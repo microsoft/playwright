@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import { test, expect, stripAnsi } from './playwright-test-fixtures';
+import { test, expect } from './playwright-test-fixtures';
 
 test('should retry failures', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'retry-failures.spec.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('flake', async ({}, testInfo) => {
         // Passes on the second run.
         expect(testInfo.retry).toBe(1);
@@ -46,7 +46,7 @@ test('should retry based on config', async ({ runInlineTest }) => {
       ] };
     `,
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', ({}, testInfo) => {
         // Passes on the third run.
         expect(testInfo.retry).toBe(2);
@@ -66,7 +66,7 @@ test('should retry based on test.describe.configure', async ({ runInlineTest }) 
       module.exports = { retries: 2 };
     `,
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.describe.configure({ retries: 1 });
       test('fail 1', ({}, testInfo) => {
         console.log('%%fail1-' + testInfo.retry);
@@ -74,7 +74,7 @@ test('should retry based on test.describe.configure', async ({ runInlineTest }) 
       });
     `,
     'b.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('fail 4', ({}, testInfo) => {
         console.log('%%fail4-' + testInfo.retry);
         expect(1).toBe(2);
@@ -118,7 +118,7 @@ test('should retry based on test.describe.configure', async ({ runInlineTest }) 
 test('should retry timeout', async ({ runInlineTest }) => {
   const { exitCode, passed, failed, output } = await runInlineTest({
     'one-timeout.spec.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('timeout', async () => {
         await new Promise(f => setTimeout(f, 10000));
       });
@@ -127,13 +127,13 @@ test('should retry timeout', async ({ runInlineTest }) => {
   expect(exitCode).toBe(1);
   expect(passed).toBe(0);
   expect(failed).toBe(1);
-  expect(stripAnsi(output).split('\n')[2]).toBe('××T');
+  expect(output.split('\n')[2]).toBe('××T');
 });
 
 test('should fail on unexpected pass with retries', async ({ runInlineTest }) => {
   const { exitCode, failed, output } = await runInlineTest({
     'unexpected-pass.spec.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('succeeds', () => {
         test.fail();
         expect(1 + 1).toBe(2);
@@ -148,7 +148,7 @@ test('should fail on unexpected pass with retries', async ({ runInlineTest }) =>
 test('should retry unexpected pass', async ({ runInlineTest }) => {
   const { exitCode, passed, failed, output } = await runInlineTest({
     'unexpected-pass.spec.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('succeeds', () => {
         test.fail();
         expect(1 + 1).toBe(2);
@@ -158,13 +158,13 @@ test('should retry unexpected pass', async ({ runInlineTest }) => {
   expect(exitCode).toBe(1);
   expect(passed).toBe(0);
   expect(failed).toBe(1);
-  expect(stripAnsi(output).split('\n')[2]).toBe('××F');
+  expect(output.split('\n')[2]).toBe('××F');
 });
 
 test('should not retry expected failure', async ({ runInlineTest }) => {
   const { exitCode, passed, failed, output } = await runInlineTest({
     'expected-failure.spec.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('fails', () => {
         test.fail();
         expect(1 + 1).toBe(3);
@@ -178,13 +178,13 @@ test('should not retry expected failure', async ({ runInlineTest }) => {
   expect(exitCode).toBe(0);
   expect(passed).toBe(2);
   expect(failed).toBe(0);
-  expect(stripAnsi(output).split('\n')[2]).toBe('··');
+  expect(output.split('\n')[2]).toBe('··');
 });
 
 test('should retry unhandled rejection', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'unhandled-rejection.spec.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('unhandled rejection', async () => {
         setTimeout(() => {
           throw new Error('Unhandled rejection in the test');
@@ -196,14 +196,14 @@ test('should retry unhandled rejection', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(1);
-  expect(stripAnsi(result.output).split('\n')[2]).toBe('××F');
+  expect(result.output.split('\n')[2]).toBe('××F');
   expect(result.output).toContain('Unhandled rejection');
 });
 
 test('should retry beforeAll failure', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.beforeAll(async () => {
         throw new Error('BeforeAll is bugged!');
       });
@@ -217,14 +217,15 @@ test('should retry beforeAll failure', async ({ runInlineTest }) => {
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(1);
   expect(result.skipped).toBe(1);
-  expect(stripAnsi(result.output).split('\n')[2]).toBe('×°×°F°');
+  expect(result.output.split('\n')[2]).toBe('×°×°F°');
   expect(result.output).toContain('BeforeAll is bugged!');
 });
 
 test('should retry worker fixture setup failure', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'helper.ts': `
-      export const test = pwt.test.extend({
+      import { test as base, expect } from '@playwright/test';
+      export const test = base.extend({
         worker: [ async () => {
           throw new Error('worker setup is bugged!');
         }, { scope: 'worker' } ]
@@ -239,6 +240,6 @@ test('should retry worker fixture setup failure', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(1);
-  expect(stripAnsi(result.output).split('\n')[2]).toBe('××F');
+  expect(result.output.split('\n')[2]).toBe('××F');
   expect(result.output).toContain('worker setup is bugged!');
 });

@@ -16,6 +16,7 @@
 
 import * as React from 'react';
 import './codeMirrorWrapper.css';
+import type { Language } from './codeMirrorWrapper';
 import { CodeMirrorWrapper } from './codeMirrorWrapper';
 
 export type SourceHighlight = {
@@ -25,7 +26,7 @@ export type SourceHighlight = {
 
 export interface SourceProps {
   text: string;
-  language: string;
+  language: Language;
   // 1-based
   highlight?: SourceHighlight[];
   revealLine?: number;

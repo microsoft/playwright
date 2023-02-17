@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import { test, expect, stripAnsi } from './playwright-test-fixtures';
+import { test, expect } from './playwright-test-fixtures';
 
 test('should retry predicate', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('should toPass sync predicate', async () => {
         let i = 0;
         await test.expect(() => {
@@ -35,16 +35,23 @@ test('should retry predicate', async ({ runInlineTest }) => {
         }).toPass();
         expect(i).toBe(3);
       });
+      test('should retry expect.soft assertions', async () => {
+        let i = 0;
+        await test.expect(() => {
+          expect.soft(++i).toBe(3);
+        }).toPass();
+        expect(i).toBe(3);
+      });
     `
   });
   expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(2);
+  expect(result.passed).toBe(3);
 });
 
 test('should respect timeout', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('should fail', async () => {
         await test.expect(() => {
           expect(1).toBe(2);
@@ -53,17 +60,17 @@ test('should respect timeout', async ({ runInlineTest }) => {
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(stripAnsi(result.output)).toContain('Timeout 100ms exceeded while waiting on the predicate');
-  expect(stripAnsi(result.output)).toContain('Received: 1');
-  expect(stripAnsi(result.output)).toContain(`
-  7 |         await test.expect(() => {
+  expect(result.output).toContain('Timeout 100ms exceeded while waiting on the predicate');
+  expect(result.output).toContain('Received: 1');
+  expect(result.output).toContain(`
+  4 |         await test.expect(() => {
   `.trim());
 });
 
 test('should not fail when used with web-first assertion', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('should fail', async ({ page }) => {
         let i = 0;
         await test.expect(async () => {
@@ -80,7 +87,7 @@ test('should not fail when used with web-first assertion', async ({ runInlineTes
 test('should support .not predicate', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('should pass', async ({ page }) => {
         let i = 0;
         await test.expect(() => {
@@ -97,15 +104,17 @@ test('should support .not predicate', async ({ runInlineTest }) => {
 test('should respect interval', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('should fail', async () => {
         let probes = 0;
+        const startTime = Date.now();
         await test.expect(() => {
-          ++probes
+          ++probes;
           expect(1).toBe(2);
-        }).toPass({ timeout: 1000, intervals: [600] }).catch(() => {});
-        // Probe at 0s, at 0.6s.
+        }).toPass({ timeout: 1000, intervals: [0, 10000] }).catch(() => {});
+        // Probe at 0 and epsilon.
         expect(probes).toBe(2);
+        expect(Date.now() - startTime).toBeLessThan(5000);
       });
     `
   });
@@ -115,7 +124,7 @@ test('should respect interval', async ({ runInlineTest }) => {
 test('should compile', async ({ runTSC }) => {
   const result = await runTSC({
     'a.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('should poll sync predicate', async ({ page }) => {
         let i = 0;
         test.expect(() => ++i).toPass();
@@ -137,7 +146,7 @@ test('should compile', async ({ runTSC }) => {
 test('should use custom message', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('should fail with custom message', async () => {
         await test.expect(() => {
           expect(1).toBe(3);
@@ -145,7 +154,69 @@ test('should use custom message', async ({ runInlineTest }) => {
       });
     `
   });
-  expect(stripAnsi(result.output)).toContain('Error: Custom message');
+  expect(result.output).toContain('Error: Custom message');
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+});
+
+test('should swallow all soft errors inside toPass matcher, if successful', async ({ runInlineTest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/20437' });
+
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('should respect soft', async () => {
+        expect.soft('before-toPass').toBe('zzzz');
+        let i = 0;
+        await test.expect(() => {
+          ++i;
+          expect.soft('inside-toPass-' + i).toBe('inside-toPass-2');
+        }).toPass({ timeout: 1000 });
+        expect.soft('after-toPass').toBe('zzzz');
+      });
+    `
+  });
+  expect(result.output).toContain('Received: "before-toPass"');
+  expect(result.output).toContain('Received: "after-toPass"');
+  expect(result.output).not.toContain('Received: "inside-toPass-1"');
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+});
+
+test('should work with no.toPass and failing soft assertion', async ({ runInlineTest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/20518' });
+
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('should work', async () => {
+        await test.expect(() => {
+          expect.soft(1).toBe(2);
+        }).not.toPass({ timeout: 1000 });
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.failed).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
+test('should show only soft errors on last toPass pass', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('should respect soft', async () => {
+        let i = 0;
+        await test.expect(() => {
+          ++i;
+          expect.soft('inside-toPass-' + i).toBe('0');
+        }).toPass({ timeout: 1000, intervals: [100, 100, 100000] });
+      });
+    `
+  });
+  expect(result.output).not.toContain('Received: "inside-toPass-1"');
+  expect(result.output).not.toContain('Received: "inside-toPass-2"');
+  expect(result.output).toContain('Received: "inside-toPass-3"');
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
 });
@@ -153,17 +224,17 @@ test('should use custom message', async ({ runInlineTest }) => {
 test('should work with soft', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('should respect soft', async () => {
         await test.expect.soft(() => {
           expect(1).toBe(3);
-        }).toPass({ timeout: 1 });
+        }).toPass({ timeout: 1000 });
         expect.soft(2).toBe(3);
       });
     `
   });
-  expect(stripAnsi(result.output)).toContain('Received: 1');
-  expect(stripAnsi(result.output)).toContain('Received: 2');
+  expect(result.output).toContain('Received: 1');
+  expect(result.output).toContain('Received: 2');
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
 });
@@ -171,7 +242,7 @@ test('should work with soft', async ({ runInlineTest }) => {
 test('should not accept TimeoutError', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('should fail', async () => {
         await test.expect(() => {}).not.toPass({ timeout: 1 });
       });

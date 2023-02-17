@@ -51,6 +51,7 @@ import { registry } from '../registry';
 import { ManualPromise } from '../../utils/manualPromise';
 import { validateBrowserContextOptions } from '../browserContext';
 import { chromiumSwitches } from './chromiumSwitches';
+import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent } from '../happy-eyeballs';
 
 const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');
 
@@ -287,9 +288,13 @@ export class Chromium extends BrowserType {
       throw new Error('Arguments can not specify page to be opened');
     const chromeArguments = [...chromiumSwitches];
 
-    // See https://github.com/microsoft/playwright/issues/7362
-    if (os.platform() === 'darwin')
+    if (os.platform() === 'darwin') {
+      // See https://github.com/microsoft/playwright/issues/7362
       chromeArguments.push('--enable-use-zoom-for-dsf=false');
+      // See https://bugs.chromium.org/p/chromium/issues/detail?id=1407025.
+      if (options.headless)
+        chromeArguments.push('--use-angle');
+    }
 
     if (options.devtools)
       chromeArguments.push('--auto-open-devtools-for-tabs');
@@ -333,10 +338,11 @@ async function urlToWSEndpoint(progress: Progress, endpointURL: string) {
     return endpointURL;
   progress.log(`<ws preparing> retrieving websocket url from ${endpointURL}`);
   const httpURL = endpointURL.endsWith('/') ? `${endpointURL}json/version/` : `${endpointURL}/json/version/`;
-  const request = endpointURL.startsWith('https') ? https : http;
+  const isHTTPS = endpointURL.startsWith('https://');
   const json = await new Promise<string>((resolve, reject) => {
-    request.get(httpURL, {
+    (isHTTPS ? https : http).get(httpURL, {
       timeout: NET_DEFAULT_TIMEOUT,
+      agent: isHTTPS ? httpsHappyEyeballsAgent : httpHappyEyeballsAgent,
     }, resp => {
       if (resp.statusCode! < 200 || resp.statusCode! >= 400) {
         reject(new Error(`Unexpected status ${resp.statusCode} when connecting to ${httpURL}.\n` +

@@ -1,4 +1,4 @@
 [*]
+../common/
 ../util.ts
-../babelBundle.ts
 ../utilsBundle.ts

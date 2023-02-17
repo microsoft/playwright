@@ -385,7 +385,6 @@ export module Protocol {
     export type navigationStartedPayload = {
       frameId: string;
       navigationId: string;
-      url: string;
     }
     export type navigationCommittedPayload = {
       frameId: string;
@@ -550,7 +549,6 @@ export module Protocol {
     };
     export type navigateReturnValue = {
       navigationId: string|null;
-      navigationURL: string|null;
     };
     export type goBackParameters = {
       frameId: string;
@@ -565,7 +563,6 @@ export module Protocol {
       success: boolean;
     };
     export type reloadParameters = {
-      frameId: string;
     };
     export type reloadReturnValue = void;
     export type adoptNodeParameters = {
@@ -651,7 +648,7 @@ export module Protocol {
     };
     export type dispatchTapEventReturnValue = void;
     export type dispatchMouseEventParameters = {
-      type: string;
+      type: ("mousedown"|"mousemove"|"mouseup");
       button: number;
       x: number;
       y: number;

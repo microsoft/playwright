@@ -1,7 +1,7 @@
 [*]
-../types.ts
+common/
+./utils.ts
 ./utilsBundle.ts
-matchers/
-reporters/
-third_party/
-plugins/
+
+[cli.ts]
+**

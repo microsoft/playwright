@@ -29,7 +29,7 @@ import type { CSSComplexSelectorList } from '../isomorphic/cssParser';
 import { generateSelector } from './selectorGenerator';
 import type * as channels from '@protocol/channels';
 import { Highlight } from './highlight';
-import { getAriaCheckedStrict, getAriaDisabled, getAriaLabelledByElements, getAriaRole, getElementAccessibleName } from './roleUtils';
+import { getChecked, getAriaDisabled, getAriaLabelledByElements, getAriaRole, getElementAccessibleName } from './roleUtils';
 import { kLayoutSelectorNames, type LayoutSelectorName, layoutSelectorScore } from './layoutSelectorUtils';
 import { asLocator } from '../isomorphic/locatorGenerators';
 import type { Language } from '../isomorphic/locatorGenerators';
@@ -614,7 +614,7 @@ export class InjectedScript {
 
     if (state === 'checked' || state === 'unchecked') {
       const need = state === 'checked';
-      const checked = getAriaCheckedStrict(element);
+      const checked = getChecked(element, false);
       if (checked === 'error')
         throw this.createStacklessError('Not a checkbox or radio button');
       return need === checked;
@@ -1119,7 +1119,7 @@ export class InjectedScript {
     this.onGlobalListenersRemoved.add(addHitTargetInterceptorListeners);
   }
 
-  expect(element: Element | undefined, options: FrameExpectParams, elements: Element[]) {
+  async expect(element: Element | undefined, options: FrameExpectParams, elements: Element[]): Promise<{ matches: boolean, received?: any, missingRecevied?: boolean }> {
     const isArray = options.expression === 'to.have.count' || options.expression.endsWith('.array');
     if (isArray)
       return this.expectArray(elements, options);
@@ -1130,13 +1130,16 @@ export class InjectedScript {
       // expect(locator).not.toBeVisible() passes when there is no element.
       if (options.isNot && options.expression === 'to.be.visible')
         return { matches: false };
+      // expect(locator).not.toBeInViewport() passes when there is no element.
+      if (options.isNot && options.expression === 'to.be.in.viewport')
+        return { matches: false };
       // When none of the above applies, expect does not match.
-      return { matches: options.isNot };
+      return { matches: options.isNot, missingRecevied: true };
     }
-    return this.expectSingleElement(element, options);
+    return await this.expectSingleElement(element, options);
   }
 
-  private expectSingleElement(element: Element, options: FrameExpectParams): { matches: boolean, received?: any } {
+  private async expectSingleElement(element: Element, options: FrameExpectParams): Promise<{ matches: boolean, received?: any }> {
     const expression = options.expression;
 
     {
@@ -1182,6 +1185,13 @@ export class InjectedScript {
         const received = (element as any)[options.expressionArg];
         const matches = deepEquals(received, options.expectedValue);
         return { received, matches };
+      }
+    }
+    {
+      // Viewport intersection
+      if (expression === 'to.be.in.viewport') {
+        const ratio = await this.viewportRatio(element);
+        return { received: `viewport ratio ${ratio}`, matches: ratio > 0 && ratio > (options.expectedNumber ?? 0) - 1e-9 };
       }
     }
 

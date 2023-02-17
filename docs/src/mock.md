@@ -66,7 +66,7 @@ await page.route('https://dog.ceo/api/breeds/list/all', async route => {
   const response = await route.fetch();
   const json = await response.json();
   json.message['big_red_dog'] = [];
-  // Fullfill using the original response, while patching the response body
+  // Fulfill using the original response, while patching the response body
   // with the given JSON object.
   await route.fulfill({ response, json });
 });
@@ -77,7 +77,7 @@ async def handle(route):
     response = await route.fulfill()
     json = await response.json()
     json["message"]["big_red_dog"] = []
-    # Fullfill using the original response, while patching the response body
+    # Fulfill using the original response, while patching the response body
     # with the given JSON object.
     await route.fulfill(response=response, json=json)
 
@@ -89,7 +89,7 @@ def handle(route):
     response = route.fulfill()
     json = response.json()
     json["message"]["big_red_dog"] = []
-    # Fullfill using the original response, while patching the response body
+    # Fulfill using the original response, while patching the response body
     # with the given JSON object.
     route.fulfill(response=response, json=json)
 
@@ -102,7 +102,7 @@ await page.RouteAsync("https://dog.ceo/api/breeds/list/all", async route =>
     var response = await route.FetchAsync();
     dynamic json = await response.JsonAsync();
     json.message.big_red_dog = new string[] {};
-    // Fullfill using the original response, while patching the response body
+    // Fulfill using the original response, while patching the response body
     // with the given JSON object.
     await route.FulfillAsync(new() { Response = response, Json = json });
 });
@@ -114,7 +114,7 @@ page.route("https://dog.ceo/api/breeds/list/all", route -> {
   JsonObject json = new Gson().fromJson(response.text(), JsonObject.class);
   JsonObject message = json.get("message").getAsJsonObject();
   message.set("big_red_dog", new JsonArray());
-  // Fullfill using the original response, while patching the response body
+  // Fulfill using the original response, while patching the response body
   // with the given JSON object.
   route.fulfill(new Route.FulfillOptions()
     .setResponse(response)

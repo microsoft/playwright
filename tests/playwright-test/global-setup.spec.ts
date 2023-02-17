@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, stripAnsi } from './playwright-test-fixtures';
+import { test, expect } from './playwright-test-fixtures';
 
 test('globalSetup and globalTeardown should work', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -24,10 +24,7 @@ test('globalSetup and globalTeardown should work', async ({ runInlineTest }) => 
         testDir: '..',
         globalSetup: './globalSetup',
         globalTeardown: path.join(__dirname, 'globalTeardown.ts'),
-        projects: [
-          { name: 'p1' },
-          { name: 'p2' },
-        ]
+        projects: [{ name: 'p1' }]
       };
     `,
     'dir/globalSetup.ts': `
@@ -41,18 +38,18 @@ test('globalSetup and globalTeardown should work', async ({ runInlineTest }) => 
       };
     `,
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('should work', async ({}, testInfo) => {
         console.log('\\n%%from-test');
       });
     `,
-  }, { 'project': 'p2', 'config': 'dir' });
+  }, { 'config': 'dir' });
   expect(result.passed).toBe(1);
   expect(result.failed).toBe(0);
-  expect(stripAnsi(result.output).split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    '%%from-global-setup',
-    '%%from-test',
-    '%%from-global-teardown',
+  expect(result.outputLines).toEqual([
+    'from-global-setup',
+    'from-test',
+    'from-global-teardown',
   ]);
 });
 
@@ -70,7 +67,7 @@ test('standalone globalTeardown should work', async ({ runInlineTest }) => {
       };
     `,
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('should work', async ({}, testInfo) => {
       });
     `,
@@ -101,7 +98,7 @@ test('globalTeardown runs after failures', async ({ runInlineTest }) => {
       };
     `,
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('should work', async ({}, testInfo) => {
         expect(process.env.FOO).toBe('43');
       });
@@ -132,16 +129,12 @@ test('globalTeardown does not run when globalSetup times out', async ({ runInlin
       };
     `,
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('should not run', async ({}, testInfo) => {
       });
     `,
   });
-  // We did not run tests, so we should only have 1 skipped test.
-  expect(result.skipped).toBe(1);
-  expect(result.passed).toBe(0);
-  expect(result.failed).toBe(0);
-  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('Timed out waiting 1s for the global setup to run');
   expect(result.output).not.toContain('teardown=');
 });
 
@@ -159,7 +152,7 @@ test('globalSetup should work with sync function', async ({ runInlineTest }) => 
       };
     `,
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('should work', async ({}) => {
         const value = JSON.parse(process.env.FOO);
         expect(value).toEqual({ foo: 'bar' });
@@ -183,7 +176,7 @@ test('globalSetup error should prevent tests from executing', async ({ runInline
       };
     `,
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('a', async ({}) => {
         console.log('this test ran');
       });
@@ -194,7 +187,7 @@ test('globalSetup error should prevent tests from executing', async ({ runInline
     `,
   }, { reporter: 'line' });
 
-  expect(stripAnsi(output)).not.toContain('this test ran');
+  expect(output).not.toContain('this test ran');
   expect(passed).toBe(0);
 });
 
@@ -210,7 +203,7 @@ test('globalSetup should throw when passed non-function', async ({ runInlineTest
       module.exports = 42;
     `,
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('should work', async ({}) => {
       });
     `,
@@ -238,7 +231,7 @@ test('globalSetup should work with default export and run the returned fn', asyn
       export default setup;
     `,
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('should work', async ({}) => {
       });
     `,
@@ -265,7 +258,7 @@ test('globalSetup should allow requiring a package from node_modules', async ({ 
       };
     `,
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('should work', async ({}, testInfo) => {
         expect(process.env.FOO).toBe('42');
       });
@@ -276,7 +269,8 @@ test('globalSetup should allow requiring a package from node_modules', async ({ 
 
 const authFiles = {
   'playwright.config.ts': `
-    const config: pwt.PlaywrightTestConfig = {
+    import { PlaywrightTestConfig } from '@playwright/test';
+    const config: PlaywrightTestConfig = {
       globalSetup: require.resolve('./auth'),
       use: {
         baseURL: 'https://www.example.com',
@@ -286,9 +280,10 @@ const authFiles = {
     export default config;
   `,
   'auth.ts': `
-    async function globalSetup(config: pwt.FullConfig) {
+    import { chromium, FullConfig } from '@playwright/test';
+    async function globalSetup(config: FullConfig) {
       const { baseURL, storageState } = config.projects[0].use;
-      const browser = await pwt.chromium.launch();
+      const browser = await chromium.launch();
       const page = await browser.newPage();
       await page.route('**/*', route => {
         route.fulfill({ body: '<html></html>' }).catch(() => {});
@@ -303,7 +298,7 @@ const authFiles = {
     export default globalSetup;
   `,
   'a.test.ts': `
-    const { test } = pwt;
+    import { test, expect } from '@playwright/test';
     test('should have storage state', async ({ page }) => {
       await page.route('**/*', route => {
         route.fulfill({ body: '<html></html>' }).catch(() => {});
@@ -324,4 +319,70 @@ test('globalSetup should work for auth', async ({ runInlineTest }) => {
 test('globalSetup auth should compile', async ({ runTSC }) => {
   const result = await runTSC(authFiles);
   expect(result.exitCode).toBe(0);
+});
+
+test('teardown order', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      const _plugins = [];
+      for (let i = 1; i < 4; ++i) {
+        _plugins.push(() => ({
+          setup: () => console.log('\\n%%setup ' + i),
+          teardown: () => console.log('\\n%%teardown ' + i),
+        }));
+      }
+      export default { _plugins };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test', () => {});
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.outputLines).toEqual([
+    'setup 1',
+    'setup 2',
+    'setup 3',
+    'teardown 3',
+    'teardown 2',
+    'teardown 1',
+  ]);
+});
+
+test('teardown after error', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      const _plugins = [];
+      for (let i = 1; i < 4; ++i) {
+        _plugins.push(() => ({
+          setup: () => console.log('\\n%%setup ' + i),
+          teardown: () => {
+            console.log('\\n%%teardown ' + i);
+            throw new Error('failed teardown ' + i)
+          },
+        }));
+      }
+      export default { _plugins };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test', () => {});
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(1);
+  const output = result.output;
+  expect(output).toContain('Error: failed teardown 1');
+  expect(output).toContain('Error: failed teardown 2');
+  expect(output).toContain('Error: failed teardown 3');
+  expect(output).toContain('throw new Error(\'failed teardown');
+  expect(result.outputLines).toEqual([
+    'setup 1',
+    'setup 2',
+    'setup 3',
+    'teardown 3',
+    'teardown 2',
+    'teardown 1',
+  ]);
 });

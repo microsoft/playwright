@@ -15,12 +15,13 @@
  */
 
 import path from 'path';
-import { test, expect, stripAnsi } from './playwright-test-fixtures';
+import { test, expect } from './playwright-test-fixtures';
 
 test('should be able to call expect.extend in config', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'helper.ts': `
-      pwt.expect.extend({
+      import { test as base, expect } from '@playwright/test';
+      expect.extend({
         toBeWithinRange(received, floor, ceiling) {
           const pass = received >= floor && received <= ceiling;
           if (pass) {
@@ -37,7 +38,7 @@ test('should be able to call expect.extend in config', async ({ runInlineTest })
           }
         },
       });
-      export const test = pwt.test;
+      export const test = base;
     `,
     'expect-test.spec.ts': `
       import { test } from './helper';
@@ -54,7 +55,7 @@ test('should be able to call expect.extend in config', async ({ runInlineTest })
 test('should not expand huge arrays', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'expect-test.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('numeric ranges', () => {
         const a1 = Array(100000).fill(1);
         const a2 = Array(100000).fill(1);
@@ -71,7 +72,7 @@ test('should not expand huge arrays', async ({ runInlineTest }) => {
 test('should include custom error message', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'expect-test.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('custom expect message', () => {
         test.expect(1+1, 'one plus one is two!').toEqual(3);
       });
@@ -79,7 +80,7 @@ test('should include custom error message', async ({ runInlineTest }) => {
   });
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
-  expect(stripAnsi(result.output)).toContain([
+  expect(result.output).toContain([
     `    Error: one plus one is two!`,
     ``,
     `    Expected: 3`,
@@ -90,7 +91,7 @@ test('should include custom error message', async ({ runInlineTest }) => {
 test('should include custom error message with web-first assertions', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'expect-test.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('custom expect message', async ({page}) => {
         await expect(page.locator('x-foo'), { message: 'x-foo must be visible' }).toBeVisible({timeout: 1});
       });
@@ -107,7 +108,7 @@ test('should include custom error message with web-first assertions', async ({ r
 
 test('should work with default expect prototype functions', async ({ runTSC, runInlineTest }) => {
   const spec = `
-    const { test } = pwt;
+    import { test, expect } from '@playwright/test';
     test('pass', async () => {
       const expected = [1, 2, 3, 4, 5, 6];
       test.expect([4, 1, 6, 7, 3, 5, 2, 5, 4, 6]).toEqual(
@@ -133,12 +134,118 @@ test('should work with default expect prototype functions', async ({ runTSC, run
   }
 });
 
-test('should work with default expect matchers', async ({ runTSC }) => {
+test('should work with generic matchers', async ({ runTSC }) => {
   const result = await runTSC({
     'a.spec.ts': `
-      const { test } = pwt;
-      test.expect(42).toBe(42);
+      import { expect } from '@playwright/test';
+      expect(42).toBe(42);
+      expect(0.1 + 0.2).toBeCloseTo(0.3, 5);
+      expect(null).toBeDefined();
+      expect(null).toBeFalsy();
+      expect(42).toBeGreaterThan(1);
+      expect(42).toBeGreaterThanOrEqual(42);
+      expect({}).toBeInstanceOf(Object);
+      expect(42).toBeLessThan(100);
+      expect(42).toBeLessThanOrEqual(42);
+      expect(null).toBeNull();
+      expect(42).toBeTruthy();
+      expect(undefined).toBeUndefined();
+      expect(NaN).toBeNaN();
+      expect('abc').toContain('a');
+      expect(['abc']).toContain('abc');
+      expect(['abc']).toContainEqual('abc');
+      expect({}).toEqual({});
+      expect([1, 2]).toHaveLength(2);
+      expect('abc').toMatch(/a.?c/);
+      expect({ a: 1, b: 2 }).toMatchObject({ a: 1 });
+      expect({}).toStrictEqual({});
+      expect(() => { throw new Error('Something bad'); }).toThrow('something');
+      expect(() => { throw new Error('Something bad'); }).toThrowError('something');
+
+      expect(['Bob', 'Eve']).not.toEqual(expect.arrayContaining(['Alice', 'Bob']));
+      expect({}).toEqual(expect.anything());
+      expect({ sum: 0.1 + 0.2 }).toEqual({ sum: expect.closeTo(0.3, 5) });
+      class Cat {}
+      expect(new Cat()).toEqual(expect.any(Cat));
+      expect({ x: 2, y: 3, foo: 'bar' }).toEqual(expect.objectContaining({
+        x: expect.any(Number),
+        y: expect.any(Number),
+      }));
+      expect('abc').toEqual(expect.stringContaining('bc'));
+      expect(['Alicia', 'Roberto', 'Evelina']).toEqual(
+        expect.arrayContaining([
+          expect.stringMatching(/^Alic/),
+          expect.stringMatching('Roberto'),
+        ]),
+      );
     `
+  });
+  expect(result.exitCode).toBe(0);
+});
+
+test('should compile generic matchers', async ({ runTSC }) => {
+  const result = await runTSC({
+    'a.spec.ts': `
+      import { expect } from '@playwright/test';
+      expect(42).toBe(42);
+      expect(42).toBeCloseTo(42);
+      expect(42).toBeCloseTo(42, 5);
+      expect(42).toBeDefined();
+      expect(42).toBeFalsy();
+      expect(42).toBeGreaterThan(1);
+      expect(42n).toBeGreaterThan(1n);
+      expect(42).toBeGreaterThanOrEqual(1);
+      expect(42n).toBeGreaterThanOrEqual(1n);
+      expect({}).toBeInstanceOf(Object);
+      expect(42).toBeLessThan(1);
+      expect(42n).toBeLessThan(1n);
+      expect(42).toBeLessThanOrEqual(1);
+      expect(42n).toBeLessThanOrEqual(1n);
+      expect(42).toBeNull();
+      expect(42).toBeTruthy();
+      expect(42).toBeUndefined();
+      expect(42).toBeNaN();
+      expect('abc').toContain('b');
+      expect([1, 2]).toContain(1);
+      expect(new Set([1, 2])).toContain(1);
+      expect([{}, { a: 1 }]).toContainEqual({});
+      expect({}).toEqual({});
+      expect([1, 2]).toHaveLength(2);
+      expect('abc').toMatch(/a.?c/);
+      expect({ a: 1, b: 2 }).toMatchObject({ a: 1 });
+      expect([]).toMatchObject([]);
+      expect({}).toStrictEqual({});
+      expect(() => { throw new Error('Something bad'); }).toThrow('something');
+      expect(() => { throw new Error('Something bad'); }).toThrow();
+      expect(() => { throw new Error('Something bad'); }).toThrowError('something');
+      expect(() => { throw new Error('Something bad'); }).toThrowError();
+
+      expect(['Bob', 'Eve']).not.toEqual(expect.arrayContaining(['Alice', 'Bob']));
+      expect({}).toEqual(expect.anything());
+      expect({ sum: 0.1 + 0.2 }).toEqual({ sum: expect.closeTo(0.3, 5) });
+      class Cat {}
+      expect(new Cat()).toEqual(expect.any(Cat));
+      expect({ x: 2, y: 3, foo: 'bar' }).toEqual(expect.objectContaining({
+        x: expect.any(Number),
+        y: expect.any(Number),
+      }));
+      expect('abc').toEqual(expect.stringContaining('bc'));
+      expect(['Alicia', 'Roberto', 'Evelina']).toEqual(
+        expect.arrayContaining([
+          expect.stringMatching(/^Alic/),
+          expect.stringMatching('Roberto'),
+        ]),
+      );
+
+      // @ts-expect-error
+      expect(42).toBe(123, 456);
+      // @ts-expect-error
+      expect(42).toBeCloseTo(42, '5');
+      // @ts-expect-error
+      expect(42).toBeFalsy(123);
+      // @ts-expect-error
+      expect({}).toBeInstanceOf({});
+    `,
   });
   expect(result.exitCode).toBe(0);
 });
@@ -146,7 +253,7 @@ test('should work with default expect matchers', async ({ runTSC }) => {
 test('should work with expect message', async ({ runTSC }) => {
   const result = await runTSC({
     'a.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.expect(42, 'this is expect message').toBe(42);
     `
   });
@@ -156,7 +263,7 @@ test('should work with expect message', async ({ runTSC }) => {
 test('should work with default expect matchers and esModuleInterop=false', async ({ runTSC }) => {
   const result = await runTSC({
     'a.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.expect(42).toBe(42);
     `,
     'tsconfig.json': JSON.stringify({
@@ -191,7 +298,7 @@ test('should work with custom PlaywrightTest namespace', async ({ runTSC }) => {
       }
     `,
     'a.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.expect.extend({
         toBeWithinRange() { },
       });
@@ -211,7 +318,7 @@ test('should work with custom PlaywrightTest namespace', async ({ runTSC }) => {
 test('should propose only the relevant matchers when custom expect matcher classes were passed', async ({ runTSC }) => {
   const result = await runTSC({
     'a.spec.ts': `
-    const { test } = pwt;
+    import { test, expect } from '@playwright/test';
     test('custom matchers', async ({ page }) => {
       await test.expect(page).toHaveURL('https://example.com');
       await test.expect(page).not.toHaveURL('https://example.com');
@@ -260,10 +367,11 @@ test('should propose only the relevant matchers when custom expect matcher class
 test('should return void/Promise when appropriate', async ({ runTSC }) => {
   const result = await runTSC({
     'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
       type AssertType<T, S> = S extends T ? AssertNotAny<S> : false;
       type AssertNotAny<S> = {notRealProperty: number} extends S ? false : true;
 
-      pwt.test('example', async ({ page }) => {
+      test('example', async ({ page }) => {
         {
           const value = expect(1).toBe(2);
           const assertion: AssertType<void, typeof value> = true;
@@ -303,7 +411,7 @@ test.describe('helpful expect errors', () => {
   test('top-level', async ({ runInlineTest }) => {
     const result = await runInlineTest({
       'a.spec.ts': `
-        const { test } = pwt;
+        import { test, expect } from '@playwright/test';
         test('explodes', () => {
           expect(1).nope();
         });
@@ -316,7 +424,7 @@ test.describe('helpful expect errors', () => {
   test('soft', async ({ runInlineTest }) => {
     const result = await runInlineTest({
       'a.spec.ts': `
-        const { test } = pwt;
+        import { test, expect } from '@playwright/test';
         test('explodes', () => {
           expect.soft(1).nope();
         });
@@ -329,7 +437,7 @@ test.describe('helpful expect errors', () => {
   test('poll', async ({ runInlineTest }) => {
     const result = await runInlineTest({
       'a.spec.ts': `
-        const { test } = pwt;
+        import { test, expect } from '@playwright/test';
         test('explodes', () => {
           expect.poll(() => {}).nope();
         });
@@ -342,7 +450,7 @@ test.describe('helpful expect errors', () => {
   test('not', async ({ runInlineTest }) => {
     const result = await runInlineTest({
       'a.spec.ts': `
-        const { test } = pwt;
+        import { test, expect } from '@playwright/test';
         test('explodes', () => {
           expect(1).not.nope();
         });
@@ -355,7 +463,7 @@ test.describe('helpful expect errors', () => {
   test('bare', async ({ runInlineTest }) => {
     const result = await runInlineTest({
       'a.spec.ts': `
-        const { test } = pwt;
+        import { test, expect } from '@playwright/test';
         test('explodes', () => {
           expect('');
         });
@@ -373,7 +481,7 @@ test('should reasonably work in global setup', async ({ runInlineTest }) => {
       export default { globalSetup: './global-setup' };
     `,
     'global-setup.ts': `
-      const { expect } = pwt;
+      import { test, expect } from '@playwright/test';
       export default async () => {
         expect(1).toBe(1);
         await expect.poll(async () => {
@@ -384,20 +492,20 @@ test('should reasonably work in global setup', async ({ runInlineTest }) => {
       };
     `,
     'a.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('skipped', () => {});
     `,
   });
 
   expect(result.exitCode).toBe(1);
-  expect(stripAnsi(result.output)).toContain('> 11 |         expect(1).toBe(2);');
+  expect(result.output).toContain('>  9 |         expect(1).toBe(2);');
 });
 
 test('should support toHaveURL with baseURL from webServer', async ({ runInlineTest }, testInfo) => {
   const port = testInfo.workerIndex + 10500;
   const result = await runInlineTest({
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
 
       test('pass', async ({ page }) => {
         await page.goto('/foobar');
@@ -419,7 +527,7 @@ test('should support toHaveURL with baseURL from webServer', async ({ runInlineT
       };
   `,
   }, { workers: 1 });
-  const output = stripAnsi(result.output);
+  const output = result.output;
   expect(output).toContain('expect(page).toHaveURL');
   expect(output).toContain(`Expected string: \"http://localhost:${port}/kek\"`);
   expect(result.passed).toBe(1);
@@ -431,7 +539,7 @@ test('should respect expect.timeout', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.js': `module.exports = { expect: { timeout: 1000 } }`,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
 
       test('timeout', async ({ page }) => {
         await page.goto('data:text/html,<div>A</div>');
@@ -448,7 +556,7 @@ test('should respect expect.timeout', async ({ runInlineTest }) => {
 test('should log scale the time', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
 
       test('pass', async ({ page }) => {
         await page.setContent('<div id=div>Wrong</div>');
@@ -456,7 +564,7 @@ test('should log scale the time', async ({ runInlineTest }) => {
       });
       `,
   }, { workers: 1 });
-  const output = stripAnsi(result.output);
+  const output = result.output;
   const tokens = output.split('unexpected value');
   // Log scale: 0, 100, 250, 500, 1000, 1000, should be less than 8.
   expect(tokens.length).toBeGreaterThan(1);
@@ -469,7 +577,7 @@ test('should log scale the time', async ({ runInlineTest }) => {
 test('should print expected/received before timeout', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
 
       test('times out waiting for text', async ({ page }) => {
         await page.setContent('<div id=node>Text content</div>');
@@ -481,14 +589,14 @@ test('should print expected/received before timeout', async ({ runInlineTest }) 
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(1);
   expect(result.output).toContain('Test timeout of 2000ms exceeded.');
-  expect(stripAnsi(result.output)).toContain('Expected string: "Text 2"');
-  expect(stripAnsi(result.output)).toContain('Received string: "Text content"');
+  expect(result.output).toContain('Expected string: "Text 2"');
+  expect(result.output).toContain('Received string: "Text content"');
 });
 
 test('should print pending operations for toHaveText', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
 
       test('fail', async ({ page }) => {
         await page.setContent('<div id=node>Text content</div>');
@@ -498,7 +606,7 @@ test('should print pending operations for toHaveText', async ({ runInlineTest })
   }, { workers: 1, timeout: 2000 });
   expect(result.failed).toBe(1);
   expect(result.exitCode).toBe(1);
-  const output = stripAnsi(result.output);
+  const output = result.output;
   expect(output).toContain('Pending operations:');
   expect(output).toContain('expect(received).toHaveText(expected)');
   expect(output).toContain('Expected string: "Text"');
@@ -511,7 +619,7 @@ test('should print expected/received on Ctrl+C', async ({ runInlineTest }) => {
 
   const result = await runInlineTest({
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
 
       test('times out waiting for text', async ({ page }) => {
         await page.setContent('<div id=node>Text content</div>');
@@ -525,23 +633,49 @@ test('should print expected/received on Ctrl+C', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(130);
   expect(result.passed).toBe(0);
   expect(result.interrupted).toBe(1);
-  expect(stripAnsi(result.output)).toContain('Expected string: "Text 2"');
-  expect(stripAnsi(result.output)).toContain('Received string: "Text content"');
+  expect(result.output).toContain('Expected string: "Text 2"');
+  expect(result.output).toContain('Received string: "Text content"');
 });
 
 test('should print timed out error message', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
 
       test('fail', async ({ page }) => {
         await page.setContent('<div id=node>Text content</div>');
-        await expect(page.locator('no-such-thing')).toBeChecked({ timeout: 1 });
+        await expect(page.locator('no-such-thing')).toHaveText('hey', { timeout: 1000 });
       });
       `,
   }, { workers: 1 });
   expect(result.failed).toBe(1);
   expect(result.exitCode).toBe(1);
-  const output = stripAnsi(result.output);
-  expect(output).toContain('Timed out 1ms waiting for expect(received).toBeChecked()');
+  const output = result.output;
+  expect(output).toContain('Timed out 1000ms waiting for expect(received).toHaveText(expected)');
+});
+
+test('should not leak long expect message strings', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+
+      let logs: string = 'Ab';
+      const consoleLogWatcher = (msg: ConsoleMessage) => {
+        if (logs.length < (1<<28))
+          logs += logs;
+        expect(msg.text(), logs).toMatch(/^\\d+$/);
+      }
+
+      test('main', async ({ page }) => {
+        page.on('console', consoleLogWatcher);
+        await page.evaluate(() => {
+          for (let i = 0; i < 20; i++)
+            console.log(i);
+        });
+      });
+      `,
+  }, { workers: 1 });
+  // expect(result.output).toBe('');
+  expect(result.failed).toBe(0);
+  expect(result.exitCode).toBe(0);
 });

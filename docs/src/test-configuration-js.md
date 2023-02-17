@@ -425,7 +425,7 @@ However, most common ones like `headless` or `viewport` are available directly i
 
 ## Explicit Context Creation and Option Inheritance
 
-If using the built-in `browser` fixture, calling [`method: Browser.newContext`] will create a context with options inherted from the config:
+If using the built-in `browser` fixture, calling [`method: Browser.newContext`] will create a context with options inherited from the config:
 
 ```js tab=js-ts
 // playwright.config.ts

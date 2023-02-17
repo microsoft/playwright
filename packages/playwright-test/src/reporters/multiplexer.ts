@@ -14,13 +14,21 @@
  * limitations under the License.
  */
 
-import type { FullConfig, Suite, TestCase, TestError, TestResult, FullResult, TestStep } from '../../types/testReporter';
-import type { ReporterInternal } from '../types';
+import type { FullConfig, TestCase, TestError, TestResult, FullResult, TestStep, Reporter } from '../../types/testReporter';
+import { Suite } from '../common/test';
 
-export class Multiplexer implements ReporterInternal {
-  private _reporters: ReporterInternal[];
+type StdIOChunk = {
+  chunk: string | Buffer;
+  test?: TestCase;
+  result?: TestResult;
+};
 
-  constructor(reporters: ReporterInternal[]) {
+export class Multiplexer implements Reporter {
+  private _reporters: Reporter[];
+  private _deferred: { error?: TestError, stdout?: StdIOChunk, stderr?: StdIOChunk }[] | null = [];
+  private _config!: FullConfig;
+
+  constructor(reporters: Reporter[]) {
     this._reporters = reporters;
   }
 
@@ -28,9 +36,24 @@ export class Multiplexer implements ReporterInternal {
     return this._reporters.some(r => r.printsToStdio ? r.printsToStdio() : true);
   }
 
+  onConfigure(config: FullConfig) {
+    this._config = config;
+  }
+
   onBegin(config: FullConfig, suite: Suite) {
     for (const reporter of this._reporters)
-      reporter.onBegin?.(config, suite);
+      wrap(() => reporter.onBegin?.(config, suite));
+
+    const deferred = this._deferred!;
+    this._deferred = null;
+    for (const item of deferred) {
+      if (item.error)
+        this.onError(item.error);
+      if (item.stdout)
+        this.onStdOut(item.stdout.chunk, item.stdout.test, item.stdout.result);
+      if (item.stderr)
+        this.onStdErr(item.stderr.chunk, item.stderr.test, item.stderr.result);
+    }
   }
 
   onTestBegin(test: TestCase, result: TestResult) {
@@ -39,11 +62,20 @@ export class Multiplexer implements ReporterInternal {
   }
 
   onStdOut(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
+    if (this._deferred) {
+      this._deferred.push({ stdout: { chunk, test, result } });
+      return;
+    }
     for (const reporter of this._reporters)
       wrap(() => reporter.onStdOut?.(chunk, test, result));
   }
 
   onStdErr(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
+    if (this._deferred) {
+      this._deferred.push({ stderr: { chunk, test, result } });
+      return;
+    }
+
     for (const reporter of this._reporters)
       wrap(() => reporter.onStdErr?.(chunk, test, result));
   }
@@ -53,17 +85,26 @@ export class Multiplexer implements ReporterInternal {
       wrap(() => reporter.onTestEnd?.(test, result));
   }
 
-  async onEnd(result: FullResult) {
+  async onEnd() { }
+
+  async onExit(result: FullResult) {
+    if (this._deferred) {
+      // onBegin was not reported, emit it.
+      this.onBegin(this._config, new Suite('', 'root'));
+    }
+
     for (const reporter of this._reporters)
       await Promise.resolve().then(() => reporter.onEnd?.(result)).catch(e => console.error('Error in reporter', e));
-  }
 
-  async _onExit() {
     for (const reporter of this._reporters)
-      await Promise.resolve().then(() => reporter._onExit?.()).catch(e => console.error('Error in reporter', e));
+      await Promise.resolve().then(() => (reporter as any)._onExit?.()).catch(e => console.error('Error in reporter', e));
   }
 
   onError(error: TestError) {
+    if (this._deferred) {
+      this._deferred.push({ error });
+      return;
+    }
     for (const reporter of this._reporters)
       wrap(() => reporter.onError?.(error));
   }
@@ -75,7 +116,7 @@ export class Multiplexer implements ReporterInternal {
 
   onStepEnd(test: TestCase, result: TestResult, step: TestStep) {
     for (const reporter of this._reporters)
-      (reporter as any).onStepEnd?.(test, result, step);
+      wrap(() => (reporter as any).onStepEnd?.(test, result, step));
   }
 }
 

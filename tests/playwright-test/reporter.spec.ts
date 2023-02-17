@@ -122,7 +122,7 @@ test('should work with custom reporter', async ({ runInlineTest }) => {
       };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('not run', async ({}) => {
         console.log('log');
         console.error('error');
@@ -135,22 +135,22 @@ test('should work with custom reporter', async ({ runInlineTest }) => {
   }, { reporter: '', workers: 1 });
 
   expect(result.exitCode).toBe(0);
-  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    '%%reporter-begin-begin%%',
-    '%%version-' + require('../../packages/playwright-test/package.json').version,
-    '%%reporter-testbegin-is run-foo%%',
-    '%%reporter-stdout%%',
-    '%%reporter-stderr%%',
-    '%%reporter-testend-is run-foo%%',
-    '%%reporter-testbegin-is run-foo%%',
-    '%%reporter-stdout%%',
-    '%%reporter-stderr%%',
-    '%%reporter-testend-is run-foo%%',
-    '%%reporter-testbegin-is run-bar%%',
-    '%%reporter-stdout%%',
-    '%%reporter-stderr%%',
-    '%%reporter-testend-is run-bar%%',
-    '%%reporter-end-end%%',
+  expect(result.outputLines).toEqual([
+    'reporter-begin-begin%%',
+    'version-' + require('../../packages/playwright-test/package.json').version,
+    'reporter-testbegin-is run-foo%%',
+    'reporter-stdout%%',
+    'reporter-stderr%%',
+    'reporter-testend-is run-foo%%',
+    'reporter-testbegin-is run-foo%%',
+    'reporter-stdout%%',
+    'reporter-stderr%%',
+    'reporter-testend-is run-foo%%',
+    'reporter-testbegin-is run-bar%%',
+    'reporter-stdout%%',
+    'reporter-stderr%%',
+    'reporter-testend-is run-bar%%',
+    'reporter-end-end%%',
   ]);
 });
 
@@ -163,16 +163,16 @@ test('should work without a file extension', async ({ runInlineTest }) => {
       };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', async ({}) => {
       });
     `
   }, { reporter: '', workers: 1 });
 
   expect(result.exitCode).toBe(0);
-  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    '%%begin',
-    '%%end',
+  expect(result.outputLines).toEqual([
+    'begin',
+    'end',
   ]);
 });
 
@@ -191,17 +191,17 @@ test('should report onEnd after global teardown', async ({ runInlineTest }) => {
       };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', async ({}) => {
       });
     `
   }, { reporter: '', workers: 1 });
 
   expect(result.exitCode).toBe(0);
-  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    '%%begin',
-    '%%global teardown',
-    '%%end',
+  expect(result.outputLines).toEqual([
+    'begin',
+    'global teardown',
+    'end',
   ]);
 });
 
@@ -214,16 +214,16 @@ test('should load reporter from node_modules', async ({ runInlineTest }) => {
       };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', async ({}) => {
       });
     `
   }, { reporter: '', workers: 1 });
 
   expect(result.exitCode).toBe(0);
-  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    '%%begin',
-    '%%end',
+  expect(result.outputLines).toEqual([
+    'begin',
+    'end',
   ]);
 });
 
@@ -236,7 +236,7 @@ test('should report expect steps', async ({ runInlineTest }) => {
       };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('fail', async ({}) => {
         expect(true).toBeTruthy();
         expect(false).toBeTruthy();
@@ -251,31 +251,31 @@ test('should report expect steps', async ({ runInlineTest }) => {
   }, { reporter: '', workers: 1 });
 
   expect(result.exitCode).toBe(1);
-  expect(result.output.split('\n').filter(line => line.startsWith('%%')).map(stripEscapedAscii)).toEqual([
-    `%% begin {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
-    `%% end {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
-    `%% begin {\"title\":\"expect.toBeTruthy\",\"category\":\"expect\"}`,
-    `%% end {\"title\":\"expect.toBeTruthy\",\"category\":\"expect\"}`,
-    `%% begin {\"title\":\"expect.toBeTruthy\",\"category\":\"expect\"}`,
-    `%% end {\"title\":\"expect.toBeTruthy\",\"category\":\"expect\",\"error\":{\"message\":\"expect(received).toBeTruthy()\\n\\nReceived: false\",\"stack\":\"<stack>\"}}`,
-    `%% begin {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
-    `%% end {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
-    `%% begin {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
-    `%% end {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
-    `%% begin {\"title\":\"expect.not.toBeTruthy\",\"category\":\"expect\"}`,
-    `%% end {\"title\":\"expect.not.toBeTruthy\",\"category\":\"expect\"}`,
-    `%% begin {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
-    `%% end {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
-    `%% begin {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
-    `%% begin {\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}`,
-    `%% end {\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}`,
-    `%% end {\"title\":\"Before Hooks\",\"category\":\"hook\",\"steps\":[{\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}]}`,
-    `%% begin {\"title\":\"expect.not.toHaveTitle\",\"category\":\"expect\"}`,
-    `%% end {\"title\":\"expect.not.toHaveTitle\",\"category\":\"expect\"}`,
-    `%% begin {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
-    `%% begin {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
-    `%% end {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
-    `%% end {\"title\":\"After Hooks\",\"category\":\"hook\",\"steps\":[{\"title\":\"browserContext.close\",\"category\":\"pw:api\"}]}`,
+  expect(result.outputLines).toEqual([
+    `begin {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
+    `end {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
+    `begin {\"title\":\"expect.toBeTruthy\",\"category\":\"expect\"}`,
+    `end {\"title\":\"expect.toBeTruthy\",\"category\":\"expect\"}`,
+    `begin {\"title\":\"expect.toBeTruthy\",\"category\":\"expect\"}`,
+    `end {\"title\":\"expect.toBeTruthy\",\"category\":\"expect\",\"error\":{\"message\":\"\\u001b[2mexpect(\\u001b[22m\\u001b[31mreceived\\u001b[39m\\u001b[2m).\\u001b[22mtoBeTruthy\\u001b[2m()\\u001b[22m\\n\\nReceived: \\u001b[31mfalse\\u001b[39m\",\"stack\":\"<stack>\"}}`,
+    `begin {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
+    `end {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
+    `begin {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
+    `end {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
+    `begin {\"title\":\"expect.not.toBeTruthy\",\"category\":\"expect\"}`,
+    `end {\"title\":\"expect.not.toBeTruthy\",\"category\":\"expect\"}`,
+    `begin {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
+    `end {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
+    `begin {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
+    `begin {\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}`,
+    `end {\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}`,
+    `end {\"title\":\"Before Hooks\",\"category\":\"hook\",\"steps\":[{\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}]}`,
+    `begin {\"title\":\"expect.not.toHaveTitle\",\"category\":\"expect\"}`,
+    `end {\"title\":\"expect.not.toHaveTitle\",\"category\":\"expect\"}`,
+    `begin {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
+    `begin {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
+    `end {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
+    `end {\"title\":\"After Hooks\",\"category\":\"hook\",\"steps\":[{\"title\":\"browserContext.close\",\"category\":\"pw:api\"}]}`,
   ]);
 });
 
@@ -288,7 +288,7 @@ test('should report api steps', async ({ runInlineTest }) => {
       };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', async ({ page, request }) => {
         await Promise.all([
           page.waitForNavigation(),
@@ -321,49 +321,49 @@ test('should report api steps', async ({ runInlineTest }) => {
   }, { reporter: '', workers: 1 });
 
   expect(result.exitCode).toBe(0);
-  expect(result.output.split('\n').filter(line => line.startsWith('%%')).map(stripEscapedAscii)).toEqual([
-    `%% begin {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
-    `%% begin {\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}`,
-    `%% end {\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}`,
-    `%% end {\"title\":\"Before Hooks\",\"category\":\"hook\",\"steps\":[{\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}]}`,
-    `%% begin {\"title\":\"page.waitForNavigation\",\"category\":\"pw:api\"}`,
-    `%% begin {\"title\":\"page.goto(data:text/html,<button></button>)\",\"category\":\"pw:api\"}`,
-    `%% end {\"title\":\"page.waitForNavigation\",\"category\":\"pw:api\"}`,
-    `%% end {\"title\":\"page.goto(data:text/html,<button></button>)\",\"category\":\"pw:api\"}`,
-    `%% begin {\"title\":\"page.click(button)\",\"category\":\"pw:api\"}`,
-    `%% end {\"title\":\"page.click(button)\",\"category\":\"pw:api\"}`,
-    `%% begin {"title":"apiRequestContext.get(http://localhost2)","category":"pw:api"}`,
-    `%% end {"title":"apiRequestContext.get(http://localhost2)","category":"pw:api","error":{"message":"<message>","stack":"<stack>"}}`,
-    `%% begin {"title":"apiRequestContext.get(http://localhost2)","category":"pw:api"}`,
-    `%% end {"title":"apiRequestContext.get(http://localhost2)","category":"pw:api","error":{"message":"<message>","stack":"<stack>"}}`,
-    `%% begin {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
-    `%% begin {\"title\":\"apiRequestContext.dispose\",\"category\":\"pw:api\"}`,
-    `%% end {\"title\":\"apiRequestContext.dispose\",\"category\":\"pw:api\"}`,
-    `%% begin {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
-    `%% end {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
-    `%% end {\"title\":\"After Hooks\",\"category\":\"hook\",\"steps\":[{\"title\":\"apiRequestContext.dispose\",\"category\":\"pw:api\"},{\"title\":\"browserContext.close\",\"category\":\"pw:api\"}]}`,
-    `%% begin {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
-    `%% begin {\"title\":\"beforeAll hook\",\"category\":\"hook\"}`,
-    `%% begin {\"title\":\"browser.newPage\",\"category\":\"pw:api\"}`,
-    `%% end {\"title\":\"browser.newPage\",\"category\":\"pw:api\"}`,
-    `%% begin {\"title\":\"page.setContent\",\"category\":\"pw:api\"}`,
-    `%% end {\"title\":\"page.setContent\",\"category\":\"pw:api\"}`,
-    `%% end {\"title\":\"beforeAll hook\",\"category\":\"hook\",\"steps\":[{\"title\":\"browser.newPage\",\"category\":\"pw:api\"},{\"title\":\"page.setContent\",\"category\":\"pw:api\"}]}`,
-    `%% end {\"title\":\"Before Hooks\",\"category\":\"hook\",\"steps\":[{\"title\":\"beforeAll hook\",\"category\":\"hook\",\"steps\":[{\"title\":\"browser.newPage\",\"category\":\"pw:api\"},{\"title\":\"page.setContent\",\"category\":\"pw:api\"}]}]}`,
-    `%% begin {\"title\":\"page.click(button)\",\"category\":\"pw:api\"}`,
-    `%% end {\"title\":\"page.click(button)\",\"category\":\"pw:api\"}`,
-    `%% begin {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
-    `%% end {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
-    `%% begin {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
-    `%% end {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
-    `%% begin {\"title\":\"page.click(button)\",\"category\":\"pw:api\"}`,
-    `%% end {\"title\":\"page.click(button)\",\"category\":\"pw:api\"}`,
-    `%% begin {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
-    `%% begin {\"title\":\"afterAll hook\",\"category\":\"hook\"}`,
-    `%% begin {\"title\":\"page.close\",\"category\":\"pw:api\"}`,
-    `%% end {\"title\":\"page.close\",\"category\":\"pw:api\"}`,
-    `%% end {\"title\":\"afterAll hook\",\"category\":\"hook\",\"steps\":[{\"title\":\"page.close\",\"category\":\"pw:api\"}]}`,
-    `%% end {\"title\":\"After Hooks\",\"category\":\"hook\",\"steps\":[{\"title\":\"afterAll hook\",\"category\":\"hook\",\"steps\":[{\"title\":\"page.close\",\"category\":\"pw:api\"}]}]}`,
+  expect(result.outputLines).toEqual([
+    `begin {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
+    `begin {\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}`,
+    `end {\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}`,
+    `end {\"title\":\"Before Hooks\",\"category\":\"hook\",\"steps\":[{\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}]}`,
+    `begin {\"title\":\"page.waitForNavigation\",\"category\":\"pw:api\"}`,
+    `begin {\"title\":\"page.goto(data:text/html,<button></button>)\",\"category\":\"pw:api\"}`,
+    `end {\"title\":\"page.waitForNavigation\",\"category\":\"pw:api\"}`,
+    `end {\"title\":\"page.goto(data:text/html,<button></button>)\",\"category\":\"pw:api\"}`,
+    `begin {\"title\":\"page.click(button)\",\"category\":\"pw:api\"}`,
+    `end {\"title\":\"page.click(button)\",\"category\":\"pw:api\"}`,
+    `begin {"title":"apiRequestContext.get(http://localhost2)","category":"pw:api"}`,
+    `end {"title":"apiRequestContext.get(http://localhost2)","category":"pw:api","error":{"message":"<message>","stack":"<stack>"}}`,
+    `begin {"title":"apiRequestContext.get(http://localhost2)","category":"pw:api"}`,
+    `end {"title":"apiRequestContext.get(http://localhost2)","category":"pw:api","error":{"message":"<message>","stack":"<stack>"}}`,
+    `begin {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
+    `begin {\"title\":\"apiRequestContext.dispose\",\"category\":\"pw:api\"}`,
+    `end {\"title\":\"apiRequestContext.dispose\",\"category\":\"pw:api\"}`,
+    `begin {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
+    `end {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
+    `end {\"title\":\"After Hooks\",\"category\":\"hook\",\"steps\":[{\"title\":\"apiRequestContext.dispose\",\"category\":\"pw:api\"},{\"title\":\"browserContext.close\",\"category\":\"pw:api\"}]}`,
+    `begin {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
+    `begin {\"title\":\"beforeAll hook\",\"category\":\"hook\"}`,
+    `begin {\"title\":\"browser.newPage\",\"category\":\"pw:api\"}`,
+    `end {\"title\":\"browser.newPage\",\"category\":\"pw:api\"}`,
+    `begin {\"title\":\"page.setContent\",\"category\":\"pw:api\"}`,
+    `end {\"title\":\"page.setContent\",\"category\":\"pw:api\"}`,
+    `end {\"title\":\"beforeAll hook\",\"category\":\"hook\",\"steps\":[{\"title\":\"browser.newPage\",\"category\":\"pw:api\"},{\"title\":\"page.setContent\",\"category\":\"pw:api\"}]}`,
+    `end {\"title\":\"Before Hooks\",\"category\":\"hook\",\"steps\":[{\"title\":\"beforeAll hook\",\"category\":\"hook\",\"steps\":[{\"title\":\"browser.newPage\",\"category\":\"pw:api\"},{\"title\":\"page.setContent\",\"category\":\"pw:api\"}]}]}`,
+    `begin {\"title\":\"page.click(button)\",\"category\":\"pw:api\"}`,
+    `end {\"title\":\"page.click(button)\",\"category\":\"pw:api\"}`,
+    `begin {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
+    `end {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
+    `begin {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
+    `end {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
+    `begin {\"title\":\"page.click(button)\",\"category\":\"pw:api\"}`,
+    `end {\"title\":\"page.click(button)\",\"category\":\"pw:api\"}`,
+    `begin {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
+    `begin {\"title\":\"afterAll hook\",\"category\":\"hook\"}`,
+    `begin {\"title\":\"page.close\",\"category\":\"pw:api\"}`,
+    `end {\"title\":\"page.close\",\"category\":\"pw:api\"}`,
+    `end {\"title\":\"afterAll hook\",\"category\":\"hook\",\"steps\":[{\"title\":\"page.close\",\"category\":\"pw:api\"}]}`,
+    `end {\"title\":\"After Hooks\",\"category\":\"hook\",\"steps\":[{\"title\":\"afterAll hook\",\"category\":\"hook\",\"steps\":[{\"title\":\"page.close\",\"category\":\"pw:api\"}]}]}`,
   ]);
 });
 
@@ -377,7 +377,7 @@ test('should report api step failure', async ({ runInlineTest }) => {
       };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('fail', async ({ page }) => {
         await page.setContent('<button></button>');
         await page.click('input', { timeout: 1 });
@@ -386,26 +386,27 @@ test('should report api step failure', async ({ runInlineTest }) => {
   }, { reporter: '', workers: 1 });
 
   expect(result.exitCode).toBe(1);
-  expect(result.output.split('\n').filter(line => line.startsWith('%%')).map(stripEscapedAscii)).toEqual([
-    `%% begin {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
-    `%% begin {\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}`,
-    `%% end {\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}`,
-    `%% end {\"title\":\"Before Hooks\",\"category\":\"hook\",\"steps\":[{\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}]}`,
-    `%% begin {\"title\":\"page.setContent\",\"category\":\"pw:api\"}`,
-    `%% end {\"title\":\"page.setContent\",\"category\":\"pw:api\"}`,
-    `%% begin {\"title\":\"page.click(input)\",\"category\":\"pw:api\"}`,
-    `%% end {\"title\":\"page.click(input)\",\"category\":\"pw:api\",\"error\":{\"message\":\"page.click: Timeout 1ms exceeded.\\n=========================== logs ===========================\\nwaiting for locator('input')\\n============================================================\",\"stack\":\"<stack>\"}}`,
-    `%% begin {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
-    `%% begin {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
-    `%% end {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
-    `%% end {\"title\":\"After Hooks\",\"category\":\"hook\",\"steps\":[{\"title\":\"browserContext.close\",\"category\":\"pw:api\"}]}`,
+  expect(result.outputLines).toEqual([
+    `begin {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
+    `begin {\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}`,
+    `end {\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}`,
+    `end {\"title\":\"Before Hooks\",\"category\":\"hook\",\"steps\":[{\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}]}`,
+    `begin {\"title\":\"page.setContent\",\"category\":\"pw:api\"}`,
+    `end {\"title\":\"page.setContent\",\"category\":\"pw:api\"}`,
+    `begin {\"title\":\"page.click(input)\",\"category\":\"pw:api\"}`,
+    `end {\"title\":\"page.click(input)\",\"category\":\"pw:api\",\"error\":{\"message\":\"page.click: Timeout 1ms exceeded.\\n=========================== logs ===========================\\nwaiting for locator('input')\\n============================================================\",\"stack\":\"<stack>\"}}`,
+    `begin {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
+    `begin {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
+    `end {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
+    `end {\"title\":\"After Hooks\",\"category\":\"hook\",\"steps\":[{\"title\":\"browserContext.close\",\"category\":\"pw:api\"}]}`,
   ]);
 });
 
 test('should not have internal error when steps are finished after timeout', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      const test = pwt.test.extend({
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend({
         page: async ({ page }, use) => {
           await use(page);
           // Timeout in fixture teardown that will resolve on browser.close.
@@ -433,7 +434,7 @@ test('should show nice stacks for locators', async ({ runInlineTest }) => {
       };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', async ({ page }) => {
         await page.setContent('<button></button>');
         const locator = page.locator('button');
@@ -445,19 +446,19 @@ test('should show nice stacks for locators', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(0);
   expect(result.output).not.toContain('Internal error');
-  expect(result.output.split('\n').filter(line => line.startsWith('%%')).map(stripEscapedAscii)).toEqual([
-    `%% begin {"title":"Before Hooks","category":"hook"}`,
-    `%% begin {"title":"browserContext.newPage","category":"pw:api"}`,
-    `%% end {"title":"browserContext.newPage","category":"pw:api"}`,
-    `%% end {"title":"Before Hooks","category":"hook","steps":[{"title":"browserContext.newPage","category":"pw:api"}]}`,
-    `%% begin {"title":"page.setContent","category":"pw:api"}`,
-    `%% end {"title":"page.setContent","category":"pw:api"}`,
-    `%% begin {"title":"locator.evaluate(button)","category":"pw:api"}`,
-    `%% end {"title":"locator.evaluate(button)","category":"pw:api"}`,
-    `%% begin {"title":"After Hooks","category":"hook"}`,
-    `%% begin {"title":"browserContext.close","category":"pw:api"}`,
-    `%% end {"title":"browserContext.close","category":"pw:api"}`,
-    `%% end {"title":"After Hooks","category":"hook","steps":[{"title":"browserContext.close","category":"pw:api"}]}`,
+  expect(result.outputLines).toEqual([
+    `begin {"title":"Before Hooks","category":"hook"}`,
+    `begin {"title":"browserContext.newPage","category":"pw:api"}`,
+    `end {"title":"browserContext.newPage","category":"pw:api"}`,
+    `end {"title":"Before Hooks","category":"hook","steps":[{"title":"browserContext.newPage","category":"pw:api"}]}`,
+    `begin {"title":"page.setContent","category":"pw:api"}`,
+    `end {"title":"page.setContent","category":"pw:api"}`,
+    `begin {"title":"locator.evaluate(button)","category":"pw:api"}`,
+    `end {"title":"locator.evaluate(button)","category":"pw:api"}`,
+    `begin {"title":"After Hooks","category":"hook"}`,
+    `begin {"title":"browserContext.close","category":"pw:api"}`,
+    `end {"title":"browserContext.close","category":"pw:api"}`,
+    `end {"title":"After Hooks","category":"hook","steps":[{"title":"browserContext.close","category":"pw:api"}]}`,
   ]);
 });
 
@@ -470,7 +471,8 @@ test('should report forbid-only error to reporter', async ({ runInlineTest }) =>
       };
     `,
     'a.test.ts': `
-      pwt.test.only('pass', () => {});
+      import { test, expect } from '@playwright/test';
+      test.only('pass', () => {});
     `
   }, { 'reporter': '', 'forbid-only': true });
 
@@ -489,7 +491,7 @@ test('should report no-tests error to reporter', async ({ runInlineTest }) => {
   }, { 'reporter': '' });
 
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain(`%%got error: =================\n no tests found.`);
+  expect(result.output).toContain(`%%got error: No tests found`);
 });
 
 test('should report require error to reporter', async ({ runInlineTest }) => {
@@ -524,7 +526,8 @@ test('should report global setup error to reporter', async ({ runInlineTest }) =
       };
     `,
     'a.spec.js': `
-      pwt.test('test', () => {});
+      const { test, expect } = require('@playwright/test');
+      test('test', () => {});
     `,
   }, { 'reporter': '' });
 
@@ -535,7 +538,7 @@ test('should report global setup error to reporter', async ({ runInlineTest }) =
 test('should report correct tests/suites when using grep', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
 
       test.describe('@foo', () => {
         test('test1', async ({ }) => {
@@ -579,7 +582,7 @@ test('should use sourceMap-based file suite names', async ({ runInlineTest }) =>
       };
     `,
     'a.spec.js':
-`var __create = Object.create;//@no-header
+`var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -622,14 +625,10 @@ test('parallelIndex is presented in onTestEnd', async ({ runInlineTest }) => {
       };
     `,
     'a.spec.js': `
-      pwt.test('test', () => {});
+      const { test, expect } = require('@playwright/test');
+      test('test', () => {});
     `,
   }, { 'reporter': '', 'workers': 1 });
 
   expect(result.output).toContain('parallelIndex: 0');
 });
-
-
-function stripEscapedAscii(str: string) {
-  return str.replace(/\\u00[a-z0-9][a-z0-9]\[[^m]+m/g, '');
-}

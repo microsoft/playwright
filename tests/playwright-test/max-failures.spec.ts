@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import { test, expect, stripAnsi } from './playwright-test-fixtures';
+import { test, expect } from './playwright-test-fixtures';
 
 test('max-failures should work', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       for (let i = 0; i < 10; ++i) {
         test('fail_' + i, () => {
           expect(true).toBe(false);
@@ -27,7 +27,7 @@ test('max-failures should work', async ({ runInlineTest }) => {
       }
     `,
     'b.spec.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       for (let i = 0; i < 10; ++i) {
         test('fail_' + i, () => {
           expect(true).toBe(false);
@@ -45,7 +45,7 @@ test('max-failures should work', async ({ runInlineTest }) => {
 test('-x should work', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       for (let i = 0; i < 10; ++i) {
         test('fail_' + i, () => {
           expect(true).toBe(false);
@@ -53,7 +53,7 @@ test('-x should work', async ({ runInlineTest }) => {
       }
     `,
     'b.spec.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       for (let i = 0; i < 10; ++i) {
         test('fail_' + i, () => {
           expect(true).toBe(false);
@@ -69,7 +69,7 @@ test('-x should work', async ({ runInlineTest }) => {
 test('max-failures should work with retries', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       for (let i = 0; i < 10; ++i) {
         test('fail_' + i, () => {
           expect(true).toBe(false);
@@ -85,7 +85,7 @@ test('max-failures should work with retries', async ({ runInlineTest }) => {
 test('max-failures should stop workers', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('passed', async () => {
         await new Promise(f => setTimeout(f, 2000));
       });
@@ -94,7 +94,7 @@ test('max-failures should stop workers', async ({ runInlineTest }) => {
       });
     `,
     'b.spec.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('passed short', async () => {
         await new Promise(f => setTimeout(f, 1));
       });
@@ -126,7 +126,7 @@ test('max-failures should properly shutdown', async ({ runInlineTest }) => {
       export default config;
     `,
     'test1.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.describe('spec 1', () => {
         test('test 1', async () => {
           expect(false).toBeTruthy()
@@ -134,7 +134,7 @@ test('max-failures should properly shutdown', async ({ runInlineTest }) => {
       });
     `,
     'test2.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.describe('spec 2', () => {
         test('test 2', () => {
           expect(true).toBeTruthy()
@@ -144,5 +144,5 @@ test('max-failures should properly shutdown', async ({ runInlineTest }) => {
   }, { workers: 1 });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
-  expect(stripAnsi(result.output)).toContain('expect(false).toBeTruthy()');
+  expect(result.output).toContain('expect(false).toBeTruthy()');
 });

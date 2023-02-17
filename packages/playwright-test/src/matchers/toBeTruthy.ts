@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-import type { Expect } from '../types';
+import type { Expect } from '../common/types';
 import type { ParsedStackTrace } from '../util';
-import { expectTypes, callLogText, currentExpectTimeout, captureStackTrace } from '../util';
+import { expectTypes, callLogText, captureStackTrace } from '../util';
 import { matcherHint } from './matcherHint';
+import { currentExpectTimeout } from '../common/globals';
 
 export async function toBeTruthy(
   this: ReturnType<Expect['getState']>,

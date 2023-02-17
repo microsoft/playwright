@@ -57,6 +57,7 @@ const test = playwrightTest.extend<ExtraFixtures>({
   },
 
   ipV6ServerUrl: async ({}, use) => {
+    test.skip(!!process.env.INSIDE_DOCKER, 'docker does not support IPv6 by default');
     const server = http.createServer((req: http.IncomingMessage, res: http.ServerResponse) => {
       res.end('<html><body>from-ipv6-server</body></html>');
     });
@@ -145,6 +146,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
     });
 
     test('should be able to visit ipv6', async ({ connect, startRemoteServer, ipV6ServerUrl }) => {
+      test.fail(!!process.env.INSIDE_DOCKER, 'docker does not support IPv6 by default');
       const remoteServer = await startRemoteServer(kind);
       const browser = await connect(remoteServer.wsEndpoint());
       const page = await browser.newPage();

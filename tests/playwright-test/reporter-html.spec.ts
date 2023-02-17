@@ -17,17 +17,17 @@
 import fs from 'fs';
 import path from 'path';
 import url from 'url';
-import { test as baseTest, expect, createImage, stripAnsi } from './playwright-test-fixtures';
-import type { HttpServer } from '../../packages/playwright-core/lib/utils';
+import { test as baseTest, expect, createImage } from './playwright-test-fixtures';
+import type { HttpServer } from '../../packages/playwright-core/src/utils';
 import { startHtmlReportServer } from '../../packages/playwright-test/lib/reporters/html';
 import { spawnAsync } from 'playwright-core/lib/utils';
 
-const test = baseTest.extend<{ showReport: () => Promise<void> }>({
+const test = baseTest.extend<{ showReport: (reportFolder?: string) => Promise<void> }>({
   showReport: async ({ page }, use, testInfo) => {
     let server: HttpServer | undefined;
-    await use(async () => {
-      const reportFolder = testInfo.outputPath('playwright-report');
-      server = startHtmlReportServer(reportFolder);
+    await use(async (reportFolder?: string) => {
+      reportFolder ??=  testInfo.outputPath('playwright-report');
+      server = startHtmlReportServer(reportFolder) as HttpServer;
       const location = await server.start();
       await page.goto(location);
     });
@@ -43,7 +43,7 @@ test('should generate report', async ({ runInlineTest, showReport, page }) => {
       module.exports = { name: 'project-name' };
     `,
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('passes', async ({}) => {});
       test('fails', async ({}) => {
         expect(1).toBe(2);
@@ -83,7 +83,7 @@ test('should not throw when attachment is missing', async ({ runInlineTest, page
       module.exports = { preserveOutput: 'failures-only' };
     `,
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('passes', async ({ page }, testInfo) => {
         const screenshot = testInfo.outputPath('screenshot.png');
         await page.screenshot({ path: screenshot });
@@ -111,7 +111,7 @@ test('should include image diff', async ({ runInlineTest, page, showReport }) =>
     'a.test.js-snapshots/expected-darwin.png': expected,
     'a.test.js-snapshots/expected-win32.png': expected,
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('fails', async ({ page }, testInfo) => {
         await page.setContent('<html>Hello World</html>');
         const screenshot = await page.screenshot();
@@ -130,6 +130,7 @@ test('should include image diff', async ({ runInlineTest, page, showReport }) =>
   const set = new Set();
 
   const imageDiff = page.locator('data-testid=test-result-image-mismatch');
+  await imageDiff.locator('text="Actual"').click();
   const expectedImage = imageDiff.locator('img').first();
   const actualImage = imageDiff.locator('img').last();
   await expect(expectedImage).toHaveAttribute('src', /.*png/);
@@ -137,6 +138,7 @@ test('should include image diff', async ({ runInlineTest, page, showReport }) =>
   set.add(await expectedImage.getAttribute('src'));
   set.add(await actualImage.getAttribute('src'));
   expect(set.size, 'Should be two images overlaid').toBe(2);
+  await expect(imageDiff).toContainText('200x200');
 
   const sliderElement = imageDiff.locator('data-testid=test-result-image-mismatch-grip');
   await expect.poll(() => sliderElement.evaluate(e => e.style.left), 'Actual slider is on the right').toBe('590px');
@@ -170,7 +172,7 @@ test('should include multiple image diffs', async ({ runInlineTest, page, showRe
     '__screenshots__/a.test.js/fails-2.png': whiteImage,
     '__screenshots__/a.test.js/fails-3.png': redImage,
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('fails', async ({ page }, testInfo) => {
         testInfo.snapshotSuffix = '';
         await expect.soft(page).toHaveScreenshot({ timeout: 1000 });
@@ -204,7 +206,7 @@ test('should include image diffs for same expectation', async ({ runInlineTest, 
     'a.test.js-snapshots/expected-darwin.png': expected,
     'a.test.js-snapshots/expected-win32.png': expected,
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('fails', async ({ page }, testInfo) => {
         await page.setContent('<html>Hello World</html>');
         const screenshot = await page.screenshot();
@@ -233,7 +235,7 @@ test('should include image diff when screenshot failed to generate due to animat
       module.exports = { use: { viewport: { width: 200, height: 200 }} };
     `,
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('fails', async ({ page }, testInfo) => {
         testInfo.snapshotSuffix = '';
         await page.evaluate(() => {
@@ -254,6 +256,7 @@ test('should include image diff when screenshot failed to generate due to animat
   await expect(page.locator('text=Snapshot mismatch')).toHaveCount(0);
   await expect(page.locator('.chip-header', { hasText: 'Screenshots' })).toHaveCount(0);
   const imageDiff = page.locator('data-testid=test-result-image-mismatch');
+  await imageDiff.locator('text="Actual"').click();
   const image = imageDiff.locator('img');
   await expect(image.first()).toHaveAttribute('src', /.*png/);
   await expect(image.last()).toHaveAttribute('src', /.*png/);
@@ -276,7 +279,7 @@ test('should not include image diff with non-images', async ({ runInlineTest, pa
     'a.test.js-snapshots/expected-darwin': expected,
     'a.test.js-snapshots/expected-win32': expected,
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('fails', async ({ page }, testInfo) => {
         await page.setContent('<html>Hello World</html>');
         const screenshot = await page.screenshot();
@@ -306,7 +309,7 @@ test('should include screenshot on failure', async ({ runInlineTest, page, showR
       };
     `,
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('fails', async ({ page }) => {
         await page.setContent('<html>Failed state</html>');
         await expect(true).toBeFalsy();
@@ -327,7 +330,7 @@ test('should include screenshot on failure', async ({ runInlineTest, page, showR
 test('should include stdio', async ({ runInlineTest, page, showReport }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('fails', async ({ page }) => {
         console.log('First line');
         console.log('Second line');
@@ -350,7 +353,7 @@ test('should include stdio', async ({ runInlineTest, page, showReport }) => {
 test('should highlight error', async ({ runInlineTest, page, showReport }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('fails', async ({ page }) => {
         await expect(true).toBeFalsy();
       });
@@ -370,7 +373,7 @@ test('should show trace source', async ({ runInlineTest, page, showReport }) => 
       module.exports = { use: { trace: 'on' } };
     `,
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('passes', async ({ page }) => {
         await page.evaluate('2 + 2');
       });
@@ -386,7 +389,7 @@ test('should show trace source', async ({ runInlineTest, page, showReport }) => 
   await page.click('text=Source');
 
   await expect(page.locator('.CodeMirror-line')).toContainText([
-    /const.*pwt;/,
+    /import.*test/,
     /page\.evaluate/
   ]);
   await expect(page.locator('.source-line-running')).toContainText('page.evaluate');
@@ -403,7 +406,7 @@ test('should show trace title', async ({ runInlineTest, page, showReport }) => {
       module.exports = { use: { trace: 'on' } };
     `,
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('passes', async ({ page }) => {
         await page.evaluate('2 + 2');
       });
@@ -415,7 +418,7 @@ test('should show trace title', async ({ runInlineTest, page, showReport }) => {
   await showReport();
   await page.click('text=passes');
   await page.click('img');
-  await expect(page.locator('.workbench .title')).toHaveText('a.test.js:6 › passes');
+  await expect(page.locator('.workbench .title')).toHaveText('a.test.js:3 › passes');
 });
 
 test('should show multi trace source', async ({ runInlineTest, page, server, showReport }) => {
@@ -424,7 +427,7 @@ test('should show multi trace source', async ({ runInlineTest, page, server, sho
       module.exports = { use: { trace: 'on' } };
     `,
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('passes', async ({ playwright, page }) => {
         await page.evaluate('2 + 2');
         const request = await playwright.request.newContext();
@@ -458,7 +461,7 @@ test('should warn user when viewing via file:// protocol', async ({ runInlineTes
       module.exports = { use: { trace: 'on' } };
     `,
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('passes', async ({ page }) => {
         await page.evaluate('2 + 2');
       });
@@ -489,7 +492,7 @@ test('should show failed and timed out steps and hooks', async ({ runInlineTest,
       module.exports = { timeout: 3000 };
     `,
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.beforeAll(() => {
         console.log('beforeAll 1');
       });
@@ -560,7 +563,7 @@ test('should render annotations', async ({ runInlineTest, page, showReport }) =>
       module.exports = { timeout: 1500 };
     `,
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('skipped test', async ({ page }) => {
         test.skip(true, 'I am not interested in this test');
       });
@@ -577,7 +580,7 @@ test('should render annotations', async ({ runInlineTest, page, showReport }) =>
 test('should render text attachments as text', async ({ runInlineTest, page, showReport }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('passing', async ({ page }, testInfo) => {
         testInfo.attachments.push({
           name: 'example.txt',
@@ -618,7 +621,7 @@ test('should render text attachments as text', async ({ runInlineTest, page, sho
 test('should use file-browser friendly extensions for buffer attachments based on contentType', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('passing', async ({ page }, testInfo) => {
         await testInfo.attach('screenshot', { body: await page.screenshot(), contentType: 'image/png' });
         await testInfo.attach('some-pdf', { body: Buffer.from('foo'), contentType: 'application/pdf' });
@@ -642,10 +645,12 @@ test('should use file-browser friendly extensions for buffer attachments based o
   ]));
 });
 
-test('should strikethough textual diff', async ({ runInlineTest, showReport, page }) => {
+test('should strikethrough textual diff', async ({ runInlineTest, showReport, page }) => {
   const result = await runInlineTest({
     'helper.ts': `
-      export const test = pwt.test.extend({
+      import { test as base } from '@playwright/test';
+      export * from '@playwright/test';
+      export const test = base.extend({
         auto: [ async ({}, run, testInfo) => {
           testInfo.snapshotSuffix = '';
           await run();
@@ -654,7 +659,7 @@ test('should strikethough textual diff', async ({ runInlineTest, showReport, pag
     `,
     'a.spec.js-snapshots/snapshot.txt': `old`,
     'a.spec.js': `
-      const { test } = require('./helper');
+      const { test, expect } = require('./helper');
       test('is a test', ({}) => {
         expect('new').toMatchSnapshot('snapshot.txt');
       });
@@ -667,10 +672,12 @@ test('should strikethough textual diff', async ({ runInlineTest, showReport, pag
   expect(stricken).toBe('old');
 });
 
-test('should strikethough textual diff with commonalities', async ({ runInlineTest, showReport, page }) => {
+test('should strikethrough textual diff with commonalities', async ({ runInlineTest, showReport, page }) => {
   const result = await runInlineTest({
     'helper.ts': `
-      export const test = pwt.test.extend({
+      import { test as base } from '@playwright/test';
+      export * from '@playwright/test';
+      export const test = base.extend({
         auto: [ async ({}, run, testInfo) => {
           testInfo.snapshotSuffix = '';
           await run();
@@ -679,7 +686,7 @@ test('should strikethough textual diff with commonalities', async ({ runInlineTe
     `,
     'a.spec.js-snapshots/snapshot.txt': `oldcommon`,
     'a.spec.js': `
-      const { test } = require('./helper');
+      const { test, expect } = require('./helper');
       test('is a test', ({}) => {
         expect('newcommon').toMatchSnapshot('snapshot.txt');
       });
@@ -696,7 +703,7 @@ test('should differentiate repeat-each test cases', async ({ runInlineTest, show
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/10859' });
   const result = await runInlineTest({
     'a.spec.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('sample', async ({}, testInfo) => {
         if (testInfo.repeatEachIndex === 2)
           throw new Error('ouch');
@@ -719,7 +726,7 @@ test('should group similar / loop steps', async ({ runInlineTest, showReport, pa
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/10098' });
   const result = await runInlineTest({
     'a.spec.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('sample', async ({}, testInfo) => {
         for (let i = 0; i < 10; ++i)
           expect(1).toBe(1);
@@ -742,7 +749,7 @@ test('open tests from required file', async ({ runInlineTest, showReport, page }
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/11742' });
   const result = await runInlineTest({
     'inner.js': `
-      const { test, expect } = pwt;
+      const { test, expect } = require('@playwright/test');
       test('sample', async ({}) => { expect(2).toBe(2); });
     `,
     'a.spec.js': `require('./inner')`
@@ -757,32 +764,41 @@ test('open tests from required file', async ({ runInlineTest, showReport, page }
 });
 
 test.describe('gitCommitInfo plugin', () => {
-  test('should include metadata', async ({ runInlineTest, showReport, page }) => {
-    const beforeRunPlaywrightTest = async ({ baseDir }: { baseDir: string }) => {
-      const execGit = async (args: string[]) => {
-        const { code, stdout, stderr } = await spawnAsync('git', args, { stdio: 'pipe', cwd: baseDir });
-        if (!!code)
-          throw new Error(`Non-zero exit of:\n$ git ${args.join(' ')}\nConsole:\nstdout:\n${stdout}\n\nstderr:\n${stderr}\n\n`);
-        return;
-      };
-
-      await execGit(['init']);
-      await execGit(['config', '--local', 'user.email', 'shakespeare@example.local']);
-      await execGit(['config', '--local', 'user.name', 'William']);
-      await execGit(['add', '*.ts']);
-      await execGit(['commit', '-m', 'awesome commit message']);
-    };
-
-    const result = await runInlineTest({
+  test('should include metadata', async ({ runInlineTest, writeFiles, showReport, page }) => {
+    const files = {
       'uncommitted.txt': `uncommitted file`,
-      'playwright.config.ts': `export default {};`,
-      'example.spec.ts': `
+      'playwright.config.ts': `
         import { gitCommitInfo } from '@playwright/test/lib/plugins';
-        const { test, _addRunnerPlugin } = pwt;
-        _addRunnerPlugin(gitCommitInfo());
+        import { test, expect } from '@playwright/test';
+        export default { _plugins: [gitCommitInfo()] };
+      `,
+      'example.spec.ts': `
+        import { test, expect } from '@playwright/test';
         test('sample', async ({}) => { expect(2).toBe(2); });
       `,
-    }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never', GITHUB_REPOSITORY: 'microsoft/playwright-example-for-test', GITHUB_RUN_ID: 'example-run-id', GITHUB_SERVER_URL: 'https://playwright.dev', GITHUB_SHA: 'example-sha' }, undefined, beforeRunPlaywrightTest);
+    };
+    const baseDir = await writeFiles(files);
+
+    const execGit = async (args: string[]) => {
+      const { code, stdout, stderr } = await spawnAsync('git', args, { stdio: 'pipe', cwd: baseDir });
+      if (!!code)
+        throw new Error(`Non-zero exit of:\n$ git ${args.join(' ')}\nConsole:\nstdout:\n${stdout}\n\nstderr:\n${stderr}\n\n`);
+      return;
+    };
+
+    await execGit(['init']);
+    await execGit(['config', '--local', 'user.email', 'shakespeare@example.local']);
+    await execGit(['config', '--local', 'user.name', 'William']);
+    await execGit(['add', '*.ts']);
+    await execGit(['commit', '-m', 'awesome commit message']);
+
+    const result = await runInlineTest(files, { reporter: 'dot,html' }, {
+      PW_TEST_HTML_REPORT_OPEN: 'never',
+      GITHUB_REPOSITORY: 'microsoft/playwright-example-for-test',
+      GITHUB_RUN_ID: 'example-run-id',
+      GITHUB_SERVER_URL: 'https://playwright.dev',
+      GITHUB_SHA: 'example-sha',
+    });
 
     await showReport();
 
@@ -805,12 +821,9 @@ test.describe('gitCommitInfo plugin', () => {
     const result = await runInlineTest({
       'uncommitted.txt': `uncommitted file`,
       'playwright.config.ts': `
-        export default {};
-      `,
-      'example.spec.ts': `
         import { gitCommitInfo } from '@playwright/test/lib/plugins';
-        const { test, _addRunnerPlugin } = pwt;
-        _addRunnerPlugin(gitCommitInfo({
+        import { test, expect } from '@playwright/test';
+        const plugin = gitCommitInfo({
           info: {
             'revision.id': '1234567890',
             'revision.subject': 'a better subject',
@@ -818,7 +831,12 @@ test.describe('gitCommitInfo plugin', () => {
             'revision.author': 'William',
             'revision.email': 'shakespeare@example.local',
           },
-        }));
+        });
+        export default { _plugins: [plugin] };
+      `,
+      'example.spec.ts': `
+        import { gitCommitInfo } from '@playwright/test/lib/plugins';
+        import { test, expect } from '@playwright/test';
         test('sample', async ({}) => { expect(2).toBe(2); });
       `,
     }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never', GITHUB_REPOSITORY: 'microsoft/playwright-example-for-test', GITHUB_RUN_ID: 'example-run-id', GITHUB_SERVER_URL: 'https://playwright.dev', GITHUB_SHA: 'example-sha' }, undefined);
@@ -846,7 +864,7 @@ test.describe('gitCommitInfo plugin', () => {
         export default {};
       `,
       'example.spec.ts': `
-        const { test } = pwt;
+        import { test, expect } from '@playwright/test';
         test('my sample test', async ({}) => { expect(2).toBe(2); });
       `,
     }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' }, undefined);
@@ -870,7 +888,7 @@ test.describe('gitCommitInfo plugin', () => {
         };
       `,
       'example.spec.ts': `
-        const { test } = pwt;
+        import { test, expect } from '@playwright/test';
         test('my sample test', async ({}) => { expect(2).toBe(2); });
       `,
     }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
@@ -892,13 +910,13 @@ test('should report clashing folders', async ({ runInlineTest }) => {
       }
     `,
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('passes', async ({}) => {
       });
     `,
   },  {}, {}, { usesCustomReporters: true });
   expect(result.exitCode).toBe(0);
-  const output = stripAnsi(result.output);
+  const output = result.output;
   expect(output).toContain('Configuration Error');
   expect(output).toContain('html-report');
 });
@@ -910,7 +928,7 @@ test.describe('report location', () => {
         module.exports = { reporter: [['html', { outputFolder: '../my-report/' }]] };
       `,
       'nested/project/a.test.js': `
-        const { test } = pwt;
+        import { test, expect } from '@playwright/test';
         test('one', async ({}) => {
           expect(1).toBe(1);
         });
@@ -928,7 +946,7 @@ test.describe('report location', () => {
         module.exports = { projects: [ {} ] };
       `,
       'foo/bar/baz/tests/a.spec.js': `
-        const { test } = pwt;
+        import { test, expect } from '@playwright/test';
         const fs = require('fs');
         test('pass', ({}, testInfo) => {
         });
@@ -953,7 +971,7 @@ test.describe('report location', () => {
         module.exports = { projects: [ {} ] };
       `,
       'foo/bar/baz/tests/a.spec.js': `
-        const { test } = pwt;
+        import { test, expect } from '@playwright/test';
         const fs = require('fs');
         test('pass', ({}, testInfo) => {
         });
@@ -967,5 +985,3 @@ test.describe('report location', () => {
     expect(fs.existsSync(testInfo.outputPath('foo', 'bar', 'baz', 'my-report'))).toBe(true);
   });
 });
-
-

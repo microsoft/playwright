@@ -631,6 +631,20 @@ Script to be evaluated in all pages in the browser context.
 
 Optional argument to pass to [`param: script`] (only supported when passing a function).
 
+### param: Page.addInitScript.path
+* since: v1.8
+* langs: python
+- `path` ?<[path]>
+
+Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
+
+### param: Page.addInitScript.script
+* since: v1.8
+* langs: python
+- `script` ?<[string]>
+
+Script to be evaluated in all pages in the browser context. Optional.
+
 ## async method: Page.addScriptTag
 * since: v1.8
 - returns: <[ElementHandle]>
@@ -1328,6 +1342,9 @@ var html = await page.EvalOnSelectorAsync(".main-container", "(e, suffix) => e.o
 ### param: Page.evalOnSelector.expression = %%-evaluate-expression-%%
 * since: v1.9
 
+### param: Page.evalOnSelector.expression = %%-js-evalonselector-pagefunction-%%
+* since: v1.9
+
 ### param: Page.evalOnSelector.arg
 * since: v1.9
 - `arg` ?<[EvaluationArgument]>
@@ -1378,6 +1395,9 @@ var divsCount = await page.EvalOnSelectorAllAsync<bool>("div", "(divs, min) => d
 * since: v1.9
 
 ### param: Page.evalOnSelectorAll.expression = %%-evaluate-expression-%%
+* since: v1.9
+
+### param: Page.evalOnSelectorAll.expression = %%-js-evalonselectorall-pagefunction-%%
 * since: v1.9
 
 ### param: Page.evalOnSelectorAll.arg
@@ -1495,6 +1515,9 @@ await bodyHandle.DisposeAsync();
 ### param: Page.evaluate.expression = %%-evaluate-expression-%%
 * since: v1.8
 
+### param: Page.evaluate.expression = %%-js-evaluate-pagefunction-%%
+* since: v1.8
+
 ### param: Page.evaluate.arg
 * since: v1.8
 - `arg` ?<[EvaluationArgument]>
@@ -1599,6 +1622,9 @@ await resultHandle.DisposeAsync();
 ```
 
 ### param: Page.evaluateHandle.expression = %%-evaluate-expression-%%
+* since: v1.8
+
+### param: Page.evaluateHandle.expression = %%-js-evaluate-pagefunction-%%
 * since: v1.8
 
 ### param: Page.evaluateHandle.arg
@@ -2138,6 +2164,20 @@ Frame name or other frame lookup options.
 
 Frame name specified in the `iframe`'s `name` attribute.
 
+### option: Page.frame.name
+* since: v1.8
+* langs: python
+- `name` ?<[string]>
+
+Frame name specified in the `iframe`'s `name` attribute. Optional.
+
+### option: Page.frame.url
+* since: v1.8
+* langs: python
+- `url` ?<[string]|[RegExp]|[function]\([URL]\):[boolean]>
+
+A glob pattern, regex pattern or predicate receiving frame's `url` as a [URL] object. Optional.
+
 ## method: Page.frameByUrl
 * since: v1.9
 * langs: csharp, java
@@ -2596,6 +2636,50 @@ The page's main frame. Page is guaranteed to have a main frame which persists du
 ## property: Page.mouse
 * since: v1.8
 - type: <[Mouse]>
+
+## method: Page.onceDialog
+* since: v1.10
+* langs: java
+
+Adds one-off [Dialog] handler. The handler will be removed immediately after next [Dialog] is created.
+```java
+page.onceDialog(dialog -> {
+  dialog.accept("foo");
+});
+
+// prints 'foo'
+System.out.println(page.evaluate("prompt('Enter string:')"));
+
+// prints 'null' as the dialog will be auto-dismissed because there are no handlers.
+System.out.println(page.evaluate("prompt('Enter string:')"));
+```
+
+This code above is equivalent to:
+```java
+Consumer<Dialog> handler = new Consumer<Dialog>() {
+  @Override
+  public void accept(Dialog dialog) {
+    dialog.accept("foo");
+    page.offDialog(this);
+  }
+};
+page.onDialog(handler);
+
+// prints 'foo'
+System.out.println(page.evaluate("prompt('Enter string:')"));
+
+// prints 'null' as the dialog will be auto-dismissed because there are no handlers.
+System.out.println(page.evaluate("prompt('Enter string:')"));
+```
+
+### param: Page.onceDialog.handler
+* since: v1.10
+- `handler` <[function]\([Dialog]\)>
+
+Receives the [Dialog] object, it **must** either [`method: Dialog.accept`] or [`method: Dialog.dismiss`] the dialog - otherwise
+the page will [freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop#never_blocking) waiting for the dialog,
+and actions like click will never finish.
+
 
 ## async method: Page.opener
 * since: v1.8
@@ -3284,6 +3368,18 @@ await page.SelectOptionAsync("select#colors", new[] { "red", "green", "blue" });
 ### option: Page.selectOption.timeout = %%-input-timeout-%%
 * since: v1.8
 
+### param: Page.selectOption.element = %%-python-select-options-element-%%
+* since: v1.8
+
+### param: Page.selectOption.index = %%-python-select-options-index-%%
+* since: v1.8
+
+### param: Page.selectOption.value = %%-python-select-options-value-%%
+* since: v1.8
+
+### param: Page.selectOption.label = %%-python-select-options-label-%%
+* since: v1.8
+
 ## async method: Page.setChecked
 * since: v1.15
 * discouraged: Use locator-based [`method: Locator.setChecked`] instead. Read more about [locators](../locators.md).
@@ -3498,7 +3594,7 @@ When all steps combined have not finished during the specified [`option: timeout
 [TimeoutError]. Passing zero timeout disables this.
 
 :::note
-[`method: Page.tap`] requires that the [`option: hasTouch`] option of the browser context be set to true.
+[`method: Page.tap`] the method will throw if [`option: hasTouch`] option of the browser context is false.
 :::
 
 ### param: Page.tap.selector = %%-input-selector-%%
@@ -3705,6 +3801,9 @@ Performs action and waits for the Page to close.
 ### option: Page.waitForClose.timeout = %%-wait-for-event-timeout-%%
 * since: v1.9
 
+### param: Page.waitForClose.callback = %%-java-wait-for-event-callback-%%
+* since: v1.9
+
 ## async method: Page.waitForConsoleMessage
 * since: v1.9
 * langs: java, python, csharp
@@ -3716,13 +3815,24 @@ Performs action and waits for a [ConsoleMessage] to be logged by in the page. If
 [ConsoleMessage] value into the `predicate` function and waits for `predicate(message)` to return a truthy value.
 Will throw an error if the page is closed before the [`event: Page.console`] event is fired.
 
-### option: Page.waitForConsoleMessage.predicate =
+## async method: Page.waitForConsoleMessage
+* since: v1.9
+* langs: python
+- returns: <[EventContextManager]<[ConsoleMessage]>>
+
+### param: Page.waitForConsoleMessage.action = %%-csharp-wait-for-event-action-%%
+* since: v1.12
+
+### option: Page.waitForConsoleMessage.predicate
 * since: v1.9
 - `predicate` <[function]\([ConsoleMessage]\):[boolean]>
 
 Receives the [ConsoleMessage] object and resolves to truthy value when the waiting should resolve.
 
 ### option: Page.waitForConsoleMessage.timeout = %%-wait-for-event-timeout-%%
+* since: v1.9
+
+### param: Page.waitForConsoleMessage.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9
 
 ## async method: Page.waitForDownload
@@ -3736,13 +3846,24 @@ Performs action and waits for a new [Download]. If predicate is provided, it pas
 [Download] value into the `predicate` function and waits for `predicate(download)` to return a truthy value.
 Will throw an error if the page is closed before the download event is fired.
 
-### option: Page.waitForDownload.predicate =
+## async method: Page.waitForDownload
+* since: v1.9
+* langs: python
+- returns: <[EventContextManager]<[Download]>>
+
+### param: Page.waitForDownload.action = %%-csharp-wait-for-event-action-%%
+* since: v1.12
+
+### option: Page.waitForDownload.predicate
 * since: v1.9
 - `predicate` <[function]\([Download]\):[boolean]>
 
 Receives the [Download] object and resolves to truthy value when the waiting should resolve.
 
 ### option: Page.waitForDownload.timeout = %%-wait-for-event-timeout-%%
+* since: v1.9
+
+### param: Page.waitForDownload.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9
 
 ## async method: Page.waitForEvent
@@ -3775,6 +3896,11 @@ with page.expect_event("framenavigated") as event_info:
 frame = event_info.value
 ```
 
+## async method: Page.waitForEvent
+* since: v1.8
+* langs: python
+- returns: <[EventContextManager]>
+
 ### param: Page.waitForEvent.event = %%-wait-for-event-event-%%
 * since: v1.8
 
@@ -3788,6 +3914,12 @@ frame = event_info.value
 
 Either a predicate that receives an event or an options object. Optional.
 
+### option: Page.waitForEvent.predicate = %%-wait-for-event-predicate-%%
+* since: v1.8
+
+### option: Page.waitForEvent.timeout = %%-wait-for-event-timeout-%%
+* since: v1.8
+
 ## async method: Page.waitForFileChooser
 * since: v1.9
 * langs: java, python, csharp
@@ -3799,13 +3931,24 @@ Performs action and waits for a new [FileChooser] to be created. If predicate is
 [FileChooser] value into the `predicate` function and waits for `predicate(fileChooser)` to return a truthy value.
 Will throw an error if the page is closed before the file chooser is opened.
 
-### option: Page.waitForFileChooser.predicate =
+## async method: Page.waitForFileChooser
+* since: v1.9
+* langs: python
+- returns: <[EventContextManager]<[FileChooser]>>
+
+### param: Page.waitForFileChooser.action = %%-csharp-wait-for-event-action-%%
+* since: v1.12
+
+### option: Page.waitForFileChooser.predicate
 * since: v1.9
 - `predicate` <[function]\([FileChooser]\):[boolean]>
 
 Receives the [FileChooser] object and resolves to truthy value when the waiting should resolve.
 
 ### option: Page.waitForFileChooser.timeout = %%-wait-for-event-timeout-%%
+* since: v1.9
+
+### param: Page.waitForFileChooser.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9
 
 ## async method: Page.waitForFunction
@@ -3926,6 +4069,9 @@ await page.WaitForFunctionAsync("selector => !!document.querySelector(selector)"
 ```
 
 ### param: Page.waitForFunction.expression = %%-evaluate-expression-%%
+* since: v1.8
+
+### param: Page.waitForFunction.expression = %%-js-evaluate-pagefunction-%%
 * since: v1.8
 
 ### param: Page.waitForFunction.arg
@@ -4091,6 +4237,14 @@ Usage of the [History API](https://developer.mozilla.org/en-US/docs/Web/API/Hist
 a navigation.
 :::
 
+## async method: Page.waitForNavigation
+* since: v1.8
+* langs: python
+- returns: <[EventContextManager]<[Response]>>
+
+### param: Page.waitForNavigation.action = %%-csharp-wait-for-event-action-%%
+* since: v1.12
+
 ### option: Page.waitForNavigation.url = %%-wait-for-navigation-url-%%
 * since: v1.8
 
@@ -4099,6 +4253,9 @@ a navigation.
 
 ### option: Page.waitForNavigation.timeout = %%-navigation-timeout-%%
 * since: v1.8
+
+### param: Page.waitForNavigation.callback = %%-java-wait-for-event-callback-%%
+* since: v1.9
 
 ## async method: Page.waitForPopup
 * since: v1.9
@@ -4111,13 +4268,24 @@ Performs action and waits for a popup [Page]. If predicate is provided, it passe
 [Popup] value into the `predicate` function and waits for `predicate(page)` to return a truthy value.
 Will throw an error if the page is closed before the popup event is fired.
 
-### option: Page.waitForPopup.predicate =
+## async method: Page.waitForPopup
+* since: v1.9
+* langs: python
+- returns: <[EventContextManager]<[Page]>>
+
+### param: Page.waitForPopup.action = %%-csharp-wait-for-event-action-%%
+* since: v1.12
+
+### option: Page.waitForPopup.predicate
 * since: v1.9
 - `predicate` <[function]\([Page]\):[boolean]>
 
 Receives the [Page] object and resolves to truthy value when the waiting should resolve.
 
 ### option: Page.waitForPopup.timeout = %%-wait-for-event-timeout-%%
+* since: v1.9
+
+### param: Page.waitForPopup.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9
 
 ## async method: Page.waitForRequest
@@ -4193,6 +4361,11 @@ await page.RunAndWaitForRequestAsync(async () =>
 }, request => request.Url == "https://example.com" && request.Method == "GET");
 ```
 
+## async method: Page.waitForRequest
+* since: v1.8
+* langs: python
+- returns: <[EventContextManager]<[Request]>>
+
 ### param: Page.waitForRequest.action = %%-csharp-wait-for-event-action-%%
 * since: v1.12
 
@@ -4218,6 +4391,9 @@ Request URL string, regex or predicate receiving [Request] object.
 Maximum wait time in milliseconds, defaults to 30 seconds, pass `0` to disable the timeout. The default value can be
 changed by using the [`method: Page.setDefaultTimeout`] method.
 
+### param: Page.waitForRequest.callback = %%-java-wait-for-event-callback-%%
+* since: v1.9
+
 ## async method: Page.waitForRequestFinished
 * since: v1.12
 * langs: java, python, csharp
@@ -4229,13 +4405,24 @@ Performs action and waits for a [Request] to finish loading. If predicate is pro
 [Request] value into the `predicate` function and waits for `predicate(request)` to return a truthy value.
 Will throw an error if the page is closed before the [`event: Page.requestFinished`] event is fired.
 
-### option: Page.waitForRequestFinished.predicate =
+## async method: Page.waitForRequestFinished
+* since: v1.12
+* langs: python
+- returns: <[EventContextManager]<[Request]>>
+
+### param: Page.waitForRequestFinished.action = %%-csharp-wait-for-event-action-%%
+* since: v1.12
+
+### option: Page.waitForRequestFinished.predicate
 * since: v1.12
 - `predicate` <[function]\([Request]\):[boolean]>
 
 Receives the [Request] object and resolves to truthy value when the waiting should resolve.
 
 ### option: Page.waitForRequestFinished.timeout = %%-wait-for-event-timeout-%%
+* since: v1.12
+
+### param: Page.waitForRequestFinished.callback = %%-java-wait-for-event-callback-%%
 * since: v1.12
 
 ## async method: Page.waitForResponse
@@ -4315,6 +4502,11 @@ await page.RunAndWaitForResponseAsync(async () =>
 }, response => response.Url == "https://example.com" && response.Status == 200);
 ```
 
+## async method: Page.waitForResponse
+* since: v1.8
+* langs: python
+- returns: <[EventContextManager]<[Response]>>
+
 ### param: Page.waitForResponse.action = %%-csharp-wait-for-event-action-%%
 * since: v1.12
 
@@ -4341,6 +4533,9 @@ it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/We
 
 Maximum wait time in milliseconds, defaults to 30 seconds, pass `0` to disable the timeout. The default value can be
 changed by using the [`method: BrowserContext.setDefaultTimeout`] or [`method: Page.setDefaultTimeout`] methods.
+
+### param: Page.waitForResponse.callback = %%-java-wait-for-event-callback-%%
+* since: v1.9
 
 ## async method: Page.waitForSelector
 * since: v1.8
@@ -4565,13 +4760,24 @@ Performs action and waits for a new [WebSocket]. If predicate is provided, it pa
 [WebSocket] value into the `predicate` function and waits for `predicate(webSocket)` to return a truthy value.
 Will throw an error if the page is closed before the WebSocket event is fired.
 
-### option: Page.waitForWebSocket.predicate =
+## async method: Page.waitForWebSocket
+* since: v1.9
+* langs: python
+- returns: <[EventContextManager]<[WebSocket]>>
+
+### param: Page.waitForWebSocket.action = %%-csharp-wait-for-event-action-%%
+* since: v1.12
+
+### option: Page.waitForWebSocket.predicate
 * since: v1.9
 - `predicate` <[function]\([WebSocket]\):[boolean]>
 
 Receives the [WebSocket] object and resolves to truthy value when the waiting should resolve.
 
 ### option: Page.waitForWebSocket.timeout = %%-wait-for-event-timeout-%%
+* since: v1.9
+
+### param: Page.waitForWebSocket.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9
 
 ## async method: Page.waitForWorker
@@ -4585,13 +4791,24 @@ Performs action and waits for a new [Worker]. If predicate is provided, it passe
 [Worker] value into the `predicate` function and waits for `predicate(worker)` to return a truthy value.
 Will throw an error if the page is closed before the worker event is fired.
 
-### option: Page.waitForWorker.predicate =
+## async method: Page.waitForWorker
+* since: v1.9
+* langs: python
+- returns: <[EventContextManager]<[Worker]>>
+
+### param: Page.waitForWorker.action = %%-csharp-wait-for-event-action-%%
+* since: v1.12
+
+### option: Page.waitForWorker.predicate
 * since: v1.9
 - `predicate` <[function]\([Worker]\):[boolean]>
 
 Receives the [Worker] object and resolves to truthy value when the waiting should resolve.
 
 ### option: Page.waitForWorker.timeout = %%-wait-for-event-timeout-%%
+* since: v1.9
+
+### param: Page.waitForWorker.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9
 
 ## method: Page.workers

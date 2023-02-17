@@ -91,7 +91,7 @@ this request body.
 * since: v1.18
 - returns: <[RequestOptions]>
 
-Sets an HTTP header to the request.
+Sets an HTTP header to the request. This header will apply to the fetched request as well as any redirects initiated by it.
 
 ### param: RequestOptions.setHeader.name
 * since: v1.18

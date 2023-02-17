@@ -32,3 +32,27 @@ it('should work with cross-process _blank target', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.click('"Click me"');
 });
+
+it('should work with _blank target in form', async ({ page, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/18392' });
+  server.setRoute('/done.html?', (req, res) => {
+    res.end(`Done`);
+  });
+  await page.goto(server.EMPTY_PAGE);
+
+  page.setContent(`<form target="_blank" action="done.html" >
+      <input type="submit" value="Click me">
+    </form>`);
+  await Promise.all([
+    page.waitForEvent('popup'),
+    page.click('"Click me"')
+  ]);
+
+  page.setContent(`<form target="_blank" action="done.html" method="post">
+      <input type="submit" value="Click me">
+    </form>`);
+  await Promise.all([
+    page.waitForEvent('popup'),
+    page.click('"Click me"')
+  ]);
+});

@@ -251,7 +251,7 @@ it.describe('post data', () => {
 
   it('should use content-type from original request', async ({ page, server, browserName }) => {
     it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/16736' });
-    it.fixme(browserName === 'firefox');
+
     await page.goto(server.EMPTY_PAGE);
     await page.route(`${server.PREFIX}/title.html`, route => route.continue({ postData: '{"b":2}' }));
     const [request] = await Promise.all([
@@ -373,4 +373,38 @@ it('should continue preload link requests', async ({ page, server, browserName }
   expect(intercepted).toBe(true);
   const color = await page.evaluate(() => window.getComputedStyle(document.body).backgroundColor);
   expect(color).toBe('rgb(255, 192, 203)');
+});
+
+it('should intercept css variable with background url', async ({ page, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/19158' });
+
+  server.setRoute('/test.html', (request, response) => {
+    response.setHeader('Content-Type', 'text/html');
+    response.end(`
+    <style>
+      @keyframes JNDzq {
+        0% { background-position: 0 0 }
+        to { background-position: 100 0 }
+      }
+      div {
+        --background: url(/pptr.png);
+        background-image: var(--background);
+        animation: JNDzq 1s linear infinite;
+      }
+    </style>
+    <div>Yo!</div>`);
+  });
+  let interceptCallback;
+  const interceptPromise = new Promise(f => interceptCallback = f);
+  let interceptedRequests = 0;
+  await page.route(server.PREFIX + '/pptr.png', async (route, request) => {
+    ++interceptedRequests;
+    interceptCallback();
+    route.continue();
+  });
+  await page.goto(server.PREFIX + '/test.html');
+  expect(await page.locator('div').textContent()).toBe('Yo!');
+  await interceptPromise;
+  await page.waitForTimeout(1000);
+  expect(interceptedRequests).toBe(1);
 });

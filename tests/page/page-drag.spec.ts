@@ -67,7 +67,8 @@ it.describe('Drag and drop', () => {
     ]);
   });
 
-  it('should work inside iframe', async ({ page, server, browserName }) => {
+  it('should work inside iframe', async ({ page, server, browserName, isElectron, isWindows }) => {
+    it.fixme(isElectron && isWindows, 'Fails on the bots');
     await page.goto(server.EMPTY_PAGE);
     const frame = await attachFrame(page, 'myframe', server.PREFIX + '/drag-n-drop.html');
     await page.$eval('iframe', iframe => {
@@ -390,3 +391,42 @@ async function trackEvents(target: ElementHandle) {
   });
   return eventsHandle;
 }
+
+it('should handle custom dataTransfer', async ({ page, browserName, isWindows }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/18013' });
+  it.fixme(browserName === 'webkit' && isWindows);
+  await page.setContent(`<button draggable="true">Draggable</button>`);
+
+  const resultPromise = page.evaluate(() =>
+    new Promise(resolve => {
+      document.addEventListener('dragstart', event => {
+        event.dataTransfer!.setData('custom-type', 'Hello World');
+      }, false);
+
+      document.addEventListener('dragenter', event => {
+        event.preventDefault();
+      }, false);
+      document.addEventListener('dragover', event => {
+        event.preventDefault();
+      }, false);
+
+      document.addEventListener('drop', event => {
+        event.preventDefault();
+        resolve({
+          types: event.dataTransfer!.types,
+          data: event.dataTransfer!.getData('custom-type'),
+        });
+      }, false);
+    })
+  );
+
+  await page.hover('[draggable="true"]');
+  await page.mouse.down();
+  await page.mouse.move(100, 100);
+  await page.mouse.up();
+
+  await expect(resultPromise).resolves.toEqual({
+    types: ['custom-type'],
+    data: 'Hello World',
+  });
+});

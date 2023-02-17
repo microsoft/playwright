@@ -161,7 +161,7 @@ const wrapperKey = Symbol('wrapperKey');
 
 window.playwrightMount = async (component, rootElement, hooksConfig) => {
   let options = {};
-  for (const hook of /** @type {any} */(window).__pw_hooks_before_mount || [])
+  for (const hook of window.__pw_hooks_before_mount || [])
     options = await hook({ hooksConfig, Vue });
 
   const instance = new Vue({
@@ -175,12 +175,12 @@ window.playwrightMount = async (component, rootElement, hooksConfig) => {
   rootElement.appendChild(instance.$el);
   /** @type {any} */ (rootElement)[instanceKey] = instance;
 
-  for (const hook of /** @type {any} */(window).__pw_hooks_after_mount || [])
+  for (const hook of window.__pw_hooks_after_mount || [])
     await hook({ hooksConfig, instance });
 };
 
 window.playwrightUnmount = async rootElement => {
-  const component = /** @type {any} */(rootElement)[instanceKey];
+  const component = rootElement[instanceKey];
   if (!component)
     throw new Error('Component was not mounted');
   component.$destroy();

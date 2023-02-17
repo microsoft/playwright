@@ -15,31 +15,20 @@
  */
 
 import type { Suite, Reporter } from '../../types/testReporter';
-import type { Runner } from '../runner';
-import type { FullConfig } from '../types';
+import type { FullConfig } from '../common/types';
 
 export interface TestRunnerPlugin {
   name: string;
-  setup?(config: FullConfig, configDir: string, rootSuite: Suite, reporter: Reporter): Promise<void>;
+  setup?(config: FullConfig, configDir: string, reporter: Reporter): Promise<void>;
+  begin?(suite: Suite): Promise<void>;
+  end?(): Promise<void>;
   teardown?(): Promise<void>;
 }
 
+export type TestRunnerPluginRegistration = {
+  factory: TestRunnerPlugin | (() => TestRunnerPlugin | Promise<TestRunnerPlugin>);
+  instance?: TestRunnerPlugin;
+};
+
 export { webServer } from './webServerPlugin';
 export { gitCommitInfo } from './gitCommitInfoPlugin';
-
-let runnerInstanceToAddPluginsTo: Runner | undefined;
-const deferredPlugins: TestRunnerPlugin[] = [];
-
-export const setRunnerToAddPluginsTo = (runner: Runner) => {
-  runnerInstanceToAddPluginsTo = runner;
-  for (const plugin of deferredPlugins)
-    runnerInstanceToAddPluginsTo.addPlugin(plugin);
-};
-
-export const addRunnerPlugin = (plugin: TestRunnerPlugin | (() => TestRunnerPlugin)) => {
-  plugin = typeof plugin === 'function' ? plugin() : plugin;
-  if (runnerInstanceToAddPluginsTo)
-    runnerInstanceToAddPluginsTo.addPlugin(plugin);
-  else
-    deferredPlugins.push(plugin);
-};

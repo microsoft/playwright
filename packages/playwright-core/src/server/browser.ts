@@ -97,10 +97,6 @@ export abstract class Browser extends SdkObject {
 
   async newContextForReuse(params: channels.BrowserNewContextForReuseParams, metadata: CallMetadata): Promise<{ context: BrowserContext, needsReset: boolean }> {
     const hash = BrowserContext.reusableContextHash(params);
-    for (const context of this.contexts()) {
-      if (context !== this._contextForReuse?.context)
-        await context.close(metadata);
-    }
     if (!this._contextForReuse || hash !== this._contextForReuse.hash || !this._contextForReuse.context.canResetForReuse()) {
       if (this._contextForReuse)
         await this._contextForReuse.context.close(metadata);

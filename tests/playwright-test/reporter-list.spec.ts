@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, stripAnsi } from './playwright-test-fixtures';
+import { test, expect } from './playwright-test-fixtures';
 
 const DOES_NOT_SUPPORT_UTF8_IN_TERMINAL = process.platform === 'win32' && process.env.TERM_PROGRAM !== 'vscode' && !process.env.WT_SESSION;
 const POSITIVE_STATUS_MARK = DOES_NOT_SUPPORT_UTF8_IN_TERMINAL ? 'ok' : '✓ ';
@@ -29,7 +29,7 @@ test('render each test with project name', async ({ runInlineTest }) => {
       ] };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      const { test, expect } = require('@playwright/test');
       test('fails', async ({}) => {
         expect(1).toBe(0);
       });
@@ -40,21 +40,21 @@ test('render each test with project name', async ({ runInlineTest }) => {
       });
     `,
   }, { reporter: 'list', workers: '1' });
-  const text = stripAnsi(result.output);
+  const text = result.output;
 
-  expect(text).toContain(`${NEGATIVE_STATUS_MARK} 1 [foo] › a.test.ts:6:7 › fails`);
-  expect(text).toContain(`${POSITIVE_STATUS_MARK} 2 [foo] › a.test.ts:9:7 › passes`);
-  expect(text).toContain(`-  3 [foo] › a.test.ts:12:12 › skipped`);
-  expect(text).toContain(`${NEGATIVE_STATUS_MARK} 4 [bar] › a.test.ts:6:7 › fails`);
-  expect(text).toContain(`${POSITIVE_STATUS_MARK} 5 [bar] › a.test.ts:9:7 › passes`);
-  expect(text).toContain(`-  6 [bar] › a.test.ts:12:12 › skipped`);
+  expect(text).toContain(`${NEGATIVE_STATUS_MARK} 1 [foo] › a.test.ts:3:7 › fails`);
+  expect(text).toContain(`${POSITIVE_STATUS_MARK} 2 [foo] › a.test.ts:6:7 › passes`);
+  expect(text).toContain(`-  3 [foo] › a.test.ts:9:12 › skipped`);
+  expect(text).toContain(`${NEGATIVE_STATUS_MARK} 4 [bar] › a.test.ts:3:7 › fails`);
+  expect(text).toContain(`${POSITIVE_STATUS_MARK} 5 [bar] › a.test.ts:6:7 › passes`);
+  expect(text).toContain(`-  6 [bar] › a.test.ts:9:12 › skipped`);
   expect(result.exitCode).toBe(1);
 });
 
 test('render steps', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('passes', async ({}) => {
         await test.step('outer 1.0', async () => {
           await test.step('inner 1.1', async () => {});
@@ -67,11 +67,11 @@ test('render steps', async ({ runInlineTest }) => {
       });
     `,
   }, { reporter: 'list' }, { PW_TEST_DEBUG_REPORTERS: '1', PW_TEST_DEBUG_REPORTERS_PRINT_STEPS: '1', PWTEST_TTY_WIDTH: '80' });
-  const text = stripAnsi(result.output);
+  const text = result.output;
   const lines = text.split('\n').filter(l => l.match(/^\d :/)).map(l => l.replace(/\d+ms/, 'Xms'));
   lines.pop(); // Remove last item that contains [v] and time in ms.
   expect(lines).toEqual([
-    '0 :      1 a.test.ts:6:7 › passes',
+    '0 :      1 a.test.ts:3:11 › passes',
     '1 :      1.1 passes › outer 1.0',
     '2 :      1.2 passes › outer 1.0 › inner 1.1',
     '2 :      1.2 passes › outer 1.0 › inner 1.1 (Xms)',
@@ -90,7 +90,7 @@ test('render steps', async ({ runInlineTest }) => {
 test('render steps inlint', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('passes', async ({}) => {
         await test.step('outer 1.0', async () => {
           await test.step('inner 1.1', async () => {});
@@ -103,23 +103,23 @@ test('render steps inlint', async ({ runInlineTest }) => {
       });
     `,
   }, { reporter: 'list' }, { PW_TEST_DEBUG_REPORTERS: '1', PWTEST_TTY_WIDTH: '80' });
-  const text = stripAnsi(result.output);
+  const text = result.output;
   const lines = text.split('\n').filter(l => l.match(/^\d :/)).map(l => l.replace(/\d+ms/, 'Xms'));
   lines.pop(); // Remove last item that contains [v] and time in ms.
   expect(lines).toEqual([
-    '0 :      1 a.test.ts:6:7 › passes',
-    '0 :      1 a.test.ts:7:20 › passes › outer 1.0',
-    '0 :      1 a.test.ts:8:22 › passes › outer 1.0 › inner 1.1',
-    '0 :      1 a.test.ts:7:20 › passes › outer 1.0',
-    '0 :      1 a.test.ts:9:22 › passes › outer 1.0 › inner 1.2',
-    '0 :      1 a.test.ts:7:20 › passes › outer 1.0',
-    '0 :      1 a.test.ts:6:7 › passes',
-    '0 :      1 a.test.ts:11:20 › passes › outer 2.0',
-    '0 :      1 a.test.ts:12:22 › passes › outer 2.0 › inner 2.1',
-    '0 :      1 a.test.ts:11:20 › passes › outer 2.0',
-    '0 :      1 a.test.ts:13:22 › passes › outer 2.0 › inner 2.2',
-    '0 :      1 a.test.ts:11:20 › passes › outer 2.0',
-    '0 :      1 a.test.ts:6:7 › passes',
+    '0 :      1 a.test.ts:3:11 › passes',
+    '0 :      1 a.test.ts:4:20 › passes › outer 1.0',
+    '0 :      1 a.test.ts:5:22 › passes › outer 1.0 › inner 1.1',
+    '0 :      1 a.test.ts:4:20 › passes › outer 1.0',
+    '0 :      1 a.test.ts:6:22 › passes › outer 1.0 › inner 1.2',
+    '0 :      1 a.test.ts:4:20 › passes › outer 1.0',
+    '0 :      1 a.test.ts:3:11 › passes',
+    '0 :      1 a.test.ts:8:20 › passes › outer 2.0',
+    '0 :      1 a.test.ts:9:22 › passes › outer 2.0 › inner 2.1',
+    '0 :      1 a.test.ts:8:20 › passes › outer 2.0',
+    '0 :      1 a.test.ts:10:22 › passes › outer 2.0 › inner 2.2',
+    '0 :      1 a.test.ts:8:20 › passes › outer 2.0',
+    '0 :      1 a.test.ts:3:11 › passes',
   ]);
 });
 
@@ -127,39 +127,39 @@ test('very long console line should not mess terminal', async ({ runInlineTest }
   const TTY_WIDTH = 80;
   const result = await runInlineTest({
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('passes', async ({}) => {
         console.log('a'.repeat(80) + 'b'.repeat(20));
       });
     `,
   }, { reporter: 'list' }, { PWTEST_TTY_WIDTH: TTY_WIDTH + '' });
 
-  const renderedText = simpleAnsiRenderer(result.output, TTY_WIDTH);
+  const renderedText = simpleAnsiRenderer(result.rawOutput, TTY_WIDTH);
   if (process.platform === 'win32')
-    expect(renderedText).toContain('  ok 1 a.test.ts:6:7 › passes');
+    expect(renderedText).toContain('  ok 1 a.test.ts:3:11 › passes');
   else
-    expect(renderedText).toContain('  ✓  1 a.test.ts:6:7 › passes');
-  expect(renderedText).not.toContain('     1 a.test.ts:6:7 › passes');
+    expect(renderedText).toContain('  ✓  1 a.test.ts:3:11 › passes');
+  expect(renderedText).not.toContain('     1 a.test.ts:3:11 › passes');
   expect(renderedText).toContain('a'.repeat(80) + '\n' + 'b'.repeat(20));
 });
 
 test('render retries', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('flaky', async ({}, testInfo) => {
         expect(testInfo.retry).toBe(1);
       });
     `,
   }, { reporter: 'list', retries: '1' }, { PW_TEST_DEBUG_REPORTERS: '1', PWTEST_TTY_WIDTH: '80' });
-  const text = stripAnsi(result.output);
-  const lines = text.split('\n').filter(l => l.startsWith('0 :') || l.startsWith('1 :')).map(l => l.replace(/[\dm]+s/, 'XXms'));
+  const text = result.output;
+  const lines = text.split('\n').filter(l => l.startsWith('0 :') || l.startsWith('1 :')).map(l => l.replace(/\d+(\.\d+)?m?s/, 'XXms'));
 
   expect(lines).toEqual([
-    `0 :      1 a.test.ts:6:7 › flaky`,
-    `0 :   ${NEGATIVE_STATUS_MARK} 1 a.test.ts:6:7 › flaky (XXms)`,
-    `1 :      2 a.test.ts:6:7 › flaky (retry #1)`,
-    `1 :   ${POSITIVE_STATUS_MARK} 2 a.test.ts:6:7 › flaky (retry #1) (XXms)`,
+    `0 :      1 a.test.ts:3:11 › flaky`,
+    `0 :   ${NEGATIVE_STATUS_MARK} 1 a.test.ts:3:11 › flaky (XXms)`,
+    `1 :      2 a.test.ts:3:11 › flaky (retry #1)`,
+    `1 :   ${POSITIVE_STATUS_MARK} 2 a.test.ts:3:11 › flaky (retry #1) (XXms)`,
   ]);
 });
 
@@ -171,7 +171,7 @@ test('should truncate long test names', async ({ runInlineTest }) => {
       ] };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('failure in very long name', async ({}) => {
         expect(1).toBe(0);
       });
@@ -185,28 +185,28 @@ test('should truncate long test names', async ({ runInlineTest }) => {
   }, { reporter: 'list', retries: 0 }, { PWTEST_TTY_WIDTH: 50 });
   expect(result.exitCode).toBe(1);
 
-  const lines = stripAnsi(result.output).split('\n').slice(3, 11);
+  const lines = result.output.split('\n').slice(3, 11);
   expect(lines.every(line => line.length <= 50)).toBe(true);
 
-  expect(lines[0]).toBe(`     1 … a.test.ts:6:7 › failure in very long name`);
+  expect(lines[0]).toBe(`     1 …a.test.ts:3:11 › failure in very long name`);
 
   expect(lines[1]).toContain(`${NEGATIVE_STATUS_MARK} 1 …`);
-  expect(lines[1]).toContain(`:6:7 › failure in very long name (`);
+  expect(lines[1]).toContain(`:3:11 › failure in very long name (`);
   expect(lines[1].length).toBe(50);
 
-  expect(lines[2]).toBe(`     2 [foo] › a.test.ts:9:7 › passes`);
+  expect(lines[2]).toBe(`     2 [foo] › a.test.ts:6:11 › passes`);
 
-  expect(lines[3]).toContain(`${POSITIVE_STATUS_MARK} 2 [foo] › a.test.ts:9:7 › passes (`);
+  expect(lines[3]).toContain(`${POSITIVE_STATUS_MARK} 2 [foo] › a.test.ts:6:11 › passes (`);
 
-  expect(lines[4]).toBe(`     3 [foo] › a.test.ts:11:7 › passes 2 long name`);
+  expect(lines[4]).toBe(`     3 [foo] › a.test.ts:8:11 › passes 2 long name`);
 
   expect(lines[5]).toContain(`${POSITIVE_STATUS_MARK} 3 …`);
-  expect(lines[5]).toContain(`test.ts:11:7 › passes 2 long name (`);
+  expect(lines[5]).toContain(`test.ts:8:11 › passes 2 long name (`);
   expect(lines[5].length).toBe(50);
 
-  expect(lines[6]).toBe(`     4 …› a.test.ts:13:12 › skipped very long name`);
+  expect(lines[6]).toBe(`     4 …› a.test.ts:10:12 › skipped very long name`);
 
-  expect(lines[7]).toBe(`  -  4 …› a.test.ts:13:12 › skipped very long name`);
+  expect(lines[7]).toBe(`  -  4 …› a.test.ts:10:12 › skipped very long name`);
 });
 
 function simpleAnsiRenderer(text, ttyWidth) {

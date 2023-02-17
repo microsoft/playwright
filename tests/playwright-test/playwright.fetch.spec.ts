@@ -19,7 +19,7 @@ import { test, expect } from './playwright-test-fixtures';
 test('should expose request fixture', async ({ runInlineTest, server }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', async ({ request }) => {
         const response = await request.get('${server.PREFIX}/simple.json');
         const json = await response.json();
@@ -38,7 +38,7 @@ test('should use baseURL in request fixture', async ({ runInlineTest, server }) 
       module.exports = { use: { baseURL: '${server.PREFIX}' } };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', async ({ request }) => {
         const response = await request.get('/simple.json');
         const json = await response.json();
@@ -72,7 +72,7 @@ test('should stop tracing on requestContex.dispose()', async ({ runInlineTest, s
       };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('hanging request', async ({ page, request }) => {
         const response = await page.goto('${server.EMPTY_PAGE}');
         expect(response.status()).toBe(200);

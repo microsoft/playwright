@@ -24,7 +24,7 @@ test('should stop tracing with trace: on-first-retry, when not retrying', async 
       module.exports = { use: { trace: 'on-first-retry' } };
     `,
     'a.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
 
       test.describe('shared', () => {
         let page;
@@ -60,7 +60,7 @@ test('should record api trace', async ({ runInlineTest, server }, testInfo) => {
       module.exports = { use: { trace: 'on' } };
     `,
     'a.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
 
       test('pass', async ({request, page}, testInfo) => {
         await page.goto('about:blank');
@@ -99,7 +99,7 @@ test('should not throw with trace: on-first-retry and two retries in the same wo
   const files = {};
   for (let i = 0; i < 6; i++) {
     files[`a${i}.spec.ts`] = `
-      import { test } from './helper';
+      import { test, expect } from './helper';
       test('flaky', async ({ myContext }, testInfo) => {
         await new Promise(f => setTimeout(f, 200 + Math.round(Math.random() * 1000)));
         expect(testInfo.retry).toBe(1);
@@ -115,7 +115,8 @@ test('should not throw with trace: on-first-retry and two retries in the same wo
       module.exports = { use: { trace: 'on-first-retry' } };
     `,
     'helper.ts': `
-      const { test: base } = pwt;
+      import { test as base } from '@playwright/test';
+      export * from '@playwright/test';
       export const test = base.extend({
         myContext: [async ({ browser }, use) => {
           const c = await browser.newContext();
@@ -141,7 +142,7 @@ test('should save sources when requested', async ({ runInlineTest }, testInfo) =
       };
     `,
     'a.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', async ({ page }) => {
         await page.evaluate(2 + 2);
       });
@@ -165,7 +166,7 @@ test('should not save sources when not requested', async ({ runInlineTest }, tes
       };
     `,
     'a.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', async ({ page }) => {
         await page.evaluate(2 + 2);
       });
@@ -182,7 +183,7 @@ test('should work in serial mode', async ({ runInlineTest }, testInfo) => {
       module.exports = { use: { trace: 'retain-on-failure' } };
     `,
     'a.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
 
       test.describe.serial('serial', () => {
         let page;
@@ -217,7 +218,7 @@ test('should not override trace file in afterAll', async ({ runInlineTest, serve
       module.exports = { use: { trace: 'retain-on-failure' } };
     `,
     'a.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
 
       test('test 1', async ({ page }) => {
         await page.goto('about:blank');
@@ -247,13 +248,15 @@ test('should retain traces for interrupted tests', async ({ runInlineTest }, tes
       module.exports = { use: { trace: 'retain-on-failure' }, maxFailures: 1 };
     `,
     'a.spec.ts': `
-      pwt.test('test 1', async ({ page }) => {
+      import { test, expect } from '@playwright/test';
+      test('test 1', async ({ page }) => {
         await page.waitForTimeout(2000);
         expect(1).toBe(2);
       });
     `,
     'b.spec.ts': `
-      pwt.test('test 2', async ({ page }) => {
+      import { test, expect } from '@playwright/test';
+      test('test 2', async ({ page }) => {
         await page.goto('about:blank');
         await page.waitForTimeout(5000);
       });
@@ -270,7 +273,8 @@ test('should retain traces for interrupted tests', async ({ runInlineTest }, tes
 test('should respect --trace', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'a.spec.ts': `
-      pwt.test('test 1', async ({ page }) => {
+      import { test, expect } from '@playwright/test';
+      test('test 1', async ({ page }) => {
         await page.goto('about:blank');
       });
     `,

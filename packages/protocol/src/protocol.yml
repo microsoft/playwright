@@ -1032,9 +1032,16 @@ BrowserContext:
             username: string
             password: string
 
-    setNetworkInterceptionEnabled:
+    setNetworkInterceptionPatterns:
       parameters:
-        enabled: boolean
+        patterns:
+          type: array
+          items:
+            type: object
+            properties:
+              glob: string?
+              regexSource: string?
+              regexFlags: string?
 
     setOffline:
       parameters:
@@ -1311,9 +1318,16 @@ Page:
           type: array
           items: NameValue
 
-    setNetworkInterceptionEnabled:
+    setNetworkInterceptionPatterns:
       parameters:
-        enabled: boolean
+        patterns:
+          type: array
+          items:
+            type: object
+            properties:
+              glob: string?
+              regexSource: string?
+              regexFlags: string?
 
     setViewportSize:
       parameters:

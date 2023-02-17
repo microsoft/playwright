@@ -56,7 +56,6 @@ test('androidDevice.launchBrowser should throw for bad proxy server value', asyn
 });
 
 test('androidDevice.launchBrowser should pass proxy config', async ({ androidDevice, server, mode, loopback }) => {
-  test.skip(mode === 'docker', 'proxy is not supported for remote connection');
   server.setRoute('/target.html', async (req, res) => {
     res.end('<html><title>Served by the proxy</title></html>');
   });

@@ -42,6 +42,7 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
   grepInvert: RegExp | RegExp[] | null;
   metadata: Metadata;
   name: string;
+  dependencies: string[];
   snapshotDir: string;
   outputDir: string;
   repeatEach: number;
@@ -51,8 +52,8 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
   testMatch: string | RegExp | (string | RegExp)[];
   timeout: number;
   use: UseOptions<PlaywrightTestOptions & TestArgs, PlaywrightWorkerOptions & WorkerArgs>;
-  // [internal] !!! DO NOT ADD TO THIS !!! See prior note.
 }
+// [internal] !!! DO NOT ADD TO THIS !!! See prior note.
 
 type LiteralUnion<T extends U, U = string> = T | (U & { zz_IGNORE_ME?: never });
 
@@ -196,10 +197,15 @@ type ConnectOptions = {
   timeout?: number;
 };
 
+export interface TestStore {
+  get<T>(path: string): Promise<T | undefined>;
+  set<T>(path: string, value: T | undefined): Promise<void>;
+}
+
 export interface PlaywrightWorkerOptions {
   browserName: BrowserName;
   defaultBrowserType: BrowserName;
-  headless: boolean | undefined;
+  headless: boolean;
   channel: BrowserChannel | undefined;
   launchOptions: LaunchOptions;
   connectOptions: ConnectOptions | undefined;
@@ -213,31 +219,31 @@ export type TraceMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry';
 export type VideoMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry';
 
 export interface PlaywrightTestOptions {
-  acceptDownloads: boolean | undefined;
-  bypassCSP: boolean | undefined;
-  colorScheme: ColorScheme | undefined;
+  acceptDownloads: boolean;
+  bypassCSP: boolean;
+  colorScheme: ColorScheme;
   deviceScaleFactor: number | undefined;
   extraHTTPHeaders: ExtraHTTPHeaders | undefined;
   geolocation: Geolocation | undefined;
-  hasTouch: boolean | undefined;
+  hasTouch: boolean;
   httpCredentials: HTTPCredentials | undefined;
-  ignoreHTTPSErrors: boolean | undefined;
-  isMobile: boolean | undefined;
-  javaScriptEnabled: boolean | undefined;
+  ignoreHTTPSErrors: boolean;
+  isMobile: boolean;
+  javaScriptEnabled: boolean;
   locale: string | undefined;
-  offline: boolean | undefined;
+  offline: boolean;
   permissions: string[] | undefined;
   proxy: Proxy | undefined;
   storageState: StorageState | undefined;
   timezoneId: string | undefined;
   userAgent: string | undefined;
-  viewport: ViewportSize | null | undefined;
+  viewport: ViewportSize | null;
   baseURL: string | undefined;
   contextOptions: BrowserContextOptions;
-  actionTimeout: number | undefined;
-  navigationTimeout: number | undefined;
-  serviceWorkers: ServiceWorkerPolicy | undefined;
-  testIdAttribute: string | undefined;
+  actionTimeout: number;
+  navigationTimeout: number;
+  serviceWorkers: ServiceWorkerPolicy;
+  testIdAttribute: string;
 }
 
 
@@ -252,11 +258,13 @@ export interface PlaywrightTestArgs {
   request: APIRequestContext;
 }
 
-export type PlaywrightTestProject<TestArgs = {}, WorkerArgs = {}> = Project<PlaywrightTestOptions & TestArgs, PlaywrightWorkerOptions & WorkerArgs>;
-export type PlaywrightTestConfig<TestArgs = {}, WorkerArgs = {}> = Config<PlaywrightTestOptions & TestArgs, PlaywrightWorkerOptions & WorkerArgs>;
+type ExcludeProps<A, B> = {
+  [K in Exclude<keyof A, keyof B>]: A[K];
+};
+type CustomProperties<T> = ExcludeProps<T, PlaywrightTestOptions & PlaywrightWorkerOptions & PlaywrightTestArgs & PlaywrightWorkerArgs>;
 
-import type * as expectType from './expect-types';
-import type { Suite } from './testReporter';
+export type PlaywrightTestProject<TestArgs = {}, WorkerArgs = {}> = Project<PlaywrightTestOptions & CustomProperties<TestArgs>, PlaywrightWorkerOptions & CustomProperties<WorkerArgs>>;
+export type PlaywrightTestConfig<TestArgs = {}, WorkerArgs = {}> = Config<PlaywrightTestOptions & CustomProperties<TestArgs>, PlaywrightWorkerOptions & CustomProperties<WorkerArgs>>;
 
 type AsymmetricMatcher = Record<string, any>;
 
@@ -270,17 +278,38 @@ type AsymmetricMatchers = {
   stringMatching(sample: string | RegExp): AsymmetricMatcher;
 }
 
-type Inverse<Matchers> = {
-  /**
-   * Inverse next matcher. If you know how to test something, `.not` lets you test its opposite.
-   */
-  not: Matchers;
-};
-
 type IfAny<T, Y, N> = 0 extends (1 & T) ? Y : N;
 type ExtraMatchers<T, Type, Matchers> = T extends Type ? Matchers : IfAny<T, Matchers, {}>;
 
-type BaseMatchers<R, T> = expectType.Matchers<R> & PlaywrightTest.Matchers<R, T>;
+interface GenericAssertions<R> {
+  not: GenericAssertions<R>;
+  toBe(expected: unknown): R;
+  toBeCloseTo(expected: number, numDigits?: number): R;
+  toBeDefined(): R;
+  toBeFalsy(): R;
+  toBeGreaterThan(expected: number | bigint): R;
+  toBeGreaterThanOrEqual(expected: number | bigint): R;
+  toBeInstanceOf(expected: Function): R;
+  toBeLessThan(expected: number | bigint): R;
+  toBeLessThanOrEqual(expected: number | bigint): R;
+  toBeNaN(): R;
+  toBeNull(): R;
+  toBeTruthy(): R;
+  toBeUndefined(): R;
+  toContain(expected: string): R;
+  toContain(expected: unknown): R;
+  toContainEqual(expected: unknown): R;
+  toEqual(expected: unknown): R;
+  toHaveLength(expected: number): R;
+  toHaveProperty(keyPath: string | Array<string>, value?: unknown): R;
+  toMatch(expected: RegExp): R;
+  toMatchObject(expected: Record<string, unknown> | Array<unknown>): R;
+  toStrictEqual(expected: unknown): R;
+  toThrow(error?: unknown): R;
+  toThrowError(error?: unknown): R;
+}
+
+type BaseMatchers<R, T> = GenericAssertions<R> & PlaywrightTest.Matchers<R, T>;
 
 type MakeMatchers<R, T> = BaseMatchers<R, T> & {
     /**
@@ -308,16 +337,6 @@ type MakeMatchers<R, T> = BaseMatchers<R, T> & {
     toPass(options?: { timeout?: number, intervals?: number[] }): Promise<void>;
   }>;
 
-type BaseExpect = {
-  // Removed following methods because they rely on a test-runner integration from Jest which we don't support:
-  // assertions(numberOfAssertions: number): void;
-  // extractExpectedAssertionsErrors(): ExpectedAssertionsErrors;
-  // hasAssertions(): void;
-  extend(matchers: any): void;
-  getState(): expectType.MatcherState;
-  setState(state: Partial<expectType.MatcherState>): void;
-}
-
 export type Expect = {
   <T = unknown>(actual: T, messageOrOptions?: string | { message?: string }): MakeMatchers<void, T>;
   soft: <T = unknown>(actual: T, messageOrOptions?: string | { message?: string }) => MakeMatchers<void, T>;
@@ -327,9 +346,15 @@ export type Expect = {
      */
      not: BaseMatchers<Promise<void>, T>;
   };
-} & BaseExpect &
-  AsymmetricMatchers &
-  Inverse<Omit<AsymmetricMatchers, 'any' | 'anything'>>;
+  extend(matchers: any): void;
+  getState(): {
+    expand?: boolean;
+    isNot: boolean;
+    promise: string;
+    utils: any;
+  };
+  not: Omit<AsymmetricMatchers, 'any' | 'anything'>;
+} & AsymmetricMatchers;
 
 type Awaited<T> = T extends PromiseLike<infer U> ? U : T;
 
@@ -351,6 +376,7 @@ export default test;
 
 export const _baseTest: TestType<{}, {}>;
 export const expect: Expect;
+export const store: TestStore;
 
 /**
  * Defines Playwright config

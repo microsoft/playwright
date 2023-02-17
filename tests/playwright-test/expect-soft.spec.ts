@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import { test, expect, stripAnsi } from './playwright-test-fixtures';
+import { test, expect } from './playwright-test-fixtures';
 
 test('soft expects should compile', async ({ runTSC }) => {
   const result = await runTSC({
     'a.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('should work', () => {
         test.expect.soft(1+1).toBe(3);
         test.expect.soft(1+1, 'custom error message').toBe(3);
@@ -33,7 +33,7 @@ test('soft expects should compile', async ({ runTSC }) => {
 test('soft expects should work', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('should work', () => {
         test.expect.soft(1+1).toBe(3);
         console.log('woof-woof');
@@ -41,13 +41,13 @@ test('soft expects should work', async ({ runInlineTest }) => {
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(stripAnsi(result.output)).toContain('woof-woof');
+  expect(result.output).toContain('woof-woof');
 });
 
 test('should report a mixture of soft and non-soft errors', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('should work', ({}) => {
         test.expect.soft(1+1, 'one plus one').toBe(3);
         test.expect.soft(2*2, 'two times two').toBe(5);
@@ -57,16 +57,16 @@ test('should report a mixture of soft and non-soft errors', async ({ runInlineTe
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(stripAnsi(result.output)).toContain('Error: one plus one');
-  expect(stripAnsi(result.output)).toContain('Error: two times two');
-  expect(stripAnsi(result.output)).toContain('Error: three div three');
-  expect(stripAnsi(result.output)).not.toContain('Error: six minus four');
+  expect(result.output).toContain('Error: one plus one');
+  expect(result.output).toContain('Error: two times two');
+  expect(result.output).toContain('Error: three div three');
+  expect(result.output).not.toContain('Error: six minus four');
 });
 
 test('testInfo should contain all soft expect errors', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('should work', ({}, testInfo) => {
         test.expect.soft(1+1, 'one plus one').toBe(3);
         test.expect.soft(2*2, 'two times two').toBe(5);
@@ -75,7 +75,7 @@ test('testInfo should contain all soft expect errors', async ({ runInlineTest })
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(stripAnsi(result.output)).toContain('Error: one plus one');
-  expect(stripAnsi(result.output)).toContain('Error: two times two');
-  expect(stripAnsi(result.output)).not.toContain('Error: must be exactly two errors');
+  expect(result.output).toContain('Error: one plus one');
+  expect(result.output).toContain('Error: two times two');
+  expect(result.output).not.toContain('Error: must be exactly two errors');
 });

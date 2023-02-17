@@ -13,7 +13,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: 16
+          node-version: 18
       - run: node utils/build/update-playwright-driver-version.mjs
       - name: Prepare branch
         id: prepare-branch
@@ -22,9 +22,9 @@ jobs:
               echo "there are no changes";
               exit 0;
           fi
-          echo "::set-output name=HAS_CHANGES::1"
+          echo "HAS_CHANGES=1" >> $GITHUB_OUTPUT
           BRANCH_NAME="roll-driver-nodejs/$(date +%Y-%b-%d)"
-          echo "::set-output name=BRANCH_NAME::$BRANCH_NAME"
+          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_OUTPUT
           git config --global user.name github-actions
           git config --global user.email 41898282+github-actions[bot]@users.noreply.github.com
           git checkout -b "$BRANCH_NAME"

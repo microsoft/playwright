@@ -479,7 +479,7 @@ test('using specific annotations for passing test metadata to Xray', async ({}, 
 });
 ```
 
-Please note that the semantics of these properties will depend on the tool that will process this evoled report format; there are no standard property names/annotations.
+Please note that the semantics of these properties will depend on the tool that will process this evolved report format; there are no standard property names/annotations.
 
 If the configuration option `embedAttachmentsAsProperty` is defined, then a `property` with its name is created. Attachments, including their contents, will be embedded on the JUnit XML report inside `<item>` elements under this `property`. Attachments are obtained from the `TestInfo` object, using either a path or a body, and are added as base64 encoded content.
 Embedding attachments can be used to attach screenshots or any other relevant evidence; nevertheless, use it wisely as it affects the report size.

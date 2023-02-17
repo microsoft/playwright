@@ -96,3 +96,12 @@ svg {
   flex: auto;
   position: relative;
 }
+
+.codicon-check {
+  color: var(--green);
+}
+
+.codicon-close,
+.codicon-error {
+  color: var(--red);
+}

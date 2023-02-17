@@ -724,8 +724,9 @@ it.describe('screencast', () => {
     expectAll(pixels, almostRed);
   });
 
-  it('should work with video+trace', async ({ browser, trace }, testInfo) => {
+  it('should work with video+trace', async ({ browser, trace, headless }, testInfo) => {
     it.skip(trace === 'on');
+    it.fixme(!headless, 'different trace screencast image size on all browsers');
 
     const size = { width: 500, height: 400 };
     const traceFile = testInfo.outputPath('trace.zip');

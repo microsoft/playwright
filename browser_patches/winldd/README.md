@@ -1,7 +1,7 @@
 # Tool for printing .exe and .dll dependencies on Windows
 
 This is similar to `ldd` on linux in that loads specified files and tries to
-resolve all DLLs referenced by it, printing in the formar `<lib name> => <full path> | "no found"`
+resolve all DLLs referenced by it, printing in the format `<lib name> => <full path> | "no found"`
 To minimize dependencies we link all C runtime libraries statically, there is
 still one dynamic dependency on `dbghelp.dll` which is supposed to be preinstalled
 on all Windows machines.

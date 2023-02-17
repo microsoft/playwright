@@ -131,7 +131,7 @@ browserTest.describe('page screenshot', () => {
   });
 
   browserTest('should work with large size', async ({ browserName, headless, platform, contextFactory }) => {
-    browserTest.fixme(browserName === 'chromium' && !headless && platform === 'linux', 'Chromium has gpu problems on linux with large screnshots');
+    browserTest.fixme(browserName === 'chromium' && !headless && platform === 'linux', 'Chromium has gpu problems on linux with large screenshots');
     browserTest.slow(true, 'Large screenshot is slow');
 
     const context = await contextFactory();
@@ -377,7 +377,8 @@ browserTest.describe('element screenshot', () => {
 
   browserTest('should work if the main resource hangs', async ({ browser, browserName, mode, server }) => {
     browserTest.skip(mode !== 'default');
-    browserTest.fixme(browserName === 'chromium', 'https://github.com/microsoft/playwright/issues/9757');
+    browserTest.skip(browserName === 'chromium', 'https://github.com/microsoft/playwright/issues/9757');
+
     const page = await browser.newPage();
     server.setRoute('/slow', (req, res) => {
       res.writeHead(200, {

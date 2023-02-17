@@ -15,12 +15,8 @@
  */
 
 import { debugLogger } from '../common/debugLogger';
-import type { BrowserContext } from './browserContext';
-import { Events } from './events';
 import type { LocalUtils } from './localUtils';
 import type { Route } from './network';
-import type { URLMatch } from './types';
-import type { Page } from './page';
 
 type HarNotFoundAction = 'abort' | 'fallback';
 
@@ -28,23 +24,21 @@ export class HarRouter {
   private _localUtils: LocalUtils;
   private _harId: string;
   private _notFoundAction: HarNotFoundAction;
-  private _options: { urlMatch?: URLMatch; baseURL?: string; };
 
-  static async create(localUtils: LocalUtils, file: string, notFoundAction: HarNotFoundAction, options: { urlMatch?: URLMatch }): Promise<HarRouter> {
+  static async create(localUtils: LocalUtils, file: string, notFoundAction: HarNotFoundAction): Promise<HarRouter> {
     const { harId, error } = await localUtils._channel.harOpen({ file });
     if (error)
       throw new Error(error);
-    return new HarRouter(localUtils, harId!, notFoundAction, options);
+    return new HarRouter(localUtils, harId!, notFoundAction);
   }
 
-  constructor(localUtils: LocalUtils, harId: string, notFoundAction: HarNotFoundAction, options: { urlMatch?: URLMatch }) {
+  private constructor(localUtils: LocalUtils, harId: string, notFoundAction: HarNotFoundAction) {
     this._localUtils = localUtils;
     this._harId = harId;
-    this._options = options;
     this._notFoundAction = notFoundAction;
   }
 
-  private async _handle(route: Route) {
+  async handleRoute(route: Route) {
     const request = route.request();
 
     const response = await this._localUtils._channel.harLookup({
@@ -81,16 +75,6 @@ export class HarRouter {
     }
 
     await route.fallback();
-  }
-
-  async addContextRoute(context: BrowserContext) {
-    await context.route(this._options.urlMatch || '**/*', route => this._handle(route));
-    context.once(Events.BrowserContext.Close, () => this.dispose());
-  }
-
-  async addPageRoute(page: Page) {
-    await page.route(this._options.urlMatch || '**/*', route => this._handle(route));
-    page.once(Events.Page.Close, () => this.dispose());
   }
 
   dispose() {

@@ -19,7 +19,9 @@ using namespace webrtc;
 namespace mozilla {
 
 rtc::scoped_refptr<webrtc::VideoCaptureModuleEx> HeadlessWindowCapturer::Create(HeadlessWidget* headlessWindow) {
-  return new rtc::RefCountedObject<HeadlessWindowCapturer>(headlessWindow);
+  return rtc::scoped_refptr<webrtc::VideoCaptureModuleEx>(
+    new rtc::RefCountedObject<HeadlessWindowCapturer>(headlessWindow)
+  );
 }
 
 HeadlessWindowCapturer::HeadlessWindowCapturer(mozilla::widget::HeadlessWidget* window)

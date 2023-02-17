@@ -58,7 +58,7 @@ export const HeaderView: React.FC<React.PropsWithChildren<{
       </form>
     </div>
     <div className='pt-2'>
-      {projectNames.length === 1 && <span data-testid="project-name" style={{ color: 'var(--color-fg-subtle)', float: 'left' }}>Project: {projectNames[0]}</span>}
+      {projectNames.length === 1 && !!projectNames[0] && <span data-testid="project-name" style={{ color: 'var(--color-fg-subtle)', float: 'left' }}>Project: {projectNames[0]}</span>}
       <span data-testid="overall-duration" style={{ color: 'var(--color-fg-subtle)', paddingRight: '10px', float: 'right' }}>Total time: {msToString(stats.duration)}</span>
     </div>
   </>);

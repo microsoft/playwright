@@ -122,7 +122,7 @@ it.describe('permissions', () => {
 
     // Note: Chromium 110 stopped triggering "onchange" when clearing permissions.
     expect(await page.evaluate(() => window['events'])).toEqual(
-        (browserName === 'chromium' && browserMajorVersion >= 110) ?
+        (browserName === 'chromium' && browserMajorVersion === 110) ?
           ['prompt', 'denied', 'granted'] :
           ['prompt', 'denied', 'granted', 'prompt']);
   });

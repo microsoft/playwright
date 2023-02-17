@@ -112,10 +112,8 @@ export class CRServiceWorker extends Worker {
     this._browserContext.emit(BrowserContext.Events.Request, request);
     if (route) {
       const r = new network.Route(request, route);
-      if (this._browserContext._requestInterceptor) {
-        this._browserContext._requestInterceptor(r, request);
+      if (this._browserContext._requestInterceptor?.(r, request))
         return;
-      }
       r.continue();
     }
   }

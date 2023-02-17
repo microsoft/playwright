@@ -171,7 +171,7 @@ it('should support offline option', async ({ server, launchPersistent }) => {
 });
 
 it('should support acceptDownloads option', async ({ server, launchPersistent, mode }) => {
-  it.skip(mode !== 'default', 'download.path() is not avaialble in remote mode');
+  it.skip(mode !== 'default', 'download.path() is not available in remote mode');
 
   const { page } = await launchPersistent();
   server.setRoute('/download', (req, res) => {

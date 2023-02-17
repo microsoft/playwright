@@ -1749,13 +1749,6 @@ export interface Page {
   prependListener(event: 'worker', listener: (worker: Worker) => void): this;
 
   /**
-   * @deprecated This property is discouraged. Please use other libraries such as [Axe](https://www.deque.com/axe/) if you need to
-   * test page accessibility. See our Node.js [guide](https://playwright.dev/docs/accessibility-testing) for integration
-   * with Axe.
-   */
-  accessibility: Accessibility;
-
-  /**
    * Adds a `<script>` tag into the page with the desired url or content. Returns the added tag when the script's onload
    * fires or when the script content was injected into frame.
    * @param options
@@ -1989,13 +1982,6 @@ export interface Page {
    * Get the browser context that the page belongs to.
    */
   context(): BrowserContext;
-
-  /**
-   * **NOTE** Only available for Chromium atm.
-   *
-   * Browser-specific Coverage implementation. See [Coverage] for more details.
-   */
-  coverage: Coverage;
 
   /**
    * **NOTE** Use locator-based [locator.dblclick([options])](https://playwright.dev/docs/api/class-locator#locator-dblclick)
@@ -3194,8 +3180,6 @@ export interface Page {
     timeout?: number;
   }): Promise<boolean>;
 
-  keyboard: Keyboard;
-
   /**
    * The method returns an element locator that can be used to perform actions on this page / frame. Locator is resolved
    * to the element immediately before performing an action, so a series of actions on the same locator can in fact be
@@ -3226,8 +3210,6 @@ export interface Page {
    * The page's main frame. Page is guaranteed to have a main frame which persists during navigations.
    */
   mainFrame(): Frame;
-
-  mouse: Mouse;
 
   /**
    * Returns the opener for popup pages and `null` for others. If the opener has been closed already the returns `null`.
@@ -3495,15 +3477,6 @@ export interface Page {
      */
     waitUntil?: "load"|"domcontentloaded"|"networkidle"|"commit";
   }): Promise<null|Response>;
-
-  /**
-   * API testing helper associated with this page. This method returns the same instance as
-   * [browserContext.request](https://playwright.dev/docs/api/class-browsercontext#browser-context-request) on the
-   * page's context. See
-   * [browserContext.request](https://playwright.dev/docs/api/class-browsercontext#browser-context-request) for more
-   * details.
-   */
-  request: APIRequestContext;
 
   /**
    * Routing provides the capability to modify network requests that are made by a page.
@@ -3968,8 +3941,8 @@ export interface Page {
    * When all steps combined have not finished during the specified `timeout`, this method throws a [TimeoutError].
    * Passing zero timeout disables this.
    *
-   * **NOTE** [page.tap(selector[, options])](https://playwright.dev/docs/api/class-page#page-tap) requires that the
-   * `hasTouch` option of the browser context be set to true.
+   * **NOTE** [page.tap(selector[, options])](https://playwright.dev/docs/api/class-page#page-tap) the method will throw
+   * if `hasTouch` option of the browser context is false.
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
    * used.
    * @param options
@@ -4054,8 +4027,6 @@ export interface Page {
    * Returns the page's title.
    */
   title(): Promise<string>;
-
-  touchscreen: Touchscreen;
 
   /**
    * **NOTE** Use locator-based [locator.type(text[, options])](https://playwright.dev/docs/api/class-locator#locator-type)
@@ -4620,7 +4591,37 @@ export interface Page {
    *
    * **NOTE** This does not contain ServiceWorkers
    */
-  workers(): Array<Worker>;}
+  workers(): Array<Worker>;
+
+  /**
+   * @deprecated This property is discouraged. Please use other libraries such as [Axe](https://www.deque.com/axe/) if you need to
+   * test page accessibility. See our Node.js [guide](https://playwright.dev/docs/accessibility-testing) for integration
+   * with Axe.
+   */
+  accessibility: Accessibility;
+
+  /**
+   * **NOTE** Only available for Chromium atm.
+   *
+   * Browser-specific Coverage implementation. See [Coverage] for more details.
+   */
+  coverage: Coverage;
+
+  keyboard: Keyboard;
+
+  mouse: Mouse;
+
+  /**
+   * API testing helper associated with this page. This method returns the same instance as
+   * [browserContext.request](https://playwright.dev/docs/api/class-browsercontext#browser-context-request) on the
+   * page's context. See
+   * [browserContext.request](https://playwright.dev/docs/api/class-browsercontext#browser-context-request) for more
+   * details.
+   */
+  request: APIRequestContext;
+
+  touchscreen: Touchscreen;
+}
 
 /**
  * At every point of time, page exposes its current frame tree via the
@@ -7235,7 +7236,8 @@ export interface Frame {
      *   loading.
      */
     waitUntil?: "load"|"domcontentloaded"|"networkidle"|"commit";
-  }): Promise<void>;}
+  }): Promise<void>;
+}
 
 /**
  * - extends: [EventEmitter]
@@ -7979,11 +7981,6 @@ export interface BrowserContext {
   pages(): Array<Page>;
 
   /**
-   * API testing helper associated with this context. Requests made with this API will use context cookies.
-   */
-  request: APIRequestContext;
-
-  /**
    * Routing provides the capability to modify network requests that are made by any page in the browser context. Once
    * route is enabled, every request matching the url pattern will stall unless it's continued, fulfilled or aborted.
    *
@@ -8223,8 +8220,6 @@ export interface BrowserContext {
     }>;
   }>;
 
-  tracing: Tracing;
-
   /**
    * Removes a route created with
    * [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route).
@@ -8323,6 +8318,14 @@ export interface BrowserContext {
    * Emitted when new service worker is created in the context.
    */
   waitForEvent(event: 'serviceworker', optionsOrPredicate?: { predicate?: (worker: Worker) => boolean | Promise<boolean>, timeout?: number } | ((worker: Worker) => boolean | Promise<boolean>)): Promise<Worker>;
+
+
+  /**
+   * API testing helper associated with this context. Requests made with this API will use context cookies.
+   */
+  request: APIRequestContext;
+
+  tracing: Tracing;
 }
 
 /**
@@ -8453,7 +8456,8 @@ export interface Worker {
    */
   prependListener(event: 'close', listener: (worker: Worker) => void): this;
 
-  url(): string;}
+  url(): string;
+}
 
 /**
  * JSHandle represents an in-page JavaScript object. JSHandles can be created with the
@@ -8585,7 +8589,8 @@ export interface JSHandle<T = any> {
    * Fetches a single property from the referenced object.
    * @param propertyName property to get
    */
-  getProperty(propertyName: string): Promise<JSHandle>;}
+  getProperty(propertyName: string): Promise<JSHandle>;
+}
 
 /**
  * - extends: [JSHandle]
@@ -9978,7 +9983,8 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
      * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
      */
     timeout?: number;
-  }): Promise<void>;}
+  }): Promise<void>;
+}
 
 /**
  * Locators are the central piece of Playwright's auto-waiting and retry-ability. In a nutshell, locators represent a
@@ -10496,7 +10502,7 @@ export interface Locator {
   }): Promise<void>;
 
   /**
-   * Programmaticaly dispatch an event on the matching element.
+   * Programmatically dispatch an event on the matching element.
    *
    * **Usage**
    *
@@ -11405,7 +11411,7 @@ export interface Locator {
   page(): Page;
 
   /**
-   * Focuses the mathing element and presses a combintation of the keys.
+   * Focuses the matching element and presses a combination of the keys.
    *
    * **Usage**
    *
@@ -11997,7 +12003,8 @@ export interface Locator {
      * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
      */
     timeout?: number;
-  }): Promise<void>;}
+  }): Promise<void>;
+}
 
 /**
  * BrowserType provides methods to launch a specific browser instance or connect to an existing one. The following is
@@ -12514,7 +12521,11 @@ export interface BrowserType<Unused = {}> {
     videosPath?: string;
 
     /**
-     * Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. `null` disables the default viewport.
+     * Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Use `null` to disable the consistent
+     * viewport emulation.
+     *
+     * **NOTE** The `null` value opts out from the default presets, makes viewport depend on the host window size defined
+     * by the operating system. It makes the execution of the tests non-deterministic.
      */
     viewport?: null|{
       /**
@@ -12692,7 +12703,8 @@ export interface BrowserType<Unused = {}> {
   /**
    * Returns browser name. For example: `'chromium'`, `'webkit'` or `'firefox'`.
    */
-  name(): string;}
+  name(): string;
+}
 
 /**
  * - extends: [EventEmitter]
@@ -12737,7 +12749,8 @@ export interface CDPSession {
    * Detaches the CDPSession from the target. Once detached, the CDPSession object won't emit any events and can't be
    * used to send messages.
    */
-  detach(): Promise<void>;}
+  detach(): Promise<void>;
+}
 
 type DeviceDescriptor = {
   viewport: ViewportSize;
@@ -12777,7 +12790,8 @@ export namespace errors {
  * ```
  *
  */
-class TimeoutError extends Error {}
+class TimeoutError extends Error {
+}
 
 }
 
@@ -12839,6 +12853,7 @@ export interface Accessibility {
    * @param options
    */
   snapshot(options?: AccessibilitySnapshotOptions): Promise<null|AccessibilityNode>;
+
 }
 
 type AccessibilityNode = {
@@ -13106,7 +13121,8 @@ export interface ElectronApplication {
   /**
    * Convenience method that returns all the opened windows.
    */
-  windows(): Array<Page>;}
+  windows(): Array<Page>;
+}
 
 export type AndroidElementInfo = {
   clazz: string;
@@ -13556,8 +13572,6 @@ export interface AndroidDevice {
    */
   info(selector: AndroidSelector): Promise<AndroidElementInfo>;
 
-  input: AndroidInput;
-
   /**
    * Installs an apk on the device.
    * @param file Either a path to the apk file, or apk file content.
@@ -13877,7 +13891,11 @@ export interface AndroidDevice {
     videosPath?: string;
 
     /**
-     * Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. `null` disables the default viewport.
+     * Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Use `null` to disable the consistent
+     * viewport emulation.
+     *
+     * **NOTE** The `null` value opts out from the default presets, makes viewport depend on the host window size defined
+     * by the operating system. It makes the execution of the tests non-deterministic.
      */
     viewport?: null|{
       /**
@@ -14145,6 +14163,8 @@ export interface AndroidDevice {
    * Currently open WebViews.
    */
   webViews(): Array<AndroidWebView>;
+
+  input: AndroidInput;
 }
 
 export interface AndroidInput {
@@ -14518,7 +14538,8 @@ export interface APIRequestContext {
     form?: { [key: string]: string|number|boolean; };
 
     /**
-     * Allows to set HTTP headers.
+     * Allows to set HTTP headers. These headers will apply to the fetched request as well as any redirects initiated by
+     * it.
      */
     headers?: { [key: string]: string; };
 
@@ -14647,7 +14668,8 @@ export interface APIRequestContext {
     form?: { [key: string]: string|number|boolean; };
 
     /**
-     * Allows to set HTTP headers.
+     * Allows to set HTTP headers. These headers will apply to the fetched request as well as any redirects initiated by
+     * it.
      */
     headers?: { [key: string]: string; };
 
@@ -14746,7 +14768,8 @@ export interface APIRequestContext {
     form?: { [key: string]: string|number|boolean; };
 
     /**
-     * Allows to set HTTP headers.
+     * Allows to set HTTP headers. These headers will apply to the fetched request as well as any redirects initiated by
+     * it.
      */
     headers?: { [key: string]: string; };
 
@@ -14825,7 +14848,8 @@ export interface APIRequestContext {
     form?: { [key: string]: string|number|boolean; };
 
     /**
-     * Allows to set HTTP headers.
+     * Allows to set HTTP headers. These headers will apply to the fetched request as well as any redirects initiated by
+     * it.
      */
     headers?: { [key: string]: string; };
 
@@ -14904,7 +14928,8 @@ export interface APIRequestContext {
     form?: { [key: string]: string|number|boolean; };
 
     /**
-     * Allows to set HTTP headers.
+     * Allows to set HTTP headers. These headers will apply to the fetched request as well as any redirects initiated by
+     * it.
      */
     headers?: { [key: string]: string; };
 
@@ -15034,7 +15059,8 @@ export interface APIRequestContext {
     form?: { [key: string]: string|number|boolean; };
 
     /**
-     * Allows to set HTTP headers.
+     * Allows to set HTTP headers. These headers will apply to the fetched request as well as any redirects initiated by
+     * it.
      */
     headers?: { [key: string]: string; };
 
@@ -15113,7 +15139,8 @@ export interface APIRequestContext {
     form?: { [key: string]: string|number|boolean; };
 
     /**
-     * Allows to set HTTP headers.
+     * Allows to set HTTP headers. These headers will apply to the fetched request as well as any redirects initiated by
+     * it.
      */
     headers?: { [key: string]: string; };
 
@@ -15779,7 +15806,11 @@ export interface Browser extends EventEmitter {
     videosPath?: string;
 
     /**
-     * Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. `null` disables the default viewport.
+     * Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Use `null` to disable the consistent
+     * viewport emulation.
+     *
+     * **NOTE** The `null` value opts out from the default presets, makes viewport depend on the host window size defined
+     * by the operating system. It makes the execution of the tests non-deterministic.
      */
     viewport?: null|{
       /**
@@ -17304,6 +17335,7 @@ export const selectors: Selectors;
  * This object can be used to launch or connect to WebKit, returning instances of [Browser].
  */
 export const webkit: BrowserType;
+
 /**
  * Whenever the page sends a request for a network resource the following sequence of events are emitted by [Page]:
  * - [page.on('request')](https://playwright.dev/docs/api/class-page#page-event-request) emitted when the request is
@@ -17777,6 +17809,13 @@ export interface Route {
    * });
    * ```
    *
+   * **Details**
+   *
+   * Note that any overrides such as `url` or `headers` only apply to the request being routed. If this request results
+   * in a redirect, overrides will not be applied to the new redirected request. If you want to propagate a header
+   * through redirects, use the combination of
+   * [route.fetch([options])](https://playwright.dev/docs/api/class-route#route-fetch) and
+   * [route.fulfill([options])](https://playwright.dev/docs/api/class-route#route-fulfill) instead.
    * @param options
    */
   continue(options?: {
@@ -17904,6 +17943,11 @@ export interface Route {
    * });
    * ```
    *
+   * **Details**
+   *
+   * Note that `headers` option will apply to the fetched request as well as any redirects initiated by it. If you want
+   * to only apply `headers` to the original request, but not to redirects, look into
+   * [route.continue([options])](https://playwright.dev/docs/api/class-route#route-continue) instead.
    * @param options
    */
   fetch(options?: {
@@ -17911,6 +17955,12 @@ export interface Route {
      * If set changes the request HTTP headers. Header values will be converted to a string.
      */
     headers?: { [key: string]: string; };
+
+    /**
+     * Maximum number of request redirects that will be followed automatically. An error will be thrown if the number is
+     * exceeded. Defaults to `20`. Pass `0` to not follow redirects.
+     */
+    maxRedirects?: number;
 
     /**
      * If set changes the request method (e.g. GET or POST).
@@ -18006,6 +18056,8 @@ export interface Route {
  */
 export interface Selectors {
   /**
+   * Selectors must be registered before creating the page.
+   *
    * **Usage**
    *
    * An example of registering selector engine that queries elements based on a tag name:
@@ -18036,8 +18088,8 @@ export interface Selectors {
    *
    *   // Use the selector prefixed with its name.
    *   const button = page.locator('tag=button');
-   *   // Combine it with other selector engines.
-   *   await page.locator('tag=div >> text="Click me"').click();
+   *   // We can combine it with built-in locators.
+   *   await page.locator('tag=div').getByText('Click me').click();
    *   // Can use it in any methods supporting selectors.
    *   const buttonCount = await page.locator('tag=button').count();
    *
@@ -18086,6 +18138,9 @@ export interface Selectors {
 export interface Touchscreen {
   /**
    * Dispatches a `touchstart` and `touchend` event with a single touch at the position (`x`,`y`).
+   *
+   * **NOTE** [page.tap(selector[, options])](https://playwright.dev/docs/api/class-page#page-tap) the method will throw
+   * if `hasTouch` option of the browser context is false.
    * @param x
    * @param y
    */
@@ -18256,21 +18311,21 @@ export interface WebSocket {
    * Fired when the websocket receives a frame.
    */
   on(event: 'framereceived', listener: (data: {
-  /**
-   * frame payload
-   */
-  payload: string|Buffer;
-}) => void): this;
+    /**
+     * frame payload
+     */
+    payload: string|Buffer;
+  }) => void): this;
 
   /**
    * Fired when the websocket sends a frame.
    */
   on(event: 'framesent', listener: (data: {
-  /**
-   * frame payload
-   */
-  payload: string|Buffer;
-}) => void): this;
+    /**
+     * frame payload
+     */
+    payload: string|Buffer;
+  }) => void): this;
 
   /**
    * Fired when the websocket has an error.
@@ -18286,21 +18341,21 @@ export interface WebSocket {
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
   once(event: 'framereceived', listener: (data: {
-  /**
-   * frame payload
-   */
-  payload: string|Buffer;
-}) => void): this;
+    /**
+     * frame payload
+     */
+    payload: string|Buffer;
+  }) => void): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
   once(event: 'framesent', listener: (data: {
-  /**
-   * frame payload
-   */
-  payload: string|Buffer;
-}) => void): this;
+    /**
+     * frame payload
+     */
+    payload: string|Buffer;
+  }) => void): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
@@ -18316,21 +18371,21 @@ export interface WebSocket {
    * Fired when the websocket receives a frame.
    */
   addListener(event: 'framereceived', listener: (data: {
-  /**
-   * frame payload
-   */
-  payload: string|Buffer;
-}) => void): this;
+    /**
+     * frame payload
+     */
+    payload: string|Buffer;
+  }) => void): this;
 
   /**
    * Fired when the websocket sends a frame.
    */
   addListener(event: 'framesent', listener: (data: {
-  /**
-   * frame payload
-   */
-  payload: string|Buffer;
-}) => void): this;
+    /**
+     * frame payload
+     */
+    payload: string|Buffer;
+  }) => void): this;
 
   /**
    * Fired when the websocket has an error.
@@ -18346,21 +18401,21 @@ export interface WebSocket {
    * Removes an event listener added by `on` or `addListener`.
    */
   removeListener(event: 'framereceived', listener: (data: {
-  /**
-   * frame payload
-   */
-  payload: string|Buffer;
-}) => void): this;
+    /**
+     * frame payload
+     */
+    payload: string|Buffer;
+  }) => void): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
   removeListener(event: 'framesent', listener: (data: {
-  /**
-   * frame payload
-   */
-  payload: string|Buffer;
-}) => void): this;
+    /**
+     * frame payload
+     */
+    payload: string|Buffer;
+  }) => void): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
@@ -18376,21 +18431,21 @@ export interface WebSocket {
    * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'framereceived', listener: (data: {
-  /**
-   * frame payload
-   */
-  payload: string|Buffer;
-}) => void): this;
+    /**
+     * frame payload
+     */
+    payload: string|Buffer;
+  }) => void): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'framesent', listener: (data: {
-  /**
-   * frame payload
-   */
-  payload: string|Buffer;
-}) => void): this;
+    /**
+     * frame payload
+     */
+    payload: string|Buffer;
+  }) => void): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
@@ -18406,21 +18461,21 @@ export interface WebSocket {
    * Fired when the websocket receives a frame.
    */
   prependListener(event: 'framereceived', listener: (data: {
-  /**
-   * frame payload
-   */
-  payload: string|Buffer;
-}) => void): this;
+    /**
+     * frame payload
+     */
+    payload: string|Buffer;
+  }) => void): this;
 
   /**
    * Fired when the websocket sends a frame.
    */
   prependListener(event: 'framesent', listener: (data: {
-  /**
-   * frame payload
-   */
-  payload: string|Buffer;
-}) => void): this;
+    /**
+     * frame payload
+     */
+    payload: string|Buffer;
+  }) => void): this;
 
   /**
    * Fired when the websocket has an error.
@@ -18446,41 +18501,41 @@ export interface WebSocket {
    * Fired when the websocket receives a frame.
    */
   waitForEvent(event: 'framereceived', optionsOrPredicate?: { predicate?: (data: {
-  /**
-   * frame payload
-   */
-  payload: string|Buffer;
-}) => boolean | Promise<boolean>, timeout?: number } | ((data: {
-  /**
-   * frame payload
-   */
-  payload: string|Buffer;
-}) => boolean | Promise<boolean>)): Promise<{
-  /**
-   * frame payload
-   */
-  payload: string|Buffer;
-}>;
+    /**
+     * frame payload
+     */
+    payload: string|Buffer;
+  }) => boolean | Promise<boolean>, timeout?: number } | ((data: {
+    /**
+     * frame payload
+     */
+    payload: string|Buffer;
+  }) => boolean | Promise<boolean>)): Promise<{
+    /**
+     * frame payload
+     */
+    payload: string|Buffer;
+  }>;
 
   /**
    * Fired when the websocket sends a frame.
    */
   waitForEvent(event: 'framesent', optionsOrPredicate?: { predicate?: (data: {
-  /**
-   * frame payload
-   */
-  payload: string|Buffer;
-}) => boolean | Promise<boolean>, timeout?: number } | ((data: {
-  /**
-   * frame payload
-   */
-  payload: string|Buffer;
-}) => boolean | Promise<boolean>)): Promise<{
-  /**
-   * frame payload
-   */
-  payload: string|Buffer;
-}>;
+    /**
+     * frame payload
+     */
+    payload: string|Buffer;
+  }) => boolean | Promise<boolean>, timeout?: number } | ((data: {
+    /**
+     * frame payload
+     */
+    payload: string|Buffer;
+  }) => boolean | Promise<boolean>)): Promise<{
+    /**
+     * frame payload
+     */
+    payload: string|Buffer;
+  }>;
 
   /**
    * Fired when the websocket has an error.
@@ -18820,7 +18875,11 @@ export interface BrowserContextOptions {
   videosPath?: string;
 
   /**
-   * Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. `null` disables the default viewport.
+   * Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Use `null` to disable the consistent
+   * viewport emulation.
+   *
+   * **NOTE** The `null` value opts out from the default presets, makes viewport depend on the host window size defined
+   * by the operating system. It makes the execution of the tests non-deterministic.
    */
   viewport?: null|ViewportSize;
 }

@@ -240,3 +240,52 @@ Selectors can be used to install custom selector engines. See
 - type: <[BrowserType]>
 
 This object can be used to launch or connect to WebKit, returning instances of [Browser].
+
+## method: Playwright.close
+* since: v1.9
+* langs: java
+
+Terminates this instance of Playwright, will also close all created browsers if they are still running.
+
+## method: Playwright.create
+* since: v1.10
+* langs: java
+- returns: <[Playwright]>
+
+Launches new Playwright driver process and connects to it. [`method: Playwright.close`] should be called when the instance is no longer needed.
+
+```java
+Playwright playwright = Playwright.create();
+Browser browser = playwright.webkit().launch();
+Page page = browser.newPage();
+page.navigate("https://www.w3.org/");
+playwright.close();
+```
+
+### option: Playwright.create.env
+* since: v1.13
+* langs: java
+- `env` <[Object]<[string], [string]>>
+
+Additional environment variables that will be passed to the driver process. By default driver
+process inherits environment variables of the Playwright process.
+
+## async method: Playwright.stop
+* since: v1.8
+* langs: python
+
+Terminates this instance of Playwright in case it was created bypassing the Python context manager. This is useful in REPL applications.
+
+```py
+>>> from playwright.sync_api import sync_playwright
+
+>>> playwright = sync_playwright().start()
+
+>>> browser = playwright.chromium.launch()
+>>> page = browser.new_page()
+>>> page.goto("http://whatsmyuseragent.org/")
+>>> page.screenshot(path="example.png")
+>>> browser.close()
+
+>>> playwright.stop()
+```

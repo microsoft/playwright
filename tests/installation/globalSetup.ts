@@ -21,7 +21,6 @@ import fs from 'fs';
 import { TMP_WORKSPACES } from './npmTest';
 
 const PACKAGE_BUILDER_SCRIPT = path.join(__dirname, '..', '..', 'utils', 'pack_package.js');
-const DOCKER_BUILDER_SCRIPT = path.join(__dirname, '..', '..', 'utils', 'docker', 'build.sh');
 
 async function globalSetup() {
   await promisify(rimraf)(TMP_WORKSPACES);
@@ -55,20 +54,6 @@ async function globalSetup() {
     ]);
 
     await fs.promises.writeFile(path.join(__dirname, '.registry.json'), JSON.stringify(Object.fromEntries(builds)));
-  }
-
-  if (process.env.CI && process.platform !== 'linux') {
-    console.log('Skipped building docker: docker tests are not supported on Windows and macOS Github Actions.');
-  } else if (process.env.PWTEST_INSTALLATION_TEST_SKIP_DOCKER_BUILD) {
-    console.log('Skipped building docker. Unset PWTEST_INSTALLATION_TEST_SKIP_DOCKER_BUILD to build docker.');
-  } else {
-    console.log('Building docker. Set PWTEST_INSTALLATION_TEST_SKIP_DOCKER_BUILD to skip.');
-    const DOCKER_IMAGE_NAME =  'playwright:installation-tests-focal';
-    const arch = process.arch === 'arm64' ? '--arm64' : '--amd64';
-    const { code, stderr, stdout } = await spawnAsync('bash', [DOCKER_BUILDER_SCRIPT, arch, 'focal', DOCKER_IMAGE_NAME]);
-    if (!!code)
-      throw new Error(`Failed to build docker:\n${stderr}\n${stdout}`);
-    console.log('Built: docker image ', DOCKER_IMAGE_NAME);
   }
 }
 

@@ -453,7 +453,8 @@ module.exports = defineConfig({
 
 ```js tab=js-ts
 // playwright.config.ts
-import { defineConfig } from '@playwright/test';
+import { defineConfig, devices } from '@playwright/test';
+
 export default defineConfig({
   projects: [
     {
@@ -598,9 +599,10 @@ export const test = base.extend<{}, { server: http.Server }>({
 
 ## Add custom matchers using expect.extend
 
-Playwright Test uses [`expect` library](https://jestjs.io/docs/expect) under the hood which has the functionality to extend it with [custom matchers](https://jestjs.io/docs/expect#expectextendmatchers).
+You can extend Playwright assertions by providing custom matchers. These matchers will be available on the `expect` object.
 
-In this example we add a custom `toBeWithinRange` function in the configuration file.
+In this example we add a custom `toBeWithinRange` function in the configuration file. Custom matcher should return a `message` callback and a `pass` flag indicating whether the assertion passed.
+
 ```js tab=js-js
 // playwright.config.js
 const { expect } = require('@playwright/test');
@@ -670,6 +672,10 @@ test('numeric ranges', () => {
   expect(101).not.toBeWithinRange(0, 100);
 });
 ```
+
+:::note
+Do not confuse Playwright's `expect` with the [`expect` library](https://jestjs.io/docs/expect). The latter is not fully integrated with Playwright test runner, so make sure to use Playwright's own `expect`.
+:::
 
 For TypeScript, also add the following to your [`global.d.ts`](https://www.typescriptlang.org/docs/handbook/declaration-files/templates/global-d-ts.html). If it does not exist, you need to create it inside your repository. Make sure that your `global.d.ts` gets included inside your `tsconfig.json` via the `include` or `compilerOptions.typeRoots` option so that your IDE will pick it up.
 

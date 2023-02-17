@@ -78,5 +78,5 @@ export function escapeForAttributeSelector(value: string, exact: boolean): strin
   //   cssEscape(value).replace(/\\ /g, ' ')
   // However, our attribute selectors do not conform to CSS parsing spec,
   // so we escape them differently.
-  return `"${value.replace(/["]/g, '\\"')}"${exact ? 's' : 'i'}`;
+  return `"${value.replace(/\\/g, '\\\\').replace(/["]/g, '\\"')}"${exact ? 's' : 'i'}`;
 }

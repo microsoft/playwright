@@ -52,10 +52,10 @@ it('should work', async ({ page, server }) => {
 });
 
 it('should work with buffer as body', async ({ page, server, browserName, isLinux }) => {
-  it.fail(browserName === 'webkit' && isLinux, 'Loading of application/octet-stream resource fails');
   await page.route('**/*', route => {
     route.fulfill({
       status: 200,
+      contentType: 'text/plain',
       body: Buffer.from('Yo, page!')
     });
   });
@@ -78,7 +78,6 @@ it('should work with status code 422', async ({ page, server }) => {
 });
 
 it('should allow mocking binary responses', async ({ page, server, browserName, headless, asset, isAndroid, mode }) => {
-  it.skip(mode === 'service');
   it.skip(browserName === 'firefox' && !headless, 'Firefox headed produces a different image.');
   it.skip(isAndroid);
 
@@ -100,7 +99,6 @@ it('should allow mocking binary responses', async ({ page, server, browserName, 
 });
 
 it('should allow mocking svg with charset', async ({ page, server, browserName, headless, isAndroid, isElectron, mode }) => {
-  it.skip(mode === 'service');
   it.skip(browserName === 'firefox' && !headless, 'Firefox headed produces a different image.');
   it.skip(isAndroid);
   it.skip(isElectron, 'Protocol error (Storage.getCookies): Browser context management is not supported');
@@ -122,7 +120,7 @@ it('should allow mocking svg with charset', async ({ page, server, browserName, 
 });
 
 it('should work with file path', async ({ page, server, asset, mode, isAndroid }) => {
-  it.skip(mode === 'service' || isAndroid);
+  it.skip(isAndroid);
 
   await page.route('**/*', route => route.fulfill({ contentType: 'shouldBeIgnored', path: asset('pptr.png') }));
   await page.evaluate(PREFIX => {
@@ -308,7 +306,7 @@ it('should fulfill with fetch response that has multiple set-cookie', async ({ p
 
 it('headerValue should return set-cookie from intercepted response', async ({ page, server, browserName }) => {
   it.fail(browserName === 'chromium', 'Set-Cookie is missing in response after interception');
-  it.fixme(browserName === 'webkit', 'Set-Cookie with \n in intercepted response does not pass validation in WebCore, see also https://github.com/microsoft/playwright/pull/9273');
+  it.skip(browserName === 'webkit', 'Set-Cookie with \n in intercepted response does not pass validation in WebCore, see also https://github.com/microsoft/playwright/pull/9273');
   await page.route('**/empty.html', async route => {
     route.fulfill({
       status: 200,

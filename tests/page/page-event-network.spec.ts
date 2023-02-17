@@ -132,7 +132,7 @@ it('should resolve responses after a navigation', async ({ page, server, browser
   const responsePromise = request.response();
   // navigate, which should cancel the request
   await page.goto(server.CROSS_PROCESS_PREFIX);
-  // make sure we arent stalling this request on the server
+  // make sure we aren't stalling this request on the server
   responseFromServer.end('done');
   // the response should resolve to null, because the page navigated.
   expect(await responsePromise).toBe(null);

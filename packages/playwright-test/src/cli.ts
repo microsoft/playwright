@@ -18,17 +18,14 @@
 
 import type { Command } from 'playwright-core/lib/utilsBundle';
 import fs from 'fs';
-import url from 'url';
 import path from 'path';
-import { Runner, builtInReporters, kDefaultConfigFiles } from './runner';
-import type { ConfigCLIOverrides } from './runner';
-import { stopProfiling, startProfiling } from './profiler';
-import { fileIsModule } from './util';
-import type { TestFileFilter } from './util';
-import { createTitleMatcher } from './util';
+import { Runner } from './runner/runner';
+import { stopProfiling, startProfiling } from './common/profiler';
+import { experimentalLoaderOption, fileIsModule } from './util';
 import { showHTMLReport } from './reporters/html';
-import { baseFullConfig, defaultTimeout } from './configLoader';
-import type { TraceMode } from './types';
+import { baseFullConfig, builtInReporters, ConfigLoader, defaultTimeout, kDefaultConfigFiles, resolveConfigFile } from './common/configLoader';
+import type { TraceMode } from './common/types';
+import type { ConfigCLIOverrides } from './common/ipc';
 
 export function addTestCommands(program: Command) {
   addTestCommand(program);
@@ -52,6 +49,7 @@ function addTestCommand(program: Command) {
   command.option('-j, --workers <workers>', `Number of concurrent workers or percentage of logical CPU cores, use 1 to run in a single worker (default: 50%)`);
   command.option('--list', `Collect all the tests and report them, but do not run`);
   command.option('--max-failures <N>', `Stop after the first N failures`);
+  command.option('--no-deps', 'Do not run project dependencies');
   command.option('--output <dir>', `Folder for output artifacts (default: "test-results")`);
   command.option('--pass-with-no-tests', `Makes test run succeed even if no tests were found`);
   command.option('--quiet', `Suppress stdio`);
@@ -147,66 +145,50 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
 
   // When no --config option is passed, let's look for the config file in the current directory.
   const configFileOrDirectory = opts.config ? path.resolve(process.cwd(), opts.config) : process.cwd();
-  const resolvedConfigFile = Runner.resolveConfigFile(configFileOrDirectory);
+  const resolvedConfigFile = resolveConfigFile(configFileOrDirectory);
   if (restartWithExperimentalTsEsm(resolvedConfigFile))
     return;
 
-  const runner = new Runner(overrides);
+  const configLoader = new ConfigLoader(overrides);
   if (resolvedConfigFile)
-    await runner.loadConfigFromResolvedFile(resolvedConfigFile);
+    await configLoader.loadConfigFile(resolvedConfigFile);
   else
-    await runner.loadEmptyConfig(configFileOrDirectory);
+    await configLoader.loadEmptyConfig(configFileOrDirectory);
+  if (opts.deps === false)
+    configLoader.ignoreProjectDependencies();
 
-  const testFileFilters: TestFileFilter[] = args.map(arg => {
-    const match = /^(.*?):(\d+):?(\d+)?$/.exec(arg);
-    return {
-      re: forceRegExp(match ? match[1] : arg),
-      line: match ? parseInt(match[2], 10) : null,
-      column: match?.[3] ? parseInt(match[3], 10) : null,
-    };
-  });
+  const config = configLoader.fullConfig();
+  config._internal.cliArgs = args;
+  config._internal.cliGrep = opts.grep as string | undefined;
+  config._internal.cliGrepInvert = opts.grepInvert as string | undefined;
+  config._internal.listOnly = !!opts.list;
+  config._internal.cliProjectFilter = opts.project || undefined;
+  config._internal.passWithNoTests = !!opts.passWithNoTests;
 
-  const grepMatcher = opts.grep ? createTitleMatcher(forceRegExp(opts.grep)) : () => true;
-  const grepInvertMatcher = opts.grepInvert ? createTitleMatcher(forceRegExp(opts.grepInvert)) : () => false;
-  const testTitleMatcher = (title: string) => !grepInvertMatcher(title) && grepMatcher(title);
-
-  const result = await runner.runAllTests({
-    listOnly: !!opts.list,
-    testFileFilters,
-    testTitleMatcher,
-    projectFilter: opts.project || undefined,
-    passWithNoTests: opts.passWithNoTests,
-  });
+  const runner = new Runner(config);
+  const status = process.env.PWTEST_WATCH ? await runner.watchAllTests() : await runner.runAllTests();
   await stopProfiling(undefined);
-
-  if (result.status === 'interrupted')
+  if (status === 'interrupted')
     process.exit(130);
-  process.exit(result.status === 'passed' ? 0 : 1);
+  process.exit(status === 'passed' ? 0 : 1);
 }
-
 
 async function listTestFiles(opts: { [key: string]: any }) {
   // Redefine process.stdout.write in case config decides to pollute stdio.
   const write = process.stdout.write.bind(process.stdout);
   process.stdout.write = (() => {}) as any;
   const configFileOrDirectory = opts.config ? path.resolve(process.cwd(), opts.config) : process.cwd();
-  const resolvedConfigFile = Runner.resolveConfigFile(configFileOrDirectory)!;
+  const resolvedConfigFile = resolveConfigFile(configFileOrDirectory)!;
   if (restartWithExperimentalTsEsm(resolvedConfigFile))
     return;
 
-  const runner = new Runner();
-  await runner.loadConfigFromResolvedFile(resolvedConfigFile);
+  const configLoader = new ConfigLoader();
+  const runner = new Runner(configLoader.fullConfig());
+  await configLoader.loadConfigFile(resolvedConfigFile);
   const report = await runner.listTestFiles(opts.project);
   write(JSON.stringify(report), () => {
     process.exit(0);
   });
-}
-
-function forceRegExp(pattern: string): RegExp {
-  const match = pattern.match(/^\/(.*)\/([gi]*)$/);
-  if (match)
-    return new RegExp(match[1], match[2]);
-  return new RegExp(pattern, 'gi');
 }
 
 function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrides {
@@ -265,18 +247,6 @@ function restartWithExperimentalTsEsm(configFile: string | null): boolean {
       process.exit(code);
   });
   return true;
-}
-
-export function experimentalLoaderOption() {
-  return ` --no-warnings --experimental-loader=${url.pathToFileURL(require.resolve('@playwright/test/lib/experimentalLoader')).toString()}`;
-}
-
-export function envWithoutExperimentalLoaderOptions(): NodeJS.ProcessEnv {
-  const substring = experimentalLoaderOption();
-  const result = { ...process.env };
-  if (result.NODE_OPTIONS)
-    result.NODE_OPTIONS = result.NODE_OPTIONS.replace(substring, '').trim() || undefined;
-  return result;
 }
 
 const kTraceModes: TraceMode[] = ['on', 'off', 'on-first-retry', 'retain-on-failure'];

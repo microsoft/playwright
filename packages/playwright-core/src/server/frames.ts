@@ -304,18 +304,12 @@ export class FrameManager {
     this._page.emitOnContext(BrowserContext.Events.Request, request);
     if (route) {
       const r = new network.Route(request, route);
-      if (this._page._serverRequestInterceptor) {
-        this._page._serverRequestInterceptor(r, request);
+      if (this._page._serverRequestInterceptor?.(r, request))
         return;
-      }
-      if (this._page._clientRequestInterceptor) {
-        this._page._clientRequestInterceptor(r, request);
+      if (this._page._clientRequestInterceptor?.(r, request))
         return;
-      }
-      if (this._page._browserContext._requestInterceptor) {
-        this._page._browserContext._requestInterceptor(r, request);
+      if (this._page._browserContext._requestInterceptor?.(r, request))
         return;
-      }
       r.continue();
     }
   }
@@ -1217,6 +1211,8 @@ export class Frame extends SdkObject {
   }
 
   async tap(metadata: CallMetadata, selector: string, options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
+    if (!this._page._browserContext._options.hasTouch)
+      throw new Error('The page does not support tap. Use hasTouch context option to enable touch support.');
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options.strict, handle => handle._tap(progress, options)));
@@ -1406,7 +1402,7 @@ export class Frame extends SdkObject {
       timeout -= elapsed;
     }
     if (timeout < 0)
-      return { matches: options.isNot, log: metadata.log, timedOut: true };
+      return { matches: options.isNot, log: metadata.log, timedOut: true, received: lastIntermediateResult.received };
     return await this._expectInternal(metadata, selector, options, false, timeout, lastIntermediateResult);
   }
 
@@ -1426,7 +1422,7 @@ export class Frame extends SdkObject {
         const injected = await context.injectedScript();
         progress.throwIfAborted();
 
-        const { log, matches, received } = await injected.evaluate((injected, { info, options, snapshotName }) => {
+        const { log, matches, received, missingRecevied } = await injected.evaluate(async (injected, { info, options, snapshotName }) => {
           const elements = info ? injected.querySelectorAll(info.parsed, document) : [];
           const isArray = options.expression === 'to.have.count' || options.expression.endsWith('.array');
           let log = '';
@@ -1438,12 +1434,13 @@ export class Frame extends SdkObject {
             log = `  locator resolved to ${injected.previewNode(elements[0])}`;
           if (snapshotName)
             injected.markTargetElements(new Set(elements), snapshotName);
-          return { log, ...injected.expect(elements[0], options, elements) };
+          return { log, ...(await injected.expect(elements[0], options, elements)) };
         }, { info, options, snapshotName: progress.metadata.afterSnapshot });
 
         if (log)
           progress.log(log);
-        if (matches === options.isNot) {
+        // Note: missingReceived avoids `unexpected value "undefined"` when element was not found.
+        if (matches === options.isNot && !missingRecevied) {
           lastIntermediateResult.received = received;
           lastIntermediateResult.isSet = true;
           if (!Array.isArray(received))
@@ -1478,11 +1475,14 @@ export class Frame extends SdkObject {
     expression = js.normalizeEvaluationExpression(expression, isFunction);
     return controller.run(async progress => {
       return this.retryWithProgressAndTimeouts(progress, [100], async () => {
-        const context = await this._mainContext();
+        const context = world === 'main' ? await this._mainContext() : await this._utilityContext();
         const injectedScript = await context.injectedScript();
         const handle = await injectedScript.evaluateHandle((injected, { expression, isFunction, polling, arg }) => {
           const predicate = (): R => {
-            let result = self.eval(expression);
+            // NOTE: make sure to use `globalThis.eval` instead of `self.eval` due to a bug with sandbox isolation
+            // in firefox.
+            // See https://bugzilla.mozilla.org/show_bug.cgi?id=1814898
+            let result = globalThis.eval(expression);
             if (isFunction === true) {
               result = result(arg);
             } else if (isFunction === false) {

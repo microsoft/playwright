@@ -18,6 +18,7 @@ import type { Fixtures } from '@playwright/test';
 import type { ChildProcess } from 'child_process';
 import { execSync, spawn } from 'child_process';
 import net from 'net';
+import { stripAnsi } from './utils';
 
 type TestChildParams = {
   command: string[],
@@ -31,6 +32,7 @@ export class TestChildProcess {
   params: TestChildParams;
   process: ChildProcess;
   output = '';
+  fullOutput = '';
   onOutput?: (chunk: string | Buffer) => void;
   exited: Promise<{ exitCode: number, signal: string | null }>;
   exitCode: Promise<number>;
@@ -59,6 +61,8 @@ export class TestChildProcess {
       this.output += String(chunk);
       if (process.env.PWTEST_DEBUG)
         process.stdout.write(String(chunk));
+      else
+        this.fullOutput += String(chunk);
       this.onOutput?.(chunk);
       for (const cb of this._outputCallbacks)
         cb();
@@ -105,8 +109,16 @@ export class TestChildProcess {
   }
 
   async waitForOutput(substring: string) {
-    while (!this.output.includes(substring))
+    while (!stripAnsi(this.output).includes(substring))
       await new Promise<void>(f => this._outputCallbacks.add(f));
+  }
+
+  clearOutput() {
+    this.output = '';
+  }
+
+  write(chars: string) {
+    this.process.stdin.write(chars);
   }
 }
 
@@ -131,7 +143,7 @@ export const commonFixtures: Fixtures<CommonFixtures, CommonWorkerFixtures> = {
     if (testInfo.status !== 'passed' && testInfo.status !== 'skipped' && !process.env.PWTEST_DEBUG) {
       for (const process of processes) {
         console.log('====== ' + process.params.command.join(' '));
-        console.log(process.output);
+        console.log(process.fullOutput.replace(/\x1Bc/g, ''));
         console.log('=========================================');
       }
     }

@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import { test, expect, stripAnsi } from './playwright-test-fixtures';
+import { test, expect } from './playwright-test-fixtures';
 
 test('should work directly', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('test 1', async ({}, testInfo) => {
         expect(testInfo.title).toBe('test 1');
       });
@@ -34,14 +34,16 @@ test('should work directly', async ({ runInlineTest }) => {
 test('should work via fixture', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'helper.ts': `
-      export const test = pwt.test.extend({
+      import { test as base } from '@playwright/test';
+      export * from '@playwright/test';
+      export const test = base.extend({
         title: async ({}, run, testInfo) => {
           await run(testInfo.title);
         },
       });
     `,
     'a.test.js': `
-      const { test } = require('./helper');
+      const { test, expect } = require('./helper');
       test('test 1', async ({title}) => {
         expect(title).toBe('test 1');
       });
@@ -56,14 +58,16 @@ test('should work via fixture', async ({ runInlineTest }) => {
 test('should work via test.info', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'helper.ts': `
-      export const test = pwt.test.extend({
+      import { test as base } from '@playwright/test';
+      export * from '@playwright/test';
+      export const test = base.extend({
         title: async ({}, run) => {
-          await run(pwt.test.info().title);
+          await run(base.info().title);
         },
       });
     `,
     'a.test.js': `
-      const { test } = require('./helper');
+      const { test, expect } = require('./helper');
       test('test 1', async ({title}) => {
         expect(test.info().title).toBe('test 1');
         expect(title).toBe('test 1');
@@ -79,12 +83,12 @@ test('should work via test.info', async ({ runInlineTest }) => {
 test('should throw outside test', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.info();
       test('test 1', async ({title}) => {});
     `,
   });
-  const output = stripAnsi(result.output);
+  const output = result.output;
   expect(result.exitCode).toBe(1);
   expect(output).toContain('test.info() can only be called while test is running');
 });

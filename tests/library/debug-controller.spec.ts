@@ -30,6 +30,7 @@ type Fixtures = {
 
 const test = baseTest.extend<Fixtures>({
   wsEndpoint: async ({ }, use) => {
+    process.env.PW_DEBUG_CONTROLLER_HEADLESS = '1';
     const server = new PlaywrightServer({ path: '/' + createGuid(), maxConnections: Number.MAX_VALUE, enableSocksProxy: false });
     const wsEndpoint = await server.listen();
     await use(wsEndpoint);
@@ -64,6 +65,7 @@ const test = baseTest.extend<Fixtures>({
 });
 
 test.slow(true, 'All controller tests are slow');
+test.skip(({ mode }) => mode === 'service');
 
 test('should pick element', async ({ backend, connectedBrowser }) => {
   const events = [];

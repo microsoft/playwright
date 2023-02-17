@@ -25,7 +25,7 @@ import type { LaunchOptions } from '../server/types';
 import { AndroidDevice } from '../server/android/android';
 import { DebugControllerDispatcher } from '../server/dispatchers/debugControllerDispatcher';
 
-export type ClientType = 'controller' | 'playwright' | 'launch-browser' | 'reuse-browser' | 'pre-launched-browser-or-android' | 'network-tethering';
+export type ClientType = 'controller' | 'playwright' | 'launch-browser' | 'reuse-browser' | 'pre-launched-browser-or-android';
 
 type Options = {
   socksProxyPattern: string | undefined,
@@ -37,8 +37,7 @@ type PreLaunched = {
   playwright?: Playwright | undefined;
   browser?: Browser | undefined;
   androidDevice?: AndroidDevice | undefined;
-  ownedSocksProxy?: SocksProxy | undefined;
-  sharedSocksProxy?: SocksProxy | undefined;
+  socksProxy?: SocksProxy | undefined;
 };
 
 export class PlaywrightConnection {
@@ -91,18 +90,8 @@ export class PlaywrightConnection {
         return await this._initLaunchBrowserMode(scope);
       if (clientType === 'playwright')
         return await this._initPlaywrightConnectMode(scope);
-      if (clientType === 'network-tethering')
-        return await this._initPlaywrightTetheringMode(scope);
       throw new Error('Unsupported client type: ' + clientType);
     });
-  }
-
-  private async _initPlaywrightTetheringMode(scope: RootDispatcher) {
-    this._debugLog(`engaged playwright.tethering mode`);
-    const playwright = createPlaywright('javascript');
-    this._preLaunched.sharedSocksProxy?.setPattern(this._options.socksProxyPattern);
-    // Tethering client owns the shared socks proxy.
-    return new PlaywrightDispatcher(scope, playwright, this._preLaunched.sharedSocksProxy);
   }
 
   private async _initPlaywrightConnectMode(scope: RootDispatcher) {
@@ -113,14 +102,7 @@ export class PlaywrightConnection {
       await Promise.all(playwright.allBrowsers().map(browser => browser.close()));
     });
 
-    let ownedSocksProxy: SocksProxy | undefined;
-    if (this._preLaunched.sharedSocksProxy) {
-      // Note: tethering client configures the pattern, and connected client's pattern is ignored.
-      playwright.options.socksProxyPort = this._preLaunched.sharedSocksProxy.port();
-      this._debugLog(`using shared socks proxy on port ${playwright.options.socksProxyPort}`);
-    } else {
-      ownedSocksProxy = await this._createOwnedSocksProxy(playwright);
-    }
+    const ownedSocksProxy = await this._createOwnedSocksProxy(playwright);
     return new PlaywrightDispatcher(scope, playwright, ownedSocksProxy);
   }
 
@@ -128,15 +110,7 @@ export class PlaywrightConnection {
     this._debugLog(`engaged launch mode for "${this._options.browserName}"`);
     const playwright = createPlaywright('javascript');
 
-    let ownedSocksProxy: SocksProxy | undefined;
-    if (this._preLaunched.sharedSocksProxy) {
-      // Note: tethering client configures the pattern, and connected client's pattern is ignored.
-      playwright.options.socksProxyPort = this._preLaunched.sharedSocksProxy.port();
-      this._debugLog(`using shared socks proxy on port ${playwright.options.socksProxyPort}`);
-    } else {
-      ownedSocksProxy = await this._createOwnedSocksProxy(playwright);
-    }
-
+    const ownedSocksProxy = await this._createOwnedSocksProxy(playwright);
     const browser = await playwright[this._options.browserName as 'chromium'].launch(serverSideCallMetadata(), this._options.launchOptions);
 
     this._cleanups.push(async () => {
@@ -156,8 +130,7 @@ export class PlaywrightConnection {
     const playwright = this._preLaunched.playwright!;
 
     // Note: connected client owns the socks proxy and configures the pattern.
-    playwright.options.socksProxyPort = this._preLaunched.ownedSocksProxy?.port();
-    this._preLaunched.ownedSocksProxy?.setPattern(this._options.socksProxyPattern);
+    this._preLaunched.socksProxy?.setPattern(this._options.socksProxyPattern);
 
     const browser = this._preLaunched.browser!;
     browser.on(Browser.Events.Disconnected, () => {
@@ -165,7 +138,7 @@ export class PlaywrightConnection {
       this.close({ code: 1001, reason: 'Browser closed' });
     });
 
-    const playwrightDispatcher = new PlaywrightDispatcher(scope, playwright, this._preLaunched.ownedSocksProxy, browser);
+    const playwrightDispatcher = new PlaywrightDispatcher(scope, playwright, this._preLaunched.socksProxy, browser);
     // In pre-launched mode, keep only the pre-launched browser.
     for (const b of playwright.allBrowsers()) {
       if (b !== browser)
@@ -196,12 +169,11 @@ export class PlaywrightConnection {
   }
 
   private async _initReuseBrowsersMode(scope: RootDispatcher) {
+    // Note: reuse browser mode does not support socks proxy, because
+    // clients come and go, while the browser stays the same.
+
     this._debugLog(`engaged reuse browsers mode for ${this._options.browserName}`);
     const playwright = this._preLaunched.playwright!;
-
-    // Note: connected client owns the socks proxy and configures the pattern.
-    playwright.options.socksProxyPort = this._preLaunched.sharedSocksProxy?.port();
-    this._debugLog(`using shared socks proxy on port ${playwright.options.socksProxyPort}`);
 
     const requestedOptions = launchOptionsHash(this._options.launchOptions);
     let browser = playwright.allBrowsers().find(b => {
@@ -220,7 +192,10 @@ export class PlaywrightConnection {
     }
 
     if (!browser) {
-      browser = await playwright[(this._options.browserName || 'chromium') as 'chromium'].launch(serverSideCallMetadata(), this._options.launchOptions);
+      browser = await playwright[(this._options.browserName || 'chromium') as 'chromium'].launch(serverSideCallMetadata(), {
+        ...this._options.launchOptions,
+        headless: !!process.env.PW_DEBUG_CONTROLLER_HEADLESS,
+      });
       browser.on(Browser.Events.Disconnected, () => {
         // Underlying browser did close for some reason - force disconnect the client.
         this.close({ code: 1001, reason: 'Browser closed' });
@@ -284,6 +259,8 @@ function launchOptionsHash(options: LaunchOptions) {
     if (copy[key] === defaultLaunchOptions[key])
       delete copy[key];
   }
+  for (const key of optionsThatAllowBrowserReuse)
+    delete copy[key];
   return JSON.stringify(copy);
 }
 
@@ -295,3 +272,7 @@ const defaultLaunchOptions: LaunchOptions = {
   headless: true,
   devtools: false,
 };
+
+const optionsThatAllowBrowserReuse: (keyof LaunchOptions)[] = [
+  'headless',
+];

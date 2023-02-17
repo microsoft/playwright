@@ -17,7 +17,6 @@
 import { expect, test as it } from './pageTest';
 
 it('should not hit scroll bar', async ({ page, browserName, platform }) => {
-  it.fixme(browserName === 'webkit' && platform === 'darwin');
   it.fixme(browserName === 'webkit' && platform === 'linux', 'Fails in headless and in headful on Ubuntu 22.04');
   it.fixme(browserName === 'webkit' && platform === 'win32', 'https://github.com/microsoft/playwright/issues/18452');
 
@@ -86,4 +85,14 @@ it('should not crash when force-clicking hidden input', async ({ page, browserNa
   await page.setContent(`<input type=hidden>`);
   const error = await page.locator('input').click({ force: true, timeout: 2000 }).catch(e => e);
   expect(error.message).toContain('Element is not visible');
+});
+
+it('should scroll into view span element', async ({ page }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/20165' });
+  await page.setContent(`
+    <div id=big style="height: 10000px;"></div>
+    <span id=small>foo</span>
+  `);
+  await page.locator('#small').scrollIntoViewIfNeeded();
+  expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(9000);
 });

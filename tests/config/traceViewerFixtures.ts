@@ -29,7 +29,7 @@ type BaseWorkerFixtures = {
 };
 
 export type TraceViewerFixtures = {
-  showTraceViewer: (trace: string[], preferredPort?: number) => Promise<TraceViewerPage>;
+  showTraceViewer: (trace: string[], options?: {host?: string, port?: number}) => Promise<TraceViewerPage>;
   runAndTrace: (body: () => Promise<void>) => Promise<TraceViewerPage>;
 };
 
@@ -55,13 +55,13 @@ class TraceViewerPage {
   }
 
   async actionIconsText(action: string) {
-    const entry = await this.page.waitForSelector(`.action-entry:has-text("${action}")`);
+    const entry = await this.page.waitForSelector(`.list-view-entry:has-text("${action}")`);
     await entry.waitForSelector('.action-icon-value:visible');
     return await entry.$$eval('.action-icon-value:visible', ee => ee.map(e => e.textContent));
   }
 
   async actionIcons(action: string) {
-    return await this.page.waitForSelector(`.action-entry:has-text("${action}") .action-icons`);
+    return await this.page.waitForSelector(`.list-view-entry:has-text("${action}") .action-icons`);
   }
 
   async selectAction(title: string, ordinal: number = 0) {
@@ -112,8 +112,8 @@ export const traceViewerFixtures: Fixtures<TraceViewerFixtures, {}, BaseTestFixt
   showTraceViewer: async ({ playwright, browserName, headless }, use) => {
     const browsers: Browser[] = [];
     const contextImpls: any[] = [];
-    await use(async (traces: string[], preferredPort?: number) => {
-      const contextImpl = await showTraceViewer(traces, browserName, headless, preferredPort);
+    await use(async (traces: string[], { host, port } = {}) => {
+      const contextImpl = await showTraceViewer(traces, browserName, { headless, host, port });
       const browser = await playwright.chromium.connectOverCDP(contextImpl._browser.options.wsEndpoint);
       browsers.push(browser);
       contextImpls.push(contextImpl);

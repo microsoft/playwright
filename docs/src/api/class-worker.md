@@ -73,6 +73,9 @@ additional values that are not serializable by `JSON`: `-0`, `NaN`, `Infinity`, 
 ### param: Worker.evaluate.expression = %%-evaluate-expression-%%
 * since: v1.8
 
+### param: Worker.evaluate.expression = %%-js-worker-evaluate-workerfunction-%%
+* since: v1.8
+
 ### param: Worker.evaluate.arg
 * since: v1.8
 - `arg` ?<[EvaluationArgument]>
@@ -95,6 +98,9 @@ the promise to resolve and return its value.
 ### param: Worker.evaluateHandle.expression = %%-evaluate-expression-%%
 * since: v1.8
 
+### param: Worker.evaluateHandle.expression = %%-js-worker-evaluate-workerfunction-%%
+* since: v1.8
+
 ### param: Worker.evaluateHandle.arg
 * since: v1.8
 - `arg` ?<[EvaluationArgument]>
@@ -113,4 +119,7 @@ Optional argument to pass to [`param: expression`].
 Performs action and waits for the Worker to close.
 
 ### option: Worker.waitForClose.timeout = %%-wait-for-event-timeout-%%
+* since: v1.9
+
+### param: Worker.waitForClose.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9

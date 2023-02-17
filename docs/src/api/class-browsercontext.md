@@ -312,6 +312,20 @@ Script to be evaluated in all pages in the browser context.
 
 Optional argument to pass to [`param: script`] (only supported when passing a function).
 
+### param: BrowserContext.addInitScript.path
+* since: v1.8
+* langs: python
+- `path` ?<[path]>
+
+Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
+
+### param: BrowserContext.addInitScript.script
+* since: v1.8
+* langs: python
+- `script` ?<[string]>
+
+Script to be evaluated in all pages in the browser context. Optional.
+
 ## method: BrowserContext.backgroundPages
 * since: v1.11
 * langs: js, python
@@ -857,7 +871,7 @@ The [origin] to grant permissions to, e.g. "https://example.com".
 
 ## async method: BrowserContext.newCDPSession
 * since: v1.11
-* langs: js, python
+* langs: js, python, csharp
 - returns: <[CDPSession]>
 
 :::note
@@ -1338,6 +1352,11 @@ var page = await context.RunAndWaitForPageAsync(async () =>
 });
 ```
 
+## async method: BrowserContext.waitForEvent
+* since: v1.8
+* langs: python
+- returns: <[EventContextManager]>
+
 ### param: BrowserContext.waitForEvent.event
 * since: v1.8
 - `event` <[string]>
@@ -1354,6 +1373,12 @@ Event name, same one would pass into `browserContext.on(event)`.
 
 Either a predicate that receives an event or an options object. Optional.
 
+### option: BrowserContext.waitForEvent.predicate = %%-wait-for-event-predicate-%%
+* since: v1.8
+
+### option: BrowserContext.waitForEvent.timeout = %%-wait-for-event-timeout-%%
+* since: v1.8
+
 ## async method: BrowserContext.waitForPage
 * since: v1.9
 * langs: java, python, csharp
@@ -1365,7 +1390,15 @@ Performs action and waits for a new [Page] to be created in the context. If pred
 [Page] value into the `predicate` function and waits for `predicate(event)` to return a truthy value.
 Will throw an error if the context closes before new [Page] is created.
 
-### option: BrowserContext.waitForPage.predicate =
+## async method: BrowserContext.waitForPage
+* since: v1.9
+* langs: python
+- returns: <[EventContextManager]<[Page]>>
+
+### param: BrowserContext.waitForPage.action = %%-csharp-wait-for-event-action-%%
+* since: v1.12
+
+### option: BrowserContext.waitForPage.predicate
 * since: v1.9
 * langs: csharp, java, python
 - `predicate` <[function]\([Page]\):[boolean]>
@@ -1373,6 +1406,9 @@ Will throw an error if the context closes before new [Page] is created.
 Receives the [Page] object and resolves to truthy value when the waiting should resolve.
 
 ### option: BrowserContext.waitForPage.timeout = %%-wait-for-event-timeout-%%
+* since: v1.9
+
+### param: BrowserContext.waitForPage.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9
 
 ## async method: BrowserContext.waitForEvent2

@@ -19,7 +19,7 @@ import { test, expect } from './playwright-test-fixtures';
 test('should repeat from command line', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('test', ({}, testInfo) => {
         console.log('REPEAT ' + testInfo.repeatEachIndex);
         expect(1).toBe(1);
@@ -43,7 +43,7 @@ test('should repeat based on config', async ({ runInlineTest }) => {
       ] };
     `,
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('my test', ({}, testInfo) => {});
     `
   });

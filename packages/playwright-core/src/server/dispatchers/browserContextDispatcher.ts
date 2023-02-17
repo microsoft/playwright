@@ -31,7 +31,7 @@ import type { Request, Response } from '../network';
 import { TracingDispatcher } from './tracingDispatcher';
 import * as fs from 'fs';
 import * as path from 'path';
-import { createGuid } from '../../utils';
+import { createGuid, urlMatches } from '../../utils';
 import { WritableStreamDispatcher } from './writableStreamDispatcher';
 
 export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channels.BrowserContextChannel, DispatcherScope> implements channels.BrowserContextChannel {
@@ -216,13 +216,18 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     await this._context.addInitScript(params.source);
   }
 
-  async setNetworkInterceptionEnabled(params: channels.BrowserContextSetNetworkInterceptionEnabledParams): Promise<void> {
-    if (!params.enabled) {
+  async setNetworkInterceptionPatterns(params: channels.BrowserContextSetNetworkInterceptionPatternsParams): Promise<void> {
+    if (!params.patterns.length) {
       await this._context.setRequestInterceptor(undefined);
       return;
     }
+    const urlMatchers = params.patterns.map(pattern => pattern.regexSource ? new RegExp(pattern.regexSource, pattern.regexFlags!) : pattern.glob!);
     await this._context.setRequestInterceptor((route, request) => {
+      const matchesSome = urlMatchers.some(urlMatch => urlMatches(this._context._options.baseURL, request.url(), urlMatch));
+      if (!matchesSome)
+        return false;
       this._dispatchEvent('route', { route: RouteDispatcher.from(RequestDispatcher.from(this, request), route) });
+      return true;
     });
   }
 

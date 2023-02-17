@@ -276,7 +276,14 @@ When using [`method: Page.goto`], [`method: Page.route`], [`method: Page.waitFor
   - `width` <[int]> page width in pixels.
   - `height` <[int]> page height in pixels.
 
-Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. `null` disables the default viewport.
+Emulates consistent viewport for each page. Defaults to an 1280x720 viewport.
+Use `null` to disable the consistent viewport emulation.
+
+:::note
+The `null` value opts out from the default presets, makes viewport depend on the
+host window size defined by the operating system. It makes the execution of the
+tests non-deterministic.
+:::
 
 ## csharp-context-option-viewport
 * langs: csharp
@@ -285,7 +292,14 @@ Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. `n
   - `width` <[int]> page width in pixels.
   - `height` <[int]> page height in pixels.
 
-Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Use `ViewportSize.NoViewport` to disable the default viewport.
+Emulates consistent viewport for each page. Defaults to an 1280x720 viewport.
+Use `ViewportSize.NoViewport` to disable the consistent viewport emulation.
+
+:::note
+The `ViewportSize.NoViewport` value opts out from the default presets,
+makes viewport depend on the host window size defined by the operating system.
+It makes the execution of the tests non-deterministic.
+:::
 
 ## context-option-screen
 * langs:
@@ -325,7 +339,7 @@ Optional request parameters.
 * langs: js, python, csharp
 - `headers` <[Object]<[string], [string]>>
 
-Allows to set HTTP headers.
+Allows to set HTTP headers. These headers will apply to the fetched request as well as any redirects initiated by it.
 
 ## js-python-csharp-fetch-option-timeout
 * langs: js, python, csharp
@@ -416,13 +430,13 @@ Function to be evaluated in the page context.
 
 ## js-evalonselector-pagefunction
 * langs: js
-- `pageFunction` <[function]\([Element]\)>
+- `pageFunction` <[function]\([Element]\)|[string]>
 
 Function to be evaluated in the page context.
 
 ## js-evalonselectorall-pagefunction
 * langs: js
-- `pageFunction` <[function]\([Array]<[Element]>\)>
+- `pageFunction` <[function]\([Array]<[Element]>\)|[string]>
 
 Function to be evaluated in the page context.
 

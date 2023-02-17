@@ -559,7 +559,8 @@ it('should have popup requests', async ({ contextFactory, server }, testInfo) =>
 });
 
 it('should not contain internal pages', async ({ browserName, contextFactory, server }, testInfo) => {
-  it.fixme(true, 'https://github.com/microsoft/playwright/issues/6743');
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/6743' });
+
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('Set-Cookie', 'name=value');
     res.end();

@@ -32,7 +32,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 14
+        node-version: 16
     - run: npm i -g npm@8
     - run: npm ci
       env:
@@ -63,7 +63,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 14
+        node-version: 16
     - run: npm i -g npm@8
     - run: npm ci
       env:
@@ -92,7 +92,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 14
+        node-version: 16
     - run: npm i -g npm@8
     - run: npm ci
       env:
@@ -154,7 +154,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 14
+        node-version: 16
     - run: npm i -g npm@8
     - run: npm ci
       env:
@@ -186,7 +186,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 14
+        node-version: 16
     - run: npm i -g npm@8
     - run: npm ci
       env:
@@ -195,11 +195,6 @@ jobs:
     - run: npm run build
     - run: npx playwright install --with-deps chromium
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest
-      if: matrix.mode == 'service'
-      env:
-        PWTEST_MODE: ${{ matrix.mode }}
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest
-      if: matrix.mode != 'service'
       env:
         PWTEST_MODE: ${{ matrix.mode }}
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
@@ -227,7 +222,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 14
+        node-version: 16
     - run: npm i -g npm@8
     - run: npm ci
       env:
@@ -250,7 +245,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 14
+        node-version: 16
     - run: npm i -g npm@8
     - run: npm ci
       env:
@@ -276,7 +271,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 14
+        node-version: 16
     - run: npm i -g npm@8
     - run: npm ci
       env:
@@ -303,7 +298,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 14
+        node-version: 16
     - run: npm i -g npm@8
     - run: npm ci
       env:
@@ -333,7 +328,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 14
+        node-version: 16
     - run: npm i -g npm@8
     - run: npm ci
       env:
@@ -368,7 +363,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 14
+        node-version: 16
     - run: npm i -g npm@8
     - run: npm ci
       env:
@@ -399,7 +394,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 14
+        node-version: 16
     - run: npm i -g npm@8
     - run: npm ci
       env:
@@ -425,7 +420,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 14
+        node-version: 16
     - run: npm i -g npm@8
     - run: npm ci
       env:
@@ -452,7 +447,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 14
+        node-version: 16
     - run: npm i -g npm@8
     - run: npm ci
       env:
@@ -478,7 +473,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 14
+        node-version: 16
     - run: npm i -g npm@8
     - run: npm ci
       env:
@@ -505,7 +500,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 14
+        node-version: 16
     - run: npm i -g npm@8
     - run: npm ci
       env:
@@ -532,7 +527,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 14
+        node-version: 16
     - run: npm i -g npm@8
     - run: npm ci
       env:
@@ -558,7 +553,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 14
+        node-version: 16
     - run: npm i -g npm@8
     - run: npm ci
       env:
@@ -584,7 +579,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 14
+        node-version: 16
     - run: npm i -g npm@8
     - run: npm ci
       env:
@@ -611,7 +606,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 14
+        node-version: 16
     - run: npm i -g npm@8
     - run: npm ci
       env:
@@ -637,7 +632,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 14
+        node-version: 16
     - run: npm i -g npm@8
     - run: npm ci
       env:
@@ -663,7 +658,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 14
+        node-version: 16
     - run: npm i -g npm@8
     - run: npm ci
       env:
@@ -690,7 +685,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 14
+        node-version: 16
     - run: npm i -g npm@8
     - run: npm ci
       env:
@@ -716,7 +711,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 14
+        node-version: 16
     - run: npm i -g npm@8
     - run: npm ci
       env:
@@ -742,7 +737,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 14
+        node-version: 16
     - run: npm i -g npm@8
     - run: npm ci
       env:
@@ -769,7 +764,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 14
+        node-version: 16
     - run: npm i -g npm@8
     - run: npm ci
       env:
@@ -795,41 +790,10 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 14
+        node-version: 16
     - run: npm i -g npm@8
     - run: npm ci
     - run: npm run build
     - run: npx playwright install-deps
     - run: utils/build/build-playwright-driver.sh
-
-  smoke_test_docker_integration:
-    runs-on: ubuntu-20.04
-    steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
-      with:
-        node-version: 14
-    - run: npm i -g npm@8
-    - run: npm ci
-      env:
-        DEBUG: pw:install
-        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
-    - run: npm run build
-    - run: npx playwright install --with-deps
-    - run: |
-        ./utils/docker/build.sh --amd64 focal $PWTEST_DOCKER_BASE_IMAGE
-        npx playwright docker build
-        nohup npx playwright docker start &
-        xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --grep '@smoke'
-      env:
-        PLAYWRIGHT_DOCKER: 1
-        PWTEST_DOCKER_BASE_IMAGE: playwright:localbuild
-    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always()
-      shell: bash
-    - uses: actions/upload-artifact@v3
-      if: always()
-      with:
-        name: docker-integration-test-results
-        path: test-results
 

@@ -4,7 +4,6 @@
 ../common
 ../debug/injected
 ../generated/
-../grid
 ../server/injected/
 ../server/trace
 ../utils

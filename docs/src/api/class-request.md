@@ -56,6 +56,12 @@ page.RequestFailed += (_, request) =>
 };
 ```
 
+## method: Request.failure
+* since: v1.8
+* langs: js
+- returns: <[null]|[Object]>
+  - `errorText` <[string]> Human-readable error message, e.g. `'net::ERR_FAILED'`.
+
 ## method: Request.frame
 * since: v1.8
 - returns: <[Frame]>
@@ -119,6 +125,16 @@ Request's post body in a binary form, if any.
 * since: v1.8
 * langs: js, python
 - returns: <[null]|[Serializable]>
+
+Returns parsed request's body for `form-urlencoded` and JSON as a fallback if any.
+
+When the response is `application/x-www-form-urlencoded` then a key/value object of the values will be returned.
+Otherwise it will be parsed as JSON.
+
+## method: Request.postDataJSON
+* since: v1.12
+* langs: csharp
+- returns: <[null]|[JsonElement]>
 
 Returns parsed request's body for `form-urlencoded` and JSON as a fallback if any.
 

@@ -21,7 +21,7 @@ import fs from 'fs';
 test('should reuse context', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'src/reuse.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       let lastContextGuid;
       test('one', async ({ context }) => {
         lastContextGuid = context._guid;
@@ -66,7 +66,7 @@ test('should not reuse context with video if mode=when-possible', async ({ runIn
       };
     `,
     'src/reuse.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       let lastContextGuid;
 
       test('one', async ({ context }) => {
@@ -93,7 +93,7 @@ test('should reuse context and disable video if mode=force', async ({ runInlineT
       };
     `,
     'reuse.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       let lastContextGuid;
 
       test('one', async ({ context, page }) => {
@@ -122,7 +122,7 @@ test('should reuse context with trace if mode=when-possible', async ({ runInline
       };
     `,
     'reuse.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       let lastContextGuid;
 
       test('one', async ({ context, page }) => {
@@ -165,7 +165,7 @@ test('should reuse context with trace if mode=when-possible', async ({ runInline
 test('should work with manually closed pages', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'src/button.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
 
       test('closes page', async ({ page }) => {
         await page.close();
@@ -194,7 +194,7 @@ test('should work with manually closed pages', async ({ runInlineTest }) => {
 test('should clean storage', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'src/reuse.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       let lastContextGuid;
 
       test.beforeEach(async ({ page }) => {
@@ -237,7 +237,7 @@ test('should clean storage', async ({ runInlineTest }) => {
 test('should restore localStorage', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'src/reuse.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       let lastContextGuid;
 
       test.use({
@@ -312,7 +312,7 @@ test('should clean db', async ({ runInlineTest }) => {
   test.slow();
   const result = await runInlineTest({
     'src/reuse.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       let lastContextGuid;
 
       test.beforeEach(async ({ page }) => {
@@ -351,7 +351,7 @@ test('should clean db', async ({ runInlineTest }) => {
 test('should restore cookies', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'src/reuse.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       let lastContextGuid;
 
       test.use({
@@ -409,7 +409,7 @@ test('should restore cookies', async ({ runInlineTest }) => {
 test('should reuse context with beforeunload', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'src/reuse.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       let lastContextGuid;
       test('one', async ({ page, context }) => {
         lastContextGuid = context._guid;
@@ -434,7 +434,7 @@ test('should reuse context with beforeunload', async ({ runInlineTest }) => {
 test('should cancel pending operations upon reuse', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'src/reuse.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('one', async ({ page }) => {
         await Promise.race([
           page.getByText('click me').click().catch(e => {}),
@@ -460,7 +460,7 @@ test('should reset tracing', async ({ runInlineTest }, testInfo) => {
   const traceFile2 = testInfo.outputPath('trace2.zip');
   const result = await runInlineTest({
     'reuse.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('one', async ({ page }) => {
         await page.context().tracing.start({ snapshots: true });
         await page.setContent('<button>Click</button>');
@@ -494,4 +494,25 @@ test('should reset tracing', async ({ runInlineTest }, testInfo) => {
     'locator.click',
   ]);
   expect(trace2.events.some(e => e.type === 'frame-snapshot')).toBe(true);
+});
+
+test('should not delete others contexts', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'src/reuse.test.ts': `
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend<{ loggedInPage: Page }>({
+        loggedInPage: async ({ browser }, use) => {
+          const page = await browser.newPage();
+          await use(page);
+          await page.close();
+        },
+      });
+      test("passes", async ({ loggedInPage, page }) => {
+        await loggedInPage.goto('data:text/plain,Hello world');
+      });
+    `,
+  }, { workers: 1 }, { PW_TEST_REUSE_CONTEXT: '1' });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
 });

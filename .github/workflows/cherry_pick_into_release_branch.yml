@@ -48,12 +48,12 @@ jobs:
           git commit -m "$COMMIT_MESSAGE"
         done
         LAST_COMMIT_MESSAGE=$(git show -s --format=%B)
-        echo "::set-output name=PR_TITLE::$LAST_COMMIT_MESSAGE"
+        echo "PR_TITLE=$LAST_COMMIT_MESSAGE" >> $GITHUB_OUTPUT
     - name: Prepare branch
       id: prepare-branch
       run: |
         BRANCH_NAME="cherry-pick-${{ github.event.inputs.version }}-$(date +%Y-%m-%d-%H-%M-%S)"
-        echo "::set-output name=BRANCH_NAME::$BRANCH_NAME"
+        echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_OUTPUT
         git checkout -b "$BRANCH_NAME"
         git push origin $BRANCH_NAME
     - name: Create Pull Request

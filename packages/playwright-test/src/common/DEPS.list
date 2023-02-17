@@ -1,0 +1,9 @@
+[*]
+../util.ts
+../utilsBundle.ts
+
+[transform.ts]
+../third_party/tsconfig-loader.ts
+
+[testType.ts]
+../matchers/expect.ts

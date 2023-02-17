@@ -94,6 +94,7 @@ it('should use proxy', async ({ contextFactory, server, proxyServer }) => {
 
 it('should set cookie for top-level domain', async ({ contextFactory, server, proxyServer, browserName, isLinux }) => {
   it.fixme(browserName === 'webkit' && isLinux);
+
   proxyServer.forwardTo(server.PORT);
   const context = await contextFactory({
     proxy: { server: `localhost:${proxyServer.PORT}` }
@@ -129,7 +130,7 @@ it.describe('should proxy local network requests', () => {
         }
       ]) {
         it(`${params.description}`, async ({ platform, browserName, contextFactory, server, proxyServer }) => {
-          it.fixme(browserName === 'webkit' && platform === 'darwin' && ['localhost', '127.0.0.1'].includes(params.target), 'Flaky on macOS; needs investigation.');
+          it.skip(browserName === 'webkit' && platform === 'darwin' && ['localhost', '127.0.0.1'].includes(params.target), 'Mac webkit does not proxy localhost');
 
           const path = `/target-${additionalBypass}-${params.target}.html`;
           server.setRoute(path, async (req, res) => {
@@ -209,7 +210,8 @@ it('should use proxy for second page', async ({ contextFactory, server, proxySer
   await context.close();
 });
 
-it('should use proxy for https urls', async ({ contextFactory, server, httpsServer, proxyServer }) => {
+it('should use proxy for https urls', async ({ contextFactory, httpsServer, proxyServer, isWindows, browserName }) => {
+  it.fixme(browserName === 'webkit' && isWindows, 'Fixed upstream, https://github.com/microsoft/playwright/issues/20822');
   httpsServer.setRoute('/target.html', async (req, res) => {
     res.end('<html><title>Served by https server via proxy</title></html>');
   });
@@ -287,8 +289,6 @@ it('should authenticate with empty password', async ({ contextFactory, server, p
 });
 
 it('should isolate proxy credentials between contexts', async ({ contextFactory, server, browserName, proxyServer }) => {
-  it.fixme(browserName === 'firefox', 'Credentials from the first context stick around');
-
   proxyServer.forwardTo(server.PORT);
   let auth;
   proxyServer.setAuthHandler(req => {

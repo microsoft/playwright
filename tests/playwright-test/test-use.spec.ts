@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-import { test, expect, stripAnsi } from './playwright-test-fixtures';
+import { test, expect } from './playwright-test-fixtures';
 
 test('should merge options', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      const test = pwt.test.extend({
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend({
         foo: 'foo',
         bar: 'bar',
       });
@@ -39,12 +40,14 @@ test('should merge options', async ({ runInlineTest }) => {
 test('should run tests with different test options in the same worker', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'helper.ts': `
-      export const test = pwt.test.extend({
+      import { test as base } from '@playwright/test';
+      export * from '@playwright/test';
+      export const test = base.extend({
         foo: 'foo',
       });
     `,
     'a.test.ts': `
-      import { test } from './helper';
+      import { test, expect } from './helper';
       test('test', ({ foo }, testInfo) => {
         expect(foo).toBe('foo');
         expect(testInfo.workerIndex).toBe(0);
@@ -74,7 +77,8 @@ test('should run tests with different test options in the same worker', async ({
 test('should throw when setting worker options in describe', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      const test = pwt.test.extend({
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend({
         foo: [undefined, { scope: 'worker' }],
       });
       test.describe('suite', () => {
@@ -90,25 +94,27 @@ test('should throw when setting worker options in describe', async ({ runInlineT
     `Cannot use({ foo }) in a describe group, because it forces a new worker.`,
     `Make it top-level in the test file or put in the configuration file.`,
   ].join('\n'));
-  expect(stripAnsi(result.output)).toContain(`{ foo: 'bar' }`);
+  expect(result.output).toContain(`{ foo: 'bar' }`);
 });
 
 test('should run tests with different worker options', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'helper.ts': `
-      export const test = pwt.test.extend({
+      import { test as base } from '@playwright/test';
+      export * from '@playwright/test';
+      export const test = base.extend({
         foo: [undefined, { scope: 'worker' }],
       });
     `,
     'a.test.ts': `
-      import { test } from './helper';
+      import { test, expect } from './helper';
       test('test', ({ foo }, testInfo) => {
         expect(foo).toBe(undefined);
         expect(testInfo.workerIndex).toBe(0);
       });
     `,
     'b.test.ts': `
-      import { test } from './helper';
+      import { test, expect } from './helper';
       test.use({ foo: 'bar' });
 
       test('test1', ({ foo }, testInfo) => {
@@ -122,7 +128,7 @@ test('should run tests with different worker options', async ({ runInlineTest })
       });
     `,
     'c.test.ts': `
-      import { test } from './helper';
+      import { test, expect } from './helper';
       test.use({ foo: 'baz' });
       test('test2', ({ foo }, testInfo) => {
         expect(foo).toBe('baz');
@@ -138,7 +144,9 @@ test('should run tests with different worker options', async ({ runInlineTest })
 test('should use options from the config', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'helper.ts': `
-      export const test = pwt.test.extend({
+      import { test as base } from '@playwright/test';
+      export * from '@playwright/test';
+      export const test = base.extend({
         foo: [ 'foo', { option: true } ],
       });
     `,
@@ -146,7 +154,7 @@ test('should use options from the config', async ({ runInlineTest }) => {
       module.exports = { use: { foo: 'bar' } };
     `,
     'a.test.ts': `
-      import { test } from './helper';
+      import { test, expect } from './helper';
       test('test1', ({ foo }) => {
         expect(foo).toBe('bar');
       });
@@ -167,7 +175,7 @@ test('should use options from the config', async ({ runInlineTest }) => {
 test('test.use() should throw if called from beforeAll ', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      const test = pwt.test;
+      import { test, expect } from '@playwright/test';
       test.beforeAll(() => {
         test.use({});
       });

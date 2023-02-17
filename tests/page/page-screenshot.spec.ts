@@ -61,7 +61,8 @@ it.describe('page screenshot', () => {
   });
 
   it('should capture blinking caret if explicitly asked for', async ({ page, server, browserName }) => {
-    it.fixme(browserName === 'firefox', 'browser-level screenshot API in firefox does not capture caret');
+    it.skip(browserName === 'firefox', 'browser-level screenshot API in firefox does not capture caret');
+
     await page.setContent(`
       <!-- Refer to stylesheet from other origin. Accessing this
            stylesheet rules will throw.
@@ -267,7 +268,9 @@ it.describe('page screenshot', () => {
     expect(screenshot).toMatchSnapshot('screenshot-clip-odd-size.png');
   });
 
-  it('should work for canvas', async ({ page, server }) => {
+  it('should work for canvas', async ({ page, server, browserName, channel, browserMajorVersion, isElectron, isMac }) => {
+    it.fixme(browserName === 'firefox' && channel === 'firefox-beta' && browserMajorVersion === 110, 'https://github.com/microsoft/playwright/issues/20522');
+    it.fixme(isElectron && isMac, 'Fails on the bots');
     await page.setViewportSize({ width: 500, height: 500 });
     await page.goto(server.PREFIX + '/screenshots/canvas.html');
     const screenshot = await page.screenshot();
@@ -307,7 +310,7 @@ it.describe('page screenshot', () => {
   });
 
   it('should work for webgl', async ({ page, server, browserName }) => {
-    it.fixme(browserName === 'firefox' || browserName === 'webkit');
+    it.fixme(browserName === 'firefox');
 
     await page.setViewportSize({ width: 640, height: 480 });
     await page.goto(server.PREFIX + '/screenshots/webgl.html');

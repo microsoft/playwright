@@ -9,14 +9,13 @@ const Cu = Components.utils;
 
 const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 const {SimpleChannel} = ChromeUtils.import('chrome://juggler/content/SimpleChannel.js');
-const {EventEmitter} = ChromeUtils.import('resource://gre/modules/EventEmitter.jsm');
 const {Runtime} = ChromeUtils.import('chrome://juggler/content/content/Runtime.js');
 
 const helper = new Helper();
 
 class FrameTree {
   constructor(rootDocShell) {
-    EventEmitter.decorate(this);
+    helper.decorateAsEventEmitter(this);
 
     this._browsingContextGroup = rootDocShell.browsingContext.group;
     if (!this._browsingContextGroup.__jugglerFrameTrees)
@@ -33,6 +32,7 @@ class FrameTree {
     this._docShellToFrame = new Map();
     this._frameIdToFrame = new Map();
     this._pageReady = false;
+    this._javaScriptDisabled = false;
     this._mainFrame = this._createFrame(rootDocShell);
     const webProgress = rootDocShell.QueryInterface(Ci.nsIInterfaceRequestor)
                                 .getInterface(Ci.nsIWebProgress);
@@ -128,6 +128,12 @@ class FrameTree {
     this.scrollbarsHidden = hidden;
   }
 
+  setJavaScriptDisabled(javaScriptDisabled) {
+    this._javaScriptDisabled = javaScriptDisabled;
+    for (const frame of this.frames())
+      frame._updateJavaScriptDisabled();
+  }
+
   _onWorkerCreated(workerDebugger) {
     // Note: we do not interoperate with firefox devtools.
     if (workerDebugger.isInitialized)
@@ -214,7 +220,7 @@ class FrameTree {
     const docShell = progress.DOMWindow.docShell;
     const frame = this._docShellToFrame.get(docShell);
     if (!frame) {
-      dump(`ERROR: got a state changed event for un-tracked docshell!\n`);
+      dump(`WARNING: got a state changed event for un-tracked docshell!\n`);
       return;
     }
 
@@ -227,7 +233,6 @@ class FrameTree {
     const isStart = flag & Ci.nsIWebProgressListener.STATE_START;
     const isTransferring = flag & Ci.nsIWebProgressListener.STATE_TRANSFERRING;
     const isStop = flag & Ci.nsIWebProgressListener.STATE_STOP;
-    const isDocument = flag & Ci.nsIWebProgressListener.STATE_IS_DOCUMENT;
 
     if (isStart) {
       // Starting a new navigation.
@@ -257,9 +262,6 @@ class FrameTree {
       if (frame === this._mainFrame && status !== Cr.NS_BINDING_ABORTED)
         this.forcePageReady();
     }
-
-    if (isStop && isDocument)
-      this.emit(FrameTree.Events.Load, frame);
   }
 
   onLocationChange(progress, request, location, flags) {
@@ -287,6 +289,10 @@ class FrameTree {
 
   _createFrame(docShell) {
     const parentFrame = this._docShellToFrame.get(docShell.parent) || null;
+    if (!parentFrame && this._mainFrame) {
+      dump(`WARNING: found docShell with the same root, but no parent!\n`);
+      return;
+    }
     const frame = new Frame(this, this._runtime, docShell, parentFrame);
     this._docShellToFrame.set(docShell, frame);
     this._frameIdToFrame.set(frame.id(), frame);
@@ -308,6 +314,11 @@ class FrameTree {
     // Detach all children first
     for (const subframe of frame._children)
       this._detachFrame(subframe);
+    if (frame === this._mainFrame) {
+      // Do not detach main frame (happens during cross-process navigation),
+      // as it confuses the client.
+      return;
+    }
     this._docShellToFrame.delete(frame._docShell);
     this._frameIdToFrame.delete(frame.id());
     if (frame._parentFrame)
@@ -333,7 +344,6 @@ FrameTree.Events = {
   NavigationAborted: 'navigationaborted',
   SameDocumentNavigation: 'samedocumentnavigation',
   PageReady: 'pageready',
-  Load: 'load',
 };
 
 class IsolatedWorld {
@@ -518,6 +528,20 @@ class Frame {
       for (const script of world._scriptsToEvaluateOnNewDocument)
         executionContext.evaluateScriptSafely(script);
     }
+
+    const url = this.domWindow().location?.href;
+    if (url === 'about:blank' && !this._url) {
+      // Sometimes FrameTree is created too early, before the location has been set.
+      this._url = url;
+      this._frameTree.emit(FrameTree.Events.NavigationCommitted, this);
+    }
+
+    this._updateJavaScriptDisabled();
+  }
+
+  _updateJavaScriptDisabled() {
+    if (this._docShell.browsingContext.currentWindowContext)
+      this._docShell.browsingContext.currentWindowContext.allowJavascript = !this._frameTree._javaScriptDisabled;
   }
 
   mainExecutionContext() {
@@ -592,7 +616,7 @@ class Worker {
       onMessage: msg => void this._channel._onMessage(JSON.parse(msg)),
       onClose: () => void this._channel.dispose(),
       onError: (filename, lineno, message) => {
-        dump(`Error in worker: ${message} @${filename}:${lineno}\n`);
+        dump(`WARNING: Error in worker: ${message} @${filename}:${lineno}\n`);
       },
     };
     workerDebugger.addListener(this._workerDebuggerListener);

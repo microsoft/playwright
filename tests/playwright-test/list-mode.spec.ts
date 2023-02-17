@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, stripAnsi } from './playwright-test-fixtures';
+import { test, expect } from './playwright-test-fixtures';
 import path from 'path';
 import fs from 'fs';
 
@@ -24,7 +24,7 @@ test('should list tests', async ({ runInlineTest }) => {
       module.exports = { projects: [{ name: 'foo' }, {}] };
     `,
     'a.test.js': `
-      const { test } = pwt;
+      const { test, expect } = require('@playwright/test');
       test('example1', async ({}) => {
         expect(1 + 1).toBe(2);
       });
@@ -36,10 +36,10 @@ test('should list tests', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
   expect(result.output).toContain([
     `Listing tests:`,
-    `  [foo] › a.test.js:6:7 › example1`,
-    `  [foo] › a.test.js:9:7 › example2`,
-    `  a.test.js:6:7 › example1`,
-    `  a.test.js:9:7 › example2`,
+    `  [foo] › a.test.js:3:7 › example1`,
+    `  [foo] › a.test.js:6:7 › example2`,
+    `  a.test.js:3:7 › example1`,
+    `  a.test.js:6:7 › example2`,
     `Total: 4 tests in 1 file`
   ].join('\n'));
 });
@@ -50,7 +50,7 @@ test('should list tests to stdout when JSON reporter outputs to a file', async (
       module.exports = { projects: [{ name: 'foo' }, {}] };
     `,
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('example1', async ({}) => {
         expect(1 + 1).toBe(2);
       });
@@ -87,13 +87,13 @@ test('globalSetup and globalTeardown should not run', async ({ runInlineTest }) 
       };
     `,
     'a.test.js': `
-      const { test } = pwt;
+      const { test, expect } = require('@playwright/test');
       test('should work 1', async ({}, testInfo) => {
         console.log('Running test 1');
       });
     `,
     'b.test.js': `
-      const { test } = pwt;
+      const { test, expect } = require('@playwright/test');
       test('should work 2', async ({}, testInfo) => {
         console.log('Running test 2');
       });
@@ -102,8 +102,8 @@ test('globalSetup and globalTeardown should not run', async ({ runInlineTest }) 
   expect(result.exitCode).toBe(0);
   expect(result.output).toContain([
     `Listing tests:`,
-    `  a.test.js:6:7 › should work 1`,
-    `  b.test.js:6:7 › should work 2`,
+    `  a.test.js:3:7 › should work 1`,
+    `  b.test.js:3:7 › should work 2`,
     `Total: 2 tests in 2 files`,
   ].join('\n'));
 });
@@ -116,7 +116,7 @@ test('outputDir should not be removed', async ({ runInlineTest }, testInfo) => {
       module.exports = { outputDir: ${JSON.stringify(outputDir)} };
     `,
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('my test', async ({}, testInfo) => {
         console.log(testInfo.outputDir);
         require('fs').writeFileSync(testInfo.outputPath('myfile.txt'), 'hello');
@@ -131,7 +131,7 @@ test('outputDir should not be removed', async ({ runInlineTest }, testInfo) => {
       module.exports = { outputDir: ${JSON.stringify(outputDir)} };
     `,
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('my test', async ({}, testInfo) => {
         console.log(testInfo.outputDir);
       });
@@ -149,5 +149,26 @@ test('should report errors', async ({ runInlineTest }) => {
     `
   }, { 'list': true });
   expect(result.exitCode).toBe(1);
-  expect(stripAnsi(result.output)).toContain('> 6 |       oh = 2;');
+  expect(result.output).toContain('> 3 |       oh = 2;');
+});
+
+test('should ignore .only', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test, expect } = require('@playwright/test');
+      test('example1', async ({}) => {
+        expect(1 + 1).toBe(2);
+      });
+      test.only('example2', async ({}) => {
+        expect(1 + 1).toBe(2);
+      });
+    `
+  }, { 'list': true });
+  expect(result.exitCode).toBe(0);
+  expect(result.output).toContain([
+    `Listing tests:`,
+    `  a.test.js:3:7 › example1`,
+    `  a.test.js:6:12 › example2`,
+    `Total: 2 tests in 1 file`
+  ].join('\n'));
 });

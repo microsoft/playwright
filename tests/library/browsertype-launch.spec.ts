@@ -59,7 +59,9 @@ it('should throw if page argument is passed', async ({ browserType, browserName 
   expect(waitError.message).toContain('can not specify page');
 });
 
-it('should reject if launched browser fails immediately', async ({ browserType,  asset }) => {
+it('should reject if launched browser fails immediately', async ({ mode, browserType, asset }) => {
+  it.skip(mode === 'service');
+
   let waitError = null;
   await browserType.launch({ executablePath: asset('dummy_bad_browser_executable.js') }).catch(e => waitError = e);
   expect(waitError.message).toContain('== logs ==');
@@ -99,7 +101,9 @@ it('should report launch log', async ({ browserType, mode }) => {
   expect(error.message).toContain('<launching>');
 });
 
-it('should accept objects as options', async ({ browserType }) => {
+it('should accept objects as options', async ({ mode,   browserType }) => {
+  it.skip(mode === 'service');
+
   // @ts-expect-error process is not a real option.
   const browser = await browserType.launch({ process });
   await browser.close();

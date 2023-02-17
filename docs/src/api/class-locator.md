@@ -448,7 +448,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ## async method: Locator.dispatchEvent
 * since: v1.14
 
-Programmaticaly dispatch an event on the matching element.
+Programmatically dispatch an event on the matching element.
 
 **Usage**
 
@@ -702,6 +702,9 @@ Assert.AreEqual("10 retweets", await tweets.EvaluateAsync("node => node.innerTex
 ### param: Locator.evaluate.expression = %%-evaluate-expression-%%
 * since: v1.14
 
+### param: Locator.evaluate.expression = %%-js-evaluate-pagefunction-%%
+* since: v1.14
+
 ### param: Locator.evaluate.arg
 * since: v1.14
 - `arg` ?<[EvaluationArgument]>
@@ -755,6 +758,9 @@ var moreThanTen = await locator.EvaluateAllAsync<bool>("(divs, min) => divs.leng
 ### param: Locator.evaluateAll.expression = %%-evaluate-expression-%%
 * since: v1.14
 
+### param: Locator.evaluateAll.expression = %%-js-evaluate-pagefunction-%%
+* since: v1.14
+
 ### param: Locator.evaluateAll.arg
 * since: v1.14
 - `arg` ?<[EvaluationArgument]>
@@ -780,6 +786,9 @@ If [`param: expression`] throws or rejects, this method throws.
 See [`method: Page.evaluateHandle`] for more details.
 
 ### param: Locator.evaluateHandle.expression = %%-evaluate-expression-%%
+* since: v1.14
+
+### param: Locator.evaluateHandle.expression = %%-js-evaluate-pagefunction-%%
 * since: v1.14
 
 ### param: Locator.evaluateHandle.arg
@@ -1427,7 +1436,7 @@ A page this locator belongs to.
 ## async method: Locator.press
 * since: v1.14
 
-Focuses the mathing element and presses a combintation of the keys.
+Focuses the matching element and presses a combination of the keys.
 
 **Usage**
 
@@ -1651,6 +1660,18 @@ await element.SelectOptionAsync(new[] { "red", "green", "blue" });
 * since: v1.14
 
 ### option: Locator.selectOption.timeout = %%-input-timeout-%%
+* since: v1.14
+
+### param: Locator.selectOption.element = %%-python-select-options-element-%%
+* since: v1.14
+
+### param: Locator.selectOption.index = %%-python-select-options-index-%%
+* since: v1.14
+
+### param: Locator.selectOption.value = %%-python-select-options-value-%%
+* since: v1.14
+
+### param: Locator.selectOption.label = %%-python-select-options-label-%%
 * since: v1.14
 
 ## async method: Locator.selectText

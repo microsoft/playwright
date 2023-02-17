@@ -6,6 +6,16 @@ const uuidGen = Cc["@mozilla.org/uuid-generator;1"].getService(Ci.nsIUUIDGenerat
 const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 class Helper {
+  decorateAsEventEmitter(objectToDecorate) {
+    const { EventEmitter } = ChromeUtils.import('resource://gre/modules/EventEmitter.jsm');
+    const emitter = new EventEmitter();
+    objectToDecorate.on = emitter.on.bind(emitter);
+    objectToDecorate.addEventListener = emitter.on.bind(emitter);
+    objectToDecorate.off = emitter.off.bind(emitter);
+    objectToDecorate.removeEventListener = emitter.off.bind(emitter);
+    objectToDecorate.once = emitter.once.bind(emitter);
+    objectToDecorate.emit = emitter.emit.bind(emitter);
+  }
 
   addObserver(handler, topic) {
     Services.obs.addObserver(handler, topic);
@@ -19,7 +29,15 @@ class Helper {
 
   addEventListener(receiver, eventName, handler) {
     receiver.addEventListener(eventName, handler);
-    return () => receiver.removeEventListener(eventName, handler);
+    return () => {
+      try {
+        receiver.removeEventListener(eventName, handler);
+      } catch (e) {
+        // This could fail when window has navigated cross-process
+        // and we remove the listener from WindowProxy.
+        dump(`WARNING: removeEventListener throws ${e} at ${new Error().stack}\n`);
+      }
+    };
   }
 
   awaitEvent(receiver, eventName) {

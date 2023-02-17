@@ -18,7 +18,6 @@ import { test, expect } from './inspectorTest';
 
 test.describe('cli codegen', () => {
   test.skip(({ mode }) => mode !== 'default');
-  test.fixme(({ browserName, headless }) => browserName === 'firefox' && !headless, 'Focus is off');
 
   test('should click', async ({ page, openRecorder }) => {
     const recorder = await openRecorder();
@@ -609,8 +608,6 @@ test.describe('cli codegen', () => {
   });
 
   test('should await popup', async ({ page, openRecorder, browserName, headless }) => {
-    test.fixme(browserName === 'webkit' && !headless, 'Middle click does not open a popup in our webkit embedder');
-
     const recorder = await openRecorder();
     await recorder.setContentAndWait('<a target=_blank rel=noopener href="about:blank">link</a>');
 

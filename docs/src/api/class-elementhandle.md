@@ -422,6 +422,9 @@ Assert.AreEqual("10", await tweetHandle.EvalOnSelectorAsync(".retweets", "node =
 ### param: ElementHandle.evalOnSelector.expression = %%-evaluate-expression-%%
 * since: v1.9
 
+### param: ElementHandle.evalOnSelector.expression = %%-js-evalonselector-pagefunction-%%
+* since: v1.9
+
 ### param: ElementHandle.evalOnSelector.arg
 * since: v1.9
 - `arg` ?<[EvaluationArgument]>
@@ -481,6 +484,9 @@ Assert.AreEqual(new [] { "Hello!", "Hi!" }, await feedHandle.EvalOnSelectorAllAs
 * since: v1.9
 
 ### param: ElementHandle.evalOnSelectorAll.expression = %%-evaluate-expression-%%
+* since: v1.9
+
+### param: ElementHandle.evalOnSelectorAll.expression = %%-js-evalonselectorall-pagefunction-%%
 * since: v1.9
 
 ### param: ElementHandle.evalOnSelectorAll.arg
@@ -797,6 +803,18 @@ await handle.SelectOptionAsync(new[] {
 * since: v1.8
 
 ### option: ElementHandle.selectOption.timeout = %%-input-timeout-%%
+* since: v1.8
+
+### param: ElementHandle.selectOption.element = %%-python-select-options-element-%%
+* since: v1.8
+
+### param: ElementHandle.selectOption.index = %%-python-select-options-index-%%
+* since: v1.8
+
+### param: ElementHandle.selectOption.value = %%-python-select-options-value-%%
+* since: v1.8
+
+### param: ElementHandle.selectOption.label = %%-python-select-options-label-%%
 * since: v1.8
 
 ## async method: ElementHandle.selectText

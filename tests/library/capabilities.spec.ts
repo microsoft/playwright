@@ -66,17 +66,28 @@ it('should respect CSP @smoke', async ({ page, server }) => {
 });
 
 it('should play video @smoke', async ({ page, asset, browserName, platform, mode }) => {
-  it.skip(mode === 'docker', 'local paths do not work with remote setup');
   // TODO: the test passes on Windows locally but fails on GitHub Action bot,
   // apparently due to a Media Pack issue in the Windows Server.
   // Also the test is very flaky on Linux WebKit.
   it.fixme(browserName === 'webkit' && platform !== 'darwin');
   it.fixme(browserName === 'firefox', 'https://github.com/microsoft/playwright/issues/5721');
-  it.fixme(browserName === 'webkit' && platform === 'darwin' && parseInt(os.release(), 10) >= 20, 'Does not work on BigSur');
+  it.fixme(browserName === 'webkit' && platform === 'darwin' && parseInt(os.release(), 10) === 20, 'Does not work on BigSur');
 
   // Safari only plays mp4 so we test WebKit with an .mp4 clip.
   const fileName = browserName === 'webkit' ? 'video_mp4.html' : 'video.html';
   const absolutePath = asset(fileName);
+  // Our test server doesn't support range requests required to play on Mac,
+  // so we load the page using a file url.
+  await page.goto(url.pathToFileURL(absolutePath).href);
+  await page.$eval('video', v => v.play());
+  await page.$eval('video', v => v.pause());
+});
+
+it('should play webm video @smoke', async ({ page, asset, browserName, platform, mode }) => {
+  it.fixme(browserName === 'webkit' && platform === 'darwin' && parseInt(os.release(), 10) === 20, 'Does not work on BigSur');
+  it.fixme(browserName === 'webkit' && platform === 'win32');
+
+  const absolutePath = asset('video_webm.html');
   // Our test server doesn't support range requests required to play on Mac,
   // so we load the page using a file url.
   await page.goto(url.pathToFileURL(absolutePath).href);
@@ -97,8 +108,6 @@ it('should play audio @smoke', async ({ page, server, browserName, platform }) =
 });
 
 it('should support webgl @smoke', async ({ page, browserName, headless }) => {
-  it.fixme(browserName === 'firefox' && headless);
-
   const hasWebGL = await page.evaluate(() => {
     const canvas = document.createElement('canvas');
     return !!canvas.getContext('webgl');
@@ -106,9 +115,9 @@ it('should support webgl @smoke', async ({ page, browserName, headless }) => {
   expect(hasWebGL).toBe(true);
 });
 
-it('should support webgl 2 @smoke', async ({ page, browserName, headless }) => {
+it('should support webgl 2 @smoke', async ({ page, browserName, headless, isWindows }) => {
   it.skip(browserName === 'webkit', 'WebKit doesn\'t have webgl2 enabled yet upstream.');
-  it.fixme(browserName === 'firefox');
+  it.fixme(browserName === 'firefox' && isWindows);
   it.fixme(browserName === 'chromium' && !headless, 'chromium doesn\'t like webgl2 when running under xvfb');
 
   const hasWebGL2 = await page.evaluate(() => {
@@ -157,4 +166,23 @@ it('should not crash on storage.getDirectory()', async ({ page, server, browserN
   } else {
     expect(error).toBeFalsy();
   }
+});
+
+it('navigator.clipboard should be present', async ({ page, server, browserName, browserMajorVersion }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/18901' });
+  await page.goto(server.EMPTY_PAGE);
+  expect(await page.evaluate(() => navigator.clipboard)).toBeTruthy();
+});
+
+it('should set CloseEvent.wasClean to false when the server terminates a WebSocket connection', async ({ page, server, browserName, platform }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/12353' });
+  it.fixme(browserName === 'webkit' && platform === 'win32');
+  server.onceWebSocketConnection(socket => {
+    socket.terminate();
+  });
+  const wasClean = await page.evaluate(port => new Promise<boolean>(resolve => {
+    const ws = new WebSocket('ws://localhost:' + port + '/ws');
+    ws.addEventListener('close', error => resolve(error.wasClean));
+  }), server.PORT);
+  expect(wasClean).toBe(false);
 });

@@ -184,8 +184,6 @@ it('should goBack to redirected navigation', async ({ context, asset, server }) 
 });
 
 it('should goForward to redirected navigation', async ({ context, asset, server, browserName }) => {
-  it.fixme(browserName === 'firefox', 'Flaky in firefox');
-
   const path = asset('har-redirect.har');
   await context.routeFromHAR(path, { url: /.*theverge.*/ });
   const page = await context.newPage();

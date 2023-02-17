@@ -19,6 +19,7 @@ export * from './comparators';
 export * from './crypto';
 export * from './debug';
 export * from './env';
+export * from './eventsHelper';
 export * from './fileUtils';
 export * from './glob';
 export * from './headers';

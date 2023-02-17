@@ -34,11 +34,7 @@ const getExecutablePath = (browserName: BrowserName) => {
     return process.env.WKPATH;
 };
 
-let mode: TestModeName = 'default';
-if (process.env.PLAYWRIGHT_DOCKER)
-  mode = 'docker';
-else
-  mode = (process.env.PWTEST_MODE ?? 'default') as ('default' | 'driver' | 'service' | 'service2');
+const mode: TestModeName = (process.env.PWTEST_MODE ?? 'default') as ('default' | 'driver' | 'service');
 const headed = process.argv.includes('--headed');
 const channel = process.env.PWTEST_CHANNEL as any;
 const video = !!process.env.PWTEST_VIDEO;
@@ -76,44 +72,10 @@ const config: Config<CoverageWorkerOptions & PlaywrightWorkerOptions & Playwrigh
   },
   webServer: mode === 'service' ? {
     command: 'npx playwright run-server --port=3333',
-    port: 3333,
+    url: 'http://localhost:3333',
     reuseExistingServer: !process.env.CI,
   } : undefined,
 };
-
-if (mode === 'service2') {
-  config.webServer = {
-    command: 'npx playwright experimental-grid-server --auth-token=mysecret --address=http://localhost:3333 --port=3333',
-    port: 3333,
-    reuseExistingServer: !process.env.CI,
-    env: {
-      PWTEST_UNSAFE_GRID_VERSION: '1',
-    },
-  };
-  config.use.connectOptions = {
-    wsEndpoint: 'ws://localhost:3333/mysecret/claimWorker?os=linux',
-  };
-  config.projects = [{
-    name: 'Chromium page tests',
-    testMatch: /page\/.*spec.ts$/,
-    testIgnore: '**/*screenshot*',
-    use: {
-      browserName: 'chromium',
-      mode
-    },
-    metadata: {
-      platform: process.platform,
-      docker: !!process.env.INSIDE_DOCKER,
-      dockerIntegration: !!process.env.PLAYWRIGHT_DOCKER,
-      headful: !!headed,
-      browserName: 'chromium',
-      channel,
-      mode,
-      video: !!video,
-      trace: !!trace,
-    },
-  }];
-}
 
 const browserNames = ['chromium', 'webkit', 'firefox'] as BrowserName[];
 for (const browserName of browserNames) {
@@ -123,8 +85,6 @@ for (const browserName of browserNames) {
   const devtools = process.env.DEVTOOLS === '1';
   const testIgnore: RegExp[] = browserNames.filter(b => b !== browserName).map(b => new RegExp(b));
   for (const folder of ['library', 'page']) {
-    if (mode === 'service' && folder === 'library')
-      continue;
     config.projects.push({
       name: browserName,
       testDir: path.join(testDir, folder),
@@ -146,7 +106,6 @@ for (const browserName of browserNames) {
       metadata: {
         platform: process.platform,
         docker: !!process.env.INSIDE_DOCKER,
-        dockerIntegration: !!process.env.PLAYWRIGHT_DOCKER,
         headful: !!headed,
         browserName,
         channel,

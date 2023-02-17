@@ -1,7 +1,7 @@
 # class: APIResponseAssertions
 * since: v1.18
 
-The [APIResponseAssertions] class provides assertion methods that can be used to make assertions about the [APIResponse] in the tests. A new instance of [APIResponseAssertions] is created by calling [`method: PlaywrightAssertions.expectAPIResponse`]:
+The [APIResponseAssertions] class provides assertion methods that can be used to make assertions about the [APIResponse] in the tests.
 
 ```js
 import { test, expect } from '@playwright/test';

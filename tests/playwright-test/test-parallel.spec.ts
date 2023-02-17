@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import { test, expect, countTimes, stripAnsi } from './playwright-test-fixtures';
+import { test, expect, countTimes } from './playwright-test-fixtures';
 
 test('test.describe.parallel should throw inside test.describe.serial', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.describe.serial('serial suite', () => {
         test.describe.parallel('parallel suite', () => {
         });
@@ -28,13 +28,13 @@ test('test.describe.parallel should throw inside test.describe.serial', async ({
   });
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain('Error: describe.parallel cannot be nested inside describe.serial');
-  expect(result.output).toContain('a.test.ts:7');
+  expect(result.output).toContain('a.test.ts:4');
 });
 
 test('test.describe.parallel should work', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.describe.parallel('parallel suite', () => {
         test('test1', async ({}, testInfo) => {
           console.log('\\n%% worker=' + testInfo.workerIndex);
@@ -63,7 +63,7 @@ test('test.describe.parallel should work', async ({ runInlineTest }) => {
 test('test.describe.parallel should work in file', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.describe.configure({ mode: 'parallel' });
       test('test1', async ({}, testInfo) => {
         console.log('\\n%% worker=' + testInfo.workerIndex);
@@ -91,7 +91,7 @@ test('test.describe.parallel should work in file', async ({ runInlineTest }) => 
 test('test.describe.parallel should work in describe', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.describe('parallel suite', () => {
         test.describe.configure({ mode: 'parallel' });
         test('test1', async ({}, testInfo) => {
@@ -124,7 +124,7 @@ test('config.fullyParallel should work', async ({ runInlineTest }) => {
       module.exports = { fullyParallel: true };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('test1', async ({}, testInfo) => {
         console.log('\\n%% worker=' + testInfo.workerIndex);
         await new Promise(f => setTimeout(f, 1000));
@@ -154,7 +154,7 @@ test('project.fullyParallel should work', async ({ runInlineTest }) => {
       module.exports = { projects: [ { fullyParallel: true } ] };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('test1', async ({}, testInfo) => {
         console.log('\\n%% worker=' + testInfo.workerIndex);
         await new Promise(f => setTimeout(f, 1000));
@@ -181,7 +181,7 @@ test('project.fullyParallel should work', async ({ runInlineTest }) => {
 test('parallel mode should minimize running beforeAll/afterAll hooks', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.describe.configure({ mode: 'parallel' });
       test.beforeAll(() => {
         console.log('\\n%%beforeAll');
@@ -197,14 +197,14 @@ test('parallel mode should minimize running beforeAll/afterAll hooks', async ({ 
   }, { workers: 1 });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(4);
-  expect(countTimes(stripAnsi(result.output), '%%beforeAll')).toBe(1);
-  expect(countTimes(stripAnsi(result.output), '%%afterAll')).toBe(1);
+  expect(countTimes(result.output, '%%beforeAll')).toBe(1);
+  expect(countTimes(result.output, '%%afterAll')).toBe(1);
 });
 
 test('parallel mode should minimize running beforeAll/afterAll hooks 2', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.describe.configure({ mode: 'parallel' });
       test.beforeAll(() => {
         console.log('\\n%%beforeAll');
@@ -220,6 +220,6 @@ test('parallel mode should minimize running beforeAll/afterAll hooks 2', async (
   }, { workers: 2 });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(4);
-  expect(countTimes(stripAnsi(result.output), '%%beforeAll')).toBe(2);
-  expect(countTimes(stripAnsi(result.output), '%%afterAll')).toBe(2);
+  expect(countTimes(result.output, '%%beforeAll')).toBe(2);
+  expect(countTimes(result.output, '%%afterAll')).toBe(2);
 });

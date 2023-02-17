@@ -34,6 +34,7 @@ export const SnapshotTab: React.FunctionComponent<{
   const snapshots = [actionSnapshot ? { ...actionSnapshot, title: 'action' } : undefined, snapshotMap.get('before'), snapshotMap.get('after')].filter(Boolean) as { title: string, snapshotName: string }[];
 
   let snapshotUrl = 'data:text/html,<body style="background: #ddd"></body>';
+  let popoutUrl: string | undefined;
   let snapshotInfoUrl: string | undefined;
   let pointX: number | undefined;
   let pointY: number | undefined;
@@ -49,6 +50,10 @@ export const SnapshotTab: React.FunctionComponent<{
         pointX = action.metadata.point?.x;
         pointY = action.metadata.point?.y;
       }
+      const popoutParams = new URLSearchParams();
+      popoutParams.set('r', snapshotUrl);
+      popoutParams.set('trace', context(action).traceUrl);
+      popoutUrl = new URL(`popout.html?${popoutParams.toString()}`, window.location.href).toString();
     }
   }
 
@@ -79,11 +84,14 @@ export const SnapshotTab: React.FunctionComponent<{
   }, [iframeRef, snapshotUrl, snapshotInfoUrl, pointX, pointY]);
 
   const windowHeaderHeight = 40;
-  const snapshotSize = snapshotInfo.viewport;
-  const scale = Math.min(measure.width / snapshotSize.width, measure.height / (snapshotSize.height + windowHeaderHeight), 1);
-  const scaledSize = {
-    width: snapshotSize.width * scale,
-    height: (snapshotSize.height + windowHeaderHeight) * scale,
+  const snapshotContainerSize = {
+    width: snapshotInfo.viewport.width,
+    height: snapshotInfo.viewport.height + windowHeaderHeight,
+  };
+  const scale = Math.min(measure.width / snapshotContainerSize.width, measure.height / snapshotContainerSize.height, 1);
+  const translate = {
+    x: (measure.width - snapshotContainerSize.width) / 2,
+    y: (measure.height - snapshotContainerSize.height) / 2,
   };
   return <div
     className='snapshot-tab'
@@ -104,10 +112,13 @@ export const SnapshotTab: React.FunctionComponent<{
       })}
     </div>
     <div ref={ref} className='snapshot-wrapper'>
+      <a className={`popout-icon ${popoutUrl ? '' : 'popout-disabled'}`} href={popoutUrl} target='_blank' title='Open snapshot in a new tab'>
+        <span className='codicon codicon-link-external'/>
+      </a>
       { snapshots.length ? <div className='snapshot-container' style={{
-        width: snapshotSize.width + 'px',
-        height: (snapshotSize.height + windowHeaderHeight) + 'px',
-        transform: `translate(${-snapshotSize.width * (1 - scale) / 2 + (measure.width - scaledSize.width) / 2}px, ${-snapshotSize.height * (1 - scale) / 2  + (measure.height - scaledSize.height) / 2}px) scale(${scale})`,
+        width: snapshotContainerSize.width + 'px',
+        height: snapshotContainerSize.height + 'px',
+        transform: `translate(${translate.x}px, ${translate.y}px) scale(${scale})`,
       }}>
         <div className='window-header'>
           <div style={{ whiteSpace: 'nowrap' }}>

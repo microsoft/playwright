@@ -461,6 +461,7 @@ export abstract class BrowserContext extends SdkObject {
       const page = await this.newPage(internalMetadata);
       await page._setServerRequestInterceptor(handler => {
         handler.fulfill({ body: '<html></html>' }).catch(() => {});
+        return true;
       });
       for (const origin of this._origins) {
         const originStorage: channels.OriginStorage = { origin, localStorage: [] };
@@ -489,6 +490,7 @@ export abstract class BrowserContext extends SdkObject {
     page = page || await this.newPage(internalMetadata);
     await page._setServerRequestInterceptor(handler => {
       handler.fulfill({ body: '<html></html>' }).catch(() => {});
+      return true;
     });
 
     for (const origin of new Set([...oldOrigins, ...newOrigins.keys()])) {
@@ -523,6 +525,7 @@ export abstract class BrowserContext extends SdkObject {
         const page = await this.newPage(internalMetadata);
         await page._setServerRequestInterceptor(handler => {
           handler.fulfill({ body: '<html></html>' }).catch(() => {});
+          return true;
         });
         for (const originState of state.origins) {
           const frame = page.mainFrame();
@@ -585,7 +588,7 @@ export function assertBrowserContextIsNotOwned(context: BrowserContext) {
 export function validateBrowserContextOptions(options: channels.BrowserNewContextParams, browserOptions: BrowserOptions) {
   if (options.noDefaultViewport && options.deviceScaleFactor !== undefined)
     throw new Error(`"deviceScaleFactor" option is not supported with null "viewport"`);
-  if (options.noDefaultViewport && options.isMobile !== undefined)
+  if (options.noDefaultViewport && !!options.isMobile)
     throw new Error(`"isMobile" option is not supported with null "viewport"`);
   if (options.acceptDownloads === undefined)
     options.acceptDownloads = true;

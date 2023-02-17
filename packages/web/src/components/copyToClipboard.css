@@ -14,14 +14,6 @@
   limitations under the License.
 */
 
-.codicon-check {
-  color: var(--green);
-}
-
-.codicon-close {
-  color: var(--red);
-}
-
 .copy-icon {
   cursor: pointer;
 }

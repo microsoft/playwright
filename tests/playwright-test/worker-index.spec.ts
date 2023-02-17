@@ -21,7 +21,7 @@ test('should run in parallel', async ({ runInlineTest }) => {
     '1.spec.ts': `
       import * as fs from 'fs';
       import * as path from 'path';
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('succeeds', async ({}, testInfo) => {
         expect(testInfo.workerIndex).toBe(0);
         expect(testInfo.parallelIndex).toBe(0);
@@ -36,7 +36,7 @@ test('should run in parallel', async ({ runInlineTest }) => {
     '2.spec.ts': `
       import * as fs from 'fs';
       import * as path from 'path';
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('succeeds', async ({}, testInfo) => {
         // First test waits for the second to start to work around the race.
         fs.mkdirSync(testInfo.project.outputDir, { recursive: true });
@@ -53,7 +53,7 @@ test('should run in parallel', async ({ runInlineTest }) => {
 test('should reuse worker for multiple tests', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('succeeds 1', async ({}, testInfo) => {
         expect(testInfo.workerIndex).toBe(0);
         expect(testInfo.parallelIndex).toBe(0);
@@ -77,7 +77,7 @@ test('should reuse worker for multiple tests', async ({ runInlineTest }) => {
 test('should reuse worker after test.fixme()', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('succeeds 1', async ({}, testInfo) => {
         expect(testInfo.workerIndex).toBe(0);
         expect(testInfo.parallelIndex).toBe(0);
@@ -103,7 +103,7 @@ test('should reuse worker after test.fixme()', async ({ runInlineTest }) => {
 test('should reuse worker after test.skip()', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('succeeds 1', async ({}, testInfo) => {
         expect(testInfo.workerIndex).toBe(0);
         expect(testInfo.parallelIndex).toBe(0);
@@ -129,7 +129,7 @@ test('should reuse worker after test.skip()', async ({ runInlineTest }) => {
 test('should not use new worker after test.fail()', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('succeeds 1', async ({}, testInfo) => {
         expect(testInfo.workerIndex).toBe(0);
         expect(testInfo.parallelIndex).toBe(0);
@@ -154,7 +154,7 @@ test('should not use new worker after test.fail()', async ({ runInlineTest }) =>
 test('should use new worker after test failure', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('succeeds 1', async ({}, testInfo) => {
         expect(testInfo.workerIndex).toBe(0);
         expect(testInfo.parallelIndex).toBe(0);
@@ -181,7 +181,7 @@ test('should not reuse worker for different suites', async ({ runInlineTest }) =
       module.exports = { projects: [{}, {}, {}] };
     `,
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('succeeds', async ({}, testInfo) => {
         console.log('workerIndex-' + testInfo.workerIndex);
         console.log('parallelIndex-' + testInfo.parallelIndex);
@@ -202,7 +202,7 @@ test('parallelIndex should be in 0..workers-1', async ({ runInlineTest }) => {
   const files = {};
   for (let i = 0; i < 10; i++) {
     files[`a${i}.test.js`] = `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('passes-1', async ({}, testInfo) => {
         await new Promise(f => setTimeout(f, 100 + 50 * ${i}));
         expect(testInfo.parallelIndex >= 0).toBeTruthy();
@@ -218,4 +218,24 @@ test('parallelIndex should be in 0..workers-1', async ({ runInlineTest }) => {
   const result = await runInlineTest(files, { workers: 3 });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(20);
+});
+
+test('should not spawn workers for statically skipped tests', async ({ runInlineTest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/20156' });
+
+  const result = await runInlineTest({
+    'a.test.js': `
+      console.log('%%workerIndex=' + process.env.TEST_WORKER_INDEX);
+      import { test, expect } from '@playwright/test';
+      test.describe.configure({ mode: 'parallel' });
+      test('success', () => {});
+      test.skip('skipped', () => {});
+    `,
+  }, { workers: 2 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.skipped).toBe(1);
+  expect(result.output).toContain('workerIndex=undefined');
+  expect(result.output).toContain('workerIndex=0');
+  expect(result.output).not.toContain('workerIndex=1');
 });

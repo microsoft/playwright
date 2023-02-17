@@ -71,7 +71,7 @@ function render(component) {
 
 window.playwrightMount = async (component, rootElement, hooksConfig) => {
   let App = () => render(component);
-  for (const hook of /** @type {any} */(window).__pw_hooks_before_mount || []) {
+  for (const hook of window.__pw_hooks_before_mount || []) {
     const wrapper = await hook({ App, hooksConfig });
     if (wrapper)
       App = () => wrapper;
@@ -79,7 +79,7 @@ window.playwrightMount = async (component, rootElement, hooksConfig) => {
 
   ReactDOM.render(App(), rootElement);
 
-  for (const hook of /** @type {any} */(window).__pw_hooks_after_mount || [])
+  for (const hook of window.__pw_hooks_after_mount || [])
     await hook({ hooksConfig });
 };
 

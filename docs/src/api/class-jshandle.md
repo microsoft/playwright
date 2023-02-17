@@ -87,6 +87,9 @@ Assert.AreEqual("10 retweets", await tweetHandle.EvaluateAsync("node => node.inn
 ### param: JSHandle.evaluate.expression = %%-evaluate-expression-%%
 * since: v1.8
 
+### param: JSHandle.evaluate.expression = %%-js-evaluate-pagefunction-%%
+* since: v1.8
+
 ### param: JSHandle.evaluate.arg
 * since: v1.8
 - `arg` ?<[EvaluationArgument]>
@@ -109,6 +112,9 @@ for the promise to resolve and return its value.
 See [`method: Page.evaluateHandle`] for more details.
 
 ### param: JSHandle.evaluateHandle.expression = %%-evaluate-expression-%%
+* since: v1.8
+
+### param: JSHandle.evaluateHandle.expression = %%-js-evaluate-pagefunction-%%
 * since: v1.8
 
 ### param: JSHandle.evaluateHandle.arg

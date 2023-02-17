@@ -20,13 +20,13 @@ import { open } from '../utilsBundle';
 import path from 'path';
 import type { TransformCallback } from 'stream';
 import { Transform } from 'stream';
-import type { FullConfig, Suite } from '../../types/testReporter';
+import type { FullConfig, Reporter, Suite } from '../../types/testReporter';
 import { HttpServer, assert, calculateSha1, monotonicTime, copyFileAndMakeWritable, removeFolders } from 'playwright-core/lib/utils';
 import type { JsonAttachment, JsonReport, JsonSuite, JsonTestCase, JsonTestResult, JsonTestStep } from './raw';
 import RawReporter from './raw';
 import { stripAnsiEscapes } from './base';
 import { getPackageJsonPath, sanitizeForFilePath } from '../util';
-import type { FullConfigInternal, Metadata, ReporterInternal } from '../types';
+import type { FullConfigInternal, Metadata } from '../common/types';
 import type { ZipFile } from 'playwright-core/lib/zipBundle';
 import { yazl } from 'playwright-core/lib/zipBundle';
 import { mime } from 'playwright-core/lib/utilsBundle';
@@ -47,7 +47,7 @@ type HtmlReporterOptions = {
   port?: number,
 };
 
-class HtmlReporter implements ReporterInternal {
+class HtmlReporter implements Reporter {
   private config!: FullConfigInternal;
   private suite!: Suite;
   private _montonicStartTime: number = 0;
@@ -92,9 +92,9 @@ class HtmlReporter implements ReporterInternal {
   _resolveOptions(): { outputFolder: string, open: HtmlReportOpenOption } {
     let { outputFolder } = this._options;
     if (outputFolder)
-      outputFolder = path.resolve(this.config._configDir, outputFolder);
+      outputFolder = path.resolve(this.config._internal.configDir, outputFolder);
     return {
-      outputFolder: reportFolderFromEnv() ?? outputFolder ?? defaultReportFolder(this.config._configDir),
+      outputFolder: reportFolderFromEnv() ?? outputFolder ?? defaultReportFolder(this.config._internal.configDir),
       open: process.env.PW_TEST_HTML_REPORT_OPEN as any || this._options.open || 'on-failure',
     };
   }
@@ -113,10 +113,10 @@ class HtmlReporter implements ReporterInternal {
   }
 
   async _onExit() {
-    if (process.env.CI)
+    if (process.env.CI || !this._buildResult)
       return;
 
-    const { ok, singleTestId } = this._buildResult!;
+    const { ok, singleTestId } = this._buildResult;
     const shouldOpen = this._open === 'always' || (!ok && this._open === 'on-failure');
     if (shouldOpen) {
       await showHTMLReport(this._outputFolder, this._options.host, this._options.port, singleTestId);
@@ -181,6 +181,8 @@ export function startHtmlReportServer(folder: string): HttpServer {
         return false;
       }
     }
+    if (relativePath.endsWith('/stall.js'))
+      return true;
     if (relativePath === '/')
       relativePath = '/index.html';
     const absolutePath = path.join(folder, ...relativePath.split('/'));

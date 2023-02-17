@@ -548,3 +548,25 @@ it('should trigger listener added before navigation', async ({ page, server, bro
   expect(chooser).toBeTruthy();
 });
 
+it('input should trigger events when files changed second time', async ({ page, asset }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/20079' });
+  await page.setContent(`<input type=file multiple=true/>`);
+
+  const input = page.locator('input');
+  const events = await input.evaluateHandle(e => {
+    const events = [];
+    e.addEventListener('input', () => events.push('input'));
+    e.addEventListener('change', () => events.push('change'));
+    return events;
+  });
+
+  await input.setInputFiles(asset('file-to-upload.txt'));
+  expect(await input.evaluate(e => (e as HTMLInputElement).files[0].name)).toBe('file-to-upload.txt');
+  expect(await events.evaluate(e => e)).toEqual(['input', 'change']);
+
+  await events.evaluate(e => e.length = 0);
+
+  await input.setInputFiles(asset('pptr.png'));
+  expect(await input.evaluate(e => (e as HTMLInputElement).files[0].name)).toBe('pptr.png');
+  expect(await events.evaluate(e => e)).toEqual(['input', 'change']);
+});

@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-import type { JSONReport, JSONReportSuite, JSONReportTest, JSONReportTestResult } from '@playwright/test/reporter';
+import type { JSONReport, JSONReportSpec, JSONReportSuite, JSONReportTest, JSONReportTestResult } from '@playwright/test/reporter';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { rimraf, PNG } from 'playwright-core/lib/utilsBundle';
 import { promisify } from 'util';
-import type { CommonFixtures } from '../config/commonFixtures';
+import type { CommonFixtures, CommonWorkerFixtures, TestChildProcess } from '../config/commonFixtures';
 import { commonFixtures } from '../config/commonFixtures';
 import type { ServerFixtures, ServerWorkerOptions } from '../config/serverFixtures';
 import { serverFixtures } from '../config/serverFixtures';
@@ -38,6 +38,8 @@ export type CliRunResult = {
 export type RunResult = {
   exitCode: number,
   output: string,
+  outputLines: string[],
+  rawOutput: string,
   passed: number,
   failed: number,
   flaky: number,
@@ -54,31 +56,11 @@ type TSCResult = {
 
 type Files = { [key: string]: string | Buffer };
 type Params = { [key: string]: string | number | boolean | string[] };
-type Env = { [key: string]: string | number | boolean | undefined };
 
-async function writeFiles(testInfo: TestInfo, files: Files) {
+async function writeFiles(testInfo: TestInfo, files: Files, initial: boolean) {
   const baseDir = testInfo.outputPath();
 
-  const headerJS = `
-    const pwt = require('@playwright/test');
-  `;
-  const headerTS = `
-    import * as pwt from '@playwright/test';
-  `;
-  const headerESM = `
-    import * as pwt from '@playwright/test';
-  `;
-
-  const hasConfig = Object.keys(files).some(name => name.includes('.config.'));
-  if (!hasConfig) {
-    files = {
-      ...files,
-      'playwright.config.ts': `
-        module.exports = { projects: [ {} ] };
-      `,
-    };
-  }
-  if (!Object.keys(files).some(name => name.includes('package.json'))) {
+  if (initial && !Object.keys(files).some(name => name.includes('package.json'))) {
     files = {
       ...files,
       'package.json': `{ "name": "test-project" }`,
@@ -88,19 +70,7 @@ async function writeFiles(testInfo: TestInfo, files: Files) {
   await Promise.all(Object.keys(files).map(async name => {
     const fullName = path.join(baseDir, name);
     await fs.promises.mkdir(path.dirname(fullName), { recursive: true });
-    const isTypeScriptSourceFile = name.endsWith('.ts') && !name.endsWith('.d.ts');
-    const isJSModule = name.endsWith('.mjs') || name.includes('esm');
-    const header = isTypeScriptSourceFile ? headerTS : (isJSModule ? headerESM : headerJS);
-    if (typeof files[name] === 'string' && files[name].includes('//@no-header')) {
-      await fs.promises.writeFile(fullName, files[name]);
-    } else if (/(spec|test)\.(js|ts|jsx|tsx|mjs)$/.test(name)) {
-      const fileHeader = header + 'const { expect } = pwt;\n';
-      await fs.promises.writeFile(fullName, fileHeader + files[name]);
-    } else if (/\.(js|ts)$/.test(name) && !name.endsWith('d.ts')) {
-      await fs.promises.writeFile(fullName, header + files[name]);
-    } else {
-      await fs.promises.writeFile(fullName, files[name]);
-    }
+    await fs.promises.writeFile(fullName, files[name]);
   }));
 
   return baseDir;
@@ -108,7 +78,7 @@ async function writeFiles(testInfo: TestInfo, files: Files) {
 
 const cliEntrypoint = path.join(__dirname, '../../packages/playwright-core/cli.js');
 
-async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], baseDir: string, params: any, env: Env, options: RunOptions): Promise<RunResult> {
+async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], baseDir: string, params: any, env: NodeJS.ProcessEnv, options: RunOptions): Promise<RunResult> {
   const paramList: string[] = [];
   for (const key of Object.keys(params)) {
     for (const value of Array.isArray(params[key]) ? params[key] : [params[key]]) {
@@ -173,9 +143,12 @@ async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], b
   if (report)
     visitSuites(report.suites);
 
+  const strippedOutput = stripAnsi(output);
   return {
     exitCode,
-    output,
+    output: strippedOutput,
+    outputLines: strippedOutput.split('\n').filter(line => line.startsWith('%%')).map(line => line.substring(2).trim()),
+    rawOutput: output,
     passed,
     failed,
     flaky,
@@ -186,34 +159,32 @@ async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], b
   };
 }
 
-async function runPlaywrightCommand(childProcess: CommonFixtures['childProcess'], cwd: string, commandWithArguments: string[], env: Env, sendSIGINTAfter?: number): Promise<CliRunResult> {
+function watchPlaywrightTest(childProcess: CommonFixtures['childProcess'], baseDir: string, env: NodeJS.ProcessEnv, options: RunOptions): TestChildProcess {
+  const paramList: string[] = [];
+  const outputDir = path.join(baseDir, 'test-results');
+  const args = ['test'];
+  args.push('--output=' + outputDir);
+  args.push('--workers=2', ...paramList);
+  if (options.additionalArgs)
+    args.push(...options.additionalArgs);
+  const cwd = options.cwd ? path.resolve(baseDir, options.cwd) : baseDir;
+
   const command = ['node', cliEntrypoint];
-  command.push(...commandWithArguments);
-  const cacheDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-test-cache-'));
+  command.push(...args);
   const testProcess = childProcess({
     command,
-    env: {
-      ...process.env,
-      PWTEST_CACHE_DIR: cacheDir,
-      // BEGIN: Reserved CI
-      CI: undefined,
-      BUILD_URL: undefined,
-      CI_COMMIT_SHA: undefined,
-      CI_JOB_URL: undefined,
-      CI_PROJECT_URL: undefined,
-      GITHUB_REPOSITORY: undefined,
-      GITHUB_RUN_ID: undefined,
-      GITHUB_SERVER_URL: undefined,
-      GITHUB_SHA: undefined,
-      // END: Reserved CI
-      PW_TEST_HTML_REPORT_OPEN: undefined,
-      PW_TEST_REPORTER: undefined,
-      PW_TEST_REPORTER_WS_ENDPOINT: undefined,
-      PW_TEST_SOURCE_TRANSFORM: undefined,
-      PW_TEST_SOURCE_TRANSFORM_SCOPE: undefined,
-      NODE_OPTIONS: undefined,
-      ...env,
-    },
+    env: cleanEnv({ PWTEST_WATCH: '1', ...env }),
+    cwd,
+  });
+  return testProcess;
+}
+
+async function runPlaywrightCommand(childProcess: CommonFixtures['childProcess'], cwd: string, commandWithArguments: string[], env: NodeJS.ProcessEnv, sendSIGINTAfter?: number): Promise<CliRunResult> {
+  const command = ['node', cliEntrypoint];
+  command.push(...commandWithArguments);
+  const testProcess = childProcess({
+    command,
+    env: cleanEnv(env),
     cwd,
   });
   let didSendSigint = false;
@@ -224,11 +195,34 @@ async function runPlaywrightCommand(childProcess: CommonFixtures['childProcess']
     }
   };
   const { exitCode } = await testProcess.exited;
-  await removeFolderAsync(cacheDir);
-
   return { exitCode, output: testProcess.output.toString() };
 }
 
+function cleanEnv(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+  return {
+    ...process.env,
+    // BEGIN: Reserved CI
+    CI: undefined,
+    BUILD_URL: undefined,
+    CI_COMMIT_SHA: undefined,
+    CI_JOB_URL: undefined,
+    CI_PROJECT_URL: undefined,
+    GITHUB_REPOSITORY: undefined,
+    GITHUB_RUN_ID: undefined,
+    GITHUB_SERVER_URL: undefined,
+    GITHUB_SHA: undefined,
+    // END: Reserved CI
+    PW_TEST_HTML_REPORT_OPEN: undefined,
+    PW_TEST_REPORTER: undefined,
+    PW_TEST_REPORTER_WS_ENDPOINT: undefined,
+    PW_TEST_SOURCE_TRANSFORM: undefined,
+    PW_TEST_SOURCE_TRANSFORM_SCOPE: undefined,
+    TEST_WORKER_INDEX: undefined,
+    TEST_PARLLEL_INDEX: undefined,
+    NODE_OPTIONS: undefined,
+    ...env,
+  };
+}
 
 type RunOptions = {
   sendSIGINTAfter?: number;
@@ -239,40 +233,44 @@ type RunOptions = {
 };
 type Fixtures = {
   writeFiles: (files: Files) => Promise<string>;
-  runInlineTest: (files: Files, params?: Params, env?: Env, options?: RunOptions, beforeRunPlaywrightTest?: ({ baseDir }: { baseDir: string }) => Promise<void>) => Promise<RunResult>;
+  runInlineTest: (files: Files, params?: Params, env?: NodeJS.ProcessEnv, options?: RunOptions) => Promise<RunResult>;
+  runWatchTest: (files: Files, env?: NodeJS.ProcessEnv, options?: RunOptions) => Promise<TestChildProcess>;
   runTSC: (files: Files) => Promise<TSCResult>;
   nodeVersion: { major: number, minor: number, patch: number };
-  runGroups: (files: Files, params?: Params, env?: Env, options?: RunOptions) => Promise<{ timeline: { titlePath: string[], event: 'begin' | 'end' }[] } & RunResult>;
-  runCommand: (files: Files, args: string[]) => Promise<CliRunResult>;
 };
 
 export const test = base
-    .extend<CommonFixtures>(commonFixtures)
+    .extend<CommonFixtures, CommonWorkerFixtures>(commonFixtures)
     .extend<ServerFixtures, ServerWorkerOptions>(serverFixtures)
     .extend<Fixtures>({
       writeFiles: async ({}, use, testInfo) => {
-        await use(files => writeFiles(testInfo, files));
+        await use(files => writeFiles(testInfo, files, false));
       },
 
       runInlineTest: async ({ childProcess }, use, testInfo: TestInfo) => {
-        await use(async (files: Files, params: Params = {}, env: Env = {}, options: RunOptions = {}, beforeRunPlaywrightTest?: ({ baseDir: string }) => Promise<void>) => {
-          const baseDir = await writeFiles(testInfo, files);
-          if (beforeRunPlaywrightTest)
-            await beforeRunPlaywrightTest({ baseDir });
-          return await runPlaywrightTest(childProcess, baseDir, params, env, options);
+        const cacheDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-test-cache-'));
+        await use(async (files: Files, params: Params = {}, env: NodeJS.ProcessEnv = {}, options: RunOptions = {}) => {
+          const baseDir = await writeFiles(testInfo, files, true);
+          return await runPlaywrightTest(childProcess, baseDir, params, { ...env, PWTEST_CACHE_DIR: cacheDir }, options);
         });
+        await removeFolderAsync(cacheDir);
       },
 
-      runCommand: async ({ childProcess }, use, testInfo: TestInfo) => {
-        await use(async (files: Files, args: string[]) => {
-          const baseDir = await writeFiles(testInfo, files);
-          return await runPlaywrightCommand(childProcess, baseDir, args, { });
+      runWatchTest: async ({ childProcess }, use, testInfo: TestInfo) => {
+        const cacheDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-test-cache-'));
+        let testProcess: TestChildProcess | undefined;
+        await use(async (files: Files, env: NodeJS.ProcessEnv = {}, options: RunOptions = {}) => {
+          const baseDir = await writeFiles(testInfo, files, true);
+          testProcess = watchPlaywrightTest(childProcess, baseDir, { ...env, PWTEST_CACHE_DIR: cacheDir }, options);
+          return testProcess;
         });
+        await testProcess?.close();
+        await removeFolderAsync(cacheDir);
       },
 
       runTSC: async ({ childProcess }, use, testInfo) => {
         await use(async files => {
-          const baseDir = await writeFiles(testInfo, { 'tsconfig.json': JSON.stringify(TSCONFIG), ...files });
+          const baseDir = await writeFiles(testInfo, { 'tsconfig.json': JSON.stringify(TSCONFIG), ...files }, true);
           const tsc = childProcess({
             command: ['npx', 'tsc', '-p', baseDir],
             cwd: baseDir,
@@ -286,43 +284,6 @@ export const test = base
       nodeVersion: async ({}, use) => {
         const [major, minor, patch] = process.versions.node.split('.');
         await use({ major: +major, minor: +minor, patch: +patch });
-      },
-
-      runGroups: async ({ runInlineTest }, use, testInfo) => {
-        const timelinePath = testInfo.outputPath('timeline.json');
-        await use(async (files, params, env, options) => {
-          const result = await runInlineTest({
-            ...files,
-            'reporter.ts': `
-              import { Reporter, TestCase } from '@playwright/test/reporter';
-              import fs from 'fs';
-              import path from 'path';
-              class TimelineReporter implements Reporter {
-                private _timeline: {titlePath: string, event: 'begin' | 'end'}[] = [];
-                onTestBegin(test: TestCase) {
-                  this._timeline.push({ titlePath: test.titlePath(), event: 'begin' });
-                }
-                onTestEnd(test: TestCase) {
-                  this._timeline.push({ titlePath: test.titlePath(), event: 'end' });
-                }
-                onEnd() {
-                  fs.writeFileSync(path.join(${JSON.stringify(timelinePath)}), JSON.stringify(this._timeline, null, 2));
-                }
-              }
-              export default TimelineReporter;
-            `
-          }, { ...params, reporter: 'list,json,./reporter.ts', workers: 2 }, env, options);
-
-          let timeline;
-          try {
-            timeline = JSON.parse((await fs.promises.readFile(timelinePath, 'utf8')).toString());
-          } catch (e) {
-          }
-          return {
-            ...result,
-            timeline
-          };
-        });
       },
     });
 
@@ -387,11 +348,11 @@ export function paintBlackPixels(image: Buffer, blackPixelsCount: number): Buffe
   return PNG.sync.write(png);
 }
 
-export function allTests(result: RunResult) {
-  const tests: { title: string; expectedStatus: JSONReportTest['expectedStatus'], actualStatus: JSONReportTest['status'], annotations: string[] }[] = [];
+function filterTests(result: RunResult, filter: (spec: JSONReportSpec) => boolean) {
+  const tests: JSONReportTest[] = [];
   const visit = (suite: JSONReportSuite) => {
     for (const spec of suite.specs)
-      spec.tests.forEach(t => tests.push({ title: spec.title, expectedStatus: t.expectedStatus, actualStatus: t.status, annotations: t.annotations.map(a => a.type)  }));
+      spec.tests.forEach(t => filter(spec) && tests.push(t));
     suite.suites?.forEach(s => visit(s));
   };
   visit(result.report.suites[0]);
@@ -399,12 +360,12 @@ export function allTests(result: RunResult) {
 }
 
 export function expectTestHelper(result: RunResult) {
-  return (title: string, expectedStatus: string, status: string, annotations: any) => {
-    const tests = allTests(result).filter(t => t.title === title);
+  return (title: string, expectedStatus: string, status: string, annotations: string[]) => {
+    const tests = filterTests(result, s => s.title === title);
     for (const test of tests) {
       expect(test.expectedStatus, `title: ${title}`).toBe(expectedStatus);
-      expect(test.actualStatus, `title: ${title}`).toBe(status);
-      expect(test.annotations, `title: ${title}`).toEqual(annotations);
+      expect(test.status, `title: ${title}`).toBe(status);
+      expect(test.annotations.map(a => a.type), `title: ${title}`).toEqual(annotations);
     }
   };
 }

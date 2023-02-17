@@ -31,7 +31,7 @@ export type PlaywrightTestConfig<T = {}, W = {}> = Omit<BasePlaywrightTestConfig
     ctPort?: number;
     ctTemplateDir?: string;
     ctCacheDir?: string;
-    ctViteConfig?: InlineConfig;
+    ctViteConfig?: InlineConfig | (() => Promise<InlineConfig>);
   };
 };
 

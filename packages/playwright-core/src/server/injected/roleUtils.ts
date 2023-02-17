@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { closestCrossShadow, enclosingShadowRootOrDocument, parentElementOrShadowHost } from './domUtils';
+import { closestCrossShadow, enclosingShadowRootOrDocument, getElementComputedStyle, isElementStyleVisibilityVisible, parentElementOrShadowHost } from './domUtils';
 
 function hasExplicitAccessibleName(e: Element) {
   return e.hasAttribute('aria-label') || e.hasAttribute('aria-labelledby');
@@ -225,24 +225,23 @@ function getAriaBoolean(attr: string | null) {
   return attr === null ? undefined : attr.toLowerCase() === 'true';
 }
 
-function getComputedStyle(element: Element, pseudo?: string): CSSStyleDeclaration | undefined {
-  return element.ownerDocument && element.ownerDocument.defaultView ? element.ownerDocument.defaultView.getComputedStyle(element, pseudo) : undefined;
-}
-
 // https://www.w3.org/TR/wai-aria-1.2/#tree_exclusion, but including "none" and "presentation" roles
 // https://www.w3.org/TR/wai-aria-1.2/#aria-hidden
 export function isElementHiddenForAria(element: Element, cache: Map<Element, boolean>): boolean {
   if (['STYLE', 'SCRIPT', 'NOSCRIPT', 'TEMPLATE'].includes(element.tagName))
     return true;
-  const style: CSSStyleDeclaration | undefined = getComputedStyle(element);
-  if (!style || style.visibility === 'hidden')
+  // Note: <option> inside <select> are not affected by visibility or content-visibility.
+  // Same goes for <slot>.
+  const isOptionInsideSelect = element.nodeName === 'OPTION' && !!element.closest('select');
+  const isSlot = element.nodeName === 'SLOT';
+  if (!isOptionInsideSelect && !isSlot && !isElementStyleVisibilityVisible(element))
     return true;
   return belongsToDisplayNoneOrAriaHidden(element, cache);
 }
 
 function belongsToDisplayNoneOrAriaHidden(element: Element, cache: Map<Element, boolean>): boolean {
   if (!cache.has(element)) {
-    const style = getComputedStyle(element);
+    const style = getElementComputedStyle(element);
     let hidden = !style || style.display === 'none' || getAriaBoolean(element.getAttribute('aria-hidden')) === true;
     if (!hidden) {
       const parent = parentElementOrShadowHost(element);
@@ -603,7 +602,7 @@ function getElementAccessibleNameInternal(element: Element, options: AccessibleN
       if (skipSlotted && (node as Element | Text).assignedSlot)
         return;
       if (node.nodeType === 1 /* Node.ELEMENT_NODE */) {
-        const display = getComputedStyle(node as Element)?.getPropertyValue('display') || 'inline';
+        const display = getElementComputedStyle(node as Element)?.getPropertyValue('display') || 'inline';
         let token = getElementAccessibleNameInternal(node as Element, childOptions);
         // SPEC DIFFERENCE.
         // Spec says "append the result to the accumulated text", assuming "with space".
@@ -617,7 +616,7 @@ function getElementAccessibleNameInternal(element: Element, options: AccessibleN
         tokens.push(node.textContent || '');
       }
     };
-    tokens.push(getPseudoContent(getComputedStyle(element, '::before')));
+    tokens.push(getPseudoContent(getElementComputedStyle(element, '::before')));
     const assignedNodes = element.nodeName === 'SLOT' ? (element as HTMLSlotElement).assignedNodes() : [];
     if (assignedNodes.length) {
       for (const child of assignedNodes)
@@ -632,7 +631,7 @@ function getElementAccessibleNameInternal(element: Element, options: AccessibleN
       for (const owned of getIdRefs(element, element.getAttribute('aria-owns')))
         visit(owned, true);
     }
-    tokens.push(getPseudoContent(getComputedStyle(element, '::after')));
+    tokens.push(getPseudoContent(getElementComputedStyle(element, '::after')));
     const accessibleName = tokens.join('');
     if (accessibleName.trim())
       return accessibleName;
@@ -663,13 +662,13 @@ export function getAriaSelected(element: Element): boolean {
 
 export const kAriaCheckedRoles = ['checkbox', 'menuitemcheckbox', 'option', 'radio', 'switch', 'menuitemradio', 'treeitem'];
 export function getAriaChecked(element: Element): boolean | 'mixed' {
-  const result = getAriaCheckedStrict(element);
+  const result = getChecked(element, true);
   return result === 'error' ? false : result;
 }
-export function getAriaCheckedStrict(element: Element): boolean | 'mixed' | 'error' {
+export function getChecked(element: Element, allowMixed: boolean): boolean | 'mixed' | 'error' {
   // https://www.w3.org/TR/wai-aria-1.2/#aria-checked
   // https://www.w3.org/TR/html-aam-1.0/#html-attribute-state-and-property-mappings
-  if (element.tagName === 'INPUT' && (element as HTMLInputElement).indeterminate)
+  if (allowMixed && element.tagName === 'INPUT' && (element as HTMLInputElement).indeterminate)
     return 'mixed';
   if (element.tagName === 'INPUT' && ['checkbox', 'radio'].includes((element as HTMLInputElement).type))
     return (element as HTMLInputElement).checked;
@@ -677,7 +676,7 @@ export function getAriaCheckedStrict(element: Element): boolean | 'mixed' | 'err
     const checked = element.getAttribute('aria-checked');
     if (checked === 'true')
       return true;
-    if (checked === 'mixed')
+    if (allowMixed && checked === 'mixed')
       return 'mixed';
     return false;
   }

@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import type { IncomingHttpHeaders } from 'http';
 import type { Cookie } from '@playwright/test';
 import { contextTest as it, playwrightTest, expect } from '../config/browserTest';
 
@@ -451,4 +452,18 @@ it('should allow unnamed cookies', async ({ page, context, server, browserName, 
     expect.soft(await page.evaluate('document.cookie')).toBe('');
   else
     expect.soft(await page.evaluate('document.cookie')).toBe('unnamed-via-js');
+});
+
+it('should set cookies on WebSocket', async ({ contextFactory, httpsServer, browserName, platform }) => {
+  it.fixme(browserName === 'webkit' && platform === 'win32', 'WebKit on win32 does not send any cookies over the WebSocket connection');
+  let resolveResceivedWebSocketHeaders = (headers: IncomingHttpHeaders) => { };
+  const receivedWebSocketHeaders = new Promise<IncomingHttpHeaders>(resolve => resolveResceivedWebSocketHeaders = resolve);
+  httpsServer.onceWebSocketConnection((ws, req) => resolveResceivedWebSocketHeaders(req.headers));
+  const context = await contextFactory({ ignoreHTTPSErrors: true });
+  const page = await context.newPage();
+  await page.goto(httpsServer.EMPTY_PAGE);
+  await context.addCookies([{ domain: 'localhost', path: '/', name: 'foo', value: 'bar', secure: true }]);
+  await page.evaluate(port => new WebSocket(`wss://localhost:${port}/ws`), httpsServer.PORT);
+  const headers = await receivedWebSocketHeaders;
+  expect(headers.cookie).toBe('foo=bar');
 });

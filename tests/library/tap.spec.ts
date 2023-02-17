@@ -28,7 +28,7 @@ it('should send all of the correct events @smoke', async ({ page }) => {
   await page.tap('#a');
   const eventsHandle = await trackEvents(await page.$('#b'));
   await page.tap('#b');
-  // webkit doesnt send pointerenter or pointerleave or mouseout
+  // webkit doesn't send pointerenter or pointerleave or mouseout
   expect(await eventsHandle.jsonValue()).toEqual([
     'pointerover',  'pointerenter',
     'pointerdown',  'touchstart',
@@ -96,7 +96,7 @@ it('should wait for a navigation caused by a tap', async ({ page, server }) => {
   let resolved = false;
   const tapPromise = page.tap('a').then(() => resolved = true);
   const response = await responsePromise;
-  // make sure the tap doesnt resolve too early
+  // make sure the tap doesn't resolve too early
   await new Promise(x => setTimeout(x, 100));
   expect(resolved).toBe(false);
 

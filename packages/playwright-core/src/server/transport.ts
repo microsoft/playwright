@@ -20,6 +20,7 @@ import type { WebSocket } from '../utilsBundle';
 import type { ClientRequest, IncomingMessage } from 'http';
 import type { Progress } from './progress';
 import { makeWaitForNextTask } from '../utils';
+import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent } from './happy-eyeballs';
 
 export type ProtocolRequest = {
   id: number;
@@ -100,6 +101,7 @@ export class WebSocketTransport implements ConnectionTransport {
       handshakeTimeout: Math.max(progress?.timeUntilDeadline() ?? 30_000, 1),
       headers,
       followRedirects,
+      agent: (/^(https|wss):\/\//.test(url)) ? httpsHappyEyeballsAgent : httpHappyEyeballsAgent
     });
     this._progress = progress;
     // The 'ws' module in node sometimes sends us multiple messages in a single task.

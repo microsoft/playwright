@@ -38,6 +38,39 @@ it('should click button inside frameset', async ({ page, server }) => {
   expect(await frame.evaluate('result')).toBe('Clicked');
 });
 
+it('should click a button that closes popup', async ({ page }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/20093' });
+  const [popup] = await Promise.all([
+    page.waitForEvent('popup'),
+    page.evaluate(() => window.open('')),
+  ]);
+  await popup.setContent(`<button>clickme</button>`);
+  await popup.$eval('button', body => body.addEventListener('click', () => {
+    window.close();
+  }));
+  await Promise.all([
+    popup.locator('button').click(), // throws in Firefox, but not in Chromium or WebKit
+    popup.waitForEvent('close'),
+  ]);
+});
+
+it('should issue clicks in parallel in page and popup', async ({ page, server }) => {
+  await page.goto(server.PREFIX + '/counter.html');
+  const [popup] = await Promise.all([
+    page.waitForEvent('popup'),
+    page.evaluate(() => window.open('/counter.html')),
+  ]);
+  const clickPromises = [];
+  for (let i = 0; i < 21; ++i) {
+    if (i % 3 === 0)
+      clickPromises.push(popup.locator('button').click());
+    else
+      clickPromises.push(page.locator('button').click());
+  }
+  await Promise.all(clickPromises);
+  expect(await page.evaluate(() => window['count'])).toBe(14);
+  expect(await popup.evaluate(() => window['count'])).toBe(7);
+});
 
 it('should click svg', async ({ page }) => {
   await page.setContent(`
@@ -1012,7 +1045,6 @@ it('should click in a nested transformed iframe', async ({ page }) => {
 
 it('ensure events are dispatched in the individual tasks', async ({ page, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/19685' });
-  it.fixme(browserName === 'firefox');
   await page.setContent(`
     <div id="outer" style="background: #d4d4d4; width: 60px; height: 60px;">
       <div id="inner" style="background: #adadad; width: 46px; height: 46px;"></div>
@@ -1043,8 +1075,7 @@ it('ensure events are dispatched in the individual tasks', async ({ page, browse
   // Click on the inner div element
   await page.locator('#inner').click();
 
-  // await new Promise(() => {});
-  expect(messages).toEqual([
+  await expect.poll(() => messages).toEqual([
     'click inner',
     'promise inner',
     'click outer',

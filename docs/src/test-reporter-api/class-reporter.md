@@ -34,22 +34,22 @@ module.exports = MyReporter;
 
 ```js tab=js-ts
 // my-awesome-reporter.ts
-import { Reporter } from '@playwright/test/reporter';
+import { Reporter, FullConfig, Suite, TestCase, TestResult, FullResult } from '@playwright/test/reporter';
 
 class MyReporter implements Reporter {
-  onBegin(config, suite) {
+  onBegin(config: FullConfig, suite: Suite) {
     console.log(`Starting the run with ${suite.allTests().length} tests`);
   }
 
-  onTestBegin(test) {
+  onTestBegin(test: TestCase) {
     console.log(`Starting test ${test.title}`);
   }
 
-  onTestEnd(test, result) {
+  onTestEnd(test: TestCase, result: TestResult) {
     console.log(`Finished test ${test.title}: ${result.status}`);
   }
 
-  onEnd(result) {
+  onEnd(result: FullResult) {
     console.log(`Finished the run: ${result.status}`);
   }
 }
@@ -107,8 +107,6 @@ Resolved configuration.
 
 The root suite that contains all projects, files and test cases.
 
-
-
 ## optional async method: Reporter.onEnd
 * since: v1.10
 
@@ -124,9 +122,6 @@ Result of the full test run.
 * `'failed'` - Any test has failed.
 * `'timedout'` - The [`property: TestConfig.globalTimeout`] has been reached.
 * `'interrupted'` - Interrupted by the user.
-
-
-
 
 ## optional method: Reporter.onError
 * since: v1.10

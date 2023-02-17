@@ -119,7 +119,7 @@ playwright codegen --timezone="Europe/Rome" --geolocation="41.890221,12.492348" 
 pwsh bin/Debug/netX/playwright.ps1 codegen --timezone="Europe/Rome" --geolocation="41.890221,12.492348" --lang="it-IT" maps.google.com
 ```
 
-<img width="1276" alt="Codegen generating code for tests for google maps showing timezone, geoloation as Rome, Italy and in Italian language" src="https://user-images.githubusercontent.com/13063165/182394434-73e1c2a8-767e-411a-94e4-0912c1c50ecc.png" />
+<img width="1276" alt="Codegen generating code for tests for google maps showing timezone, geolocation as Rome, Italy and in Italian language" src="https://user-images.githubusercontent.com/13063165/182394434-73e1c2a8-767e-411a-94e4-0912c1c50ecc.png" />
 
 ## Preserve authenticated state
 

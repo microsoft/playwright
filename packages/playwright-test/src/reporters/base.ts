@@ -17,9 +17,9 @@
 import { colors, ms as milliseconds, parseStackTraceLine } from 'playwright-core/lib/utilsBundle';
 import fs from 'fs';
 import path from 'path';
-import type { FullConfig, TestCase, Suite, TestResult, TestError, FullResult, TestStep, Location } from '../../types/testReporter';
-import type { FullConfigInternal, ReporterInternal } from '../types';
-import { codeFrameColumns } from '../babelBundle';
+import type { FullConfig, TestCase, Suite, TestResult, TestError, FullResult, TestStep, Location, Reporter } from '../../types/testReporter';
+import type { FullConfigInternal } from '../common/types';
+import { codeFrameColumns } from '../common/babelBundle';
 import { monotonicTime } from 'playwright-core/lib/utils';
 
 export type TestResultOutput = { chunk: string | Buffer, type: 'stdout' | 'stderr' };
@@ -46,7 +46,7 @@ type TestSummary = {
   fatalErrors: TestError[];
 };
 
-export class BaseReporter implements ReporterInternal  {
+export class BaseReporter implements Reporter {
   duration = 0;
   config!: FullConfigInternal;
   suite!: Suite;
@@ -121,9 +121,9 @@ export class BaseReporter implements ReporterInternal  {
   }
 
   protected generateStartingMessage() {
-    const jobs = Math.min(this.config.workers, this.config._maxConcurrentTestGroups);
+    const jobs = Math.min(this.config.workers, this.config._internal.maxConcurrentTestGroups);
     const shardDetails = this.config.shard ? `, shard ${this.config.shard.current} of ${this.config.shard.total}` : '';
-    return `\nRunning ${this.totalTestCount} test${this.totalTestCount !== 1 ? 's' : ''} using ${jobs} worker${jobs !== 1 ? 's' : ''}${shardDetails}`;
+    return '\n' + colors.dim('Running ') + this.totalTestCount + colors.dim(` test${this.totalTestCount !== 1 ? 's' : ''} using `) + jobs + colors.dim(` worker${jobs !== 1 ? 's' : ''}${shardDetails}`);
   }
 
   protected getSlowTests(): [string, number][] {
@@ -231,10 +231,8 @@ export class BaseReporter implements ReporterInternal  {
   }
 
   private _printSummary(summary: string) {
-    if (summary.trim()) {
-      console.log('');
+    if (summary.trim())
       console.log(summary);
-    }
   }
 
   willRetry(test: TestCase): boolean {
@@ -260,7 +258,7 @@ export function formatFailure(config: FullConfig, test: TestCase, options: {inde
     const retryLines = [];
     if (result.retry) {
       retryLines.push('');
-      retryLines.push(colors.gray(pad(`    Retry #${result.retry}`, '-')));
+      retryLines.push(colors.gray(separator(`    Retry #${result.retry}`)));
     }
     resultLines.push(...retryLines);
     resultLines.push(...errors.map(error => '\n' + error.message));
@@ -271,7 +269,7 @@ export function formatFailure(config: FullConfig, test: TestCase, options: {inde
         if (!attachment.path && !hasPrintableContent)
           continue;
         resultLines.push('');
-        resultLines.push(colors.cyan(pad(`    attachment #${i + 1}: ${attachment.name} (${attachment.contentType})`, '-')));
+        resultLines.push(colors.cyan(separator(`    attachment #${i + 1}: ${attachment.name} (${attachment.contentType})`)));
         if (attachment.path) {
           const relativePath = path.relative(process.cwd(), attachment.path);
           resultLines.push(colors.cyan(`    ${relativePath}`));
@@ -287,10 +285,11 @@ export function formatFailure(config: FullConfig, test: TestCase, options: {inde
             let text = attachment.body.toString();
             if (text.length > 300)
               text = text.slice(0, 300) + '...';
-            resultLines.push(colors.cyan(`    ${text}`));
+            for (const line of text.split('\n'))
+              resultLines.push(colors.cyan(`    ${line}`));
           }
         }
-        resultLines.push(colors.cyan(pad('   ', '-')));
+        resultLines.push(colors.cyan(separator('   ')));
       }
     }
     const output = ((result as any)[kOutputSymbol] || []) as TestResultOutput[];
@@ -302,7 +301,7 @@ export function formatFailure(config: FullConfig, test: TestCase, options: {inde
         return text;
       }).join('');
       resultLines.push('');
-      resultLines.push(colors.gray(pad('--- Test output', '-')) + '\n\n' + outputText + '\n' + pad('', '-'));
+      resultLines.push(colors.gray(separator('--- Test output')) + '\n\n' + outputText + '\n' + separator());
     }
     for (const error of errors) {
       annotations.push({
@@ -372,7 +371,7 @@ export function formatTestTitle(config: FullConfig, test: TestCase, step?: TestS
 function formatTestHeader(config: FullConfig, test: TestCase, indent: string, index?: number): string {
   const title = formatTestTitle(config, test);
   const header = `${indent}${index ? index + ') ' : ''}${title}`;
-  return pad(header, '=');
+  return separator(header);
 }
 
 export function formatError(config: FullConfig, error: TestError, highlightCode: boolean, file?: string): ErrorDetails {
@@ -418,10 +417,11 @@ export function formatError(config: FullConfig, error: TestError, highlightCode:
   };
 }
 
-function pad(line: string, char: string): string {
-  if (line)
-    line += ' ';
-  return line + colors.gray(char.repeat(Math.max(0, 100 - line.length)));
+export function separator(text: string = ''): string {
+  if (text)
+    text += ' ';
+  const columns = Math.min(100, process.stdout?.columns || 100);
+  return text + colors.dim('─'.repeat(Math.max(0, columns - text.length)));
 }
 
 function indent(lines: string, tab: string) {

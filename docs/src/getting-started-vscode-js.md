@@ -3,9 +3,16 @@ id: getting-started-vscode
 title: "Getting started - VS Code"
 ---
 
+import LiteYouTube from '@site/src/components/LiteYouTube';
+
 Playwright Test was created specifically to accommodate the needs of end-to-end testing. Playwright supports all modern rendering engines including Chromium, WebKit, and Firefox. Test on Windows, Linux, and macOS, locally or on CI, headless or headed with native mobile emulation of Google Chrome for Android and Mobile Safari. 
 
 Get started by installing Playwright and generating a test to see it in action. Alternatively you can also get started and run your tests using the [CLI](./intro.md).
+
+<LiteYouTube
+    id="Xz6lhEzgI5I"
+    title="Getting Started with Playwright in VS Code"
+/>
 
 ## Installation
 
@@ -60,6 +67,11 @@ Choose various or all profiles to run tests on multiple profiles. These profiles
 
 With the VS Code extension you can debug your tests right in VS Code see error messages, create breakpoints and live debug your tests.
 
+<LiteYouTube
+    id="tJF7UhA59Gc"
+    title="Debugging Playwright tests in VS Code"
+/>
+
 ### Error Messages
 
 If your test fails VS Code will show you error messages right in the editor showing what was expected, what was received as well as a complete call log.
@@ -68,7 +80,7 @@ If your test fails VS Code will show you error messages right in the editor show
 
 ### Live Debugging
 
-You can debug your test live in VS Code. After running a test with the `Show Browser` option checked, click on any of the locators in VS Code and it will be highlighted in the Browser window. Playwright will highlight it if it exits and show you if there is more than one result
+You can debug your test live in VS Code. After running a test with the `Show Browser` option checked, click on any of the locators in VS Code and it will be highlighted in the Browser window. Playwright will highlight it if it exists and show you if there is more than one result
 
 <img width="1394" alt="live debugging in VS Code" src="https://user-images.githubusercontent.com/13063165/212884329-0755b007-0d69-4987-b084-38fd5bfb577d.png" />
 
@@ -101,6 +113,11 @@ To learn more about debugging, see [Debugging in Visual Studio Code](https://cod
 ## Generating Tests
 
 CodeGen will auto generate your tests for you as you perform actions in the browser and is a great way to quickly get started. The viewport for the browser window is set to a specific width and height. See the [configuration guide](./test-configuration.md) to change the viewport or emulate different environments.
+
+<LiteYouTube
+    id="LM4yqrOzmFE"
+    title="Generating Playwright tests in VS Code"
+/>
 
 ### Record a New Test
 

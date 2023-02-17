@@ -356,7 +356,7 @@ it('should properly serialize PerformanceMeasure object', async ({ page }) => {
   }]);
 });
 
-it('shuld properly serialize window.performance object', async ({ page }) => {
+it('should properly serialize window.performance object', async ({ page }) => {
   expect(await page.evaluate(() => performance)).toEqual({
     'navigation': {
       'redirectCount': 0,
@@ -482,7 +482,7 @@ it('should not throw an error when evaluation does a navigation', async ({ page,
 });
 
 it('should not throw an error when evaluation does a synchronous navigation and returns an object', async ({ page, server, browserName }) => {
-  // It is imporant to be on about:blank for sync reload.
+  // It is important to be on about:blank for sync reload.
   const result = await page.evaluate(() => {
     window.location.reload();
     return { a: 42 };
@@ -491,7 +491,7 @@ it('should not throw an error when evaluation does a synchronous navigation and 
 });
 
 it('should not throw an error when evaluation does a synchronous navigation and returns undefined', async ({ page }) => {
-  // It is imporant to be on about:blank for sync reload.
+  // It is important to be on about:blank for sync reload.
   const result = await page.evaluate(() => {
     window.location.reload();
     return undefined;
