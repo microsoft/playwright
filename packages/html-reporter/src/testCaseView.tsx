@@ -14,8 +14,8 @@
   limitations under the License.
 */
 
-import type { TestCase } from './types';
 import { CopyToClipboard } from '@web/components/copyToClipboard';
+import type { TestCase } from './types';
 import * as React from 'react';
 import { TabbedPane } from './tabbedPane';
 import { AutoChip } from './chip';
