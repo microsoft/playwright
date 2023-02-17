@@ -239,7 +239,7 @@ export class Recorder {
     const activeElement = this._deepActiveElement(this.document);
     // Firefox dispatches "focus" event to body when clicking on a backgrounded headed browser window.
     // We'd like to ignore this stray event.
-    if (activeElement === this.document.body)
+    if (userGesture && activeElement === this.document.body)
       return;
     const result = activeElement ? generateSelector(this._injectedScript, activeElement, this._testIdAttributeName) : null;
     this._activeModel = result && result.selector ? result : null;
