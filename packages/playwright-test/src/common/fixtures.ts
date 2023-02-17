@@ -227,7 +227,7 @@ export function fixtureParameterNames(fn: Function | any, location: Location, on
 }
 
 function innerFixtureParameterNames(fn: Function, location: Location, onError: LoadErrorSink): string[] {
-  const text = fn.toString();
+  const text = filterOutComments(fn.toString());
   const match = text.match(/(?:async)?(?:\s+function)?[^(]*\(([^)]*)/);
   if (!match)
     return [];
@@ -240,7 +240,6 @@ function innerFixtureParameterNames(fn: Function, location: Location, onError: L
     return [];
   }
   const props = splitByComma(firstParam.substring(1, firstParam.length - 1)).map(prop => {
-    prop = filterOutComments(prop);
     const colon = prop.indexOf(':');
     return colon === -1 ? prop.trim() : prop.substring(0, colon).trim();
   });
