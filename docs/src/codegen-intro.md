@@ -5,15 +5,16 @@ title: "Test Generator"
 
 Playwright comes with the ability to generate tests out of the box and is a great way to quickly get started with testing. It will open two windows, a browser window where you interact with the website you wish to test and the Playwright Inspector window where you can record your tests, copy the tests, clear your tests as well as change the language of your tests.
 
+**You will learn**
+
+- [How to record a test](/codegen.md#recording-a-test)
+- [How to generate locators](/codegen.md#generate-locators)
+
 <video width="100%" height="100%" controls muted >
   <source src="https://user-images.githubusercontent.com/13063165/197979804-c4fa3347-8fab-4526-a728-c1b2fbd079b4.mp4" type="video/mp4" />
   Your browser does not support the video tag.
 </video>
 
-**You will learn**
-
-- [How to record a test](/codegen.md#recording-a-test)
-- [How to generate locators](/codegen.md#generate-locators)
 ## Running Codegen
 
 Use the `codegen` command to run the test generator followed by the URL of the website you want to generate tests for. The URL is optional and you can always run the command without it and then add the URL directly into the browser window instead.
@@ -87,6 +88,10 @@ You can generate [locators](/locators.md) with the test generator. Press the rec
 * langs: csharp
 
 <img width="1321" alt="Picking a locator" src="https://user-images.githubusercontent.com/13063165/212753728-49d35a7c-c05a-4298-bf66-89930d2cb578.png" />
+
+### Emulation
+
+You can also generate tests using emulation so as to generate a test for a specific viewport, device, color scheme, as well as emulate the geolocation, language or timezone. The test generator can also generate a test while preserving authenticated state. Check out the [Test Generator](./codegen.md#emulation) guide to learn more.
 
 ## What's Next
 
