@@ -25,7 +25,7 @@ test('render expected', async ({ runInlineTest }) => {
         expect(1).toBe(1);
       });
     `,
-  });
+  }, { reporter: 'dot' });
   expect(result.rawOutput).toContain(colors.green('·'));
   expect(result.exitCode).toBe(0);
 });
@@ -38,7 +38,7 @@ test('render unexpected', async ({ runInlineTest }) => {
         expect(1).toBe(0);
       });
     `,
-  });
+  }, { reporter: 'dot' });
   expect(result.rawOutput).toContain(colors.red('F'));
   expect(result.exitCode).toBe(1);
 });
@@ -51,7 +51,7 @@ test('render unexpected after retry', async ({ runInlineTest }) => {
         expect(1).toBe(0);
       });
     `,
-  }, { retries: 3 });
+  }, { retries: 3, reporter: 'dot' });
   const text = result.output;
   expect(text).toContain('×××F');
   expect(result.rawOutput).toContain(colors.red('F'));
@@ -66,7 +66,7 @@ test('render flaky', async ({ runInlineTest }) => {
         expect(testInfo.retry).toBe(3);
       });
     `,
-  }, { retries: 3 });
+  }, { retries: 3, reporter: 'dot' });
   const text = result.output;
   expect(text).toContain('×××±');
   expect(result.rawOutput).toContain(colors.yellow('±'));
@@ -86,7 +86,7 @@ test('should work from config', async ({ runInlineTest }) => {
         expect(1).toBe(1);
       });
     `,
-  });
+  }, { reporter: 'dot' });
   expect(result.rawOutput).toContain(colors.green('·'));
   expect(result.exitCode).toBe(0);
 });
@@ -99,7 +99,7 @@ test('render 243 tests in rows by 80', async ({ runInlineTest }) => {
         test('test' + i, () => {});
       }
     `,
-  });
+  }, { reporter: 'dot' });
   expect(result.exitCode).toBe(0);
   expect(result.rawOutput).toContain(
       colors.green('·').repeat(80) + '\n' +

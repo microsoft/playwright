@@ -87,7 +87,7 @@ test('should default to package.json directory', async ({ runInlineTest }, testI
   const result = await runInlineTest({
     'foo/package.json': `{ "name": "foo" }`,
     'foo/bar/playwright.config.js': `
-      module.exports = { projects: [ {} ] };
+      module.exports = { reporters: [], projects: [ {} ] };
     `,
     'foo/bar/baz/tests/a.spec.js': `
       import { test, expect } from '@playwright/test';
@@ -97,7 +97,7 @@ test('should default to package.json directory', async ({ runInlineTest }, testI
         fs.writeFileSync(testInfo.outputPath('foo.ts'), 'foobar');
       });
     `
-  }, { 'reporter': '' }, {}, {
+  }, {}, { PW_TEST_REPORTER: '' }, {
     cwd: 'foo/bar/baz/tests',
   });
   expect(result.exitCode).toBe(0);

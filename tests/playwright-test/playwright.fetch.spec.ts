@@ -64,7 +64,7 @@ test('should stop tracing on requestContex.dispose()', async ({ runInlineTest, s
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = {
-        reporter: 'html',
+        reporter: [['html', { open: 'never' }]],
         use: {
           browserName: 'firefox',
           trace:'retain-on-failure'

@@ -158,7 +158,6 @@ test('should work with screenshot: on', async ({ runInlineTest }, testInfo) => {
     'artifacts-two-contexts-failing',
     '  test-failed-1.png',
     '  test-failed-2.png',
-    'report.json',
   ]);
 });
 
@@ -185,7 +184,6 @@ test('should work with screenshot: only-on-failure', async ({ runInlineTest }, t
     'artifacts-two-contexts-failing',
     '  test-failed-1.png',
     '  test-failed-2.png',
-    'report.json',
   ]);
 });
 
@@ -210,7 +208,6 @@ test('should work with screenshot: only-on-failure & fullPage', async ({ runInli
   expect(listFiles(testInfo.outputPath('test-results'))).toEqual([
     'artifacts-should-fail-and-take-fullPage-screenshots',
     '  test-failed-1.png',
-    'report.json',
   ]);
   const screenshotFailure = fs.readFileSync(
       testInfo.outputPath('test-results', 'artifacts-should-fail-and-take-fullPage-screenshots', 'test-failed-1.png')
@@ -252,7 +249,6 @@ test('should work with trace: on', async ({ runInlineTest }, testInfo) => {
     'artifacts-two-contexts-failing',
     '  trace-1.zip',
     '  trace.zip',
-    'report.json',
   ]);
 });
 
@@ -279,7 +275,6 @@ test('should work with trace: retain-on-failure', async ({ runInlineTest }, test
     'artifacts-two-contexts-failing',
     '  trace-1.zip',
     '  trace.zip',
-    'report.json',
   ]);
 });
 
@@ -306,7 +301,6 @@ test('should work with trace: on-first-retry', async ({ runInlineTest }, testInf
     'artifacts-two-contexts-failing-retry1',
     '  trace-1.zip',
     '  trace.zip',
-    'report.json',
   ]);
 });
 
