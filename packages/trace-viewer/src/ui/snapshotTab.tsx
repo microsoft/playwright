@@ -35,10 +35,10 @@ export const SnapshotTab: React.FunctionComponent<{
   sdkLanguage: Language,
   testIdAttributeName: string,
 }> = ({ action, sdkLanguage, testIdAttributeName }) => {
-  const [mode, setMode] = React.useState<'none' | 'inspecting'>('none');
   const [measure, ref] = useMeasure<HTMLDivElement>();
   const [snapshotIndex, setSnapshotIndex] = React.useState(0);
-  const [locator, setLocator] = React.useState<string>('');
+  const [isInspecting, setIsInspecting] = React.useState(false);
+  const [highlightedLocator, setHighlightedLocator] = React.useState<string>('');
   const [pickerVisible, setPickerVisible] = React.useState(false);
 
   const snapshotMap = new Map<string, { title: string, snapshotName: string }>();
@@ -108,31 +108,32 @@ export const SnapshotTab: React.FunctionComponent<{
     y: (measure.height - snapshotContainerSize.height) / 2,
   };
 
-  const recorderGetter = () => {
-    if (!iframeRef.current)
-      return;
-    return getOrCreateRecorder(iframeRef.current.contentWindow!, true, sdkLanguage, testIdAttributeName, locator => {
-      setLocator(locator);
-      setMode('none');
-    });
-  };
-
   return <div
     className='snapshot-tab'
     tabIndex={0}
     onKeyDown={event => {
       if (event.key === 'ArrowRight')
         setSnapshotIndex(Math.min(snapshotIndex + 1, snapshots.length - 1));
+      if (event.key === 'Escape') {
+        if (isInspecting)
+          setIsInspecting(false);
+      }
       if (event.key === 'ArrowLeft')
         setSnapshotIndex(Math.max(snapshotIndex - 1, 0));
     }}
   >
+    <InspectModeController
+      isInspecting={isInspecting}
+      sdkLanguage={sdkLanguage}
+      testIdAttributeName={testIdAttributeName}
+      highlightedLocator={highlightedLocator}
+      setHighlightedLocator={setHighlightedLocator}
+      iframe={iframeRef.current} />
     <Toolbar>
       <ToolbarButton title='Pick locator' disabled={!popoutUrl} toggled={pickerVisible} onClick={() => {
         setPickerVisible(!pickerVisible);
-        setMode(mode === 'inspecting' ? 'none' : 'inspecting');
-        const recorder = recorderGetter();
-        recorder?.setUIState({ mode: pickerVisible ? 'none' : 'inspecting', language: sdkLanguage, testIdAttributeName });
+        setHighlightedLocator('');
+        setIsInspecting(!pickerVisible);
       }}>Pick locator</ToolbarButton>
       <div style={{ width: 5 }}></div>
       {snapshots.map((snapshot, index) => {
@@ -149,19 +150,15 @@ export const SnapshotTab: React.FunctionComponent<{
       }}></ToolbarButton>
     </Toolbar>
     {pickerVisible && <Toolbar>
-      <ToolbarButton icon='microscope' title='Pick locator' disabled={!popoutUrl} toggled={mode === 'inspecting'} onClick={() => {
-        setMode(mode === 'inspecting' ? 'none' : 'inspecting');
-        const recorder = recorderGetter();
-        recorder?.setUIState({ mode: mode === 'inspecting' ? 'none' : 'inspecting', language: sdkLanguage, testIdAttributeName });
+      <ToolbarButton icon='microscope' title='Pick locator' disabled={!popoutUrl} toggled={isInspecting} onClick={() => {
+        setIsInspecting(!isInspecting);
       }}></ToolbarButton>
-      <CodeMirrorWrapper text={locator} language={sdkLanguage} readOnly={!popoutUrl} focusOnChange={true} wrapLines={true} onChange={text => {
-        const recorder = recorderGetter();
-        const actionSelector = locatorOrSelectorAsSelector(sdkLanguage, text, testIdAttributeName);
-        recorder?.setUIState({ mode: 'none', language: sdkLanguage, testIdAttributeName, actionSelector });
-        setLocator(text);
+      <CodeMirrorWrapper text={highlightedLocator} language={sdkLanguage} readOnly={!popoutUrl} focusOnChange={true} wrapLines={true} onChange={text => {
+        setIsInspecting(false);
+        setHighlightedLocator(text);
       }}></CodeMirrorWrapper>
       <ToolbarButton icon='files' title='Copy locator' disabled={!popoutUrl} onClick={() => {
-        copy(locator);
+        copy(highlightedLocator);
       }}></ToolbarButton>
     </Toolbar>}
     <div ref={ref} className='snapshot-wrapper'>
@@ -192,25 +189,6 @@ export const SnapshotTab: React.FunctionComponent<{
   </div>;
 };
 
-function getOrCreateRecorder(contentWindow: Window, enabled: boolean, sdkLanguage: Language, testIdAttributeName: string, setLocator: (locator: string) => void): Recorder | undefined {
-  const win = contentWindow as any;
-  if (!enabled && !win._recorder)
-    return;
-  let recorder: Recorder | undefined = win._recorder;
-
-  if (!recorder) {
-    const injectedScript = new InjectedScript(contentWindow as any, false, sdkLanguage, testIdAttributeName, 1, 'chromium', []);
-    recorder = new Recorder(injectedScript, {
-      async setSelector(selector: string) {
-        recorder!.setUIState({ mode: 'none', language: sdkLanguage, testIdAttributeName });
-        setLocator(asLocator('javascript', selector, false));
-      }
-    });
-    win._recorder = recorder;
-  }
-  return recorder;
-}
-
 function renderTitle(snapshotTitle: string): string {
   if (snapshotTitle === 'before')
     return 'Before';
@@ -220,5 +198,41 @@ function renderTitle(snapshotTitle: string): string {
     return 'Action';
   return snapshotTitle;
 }
+
+export const InspectModeController: React.FunctionComponent<{
+  iframe: HTMLIFrameElement | null,
+  isInspecting: boolean,
+  sdkLanguage: Language,
+  testIdAttributeName: string,
+  highlightedLocator: string,
+  setHighlightedLocator: (locator: string) => void,
+}> = ({ iframe, isInspecting, sdkLanguage, testIdAttributeName, highlightedLocator, setHighlightedLocator }) => {
+  React.useEffect(() => {
+    if (!iframe)
+      return;
+    const win = iframe.contentWindow as any;
+    if (!isInspecting && !highlightedLocator && !win._recorder)
+      return;
+    let recorder: Recorder | undefined = win._recorder;
+    if (!recorder) {
+      const injectedScript = new InjectedScript(win, false, sdkLanguage, testIdAttributeName, 1, 'chromium', []);
+      recorder = new Recorder(injectedScript, {
+        async setSelector(selector: string) {
+          recorder!.setUIState({ mode: 'none', language: sdkLanguage, testIdAttributeName });
+          setHighlightedLocator(asLocator('javascript', selector, false));
+        }
+      });
+      win._recorder = recorder;
+    }
+    const actionSelector = locatorOrSelectorAsSelector(sdkLanguage, highlightedLocator, testIdAttributeName);
+    recorder.setUIState({
+      mode: isInspecting ? 'inspecting' : 'none',
+      actionSelector,
+      language: sdkLanguage,
+      testIdAttributeName,
+    });
+  }, [iframe, isInspecting, highlightedLocator, setHighlightedLocator, sdkLanguage, testIdAttributeName]);
+  return <></>;
+};
 
 const kDefaultViewport = { width: 1280, height: 720 };
