@@ -914,7 +914,7 @@ test('should report clashing folders', async ({ runInlineTest }) => {
       test('passes', async ({}) => {
       });
     `,
-  },  {}, {}, { usesCustomReporters: true });
+  });
   expect(result.exitCode).toBe(0);
   const output = result.output;
   expect(output).toContain('Configuration Error');

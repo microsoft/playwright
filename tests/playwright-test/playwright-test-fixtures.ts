@@ -86,11 +86,8 @@ async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], b
       paramList.push(params[key] === true ? `${k}` : `${k}=${value}`);
     }
   }
-  const outputDir = path.join(baseDir, 'test-results');
-  const reportFile = path.join(outputDir, 'report.json');
+  const reportFile = path.join(baseDir, 'report.json');
   const args = ['test'];
-  if (!options.usesCustomReporters)
-    args.push('--reporter=dot,json');
   args.push(
       '--workers=2',
       ...paramList
@@ -101,6 +98,7 @@ async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], b
   const cwd = options.cwd ? path.resolve(baseDir, options.cwd) : baseDir;
   // eslint-disable-next-line prefer-const
   let { exitCode, output } = await runPlaywrightCommand(childProcess, cwd, args, {
+    PW_TEST_REPORTER: path.join(__dirname, '../../packages/playwright-test/lib/reporters/json.js'),
     PLAYWRIGHT_JSON_OUTPUT_NAME: reportFile,
     ...env,
   }, options.sendSIGINTAfter);
@@ -158,11 +156,7 @@ async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], b
 }
 
 function watchPlaywrightTest(childProcess: CommonFixtures['childProcess'], baseDir: string, env: NodeJS.ProcessEnv, options: RunOptions): TestChildProcess {
-  const paramList: string[] = [];
-  const outputDir = path.join(baseDir, 'test-results');
-  const args = ['test'];
-  args.push('--output=' + outputDir);
-  args.push('--workers=2', ...paramList);
+  const args = ['test', '--workers=2'];
   if (options.additionalArgs)
     args.push(...options.additionalArgs);
   const cwd = options.cwd ? path.resolve(baseDir, options.cwd) : baseDir;
@@ -224,7 +218,6 @@ function cleanEnv(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
 
 type RunOptions = {
   sendSIGINTAfter?: number;
-  usesCustomReporters?: boolean;
   additionalArgs?: string[];
   cwd?: string,
 };

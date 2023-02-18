@@ -123,7 +123,7 @@ test('should retry timeout', async ({ runInlineTest }) => {
         await new Promise(f => setTimeout(f, 10000));
       });
     `
-  }, { timeout: 1000, retries: 2 });
+  }, { timeout: 1000, retries: 2, reporter: 'dot' });
   expect(exitCode).toBe(1);
   expect(passed).toBe(0);
   expect(failed).toBe(1);
@@ -154,7 +154,7 @@ test('should retry unexpected pass', async ({ runInlineTest }) => {
         expect(1 + 1).toBe(2);
       });
     `
-  }, { retries: 2 });
+  }, { retries: 2, reporter: 'dot' });
   expect(exitCode).toBe(1);
   expect(passed).toBe(0);
   expect(failed).toBe(1);
@@ -174,7 +174,7 @@ test('should not retry expected failure', async ({ runInlineTest }) => {
         expect(1 + 1).toBe(2);
       });
     `
-  }, { retries: 2 });
+  }, { retries: 2, reporter: 'dot' });
   expect(exitCode).toBe(0);
   expect(passed).toBe(2);
   expect(failed).toBe(0);
@@ -192,7 +192,7 @@ test('should retry unhandled rejection', async ({ runInlineTest }) => {
         await new Promise(f => setTimeout(f, 2000));
       });
     `
-  }, { retries: 2 });
+  }, { retries: 2, reporter: 'dot' });
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(1);
@@ -212,7 +212,7 @@ test('should retry beforeAll failure', async ({ runInlineTest }) => {
       test('another passing test', async () => {
       });
     `
-  }, { retries: 2 });
+  }, { retries: 2, reporter: 'dot' });
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(1);
@@ -236,7 +236,7 @@ test('should retry worker fixture setup failure', async ({ runInlineTest }) => {
       test('passing test', async ({ worker }) => {
       });
     `
-  }, { retries: 2 });
+  }, { retries: 2, reporter: 'dot' });
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(1);

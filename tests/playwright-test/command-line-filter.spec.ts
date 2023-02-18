@@ -168,7 +168,6 @@ test('should focus a single nested test spec', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(2);
   expect(result.skipped).toBe(0);
-  console.log(JSON.stringify(result.report, null, 2));
   expect(result.report.suites[0].specs[0].title).toEqual('pass3');
   expect(result.report.suites[1].suites[0].suites[0].specs[0].title).toEqual('pass2');
 });
