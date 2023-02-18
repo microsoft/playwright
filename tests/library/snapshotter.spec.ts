@@ -244,6 +244,12 @@ it.describe('snapshots', () => {
     // Second snapshot should be just a copy of the first one.
     expect(snapshot2.html).toEqual([[1, 13]]);
   });
+
+  it('should not navigate on anchor clicks', async ({ page, toImpl, snapshotter }) => {
+    await page.setContent('<a href="https://example.com">example.com</a>');
+    const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'snapshot');
+    expect(distillSnapshot(snapshot)).toBe('<A href="link://https://example.com">example.com</A>');
+  });
 });
 
 function distillSnapshot(snapshot, distillTarget = true) {
