@@ -480,7 +480,6 @@ test.describe('report location', () => {
       `
     }, { 'reporter': 'junit' }, { 'PLAYWRIGHT_JUNIT_OUTPUT_NAME': '../my-report.xml' }, {
       cwd: 'foo/bar/baz/tests',
-      usesCustomOutputDir: true
     });
     expect(result.exitCode).toBe(0);
     expect(result.passed).toBe(1);

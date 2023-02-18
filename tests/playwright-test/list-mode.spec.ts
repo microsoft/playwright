@@ -122,7 +122,7 @@ test('outputDir should not be removed', async ({ runInlineTest }, testInfo) => {
         require('fs').writeFileSync(testInfo.outputPath('myfile.txt'), 'hello');
       });
     `,
-  }, {}, {}, { usesCustomOutputDir: true });
+  });
   expect(result1.exitCode).toBe(0);
   expect(fs.existsSync(path.join(outputDir, 'a-my-test', 'myfile.txt'))).toBe(true);
 
@@ -136,7 +136,7 @@ test('outputDir should not be removed', async ({ runInlineTest }, testInfo) => {
         console.log(testInfo.outputDir);
       });
     `,
-  }, { list: true }, {}, { usesCustomOutputDir: true });
+  }, { list: true });
   expect(result2.exitCode).toBe(0);
   expect(fs.existsSync(path.join(outputDir, 'a-my-test', 'myfile.txt'))).toBe(true);
 });
