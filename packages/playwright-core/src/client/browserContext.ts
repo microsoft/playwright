@@ -40,10 +40,11 @@ import { Artifact } from './artifact';
 import { APIRequestContext } from './fetch';
 import { createInstrumentation } from './clientInstrumentation';
 import { rewriteErrorMessage } from '../utils/stackTrace';
+import { HarRouter } from './harRouter';
 
 export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel> implements api.BrowserContext {
   _pages = new Set<Page>();
-  private _router: network.NetworkRouter;
+  private _routes: network.RouteHandler[] = [];
   readonly _browser: Browser | null = null;
   private _browserType: BrowserType | undefined;
   readonly _bindings = new Map<string, (source: structs.BindingSource, ...args: any[]) => any>();
@@ -72,7 +73,6 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     if (parent instanceof Browser)
       this._browser = parent;
     this._isChromium = this._browser?._name === 'chromium';
-    this._router = new network.NetworkRouter(this, this._options.baseURL);
     this.tracing = Tracing.from(initializer.tracing);
     this.request = APIRequestContext.from(initializer.requestContext);
 
@@ -153,8 +153,18 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   }
 
   async _onRoute(route: network.Route) {
-    if (await this._router.handleRoute(route))
-      return;
+    const routeHandlers = this._routes.slice();
+    for (const routeHandler of routeHandlers) {
+      if (!routeHandler.matches(route.request().url()))
+        continue;
+      if (routeHandler.willExpire())
+        this._routes.splice(this._routes.indexOf(routeHandler), 1);
+      const handled = await routeHandler.handle(route);
+      if (!this._routes.length)
+        this._wrapApiCall(() => this._updateInterceptionPatterns(), true).catch(() => {});
+      if (handled)
+        return;
+    }
     await route._innerContinue(true);
   }
 
@@ -251,7 +261,8 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   }
 
   async route(url: URLMatch, handler: network.RouteHandlerCallback, options: { times?: number } = {}): Promise<void> {
-    await this._router.route(url, handler, options);
+    this._routes.unshift(new network.RouteHandler(this._options.baseURL, url, handler, options.times));
+    await this._updateInterceptionPatterns();
   }
 
   async _recordIntoHAR(har: string, page: Page | null, options: { url?: string | RegExp, notFound?: 'abort' | 'fallback', update?: boolean } = {}): Promise<void> {
@@ -272,11 +283,18 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
       await this._recordIntoHAR(har, null, options);
       return;
     }
-    await this._router.routeFromHAR(har, options);
+    const harRouter = await HarRouter.create(this._connection.localUtils(), har, options.notFound || 'abort', { urlMatch: options.url });
+    harRouter.addContextRoute(this);
   }
 
   async unroute(url: URLMatch, handler?: network.RouteHandlerCallback): Promise<void> {
-    await this._router.unroute(url, handler);
+    this._routes = this._routes.filter(route => route.url !== url || (handler && route.handler !== handler));
+    await this._updateInterceptionPatterns();
+  }
+
+  private async _updateInterceptionPatterns() {
+    const patterns = network.RouteHandler.prepareInterceptionPatterns(this._routes);
+    await this._channel.setNetworkInterceptionPatterns({ patterns });
   }
 
   async waitForEvent(event: string, optionsOrPredicate: WaitForEventOptions = {}): Promise<any> {
