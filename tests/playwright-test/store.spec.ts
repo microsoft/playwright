@@ -290,3 +290,48 @@ test('should delete value', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 });
+
+test('should support text, json and binary values', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test, store, expect } from '@playwright/test';
+      test('json', async ({ }) => {
+        await store.set('key.json', {'a': 2023});
+        expect(await store.get('key.json')).toEqual({ 'a': 2023 });
+      });
+      test('text', async ({ }) => {
+        await store.set('key.txt', 'Hello');
+        expect(await store.get('key.txt')).toEqual('Hello');
+      });
+      test('binary', async ({ }) => {
+        const buf = Buffer.alloc(256);
+        for (let i = 0; i < 256; i++)
+          buf[i] = i;
+        await store.set('key.png', buf);
+        expect(await store.get('key.png')).toEqual(buf);
+      });
+    `,
+  }, { workers: 1 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(3);
+});
+
+test('should throw on unsupported value type for given key extension', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test, store, expect } from '@playwright/test';
+      test('json', async ({ }) => {
+        const buf = Buffer.alloc(5);
+        await store.set('key.json', buf);
+      });
+      test('text', async ({ }) => {
+        await store.set('key.txt', {});
+      });
+      test('binary', async ({ }) => {
+        await store.set('key.png', {});
+      });
+    `,
+  }, { workers: 1 });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(3);
+});
