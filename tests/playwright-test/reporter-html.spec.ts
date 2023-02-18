@@ -953,7 +953,6 @@ test.describe('report location', () => {
       `
     }, { 'reporter': 'html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' }, {
       cwd: 'foo/bar/baz/tests',
-      usesCustomOutputDir: true
     });
     expect(result.exitCode).toBe(0);
     expect(result.passed).toBe(1);
@@ -978,7 +977,6 @@ test.describe('report location', () => {
       `
     }, { 'reporter': 'html' }, { 'PW_TEST_HTML_REPORT_OPEN': 'never', 'PLAYWRIGHT_HTML_REPORT': '../my-report' }, {
       cwd: 'foo/bar/baz/tests',
-      usesCustomOutputDir: true
     });
     expect(result.exitCode).toBe(0);
     expect(result.passed).toBe(1);

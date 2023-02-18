@@ -99,7 +99,6 @@ test('should default to package.json directory', async ({ runInlineTest }, testI
     `
   }, { 'reporter': '' }, {}, {
     cwd: 'foo/bar/baz/tests',
-    usesCustomOutputDir: true
   });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
@@ -364,7 +363,7 @@ test('should accept a relative path for outputDir', async ({ runInlineTest }, te
       { outputDir: './my-output-dir' },
     ] };
     `,
-  }, {}, {}, { usesCustomOutputDir: true });
+  });
   expect(result.exitCode).toBe(0);
 });
 
@@ -383,7 +382,7 @@ test('should have output dir based on rootDir (cwd)', async ({ runInlineTest }, 
         fs.writeFileSync(testInfo.outputPath('foo.txt'), 'hello');
       });
     `,
-  }, {}, {}, { usesCustomOutputDir: true });
+  });
   expect(result.exitCode).toBe(0);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'example-hello-world', 'foo.txt'))).toBe(true);
 });

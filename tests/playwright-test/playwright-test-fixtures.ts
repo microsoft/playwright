@@ -89,8 +89,6 @@ async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], b
   const outputDir = path.join(baseDir, 'test-results');
   const reportFile = path.join(outputDir, 'report.json');
   const args = ['test'];
-  if (!options.usesCustomOutputDir)
-    args.push('--output=' + outputDir);
   if (!options.usesCustomReporters)
     args.push('--reporter=dot,json');
   args.push(
@@ -226,7 +224,6 @@ function cleanEnv(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
 
 type RunOptions = {
   sendSIGINTAfter?: number;
-  usesCustomOutputDir?: boolean;
   usesCustomReporters?: boolean;
   additionalArgs?: string[];
   cwd?: string,

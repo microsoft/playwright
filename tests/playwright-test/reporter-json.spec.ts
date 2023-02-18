@@ -287,7 +287,6 @@ test.describe('report location', () => {
       `
     }, { 'reporter': 'json' }, { 'PW_TEST_HTML_REPORT_OPEN': 'never', 'PLAYWRIGHT_JSON_OUTPUT_NAME': '../my-report.json' }, {
       cwd: 'foo/bar/baz/tests',
-      usesCustomOutputDir: true
     });
     expect(result.exitCode).toBe(0);
     expect(result.passed).toBe(1);
