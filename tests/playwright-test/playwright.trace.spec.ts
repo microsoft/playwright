@@ -15,7 +15,7 @@
  */
 
 import { test, expect } from './playwright-test-fixtures';
-import { ZipFile } from '../../packages/playwright-core/lib/utils';
+const { ZipFile } = require('../../packages/playwright-core/lib/utils');
 import fs from 'fs';
 
 test('should stop tracing with trace: on-first-retry, when not retrying', async ({ runInlineTest }, testInfo) => {

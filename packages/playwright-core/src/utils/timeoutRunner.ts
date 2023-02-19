@@ -123,9 +123,9 @@ export async function pollAgainstTimeout<T>(callback: () => Promise<{ continuePo
       : await wrappedCallback().then(value => ({ result: value, timedOut: false }));
     if (received.timedOut)
       break;
-    lastResult = received.result.result;
-    if (!received.result.continuePolling)
-      return { result: received.result.result, timedOut: false };
+    lastResult = (received as any).result.result;
+    if (!(received as any).result.continuePolling)
+      return { result: lastResult, timedOut: false };
     const interval = pollIntervals!.shift() ?? lastPollInterval;
     if (timeout !== 0 && startTime + timeout <= monotonicTime() + interval)
       break;
