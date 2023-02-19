@@ -182,7 +182,7 @@ test('should truncate long test names', async ({ runInlineTest }) => {
       test.skip('skipped very long name', async () => {
       });
     `,
-  }, { reporter: 'list', retries: 0 }, { PWTEST_TTY_WIDTH: 50 });
+  }, { reporter: 'list', retries: 0 }, { PWTEST_TTY_WIDTH: '50' });
   expect(result.exitCode).toBe(1);
 
   const lines = result.output.split('\n').slice(3, 11);
