@@ -46,13 +46,12 @@ import { Keyboard, Mouse, Touchscreen } from './input';
 import { assertMaxArguments, JSHandle, parseResult, serializeArgument } from './jsHandle';
 import type { FrameLocator, Locator, LocatorOptions } from './locator';
 import type { ByRoleOptions } from '../utils/isomorphic/locatorUtils';
-import { NetworkRouter, type RouteHandlerCallback } from './network';
-import { Response, Route, validateHeaders, WebSocket } from './network';
-import type { Request } from './network';
+import { type RouteHandlerCallback, type Request, Response, Route, RouteHandler, validateHeaders, WebSocket } from './network';
 import type { FilePayload, Headers, LifecycleEvent, SelectOption, SelectOptionOptions, Size, URLMatch, WaitForEventOptions, WaitForFunctionOptions } from './types';
 import { Video } from './video';
 import { Waiter } from './waiter';
 import { Worker } from './worker';
+import { HarRouter } from './harRouter';
 
 type PDFOptions = Omit<channels.PagePdfParams, 'width' | 'height' | 'margin'> & {
   width?: string | number,
@@ -84,7 +83,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   private _closed = false;
   _closedOrCrashedPromise: Promise<void>;
   private _viewportSize: Size | null;
-  private _router: NetworkRouter;
+  private _routes: RouteHandler[] = [];
 
   readonly accessibility: Accessibility;
   readonly coverage: Coverage;
@@ -110,7 +109,6 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     super(parent, type, guid, initializer);
     this._browserContext = parent as unknown as BrowserContext;
     this._timeoutSettings = new TimeoutSettings(this._browserContext._timeoutSettings);
-    this._router = new NetworkRouter(this, this._browserContext._options.baseURL);
 
     this.accessibility = new Accessibility(this._channel);
     this.keyboard = new Keyboard(this);
@@ -187,8 +185,18 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   }
 
   private async _onRoute(route: Route) {
-    if (await this._router.handleRoute(route))
-      return;
+    const routeHandlers = this._routes.slice();
+    for (const routeHandler of routeHandlers) {
+      if (!routeHandler.matches(route.request().url()))
+        continue;
+      if (routeHandler.willExpire())
+        this._routes.splice(this._routes.indexOf(routeHandler), 1);
+      const handled = await routeHandler.handle(route);
+      if (!this._routes.length)
+        this._wrapApiCall(() => this._updateInterceptionPatterns(), true).catch(() => {});
+      if (handled)
+        return;
+    }
     await this._browserContext._onRoute(route);
   }
 
@@ -449,7 +457,8 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   }
 
   async route(url: URLMatch, handler: RouteHandlerCallback, options: { times?: number } = {}): Promise<void> {
-    await this._router.route(url, handler, options);
+    this._routes.unshift(new RouteHandler(this._browserContext._options.baseURL, url, handler, options.times));
+    await this._updateInterceptionPatterns();
   }
 
   async routeFromHAR(har: string, options: { url?: string | RegExp, notFound?: 'abort' | 'fallback', update?: boolean } = {}): Promise<void> {
@@ -457,11 +466,18 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
       await this._browserContext._recordIntoHAR(har, this, options);
       return;
     }
-    await this._router.routeFromHAR(har, options);
+    const harRouter = await HarRouter.create(this._connection.localUtils(), har, options.notFound || 'abort', { urlMatch: options.url });
+    harRouter.addPageRoute(this);
   }
 
   async unroute(url: URLMatch, handler?: RouteHandlerCallback): Promise<void> {
-    await this._router.unroute(url, handler);
+    this._routes = this._routes.filter(route => route.url !== url || (handler && route.handler !== handler));
+    await this._updateInterceptionPatterns();
+  }
+
+  private async _updateInterceptionPatterns() {
+    const patterns = RouteHandler.prepareInterceptionPatterns(this._routes);
+    await this._channel.setNetworkInterceptionPatterns({ patterns });
   }
 
   async screenshot(options: Omit<channels.PageScreenshotOptions, 'mask'> & { path?: string, mask?: Locator[] } = {}): Promise<Buffer> {
