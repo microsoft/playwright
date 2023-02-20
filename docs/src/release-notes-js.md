@@ -69,7 +69,7 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 - Official [docker images](./docker.md) now include Node 18 instead of Node 16.
 
 
-## ⚠️ Breaking change in component tests
+### ⚠️ Breaking change in component tests
 
 Note: **component tests only**, does not affect end-to-end tests.
 

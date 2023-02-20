@@ -103,15 +103,7 @@ them using Playwright command line tool:
 npx playwright install msedge
 ```
 
-```powershell lang=js
-npx playwright install msedge
-```
-
 ```bash lang=python
-playwright install msedge
-```
-
-```powershell lang=python
 playwright install msedge
 ```
 
@@ -119,15 +111,7 @@ playwright install msedge
 pwsh bin/Debug/netX/playwright.ps1 install msedge
 ```
 
-```powershell lang=csharp
-pwsh bin/Debug/netX/playwright.ps1 install msedge
-```
-
 ```batch lang=java
-mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install msedge"
-```
-
-```powershell lang=java
 mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install msedge"
 ```
 
