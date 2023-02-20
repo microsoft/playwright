@@ -15,6 +15,12 @@ Playwright Test was created specifically to accommodate the needs of end-to-end 
 
 ## Installing Playwright
 
+### Prerequisites
+Node JS: Playwright requires a node.js version that is 14 or above. To download and install Node follow below links:
+ - [Windows](https://nodejs.org/en/)
+ - Mac: `$ brew install node`
+
+### Get started
 Get started by installing Playwright using npm or yarn. Alternatively you can also get started and run your tests using the [VS Code Extension](./getting-started-vscode.md).
 
 <Tabs
