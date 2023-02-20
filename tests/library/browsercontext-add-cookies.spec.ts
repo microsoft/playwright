@@ -454,8 +454,7 @@ it('should allow unnamed cookies', async ({ page, context, server, browserName, 
     expect.soft(await page.evaluate('document.cookie')).toBe('unnamed-via-js');
 });
 
-it('should set cookies on WebSocket', async ({ contextFactory, httpsServer, browserName, platform }) => {
-  it.fixme(browserName === 'webkit' && platform === 'win32', 'WebKit on win32 does not send any cookies over the WebSocket connection');
+it('should set secure cookies on secure WebSocket', async ({ contextFactory, httpsServer }) => {
   let resolveResceivedWebSocketHeaders = (headers: IncomingHttpHeaders) => { };
   const receivedWebSocketHeaders = new Promise<IncomingHttpHeaders>(resolve => resolveResceivedWebSocketHeaders = resolve);
   httpsServer.onceWebSocketConnection((ws, req) => resolveResceivedWebSocketHeaders(req.headers));
