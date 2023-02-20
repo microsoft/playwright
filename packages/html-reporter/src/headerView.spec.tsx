@@ -96,6 +96,8 @@ test('should show the project names', async ({ mount }) => {
     >
     </HeaderView>);
     await expect(component.getByText('Project:')).toBeHidden();
+
+    await component.unmount();
   });
   await test.step('with more than 1 project', async () => {
     const component = await mount(<HeaderView
