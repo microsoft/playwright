@@ -99,7 +99,7 @@ window.playwrightUnmount = async rootElement => {
     throw new Error('Component was not mounted');
 
   root.unmount();
-  rootRegistry.splice(registryEntryIndex, 1);
+  rootRegistry.delete(rootElement);
 };
 
 window.playwrightUpdate = async (rootElement, component) => {
