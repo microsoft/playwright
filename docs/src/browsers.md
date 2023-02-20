@@ -3,30 +3,272 @@ id: browsers
 title: "Browsers"
 ---
 
-Each version of Playwright needs specific versions of browser binaries to operate. Depending on the language you use, Playwright will either download these browsers at package install time for you, or you will need to use [Playwright CLI](./cli.md) to install these browsers.
+Each version of Playwright needs specific versions of browser binaries to operate. Depending on the language you use, Playwright will either download these browsers at package install time for you, or you will need to use Playwright CLI to install these browsers.
+
 
 With every release, Playwright updates the versions of the browsers it supports, so that the latest Playwright would support the latest browsers at any moment. It means that every time you update playwright, you might need to re-run the `install` CLI command.
 
-## Chromium
+## Install browsers
+
+Playwright can install supported browsers. Running the command without arguments will install the default browsers.
+
+```bash js
+npx playwright install
+```
+
+```bash java
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install"
+```
+
+```bash python
+playwright install
+```
+
+```bash csharp
+pwsh bin/Debug/netX/playwright.ps1 install
+```
+
+You can also install specific browsers by providing an argument:
+
+```bash js
+npx playwright install webkit
+```
+
+```bash java
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install webkit"
+```
+
+```bash python
+playwright install webkit
+```
+
+```bash csharp
+pwsh bin/Debug/netX/playwright.ps1 install webkit
+```
+
+See all supported browsers:
+
+```bash js
+npx playwright install --help
+```
+
+```bash java
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install --help"
+```
+
+```bash python
+playwright install --help
+```
+
+```bash csharp
+pwsh bin/Debug/netX/playwright.ps1 install --help
+```
+
+
+## Install system dependencies
+
+System dependencies can get installed automatically. This is useful for CI environments.
+
+```bash js
+npx playwright install-deps
+```
+
+```bash java
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install-deps"
+```
+
+```bash python
+playwright install-deps
+```
+
+```bash csharp
+pwsh bin/Debug/netX/playwright.ps1 install-deps
+```
+
+You can also install the dependencies for a single browser only by passing it as an argument:
+
+```bash js
+npx playwright install-deps chromium
+```
+
+```bash java
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install-deps chromium"
+```
+
+```bash python
+playwright install-deps chromium
+```
+
+```bash csharp
+pwsh bin/Debug/netX/playwright.ps1 install-deps chromium
+```
+
+It's also possible to combine `install-deps` with `install` and install by that the browsers and OS dependencies with a single command. This would do both for Chromium, but you can also leave it out.
+
+```bash js
+npx playwright install --with-deps chromium
+```
+
+```bash java
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install --with-deps chromium"
+```
+
+```bash python
+playwright install --with-deps chromium
+```
+
+```bash csharp
+pwsh bin/Debug/netX/playwright.ps1 install --with-deps chromium
+```
+## Browser Configuration
+* langs: js
+
+Playwright Test supports multiple "projects" so that can run your tests in multiple browsers and configurations. Here is an example that runs every test in Chromium, Firefox and WebKit, by creating a project for each.
+
+```js tab=js-js
+// playwright.config.js
+// @ts-check
+const { devices } = require('@playwright/test');
+
+const { defineConfig } = require('@playwright/test');
+
+module.exports = defineConfig({
+  projects: [
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      name: 'firefox',
+      use: { ...devices['Desktop Firefox'] },
+    },
+    {
+      name: 'webkit',
+      use: { ...devices['Desktop Safari'] },
+    },
+  ],
+});
+```
+
+```js tab=js-ts
+// playwright.config.ts
+import { defineConfig, devices } from '@playwright/test';
+
+export default defineConfig({
+  projects: [
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      name: 'firefox',
+      use: { ...devices['Desktop Firefox'] },
+    },
+    {
+      name: 'webkit',
+      use: { ...devices['Desktop Safari'] },
+    },
+  ],
+});
+```
+
+You can specify [different options][TestProject] for each project, for example set specific command-line arguments for Chromium.
+
+Playwright Test will run all projects by default.
+
+```bash
+npx playwright test
+
+Running 5 tests using 5 workers
+
+  ✓ [chromium] › example.spec.ts:3:1 › basic test (2s)
+  ✓ [firefox] › example.spec.ts:3:1 › basic test (2s)
+  ✓ [webkit] › example.spec.ts:3:1 › basic test (2s)
+```
+
+Use the  `--project` command line option to run a single project.
+
+```bash
+npx playwright test --project=firefox
+
+Running 1 test using 1 worker
+
+  ✓ [firefox] › example.spec.ts:3:1 › basic test (2s)
+```
+
+In Playwright you can configure projects for major browser engines as well as branded browsers such as Google Chrome and Microsoft Edge.
+
+```js tab=js-js
+// playwright.config.js
+// @ts-check
+const { devices } = require('@playwright/test');
+
+const { defineConfig } = require('@playwright/test');
+
+module.exports = defineConfig({
+  projects: [
+    /* Test against branded browsers. */
+    {
+      name: 'Chrome',
+      use: {
+        channel: 'chrome',
+      },
+    },
+    {
+      name: 'Microsoft Edge',
+      use: {
+        channel: 'msedge',
+      },
+    },
+  ],
+});
+```
+
+```js tab=js-ts
+// playwright.config.ts
+import { defineConfig, devices } from '@playwright/test';
+
+export default defineConfig({
+  projects: [
+    /* Test against branded browsers. */
+    {
+      name: 'Chrome',
+      use: {
+        channel: 'chrome',
+      },
+    },
+    {
+      name: 'Microsoft Edge',
+      use: {
+        channel: 'msedge',
+      },
+    },
+  ],
+});
+```
+
+## Browser versions
+
+### Chromium
 
 For Google Chrome, Microsoft Edge and other Chromium-based browsers, by default, Playwright uses open source Chromium builds.
 Since Chromium project is ahead of the branded browsers, when the world is on Google Chrome N, Playwright already supports
-Chromium N+1 that will be released in Google Chrome and Microsoft Edge in a few weeks.
+Chromium N+1 that will be released in Google Chrome and Microsoft Edge a few weeks later.
 
 There is also a way to opt into using Google Chrome's or Microsoft Edge's branded builds for testing. For details
 on when to opt into stable channels, refer to the [Google Chrome & Microsoft Edge](#google-chrome--microsoft-edge) section below.
 
-## Firefox
+### Firefox
 
 Playwright's Firefox version matches the recent [Firefox Stable](https://www.mozilla.org/en-US/firefox/new/)
 build.
 
-## WebKit
+### WebKit
 
 Playwright's WebKit version matches the recent WebKit trunk build, before it is used in Apple Safari and
 other WebKit-based browsers. This gives a lot of lead time to react on the potential browser update issues.
 
-## Google Chrome & Microsoft Edge
+### Google Chrome & Microsoft Edge
 
 While Playwright can download and use the recent Chromium build, it can operate against the stock Google
 Chrome and Microsoft Edge browsers available on the machine (note that Playwright doesn't install them by
@@ -94,7 +336,7 @@ var chromium = playwright.Chromium;
 var browser = await chromium.LaunchAsync(new BrowserTypeLaunchOptions { Channel = "chrome" });
 ```
 
-### Installing Google Chrome & Microsoft Edge
+#### Installing Google Chrome & Microsoft Edge
 
 If stock Google Chrome or Microsoft Edge is not available on your machine, you can install
 them using Playwright command line tool:
@@ -122,7 +364,7 @@ Google Chrome or Microsoft Edge installations will not be isolated. They will be
 default global location that depends on your operating system.
 :::
 
-### When to use Google Chrome & Microsoft Edge and when not to?
+#### When to use Google Chrome & Microsoft Edge and when not to?
 
 **Defaults**
 
