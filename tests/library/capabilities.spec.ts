@@ -186,3 +186,20 @@ it('should set CloseEvent.wasClean to false when the server terminates a WebSock
   }), server.PORT);
   expect(wasClean).toBe(false);
 });
+
+it('serviceWorker should intercept document request', async ({ page, server, browserName }) => {
+  it.fixme(browserName === 'firefox');
+
+  server.setRoute('/sw.js', (req, res) => {
+    res.setHeader('Content-Type', 'application/javascript');
+    res.end(`
+      self.addEventListener('fetch', event => {
+        event.respondWith(new Response('intercepted'));
+      });
+    `);
+  });
+  await page.goto(server.EMPTY_PAGE);
+  await page.evaluate(() => navigator.serviceWorker.register('/sw.js'));
+  await page.reload();
+  expect(await page.textContent('body')).toBe('intercepted');
+});
