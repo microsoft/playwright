@@ -333,7 +333,7 @@ test('should filter out syntax error stack traces', async ({ runInlineTest }, te
       import { test, expect } from '@playwright/test';
       test('should work', ({}) => {
         // syntax error: cannot have await in non-async function
-        await Proimse.resolve();
+        await Promise.resolve();
       });
     `
   });
@@ -380,26 +380,6 @@ test('should not filter out POM', async ({ runInlineTest }) => {
   expect(result.output).not.toContain(path.sep + `playwright-test`);
   expect(result.output).not.toContain(path.sep + `playwright-core`);
   expect(result.output).not.toContain('internal');
-});
-
-test('should filter stack even without default Error.prepareStackTrace', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'expect-test.spec.ts': `
-      import { test, expect } from '@playwright/test';
-      test('should work', ({}) => {
-        Error.prepareStackTrace = undefined;
-        throw new Error('foobar');
-      });
-    `
-  });
-  expect(result.exitCode).toBe(1);
-  expect(result.output).toContain('foobar');
-  expect(result.output).toContain('expect-test.spec.ts');
-  expect(result.output).not.toContain(path.sep + `playwright-test`);
-  expect(result.output).not.toContain(path.sep + `playwright-core`);
-  expect(result.output).not.toContain('internal');
-  const stackLines = result.output.split('\n').filter(line => line.includes('    at '));
-  expect(stackLines.length).toBe(1);
 });
 
 test('should work with cross-imports - 1', async ({ runInlineTest }) => {

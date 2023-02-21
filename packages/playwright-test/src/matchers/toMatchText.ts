@@ -18,8 +18,7 @@
 import type { ExpectedTextValue } from '@protocol/channels';
 import { isRegExp, isString } from 'playwright-core/lib/utils';
 import type { Expect } from '../common/types';
-import type { ParsedStackTrace } from '../util';
-import { expectTypes, callLogText, captureStackTrace } from '../util';
+import { expectTypes, callLogText } from '../util';
 import {
   printReceivedStringContainExpectedResult,
   printReceivedStringContainExpectedSubstring
@@ -32,7 +31,7 @@ export async function toMatchText(
   matcherName: string,
   receiver: any,
   receiverType: string,
-  query: (isNot: boolean, timeout: number, customStackTrace: ParsedStackTrace) => Promise<{ matches: boolean, received?: string, log?: string[], timedOut?: boolean }>,
+  query: (isNot: boolean, timeout: number) => Promise<{ matches: boolean, received?: string, log?: string[], timedOut?: boolean }>,
   expected: string | RegExp,
   options: { timeout?: number, matchSubstring?: boolean } = {},
 ) {
@@ -60,7 +59,7 @@ export async function toMatchText(
 
   const timeout = currentExpectTimeout(options);
 
-  const { matches: pass, received, log, timedOut } = await query(this.isNot, timeout, captureStackTrace(`expect.${this.isNot ? 'not.' : ''}${matcherName}`));
+  const { matches: pass, received, log, timedOut } = await query(this.isNot, timeout);
   const stringSubstring = options.matchSubstring ? 'substring' : 'string';
   const receivedString = received || '';
   const message = pass
