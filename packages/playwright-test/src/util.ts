@@ -16,31 +16,50 @@
 
 import fs from 'fs';
 import { mime } from 'playwright-core/lib/utilsBundle';
+import type { StackFrameData } from 'playwright-core/lib/utilsBundle';
 import util from 'util';
 import path from 'path';
 import url from 'url';
-import { colors, debug, minimatch } from 'playwright-core/lib/utilsBundle';
+import { colors, debug, minimatch, parseStackTraceLine } from 'playwright-core/lib/utilsBundle';
 import type { TestInfoError, Location } from './common/types';
-import { calculateSha1, captureStackTrace, isRegExp, isString } from 'playwright-core/lib/utils';
-import type { ParsedStackTrace } from 'playwright-core/lib/utils';
-
-export type { ParsedStackTrace };
+import { calculateSha1, isRegExp, isString } from 'playwright-core/lib/utils';
 
 const PLAYWRIGHT_TEST_PATH = path.join(__dirname, '..');
+const PLAYWRIGHT_CORE_PATH = path.dirname(require.resolve('playwright-core/package.json'));
 
 export function filterStackTrace(e: Error) {
   if (process.env.PWDEBUGIMPL)
     return;
-
-  const stack = captureStackTrace(e.stack);
-  const stackLines = stack.frames.filter(f => !f.file.startsWith(PLAYWRIGHT_TEST_PATH)).map(f => {
-    if (f.function)
-      return `    at ${f.function} (${f.file}:${f.line}:${f.column})`;
-    return `    at ${f.file}:${f.line}:${f.column}`;
-  });
+  const stackLines = stringifyStackFrames(filteredStackTrace(e));
   const message = e.message;
   e.stack = `${e.name}: ${e.message}\n${stackLines.join('\n')}`;
   e.message = message;
+}
+
+export function filteredStackTrace(e: Error): StackFrameData[] {
+  const frames: StackFrameData[] = [];
+  for (const line of e.stack?.split('\n') || []) {
+    const frame = parseStackTraceLine(line);
+    if (!frame || !frame.fileName)
+      continue;
+    if (!process.env.PWDEBUGIMPL && frame.fileName.startsWith(PLAYWRIGHT_TEST_PATH))
+      continue;
+    if (!process.env.PWDEBUGIMPL && frame.fileName.startsWith(PLAYWRIGHT_CORE_PATH))
+      continue;
+    frames.push(frame);
+  }
+  return frames;
+}
+
+export function stringifyStackFrames(frames: StackFrameData[]): string[] {
+  const stackLines: string[] = [];
+  for (const frame of frames) {
+    if (frame.function)
+      stackLines.push(`    at ${frame.function} (${frame.fileName}:${frame.line}:${frame.column})`);
+    else
+      stackLines.push(`    at ${frame.fileName}:${frame.line}:${frame.column}`);
+  }
+  return stackLines;
 }
 
 export function serializeError(error: Error | any): TestInfoError {

@@ -58,17 +58,7 @@ export function captureRawStack(): string {
   return stack;
 }
 
-function isInternalFileName(file: string, functionName?: string): boolean {
-  // Node 16+ has node:internal.
-  if (file.startsWith('internal') || file.startsWith('node:'))
-    return true;
-  // EventEmitter.emit has 'events.js' file.
-  if (file === 'events.js' && functionName?.endsWith('emit'))
-    return true;
-  return false;
-}
-
-export function captureStackTrace(rawStack?: string): ParsedStackTrace {
+export function captureLibraryStackTrace(rawStack?: string): ParsedStackTrace {
   const stack = rawStack || captureRawStack();
 
   const isTesting = isUnderTest();
@@ -78,17 +68,15 @@ export function captureStackTrace(rawStack?: string): ParsedStackTrace {
     isPlaywrightLibrary: boolean;
   };
   let parsedFrames = stack.split('\n').map(line => {
-    const { frame, fileName } = parseStackTraceLine(line);
-    if (!frame || !frame.file || !fileName)
+    const frame = parseStackTraceLine(line);
+    if (!frame || !frame.fileName)
       return null;
-    if (!process.env.PWDEBUGIMPL && isInternalFileName(frame.file, frame.function))
+    if (!process.env.PWDEBUGIMPL && isTesting && frame.fileName.includes(COVERAGE_PATH))
       return null;
-    if (!process.env.PWDEBUGIMPL && isTesting && fileName.includes(COVERAGE_PATH))
-      return null;
-    const isPlaywrightLibrary = fileName.startsWith(CORE_DIR);
+    const isPlaywrightLibrary = frame.fileName.startsWith(CORE_DIR);
     const parsed: ParsedFrame = {
       frame: {
-        file: fileName,
+        file: frame.fileName,
         line: frame.line,
         column: frame.column,
         function: frame.function,

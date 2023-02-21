@@ -278,7 +278,6 @@ it('should dispatch mouse move after context menu was opened', async ({ page, br
       const angle = 2 * Math.PI * i / N;
       const x = CX + Math.round(radius * Math.cos(angle));
       const y = CY + Math.round(radius * Math.sin(angle));
-      console.log(x, y);
       await page.mouse.move(x, y);
     }
   }

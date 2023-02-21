@@ -17,8 +17,6 @@
 import type { Expect } from '../common/types';
 import { expectTypes } from '../util';
 import { callLogText } from '../util';
-import type { ParsedStackTrace } from 'playwright-core/lib/utils';
-import { captureStackTrace } from 'playwright-core/lib/utils';
 import { matcherHint } from './matcherHint';
 import { currentExpectTimeout } from '../common/globals';
 
@@ -34,7 +32,7 @@ export async function toEqual<T>(
   matcherName: string,
   receiver: any,
   receiverType: string,
-  query: (isNot: boolean, timeout: number, customStackTrace: ParsedStackTrace) => Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }>,
+  query: (isNot: boolean, timeout: number) => Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }>,
   expected: T,
   options: { timeout?: number, contains?: boolean } = {},
 ) {
@@ -48,9 +46,7 @@ export async function toEqual<T>(
 
   const timeout = currentExpectTimeout(options);
 
-  const customStackTrace = captureStackTrace();
-  customStackTrace.apiName = 'expect.' + matcherName;
-  const { matches: pass, received, log, timedOut } = await query(this.isNot, timeout, customStackTrace);
+  const { matches: pass, received, log, timedOut } = await query(this.isNot, timeout);
 
   const message = pass
     ? () =>
