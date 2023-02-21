@@ -44,7 +44,7 @@ test('should work with comments inside fixtures', async ({ runInlineTest }) => {
 
       test('should use asdf', async ({ // }) {,,, /*
     asdf, // a comment
-/* /* /* */       // line // //
+/*/aa* /* */       // line // //
     /* // */      foo, /* what // */ bar // whoa
           /* some // comment */ : //
       /* // /* // */ barbar /* /* /* */
