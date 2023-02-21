@@ -35,6 +35,7 @@ jobs:
         if: ${{ steps.prepare-branch.outputs.HAS_CHANGES == '1' }}
         uses: actions/github-script@v6
         with:
+          github-token: ${{ secrets.REPOSITORY_DISPATCH_PERSONAL_ACCESS_TOKEN }}
           script: |
             await github.rest.pulls.create({
               owner: 'microsoft',
