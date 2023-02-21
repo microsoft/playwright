@@ -608,3 +608,27 @@ test('should treat 3XX as available server', async ({ runInlineTest }, { workerI
   expect(result.output).toContain('[WebServer] listening');
   expect(result.output).toContain('[WebServer] error from server');
 });
+
+test('should check ipv4 and ipv6 with happy eyeballs when URL is passed', async ({ runInlineTest }, { workerIndex }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/20784' });
+  const port = workerIndex * 2 + 10500;
+  const result = await runInlineTest({
+    'test.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({}) => {});
+    `,
+    'playwright.config.ts': `
+      module.exports = {
+        webServer: {
+          command: 'node -e "require(\\'http\\').createServer((req, res) => res.end()).listen(${port}, \\'127.0.0.1\\')"',
+          url: 'http://localhost:${port}/',
+        }
+      };
+    `,
+  }, {}, { DEBUG: 'pw:webserver' });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.output).toContain('Process started');
+  expect(result.output).toContain(`HTTP GET: http://localhost:${port}/`);
+  expect(result.output).toContain('WebServer available');
+});

@@ -19,7 +19,7 @@ import path from 'path';
 import net from 'net';
 
 import { debug } from 'playwright-core/lib/utilsBundle';
-import { raceAgainstTimeout, launchProcess } from 'playwright-core/lib/utils';
+import { raceAgainstTimeout, launchProcess, getHappyEyeballsAgent } from 'playwright-core/lib/utils';
 
 import type { FullConfig, Reporter } from '../../types/testReporter';
 import type { TestRunnerPlugin } from '.';
@@ -159,8 +159,11 @@ async function isURLAvailable(url: URL, ignoreHTTPSErrors: boolean, onStdErr: Re
 }
 
 async function httpStatusCode(url: URL, ignoreHTTPSErrors: boolean, onStdErr: Reporter['onStdErr']): Promise<number> {
-  const commonRequestOptions = { headers: { Accept: '*/*' } };
   const isHttps = url.protocol === 'https:';
+  const commonRequestOptions = {
+    headers: { Accept: '*/*' },
+    agent: getHappyEyeballsAgent(isHttps),
+  };
   const requestOptions = isHttps ? {
     ...commonRequestOptions,
     rejectUnauthorized: !ignoreHTTPSErrors,

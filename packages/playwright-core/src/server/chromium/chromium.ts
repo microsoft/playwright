@@ -51,7 +51,7 @@ import { registry } from '../registry';
 import { ManualPromise } from '../../utils/manualPromise';
 import { validateBrowserContextOptions } from '../browserContext';
 import { chromiumSwitches } from './chromiumSwitches';
-import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent } from '../happy-eyeballs';
+import { getHappyEyeballsAgent } from '../../utils/happy-eyeballs';
 
 const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');
 
@@ -342,7 +342,7 @@ async function urlToWSEndpoint(progress: Progress, endpointURL: string) {
   const json = await new Promise<string>((resolve, reject) => {
     (isHTTPS ? https : http).get(httpURL, {
       timeout: NET_DEFAULT_TIMEOUT,
-      agent: isHTTPS ? httpsHappyEyeballsAgent : httpHappyEyeballsAgent,
+      agent: getHappyEyeballsAgent(isHTTPS),
     }, resp => {
       if (resp.statusCode! < 200 || resp.statusCode! >= 400) {
         reject(new Error(`Unexpected status ${resp.statusCode} when connecting to ${httpURL}.\n` +

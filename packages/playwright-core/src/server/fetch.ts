@@ -30,7 +30,7 @@ import { HttpsProxyAgent, SocksProxyAgent } from '../utilsBundle';
 import { BrowserContext } from './browserContext';
 import { CookieStore, domainMatches } from './cookieStore';
 import { MultipartFormData } from './formData';
-import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent } from './happy-eyeballs';
+import { getHappyEyeballsAgent } from '../utils/happy-eyeballs';
 import type { CallMetadata } from './instrumentation';
 import { SdkObject } from './instrumentation';
 import type { Playwright } from './playwright';
@@ -257,7 +257,7 @@ export abstract class APIRequestContext extends SdkObject {
       const requestConstructor: ((url: URL, options: http.RequestOptions, callback?: (res: http.IncomingMessage) => void) => http.ClientRequest)
         = (url.protocol === 'https:' ? https : http).request;
       // If we have a proxy agent already, do not override it.
-      const agent = options.agent || (url.protocol === 'https:' ? httpsHappyEyeballsAgent : httpHappyEyeballsAgent);
+      const agent = options.agent || getHappyEyeballsAgent(url.protocol === 'https:');
       const requestOptions = { ...options, agent };
       const request = requestConstructor(url, requestOptions as any, async response => {
         const notifyRequestFinished = (body?: Buffer) => {

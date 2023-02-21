@@ -19,8 +19,8 @@ import * as http from 'http';
 import * as https from 'https';
 import * as net from 'net';
 import * as tls from 'tls';
-import { ManualPromise } from '../utils/manualPromise';
-import type { SendRequestOptions } from './fetch';
+import { ManualPromise } from './manualPromise';
+import type { SendRequestOptions } from '../server/fetch';
 
 // Implementation(partial) of Happy Eyeballs 2 algorithm described in
 // https://www.rfc-editor.org/rfc/rfc8305
@@ -46,8 +46,10 @@ class HttpsHappyEyeballsAgent extends https.Agent {
   }
 }
 
-export const httpsHappyEyeballsAgent = new HttpsHappyEyeballsAgent();
-export const httpHappyEyeballsAgent = new HttpHappyEyeballsAgent();
+const httpsHappyEyeballsAgent = new HttpsHappyEyeballsAgent();
+const httpHappyEyeballsAgent = new HttpHappyEyeballsAgent();
+
+export const getHappyEyeballsAgent = (isHttps: boolean) => isHttps ? httpsHappyEyeballsAgent : httpHappyEyeballsAgent;
 
 async function createConnectionAsync(options: http.ClientRequestArgs, oncreate: ((err: Error | null, socket?: net.Socket) => void) | undefined, useTLS: boolean) {
   const lookup = (options as SendRequestOptions).__testHookLookup || lookupAddresses;
