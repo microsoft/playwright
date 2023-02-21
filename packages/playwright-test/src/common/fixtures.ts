@@ -227,7 +227,7 @@ export function fixtureParameterNames(fn: Function | any, location: Location, on
 }
 
 function innerFixtureParameterNames(fn: Function, location: Location, onError: LoadErrorSink): string[] {
-  const text = fn.toString();
+  const text = filterOutComments(fn.toString());
   const match = text.match(/(?:async)?(?:\s+function)?[^(]*\(([^)]*)/);
   if (!match)
     return [];
@@ -241,9 +241,33 @@ function innerFixtureParameterNames(fn: Function, location: Location, onError: L
   }
   const props = splitByComma(firstParam.substring(1, firstParam.length - 1)).map(prop => {
     const colon = prop.indexOf(':');
-    return colon === -1 ? prop : prop.substring(0, colon).trim();
+    return colon === -1 ? prop.trim() : prop.substring(0, colon).trim();
   });
   return props;
+}
+
+function filterOutComments(s: string): string {
+  const result: string[] = [];
+  let commentState: 'none'|'singleline'|'multiline' = 'none';
+  for (let i = 0; i < s.length; ++i) {
+    if (commentState === 'singleline') {
+      if (s[i] === '\n')
+        commentState = 'none';
+    } else if (commentState === 'multiline') {
+      if (s[i - 1] === '*' && s[i] === '/')
+        commentState = 'none';
+    } else if (commentState === 'none') {
+      if (s[i] === '/' && s[i + 1] === '/') {
+        commentState = 'singleline';
+      } else if (s[i] === '/' && s[i + 1] === '*') {
+        commentState = 'multiline';
+        i += 2;
+      } else {
+        result.push(s[i]);
+      }
+    }
+  }
+  return result.join('');
 }
 
 function splitByComma(s: string) {
