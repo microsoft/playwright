@@ -157,8 +157,19 @@ class FrameTree {
 
   allFramesInBrowsingContextGroup(group) {
     const frames = [];
-    for (const frameTree of (group.__jugglerFrameTrees || []))
-      frames.push(...frameTree.frames());
+    for (const frameTree of (group.__jugglerFrameTrees || [])) {
+      for (const frame of frameTree.frames()) {
+        try {
+          // Try accessing docShell and domWindow to filter out dead frames.
+          // This might happen for print-preview frames, but maybe for something else as well.
+          frame.docShell();
+          frame.domWindow();
+          frames.push(frame);
+        } catch (e) {
+          dump(`WARNING: unable to access docShell and domWindow of the frame[id=${frame.id()}]\n`);
+        }
+      }
+    }
     return frames;
   }
 
