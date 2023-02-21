@@ -36,12 +36,10 @@ import { ManualPromise } from '../utils/manualPromise';
 import { debugLogger } from '../common/debugLogger';
 import type { ImageComparatorOptions } from '../utils/comparators';
 import { getComparator } from '../utils/comparators';
-import type { SelectorInfo, Selectors } from './selectors';
 import type { CallMetadata } from './instrumentation';
 import { SdkObject } from './instrumentation';
 import type { Artifact } from './artifact';
 import type { TimeoutOptions } from '../common/types';
-import type { ParsedSelector } from './isomorphic/selectorParser';
 import { isInvalidSelectorError } from './isomorphic/selectorParser';
 import { parseEvaluationResultValue, source } from './isomorphic/utilityScriptSerializers';
 import type { SerializedValue } from './isomorphic/utilityScriptSerializers';
@@ -166,7 +164,6 @@ export class Page extends SdkObject {
   _clientRequestInterceptor: network.RouteHandler | undefined;
   _serverRequestInterceptor: network.RouteHandler | undefined;
   _ownedContext: BrowserContext | undefined;
-  selectors: Selectors;
   _pageIsError: Error | undefined;
   _video: Artifact | null = null;
   _opener: Page | undefined;
@@ -191,7 +188,6 @@ export class Page extends SdkObject {
     if (delegate.pdf)
       this.pdf = delegate.pdf.bind(delegate);
     this.coverage = delegate.coverage ? delegate.coverage() : null;
-    this.selectors = browserContext.selectors();
   }
 
   async initOpener(opener: PageDelegate | null) {
@@ -679,11 +675,6 @@ export class Page extends SdkObject {
 
   firePageError(error: Error) {
     this.emit(Page.Events.PageError, error);
-  }
-
-  parseSelector(selector: string | ParsedSelector, options?: types.StrictOptions): SelectorInfo {
-    const strict = typeof options?.strict === 'boolean' ? options.strict : !!this.context()._options.strictSelectors;
-    return this.selectors.parseSelector(selector, strict);
   }
 
   async hideHighlight() {

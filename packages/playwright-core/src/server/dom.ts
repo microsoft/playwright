@@ -95,7 +95,8 @@ export class FrameExecutionContext extends js.ExecutionContext {
   injectedScript(): Promise<js.JSHandle<InjectedScript>> {
     if (!this._injectedScriptPromise) {
       const custom: string[] = [];
-      for (const [name, { source }] of this.frame._page.selectors._engines)
+      const selectorsRegistry = this.frame._page.context().selectors();
+      for (const [name, { source }] of selectorsRegistry._engines)
         custom.push(`{ name: '${name}', engine: (${source}) }`);
       const sdkLanguage = this.frame._page.context()._browser.options.sdkLanguage;
       const source = `
@@ -106,7 +107,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
           globalThis,
           ${isUnderTest()},
           "${sdkLanguage}",
-          ${JSON.stringify(this.frame._page.selectors.testIdAttributeName())},
+          ${JSON.stringify(selectorsRegistry.testIdAttributeName())},
           ${this.frame._page._delegate.rafCountForStablePosition()},
           "${this.frame._page._browserContext._browser.options.name}",
           [${custom.join(',\n')}]
@@ -754,27 +755,15 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async querySelector(selector: string, options: types.StrictOptions): Promise<ElementHandle | null> {
-    const pair = await this._frame.resolveFrameForSelectorNoWait(selector, options, this);
-    if (!pair)
-      return null;
-    const { frame, info } = pair;
-    // If we end up in the same frame => use the scope again, line above was noop.
-    return this._page.selectors.query(frame, info, this._frame === frame ? this : undefined);
+    return this._frame.selectors.query(selector, options, this);
   }
 
   async querySelectorAll(selector: string): Promise<ElementHandle<Element>[]> {
-    const pair = await this._frame.resolveFrameForSelectorNoWait(selector, {}, this);
-    if (!pair)
-      return [];
-    const { frame, info } = pair;
-    // If we end up in the same frame => use the scope again, line above was noop.
-    return this._page.selectors._queryAll(frame, info, this._frame === frame ? this : undefined, true /* adoptToMain */);
+    return this._frame.selectors.queryAll(selector, this);
   }
 
   async evalOnSelectorAndWaitForSignals(selector: string, strict: boolean, expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
-    const pair = await this._frame.resolveFrameForSelectorNoWait(selector, { strict }, this);
-    // If we end up in the same frame => use the scope again, line above was noop.
-    const handle = pair ? await this._page.selectors.query(pair.frame, pair.info, this._frame === pair.frame ? this : undefined) : null;
+    const handle = await this._frame.selectors.query(selector, { strict }, this);
     if (!handle)
       throw new Error(`Error: failed to find element matching selector "${selector}"`);
     const result = await handle.evaluateExpressionAndWaitForSignals(expression, isFunction, true, arg);
@@ -783,12 +772,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async evalOnSelectorAllAndWaitForSignals(selector: string, expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
-    const pair = await this._frame.resolveFrameForSelectorNoWait(selector, {}, this);
-    if (!pair)
-      throw new Error(`Error: failed to find frame for selector "${selector}"`);
-    const { frame, info } = pair;
-    // If we end up in the same frame => use the scope again, line above was noop.
-    const arrayHandle = await this._page.selectors._queryArrayInMainWorld(frame, info, this._frame === frame ? this : undefined);
+    const arrayHandle = await this._frame.selectors.queryArrayInMainWorld(selector, this);
     const result = await arrayHandle.evaluateExpressionAndWaitForSignals(expression, isFunction, true, arg);
     arrayHandle.dispose();
     return result;

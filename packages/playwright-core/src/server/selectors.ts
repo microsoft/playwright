@@ -14,23 +14,12 @@
  * limitations under the License.
  */
 
-import type * as dom from './dom';
-import type * as frames from './frames';
-import type * as js from './javascript';
-import type * as types from './types';
-import type { ParsedSelector } from './isomorphic/selectorParser';
-import { allEngineNames, InvalidSelectorError, parseSelector, stringifySelector } from './isomorphic/selectorParser';
+import { allEngineNames, InvalidSelectorError, type ParsedSelector, parseSelector, stringifySelector } from './isomorphic/selectorParser';
 import { createGuid } from '../utils';
 
-export type SelectorInfo = {
-  parsed: ParsedSelector,
-  world: types.World,
-  strict: boolean,
-};
-
 export class Selectors {
-  readonly _builtinEngines: Set<string>;
-  readonly _builtinEnginesInMainWorld: Set<string>;
+  private readonly _builtinEngines: Set<string>;
+  private readonly _builtinEnginesInMainWorld: Set<string>;
   readonly _engines: Map<string, { source: string, contentScript: boolean }>;
   readonly guid = `selectors@${createGuid()}`;
   private _testIdAttributeName: string = 'data-testid';
@@ -78,72 +67,7 @@ export class Selectors {
     this._engines.clear();
   }
 
-  async query(frame: frames.Frame, info: SelectorInfo, scope?: dom.ElementHandle): Promise<dom.ElementHandle<Element> | null> {
-    const context = await frame._context(info.world);
-    const injectedScript = await context.injectedScript();
-    const handle = await injectedScript.evaluateHandle((injected, { parsed, scope, strict }) => {
-      return injected.querySelector(parsed, scope || document, strict);
-    }, { parsed: info.parsed, scope, strict: info.strict });
-    const elementHandle = handle.asElement() as dom.ElementHandle<Element> | null;
-    if (!elementHandle) {
-      handle.dispose();
-      return null;
-    }
-    const mainContext = await frame._mainContext();
-    return this._adoptIfNeeded(elementHandle, mainContext);
-  }
-
-  async _queryArrayInMainWorld(frame: frames.Frame, info: SelectorInfo, scope?: dom.ElementHandle): Promise<js.JSHandle<Element[]>> {
-    const context = await frame._mainContext();
-    const injectedScript = await context.injectedScript();
-    const arrayHandle = await injectedScript.evaluateHandle((injected, { parsed, scope }) => {
-      return injected.querySelectorAll(parsed, scope || document);
-    }, { parsed: info.parsed, scope });
-    return arrayHandle;
-  }
-
-  async _queryCount(frame: frames.Frame, info: SelectorInfo, scope?: dom.ElementHandle): Promise<number> {
-    const context = await frame._context(info.world);
-    const injectedScript = await context.injectedScript();
-    return await injectedScript.evaluate((injected, { parsed, scope }) => {
-      return injected.querySelectorAll(parsed, scope || document).length;
-    }, { parsed: info.parsed, scope });
-  }
-
-  async _queryAll(frame: frames.Frame, selector: SelectorInfo, scope?: dom.ElementHandle, adoptToMain?: boolean): Promise<dom.ElementHandle<Element>[]> {
-    const info = typeof selector === 'string' ? frame._page.parseSelector(selector) : selector;
-    const context = await frame._context(info.world);
-    const injectedScript = await context.injectedScript();
-    const arrayHandle = await injectedScript.evaluateHandle((injected, { parsed, scope }) => {
-      return injected.querySelectorAll(parsed, scope || document);
-    }, { parsed: info.parsed, scope });
-
-    const properties = await arrayHandle.getProperties();
-    arrayHandle.dispose();
-
-    // Note: adopting elements one by one may be slow. If we encounter the issue here,
-    // we might introduce 'useMainContext' option or similar to speed things up.
-    const targetContext = adoptToMain ? await frame._mainContext() : context;
-    const result: Promise<dom.ElementHandle<Element>>[] = [];
-    for (const property of properties.values()) {
-      const elementHandle = property.asElement() as dom.ElementHandle<Element>;
-      if (elementHandle)
-        result.push(this._adoptIfNeeded(elementHandle, targetContext));
-      else
-        property.dispose();
-    }
-    return Promise.all(result);
-  }
-
-  private async _adoptIfNeeded<T extends Node>(handle: dom.ElementHandle<T>, context: dom.FrameExecutionContext): Promise<dom.ElementHandle<T>> {
-    if (handle._context === context)
-      return handle;
-    const adopted = handle._page._delegate.adoptElementHandle(handle, context);
-    handle.dispose();
-    return adopted;
-  }
-
-  parseSelector(selector: string | ParsedSelector, strict: boolean): SelectorInfo {
+  parseSelector(selector: string | ParsedSelector, strict: boolean) {
     const parsed = typeof selector === 'string' ? parseSelector(selector) : selector;
     let needsMainWorld = false;
     for (const name of allEngineNames(parsed)) {
@@ -157,7 +81,7 @@ export class Selectors {
     }
     return {
       parsed,
-      world: needsMainWorld ? 'main' : 'utility',
+      world: needsMainWorld ? 'main' as const : 'utility' as const,
       strict,
     };
   }

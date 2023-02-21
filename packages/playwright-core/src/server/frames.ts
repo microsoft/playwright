@@ -36,11 +36,11 @@ import type { CallMetadata } from './instrumentation';
 import { serverSideCallMetadata, SdkObject } from './instrumentation';
 import type { InjectedScript, ElementStateWithoutStable, FrameExpectParams, InjectedScriptPoll, InjectedScriptProgress } from './injected/injectedScript';
 import { isSessionClosedError } from './protocolError';
-import { type ParsedSelector, isInvalidSelectorError, splitSelectorByFrame, stringifySelector } from './isomorphic/selectorParser';
-import type { SelectorInfo } from './selectors';
+import { type ParsedSelector, isInvalidSelectorError } from './isomorphic/selectorParser';
 import type { ScreenshotOptions } from './screenshotter';
 import type { InputFilesItems } from './dom';
 import { asLocator } from './isomorphic/locatorGenerators';
+import { FrameSelectors } from './frameSelectors';
 
 type ContextData = {
   contextPromise: ManualPromise<dom.FrameExecutionContext | Error>;
@@ -90,11 +90,6 @@ export class NavigationAbortedError extends Error {
     this.documentId = documentId;
   }
 }
-
-type SelectorInFrame = {
-  frame: Frame;
-  info: SelectorInfo;
-};
 
 const kDummyFrameId = '<dummy>';
 
@@ -491,6 +486,7 @@ export class Frame extends SdkObject {
   private _detachedCallback = () => {};
   private _raceAgainstEvaluationStallingEventsPromises = new Set<ManualPromise<any>>();
   readonly _redirectedNavigations = new Map<string, { url: string, gotoPromise: Promise<network.Response | null> }>(); // documentId -> data
+  readonly selectors: FrameSelectors;
 
   constructor(page: Page, id: string, parentFrame: Frame | null) {
     super(page, 'frame');
@@ -499,6 +495,7 @@ export class Frame extends SdkObject {
     this._page = page;
     this._parentFrame = parentFrame;
     this._currentDocument = { documentId: undefined, request: undefined };
+    this.selectors = new FrameSelectors(this);
 
     this._detachedPromise = new Promise<void>(x => this._detachedCallback = x);
 
@@ -773,10 +770,7 @@ export class Frame extends SdkObject {
 
   async querySelector(selector: string, options: types.StrictOptions): Promise<dom.ElementHandle<Element> | null> {
     debugLogger.log('api', `    finding element using the selector "${selector}"`);
-    const result = await this.resolveFrameForSelectorNoWait(selector, options);
-    if (!result)
-      return null;
-    return this._page.selectors.query(result.frame, result.info);
+    return this.selectors.query(selector, options);
   }
 
   async waitForSelector(metadata: CallMetadata, selector: string, options: types.WaitForElementOptions, scope?: dom.ElementHandle): Promise<dom.ElementHandle<Element> | null> {
@@ -791,7 +785,8 @@ export class Frame extends SdkObject {
     return controller.run(async progress => {
       progress.log(`waiting for ${this._asLocator(selector)}${state === 'attached' ? '' : ' to be ' + state}`);
       const promise = this.retryWithProgressAndTimeouts(progress, [0, 20, 50, 100, 100, 500], async continuePolling => {
-        const resolved = await this._resolveInjectedForSelector(progress, selector, options, scope);
+        const resolved = await this.selectors.resolveInjectedForSelector(selector, options, scope);
+        progress.throwIfAborted();
         if (!resolved)
           return continuePolling;
         const result = await resolved.injected.evaluateHandle((injected, { info, root }) => {
@@ -839,8 +834,7 @@ export class Frame extends SdkObject {
   }
 
   async evalOnSelectorAndWaitForSignals(selector: string, strict: boolean, expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
-    const pair = await this.resolveFrameForSelectorNoWait(selector, { strict });
-    const handle = pair ? await this._page.selectors.query(pair.frame, pair.info) : null;
+    const handle = await this.selectors.query(selector, { strict });
     if (!handle)
       throw new Error(`Error: failed to find element matching selector "${selector}"`);
     const result = await handle.evaluateExpressionAndWaitForSignals(expression, isFunction, true, arg);
@@ -849,10 +843,7 @@ export class Frame extends SdkObject {
   }
 
   async evalOnSelectorAllAndWaitForSignals(selector: string, expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
-    const pair = await this.resolveFrameForSelectorNoWait(selector, {});
-    if (!pair)
-      throw new Error(`Error: failed to find frame for selector "${selector}"`);
-    const arrayHandle = await this._page.selectors._queryArrayInMainWorld(pair.frame, pair.info);
+    const arrayHandle = await this.selectors.queryArrayInMainWorld(selector);
     const result = await arrayHandle.evaluateExpressionAndWaitForSignals(expression, isFunction, true, arg);
     arrayHandle.dispose();
     return result;
@@ -867,17 +858,11 @@ export class Frame extends SdkObject {
   }
 
   async querySelectorAll(selector: string): Promise<dom.ElementHandle<Element>[]> {
-    const pair = await this.resolveFrameForSelectorNoWait(selector, {});
-    if (!pair)
-      return [];
-    return this._page.selectors._queryAll(pair.frame, pair.info, undefined, true /* adoptToMain */);
+    return this.selectors.queryAll(selector);
   }
 
   async queryCount(selector: string): Promise<number> {
-    const pair = await this.resolveFrameForSelectorNoWait(selector);
-    if (!pair)
-      throw new Error(`Error: failed to find frame for selector "${selector}"`);
-    return await this._page.selectors._queryCount(pair.frame, pair.info);
+    return await this.selectors.queryCount(selector);
   }
 
   async content(): Promise<string> {
@@ -1105,19 +1090,6 @@ export class Frame extends SdkObject {
     return false;
   }
 
-  private async _resolveInjectedForSelector(progress: Progress, selector: string, options: { strict?: boolean, mainWorld?: boolean }, scope?: dom.ElementHandle): Promise<{ injected: js.JSHandle<InjectedScript>, info: SelectorInfo, frame: Frame } | undefined> {
-    const selectorInFrame = await this.resolveFrameForSelectorNoWait(selector, options, scope);
-    if (!selectorInFrame)
-      return;
-    progress.throwIfAborted();
-
-    // Be careful, |this| can be different from |selectorInFrame.frame|.
-    const context = await selectorInFrame.frame._context(options.mainWorld ? 'main' : selectorInFrame.info.world);
-    const injected = await context.injectedScript();
-    progress.throwIfAborted();
-    return { injected, info: selectorInFrame.info, frame: selectorInFrame.frame };
-  }
-
   private async _retryWithProgressIfNotConnected<R>(
     progress: Progress,
     selector: string,
@@ -1125,7 +1097,8 @@ export class Frame extends SdkObject {
     action: (handle: dom.ElementHandle<Element>) => Promise<R | 'error:notconnected'>): Promise<R> {
     progress.log(`waiting for ${this._asLocator(selector)}`);
     return this.retryWithProgressAndTimeouts(progress, [0, 20, 50, 100, 100, 500], async continuePolling => {
-      const resolved = await this._resolveInjectedForSelector(progress, selector, { strict });
+      const resolved = await this.selectors.resolveInjectedForSelector(selector, { strict });
+      progress.throwIfAborted();
       if (!resolved)
         return continuePolling;
       const result = await resolved.injected.evaluateHandle((injected, { info }) => {
@@ -1270,14 +1243,12 @@ export class Frame extends SdkObject {
   }
 
   async highlight(selector: string) {
-    const pair = await this.resolveFrameForSelectorNoWait(selector);
-    if (!pair)
+    const resolved = await this.selectors.resolveInjectedForSelector(selector);
+    if (!resolved)
       return;
-    const context = await pair.frame._utilityContext();
-    const injectedScript = await context.injectedScript();
-    return await injectedScript.evaluate((injected, { parsed }) => {
-      return injected.highlight(parsed);
-    }, { parsed: pair.info.parsed });
+    return await resolved.injected.evaluate((injected, { info }) => {
+      return injected.highlight(info.parsed);
+    }, { info: resolved.info });
   }
 
   async hideHighlight() {
@@ -1301,16 +1272,14 @@ export class Frame extends SdkObject {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       progress.log(`  checking visibility of ${this._asLocator(selector)}`);
-      const pair = await this.resolveFrameForSelectorNoWait(selector, options);
-      if (!pair)
+      const resolved = await this.selectors.resolveInjectedForSelector(selector, options);
+      if (!resolved)
         return false;
-      const context = await pair.frame._context(pair.info.world);
-      const injectedScript = await context.injectedScript();
-      return await injectedScript.evaluate((injected, { parsed, strict }) => {
-        const element = injected.querySelector(parsed, document, strict);
+      return await resolved.injected.evaluate((injected, { info }) => {
+        const element = injected.querySelector(info.parsed, document, info.strict);
         const state = element ? injected.elementState(element, 'visible') : false;
         return state === 'error:notconnected' ? false : state;
-      }, { parsed: pair.info.parsed, strict: pair.info.strict });
+      }, { info: resolved.info });
     }, this._page._timeoutSettings.timeout({}));
   }
 
@@ -1413,7 +1382,7 @@ export class Frame extends SdkObject {
         progress.log(`${metadata.apiName}${timeout ? ` with timeout ${timeout}ms` : ''}`);
       progress.log(`waiting for ${this._asLocator(selector)}`);
       return await this.retryWithProgressAndTimeouts(progress, [100, 250, 500, 1000], async continuePolling => {
-        const selectorInFrame = await this.resolveFrameForSelectorNoWait(selector, { strict: true });
+        const selectorInFrame = await this.selectors.resolveFrameForSelector(selector, { strict: true });
         progress.throwIfAborted();
 
         const { frame, info } = selectorInFrame || { frame: this, info: undefined };
@@ -1579,7 +1548,8 @@ export class Frame extends SdkObject {
     return controller.run(async progress => {
       progress.log(`waiting for ${this._asLocator(selector)}`);
       return this.retryWithProgressAndTimeouts(progress, [0, 20, 50, 100, 100, 500], async continuePolling => {
-        const resolved = await this._resolveInjectedForSelector(progress, selector, options);
+        const resolved = await this.selectors.resolveInjectedForSelector(selector, options);
+        progress.throwIfAborted();
         if (!resolved)
           return continuePolling;
         const { log, success, value } = await resolved.injected.evaluate((injected, { info, callbackText, taskData, snapshotName }) => {
@@ -1661,32 +1631,6 @@ export class Frame extends SdkObject {
     return injectedScriptHandle.evaluateHandle((injectedScript, { source, arg }) => {
       return injectedScript.extend(source, arg);
     }, { source, arg });
-  }
-
-  async resolveFrameForSelectorNoWait(selector: string, options: types.StrictOptions = {}, scope?: dom.ElementHandle): Promise<SelectorInFrame | null> {
-    let frame: Frame = this;
-    const frameChunks = splitSelectorByFrame(selector);
-
-    for (let i = 0; i < frameChunks.length - 1; ++i) {
-      const info = this._page.parseSelector(frameChunks[i], options);
-      const context = await frame._context(info.world);
-      const injectedScript = await context.injectedScript();
-      const handle = await injectedScript.evaluateHandle((injected, { info, scope, selectorString }) => {
-        const element = injected.querySelector(info.parsed, scope || document, info.strict);
-        if (element && element.nodeName !== 'IFRAME' && element.nodeName !== 'FRAME')
-          throw injected.createStacklessError(`Selector "${selectorString}" resolved to ${injected.previewNode(element)}, <iframe> was expected`);
-        return element;
-      }, { info, scope: i === 0 ? scope : undefined, selectorString: stringifySelector(info.parsed) });
-      const element = handle.asElement() as dom.ElementHandle<Element> | null;
-      if (!element)
-        return null;
-      const maybeFrame = await this._page._delegate.getContentFrame(element);
-      element.dispose();
-      if (!maybeFrame)
-        return null;
-      frame = maybeFrame;
-    }
-    return { frame, info: this._page.parseSelector(frameChunks[frameChunks.length - 1], options) };
   }
 
   async resetStorageForCurrentOriginBestEffort(newStorage: channels.OriginStorage | undefined) {
