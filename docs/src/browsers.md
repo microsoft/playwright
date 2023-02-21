@@ -8,6 +8,22 @@ Each version of Playwright needs specific versions of browser binaries to operat
 
 With every release, Playwright updates the versions of the browsers it supports, so that the latest Playwright would support the latest browsers at any moment. It means that every time you update playwright, you might need to re-run the `install` CLI command.
 
+## Update Playwright dependency
+* langs: js
+
+By keeping your Playwright version up to date you will be able to test your app on the latest browser versions and catch failures before the latest browser version is released to the public.
+
+```js
+npm install -D @playwright/test@latest
+```
+Check the [release notes](./release-notes.md) to see what the latest version is and what changes have been released.
+
+You can see what version of Playwright you have by running the following command.
+
+```js
+npx playwright --version
+```
+
 ## Install browsers
 
 Playwright can install supported browsers. Running the command without arguments will install the default browsers.
@@ -64,6 +80,18 @@ playwright install --help
 pwsh bin/Debug/netX/playwright.ps1 install --help
 ```
 
+## Install browsers via API
+* langs: csharp
+
+It's possible to run [Command line tools](./cli.md) commands via the .NET API:
+
+```csharp
+var exitCode = Microsoft.Playwright.Program.Main(new[] {"install"});
+if (exitCode != 0)
+{
+    throw new Exception($"Playwright exited with code {exitCode}");
+}
+```
 
 ## Install system dependencies
 
@@ -186,7 +214,7 @@ Running 5 tests using 5 workers
   ✓ [webkit] › example.spec.ts:3:1 › basic test (2s)
 ```
 
-Use the  `--project` command line option to run a single project.
+Use the `--project` command line option to run a single project.
 
 ```bash
 npx playwright test --project=firefox
@@ -196,84 +224,11 @@ Running 1 test using 1 worker
   ✓ [firefox] › example.spec.ts:3:1 › basic test (2s)
 ```
 
-In Playwright you can configure projects for major browser engines as well as branded browsers such as Google Chrome and Microsoft Edge.
-
-```js tab=js-js
-// playwright.config.js
-// @ts-check
-const { devices } = require('@playwright/test');
-
-const { defineConfig } = require('@playwright/test');
-
-module.exports = defineConfig({
-  projects: [
-    /* Test against branded browsers. */
-    {
-      name: 'Chrome',
-      use: {
-        channel: 'chrome',
-      },
-    },
-    {
-      name: 'Microsoft Edge',
-      use: {
-        channel: 'msedge',
-      },
-    },
-  ],
-});
-```
-
-```js tab=js-ts
-// playwright.config.ts
-import { defineConfig, devices } from '@playwright/test';
-
-export default defineConfig({
-  projects: [
-    /* Test against branded browsers. */
-    {
-      name: 'Chrome',
-      use: {
-        channel: 'chrome',
-      },
-    },
-    {
-      name: 'Microsoft Edge',
-      use: {
-        channel: 'msedge',
-      },
-    },
-  ],
-});
-```
-
 ## Browser versions
 
 ### Chromium
 
-For Google Chrome, Microsoft Edge and other Chromium-based browsers, by default, Playwright uses open source Chromium builds.
-Since Chromium project is ahead of the branded browsers, when the world is on Google Chrome N, Playwright already supports
-Chromium N+1 that will be released in Google Chrome and Microsoft Edge a few weeks later.
-
-There is also a way to opt into using Google Chrome's or Microsoft Edge's branded builds for testing. For details
-on when to opt into stable channels, refer to the [Google Chrome & Microsoft Edge](#google-chrome--microsoft-edge) section below.
-
-### Firefox
-
-Playwright's Firefox version matches the recent [Firefox Stable](https://www.mozilla.org/en-US/firefox/new/)
-build.
-
-### WebKit
-
-Playwright's WebKit version matches the recent WebKit trunk build, before it is used in Apple Safari and
-other WebKit-based browsers. This gives a lot of lead time to react on the potential browser update issues.
-
-### Google Chrome & Microsoft Edge
-
-While Playwright can download and use the recent Chromium build, it can operate against the stock Google
-Chrome and Microsoft Edge browsers available on the machine (note that Playwright doesn't install them by
-default). In particular, current Playwright version will support Stable and Beta channels of these browsers.
-Here is how you can opt into using the stock browser:
+For Google Chrome, Microsoft Edge and other Chromium-based browsers, by default, Playwright uses open source Chromium builds. Since the Chromium project is ahead of the branded browsers, when the world is on Google Chrome N, Playwright already supports Chromium N+1 that will be released in Google Chrome and Microsoft Edge a few weeks later.
 
 ```js tab=js-js
 // @ts-check
@@ -281,25 +236,36 @@ Here is how you can opt into using the stock browser:
 const { defineConfig } = require('@playwright/test');
 
 module.exports = defineConfig({
-  use: {
-    channel: 'chrome',
-  },
+  projects: [
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
+    },
+  ]
 });
 ```
 
 ```js tab=js-ts
 import { defineConfig } from '@playwright/test';
 export default defineConfig({
-  use: {
-    channel: 'chrome',
-  },
+  projects: [
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
+    },
+  ]
 });
 ```
 
 ```js tab=js-library
 const { chromium } = require('playwright');
 const browser = await chromium.launch({
-  channel: 'chrome' // or 'msedge', 'chrome-beta', 'msedge-beta', 'msedge-dev', etc.
+  projects: [
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
+    },
+  ]
 });
 ```
 
@@ -310,7 +276,71 @@ public class Example {
   public static void main(String[] args) {
     try (Playwright playwright = Playwright.create()) {
       BrowserType chromium = playwright.chromium();
-      // Can be "msedge", "chrome-beta", "msedge-beta", "msedge-dev", etc.
+      Browser browser = chromium.launch(new BrowserType.LaunchOptions().setProject("chromium"));
+    }
+  }
+}
+```
+
+```python async
+browser = await playwright.chromium.launch(project="chrome")
+```
+
+```python sync
+browser = playwright.chromium.launch(project="chrome")
+```
+
+```csharp
+using Microsoft.Playwright;
+
+using var playwright = await Playwright.CreateAsync();
+var chromium = playwright.Chromium;
+var browser = await chromium.LaunchAsync(new BrowserTypeLaunchOptions { Project = "chromium" });
+```
+
+### Google Chrome & Microsoft Edge
+
+While Playwright can download and use the recent Chromium build, it can operate against the branded Google Chrome and Microsoft Edge browsers available on the machine (note that Playwright doesn't install them by default). In particular, the current Playwright version will support Stable and Beta channels of these browsers.
+
+Here is how you can opt into using the branded browser:
+
+
+```js tab=js-js
+// @ts-check
+
+const { defineConfig } = require('@playwright/test');
+
+module.exports = defineConfig({
+  use: {
+    channel: 'chrome', // or 'msedge', 'chrome-beta', 'msedge-beta', 'msedge-dev'
+  },
+});
+```
+
+```js tab=js-ts
+import { defineConfig } from '@playwright/test';
+export default defineConfig({
+  use: {
+    channel: 'chrome', // or 'msedge', 'chrome-beta', 'msedge-beta', 'msedge-dev'
+  },
+});
+```
+
+```js tab=js-library
+const { chromium } = require('playwright');
+const browser = await chromium.launch({
+  channel: 'chrome' // or 'msedge', 'chrome-beta', 'msedge-beta', 'msedge-dev'
+});
+```
+
+```java
+import com.microsoft.playwright.*;
+
+public class Example {
+  public static void main(String[] args) {
+    try (Playwright playwright = Playwright.create()) {
+      BrowserType chromium = playwright.chromium();
+      // Can be "msedge", "chrome-beta", "msedge-beta", "msedge-dev"
       Browser browser = chromium.launch(new BrowserType.LaunchOptions().setChannel("chrome"));
     }
   }
@@ -318,12 +348,12 @@ public class Example {
 ```
 
 ```python async
-# Can be "msedge", "chrome-beta", "msedge-beta", "msedge-dev", etc.
+# Can be "msedge", "chrome-beta", "msedge-beta", "msedge-dev"
 browser = await playwright.chromium.launch(channel="chrome")
 ```
 
 ```python sync
-# Can be "msedge", "chrome-beta", "msedge-beta", "msedge-dev", etc.
+# Can be "msedge", "chrome-beta", "msedge-beta", "msedge-dev"
 browser = playwright.chromium.launch(channel="chrome")
 ```
 
@@ -332,14 +362,14 @@ using Microsoft.Playwright;
 
 using var playwright = await Playwright.CreateAsync();
 var chromium = playwright.Chromium;
-// Can be "msedge", "chrome-beta", "msedge-beta", "msedge-dev", etc.
+// Can be "msedge", "chrome-beta", "msedge-beta", "msedge-dev"
 var browser = await chromium.LaunchAsync(new BrowserTypeLaunchOptions { Channel = "chrome" });
 ```
 
 #### Installing Google Chrome & Microsoft Edge
 
-If stock Google Chrome or Microsoft Edge is not available on your machine, you can install
-them using Playwright command line tool:
+If Google Chrome or Microsoft Edge is not available on your machine, you can install
+them using the Playwright command line tool:
 
 ```bash lang=js
 npx playwright install msedge
@@ -357,18 +387,20 @@ pwsh bin/Debug/netX/playwright.ps1 install msedge
 mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install msedge"
 ```
 
-Run with `--help` option to see full list of the browsers that can be installed this way.
 
 :::warning
-Google Chrome or Microsoft Edge installations will not be isolated. They will be installed at the
-default global location that depends on your operating system.
+Google Chrome or Microsoft Edge installations will be installed at the
+default global location of your operating system overriding your current browser installation.
 :::
+
+Run with `--help` option to see full list of the browsers that can be installed this way.
+
 
 #### When to use Google Chrome & Microsoft Edge and when not to?
 
 **Defaults**
 
-Using default Playwright configuration with the latest Chromium is a good idea most of the time.
+Using the default Playwright configuration with the latest Chromium is a good idea most of the time.
 Since Playwright is ahead of Stable channels for the browsers, it gives peace of mind that the
 upcoming Google Chrome or Microsoft Edge releases won't break your site. You catch breakage
 early and have a lot of time to fix it before the official Chrome update.
@@ -388,51 +420,150 @@ rarely the case), you also want to use official channel.
 
 **Enterprise policy**
 
-Google Chrome and Microsoft Edge respect enterprise policies, which include limitations to the capabilities,
-network proxy, mandatory extensions that stand in the way of testing. So if you are a part of the
-organization that uses such policies, it is the easiest to use bundled Chromium for your local testing,
-you can still opt into stable channels on the bots that are typically free of such restrictions.
+Google Chrome and Microsoft Edge respect enterprise policies, which include limitations to the capabilities, network proxy, mandatory extensions that stand in the way of testing. So if you are a part of the organization that uses such policies, it is the easiest to use bundled Chromium for your local testing, you can still opt into stable channels on the bots that are typically free of such restrictions.
 
-## Installing browsers
-* langs: csharp
+### Firefox
 
-To invoke Playwright CLI commands, you need to invoke a PowerShell script:
+Playwright's Firefox version matches the recent [Firefox Stable](https://www.mozilla.org/en-US/firefox/new/) build. Playwright doesn't work with the branded version of Firefox since it relies on patches. Instead you can test against the recent Firefox Stable build.
 
-```bash
-pwsh bin/Debug/netX/playwright.ps1 --help
+```js tab=js-js
+// @ts-check
+
+const { defineConfig } = require('@playwright/test');
+
+module.exports = defineConfig({
+  projects: [
+    {
+      name: 'firefox',
+      use: { ...devices['Desktop Firefox'] },
+    },
+  ]
+});
 ```
 
-Playwright can install supported browsers by means of the CLI tool.
-
-```bash csharp
-# Running without arguments will install all browsers
-pwsh bin/Debug/netX/playwright.ps1 install
+```js tab=js-ts
+import { defineConfig } from '@playwright/test';
+export default defineConfig({
+  projects: [
+    {
+      name: 'firefox',
+      use: { ...devices['Desktop Firefox'] },
+    },
+  ]
+});
 ```
 
-You can also install specific browsers by providing an argument:
-
-```bash csharp
-# Install WebKit
-pwsh bin/Debug/netX/playwright.ps1 install webkit
+```js tab=js-library
+const { chromium } = require('playwright');
+const browser = await firefox.launch({
+  projects: [
+    {
+      name: 'firefox',
+      use: { ...devices['Desktop Firefox'] },
+    },
+  ]
+});
 ```
 
-See all supported browsers:
+```java
+import com.microsoft.playwright.*;
 
-```bash csharp
-pwsh bin/Debug/netX/playwright.ps1 install --help
+public class Example {
+  public static void main(String[] args) {
+    try (Playwright playwright = Playwright.create()) {
+      BrowserType firefox = playwright.firefox();
+      Browser browser = firefox.launch(new BrowserType.LaunchOptions().setProject("firefox"));
+    }
+  }
+}
 ```
 
-## Install browsers via API
-* langs: csharp
+```python async
+browser = await playwright.firefox.launch(project="firefox")
+```
 
-It's possible to run [Command line tools](./cli.md) commands via the .NET API:
+```python sync
+browser = playwright.firefox.launch(project="firefox")
+```
 
 ```csharp
-var exitCode = Microsoft.Playwright.Program.Main(new[] {"install"});
-if (exitCode != 0)
-{
-    throw new Exception($"Playwright exited with code {exitCode}");
+using Microsoft.Playwright;
+
+using var playwright = await Playwright.CreateAsync();
+var firefox = playwright.Firefox;
+var browser = await firefox.LaunchAsync(new BrowserTypeLaunchOptions { Project = "firefox" });
+```
+
+### WebKit
+
+Playwright's WebKit version matches the recent WebKit trunk build, before it is used in Apple Safari and other WebKit-based browsers. This gives a lot of lead time to react on the potential browser update issues. Playwright doesn't work with the branded version of Safari since it relies on patches. Instead you can test against the recent Webkit build.
+
+```js tab=js-js
+// @ts-check
+
+const { defineConfig } = require('@playwright/test');
+
+module.exports = defineConfig({
+  projects: [
+    {
+      name: 'webkit',
+      use: { ...devices['Desktop Safari'] },
+    },
+  ]
+});
+```
+
+```js tab=js-ts
+import { defineConfig } from '@playwright/test';
+export default defineConfig({
+  projects: [
+    {
+      name: 'webkit',
+      use: { ...devices['Desktop Safari'] },
+    },
+  ]
+});
+```
+
+```js tab=js-library
+const { chromium } = require('playwright');
+const browser = await webkit.launch({
+  projects: [
+    {
+      name: 'webkit',
+      use: { ...devices['Desktop Safari'] },
+    },
+  ]
+});
+```
+
+```java
+import com.microsoft.playwright.*;
+
+public class Example {
+  public static void main(String[] args) {
+    try (Playwright playwright = Playwright.create()) {
+      BrowserType webkit = playwright.webkit();
+      Browser browser = webkit.launch(new BrowserType.LaunchOptions().setProject("webkit"));
+    }
+  }
 }
+```
+
+```python async
+browser = await playwright.webkit.launch(project="webkit")
+```
+
+```python sync
+browser = playwright.webkit.launch(project="webkit")
+```
+
+```csharp
+using Microsoft.Playwright;
+
+using var playwright = await Playwright.CreateAsync();
+var webkit = playwright.Webkit;
+var browser = await webkit.LaunchAsync(new BrowserTypeLaunchOptions { Project = "webkit" });
 ```
 
 ## Managing browser binaries
@@ -936,6 +1067,20 @@ browser binaries are managed separately.
 
 This can be done by setting `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD` variable before installation.
 
+```bash tab=bash-bash lang=js
+PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npx playwright install
+```
+  
+```batch tab=bash-batch lang=js
+set PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+npx playwright install
+```
+  
+```powershell tab=bash-powershell lang=js
+$env:PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+npx playwright install
+```
+
 ```bash tab=bash-bash lang=python
 pip install playwright
 PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 python -m playwright install
@@ -993,8 +1138,6 @@ playwright install firefox
 
 ## Stale browser removal
 
-Playwright keeps track of the clients that use its browsers. When there are no more clients that require particular
-version of the browser, that version is deleted from the system. That way you can safely use Playwright instances of
-different versions and at the same time, you don't waste disk space for the browsers that are no longer in use.
+Playwright keeps track of the clients that use its browsers. When there are no more clients that require particular version of the browser, that version is deleted from the system. That way you can safely use Playwright instances of different versions and at the same time, you don't waste disk space for the browsers that are no longer in use.
 
 To opt-out from the unused browser removal, you can set the `PLAYWRIGHT_SKIP_BROWSER_GC=1` environment variable.
