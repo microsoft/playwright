@@ -257,12 +257,14 @@ function filterOutComments(s: string): string {
       if (s[i - 1] === '*' && s[i] === '/')
         commentState = 'none';
     } else if (commentState === 'none') {
-      if (s[i] === '/' && s[i + 1] === '/')
+      if (s[i] === '/' && s[i + 1] === '/') {
         commentState = 'singleline';
-      else if (s[i] === '/' && s[i + 1] === '*')
+      } else if (s[i] === '/' && s[i + 1] === '*') {
         commentState = 'multiline';
-      else
+        i += 2;
+      } else {
         result.push(s[i]);
+      }
     }
   }
   return result.join('');
