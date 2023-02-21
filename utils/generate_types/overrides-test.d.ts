@@ -276,7 +276,7 @@ type AsymmetricMatchers = {
   objectContaining(sample: Record<string, unknown>): AsymmetricMatcher;
   stringContaining(sample: string): AsymmetricMatcher;
   stringMatching(sample: string | RegExp): AsymmetricMatcher;
-}
+} & PlaywrightTest.AsymmetricMatchers;
 
 type IfAny<T, Y, N> = 0 extends (1 & T) ? Y : N;
 type ExtraMatchers<T, Type, Matchers> = T extends Type ? Matchers : IfAny<T, Matchers, {}>;
@@ -362,6 +362,8 @@ type Awaited<T> = T extends PromiseLike<infer U> ? U : T;
 declare global {
   export namespace PlaywrightTest {
     export interface Matchers<R, T = unknown> {
+    }
+    export interface AsymmetricMatchers {
     }
   }
 }

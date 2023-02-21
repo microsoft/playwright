@@ -590,6 +590,7 @@ class TypesGenerator {
         'PlaywrightWorkerOptions.defaultBrowserType',
         'PlaywrightWorkerArgs.playwright',
         'Matchers',
+        'AsymmetricMatchers',
       ]),
       doNotExportClassNames: new Set([...assertionClasses, 'TestProject']),
       includeExperimental,

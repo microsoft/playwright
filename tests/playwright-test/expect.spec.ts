@@ -45,6 +45,10 @@ test('should be able to call expect.extend in config', async ({ runInlineTest })
       test('numeric ranges', () => {
         test.expect(100).toBeWithinRange(90, 110);
         test.expect(101).not.toBeWithinRange(0, 100);
+        test.expect({ apples: 6, bananas: 3 }).toEqual({
+          apples: test.expect.toBeWithinRange(1, 10),
+          bananas: test.expect.not.toBeWithinRange(11, 20),
+        });
       });
     `
   });
@@ -295,6 +299,9 @@ test('should work with custom PlaywrightTest namespace', async ({ runTSC }) => {
         interface Matchers<R, T> {
           toBeNonEmpty(): R;
         }
+        interface AsymmetricMatchers {
+          toBeWithinRange(floor: number, ceiling: number): void;
+        }
       }
     `,
     'a.spec.ts': `
@@ -310,6 +317,10 @@ test('should work with custom PlaywrightTest namespace', async ({ runTSC }) => {
       test.expect({}).toBeEmpty();
       test.expect({ hello: 'world' }).not.toBeEmpty();
       test.expect('').toBeNonEmpty();
+      expect({apples: 6, bananas: 3}).toEqual({
+        apples: expect.toBeWithinRange(1, 10),
+        bananas: expect.not.toBeWithinRange(11, 20),
+      });
     `
   });
   expect(result.exitCode).toBe(0);
