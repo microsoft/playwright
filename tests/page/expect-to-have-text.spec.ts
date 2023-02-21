@@ -206,7 +206,7 @@ test.describe('toHaveText with array', () => {
     await page.setContent('<div></div>');
     const locator = page.locator('p');
     const error = await expect(locator).not.toHaveText([], { timeout: 1000 }).catch(e => e);
-    expect(error.message).toContain('expect.toHaveText with timeout 1000ms');
+    expect(error.message).toContain('expect.not.toHaveText with timeout 1000ms');
   });
 
   test('pass eventually empty', async ({ page }) => {

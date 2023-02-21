@@ -17,7 +17,6 @@
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
 import type * as channels from '@protocol/channels';
-import type { ParsedStackTrace } from '../utils/stackTrace';
 import * as util from 'util';
 import { monotonicTime } from '../utils';
 import { ElementHandle } from './elementHandle';
@@ -310,15 +309,13 @@ export class Locator implements api.Locator {
     await this._frame._channel.waitForSelector({ selector: this._selector, strict: true, omitReturnValue: true, ...options });
   }
 
-  async _expect(customStackTrace: ParsedStackTrace, expression: string, options: Omit<FrameExpectOptions, 'expectedValue'> & { expectedValue?: any }): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }> {
-    return this._frame._wrapApiCall(async () => {
-      const params: channels.FrameExpectParams = { selector: this._selector, expression, ...options, isNot: !!options.isNot };
-      params.expectedValue = serializeArgument(options.expectedValue);
-      const result = (await this._frame._channel.expect(params));
-      if (result.received !== undefined)
-        result.received = parseResult(result.received);
-      return result;
-    }, false /* isInternal */, customStackTrace);
+  async _expect(expression: string, options: Omit<FrameExpectOptions, 'expectedValue'> & { expectedValue?: any }): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }> {
+    const params: channels.FrameExpectParams = { selector: this._selector, expression, ...options, isNot: !!options.isNot };
+    params.expectedValue = serializeArgument(options.expectedValue);
+    const result = (await this._frame._channel.expect(params));
+    if (result.received !== undefined)
+      result.received = parseResult(result.received);
+    return result;
   }
 
   [util.inspect.custom]() {

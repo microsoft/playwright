@@ -15,8 +15,7 @@
  */
 
 import type { Expect } from '../common/types';
-import type { ParsedStackTrace } from '../util';
-import { expectTypes, callLogText, captureStackTrace } from '../util';
+import { expectTypes, callLogText } from '../util';
 import { matcherHint } from './matcherHint';
 import { currentExpectTimeout } from '../common/globals';
 
@@ -25,7 +24,7 @@ export async function toBeTruthy(
   matcherName: string,
   receiver: any,
   receiverType: string,
-  query: (isNot: boolean, timeout: number, customStackTrace: ParsedStackTrace) => Promise<{ matches: boolean, log?: string[], received?: any, timedOut?: boolean }>,
+  query: (isNot: boolean, timeout: number) => Promise<{ matches: boolean, log?: string[], received?: any, timedOut?: boolean }>,
   options: { timeout?: number } = {},
 ) {
   expectTypes(receiver, [receiverType], matcherName);
@@ -37,7 +36,7 @@ export async function toBeTruthy(
 
   const timeout = currentExpectTimeout(options);
 
-  const { matches, log, timedOut } = await query(this.isNot, timeout, captureStackTrace(`expect.${this.isNot ? 'not.' : ''}${matcherName}`));
+  const { matches, log, timedOut } = await query(this.isNot, timeout);
 
   const message = () => {
     return matcherHint(this, matcherName, undefined, '', matcherOptions, timedOut ? timeout : undefined) + callLogText(log);

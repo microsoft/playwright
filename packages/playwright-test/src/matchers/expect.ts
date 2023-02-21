@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { pollAgainstTimeout } from 'playwright-core/lib/utils';
+import { captureStackTrace, pollAgainstTimeout } from 'playwright-core/lib/utils';
 import path from 'path';
 import {
   toBeChecked,
@@ -44,7 +44,7 @@ import {
 import { toMatchSnapshot, toHaveScreenshot } from './toMatchSnapshot';
 import type { Expect } from '../common/types';
 import { currentTestInfo, currentExpectTimeout } from '../common/globals';
-import { serializeError, captureStackTrace, trimLongString } from '../util';
+import { serializeError, trimLongString } from '../util';
 import {
   expect as expectLibrary,
   INVERTED_COLOR,
@@ -157,6 +157,7 @@ type ExpectMetaInfo = {
   isNot: boolean;
   isSoft: boolean;
   isPoll: boolean;
+  nameTokens: string[];
   pollTimeout?: number;
   pollIntervals?: number[];
   generator?: Generator;
@@ -166,7 +167,7 @@ class ExpectMetaInfoProxyHandler {
   private _info: ExpectMetaInfo;
 
   constructor(messageOrOptions: ExpectMessageOrOptions, isSoft: boolean, isPoll: boolean, generator?: Generator) {
-    this._info = { isSoft, isPoll, generator, isNot: false };
+    this._info = { isSoft, isPoll, generator, isNot: false, nameTokens: [] };
     if (typeof messageOrOptions === 'string') {
       this._info.message = messageOrOptions;
     } else {
@@ -224,12 +225,12 @@ class ExpectMetaInfoProxyHandler {
               messageLines.splice(uselessMatcherLineIndex, 1);
           }
           const newMessage = [
-            'Error: ' + customMessage,
+            customMessage,
             '',
             ...messageLines,
           ].join('\n');
           jestError.message = newMessage;
-          jestError.stack = newMessage + '\n' + stackLines.join('\n');
+          jestError.stack = jestError.name + ': ' + newMessage + '\n' + stackLines.join('\n');
         }
 
         const serializerError = serializeError(jestError);
@@ -241,8 +242,10 @@ class ExpectMetaInfoProxyHandler {
       };
 
       try {
-        const result = matcher.call(target, ...args);
-        if ((result instanceof Promise))
+        const result = namedFunction(defaultTitle)(() => {
+          return matcher.call(target, ...args);
+        });
+        if (result instanceof Promise)
           return result.then(() => step.complete({})).catch(reportStepError);
         else
           step.complete({});
@@ -251,6 +254,14 @@ class ExpectMetaInfoProxyHandler {
       }
     };
   }
+}
+
+function namedFunction(name: string) {
+  const result = function(callback: any) {
+    return callback();
+  };
+  Object.defineProperty(result, 'name', { value: '__PWTRAP__[' + name + ']' });
+  return result;
 }
 
 async function pollMatcher(matcherName: any, isNot: boolean, pollIntervals: number[] | undefined, timeout: number, generator: () => any, ...args: any[]) {
