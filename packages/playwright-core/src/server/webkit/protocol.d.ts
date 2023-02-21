@@ -2909,6 +2909,10 @@ export module Protocol {
        * If provided, used to configure a flex overlay shown during element selection. This overrides DOM.showFlexOverlay.
        */
       flexOverlayConfig?: FlexOverlayConfig;
+      /**
+       * Whether the rulers should be shown during element selection. This overrides Page.setShowRulers.
+       */
+      showRulers?: boolean;
     }
     export type highlightSelectorReturnValue = {
     }
@@ -2936,6 +2940,10 @@ export module Protocol {
        * If provided, used to configure a flex overlay shown during element selection. This overrides DOM.showFlexOverlay.
        */
       flexOverlayConfig?: FlexOverlayConfig;
+      /**
+       * Whether the rulers should be shown during element selection. This overrides Page.setShowRulers.
+       */
+      showRulers?: boolean;
     }
     export type highlightNodeReturnValue = {
     }
@@ -2953,6 +2961,10 @@ export module Protocol {
        * If provided, used to configure a flex overlay shown during element selection. This overrides DOM.showFlexOverlay.
        */
       flexOverlayConfig?: FlexOverlayConfig;
+      /**
+       * Whether the rulers should be shown during element selection. This overrides Page.setShowRulers.
+       */
+      showRulers?: boolean;
     }
     export type highlightNodeListReturnValue = {
     }
