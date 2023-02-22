@@ -255,9 +255,7 @@ pwsh bin/Debug/netX/playwright.ps1 codegen --timezone="Europe/Rome" --geolocatio
 
 ### Preserve authenticated state
 
-Run `codegen` with `--save-storage` to save [cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies) and [localStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage) at the end of the session. This is useful to separately record an authentication step and reuse it later in the tests.
-
-After performing authentication and closing the browser, `auth.json` will contain the storage state.
+Run `codegen` with `--save-storage` to save [cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies) and [localStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage) at the end of the session. This is useful to separately record an authentication step and reuse it later when recording more tests. 
 
 ```bash js
 npx playwright codegen github.com/microsoft/playwright --save-storage=auth.json
@@ -275,29 +273,40 @@ playwright codegen github.com/microsoft/playwright --save-storage=auth.json
 pwsh bin/Debug/netX/playwright.ps1 codegen github.com/microsoft/playwright --save-storage=auth.json
 ```
 
-<img width="1264" alt="Screenshot 2022-08-03 at 13 28 02" src="https://user-images.githubusercontent.com/13063165/182599605-df2fbd05-622b-4cd7-8a32-0abdfea7d38d.png" />
-
 ######
 * langs: js
 
-
+<img width="1394" alt="github page before logging in js" src="https://user-images.githubusercontent.com/13063165/220558833-67ef96a9-7278-4698-b04a-f6a20e93cbe1.png" />
 
 ######
 * langs: java
 
+<img width="1394" alt="github page before logging in java" src="https://user-images.githubusercontent.com/13063165/220559095-94f127d7-d8d9-4c56-ba58-5f62e91dfe84.png" />
 
 
 ######
 * langs: python
 
-
+<img width="1394" alt="github page before logging in python" src="https://user-images.githubusercontent.com/13063165/220559267-8c6ca9df-0c69-4b6c-8a1c-e5d022a1f6bc.png" />
 
 ######
 * langs: csharp
 
+<img width="1394" alt="github page before logging in csharp" src="https://user-images.githubusercontent.com/13063165/220559407-6f124c3a-ac9d-4006-bf03-ae58917f7695.png" />
 
+#### Login
 
-Run with `--load-storage` to consume previously loaded storage. This way, all [cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies) and [localStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage) will be restored, bringing most web apps to the authenticated state without the need to login again.
+After performing authentication and closing the browser, `auth.json` will contain the storage state which you can then reuse in your tests. 
+
+<img width="1394" alt="Screenshot 2023-02-22 at 09 10 36" src="https://user-images.githubusercontent.com/13063165/220561688-04b2b984-4ba6-4446-8b0a-8058876e2a02.png" />
+
+Make sure you only use the `auth.json` locally as it contains sensative information. Add it to your `.gitignore` or delete it once you have finished generating your tests.
+
+<img width="1385" alt="Screenshot 2023-02-22 at 09 14 19" src="https://user-images.githubusercontent.com/13063165/220561822-d8e190c8-0064-4c53-a87a-0165d2c60fce.png" />
+
+#### Load authenticated state
+
+Run with `--load-storage` to consume the previously loaded storage from the `auth.json`. This way, all [cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies) and [localStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage) will be restored, bringing most web apps to the authenticated state without the need to login again. This means you can can continue generating tests from the logged in state.
 
 ```bash js
 npx playwright codegen --load-storage=auth.json github.com/microsoft/playwright
@@ -315,46 +324,27 @@ playwright codegen --load-storage=auth.json github.com/microsoft/playwright
 pwsh bin/Debug/netX/playwright.ps1 codegen --load-storage=auth.json github.com/microsoft/playwright
 ```
 
-<img width="1261" alt="Screenshot 2022-08-03 at 13 33 40" src="https://user-images.githubusercontent.com/13063165/182599680-05297b4e-c258-4416-8daa-b8637c1db120.png" />
-
 ######
 * langs: js
 
+<img width="1394" alt="github signed in showing use of load storage js" src="https://user-images.githubusercontent.com/13063165/220555719-b94dc157-688b-45bd-b61a-282edb4b0d16.png" />
 
 
 ######
 * langs: java
 
+<img width="1394" alt="github signed in showing use of load storage java" src="https://user-images.githubusercontent.com/13063165/220556119-cf338f0e-e5b9-4631-ad0c-fc696e10057d.png" />
 
 
 ######
 * langs: python
 
-
+<img width="1394" alt="github signed in showing use of load storage python" src="https://user-images.githubusercontent.com/13063165/220556321-35157739-744a-45c4-a80c-72dca848ca66.png" />
 
 ######
 * langs: csharp
 
-
-
-Use the `open` command with `--load-storage` to open the saved `auth.json`.
-
-```bash js
-npx playwright open --load-storage=auth.json github.com/microsoft/playwright
-```
-
-```bash java
-mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="open --load-storage=auth.json github.com/microsoft/playwright"
-```
-
-```bash python
-playwright open --load-storage=auth.json github.com/microsoft/playwright
-```
-
-```bash csharp
-pwsh bin/Debug/netX/playwright.ps1 open --load-storage=auth.json github.com/microsoft/playwright
-```
-
+<img width="1394" alt="github signed in showing use of load storage scharp" src="https://user-images.githubusercontent.com/13063165/220556585-c6f32cb8-2e3c-4d86-b7d8-2adf8794c2c2.png" />
 
 ## Record using custom setup
 
