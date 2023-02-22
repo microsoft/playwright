@@ -59,9 +59,7 @@ For a better debugging experience check out the [VS Code Extension](./getting-st
   npx playwright test landing-page.ts --project=chromium
   ```
 
-In Playwright you can configure projects in your [`playwright.config`](/test-configuration.md#multiple-browsers) for major browser engines such as Chromium and Firefox, branded browsers such as Google Chrome and Microsoft Edge, and mobile viewports such as Safari on an iPhone 12 or Chrome for Android on a Pixel 5. 
-
-For a full list of devices check out the [registry of device parameters](https://github.com/microsoft/playwright/blob/main/packages/playwright-core/src/server/deviceDescriptorsSource.json).
+In Playwright you can configure projects in your [`playwright.config`](/test-configuration.md#multiple-browsers) for major browser engines such as Chromium and Firefox, branded browsers such as Google Chrome and Microsoft Edge, and mobile viewports such as Safari on an iPhone 12 or Chrome for Android on a Pixel 5.
 
 ```ts
 const config: PlaywrightTestConfig = {
@@ -115,7 +113,7 @@ Since Playwright runs in Node.js, you can debug it with your debugger of choice 
 - Debugging a test from the line number where the `test(..` is defined:
 
   ```bash
-  npx playwright test example.spec.ts:42 --debug
+  npx playwright test example.spec.ts:10 --debug
   ```
 
 <img width="1350" alt="Debugging Tests with the Playwright inspector" src="https://user-images.githubusercontent.com/13063165/197800771-50cb2f39-2345-4153-b4ed-de9fe63ba29b.png" />
