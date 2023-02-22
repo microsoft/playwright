@@ -25,7 +25,7 @@ export default defineConfig({
     {
       name: 'Mobile Safari',
       use: {
-        ...devices['iPhone 12'],
+        ...devices['iPhone 13'],
       },
     },
   ],
@@ -48,7 +48,7 @@ module.exports = defineConfig({
     {
       name: 'Mobile Safari',
       use: {
-        ...devices['iPhone 12'],
+        ...devices['iPhone 13'],
       },
     },
   ],
@@ -59,7 +59,7 @@ module.exports = defineConfig({
 const { chromium, devices } = require('playwright');
 const browser = await chromium.launch();
 
-const iphone12 = devices['iPhone 12'];
+const iphone12 = devices['iPhone 13'];
 const context = await browser.newContext({
   ...iphone12,
 });
@@ -70,7 +70,7 @@ import asyncio
 from playwright.async_api import async_playwright
 
 async def run(playwright):
-    iphone_12 = playwright.devices['iPhone 12']
+    iphone_12 = playwright.devices['iPhone 13']
     browser = await playwright.webkit.launch(headless=False)
     context = await browser.new_context(
         **iphone_12,
@@ -86,7 +86,7 @@ asyncio.run(main())
 from playwright.sync_api import sync_playwright
 
 def run(playwright):
-    iphone_12 = playwright.devices['iPhone 12']
+    iphone_12 = playwright.devices['iPhone 13']
     browser = playwright.webkit.launch(headless=False)
     context = browser.new_context(
         **iphone_12,
@@ -109,25 +109,26 @@ class Program
         {
             Headless: False
         });
-        var iphone12 = playwright.Devices["iPhone 12"];
+        var iphone12 = playwright.Devices["iPhone 13"];
         await using var context = await browser.NewContextAsync(iphone12);
     }
 }
 ```
 
+<img width="458" alt="playwright.dev website emulated for iPhone 13" src="https://user-images.githubusercontent.com/13063165/220411073-76fe59f9-9a2d-463d-8e30-c19a7deca133.png" />
+
 ## Viewport
 
-The viewport is included in the device but you can override it for some tests with [`method: Page.setViewportSize`].
+The viewport is included in the device but you can override it for some tests with [`method: Page.setViewportSize`]. Run tests in a file with a specific viewport by setting the `viewport` option in `test.use`:
 
 ```js tab=js-ts
 import { test, expect } from '@playwright/test';
 
-// Run tests in this file with portrait-like viewport.
 test.use({
-  viewport: { width: 600, height: 900 },
+  viewport: { width: 1600, height: 1200 },
 });
 
-test('my portrait test', async ({ page }) => {
+test('my test', async ({ page }) => {
   // ...
 });
 ```
@@ -135,12 +136,11 @@ test('my portrait test', async ({ page }) => {
 ```js tab=js-js
 const { test, expect } = require('@playwright/test');
 
-// Run tests in this file with portrait-like viewport.
 test.use({ 
-  viewport: { width: 600, height: 900 },
+  viewport: { width: 1600, height: 1200 },
 });
 
-test('my portrait test', async ({ page }) => {
+test('my test', async ({ page }) => {
   // ...
 });
 ```
@@ -165,11 +165,10 @@ The same works inside a describe block.
 ```js tab=js-ts
 import { test, expect } from '@playwright/test';
 
-test.describe('locale block', () => {
-  // Run tests in this describe block with portrait-like viewport.
-  test.use({ viewport: { width: 600, height: 900 } });
+test.describe('specific viewport block', () => {
+  test.use({ viewport: { width: 1600, height: 1200 } });
 
-  test('my portrait test', async ({ page }) => {
+  test('my test', async ({ page }) => {
     // ...
   });
 });
@@ -178,11 +177,10 @@ test.describe('locale block', () => {
 ```js tab=js-js
 const { test, expect } = require('@playwright/test');
 
-test.describe('locale block', () => {
-  // Run tests in this describe block with portrait-like viewport.
-  test.use({ viewport: { width: 600, height: 900 } });
+test.describe('specific viewport block', () => {
+  test.use({ viewport: { width: 1600, height: 1200 } });
 
-  test('my portrait test', async ({ page }) => {
+  test('my test', async ({ page }) => {
     // ...
   });
 });
@@ -250,6 +248,9 @@ await using var context = await browser.NewContextAsync(new()
     DeviceScaleFactor = 2
 });
 ```
+
+<img width="1714" alt="Screenshot 2023-02-21 at 17 36 04" src="https://user-images.githubusercontent.com/13063165/220405141-a7446ee5-aa1e-42af-b8fc-7a281f901dc2.png" />
+
 ## Locale & Timezone
 
 Emulate the user Locale and Timezone which can be set globally for all tests in the config and then overridden for particular tests.
@@ -263,6 +264,7 @@ test.use({
 });
 
 test('my test for de lang in Berlin timezone', async ({ page }) => {
+  await page.goto('https://www.bing.com');
   // ...
 });
 ```
@@ -276,12 +278,12 @@ test.use({
 });
 
 test('my test for de lang in Berlin timezone', async ({ page }) => {
+  await page.goto('https://www.bing.com');
   // ...
 });
 ```
 
 ```js tab=js-library
-// Emulate locale and time
 const context = await browser.newContext({
   locale: 'de-DE',
   timezoneId: 'Europe/Berlin',
@@ -289,14 +291,12 @@ const context = await browser.newContext({
 ```
 
 ```java
-// Emulate locale and time
 BrowserContext context = browser.newContext(new Browser.NewContextOptions()
   .setLocale("de-DE")
   .setTimezoneId("Europe/Berlin"));
 ```
 
 ```python async
-# Emulate locale and time
 context = await browser.new_context(
   locale='de-DE',
   timezone_id='Europe/Berlin',
@@ -304,7 +304,6 @@ context = await browser.new_context(
 ```
 
 ```python sync
-# Emulate locale and time
 context = browser.new_context(
   locale='de-DE',
   timezone_id='Europe/Berlin',
@@ -318,6 +317,8 @@ await using var context = await browser.NewContextAsync(new()
     TimezoneId = "Europe/Berlin"
 });
 ```
+
+<img width="1394" alt="Bing in german lang and timezone" src="https://user-images.githubusercontent.com/13063165/220416571-ccc96ab1-44bb-4579-8430-64502fc24a15.png" />
 ## Permissions
 
 Allow app to show system notifications.
@@ -486,7 +487,7 @@ Create a test with `"geolocation"` permissions granted and geolocation set to a 
 import { test, expect } from '@playwright/test';
 
 test.use({ 
-  geolocation: { longitude: 48.858455, latitude: 2.294474 },
+  geolocation: { longitude: 41.890221, latitude: 12.492348 },
   permissions: ['geolocation'],
 });
 
@@ -499,7 +500,7 @@ test('my test with geolocation', async ({ page }) => {
 const { test, expect } = require('@playwright/test');
 
 test.use({ 
-  geolocation: { longitude: 48.858455, latitude: 2.294474 },
+  geolocation: { longitude: 41.890221, latitude: 12.492348 },
   permissions: ['geolocation'],
 });
 
@@ -510,7 +511,7 @@ test('my test with geolocation', async ({ page }) => {
 
 ```js tab=js-library
 const context = await browser.newContext({
-  geolocation: { longitude: 48.858455, latitude: 2.294474 },
+  geolocation: { longitude: 41.890221, latitude: 12.492348 },
   permissions: ['geolocation']
 });
 
@@ -518,20 +519,20 @@ const context = await browser.newContext({
 
 ```java
 BrowserContext context = browser.newContext(new Browser.NewContextOptions()
-  .setGeolocation(48.858455, 2.294474)
+  .setGeolocation(41.890221, 12.492348)
   .setPermissions(Arrays.asList("geolocation")));
 ```
 
 ```python async
 context = await browser.new_context(
-  geolocation={"longitude": 48.858455, "latitude": 2.294474},
+  geolocation={"longitude": 41.890221, "latitude": 12.492348},
   permissions=["geolocation"]
 )
 ```
 
 ```python sync
 context = browser.new_context(
-  geolocation={"longitude": 48.858455, "latitude": 2.294474},
+  geolocation={"longitude": 41.890221, "latitude": 12.492348},
   permissions=["geolocation"]
 )
 ```
@@ -540,9 +541,11 @@ context = browser.new_context(
 await using var context = await browser.NewContextAsync(new()
 {
     Permissions = new[] { "geolocation" },
-    Geolocation = new Geolocation() { Longitude = 48.858455f, Latitude = 2.294474f }
+    Geolocation = new Geolocation() { Longitude = 41.890221, Latitude = 12.492348 }
 });
 ```
+
+<img width="1394" alt="geolocation for italy on bing maps" src="https://user-images.githubusercontent.com/13063165/220417670-bb22d815-f5cd-47c4-8562-0b88165eac27.png" />
 
 Change the location later:
 
@@ -550,13 +553,13 @@ Change the location later:
 import { test, expect } from '@playwright/test';
 
 test.use({ 
-  geolocation: { longitude: 48.858455, latitude: 2.294474 },
+  geolocation: { longitude: 41.890221, latitude: 12.492348 },
   permissions: ['geolocation'],
 });
 
 test('my test with geolocation', async ({ page, context }) => {
   // overwrite the location for this test
-  await context.setGeolocation({ longitude: 29.979097, latitude: 31.134256 });
+  await context.setGeolocation({ longitude: 48.858455, latitude: 2.294474 });
 });
 ```
 
@@ -564,34 +567,34 @@ test('my test with geolocation', async ({ page, context }) => {
 const { test, expect } = require('@playwright/test');
 
 test.use({ 
-  geolocation: { longitude: 48.858455, latitude: 2.294474 },
+  geolocation: { longitude: 41.890221, latitude: 12.492348},
   permissions: ['geolocation'],
 });
 
 test('my test with geolocation', async ({ page, context }) => {
   // overwrite the location for this test
-  await context.setGeolocation({ longitude: 29.979097, latitude: 31.134256 });
+  await context.setGeolocation({ longitude: 48.858455, latitude: 2.294474 });
 });
 ```
 
 ```js tab=js-library
-await context.setGeolocation({ longitude: 29.979097, latitude: 31.134256 });
+await context.setGeolocation({ longitude: 48.858455, latitude: 2.294474 });
 ```
 
 ```java
-context.setGeolocation(new Geolocation(29.979097, 31.134256));
+context.setGeolocation(new Geolocation(48.858455, 2.294474));
 ```
 
 ```python async
-await context.set_geolocation({"longitude": 29.979097, "latitude": 31.134256})
+await context.set_geolocation({"longitude": 48.858455, "latitude": 2.294474})
 ```
 
 ```python sync
-context.set_geolocation({"longitude": 29.979097, "latitude": 31.134256})
+context.set_geolocation({"longitude": 48.858455, "latitude": 2.294474})
 ```
 
 ```csharp
-await context.SetGeolocationAsync(new Geolocation() { Longitude = 48.858455f, Latitude = 2.294474f });
+await context.SetGeolocationAsync(new Geolocation() { Longitude = 48.858455, Latitude = 2.294474 });
 ```
 
 **Note** you can only change geolocation for all pages in the context.
@@ -718,6 +721,8 @@ await page.EmulateMediaAsync(new()
     Media = Media.Print
 });
 ```
+
+<img width="1394" alt="playwright web in dark mode" src="https://user-images.githubusercontent.com/13063165/220411638-55d2b051-4678-4da7-9f0b-ed22f5a3c47c.png" />
 ## User Agent
 
 The User Agent is included in the device and therefore you  will rarely need to change it however if you do need to test a different user agent you can override it with the `userAgent` property.

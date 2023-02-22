@@ -111,30 +111,66 @@ playwright codegen --viewport-size=800,600 playwright.dev
 ```bash csharp
 pwsh bin/Debug/netX/playwright.ps1 codegen --viewport-size=800,600 playwright.dev
 ```
+######
+* langs: js
 
-<img width="1409" alt="Codegen generating code for tests for playwright.dev website with a specific viewport" src="https://user-images.githubusercontent.com/13063165/182360039-6db79ad6-fe82-4fd6-900a-b5e25f7f720f.png" />
+<img width="870" alt="Codegen generating code for tests for playwright.dev website with a specific viewport js" src="https://user-images.githubusercontent.com/13063165/220402029-f90d1c9f-d740-4c0f-acc8-95235ee83f85.png" />
+
+######
+* langs: java
+
+<img width="870" alt="Codegen generating code for tests for playwright.dev website with a specific viewport java" src="https://user-images.githubusercontent.com/13063165/220402748-12a856c2-b3ff-4155-b82d-64dad9c46886.png" />
+
+######
+* langs: python
+
+<img width="870" alt="Codegen generating code for tests for playwright.dev website with a specific viewport python" src="https://user-images.githubusercontent.com/13063165/220403118-7704b708-dea3-44b3-97a4-04c2b9d1d0fa.png" />
+
+######
+* langs: csharp
+
+<img width="870" alt="Codegen generating code for tests for playwright.dev website with a specific viewport dotnet" src="https://user-images.githubusercontent.com/13063165/220403496-4a46a9a1-4bc4-43e7-8f22-9cc760ceadaf.png" />
+
 
 ### Emulate devices
 
 Record scripts and tests while emulating a mobile device using the `--device` option which sets the viewport size and user agent among others.
 
 ```bash js
-npx playwright codegen --device="iPhone 11" playwright.dev
+npx playwright codegen --device="iPhone 13" playwright.dev
 ```
 
 ```bash java
-mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args='codegen --device="iPhone 11" playwright.dev'
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args='codegen --device="iPhone 13" playwright.dev'
 ```
 
 ```bash python
-playwright codegen --device="iPhone 11" playwright.dev
+playwright codegen --device="iPhone 13" playwright.dev
 ```
 
 ```bash csharp
-pwsh bin/Debug/netX/playwright.ps1 codegen --device="iPhone 11" playwright.dev
+pwsh bin/Debug/netX/playwright.ps1 codegen --device="iPhone 13" playwright.dev
 ```
+######
+* langs: js
 
-<img width="1254" alt="Codegen generating code for tests for playwright.dev website emulated for iPhone 11" src="https://user-images.githubusercontent.com/13063165/197976789-ee25ed24-69af-4684-b6a4-098673cfb035.png" />
+<img width="458" alt="Codegen generating code for tests for playwright.dev website emulated for iPhone 13 js" src="https://user-images.githubusercontent.com/13063165/220409614-6a83f087-79d3-404b-9d13-8864a186769d.png" />
+
+######
+* langs: java
+
+<img width="458" alt="Codegen generating code for tests for playwright.dev website emulated for iPhone 13 java" src="https://user-images.githubusercontent.com/13063165/220410623-99cdba9f-c5af-4deb-b036-ace8806c5030.png" />
+
+######
+* langs: python
+
+<img width="458" alt="Codegen generating code for tests for playwright.dev website emulated for iPhone 13 python" src="https://user-images.githubusercontent.com/13063165/220410800-9f0c6c5a-5014-44de-97a9-a44ce4d52912.png" />
+
+######
+* langs: csharp
+
+<img width="458" alt="Codegen generating code for tests for playwright.dev website emulated for iPhone 13 csharp" src="https://user-images.githubusercontent.com/13063165/220410964-8a8733aa-48a2-4461-a052-f19c20f251cd.png">
+
 
 ### Emulate color scheme
 
@@ -156,29 +192,66 @@ playwright codegen --color-scheme=dark playwright.dev
 pwsh bin/Debug/netX/playwright.ps1 codegen --color-scheme=dark playwright.dev
 ```
 
-<img width="1258" alt="Codegen generating code for tests for playwright.dev website in dark mode" src="https://user-images.githubusercontent.com/13063165/182359371-0bb4a7a2-abbb-4f73-8550-d67e0101f0ad.png" />
+######
+* langs: js
+
+<img width="1394" alt="Codegen generating code for tests for playwright.dev website in dark mode js" src="https://user-images.githubusercontent.com/13063165/220412436-5f382f44-7dd7-4169-8acc-cc4894dc513c.png" />
+
+######
+* langs: java
+
+<img width="1394" alt="Codegen generating code for tests for playwright.dev website in dark mode java" src="https://user-images.githubusercontent.com/13063165/220412615-509e9810-2daa-45d9-86ea-efd108be0e51.png" />
+
+######
+* langs: python
+
+<img width="1394" alt="Codegen generating code for tests for playwright.dev website in dark mode python" src="https://user-images.githubusercontent.com/13063165/220412939-a54c1b0b-b758-4fc3-88d2-719f5e885aaf.png" />
+
+######
+* langs: csharp
+
+<img width="1394" alt="Codegen generating code for tests for playwright.dev website in dark mode csharp" src="https://user-images.githubusercontent.com/13063165/220413119-9bc1c77b-2609-4b21-861c-5786b9ab48f9.png" />
 
 ### Emulate geolocation, language and timezone
 
-Record scripts and tests while emulating timezone, language & location using the `--timezone`, `--geolocation` and `--lang` options. Once page opens, click the "show your location" icon at them bottom right corner of the map to see geolocation in action.
+Record scripts and tests while emulating timezone, language & location using the `--timezone`, `--geolocation` and `--lang` options. Once the page opens, click the "show your location" icon on the map to see geolocation in action.
 
 ```bash js
-npx playwright codegen --timezone="Europe/Rome" --geolocation="41.890221,12.492348" --lang="it-IT" maps.google.com
+npx playwright codegen --timezone="Europe/Rome" --geolocation="41.890221,12.492348" --lang="it-IT" bing.com/maps
 ```
 
 ```bash java
-mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args='codegen --timezone="Europe/Rome" --geolocation="41.890221,12.492348" --lang="it-IT" maps.google.com'
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args='codegen --timezone="Europe/Rome" --geolocation="41.890221,12.492348" --lang="it-IT" bing.com/maps'
 ```
 
 ```bash python
-playwright codegen --timezone="Europe/Rome" --geolocation="41.890221,12.492348" --lang="it-IT" maps.google.com
+playwright codegen --timezone="Europe/Rome" --geolocation="41.890221,12.492348" --lang="it-IT" bing.com/maps
 ```
 
 ```bash csharp
-pwsh bin/Debug/netX/playwright.ps1 codegen --timezone="Europe/Rome" --geolocation="41.890221,12.492348" --lang="it-IT" maps.google.com
+pwsh bin/Debug/netX/playwright.ps1 codegen --timezone="Europe/Rome" --geolocation="41.890221,12.492348" --lang="it-IT" bing.com/maps
 ```
 
-<img width="1276" alt="Codegen generating code for tests for google maps showing timezone, geolocation as Rome, Italy and in Italian language" src="https://user-images.githubusercontent.com/13063165/182394434-73e1c2a8-767e-411a-94e4-0912c1c50ecc.png" />
+######
+* langs: js
+
+<img width="1394" alt="Codegen generating code for tests for bing maps showing timezone, geolocation as Rome, Italy and in Italian language" src="https://user-images.githubusercontent.com/13063165/220400294-33252d11-c16b-43b6-861f-a6a78827084f.png" />
+
+######
+* langs: java
+
+<img width="1394" alt="Codegen generating code for tests for bing maps showing timezone, geolocation as Rome, Italy and in Italian language java" src="https://user-images.githubusercontent.com/13063165/220414470-0951350c-0fe5-46a9-8787-f0936fd79957.png" />
+
+######
+* langs: python
+
+<img width="1394" alt="Codegen generating code for tests for bing maps showing timezone, geolocation as Rome, Italy and in Italian language python" src="https://user-images.githubusercontent.com/13063165/220415142-0316c8dc-c798-4fe9-8fa6-7c2ac2f2e016.png" />
+
+
+######
+* langs: csharp
+
+<img width="1394" alt="Codegen generating code for tests for bing maps showing timezone, geolocation as Rome, Italy and in Italian language csharp" src="https://user-images.githubusercontent.com/13063165/220414672-70630f48-d09e-43d6-9492-bb064d308f2a.png" />
 
 ### Preserve authenticated state
 
@@ -187,22 +260,42 @@ Run `codegen` with `--save-storage` to save [cookies](https://developer.mozilla.
 After performing authentication and closing the browser, `auth.json` will contain the storage state.
 
 ```bash js
-npx playwright codegen --save-storage=auth.json
+npx playwright codegen github.com/microsoft/playwright --save-storage=auth.json
 ```
 
 ```bash java
-mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="codegen  --save-storage=auth.json"
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="codegen github.com/microsoft/playwright  --save-storage=auth.json"
 ```
 
 ```bash python
-playwright codegen --save-storage=auth.json
+playwright codegen github.com/microsoft/playwright --save-storage=auth.json
 ```
 
 ```bash csharp
-pwsh bin/Debug/netX/playwright.ps1 codegen --save-storage=auth.json
+pwsh bin/Debug/netX/playwright.ps1 codegen github.com/microsoft/playwright --save-storage=auth.json
 ```
 
 <img width="1264" alt="Screenshot 2022-08-03 at 13 28 02" src="https://user-images.githubusercontent.com/13063165/182599605-df2fbd05-622b-4cd7-8a32-0abdfea7d38d.png" />
+
+######
+* langs: js
+
+
+
+######
+* langs: java
+
+
+
+######
+* langs: python
+
+
+
+######
+* langs: csharp
+
+
 
 Run with `--load-storage` to consume previously loaded storage. This way, all [cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies) and [localStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage) will be restored, bringing most web apps to the authenticated state without the need to login again.
 
@@ -223,6 +316,26 @@ pwsh bin/Debug/netX/playwright.ps1 codegen --load-storage=auth.json github.com/m
 ```
 
 <img width="1261" alt="Screenshot 2022-08-03 at 13 33 40" src="https://user-images.githubusercontent.com/13063165/182599680-05297b4e-c258-4416-8daa-b8637c1db120.png" />
+
+######
+* langs: js
+
+
+
+######
+* langs: java
+
+
+
+######
+* langs: python
+
+
+
+######
+* langs: csharp
+
+
 
 Use the `open` command with `--load-storage` to open the saved `auth.json`.
 
