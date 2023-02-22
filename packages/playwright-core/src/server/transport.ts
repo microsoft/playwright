@@ -20,7 +20,7 @@ import type { WebSocket } from '../utilsBundle';
 import type { ClientRequest, IncomingMessage } from 'http';
 import type { Progress } from './progress';
 import { makeWaitForNextTask } from '../utils';
-import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent } from './happy-eyeballs';
+import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent } from '../utils/happy-eyeballs';
 
 export type ProtocolRequest = {
   id: number;
