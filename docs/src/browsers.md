@@ -3,7 +3,7 @@ id: browsers
 title: "Browsers"
 ---
 
-Each version of Playwright needs specific versions of browser binaries to operate. Depending on the language you use, Playwright will either download these browsers at package install time for you, or you will need to use Playwright CLI to install these browsers.
+Each version of Playwright needs specific versions of browser binaries to operate. You will need to use Playwright CLI to install these browsers.
 
 
 With every release, Playwright updates the versions of the browsers it supports, so that the latest Playwright would support the latest browsers at any moment. It means that every time you update playwright, you might need to re-run the `install` CLI command.
@@ -80,7 +80,7 @@ playwright install --help
 pwsh bin/Debug/netX/playwright.ps1 install --help
 ```
 
-## Install browsers via API
+### Install browsers via API
 * langs: csharp
 
 It's possible to run [Command line tools](./cli.md) commands via the .NET API:
@@ -151,14 +151,13 @@ pwsh bin/Debug/netX/playwright.ps1 install --with-deps chromium
 ## Browser Configuration
 * langs: js
 
-Playwright Test supports multiple "projects" so that can run your tests in multiple browsers and configurations. Here is an example that runs every test in Chromium, Firefox and WebKit, by creating a project for each.
+Playwright supports multiple "projects" so that can run your tests in multiple browsers and configurations. Here is an example that runs every test in Chromium, Firefox and WebKit, by creating a project for each. You can also add branded browsers and mobile devices as "projects", see below.
 
 ```js tab=js-js
 // playwright.config.js
 // @ts-check
-const { devices } = require('@playwright/test');
+const { devices, defineConfig } = require('@playwright/test');
 
-const { defineConfig } = require('@playwright/test');
 
 module.exports = defineConfig({
   projects: [
@@ -246,7 +245,7 @@ module.exports = defineConfig({
 ```
 
 ```js tab=js-ts
-import { defineConfig } from '@playwright/test';
+import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
   projects: [
     {
@@ -514,7 +513,7 @@ module.exports = defineConfig({
 ```
 
 ```js tab=js-ts
-import { defineConfig } from '@playwright/test';
+import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
   projects: [
     {
