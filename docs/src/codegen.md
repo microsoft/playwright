@@ -52,7 +52,7 @@ Run `codegen` and perform actions in the browser. Playwright will generate the c
 ######
 * langs: csharp
 
-<img width="1365" alt="Screenshot 2023-01-16 at 20 42 26" src="https://user-images.githubusercontent.com/13063165/212754994-fa637d81-b81d-44b8-bcd7-5dc218034f0a.png" />
+<img width="1365" alt="Recording a test" src="https://user-images.githubusercontent.com/13063165/212754994-fa637d81-b81d-44b8-bcd7-5dc218034f0a.png" />
 
 When you have finished interacting with the page, press the **record** button to stop the recording and use the **copy** button to copy the generated code to your editor.
 
@@ -298,11 +298,11 @@ pwsh bin/Debug/netX/playwright.ps1 codegen github.com/microsoft/playwright --sav
 
 After performing authentication and closing the browser, `auth.json` will contain the storage state which you can then reuse in your tests. 
 
-<img width="1394" alt="Screenshot 2023-02-22 at 09 10 36" src="https://user-images.githubusercontent.com/13063165/220561688-04b2b984-4ba6-4446-8b0a-8058876e2a02.png" />
+<img width="1394" alt="login to Github screen" src="https://user-images.githubusercontent.com/13063165/220561688-04b2b984-4ba6-4446-8b0a-8058876e2a02.png" />
 
 Make sure you only use the `auth.json` locally as it contains sensative information. Add it to your `.gitignore` or delete it once you have finished generating your tests.
 
-<img width="1385" alt="Screenshot 2023-02-22 at 09 14 19" src="https://user-images.githubusercontent.com/13063165/220561822-d8e190c8-0064-4c53-a87a-0165d2c60fce.png" />
+<img width="1385" alt="vscode showing auth.json" src="https://user-images.githubusercontent.com/13063165/220561822-d8e190c8-0064-4c53-a87a-0165d2c60fce.png" />
 
 #### Load authenticated state
 

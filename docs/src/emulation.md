@@ -249,7 +249,7 @@ await using var context = await browser.NewContextAsync(new()
 });
 ```
 
-<img width="1714" alt="Screenshot 2023-02-21 at 17 36 04" src="https://user-images.githubusercontent.com/13063165/220405141-a7446ee5-aa1e-42af-b8fc-7a281f901dc2.png" />
+<img width="1714" alt="website with set viewport" src="https://user-images.githubusercontent.com/13063165/220405141-a7446ee5-aa1e-42af-b8fc-7a281f901dc2.png" />
 
 ## Locale & Timezone
 
