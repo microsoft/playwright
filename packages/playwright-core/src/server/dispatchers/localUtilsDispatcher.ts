@@ -62,16 +62,7 @@ export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.
       }
     }
 
-    if (!fs.existsSync(params.zipFile)) {
-      // New file, just compress the entries.
-      await fs.promises.mkdir(path.dirname(params.zipFile), { recursive: true });
-      zipFile.end(undefined, () => {
-        zipFile.outputStream.pipe(fs.createWriteStream(params.zipFile)).on('close', () => promise.resolve());
-      });
-      return promise;
-    }
-
-    // File already exists. Repack and add new entries.
+    // Repack and add new entries.
     const tempFile = params.zipFile + '.tmp';
     await fs.promises.rename(params.zipFile, tempFile);
 
