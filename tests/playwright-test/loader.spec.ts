@@ -612,3 +612,29 @@ test('should import export assignment from ts', async ({ runInlineTest }) => {
   expect(result.passed).toBe(1);
   expect(result.exitCode).toBe(0);
 });
+
+test('should support node imports', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'package.json': JSON.stringify({
+      type: 'module'
+    }),
+    'test.json': 'test data',
+    'utils.mjs': `
+      import fs from "node:fs/promises";
+
+      export async function utilityModuleThatImportsNodeModule() {
+        return await fs.readFile('test.json', 'utf8');
+      }
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      import { utilityModuleThatImportsNodeModule } from './utils.mjs';
+
+      test('pass', async () => {
+        expect(await utilityModuleThatImportsNodeModule()).toBe('test data');
+      });
+    `
+  });
+  expect(result.passed).toBe(1);
+  expect(result.exitCode).toBe(0);
+});
