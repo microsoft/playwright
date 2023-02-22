@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { captureStackTrace, pollAgainstTimeout } from 'playwright-core/lib/utils';
+import { pollAgainstTimeout } from 'playwright-core/lib/utils';
 import path from 'path';
 import {
   toBeChecked,
@@ -44,7 +44,7 @@ import {
 import { toMatchSnapshot, toHaveScreenshot } from './toMatchSnapshot';
 import type { Expect } from '../common/types';
 import { currentTestInfo, currentExpectTimeout } from '../common/globals';
-import { serializeError, trimLongString } from '../util';
+import { filteredStackTrace, serializeError, stringifyStackFrames, trimLongString } from '../util';
 import {
   expect as expectLibrary,
   INVERTED_COLOR,
@@ -196,13 +196,12 @@ class ExpectMetaInfoProxyHandler {
       if (!testInfo)
         return matcher.call(target, ...args);
 
-      const stackTrace = captureStackTrace();
-      const stackLines = stackTrace.frameTexts;
-      const frame = stackTrace.frames[0];
+      const stackFrames = filteredStackTrace(new Error());
+      const frame = stackFrames[0];
       const customMessage = this._info.message || '';
       const defaultTitle = `expect${this._info.isPoll ? '.poll' : ''}${this._info.isSoft ? '.soft' : ''}${this._info.isNot ? '.not' : ''}.${matcherName}`;
       const step = testInfo._addStep({
-        location: frame && frame.file ? { file: path.resolve(process.cwd(), frame.file), line: frame.line || 0, column: frame.column || 0 } : undefined,
+        location: frame && frame.fileName ? { file: path.resolve(process.cwd(), frame.fileName), line: frame.line || 0, column: frame.column || 0 } : undefined,
         category: 'expect',
         title: trimLongString(customMessage || defaultTitle, 1024),
         canHaveChildren: true,
@@ -230,7 +229,7 @@ class ExpectMetaInfoProxyHandler {
             ...messageLines,
           ].join('\n');
           jestError.message = newMessage;
-          jestError.stack = jestError.name + ': ' + newMessage + '\n' + stackLines.join('\n');
+          jestError.stack = jestError.name + ': ' + newMessage + '\n' + stringifyStackFrames(stackFrames).join('\n');
         }
 
         const serializerError = serializeError(jestError);

@@ -233,7 +233,8 @@ export class WorkerMain extends ProcessRunner {
       // In theory, we should run above code without any errors.
       // However, in the case we screwed up, or loadTestFile failed in the worker
       // but not in the runner, let's do a fatal error.
-      this.unhandledError(e);
+      this._fatalErrors.push(serializeError(e));
+      this._stop();
     } finally {
       const donePayload: DonePayload = {
         fatalErrors: this._fatalErrors,

@@ -19,7 +19,7 @@ import type * as channels from '@protocol/channels';
 import { maybeFindValidator, ValidationError, type ValidatorContext } from '../protocol/validator';
 import { debugLogger } from '../common/debugLogger';
 import type { ParsedStackTrace } from '../utils/stackTrace';
-import { captureRawStack, captureStackTrace } from '../utils/stackTrace';
+import { captureRawStack, captureLibraryStackTrace } from '../utils/stackTrace';
 import { isUnderTest } from '../utils';
 import { zones } from '../utils/zones';
 import type { ClientInstrumentation } from './clientInstrumentation';
@@ -161,7 +161,7 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
     if (apiZone)
       return func(apiZone);
 
-    const stackTrace = captureStackTrace(stack);
+    const stackTrace = captureLibraryStackTrace(stack);
     if (isInternal)
       delete stackTrace.apiName;
     const csi = isInternal ? undefined : this._instrumentation;

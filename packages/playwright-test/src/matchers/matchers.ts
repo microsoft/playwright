@@ -135,7 +135,7 @@ export function toContainText(
   options: { timeout?: number, useInnerText?: boolean, ignoreCase?: boolean } = {},
 ) {
   if (Array.isArray(expected)) {
-    return toEqual.call(this, 'toContainText', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
+    return toEqual.call(this, 'toContainText', locator, 'Locator', async (isNot, timeout) => {
       const expectedText = toExpectedTextValues(expected, { matchSubstring: true, normalizeWhiteSpace: true, ignoreCase: options.ignoreCase });
       return await locator._expect('to.contain.text.array', { expectedText, isNot, useInnerText: options.useInnerText, timeout });
     }, expected, { ...options, contains: true });
@@ -264,7 +264,7 @@ export function toHaveValues(
   expected: (string | RegExp)[],
   options?: { timeout?: number },
 ) {
-  return toEqual.call(this, 'toHaveValues', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
+  return toEqual.call(this, 'toHaveValues', locator, 'Locator', async (isNot, timeout) => {
     const expectedText = toExpectedTextValues(expected);
     return await locator._expect('to.have.values', { expectedText, isNot, timeout });
   }, expected, options);
