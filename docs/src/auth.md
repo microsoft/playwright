@@ -82,10 +82,7 @@ setup('authenticate', async ({ page }) => {
   // Wait for the final URL to ensure that the cookies are actually set.
   await page.waitForURL('https://github.com/');
   // Alternatively, you can wait until the page reaches a state where all cookies are set.
-  // await expect(page.getByRole('button', { name: 'View profile and more' })).toBeVisible();
-  //
-  // Or if you know which response sets the cookies you can wait just for it.
-  // await page.waitForResponse('https://github.com/dashboard/recent-activity');
+  await expect(page.getByRole('button', { name: 'View profile and more' })).toBeVisible();
 
   // End of authentication steps.
 
@@ -199,10 +196,7 @@ export const test = baseTest.extend<{}, { workerStorageState: string }>({
     // Wait for the final URL to ensure that the cookies are actually set.
     await page.waitForURL('https://github.com/');
     // Alternatively, you can wait until the page reaches a state where all cookies are set.
-    // await expect(page.getByRole('button', { name: 'View profile and more' })).toBeVisible();
-    //
-    // Or if you know which response sets the cookies you can wait just for it.
-    // await page.waitForResponse('https://github.com/dashboard/recent-activity');
+    await expect(page.getByRole('button', { name: 'View profile and more' })).toBeVisible();
 
     // End of authentication steps.
 
@@ -454,10 +448,7 @@ test('authenticate as admin', async ({ page }) => {
   // Wait for the final URL to ensure that the cookies are actually set.
   await page.waitForURL('https://github.com/');
   // Alternatively, you can wait until the page reaches a state where all cookies are set.
-  // await expect(page.getByRole('button', { name: 'View profile and more' })).toBeVisible();
-  //
-  // Or if you know which response sets the cookies you can wait just for it.
-  // await page.waitForResponse('https://github.com/dashboard/recent-activity');
+  await expect(page.getByRole('button', { name: 'View profile and more' })).toBeVisible();
 
   // End of authentication steps.
 
@@ -482,10 +473,7 @@ test('authenticate as user', async ({ page }) => {
   // Wait for the final URL to ensure that the cookies are actually set.
   await page.waitForURL('https://github.com/');
   // Alternatively, you can wait until the page reaches a state where all cookies are set.
-  // await expect(page.getByRole('button', { name: 'View profile and more' })).toBeVisible();
-  //
-  // Or if you know which response sets the cookies you can wait just for it.
-  // await page.waitForResponse('https://github.com/dashboard/recent-activity');
+  await expect(page.getByRole('button', { name: 'View profile and more' })).toBeVisible();
 
   // End of authentication steps.
 
