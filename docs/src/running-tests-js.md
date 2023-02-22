@@ -65,8 +65,8 @@ For a full list of devices check out the [registry of device parameters](https:/
 
 ```ts
 const config: PlaywrightTestConfig = {
-/* Configure projects for major browsers */
   projects: [
+    /* Test against desktop browsers */
     {
       name: 'chromium',
       use: {
