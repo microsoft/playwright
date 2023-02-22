@@ -76,9 +76,8 @@ setup('authenticate', async ({ page }) => {
   await page.getByLabel('Username or email address').fill('username');
   await page.getByLabel('Password').fill('password');
   await page.getByRole('button', { name: 'Sign in' }).click();
-  // Make sure all login redirects finished and the
-  // cookies are actually set in the browser.
-  await page.waitForURL("https://discord.com/channels/@me");
+  // Wait for a state where the page has received all cookies.
+  await expect(page.getByRole('heading', { name: 'Recent activity' })).toBeVisible();
   // End of authentication steps.
 
   await page.context().storageState({ path: authFile });
@@ -185,9 +184,8 @@ export const test = baseTest.extend<{}, { workerStorageState: string }>({
     await page.getByLabel('Username or email address').fill(account.username);
     await page.getByLabel('Password').fill(account.password);
     await page.getByRole('button', { name: 'Sign in' }).click();
-    // Make sure all login redirects finished and the
-    // cookies are actually set in the browser.
-    await page.waitForURL("https://discord.com/channels/@me");
+    // Wait for a state where the page has received all cookies.
+    await expect(page.getByRole('heading', { name: 'Recent activity' })).toBeVisible();
     // End of authentication steps.
 
     await page.context().storageState({ path: fileName });
@@ -432,9 +430,8 @@ test('authenticate as admin', async ({ page }) => {
   await page.getByLabel('Username or email address').fill('admin');
   await page.getByLabel('Password').fill('password');
   await page.getByRole('button', { name: 'Sign in' }).click();
-  // Make sure all login redirects finished and the
-  // cookies are actually set in the browser.
-  await page.waitForURL("https://discord.com/channels/@me");
+  // Wait for a state where the page has received all cookies.
+  await expect(page.getByRole('heading', { name: 'Recent activity' })).toBeVisible();
   // End of authentication steps.
 
   await page.context().storageState({ path: adminFile });
@@ -452,9 +449,8 @@ test('authenticate as user', async ({ page }) => {
   await page.getByLabel('Username or email address').fill('user');
   await page.getByLabel('Password').fill('password');
   await page.getByRole('button', { name: 'Sign in' }).click();
-  // Make sure all login redirects finished and the
-  // cookies are actually set in the browser.
-  await page.waitForURL("https://discord.com/channels/@me");
+  // Wait for a state where the page has received all cookies.
+  await expect(page.getByRole('heading', { name: 'Recent activity' })).toBeVisible();
   // End of authentication steps.
 
   await page.context().storageState({ path: userFile });
