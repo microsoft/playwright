@@ -76,8 +76,15 @@ setup('authenticate', async ({ page }) => {
   await page.getByLabel('Username or email address').fill('username');
   await page.getByLabel('Password').fill('password');
   await page.getByRole('button', { name: 'Sign in' }).click();
-  // Wait for a state where the page has received all cookies.
-  await expect(page.getByRole('heading', { name: 'Recent activity' })).toBeVisible();
+  // Sometimes login flow navigates the page and sets the cookies asynchronously.
+  // Wait for the final URL to ensure that the cookies are actually set.
+  await page.waitForURL('https://github.com/');
+  // Alternatively, you can wait until the page reaches the state where all cookies are set.
+  // await expect(page.getByRole('button', { name: 'View profile and more' })).toBeVisible();
+  //
+  // Or if you know which response sets the cookies you can wait for it.
+  // await page.waitForResponse('https://github.com/dashboard/recent-activity');
+
   // End of authentication steps.
 
   await page.context().storageState({ path: authFile });
@@ -184,8 +191,15 @@ export const test = baseTest.extend<{}, { workerStorageState: string }>({
     await page.getByLabel('Username or email address').fill(account.username);
     await page.getByLabel('Password').fill(account.password);
     await page.getByRole('button', { name: 'Sign in' }).click();
-    // Wait for a state where the page has received all cookies.
-    await expect(page.getByRole('heading', { name: 'Recent activity' })).toBeVisible();
+    // Sometimes login flow navigates the page and sets the cookies asynchronously.
+    // Wait for the final URL to ensure that the cookies are actually set.
+    await page.waitForURL('https://github.com/');
+    // Alternatively, you can wait until the page reaches the state where all cookies are set.
+    // await expect(page.getByRole('button', { name: 'View profile and more' })).toBeVisible();
+    //
+    // Or if you know which response sets the cookies you can wait for it.
+    // await page.waitForResponse('https://github.com/dashboard/recent-activity');
+
     // End of authentication steps.
 
     await page.context().storageState({ path: fileName });
@@ -430,8 +444,15 @@ test('authenticate as admin', async ({ page }) => {
   await page.getByLabel('Username or email address').fill('admin');
   await page.getByLabel('Password').fill('password');
   await page.getByRole('button', { name: 'Sign in' }).click();
-  // Wait for a state where the page has received all cookies.
-  await expect(page.getByRole('heading', { name: 'Recent activity' })).toBeVisible();
+  // Sometimes login flow navigates the page and sets the cookies asynchronously.
+  // Wait for the final URL to ensure that the cookies are actually set.
+  await page.waitForURL('https://github.com/');
+  // Alternatively, you can wait until the page reaches the state where all cookies are set.
+  // await expect(page.getByRole('button', { name: 'View profile and more' })).toBeVisible();
+  //
+  // Or if you know which response sets the cookies you can wait for it.
+  // await page.waitForResponse('https://github.com/dashboard/recent-activity');
+
   // End of authentication steps.
 
   await page.context().storageState({ path: adminFile });
@@ -449,8 +470,15 @@ test('authenticate as user', async ({ page }) => {
   await page.getByLabel('Username or email address').fill('user');
   await page.getByLabel('Password').fill('password');
   await page.getByRole('button', { name: 'Sign in' }).click();
-  // Wait for a state where the page has received all cookies.
-  await expect(page.getByRole('heading', { name: 'Recent activity' })).toBeVisible();
+  // Sometimes login flow navigates the page and sets the cookies asynchronously.
+  // Wait for the final URL to ensure that the cookies are actually set.
+  await page.waitForURL('https://github.com/');
+  // Alternatively, you can wait until the page reaches the state where all cookies are set.
+  // await expect(page.getByRole('button', { name: 'View profile and more' })).toBeVisible();
+  //
+  // Or if you know which response sets the cookies you can wait for it.
+  // await page.waitForResponse('https://github.com/dashboard/recent-activity');
+
   // End of authentication steps.
 
   await page.context().storageState({ path: userFile });
