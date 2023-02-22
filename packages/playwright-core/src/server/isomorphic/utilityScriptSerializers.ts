@@ -35,15 +35,27 @@ type VisitorInfo = {
 export function source() {
 
   function isRegExp(obj: any): obj is RegExp {
-    return obj instanceof RegExp || Object.prototype.toString.call(obj) === '[object RegExp]';
+    try {
+      return obj instanceof RegExp || Object.prototype.toString.call(obj) === '[object RegExp]';
+    } catch (error) {
+      return false;
+    }
   }
 
   function isDate(obj: any): obj is Date {
-    return obj instanceof Date || Object.prototype.toString.call(obj) === '[object Date]';
+    try {
+      return obj instanceof Date || Object.prototype.toString.call(obj) === '[object Date]';
+    } catch (error) {
+      return false;
+    }
   }
 
   function isURL(obj: any): obj is URL {
-    return obj instanceof URL || Object.prototype.toString.call(obj) === '[object URL]';
+    try {
+      return obj instanceof URL || Object.prototype.toString.call(obj) === '[object URL]';
+    } catch (error) {
+      return false;
+    }
   }
 
   function isError(obj: any): obj is Error {
