@@ -24,7 +24,7 @@ import { commandsWithTracingSnapshots } from '../../../protocol/debug';
 import { ManualPromise } from '../../../utils/manualPromise';
 import type { RegisteredListener } from '../../../utils/eventsHelper';
 import { eventsHelper } from '../../../utils/eventsHelper';
-import { assert, calculateSha1, createGuid, monotonicTime } from '../../../utils';
+import { assert, createGuid, monotonicTime } from '../../../utils';
 import { mkdirIfNeeded, removeFolders } from '../../../utils/fileUtils';
 import { Artifact } from '../../artifact';
 import { BrowserContext } from '../../browserContext';
@@ -49,7 +49,6 @@ export type TracerOptions = {
   name?: string;
   snapshots?: boolean;
   screenshots?: boolean;
-  sources?: boolean;
 };
 
 type RecordingState = {
@@ -62,7 +61,6 @@ type RecordingState = {
   filesCount: number,
   networkSha1s: Set<string>,
   traceSha1s: Set<string>,
-  sources: Set<string>,
   recording: boolean;
 };
 
@@ -133,7 +131,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     // and conflict.
     const traceName = options.name || createGuid();
     // Init the state synchrounously.
-    this._state = { options, traceName, traceFile: '', networkFile: '', tracesDir: '', resourcesDir: '', filesCount: 0, traceSha1s: new Set(), networkSha1s: new Set(), sources: new Set(), recording: false };
+    this._state = { options, traceName, traceFile: '', networkFile: '', tracesDir: '', resourcesDir: '', filesCount: 0, traceSha1s: new Set(), networkSha1s: new Set(), recording: false };
     const state = this._state;
 
     state.tracesDir = await this._createTracesDirIfNeeded();
@@ -147,7 +145,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
 
   async startChunk(options: { title?: string } = {}) {
     if (this._state && this._state.recording)
-      await this.stopChunk({ mode: 'doNotSave' });
+      await this.stopChunk({ mode: 'discard' });
 
     if (!this._state)
       throw new Error('Must start tracing before starting a new chunk');
@@ -220,16 +218,16 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     await this._writeChain;
   }
 
-  async stopChunk(params: TracingTracingStopChunkParams): Promise<{ artifact: Artifact | null, sourceEntries: NameValue[] | undefined }> {
+  async stopChunk(params: TracingTracingStopChunkParams): Promise<{ artifact?: Artifact, entries?: NameValue[], sourceEntries?: NameValue[] }> {
     if (this._isStopping)
       throw new Error(`Tracing is already stopping`);
     this._isStopping = true;
 
     if (!this._state || !this._state.recording) {
       this._isStopping = false;
-      if (params.mode !== 'doNotSave')
+      if (params.mode !== 'discard')
         throw new Error(`Must start tracing before stopping`);
-      return { artifact: null, sourceEntries: [] };
+      return { sourceEntries: [] };
     }
 
     const state = this._state!;
@@ -256,10 +254,10 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     // Chain the export operation against write operations,
     // so that neither trace files nor sha1s change during the export.
     return await this._appendTraceOperation(async () => {
-      if (params.mode === 'doNotSave')
-        return { artifact: null, sourceEntries: undefined };
+      if (params.mode === 'discard')
+        return {};
 
-      // Har files a live, make a snapshot before returning the resulting entries.
+      // Har files are live, make a snapshot before returning the resulting entries.
       const networkFile = path.join(state.networkFile, '..', createGuid());
       await fs.promises.copyFile(state.networkFile, networkFile);
 
@@ -269,34 +267,21 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       for (const sha1 of new Set([...state.traceSha1s, ...state.networkSha1s]))
         entries.push({ name: path.join('resources', sha1), value: path.join(state.resourcesDir, sha1) });
 
-      let sourceEntries: NameValue[] | undefined;
-      if (state.sources.size) {
-        sourceEntries = [];
-        for (const value of state.sources) {
-          const entry = { name: 'resources/src@' + calculateSha1(value) + '.txt', value };
-          if (params.mode === 'compressTraceAndSources') {
-            if (fs.existsSync(entry.value))
-              entries.push(entry);
-          } else {
-            sourceEntries.push(entry);
-          }
-        }
-      }
-
-      const artifact = await this._exportZip(entries, state).catch(() => null);
-      return { artifact, sourceEntries };
+      if (params.mode === 'entries')
+        return { entries };
+      const artifact = await this._exportZip(entries, state).catch(() => undefined);
+      return { artifact, entries };
     }).finally(() => {
       // Only reset trace sha1s, network resources are preserved between chunks.
       state.traceSha1s = new Set();
-      state.sources = new Set();
       this._isStopping = false;
       state.recording = false;
-    }) || { artifact: null, sourceEntries: undefined };
+    }) || { };
   }
 
-  private async _exportZip(entries: NameValue[], state: RecordingState): Promise<Artifact | null> {
+  private _exportZip(entries: NameValue[], state: RecordingState): Promise<Artifact | undefined> {
     const zipFile = new yazl.ZipFile();
-    const result = new ManualPromise<Artifact | null>();
+    const result = new ManualPromise<Artifact | undefined>();
     (zipFile as any as EventEmitter).on('error', error => result.reject(error));
     for (const entry of entries)
       zipFile.addFile(entry.value, entry.name);
@@ -335,10 +320,6 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     metadata.afterSnapshot = `after@${metadata.id}`;
     const beforeSnapshot = this._captureSnapshot('before', sdkObject, metadata);
     this._pendingCalls.set(metadata.id, { sdkObject, metadata, beforeSnapshot });
-    if (this._state?.options.sources) {
-      for (const frame of metadata.stack || [])
-        this._state.sources.add(frame.file);
-    }
     await beforeSnapshot;
   }
 

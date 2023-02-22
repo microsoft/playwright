@@ -16,6 +16,7 @@
 
 import type { CallMetadata } from '@protocol/callMetadata';
 import type * as trace from '@trace/trace';
+import { parseClientSideCallMetadata } from '@trace/traceUtils';
 import type zip from '@zip.js/zip.js';
 // @ts-ignore
 import zipImport from '@zip.js/zip.js/dist/zip-no-worker-inflate.min.js';
@@ -52,11 +53,14 @@ export class TraceModel {
         { useWebWorkers: false }) as zip.ZipReader;
     let traceEntry: zip.Entry | undefined;
     let networkEntry: zip.Entry | undefined;
+    let stacksEntry: zip.Entry | undefined;
     for (const entry of await this._zipReader.getEntries({ onprogress: progress })) {
       if (entry.filename.endsWith('.trace'))
         traceEntry = entry;
       if (entry.filename.endsWith('.network'))
         networkEntry = entry;
+      if (entry.filename.endsWith('.stacks'))
+        stacksEntry = entry;
       if (entry.filename.includes('src@'))
         this.contextEntry.hasSource = true;
       this._entries.set(entry.filename, entry);
@@ -77,6 +81,15 @@ export class TraceModel {
       for (const line of (await networkWriter.getData()).split('\n'))
         this.appendEvent(line);
     }
+
+    if (stacksEntry) {
+      const writer = new zipjs.TextWriter();
+      await stacksEntry.getData!(writer);
+      const metadataMap = parseClientSideCallMetadata(JSON.parse(await writer.getData()));
+      for (const action of this.contextEntry.actions)
+        action.metadata.stack = metadataMap.get(action.metadata.id);
+    }
+
     this._build();
   }
 

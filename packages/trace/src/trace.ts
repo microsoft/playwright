@@ -15,6 +15,7 @@
  */
 
 import type { CallMetadata } from '@protocol/callMetadata';
+import type { StackFrame } from '@protocol/channels';
 import type { Language } from '../../playwright-core/src/server/isomorphic/locatorGenerators';
 import type { FrameSnapshot, ResourceSnapshot } from './snapshot';
 
@@ -53,7 +54,7 @@ export type ScreencastFrameTraceEvent = {
 
 export type ActionTraceEvent = {
   type: 'action' | 'event',
-  metadata: CallMetadata,
+  metadata: CallMetadata & { stack?: StackFrame[] },
 };
 
 export type ResourceSnapshotTraceEvent = {

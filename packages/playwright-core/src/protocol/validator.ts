@@ -27,9 +27,17 @@ scheme.StackFrame = tObject({
   function: tOptional(tString),
 });
 scheme.Metadata = tObject({
-  stack: tOptional(tArray(tType('StackFrame'))),
+  location: tOptional(tObject({
+    file: tString,
+    line: tOptional(tNumber),
+    column: tOptional(tNumber),
+  })),
   apiName: tOptional(tString),
   internal: tOptional(tBoolean),
+});
+scheme.ClientSideCallMetadata = tObject({
+  id: tNumber,
+  stack: tOptional(tArray(tType('StackFrame'))),
 });
 scheme.Point = tObject({
   x: tNumber,
@@ -211,6 +219,9 @@ scheme.LocalUtilsInitializer = tOptional(tObject({}));
 scheme.LocalUtilsZipParams = tObject({
   zipFile: tString,
   entries: tArray(tType('NameValue')),
+  mode: tEnum(['write', 'append']),
+  metadata: tArray(tType('ClientSideCallMetadata')),
+  includeSources: tBoolean,
 });
 scheme.LocalUtilsZipResult = tOptional(tObject({}));
 scheme.LocalUtilsHarOpenParams = tObject({
@@ -2084,11 +2095,11 @@ scheme.TracingTracingStartChunkParams = tObject({
 });
 scheme.TracingTracingStartChunkResult = tOptional(tObject({}));
 scheme.TracingTracingStopChunkParams = tObject({
-  mode: tEnum(['doNotSave', 'compressTrace', 'compressTraceAndSources']),
+  mode: tEnum(['archive', 'discard', 'entries']),
 });
 scheme.TracingTracingStopChunkResult = tObject({
   artifact: tOptional(tChannel(['Artifact'])),
-  sourceEntries: tOptional(tArray(tType('NameValue'))),
+  entries: tOptional(tArray(tType('NameValue'))),
 });
 scheme.TracingTracingStopParams = tOptional(tObject({}));
 scheme.TracingTracingStopResult = tOptional(tObject({}));

@@ -19,6 +19,7 @@ import { jpegjs } from 'playwright-core/lib/utilsBundle';
 import path from 'path';
 import { browserTest, contextTest as test, expect } from '../config/browserTest';
 import { parseTrace } from '../config/utils';
+import type { StackFrame } from '@protocol/channels';
 
 test.skip(({ trace }) => trace === 'on');
 
@@ -208,8 +209,8 @@ test('should not include trace resources from the provious chunks', async ({ con
     // 1 network resource should be preserved.
     expect(names.filter(n => n.endsWith('.html')).length).toBe(1);
     expect(names.filter(n => n.endsWith('.jpeg')).length).toBe(0);
-    // 1 source file for the test.
-    expect(names.filter(n => n.endsWith('.txt')).length).toBe(1);
+    // 0 source file for the second test.
+    expect(names.filter(n => n.endsWith('.txt')).length).toBe(0);
   }
 });
 
@@ -474,7 +475,7 @@ test('should hide internal stack frames', async ({ context, page }, testInfo) =>
   const actions = trace.events.filter(e => e.type === 'action' && !e.metadata.apiName.startsWith('tracing.'));
   expect(actions).toHaveLength(4);
   for (const action of actions)
-    expect(relativeStack(action)).toEqual(['tracing.spec.ts']);
+    expect(relativeStack(action, trace.stacks)).toEqual(['tracing.spec.ts']);
 });
 
 test('should hide internal stack frames in expect', async ({ context, page }, testInfo) => {
@@ -495,7 +496,7 @@ test('should hide internal stack frames in expect', async ({ context, page }, te
   const actions = trace.events.filter(e => e.type === 'action' && !e.metadata.apiName.startsWith('tracing.'));
   expect(actions).toHaveLength(5);
   for (const action of actions)
-    expect(relativeStack(action)).toEqual(['tracing.spec.ts']);
+    expect(relativeStack(action, trace.stacks)).toEqual(['tracing.spec.ts']);
 });
 
 test('should record global request trace', async ({ request, context, server }, testInfo) => {
@@ -605,6 +606,7 @@ function expectBlue(pixels: Buffer, offset: number) {
   expect(a).toBe(255);
 }
 
-function relativeStack(action: any): string[] {
-  return action.metadata.stack.map(f => f.file.replace(__dirname + path.sep, ''));
+function relativeStack(action: any, stacks: Map<string, StackFrame[]>): string[] {
+  const stack = stacks.get(action.metadata.id) || [];
+  return stack.map(f => f.file.replace(__dirname + path.sep, ''));
 }
