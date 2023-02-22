@@ -613,8 +613,11 @@ test('should import export assignment from ts', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
 });
 
-test('should support node imports', async ({ runInlineTest }) => {
+test('should support node imports', async ({ runInlineTest, nodeVersion }) => {
+  // We only support experimental esm mode on Node 16+
+  test.skip(nodeVersion.major < 16);
   const result = await runInlineTest({
+    'playwright.config.ts': 'export default {}',
     'package.json': JSON.stringify({
       type: 'module'
     }),
