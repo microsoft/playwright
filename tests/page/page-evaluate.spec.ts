@@ -717,7 +717,7 @@ it('should work with overridden URL/Date/RegExp', async ({ page, server }) => {
       await page.goto(server.EMPTY_PAGE);
       await page.evaluate(testCase);
       expect(await page.evaluate('1+2')).toBe(3);
-      expect(await page.evaluate(() => ({ 'a': 2023}))).toEqual({ 'a': 2023 });
+      expect(await page.evaluate(() => ({ 'a': 2023 }))).toEqual({ 'a': 2023 });
     });
   }
 });
