@@ -59,6 +59,40 @@ For a better debugging experience check out the [VS Code Extension](./getting-st
   npx playwright test landing-page.ts --project=chromium
   ```
 
+In Playwright you can configure projects in your [`playwright.config`](/test-configuration.md#multiple-browsers) for major browser engines such as Chromium and Firefox, branded browsers such as Google Chrome and Microsoft Edge, and mobile viewports such as Safari on an iPhone 12 or Chrome for Android on a Pixel 5.
+
+```ts
+const config: PlaywrightTestConfig = {
+  projects: [
+    /* Test against desktop browsers */
+    {
+      name: 'chromium',
+      use: {
+        ...devices['Desktop Chrome'],
+      },
+    },
+
+    /* Test against mobile viewports. */
+    {
+      name: 'Mobile Safari',
+      use: {
+        ...devices['iPhone 12'],
+      },
+    },
+
+    /* Test against branded browsers. */
+    {
+      name: 'Microsoft Edge',
+      use: {
+        channel: 'msedge',
+      },
+    },
+  ],
+};
+```
+
+  
+
 ## Debugging Tests
 
 Since Playwright runs in Node.js, you can debug it with your debugger of choice e.g. using `console.log` or inside your IDE or directly in VS Code with the [VS Code Extension](./getting-started-vscode.md). Playwright comes with the [Playwright Inspector](./debug.md#playwright-inspector) which allows you to step through Playwright API calls, see their debug logs and explore [locators](./locators.md).
@@ -82,38 +116,25 @@ Since Playwright runs in Node.js, you can debug it with your debugger of choice 
   npx playwright test example.spec.ts:10 --debug
   ```
 
-<img width="1394" alt="Debugging Tests with the Playwright inspector" src="https://user-images.githubusercontent.com/13063165/212744309-4b7e431b-de2a-45ca-b287-6360124adc33.png" />
+<img width="1350" alt="Debugging Tests with the Playwright inspector" src="https://user-images.githubusercontent.com/13063165/197800771-50cb2f39-2345-4153-b4ed-de9fe63ba29b.png" />
+
 
 Check out our [debugging guide](./debug.md) to learn more about the [Playwright Inspector](./debug.md#playwright-inspector) as well as debugging with [Browser Developer tools](./debug.md#browser-developer-tools).
 
+
 ## Test Reports
 
-The [HTML Reporter](./test-reporters.md#html-reporter) is a built in reporter which shows you a full report of all your tests that have been ran. It shows the name of the test as well as the file name with the line number of the test next to it as well as how long each test took to run and what browsers they were ran on. You can filter the report by passed tests, failed tests, skipped tests or flaky tests. You can also filter by browsers by clicking on the name of the browser next to a test. You can also search for a particular test or browser using the search bar.
-
-To open the report first run your tests:
-
-```bash
-npx playwright test
-```
-
-By default, the HTML report is opened automatically if some of the tests failed. If you need to open the report manually you can use the following command:
+The [HTML Reporter](././test-reporters.md#html-reporter) shows you a full report of your tests allowing you to filter the report by browsers, passed tests, failed tests, skipped tests and flaky tests. By default, the HTML report is opened automatically if some of the tests failed.
 
 ```bash
 npx playwright show-report
 ```
 
-<img width="1392" alt="HTML Report > Test Reports view" src="https://user-images.githubusercontent.com/13063165/212744633-826cce1b-fab1-455a-8ca7-68867c4d4698.png" />
+<img width="963" alt="HTML Report > Test Reports view" src="https://user-images.githubusercontent.com/13063165/189140120-71a6bc41-f921-40be-a7a4-61d44da33b20.png" />
 
-You can open a detailed view of each test by clicking on the test name. You can then explore the tests errors as well as expand each step of the test to see the code for that step and how long each step took to run.
+You can click on each test and explore the tests errors as well as each step of the test.
 
-<img width="1247" alt="HTML Reporter > Test Reports detailed view" src="https://user-images.githubusercontent.com/13063165/212868173-2bf680bb-274a-4aec-932b-d07255adcc74.png" />
-
-
-For projects created with `create-playwright` the HTML report is enabled by default. If you have a config which does not use the HTML report or running the show-report command yields to no reports, you can run it with `--reporter=html`.
-
-```bash
-npx playwright show-report --reporter=html
-```
+<img width="955" alt="HTML Reporter > Test Reports detailed view" src="https://user-images.githubusercontent.com/13063165/189140263-0e3ac2d9-4e75-40c8-b29c-58323c8be433.png" />
 
 ## What's Next
 
