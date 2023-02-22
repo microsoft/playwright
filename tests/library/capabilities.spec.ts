@@ -187,8 +187,6 @@ it('should set CloseEvent.wasClean to false when the server terminates a WebSock
 });
 
 it('serviceWorker should intercept document request', async ({ page, server, browserName }) => {
-  it.fixme(browserName === 'firefox');
-
   server.setRoute('/sw.js', (req, res) => {
     res.setHeader('Content-Type', 'application/javascript');
     res.end(`
