@@ -71,6 +71,7 @@ export class Connection extends EventEmitter {
   private _localUtils?: LocalUtils;
   // Some connections allow resolving in-process dispatchers.
   toImpl: ((client: ChannelOwner) => any) | undefined;
+  private _stackCollectors = new Set<channels.ClientSideCallMetadata[]>();
 
   constructor(localUtils?: LocalUtils) {
     super();
@@ -102,6 +103,14 @@ export class Connection extends EventEmitter {
     return this._objects.get(guid)!;
   }
 
+  startCollectingCallMetadata(collector: channels.ClientSideCallMetadata[]) {
+    this._stackCollectors.add(collector);
+  }
+
+  stopCollectingCallMetadata(collector: channels.ClientSideCallMetadata[]) {
+    this._stackCollectors.delete(collector);
+  }
+
   async sendMessageToServer(object: ChannelOwner, type: string, method: string, params: any, stackTrace: ParsedStackTrace | null): Promise<any> {
     if (this._closedErrorMessage)
       throw new Error(this._closedErrorMessage);
@@ -112,7 +121,10 @@ export class Connection extends EventEmitter {
     const converted = { id, guid, method, params };
     // Do not include metadata in debug logs to avoid noise.
     debugLogger.log('channel:command', converted);
-    const metadata: channels.Metadata = { stack: frames, apiName, internal: !apiName };
+    for (const collector of this._stackCollectors)
+      collector.push({ stack: frames, id: id });
+    const location = frames[0] ? { file: frames[0].file, line: frames[0].line, column: frames[0].column } : undefined;
+    const metadata: channels.Metadata = { apiName, location, internal: !apiName };
     this.onmessage({ ...converted, metadata });
 
     return await new Promise((resolve, reject) => this._callbacks.set(id, { resolve, reject, stackTrace, type, method }));

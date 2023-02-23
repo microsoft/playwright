@@ -16,6 +16,8 @@
 
 import type { Frame, Page } from 'playwright-core';
 import { ZipFile } from '../../packages/playwright-core/lib/utils/zipFile';
+import type { StackFrame } from '@protocol/channels';
+import { parseClientSideCallMetadata } from '../../packages/trace/src/traceUtils';
 
 export async function attachFrame(page: Page, frameId: string, url: string): Promise<Frame> {
   const handle = await page.evaluateHandle(async ({ frameId, url }) => {
@@ -91,7 +93,7 @@ export function suppressCertificateWarning() {
   };
 }
 
-export async function parseTrace(file: string): Promise<{ events: any[], resources: Map<string, Buffer>, actions: string[] }> {
+export async function parseTrace(file: string): Promise<{ events: any[], resources: Map<string, Buffer>, actions: string[], stacks: Map<string, StackFrame[]> }> {
   const zipFS = new ZipFile(file);
   const resources = new Map<string, Buffer>();
   for (const entry of await zipFS.entries())
@@ -103,14 +105,18 @@ export async function parseTrace(file: string): Promise<{ events: any[], resourc
     if (line)
       events.push(JSON.parse(line));
   }
+
   for (const line of resources.get('trace.network').toString().split('\n')) {
     if (line)
       events.push(JSON.parse(line));
   }
+
+  const stacks = parseClientSideCallMetadata(JSON.parse(resources.get('trace.stacks').toString()));
   return {
     events,
     resources,
-    actions: eventsToActions(events)
+    actions: eventsToActions(events),
+    stacks,
   };
 }
 

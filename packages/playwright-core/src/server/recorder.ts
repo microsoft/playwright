@@ -275,9 +275,9 @@ export class Recorder implements InstrumentationListener {
     // Apply new decorations.
     let fileToSelect = undefined;
     for (const metadata of this._currentCallsMetadata.keys()) {
-      if (!metadata.stack || !metadata.stack[0])
+      if (!metadata.location)
         continue;
-      const { file, line } = metadata.stack[0];
+      const { file, line } = metadata.location;
       let source = this._userSources.get(file);
       if (!source) {
         source = { isRecorded: false, label: file, id: file, text: this._readSource(file), highlight: [], language: languageForFile(file) };

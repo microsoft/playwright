@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Point, StackFrame, SerializedError } from './channels';
+import type { Point, SerializedError } from './channels';
 
 export type CallMetadata = {
   id: string;
@@ -33,7 +33,7 @@ export type CallMetadata = {
   // Service-side is making a call to itself, this metadata does not go
   // through the dispatcher, so is always excluded from inspector / tracing.
   isServerSide?: boolean;
-  stack?: StackFrame[];
+  location?: { file: string, line?: number, column?: number };
   log: string[];
   afterSnapshot?: string;
   snapshots: { title: string, snapshotName: string }[];

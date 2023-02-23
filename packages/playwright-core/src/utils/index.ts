@@ -35,5 +35,6 @@ export * from './stackTrace';
 export * from './task';
 export * from './time';
 export * from './timeoutRunner';
+export * from './traceUtils';
 export * from './userAgent';
 export * from './zipFile';

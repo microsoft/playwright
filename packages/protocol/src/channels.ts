@@ -143,9 +143,18 @@ export type StackFrame = {
 };
 
 export type Metadata = {
-  stack?: StackFrame[],
+  location?: {
+    file: string,
+    line?: number,
+    column?: number,
+  },
   apiName?: string,
   internal?: boolean,
+};
+
+export type ClientSideCallMetadata = {
+  id: number,
+  stack?: StackFrame[],
 };
 
 export type Point = {
@@ -394,6 +403,9 @@ export interface LocalUtilsChannel extends LocalUtilsEventTarget, Channel {
 export type LocalUtilsZipParams = {
   zipFile: string,
   entries: NameValue[],
+  mode: 'write' | 'append',
+  metadata: ClientSideCallMetadata[],
+  includeSources: boolean,
 };
 export type LocalUtilsZipOptions = {
 
@@ -3741,14 +3753,14 @@ export type TracingTracingStartChunkOptions = {
 };
 export type TracingTracingStartChunkResult = void;
 export type TracingTracingStopChunkParams = {
-  mode: 'doNotSave' | 'compressTrace' | 'compressTraceAndSources',
+  mode: 'archive' | 'discard' | 'entries',
 };
 export type TracingTracingStopChunkOptions = {
 
 };
 export type TracingTracingStopChunkResult = {
   artifact?: ArtifactChannel,
-  sourceEntries?: NameValue[],
+  entries?: NameValue[],
 };
 export type TracingTracingStopParams = {};
 export type TracingTracingStopOptions = {};

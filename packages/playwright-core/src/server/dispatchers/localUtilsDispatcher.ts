@@ -19,7 +19,7 @@ import fs from 'fs';
 import path from 'path';
 import type * as channels from '@protocol/channels';
 import { ManualPromise } from '../../utils/manualPromise';
-import { assert, createGuid } from '../../utils';
+import { assert, calculateSha1, createGuid } from '../../utils';
 import type { RootDispatcher } from './dispatcher';
 import { Dispatcher } from './dispatcher';
 import { yazl, yauzl } from '../../zipBundle';
@@ -38,6 +38,7 @@ import type { HTTPRequestParams } from '../../utils/network';
 import type http from 'http';
 import type { Playwright } from '../playwright';
 import { SdkObject } from '../../server/instrumentation';
+import { serializeClientSideCallMetadata } from '../../utils';
 
 export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.LocalUtilsChannel, RootDispatcher> implements channels.LocalUtilsChannel {
   _type_LocalUtils: boolean;
@@ -49,20 +50,39 @@ export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.
     this._type_LocalUtils = true;
   }
 
-  async zip(params: channels.LocalUtilsZipParams, metadata: CallMetadata): Promise<void> {
+  async zip(params: channels.LocalUtilsZipParams): Promise<void> {
     const promise = new ManualPromise<void>();
     const zipFile = new yazl.ZipFile();
     (zipFile as any as EventEmitter).on('error', error => promise.reject(error));
 
-    for (const entry of params.entries) {
+    const addFile = (file: string, name: string) => {
       try {
-        if (fs.statSync(entry.value).isFile())
-          zipFile.addFile(entry.value, entry.name);
+        if (fs.statSync(file).isFile())
+          zipFile.addFile(file, name);
       } catch (e) {
       }
+    };
+
+    for (const entry of params.entries)
+      addFile(entry.value, entry.name);
+
+    // Add stacks and the sources.
+    zipFile.addBuffer(Buffer.from(JSON.stringify(serializeClientSideCallMetadata(params.metadata))), 'trace.stacks');
+
+    // Collect sources from stacks.
+    if (params.includeSources) {
+      const sourceFiles = new Set<string>();
+      for (const { stack } of params.metadata) {
+        if (!stack)
+          continue;
+        for (const { file } of stack)
+          sourceFiles.add(file);
+      }
+      for (const sourceFile of sourceFiles)
+        addFile(sourceFile, 'resources/src@' + calculateSha1(sourceFile) + '.txt');
     }
 
-    if (!fs.existsSync(params.zipFile)) {
+    if (params.mode === 'write') {
       // New file, just compress the entries.
       await fs.promises.mkdir(path.dirname(params.zipFile), { recursive: true });
       zipFile.end(undefined, () => {
