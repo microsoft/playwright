@@ -38,7 +38,7 @@ export const TestCaseView: React.FC<{
     {test && <div className='test-case-location'>{test.location.file}:{test.location.line}</div>}
     {test && !!test.projectName && <ProjectLink projectNames={projectNames} projectName={test.projectName}></ProjectLink>}
     {test && !!test.annotations.length && <AutoChip header='Annotations'>
-      {test.annotations.map(annotation => <TestAnnotation annotation={annotation} />)}
+      {test.annotations.map(annotation => <TestCaseAnnotationView annotation={annotation} />)}
     </AutoChip>}
     {test && <TabbedPane tabs={
       test.results.map((result, index) => ({
@@ -50,12 +50,14 @@ export const TestCaseView: React.FC<{
 };
 
 function renderAnnotationDescription(description: string) {
-  if (description.startsWith('http://') || description.startsWith('https://'))
-    return <a href={description} target='_blank' rel='noopener noreferrer'>{description}</a>;
+  try {
+    if (['http:', 'https:'].includes(new URL(description).protocol))
+      return <a href={description} target='_blank' rel='noopener noreferrer'>{description}</a>;
+  } catch {}
   return description;
 }
 
-function TestAnnotation({ annotation: { type, description } }: { annotation: TestCaseAnnotation }) {
+function TestCaseAnnotationView({ annotation: { type, description } }: { annotation: TestCaseAnnotation }) {
   return (
     <div className='test-case-annotation'>
       <span style={{ fontWeight: 'bold' }}>{type}</span>
