@@ -664,7 +664,7 @@ async function captureLastKeydown(page) {
   return lastEvent;
 }
 
-it('should dispatch insertText after context menu was opened', async ({ server, page, browserName }) => {
+it('should dispatch insertText after context menu was opened', async ({ server, page, browserName, isWindows }) => {
   it.skip(browserName === 'chromium' && isWindows, 'context menu support is best-effort for Linux and MacOS');
   await page.goto(server.PREFIX + '/input/textarea.html');
   await page.evaluate(() => {
