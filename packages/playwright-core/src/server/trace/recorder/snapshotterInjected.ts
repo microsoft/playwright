@@ -45,6 +45,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
   const kScrollLeftAttribute = '__playwright_scroll_left_';
   const kStyleSheetAttribute = '__playwright_style_sheet_';
   const kTargetAttribute = '__playwright_target__';
+  const kCustomElementsAttribute = '__playwright_custom_elements__';
 
   // Symbols for our own info on Nodes/StyleSheets.
   const kSnapshotFrameId = Symbol('__playwright_snapshot_frameid_');
@@ -296,6 +297,8 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
       if (document.documentElement)
         findElementsToRestoreScrollPositionRecursively(document.documentElement);
 
+      const definedCustomElements = new Set<string>();
+
       const visitNode = (node: Node | ShadowRoot): { equals: boolean, n: NodeSnapshot } | undefined => {
         const nodeType = node.nodeType;
         const nodeName = nodeType === Node.DOCUMENT_FRAGMENT_NODE ? 'template' : node.nodeName;
@@ -385,6 +388,8 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
 
         if (nodeType === Node.ELEMENT_NODE) {
           const element = node as Element;
+          if (element.localName.includes('-') && window.customElements?.get(element.localName))
+            definedCustomElements.add(element.localName);
           if (nodeName === 'INPUT' || nodeName === 'TEXTAREA') {
             const value = (element as HTMLInputElement).value;
             expectValue(kValueAttribute);
@@ -451,6 +456,14 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
           expectValue(name);
           expectValue(value);
           attrs[name] = value;
+        }
+
+        // Process custom elements before bailing out since they depend on JS, not the DOM.
+        if (nodeName === 'BODY' && definedCustomElements.size) {
+          const value = [...definedCustomElements].join(',');
+          expectValue(kCustomElementsAttribute);
+          expectValue(value);
+          attrs[kCustomElementsAttribute] = value;
         }
 
         // We can skip attributes comparison because nothing else has changed,

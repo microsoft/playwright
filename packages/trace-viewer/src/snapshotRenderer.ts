@@ -229,6 +229,15 @@ function snapshotScript() {
         }
       }
 
+      {
+        const body = root.querySelector(`body[__playwright_custom_elements__]`);
+        if (body && window.customElements) {
+          const customElements = (body.getAttribute('__playwright_custom_elements__') || '').split(',');
+          for (const elementName of customElements)
+            window.customElements.define(elementName, class extends HTMLElement {});
+        }
+      }
+
       for (const element of root.querySelectorAll(`template[__playwright_shadow_root_]`)) {
         const template = element as HTMLTemplateElement;
         const shadowRoot = template.parentElement!.attachShadow({ mode: 'open' });
