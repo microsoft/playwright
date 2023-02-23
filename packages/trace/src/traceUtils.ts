@@ -16,17 +16,20 @@
 
 import type { StackFrame } from '@protocol/channels';
 
+export type SerializedStackFrame = [number, number, number, string];
+export type SerializedStack = [number, SerializedStackFrame[]];
+
 export type SerializedClientSideCallMetadata = {
-  frames: StackFrame[];
-  stacks: [number, number[]][];
+  files: string[];
+  stacks: SerializedStack[];
 };
 
 export function parseClientSideCallMetadata(data: SerializedClientSideCallMetadata): Map<string, StackFrame[]> {
   const result = new Map<string, StackFrame[]>();
-  const { frames, stacks } = data;
+  const { files, stacks } = data;
   for (const s of stacks) {
     const [id, ff] = s;
-    result.set(`call@${id}`, ff.map((f: number) => frames[f]));
+    result.set(`call@${id}`, ff.map(f => ({ file: files[f[0]], line: f[1], column: f[2], function: f[3] })));
   }
   return result;
 }

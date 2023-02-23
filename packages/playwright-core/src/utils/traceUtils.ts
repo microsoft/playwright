@@ -14,28 +14,26 @@
  * limitations under the License.
  */
 
-import type { ClientSideCallMetadata, StackFrame } from '@protocol/channels';
-import type { SerializedClientSideCallMetadata } from '@trace/traceUtils';
+import type { ClientSideCallMetadata } from '@protocol/channels';
+import type { SerializedClientSideCallMetadata, SerializedStack, SerializedStackFrame } from '@trace/traceUtils';
 
 export function serializeClientSideCallMetadata(metadatas: ClientSideCallMetadata[]): SerializedClientSideCallMetadata {
-  const stackFrames = new Map<string, number>();
-  const frames: StackFrame[] = [];
-  const stacks: [number, number[]][] = [];
+  const fileNames = new Map<string, number>();
+  const stacks: SerializedStack[] = [];
   for (const m of metadatas) {
     if (!m.stack || !m.stack.length)
       continue;
-    const stack: number[] = [];
+    const stack: SerializedStackFrame[] = [];
     for (const frame of m.stack) {
-      const key = `${frame.file}:${frame.line || 0}:${frame.column || 0}`;
-      let ordinal = stackFrames.get(key);
+      let ordinal = fileNames.get(frame.file);
       if (typeof ordinal !== 'number') {
-        ordinal = stackFrames.size;
-        stackFrames.set(key, ordinal);
-        frames.push(frame);
+        ordinal = fileNames.size;
+        fileNames.set(frame.file, ordinal);
       }
-      stack.push(ordinal);
+      const stackFrame: SerializedStackFrame = [ordinal, frame.line || 0, frame.column || 0, frame.function || ''];
+      stack.push(stackFrame);
     }
     stacks.push([m.id, stack]);
   }
-  return { frames, stacks };
+  return { files: [...fileNames.keys()], stacks };
 }
