@@ -665,6 +665,7 @@ async function captureLastKeydown(page) {
 }
 
 it('should dispatch insertText after context menu was opened', async ({ server, page, browserName }) => {
+  it.skip(isWindows, 'context menu support is best-effort for Linux and MacOS');
   await page.goto(server.PREFIX + '/input/textarea.html');
   await page.evaluate(() => {
     window['contextMenuPromise'] = new Promise(x => {
@@ -682,7 +683,9 @@ it('should dispatch insertText after context menu was opened', async ({ server, 
   await expect.poll(() => page.locator('textarea').inputValue()).toBe('嗨');
 });
 
-it('should type after context menu was opened', async ({ server, page, browserName }) => {
+it('should type after context menu was opened', async ({ server, page, browserName, isWindows }) => {
+  it.fixme(isWindows && browserName === 'chromium');
+  it.skip(isWindows, 'context menu support is best-effort for Linux and MacOS');
   await page.evaluate(() => {
     window['keys'] = [];
     window.addEventListener('keydown', event => window['keys'].push(event.key));

@@ -253,6 +253,10 @@ it('should always round down', async ({ page }) => {
 
 it('should not crash on mouse drag with any button', async ({ page }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/16609' });
+  await page.evaluate(() => {
+    // Do not show contextmenu on right click since it is poorly supported.
+    window.addEventListener('contextmenu', e => e.preventDefault(), false);
+  });
   for (const button of ['left', 'middle', 'right'] as const) {
     await page.mouse.move(50, 50);
     await page.mouse.down({ button });
@@ -260,9 +264,10 @@ it('should not crash on mouse drag with any button', async ({ page }) => {
   }
 });
 
-it('should dispatch mouse move after context menu was opened', async ({ page, browserName }) => {
+it('should dispatch mouse move after context menu was opened', async ({ page, browserName, isWindows }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/20823' });
   it.fixme(browserName === 'firefox');
+  it.skip(isWindows, 'context menu support is best-effort for Linux and MacOS');
   await page.evaluate(() => {
     window['contextMenuPromise'] = new Promise(x => {
       window.addEventListener('contextmenu', x, false);
