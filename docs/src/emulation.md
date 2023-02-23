@@ -119,7 +119,7 @@ class Program
 
 ## Viewport
 
-The viewport is included in the device but you can override it for some tests with [`method: Page.setViewportSize`]. Run tests in a file with a specific viewport by setting the `viewport` option in `test.use`:
+The viewport is included in the device but you can override it for some tests with [`method: Page.setViewportSize`].
 
 ```js tab=js-ts
 import { test, expect } from '@playwright/test';
