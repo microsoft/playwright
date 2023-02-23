@@ -41,7 +41,7 @@ expect(page.get_by_text("Name"), "should be logged in").to_be_visible()
 The error would look like this:
 
 ```bash
-    def test_input_value(page: Page, server: Server) -> None:
+    def test_foobar(page: Page) -> None:
 >       expect(page.get_by_text("Name"), "should be logged in").to_be_visible()
 E       AssertionError: should be logged in
 E       Actual value: None 
@@ -50,5 +50,5 @@ E       LocatorAssertions.to_be_visible with timeout 5000ms
 E       waiting for get_by_text("Name")
 E       waiting for get_by_text("Name")
 
-tests/sync/test_page.py:22: AssertionError
+tests/test_foobar.py:22: AssertionError
 ```
