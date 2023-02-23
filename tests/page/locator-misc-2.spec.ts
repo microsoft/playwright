@@ -80,7 +80,7 @@ it('should select textarea', async ({ page, server, browserName }) => {
   const textarea = page.locator('textarea');
   await textarea.evaluate(textarea => (textarea as HTMLTextAreaElement).value = 'some value');
   await textarea.selectText();
-  if (browserName === 'firefox') {
+  if (browserName === 'firefox' || browserName === 'webkit') {
     expect(await textarea.evaluate(el => (el as HTMLTextAreaElement).selectionStart)).toBe(0);
     expect(await textarea.evaluate(el => (el as HTMLTextAreaElement).selectionEnd)).toBe(10);
   } else {
