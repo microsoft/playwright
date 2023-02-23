@@ -34,6 +34,7 @@ scheme.Metadata = tObject({
   })),
   apiName: tOptional(tString),
   internal: tOptional(tBoolean),
+  wallTime: tOptional(tNumber),
 });
 scheme.ClientSideCallMetadata = tObject({
   id: tNumber,

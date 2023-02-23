@@ -140,9 +140,10 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
               return this._wrapApiCall(apiZone => {
                 const { stackTrace, csi, callCookie } = apiZone.reported ? { csi: undefined, callCookie: undefined, stackTrace: null } : apiZone;
                 apiZone.reported = true;
+                const wallTime = Date.now();
                 if (csi && stackTrace && stackTrace.apiName)
-                  csi.onApiCallBegin(renderCallWithParams(stackTrace.apiName, params), stackTrace, callCookie);
-                return this._connection.sendMessageToServer(this, this._type, prop, validator(params, '', { tChannelImpl: tChannelImplToWire, binary: this._connection.isRemote() ? 'toBase64' : 'buffer' }), stackTrace);
+                  csi.onApiCallBegin(renderCallWithParams(stackTrace.apiName, params), stackTrace, wallTime, callCookie);
+                return this._connection.sendMessageToServer(this, this._type, prop, validator(params, '', { tChannelImpl: tChannelImplToWire, binary: this._connection.isRemote() ? 'toBase64' : 'buffer' }), stackTrace, wallTime);
               });
             };
           }

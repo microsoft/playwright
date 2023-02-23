@@ -63,7 +63,7 @@ export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.Playwr
     this._browserDispatcher = browserDispatcher;
   }
 
-  async newRequest(params: channels.PlaywrightNewRequestParams, metadata?: channels.Metadata): Promise<channels.PlaywrightNewRequestResult> {
+  async newRequest(params: channels.PlaywrightNewRequestParams): Promise<channels.PlaywrightNewRequestResult> {
     const request = new GlobalAPIRequestContext(this._object, params);
     return { request: APIRequestContextDispatcher.from(this.parentScope(), request) };
   }

@@ -217,7 +217,8 @@ export class TestTypeImpl {
       title,
       location,
       canHaveChildren: true,
-      forceNoParent: false
+      forceNoParent: false,
+      wallTime: Date.now(),
     });
     try {
       const result = await body();

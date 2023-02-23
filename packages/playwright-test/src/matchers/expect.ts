@@ -205,7 +205,8 @@ class ExpectMetaInfoProxyHandler {
         category: 'expect',
         title: trimLongString(customMessage || defaultTitle, 1024),
         canHaveChildren: true,
-        forceNoParent: false
+        forceNoParent: false,
+        wallTime: Date.now()
       });
       testInfo.currentStep = step;
 

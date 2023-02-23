@@ -30,7 +30,7 @@ export class SelectorsDispatcher extends Dispatcher<Selectors, channels.Selector
     await this._object.register(params.name, params.source, params.contentScript);
   }
 
-  async setTestIdAttributeName(params: channels.SelectorsSetTestIdAttributeNameParams, metadata?: channels.Metadata | undefined): Promise<void> {
+  async setTestIdAttributeName(params: channels.SelectorsSetTestIdAttributeNameParams): Promise<void> {
     this._object.setTestIdAttributeName(params.testIdAttributeName);
   }
 }

@@ -36,6 +36,7 @@ interface TestStepInternal {
   category: string;
   canHaveChildren: boolean;
   forceNoParent: boolean;
+  wallTime: number;
   location?: Location;
   refinedTitle?: string;
 }
@@ -278,8 +279,8 @@ export class TestInfoImpl implements TestInfo {
     this._hasHardError = state.hasHardError;
   }
 
-  async _runAsStep<T>(cb: () => Promise<T>, stepInfo: Omit<TestStepInternal, 'complete'>): Promise<T> {
-    const step = this._addStep(stepInfo);
+  async _runAsStep<T>(cb: () => Promise<T>, stepInfo: Omit<TestStepInternal, 'complete' | 'wallTime'>): Promise<T> {
+    const step = this._addStep({ ...stepInfo, wallTime: Date.now() });
     try {
       const result = await cb();
       step.complete({});
