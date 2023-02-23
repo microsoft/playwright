@@ -3,14 +3,66 @@ id: codegen
 title: "Test Generator"
 ---
 
-Playwright comes with the ability to generate tests out of the box and is a great way to quickly get started with testing. It will open two windows, a browser window where you interact with the website you wish to test and the Playwright Inspector window where you can record your tests, copy the tests, clear your tests as well as change the language of your tests.
+import LiteYouTube from '@site/src/components/LiteYouTube';
 
-<video width="100%" height="100%" controls muted>
-  <source src="https://user-images.githubusercontent.com/13063165/197979804-c4fa3347-8fab-4526-a728-c1b2fbd079b4.mp4" type="video/mp4" />
-  Your browser does not support the video tag.
-</video>
 
-## Running Codegen
+Playwright comes with the ability to generate tests for you as you perform actions in the browser and is a great way to quickly get started with testing. Playwright will look at your page and figure out the best locator, prioritizing [role, text and test id locators](./locators.md). If the generator finds multiple elements matching the locator, it will improve the locator to make it resilient and uniquely identify the target element, so you don't have to worry about failing tests due to locators.
+
+The viewport for the browser window used for test generation is set to a specific width and height and is not responsive by default. See the [configuration guide](./test-configuration.md) to change the viewport or emulate different environments.
+
+## Generate tests in VS Code
+* langs: js
+
+Install the VS Code extension and generate tests dirctly from VS Code. The extension is available on the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=ms-playwright.playwright). Check out our guide on [getting started with VS Code](./getting-started-vscode.md).
+
+<LiteYouTube
+    id="LM4yqrOzmFE"
+    title="Generating Playwright tests in VS Code"
+/>
+
+### Record a New Test
+
+To record a test click on the **Record new** button from the Testing sidebar. This will create a `test-1.spec.ts` file as well as open up a browser window. 
+
+<img width="1385" alt="record new in vs code" src="https://user-images.githubusercontent.com/13063165/220961665-615d0ab8-3f0b-439c-ad0b-0424d9aa154b.png" />
+
+In the browser go to the URL you wish to test and start clicking around to recordd your user actions.
+
+<img width="1394" alt="clicking delete button on todo app with locator highlighted" src="https://user-images.githubusercontent.com/13063165/220957132-31b54f82-6235-4c52-a966-6863553b5b23.png" />
+
+Playwright will record your actions and generate the test code directly in VS Code. Once you are done recording click the **cancel** button or close the browser window. You can then inspect your `test-1.spec.ts` file and see your generated test and then manually improve the test by adding [ assertions](test-assertions).
+
+<img width="1667" alt="vs code showing recorded actions of test" src="https://user-images.githubusercontent.com/13063165/220938674-6e1ff1d3-e75a-4238-a7fc-4c40dbc8b3bc.png" />
+
+### Record at Cursor
+
+To record from a specific point in your test move your cursor to where you want to record more actions and then click the **Record at cursor** button from the Testing sidebar. If your browser window is not already open then first run the test with 'show browser' checked and then click the **Record at cursor** button.
+
+<img width="1529" alt="record at cursor in vs code" src="https://user-images.githubusercontent.com/13063165/220959996-2bb3af59-85d9-4d58-aba7-d57375e7ca7e.png" />
+
+In the browser window start performing the actions you want to record.
+
+<img width="1394" alt="add feed the dog to todo app" src="https://user-images.githubusercontent.com/13063165/220960770-6435cec7-1723-42a8-8c1f-8244e2d800c7.png" />
+
+
+In the test file in VS Code you will see your new generated actions added to your test at the cursor position.
+
+<img width="1641" alt="vs code showing test code generated" src="https://user-images.githubusercontent.com/13063165/220940902-d1dbc321-0ef5-4388-9e11-6311aff59ff4.png" />
+
+### Generating locators
+
+You can generate locators with the test generator. 
+- Click on the **Pick locator** button form the testing sidebar and then hover over elements in the browser window to see the [locator](./locators.md) highlighted underneath each element. 
+- Click the element you require and it will now show up in the **Pick locator** box in VS Code. 
+- Press 'enter' on your keyboard to copy the locator into the clipboard and then paste anywhere in your code. Or press 'escape' if you want to cancel.
+
+<img width="1641" alt="Pick locators in VS code" src="https://user-images.githubusercontent.com/13063165/220958368-95b03620-3c9b-40a8-be74-01c96ba03cad.png" />
+
+## Generate tests with the Playwright Inspector
+
+For non VS Code users you can generate tests using the CLI. When running the `codegen` command two windows will be opened, a browser window where you interact with the website you wish to test and the Playwright Inspector window where you can record your tests and then copy them into your editor.
+
+### Running Codegen
 
 Use the `codegen` command to run the test generator followed by the URL of the website you want to generate tests for. The URL is optional and you can always run the command without it and then add the URL directly into the browser window instead.
 
@@ -32,7 +84,7 @@ pwsh bin/Debug/netX/playwright.ps1 codegen demo.playwright.dev/todomvc
 
 ### Recording a test
 
-Run `codegen` and perform actions in the browser. Playwright will generate the code for the user interactions. `Codegen` will look at the rendered page and figure out the recommended locator, prioritizing role, text and test id locators. If the generator identifies multiple elements matching the locator, it will improve the locator to make it resilient and uniquely identify the target element, therefore eliminating and reducing test(s) failing and flaking due to locators.
+Run the `codegen` command and perform actions in the browser window. Playwright will generate the code for the user interactions which you can see in the Playwright Inspector window. Once you have finished recording your test stop the recording and press the **copy** button to copy your generated test into your editor.
 
 ######
 * langs: js
@@ -154,22 +206,22 @@ pwsh bin/Debug/netX/playwright.ps1 codegen --device="iPhone 13" playwright.dev
 ######
 * langs: js
 
-<img width="458" alt="Codegen generating code for tests for playwright.dev website emulated for iPhone 13 js" src="https://user-images.githubusercontent.com/13063165/220409614-6a83f087-79d3-404b-9d13-8864a186769d.png" />
+<img width="1300" alt="Codegen generating code for tests for playwright.dev website emulated for iPhone 13 js" src="https://user-images.githubusercontent.com/13063165/220921482-dc4f5532-9dce-40bd-8a28-e0d87d26a601.png" />
 
 ######
 * langs: java
 
-<img width="458" alt="Codegen generating code for tests for playwright.dev website emulated for iPhone 13 java" src="https://user-images.githubusercontent.com/13063165/220410623-99cdba9f-c5af-4deb-b036-ace8806c5030.png" />
+<img width="1300" alt="Codegen generating code for tests for playwright.dev website emulated for iPhone 13 java" src="https://user-images.githubusercontent.com/13063165/220922591-241e6a59-a920-4cb1-97a2-d46c33ea17c5.png" />
 
 ######
 * langs: python
 
-<img width="458" alt="Codegen generating code for tests for playwright.dev website emulated for iPhone 13 python" src="https://user-images.githubusercontent.com/13063165/220410800-9f0c6c5a-5014-44de-97a9-a44ce4d52912.png" />
+<img width="1300" alt="Codegen generating code for tests for playwright.dev website emulated for iPhone 13 python" src="https://user-images.githubusercontent.com/13063165/220922790-5c5a4d1a-e27d-4c9b-90ac-13cf9c925706.png" />
 
 ######
 * langs: csharp
 
-<img width="458" alt="Codegen generating code for tests for playwright.dev website emulated for iPhone 13 csharp" src="https://user-images.githubusercontent.com/13063165/220410964-8a8733aa-48a2-4461-a052-f19c20f251cd.png">
+<img width="1300" alt="Codegen generating code for tests for playwright.dev website emulated for iPhone 13 csharp" src="https://user-images.githubusercontent.com/13063165/220923048-f13583b1-ab08-4702-ab74-58691d50acfe.png" />
 
 
 ### Emulate color scheme
@@ -195,26 +247,29 @@ pwsh bin/Debug/netX/playwright.ps1 codegen --color-scheme=dark playwright.dev
 ######
 * langs: js
 
-<img width="1394" alt="Codegen generating code for tests for playwright.dev website in dark mode js" src="https://user-images.githubusercontent.com/13063165/220412436-5f382f44-7dd7-4169-8acc-cc4894dc513c.png" />
+<img width="1394" alt="Codegen generating code for tests for playwright.dev website in dark mode js" src="https://user-images.githubusercontent.com/13063165/220930273-f3a25bae-64dd-4bbb-99ed-1e97c0cb1ebf.png" />
 
 ######
 * langs: java
 
-<img width="1394" alt="Codegen generating code for tests for playwright.dev website in dark mode java" src="https://user-images.githubusercontent.com/13063165/220412615-509e9810-2daa-45d9-86ea-efd108be0e51.png" />
+<img width="1394" alt="Codegen generating code for tests for playwright.dev website in dark mode java" src="https://user-images.githubusercontent.com/13063165/220930514-3b105fab-c87e-4f58-affa-d11d570122a8.png" />
 
 ######
 * langs: python
 
-<img width="1394" alt="Codegen generating code for tests for playwright.dev website in dark mode python" src="https://user-images.githubusercontent.com/13063165/220412939-a54c1b0b-b758-4fc3-88d2-719f5e885aaf.png" />
+<img width="1394" alt="Codegen generating code for tests for playwright.dev website in dark mode python" src="https://user-images.githubusercontent.com/13063165/220930714-737647fd-ae99-4dd3-b7a4-4f3eb4fe712d.png" />
 
 ######
 * langs: csharp
 
-<img width="1394" alt="Codegen generating code for tests for playwright.dev website in dark mode csharp" src="https://user-images.githubusercontent.com/13063165/220413119-9bc1c77b-2609-4b21-861c-5786b9ab48f9.png" />
+<img width="1394" alt="Codegen generating code for tests for playwright.dev website in dark mode csharp" src="https://user-images.githubusercontent.com/13063165/220930893-c1d0df65-c662-4b33-91eb-ea10552d7cc5.png" />
 
 ### Emulate geolocation, language and timezone
 
-Record scripts and tests while emulating timezone, language & location using the `--timezone`, `--geolocation` and `--lang` options. Once the page opens, click the "show your location" icon on the map to see geolocation in action.
+Record scripts and tests while emulating timezone, language & location using the `--timezone`, `--geolocation` and `--lang` options. Once the page opens:
+
+1. Accept the cookies
+1. On the top right click on the locate me button to see geolocation in action.
 
 ```bash js
 npx playwright codegen --timezone="Europe/Rome" --geolocation="41.890221,12.492348" --lang="it-IT" bing.com/maps
@@ -235,23 +290,23 @@ pwsh bin/Debug/netX/playwright.ps1 codegen --timezone="Europe/Rome" --geolocatio
 ######
 * langs: js
 
-<img width="1394" alt="Codegen generating code for tests for bing maps showing timezone, geolocation as Rome, Italy and in Italian language" src="https://user-images.githubusercontent.com/13063165/220400294-33252d11-c16b-43b6-861f-a6a78827084f.png" />
+<img width="1394" alt="Codegen generating code for tests for bing maps showing timezone, geolocation as Rome, Italy and in Italian language" src="https://user-images.githubusercontent.com/13063165/220931996-d3144421-8d3b-4f9f-896c-769c01566c01.png" />
 
 ######
 * langs: java
 
-<img width="1394" alt="Codegen generating code for tests for bing maps showing timezone, geolocation as Rome, Italy and in Italian language java" src="https://user-images.githubusercontent.com/13063165/220414470-0951350c-0fe5-46a9-8787-f0936fd79957.png" />
+<img width="1394" alt="Codegen generating code for tests for bing maps showing timezone, geolocation as Rome, Italy and in Italian language java" src="https://user-images.githubusercontent.com/13063165/220932268-9012163f-7673-4072-aa91-13b3c8f57799.png" />
 
 ######
 * langs: python
 
-<img width="1394" alt="Codegen generating code for tests for bing maps showing timezone, geolocation as Rome, Italy and in Italian language python" src="https://user-images.githubusercontent.com/13063165/220415142-0316c8dc-c798-4fe9-8fa6-7c2ac2f2e016.png" />
+<img width="1394" alt="Codegen generating code for tests for bing maps showing timezone, geolocation as Rome, Italy and in Italian language python" src="https://user-images.githubusercontent.com/13063165/220932413-f2943956-dd38-4560-94b9-51968076210d.png" />
 
 
 ######
 * langs: csharp
 
-<img width="1394" alt="Codegen generating code for tests for bing maps showing timezone, geolocation as Rome, Italy and in Italian language csharp" src="https://user-images.githubusercontent.com/13063165/220414672-70630f48-d09e-43d6-9492-bb064d308f2a.png" />
+<img width="1394" alt="Codegen generating code for tests for bing maps showing timezone, geolocation as Rome, Italy and in Italian language csharp" src="https://user-images.githubusercontent.com/13063165/220932688-a47df2a8-332b-47a4-9580-7d351def9f50.png" />
 
 ### Preserve authenticated state
 
@@ -276,23 +331,24 @@ pwsh bin/Debug/netX/playwright.ps1 codegen github.com/microsoft/playwright --sav
 ######
 * langs: js
 
-<img width="1394" alt="github page before logging in js" src="https://user-images.githubusercontent.com/13063165/220558833-67ef96a9-7278-4698-b04a-f6a20e93cbe1.png" />
+<img width="1394" alt="github page before logging in js" src="https://user-images.githubusercontent.com/13063165/220929062-88dfe567-0c6d-4e49-b9f9-74ae241fb8c7.png" />
+
 
 ######
 * langs: java
 
-<img width="1394" alt="github page before logging in java" src="https://user-images.githubusercontent.com/13063165/220559095-94f127d7-d8d9-4c56-ba58-5f62e91dfe84.png" />
+<img width="1394" alt="github page before logging in java" src="https://user-images.githubusercontent.com/13063165/220929236-08129e16-82a9-46a3-9f1c-3e59619c6289.png" />
 
 
 ######
 * langs: python
 
-<img width="1394" alt="github page before logging in python" src="https://user-images.githubusercontent.com/13063165/220559267-8c6ca9df-0c69-4b6c-8a1c-e5d022a1f6bc.png" />
+<img width="1394" alt="github page before logging in python" src="https://user-images.githubusercontent.com/13063165/220929429-8756ec49-fbf2-46e0-8f41-d25f5f5a6623.png" />
 
 ######
 * langs: csharp
 
-<img width="1394" alt="github page before logging in csharp" src="https://user-images.githubusercontent.com/13063165/220559407-6f124c3a-ac9d-4006-bf03-ae58917f7695.png" />
+<img width="1394" alt="github page before logging in csharp" src="https://user-images.githubusercontent.com/13063165/220929619-28d4ed0c-d172-4cf1-b30b-bf5bed0e07bf.png" />
 
 #### Login
 
@@ -301,8 +357,6 @@ After performing authentication and closing the browser, `auth.json` will contai
 <img width="1394" alt="login to Github screen" src="https://user-images.githubusercontent.com/13063165/220561688-04b2b984-4ba6-4446-8b0a-8058876e2a02.png" />
 
 Make sure you only use the `auth.json` locally as it contains sensative information. Add it to your `.gitignore` or delete it once you have finished generating your tests.
-
-<img width="1385" alt="vscode showing auth.json" src="https://user-images.githubusercontent.com/13063165/220561822-d8e190c8-0064-4c53-a87a-0165d2c60fce.png" />
 
 #### Load authenticated state
 
@@ -327,24 +381,23 @@ pwsh bin/Debug/netX/playwright.ps1 codegen --load-storage=auth.json github.com/m
 ######
 * langs: js
 
-<img width="1394" alt="github signed in showing use of load storage js" src="https://user-images.githubusercontent.com/13063165/220555719-b94dc157-688b-45bd-b61a-282edb4b0d16.png" />
+<img width="1394" alt="github signed in showing use of load storage js" src="https://user-images.githubusercontent.com/13063165/220927873-9e55fdda-2def-45c1-9a1b-bcc851885f96.png" />
 
 
 ######
 * langs: java
 
-<img width="1394" alt="github signed in showing use of load storage java" src="https://user-images.githubusercontent.com/13063165/220556119-cf338f0e-e5b9-4631-ad0c-fc696e10057d.png" />
-
+<img width="1394" alt="github signed in showing use of load storage java" src="https://user-images.githubusercontent.com/13063165/220928075-1e38347b-9d0d-4d9e-9a67-506c717893df.png" />
 
 ######
 * langs: python
 
-<img width="1394" alt="github signed in showing use of load storage python" src="https://user-images.githubusercontent.com/13063165/220556321-35157739-744a-45c4-a80c-72dca848ca66.png" />
+<img width="1394" alt="github signed in showing use of load storage python" src="https://user-images.githubusercontent.com/13063165/220928211-ca1d4dc9-9966-414e-ab23-a3ef1d2d5ed9.png" />
 
 ######
 * langs: csharp
 
-<img width="1394" alt="github signed in showing use of load storage scharp" src="https://user-images.githubusercontent.com/13063165/220556585-c6f32cb8-2e3c-4d86-b7d8-2adf8794c2c2.png" />
+<img width="1394" alt="github signed in showing use of load storage scharp" src="https://user-images.githubusercontent.com/13063165/220928354-caa0e958-fe09-4125-9b54-67483064da51.png" />
 
 ## Record using custom setup
 
