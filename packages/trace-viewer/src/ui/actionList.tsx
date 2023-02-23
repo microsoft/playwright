@@ -46,6 +46,7 @@ export const ActionList: React.FC<ActionListProps> = ({
     onSelected={(action: ActionTraceEvent) => onSelected(action)}
     onHighlighted={(action: ActionTraceEvent) => onHighlighted(action)}
     itemKey={(action: ActionTraceEvent) => action.metadata.id}
+    itemType={(action: ActionTraceEvent) => action.metadata.error?.error?.message ? 'error' : undefined}
     itemRender={(action: ActionTraceEvent) => renderAction(action, sdkLanguage, setSelectedTab)}
     showNoItemsMessage={true}
   ></ListView>;
@@ -57,7 +58,6 @@ const renderAction = (
   setSelectedTab: (tab: string) => void
 ) => {
   const { metadata } = action;
-  const error = metadata.error?.error?.message;
   const { errors, warnings } = modelUtil.stats(action);
   const locator = metadata.params.selector ? asLocator(sdkLanguage || 'javascript', metadata.params.selector) : undefined;
 
@@ -72,6 +72,5 @@ const renderAction = (
       {!!errors && <div className='action-icon'><span className={'codicon codicon-error'}></span><span className="action-icon-value">{errors}</span></div>}
       {!!warnings && <div className='action-icon'><span className={'codicon codicon-warning'}></span><span className="action-icon-value">{warnings}</span></div>}
     </div>
-    {error && <div className='codicon codicon-issues' title={error} />}
   </>;
 };

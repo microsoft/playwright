@@ -59,3 +59,9 @@
   align-items: center;
   justify-content: center;
 }
+
+.list-view-entry.error:not(.selected) {
+  color: var(--vscode-list-errorForeground);
+  background-color: var(--vscode-inputValidation-errorBackground);
+  outline: 1px solid var(--vscode-inputValidation-errorBorder);
+}

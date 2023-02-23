@@ -68,15 +68,3 @@
   padding-left: 5px;
   color: var(--blue);
 }
-
-.action-entry .codicon {
-  padding: 0 2px;
-}
-
-.action-entry .codicon-error, .action-entry .codicon-issues {
-  color: red;
-}
-
-.action-entry .codicon-warning {
-  color: darkorange;
-}
