@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import type { TestCase } from './types';
+import type { TestCase, TestCaseAnnotation } from './types';
 import * as React from 'react';
 import { TabbedPane } from './tabbedPane';
 import { AutoChip } from './chip';
@@ -38,10 +38,7 @@ export const TestCaseView: React.FC<{
     {test && <div className='test-case-location'>{test.location.file}:{test.location.line}</div>}
     {test && !!test.projectName && <ProjectLink projectNames={projectNames} projectName={test.projectName}></ProjectLink>}
     {test && !!test.annotations.length && <AutoChip header='Annotations'>
-      {test.annotations.map(a => <div className='test-case-annotation'>
-        <span style={{ fontWeight: 'bold' }}>{a.type}</span>
-        {a.description && <span>: {a.description}</span>}
-      </div>)}
+      {test.annotations.map(annotation => <TestCaseAnnotationView annotation={annotation} />)}
     </AutoChip>}
     {test && <TabbedPane tabs={
       test.results.map((result, index) => ({
@@ -51,6 +48,23 @@ export const TestCaseView: React.FC<{
       })) || []} selectedTab={String(selectedResultIndex)} setSelectedTab={id => setSelectedResultIndex(+id)} />}
   </div>;
 };
+
+function renderAnnotationDescription(description: string) {
+  try {
+    if (['http:', 'https:'].includes(new URL(description).protocol))
+      return <a href={description} target='_blank' rel='noopener noreferrer'>{description}</a>;
+  } catch {}
+  return description;
+}
+
+function TestCaseAnnotationView({ annotation: { type, description } }: { annotation: TestCaseAnnotation }) {
+  return (
+    <div className='test-case-annotation'>
+      <span style={{ fontWeight: 'bold' }}>{type}</span>
+      {description && <span>: {renderAnnotationDescription(description)}</span>}
+    </div>
+  );
+}
 
 function retryLabel(index: number) {
   if (!index)
