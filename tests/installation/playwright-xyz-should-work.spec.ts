@@ -16,13 +16,19 @@
  */
 import { test, expect } from './npmTest';
 
+const INSTALLED_CHROMIUM = process.platform === 'win32' ? 'chromium_win64_special' : 'chromium';
+
 for (const pkg of ['playwright-chromium', 'playwright-firefox', 'playwright-webkit']) {
   test(`${pkg} should work`, async ({ exec, nodeMajorVersion, installedSoftwareOnDisk }) => {
     const result = await exec('npm i --foreground-scripts', pkg);
     const browserName = pkg.split('-')[1];
-    const expectedSoftware = [browserName];
-    if (browserName === 'chromium')
+    const expectedSoftware = [];
+    if (browserName === 'chromium') {
+      expectedSoftware.push(INSTALLED_CHROMIUM);
       expectedSoftware.push('ffmpeg');
+    } else {
+      expectedSoftware.push(browserName);
+    }
     expect(result).toHaveLoggedSoftwareDownload(expectedSoftware as any);
     expect(await installedSoftwareOnDisk()).toEqual(expectedSoftware);
     expect(result).not.toContain(`To avoid unexpected behavior, please install your dependencies first`);

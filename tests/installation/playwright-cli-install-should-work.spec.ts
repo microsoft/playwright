@@ -15,19 +15,21 @@
  */
 import { test, expect } from './npmTest';
 
+const INSTALLED_CHROMIUM = process.platform === 'win32' ? 'chromium_win64_special' : 'chromium';
+
 test('codegen should work', async ({ exec, installedSoftwareOnDisk }) => {
   await exec('npm i --foreground-scripts playwright', { env: { PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1' } });
 
   await test.step('playwright install chromium', async () => {
     const result = await exec('npx playwright install chromium');
     expect(result).toHaveLoggedSoftwareDownload(['chromium', 'ffmpeg']);
-    expect(await installedSoftwareOnDisk()).toEqual(['chromium', 'ffmpeg']);
+    expect(await installedSoftwareOnDisk()).toEqual([INSTALLED_CHROMIUM, 'ffmpeg']);
   });
 
   await test.step('playwright install', async () => {
     const result = await exec('npx playwright install');
     expect(result).toHaveLoggedSoftwareDownload(['firefox', 'webkit']);
-    expect(await installedSoftwareOnDisk()).toEqual(['chromium', 'ffmpeg', 'firefox', 'webkit']);
+    expect(await installedSoftwareOnDisk()).toEqual([INSTALLED_CHROMIUM, 'ffmpeg', 'firefox', 'webkit']);
   });
 
   await exec('node sanity.js playwright none', { env: {  PLAYWRIGHT_BROWSERS_PATH: undefined } });

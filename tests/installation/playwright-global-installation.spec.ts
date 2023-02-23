@@ -15,10 +15,12 @@
  */
 import { test, expect } from './npmTest';
 
+const INSTALLED_CHROMIUM = process.platform === 'win32' ? 'chromium_win64_special' : 'chromium';
+
 test('global installation', async ({ exec, installedSoftwareOnDisk }) => {
   const result = await exec('npm i --foreground-scripts playwright');
   expect(result).toHaveLoggedSoftwareDownload(['chromium', 'ffmpeg', 'firefox', 'webkit']);
-  expect(await installedSoftwareOnDisk()).toEqual(['chromium', 'ffmpeg', 'firefox', 'webkit']);
+  expect(await installedSoftwareOnDisk()).toEqual([INSTALLED_CHROMIUM, 'ffmpeg', 'firefox', 'webkit']);
   await exec('node sanity.js playwright none', { env: { PLAYWRIGHT_BROWSERS_PATH: undefined } });
   await exec('node sanity.js playwright');
 });

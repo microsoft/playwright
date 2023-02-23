@@ -15,13 +15,15 @@
  */
 import { test, expect } from './npmTest';
 
+const INSTALLED_CHROMIUM = process.platform === 'win32' ? 'chromium_win64_special' : 'chromium';
+
 test('global installation cross package', async ({ exec, installedSoftwareOnDisk }) => {
   const packages = ['playwright-chromium', 'playwright-firefox', 'playwright-webkit'];
   for (const pkg of packages)
     await exec('npm i --foreground-scripts', pkg, { env: { PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1' } });
   const result = await exec('npm i --foreground-scripts playwright');
   expect(result).toHaveLoggedSoftwareDownload(['chromium', 'ffmpeg', 'firefox', 'webkit']);
-  expect(await installedSoftwareOnDisk()).toEqual(['chromium', 'ffmpeg', 'firefox', 'webkit']);
+  expect(await installedSoftwareOnDisk()).toEqual([INSTALLED_CHROMIUM, 'ffmpeg', 'firefox', 'webkit']);
 
   for (const pkg of packages)
     await test.step(pkg, () => exec('node sanity.js', pkg, 'all'));
