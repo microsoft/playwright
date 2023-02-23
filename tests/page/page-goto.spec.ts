@@ -409,10 +409,14 @@ it('should fail when replaced by another navigation', async ({ page, server, bro
   });
   const error = await page.goto(server.PREFIX + '/empty.html').catch(e => e);
   await anotherPromise;
-  if (browserName === 'chromium')
+  if (browserName === 'chromium') {
     expect(error.message).toContain('net::ERR_ABORTED');
-  else if (browserName === 'webkit' || browserName === 'firefox')
+  } else if (browserName === 'webkit') {
     expect(error.message).toContain('Navigation interrupted by another one');
+  } else if (browserName === 'firefox') {
+    // Firefox might yield either NS_BINDING_ABORTED or 'navigation interrupted by another one'
+    expect(error.message.includes('Navigation interrupted by another one') || error.message.includes('NS_BINDING_ABORTED')).toBe(true);
+  }
 });
 
 it('should work when navigating to valid url', async ({ page, server }) => {
