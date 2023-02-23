@@ -208,10 +208,8 @@ export const InspectModeController: React.FunctionComponent<{
   setHighlightedLocator: (locator: string) => void,
 }> = ({ iframe, isInspecting, sdkLanguage, testIdAttributeName, highlightedLocator, setHighlightedLocator }) => {
   React.useEffect(() => {
-    if (!iframe)
-      return;
-    const win = iframe.contentWindow as any;
-    if (!isInspecting && !highlightedLocator && !win._recorder)
+    const win = iframe?.contentWindow as any;
+    if (!win || !isInspecting && !highlightedLocator && !win._recorder)
       return;
     let recorder: Recorder | undefined = win._recorder;
     if (!recorder) {
