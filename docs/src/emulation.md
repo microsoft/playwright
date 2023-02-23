@@ -59,9 +59,9 @@ module.exports = defineConfig({
 const { chromium, devices } = require('playwright');
 const browser = await chromium.launch();
 
-const iphone12 = devices['iPhone 13'];
+const iphone13 = devices['iPhone 13'];
 const context = await browser.newContext({
-  ...iphone12,
+  ...iphone13,
 });
 ```
 
@@ -109,8 +109,8 @@ class Program
         {
             Headless: False
         });
-        var iphone12 = playwright.Devices["iPhone 13"];
-        await using var context = await browser.NewContextAsync(iphone12);
+        var iphone13 = playwright.Devices["iPhone 13"];
+        await using var context = await browser.NewContextAsync(iphone13);
     }
 }
 ```
