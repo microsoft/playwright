@@ -5,6 +5,9 @@
       "name": "chromium",
       "revision": "1048",
       "installByDefault": true,
+      "revisionOverrides": {
+        "win64": "1050"
+      },
       "browserVersion": "111.0.5563.19"
     },
     {
