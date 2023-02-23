@@ -191,7 +191,6 @@ export class DispatcherConnection {
         objectId: sdkObject?.guid,
         pageId: sdkObject?.attribution?.page?.guid,
         frameId: sdkObject?.attribution?.frame?.guid,
-        wallTime: Date.now(),
         startTime: monotonicTime(),
         endTime: 0,
         type,
@@ -251,13 +250,13 @@ export class DispatcherConnection {
     const sdkObject = dispatcher._object instanceof SdkObject ? dispatcher._object : undefined;
     const callMetadata: CallMetadata = {
       id: `call@${id}`,
+      wallTime: validMetadata.wallTime,
       location: validMetadata.location,
       apiName: validMetadata.apiName,
       internal: validMetadata.internal,
       objectId: sdkObject?.guid,
       pageId: sdkObject?.attribution?.page?.guid,
       frameId: sdkObject?.attribution?.frame?.guid,
-      wallTime: Date.now(),
       startTime: monotonicTime(),
       endTime: 0,
       type: dispatcher._type,

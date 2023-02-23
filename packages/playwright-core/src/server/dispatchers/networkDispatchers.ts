@@ -212,16 +212,16 @@ export class APIRequestContextDispatcher extends Dispatcher<APIRequestContext, c
     };
   }
 
-  async fetchResponseBody(params: channels.APIRequestContextFetchResponseBodyParams, metadata?: channels.Metadata): Promise<channels.APIRequestContextFetchResponseBodyResult> {
+  async fetchResponseBody(params: channels.APIRequestContextFetchResponseBodyParams): Promise<channels.APIRequestContextFetchResponseBodyResult> {
     return { binary: this._object.fetchResponses.get(params.fetchUid) };
   }
 
-  async fetchLog(params: channels.APIRequestContextFetchLogParams, metadata?: channels.Metadata): Promise<channels.APIRequestContextFetchLogResult> {
+  async fetchLog(params: channels.APIRequestContextFetchLogParams): Promise<channels.APIRequestContextFetchLogResult> {
     const log = this._object.fetchLog.get(params.fetchUid) || [];
     return { log };
   }
 
-  async disposeAPIResponse(params: channels.APIRequestContextDisposeAPIResponseParams, metadata?: channels.Metadata): Promise<void> {
+  async disposeAPIResponse(params: channels.APIRequestContextDisposeAPIResponseParams): Promise<void> {
     this._object.disposeResponse(params.fetchUid);
   }
 }

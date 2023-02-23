@@ -204,7 +204,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     await this._page.close(metadata, params);
   }
 
-  async updateSubscription(params: channels.PageUpdateSubscriptionParams, metadata?: channels.Metadata | undefined): Promise<void> {
+  async updateSubscription(params: channels.PageUpdateSubscriptionParams): Promise<void> {
     if (params.event === 'fileChooser')
       await this._page.setFileChooserIntercepted(params.enabled);
     if (params.enabled)

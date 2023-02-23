@@ -329,7 +329,8 @@ export class WorkerMain extends ProcessRunner {
         category: 'hook',
         title: 'Before Hooks',
         canHaveChildren: true,
-        forceNoParent: true
+        forceNoParent: true,
+        wallTime: Date.now(),
       });
 
       // Note: wrap all preparation steps together, because failure/skip in any of them
@@ -394,7 +395,8 @@ export class WorkerMain extends ProcessRunner {
       category: 'hook',
       title: 'After Hooks',
       canHaveChildren: true,
-      forceNoParent: true
+      forceNoParent: true,
+      wallTime: Date.now(),
     });
     let firstAfterHooksError: TestInfoError | undefined;
 

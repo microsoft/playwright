@@ -250,7 +250,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
 
     const createInstrumentationListener = (context?: BrowserContext) => {
       return {
-        onApiCallBegin: (apiCall: string, stackTrace: ParsedStackTrace | null, userData: any) => {
+        onApiCallBegin: (apiCall: string, stackTrace: ParsedStackTrace | null, wallTime: number, userData: any) => {
           if (apiCall.startsWith('expect.'))
             return { userObject: null };
           if (apiCall === 'page.pause') {
@@ -263,7 +263,8 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
             category: 'pw:api',
             title: apiCall,
             canHaveChildren: false,
-            forceNoParent: false
+            forceNoParent: false,
+            wallTime,
           });
           userData.userObject = step;
         },

@@ -111,7 +111,7 @@ export class Connection extends EventEmitter {
     this._stackCollectors.delete(collector);
   }
 
-  async sendMessageToServer(object: ChannelOwner, type: string, method: string, params: any, stackTrace: ParsedStackTrace | null): Promise<any> {
+  async sendMessageToServer(object: ChannelOwner, type: string, method: string, params: any, stackTrace: ParsedStackTrace | null, wallTime: number): Promise<any> {
     if (this._closedErrorMessage)
       throw new Error(this._closedErrorMessage);
 
@@ -124,7 +124,7 @@ export class Connection extends EventEmitter {
     for (const collector of this._stackCollectors)
       collector.push({ stack: frames, id: id });
     const location = frames[0] ? { file: frames[0].file, line: frames[0].line, column: frames[0].column } : undefined;
-    const metadata: channels.Metadata = { apiName, location, internal: !apiName };
+    const metadata: channels.Metadata = { wallTime, apiName, location, internal: !apiName };
     this.onmessage({ ...converted, metadata });
 
     return await new Promise((resolve, reject) => this._callbacks.set(id, { resolve, reject, stackTrace, type, method }));
