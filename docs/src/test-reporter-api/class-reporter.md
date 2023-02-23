@@ -12,6 +12,10 @@ You can create a custom reporter by implementing a class with some of the report
 
 /** @implements {import('@playwright/test/reporter').Reporter} */
 class MyReporter {
+  constructor(options) {
+    console.log(`my-awesome-reporter setup with customOption set to ${options.customOption}`);
+  }
+
   onBegin(config, suite) {
     console.log(`Starting the run with ${suite.allTests().length} tests`);
   }
@@ -37,6 +41,10 @@ module.exports = MyReporter;
 import { Reporter, FullConfig, Suite, TestCase, TestResult, FullResult } from '@playwright/test/reporter';
 
 class MyReporter implements Reporter {
+  constructor(options: {customOption: { customOption?: string } = {}) {
+    console.log(`my-awesome-reporter setup with customOption set to ${options.customOption}`);
+  }
+
   onBegin(config: FullConfig, suite: Suite) {
     console.log(`Starting the run with ${suite.allTests().length} tests`);
   }
@@ -65,7 +73,7 @@ Now use this reporter with [`property: TestConfig.reporter`]. Learn more about [
 const { defineConfig } = require('@playwright/test');
 
 module.exports = defineConfig({
-  reporter: './my-awesome-reporter.js',
+  reporter: ['./my-awesome-reporter.js', { customOption: 'some value' }],
 });
 ```
 
@@ -74,7 +82,7 @@ module.exports = defineConfig({
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
-  reporter: './my-awesome-reporter.ts',
+  reporter: ['./my-awesome-reporter.ts', { customOption: 'some value' }],
 });
 ```
 

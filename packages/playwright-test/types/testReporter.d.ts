@@ -319,6 +319,10 @@ export interface FullResult {
  * import { Reporter, FullConfig, Suite, TestCase, TestResult, FullResult } from '@playwright/test/reporter';
  *
  * class MyReporter implements Reporter {
+ *   constructor(options: {customOption: { customOption?: string } = {}) {
+ *     console.log(`my-awesome-reporter setup with customOption set to ${options.customOption}`);
+ *   }
+ *
  *   onBegin(config: FullConfig, suite: Suite) {
  *     console.log(`Starting the run with ${suite.allTests().length} tests`);
  *   }
@@ -347,7 +351,7 @@ export interface FullResult {
  * import { defineConfig } from '@playwright/test';
  *
  * export default defineConfig({
- *   reporter: './my-awesome-reporter.ts',
+ *   reporter: ['./my-awesome-reporter.ts', { customOption: 'some value' }],
  * });
  * ```
  *
