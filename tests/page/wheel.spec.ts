@@ -70,7 +70,7 @@ it('should dispatch wheel events @smoke', async ({ page, server }) => {
 it('should dispatch wheel events after context menu was opened', async ({ page, browserName, isWindows }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/20823' });
   it.fixme(browserName === 'firefox');
-  it.skip(isWindows, 'context menu support is best-effort for Linux and MacOS');
+  it.skip(browserName === 'chromium' && isWindows, 'context menu support is best-effort for Linux and MacOS');
 
   await page.setContent(`<div style="width: 5000px; height: 5000px;"></div>`);
   await page.mouse.move(50, 60);
