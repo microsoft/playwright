@@ -75,6 +75,7 @@ export const ListView: React.FC<ListViewProps> = ({
         }
         const element = itemListRef.current?.children.item(newIndex);
         scrollIntoViewIfNeeded(element);
+        onHighlighted?.(undefined);
         onSelected?.(items[newIndex]);
       }}
       ref={itemListRef}
