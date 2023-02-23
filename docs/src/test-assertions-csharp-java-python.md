@@ -41,21 +41,6 @@ expect(page.get_by_text("Name"), "should be logged in").to_be_visible()
 The error would look like this:
 
 ```bash
-=========================================================================== test session starts ===========================================================================
-platform darwin -- Python 3.11.2, pytest-7.2.1, pluggy-1.0.0 -- /Users/<user>/Developer/playwright-python/env/bin/python
-cachedir: .pytest_cache
-rootdir: /Users/<user>/Developer/playwright-python, configfile: pyproject.toml
-plugins: asyncio-0.20.3
-asyncio: mode=Mode.AUTO
-collected 1 item                                                                                                                                                          
-
-tests/sync/test_page.py::test_input_value[chromium] FAILED
-
-================================================================================ FAILURES =================================================================================
-_______________________________________________________________________ test_input_value[chromium] ________________________________________________________________________
-
-page = <Page url='about:blank'>
-
     def test_input_value(page: Page, server: Server) -> None:
 >       expect(page.get_by_text("Name"), "should be logged in").to_be_visible()
 E       AssertionError: should be logged in
@@ -66,5 +51,4 @@ E       waiting for get_by_text("Name")
 E       waiting for get_by_text("Name")
 
 tests/sync/test_page.py:22: AssertionError
-====================================================================== 1 failed, 1 warning in 6.19s =======================================================================
 ```
