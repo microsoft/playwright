@@ -29,6 +29,7 @@ const { workspace } = require('../workspace');
  *   shell: boolean,
  *   env?: NodeJS.ProcessEnv,
  *   cwd?: string,
+ *   concurrent?: boolean,
  * }} Step
  */
 
@@ -79,6 +80,24 @@ function quotePath(path) {
   return "\"" + path + "\"";
 }
 
+/**
+ * @param {Step} step
+ */
+function runStep(step) {
+  console.log(`==== Running ${step.command} ${step.args.join(' ')} in ${step.cwd || process.cwd()}`);
+  const out = child_process.spawnSync(step.command, step.args, {
+    stdio: 'inherit',
+    shell: step.shell,
+    env: {
+      ...process.env,
+      ...step.env
+    },
+    cwd: step.cwd,
+  });
+  if (out.status)
+    process.exit(out.status);
+}
+
 async function runWatch() {
   /** @param {OnChange} onChange */
   function runOnChange(onChange) {
@@ -112,9 +131,17 @@ async function runWatch() {
       copyFile(file, from, to);
     });
   }
+
+  for (const step of steps) {
+    if (!step.concurrent)
+      runStep(step);
+  }
+
   /** @type{import('child_process').ChildProcess[]} */
   const spawns = [];
   for (const step of steps) {
+    if (!step.concurrent)
+      continue;
     spawns.push(child_process.spawn(step.command, step.args, {
       stdio: 'inherit',
       shell: step.shell,
@@ -131,23 +158,6 @@ async function runWatch() {
 }
 
 async function runBuild() {
-  /**
-   * @param {Step} step
-   */
-  function runStep(step) {
-    const out = child_process.spawnSync(step.command, step.args, {
-      stdio: 'inherit',
-      shell: step.shell,
-      env: {
-        ...process.env,
-        ...step.env
-      },
-      cwd: step.cwd,
-    });
-    if (out.status)
-      process.exit(out.status);
-  }
-
   for (const { files, from, to, ignored } of copyFiles) {
     const watcher = chokidar.watch([filePath(files)], {
       ignored
@@ -234,6 +244,7 @@ for (const pkg of workspace.packages()) {
       '--ignore', '"packages/playwright-core/src/server/injected/**/*"',
       quotePath(path.join(pkg.path, 'src'))],
     shell: true,
+    concurrent: true,
   });
 }
 
@@ -244,6 +255,7 @@ for (const bundle of bundles) {
     args: ['run', watchMode ? 'watch' : 'build'],
     shell: true,
     cwd: bundle,
+    concurrent: true,
   });
 }
 
@@ -254,6 +266,7 @@ for (const webPackage of ['html-reporter', 'recorder', 'trace-viewer']) {
     args: ['vite', 'build', ...(watchMode ? ['--watch', '--sourcemap'] : [])],
     shell: true,
     cwd: path.join(__dirname, '..', '..', 'packages', webPackage),
+    concurrent: true,
   });
 }
 // Build/watch trace viewer service worker.
@@ -262,6 +275,7 @@ steps.push({
   args: ['vite', '--config', 'vite.sw.config.ts', 'build', ...(watchMode ? ['--watch', '--sourcemap'] : [])],
   shell: true,
   cwd: path.join(__dirname, '..', '..', 'packages', 'trace-viewer'),
+  concurrent: true,
 });
 
 
@@ -333,12 +347,14 @@ if (lintMode) {
     command: 'npx',
     args: ['tsc', ...(watchMode ? ['-w'] : []), '-p', quotePath(filePath('.'))],
     shell: true,
+    concurrent: true,
   });
   for (const webPackage of ['html-reporter', 'recorder', 'trace-viewer']) {
     steps.push({
       command: 'npx',
       args: ['tsc', ...(watchMode ? ['-w'] : []), '-p', quotePath(filePath(`packages/${webPackage}`))],
       shell: true,
+      concurrent: true,
     });
   }
 }
