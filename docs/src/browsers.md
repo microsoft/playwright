@@ -12,13 +12,13 @@ With every release, Playwright updates the versions of the browsers it supports,
 
 By keeping your Playwright version up to date you will be able to test your app on the latest browser versions and catch failures before the latest browser version is released to the public.
 
-```js
+```bash js
 npm install -D @playwright/test@latest
 ```
 Check the [release notes](./release-notes.md) to see what the latest version is and what changes have been released.
 
-```js
-// see what version of Playwright you have by running the following command
+```bash js
+# See what version of Playwright you have by running the following command
 npx playwright --version
 ```
 
@@ -146,10 +146,10 @@ playwright install --with-deps chromium
 ```bash csharp
 pwsh bin/Debug/netX/playwright.ps1 install --with-deps chromium
 ```
-## Browser Configuration
+## Configure browsers
 * langs: js
 
-Playwright supports multiple "projects" so that can run your tests in multiple browsers and configurations. Here is an example that runs every test in Chromium, Firefox and WebKit, by creating a project for each. You can also add branded browsers and mobile devices as "projects", see below.
+Playwright can run your tests in multiple browsers and configurations when you define multiple "projects" in the config . Here is an example that runs every test in Chromium, Firefox and WebKit, by creating a project for each. You can also add branded browsers and mobile devices as "projects", see below.
 
 ```js tab=js-js
 // @ts-check
@@ -201,7 +201,7 @@ Playwright Test will run all projects by default.
 ```bash
 npx playwright test
 
-Running 5 tests using 5 workers
+Running 3 tests using 3 workers
 
   ✓ [chromium] › example.spec.ts:3:1 › basic test (2s)
   ✓ [firefox] › example.spec.ts:3:1 › basic test (2s)
