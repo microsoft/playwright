@@ -23,6 +23,7 @@ export type ListViewProps = {
   itemRender: (item: any) => React.ReactNode,
   itemIcon?: (item: any) => string | undefined,
   itemIndent?: (item: any) => number | undefined,
+  itemType: (item: any) => 'error' | undefined,
   selectedItem?: any,
   onAccepted?: (item: any) => void,
   onSelected?: (item: any) => void,
@@ -35,6 +36,7 @@ export const ListView: React.FC<ListViewProps> = ({
   itemKey,
   itemRender,
   itemIcon,
+  itemType,
   itemIndent,
   selectedItem,
   onAccepted,
@@ -83,6 +85,7 @@ export const ListView: React.FC<ListViewProps> = ({
       {items.map(item => <ListItemView
         key={itemKey(item)}
         icon={itemIcon?.(item)}
+        type={itemType?.(item)}
         indent={itemIndent?.(item)}
         isHighlighted={item === highlightedItem}
         isSelected={item === selectedItem}
@@ -105,6 +108,7 @@ export const ListView: React.FC<ListViewProps> = ({
 const ListItemView: React.FC<{
   key: string,
   icon: string | undefined,
+  type: 'error' | undefined,
   indent: number | undefined,
   isHighlighted: boolean,
   isSelected: boolean,
@@ -112,9 +116,10 @@ const ListItemView: React.FC<{
   onMouseEnter: () => void,
   onMouseLeave: () => void,
   children: React.ReactNode | React.ReactNode[],
-}> = ({ key, icon, indent, onSelected, onMouseEnter, onMouseLeave, isHighlighted, isSelected, children }) => {
+}> = ({ key, icon, type, indent, onSelected, onMouseEnter, onMouseLeave, isHighlighted, isSelected, children }) => {
   const selectedSuffix = isSelected ? ' selected' : '';
   const highlightedSuffix = isHighlighted ? ' highlighted' : '';
+  const errorSuffix = type === 'error' ? ' error' : '';
   const divRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
@@ -124,14 +129,14 @@ const ListItemView: React.FC<{
 
   return <div
     key={key}
-    className={'list-view-entry' + selectedSuffix + highlightedSuffix}
+    className={'list-view-entry' + selectedSuffix + highlightedSuffix + errorSuffix}
     onClick={onSelected}
     onMouseEnter={onMouseEnter}
     onMouseLeave={onMouseLeave}
     ref={divRef}
   >
     {indent ? <div style={{ minWidth: indent * 16 }}></div> : undefined}
-    <div className={'codicon ' + icon} style={{ minWidth: 16, marginRight: 4 }}></div>
+    <div className={'codicon ' + (icon || 'blank')} style={{ minWidth: 16, marginRight: 4 }}></div>
     {typeof children === 'string' ? <div style={{ textOverflow: 'ellipsis', overflow: 'hidden' }}>{children}</div> : children}
   </div>;
 };
