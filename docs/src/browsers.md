@@ -279,27 +279,27 @@ Run with `--help` option to see full list of the browsers that can be installed 
 
 #### When to use Google Chrome & Microsoft Edge and when not to?
 
-**Defaults**
+##### Defaults
 
 Using the default Playwright configuration with the latest Chromium is a good idea most of the time.
 Since Playwright is ahead of Stable channels for the browsers, it gives peace of mind that the
 upcoming Google Chrome or Microsoft Edge releases won't break your site. You catch breakage
 early and have a lot of time to fix it before the official Chrome update.
 
-**Regression testing**
+##### Regression testing
 
 Having said that, testing policies often require regression testing to be performed against
 the current publicly available browsers. In this case, you can opt into one of the stable channels,
 `"chrome"` or `"msedge"`.
 
-**Media codecs**
+##### Media codecs
 
 Another reason for testing using official binaries is to test functionality related to media codecs.
 Chromium does not have all the codecs that Google Chrome or Microsoft Edge are bundling due to
 various licensing considerations and agreements. If your site relies on this kind of codecs (which is
 rarely the case), you also want to use official channel.
 
-**Enterprise policy**
+##### Enterprise policy
 
 Google Chrome and Microsoft Edge respect enterprise policies, which include limitations to the capabilities, network proxy, mandatory extensions that stand in the way of testing. So if you are a part of the organization that uses such policies, it is the easiest to use bundled Chromium for your local testing, you can still opt into stable channels on the bots that are typically free of such restrictions.
 
