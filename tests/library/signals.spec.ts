@@ -56,18 +56,6 @@ test('should remove temp dir on process.exit', async ({ startRemoteServer, serve
 test.describe('signals', () => {
   test.skip(({ platform }) => platform === 'win32');
 
-  test('should report browser close signal', async ({ startRemoteServer, server, headless }) => {
-    test.skip(!headless, 'Wrong exit code in headed');
-
-    const remoteServer = await startRemoteServer('launchServer', { url: server.EMPTY_PAGE });
-    const pid = await remoteServer.out('pid');
-    process.kill(-pid, 'SIGTERM');
-    expect(await remoteServer.out('exitCode')).toBe('null');
-    expect(await remoteServer.out('signal')).toBe('SIGTERM');
-    process.kill(remoteServer.child().pid);
-    await remoteServer.childExitCode();
-  });
-
   test('should report browser close signal 2', async ({ startRemoteServer, server }) => {
     const remoteServer = await startRemoteServer('launchServer', { url: server.EMPTY_PAGE });
     const pid = await remoteServer.out('pid');
