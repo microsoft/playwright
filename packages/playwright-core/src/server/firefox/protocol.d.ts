@@ -128,6 +128,7 @@ export module Protocol {
       credentials: {
         username: string;
         password: string;
+        origin?: string;
       }|null;
     };
     export type setHTTPCredentialsReturnValue = void;
@@ -842,6 +843,7 @@ export module Protocol {
     export type HTTPCredentials = {
       username: string;
       password: string;
+      origin?: string;
     };
     export type SecurityDetails = {
       protocol: string;
