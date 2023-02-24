@@ -442,11 +442,11 @@ export function prepareErrorStack(stack: string): {
   let location: Location | undefined;
   for (const line of stackLines) {
     const frame = parseStackTraceLine(line);
-    if (!frame || !frame.fileName)
+    if (!frame || !frame.file)
       continue;
-    if (belongsToNodeModules(frame.fileName))
+    if (belongsToNodeModules(frame.file))
       continue;
-    location = { file: frame.fileName, column: frame.column || 0, line: frame.line || 0 };
+    location = { file: frame.file, column: frame.column || 0, line: frame.line || 0 };
     break;
   }
   return { message, stackLines, location };

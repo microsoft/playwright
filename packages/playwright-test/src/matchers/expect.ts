@@ -16,7 +16,6 @@
 
 import { captureRawStack, pollAgainstTimeout } from 'playwright-core/lib/utils';
 import type { ExpectZone } from 'playwright-core/lib/utils';
-import path from 'path';
 import {
   toBeChecked,
   toBeDisabled,
@@ -200,12 +199,11 @@ class ExpectMetaInfoProxyHandler {
 
       const rawStack = captureRawStack();
       const stackFrames = filteredStackTrace(rawStack);
-      const frame = stackFrames[0];
       const customMessage = this._info.message || '';
       const defaultTitle = `expect${this._info.isPoll ? '.poll' : ''}${this._info.isSoft ? '.soft' : ''}${this._info.isNot ? '.not' : ''}.${matcherName}`;
       const wallTime = Date.now();
       const step = testInfo._addStep({
-        location: frame && frame.fileName ? { file: path.resolve(process.cwd(), frame.fileName), line: frame.line || 0, column: frame.column || 0 } : undefined,
+        location: stackFrames[0],
         category: 'expect',
         title: trimLongString(customMessage || defaultTitle, 1024),
         canHaveChildren: true,
