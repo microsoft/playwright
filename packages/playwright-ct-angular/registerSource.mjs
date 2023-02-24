@@ -22,6 +22,7 @@ import 'zone.js';
 import { getTestBed, TestBed } from '@angular/core/testing';
 import { BrowserDynamicTestingModule, platformBrowserDynamicTesting } from '@angular/platform-browser-dynamic/testing';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { reflectComponentType } from '@angular/core';
 
 /** @typedef {import('../playwright-test/types/component').Component} Component */
 /** @typedef {import('@angular/core').Type} FrameworkComponent */
@@ -63,6 +64,9 @@ function renderComponent(component) {
   if (component.kind !== 'object')
     throw new Error('JSX mount notation is not supported');
 
+  const ngComponent = reflectComponentType(Component);
+  if (!ngComponent || !ngComponent.isStandalone)
+    throw new Error('Only standalone components are supported');
 
   TestBed.configureTestingModule({
     imports: [BrowserAnimationsModule]
