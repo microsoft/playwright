@@ -75,7 +75,7 @@ function renderComponent(component) {
   fixture.nativeElement.id = 'root';
 
   for (const [name, value] of Object.entries(component.options?.props || {}))
-    fixture.componentInstance[name] = value;
+    fixture.componentRef.setInput(name, value);
 
   fixture.autoDetectChanges();
 
