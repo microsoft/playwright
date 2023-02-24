@@ -394,10 +394,10 @@ test('should show trace source', async ({ runInlineTest, page, showReport }) => 
   ]);
   await expect(page.locator('.source-line-running')).toContainText('page.evaluate');
 
-  await expect(page.locator('.stack-trace-frame')).toContainText([
+  await expect(page.getByTestId('stack-trace')).toContainText([
     /a.test.js:[\d]+/,
   ]);
-  await expect(page.locator('.stack-trace-frame.selected')).toContainText('a.test.js');
+  await expect(page.getByTestId('stack-trace').locator('.list-view-entry.selected')).toContainText('a.test.js');
 });
 
 test('should show trace title', async ({ runInlineTest, page, showReport }) => {

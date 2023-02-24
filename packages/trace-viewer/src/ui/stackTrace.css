@@ -14,32 +14,6 @@
   limitations under the License.
 */
 
-.stack-trace {
-  flex: 1 1 120px;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  overflow-y: auto;
-}
-
-.stack-trace-frame {
-  flex: 0 0 20px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  cursor: pointer;
-  padding: 0 5px;
-}
-
-.stack-trace-frame:hover {
-  background-color: var(--vscode-list-inactiveSelectionBackground);
-}
-
-.stack-trace-frame:selected {
-  background-color: var(--vscode-list-activeSelectionBackground);
-  color: var(--vscode-list-activeSelectionForeground);
-}
-
 .stack-trace-frame-function {
   flex: 1 1 100px;
   overflow: hidden;

@@ -87,7 +87,7 @@ export class TraceModel {
       await stacksEntry.getData!(writer);
       const metadataMap = parseClientSideCallMetadata(JSON.parse(await writer.getData()));
       for (const action of this.contextEntry.actions)
-        action.metadata.stack = metadataMap.get(action.metadata.id);
+        action.metadata.stack = action.metadata.stack || metadataMap.get(action.metadata.id);
     }
 
     this._build();
