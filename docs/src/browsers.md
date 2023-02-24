@@ -3,23 +3,10 @@ id: browsers
 title: "Browsers"
 ---
 
-Each version of Playwright needs specific versions of browser binaries to operate. You will need to use Playwright CLI to install these browsers.
+Each version of Playwright needs specific versions of browser binaries to operate. You will need to use the Playwright CLI to install these browsers.
 
 With every release, Playwright updates the versions of the browsers it supports, so that the latest Playwright would support the latest browsers at any moment. It means that every time you update playwright, you might need to re-run the `install` CLI command.
 
-## Update Playwright dependency
-
-By keeping your Playwright version up to date you will be able to test your app on the latest browser versions and catch failures before the latest browser version is released to the public.
-
-```bash js
-npm install -D @playwright/test@latest
-```
-Check the [release notes](./release-notes.md) to see what the latest version is and what changes have been released.
-
-```bash js
-# See what version of Playwright you have by running the following command
-npx playwright --version
-```
 ## Install browsers
 
 Playwright can install supported browsers. Running the command without arguments will install the default browsers.
@@ -143,6 +130,20 @@ playwright install --with-deps chromium
 
 ```bash csharp
 pwsh bin/Debug/netX/playwright.ps1 install --with-deps chromium
+```
+
+## Update Playwright dependency
+
+By keeping your Playwright version up to date you will be able to test your app on the latest browser versions and catch failures before the latest browser version is released to the public.
+
+```bash js
+npm install -D @playwright/test@latest
+```
+Check the [release notes](./release-notes.md) to see what the latest version is and what changes have been released.
+
+```bash js
+# See what version of Playwright you have by running the following command
+npx playwright --version
 ```
 
 ## Configure Browsers
