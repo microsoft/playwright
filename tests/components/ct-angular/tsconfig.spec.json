@@ -1,0 +1,10 @@
+/* To learn more about this file see: https://angular.io/config/tsconfig. */
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "composite": false,
+    "outDir": "./out-tsc/spec",
+    "types": ["node"]
+  },
+  "include": ["src/**/*.spec.ts", "src/**/*.ts"]
+}

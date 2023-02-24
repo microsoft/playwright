@@ -58,6 +58,7 @@ export function createPlugin(
     },
 
     begin: async (suite: Suite) => {
+      process.env['NODE_ENV'] = 'test';
       const use = config.projects[0].use as CtConfig;
       const port = use.ctPort || 3100;
       const viteConfig = typeof use.ctViteConfig === 'function' ? await use.ctViteConfig() : (use.ctViteConfig || {});

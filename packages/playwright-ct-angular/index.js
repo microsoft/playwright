@@ -14,19 +14,20 @@
  * limitations under the License.
  */
 
-const { test: baseTest, expect, devices, _addRunnerPlugin } = require('@playwright/test');
+const { test: baseTest, expect, devices, defineConfig: originalDefineConfig } = require('@playwright/test');
 const { fixtures } = require('@playwright/test/lib/mount');
 const path = require('path');
 
-_addRunnerPlugin(() => {
+function plugin() {
   // Only fetch upon request to avoid resolution in workers.
   const { createPlugin } = require('@playwright/test/lib/plugins/vitePlugin');
   return createPlugin(
     path.join(__dirname, 'registerSource.mjs'),
-    () => {}
+    () => import('@analogjs/vite-plugin-angular').then(plugin => plugin.default.default())
   )
-});
+};
 
 const test = baseTest.extend(fixtures);
+const defineConfig = config => originalDefineConfig({ ...config, _plugins: [plugin] });
 
-module.exports = { test, expect, devices };
+module.exports = { test, expect, devices, defineConfig };

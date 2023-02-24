@@ -1,6 +1,6 @@
 {
   "name": "@playwright/experimental-ct-angular",
-  "version": "1.29.0-next",
+  "version": "1.32.0-next",
   "description": "Playwright Component Testing for Angular",
   "repository": "github:Microsoft/playwright",
   "homepage": "https://playwright.dev",
@@ -26,16 +26,18 @@
     }
   },
   "dependencies": {
-    "@angular/common": "^14.2.0",
-    "@angular/compiler": "^14.2.0",
-    "@angular/core": "^14.2.0",
-    "@angular/platform-browser": "^14.2.0",
-    "@angular/platform-browser-dynamic": "^14.2.0",
-    "rxjs": "~7.5.0",
-    "tslib": "^2.3.0",
-    "zone.js": "~0.11.4"
+    "@analogjs/vite-plugin-angular": "^0.2.0-alpha.27",
+    "@angular/common": "^15.2.0",
+    "@angular/compiler": "^15.2.0",
+    "@angular/core": "^15.2.0",
+    "@angular/platform-browser": "^15.2.0",
+    "@angular/platform-browser-dynamic": "^15.2.0",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.5.0",
+    "vite": "^4.1.1",
+    "zone.js": "~0.12.0"
   },
   "devDependencies": {
-    "typescript": "~4.7.2"
+    "typescript": "~4.9.5"
   }
 }
