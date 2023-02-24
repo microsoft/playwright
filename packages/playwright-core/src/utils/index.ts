@@ -38,3 +38,4 @@ export * from './timeoutRunner';
 export * from './traceUtils';
 export * from './userAgent';
 export * from './zipFile';
+export * from './zones';
