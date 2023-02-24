@@ -684,7 +684,7 @@ new file mode 100644
 index 0000000000000000000000000000000000000000..347a01b3fdd1a8277cb4104558e8bbfa63539374
 --- /dev/null
 +++ b/Source/JavaScriptCore/inspector/protocol/Emulation.json
-@@ -0,0 +1,51 @@
+@@ -0,0 +1,52 @@
 +{
 +    "domain": "Emulation",
 +    "availability": ["web"],
@@ -712,7 +712,8 @@ index 0000000000000000000000000000000000000000..347a01b3fdd1a8277cb4104558e8bbfa
 +            "description": "Credentials to use during HTTP authentication.",
 +            "parameters": [
 +                { "name": "username", "type": "string", "optional": true },
-+                { "name": "password", "type": "string", "optional": true }
++                { "name": "password", "type": "string", "optional": true },
++                { "name": "hostname", "type": "string", "optional": true }
 +            ]
 +        },
 +        {
@@ -16598,12 +16599,12 @@ index 0000000000000000000000000000000000000000..ae45b4212bdb3f6a004cc80a1d91146b
 +    return { };
 +}
 +
-+Inspector::Protocol::ErrorStringOr<void> WebPageInspectorEmulationAgent::setAuthCredentials(const String& username, const String& password)
++Inspector::Protocol::ErrorStringOr<void> WebPageInspectorEmulationAgent::setAuthCredentials(const String& username, const String& password, const String& hostname)
 +{
-+    if (!!username && !!password)
-+        m_page.setAuthCredentialsForAutomation(WebCore::Credential(username, password, CredentialPersistencePermanent));
++    if (!!username && !!password && !!hostname)
++        m_page.setAuthCredentialsForAutomation(WebCore::Credential(username, password, CredentialPersistencePermanent), hostname);
 +    else
-+        m_page.setAuthCredentialsForAutomation(std::optional<WebCore::Credential>());
++        m_page.setAuthCredentialsForAutomation(std::optional<WebCore::Credential>(), std::optional<String>());
 +    return { };
 +}
 +
@@ -16706,7 +16707,7 @@ index 0000000000000000000000000000000000000000..b3bb4880a866ee6132b8b26acf8dad81
 +
 +    void setDeviceMetricsOverride(int width, int height, bool fixedlayout, std::optional<double>&& deviceScaleFactor, Ref<SetDeviceMetricsOverrideCallback>&&) override;
 +    Inspector::Protocol::ErrorStringOr<void> setJavaScriptEnabled(bool enabled) override;
-+    Inspector::Protocol::ErrorStringOr<void> setAuthCredentials(const String&, const String&) override;
++    Inspector::Protocol::ErrorStringOr<void> setAuthCredentials(const String&, const String&, const String&) override;
 +    Inspector::Protocol::ErrorStringOr<void> setActiveAndFocused(std::optional<bool>&&) override;
 +    Inspector::Protocol::ErrorStringOr<void> grantPermissions(const String& origin, Ref<JSON::Array>&& permissions) override;
 +    Inspector::Protocol::ErrorStringOr<void> resetPermissions() override;
@@ -17209,13 +17210,14 @@ index 4b9bff0b93d571834c2b2fdb06fcd3253efba9b6..03bfbe2490597a73b35d55f1cfcb8251
  RefPtr<API::Navigation> WebPageProxy::loadRequest(ResourceRequest&& request, ShouldOpenExternalURLsPolicy shouldOpenExternalURLsPolicy, API::Object* userData)
  {
      if (m_isClosed)
-@@ -2010,6 +2033,31 @@ void WebPageProxy::setControlledByAutomation(bool controlled)
+@@ -2010,6 +2033,32 @@ void WebPageProxy::setControlledByAutomation(bool controlled)
      websiteDataStore().networkProcess().send(Messages::NetworkProcess::SetSessionIsControlledByAutomation(m_websiteDataStore->sessionID(), m_controlledByAutomation), 0);
  }
  
-+void WebPageProxy::setAuthCredentialsForAutomation(std::optional<WebCore::Credential>&& credentials)
++void WebPageProxy::setAuthCredentialsForAutomation(std::optional<WebCore::Credential>&& credentials, std::optional<String>&& hostname)
 +{
 +    m_credentialsForAutomation = WTFMove(credentials);
++    m_hostnameForAutomation = WTFMove(hostname);
 +}
 +
 +void WebPageProxy::setPermissionsForAutomation(const HashMap<String, HashSet<String>>& permissions)
@@ -17642,7 +17644,7 @@ index 4b9bff0b93d571834c2b2fdb06fcd3253efba9b6..03bfbe2490597a73b35d55f1cfcb8251
  #if PLATFORM(IOS)
      // FIXME: This is also being passed over the to WebProcess via the PreferencesStore.
      parameters.allowsDeprecatedSynchronousXMLHttpRequestDuringUnload = allowsDeprecatedSynchronousXMLHttpRequestDuringUnload();
-@@ -8890,6 +9076,14 @@ void WebPageProxy::gamepadActivity(const Vector<GamepadData>& gamepadDatas, Even
+@@ -8890,6 +9076,23 @@ void WebPageProxy::gamepadActivity(const Vector<GamepadData>& gamepadDatas, Even
  
  void WebPageProxy::didReceiveAuthenticationChallengeProxy(Ref<AuthenticationChallengeProxy>&& authenticationChallenge, NegotiatedLegacyTLS negotiatedLegacyTLS)
  {
@@ -17650,6 +17652,15 @@ index 4b9bff0b93d571834c2b2fdb06fcd3253efba9b6..03bfbe2490597a73b35d55f1cfcb8251
 +        if (m_credentialsForAutomation->isEmpty() || authenticationChallenge->core().previousFailureCount()) {
 +            authenticationChallenge->listener().completeChallenge(AuthenticationChallengeDisposition::PerformDefaultHandling);
 +            return;
++        }
++        if (m_hostnameForAutomation.has_value() && !m_hostnameForAutomation.value().isEmpty()) {
++           if (equalIgnoringASCIICase(authenticationChallenge->protectionSpace()->host(),m_hostnameForAutomation.value())) {
++               authenticationChallenge->listener().completeChallenge(AuthenticationChallengeDisposition::UseCredential, *m_credentialsForAutomation);
++                return;
++           } else {
++                authenticationChallenge->listener().completeChallenge(AuthenticationChallengeDisposition::PerformDefaultHandling);
++                return;
++            }
 +        }
 +        authenticationChallenge->listener().completeChallenge(AuthenticationChallengeDisposition::UseCredential, *m_credentialsForAutomation);
 +        return;
@@ -17741,7 +17752,7 @@ index ba5285d23dd2974ba6674db6827cf1df870fade5..fbcb3d53d988f0d2a932a59f45509f64
  
      void setPageLoadStateObserver(std::unique_ptr<PageLoadState::Observer>&&);
  
-+    void setAuthCredentialsForAutomation(std::optional<WebCore::Credential>&&);
++    void setAuthCredentialsForAutomation(std::optional<WebCore::Credential>&&, std::optional<String>&&);
 +    void setPermissionsForAutomation(const HashMap<String, HashSet<String>>&);
 +    void setActiveForAutomation(std::optional<bool> active);
 +    void logToStderr(const String& str);
@@ -17825,11 +17836,12 @@ index ba5285d23dd2974ba6674db6827cf1df870fade5..fbcb3d53d988f0d2a932a59f45509f64
  #endif
  
      PageLoadState m_pageLoadState;
-@@ -3309,6 +3353,9 @@ private:
+@@ -3309,6 +3353,10 @@ private:
          RefPtr<API::Object> messageBody;
      };
      Vector<InjectedBundleMessage> m_pendingInjectedBundleMessages;
 +    std::optional<WebCore::Credential> m_credentialsForAutomation;
++    std::optional<String> m_hostnameForAutomation;
 +    HashMap<String, HashSet<String>> m_permissionsForAutomation;
 +    std::optional<bool> m_activeForAutomation;
          
