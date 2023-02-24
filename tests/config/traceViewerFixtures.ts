@@ -49,7 +49,7 @@ class TraceViewerPage {
     this.consoleLines = page.locator('.console-line');
     this.consoleLineMessages = page.locator('.console-line-message');
     this.consoleStacks = page.locator('.console-stack');
-    this.stackFrames = page.locator('.stack-trace-frame');
+    this.stackFrames = page.getByTestId('stack-trace').locator('.list-view-entry');
     this.networkRequests = page.locator('.network-request-title');
     this.snapshotContainer = page.locator('.snapshot-container iframe');
   }

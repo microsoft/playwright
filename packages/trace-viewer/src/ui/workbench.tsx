@@ -207,7 +207,7 @@ export const Workbench: React.FunctionComponent<{
       />
     </div>
     <SplitView sidebarSize={300} orientation='horizontal' sidebarIsFirst={true}>
-      <SplitView sidebarSize={300} orientation={view === 'embedded' ? 'vertical' : 'horizontal'}>
+      <SplitView sidebarSize={300} orientation='vertical'>
         <SnapshotTab action={activeAction} sdkLanguage={model.sdkLanguage || 'javascript'} testIdAttributeName={model.testIdAttributeName || 'data-testid'} />
         <TabbedPane tabs={tabs} selectedTab={selectedPropertiesTab} setSelectedTab={setSelectedPropertiesTab}/>
       </SplitView>

@@ -17,6 +17,7 @@
 import * as React from 'react';
 import './stackTrace.css';
 import type { ActionTraceEvent } from '@trace/trace';
+import { ListView } from '@web/components/listView';
 
 export const StackTraceView: React.FunctionComponent<{
   action: ActionTraceEvent | undefined,
@@ -24,17 +25,13 @@ export const StackTraceView: React.FunctionComponent<{
   setSelectedFrame: (index: number) => void
 }> = ({ action, setSelectedFrame, selectedFrame }) => {
   const frames = action?.metadata.stack || [];
-  return <div className='stack-trace'>{
-    frames.map((frame, index) => {
-      // Windows frames are E:\path\to\file
+  return <ListView
+    dataTestId='stack-trace'
+    items={frames}
+    selectedItem={frames[selectedFrame]}
+    itemRender={frame => {
       const pathSep = frame.file[1] === ':' ? '\\' : '/';
-      return <div
-        key={index}
-        className={'stack-trace-frame' + (selectedFrame === index ? ' selected' : '')}
-        onClick={() => {
-          setSelectedFrame(index);
-        }}
-      >
+      return <>
         <span className='stack-trace-frame-function'>
           {frame.function || '(anonymous)'}
         </span>
@@ -44,8 +41,7 @@ export const StackTraceView: React.FunctionComponent<{
         <span className='stack-trace-frame-line'>
           {':' + frame.line}
         </span>
-      </div>;
-    })
-  }
-  </div>;
+      </>;
+    }}
+    onSelected={frame => setSelectedFrame(frames.indexOf(frame))} />;
 };

@@ -79,7 +79,7 @@ export const SourceTab: React.FunctionComponent<{
     }
   }, [needReveal, targetLineRef]);
 
-  return <SplitView sidebarSize={100} orientation='vertical'>
+  return <SplitView sidebarSize={200} orientation='horizontal'>
     <SourceView text={content} language='javascript' highlight={[{ line: targetLine, type: 'running' }]} revealLine={targetLine}></SourceView>
     <StackTraceView action={action} selectedFrame={selectedFrame} setSelectedFrame={setSelectedFrame}></StackTraceView>
   </SplitView>;
