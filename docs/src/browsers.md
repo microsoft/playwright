@@ -148,7 +148,7 @@ npx playwright --version
 
 ## Configure Browsers
 
-Playwright can run tests on chromium, webkit and firefox browsers as well as branded browsers such as Google Chrome and Microsoft Edge. It can also run on emulated tablet and mobile devices. See the [registry of device parameters](https://github.com/microsoft/playwright/blob/main/packages/playwright-core/src/server/deviceDescriptorsSource.json) which uses [`property: Playwright.devices`] for a complete list of selected desktop, tablet and mobile devices. 
+Playwright can run tests on chromium, webkit and firefox browsers as well as branded browsers such as Google Chrome and Microsoft Edge. It can also run on emulated tablet and mobile devices. See the [registry of device parameters](https://github.com/microsoft/playwright/blob/main/packages/playwright-core/src/server/deviceDescriptorsSource.json) for a complete list of selected desktop, tablet and mobile devices. 
 
 ### Run tests on different browsers
 * langs: js
