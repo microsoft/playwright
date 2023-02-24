@@ -17,12 +17,11 @@
 // @ts-check
 // This file is injected into the registry as text, no dependencies are allowed.
 
-import '@angular/compiler';
 import 'zone.js';
 import { getTestBed, TestBed } from '@angular/core/testing';
 import { BrowserDynamicTestingModule, platformBrowserDynamicTesting } from '@angular/platform-browser-dynamic/testing';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { reflectComponentType } from '@angular/core';
+import { EventEmitter, reflectComponentType } from '@angular/core';
 
 /** @typedef {import('../playwright-test/types/component').Component} Component */
 /** @typedef {import('@angular/core').Type} FrameworkComponent */
@@ -64,8 +63,8 @@ function renderComponent(component) {
   if (component.kind !== 'object')
     throw new Error('JSX mount notation is not supported');
 
-  const ngComponent = reflectComponentType(Component);
-  if (!ngComponent || !ngComponent.isStandalone)
+  const componentMetadata = reflectComponentType(Component);
+  if (!componentMetadata?.isStandalone)
     throw new Error('Only standalone components are supported');
 
   TestBed.configureTestingModule({
@@ -76,6 +75,13 @@ function renderComponent(component) {
 
   for (const [name, value] of Object.entries(component.options?.props || {}))
     fixture.componentRef.setInput(name, value);
+
+  for (const [name, value] of Object.entries(component.options?.on || {})) {
+    fixture.componentInstance[name] = {
+      ...new EventEmitter(),
+      emit: event => value(event)
+    };
+  }
 
   fixture.autoDetectChanges();
 

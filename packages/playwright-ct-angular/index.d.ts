@@ -42,7 +42,8 @@ type JsonObject = { [Key in string]?: JsonValue };
 
 export interface MountOptions<HooksConfig extends JsonObject> {
   hooksConfig?: HooksConfig;
-  props: any;
+  props?: any;
+  on?: Record<string, Function>;
 }
 
 interface MountResult extends Locator {
