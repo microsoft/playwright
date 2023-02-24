@@ -15,7 +15,6 @@
  */
 
 import type { ParsedStackTrace } from '../utils/stackTrace';
-
 export interface ClientInstrumentation {
   addListener(listener: ClientInstrumentationListener): void;
   removeListener(listener: ClientInstrumentationListener): void;

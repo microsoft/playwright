@@ -23,6 +23,7 @@ import url from 'url';
 import { colors, debug, minimatch, parseStackTraceLine } from 'playwright-core/lib/utilsBundle';
 import type { TestInfoError, Location } from './common/types';
 import { calculateSha1, isRegExp, isString } from 'playwright-core/lib/utils';
+import type { RawStack } from 'playwright-core/lib/utils';
 
 const PLAYWRIGHT_TEST_PATH = path.join(__dirname, '..');
 const PLAYWRIGHT_CORE_PATH = path.dirname(require.resolve('playwright-core/package.json'));
@@ -30,15 +31,15 @@ const PLAYWRIGHT_CORE_PATH = path.dirname(require.resolve('playwright-core/packa
 export function filterStackTrace(e: Error) {
   if (process.env.PWDEBUGIMPL)
     return;
-  const stackLines = stringifyStackFrames(filteredStackTrace(e));
+  const stackLines = stringifyStackFrames(filteredStackTrace(e.stack?.split('\n') || []));
   const message = e.message;
   e.stack = `${e.name}: ${e.message}\n${stackLines.join('\n')}`;
   e.message = message;
 }
 
-export function filteredStackTrace(e: Error): StackFrameData[] {
+export function filteredStackTrace(rawStack: RawStack): StackFrameData[] {
   const frames: StackFrameData[] = [];
-  for (const line of e.stack?.split('\n') || []) {
+  for (const line of rawStack) {
     const frame = parseStackTraceLine(line);
     if (!frame || !frame.fileName)
       continue;

@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import { pollAgainstTimeout } from 'playwright-core/lib/utils';
+import { captureRawStack, pollAgainstTimeout } from 'playwright-core/lib/utils';
+import type { ExpectZone } from 'playwright-core/lib/utils';
 import path from 'path';
 import {
   toBeChecked,
@@ -51,6 +52,7 @@ import {
   RECEIVED_COLOR,
   printReceived,
 } from '../common/expectBundle';
+import { zones } from 'playwright-core/lib/utils';
 
 // from expect/build/types
 export type SyncExpectationResult = {
@@ -196,17 +198,19 @@ class ExpectMetaInfoProxyHandler {
       if (!testInfo)
         return matcher.call(target, ...args);
 
-      const stackFrames = filteredStackTrace(new Error());
+      const rawStack = captureRawStack();
+      const stackFrames = filteredStackTrace(rawStack);
       const frame = stackFrames[0];
       const customMessage = this._info.message || '';
       const defaultTitle = `expect${this._info.isPoll ? '.poll' : ''}${this._info.isSoft ? '.soft' : ''}${this._info.isNot ? '.not' : ''}.${matcherName}`;
+      const wallTime = Date.now();
       const step = testInfo._addStep({
         location: frame && frame.fileName ? { file: path.resolve(process.cwd(), frame.fileName), line: frame.line || 0, column: frame.column || 0 } : undefined,
         category: 'expect',
         title: trimLongString(customMessage || defaultTitle, 1024),
         canHaveChildren: true,
         forceNoParent: false,
-        wallTime: Date.now()
+        wallTime
       });
       testInfo.currentStep = step;
 
@@ -242,7 +246,8 @@ class ExpectMetaInfoProxyHandler {
       };
 
       try {
-        const result = namedFunction(defaultTitle)(() => {
+        const expectZone: ExpectZone = { title: defaultTitle, wallTime };
+        const result = zones.run<ExpectZone, any>('expectZone', expectZone, () => {
           return matcher.call(target, ...args);
         });
         if (result instanceof Promise)
@@ -254,14 +259,6 @@ class ExpectMetaInfoProxyHandler {
       }
     };
   }
-}
-
-function namedFunction(name: string) {
-  const result = function(callback: any) {
-    return callback();
-  };
-  Object.defineProperty(result, 'name', { value: '__PWTRAP__[' + name + ']' });
-  return result;
 }
 
 async function pollMatcher(matcherName: any, isNot: boolean, pollIntervals: number[] | undefined, timeout: number, generator: () => any, ...args: any[]) {
