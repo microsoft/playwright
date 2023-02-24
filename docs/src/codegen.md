@@ -8,8 +8,6 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 Playwright comes with the ability to generate tests for you as you perform actions in the browser and is a great way to quickly get started with testing. Playwright will look at your page and figure out the best locator, prioritizing [role, text and test id locators](./locators.md). If the generator finds multiple elements matching the locator, it will improve the locator to make it resilient and uniquely identify the target element, so you don't have to worry about failing tests due to locators.
 
-The viewport for the browser window used for test generation is set to a specific width and height and is not responsive by default. See the [configuration guide](./test-configuration.md) to change the viewport or emulate different environments.
-
 ## Generate tests in VS Code
 * langs: js
 
@@ -26,7 +24,7 @@ To record a test click on the **Record new** button from the Testing sidebar. Th
 
 <img width="1385" alt="record new in vs code" src="https://user-images.githubusercontent.com/13063165/220961665-615d0ab8-3f0b-439c-ad0b-0424d9aa154b.png" />
 
-In the browser go to the URL you wish to test and start clicking around to recordd your user actions.
+In the browser go to the URL you wish to test and start clicking around to record your user actions. The viewport for the browser window used for test generation is set to a specific width and height and is not responsive by default. See the [configuration guide](./test-configuration.md) to change the viewport or emulate different environments.
 
 <img width="1394" alt="clicking delete button on todo app with locator highlighted" src="https://user-images.githubusercontent.com/13063165/220957132-31b54f82-6235-4c52-a966-6863553b5b23.png" />
 
@@ -60,7 +58,9 @@ You can generate locators with the test generator.
 
 ## Generate tests with the Playwright Inspector
 
-For non VS Code users you can generate tests using the CLI. When running the `codegen` command two windows will be opened, a browser window where you interact with the website you wish to test and the Playwright Inspector window where you can record your tests and then copy them into your editor.
+For non VS Code users you can generate tests using the CLI. When running the `codegen` command two windows will be opened, a browser window where you interact with the website you wish to test and the Playwright Inspector window where you can record your tests and then copy them into your editor. 
+
+The viewport for the browser window used for test generation is set to a specific width and height and is not responsive by default. However you can configure this in your tests by changing the viewport or emulating different environments.
 
 ### Running Codegen
 
