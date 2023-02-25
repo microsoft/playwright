@@ -22,8 +22,8 @@ export { ValidationError, findValidator, maybeFindValidator, createMetadataValid
 
 scheme.StackFrame = tObject({
   file: tString,
-  line: tOptional(tNumber),
-  column: tOptional(tNumber),
+  line: tNumber,
+  column: tNumber,
   function: tOptional(tString),
 });
 scheme.Metadata = tObject({

@@ -16,7 +16,7 @@
 
 import fs from 'fs';
 import { mime } from 'playwright-core/lib/utilsBundle';
-import type { StackFrameData } from 'playwright-core/lib/utilsBundle';
+import type { StackFrame } from '@protocol/channels';
 import util from 'util';
 import path from 'path';
 import url from 'url';
@@ -37,28 +37,28 @@ export function filterStackTrace(e: Error) {
   e.message = message;
 }
 
-export function filteredStackTrace(rawStack: RawStack): StackFrameData[] {
-  const frames: StackFrameData[] = [];
+export function filteredStackTrace(rawStack: RawStack): StackFrame[] {
+  const frames: StackFrame[] = [];
   for (const line of rawStack) {
     const frame = parseStackTraceLine(line);
-    if (!frame || !frame.fileName)
+    if (!frame || !frame.file)
       continue;
-    if (!process.env.PWDEBUGIMPL && frame.fileName.startsWith(PLAYWRIGHT_TEST_PATH))
+    if (!process.env.PWDEBUGIMPL && frame.file.startsWith(PLAYWRIGHT_TEST_PATH))
       continue;
-    if (!process.env.PWDEBUGIMPL && frame.fileName.startsWith(PLAYWRIGHT_CORE_PATH))
+    if (!process.env.PWDEBUGIMPL && frame.file.startsWith(PLAYWRIGHT_CORE_PATH))
       continue;
     frames.push(frame);
   }
   return frames;
 }
 
-export function stringifyStackFrames(frames: StackFrameData[]): string[] {
+export function stringifyStackFrames(frames: StackFrame[]): string[] {
   const stackLines: string[] = [];
   for (const frame of frames) {
     if (frame.function)
-      stackLines.push(`    at ${frame.function} (${frame.fileName}:${frame.line}:${frame.column})`);
+      stackLines.push(`    at ${frame.function} (${frame.file}:${frame.line}:${frame.column})`);
     else
-      stackLines.push(`    at ${frame.fileName}:${frame.line}:${frame.column}`);
+      stackLines.push(`    at ${frame.file}:${frame.line}:${frame.column}`);
   }
   return stackLines;
 }
