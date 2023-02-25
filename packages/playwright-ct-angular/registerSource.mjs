@@ -107,3 +107,17 @@ window.playwrightUnmount = async rootElement => {
   fixture.destroy();
   fixture.nativeElement.replaceChildren();
 };
+
+window.playwrightUpdate = async (rootElement, component) => {
+  for (const [name, value] of Object.entries(component.options?.props || {}))
+    fixture.componentRef.setInput(name, value);
+
+  for (const [name, value] of Object.entries(component.options?.on || {})) {
+    fixture.componentInstance[name] = {
+      ...new EventEmitter(),
+      emit: event => value(event)
+    };
+  }
+
+  fixture.autoDetectChanges();
+};

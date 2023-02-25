@@ -40,21 +40,25 @@ type JsonValue = JsonPrimitive | JsonObject | JsonArray;
 type JsonArray = JsonValue[];
 type JsonObject = { [Key in string]?: JsonValue };
 
-export interface MountOptions<HooksConfig extends JsonObject> {
-  hooksConfig?: HooksConfig;
-  props?: any;
+type Slot = string | string[];
+
+export interface MountOptions<HooksConfig extends JsonObject, Component> {
+  props?: Partial<Component>, // TODO: filter props
+  slots?: Record<string, Slot> & { default?: Slot };
   on?: Record<string, Function>;
+  hooksConfig?: HooksConfig;
 }
 
-interface MountResult extends Locator {
+interface MountResult<Component> extends Locator {
   unmount(): Promise<void>;
+  update(options: Omit<MountOptions<never, Component>, 'hooksConfig'>): Promise<void>;
 }
 
 export interface ComponentFixtures {
   mount<HooksConfig extends JsonObject, Component>(
     component: Type<Component>,
-    options?: MountOptions<HooksConfig>
-  ): Promise<MountResult>;
+    options?: MountOptions<HooksConfig, Component>
+  ): Promise<MountResult<Component>>;
 }
 
 export const test: TestType<
