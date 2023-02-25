@@ -28,6 +28,7 @@ import { EventEmitter, reflectComponentType } from '@angular/core';
 
 /** @type {Map<string, FrameworkComponent>} */
 const registry = new Map();
+const fixtureRegistry = new Map();
 
 getTestBed().initTestEnvironment(
     BrowserDynamicTestingModule,
@@ -88,19 +89,20 @@ function renderComponent(component) {
   return fixture;
 }
 
-let fixture;
 
 window.playwrightMount = async (component, rootElement, hooksConfig) => {
   for (const hook of /** @type {any} */(window).__pw_hooks_before_mount || [])
     await hook({ hooksConfig });
 
-  fixture = renderComponent(component);
+  const fixture = renderComponent(component);
+  fixtureRegistry.set(rootElement, fixture);
 
   for (const hook of /** @type {any} */(window).__pw_hooks_after_mount || [])
     await hook({ hooksConfig });
 };
 
 window.playwrightUnmount = async rootElement => {
+  const fixture = fixtureRegistry.get(rootElement);
   if (!fixture)
     throw new Error('Component was not mounted');
 
@@ -109,6 +111,13 @@ window.playwrightUnmount = async rootElement => {
 };
 
 window.playwrightUpdate = async (rootElement, component) => {
+  if (component.kind === 'jsx')
+    throw new Error('JSX mount notation is not supported');
+
+  const fixture = fixtureRegistry.get(rootElement);
+  if (!fixture)
+    throw new Error('Component was not mounted');
+
   for (const [name, value] of Object.entries(component.options?.props || {}))
     fixture.componentRef.setInput(name, value);
 
