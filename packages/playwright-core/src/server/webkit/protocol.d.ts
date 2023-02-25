@@ -7012,6 +7012,13 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     export type setTimeZoneReturnValue = {
     }
     /**
+     * Clears browser memory cache.
+     */
+    export type clearMemoryCacheParameters = {
+    }
+    export type clearMemoryCacheReturnValue = {
+    }
+    /**
      * Enables touch events on platforms that lack them.
      */
     export type setTouchEmulationEnabledParameters = {
@@ -9362,6 +9369,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Page.setEmulatedMedia": Page.setEmulatedMediaParameters;
     "Page.setForcedColors": Page.setForcedColorsParameters;
     "Page.setTimeZone": Page.setTimeZoneParameters;
+    "Page.clearMemoryCache": Page.clearMemoryCacheParameters;
     "Page.setTouchEmulationEnabled": Page.setTouchEmulationEnabledParameters;
     "Page.snapshotNode": Page.snapshotNodeParameters;
     "Page.snapshotRect": Page.snapshotRectParameters;
@@ -9670,6 +9678,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Page.setEmulatedMedia": Page.setEmulatedMediaReturnValue;
     "Page.setForcedColors": Page.setForcedColorsReturnValue;
     "Page.setTimeZone": Page.setTimeZoneReturnValue;
+    "Page.clearMemoryCache": Page.clearMemoryCacheReturnValue;
     "Page.setTouchEmulationEnabled": Page.setTouchEmulationEnabledReturnValue;
     "Page.snapshotNode": Page.snapshotNodeReturnValue;
     "Page.snapshotRect": Page.snapshotRectReturnValue;
