@@ -565,6 +565,7 @@ test('should render annotations', async ({ runInlineTest, page, showReport }) =>
     'a.test.js': `
       import { test, expect } from '@playwright/test';
       test('skipped test', async ({ page }) => {
+        test.info().annotations.push({ type: 'issues', description: ['foo', 'bar'] });
         test.skip(true, 'I am not interested in this test');
       });
     `,
@@ -574,7 +575,8 @@ test('should render annotations', async ({ runInlineTest, page, showReport }) =>
 
   await showReport();
   await page.click('text=skipped test');
-  await expect(page.locator('.test-case-annotation')).toHaveText('skip: I am not interested in this test');
+  await expect(page.locator('.test-case-annotation').first()).toHaveText('issues: foobar');
+  await expect(page.locator('.test-case-annotation').nth(1)).toHaveText('skip: I am not interested in this test');
 });
 
 test('should render annotations as link if needed', async ({ runInlineTest, page, showReport, server }) => {

@@ -49,7 +49,9 @@ export const TestCaseView: React.FC<{
   </div>;
 };
 
-function renderAnnotationDescription(description: string) {
+function renderAnnotationDescription(description: string | object) {
+  if (typeof description === 'object')
+    return JSON.stringify(description);
   try {
     if (['http:', 'https:'].includes(new URL(description).protocol))
       return <a href={description} target='_blank' rel='noopener noreferrer'>{description}</a>;
