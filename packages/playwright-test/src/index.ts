@@ -307,7 +307,9 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     };
 
     const startedCollectingArtifacts = Symbol('startedCollectingArtifacts');
-    const stopTraceChunkOnContextClosure = async (tracing: Tracing) => {
+    const stopTracing = async (tracing: Tracing) => {
+      if ((tracing as any)[startedCollectingArtifacts])
+        return;
       (tracing as any)[startedCollectingArtifacts] = true;
       if (captureTrace) {
         // Export trace for now. We'll know whether we have to preserve it
@@ -342,7 +344,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       // Do not record empty traces and useless screenshots for them.
       if (reusedContexts.has(context))
         return;
-      await stopTraceChunkOnContextClosure(context.tracing);
+      await stopTracing(context.tracing);
       if (screenshotMode === 'on' || screenshotMode === 'only-on-failure') {
         // Capture screenshot for now. We'll know whether we have to preserve them
         // after the test finishes.
@@ -352,7 +354,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
 
     const onWillCloseRequestContext =  async (context: APIRequestContext) => {
       const tracing = (context as any)._tracing as Tracing;
-      await stopTraceChunkOnContextClosure(tracing);
+      await stopTracing(tracing);
     };
 
     // 1. Setup instrumentation and process existing contexts.
@@ -383,14 +385,6 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     const preserveTrace = captureTrace && (traceMode === 'on' || (testFailed && traceMode === 'retain-on-failure') || (traceMode === 'on-first-retry' && testInfo.retry === 1));
     const captureScreenshots = screenshotMode === 'on' || (screenshotMode === 'only-on-failure' && testFailed);
 
-    const traceAttachments: string[] = [];
-    const addTraceAttachment = () => {
-      const tracePath = testInfo.outputPath(`trace${traceAttachments.length ? '-' + traceAttachments.length : ''}.zip`);
-      traceAttachments.push(tracePath);
-      testInfo.attachments.push({ name: 'trace', path: tracePath, contentType: 'application/zip' });
-      return tracePath;
-    };
-
     const screenshotAttachments: string[] = [];
     const addScreenshotAttachment = () => {
       const screenshotPath = testInfo.outputPath(`test-${testFailed ? 'failed' : 'finished'}-${screenshotAttachments.length + 1}.png`);
@@ -415,21 +409,9 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     (playwright.request as any)._onWillCloseContext = undefined;
     testInfoImpl._onTestFailureImmediateCallbacks.delete(screenshotOnTestFailure);
 
-    const stopTraceChunkOnTestFinish = async (tracing: Tracing) => {
-      // When we timeout during context.close(), we might end up with context still alive
-      // but artifacts being already collected. In this case, do not collect artifacts
-      // for the second time.
-      if ((tracing as any)[startedCollectingArtifacts])
-        return;
-      if (preserveTrace)
-        await tracing.stopChunk({ path: addTraceAttachment() });
-      else if (captureTrace)
-        await tracing.stopChunk();
-    };
-
     // 5. Collect artifacts from any non-closed contexts.
     await Promise.all(leftoverContexts.map(async context => {
-      await stopTraceChunkOnTestFinish(context.tracing);
+      await stopTracing(context.tracing);
       if (captureScreenshots) {
         await Promise.all(context.pages().map(async page => {
           if ((page as any)[screenshottedSymbol])
@@ -441,16 +423,19 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       }
     }).concat(leftoverApiRequests.map(async context => {
       const tracing = (context as any)._tracing as Tracing;
-      await stopTraceChunkOnTestFinish(tracing);
+      await stopTracing(tracing);
     })));
 
     // 6. Either remove or attach temporary traces and screenshots for contexts closed
     // before the test has finished.
-    await Promise.all(temporaryTraceFiles.map(async file => {
-      if (preserveTrace)
-        await fs.promises.rename(file, addTraceAttachment()).catch(() => {});
-      else
+    await Promise.all(temporaryTraceFiles.map(async (file, i) => {
+      if (preserveTrace) {
+        const tracePath = testInfo.outputPath(`trace${i ? '-' + i : ''}.zip`);
+        await fs.promises.rename(file, tracePath).catch(() => {});
+        testInfo.attachments.push({ name: 'trace', path: tracePath, contentType: 'application/zip' });
+      } else {
         await fs.promises.unlink(file).catch(() => {});
+      }
     }));
     await Promise.all(temporaryScreenshots.map(async file => {
       if (captureScreenshots)
