@@ -21,13 +21,15 @@ import 'zone.js';
 import { getTestBed, TestBed } from '@angular/core/testing';
 import { BrowserDynamicTestingModule, platformBrowserDynamicTesting } from '@angular/platform-browser-dynamic/testing';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { EventEmitter, reflectComponentType } from '@angular/core';
+import { EventEmitter, reflectComponentType, Component as defineComponent } from '@angular/core';
+import { Router } from '@angular/router';
 
 /** @typedef {import('../playwright-test/types/component').Component} Component */
 /** @typedef {import('@angular/core').Type} FrameworkComponent */
 
 /** @type {Map<string, FrameworkComponent>} */
 const registry = new Map();
+/** @type {Map<string, import('@angular/core/testing').ComponentFixture>} */
 const fixtureRegistry = new Map();
 
 getTestBed().initTestEnvironment(
@@ -44,9 +46,78 @@ export function register(components) {
 }
 
 /**
+ * @param {import('@angular/core/testing').ComponentFixture} fixture
+ */
+function updateProps(fixture, props = {}) {
+  for (const [name, value] of Object.entries(props))
+    fixture.debugElement.children[0].context[name] = value;
+}
+
+/**
+ * @param {import('@angular/core/testing').ComponentFixture} fixture
+ */
+function updateEvents(fixture, events = {}) {
+  for (const [name, value] of Object.entries(events)) {
+    fixture.debugElement.children[0].componentInstance[name] = {
+      ...new EventEmitter(),
+      emit: event => value(event)
+    };
+  }
+}
+
+function updateSlots(Component, slots = {}, tag) {
+  const wrapper = document.createElement('div');
+  for (const [key, value] of Object.entries(slots)) {
+    let slotElements;
+    if (typeof value !== 'object')
+      slotElements = [createSlot(value)];
+
+    if (Array.isArray(value))
+      slotElements = value.map(createSlot);
+
+    if (!slotElements)
+      throw new Error(`Invalid slot with name: \`${key}\` supplied to \`mount()\``);
+
+    for (const slotElement of slotElements) {
+      if (!slotElement)
+        throw new Error(`Invalid slot with name: \`${key}\` supplied to \`mount()\``);
+
+      if (key === 'default') {
+        wrapper.appendChild(slotElement);
+        continue;
+      }
+
+      if (slotElement.nodeName === '#text') {
+        throw new Error(
+            `Invalid slot with name: \`${key}\` supplied to \`mount()\`, expected \`HTMLElement\` but received \`TextNode\`.`
+        );
+      }
+
+      slotElement.setAttribute(key, '');
+      wrapper.appendChild(slotElement);
+    }
+  }
+
+  TestBed.overrideTemplate(Component, `<${tag}>${wrapper.innerHTML}</${tag}>`);
+}
+
+/**
+ * @param {any} value
+ * @return {?HTMLElement}
+ */
+function createSlot(value) {
+  return /** @type {?HTMLElement} */ (
+    document
+        .createRange()
+        .createContextualFragment(value)
+        .firstChild
+  );
+}
+
+/**
  * @param {Component} component
  */
-function renderComponent(component) {
+async function renderComponent(component) {
   let Component = registry.get(component.type);
   if (!Component) {
     // Lookup by shorthand.
@@ -68,41 +139,48 @@ function renderComponent(component) {
   if (!componentMetadata?.isStandalone)
     throw new Error('Only standalone components are supported');
 
+  const WrapperComponent = defineComponent({
+    selector: 'pw-wrapper-component',
+    template: ``,
+  })(class {});
+
   TestBed.configureTestingModule({
-    imports: [BrowserAnimationsModule]
+    imports: [Component, BrowserAnimationsModule],
+    declarations: [WrapperComponent]
   });
-  const fixture = TestBed.createComponent(Component);
+
+  await TestBed.compileComponents();
+
+  updateSlots(WrapperComponent, component.options?.slots, componentMetadata.selector);
+
+  // TODO: only inject when router is provided
+  TestBed.inject(Router).initialNavigation();
+
+  const fixture = TestBed.createComponent(WrapperComponent);
   fixture.nativeElement.id = 'root';
 
-  for (const [name, value] of Object.entries(component.options?.props || {}))
-    fixture.componentRef.setInput(name, value);
-
-  for (const [name, value] of Object.entries(component.options?.on || {})) {
-    fixture.componentInstance[name] = {
-      ...new EventEmitter(),
-      emit: event => value(event)
-    };
-  }
+  updateProps(fixture, component.options?.props);
+  updateEvents(fixture, component.options?.on);
 
   fixture.autoDetectChanges();
 
   return fixture;
 }
 
-
 window.playwrightMount = async (component, rootElement, hooksConfig) => {
-  for (const hook of /** @type {any} */(window).__pw_hooks_before_mount || [])
+  for (const hook of window.__pw_hooks_before_mount || [])
+    await hook({ hooksConfig, TestBed });
+
+  const fixture = await renderComponent(component);
+
+  for (const hook of window.__pw_hooks_after_mount || [])
     await hook({ hooksConfig });
 
-  const fixture = renderComponent(component);
-  fixtureRegistry.set(rootElement, fixture);
-
-  for (const hook of /** @type {any} */(window).__pw_hooks_after_mount || [])
-    await hook({ hooksConfig });
+  fixtureRegistry.set(rootElement.id, fixture);
 };
 
 window.playwrightUnmount = async rootElement => {
-  const fixture = fixtureRegistry.get(rootElement);
+  const fixture = fixtureRegistry.get(rootElement.id);
   if (!fixture)
     throw new Error('Component was not mounted');
 
@@ -114,19 +192,12 @@ window.playwrightUpdate = async (rootElement, component) => {
   if (component.kind === 'jsx')
     throw new Error('JSX mount notation is not supported');
 
-  const fixture = fixtureRegistry.get(rootElement);
+  const fixture = fixtureRegistry.get(rootElement.id);
   if (!fixture)
     throw new Error('Component was not mounted');
 
-  for (const [name, value] of Object.entries(component.options?.props || {}))
-    fixture.componentRef.setInput(name, value);
+  updateProps(fixture, component.options?.props);
+  updateEvents(fixture, component.options?.on);
 
-  for (const [name, value] of Object.entries(component.options?.on || {})) {
-    fixture.componentInstance[name] = {
-      ...new EventEmitter(),
-      emit: event => value(event)
-    };
-  }
-
-  fixture.autoDetectChanges();
+  fixture.detectChanges();
 };

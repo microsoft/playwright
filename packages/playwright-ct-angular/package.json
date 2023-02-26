@@ -26,9 +26,10 @@
     }
   },
   "dependencies": {
-    "@analogjs/vite-plugin-angular": "^0.2.0-alpha.27",
+    "@analogjs/vite-plugin-angular": "^0.2.0-alpha.28",
     "@angular/common": "^15.2.0",
     "@angular/compiler": "^15.2.0",
+    "@angular/router": "^15.2.0",
     "@angular/core": "^15.2.0",
     "@angular/platform-browser": "^15.2.0",
     "@angular/platform-browser-dynamic": "^15.2.0",
@@ -39,5 +40,8 @@
   },
   "devDependencies": {
     "typescript": "~4.9.5"
+  },
+  "bin": {
+    "playwright": "./cli.js"
   }
 }

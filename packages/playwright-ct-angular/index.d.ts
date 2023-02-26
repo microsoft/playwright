@@ -55,7 +55,7 @@ interface MountResult<Component> extends Locator {
 }
 
 export interface ComponentFixtures {
-  mount<HooksConfig extends JsonObject, Component>(
+  mount<HooksConfig extends JsonObject, Component = unknown>(
     component: Type<Component>,
     options?: MountOptions<HooksConfig, Component>
   ): Promise<MountResult<Component>>;

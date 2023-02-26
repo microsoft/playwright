@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 /**
  * Copyright (c) Microsoft Corporation.
  *
@@ -13,17 +14,4 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-import type { TestBedStatic } from '@angular/core/testing';
-
-type JsonPrimitive = string | number | boolean | null;
-type JsonValue = JsonPrimitive | JsonObject | JsonArray;
-type JsonArray = JsonValue[];
-type JsonObject = { [Key in string]?: JsonValue };
-
-export declare function beforeMount<HooksConfig extends JsonObject>(
-  callback: (params: { hooksConfig: HooksConfig, TestBed: TestBedStatic }) => Promise<void>
-): void;
-export declare function afterMount<HooksConfig extends JsonObject>(
-  callback: (params: { hooksConfig: HooksConfig }) => Promise<void>
-): void;
+module.exports = require('playwright-core/cli');

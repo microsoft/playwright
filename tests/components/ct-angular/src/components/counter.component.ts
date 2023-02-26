@@ -6,6 +6,8 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
     <div (click)="submit.emit('hello')">
       <div data-testid="props">{{ count }}</div>
       <div data-testid="remount-count">{{ this.remountCount }}</div>
+      <ng-content select="[main]"></ng-content>
+      <ng-content></ng-content>
     </div>
   `,
 })
