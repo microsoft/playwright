@@ -575,7 +575,7 @@ test('should render annotations', async ({ runInlineTest, page, showReport }) =>
 
   await showReport();
   await page.click('text=skipped test');
-  await expect(page.locator('.test-case-annotation').first()).toHaveText('issues: foobar');
+  await expect(page.locator('.test-case-annotation').first()).toHaveText('issues: ["foo","bar"]');
   await expect(page.locator('.test-case-annotation').nth(1)).toHaveText('skip: I am not interested in this test');
 });
 
