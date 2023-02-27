@@ -450,7 +450,7 @@ Function to be evaluated in the worker context.
 * langs: js
 - `pageFunction` <[function]|[Electron]>
 
-Function to be evaluated in the worker context.
+Function to be evaluated in the main Electron process.
 
 ## python-context-option-viewport
 * langs: python
