@@ -130,9 +130,7 @@ it.describe('snapshots', () => {
     expect((await snapshotter.resourceContentForTest(resource.response.content._sha1)).toString()).toBe('button { color: blue; }');
   });
 
-  it('should capture frame', async ({ page, server, toImpl, browserName, snapshotter }) => {
-    it.skip(browserName === 'firefox');
-
+  it('should capture frame', async ({ page, server, toImpl, snapshotter }) => {
     await page.route('**/empty.html', route => {
       route.fulfill({
         body: '<frameset><frame src="frame.html"></frameset>',
@@ -156,9 +154,7 @@ it.describe('snapshots', () => {
     }
   });
 
-  it('should capture iframe', async ({ page, server, toImpl, browserName, snapshotter }) => {
-    it.skip(browserName === 'firefox');
-
+  it('should capture iframe', async ({ page, server, toImpl, snapshotter }) => {
     await page.route('**/empty.html', route => {
       route.fulfill({
         body: '<iframe src="iframe.html"></iframe>',
@@ -168,6 +164,26 @@ it.describe('snapshots', () => {
     await page.route('**/iframe.html', route => {
       route.fulfill({
         body: '<html><button>Hello iframe</button></html>',
+        contentType: 'text/html'
+      }).catch(() => {});
+    });
+    await page.goto(server.EMPTY_PAGE);
+
+    // Marking iframe hierarchy is racy, do not expect snapshot, wait for it.
+    for (let counter = 0; ; ++counter) {
+      const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'snapshot' + counter);
+      const text = distillSnapshot(snapshot).replace(/frame@[^"]+["]/, '<id>"');
+      if (text === '<IFRAME __playwright_src__=\"/snapshot/<id>\"></IFRAME>')
+        break;
+      await page.waitForTimeout(250);
+    }
+  });
+
+
+  it('should capture iframe with srcdoc', async ({ page, server, toImpl, snapshotter }) => {
+    await page.route('**/empty.html', route => {
+      route.fulfill({
+        body: '<iframe srcdoc="&lt;html>&lt;button>Hello iframe&lt;/button>&lt;/html>"></iframe>',
         contentType: 'text/html'
       }).catch(() => {});
     });
