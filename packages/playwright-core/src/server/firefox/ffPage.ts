@@ -118,6 +118,10 @@ export class FFPage implements PageDelegate {
     this.addInitScript('', UTILITY_WORLD_NAME).catch(e => this._markAsError(e));
   }
 
+  async resetNetworkCache(): Promise<void> {
+    // await this._session.send('Page.clearNetworkCache');
+  }
+
   potentiallyUninitializedPage(): Page {
     return this._page;
   }

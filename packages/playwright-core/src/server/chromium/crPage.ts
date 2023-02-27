@@ -118,6 +118,12 @@ export class CRPage implements PageDelegate {
     });
   }
 
+  async resetNetworkCache(): Promise<void> {
+    await this._mainFrameSession._client.send('Network.setCacheDisabled', { cacheDisabled: true });
+    await this._mainFrameSession._client.send('Network.setCacheDisabled', { cacheDisabled: false });
+    await this._mainFrameSession._client.send('Network.clearBrowserCache');
+  }
+
   potentiallyUninitializedPage(): Page {
     return this._page;
   }
