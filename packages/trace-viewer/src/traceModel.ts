@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import type { CallMetadata } from '@protocol/callMetadata';
 import type * as trace from '@trace/trace';
+import type * as traceV3 from './versions/traceV3';
 import { parseClientSideCallMetadata } from '@trace/traceUtils';
 import type zip from '@zip.js/zip.js';
 // @ts-ignore
@@ -87,7 +87,7 @@ export class TraceModel {
       await stacksEntry.getData!(writer);
       const metadataMap = parseClientSideCallMetadata(JSON.parse(await writer.getData()));
       for (const action of this.contextEntry.actions)
-        action.metadata.stack = action.metadata.stack || metadataMap.get(action.metadata.id);
+        action.stack = action.stack || metadataMap.get(action.callId);
     }
 
     this._build();
@@ -117,7 +117,7 @@ export class TraceModel {
   }
 
   private _build() {
-    this.contextEntry!.actions.sort((a1, a2) => a1.metadata.startTime - a2.metadata.startTime);
+    this.contextEntry!.actions.sort((a1, a2) => a1.startTime - a2.startTime);
     this.contextEntry!.resources = this._snapshotStorage!.resources();
   }
 
@@ -137,6 +137,8 @@ export class TraceModel {
     if (!line)
       return;
     const event = this._modernize(JSON.parse(line));
+    if (!event)
+      return;
     switch (event.type) {
       case 'context-options': {
         this.contextEntry.browserName = event.browserName;
@@ -153,22 +155,15 @@ export class TraceModel {
         break;
       }
       case 'action': {
-        const include = !isTracing(event.metadata) && (!event.metadata.internal || event.metadata.apiName);
-        if (include) {
-          if (!event.metadata.apiName)
-            event.metadata.apiName = event.metadata.type + '.' + event.metadata.method;
-          this.contextEntry!.actions.push(event);
-        }
+        this.contextEntry!.actions.push(event);
         break;
       }
       case 'event': {
-        const metadata = event.metadata;
-        if (metadata.pageId) {
-          if (metadata.method === '__create__')
-            this.contextEntry!.objects[metadata.params.guid] = metadata.params.initializer;
-          else
-            this.contextEntry!.events.push(event);
-        }
+        this.contextEntry!.events.push(event);
+        break;
+      }
+      case 'object': {
+        this.contextEntry!.initializers[event.guid] = event.initializer;
         break;
       }
       case 'resource-snapshot':
@@ -178,9 +173,13 @@ export class TraceModel {
         this._snapshotStorage!.addFrameSnapshot(event.snapshot);
         break;
     }
-    if (event.type === 'action' || event.type === 'event') {
-      this.contextEntry!.startTime = Math.min(this.contextEntry!.startTime, event.metadata.startTime);
-      this.contextEntry!.endTime = Math.max(this.contextEntry!.endTime, event.metadata.endTime);
+    if (event.type === 'action') {
+      this.contextEntry!.startTime = Math.min(this.contextEntry!.startTime, event.startTime);
+      this.contextEntry!.endTime = Math.max(this.contextEntry!.endTime, event.endTime);
+    }
+    if (event.type === 'event') {
+      this.contextEntry!.startTime = Math.min(this.contextEntry!.startTime, event.time);
+      this.contextEntry!.endTime = Math.max(this.contextEntry!.endTime, event.time);
     }
     if (event.type === 'screencast-frame') {
       this.contextEntry!.startTime = Math.min(this.contextEntry!.startTime, event.timestamp);
@@ -237,6 +236,54 @@ export class TraceModel {
     }
     return event;
   }
+
+  _modernize_3_to_4(event: traceV3.TraceEvent): trace.TraceEvent | null {
+    if (event.type !== 'action') {
+      return event as traceV3.ContextCreatedTraceEvent |
+        traceV3.ScreencastFrameTraceEvent |
+        traceV3.ResourceSnapshotTraceEvent |
+        traceV3.FrameSnapshotTraceEvent;
+    }
+
+    const metadata = event.metadata;
+    if (metadata.internal || metadata.method.startsWith('tracing'))
+      return null;
+    if (metadata.id.startsWith('event@')) {
+      if (metadata.method === '__create__' && metadata.type === 'ConsoleMessage') {
+        return {
+          type: 'object',
+          class: metadata.type,
+          guid: metadata.params.guid,
+          initializer: metadata.params.initializer,
+        };
+      }
+      return {
+        type: 'event',
+        time: metadata.startTime,
+        class: metadata.type,
+        method: metadata.method,
+        params: metadata.params,
+        pageId: metadata.pageId,
+      };
+    }
+    return {
+      type: 'action',
+      callId: metadata.id,
+      startTime: metadata.startTime,
+      endTime: metadata.endTime,
+      apiName: metadata.apiName || metadata.type + '.' + metadata.method,
+      class: metadata.type,
+      method: metadata.method,
+      params: metadata.params,
+      wallTime: metadata.wallTime || Date.now(),
+      log: metadata.log,
+      snapshots: metadata.snapshots,
+      error: metadata.error?.error,
+      result: metadata.result,
+      point: metadata.point,
+      pageId: metadata.pageId,
+    };
+  }
 }
 
 export class PersistentSnapshotStorage extends BaseSnapshotStorage {
@@ -253,8 +300,4 @@ export class PersistentSnapshotStorage extends BaseSnapshotStorage {
     await entry.getData!(writer);
     return writer.getData();
   }
-}
-
-function isTracing(metadata: CallMetadata): boolean {
-  return metadata.method.startsWith('tracing');
 }

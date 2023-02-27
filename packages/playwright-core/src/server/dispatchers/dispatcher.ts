@@ -26,6 +26,7 @@ import { rewriteErrorMessage } from '../../utils/stackTrace';
 import type { PlaywrightDispatcher } from './playwrightDispatcher';
 import { eventsHelper } from '../..//utils/eventsHelper';
 import type { RegisteredListener } from '../..//utils/eventsHelper';
+import type * as trace from '@trace/trace';
 
 export const dispatcherSymbol = Symbol('dispatcher');
 const metadataValidator = createMetadataValidator();
@@ -186,20 +187,15 @@ export class DispatcherConnection {
 
   private _sendMessageToClient(guid: string, type: string, method: string, params: any, sdkObject?: SdkObject) {
     if (sdkObject) {
-      const eventMetadata: CallMetadata = {
-        id: `event@${++lastEventId}`,
-        objectId: sdkObject?.guid,
-        pageId: sdkObject?.attribution?.page?.guid,
-        frameId: sdkObject?.attribution?.frame?.guid,
-        startTime: monotonicTime(),
-        endTime: 0,
-        type,
+      const event: trace.EventTraceEvent = {
+        type: 'event',
+        class: type,
         method,
         params: params || {},
-        log: [],
-        snapshots: []
+        time: monotonicTime(),
+        pageId: sdkObject?.attribution?.page?.guid,
       };
-      sdkObject.instrumentation?.onEvent(sdkObject, eventMetadata);
+      sdkObject.instrumentation?.onEvent(sdkObject, event);
     }
     this.onmessage({ guid, method, params });
   }
@@ -330,5 +326,3 @@ function formatLogRecording(log: string[]): string {
   const rightLength = headerLength - header.length - leftLength;
   return `\n${'='.repeat(leftLength)}${header}${'='.repeat(rightLength)}\n${log.join('\n')}\n${'='.repeat(headerLength)}`;
 }
-
-let lastEventId = 0;

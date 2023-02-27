@@ -24,7 +24,7 @@ export const StackTraceView: React.FunctionComponent<{
   selectedFrame: number,
   setSelectedFrame: (index: number) => void
 }> = ({ action, setSelectedFrame, selectedFrame }) => {
-  const frames = action?.metadata.stack || [];
+  const frames = action?.stack || [];
   return <ListView
     dataTestId='stack-trace'
     items={frames}

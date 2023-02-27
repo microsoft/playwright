@@ -42,7 +42,7 @@ export const SnapshotTab: React.FunctionComponent<{
   const [pickerVisible, setPickerVisible] = React.useState(false);
 
   const snapshotMap = new Map<string, { title: string, snapshotName: string }>();
-  for (const snapshot of action?.metadata.snapshots || [])
+  for (const snapshot of action?.snapshots || [])
     snapshotMap.set(snapshot.title, snapshot);
   const actionSnapshot = snapshotMap.get('action') || snapshotMap.get('after');
   const snapshots = [actionSnapshot ? { ...actionSnapshot, title: 'action' } : undefined, snapshotMap.get('before'), snapshotMap.get('after')].filter(Boolean) as { title: string, snapshotName: string }[];
@@ -58,11 +58,11 @@ export const SnapshotTab: React.FunctionComponent<{
       const params = new URLSearchParams();
       params.set('trace', context(action).traceUrl);
       params.set('name', snapshot.snapshotName);
-      snapshotUrl = new URL(`snapshot/${action.metadata.pageId}?${params.toString()}`, window.location.href).toString();
-      snapshotInfoUrl = new URL(`snapshotInfo/${action.metadata.pageId}?${params.toString()}`, window.location.href).toString();
+      snapshotUrl = new URL(`snapshot/${action.pageId}?${params.toString()}`, window.location.href).toString();
+      snapshotInfoUrl = new URL(`snapshotInfo/${action.pageId}?${params.toString()}`, window.location.href).toString();
       if (snapshot.snapshotName.includes('action')) {
-        pointX = action.metadata.point?.x;
-        pointY = action.metadata.point?.y;
+        pointX = action.point?.x;
+        pointY = action.point?.y;
       }
       const popoutParams = new URLSearchParams();
       popoutParams.set('r', snapshotUrl);

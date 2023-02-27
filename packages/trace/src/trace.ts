@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-import type { CallMetadata } from '@protocol/callMetadata';
-import type { StackFrame } from '@protocol/channels';
+import type { Point, SerializedError, StackFrame } from '@protocol/channels';
 import type { Language } from '../../playwright-core/src/server/isomorphic/locatorGenerators';
 import type { FrameSnapshot, ResourceSnapshot } from './snapshot';
 
 export type Size = { width: number, height: number };
 
 // Make sure you add _modernize_N_to_N1(event: any) to traceModel.ts.
-export type VERSION = 3;
+export type VERSION = 4;
 
 export type BrowserContextEventOptions = {
   viewport?: Size,
@@ -53,8 +52,38 @@ export type ScreencastFrameTraceEvent = {
 };
 
 export type ActionTraceEvent = {
-  type: 'action' | 'event',
-  metadata: CallMetadata & { stack?: StackFrame[] },
+  type: 'action',
+  callId: string;
+  startTime: number;
+  endTime: number;
+  apiName: string;
+  class: string;
+  method: string;
+  params: any;
+  wallTime: number;
+  log: string[];
+  snapshots: { title: string, snapshotName: string }[];
+  stack?: StackFrame[];
+  error?: SerializedError['error'];
+  result?: any;
+  point?: Point;
+  pageId?: string;
+};
+
+export type EventTraceEvent = {
+  type: 'event',
+  time: number;
+  class: string;
+  method: string;
+  params: any;
+  pageId?: string;
+};
+
+export type ObjectTraceEvent = {
+  type: 'object';
+  class: string;
+  initializer: any;
+  guid: string;
 };
 
 export type ResourceSnapshotTraceEvent = {
@@ -71,5 +100,7 @@ export type TraceEvent =
     ContextCreatedTraceEvent |
     ScreencastFrameTraceEvent |
     ActionTraceEvent |
+    EventTraceEvent |
+    ObjectTraceEvent |
     ResourceSnapshotTraceEvent |
     FrameSnapshotTraceEvent;

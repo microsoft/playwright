@@ -20,6 +20,7 @@ import path from 'path';
 import { browserTest, contextTest as test, expect } from '../config/browserTest';
 import { parseTrace } from '../config/utils';
 import type { StackFrame } from '@protocol/channels';
+import type { ActionTraceEvent } from '../../packages/trace/src/trace';
 
 test.skip(({ trace }) => trace === 'on');
 
@@ -111,9 +112,9 @@ test('should not include buffers in the trace', async ({ context, page, server, 
   await page.screenshot();
   await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
   const { events } = await parseTrace(testInfo.outputPath('trace.zip'));
-  const screenshotEvent = events.find(e => e.type === 'action' && e.metadata.apiName === 'page.screenshot');
-  expect(screenshotEvent.metadata.snapshots.length).toBe(2);
-  expect(screenshotEvent.metadata.result).toEqual({});
+  const screenshotEvent = events.find(e => e.type === 'action' && e.apiName === 'page.screenshot');
+  expect(screenshotEvent.snapshots.length).toBe(2);
+  expect(screenshotEvent.result).toEqual({});
 });
 
 test('should exclude internal pages', async ({ browserName, context, page, server }, testInfo) => {
@@ -127,7 +128,7 @@ test('should exclude internal pages', async ({ browserName, context, page, serve
   const trace = await parseTrace(testInfo.outputPath('trace.zip'));
   const pageIds = new Set();
   trace.events.forEach(e => {
-    const pageId = e.metadata?.pageId;
+    const pageId = e.pageId;
     if (pageId)
       pageIds.add(pageId);
   });
@@ -139,7 +140,7 @@ test('should include context API requests', async ({ browserName, context, page,
   await page.request.post(server.PREFIX + '/simple.json', { data: { foo: 'bar' } });
   await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
   const { events } = await parseTrace(testInfo.outputPath('trace.zip'));
-  const postEvent = events.find(e => e.metadata?.apiName === 'apiRequestContext.post');
+  const postEvent = events.find(e => e.apiName === 'apiRequestContext.post');
   expect(postEvent).toBeTruthy();
   const harEntry = events.find(e => e.type === 'resource-snapshot');
   expect(harEntry).toBeTruthy();
@@ -350,9 +351,9 @@ test('should include interrupted actions', async ({ context, page, server }, tes
   await context.close();
 
   const { events } = await parseTrace(testInfo.outputPath('trace.zip'));
-  const clickEvent = events.find(e => e.metadata?.apiName === 'page.click');
+  const clickEvent = events.find(e => e.apiName === 'page.click');
   expect(clickEvent).toBeTruthy();
-  expect(clickEvent.metadata.error.error.message).toBe('Action was interrupted');
+  expect(clickEvent.error.message).toBe('Action was interrupted');
 });
 
 test('should throw when starting with different options', async ({ context }) => {
@@ -395,8 +396,8 @@ test('should work with multiple chunks', async ({ context, page, server }, testI
     'page.click',
     'page.click',
   ]);
-  expect(trace1.events.find(e => e.metadata?.apiName === 'page.click' && !!e.metadata.error)).toBeTruthy();
-  expect(trace1.events.find(e => e.metadata?.apiName === 'page.click' && e.metadata?.error?.error?.message === 'Action was interrupted')).toBeTruthy();
+  expect(trace1.events.find(e => e.apiName === 'page.click' && !!e.error)).toBeTruthy();
+  expect(trace1.events.find(e => e.apiName === 'page.click' && e.error?.message === 'Action was interrupted')).toBeTruthy();
   expect(trace1.events.some(e => e.type === 'frame-snapshot')).toBeTruthy();
   expect(trace1.events.some(e => e.type === 'resource-snapshot' && e.snapshot.request.url.endsWith('style.css'))).toBeTruthy();
 
@@ -472,7 +473,7 @@ test('should hide internal stack frames', async ({ context, page }, testInfo) =>
   await context.tracing.stop({ path: tracePath });
 
   const trace = await parseTrace(tracePath);
-  const actions = trace.events.filter(e => e.type === 'action' && !e.metadata.apiName.startsWith('tracing.'));
+  const actions = trace.events.filter(e => e.type === 'action' && !e.apiName.startsWith('tracing.'));
   expect(actions).toHaveLength(4);
   for (const action of actions)
     expect(relativeStack(action, trace.stacks)).toEqual(['tracing.spec.ts']);
@@ -493,7 +494,7 @@ test('should hide internal stack frames in expect', async ({ context, page }, te
   await context.tracing.stop({ path: tracePath });
 
   const trace = await parseTrace(tracePath);
-  const actions = trace.events.filter(e => e.type === 'action' && !e.metadata.apiName.startsWith('tracing.'));
+  const actions = trace.events.filter(e => e.type === 'action' && !e.apiName.startsWith('tracing.'));
   expect(actions).toHaveLength(5);
   for (const action of actions)
     expect(relativeStack(action, trace.stacks)).toEqual(['tracing.spec.ts']);
@@ -606,7 +607,7 @@ function expectBlue(pixels: Buffer, offset: number) {
   expect(a).toBe(255);
 }
 
-function relativeStack(action: any, stacks: Map<string, StackFrame[]>): string[] {
-  const stack = stacks.get(action.metadata.id) || [];
+function relativeStack(action: ActionTraceEvent, stacks: Map<string, StackFrame[]>): string[] {
+  const stack = stacks.get(action.callId) || [];
   return stack.map(f => f.file.replace(__dirname + path.sep, ''));
 }
