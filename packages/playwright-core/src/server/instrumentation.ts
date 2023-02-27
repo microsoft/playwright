@@ -35,6 +35,7 @@ export type Attribution = {
 
 import type { CallMetadata } from '@protocol/callMetadata';
 export type { CallMetadata } from '@protocol/callMetadata';
+import type * as trace from '@trace/trace';
 
 export const kTestSdkObjects = new WeakSet<SdkObject>();
 
@@ -61,7 +62,7 @@ export interface Instrumentation {
   onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata, element: ElementHandle): Promise<void>;
   onCallLog(sdkObject: SdkObject, metadata: CallMetadata, logName: string, message: string): void;
   onAfterCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
-  onEvent(sdkObject: SdkObject, metadata: CallMetadata): void;
+  onEvent(sdkObject: SdkObject, event: trace.EventTraceEvent): void;
   onPageOpen(page: Page): void;
   onPageClose(page: Page): void;
   onBrowserOpen(browser: Browser): void;
@@ -73,7 +74,7 @@ export interface InstrumentationListener {
   onBeforeInputAction?(sdkObject: SdkObject, metadata: CallMetadata, element: ElementHandle): Promise<void>;
   onCallLog?(sdkObject: SdkObject, metadata: CallMetadata, logName: string, message: string): void;
   onAfterCall?(sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
-  onEvent?(sdkObject: SdkObject, metadata: CallMetadata): void;
+  onEvent?(sdkObject: SdkObject, event: trace.EventTraceEvent): void;
   onPageOpen?(page: Page): void;
   onPageClose?(page: Page): void;
   onBrowserOpen?(browser: Browser): void;

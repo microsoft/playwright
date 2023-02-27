@@ -45,8 +45,8 @@ export const ActionList: React.FC<ActionListProps> = ({
     selectedItem={selectedAction}
     onSelected={(action: ActionTraceEvent) => onSelected(action)}
     onHighlighted={(action: ActionTraceEvent) => onHighlighted(action)}
-    itemKey={(action: ActionTraceEvent) => action.metadata.id}
-    itemType={(action: ActionTraceEvent) => action.metadata.error?.error?.message ? 'error' : undefined}
+    itemKey={(action: ActionTraceEvent) => action.callId}
+    itemType={(action: ActionTraceEvent) => action.error?.message ? 'error' : undefined}
     itemRender={(action: ActionTraceEvent) => renderAction(action, sdkLanguage, setSelectedTab)}
     showNoItemsMessage={true}
   ></ListView>;
@@ -57,17 +57,16 @@ const renderAction = (
   sdkLanguage: Language | undefined,
   setSelectedTab: (tab: string) => void
 ) => {
-  const { metadata } = action;
   const { errors, warnings } = modelUtil.stats(action);
-  const locator = metadata.params.selector ? asLocator(sdkLanguage || 'javascript', metadata.params.selector) : undefined;
+  const locator = action.params.selector ? asLocator(sdkLanguage || 'javascript', action.params.selector) : undefined;
 
   return <>
     <div className='action-title'>
-      <span>{metadata.apiName}</span>
+      <span>{action.apiName}</span>
       {locator && <div className='action-selector' title={locator}>{locator}</div>}
-      {metadata.method === 'goto' && metadata.params.url && <div className='action-url' title={metadata.params.url}>{metadata.params.url}</div>}
+      {action.method === 'goto' && action.params.url && <div className='action-url' title={action.params.url}>{action.params.url}</div>}
     </div>
-    <div className='action-duration' style={{ flex: 'none' }}>{metadata.endTime ? msToString(metadata.endTime - metadata.startTime) : 'Timed Out'}</div>
+    <div className='action-duration' style={{ flex: 'none' }}>{action.endTime ? msToString(action.endTime - action.startTime) : 'Timed Out'}</div>
     <div className='action-icons' onClick={() => setSelectedTab('console')}>
       {!!errors && <div className='action-icon'><span className={'codicon codicon-error'}></span><span className="action-icon-value">{errors}</span></div>}
       {!!warnings && <div className='action-icon'><span className={'codicon codicon-warning'}></span><span className="action-icon-value">{warnings}</span></div>}
