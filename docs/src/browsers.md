@@ -230,7 +230,7 @@ The VS Code test runner runs your tests on the default browser of Chrome. To run
 
 Choose a specific profile, various profiles or all profiles to run tests on.
 
-<img width="1536" alt="choosing default profiles" src="https://user-images.githubusercontent.com/13063165/221669537-e5df8672-f50d-4ff1-96f9-141cd67e12f8.png">
+<img width="1536" alt="choosing default profiles" src="https://user-images.githubusercontent.com/13063165/221669537-e5df8672-f50d-4ff1-96f9-141cd67e12f8.png" />
 
 ### Run tests on different browsers
 * langs: python
@@ -249,12 +249,12 @@ pytest test_login.py --browser webkit --browser firefox
 
 Test against mobile viewports:
 
-```python
+```bash
 pytest test_login.py --device iphone_13
 ```
 Test against branded browsers:
 
-```python
+```bash
 pytest test_login.py --browser-channel msedge
 ```
 
