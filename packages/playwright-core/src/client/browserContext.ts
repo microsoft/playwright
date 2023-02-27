@@ -275,7 +275,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
         urlFilter: options.url
       })!
     });
-    this._harRecorders.set(harId, { path: har, content: 'attach' });
+    this._harRecorders.set(harId, { path: har, content: options.content ?? 'attach' });
   }
 
   async routeFromHAR(har: string, options: { url?: string | RegExp, notFound?: 'abort' | 'fallback', update?: boolean, content?: 'omit' | 'attach' | 'embed' | undefined, mode?: 'minimal' | 'full' } = {}): Promise<void> {

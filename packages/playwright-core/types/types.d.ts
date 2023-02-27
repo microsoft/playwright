@@ -8061,8 +8061,17 @@ export interface BrowserContext {
    * @param options
    */
   routeFromHAR(har: string, options?: {
+    /**
+     * Optional setting to control resource content management. If `omit` is specified, content is not persisted. If
+     * `attach` is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is
+     * specified, content is stored inline the HAR file
+     */
     content?: "omit"|"embed"|"attach";
 
+    /**
+     * When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page,
+     * cookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to `full`.
+     */
     mode?: "full"|"minimal";
 
     /**
@@ -8080,6 +8089,10 @@ export interface BrowserContext {
      */
     update?: boolean;
 
+    /**
+     * A glob pattern, regular expression or predicate to match the request URL. Only requests with URL matching the
+     * pattern will be served from the HAR file. If not specified, all requests are served from the HAR file.
+     */
     url?: string|RegExp;
   }): Promise<void>;
 
