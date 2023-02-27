@@ -3556,6 +3556,10 @@ export interface Page {
    * @param options
    */
   routeFromHAR(har: string, options?: {
+    content?: "omit"|"embed"|"attach";
+
+    mode?: "full"|"minimal";
+
     /**
      * - If set to 'abort' any request not found in the HAR file will be aborted.
      * - If set to 'fallback' missing requests will be sent to the network.
@@ -8057,6 +8061,20 @@ export interface BrowserContext {
    * @param options
    */
   routeFromHAR(har: string, options?: {
+    /**
+     * Optional setting to control resource content management. If `omit` is specified, content is not persisted. If
+     * `attach` is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is
+     * specified, content is stored inline the HAR file
+     */
+    content?: "omit"|"embed"|"attach";
+
+    /**
+     * When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page,
+     * cookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to
+     * `minimal`.
+     */
+    mode?: "full"|"minimal";
+
     /**
      * - If set to 'abort' any request not found in the HAR file will be aborted.
      * - If set to 'fallback' falls through to the next route handler in the handler chain.

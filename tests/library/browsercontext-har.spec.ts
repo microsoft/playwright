@@ -371,6 +371,23 @@ it('should update har.zip for page', async ({ contextFactory, server }, testInfo
   await expect(page2.locator('body')).toHaveCSS('background-color', 'rgb(255, 192, 203)');
 });
 
+
+it('should update har.zip for page with different options', async ({ contextFactory, server }, testInfo) => {
+  const harPath = testInfo.outputPath('har.zip');
+  const context1 = await contextFactory();
+  const page1 = await context1.newPage();
+  await page1.routeFromHAR(harPath, { 'update': true, 'content': 'embed', 'mode': 'full' });
+  await page1.goto(server.PREFIX + '/one-style.html');
+  await context1.close();
+
+  const context2 = await contextFactory();
+  const page2 = await context2.newPage();
+  await page2.routeFromHAR(harPath, { notFound: 'abort' });
+  await page2.goto(server.PREFIX + '/one-style.html');
+  expect(await page2.content()).toContain('hello, world!');
+  await expect(page2.locator('body')).toHaveCSS('background-color', 'rgb(255, 192, 203)');
+});
+
 it('should update extracted har.zip for page', async ({ contextFactory, server }, testInfo) => {
   const harPath = testInfo.outputPath('har.har');
   const context1 = await contextFactory();
