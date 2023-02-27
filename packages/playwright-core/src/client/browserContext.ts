@@ -270,7 +270,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
       page: page?._channel,
       options: prepareRecordHarOptions({
         path: har,
-        content: options.content ?? 'embed',
+        content: options.content ?? 'attach',
         mode: options.mode ?? 'minimal',
         urlFilter: options.url
       })!
