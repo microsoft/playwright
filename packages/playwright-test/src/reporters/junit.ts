@@ -116,7 +116,7 @@ class JUnitReporter implements Reporter {
       name: 'testsuite',
       attributes: {
         name: suite.title,
-        timestamp: this.timestamp?.toISOString(),
+        timestamp: this.timestamp.toISOString(),
         hostname: projectName,
         tests,
         failures,
