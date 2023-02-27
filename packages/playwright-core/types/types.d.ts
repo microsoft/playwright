@@ -3556,6 +3556,10 @@ export interface Page {
    * @param options
    */
   routeFromHAR(har: string, options?: {
+    content?: "omit"|"embed"|"attach";
+
+    mode?: "full"|"minimal";
+
     /**
      * - If set to 'abort' any request not found in the HAR file will be aborted.
      * - If set to 'fallback' missing requests will be sent to the network.
@@ -8057,6 +8061,10 @@ export interface BrowserContext {
    * @param options
    */
   routeFromHAR(har: string, options?: {
+    content?: "omit"|"embed"|"attach";
+
+    mode?: "full"|"minimal";
+
     /**
      * - If set to 'abort' any request not found in the HAR file will be aborted.
      * - If set to 'fallback' falls through to the next route handler in the handler chain.
@@ -8072,10 +8080,6 @@ export interface BrowserContext {
      */
     update?: boolean;
 
-    /**
-     * A glob pattern, regular expression or predicate to match the request URL. Only requests with URL matching the
-     * pattern will be served from the HAR file. If not specified, all requests are served from the HAR file.
-     */
     url?: string|RegExp;
   }): Promise<void>;
 
