@@ -132,12 +132,16 @@ playwright install --with-deps chromium
 pwsh bin/Debug/netX/playwright.ps1 install --with-deps chromium
 ```
 
-## Update Playwright dependency
+## Update Playwright regulary
 
 By keeping your Playwright version up to date you will be able to test your app on the latest browser versions and catch failures before the latest browser version is released to the public.
 
 ```bash js
+# Update playwright
 npm install -D @playwright/test@latest
+
+# Install new browsers
+npx playwright install
 ```
 Check the [release notes](./release-notes.md) to see what the latest version is and what changes have been released.
 
@@ -155,42 +159,7 @@ Playwright can run tests on chromium, webkit and firefox browsers as well as bra
 
 Playwright can run your tests in multiple browsers and configurations by setting up **projects** in the config. You can also add [different options][TestProject] for each project. 
 
-```js tab=js-js
-// @ts-check
-const { devices, defineConfig } = require('@playwright/test');
-
-module.exports = defineConfig({
-  projects: [
-    /* Test against desktop browsers */
-    {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
-    },
-    {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
-    },
-    {
-      name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
-    },
-     /* Test against mobile viewports. */
-    {
-      name: 'Mobile Safari',
-      use: {
-        ...devices['iPhone 13'],
-      },
-    },
-    /* Test against branded browsers. */
-    {
-      name: 'Microsoft Edge',
-      use: { channel: 'msedge' }, // or 'chrome', 'chrome-beta', 'msedge-beta', 'msedge-dev'
-    },
-  ],
-});
-```
-
-```js tab=js-ts
+```js
 import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
@@ -219,12 +188,12 @@ export default defineConfig({
     },
     /* Test against branded browsers. */
     {
-      name: 'Microsoft Edge',
-      use: { channel: 'msedge' }, // or 'msedge-beta', 'msedge-dev'
+      name: 'Google Chrome',
+      use: { ...devices['Desktop Chrome'], channel: 'chrome' }, // or 'chrome-beta'
     },
     {
-      name: 'Google Chrome',
-      use: { channel: 'chrome' }, // or 'chrome-beta'
+      name: 'Microsoft Edge',
+      use: { ...devices['Desktop Edge'], channel: 'msedge' }, // or 'msedge-dev'
     },
   ],
 });
@@ -242,8 +211,8 @@ Running 7 tests using 5 workers
   ✓ [webkit] › example.spec.ts:3:1 › basic test (2s)
   ✓ [Mobile Chrome] › example.spec.ts:3:1 › basic test (2s)
   ✓ [Mobile Safari] › example.spec.ts:3:1 › basic test (2s)
-  ✓ [Microsoft Edge] › example.spec.ts:3:1 › basic test (2s)
   ✓ [Google Chrome] › example.spec.ts:3:1 › basic test (2s)
+  ✓ [Microsoft Edge] › example.spec.ts:3:1 › basic test (2s)
 ```
 
 Use the `--project` command line option to run a single project.
@@ -261,12 +230,12 @@ The VS Code test runner runs your tests on the default browser of Chrome. To run
 
 Choose a specific profile, various profiles or all profiles to run tests on.
 
-<img width="1464" alt="choosing default profiles" src="https://user-images.githubusercontent.com/13063165/221137348-81ecaa1d-b7c9-4696-be9f-25149d40dee9.png" />
+<img width="1536" alt="choosing default profiles" src="https://user-images.githubusercontent.com/13063165/221669537-e5df8672-f50d-4ff1-96f9-141cd67e12f8.png">
 
-## Run tests on different browsers
+### Run tests on different browsers
 * langs: python
 
-Run Tests on specific browsers:
+Run tests on specific browsers:
 
 ```bash
 pytest test_login.py --browser webkit
@@ -278,33 +247,39 @@ Run Tests on multiple browsers:
 pytest test_login.py --browser webkit --browser firefox
 ```
 
-## Run tests on different browsers
+Test against mobile viewports:
+
+```python
+pytest test_login.py --device iphone_13
+```
+Test against branded browsers:
+
+```python
+pytest test_login.py --browser-channel msedge
+```
+
+### Run tests on different browsers
 * langs: java
 
 ```java
-package org.example;
-
-import java.util.regex.Pattern;
 import com.microsoft.playwright.*;
-import com.microsoft.playwright.options.AriaRole;
 
-import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
-
-public class App {
-    public static void main(String[] args) {
-        try (Playwright playwright = Playwright.create()) {
-            Browser browser = playwright.chromium().launch();
-            Page page = browser.newPage();
-            // test code
-        }
+public class Example {
+  public static void main(String[] args) {
+    try (Playwright playwright = Playwright.create()) {
+      // Launch chromium, firefox or webkit.
+      Browser browser = playwright.chromium().launch();
+      Page page = browser.newPage();
+      // ...
     }
+  }
 }
 ```
 
-## Run tests on different browsers
+### Run tests on different browsers
 * langs: csharp
 
-Run Tests on specific browsers:
+Run tests on a specific browser:
 
 ```bash
 dotnet test -- Playwright.BrowserName=webkit
@@ -335,22 +310,23 @@ For Google Chrome, Microsoft Edge and other Chromium-based browsers, by default,
 
 While Playwright can download and use the recent Chromium build, it can operate against the branded Google Chrome and Microsoft Edge browsers available on the machine (note that Playwright doesn't install them by default). In particular, the current Playwright version will support Stable and Beta channels of these browsers.
 
-```js tab=js-js
-// @ts-check
-const { defineConfig } = require('@playwright/test');
-module.exports = defineConfig({
-  use: {
-    channel: 'chrome',
-  },
-});
-```
+Channel can be `chrome`, `msedge`, `chrome-beta`, `msedge-beta` or `msedge-dev`.
 
-```js tab=js-ts
-import { defineConfig } from '@playwright/test';
+```js
+import { defineConfig, devices } from '@playwright/test';
+
 export default defineConfig({
-  use: {
-    channel: 'chrome',
-  },
+  projects: [
+    /* Test against branded browsers. */
+    {
+      name: 'Google Chrome',
+      use: { ...devices['Desktop Chrome'], channel: 'chrome' }, // or 'chrome-beta'
+    },
+    {
+      name: 'Microsoft Edge',
+      use: { ...devices['Desktop Edge'], channel: 'msedge' }, // or "msedge-beta" or 'msedge-dev'
+    },
+  ],
 });
 ```
 
@@ -360,30 +336,41 @@ import com.microsoft.playwright.*;
 public class Example {
   public static void main(String[] args) {
     try (Playwright playwright = Playwright.create()) {
-      BrowserType chromium = playwright.chromium();
-      // Can be "msedge", "chrome-beta", "msedge-beta", "msedge-dev", etc.
-      Browser browser = chromium.launch(new BrowserType.LaunchOptions().setChannel("chrome"));
+      // Channel can be "chrome", "msedge", "chrome-beta", "msedge-beta" or "msedge-dev".
+      Browser browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setChannel("chrome"));
+      Page page = browser.newPage();
+      // ...
     }
   }
 }
 ```
 
-```python async
-# Can be "msedge", "chrome-beta", "msedge-beta", "msedge-dev", etc.
-browser = await playwright.chromium.launch(channel="chrome")
-```
-
-```python sync
-# Can be "msedge", "chrome-beta", "msedge-beta", "msedge-dev", etc.
-browser = playwright.chromium.launch(channel="chrome")
+```python
+pytest test_login.py --browser-channel msedge
 ```
 
 ```csharp
 using Microsoft.Playwright;
 using var playwright = await Playwright.CreateAsync();
 var chromium = playwright.Chromium;
-// Can be "msedge", "chrome-beta", "msedge-beta", "msedge-dev", etc.
+// Channel can be "chrome", "msedge", "chrome-beta", "msedge-beta" or "msedge-dev".
 var browser = await chromium.LaunchAsync(new BrowserTypeLaunchOptions { Channel = "chrome" });
+```
+
+```csharp
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <Playwright>
+    <BrowserName>chromium</BrowserName>
+    <LaunchOptions>
+      <Channel>msedge</Channel>
+    </LaunchOptions>
+  </Playwright>
+</RunSettings>
+```
+
+```csharp
+dotnet test -- Playwright.BrowserName=chromium Playwright.LaunchOptions.Channel=msedge
 ```
 
 #### Installing Google Chrome & Microsoft Edge
