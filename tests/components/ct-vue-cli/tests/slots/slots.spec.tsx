@@ -4,8 +4,12 @@ import DefaultSlot from '@/components/DefaultSlot.vue';
 import NamedSlots from '@/components/NamedSlots.vue';
 
 test('render a default slot', async ({ mount }) => {
-  const component = await mount(<DefaultSlot>Main Content</DefaultSlot>);
-  await expect(component).toContainText('Main Content');
+  const component = await mount(
+    <DefaultSlot>
+      <strong>Main Content</strong>
+    </DefaultSlot>
+  );
+  await expect(component.getByRole('strong')).toContainText('Main Content');
 });
 
 test('render a component as slot', async ({ mount }) => {
@@ -17,15 +21,15 @@ test('render a component as slot', async ({ mount }) => {
   await expect(component).toContainText('Submit');
 });
 
-test('render a component with multiple children', async ({ mount }) => {
+test('render a component with multiple slots', async ({ mount }) => {
   const component = await mount(
     <DefaultSlot>
-      <div id="one">One</div>
-      <div id="two">Two</div>
+      <div data-testid="one">One</div>
+      <div data-testid="two">Two</div>
     </DefaultSlot>
   );
-  await expect(component.locator('#one')).toContainText('One');
-  await expect(component.locator('#two')).toContainText('Two');
+  await expect(component.getByTestId('one')).toContainText('One');
+  await expect(component.getByTestId('two')).toContainText('Two');
 });
 
 test('render a component with a named slot', async ({ mount }) => {
