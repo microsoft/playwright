@@ -96,7 +96,7 @@ playwright install-deps
 pwsh bin/Debug/netX/playwright.ps1 install-deps
 ```
 
-You can also install the dependencies for a single browser only by passing it as an argument:
+You can also install the dependencies for a single browser by passing it as an argument:
 
 ```bash js
 npx playwright install-deps chromium
@@ -114,7 +114,7 @@ playwright install-deps chromium
 pwsh bin/Debug/netX/playwright.ps1 install-deps chromium
 ```
 
-It's also possible to combine `install-deps` with `install` and install by that the browsers and OS dependencies with a single command. This would do both for Chromium, but you can also leave it out.
+It's also possible to combine `install-deps` with `install` so that the browsers and OS dependencies are installed with a single command.
 
 ```bash js
 npx playwright install --with-deps chromium
@@ -134,7 +134,7 @@ pwsh bin/Debug/netX/playwright.ps1 install --with-deps chromium
 
 ## Update Playwright regulary
 
-By keeping your Playwright version up to date you will be able to test your app on the latest browser versions and catch failures before the latest browser version is released to the public.
+By keeping your Playwright version up to date you will be able to use new features and test your app on the latest browser versions and catch failures before the latest browser version is released to the public.
 
 ```bash js
 # Update playwright
@@ -157,7 +157,7 @@ Playwright can run tests on chromium, webkit and firefox browsers as well as bra
 ### Run tests on different browsers
 * langs: js
 
-Playwright can run your tests in multiple browsers and configurations by setting up **projects** in the config. You can also add [different options][TestProject] for each project. 
+Playwright can run your tests in multiple browsers and configurations by setting up **projects** in the config. You can also add [different options](./test-configuration) for each project. 
 
 ```js
 import { defineConfig, devices } from '@playwright/test';
@@ -199,7 +199,7 @@ export default defineConfig({
 });
 ```
 
-Playwright Test will run all projects by default.
+Playwright will run all projects by default.
 
 ```bash
 npx playwright test
@@ -224,6 +224,7 @@ Running 1 test using 1 worker
 
   ✓ [firefox] › example.spec.ts:3:1 › basic test (2s)
 ```
+
 The VS Code test runner runs your tests on the default browser of Chrome. To run on other/multiple browsers click the play button's dropdown from the testing sidebar and choose another profile or modify the default profile by clicking **Select Default Profile** and select the browsers you wish to run your tests on.
 
 <img width="1464" alt="selecting browsers" src="https://user-images.githubusercontent.com/13063165/221136731-9d4bc18f-38a4-4adb-997b-5b98c98aec7f.png" />
@@ -235,13 +236,13 @@ Choose a specific profile, various profiles or all profiles to run tests on.
 ### Run tests on different browsers
 * langs: python
 
-Run tests on specific browsers:
+Run tests on a specific browser:
 
 ```bash
 pytest test_login.py --browser webkit
 ```
 
-Run Tests on multiple browsers:
+Run tests on multiple browsers:
 
 ```bash
 pytest test_login.py --browser webkit --browser firefox
@@ -310,7 +311,7 @@ For Google Chrome, Microsoft Edge and other Chromium-based browsers, by default,
 
 While Playwright can download and use the recent Chromium build, it can operate against the branded Google Chrome and Microsoft Edge browsers available on the machine (note that Playwright doesn't install them by default). In particular, the current Playwright version will support Stable and Beta channels of these browsers.
 
-Channel can be `chrome`, `msedge`, `chrome-beta`, `msedge-beta` or `msedge-dev`.
+Available channels are `chrome`, `msedge`, `chrome-beta`, `msedge-beta` or `msedge-dev`.
 
 ```js
 import { defineConfig, devices } from '@playwright/test';
@@ -347,14 +348,6 @@ public class Example {
 
 ```python
 pytest test_login.py --browser-channel msedge
-```
-
-```csharp
-using Microsoft.Playwright;
-using var playwright = await Playwright.CreateAsync();
-var chromium = playwright.Chromium;
-// Channel can be "chrome", "msedge", "chrome-beta", "msedge-beta" or "msedge-dev".
-var browser = await chromium.LaunchAsync(new BrowserTypeLaunchOptions { Channel = "chrome" });
 ```
 
 ```csharp
@@ -399,7 +392,7 @@ Google Chrome or Microsoft Edge installations will be installed at the
 default global location of your operating system overriding your current browser installation.
 :::
 
-Run with `--help` option to see full list of the browsers that can be installed this way.
+Run with the `--help` option to see a full a list of browsers that can be installed.
 
 #### When to use Google Chrome & Microsoft Edge and when not to?
 
@@ -421,11 +414,11 @@ the current publicly available browsers. In this case, you can opt into one of t
 Another reason for testing using official binaries is to test functionality related to media codecs.
 Chromium does not have all the codecs that Google Chrome or Microsoft Edge are bundling due to
 various licensing considerations and agreements. If your site relies on this kind of codecs (which is
-rarely the case), you also want to use official channel.
+rarely the case), you will also want to use the official channel.
 
 ##### Enterprise policy
 
-Google Chrome and Microsoft Edge respect enterprise policies, which include limitations to the capabilities, network proxy, mandatory extensions that stand in the way of testing. So if you are a part of the organization that uses such policies, it is the easiest to use bundled Chromium for your local testing, you can still opt into stable channels on the bots that are typically free of such restrictions.
+Google Chrome and Microsoft Edge respect enterprise policies, which include limitations to the capabilities, network proxy, mandatory extensions that stand in the way of testing. So if you are part of the organization that uses such policies, it is easiest to use bundled Chromium for your local testing, you can still opt into stable channels on the bots that are typically free of such restrictions.
 
 ### Firefox
 
@@ -436,7 +429,7 @@ Playwright's WebKit version matches the recent WebKit trunk build, before it is 
 
 ## Install behind a firewall or a proxy
 
-By default, Playwright downloads browsers from Microsoft CDN.
+By default, Playwright downloads browsers from Microsoft's CDN.
 
 Sometimes companies maintain an internal proxy that blocks direct access to the public
 resources. In this case, Playwright can be configured to download browsers via a proxy server.
@@ -590,7 +583,7 @@ pwsh bin/Debug/netX/playwright.ps1 install
 ```
 ## Download from artifact repository
 
-By default, Playwright downloads browsers from Microsoft CDN.
+By default, Playwright downloads browsers from Microsoft's CDN.
 
 Sometimes companies maintain an internal artifact repository to host browser
 binaries. In this case, Playwright can be configured to download from a custom
@@ -994,6 +987,6 @@ pwsh bin/Debug/netX/playwright.ps1 install
 
 ### Stale browser removal
 
-Playwright keeps track of the clients that use its browsers. When there are no more clients that require particular version of the browser, that version is deleted from the system. That way you can safely use Playwright instances of different versions and at the same time, you don't waste disk space for the browsers that are no longer in use.
+Playwright keeps track of the clients that use its browsers. When there are no more clients that require a particular version of the browser, that version is deleted from the system. That way you can safely use Playwright instances of different versions and at the same time, you don't waste disk space for the browsers that are no longer in use.
 
 To opt-out from the unused browser removal, you can set the `PLAYWRIGHT_SKIP_BROWSER_GC=1` environment variable.
