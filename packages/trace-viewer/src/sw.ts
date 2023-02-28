@@ -76,12 +76,12 @@ async function doFetch(event: FetchEvent): Promise<Response> {
     const traceUrl = url.searchParams.get('trace')!;
     const { snapshotServer } = loadedTraces.get(traceUrl) || {};
 
-    if (relativePath === '/context') {
+    if (relativePath === '/contexts') {
       try {
         const traceModel = await loadTrace(traceUrl, url.searchParams.get('traceFileName'), event.clientId, (done: number, total: number) => {
           client.postMessage({ method: 'progress', params: { done, total } });
         });
-        return new Response(JSON.stringify(traceModel!.contextEntry), {
+        return new Response(JSON.stringify(traceModel!.contextEntries), {
           status: 200,
           headers: { 'Content-Type': 'application/json' }
         });

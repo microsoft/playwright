@@ -27,7 +27,7 @@ import { BaseSnapshotStorage } from './snapshotStorage';
 const zipjs = zipImport as typeof zip;
 
 export class TraceModel {
-  contextEntry: ContextEntry;
+  contextEntries: ContextEntry[] = [];
   pageEntries = new Map<string, PageEntry>();
   private _snapshotStorage: PersistentSnapshotStorage | undefined;
   private _entries = new Map<string, zip.Entry>();
@@ -35,7 +35,6 @@ export class TraceModel {
   private _zipReader: zip.ZipReader | undefined;
 
   constructor() {
-    this.contextEntry = createEmptyContext();
   }
 
   private _formatUrl(trace: string) {
@@ -47,50 +46,54 @@ export class TraceModel {
   }
 
   async load(traceURL: string, progress: (done: number, total: number) => void) {
-    this.contextEntry.traceUrl = traceURL;
     this._zipReader = new zipjs.ZipReader( // @ts-ignore
         new zipjs.HttpReader(this._formatUrl(traceURL), { mode: 'cors', preventHeadRequest: true }),
         { useWebWorkers: false }) as zip.ZipReader;
-    let traceEntry: zip.Entry | undefined;
-    let networkEntry: zip.Entry | undefined;
-    let stacksEntry: zip.Entry | undefined;
+
+    const ordinals: string[] = [];
+    let hasSource = false;
     for (const entry of await this._zipReader.getEntries({ onprogress: progress })) {
-      if (entry.filename.endsWith('.trace'))
-        traceEntry = entry;
-      if (entry.filename.endsWith('.network'))
-        networkEntry = entry;
-      if (entry.filename.endsWith('.stacks'))
-        stacksEntry = entry;
+      const match = entry.filename.match(/([\d]+-)?trace\.trace/);
+      if (match)
+        ordinals.push(match[1] || '');
       if (entry.filename.includes('src@'))
-        this.contextEntry.hasSource = true;
+        hasSource = true;
       this._entries.set(entry.filename, entry);
     }
-    if (!traceEntry)
+    if (!ordinals.length)
       throw new Error('Cannot find .trace file');
 
     this._snapshotStorage = new PersistentSnapshotStorage(this._entries);
 
-    const traceWriter = new zipjs.TextWriter() as zip.TextWriter;
-    await traceEntry.getData!(traceWriter);
-    for (const line of (await traceWriter.getData()).split('\n'))
-      this.appendEvent(line);
+    for (const ordinal of ordinals) {
+      const contextEntry = createEmptyContext();
+      contextEntry.traceUrl = traceURL;
+      contextEntry.hasSource = hasSource;
 
-    if (networkEntry) {
+      const traceWriter = new zipjs.TextWriter() as zip.TextWriter;
+      const traceEntry = this._entries.get(ordinal + 'trace.trace')!;
+      await traceEntry!.getData!(traceWriter);
+      for (const line of (await traceWriter.getData()).split('\n'))
+        this.appendEvent(contextEntry, line);
+
       const networkWriter = new zipjs.TextWriter();
-      await networkEntry.getData!(networkWriter);
+      const networkEntry = this._entries.get(ordinal + 'trace.network')!;
+      await networkEntry?.getData?.(networkWriter);
       for (const line of (await networkWriter.getData()).split('\n'))
-        this.appendEvent(line);
-    }
+        this.appendEvent(contextEntry, line);
 
-    if (stacksEntry) {
-      const writer = new zipjs.TextWriter();
-      await stacksEntry.getData!(writer);
-      const metadataMap = parseClientSideCallMetadata(JSON.parse(await writer.getData()));
-      for (const action of this.contextEntry.actions)
-        action.stack = action.stack || metadataMap.get(action.callId);
-    }
+      const stacksWriter = new zipjs.TextWriter();
+      const stacksEntry = this._entries.get(ordinal + 'trace.stacks');
+      if (stacksEntry) {
+        await stacksEntry!.getData!(stacksWriter);
+        const stacks = parseClientSideCallMetadata(JSON.parse(await stacksWriter.getData()));
+        for (const action of contextEntry.actions)
+          action.stack = action.stack || stacks.get(action.callId);
+      }
 
-    this._build();
+      contextEntry.actions.sort((a1, a2) => a1.startTime - a2.startTime);
+      this.contextEntries.push(contextEntry);
+    }
   }
 
   async hasEntry(filename: string): Promise<boolean> {
@@ -116,24 +119,19 @@ export class TraceModel {
     return this._snapshotStorage!;
   }
 
-  private _build() {
-    this.contextEntry!.actions.sort((a1, a2) => a1.startTime - a2.startTime);
-    this.contextEntry!.resources = this._snapshotStorage!.resources();
-  }
-
-  private _pageEntry(pageId: string): PageEntry {
+  private _pageEntry(contextEntry: ContextEntry, pageId: string): PageEntry {
     let pageEntry = this.pageEntries.get(pageId);
     if (!pageEntry) {
       pageEntry = {
         screencastFrames: [],
       };
       this.pageEntries.set(pageId, pageEntry);
-      this.contextEntry.pages.push(pageEntry);
+      contextEntry.pages.push(pageEntry);
     }
     return pageEntry;
   }
 
-  appendEvent(line: string) {
+  appendEvent(contextEntry: ContextEntry, line: string) {
     if (!line)
       return;
     const event = this._modernize(JSON.parse(line));
@@ -141,49 +139,50 @@ export class TraceModel {
       return;
     switch (event.type) {
       case 'context-options': {
-        this.contextEntry.browserName = event.browserName;
-        this.contextEntry.title = event.title;
-        this.contextEntry.platform = event.platform;
-        this.contextEntry.wallTime = event.wallTime;
-        this.contextEntry.sdkLanguage = event.sdkLanguage;
-        this.contextEntry.options = event.options;
-        this.contextEntry.testIdAttributeName = event.testIdAttributeName;
+        contextEntry.browserName = event.browserName;
+        contextEntry.title = event.title;
+        contextEntry.platform = event.platform;
+        contextEntry.wallTime = event.wallTime;
+        contextEntry.sdkLanguage = event.sdkLanguage;
+        contextEntry.options = event.options;
+        contextEntry.testIdAttributeName = event.testIdAttributeName;
         break;
       }
       case 'screencast-frame': {
-        this._pageEntry(event.pageId).screencastFrames.push(event);
+        this._pageEntry(contextEntry, event.pageId).screencastFrames.push(event);
         break;
       }
       case 'action': {
-        this.contextEntry!.actions.push(event);
+        contextEntry!.actions.push(event);
         break;
       }
       case 'event': {
-        this.contextEntry!.events.push(event);
+        contextEntry!.events.push(event);
         break;
       }
       case 'object': {
-        this.contextEntry!.initializers[event.guid] = event.initializer;
+        contextEntry!.initializers[event.guid] = event.initializer;
         break;
       }
       case 'resource-snapshot':
         this._snapshotStorage!.addResource(event.snapshot);
+        contextEntry.resources.push(event.snapshot);
         break;
       case 'frame-snapshot':
         this._snapshotStorage!.addFrameSnapshot(event.snapshot);
         break;
     }
     if (event.type === 'action') {
-      this.contextEntry!.startTime = Math.min(this.contextEntry!.startTime, event.startTime);
-      this.contextEntry!.endTime = Math.max(this.contextEntry!.endTime, event.endTime);
+      contextEntry.startTime = Math.min(contextEntry.startTime, event.startTime);
+      contextEntry.endTime = Math.max(contextEntry.endTime, event.endTime);
     }
     if (event.type === 'event') {
-      this.contextEntry!.startTime = Math.min(this.contextEntry!.startTime, event.time);
-      this.contextEntry!.endTime = Math.max(this.contextEntry!.endTime, event.time);
+      contextEntry.startTime = Math.min(contextEntry.startTime, event.time);
+      contextEntry.endTime = Math.max(contextEntry.endTime, event.time);
     }
     if (event.type === 'screencast-frame') {
-      this.contextEntry!.startTime = Math.min(this.contextEntry!.startTime, event.timestamp);
-      this.contextEntry!.endTime = Math.max(this.contextEntry!.endTime, event.timestamp);
+      contextEntry.startTime = Math.min(contextEntry.startTime, event.timestamp);
+      contextEntry.endTime = Math.max(contextEntry.endTime, event.timestamp);
     }
   }
 
@@ -206,7 +205,7 @@ export class TraceModel {
   _modernize_1_to_2(event: any): any {
     if (event.type === 'frame-snapshot' && event.snapshot.isMainFrame) {
       // Old versions had completely wrong viewport.
-      event.snapshot.viewport = this.contextEntry.options.viewport || { width: 1280, height: 720 };
+      event.snapshot.viewport = this.contextEntries[0]?.options?.viewport || { width: 1280, height: 720 };
     }
     return event;
   }

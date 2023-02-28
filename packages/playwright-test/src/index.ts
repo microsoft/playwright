@@ -18,7 +18,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import type { APIRequestContext, BrowserContext, BrowserContextOptions, LaunchOptions, Page, Tracing, Video } from 'playwright-core';
 import * as playwrightLibrary from 'playwright-core';
-import { createGuid, debugMode, removeFolders, addInternalStackPrefix } from 'playwright-core/lib/utils';
+import { createGuid, debugMode, removeFolders, addInternalStackPrefix, mergeTraceFiles } from 'playwright-core/lib/utils';
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, TraceMode, VideoMode } from '../types/test';
 import type { TestInfoImpl } from './worker/testInfo';
 import { rootTestType } from './common/testType';
@@ -428,15 +428,11 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
 
     // 6. Either remove or attach temporary traces and screenshots for contexts closed
     // before the test has finished.
-    await Promise.all(temporaryTraceFiles.map(async (file, i) => {
-      if (preserveTrace) {
-        const tracePath = testInfo.outputPath(`trace${i ? '-' + i : ''}.zip`);
-        await fs.promises.rename(file, tracePath).catch(() => {});
-        testInfo.attachments.push({ name: 'trace', path: tracePath, contentType: 'application/zip' });
-      } else {
-        await fs.promises.unlink(file).catch(() => {});
-      }
-    }));
+    if (preserveTrace && temporaryTraceFiles.length) {
+      const tracePath = testInfo.outputPath(`trace.zip`);
+      await mergeTraceFiles(tracePath, temporaryTraceFiles);
+      testInfo.attachments.push({ name: 'trace', path: tracePath, contentType: 'application/zip' });
+    }
     await Promise.all(temporaryScreenshots.map(async file => {
       if (captureScreenshots)
         await fs.promises.rename(file, addScreenshotAttachment()).catch(() => {});

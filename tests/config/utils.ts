@@ -16,7 +16,7 @@
 
 import type { Frame, Page } from 'playwright-core';
 import { ZipFile } from '../../packages/playwright-core/lib/utils/zipFile';
-import type { StackFrame } from '@protocol/channels';
+import type { StackFrame } from '../../packages/protocol/src/channels';
 import { parseClientSideCallMetadata } from '../../packages/trace/src/traceUtils';
 import type { ActionTraceEvent } from '../../packages/trace/src/trace';
 
@@ -102,17 +102,26 @@ export async function parseTrace(file: string): Promise<{ events: any[], resourc
   zipFS.close();
 
   const events: any[] = [];
-  for (const line of resources.get('trace.trace')!.toString().split('\n')) {
-    if (line)
-      events.push(JSON.parse(line));
+  for (const traceFile of [...resources.keys()].filter(name => name.endsWith('.trace'))) {
+    for (const line of resources.get(traceFile)!.toString().split('\n')) {
+      if (line)
+        events.push(JSON.parse(line));
+    }
   }
 
-  for (const line of resources.get('trace.network')!.toString().split('\n')) {
-    if (line)
-      events.push(JSON.parse(line));
+  for (const networkFile of [...resources.keys()].filter(name => name.endsWith('.network'))) {
+    for (const line of resources.get(networkFile)!.toString().split('\n')) {
+      if (line)
+        events.push(JSON.parse(line));
+    }
   }
 
-  const stacks = parseClientSideCallMetadata(JSON.parse(resources.get('trace.stacks')!.toString()));
+  const stacks: Map<string, StackFrame[]> = new Map();
+  for (const stacksFile of [...resources.keys()].filter(name => name.endsWith('.stacks'))) {
+    for (const [key, value] of parseClientSideCallMetadata(JSON.parse(resources.get(stacksFile)!.toString())))
+      stacks.set(key, value);
+  }
+
   return {
     events,
     resources,
