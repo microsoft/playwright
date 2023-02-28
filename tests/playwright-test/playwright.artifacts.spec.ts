@@ -244,10 +244,8 @@ test('should work with trace: on', async ({ runInlineTest }, testInfo) => {
     'artifacts-shared-shared-passing',
     '  trace.zip',
     'artifacts-two-contexts',
-    '  trace-1.zip',
     '  trace.zip',
     'artifacts-two-contexts-failing',
-    '  trace-1.zip',
     '  trace.zip',
   ]);
 });
@@ -273,7 +271,6 @@ test('should work with trace: retain-on-failure', async ({ runInlineTest }, test
     'artifacts-shared-shared-failing',
     '  trace.zip',
     'artifacts-two-contexts-failing',
-    '  trace-1.zip',
     '  trace.zip',
   ]);
 });
@@ -299,7 +296,6 @@ test('should work with trace: on-first-retry', async ({ runInlineTest }, testInf
     'artifacts-shared-shared-failing-retry1',
     '  trace.zip',
     'artifacts-two-contexts-failing-retry1',
-    '  trace-1.zip',
     '  trace.zip',
   ]);
 });

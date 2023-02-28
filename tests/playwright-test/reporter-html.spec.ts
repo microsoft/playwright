@@ -443,7 +443,7 @@ test('should show multi trace source', async ({ runInlineTest, page, server, sho
   await page.click('text=passes');
   // Expect one image-link to trace viewer and 2 separate download links
   await expect(page.locator('img')).toHaveCount(1);
-  await expect(page.locator('a', { hasText: 'trace' })).toHaveText(['trace-1', 'trace-2']);
+  await expect(page.locator('a', { hasText: 'trace' })).toHaveText(['trace']);
 
   await page.click('img');
   await page.click('.action-title >> text=page.evaluate');

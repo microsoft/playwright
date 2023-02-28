@@ -110,14 +110,13 @@ export const WorkbenchLoader: React.FunctionComponent<{
           params.set('trace', url);
           if (uploadedTraceNames.length)
             params.set('traceFileName', uploadedTraceNames[i]);
-          const response = await fetch(`context?${params.toString()}`);
+          const response = await fetch(`contexts?${params.toString()}`);
           if (!response.ok) {
             setTraceURLs([]);
             setProcessingErrorMessage((await response.json()).error);
             return;
           }
-          const contextEntry = await response.json() as ContextEntry;
-          contextEntries.push(contextEntry);
+          contextEntries.push(...(await response.json()));
         }
         navigator.serviceWorker.removeEventListener('message', swListener);
         const model = new MultiTraceModel(contextEntries);
