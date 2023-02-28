@@ -114,7 +114,7 @@ test('should work with workers=1 and --fully-parallel', async ({ runInlineTest }
   `,
   };
 
-  const result = await runInlineTest(tests, { shard: '1/2', ['fully-parallel']: true, workers: 1 }, { DEBUG: 'pw:test:protocol'});
+  const result = await runInlineTest(tests, { shard: '1/2', ['fully-parallel']: true, workers: 1 });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
   expect(result.skipped).toBe(1);
