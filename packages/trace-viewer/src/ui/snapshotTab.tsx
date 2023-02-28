@@ -95,7 +95,7 @@ export const SnapshotTab: React.FunctionComponent<{
       } catch (e) {
       }
     })();
-  }, [iframeRef, snapshotUrl, snapshotInfoUrl, pointX, pointY]);
+  }, [iframeRef, snapshotUrl, snapshotInfoUrl, pointX, pointY, action]);
 
   const windowHeaderHeight = 40;
   const snapshotContainerSize = {

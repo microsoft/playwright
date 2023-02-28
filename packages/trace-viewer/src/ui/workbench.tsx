@@ -35,68 +35,57 @@ import { toggleTheme } from '@web/theme';
 
 export const WorkbenchLoader: React.FunctionComponent<{
 }> = () => {
-  const [traceURLs, setTraceURLs] = React.useState<string[]>([]);
-  const [uploadedTraceNames, setUploadedTraceNames] = React.useState<string[]>([]);
+  const [traceURL, setTraceURL] = React.useState<string | undefined>();
+  const [uploadedTraceName, setUploadedTraceName] = React.useState<string | undefined>();
   const [model, setModel] = React.useState<MultiTraceModel>(emptyModel);
   const [progress, setProgress] = React.useState<{ done: number, total: number }>({ done: 0, total: 0 });
   const [dragOver, setDragOver] = React.useState<boolean>(false);
   const [processingErrorMessage, setProcessingErrorMessage] = React.useState<string | null>(null);
   const [fileForLocalModeError, setFileForLocalModeError] = React.useState<string | null>(null);
 
-  const processTraceFiles = (files: FileList) => {
-    const blobUrls = [];
-    const fileNames = [];
+  const processTraceFile = (file: File) => {
     const url = new URL(window.location.href);
-    for (let i = 0; i < files.length; i++) {
-      const file = files.item(i);
-      if (!file)
-        continue;
-      const blobTraceURL = URL.createObjectURL(file);
-      blobUrls.push(blobTraceURL);
-      fileNames.push(file.name);
-      url.searchParams.append('trace', blobTraceURL);
-      url.searchParams.append('traceFileName', file.name);
-    }
+    const blobTraceURL = URL.createObjectURL(file);
+    url.searchParams.set('trace', blobTraceURL);
+    url.searchParams.set('traceFileName', file.name);
     const href = url.toString();
     // Snapshot loaders will inherit the trace url from the query parameters,
     // so set it here.
     window.history.pushState({}, '', href);
-    setTraceURLs(blobUrls);
-    setUploadedTraceNames(fileNames);
+    setTraceURL(blobTraceURL);
+    setUploadedTraceName(file.name);
     setDragOver(false);
     setProcessingErrorMessage(null);
   };
 
   const handleDropEvent = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
-    processTraceFiles(event.dataTransfer.files);
+    if (event.dataTransfer.files.length === 1)
+      processTraceFile(event.dataTransfer.files[0]);
   };
 
   const handleFileInputChange = (event: any) => {
     event.preventDefault();
-    if (!event.target.files)
-      return;
-    processTraceFiles(event.target.files);
+    if (event.target.files?.length === 1)
+      processTraceFile(event.target.files[0]);
   };
 
   React.useEffect(() => {
-    const newTraceURLs = new URL(window.location.href).searchParams.getAll('trace');
+    const url = new URL(window.location.href).searchParams.get('trace');
     // Don't accept file:// URLs - this means we re opened locally.
-    for (const url of newTraceURLs) {
-      if (url.startsWith('file:')) {
-        setFileForLocalModeError(url || null);
-        return;
-      }
+    if (url?.startsWith('file:')) {
+      setFileForLocalModeError(url || null);
+      return;
     }
 
     // Don't re-use blob file URLs on page load (results in Fetch error)
-    if (!newTraceURLs.some(url => url.startsWith('blob:')))
-      setTraceURLs(newTraceURLs);
-  }, [setTraceURLs]);
+    if (url && !url.startsWith('blob:'))
+      setTraceURL(url);
+  }, [setTraceURL]);
 
   React.useEffect(() => {
     (async () => {
-      if (traceURLs.length) {
+      if (traceURL) {
         const swListener = (event: any) => {
           if (event.data.method === 'progress')
             setProgress(event.data.params);
@@ -104,20 +93,17 @@ export const WorkbenchLoader: React.FunctionComponent<{
         navigator.serviceWorker.addEventListener('message', swListener);
         setProgress({ done: 0, total: 1 });
         const contextEntries: ContextEntry[] = [];
-        for (let i = 0; i < traceURLs.length; i++) {
-          const url = traceURLs[i];
-          const params = new URLSearchParams();
-          params.set('trace', url);
-          if (uploadedTraceNames.length)
-            params.set('traceFileName', uploadedTraceNames[i]);
-          const response = await fetch(`contexts?${params.toString()}`);
-          if (!response.ok) {
-            setTraceURLs([]);
-            setProcessingErrorMessage((await response.json()).error);
-            return;
-          }
-          contextEntries.push(...(await response.json()));
+        const params = new URLSearchParams();
+        params.set('trace', traceURL);
+        if (uploadedTraceName)
+          params.set('traceFileName', uploadedTraceName);
+        const response = await fetch(`contexts?${params.toString()}`);
+        if (!response.ok) {
+          setTraceURL(undefined);
+          setProcessingErrorMessage((await response.json()).error);
+          return;
         }
+        contextEntries.push(...(await response.json()));
         navigator.serviceWorker.removeEventListener('message', swListener);
         const model = new MultiTraceModel(contextEntries);
         setProgress({ done: 0, total: 0 });
@@ -126,7 +112,7 @@ export const WorkbenchLoader: React.FunctionComponent<{
         setModel(emptyModel);
       }
     })();
-  }, [traceURLs, uploadedTraceNames]);
+  }, [traceURL, uploadedTraceName]);
 
   return <div className='vbox workbench' onDragOver={event => { event.preventDefault(); setDragOver(true); }}>
     <div className='hbox header'>
@@ -148,7 +134,7 @@ export const WorkbenchLoader: React.FunctionComponent<{
         <div>3. Drop the trace from the download shelf into the page</div>
       </div>
     </div>}
-    {!dragOver && !fileForLocalModeError && (!traceURLs.length || processingErrorMessage) && <div className='drop-target'>
+    {!dragOver && !fileForLocalModeError && (!traceURL || processingErrorMessage) && <div className='drop-target'>
       <div className='processing-error'>{processingErrorMessage}</div>
       <div className='title'>Drop Playwright Trace to load</div>
       <div>or</div>

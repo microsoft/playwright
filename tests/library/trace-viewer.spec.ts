@@ -645,58 +645,6 @@ test('should include metainfo', async ({ showTraceViewer, browserName }) => {
   await expect(callLine.getByText('events')).toHaveText(/events:[\d]+/);
 });
 
-test('should open two trace files', async ({ context, page, request, server, showTraceViewer }, testInfo) => {
-  await (request as any)._tracing.start({ snapshots: true });
-  await context.tracing.start({ screenshots: true, snapshots: true, sources: true });
-  {
-    const response = await request.get(server.PREFIX + '/simple.json');
-    await expect(response).toBeOK();
-  }
-  await page.goto(server.PREFIX + '/input/button.html');
-  {
-    const response = await request.head(server.PREFIX + '/simplezip.json');
-    await expect(response).toBeOK();
-  }
-  await page.locator('button').click();
-  await page.locator('button').click();
-  {
-    const response = await request.post(server.PREFIX + '/one-style.css');
-    expect(response).toBeOK();
-  }
-  const apiTrace = testInfo.outputPath('api.zip');
-  const contextTrace = testInfo.outputPath('context.zip');
-  await (request as any)._tracing.stop({ path: apiTrace });
-  await context.tracing.stop({ path: contextTrace });
-
-
-  const traceViewer = await showTraceViewer([contextTrace, apiTrace]);
-  await traceViewer.selectAction('apiRequestContext.head');
-  await traceViewer.selectAction('apiRequestContext.get');
-  await traceViewer.selectAction('apiRequestContext.post');
-  await expect(traceViewer.actionTitles).toHaveText([
-    `apiRequestContext.get`,
-    `page.gotohttp://localhost:${server.PORT}/input/button.html`,
-    `apiRequestContext.head`,
-    `locator.clicklocator('button')`,
-    `locator.clicklocator('button')`,
-    `apiRequestContext.post`,
-  ]);
-
-  await traceViewer.page.locator('text=Metadata').click();
-  const callLine = traceViewer.page.locator('.call-line');
-  // Should get metadata from the context trace
-  await expect(callLine.getByText('start time')).toHaveText(/start time:[\d/,: ]+/);
-  // duration in the metatadata section
-  await expect(callLine.getByText('duration').first()).toHaveText(/duration:[\dms]+/);
-  await expect(callLine.getByText('engine')).toHaveText(/engine:[\w]+/);
-  await expect(callLine.getByText('platform')).toHaveText(/platform:[\w]+/);
-  await expect(callLine.getByText('width')).toHaveText(/width:[\d]+/);
-  await expect(callLine.getByText('height')).toHaveText(/height:[\d]+/);
-  await expect(callLine.getByText('pages')).toHaveText(/pages:1/);
-  await expect(callLine.getByText('actions')).toHaveText(/actions:6/);
-  await expect(callLine.getByText('events')).toHaveText(/events:[\d]+/);
-});
-
 test('should include requestUrl in route.fulfill', async ({ page, runAndTrace, browserName }) => {
   await page.route('**/*', route => {
     route.fulfill({
