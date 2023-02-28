@@ -59,40 +59,6 @@ For a better debugging experience check out the [VS Code Extension](./getting-st
   npx playwright test landing-page.ts --project=chromium
   ```
 
-In Playwright you can configure projects in your [`playwright.config`](/test-configuration.md#multiple-browsers) for major browser engines such as Chromium and Firefox, branded browsers such as Google Chrome and Microsoft Edge, and mobile viewports such as Safari on an iPhone 12 or Chrome for Android on a Pixel 5.
-
-```ts
-const config: PlaywrightTestConfig = {
-  projects: [
-    /* Test against desktop browsers */
-    {
-      name: 'chromium',
-      use: {
-        ...devices['Desktop Chrome'],
-      },
-    },
-
-    /* Test against mobile viewports. */
-    {
-      name: 'Mobile Safari',
-      use: {
-        ...devices['iPhone 12'],
-      },
-    },
-
-    /* Test against branded browsers. */
-    {
-      name: 'Microsoft Edge',
-      use: {
-        channel: 'msedge',
-      },
-    },
-  ],
-};
-```
-
-  
-
 ## Debugging Tests
 
 Since Playwright runs in Node.js, you can debug it with your debugger of choice e.g. using `console.log` or inside your IDE or directly in VS Code with the [VS Code Extension](./getting-started-vscode.md). Playwright comes with the [Playwright Inspector](./debug.md#playwright-inspector) which allows you to step through Playwright API calls, see their debug logs and explore [locators](./locators.md).
@@ -116,7 +82,7 @@ Since Playwright runs in Node.js, you can debug it with your debugger of choice 
   npx playwright test example.spec.ts:10 --debug
   ```
 
-<img width="1350" alt="Debugging Tests with the Playwright inspector" src="https://user-images.githubusercontent.com/13063165/197800771-50cb2f39-2345-4153-b4ed-de9fe63ba29b.png" />
+<img width="1340" alt="Debugging Tests with the Playwright inspector" src="https://user-images.githubusercontent.com/13063165/212936618-84b87acc-bc2e-46ed-994b-32b2ef742e60.png" />
 
 
 Check out our [debugging guide](./debug.md) to learn more about the [Playwright Inspector](./debug.md#playwright-inspector) as well as debugging with [Browser Developer tools](./debug.md#browser-developer-tools).
@@ -130,11 +96,11 @@ The [HTML Reporter](././test-reporters.md#html-reporter) shows you a full report
 npx playwright show-report
 ```
 
-<img width="963" alt="HTML Report > Test Reports view" src="https://user-images.githubusercontent.com/13063165/189140120-71a6bc41-f921-40be-a7a4-61d44da33b20.png" />
+<img width="1424" alt="HTML Report > Test Reports view" src="https://user-images.githubusercontent.com/13063165/221930419-49543647-9130-4429-a857-6851c2005e48.png" />
 
 You can click on each test and explore the tests errors as well as each step of the test.
 
-<img width="955" alt="HTML Reporter > Test Reports detailed view" src="https://user-images.githubusercontent.com/13063165/189140263-0e3ac2d9-4e75-40c8-b29c-58323c8be433.png" />
+<img width="1440" alt="HTML Reporter > Test Reports detailed view" src="https://user-images.githubusercontent.com/13063165/221930640-c1ccda28-7906-44c7-a198-acd9acb40bbe.png" />
 
 ## What's Next
 
