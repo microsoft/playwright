@@ -294,7 +294,7 @@ dotnet test --settings:firefox.runsettings
 dotnet test --settings:webkit.runsettings
 ```
 
-```csharp
+```xml
 <?xml version="1.0" encoding="utf-8"?>
   <RunSettings>
     <Playwright>
@@ -346,11 +346,11 @@ public class Example {
 }
 ```
 
-```python
+```bash python
 pytest test_login.py --browser-channel msedge
 ```
 
-```csharp
+```xml csharp
 <?xml version="1.0" encoding="utf-8"?>
 <RunSettings>
   <Playwright>
