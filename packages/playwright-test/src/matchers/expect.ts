@@ -101,7 +101,7 @@ export const printReceivedStringContainExpectedResult = (
 
 type ExpectMessageOrOptions = undefined | string | { message?: string, timeout?: number, intervals?: number[] };
 
-function createExpect(actual: unknown, messageOrOptions: ExpectMessageOrOptions, isSoft: boolean, isPoll: boolean, generator?: Generator) {
+function createExpect(actual: unknown, messageOrOptions: ExpectMessageOrOptions, isSoft: boolean, isPoll: boolean, generator?: Generator): any {
   return new Proxy(expectLibrary(actual), new ExpectMetaInfoProxyHandler(messageOrOptions, isSoft, isPoll, generator));
 }
 
@@ -164,7 +164,7 @@ type ExpectMetaInfo = {
   generator?: Generator;
 };
 
-class ExpectMetaInfoProxyHandler {
+class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
   private _info: ExpectMetaInfo;
 
   constructor(messageOrOptions: ExpectMessageOrOptions, isSoft: boolean, isPoll: boolean, generator?: Generator) {
@@ -178,8 +178,10 @@ class ExpectMetaInfoProxyHandler {
     }
   }
 
-  get(target: any, matcherName: any, receiver: any): any {
+  get(target: Object, matcherName: string | symbol, receiver: any): any {
     let matcher = Reflect.get(target, matcherName, receiver);
+    if (typeof matcherName !== 'string')
+      return matcher;
     if (matcher === undefined)
       throw new Error(`expect: Property '${matcherName}' not found.`);
     if (typeof matcher !== 'function') {

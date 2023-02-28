@@ -84,7 +84,9 @@ export interface InstrumentationListener {
 export function createInstrumentation(): Instrumentation {
   const listeners = new Map<InstrumentationListener, BrowserContext | APIRequestContext | null>();
   return new Proxy({}, {
-    get: (obj: any, prop: string) => {
+    get: (obj: any, prop: string | symbol) => {
+      if (typeof prop !== 'string')
+        return obj[prop];
       if (prop === 'addListener')
         return (listener: InstrumentationListener, context: BrowserContext | APIRequestContext | null) => listeners.set(listener, context);
       if (prop === 'removeListener')

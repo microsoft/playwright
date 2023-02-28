@@ -31,7 +31,9 @@ export interface ClientInstrumentationListener {
 export function createInstrumentation(): ClientInstrumentation {
   const listeners: ClientInstrumentationListener[] = [];
   return new Proxy({}, {
-    get: (obj: any, prop: string) => {
+    get: (obj: any, prop: string | symbol) => {
+      if (typeof prop !== 'string')
+        return obj[prop];
       if (prop === 'addListener')
         return (listener: ClientInstrumentationListener) => listeners.push(listener);
       if (prop === 'removeListener')

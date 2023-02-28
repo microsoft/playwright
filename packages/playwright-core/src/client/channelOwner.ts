@@ -132,7 +132,7 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
 
   private _createChannel(base: Object): T {
     const channel = new Proxy(base, {
-      get: (obj: any, prop) => {
+      get: (obj: any, prop: string | symbol) => {
         if (typeof prop === 'string') {
           const validator = maybeFindValidator(this._type, prop, 'Params');
           if (validator) {
