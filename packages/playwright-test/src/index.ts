@@ -18,7 +18,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import type { APIRequestContext, BrowserContext, BrowserContextOptions, LaunchOptions, Page, Tracing, Video } from 'playwright-core';
 import * as playwrightLibrary from 'playwright-core';
-import { createGuid, debugMode, removeFolders, addInternalStackPrefix, mergeTraceFiles } from 'playwright-core/lib/utils';
+import { createGuid, debugMode, removeFolders, addInternalStackPrefix, mergeTraceFiles, saveTraceFile } from 'playwright-core/lib/utils';
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, TraceMode, VideoMode } from '../types/test';
 import type { TestInfoImpl } from './worker/testInfo';
 import { rootTestType } from './common/testType';
@@ -426,7 +426,18 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       await stopTracing(tracing);
     })));
 
-    // 6. Either remove or attach temporary traces and screenshots for contexts closed
+
+    // 6. Save test trace.
+    if (preserveTrace) {
+      const events = (testInfo as any)._traceEvents;
+      if (events.length) {
+        const tracePath = path.join(_artifactsDir(), createGuid() + '.zip');
+        temporaryTraceFiles.push(tracePath);
+        await saveTraceFile(tracePath, events, traceOptions.sources);
+      }
+    }
+
+    // 7. Either remove or attach temporary traces and screenshots for contexts closed
     // before the test has finished.
     if (preserveTrace && temporaryTraceFiles.length) {
       const tracePath = testInfo.outputPath(`trace.zip`);

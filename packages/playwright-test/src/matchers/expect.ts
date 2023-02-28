@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { captureRawStack, pollAgainstTimeout } from 'playwright-core/lib/utils';
+import { captureRawStack, createTraceEventForExpect, monotonicTime, pollAgainstTimeout } from 'playwright-core/lib/utils';
 import type { ExpectZone } from 'playwright-core/lib/utils';
 import {
   toBeChecked,
@@ -214,6 +214,11 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
       });
       testInfo.currentStep = step;
 
+      const generateTraceEvent = matcherName !== 'poll' && matcherName !== 'toPass';
+      const traceEvent = generateTraceEvent ? createTraceEventForExpect(defaultTitle, args[0], stackFrames, wallTime) : undefined;
+      if (traceEvent)
+        testInfo._traceEvents.push(traceEvent);
+
       const reportStepError = (jestError: Error) => {
         const message = jestError.message;
         if (customMessage) {
@@ -238,11 +243,21 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
         }
 
         const serializerError = serializeError(jestError);
-        step.complete({ error: serializerError });
+        if (traceEvent) {
+          traceEvent.error = { name: jestError.name, message: jestError.message, stack: jestError.stack };
+          traceEvent.endTime = monotonicTime();
+          step.complete({ error: serializerError });
+        }
         if (this._info.isSoft)
           testInfo._failWithError(serializerError, false /* isHardError */);
         else
           throw jestError;
+      };
+
+      const finalizer = () => {
+        if (traceEvent)
+          traceEvent.endTime = monotonicTime();
+        step.complete({});
       };
 
       try {
@@ -251,9 +266,9 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
           return matcher.call(target, ...args);
         });
         if (result instanceof Promise)
-          return result.then(() => step.complete({})).catch(reportStepError);
+          return result.then(() => finalizer()).catch(reportStepError);
         else
-          step.complete({});
+          finalizer();
       } catch (e) {
         reportStepError(e);
       }

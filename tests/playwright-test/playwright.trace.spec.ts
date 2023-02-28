@@ -89,7 +89,7 @@ test('should record api trace', async ({ runInlineTest, server }, testInfo) => {
   const trace2 = await parseTrace(testInfo.outputPath('test-results', 'a-api-pass', 'trace.zip'));
   expect(trace2.actions).toEqual(['apiRequestContext.get']);
   const trace3 = await parseTrace(testInfo.outputPath('test-results', 'a-fail', 'trace.zip'));
-  expect(trace3.actions).toEqual(['browserContext.newPage', 'page.goto', 'apiRequestContext.get']);
+  expect(trace3.actions).toEqual(['browserContext.newPage', 'page.goto', 'apiRequestContext.get', 'expect.toBe']);
 });
 
 

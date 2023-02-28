@@ -16,10 +16,13 @@
 
 import fs from 'fs';
 import type EventEmitter from 'events';
-import type { ClientSideCallMetadata } from '@protocol/channels';
+import type { ClientSideCallMetadata, StackFrame } from '@protocol/channels';
 import type { SerializedClientSideCallMetadata, SerializedStack, SerializedStackFrame } from '@trace/traceUtils';
 import { yazl, yauzl } from '../zipBundle';
 import { ManualPromise } from './manualPromise';
+import type { ActionTraceEvent } from '@trace/trace';
+import { calculateSha1 } from './crypto';
+import { monotonicTime } from './time';
 
 export function serializeClientSideCallMetadata(metadatas: ClientSideCallMetadata[]): SerializedClientSideCallMetadata {
   const fileNames = new Map<string, number>();
@@ -91,4 +94,66 @@ export async function mergeTraceFiles(fileName: string, temporaryTraceFiles: str
     });
   });
   await mergePromise;
+}
+
+export async function saveTraceFile(fileName: string, traceEvents: ActionTraceEvent[], saveSources: boolean) {
+  const lines: string[] = traceEvents.map(e => JSON.stringify(e));
+  const zipFile = new yazl.ZipFile();
+  zipFile.addBuffer(Buffer.from(lines.join('\n')), 'trace.trace');
+
+  if (saveSources) {
+    const sourceFiles = new Set<string>();
+    for (const event of traceEvents) {
+      for (const frame of event.stack || [])
+        sourceFiles.add(frame.file);
+    }
+    for (const sourceFile of sourceFiles) {
+      await fs.promises.readFile(sourceFile, 'utf8').then(source => {
+        zipFile.addBuffer(Buffer.from(source), 'resources/src@' + calculateSha1(sourceFile) + '.txt');
+      }).catch(() => {});
+    }
+  }
+  await new Promise(f => {
+    zipFile.end(undefined, () => {
+      zipFile.outputStream.pipe(fs.createWriteStream(fileName)).on('close', f);
+    });
+  });
+}
+
+export function createTraceEventForExpect(apiName: string, expected: any, stack: StackFrame[], wallTime: number): ActionTraceEvent {
+  return {
+    type: 'action',
+    callId: 'expect@' + wallTime,
+    wallTime,
+    startTime: monotonicTime(),
+    endTime: 0,
+    class: 'Test',
+    method: 'step',
+    apiName,
+    params: { expected: generatePreview(expected) },
+    snapshots: [],
+    log: [],
+    stack,
+  };
+}
+
+function generatePreview(value: any, visited = new Set<any>()): string {
+  if (visited.has(value))
+    return '';
+  visited.add(value);
+  if (typeof value === 'string')
+    return value;
+  if (typeof value === 'number')
+    return value.toString();
+  if (typeof value === 'boolean')
+    return value.toString();
+  if (value === null)
+    return 'null';
+  if (value === undefined)
+    return 'undefined';
+  if (Array.isArray(value))
+    return '[' + value.map(v => generatePreview(v, visited)).join(', ') + ']';
+  if (typeof value === 'object')
+    return 'Object';
+  return String(value);
 }
