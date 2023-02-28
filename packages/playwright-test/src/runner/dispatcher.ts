@@ -76,6 +76,9 @@ export class Dispatcher {
       }
       this._queue.shift();
     }
+
+    // If all remaining tests were skipped, resolve finished state.
+    this._checkFinished();
   }
 
   private async _scheduleJob() {

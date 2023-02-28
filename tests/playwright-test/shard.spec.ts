@@ -96,3 +96,26 @@ test('should respect shard=1/2 in config', async ({ runInlineTest }) => {
   expect(result.output).toContain('test2-done');
   expect(result.output).toContain('test3-done');
 });
+
+test('should work with workers=1 and --fully-parallel', async ({ runInlineTest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/21226' });
+  const tests = {
+    'a1.spec.ts': `
+      import { test } from '@playwright/test';
+      test('should pass', async ({ }) => {
+      });
+      test.skip('should skip', async ({ }) => {
+      });
+    `,
+    'a2.spec.ts': `
+    import { test } from '@playwright/test';
+    test('shoul pass', async ({ }) => {
+    });
+  `,
+  };
+
+  const result = await runInlineTest(tests, { shard: '1/2', ['fully-parallel']: true, workers: 1 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.skipped).toBe(1);
+});
