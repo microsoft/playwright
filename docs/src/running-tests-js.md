@@ -169,11 +169,11 @@ The [HTML Reporter](././test-reporters.md#html-reporter) shows you a full report
 npx playwright show-report
 ```
 
-<img width="1648" alt="HTML Report > Test Reports view" src="https://user-images.githubusercontent.com/13063165/221886935-8346724c-1ea3-4f98-84d8-0ce087a41f11.png" />
+<img width="1424" alt="HTML Report > Test Reports view" src="https://user-images.githubusercontent.com/13063165/221930419-49543647-9130-4429-a857-6851c2005e48.png" />
 
 You can click on each test and explore the tests errors as well as each step of the test.
 
-<img width="1680" alt="HTML Reporter > Test Reports detailed view" src="https://user-images.githubusercontent.com/13063165/221887722-66b561ee-3028-4f19-ba4d-dd2f7e147d4b.png" />
+<img width="1440" alt="HTML Reporter > Test Reports detailed view" src="https://user-images.githubusercontent.com/13063165/221930640-c1ccda28-7906-44c7-a198-acd9acb40bbe.png" />
 
 ## What's Next
 
