@@ -236,3 +236,34 @@ it('page.goForward during renderer-initiated navigation', async ({ page, server 
   // to the original one-style.html.
   await page.waitForSelector('text=hello');
 });
+
+it('regression test for issue 20791', async ({ page, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/20791' });
+  server.setRoute('/iframe.html', (req, res) => {
+    res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+    // iframe access parent frame to log a value from it.
+    res.end(`
+      <!doctype html>
+      <script type="text/javascript">
+        console.log(window.parent.foo);
+      </script>
+    `);
+  });
+  server.setRoute('/main.html', (req, res) => {
+    res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+    res.end(`
+      <!doctype html>
+      <iframe id=myframe src="about:blank"></iframe>
+      <script type="text/javascript">
+        setTimeout(() => window.foo = 'foo', 0);
+        setTimeout(() => myframe.contentDocument.location.href = '${server.PREFIX}/iframe.html', 0);
+      </script>
+    `);
+  });
+  const messages = [];
+  page.on('console', msg => messages.push(msg.text()));
+  await page.goto(server.PREFIX + '/main.html');
+  await expect.poll(() => messages).toEqual(['foo']);
+  await page.reload();
+  await expect.poll(() => messages).toEqual(['foo', 'foo']);
+});
