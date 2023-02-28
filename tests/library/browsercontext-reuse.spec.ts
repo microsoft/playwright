@@ -128,24 +128,57 @@ test('should reset serviceworker that hangs in importScripts', async ({ reusedCo
   await expect(page).toHaveTitle('Page Title');
 });
 
-test('should not cache main document', async ({ reusedContext, server, browserName }) => {
+test('should not cache resources', async ({ reusedContext, server }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/19926' });
-  let requestCount = 0;
+  const requestCountMap = new Map<string, number>();
   server.setRoute('/page.html', (req, res) => {
     res.setHeader('Content-Type', 'text/html');
     res.setHeader(`Cache-Control`, `max-age=3600`);
+    const requestCount = requestCountMap.get(req.url) || 0;
     res.end(`
-      <title>Count: ${requestCount}</title>
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>Count: ${requestCount}</title>
+        <link rel="stylesheet" href="style.css">
+        <script>
+          fetch('simple.json').then(() => {});
+        </script>
+      </head>
+    </html>
     `);
-    requestCount++;
+    requestCountMap.set(req.url, requestCount + 1);
+  });
+  server.setRoute('/style.css', (req, res) => {
+    res.setHeader('Content-Type', 'text/css');
+    res.setHeader(`Cache-Control`, `max-age=3600`);
+    res.end(`body { background-color: red; }`);
+    requestCountMap.set(req.url, (requestCountMap.get(req.url) || 0) + 1);
+  });
+  server.setRoute('/simple.json', (req, res) => {
+    res.setHeader(`Cache-Control`, `max-age=3600`);
+    res.setHeader('Content-Type', 'application/json');
+    res.end(`{ "foo": "bar" }`);
+    requestCountMap.set(req.url, (requestCountMap.get(req.url) || 0) + 1);
   });
 
-  let context = await reusedContext();
-  let page = await context.newPage();
-  await page.goto(server.PREFIX + '/page.html');
-  await expect(page).toHaveTitle('Count: 0');
-  context = await reusedContext();
-  page = context.pages()[0];
-  await page.goto(server.PREFIX + '/page.html');
-  await expect(page).toHaveTitle('Count: 1');
+  {
+    const context = await reusedContext();
+    const page = await context.newPage();
+    await page.goto(server.PREFIX + '/page.html');
+    await expect(page).toHaveTitle('Count: 0');
+    expect(requestCountMap.get('/page.html')).toBe(1);
+    expect(requestCountMap.get('/style.css')).toBe(1);
+    expect(requestCountMap.get('/simple.json')).toBe(1);
+  }
+  {
+    const context = await reusedContext();
+    const page = context.pages()[0];
+    await page.goto(server.PREFIX + '/page.html');
+    await expect(page).toHaveTitle('Count: 1');
+    expect(requestCountMap.get('/page.html')).toBe(2);
+    expect(requestCountMap.get('/style.css')).toBe(2);
+    expect(requestCountMap.get('/simple.json')).toBe(2);
+  }
 });
