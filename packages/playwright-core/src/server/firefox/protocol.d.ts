@@ -104,8 +104,8 @@ export module Protocol {
       }[];
     };
     export type setExtraHTTPHeadersReturnValue = void;
-    export type clearNetworkCacheParameters = void;
-    export type clearNetworkCacheReturnValue = void;
+    export type clearCacheParameters = void;
+    export type clearCacheReturnValue = void;
     export type setBrowserProxyParameters = {
       type: ("http"|"https"|"socks"|"socks4");
       bypass: string[];
@@ -1085,7 +1085,7 @@ export module Protocol {
     "Browser.close": Browser.closeParameters;
     "Browser.getInfo": Browser.getInfoParameters;
     "Browser.setExtraHTTPHeaders": Browser.setExtraHTTPHeadersParameters;
-    "Browser.clearNetworkCache": Browser.clearNetworkCacheParameters;
+    "Browser.clearCache": Browser.clearCacheParameters;
     "Browser.setBrowserProxy": Browser.setBrowserProxyParameters;
     "Browser.setContextProxy": Browser.setContextProxyParameters;
     "Browser.setHTTPCredentials": Browser.setHTTPCredentialsParameters;
@@ -1165,7 +1165,7 @@ export module Protocol {
     "Browser.close": Browser.closeReturnValue;
     "Browser.getInfo": Browser.getInfoReturnValue;
     "Browser.setExtraHTTPHeaders": Browser.setExtraHTTPHeadersReturnValue;
-    "Browser.clearNetworkCache": Browser.clearNetworkCacheReturnValue;
+    "Browser.clearCache": Browser.clearCacheReturnValue;
     "Browser.setBrowserProxy": Browser.setBrowserProxyReturnValue;
     "Browser.setContextProxy": Browser.setContextProxyReturnValue;
     "Browser.setHTTPCredentials": Browser.setHTTPCredentialsReturnValue;
