@@ -66,7 +66,7 @@ pwsh bin/Debug/netX/playwright.ps1 install --help
 ### Install browsers via API
 * langs: csharp
 
-It's possible to run [Command line tools](./cli.md) commands via the .NET API:
+It's possible to run Command line tools commands via the .NET API:
 
 ```csharp
 var exitCode = Microsoft.Playwright.Program.Main(new[] {"install"});
@@ -294,7 +294,7 @@ dotnet test --settings:firefox.runsettings
 dotnet test --settings:webkit.runsettings
 ```
 
-```xml
+```csharp
 <?xml version="1.0" encoding="utf-8"?>
   <RunSettings>
     <Playwright>
