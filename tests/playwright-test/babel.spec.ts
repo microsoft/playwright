@@ -75,3 +75,32 @@ test('should treat enums equally', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 });
+
+test('should allow declare fields', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'example.spec.ts': `
+      import { test, expect } from '@playwright/test';
+
+      class Base {
+        constructor(p1, p2) {
+          this.p1 = p1;
+          this.p2 = p2;
+        }
+      }
+
+      class Derived extends Base {
+        p1: string;
+        declare p2: string;
+      }
+
+      test('works', () => {
+        const d = new Derived('value1', 'value2');
+        expect(d.p1).toBe(undefined);
+        expect(d.p2).toBe('value2');
+      })
+    `,
+  });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
