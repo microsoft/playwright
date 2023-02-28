@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import ansi2html from 'ansi-to-html';
 import type { SerializedValue } from '@protocol/channels';
 import type { ActionTraceEvent } from '@trace/trace';
 import { msToString } from '@web/uiUtils';
@@ -38,10 +39,8 @@ export const CallTab: React.FunctionComponent<{
   const wallTime = action.wallTime ? new Date(action.wallTime).toLocaleString() : null;
   const duration = action.endTime ? msToString(action.endTime - action.startTime) : 'Timed Out';
   return <div className='call-tab'>
-    <div className='call-error' key='error' hidden={!error}>
-      <div className='codicon codicon-issues'/>
-      {error}
-    </div>
+    {!!error && <ErrorMessage error={error}></ErrorMessage>}
+    {!!error && <div className='call-section'>Call</div>}
     <div className='call-line'>{action.apiName}</div>
     {<>
       <div className='call-section'>Time</div>
@@ -144,4 +143,41 @@ function parseSerializedValue(value: SerializedValue, handles: any[] | undefined
     return handles[value.h];
   }
   return '<object>';
+}
+
+const ErrorMessage: React.FC<{
+  error: string;
+}> = ({ error }) => {
+  const html = React.useMemo(() => {
+    const config: any = {
+      bg: 'var(--vscode-panel-background)',
+      fg: 'var(--vscode-foreground)',
+    };
+    config.colors = ansiColors;
+    return new ansi2html(config).toHtml(escapeHTML(error));
+  }, [error]);
+  return <div className='call-error-message' dangerouslySetInnerHTML={{ __html: html || '' }}></div>;
+};
+
+const ansiColors = {
+  0: '#000',
+  1: '#C00',
+  2: '#0C0',
+  3: '#C50',
+  4: '#00C',
+  5: '#C0C',
+  6: '#0CC',
+  7: '#CCC',
+  8: '#555',
+  9: '#F55',
+  10: '#5F5',
+  11: '#FF5',
+  12: '#55F',
+  13: '#F5F',
+  14: '#5FF',
+  15: '#FFF'
+};
+
+function escapeHTML(text: string): string {
+  return text.replace(/[&"<>]/g, c => ({ '&': '&amp;', '"': '&quot;', '<': '&lt;', '>': '&gt;' }[c]!));
 }

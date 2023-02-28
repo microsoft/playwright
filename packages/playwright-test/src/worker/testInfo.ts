@@ -23,6 +23,7 @@ import type { TestCase } from '../common/test';
 import { TimeoutManager } from './timeoutManager';
 import type { Annotation, FullConfigInternal, FullProjectInternal, Location } from '../common/types';
 import { getContainedPath, normalizeAndSaveAttachment, sanitizeForFilePath, serializeError, trimLongString } from '../util';
+import type * as trace from '@trace/trace';
 
 export type TestInfoErrorState = {
   status: TestStatus,
@@ -49,6 +50,7 @@ export class TestInfoImpl implements TestInfo {
   readonly _startTime: number;
   readonly _startWallTime: number;
   private _hasHardError: boolean = false;
+  readonly _traceEvents: trace.TraceEvent[] = [];
   readonly _onTestFailureImmediateCallbacks = new Map<() => Promise<void>, string>(); // fn -> title
   _didTimeout = false;
   _lastStepId = 0;

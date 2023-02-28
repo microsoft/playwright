@@ -59,6 +59,7 @@ export class MultiTraceModel {
 
     this.actions.sort((a1, a2) => a1.startTime - a2.startTime);
     this.events.sort((a1, a2) => a1.time - a2.time);
+    this.actions = dedupeActions(this.actions);
   }
 }
 
@@ -72,6 +73,39 @@ function indexModel(context: ContextEntry) {
   }
   for (const event of context.events)
     (event as any)[contextSymbol] = context;
+}
+
+function dedupeActions(actions: ActionTraceEvent[]) {
+  const callActions = actions.filter(a => a.callId.startsWith('call@'));
+  const expectActions = actions.filter(a => a.callId.startsWith('expect@'));
+
+  // Call startTime/endTime are server-side times.
+  // Expect startTime/endTime are client-side times.
+  // If there are call times, adjust expect startTime/endTime to align with callTime.
+  if (callActions.length && expectActions.length) {
+    const offset = callActions[0].startTime - callActions[0].wallTime!;
+    for (const expectAction of expectActions) {
+      const duration = expectAction.endTime - expectAction.startTime;
+      expectAction.startTime = expectAction.wallTime! + offset;
+      expectAction.endTime = expectAction.startTime + duration;
+    }
+  }
+  const callActionsByKey = new Map<string, ActionTraceEvent>();
+  for (const action of callActions)
+    callActionsByKey.set(action.apiName + '@' + action.wallTime, action);
+
+  const result = [...callActions];
+  for (const expectAction of expectActions) {
+    const callAction = callActionsByKey.get(expectAction.apiName + '@' + expectAction.wallTime);
+    if (callAction) {
+      if (expectAction.error)
+        callAction.error = expectAction.error;
+      continue;
+    }
+    result.push(expectAction);
+  }
+
+  return result.sort((a1, a2) => a1.startTime - a2.startTime);
 }
 
 export function context(action: ActionTraceEvent): ContextEntry {
