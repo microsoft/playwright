@@ -25,7 +25,12 @@ import { errorWithFile, getPackageJsonPath, mergeObjects } from '../util';
 import { setCurrentConfig } from './globals';
 
 export const defaultTimeout = 30000;
-export const kDefineConfigWasUsed = Symbol('defineConfigWasUsed');
+
+const kDefineConfigWasUsed = Symbol('defineConfigWasUsed');
+export const defineConfig = (config: any) => {
+  config[kDefineConfigWasUsed] = true;
+  return config;
+};
 
 export class ConfigLoader {
   private _fullConfig: FullConfigInternal;
