@@ -15,8 +15,12 @@
  */
 
 const pwt = require('./lib/index');
+const { kDefineConfigWasUsed  } = require('./lib/common/configLoader');
 const playwright = require('playwright-core');
-const defineConfig = config => config;
+const defineConfig = config => {
+  config[kDefineConfigWasUsed] = true;
+  return config;
+};
 const combinedExports = {
   ...playwright,
   ...pwt,

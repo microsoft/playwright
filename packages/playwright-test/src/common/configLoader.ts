@@ -25,6 +25,7 @@ import { errorWithFile, getPackageJsonPath, mergeObjects } from '../util';
 import { setCurrentConfig } from './globals';
 
 export const defaultTimeout = 30000;
+export const kDefineConfigWasUsed = Symbol('defineConfigWasUsed');
 
 export class ConfigLoader {
   private _fullConfig: FullConfigInternal;
@@ -125,6 +126,7 @@ export class ConfigLoader {
     this._fullConfig._internal.ignoreSnapshots = takeFirst(config.ignoreSnapshots, baseFullConfig._internal.ignoreSnapshots);
     this._fullConfig.updateSnapshots = takeFirst(config.updateSnapshots, baseFullConfig.updateSnapshots);
     this._fullConfig._internal.plugins = ((config as any)._plugins || []).map((p: any) => ({ factory: p }));
+    this._fullConfig._internal.defineConfigWasUsed = !!(config as any)[kDefineConfigWasUsed];
 
     const workers = takeFirst(config.workers, '50%');
     if (typeof workers === 'string') {
@@ -457,6 +459,7 @@ export const baseFullConfig: FullConfigInternal = {
     cliGrep: undefined,
     cliGrepInvert: undefined,
     listOnly: false,
+    defineConfigWasUsed: false,
   }
 };
 
