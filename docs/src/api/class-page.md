@@ -4249,6 +4249,7 @@ a navigation.
 
 ## async method: Page.waitForNavigation
 * since: v1.8
+* deprecated: This method is inherently racy, please use [`method: Page.waitForURL`] instead.
 * langs: python
 - returns: <[EventContextManager]<[Response]>>
 

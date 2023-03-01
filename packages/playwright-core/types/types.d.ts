@@ -7163,6 +7163,8 @@ export interface Frame {
    *
    * **NOTE** Usage of the [History API](https://developer.mozilla.org/en-US/docs/Web/API/History_API) to change the URL
    * is considered a navigation.
+   * @deprecated This method is inherently racy, please use
+   * [frame.waitForURL(url[, options])](https://playwright.dev/docs/api/class-frame#frame-wait-for-url) instead.
    * @param options
    */
   waitForNavigation(options?: {
