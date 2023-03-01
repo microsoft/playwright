@@ -77,7 +77,12 @@ export const SnapshotTab: React.FunctionComponent<{
       if (!iframeRef.current)
         return;
       try {
-        iframeRef.current.src = snapshotUrl + (pointX === undefined ? '' : `&pointX=${pointX}&pointY=${pointY}`);
+        const newUrl = snapshotUrl + (pointX === undefined ? '' : `&pointX=${pointX}&pointY=${pointY}`);
+        // Try preventing history entry from being created.
+        if (iframeRef.current.contentWindow)
+          iframeRef.current.contentWindow.location.replace(newUrl);
+        else
+          iframeRef.current.src = newUrl;
       } catch (e) {
       }
     })();
