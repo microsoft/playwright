@@ -267,3 +267,30 @@ it('regression test for issue 20791', async ({ page, server }) => {
   await page.reload();
   await expect.poll(() => messages).toEqual(['foo', 'foo']);
 });
+
+it('should reload proper page', async ({ page, server }) => {
+  let mainRequest = 0, popupRequest = 0;
+  server.setRoute('/main.html', (req, res) => {
+    res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+    res.end(`<!doctype html><h1>main: ${++mainRequest}</h1>`);
+  });
+  server.setRoute('/popup.html', (req, res) => {
+    res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+    res.end(`<!doctype html><h1>popup: ${++popupRequest}</h1>`);
+  });
+  await page.goto(server.PREFIX + '/main.html');
+  const [popup] = await Promise.all([
+    page.waitForEvent('popup'),
+    page.evaluate(() => window.open('/popup.html')),
+  ]);
+  await expect(page.locator('h1')).toHaveText('main: 1');
+  await expect(popup.locator('h1')).toHaveText('popup: 1');
+
+  await page.reload();
+  await expect(page.locator('h1')).toHaveText('main: 2');
+  await expect(popup.locator('h1')).toHaveText('popup: 1');
+
+  await popup.reload();
+  await expect(page.locator('h1')).toHaveText('main: 2');
+  await expect(popup.locator('h1')).toHaveText('popup: 2');
+});
