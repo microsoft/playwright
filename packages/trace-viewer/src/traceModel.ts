@@ -139,6 +139,7 @@ export class TraceModel {
       return;
     switch (event.type) {
       case 'context-options': {
+        this._version = event.version;
         contextEntry.browserName = event.browserName;
         contextEntry.title = event.title;
         contextEntry.platform = event.platform;
@@ -189,7 +190,8 @@ export class TraceModel {
   private _modernize(event: any): trace.TraceEvent {
     if (this._version === undefined)
       return event;
-    for (let version = this._version; version < 3; ++version)
+    const lastVersion: trace.VERSION = 4;
+    for (let version = this._version; version < lastVersion; ++version)
       event = (this as any)[`_modernize_${version}_to_${version + 1}`].call(this, event);
     return event;
   }
@@ -237,7 +239,7 @@ export class TraceModel {
   }
 
   _modernize_3_to_4(event: traceV3.TraceEvent): trace.TraceEvent | null {
-    if (event.type !== 'action') {
+    if (event.type !== 'action' && event.type !== 'event') {
       return event as traceV3.ContextCreatedTraceEvent |
         traceV3.ScreencastFrameTraceEvent |
         traceV3.ResourceSnapshotTraceEvent |
@@ -247,7 +249,8 @@ export class TraceModel {
     const metadata = event.metadata;
     if (metadata.internal || metadata.method.startsWith('tracing'))
       return null;
-    if (metadata.id.startsWith('event@')) {
+
+    if (event.type === 'event') {
       if (metadata.method === '__create__' && metadata.type === 'ConsoleMessage') {
         return {
           type: 'object',
@@ -265,6 +268,7 @@ export class TraceModel {
         pageId: metadata.pageId,
       };
     }
+
     return {
       type: 'action',
       callId: metadata.id,
