@@ -530,7 +530,7 @@ Whether to emulate network being offline. Defaults to `false`.
 - `httpCredentials` <[Object]>
   - `username` <[string]>
   - `password` <[string]>
-  - `hostname` ?<[string]>
+  - `origin` ?<[string]>
 
 Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
 

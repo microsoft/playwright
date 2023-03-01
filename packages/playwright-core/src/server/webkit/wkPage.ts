@@ -731,10 +731,10 @@ export class WKPage implements PageDelegate {
   }
 
   async updateHttpCredentials() {
-    const credentials = this._browserContext._options.httpCredentials || { username: '', password: '', hostname: '' };
-    if (!credentials.hostname) credentials.hostname = '';
+    const credentials = this._browserContext._options.httpCredentials || { username: '', password: '', origin: '' };
+    if (!credentials.origin) credentials.origin = '';
 
-    await this._pageProxySession.send('Emulation.setAuthCredentials', { username: credentials.username, password: credentials.password, hostname: credentials.hostname });
+    await this._pageProxySession.send('Emulation.setAuthCredentials', { username: credentials.username, password: credentials.password, origin: credentials.origin });
   }
 
   async updateFileChooserInterception() {

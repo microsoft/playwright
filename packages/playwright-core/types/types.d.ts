@@ -8164,7 +8164,7 @@ export interface BrowserContext {
 
   /**
    * @deprecated Browsers may cache credentials after successful authentication. Create a new browser context instead.
-   * @param httpCredentials If no hostname is specified, the username and password are sent to any servers upon unauthorized responses.
+   * @param httpCredentials If no origin is specified, the username and password are sent to any servers upon unauthorized responses.
    */
   setHTTPCredentials(httpCredentials: null|{
     username: string;
@@ -8172,9 +8172,9 @@ export interface BrowserContext {
     password: string;
 
     /**
-     * Restrain sending http credentials on specific hostname.
+     * Restrain sending http credentials on specific origin (scheme://host:port).
      */
-    hostname?: string;
+    origin?: string;
   }): Promise<void>;
 
   /**
@@ -12294,7 +12294,7 @@ export interface BrowserType<Unused = {}> {
 
       password: string;
 
-      hostname?: string;
+      origin?: string;
     };
 
     /**
@@ -13689,7 +13689,7 @@ export interface AndroidDevice {
 
       password: string;
 
-      hostname?: string;
+      origin?: string;
     };
 
     /**
@@ -14401,7 +14401,7 @@ export interface APIRequest {
 
       password: string;
 
-      hostname?: string;
+      origin?: string;
     };
 
     /**
@@ -15550,7 +15550,7 @@ export interface Browser extends EventEmitter {
 
       password: string;
 
-      hostname?: string;
+      origin?: string;
     };
 
     /**
@@ -16413,7 +16413,7 @@ export interface Electron {
 
       password: string;
 
-      hostname?: string;
+      origin?: string;
     };
 
     /**
@@ -18916,7 +18916,7 @@ export interface HTTPCredentials {
 
   password: string;
 
-  hostname?: string;
+  origin?: string;
 }
 
 export interface Geolocation {

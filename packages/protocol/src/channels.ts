@@ -926,7 +926,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
   httpCredentials?: {
     username: string,
     password: string,
-    hostname?: string,
+    origin?: string,
   },
   deviceScaleFactor?: number,
   isMobile?: boolean,
@@ -997,7 +997,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   httpCredentials?: {
     username: string,
     password: string,
-    hostname?: string,
+    origin?: string,
   },
   deviceScaleFactor?: number,
   isMobile?: boolean,
@@ -1093,7 +1093,7 @@ export type BrowserNewContextParams = {
   httpCredentials?: {
     username: string,
     password: string,
-    hostname?: string,
+    origin?: string,
   },
   deviceScaleFactor?: number,
   isMobile?: boolean,
@@ -1151,7 +1151,7 @@ export type BrowserNewContextOptions = {
   httpCredentials?: {
     username: string,
     password: string,
-    hostname?: string,
+    origin?: string,
   },
   deviceScaleFactor?: number,
   isMobile?: boolean,
@@ -1212,7 +1212,7 @@ export type BrowserNewContextForReuseParams = {
   httpCredentials?: {
     username: string,
     password: string,
-    hostname?: string,
+    origin?: string,
   },
   deviceScaleFactor?: number,
   isMobile?: boolean,
@@ -1270,7 +1270,7 @@ export type BrowserNewContextForReuseOptions = {
   httpCredentials?: {
     username: string,
     password: string,
-    hostname?: string,
+    origin?: string,
   },
   deviceScaleFactor?: number,
   isMobile?: boolean,
@@ -1535,14 +1535,14 @@ export type BrowserContextSetHTTPCredentialsParams = {
   httpCredentials?: {
     username: string,
     password: string,
-    hostname?: string,
+    origin?: string,
   },
 };
 export type BrowserContextSetHTTPCredentialsOptions = {
   httpCredentials?: {
     username: string,
     password: string,
-    hostname?: string,
+    origin?: string,
   },
 };
 export type BrowserContextSetHTTPCredentialsResult = void;
@@ -4341,7 +4341,7 @@ export type AndroidDeviceLaunchBrowserParams = {
   httpCredentials?: {
     username: string,
     password: string,
-    hostname?: string,
+    origin?: string,
   },
   deviceScaleFactor?: number,
   isMobile?: boolean,
@@ -4397,7 +4397,7 @@ export type AndroidDeviceLaunchBrowserOptions = {
   httpCredentials?: {
     username: string,
     password: string,
-    hostname?: string,
+    origin?: string,
   },
   deviceScaleFactor?: number,
   isMobile?: boolean,

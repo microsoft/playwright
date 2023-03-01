@@ -57,7 +57,7 @@ export type PageScreencastOptions = {
 export type Credentials = {
   username: string;
   password: string;
-  hostname?: string;
+  origin?: string;
 };
 
 export type Geolocation = {

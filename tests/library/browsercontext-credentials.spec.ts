@@ -54,69 +54,10 @@ it('should work with correct credentials @smoke', async ({ browser, server }) =>
   await context.close();
 });
 
-it('should fail with correct credentials and mismatching hostname', async ({ browser, server }) => {
-  server.setAuth('/empty.html', 'user', 'pass');
-  const context = await browser.newContext({
-    httpCredentials: { hostname: 'mismatching-hostname', username: 'user', password: 'pass' }
-  });
-  const page = await context.newPage();
-  const response = await page.goto(server.EMPTY_PAGE);
-  expect(response.status()).toBe(401);
-  await context.close();
-});
-
-it('should work with correct credentials and matching hostname', async ({ browser, server }) => {
-  server.setAuth('/empty.html', 'user', 'pass');
-  const hostname = URL.parse(server.PREFIX).hostname;
-  const context = await browser.newContext({
-    httpCredentials: { hostname: hostname, username: 'user', password: 'pass' }
-  });
-  const page = await context.newPage();
-  const response = await page.goto(server.EMPTY_PAGE);
-  expect(response.status()).toBe(200);
-  await context.close();
-});
-
-it('should work with correct credentials and matching hostname case insensitive', async ({ browser, server }) => {
-  server.setAuth('/empty.html', 'user', 'pass');
-  const hostnameUpperCase = URL.parse(server.PREFIX).hostname.toUpperCase();
-  const context = await browser.newContext({
-    httpCredentials: { hostname: hostnameUpperCase, username: 'user', password: 'pass' }
-  });
-  const page = await context.newPage();
-  const response = await page.goto(server.EMPTY_PAGE);
-  expect(response.status()).toBe(200);
-  await context.close();
-});
-
 it('should fail with wrong credentials', async ({ browser, server }) => {
   server.setAuth('/empty.html', 'user', 'pass');
   const context = await browser.newContext({
     httpCredentials: { username: 'foo', password: 'bar' }
-  });
-  const page = await context.newPage();
-  const response = await page.goto(server.EMPTY_PAGE);
-  expect(response.status()).toBe(401);
-  await context.close();
-});
-
-it('should fail with wrong credentials and matching hostname', async ({ browser, server }) => {
-  server.setAuth('/empty.html', 'user', 'pass');
-  const hostname = URL.parse(server.PREFIX).hostname;
-  const context = await browser.newContext({
-    httpCredentials: { hostname: hostname, username: 'foo', password: 'bar' }
-  });
-  const page = await context.newPage();
-  const response = await page.goto(server.EMPTY_PAGE);
-  expect(response.status()).toBe(401);
-  await context.close();
-});
-
-it('should fail with wrong credentials and matching hostname case insensitive', async ({ browser, server }) => {
-  server.setAuth('/empty.html', 'user', 'pass');
-  const hostnameUpperCase = URL.parse(server.PREFIX).hostname.toUpperCase();
-  const context = await browser.newContext({
-    httpCredentials: { hostname: hostnameUpperCase, username: 'foo', password: 'bar' }
   });
   const page = await context.newPage();
   const response = await page.goto(server.EMPTY_PAGE);
@@ -134,5 +75,66 @@ it('should return resource body', async ({ browser, server }) => {
   expect(response.status()).toBe(200);
   expect(await page.title()).toBe('Playground');
   expect((await response.body()).toString()).toContain('Playground');
+  await context.close();
+});
+
+it('should work with correct credentials and matching origin', async ({ browser, server }) => {
+  server.setAuth('/empty.html', 'user', 'pass');
+  const origin = server.PREFIX;
+  const context = await browser.newContext({
+    httpCredentials: { username: 'user', password: 'pass', origin: origin }
+  });
+  const page = await context.newPage();
+  const response = await page.goto(server.EMPTY_PAGE);
+  expect(response.status()).toBe(200);
+  await context.close();
+});
+
+it('should work with correct credentials and matching origin case insensitive', async ({ browser, server }) => {
+  server.setAuth('/empty.html', 'user', 'pass');
+  const origin = server.PREFIX.toUpperCase();
+  const context = await browser.newContext({
+    httpCredentials: { username: 'user', password: 'pass', origin: origin }
+  });
+  const page = await context.newPage();
+  const response = await page.goto(server.EMPTY_PAGE);
+  expect(response.status()).toBe(200);
+  await context.close();
+});
+
+it('should fail with correct credentials and mismatching scheme', async ({ browser, server }) => {
+  server.setAuth('/empty.html', 'user', 'pass');
+  const origin = server.PREFIX.replace('http://', 'https://');
+  const context = await browser.newContext({
+    httpCredentials: { username: 'user', password: 'pass', origin: origin }
+  });
+  const page = await context.newPage();
+  const response = await page.goto(server.EMPTY_PAGE);
+  expect(response.status()).toBe(401);
+  await context.close();
+});
+
+it('should fail with correct credentials and mismatching hostname', async ({ browser, server }) => {
+  server.setAuth('/empty.html', 'user', 'pass');
+  const hostname = URL.parse(server.PREFIX).hostname;
+  const origin = server.PREFIX.replace(hostname, 'mismatching-hostname');
+  const context = await browser.newContext({
+    httpCredentials: { username: 'user', password: 'pass', origin: origin }
+  });
+  const page = await context.newPage();
+  const response = await page.goto(server.EMPTY_PAGE);
+  expect(response.status()).toBe(401);
+  await context.close();
+});
+
+it('should fail with correct credentials and mismatching port', async ({ browser, server }) => {
+  server.setAuth('/empty.html', 'user', 'pass');
+  const origin = server.PREFIX.replace(server.PORT.toString(), (server.PORT + 1).toString());
+  const context = await browser.newContext({
+    httpCredentials: { username: 'user', password: 'pass', origin: origin }
+  });
+  const page = await context.newPage();
+  const response = await page.goto(server.EMPTY_PAGE);
+  expect(response.status()).toBe(401);
   await context.close();
 });
