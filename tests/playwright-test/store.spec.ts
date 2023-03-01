@@ -27,15 +27,15 @@ test('should provide store fixture', async ({ runInlineTest }) => {
       import { test, store, expect } from '@playwright/test';
       test('should store number', async ({ }) => {
         expect(store).toBeTruthy();
-        expect(await store.get('number')).toBe(undefined);
-        await store.set('number', 2022)
-        expect(await store.get('number')).toBe(2022);
+        expect(await store.get('number.json')).toBe(undefined);
+        await store.set('number.json', 2022)
+        expect(await store.get('number.json')).toBe(2022);
       });
       test('should store object', async ({ }) => {
         expect(store).toBeTruthy();
-        expect(await store.get('object')).toBe(undefined);
-        await store.set('object', { 'a': 2022 })
-        expect(await store.get('object')).toEqual({ 'a': 2022 });
+        expect(await store.get('object.json')).toBe(undefined);
+        await store.set('object.json', { 'a': 2022 })
+        expect(await store.get('object.json')).toEqual({ 'a': 2022 });
       });
     `,
   }, { workers: 1 });
@@ -63,27 +63,27 @@ test('should share store state between project setup and tests', async ({ runInl
     'store.setup.ts': `
       import { test, store, expect } from '@playwright/test';
       test('should initialize store', async ({ }) => {
-        expect(await store.get('number')).toBe(undefined);
-        await store.set('number', 2022)
-        expect(await store.get('number')).toBe(2022);
+        expect(await store.get('number.json')).toBe(undefined);
+        await store.set('number.json', 2022)
+        expect(await store.get('number.json')).toBe(2022);
 
-        expect(await store.get('object')).toBe(undefined);
-        await store.set('object', { 'a': 2022 })
-        expect(await store.get('object')).toEqual({ 'a': 2022 });
+        expect(await store.get('object.json')).toBe(undefined);
+        await store.set('object.json', { 'a': 2022 })
+        expect(await store.get('object.json')).toEqual({ 'a': 2022 });
       });
     `,
     'a.test.ts': `
       import { test, store, expect } from '@playwright/test';
       test('should get data from setup', async ({ }) => {
-        expect(await store.get('number')).toBe(2022);
-        expect(await store.get('object')).toEqual({ 'a': 2022 });
+        expect(await store.get('number.json')).toBe(2022);
+        expect(await store.get('object.json')).toEqual({ 'a': 2022 });
       });
     `,
     'b.test.ts': `
       import { test, store, expect } from '@playwright/test';
       test('should get data from setup', async ({ }) => {
-        expect(await store.get('number')).toBe(2022);
-        expect(await store.get('object')).toEqual({ 'a': 2022 });
+        expect(await store.get('number.json')).toBe(2022);
+        expect(await store.get('object.json')).toEqual({ 'a': 2022 });
       });
     `,
   }, { workers: 1 });
@@ -99,17 +99,17 @@ test('should persist store state between project runs', async ({ runInlineTest }
     'a.test.ts': `
       import { test, store, expect } from '@playwright/test';
       test('should have no data on first run', async ({ }) => {
-        expect(await store.get('number')).toBe(undefined);
-        await store.set('number', 2022)
-        expect(await store.get('object')).toBe(undefined);
-        await store.set('object', { 'a': 2022 })
+        expect(await store.get('number.json')).toBe(undefined);
+        await store.set('number.json', 2022)
+        expect(await store.get('object.json')).toBe(undefined);
+        await store.set('object.json', { 'a': 2022 })
       });
     `,
     'b.test.ts': `
       import { test, store, expect } from '@playwright/test';
       test('should get data from previous run', async ({ }) => {
-        expect(await store.get('number')).toBe(2022);
-        expect(await store.get('object')).toEqual({ 'a': 2022 });
+        expect(await store.get('number.json')).toBe(2022);
+        expect(await store.get('object.json')).toEqual({ 'a': 2022 });
       });
     `,
   };
@@ -152,13 +152,13 @@ test('should load context storageState from store', async ({ runInlineTest, serv
         expect(await store.get('user')).toBe(undefined);
         await page.goto('${server.PREFIX}/setcookie.html');
         const state = await page.context().storageState();
-        await store.set('user', state);
+        await store.set('user.json', state);
       });
     `,
     'a.test.ts': `
       import { test, store, expect } from '@playwright/test';
       test.use({
-        storageState: async ({}, use) => use(store.get('user'))
+        storageState: async ({}, use) => use(store.get('user.json'))
       })
       test('should get data from setup', async ({ page }) => {
         await page.goto('${server.EMPTY_PAGE}');
