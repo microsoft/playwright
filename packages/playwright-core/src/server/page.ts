@@ -88,8 +88,6 @@ export interface PageDelegate {
   pdf?: (options: channels.PagePdfParams) => Promise<Buffer>;
   coverage?: () => any;
 
-  resetNetworkCache(): Promise<void>;
-
   // Work around WebKit's raf issues on Windows.
   rafCountForStablePosition(): number;
   // Work around Chrome's non-associated input and protocol.
@@ -249,7 +247,7 @@ export class Page extends SdkObject {
       this._delegate.updateEmulateMedia(),
       this._delegate.updateFileChooserInterception(),
     ]);
-    await this._delegate.resetNetworkCache();
+    await this.context().clearCache();
   }
 
   _didClose() {

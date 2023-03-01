@@ -109,10 +109,6 @@ export class WKPage implements PageDelegate {
     }
   }
 
-  async resetNetworkCache(): Promise<void> {
-    await this._session.send('Page.clearMemoryCache');
-  }
-
   potentiallyUninitializedPage(): Page {
     return this._page;
   }

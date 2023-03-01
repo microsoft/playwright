@@ -118,11 +118,6 @@ export class FFPage implements PageDelegate {
     this.addInitScript('', UTILITY_WORLD_NAME).catch(e => this._markAsError(e));
   }
 
-  async resetNetworkCache(): Promise<void> {
-    // Clearing only the context cache does not work: https://bugzilla.mozilla.org/show_bug.cgi?id=1819147
-    await this._browserContext._browser._connection.send('Browser.clearNetworkCache');
-  }
-
   potentiallyUninitializedPage(): Page {
     return this._page;
   }

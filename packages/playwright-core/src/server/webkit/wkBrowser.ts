@@ -339,6 +339,12 @@ export class WKBrowserContext extends BrowserContext {
 
   onClosePersistent() {}
 
+  override async clearCache(): Promise<void> {
+    await this._browser._browserSession.send('Playwright.clearMemoryCache', {
+      browserContextId: this._browserContextId!
+    });
+  }
+
   async doClose() {
     if (!this._browserContextId) {
       await Promise.all(this._wkPages().map(wkPage => wkPage._stopVideo()));
