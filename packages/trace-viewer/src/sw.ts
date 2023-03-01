@@ -65,6 +65,13 @@ async function doFetch(event: FetchEvent): Promise<Response> {
   const request = event.request;
   const client = await self.clients.get(event.clientId);
 
+  // When trace viewer is deployed over https, we will force upgrade
+  // insecure http subresources to https. Otherwise, these will fail
+  // to load inside our https snapshots.
+  // In this case, we also match http resources from the archive by
+  // the https urls.
+  const isDeployedAsHttps = self.registration.scope.startsWith('https://');
+
   if (request.url.startsWith(self.registration.scope)) {
     const url = new URL(unwrapPopoutUrl(request.url));
     const relativePath = url.pathname.substring(scopePath.length - 1);
@@ -102,7 +109,10 @@ async function doFetch(event: FetchEvent): Promise<Response> {
     if (relativePath.startsWith('/snapshot/')) {
       if (!snapshotServer)
         return new Response(null, { status: 404 });
-      return snapshotServer.serveSnapshot(relativePath, url.searchParams, url.href);
+      const response = snapshotServer.serveSnapshot(relativePath, url.searchParams, url.href);
+      if (isDeployedAsHttps)
+        response.headers.set('Content-Security-Policy', 'upgrade-insecure-requests');
+      return response;
     }
 
     if (relativePath.startsWith('/sha1/')) {
@@ -126,10 +136,7 @@ async function doFetch(event: FetchEvent): Promise<Response> {
     return new Response(null, { status: 404 });
 
   const lookupUrls = [request.url];
-  // When trace viewer is deployed over https, Chrome changes http subresources
-  // in snapshots to https, presumably to avoid mixed-content.
-  // In this case, we additionally match http resources from the archive.
-  if (self.registration.scope.startsWith('https://') && request.url.startsWith('https://'))
+  if (isDeployedAsHttps && request.url.startsWith('https://'))
     lookupUrls.push(request.url.replace(/^https/, 'http'));
   return snapshotServer.serveResource(lookupUrls, snapshotUrl);
 }
