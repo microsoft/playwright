@@ -24,6 +24,7 @@ import * as URL from 'url';
 import type { URLMatch } from '../common/types';
 import { isString, isRegExp } from './rtti';
 import { globToRegex } from './glob';
+import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent } from './happy-eyeballs';
 
 export async function createSocket(host: string, port: number): Promise<net.Socket> {
   return new Promise((resolve, reject) => {
@@ -39,15 +40,22 @@ export type HTTPRequestParams = {
   headers?: http.OutgoingHttpHeaders,
   data?: string | Buffer,
   timeout?: number,
+  rejectUnauthorized?: boolean,
 };
 
 export const NET_DEFAULT_TIMEOUT = 30_000;
 
 export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.IncomingMessage) => void, onError: (error: Error) => void) {
   const parsedUrl = URL.parse(params.url);
-  let options: https.RequestOptions = { ...parsedUrl };
-  options.method = params.method || 'GET';
-  options.headers = params.headers;
+  let options: https.RequestOptions = {
+    ...parsedUrl,
+    agent: parsedUrl.protocol === 'https:' ? httpsHappyEyeballsAgent : httpHappyEyeballsAgent,
+    method: params.method || 'GET',
+    headers: params.headers,
+  };
+  if (params.rejectUnauthorized !== undefined)
+    options.rejectUnauthorized = params.rejectUnauthorized;
+
   const timeout = params.timeout ?? NET_DEFAULT_TIMEOUT;
 
   const proxyURL = getProxyForUrl(params.url);

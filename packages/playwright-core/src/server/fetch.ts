@@ -30,7 +30,7 @@ import { HttpsProxyAgent, SocksProxyAgent } from '../utilsBundle';
 import { BrowserContext } from './browserContext';
 import { CookieStore, domainMatches } from './cookieStore';
 import { MultipartFormData } from './formData';
-import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent } from './happy-eyeballs';
+import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent } from '../utils/happy-eyeballs';
 import type { CallMetadata } from './instrumentation';
 import { SdkObject } from './instrumentation';
 import type { Playwright } from './playwright';
@@ -69,7 +69,7 @@ export type APIRequestFinishedEvent = {
   body?: Buffer;
 };
 
-export type SendRequestOptions = https.RequestOptions & {
+type SendRequestOptions = https.RequestOptions & {
   maxRedirects: number,
   deadline: number,
   __testHookLookup?: (hostname: string) => LookupAddress[]

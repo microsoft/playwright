@@ -33,11 +33,10 @@ import { Browser } from '../browser';
 import type * as types from '../types';
 import type * as channels from '@protocol/channels';
 import type { HTTPRequestParams } from '../../utils/network';
-import { NET_DEFAULT_TIMEOUT } from '../../utils/network';
 import { fetchData } from '../../utils/network';
 import { getUserAgent } from '../../utils/userAgent';
 import { wrapInASCIIBox } from '../../utils/ascii';
-import { debugMode, headersArrayToObject,  } from '../../utils';
+import { debugMode, headersArrayToObject, } from '../../utils';
 import { removeFolders } from '../../utils/fileUtils';
 import { RecentLogsCollector } from '../../common/debugLogger';
 import type { Progress } from '../progress';
@@ -45,13 +44,11 @@ import { ProgressController } from '../progress';
 import { TimeoutSettings } from '../../common/timeoutSettings';
 import { helper } from '../helper';
 import type { CallMetadata } from '../instrumentation';
-import http from 'http';
-import https from 'https';
+import type http from 'http';
 import { registry } from '../registry';
 import { ManualPromise } from '../../utils/manualPromise';
 import { validateBrowserContextOptions } from '../browserContext';
 import { chromiumSwitches } from './chromiumSwitches';
-import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent } from '../happy-eyeballs';
 
 const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');
 
@@ -338,21 +335,11 @@ async function urlToWSEndpoint(progress: Progress, endpointURL: string) {
     return endpointURL;
   progress.log(`<ws preparing> retrieving websocket url from ${endpointURL}`);
   const httpURL = endpointURL.endsWith('/') ? `${endpointURL}json/version/` : `${endpointURL}/json/version/`;
-  const isHTTPS = endpointURL.startsWith('https://');
-  const json = await new Promise<string>((resolve, reject) => {
-    (isHTTPS ? https : http).get(httpURL, {
-      timeout: NET_DEFAULT_TIMEOUT,
-      agent: isHTTPS ? httpsHappyEyeballsAgent : httpHappyEyeballsAgent,
-    }, resp => {
-      if (resp.statusCode! < 200 || resp.statusCode! >= 400) {
-        reject(new Error(`Unexpected status ${resp.statusCode} when connecting to ${httpURL}.\n` +
-        `This does not look like a DevTools server, try connecting via ws://.`));
-      }
-      let data = '';
-      resp.on('data', chunk => data += chunk);
-      resp.on('end', () => resolve(data));
-    }).on('error', reject);
-  });
+  const json = await fetchData({
+    url: httpURL,
+  }, async (_, resp) => new Error(`Unexpected status ${resp.statusCode} when connecting to ${httpURL}.\n` +
+    `This does not look like a DevTools server, try connecting via ws://.`)
+  );
   return JSON.parse(json).webSocketDebuggerUrl;
 }
 
