@@ -253,7 +253,7 @@ export const emptyModel = new MultiTraceModel([]);
 export async function loadSingleTraceFile(url: string): Promise<MultiTraceModel> {
   const params = new URLSearchParams();
   params.set('trace', url);
-  const response = await fetch(`context?${params.toString()}`);
-  const contextEntry = await response.json() as ContextEntry;
-  return new MultiTraceModel([contextEntry]);
+  const response = await fetch(`contexts?${params.toString()}`);
+  const contextEntries = await response.json() as ContextEntry[];
+  return new MultiTraceModel(contextEntries);
 }

@@ -105,3 +105,10 @@ svg {
 .codicon-error {
   color: var(--red);
 }
+
+input[type=text], input[type=search] {
+  color: var(--vscode-input-foreground);
+  background-color: var(--vscode-input-background);
+  border: none;
+  outline: none;
+}
