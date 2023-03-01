@@ -39,7 +39,7 @@ export const fixtures: Fixtures<
 
     page: async ({ page }, use, info) => {
       if (!(info.config as FullConfigInternal)._internal.defineConfigWasUsed)
-        throw new Error('Playwright Test\'s Vite plugin isn\'t loaded. Make sure to use defineConfig inside your playwright-ct.config.{ts,js}: https://aka.ms/playwright/ct-define-config');
+        throw new Error('Component testing requires the use of the defineConfig() in your playwright-ct.config.{ts,js}: https://aka.ms/playwright/ct-define-config');
       await (page as any)._wrapApiCall(async () => {
         await page.exposeFunction('__ct_dispatch', (ordinal: number, args: any[]) => {
           boundCallbacksForMount[ordinal](...args);
