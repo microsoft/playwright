@@ -104,7 +104,7 @@ it('should work with correct credentials and matching origin case insensitive', 
 
 it('should fail with correct credentials and mismatching scheme', async ({ browser, server }) => {
   server.setAuth('/empty.html', 'user', 'pass');
-  const origin = server.PREFIX.replace('http://', 'https://');
+  const origin = server.PREFIX.includes('http://') ? server.PREFIX.replace('http://', 'https://') : server.PREFIX.replace('https://', 'http://');
   const context = await browser.newContext({
     httpCredentials: { username: 'user', password: 'pass', origin: origin }
   });
