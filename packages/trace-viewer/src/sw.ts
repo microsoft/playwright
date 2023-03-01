@@ -124,7 +124,14 @@ async function doFetch(event: FetchEvent): Promise<Response> {
   const { snapshotServer } = loadedTraces.get(traceUrl) || {};
   if (!snapshotServer)
     return new Response(null, { status: 404 });
-  return snapshotServer.serveResource(request.url, snapshotUrl);
+
+  const lookupUrls = [request.url];
+  // When trace viewer is deployed over https, Chrome changes http subresources
+  // in snapshots to https, presumably to avoid mixed-content.
+  // In this case, we additionally match http resources from the archive.
+  if (self.registration.scope.startsWith('https://') && request.url.startsWith('https://'))
+    lookupUrls.push(request.url.replace(/^https/, 'http'));
+  return snapshotServer.serveResource(lookupUrls, snapshotUrl);
 }
 
 async function gc() {
