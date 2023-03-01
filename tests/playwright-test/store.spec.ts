@@ -27,15 +27,15 @@ test('should provide store fixture', async ({ runInlineTest }) => {
       import { test, store, expect } from '@playwright/test';
       test('should store number', async ({ }) => {
         expect(store).toBeTruthy();
-        expect(await store.get('number')).toBe(undefined);
-        await store.set('number', 2022)
-        expect(await store.get('number')).toBe(2022);
+        expect(await store.get('number.json')).toBe(undefined);
+        await store.set('number.json', 2022)
+        expect(await store.get('number.json')).toBe(2022);
       });
       test('should store object', async ({ }) => {
         expect(store).toBeTruthy();
-        expect(await store.get('object')).toBe(undefined);
-        await store.set('object', { 'a': 2022 })
-        expect(await store.get('object')).toEqual({ 'a': 2022 });
+        expect(await store.get('object.json')).toBe(undefined);
+        await store.set('object.json', { 'a': 2022 })
+        expect(await store.get('object.json')).toEqual({ 'a': 2022 });
       });
     `,
   }, { workers: 1 });
@@ -63,27 +63,27 @@ test('should share store state between project setup and tests', async ({ runInl
     'store.setup.ts': `
       import { test, store, expect } from '@playwright/test';
       test('should initialize store', async ({ }) => {
-        expect(await store.get('number')).toBe(undefined);
-        await store.set('number', 2022)
-        expect(await store.get('number')).toBe(2022);
+        expect(await store.get('number.json')).toBe(undefined);
+        await store.set('number.json', 2022)
+        expect(await store.get('number.json')).toBe(2022);
 
-        expect(await store.get('object')).toBe(undefined);
-        await store.set('object', { 'a': 2022 })
-        expect(await store.get('object')).toEqual({ 'a': 2022 });
+        expect(await store.get('object.json')).toBe(undefined);
+        await store.set('object.json', { 'a': 2022 })
+        expect(await store.get('object.json')).toEqual({ 'a': 2022 });
       });
     `,
     'a.test.ts': `
       import { test, store, expect } from '@playwright/test';
       test('should get data from setup', async ({ }) => {
-        expect(await store.get('number')).toBe(2022);
-        expect(await store.get('object')).toEqual({ 'a': 2022 });
+        expect(await store.get('number.json')).toBe(2022);
+        expect(await store.get('object.json')).toEqual({ 'a': 2022 });
       });
     `,
     'b.test.ts': `
       import { test, store, expect } from '@playwright/test';
       test('should get data from setup', async ({ }) => {
-        expect(await store.get('number')).toBe(2022);
-        expect(await store.get('object')).toEqual({ 'a': 2022 });
+        expect(await store.get('number.json')).toBe(2022);
+        expect(await store.get('object.json')).toEqual({ 'a': 2022 });
       });
     `,
   }, { workers: 1 });
@@ -99,17 +99,17 @@ test('should persist store state between project runs', async ({ runInlineTest }
     'a.test.ts': `
       import { test, store, expect } from '@playwright/test';
       test('should have no data on first run', async ({ }) => {
-        expect(await store.get('number')).toBe(undefined);
-        await store.set('number', 2022)
-        expect(await store.get('object')).toBe(undefined);
-        await store.set('object', { 'a': 2022 })
+        expect(await store.get('number.json')).toBe(undefined);
+        await store.set('number.json', 2022)
+        expect(await store.get('object.json')).toBe(undefined);
+        await store.set('object.json', { 'a': 2022 })
       });
     `,
     'b.test.ts': `
       import { test, store, expect } from '@playwright/test';
       test('should get data from previous run', async ({ }) => {
-        expect(await store.get('number')).toBe(2022);
-        expect(await store.get('object')).toEqual({ 'a': 2022 });
+        expect(await store.get('number.json')).toBe(2022);
+        expect(await store.get('object.json')).toEqual({ 'a': 2022 });
       });
     `,
   };
@@ -152,13 +152,13 @@ test('should load context storageState from store', async ({ runInlineTest, serv
         expect(await store.get('user')).toBe(undefined);
         await page.goto('${server.PREFIX}/setcookie.html');
         const state = await page.context().storageState();
-        await store.set('user', state);
+        await store.set('user.json', state);
       });
     `,
     'a.test.ts': `
       import { test, store, expect } from '@playwright/test';
       test.use({
-        storageState: async ({}, use) => use(store.get('user'))
+        storageState: async ({}, use) => use(store.get('user.json'))
       })
       test('should get data from setup', async ({ page }) => {
         await page.goto('${server.EMPTY_PAGE}');
@@ -289,4 +289,49 @@ test('should delete value', async ({ runInlineTest }) => {
   }, { workers: 1 });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
+});
+
+test('should support text, json and binary values', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test, store, expect } from '@playwright/test';
+      test('json', async ({ }) => {
+        await store.set('key.json', {'a': 2023});
+        expect(await store.get('key.json')).toEqual({ 'a': 2023 });
+      });
+      test('text', async ({ }) => {
+        await store.set('key.txt', 'Hello');
+        expect(await store.get('key.txt')).toEqual('Hello');
+      });
+      test('binary', async ({ }) => {
+        const buf = Buffer.alloc(256);
+        for (let i = 0; i < 256; i++)
+          buf[i] = i;
+        await store.set('key.png', buf);
+        expect(await store.get('key.png')).toEqual(buf);
+      });
+    `,
+  }, { workers: 1 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(3);
+});
+
+test('should throw on unsupported value type for given key extension', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test, store, expect } from '@playwright/test';
+      test('json', async ({ }) => {
+        const buf = Buffer.alloc(5);
+        await store.set('key.json', buf);
+      });
+      test('text', async ({ }) => {
+        await store.set('key.txt', {});
+      });
+      test('binary', async ({ }) => {
+        await store.set('key.png', {});
+      });
+    `,
+  }, { workers: 1 });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(3);
 });

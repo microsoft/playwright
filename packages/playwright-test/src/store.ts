@@ -18,6 +18,8 @@ import fs from 'fs';
 import path from 'path';
 import type { TestStore } from '../types/test';
 import { currentConfig } from './common/globals';
+import { mime } from 'playwright-core/lib/utilsBundle';
+import { isJsonMimeType, isString, isTextualMimeType } from 'playwright-core/lib/utils';
 
 class JsonStore implements TestStore {
   async delete(name: string) {
@@ -28,8 +30,13 @@ class JsonStore implements TestStore {
   async get<T>(name: string) {
     const file = this.path(name);
     try {
-      const data = await fs.promises.readFile(file, 'utf-8');
-      return JSON.parse(data) as T;
+      const type = contentType(name);
+      if (type === 'binary')
+        return await fs.promises.readFile(file) as T;
+      const text = await fs.promises.readFile(file, 'utf-8');
+      if (type === 'json')
+        return JSON.parse(text) as T;
+      return text as T;
     } catch (e) {
       return undefined;
     }
@@ -52,10 +59,39 @@ class JsonStore implements TestStore {
       await fs.promises.rm(file, { force: true });
       return;
     }
-    const data = JSON.stringify(value, undefined, 2);
+    let data: string | Buffer = '';
+    switch (contentType(name)) {
+      case 'json': {
+        if (Buffer.isBuffer(value))
+          throw new Error('JSON value must be an Object');
+        data = JSON.stringify(value, undefined, 2);
+        break;
+      }
+      case 'text': {
+        if (!isString(value))
+          throw new Error('Textual value must be a string');
+        data = value as string;
+        break;
+      }
+      case 'binary': {
+        if (!Buffer.isBuffer(value))
+          throw new Error('Binary value must be a Buffer');
+        data = value;
+        break;
+      }
+    }
     await fs.promises.mkdir(path.dirname(file), { recursive: true });
     await fs.promises.writeFile(file, data);
   }
+}
+
+function contentType(name: string): 'json'|'text'|'binary' {
+  const mimeType = mime.getType(path.basename(name)) ?? 'application/octet-string';
+  if (isJsonMimeType(mimeType))
+    return 'json';
+  if (isTextualMimeType(mimeType))
+    return 'text';
+  return 'binary';
 }
 
 export const store = new JsonStore();
