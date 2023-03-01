@@ -21,7 +21,7 @@
   position: relative;
   user-select: none;
   overflow: auto;
-  outline: 1 px solid transparent;
+  outline: 1px solid transparent;
 }
 
 .list-view-entry {
@@ -55,6 +55,10 @@
 
 .list-view-content:focus .list-view-entry.error.selected {
   outline: 1px solid var(--vscode-inputValidation-errorBorder);
+}
+
+.list-view-content:focus .list-view-entry.selected .codicon {
+  color: var(--vscode-list-activeSelectionForeground) !important;
 }
 
 .list-view-empty {

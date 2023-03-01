@@ -24,6 +24,7 @@ import { toPosixPath, serializePatterns } from './json';
 import { MultiMap } from 'playwright-core/lib/utils';
 import { codeFrameColumns } from '../common/babelBundle';
 import type { Metadata } from '../common/types';
+import type { SuitePrivate } from '../../types/reporterPrivate';
 
 export type JsonLocation = Location;
 export type JsonError = string;
@@ -50,7 +51,7 @@ export type JsonProject = {
 };
 
 export type JsonSuite = {
-  fileId: string;
+  fileId?: string;
   title: string;
   location?: JsonLocation;
   suites: JsonSuite[];
@@ -215,7 +216,7 @@ class RawReporter {
     const location = this._relativeLocation(suite.location);
     const result = {
       title: suite.title,
-      fileId: (suite as any)._fileId,
+      fileId: (suite as SuitePrivate)._fileId,
       location,
       suites: suite.suites.map(s => this._serializeSuite(s)),
       tests: suite.tests.map(t => this._serializeTest(t)),

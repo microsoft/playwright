@@ -16,6 +16,7 @@
 
 import type { FixturePool } from './fixtures';
 import type * as reporterTypes from '../../types/testReporter';
+import type { SuitePrivate } from '../../types/reporterPrivate';
 import type { TestTypeImpl } from './testType';
 import { rootTestType } from './testType';
 import type { Annotation, FixturesWithLocation, FullProject, FullProjectInternal, Location } from './types';
@@ -37,7 +38,7 @@ export type Modifier = {
   description: string | undefined
 };
 
-export class Suite extends Base implements reporterTypes.Suite {
+export class Suite extends Base implements SuitePrivate {
   location?: Location;
   parent?: Suite;
   _use: FixturesWithLocation[] = [];

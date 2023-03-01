@@ -27,7 +27,10 @@ export type ListViewProps = {
   selectedItem?: any,
   onAccepted?: (item: any) => void,
   onSelected?: (item: any) => void,
+  onLeftArrow?: (item: any) => void,
+  onRightArrow?: (item: any) => void,
   onHighlighted?: (item: any | undefined) => void,
+  onIconClicked?: (item: any) => void,
   showNoItemsMessage?: boolean,
   dataTestId?: string,
 };
@@ -42,7 +45,10 @@ export const ListView: React.FC<ListViewProps> = ({
   selectedItem,
   onAccepted,
   onSelected,
+  onLeftArrow,
+  onRightArrow,
   onHighlighted,
+  onIconClicked,
   showNoItemsMessage,
   dataTestId,
 }) => {
@@ -59,10 +65,21 @@ export const ListView: React.FC<ListViewProps> = ({
           onAccepted?.(selectedItem);
           return;
         }
-        if (event.key !== 'ArrowDown' &&  event.key !== 'ArrowUp')
+        if (event.key !== 'ArrowDown' &&  event.key !== 'ArrowUp' && event.key !== 'ArrowLeft' &&  event.key !== 'ArrowRight')
           return;
+
         event.stopPropagation();
         event.preventDefault();
+
+        if (event.key === 'ArrowLeft') {
+          onLeftArrow?.(selectedItem);
+          return;
+        }
+        if (event.key === 'ArrowRight') {
+          onRightArrow?.(selectedItem);
+          return;
+        }
+
         const index = selectedItem ? items.indexOf(selectedItem) : -1;
         let newIndex = index;
         if (event.key === 'ArrowDown') {
@@ -77,6 +94,7 @@ export const ListView: React.FC<ListViewProps> = ({
           else
             newIndex = Math.max(index - 1, 0);
         }
+
         const element = itemListRef.current?.children.item(newIndex);
         scrollIntoViewIfNeeded(element);
         onHighlighted?.(undefined);
@@ -102,6 +120,7 @@ export const ListView: React.FC<ListViewProps> = ({
           setHighlightedItem(undefined);
           onHighlighted?.(undefined);
         }}
+        onIconClicked={() => onIconClicked?.(item)}
       >
         {itemRender(item)}
       </ListItemView>)}
@@ -120,8 +139,9 @@ const ListItemView: React.FC<{
   onSelected: () => void,
   onMouseEnter: () => void,
   onMouseLeave: () => void,
+  onIconClicked: () => void,
   children: React.ReactNode | React.ReactNode[],
-}> = ({ key, hasIcons, icon, type, indent, onSelected, onMouseEnter, onMouseLeave, isHighlighted, isSelected, children }) => {
+}> = ({ key, hasIcons, icon, type, indent, onSelected, onMouseEnter, onMouseLeave, onIconClicked, isHighlighted, isSelected, children }) => {
   const selectedSuffix = isSelected ? ' selected' : '';
   const highlightedSuffix = isHighlighted ? ' highlighted' : '';
   const errorSuffix = type === 'error' ? ' error' : '';
@@ -141,7 +161,7 @@ const ListItemView: React.FC<{
     ref={divRef}
   >
     {indent ? <div style={{ minWidth: indent * 16 }}></div> : undefined}
-    {hasIcons && <div className={'codicon ' + (icon || 'blank')} style={{ minWidth: 16, marginRight: 4 }}></div>}
+    {hasIcons && <div className={'codicon ' + (icon || 'blank')} style={{ minWidth: 16, marginRight: 4 }} onClick={onIconClicked}></div>}
     {typeof children === 'string' ? <div style={{ textOverflow: 'ellipsis', overflow: 'hidden' }}>{children}</div> : children}
   </div>;
 };

@@ -20,13 +20,16 @@ import * as consoleApiSource from '../../../generated/consoleApiSource';
 import { HttpServer } from '../../../utils/httpServer';
 import { findChromiumChannel } from '../../registry';
 import { isUnderTest } from '../../../utils';
-import type { BrowserContext } from '../../browserContext';
 import { installAppIcon, syncLocalStorageWithSettings } from '../../chromium/crApp';
 import { serverSideCallMetadata } from '../../instrumentation';
 import { createPlaywright } from '../../playwright';
 import { ProgressController } from '../../progress';
+import type { Page } from '../../page';
 
-export async function showTraceViewer(traceUrls: string[], browserName: string, { headless = false, host, port }: { headless?: boolean, host?: string, port?: number }): Promise<BrowserContext | undefined> {
+type Options = { headless?: boolean, host?: string, port?: number, watchMode?: boolean };
+
+export async function showTraceViewer(traceUrls: string[], browserName: string, options?: Options): Promise<Page> {
+  const { headless = false, host, port, watchMode } = options || {};
   for (const traceUrl of traceUrls) {
     if (!traceUrl.startsWith('http://') && !traceUrl.startsWith('https://') && !fs.existsSync(traceUrl)) {
       // eslint-disable-next-line no-console
@@ -86,6 +89,8 @@ export async function showTraceViewer(traceUrls: string[], browserName: string, 
   await syncLocalStorageWithSettings(page, 'traceviewer');
 
   const params = traceUrls.map(t => `trace=${t}`);
+  if (watchMode)
+    params.push('watchMode=true');
   if (isUnderTest()) {
     params.push('isUnderTest=true');
     page.on('close', () => context.close(serverSideCallMetadata()).catch(() => {}));
@@ -95,5 +100,5 @@ export async function showTraceViewer(traceUrls: string[], browserName: string, 
 
   const searchQuery = params.length ? '?' + params.join('&') : '';
   await page.mainFrame().goto(serverSideCallMetadata(), urlPrefix + `/trace/index.html${searchQuery}`);
-  return context;
+  return page;
 }

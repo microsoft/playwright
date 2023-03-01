@@ -15,7 +15,7 @@
  */
 
 import type { Fixtures, Frame, Locator, Page, Browser, BrowserContext } from '@playwright/test';
-import { showTraceViewer } from '../../packages/playwright-core/lib/server/trace/viewer/traceViewer';
+import { showTraceViewer } from '../../packages/playwright-core/lib/server';
 
 type BaseTestFixtures = {
   context: BrowserContext;
@@ -113,7 +113,8 @@ export const traceViewerFixtures: Fixtures<TraceViewerFixtures, {}, BaseTestFixt
     const browsers: Browser[] = [];
     const contextImpls: any[] = [];
     await use(async (traces: string[], { host, port } = {}) => {
-      const contextImpl = await showTraceViewer(traces, browserName, { headless, host, port });
+      const pageImpl = await showTraceViewer(traces, browserName, { headless, host, port });
+      const contextImpl = pageImpl.context();
       const browser = await playwright.chromium.connectOverCDP(contextImpl._browser.options.wsEndpoint);
       browsers.push(browser);
       contextImpls.push(contextImpl);

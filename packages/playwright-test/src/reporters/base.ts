@@ -18,6 +18,7 @@ import { colors, ms as milliseconds, parseStackTraceLine } from 'playwright-core
 import fs from 'fs';
 import path from 'path';
 import type { FullConfig, TestCase, Suite, TestResult, TestError, FullResult, TestStep, Location, Reporter } from '../../types/testReporter';
+import type { SuitePrivate } from '../../types/reporterPrivate';
 import type { FullConfigInternal } from '../common/types';
 import { codeFrameColumns } from '../common/babelBundle';
 import { monotonicTime } from 'playwright-core/lib/utils';
@@ -88,7 +89,7 @@ export class BaseReporter implements Reporter {
   onTestEnd(test: TestCase, result: TestResult) {
     // Ignore any tests that are run in parallel.
     for (let suite: Suite | undefined = test.parent; suite; suite = suite.parent) {
-      if ((suite as any)._parallelMode === 'parallel')
+      if ((suite as SuitePrivate)._parallelMode === 'parallel')
         return;
     }
     const projectName = test.titlePath()[1];
