@@ -60,7 +60,7 @@ class JsonStore implements TestStore {
       return;
     }
     let data: string | Buffer = '';
-    switch(contentType(name)) {
+    switch (contentType(name)) {
       case 'json': {
         if (Buffer.isBuffer(value))
           throw new Error('JSON value must be an Object');
