@@ -24,6 +24,7 @@ import type { FullConfig, Suite, TestCase, TestStep } from '../../../playwright-
 import { SplitView } from '@web/components/splitView';
 import type { MultiTraceModel } from './modelUtil';
 import './watchMode.css';
+import { ToolbarButton } from '@web/components/toolbarButton';
 
 let rootSuite: Suite | undefined;
 
@@ -63,10 +64,10 @@ export const WatchModeView: React.FC<{}> = ({
   const explicitlyOrAutoExpandedFiles = new Set<Suite>();
   const entries = new Map<TestCase | Suite, Entry>();
   const trimmedFilterText = filterText.trim();
-  const filterTokens = trimmedFilterText.split(' ');
+  const filterTokens = trimmedFilterText.toLowerCase().split(' ');
   for (const fileSuite of fileSuites) {
     const hasMatch = !trimmedFilterText || fileSuite.allTests().some(test => {
-      const fullTitle = test.titlePath().join(' ');
+      const fullTitle = test.titlePath().join(' ').toLowerCase();
       return !filterTokens.some(token => !fullTitle.includes(token));
     });
     if (hasMatch)
@@ -76,12 +77,27 @@ export const WatchModeView: React.FC<{}> = ({
     if (expandState === true || autoExpandMatches) {
       explicitlyOrAutoExpandedFiles.add(fileSuite);
       for (const test of fileSuite.allTests()) {
-        const fullTitle = test.titlePath().join(' ');
+        const fullTitle = test.titlePath().join(' ').toLowerCase();
         if (!filterTokens.some(token => !fullTitle.includes(token)))
           entries.set(test, { test, fileSuite });
       }
     }
   }
+
+  const visibleTestIds = new Set<string>();
+  for (const { test } of entries.values()) {
+    if (test)
+      visibleTestIds.add(test.id);
+  }
+
+  const runEntry = (entry: Entry) => {
+    expandedFiles.set(entry.fileSuite, true);
+    setSelectedTest(entry.test);
+    setIsRunningTest(true);
+    runTests(entry.test ? entry.test.location.file + ':' + entry.test.location.line : entry.fileSuite.title, undefined).then(() => {
+      setIsRunningTest(false);
+    });
+  };
 
   const selectedEntry = selectedTest ? entries.get(selectedTest) : selectedOrDefaultFileSuite ? entries.get(selectedOrDefaultFileSuite) : undefined;
   return <SplitView sidebarSize={300} orientation='horizontal' sidebarIsFirst={true}>
@@ -93,12 +109,23 @@ export const WatchModeView: React.FC<{}> = ({
             setFilterText(e.target.value);
           }}
           onKeyDown={e => {
+            if (e.key === 'Enter') {
+              setIsRunningTest(true);
+              runTests(undefined, [...visibleTestIds]).then(() => {
+                setIsRunningTest(false);
+              });
+            }
           }}></input>
       </div>
       <ListView
         items={[...entries.values()]}
         itemKey={(entry: Entry) => entry.test ? entry.test!.id : entry.fileSuite.title }
-        itemRender={(entry: Entry) => entry.test ? entry.test!.titlePath().slice(3).join(' › ') : entry.fileSuite.title }
+        itemRender={(entry: Entry) => {
+          return <div className='hbox watch-mode-list-item'>
+            <div className='watch-mode-list-item-title'>{entry.test ? entry.test!.titlePath().slice(3).join(' › ') : entry.fileSuite.title}</div>
+            <ToolbarButton icon='play' title='Run' onClick={() => runEntry(entry)} disabled={isRunningTest}></ToolbarButton>
+          </div>;
+        }}
         itemIcon={(entry: Entry) => {
           if (entry.test) {
             if (entry.test.results.length && entry.test.results[0].duration)
@@ -113,15 +140,7 @@ export const WatchModeView: React.FC<{}> = ({
         }}
         itemIndent={(entry: Entry) => entry.test ? 1 : 0}
         selectedItem={selectedEntry}
-        onAccepted={(entry: Entry) => {
-          if (entry.test) {
-            setSelectedTest(entry.test);
-            setIsRunningTest(true);
-            runTests(entry.test ? entry.test.location.file + ':' + entry.test.location.line : entry.fileSuite.title).then(() => {
-              setIsRunningTest(false);
-            });
-          }
-        }}
+        onAccepted={runEntry}
         onLeftArrow={(entry: Entry) => {
           expandedFiles.set(entry.fileSuite, false);
           setSelectedTest(undefined);
@@ -248,9 +267,9 @@ const receiver = new TeleReporterReceiver({
   receiver.dispatch(message);
 };
 
-async function runTests(location: string): Promise<void> {
+async function runTests(location: string | undefined, testIds: string[] | undefined): Promise<void> {
   await (window as any).binding({
     method: 'run',
-    params: { location }
+    params: { location, testIds }
   });
 }

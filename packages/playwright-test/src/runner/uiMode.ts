@@ -85,8 +85,13 @@ class Controller {
     this._page.exposeBinding('binding', false, (source, data) => {
       const { method, params } = data;
       if (method === 'run') {
-        const { location } = params;
-        config._internal.cliArgs = [location];
+        const { location, testIds } = params;
+        if (location)
+          config._internal.cliArgs = [location];
+        if (testIds) {
+          const testIdSet = testIds ? new Set<string>(testIds) : null;
+          config._internal.testIdMatcher = id => !testIdSet || testIdSet.has(id);
+        }
         this._queue = this._queue.then(() => runTests(config, this._runReporter));
         return this._queue;
       }

@@ -21,3 +21,21 @@
 .watch-mode-sidebar input {
   flex: auto;
 }
+
+.watch-mode-sidebar .toolbar-button:not([disabled]) .codicon-play {
+  color: var(--vscode-testing-runAction);
+}
+
+.watch-mode-list-item {
+  flex: auto;
+}
+
+.watch-mode-list-item-title {
+  flex: auto;
+  text-overflow: ellipsis;
+  overflow: hidden
+}
+
+.watch-mode-sidebar .toolbar-button {
+  margin: 0;
+}
