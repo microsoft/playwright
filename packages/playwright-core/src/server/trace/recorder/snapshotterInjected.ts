@@ -15,6 +15,7 @@
  */
 
 import type { NodeSnapshot } from '@trace/snapshot';
+import { maskString } from '../../../utils';
 
 export type SnapshotData = {
   doctype?: string,
@@ -58,6 +59,12 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
     cssText?: string, // Text for stylesheets.
     cssRef?: number, // Previous snapshotNumber for overridden stylesheets.
   };
+
+  function maskIfSecret(value: string) {
+    if ((window as any).__playwright_secrets_?.has(value))
+      return maskString(value);
+    return value;
+  }
 
   function resetCachedData(obj: any) {
     delete obj[kCachedData];
@@ -391,7 +398,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
           if (element.localName.includes('-') && window.customElements?.get(element.localName))
             definedCustomElements.add(element.localName);
           if (nodeName === 'INPUT' || nodeName === 'TEXTAREA') {
-            const value = (element as HTMLInputElement).value;
+            const value = maskIfSecret((element as HTMLInputElement).value);
             expectValue(kValueAttribute);
             expectValue(value);
             attrs[kValueAttribute] = value;

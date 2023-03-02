@@ -44,6 +44,10 @@ export type ForceOptions = {
   force?: boolean,
 };
 
+export type TextInputOptions = {
+  redactFromLogs?: boolean,
+};
+
 export type PointerActionWaitOptions = TimeoutOptions & ForceOptions & StrictOptions & {
   trial?: boolean;
 };

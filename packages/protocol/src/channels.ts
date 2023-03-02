@@ -2447,12 +2447,14 @@ export type FrameFillParams = {
   force?: boolean,
   timeout?: number,
   noWaitAfter?: boolean,
+  redactFromLogs?: boolean,
 };
 export type FrameFillOptions = {
   strict?: boolean,
   force?: boolean,
   timeout?: number,
   noWaitAfter?: boolean,
+  redactFromLogs?: boolean,
 };
 export type FrameFillResult = void;
 export type FrameFocusParams = {
@@ -2787,12 +2789,14 @@ export type FrameTypeParams = {
   text: string,
   delay?: number,
   noWaitAfter?: boolean,
+  redactFromLogs?: boolean,
   timeout?: number,
 };
 export type FrameTypeOptions = {
   strict?: boolean,
   delay?: number,
   noWaitAfter?: boolean,
+  redactFromLogs?: boolean,
   timeout?: number,
 };
 export type FrameTypeResult = void;
@@ -3146,11 +3150,13 @@ export type ElementHandleFillParams = {
   force?: boolean,
   timeout?: number,
   noWaitAfter?: boolean,
+  redactFromLogs?: boolean,
 };
 export type ElementHandleFillOptions = {
   force?: boolean,
   timeout?: number,
   noWaitAfter?: boolean,
+  redactFromLogs?: boolean,
 };
 export type ElementHandleFillResult = void;
 export type ElementHandleFocusParams = {};
@@ -3388,11 +3394,13 @@ export type ElementHandleTypeParams = {
   text: string,
   delay?: number,
   noWaitAfter?: boolean,
+  redactFromLogs?: boolean,
   timeout?: number,
 };
 export type ElementHandleTypeOptions = {
   delay?: number,
   noWaitAfter?: boolean,
+  redactFromLogs?: boolean,
   timeout?: number,
 };
 export type ElementHandleTypeResult = void;

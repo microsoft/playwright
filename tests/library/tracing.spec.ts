@@ -584,6 +584,42 @@ test('should store postData for global request', async ({ request, server }, tes
   }));
 });
 
+test('should mask sensitive input data', async ({ context, page, server }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/19992' });
+  const secret = 'My secret!';
+  await context.tracing.start({ snapshots: true });
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent('<input></input>');
+  await page.fill('input', secret, { redactFromLogs: true });
+  await page.fill('input', '');
+  await page.type('input', secret, { redactFromLogs: true });
+  await page.fill('input', '');
+  await page.locator('input').fill(secret, { redactFromLogs: true });
+  await page.fill('input', '');
+  await page.locator('input').type(secret, { redactFromLogs: true });
+  await page.fill('input', '');
+  await(await page.$('input')).fill(secret, { redactFromLogs: true });
+  await page.fill('input', '');
+  await(await page.$('input')).type(secret, { redactFromLogs: true });
+
+  await page.close();
+  await context.tracing.stop({ path: test.info().outputPath('trace.zip') });
+
+  const { events, actions, resources } = await parseTrace(test.info().outputPath('trace.zip'));
+  expect(events[0].type).toBe('context-options');
+
+  expect(actions).toContain('page.fill');
+  expect(actions).toContain('page.type');
+  expect(actions).toContain('locator.fill');
+  expect(actions).toContain('locator.type');
+  expect(actions).toContain('elementHandle.fill');
+  expect(actions).toContain('elementHandle.type');
+
+  for (const [name, content] of resources) {
+    if (name.endsWith('.trace'))
+      expect(content.toString()).not.toContain(secret);
+  }
+});
 
 function expectRed(pixels: Buffer, offset: number) {
   const r = pixels.readUInt8(offset);

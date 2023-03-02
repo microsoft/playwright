@@ -120,6 +120,10 @@ export async function saveTraceFile(fileName: string, traceEvents: ActionTraceEv
   });
 }
 
+export function maskString(str: string) {
+  return '*'.repeat(str.length);
+}
+
 export function createTraceEventForExpect(apiName: string, expected: any, stack: StackFrame[], wallTime: number): ActionTraceEvent {
   return {
     type: 'action',

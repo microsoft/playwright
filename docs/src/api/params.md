@@ -23,6 +23,11 @@ The default value can be changed by using the
 maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default
 value can be changed by using the [`method: BrowserContext.setDefaultTimeout`].
 
+## input-redact-from-logs
+- `redactFromLogs` <[boolean]>
+
+If set to true, the input value will be redacted from the logs and replaced with X symbols.
+
 ## input-strict
 - `strict` <[boolean]>
 

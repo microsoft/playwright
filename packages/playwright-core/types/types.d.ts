@@ -2338,6 +2338,11 @@ export interface Page {
     noWaitAfter?: boolean;
 
     /**
+     * If set to true, the input value will be redacted from the logs and replaced with X symbols.
+     */
+    redactFromLogs?: boolean;
+
+    /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
@@ -4069,6 +4074,11 @@ export interface Page {
     noWaitAfter?: boolean;
 
     /**
+     * If set to true, the input value will be redacted from the logs and replaced with X symbols.
+     */
+    redactFromLogs?: boolean;
+
+    /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
@@ -5760,6 +5770,11 @@ export interface Frame {
     noWaitAfter?: boolean;
 
     /**
+     * If set to true, the input value will be redacted from the logs and replaced with X symbols.
+     */
+    redactFromLogs?: boolean;
+
+    /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
@@ -7024,6 +7039,11 @@ export interface Frame {
      * navigating to inaccessible pages. Defaults to `false`.
      */
     noWaitAfter?: boolean;
+
+    /**
+     * If set to true, the input value will be redacted from the logs and replaced with X symbols.
+     */
+    redactFromLogs?: boolean;
 
     /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
@@ -9307,6 +9327,11 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     noWaitAfter?: boolean;
 
     /**
+     * If set to true, the input value will be redacted from the logs and replaced with X symbols.
+     */
+    redactFromLogs?: boolean;
+
+    /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed
      * by using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -9911,6 +9936,11 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
      * navigating to inaccessible pages. Defaults to `false`.
      */
     noWaitAfter?: boolean;
+
+    /**
+     * If set to true, the input value will be redacted from the logs and replaced with X symbols.
+     */
+    redactFromLogs?: boolean;
 
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed
@@ -10728,6 +10758,11 @@ export interface Locator {
      * navigating to inaccessible pages. Defaults to `false`.
      */
     noWaitAfter?: boolean;
+
+    /**
+     * If set to true, the input value will be redacted from the logs and replaced with X symbols.
+     */
+    redactFromLogs?: boolean;
 
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed
@@ -11919,6 +11954,11 @@ export interface Locator {
      * navigating to inaccessible pages. Defaults to `false`.
      */
     noWaitAfter?: boolean;
+
+    /**
+     * If set to true, the input value will be redacted from the logs and replaced with X symbols.
+     */
+    redactFromLogs?: boolean;
 
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed

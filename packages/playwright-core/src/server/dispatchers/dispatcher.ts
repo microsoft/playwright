@@ -18,7 +18,7 @@ import { EventEmitter } from 'events';
 import type * as channels from '@protocol/channels';
 import { serializeError } from '../../protocol/serializers';
 import { findValidator, ValidationError, createMetadataValidator, type ValidatorContext } from '../../protocol/validator';
-import { assert, isUnderTest, monotonicTime } from '../../utils';
+import { assert, isObject, isString, isUnderTest, maskString, monotonicTime } from '../../utils';
 import { kBrowserOrContextClosedError } from '../../common/errors';
 import type { CallMetadata } from '../instrumentation';
 import { SdkObject } from '../instrumentation';
@@ -257,7 +257,7 @@ export class DispatcherConnection {
       endTime: 0,
       type: dispatcher._type,
       method,
-      params: params || {},
+      params: maybeMaskSensitiveData(params) || {},
       log: [],
       snapshots: []
     };
@@ -325,4 +325,17 @@ function formatLogRecording(log: string[]): string {
   const leftLength = (headerLength - header.length) / 2;
   const rightLength = headerLength - header.length - leftLength;
   return `\n${'='.repeat(leftLength)}${header}${'='.repeat(rightLength)}\n${log.join('\n')}\n${'='.repeat(headerLength)}`;
+}
+
+function maybeMaskSensitiveData(params: any) {
+  if (!params || !isObject(params))
+    return params;
+  if (!(params as any).redactFromLogs)
+    return params;
+  const redacted: any = { ...params };
+  for (const name of ['text', 'value']) {
+    if (isString(redacted[name]))
+      redacted[name] = maskString(redacted[name]);
+  }
+  return redacted;
 }

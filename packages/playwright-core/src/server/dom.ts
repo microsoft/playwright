@@ -28,7 +28,7 @@ import type { Progress } from './progress';
 import { ProgressController } from './progress';
 import type * as types from './types';
 import type { TimeoutOptions } from '../common/types';
-import { isUnderTest } from '../utils';
+import { isUnderTest, maskString } from '../utils';
 
 type SetInputFilesFiles = channels.ElementHandleSetInputFilesParams['files'];
 export type InputFilesItems = { files?: SetInputFilesFiles, localPaths?: string[] };
@@ -560,7 +560,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     });
   }
 
-  async fill(metadata: CallMetadata, value: string, options: types.NavigatingActionWaitOptions & types.ForceOptions = {}): Promise<void> {
+  async fill(metadata: CallMetadata, value: string, options: types.NavigatingActionWaitOptions & types.ForceOptions & types.TextInputOptions = {}): Promise<void> {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       const result = await this._fill(progress, value, options);
@@ -568,8 +568,8 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     }, this._page._timeoutSettings.timeout(options));
   }
 
-  async _fill(progress: Progress, value: string, options: types.NavigatingActionWaitOptions & types.ForceOptions): Promise<'error:notconnected' | 'done'> {
-    progress.log(`elementHandle.fill("${value}")`);
+  async _fill(progress: Progress, value: string, options: types.NavigatingActionWaitOptions & types.ForceOptions & types.TextInputOptions): Promise<'error:notconnected' | 'done'> {
+    progress.log(`elementHandle.fill("${options.redactFromLogs ? maskString(value) : value}")`);
     await progress.beforeInputAction(this);
     return this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
       progress.log('  waiting for element to be visible, enabled and editable');
@@ -582,15 +582,33 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       progress.log('  element is visible, enabled and editable');
       if (filled === 'needsinput') {
         progress.throwIfAborted();  // Avoid action that has side-effects.
-        if (value)
+        if (value) {
+          if (options.redactFromLogs)
+            await this._addSecret(value);
           await this._page.keyboard.insertText(value);
-        else
+        } else {
           await this._page.keyboard.press('Delete');
+        }
       } else {
         assertDone(filled);
       }
       return 'done';
     }, 'input');
+  }
+
+  private async _addSecret(secret: string) {
+    const context = await this._frame._mainContext();
+    // await this.evaluate((el, secret) => {
+    await context.evaluate(secret => {
+      let secrets = (window as any).__playwright_secrets_;
+      // console.log('_addSecret ', secrets);
+      if (!secrets) {
+        secrets = new Set();
+        (window as any).__playwright_secrets_ = secrets;
+      }
+      // console.log('add secret ', secret);
+      secrets.add(secret);
+    }, secret);
   }
 
   async selectText(metadata: CallMetadata, options: types.TimeoutOptions & types.ForceOptions = {}): Promise<void> {
@@ -668,7 +686,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return await this.evaluateInUtility(([injected, node]) => injected.blurNode(node), {});
   }
 
-  async type(metadata: CallMetadata, text: string, options: { delay?: number } & types.NavigatingActionWaitOptions): Promise<void> {
+  async type(metadata: CallMetadata, text: string, options: { delay?: number } & types.NavigatingActionWaitOptions & types.TextInputOptions): Promise<void> {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       const result = await this._type(progress, text, options);
@@ -676,14 +694,16 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     }, this._page._timeoutSettings.timeout(options));
   }
 
-  async _type(progress: Progress, text: string, options: { delay?: number } & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
-    progress.log(`elementHandle.type("${text}")`);
+  async _type(progress: Progress, text: string, options: { delay?: number } & types.NavigatingActionWaitOptions & types.TextInputOptions): Promise<'error:notconnected' | 'done'> {
+    progress.log(`elementHandle.type("${options.redactFromLogs ? maskString(text) : text}")`);
     await progress.beforeInputAction(this);
     return this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
       const result = await this._focus(progress, true /* resetSelectionIfNotFocused */);
       if (result !== 'done')
         return result;
       progress.throwIfAborted();  // Avoid action that has side-effects.
+      if (options.redactFromLogs)
+        await this._addSecret(text);
       await this._page.keyboard.type(text, options);
       return 'done';
     }, 'input');

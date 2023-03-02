@@ -516,6 +516,9 @@ Value to set for the `<input>`, `<textarea>` or `[contenteditable]` element.
 ### option: ElementHandle.fill.noWaitAfter = %%-input-no-wait-after-%%
 * since: v1.8
 
+### option: ElementHandle.fill.redactFromLogs = %%-input-redact-from-logs-%%
+* since: v1.32
+
 ### option: ElementHandle.fill.timeout = %%-input-timeout-%%
 * since: v1.8
 
@@ -1005,6 +1008,9 @@ Time to wait between key presses in milliseconds. Defaults to 0.
 
 ### option: ElementHandle.type.noWaitAfter = %%-input-no-wait-after-%%
 * since: v1.8
+
+### option: ElementHandle.type.redactFromLogs = %%-input-redact-from-logs-%%
+* since: v1.32
 
 ### option: ElementHandle.type.timeout = %%-input-timeout-%%
 * since: v1.8
