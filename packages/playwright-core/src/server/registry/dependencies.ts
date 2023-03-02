@@ -102,11 +102,19 @@ export async function installDependenciesLinux(targets: Set<DependencyGroup>, dr
   if (!dryRun)
     console.log(`Installing dependencies...`);  // eslint-disable-line no-console
   const commands: string[] = [];
-  commands.push('apt-get update');
-  commands.push(['apt-get', 'install', '-y', '--no-install-recommends',
-    ...uniqueLibraries,
-  ].join(' '));
-  const { command, args, elevatedPermissions } = await transformCommandsForRoot(commands);
+  if (platform.includes('arch')) {
+    commands.push('pacman -Syy');
+    commands.push(['yay', '-S', '--noconfirm', '--removemake', '--noprovides', '--answerdiff', 'None', '--answerclean', 'None', '--mflags', '"--noconfirm"',
+      ...uniqueLibraries,
+    ].join(' '));
+    commands.push('sudo ln -s /usr/lib/libpcre.so /usr/lib/libpcre.so.3')
+  } else {
+    commands.push('apt-get update');
+    commands.push(['apt-get', 'install', '-y', '--no-install-recommends',
+      ...uniqueLibraries,
+    ].join(' '));
+  }
+  const { command, args, elevatedPermissions } = await transformCommandsForRoot(commands);
   if (dryRun) {
     console.log(`${command} ${quoteProcessArgs(args).join(' ')}`); // eslint-disable-line no-console
     return;
