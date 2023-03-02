@@ -284,18 +284,19 @@ export class CRNetworkManager {
       const contentLengthHeader = Object.entries(responsePayload.headers).find(header => header[0].toLowerCase() === 'content-length');
       const expectedLength = contentLengthHeader ? +contentLengthHeader[1] : undefined;
 
-      const response = await this._client.send('Network.getResponseBody', { requestId: request._requestId });
+      const client = request._adoptingOopifSession ?? this._client;
+      const response = await client.send('Network.getResponseBody', { requestId: request._requestId });
       if (response.body || !expectedLength)
         return Buffer.from(response.body, response.base64Encoded ? 'base64' : 'utf8');
 
       // For <link prefetch we are going to receive empty body with non-emtpy content-length expectation. Reach out for the actual content.
-      const resource = await this._client.send('Network.loadNetworkResource', { url: request.request.url(), frameId: this._serviceWorker ? undefined : request.request.frame()!._id, options: { disableCache: false, includeCredentials: true } });
+      const resource = await client.send('Network.loadNetworkResource', { url: request.request.url(), frameId: this._serviceWorker ? undefined : request.request.frame()!._id, options: { disableCache: false, includeCredentials: true } });
       const chunks: Buffer[] = [];
       while (resource.resource.stream) {
-        const chunk = await this._client.send('IO.read', { handle: resource.resource.stream });
+        const chunk = await client.send('IO.read', { handle: resource.resource.stream });
         chunks.push(Buffer.from(chunk.data, chunk.base64Encoded ? 'base64' : 'utf-8'));
         if (chunk.eof) {
-          await this._client.send('IO.close', { handle: resource.resource.stream });
+          await client.send('IO.close', { handle: resource.resource.stream });
           break;
         }
       }
@@ -456,6 +457,7 @@ export class CRNetworkManager {
     if (!request || request._documentId !== requestId)
       return;
     this._requestIdToRequest.set(requestId, request);
+    request._adoptingOopifSession = this._client;
     this._parentManager._requestIdToRequest.delete(requestId);
     if (request._interceptionId && this._parentManager._attemptedAuthentications.has(request._interceptionId)) {
       this._parentManager._attemptedAuthentications.delete(request._interceptionId);
@@ -474,6 +476,7 @@ class InterceptableRequest {
   readonly _wallTime: number;
   private _route: RouteImpl | null;
   private _redirectedFrom: InterceptableRequest | null;
+  _adoptingOopifSession: CRSession | undefined;
 
   constructor(options: {
     context: contexts.BrowserContext;
