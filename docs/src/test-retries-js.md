@@ -63,27 +63,16 @@ This scheme works perfectly for independent tests and guarantees that failing te
 
 ## Retries
 
-Playwright Test supports **test retries**. When enabled, failing tests will be retried multiple times until they pass, or until the maximum number of retries is reached. By default failing tests are not retried.
+Playwright supports **test retries**. When enabled, failing tests will be retried multiple times until they pass, or until the maximum number of retries is reached. By default failing tests are not retried.
 
 ```bash
 # Give failing tests 3 retry attempts
 npx playwright test --retries=3
 ```
 
-```js tab=js-js
-// playwright.config.js
-// @ts-check
+You can configure retries in the configuration file:
 
-const { defineConfig } = require('@playwright/test');
-
-module.exports = defineConfig({
-  // Give failing tests 3 retry attempts
-  retries: 3,
-});
-```
-
-```js tab=js-ts
-// playwright.config.ts
+```js
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -272,7 +261,7 @@ test('runs first', async () => {
   await page.goto('https://playwright.dev/');
 });
 
-test('runs second', async () => {
+test('runs second', async () => { 
   await page.getByText('Get Started').click();
 });
 ```
