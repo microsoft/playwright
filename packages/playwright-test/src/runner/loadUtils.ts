@@ -26,6 +26,7 @@ import { buildProjectsClosure, collectFilesForProject, filterProjects } from './
 import { requireOrImport } from '../common/transform';
 import { buildFileSuiteForProject, filterByFocusedLine, filterByTestIds, filterOnly, filterTestsRemoveEmptySuites } from '../common/suiteUtils';
 import { filterForShard } from './testGroups';
+import { dependenciesForTestFile } from '../common/compilationCache';
 
 export async function loadAllTests(mode: 'out-of-process' | 'in-process', config: FullConfigInternal, projectsToIgnore: Set<FullProjectInternal>, fileMatcher: Matcher, errors: TestError[], shouldFilterOnly: boolean): Promise<Suite> {
   const projects = filterProjects(config.projects, config._internal.cliProjectFilter);
@@ -78,7 +79,7 @@ export async function loadAllTests(mode: 'out-of-process' | 'in-process', config
   }
 
   // Load all test files and create a preprocessed root. Child suites are files there.
-  const fileSuits: Suite[] = [];
+  const fileSuites: Suite[] = [];
   {
     const loaderHost = mode === 'out-of-process' ? new OutOfProcessLoaderHost(config) : new InProcessLoaderHost(config);
     const allTestFiles = new Set<string>();
@@ -86,13 +87,28 @@ export async function loadAllTests(mode: 'out-of-process' | 'in-process', config
       files.forEach(file => allTestFiles.add(file));
     for (const file of allTestFiles) {
       const fileSuite = await loaderHost.loadTestFile(file, errors);
-      fileSuits.push(fileSuite);
+      fileSuites.push(fileSuite);
     }
     await loaderHost.stop();
+
+    // Check that no test file imports another test file.
+    // Loader must be stopped first, since it popuplates the dependency tree.
+    for (const file of allTestFiles) {
+      for (const dependency of dependenciesForTestFile(file)) {
+        if (allTestFiles.has(dependency)) {
+          const importer = path.relative(config.rootDir, file);
+          const importee = path.relative(config.rootDir, dependency);
+          errors.push({
+            message: `Error: test file "${importer}" should not import test file "${importee}"`,
+            location: { file, line: 1, column: 1 },
+          });
+        }
+      }
+    }
   }
 
   // Complain about duplicate titles.
-  errors.push(...createDuplicateTitlesErrors(config, fileSuits));
+  errors.push(...createDuplicateTitlesErrors(config, fileSuites));
 
   // Create root suites with clones for the projects.
   const rootSuite = new Suite('', 'root');
@@ -105,7 +121,7 @@ export async function loadAllTests(mode: 'out-of-process' | 'in-process', config
 
   // First iterate leaf projects to focus only, then add all other projects.
   for (const project of topLevelProjects) {
-    const projectSuite = await createProjectSuite(fileSuits, project, { cliFileFilters, cliTitleMatcher, testIdMatcher: config._internal.testIdMatcher }, filesToRunByProject.get(project)!);
+    const projectSuite = await createProjectSuite(fileSuites, project, { cliFileFilters, cliTitleMatcher, testIdMatcher: config._internal.testIdMatcher }, filesToRunByProject.get(project)!);
     if (projectSuite)
       rootSuite._addSuite(projectSuite);
   }
@@ -123,7 +139,7 @@ export async function loadAllTests(mode: 'out-of-process' | 'in-process', config
 
   // Prepend the projects that are dependencies.
   for (const project of dependencyProjects) {
-    const projectSuite = await createProjectSuite(fileSuits, project, { cliFileFilters: [], cliTitleMatcher: undefined }, filesToRunByProject.get(project)!);
+    const projectSuite = await createProjectSuite(fileSuites, project, { cliFileFilters: [], cliTitleMatcher: undefined }, filesToRunByProject.get(project)!);
     if (projectSuite)
       rootSuite._prependSuite(projectSuite);
   }
