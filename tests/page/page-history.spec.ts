@@ -187,7 +187,6 @@ it('page.reload should work with cross-origin redirect', async ({ page, server, 
 
 it('page.reload should work on a page with a hash', async ({ page, server, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/21145' });
-  it.fixme(browserName === 'firefox');
   await page.goto(server.EMPTY_PAGE + '#hash');
   await page.reload();
   await expect(page).toHaveURL(server.EMPTY_PAGE + '#hash');
@@ -237,8 +236,9 @@ it('page.goForward during renderer-initiated navigation', async ({ page, server 
   await page.waitForSelector('text=hello');
 });
 
-it('regression test for issue 20791', async ({ page, server }) => {
+it('regression test for issue 20791', async ({ page, server, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/20791' });
+  it.fixme(browserName === 'firefox');
   server.setRoute('/iframe.html', (req, res) => {
     res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
     // iframe access parent frame to log a value from it.

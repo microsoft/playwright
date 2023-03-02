@@ -393,7 +393,7 @@ export class FFPage implements PageDelegate {
   }
 
   async reload(): Promise<void> {
-    await this._session.send('Page.reload');
+    await this._page._frameManager.mainFrame().softReload();
   }
 
   async goBack(): Promise<boolean> {
