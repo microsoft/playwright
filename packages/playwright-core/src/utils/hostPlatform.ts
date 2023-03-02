@@ -69,7 +69,7 @@ export const hostPlatform = ((): HostPlatform => {
     }
     if (distroInfo?.id === 'debian' && distroInfo?.version === '11')
       return ('debian11' + archSuffix) as HostPlatform;
-    if (distroInfo?.id === 'arch' || distroInfo?.id_like ==='arch')
+    if (distroInfo?.id === 'arch' || distroInfo?.id_like === 'arch')
       return ('arch' + archSuffix) as HostPlatform;
     return ('generic-linux' + archSuffix) as HostPlatform;
   }

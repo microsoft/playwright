@@ -844,7 +844,7 @@ deps['arch'] = {
     'libflite_cmu_us_kal.so.1': 'flite1',
     'libflite_cmu_us_rms.so.1': 'flite1',
   },
-}
+};
 
 deps['ubuntu20.04-arm64'] = {
   tools: [...deps['ubuntu20.04'].tools],
