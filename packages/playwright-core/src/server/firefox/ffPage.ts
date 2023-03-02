@@ -393,7 +393,20 @@ export class FFPage implements PageDelegate {
   }
 
   async reload(): Promise<void> {
-    await this._session.send('Page.reload');
+    const mainFrame = this._page._frameManager.mainFrame();
+    // This is a workaround for https://github.com/microsoft/playwright/issues/21145
+    let hash = '';
+    try {
+      hash = (new URL(mainFrame.url())).hash;
+    } catch (e) {
+      // Ignore URL parsing error, if any.
+    }
+    if (hash.length) {
+      const context = await mainFrame._utilityContext();
+      await context.rawEvaluateJSON(`void window.location.reload();`);
+    } else {
+      await this._session.send('Page.reload');
+    }
   }
 
   async goBack(): Promise<boolean> {
