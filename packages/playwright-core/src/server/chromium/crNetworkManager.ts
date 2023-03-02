@@ -259,6 +259,7 @@ export class CRNetworkManager {
     const isNavigationRequest = requestWillBeSentEvent.requestId === requestWillBeSentEvent.loaderId && requestWillBeSentEvent.type === 'Document';
     const documentId = isNavigationRequest ? requestWillBeSentEvent.loaderId : undefined;
     const request = new InterceptableRequest({
+      owningNetworkManager: this,
       context: (this._page || this._serviceWorker)!._browserContext,
       frame: frame || null,
       serviceWorker: this._serviceWorker || null,
@@ -284,7 +285,7 @@ export class CRNetworkManager {
       const contentLengthHeader = Object.entries(responsePayload.headers).find(header => header[0].toLowerCase() === 'content-length');
       const expectedLength = contentLengthHeader ? +contentLengthHeader[1] : undefined;
 
-      const client = request._adoptingOopifSession ?? this._client;
+      const client = request._owningNetworkManager._client;
       const response = await client.send('Network.getResponseBody', { requestId: request._requestId });
       if (response.body || !expectedLength)
         return Buffer.from(response.body, response.base64Encoded ? 'base64' : 'utf8');
@@ -457,7 +458,7 @@ export class CRNetworkManager {
     if (!request || request._documentId !== requestId)
       return;
     this._requestIdToRequest.set(requestId, request);
-    request._adoptingOopifSession = this._client;
+    request._owningNetworkManager = this;
     this._parentManager._requestIdToRequest.delete(requestId);
     if (request._interceptionId && this._parentManager._attemptedAuthentications.has(request._interceptionId)) {
       this._parentManager._attemptedAuthentications.delete(request._interceptionId);
@@ -476,9 +477,10 @@ class InterceptableRequest {
   readonly _wallTime: number;
   private _route: RouteImpl | null;
   private _redirectedFrom: InterceptableRequest | null;
-  _adoptingOopifSession: CRSession | undefined;
+  _owningNetworkManager: CRNetworkManager;
 
   constructor(options: {
+    owningNetworkManager: CRNetworkManager,    
     context: contexts.BrowserContext;
     frame: frames.Frame | null;
     serviceWorker: CRServiceWorker | null;
@@ -488,7 +490,8 @@ class InterceptableRequest {
     requestPausedEvent: Protocol.Fetch.requestPausedPayload | null;
     redirectedFrom: InterceptableRequest | null;
   }) {
-    const { context, frame, documentId, route, requestWillBeSentEvent, requestPausedEvent, redirectedFrom, serviceWorker } = options;
+    const { owningNetworkManager, context, frame, documentId, route, requestWillBeSentEvent, requestPausedEvent, redirectedFrom, serviceWorker } = options;
+    this._owningNetworkManager = owningNetworkManager;
     this._timestamp = requestWillBeSentEvent.timestamp;
     this._wallTime = requestWillBeSentEvent.wallTime;
     this._requestId = requestWillBeSentEvent.requestId;
