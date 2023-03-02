@@ -185,9 +185,8 @@ it('page.reload should work with cross-origin redirect', async ({ page, server, 
   await expect(page).toHaveURL(server.CROSS_PROCESS_PREFIX + '/title.html');
 });
 
-it('page.reload should work on a page with a hash', async ({ page, server, browserName }) => {
+it('page.reload should work on a page with a hash', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/21145' });
-  it.fixme(browserName === 'firefox');
   await page.goto(server.EMPTY_PAGE + '#hash');
   await page.reload();
   await expect(page).toHaveURL(server.EMPTY_PAGE + '#hash');
