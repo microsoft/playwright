@@ -1512,12 +1512,6 @@ export class Frame extends SdkObject {
     return context.evaluate(() => document.title);
   }
 
-  // This is a workaround for https://github.com/microsoft/playwright/issues/21145
-  async softReload(): Promise<void> {
-    const context = await this._utilityContext();
-    await context.evaluate(() => window.location.reload());
-  }
-
   async rafrafTimeout(timeout: number): Promise<void> {
     if (timeout === 0)
       return;
