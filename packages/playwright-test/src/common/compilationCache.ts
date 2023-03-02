@@ -173,6 +173,10 @@ export function collectAffectedTestFiles(dependency: string, testFileCollector: 
   }
 }
 
+export function dependenciesForTestFile(filename: string): Set<string> {
+  return fileDependencies.get(filename) || new Set();
+}
+
 // These two are only used in the dev mode, they are specifically excluding
 // files from packages/playwright*. In production mode, node_modules covers
 // that.
