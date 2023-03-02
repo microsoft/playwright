@@ -119,6 +119,17 @@ class Program
 
 The viewport is included in the device but you can override it for some tests with [`method: Page.setViewportSize`].
 
+```js
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  use: {
+    // Viewport used for all pages in the context.
+    viewport: { width: 1280, height: 720 },
+  },
+});
+```
+
 ```js tab=js-ts
 import { test, expect } from '@playwright/test';
 
@@ -254,6 +265,20 @@ await using var context = await browser.NewContextAsync(new()
 
 Emulate the user Locale and Timezone which can be set globally for all tests in the config and then overridden for particular tests.
 
+```js
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  use: {
+    // Emulates the user locale.
+    locale: 'en-GB',
+
+    // Emulates the user timezone.
+    timezoneId: 'Europe/Paris',
+  },
+});
+```
+
 ```js tab=js-ts
 import { test, expect } from '@playwright/test';
 
@@ -321,6 +346,17 @@ await using var context = await browser.NewContextAsync(new()
 ## Permissions
 
 Allow app to show system notifications.
+
+```js
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  use: {
+    // Grants specified permissions to the browser context.
+    permissions: 'notifications',
+  },
+});
+```
 
 ```js tab=js-js
 // @ts-check
@@ -480,7 +516,18 @@ await context.ClearPermissionsAsync();
 ```
 ## Geolocation
 
-Create a test with `"geolocation"` permissions granted and geolocation set to a specific area.
+Grant `"geolocation"` permissions and set geolocation to a specific area.
+
+```js
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  use: {
+    // Context geolocation
+    geolocation: { longitude: 12.492507, latitude: 41.889938 },
+  },
+});
+```
 
 ```js tab=js-ts
 import { test, expect } from '@playwright/test';
@@ -597,7 +644,17 @@ await context.SetGeolocationAsync(new Geolocation() { Longitude = 48.858455f, La
 **Note** you can only change geolocation for all pages in the context.
 ## Color Scheme and Media
 
-Create a test that emulates the users `"colorScheme"`. Supported values are 'light', 'dark', 'no-preference'. You can also emulate the media type with [`method: Page.emulateMedia`].
+Emulate the users `"colorScheme"`. Supported values are 'light', 'dark', 'no-preference'. You can also emulate the media type with [`method: Page.emulateMedia`].
+
+```js
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  use: {
+    colorScheme: 'dark',
+  },
+});
+```
 
 ```js tab=js-ts
 import { test, expect } from '@playwright/test';
