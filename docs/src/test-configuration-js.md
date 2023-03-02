@@ -63,7 +63,7 @@ export default defineConfig({
 | [`property: TestConfig.globalTeardown`] |Path to the global teardown file. This file will be required and run after all the tests. It must export a single function. |
 | [`property: TestConfig.outputDir`] | Folder for test artifacts such as screenshots, videos, traces, etc. |
 | [`property: TestConfig.reporter`] | Reporter to use. See [Test Reporters](/test-reporters.md) to learn more about which reporters are available. |
-| [`property: TestConfig.retries`] | The maximum number of retry attempts per test.|
+| [`property: TestConfig.retries`] | The maximum number of retry attempts per test. See [Test Retries](/test-retries.md) to learn more about retries.|
 | [`property: TestConfig.testDir`] | Directory with the test files. |
 | [`property: TestConfig.testIgnore`] | Glob patterns or regular expressions that should be ignored when looking for the test files. For example, `'*test-assets'` |
 | [`property: TestConfig.testMatch`] | Glob patterns or regular expressions that match test files. For example, `'*todo-tests/*.spec.ts'`. By default, Playwright Test runs `.*(test|spec)\.(js|ts|mjs)` files. |
