@@ -45,6 +45,7 @@ type ConfigInternal = {
   cliProjectFilter?: string[];
   testIdMatcher?: Matcher;
   passWithNoTests?: boolean;
+  defineConfigWasUsed: boolean;
 };
 
 /**
