@@ -330,3 +330,52 @@ test('should run dependency in each shard', async ({ runInlineTest }) => {
     expect(result.outputLines).toEqual(['setup', 'test2']);
   }
 });
+
+test('should run setup project with zero tests', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          { name: 'setup', testMatch: /not-matching/ },
+          { name: 'real', dependencies: ['setup'] },
+        ],
+      };`,
+    'test.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test', async ({}, testInfo) => {
+        console.log('\\n%%' + testInfo.project.name);
+      });
+    `,
+  }, { workers: 1 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.outputLines).toEqual(['real']);
+});
+
+test('should run setup project with zero tests recursively', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          { name: 'A', testMatch: /a.spec/ },
+          { name: 'B', testMatch: /not-matching/, dependencies: ['A'] },
+          { name: 'C', testMatch: /c.spec/, dependencies: ['B'] },
+        ],
+      };`,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test', async ({}, testInfo) => {
+        console.log('\\n%%' + testInfo.project.name);
+      });
+    `,
+    'c.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test', async ({}, testInfo) => {
+        console.log('\\n%%' + testInfo.project.name);
+      });
+    `,
+  }, { workers: 1, project: 'C' });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(2);
+  expect(result.outputLines).toEqual(['A', 'C']);
+});
