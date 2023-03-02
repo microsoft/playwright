@@ -14,21 +14,30 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
 import path from 'path';
+import readline from 'readline';
 import type { Reporter, TestError } from '../../types/testReporter';
 import { InProcessLoaderHost, OutOfProcessLoaderHost } from './loaderHost';
 import { Suite } from '../common/test';
 import type { TestCase } from '../common/test';
 import type { FullConfigInternal, FullProjectInternal } from '../common/types';
-import { createFileFiltersFromArguments, createTitleMatcher, errorWithFile, forceRegExp } from '../util';
+import { createFileMatcherFromArguments, createFileFiltersFromArguments, createTitleMatcher, errorWithFile, forceRegExp } from '../util';
 import type { Matcher, TestFileFilter } from '../util';
 import { buildProjectsClosure, collectFilesForProject, filterProjects } from './projectUtils';
 import { requireOrImport } from '../common/transform';
 import { buildFileSuiteForProject, filterByFocusedLine, filterByTestIds, filterOnly, filterTestsRemoveEmptySuites } from '../common/suiteUtils';
 import { filterForShard } from './testGroups';
 
-export async function loadAllTests(mode: 'out-of-process' | 'in-process', config: FullConfigInternal, projectsToIgnore: Set<FullProjectInternal>, fileMatcher: Matcher, errors: TestError[], shouldFilterOnly: boolean): Promise<Suite> {
+export async function loadAllTests(mode: 'out-of-process' | 'in-process', config: FullConfigInternal, projectsToIgnore: Set<FullProjectInternal>, additionalFileMatcher: Matcher | undefined, errors: TestError[], shouldFilterOnly: boolean): Promise<Suite> {
   const projects = filterProjects(config.projects, config._internal.cliProjectFilter);
+
+  // Interpret cli parameters.
+  const cliFileFilters = createFileFiltersFromArguments(config._internal.cliArgs);
+  const grepMatcher = config._internal.cliGrep ? createTitleMatcher(forceRegExp(config._internal.cliGrep)) : () => true;
+  const grepInvertMatcher = config._internal.cliGrepInvert ? createTitleMatcher(forceRegExp(config._internal.cliGrepInvert)) : () => false;
+  const cliTitleMatcher = (title: string) => !grepInvertMatcher(title) && grepMatcher(title);
+  const cliFileMatcher = config._internal.cliArgs.length ? createFileMatcherFromArguments(config._internal.cliArgs) : null;
 
   let filesToRunByProject = new Map<FullProjectInternal, string[]>();
   let topLevelProjects: FullProjectInternal[];
@@ -36,6 +45,7 @@ export async function loadAllTests(mode: 'out-of-process' | 'in-process', config
   // Collect files, categorize top level and dependency projects.
   {
     const fsCache = new Map();
+    const sourceMapCache = new Map();
 
     // First collect all files for the projects in the command line, don't apply any file filters.
     const allFilesForProject = new Map<FullProjectInternal, string[]>();
@@ -48,7 +58,16 @@ export async function loadAllTests(mode: 'out-of-process' | 'in-process', config
 
     // Filter files based on the file filters, eliminate the empty projects.
     for (const [project, files] of allFilesForProject) {
-      const filteredFiles = files.filter(fileMatcher);
+      const matchedFiles = await Promise.all(files.map(async file => {
+        if (additionalFileMatcher && !additionalFileMatcher(file))
+          return;
+        if (cliFileMatcher) {
+          if (!cliFileMatcher(file) && !await isPotentiallyJavaScriptFileWithSourceMap(file, sourceMapCache))
+            return;
+        }
+        return file;
+      }));
+      const filteredFiles = matchedFiles.filter(Boolean) as string[];
       if (filteredFiles.length)
         filesToRunByProject.set(project, filteredFiles);
     }
@@ -96,12 +115,6 @@ export async function loadAllTests(mode: 'out-of-process' | 'in-process', config
 
   // Create root suites with clones for the projects.
   const rootSuite = new Suite('', 'root');
-
-  // Interpret cli parameters.
-  const cliFileFilters = createFileFiltersFromArguments(config._internal.cliArgs);
-  const grepMatcher = config._internal.cliGrep ? createTitleMatcher(forceRegExp(config._internal.cliGrep)) : () => true;
-  const grepInvertMatcher = config._internal.cliGrepInvert ? createTitleMatcher(forceRegExp(config._internal.cliGrepInvert)) : () => false;
-  const cliTitleMatcher = (title: string) => !grepInvertMatcher(title) && grepMatcher(title);
 
   // First iterate leaf projects to focus only, then add all other projects.
   for (const project of topLevelProjects) {
@@ -222,4 +235,31 @@ export function loadGlobalHook(config: FullConfigInternal, file: string): Promis
 
 export function loadReporter(config: FullConfigInternal, file: string): Promise<new (arg?: any) => Reporter> {
   return requireOrImportDefaultFunction(path.resolve(config.rootDir, file), true);
+}
+
+async function isPotentiallyJavaScriptFileWithSourceMap(file: string, cache: Map<string, boolean>): Promise<boolean> {
+  if (!file.endsWith('.js'))
+    return false;
+  if (cache.has(file))
+    return cache.get(file)!;
+
+  try {
+    const stream = fs.createReadStream(file);
+    const rl = readline.createInterface({ input: stream, crlfDelay: Infinity });
+    let lastLine: string | undefined;
+    rl.on('line', line => {
+      lastLine = line;
+    });
+    await new Promise((fulfill, reject) => {
+      rl.on('close', fulfill);
+      rl.on('error', reject);
+      stream.on('error', reject);
+    });
+    const hasSourceMap = !!lastLine && lastLine.startsWith('//# sourceMappingURL=');
+    cache.set(file, hasSourceMap);
+    return hasSourceMap;
+  } catch (e) {
+    cache.set(file, true);
+    return true;
+  }
 }
