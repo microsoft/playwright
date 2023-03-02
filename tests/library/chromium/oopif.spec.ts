@@ -336,6 +336,15 @@ it('should not throw on exposeFunction when oopif detaches', async ({ page, brow
   expect(await page.evaluate(() => (window as any).myFunc())).toBe(2022);
 });
 
+it('should intercept response body from oopif', async function({ page, browser, server }) {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/20809' });
+  const [response] = await Promise.all([
+    page.waitForResponse('**/grid.html'),
+    page.goto(server.PREFIX + '/dynamic-oopif.html')
+  ]);
+  expect(await response.text()).toBeTruthy();
+});
+
 async function countOOPIFs(browser) {
   const browserSession = await browser.newBrowserCDPSession();
   const oopifs = [];
