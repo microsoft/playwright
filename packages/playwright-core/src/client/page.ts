@@ -532,7 +532,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
       else
         await this._channel.close(options);
     } catch (e) {
-      if (isSafeCloseError(e))
+      if (isSafeCloseError(e) && !options.runBeforeUnload)
         return;
       throw e;
     }

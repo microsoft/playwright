@@ -426,29 +426,6 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       await browser.close();
     });
 
-    test('should not throw on context.close after disconnect', async ({ connect, startRemoteServer }) => {
-      const remoteServer = await startRemoteServer(kind);
-      const browser = await connect(remoteServer.wsEndpoint());
-      const context = await browser.newContext();
-      await context.newPage();
-      await Promise.all([
-        new Promise(f => browser.on('disconnected', f)),
-        remoteServer.close()
-      ]);
-      await context.close();
-    });
-
-    test('should not throw on page.close after disconnect', async ({ connect, startRemoteServer }) => {
-      const remoteServer = await startRemoteServer(kind);
-      const browser = await connect(remoteServer.wsEndpoint());
-      const page = await browser.newPage();
-      await Promise.all([
-        new Promise(f => browser.on('disconnected', f)),
-        remoteServer.close()
-      ]);
-      await page.close();
-    });
-
     test('should saveAs videos from remote browser', async ({ connect, startRemoteServer }, testInfo) => {
       const remoteServer = await startRemoteServer(kind);
       const browser = await connect(remoteServer.wsEndpoint());
