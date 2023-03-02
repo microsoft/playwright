@@ -3,10 +3,9 @@ id: test-parallel
 title: "Parallelism and sharding"
 ---
 
-Playwright Test runs tests in parallel. In order to achieve that, it runs several worker processes that run at the same time.
+Playwright Test runs tests in parallel. In order to achieve that, it runs several worker processes that run at the same time. By default, **test files** are run in parallel. Tests in a single file are run in order, in the same worker process.
 
-- By default, **test files** are run in parallel. Tests in a single file are run in order, in the same worker process.
-- Configure tests using [`test.describe.configure`](#parallelize-tests-in-a-single-file) to run **tests in a single file** in parallel.
+- You can configure tests using [`test.describe.configure`](#parallelize-tests-in-a-single-file) to run **tests in a single file** in parallel.
 - You can configure **entire project** to have all tests in all files to run in parallel using [`property: TestProject.fullyParallel`] or [`property: TestConfig.fullyParallel`].
 - To **disable** parallelism limit the number of [workers to one](#disable-parallelism).
 
@@ -30,20 +29,8 @@ npx playwright test --workers 4
 ```
 
 In the configuration file:
-```js tab=js-js
-// playwright.config.js
-// @ts-check
 
-const { defineConfig } = require('@playwright/test');
-
-module.exports = defineConfig({
-  // Limit the number of workers on CI, use default locally
-  workers: process.env.CI ? 2 : undefined,
-});
-```
-
-```js tab=js-ts
-// playwright.config.ts
+```js
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -84,25 +71,30 @@ test('runs in parallel 1', async ({ page }) => { /* ... */ });
 test('runs in parallel 2', async ({ page }) => { /* ... */ });
 ```
 
-Alternatively, you can opt-in all tests (or just a few projects) into this fully-parallel mode in the configuration file:
+Alternatively, you can opt-in all tests into this fully-parallel mode in the configuration file:
 
-```js tab=js-js
-// playwright.config.js
-// @ts-check
-
-const { defineConfig } = require('@playwright/test');
-
-module.exports = defineConfig({
-  fullyParallel: true,
-});
-```
-
-```js tab=js-ts
-// playwright.config.ts
+```js
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
   fullyParallel: true,
+});
+```
+
+You can also opt in for fully-parallel mode for just a few projects:
+
+```js
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  // runs all tests in all files of a specific project in parallel
+  projects: [
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
+      fullyParallel: true,
+    },
+  ]
 });
 ```
 
@@ -115,36 +107,7 @@ fails, all subsequent tests are skipped. All tests in a group are retried togeth
 Using serial is not recommended. It is usually better to make your tests isolated, so they can be run independently.
 :::
 
-```js tab=js-js
-// @ts-check
-
-const { test } = require('@playwright/test');
-
-test.describe.configure({ mode: 'serial' });
-
-/** @type {import('@playwright/test').Page} */
-let page;
-
-test.beforeAll(async ({ browser }) => {
-  page = await browser.newPage();
-});
-
-test.afterAll(async () => {
-  await page.close();
-});
-
-test('runs first', async () => {
-  await page.goto('https://playwright.dev/');
-});
-
-test('runs second', async () => {
-  await page.getByText('Get Started').click();
-});
-```
-
-```js tab=js-ts
-// example.spec.ts
-
+```js
 import { test, Page } from '@playwright/test';
 
 // Annotate entire file as serial.
@@ -193,20 +156,8 @@ npx playwright test --max-failures=10
 ```
 
 Setting in the configuration file:
-```js tab=js-js
-// playwright.config.js
-// @ts-check
 
-const { defineConfig } = require('@playwright/test');
-
-module.exports = defineConfig({
-  // Limit the number of failures on CI to save resources
-  maxFailures: process.env.CI ? 10 : undefined,
-});
-```
-
-```js tab=js-ts
-// playwright.config.ts
+```js
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -235,30 +186,7 @@ When you **disable parallel test execution**, Playwright Test runs test files in
 
 You can put your tests in helper functions in multiple files. Consider the following example where tests are not defined directly in the file, but rather in a wrapper function.
 
-```js tab=js-js
-// feature-a.spec.js
-const { test, expect } = require('@playwright/test');
-
-module.exports = function createTests() {
-  test('feature-a example test', async ({ page }) => {
-    // ... test goes here
-  });
-};
-
-
-// feature-b.spec.js
-const { test, expect } = require('@playwright/test');
-
-module.exports = function createTests() {
-  test.use({ viewport: { width: 500, height: 500 } });
-
-  test('feature-b example test', async ({ page }) => {
-    // ... test goes here
-  });
-};
-```
-
-```js tab=js-ts
+```js
 // feature-a.spec.ts
 import { test, expect } from '@playwright/test';
 
@@ -283,15 +211,7 @@ export default function createTests() {
 You can create a test list file that will control the order of tests - first run `feature-b` tests, then `feature-a` tests. Note how each test file is wrapped in a `test.describe()` block that calls the function where tests are defined. This way `test.use()` calls only affect tests from a single file.
 
 
-```js tab=js-js
-// test.list.js
-const { test } = require('@playwright/test');
-
-test.describe(require('./feature-b.spec.js'));
-test.describe(require('./feature-a.spec.js'));
-```
-
-```js tab=js-ts
+```js
 // test.list.ts
 import { test } from '@playwright/test';
 import featureBTests from './feature-b.spec.ts';
@@ -303,19 +223,7 @@ test.describe(featureATests);
 
 Now **disable parallel execution** by setting workers to one, and specify your test list file.
 
-```js tab=js-js
-// playwright.config.js
-// @ts-check
-
-const { defineConfig } = require('@playwright/test');
-
-module.exports = defineConfig({
-  workers: 1,
-  testMatch: 'test.list.js',
-});
-```
-
-```js tab=js-ts
+```js
 // playwright.config.ts
 import { defineConfig } from '@playwright/test';
 
