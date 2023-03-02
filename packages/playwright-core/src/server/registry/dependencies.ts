@@ -103,6 +103,12 @@ export async function installDependenciesLinux(targets: Set<DependencyGroup>, dr
     console.log(`Installing dependencies...`);  // eslint-disable-line no-console
   const commands: string[] = [];
   if (platform.includes('arch')) {
+    const { code } = await spawnAsync('command', ['-v', 'yay']);
+    if (code !== 0) {
+      console.log('Installing playwright deps in Arch distros requires the pacman helper "yay"')
+      return
+    }
+
     commands.push('pacman -Syy');
     commands.push(['yay', '-S', '--noconfirm', '--removemake', '--noprovides', '--answerdiff', 'None', '--answerclean', 'None', '--mflags', '"--noconfirm"',
       ...uniqueLibraries,
