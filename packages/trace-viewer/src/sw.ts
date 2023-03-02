@@ -37,10 +37,7 @@ const loadedTraces = new Map<string, { traceModel: TraceModel, snapshotServer: S
 const clientIdToTraceUrls = new MultiMap<string, string>();
 
 async function loadTrace(traceUrl: string, traceFileName: string | null, clientId: string, progress: (done: number, total: number) => void): Promise<TraceModel> {
-  const entry = loadedTraces.get(traceUrl);
   clientIdToTraceUrls.set(clientId, traceUrl);
-  if (entry)
-    return entry.traceModel;
   const traceModel = new TraceModel();
   try {
     await traceModel.load(traceUrl, progress);
