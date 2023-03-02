@@ -34,7 +34,7 @@ export type ObjectComponent = {
   options?: MountOptions
 };
 
-export type Component = JsxComponent | ObjectComponent;
+export type Component = JsxComponent | ObjectComponent | number | string | Array<any>;
 
 declare global {
   interface Window {
