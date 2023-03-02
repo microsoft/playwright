@@ -480,7 +480,7 @@ class InterceptableRequest {
   _owningNetworkManager: CRNetworkManager;
 
   constructor(options: {
-    owningNetworkManager: CRNetworkManager,    
+    owningNetworkManager: CRNetworkManager,
     context: contexts.BrowserContext;
     frame: frames.Frame | null;
     serviceWorker: CRServiceWorker | null;
