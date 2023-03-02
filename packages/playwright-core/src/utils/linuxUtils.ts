@@ -20,10 +20,11 @@ import fs from 'fs';
 let didFailToReadOSRelease = false;
 let osRelease: {
   id: string,
+  id_like: string,
   version: string,
 } | undefined;
 
-export async function getLinuxDistributionInfo(): Promise<{ id: string, version: string } | undefined> {
+export async function getLinuxDistributionInfo(): Promise<typeof osRelease> {
   if (process.platform !== 'linux')
     return undefined;
   if (!osRelease && !didFailToReadOSRelease) {
@@ -34,6 +35,7 @@ export async function getLinuxDistributionInfo(): Promise<{ id: string, version:
       const fields = parseOSReleaseText(osReleaseText);
       osRelease = {
         id: fields.get('id') ?? '',
+        id_like: fields.get('id_like') ?? '',
         version: fields.get('version_id') ?? '',
       };
     } catch (e) {
@@ -43,7 +45,7 @@ export async function getLinuxDistributionInfo(): Promise<{ id: string, version:
   return osRelease;
 }
 
-export function getLinuxDistributionInfoSync(): { id: string, version: string } | undefined {
+export function getLinuxDistributionInfoSync(): typeof osRelease {
   if (process.platform !== 'linux')
     return undefined;
   if (!osRelease && !didFailToReadOSRelease) {
@@ -54,6 +56,7 @@ export function getLinuxDistributionInfoSync(): { id: string, version: string } 
       const fields = parseOSReleaseText(osReleaseText);
       osRelease = {
         id: fields.get('id') ?? '',
+        id_like: fields.get('id_like') ?? '',
         version: fields.get('version_id') ?? '',
       };
     } catch (e) {
