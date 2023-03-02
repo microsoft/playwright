@@ -247,7 +247,6 @@ export class Page extends SdkObject {
       this._delegate.updateEmulateMedia(),
       this._delegate.updateFileChooserInterception(),
     ]);
-    await this.context().clearCache();
   }
 
   _didClose() {

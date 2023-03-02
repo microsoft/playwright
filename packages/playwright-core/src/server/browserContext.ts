@@ -209,6 +209,7 @@ export abstract class BrowserContext extends SdkObject {
     await this.setGeolocation(this._options.geolocation);
     await this.setOffline(!!this._options.offline);
     await this.setUserAgent(this._options.userAgent);
+    await this.clearCache();
     await this._resetCookies();
 
     await page?.resetForReuse(metadata);

@@ -340,6 +340,7 @@ export class WKBrowserContext extends BrowserContext {
   onClosePersistent() {}
 
   override async clearCache(): Promise<void> {
+    // We use ephemeral contexts so there is no disk cache.
     await this._browser._browserSession.send('Playwright.clearMemoryCache', {
       browserContextId: this._browserContextId!
     });
