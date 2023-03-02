@@ -824,6 +824,28 @@ export const deps: any = {
   }
 };
 
+deps['arch'] = {
+  tools: [...deps['ubuntu20.04'].tools],
+  chromium: [...deps['ubuntu20.04'].chromium],
+  firefox: [
+    ...deps['ubuntu20.04'].firefox,
+  ],
+  webkit: [
+    ...deps['ubuntu20.04'].webkit,
+  ],
+  lib2package: {
+    'libenchant.so.1': 'enchant',
+    'libicui18n.so.66': 'icu66',
+    'libicuuc.so.66': 'icu66',
+    'libpcre.so.3': 'libffi7',
+    'libwebp.so.1': 'libwebp052',
+    'libflite.so.1': 'flite1',
+    'libflite_cmu_us_awb.so.1': 'flite1',
+    'libflite_cmu_us_kal.so.1': 'flite1',
+    'libflite_cmu_us_rms.so.1': 'flite1',
+  },
+}
+
 deps['ubuntu20.04-arm64'] = {
   tools: [...deps['ubuntu20.04'].tools],
   chromium: [...deps['ubuntu20.04'].chromium],
