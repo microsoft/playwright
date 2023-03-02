@@ -368,6 +368,12 @@ This is a base timeout for all tests. Each test can configure its own timeout wi
 
 Use [`property: TestConfig.timeout`] to change this option for all projects.
 
+## property: TestProject.transpiled
+* since: v1.32
+- type: ?<[boolean]>
+
+Whether test files were transpiled. Playwright will respect source maps in transpiled test files and will not apply certain performance optimizations to ensure correctness.
+
 ## property: TestProject.use
 * since: v1.10
 - type: <[Fixtures]>

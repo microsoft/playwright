@@ -72,6 +72,7 @@ type ProjectInternal = {
   expect: Project['expect'];
   respectGitIgnore: boolean;
   deps: FullProjectInternal[];
+  transpiled: boolean;
 };
 
 /**

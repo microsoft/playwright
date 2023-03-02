@@ -140,17 +140,27 @@ First add a `tsconfig.json` file inside the tests directory:
 }
 ```
 
+Then create a config file `tests-out/playwright.config.ts` and inform Playwright that your tests are transpiled:
+
+```ts
+// tests-out/playwright.config.ts
+import { defineConfig } from '@playwright/test';
+export default defineConfig({
+  transpiled: true
+});
+```
+
 In `package.json`, add two scripts:
 
 ```json
 {
   "scripts": {
     "pretest": "tsc --incremental -p tests/tsconfig.json",
-    "test": "playwright test -c tests-out"
+    "test": "playwright test -c tests-out/playwright.config.ts"
   }
 }
 ```
 
-The `pretest` script runs typescript on the tests. `test` will run the tests that have been generated to the `tests-out` directory. The `-c` argument configures the test runner to look for tests inside the `tests-out` directory.
+The `pretest` script runs typescript on the tests. `test` will run the tests that have been generated to the `tests-out` directory, with `-c` argument pointing to the config file.
 
 Then `npm run test` will build the tests and run them.

@@ -222,6 +222,7 @@ export class ConfigLoader {
         expect: takeFirst(projectConfig.expect, config.expect, {}),
         deps: [],
         respectGitIgnore: respectGitIgnore,
+        transpiled: takeFirst(projectConfig.transpiled, config.transpiled, false),
       },
       grep: takeFirst(projectConfig.grep, config.grep, baseFullConfig.grep),
       grepInvert: takeFirst(projectConfig.grepInvert, config.grepInvert, baseFullConfig.grepInvert),

@@ -895,6 +895,34 @@ export default defineConfig({
 });
 ```
 
+## property: TestConfig.transpiled
+* since: v1.32
+- type: ?<[boolean]>
+
+Whether test files were transpiled. Playwright will respect source maps in transpiled test files and will not apply certain performance optimizations to ensure correctness.
+
+**Usage**
+
+```js tab=js-js
+// playwright.config.js
+// @ts-check
+
+const { defineConfig } = require('@playwright/test');
+
+module.exports = defineConfig({
+  transpiled: true,
+});
+```
+
+```js tab=js-ts
+// playwright.config.ts
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  transpiled: true,
+});
+```
+
 ## property: TestConfig.updateSnapshots
 * since: v1.10
 - type: ?<[UpdateSnapshots]<"all"|"none"|"missing">>

@@ -1246,6 +1246,24 @@ interface TestConfig {
   timeout?: number;
 
   /**
+   * Whether test files were transpiled. Playwright will respect source maps in transpiled test files and will not apply
+   * certain performance optimizations to ensure correctness.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   transpiled: true,
+   * });
+   * ```
+   *
+   */
+  transpiled?: boolean;
+
+  /**
    * Whether to update expected snapshots with the actual results produced by the test run. Defaults to `'missing'`.
    * - `'all'` - All tests that are executed will update snapshots that did not match. Matching snapshots will not be
    *   updated.
@@ -5930,6 +5948,12 @@ interface TestProject {
    * option for all projects.
    */
   timeout?: number;
+
+  /**
+   * Whether test files were transpiled. Playwright will respect source maps in transpiled test files and will not apply
+   * certain performance optimizations to ensure correctness.
+   */
+  transpiled?: boolean;
 }
 
 interface TestConfigWebServer {
