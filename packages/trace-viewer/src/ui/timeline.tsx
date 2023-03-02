@@ -33,7 +33,7 @@ type TimelineBar = {
   rightTime: number;
   type: string;
   label: string;
-  title: string;
+  title: string | undefined;
   className: string;
 };
 
@@ -81,7 +81,7 @@ export const Timeline: React.FunctionComponent<{
         leftPosition: timeToPosition(measure.width, boundaries, startTime),
         rightPosition: timeToPosition(measure.width, boundaries, startTime),
         label: event.method,
-        title: '0',
+        title: undefined,
         type: event.class + '.' + event.method,
         className: `${event.class}_${event.method}`.toLowerCase()
       });
