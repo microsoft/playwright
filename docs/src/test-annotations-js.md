@@ -230,3 +230,81 @@ test('user profile', async ({ page }) => {
   // ...
 });
 ```
+## TestInfo object
+
+Test functions, fixtures and hooks receive a [TestInfo] parameter that provides information about the currently running test as well as some useful utilities that include:
+- Information about the test, for example `title`, `config` and `project`.
+- Information about test execution, for example `expectedStatus` and `status`.
+- Test artifact utilities, for example `outputPath()` and `attach()`.
+
+See [TestInfo] methods and properties for all available information and utilities.
+
+Here is an example test that saves information to a file using [TestInfo].
+```js tab=js-js
+// example.spec.js
+const { test } = require('@playwright/test');
+
+test('my test needs a file', async ({ table }, testInfo) => {
+  // Do something with the table...
+  // ... and then save contents.
+  const filePath = testInfo.outputPath('table.dat');
+  await table.saveTo(filePath);
+});
+```
+
+```js tab=js-ts
+// example.spec.ts
+import { test } from '@playwright/test';
+
+test('my test needs a file', async ({ table }, testInfo) => {
+  // Do something with the table...
+  // ... and then save contents.
+  const filePath = testInfo.outputPath('table.dat');
+  await table.saveTo(filePath);
+});
+```
+
+Here is an example fixture that automatically saves debug logs when the test fails.
+```js tab=js-js
+// my-test.js
+const debug = require('debug');
+const fs = require('fs');
+const base = require('@playwright/test');
+
+// Note how we mark the fixture as { auto: true }.
+// This way it is always instantiated, even if the test does not use it explicitly.
+exports.test = base.test.extend({
+  saveLogs: [ async ({}, use, testInfo) => {
+    const logs = [];
+    debug.log = (...args) => logs.push(args.map(String).join(''));
+    debug.enable('mycomponent');
+
+    await use();
+
+    if (testInfo.status !== testInfo.expectedStatus)
+      fs.writeFileSync(testInfo.outputPath('logs.txt'), logs.join('\n'), 'utf8');
+  }, { auto: true } ]
+});
+```
+
+```js tab=js-ts
+// my-test.ts
+import * as debug from 'debug';
+import * as fs from 'fs';
+import { test as base } from '@playwright/test';
+
+// Note how we mark the fixture as { auto: true }.
+// This way it is always instantiated, even if the test does not use it explicitly.
+export const test = base.extend<{ saveLogs: void }>({
+  saveLogs: [ async ({}, use, testInfo) => {
+    const logs = [];
+    debug.log = (...args) => logs.push(args.map(String).join(''));
+    debug.enable('mycomponent');
+
+    await use();
+
+    if (testInfo.status !== testInfo.expectedStatus)
+      fs.writeFileSync(testInfo.outputPath('logs.txt'), logs.join('\n'), 'utf8');
+  }, { auto: true } ]
+});
+```
