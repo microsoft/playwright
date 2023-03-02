@@ -163,9 +163,8 @@ async function createProjectSuite(fileSuits: Suite[], project: FullProjectIntern
     return grepMatcher(grepTitle) && (!options.cliTitleMatcher || options.cliTitleMatcher(grepTitle));
   };
 
-  if (filterTestsRemoveEmptySuites(projectSuite, titleMatcher))
-    return projectSuite;
-  return null;
+  filterTestsRemoveEmptySuites(projectSuite, titleMatcher);
+  return projectSuite;
 }
 
 function createForbidOnlyErrors(onlyTestsAndSuites: (TestCase | Suite)[]): TestError[] {
