@@ -51,7 +51,9 @@ export default defineConfig({
 
 ## Adding a baseURL
 
-It is also recommended to specify the `baseURL` in the `use: {}` section of your config, so that tests can use relative urls and you don't have to specify the full URL over and over again.
+It is also recommended to specify the `baseURL` in the `use: {}` section of your config, so that tests can use relative urls and you don't have to specify the full URL over and over again. 
+
+When using [`method: Page.goto`], [`method: Page.route`], [`method: Page.waitForURL`], [`method: Page.waitForRequest`], or [`method: Page.waitForResponse`] it takes the base URL in consideration by using the [`URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor for building the corresponding URL. For Example, by setting the baseURL to `http://127.0.0.1:3000` and navigating to `/login` in your tests, Playwright will run the test using `http://127.0.0.1:3000/login`.
 
 ```js
 import { defineConfig } from '@playwright/test';
@@ -78,7 +80,6 @@ Now you can use a relative path when navigating the page:
 const { test } = require('@playwright/test');
 
 test('test', async ({ page }) => {
-  // baseURL is set in the config to http://127.0.0.1:3000
   // This will navigate to http://127.0.0.1:3000/login
   await page.goto('./login');
 });
