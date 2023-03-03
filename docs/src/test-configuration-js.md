@@ -1,179 +1,7 @@
 ---
 id: test-configuration
-title: "Configuration"
+title: "Test Options with use"
 ---
-
-Playwright provides you with many options to configure the test environment, Browser, BrowserContext and more. These options are usually provided in the configuration file through `testConfig.use` and `testProject.use`. However, you can also override them in the test file using the `test.use()` method.
-
-## Test Runner Options
-
-Playwright has many options to configure how your tests are run. You can specify these options in the configuration file. Note that test runner options are **top-level**, do not put them into the `use` section.
-
-```js
-import { defineConfig } from '@playwright/test';
-
-export default defineConfig({
-  // Forbid test.only on CI 
-  forbidOnly: !!process.env.CI,
-
-  // Run all tests in parallel
-  fullyParallel: true,
-
-  // path to the global setup and teardown files 
-  globalSetup: require.resolve('./global-setup'),
-  globalTeardown: require.resolve('./global-teardown'),
-
-  // Folder for test artifacts such as screenshots, videos, traces, etc. 
-  outputDir: 'test-results/',
-
-  // Reporter to use
-  reporter: 'html',
-
-  // Two retries for each test 
-  retries: 2,
-
-  // Look for test files in the "tests" directory, relative to this configuration file 
-  testDir: 'tests',
-
-  // Glob patterns or regular expressions to ignore test files. 
-  testIgnore: '*test-assets',
-
-  // Glob patterns or regular expressions that match test files. 
-  testMatch: '*todo-tests/*.spec.ts',
-
-  // Each test is given 30 seconds 
-  timeout: 30000,
-
-  // Run your local dev server before starting the tests 
-  webServer: {
-    command: 'npm run start',
-    port: 3000,
-  },
-
-  // Limit the number of workers on CI, use default locally 
-  workers: process.env.CI ? 2 : undefined,
-});
-```
-
-| Option | Description |
-| :- | :- |
-| [`property: TestConfig.forbidOnly`] | Whether to exit with an error if any tests are marked as `test.only`. Useful on CI.|
-| [`property: TestConfig.fullyParallel`] | have all tests in all files to run in parallel. See [/Parallelism and sharding](./test-parallel) for more details. |
-| [`property: TestConfig.globalSetup`] | Path to the global setup file. This file will be required and run before all the tests. It must export a single function. |
-| [`property: TestConfig.globalTeardown`] |Path to the global teardown file. This file will be required and run after all the tests. It must export a single function. |
-| [`property: TestConfig.outputDir`] | Folder for test artifacts such as screenshots, videos, traces, etc. |
-| [`property: TestConfig.reporter`] | Reporter to use. See [Test Reporters](/test-reporters.md) to learn more about which reporters are available. |
-| [`property: TestConfig.retries`] | The maximum number of retry attempts per test. See [Test Retries](/test-retries.md) to learn more about retries.|
-| [`property: TestConfig.testDir`] | Directory with the test files. |
-| [`property: TestConfig.testIgnore`] | Glob patterns or regular expressions that should be ignored when looking for the test files. For example, `'*test-assets'` |
-| [`property: TestConfig.testMatch`] | Glob patterns or regular expressions that match test files. For example, `'*todo-tests/*.spec.ts'`. By default, Playwright runs `.*(test|spec)\.(js|ts|mjs)` files. |
-| [`property: TestConfig.timeout`] | Playwright enforces a [timeout](./test-timeouts.md) for each test, 30 seconds by default. Time spent by the test function, fixtures, beforeEach and afterEach hooks is included in the test timeout. |
-| [`property: TestConfig.webServer`] | To launch a server during the tests, use the `webServer` option |
-| [`property: TestConfig.workers`] | The maximum number of concurrent worker processes to use for parallelizing tests. Can also be set as percentage of logical CPU cores, e.g. `'50%'.`. See [/Parallelism and sharding](./test-parallel) for more details. |
-
-### Expect Options
-
-Configuration for the expect assertion library.
-
-```js
-import { defineConfig } from '@playwright/test';
-
-export default defineConfig({
-  expect: {
-    // Maximum time expect() should wait for the condition to be met.
-    timeout: 5000,
-
-    toHaveScreenshot: {
-      // An acceptable amount of pixels that could be different, unset by default.
-      maxDiffPixels: 10,
-    },
-
-    toMatchSnapshot:  {
-      // An acceptable ratio of pixels that are different to the total amount of pixels, between 0 and 1.
-      maxDiffPixelRatio: 10,
-    },
-  },
-  
-});
-```
-
-| Option | Description |
-| :- | :- |
-| [`property: TestConfig.expect`] | [Web first assertions](./test-assertions.md) like `expect(locator).toHaveText()` have a separate timeout of 5 seconds by default. This is the maximum time the `expect()` should wait for the condition to be met. Learn more about [test and expect timeouts](./test-timeouts.md) and how to set them for a single test. |
-| [`method: PageAssertions.toHaveScreenshot#1`] | Configuration for the `expect(locator).toHaveScreeshot()` method. |
-| [`method: SnapshotAssertions.toMatchSnapshot#1`]| Configuration for the `expect(locator).toMatchSnapshot()` method.|
-
-### Launch a development web server
-
-Run your local dev server before starting the tests. If `port` is specified in the config, test runner will wait for `127.0.0.1:port` or `::1:port` to be available before running the tests. The `port` (but not the `url`) gets passed over to Playwright as a [`property: TestOptions.baseURL`]. For example port `3000` produces `baseURL` equal to `http://localhost:3000`.
-
-```js
-import { defineConfig, devices } from '@playwright/test';
-
-export default defineConfig({
-  /* Run your local dev server before starting the tests */
-  webServer: {
-    command: 'npm run start',
-    port: 3000,
-  },
-});
-```
-
-#### Adding a server timeout
-
-User applications can sometimes take a few minutes to boot up. In this case, you can increase the timeout to wait for the server to start.
-
-```js
-import { defineConfig } from '@playwright/test';
-
-export default defineConfig({
-  webServer: {
-    command: 'npm run start',
-    port: 3000,
-    timeout: 120 * 1000,
-  },
-});
-```
-#### Reuse existing server
-
-If true, it will re-use an existing server on the port or url when available. If no server is running on that port or url, it will run the command to start a new server. If false, it will throw if an existing process is listening on the port or url. This should be set to `!process.env.CI` to allow the local dev server to reuse the existing server when running tests locally but does not use an existing server on the CI. To see the stdout, you can set the `DEBUG=pw:webserver` environment variable.
-
-```js
-import { defineConfig } from '@playwright/test';
-
-export default defineConfig({
-  webServer: {
-    command: 'npm run start',
-    port: 3000,
-    timeout: 120 * 1000,
-    reuseExistingServer: !process.env.CI,
-  },
-});
-```
-
-#### URL instead of port
-
-If `url` is specified in the config, test runner will wait for that `url` to return a 2xx, 3xx, 400, 401, 402, or 403 response before running the tests. It is also recommended to specify [`property: TestOptions.baseURL`] in the config, so that tests could use relative urls.
-
-```js
-import { defineConfig } from '@playwright/test';
-
-export default defineConfig({
-  webServer: {
-    command: 'npm run start',
-    url: 'http://localhost:3000/',
-    reuseExistingServer: !process.env.CI,
-  },
-  use: {
-    baseURL: 'http://localhost:3000/',
-  },
-});
-```
-
-Multiple web servers (or background processes) can be launched simultaneously by providing an array of `webServer` configurations. See [`property: TestConfig.webServer`] for additional examples and documentation.
-
-
-## Test Options with use:{}
 
 In addition to configuring the test runner you can also configure the [Browser] or [BrowserContext], [Emulation](#emulation-options), [Networks](#network-options) and [Recordings](#network-options). These options are passed to the `use: {}` object in the Playwright config.
 
@@ -201,7 +29,7 @@ export default defineConfig({
 
 ### Emulation Options
 
-Normally you would start with emulating a device, for example Desktop Chromium. See our [Emulation](./emulation.md) guide to learn more.
+See our [Emulation](./emulation.md) guide to learn more.
 
 
 ```js
@@ -407,10 +235,9 @@ test('should inherit use options on context when using built-in browser fixture'
 });
 ```
 
-
 ### Configuration Scopes
 
-You can configure Playwright globally, per project, or per test. For example, you can set the viewport to be used globally by adding `viewport` to the `use` option of the Playwright config, and then override it for a specific project using the `project` option in the config. You can also override it for a specific test by adding `test.use({})` in the test file and passing in the options.
+You can configure Playwright globally, per project, or per test. For example, you can set the viewport to be used globally by adding `locale` to the `use` option of the Playwright config, and then override it for a specific project using the `project` option in the config. You can also override it for a specific test by adding `test.use({})` in the test file and passing in the options.
 
 
 ```js
@@ -418,15 +245,12 @@ import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
   use: {
-    viewport: { width: 1280, height: 720 },
+    locale: 'en-GB'
   },
 });
 ```
 
-Playwright supports multiple **projects** so you can run your tests in multiple browsers and configurations including mobile viewports and branded browsers. Each project is given a name and a set of options. 
-
-You can also use projects to run the same tests in different configurations. For example, you can run the same tests in a logged-in and logged-out state. Learn more about [projects](#projects).
-
+You can override options for a specific project using the `project` option in the Playwright config.
 
 ```js
 import { defineConfig, devices } from '@playwright/test';
@@ -435,37 +259,138 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: { 
+        ...devices['Desktop Chrome'], 
+        locale: 'de-DE' 
+      },
     },
   ],
 });
 ```
 
-You can override options for a specific test file by using the `test.use()` method and passing in the options. For example to run tests in a portrait-like viewport for a specific test:
+You can override options for a specific test file by using the `test.use()` method and passing in the options. For example to run tests with the Frence locale for a specific test:
 
 ```js
 import { test, expect } from '@playwright/test';
 
-test.use({ viewport: { width: 600, height: 900 } });
+test.use({ locale: 'fr-FR' });
 
-test('my portrait test', async ({ page }) => {
+test('example', async ({ page }) => {
   // ...
 });
 ```
 
-The same works inside a describe block. For example to run tests in a describe block with portrait-like viewport:
+The same works inside a describe block. For example to run tests in a describe block with the French locale:
 
 ```js
 import { test, expect } from '@playwright/test';
 
-test.describe('portrait block', () => {
+test.describe('french language block', () => {
 
-  test.use({ portrait: { width: 600, height: 900 } });
+  test.use({ { locale: 'fr-FR' }});
 
-  test('my portrait test', async ({ page }) => {
+  test('example', async ({ page }) => {
     // ...
   });
 });
 ```
 
+
+## Test Runner Options
+
+Playwright has many options to configure how your tests are run. You can specify these options in the configuration file. Note that test runner options are **top-level**, do not put them into the `use` section.
+
+```js
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  // Forbid test.only on CI 
+  forbidOnly: !!process.env.CI,
+
+  // Run all tests in parallel
+  fullyParallel: true,
+
+  // path to the global setup and teardown files 
+  globalSetup: require.resolve('./global-setup'),
+  globalTeardown: require.resolve('./global-teardown'),
+
+  // Folder for test artifacts such as screenshots, videos, traces, etc. 
+  outputDir: 'test-results/',
+
+  // Reporter to use
+  reporter: 'html',
+
+  // Two retries for each test 
+  retries: 2,
+
+  // Look for test files in the "tests" directory, relative to this configuration file 
+  testDir: 'tests',
+
+  // Glob patterns or regular expressions to ignore test files. 
+  testIgnore: '*test-assets',
+
+  // Glob patterns or regular expressions that match test files. 
+  testMatch: '*todo-tests/*.spec.ts',
+
+  // Each test is given 30 seconds 
+  timeout: 30000,
+
+  // Run your local dev server before starting the tests 
+  webServer: {
+    command: 'npm run start',
+    port: 3000,
+  },
+
+  // Limit the number of workers on CI, use default locally 
+  workers: process.env.CI ? 2 : undefined,
+});
+```
+
+| Option | Description |
+| :- | :- |
+| [`property: TestConfig.forbidOnly`] | Whether to exit with an error if any tests are marked as `test.only`. Useful on CI.|
+| [`property: TestConfig.fullyParallel`] | have all tests in all files to run in parallel. See [/Parallelism and sharding](./test-parallel) for more details. |
+| [`property: TestConfig.globalSetup`] | Path to the global setup file. This file will be required and run before all the tests. It must export a single function. |
+| [`property: TestConfig.globalTeardown`] |Path to the global teardown file. This file will be required and run after all the tests. It must export a single function. |
+| [`property: TestConfig.outputDir`] | Folder for test artifacts such as screenshots, videos, traces, etc. |
+| [`property: TestConfig.reporter`] | Reporter to use. See [Test Reporters](/test-reporters.md) to learn more about which reporters are available. |
+| [`property: TestConfig.retries`] | The maximum number of retry attempts per test. See [Test Retries](/test-retries.md) to learn more about retries.|
+| [`property: TestConfig.testDir`] | Directory with the test files. |
+| [`property: TestConfig.testIgnore`] | Glob patterns or regular expressions that should be ignored when looking for the test files. For example, `'*test-assets'` |
+| [`property: TestConfig.testMatch`] | Glob patterns or regular expressions that match test files. For example, `'*todo-tests/*.spec.ts'`. By default, Playwright runs `.*(test|spec)\.(js|ts|mjs)` files. |
+| [`property: TestConfig.timeout`] | Playwright enforces a [timeout](./test-timeouts.md) for each test, 30 seconds by default. Time spent by the test function, fixtures, beforeEach and afterEach hooks is included in the test timeout. |
+| [`property: TestConfig.webServer`] | To launch a server during the tests, use the `webServer` option |
+| [`property: TestConfig.workers`] | The maximum number of concurrent worker processes to use for parallelizing tests. Can also be set as percentage of logical CPU cores, e.g. `'50%'.`. See [/Parallelism and sharding](./test-parallel) for more details. |
+
+### Expect Options
+
+Configuration for the expect assertion library.
+
+```js
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  expect: {
+    // Maximum time expect() should wait for the condition to be met.
+    timeout: 5000,
+
+    toHaveScreenshot: {
+      // An acceptable amount of pixels that could be different, unset by default.
+      maxDiffPixels: 10,
+    },
+
+    toMatchSnapshot:  {
+      // An acceptable ratio of pixels that are different to the total amount of pixels, between 0 and 1.
+      maxDiffPixelRatio: 10,
+    },
+  },
+  
+});
+```
+
+| Option | Description |
+| :- | :- |
+| [`property: TestConfig.expect`] | [Web first assertions](./test-assertions.md) like `expect(locator).toHaveText()` have a separate timeout of 5 seconds by default. This is the maximum time the `expect()` should wait for the condition to be met. Learn more about [test and expect timeouts](./test-timeouts.md) and how to set them for a single test. |
+| [`method: PageAssertions.toHaveScreenshot#1`] | Configuration for the `expect(locator).toHaveScreeshot()` method. |
+| [`method: SnapshotAssertions.toMatchSnapshot#1`]| Configuration for the `expect(locator).toMatchSnapshot()` method.|
 
