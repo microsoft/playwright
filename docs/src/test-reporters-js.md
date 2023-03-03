@@ -291,6 +291,7 @@ In the previous configuration sample, all annotations will be added as `<propert
 Annotations can be used to, for example, link a Playwright test with an existing Test in Xray or to link a test with an existing story/requirement in Jira (i.e., "cover" it).
 
 ```js
+// example.spec.ts/js
 import { test } from '@playwright/test';
 
 test('using specific annotations for passing test metadata to Xray', async ({}, testInfo) => {
@@ -320,6 +321,7 @@ export default defineConfig({
 The following test adds attachments:
 
 ```js
+// example.spec.ts/js
 import { test } from '@playwright/test';
 
 test('embed attachments, including its content, on the JUnit report', async ({}, testInfo) => {
