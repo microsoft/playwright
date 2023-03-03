@@ -174,6 +174,7 @@ By default, report is written into the `playwright-report` folder in the current
 that location using the `PLAYWRIGHT_HTML_REPORT` environment variable or a reporter configuration.
 
 In configuration file, pass options directly:
+
 ```js
 import { defineConfig } from '@playwright/test';
 
@@ -289,20 +290,7 @@ export default defineConfig({
 In the previous configuration sample, all annotations will be added as `<property>` elements on the JUnit XML report. The annotation type is mapped to the `name` attribute of the `<property>`, and the annotation description will be added as a `value` attribute. In this case, the exception will be the annotation type `testrun_evidence` whose description will be added as inner content on the respective `<property>`.
 Annotations can be used to, for example, link a Playwright test with an existing Test in Xray or to link a test with an existing story/requirement in Jira (i.e., "cover" it).
 
-```js tab=js-js
-// @ts-check
-const { test } = require('@playwright/test');
-
-test('using specific annotations for passing test metadata to Xray', async ({}, testInfo) => {
-  testInfo.annotations.push({ type: 'test_id', description: '1234' });
-  testInfo.annotations.push({ type: 'test_key', description: 'CALC-2' });
-  testInfo.annotations.push({ type: 'test_summary', description: 'sample summary' });
-  testInfo.annotations.push({ type: 'requirements', description: 'CALC-5,CALC-6' });
-  testInfo.annotations.push({ type: 'test_description', description: 'sample description' });
-});
-```
-
-```js tab=js-ts
+```js
 import { test } from '@playwright/test';
 
 test('using specific annotations for passing test metadata to Xray', async ({}, testInfo) => {
@@ -331,19 +319,7 @@ export default defineConfig({
 
 The following test adds attachments:
 
-```js tab=js-js
-// @ts-check
-const { test } = require('@playwright/test');
-
-test('embed attachments, including its content, on the JUnit report', async ({}, testInfo) => {
-  const file = testInfo.outputPath('evidence1.txt');
-  require('fs').writeFileSync(file, 'hello', 'utf8');
-  await testInfo.attach('evidence1.txt', { path: file, contentType: 'text/plain' });
-  await testInfo.attach('evidence2.txt', { body: Buffer.from('world'), contentType: 'text/plain' });
-});
-```
-
-```js tab=js-ts
+```js
 import { test } from '@playwright/test';
 
 test('embed attachments, including its content, on the JUnit report', async ({}, testInfo) => {
@@ -374,33 +350,7 @@ export default defineConfig({
 
 You can create a custom reporter by implementing a class with some of the reporter methods. Learn more about the [Reporter] API.
 
-```js tab=js-js
-// my-awesome-reporter.js
-// @ts-check
-
-/** @implements {import('@playwright/test/reporter').Reporter} */
-class MyReporter {
-  onBegin(config, suite) {
-    console.log(`Starting the run with ${suite.allTests().length} tests`);
-  }
-
-  onTestBegin(test) {
-    console.log(`Starting test ${test.title}`);
-  }
-
-  onTestEnd(test, result) {
-    console.log(`Finished test ${test.title}: ${result.status}`);
-  }
-
-  onEnd(result) {
-    console.log(`Finished the run: ${result.status}`);
-  }
-}
-
-module.exports = MyReporter;
-```
-
-```js tab=js-ts
+```js
 // my-awesome-reporter.ts
 import { FullConfig, FullResult, Reporter, Suite, TestCase, TestResult } from '@playwright/test/reporter';
 
@@ -434,12 +384,9 @@ export default defineConfig({
   reporter: './my-awesome-reporter.ts',
 });
 ```
-
-
 ## Third party reporter showcase
 
 * [Allure](https://www.npmjs.com/package/allure-playwright)
 * [Monocart](https://github.com/cenfun/monocart-reporter)
 * [Tesults](https://www.tesults.com/docs/playwright)
 * [ReportPortal](https://github.com/reportportal/agent-js-playwright)
-
