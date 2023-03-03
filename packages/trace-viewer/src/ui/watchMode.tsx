@@ -25,11 +25,13 @@ import { SplitView } from '@web/components/splitView';
 import type { MultiTraceModel } from './modelUtil';
 import './watchMode.css';
 import { ToolbarButton } from '@web/components/toolbarButton';
+import { Toolbar } from '@web/components/toolbar';
 
 let rootSuite: Suite | undefined;
 
 let updateList: () => void = () => {};
 let updateProgress: () => void = () => {};
+let runWatchedTests = () => {};
 
 type Entry = { test?: TestCase, fileSuite: Suite };
 
@@ -47,7 +49,14 @@ export const WatchModeView: React.FC<{}> = ({
 
   React.useEffect(() => {
     inputRef.current?.focus();
+    sendMessageNoReply('list');
   }, []);
+
+  React.useEffect(() => {
+    sendMessageNoReply('watch', {
+      fileName: selectedFileSuite?.location?.file || selectedTest?.location?.file
+    });
+  }, [selectedFileSuite, selectedTest]);
 
   const selectedOrDefaultFileSuite = selectedFileSuite || rootSuite?.suites?.[0]?.suites?.[0];
   const tests: TestCase[] = [];
@@ -93,8 +102,16 @@ export const WatchModeView: React.FC<{}> = ({
   const runEntry = (entry: Entry) => {
     expandedFiles.set(entry.fileSuite, true);
     setSelectedTest(entry.test);
+    runTests(collectTestIds(entry));
+  };
+
+  runWatchedTests = () => {
+    runTests(collectTestIds({ test: selectedTest, fileSuite: selectedFileSuite || selectedTest!.parent }));
+  };
+
+  const runTests = (testIds: string[] | undefined) => {
     setIsRunningTest(true);
-    runTests(entry.test ? entry.test.location.file + ':' + entry.test.location.line : entry.fileSuite.title, undefined).then(() => {
+    sendMessage('run', { testIds }).then(() => {
       setIsRunningTest(false);
     });
   };
@@ -103,20 +120,18 @@ export const WatchModeView: React.FC<{}> = ({
   return <SplitView sidebarSize={300} orientation='horizontal' sidebarIsFirst={true}>
     <TraceView test={selectedTest} isRunningTest={isRunningTest}></TraceView>
     <div className='vbox watch-mode-sidebar'>
-      <div style={{ flex: 'none', display: 'flex', padding: 4 }}>
+      <Toolbar>
         <input ref={inputRef} type='search' placeholder='Filter tests' spellCheck={false} value={filterText}
           onChange={e => {
             setFilterText(e.target.value);
           }}
           onKeyDown={e => {
-            if (e.key === 'Enter') {
-              setIsRunningTest(true);
-              runTests(undefined, [...visibleTestIds]).then(() => {
-                setIsRunningTest(false);
-              });
-            }
+            if (e.key === 'Enter')
+              runTests([...visibleTestIds]);
           }}></input>
-      </div>
+        <ToolbarButton icon='play' title='Run' onClick={() => runTests([...visibleTestIds])} disabled={isRunningTest}></ToolbarButton>
+        <ToolbarButton icon='debug-stop' title='Stop' onClick={() => sendMessageNoReply('stop')} disabled={!isRunningTest}></ToolbarButton>
+      </Toolbar>
       <ListView
         items={[...entries.values()]}
         itemKey={(entry: Entry) => entry.test ? entry.test!.id : entry.fileSuite.title }
@@ -264,12 +279,28 @@ const receiver = new TeleReporterReceiver({
 
 
 (window as any).dispatch = (message: any) => {
-  receiver.dispatch(message);
+  if (message.method === 'fileChanged')
+    runWatchedTests();
+  else
+    receiver.dispatch(message);
 };
 
-async function runTests(location: string | undefined, testIds: string[] | undefined): Promise<void> {
-  await (window as any).binding({
-    method: 'run',
-    params: { location, testIds }
+const sendMessage = async (method: string, params: any) => {
+  await (window as any).sendMessage({ method, params });
+};
+
+const sendMessageNoReply = (method: string, params?: any) => {
+  sendMessage(method, params).catch((e: Error) => {
+    // eslint-disable-next-line no-console
+    console.error(e);
   });
-}
+};
+
+const collectTestIds = (entry: Entry): string[] => {
+  const testIds: string[] = [];
+  if (entry.test)
+    testIds.push(entry.test.id);
+  else
+    entry.fileSuite.allTests().forEach(test => testIds.push(test.id));
+  return testIds;
+};
