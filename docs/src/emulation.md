@@ -32,29 +32,6 @@ export default defineConfig({
 });
 ```
 
-```js tab=js-js
-// playwright.config.js
-// @ts-check
-const { devices, defineConfig } = require('@playwright/test'); // require devices
-
-module.exports = defineConfig({
-  projects: [
-    {
-      name: 'chromium',
-      use: {
-        ...devices['Desktop Chrome'],
-      },
-    },
-    {
-      name: 'Mobile Safari',
-      use: {
-        ...devices['iPhone 12'],
-      },
-    },
-  ],
-});
-```
-
 ```js tab=js-library
 const { chromium, devices } = require('playwright');
 const browser = await chromium.launch();
@@ -143,19 +120,6 @@ test('my portrait test', async ({ page }) => {
 });
 ```
 
-```js tab=js-js
-const { test, expect } = require('@playwright/test');
-
-// Run tests in this file with portrait-like viewport.
-test.use({ 
-  viewport: { width: 600, height: 900 },
-});
-
-test('my portrait test', async ({ page }) => {
-  // ...
-});
-```
-
 ```js tab=js-library
 // Create context with given viewport
 const context = await browser.newContext({
@@ -173,21 +137,8 @@ const context = await browser.newContext({
 ```
 The same works inside a describe block.
 
-```js tab=js-ts
+```js
 import { test, expect } from '@playwright/test';
-
-test.describe('locale block', () => {
-  // Run tests in this describe block with portrait-like viewport.
-  test.use({ viewport: { width: 600, height: 900 } });
-
-  test('my portrait test', async ({ page }) => {
-    // ...
-  });
-});
-```
-
-```js tab=js-js
-const { test, expect } = require('@playwright/test');
 
 test.describe('locale block', () => {
   // Run tests in this describe block with portrait-like viewport.
@@ -292,19 +243,6 @@ test('my test for de lang in Berlin timezone', async ({ page }) => {
 });
 ```
 
-```js tab=js-js
-const { test, expect } = require('@playwright/test');
-
-test.use({ 
-  locale: 'de-DE',
-  timezoneId: 'Europe/Berlin',
-});
-
-test('my test for de lang in Berlin timezone', async ({ page }) => {
-  // ...
-});
-```
-
 ```js tab=js-library
 // Emulate locale and time
 const context = await browser.newContext({
@@ -358,17 +296,6 @@ export default defineConfig({
 });
 ```
 
-```js tab=js-js
-// @ts-check
-
-const { defineConfig } = require('@playwright/test');
-module.exports = defineConfig({
-  use: {
-    permissions: ['notifications'],
-  },
-});
-```
-
 ```js tab=js-ts
 import type { PlaywrightTestConfig } from '@playwright/test';
 export default defineConfig({
@@ -403,17 +330,6 @@ context = browser.new_context(
 
 Allow test to request current location.
 
-```js tab=js-js
-// @ts-check
-
-const { defineConfig } = require('@playwright/test');
-module.exports = defineConfig({
-  use: {
-    permissions: ['geolocation'],
-  },
-});
-```
-
 ```js tab=js-ts
 import type { defineConfig } from '@playwright/test';
 export default defineConfig({
@@ -444,19 +360,6 @@ await context.GrantPermissionsAsync(new[] { "geolocation" });
 ```
 
 Allow notifications for a specific domain.
-
-```js tab=js-js
-const { test } = require('@playwright/test');
-
-test.beforeEach(async ({ context }) => {
-  // Runs before each test and signs in each page.
-  await context.grantPermissions(['notifications'], { origin: 'https://skype.com' });
-});
-
-test('first', async ({ page }) => {
-  // page has notifications permission for https://skype.com.
-});
-```
 
 ```js tab=js-ts
 import { test } from '@playwright/test';
@@ -542,19 +445,6 @@ test('my test with geolocation', async ({ page }) => {
 });
 ```
 
-```js tab=js-js
-const { test, expect } = require('@playwright/test');
-
-test.use({ 
-  geolocation: { longitude: 48.858455, latitude: 2.294474 },
-  permissions: ['geolocation'],
-});
-
-test('my test with geolocation', async ({ page }) => {
-  // ...
-});
-```
-
 ```js tab=js-library
 const context = await browser.newContext({
   geolocation: { longitude: 48.858455, latitude: 2.294474 },
@@ -607,20 +497,6 @@ test('my test with geolocation', async ({ page, context }) => {
 });
 ```
 
-```js tab=js-js
-const { test, expect } = require('@playwright/test');
-
-test.use({ 
-  geolocation: { longitude: 48.858455, latitude: 2.294474 },
-  permissions: ['geolocation'],
-});
-
-test('my test with geolocation', async ({ page, context }) => {
-  // overwrite the location for this test
-  await context.setGeolocation({ longitude: 29.979097, latitude: 31.134256 });
-});
-```
-
 ```js tab=js-library
 await context.setGeolocation({ longitude: 29.979097, latitude: 31.134256 });
 ```
@@ -658,18 +534,6 @@ export default defineConfig({
 
 ```js tab=js-ts
 import { test, expect } from '@playwright/test';
-
-test.use({ 
-  colorScheme: 'dark' // or 'light'
-});
-
-test('my test with dark mode', async ({ page }) => {
-  // ...
-});
-```
-
-```js tab=js-js
-const { test, expect } = require('@playwright/test');
 
 test.use({ 
   colorScheme: 'dark' // or 'light'
@@ -789,16 +653,6 @@ test('my user agent test', async ({ page }) => {
 });
 ```
 
-```js tab=js-js
-const { test, expect } = require('@playwright/test');
-
-test.use({ userAgent: 'My user agent' });
-
-test('my user agent test', async ({ page }) => {
-  // ...
-});
-```
-
 ```js tab=js-library
 const context = await browser.newContext({
   userAgent: 'My user agent'
@@ -831,16 +685,6 @@ Emulate a user scenario where JavaScript is disabled.
 
 ```js tab=js-ts
 import { test, expect } from '@playwright/test';
-
-test.use({ javaScriptEnabled: false });
-
-test('test with no JavaScript', async ({ page }) => {
-  // ...
-});
-```
-
-```js tab=js-js
-const { test, expect } = require('@playwright/test');
 
 test.use({ javaScriptEnabled: false });
 
