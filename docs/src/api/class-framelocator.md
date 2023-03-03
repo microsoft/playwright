@@ -196,7 +196,7 @@ Returns locator to the last matching frame.
 
 %%-template-locator-locator-%%
 
-### param: FrameLocator.locator.selector = %%-find-selector-%%
+### param: FrameLocator.locator.selectorOrLocator = %%-find-selector-or-locator-%%
 * since: v1.17
 
 ### option: FrameLocator.locator.-inline- = %%-locator-options-list-v1.14-%%

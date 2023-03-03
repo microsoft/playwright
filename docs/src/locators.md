@@ -1044,6 +1044,44 @@ await product
     .ClickAsync();
 ```
 
+You can also chain two locators together, for example to find a "Save" button inside a particular dialog:
+
+```js
+const saveButton = page.getByRole('button', { name: 'Save' });
+// ...
+const dialog = page.getByTestId('settings-dialog');
+await dialog.locator(saveButton).click();
+```
+
+```python async
+save_button = page.get_by_role("button", name="Save")
+# ...
+dialog = page.get_by_test_id("settings-dialog")
+await dialog.locator(save_button).click()
+```
+
+```python sync
+save_button = page.get_by_role("button", name="Save")
+# ...
+dialog = page.get_by_test_id("settings-dialog")
+dialog.locator(save_button).click()
+```
+
+```java
+Locator saveButton = page.getByRole(AriaRole.BUTTON,
+                                    new Page.GetByRoleOptions().setName("Save"));
+// ...
+Locator dialog = page.getByTestId("settings-dialog");
+dialog.locator(saveButton).click();
+```
+
+```csharp
+var saveButton = page.GetByRole(AriaRole.Button, new() { Name = "Save" });
+// ...
+var dialog = page.GetByTestId("settings-dialog");
+await dialog.Locator(saveButton).ClickAsync();
+```
+
 ## Lists
 
 ### Count items in a list

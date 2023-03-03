@@ -11392,10 +11392,10 @@ export interface Locator {
    * method.
    *
    * [Learn more about locators](https://playwright.dev/docs/locators).
-   * @param selector A selector to use when resolving DOM element.
+   * @param selectorOrLocator A selector or locator to use when resolving DOM element.
    * @param options
    */
-  locator(selector: string, options?: {
+  locator(selectorOrLocator: string|Locator, options?: {
     /**
      * Matches elements containing an element that matches an inner locator. Inner locator is queried against the outer
      * one. For example, `article` that has `text=Playwright` matches `<article><div>Playwright</div></article>`.
@@ -16969,10 +16969,10 @@ export interface FrameLocator {
    * method.
    *
    * [Learn more about locators](https://playwright.dev/docs/locators).
-   * @param selector A selector to use when resolving DOM element.
+   * @param selectorOrLocator A selector or locator to use when resolving DOM element.
    * @param options
    */
-  locator(selector: string, options?: {
+  locator(selectorOrLocator: string|Locator, options?: {
     /**
      * Matches elements containing an element that matches an inner locator. Inner locator is queried against the outer
      * one. For example, `article` that has `text=Playwright` matches `<article><div>Playwright</div></article>`.
