@@ -127,6 +127,14 @@ export class CRNetworkManager {
     }
   }
 
+  async clearCache() {
+    // Sending 'Network.setCacheDisabled' with 'cacheDisabled = true' will clear the MemoryCache.
+    await this._client.send('Network.setCacheDisabled', { cacheDisabled: true });
+    if (!this._protocolRequestInterceptionEnabled)
+      await this._client.send('Network.setCacheDisabled', { cacheDisabled: false });
+    await this._client.send('Network.clearBrowserCache');
+  }
+
   _onRequestWillBeSent(workerFrame: frames.Frame | undefined, event: Protocol.Network.requestWillBeSentPayload) {
     // Request interception doesn't happen for data URLs with Network Service.
     if (this._protocolRequestInterceptionEnabled && !event.request.url.startsWith('data:')) {

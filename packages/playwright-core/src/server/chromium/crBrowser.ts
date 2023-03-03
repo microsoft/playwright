@@ -543,6 +543,11 @@ export class CRBrowserContext extends BrowserContext {
     }
   }
 
+  override async clearCache(): Promise<void> {
+    for (const page of this._crPages())
+      await page._mainFrameSession._networkManager.clearCache();
+  }
+
   async cancelDownload(guid: string) {
     // The upstream CDP method is implemented in a way that no explicit error would be given
     // regarding the requested `guid`, even if the download is in a state not suitable for
