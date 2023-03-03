@@ -3,13 +3,13 @@ id: test-projects
 title: "Projects"
 ---
 
+A project is logical group of tests running with the same configuration. We use projects so we can run tests on different browsers and devices. Projects are configured in the `playwright.config.ts` file and once configured you can then run your tests on all projects or only on a specific project. You can also use projects to run the same tests in different configurations. For example, you can run the same tests in a logged-in and logged-out state.
 
-Playwright supports multiple **projects** so you can run your tests in multiple browsers such as chromium, webkit and firefox browsers as well as branded browsers such as Google Chrome and Microsoft Edge. Playwright can also run on emulated tablet and mobile devices. See the [registry of device parameters](https://github.com/microsoft/playwright/blob/main/packages/playwright-core/src/server/deviceDescriptorsSource.json) for a complete list of selected desktop, tablet and mobile devices. 
+By setting up projects you can also run a group of tests with different timeouts or retries or a group of tests against different environments such as staging and production, splitting tests per package/functionality and more.
 
-Each project is given a name and a set of options which are configured in the `use` object.
+## Configure projects for multiple browsers
 
-## Project Configuration
-
+By using **projects** you can run your tests in multiple browsers such as chromium, webkit and firefox as well as branded browsers such as Google Chrome and Microsoft Edge. Playwright can also run on emulated tablet and mobile devices. See the [registry of device parameters](https://github.com/microsoft/playwright/blob/main/packages/playwright-core/src/server/deviceDescriptorsSource.json) for a complete list of selected desktop, tablet and mobile devices.
 
 ```js
 import { defineConfig, devices } from '@playwright/test';
@@ -53,7 +53,8 @@ export default defineConfig({
   ],
 });
 ```
-## Running tests on projects
+
+## Run projects
 
 Playwright will run all projects by default.
 
@@ -89,11 +90,34 @@ Choose a specific profile, various profiles or all profiles to run tests on.
 
 <img width="1536" alt="choosing default profiles" src="https://user-images.githubusercontent.com/13063165/221669537-e5df8672-f50d-4ff1-96f9-141cd67e12f8.png" />
 
-## Multiple configurations
 
-You can also use projects to run the same tests in different configurations. For example, you can run the same tests in a logged-in and logged-out state.
+## Configure projects for multiple environments
 
-Note that each [test project](#projects) can provide its own [options][TestProject], for example two projects can run different tests by providing different `testDir`s.
+By setting up projects we can also run a group of tests with different timeouts or retries or run a group of tests against different environments. For example we can run our tests against a staging environment with 2 retries as well as against a production environment with 0 retries.
+
+```js
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  timeout: 60000, // Timeout is shared between all tests.
+  projects: [
+    {
+      name: 'staging',
+      baseURL: 'staging.example.com',
+      retries: 2,
+    },
+    {
+      name: 'production',
+      baseURL: 'production.example.com',
+      retries: 0,
+    },
+  ],
+});
+```
+
+## Splitting tests into projects
+
+We can split tests into projects and use filters to run a subset of tests. For example, we can create a project that runs tests using a filter matching all tests with a specific file name. We can then have another group of tests that ignore specific test files.
 
 Here is an example that defines a common timeout and two projects. The "Smoke" project runs a small subset of tests without retries, and "Default" project runs all other tests with retries.
 
@@ -116,3 +140,4 @@ export default defineConfig({
   ],
 });
 ```
+## Dependencies
