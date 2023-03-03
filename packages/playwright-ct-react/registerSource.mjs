@@ -25,7 +25,7 @@ import { createRoot } from 'react-dom/client';
 
 /** @type {Map<string, FrameworkComponent>} */
 const registry = new Map();
-/** @type {Map<Element, import('react-dom/client').Root>>} */
+/** @type {Map<Element, import('react-dom/client').Root>} */
 const rootRegistry = new Map();
 
 /**
