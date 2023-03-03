@@ -1,0 +1,12 @@
+**/*
+
+!README.md
+!LICENSE
+!cli.js
+!register.d.ts
+!register.mjs
+!registerSource.mjs
+!index.d.ts
+!index.js
+!hooks.d.ts
+!hooks.mjs

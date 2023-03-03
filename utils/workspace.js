@@ -179,6 +179,11 @@ const workspace = new Workspace(ROOT_PATH, [
     files: ['LICENSE'],
   }),
   new PWPackage({
+    name: '@playwright/experimental-ct-react17',
+    path: path.join(ROOT_PATH, 'packages', 'playwright-ct-react17'),
+    files: ['LICENSE'],
+  }),
+  new PWPackage({
     name: '@playwright/experimental-ct-solid',
     path: path.join(ROOT_PATH, 'packages', 'playwright-ct-solid'),
     files: ['LICENSE'],

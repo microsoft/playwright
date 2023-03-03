@@ -17,16 +17,14 @@
 // @ts-check
 // This file is injected into the registry as text, no dependencies are allowed.
 
-import * as React from 'react';
-import { createRoot } from 'react-dom/client';
+import React from 'react';
+import ReactDOM from 'react-dom';
 
 /** @typedef {import('../playwright-test/types/component').Component} Component */
 /** @typedef {import('react').FunctionComponent} FrameworkComponent */
 
 /** @type {Map<string, FrameworkComponent>} */
 const registry = new Map();
-/** @type {Map<Element, import('react-dom/client').Root>>} */
-const rootRegistry = new Map();
 
 /**
  * @param {{[key: string]: FrameworkComponent}} components
@@ -38,11 +36,9 @@ export function register(components) {
 
 /**
  * @param {Component} component
+ * @returns {JSX.Element}
  */
 function render(component) {
-  if (typeof component !== 'object' || Array.isArray(component))
-    return component;
-
   let componentFunc = registry.get(component.type);
   if (!componentFunc) {
     // Lookup by shorthand.
@@ -81,33 +77,17 @@ window.playwrightMount = async (component, rootElement, hooksConfig) => {
       App = () => wrapper;
   }
 
-  if (rootRegistry.has(rootElement)) {
-    throw new Error(
-        'Attempting to mount a component into an container that already has a React root'
-    );
-  }
-
-  const root = createRoot(rootElement);
-  rootRegistry.set(rootElement, root);
-  root.render(App());
+  ReactDOM.render(App(), rootElement);
 
   for (const hook of window.__pw_hooks_after_mount || [])
     await hook({ hooksConfig });
 };
 
 window.playwrightUnmount = async rootElement => {
-  const root = rootRegistry.get(rootElement);
-  if (root === undefined)
+  if (!ReactDOM.unmountComponentAtNode(rootElement))
     throw new Error('Component was not mounted');
-
-  root.unmount();
-  rootRegistry.delete(rootElement);
 };
 
 window.playwrightUpdate = async (rootElement, component) => {
-  const root = rootRegistry.get(rootElement);
-  if (root === undefined)
-    throw new Error('Component was not mounted');
-
-  root.render(render(/** @type {Component} */ (component)));
+  ReactDOM.render(render(/** @type {Component} */(component)), rootElement);
 };
