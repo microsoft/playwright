@@ -26,7 +26,7 @@ import { assert } from '../../packages/playwright-core/lib/utils/debug';
 
 type ElectronTestFixtures = PageTestFixtures & {
   electronApp: ElectronApplication;
-  launchElectronApp: (appFile: string, options?: any) => Promise<ElectronApplication>;
+  launchElectronApp: (appFile: string, args?: string[], options?: any) => Promise<ElectronApplication>;
   newWindow: () => Promise<Page>;
 };
 
@@ -45,8 +45,8 @@ export const electronTest = baseTest.extend<TraceViewerFixtures>(traceViewerFixt
     // This env prevents 'Electron Security Policy' console message.
     process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true';
     const apps: ElectronApplication[] = [];
-    await use(async (appFile: string, options?: any[]) => {
-      const app = await playwright._electron.launch({ ...options, args: [path.join(__dirname, appFile)] });
+    await use(async (appFile: string, args: string[] = [], options?: any[]) => {
+      const app = await playwright._electron.launch({ ...options, args: [path.join(__dirname, appFile), ...args] });
       apps.push(app);
       return app;
     });
