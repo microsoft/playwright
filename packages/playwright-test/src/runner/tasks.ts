@@ -28,7 +28,6 @@ import { TaskRunner } from './taskRunner';
 import type { Suite } from '../common/test';
 import type { FullConfigInternal, FullProjectInternal } from '../common/types';
 import { loadAllTests, loadGlobalHook } from './loadUtils';
-import { createFileMatcherFromArguments } from '../util';
 import type { Matcher } from '../util';
 
 const removeFolderAsync = promisify(rimraf);
@@ -158,9 +157,7 @@ function createRemoveOutputDirsTask(): Task<TaskRunnerState> {
 function createLoadTask(mode: 'out-of-process' | 'in-process', shouldFilterOnly: boolean, projectsToIgnore = new Set<FullProjectInternal>(), additionalFileMatcher?: Matcher): Task<TaskRunnerState> {
   return async (context, errors) => {
     const { config } = context;
-    const cliMatcher = config._internal.cliArgs.length ? createFileMatcherFromArguments(config._internal.cliArgs) : () => true;
-    const fileMatcher = (value: string) => cliMatcher(value) && (additionalFileMatcher ? additionalFileMatcher(value) : true);
-    context.rootSuite = await loadAllTests(mode, config, projectsToIgnore, fileMatcher, errors, shouldFilterOnly);
+    context.rootSuite = await loadAllTests(mode, config, projectsToIgnore, additionalFileMatcher, errors, shouldFilterOnly);
     // Fail when no tests.
     if (!context.rootSuite.allTests().length && !config._internal.passWithNoTests && !config.shard)
       throw new Error(`No tests found`);
