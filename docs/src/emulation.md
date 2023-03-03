@@ -290,7 +290,7 @@ await using var context = await browser.NewContextAsync(new()
 
 Allow app to show system notifications.
 
-```js
+```js tab=js-ts
 // playwright.config.ts/js
 import { defineConfig } from '@playwright/test';
 
@@ -298,17 +298,6 @@ export default defineConfig({
   use: {
     // Grants specified permissions to the browser context.
     permissions: 'notifications',
-  },
-});
-```
-
-```js tab=js-ts
-// playwright.config.ts/js
-import type { PlaywrightTestConfig } from '@playwright/test';
-
-export default defineConfig({
-  use: {
-    permissions: ['notifications'],
   },
 });
 ```
@@ -334,39 +323,6 @@ context = await browser.new_context(
 context = browser.new_context(
   permissions=['notifications'],
 )
-```
-
-Allow test to request current location.
-
-```js tab=js-ts
-// playwright.config.ts/js
-import type { defineConfig } from '@playwright/test';
-
-export default defineConfig({
-  use: {
-    permissions: ['geolocation'],
-  },
-});
-```
-
-```js tab=js-library
-await context.grantPermissions(['geolocation']);
-```
-
-```java
-context.grantPermissions(Arrays.asList("geolocation"));
-```
-
-```python async
-await context.grant_permissions(['geolocation'])
-```
-
-```python sync
-context.grant_permissions(['geolocation'])
-```
-
-```csharp
-await context.GrantPermissionsAsync(new[] { "geolocation" });
 ```
 
 Allow notifications for a specific domain.
