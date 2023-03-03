@@ -11,7 +11,7 @@ With Playwright you can test your app on any browser as well as emulate a real d
 Playwright comes with a [registry of device parameters](https://github.com/microsoft/playwright/blob/main/packages/playwright-core/src/server/deviceDescriptorsSource.json) using [`property: Playwright.devices`] for selected desktop, tablet and mobile devices. It can be used to simulate browser behavior for a specific device such as user agent, screen size, viewport and if it has touch enabled. All tests will run with the specified device parameters. 
 
 ```js tab=js-ts
-// playwright.config.ts
+// playwright.config.ts/js
 import { defineConfig, devices } from '@playwright/test'; // import devices
 
 export default defineConfig({
@@ -97,6 +97,7 @@ class Program
 The viewport is included in the device but you can override it for some tests with [`method: Page.setViewportSize`].
 
 ```js
+// playwright.config.ts/js
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -108,6 +109,7 @@ export default defineConfig({
 ```
 
 ```js tab=js-ts
+// example.spec.ts/js
 import { test, expect } from '@playwright/test';
 
 // Run tests in this file with portrait-like viewport.
@@ -138,6 +140,7 @@ const context = await browser.newContext({
 The same works inside a describe block.
 
 ```js
+// example.spec.ts/js
 import { test, expect } from '@playwright/test';
 
 test.describe('locale block', () => {
@@ -217,6 +220,7 @@ await using var context = await browser.NewContextAsync(new()
 Emulate the user Locale and Timezone which can be set globally for all tests in the config and then overridden for particular tests.
 
 ```js
+// playwright.config.ts/js
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -231,6 +235,7 @@ export default defineConfig({
 ```
 
 ```js tab=js-ts
+// example.spec.ts/js
 import { test, expect } from '@playwright/test';
 
 test.use({ 
@@ -286,6 +291,7 @@ await using var context = await browser.NewContextAsync(new()
 Allow app to show system notifications.
 
 ```js
+// playwright.config.ts/js
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -297,7 +303,9 @@ export default defineConfig({
 ```
 
 ```js tab=js-ts
+// playwright.config.ts/js
 import type { PlaywrightTestConfig } from '@playwright/test';
+
 export default defineConfig({
   use: {
     permissions: ['notifications'],
@@ -331,7 +339,9 @@ context = browser.new_context(
 Allow test to request current location.
 
 ```js tab=js-ts
+// playwright.config.ts/js
 import type { defineConfig } from '@playwright/test';
+
 export default defineConfig({
   use: {
     permissions: ['geolocation'],
@@ -362,6 +372,7 @@ await context.GrantPermissionsAsync(new[] { "geolocation" });
 Allow notifications for a specific domain.
 
 ```js tab=js-ts
+// example.spec.ts/js
 import { test } from '@playwright/test';
 
 test.beforeEach(async ({ context }) => {
@@ -422,6 +433,7 @@ await context.ClearPermissionsAsync();
 Grant `"geolocation"` permissions and set geolocation to a specific area.
 
 ```js
+// playwright.config.ts/js
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -433,6 +445,7 @@ export default defineConfig({
 ```
 
 ```js tab=js-ts
+// example.spec.ts/js
 import { test, expect } from '@playwright/test';
 
 test.use({ 
@@ -484,6 +497,7 @@ await using var context = await browser.NewContextAsync(new()
 Change the location later:
 
 ```js tab=js-ts
+// example.spec.ts/js
 import { test, expect } from '@playwright/test';
 
 test.use({ 
@@ -533,6 +547,7 @@ export default defineConfig({
 ```
 
 ```js tab=js-ts
+// example.spec.ts/js
 import { test, expect } from '@playwright/test';
 
 test.use({ 
@@ -644,6 +659,7 @@ await page.EmulateMediaAsync(new()
 The User Agent is included in the device and therefore you  will rarely need to change it however if you do need to test a different user agent you can override it with the `userAgent` property.
 
 ```js tab=js-ts
+// example.spec.ts/js
 import { test, expect } from '@playwright/test';
 
 test.use({ userAgent: 'My user agent'});
@@ -684,6 +700,7 @@ var context = await browser.NewContextAsync(new BrowserNewContextOptions { UserA
 Emulate a user scenario where JavaScript is disabled.
 
 ```js tab=js-ts
+// example.spec.ts/js
 import { test, expect } from '@playwright/test';
 
 test.use({ javaScriptEnabled: false });
