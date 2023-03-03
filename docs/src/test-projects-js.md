@@ -141,3 +141,36 @@ export default defineConfig({
 });
 ```
 ## Dependencies
+
+Dependencies are a list of projects that need to run before the tests in another project run. They can be useful for configuring the global setup actions so that one project depends on this running first. Using dependencies allows global setup to produce traces and other artifacts. 
+
+In this example the chromium, firefox and webkit projects depend on the setup project.
+
+```js
+// playwright.config.ts
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  projects: [
+    {
+      name: 'setup',
+      testMatch: /global.setup\.ts/,
+    },
+    {
+      name: 'chromium',
+      use: devices['Desktop Chrome'],
+      dependencies: ['setup'],
+    },
+    {
+      name: 'firefox',
+      use: devices['Desktop Firefox'],
+      dependencies: ['setup'],
+    },
+    {
+      name: 'webkit',
+      use: devices['Desktop Safari'],
+      dependencies: ['setup'],
+    },
+  ],
+});
+```
