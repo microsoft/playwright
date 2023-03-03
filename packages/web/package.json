@@ -1,0 +1,10 @@
+{
+  "name": "web",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+  },
+  "dependencies": {
+    "codemirror": "^5.65.9"
+  }
+}
