@@ -66,8 +66,8 @@ export default defineConfig({
 | [`property: TestConfig.retries`] | The maximum number of retry attempts per test. See [Test Retries](/test-retries.md) to learn more about retries.|
 | [`property: TestConfig.testDir`] | Directory with the test files. |
 | [`property: TestConfig.testIgnore`] | Glob patterns or regular expressions that should be ignored when looking for the test files. For example, `'*test-assets'` |
-| [`property: TestConfig.testMatch`] | Glob patterns or regular expressions that match test files. For example, `'*todo-tests/*.spec.ts'`. By default, Playwright Test runs `.*(test|spec)\.(js|ts|mjs)` files. |
-| [`property: TestConfig.timeout`] | Playwright Test enforces a [timeout](./test-timeouts.md) for each test, 30 seconds by default. Time spent by the test function, fixtures, beforeEach and afterEach hooks is included in the test timeout. |
+| [`property: TestConfig.testMatch`] | Glob patterns or regular expressions that match test files. For example, `'*todo-tests/*.spec.ts'`. By default, Playwright runs `.*(test|spec)\.(js|ts|mjs)` files. |
+| [`property: TestConfig.timeout`] | Playwright enforces a [timeout](./test-timeouts.md) for each test, 30 seconds by default. Time spent by the test function, fixtures, beforeEach and afterEach hooks is included in the test timeout. |
 | [`property: TestConfig.webServer`] | To launch a server during the tests, use the `webServer` option |
 | [`property: TestConfig.workers`] | The maximum number of concurrent worker processes to use for parallelizing tests. Can also be set as percentage of logical CPU cores, e.g. `'50%'.`. See [/Parallelism and sharding](./test-parallel) for more details. |
 
@@ -203,8 +203,6 @@ export default defineConfig({
 
 Normally you would start with emulating a device, for example Desktop Chromium. See our [Emulation](./emulation.md) guide to learn more.
 
-Here are some of the commonly used options for various scenarios. You usually set them globally in the [configuration file](#global-configuration).
-
 
 ```js
 import { defineConfig } from '@playwright/test';
@@ -319,8 +317,8 @@ export default defineConfig({
 | Option | Description |
 | :- | :- |
 | [`property: TestOptions.screenshot`] | Capture screenshots of your test. Options include `'off'`, `'on'` and `'only-on-failure'` |
-| [`property: TestOptions.trace`] | Playwright Test can produce test traces while running the tests. Later on, you can view the trace and get detailed information about Playwright execution by opening [Trace Viewer](./trace-viewer.md). Options include: `'off'`, `'on'`, `'retain-on-failure'` and `'on-first-retry'`  |
-| [`property: TestOptions.video`] | Playwright Test can record videos for your tests. Options include: `'off'`, `'on'`, `'retain-on-failure'` and `'on-first-retry'` |
+| [`property: TestOptions.trace`] | Playwright can produce test traces while running the tests. Later on, you can view the trace and get detailed information about Playwright execution by opening [Trace Viewer](./trace-viewer.md). Options include: `'off'`, `'on'`, `'retain-on-failure'` and `'on-first-retry'`  |
+| [`property: TestOptions.video`] | Playwright can record videos for your tests. Options include: `'off'`, `'on'`, `'retain-on-failure'` and `'on-first-retry'` |
 
 
 ### Other Options
@@ -425,7 +423,7 @@ export default defineConfig({
 });
 ```
 
-Playwright Test supports multiple **projects** so you can run your tests in multiple browsers and configurations including mobile viewports and branded browsers. Each project is given a name and a set of options. 
+Playwright supports multiple **projects** so you can run your tests in multiple browsers and configurations including mobile viewports and branded browsers. Each project is given a name and a set of options. 
 
 You can also use projects to run the same tests in different configurations. For example, you can run the same tests in a logged-in and logged-out state. Learn more about [projects](#projects).
 
@@ -439,64 +437,8 @@ export default defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
     },
-
-    {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
-    },
-
-    {
-      name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
-    },
-
-    /* Test against mobile viewports. */
-    {
-      name: 'Mobile Chrome',
-      use: { ...devices['Pixel 5'] },
-    },
-    {
-      name: 'Mobile Safari',
-      use: { ...devices['iPhone 12'] },
-    },
-
-    /* Test against branded browsers. */
-    {
-      name: 'Microsoft Edge',
-      use: { ...devices['Desktop Edge'], channel: 'msedge' },
-    },
-    {
-      name: 'Google Chrome',
-      use: { ...devices['Desktop Chrome'], channel: 'chrome' },
-    },
   ],
 });
-```
-
-Playwright will run all projects by default.
-
-```bash
-npx playwright test
-
-Running 7 tests using 5 workers
-
-  ✓ [chromium] › example.spec.ts:3:1 › basic test (2s)
-  ✓ [firefox] › example.spec.ts:3:1 › basic test (2s)
-  ✓ [webkit] › example.spec.ts:3:1 › basic test (2s)
-  ✓ [Mobile Chrome] › example.spec.ts:3:1 › basic test (2s)
-  ✓ [Mobile Safari] › example.spec.ts:3:1 › basic test (2s)
-  ✓ [Microsoft Edge] › example.spec.ts:3:1 › basic test (2s)
-  ✓ [Google Chrome] › example.spec.ts:3:1 › basic test (2s)
-```
-
-Use the `--project` command line option to run a single project.
-
-```bash
-npx playwright test --project=firefox
-
-Running 1 test using 1 worker
-
-  ✓ [firefox] › example.spec.ts:3:1 › basic test (2s)
 ```
 
 You can override options for a specific test file by using the `test.use()` method and passing in the options. For example to run tests in a portrait-like viewport for a specific test:
