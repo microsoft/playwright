@@ -440,6 +440,7 @@ export default defineConfig({
   use: {
     // Context geolocation
     geolocation: { longitude: 12.492507, latitude: 41.889938 },
+    permissions: ['geolocation'],
   },
 });
 ```
