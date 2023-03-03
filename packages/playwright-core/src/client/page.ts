@@ -19,12 +19,12 @@ import fs from 'fs';
 import path from 'path';
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
-import { isSafeCloseError } from '../common/errors';
+import { isSafeCloseError, kBrowserOrContextClosedError } from '../common/errors';
 import { urlMatches } from '../utils/network';
 import { TimeoutSettings } from '../common/timeoutSettings';
 import type * as channels from '@protocol/channels';
 import { parseError, serializeError } from '../protocol/serializers';
-import { assert, headersObjectToArray, isObject, isRegExp, isString } from '../utils';
+import { assert, headersObjectToArray, isObject, isRegExp, isString, ScopedRace } from '../utils';
 import { mkdirIfNeeded } from '../utils/fileUtils';
 import { Accessibility } from './accessibility';
 import { Artifact } from './artifact';
@@ -80,7 +80,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   private _frames = new Set<Frame>();
   _workers = new Set<Worker>();
   private _closed = false;
-  _closedOrCrashedPromise: Promise<void>;
+  readonly _closedOrCrashedRace = new ScopedRace();
   private _viewportSize: Size | null;
   private _routes: RouteHandler[] = [];
 
@@ -153,10 +153,8 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
 
     this.coverage = new Coverage(this._channel);
 
-    this._closedOrCrashedPromise = Promise.race([
-      new Promise<void>(f => this.once(Events.Page.Close, f)),
-      new Promise<void>(f => this.once(Events.Page.Crash, f)),
-    ]);
+    this.once(Events.Page.Close, () => this._closedOrCrashedRace.scopeClosed(new Error(kBrowserOrContextClosedError)));
+    this.once(Events.Page.Crash, () => this._closedOrCrashedRace.scopeClosed(new Error(kBrowserOrContextClosedError)));
 
     this._setEventToSubscriptionMapping(new Map<string, channels.PageUpdateSubscriptionParams['event']>([
       [Events.Page.Request, 'request'],
@@ -693,10 +691,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   async pause() {
     if (require('inspector').url())
       return;
-    await Promise.race([
-      this.context()._channel.pause(),
-      this._closedOrCrashedPromise
-    ]);
+    await this._closedOrCrashedRace.safeRace(this.context()._channel.pause());
   }
 
   async pdf(options: PDFOptions = {}): Promise<Buffer> {

@@ -23,7 +23,7 @@ import type { Headers, RemoteAddr, SecurityDetails, WaitForEventOptions } from '
 import fs from 'fs';
 import { mime } from '../utilsBundle';
 import { assert, isString, headersObjectToArray, isRegExp } from '../utils';
-import { ManualPromise } from '../utils/manualPromise';
+import { ManualPromise, ScopedRace } from '../utils/manualPromise';
 import { Events } from './events';
 import type { Page } from './page';
 import { Waiter } from './waiter';
@@ -33,7 +33,6 @@ import { urlMatches } from '../utils/network';
 import { MultiMap } from '../utils/multimap';
 import { APIResponse } from './fetch';
 import type { Serializable } from '../../types/structs';
-import { kBrowserOrContextClosedError } from '../common/errors';
 
 export type NetworkCookie = {
   name: string,
@@ -271,8 +270,8 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
     return this._fallbackOverrides;
   }
 
-  _targetClosedPromise(): Promise<void> {
-    return this.serviceWorker()?._closedPromise || this.frame()._page?._closedOrCrashedPromise || new Promise(() => {});
+  _targetClosedRace(): ScopedRace {
+    return this.serviceWorker()?._closedRace || this.frame()._page?._closedOrCrashedRace || new ScopedRace();
   }
 }
 
@@ -295,10 +294,7 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
     // When page closes or crashes, we catch any potential rejects from this Route.
     // Note that page could be missing when routing popup's initial request that
     // does not have a Page initialized just yet.
-    return Promise.race([
-      promise,
-      this.request()._targetClosedPromise(),
-    ]);
+    return this.request()._targetClosedRace().safeRace(promise);
   }
 
   _startHandling(): Promise<boolean> {
@@ -452,7 +448,7 @@ export class Response extends ChannelOwner<channels.ResponseChannel> implements 
   private _provisionalHeaders: RawHeaders;
   private _actualHeadersPromise: Promise<RawHeaders> | undefined;
   private _request: Request;
-  readonly _finishedPromise = new ManualPromise<void>();
+  readonly _finishedPromise = new ManualPromise<null>();
 
   static from(response: channels.ResponseChannel): Response {
     return (response as any)._object;
@@ -523,12 +519,7 @@ export class Response extends ChannelOwner<channels.ResponseChannel> implements 
   }
 
   async finished(): Promise<null> {
-    return Promise.race([
-      this._finishedPromise.then(() => null),
-      this.request()._targetClosedPromise().then(() => {
-        throw new Error(kBrowserOrContextClosedError);
-      }),
-    ]);
+    return this.request()._targetClosedRace().race(this._finishedPromise);
   }
 
   async body(): Promise<Buffer> {
