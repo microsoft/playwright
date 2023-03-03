@@ -652,7 +652,7 @@ it('should return server address directly from response', async ({ page, server,
     expect(port).toBe(server.PORT);
 });
 
-it.skip('should return security details directly from response', async ({ contextFactory, httpsServer, browserName, platform }) => {
+it('should return security details directly from response', async ({ contextFactory, httpsServer, browserName, platform }) => {
   it.fail(browserName === 'webkit' && platform === 'linux', 'https://github.com/microsoft/playwright/issues/6759');
   it.fail(browserName === 'webkit' && platform === 'win32');
 
