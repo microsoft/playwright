@@ -27,9 +27,7 @@ export default defineConfig({
 | [`property: TestConfig.webServer`] | Launch a development web server (or multiple) during the tests. |
 | `command`| Shell command to start the local dev server of your app. |
 | `url`| URL of your http server that is expected to return a 2xx, 3xx, 400, 401, 402, or 403 status code when the server is ready to accept connections. |
-| `reuseExistingServer`| If `true`, it will re-use an existing server on the port or url when available. If no server is running on that port or url, it will run the command to start a new server. If `false`, it will throw if an existing process is listening on the port or url. |
-
-
+| `reuseExistingServer`| If `true`, it will re-use an existing server on the url when available. If no server is running on that url, it will run the command to start a new server. If `false`, it will throw if an existing process is listening on the url. To see the stdout, you can set the `DEBUG=pw:webserver` environment variable. |
 
 ## Adding a server timeout
 
