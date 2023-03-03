@@ -174,3 +174,7 @@ export default defineConfig({
   ],
 });
 ```
+
+## Custom project parameters
+
+Projects can be also used to parametrize tests with your custom configuration - take a look at [this separate guide](./test-parameterize.md#parameterized-projects).
