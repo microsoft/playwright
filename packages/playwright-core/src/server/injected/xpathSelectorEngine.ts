@@ -21,7 +21,7 @@ export const XPathEngine: SelectorEngine = {
     if (selector.startsWith('/'))
       selector = '.' + selector;
     const result: Element[] = [];
-    const document = root instanceof Document ? root : root.ownerDocument;
+    const document = root.ownerDocument || root;
     if (!document)
       return result;
     const it = document.evaluate(selector, root, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE);
