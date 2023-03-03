@@ -828,3 +828,37 @@ it('should not hang on resources served from cache', async ({ contextFactory, se
   else
     expect(entries.length).toBe(2);
 });
+
+it('should not hang on slow chunked response', async ({ browserName, browser, contextFactory, server }, testInfo) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/21182' });
+  it.fixme(browserName === 'webkit');
+  server.setRoute('/empty.html', (req, res) => {
+    res.writeHead(200, {
+      'Content-Type': 'text/html',
+    });
+    res.end(`<script>
+    let receivedFirstData = new Promise(f => {
+      setTimeout(() =>  {
+        var x = new XMLHttpRequest();
+        x.open("GET", "slow.txt");
+        x.onprogress = () => f();
+        x.send();
+      }, 0);
+    });
+    </script>`);
+  });
+  server.setRoute('/slow.txt', async (req, res) => {
+    res.writeHead(200, {
+      'Content-Type': 'text/plain',
+      'Transfer-Encoding': 'chunked',
+      'Content-length': '2023'
+    });
+    res.write('begin');
+  });
+  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+  await page.goto(server.EMPTY_PAGE);
+  await page.evaluate(() => (window as any).receivedFirstData);
+  const log = await getLog();
+  expect(log.browser.name.toLowerCase()).toBe(browserName);
+  expect(log.browser.version).toBe(browser.version());
+});
