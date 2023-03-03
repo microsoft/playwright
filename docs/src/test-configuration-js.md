@@ -294,5 +294,3 @@ test.describe('french language block', () => {
   });
 });
 ```
-
-
