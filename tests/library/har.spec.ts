@@ -831,7 +831,6 @@ it('should not hang on resources served from cache', async ({ contextFactory, se
 
 it('should not hang on slow chunked response', async ({ browserName, browser, contextFactory, server }, testInfo) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/21182' });
-  it.fixme(browserName === 'webkit');
   server.setRoute('/empty.html', (req, res) => {
     res.writeHead(200, {
       'Content-Type': 'text/html',
