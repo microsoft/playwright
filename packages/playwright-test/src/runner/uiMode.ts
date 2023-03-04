@@ -113,11 +113,11 @@ class UIMode {
     const stop = new ManualPromise();
     const run = taskRunner.run(context, 0, stop).then(async status => {
       await reporter.onExit({ status });
+      this._testRun = undefined;
       return status;
     });
     this._testRun = { run, stop };
     await run;
-    this._testRun = undefined;
   }
 
   private async _watchFile(fileName: string) {

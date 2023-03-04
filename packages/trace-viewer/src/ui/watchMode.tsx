@@ -32,17 +32,14 @@ let rootSuite: Suite | undefined;
 let updateList: () => void = () => {};
 let updateProgress: () => void = () => {};
 let runWatchedTests = () => {};
-
-type Entry = { test?: TestCase, fileSuite: Suite };
+const expandedItems = new Map<string, boolean | undefined>();
 
 export const WatchModeView: React.FC<{}> = ({
 }) => {
   const [updateCounter, setUpdateCounter] = React.useState(0);
   updateList = () => setUpdateCounter(updateCounter + 1);
-  const [selectedFileSuite, setSelectedFileSuite] = React.useState<Suite | undefined>();
-  const [selectedTest, setSelectedTest] = React.useState<TestCase | undefined>();
+  const [selectedTreeItemId, setSelectedTreeItemId] = React.useState<string | undefined>();
   const [isRunningTest, setIsRunningTest] = React.useState<boolean>(false);
-  const [expandedFiles] = React.useState(new Map<Suite, boolean | undefined>());
   const [filterText, setFilterText] = React.useState<string>('');
 
   const inputRef = React.useRef<HTMLInputElement>(null);
@@ -52,61 +49,39 @@ export const WatchModeView: React.FC<{}> = ({
     sendMessageNoReply('list');
   }, []);
 
+  const { treeItemMap, visibleTestIds, listItems } = React.useMemo(() => {
+    // updateCounter is used to trigger the compute.
+    noop(updateCounter);
+    const treeItems = createTree(rootSuite);
+    const filteredItems = filterTree(treeItems, filterText);
+
+    const treeItemMap = new Map<string, TreeItem>();
+    const visibleTestIds = new Set<string>();
+    const visit = (treeItem: TreeItem) => {
+      if (treeItem.kind === 'test')
+        visibleTestIds.add(treeItem.id);
+      treeItem.children?.forEach(visit);
+      treeItemMap.set(treeItem.id, treeItem);
+    };
+    filteredItems.forEach(visit);
+    const listItems = flattenTree(filteredItems, expandedItems, !!filterText.trim());
+    return { treeItemMap, visibleTestIds, listItems };
+  }, [filterText, updateCounter]);
+
+  const selectedTreeItem = selectedTreeItemId ? treeItemMap.get(selectedTreeItemId) : undefined;
+
   React.useEffect(() => {
-    sendMessageNoReply('watch', {
-      fileName: selectedFileSuite?.location?.file || selectedTest?.location?.file
-    });
-  }, [selectedFileSuite, selectedTest]);
+    sendMessageNoReply('watch', { fileName: fileName(selectedTreeItem) });
+  }, [selectedTreeItem, treeItemMap]);
 
-  const selectedOrDefaultFileSuite = selectedFileSuite || rootSuite?.suites?.[0]?.suites?.[0];
-  const tests: TestCase[] = [];
-  const fileSuites: Suite[] = [];
-
-  for (const projectSuite of rootSuite?.suites || []) {
-    for (const fileSuite of projectSuite.suites) {
-      if (fileSuite === selectedOrDefaultFileSuite)
-        tests.push(...fileSuite.allTests());
-      fileSuites.push(fileSuite);
-    }
-  }
-
-  const explicitlyOrAutoExpandedFiles = new Set<Suite>();
-  const entries = new Map<TestCase | Suite, Entry>();
-  const trimmedFilterText = filterText.trim();
-  const filterTokens = trimmedFilterText.toLowerCase().split(' ');
-  for (const fileSuite of fileSuites) {
-    const hasMatch = !trimmedFilterText || fileSuite.allTests().some(test => {
-      const fullTitle = test.titlePath().join(' ').toLowerCase();
-      return !filterTokens.some(token => !fullTitle.includes(token));
-    });
-    if (hasMatch)
-      entries.set(fileSuite, { fileSuite });
-    const expandState = expandedFiles.get(fileSuite);
-    const autoExpandMatches = entries.size < 100 && (trimmedFilterText && hasMatch && expandState !== false);
-    if (expandState === true || autoExpandMatches) {
-      explicitlyOrAutoExpandedFiles.add(fileSuite);
-      for (const test of fileSuite.allTests()) {
-        const fullTitle = test.titlePath().join(' ').toLowerCase();
-        if (!filterTokens.some(token => !fullTitle.includes(token)))
-          entries.set(test, { test, fileSuite });
-      }
-    }
-  }
-
-  const visibleTestIds = new Set<string>();
-  for (const { test } of entries.values()) {
-    if (test)
-      visibleTestIds.add(test.id);
-  }
-
-  const runEntry = (entry: Entry) => {
-    expandedFiles.set(entry.fileSuite, true);
-    setSelectedTest(entry.test);
-    runTests(collectTestIds(entry));
+  const runTreeItem = (treeItem: TreeItem) => {
+    expandedItems.set(treeItem.id, true);
+    setSelectedTreeItemId(treeItem.id);
+    runTests(collectTestIds(treeItem));
   };
 
   runWatchedTests = () => {
-    runTests(collectTestIds({ test: selectedTest, fileSuite: selectedFileSuite || selectedTest!.parent }));
+    runTests(collectTestIds(selectedTreeItem));
   };
 
   const runTests = (testIds: string[] | undefined) => {
@@ -116,9 +91,8 @@ export const WatchModeView: React.FC<{}> = ({
     });
   };
 
-  const selectedEntry = selectedTest ? entries.get(selectedTest) : selectedOrDefaultFileSuite ? entries.get(selectedOrDefaultFileSuite) : undefined;
   return <SplitView sidebarSize={300} orientation='horizontal' sidebarIsFirst={true}>
-    <TraceView test={selectedTest} isRunningTest={isRunningTest}></TraceView>
+    <TraceView testItem={selectedTreeItem?.kind === 'test' ? selectedTreeItem : undefined} isRunningTest={isRunningTest}></TraceView>
     <div className='vbox watch-mode-sidebar'>
       <Toolbar>
         <input ref={inputRef} type='search' placeholder='Filter tests' spellCheck={false} value={filterText}
@@ -133,53 +107,56 @@ export const WatchModeView: React.FC<{}> = ({
         <ToolbarButton icon='debug-stop' title='Stop' onClick={() => sendMessageNoReply('stop')} disabled={!isRunningTest}></ToolbarButton>
       </Toolbar>
       <ListView
-        items={[...entries.values()]}
-        itemKey={(entry: Entry) => entry.test ? entry.test!.id : entry.fileSuite.title }
-        itemRender={(entry: Entry) => {
+        items={listItems}
+        itemKey={(treeItem: TreeItem) => treeItem.id }
+        itemRender={(treeItem: TreeItem) => {
           return <div className='hbox watch-mode-list-item'>
-            <div className='watch-mode-list-item-title'>{entry.test ? entry.test!.titlePath().slice(3).join(' › ') : entry.fileSuite.title}</div>
-            <ToolbarButton icon='play' title='Run' onClick={() => runEntry(entry)} disabled={isRunningTest}></ToolbarButton>
+            <div className='watch-mode-list-item-title'>{treeItem.title}</div>
+            <ToolbarButton icon='play' title='Run' onClick={() => runTreeItem(treeItem)} disabled={isRunningTest}></ToolbarButton>
           </div>;
         }}
-        itemIcon={(entry: Entry) => {
-          if (entry.test) {
-            if (entry.test.results.length && entry.test.results[0].duration)
-              return entry.test.ok() ? 'codicon-check' : 'codicon-error';
-            if (entry.test.results.length)
+        itemIcon={(treeItem: TreeItem) => {
+          if (treeItem.kind === 'case' && treeItem.children?.length === 1)
+            treeItem = treeItem.children[0];
+          if (treeItem.kind === 'test') {
+            const ok = treeItem.test.outcome() === 'expected';
+            const failed = treeItem.test.results.length && treeItem.test.outcome() !== 'expected';
+            const running = treeItem.test.results.some(r => r.duration === -1);
+            if (running)
               return 'codicon-loading';
+            if (ok)
+              return 'codicon-check';
+            if (failed)
+              return 'codicon-error';
           } else {
-            if (explicitlyOrAutoExpandedFiles.has(entry.fileSuite))
-              return 'codicon-chevron-down';
-            return 'codicon-chevron-right';
+            return treeItem.expanded ? 'codicon-chevron-down' : 'codicon-chevron-right';
           }
         }}
-        itemIndent={(entry: Entry) => entry.test ? 1 : 0}
-        selectedItem={selectedEntry}
-        onAccepted={runEntry}
-        onLeftArrow={(entry: Entry) => {
-          expandedFiles.set(entry.fileSuite, false);
-          setSelectedTest(undefined);
-          setSelectedFileSuite(entry.fileSuite);
-          updateList();
-        }}
-        onRightArrow={(entry: Entry) => {
-          expandedFiles.set(entry.fileSuite, true);
-          updateList();
-        }}
-        onSelected={(entry: Entry) => {
-          if (entry.test) {
-            setSelectedFileSuite(undefined);
-            setSelectedTest(entry.test!);
-          } else {
-            setSelectedTest(undefined);
-            setSelectedFileSuite(entry.fileSuite);
-          }
-        }}
-        onIconClicked={(entry: Entry) => {
-          if (explicitlyOrAutoExpandedFiles.has(entry.fileSuite))
-            expandedFiles.set(entry.fileSuite, false);
+        itemIndent={(treeItem: TreeItem) => treeItem.kind === 'file' ? 0 : treeItem.kind === 'case' ? 1 : 2}
+        selectedItem={selectedTreeItem}
+        onAccepted={runTreeItem}
+        onLeftArrow={(treeItem: TreeItem) => {
+          if (treeItem.children && treeItem.expanded)
+            expandedItems.set(treeItem.id, false);
           else
-            expandedFiles.set(entry.fileSuite, true);
+            setSelectedTreeItemId(treeItem.parent?.id);
+          updateList();
+        }}
+        onRightArrow={(treeItem: TreeItem) => {
+          if (treeItem.children)
+            expandedItems.set(treeItem.id, true);
+          updateList();
+        }}
+        onSelected={(treeItem: TreeItem) => {
+          setSelectedTreeItemId(treeItem.id);
+        }}
+        onIconClicked={(treeItem: TreeItem) => {
+          if (treeItem.kind === 'test')
+            return;
+          if (treeItem.expanded)
+            expandedItems.set(treeItem.id, false);
+          else
+            expandedItems.set(treeItem.id, true);
           updateList();
         }}
         showNoItemsMessage={true}></ListView>
@@ -188,17 +165,16 @@ export const WatchModeView: React.FC<{}> = ({
 };
 
 export const ProgressView: React.FC<{
-  test: TestCase | undefined,
+  testItem: TestItem | undefined,
 }> = ({
-  test,
+  testItem,
 }) => {
   const [updateCounter, setUpdateCounter] = React.useState(0);
   updateProgress = () => setUpdateCounter(updateCounter + 1);
 
   const steps: (TestCase | TestStep)[] = [];
-  for (const result of test?.results || [])
+  for (const result of testItem?.test.results || [])
     steps.push(...result.steps);
-
   return <ListView
     items={steps}
     itemRender={(step: TestStep) => step.title}
@@ -207,18 +183,18 @@ export const ProgressView: React.FC<{
 };
 
 export const TraceView: React.FC<{
-  test: TestCase | undefined,
+  testItem: TestItem | undefined,
   isRunningTest: boolean,
-}> = ({ test, isRunningTest }) => {
+}> = ({ testItem, isRunningTest }) => {
   const [model, setModel] = React.useState<MultiTraceModel | undefined>();
 
   React.useEffect(() => {
     (async () => {
-      if (!test) {
+      if (!testItem) {
         setModel(undefined);
         return;
       }
-      for (const result of test.results) {
+      for (const result of testItem?.test.results || []) {
         const attachment = result.attachments.find(a => a.name === 'trace');
         if (attachment && attachment.path) {
           setModel(await loadSingleTraceFile(attachment.path));
@@ -227,10 +203,10 @@ export const TraceView: React.FC<{
       }
       setModel(undefined);
     })();
-  }, [test, isRunningTest]);
+  }, [testItem, isRunningTest]);
 
   if (isRunningTest)
-    return <ProgressView test={test}></ProgressView>;
+    return <ProgressView testItem={testItem}></ProgressView>;
 
   if (!model) {
     return <div className='vbox'>
@@ -296,11 +272,136 @@ const sendMessageNoReply = (method: string, params?: any) => {
   });
 };
 
-const collectTestIds = (entry: Entry): string[] => {
+const fileName = (treeItem?: TreeItem): string | undefined => {
+  if (!treeItem)
+    return;
+  if (treeItem.kind === 'file')
+    return treeItem.file;
+  return fileName(treeItem.parent || undefined);
+};
+
+const collectTestIds = (treeItem?: TreeItem): string[] => {
+  if (!treeItem)
+    return [];
   const testIds: string[] = [];
-  if (entry.test)
-    testIds.push(entry.test.id);
-  else
-    entry.fileSuite.allTests().forEach(test => testIds.push(test.id));
+  const visit = (treeItem: TreeItem) => {
+    if (treeItem.kind === 'test')
+      testIds.push(treeItem.id);
+    treeItem.children?.forEach(visit);
+  };
+  visit(treeItem);
   return testIds;
 };
+
+type TreeItemBase = {
+  kind: 'file' | 'case' | 'test',
+  id: string;
+  title: string;
+  parent: TreeItem | null;
+  children?: TreeItem[];
+  expanded?: boolean;
+};
+
+type FileItem = TreeItemBase & {
+  kind: 'file',
+  file: string;
+};
+
+type TestCaseItem = TreeItemBase & {
+  kind: 'case',
+};
+
+type TestItem = TreeItemBase & {
+  kind: 'test',
+  test: TestCase;
+};
+
+type TreeItem = FileItem | TestCaseItem | TestItem;
+
+function createTree(rootSuite?: Suite): FileItem[] {
+  const fileItems = new Map<string, FileItem>();
+  for (const projectSuite of rootSuite?.suites || []) {
+    for (const fileSuite of projectSuite.suites) {
+      const file = fileSuite.location!.file;
+
+      let fileItem = fileItems.get(file);
+      if (!fileItem) {
+        fileItem = {
+          kind: 'file',
+          id: fileSuite.title,
+          title: fileSuite.title,
+          file,
+          parent: null,
+          children: [],
+          expanded: false,
+        };
+        fileItems.set(fileSuite.location!.file, fileItem);
+      }
+
+      for (const test of fileSuite.allTests()) {
+        const title = test.titlePath().slice(3).join(' › ');
+        let testCaseItem = fileItem.children!.find(t => t.title === title);
+        if (!testCaseItem) {
+          testCaseItem = {
+            kind: 'case',
+            id: fileItem.id + ' / ' + title,
+            title,
+            parent: fileItem,
+            children: [],
+            expanded: false,
+          };
+          fileItem.children!.push(testCaseItem);
+        }
+        testCaseItem.children!.push({
+          kind: 'test',
+          id: test.id,
+          title: projectSuite.title,
+          parent: testCaseItem,
+          test,
+        });
+      }
+    }
+  }
+  return [...fileItems.values()];
+}
+
+function filterTree(fileItems: FileItem[], filterText: string): FileItem[] {
+  const trimmedFilterText = filterText.trim();
+  const filterTokens = trimmedFilterText.toLowerCase().split(' ');
+  const result: FileItem[] = [];
+  for (const fileItem of fileItems) {
+    if (trimmedFilterText) {
+      const filteredCases: TreeItem[] = [];
+      for (const testCaseItem of fileItem.children!) {
+        const fullTitle = (fileItem.title + ' ' + testCaseItem.title).toLowerCase();
+        if (filterTokens.every(token => fullTitle.includes(token)))
+          filteredCases.push(testCaseItem);
+      }
+      fileItem.children = filteredCases;
+    }
+    if (fileItem.children!.length)
+      result.push(fileItem);
+  }
+  return result;
+}
+
+function flattenTree(fileItems: FileItem[], expandedItems: Map<string, boolean | undefined>, hasFilter: boolean): TreeItem[] {
+  const result: TreeItem[] = [];
+  for (const fileItem of fileItems) {
+    result.push(fileItem);
+    const expandState = expandedItems.get(fileItem.id);
+    const autoExpandMatches = result.length < 100 && (hasFilter && expandState !== false);
+    if (expandState || autoExpandMatches) {
+      fileItem.expanded = true;
+      for (const testCaseItem of fileItem.children!) {
+        result.push(testCaseItem);
+        testCaseItem.expanded = !!expandedItems.get(testCaseItem.id);
+        if (testCaseItem.expanded && testCaseItem.children!.length > 1)
+          result.push(...testCaseItem.children!);
+      }
+    }
+  }
+  return result;
+}
+
+function noop(_: any) {}
