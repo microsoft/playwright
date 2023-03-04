@@ -23,7 +23,11 @@
 }
 
 .watch-mode-sidebar .toolbar-button:not([disabled]) .codicon-play {
-  color: var(--vscode-testing-runAction);
+  color: var(--vscode-debugIcon-restartForeground);
+}
+
+.watch-mode-sidebar .toolbar-button:not([disabled]) .codicon-debug-stop {
+  color: var(--vscode-debugIcon-stopForeground);
 }
 
 .watch-mode-list-item {

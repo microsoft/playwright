@@ -40,17 +40,13 @@ export class TaskRunner<Context> {
     this._tasks.push({ name, task });
   }
 
-  stop() {
-    this._interrupted = true;
-  }
-
-  async run(context: Context, deadline: number): Promise<FullResult['status']> {
-    const { status, cleanup } = await this.runDeferCleanup(context, deadline);
+  async run(context: Context, deadline: number, cancelPromise?: ManualPromise<void>): Promise<FullResult['status']> {
+    const { status, cleanup } = await this.runDeferCleanup(context, deadline, cancelPromise);
     const teardownStatus = await cleanup();
     return status === 'passed' ? teardownStatus : status;
   }
 
-  async runDeferCleanup(context: Context, deadline: number): Promise<{ status: FullResult['status'], cleanup: () => Promise<FullResult['status']> }> {
+  async runDeferCleanup(context: Context, deadline: number, cancelPromise = new ManualPromise<void>()): Promise<{ status: FullResult['status'], cleanup: () => Promise<FullResult['status']> }> {
     const sigintWatcher = new SigIntWatcher();
     const timeoutWatcher = new TimeoutWatcher(deadline);
     const teardownRunner = new TaskRunner(this._reporter, this._globalTimeoutForError);
@@ -87,6 +83,7 @@ export class TaskRunner<Context> {
 
     await Promise.race([
       taskLoop(),
+      cancelPromise,
       sigintWatcher.promise(),
       timeoutWatcher.promise,
     ]);
@@ -98,7 +95,7 @@ export class TaskRunner<Context> {
     this._interrupted = true;
 
     let status: FullResult['status'] = 'passed';
-    if (sigintWatcher.hadSignal()) {
+    if (sigintWatcher.hadSignal() || cancelPromise?.isDone()) {
       status = 'interrupted';
     } else if (timeoutWatcher.timedOut()) {
       this._reporter.onError?.({ message: `Timed out waiting ${this._globalTimeoutForError / 1000}s for the ${currentTaskName} to run` });
@@ -106,7 +103,7 @@ export class TaskRunner<Context> {
     } else if (this._hasErrors) {
       status = 'failed';
     }
-
+    cancelPromise?.resolve();
     const cleanup = () => teardownRunner.runDeferCleanup(context, deadline).then(r => r.status);
     return { status, cleanup };
   }

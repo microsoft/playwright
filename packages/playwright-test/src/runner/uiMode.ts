@@ -14,112 +14,144 @@
  * limitations under the License.
  */
 
-import type { FullResult } from 'packages/playwright-test/reporter';
+import { showTraceViewer } from 'playwright-core/lib/server';
 import type { Page } from 'playwright-core/lib/server/page';
-import { showTraceViewer, serverSideCallMetadata } from 'playwright-core/lib/server';
-import { clearCompilationCache } from '../common/compilationCache';
+import { ManualPromise } from 'playwright-core/lib/utils';
+import type { FullResult } from '../../reporter';
+import { clearCompilationCache, dependenciesForTestFile } from '../common/compilationCache';
 import type { FullConfigInternal } from '../common/types';
 import ListReporter from '../reporters/list';
 import { Multiplexer } from '../reporters/multiplexer';
 import { TeleReporterEmitter } from '../reporters/teleEmitter';
-import { createTaskRunnerForList, createTaskRunnerForWatch, createTaskRunnerForWatchSetup } from './tasks';
-import type { TaskRunnerState } from './tasks';
 import { createReporter } from './reporters';
+import type { TaskRunnerState } from './tasks';
+import { createTaskRunnerForList, createTaskRunnerForWatch, createTaskRunnerForWatchSetup } from './tasks';
+import { chokidar } from '../utilsBundle';
+import type { FSWatcher } from 'chokidar';
 
-export async function runUIMode(config: FullConfigInternal): Promise<FullResult['status']> {
-  // Reset the settings that don't apply to watch.
-  config._internal.passWithNoTests = true;
-  for (const p of config.projects)
-    p.retries = 0;
+class UIMode {
+  private _config: FullConfigInternal;
+  private _page!: Page;
+  private _testRun: { run: Promise<FullResult['status']>, stop: ManualPromise<void> } | undefined;
+  globalCleanup: (() => Promise<FullResult['status']>) | undefined;
+  private _watcher: FSWatcher | undefined;
+  private _watchTestFile: string | undefined;
 
-  {
-    // Global setup.
-    const reporter = await createReporter(config, 'watch');
-    const taskRunner = createTaskRunnerForWatchSetup(config, reporter);
-    reporter.onConfigure(config);
-    const context: TaskRunnerState = {
-      config,
-      reporter,
-      phases: [],
-    };
-    const { status, cleanup: globalCleanup } = await taskRunner.runDeferCleanup(context, 0);
-    if (status !== 'passed')
-      return await globalCleanup();
+  constructor(config: FullConfigInternal) {
+    this._config = config;
+    config._internal.passWithNoTests = true;
+    for (const p of config.projects)
+      p.retries = 0;
+    config._internal.configCLIOverrides.use = config._internal.configCLIOverrides.use || {};
+    config._internal.configCLIOverrides.use.trace = 'on';
   }
 
-  // Show trace viewer.
-  const page = await showTraceViewer([], 'chromium', { watchMode: true });
-  await page.mainFrame()._waitForFunctionExpression(serverSideCallMetadata(), '!!window.dispatch', false, undefined, { timeout: 0 });
-  {
-    // List
-    const controller = new Controller(config, page);
-    const listReporter = new TeleReporterEmitter(message => controller!.send(message));
-    const reporter = new Multiplexer([listReporter]);
-    const taskRunner = createTaskRunnerForList(config, reporter);
+  async runGlobalSetup(): Promise<FullResult['status']> {
+    const reporter = await createReporter(this._config, 'watch');
+    const taskRunner = createTaskRunnerForWatchSetup(this._config, reporter);
+    reporter.onConfigure(this._config);
     const context: TaskRunnerState = {
-      config,
+      config: this._config,
       reporter,
       phases: [],
     };
-    reporter.onConfigure(config);
     const { status, cleanup: globalCleanup } = await taskRunner.runDeferCleanup(context, 0);
-    if (status !== 'passed')
-      return await globalCleanup();
+    if (status !== 'passed') {
+      await globalCleanup();
+      return status;
+    }
+    this.globalCleanup = globalCleanup;
+    return status;
+  }
+
+  async showUI() {
+    this._page = await showTraceViewer([], 'chromium', { watchMode: true });
+    const exitPromise = new ManualPromise();
+    this._page.on('close', () => exitPromise.resolve());
+    this._page.exposeBinding('sendMessage', false, async (source, data) => {
+      const { method, params }: { method: string, params: any } = data;
+      if (method === 'list')
+        await this._listTests();
+      if (method === 'run')
+        await this._runTests(params.testIds);
+      if (method === 'stop')
+        this._stopTests();
+      if (method === 'watch')
+        this._watchFile(params.fileName);
+      if (method === 'exit')
+        exitPromise.resolve();
+    });
+    await exitPromise;
+  }
+
+  private _dispatchEvent(message: any) {
+    // eslint-disable-next-line no-console
+    this._page.mainFrame().evaluateExpression(dispatchFuncSource, true, message).catch(e => console.log(e));
+  }
+
+  private async _listTests() {
+    const listReporter = new TeleReporterEmitter(e => this._dispatchEvent(e));
+    const reporter = new Multiplexer([listReporter]);
+    const taskRunner = createTaskRunnerForList(this._config, reporter);
+    const context: TaskRunnerState = { config: this._config, reporter, phases: [] };
+    reporter.onConfigure(this._config);
     await taskRunner.run(context, 0);
   }
 
-  await new Promise(() => {});
-  // TODO: implement watch queue with the sigint watcher and global teardown.
-  return 'passed';
-}
+  private async _runTests(testIds: string[]) {
+    await this._stopTests();
 
+    const testIdSet = testIds ? new Set<string>(testIds) : null;
+    this._config._internal.testIdMatcher = id => !testIdSet || testIdSet.has(id);
 
-class Controller {
-  private _page: Page;
-  private _queue = Promise.resolve();
-  private _runReporter: TeleReporterEmitter;
+    const runReporter = new TeleReporterEmitter(e => this._dispatchEvent(e));
+    const reporter = new Multiplexer([new ListReporter(), runReporter]);
+    const taskRunner = createTaskRunnerForWatch(this._config, reporter);
+    const context: TaskRunnerState = { config: this._config, reporter, phases: [] };
+    clearCompilationCache();
+    reporter.onConfigure(this._config);
+    const stop = new ManualPromise();
+    const run = taskRunner.run(context, 0, stop).then(async status => {
+      await reporter.onExit({ status });
+      return status;
+    });
+    this._testRun = { run, stop };
+    await run;
+    this._testRun = undefined;
+  }
 
-  constructor(config: FullConfigInternal, page: Page) {
-    this._page = page;
-    this._runReporter = new TeleReporterEmitter(message => this!.send(message));
-    this._page.exposeBinding('binding', false, (source, data) => {
-      const { method, params } = data;
-      if (method === 'run') {
-        const { location, testIds } = params;
-        if (location)
-          config._internal.cliArgs = [location];
-        if (testIds) {
-          const testIdSet = testIds ? new Set<string>(testIds) : null;
-          config._internal.testIdMatcher = id => !testIdSet || testIdSet.has(id);
-        }
-        this._queue = this._queue.then(() => runTests(config, this._runReporter));
-        return this._queue;
-      }
+  private async _watchFile(fileName: string) {
+    if (this._watchTestFile === fileName)
+      return;
+    if (this._watcher)
+      await this._watcher.close();
+    this._watchTestFile = fileName;
+    if (!fileName)
+      return;
+
+    const files = [fileName, ...dependenciesForTestFile(fileName)];
+    this._watcher = chokidar.watch(files, { ignoreInitial: true }).on('all', async (event, file) => {
+      if (event !== 'add' && event !== 'change')
+        return;
+      this._dispatchEvent({ method: 'fileChanged', params: { fileName: file } });
     });
   }
 
-  send(message: any) {
-    const func = (message: any) => {
-      (window as any).dispatch(message);
-    };
-    // eslint-disable-next-line no-console
-    this._page.mainFrame().evaluateExpression(String(func), true, message).catch(e => console.log(e));
+  private async _stopTests() {
+    this._testRun?.stop?.resolve();
+    await this._testRun?.run;
   }
 }
 
-async function runTests(config: FullConfigInternal, teleReporter: TeleReporterEmitter) {
-  const reporter = new Multiplexer([new ListReporter(), teleReporter]);
-  config._internal.configCLIOverrides.use = config._internal.configCLIOverrides.use || {};
-  config._internal.configCLIOverrides.use.trace = 'on';
+const dispatchFuncSource = String((message: any) => {
+  (window as any).dispatch(message);
+});
 
-  const taskRunner = createTaskRunnerForWatch(config, reporter);
-  const context: TaskRunnerState = {
-    config,
-    reporter,
-    phases: [],
-  };
-  clearCompilationCache();
-  reporter.onConfigure(config);
-  const status = await taskRunner.run(context, 0);
-  await reporter.onExit({ status });
+export async function runUIMode(config: FullConfigInternal): Promise<FullResult['status']> {
+  const uiMode = new UIMode(config);
+  const status = await uiMode.runGlobalSetup();
+  if (status !== 'passed')
+    return status;
+  await uiMode.showUI();
+  return await uiMode.globalCleanup?.() || 'passed';
 }
