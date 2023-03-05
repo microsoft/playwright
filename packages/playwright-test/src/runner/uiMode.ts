@@ -114,6 +114,7 @@ class UIMode {
     const run = taskRunner.run(context, 0, stop).then(async status => {
       await reporter.onExit({ status });
       this._testRun = undefined;
+      this._config._internal.testIdMatcher = undefined;
       return status;
     });
     this._testRun = { run, stop };
