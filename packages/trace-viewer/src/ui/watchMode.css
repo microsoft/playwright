@@ -43,3 +43,26 @@
 .watch-mode-sidebar .toolbar-button {
   margin: 0;
 }
+
+.watch-mode-sidebar .toolbar h3.title {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  font-size: 11px;
+  min-width: 3ch;
+  margin: 0 10px;
+  -webkit-margin-before: 0;
+  -webkit-margin-after: 0;
+  text-transform: uppercase;
+}
+
+.watch-mode-sidebar .spacer {
+  flex: auto;
+}
+
+.watch-mode-sidebar .status-line {
+  flex: none;
+  border-top: 1px solid var(--vscode-panel-border);
+  line-height: 22px;
+  padding: 0 10px;
+}

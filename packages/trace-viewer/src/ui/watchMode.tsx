@@ -26,15 +26,22 @@ import type { MultiTraceModel } from './modelUtil';
 import './watchMode.css';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { Toolbar } from '@web/components/toolbar';
+import { toggleTheme } from '@web/theme';
 
-let updateRootSuite: (rootSuite: Suite) => void = () => {};
-let updateProgress: () => void = () => {};
+let updateRootSuite: (rootSuite: Suite, progress: Progress) => void = () => {};
+let updateStepsProgress: () => void = () => {};
 let runWatchedTests = () => {};
 
 export const WatchModeView: React.FC<{}> = ({
 }) => {
   const [rootSuite, setRootSuite] = React.useState<{ value: Suite | undefined }>({ value: undefined });
-  updateRootSuite = (rootSuite: Suite) => setRootSuite({ value: rootSuite });
+  const [progress, setProgress] = React.useState<Progress>({ total: 0, passed: 0, failed: 0 });
+  updateRootSuite = (rootSuite: Suite, { passed, failed }: Progress) => {
+    setRootSuite({ value: rootSuite });
+    progress.passed = passed;
+    progress.failed = failed;
+    setProgress({ ...progress });
+  };
   const [selectedTreeItemId, setSelectedTreeItemId] = React.useState<string | undefined>();
   const [isRunningTest, setIsRunningTest] = React.useState<boolean>(false);
   const [filterText, setFilterText] = React.useState<string>('');
@@ -45,7 +52,7 @@ export const WatchModeView: React.FC<{}> = ({
 
   React.useEffect(() => {
     inputRef.current?.focus();
-    sendMessageNoReply('list');
+    resetCollectingRootSuite();
   }, []);
 
   React.useEffect(() => {
@@ -91,18 +98,33 @@ export const WatchModeView: React.FC<{}> = ({
     runTests(collectTestIds(selectedTreeItem));
   };
 
-  const runTests = (testIds: string[] | undefined) => {
+  const runTests = (testIds: string[]) => {
+    setProgress({ total: testIds.length, passed: 0, failed: 0 });
     setIsRunningTest(true);
     sendMessage('run', { testIds }).then(() => {
       setIsRunningTest(false);
     });
   };
 
+  let selectedTestItem: TestItem | undefined;
+  if (selectedTreeItem?.kind === 'test')
+    selectedTestItem = selectedTreeItem;
+  else if (selectedTreeItem?.kind === 'case' && selectedTreeItem.children?.length === 1)
+    selectedTestItem = selectedTreeItem.children[0]! as TestItem;
+
   return <SplitView sidebarSize={300} orientation='horizontal' sidebarIsFirst={true}>
-    <TraceView testItem={selectedTreeItem?.kind === 'test' ? selectedTreeItem : undefined} isRunningTest={isRunningTest}></TraceView>
+    <TraceView testItem={selectedTestItem} isRunningTest={isRunningTest}></TraceView>
     <div className='vbox watch-mode-sidebar'>
       <Toolbar>
-        <input ref={inputRef} type='search' placeholder='Filter tests' spellCheck={false} value={filterText}
+        <h3 className='title'>Test explorer</h3>
+        <ToolbarButton icon='play' title='Run' onClick={() => runTests([...visibleTestIds])} disabled={isRunningTest}></ToolbarButton>
+        <ToolbarButton icon='debug-stop' title='Stop' onClick={() => sendMessageNoReply('stop')} disabled={!isRunningTest}></ToolbarButton>
+        <ToolbarButton icon='refresh' title='Reload' onClick={resetCollectingRootSuite} disabled={isRunningTest}></ToolbarButton>
+        <div className='spacer'></div>
+        <ToolbarButton icon='color-mode' title='Toggle color mode' toggled={false} onClick={() => toggleTheme()}></ToolbarButton>
+      </Toolbar>
+      <Toolbar>
+        <input ref={inputRef} type='search' placeholder='Filter (e.g. text, @tag)' spellCheck={false} value={filterText}
           onChange={e => {
             setFilterText(e.target.value);
           }}
@@ -110,8 +132,6 @@ export const WatchModeView: React.FC<{}> = ({
             if (e.key === 'Enter')
               runTests([...visibleTestIds]);
           }}></input>
-        <ToolbarButton icon='play' title='Run' onClick={() => runTests([...visibleTestIds])} disabled={isRunningTest}></ToolbarButton>
-        <ToolbarButton icon='debug-stop' title='Stop' onClick={() => sendMessageNoReply('stop')} disabled={!isRunningTest}></ToolbarButton>
       </Toolbar>
       <ListView
         items={listItems}
@@ -171,11 +191,17 @@ export const WatchModeView: React.FC<{}> = ({
         }}
         showNoItemsMessage={true}></ListView>
       {(rootSuite.value?.suites.length || 0) > 1 && <div style={{ flex: 'none', borderTop: '1px solid var(--vscode-panel-border)' }}>
+        <Toolbar>
+          <h3 className='title'>Projects</h3>
+        </Toolbar>
         <ListView
           items={rootSuite.value!.suites}
           onSelected={(suite: Suite) => {
             const copy = [...projectNames];
-            copy.includes(suite.title) ? copy.splice(copy.indexOf(suite.title), 1) : copy.push(suite.title);
+            if (copy.includes(suite.title))
+              copy.splice(copy.indexOf(suite.title), 1);
+            else
+              copy.push(suite.title);
             setProjectNames(copy);
           }}
           itemRender={(suite: Suite) => {
@@ -186,17 +212,23 @@ export const WatchModeView: React.FC<{}> = ({
           }}
         />
       </div>}
+      {isRunningTest && <div className='status-line'>
+        Running: {progress.total} tests | {progress.passed} passed | {progress.failed} failed
+      </div>}
+      {!isRunningTest && <div className='status-line'>
+        Total: {visibleTestIds.size} tests
+      </div>}
     </div>
   </SplitView>;
 };
 
-export const ProgressView: React.FC<{
+export const StepsView: React.FC<{
   testItem: TestItem | undefined,
 }> = ({
   testItem,
 }) => {
   const [updateCounter, setUpdateCounter] = React.useState(0);
-  updateProgress = () => setUpdateCounter(updateCounter + 1);
+  updateStepsProgress = () => setUpdateCounter(updateCounter + 1);
 
   const steps: (TestCase | TestStep)[] = [];
   for (const result of testItem?.test.results || [])
@@ -232,7 +264,7 @@ export const TraceView: React.FC<{
   }, [testItem, isRunningTest]);
 
   if (isRunningTest)
-    return <ProgressView testItem={testItem}></ProgressView>;
+    return <StepsView testItem={testItem}></StepsView>;
 
   if (!model) {
     return <div className='vbox'>
@@ -255,40 +287,53 @@ declare global {
   }
 }
 
-{
+let receiver: TeleReporterReceiver | undefined;
+
+const resetCollectingRootSuite = () => {
   let rootSuite: Suite;
-  const receiver = new TeleReporterReceiver({
+  const progress: Progress = {
+    total: 0,
+    passed: 0,
+    failed: 0,
+  };
+  receiver = new TeleReporterReceiver({
     onBegin: (config: FullConfig, suite: Suite) => {
       if (!rootSuite)
         rootSuite = suite;
-      updateRootSuite(rootSuite);
+      progress.passed = 0;
+      progress.failed = 0;
+      updateRootSuite(rootSuite, progress);
     },
 
     onTestBegin: () => {
-      updateRootSuite(rootSuite);
+      updateRootSuite(rootSuite, progress);
     },
 
-    onTestEnd: () => {
-      updateRootSuite(rootSuite);
+    onTestEnd: (test: TestCase) => {
+      if (test.outcome() === 'unexpected')
+        ++progress.failed;
+      else
+        ++progress.passed;
+      updateRootSuite(rootSuite, progress);
     },
 
     onStepBegin: () => {
-      updateProgress();
+      updateStepsProgress();
     },
 
     onStepEnd: () => {
-      updateProgress();
+      updateStepsProgress();
     },
   });
+  sendMessageNoReply('list');
+};
 
-
-  (window as any).dispatch = (message: any) => {
-    if (message.method === 'fileChanged')
-      runWatchedTests();
-    else
-      receiver.dispatch(message);
-  };
-}
+(window as any).dispatch = (message: any) => {
+  if (message.method === 'fileChanged')
+    runWatchedTests();
+  else
+    receiver?.dispatch(message);
+};
 
 const sendMessage = async (method: string, params: any) => {
   await (window as any).sendMessage({ method, params });
@@ -320,6 +365,12 @@ const collectTestIds = (treeItem?: TreeItem): string[] => {
   };
   visit(treeItem);
   return testIds;
+};
+
+type Progress = {
+  total: number;
+  passed: number;
+  failed: number;
 };
 
 type TreeItemBase = {
