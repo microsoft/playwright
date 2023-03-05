@@ -2,9 +2,10 @@
   "name": "web",
   "private": true,
   "version": "0.0.0",
-  "scripts": {
-  },
+  "scripts": {},
   "dependencies": {
-    "codemirror": "^5.65.9"
+    "codemirror": "^5.65.9",
+    "xterm": "^5.1.0",
+    "xterm-addon-fit": "^0.7.0"
   }
 }
