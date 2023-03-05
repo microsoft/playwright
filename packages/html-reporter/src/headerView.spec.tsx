@@ -30,10 +30,10 @@ test('should render counters', async ({ mount }) => {
     duration: 100000
   }} filterText='' setFilterText={() => {}} projectNames={[]}></HeaderView>);
   await expect(component.locator('a', { hasText: 'All' }).locator('.counter')).toHaveText('100');
-  await expect(component.locator('a', { hasText: 'Passed' }).locator('.counter')).toHaveText('42');
-  await expect(component.locator('a', { hasText: 'Failed' }).locator('.counter')).toHaveText('31');
-  await expect(component.locator('a', { hasText: 'Flaky' }).locator('.counter')).toHaveText('17');
-  await expect(component.locator('a', { hasText: 'Skipped' }).locator('.counter')).toHaveText('10');
+  await expect(component.locator('a', { hasText: 'Passed' }).locator('.counter')).toHaveText('42 (42%)');
+  await expect(component.locator('a', { hasText: 'Failed' }).locator('.counter')).toHaveText('31 (31%)');
+  await expect(component.locator('a', { hasText: 'Flaky' }).locator('.counter')).toHaveText('17 (17%)');
+  await expect(component.locator('a', { hasText: 'Skipped' }).locator('.counter')).toHaveText('10 (10%)');
 });
 
 test('should toggle filters', async ({ page, mount }) => {

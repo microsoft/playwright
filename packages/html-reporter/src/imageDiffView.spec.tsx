@@ -48,14 +48,14 @@ test('should switch to actual', async ({ mount }) => {
   const component = await mount(<ImageDiffView key='image-diff' imageDiff={imageDiff}></ImageDiffView>);
   await component.getByText('Actual', { exact: true }).click();
   const sliderElement = component.locator('data-testid=test-result-image-mismatch-grip');
-  await expect.poll(() => sliderElement.evaluate(e => e.style.left), 'Actual slider is on the right').toBe('611px');
+  await expect.poll(() => sliderElement.evaluate(e => e.style.left), 'Actual slider is on the right').toBe('619px');
 
   const images = component.locator('img');
   const imageCount = await component.locator('img').count();
   for (let i = 0; i < imageCount; ++i) {
     const image = images.nth(i);
     const box = await image.boundingBox();
-    expect(box).toEqual({ x: 400, y: 108, width: 200, height: 200 });
+    expect(box).toEqual({ x: 400, y: 100, width: 200, height: 200 });
   }
 });
 
@@ -63,14 +63,14 @@ test('should switch to expected', async ({ mount }) => {
   const component = await mount(<ImageDiffView key='image-diff' imageDiff={imageDiff}></ImageDiffView>);
   await component.getByText('Expected', { exact: true }).click();
   const sliderElement = component.locator('data-testid=test-result-image-mismatch-grip');
-  await expect.poll(() => sliderElement.evaluate(e => e.style.left), 'Expected slider is on the left').toBe('371px');
+  await expect.poll(() => sliderElement.evaluate(e => e.style.left), 'Expected slider is on the left').toBe('379px');
 
   const images = component.locator('img');
   const imageCount = await component.locator('img').count();
   for (let i = 0; i < imageCount; ++i) {
     const image = images.nth(i);
     const box = await image.boundingBox();
-    expect(box).toEqual({ x: 400, y: 108, width: 200, height: 200 });
+    expect(box).toEqual({ x: 400, y: 100, width: 200, height: 200 });
   }
 });
 
@@ -79,5 +79,5 @@ test('should show diff by default', async ({ mount }) => {
 
   const image = component.locator('img');
   const box = await image.boundingBox();
-  expect(box).toEqual({ x: 400, y: 108, width: 200, height: 200 });
+  expect(box).toEqual({ x: 400, y: 100, width: 200, height: 200 });
 });
