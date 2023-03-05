@@ -16,11 +16,7 @@
 
 import './source.css';
 import * as React from 'react';
-import CodeMirror from 'codemirror';
-import 'codemirror/mode/javascript/javascript';
-import 'codemirror/mode/python/python';
-import 'codemirror/mode/clike/clike';
-import 'codemirror/lib/codemirror.css';
+import type { CodeMirror } from './codeMirrorModule';
 
 export type SourceHighlight = {
   line: number;
@@ -54,42 +50,53 @@ export const CodeMirrorWrapper: React.FC<SourceProps> = ({
   onChange,
 }) => {
   const codemirrorElement = React.createRef<HTMLDivElement>();
+  const [modulePromise] = React.useState<Promise<CodeMirror>>(import('./codeMirrorModule').then(m => m.default));
   const [codemirror, setCodemirror] = React.useState<CodeMirror.Editor>();
 
   React.useEffect(() => {
-    let mode;
-    if (language === 'javascript')
-      mode = 'javascript';
-    if (language === 'python')
-      mode = 'python';
-    if (language === 'java')
-      mode = 'text/x-java';
-    if (language === 'csharp')
-      mode = 'text/x-csharp';
+    (async () => {
+      // Always load the module first.
+      const CodeMirror = await modulePromise;
 
-    if (codemirror && codemirror.getOption('mode') === mode && codemirror.isReadOnly() === readOnly)
-      return;
+      const element = codemirrorElement.current;
+      if (!element)
+        return;
 
-    if (!codemirrorElement.current)
-      return;
-    if (codemirror)
-      codemirror.getWrapperElement().remove();
+      let mode = 'javascript';
+      if (language === 'python')
+        mode = 'python';
+      if (language === 'java')
+        mode = 'text/x-java';
+      if (language === 'csharp')
+        mode = 'text/x-csharp';
 
-    const cm = CodeMirror(codemirrorElement.current, {
-      value: '',
-      mode,
-      readOnly,
-      lineNumbers,
-      lineWrapping: wrapLines,
-    });
-    if (onChange)
-      cm.on('change', () => onChange(cm.getValue()));
-    setCodemirror(cm);
-    updateEditor(cm, text, highlight, revealLine, focusOnChange);
-  }, [codemirror, codemirrorElement, text, language, highlight, revealLine, focusOnChange, lineNumbers, wrapLines, readOnly, onChange]);
+      if (codemirror
+        && mode === codemirror.getOption('mode')
+        && readOnly === codemirror.getOption('readOnly')
+        && lineNumbers === codemirror.getOption('lineNumbers')
+        && wrapLines === codemirror.getOption('lineWrapping')) {
+        updateEditor(codemirror, text, highlight, revealLine, focusOnChange);
+        return;
+      }
 
-  if (codemirror)
-    updateEditor(codemirror, text, highlight, revealLine, focusOnChange);
+      // Either configuration is different or we don't have a codemirror yet.
+      if (codemirror)
+        codemirror.getWrapperElement().remove();
+
+      const cm = CodeMirror(element, {
+        value: '',
+        mode,
+        readOnly,
+        lineNumbers,
+        lineWrapping: wrapLines,
+      });
+      setCodemirror(cm);
+      if (onChange)
+        cm.on('change', () => onChange(cm.getValue()));
+      updateEditor(cm, text, highlight, revealLine, focusOnChange);
+      return cm;
+    })();
+  }, [modulePromise, codemirror, codemirrorElement, text, language, highlight, revealLine, focusOnChange, lineNumbers, wrapLines, readOnly, onChange]);
 
   return <div className='cm-wrapper' ref={codemirrorElement}></div>;
 };

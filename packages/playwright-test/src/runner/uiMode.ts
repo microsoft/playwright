@@ -65,7 +65,7 @@ class UIMode {
   }
 
   async showUI() {
-    this._page = await showTraceViewer([], 'chromium', { watchMode: true });
+    this._page = await showTraceViewer([], 'chromium', { app: 'watch.html' });
     const exitPromise = new ManualPromise();
     this._page.on('close', () => exitPromise.resolve());
     this._page.exposeBinding('sendMessage', false, async (source, data) => {

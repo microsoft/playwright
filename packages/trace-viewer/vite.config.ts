@@ -43,6 +43,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         index: path.resolve(__dirname, 'index.html'),
+        watch: path.resolve(__dirname, 'watch.html'),
         popout: path.resolve(__dirname, 'popout.html'),
       },
       output: {

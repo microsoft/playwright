@@ -15,10 +15,9 @@
 */
 
 import * as React from 'react';
-import { Terminal } from 'xterm';
-import { FitAddon } from 'xterm-addon-fit';
-import 'xterm/css/xterm.css';
 import './xtermWrapper.css';
+import type { Terminal } from 'xterm';
+import type { XTermModule } from './xtermModule';
 
 export type XTermDataSource = {
   pending: (string | Uint8Array)[];
@@ -30,29 +29,37 @@ export const XTermWrapper: React.FC<{ source: XTermDataSource }> = ({
   source
 }) => {
   const xtermElement = React.createRef<HTMLDivElement>();
+  const [modulePromise] = React.useState<Promise<XTermModule>>(import('./xTermModule').then(m => m.default));
   const [terminal, setTerminal] = React.useState<Terminal>();
   React.useEffect(() => {
-    if (terminal)
-      return;
-    if (!xtermElement.current)
-      return;
-    const newTerminal = new Terminal({ convertEol: true });
-    const fitAddon = new FitAddon();
-    newTerminal.loadAddon(fitAddon);
-    for (const p of source.pending)
-      newTerminal.write(p);
-    source.write = (data => {
-      newTerminal.write(data);
-    });
-    newTerminal.open(xtermElement.current);
-    setTerminal(newTerminal);
-    fitAddon.fit();
-    const resizeObserver = new ResizeObserver(() => {
-      source.resize(newTerminal.cols, newTerminal.rows);
+    (async () => {
+      // Always load the module first.
+      const { Terminal, FitAddon } = await modulePromise;
+      const element = xtermElement.current;
+      if (!element)
+        return;
+
+      if (terminal)
+        return;
+
+      const newTerminal = new Terminal({ convertEol: true });
+      const fitAddon = new FitAddon();
+      newTerminal.loadAddon(fitAddon);
+      for (const p of source.pending)
+        newTerminal.write(p);
+      source.write = (data => {
+        newTerminal.write(data);
+      });
+      newTerminal.open(element);
       fitAddon.fit();
-    });
-    resizeObserver.observe(xtermElement.current);
-  }, [terminal, xtermElement, source]);
+      setTerminal(newTerminal);
+      const resizeObserver = new ResizeObserver(() => {
+        source.resize(newTerminal.cols, newTerminal.rows);
+        fitAddon.fit();
+      });
+      resizeObserver.observe(element);
+    })();
+  }, [modulePromise, terminal, xtermElement, source]);
   return <div className='xterm-wrapper' style={{ flex: 'auto' }} ref={xtermElement}>
   </div>;
 };
