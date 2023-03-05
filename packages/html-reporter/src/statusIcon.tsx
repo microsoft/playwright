@@ -31,6 +31,7 @@ export function statusIcon(status: 'failed' | 'timedOut' | 'skipped' | 'passed' 
     case 'flaky':
       return icons.warning();
     case 'skipped':
+      return icons.skipped();
     case 'interrupted':
       return icons.blank();
   }

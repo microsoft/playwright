@@ -28,6 +28,7 @@ import { MetadataView } from './metadataView';
 import { TestCaseView } from './testCaseView';
 import { TestFilesView } from './testFilesView';
 import './theme.css';
+import { Tags } from './tags';
 
 declare global {
   interface Window {
@@ -36,8 +37,8 @@ declare global {
 }
 
 // These are extracted to preserve the function identity between renders to avoid re-triggering effects.
-const testFilesRoutePredicate = (params: URLSearchParams) => !params.has('testId');
-const testCaseRoutePredicate = (params: URLSearchParams) => params.has('testId');
+export const testFilesRoutePredicate = (params: URLSearchParams) => !params.has('testId');
+export const testCaseRoutePredicate = (params: URLSearchParams) => params.has('testId');
 
 export const ReportView: React.FC<{
   report: LoadedReport | undefined,
@@ -45,18 +46,53 @@ export const ReportView: React.FC<{
   const searchParams = new URLSearchParams(window.location.hash.slice(1));
   const [expandedFiles, setExpandedFiles] = React.useState<Map<string, boolean>>(new Map());
   const [filterText, setFilterText] = React.useState(searchParams.get('q') || '');
+  const [appliedTagsArray, setAppliedTagsArray] = React.useState<string[]>([]);
 
   const filter = React.useMemo(() => Filter.parse(filterText), [filterText]);
 
+  React.useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.hash.slice(1));
+    const values = searchParams.get('q')?.split(' ');
+    const tags = values?.filter(v => v.startsWith('t:')) || filterText?.split(' ').filter(v => v.startsWith('t:')) || [];
+    setAppliedTagsArray(tags.map(t => t.slice(2)));
+  }, [filterText]);
+
   return <div className='htmlreport vbox px-4 pb-4'>
     <main>
-      {report?.json() && <HeaderView stats={report.json().stats} filterText={filterText} setFilterText={setFilterText} projectNames={report.json().projectNames}></HeaderView>}
+      {report?.json() && <HeaderView
+        stats={report.json().stats}
+        filterText={filterText}
+        setFilterText={setFilterText}
+        projectNames={report.json().projectNames}
+        setAppliedTagsArray={setAppliedTagsArray}
+      />}
       {report?.json().metadata && <MetadataView {...report?.json().metadata as Metainfo} />}
       <Route predicate={testFilesRoutePredicate}>
-        <TestFilesView report={report?.json()} filter={filter} expandedFiles={expandedFiles} setExpandedFiles={setExpandedFiles}></TestFilesView>
+        {report?.json() && <Tags
+          style={{ margin: '8px 0' }}
+          report={report.json()}
+          filterText={filterText}
+          filter={filter}
+          appliedTagsArray={appliedTagsArray}
+          setAppliedTagsArray={setAppliedTagsArray}
+        />}
+      </Route>
+      <Route predicate={testFilesRoutePredicate}>
+        <TestFilesView
+          report={report?.json()}
+          filter={filter}
+          expandedFiles={expandedFiles}
+          setExpandedFiles={setExpandedFiles}
+          appliedTagsArray={appliedTagsArray}
+          setAppliedTagsArray={setAppliedTagsArray}
+        />
       </Route>
       <Route predicate={testCaseRoutePredicate}>
-        {!!report && <TestCaseViewLoader report={report}></TestCaseViewLoader>}
+        {!!report && <TestCaseViewLoader
+          report={report}
+          appliedTagsArray={appliedTagsArray}
+          setAppliedTagsArray={setAppliedTagsArray}
+        />}
       </Route>
     </main>
   </div>;
@@ -64,7 +100,9 @@ export const ReportView: React.FC<{
 
 const TestCaseViewLoader: React.FC<{
   report: LoadedReport,
-}> = ({ report }) => {
+  appliedTagsArray: string[],
+  setAppliedTagsArray: React.Dispatch<React.SetStateAction<string[]>>,
+}> = ({ report, appliedTagsArray, setAppliedTagsArray }) => {
   const searchParams = new URLSearchParams(window.location.hash.slice(1));
   const [test, setTest] = React.useState<TestCase | undefined>();
   const testId = searchParams.get('testId');
@@ -86,5 +124,7 @@ const TestCaseViewLoader: React.FC<{
       }
     })();
   }, [test, report, testId]);
-  return <TestCaseView projectNames={report.json().projectNames} test={test} anchor={anchor} run={run}></TestCaseView>;
+  return <TestCaseView projectNames={report.json().projectNames} test={test} anchor={anchor} run={run}
+    appliedTagsArray={appliedTagsArray}
+    setAppliedTagsArray={setAppliedTagsArray} />;
 };

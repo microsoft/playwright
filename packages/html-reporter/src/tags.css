@@ -1,0 +1,59 @@
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.tags span:first-child {
+  margin-right: 8px;
+}
+
+.tag {
+  margin: 4px 0;
+  padding-top: 2px;
+}
+
+.tag:hover {
+  opacity: 1;
+  transition: 0.2s opacity
+}
+
+.tag-not-current {
+  opacity: 0.8;
+  transition: 0.2s opacity;
+}
+
+.tag-current {
+  opacity: 1;
+  transition: 0.2s opacity;
+}
+
+.plus-sign {
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.plus-sign svg {
+  margin: 3px 0 0 4px;
+  height: 10px;
+  transition: 0.2s;
+}
+
+.plus-sign__remove svg {
+  rotate: 45deg;
+  transition: 0.2s rotate;
+}
+
+.tag-disabled {
+  opacity: 0.2;
+  transition: 0.2s opacity;
+}
+
+.tag-disabled:hover,
+.tag-disabled .plus-sign {
+  opacity: 0.2;
+  cursor: not-allowed;
+}

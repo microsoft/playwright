@@ -14,11 +14,13 @@
   limitations under the License.
 */
 
+import { tagRegex } from './tags';
 import type { TestCaseSummary } from './types';
 
 export class Filter {
   project: string[] = [];
   status: string[] = [];
+  tag: string[] = [];
   text: string[] = [];
 
   empty(): boolean {
@@ -29,6 +31,7 @@ export class Filter {
     const tokens = Filter.tokenize(expression);
     const project = new Set<string>();
     const status = new Set<string>();
+    const tag = new Set<string>();
     const text: string[] = [];
     for (const token of tokens) {
       if (token.startsWith('p:')) {
@@ -39,6 +42,13 @@ export class Filter {
         status.add(token.slice(2));
         continue;
       }
+      if (token.startsWith('t:')) {
+        const regexp = tagRegex(token.slice(2));
+        const match = token.match(regexp);
+        if (match)
+          tag.add(match[0].slice(2));
+        continue;
+      }
       text.push(token.toLowerCase());
     }
 
@@ -46,6 +56,7 @@ export class Filter {
     filter.text = text;
     filter.project = [...project];
     filter.status = [...status];
+    filter.tag = [...tag];
     return filter;
   }
 
@@ -115,6 +126,15 @@ export class Filter {
     }
     if (this.status.length) {
       const matches = !!this.status.find(s => searchValues.status.includes(s));
+      if (!matches)
+        return false;
+    }
+    if (this.tag.length) {
+      const matches = !!this.tag.find(t => {
+        // match all tags in the search string as @smoke @regression
+        const regexp = new RegExp(`(\\s|^)@${t}(\\s|$)`, 'g');
+        return searchValues.text.match(regexp);
+      });
       if (!matches)
         return false;
     }

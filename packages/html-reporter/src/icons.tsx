@@ -106,3 +106,17 @@ export const trace = () => {
 export const empty = () => {
   return <svg className='octicon' viewBox='0 0 16 16' version='1.1' width='16' height='16' aria-hidden='true'></svg>;
 };
+
+export const plus = () => {
+  return <svg  viewBox='0 0 16 16' version='1.1' width='16' height='16' aria-hidden='true'>
+    <path xmlns="http://www.w3.org/2000/svg" d="M8 1a1 1 0 00-1 1v6H1a1 1 0 000 2h6v6a1 1 0 002 0v-6h6a1 1 0 000-2h-6V2a1 1 0 00-1-1Z"/>
+  </svg>;
+};
+
+export const skipped = () => {
+  return <svg xmlns="http://www.w3.org/2000/svg" viewBox='2 2 18 18' version='1.1' width='16' height='16' className='octicon' aria-hidden='true'>
+    <path fill="#007bff" d="m6.35,7.84c-.06,0-.13,0-.19-.02-.54-.11-.9-.63-.79-1.17l.66-3.34c.11-.54.63-.9,1.17-.79.54.11.9.63.79,1.17l-.66,3.34c-.09.48-.51.81-.98.81Z" />
+    <path fill="#007bff" d="m12,21.5c-4.96,0-9-4.04-9-9,0-.55.45-1,1-1s1,.45,1,1c0,3.86,3.14,7,7,7s7-3.14,7-7-3.14-7-7-7c-1.87,0-3.63.73-4.95,2.05-.39.39-1.02.39-1.41,0s-.39-1.02,0-1.41c1.7-1.7,3.96-2.64,6.36-2.64,4.96,0,9,4.04,9,9s-4.04,9-9,9Z" />
+    <path fill="#007bff" d="m12,15.5c-1.65,0-3-1.35-3-3s1.35-3,3-3,3,1.35,3,3-1.35,3-3,3Zm0-4c-.55,0-1,.45-1,1s.45,1,1,1,1-.45,1-1-.45-1-1-1Z" />
+  </svg>;
+};

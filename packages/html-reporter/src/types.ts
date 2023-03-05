@@ -37,6 +37,7 @@ export type HTMLReport = {
   files: TestFileSummary[];
   stats: Stats;
   projectNames: string[];
+  excludeTagsFilterPattern?: string,
 };
 
 export type TestFile = {

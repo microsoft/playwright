@@ -23,20 +23,30 @@ import { ProjectLink } from './links';
 import { statusIcon } from './statusIcon';
 import './testCaseView.css';
 import { TestResultView } from './testResultView';
+import { Tags } from './tags';
+import { msToString } from './uiUtils';
 
 export const TestCaseView: React.FC<{
   projectNames: string[],
   test: TestCase | undefined,
   anchor: 'video' | 'diff' | '',
   run: number,
-}> = ({ projectNames, test, run, anchor }) => {
+  appliedTagsArray: string[],
+  setAppliedTagsArray: React.Dispatch<React.SetStateAction<string[]>>,
+}> = ({ projectNames, test, run, anchor, appliedTagsArray, setAppliedTagsArray }) => {
   const [selectedResultIndex, setSelectedResultIndex] = React.useState(run);
 
   return <div className='test-case-column vbox'>
     {test && <div className='test-case-path'>{test.path.join(' › ')}</div>}
     {test && <div className='test-case-title'>{test?.title}</div>}
+    {test && <span data-testid="overall-duration" style={{ padding: '6px 0 6px 6px' }}>Test case time: {msToString(test.duration)}</span>}
     {test && <div className='test-case-location'>{test.location.file}:{test.location.line}</div>}
-    {test && !!test.projectName && <ProjectLink projectNames={projectNames} projectName={test.projectName}></ProjectLink>}
+    {test && !!test.projectName && <><span style={{ margin: '2px 8px' }}>Project: <ProjectLink projectNames={projectNames} projectName={test.projectName}></ProjectLink></span></>}
+    {<Tags
+      style={{ margin: '2px 8px' }}
+      testCase={test}
+      appliedTagsArray={appliedTagsArray}
+      setAppliedTagsArray={setAppliedTagsArray} />}
     {test && !!test.annotations.length && <AutoChip header='Annotations'>
       {test.annotations.map(a => <div className='test-case-annotation'>
         <span style={{ fontWeight: 'bold' }}>{a.type}</span>

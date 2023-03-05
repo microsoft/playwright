@@ -25,7 +25,9 @@ export const TestFilesView: React.FC<{
   expandedFiles: Map<string, boolean>,
   setExpandedFiles: (value: Map<string, boolean>) => void,
   filter: Filter,
-}> = ({ report, filter, expandedFiles, setExpandedFiles }) => {
+  appliedTagsArray: string[],
+  setAppliedTagsArray: React.Dispatch<React.SetStateAction<string[]>>,
+}> = ({ report, filter, expandedFiles, setExpandedFiles, appliedTagsArray, setAppliedTagsArray }) => {
   const filteredFiles = React.useMemo(() => {
     const result: { file: TestFileSummary, defaultExpanded: boolean }[] = [];
     let visibleTests = 0;
@@ -54,7 +56,10 @@ export const TestFilesView: React.FC<{
           newExpanded.set(fileId, expanded);
           setExpandedFiles(newExpanded);
         }}
-        filter={filter}>
+        filter={filter}
+        appliedTagsArray={appliedTagsArray}
+        setAppliedTagsArray={setAppliedTagsArray}
+      >
       </TestFileView>;
     })}
   </>;

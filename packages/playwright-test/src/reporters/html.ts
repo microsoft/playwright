@@ -45,6 +45,7 @@ type HtmlReporterOptions = {
   open?: HtmlReportOpenOption,
   host?: string,
   port?: number,
+  excludeTagsFilterPattern?: string|RegExp|Array<string|RegExp>,
 };
 
 class HtmlReporter implements Reporter {
@@ -55,6 +56,7 @@ class HtmlReporter implements Reporter {
   private _outputFolder!: string;
   private _open: string | undefined;
   private _buildResult: { ok: boolean, singleTestId: string | undefined } | undefined;
+  private _excludeTagsFilterPattern?: string|RegExp|Array<string|RegExp>;
 
   constructor(options: HtmlReporterOptions = {}) {
     this._options = options;
@@ -67,9 +69,10 @@ class HtmlReporter implements Reporter {
   onBegin(config: FullConfig, suite: Suite) {
     this._montonicStartTime = monotonicTime();
     this.config = config as FullConfigInternal;
-    const { outputFolder, open } = this._resolveOptions();
+    const { outputFolder, open, excludeTagsFilterPattern } = this._resolveOptions();
     this._outputFolder = outputFolder;
     this._open = open;
+    this._excludeTagsFilterPattern = excludeTagsFilterPattern;
     const reportedWarnings = new Set<string>();
     for (const project of config.projects) {
       if (outputFolder.startsWith(project.outputDir) || project.outputDir.startsWith(outputFolder)) {
@@ -89,13 +92,30 @@ class HtmlReporter implements Reporter {
     this.suite = suite;
   }
 
-  _resolveOptions(): { outputFolder: string, open: HtmlReportOpenOption } {
-    let { outputFolder } = this._options;
+  _resolveOptions(): { outputFolder: string, open: HtmlReportOpenOption, excludeTagsFilterPattern?: string|RegExp|Array<string|RegExp> } {
+    let { outputFolder, excludeTagsFilterPattern } = this._options;
     if (outputFolder)
       outputFolder = path.resolve(this.config._internal.configDir, outputFolder);
+    if (excludeTagsFilterPattern) {
+      if (typeof excludeTagsFilterPattern === 'string') {
+        excludeTagsFilterPattern = excludeTagsFilterPattern;
+      } else if (Array.isArray(excludeTagsFilterPattern)) {
+        excludeTagsFilterPattern = excludeTagsFilterPattern
+            .map(pattern => {
+              if (typeof pattern === 'string')
+                return pattern;
+
+              return pattern.source;
+            })
+            .join('|');
+      } else {
+        excludeTagsFilterPattern =  excludeTagsFilterPattern.source;
+      }
+    }
     return {
       outputFolder: reportFolderFromEnv() ?? outputFolder ?? defaultReportFolder(this.config._internal.configDir),
       open: process.env.PW_TEST_HTML_REPORT_OPEN as any || this._options.open || 'on-failure',
+      excludeTagsFilterPattern,
     };
   }
 
@@ -109,7 +129,7 @@ class HtmlReporter implements Reporter {
     });
     await removeFolders([this._outputFolder]);
     const builder = new HtmlBuilder(this._outputFolder);
-    this._buildResult = await builder.build({ ...this.config.metadata, duration }, reports);
+    this._buildResult = await builder.build({ ...this.config.metadata, duration, excludeTagsFilterPattern: this._excludeTagsFilterPattern }, reports);
   }
 
   async _onExit() {
@@ -259,11 +279,13 @@ class HtmlBuilder {
 
       this._addDataFile(fileId + '.json', testFile);
     }
+
     const htmlReport: HTMLReport = {
       metadata,
       files: [...data.values()].map(e => e.testFileSummary),
       projectNames: rawReports.map(r => r.project.name),
-      stats: { ...[...data.values()].reduce((a, e) => addStats(a, e.testFileSummary.stats), emptyStats()), duration: metadata.duration }
+      stats: { ...[...data.values()].reduce((a, e) => addStats(a, e.testFileSummary.stats), emptyStats()), duration: metadata.duration },
+      excludeTagsFilterPattern: metadata.excludeTagsFilterPattern,
     };
     htmlReport.files.sort((f1, f2) => {
       const w1 = f1.stats.unexpected * 1000 + f1.stats.flaky;

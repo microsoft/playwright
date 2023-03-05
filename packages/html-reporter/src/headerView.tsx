@@ -29,14 +29,25 @@ export const HeaderView: React.FC<React.PropsWithChildren<{
   filterText: string,
   setFilterText: (filterText: string) => void,
   projectNames: string[],
-}>> = ({ stats, filterText, setFilterText, projectNames }) => {
+  setAppliedTagsArray?: React.Dispatch<React.SetStateAction<string[]>>,
+}>> = ({ stats, filterText, setFilterText, projectNames, setAppliedTagsArray }) => {
   React.useEffect(() => {
-    (async () => {
-      window.addEventListener('popstate', () => {
-        const params = new URLSearchParams(window.location.hash.slice(1));
-        setFilterText(params.get('q') || '');
-      });
-    })();
+    const popstateFn = () => {
+      const params = new URLSearchParams(window.location.hash.slice(1));
+      setFilterText(params.get('q') || '');
+    };
+    const searchFn = () => {
+      navigate('#');
+      if (setAppliedTagsArray)
+        setAppliedTagsArray([]);
+    };
+    window.addEventListener('popstate', popstateFn);
+    window.addEventListener('search', searchFn);
+
+    return () => {
+      window.removeEventListener('popstate', popstateFn);
+      window.removeEventListener('search', searchFn);
+    };
   });
 
   return (<>
@@ -57,7 +68,7 @@ export const HeaderView: React.FC<React.PropsWithChildren<{
         }}></input>
       </form>
     </div>
-    <div className='pt-2'>
+    <div className='pt-2' style={{ height: '24px' }}>
       {projectNames.length === 1 && !!projectNames[0] && <span data-testid="project-name" style={{ color: 'var(--color-fg-subtle)', float: 'left' }}>Project: {projectNames[0]}</span>}
       <span data-testid="overall-duration" style={{ color: 'var(--color-fg-subtle)', paddingRight: '10px', float: 'right' }}>Total time: {msToString(stats.duration)}</span>
     </div>
@@ -72,16 +83,48 @@ const StatsNavView: React.FC<{
       All <span className='d-inline counter'>{stats.total}</span>
     </Link>
     <Link className='subnav-item' href='#?q=s:passed'>
-      Passed <span className='d-inline counter'>{stats.expected}</span>
+      Passed {stats.expected > 0 ? (
+        <span className='d-inline counter'>
+          {stats.expected} ({Math.round(stats.expected / stats.total * 100)}%)
+        </span>
+      ) : (
+        <span className='d-inline counter'>
+          {stats.expected}
+        </span>
+      )}
     </Link>
     <Link className='subnav-item' href='#?q=s:failed'>
-      {!!stats.unexpected && statusIcon('unexpected')} Failed <span className='d-inline counter'>{stats.unexpected}</span>
+      {!!stats.unexpected && statusIcon('unexpected')} Failed {stats.unexpected > 0 ? (
+        <span className='d-inline counter'>
+          {stats.unexpected} ({Math.round(stats.unexpected / stats.total * 100)}%)
+        </span>
+      ) : (
+        <span className='d-inline counter'>
+          {stats.unexpected}
+        </span>
+      )}
     </Link>
     <Link className='subnav-item' href='#?q=s:flaky'>
-      {!!stats.flaky && statusIcon('flaky')} Flaky <span className='d-inline counter'>{stats.flaky}</span>
+      {!!stats.flaky && statusIcon('flaky')} Flaky {stats.flaky > 0 ? (
+        <span className='d-inline counter'>
+          {stats.flaky} ({Math.round(stats.flaky / stats.total * 100)}%)
+        </span>
+      ) : (
+        <span className='d-inline counter'>
+          {stats.flaky}
+        </span>
+      )}
     </Link>
     <Link className='subnav-item' href='#?q=s:skipped'>
-      Skipped <span className='d-inline counter'>{stats.skipped}</span>
+      {!!stats.skipped && statusIcon('skipped')} Skipped {stats.skipped > 0 ? (
+        <span className='d-inline counter'>
+          {stats.skipped} ({Math.round(stats.skipped / stats.total * 100)}%)
+        </span>
+      ) : (
+        <span className='d-inline counter'>
+          {stats.skipped}
+        </span>
+      )}
     </Link>
   </nav>;
 };

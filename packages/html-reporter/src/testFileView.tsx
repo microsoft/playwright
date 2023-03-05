@@ -23,6 +23,7 @@ import { generateTraceUrl, Link, ProjectLink } from './links';
 import { statusIcon } from './statusIcon';
 import './testFileView.css';
 import { video, image, trace } from './icons';
+import { Tags } from './tags';
 
 export const TestFileView: React.FC<React.PropsWithChildren<{
   report: HTMLReport;
@@ -30,7 +31,9 @@ export const TestFileView: React.FC<React.PropsWithChildren<{
   isFileExpanded: (fileId: string) => boolean;
   setFileExpanded: (fileId: string, expanded: boolean) => void;
   filter: Filter;
-}>> = ({ file, report, isFileExpanded, setFileExpanded, filter }) => {
+  appliedTagsArray: string[],
+  setAppliedTagsArray: React.Dispatch<React.SetStateAction<string[]>>,
+}>> = ({ file, report, isFileExpanded, setFileExpanded, filter, appliedTagsArray, setAppliedTagsArray }) => {
   return <Chip
     expanded={isFileExpanded(file.fileId)}
     noInsets={true}
@@ -56,6 +59,9 @@ export const TestFileView: React.FC<React.PropsWithChildren<{
           {imageDiffBadge(test)}
           {videoBadge(test)}
           {traceBadge(test)}
+        </div>
+        <div className='test-file-details-row'>
+          <Tags report={report} testCase={test} appliedTagsArray={appliedTagsArray} setAppliedTagsArray={setAppliedTagsArray} />
         </div>
       </div>
     )}
