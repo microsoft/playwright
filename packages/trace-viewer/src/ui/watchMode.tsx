@@ -27,20 +27,19 @@ import './watchMode.css';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { Toolbar } from '@web/components/toolbar';
 
-let rootSuite: Suite | undefined;
-
-let updateList: () => void = () => {};
+let updateRootSuite: (rootSuite: Suite) => void = () => {};
 let updateProgress: () => void = () => {};
 let runWatchedTests = () => {};
-const expandedItems = new Map<string, boolean | undefined>();
 
 export const WatchModeView: React.FC<{}> = ({
 }) => {
-  const [updateCounter, setUpdateCounter] = React.useState(0);
-  updateList = () => setUpdateCounter(updateCounter + 1);
+  const [rootSuite, setRootSuite] = React.useState<{ value: Suite | undefined }>({ value: undefined });
+  updateRootSuite = (rootSuite: Suite) => setRootSuite({ value: rootSuite });
   const [selectedTreeItemId, setSelectedTreeItemId] = React.useState<string | undefined>();
   const [isRunningTest, setIsRunningTest] = React.useState<boolean>(false);
   const [filterText, setFilterText] = React.useState<string>('');
+  const [projectNames, setProjectNames] = React.useState<string[]>([]);
+  const [expandedItems, setExpandedItems] = React.useState<Map<string, boolean>>(new Map());
 
   const inputRef = React.useRef<HTMLInputElement>(null);
 
@@ -49,10 +48,13 @@ export const WatchModeView: React.FC<{}> = ({
     sendMessageNoReply('list');
   }, []);
 
-  const { treeItemMap, visibleTestIds, listItems } = React.useMemo(() => {
-    // updateCounter is used to trigger the compute.
-    noop(updateCounter);
-    const treeItems = createTree(rootSuite);
+  React.useEffect(() => {
+    if (projectNames.length === 0 && rootSuite.value?.suites.length)
+      setProjectNames([rootSuite.value?.suites[0].title]);
+  }, [projectNames,  rootSuite]);
+
+  const { filteredItems, treeItemMap, visibleTestIds } = React.useMemo(() => {
+    const treeItems = createTree(rootSuite.value, projectNames);
     const filteredItems = filterTree(treeItems, filterText);
 
     const treeItemMap = new Map<string, TreeItem>();
@@ -64,9 +66,14 @@ export const WatchModeView: React.FC<{}> = ({
       treeItemMap.set(treeItem.id, treeItem);
     };
     filteredItems.forEach(visit);
+    return { treeItemMap, visibleTestIds, filteredItems };
+  }, [filterText, rootSuite, projectNames]);
+
+
+  const { listItems } = React.useMemo(() => {
     const listItems = flattenTree(filteredItems, expandedItems, !!filterText.trim());
-    return { treeItemMap, visibleTestIds, listItems };
-  }, [filterText, updateCounter]);
+    return { listItems };
+  }, [filteredItems, filterText, expandedItems]);
 
   const selectedTreeItem = selectedTreeItemId ? treeItemMap.get(selectedTreeItemId) : undefined;
 
@@ -136,16 +143,19 @@ export const WatchModeView: React.FC<{}> = ({
         selectedItem={selectedTreeItem}
         onAccepted={runTreeItem}
         onLeftArrow={(treeItem: TreeItem) => {
-          if (treeItem.children && treeItem.expanded)
+          if (treeItem.children && treeItem.expanded) {
             expandedItems.set(treeItem.id, false);
-          else
+            setExpandedItems(new Map(expandedItems));
+          } else {
             setSelectedTreeItemId(treeItem.parent?.id);
-          updateList();
+          }
         }}
         onRightArrow={(treeItem: TreeItem) => {
-          if (treeItem.children)
+          if (treeItem.children) {
             expandedItems.set(treeItem.id, true);
-          updateList();
+            setExpandedItems(new Map(expandedItems));
+          }
+          setRootSuite({ ...rootSuite });
         }}
         onSelected={(treeItem: TreeItem) => {
           setSelectedTreeItemId(treeItem.id);
@@ -157,9 +167,25 @@ export const WatchModeView: React.FC<{}> = ({
             expandedItems.set(treeItem.id, false);
           else
             expandedItems.set(treeItem.id, true);
-          updateList();
+          setExpandedItems(new Map(expandedItems));
         }}
         showNoItemsMessage={true}></ListView>
+      {(rootSuite.value?.suites.length || 0) > 1 && <div style={{ flex: 'none', borderTop: '1px solid var(--vscode-panel-border)' }}>
+        <ListView
+          items={rootSuite.value!.suites}
+          onSelected={(suite: Suite) => {
+            const copy = [...projectNames];
+            copy.includes(suite.title) ? copy.splice(copy.indexOf(suite.title), 1) : copy.push(suite.title);
+            setProjectNames(copy);
+          }}
+          itemRender={(suite: Suite) => {
+            return <label style={{ display: 'flex', pointerEvents: 'none' }}>
+              <input type='checkbox' checked={projectNames.includes(suite.title)} />
+              {suite.title}
+            </label>;
+          }}
+        />
+      </div>}
     </div>
   </SplitView>;
 };
@@ -229,37 +255,40 @@ declare global {
   }
 }
 
-const receiver = new TeleReporterReceiver({
-  onBegin: (config: FullConfig, suite: Suite) => {
-    if (!rootSuite)
-      rootSuite = suite;
-    updateList();
-  },
+{
+  let rootSuite: Suite;
+  const receiver = new TeleReporterReceiver({
+    onBegin: (config: FullConfig, suite: Suite) => {
+      if (!rootSuite)
+        rootSuite = suite;
+      updateRootSuite(rootSuite);
+    },
 
-  onTestBegin: () => {
-    updateList();
-  },
+    onTestBegin: () => {
+      updateRootSuite(rootSuite);
+    },
 
-  onTestEnd: () => {
-    updateList();
-  },
+    onTestEnd: () => {
+      updateRootSuite(rootSuite);
+    },
 
-  onStepBegin: () => {
-    updateProgress();
-  },
+    onStepBegin: () => {
+      updateProgress();
+    },
 
-  onStepEnd: () => {
-    updateProgress();
-  },
-});
+    onStepEnd: () => {
+      updateProgress();
+    },
+  });
 
 
-(window as any).dispatch = (message: any) => {
-  if (message.method === 'fileChanged')
-    runWatchedTests();
-  else
-    receiver.dispatch(message);
-};
+  (window as any).dispatch = (message: any) => {
+    if (message.method === 'fileChanged')
+      runWatchedTests();
+    else
+      receiver.dispatch(message);
+  };
+}
 
 const sendMessage = async (method: string, params: any) => {
   await (window as any).sendMessage({ method, params });
@@ -318,9 +347,11 @@ type TestItem = TreeItemBase & {
 
 type TreeItem = FileItem | TestCaseItem | TestItem;
 
-function createTree(rootSuite?: Suite): FileItem[] {
+function createTree(rootSuite: Suite | undefined, projectNames: string[]): FileItem[] {
   const fileItems = new Map<string, FileItem>();
   for (const projectSuite of rootSuite?.suites || []) {
+    if (!projectNames.includes(projectSuite.title))
+      continue;
     for (const fileSuite of projectSuite.suites) {
       const file = fileSuite.location!.file;
 
@@ -391,8 +422,8 @@ function flattenTree(fileItems: FileItem[], expandedItems: Map<string, boolean |
     result.push(fileItem);
     const expandState = expandedItems.get(fileItem.id);
     const autoExpandMatches = result.length < 100 && (hasFilter && expandState !== false);
-    if (expandState || autoExpandMatches) {
-      fileItem.expanded = true;
+    fileItem.expanded = expandState || autoExpandMatches;
+    if (fileItem.expanded) {
       for (const testCaseItem of fileItem.children!) {
         result.push(testCaseItem);
         testCaseItem.expanded = !!expandedItems.get(testCaseItem.id);
@@ -403,5 +434,3 @@ function flattenTree(fileItems: FileItem[], expandedItems: Map<string, boolean |
   }
   return result;
 }
-
-function noop(_: any) {}
