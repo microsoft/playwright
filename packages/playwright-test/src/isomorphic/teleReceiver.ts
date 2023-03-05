@@ -393,7 +393,7 @@ export class TeleTestCase implements reporterTypes.TestCase {
       retry: this.results.length,
       parallelIndex: -1,
       workerIndex: -1,
-      duration: 0,
+      duration: -1,
       startTime: new Date(),
       stdout: [],
       stderr: [],
