@@ -3,7 +3,7 @@ id: test-configuration
 title: "Test Options with use"
 ---
 
-In addition to configuring the test runner you can also configure the [Browser] or [BrowserContext], [Emulation](#emulation-options), [Networks](#network-options) and [Recordings](#network-options). These options are passed to the `use: {}` object in the Playwright config.
+In addition to configuring the test runner you can also configure the [Browser] or [BrowserContext], [Emulation](#emulation-options), [Network](#network-options) and [Recording](#recording-options). These options are passed to the `use: {}` object in the Playwright config.
 
 ### Basic Options
 
@@ -80,7 +80,7 @@ export default defineConfig({
     acceptDownloads: false,
 
     // An object containing additional HTTP headers to be sent with every request.
-    httpHeaders: {
+    extraHTTPHeaders: {
       'X-My-Header': 'value',
     },
 
@@ -121,7 +121,7 @@ You don't have to configure anything to mock network requests. Just define a cus
 
 ### Recording Options
 
-With Playwright you can capture screenshots, record videos aswell as traces of your test. By default these are turned off but you can enable them by setting the `screenshot`, `video` and `trace` options in your `playwright.config.js` file. 
+With Playwright you can capture screenshots, record videos as well as traces of your test. By default these are turned off but you can enable them by setting the `screenshot`, `video` and `trace` options in your `playwright.config.js` file. 
 
 Trace files, screenshots and videos will appear in the test output directory, typically `test-results`.
 
@@ -156,7 +156,7 @@ import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
   use: {
-    /* Maximum time each action such as `click()` can take. Defaults to 0 (no limit). */
+    // Maximum time each action such as `click()` can take. Defaults to 0 (no limit).
     actionTimeout: 0,
 
     // Name of the browser that runs tests. For example `chromium`, `firefox`, `webkit`.
@@ -188,7 +188,7 @@ export default defineConfig({
 
 ### More browser and context options
 
-Any options accepted by [`method: BrowserType.launch`] or [`method: Browser.newContext`] can be put into `launchOptions` or `contextOptions` respectively in the `use` section. Take a look at the [m list of available options][TestOptions].
+Any options accepted by [`method: BrowserType.launch`] or [`method: Browser.newContext`] can be put into `launchOptions` or `contextOptions` respectively in the `use` section.
 
 ```js
 import { defineConfig } from '@playwright/test';
@@ -237,7 +237,7 @@ test('should inherit use options on context when using built-in browser fixture'
 
 ### Configuration Scopes
 
-You can configure Playwright globally, per project, or per test. For example, you can set the viewport to be used globally by adding `locale` to the `use` option of the Playwright config, and then override it for a specific project using the `project` option in the config. You can also override it for a specific test by adding `test.use({})` in the test file and passing in the options.
+You can configure Playwright globally, per project, or per test. For example, you can set the locale to be used globally by adding `locale` to the `use` option of the Playwright config, and then override it for a specific project using the `project` option in the config. You can also override it for a specific test by adding `test.use({})` in the test file and passing in the options.
 
 
 ```js
@@ -268,7 +268,7 @@ export default defineConfig({
 });
 ```
 
-You can override options for a specific test file by using the `test.use()` method and passing in the options. For example to run tests with the Frence locale for a specific test:
+You can override options for a specific test file by using the `test.use()` method and passing in the options. For example to run tests with the French locale for a specific test:
 
 ```js
 import { test, expect } from '@playwright/test';
