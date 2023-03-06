@@ -15,18 +15,19 @@
  */
 
 import '@web/third_party/vscode/codicon.css';
-import { loadSingleTraceFile, Workbench } from './workbench';
+import { Workbench } from './workbench';
 import '@web/common.css';
 import React from 'react';
 import { ListView } from '@web/components/listView';
 import { TeleReporterReceiver } from '../../../playwright-test/src/isomorphic/teleReceiver';
 import type { FullConfig, Suite, TestCase, TestStep } from '../../../playwright-test/types/testReporter';
 import { SplitView } from '@web/components/splitView';
-import type { MultiTraceModel } from './modelUtil';
+import { MultiTraceModel } from './modelUtil';
 import './watchMode.css';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { Toolbar } from '@web/components/toolbar';
 import { toggleTheme } from '@web/theme';
+import type { ContextEntry } from '../entries';
 
 let updateRootSuite: (rootSuite: Suite, progress: Progress) => void = () => {};
 let updateStepsProgress: () => void = () => {};
@@ -277,8 +278,7 @@ export const TraceView: React.FC<{
     </div>;
   }
 
-  return <Workbench model={model} view='embedded'></Workbench>;
-
+  return <Workbench model={model} />;
 };
 
 declare global {
@@ -484,4 +484,12 @@ function flattenTree(fileItems: FileItem[], expandedItems: Map<string, boolean |
     }
   }
   return result;
+}
+
+async function loadSingleTraceFile(url: string): Promise<MultiTraceModel> {
+  const params = new URLSearchParams();
+  params.set('trace', url);
+  const response = await fetch(`contexts?${params.toString()}`);
+  const contextEntries = await response.json() as ContextEntry[];
+  return new MultiTraceModel(contextEntries);
 }
