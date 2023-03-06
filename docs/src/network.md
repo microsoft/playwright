@@ -6,6 +6,41 @@ title: "Network"
 Playwright provides APIs to **monitor** and **modify** network traffic, both HTTP and HTTPS. Any requests that a page does, including [XHRs](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest) and
 [fetch](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) requests, can be tracked, modified and handled.
 
+## Network mocking
+* langs: js
+
+You don't have to configure anything to mock network requests. Just define a custom [Route] that mocks network for a browser context.
+
+```js
+// example.spec.ts
+import { test, expect } from '@playwright/test';
+
+test.beforeEach(async ({ context }) => {
+  // Block any css requests for each test in this file.
+  await context.route(/.css$/, route => route.abort());
+});
+
+test('loads page without css', async ({ page }) => {
+  await page.goto('https://playwright.dev');
+  // ... test goes here
+});
+```
+
+Alternatively, you can use [`method: Page.route`] to mock network in a single page.
+
+```js
+// example.spec.ts
+import { test, expect } from '@playwright/test';
+
+test('loads page without images', async ({ page }) => {
+  // Block png and jpeg images.
+  await page.route(/(png|jpeg)$/, route => route.abort());
+
+  await page.goto('https://playwright.dev');
+  // ... test goes here
+});
+```
+
 ## HTTP Authentication
 
 Perform HTTP Authentication.
