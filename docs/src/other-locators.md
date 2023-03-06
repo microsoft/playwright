@@ -1,6 +1,6 @@
 ---
 id: other-locators
-title: "Other Locators"
+title: "Other locators"
 ---
 
 :::tip

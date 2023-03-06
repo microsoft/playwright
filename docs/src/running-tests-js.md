@@ -1,6 +1,6 @@
 ---
 id: running-tests
-title: "Running Tests"
+title: "Running tests"
 ---
 
 You can run a single test, a set of tests or all tests. Tests can be run on one browser or multiple browsers. By default tests are run in a headless manner meaning no browser window will be opened while running the tests and results will be seen in the terminal.

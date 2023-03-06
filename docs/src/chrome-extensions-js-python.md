@@ -1,6 +1,6 @@
 ---
 id: chrome-extensions
-title: "Chrome Extensions"
+title: "Chrome extensions"
 ---
 
 :::note
