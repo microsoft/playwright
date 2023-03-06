@@ -24,7 +24,7 @@ To record a test click on the **Record new** button from the Testing sidebar. Th
 
 <img width="1385" alt="record new in vs code" src="https://user-images.githubusercontent.com/13063165/220961665-615d0ab8-3f0b-439c-ad0b-0424d9aa154b.png" />
 
-In the browser go to the URL you wish to test and start clicking around to record your user actions. The viewport for the browser window used for test generation and the tests is set to a specific width and height so they behave the same even if your coworkers have different screen resolutions. See the [configuration guide](./test-configuration.md) to change the viewport or emulate different environments.
+In the browser go to the URL you wish to test and start clicking around to record your user actions.
 
 <img width="1394" alt="clicking delete button on todo app with locator highlighted" src="https://user-images.githubusercontent.com/13063165/220957132-31b54f82-6235-4c52-a966-6863553b5b23.png" />
 
