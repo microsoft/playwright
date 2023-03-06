@@ -10,7 +10,18 @@ With Playwright you can test your app on any browser as well as emulate a real d
 
 Playwright comes with a [registry of device parameters](https://github.com/microsoft/playwright/blob/main/packages/playwright-core/src/server/deviceDescriptorsSource.json) using [`property: Playwright.devices`] for selected desktop, tablet and mobile devices. It can be used to simulate browser behavior for a specific device such as user agent, screen size, viewport and if it has touch enabled. All tests will run with the specified device parameters. 
 
-```js tab=js-ts
+
+<Tabs
+  defaultValue="test"
+  values={[
+    {label: 'Test', value: 'test'},
+    {label: 'Library', value: 'library'},
+  ]
+}>
+<TabItem value="test">
+
+
+```js
 // playwright.config.ts/js
 import { defineConfig, devices } from '@playwright/test'; // import devices
 
@@ -32,7 +43,11 @@ export default defineConfig({
 });
 ```
 
-```js tab=js-library
+</TabItem>
+
+<TabItem value="library">
+
+```js
 const { chromium, devices } = require('playwright');
 const browser = await chromium.launch();
 
@@ -41,6 +56,10 @@ const context = await browser.newContext({
   ...iphone12,
 });
 ```
+
+</TabItem>
+
+</Tabs>
 
 ```python async
 import asyncio
@@ -96,6 +115,15 @@ class Program
 
 The viewport is included in the device but you can override it for some tests with [`method: Page.setViewportSize`].
 
+<Tabs
+  defaultValue="test"
+  values={[
+    {label: 'Test', value: 'test'},
+    {label: 'Library', value: 'library'},
+  ]
+}>
+<TabItem value="test">
+
 ```js
 // playwright.config.ts/js
 import { defineConfig } from '@playwright/test';
@@ -108,35 +136,6 @@ export default defineConfig({
 });
 ```
 
-```js tab=js-ts
-// example.spec.ts/js
-import { test, expect } from '@playwright/test';
-
-// Run tests in this file with portrait-like viewport.
-test.use({
-  viewport: { width: 600, height: 900 },
-});
-
-test('my portrait test', async ({ page }) => {
-  // ...
-});
-```
-
-```js tab=js-library
-// Create context with given viewport
-const context = await browser.newContext({
-  viewport: { width: 1280, height: 1024 }
-});
-
-// Resize viewport for individual page
-await page.setViewportSize({ width: 1600, height: 1200 });
-
-// Emulate high-DPI
-const context = await browser.newContext({
-  viewport: { width: 2560, height: 1440 },
-  deviceScaleFactor: 2,
-});
-```
 The same works inside a describe block.
 
 ```js
@@ -152,6 +151,30 @@ test.describe('locale block', () => {
   });
 });
 ```
+
+</TabItem>
+
+<TabItem value="library">
+
+```js
+// Create context with given viewport
+const context = await browser.newContext({
+  viewport: { width: 1280, height: 1024 }
+});
+
+// Resize viewport for individual page
+await page.setViewportSize({ width: 1600, height: 1200 });
+
+// Emulate high-DPI
+const context = await browser.newContext({
+  viewport: { width: 2560, height: 1440 },
+  deviceScaleFactor: 2,
+});
+```
+
+</TabItem>
+
+</Tabs>
 
 ```java
 // Create context with given viewport
@@ -217,7 +240,18 @@ await using var context = await browser.NewContextAsync(new()
 ```
 ## Locale & Timezone
 
-Emulate the user Locale and Timezone which can be set globally for all tests in the config and then overridden for particular tests.
+Emulate the user Locale and Timezone.
+<Tabs
+  defaultValue="test"
+  values={[
+    {label: 'Test', value: 'test'},
+    {label: 'Library', value: 'library'},
+  ]
+}>
+<TabItem value="test">
+
+ This can be set globally for all tests in the config and then overridden for particular tests.
+
 
 ```js
 // playwright.config.ts/js
@@ -234,7 +268,7 @@ export default defineConfig({
 });
 ```
 
-```js tab=js-ts
+```js
 // example.spec.ts/js
 import { test, expect } from '@playwright/test';
 
@@ -248,13 +282,21 @@ test('my test for de lang in Berlin timezone', async ({ page }) => {
 });
 ```
 
-```js tab=js-library
+</TabItem>
+
+<TabItem value="library">
+
+```js
 // Emulate locale and time
 const context = await browser.newContext({
   locale: 'de-DE',
   timezoneId: 'Europe/Berlin',
 });
 ```
+
+</TabItem>
+
+</Tabs>
 
 ```java
 // Emulate locale and time
@@ -290,7 +332,16 @@ await using var context = await browser.NewContextAsync(new()
 
 Allow app to show system notifications.
 
-```js tab=js-ts
+<Tabs
+  defaultValue="test"
+  values={[
+    {label: 'Test', value: 'test'},
+    {label: 'Library', value: 'library'},
+  ]
+}>
+<TabItem value="test">
+
+```js
 // playwright.config.ts/js
 import { defineConfig } from '@playwright/test';
 
@@ -302,11 +353,19 @@ export default defineConfig({
 });
 ```
 
-```js tab=js-library
+</TabItem>
+
+<TabItem value="library">
+
+```js
 const context = await browser.newContext({
   permissions: ['notifications'],
 });
 ```
+
+</TabItem>
+
+</Tabs>
 
 ```java
 BrowserContext context = browser.newContext(new Browser.NewContextOptions()
@@ -327,7 +386,16 @@ context = browser.new_context(
 
 Allow notifications for a specific domain.
 
-```js tab=js-ts
+<Tabs
+  defaultValue="test"
+  values={[
+    {label: 'Test', value: 'test'},
+    {label: 'Library', value: 'library'},
+  ]
+}>
+<TabItem value="test">
+
+```js
 // example.spec.ts/js
 import { test } from '@playwright/test';
 
@@ -341,9 +409,17 @@ test('first', async ({ page }) => {
 });
 ```
 
-```js tab=js-library
+</TabItem>
+
+<TabItem value="library">
+
+```js
 await context.grantPermissions(['notifications'], { origin: 'https://skype.com' });
 ```
+
+</TabItem>
+
+</Tabs>
 
 ```java
 context.grantPermissions(Arrays.asList("notifications"),
@@ -388,6 +464,15 @@ await context.ClearPermissionsAsync();
 
 Grant `"geolocation"` permissions and set geolocation to a specific area.
 
+<Tabs
+  defaultValue="test"
+  values={[
+    {label: 'Test', value: 'test'},
+    {label: 'Library', value: 'library'},
+  ]
+}>
+<TabItem value="test">
+
 ```js
 // playwright.config.ts/js
 import { defineConfig } from '@playwright/test';
@@ -401,7 +486,7 @@ export default defineConfig({
 });
 ```
 
-```js tab=js-ts
+```js
 // example.spec.ts/js
 import { test, expect } from '@playwright/test';
 
@@ -415,13 +500,20 @@ test('my test with geolocation', async ({ page }) => {
 });
 ```
 
-```js tab=js-library
+</TabItem>
+
+<TabItem value="library">
+
+```js
 const context = await browser.newContext({
   geolocation: { longitude: 48.858455, latitude: 2.294474 },
   permissions: ['geolocation']
 });
-
 ```
+
+</TabItem>
+
+</Tabs>
 
 ```java
 BrowserContext context = browser.newContext(new Browser.NewContextOptions()
@@ -453,7 +545,16 @@ await using var context = await browser.NewContextAsync(new()
 
 Change the location later:
 
-```js tab=js-ts
+<Tabs
+  defaultValue="test"
+  values={[
+    {label: 'Test', value: 'test'},
+    {label: 'Library', value: 'library'},
+  ]
+}>
+<TabItem value="test">
+
+```js
 // example.spec.ts/js
 import { test, expect } from '@playwright/test';
 
@@ -468,9 +569,17 @@ test('my test with geolocation', async ({ page, context }) => {
 });
 ```
 
-```js tab=js-library
+</TabItem>
+
+<TabItem value="library">
+
+```js
 await context.setGeolocation({ longitude: 29.979097, latitude: 31.134256 });
 ```
+
+</TabItem>
+
+</Tabs>
 
 ```java
 context.setGeolocation(new Geolocation(29.979097, 31.134256));
@@ -493,6 +602,15 @@ await context.SetGeolocationAsync(new Geolocation() { Longitude = 48.858455f, La
 
 Emulate the users `"colorScheme"`. Supported values are 'light', 'dark', 'no-preference'. You can also emulate the media type with [`method: Page.emulateMedia`].
 
+<Tabs
+  defaultValue="test"
+  values={[
+    {label: 'Test', value: 'test'},
+    {label: 'Library', value: 'library'},
+  ]
+}>
+<TabItem value="test">
+
 ```js
 import { defineConfig } from '@playwright/test';
 
@@ -503,7 +621,7 @@ export default defineConfig({
 });
 ```
 
-```js tab=js-ts
+```js
 // example.spec.ts/js
 import { test, expect } from '@playwright/test';
 
@@ -516,7 +634,11 @@ test('my test with dark mode', async ({ page }) => {
 });
 ```
 
-```js tab=js-library
+</TabItem>
+
+<TabItem value="library">
+
+```js
 // Create context with dark mode
 const context = await browser.newContext({
   colorScheme: 'dark' // or 'light'
@@ -533,6 +655,11 @@ await page.emulateMedia({ colorScheme: 'dark' });
 // Change media for page
 await page.emulateMedia({ media: 'print' });
 ```
+
+</TabItem>
+
+</Tabs>
+
 
 ```java
 // Create context with dark mode
@@ -615,7 +742,16 @@ await page.EmulateMediaAsync(new()
 
 The User Agent is included in the device and therefore you  will rarely need to change it however if you do need to test a different user agent you can override it with the `userAgent` property.
 
-```js tab=js-ts
+<Tabs
+  defaultValue="test"
+  values={[
+    {label: 'Test', value: 'test'},
+    {label: 'Library', value: 'library'},
+  ]
+}>
+<TabItem value="test">
+
+```js
 // example.spec.ts/js
 import { test, expect } from '@playwright/test';
 
@@ -626,11 +762,20 @@ test('my user agent test', async ({ page }) => {
 });
 ```
 
-```js tab=js-library
+</TabItem>
+
+<TabItem value="library">
+
+```js
 const context = await browser.newContext({
   userAgent: 'My user agent'
 });
 ```
+
+</TabItem>
+
+</Tabs>
+
 
 ```java
 BrowserContext context = browser.newContext(new Browser.NewContextOptions()
@@ -656,7 +801,16 @@ var context = await browser.NewContextAsync(new BrowserNewContextOptions { UserA
 
 Emulate a user scenario where JavaScript is disabled.
 
-```js tab=js-ts
+<Tabs
+  defaultValue="test"
+  values={[
+    {label: 'Test', value: 'test'},
+    {label: 'Library', value: 'library'},
+  ]
+}>
+<TabItem value="test">
+
+```js
 // example.spec.ts/js
 import { test, expect } from '@playwright/test';
 
@@ -667,8 +821,16 @@ test('test with no JavaScript', async ({ page }) => {
 });
 ```
 
-```js tab=js-library
+</TabItem>
+
+<TabItem value="library">
+
+```js
 const context = await browser.newContext({
   javaScriptEnabled: false
 });
 ```
+
+</TabItem>
+
+</Tabs>
