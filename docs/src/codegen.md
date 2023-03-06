@@ -6,12 +6,12 @@ title: "Test Generator"
 import LiteYouTube from '@site/src/components/LiteYouTube';
 
 
-Playwright comes with the ability to generate tests for you as you perform actions in the browser and is a great way to quickly get started with testing. Playwright will look at your page and figure out the best locator, prioritizing [role, text and test id locators](./locators.md). If the generator finds multiple elements matching the locator, it will improve the locator to make it resilient and uniquely identify the target element.
+Playwright comes with the ability to generate tests for you as you perform actions in the browser and is a great way to quickly get started with testing. Playwright will look at your page and figure out the best locator, prioritizing [role, text and test id locators](./locators.md). If the generator finds multiple elements matching the locator, it will improve the locator to make it resilient that uniquely identify the target element.
 
 ## Generate tests in VS Code
 * langs: js
 
-Install the VS Code extension and generate tests dirctly from VS Code. The extension is available on the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=ms-playwright.playwright). Check out our guide on [getting started with VS Code](./getting-started-vscode.md).
+Install the VS Code extension and generate tests directly from VS Code. The extension is available on the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=ms-playwright.playwright). Check out our guide on [getting started with VS Code](./getting-started-vscode.md).
 
 <LiteYouTube
     id="LM4yqrOzmFE"
@@ -24,7 +24,7 @@ To record a test click on the **Record new** button from the Testing sidebar. Th
 
 <img width="1385" alt="record new in vs code" src="https://user-images.githubusercontent.com/13063165/220961665-615d0ab8-3f0b-439c-ad0b-0424d9aa154b.png" />
 
-In the browser go to the URL you wish to test and start clicking around to record your user actions. The viewport for the browser window used for test generation is set to a specific width and height and is not responsive by default. See the [configuration guide](./test-configuration.md) to change the viewport or emulate different environments.
+In the browser go to the URL you wish to test and start clicking around to record your user actions. The viewport for the browser window used for test generation and the tests is set to a specific width and height so they behave the same even if your coworkers have different screen resolutions. See the [configuration guide](./test-configuration.md) to change the viewport or emulate different environments.
 
 <img width="1394" alt="clicking delete button on todo app with locator highlighted" src="https://user-images.githubusercontent.com/13063165/220957132-31b54f82-6235-4c52-a966-6863553b5b23.png" />
 
@@ -34,7 +34,7 @@ Playwright will record your actions and generate the test code directly in VS Co
 
 ### Record at Cursor
 
-To record from a specific point in your test move your cursor to where you want to record more actions and then click the **Record at cursor** button from the Testing sidebar. If your browser window is not already open then first run the test with 'show browser' checked and then click the **Record at cursor** button.
+To record from a specific point in your test move your cursor to where you want to record more actions and then click the **Record at cursor** button from the Testing sidebar. If your browser window is not already open then first run the test with 'Show browser' checked and then click the **Record at cursor** button.
 
 <img width="1529" alt="record at cursor in vs code" src="https://user-images.githubusercontent.com/13063165/220959996-2bb3af59-85d9-4d58-aba7-d57375e7ca7e.png" />
 
@@ -52,7 +52,7 @@ In the test file in VS Code you will see your new generated actions added to you
 You can generate locators with the test generator. 
 - Click on the **Pick locator** button form the testing sidebar and then hover over elements in the browser window to see the [locator](./locators.md) highlighted underneath each element. 
 - Click the element you require and it will now show up in the **Pick locator** box in VS Code. 
-- Press 'enter' on your keyboard to copy the locator into the clipboard and then paste anywhere in your code. Or press 'escape' if you want to cancel.
+- Press <kbd>Enter</kbd> on your keyboard to copy the locator into the clipboard and then paste anywhere in your code. Or press 'escape' if you want to cancel.
 
 <img width="1641" alt="Pick locators in VS code" src="https://user-images.githubusercontent.com/13063165/220958368-95b03620-3c9b-40a8-be74-01c96ba03cad.png" />
 
