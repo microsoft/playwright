@@ -526,6 +526,36 @@ test('should handle src=blob', async ({ page, server, runAndTrace, browserName }
   expect(size).toBe(10);
 });
 
+test('should register custom elements', async ({ page, server, runAndTrace }) => {
+  const traceViewer = await runAndTrace(async () => {
+    page.on('console', console.log);
+    await page.goto(server.EMPTY_PAGE);
+    await page.evaluate(() => {
+      customElements.define('my-element', class extends HTMLElement {
+        constructor() {
+          super();
+          const shadow = this.attachShadow({ mode: 'open' });
+          const span = document.createElement('span');
+          span.textContent = 'hello';
+          shadow.appendChild(span);
+          shadow.appendChild(document.createElement('slot'));
+        }
+      });
+    });
+    await page.setContent(`
+      <style>
+        :not(:defined) {
+          visibility: hidden;
+        }
+      </style>
+      <MY-element>world</MY-element>
+    `);
+  });
+
+  const frame = await traceViewer.snapshotFrame('page.setContent');
+  await expect(frame.getByText('worldhello')).toBeVisible();
+});
+
 test('should highlight target elements', async ({ page, runAndTrace, browserName }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.setContent(`
@@ -571,7 +601,7 @@ test('should show action source', async ({ showTraceViewer }) => {
 
   await page.click('text=Source');
   await expect(page.locator('.source-line-running')).toContainText('await page.getByText(\'Click\').click()');
-  await expect(page.locator('.stack-trace-frame.selected')).toHaveText(/doClick.*trace-viewer\.spec\.ts:[\d]+/);
+  await expect(page.getByTestId('stack-trace').locator('.list-view-entry.selected')).toHaveText(/doClick.*trace-viewer\.spec\.ts:[\d]+/);
 });
 
 test('should follow redirects', async ({ page, runAndTrace, server, asset }) => {

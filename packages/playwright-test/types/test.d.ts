@@ -4144,7 +4144,7 @@ interface GenericAssertions<R> {
    *
    * ```js
    * const value = 'Is 42 enough?';
-   * expect(value).toMatches(/Is \d+ enough/);
+   * expect(value).toMatch(/Is \d+ enough/);
    * ```
    *
    * @param expected Regular expression to match against.

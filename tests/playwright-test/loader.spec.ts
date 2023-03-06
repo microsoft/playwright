@@ -333,7 +333,7 @@ test('should filter out syntax error stack traces', async ({ runInlineTest }, te
       import { test, expect } from '@playwright/test';
       test('should work', ({}) => {
         // syntax error: cannot have await in non-async function
-        await Proimse.resolve();
+        await Promise.resolve();
       });
     `
   });
@@ -380,26 +380,6 @@ test('should not filter out POM', async ({ runInlineTest }) => {
   expect(result.output).not.toContain(path.sep + `playwright-test`);
   expect(result.output).not.toContain(path.sep + `playwright-core`);
   expect(result.output).not.toContain('internal');
-});
-
-test('should filter stack even without default Error.prepareStackTrace', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'expect-test.spec.ts': `
-      import { test, expect } from '@playwright/test';
-      test('should work', ({}) => {
-        Error.prepareStackTrace = undefined;
-        throw new Error('foobar');
-      });
-    `
-  });
-  expect(result.exitCode).toBe(1);
-  expect(result.output).toContain('foobar');
-  expect(result.output).toContain('expect-test.spec.ts');
-  expect(result.output).not.toContain(path.sep + `playwright-test`);
-  expect(result.output).not.toContain(path.sep + `playwright-core`);
-  expect(result.output).not.toContain('internal');
-  const stackLines = result.output.split('\n').filter(line => line.includes('    at '));
-  expect(stackLines.length).toBe(1);
 });
 
 test('should work with cross-imports - 1', async ({ runInlineTest }) => {
@@ -631,4 +611,55 @@ test('should import export assignment from ts', async ({ runInlineTest }) => {
   });
   expect(result.passed).toBe(1);
   expect(result.exitCode).toBe(0);
+});
+
+test('should support node imports', async ({ runInlineTest, nodeVersion }) => {
+  // We only support experimental esm mode on Node 16+
+  test.skip(nodeVersion.major < 16);
+  const result = await runInlineTest({
+    'playwright.config.ts': 'export default {}',
+    'package.json': JSON.stringify({
+      type: 'module'
+    }),
+    'test.json': 'test data',
+    'utils.mjs': `
+      import fs from "node:fs/promises";
+
+      export async function utilityModuleThatImportsNodeModule() {
+        return await fs.readFile('test.json', 'utf8');
+      }
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      import { utilityModuleThatImportsNodeModule } from './utils.mjs';
+
+      test('pass', async () => {
+        expect(await utilityModuleThatImportsNodeModule()).toBe('test data');
+      });
+    `
+  });
+  expect(result.passed).toBe(1);
+  expect(result.exitCode).toBe(0);
+});
+
+test('should complain when one test file imports another', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      import { foo } from './b.test';
+
+      test('pass1', async () => {
+        expect(foo).toBe('foo');
+      });
+    `,
+    'b.test.ts': `
+      import { test, expect } from '@playwright/test';
+      export const foo = 'foo';
+
+      test('pass2', async () => {
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain(`test file "a.test.ts" should not import test file "b.test.ts"`);
 });

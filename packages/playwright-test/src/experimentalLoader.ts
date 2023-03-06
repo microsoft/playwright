@@ -29,8 +29,9 @@ async function resolve(specifier: string, context: { parentURL?: string }, defau
       specifier = url.pathToFileURL(resolved).toString();
   }
   const result = await defaultResolve(specifier, context, defaultResolve);
-  if (result?.url)
+  if (result?.url && result.url.startsWith('file://'))
     currentFileDepsCollector()?.add(url.fileURLToPath(result.url));
+
   return result;
 }
 

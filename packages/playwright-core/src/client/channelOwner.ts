@@ -18,8 +18,8 @@ import { EventEmitter } from 'events';
 import type * as channels from '@protocol/channels';
 import { maybeFindValidator, ValidationError, type ValidatorContext } from '../protocol/validator';
 import { debugLogger } from '../common/debugLogger';
-import type { ParsedStackTrace } from '../utils/stackTrace';
-import { captureRawStack, captureStackTrace } from '../utils/stackTrace';
+import type { ExpectZone, ParsedStackTrace } from '../utils/stackTrace';
+import { captureRawStack, captureLibraryStackTrace } from '../utils/stackTrace';
 import { isUnderTest } from '../utils';
 import { zones } from '../utils/zones';
 import type { ClientInstrumentation } from './clientInstrumentation';
@@ -132,17 +132,17 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
 
   private _createChannel(base: Object): T {
     const channel = new Proxy(base, {
-      get: (obj: any, prop) => {
+      get: (obj: any, prop: string | symbol) => {
         if (typeof prop === 'string') {
           const validator = maybeFindValidator(this._type, prop, 'Params');
           if (validator) {
             return (params: any) => {
               return this._wrapApiCall(apiZone => {
-                const { stackTrace, csi, callCookie } = apiZone.reported ? { csi: undefined, callCookie: undefined, stackTrace: null } : apiZone;
+                const { stackTrace, csi, callCookie, wallTime } = apiZone.reported ? { csi: undefined, callCookie: undefined, stackTrace: null, wallTime: undefined } : apiZone;
                 apiZone.reported = true;
                 if (csi && stackTrace && stackTrace.apiName)
-                  csi.onApiCallBegin(renderCallWithParams(stackTrace.apiName, params), stackTrace, callCookie);
-                return this._connection.sendMessageToServer(this, this._type, prop, validator(params, '', { tChannelImpl: tChannelImplToWire, binary: this._connection.isRemote() ? 'toBase64' : 'buffer' }), stackTrace);
+                  csi.onApiCallBegin(renderCallWithParams(stackTrace.apiName, params), stackTrace, wallTime, callCookie);
+                return this._connection.sendMessageToServer(this, this._type, prop, validator(params, '', { tChannelImpl: tChannelImplToWire, binary: this._connection.isRemote() ? 'toBase64' : 'buffer' }), stackTrace, wallTime);
               });
             };
           }
@@ -154,24 +154,30 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
     return channel;
   }
 
-  async _wrapApiCall<R>(func: (apiZone: ApiZone) => Promise<R>, isInternal = false, customStackTrace?: ParsedStackTrace): Promise<R> {
+  async _wrapApiCall<R>(func: (apiZone: ApiZone) => Promise<R>, isInternal = false): Promise<R> {
     const logger = this._logger;
     const stack = captureRawStack();
     const apiZone = zones.zoneData<ApiZone>('apiZone', stack);
     if (apiZone)
       return func(apiZone);
 
-    const stackTrace = customStackTrace || captureStackTrace(stack);
+    const stackTrace = captureLibraryStackTrace(stack);
     if (isInternal)
       delete stackTrace.apiName;
+
+    // Enclosing zone could have provided the apiName and wallTime.
+    const expectZone = zones.zoneData<ExpectZone>('expectZone', stack);
+    const wallTime = expectZone ? expectZone.wallTime : Date.now();
+    if (!isInternal && expectZone)
+      stackTrace.apiName = expectZone.title;
+
     const csi = isInternal ? undefined : this._instrumentation;
     const callCookie: any = {};
 
     const { apiName, frameTexts } = stackTrace;
-
     try {
       logApiCall(logger, `=> ${apiName} started`, isInternal);
-      const apiZone = { stackTrace, isInternal, reported: false, csi, callCookie };
+      const apiZone = { stackTrace, isInternal, reported: false, csi, callCookie, wallTime };
       const result = await zones.run<ApiZone, R>('apiZone', apiZone, async () => {
         return await func(apiZone);
       });
@@ -242,4 +248,5 @@ type ApiZone = {
   reported: boolean;
   csi: ClientInstrumentation | undefined;
   callCookie: any;
+  wallTime: number;
 };

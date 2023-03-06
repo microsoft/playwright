@@ -703,6 +703,27 @@ it('should work with overridden globalThis.Window/Document/Node', async ({ page,
   }
 });
 
+it('should work with overridden URL/Date/RegExp', async ({ page, server, browserName }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/21109' });
+  it.fixme(browserName === 'firefox');
+  const testCases = [
+    // @ts-ignore
+    () => globalThis.URL = 'foo',
+    // @ts-ignore
+    () => globalThis.RegExp = 'foo',
+    // @ts-ignore
+    () => globalThis.Date = 'foo',
+  ];
+  for (const testCase of testCases) {
+    await it.step(testCase.toString(), async () => {
+      await page.goto(server.EMPTY_PAGE);
+      await page.evaluate(testCase);
+      expect(await page.evaluate('1+2')).toBe(3);
+      expect(await page.evaluate(() => ({ 'a': 2023 }))).toEqual({ 'a': 2023 });
+    });
+  }
+});
+
 it('should expose utilityScript', async ({ page }) => {
   const result = await (page.mainFrame() as any)._evaluateExposeUtilityScript((utilityScript, { a }) => {
     return { utils: 'parseEvaluationResultValue' in utilityScript, a };

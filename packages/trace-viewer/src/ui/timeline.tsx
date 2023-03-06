@@ -15,7 +15,7 @@
   limitations under the License.
 */
 
-import type { ActionTraceEvent } from '@trace/trace';
+import type { ActionTraceEvent, EventTraceEvent } from '@trace/trace';
 import { msToString } from '@web/uiUtils';
 import * as React from 'react';
 import type { Boundaries } from '../geometry';
@@ -26,14 +26,14 @@ import './timeline.css';
 
 type TimelineBar = {
   action?: ActionTraceEvent;
-  event?: ActionTraceEvent;
+  event?: EventTraceEvent;
   leftPosition: number;
   rightPosition: number;
   leftTime: number;
   rightTime: number;
   type: string;
   label: string;
-  title: string;
+  title: string | undefined;
   className: string;
 };
 
@@ -56,34 +56,34 @@ export const Timeline: React.FunctionComponent<{
   const bars = React.useMemo(() => {
     const bars: TimelineBar[] = [];
     for (const entry of context.actions) {
-      let detail = trimRight(entry.metadata.params.selector || '', 50);
-      if (entry.metadata.method === 'goto')
-        detail = trimRight(entry.metadata.params.url || '', 50);
+      let detail = trimRight(entry.params.selector || '', 50);
+      if (entry.method === 'goto')
+        detail = trimRight(entry.params.url || '', 50);
       bars.push({
         action: entry,
-        leftTime: entry.metadata.startTime,
-        rightTime: entry.metadata.endTime,
-        leftPosition: timeToPosition(measure.width, boundaries, entry.metadata.startTime),
-        rightPosition: timeToPosition(measure.width, boundaries, entry.metadata.endTime),
-        label: entry.metadata.apiName + ' ' + detail,
-        title: entry.metadata.endTime ? msToString(entry.metadata.endTime - entry.metadata.startTime) : 'Timed Out',
-        type: entry.metadata.type + '.' + entry.metadata.method,
-        className: `${entry.metadata.type}_${entry.metadata.method}`.toLowerCase()
+        leftTime: entry.startTime,
+        rightTime: entry.endTime,
+        leftPosition: timeToPosition(measure.width, boundaries, entry.startTime),
+        rightPosition: timeToPosition(measure.width, boundaries, entry.endTime),
+        label: entry.apiName + ' ' + detail,
+        title: entry.endTime ? msToString(entry.endTime - entry.startTime) : 'Timed Out',
+        type: entry.type + '.' + entry.method,
+        className: `${entry.type}_${entry.method}`.toLowerCase()
       });
     }
 
     for (const event of context.events) {
-      const startTime = event.metadata.startTime;
+      const startTime = event.time;
       bars.push({
         event,
         leftTime: startTime,
         rightTime: startTime,
         leftPosition: timeToPosition(measure.width, boundaries, startTime),
         rightPosition: timeToPosition(measure.width, boundaries, startTime),
-        label: event.metadata.method,
-        title: event.metadata.endTime ? msToString(event.metadata.endTime - event.metadata.startTime) : 'Timed Out',
-        type: event.metadata.type + '.' + event.metadata.method,
-        className: `${event.metadata.type}_${event.metadata.method}`.toLowerCase()
+        label: event.method,
+        title: undefined,
+        type: event.class + '.' + event.method,
+        className: `${event.class}_${event.method}`.toLowerCase()
       });
     }
     return bars;
@@ -237,5 +237,5 @@ function trimRight(s: string, maxLength: number): string {
 
 const kBarHeight = 11;
 function barTop(bar: TimelineBar): number {
-  return bar.event ? 22 : (bar.action?.metadata.method === 'waitForEventInfo' ? 0 : 11);
+  return bar.event ? 22 : (bar.action?.method === 'waitForEventInfo' ? 0 : 11);
 }

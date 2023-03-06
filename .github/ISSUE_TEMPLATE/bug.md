@@ -7,43 +7,66 @@ assignees: ''
 
 ---
 
-**Context:**
-- Playwright Version: [what Playwright version do you use?]
-- Operating System: [e.g. Windows, Linux or Mac]
-- Node.js version: [e.g. 12.22, 14.6]
-- Browser: [e.g. All, Chromium, Firefox, WebKit]
-- Extra: [any specific details about your environment]
+<!-- ⚠️⚠️ Do not delete this template ⚠️⚠️ -->
 
-<!-- CLI to auto-capture this info -->
-<!-- npx envinfo --preset playwright --markdown -->
+<!-- 🔎 Search existing issues to avoid creating duplicates. -->
+<!-- 🧪 Test using the latest Playwright release to see if your issue has already been fixed -->
+<!-- 💡 Provide enough information for us to be able to reproduce your issue locally -->
 
-**Code Snippet**
+### System info
+- Playwright Version: [v1.XX]
+- Operating System: [All, Windows 11, Ubuntu 20, macOS 13.2, etc.]
+- Browser: [All, Chromium, Firefox, WebKit]
+- Other info:
 
-Help us help you! Put down a short code snippet that illustrates your bug and
-that we can run and debug locally. For example:
+### Source code
 
-```javascript
-const {chromium, webkit, firefox} = require('playwright');
+- [ ] I provided exact source code that allows reproducing the issue locally.
 
-(async () => {
-  const browser = await chromium.launch();
-  const context = await browser.newContext();
-  const page = await context.newPage();
-  
-  // Please include a snippet of HTML that shows an example of the content
-  // you are testing.
-  await page.setContent(`
-    <div>
-      …
-    </div>
-  `);
-  // Alternatively, if you are testing a public application, include the URL:
-  // await page.goto('https://example.com/')
-  
-  await page.locator(…);
-})();
+<!-- For simple cases, please provide a self-contained test file along with the config file -->
+<!-- For larger cases, you can provide a GitHub repo you created for this issue -->
+<!-- If we can not reproduce the problem locally, we won't be able to act on it -->
+<!-- You can still file without the exact code and we will try to help, but if we can't repro, it will be closed -->
+
+**Link to the GitHub repository with the repro**
+
+[https://github.com/your_profile/playwright_issue_title]
+
+or
+
+**Config file**
+
+```js
+// playwright.config.ts
+import { defineConfig, devices } from '@playwright/test';
+
+export default defineConfig({
+  projects: [
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'], },
+    },
+});
 ```
 
-**Describe the bug**
+**Test file (self-contained)**
 
-Add any other details about the problem here.
+```js
+it('should check the box using setChecked', async ({ page }) => {
+  await page.setContent(`<input id='checkbox' type='checkbox'></input>`);
+  await page.getByRole('checkbox').check();
+  await expect(page.getByRole('checkbox')).toBeChecked();
+});
+```
+
+**Steps**
+- [Run the test]
+- [...]
+
+**Expected**
+
+[Describe expected behavior]
+
+**Actual**
+
+[Describe actual behavior]

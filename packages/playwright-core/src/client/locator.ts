@@ -17,9 +17,8 @@
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
 import type * as channels from '@protocol/channels';
-import type { ParsedStackTrace } from '../utils/stackTrace';
 import * as util from 'util';
-import { monotonicTime } from '../utils';
+import { isString, monotonicTime } from '../utils';
 import { ElementHandle } from './elementHandle';
 import type { Frame } from './frame';
 import type { FilePayload, FrameExpectOptions, Rect, SelectOption, SelectOptionOptions, TimeoutOptions } from './types';
@@ -129,8 +128,12 @@ export class Locator implements api.Locator {
     return this._frame._highlight(this._selector);
   }
 
-  locator(selector: string, options?: LocatorOptions): Locator {
-    return new Locator(this._frame, this._selector + ' >> ' + selector, options);
+  locator(selectorOrLocator: string | Locator, options?: LocatorOptions): Locator {
+    if (isString(selectorOrLocator))
+      return new Locator(this._frame, this._selector + ' >> ' + selectorOrLocator, options);
+    if (selectorOrLocator._frame !== this._frame)
+      throw new Error(`Locators must belong to the same frame.`);
+    return new Locator(this._frame, this._selector + ' >> ' + selectorOrLocator._selector, options);
   }
 
   getByTestId(testId: string | RegExp): Locator {
@@ -310,15 +313,13 @@ export class Locator implements api.Locator {
     await this._frame._channel.waitForSelector({ selector: this._selector, strict: true, omitReturnValue: true, ...options });
   }
 
-  async _expect(customStackTrace: ParsedStackTrace, expression: string, options: Omit<FrameExpectOptions, 'expectedValue'> & { expectedValue?: any }): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }> {
-    return this._frame._wrapApiCall(async () => {
-      const params: channels.FrameExpectParams = { selector: this._selector, expression, ...options, isNot: !!options.isNot };
-      params.expectedValue = serializeArgument(options.expectedValue);
-      const result = (await this._frame._channel.expect(params));
-      if (result.received !== undefined)
-        result.received = parseResult(result.received);
-      return result;
-    }, false /* isInternal */, customStackTrace);
+  async _expect(expression: string, options: Omit<FrameExpectOptions, 'expectedValue'> & { expectedValue?: any }): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }> {
+    const params: channels.FrameExpectParams = { selector: this._selector, expression, ...options, isNot: !!options.isNot };
+    params.expectedValue = serializeArgument(options.expectedValue);
+    const result = (await this._frame._channel.expect(params));
+    if (result.received !== undefined)
+      result.received = parseResult(result.received);
+    return result;
   }
 
   [util.inspect.custom]() {
@@ -339,8 +340,12 @@ export class FrameLocator implements api.FrameLocator {
     this._frameSelector = selector;
   }
 
-  locator(selector: string, options?: { hasText?: string | RegExp }): Locator {
-    return new Locator(this._frame, this._frameSelector + ' >> internal:control=enter-frame >> ' + selector, options);
+  locator(selectorOrLocator: string | Locator, options?: LocatorOptions): Locator {
+    if (isString(selectorOrLocator))
+      return new Locator(this._frame, this._frameSelector + ' >> internal:control=enter-frame >> ' + selectorOrLocator, options);
+    if (selectorOrLocator._frame !== this._frame)
+      throw new Error(`Locators must belong to the same frame.`);
+    return new Locator(this._frame, this._frameSelector + ' >> internal:control=enter-frame >> ' + selectorOrLocator._selector, options);
   }
 
   getByTestId(testId: string | RegExp): Locator {

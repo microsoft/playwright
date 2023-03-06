@@ -16,8 +16,8 @@ StackFrame:
   type: object
   properties:
     file: string
-    line: number?
-    column: number?
+    line: number
+    column: number
     function: string?
 
 # This object can be send with any rpc call in the "metadata" field.
@@ -25,12 +25,24 @@ StackFrame:
 Metadata:
   type: object
   properties:
+    location:
+      type: object?
+      properties:
+        file: string
+        line: number?
+        column: number?
+    apiName: string?
+    internal: boolean?
+    # The number of milliseconds elapsed since midnight, January 1, 1970 UTC.
+    wallTime: number?
+
+ClientSideCallMetadata:
+  type: object
+  properties:
+    id: number
     stack:
       type: array?
       items: StackFrame
-    apiName: string?
-    internal: boolean?
-
 
 Point:
   type: object
@@ -488,6 +500,15 @@ LocalUtils:
         entries:
           type: array
           items: NameValue
+        mode:
+          type: enum
+          literals:
+            - write
+            - append
+        metadata:
+          type: array
+          items: ClientSideCallMetadata
+        includeSources: boolean
 
     harOpen:
       parameters:
@@ -2911,13 +2932,15 @@ Tracing:
         mode:
           type: enum
           literals:
-          - doNotSave
-          - compressTrace
-          - compressTraceAndSources
+          - archive
+          - discard
+          - entries
       returns:
-        # The artifact may be missing if the browser closes while tracing is beeing stopped.
+        # The artifact may be missing if the browser closes while tracing is being stopped.
+        # Or it can be missing if client-side compression is taking place.
         artifact: Artifact?
-        sourceEntries:
+        # For local mode, these are all entries.
+        entries:
           type: array?
           items: NameValue
 

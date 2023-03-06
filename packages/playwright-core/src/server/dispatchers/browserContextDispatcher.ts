@@ -146,7 +146,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     return false;
   }
 
-  async createTempFile(params: channels.BrowserContextCreateTempFileParams, metadata?: channels.Metadata): Promise<channels.BrowserContextCreateTempFileResult> {
+  async createTempFile(params: channels.BrowserContextCreateTempFileParams): Promise<channels.BrowserContextCreateTempFileResult> {
     const dir = this._context._browser.options.artifactsDir;
     const tmpDir = path.join(dir, 'upload-' + createGuid());
     await fs.promises.mkdir(tmpDir);
@@ -268,7 +268,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     return { artifact: ArtifactDispatcher.from(this, artifact) };
   }
 
-  async updateSubscription(params: channels.BrowserContextUpdateSubscriptionParams, metadata?: channels.Metadata | undefined): Promise<void> {
+  async updateSubscription(params: channels.BrowserContextUpdateSubscriptionParams): Promise<void> {
     if (params.enabled)
       this._subscriptions.add(params.event);
     else

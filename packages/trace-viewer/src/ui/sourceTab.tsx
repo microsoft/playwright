@@ -44,10 +44,7 @@ export const SourceTab: React.FunctionComponent<{
   const stackInfo = React.useMemo<StackInfo>(() => {
     if (!action)
       return '';
-    const { metadata } = action;
-    if (!metadata.stack)
-      return '';
-    const frames = metadata.stack;
+    const frames = action.stack || [];
     return {
       frames,
       fileContent: new Map(),
@@ -59,7 +56,9 @@ export const SourceTab: React.FunctionComponent<{
     if (typeof stackInfo === 'string') {
       value = stackInfo;
     } else {
-      const filePath = stackInfo.frames[selectedFrame].file;
+      const filePath = stackInfo.frames[selectedFrame]?.file;
+      if (!filePath)
+        return '';
       if (!stackInfo.fileContent.has(filePath)) {
         const sha1 = await calculateSha1(filePath);
         stackInfo.fileContent.set(filePath, await fetch(`sha1/src@${sha1}.txt`).then(response => response.text()).catch(e => `<Unable to read "${filePath}">`));
@@ -79,7 +78,7 @@ export const SourceTab: React.FunctionComponent<{
     }
   }, [needReveal, targetLineRef]);
 
-  return <SplitView sidebarSize={100} orientation='vertical'>
+  return <SplitView sidebarSize={200} orientation='horizontal'>
     <SourceView text={content} language='javascript' highlight={[{ line: targetLine, type: 'running' }]} revealLine={targetLine}></SourceView>
     <StackTraceView action={action} selectedFrame={selectedFrame} setSelectedFrame={setSelectedFrame}></StackTraceView>
   </SplitView>;

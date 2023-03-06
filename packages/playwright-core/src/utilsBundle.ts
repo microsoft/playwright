@@ -36,22 +36,30 @@ export const wsReceiver = require('./utilsBundleImpl').wsReceiver;
 export const wsSender = require('./utilsBundleImpl').wsSender;
 export type { Command } from '../bundles/utils/node_modules/commander';
 export type { WebSocket, WebSocketServer, RawData as WebSocketRawData, EventEmitter as WebSocketEventEmitter } from '../bundles/utils/node_modules/@types/ws';
+import type { StackFrame } from '@protocol/channels';
 
 const StackUtils: typeof import('../bundles/utils/node_modules/@types/stack-utils') = require('./utilsBundleImpl').StackUtils;
-const stackUtils = new StackUtils();
+const stackUtils = new StackUtils({ internals: StackUtils.nodeInternals() });
+const nodeInternals = StackUtils.nodeInternals();
+const nodeMajorVersion = +process.versions.node.split('.')[0];
 
-export function parseStackTraceLine(line: string): { frame: import('../bundles/utils/node_modules/@types/stack-utils').StackLineData | null, fileName: string | null } {
+export function parseStackTraceLine(line: string): StackFrame | null {
+  if (!process.env.PWDEBUGIMPL && nodeMajorVersion < 16 && nodeInternals.some(internal => internal.test(line)))
+    return null;
   const frame = stackUtils.parseLine(line);
   if (!frame)
-    return { frame: null, fileName: null };
-  let fileName = null;
-  if (frame.file) {
-    // ESM files return file:// URLs, see here: https://github.com/tapjs/stack-utils/issues/60
-    fileName = frame.file.startsWith('file://') ? url.fileURLToPath(frame.file) : path.resolve(process.cwd(), frame.file);
-  }
+    return null;
+  if (!process.env.PWDEBUGIMPL && (frame.file?.startsWith('internal') || frame.file?.startsWith('node:')))
+    return null;
+  if (!frame.file)
+    return null;
+  // ESM files return file:// URLs, see here: https://github.com/tapjs/stack-utils/issues/60
+  const file = frame.file.startsWith('file://') ? url.fileURLToPath(frame.file) : path.resolve(process.cwd(), frame.file);
   return {
-    frame,
-    fileName,
+    file,
+    line: frame.line || 0,
+    column: frame.column || 0,
+    function: frame.function,
   };
 }
 

@@ -42,7 +42,7 @@ export const SnapshotTab: React.FunctionComponent<{
   const [pickerVisible, setPickerVisible] = React.useState(false);
 
   const snapshotMap = new Map<string, { title: string, snapshotName: string }>();
-  for (const snapshot of action?.metadata.snapshots || [])
+  for (const snapshot of action?.snapshots || [])
     snapshotMap.set(snapshot.title, snapshot);
   const actionSnapshot = snapshotMap.get('action') || snapshotMap.get('after');
   const snapshots = [actionSnapshot ? { ...actionSnapshot, title: 'action' } : undefined, snapshotMap.get('before'), snapshotMap.get('after')].filter(Boolean) as { title: string, snapshotName: string }[];
@@ -58,11 +58,11 @@ export const SnapshotTab: React.FunctionComponent<{
       const params = new URLSearchParams();
       params.set('trace', context(action).traceUrl);
       params.set('name', snapshot.snapshotName);
-      snapshotUrl = new URL(`snapshot/${action.metadata.pageId}?${params.toString()}`, window.location.href).toString();
-      snapshotInfoUrl = new URL(`snapshotInfo/${action.metadata.pageId}?${params.toString()}`, window.location.href).toString();
+      snapshotUrl = new URL(`snapshot/${action.pageId}?${params.toString()}`, window.location.href).toString();
+      snapshotInfoUrl = new URL(`snapshotInfo/${action.pageId}?${params.toString()}`, window.location.href).toString();
       if (snapshot.snapshotName.includes('action')) {
-        pointX = action.metadata.point?.x;
-        pointY = action.metadata.point?.y;
+        pointX = action.point?.x;
+        pointY = action.point?.y;
       }
       const popoutParams = new URLSearchParams();
       popoutParams.set('r', snapshotUrl);
@@ -91,7 +91,12 @@ export const SnapshotTab: React.FunctionComponent<{
       if (!iframeRef.current)
         return;
       try {
-        iframeRef.current.src = snapshotUrl + (pointX === undefined ? '' : `&pointX=${pointX}&pointY=${pointY}`);
+        const newUrl = snapshotUrl + (pointX === undefined ? '' : `&pointX=${pointX}&pointY=${pointY}`);
+        // Try preventing history entry from being created.
+        if (iframeRef.current.contentWindow)
+          iframeRef.current.contentWindow.location.replace(newUrl);
+        else
+          iframeRef.current.src = newUrl;
       } catch (e) {
       }
     })();
@@ -112,14 +117,10 @@ export const SnapshotTab: React.FunctionComponent<{
     className='snapshot-tab'
     tabIndex={0}
     onKeyDown={event => {
-      if (event.key === 'ArrowRight')
-        setSnapshotIndex(Math.min(snapshotIndex + 1, snapshots.length - 1));
       if (event.key === 'Escape') {
         if (isInspecting)
           setIsInspecting(false);
       }
-      if (event.key === 'ArrowLeft')
-        setSnapshotIndex(Math.max(snapshotIndex - 1, 0));
     }}
   >
     <InspectModeController
@@ -208,10 +209,8 @@ export const InspectModeController: React.FunctionComponent<{
   setHighlightedLocator: (locator: string) => void,
 }> = ({ iframe, isInspecting, sdkLanguage, testIdAttributeName, highlightedLocator, setHighlightedLocator }) => {
   React.useEffect(() => {
-    if (!iframe)
-      return;
-    const win = iframe.contentWindow as any;
-    if (!isInspecting && !highlightedLocator && !win._recorder)
+    const win = iframe?.contentWindow as any;
+    if (!win || !isInspecting && !highlightedLocator && !win._recorder)
       return;
     let recorder: Recorder | undefined = win._recorder;
     if (!recorder) {

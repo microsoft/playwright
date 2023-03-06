@@ -16,72 +16,51 @@
 
 import fs from 'fs';
 import { mime } from 'playwright-core/lib/utilsBundle';
+import type { StackFrame } from '@protocol/channels';
 import util from 'util';
 import path from 'path';
 import url from 'url';
-import { colors, debug, minimatch } from 'playwright-core/lib/utilsBundle';
+import { colors, debug, minimatch, parseStackTraceLine } from 'playwright-core/lib/utilsBundle';
 import type { TestInfoError, Location } from './common/types';
-import { calculateSha1, isRegExp, isString, captureStackTrace as coreCaptureStackTrace } from 'playwright-core/lib/utils';
-import { isInternalFileName } from 'playwright-core/lib/utils';
-import type { ParsedStackTrace } from 'playwright-core/lib/utils';
+import { calculateSha1, isRegExp, isString } from 'playwright-core/lib/utils';
+import type { RawStack } from 'playwright-core/lib/utils';
 
-export type { ParsedStackTrace };
-
-const PLAYWRIGHT_CORE_PATH = path.dirname(require.resolve('playwright-core'));
-const EXPECT_PATH = require.resolve('./common/expectBundle');
-const EXPECT_PATH_IMPL = require.resolve('./common/expectBundleImpl');
 const PLAYWRIGHT_TEST_PATH = path.join(__dirname, '..');
+const PLAYWRIGHT_CORE_PATH = path.dirname(require.resolve('playwright-core/package.json'));
 
-function filterStackTrace(e: Error) {
+export function filterStackTrace(e: Error) {
   if (process.env.PWDEBUGIMPL)
     return;
-
-  // This method filters internal stack frames using Error.prepareStackTrace
-  // hook. Read more about the hook: https://v8.dev/docs/stack-trace-api
-  //
-  // NOTE: Error.prepareStackTrace will only be called if `e.stack` has not
-  // been accessed before. This is the case for Jest Expect and simple throw
-  // statements.
-  //
-  // If `e.stack` has been accessed, this method will be NOOP.
-  const oldPrepare = Error.prepareStackTrace;
-  const stackFormatter = oldPrepare || ((error, structuredStackTrace) => [
-    `${error.name}: ${error.message}`,
-    ...structuredStackTrace.map(callSite => '    at ' + callSite.toString()),
-  ].join('\n'));
-  Error.prepareStackTrace = (error, structuredStackTrace) => {
-    return stackFormatter(error, structuredStackTrace.filter(callSite => {
-      const fileName = callSite.getFileName();
-      const functionName = callSite.getFunctionName() || undefined;
-      if (!fileName)
-        return true;
-      return !fileName.startsWith(PLAYWRIGHT_TEST_PATH) &&
-             !fileName.startsWith(PLAYWRIGHT_CORE_PATH) &&
-             !isInternalFileName(fileName, functionName);
-    }));
-  };
-  // eslint-disable-next-line
-  e.stack; // trigger Error.prepareStackTrace
-  Error.prepareStackTrace = oldPrepare;
+  const stackLines = stringifyStackFrames(filteredStackTrace(e.stack?.split('\n') || []));
+  const message = e.message;
+  e.stack = `${e.name}: ${e.message}\n${stackLines.join('\n')}`;
+  e.message = message;
 }
 
-export function captureStackTrace(customApiName?: string): ParsedStackTrace {
-  const stackTrace: ParsedStackTrace = coreCaptureStackTrace();
-  const frames = [];
-  const frameTexts = [];
-  for (let i = 0; i < stackTrace.frames.length; ++i) {
-    const frame = stackTrace.frames[i];
-    if (frame.file === EXPECT_PATH || frame.file === EXPECT_PATH_IMPL)
+export function filteredStackTrace(rawStack: RawStack): StackFrame[] {
+  const frames: StackFrame[] = [];
+  for (const line of rawStack) {
+    const frame = parseStackTraceLine(line);
+    if (!frame || !frame.file)
+      continue;
+    if (!process.env.PWDEBUGIMPL && frame.file.startsWith(PLAYWRIGHT_TEST_PATH))
+      continue;
+    if (!process.env.PWDEBUGIMPL && frame.file.startsWith(PLAYWRIGHT_CORE_PATH))
       continue;
     frames.push(frame);
-    frameTexts.push(stackTrace.frameTexts[i]);
   }
-  return {
-    allFrames: stackTrace.allFrames,
-    frames,
-    frameTexts,
-    apiName: customApiName ?? stackTrace.apiName,
-  };
+  return frames;
+}
+
+export function stringifyStackFrames(frames: StackFrame[]): string[] {
+  const stackLines: string[] = [];
+  for (const frame of frames) {
+    if (frame.function)
+      stackLines.push(`    at ${frame.function} (${frame.file}:${frame.line}:${frame.column})`);
+    else
+      stackLines.push(`    at ${frame.file}:${frame.line}:${frame.column}`);
+  }
+  return stackLines;
 }
 
 export function serializeError(error: Error | any): TestInfoError {

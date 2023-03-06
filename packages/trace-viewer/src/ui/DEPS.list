@@ -1,6 +1,8 @@
 [*]
 @injected/**
 @isomorphic/**
+@trace/**
 @web/**
 ../entries.ts
 ../geometry.ts
+../../../playwright-test/src/isomorphic/**

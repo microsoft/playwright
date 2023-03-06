@@ -253,9 +253,38 @@ it('should always round down', async ({ page }) => {
 
 it('should not crash on mouse drag with any button', async ({ page }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/16609' });
+  await page.evaluate(() => {
+    // Do not show contextmenu on right click since it is poorly supported.
+    window.addEventListener('contextmenu', e => e.preventDefault(), false);
+  });
   for (const button of ['left', 'middle', 'right'] as const) {
     await page.mouse.move(50, 50);
     await page.mouse.down({ button });
     await page.mouse.move(100, 100);
   }
 });
+
+it('should dispatch mouse move after context menu was opened', async ({ page, browserName, isWindows }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/20823' });
+  it.fixme(browserName === 'firefox');
+  it.skip(browserName === 'chromium' && isWindows, 'context menu support is best-effort for Linux and MacOS');
+  await page.evaluate(() => {
+    window['contextMenuPromise'] = new Promise(x => {
+      window.addEventListener('contextmenu', x, false);
+    });
+  });
+  const CX = 100, CY = 100;
+  await page.mouse.move(CX, CY);
+  await page.mouse.down({ button: 'right' });
+  await page.evaluate(() => window['contextMenuPromise']);
+  const N = 20;
+  for (const radius of [10, 30, 60, 90]) {
+    for (let i = 0; i < N; ++i) {
+      const angle = 2 * Math.PI * i / N;
+      const x = CX + Math.round(radius * Math.cos(angle));
+      const y = CY + Math.round(radius * Math.sin(angle));
+      await page.mouse.move(x, y);
+    }
+  }
+});
+

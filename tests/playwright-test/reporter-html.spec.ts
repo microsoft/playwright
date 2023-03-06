@@ -394,10 +394,10 @@ test('should show trace source', async ({ runInlineTest, page, showReport }) => 
   ]);
   await expect(page.locator('.source-line-running')).toContainText('page.evaluate');
 
-  await expect(page.locator('.stack-trace-frame')).toContainText([
+  await expect(page.getByTestId('stack-trace')).toContainText([
     /a.test.js:[\d]+/,
   ]);
-  await expect(page.locator('.stack-trace-frame.selected')).toContainText('a.test.js');
+  await expect(page.getByTestId('stack-trace').locator('.list-view-entry.selected')).toContainText('a.test.js');
 });
 
 test('should show trace title', async ({ runInlineTest, page, showReport }) => {
@@ -443,7 +443,7 @@ test('should show multi trace source', async ({ runInlineTest, page, server, sho
   await page.click('text=passes');
   // Expect one image-link to trace viewer and 2 separate download links
   await expect(page.locator('img')).toHaveCount(1);
-  await expect(page.locator('a', { hasText: 'trace' })).toHaveText(['trace-1', 'trace-2']);
+  await expect(page.locator('a', { hasText: 'trace' })).toHaveText(['trace']);
 
   await page.click('img');
   await page.click('.action-title >> text=page.evaluate');
@@ -575,6 +575,30 @@ test('should render annotations', async ({ runInlineTest, page, showReport }) =>
   await showReport();
   await page.click('text=skipped test');
   await expect(page.locator('.test-case-annotation')).toHaveText('skip: I am not interested in this test');
+});
+
+test('should render annotations as link if needed', async ({ runInlineTest, page, showReport, server }) => {
+  const result = await runInlineTest({
+    'playwright.config.js': `
+      module.exports = { timeout: 1500 };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('pass test', async ({ page }) => {
+        test.info().annotations.push({ type: 'issue', description: '${server.EMPTY_PAGE}' });
+      });
+    `,
+  }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+
+  await showReport();
+  await page.getByText('pass test').click();
+  await expect(page.locator('.test-case-annotation')).toHaveText(`issue: ${server.EMPTY_PAGE}`);
+  const popupPromise = page.waitForEvent('popup');
+  await page.getByRole('link', { name: server.EMPTY_PAGE }).click();
+  const popup = await popupPromise;
+  expect(popup.url()).toBe(server.EMPTY_PAGE);
 });
 
 test('should render text attachments as text', async ({ runInlineTest, page, showReport }) => {

@@ -84,6 +84,8 @@ test('should show the project names', async ({ mount }) => {
     >
     </HeaderView>);
     await expect(component.getByText('Project: my-project')).toBeVisible();
+
+    await component.unmount();
   });
   await test.step('with 1 project and empty projectName', async () => {
     const component = await mount(<HeaderView
@@ -94,6 +96,8 @@ test('should show the project names', async ({ mount }) => {
     >
     </HeaderView>);
     await expect(component.getByText('Project:')).toBeHidden();
+
+    await component.unmount();
   });
   await test.step('with more than 1 project', async () => {
     const component = await mount(<HeaderView
@@ -105,5 +109,7 @@ test('should show the project names', async ({ mount }) => {
     </HeaderView>);
     await expect(component.getByText('my-project')).toBeHidden();
     await expect(component.getByText('great-project')).toBeHidden();
+
+    await component.unmount();
   });
 });

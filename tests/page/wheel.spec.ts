@@ -67,6 +67,37 @@ it('should dispatch wheel events @smoke', async ({ page, server }) => {
   });
 });
 
+it('should dispatch wheel events after context menu was opened', async ({ page, browserName, isWindows }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/20823' });
+  it.fixme(browserName === 'firefox');
+  it.skip(browserName === 'chromium' && isWindows, 'context menu support is best-effort for Linux and MacOS');
+
+  await page.setContent(`<div style="width: 5000px; height: 5000px;"></div>`);
+  await page.mouse.move(50, 60);
+  await page.evaluate(() => {
+    window['contextMenuPromise'] = new Promise(x => {
+      window.addEventListener('contextmenu', x, false);
+    });
+  });
+  await page.mouse.down({ button: 'right' });
+  await page.evaluate(() => window['contextMenuPromise']);
+
+  await listenForWheelEvents(page, 'div');
+  await page.mouse.wheel(0, 100);
+  await page.waitForFunction('window.scrollY === 100');
+  await expectEvent(page, {
+    deltaX: 0,
+    deltaY: 100,
+    clientX: 50,
+    clientY: 60,
+    deltaMode: 0,
+    ctrlKey: false,
+    shiftKey: false,
+    altKey: false,
+    metaKey: false,
+  });
+});
+
 it('should dispatch wheel events after popup was opened @smoke', async ({ page, server }) => {
   await page.setContent(`
     <div style="width: 5000px; height: 5000px;"></div>

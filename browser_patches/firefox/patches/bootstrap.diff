@@ -895,7 +895,7 @@ index b81fb1088ab0025555c24e7353cda836f896b26b..21403d0a219cc478b8de20fda410eb26
  
    static bool AutomaticStorageAccessPermissionCanBeGranted(
 diff --git a/dom/base/Navigator.cpp b/dom/base/Navigator.cpp
-index e432d25c7397be64b009e4cb671cb6e322175830..074b1c7241c64412ee58a6239d36c9f74476ae46 100644
+index e432d25c7397be64b009e4cb671cb6e322175830..2d9fd36ed9bf96065b4d7cf37944523626522345 100644
 --- a/dom/base/Navigator.cpp
 +++ b/dom/base/Navigator.cpp
 @@ -326,14 +326,18 @@ void Navigator::GetAppName(nsAString& aAppName, CallerType aCallerType) const {
@@ -949,16 +949,6 @@ index e432d25c7397be64b009e4cb671cb6e322175830..074b1c7241c64412ee58a6239d36c9f7
  
  void Navigator::GetBuildID(nsAString& aBuildID, CallerType aCallerType,
                             ErrorResult& aRv) const {
-@@ -2257,7 +2273,8 @@ bool Navigator::Webdriver() {
-   }
- #endif
- 
--  return false;
-+  // Playwright is automating the browser, so we should pretend to be a webdriver
-+  return true;
- }
- 
- }  // namespace mozilla::dom
 diff --git a/dom/base/Navigator.h b/dom/base/Navigator.h
 index 19b9c31fa2464fc3e865e7a7d69ff91140153510..14b617eefc5c23fcca20c407cb71b5618321f6da 100644
 --- a/dom/base/Navigator.h
@@ -2720,7 +2710,7 @@ diff --git a/widget/cocoa/NativeKeyBindings.mm b/widget/cocoa/NativeKeyBindings.
 index d3e5983259053175584254e7ac01ca9ce024f33a..97f5b851c402fea5477c0ee57af451c62b016eec 100644
 --- a/widget/cocoa/NativeKeyBindings.mm
 +++ b/widget/cocoa/NativeKeyBindings.mm
-@@ -492,6 +492,13 @@
+@@ -492,6 +492,13 @@ void NativeKeyBindings::GetEditCommandsForTests(NativeKeyBindingsType aType,
        break;
      case KEY_NAME_INDEX_ArrowLeft:
        if (aEvent.IsAlt()) {
@@ -2734,7 +2724,7 @@ index d3e5983259053175584254e7ac01ca9ce024f33a..97f5b851c402fea5477c0ee57af451c6
          break;
        }
        if (aEvent.IsMeta() || (aEvent.IsControl() && aEvent.IsShift())) {
-@@ -512,6 +519,13 @@
+@@ -512,6 +519,13 @@ void NativeKeyBindings::GetEditCommandsForTests(NativeKeyBindingsType aType,
        break;
      case KEY_NAME_INDEX_ArrowRight:
        if (aEvent.IsAlt()) {
@@ -2748,7 +2738,7 @@ index d3e5983259053175584254e7ac01ca9ce024f33a..97f5b851c402fea5477c0ee57af451c6
          break;
        }
        if (aEvent.IsMeta() || (aEvent.IsControl() && aEvent.IsShift())) {
-@@ -532,6 +546,10 @@
+@@ -532,6 +546,10 @@ void NativeKeyBindings::GetEditCommandsForTests(NativeKeyBindingsType aType,
        break;
      case KEY_NAME_INDEX_ArrowUp:
        if (aEvent.IsControl()) {
@@ -2759,7 +2749,7 @@ index d3e5983259053175584254e7ac01ca9ce024f33a..97f5b851c402fea5477c0ee57af451c6
          break;
        }
        if (aEvent.IsMeta()) {
-@@ -541,7 +559,7 @@
+@@ -541,7 +559,7 @@ void NativeKeyBindings::GetEditCommandsForTests(NativeKeyBindingsType aType,
          instance->AppendEditCommandsForSelector(
              !aEvent.IsShift()
                  ? ToObjcSelectorPtr(@selector(moveToBeginningOfDocument:))
@@ -2768,7 +2758,7 @@ index d3e5983259053175584254e7ac01ca9ce024f33a..97f5b851c402fea5477c0ee57af451c6
              aCommands);
          break;
        }
-@@ -564,6 +582,10 @@
+@@ -564,6 +582,10 @@ void NativeKeyBindings::GetEditCommandsForTests(NativeKeyBindingsType aType,
        break;
      case KEY_NAME_INDEX_ArrowDown:
        if (aEvent.IsControl()) {

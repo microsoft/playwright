@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Fixtures, Locator, Page, BrowserContextOptions, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, BrowserContext, ContextReuseMode } from './common/types';
+import type { Fixtures, Locator, Page, BrowserContextOptions, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, BrowserContext, ContextReuseMode, FullConfigInternal } from './common/types';
 import type { Component, JsxComponent, MountOptions } from '../types/component';
 
 let boundCallbacksForMount: Function[] = [];
@@ -37,7 +37,9 @@ export const fixtures: Fixtures<
 
     _ctWorker: [{ context: undefined, hash: '' }, { scope: 'worker' }],
 
-    page: async ({ page }, use) => {
+    page: async ({ page }, use, info) => {
+      if (!(info.config as FullConfigInternal)._internal.defineConfigWasUsed)
+        throw new Error('Component testing requires the use of the defineConfig() in your playwright-ct.config.{ts,js}: https://aka.ms/playwright/ct-define-config');
       await (page as any)._wrapApiCall(async () => {
         await page.exposeFunction('__ct_dispatch', (ordinal: number, args: any[]) => {
           boundCallbacksForMount[ordinal](...args);

@@ -1937,6 +1937,7 @@ await frame.WaitForLoadStateAsync(); // Defaults to LoadState.Load
 
 ## async method: Frame.waitForNavigation
 * since: v1.8
+* deprecated: This method is inherently racy, please use [`method: Frame.waitForURL`] instead.
 * langs:
   * alias-python: expect_navigation
   * alias-csharp: RunAndWaitForNavigation
@@ -1995,6 +1996,7 @@ a navigation.
 
 ## async method: Frame.waitForNavigation
 * since: v1.8
+* deprecated: This method is inherently racy, please use [`method: Frame.waitForURL`] instead.
 * langs: python
 - returns: <[EventContextManager]<[Response]>>
 

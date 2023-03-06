@@ -22,7 +22,7 @@ it('should select textarea', async ({ page, server, browserName }) => {
   const textarea = await page.$('textarea');
   await textarea.evaluate(textarea => textarea.value = 'some value');
   await textarea.selectText();
-  if (browserName === 'firefox') {
+  if (browserName === 'firefox' || browserName === 'webkit') {
     expect(await textarea.evaluate(el => el.selectionStart)).toBe(0);
     expect(await textarea.evaluate(el => el.selectionEnd)).toBe(10);
   } else {
@@ -35,7 +35,7 @@ it('should select input', async ({ page, server, browserName }) => {
   const input = await page.$('input');
   await input.evaluate(input => input.value = 'some value');
   await input.selectText();
-  if (browserName === 'firefox') {
+  if (browserName === 'firefox' || browserName === 'webkit') {
     expect(await input.evaluate(el => el.selectionStart)).toBe(0);
     expect(await input.evaluate(el => el.selectionEnd)).toBe(10);
   } else {

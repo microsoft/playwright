@@ -30,7 +30,6 @@ import { Waiter } from './waiter';
 import type { URLMatch, Headers, WaitForEventOptions, BrowserContextOptions, StorageState, LaunchOptions } from './types';
 import { headersObjectToArray, isRegExp, isString } from '../utils';
 import { mkdirIfNeeded } from '../utils/fileUtils';
-import { isSafeCloseError } from '../common/errors';
 import type * as api from '../../types/types';
 import type * as structs from '../../types/structs';
 import { CDPSession } from './cdpSession';
@@ -59,6 +58,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   readonly _serviceWorkers = new Set<Worker>();
   readonly _isChromium: boolean;
   private _harRecorders = new Map<string, { path: string, content: 'embed' | 'attach' | 'omit' | undefined }>();
+  private _closeWasCalled = false;
 
   static from(context: channels.BrowserContextChannel): BrowserContext {
     return (context as any)._object;
@@ -265,20 +265,20 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     await this._updateInterceptionPatterns();
   }
 
-  async _recordIntoHAR(har: string, page: Page | null, options: { url?: string | RegExp, notFound?: 'abort' | 'fallback', update?: boolean } = {}): Promise<void> {
+  async _recordIntoHAR(har: string, page: Page | null, options: { url?: string | RegExp, notFound?: 'abort' | 'fallback', update?: boolean, content?: 'omit' | 'attach' | 'embed' | undefined, mode?: 'minimal' | 'full'} = {}): Promise<void> {
     const { harId } = await this._channel.harStart({
       page: page?._channel,
       options: prepareRecordHarOptions({
         path: har,
-        content: 'attach',
-        mode: 'minimal',
+        content: options.content ?? 'attach',
+        mode: options.mode ?? 'minimal',
         urlFilter: options.url
       })!
     });
-    this._harRecorders.set(harId, { path: har, content: 'attach' });
+    this._harRecorders.set(harId, { path: har, content: options.content ?? 'attach' });
   }
 
-  async routeFromHAR(har: string, options: { url?: string | RegExp, notFound?: 'abort' | 'fallback', update?: boolean } = {}): Promise<void> {
+  async routeFromHAR(har: string, options: { url?: string | RegExp, notFound?: 'abort' | 'fallback', update?: boolean, content?: 'omit' | 'attach' | 'embed' | undefined, mode?: 'minimal' | 'full' } = {}): Promise<void> {
     if (options.update) {
       await this._recordIntoHAR(har, null, options);
       return;
@@ -344,31 +344,28 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   }
 
   async close(): Promise<void> {
-    try {
-      await this._wrapApiCall(async () => {
-        await this._browserType?._onWillCloseContext?.(this);
-        for (const [harId, harParams] of this._harRecorders) {
-          const har = await this._channel.harExport({ harId });
-          const artifact = Artifact.from(har.artifact);
-          // Server side will compress artifact if content is attach or if file is .zip.
-          const isCompressed = harParams.content === 'attach' || harParams.path.endsWith('.zip');
-          const needCompressed = harParams.path.endsWith('.zip');
-          if (isCompressed && !needCompressed) {
-            await artifact.saveAs(harParams.path + '.tmp');
-            await this._connection.localUtils()._channel.harUnzip({ zipFile: harParams.path + '.tmp', harFile: harParams.path });
-          } else {
-            await artifact.saveAs(harParams.path);
-          }
-          await artifact.delete();
+    if (this._closeWasCalled)
+      return;
+    this._closeWasCalled = true;
+    await this._wrapApiCall(async () => {
+      await this._browserType?._onWillCloseContext?.(this);
+      for (const [harId, harParams] of this._harRecorders) {
+        const har = await this._channel.harExport({ harId });
+        const artifact = Artifact.from(har.artifact);
+        // Server side will compress artifact if content is attach or if file is .zip.
+        const isCompressed = harParams.content === 'attach' || harParams.path.endsWith('.zip');
+        const needCompressed = harParams.path.endsWith('.zip');
+        if (isCompressed && !needCompressed) {
+          await artifact.saveAs(harParams.path + '.tmp');
+          await this._connection.localUtils()._channel.harUnzip({ zipFile: harParams.path + '.tmp', harFile: harParams.path });
+        } else {
+          await artifact.saveAs(harParams.path);
         }
-      }, true);
-      await this._channel.close();
-      await this._closedPromise;
-    } catch (e) {
-      if (isSafeCloseError(e))
-        return;
-      throw e;
-    }
+        await artifact.delete();
+      }
+    }, true);
+    await this._channel.close();
+    await this._closedPromise;
   }
 
   async _enableRecorder(params: {

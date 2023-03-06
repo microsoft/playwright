@@ -15,7 +15,7 @@
  */
 
 import { test, expect } from './playwright-test-fixtures';
-const { ZipFile } = require('../../packages/playwright-core/lib/utils');
+import { parseTrace } from '../config/utils';
 import fs from 'fs';
 
 test('should stop tracing with trace: on-first-retry, when not retrying', async ({ runInlineTest }, testInfo) => {
@@ -84,14 +84,12 @@ test('should record api trace', async ({ runInlineTest, server }, testInfo) => {
   expect(result.passed).toBe(2);
   expect(result.failed).toBe(1);
   // One trace file for request context and one for each APIRequestContext
-  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-pass', 'trace.zip'))).toBeTruthy();
-  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-pass', 'trace-1.zip'))).toBeTruthy();
-  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-api-pass', 'trace.zip'))).toBeTruthy();
-  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-api-pass', 'trace-1.zip'))).toBeFalsy();
-  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-fail', 'trace.zip'))).toBeTruthy();
-  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-fail', 'trace-1.zip'))).toBeTruthy();
-  // One leftover global APIRequestContext from 'api pass' test.
-  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-fail', 'trace-2.zip'))).toBeTruthy();
+  const trace1 = await parseTrace(testInfo.outputPath('test-results', 'a-pass', 'trace.zip'));
+  expect(trace1.actions).toEqual(['browserContext.newPage', 'page.goto', 'apiRequestContext.get']);
+  const trace2 = await parseTrace(testInfo.outputPath('test-results', 'a-api-pass', 'trace.zip'));
+  expect(trace2.actions).toEqual(['apiRequestContext.get']);
+  const trace3 = await parseTrace(testInfo.outputPath('test-results', 'a-fail', 'trace.zip'));
+  expect(trace3.actions).toEqual(['browserContext.newPage', 'page.goto', 'apiRequestContext.get', 'expect.toBe']);
 });
 
 
@@ -149,8 +147,8 @@ test('should save sources when requested', async ({ runInlineTest }, testInfo) =
     `,
   }, { workers: 1 });
   expect(result.exitCode).toEqual(0);
-  const resources = await parseTrace(testInfo.outputPath('test-results', 'a-pass', 'trace.zip'));
-  expect([...resources.keys()].filter(f => f.includes('src@'))).toHaveLength(1);
+  const { resources } = await parseTrace(testInfo.outputPath('test-results', 'a-pass', 'trace.zip'));
+  expect([...resources.keys()].filter(name => name.startsWith('resources/src@'))).toHaveLength(1);
 });
 
 test('should not save sources when not requested', async ({ runInlineTest }, testInfo) => {
@@ -173,8 +171,8 @@ test('should not save sources when not requested', async ({ runInlineTest }, tes
     `,
   }, { workers: 1 });
   expect(result.exitCode).toEqual(0);
-  const resources = await parseTrace(testInfo.outputPath('test-results', 'a-pass', 'trace.zip'));
-  expect([...resources.keys()].filter(f => f.includes('src@'))).toHaveLength(0);
+  const { resources } = await parseTrace(testInfo.outputPath('test-results', 'a-pass', 'trace.zip'));
+  expect([...resources.keys()].filter(name => name.startsWith('resources/src@'))).toHaveLength(0);
 });
 
 test('should work in serial mode', async ({ runInlineTest }, testInfo) => {
@@ -226,7 +224,7 @@ test('should not override trace file in afterAll', async ({ runInlineTest, serve
       });
 
       // Another test in the same file to affect after hooks order.
-      test('test 2', async ({}) => {
+      test('test 2', async ({ page }) => {
       });
 
       test.afterAll(async ({ request }) => {
@@ -238,8 +236,10 @@ test('should not override trace file in afterAll', async ({ runInlineTest, serve
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(1);
   expect(result.failed).toBe(1);
-  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-test-1', 'trace.zip'))).toBeTruthy();
-  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-test-1', 'trace-1.zip'))).toBeTruthy();
+  const trace1 = await parseTrace(testInfo.outputPath('test-results', 'a-test-1', 'trace.zip'));
+  expect(trace1.actions).toEqual(['browserContext.newPage', 'page.goto', 'apiRequestContext.get']);
+  const error = await parseTrace(testInfo.outputPath('test-results', 'a-test-2', 'trace.zip')).catch(e => e);
+  expect(error).toBeTruthy();
 });
 
 test('should retain traces for interrupted tests', async ({ runInlineTest }, testInfo) => {
@@ -284,12 +284,3 @@ test('should respect --trace', async ({ runInlineTest }, testInfo) => {
   expect(result.passed).toBe(1);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-test-1', 'trace.zip'))).toBeTruthy();
 });
-
-async function parseTrace(file: string): Promise<Map<string, Buffer>> {
-  const zipFS = new ZipFile(file);
-  const resources = new Map<string, Buffer>();
-  for (const entry of await zipFS.entries())
-    resources.set(entry, await zipFS.read(entry));
-  zipFS.close();
-  return resources;
-}

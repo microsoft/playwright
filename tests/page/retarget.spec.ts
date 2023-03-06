@@ -239,7 +239,7 @@ it('input value retargeting', async ({ page, browserName }) => {
       await expect(target).toHaveValue('bar');
 
       await target.selectText();
-      if (browserName === 'firefox') {
+      if (browserName === 'firefox' || browserName === 'webkit') {
         expect(await page.locator('#target').evaluate((el: HTMLInputElement) => el.selectionStart)).toBe(0);
         expect(await page.locator('#target').evaluate((el: HTMLInputElement) => el.selectionEnd)).toBe(3);
       } else {

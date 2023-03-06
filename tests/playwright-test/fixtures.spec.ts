@@ -32,6 +32,32 @@ test('should work', async ({ runInlineTest }) => {
   expect(results[0].status).toBe('passed');
 });
 
+test('should work with comments inside fixtures', async ({ runInlineTest }) => {
+  const { results } = await runInlineTest({
+    'a.test.ts': `
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend({
+        asdf: async ({}, test) => await test(123),
+        foo: async ({}, test) => await  test('foo'),
+        bar: async ({}, test) => await  test('bar'),
+      });
+
+      test('should use asdf', async ({ // }) {,,, /*
+    asdf, // a comment
+/*/aa* /* */       // line // //
+    /* // */      foo, /* what // */ bar // whoa
+          /* some // comment */ : //
+      /* // /* // */ barbar /* /* /* */
+          }) => {
+        expect(asdf).toBe(123);
+        expect(foo).toBe('foo');
+        expect(barbar).toBe('bar');
+      });
+    `,
+  });
+  expect(results[0].status).toBe('passed');
+});
+
 test('should work with a sync test function', async ({ runInlineTest }) => {
   const { results } = await runInlineTest({
     'a.test.ts': `

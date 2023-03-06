@@ -80,7 +80,7 @@ it('should select textarea', async ({ page, server, browserName }) => {
   const textarea = page.locator('textarea');
   await textarea.evaluate(textarea => (textarea as HTMLTextAreaElement).value = 'some value');
   await textarea.selectText();
-  if (browserName === 'firefox') {
+  if (browserName === 'firefox' || browserName === 'webkit') {
     expect(await textarea.evaluate(el => (el as HTMLTextAreaElement).selectionStart)).toBe(0);
     expect(await textarea.evaluate(el => (el as HTMLTextAreaElement).selectionEnd)).toBe(10);
   } else {
@@ -152,5 +152,22 @@ it('locator.count should work with deleted Map in main world', async ({ page }) 
   await page.evaluate('Map = 1');
   await page.locator('#searchResultTableDiv .x-grid3-row').count();
   await expect(page.locator('#searchResultTableDiv .x-grid3-row')).toHaveCount(0);
+});
+
+it('Locator.locator() and FrameLocator.locator() should accept locator', async ({ page }) => {
+  await page.setContent(`
+    <div><input value=outer></div>
+    <iframe srcdoc="<div><input value=inner></div>"></iframe>
+  `);
+
+  const inputLocator = page.locator('input');
+  expect(await inputLocator.inputValue()).toBe('outer');
+  expect(await page.locator('div').locator(inputLocator).inputValue()).toBe('outer');
+  expect(await page.frameLocator('iframe').locator(inputLocator).inputValue()).toBe('inner');
+  expect(await page.frameLocator('iframe').locator('div').locator(inputLocator).inputValue()).toBe('inner');
+
+  const divLocator = page.locator('div');
+  expect(await divLocator.locator('input').inputValue()).toBe('outer');
+  expect(await page.frameLocator('iframe').locator(divLocator).locator('input').inputValue()).toBe('inner');
 });
 

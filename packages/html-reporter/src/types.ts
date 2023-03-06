@@ -52,13 +52,15 @@ export type TestFileSummary = {
   stats: Stats;
 };
 
+export type TestCaseAnnotation = { type: string, description?: string };
+
 export type TestCaseSummary = {
   testId: string,
   title: string;
   path: string[];
   projectName: string;
   location: Location;
-  annotations: { type: string, description?: string }[];
+  annotations: TestCaseAnnotation[];
   outcome: 'skipped' | 'expected' | 'unexpected' | 'flaky';
   duration: number;
   ok: boolean;

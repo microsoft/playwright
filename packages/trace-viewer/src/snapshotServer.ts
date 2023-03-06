@@ -17,6 +17,7 @@
 import type { SnapshotStorage } from './snapshotStorage';
 import type { URLSearchParams } from 'url';
 import type { SnapshotRenderer } from './snapshotRenderer';
+import type { ResourceSnapshot } from '@trace/snapshot';
 
 type Point = { x: number, y: number };
 
@@ -62,10 +63,14 @@ export class SnapshotServer {
     });
   }
 
-  async serveResource(requestUrl: string, snapshotUrl: string): Promise<Response> {
+  async serveResource(requestUrlAlternatives: string[], snapshotUrl: string): Promise<Response> {
+    let resource: ResourceSnapshot | undefined;
     const snapshot = this._snapshotIds.get(snapshotUrl)!;
-    const url = removeHash(requestUrl);
-    const resource = snapshot?.resourceByUrl(url);
+    for (const requestUrl of requestUrlAlternatives) {
+      resource = snapshot?.resourceByUrl(removeHash(requestUrl));
+      if (resource)
+        break;
+    }
     if (!resource)
       return new Response(null, { status: 404 });
 

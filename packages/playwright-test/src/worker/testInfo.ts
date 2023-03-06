@@ -23,6 +23,7 @@ import type { TestCase } from '../common/test';
 import { TimeoutManager } from './timeoutManager';
 import type { Annotation, FullConfigInternal, FullProjectInternal, Location } from '../common/types';
 import { getContainedPath, normalizeAndSaveAttachment, sanitizeForFilePath, serializeError, trimLongString } from '../util';
+import type * as trace from '@trace/trace';
 
 export type TestInfoErrorState = {
   status: TestStatus,
@@ -36,6 +37,7 @@ interface TestStepInternal {
   category: string;
   canHaveChildren: boolean;
   forceNoParent: boolean;
+  wallTime: number;
   location?: Location;
   refinedTitle?: string;
 }
@@ -48,6 +50,7 @@ export class TestInfoImpl implements TestInfo {
   readonly _startTime: number;
   readonly _startWallTime: number;
   private _hasHardError: boolean = false;
+  readonly _traceEvents: trace.TraceEvent[] = [];
   readonly _onTestFailureImmediateCallbacks = new Map<() => Promise<void>, string>(); // fn -> title
   _didTimeout = false;
   _lastStepId = 0;
@@ -278,8 +281,8 @@ export class TestInfoImpl implements TestInfo {
     this._hasHardError = state.hasHardError;
   }
 
-  async _runAsStep<T>(cb: () => Promise<T>, stepInfo: Omit<TestStepInternal, 'complete'>): Promise<T> {
-    const step = this._addStep(stepInfo);
+  async _runAsStep<T>(cb: () => Promise<T>, stepInfo: Omit<TestStepInternal, 'complete' | 'wallTime'>): Promise<T> {
+    const step = this._addStep({ ...stepInfo, wallTime: Date.now() });
     try {
       const result = await cb();
       step.complete({});

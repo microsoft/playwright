@@ -26,7 +26,6 @@ import type * as channels from '@protocol/channels';
 import { parseError, serializeError } from '../protocol/serializers';
 import { assert, headersObjectToArray, isObject, isRegExp, isString } from '../utils';
 import { mkdirIfNeeded } from '../utils/fileUtils';
-import type { ParsedStackTrace } from '../utils/stackTrace';
 import { Accessibility } from './accessibility';
 import { Artifact } from './artifact';
 import type { BrowserContext } from './browserContext';
@@ -461,7 +460,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     await this._updateInterceptionPatterns();
   }
 
-  async routeFromHAR(har: string, options: { url?: string | RegExp, notFound?: 'abort' | 'fallback', update?: boolean } = {}): Promise<void> {
+  async routeFromHAR(har: string, options: { url?: string | RegExp, notFound?: 'abort' | 'fallback', update?: boolean, content?: 'omit' | 'attach' | 'embed' | undefined, mode?: 'minimal' | 'full'} = {}): Promise<void> {
     if (options.update) {
       await this._browserContext._recordIntoHAR(har, this, options);
       return;
@@ -498,26 +497,24 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return result.binary;
   }
 
-  async _expectScreenshot(customStackTrace: ParsedStackTrace, options: ExpectScreenshotOptions): Promise<{ actual?: Buffer, previous?: Buffer, diff?: Buffer, errorMessage?: string, log?: string[]}> {
-    return this._wrapApiCall(async () => {
-      const mask = options.screenshotOptions?.mask ? options.screenshotOptions?.mask.map(locator => ({
-        frame: locator._frame._channel,
-        selector: locator._selector,
-      })) : undefined;
-      const locator = options.locator ? {
-        frame: options.locator._frame._channel,
-        selector: options.locator._selector,
-      } : undefined;
-      return await this._channel.expectScreenshot({
-        ...options,
-        isNot: !!options.isNot,
-        locator,
-        screenshotOptions: {
-          ...options.screenshotOptions,
-          mask,
-        }
-      });
-    }, false /* isInternal */, customStackTrace);
+  async _expectScreenshot(options: ExpectScreenshotOptions): Promise<{ actual?: Buffer, previous?: Buffer, diff?: Buffer, errorMessage?: string, log?: string[]}> {
+    const mask = options.screenshotOptions?.mask ? options.screenshotOptions?.mask.map(locator => ({
+      frame: locator._frame._channel,
+      selector: locator._selector,
+    })) : undefined;
+    const locator = options.locator ? {
+      frame: options.locator._frame._channel,
+      selector: options.locator._selector,
+    } : undefined;
+    return await this._channel.expectScreenshot({
+      ...options,
+      isNot: !!options.isNot,
+      locator,
+      screenshotOptions: {
+        ...options.screenshotOptions,
+        mask,
+      }
+    });
   }
 
   async title(): Promise<string> {
@@ -535,7 +532,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
       else
         await this._channel.close(options);
     } catch (e) {
-      if (isSafeCloseError(e))
+      if (isSafeCloseError(e) && !options.runBeforeUnload)
         return;
       throw e;
     }

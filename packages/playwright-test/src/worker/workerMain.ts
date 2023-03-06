@@ -233,7 +233,8 @@ export class WorkerMain extends ProcessRunner {
       // In theory, we should run above code without any errors.
       // However, in the case we screwed up, or loadTestFile failed in the worker
       // but not in the runner, let's do a fatal error.
-      this.unhandledError(e);
+      this._fatalErrors.push(serializeError(e));
+      this._stop();
     } finally {
       const donePayload: DonePayload = {
         fatalErrors: this._fatalErrors,
@@ -328,7 +329,8 @@ export class WorkerMain extends ProcessRunner {
         category: 'hook',
         title: 'Before Hooks',
         canHaveChildren: true,
-        forceNoParent: true
+        forceNoParent: true,
+        wallTime: Date.now(),
       });
 
       // Note: wrap all preparation steps together, because failure/skip in any of them
@@ -393,7 +395,8 @@ export class WorkerMain extends ProcessRunner {
       category: 'hook',
       title: 'After Hooks',
       canHaveChildren: true,
-      forceNoParent: true
+      forceNoParent: true,
+      wallTime: Date.now(),
     });
     let firstAfterHooksError: TestInfoError | undefined;
 

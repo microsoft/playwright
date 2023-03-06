@@ -19,7 +19,6 @@
   line-height: 24px;
   white-space: pre;
   overflow: auto;
-  padding: 6px 0;
   user-select: text;
 }
 
@@ -93,4 +92,14 @@
 .call-value.function,
 .call-value.object {
   color: var(--blue);
+}
+
+.call-error-message {
+  font-family: var(--vscode-editor-font-family);
+  font-weight: var(--vscode-editor-font-weight);
+  font-size: var(--vscode-editor-font-size);
+  background-color: var(--vscode-inputValidation-errorBackground);
+  white-space: pre;
+  overflow: auto;
+  padding: 5px;
 }

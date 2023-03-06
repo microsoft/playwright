@@ -17,6 +17,7 @@
 import path from 'path';
 import { parseStackTraceLine } from '../utilsBundle';
 import { isUnderTest } from './';
+import type { StackFrame } from '@protocol/channels';
 
 export function rewriteErrorMessage<E extends Error>(e: E, newMessage: string): E {
   const lines: string[] = (e.stack?.split('\n') || []).filter(l => l.startsWith('    at '));
@@ -28,21 +29,12 @@ export function rewriteErrorMessage<E extends Error>(e: E, newMessage: string): 
 }
 
 const CORE_DIR = path.resolve(__dirname, '..', '..');
-const CORE_LIB = path.join(CORE_DIR, 'lib');
-const CORE_SRC = path.join(CORE_DIR, 'src');
 const COVERAGE_PATH = path.join(CORE_DIR, '..', '..', 'tests', 'config', 'coverage.js');
 
-const stackIgnoreFilters = [
-  (frame: StackFrame) => frame.file.startsWith(CORE_DIR),
+const internalStackPrefixes = [
+  CORE_DIR,
 ];
-export const addStackIgnoreFilter = (filter: (frame: StackFrame) => boolean) => stackIgnoreFilters.push(filter);
-
-export type StackFrame = {
-  file: string,
-  line?: number,
-  column?: number,
-  function?: string,
-};
+export const addInternalStackPrefix = (prefix: string) => internalStackPrefixes.push(prefix);
 
 export type ParsedStackTrace = {
   allFrames: StackFrame[];
@@ -51,66 +43,50 @@ export type ParsedStackTrace = {
   apiName: string | undefined;
 };
 
-export function captureRawStack(): string {
+export type RawStack = string[];
+
+export function captureRawStack(): RawStack {
   const stackTraceLimit = Error.stackTraceLimit;
   Error.stackTraceLimit = 30;
   const error = new Error();
-  const stack = error.stack!;
+  const stack = error.stack || '';
   Error.stackTraceLimit = stackTraceLimit;
-  return stack;
+  return stack.split('\n');
 }
 
-export function isInternalFileName(file: string, functionName?: string): boolean {
-  // Node 16+ has node:internal.
-  if (file.startsWith('internal') || file.startsWith('node:'))
-    return true;
-  // EventEmitter.emit has 'events.js' file.
-  if (file === 'events.js' && functionName?.endsWith('emit'))
-    return true;
-  return false;
-}
-
-export function captureStackTrace(rawStack?: string): ParsedStackTrace {
+export function captureLibraryStackTrace(rawStack?: RawStack): ParsedStackTrace {
   const stack = rawStack || captureRawStack();
 
   const isTesting = isUnderTest();
   type ParsedFrame = {
     frame: StackFrame;
     frameText: string;
-    inCore: boolean;
+    isPlaywrightLibrary: boolean;
   };
-  let parsedFrames = stack.split('\n').map(line => {
-    const { frame, fileName } = parseStackTraceLine(line);
-    if (!frame || !frame.file || !fileName)
+  let parsedFrames = stack.map(line => {
+    const frame = parseStackTraceLine(line);
+    if (!frame || !frame.file)
       return null;
-    if (!process.env.PWDEBUGIMPL && isInternalFileName(frame.file, frame.function))
+    if (!process.env.PWDEBUGIMPL && isTesting && frame.file.includes(COVERAGE_PATH))
       return null;
-    if (!process.env.PWDEBUGIMPL && isTesting && fileName.includes(COVERAGE_PATH))
-      return null;
-    const inCore = fileName.startsWith(CORE_LIB) || fileName.startsWith(CORE_SRC);
+    const isPlaywrightLibrary = frame.file.startsWith(CORE_DIR);
     const parsed: ParsedFrame = {
-      frame: {
-        file: fileName,
-        line: frame.line,
-        column: frame.column,
-        function: frame.function,
-      },
+      frame,
       frameText: line,
-      inCore
+      isPlaywrightLibrary
     };
     return parsed;
   }).filter(Boolean) as ParsedFrame[];
 
   let apiName = '';
   const allFrames = parsedFrames;
-  // Deepest transition between non-client code calling into client code
-  // is the api entry.
+
+  // Deepest transition between non-client code calling into client
+  // code is the api entry.
   for (let i = 0; i < parsedFrames.length - 1; i++) {
-    if (parsedFrames[i].inCore && !parsedFrames[i + 1].inCore) {
-      const frame = parsedFrames[i].frame;
-      apiName = normalizeAPIName(frame.function);
-      if (!process.env.PWDEBUGIMPL)
-        parsedFrames = parsedFrames.slice(i + 1);
+    const parsedFrame = parsedFrames[i];
+    if (parsedFrame.isPlaywrightLibrary && !parsedFrames[i + 1].isPlaywrightLibrary) {
+      apiName = apiName || normalizeAPIName(parsedFrame.frame.function);
       break;
     }
   }
@@ -124,11 +100,11 @@ export function captureStackTrace(rawStack?: string): ParsedStackTrace {
     return match[1].toLowerCase() + match[2];
   }
 
-  // Hide all test runner and library frames in the user stack (event handlers produce them).
-  parsedFrames = parsedFrames.filter((f, i) => {
+  // This is for the inspector so that it did not include the test runner stack frames.
+  parsedFrames = parsedFrames.filter(f => {
     if (process.env.PWDEBUGIMPL)
       return true;
-    if (stackIgnoreFilters.some(filter => filter(f.frame)))
+    if (internalStackPrefixes.some(prefix => f.frame.file.startsWith(prefix)))
       return false;
     return true;
   });
@@ -148,3 +124,8 @@ export function splitErrorMessage(message: string): { name: string, message: str
     message: separationIdx !== -1 && separationIdx + 2 <= message.length ? message.substring(separationIdx + 2) : message,
   };
 }
+
+export type ExpectZone = {
+  title: string;
+  wallTime: number;
+};

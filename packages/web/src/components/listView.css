@@ -21,7 +21,7 @@
   position: relative;
   user-select: none;
   overflow: auto;
-  outline: none;
+  outline: 1px solid transparent;
 }
 
 .list-view-entry {
@@ -39,18 +39,26 @@
   background-color: var(--vscode-list-inactiveSelectionBackground);
 }
 
+.list-view-entry.selected {
+  z-index: 10;
+}
+
 .list-view-entry.highlighted {
   background-color: var(--vscode-list-inactiveSelectionBackground);
 }
 
-.list-view-content:focus .list-view-entry.selected {
+.list-view-content:focus .list-view-entry.selected:not(.error) {
   background-color: var(--vscode-list-activeSelectionBackground);
   color: var(--vscode-list-activeSelectionForeground);
   outline: 1px solid var(--vscode-focusBorder);
 }
 
-.list-view-content:focus .list-view-entry.selected * {
-  color: var(--vscode-list-activeSelectionForeground);
+.list-view-content:focus .list-view-entry.error.selected {
+  outline: 1px solid var(--vscode-inputValidation-errorBorder);
+}
+
+.list-view-content:focus .list-view-entry.selected .codicon {
+  color: var(--vscode-list-activeSelectionForeground) !important;
 }
 
 .list-view-empty {
@@ -58,4 +66,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.list-view-entry.error {
+  color: var(--vscode-list-errorForeground);
+  background-color: var(--vscode-inputValidation-errorBackground);
 }

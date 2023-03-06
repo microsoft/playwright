@@ -19,7 +19,7 @@ import * as React from 'react';
 export const Expandable: React.FunctionComponent<React.PropsWithChildren<{
   title: JSX.Element | string,
   setExpanded: Function,
-  expanded: Boolean,
+  expanded: boolean,
   style?: React.CSSProperties,
 }>> = ({ title, children, setExpanded, expanded, style }) => {
   return <div style={{ ...style, display: 'flex', flexDirection: 'column' }}>

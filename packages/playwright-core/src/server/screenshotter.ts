@@ -261,7 +261,7 @@ export class Screenshotter {
       return cleanup;
 
     await Promise.all((options.mask || []).map(async ({ frame, selector }) => {
-      const pair = await frame.resolveFrameForSelectorNoWait(selector);
+      const pair = await frame.selectors.resolveFrameForSelector(selector);
       if (pair)
         framesToParsedSelectors.set(pair.frame, pair.info.parsed);
     }));

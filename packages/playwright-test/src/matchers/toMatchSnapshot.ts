@@ -25,7 +25,7 @@ import type { PageScreenshotOptions } from 'playwright-core/types/types';
 import {
   addSuffixToFilePath, serializeError, sanitizeForFilePath,
   trimLongString, callLogText,
-  expectTypes, captureStackTrace  } from '../util';
+  expectTypes  } from '../util';
 import { colors } from 'playwright-core/lib/utilsBundle';
 import fs from 'fs';
 import path from 'path';
@@ -329,7 +329,6 @@ export async function toHaveScreenshot(
     maxDiffPixelRatio: undefined,
   };
 
-  const customStackTrace = captureStackTrace(`expect.${this.isNot ? 'not.' : ''}toHaveScreenshot`);
   const hasSnapshot = fs.existsSync(helper.snapshotPath);
   if (this.isNot) {
     if (!hasSnapshot)
@@ -338,7 +337,7 @@ export async function toHaveScreenshot(
     // Having `errorMessage` means we timed out while waiting
     // for screenshots not to match, so screenshots
     // are actually the same in the end.
-    const isDifferent = !(await page._expectScreenshot(customStackTrace, {
+    const isDifferent = !(await page._expectScreenshot({
       expected: await fs.promises.readFile(helper.snapshotPath),
       isNot: true,
       locator,
@@ -359,7 +358,7 @@ export async function toHaveScreenshot(
   if (!hasSnapshot) {
     // Regenerate a new screenshot by waiting until two screenshots are the same.
     const timeout = currentExpectTimeout(helper.allOptions);
-    const { actual, previous, diff, errorMessage, log } = await page._expectScreenshot(customStackTrace, {
+    const { actual, previous, diff, errorMessage, log } = await page._expectScreenshot({
       expected: undefined,
       isNot: false,
       locator,
@@ -381,7 +380,7 @@ export async function toHaveScreenshot(
   // - regular matcher (i.e. not a `.not`)
   // - perhaps an 'all' flag to update non-matching screenshots
   const expected = await fs.promises.readFile(helper.snapshotPath);
-  const { actual, diff, errorMessage, log } = await page._expectScreenshot(customStackTrace, {
+  const { actual, diff, errorMessage, log } = await page._expectScreenshot({
     expected,
     isNot: false,
     locator,

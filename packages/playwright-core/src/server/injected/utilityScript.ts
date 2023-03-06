@@ -70,5 +70,3 @@ export class UtilityScript {
     return safeJson(value);
   }
 }
-
-module.exports = UtilityScript;

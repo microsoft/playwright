@@ -122,7 +122,7 @@ export class ExecutionContext extends SdkObject {
       (() => {
         const module = {};
         ${utilityScriptSource.source}
-        return new module.exports();
+        return new (module.exports.UtilityScript())();
       })();`;
       this._utilityScriptPromise = this._raceAgainstContextDestroyed(this._delegate.rawEvaluateHandle(source).then(objectId => new JSHandle(this, 'object', undefined, objectId)));
     }

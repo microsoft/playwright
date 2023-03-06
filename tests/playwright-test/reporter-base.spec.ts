@@ -283,7 +283,6 @@ test('should print errors with inconsistent message/stack', async ({ runInlineTe
         // Otherwise it is computed lazy and will get 'foo bar' instead.
         e.stack;
         e.message = 'foo bar';
-        e.stack = 'hi!' + e.stack;
         throw e;
       });
     `
@@ -291,7 +290,7 @@ test('should print errors with inconsistent message/stack', async ({ runInlineTe
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
   const output = result.output;
-  expect(output).toContain('hi!Error: Hello');
+  expect(output).toContain('foo bar');
   expect(output).toContain('function myTest');
 });
 

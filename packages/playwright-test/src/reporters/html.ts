@@ -210,7 +210,7 @@ class HtmlBuilder {
     for (const projectJson of rawReports) {
       for (const file of projectJson.suites) {
         const fileName = file.location!.file;
-        const fileId = file.fileId;
+        const fileId = file.fileId!;
         let fileEntry = data.get(fileId);
         if (!fileEntry) {
           fileEntry = {

@@ -110,14 +110,13 @@ export const WorkbenchLoader: React.FunctionComponent<{
           params.set('trace', url);
           if (uploadedTraceNames.length)
             params.set('traceFileName', uploadedTraceNames[i]);
-          const response = await fetch(`context?${params.toString()}`);
+          const response = await fetch(`contexts?${params.toString()}`);
           if (!response.ok) {
             setTraceURLs([]);
             setProcessingErrorMessage((await response.json()).error);
             return;
           }
-          const contextEntry = await response.json() as ContextEntry;
-          contextEntries.push(contextEntry);
+          contextEntries.push(...(await response.json()));
         }
         navigator.serviceWorker.removeEventListener('message', swListener);
         const model = new MultiTraceModel(contextEntries);
@@ -207,7 +206,7 @@ export const Workbench: React.FunctionComponent<{
       />
     </div>
     <SplitView sidebarSize={300} orientation='horizontal' sidebarIsFirst={true}>
-      <SplitView sidebarSize={300} orientation={view === 'embedded' ? 'vertical' : 'horizontal'}>
+      <SplitView sidebarSize={300} orientation='vertical'>
         <SnapshotTab action={activeAction} sdkLanguage={model.sdkLanguage || 'javascript'} testIdAttributeName={model.testIdAttributeName || 'data-testid'} />
         <TabbedPane tabs={tabs} selectedTab={selectedPropertiesTab} setSelectedTab={setSelectedPropertiesTab}/>
       </SplitView>
@@ -254,7 +253,7 @@ export const emptyModel = new MultiTraceModel([]);
 export async function loadSingleTraceFile(url: string): Promise<MultiTraceModel> {
   const params = new URLSearchParams();
   params.set('trace', url);
-  const response = await fetch(`context?${params.toString()}`);
-  const contextEntry = await response.json() as ContextEntry;
-  return new MultiTraceModel([contextEntry]);
+  const response = await fetch(`contexts?${params.toString()}`);
+  const contextEntries = await response.json() as ContextEntry[];
+  return new MultiTraceModel(contextEntries);
 }

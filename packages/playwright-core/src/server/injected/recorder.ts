@@ -487,7 +487,7 @@ interface Embedder {
   __pw_refreshOverlay(): void;
 }
 
-class PollingRecorder implements RecorderDelegate {
+export class PollingRecorder implements RecorderDelegate {
   private _recorder: Recorder;
   private _embedder: Embedder;
   private _pollRecorderModeTimer: NodeJS.Timeout | undefined;
@@ -535,4 +535,4 @@ class PollingRecorder implements RecorderDelegate {
   }
 }
 
-module.exports = PollingRecorder;
+export default PollingRecorder;

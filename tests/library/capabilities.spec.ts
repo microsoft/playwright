@@ -168,15 +168,14 @@ it('should not crash on storage.getDirectory()', async ({ page, server, browserN
   }
 });
 
-it('navigator.clipboard should be present', async ({ page, server, browserName, browserMajorVersion }) => {
+it('navigator.clipboard should be present', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/18901' });
   await page.goto(server.EMPTY_PAGE);
   expect(await page.evaluate(() => navigator.clipboard)).toBeTruthy();
 });
 
-it('should set CloseEvent.wasClean to false when the server terminates a WebSocket connection', async ({ page, server, browserName, platform }) => {
+it('should set CloseEvent.wasClean to false when the server terminates a WebSocket connection', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/12353' });
-  it.fixme(browserName === 'webkit' && platform === 'win32');
   server.onceWebSocketConnection(socket => {
     socket.terminate();
   });
@@ -185,4 +184,27 @@ it('should set CloseEvent.wasClean to false when the server terminates a WebSock
     ws.addEventListener('close', error => resolve(error.wasClean));
   }), server.PORT);
   expect(wasClean).toBe(false);
+});
+
+it('serviceWorker should intercept document request', async ({ page, server, browserName }) => {
+  server.setRoute('/sw.js', (req, res) => {
+    res.setHeader('Content-Type', 'application/javascript');
+    res.end(`
+      self.addEventListener('fetch', event => {
+        event.respondWith(new Response('intercepted'));
+      });
+    `);
+  });
+  await page.goto(server.EMPTY_PAGE);
+  await page.evaluate(() => navigator.serviceWorker.register('/sw.js'));
+  await page.reload();
+  expect(await page.textContent('body')).toBe('intercepted');
+});
+
+it('webkit should define window.safari', async ({ page, server, browserName }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/21037' });
+  it.skip(browserName !== 'webkit');
+  await page.goto(server.EMPTY_PAGE);
+  const defined = await page.evaluate(() => !!(window as any).safari);
+  expect(defined).toBeTruthy();
 });

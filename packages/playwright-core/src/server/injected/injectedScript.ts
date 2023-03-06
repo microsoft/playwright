@@ -380,7 +380,7 @@ export class InjectedScript {
     (() => {
       const module = {};
       ${source}
-      return module.exports;
+      return module.exports.default();
     })()`);
     return new constrFunction(this, params);
   }
@@ -1504,5 +1504,3 @@ function deepEquals(a: any, b: any): boolean {
 
   return false;
 }
-
-module.exports = InjectedScript;

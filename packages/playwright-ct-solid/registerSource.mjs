@@ -42,7 +42,7 @@ function createChild(child) {
  * @param {Component} component
  */
 function createComponent(component) {
-  if (typeof component === 'string')
+  if (typeof component !== 'object' || Array.isArray(component))
     return component;
 
   let Component = registry.get(component.type);

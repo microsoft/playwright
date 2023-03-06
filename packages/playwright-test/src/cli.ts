@@ -26,6 +26,7 @@ import { showHTMLReport } from './reporters/html';
 import { baseFullConfig, builtInReporters, ConfigLoader, defaultTimeout, kDefaultConfigFiles, resolveConfigFile } from './common/configLoader';
 import type { TraceMode } from './common/types';
 import type { ConfigCLIOverrides } from './common/ipc';
+import type { FullResult } from '../reporter';
 
 export function addTestCommands(program: Command) {
   addTestCommand(program);
@@ -166,7 +167,13 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   config._internal.passWithNoTests = !!opts.passWithNoTests;
 
   const runner = new Runner(config);
-  const status = process.env.PWTEST_WATCH ? await runner.watchAllTests() : await runner.runAllTests();
+  let status: FullResult['status'];
+  if (process.env.PWTEST_UI)
+    status = await runner.uiAllTests();
+  else if (process.env.PWTEST_WATCH)
+    status = await runner.watchAllTests();
+  else
+    status = await runner.runAllTests();
   await stopProfiling(undefined);
   if (status === 'interrupted')
     process.exit(130);

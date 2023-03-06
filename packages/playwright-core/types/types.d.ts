@@ -3556,6 +3556,10 @@ export interface Page {
    * @param options
    */
   routeFromHAR(har: string, options?: {
+    content?: "omit"|"embed"|"attach";
+
+    mode?: "full"|"minimal";
+
     /**
      * - If set to 'abort' any request not found in the HAR file will be aborted.
      * - If set to 'fallback' missing requests will be sent to the network.
@@ -7159,6 +7163,8 @@ export interface Frame {
    *
    * **NOTE** Usage of the [History API](https://developer.mozilla.org/en-US/docs/Web/API/History_API) to change the URL
    * is considered a navigation.
+   * @deprecated This method is inherently racy, please use
+   * [frame.waitForURL(url[, options])](https://playwright.dev/docs/api/class-frame#frame-wait-for-url) instead.
    * @param options
    */
   waitForNavigation(options?: {
@@ -8057,6 +8063,20 @@ export interface BrowserContext {
    * @param options
    */
   routeFromHAR(har: string, options?: {
+    /**
+     * Optional setting to control resource content management. If `omit` is specified, content is not persisted. If
+     * `attach` is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is
+     * specified, content is stored inline the HAR file
+     */
+    content?: "omit"|"embed"|"attach";
+
+    /**
+     * When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page,
+     * cookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to
+     * `minimal`.
+     */
+    mode?: "full"|"minimal";
+
     /**
      * - If set to 'abort' any request not found in the HAR file will be aborted.
      * - If set to 'fallback' falls through to the next route handler in the handler chain.
@@ -11372,10 +11392,10 @@ export interface Locator {
    * method.
    *
    * [Learn more about locators](https://playwright.dev/docs/locators).
-   * @param selector A selector to use when resolving DOM element.
+   * @param selectorOrLocator A selector or locator to use when resolving DOM element.
    * @param options
    */
-  locator(selector: string, options?: {
+  locator(selectorOrLocator: string|Locator, options?: {
     /**
      * Matches elements containing an element that matches an inner locator. Inner locator is queried against the outer
      * one. For example, `article` that has `text=Playwright` matches `<article><div>Playwright</div></article>`.
@@ -12942,7 +12962,7 @@ export interface ElectronApplication {
    * [electronApplication.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-electronapplication#electron-application-evaluate)
    * returns `undefined`. Playwright also supports transferring some additional values that are not serializable by
    * `JSON`: `-0`, `NaN`, `Infinity`, `-Infinity`.
-   * @param pageFunction Function to be evaluated in the worker context.
+   * @param pageFunction Function to be evaluated in the main Electron process.
    * @param arg Optional argument to pass to `pageFunction`.
    */
   evaluate<R, Arg>(pageFunction: PageFunctionOn<ElectronType, Arg, R>, arg: Arg): Promise<R>;
@@ -12961,7 +12981,7 @@ export interface ElectronApplication {
    * [electronApplication.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-electronapplication#electron-application-evaluate)
    * returns `undefined`. Playwright also supports transferring some additional values that are not serializable by
    * `JSON`: `-0`, `NaN`, `Infinity`, `-Infinity`.
-   * @param pageFunction Function to be evaluated in the worker context.
+   * @param pageFunction Function to be evaluated in the main Electron process.
    * @param arg Optional argument to pass to `pageFunction`.
    */
   evaluate<R>(pageFunction: PageFunctionOn<ElectronType, void, R>, arg?: any): Promise<R>;
@@ -12982,7 +13002,7 @@ export interface ElectronApplication {
    * returns a [Promise], then
    * [electronApplication.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-electronapplication#electron-application-evaluate-handle)
    * would wait for the promise to resolve and return its value.
-   * @param pageFunction Function to be evaluated in the worker context.
+   * @param pageFunction Function to be evaluated in the main Electron process.
    * @param arg Optional argument to pass to `pageFunction`.
    */
   evaluateHandle<R, Arg>(pageFunction: PageFunctionOn<ElectronType, Arg, R>, arg: Arg): Promise<SmartHandle<R>>;
@@ -13002,7 +13022,7 @@ export interface ElectronApplication {
    * returns a [Promise], then
    * [electronApplication.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-electronapplication#electron-application-evaluate-handle)
    * would wait for the promise to resolve and return its value.
-   * @param pageFunction Function to be evaluated in the worker context.
+   * @param pageFunction Function to be evaluated in the main Electron process.
    * @param arg Optional argument to pass to `pageFunction`.
    */
   evaluateHandle<R>(pageFunction: PageFunctionOn<ElectronType, void, R>, arg?: any): Promise<SmartHandle<R>>;
@@ -16949,10 +16969,10 @@ export interface FrameLocator {
    * method.
    *
    * [Learn more about locators](https://playwright.dev/docs/locators).
-   * @param selector A selector to use when resolving DOM element.
+   * @param selectorOrLocator A selector or locator to use when resolving DOM element.
    * @param options
    */
-  locator(selector: string, options?: {
+  locator(selectorOrLocator: string|Locator, options?: {
     /**
      * Matches elements containing an element that matches an inner locator. Inner locator is queried against the outer
      * one. For example, `article` that has `text=Playwright` matches `<article><div>Playwright</div></article>`.

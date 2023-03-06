@@ -16,6 +16,9 @@
 
 import type { Frame, Page } from 'playwright-core';
 import { ZipFile } from '../../packages/playwright-core/lib/utils/zipFile';
+import type { StackFrame } from '../../packages/protocol/src/channels';
+import { parseClientSideCallMetadata } from '../../packages/trace/src/traceUtils';
+import type { ActionTraceEvent } from '../../packages/trace/src/trace';
 
 export async function attachFrame(page: Page, frameId: string, url: string): Promise<Frame> {
   const handle = await page.evaluateHandle(async ({ frameId, url }) => {
@@ -26,20 +29,20 @@ export async function attachFrame(page: Page, frameId: string, url: string): Pro
     await new Promise(x => frame.onload = x);
     return frame;
   }, { frameId, url });
-  return handle.asElement().contentFrame();
+  return handle.asElement().contentFrame() as Promise<Frame>;
 }
 
 export async function detachFrame(page: Page, frameId: string) {
   await page.evaluate(frameId => {
-    document.getElementById(frameId).remove();
+    document.getElementById(frameId)!.remove();
   }, frameId);
 }
 
 export async function verifyViewport(page: Page, width: number, height: number) {
   // `expect` may clash in test runner tests if imported eagerly.
   const { expect } = require('@playwright/test');
-  expect(page.viewportSize().width).toBe(width);
-  expect(page.viewportSize().height).toBe(height);
+  expect(page.viewportSize()!.width).toBe(width);
+  expect(page.viewportSize()!.height).toBe(height);
   expect(await page.evaluate('window.innerWidth')).toBe(width);
   expect(await page.evaluate('window.innerHeight')).toBe(height);
 }
@@ -91,34 +94,47 @@ export function suppressCertificateWarning() {
   };
 }
 
-export async function parseTrace(file: string): Promise<{ events: any[], resources: Map<string, Buffer>, actions: string[] }> {
+export async function parseTrace(file: string): Promise<{ events: any[], resources: Map<string, Buffer>, actions: string[], stacks: Map<string, StackFrame[]> }> {
   const zipFS = new ZipFile(file);
   const resources = new Map<string, Buffer>();
   for (const entry of await zipFS.entries())
     resources.set(entry, await zipFS.read(entry));
   zipFS.close();
 
-  const events = [];
-  for (const line of resources.get('trace.trace').toString().split('\n')) {
-    if (line)
-      events.push(JSON.parse(line));
+  const events: any[] = [];
+  for (const traceFile of [...resources.keys()].filter(name => name.endsWith('.trace'))) {
+    for (const line of resources.get(traceFile)!.toString().split('\n')) {
+      if (line)
+        events.push(JSON.parse(line));
+    }
   }
-  for (const line of resources.get('trace.network').toString().split('\n')) {
-    if (line)
-      events.push(JSON.parse(line));
+
+  for (const networkFile of [...resources.keys()].filter(name => name.endsWith('.network'))) {
+    for (const line of resources.get(networkFile)!.toString().split('\n')) {
+      if (line)
+        events.push(JSON.parse(line));
+    }
   }
+
+  const stacks: Map<string, StackFrame[]> = new Map();
+  for (const stacksFile of [...resources.keys()].filter(name => name.endsWith('.stacks'))) {
+    for (const [key, value] of parseClientSideCallMetadata(JSON.parse(resources.get(stacksFile)!.toString())))
+      stacks.set(key, value);
+  }
+
   return {
     events,
     resources,
-    actions: eventsToActions(events)
+    actions: eventsToActions(events),
+    stacks,
   };
 }
 
-function eventsToActions(events: any[]): string[] {
+function eventsToActions(events: ActionTraceEvent[]): string[] {
   // Trace viewer only shows non-internal non-tracing actions.
-  return events.filter(e => e.type === 'action' && !e.metadata.internal && !e.metadata.method.startsWith('tracing'))
-      .sort((a, b) => a.metadata.startTime - b.metadata.startTime)
-      .map(e => e.metadata.apiName);
+  return events.filter(e => e.type === 'action')
+      .sort((a, b) => a.startTime - b.startTime)
+      .map(e => e.apiName);
 }
 
 export async function parseHar(file: string): Promise<Map<string, Buffer>> {
