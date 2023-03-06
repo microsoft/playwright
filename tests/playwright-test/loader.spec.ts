@@ -641,3 +641,25 @@ test('should support node imports', async ({ runInlineTest, nodeVersion }) => {
   expect(result.passed).toBe(1);
   expect(result.exitCode).toBe(0);
 });
+
+test('should complain when one test file imports another', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      import { foo } from './b.test';
+
+      test('pass1', async () => {
+        expect(foo).toBe('foo');
+      });
+    `,
+    'b.test.ts': `
+      import { test, expect } from '@playwright/test';
+      export const foo = 'foo';
+
+      test('pass2', async () => {
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain(`test file "a.test.ts" should not import test file "b.test.ts"`);
+});

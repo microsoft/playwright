@@ -4377,6 +4377,7 @@ might return multiple quads for inline nodes.
     export type setAuthCredentialsParameters = {
       username?: string;
       password?: string;
+      origin?: string;
     }
     export type setAuthCredentialsReturnValue = {
     }
@@ -7012,13 +7013,6 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     export type setTimeZoneReturnValue = {
     }
     /**
-     * Clears browser memory cache.
-     */
-    export type clearMemoryCacheParameters = {
-    }
-    export type clearMemoryCacheReturnValue = {
-    }
-    /**
      * Enables touch events on platforms that lack them.
      */
     export type setTouchEmulationEnabledParameters = {
@@ -7624,6 +7618,17 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
       uuid: string;
     }
     export type cancelDownloadReturnValue = {
+    }
+    /**
+     * Clears browser memory cache.
+     */
+    export type clearMemoryCacheParameters = {
+      /**
+       * Browser context id.
+       */
+      browserContextId: ContextID;
+    }
+    export type clearMemoryCacheReturnValue = {
     }
   }
   
@@ -9369,7 +9374,6 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Page.setEmulatedMedia": Page.setEmulatedMediaParameters;
     "Page.setForcedColors": Page.setForcedColorsParameters;
     "Page.setTimeZone": Page.setTimeZoneParameters;
-    "Page.clearMemoryCache": Page.clearMemoryCacheParameters;
     "Page.setTouchEmulationEnabled": Page.setTouchEmulationEnabledParameters;
     "Page.snapshotNode": Page.snapshotNodeParameters;
     "Page.snapshotRect": Page.snapshotRectParameters;
@@ -9402,6 +9406,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Playwright.setLanguages": Playwright.setLanguagesParameters;
     "Playwright.setDownloadBehavior": Playwright.setDownloadBehaviorParameters;
     "Playwright.cancelDownload": Playwright.cancelDownloadParameters;
+    "Playwright.clearMemoryCache": Playwright.clearMemoryCacheParameters;
     "Runtime.parse": Runtime.parseParameters;
     "Runtime.evaluate": Runtime.evaluateParameters;
     "Runtime.awaitPromise": Runtime.awaitPromiseParameters;
@@ -9678,7 +9683,6 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Page.setEmulatedMedia": Page.setEmulatedMediaReturnValue;
     "Page.setForcedColors": Page.setForcedColorsReturnValue;
     "Page.setTimeZone": Page.setTimeZoneReturnValue;
-    "Page.clearMemoryCache": Page.clearMemoryCacheReturnValue;
     "Page.setTouchEmulationEnabled": Page.setTouchEmulationEnabledReturnValue;
     "Page.snapshotNode": Page.snapshotNodeReturnValue;
     "Page.snapshotRect": Page.snapshotRectReturnValue;
@@ -9711,6 +9715,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Playwright.setLanguages": Playwright.setLanguagesReturnValue;
     "Playwright.setDownloadBehavior": Playwright.setDownloadBehaviorReturnValue;
     "Playwright.cancelDownload": Playwright.cancelDownloadReturnValue;
+    "Playwright.clearMemoryCache": Playwright.clearMemoryCacheReturnValue;
     "Runtime.parse": Runtime.parseReturnValue;
     "Runtime.evaluate": Runtime.evaluateReturnValue;
     "Runtime.awaitPromise": Runtime.awaitPromiseReturnValue;

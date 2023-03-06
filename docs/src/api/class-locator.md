@@ -959,7 +959,7 @@ var locator = page.FrameLocator("iframe").GetByText("Submit");
 await locator.ClickAsync();
 ```
 
-### param: Locator.frameLocator.selector = %%-find-selector-%%
+### param: Locator.frameLocator.selectorOrLocator = %%-find-selector-%%
 * since: v1.17
 
 ## async method: Locator.getAttribute
@@ -1389,7 +1389,7 @@ var banana = await page.GetByRole(AriaRole.Listitem).Last(1);
 
 %%-template-locator-locator-%%
 
-### param: Locator.locator.selector = %%-find-selector-%%
+### param: Locator.locator.selectorOrLocator = %%-find-selector-or-locator-%%
 * since: v1.14
 
 ### option: Locator.locator.-inline- = %%-locator-options-list-v1.14-%%

@@ -289,6 +289,23 @@ export class HarTracer {
       return;
     const page = request.frame()?._page;
 
+    // In WebKit security details and server ip are reported in Network.loadingFinished, so we populate
+    // it here to not hang in case of long chunked responses, see https://github.com/microsoft/playwright/issues/21182.
+    if (!this._options.omitServerIP) {
+      this._addBarrier(page || request.serviceWorker(), response.serverAddr().then(server => {
+        if (server?.ipAddress)
+          harEntry.serverIPAddress = server.ipAddress;
+        if (server?.port)
+          harEntry._serverPort = server.port;
+      }));
+    }
+    if (!this._options.omitSecurityDetails) {
+      this._addBarrier(page || request.serviceWorker(), response.securityDetails().then(details => {
+        if (details)
+          harEntry._securityDetails = details;
+      }));
+    }
+
     const httpVersion = response.httpVersion();
     harEntry.request.httpVersion = httpVersion;
     harEntry.response.httpVersion = httpVersion;
@@ -435,20 +452,6 @@ export class HarTracer {
       this._computeHarEntryTotalTime(harEntry);
     }
 
-    if (!this._options.omitServerIP) {
-      this._addBarrier(page || request.serviceWorker(), response.serverAddr().then(server => {
-        if (server?.ipAddress)
-          harEntry.serverIPAddress = server.ipAddress;
-        if (server?.port)
-          harEntry._serverPort = server.port;
-      }));
-    }
-    if (!this._options.omitSecurityDetails) {
-      this._addBarrier(page || request.serviceWorker(), response.securityDetails().then(details => {
-        if (details)
-          harEntry._securityDetails = details;
-      }));
-    }
     this._recordRequestOverrides(harEntry, request);
     this._addBarrier(page || request.serviceWorker(), request.rawRequestHeaders().then(headers => {
       this._recordRequestHeadersAndCookies(harEntry, headers);

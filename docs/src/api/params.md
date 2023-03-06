@@ -134,6 +134,11 @@ A selector to query for.
 
 A selector to use when resolving DOM element.
 
+## find-selector-or-locator
+- `selectorOrLocator` <[string]|[Locator]>
+
+A selector or locator to use when resolving DOM element.
+
 ## wait-for-selector-state
 - `state` <[WaitForSelectorState]<"attached"|"detached"|"visible"|"hidden">>
 

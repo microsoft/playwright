@@ -48,9 +48,10 @@ test('should script application', async ({ electronApp }) => {
   expect(appPath).toBe(path.resolve(__dirname));
 });
 
-test('should preserve args', async ({ electronApp }) => {
-  const argv = await electronApp.evaluate(async () => process.argv);
-  expect(argv.slice(1)).toEqual([expect.stringContaining(path.join('electron', 'electron-app.js'))]);
+test('should preserve args', async ({ launchElectronApp }) => {
+  const electronApp = await launchElectronApp('electron-app-args.js', ['foo', 'bar']);
+  const argv = await electronApp.evaluate(async () => globalThis.argv);
+  expect(argv).toEqual([expect.stringContaining(path.join('dist', 'electron')), expect.stringContaining(path.join('electron', 'electron-app-args.js')), 'foo', 'bar']);
 });
 
 test('should return windows', async ({ electronApp, newWindow }) => {
@@ -118,7 +119,7 @@ test('should return browser window', async ({ launchElectronApp }) => {
 });
 
 test('should bypass csp', async ({ launchElectronApp, server }) => {
-  const app = await launchElectronApp('electron-app.js', { bypassCSP: true });
+  const app = await launchElectronApp('electron-app.js', [], { bypassCSP: true });
   await app.evaluate(electron => {
     const window = new electron.BrowserWindow({
       width: 800,
@@ -167,7 +168,7 @@ test('should return same browser window for browser view pages', async ({ launch
 });
 
 test('should record video', async ({ launchElectronApp }, testInfo) => {
-  const app = await launchElectronApp('electron-window-app.js', {
+  const app = await launchElectronApp('electron-window-app.js', [], {
     recordVideo: { dir: testInfo.outputPath('video') }
   });
   const page = await app.firstWindow();

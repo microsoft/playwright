@@ -35,11 +35,15 @@ const peerDependencies = ['electron', 'react', 'react-dom', '@zip.js/zip.js'];
 const depsCache = {};
 
 async function checkDeps() {
-  await innerCheckDeps(path.join(packagesDir, 'recorder'), true, true);
-  await innerCheckDeps(path.join(packagesDir, 'trace-viewer'), true, true);
+  await innerCheckDeps(path.join(packagesDir, 'protocol'));
+  await innerCheckDeps(path.join(packagesDir, 'trace'));
+  await innerCheckDeps(path.join(packagesDir, 'web'));
+  await innerCheckDeps(path.join(packagesDir, 'html-reporter'));
+  await innerCheckDeps(path.join(packagesDir, 'recorder'));
+  await innerCheckDeps(path.join(packagesDir, 'trace-viewer'));
 
-  const corePackageJson = await innerCheckDeps(path.join(packagesDir, 'playwright-core'), true, true);
-  const testPackageJson = await innerCheckDeps(path.join(packagesDir, 'playwright-test'), true, true);
+  const corePackageJson = await innerCheckDeps(path.join(packagesDir, 'playwright-core'));
+  const testPackageJson = await innerCheckDeps(path.join(packagesDir, 'playwright-test'));
 
   let hasVersionMismatch = false;
   for (const [key, value] of Object.entries(corePackageJson.dependencies || {})) {
@@ -52,12 +56,17 @@ async function checkDeps() {
   process.exit(hasVersionMismatch ? 1 : 0);
 }
 
-async function innerCheckDeps(root, checkDepsFile, checkPackageJson) {
-  console.log('Testing', path.relative(packagesDir, root));
+async function innerCheckDeps(root) {
+  console.log('Checking DEPS for ' + path.relative(packagesDir, root));
   const deps = new Set();
   const src = path.join(root, 'src');
 
-  const packageJSON = require(path.join(root, 'package.json'));
+  let packageJSON;
+  try {
+    packageJSON = require(path.join(root, 'package.json'));
+  } catch {
+  }
+
   const program = ts.createProgram({
     options: {
       allowJs: true,
@@ -70,7 +79,7 @@ async function innerCheckDeps(root, checkDepsFile, checkPackageJson) {
   const errors = [];
   sourceFiles.filter(x => !x.fileName.includes('node_modules')).map(x => visit(x, x.fileName));
 
-  if (checkDepsFile && errors.length) {
+  if (errors.length) {
     for (const error of errors)
       console.log(error);
     console.log(`--------------------------------------------------------`);
@@ -80,7 +89,7 @@ async function innerCheckDeps(root, checkDepsFile, checkPackageJson) {
     process.exit(1);
   }
 
-  if (checkPackageJson) {
+  if (packageJSON) {
     for (const dep of peerDependencies)
       deps.delete(dep);
     for (const dep of deps) {
@@ -90,13 +99,13 @@ async function innerCheckDeps(root, checkDepsFile, checkPackageJson) {
     }
     for (const dep of Object.keys(packageJSON.dependencies || {}))
       deps.delete(dep);
-  
+
     if (deps.size) {
       console.log('Dependencies are not declared in package.json:');
       for (const dep of deps)
         console.log(`  ${dep}`);
       process.exit(1);
-    }  
+    }
   }
 
   return packageJSON;
@@ -126,7 +135,7 @@ async function innerCheckDeps(root, checkDepsFile, checkPackageJson) {
             importPath = importPath + '.d.ts';
         }
 
-        if (checkDepsFile && !allowImport(fileName, importPath))
+        if (!allowImport(fileName, importPath))
           errors.push(`Disallowed import ${path.relative(root, importPath)} in ${path.relative(root, fileName)}`);
         return;
       }
@@ -136,7 +145,7 @@ async function innerCheckDeps(root, checkDepsFile, checkPackageJson) {
       else
         deps.add(importName.split('/')[0]);
 
-      if (checkDepsFile && !allowExternalImport(importName, packageJSON))
+      if (!allowExternalImport(importName, packageJSON))
         errors.push(`Disallowed external dependency ${importName} from ${path.relative(root, fileName)}`);
     }
     ts.forEachChild(node, x => visit(x, fileName));
@@ -201,7 +210,8 @@ async function innerCheckDeps(root, checkDepsFile, checkPackageJson) {
       if (error.code !== 'MODULE_NOT_FOUND')
         throw error;
     }
-
+    if (!packageJSON)
+      return false;
     const match = importName.match(/(@[\w-]+\/)?([^/]+)/);
     const dependency = match[1] ? match[1] + '/' + match[2] : match[2];
     return !!(packageJSON.dependencies || {})[dependency];

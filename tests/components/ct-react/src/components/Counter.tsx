@@ -1,4 +1,4 @@
-import { useRef } from "react"
+import { useLayoutEffect, useRef, useState } from "react"
 
  type CounterProps = {
    count?: number;
@@ -9,11 +9,17 @@ import { useRef } from "react"
  let _remountCount = 1;
 
  export default function Counter(props: CounterProps) {
-   const remountCount = useRef(_remountCount++);
+   const [remountCount] = useState(_remountCount);
+   const didMountRef = useRef(false)
+   useLayoutEffect(() => {
+     if (!didMountRef.current) {
+       didMountRef.current = true;
+       _remountCount++;
+     }
+   }, [])
    return <div onClick={() => props.onClick?.('hello')}>
      <div id="props">{ props.count }</div>
-     <div id="remount-count">{ remountCount.current }</div>
+     <div id="remount-count">{ remountCount }</div>
      { props.children }
    </div>
  }
- 

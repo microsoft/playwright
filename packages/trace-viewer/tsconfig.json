@@ -22,6 +22,10 @@
       "@recorder/*": ["../recorder/src/*"],
       "@trace/*": ["../trace/src/*"],
       "@web/*": ["../web/src/*"],
+      // Resolving type dependencies will start processing types in @playwright/test
+      // which in turn will start parsing the files and hence stumble upon the core
+      // imports.
+      "playwright-core/lib/*": ["../playwright-core/src/*"],
     },
     "useUnknownInCatchVariables": false,
   },

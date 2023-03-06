@@ -117,14 +117,10 @@ export const SnapshotTab: React.FunctionComponent<{
     className='snapshot-tab'
     tabIndex={0}
     onKeyDown={event => {
-      if (event.key === 'ArrowRight')
-        setSnapshotIndex(Math.min(snapshotIndex + 1, snapshots.length - 1));
       if (event.key === 'Escape') {
         if (isInspecting)
           setIsInspecting(false);
       }
-      if (event.key === 'ArrowLeft')
-        setSnapshotIndex(Math.max(snapshotIndex - 1, 0));
     }}
   >
     <InspectModeController
