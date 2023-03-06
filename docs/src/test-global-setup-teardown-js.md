@@ -3,7 +3,7 @@ id: test-global-setup-teardown
 title: "Global setup and teardown"
 ---
 
-There are two ways to configure global setup and teardown: using a global setup file and setting it in the config under [`globalSetup`](#configure-globalsetup-and-globalteardown) or using [project dependencies](#project-dependencies). With project dependencies, you define a project that runs before all other projects. This is the recommended way to configure global setup as with Project dependencies your HTML report will show the global setup, trace viewer will record a trace of the setup, the inspector works and fixtures can be used.
+There are two ways to configure global setup and teardown: using a global setup file and setting it in the config under [`globalSetup`](#configure-globalsetup-and-globalteardown) or using [project dependencies](#project-dependencies). With project dependencies, you define a project that runs before all other projects. This is the recommended way to configure global setup as with Project dependencies your HTML report will show the global setup, trace viewer will record a trace of the setup and fixtures can be used.
 
 ## Project Dependencies
 
