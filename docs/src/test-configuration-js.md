@@ -3,9 +3,11 @@ id: test-configuration
 title: "Test Options with use"
 ---
 
-In addition to configuring the test runner you can also configure the [Browser] or [BrowserContext], [Emulation](#emulation-options), [Network](#network-options) and [Recording](#recording-options). These options are passed to the `use: {}` object in the Playwright config.
+In addition to configuring the test runner you can also configure [Emulation](#emulation-options), [Network](#network-options) and [Recording](#recording-options) for the [Browser] or [BrowserContext],. These options are passed to the `use: {}` object in the Playwright config.
 
 ### Basic Options
+
+Set the base URL and storage state for all tests:
 
 ```js
 import { defineConfig } from '@playwright/test';
@@ -29,7 +31,7 @@ export default defineConfig({
 
 ### Emulation Options
 
-See our [Emulation](./emulation.md) guide to learn more.
+With Playwright you can emulate a real device such as a mobile phone or tablet. See our [guide on projects](./test-projects.md) for more info on emulating devices. You can also emulate the `"geolocation"`, `"locale"` and `"timezone"` for all tests or for a specific test as well as set the `"permissions"` to show notifications or change the `"colorScheme"`. See our [Emulation](./emulation.md) guide to learn more.
 
 
 ```js
@@ -60,12 +62,12 @@ export default defineConfig({
 
 | Option | Description |
 | :- | :- |
-| [`property: TestOptions.colorScheme`] | Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'` |
-| [`property: TestOptions.geolocation`] | Context geolocation. |
-| [`property: TestOptions.locale`] | [Emulates](./emulation.md) the user locale, for example `en-GB`, `de-DE`, etc. |
-| [`property: TestOptions.permissions`] | A list of permissions to grant to all pages in the context. |
-| [`property: TestOptions.timezoneId`] | Changes the timezone of the context. |
-| [`property: TestOptions.viewport`] | Viewport used for all pages in the context. |
+| [`property: TestOptions.colorScheme`] | [Emulates](./emulation.md#color-scheme-and-media) `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'` |
+| [`property: TestOptions.geolocation`] | Context [geolocation](./emulation.md#geolocation). |
+| [`property: TestOptions.locale`] | [Emulates](./emulation.md#locale--timezone) the user locale, for example `en-GB`, `de-DE`, etc. |
+| [`property: TestOptions.permissions`] | A list of [permissions](./emulation.md#permissions) to grant to all pages in the context. |
+| [`property: TestOptions.timezoneId`] | Changes the [timezone](./emulation.md#locale--timezone) of the context. |
+| [`property: TestOptions.viewport`] | [Viewport](./emulation.md#viewport) used for all pages in the context. |
 
 ### Network Options
 
@@ -144,9 +146,9 @@ export default defineConfig({
   
 | Option | Description |
 | :- | :- |
-| [`property: TestOptions.screenshot`] | Capture screenshots of your test. Options include `'off'`, `'on'` and `'only-on-failure'` |
+| [`property: TestOptions.screenshot`] | Capture [screenshots](./screenshots.md) of your test. Options include `'off'`, `'on'` and `'only-on-failure'` |
 | [`property: TestOptions.trace`] | Playwright can produce test traces while running the tests. Later on, you can view the trace and get detailed information about Playwright execution by opening [Trace Viewer](./trace-viewer.md). Options include: `'off'`, `'on'`, `'retain-on-failure'` and `'on-first-retry'`  |
-| [`property: TestOptions.video`] | Playwright can record videos for your tests. Options include: `'off'`, `'on'`, `'retain-on-failure'` and `'on-first-retry'` |
+| [`property: TestOptions.video`] | Playwright can record [videos](./videos.md) for your tests. Options include: `'off'`, `'on'`, `'retain-on-failure'` and `'on-first-retry'` |
 
 
 ### Other Options
@@ -184,7 +186,7 @@ export default defineConfig({
 | [`property: TestOptions.bypassCSP`] |Toggles bypassing Content-Security-Policy. Useful when CSP includes the production origin. Defaults to `false`. |
 | [`property: TestOptions.channel`] | Browser channel to use. [Learn more](./browsers.md) about different browsers and channels. |
 | [`property: TestOptions.headless`] | Whether to run the browser in headless mode meaning no browser is shown when running tests. Defaults to `true`. |
-| [`property: TestOptions.testIdAttribute`] | Changes the default `data-testid` attribute used by Playwright locators. |
+| [`property: TestOptions.testIdAttribute`] | Changes the default [`data-testid` attribute](./locators.md#locate-by-test-id) used by Playwright locators. |
 
 ### More browser and context options
 
