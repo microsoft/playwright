@@ -15,7 +15,7 @@ export default defineConfig({
     // Base URL to use in actions like `await page.goto('/')`.
     baseURL: 'http://127.0.0.1:3000'
 
-    // populates context with given storage state.
+    // Populates context with given storage state.
     storageState: 'state.json',
   },
 });
@@ -40,7 +40,7 @@ export default defineConfig({
     // Emulates `'prefers-colors-scheme'` media feature.
     colorScheme: 'dark',
 
-    // Context geolocation
+    // Context geolocation.
     geolocation: { longitude: 12.492507, latitude: 41.889938 },
 
     // Emulates the user locale.
@@ -116,7 +116,7 @@ export default defineConfig({
 
 
 :::note
-You don't have to configure anything to mock network requests. Just define a custom [Route] that mocks network for a browser context. See our network mocking guide to learn more.
+You don't have to configure anything to mock network requests. Just define a custom [Route] that mocks the network for a browser context. See our [network mocking guide](./network.md) to learn more.
 :::
 
 ### Recording Options
@@ -133,10 +133,10 @@ export default defineConfig({
     // Capture screenshot after each test failure. 
     screenshot: 'only-on-failure'
 
-    // Record trace only when retrying a test for the first time. 
+    // Record trace only when retrying a test for the first time.
     trace: 'on-first-retry',
 
-    // Record video only when retrying a test for the first time. 
+    // Record video only when retrying a test for the first time.
     video: 'on-first-retry'
   },
 });
@@ -162,16 +162,16 @@ export default defineConfig({
     // Name of the browser that runs tests. For example `chromium`, `firefox`, `webkit`.
     browserName: 'chromium',
 
-    // toggles bypassing Content-Security-Policy
+    // Toggles bypassing Content-Security-Policy.
     bypassCSP: true,
 
-    // channel to use, for example "chrome", "chrome-beta", "msedge", "msedge-beta"
+    // Channel to use, for example "chrome", "chrome-beta", "msedge", "msedge-beta".
     channel: 'chrome',
 
-    // run browser in headless mode
+    // Run browser in headless mode.
     headless: false,
 
-    // change the default data-testid attribute
+    // Change the default data-testid attribute.
     testIdAttribute: 'pw-test-id',
   },
 });
