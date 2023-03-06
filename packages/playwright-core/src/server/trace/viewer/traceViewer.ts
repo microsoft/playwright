@@ -26,10 +26,10 @@ import { createPlaywright } from '../../playwright';
 import { ProgressController } from '../../progress';
 import type { Page } from '../../page';
 
-type Options = { headless?: boolean, host?: string, port?: number, watchMode?: boolean };
+type Options = { app?: string, headless?: boolean, host?: string, port?: number };
 
 export async function showTraceViewer(traceUrls: string[], browserName: string, options?: Options): Promise<Page> {
-  const { headless = false, host, port, watchMode } = options || {};
+  const { headless = false, host, port, app } = options || {};
   for (const traceUrl of traceUrls) {
     if (!traceUrl.startsWith('http://') && !traceUrl.startsWith('https://') && !fs.existsSync(traceUrl)) {
       // eslint-disable-next-line no-console
@@ -89,8 +89,6 @@ export async function showTraceViewer(traceUrls: string[], browserName: string, 
   await syncLocalStorageWithSettings(page, 'traceviewer');
 
   const params = traceUrls.map(t => `trace=${t}`);
-  if (watchMode)
-    params.push('watchMode=true');
   if (isUnderTest()) {
     params.push('isUnderTest=true');
     page.on('close', () => context.close(serverSideCallMetadata()).catch(() => {}));
@@ -99,6 +97,6 @@ export async function showTraceViewer(traceUrls: string[], browserName: string, 
   }
 
   const searchQuery = params.length ? '?' + params.join('&') : '';
-  await page.mainFrame().goto(serverSideCallMetadata(), urlPrefix + `/trace/index.html${searchQuery}`);
+  await page.mainFrame().goto(serverSideCallMetadata(), urlPrefix + `/trace/${app || 'index.html'}${searchQuery}`);
   return page;
 }
