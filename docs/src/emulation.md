@@ -10,34 +10,11 @@ With Playwright you can test your app on any browser as well as emulate a real d
 
 Playwright comes with a [registry of device parameters](https://github.com/microsoft/playwright/blob/main/packages/playwright-core/src/server/deviceDescriptorsSource.json) using [`property: Playwright.devices`] for selected desktop, tablet and mobile devices. It can be used to simulate browser behavior for a specific device such as user agent, screen size, viewport and if it has touch enabled. All tests will run with the specified device parameters. 
 
-```js tab=js-ts
-// playwright.config.ts
+```js tab=js-js
+// playwright.config.ts/js
 import { defineConfig, devices } from '@playwright/test'; // import devices
 
 export default defineConfig({
-  projects: [
-    {
-      name: 'chromium',
-      use: {
-        ...devices['Desktop Chrome'],
-      },
-    },
-    {
-      name: 'Mobile Safari',
-      use: {
-        ...devices['iPhone 12'],
-      },
-    },
-  ],
-});
-```
-
-```js tab=js-js
-// playwright.config.js
-// @ts-check
-const { devices, defineConfig } = require('@playwright/test'); // require devices
-
-module.exports = defineConfig({
   projects: [
     {
       name: 'chromium',
@@ -119,24 +96,24 @@ class Program
 
 The viewport is included in the device but you can override it for some tests with [`method: Page.setViewportSize`].
 
-```js tab=js-ts
-import { test, expect } from '@playwright/test';
+```js
+// playwright.config.ts/js
+import { defineConfig } from '@playwright/test';
 
-// Run tests in this file with portrait-like viewport.
-test.use({
-  viewport: { width: 600, height: 900 },
-});
-
-test('my portrait test', async ({ page }) => {
-  // ...
+export default defineConfig({
+  use: {
+    // Viewport used for all pages in the context.
+    viewport: { width: 1280, height: 720 },
+  },
 });
 ```
 
 ```js tab=js-js
-const { test, expect } = require('@playwright/test');
+// example.spec.ts/js
+import { test, expect } from '@playwright/test';
 
 // Run tests in this file with portrait-like viewport.
-test.use({ 
+test.use({
   viewport: { width: 600, height: 900 },
 });
 
@@ -162,21 +139,9 @@ const context = await browser.newContext({
 ```
 The same works inside a describe block.
 
-```js tab=js-ts
+```js
+// example.spec.ts/js
 import { test, expect } from '@playwright/test';
-
-test.describe('locale block', () => {
-  // Run tests in this describe block with portrait-like viewport.
-  test.use({ viewport: { width: 600, height: 900 } });
-
-  test('my portrait test', async ({ page }) => {
-    // ...
-  });
-});
-```
-
-```js tab=js-js
-const { test, expect } = require('@playwright/test');
 
 test.describe('locale block', () => {
   // Run tests in this describe block with portrait-like viewport.
@@ -254,21 +219,24 @@ await using var context = await browser.NewContextAsync(new()
 
 Emulate the user Locale and Timezone which can be set globally for all tests in the config and then overridden for particular tests.
 
-```js tab=js-ts
-import { test, expect } from '@playwright/test';
+```js
+// playwright.config.ts/js
+import { defineConfig } from '@playwright/test';
 
-test.use({ 
-  locale: 'de-DE',
-  timezoneId: 'Europe/Berlin',
-});
+export default defineConfig({
+  use: {
+    // Emulates the user locale.
+    locale: 'en-GB',
 
-test('my test for de lang in Berlin timezone', async ({ page }) => {
-  // ...
+    // Emulates the user timezone.
+    timezoneId: 'Europe/Paris',
+  },
 });
 ```
 
 ```js tab=js-js
-const { test, expect } = require('@playwright/test');
+// example.spec.ts/js
+import { test, expect } from '@playwright/test';
 
 test.use({ 
   locale: 'de-DE',
@@ -323,21 +291,13 @@ await using var context = await browser.NewContextAsync(new()
 Allow app to show system notifications.
 
 ```js tab=js-js
-// @ts-check
+// playwright.config.ts/js
+import { defineConfig } from '@playwright/test';
 
-const { defineConfig } = require('@playwright/test');
-module.exports = defineConfig({
-  use: {
-    permissions: ['notifications'],
-  },
-});
-```
-
-```js tab=js-ts
-import type { PlaywrightTestConfig } from '@playwright/test';
 export default defineConfig({
   use: {
-    permissions: ['notifications'],
+    // Grants specified permissions to the browser context.
+    permissions: 'notifications',
   },
 });
 ```
@@ -365,64 +325,10 @@ context = browser.new_context(
 )
 ```
 
-Allow test to request current location.
-
-```js tab=js-js
-// @ts-check
-
-const { defineConfig } = require('@playwright/test');
-module.exports = defineConfig({
-  use: {
-    permissions: ['geolocation'],
-  },
-});
-```
-
-```js tab=js-ts
-import type { defineConfig } from '@playwright/test';
-export default defineConfig({
-  use: {
-    permissions: ['geolocation'],
-  },
-});
-```
-
-```js tab=js-library
-await context.grantPermissions(['geolocation']);
-```
-
-```java
-context.grantPermissions(Arrays.asList("geolocation"));
-```
-
-```python async
-await context.grant_permissions(['geolocation'])
-```
-
-```python sync
-context.grant_permissions(['geolocation'])
-```
-
-```csharp
-await context.GrantPermissionsAsync(new[] { "geolocation" });
-```
-
 Allow notifications for a specific domain.
 
 ```js tab=js-js
-const { test } = require('@playwright/test');
-
-test.beforeEach(async ({ context }) => {
-  // Runs before each test and signs in each page.
-  await context.grantPermissions(['notifications'], { origin: 'https://skype.com' });
-});
-
-test('first', async ({ page }) => {
-  // page has notifications permission for https://skype.com.
-});
-```
-
-```js tab=js-ts
+// example.spec.ts/js
 import { test } from '@playwright/test';
 
 test.beforeEach(async ({ context }) => {
@@ -480,23 +386,24 @@ await context.ClearPermissionsAsync();
 ```
 ## Geolocation
 
-Create a test with `"geolocation"` permissions granted and geolocation set to a specific area.
+Grant `"geolocation"` permissions and set geolocation to a specific area.
 
-```js tab=js-ts
-import { test, expect } from '@playwright/test';
+```js
+// playwright.config.ts/js
+import { defineConfig } from '@playwright/test';
 
-test.use({ 
-  geolocation: { longitude: 48.858455, latitude: 2.294474 },
-  permissions: ['geolocation'],
-});
-
-test('my test with geolocation', async ({ page }) => {
-  // ...
+export default defineConfig({
+  use: {
+    // Context geolocation
+    geolocation: { longitude: 12.492507, latitude: 41.889938 },
+    permissions: ['geolocation'],
+  },
 });
 ```
 
 ```js tab=js-js
-const { test, expect } = require('@playwright/test');
+// example.spec.ts/js
+import { test, expect } from '@playwright/test';
 
 test.use({ 
   geolocation: { longitude: 48.858455, latitude: 2.294474 },
@@ -546,22 +453,9 @@ await using var context = await browser.NewContextAsync(new()
 
 Change the location later:
 
-```js tab=js-ts
-import { test, expect } from '@playwright/test';
-
-test.use({ 
-  geolocation: { longitude: 48.858455, latitude: 2.294474 },
-  permissions: ['geolocation'],
-});
-
-test('my test with geolocation', async ({ page, context }) => {
-  // overwrite the location for this test
-  await context.setGeolocation({ longitude: 29.979097, latitude: 31.134256 });
-});
-```
-
 ```js tab=js-js
-const { test, expect } = require('@playwright/test');
+// example.spec.ts/js
+import { test, expect } from '@playwright/test';
 
 test.use({ 
   geolocation: { longitude: 48.858455, latitude: 2.294474 },
@@ -597,22 +491,21 @@ await context.SetGeolocationAsync(new Geolocation() { Longitude = 48.858455f, La
 **Note** you can only change geolocation for all pages in the context.
 ## Color Scheme and Media
 
-Create a test that emulates the users `"colorScheme"`. Supported values are 'light', 'dark', 'no-preference'. You can also emulate the media type with [`method: Page.emulateMedia`].
+Emulate the users `"colorScheme"`. Supported values are 'light', 'dark', 'no-preference'. You can also emulate the media type with [`method: Page.emulateMedia`].
 
-```js tab=js-ts
-import { test, expect } from '@playwright/test';
+```js
+import { defineConfig } from '@playwright/test';
 
-test.use({ 
-  colorScheme: 'dark' // or 'light'
-});
-
-test('my test with dark mode', async ({ page }) => {
-  // ...
+export default defineConfig({
+  use: {
+    colorScheme: 'dark',
+  },
 });
 ```
 
 ```js tab=js-js
-const { test, expect } = require('@playwright/test');
+// example.spec.ts/js
+import { test, expect } from '@playwright/test';
 
 test.use({ 
   colorScheme: 'dark' // or 'light'
@@ -722,20 +615,11 @@ await page.EmulateMediaAsync(new()
 
 The User Agent is included in the device and therefore you  will rarely need to change it however if you do need to test a different user agent you can override it with the `userAgent` property.
 
-```js tab=js-ts
+```js tab=js-js
+// example.spec.ts/js
 import { test, expect } from '@playwright/test';
 
 test.use({ userAgent: 'My user agent'});
-
-test('my user agent test', async ({ page }) => {
-  // ...
-});
-```
-
-```js tab=js-js
-const { test, expect } = require('@playwright/test');
-
-test.use({ userAgent: 'My user agent' });
 
 test('my user agent test', async ({ page }) => {
   // ...
@@ -772,18 +656,9 @@ var context = await browser.NewContextAsync(new BrowserNewContextOptions { UserA
 
 Emulate a user scenario where JavaScript is disabled.
 
-```js tab=js-ts
-import { test, expect } from '@playwright/test';
-
-test.use({ javaScriptEnabled: false });
-
-test('test with no JavaScript', async ({ page }) => {
-  // ...
-});
-```
-
 ```js tab=js-js
-const { test, expect } = require('@playwright/test');
+// example.spec.ts/js
+import { test, expect } from '@playwright/test';
 
 test.use({ javaScriptEnabled: false });
 
