@@ -594,7 +594,7 @@ module.exports = defineConfig({
 import { defineConfig } from '@playwright/test';
 import { MyOptions } from './my-test';
 
-export default defineConfig({
+export default defineConfig<MyOptions>({
   projects: [
     {
       name: 'shopping',
