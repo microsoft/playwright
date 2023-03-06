@@ -44,11 +44,17 @@ export default defineConfig({
     /* Test against branded browsers. */
     {
       name: 'Microsoft Edge',
-      use: { ...devices['Desktop Edge'], channel: 'msedge' },
+      use: { 
+        ...devices['Desktop Edge'], 
+        channel: 'msedge' 
+      },
     },
     {
       name: 'Google Chrome',
-      use: { ...devices['Desktop Chrome'], channel: 'chrome' },
+      use: { 
+        ...devices['Desktop Chrome'], 
+        channel: 'chrome' 
+      },
     },
   ],
 });
@@ -103,12 +109,16 @@ export default defineConfig({
   projects: [
     {
       name: 'staging',
-      baseURL: 'staging.example.com',
+      use: {
+        baseURL: 'staging.example.com',
+      }
       retries: 2,
     },
     {
       name: 'production',
-      baseURL: 'production.example.com',
+      use: {
+        baseURL: 'production.example.com',
+      }
       retries: 0,
     },
   ],
@@ -158,17 +168,17 @@ export default defineConfig({
     },
     {
       name: 'chromium',
-      use: devices['Desktop Chrome'],
+      use: { ...devices['Desktop Chrome'] },
       dependencies: ['setup'],
     },
     {
       name: 'firefox',
-      use: devices['Desktop Firefox'],
+      use: { ...devices['Desktop Firefox'] },
       dependencies: ['setup'],
     },
     {
       name: 'webkit',
-      use: devices['Desktop Safari'],
+      use: { ...devices['Desktop Safari'] },
       dependencies: ['setup'],
     },
   ],
