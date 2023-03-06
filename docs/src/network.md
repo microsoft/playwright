@@ -17,7 +17,7 @@ import { test, expect } from '@playwright/test';
 
 test.beforeEach(async ({ context }) => {
   // Block any css requests for each test in this file.
-  await context.route(/.css/, route => route.abort());
+  await context.route(/.css$/, route => route.abort());
 });
 
 test('loads page without css', async ({ page }) => {
@@ -26,7 +26,7 @@ test('loads page without css', async ({ page }) => {
 });
 ```
 
-Alternatively, you can use [`method: Page.route`] to mock network in a single test.
+Alternatively, you can use [`method: Page.route`] to mock network in a single page.
 
 ```js
 // example.spec.ts
