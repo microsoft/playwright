@@ -1,6 +1,6 @@
 ---
 id: trace-viewer
-title: "Trace Viewer"
+title: "Trace viewer"
 ---
 
 
