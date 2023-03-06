@@ -3,7 +3,46 @@ id: test-global-setup-teardown
 title: "Global setup and teardown"
 ---
 
-To set something up once before running all tests, use `globalSetup` option in the [configuration file](#configuration-object). The global setup file must export a single function that takes a config object. This function will be run once before all the tests.
+There are two ways to configure global setup and teardown: using a global setup file and setting it in the config under [`globalSetup`](#configure-globalsetup-and-globalteardown) or using [project dependencies](#project-dependencies). With project dependencies, you define a project that runs before all other projects. This is the recommended way to configure global setup as with Project dependencies your HTML report will show the global setup, trace viewer will record a trace of the setup and fixtures can be used.
+
+## Project Dependencies
+
+[Project dependencies](./api/class-testproject#test-project-dependencies) are a list of projects that need to run before the tests in another project run. They can be useful for configuring the global setup actions so that one project depends on this running first. Using dependencies allows global setup to produce traces and other artifacts.
+
+In this example the chromium, firefox and webkit projects depend on the setup project.
+
+```js
+// playwright.config.ts
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  projects: [
+    {
+      name: 'setup',
+      testMatch: /global.setup\.ts/,
+    },
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
+      dependencies: ['setup'],
+    },
+    {
+      name: 'firefox',
+      use: { ...devices['Desktop Firefox'] },
+      dependencies: ['setup'],
+    },
+    {
+      name: 'webkit',
+      use: { ...devices['Desktop Safari'] },
+      dependencies: ['setup'],
+    },
+  ],
+});
+
+```
+## Configure globalSetup and globalTeardown
+
+You can use the `globalSetup` option in the [configuration file](#configuration-object) to set something up once before running all tests. The global setup file must export a single function that takes a config object. This function will be run once before all the tests.
 
 Similarly, use `globalTeardown` to run something once after all the tests. Alternatively, let `globalSetup` return a function that will be used as a global teardown. You can pass data such as port number, authentication tokens, etc. from your global setup to your tests using environment variables.
 
@@ -19,7 +58,7 @@ export default defineConfig({
 });
 ```
 
-## Example
+### Example
 
 Here is a global setup example that authenticates once and reuses authentication state in tests. It uses the `baseURL` and `storageState` options from the configuration file.
 
