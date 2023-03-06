@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import type { CSSComplexSelector, CSSSimpleSelector, CSSComplexSelectorList, CSSFunctionArgument } from '../isomorphic/cssParser';
-import { customCSSNames } from '../isomorphic/selectorParser';
+import type { CSSComplexSelector, CSSSimpleSelector, CSSComplexSelectorList, CSSFunctionArgument } from '../../utils/isomorphic/cssParser';
+import { customCSSNames } from '../../utils/isomorphic/selectorParser';
 import { isElementVisible, parentElementOrShadowHost } from './domUtils';
 import { type LayoutSelectorName, layoutSelectorScore } from './layoutSelectorUtils';
 import { elementMatchesText, elementText, shouldSkipForTextMatching, type ElementText } from './selectorUtils';

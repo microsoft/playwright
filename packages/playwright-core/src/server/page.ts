@@ -40,7 +40,7 @@ import type { CallMetadata } from './instrumentation';
 import { SdkObject } from './instrumentation';
 import type { Artifact } from './artifact';
 import type { TimeoutOptions } from '../common/types';
-import { isInvalidSelectorError } from './isomorphic/selectorParser';
+import { isInvalidSelectorError } from '../utils/isomorphic/selectorParser';
 import { parseEvaluationResultValue, source } from './isomorphic/utilityScriptSerializers';
 import type { SerializedValue } from './isomorphic/utilityScriptSerializers';
 

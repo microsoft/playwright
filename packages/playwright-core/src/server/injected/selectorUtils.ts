@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { type AttributeSelectorPart } from '../isomorphic/selectorParser';
+import { type AttributeSelectorPart } from '../../utils/isomorphic/selectorParser';
 
 export function matchesComponentAttribute(obj: any, attr: AttributeSelectorPart) {
   for (const token of attr.jsonPath) {

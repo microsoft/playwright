@@ -20,11 +20,12 @@ import { maybeFindValidator, ValidationError, type ValidatorContext } from '../p
 import { debugLogger } from '../common/debugLogger';
 import type { ExpectZone, ParsedStackTrace } from '../utils/stackTrace';
 import { captureRawStack, captureLibraryStackTrace } from '../utils/stackTrace';
-import { isUnderTest } from '../utils';
+import { isString, isUnderTest } from '../utils';
 import { zones } from '../utils/zones';
 import type { ClientInstrumentation } from './clientInstrumentation';
 import type { Connection } from './connection';
 import type { Logger } from './types';
+import { asLocator } from '../utils/isomorphic/locatorGenerators';
 
 type Listener = (...args: any[]) => void;
 
@@ -228,8 +229,18 @@ function renderCallWithParams(apiName: string, params: any) {
   const paramsArray = [];
   if (params) {
     for (const name of paramsToRender) {
-      if (params[name])
-        paramsArray.push(params[name]);
+      if (!(name in params))
+        continue;
+      let value;
+      if (name === 'selector' && isString(params[name]) && params[name].startsWith('internal:')) {
+        const getter = asLocator('javascript', params[name], false, true);
+        apiName = apiName.replace(/^locator\./, 'locator.' + getter + '.');
+        apiName = apiName.replace(/^page\./, 'page.' + getter + '.');
+        apiName = apiName.replace(/^frame\./, 'frame.' + getter + '.');
+      } else {
+        value = params[name];
+        paramsArray.push(value);
+      }
     }
   }
   const paramsText = paramsArray.length ? '(' + paramsArray.join(', ') + ')' : '';
