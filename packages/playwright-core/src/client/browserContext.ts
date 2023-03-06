@@ -149,7 +149,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     if (page)
       page.emit(Events.Page.RequestFinished, request);
     if (response)
-      response._finishedPromise.resolve();
+      response._finishedPromise.resolve(null);
   }
 
   async _onRoute(route: network.Route) {

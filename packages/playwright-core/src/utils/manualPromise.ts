@@ -53,3 +53,37 @@ export class ManualPromise<T = void> extends Promise<T> {
     return 'ManualPromise';
   }
 }
+
+export class ScopedRace {
+  private _terminateError: Error | undefined;
+  private _terminatePromises = new Set<ManualPromise<Error>>();
+
+  scopeClosed(error: Error) {
+    this._terminateError = error;
+    for (const p of this._terminatePromises)
+      p.resolve(error);
+  }
+
+  async race<T>(promise: Promise<T>): Promise<T> {
+    return this._race([promise], false) as Promise<T>;
+  }
+
+  async safeRace<T>(promise: Promise<T>, defaultValue?: T): Promise<T> {
+    return this._race([promise], true, defaultValue);
+  }
+
+  private async _race(promises: Promise<any>[], safe: boolean, defaultValue?: any): Promise<any> {
+    const terminatePromise = new ManualPromise<Error>();
+    if (this._terminateError)
+      terminatePromise.resolve(this._terminateError);
+    this._terminatePromises.add(terminatePromise);
+    try {
+      return await Promise.race([
+        terminatePromise.then(e => safe ? defaultValue : Promise.reject(e)),
+        ...promises
+      ]);
+    } finally {
+      this._terminatePromises.delete(terminatePromise);
+    }
+  }
+}

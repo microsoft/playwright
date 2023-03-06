@@ -22,11 +22,13 @@ import type { Page } from './page';
 import type { BrowserContext } from './browserContext';
 import type * as api from '../../types/types';
 import type * as structs from '../../types/structs';
+import { ScopedRace } from '../utils';
+import { kBrowserOrContextClosedError } from '../common/errors';
 
 export class Worker extends ChannelOwner<channels.WorkerChannel> implements api.Worker {
   _page: Page | undefined;  // Set for web workers.
   _context: BrowserContext | undefined;  // Set for service workers.
-  _closedPromise: Promise<void>;
+  readonly _closedRace = new ScopedRace();
 
   static from(worker: channels.WorkerChannel): Worker {
     return (worker as any)._object;
@@ -41,7 +43,7 @@ export class Worker extends ChannelOwner<channels.WorkerChannel> implements api.
         this._context._serviceWorkers.delete(this);
       this.emit(Events.Worker.Close, this);
     });
-    this._closedPromise = new Promise(f => this.once(Events.Worker.Close, f));
+    this.once(Events.Worker.Close, () => this._closedRace.scopeClosed(new Error(kBrowserOrContextClosedError)));
   }
 
   url(): string {
