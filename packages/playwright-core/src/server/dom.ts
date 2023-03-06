@@ -103,7 +103,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
         (() => {
         const module = {};
         ${injectedScriptSource.source}
-        return new module.exports(
+        return new (module.exports.InjectedScript())(
           globalThis,
           ${isUnderTest()},
           "${sdkLanguage}",

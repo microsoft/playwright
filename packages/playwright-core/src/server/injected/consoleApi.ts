@@ -128,4 +128,4 @@ class ConsoleAPI {
   }
 }
 
-module.exports = ConsoleAPI;
+export default ConsoleAPI;
