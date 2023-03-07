@@ -642,6 +642,7 @@ Playwright:
           properties:
             username: string
             password: string
+            origin: string?
         proxy:
           type: object?
           properties:
@@ -3071,6 +3072,7 @@ Electron:
           properties:
             username: string
             password: string
+            origin: string?
         ignoreHTTPSErrors: boolean?
         locale: string?
         offline: boolean?
