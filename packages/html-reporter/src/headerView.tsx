@@ -31,12 +31,25 @@ export const HeaderView: React.FC<React.PropsWithChildren<{
   projectNames: string[],
 }>> = ({ stats, filterText, setFilterText, projectNames }) => {
   React.useEffect(() => {
-    (async () => {
-      window.addEventListener('popstate', () => {
-        const params = new URLSearchParams(window.location.hash.slice(1));
-        setFilterText(params.get('q') || '');
-      });
-    })();
+    const popstateFn = () => {
+      const params = new URLSearchParams(window.location.hash.slice(1));
+      setFilterText(params.get('q') || '');
+    };
+    const inputFn = (e: any): void => {
+      e.preventDefault();
+      if (e.target.value)
+        navigate(`#?q=${e.target.value}`);
+      else
+        navigate('#');
+    };
+    const search = document.querySelector<HTMLInputElement>('input[type=search]');
+    window.addEventListener('popstate', popstateFn);
+    search?.addEventListener('input', inputFn);
+
+    return () => {
+      window.removeEventListener('popstate', popstateFn);
+      search?.removeEventListener('input', inputFn);
+    };
   });
 
   return (<>
@@ -47,7 +60,7 @@ export const HeaderView: React.FC<React.PropsWithChildren<{
       <form className='subnav-search' onSubmit={
         event => {
           event.preventDefault();
-          navigate(`#?q=${filterText ? encodeURIComponent(filterText) : ''}`);
+          navigate(`#?q=${filterText ? decodeURIComponent(filterText) : ''}`);
         }
       }>
         {icons.search()}

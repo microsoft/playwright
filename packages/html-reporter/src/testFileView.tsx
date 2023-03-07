@@ -23,6 +23,7 @@ import { generateTraceUrl, Link, ProjectLink } from './links';
 import { statusIcon } from './statusIcon';
 import './testFileView.css';
 import { video, image, trace } from './icons';
+import { Labels } from './labels';
 
 export const TestFileView: React.FC<React.PropsWithChildren<{
   report: HTMLReport;
@@ -48,6 +49,9 @@ export const TestFileView: React.FC<React.PropsWithChildren<{
           <Link href={`#?testId=${test.testId}`} title={[...test.path, test.title].join(' › ')}>
             <span className='test-file-title'>{[...test.path, test.title].join(' › ')}</span>
           </Link>
+        </div>
+        <div className='test-file-details-row'>
+          <Labels testCase={test} />
         </div>
         <div className='test-file-details-row'>
           <Link href={`#?testId=${test.testId}`} title={[...test.path, test.title].join(' › ')} className='test-file-path-link'>
