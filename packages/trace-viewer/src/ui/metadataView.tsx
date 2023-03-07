@@ -20,8 +20,10 @@ import type { MultiTraceModel } from './modelUtil';
 import './callTab.css';
 
 export const MetadataView: React.FunctionComponent<{
-  model: MultiTraceModel,
+  model?: MultiTraceModel,
 }> = ({ model }) => {
+  if (!model)
+    return <></>;
   return <div className='vbox'>
     <div className='call-section' style={{ paddingTop: 2 }}>Time</div>
     {model.wallTime && <div className='call-line'>start time:<span className='call-value datetime' title={new Date(model.wallTime).toLocaleString()}>{new Date(model.wallTime).toLocaleString()}</span></div>}

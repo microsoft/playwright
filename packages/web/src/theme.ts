@@ -45,3 +45,7 @@ export function toggleTheme() {
   document.body.classList.add(newTheme);
   localStorage.setItem('theme', newTheme);
 }
+
+export function isDarkTheme() {
+  return document.body.classList.contains('dark-mode');
+}
