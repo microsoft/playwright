@@ -17,7 +17,7 @@
 import type { SelectorEngine, SelectorRoot } from './selectorEngine';
 import { matchesAttributePart } from './selectorUtils';
 import { getAriaChecked, getAriaDisabled, getAriaExpanded, getAriaLevel, getAriaPressed, getAriaRole, getAriaSelected, getElementAccessibleName, isElementHiddenForAria, kAriaCheckedRoles, kAriaExpandedRoles, kAriaLevelRoles, kAriaPressedRoles, kAriaSelectedRoles } from './roleUtils';
-import { parseAttributeSelector, type AttributeSelectorPart, type AttributeSelectorOperator } from '../isomorphic/selectorParser';
+import { parseAttributeSelector, type AttributeSelectorPart, type AttributeSelectorOperator } from '../../utils/isomorphic/selectorParser';
 import { normalizeWhiteSpace } from '../../utils/isomorphic/stringUtils';
 
 type RoleEngineOptions = {

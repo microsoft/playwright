@@ -15,10 +15,10 @@
  */
 
 import type { BrowserContextOptions, LaunchOptions } from '../../..';
-import type { Language } from '../isomorphic/locatorGenerators';
+import type { Language } from '../../utils/isomorphic/locatorGenerators';
 import type { ActionInContext } from './codeGenerator';
 import type { Action, DialogSignal, DownloadSignal, PopupSignal } from './recorderActions';
-export type { Language } from '../isomorphic/locatorGenerators';
+export type { Language } from '../../utils/isomorphic/locatorGenerators';
 
 export type LanguageGeneratorOptions = {
   browserName: string;

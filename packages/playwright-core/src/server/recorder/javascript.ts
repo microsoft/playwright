@@ -23,7 +23,7 @@ import type { MouseClickOptions } from './utils';
 import { toModifiers } from './utils';
 const deviceDescriptors = require('../deviceDescriptorsSource.json');
 import { escapeWithQuotes } from '../../utils/isomorphic/stringUtils';
-import { asLocator } from '../isomorphic/locatorGenerators';
+import { asLocator } from '../../utils/isomorphic/locatorGenerators';
 
 export class JavaScriptLanguageGenerator implements LanguageGenerator {
   id: string;

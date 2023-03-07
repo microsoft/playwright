@@ -17,7 +17,7 @@
 import type { SelectorEngine, SelectorRoot } from './selectorEngine';
 import { isInsideScope } from './domUtils';
 import { matchesComponentAttribute } from './selectorUtils';
-import { parseAttributeSelector } from '../isomorphic/selectorParser';
+import { parseAttributeSelector } from '../../utils/isomorphic/selectorParser';
 
 type ComponentNode = {
   name: string,

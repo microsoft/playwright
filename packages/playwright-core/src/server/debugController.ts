@@ -23,8 +23,8 @@ import type { InstrumentationListener } from './instrumentation';
 import type { Playwright } from './playwright';
 import { Recorder } from './recorder';
 import { EmptyRecorderApp } from './recorder/recorderApp';
-import { asLocator } from './isomorphic/locatorGenerators';
-import type { Language } from './isomorphic/locatorGenerators';
+import { asLocator } from '../utils/isomorphic/locatorGenerators';
+import type { Language } from '../utils/isomorphic/locatorGenerators';
 
 const internalMetadata = serverSideCallMetadata();
 

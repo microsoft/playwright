@@ -283,7 +283,7 @@ steps.push({
 onChanges.push({
   inputs: [
     'packages/playwright-core/src/server/injected/**',
-    'packages/playwright-core/src/server/isomorphic/**',
+    'packages/playwright-core/src/utils/isomorphic/**',
     'utils/generate_injected.js',
   ],
   script: 'utils/generate_injected.js',
