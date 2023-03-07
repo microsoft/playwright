@@ -48,7 +48,7 @@ export const ActionList: React.FC<ActionListProps> = ({
     itemKey={(action: ActionTraceEvent) => action.callId}
     itemType={(action: ActionTraceEvent) => action.error?.message ? 'error' : undefined}
     itemRender={(action: ActionTraceEvent) => renderAction(action, sdkLanguage, revealConsole)}
-    showNoItemsMessage={true}
+    noItemsMessage='No actions'
   ></ListView>;
 };
 

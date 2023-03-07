@@ -153,45 +153,47 @@ export const Timeline: React.FunctionComponent<{
       onSelected(entry);
   };
 
-  return <div ref={ref} className='timeline-view' onMouseMove={onMouseMove} onMouseOver={onMouseMove} onMouseLeave={onMouseLeave} onClick={onClick}>
-    <div className='timeline-grid'>{
-      offsets.map((offset, index) => {
-        return <div key={index} className='timeline-divider' style={{ left: offset.position + 'px' }}>
-          <div className='timeline-time'>{msToString(offset.time - boundaries.minimum)}</div>
-        </div>;
-      })
-    }</div>
-    <div className='timeline-lane timeline-labels'>{
-      bars.map((bar, index) => {
-        return <div key={index}
-          className={'timeline-label ' + bar.className + (targetBar === bar ? ' selected' : '')}
-          style={{
-            left: bar.leftPosition,
-            maxWidth: 100,
-          }}
-        >
-          {bar.label}
-        </div>;
-      })
-    }</div>
-    <div className='timeline-lane timeline-bars' ref={barsRef}>{
-      bars.map((bar, index) => {
-        return <div key={index}
-          className={'timeline-bar ' + (bar.action ? 'action ' : '') + (bar.event ? 'event ' : '') + bar.className + (targetBar === bar ? ' selected' : '')}
-          style={{
-            left: bar.leftPosition + 'px',
-            width: Math.max(1, bar.rightPosition - bar.leftPosition) + 'px',
-            top: barTop(bar) + 'px',
-          }}
-          title={bar.title}
-        ></div>;
-      })
-    }</div>
-    <FilmStrip model={model} boundaries={boundaries} previewPoint={previewPoint} />
-    <div className='timeline-marker timeline-marker-hover' style={{
-      display: (previewPoint !== undefined) ? 'block' : 'none',
-      left: (previewPoint?.x || 0) + 'px',
-    }}></div>
+  return <div style={{ flex: 'none', borderBottom: '1px solid var(--vscode-panel-border)' }}>
+    <div ref={ref} className='timeline-view' onMouseMove={onMouseMove} onMouseOver={onMouseMove} onMouseLeave={onMouseLeave} onClick={onClick}>
+      <div className='timeline-grid'>{
+        offsets.map((offset, index) => {
+          return <div key={index} className='timeline-divider' style={{ left: offset.position + 'px' }}>
+            <div className='timeline-time'>{msToString(offset.time - boundaries.minimum)}</div>
+          </div>;
+        })
+      }</div>
+      <div className='timeline-lane timeline-labels'>{
+        bars.map((bar, index) => {
+          return <div key={index}
+            className={'timeline-label ' + bar.className + (targetBar === bar ? ' selected' : '')}
+            style={{
+              left: bar.leftPosition,
+              maxWidth: 100,
+            }}
+          >
+            {bar.label}
+          </div>;
+        })
+      }</div>
+      <div className='timeline-lane timeline-bars' ref={barsRef}>{
+        bars.map((bar, index) => {
+          return <div key={index}
+            className={'timeline-bar ' + (bar.action ? 'action ' : '') + (bar.event ? 'event ' : '') + bar.className + (targetBar === bar ? ' selected' : '')}
+            style={{
+              left: bar.leftPosition + 'px',
+              width: Math.max(1, bar.rightPosition - bar.leftPosition) + 'px',
+              top: barTop(bar) + 'px',
+            }}
+            title={bar.title}
+          ></div>;
+        })
+      }</div>
+      <FilmStrip model={model} boundaries={boundaries} previewPoint={previewPoint} />
+      <div className='timeline-marker timeline-marker-hover' style={{
+        display: (previewPoint !== undefined) ? 'block' : 'none',
+        left: (previewPoint?.x || 0) + 'px',
+      }}></div>
+    </div>
   </div>;
 };
 

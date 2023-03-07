@@ -34,23 +34,22 @@
   padding-left: 5px;
 }
 
-.list-view-entry.highlighted,
-.list-view-entry.selected {
-  background-color: var(--vscode-list-inactiveSelectionBackground);
+.list-view-entry.highlighted:not(.selected) {
+  background-color: var(--vscode-list-inactiveSelectionBackground) !important;
 }
 
 .list-view-entry.selected {
   z-index: 10;
 }
 
-.list-view-entry.highlighted {
-  background-color: var(--vscode-list-inactiveSelectionBackground);
-}
-
-.list-view-content:focus .list-view-entry.selected:not(.error) {
+.list-view-content:focus .list-view-entry.selected {
   background-color: var(--vscode-list-activeSelectionBackground);
   color: var(--vscode-list-activeSelectionForeground);
   outline: 1px solid var(--vscode-focusBorder);
+}
+
+.list-view-content:focus .list-view-entry.selected * {
+  color: var(--vscode-list-activeSelectionForeground) !important;
 }
 
 .list-view-content:focus .list-view-entry.error.selected {

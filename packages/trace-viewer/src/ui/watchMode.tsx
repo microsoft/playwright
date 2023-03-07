@@ -33,34 +33,103 @@ import type * as trace from '@trace/trace';
 let updateRootSuite: (rootSuite: Suite, progress: Progress) => void = () => {};
 let updateStepsProgress: () => void = () => {};
 let runWatchedTests = () => {};
+let runVisibleTests = () => {};
 
 export const WatchModeView: React.FC<{}> = ({
 }) => {
+  const [projectNames, setProjectNames] = React.useState<string[]>([]);
   const [rootSuite, setRootSuite] = React.useState<{ value: Suite | undefined }>({ value: undefined });
+  const [isRunningTest, setIsRunningTest] = React.useState<boolean>(false);
   const [progress, setProgress] = React.useState<Progress>({ total: 0, passed: 0, failed: 0 });
+  const [selectedTestItem, setSelectedTestItem] = React.useState<TestItem | undefined>(undefined);
+  const [settingsVisible, setSettingsVisible] = React.useState<boolean>(false);
+
   updateRootSuite = (rootSuite: Suite, { passed, failed }: Progress) => {
     setRootSuite({ value: rootSuite });
     progress.passed = passed;
     progress.failed = failed;
     setProgress({ ...progress });
   };
-  const [selectedTreeItemId, setSelectedTreeItemId] = React.useState<string | undefined>();
-  const [isRunningTest, setIsRunningTest] = React.useState<boolean>(false);
-  const [filterText, setFilterText] = React.useState<string>('');
-  const [projectNames, setProjectNames] = React.useState<string[]>([]);
-  const [expandedItems, setExpandedItems] = React.useState<Map<string, boolean>>(new Map());
 
+  const runTests = (testIds: string[]) => {
+    setProgress({ total: testIds.length, passed: 0, failed: 0 });
+    setIsRunningTest(true);
+    sendMessage('run', { testIds }).then(() => {
+      setIsRunningTest(false);
+    });
+  };
+
+  React.useEffect(() => {
+    if (projectNames.length === 0 && rootSuite.value?.suites.length)
+      setProjectNames([rootSuite.value?.suites[0].title]);
+  }, [projectNames, rootSuite]);
+
+  return <SplitView sidebarSize={300} orientation='horizontal' sidebarIsFirst={true}>
+    <TraceView testItem={selectedTestItem}></TraceView>
+    <div className='vbox watch-mode-sidebar'>
+      <Toolbar>
+        <div className='section-title' style={{ cursor: 'pointer' }} onClick={() => setSettingsVisible(false)}>Tests</div>
+        <ToolbarButton icon='play' title='Run' onClick={runVisibleTests} disabled={isRunningTest}></ToolbarButton>
+        <ToolbarButton icon='debug-stop' title='Stop' onClick={() => sendMessageNoReply('stop')} disabled={!isRunningTest}></ToolbarButton>
+        <ToolbarButton icon='refresh' title='Reload' onClick={resetCollectingRootSuite} disabled={isRunningTest}></ToolbarButton>
+        <div className='spacer'></div>
+        <ToolbarButton icon='gear' title='Toggle color mode' toggled={settingsVisible} onClick={() => { setSettingsVisible(!settingsVisible); }}></ToolbarButton>
+      </Toolbar>
+      { !settingsVisible && <TestList
+        projectNames={projectNames}
+        rootSuite={rootSuite}
+        isRunningTest={isRunningTest}
+        runTests={runTests}
+        onTestItemSelected={setSelectedTestItem} />}
+      { settingsVisible && <div className='vbox'>
+        <div className='hbox' style={{ flex: 'none' }}>
+          <div className='section-title' style={{ marginTop: 10 }}>Projects</div>
+          <div className='spacer'></div>
+          <ToolbarButton icon='close' title='Close settings' toggled={false} onClick={() => setSettingsVisible(false)}></ToolbarButton>
+        </div>
+        {(rootSuite.value?.suites || []).map(suite => {
+          return <div style={{ display: 'flex', alignItems: 'center', lineHeight: '24px' }}>
+            <input id={`project-${suite.title}`} type='checkbox' checked={projectNames.includes(suite.title)} onClick={() => {
+              const copy = [...projectNames];
+              if (copy.includes(suite.title))
+                copy.splice(copy.indexOf(suite.title), 1);
+              else
+                copy.push(suite.title);
+              setProjectNames(copy);
+            }} style={{ margin: '0 5px 0 10px' }} />
+            <label htmlFor={`project-${suite.title}`}>
+              {suite.title}
+            </label>
+          </div>;
+        })}
+        <div className='section-title'>Appearance</div>
+        <div style={{ marginLeft: 3 }}>
+          <ToolbarButton icon='color-mode' title='Toggle color mode' toggled={false} onClick={() => toggleTheme()}>Toggle color mode</ToolbarButton>
+        </div>
+      </div>}
+      {isRunningTest && <div className='status-line'>
+        Running: {progress.total} tests | {progress.passed} passed | {progress.failed} failed
+      </div>}
+    </div>
+  </SplitView>;
+};
+
+export const TestList: React.FC<{
+  projectNames: string[],
+  rootSuite: { value: Suite | undefined },
+  runTests: (testIds: string[]) => void,
+  isRunningTest: boolean,
+  onTestItemSelected: (test: TestItem | undefined) => void,
+}> = ({ projectNames, rootSuite, runTests, isRunningTest, onTestItemSelected }) => {
+  const [filterText, setFilterText] = React.useState<string>('');
+  const [selectedTreeItemId, setSelectedTreeItemId] = React.useState<string | undefined>();
+  const [expandedItems, setExpandedItems] = React.useState<Map<string, boolean>>(new Map());
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
     inputRef.current?.focus();
     resetCollectingRootSuite();
   }, []);
-
-  React.useEffect(() => {
-    if (projectNames.length === 0 && rootSuite.value?.suites.length)
-      setProjectNames([rootSuite.value?.suites[0].title]);
-  }, [projectNames,  rootSuite]);
 
   const { filteredItems, treeItemMap, visibleTestIds } = React.useMemo(() => {
     const treeItems = createTree(rootSuite.value, projectNames);
@@ -78,6 +147,7 @@ export const WatchModeView: React.FC<{}> = ({
     return { treeItemMap, visibleTestIds, filteredItems };
   }, [filterText, rootSuite, projectNames]);
 
+  runVisibleTests = () => runTests([...visibleTestIds]);
 
   const { listItems } = React.useMemo(() => {
     const listItems = flattenTree(filteredItems, expandedItems, !!filterText.trim());
@@ -95,6 +165,8 @@ export const WatchModeView: React.FC<{}> = ({
     return { selectedTreeItem, selectedTestItem };
   }, [selectedTreeItemId, treeItemMap]);
 
+  onTestItemSelected(selectedTestItem);
+
   const runTreeItem = (treeItem: TreeItem) => {
     expandedItems.set(treeItem.id, true);
     setSelectedTreeItemId(treeItem.id);
@@ -105,128 +177,79 @@ export const WatchModeView: React.FC<{}> = ({
     runTests(collectTestIds(selectedTreeItem));
   };
 
-  const runTests = (testIds: string[]) => {
-    setProgress({ total: testIds.length, passed: 0, failed: 0 });
-    setIsRunningTest(true);
-    sendMessage('run', { testIds }).then(() => {
-      setIsRunningTest(false);
-    });
-  };
-
-  return <SplitView sidebarSize={300} orientation='horizontal' sidebarIsFirst={true}>
-    <TraceView testItem={selectedTestItem} isRunningTest={isRunningTest}></TraceView>
-    <div className='vbox watch-mode-sidebar'>
-      <Toolbar>
-        <h3 className='title'>Test explorer</h3>
-        <ToolbarButton icon='play' title='Run' onClick={() => runTests([...visibleTestIds])} disabled={isRunningTest}></ToolbarButton>
-        <ToolbarButton icon='debug-stop' title='Stop' onClick={() => sendMessageNoReply('stop')} disabled={!isRunningTest}></ToolbarButton>
-        <ToolbarButton icon='refresh' title='Reload' onClick={resetCollectingRootSuite} disabled={isRunningTest}></ToolbarButton>
-        <div className='spacer'></div>
-        <ToolbarButton icon='color-mode' title='Toggle color mode' toggled={false} onClick={() => toggleTheme()}></ToolbarButton>
-      </Toolbar>
-      <Toolbar>
-        <input ref={inputRef} type='search' placeholder='Filter (e.g. text, @tag)' spellCheck={false} value={filterText}
-          onChange={e => {
-            setFilterText(e.target.value);
-          }}
-          onKeyDown={e => {
-            if (e.key === 'Enter')
-              runTests([...visibleTestIds]);
-          }}></input>
-      </Toolbar>
-      <ListView
-        items={listItems}
-        itemKey={(treeItem: TreeItem) => treeItem.id }
-        itemRender={(treeItem: TreeItem) => {
-          return <div className='hbox watch-mode-list-item'>
-            <div className='watch-mode-list-item-title'>{treeItem.title}</div>
-            <ToolbarButton icon='play' title='Run' onClick={() => runTreeItem(treeItem)} disabled={isRunningTest}></ToolbarButton>
-          </div>;
+  return <div className='vbox'>
+    <Toolbar>
+      <input ref={inputRef} type='search' placeholder='Filter (e.g. text, @tag)' spellCheck={false} value={filterText}
+        onChange={e => {
+          setFilterText(e.target.value);
         }}
-        itemIcon={(treeItem: TreeItem) => {
-          if (treeItem.kind === 'case' && treeItem.children?.length === 1)
-            treeItem = treeItem.children[0];
-          if (treeItem.kind === 'test') {
-            const ok = treeItem.test.outcome() === 'expected';
-            const failed = treeItem.test.results.length && treeItem.test.outcome() !== 'expected';
-            const running = treeItem.test.results.some(r => r.duration === -1);
-            if (running)
-              return 'codicon-loading';
-            if (ok)
-              return 'codicon-check';
-            if (failed)
-              return 'codicon-error';
-          } else {
-            return treeItem.expanded ? 'codicon-chevron-down' : 'codicon-chevron-right';
-          }
-        }}
-        itemIndent={(treeItem: TreeItem) => treeItem.kind === 'file' ? 0 : treeItem.kind === 'case' ? 1 : 2}
-        selectedItem={selectedTreeItem}
-        onAccepted={runTreeItem}
-        onLeftArrow={(treeItem: TreeItem) => {
-          if (treeItem.children && treeItem.expanded) {
-            expandedItems.set(treeItem.id, false);
-            setExpandedItems(new Map(expandedItems));
-          } else {
-            setSelectedTreeItemId(treeItem.parent?.id);
-          }
-        }}
-        onRightArrow={(treeItem: TreeItem) => {
-          if (treeItem.children) {
-            expandedItems.set(treeItem.id, true);
-            setExpandedItems(new Map(expandedItems));
-          }
-          setRootSuite({ ...rootSuite });
-        }}
-        onSelected={(treeItem: TreeItem) => {
-          setSelectedTreeItemId(treeItem.id);
-        }}
-        onIconClicked={(treeItem: TreeItem) => {
-          if (treeItem.kind === 'test')
-            return;
-          if (treeItem.expanded)
-            expandedItems.set(treeItem.id, false);
-          else
-            expandedItems.set(treeItem.id, true);
+        onKeyDown={e => {
+          if (e.key === 'Enter')
+            runVisibleTests();
+        }}></input>
+    </Toolbar>
+    <ListView
+      items={listItems}
+      itemKey={(treeItem: TreeItem) => treeItem.id }
+      itemRender={(treeItem: TreeItem) => {
+        return <div className='hbox watch-mode-list-item'>
+          <div className='watch-mode-list-item-title'>{treeItem.title}</div>
+          <ToolbarButton icon='play' title='Run' onClick={() => runTreeItem(treeItem)} disabled={isRunningTest}></ToolbarButton>
+        </div>;
+      }}
+      itemIcon={(treeItem: TreeItem) => {
+        if (treeItem.kind === 'case' && treeItem.children?.length === 1)
+          treeItem = treeItem.children[0];
+        if (treeItem.kind === 'test') {
+          const ok = treeItem.test.outcome() === 'expected';
+          const failed = treeItem.test.results.length && treeItem.test.outcome() !== 'expected';
+          const running = treeItem.test.results.some(r => r.duration === -1);
+          if (running)
+            return 'codicon-loading';
+          if (ok)
+            return 'codicon-check';
+          if (failed)
+            return 'codicon-error';
+        } else {
+          return treeItem.expanded ? 'codicon-chevron-down' : 'codicon-chevron-right';
+        }
+      }}
+      itemIndent={(treeItem: TreeItem) => treeItem.kind === 'file' ? 0 : treeItem.kind === 'case' ? 1 : 2}
+      selectedItem={selectedTreeItem}
+      onAccepted={runTreeItem}
+      onLeftArrow={(treeItem: TreeItem) => {
+        if (treeItem.children && treeItem.expanded) {
+          expandedItems.set(treeItem.id, false);
           setExpandedItems(new Map(expandedItems));
-        }}
-        showNoItemsMessage={true}></ListView>
-      {(rootSuite.value?.suites.length || 0) > 1 && <div style={{ flex: 'none', borderTop: '1px solid var(--vscode-panel-border)' }}>
-        <Toolbar>
-          <h3 className='title'>Projects</h3>
-        </Toolbar>
-        <ListView
-          items={rootSuite.value!.suites}
-          onSelected={(suite: Suite) => {
-            const copy = [...projectNames];
-            if (copy.includes(suite.title))
-              copy.splice(copy.indexOf(suite.title), 1);
-            else
-              copy.push(suite.title);
-            setProjectNames(copy);
-          }}
-          itemRender={(suite: Suite) => {
-            return <label style={{ display: 'flex', pointerEvents: 'none' }}>
-              <input type='checkbox' checked={projectNames.includes(suite.title)} />
-              {suite.title}
-            </label>;
-          }}
-        />
-      </div>}
-      {isRunningTest && <div className='status-line'>
-        Running: {progress.total} tests | {progress.passed} passed | {progress.failed} failed
-      </div>}
-      {!isRunningTest && <div className='status-line'>
-        Total: {visibleTestIds.size} tests
-      </div>}
-    </div>
-  </SplitView>;
+        } else {
+          setSelectedTreeItemId(treeItem.parent?.id);
+        }
+      }}
+      onRightArrow={(treeItem: TreeItem) => {
+        if (treeItem.children) {
+          expandedItems.set(treeItem.id, true);
+          setExpandedItems(new Map(expandedItems));
+        }
+      }}
+      onSelected={(treeItem: TreeItem) => {
+        setSelectedTreeItemId(treeItem.id);
+      }}
+      onIconClicked={(treeItem: TreeItem) => {
+        if (treeItem.kind === 'test')
+          return;
+        if (treeItem.expanded)
+          expandedItems.set(treeItem.id, false);
+        else
+          expandedItems.set(treeItem.id, true);
+        setExpandedItems(new Map(expandedItems));
+      }}
+      noItemsMessage='No tests' />;
+  </div>;
 };
 
 export const TraceView: React.FC<{
   testItem: TestItem | undefined,
-  isRunningTest: boolean,
-}> = ({ testItem, isRunningTest }) => {
+}> = ({ testItem }) => {
   const [model, setModel] = React.useState<MultiTraceModel | undefined>();
   const [stepsProgress, setStepsProgress] = React.useState(0);
   updateStepsProgress = () => setStepsProgress(stepsProgress + 1);
@@ -249,20 +272,9 @@ export const TraceView: React.FC<{
         setModel(undefined);
       }
     })();
-  }, [testItem, isRunningTest, stepsProgress]);
+  }, [testItem, stepsProgress]);
 
-  if (!model) {
-    return <div className='vbox'>
-      <div className='drop-target'>
-        <div>Run test to see the trace</div>
-        <div style={{ paddingTop: 20 }}>
-          <div>Double click a test or hit Enter</div>
-        </div>
-      </div>
-    </div>;
-  }
-
-  return <Workbench model={model} />;
+  return <Workbench model={model}/>;
 };
 
 declare global {

@@ -45,7 +45,7 @@ class TraceViewerPage {
 
   constructor(public page: Page) {
     this.actionTitles = page.locator('.action-title');
-    this.callLines = page.locator('.call-line');
+    this.callLines = page.locator('.call-tab .call-line');
     this.consoleLines = page.locator('.console-line');
     this.consoleLineMessages = page.locator('.console-line-message');
     this.consoleStacks = page.locator('.console-stack');
