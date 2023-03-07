@@ -289,7 +289,7 @@ class HtmlBuilder {
         await copyFileAndMakeWritable(path.join(traceViewerFolder, file), path.join(traceViewerTargetFolder, file));
       }
       for (const file of fs.readdirSync(path.join(traceViewerFolder, 'assets'))) {
-        if (file.endsWith('.map') || file.includes('xTermModule'))
+        if (file.endsWith('.map') || file.includes('xtermModule'))
           continue;
         await copyFileAndMakeWritable(path.join(traceViewerFolder, 'assets', file), path.join(traceViewerAssetsTargetFolder, file));
       }

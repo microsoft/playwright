@@ -66,3 +66,7 @@
   line-height: 22px;
   padding: 0 10px;
 }
+
+.list-view-entry:not(.selected):not(.highlighted) .toolbar-button {
+  display: none;
+}
