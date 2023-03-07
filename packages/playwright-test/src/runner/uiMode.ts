@@ -28,6 +28,7 @@ import type { TaskRunnerState } from './tasks';
 import { createTaskRunnerForList, createTaskRunnerForWatch, createTaskRunnerForWatchSetup } from './tasks';
 import { chokidar } from '../utilsBundle';
 import type { FSWatcher } from 'chokidar';
+import { open } from '../utilsBundle';
 
 class UIMode {
   private _config: FullConfigInternal;
@@ -88,6 +89,8 @@ class UIMode {
         this._stopTests();
       if (method === 'watch')
         this._watchFile(params.fileName);
+      if (method === 'open' && params.location)
+        open.openApp('code', { arguments: ['--goto', params.location] }).catch(() => {});
       if (method === 'resizeTerminal') {
         process.stdout.columns = params.cols;
         process.stdout.rows = params.rows;
