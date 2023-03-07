@@ -8,6 +8,11 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 ## Version 1.31
 
+<LiteYouTube
+  id="PI50YAPTAs4"
+  title="Playwright 1.31"
+/>
+
 ### New APIs
 
 - New property [`property: TestProject.dependencies`] to configure dependencies between projects.
