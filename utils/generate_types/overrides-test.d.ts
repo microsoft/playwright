@@ -302,7 +302,7 @@ interface GenericAssertions<R> {
   toEqual(expected: unknown): R;
   toHaveLength(expected: number): R;
   toHaveProperty(keyPath: string | Array<string>, value?: unknown): R;
-  toMatch(expected: RegExp): R;
+  toMatch(expected: RegExp | string): R;
   toMatchObject(expected: Record<string, unknown> | Array<unknown>): R;
   toStrictEqual(expected: unknown): R;
   toThrow(error?: unknown): R;

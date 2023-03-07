@@ -418,7 +418,7 @@ expect(value).toMatch(/Is \d+ enough/);
 
 ### param: GenericAssertions.toMatch.expected
 * since: v1.9
-- `expected` <[RegExp]>
+- `expected` <[RegExp]|[string]>
 
 Regular expression to match against.
 
