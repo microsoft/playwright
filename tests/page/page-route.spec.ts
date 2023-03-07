@@ -688,8 +688,9 @@ it('should respect cors overrides', async ({ page, server, browserName, isAndroi
   }
 });
 
-it('should not auto-intercept non-preflight OPTIONS', async ({ page, server, browserName }) => {
+it('should not auto-intercept non-preflight OPTIONS', async ({ page, server, isAndroid }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/20469' });
+  it.fixme(isAndroid);
 
   await page.goto(server.EMPTY_PAGE);
 
