@@ -20,13 +20,14 @@ import type { Terminal } from 'xterm';
 import type { XtermModule } from './xtermModule';
 import { isDarkTheme } from '@web/theme';
 
-export type XTermDataSource = {
+export type XtermDataSource = {
   pending: (string | Uint8Array)[];
+  clear: () => void,
   write: (data: string | Uint8Array) => void;
   resize: (cols: number, rows: number) => void;
 };
 
-export const XTermWrapper: React.FC<{ source: XTermDataSource }> = ({
+export const XtermWrapper: React.FC<{ source: XtermDataSource }> = ({
   source
 }) => {
   const xtermElement = React.createRef<HTMLDivElement>();
@@ -55,8 +56,13 @@ export const XTermWrapper: React.FC<{ source: XTermDataSource }> = ({
       for (const p of source.pending)
         newTerminal.write(p);
       source.write = (data => {
+        source.pending.push(data);
         newTerminal.write(data);
       });
+      source.clear = () => {
+        source.pending = [];
+        newTerminal.clear();
+      };
       newTerminal.open(element);
       fitAddon.fit();
       setTerminal(newTerminal);

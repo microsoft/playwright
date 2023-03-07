@@ -97,6 +97,10 @@ svg {
   position: relative;
 }
 
+.spacer {
+  flex: auto;
+}
+
 .codicon-check {
   color: var(--green);
 }

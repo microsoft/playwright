@@ -103,7 +103,3 @@
 .workbench .header .title {
   margin-left: 16px;
 }
-
-.workbench .spacer {
-  flex: auto;
-}

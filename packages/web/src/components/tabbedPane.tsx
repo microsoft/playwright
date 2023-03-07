@@ -45,6 +45,7 @@ export const TabbedPane: React.FunctionComponent<{
             selected={selectedTab === tab.id}
             onSelect={setSelectedTab}
           ></TabbedPaneTab>)),
+        <div className='spacer'></div>,
         ...rightToolbar || [],
       ]}</Toolbar>
       {
