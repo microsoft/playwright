@@ -161,7 +161,11 @@ const ListItemView: React.FC<{
     ref={divRef}
   >
     {indent ? <div style={{ minWidth: indent * 16 }}></div> : undefined}
-    {hasIcons && <div className={'codicon ' + (icon || 'blank')} style={{ minWidth: 16, marginRight: 4 }} onClick={onIconClicked}></div>}
+    {hasIcons && <div className={'codicon ' + (icon || 'blank')} style={{ minWidth: 16, marginRight: 4 }} onClick={e => {
+      e.stopPropagation();
+      e.preventDefault();
+      onIconClicked();
+    }}></div>}
     {typeof children === 'string' ? <div style={{ textOverflow: 'ellipsis', overflow: 'hidden' }}>{children}</div> : children}
   </div>;
 };

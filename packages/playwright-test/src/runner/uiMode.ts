@@ -36,6 +36,7 @@ class UIMode {
   globalCleanup: (() => Promise<FullResult['status']>) | undefined;
   private _watcher: FSWatcher | undefined;
   private _watchTestFile: string | undefined;
+  private _originalStderr: (buffer: string | Uint8Array) => void;
 
   constructor(config: FullConfigInternal) {
     this._config = config;
@@ -44,6 +45,15 @@ class UIMode {
       p.retries = 0;
     config._internal.configCLIOverrides.use = config._internal.configCLIOverrides.use || {};
     config._internal.configCLIOverrides.use.trace = 'on';
+    this._originalStderr = process.stderr.write.bind(process.stderr);
+    process.stdout.write = (chunk: string | Buffer) => {
+      this._dispatchEvent({ method: 'stdio', params: chunkToPayload('stdout', chunk) });
+      return true;
+    };
+    process.stderr.write = (chunk: string | Buffer) => {
+      this._dispatchEvent({ method: 'stdio', params: chunkToPayload('stderr', chunk) });
+      return true;
+    };
   }
 
   async runGlobalSetup(): Promise<FullResult['status']> {
@@ -78,6 +88,12 @@ class UIMode {
         this._stopTests();
       if (method === 'watch')
         this._watchFile(params.fileName);
+      if (method === 'resizeTerminal') {
+        process.stdout.columns = params.cols;
+        process.stdout.rows = params.rows;
+        process.stderr.columns = params.cols;
+        process.stderr.columns = params.rows;
+      }
       if (method === 'exit')
         exitPromise.resolve();
     });
@@ -86,7 +102,7 @@ class UIMode {
 
   private _dispatchEvent(message: any) {
     // eslint-disable-next-line no-console
-    this._page.mainFrame().evaluateExpression(dispatchFuncSource, true, message).catch(e => console.log(e));
+    this._page.mainFrame().evaluateExpression(dispatchFuncSource, true, message).catch(e => this._originalStderr(String(e)));
   }
 
   private async _listTests() {
@@ -155,4 +171,16 @@ export async function runUIMode(config: FullConfigInternal): Promise<FullResult[
     return status;
   await uiMode.showUI();
   return await uiMode.globalCleanup?.() || 'passed';
+}
+
+type StdioPayload = {
+  type: 'stdout' | 'stderr';
+  text?: string;
+  buffer?: string;
+};
+
+function chunkToPayload(type: 'stdout' | 'stderr', chunk: Buffer | string): StdioPayload {
+  if (chunk instanceof Buffer)
+    return { type, buffer: chunk.toString('base64') };
+  return { type, text: chunk };
 }

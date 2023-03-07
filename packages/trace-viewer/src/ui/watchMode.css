@@ -51,15 +51,12 @@
   margin: 5px;
 }
 
-.watch-mode-sidebar .spacer {
-  flex: auto;
-}
-
-.watch-mode-sidebar .status-line {
+.status-line {
   flex: none;
-  border-top: 1px solid var(--vscode-panel-border);
   line-height: 22px;
   padding: 0 10px;
+  color: var(--vscode-statusBar-foreground);
+  background-color: var(--vscode-statusBar-background);
 }
 
 .list-view-entry:not(.selected):not(.highlighted) .toolbar-button {

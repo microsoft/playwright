@@ -29,11 +29,20 @@ import { Toolbar } from '@web/components/toolbar';
 import { toggleTheme } from '@web/theme';
 import type { ContextEntry } from '../entries';
 import type * as trace from '@trace/trace';
+import type { XtermDataSource } from '@web/components/xtermWrapper';
+import { XtermWrapper } from '@web/components/xtermWrapper';
 
 let updateRootSuite: (rootSuite: Suite, progress: Progress) => void = () => {};
 let updateStepsProgress: () => void = () => {};
 let runWatchedTests = () => {};
 let runVisibleTests = () => {};
+
+const xtermDataSource: XtermDataSource = {
+  pending: [],
+  clear: () => {},
+  write: data => xtermDataSource.pending.push(data),
+  resize: (cols: number, rows: number) => sendMessageNoReply('resizeTerminal', { cols, rows }),
+};
 
 export const WatchModeView: React.FC<{}> = ({
 }) => {
@@ -64,54 +73,31 @@ export const WatchModeView: React.FC<{}> = ({
       setProjectNames([rootSuite.value?.suites[0].title]);
   }, [projectNames, rootSuite]);
 
-  return <SplitView sidebarSize={300} orientation='horizontal' sidebarIsFirst={true}>
-    <TraceView testItem={selectedTestItem}></TraceView>
-    <div className='vbox watch-mode-sidebar'>
-      <Toolbar>
-        <div className='section-title' style={{ cursor: 'pointer' }} onClick={() => setSettingsVisible(false)}>Tests</div>
-        <ToolbarButton icon='play' title='Run' onClick={runVisibleTests} disabled={isRunningTest}></ToolbarButton>
-        <ToolbarButton icon='debug-stop' title='Stop' onClick={() => sendMessageNoReply('stop')} disabled={!isRunningTest}></ToolbarButton>
-        <ToolbarButton icon='refresh' title='Reload' onClick={resetCollectingRootSuite} disabled={isRunningTest}></ToolbarButton>
-        <div className='spacer'></div>
-        <ToolbarButton icon='gear' title='Toggle color mode' toggled={settingsVisible} onClick={() => { setSettingsVisible(!settingsVisible); }}></ToolbarButton>
-      </Toolbar>
-      { !settingsVisible && <TestList
-        projectNames={projectNames}
-        rootSuite={rootSuite}
-        isRunningTest={isRunningTest}
-        runTests={runTests}
-        onTestItemSelected={setSelectedTestItem} />}
-      { settingsVisible && <div className='vbox'>
-        <div className='hbox' style={{ flex: 'none' }}>
-          <div className='section-title' style={{ marginTop: 10 }}>Projects</div>
+  return <div className='vbox'>
+    <SplitView sidebarSize={250} orientation='horizontal' sidebarIsFirst={true}>
+      <TraceView testItem={selectedTestItem}></TraceView>
+      <div className='vbox watch-mode-sidebar'>
+        <Toolbar>
+          <div className='section-title' style={{ cursor: 'pointer' }} onClick={() => setSettingsVisible(false)}>Tests</div>
+          <ToolbarButton icon='play' title='Run' onClick={runVisibleTests} disabled={isRunningTest}></ToolbarButton>
+          <ToolbarButton icon='debug-stop' title='Stop' onClick={() => sendMessageNoReply('stop')} disabled={!isRunningTest}></ToolbarButton>
+          <ToolbarButton icon='refresh' title='Reload' onClick={resetCollectingRootSuite} disabled={isRunningTest}></ToolbarButton>
           <div className='spacer'></div>
-          <ToolbarButton icon='close' title='Close settings' toggled={false} onClick={() => setSettingsVisible(false)}></ToolbarButton>
-        </div>
-        {(rootSuite.value?.suites || []).map(suite => {
-          return <div style={{ display: 'flex', alignItems: 'center', lineHeight: '24px' }}>
-            <input id={`project-${suite.title}`} type='checkbox' checked={projectNames.includes(suite.title)} onClick={() => {
-              const copy = [...projectNames];
-              if (copy.includes(suite.title))
-                copy.splice(copy.indexOf(suite.title), 1);
-              else
-                copy.push(suite.title);
-              setProjectNames(copy);
-            }} style={{ margin: '0 5px 0 10px' }} />
-            <label htmlFor={`project-${suite.title}`}>
-              {suite.title}
-            </label>
-          </div>;
-        })}
-        <div className='section-title'>Appearance</div>
-        <div style={{ marginLeft: 3 }}>
-          <ToolbarButton icon='color-mode' title='Toggle color mode' toggled={false} onClick={() => toggleTheme()}>Toggle color mode</ToolbarButton>
-        </div>
-      </div>}
-      {isRunningTest && <div className='status-line'>
+          <ToolbarButton icon='gear' title='Toggle color mode' toggled={settingsVisible} onClick={() => { setSettingsVisible(!settingsVisible); }}></ToolbarButton>
+        </Toolbar>
+        { !settingsVisible && <TestList
+          projectNames={projectNames}
+          rootSuite={rootSuite}
+          isRunningTest={isRunningTest}
+          runTests={runTests}
+          onTestItemSelected={setSelectedTestItem} />}
+        {settingsVisible && <SettingsView projectNames={projectNames} setProjectNames={setProjectNames} onClose={() => setSettingsVisible(false)}></SettingsView>}
+      </div>
+    </SplitView>
+    <div className='status-line'>
         Running: {progress.total} tests | {progress.passed} passed | {progress.failed} failed
-      </div>}
     </div>
-  </SplitView>;
+  </div>;
 };
 
 export const TestList: React.FC<{
@@ -243,7 +229,40 @@ export const TestList: React.FC<{
           expandedItems.set(treeItem.id, true);
         setExpandedItems(new Map(expandedItems));
       }}
-      noItemsMessage='No tests' />;
+      noItemsMessage='No tests' />
+  </div>;
+};
+
+export const SettingsView: React.FC<{
+  projectNames: string[],
+  setProjectNames: (projectNames: string[]) => void,
+  onClose: () => void,
+}> = ({ projectNames, setProjectNames, onClose }) => {
+  return <div className='vbox'>
+    <div className='hbox' style={{ flex: 'none' }}>
+      <div className='section-title' style={{ marginTop: 10 }}>Projects</div>
+      <div className='spacer'></div>
+      <ToolbarButton icon='close' title='Close settings' toggled={false} onClick={onClose}></ToolbarButton>
+    </div>
+    {projectNames.map(projectName => {
+      return <div style={{ display: 'flex', alignItems: 'center', lineHeight: '24px' }}>
+        <input id={`project-${projectName}`} type='checkbox' checked={projectNames.includes(projectName)} onClick={() => {
+          const copy = [...projectNames];
+          if (copy.includes(projectName))
+            copy.splice(copy.indexOf(projectName), 1);
+          else
+            copy.push(projectName);
+          setProjectNames(copy);
+        }} style={{ margin: '0 5px 0 10px' }} />
+        <label htmlFor={`project-${projectName}`}>
+          {projectName}
+        </label>
+      </div>;
+    })}
+    <div className='section-title'>Appearance</div>
+    <div style={{ marginLeft: 3 }}>
+      <ToolbarButton icon='color-mode' title='Toggle color mode' toggled={false} onClick={() => toggleTheme()}>Toggle color mode</ToolbarButton>
+    </div>
   </div>;
 };
 
@@ -274,7 +293,10 @@ export const TraceView: React.FC<{
     })();
   }, [testItem, stepsProgress]);
 
-  return <Workbench model={model}/>;
+  const xterm = <XtermWrapper source={xtermDataSource}></XtermWrapper>;
+  return <Workbench model={model} output={xterm} rightToolbar={[
+    <ToolbarButton icon='trash' title='Clear output' onClick={() => xtermDataSource.clear()}></ToolbarButton>,
+  ]}/>;
 };
 
 declare global {
@@ -325,10 +347,18 @@ const resetCollectingRootSuite = () => {
 };
 
 (window as any).dispatch = (message: any) => {
-  if (message.method === 'fileChanged')
+  if (message.method === 'fileChanged') {
     runWatchedTests();
-  else
+  } else if (message.method === 'stdio') {
+    if (message.params.buffer) {
+      const data = atob(message.params.buffer);
+      xtermDataSource.write(data);
+    } else {
+      xtermDataSource.write(message.params.text);
+    }
+  } else {
     receiver?.dispatch(message);
+  }
 };
 
 const sendMessage = async (method: string, params: any) => {
