@@ -19,7 +19,7 @@ import 'xterm/css/xterm.css';
 import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
 
-export type XTermModule = {
+export type XtermModule = {
   Terminal: typeof Terminal;
   FitAddon: typeof FitAddon;
 };
