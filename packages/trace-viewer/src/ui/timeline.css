@@ -22,7 +22,7 @@
   padding: 20px 0 5px;
   cursor: text;
   user-select: none;
-  border-bottom: 1px solid var(--vscode-panel-border);
+  margin-left: 10px;
 }
 
 .timeline-divider {

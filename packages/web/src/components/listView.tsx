@@ -31,7 +31,7 @@ export type ListViewProps = {
   onRightArrow?: (item: any) => void,
   onHighlighted?: (item: any | undefined) => void,
   onIconClicked?: (item: any) => void,
-  showNoItemsMessage?: boolean,
+  noItemsMessage?: string,
   dataTestId?: string,
 };
 
@@ -49,7 +49,7 @@ export const ListView: React.FC<ListViewProps> = ({
   onRightArrow,
   onHighlighted,
   onIconClicked,
-  showNoItemsMessage,
+  noItemsMessage,
   dataTestId,
 }) => {
   const itemListRef = React.createRef<HTMLDivElement>();
@@ -102,7 +102,7 @@ export const ListView: React.FC<ListViewProps> = ({
       }}
       ref={itemListRef}
     >
-      {showNoItemsMessage && items.length === 0 && <div className='list-view-empty'>No items</div>}
+      {noItemsMessage && items.length === 0 && <div className='list-view-empty'>{noItemsMessage}</div>}
       {items.map((item, index) => <ListItemView
         key={itemKey ? itemKey(item) : String(index)}
         hasIcons={!!itemIcon}

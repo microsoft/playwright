@@ -101,7 +101,6 @@ svg {
   color: var(--green);
 }
 
-.codicon-close,
 .codicon-error {
   color: var(--red);
 }

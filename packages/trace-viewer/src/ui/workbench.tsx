@@ -31,25 +31,26 @@ import './workbench.css';
 import { MetadataView } from './metadataView';
 
 export const Workbench: React.FunctionComponent<{
-  model: MultiTraceModel,
+  model?: MultiTraceModel,
 }> = ({ model }) => {
   const [selectedAction, setSelectedAction] = React.useState<ActionTraceEvent | undefined>();
   const [highlightedAction, setHighlightedAction] = React.useState<ActionTraceEvent | undefined>();
   const [selectedNavigatorTab, setSelectedNavigatorTab] = React.useState<string>('actions');
   const [selectedPropertiesTab, setSelectedPropertiesTab] = React.useState<string>('logs');
-  const activeAction = highlightedAction || selectedAction;
+  const activeAction = model ? highlightedAction || selectedAction : undefined;
 
   const { errors, warnings } = activeAction ? modelUtil.stats(activeAction) : { errors: 0, warnings: 0 };
   const consoleCount = errors + warnings;
   const networkCount = activeAction ? modelUtil.resourcesForAction(activeAction).length : 0;
+  const sdkLanguage = model?.sdkLanguage || 'javascript';
 
   const tabs = [
-    { id: 'logs', title: 'Call', count: 0, render: () => <CallTab action={activeAction} sdkLanguage={model.sdkLanguage} /> },
+    { id: 'logs', title: 'Call', count: 0, render: () => <CallTab action={activeAction} sdkLanguage={sdkLanguage} /> },
     { id: 'console', title: 'Console', count: consoleCount, render: () => <ConsoleTab action={activeAction} /> },
     { id: 'network', title: 'Network', count: networkCount, render: () => <NetworkTab action={activeAction} /> },
   ];
 
-  if (model.hasSource)
+  if (model?.hasSource)
     tabs.push({ id: 'source', title: 'Source', count: 0, render: () => <SourceTab action={activeAction} /> });
 
   return <div className='vbox'>
@@ -60,27 +61,33 @@ export const Workbench: React.FunctionComponent<{
     />
     <SplitView sidebarSize={300} orientation='horizontal' sidebarIsFirst={true}>
       <SplitView sidebarSize={300} orientation='vertical'>
-        <SnapshotTab action={activeAction} sdkLanguage={model.sdkLanguage || 'javascript'} testIdAttributeName={model.testIdAttributeName || 'data-testid'} />
+        <SnapshotTab action={activeAction} sdkLanguage={sdkLanguage} testIdAttributeName={model?.testIdAttributeName || 'data-testid'} />
         <TabbedPane tabs={tabs} selectedTab={selectedPropertiesTab} setSelectedTab={setSelectedPropertiesTab}/>
       </SplitView>
       <TabbedPane tabs={
         [
-          { id: 'actions', title: 'Actions', count: 0, render: () => <ActionList
-            sdkLanguage={model.sdkLanguage}
-            actions={model.actions}
-            selectedAction={selectedAction}
-            onSelected={action => {
-              setSelectedAction(action);
-            }}
-            onHighlighted={action => {
-              setHighlightedAction(action);
-            }}
-            revealConsole={() => setSelectedPropertiesTab('console')}
-          /> },
-          { id: 'metadata',
+          {
+            id: 'actions',
+            title: 'Actions',
+            count: 0,
+            component: <ActionList
+              sdkLanguage={sdkLanguage}
+              actions={model?.actions || []}
+              selectedAction={model ? selectedAction : undefined}
+              onSelected={action => {
+                setSelectedAction(action);
+              }}
+              onHighlighted={action => {
+                setHighlightedAction(action);
+              }}
+              revealConsole={() => setSelectedPropertiesTab('console')}
+            />
+          },
+          {
+            id: 'metadata',
             title: 'Metadata',
             count: 0,
-            render: () => <MetadataView model={model} />
+            component: <MetadataView model={model}/>
           },
         ]
       } selectedTab={selectedNavigatorTab} setSelectedTab={setSelectedNavigatorTab}/>
