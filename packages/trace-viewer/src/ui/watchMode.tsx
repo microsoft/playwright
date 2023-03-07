@@ -52,6 +52,7 @@ export const WatchModeView: React.FC<{}> = ({
   const [progress, setProgress] = React.useState<Progress>({ total: 0, passed: 0, failed: 0 });
   const [selectedTestItem, setSelectedTestItem] = React.useState<TestItem | undefined>(undefined);
   const [settingsVisible, setSettingsVisible] = React.useState<boolean>(false);
+  const [isWatchingFiles, setIsWatchingFiles] = React.useState<boolean>(true);
 
   updateRootSuite = (rootSuite: Suite, { passed, failed }: Progress) => {
     setRootSuite({ value: rootSuite });
@@ -82,6 +83,7 @@ export const WatchModeView: React.FC<{}> = ({
           <ToolbarButton icon='play' title='Run' onClick={runVisibleTests} disabled={isRunningTest}></ToolbarButton>
           <ToolbarButton icon='debug-stop' title='Stop' onClick={() => sendMessageNoReply('stop')} disabled={!isRunningTest}></ToolbarButton>
           <ToolbarButton icon='refresh' title='Reload' onClick={resetCollectingRootSuite} disabled={isRunningTest}></ToolbarButton>
+          <ToolbarButton icon='eye-watch' title='Watch' toggled={isWatchingFiles} onClick={() => setIsWatchingFiles(!isWatchingFiles)}></ToolbarButton>
           <div className='spacer'></div>
           <ToolbarButton icon='gear' title='Toggle color mode' toggled={settingsVisible} onClick={() => { setSettingsVisible(!settingsVisible); }}></ToolbarButton>
         </Toolbar>
@@ -89,6 +91,7 @@ export const WatchModeView: React.FC<{}> = ({
           projectNames={projectNames}
           rootSuite={rootSuite}
           isRunningTest={isRunningTest}
+          isWatchingFiles={isWatchingFiles}
           runTests={runTests}
           onTestItemSelected={setSelectedTestItem} />}
         {settingsVisible && <SettingsView projectNames={projectNames} setProjectNames={setProjectNames} onClose={() => setSettingsVisible(false)}></SettingsView>}
@@ -105,8 +108,9 @@ export const TestList: React.FC<{
   rootSuite: { value: Suite | undefined },
   runTests: (testIds: string[]) => void,
   isRunningTest: boolean,
+  isWatchingFiles: boolean,
   onTestItemSelected: (test: TestItem | undefined) => void,
-}> = ({ projectNames, rootSuite, runTests, isRunningTest, onTestItemSelected }) => {
+}> = ({ projectNames, rootSuite, runTests, isRunningTest, isWatchingFiles, onTestItemSelected }) => {
   const [filterText, setFilterText] = React.useState<string>('');
   const [selectedTreeItemId, setSelectedTreeItemId] = React.useState<string | undefined>();
   const [expandedItems, setExpandedItems] = React.useState<Map<string, boolean>>(new Map());
@@ -147,9 +151,12 @@ export const TestList: React.FC<{
       selectedTestItem = selectedTreeItem;
     else if (selectedTreeItem?.kind === 'case' && selectedTreeItem.children?.length === 1)
       selectedTestItem = selectedTreeItem.children[0]! as TestItem;
-    sendMessageNoReply('watch', { fileName: fileName(selectedTestItem) });
     return { selectedTreeItem, selectedTestItem };
   }, [selectedTreeItemId, treeItemMap]);
+
+  React.useEffect(() => {
+    sendMessageNoReply('watch', { fileName: isWatchingFiles ? fileName(selectedTestItem) : undefined });
+  }, [selectedTestItem, isWatchingFiles]);
 
   onTestItemSelected(selectedTestItem);
 

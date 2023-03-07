@@ -48,6 +48,10 @@
   outline: 1px solid var(--vscode-focusBorder);
 }
 
+.list-view-content .list-view-entry.selected {
+  background-color: var(--vscode-list-inactiveSelectionBackground);
+}
+
 .list-view-content:focus .list-view-entry.selected * {
   color: var(--vscode-list-activeSelectionForeground) !important;
 }

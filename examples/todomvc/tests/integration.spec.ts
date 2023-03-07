@@ -21,12 +21,6 @@ test.describe('New Todo', () => {
     // create a new todo locator
     const newTodo = page.getByPlaceholder('What needs to be done?');
     // Create 1st todo.
-    expect.soft(1).toBe(2);
-    expect.soft(1).toBe(2);
-    expect.soft(1).toBe(2);
-    expect.soft(1).toBe(2);
-    expect.soft(1).toBe(2);
-    expect.soft(1).toBe(2);
     await newTodo.fill(TODO_ITEMS[0]);
     await newTodo.press('Enter');
 
