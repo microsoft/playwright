@@ -53,13 +53,11 @@ export const Workbench: React.FunctionComponent<{
     tabs.push({ id: 'source', title: 'Source', count: 0, render: () => <SourceTab action={activeAction} /> });
 
   return <div className='vbox'>
-    <div style={{ paddingLeft: '20px', flex: 'none', borderBottom: '1px solid var(--vscode-panel-border)' }}>
-      <Timeline
-        model={model}
-        selectedAction={activeAction}
-        onSelected={action => setSelectedAction(action)}
-      />
-    </div>
+    <Timeline
+      model={model}
+      selectedAction={activeAction}
+      onSelected={action => setSelectedAction(action)}
+    />
     <SplitView sidebarSize={300} orientation='horizontal' sidebarIsFirst={true}>
       <SplitView sidebarSize={300} orientation='vertical'>
         <SnapshotTab action={activeAction} sdkLanguage={model.sdkLanguage || 'javascript'} testIdAttributeName={model.testIdAttributeName || 'data-testid'} />
@@ -77,7 +75,7 @@ export const Workbench: React.FunctionComponent<{
             onHighlighted={action => {
               setHighlightedAction(action);
             }}
-            setSelectedTab={setSelectedPropertiesTab}
+            revealConsole={() => setSelectedPropertiesTab('console')}
           /> },
           { id: 'metadata',
             title: 'Metadata',

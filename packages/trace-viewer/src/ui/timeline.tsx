@@ -38,7 +38,7 @@ type TimelineBar = {
 };
 
 export const Timeline: React.FunctionComponent<{
-  model: MultiTraceModel,
+  model: MultiTraceModel | undefined,
   selectedAction: ActionTraceEvent | undefined,
   onSelected: (action: ActionTraceEvent) => void,
 }> = ({ model, selectedAction, onSelected }) => {
@@ -49,7 +49,7 @@ export const Timeline: React.FunctionComponent<{
   const [hoveredBarIndex, setHoveredBarIndex] = React.useState<number | undefined>();
 
   const { boundaries, offsets } = React.useMemo(() => {
-    const boundaries = { minimum: model.startTime, maximum: model.endTime };
+    const boundaries = { minimum: model?.startTime || 0, maximum: model?.endTime || 30000 };
     // Leave some nice free space on the right hand side.
     boundaries.maximum += (boundaries.maximum - boundaries.minimum) / 20;
     return { boundaries, offsets: calculateDividerOffsets(measure.width, boundaries) };
@@ -57,7 +57,7 @@ export const Timeline: React.FunctionComponent<{
 
   const bars = React.useMemo(() => {
     const bars: TimelineBar[] = [];
-    for (const entry of model.actions) {
+    for (const entry of model?.actions || []) {
       let detail = trimRight(entry.params.selector || '', 50);
       if (entry.method === 'goto')
         detail = trimRight(entry.params.url || '', 50);
@@ -74,7 +74,7 @@ export const Timeline: React.FunctionComponent<{
       });
     }
 
-    for (const event of model.events) {
+    for (const event of model?.events || []) {
       const startTime = event.time;
       bars.push({
         event,

@@ -29,7 +29,7 @@ export interface ActionListProps {
   sdkLanguage: Language | undefined;
   onSelected: (action: ActionTraceEvent) => void,
   onHighlighted: (action: ActionTraceEvent | undefined) => void,
-  setSelectedTab: (tab: string) => void,
+  revealConsole: () => void,
 }
 
 export const ActionList: React.FC<ActionListProps> = ({
@@ -38,7 +38,7 @@ export const ActionList: React.FC<ActionListProps> = ({
   sdkLanguage,
   onSelected = () => {},
   onHighlighted = () => {},
-  setSelectedTab = () => {},
+  revealConsole = () => {},
 }) => {
   return <ListView
     items={actions}
@@ -47,7 +47,7 @@ export const ActionList: React.FC<ActionListProps> = ({
     onHighlighted={(action: ActionTraceEvent) => onHighlighted(action)}
     itemKey={(action: ActionTraceEvent) => action.callId}
     itemType={(action: ActionTraceEvent) => action.error?.message ? 'error' : undefined}
-    itemRender={(action: ActionTraceEvent) => renderAction(action, sdkLanguage, setSelectedTab)}
+    itemRender={(action: ActionTraceEvent) => renderAction(action, sdkLanguage, revealConsole)}
     showNoItemsMessage={true}
   ></ListView>;
 };
@@ -55,7 +55,7 @@ export const ActionList: React.FC<ActionListProps> = ({
 const renderAction = (
   action: ActionTraceEvent,
   sdkLanguage: Language | undefined,
-  setSelectedTab: (tab: string) => void
+  revealConsole: () => void
 ) => {
   const { errors, warnings } = modelUtil.stats(action);
   const locator = action.params.selector ? asLocator(sdkLanguage || 'javascript', action.params.selector) : undefined;
@@ -67,7 +67,7 @@ const renderAction = (
       {action.method === 'goto' && action.params.url && <div className='action-url' title={action.params.url}>{action.params.url}</div>}
     </div>
     <div className='action-duration' style={{ flex: 'none' }}>{action.endTime ? msToString(action.endTime - action.startTime) : 'Timed Out'}</div>
-    <div className='action-icons' onClick={() => setSelectedTab('console')}>
+    <div className='action-icons' onClick={() => revealConsole()}>
       {!!errors && <div className='action-icon'><span className={'codicon codicon-error'}></span><span className="action-icon-value">{errors}</span></div>}
       {!!warnings && <div className='action-icon'><span className={'codicon codicon-warning'}></span><span className="action-icon-value">{warnings}</span></div>}
     </div>
