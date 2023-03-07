@@ -463,29 +463,29 @@ You can also use the [`option: slowMo`] option
 to slow down execution (by N milliseconds per operation) and follow along while debugging.
 
 ```js
-// Chromium, Firefox, or Webkit
+// Chromium, Firefox, or WebKit
 await chromium.launch({ headless: false, slowMo: 100 }); 
 ```
 
 ```java
-// Chromium, Firefox, or Webkit
+// Chromium, Firefox, or WebKit
 chromium.launch(new BrowserType.LaunchOptions() 
   .setHeadless(false)
   .setSlowMo(100));
 ```
 
 ```python async
-# Chromium, Firefox, or Webkit
+# Chromium, Firefox, or WebKit
 await chromium.launch(headless=False, slow_mo=100)
 ```
 
 ```python sync
-# Chromium, Firefox, or Webkit
+# Chromium, Firefox, or WebKit
 chromium.launch(headless=False, slow_mo=100)
 ```
 
 ```csharp
-// Chromium, Firefox, or Webkit
+// Chromium, Firefox, or WebKit
 await using var browser = await playwright.Chromium.LaunchAsync(new()
 {
     Headless = false,
