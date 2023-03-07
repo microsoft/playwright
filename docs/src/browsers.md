@@ -280,7 +280,7 @@ public class Example {
 }
 ```
 
-Run tests on multiple browsers:
+Run tests on multiple browsers and make it based on the environment variable `BROWSER`:
 
 ```java
 import com.microsoft.playwright.*;
@@ -288,32 +288,15 @@ import com.microsoft.playwright.*;
 public class Example {
   public static void main(String[] args) {
     try (Playwright playwright = Playwright.create()) {
-      List<BrowserType> browserTypes = Arrays.asList(
-        playwright.chromium(),
-        playwright.webkit(),
-        playwright.firefox()
-      );
-      for (BrowserType browserType : browserTypes) {
-        try (Browser browser = browserType.launch()) {
-          BrowserContext context = browser.newContext();
-          Page page = context.newPage();
-          page.navigate("http://whatsmyuseragent.org/");
-        }
+      Browser browser = null;
+      String browserName = System.getenv("BROWSER");
+      if (browserName.equals("chromium")) {
+        browser = playwright.chromium().launch();
+      } else if (browserName.equals("firefox")) {
+        browser = playwright.firefox().launch();
+      } else if (browserName.equals("webkit")) {
+        browser = playwright.webkit().launch();
       }
-    }
-  }
-}
-```
-
-Test against branded browsers:
-
-```java
-import com.microsoft.playwright.*;
-
-public class Example {
-  public static void main(String[] args) {
-    try (Playwright playwright = Playwright.create()) {
-      Browser browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setChannel("msedge"));
       Page page = browser.newPage();
       // ...
     }
