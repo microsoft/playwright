@@ -4095,7 +4095,7 @@ interface GenericAssertions<R> {
    *
    * @param expected Regular expression to match against.
    */
-  toMatch(expected: RegExp): R;
+  toMatch(expected: RegExp | string): R;
   /**
    * Compares contents of the value with contents of `expected`, performing "deep equality" check. Allows extra
    * properties to be present in the value, unlike
