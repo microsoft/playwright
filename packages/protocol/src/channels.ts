@@ -546,6 +546,7 @@ export type PlaywrightNewRequestParams = {
   httpCredentials?: {
     username: string,
     password: string,
+    origin?: string,
   },
   proxy?: {
     server: string,
@@ -568,6 +569,7 @@ export type PlaywrightNewRequestOptions = {
   httpCredentials?: {
     username: string,
     password: string,
+    origin?: string,
   },
   proxy?: {
     server: string,
@@ -3939,6 +3941,7 @@ export type ElectronLaunchParams = {
   httpCredentials?: {
     username: string,
     password: string,
+    origin?: string,
   },
   ignoreHTTPSErrors?: boolean,
   locale?: string,
@@ -3972,6 +3975,7 @@ export type ElectronLaunchOptions = {
   httpCredentials?: {
     username: string,
     password: string,
+    origin?: string,
   },
   ignoreHTTPSErrors?: boolean,
   locale?: string,

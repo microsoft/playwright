@@ -313,6 +313,7 @@ scheme.PlaywrightNewRequestParams = tObject({
   httpCredentials: tOptional(tObject({
     username: tString,
     password: tString,
+    origin: tOptional(tString),
   })),
   proxy: tOptional(tObject({
     server: tString,
@@ -2184,6 +2185,7 @@ scheme.ElectronLaunchParams = tObject({
   httpCredentials: tOptional(tObject({
     username: tString,
     password: tString,
+    origin: tOptional(tString),
   })),
   ignoreHTTPSErrors: tOptional(tBoolean),
   locale: tOptional(tString),
