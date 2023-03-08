@@ -308,7 +308,7 @@ test('last created issue should be on the server', async ({ page, request }) => 
 
   const newIssue = await request.get(`https://api.github.com/repos/${USER}/${REPO}/issues/${issueId}`);
   expect(newIssue.ok()).toBeTruthy();
-  expect(newIssue).toEqual(expect.objectContaining({
+  expect(newIssue.json()).toEqual(expect.objectContaining({
     title: 'Bug report 1'
   }));
 });
@@ -353,7 +353,7 @@ test('last created issue should be on the server', async ({ page, request }) => 
 
   const newIssue = await request.get(`https://api.github.com/repos/${USER}/${REPO}/issues/${issueId}`);
   expect(newIssue.ok()).toBeTruthy();
-  expect(newIssue).toEqual(expect.objectContaining({
+  expect(newIssue.json()).toEqual(expect.objectContaining({
     title: 'Bug report 1'
   }));
 });
