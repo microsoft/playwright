@@ -331,12 +331,7 @@ export class FFBrowserContext extends BrowserContext {
 
   async doSetHTTPCredentials(httpCredentials?: types.Credentials): Promise<void> {
     this._options.httpCredentials = httpCredentials;
-    let credentials = null;
-    if (httpCredentials){
-      credentials = { username: httpCredentials.username, password: httpCredentials.password };
-      if (httpCredentials.origin) (credentials as any).origin = httpCredentials.origin;
-    }
-    await this._browser._connection.send('Browser.setHTTPCredentials', { browserContextId: this._browserContextId, credentials: credentials });
+    await this._browser._connection.send('Browser.setHTTPCredentials', { browserContextId: this._browserContextId, credentials: httpCredentials || null });
   }
 
   async doAddInitScript(source: string) {

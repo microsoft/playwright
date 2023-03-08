@@ -3549,7 +3549,8 @@ export interface PlaywrightTestOptions {
    */
   hasTouch: boolean;
   /**
-   * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
+   * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication). If no
+   * origin is specified, the username and password are sent to any servers upon unauthorized responses.
    */
   httpCredentials: HTTPCredentials | undefined;
   /**

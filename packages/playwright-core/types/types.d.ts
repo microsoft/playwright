@@ -12287,13 +12287,17 @@ export interface BrowserType<Unused = {}> {
     headless?: boolean;
 
     /**
-     * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
+     * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication). If no
+     * origin is specified, the username and password are sent to any servers upon unauthorized responses.
      */
     httpCredentials?: {
       username: string;
 
       password: string;
 
+      /**
+       * Restrain sending http credentials on specific origin (scheme://host:port).
+       */
       origin?: string;
     };
 
@@ -13682,13 +13686,17 @@ export interface AndroidDevice {
     hasTouch?: boolean;
 
     /**
-     * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
+     * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication). If no
+     * origin is specified, the username and password are sent to any servers upon unauthorized responses.
      */
     httpCredentials?: {
       username: string;
 
       password: string;
 
+      /**
+       * Restrain sending http credentials on specific origin (scheme://host:port).
+       */
       origin?: string;
     };
 
@@ -14394,13 +14402,17 @@ export interface APIRequest {
     extraHTTPHeaders?: { [key: string]: string; };
 
     /**
-     * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
+     * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication). If no
+     * origin is specified, the username and password are sent to any servers upon unauthorized responses.
      */
     httpCredentials?: {
       username: string;
 
       password: string;
 
+      /**
+       * Restrain sending http credentials on specific origin (scheme://host:port).
+       */
       origin?: string;
     };
 
@@ -15543,13 +15555,17 @@ export interface Browser extends EventEmitter {
     hasTouch?: boolean;
 
     /**
-     * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
+     * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication). If no
+     * origin is specified, the username and password are sent to any servers upon unauthorized responses.
      */
     httpCredentials?: {
       username: string;
 
       password: string;
 
+      /**
+       * Restrain sending http credentials on specific origin (scheme://host:port).
+       */
       origin?: string;
     };
 
@@ -16406,13 +16422,17 @@ export interface Electron {
     };
 
     /**
-     * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
+     * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication). If no
+     * origin is specified, the username and password are sent to any servers upon unauthorized responses.
      */
     httpCredentials?: {
       username: string;
 
       password: string;
 
+      /**
+       * Restrain sending http credentials on specific origin (scheme://host:port).
+       */
       origin?: string;
     };
 
@@ -18620,7 +18640,8 @@ export interface BrowserContextOptions {
   hasTouch?: boolean;
 
   /**
-   * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
+   * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication). If no
+   * origin is specified, the username and password are sent to any servers upon unauthorized responses.
    */
   httpCredentials?: HTTPCredentials;
 
@@ -18916,6 +18937,9 @@ export interface HTTPCredentials {
 
   password: string;
 
+  /**
+   * Restrain sending http credentials on specific origin (scheme://host:port).
+   */
   origin?: string;
 }
 

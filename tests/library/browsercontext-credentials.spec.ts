@@ -16,7 +16,6 @@
  */
 
 import { browserTest as it, expect } from '../config/browserTest';
-import * as URL from 'url';
 
 it('should fail without credentials', async ({ browser, server, browserName, headless }) => {
   it.fail(browserName === 'chromium' && !headless);
@@ -80,9 +79,8 @@ it('should return resource body', async ({ browser, server }) => {
 
 it('should work with correct credentials and matching origin', async ({ browser, server }) => {
   server.setAuth('/empty.html', 'user', 'pass');
-  const origin = server.PREFIX;
   const context = await browser.newContext({
-    httpCredentials: { username: 'user', password: 'pass', origin: origin }
+    httpCredentials: { username: 'user', password: 'pass', origin: server.PREFIX }
   });
   const page = await context.newPage();
   const response = await page.goto(server.EMPTY_PAGE);
@@ -92,9 +90,8 @@ it('should work with correct credentials and matching origin', async ({ browser,
 
 it('should work with correct credentials and matching origin case insensitive', async ({ browser, server }) => {
   server.setAuth('/empty.html', 'user', 'pass');
-  const origin = server.PREFIX.toUpperCase();
   const context = await browser.newContext({
-    httpCredentials: { username: 'user', password: 'pass', origin: origin }
+    httpCredentials: { username: 'user', password: 'pass', origin: server.PREFIX.toUpperCase() }
   });
   const page = await context.newPage();
   const response = await page.goto(server.EMPTY_PAGE);
@@ -104,9 +101,8 @@ it('should work with correct credentials and matching origin case insensitive', 
 
 it('should fail with correct credentials and mismatching scheme', async ({ browser, server }) => {
   server.setAuth('/empty.html', 'user', 'pass');
-  const origin = server.PREFIX.includes('http://') ? server.PREFIX.replace('http://', 'https://') : server.PREFIX.replace('https://', 'http://');
   const context = await browser.newContext({
-    httpCredentials: { username: 'user', password: 'pass', origin: origin }
+    httpCredentials: { username: 'user', password: 'pass', origin: server.PREFIX.replace('http://', 'https://') }
   });
   const page = await context.newPage();
   const response = await page.goto(server.EMPTY_PAGE);
@@ -116,7 +112,7 @@ it('should fail with correct credentials and mismatching scheme', async ({ brows
 
 it('should fail with correct credentials and mismatching hostname', async ({ browser, server }) => {
   server.setAuth('/empty.html', 'user', 'pass');
-  const hostname = URL.parse(server.PREFIX).hostname;
+  const hostname = new URL(server.PREFIX).hostname;
   const origin = server.PREFIX.replace(hostname, 'mismatching-hostname');
   const context = await browser.newContext({
     httpCredentials: { username: 'user', password: 'pass', origin: origin }
