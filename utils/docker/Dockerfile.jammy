@@ -13,7 +13,7 @@ RUN apt-get update && \
     apt-get install -y nodejs && \
     # Feature-parity with node.js base images.
     apt-get install -y --no-install-recommends git openssh-client && \
-    npm install -g yarn && \
+    npm install -g yarn pnpm && \
     # clean apt cache
     rm -rf /var/lib/apt/lists/* && \
     # Create the pwuser
