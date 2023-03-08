@@ -57,7 +57,7 @@ export class Runner {
     webServerPluginsForConfig(config).forEach(p => config._internal.plugins.push({ factory: p }));
 
     const reporter = await createReporter(config, listOnly ? 'list' : 'run');
-    const taskRunner = listOnly ? createTaskRunnerForList(config, reporter)
+    const taskRunner = listOnly ? createTaskRunnerForList(config, reporter, 'in-process')
       : createTaskRunner(config, reporter);
 
     const context: TaskRunnerState = {

@@ -18,12 +18,11 @@ import type { FullConfig, FullResult, Reporter, TestError, TestResult, TestStep 
 import type { Suite, TestCase } from '../common/test';
 import type { JsonConfig, JsonProject, JsonSuite, JsonTestCase, JsonTestResultEnd, JsonTestResultStart, JsonTestStepEnd, JsonTestStepStart } from '../isomorphic/teleReceiver';
 import type { SuitePrivate } from '../../types/reporterPrivate';
-import type { FullProjectInternal } from '../common/types';
+import type { FullConfigInternal, FullProjectInternal } from '../common/types';
 import { createGuid } from 'playwright-core/lib/utils';
 import { serializeRegexPatterns } from '../isomorphic/teleReceiver';
 
 export class TeleReporterEmitter implements Reporter {
-  private config!: FullConfig;
   private _messageSink: (message: any) => void;
 
   constructor(messageSink: (message: any) => void) {
@@ -31,7 +30,6 @@ export class TeleReporterEmitter implements Reporter {
   }
 
   onBegin(config: FullConfig, suite: Suite) {
-    this.config = config;
     const projects: any[] = [];
     for (const projectSuite of suite.suites) {
       const report = this._serializeProject(projectSuite);
@@ -116,6 +114,7 @@ export class TeleReporterEmitter implements Reporter {
     return {
       rootDir: config.rootDir,
       configFile: config.configFile,
+      listOnly: (config as FullConfigInternal)._internal.listOnly,
     };
   }
 
