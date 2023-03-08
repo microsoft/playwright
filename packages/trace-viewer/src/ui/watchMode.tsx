@@ -90,7 +90,7 @@ export const WatchModeView: React.FC<{}> = ({
           <div className='section-title' style={{ cursor: 'pointer' }} onClick={() => setSettingsVisible(false)}>Tests</div>
           <ToolbarButton icon='play' title='Run' onClick={runVisibleTests} disabled={isRunningTest}></ToolbarButton>
           <ToolbarButton icon='debug-stop' title='Stop' onClick={() => sendMessageNoReply('stop')} disabled={!isRunningTest}></ToolbarButton>
-          <ToolbarButton icon='refresh' title='Reload' onClick={resetCollectingRootSuite} disabled={isRunningTest}></ToolbarButton>
+          <ToolbarButton icon='refresh' title='Reload' onClick={() => refreshRootSuite(true)} disabled={isRunningTest}></ToolbarButton>
           <ToolbarButton icon='eye-watch' title='Watch' toggled={isWatchingFiles} onClick={() => setIsWatchingFiles(!isWatchingFiles)}></ToolbarButton>
           <div className='spacer'></div>
           <ToolbarButton icon='gear' title='Toggle color mode' toggled={settingsVisible} onClick={() => { setSettingsVisible(!settingsVisible); }}></ToolbarButton>
@@ -128,7 +128,7 @@ export const TestList: React.FC<{
 
   React.useEffect(() => {
     inputRef.current?.focus();
-    resetCollectingRootSuite();
+    refreshRootSuite(true);
   }, []);
 
   const { filteredItems, treeItemMap, visibleTestIds } = React.useMemo(() => {
@@ -165,8 +165,8 @@ export const TestList: React.FC<{
   }, [selectedTreeItemId, treeItemMap]);
 
   React.useEffect(() => {
-    sendMessageNoReply('watch', { fileName: isWatchingFiles ? fileName(selectedTestItem) : undefined });
-  }, [selectedTestItem, isWatchingFiles]);
+    sendMessageNoReply('watch', { fileName: isWatchingFiles ? fileName(selectedTreeItem) : undefined });
+  }, [selectedTreeItem, isWatchingFiles]);
 
   onTestItemSelected(selectedTestItem);
 
@@ -327,7 +327,12 @@ declare global {
 
 let receiver: TeleReporterReceiver | undefined;
 
-const resetCollectingRootSuite = () => {
+const refreshRootSuite = (eraseResults: boolean) => {
+  if (!eraseResults) {
+    sendMessageNoReply('list');
+    return;
+  }
+
   let rootSuite: Suite;
   const progress: Progress = {
     total: 0,
@@ -367,18 +372,27 @@ const resetCollectingRootSuite = () => {
 };
 
 (window as any).dispatch = (message: any) => {
+  if (message.method === 'listChanged') {
+    refreshRootSuite(false);
+    return;
+  }
+
   if (message.method === 'fileChanged') {
     runWatchedTests();
-  } else if (message.method === 'stdio') {
+    return;
+  }
+
+  if (message.method === 'stdio') {
     if (message.params.buffer) {
       const data = atob(message.params.buffer);
       xtermDataSource.write(data);
     } else {
       xtermDataSource.write(message.params.text);
     }
-  } else {
-    receiver?.dispatch(message);
+    return;
   }
+
+  receiver?.dispatch(message);
 };
 
 const sendMessage = async (method: string, params: any) => {
@@ -442,6 +456,7 @@ type TreeItemBase = {
 type FileItem = TreeItemBase & {
   kind: 'file',
   file: string;
+  children?: TestCaseItem[];
 };
 
 type TestCaseItem = TreeItemBase & {
@@ -501,6 +516,7 @@ function createTree(rootSuite: Suite | undefined, projects: Map<string, boolean>
           test,
         });
       }
+      (fileItem.children as TestCaseItem[]).sort((a, b) => a.location.line - b.location.line);
     }
   }
   return [...fileItems.values()];
@@ -512,7 +528,7 @@ function filterTree(fileItems: FileItem[], filterText: string): FileItem[] {
   const result: FileItem[] = [];
   for (const fileItem of fileItems) {
     if (trimmedFilterText) {
-      const filteredCases: TreeItem[] = [];
+      const filteredCases: TestCaseItem[] = [];
       for (const testCaseItem of fileItem.children!) {
         const fullTitle = (fileItem.title + ' ' + testCaseItem.title).toLowerCase();
         if (filterTokens.every(token => fullTitle.includes(token)))
