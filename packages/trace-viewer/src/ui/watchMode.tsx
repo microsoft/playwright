@@ -20,7 +20,7 @@ import '@web/common.css';
 import React from 'react';
 import { ListView } from '@web/components/listView';
 import { TeleReporterReceiver } from '../../../playwright-test/src/isomorphic/teleReceiver';
-import type { FullConfig, Suite, TestCase, TestResult, TestStep } from '../../../playwright-test/types/testReporter';
+import type { FullConfig, Suite, TestCase, TestResult, TestStep, Location } from '../../../playwright-test/types/testReporter';
 import { SplitView } from '@web/components/splitView';
 import { MultiTraceModel } from './modelUtil';
 import './watchMode.css';
@@ -46,7 +46,7 @@ const xtermDataSource: XtermDataSource = {
 
 export const WatchModeView: React.FC<{}> = ({
 }) => {
-  const [projectNames, setProjectNames] = React.useState<string[]>([]);
+  const [projects, setProjects] = React.useState<Map<string, boolean>>(new Map());
   const [rootSuite, setRootSuite] = React.useState<{ value: Suite | undefined }>({ value: undefined });
   const [isRunningTest, setIsRunningTest] = React.useState<boolean>(false);
   const [progress, setProgress] = React.useState<Progress>({ total: 0, passed: 0, failed: 0 });
@@ -55,9 +55,22 @@ export const WatchModeView: React.FC<{}> = ({
   const [isWatchingFiles, setIsWatchingFiles] = React.useState<boolean>(true);
 
   updateRootSuite = (rootSuite: Suite, { passed, failed }: Progress) => {
-    setRootSuite({ value: rootSuite });
+    for (const projectName of projects.keys()) {
+      if (!rootSuite.suites.find(s => s.title === projectName))
+        projects.delete(projectName);
+    }
+    for (const projectSuite of rootSuite.suites) {
+      if (!projects.has(projectSuite.title))
+        projects.set(projectSuite.title, false);
+    }
+    if (![...projects.values()].includes(true))
+      projects.set(projects.entries().next().value[0], true);
+
     progress.passed = passed;
     progress.failed = failed;
+
+    setRootSuite({ value: rootSuite });
+    setProjects(new Map(projects));
     setProgress({ ...progress });
   };
 
@@ -68,11 +81,6 @@ export const WatchModeView: React.FC<{}> = ({
       setIsRunningTest(false);
     });
   };
-
-  React.useEffect(() => {
-    if (projectNames.length === 0 && rootSuite.value?.suites.length)
-      setProjectNames([rootSuite.value?.suites[0].title]);
-  }, [projectNames, rootSuite]);
 
   return <div className='vbox'>
     <SplitView sidebarSize={250} orientation='horizontal' sidebarIsFirst={true}>
@@ -87,14 +95,15 @@ export const WatchModeView: React.FC<{}> = ({
           <div className='spacer'></div>
           <ToolbarButton icon='gear' title='Toggle color mode' toggled={settingsVisible} onClick={() => { setSettingsVisible(!settingsVisible); }}></ToolbarButton>
         </Toolbar>
-        { !settingsVisible && <TestList
-          projectNames={projectNames}
+        <TestList
+          projects={projects}
           rootSuite={rootSuite}
           isRunningTest={isRunningTest}
           isWatchingFiles={isWatchingFiles}
           runTests={runTests}
-          onTestItemSelected={setSelectedTestItem} />}
-        {settingsVisible && <SettingsView projectNames={projectNames} setProjectNames={setProjectNames} onClose={() => setSettingsVisible(false)}></SettingsView>}
+          onTestItemSelected={setSelectedTestItem}
+          isVisible={!settingsVisible} />
+        {settingsVisible && <SettingsView projects={projects} setProjects={setProjects} onClose={() => setSettingsVisible(false)}></SettingsView>}
       </div>
     </SplitView>
     <div className='status-line'>
@@ -104,13 +113,14 @@ export const WatchModeView: React.FC<{}> = ({
 };
 
 export const TestList: React.FC<{
-  projectNames: string[],
+  projects: Map<string, boolean>,
   rootSuite: { value: Suite | undefined },
   runTests: (testIds: string[]) => void,
   isRunningTest: boolean,
   isWatchingFiles: boolean,
+  isVisible: boolean
   onTestItemSelected: (test: TestItem | undefined) => void,
-}> = ({ projectNames, rootSuite, runTests, isRunningTest, isWatchingFiles, onTestItemSelected }) => {
+}> = ({ projects, rootSuite, runTests, isRunningTest, isWatchingFiles, isVisible, onTestItemSelected }) => {
   const [filterText, setFilterText] = React.useState<string>('');
   const [selectedTreeItemId, setSelectedTreeItemId] = React.useState<string | undefined>();
   const [expandedItems, setExpandedItems] = React.useState<Map<string, boolean>>(new Map());
@@ -122,7 +132,7 @@ export const TestList: React.FC<{
   }, []);
 
   const { filteredItems, treeItemMap, visibleTestIds } = React.useMemo(() => {
-    const treeItems = createTree(rootSuite.value, projectNames);
+    const treeItems = createTree(rootSuite.value, projects);
     const filteredItems = filterTree(treeItems, filterText);
 
     const treeItemMap = new Map<string, TreeItem>();
@@ -135,7 +145,7 @@ export const TestList: React.FC<{
     };
     filteredItems.forEach(visit);
     return { treeItemMap, visibleTestIds, filteredItems };
-  }, [filterText, rootSuite, projectNames]);
+  }, [filterText, rootSuite, projects]);
 
   runVisibleTests = () => runTests([...visibleTestIds]);
 
@@ -170,6 +180,9 @@ export const TestList: React.FC<{
     runTests(collectTestIds(selectedTreeItem));
   };
 
+  if (!isVisible)
+    return <></>;
+
   return <div className='vbox'>
     <Toolbar>
       <input ref={inputRef} type='search' placeholder='Filter (e.g. text, @tag)' spellCheck={false} value={filterText}
@@ -188,6 +201,7 @@ export const TestList: React.FC<{
         return <div className='hbox watch-mode-list-item'>
           <div className='watch-mode-list-item-title'>{treeItem.title}</div>
           <ToolbarButton icon='play' title='Run' onClick={() => runTreeItem(treeItem)} disabled={isRunningTest}></ToolbarButton>
+          <ToolbarButton icon='go-to-file' title='Open in VS Code' onClick={() => sendMessageNoReply('open', { location: locationToOpen(treeItem) })}></ToolbarButton>
         </div>;
       }}
       itemIcon={(treeItem: TreeItem) => {
@@ -241,25 +255,24 @@ export const TestList: React.FC<{
 };
 
 export const SettingsView: React.FC<{
-  projectNames: string[],
-  setProjectNames: (projectNames: string[]) => void,
+  projects: Map<string, boolean>,
+  setProjects: (projectNames: Map<string, boolean>) => void,
   onClose: () => void,
-}> = ({ projectNames, setProjectNames, onClose }) => {
+}> = ({ projects, setProjects, onClose }) => {
   return <div className='vbox'>
     <div className='hbox' style={{ flex: 'none' }}>
       <div className='section-title' style={{ marginTop: 10 }}>Projects</div>
       <div className='spacer'></div>
       <ToolbarButton icon='close' title='Close settings' toggled={false} onClick={onClose}></ToolbarButton>
     </div>
-    {projectNames.map(projectName => {
-      return <div style={{ display: 'flex', alignItems: 'center', lineHeight: '24px' }}>
-        <input id={`project-${projectName}`} type='checkbox' checked={projectNames.includes(projectName)} onClick={() => {
-          const copy = [...projectNames];
-          if (copy.includes(projectName))
-            copy.splice(copy.indexOf(projectName), 1);
-          else
-            copy.push(projectName);
-          setProjectNames(copy);
+    {[...projects.entries()].map(([projectName, value]) => {
+      return <div style={{ display: 'flex', alignItems: 'center', lineHeight: '24px', cursor: 'pointer' }}>
+        <input id={`project-${projectName}`} type='checkbox' checked={value} onClick={() => {
+          const copy = new Map(projects);
+          copy.set(projectName, !copy.get(projectName));
+          if (![...copy.values()].includes(true))
+            copy.set(projectName, true);
+          setProjects(copy);
         }} style={{ margin: '0 5px 0 10px' }} />
         <label htmlFor={`project-${projectName}`}>
           {projectName}
@@ -387,6 +400,17 @@ const fileName = (treeItem?: TreeItem): string | undefined => {
   return fileName(treeItem.parent || undefined);
 };
 
+const locationToOpen = (treeItem?: TreeItem) => {
+  if (!treeItem)
+    return;
+  if (treeItem.kind === 'test')
+    return treeItem.test.location.file + ':' + treeItem.test.location.line;
+  if (treeItem.kind === 'case')
+    return treeItem.location.file + ':' + treeItem.location.line;
+  if (treeItem.kind === 'file')
+    return treeItem.file;
+};
+
 const collectTestIds = (treeItem?: TreeItem): string[] => {
   if (!treeItem)
     return [];
@@ -422,6 +446,7 @@ type FileItem = TreeItemBase & {
 
 type TestCaseItem = TreeItemBase & {
   kind: 'case',
+  location: Location,
 };
 
 type TestItem = TreeItemBase & {
@@ -431,10 +456,10 @@ type TestItem = TreeItemBase & {
 
 type TreeItem = FileItem | TestCaseItem | TestItem;
 
-function createTree(rootSuite: Suite | undefined, projectNames: string[]): FileItem[] {
+function createTree(rootSuite: Suite | undefined, projects: Map<string, boolean>): FileItem[] {
   const fileItems = new Map<string, FileItem>();
   for (const projectSuite of rootSuite?.suites || []) {
-    if (!projectNames.includes(projectSuite.title))
+    if (!projects.get(projectSuite.title))
       continue;
     for (const fileSuite of projectSuite.suites) {
       const file = fileSuite.location!.file;
@@ -464,6 +489,7 @@ function createTree(rootSuite: Suite | undefined, projectNames: string[]): FileI
             parent: fileItem,
             children: [],
             expanded: false,
+            location: test.location,
           };
           fileItem.children!.push(testCaseItem);
         }
@@ -506,7 +532,7 @@ function flattenTree(fileItems: FileItem[], expandedItems: Map<string, boolean |
     result.push(fileItem);
     const expandState = expandedItems.get(fileItem.id);
     const autoExpandMatches = result.length < 100 && (hasFilter && expandState !== false);
-    fileItem.expanded = expandState || autoExpandMatches;
+    fileItem.expanded = expandState || autoExpandMatches || fileItems.length < 10;
     if (fileItem.expanded) {
       for (const testCaseItem of fileItem.children!) {
         result.push(testCaseItem);
