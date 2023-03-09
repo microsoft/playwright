@@ -107,10 +107,10 @@ module.exports = defineConfig({
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { defineConfig } from '@playwright/test';
-import { TestOptions } from './my-test';
+import { defineConfig } from '@playwright/test';
+import type { TestOptions } from './my-test';
 
-export default defineConfig({
+export default defineConfig<TestOptions>({
   projects: [
     {
       name: 'alice',
