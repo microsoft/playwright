@@ -570,17 +570,8 @@ export class WKPage implements PageDelegate {
         const objectId = JSON.parse(p.objectId);
         context = this._contextIdToContext.get(objectId.injectedScriptId);
       } else {
-        context = this._contextIdToContext.get(this._mainFrameContextId!);
-        if (!this._page._browserContext._options.javaScriptEnabled) {
-          // setContent uses console for its implementation, we need to dispatch these messages
-          // even if javascript is disabled.
-          for (const existingContext of this._contextIdToContext.values()) {
-            if (existingContext.frame === this._page.mainFrame() && existingContext.world === 'utility') {
-              context = existingContext;
-              break;
-            }
-          }
-        }
+        // Pick any context if the parameter is a value.
+        context = [...this._contextIdToContext.values()].find(c => c.frame === this._page.mainFrame());
       }
       if (!context)
         return;
