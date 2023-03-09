@@ -703,9 +703,8 @@ it('should work with overridden globalThis.Window/Document/Node', async ({ page,
   }
 });
 
-it('should work with overridden URL/Date/RegExp', async ({ page, server, browserName }) => {
+it('should work with overridden URL/Date/RegExp', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/21109' });
-  it.fixme(browserName === 'firefox');
   const testCases = [
     // @ts-ignore
     () => globalThis.URL = 'foo',
