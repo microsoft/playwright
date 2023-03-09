@@ -14,13 +14,11 @@
   limitations under the License.
 */
 
-@import '../third_party/vscode/colors.css';
-
-.xterm-wrapper {
-  padding-left: 5px;
-}
-
-.xterm-wrapper .xterm-viewport {
-  background-color: var(--vscode-panel-background) !important;
-  color: var(--vscode-foreground) !important;
+.error-message {
+  font-family: var(--vscode-editor-font-family);
+  font-weight: var(--vscode-editor-font-weight);
+  font-size: var(--vscode-editor-font-size);
+  background-color: var(--vscode-inputValidation-errorBackground);
+  white-space: pre;
+  overflow: auto;
 }

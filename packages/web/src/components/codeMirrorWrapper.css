@@ -117,6 +117,10 @@ body.dark-mode .CodeMirror span.cm-type {
 }
 
 .CodeMirror .CodeMirror-gutters {
+  z-index: 0;
+}
+
+.CodeMirror .CodeMirror-gutterwrapper {
   background: var(--vscode-editor-background);
   border-right: 1px solid var(--vscode-editorGroup-border);
   color: var(--vscode-editorLineNumber-foreground);
