@@ -324,6 +324,8 @@ const refreshRootSuite = (eraseResults: boolean) => {
       else
         ++progress.passed;
       updateRootSuite(rootSuite, progress);
+      // This will update selected trace viewer.
+      updateStepsProgress();
     },
 
     onStepBegin: () => {
@@ -373,22 +375,13 @@ const sendMessageNoReply = (method: string, params?: any) => {
 };
 
 const fileName = (treeItem?: TreeItem): string | undefined => {
-  if (!treeItem)
-    return;
-  if (treeItem.kind === 'file')
-    return treeItem.file;
-  return fileName(treeItem.parent || undefined);
+  return treeItem?.location.file;
 };
 
 const locationToOpen = (treeItem?: TreeItem) => {
   if (!treeItem)
     return;
-  if (treeItem.kind === 'test')
-    return treeItem.test.location.file + ':' + treeItem.test.location.line;
-  if (treeItem.kind === 'case')
-    return treeItem.location.file + ':' + treeItem.location.line;
-  if (treeItem.kind === 'file')
-    return treeItem.file;
+  return treeItem.location.file + ':' + treeItem.location.line;
 };
 
 const collectTestIds = (treeItem?: TreeItem): string[] => {
@@ -414,29 +407,22 @@ type Progress = {
 };
 
 type TreeItemBase = {
-  kind: 'root' | 'file' | 'case' | 'test',
+  kind: 'root' | 'group' | 'case' | 'test',
   id: string;
   title: string;
-  parent: TreeItem | null;
+  location: Location,
   children: TreeItem[];
   status: 'none' | 'running' | 'passed' | 'failed';
 };
 
-type RootItem = TreeItemBase & {
-  kind: 'root',
-  children: FileItem[];
-};
-
-type FileItem = TreeItemBase & {
-  kind: 'file',
-  file: string;
-  children: TestCaseItem[];
+type GroupItem = TreeItemBase & {
+  kind: 'group',
+  children: (TestCaseItem | GroupItem)[];
 };
 
 type TestCaseItem = TreeItemBase & {
   kind: 'case',
   tests: TestCase[];
-  location: Location,
 };
 
 type TestItem = TreeItemBase & {
@@ -444,77 +430,77 @@ type TestItem = TreeItemBase & {
   test: TestCase;
 };
 
-type TreeItem = RootItem | FileItem | TestCaseItem | TestItem;
+type TreeItem = GroupItem | TestCaseItem | TestItem;
 
-function createTree(rootSuite: Suite | undefined, projects: Map<string, boolean>): RootItem {
-  const rootItem: RootItem = {
-    kind: 'root',
+function createTree(rootSuite: Suite | undefined, projects: Map<string, boolean>): GroupItem {
+  const rootItem: GroupItem = {
+    kind: 'group',
     id: 'root',
     title: '',
-    parent: null,
+    location: { file: '', line: 0, column: 0 },
     children: [],
     status: 'none',
   };
-  const fileItems = new Map<string, FileItem>();
-  for (const projectSuite of rootSuite?.suites || []) {
-    if (!projects.get(projectSuite.title))
-      continue;
-    for (const fileSuite of projectSuite.suites) {
-      const file = fileSuite.location!.file;
 
-      let fileItem = fileItems.get(file);
-      if (!fileItem) {
-        fileItem = {
-          kind: 'file',
-          id: fileSuite.title,
-          title: fileSuite.title,
-          file,
-          parent: null,
+  const visitSuite = (projectName: string, parentSuite: Suite, parentGroup: GroupItem) => {
+    for (const suite of parentSuite.suites) {
+      const title = suite.title;
+      let group = parentGroup.children.find(item => item.title === title) as GroupItem | undefined;
+      if (!group) {
+        group = {
+          kind: 'group',
+          id: parentGroup.id + '\x1e' + title,
+          title,
+          location: suite.location!,
           children: [],
           status: 'none',
         };
-        fileItems.set(fileSuite.location!.file, fileItem);
-        rootItem.children.push(fileItem);
+        parentGroup.children.push(group);
       }
-
-      for (const test of fileSuite.allTests()) {
-        const title = test.titlePath().slice(3).join(' › ');
-        let testCaseItem = fileItem.children.find(t => t.title === title) as TestCaseItem;
-        if (!testCaseItem) {
-          testCaseItem = {
-            kind: 'case',
-            id: fileItem.id + ' / ' + title,
-            title,
-            parent: fileItem,
-            children: [],
-            tests: [],
-            location: test.location,
-            status: 'none',
-          };
-          fileItem.children.push(testCaseItem);
-        }
-
-        let status: 'none' | 'running' | 'passed' | 'failed' = 'none';
-        if (test.results.some(r => r.duration === -1))
-          status = 'running';
-        else if (test.results.length && test.outcome() !== 'expected')
-          status = 'failed';
-        else if (test.outcome() === 'expected')
-          status = 'passed';
-
-        testCaseItem.tests.push(test);
-        testCaseItem.children.push({
-          kind: 'test',
-          id: test.id,
-          title: projectSuite.title,
-          parent: testCaseItem,
-          test,
-          children: [],
-          status,
-        });
-      }
-      (fileItem.children as TestCaseItem[]).sort((a, b) => a.location.line - b.location.line);
+      visitSuite(projectName, suite, group);
     }
+
+    for (const test of parentSuite.tests) {
+      const title = test.title;
+      let testCaseItem = parentGroup.children.find(t => t.title === title) as TestCaseItem;
+      if (!testCaseItem) {
+        testCaseItem = {
+          kind: 'case',
+          id: parentGroup.id + '\x1e' + title,
+          title,
+          children: [],
+          tests: [],
+          location: test.location,
+          status: 'none',
+        };
+        parentGroup.children.push(testCaseItem);
+      }
+
+      let status: 'none' | 'running' | 'passed' | 'failed' = 'none';
+      if (test.results.some(r => r.duration === -1))
+        status = 'running';
+      else if (test.results.length && test.outcome() !== 'expected')
+        status = 'failed';
+      else if (test.outcome() === 'expected')
+        status = 'passed';
+
+      testCaseItem.tests.push(test);
+      testCaseItem.children.push({
+        kind: 'test',
+        id: test.id,
+        title: projectName,
+        location: test.location!,
+        test,
+        children: [],
+        status,
+      });
+    }
+  };
+
+  for (const projectSuite of rootSuite?.suites || []) {
+    if (!projects.get(projectSuite.title))
+      continue;
+    visitSuite(projectSuite.title, projectSuite, rootItem);
   }
 
   const propagateStatus = (treeItem: TreeItem) => {
@@ -542,27 +528,29 @@ function createTree(rootSuite: Suite | undefined, projects: Map<string, boolean>
   return rootItem;
 }
 
-function filterTree(rootItem: RootItem, filterText: string) {
+function filterTree(rootItem: GroupItem, filterText: string) {
   const trimmedFilterText = filterText.trim();
   const filterTokens = trimmedFilterText.toLowerCase().split(' ');
-  const result: FileItem[] = [];
-  for (const fileItem of rootItem.children) {
-    if (trimmedFilterText) {
-      const filteredCases: TestCaseItem[] = [];
-      for (const testCaseItem of fileItem.children) {
-        const fullTitle = (fileItem.title + ' ' + testCaseItem.title).toLowerCase();
-        if (filterTokens.every(token => fullTitle.includes(token)))
-          filteredCases.push(testCaseItem);
+
+  const visit = (treeItem: GroupItem) => {
+    const newChildren: (GroupItem | TestCaseItem)[] = [];
+    for (const child of treeItem.children) {
+      if (child.kind === 'case') {
+        const title = child.tests[0].titlePath().join(' ').toLowerCase();
+        if (filterTokens.every(token => title.includes(token)))
+          newChildren.push(child);
+      } else {
+        visit(child);
+        if (child.children.length)
+          newChildren.push(child);
       }
-      fileItem.children = filteredCases;
     }
-    if (fileItem.children.length)
-      result.push(fileItem);
-  }
-  rootItem.children = result;
+    treeItem.children = newChildren;
+  };
+  visit(rootItem);
 }
 
-function hideOnlyTests(rootItem: RootItem) {
+function hideOnlyTests(rootItem: GroupItem) {
   const visit = (treeItem: TreeItem) => {
     if (treeItem.kind === 'case' && treeItem.children.length === 1)
       treeItem.children = [];

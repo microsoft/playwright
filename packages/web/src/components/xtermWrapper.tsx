@@ -16,7 +16,7 @@
 
 import * as React from 'react';
 import './xtermWrapper.css';
-import type { Terminal } from 'xterm';
+import type { ITheme, Terminal } from 'xterm';
 import type { XtermModule } from './xtermModule';
 import { isDarkTheme } from '@web/theme';
 
@@ -77,7 +77,7 @@ export const XtermWrapper: React.FC<{ source: XtermDataSource }> = ({
   </div>;
 };
 
-const lightTheme = {
+const lightTheme: ITheme = {
   foreground: '#383a42',
   background: '#fafafa',
   cursor: '#383a42',
@@ -96,10 +96,12 @@ const lightTheme = {
   brightBlue: '#4078f2',
   brightMagenta: '#a626a4',
   brightCyan: '#0184bc',
-  brightWhite: '#383a42'
+  brightWhite: '#383a42',
+  selectionBackground: '#d7d7d7',
+  selectionForeground: '#383a42',
 };
 
-const darkTheme = {
+const darkTheme: ITheme = {
   foreground: '#f8f8f2',
   background: '#1e1e1e',
   cursor: '#f8f8f0',
@@ -119,4 +121,6 @@ const darkTheme = {
   brightMagenta: '#ff92df',
   brightCyan: '#a4ffff',
   brightWhite: '#e6e6e6',
+  selectionBackground: '#44475a',
+  selectionForeground: '#f8f8f2',
 };
