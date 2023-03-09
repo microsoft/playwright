@@ -203,34 +203,12 @@ export const TestList: React.FC<{
         </div>;
       }}
       icon={treeItem => {
-        if (treeItem.kind === 'case') {
-          let allOk = true;
-          let hasFailed = false;
-          let hasRunning = false;
-          for (const test of treeItem.tests) {
-            allOk = allOk && test.outcome() === 'expected';
-            hasFailed = hasFailed || (!!test.results.length && test.outcome() !== 'expected');
-            hasRunning = hasRunning || test.results.some(r => r.duration === -1);
-          }
-          if (hasRunning)
-            return 'codicon-loading';
-          if (allOk)
-            return 'codicon-check';
-          if (hasFailed)
-            return 'codicon-error';
-        }
-
-        if (treeItem.kind === 'test') {
-          const ok = treeItem.test.outcome() === 'expected';
-          const failed = treeItem.test.results.length && treeItem.test.outcome() !== 'expected';
-          const running = treeItem.test.results.some(r => r.duration === -1);
-          if (running)
-            return 'codicon-loading';
-          if (ok)
-            return 'codicon-check';
-          if (failed)
-            return 'codicon-error';
-        }
+        if (treeItem.status === 'running')
+          return 'codicon-loading';
+        if (treeItem.status === 'failed')
+          return 'codicon-error';
+        if (treeItem.status === 'passed')
+          return 'codicon-check';
         return 'codicon-circle-outline';
       }}
       selectedItem={selectedTreeItem}
@@ -254,15 +232,15 @@ export const SettingsView: React.FC<{
       <ToolbarButton icon='close' title='Close settings' toggled={false} onClick={onClose}></ToolbarButton>
     </div>
     {[...projects.entries()].map(([projectName, value]) => {
-      return <div style={{ display: 'flex', alignItems: 'center', lineHeight: '24px', cursor: 'pointer' }}>
-        <input id={`project-${projectName}`} type='checkbox' checked={value} onClick={() => {
+      return <div style={{ display: 'flex', alignItems: 'center', lineHeight: '24px' }}>
+        <input id={`project-${projectName}`} type='checkbox' checked={value} style={{ cursor: 'pointer' }} onClick={() => {
           const copy = new Map(projects);
           copy.set(projectName, !copy.get(projectName));
           if (![...copy.values()].includes(true))
             copy.set(projectName, true);
           setProjects(copy);
-        }} style={{ margin: '0 5px 0 10px' }} />
-        <label htmlFor={`project-${projectName}`}>
+        }}/>
+        <label htmlFor={`project-${projectName}`} style={{ cursor: 'pointer' }}>
           {projectName}
         </label>
       </div>;
@@ -441,7 +419,7 @@ type TreeItemBase = {
   title: string;
   parent: TreeItem | null;
   children: TreeItem[];
-  expanded?: boolean;
+  status: 'none' | 'running' | 'passed' | 'failed';
 };
 
 type RootItem = TreeItemBase & {
@@ -475,6 +453,7 @@ function createTree(rootSuite: Suite | undefined, projects: Map<string, boolean>
     title: '',
     parent: null,
     children: [],
+    status: 'none',
   };
   const fileItems = new Map<string, FileItem>();
   for (const projectSuite of rootSuite?.suites || []) {
@@ -492,7 +471,7 @@ function createTree(rootSuite: Suite | undefined, projects: Map<string, boolean>
           file,
           parent: null,
           children: [],
-          expanded: false,
+          status: 'none',
         };
         fileItems.set(fileSuite.location!.file, fileItem);
         rootItem.children.push(fileItem);
@@ -509,11 +488,20 @@ function createTree(rootSuite: Suite | undefined, projects: Map<string, boolean>
             parent: fileItem,
             children: [],
             tests: [],
-            expanded: false,
             location: test.location,
+            status: 'none',
           };
           fileItem.children.push(testCaseItem);
         }
+
+        let status: 'none' | 'running' | 'passed' | 'failed' = 'none';
+        if (test.results.some(r => r.duration === -1))
+          status = 'running';
+        else if (test.results.length && test.outcome() !== 'expected')
+          status = 'failed';
+        else if (test.outcome() === 'expected')
+          status = 'passed';
+
         testCaseItem.tests.push(test);
         testCaseItem.children.push({
           kind: 'test',
@@ -522,11 +510,35 @@ function createTree(rootSuite: Suite | undefined, projects: Map<string, boolean>
           parent: testCaseItem,
           test,
           children: [],
+          status,
         });
       }
       (fileItem.children as TestCaseItem[]).sort((a, b) => a.location.line - b.location.line);
     }
   }
+
+  const propagateStatus = (treeItem: TreeItem) => {
+    for (const child of treeItem.children)
+      propagateStatus(child);
+
+    let allPassed = treeItem.children.length > 0;
+    let hasFailed = false;
+    let hasRunning = false;
+
+    for (const child of treeItem.children) {
+      allPassed = allPassed && child.status === 'passed';
+      hasFailed = hasFailed || child.status === 'failed';
+      hasRunning = hasRunning || child.status === 'running';
+    }
+
+    if (hasRunning)
+      treeItem.status = 'running';
+    else if (hasFailed)
+      treeItem.status = 'failed';
+    else if (allPassed)
+      treeItem.status = 'passed';
+  };
+  propagateStatus(rootItem);
   return rootItem;
 }
 
