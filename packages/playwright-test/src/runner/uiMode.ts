@@ -38,7 +38,6 @@ class UIMode {
   private _testWatcher: FSWatcher | undefined;
   private _watchTestFile: string | undefined;
   private _originalStderr: (buffer: string | Uint8Array) => void;
-  private _globalWatcher: FSWatcher;
 
   constructor(config: FullConfigInternal) {
     this._config = config;
@@ -58,7 +57,7 @@ class UIMode {
       return true;
     };
 
-    this._globalWatcher = this._installGlobalWatcher();
+    this._installGlobalWatcher();
   }
 
   private _installGlobalWatcher(): FSWatcher {
