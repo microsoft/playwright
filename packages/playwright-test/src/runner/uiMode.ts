@@ -40,7 +40,14 @@ class UIMode {
 
   constructor(config: FullConfigInternal) {
     this._config = config;
+    config._internal.configCLIOverrides.forbidOnly = false;
+    config._internal.configCLIOverrides.globalTimeout = 0;
+    config._internal.configCLIOverrides.repeatEach = 0;
+    config._internal.configCLIOverrides.shard = undefined;
+    config._internal.configCLIOverrides.updateSnapshots = undefined;
+    config._internal.listOnly = false;
     config._internal.passWithNoTests = true;
+
     for (const p of config.projects)
       p.retries = 0;
     config._internal.configCLIOverrides.use = config._internal.configCLIOverrides.use || {};

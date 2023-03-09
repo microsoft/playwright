@@ -30,7 +30,7 @@ import type { FullResult } from '../reporter';
 
 export function addTestCommands(program: Command) {
   addTestCommand(program);
-  addOpenCommand(program);
+  addUICommand(program);
   addShowReportCommand(program);
   addListFilesCommand(program);
 }
@@ -59,9 +59,9 @@ Examples:
   $ npx playwright test --project=webkit`);
 }
 
-function addOpenCommand(program: Command) {
-  const command = program.command('gui [test-filter...]');
-  command.description('open Playwright Test UI');
+function addUICommand(program: Command) {
+  const command = program.command('ui [test-filter...]');
+  command.description('open Playwright Test interactive UI');
   sharedOptions.forEach(([name, description]) => command.option(name, description));
   command.action(async (args, opts) => {
     try {
@@ -77,10 +77,10 @@ Arguments [test-filter...]:
   Pass arguments to filter test files. Each argument is treated as a regular expression. Matching is performed against the absolute file paths.
 
 Examples:
-  $ npx playwright gui my.spec.ts
-  $ npx playwright gui some.spec.ts:42
-  $ npx playwright gui --headed
-  $ npx playwright gui --project=webkit`);
+  $ npx playwright ui my.spec.ts
+  $ npx playwright ui some.spec.ts:42
+  $ npx playwright ui --headed
+  $ npx playwright ui --project=webkit`);
 }
 
 function addListFilesCommand(program: Command) {
@@ -132,13 +132,13 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
 
   if (opts.headed || opts.debug)
     overrides.use = { headless: false };
-  if (opts.debug) {
+  if (!opts.ui && opts.debug) {
     overrides.maxFailures = 1;
     overrides.timeout = 0;
     overrides.workers = 1;
     process.env.PWDEBUG = '1';
   }
-  if (opts.trace) {
+  if (!opts.ui && opts.trace) {
     if (!kTraceModes.includes(opts.trace))
       throw new Error(`Unsupported trace mode "${opts.trace}", must be one of ${kTraceModes.map(mode => `"${mode}"`).join(', ')}`);
     overrides.use = overrides.use || {};
@@ -288,5 +288,6 @@ const testOnlyOptions: [string, string][] = [
   ['--retries <retries>', `Maximum retry count for flaky tests, zero for no retries (default: no retries)`],
   ['--shard <shard>', `Shard tests and execute only the selected shard, specify in the form "current/all", 1-based, for example "3/5"`],
   ['--trace <mode>', `Force tracing mode, can be ${kTraceModes.map(mode => `"${mode}"`).join(', ')}`],
+  ['--ui', `Run tests in interactive UI mode`],
   ['-u, --update-snapshots', `Update snapshots with actual results (default: only create missing snapshots)`],
 ];
