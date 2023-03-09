@@ -232,7 +232,7 @@ export const SettingsView: React.FC<{
       <ToolbarButton icon='close' title='Close settings' toggled={false} onClick={onClose}></ToolbarButton>
     </div>
     {[...projects.entries()].map(([projectName, value]) => {
-      return <div style={{ display: 'flex', alignItems: 'center', lineHeight: '24px' }}>
+      return <div style={{ display: 'flex', alignItems: 'center', lineHeight: '24px', marginLeft: 5 }}>
         <input id={`project-${projectName}`} type='checkbox' checked={value} style={{ cursor: 'pointer' }} onClick={() => {
           const copy = new Map(projects);
           copy.set(projectName, !copy.get(projectName));
