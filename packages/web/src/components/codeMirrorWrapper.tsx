@@ -49,9 +49,9 @@ export const CodeMirrorWrapper: React.FC<SourceProps> = ({
   wrapLines,
   onChange,
 }) => {
-  const codemirrorElement = React.createRef<HTMLDivElement>();
+  const codemirrorElement = React.useRef<HTMLDivElement>(null);
   const [modulePromise] = React.useState<Promise<CodeMirror>>(import('./codeMirrorModule').then(m => m.default));
-  const [codemirror, setCodemirror] = React.useState<CodeMirror.Editor>();
+  const [codemirror] = React.useState<{ value?: CodeMirror.Editor }>({});
 
   React.useEffect(() => {
     (async () => {
@@ -70,18 +70,17 @@ export const CodeMirrorWrapper: React.FC<SourceProps> = ({
       if (language === 'csharp')
         mode = 'text/x-csharp';
 
-      if (codemirror
-        && mode === codemirror.getOption('mode')
-        && readOnly === codemirror.getOption('readOnly')
-        && lineNumbers === codemirror.getOption('lineNumbers')
-        && wrapLines === codemirror.getOption('lineWrapping')) {
-        updateEditor(codemirror, text, highlight, revealLine, focusOnChange);
+      if (codemirror.value
+        && mode === codemirror.value.getOption('mode')
+        && readOnly === codemirror.value.getOption('readOnly')
+        && lineNumbers === codemirror.value.getOption('lineNumbers')
+        && wrapLines === codemirror.value.getOption('lineWrapping')) {
+        updateEditor(codemirror.value, text, highlight, revealLine, focusOnChange);
         return;
       }
 
       // Either configuration is different or we don't have a codemirror yet.
-      if (codemirror)
-        codemirror.getWrapperElement().remove();
+      codemirror.value?.getWrapperElement().remove();
 
       const cm = CodeMirror(element, {
         value: '',
@@ -90,7 +89,7 @@ export const CodeMirrorWrapper: React.FC<SourceProps> = ({
         lineNumbers,
         lineWrapping: wrapLines,
       });
-      setCodemirror(cm);
+      codemirror.value = cm;
       if (onChange)
         cm.on('change', () => onChange(cm.getValue()));
       updateEditor(cm, text, highlight, revealLine, focusOnChange);
