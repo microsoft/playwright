@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import type { ActionTraceEvent } from '@trace/trace';
+import { ActionTraceEvent } from '@trace/trace';
 import { msToString } from '@web/uiUtils';
 import { ListView } from '@web/components/listView';
 import * as React from 'react';
@@ -32,6 +32,8 @@ export interface ActionListProps {
   revealConsole: () => void,
 }
 
+const ActionListView = ListView<ActionTraceEvent>;
+
 export const ActionList: React.FC<ActionListProps> = ({
   actions = [],
   selectedAction,
@@ -40,16 +42,16 @@ export const ActionList: React.FC<ActionListProps> = ({
   onHighlighted = () => {},
   revealConsole = () => {},
 }) => {
-  return <ListView
+  return <ActionListView
     items={actions}
+    id={action => action.callId}
     selectedItem={selectedAction}
-    onSelected={(action: ActionTraceEvent) => onSelected(action)}
-    onHighlighted={(action: ActionTraceEvent) => onHighlighted(action)}
-    itemKey={(action: ActionTraceEvent) => action.callId}
-    itemType={(action: ActionTraceEvent) => action.error?.message ? 'error' : undefined}
-    itemRender={(action: ActionTraceEvent) => renderAction(action, sdkLanguage, revealConsole)}
+    onSelected={onSelected}
+    onHighlighted={onHighlighted}
+    isError={action => !!action.error?.message}
+    render={action => renderAction(action, sdkLanguage, revealConsole)}
     noItemsMessage='No actions'
-  ></ListView>;
+  />;
 };
 
 const renderAction = (
