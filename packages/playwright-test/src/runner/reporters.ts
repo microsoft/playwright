@@ -31,7 +31,7 @@ import type { FullConfigInternal } from '../common/types';
 import { loadReporter } from './loadUtils';
 import type { BuiltInReporter } from '../common/configLoader';
 
-export async function createReporter(config: FullConfigInternal, mode: 'list' | 'watch' | 'run') {
+export async function createReporter(config: FullConfigInternal, mode: 'list' | 'watch' | 'run' | 'ui', additionalReporters: Reporter[] = []): Promise<Multiplexer> {
   const defaultReporters: {[key in BuiltInReporter]: new(arg: any) => Reporter} = {
     dot: mode === 'list' ? ListModeReporter : DotReporter,
     line: mode === 'list' ? ListModeReporter : LineReporter,
@@ -40,7 +40,7 @@ export async function createReporter(config: FullConfigInternal, mode: 'list' | 
     json: JSONReporter,
     junit: JUnitReporter,
     null: EmptyReporter,
-    html: HtmlReporter,
+    html: mode === 'ui' ? LineReporter : HtmlReporter,
   };
   const reporters: Reporter[] = [];
   if (mode === 'watch') {
@@ -55,6 +55,7 @@ export async function createReporter(config: FullConfigInternal, mode: 'list' | 
         reporters.push(new reporterConstructor(arg));
       }
     }
+    reporters.push(...additionalReporters);
     if (process.env.PW_TEST_REPORTER) {
       const reporterConstructor = await loadReporter(config, process.env.PW_TEST_REPORTER);
       reporters.push(new reporterConstructor());

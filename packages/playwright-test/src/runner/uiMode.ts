@@ -20,7 +20,6 @@ import { ManualPromise } from 'playwright-core/lib/utils';
 import type { FullResult } from '../../reporter';
 import { clearCompilationCache, dependenciesForTestFile } from '../common/compilationCache';
 import type { FullConfigInternal } from '../common/types';
-import ListReporter from '../reporters/list';
 import { Multiplexer } from '../reporters/multiplexer';
 import { TeleReporterEmitter } from '../reporters/teleEmitter';
 import { createReporter } from './reporters';
@@ -111,7 +110,7 @@ class UIMode {
         return;
       }
       if (method === 'open' && params.location) {
-        open.openApp('code', { arguments: ['--goto', params.location] }).catch(() => {});
+        open('vscode://file/' + params.location).catch(e => this._originalStderr(String(e)));
         return;
       }
       if (method === 'resizeTerminal') {
@@ -163,7 +162,7 @@ class UIMode {
     this._config._internal.testIdMatcher = id => !testIdSet || testIdSet.has(id);
 
     const runReporter = new TeleReporterEmitter(e => this._dispatchEvent(e));
-    const reporter = new Multiplexer([new ListReporter(), runReporter]);
+    const reporter = await createReporter(this._config, 'ui', [runReporter]);
     const taskRunner = createTaskRunnerForWatch(this._config, reporter);
     const context: TaskRunnerState = { config: this._config, reporter, phases: [] };
     clearCompilationCache();
