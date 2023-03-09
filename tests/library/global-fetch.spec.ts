@@ -401,3 +401,19 @@ it('should throw an error when maxRedirects is less than 0', async ({ playwright
     await expect(async () => request.fetch(`${server.PREFIX}/a/redirect1`, { method, maxRedirects: -1 })).rejects.toThrow(`'maxRedirects' should be greater than or equal to '0'`);
   await request.dispose();
 });
+
+it('should keep headers capitalization', async ({ playwright, server }) => {
+  const request = await playwright.request.newContext();
+  const [serverRequest, response] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    request.get(server.EMPTY_PAGE, {
+      headers: {
+        'X-fOo': 'vaLUE',
+      }
+    }),
+  ]);
+  expect(response.ok()).toBeTruthy();
+  expect(serverRequest.rawHeaders).toContain('X-fOo');
+  expect(serverRequest.rawHeaders).toContain('vaLUE');
+  await request.dispose();
+});
