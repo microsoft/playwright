@@ -52,7 +52,7 @@ export function ListView<T>({
   noItemsMessage,
   dataTestId,
 }: ListViewProps<T>) {
-  const itemListRef = React.createRef<HTMLDivElement>();
+  const itemListRef = React.useRef<HTMLDivElement>(null);
   const [highlightedItem, setHighlightedItem] = React.useState<any>();
 
   React.useEffect(() => {
