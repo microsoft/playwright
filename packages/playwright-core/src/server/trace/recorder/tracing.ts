@@ -218,7 +218,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     await this._writeChain;
   }
 
-  async stopChunk(params: TracingTracingStopChunkParams): Promise<{ artifact?: Artifact, entries?: NameValue[], sourceEntries?: NameValue[] }> {
+  async stopChunk(params: TracingTracingStopChunkParams): Promise<{ artifact?: Artifact, entries?: NameValue[] }> {
     if (this._isStopping)
       throw new Error(`Tracing is already stopping`);
     this._isStopping = true;
@@ -227,7 +227,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       this._isStopping = false;
       if (params.mode !== 'discard')
         throw new Error(`Must start tracing before stopping`);
-      return { sourceEntries: [] };
+      return {};
     }
 
     const state = this._state!;
@@ -270,7 +270,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       if (params.mode === 'entries')
         return { entries };
       const artifact = await this._exportZip(entries, state).catch(() => undefined);
-      return { artifact, entries };
+      return { artifact };
     }).finally(() => {
       // Only reset trace sha1s, network resources are preserved between chunks.
       state.traceSha1s = new Set();
