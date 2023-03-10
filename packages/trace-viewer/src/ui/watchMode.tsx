@@ -36,7 +36,6 @@ import { XtermWrapper } from '@web/components/xtermWrapper';
 let updateRootSuite: (rootSuite: Suite, progress: Progress) => void = () => {};
 let updateStepsProgress: () => void = () => {};
 let runWatchedTests = () => {};
-let runVisibleTests = () => {};
 let xtermSize = { cols: 80, rows: 24 };
 
 const xtermDataSource: XtermDataSource = {
@@ -54,12 +53,20 @@ export const WatchModeView: React.FC<{}> = ({
   const [projects, setProjects] = React.useState<Map<string, boolean>>(new Map());
   const [rootSuite, setRootSuite] = React.useState<{ value: Suite | undefined }>({ value: undefined });
   const [isRunningTest, setIsRunningTest] = React.useState<boolean>(false);
-  const [progress, setProgress] = React.useState<Progress>({ total: 0, passed: 0, failed: 0 });
+  const [progress, setProgress] = React.useState<Progress>({ total: 0, passed: 0, failed: 0, skipped: 0 });
   const [selectedTest, setSelectedTest] = React.useState<TestCase | undefined>(undefined);
   const [settingsVisible, setSettingsVisible] = React.useState<boolean>(false);
   const [isWatchingFiles, setIsWatchingFiles] = React.useState<boolean>(true);
+  const [visibleTestIds, setVisibleTestIds] = React.useState<string[]>([]);
+  const [filterText, setFilterText] = React.useState<string>('');
+  const inputRef = React.useRef<HTMLInputElement>(null);
 
-  updateRootSuite = (rootSuite: Suite, { passed, failed }: Progress) => {
+  React.useEffect(() => {
+    inputRef.current?.focus();
+    refreshRootSuite(true);
+  }, []);
+
+  updateRootSuite = (rootSuite: Suite, newProgress: Progress) => {
     for (const projectName of projects.keys()) {
       if (!rootSuite.suites.find(s => s.title === projectName))
         projects.delete(projectName);
@@ -71,12 +78,9 @@ export const WatchModeView: React.FC<{}> = ({
     if (![...projects.values()].includes(true))
       projects.set(projects.entries().next().value[0], true);
 
-    progress.passed = passed;
-    progress.failed = failed;
-
     setRootSuite({ value: rootSuite });
     setProjects(new Map(projects));
-    setProgress({ ...progress });
+    setProgress(newProgress);
   };
 
   const runTests = (testIds: string[]) => {
@@ -92,7 +96,7 @@ export const WatchModeView: React.FC<{}> = ({
 
     const time = '  [' + new Date().toLocaleTimeString() + ']';
     xtermDataSource.write('\x1B[2m—'.repeat(Math.max(0, xtermSize.cols - time.length)) + time + '\x1B[22m');
-    setProgress({ total: testIds.length, passed: 0, failed: 0 });
+    setProgress({ total: testIds.length, passed: 0, failed: 0, skipped: 0 });
     setIsRunningTest(true);
     sendMessage('run', { testIds }).then(() => {
       setIsRunningTest(false);
@@ -106,26 +110,43 @@ export const WatchModeView: React.FC<{}> = ({
       <div className='vbox watch-mode-sidebar'>
         <Toolbar>
           <div className='section-title' style={{ cursor: 'pointer' }} onClick={() => setSettingsVisible(false)}>Tests</div>
-          <ToolbarButton icon='play' title='Run' onClick={() => runVisibleTests()} disabled={isRunningTest}></ToolbarButton>
+          <ToolbarButton icon='play' title='Run' onClick={() => runTests(visibleTestIds)} disabled={isRunningTest}></ToolbarButton>
           <ToolbarButton icon='debug-stop' title='Stop' onClick={() => sendMessageNoReply('stop')} disabled={!isRunningTest}></ToolbarButton>
           <ToolbarButton icon='refresh' title='Reload' onClick={() => refreshRootSuite(true)} disabled={isRunningTest}></ToolbarButton>
           <ToolbarButton icon='eye-watch' title='Watch' toggled={isWatchingFiles} onClick={() => setIsWatchingFiles(!isWatchingFiles)}></ToolbarButton>
           <div className='spacer'></div>
           <ToolbarButton icon='gear' title='Toggle color mode' toggled={settingsVisible} onClick={() => { setSettingsVisible(!settingsVisible); }}></ToolbarButton>
         </Toolbar>
+        <Toolbar>
+          <input ref={inputRef} type='search' placeholder='Filter (e.g. text, @tag)' spellCheck={false} value={filterText}
+            onChange={e => {
+              setFilterText(e.target.value);
+            }}
+            onKeyDown={e => {
+              if (e.key === 'Enter')
+                runTests(visibleTestIds);
+            }}></input>
+        </Toolbar>
         <TestList
           projects={projects}
+          filterText={filterText}
           rootSuite={rootSuite}
           isRunningTest={isRunningTest}
           isWatchingFiles={isWatchingFiles}
           runTests={runTests}
           onTestSelected={setSelectedTest}
-          isVisible={!settingsVisible} />
+          isVisible={!settingsVisible}
+          setVisibleTestIds={setVisibleTestIds} />
         {settingsVisible && <SettingsView projects={projects} setProjects={setProjects} onClose={() => setSettingsVisible(false)}></SettingsView>}
       </div>
     </SplitView>
     <div className='status-line'>
-      Running: {progress.total} tests | {progress.passed} passed | {progress.failed} failed
+      <div>Total: {progress.total}</div>
+      {isRunningTest && <div><span className='codicon codicon-loading'></span>Running {visibleTestIds.length}</div>}
+      {!isRunningTest && <div>Showing: {visibleTestIds.length}</div>}
+      <div>{progress.passed} passed</div>
+      <div>{progress.failed} failed</div>
+      <div>{progress.skipped} skipped</div>
     </div>
   </div>;
 };
@@ -134,20 +155,19 @@ const TreeListView = TreeView<TreeItem>;
 
 export const TestList: React.FC<{
   projects: Map<string, boolean>,
+  filterText: string,
   rootSuite: { value: Suite | undefined },
   runTests: (testIds: string[]) => void,
   isRunningTest: boolean,
   isWatchingFiles: boolean,
-  isVisible: boolean
+  isVisible: boolean,
+  setVisibleTestIds: (testIds: string[]) => void,
   onTestSelected: (test: TestCase | undefined) => void,
-}> = ({ projects, rootSuite, runTests, isRunningTest, isWatchingFiles, isVisible, onTestSelected }) => {
+}> = ({ projects, filterText, rootSuite, runTests, isRunningTest, isWatchingFiles, isVisible, onTestSelected, setVisibleTestIds }) => {
   const [treeState, setTreeState] = React.useState<TreeState>({ expandedItems: new Map() });
-  const [filterText, setFilterText] = React.useState<string>('');
   const [selectedTreeItemId, setSelectedTreeItemId] = React.useState<string | undefined>();
-  const inputRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
-    inputRef.current?.focus();
     refreshRootSuite(true);
   }, []);
 
@@ -164,9 +184,9 @@ export const TestList: React.FC<{
       treeItemMap.set(treeItem.id, treeItem);
     };
     visit(rootItem);
-    runVisibleTests = () => runTests([...visibleTestIds]);
+    setVisibleTestIds([...visibleTestIds]);
     return { rootItem, treeItemMap };
-  }, [filterText, rootSuite, projects, runTests]);
+  }, [filterText, rootSuite, projects, setVisibleTestIds]);
 
   const { selectedTreeItem } = React.useMemo(() => {
     const selectedTreeItem = selectedTreeItemId ? treeItemMap.get(selectedTreeItemId) : undefined;
@@ -195,46 +215,34 @@ export const TestList: React.FC<{
   if (!isVisible)
     return <></>;
 
-  return <div className='vbox'>
-    <Toolbar>
-      <input ref={inputRef} type='search' placeholder='Filter (e.g. text, @tag)' spellCheck={false} value={filterText}
-        onChange={e => {
-          setFilterText(e.target.value);
-        }}
-        onKeyDown={e => {
-          if (e.key === 'Enter')
-            runVisibleTests();
-        }}></input>
-    </Toolbar>
-    <TreeListView
-      treeState={treeState}
-      setTreeState={setTreeState}
-      rootItem={rootItem}
-      render={treeItem => {
-        return <div className='hbox watch-mode-list-item'>
-          <div className='watch-mode-list-item-title'>{treeItem.title}</div>
-          <ToolbarButton icon='play' title='Run' onClick={() => runTreeItem(treeItem)} disabled={isRunningTest}></ToolbarButton>
-          <ToolbarButton icon='go-to-file' title='Open in VS Code' onClick={() => sendMessageNoReply('open', { location: locationToOpen(treeItem) })}></ToolbarButton>
-        </div>;
-      }}
-      icon={treeItem => {
-        if (treeItem.status === 'running')
-          return 'codicon-loading';
-        if (treeItem.status === 'failed')
-          return 'codicon-error';
-        if (treeItem.status === 'passed')
-          return 'codicon-check';
-        if (treeItem.status === 'skipped')
-          return 'codicon-circle-slash';
-        return 'codicon-circle-outline';
-      }}
-      selectedItem={selectedTreeItem}
-      onAccepted={runTreeItem}
-      onSelected={treeItem => {
-        setSelectedTreeItemId(treeItem.id);
-      }}
-      noItemsMessage='No tests' />
-  </div>;
+  return <TreeListView
+    treeState={treeState}
+    setTreeState={setTreeState}
+    rootItem={rootItem}
+    render={treeItem => {
+      return <div className='hbox watch-mode-list-item'>
+        <div className='watch-mode-list-item-title'>{treeItem.title}</div>
+        <ToolbarButton icon='play' title='Run' onClick={() => runTreeItem(treeItem)} disabled={isRunningTest}></ToolbarButton>
+        <ToolbarButton icon='go-to-file' title='Open in VS Code' onClick={() => sendMessageNoReply('open', { location: locationToOpen(treeItem) })}></ToolbarButton>
+      </div>;
+    }}
+    icon={treeItem => {
+      if (treeItem.status === 'running')
+        return 'codicon-loading';
+      if (treeItem.status === 'failed')
+        return 'codicon-error';
+      if (treeItem.status === 'passed')
+        return 'codicon-check';
+      if (treeItem.status === 'skipped')
+        return 'codicon-circle-slash';
+      return 'codicon-circle-outline';
+    }}
+    selectedItem={selectedTreeItem}
+    onAccepted={runTreeItem}
+    onSelected={treeItem => {
+      setSelectedTreeItemId(treeItem.id);
+    }}
+    noItemsMessage='No tests' />;
 };
 
 export const SettingsView: React.FC<{
@@ -326,13 +334,16 @@ const refreshRootSuite = (eraseResults: boolean) => {
     total: 0,
     passed: 0,
     failed: 0,
+    skipped: 0,
   };
   receiver = new TeleReporterReceiver({
     onBegin: (config: FullConfig, suite: Suite) => {
       if (!rootSuite)
         rootSuite = suite;
+      progress.total = suite.allTests().length;
       progress.passed = 0;
       progress.failed = 0;
+      progress.skipped = 0;
       updateRootSuite(rootSuite, progress);
     },
 
@@ -341,7 +352,9 @@ const refreshRootSuite = (eraseResults: boolean) => {
     },
 
     onTestEnd: (test: TestCase) => {
-      if (test.outcome() === 'unexpected')
+      if (test.outcome() === 'skipped')
+        ++progress.skipped;
+      else if (test.outcome() === 'unexpected')
         ++progress.failed;
       else
         ++progress.passed;
@@ -426,6 +439,7 @@ type Progress = {
   total: number;
   passed: number;
   failed: number;
+  skipped: number;
 };
 
 type TreeItemBase = {

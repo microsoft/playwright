@@ -57,6 +57,15 @@
   padding: 0 10px;
   color: var(--vscode-statusBar-foreground);
   background-color: var(--vscode-statusBar-background);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.status-line > div {
+  display: flex;
+  align-items: center;
+  margin: 0 5px;
 }
 
 .list-view-entry:not(.selected):not(.highlighted) .toolbar-button {
