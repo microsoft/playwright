@@ -139,3 +139,13 @@ body.dark-mode ::-webkit-scrollbar-thumb:hover {
 body.dark-mode ::-webkit-scrollbar-track:hover {
   background-color: #444;
 }
+
+.codicon-loading {
+  animation: spin 1s infinite linear;
+}
+
+@keyframes spin {
+  100% {
+    transform: rotate(360deg);
+  }
+}
