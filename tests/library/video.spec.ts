@@ -512,7 +512,8 @@ it.describe('screencast', () => {
     expect(videoPlayer.videoHeight).toBe(600);
   });
 
-  it('should capture static page in persistent context @smoke', async ({ launchPersistent, browserName, trace }, testInfo) => {
+  it('should capture static page in persistent context @smoke', async ({ launchPersistent, browserName, trace, isMac }, testInfo) => {
+    it.skip(browserName === 'webkit' && isMac && process.arch === 'arm64', 'Is only failing on self-hosted github actions runner on M1 mac; not reproducible locally');
     const size = { width: 600, height: 400 };
     const { context, page } = await launchPersistent({
       recordVideo: {
