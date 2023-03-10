@@ -663,3 +663,29 @@ test('should complain when one test file imports another', async ({ runInlineTes
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain(`test file "a.test.ts" should not import test file "b.test.ts"`);
 });
+
+test('should support dynamic import', async ({ runInlineTest, nodeVersion }) => {
+  const result = await runInlineTest({
+    'helper.ts': `
+      module.exports.foo = 'foo';
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+
+      test('pass', async () => {
+        const { foo } = await import('./helper');
+        expect(foo).toBe('foo');
+      });
+    `,
+    'b.test.ts': `
+      import { test, expect } from '@playwright/test';
+
+      test('pass', async () => {
+        const { foo } = await import('./helper');
+        expect(foo).toBe('foo');
+      });
+    `,
+  }, { workers: 1 });
+  expect(result.passed).toBe(2);
+  expect(result.exitCode).toBe(0);
+});

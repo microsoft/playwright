@@ -145,7 +145,6 @@ export function js2ts(resolved: string): string | undefined {
 }
 
 export function transformHook(code: string, filename: string, moduleUrl?: string): string {
-  // If we are not TypeScript and there is no applicable preprocessor - bail out.
   const { cachedCode, addToCache } = getFromCompilationCache(filename, code, moduleUrl);
   if (cachedCode)
     return cachedCode;
