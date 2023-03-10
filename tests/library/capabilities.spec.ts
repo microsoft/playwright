@@ -107,7 +107,8 @@ it('should play audio @smoke', async ({ page, server, browserName, platform }) =
   expect(await page.$eval('audio', e => e.currentTime)).toBeGreaterThan(0.2);
 });
 
-it('should support webgl @smoke', async ({ page, browserName, headless }) => {
+it('should support webgl @smoke', async ({ page, browserName, headless, browserMajorVersion, channel }) => {
+  it.fixme(channel === 'msedge' && browserMajorVersion === 111, 'https://github.com/microsoft/playwright/issues/21549');
   const hasWebGL = await page.evaluate(() => {
     const canvas = document.createElement('canvas');
     return !!canvas.getContext('webgl');
@@ -115,7 +116,8 @@ it('should support webgl @smoke', async ({ page, browserName, headless }) => {
   expect(hasWebGL).toBe(true);
 });
 
-it('should support webgl 2 @smoke', async ({ page, browserName, headless, isWindows }) => {
+it('should support webgl 2 @smoke', async ({ page, browserName, headless, isWindows, channel, browserMajorVersion }) => {
+  it.fixme(channel === 'msedge' && browserMajorVersion === 111, 'https://github.com/microsoft/playwright/issues/21549');
   it.skip(browserName === 'webkit', 'WebKit doesn\'t have webgl2 enabled yet upstream.');
   it.fixme(browserName === 'firefox' && isWindows);
   it.fixme(browserName === 'chromium' && !headless, 'chromium doesn\'t like webgl2 when running under xvfb');

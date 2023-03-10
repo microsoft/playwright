@@ -104,7 +104,8 @@ test.describe('cli codegen', () => {
     expect(errors.length).toBe(0);
   });
 
-  test('should upload a single file', async ({ page, openRecorder, browserName, asset }) => {
+  test('should upload a single file', async ({ page, openRecorder, browserName, asset, isLinux }) => {
+    test.fixme(browserName === 'firefox' && isLinux, 'https://github.com/microsoft/playwright/issues/21550');
     const recorder = await openRecorder();
     await recorder.setContentAndWait(`
     <form>
@@ -134,7 +135,8 @@ test.describe('cli codegen', () => {
         await page.GetByRole(AriaRole.Textbox).SetInputFilesAsync(new[] { \"file-to-upload.txt\" });`);
   });
 
-  test('should upload multiple files', async ({ page, openRecorder, browserName, asset }) => {
+  test('should upload multiple files', async ({ page, openRecorder, browserName, asset, isLinux }) => {
+    test.fixme(browserName === 'firefox' && isLinux, 'https://github.com/microsoft/playwright/issues/21550');
     const recorder = await openRecorder();
     await recorder.setContentAndWait(`
     <form>
@@ -164,7 +166,8 @@ test.describe('cli codegen', () => {
         await page.GetByRole(AriaRole.Textbox).SetInputFilesAsync(new[] { \"file-to-upload.txt\", \"file-to-upload-2.txt\" });`);
   });
 
-  test('should clear files', async ({ page, openRecorder, browserName, asset }) => {
+  test('should clear files', async ({ page, openRecorder, browserName, asset, isLinux }) => {
+    test.fixme(browserName === 'firefox' && isLinux, 'https://github.com/microsoft/playwright/issues/21550');
     const recorder = await openRecorder();
     await recorder.setContentAndWait(`
     <form>
