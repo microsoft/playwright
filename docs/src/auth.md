@@ -312,7 +312,7 @@ var context = await browser.NewContextAsync(new()
 * langs: js
 
 **When to use**
-- Your web application supports authenticating via API that is easier/faster than interacting witht the app UI.
+- Your web application supports authenticating via API that is easier/faster than interacting with the app UI.
 
 **Details**
 
