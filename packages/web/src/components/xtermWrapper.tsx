@@ -30,9 +30,9 @@ export type XtermDataSource = {
 export const XtermWrapper: React.FC<{ source: XtermDataSource }> = ({
   source
 }) => {
-  const xtermElement = React.createRef<HTMLDivElement>();
+  const xtermElement = React.useRef<HTMLDivElement>(null);
   const [modulePromise] = React.useState<Promise<XtermModule>>(import('./xtermModule').then(m => m.default));
-  const [terminal, setTerminal] = React.useState<Terminal>();
+  const terminal = React.useRef<Terminal | null>(null);
   React.useEffect(() => {
     (async () => {
       // Always load the module first.
@@ -41,7 +41,7 @@ export const XtermWrapper: React.FC<{ source: XtermDataSource }> = ({
       if (!element)
         return;
 
-      if (terminal)
+      if (terminal.current)
         return;
 
       const newTerminal = new Terminal({
@@ -65,7 +65,7 @@ export const XtermWrapper: React.FC<{ source: XtermDataSource }> = ({
       };
       newTerminal.open(element);
       fitAddon.fit();
-      setTerminal(newTerminal);
+      terminal.current = newTerminal;
       const resizeObserver = new ResizeObserver(() => {
         source.resize(newTerminal.cols, newTerminal.rows);
         fitAddon.fit();

@@ -41,35 +41,37 @@ export const SnapshotTab: React.FunctionComponent<{
   const [highlightedLocator, setHighlightedLocator] = React.useState<string>('');
   const [pickerVisible, setPickerVisible] = React.useState(false);
 
-  const snapshotMap = new Map<string, { title: string, snapshotName: string }>();
-  for (const snapshot of action?.snapshots || [])
-    snapshotMap.set(snapshot.title, snapshot);
-  const actionSnapshot = snapshotMap.get('action') || snapshotMap.get('after');
-  const snapshots = [actionSnapshot ? { ...actionSnapshot, title: 'action' } : undefined, snapshotMap.get('before'), snapshotMap.get('after')].filter(Boolean) as { title: string, snapshotName: string }[];
-
-  let snapshotUrl = 'data:text/html,<body style="background: #ddd"></body>';
-  let popoutUrl: string | undefined;
-  let snapshotInfoUrl: string | undefined;
-  let pointX: number | undefined;
-  let pointY: number | undefined;
-  if (action) {
-    const snapshot = snapshots[snapshotIndex];
-    if (snapshot && snapshot.snapshotName) {
-      const params = new URLSearchParams();
-      params.set('trace', context(action).traceUrl);
-      params.set('name', snapshot.snapshotName);
-      snapshotUrl = new URL(`snapshot/${action.pageId}?${params.toString()}`, window.location.href).toString();
-      snapshotInfoUrl = new URL(`snapshotInfo/${action.pageId}?${params.toString()}`, window.location.href).toString();
-      if (snapshot.snapshotName.includes('action')) {
-        pointX = action.point?.x;
-        pointY = action.point?.y;
+  const { snapshots, snapshotInfoUrl, snapshotUrl, pointX, pointY, popoutUrl  } = React.useMemo(() => {
+    const snapshotMap = new Map<string, { title: string, snapshotName: string }>();
+    for (const snapshot of action?.snapshots || [])
+      snapshotMap.set(snapshot.title, snapshot);
+    const actionSnapshot = snapshotMap.get('action') || snapshotMap.get('after');
+    const snapshots = [actionSnapshot ? { ...actionSnapshot, title: 'action' } : undefined, snapshotMap.get('before'), snapshotMap.get('after')].filter(Boolean) as { title: string, snapshotName: string }[];
+    let snapshotUrl = 'data:text/html,<body style="background: #ddd"></body>';
+    let popoutUrl: string | undefined;
+    let snapshotInfoUrl: string | undefined;
+    let pointX: number | undefined;
+    let pointY: number | undefined;
+    if (action) {
+      const snapshot = snapshots[snapshotIndex];
+      if (snapshot && snapshot.snapshotName) {
+        const params = new URLSearchParams();
+        params.set('trace', context(action).traceUrl);
+        params.set('name', snapshot.snapshotName);
+        snapshotUrl = new URL(`snapshot/${action.pageId}?${params.toString()}`, window.location.href).toString();
+        snapshotInfoUrl = new URL(`snapshotInfo/${action.pageId}?${params.toString()}`, window.location.href).toString();
+        if (snapshot.snapshotName.includes('action')) {
+          pointX = action.point?.x;
+          pointY = action.point?.y;
+        }
+        const popoutParams = new URLSearchParams();
+        popoutParams.set('r', snapshotUrl);
+        popoutParams.set('trace', context(action).traceUrl);
+        popoutUrl = new URL(`popout.html?${popoutParams.toString()}`, window.location.href).toString();
       }
-      const popoutParams = new URLSearchParams();
-      popoutParams.set('r', snapshotUrl);
-      popoutParams.set('trace', context(action).traceUrl);
-      popoutUrl = new URL(`popout.html?${popoutParams.toString()}`, window.location.href).toString();
     }
-  }
+    return { snapshots, snapshotInfoUrl, snapshotUrl, pointX, pointY, popoutUrl };
+  }, [action, snapshotIndex]);
 
   React.useEffect(() => {
     if (snapshots.length >= 1 && snapshotIndex >= snapshots.length)
@@ -155,8 +157,9 @@ export const SnapshotTab: React.FunctionComponent<{
         setIsInspecting(!isInspecting);
       }}></ToolbarButton>
       <CodeMirrorWrapper text={highlightedLocator} language={sdkLanguage} readOnly={!popoutUrl} focusOnChange={true} wrapLines={true} onChange={text => {
-        setIsInspecting(false);
+        // Updating text needs to go first - react can squeeze a render between the state updates.
         setHighlightedLocator(text);
+        setIsInspecting(false);
       }}></CodeMirrorWrapper>
       <ToolbarButton icon='files' title='Copy locator' disabled={!popoutUrl} onClick={() => {
         copy(highlightedLocator);

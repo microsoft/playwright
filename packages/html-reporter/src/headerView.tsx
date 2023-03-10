@@ -37,7 +37,7 @@ export const HeaderView: React.FC<React.PropsWithChildren<{
         setFilterText(params.get('q') || '');
       });
     })();
-  });
+  }, [setFilterText]);
 
   return (<>
     <div className='pt-3'>
