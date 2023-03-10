@@ -200,8 +200,8 @@ test('should respect fixture timeout', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(1);
   expect(result.failed).toBe(2);
-  expect(result.output).toContain('Fixture "custom title" timeout of 500ms exceeded.');
-  expect(result.output).toContain('Fixture "slowTeardown" timeout of 400ms exceeded.');
+  expect(result.output).toContain('Fixture "custom title" timeout of 500ms exceeded during setup.');
+  expect(result.output).toContain('Fixture "slowTeardown" timeout of 400ms exceeded during teardown.');
   expect(result.output).toContain('> 3 |       const test = base.extend({');
 });
 
@@ -241,8 +241,8 @@ test('should respect test.setTimeout in the worker fixture', async ({ runInlineT
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(2);
   expect(result.failed).toBe(1);
-  expect(result.output).toContain('Fixture "slowSetup" timeout of 500ms exceeded.');
-  expect(result.output).toContain('Fixture "custom title" timeout of 400ms exceeded.');
+  expect(result.output).toContain('Fixture "slowSetup" timeout of 500ms exceeded during setup.');
+  expect(result.output).toContain('Fixture "custom title" timeout of 400ms exceeded during teardown.');
 });
 
 test('fixture time in beforeAll hook should not affect test', async ({ runInlineTest }) => {
