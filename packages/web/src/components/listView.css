@@ -54,6 +54,7 @@
 
 .list-view-content:focus .list-view-entry.selected * {
   color: var(--vscode-list-activeSelectionForeground) !important;
+  background-color: transparent !important;
 }
 
 .list-view-content:focus .list-view-entry.error.selected {

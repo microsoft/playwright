@@ -37,12 +37,16 @@ let updateRootSuite: (rootSuite: Suite, progress: Progress) => void = () => {};
 let updateStepsProgress: () => void = () => {};
 let runWatchedTests = () => {};
 let runVisibleTests = () => {};
+let xtermSize = { cols: 80, rows: 24 };
 
 const xtermDataSource: XtermDataSource = {
   pending: [],
   clear: () => {},
   write: data => xtermDataSource.pending.push(data),
-  resize: (cols: number, rows: number) => sendMessageNoReply('resizeTerminal', { cols, rows }),
+  resize: (cols: number, rows: number) => {
+    xtermSize = { cols, rows };
+    sendMessageNoReply('resizeTerminal', { cols, rows });
+  },
 };
 
 export const WatchModeView: React.FC<{}> = ({
@@ -76,6 +80,18 @@ export const WatchModeView: React.FC<{}> = ({
   };
 
   const runTests = (testIds: string[]) => {
+    // Clear test results.
+    {
+      const testIdSet = new Set(testIds);
+      for (const test of rootSuite.value?.allTests() || []) {
+        if (testIdSet.has(test.id))
+          test.results = [];
+      }
+      setRootSuite({ ...rootSuite });
+    }
+
+    const time = '  [' + new Date().toLocaleTimeString() + ']';
+    xtermDataSource.write('\x1B[2m—'.repeat(Math.max(0, xtermSize.cols - time.length)) + time + '\x1B[22m');
     setProgress({ total: testIds.length, passed: 0, failed: 0 });
     setIsRunningTest(true);
     sendMessage('run', { testIds }).then(() => {
@@ -83,13 +99,14 @@ export const WatchModeView: React.FC<{}> = ({
     });
   };
 
+  const result = selectedTest?.results[0];
   return <div className='vbox'>
     <SplitView sidebarSize={250} orientation='horizontal' sidebarIsFirst={true}>
-      <TraceView test={selectedTest}></TraceView>
+      {(result && result.duration >= 0) ? <FinishedTraceView testResult={result} /> : <InProgressTraceView testResult={result} />}
       <div className='vbox watch-mode-sidebar'>
         <Toolbar>
           <div className='section-title' style={{ cursor: 'pointer' }} onClick={() => setSettingsVisible(false)}>Tests</div>
-          <ToolbarButton icon='play' title='Run' onClick={runVisibleTests} disabled={isRunningTest}></ToolbarButton>
+          <ToolbarButton icon='play' title='Run' onClick={() => runVisibleTests()} disabled={isRunningTest}></ToolbarButton>
           <ToolbarButton icon='debug-stop' title='Stop' onClick={() => sendMessageNoReply('stop')} disabled={!isRunningTest}></ToolbarButton>
           <ToolbarButton icon='refresh' title='Reload' onClick={() => refreshRootSuite(true)} disabled={isRunningTest}></ToolbarButton>
           <ToolbarButton icon='eye-watch' title='Watch' toggled={isWatchingFiles} onClick={() => setIsWatchingFiles(!isWatchingFiles)}></ToolbarButton>
@@ -108,7 +125,7 @@ export const WatchModeView: React.FC<{}> = ({
       </div>
     </SplitView>
     <div className='status-line'>
-        Running: {progress.total} tests | {progress.passed} passed | {progress.failed} failed
+      Running: {progress.total} tests | {progress.passed} passed | {progress.failed} failed
     </div>
   </div>;
 };
@@ -134,23 +151,22 @@ export const TestList: React.FC<{
     refreshRootSuite(true);
   }, []);
 
-  const { rootItem, treeItemMap, visibleTestIds } = React.useMemo(() => {
+  const { rootItem, treeItemMap } = React.useMemo(() => {
     const rootItem = createTree(rootSuite.value, projects);
     filterTree(rootItem, filterText);
+    hideOnlyTests(rootItem);
     const treeItemMap = new Map<string, TreeItem>();
     const visibleTestIds = new Set<string>();
     const visit = (treeItem: TreeItem) => {
-      if (treeItem.kind === 'test')
-        visibleTestIds.add(treeItem.id);
-      treeItem.children?.forEach(visit);
+      if (treeItem.kind === 'case')
+        treeItem.tests.forEach(t => visibleTestIds.add(t.id));
+      treeItem.children.forEach(visit);
       treeItemMap.set(treeItem.id, treeItem);
     };
     visit(rootItem);
-    hideOnlyTests(rootItem);
-    return { rootItem, treeItemMap, visibleTestIds };
-  }, [filterText, rootSuite, projects]);
-
-  runVisibleTests = () => runTests([...visibleTestIds]);
+    runVisibleTests = () => runTests([...visibleTestIds]);
+    return { rootItem, treeItemMap };
+  }, [filterText, rootSuite, projects, runTests]);
 
   const { selectedTreeItem } = React.useMemo(() => {
     const selectedTreeItem = selectedTreeItemId ? treeItemMap.get(selectedTreeItemId) : undefined;
@@ -168,7 +184,6 @@ export const TestList: React.FC<{
   }, [selectedTreeItem, isWatchingFiles]);
 
   const runTreeItem = (treeItem: TreeItem) => {
-    // expandedItems.set(treeItem.id, true);
     setSelectedTreeItemId(treeItem.id);
     runTests(collectTestIds(treeItem));
   };
@@ -209,6 +224,8 @@ export const TestList: React.FC<{
           return 'codicon-error';
         if (treeItem.status === 'passed')
           return 'codicon-check';
+        if (treeItem.status === 'skipped')
+          return 'codicon-circle-slash';
         return 'codicon-circle-outline';
       }}
       selectedItem={selectedTreeItem}
@@ -252,33 +269,38 @@ export const SettingsView: React.FC<{
   </div>;
 };
 
-export const TraceView: React.FC<{
-  test: TestCase | undefined,
-}> = ({ test }) => {
+export const InProgressTraceView: React.FC<{
+  testResult: TestResult | undefined,
+}> = ({ testResult }) => {
   const [model, setModel] = React.useState<MultiTraceModel | undefined>();
   const [stepsProgress, setStepsProgress] = React.useState(0);
   updateStepsProgress = () => setStepsProgress(stepsProgress + 1);
 
   React.useEffect(() => {
-    (async () => {
-      if (!test) {
-        setModel(undefined);
-        return;
-      }
+    setModel(testResult ? stepsToModel(testResult) : undefined);
+  }, [stepsProgress, testResult]);
 
-      const result = test.results?.[0];
-      if (result) {
-        const attachment = result.attachments.find(a => a.name === 'trace');
-        if (attachment && attachment.path)
-          loadSingleTraceFile(attachment.path).then(setModel);
-        else
-          setModel(stepsToModel(result));
-      } else {
-        setModel(undefined);
-      }
-    })();
-  }, [test, stepsProgress]);
+  return <TraceView model={model} />;
+};
 
+export const FinishedTraceView: React.FC<{
+  testResult: TestResult,
+}> = ({ testResult }) => {
+  const [model, setModel] = React.useState<MultiTraceModel | undefined>();
+
+  React.useEffect(() => {
+    // Test finished.
+    const attachment = testResult.attachments.find(a => a.name === 'trace');
+    if (attachment && attachment.path)
+      loadSingleTraceFile(attachment.path).then(setModel);
+  }, [testResult]);
+
+  return <TraceView model={model} />;
+};
+
+export const TraceView: React.FC<{
+  model: MultiTraceModel | undefined,
+}> = ({ model }) => {
   const xterm = <XtermWrapper source={xtermDataSource}></XtermWrapper>;
   return <Workbench model={model} output={xterm} rightToolbar={[
     <ToolbarButton icon='trash' title='Clear output' onClick={() => xtermDataSource.clear()}></ToolbarButton>,
@@ -412,7 +434,7 @@ type TreeItemBase = {
   title: string;
   location: Location,
   children: TreeItem[];
-  status: 'none' | 'running' | 'passed' | 'failed';
+  status: 'none' | 'running' | 'passed' | 'failed' | 'skipped';
 };
 
 type GroupItem = TreeItemBase & {
@@ -476,12 +498,14 @@ function createTree(rootSuite: Suite | undefined, projects: Map<string, boolean>
         parentGroup.children.push(testCaseItem);
       }
 
-      let status: 'none' | 'running' | 'passed' | 'failed' = 'none';
+      let status: 'none' | 'running' | 'passed' | 'failed' | 'skipped' = 'none';
       if (test.results.some(r => r.duration === -1))
         status = 'running';
+      else if (test.results.length && test.outcome() === 'skipped')
+        status = 'skipped';
       else if (test.results.length && test.outcome() !== 'expected')
         status = 'failed';
-      else if (test.outcome() === 'expected')
+      else if (test.results.length && test.outcome() === 'expected')
         status = 'passed';
 
       testCaseItem.tests.push(test);
@@ -508,11 +532,13 @@ function createTree(rootSuite: Suite | undefined, projects: Map<string, boolean>
       propagateStatus(child);
 
     let allPassed = treeItem.children.length > 0;
+    let allSkipped = treeItem.children.length > 0;
     let hasFailed = false;
     let hasRunning = false;
 
     for (const child of treeItem.children) {
-      allPassed = allPassed && child.status === 'passed';
+      allSkipped = allSkipped && child.status === 'skipped';
+      allPassed = allPassed && (child.status === 'passed' || child.status === 'skipped');
       hasFailed = hasFailed || child.status === 'failed';
       hasRunning = hasRunning || child.status === 'running';
     }
@@ -521,6 +547,8 @@ function createTree(rootSuite: Suite | undefined, projects: Map<string, boolean>
       treeItem.status = 'running';
     else if (hasFailed)
       treeItem.status = 'failed';
+    else if (allSkipped)
+      treeItem.status = 'skipped';
     else if (allPassed)
       treeItem.status = 'passed';
   };

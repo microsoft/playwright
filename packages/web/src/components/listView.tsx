@@ -121,11 +121,19 @@ export function ListView<T>({
           onMouseLeave={() => setHighlightedItem(undefined)}
         >
           {indentation ? <div style={{ minWidth: indentation * 16 }}></div> : undefined}
-          {icon && <div className={'codicon ' + (icon(item) || 'blank')} style={{ minWidth: 16, marginRight: 4 }} onClick={e => {
-            e.stopPropagation();
-            e.preventDefault();
-            onIconClicked?.(item);
-          }}></div>}
+          {icon && <div
+            className={'codicon ' + (icon(item) || 'blank')}
+            style={{ minWidth: 16, marginRight: 4 }}
+            onDoubleClick={e => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+            onClick={e => {
+              e.stopPropagation();
+              e.preventDefault();
+              onIconClicked?.(item);
+            }}
+          ></div>}
           {typeof rendered === 'string' ? <div style={{ textOverflow: 'ellipsis', overflow: 'hidden' }}>{rendered}</div> : rendered}
         </div>;
       })}
