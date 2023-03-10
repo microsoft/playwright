@@ -3,14 +3,15 @@ id: trace-viewer
 title: "Trace viewer"
 ---
 
+import LiteYouTube from '@site/src/components/LiteYouTube';
 
 Playwright Trace Viewer is a GUI tool that helps you explore recorded Playwright traces after the script has ran. You can open traces [locally](#viewing-the-trace) or in your browser on [`trace.playwright.dev`](https://trace.playwright.dev).
 
 
-<video width="100%" height="100%" controls muted>
-  <source src="https://user-images.githubusercontent.com/13063165/219132713-17b9d75b-71e3-42c4-a43f-3f9e2e15f834.mp4" type="video/mp4" />
-  Your browser does not support the video tag.
-</video>
+<LiteYouTube
+    id="lfxjs--9ZQs"
+    title="Viewing Playwright Traces"
+/>
 
 
 ## Viewing the trace
