@@ -20,7 +20,7 @@ import type { Command } from 'playwright-core/lib/utilsBundle';
 import fs from 'fs';
 import path from 'path';
 import { Runner } from './runner/runner';
-import { stopProfiling, startProfiling } from './common/profiler';
+import { stopProfiling, startProfiling } from 'playwright-core/lib/utils';
 import { experimentalLoaderOption, fileIsModule } from './util';
 import { showHTMLReport } from './reporters/html';
 import { baseFullConfig, builtInReporters, ConfigLoader, defaultTimeout, kDefaultConfigFiles, resolveConfigFile } from './common/configLoader';
@@ -175,7 +175,7 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
     status = await runner.watchAllTests();
   else
     status = await runner.runAllTests();
-  await stopProfiling(undefined);
+  await stopProfiling('runner');
   if (status === 'interrupted')
     process.exit(130);
   process.exit(status === 'passed' ? 0 : 1);
