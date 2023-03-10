@@ -42,15 +42,16 @@ export const CodeMirrorWrapper: React.FC<SourceProps> = ({
   text,
   language,
   readOnly,
-  highlight = [],
+  highlight,
   revealLine,
   lineNumbers,
   focusOnChange,
   wrapLines,
   onChange,
 }) => {
-  const codemirrorElement = React.createRef<HTMLDivElement>();
+  const codemirrorElement = React.useRef<HTMLDivElement>(null);
   const [modulePromise] = React.useState<Promise<CodeMirror>>(import('./codeMirrorModule').then(m => m.default));
+  const codemirrorRef = React.useRef<CodeMirror.Editor|null>(null);
   const [codemirror, setCodemirror] = React.useState<CodeMirror.Editor>();
 
   React.useEffect(() => {
@@ -70,18 +71,17 @@ export const CodeMirrorWrapper: React.FC<SourceProps> = ({
       if (language === 'csharp')
         mode = 'text/x-csharp';
 
-      if (codemirror
-        && mode === codemirror.getOption('mode')
-        && readOnly === codemirror.getOption('readOnly')
-        && lineNumbers === codemirror.getOption('lineNumbers')
-        && wrapLines === codemirror.getOption('lineWrapping')) {
-        updateEditor(codemirror, text, highlight, revealLine, focusOnChange);
+      if (codemirrorRef.current
+        && mode === codemirrorRef.current.getOption('mode')
+        && readOnly === codemirrorRef.current.getOption('readOnly')
+        && lineNumbers === codemirrorRef.current.getOption('lineNumbers')
+        && wrapLines === codemirrorRef.current.getOption('lineWrapping')) {
+        // No need to re-create codemirror.
         return;
       }
 
       // Either configuration is different or we don't have a codemirror yet.
-      if (codemirror)
-        codemirror.getWrapperElement().remove();
+      codemirrorRef.current?.getWrapperElement().remove();
 
       const cm = CodeMirror(element, {
         value: '',
@@ -90,29 +90,38 @@ export const CodeMirrorWrapper: React.FC<SourceProps> = ({
         lineNumbers,
         lineWrapping: wrapLines,
       });
+      codemirrorRef.current = cm;
       setCodemirror(cm);
-      if (onChange)
-        cm.on('change', () => onChange(cm.getValue()));
-      updateEditor(cm, text, highlight, revealLine, focusOnChange);
       return cm;
     })();
-  }, [modulePromise, codemirror, codemirrorElement, text, language, highlight, revealLine, focusOnChange, lineNumbers, wrapLines, readOnly, onChange]);
+  }, [modulePromise, codemirror, codemirrorElement, language, lineNumbers, wrapLines, readOnly]);
+
+  React.useEffect(() => {
+    if (!codemirror)
+      return;
+    codemirror.off('change', (codemirror as any).listenerSymbol);
+    (codemirror as any)[listenerSymbol] = undefined;
+    if (onChange) {
+      (codemirror as any)[listenerSymbol] = () => onChange(codemirror.getValue());
+      codemirror.on('change', (codemirror as any)[listenerSymbol]);
+    }
+
+    if (codemirror.getValue() !== text) {
+      codemirror.setValue(text);
+      if (focusOnChange) {
+        codemirror.execCommand('selectAll');
+        codemirror.focus();
+      }
+    }
+    for (let i = 0; i < codemirror.lineCount(); ++i)
+      codemirror.removeLineClass(i, 'wrap');
+    for (const h of highlight || [])
+      codemirror.addLineClass(h.line - 1, 'wrap', `source-line-${h.type}`);
+    if (revealLine)
+      codemirror.scrollIntoView({ line: revealLine - 1, ch: 0 }, 50);
+  }, [codemirror, text, highlight, revealLine, focusOnChange, onChange]);
 
   return <div className='cm-wrapper' ref={codemirrorElement}></div>;
 };
 
-function updateEditor(cm: CodeMirror.Editor, text: string, highlight: SourceHighlight[], revealLine?: number, focusOnChange?: boolean) {
-  if (cm.getValue() !== text) {
-    cm.setValue(text);
-    if (focusOnChange) {
-      cm.execCommand('selectAll');
-      cm.focus();
-    }
-  }
-  for (let i = 0; i < cm.lineCount(); ++i)
-    cm.removeLineClass(i, 'wrap');
-  for (const h of highlight)
-    cm.addLineClass(h.line - 1, 'wrap', `source-line-${h.type}`);
-  if (revealLine)
-    cm.scrollIntoView({ line: revealLine - 1, ch: 0 }, 50);
-}
+const listenerSymbol = Symbol('listener');
