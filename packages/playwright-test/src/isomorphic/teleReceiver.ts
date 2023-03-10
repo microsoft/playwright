@@ -166,9 +166,7 @@ export class TeleReporterReceiver {
 
   private _onTestBegin(testId: string, payload: JsonTestResultStart) {
     const test = this._tests.get(testId)!;
-    test.results = [];
-    test.resultsMap.clear();
-    const testResult = test._appendTestResult(payload.id);
+    const testResult = test._createTestResult(payload.id);
     testResult.retry = payload.retry;
     testResult.workerIndex = payload.workerIndex;
     testResult.parallelIndex = payload.parallelIndex;
@@ -398,7 +396,9 @@ export class TeleTestCase implements reporterTypes.TestCase {
     return status === 'expected' || status === 'flaky' || status === 'skipped';
   }
 
-  _appendTestResult(id: string): reporterTypes.TestResult {
+  _createTestResult(id: string): reporterTypes.TestResult {
+    this.results = [];
+    this.resultsMap.clear();
     const result: TeleTestResult = {
       retry: this.results.length,
       parallelIndex: -1,

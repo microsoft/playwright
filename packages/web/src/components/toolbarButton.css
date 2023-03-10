@@ -41,5 +41,5 @@
 }
 
 .toolbar-button.toggled {
-  color: var(--vscode-inputOption-activeBorder);
+  color: var(--vscode-notificationLink-foreground);
 }

@@ -26,10 +26,10 @@ export const Expandable: React.FunctionComponent<React.PropsWithChildren<{
     <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', whiteSpace: 'nowrap' }}>
       <div
         className={'codicon codicon-' + (expanded ? 'chevron-down' : 'chevron-right')}
-        style={{ cursor: 'pointer', color: 'var(--vscode-foreground)', marginRight: '4px' }}
+        style={{ cursor: 'pointer', color: 'var(--vscode-foreground)', marginLeft: '5px' }}
         onClick={() => setExpanded(!expanded)} />
       {title}
     </div>
-    { expanded && <div style={{ display: 'flex', flex: 'auto', margin: '5px 0 5px 20px' }}>{children}</div> }
+    { expanded && <div style={{ margin: '5px 0 5px 20px' }}>{children}</div> }
   </div>;
 };
