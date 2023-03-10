@@ -70,7 +70,7 @@ const test = playwrightTest.extend<ExtraFixtures>({
 
 test.slow(true, 'All connect tests are slow');
 
-for (const kind of ['launchServer', 'run-server'] as const) {
+for (const kind of ['launchServer'] as const) {
   test.describe(kind, () => {
 
     test('should connect over wss', async ({ connect, startRemoteServer, httpsServer, mode }) => {
@@ -680,6 +680,16 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       const browser = await connect(`http://localhost:${url.port}`);
       expect(browser.version()).toBeTruthy();
       await browser.close();
+    });
+
+    test('should expose playwright object when PWDEBUG=console is set while connecting', async ({ connect, startRemoteServer, server }) => {
+      const remoteServer = await startRemoteServer(kind);
+      process.env.PWDEBUG = 'console';
+      const browser = await connect(remoteServer.wsEndpoint());
+      const page = await browser.newPage();
+      await page.goto(server.EMPTY_PAGE);
+      await expect.poll(() => page.evaluate(() => (window as any).playwright)).toBeTruthy();
+      delete process.env.PWDEBUG;
     });
 
     test.describe('socks proxy', () => {

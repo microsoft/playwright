@@ -54,11 +54,12 @@ export class ElectronApplication extends SdkObject {
   private _nodeSession: CRSession;
   private _nodeExecutionContext: js.ExecutionContext | undefined;
   _nodeElectronHandlePromise: Promise<js.JSHandle<any>>;
-  readonly _timeoutSettings = new TimeoutSettings();
+  readonly _timeoutSettings;
   private _process: childProcess.ChildProcess;
 
   constructor(parent: SdkObject, browser: CRBrowser, nodeConnection: CRConnection, process: childProcess.ChildProcess) {
     super(parent, 'electron-app');
+    this._timeoutSettings = new TimeoutSettings(browser.options.debugMode);
     this._process = process;
     this._browserContext = browser._defaultContext as CRBrowserContext;
     this._browserContext.on(BrowserContext.Events.Close, () => {
@@ -238,7 +239,7 @@ export class Electron extends SdkObject {
       app = new ElectronApplication(this, browser, nodeConnection, launchedProcess);
       await app.initialize();
       return app;
-    }, TimeoutSettings.timeout(options));
+    }, TimeoutSettings.timeout(this._playwrightOptions.debugMode, options));
   }
 }
 

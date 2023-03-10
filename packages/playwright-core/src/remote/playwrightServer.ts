@@ -26,6 +26,7 @@ import type  { LaunchOptions } from '../server/types';
 import { ManualPromise } from '../utils/manualPromise';
 import type { AndroidDevice } from '../server/android/android';
 import { type SocksProxy } from '../common/socksProxy';
+import { debugMode } from '../common/debug';
 
 const debugLog = debug('pw:server');
 
@@ -111,7 +112,7 @@ export class PlaywrightServer {
       // If we get a debug-controller request, create this._preLaunchedPlaywright.
       if (isDebugControllerClient || shouldReuseBrowser) {
         if (!this._preLaunchedPlaywright)
-          this._preLaunchedPlaywright = createPlaywright('javascript');
+          this._preLaunchedPlaywright = createPlaywright('javascript', debugMode());
       }
 
       let clientType: ClientType = 'playwright';

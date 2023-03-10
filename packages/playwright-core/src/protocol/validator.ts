@@ -270,6 +270,7 @@ scheme.LocalUtilsConnectResult = tObject({
 });
 scheme.RootInitializer = tOptional(tObject({}));
 scheme.RootInitializeParams = tObject({
+  debugMode: tEnum(['', 'console', 'inspector']),
   sdkLanguage: tEnum(['javascript', 'python', 'java', 'csharp']),
 });
 scheme.RootInitializeResult = tObject({

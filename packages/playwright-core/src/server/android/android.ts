@@ -69,7 +69,7 @@ export class Android extends SdkObject {
     super(playwrightOptions.rootSdkObject, 'android');
     this._backend = backend;
     this._playwrightOptions = playwrightOptions;
-    this._timeoutSettings = new TimeoutSettings();
+    this._timeoutSettings = new TimeoutSettings(playwrightOptions.debugMode);
   }
 
   setDefaultTimeout(timeout: number) {
@@ -127,7 +127,7 @@ export class AndroidDevice extends SdkObject {
     this.model = model;
     this.serial = backend.serial;
     this._options = options;
-    this._timeoutSettings = new TimeoutSettings(android._timeoutSettings);
+    this._timeoutSettings = new TimeoutSettings(android._playwrightOptions.debugMode, android._timeoutSettings);
   }
 
   static async create(android: Android, backend: DeviceBackend, options: channels.AndroidDevicesOptions): Promise<AndroidDevice> {

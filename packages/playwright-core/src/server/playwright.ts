@@ -41,7 +41,7 @@ export class Playwright extends SdkObject {
   private _allPages = new Set<Page>();
   private _allBrowsers = new Set<Browser>();
 
-  constructor(sdkLanguage: Language, isInternalPlaywright: boolean) {
+  constructor(sdkLanguage: Language, debugMode: 'inspector' | 'console' | '', isInternalPlaywright: boolean) {
     super({ attribution: { isInternalPlaywright }, instrumentation: createInstrumentation() } as any, undefined, 'Playwright');
     this.instrumentation.addListener({
       onBrowserOpen: browser => this._allBrowsers.add(browser),
@@ -56,6 +56,7 @@ export class Playwright extends SdkObject {
       rootSdkObject: this,
       selectors: new Selectors(),
       sdkLanguage: sdkLanguage,
+      debugMode: debugMode,
     };
     this.chromium = new Chromium(this.options);
     this.firefox = new Firefox(this.options);
@@ -79,6 +80,6 @@ export class Playwright extends SdkObject {
   }
 }
 
-export function createPlaywright(sdkLanguage: Language, isInternalPlaywright: boolean = false) {
-  return new Playwright(sdkLanguage, isInternalPlaywright);
+export function createPlaywright(sdkLanguage: Language, debugMode: 'inspector' | 'console' | '', isInternalPlaywright: boolean = false) {
+  return new Playwright(sdkLanguage, debugMode, isInternalPlaywright);
 }

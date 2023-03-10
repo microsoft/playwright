@@ -14,21 +14,13 @@
  * limitations under the License.
  */
 
-export function assert(value: any, message?: string): asserts value {
-  if (!value)
-    throw new Error(message || 'Assertion error');
+import { debugMode } from '../common/debug';
+import { TimeoutSettings as ServerTimeoutSettings } from '../common/timeoutSettings';
+
+export class TimeoutSettings extends ServerTimeoutSettings {
+  constructor(parent?: ServerTimeoutSettings | undefined) {
+    super(debugMode(), parent);
+  }
 }
 
-export function debugAssert(value: any, message?: string): asserts value {
-  if (isUnderTest() && !value)
-    throw new Error(message);
-}
 
-let _isUnderTest = false;
-export function setUnderTest() {
-  _isUnderTest = true;
-}
-
-export function isUnderTest(): boolean {
-  return _isUnderTest;
-}

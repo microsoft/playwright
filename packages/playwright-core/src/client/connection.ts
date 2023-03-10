@@ -44,6 +44,7 @@ import { APIRequestContext } from './fetch';
 import { LocalUtils } from './localUtils';
 import { Tracing } from './tracing';
 import { findValidator, ValidationError, type ValidatorContext } from '../protocol/validator';
+import { debugMode } from '../common/debug';
 
 class Root extends ChannelOwner<channels.RootChannel> {
   constructor(connection: Connection) {
@@ -51,8 +52,13 @@ class Root extends ChannelOwner<channels.RootChannel> {
   }
 
   async initialize(): Promise<Playwright> {
+    console.log({
+      sdkLanguage: 'javascript',
+      debugMode: debugMode(),
+    })
     return Playwright.from((await this._channel.initialize({
       sdkLanguage: 'javascript',
+      debugMode: debugMode(),
     })).playwright);
   }
 }

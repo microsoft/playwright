@@ -15,8 +15,6 @@
  * limitations under the License.
  */
 
-import { debugMode } from '../utils';
-
 export const DEFAULT_TIMEOUT = 30000;
 export const DEFAULT_LAUNCH_TIMEOUT = 3 * 60 * 1000; // 3 minutes
 
@@ -24,8 +22,10 @@ export class TimeoutSettings {
   private _parent: TimeoutSettings | undefined;
   private _defaultTimeout: number | undefined;
   private _defaultNavigationTimeout: number | undefined;
+  private _debugMode: 'console' | 'inspector' | '';
 
-  constructor(parent?: TimeoutSettings) {
+  constructor(debugMode: 'console' | 'inspector' | '', parent?: TimeoutSettings) {
+    this._debugMode = debugMode;
     this._parent = parent;
   }
 
@@ -42,7 +42,7 @@ export class TimeoutSettings {
       return options.timeout;
     if (this._defaultNavigationTimeout !== undefined)
       return this._defaultNavigationTimeout;
-    if (debugMode())
+    if (this._debugMode)
       return 0;
     if (this._defaultTimeout !== undefined)
       return this._defaultTimeout;
@@ -54,7 +54,7 @@ export class TimeoutSettings {
   timeout(options: { timeout?: number }): number {
     if (typeof options.timeout === 'number')
       return options.timeout;
-    if (debugMode())
+    if (this._debugMode)
       return 0;
     if (this._defaultTimeout !== undefined)
       return this._defaultTimeout;
@@ -63,18 +63,18 @@ export class TimeoutSettings {
     return DEFAULT_TIMEOUT;
   }
 
-  static timeout(options: { timeout?: number }): number {
+  static timeout(debugMode: 'inspector' | 'console' | '', options: { timeout?: number }): number {
     if (typeof options.timeout === 'number')
       return options.timeout;
-    if (debugMode())
+    if (debugMode)
       return 0;
     return DEFAULT_TIMEOUT;
   }
 
-  static launchTimeout(options: { timeout?: number }): number {
+  static launchTimeout(debugMode: 'inspector' | 'console' | '', options: { timeout?: number }): number {
     if (typeof options.timeout === 'number')
       return options.timeout;
-    if (debugMode())
+    if (debugMode)
       return 0;
     return DEFAULT_LAUNCH_TIMEOUT;
   }

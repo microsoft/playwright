@@ -40,6 +40,7 @@ export type PlaywrightOptions = {
   selectors: Selectors;
   socksProxyPort?: number;
   sdkLanguage: Language,
+  debugMode: 'inspector' | 'console' | ''
 };
 
 export type BrowserOptions = PlaywrightOptions & {

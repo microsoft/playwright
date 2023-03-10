@@ -17,7 +17,7 @@
 
 import * as os from 'os';
 import { TimeoutSettings } from '../common/timeoutSettings';
-import { createGuid, debugMode } from '../utils';
+import { createGuid } from '../utils';
 import { mkdirIfNeeded } from '../utils/fileUtils';
 import type { Browser, BrowserOptions } from './browser';
 import type { Download } from './download';
@@ -54,7 +54,7 @@ export abstract class BrowserContext extends SdkObject {
     VideoStarted: 'videostarted',
   };
 
-  readonly _timeoutSettings = new TimeoutSettings();
+  readonly _timeoutSettings;
   readonly _pageBindings = new Map<string, PageBinding>();
   readonly _activeProgressControllers = new Set<ProgressController>();
   readonly _options: channels.BrowserNewContextParams;
@@ -94,6 +94,7 @@ export abstract class BrowserContext extends SdkObject {
       this._harRecorders.set('', new HarRecorder(this, null, this._options.recordHar));
 
     this.tracing = new Tracing(this, browser.options.tracesDir);
+    this._timeoutSettings = new TimeoutSettings(this._browser.options.debugMode);
   }
 
   isPersistentContext(): boolean {
@@ -115,7 +116,7 @@ export abstract class BrowserContext extends SdkObject {
     this._debugger = new Debugger(this);
 
     // When PWDEBUG=1, show inspector for each context.
-    if (debugMode() === 'inspector')
+    if (this._browser.options.debugMode === 'inspector')
       await Recorder.show(this, { pauseOnNextStatement: true });
 
     // When paused, show inspector.
@@ -125,7 +126,7 @@ export abstract class BrowserContext extends SdkObject {
       Recorder.showInspector(this);
     });
 
-    if (debugMode() === 'console')
+    if (this._browser.options.debugMode === 'console')
       await this.extendInjectedScript(consoleApiSource.source);
     if (this._options.serviceWorkers === 'block')
       await this.addInitScript(`\nnavigator.serviceWorker.register = async () => { console.warn('Service Worker registration blocked by Playwright'); };\n`);

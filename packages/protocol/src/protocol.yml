@@ -570,6 +570,12 @@ Root:
 
     initialize:
       parameters:
+        debugMode:
+          type: enum
+          literals:
+          - ''
+          - console
+          - inspector
         sdkLanguage:
           type: enum
           literals:

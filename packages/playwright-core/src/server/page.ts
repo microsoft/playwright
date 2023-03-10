@@ -182,7 +182,7 @@ export class Page extends SdkObject {
     this.keyboard = new input.Keyboard(delegate.rawKeyboard, this);
     this.mouse = new input.Mouse(delegate.rawMouse, this);
     this.touchscreen = new input.Touchscreen(delegate.rawTouchscreen, this);
-    this._timeoutSettings = new TimeoutSettings(browserContext._timeoutSettings);
+    this._timeoutSettings = new TimeoutSettings(browserContext._browser.options.debugMode, browserContext._timeoutSettings);
     this._screenshotter = new Screenshotter(this);
     this._frameManager = new frames.FrameManager(this);
     if (delegate.pdf)

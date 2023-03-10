@@ -14,21 +14,13 @@
  * limitations under the License.
  */
 
-export function assert(value: any, message?: string): asserts value {
-  if (!value)
-    throw new Error(message || 'Assertion error');
-}
+import { getFromENV } from '../utils';
 
-export function debugAssert(value: any, message?: string): asserts value {
-  if (isUnderTest() && !value)
-    throw new Error(message);
-}
-
-let _isUnderTest = false;
-export function setUnderTest() {
-  _isUnderTest = true;
-}
-
-export function isUnderTest(): boolean {
-  return _isUnderTest;
+export function debugMode() {
+  const debugEnv = getFromENV('PWDEBUG') || '';
+  if (debugEnv === 'console')
+    return 'console';
+  if (debugEnv === '0' || debugEnv === 'false')
+    return '';
+  return debugEnv ? 'inspector' : '';
 }

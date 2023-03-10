@@ -25,6 +25,7 @@ import { serverSideCallMetadata } from '../../instrumentation';
 import { createPlaywright } from '../../playwright';
 import { ProgressController } from '../../progress';
 import type { Page } from '../../page';
+import { debugMode } from '../../../common/debug';
 
 type Options = { app?: string, headless?: boolean, host?: string, port?: number };
 
@@ -56,7 +57,7 @@ export async function showTraceViewer(traceUrls: string[], browserName: string, 
 
   const urlPrefix = await server.start({ preferredPort: port, host });
 
-  const traceViewerPlaywright = createPlaywright('javascript', true);
+  const traceViewerPlaywright = createPlaywright('javascript', debugMode(), true);
   const traceViewerBrowser = isUnderTest() ? 'chromium' : browserName;
   const args = traceViewerBrowser === 'chromium' ? [
     '--app=data:text/html,',

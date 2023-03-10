@@ -21,10 +21,11 @@ import type { BrowserServer } from './client/browserType';
 import { createGuid } from './utils';
 import { createPlaywright } from './server/playwright';
 import { PlaywrightServer } from './remote/playwrightServer';
+import { debugMode } from './common/debug';
 
 export class AndroidServerLauncherImpl {
   async launchServer(options: LaunchAndroidServerOptions = {}): Promise<BrowserServer> {
-    const playwright = createPlaywright('javascript');
+    const playwright = createPlaywright('javascript', debugMode());
     // 1. Pre-connect to the device
     let devices = await playwright.android.devices({
       host: options.adbHost,

@@ -496,7 +496,7 @@ export class GlobalAPIRequestContext extends APIRequestContext {
   constructor(playwright: Playwright, options: channels.PlaywrightNewRequestOptions) {
     super(playwright);
     this.attribution.context = this;
-    const timeoutSettings = new TimeoutSettings();
+    const timeoutSettings = new TimeoutSettings(playwright.options.debugMode);
     if (options.timeout !== undefined)
       timeoutSettings.setDefaultTimeout(options.timeout);
     const proxy = options.proxy;

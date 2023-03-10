@@ -36,7 +36,7 @@ import type { HTTPRequestParams } from '../../utils/network';
 import { fetchData } from '../../utils/network';
 import { getUserAgent } from '../../utils/userAgent';
 import { wrapInASCIIBox } from '../../utils/ascii';
-import { debugMode, headersArrayToObject, } from '../../utils';
+import { headersArrayToObject } from '../../utils';
 import { removeFolders } from '../../utils/fileUtils';
 import { RecentLogsCollector } from '../../common/debugLogger';
 import type { Progress } from '../progress';
@@ -58,7 +58,7 @@ export class Chromium extends BrowserType {
   constructor(playwrightOptions: PlaywrightOptions) {
     super('chromium', playwrightOptions);
 
-    if (debugMode())
+    if (playwrightOptions.debugMode)
       this._devtools = this._createDevTools();
   }
 
@@ -67,7 +67,7 @@ export class Chromium extends BrowserType {
     controller.setLogName('browser');
     return controller.run(async progress => {
       return await this._connectOverCDPInternal(progress, endpointURL, options);
-    }, TimeoutSettings.timeout({ timeout }));
+    }, TimeoutSettings.timeout(this._playwrightOptions.debugMode, { timeout }));
   }
 
   async _connectOverCDPInternal(progress: Progress, endpointURL: string, options: { slowMo?: number, headers?: types.HeadersArray }, onClose?: () => Promise<void>) {

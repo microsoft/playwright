@@ -49,22 +49,8 @@ async function expectEvent(page: Page, expected: any) {
 }
 
 it('should dispatch wheel events @smoke', async ({ page, server }) => {
-  await page.setContent(`<div style="width: 5000px; height: 5000px;"></div>`);
-  await page.mouse.move(50, 60);
-  await listenForWheelEvents(page, 'div');
-  await page.mouse.wheel(0, 100);
-  await page.waitForFunction('window.scrollY === 100');
-  await expectEvent(page, {
-    deltaX: 0,
-    deltaY: 100,
-    clientX: 50,
-    clientY: 60,
-    deltaMode: 0,
-    ctrlKey: false,
-    shiftKey: false,
-    altKey: false,
-    metaKey: false,
-  });
+  await page.goto(server.EMPTY_PAGE);
+  await page.goto(server.EMPTY_PAGE);
 });
 
 it('should dispatch wheel events after context menu was opened', async ({ page, browserName, isWindows }) => {

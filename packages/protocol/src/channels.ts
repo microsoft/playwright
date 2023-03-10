@@ -489,6 +489,7 @@ export interface RootChannel extends RootEventTarget, Channel {
   initialize(params: RootInitializeParams, metadata?: CallMetadata): Promise<RootInitializeResult>;
 }
 export type RootInitializeParams = {
+  debugMode: '' | 'console' | 'inspector',
   sdkLanguage: 'javascript' | 'python' | 'java' | 'csharp',
 };
 export type RootInitializeOptions = {

@@ -32,7 +32,6 @@ import { ProgressController } from './progress';
 import type * as types from './types';
 import type * as channels from '@protocol/channels';
 import { DEFAULT_TIMEOUT, TimeoutSettings } from '../common/timeoutSettings';
-import { debugMode } from '../utils';
 import { existsAsync } from '../utils/fileUtils';
 import { helper } from './helper';
 import { RecentLogsCollector } from '../common/debugLogger';
@@ -71,7 +70,7 @@ export abstract class BrowserType extends SdkObject {
       if (seleniumHubUrl)
         return this._launchWithSeleniumHub(progress, seleniumHubUrl, options);
       return this._innerLaunchWithRetries(progress, options, undefined, helper.debugProtocolLogger(protocolLogger)).catch(e => { throw this._rewriteStartupError(e); });
-    }, TimeoutSettings.launchTimeout(options));
+    }, TimeoutSettings.launchTimeout(this._playwrightOptions.debugMode, options));
     return browser;
   }
 
@@ -82,7 +81,7 @@ export abstract class BrowserType extends SdkObject {
     controller.setLogName('browser');
     const browser = await controller.run(progress => {
       return this._innerLaunchWithRetries(progress, options, persistent, helper.debugProtocolLogger(), userDataDir).catch(e => { throw this._rewriteStartupError(e); });
-    }, TimeoutSettings.launchTimeout(options));
+    }, TimeoutSettings.launchTimeout(this._playwrightOptions.debugMode, options));
     return browser._defaultContext!;
   }
 
@@ -271,7 +270,7 @@ export abstract class BrowserType extends SdkObject {
   private _validateLaunchOptions<Options extends types.LaunchOptions>(options: Options): Options {
     const { devtools = false } = options;
     let { headless = !devtools, downloadsPath, proxy } = options;
-    if (debugMode())
+    if (this._playwrightOptions.debugMode)
       headless = false;
     if (downloadsPath && !path.isAbsolute(downloadsPath))
       downloadsPath = path.join(process.cwd(), downloadsPath);

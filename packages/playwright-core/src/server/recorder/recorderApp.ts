@@ -27,6 +27,7 @@ import { installAppIcon, syncLocalStorageWithSettings } from '../chromium/crApp'
 import { findChromiumChannel } from '../registry';
 import type { Recorder } from '../recorder';
 import type { BrowserContext } from '../browserContext';
+import { debugMode } from '../../common/debug';
 
 declare global {
   interface Window {
@@ -115,7 +116,7 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
   static async open(recorder: Recorder, inspectedContext: BrowserContext, handleSIGINT: boolean | undefined): Promise<IRecorderApp> {
     const sdkLanguage = inspectedContext._browser.options.sdkLanguage;
     const headed = !!inspectedContext._browser.options.headful;
-    const recorderPlaywright = (require('../playwright').createPlaywright as typeof import('../playwright').createPlaywright)('javascript', true);
+    const recorderPlaywright = (require('../playwright').createPlaywright as typeof import('../playwright').createPlaywright)('javascript', debugMode(), true);
     const args = [
       '--app=data:text/html,',
       '--window-size=600,600',

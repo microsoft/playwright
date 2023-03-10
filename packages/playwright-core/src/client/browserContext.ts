@@ -25,7 +25,7 @@ import { evaluationScript } from './clientHelper';
 import { Browser } from './browser';
 import { Worker } from './worker';
 import { Events } from './events';
-import { TimeoutSettings } from '../common/timeoutSettings';
+import { TimeoutSettings } from './timeoutSettings';
 import { Waiter } from './waiter';
 import type { URLMatch, Headers, WaitForEventOptions, BrowserContextOptions, StorageState, LaunchOptions } from './types';
 import { headersObjectToArray, isRegExp, isString } from '../utils';
