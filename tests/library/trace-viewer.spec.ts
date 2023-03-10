@@ -25,8 +25,6 @@ const test = playwrightTest.extend<TraceViewerFixtures>(traceViewerFixtures);
 test.skip(({ trace }) => trace === 'on');
 test.slow();
 
-test.fixme(({ mode }) => mode === 'service' || mode === 'driver', 'https://github.com/microsoft/playwright/issues/21435');
-
 let traceFile: string;
 
 test.beforeAll(async function recordTrace({ browser, browserName, browserType, server }, workerInfo) {

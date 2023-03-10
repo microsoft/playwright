@@ -87,7 +87,7 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
     await artifact.delete();
 
     // Add local sources to the remote trace if necessary.
-    if (result.entries?.length)
-      await this._connection.localUtils()._channel.zip({ zipFile: filePath, entries: result.entries!, metadata, mode: 'append', includeSources: this._includeSources });
+    if (metadata.length)
+      await this._connection.localUtils()._channel.zip({ zipFile: filePath, entries: [], metadata, mode: 'append', includeSources: this._includeSources });
   }
 }
