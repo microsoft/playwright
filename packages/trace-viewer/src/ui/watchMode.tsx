@@ -21,6 +21,7 @@ import React from 'react';
 import { TreeView } from '@web/components/treeView';
 import type { TreeState } from '@web/components/treeView';
 import { TeleReporterReceiver } from '../../../playwright-test/src/isomorphic/teleReceiver';
+import type { TeleTestCase } from '../../../playwright-test/src/isomorphic/teleReceiver';
 import type { FullConfig, Suite, TestCase, TestResult, TestStep, Location } from '../../../playwright-test/types/testReporter';
 import { SplitView } from '@web/components/splitView';
 import { MultiTraceModel } from './modelUtil';
@@ -32,6 +33,7 @@ import type { ContextEntry } from '../entries';
 import type * as trace from '@trace/trace';
 import type { XtermDataSource } from '@web/components/xtermWrapper';
 import { XtermWrapper } from '@web/components/xtermWrapper';
+import { Expandable } from '@web/components/expandable';
 
 let updateRootSuite: (rootSuite: Suite, progress: Progress) => void = () => {};
 let updateStepsProgress: () => void = () => {};
@@ -59,6 +61,7 @@ export const WatchModeView: React.FC<{}> = ({
   const [isWatchingFiles, setIsWatchingFiles] = React.useState<boolean>(true);
   const [visibleTestIds, setVisibleTestIds] = React.useState<string[]>([]);
   const [filterText, setFilterText] = React.useState<string>('');
+  const [filterExpanded, setFilterExpanded] = React.useState<boolean>(false);
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
@@ -89,7 +92,7 @@ export const WatchModeView: React.FC<{}> = ({
       const testIdSet = new Set(testIds);
       for (const test of rootSuite.value?.allTests() || []) {
         if (testIdSet.has(test.id))
-          test.results = [];
+          (test as TeleTestCase)._createTestResult('pending');
       }
       setRootSuite({ ...rootSuite });
     }
@@ -101,6 +104,24 @@ export const WatchModeView: React.FC<{}> = ({
     sendMessage('run', { testIds }).then(() => {
       setIsRunningTest(false);
     });
+  };
+
+  const updateFilter = (name: string, value: string) => {
+    const result: string[] = [];
+    const prefix = name + ':';
+    for (const t of filterText.split(' ')) {
+      if (t.startsWith(prefix)) {
+        if (value) {
+          result.push(prefix + value);
+          value = '';
+        }
+      } else {
+        result.push(t);
+      }
+    }
+    if (value)
+      result.unshift(prefix + value);
+    setFilterText(result.join(' '));
   };
 
   const result = selectedTest?.results[0];
@@ -117,16 +138,29 @@ export const WatchModeView: React.FC<{}> = ({
           <div className='spacer'></div>
           <ToolbarButton icon='gear' title='Toggle color mode' toggled={settingsVisible} onClick={() => { setSettingsVisible(!settingsVisible); }}></ToolbarButton>
         </Toolbar>
-        <Toolbar>
-          <input ref={inputRef} type='search' placeholder='Filter (e.g. text, @tag)' spellCheck={false} value={filterText}
+        {!settingsVisible && <Expandable
+          title={<input ref={inputRef} type='search' placeholder='Filter (e.g. text, @tag)' spellCheck={false} value={filterText}
             onChange={e => {
               setFilterText(e.target.value);
             }}
             onKeyDown={e => {
               if (e.key === 'Enter')
                 runTests(visibleTestIds);
-            }}></input>
-        </Toolbar>
+            }}></input>}
+          style={{ flex: 'none', marginTop: 8 }}
+          expanded={filterExpanded}
+          setExpanded={setFilterExpanded}>
+          <div className='filters'>
+            <span>Status:</span>
+            <div onClick={() => updateFilter('s', '')}>all</div>
+            {['failed', 'passed', 'skipped'].map(s => <div className={filterText.includes('s:' + s) ? 'filters-toggled' : ''} onClick={() => updateFilter('s', s)}>{s}</div>)}
+          </div>
+          {[...projects.values()].filter(v => v).length > 1 && <div className='filters'>
+            <span>Project:</span>
+            <div onClick={() => updateFilter('p', '')}>all</div>
+            {[...projects].filter(([k, v]) => v).map(([k, v]) => k).map(p => <div  className={filterText.includes('p:' + p) ? 'filters-toggled' : ''} onClick={() => updateFilter('p', p)}>{p}</div>)}
+          </div>}
+        </Expandable>}
         <TestList
           projects={projects}
           filterText={filterText}
@@ -459,11 +493,13 @@ type GroupItem = TreeItemBase & {
 type TestCaseItem = TreeItemBase & {
   kind: 'case',
   tests: TestCase[];
+  children: TestItem[];
 };
 
 type TestItem = TreeItemBase & {
   kind: 'test',
   test: TestCase;
+  project: string;
 };
 
 type TreeItem = GroupItem | TestCaseItem | TestItem;
@@ -531,6 +567,7 @@ function createTree(rootSuite: Suite | undefined, projects: Map<string, boolean>
         test,
         children: [],
         status,
+        project: projectName
       });
     }
   };
@@ -573,13 +610,27 @@ function createTree(rootSuite: Suite | undefined, projects: Map<string, boolean>
 function filterTree(rootItem: GroupItem, filterText: string) {
   const trimmedFilterText = filterText.trim();
   const filterTokens = trimmedFilterText.toLowerCase().split(' ');
+  const textTokens = filterTokens.filter(token => !token.match(/^[sp]:/));
+  const statuses = new Set(filterTokens.filter(t => t.startsWith('s:')).map(t => t.substring(2)));
+  if (statuses.size)
+    statuses.add('running');
+  const projects = new Set(filterTokens.filter(t => t.startsWith('p:')).map(t => t.substring(2)));
+
+  const filter = (testCase: TestCaseItem) => {
+    const title = testCase.tests[0].titlePath().join(' ').toLowerCase();
+    if (!textTokens.every(token => title.includes(token)))
+      return false;
+    testCase.children = (testCase.children as TestItem[]).filter(test => !statuses.size || statuses.has(test.status));
+    testCase.children = (testCase.children as TestItem[]).filter(test => !projects.size || projects.has(test.project));
+    testCase.tests = (testCase.children as TestItem[]).map(c => c.test);
+    return !!testCase.children.length;
+  };
 
   const visit = (treeItem: GroupItem) => {
     const newChildren: (GroupItem | TestCaseItem)[] = [];
     for (const child of treeItem.children) {
       if (child.kind === 'case') {
-        const title = child.tests[0].titlePath().join(' ').toLowerCase();
-        if (filterTokens.every(token => title.includes(token)))
+        if (filter(child))
           newChildren.push(child);
       } else {
         visit(child);

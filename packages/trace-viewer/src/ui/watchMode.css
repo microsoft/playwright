@@ -68,6 +68,43 @@
   margin: 0 5px;
 }
 
+.list-view {
+  margin-top: 5px;
+}
+
 .list-view-entry:not(.selected):not(.highlighted) .toolbar-button {
   display: none;
+}
+
+.filters {
+  flex: none;
+  margin-left: 5px;
+  line-height: 24px;
+}
+
+.filters > span {
+  color: var(--vscode-panelTitle-inactiveForeground);
+  padding-left: 3px;
+}
+
+.filters > div {
+  display: inline-block;
+  margin: 0 5px;
+  user-select: none;
+  cursor: pointer;
+}
+
+.filters > div:hover,
+.filters > div.filters-toggled {
+  color: var(--vscode-notificationLink-foreground);
+}
+
+.watch-mode-sidebar input[type=search] {
+  padding: 0 5px;
+  line-height: 24px;
+  outline: none;
+  margin: 0 4px;
+  border: none;
+  color: var(--vscode-input-foreground);
+  background-color: var(--vscode-input-background);
 }
