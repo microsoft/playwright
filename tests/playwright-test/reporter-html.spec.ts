@@ -565,6 +565,11 @@ test('should render annotations', async ({ runInlineTest, page, showReport }) =>
     'a.test.js': `
       import { test, expect } from '@playwright/test';
       test('skipped test', async ({ page }) => {
+        test.info().annotations.push({ type: 'issue', description: '#123'});
+        test.info().annotations.push({ type: 'issue', description: '#456'});
+        test.info().annotations.push({ type: 'issue', description: 'https://playwright.dev'});
+        test.info().annotations.push({ type: 'issue' });
+        test.info().annotations.push({ type: 'empty' });
         test.skip(true, 'I am not interested in this test');
       });
     `,
@@ -574,7 +579,11 @@ test('should render annotations', async ({ runInlineTest, page, showReport }) =>
 
   await showReport();
   await page.click('text=skipped test');
-  await expect(page.locator('.test-case-annotation')).toHaveText('skip: I am not interested in this test');
+  await expect(page.locator('.test-case-annotation')).toHaveText([
+    'issue: #123, #456, https://playwright.dev',
+    'empty',
+    'skip: I am not interested in this test',
+  ]);
 });
 
 test('should render annotations as link if needed', async ({ runInlineTest, page, showReport, server }) => {
