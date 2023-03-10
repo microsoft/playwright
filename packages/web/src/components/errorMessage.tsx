@@ -21,16 +21,18 @@ import './errorMessage.css';
 export const ErrorMessage: React.FC<{
   error: string;
 }> = ({ error }) => {
-  const html = React.useMemo(() => {
-    const config: any = {
-      bg: 'var(--vscode-panel-background)',
-      fg: 'var(--vscode-foreground)',
-    };
-    config.colors = ansiColors;
-    return new ansi2html(config).toHtml(escapeHTML(error));
-  }, [error]);
+  const html = React.useMemo(() => ansi2htmlMarkup(error), [error]);
   return <div className='error-message' dangerouslySetInnerHTML={{ __html: html || '' }}></div>;
 };
+
+export function ansi2htmlMarkup(text: string) {
+  const config: any = {
+    bg: 'var(--vscode-panel-background)',
+    fg: 'var(--vscode-foreground)',
+  };
+  config.colors = ansiColors;
+  return new ansi2html(config).toHtml(escapeHTML(text));
+}
 
 const ansiColors = {
   0: '#000',

@@ -16,7 +16,7 @@
 
 import React from 'react';
 import { expect, test } from '@playwright/experimental-ct-react';
-import { Source } from './source';
+import { CodeMirrorWrapper } from './codeMirrorWrapper';
 
 test.use({ viewport: { width: 500, height: 500 } });
 
@@ -70,31 +70,31 @@ class Program
 `;
 
 test('highlight JavaScript', async ({ mount }) => {
-  const component = await mount(<Source text={javascriptSnippet} language='javascript'></Source>);
+  const component = await mount(<CodeMirrorWrapper text={javascriptSnippet} language='javascript' />);
   await expect(component.locator('text="async"').first()).toHaveClass('cm-keyword');
 });
 
 test('highlight Python', async ({ mount }) => {
-  const component = await mount(<Source text={pythonSnippet} language='python'></Source>);
+  const component = await mount(<CodeMirrorWrapper text={pythonSnippet} language='python' />);
   await expect(component.locator('text="async"').first()).toHaveClass('cm-keyword');
 });
 
 test('highlight Java', async ({ mount }) => {
-  const component = await mount(<Source text={javaSnippet} language='java'></Source>);
+  const component = await mount(<CodeMirrorWrapper text={javaSnippet} language='java' />);
   await expect(component.locator('text="public"').first()).toHaveClass('cm-keyword');
 });
 
 test('highlight C#', async ({ mount }) => {
-  const component = await mount(<Source text={csharpSnippet} language='csharp'></Source>);
+  const component = await mount(<CodeMirrorWrapper text={csharpSnippet} language='csharp' />);
   await expect(component.locator('text="public"').first()).toHaveClass('cm-keyword');
 });
 
 test('highlight lines', async ({ mount }) => {
-  const component = await mount(<Source text={javascriptSnippet} language='javascript' highlight={[
+  const component = await mount(<CodeMirrorWrapper text={javascriptSnippet} language='javascript' highlight={[
     { line: 4, type: 'running' },
     { line: 5, type: 'paused' },
     { line: 6, type: 'error' },
-  ]}></Source>);
+  ]} />);
   await expect(component.locator('.source-line-running')).toContainText('goto');
   await expect(component.locator('.source-line-paused')).toContainText('title');
   await expect(component.locator('.source-line-error')).toContainText('expect');

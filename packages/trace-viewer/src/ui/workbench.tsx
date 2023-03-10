@@ -49,9 +49,9 @@ export const Workbench: React.FunctionComponent<{
 
   const tabs: TabbedPaneTabModel[] = [
     { id: 'call', title: 'Call', render: () => <CallTab action={activeAction} sdkLanguage={sdkLanguage} /> },
+    { id: 'source', title: 'Source', count: 0, render: () => <SourceTab action={activeAction} /> },
     { id: 'console', title: 'Console', count: consoleCount, render: () => <ConsoleTab action={activeAction} /> },
     { id: 'network', title: 'Network', count: networkCount, render: () => <NetworkTab action={activeAction} /> },
-    { id: 'source', title: 'Source', count: 0, render: () => <SourceTab action={activeAction} /> },
   ];
 
   if (output)

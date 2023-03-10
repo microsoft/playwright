@@ -16,14 +16,14 @@
 
 import type { StackFrame } from '@protocol/channels';
 import type { ActionTraceEvent } from '@trace/trace';
-import { Source as SourceView } from '@web/components/source';
 import { SplitView } from '@web/components/splitView';
 import * as React from 'react';
 import { useAsyncMemo } from './helpers';
 import './sourceTab.css';
 import { StackTraceView } from './stackTrace';
+import { CodeMirrorWrapper } from '@web/components/codeMirrorWrapper';
 
-type StackInfo = string | {
+type StackInfo = {
   frames: StackFrame[];
   fileContent: Map<string, string>;
 };
@@ -33,17 +33,15 @@ export const SourceTab: React.FunctionComponent<{
 }> = ({ action }) => {
   const [lastAction, setLastAction] = React.useState<ActionTraceEvent | undefined>();
   const [selectedFrame, setSelectedFrame] = React.useState<number>(0);
-  const [needReveal, setNeedReveal] = React.useState<boolean>(false);
 
   if (lastAction !== action) {
     setLastAction(action);
     setSelectedFrame(0);
-    setNeedReveal(true);
   }
 
   const stackInfo = React.useMemo<StackInfo>(() => {
     if (!action)
-      return '';
+      return { frames: [], fileContent: new Map() };
     const frames = action.stack || [];
     return {
       frames,
@@ -52,34 +50,20 @@ export const SourceTab: React.FunctionComponent<{
   }, [action]);
 
   const content = useAsyncMemo<string>(async () => {
-    let value: string;
-    if (typeof stackInfo === 'string') {
-      value = stackInfo;
-    } else {
-      const filePath = stackInfo.frames[selectedFrame]?.file;
-      if (!filePath)
-        return '';
-      if (!stackInfo.fileContent.has(filePath)) {
-        const sha1 = await calculateSha1(filePath);
-        stackInfo.fileContent.set(filePath, await fetch(`sha1/src@${sha1}.txt`).then(response => response.text()).catch(e => `<Unable to read "${filePath}">`));
-      }
-      value = stackInfo.fileContent.get(filePath)!;
+    const filePath = stackInfo.frames[selectedFrame]?.file;
+    if (!filePath)
+      return '';
+    if (!stackInfo.fileContent.has(filePath)) {
+      const sha1 = await calculateSha1(filePath);
+      stackInfo.fileContent.set(filePath, await fetch(`sha1/src@${sha1}.txt`).then(response => response.text()).catch(() => `<Unable to read "${filePath}">`));
     }
-    return value;
+    return stackInfo.fileContent.get(filePath)!;
   }, [stackInfo, selectedFrame], '');
 
-  const targetLine = typeof stackInfo === 'string' ? 0 : stackInfo.frames[selectedFrame]?.line || 0;
-
-  const targetLineRef = React.useRef<HTMLDivElement>(null);
-  React.useLayoutEffect(() => {
-    if (needReveal && targetLineRef.current) {
-      targetLineRef.current.scrollIntoView({ block: 'center', inline: 'nearest' });
-      setNeedReveal(false);
-    }
-  }, [needReveal, targetLineRef]);
-
+  const targetLine = stackInfo.frames[selectedFrame]?.line || 0;
+  const error = action?.error?.message;
   return <SplitView sidebarSize={200} orientation='horizontal'>
-    <SourceView text={content} language='javascript' highlight={[{ line: targetLine, type: 'running' }]} revealLine={targetLine}></SourceView>
+    <CodeMirrorWrapper text={content} language='javascript' highlight={[{ line: targetLine, type: error ? 'error' : 'running', message: error }]} revealLine={targetLine} readOnly={true} lineNumbers={true}></CodeMirrorWrapper>
     <StackTraceView action={action} selectedFrame={selectedFrame} setSelectedFrame={setSelectedFrame}></StackTraceView>
   </SplitView>;
 };
