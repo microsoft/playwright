@@ -50,10 +50,12 @@ type FetchRequestOptions = {
   baseURL?: string;
 };
 
+type HeadersObject = Readonly<{ [name: string]: string }>;
+
 export type APIRequestEvent = {
   url: URL,
   method: string,
-  headers: { [name: string]: string },
+  headers: HeadersObject,
   cookies: channels.NameValue[],
   postData?: Buffer
 };
@@ -72,6 +74,7 @@ export type APIRequestFinishedEvent = {
 type SendRequestOptions = https.RequestOptions & {
   maxRedirects: number,
   deadline: number,
+  headers: HeadersObject,
   __testHookLookup?: (hostname: string) => LookupAddress[]
 };
 
@@ -130,20 +133,21 @@ export abstract class APIRequestContext extends SdkObject {
   }
 
   async fetch(params: channels.APIRequestContextFetchParams, metadata: CallMetadata): Promise<channels.APIResponse> {
-    const headers: { [name: string]: string } = {};
     const defaults = this._defaultOptions();
-    headers['user-agent'] = defaults.userAgent;
-    headers['accept'] = '*/*';
-    headers['accept-encoding'] = 'gzip,deflate,br';
+    const headers: HeadersObject = {
+      'user-agent': defaults.userAgent,
+      'accept': '*/*',
+      'accept-encoding': 'gzip,deflate,br',
+    };
 
     if (defaults.extraHTTPHeaders) {
       for (const { name, value } of defaults.extraHTTPHeaders)
-        headers[name.toLowerCase()] = value;
+        setHeader(headers, name, value);
     }
 
     if (params.headers) {
       for (const { name, value } of params.headers)
-        headers[name.toLowerCase()] = value;
+        setHeader(headers, name, value);
     }
 
     const method = params.method?.toUpperCase() || 'GET';
@@ -188,7 +192,7 @@ export abstract class APIRequestContext extends SdkObject {
 
     const postData = serializePostData(params, headers);
     if (postData)
-      headers['content-length'] = String(postData.byteLength);
+      setHeader(headers, 'content-length', String(postData.byteLength));
     const controller = new ProgressController(metadata, this);
     const fetchResponse = await controller.run(progress => {
       return this._sendRequest(progress, requestUrl, options, postData);
@@ -227,27 +231,27 @@ export abstract class APIRequestContext extends SdkObject {
     return cookies;
   }
 
-  private async _updateRequestCookieHeader(url: URL, options: http.RequestOptions) {
-    if (options.headers!['cookie'] !== undefined)
+  private async _updateRequestCookieHeader(url: URL, headers: HeadersObject) {
+    if (getHeader(headers, 'cookie') !== undefined)
       return;
     const cookies = await this._cookies(url);
     if (cookies.length) {
       const valueArray = cookies.map(c => `${c.name}=${c.value}`);
-      options.headers!['cookie'] = valueArray.join('; ');
+      setHeader(headers, 'cookie', valueArray.join('; '));
     }
   }
 
   private async _sendRequest(progress: Progress, url: URL, options: SendRequestOptions, postData?: Buffer): Promise<Omit<channels.APIResponse, 'fetchUid'> & { body: Buffer }>{
-    await this._updateRequestCookieHeader(url, options);
+    await this._updateRequestCookieHeader(url, options.headers);
 
-    const requestCookies = (options.headers!['cookie'] as (string | undefined))?.split(';').map(p => {
+    const requestCookies = getHeader(options.headers, 'cookie')?.split(';').map(p => {
       const [name, value] = p.split('=').map(v => v.trim());
       return { name, value };
     }) || [];
     const requestEvent: APIRequestEvent = {
       url,
       method: options.method!,
-      headers: options.headers as { [name: string]: string },
+      headers: options.headers,
       cookies: requestCookies,
       postData
     };
@@ -287,8 +291,8 @@ export abstract class APIRequestContext extends SdkObject {
             request.destroy();
             return;
           }
-          const headers = { ...options.headers };
-          delete headers[`cookie`];
+          const headers: HeadersObject = { ...options.headers };
+          removeHeader(headers, `cookie`);
 
           // HTTP-redirect fetch step 13 (https://fetch.spec.whatwg.org/#http-redirect-fetch)
           const status = response.statusCode!;
@@ -297,11 +301,11 @@ export abstract class APIRequestContext extends SdkObject {
               status === 303 && !['GET', 'HEAD'].includes(method)) {
             method = 'GET';
             postData = undefined;
-            delete headers[`content-encoding`];
-            delete headers[`content-language`];
-            delete headers[`content-length`];
-            delete headers[`content-location`];
-            delete headers[`content-type`];
+            removeHeader(headers, `content-encoding`);
+            removeHeader(headers, `content-language`);
+            removeHeader(headers, `content-length`);
+            removeHeader(headers, `content-location`);
+            removeHeader(headers, `content-type`);
           }
 
           const redirectOptions: SendRequestOptions = {
@@ -333,13 +337,13 @@ export abstract class APIRequestContext extends SdkObject {
             return;
           }
         }
-        if (response.statusCode === 401 && !options.headers!['authorization']) {
+        if (response.statusCode === 401 && !getHeader(options.headers, 'authorization')) {
           const auth = response.headers['www-authenticate'];
           const credentials = this._defaultOptions().httpCredentials;
           if (auth?.trim().startsWith('Basic') && credentials) {
             const { username, password } = credentials;
             const encoded = Buffer.from(`${username || ''}:${password || ''}`).toString('base64');
-            options.headers!['authorization'] = `Basic ${encoded}`;
+            setHeader(options.headers, 'authorization', `Basic ${encoded}`);
             notifyRequestFinished();
             fulfill(this._sendRequest(progress, url, options, postData));
             request.destroy();
@@ -651,17 +655,17 @@ function isJsonParsable(value: any) {
   }
 }
 
-function serializePostData(params: channels.APIRequestContextFetchParams, headers: { [name: string]: string }): Buffer | undefined {
+function serializePostData(params: channels.APIRequestContextFetchParams, headers: HeadersObject): Buffer | undefined {
   assert((params.postData ? 1 : 0) + (params.jsonData ? 1 : 0) + (params.formData ? 1 : 0) + (params.multipartData ? 1 : 0) <= 1, `Only one of 'data', 'form' or 'multipart' can be specified`);
   if (params.jsonData !== undefined) {
     const json = isJsonParsable(params.jsonData) ? params.jsonData : JSON.stringify(params.jsonData);
-    headers['content-type'] ??= 'application/json';
+    setHeader(headers, 'content-type', 'application/json', true);
     return Buffer.from(json, 'utf8');
   } else if (params.formData) {
     const searchParams = new URLSearchParams();
     for (const { name, value } of params.formData)
       searchParams.append(name, value);
-    headers['content-type'] ??= 'application/x-www-form-urlencoded';
+    setHeader(headers, 'content-type', 'application/x-www-form-urlencoded', true);
     return Buffer.from(searchParams.toString(), 'utf8');
   } else if (params.multipartData) {
     const formData = new MultipartFormData();
@@ -671,11 +675,28 @@ function serializePostData(params: channels.APIRequestContextFetchParams, header
       else if (field.value)
         formData.addField(field.name, field.value);
     }
-    headers['content-type'] ??= formData.contentTypeHeader();
+    setHeader(headers, 'content-type', formData.contentTypeHeader(), true);
     return formData.finish();
   } else if (params.postData !== undefined) {
-    headers['content-type'] ??= 'application/octet-stream';
+    setHeader(headers, 'content-type', 'application/octet-stream', true);
     return params.postData;
   }
   return undefined;
+}
+
+function setHeader(headers: { [name: string]: string }, name: string, value: string, keepExisting = false) {
+  const existing = Object.entries(headers).find(pair => pair[0].toLowerCase() === name.toLowerCase());
+  if (!existing)
+    headers[name] = value;
+  else if (!keepExisting)
+    headers[existing[0]] = value;
+}
+
+function getHeader(headers: HeadersObject, name: string) {
+  const existing = Object.entries(headers).find(pair => pair[0].toLowerCase() === name.toLowerCase());
+  return existing ? existing[1] : undefined;
+}
+
+function removeHeader(headers: { [name: string]: string }, name: string) {
+  delete headers[name];
 }
