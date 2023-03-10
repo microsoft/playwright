@@ -70,7 +70,7 @@ export const SourceTab: React.FunctionComponent<{
 
   const targetLine = typeof stackInfo === 'string' ? 0 : stackInfo.frames[selectedFrame]?.line || 0;
 
-  const targetLineRef = React.useRef<HTMLDivElement>(null);
+  const targetLineRef = React.createRef<HTMLDivElement>();
   React.useLayoutEffect(() => {
     if (needReveal && targetLineRef.current) {
       targetLineRef.current.scrollIntoView({ block: 'center', inline: 'nearest' });

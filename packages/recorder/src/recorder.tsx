@@ -78,7 +78,7 @@ export const Recorder: React.FC<RecorderProps> = ({
       setFileId(value);
   };
 
-  const messagesEndRef = React.useRef<HTMLDivElement>(null);
+  const messagesEndRef = React.createRef<HTMLDivElement>();
   React.useLayoutEffect(() => {
     messagesEndRef.current?.scrollIntoView({ block: 'center', inline: 'nearest' });
   }, [messagesEndRef]);
