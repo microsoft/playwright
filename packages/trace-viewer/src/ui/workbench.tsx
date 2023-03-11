@@ -36,11 +36,22 @@ export const Workbench: React.FunctionComponent<{
   output?: React.ReactElement,
   rightToolbar?: React.ReactElement[],
 }> = ({ model, output, rightToolbar }) => {
-  const [selectedAction, setSelectedAction] = React.useState<ActionTraceEvent | undefined>();
+  const [selectedAction, setSelectedAction] = React.useState<ActionTraceEvent | undefined>(undefined);
   const [highlightedAction, setHighlightedAction] = React.useState<ActionTraceEvent | undefined>();
   const [selectedNavigatorTab, setSelectedNavigatorTab] = React.useState<string>('actions');
   const [selectedPropertiesTab, setSelectedPropertiesTab] = React.useState<string>(output ? 'output' : 'call');
   const activeAction = model ? highlightedAction || selectedAction : undefined;
+
+  React.useEffect(() => {
+    if (selectedAction)
+      return;
+    const failedAction = model?.actions.find(a => a.error);
+    if (failedAction)
+      setSelectedAction(failedAction);
+    // In the UI mode, selecting the first error should reveal source.
+    if (output)
+      setSelectedPropertiesTab('source');
+  }, [model, output, selectedAction, setSelectedAction, setSelectedPropertiesTab]);
 
   const { errors, warnings } = activeAction ? modelUtil.stats(activeAction) : { errors: 0, warnings: 0 };
   const consoleCount = errors + warnings;

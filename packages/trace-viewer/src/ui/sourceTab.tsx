@@ -55,7 +55,14 @@ export const SourceTab: React.FunctionComponent<{
       return '';
     if (!stackInfo.fileContent.has(filePath)) {
       const sha1 = await calculateSha1(filePath);
-      stackInfo.fileContent.set(filePath, await fetch(`sha1/src@${sha1}.txt`).then(response => response.text()).catch(() => `<Unable to read "${filePath}">`));
+      try {
+        let response = await fetch(`sha1/src@${sha1}.txt`);
+        if (response.status === 404)
+          response = await fetch(`file?path=${filePath}`);
+        stackInfo.fileContent.set(filePath, await response.text());
+      } catch {
+        stackInfo.fileContent.set(filePath, `<Unable to read "${filePath}">`);
+      }
     }
     return stackInfo.fileContent.get(filePath)!;
   }, [stackInfo, selectedFrame], '');

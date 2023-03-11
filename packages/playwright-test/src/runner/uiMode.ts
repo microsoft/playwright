@@ -51,7 +51,7 @@ class UIMode {
     for (const p of config.projects)
       p.retries = 0;
     config._internal.configCLIOverrides.use = config._internal.configCLIOverrides.use || {};
-    config._internal.configCLIOverrides.use.trace = 'on';
+    config._internal.configCLIOverrides.use.trace = { mode: 'on', sources: false };
 
     this._originalStderr = process.stderr.write.bind(process.stderr);
     process.stdout.write = (chunk: string | Buffer) => {
