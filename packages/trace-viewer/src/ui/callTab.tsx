@@ -22,7 +22,7 @@ import './callTab.css';
 import { CopyToClipboard } from './copyToClipboard';
 import { asLocator } from '@isomorphic/locatorGenerators';
 import type { Language } from '@isomorphic/locatorGenerators';
-import { ErrorMessage } from './errorMessage';
+import { ErrorMessage } from '@web/components/errorMessage';
 
 export const CallTab: React.FunctionComponent<{
   action: ActionTraceEvent | undefined,

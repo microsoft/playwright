@@ -28,7 +28,7 @@
 }
 
 .call-error .codicon {
-  color: red;
+  color: var(--vscode-errorForeground);
   position: relative;
   top: 2px;
   margin-right: 2px;

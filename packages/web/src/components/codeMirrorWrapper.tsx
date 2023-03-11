@@ -14,13 +14,15 @@
   limitations under the License.
 */
 
-import './source.css';
+import './codeMirrorWrapper.css';
 import * as React from 'react';
 import type { CodeMirror } from './codeMirrorModule';
+import { ansi2htmlMarkup } from './errorMessage';
 
 export type SourceHighlight = {
   line: number;
   type: 'running' | 'paused' | 'error';
+  message?: string;
 };
 
 export type Language = 'javascript' | 'python' | 'java' | 'csharp';
@@ -28,7 +30,7 @@ export type Language = 'javascript' | 'python' | 'java' | 'csharp';
 export interface SourceProps {
   text: string;
   language: Language;
-  readOnly: boolean;
+  readOnly?: boolean;
   // 1-based
   highlight?: SourceHighlight[];
   revealLine?: number;
@@ -51,7 +53,7 @@ export const CodeMirrorWrapper: React.FC<SourceProps> = ({
 }) => {
   const codemirrorElement = React.useRef<HTMLDivElement>(null);
   const [modulePromise] = React.useState<Promise<CodeMirror>>(import('./codeMirrorModule').then(m => m.default));
-  const codemirrorRef = React.useRef<CodeMirror.Editor|null>(null);
+  const codemirrorRef = React.useRef<{ cm: CodeMirror.Editor, highlight: SourceHighlight[], widgets: CodeMirror.LineWidget[] } | null>(null);
   const [codemirror, setCodemirror] = React.useState<CodeMirror.Editor>();
 
   React.useEffect(() => {
@@ -72,25 +74,25 @@ export const CodeMirrorWrapper: React.FC<SourceProps> = ({
         mode = 'text/x-csharp';
 
       if (codemirrorRef.current
-        && mode === codemirrorRef.current.getOption('mode')
-        && readOnly === codemirrorRef.current.getOption('readOnly')
-        && lineNumbers === codemirrorRef.current.getOption('lineNumbers')
-        && wrapLines === codemirrorRef.current.getOption('lineWrapping')) {
+        && mode === codemirrorRef.current.cm.getOption('mode')
+        && !!readOnly === codemirrorRef.current.cm.getOption('readOnly')
+        && lineNumbers === codemirrorRef.current.cm.getOption('lineNumbers')
+        && wrapLines === codemirrorRef.current.cm.getOption('lineWrapping')) {
         // No need to re-create codemirror.
         return;
       }
 
       // Either configuration is different or we don't have a codemirror yet.
-      codemirrorRef.current?.getWrapperElement().remove();
+      codemirrorRef.current?.cm?.getWrapperElement().remove();
 
       const cm = CodeMirror(element, {
         value: '',
         mode,
-        readOnly,
+        readOnly: !!readOnly,
         lineNumbers,
         lineWrapping: wrapLines,
       });
-      codemirrorRef.current = cm;
+      codemirrorRef.current = { cm, highlight: [], widgets: [] };
       setCodemirror(cm);
       return cm;
     })();
@@ -113,10 +115,37 @@ export const CodeMirrorWrapper: React.FC<SourceProps> = ({
         codemirror.focus();
       }
     }
-    for (let i = 0; i < codemirror.lineCount(); ++i)
-      codemirror.removeLineClass(i, 'wrap');
+
+    // Line highlight.
+    for (const h of codemirrorRef.current!.highlight)
+      codemirror.removeLineClass(h.line - 1, 'wrap');
     for (const h of highlight || [])
       codemirror.addLineClass(h.line - 1, 'wrap', `source-line-${h.type}`);
+    codemirrorRef.current!.highlight = highlight || [];
+
+    // Error widgets.
+    for (const w of codemirrorRef.current!.widgets)
+      codemirror.removeLineWidget(w);
+    const widgets: CodeMirror.LineWidget[] = [];
+    for (const h of highlight || []) {
+      if (h.type !== 'error')
+        continue;
+
+      const line = codemirrorRef.current?.cm.getLine(h.line - 1);
+      if (line) {
+        const underlineWidgetElement = document.createElement('div');
+        underlineWidgetElement.className = 'source-line-error-underline';
+        underlineWidgetElement.innerHTML = '&nbsp;'.repeat(line.length || 1);
+        widgets.push(codemirror.addLineWidget(h.line, underlineWidgetElement, { above: true, coverGutter: false }));
+      }
+
+      const errorWidgetElement = document.createElement('div');
+      errorWidgetElement.innerHTML = ansi2htmlMarkup(h.message || '');
+      errorWidgetElement.className = 'source-line-error-widget';
+      widgets.push(codemirror.addLineWidget(h.line, errorWidgetElement, { above: true, coverGutter: false }));
+    }
+    codemirrorRef.current!.widgets = widgets;
+
     if (revealLine)
       codemirror.scrollIntoView({ line: revealLine - 1, ch: 0 }, 50);
   }, [codemirror, text, highlight, revealLine, focusOnChange, onChange]);
