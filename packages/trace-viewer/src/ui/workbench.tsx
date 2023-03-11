@@ -35,7 +35,9 @@ export const Workbench: React.FunctionComponent<{
   model?: MultiTraceModel,
   output?: React.ReactElement,
   rightToolbar?: React.ReactElement[],
-}> = ({ model, output, rightToolbar }) => {
+  hideTimelineBars?: boolean,
+  hideStackFrames?: boolean,
+}> = ({ model, output, rightToolbar, hideTimelineBars, hideStackFrames }) => {
   const [selectedAction, setSelectedAction] = React.useState<ActionTraceEvent | undefined>(undefined);
   const [highlightedAction, setHighlightedAction] = React.useState<ActionTraceEvent | undefined>();
   const [selectedNavigatorTab, setSelectedNavigatorTab] = React.useState<string>('actions');
@@ -49,7 +51,7 @@ export const Workbench: React.FunctionComponent<{
     if (failedAction)
       setSelectedAction(failedAction);
     // In the UI mode, selecting the first error should reveal source.
-    if (output)
+    if (failedAction && output)
       setSelectedPropertiesTab('source');
   }, [model, output, selectedAction, setSelectedAction, setSelectedPropertiesTab]);
 
@@ -60,7 +62,7 @@ export const Workbench: React.FunctionComponent<{
 
   const tabs: TabbedPaneTabModel[] = [
     { id: 'call', title: 'Call', render: () => <CallTab action={activeAction} sdkLanguage={sdkLanguage} /> },
-    { id: 'source', title: 'Source', count: 0, render: () => <SourceTab action={activeAction} /> },
+    { id: 'source', title: 'Source', count: 0, render: () => <SourceTab action={activeAction} hideStackFrames={hideStackFrames}/> },
     { id: 'console', title: 'Console', count: consoleCount, render: () => <ConsoleTab action={activeAction} /> },
     { id: 'network', title: 'Network', count: networkCount, render: () => <NetworkTab action={activeAction} /> },
   ];
@@ -73,6 +75,7 @@ export const Workbench: React.FunctionComponent<{
       model={model}
       selectedAction={activeAction}
       onSelected={action => setSelectedAction(action)}
+      hideTimelineBars={hideTimelineBars}
     />
     <SplitView sidebarSize={output ? 250 : 350} orientation={output ? 'vertical' : 'horizontal'}>
       <SplitView sidebarSize={250} orientation='horizontal' sidebarIsFirst={true}>

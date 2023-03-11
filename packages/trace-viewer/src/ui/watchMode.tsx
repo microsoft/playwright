@@ -346,7 +346,7 @@ export const TraceView: React.FC<{
   const xterm = <XtermWrapper source={xtermDataSource}></XtermWrapper>;
   return <Workbench model={model} output={xterm} rightToolbar={[
     <ToolbarButton icon='trash' title='Clear output' onClick={() => xtermDataSource.clear()}></ToolbarButton>,
-  ]}/>;
+  ]} hideTimelineBars={true} hideStackFrames={true} />;
 };
 
 declare global {

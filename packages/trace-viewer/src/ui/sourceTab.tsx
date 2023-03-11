@@ -30,7 +30,8 @@ type StackInfo = {
 
 export const SourceTab: React.FunctionComponent<{
   action: ActionTraceEvent | undefined,
-}> = ({ action }) => {
+  hideStackFrames?: boolean,
+}> = ({ action, hideStackFrames }) => {
   const [lastAction, setLastAction] = React.useState<ActionTraceEvent | undefined>();
   const [selectedFrame, setSelectedFrame] = React.useState<number>(0);
 
@@ -69,7 +70,7 @@ export const SourceTab: React.FunctionComponent<{
 
   const targetLine = stackInfo.frames[selectedFrame]?.line || 0;
   const error = action?.error?.message;
-  return <SplitView sidebarSize={200} orientation='horizontal'>
+  return <SplitView sidebarSize={200} orientation='horizontal' sidebarHidden={hideStackFrames}>
     <CodeMirrorWrapper text={content} language='javascript' highlight={[{ line: targetLine, type: error ? 'error' : 'running', message: error }]} revealLine={targetLine} readOnly={true} lineNumbers={true}></CodeMirrorWrapper>
     <StackTraceView action={action} selectedFrame={selectedFrame} setSelectedFrame={setSelectedFrame}></StackTraceView>
   </SplitView>;
