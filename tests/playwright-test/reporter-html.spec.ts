@@ -37,6 +37,8 @@ const test = baseTest.extend<{ showReport: (reportFolder?: string) => Promise<vo
 
 test.use({ channel: 'chrome' });
 
+test.describe.configure({ mode: 'parallel' });
+
 test('should generate report', async ({ runInlineTest, showReport, page }) => {
   await runInlineTest({
     'playwright.config.ts': `
@@ -473,7 +475,6 @@ test('should warn user when viewing via file:// protocol', async ({ runInlineTes
   await test.step('view via server', async () => {
     await showReport();
     await page.locator('[title="View trace"]').click();
-    await expect(page.locator('body')).toContainText('Action does not have snapshots', { useInnerText: true });
     await expect(page.locator('dialog')).toBeHidden();
   });
 

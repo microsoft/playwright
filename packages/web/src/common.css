@@ -72,7 +72,8 @@ body {
   min-height: 0;
 }
 
-*[hidden] {
+*[hidden],
+.hidden {
   display: none !important;
 }
 

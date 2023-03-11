@@ -146,7 +146,7 @@ export const CodeMirrorWrapper: React.FC<SourceProps> = ({
     }
     codemirrorRef.current!.widgets = widgets;
 
-    if (revealLine)
+    if (revealLine && codemirrorRef.current!.cm.lineCount() >= revealLine)
       codemirror.scrollIntoView({ line: revealLine - 1, ch: 0 }, 50);
   }, [codemirror, text, highlight, revealLine, focusOnChange, onChange]);
 
