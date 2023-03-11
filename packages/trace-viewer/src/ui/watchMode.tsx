@@ -357,6 +357,22 @@ declare global {
 
 let receiver: TeleReporterReceiver | undefined;
 
+let throttleTimer: NodeJS.Timeout | undefined;
+let throttleData: { rootSuite: Suite, progress: Progress } | undefined;
+const throttledAction = () => {
+  clearTimeout(throttleTimer);
+  throttleTimer = undefined;
+  updateRootSuite(throttleData!.rootSuite, throttleData!.progress);
+};
+
+const throttleUpdateRootSuite = (rootSuite: Suite, progress: Progress, immediate = false) => {
+  throttleData = { rootSuite, progress };
+  if (immediate)
+    throttledAction();
+  else if (!throttleTimer)
+    throttleTimer = setTimeout(throttledAction, 250);
+};
+
 const refreshRootSuite = (eraseResults: boolean) => {
   if (!eraseResults) {
     sendMessageNoReply('list');
@@ -378,11 +394,15 @@ const refreshRootSuite = (eraseResults: boolean) => {
       progress.passed = 0;
       progress.failed = 0;
       progress.skipped = 0;
-      updateRootSuite(rootSuite, progress);
+      throttleUpdateRootSuite(rootSuite, progress, true);
+    },
+
+    onEnd: () => {
+      throttleUpdateRootSuite(rootSuite, progress, true);
     },
 
     onTestBegin: () => {
-      updateRootSuite(rootSuite, progress);
+      throttleUpdateRootSuite(rootSuite, progress);
     },
 
     onTestEnd: (test: TestCase) => {
@@ -392,7 +412,7 @@ const refreshRootSuite = (eraseResults: boolean) => {
         ++progress.failed;
       else
         ++progress.passed;
-      updateRootSuite(rootSuite, progress);
+      throttleUpdateRootSuite(rootSuite, progress);
       // This will update selected trace viewer.
       updateStepsProgress();
     },
