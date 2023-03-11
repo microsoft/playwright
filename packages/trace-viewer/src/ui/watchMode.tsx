@@ -62,6 +62,7 @@ export const WatchModeView: React.FC<{}> = ({
   const [visibleTestIds, setVisibleTestIds] = React.useState<string[]>([]);
   const [filterText, setFilterText] = React.useState<string>('');
   const [filterExpanded, setFilterExpanded] = React.useState<boolean>(false);
+  const [isShowingOutput, setIsShowingOutput] = React.useState<boolean>(false);
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
@@ -125,9 +126,24 @@ export const WatchModeView: React.FC<{}> = ({
   };
 
   const result = selectedTest?.results[0];
-  return <div className='vbox'>
+  const isFinished = result && result.duration >= 0;
+  return <div className='vbox watch-mode'>
     <SplitView sidebarSize={250} orientation='horizontal' sidebarIsFirst={true}>
-      {(result && result.duration >= 0) ? <FinishedTraceView testResult={result} /> : <InProgressTraceView testResult={result} />}
+      <div className='vbox'>
+        <div className={'vbox' + (isShowingOutput ? '' : ' hidden')}>
+          <Toolbar>
+            <div className='section-title'>Output</div>
+            <ToolbarButton icon='circle-slash' title='Clear output' onClick={() => xtermDataSource.clear()}></ToolbarButton>
+            <div className='spacer'></div>
+            <ToolbarButton icon='close' title='Close' onClick={() => setIsShowingOutput(false)}></ToolbarButton>
+          </Toolbar>
+          <XtermWrapper source={xtermDataSource}></XtermWrapper>;
+        </div>
+        <div className={'vbox' + (isShowingOutput ? ' hidden' : '')}>
+          {isFinished && <FinishedTraceView testResult={result} />}
+          {!isFinished && <InProgressTraceView testResult={result} />}
+        </div>
+      </div>
       <div className='vbox watch-mode-sidebar'>
         <Toolbar>
           <div className='section-title' style={{ cursor: 'pointer' }} onClick={() => setSettingsVisible(false)}>Tests</div>
@@ -137,6 +153,7 @@ export const WatchModeView: React.FC<{}> = ({
           <ToolbarButton icon='eye-watch' title='Watch' toggled={isWatchingFiles} onClick={() => setIsWatchingFiles(!isWatchingFiles)}></ToolbarButton>
           <div className='spacer'></div>
           <ToolbarButton icon='gear' title='Toggle color mode' toggled={settingsVisible} onClick={() => { setSettingsVisible(!settingsVisible); }}></ToolbarButton>
+          <ToolbarButton icon='terminal' title='Toggle color mode' toggled={isShowingOutput} onClick={() => { setIsShowingOutput(!isShowingOutput); }}></ToolbarButton>
         </Toolbar>
         {!settingsVisible && <Expandable
           title={<input ref={inputRef} type='search' placeholder='Filter (e.g. text, @tag)' spellCheck={false} value={filterText}
@@ -322,7 +339,7 @@ export const InProgressTraceView: React.FC<{
     setModel(testResult ? stepsToModel(testResult) : undefined);
   }, [stepsProgress, testResult]);
 
-  return <TraceView model={model} />;
+  return <Workbench model={model} hideTimelineBars={true} hideStackFrames={true} showSourcesFirst={true} />;
 };
 
 export const FinishedTraceView: React.FC<{
@@ -337,16 +354,7 @@ export const FinishedTraceView: React.FC<{
       loadSingleTraceFile(attachment.path).then(setModel);
   }, [testResult]);
 
-  return <TraceView model={model} />;
-};
-
-export const TraceView: React.FC<{
-  model: MultiTraceModel | undefined,
-}> = ({ model }) => {
-  const xterm = <XtermWrapper source={xtermDataSource}></XtermWrapper>;
-  return <Workbench model={model} output={xterm} rightToolbar={[
-    <ToolbarButton icon='trash' title='Clear output' onClick={() => xtermDataSource.clear()}></ToolbarButton>,
-  ]} hideTimelineBars={true} hideStackFrames={true} />;
+  return <Workbench key='workbench' model={model} hideTimelineBars={true} hideStackFrames={true} showSourcesFirst={true} />;
 };
 
 declare global {
