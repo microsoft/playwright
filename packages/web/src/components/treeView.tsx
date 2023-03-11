@@ -19,6 +19,7 @@ import { ListView } from './listView';
 
 export type TreeItem = {
   id: string,
+  parent: TreeItem | undefined,
   children: TreeItem[],
 };
 
@@ -57,8 +58,10 @@ export function TreeView<T extends TreeItem>({
   noItemsMessage,
 }: TreeViewProps<T>) {
   const treeItems = React.useMemo(() => {
+    for (let item: TreeItem | undefined = selectedItem?.parent; item; item = item.parent)
+      treeState.expandedItems.set(item.id, true);
     return flattenTree<T>(rootItem, treeState.expandedItems);
-  }, [rootItem, treeState]);
+  }, [rootItem, selectedItem, treeState]);
 
   return <TreeListView
     items={[...treeItems.keys()]}
@@ -98,10 +101,18 @@ export function TreeView<T extends TreeItem>({
     }}
     onIconClicked={item => {
       const { expanded } = treeItems.get(item as T)!;
-      if (expanded)
+      if (expanded) {
+        // Move nested selection up.
+        for (let i: TreeItem | undefined = selectedItem; i; i = i.parent) {
+          if (i === item) {
+            onSelected?.(item as T);
+            break;
+          }
+        }
         treeState.expandedItems.set(item.id, false);
-      else
+      } else {
         treeState.expandedItems.set(item.id, true);
+      }
       setTreeState({ ...treeState });
     }}
     noItemsMessage={noItemsMessage} />;

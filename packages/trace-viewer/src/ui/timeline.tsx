@@ -114,7 +114,6 @@ export const Timeline: React.FunctionComponent<{
       const xd = Math.abs(time - xMiddle);
       if (left > right)
         continue;
-      // Prefer closest yDistance (the same bar), among those prefer the closest xDistance.
       if (index === undefined || xd < xDistance!) {
         index = i;
         xDistance = xd;
