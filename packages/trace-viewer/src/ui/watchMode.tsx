@@ -52,17 +52,18 @@ const xtermDataSource: XtermDataSource = {
 
 export const WatchModeView: React.FC<{}> = ({
 }) => {
+  const [isWatchingFiles, setIsWatchingFiles] = useSetting<boolean>('test-ui-watch-files', false);
+  const [filterText, setFilterText] = useSetting<string>('test-ui-filter-text', '');
+  const [filterExpanded, setFilterExpanded] = useSetting<boolean>('test-ui-filter-expanded', false);
+  const [isShowingOutput, setIsShowingOutput] = useSetting<boolean>('test-ui-show-output', false);
+
   const [projects, setProjects] = React.useState<Map<string, boolean>>(new Map());
   const [rootSuite, setRootSuite] = React.useState<{ value: Suite | undefined }>({ value: undefined });
-  const [isRunningTest, setIsRunningTest] = React.useState<boolean>(false);
   const [progress, setProgress] = React.useState<Progress>({ total: 0, passed: 0, failed: 0, skipped: 0 });
   const [selectedTest, setSelectedTest] = React.useState<TestCase | undefined>(undefined);
   const [settingsVisible, setSettingsVisible] = React.useState<boolean>(false);
-  const [isWatchingFiles, setIsWatchingFiles] = React.useState<boolean>(true);
   const [visibleTestIds, setVisibleTestIds] = React.useState<string[]>([]);
-  const [filterText, setFilterText] = React.useState<string>('');
-  const [filterExpanded, setFilterExpanded] = React.useState<boolean>(false);
-  const [isShowingOutput, setIsShowingOutput] = React.useState<boolean>(false);
+  const [runningState, setRunningState] = React.useState<{ testIds: Set<string>, itemSelectedByUser?: boolean }>();
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
@@ -101,9 +102,9 @@ export const WatchModeView: React.FC<{}> = ({
     const time = '  [' + new Date().toLocaleTimeString() + ']';
     xtermDataSource.write('\x1B[2m—'.repeat(Math.max(0, xtermSize.cols - time.length)) + time + '\x1B[22m');
     setProgress({ total: testIds.length, passed: 0, failed: 0, skipped: 0 });
-    setIsRunningTest(true);
+    setRunningState({ testIds: new Set(testIds) });
     sendMessage('run', { testIds }).then(() => {
-      setIsRunningTest(false);
+      setRunningState(undefined);
     });
   };
 
@@ -125,6 +126,7 @@ export const WatchModeView: React.FC<{}> = ({
     setFilterText(result.join(' '));
   };
 
+  const isRunningTest = !!runningState;
   const result = selectedTest?.results[0];
   const isFinished = result && result.duration >= 0;
   return <div className='vbox watch-mode'>
@@ -182,7 +184,7 @@ export const WatchModeView: React.FC<{}> = ({
           projects={projects}
           filterText={filterText}
           rootSuite={rootSuite}
-          isRunningTest={isRunningTest}
+          runningState={runningState}
           isWatchingFiles={isWatchingFiles}
           runTests={runTests}
           onTestSelected={setSelectedTest}
@@ -209,12 +211,12 @@ export const TestList: React.FC<{
   filterText: string,
   rootSuite: { value: Suite | undefined },
   runTests: (testIds: string[]) => void,
-  isRunningTest: boolean,
+  runningState?: { testIds: Set<string>, itemSelectedByUser?: boolean },
   isWatchingFiles: boolean,
   isVisible: boolean,
   setVisibleTestIds: (testIds: string[]) => void,
   onTestSelected: (test: TestCase | undefined) => void,
-}> = ({ projects, filterText, rootSuite, runTests, isRunningTest, isWatchingFiles, isVisible, onTestSelected, setVisibleTestIds }) => {
+}> = ({ projects, filterText, rootSuite, runTests, runningState, isWatchingFiles, isVisible, onTestSelected, setVisibleTestIds }) => {
   const [treeState, setTreeState] = React.useState<TreeState>({ expandedItems: new Map() });
   const [selectedTreeItemId, setSelectedTreeItemId] = React.useState<string | undefined>();
 
@@ -238,6 +240,28 @@ export const TestList: React.FC<{
     setVisibleTestIds([...visibleTestIds]);
     return { rootItem, treeItemMap };
   }, [filterText, rootSuite, projects, setVisibleTestIds]);
+
+  React.useEffect(() => {
+    // Look for a first failure within the run batch to select it.
+    if (!runningState || runningState.itemSelectedByUser)
+      return;
+    let selectedTreeItem: TreeItem | undefined;
+    const visit = (treeItem: TreeItem) => {
+      if (selectedTreeItem)
+        return;
+      treeItem.children.forEach(visit);
+      if (treeItem.status === 'failed') {
+        if (treeItem.kind === 'test' && runningState.testIds.has(treeItem.test.id))
+          selectedTreeItem = treeItem;
+        else if (treeItem.kind === 'case' && runningState.testIds.has(treeItem.tests[0]?.id))
+          selectedTreeItem = treeItem;
+      }
+    };
+    visit(rootItem);
+
+    if (selectedTreeItem)
+      setSelectedTreeItemId(selectedTreeItem.id);
+  }, [runningState, setSelectedTreeItemId, rootItem]);
 
   const { selectedTreeItem } = React.useMemo(() => {
     const selectedTreeItem = selectedTreeItemId ? treeItemMap.get(selectedTreeItemId) : undefined;
@@ -273,7 +297,7 @@ export const TestList: React.FC<{
     render={treeItem => {
       return <div className='hbox watch-mode-list-item'>
         <div className='watch-mode-list-item-title'>{treeItem.title}</div>
-        <ToolbarButton icon='play' title='Run' onClick={() => runTreeItem(treeItem)} disabled={isRunningTest}></ToolbarButton>
+        <ToolbarButton icon='play' title='Run' onClick={() => runTreeItem(treeItem)} disabled={!!runningState}></ToolbarButton>
         <ToolbarButton icon='go-to-file' title='Open in VS Code' onClick={() => sendMessageNoReply('open', { location: locationToOpen(treeItem) })}></ToolbarButton>
       </div>;
     }}
@@ -291,6 +315,8 @@ export const TestList: React.FC<{
     selectedItem={selectedTreeItem}
     onAccepted={runTreeItem}
     onSelected={treeItem => {
+      if (runningState)
+        runningState.itemSelectedByUser = true;
       setSelectedTreeItemId(treeItem.id);
     }}
     noItemsMessage='No tests' />;
@@ -509,6 +535,7 @@ type TreeItemBase = {
   id: string;
   title: string;
   location: Location,
+  parent: TreeItem | undefined;
   children: TreeItem[];
   status: 'none' | 'running' | 'passed' | 'failed' | 'skipped';
 };
@@ -538,6 +565,7 @@ function createTree(rootSuite: Suite | undefined, projects: Map<string, boolean>
     id: 'root',
     title: '',
     location: { file: '', line: 0, column: 0 },
+    parent: undefined,
     children: [],
     status: 'none',
   };
@@ -552,6 +580,7 @@ function createTree(rootSuite: Suite | undefined, projects: Map<string, boolean>
           id: parentGroup.id + '\x1e' + title,
           title,
           location: suite.location!,
+          parent: parentGroup,
           children: [],
           status: 'none',
         };
@@ -568,6 +597,7 @@ function createTree(rootSuite: Suite | undefined, projects: Map<string, boolean>
           kind: 'case',
           id: parentGroup.id + '\x1e' + title,
           title,
+          parent: parentGroup,
           children: [],
           tests: [],
           location: test.location,
@@ -593,6 +623,7 @@ function createTree(rootSuite: Suite | undefined, projects: Map<string, boolean>
         title: projectName,
         location: test.location!,
         test,
+        parent: testCaseItem,
         children: [],
         status,
         project: projectName
@@ -750,4 +781,18 @@ function stepsToModel(result: TestResult): MultiTraceModel {
   };
 
   return new MultiTraceModel([contextEntry]);
+}
+
+function useSetting<S>(name: string, defaultValue: S): [S, React.Dispatch<React.SetStateAction<S>>] {
+  const string = localStorage.getItem(name);
+  let value = defaultValue;
+  if (string !== null)
+    value = JSON.parse(string);
+
+  const [state, setState] = React.useState<S>(value);
+  const setStateWrapper = (value: React.SetStateAction<S>) => {
+    localStorage.setItem(name, JSON.stringify(value));
+    setState(value);
+  };
+  return [state, setStateWrapper];
 }
