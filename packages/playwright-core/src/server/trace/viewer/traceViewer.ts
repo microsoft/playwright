@@ -63,8 +63,6 @@ export async function showTraceViewer(traceUrls: string[], browserName: string, 
     '--window-size=1280,800',
     '--test-type=',
   ] : [];
-  if (isUnderTest())
-    args.push(`--remote-debugging-port=0`);
 
   const context = await traceViewerPlaywright[traceViewerBrowser as 'chromium'].launchPersistentContext(serverSideCallMetadata(), '', {
     // TODO: store language in the trace.
@@ -74,7 +72,7 @@ export async function showTraceViewer(traceUrls: string[], browserName: string, 
     ignoreDefaultArgs: ['--enable-automation'],
     headless,
     colorScheme: 'no-override',
-    useWebSocket: isUnderTest()
+    useWebSocket: isUnderTest(),
   });
 
   const controller = new ProgressController(serverSideCallMetadata(), context._browser);
@@ -83,6 +81,9 @@ export async function showTraceViewer(traceUrls: string[], browserName: string, 
   });
   await context.extendInjectedScript(consoleApiSource.source);
   const [page] = context.pages();
+
+  if (isUnderTest())
+    process.stderr.write('DevTools listening on: ' + context._browser.options.wsEndpoint + '\n');
 
   if (traceViewerBrowser === 'chromium')
     await installAppIcon(page);

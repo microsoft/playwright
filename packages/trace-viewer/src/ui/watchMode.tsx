@@ -303,6 +303,7 @@ export const TestList: React.FC<{
     treeState={treeState}
     setTreeState={setTreeState}
     rootItem={rootItem}
+    dataTestId='test-tree'
     render={treeItem => {
       return <div className='hbox watch-mode-list-item'>
         <div className='watch-mode-list-item-title'>{treeItem.title}</div>
@@ -653,9 +654,12 @@ function createTree(rootSuite: Suite | undefined, projects: Map<string, boolean>
     visitSuite(projectSuite.title, projectSuite, rootItem);
   }
 
-  const propagateStatus = (treeItem: TreeItem) => {
+  const sortAndPropagateStatus = (treeItem: TreeItem) => {
     for (const child of treeItem.children)
-      propagateStatus(child);
+      sortAndPropagateStatus(child);
+
+    if (treeItem.kind === 'group' && treeItem.parent)
+      treeItem.children.sort((a, b) => a.location.line - b.location.line);
 
     let allPassed = treeItem.children.length > 0;
     let allSkipped = treeItem.children.length > 0;
@@ -678,7 +682,7 @@ function createTree(rootSuite: Suite | undefined, projects: Map<string, boolean>
     else if (allPassed)
       treeItem.status = 'passed';
   };
-  propagateStatus(rootItem);
+  sortAndPropagateStatus(rootItem);
   return rootItem;
 }
 
