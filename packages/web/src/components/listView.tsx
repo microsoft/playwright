@@ -59,7 +59,7 @@ export function ListView<T>({
     onHighlighted?.(highlightedItem);
   }, [onHighlighted, highlightedItem]);
 
-  return <div className='list-view vbox' data-testid={dataTestId}>
+  return <div className='list-view vbox' role='list' data-testid={dataTestId}>
     <div
       className='list-view-content'
       tabIndex={0}
@@ -115,14 +115,15 @@ export function ListView<T>({
         const rendered = render(item);
         return <div
           key={id?.(item) || index}
+          role='listitem'
           className={'list-view-entry' + selectedSuffix + highlightedSuffix + errorSuffix}
           onClick={() => onSelected?.(item)}
           onMouseEnter={() => setHighlightedItem(item)}
           onMouseLeave={() => setHighlightedItem(undefined)}
         >
-          {indentation ? <div style={{ minWidth: indentation * 16 }}></div> : undefined}
+          {indentation ? new Array(indentation).fill(0).map(() => <div className='list-view-indent'></div>) : undefined}
           {icon && <div
-            className={'codicon ' + (icon(item) || 'blank')}
+            className={'codicon ' + (icon(item) || 'codicon-blank')}
             style={{ minWidth: 16, marginRight: 4 }}
             onDoubleClick={e => {
               e.preventDefault();

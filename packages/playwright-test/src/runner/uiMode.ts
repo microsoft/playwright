@@ -16,7 +16,7 @@
 
 import { showTraceViewer } from 'playwright-core/lib/server';
 import type { Page } from 'playwright-core/lib/server/page';
-import { ManualPromise } from 'playwright-core/lib/utils';
+import { isUnderTest, ManualPromise } from 'playwright-core/lib/utils';
 import type { FullResult } from '../../reporter';
 import { clearCompilationCache, dependenciesForTestFile } from '../common/compilationCache';
 import type { FullConfigInternal } from '../common/types';
@@ -53,15 +53,6 @@ class UIMode {
     config._internal.configCLIOverrides.use.trace = { mode: 'on', sources: false };
 
     this._originalStderr = process.stderr.write.bind(process.stderr);
-    process.stdout.write = (chunk: string | Buffer) => {
-      this._dispatchEvent({ method: 'stdio', params: chunkToPayload('stdout', chunk) });
-      return true;
-    };
-    process.stderr.write = (chunk: string | Buffer) => {
-      this._dispatchEvent({ method: 'stdio', params: chunkToPayload('stderr', chunk) });
-      return true;
-    };
-
     this._installGlobalWatcher();
   }
 
@@ -101,7 +92,15 @@ class UIMode {
   }
 
   async showUI() {
-    this._page = await showTraceViewer([], 'chromium', { app: 'watch.html' });
+    this._page = await showTraceViewer([], 'chromium', { app: 'watch.html', headless: isUnderTest() && process.env.PWTEST_HEADED_FOR_TEST !== '1' });
+    process.stdout.write = (chunk: string | Buffer) => {
+      this._dispatchEvent({ method: 'stdio', params: chunkToPayload('stdout', chunk) });
+      return true;
+    };
+    process.stderr.write = (chunk: string | Buffer) => {
+      this._dispatchEvent({ method: 'stdio', params: chunkToPayload('stderr', chunk) });
+      return true;
+    };
     const exitPromise = new ManualPromise();
     this._page.on('close', () => exitPromise.resolve());
     let queue = Promise.resolve();

@@ -56,6 +56,7 @@ export function TreeView<T extends TreeItem>({
   treeState,
   setTreeState,
   noItemsMessage,
+  dataTestId,
 }: TreeViewProps<T>) {
   const treeItems = React.useMemo(() => {
     for (let item: TreeItem | undefined = selectedItem?.parent; item; item = item.parent)
@@ -66,6 +67,7 @@ export function TreeView<T extends TreeItem>({
   return <TreeListView
     items={[...treeItems.keys()]}
     id={item => item.id}
+    dataTestId={dataTestId}
     render={item => {
       const rendered = render(item as T);
       return <>
