@@ -35,7 +35,6 @@ class UIMode {
   private _testRun: { run: Promise<FullResult['status']>, stop: ManualPromise<void> } | undefined;
   globalCleanup: (() => Promise<FullResult['status']>) | undefined;
   private _testWatcher: FSWatcher | undefined;
-  private _watchTestFile: string | undefined;
   private _originalStderr: (buffer: string | Uint8Array) => void;
 
   constructor(config: FullConfigInternal) {
@@ -113,7 +112,7 @@ class UIMode {
         return;
       }
       if (method === 'watch') {
-        this._watchFile(params.fileName);
+        this._watchFiles(params.fileNames);
         return;
       }
       if (method === 'open' && params.location) {
@@ -185,17 +184,19 @@ class UIMode {
     await run;
   }
 
-  private async _watchFile(fileName: string) {
-    if (this._watchTestFile === fileName)
-      return;
+  private async _watchFiles(fileNames: string[]) {
     if (this._testWatcher)
       await this._testWatcher.close();
-    this._watchTestFile = fileName;
-    if (!fileName)
+    if (!fileNames.length)
       return;
 
-    const files = [fileName, ...dependenciesForTestFile(fileName)];
-    this._testWatcher = chokidar.watch(files, { ignoreInitial: true }).on('all', async (event, file) => {
+    const files = new Set<string>();
+    for (const fileName of fileNames) {
+      files.add(fileName);
+      dependenciesForTestFile(fileName).forEach(file => files.add(file));
+    }
+
+    this._testWatcher = chokidar.watch([...files], { ignoreInitial: true }).on('all', async (event, file) => {
       if (event !== 'add' && event !== 'change')
         return;
       this._dispatchEvent({ method: 'fileChanged', params: { fileName: file } });
