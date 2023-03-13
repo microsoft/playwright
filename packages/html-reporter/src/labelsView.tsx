@@ -1,7 +1,3 @@
-import React from 'react';
-import { navigate } from './links';
-import type { TestCaseSummary } from './types';
-
 /**
  * Copyright (c) Microsoft Corporation.
  *
@@ -17,70 +13,81 @@ import type { TestCaseSummary } from './types';
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-export const Labels: React.FC<React.PropsWithChildren<{
-  testCase: TestCaseSummary,
-  style?: React.CSSProperties,
-}>> = ({ testCase, style }) => {
 
-  const labels = React.useMemo(() => {
-    return matchTags(testCase.title).sort((a, b) => a.localeCompare(b));
-  }, [testCase]);
+import React from 'react';
+import { navigate, Route } from './links';
 
-  if (!labels?.length)
+const testFilesRoutePredicate = (params: URLSearchParams) => !params.has('testId');
+const testCaseRoutePredicate = (params: URLSearchParams) => params.has('testId');
+
+export const LabelsView: React.FC<React.PropsWithChildren<{
+  labels: string[],
+}>> = ({ labels }) => {
+  if (!labels.length)
     return null;
 
-  return labels && <div className='labels' style={{ ...style }}>
-    {labels && labels.map(tag => {
-      return <Label key={tag} tag={tag} />;
-    })}
-  </div>;
+  const encodedTags = labels.map(tag => encodeTag(tag));
+
+  return (
+    <>
+      {encodedTags.map(tag => (
+        <React.Fragment key={tag}>
+          <Route predicate={testFilesRoutePredicate}>
+            <LabelClick key={tag} tag={tag} />
+          </Route>
+          <Route predicate={testCaseRoutePredicate}>
+            <LabelLink key={tag} tag={tag} />
+          </Route>
+        </React.Fragment>
+      ))}
+    </>);
 };
 
-export const Label: React.FC<React.PropsWithChildren<{
+export const LabelClick: React.FC<React.PropsWithChildren<{
   tag: string,
 }>> = ({ tag }) => {
-  const encoded = encodeURIComponent(tag);
-  const value = tag === encoded ? tag : `"${encoded.replace(/%22/g, '%5C%22')}"`;
 
   const onClickHandle = (e: React.MouseEvent, tag: string) => {
     e.preventDefault();
-
     const searchParams = new URLSearchParams(window.location.hash.slice(1));
-    const q = searchParams.get('q') || '';
-
-    if (searchParams.has('testId')){
-      searchParams.delete('testId');
-      searchParams.set('q', `${q} @${tag}`.trim());
-      navigate(`#?q=${searchParams.get('q')?.toString()}` || '');
-    }
+    let q = searchParams.get('q')?.toString() || '';
 
     // if metaKey or ctrlKey is pressed, add tag to search query without replacing existing tags
     // if metaKey or ctrlKey is pressed and tag is already in search query, remove tag from search query
     if (e.metaKey || e.ctrlKey) {
-      if (!q.includes('@')) {
-        searchParams.set('q', `${q} @${tag}`.trim());
-      } else if (!q.includes(`@${tag}`)) {
-        searchParams.set('q', `${q} @${tag}`.trim());
-      } else {
-        const re = new RegExp(`@${escapeRegExp(tag)}`, 'g');
-        searchParams.set('q', q.replace(re, '').trim());
-      }
-      navigate(`#?q=${searchParams.get('q')?.toString()}` || '');
-      return;
+      if (!q.includes(`@${tag}`))
+        q = `${q} @${tag}`.trim();
+      else
+        q = q.split(' ').filter(t => t !== `@${tag}`).join(' ').trim();
     // if metaKey or ctrlKey is not pressed, replace existing tags with new tag
     } else {
       if (!q.includes('@'))
-        searchParams.set('q', `${q} @${tag}`.trim());
+        q = `${q} @${tag}`.trim();
       else
-        searchParams.set('q', q.replace(new RegExp('@.+', 'g'), `@${tag}`).trim());
-      navigate(`#?q=${searchParams.get('q')?.toString()}` || '');
+        q = (q.split(' ').filter(t => !t.startsWith('@')).join(' ').trim() + ` @${tag}`).trim();
     }
+    navigate(q ? `#?q=${q}` : '#');
   };
 
-  return <span style={{ margin: '0 6px 0 0', cursor: 'pointer' }} className={'label label-color-' + (hashStringToInt(tag))} onClick={e => onClickHandle(e, value)}>
-    {value}
+  return <span style={{ margin: '6px 0 0 6px', cursor: 'pointer' }} className={'label label-color-' + (hashStringToInt(tag))} onClick={e => onClickHandle(e, tag)}>
+    {tag}
   </span>;
 };
+
+export const LabelLink: React.FC<React.PropsWithChildren<{
+  tag: string,
+}>> = ({ tag }) => {
+  return <a style={{ textDecoration: 'none', color: 'var(--color-fg-default)' }} href={`#?q=@${tag}`} >
+    <span style={{ margin: '6px 0 0 6px', cursor: 'pointer' }} className={'label label-color-' + (hashStringToInt(tag))}>
+      {tag}
+    </span>
+  </a>;
+};
+
+function encodeTag(tag: string) {
+  const encoded = encodeURIComponent(tag);
+  return tag === encoded ? tag : `"${encoded.replace(/%22/g, '%5C%22')}"`;
+}
 
 export function escapeRegExp(string: string) {
   const reRegExpChar = /[\\^$.*+?()[\]{}|]/g;

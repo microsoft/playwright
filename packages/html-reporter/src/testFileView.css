@@ -18,7 +18,7 @@
   line-height: 32px;
   align-items: center;
   padding: 2px 10px;
-  white-space: nowrap;
+  white-space: normal;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -66,4 +66,8 @@
 
 .test-file-test-outcome-skipped {
   color: var(--color-fg-muted);
+}
+
+.test-file-test-status-icon {
+  flex-shrink: 0;
 }

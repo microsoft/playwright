@@ -23,7 +23,7 @@ import { generateTraceUrl, Link, ProjectLink } from './links';
 import { statusIcon } from './statusIcon';
 import './testFileView.css';
 import { video, image, trace } from './icons';
-import { Labels } from './labels';
+import { LabelsView, matchTags } from './labelsView';
 
 export const TestFileView: React.FC<React.PropsWithChildren<{
   report: HTMLReport;
@@ -32,6 +32,8 @@ export const TestFileView: React.FC<React.PropsWithChildren<{
   setFileExpanded: (fileId: string, expanded: boolean) => void;
   filter: Filter;
 }>> = ({ file, report, isFileExpanded, setFileExpanded, filter }) => {
+  const labels = React.useCallback((test: TestCaseSummary) => matchTags(test?.title).sort((a, b) => a.localeCompare(b)), []);
+
   return <Chip
     expanded={isFileExpanded(file.fileId)}
     noInsets={true}
@@ -41,17 +43,21 @@ export const TestFileView: React.FC<React.PropsWithChildren<{
     </span>}>
     {file.tests.filter(t => filter.matches(t)).map(test =>
       <div key={`test-${test.testId}`} className={'test-file-test test-file-test-outcome-' + test.outcome}>
-        <div style={{ textOverflow: 'ellipsis', overflow: 'hidden' }}>
-          <span style={{ float: 'right', minWidth: '50px', textAlign: 'right' }}>{msToString(test.duration)}</span>
-          {report.projectNames.length > 1 && !!test.projectName &&
-              <span style={{ float: 'right' }}><ProjectLink projectNames={report.projectNames} projectName={test.projectName}></ProjectLink></span>}
-          {statusIcon(test.outcome)}
-          <Link href={`#?testId=${test.testId}`} title={[...test.path, test.title].join(' › ')}>
-            <span className='test-file-title'>{[...test.path, test.title].join(' › ')}</span>
-          </Link>
-        </div>
-        <div className='test-file-details-row'>
-          <Labels testCase={test} />
+        <div className='hbox' style={{ alignItems: 'flex-start' }}>
+          <div className="hbox">
+            <span className="test-file-test-status-icon">
+              {statusIcon(test.outcome)}
+            </span>
+            <span>
+              <Link href={`#?testId=${test.testId}`} title={[...test.path, test.title].join(' › ')}>
+                <span className='test-file-title'>{[...test.path, test.title].join(' › ')}</span>
+              </Link>
+              {report.projectNames.length > 1 && !!test.projectName &&
+              <ProjectLink projectNames={report.projectNames} projectName={test.projectName} />}
+              <LabelsView labels={labels(test)} />
+            </span>
+          </div>
+          <span style={{ minWidth: '50px', textAlign: 'right' }}>{msToString(test.duration)}</span>
         </div>
         <div className='test-file-details-row'>
           <Link href={`#?testId=${test.testId}`} title={[...test.path, test.title].join(' › ')} className='test-file-path-link'>

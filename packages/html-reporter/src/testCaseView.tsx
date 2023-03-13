@@ -23,7 +23,7 @@ import { ProjectLink } from './links';
 import { statusIcon } from './statusIcon';
 import './testCaseView.css';
 import { TestResultView } from './testResultView';
-import { Labels } from './labels';
+import { LabelsView, matchTags } from './labelsView';
 
 export const TestCaseView: React.FC<{
   projectNames: string[],
@@ -32,13 +32,20 @@ export const TestCaseView: React.FC<{
   run: number,
 }> = ({ projectNames, test, run, anchor }) => {
   const [selectedResultIndex, setSelectedResultIndex] = React.useState(run);
+  const labels = React.useMemo(() => {
+    if (!test)
+      return undefined;
+    return matchTags(test.title).sort((a, b) => a.localeCompare(b));
+  }, [test]);
 
   return <div className='test-case-column vbox'>
     {test && <div className='test-case-path'>{test.path.join(' › ')}</div>}
     {test && <div className='test-case-title'>{test?.title}</div>}
     {test && <div className='test-case-location'>{test.location.file}:{test.location.line}</div>}
-    {test && !!test.projectName && <><span style={{ margin: '2px 8px' }}>Project: <ProjectLink projectNames={projectNames} projectName={test.projectName}></ProjectLink></span></>}
-    {test && <Labels style={{ margin: '2px 8px' }} testCase={test} />}
+    {test && (!!test.projectName || labels) && <div className='test-case-project-labels-row'>
+      {!!test.projectName && <ProjectLink projectNames={projectNames} projectName={test.projectName}></ProjectLink>}
+      {labels && <LabelsView labels={labels} />}
+    </div>}
     {test && !!test.annotations.length && <AutoChip header='Annotations'>
       {test.annotations.map(annotation => <TestCaseAnnotationView annotation={annotation} />)}
     </AutoChip>}

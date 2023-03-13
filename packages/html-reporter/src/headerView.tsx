@@ -35,20 +35,10 @@ export const HeaderView: React.FC<React.PropsWithChildren<{
       const params = new URLSearchParams(window.location.hash.slice(1));
       setFilterText(params.get('q') || '');
     };
-    const inputFn = (e: any): void => {
-      e.preventDefault();
-      if (e.target.value)
-        navigate(`#?q=${e.target.value}`);
-      else
-        navigate('#');
-    };
-    const search = document.querySelector<HTMLInputElement>('input[type=search]');
     window.addEventListener('popstate', popstateFn);
-    search?.addEventListener('input', inputFn);
 
     return () => {
       window.removeEventListener('popstate', popstateFn);
-      search?.removeEventListener('input', inputFn);
     };
   });
 
