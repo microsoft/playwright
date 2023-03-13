@@ -62,7 +62,7 @@ class UIMode {
       projectDirs.add(p.testDir);
     let coalescingTimer: NodeJS.Timeout | undefined;
     const watcher = chokidar.watch([...projectDirs], { ignoreInitial: true, persistent: true }).on('all', async event => {
-      if (event !== 'add' && event !== 'change')
+      if (event !== 'add' && event !== 'change' && event !== 'unlink')
         return;
       if (coalescingTimer)
         clearTimeout(coalescingTimer);
