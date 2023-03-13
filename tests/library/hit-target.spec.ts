@@ -461,7 +461,6 @@ it('should click in custom element', async ({ page }) => {
       </body>
     </html>
   `);
-  page.on('console', console.log);
   await page.locator('input').click();
   expect(await page.evaluate('window.__clicked')).toBe(true);
 });
