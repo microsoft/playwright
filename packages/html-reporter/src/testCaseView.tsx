@@ -44,7 +44,7 @@ export const TestCaseView: React.FC<{
     {test && <div className='test-case-title'>{test?.title}</div>}
     {test && <div className='test-case-location'>{test.location.file}:{test.location.line}</div>}
     {test && !!test.projectName && <ProjectLink projectNames={projectNames} projectName={test.projectName}></ProjectLink>}
-    {annotations.size && <AutoChip header='Annotations'>
+    {annotations.size > 0 && <AutoChip header='Annotations'>
       {[...annotations].map(annotation => <TestCaseAnnotationView type={annotation[0]} descriptions={annotation[1]} />)}
     </AutoChip>}
     {test && <TabbedPane tabs={
