@@ -15,6 +15,7 @@
  */
 
 import { test, expect, dumpTestTree } from './ui-mode-fixtures';
+
 test.describe.configure({ mode: 'parallel' });
 
 const basicTestTree = {
@@ -32,18 +33,21 @@ const basicTestTree = {
     test('passes', () => {});
     test('fails', () => { expect(1).toBe(2); });
   `,
-  'c.test.ts': `
-    import { test, expect } from '@playwright/test';
-    test('passes', () => {});
-    test.skip('skipped', () => {});
-  `,
 };
 
-test('should run visible', async ({ runUITest }) => {
+test('should filter by title', async ({ runUITest }) => {
   const page = await runUITest(basicTestTree);
-  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toContain(`
+  await page.getByPlaceholder('Filter').fill('inner');
+  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toBe(`
     ▼ ◯ a.test.ts
+      ▼ ◯ suite
+          ◯ inner passes
+          ◯ inner fails
   `);
+});
+
+test('should filter by status', async ({ runUITest }) => {
+  const page = await runUITest(basicTestTree);
 
   await page.getByTitle('Run all').click();
 
@@ -55,50 +59,38 @@ test('should run visible', async ({ runUITest }) => {
     ▼ ❌ b.test.ts
         ✅ passes
         ❌ fails
-    ▼ ✅ c.test.ts
-        ✅ passes
-        ⊘ skipped
   `);
-});
 
-test('should run on double click', async ({ runUITest }) => {
-  const page = await runUITest({
-    'a.test.ts': `
-      import { test, expect } from '@playwright/test';
-      test('passes', () => {});
-      test('fails', () => { expect(1).toBe(2); });
-    `,
-  });
+  await expect(page.getByText('Status: all')).toBeVisible();
 
-  await page.getByText('passes').dblclick();
-
-  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toBe(`
-    ▼ ◯ a.test.ts
-        ✅ passes <=
-        ◯ fails
-  `);
-});
-
-test('should run on Enter', async ({ runUITest }) => {
-  const page = await runUITest({
-    'a.test.ts': `
-      import { test, expect } from '@playwright/test';
-      test('passes', () => {});
-      test('fails', () => { expect(1).toBe(2); });
-    `,
-  });
-
-  await page.getByText('fails').click();
-  await page.keyboard.press('Enter');
+  await page.getByText('Status:').click();
+  await page.getByLabel('failed').setChecked(true);
+  await expect(page.getByText('Status: failed')).toBeVisible();
 
   await expect.poll(dumpTestTree(page), { timeout: 15000 }).toBe(`
     ▼ ❌ a.test.ts
-        ◯ passes
         ❌ fails <=
+      ► ❌ suite
+    ▼ ❌ b.test.ts
+        ❌ fails
   `);
+
+  await page.getByLabel('passed').setChecked(true);
+  await expect(page.getByText('Status: passed failed')).toBeVisible();
+
+  await expect.poll(dumpTestTree(page), { timeout: 5000 }).toBe(`
+    ▼ ❌ a.test.ts
+        ✅ passes
+        ❌ fails <=
+      ► ❌ suite
+    ▼ ❌ b.test.ts
+        ✅ passes
+        ❌ fails
+  `);
+
 });
 
-test('should run by project', async ({ runUITest }) => {
+test('should filter by project', async ({ runUITest }) => {
   const page = await runUITest({
     ...basicTestTree,
     'playwright.config.ts': `
@@ -112,67 +104,47 @@ test('should run by project', async ({ runUITest }) => {
     `
   });
 
-  await page.getByTitle('Run all').click();
-
   await expect.poll(dumpTestTree(page), { timeout: 15000 }).toBe(`
-    ▼ ❌ a.test.ts
-        ✅ passes
-        ❌ fails <=
-      ► ❌ suite
-    ▼ ❌ b.test.ts
-        ✅ passes
-        ❌ fails
-    ▼ ✅ c.test.ts
-        ✅ passes
-        ⊘ skipped
+    ▼ ◯ a.test.ts
+        ◯ passes
+        ◯ fails
+      ► ◯ suite
+    ▼ ◯ b.test.ts
+        ◯ passes
+        ◯ fails
   `);
 
+  await expect(page.getByText('Projects: foo')).toBeVisible();
+
   await page.getByText('Status:').click();
+  await expect(page.getByLabel('foo')).toBeChecked();
+  await expect(page.getByLabel('bar')).not.toBeChecked();
   await page.getByLabel('bar').setChecked(true);
 
   await expect.poll(dumpTestTree(page), { timeout: 15000 }).toBe(`
-    ▼ ❌ a.test.ts
+    ▼ ◯ a.test.ts
       ► ◯ passes
-      ► ❌ fails <=
-      ► ❌ suite
-    ▼ ❌ b.test.ts
+      ► ◯ fails
+      ► ◯ suite
+    ▼ ◯ b.test.ts
       ► ◯ passes
-      ► ❌ fails
-    ▼ ◯ c.test.ts
-      ► ◯ passes
-      ► ◯ skipped
+      ► ◯ fails
   `);
 
-  await page.getByText('Status:').click();
-
-  await page.getByTestId('test-tree').getByText('passes').first().click();
+  await page.getByText('passes').first().click();
   await page.keyboard.press('ArrowRight');
 
-  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toContain(`
-    ▼ ❌ a.test.ts
+  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toBe(`
+    ▼ ◯ a.test.ts
       ▼ ◯ passes <=
-          ✅ foo
+          ◯ foo
           ◯ bar
-      ► ❌ fails
+      ► ◯ fails
+      ► ◯ suite
+    ▼ ◯ b.test.ts
+      ► ◯ passes
+      ► ◯ fails
   `);
 
   await expect(page.getByText('Projects: foo bar')).toBeVisible();
-
-  await page.getByTitle('Run all').click();
-  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toBe(`
-    ▼ ❌ a.test.ts
-      ▼ ✅ passes
-          ✅ foo
-          ✅ bar
-      ▼ ❌ fails
-          ❌ foo <=
-          ❌ bar
-      ► ❌ suite
-    ▼ ❌ b.test.ts
-      ► ✅ passes
-      ► ❌ fails
-    ▼ ✅ c.test.ts
-      ► ✅ passes
-      ► ⊘ skipped
-  `);
 });

@@ -14,6 +14,8 @@
   limitations under the License.
 */
 
+import React from 'react';
+
 export function msToString(ms: number): string {
   if (!isFinite(ms))
     return '-';
@@ -75,4 +77,18 @@ export function copy(text: string) {
   textArea.select();
   document.execCommand('copy');
   textArea.remove();
+}
+
+export function useSetting<S>(name: string, defaultValue: S): [S, React.Dispatch<React.SetStateAction<S>>] {
+  const string = localStorage.getItem(name);
+  let value = defaultValue;
+  if (string !== null)
+    value = JSON.parse(string);
+
+  const [state, setState] = React.useState<S>(value);
+  const setStateWrapper = (value: React.SetStateAction<S>) => {
+    localStorage.setItem(name, JSON.stringify(value));
+    setState(value);
+  };
+  return [state, setStateWrapper];
 }
