@@ -38,10 +38,16 @@ export function dumpTestTree(page: Page): () => Promise<string> {
         return ' ';
       if (icon === 'circle-outline')
         return '◯';
+      if (icon === 'circle-slash')
+        return '⊘';
       if (icon === 'check')
         return '✅';
       if (icon === 'error')
         return '❌';
+      if (icon === 'eye')
+        return '👁';
+      if (icon === 'loading')
+        return '↻';
       return icon;
     }
 
@@ -52,8 +58,9 @@ export function dumpTestTree(page: Page): () => Promise<string> {
       const treeIcon = iconName(iconElements[0]);
       const statusIcon = iconName(iconElements[1]);
       const indent = listItem.querySelectorAll('.list-view-indent').length;
+      const watch = listItem.querySelector('.toolbar-button.eye.toggled') ? ' 👁' : '';
       const selected = listItem.classList.contains('selected') ? ' <=' : '';
-      result.push('    ' + '  '.repeat(indent) + treeIcon + ' ' + statusIcon + ' ' + listItem.textContent + selected);
+      result.push('    ' + '  '.repeat(indent) + treeIcon + ' ' + statusIcon + ' ' + listItem.textContent + watch + selected);
     }
     return '\n' + result.join('\n') + '\n  ';
   });

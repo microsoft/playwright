@@ -87,7 +87,8 @@ export async function showTraceViewer(traceUrls: string[], browserName: string, 
 
   if (traceViewerBrowser === 'chromium')
     await installAppIcon(page);
-  await syncLocalStorageWithSettings(page, 'traceviewer');
+  if (!isUnderTest())
+    await syncLocalStorageWithSettings(page, 'traceviewer');
 
   const params = traceUrls.map(t => `trace=${t}`);
   if (isUnderTest()) {

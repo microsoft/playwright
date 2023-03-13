@@ -40,6 +40,7 @@ export type TreeViewProps<T> = {
   dataTestId?: string,
   treeState: TreeState,
   setTreeState: (treeState: TreeState) => void,
+  autoExpandDeep?: boolean,
 };
 
 const TreeListView = ListView<TreeItem>;
@@ -57,12 +58,13 @@ export function TreeView<T extends TreeItem>({
   setTreeState,
   noItemsMessage,
   dataTestId,
+  autoExpandDeep,
 }: TreeViewProps<T>) {
   const treeItems = React.useMemo(() => {
     for (let item: TreeItem | undefined = selectedItem?.parent; item; item = item.parent)
       treeState.expandedItems.set(item.id, true);
-    return flattenTree<T>(rootItem, treeState.expandedItems);
-  }, [rootItem, selectedItem, treeState]);
+    return flattenTree<T>(rootItem, treeState.expandedItems, autoExpandDeep);
+  }, [rootItem, selectedItem, treeState, autoExpandDeep]);
 
   return <TreeListView
     items={[...treeItems.keys()]}
@@ -126,12 +128,12 @@ type TreeItemData = {
   parent: TreeItem | null,
 };
 
-function flattenTree<T extends TreeItem>(rootItem: T, expandedItems: Map<string, boolean | undefined>): Map<T, TreeItemData> {
+function flattenTree<T extends TreeItem>(rootItem: T, expandedItems: Map<string, boolean | undefined>, autoExpandDeep?: boolean): Map<T, TreeItemData> {
   const result = new Map<T, TreeItemData>();
   const appendChildren = (parent: T, depth: number) => {
     for (const item of parent.children as T[]) {
       const expandState = expandedItems.get(item.id);
-      const autoExpandMatches = depth === 0 && result.size < 25 && expandState !== false;
+      const autoExpandMatches = (autoExpandDeep || depth === 0) && result.size < 25 && expandState !== false;
       const expanded = item.children.length ? expandState || autoExpandMatches : undefined;
       result.set(item, { depth, expanded, parent: rootItem === parent ? null : parent });
       if (expanded)

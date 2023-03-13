@@ -72,7 +72,7 @@
   margin-top: 5px;
 }
 
-.list-view-entry:not(.highlighted) .toolbar-button:not(.toggled) {
+.list-view-entry:not(.highlighted):not(.selected) .toolbar-button:not(.toggled) {
   display: none;
 }
 

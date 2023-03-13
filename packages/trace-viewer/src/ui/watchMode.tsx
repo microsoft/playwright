@@ -149,7 +149,7 @@ export const WatchModeView: React.FC<{}> = ({
       <div className='vbox watch-mode-sidebar'>
         <Toolbar>
           <div className='section-title' style={{ cursor: 'pointer' }} onClick={() => setSettingsVisible(false)}>Tests</div>
-          <ToolbarButton icon='play' title='Run' onClick={() => runTests(visibleTestIds)} disabled={isRunningTest}></ToolbarButton>
+          <ToolbarButton icon='play' title='Run all' onClick={() => runTests(visibleTestIds)} disabled={isRunningTest}></ToolbarButton>
           <ToolbarButton icon='debug-stop' title='Stop' onClick={() => sendMessageNoReply('stop')} disabled={!isRunningTest}></ToolbarButton>
           <ToolbarButton icon='refresh' title='Reload' onClick={() => refreshRootSuite(true)} disabled={isRunningTest}></ToolbarButton>
           <div className='spacer'></div>
@@ -202,7 +202,7 @@ export const WatchModeView: React.FC<{}> = ({
   </div>;
 };
 
-const TreeListView = TreeView<TreeItem>;
+const TestTreeView = TreeView<TreeItem>;
 
 export const TestList: React.FC<{
   projects: Map<string, boolean>,
@@ -299,7 +299,7 @@ export const TestList: React.FC<{
   if (!isVisible)
     return <></>;
 
-  return <TreeListView
+  return <TestTreeView
     treeState={treeState}
     setTreeState={setTreeState}
     rootItem={rootItem}
@@ -336,6 +336,7 @@ export const TestList: React.FC<{
         runningState.itemSelectedByUser = true;
       setSelectedTreeItemId(treeItem.id);
     }}
+    autoExpandDeep={!!filterText}
     noItemsMessage='No tests' />;
 };
 
