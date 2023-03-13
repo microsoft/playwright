@@ -714,6 +714,10 @@ export module Protocol {
        * Grouping list array (for rules involving @media/@supports). The array enumerates CSS groupings starting with the innermost one, going outwards.
        */
       groupings?: Grouping[];
+      /**
+       * <code>true</code> if this style is for a rule implicitly wrapping properties declared inside of CSSGrouping.
+       */
+      isImplicitlyNested?: boolean;
     }
     /**
      * Text range within a resource.
@@ -1541,6 +1545,10 @@ export module Protocol {
      */
     export type ChannelLevel = "off"|"basic"|"verbose";
     /**
+     * The reason the console is being cleared.
+     */
+    export type ClearReason = "console-api"|"main-frame-navigation";
+    /**
      * Logging channel.
      */
     export interface Channel {
@@ -1666,7 +1674,12 @@ export module Protocol {
     /**
      * Issued when console is cleared. This happens either upon <code>clearMessages</code> command or after page navigation.
      */
-    export type messagesClearedPayload = void;
+    export type messagesClearedPayload = {
+      /**
+       * The reason the console is being cleared.
+       */
+      reason: ClearReason;
+    }
     /**
      * Issued from console.takeHeapSnapshot.
      */
