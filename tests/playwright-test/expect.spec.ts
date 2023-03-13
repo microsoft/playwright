@@ -157,6 +157,7 @@ test('should work with generic matchers', async ({ runTSC }) => {
       expect({}).toEqual({});
       expect([1, 2]).toHaveLength(2);
       expect('abc').toMatch(/a.?c/);
+      expect('abc').toMatch('abc');
       expect({ a: 1, b: 2 }).toMatchObject({ a: 1 });
       expect({}).toStrictEqual({});
       expect(() => { throw new Error('Something bad'); }).toThrow('something');

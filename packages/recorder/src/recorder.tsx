@@ -16,7 +16,6 @@
 
 import type { CallLog, Mode, Source } from './recorderTypes';
 import { CodeMirrorWrapper } from '@web/components/codeMirrorWrapper';
-import { Source as SourceView } from '@web/components/source';
 import { SplitView } from '@web/components/splitView';
 import { Toolbar } from '@web/components/toolbar';
 import { ToolbarButton } from '@web/components/toolbarButton';
@@ -78,7 +77,7 @@ export const Recorder: React.FC<RecorderProps> = ({
       setFileId(value);
   };
 
-  const messagesEndRef = React.createRef<HTMLDivElement>();
+  const messagesEndRef = React.useRef<HTMLDivElement>(null);
   React.useLayoutEffect(() => {
     messagesEndRef.current?.scrollIntoView({ block: 'center', inline: 'nearest' });
   }, [messagesEndRef]);
@@ -134,7 +133,7 @@ export const Recorder: React.FC<RecorderProps> = ({
       <ToolbarButton icon='color-mode' title='Toggle color mode' toggled={false} onClick={() => toggleTheme()}></ToolbarButton>
     </Toolbar>
     <SplitView sidebarSize={200} sidebarHidden={mode === 'recording'}>
-      <SourceView text={source.text} language={source.language} highlight={source.highlight} revealLine={source.revealLine}></SourceView>
+      <CodeMirrorWrapper text={source.text} language={source.language} highlight={source.highlight} revealLine={source.revealLine} readOnly={true} lineNumbers={true}/>
       <div className='vbox'>
         <Toolbar>
           <ToolbarButton icon='microscope' title='Pick locator' toggled={mode === 'inspecting'} onClick={() => {
@@ -143,7 +142,7 @@ export const Recorder: React.FC<RecorderProps> = ({
           <CodeMirrorWrapper text={locator} language={source.language} readOnly={false} focusOnChange={true} wrapLines={true} onChange={text => {
             setLocator(text);
             window.dispatch({ event: 'selectorUpdated', params: { selector: text, language: source.language } });
-          }}></CodeMirrorWrapper>
+          }} />
           <ToolbarButton icon='files' title='Copy' onClick={() => {
             copy(locator);
           }}></ToolbarButton>

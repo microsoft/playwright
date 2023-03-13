@@ -72,7 +72,8 @@ body {
   min-height: 0;
 }
 
-*[hidden] {
+*[hidden],
+.hidden {
   display: none !important;
 }
 
@@ -97,13 +98,20 @@ svg {
   position: relative;
 }
 
+.spacer {
+  flex: auto;
+}
+
 .codicon-check {
   color: var(--green);
 }
 
-.codicon-close,
 .codicon-error {
   color: var(--red);
+}
+
+.codicon-circle-outline {
+  color: var(--vscode-disabledForeground);
 }
 
 input[type=text], input[type=search] {
@@ -111,4 +119,34 @@ input[type=text], input[type=search] {
   background-color: var(--vscode-input-background);
   border: none;
   outline: none;
+}
+
+body.dark-mode ::-webkit-scrollbar {
+  width: 10px;
+}
+
+body.dark-mode ::-webkit-scrollbar-thumb {
+  background-color: #555;
+}
+
+body.dark-mode ::-webkit-scrollbar-track {
+  background-color: #333;
+}
+
+body.dark-mode ::-webkit-scrollbar-thumb:hover {
+  background-color: #777;
+}
+
+body.dark-mode ::-webkit-scrollbar-track:hover {
+  background-color: #444;
+}
+
+.codicon-loading {
+  animation: spin 1s infinite linear;
+}
+
+@keyframes spin {
+  100% {
+    transform: rotate(360deg);
+  }
 }

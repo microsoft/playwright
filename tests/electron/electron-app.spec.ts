@@ -48,7 +48,8 @@ test('should script application', async ({ electronApp }) => {
   expect(appPath).toBe(path.resolve(__dirname));
 });
 
-test('should preserve args', async ({ launchElectronApp }) => {
+test('should preserve args', async ({ launchElectronApp, isMac }) => {
+  test.fixme(isMac, 'https://github.com/microsoft/playwright/issues/21512');
   const electronApp = await launchElectronApp('electron-app-args.js', ['foo', 'bar']);
   const argv = await electronApp.evaluate(async () => globalThis.argv);
   expect(argv).toEqual([expect.stringContaining(path.join('dist', 'electron')), expect.stringContaining(path.join('electron', 'electron-app-args.js')), 'foo', 'bar']);

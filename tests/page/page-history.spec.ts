@@ -192,6 +192,13 @@ it('page.reload should work on a page with a hash', async ({ page, server }) => 
   await expect(page).toHaveURL(server.EMPTY_PAGE + '#hash');
 });
 
+it('page.reload should work on a page with a hash at the end', async ({ page, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/21430' });
+  await page.goto(server.EMPTY_PAGE + '#');
+  await page.reload();
+  await expect(page).toHaveURL(server.EMPTY_PAGE + '#');
+});
+
 it('page.goBack during renderer-initiated navigation', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/one-style.html');
   await page.goto(server.EMPTY_PAGE);

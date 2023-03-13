@@ -18,7 +18,7 @@
   background-color: var(--vscode-sideBar-background);
 }
 
-.watch-mode-sidebar input {
+.watch-mode-sidebar input[type=search] {
   flex: auto;
 }
 
@@ -44,25 +44,67 @@
   margin: 0;
 }
 
-.watch-mode-sidebar .toolbar h3.title {
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  overflow: hidden;
+.watch-mode .section-title {
   font-size: 11px;
-  min-width: 3ch;
-  margin: 0 10px;
-  -webkit-margin-before: 0;
-  -webkit-margin-after: 0;
   text-transform: uppercase;
+  font-weight: bold;
+  margin: 5px;
 }
 
-.watch-mode-sidebar .spacer {
-  flex: auto;
-}
-
-.watch-mode-sidebar .status-line {
+.status-line {
   flex: none;
-  border-top: 1px solid var(--vscode-panel-border);
   line-height: 22px;
   padding: 0 10px;
+  color: var(--vscode-statusBar-foreground);
+  background-color: var(--vscode-statusBar-background);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.status-line > div {
+  display: flex;
+  align-items: center;
+  margin: 0 5px;
+}
+
+.list-view {
+  margin-top: 5px;
+}
+
+.list-view-entry:not(.highlighted) .toolbar-button:not(.toggled) {
+  display: none;
+}
+
+.filters {
+  flex: none;
+  margin-left: 5px;
+  line-height: 24px;
+}
+
+.filters > span {
+  color: var(--vscode-panelTitle-inactiveForeground);
+  padding-left: 3px;
+}
+
+.filters > div {
+  display: inline-block;
+  margin: 0 5px;
+  user-select: none;
+  cursor: pointer;
+}
+
+.filters > div:hover,
+.filters > div.filters-toggled {
+  color: var(--vscode-notificationLink-foreground);
+}
+
+.watch-mode-sidebar input[type=search] {
+  padding: 0 5px;
+  line-height: 24px;
+  outline: none;
+  margin: 0 4px;
+  border: none;
+  color: var(--vscode-input-foreground);
+  background-color: var(--vscode-input-background);
 }

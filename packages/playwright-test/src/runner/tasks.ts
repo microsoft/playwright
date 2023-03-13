@@ -91,9 +91,9 @@ function addRunTasks(taskRunner: TaskRunner<TaskRunnerState>, config: FullConfig
   return taskRunner;
 }
 
-export function createTaskRunnerForList(config: FullConfigInternal, reporter: Multiplexer): TaskRunner<TaskRunnerState> {
+export function createTaskRunnerForList(config: FullConfigInternal, reporter: Multiplexer, mode: 'in-process' | 'out-of-process'): TaskRunner<TaskRunnerState> {
   const taskRunner = new TaskRunner<TaskRunnerState>(reporter, config.globalTimeout);
-  taskRunner.addTask('load tests', createLoadTask('in-process', false));
+  taskRunner.addTask('load tests', createLoadTask(mode, false));
   taskRunner.addTask('report begin', async ({ reporter, rootSuite }) => {
     reporter.onBegin?.(config, rootSuite!);
     return () => reporter.onEnd();

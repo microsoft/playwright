@@ -281,11 +281,17 @@ class HtmlBuilder {
     if (this._hasTraces) {
       const traceViewerFolder = path.join(require.resolve('playwright-core'), '..', 'lib', 'webpack', 'traceViewer');
       const traceViewerTargetFolder = path.join(this._reportFolder, 'trace');
-      fs.mkdirSync(traceViewerTargetFolder, { recursive: true });
+      const traceViewerAssetsTargetFolder = path.join(traceViewerTargetFolder, 'assets');
+      fs.mkdirSync(traceViewerAssetsTargetFolder, { recursive: true });
       for (const file of fs.readdirSync(traceViewerFolder)) {
-        if (file.endsWith('.map'))
+        if (file.endsWith('.map') || file.includes('watch') || file.includes('assets'))
           continue;
         await copyFileAndMakeWritable(path.join(traceViewerFolder, file), path.join(traceViewerTargetFolder, file));
+      }
+      for (const file of fs.readdirSync(path.join(traceViewerFolder, 'assets'))) {
+        if (file.endsWith('.map') || file.includes('xtermModule'))
+          continue;
+        await copyFileAndMakeWritable(path.join(traceViewerFolder, 'assets', file), path.join(traceViewerAssetsTargetFolder, file));
       }
     }
 

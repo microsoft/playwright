@@ -26,7 +26,7 @@ import type { CallMetadata } from './instrumentation';
 import { SdkObject } from './instrumentation';
 import { Artifact } from './artifact';
 import type { Selectors } from './selectors';
-import type { Language } from './isomorphic/locatorGenerators';
+import type { Language } from '../utils/isomorphic/locatorGenerators';
 
 export interface BrowserProcess {
   onclose?: ((exitCode: number | null, signal: string | null) => void);

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { allEngineNames, InvalidSelectorError, type ParsedSelector, parseSelector, stringifySelector } from './isomorphic/selectorParser';
+import { allEngineNames, InvalidSelectorError, type ParsedSelector, parseSelector, stringifySelector } from '../utils/isomorphic/selectorParser';
 import { createGuid } from '../utils';
 
 export class Selectors {

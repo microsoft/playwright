@@ -14,35 +14,11 @@
   limitations under the License.
 */
 
-@import '../third_party/vscode/colors.css';
-
-.source {
-  display: flex;
-  flex: auto;
-  flex-direction: column;
-  white-space: pre;
-  overflow: auto;
-  user-select: text;
+.error-message {
   font-family: var(--vscode-editor-font-family);
   font-weight: var(--vscode-editor-font-weight);
-  line-height: 19px;
-  background: var(--vscode-editor-background);
-  color: var(--vscode-editor-foreground);
-}
-
-.source-line-running {
-  background-color: #b3dbff7f;
-  z-index: 2;
-}
-
-.source-line-paused {
-  background-color: #b3dbff7f;
-  outline: 1px solid #008aff;
-  z-index: 2;
-}
-
-.source-line-error {
-  background-color: #fff0f0;
-  outline: 1px solid #ff5656;
-  z-index: 2;
+  font-size: var(--vscode-editor-font-size);
+  background-color: var(--vscode-inputValidation-errorBackground);
+  white-space: pre;
+  overflow: auto;
 }

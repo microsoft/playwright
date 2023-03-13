@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Language } from '../../playwright-core/src/server/isomorphic/locatorGenerators';
+import type { Language } from '../../playwright-core/src/utils/isomorphic/locatorGenerators';
 import type { ResourceSnapshot } from '@trace/snapshot';
 import type * as trace from '@trace/trace';
 

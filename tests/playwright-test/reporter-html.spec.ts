@@ -37,6 +37,8 @@ const test = baseTest.extend<{ showReport: (reportFolder?: string) => Promise<vo
 
 test.use({ channel: 'chrome' });
 
+test.describe.configure({ mode: 'parallel' });
+
 test('should generate report', async ({ runInlineTest, showReport, page }) => {
   await runInlineTest({
     'playwright.config.ts': `
@@ -473,7 +475,6 @@ test('should warn user when viewing via file:// protocol', async ({ runInlineTes
   await test.step('view via server', async () => {
     await showReport();
     await page.locator('[title="View trace"]').click();
-    await expect(page.locator('body')).toContainText('Action does not have snapshots', { useInnerText: true });
     await expect(page.locator('dialog')).toBeHidden();
   });
 
@@ -565,6 +566,11 @@ test('should render annotations', async ({ runInlineTest, page, showReport }) =>
     'a.test.js': `
       import { test, expect } from '@playwright/test';
       test('skipped test', async ({ page }) => {
+        test.info().annotations.push({ type: 'issue', description: '#123'});
+        test.info().annotations.push({ type: 'issue', description: '#456'});
+        test.info().annotations.push({ type: 'issue', description: 'https://playwright.dev'});
+        test.info().annotations.push({ type: 'issue' });
+        test.info().annotations.push({ type: 'empty' });
         test.skip(true, 'I am not interested in this test');
       });
     `,
@@ -574,7 +580,11 @@ test('should render annotations', async ({ runInlineTest, page, showReport }) =>
 
   await showReport();
   await page.click('text=skipped test');
-  await expect(page.locator('.test-case-annotation')).toHaveText('skip: I am not interested in this test');
+  await expect(page.locator('.test-case-annotation')).toHaveText([
+    'issue: #123, #456, https://playwright.dev',
+    'empty',
+    'skip: I am not interested in this test',
+  ]);
 });
 
 test('should render annotations as link if needed', async ({ runInlineTest, page, showReport, server }) => {

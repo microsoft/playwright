@@ -295,6 +295,7 @@ test('should report api steps', async ({ runInlineTest }) => {
           page.goto('data:text/html,<button></button>'),
         ]);
         await page.click('button');
+        await page.getByRole('button').click();
         await page.request.get('http://localhost2').catch(() => {});
         await request.get('http://localhost2').catch(() => {});
       });
@@ -332,6 +333,8 @@ test('should report api steps', async ({ runInlineTest }) => {
     `end {\"title\":\"page.goto(data:text/html,<button></button>)\",\"category\":\"pw:api\"}`,
     `begin {\"title\":\"page.click(button)\",\"category\":\"pw:api\"}`,
     `end {\"title\":\"page.click(button)\",\"category\":\"pw:api\"}`,
+    `begin {\"title\":\"locator.getByRole('button').click\",\"category\":\"pw:api\"}`,
+    `end {\"title\":\"locator.getByRole('button').click\",\"category\":\"pw:api\"}`,
     `begin {"title":"apiRequestContext.get(http://localhost2)","category":"pw:api"}`,
     `end {"title":"apiRequestContext.get(http://localhost2)","category":"pw:api","error":{"message":"<message>","stack":"<stack>"}}`,
     `begin {"title":"apiRequestContext.get(http://localhost2)","category":"pw:api"}`,

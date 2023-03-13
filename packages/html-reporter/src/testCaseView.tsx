@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import type { TestCase, TestCaseAnnotation } from './types';
+import type { TestCase } from './types';
 import * as React from 'react';
 import { TabbedPane } from './tabbedPane';
 import { AutoChip } from './chip';
@@ -32,6 +32,13 @@ export const TestCaseView: React.FC<{
   run: number,
 }> = ({ projectNames, test, run, anchor }) => {
   const [selectedResultIndex, setSelectedResultIndex] = React.useState(run);
+
+  const annotations = new Map<string, (string | undefined)[]>();
+  test?.annotations.forEach(annotation => {
+    const list = annotations.get(annotation.type) || [];
+    list.push(annotation.description);
+    annotations.set(annotation.type, list);
+  });
   const labels = React.useMemo(() => {
     if (!test)
       return undefined;
@@ -46,8 +53,8 @@ export const TestCaseView: React.FC<{
       {!!test.projectName && <ProjectLink projectNames={projectNames} projectName={test.projectName}></ProjectLink>}
       {labels && <LabelsView labels={labels} />}
     </div>}
-    {test && !!test.annotations.length && <AutoChip header='Annotations'>
-      {test.annotations.map(annotation => <TestCaseAnnotationView annotation={annotation} />)}
+    {annotations.size && <AutoChip header='Annotations'>
+      {[...annotations].map(annotation => <TestCaseAnnotationView type={annotation[0]} descriptions={annotation[1]} />)}
     </AutoChip>}
     {test && <TabbedPane tabs={
       test.results.map((result, index) => ({
@@ -66,11 +73,17 @@ function renderAnnotationDescription(description: string) {
   return description;
 }
 
-function TestCaseAnnotationView({ annotation: { type, description } }: { annotation: TestCaseAnnotation }) {
+function TestCaseAnnotationView({ type, descriptions }: { type: string, descriptions: (string | undefined)[] }) {
+  const filteredDescriptions = descriptions.filter(Boolean) as string[];
   return (
     <div className='test-case-annotation'>
       <span style={{ fontWeight: 'bold' }}>{type}</span>
-      {description && <span>: {renderAnnotationDescription(description)}</span>}
+      {!!filteredDescriptions.length && <span>: {filteredDescriptions.map((d, i) => {
+        const rendered = renderAnnotationDescription(d);
+        if (i < filteredDescriptions.length - 1)
+          return <>{rendered}, </>;
+        return rendered;
+      })}</span>}
     </div>
   );
 }

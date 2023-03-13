@@ -223,6 +223,15 @@ it('should not hang on promises after disabling javascript', async ({ browserNam
   expect(await page.evaluate(async () => 2)).toBe(2);
 });
 
+it('setContent should work after disabling javascript', async ({ contextFactory, browserName, isLinux, headless }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/18235' });
+  it.fixme(browserName === 'webkit' && !headless, 'https://github.com/microsoft/playwright/issues/21574');
+  const context = await contextFactory({ javaScriptEnabled: false });
+  const page = await context.newPage();
+  await page.setContent('<h1>Hello</h1>');
+  await expect(page.locator('h1')).toHaveText('Hello');
+});
+
 it('should work with offline option', async ({ browser, server }) => {
   const context = await browser.newContext({ offline: true });
   const page = await context.newPage();

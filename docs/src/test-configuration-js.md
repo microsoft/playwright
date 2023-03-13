@@ -1,298 +1,246 @@
 ---
 id: test-configuration
-title: "Test Options with use"
+title: "Test configuration"
 ---
 
-In addition to configuring the test runner you can also configure [Emulation](#emulation-options), [Network](#network-options) and [Recording](#recording-options) for the [Browser] or [BrowserContext],. These options are passed to the `use: {}` object in the Playwright config.
+Playwright has many options to configure how your tests are run. You can specify these options in the configuration file. Note that test runner options are **top-level**, do not put them into the `use` section.
 
-### Basic Options
+## Basic Configuration
 
-Set the base URL and storage state for all tests:
+Here are some of the most common configuration options.
 
 ```js
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
+  // Look for test files in the "tests" directory, relative to this configuration file.
+  testDir: 'tests',
+
+  // Run all tests in parallel.
+  fullyParallel: true,
+
+  // Fail the build on CI if you accidentally left test.only in the source code.
+  forbidOnly: !!process.env.CI,
+
+  // Retry on CI only.
+  retries: process.env.CI ? 2 : 0,
+
+  // Opt out of parallel tests on CI.
+  workers: process.env.CI ? 1 : undefined,
+
+  // Reporter to use
+  reporter: 'html',
+
   use: {
     // Base URL to use in actions like `await page.goto('/')`.
-    baseURL: 'http://127.0.0.1:3000'
+    baseURL: 'http://127.0.0.1:3000',
 
-    // Populates context with given storage state.
-    storageState: 'state.json',
-  },
-});
-```
-
-
-| Option | Description |
-| :- | :- |
-| [`property: TestOptions.baseURL`] | Base URL used for all pages in the context. Allows navigating by using just the path, for example `page.goto('/settings')`. |
-| [`property: TestOptions.storageState`] | Populates context with given storage state. Useful for easy authentication, [learn more](./auth.md). |
-
-### Emulation Options
-
-With Playwright you can emulate a real device such as a mobile phone or tablet. See our [guide on projects](./test-projects.md) for more info on emulating devices. You can also emulate the `"geolocation"`, `"locale"` and `"timezone"` for all tests or for a specific test as well as set the `"permissions"` to show notifications or change the `"colorScheme"`. See our [Emulation](./emulation.md) guide to learn more.
-
-
-```js
-import { defineConfig } from '@playwright/test';
-
-export default defineConfig({
-  use: {
-    // Emulates `'prefers-colors-scheme'` media feature.
-    colorScheme: 'dark',
-
-    // Context geolocation.
-    geolocation: { longitude: 12.492507, latitude: 41.889938 },
-
-    // Emulates the user locale.
-    locale: 'en-GB',
-
-    // Grants specified permissions to the browser context.
-    permissions: 'geolocation',
-
-    // Emulates the user timezone.
-    timezoneId: 'Europe/Paris',
-
-    // Viewport used for all pages in the context.
-    viewport: { width: 1280, height: 720 },
-  },
-});
-```
-
-| Option | Description |
-| :- | :- |
-| [`property: TestOptions.colorScheme`] | [Emulates](./emulation.md#color-scheme-and-media) `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'` |
-| [`property: TestOptions.geolocation`] | Context [geolocation](./emulation.md#geolocation). |
-| [`property: TestOptions.locale`] | [Emulates](./emulation.md#locale--timezone) the user locale, for example `en-GB`, `de-DE`, etc. |
-| [`property: TestOptions.permissions`] | A list of [permissions](./emulation.md#permissions) to grant to all pages in the context. |
-| [`property: TestOptions.timezoneId`] | Changes the [timezone](./emulation.md#locale--timezone) of the context. |
-| [`property: TestOptions.viewport`] | [Viewport](./emulation.md#viewport) used for all pages in the context. |
-
-### Network Options
-
-Available options to configure networking:
-
-```js
-import { defineConfig } from '@playwright/test';
-
-export default defineConfig({
-  use: {
-    // Whether to automatically download all the attachments.
-    acceptDownloads: false,
-
-    // An object containing additional HTTP headers to be sent with every request.
-    extraHTTPHeaders: {
-      'X-My-Header': 'value',
-    },
-
-    // Credentials for HTTP authentication.
-    httpCredentials: {
-      username: 'user',
-      password: 'pass',
-    },
-
-    // Whether to ignore HTTPS errors during navigation.
-    ignoreHTTPSErrors: true,
-
-    // Whether to emulate network being offline.
-    offline: true,
-
-    // Proxy settings used for all pages in the test.
-    proxy: {
-      server: 'http://myproxy.com:3128',
-      bypass: 'localhost',
-    },
-  },
-});
-```
-  
-| Option | Description |
-| :- | :- |
-| [`property: TestOptions.acceptDownloads`] | Whether to automatically download all the attachments, defaults to `true`. [Learn more](./downloads.md) about working with downloads. |
-| [`property: TestOptions.extraHTTPHeaders`] | An object containing additional HTTP headers to be sent with every request. All header values must be strings. |
-| [`property: TestOptions.httpCredentials`] | Credentials for [HTTP authentication](./network.md#http-authentication). |
-| [`property: TestOptions.ignoreHTTPSErrors`] | Whether to ignore HTTPS errors during navigation. |
-| [`property: TestOptions.offline`] | Whether to emulate network being offline. |
-| [`property: TestOptions.proxy`] | [Proxy settings](./network.md#http-proxy) used for all pages in the test. |
-
-
-:::note
-You don't have to configure anything to mock network requests. Just define a custom [Route] that mocks the network for a browser context. See our [network mocking guide](./network.md) to learn more.
-:::
-
-### Recording Options
-
-With Playwright you can capture screenshots, record videos as well as traces of your test. By default these are turned off but you can enable them by setting the `screenshot`, `video` and `trace` options in your `playwright.config.js` file. 
-
-Trace files, screenshots and videos will appear in the test output directory, typically `test-results`.
-
-```js
-import { defineConfig } from '@playwright/test';
-
-export default defineConfig({
-  use: {
-    // Capture screenshot after each test failure. 
-    screenshot: 'only-on-failure'
-
-    // Record trace only when retrying a test for the first time.
+    // Collect trace when retrying the failed test.
     trace: 'on-first-retry',
-
-    // Record video only when retrying a test for the first time.
-    video: 'on-first-retry'
   },
-});
-```
-  
-| Option | Description |
-| :- | :- |
-| [`property: TestOptions.screenshot`] | Capture [screenshots](./screenshots.md) of your test. Options include `'off'`, `'on'` and `'only-on-failure'` |
-| [`property: TestOptions.trace`] | Playwright can produce test traces while running the tests. Later on, you can view the trace and get detailed information about Playwright execution by opening [Trace Viewer](./trace-viewer.md). Options include: `'off'`, `'on'`, `'retain-on-failure'` and `'on-first-retry'`  |
-| [`property: TestOptions.video`] | Playwright can record [videos](./videos.md) for your tests. Options include: `'off'`, `'on'`, `'retain-on-failure'` and `'on-first-retry'` |
-
-
-### Other Options
-
-```js
-import { defineConfig } from '@playwright/test';
-
-export default defineConfig({
-  use: {
-    // Maximum time each action such as `click()` can take. Defaults to 0 (no limit).
-    actionTimeout: 0,
-
-    // Name of the browser that runs tests. For example `chromium`, `firefox`, `webkit`.
-    browserName: 'chromium',
-
-    // Toggles bypassing Content-Security-Policy.
-    bypassCSP: true,
-
-    // Channel to use, for example "chrome", "chrome-beta", "msedge", "msedge-beta".
-    channel: 'chrome',
-
-    // Run browser in headless mode.
-    headless: false,
-
-    // Change the default data-testid attribute.
-    testIdAttribute: 'pw-test-id',
-  },
-});
-```
-
-| Option | Description |
-| :- | :- |
-| [`property: TestOptions.actionTimeout`] | Timeout for each Playwright action in milliseconds. Defaults to `0` (no timeout). Learn more about [timeouts](./test-timeouts.md) and how to set them for a single test. |
-| [`property: TestOptions.browserName`] | Name of the browser that runs tests. Defaults to 'chromium'. Options include `chromium`, `firefox`, or `webkit`. |
-| [`property: TestOptions.bypassCSP`] |Toggles bypassing Content-Security-Policy. Useful when CSP includes the production origin. Defaults to `false`. |
-| [`property: TestOptions.channel`] | Browser channel to use. [Learn more](./browsers.md) about different browsers and channels. |
-| [`property: TestOptions.headless`] | Whether to run the browser in headless mode meaning no browser is shown when running tests. Defaults to `true`. |
-| [`property: TestOptions.testIdAttribute`] | Changes the default [`data-testid` attribute](./locators.md#locate-by-test-id) used by Playwright locators. |
-
-### More browser and context options
-
-Any options accepted by [`method: BrowserType.launch`] or [`method: Browser.newContext`] can be put into `launchOptions` or `contextOptions` respectively in the `use` section.
-
-```js
-import { defineConfig } from '@playwright/test';
-
-export default defineConfig({
-  use: {
-    launchOptions: {
-      slowMo: 50,
-    },
-  },
-});
-```
-
-However, most common ones like `headless` or `viewport` are available directly in the `use` section - see [basic options](#basic-options), [emulation](./emulation.md) or [network](#network).
-
-### Explicit Context Creation and Option Inheritance
-
-If using the built-in `browser` fixture, calling [`method: Browser.newContext`] will create a context with options inherited from the config:
-
-```js
-import { defineConfig } from '@playwright/test';
-
-export default defineConfig({
-  use: {
-    userAgent: 'some custom ua',
-    viewport: { width: 100, height: 100 },
-  },
-});
-```
-
-An example test illustrating the initial context options are set:
-
-```js
-import { test, expect } from "@playwright/test";
-
-test('should inherit use options on context when using built-in browser fixture', async ({
-  browser,
-}) => {
-  const context = await browser.newContext();
-  const page = await context.newPage();
-  expect(await page.evaluate(() => navigator.userAgent)).toBe('some custom ua');
-  expect(await page.evaluate(() => window.innerWidth)).toBe(100);
-  await context.close();
-});
-```
-
-### Configuration Scopes
-
-You can configure Playwright globally, per project, or per test. For example, you can set the locale to be used globally by adding `locale` to the `use` option of the Playwright config, and then override it for a specific project using the `project` option in the config. You can also override it for a specific test by adding `test.use({})` in the test file and passing in the options.
-
-
-```js
-import { defineConfig } from '@playwright/test';
-
-export default defineConfig({
-  use: {
-    locale: 'en-GB'
-  },
-});
-```
-
-You can override options for a specific project using the `project` option in the Playwright config.
-
-```js
-import { defineConfig, devices } from '@playwright/test';
-
-export default defineConfig({
+  // Configure projects for major browsers.
   projects: [
     {
       name: 'chromium',
-      use: { 
-        ...devices['Desktop Chrome'], 
-        locale: 'de-DE' 
-      },
+      use: { ...devices['Desktop Chrome'] },
     },
   ],
+  // Run your local dev server before starting the tests.
+  webServer: {
+    command: 'npm run start',
+    url: 'http://127.0.0.1:3000',
+    reuseExistingServer: !process.env.CI,
+  },
 });
 ```
 
-You can override options for a specific test file by using the `test.use()` method and passing in the options. For example to run tests with the French locale for a specific test:
+| Option | Description |
+| :- | :- |
+| [`property: TestConfig.forbidOnly`] | Whether to exit with an error if any tests are marked as `test.only`. Useful on CI.|
+| [`property: TestConfig.fullyParallel`] | have all tests in all files to run in parallel. See [/Parallelism and sharding](./test-parallel) for more details. |
+| [`property: TestConfig.projects`] | Run tests in multiple configurations or on multiple browsers |
+| [`property: TestConfig.reporter`] | Reporter to use. See [Test Reporters](/test-reporters.md) to learn more about which reporters are available. |
+| [`property: TestConfig.retries`] | The maximum number of retry attempts per test. See [Test Retries](/test-retries.md) to learn more about retries.|
+| [`property: TestConfig.testDir`] | Directory with the test files. |
+| [`property: TestConfig.use`]  | Options with `use{}` |
+| [`property: TestConfig.webServer`] | To launch a server during the tests, use the `webServer` option |
+| [`property: TestConfig.workers`] | The maximum number of concurrent worker processes to use for parallelizing tests. Can also be set as percentage of logical CPU cores, e.g. `'50%'.`. See [/Parallelism and sharding](./test-parallel) for more details. |
+
+## Filtering Tests
+
+Filter tests by glob patterns or regular expressions.
 
 ```js
-import { test, expect } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-test.use({ locale: 'fr-FR' });
+export default defineConfig({
+  // Glob patterns or regular expressions to ignore test files. 
+  testIgnore: '*test-assets',
 
-test('example', async ({ page }) => {
-  // ...
+  // Glob patterns or regular expressions that match test files. 
+  testMatch: '*todo-tests/*.spec.ts',
 });
 ```
 
-The same works inside a describe block. For example to run tests in a describe block with the French locale:
+| Option | Description |
+| :- | :- |
+| [`property: TestConfig.testIgnore`] | Glob patterns or regular expressions that should be ignored when looking for the test files. For example, `'*test-assets'` |
+| [`property: TestConfig.testMatch`] | Glob patterns or regular expressions that match test files. For example, `'*todo-tests/*.spec.ts'`. By default, Playwright runs `.*(test|spec)\.(js|ts|mjs)` files. |
+
+## Advanced Configuration
 
 ```js
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  // Folder for test artifacts such as screenshots, videos, traces, etc.
+  outputDir: 'test-results',
+
+  // path to the global setup files.
+  globalSetup: require.resolve('./global-setup'),
+
+  // path to the global teardown files.
+  globalTeardown: require.resolve('./global-teardown'),
+
+  // Each test is given 30 seconds.
+  timeout: 30000,
+
+});
+```
+
+| Option | Description |
+| :- | :- |
+| [`property: TestConfig.globalSetup`] | Path to the global setup file. This file will be required and run before all the tests. It must export a single function. |
+| [`property: TestConfig.globalTeardown`] |Path to the global teardown file. This file will be required and run after all the tests. It must export a single function. |
+| [`property: TestConfig.outputDir`] | Folder for test artifacts such as screenshots, videos, traces, etc. |
+| [`property: TestConfig.timeout`] | Playwright enforces a [timeout](./test-timeouts.md) for each test, 30 seconds by default. Time spent by the test function, fixtures, beforeEach and afterEach hooks is included in the test timeout. |
+
+## Expect Options
+
+Configuration for the expect assertion library.
+
+```js
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  expect: {
+    // Maximum time expect() should wait for the condition to be met.
+    timeout: 5000,
+
+    toHaveScreenshot: {
+      // An acceptable amount of pixels that could be different, unset by default.
+      maxDiffPixels: 10,
+    },
+
+    toMatchSnapshot:  {
+      // An acceptable ratio of pixels that are different to the total amount of pixels, between 0 and 1.
+      maxDiffPixelRatio: 10,
+    },
+  },
+  
+});
+```
+
+| Option | Description |
+| :- | :- |
+| [`property: TestConfig.expect`] | [Web first assertions](./test-assertions.md) like `expect(locator).toHaveText()` have a separate timeout of 5 seconds by default. This is the maximum time the `expect()` should wait for the condition to be met. Learn more about [test and expect timeouts](./test-timeouts.md) and how to set them for a single test. |
+| [`method: PageAssertions.toHaveScreenshot#1`] | Configuration for the `expect(locator).toHaveScreeshot()` method. |
+| [`method: SnapshotAssertions.toMatchSnapshot#1`]| Configuration for the `expect(locator).toMatchSnapshot()` method.|
+
+
+### Add custom matchers using expect.extend
+
+You can extend Playwright assertions by providing custom matchers. These matchers will be available on the `expect` object.
+
+In this example we add a custom `toBeWithinRange` function in the configuration file. Custom matcher should return a `message` callback and a `pass` flag indicating whether the assertion passed.
+
+```js tab=js-js
+// playwright.config.js
+const { expect } = require('@playwright/test');
+
+expect.extend({
+  toBeWithinRange(received, floor, ceiling) {
+    const pass = received >= floor && received <= ceiling;
+    if (pass) {
+      return {
+        message: () => 'passed',
+        pass: true,
+      };
+    } else {
+      return {
+        message: () => 'failed',
+        pass: false,
+      };
+    }
+  },
+});
+
+module.exports = {};
+```
+
+```js tab=js-ts
+// playwright.config.ts
+import { expect, PlaywrightTestConfig } from '@playwright/test';
+
+expect.extend({
+  toBeWithinRange(received: number, floor: number, ceiling: number) {
+    const pass = received >= floor && received <= ceiling;
+    if (pass) {
+      return {
+        message: () => 'passed',
+        pass: true,
+      };
+    } else {
+      return {
+        message: () => 'failed',
+        pass: false,
+      };
+    }
+  },
+});
+
+import { defineConfig } from '@playwright/test';
+export default defineConfig({});
+```
+
+Now we can use `toBeWithinRange` in the test.
+```js tab=js-js
+// example.spec.js
+const { test, expect } = require('@playwright/test');
+
+test('numeric ranges', () => {
+  expect(100).toBeWithinRange(90, 110);
+  expect(101).not.toBeWithinRange(0, 100);
+});
+```
+
+```js tab=js-ts
+// example.spec.ts
 import { test, expect } from '@playwright/test';
 
-test.describe('french language block', () => {
-
-  test.use({ { locale: 'fr-FR' }});
-
-  test('example', async ({ page }) => {
-    // ...
-  });
+test('numeric ranges', () => {
+  expect(100).toBeWithinRange(90, 110);
+  expect(101).not.toBeWithinRange(0, 100);
 });
+```
+
+:::note
+Do not confuse Playwright's `expect` with the [`expect` library](https://jestjs.io/docs/expect). The latter is not fully integrated with Playwright test runner, so make sure to use Playwright's own `expect`.
+:::
+
+For TypeScript, also add the following to your [`global.d.ts`](https://www.typescriptlang.org/docs/handbook/declaration-files/templates/global-d-ts.html). If it does not exist, you need to create it inside your repository. Make sure that your `global.d.ts` gets included inside your `tsconfig.json` via the `include` or `compilerOptions.typeRoots` option so that your IDE will pick it up.
+
+You don't need it for JavaScript.
+
+```js
+// global.d.ts
+export {};
+
+declare global {
+ namespace PlaywrightTest {
+    interface Matchers<R, T> {
+      toBeWithinRange(a: number, b: number): R;
+    }
+  }
+}
 ```

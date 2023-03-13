@@ -36,10 +36,10 @@ import type { CallMetadata } from './instrumentation';
 import { serverSideCallMetadata, SdkObject } from './instrumentation';
 import type { InjectedScript, ElementStateWithoutStable, FrameExpectParams, InjectedScriptPoll, InjectedScriptProgress } from './injected/injectedScript';
 import { isSessionClosedError } from './protocolError';
-import { type ParsedSelector, isInvalidSelectorError } from './isomorphic/selectorParser';
+import { type ParsedSelector, isInvalidSelectorError } from '../utils/isomorphic/selectorParser';
 import type { ScreenshotOptions } from './screenshotter';
 import type { InputFilesItems } from './dom';
-import { asLocator } from './isomorphic/locatorGenerators';
+import { asLocator } from '../utils/isomorphic/locatorGenerators';
 import { FrameSelectors } from './frameSelectors';
 
 type ContextData = {

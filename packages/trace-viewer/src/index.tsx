@@ -19,16 +19,7 @@ import { applyTheme } from '@web/theme';
 import '@web/third_party/vscode/codicon.css';
 import React from 'react';
 import * as ReactDOM from 'react-dom';
-import { WatchModeView } from './ui/watchMode';
-import { WorkbenchLoader } from './ui/workbench';
-
-export const RootView: React.FC<{}> = ({
-}) => {
-  if (window.location.href.includes('watchMode=true'))
-    return <WatchModeView />;
-  else
-    return <WorkbenchLoader/>;
-};
+import { WorkbenchLoader } from './ui/workbenchLoader';
 
 (async () => {
   applyTheme();
@@ -46,5 +37,5 @@ export const RootView: React.FC<{}> = ({
     setInterval(function() { fetch('ping'); }, 10000);
   }
 
-  ReactDOM.render(<RootView></RootView>, document.querySelector('#root'));
+  ReactDOM.render(<WorkbenchLoader/>, document.querySelector('#root'));
 })();

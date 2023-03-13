@@ -40,7 +40,7 @@ export const HeaderView: React.FC<React.PropsWithChildren<{
     return () => {
       window.removeEventListener('popstate', popstateFn);
     };
-  });
+  }, [setFilterText]);
 
   return (<>
     <div className='pt-3'>

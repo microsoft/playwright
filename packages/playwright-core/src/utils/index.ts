@@ -29,6 +29,7 @@ export * from './mimeType';
 export * from './multimap';
 export * from './network';
 export * from './processLauncher';
+export * from './profiler';
 export * from './rtti';
 export * from './spawnAsync';
 export * from './stackTrace';

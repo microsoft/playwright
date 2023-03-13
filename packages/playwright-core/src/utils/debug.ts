@@ -35,7 +35,7 @@ export function debugMode() {
   return debugEnv ? 'inspector' : '';
 }
 
-let _isUnderTest = false;
+let _isUnderTest = !!process.env.PWTEST_UNDER_TEST;
 export function setUnderTest() {
   _isUnderTest = true;
 }

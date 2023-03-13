@@ -277,7 +277,8 @@ it.describe('page screenshot', () => {
     expect(screenshot).toMatchSnapshot('screenshot-canvas.png');
   });
 
-  it('should capture canvas changes', async ({ page, isElectron, browserName, isMac, isWebView2 }) => {
+  it('should capture canvas changes', async ({ page, isElectron, browserName, isMac, channel, browserMajorVersion, isWebView2 }) => {
+    it.fixme(browserName === 'firefox' && channel === 'firefox-beta' && browserMajorVersion === 110, 'https://github.com/microsoft/playwright/issues/20522');
     it.fixme(browserName === 'webkit' && isMac, 'https://github.com/microsoft/playwright/issues/8796,https://github.com/microsoft/playwright/issues/16180');
     it.skip(isElectron);
     it.skip(isWebView2);
@@ -309,7 +310,8 @@ it.describe('page screenshot', () => {
     }
   });
 
-  it('should work for webgl', async ({ page, server, browserName }) => {
+  it('should work for webgl', async ({ page, server, browserName, channel, browserMajorVersion }) => {
+    it.fixme(channel === 'msedge' && browserMajorVersion === 110, 'https://github.com/microsoft/playwright/issues/21549');
     it.fixme(browserName === 'firefox');
 
     await page.setViewportSize({ width: 640, height: 480 });

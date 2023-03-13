@@ -1,0 +1,12 @@
+[*]
+../theme.ts
+../third_party/vscode/codicon.css
+
+[expandable.spec.tsx]
+***
+
+[codeMirrorWrapper.spec.tsx]
+***
+
+[splitView.spec.tsx]
+***

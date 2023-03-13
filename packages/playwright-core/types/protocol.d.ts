@@ -223,7 +223,7 @@ This turns on accessibility for the page, which can impact performance until acc
        */
       objectId?: Runtime.RemoteObjectId;
       /**
-       * Whether to fetch this nodes ancestors, siblings and children. Defaults to true.
+       * Whether to fetch this node's ancestors, siblings and children. Defaults to true.
        */
       fetchRelatives?: boolean;
     }
@@ -841,7 +841,7 @@ instead of "limited-quirks".
       url: string;
       location?: SourceCodeLocation;
     }
-    export type GenericIssueErrorType = "CrossOriginPortalPostMessageError"|"FormLabelForNameError"|"FormDuplicateIdForInputError"|"FormInputWithNoLabelError"|"FormAutocompleteAttributeEmptyError"|"FormEmptyIdAndNameAttributesForInputError";
+    export type GenericIssueErrorType = "CrossOriginPortalPostMessageError"|"FormLabelForNameError"|"FormDuplicateIdForInputError"|"FormInputWithNoLabelError"|"FormAutocompleteAttributeEmptyError"|"FormEmptyIdAndNameAttributesForInputError"|"FormAriaLabelledByToNonExistingId"|"FormInputAssignedAutocompleteValueToIdOrNameAttributeError"|"FormLabelHasNeitherForNorNestedInput"|"FormLabelForMatchesNonExistingIdError"|"FormHasPasswordFieldWithoutUsernameFieldError";
     /**
      * Depending on the concrete errorType, different properties are set.
      */
@@ -853,7 +853,6 @@ instead of "limited-quirks".
       frameId?: Page.FrameId;
       violatingNodeId?: DOM.BackendNodeId;
     }
-    export type DeprecationIssueType = "AuthorizationCoveredByWildcard"|"CanRequestURLHTTPContainingNewline"|"ChromeLoadTimesConnectionInfo"|"ChromeLoadTimesFirstPaintAfterLoadTime"|"ChromeLoadTimesWasAlternateProtocolAvailable"|"CookieWithTruncatingChar"|"CrossOriginAccessBasedOnDocumentDomain"|"CrossOriginWindowAlert"|"CrossOriginWindowConfirm"|"CSSSelectorInternalMediaControlsOverlayCastButton"|"DeprecationExample"|"DocumentDomainSettingWithoutOriginAgentClusterHeader"|"EventPath"|"ExpectCTHeader"|"GeolocationInsecureOrigin"|"GeolocationInsecureOriginDeprecatedNotRemoved"|"GetUserMediaInsecureOrigin"|"HostCandidateAttributeGetter"|"IdentityInCanMakePaymentEvent"|"InsecurePrivateNetworkSubresourceRequest"|"LocalCSSFileExtensionRejected"|"MediaSourceAbortRemove"|"MediaSourceDurationTruncatingBuffered"|"NoSysexWebMIDIWithoutPermission"|"NotificationInsecureOrigin"|"NotificationPermissionRequestedIframe"|"ObsoleteCreateImageBitmapImageOrientationNone"|"ObsoleteWebRtcCipherSuite"|"OpenWebDatabaseInsecureContext"|"OverflowVisibleOnReplacedElement"|"PaymentInstruments"|"PaymentRequestCSPViolation"|"PersistentQuotaType"|"PictureSourceSrc"|"PrefixedCancelAnimationFrame"|"PrefixedRequestAnimationFrame"|"PrefixedStorageInfo"|"PrefixedVideoDisplayingFullscreen"|"PrefixedVideoEnterFullscreen"|"PrefixedVideoEnterFullScreen"|"PrefixedVideoExitFullscreen"|"PrefixedVideoExitFullScreen"|"PrefixedVideoSupportsFullscreen"|"PrivacySandboxExtensionsAPI"|"RangeExpand"|"RequestedSubresourceWithEmbeddedCredentials"|"RTCConstraintEnableDtlsSrtpFalse"|"RTCConstraintEnableDtlsSrtpTrue"|"RTCPeerConnectionComplexPlanBSdpUsingDefaultSdpSemantics"|"RTCPeerConnectionSdpSemanticsPlanB"|"RtcpMuxPolicyNegotiate"|"SharedArrayBufferConstructedWithoutIsolation"|"TextToSpeech_DisallowedByAutoplay"|"V8SharedArrayBufferConstructedInExtensionWithoutIsolation"|"XHRJSONEncodingDetection"|"XMLHttpRequestSynchronousInNonWorkerOutsideBeforeUnload"|"XRSupportsSession";
     /**
      * This issue tracks information needed to print a deprecation message.
 https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/frame/third_party/blink/renderer/core/frame/deprecation/README.md
@@ -861,7 +860,10 @@ https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/rende
     export interface DeprecationIssueDetails {
       affectedFrame?: AffectedFrame;
       sourceCodeLocation: SourceCodeLocation;
-      type: DeprecationIssueType;
+      /**
+       * One of the deprecation names from third_party/blink/renderer/core/frame/deprecation/deprecation.json5
+       */
+      type: string;
     }
     export type ClientHintIssueReason = "MetaTagAllowListInvalidOrigin"|"MetaTagModifiedHTML";
     export interface FederatedAuthRequestIssueDetails {
@@ -2192,7 +2194,7 @@ stylesheet rules) this rule came from.
     
     /**
      * Fires whenever a web font is updated.  A non-empty font parameter indicates a successfully loaded
-web font
+web font.
      */
     export type fontsUpdatedPayload = {
       /**
@@ -2471,7 +2473,7 @@ to the front-end, no updates will be issued for the node.
     }
     export type takeComputedStyleUpdatesReturnValue = {
       /**
-       * The list of node Ids that have their tracked computed styles updated
+       * The list of node Ids that have their tracked computed styles updated.
        */
       nodeIds: DOM.NodeId[];
     }
@@ -2607,7 +2609,7 @@ property
     }
     /**
      * Stop tracking rule usage and return the list of rules that were used since last call to
-`takeCoverageDelta` (or since start of coverage instrumentation)
+`takeCoverageDelta` (or since start of coverage instrumentation).
      */
     export type stopRuleUsageTrackingParameters = {
     }
@@ -2616,7 +2618,7 @@ property
     }
     /**
      * Obtain list of rules that became used since last call to this method (or since start of coverage
-instrumentation)
+instrumentation).
      */
     export type takeCoverageDeltaParameters = {
     }
@@ -3594,6 +3596,7 @@ might return multiple quads for inline nodes.
     }
     /**
      * Returns the root DOM node (and optionally the subtree) to the caller.
+Implicitly enables the DOM domain events for the current target.
      */
     export type getDocumentParameters = {
       /**
@@ -5479,9 +5482,10 @@ is turned-off.
      */
     export type setEmulatedVisionDeficiencyParameters = {
       /**
-       * Vision deficiency to emulate.
+       * Vision deficiency to emulate. Order: best-effort emulations come first, followed by any
+physiologically accurate emulations for medically recognized color vision deficiencies.
        */
-      type: "none"|"achromatopsia"|"blurredVision"|"deuteranopia"|"protanopia"|"tritanopia";
+      type: "none"|"blurredVision"|"reducedContrast"|"achromatopsia"|"deuteranopia"|"protanopia"|"tritanopia";
     }
     export type setEmulatedVisionDeficiencyReturnValue = {
     }
@@ -6118,7 +6122,7 @@ Security origin.
       hasMore: boolean;
     }
     /**
-     * Gets metadata of an object store
+     * Gets metadata of an object store.
      */
     export type getMetadataParameters = {
       /**
@@ -10842,6 +10846,10 @@ Example URLs: http://www.google.com/file.html -> "google.com"
       eager?: boolean;
     }
     /**
+     * Enum of possible auto-reponse for permisison / prompt dialogs.
+     */
+    export type AutoResponseMode = "none"|"autoAccept"|"autoReject"|"autoOptOut";
+    /**
      * The type of a frameNavigated event.
      */
     export type NavigationType = "Navigation"|"BackForwardCacheRestore";
@@ -10886,7 +10894,12 @@ dependent on the reason:
     /**
      * List of FinalStatus reasons for Prerender2.
      */
-    export type PrerenderFinalStatus = "Activated"|"Destroyed"|"LowEndDevice"|"InvalidSchemeRedirect"|"InvalidSchemeNavigation"|"InProgressNavigation"|"NavigationRequestBlockedByCsp"|"MainFrameNavigation"|"MojoBinderPolicy"|"RendererProcessCrashed"|"RendererProcessKilled"|"Download"|"TriggerDestroyed"|"NavigationNotCommitted"|"NavigationBadHttpStatus"|"ClientCertRequested"|"NavigationRequestNetworkError"|"MaxNumOfRunningPrerendersExceeded"|"CancelAllHostsForTesting"|"DidFailLoad"|"Stop"|"SslCertificateError"|"LoginAuthRequested"|"UaChangeRequiresReload"|"BlockedByClient"|"AudioOutputDeviceRequested"|"MixedContent"|"TriggerBackgrounded"|"EmbedderTriggeredAndCrossOriginRedirected"|"MemoryLimitExceeded"|"FailToGetMemoryUsage"|"DataSaverEnabled"|"HasEffectiveUrl"|"ActivatedBeforeStarted"|"InactivePageRestriction"|"StartFailed"|"TimeoutBackgrounded"|"CrossSiteRedirect"|"CrossSiteNavigation"|"SameSiteCrossOriginRedirect"|"SameSiteCrossOriginNavigation"|"SameSiteCrossOriginRedirectNotOptIn"|"SameSiteCrossOriginNavigationNotOptIn"|"ActivationNavigationParameterMismatch"|"ActivatedInBackground"|"EmbedderHostDisallowed"|"ActivationNavigationDestroyedBeforeSuccess"|"TabClosedByUserGesture"|"TabClosedWithoutUserGesture"|"PrimaryMainFrameRendererProcessCrashed"|"PrimaryMainFrameRendererProcessKilled"|"ActivationFramePolicyNotCompatible";
+    export type PrerenderFinalStatus = "Activated"|"Destroyed"|"LowEndDevice"|"InvalidSchemeRedirect"|"InvalidSchemeNavigation"|"InProgressNavigation"|"NavigationRequestBlockedByCsp"|"MainFrameNavigation"|"MojoBinderPolicy"|"RendererProcessCrashed"|"RendererProcessKilled"|"Download"|"TriggerDestroyed"|"NavigationNotCommitted"|"NavigationBadHttpStatus"|"ClientCertRequested"|"NavigationRequestNetworkError"|"MaxNumOfRunningPrerendersExceeded"|"CancelAllHostsForTesting"|"DidFailLoad"|"Stop"|"SslCertificateError"|"LoginAuthRequested"|"UaChangeRequiresReload"|"BlockedByClient"|"AudioOutputDeviceRequested"|"MixedContent"|"TriggerBackgrounded"|"EmbedderTriggeredAndCrossOriginRedirected"|"MemoryLimitExceeded"|"FailToGetMemoryUsage"|"DataSaverEnabled"|"HasEffectiveUrl"|"ActivatedBeforeStarted"|"InactivePageRestriction"|"StartFailed"|"TimeoutBackgrounded"|"CrossSiteRedirect"|"CrossSiteNavigation"|"SameSiteCrossOriginRedirect"|"SameSiteCrossOriginNavigation"|"SameSiteCrossOriginRedirectNotOptIn"|"SameSiteCrossOriginNavigationNotOptIn"|"ActivationNavigationParameterMismatch"|"ActivatedInBackground"|"EmbedderHostDisallowed"|"ActivationNavigationDestroyedBeforeSuccess"|"TabClosedByUserGesture"|"TabClosedWithoutUserGesture"|"PrimaryMainFrameRendererProcessCrashed"|"PrimaryMainFrameRendererProcessKilled"|"ActivationFramePolicyNotCompatible"|"PreloadingDisabled"|"BatterySaverEnabled"|"ActivatedDuringMainFrameNavigation"|"PreloadingUnsupportedByWebContents";
+    /**
+     * Preloading status values, see also PreloadingTriggeringOutcome. This
+status is shared by prefetchStatusUpdated and prerenderStatusUpdated.
+     */
+    export type PreloadingStatus = "Pending"|"Running"|"Ready"|"Success"|"Failure"|"NotSupported";
     
     export type domContentEventFiredPayload = {
       timestamp: Network.MonotonicTime;
@@ -11175,6 +11188,30 @@ that is incompatible with prerender and has caused the cancellation of the attem
        */
       disallowedApiMethod?: string;
     }
+    /**
+     * TODO(crbug/1384419): Create a dedicated domain for preloading.
+Fired when a prefetch attempt is updated.
+     */
+    export type prefetchStatusUpdatedPayload = {
+      /**
+       * The frame id of the frame initiating prefetch.
+       */
+      initiatingFrameId: FrameId;
+      prefetchUrl: string;
+      status: PreloadingStatus;
+    }
+    /**
+     * TODO(crbug/1384419): Create a dedicated domain for preloading.
+Fired when a prerender attempt is updated.
+     */
+    export type prerenderStatusUpdatedPayload = {
+      /**
+       * The frame id of the frame initiating prerender.
+       */
+      initiatingFrameId: FrameId;
+      prerenderingUrl: string;
+      status: PreloadingStatus;
+    }
     export type loadEventFiredPayload = {
       timestamp: Network.MonotonicTime;
     }
@@ -11440,6 +11477,9 @@ option, use with caution.
     export type getInstallabilityErrorsReturnValue = {
       installabilityErrors: InstallabilityError[];
     }
+    /**
+     * Deprecated because it's not guaranteed that the returned icon is in fact the one used for PWA installation.
+     */
     export type getManifestIconsParameters = {
     }
     export type getManifestIconsReturnValue = {
@@ -12140,9 +12180,18 @@ cross-process navigation.
 https://w3c.github.io/secure-payment-confirmation/#sctn-automation-set-spc-transaction-mode
      */
     export type setSPCTransactionModeParameters = {
-      mode: "none"|"autoAccept"|"autoReject"|"autoOptOut";
+      mode: AutoResponseMode;
     }
     export type setSPCTransactionModeReturnValue = {
+    }
+    /**
+     * Extensions for Custom Handlers API:
+https://html.spec.whatwg.org/multipage/system-state.html#rph-automation
+     */
+    export type setRPHRegistrationModeParameters = {
+      mode: AutoResponseMode;
+    }
+    export type setRPHRegistrationModeReturnValue = {
     }
     /**
      * Generates a report for testing.
@@ -15238,6 +15287,114 @@ list of player ids and all events again.
     }
   }
   
+  export module DeviceAccess {
+    /**
+     * Device request id.
+     */
+    export type RequestId = string;
+    /**
+     * A device id.
+     */
+    export type DeviceId = string;
+    /**
+     * Device information displayed in a user prompt to select a device.
+     */
+    export interface PromptDevice {
+      id: DeviceId;
+      /**
+       * Display name as it appears in a device request user prompt.
+       */
+      name: string;
+    }
+    
+    /**
+     * A device request opened a user prompt to select a device. Respond with the
+selectPrompt or cancelPrompt command.
+     */
+    export type deviceRequestPromptedPayload = {
+      id: RequestId;
+      devices: PromptDevice[];
+    }
+    
+    /**
+     * Enable events in this domain.
+     */
+    export type enableParameters = {
+    }
+    export type enableReturnValue = {
+    }
+    /**
+     * Disable events in this domain.
+     */
+    export type disableParameters = {
+    }
+    export type disableReturnValue = {
+    }
+    /**
+     * Select a device in response to a DeviceAccess.deviceRequestPrompted event.
+     */
+    export type selectPromptParameters = {
+      id: RequestId;
+      deviceId: DeviceId;
+    }
+    export type selectPromptReturnValue = {
+    }
+    /**
+     * Cancel a prompt in response to a DeviceAccess.deviceRequestPrompted event.
+     */
+    export type cancelPromptParameters = {
+      id: RequestId;
+    }
+    export type cancelPromptReturnValue = {
+    }
+  }
+  
+  export module Preload {
+    /**
+     * Unique id
+     */
+    export type RuleSetId = string;
+    /**
+     * Corresponds to SpeculationRuleSet
+     */
+    export interface RuleSet {
+      id: RuleSetId;
+      /**
+       * Identifies a document which the rule set is associated with.
+       */
+      loaderId: Network.LoaderId;
+      /**
+       * Source text of JSON representing the rule set. If it comes from
+<script> tag, it is the textContent of the node. Note that it is
+a JSON for valid case.
+
+See also:
+- https://wicg.github.io/nav-speculation/speculation-rules.html
+- https://github.com/WICG/nav-speculation/blob/main/triggers.md
+       */
+      sourceText: string;
+    }
+    
+    /**
+     * Upsert. Currently, it is only emitted when a rule set added.
+     */
+    export type ruleSetUpdatedPayload = {
+      ruleSet: RuleSet;
+    }
+    export type ruleSetRemovedPayload = {
+      id: RuleSetId;
+    }
+    
+    export type enableParameters = {
+    }
+    export type enableReturnValue = {
+    }
+    export type disableParameters = {
+    }
+    export type disableReturnValue = {
+    }
+  }
+  
   /**
    * This domain is deprecated - use Runtime or Log instead.
    */
@@ -16217,7 +16374,7 @@ as long as the top-most stack frame is the only activation of that function.
 successful live edit while the other enum variants denote why
 the live edit failed.
        */
-      status: "Ok"|"CompileError"|"BlockedByActiveGenerator"|"BlockedByActiveFunction";
+      status: "Ok"|"CompileError"|"BlockedByActiveGenerator"|"BlockedByActiveFunction"|"BlockedByTopLevelEsModuleChange";
       /**
        * Exception details if any. Only present when `status` is `CompileError`.
        */
@@ -17949,6 +18106,8 @@ Error was thrown.
     "Page.lifecycleEvent": Page.lifecycleEventPayload;
     "Page.backForwardCacheNotUsed": Page.backForwardCacheNotUsedPayload;
     "Page.prerenderAttemptCompleted": Page.prerenderAttemptCompletedPayload;
+    "Page.prefetchStatusUpdated": Page.prefetchStatusUpdatedPayload;
+    "Page.prerenderStatusUpdated": Page.prerenderStatusUpdatedPayload;
     "Page.loadEventFired": Page.loadEventFiredPayload;
     "Page.navigatedWithinDocument": Page.navigatedWithinDocumentPayload;
     "Page.screencastFrame": Page.screencastFramePayload;
@@ -18002,6 +18161,9 @@ Error was thrown.
     "Media.playerMessagesLogged": Media.playerMessagesLoggedPayload;
     "Media.playerErrorsRaised": Media.playerErrorsRaisedPayload;
     "Media.playersCreated": Media.playersCreatedPayload;
+    "DeviceAccess.deviceRequestPrompted": DeviceAccess.deviceRequestPromptedPayload;
+    "Preload.ruleSetUpdated": Preload.ruleSetUpdatedPayload;
+    "Preload.ruleSetRemoved": Preload.ruleSetRemovedPayload;
     "Console.messageAdded": Console.messageAddedPayload;
     "Debugger.breakpointResolved": Debugger.breakpointResolvedPayload;
     "Debugger.paused": Debugger.pausedPayload;
@@ -18385,6 +18547,7 @@ Error was thrown.
     "Page.addCompilationCache": Page.addCompilationCacheParameters;
     "Page.clearCompilationCache": Page.clearCompilationCacheParameters;
     "Page.setSPCTransactionMode": Page.setSPCTransactionModeParameters;
+    "Page.setRPHRegistrationMode": Page.setRPHRegistrationModeParameters;
     "Page.generateTestReport": Page.generateTestReportParameters;
     "Page.waitForDebugger": Page.waitForDebuggerParameters;
     "Page.setInterceptFileChooserDialog": Page.setInterceptFileChooserDialogParameters;
@@ -18491,6 +18654,12 @@ Error was thrown.
     "WebAuthn.setAutomaticPresenceSimulation": WebAuthn.setAutomaticPresenceSimulationParameters;
     "Media.enable": Media.enableParameters;
     "Media.disable": Media.disableParameters;
+    "DeviceAccess.enable": DeviceAccess.enableParameters;
+    "DeviceAccess.disable": DeviceAccess.disableParameters;
+    "DeviceAccess.selectPrompt": DeviceAccess.selectPromptParameters;
+    "DeviceAccess.cancelPrompt": DeviceAccess.cancelPromptParameters;
+    "Preload.enable": Preload.enableParameters;
+    "Preload.disable": Preload.disableParameters;
     "Console.clearMessages": Console.clearMessagesParameters;
     "Console.disable": Console.disableParameters;
     "Console.enable": Console.enableParameters;
@@ -18932,6 +19101,7 @@ Error was thrown.
     "Page.addCompilationCache": Page.addCompilationCacheReturnValue;
     "Page.clearCompilationCache": Page.clearCompilationCacheReturnValue;
     "Page.setSPCTransactionMode": Page.setSPCTransactionModeReturnValue;
+    "Page.setRPHRegistrationMode": Page.setRPHRegistrationModeReturnValue;
     "Page.generateTestReport": Page.generateTestReportReturnValue;
     "Page.waitForDebugger": Page.waitForDebuggerReturnValue;
     "Page.setInterceptFileChooserDialog": Page.setInterceptFileChooserDialogReturnValue;
@@ -19038,6 +19208,12 @@ Error was thrown.
     "WebAuthn.setAutomaticPresenceSimulation": WebAuthn.setAutomaticPresenceSimulationReturnValue;
     "Media.enable": Media.enableReturnValue;
     "Media.disable": Media.disableReturnValue;
+    "DeviceAccess.enable": DeviceAccess.enableReturnValue;
+    "DeviceAccess.disable": DeviceAccess.disableReturnValue;
+    "DeviceAccess.selectPrompt": DeviceAccess.selectPromptReturnValue;
+    "DeviceAccess.cancelPrompt": DeviceAccess.cancelPromptReturnValue;
+    "Preload.enable": Preload.enableReturnValue;
+    "Preload.disable": Preload.disableReturnValue;
     "Console.clearMessages": Console.clearMessagesReturnValue;
     "Console.disable": Console.disableReturnValue;
     "Console.enable": Console.enableReturnValue;

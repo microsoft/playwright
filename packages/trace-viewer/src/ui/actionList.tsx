@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import type { ActionTraceEvent } from '@trace/trace';
+import { ActionTraceEvent } from '@trace/trace';
 import { msToString } from '@web/uiUtils';
 import { ListView } from '@web/components/listView';
 import * as React from 'react';
@@ -29,8 +29,10 @@ export interface ActionListProps {
   sdkLanguage: Language | undefined;
   onSelected: (action: ActionTraceEvent) => void,
   onHighlighted: (action: ActionTraceEvent | undefined) => void,
-  setSelectedTab: (tab: string) => void,
+  revealConsole: () => void,
 }
+
+const ActionListView = ListView<ActionTraceEvent>;
 
 export const ActionList: React.FC<ActionListProps> = ({
   actions = [],
@@ -38,24 +40,24 @@ export const ActionList: React.FC<ActionListProps> = ({
   sdkLanguage,
   onSelected = () => {},
   onHighlighted = () => {},
-  setSelectedTab = () => {},
+  revealConsole = () => {},
 }) => {
-  return <ListView
+  return <ActionListView
     items={actions}
+    id={action => action.callId}
     selectedItem={selectedAction}
-    onSelected={(action: ActionTraceEvent) => onSelected(action)}
-    onHighlighted={(action: ActionTraceEvent) => onHighlighted(action)}
-    itemKey={(action: ActionTraceEvent) => action.callId}
-    itemType={(action: ActionTraceEvent) => action.error?.message ? 'error' : undefined}
-    itemRender={(action: ActionTraceEvent) => renderAction(action, sdkLanguage, setSelectedTab)}
-    showNoItemsMessage={true}
-  ></ListView>;
+    onSelected={onSelected}
+    onHighlighted={onHighlighted}
+    isError={action => !!action.error?.message}
+    render={action => renderAction(action, sdkLanguage, revealConsole)}
+    noItemsMessage='No actions'
+  />;
 };
 
 const renderAction = (
   action: ActionTraceEvent,
   sdkLanguage: Language | undefined,
-  setSelectedTab: (tab: string) => void
+  revealConsole: () => void
 ) => {
   const { errors, warnings } = modelUtil.stats(action);
   const locator = action.params.selector ? asLocator(sdkLanguage || 'javascript', action.params.selector) : undefined;
@@ -67,7 +69,7 @@ const renderAction = (
       {action.method === 'goto' && action.params.url && <div className='action-url' title={action.params.url}>{action.params.url}</div>}
     </div>
     <div className='action-duration' style={{ flex: 'none' }}>{action.endTime ? msToString(action.endTime - action.startTime) : 'Timed Out'}</div>
-    <div className='action-icons' onClick={() => setSelectedTab('console')}>
+    <div className='action-icons' onClick={() => revealConsole()}>
       {!!errors && <div className='action-icon'><span className={'codicon codicon-error'}></span><span className="action-icon-value">{errors}</span></div>}
       {!!warnings && <div className='action-icon'><span className={'codicon codicon-warning'}></span><span className="action-icon-value">{warnings}</span></div>}
     </div>

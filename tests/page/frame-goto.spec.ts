@@ -31,9 +31,9 @@ it('should navigate subframes @smoke', async ({ page, server }) => {
 it('should reject when frame detaches', async ({ page, server, browserName }) => {
   await page.goto(server.PREFIX + '/frames/one-frame.html');
 
-  server.setRoute('/empty.html', () => {});
-  const navigationPromise = page.frames()[1].goto(server.EMPTY_PAGE).catch(e => e);
-  await server.waitForRequest('/empty.html');
+  server.setRoute('/one-style.css', () => {});
+  const navigationPromise = page.frames()[1].goto(server.PREFIX + '/one-style.html').catch(e => e);
+  await server.waitForRequest('/one-style.css');
 
   await page.$eval('iframe', frame => frame.remove());
   const error = await navigationPromise;

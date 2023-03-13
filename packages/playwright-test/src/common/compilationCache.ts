@@ -19,7 +19,6 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { sourceMapSupport } from '../utilsBundle';
-import { isWorkerProcess } from './globals';
 
 export type MemoryCache = {
   codePath: string;
@@ -66,9 +65,6 @@ export function getFromCompilationCache(filename: string, code: string, moduleUr
   const cache = memoryCache.get(filename);
   if (cache?.codePath)
     return { cachedCode: fs.readFileSync(cache.codePath, 'utf-8') };
-
-  if (isWorkerProcess())
-    throw new Error('Internal error: unexpected file imported in the worker: ' + filename);
 
   // Then do the disk cache, this cache works between the Playwright Test runs.
   const isModule = !!moduleUrl;

@@ -24,6 +24,7 @@ import { assert } from '../utils';
 import type { LaunchOptions } from '../server/types';
 import { AndroidDevice } from '../server/android/android';
 import { DebugControllerDispatcher } from '../server/dispatchers/debugControllerDispatcher';
+import { startProfiling, stopProfiling } from '../utils';
 
 export type ClientType = 'controller' | 'playwright' | 'launch-browser' | 'reuse-browser' | 'pre-launched-browser-or-android';
 
@@ -50,6 +51,7 @@ export class PlaywrightConnection {
   private _preLaunched: PreLaunched;
   private _options: Options;
   private _root: DispatcherScope;
+  private _profileName: string;
 
   constructor(lock: Promise<void>, clientType: ClientType, ws: WebSocket, options: Options, preLaunched: PreLaunched, log: (m: string) => void, onClose: () => void) {
     this._ws = ws;
@@ -61,6 +63,7 @@ export class PlaywrightConnection {
       assert(preLaunched.browser || preLaunched.androidDevice);
     this._onClose = onClose;
     this._debugLog = log;
+    this._profileName = `${new Date().toISOString()}-${clientType}`;
 
     this._dispatcherConnection = new DispatcherConnection();
     this._dispatcherConnection.onmessage = async message => {
@@ -82,6 +85,7 @@ export class PlaywrightConnection {
     }
 
     this._root = new RootDispatcher(this._dispatcherConnection, async scope => {
+      await startProfiling();
       if (clientType === 'reuse-browser')
         return await this._initReuseBrowsersMode(scope);
       if (clientType === 'pre-launched-browser-or-android')
@@ -237,6 +241,7 @@ export class PlaywrightConnection {
     this._debugLog(`starting cleanup`);
     for (const cleanup of this._cleanups)
       await cleanup().catch(() => {});
+    await stopProfiling(this._profileName);
     this._onClose();
     this._debugLog(`finished cleanup`);
   }

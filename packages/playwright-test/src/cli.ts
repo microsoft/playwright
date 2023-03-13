@@ -20,7 +20,7 @@ import type { Command } from 'playwright-core/lib/utilsBundle';
 import fs from 'fs';
 import path from 'path';
 import { Runner } from './runner/runner';
-import { stopProfiling, startProfiling } from './common/profiler';
+import { stopProfiling, startProfiling } from 'playwright-core/lib/utils';
 import { experimentalLoaderOption, fileIsModule } from './util';
 import { showHTMLReport } from './reporters/html';
 import { baseFullConfig, builtInReporters, ConfigLoader, defaultTimeout, kDefaultConfigFiles, resolveConfigFile } from './common/configLoader';
@@ -30,6 +30,7 @@ import type { FullResult } from '../reporter';
 
 export function addTestCommands(program: Command) {
   addTestCommand(program);
+  addUICommand(program);
   addShowReportCommand(program);
   addListFilesCommand(program);
 }
@@ -37,32 +38,8 @@ export function addTestCommands(program: Command) {
 function addTestCommand(program: Command) {
   const command = program.command('test [test-filter...]');
   command.description('run tests with Playwright Test');
-  command.option('--browser <browser>', `Browser to use for tests, one of "all", "chromium", "firefox" or "webkit" (default: "chromium")`);
-  command.option('--headed', `Run tests in headed browsers (default: headless)`);
-  command.option('--debug', `Run tests with Playwright Inspector. Shortcut for "PWDEBUG=1" environment variable and "--timeout=0 --max-failures=1 --headed --workers=1" options`);
-  command.option('-c, --config <file>', `Configuration file, or a test directory with optional ${kDefaultConfigFiles.map(file => `"${file}"`).join('/')}`);
-  command.option('--forbid-only', `Fail if test.only is called (default: false)`);
-  command.option('--fully-parallel', `Run all tests in parallel (default: false)`);
-  command.option('-g, --grep <grep>', `Only run tests matching this regular expression (default: ".*")`);
-  command.option('-gv, --grep-invert <grep>', `Only run tests that do not match this regular expression`);
-  command.option('--global-timeout <timeout>', `Maximum time this test suite can run in milliseconds (default: unlimited)`);
-  command.option('--ignore-snapshots', `Ignore screenshot and snapshot expectations`);
-  command.option('-j, --workers <workers>', `Number of concurrent workers or percentage of logical CPU cores, use 1 to run in a single worker (default: 50%)`);
-  command.option('--list', `Collect all the tests and report them, but do not run`);
-  command.option('--max-failures <N>', `Stop after the first N failures`);
-  command.option('--no-deps', 'Do not run project dependencies');
-  command.option('--output <dir>', `Folder for output artifacts (default: "test-results")`);
-  command.option('--pass-with-no-tests', `Makes test run succeed even if no tests were found`);
-  command.option('--quiet', `Suppress stdio`);
-  command.option('--repeat-each <N>', `Run each test N times (default: 1)`);
-  command.option('--reporter <reporter>', `Reporter to use, comma-separated, can be ${builtInReporters.map(name => `"${name}"`).join(', ')} (default: "${baseFullConfig.reporter[0]}")`);
-  command.option('--retries <retries>', `Maximum retry count for flaky tests, zero for no retries (default: no retries)`);
-  command.option('--shard <shard>', `Shard tests and execute only the selected shard, specify in the form "current/all", 1-based, for example "3/5"`);
-  command.option('--project <project-name...>', `Only run tests from the specified list of projects (default: run all projects)`);
-  command.option('--timeout <timeout>', `Specify test timeout threshold in milliseconds, zero for unlimited (default: ${defaultTimeout})`);
-  command.option('--trace <mode>', `Force tracing mode, can be ${kTraceModes.map(mode => `"${mode}"`).join(', ')}`);
-  command.option('-u, --update-snapshots', `Update snapshots with actual results (default: only create missing snapshots)`);
-  command.option('-x', `Stop after the first failure`);
+  const options = [...sharedOptions, ...testOnlyOptions].sort((a, b) => a[0].replace(/-/g, '').localeCompare(b[0].replace(/-/g, '')));
+  options.forEach(([name, description]) => command.option(name, description));
   command.action(async (args, opts) => {
     try {
       await runTests(args, opts);
@@ -79,7 +56,31 @@ Examples:
   $ npx playwright test my.spec.ts
   $ npx playwright test some.spec.ts:42
   $ npx playwright test --headed
-  $ npx playwright test --browser=webkit`);
+  $ npx playwright test --project=webkit`);
+}
+
+function addUICommand(program: Command) {
+  const command = program.command('ui [test-filter...]');
+  command.description('open Playwright Test interactive UI');
+  sharedOptions.forEach(([name, description]) => command.option(name, description));
+  command.action(async (args, opts) => {
+    try {
+      opts.ui = true;
+      await runTests(args, opts);
+    } catch (e) {
+      console.error(e);
+      process.exit(1);
+    }
+  });
+  command.addHelpText('afterAll', `
+Arguments [test-filter...]:
+  Pass arguments to filter test files. Each argument is treated as a regular expression. Matching is performed against the absolute file paths.
+
+Examples:
+  $ npx playwright ui my.spec.ts
+  $ npx playwright ui some.spec.ts:42
+  $ npx playwright ui --headed
+  $ npx playwright ui --project=webkit`);
 }
 
 function addListFilesCommand(program: Command) {
@@ -131,13 +132,13 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
 
   if (opts.headed || opts.debug)
     overrides.use = { headless: false };
-  if (opts.debug) {
+  if (!opts.ui && opts.debug) {
     overrides.maxFailures = 1;
     overrides.timeout = 0;
     overrides.workers = 1;
     process.env.PWDEBUG = '1';
   }
-  if (opts.trace) {
+  if (!opts.ui && opts.trace) {
     if (!kTraceModes.includes(opts.trace))
       throw new Error(`Unsupported trace mode "${opts.trace}", must be one of ${kTraceModes.map(mode => `"${mode}"`).join(', ')}`);
     overrides.use = overrides.use || {};
@@ -168,13 +169,13 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
 
   const runner = new Runner(config);
   let status: FullResult['status'];
-  if (process.env.PWTEST_UI)
+  if (opts.ui)
     status = await runner.uiAllTests();
   else if (process.env.PWTEST_WATCH)
     status = await runner.watchAllTests();
   else
     status = await runner.runAllTests();
-  await stopProfiling(undefined);
+  await stopProfiling('runner');
   if (status === 'interrupted')
     process.exit(130);
   process.exit(status === 'passed' ? 0 : 1);
@@ -257,3 +258,36 @@ function restartWithExperimentalTsEsm(configFile: string | null): boolean {
 }
 
 const kTraceModes: TraceMode[] = ['on', 'off', 'on-first-retry', 'retain-on-failure'];
+
+const sharedOptions: [string, string][] = [
+  ['--headed', `Run tests in headed browsers (default: headless)`],
+  ['-c, --config <file>', `Configuration file, or a test directory with optional ${kDefaultConfigFiles.map(file => `"${file}"`).join('/')}`],
+  ['--fully-parallel', `Run all tests in parallel (default: false)`],
+  ['--ignore-snapshots', `Ignore screenshot and snapshot expectations`],
+  ['-j, --workers <workers>', `Number of concurrent workers or percentage of logical CPU cores, use 1 to run in a single worker (default: 50%)`],
+  ['--max-failures <N>', `Stop after the first N failures`],
+  ['--no-deps', 'Do not run project dependencies'],
+  ['--output <dir>', `Folder for output artifacts (default: "test-results")`],
+  ['--quiet', `Suppress stdio`],
+  ['--reporter <reporter>', `Reporter to use, comma-separated, can be ${builtInReporters.map(name => `"${name}"`).join(', ')} (default: "${baseFullConfig.reporter[0]}")`],
+  ['--project <project-name...>', `Only run tests from the specified list of projects (default: run all projects)`],
+  ['--timeout <timeout>', `Specify test timeout threshold in milliseconds, zero for unlimited (default: ${defaultTimeout})`],
+  ['-x', `Stop after the first failure`],
+];
+
+const testOnlyOptions: [string, string][] = [
+  ['--browser <browser>', `Browser to use for tests, one of "all", "chromium", "firefox" or "webkit" (default: "chromium")`],
+  ['--debug', `Run tests with Playwright Inspector. Shortcut for "PWDEBUG=1" environment variable and "--timeout=0 --max-failures=1 --headed --workers=1" options`],
+  ['--forbid-only', `Fail if test.only is called (default: false)`],
+  ['--global-timeout <timeout>', `Maximum time this test suite can run in milliseconds (default: unlimited)`],
+  ['-g, --grep <grep>', `Only run tests matching this regular expression (default: ".*")`],
+  ['-gv, --grep-invert <grep>', `Only run tests that do not match this regular expression`],
+  ['--list', `Collect all the tests and report them, but do not run`],
+  ['--pass-with-no-tests', `Makes test run succeed even if no tests were found`],
+  ['--repeat-each <N>', `Run each test N times (default: 1)`],
+  ['--retries <retries>', `Maximum retry count for flaky tests, zero for no retries (default: no retries)`],
+  ['--shard <shard>', `Shard tests and execute only the selected shard, specify in the form "current/all", 1-based, for example "3/5"`],
+  ['--trace <mode>', `Force tracing mode, can be ${kTraceModes.map(mode => `"${mode}"`).join(', ')}`],
+  ['--ui', `Run tests in interactive UI mode`],
+  ['-u, --update-snapshots', `Update snapshots with actual results (default: only create missing snapshots)`],
+];

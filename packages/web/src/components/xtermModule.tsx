@@ -14,9 +14,14 @@
   limitations under the License.
 */
 
-@import '../third_party/vscode/colors.css';
+import 'xterm/css/xterm.css';
 
-.xterm-wrapper .xterm-viewport {
-  background-color: var(--vscode-panel-background) !important;
-  color: var(--vscode-foreground) !important;
-}
+import { Terminal } from 'xterm';
+import { FitAddon } from 'xterm-addon-fit';
+
+export type XtermModule = {
+  Terminal: typeof Terminal;
+  FitAddon: typeof FitAddon;
+};
+
+export default { Terminal, FitAddon };

@@ -27,7 +27,7 @@ import { createInstrumentation, SdkObject } from './instrumentation';
 import { debugLogger } from '../common/debugLogger';
 import type { Page } from './page';
 import { DebugController } from './debugController';
-import type { Language } from './isomorphic/locatorGenerators';
+import type { Language } from '../utils/isomorphic/locatorGenerators';
 
 export class Playwright extends SdkObject {
   readonly selectors: Selectors;

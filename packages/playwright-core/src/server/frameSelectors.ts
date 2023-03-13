@@ -16,7 +16,7 @@
 
 import { type Frame } from './frames';
 import type * as types from './types';
-import { stringifySelector, type ParsedSelector, splitSelectorByFrame } from './isomorphic/selectorParser';
+import { stringifySelector, type ParsedSelector, splitSelectorByFrame } from '../utils/isomorphic/selectorParser';
 import { type FrameExecutionContext, type ElementHandle } from './dom';
 import { type JSHandle } from './javascript';
 import { type InjectedScript } from './injected/injectedScript';

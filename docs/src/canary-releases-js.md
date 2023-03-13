@@ -1,6 +1,6 @@
 ---
 id: canary-releases
-title: "Canary Releases"
+title: "Canary releases"
 ---
 
 Playwright for Node.js has a canary releases system.

@@ -16,7 +16,7 @@
 
 import type { WriteStream } from 'tty';
 import type { ProcessInitParams, TtyParams } from './ipc';
-import { startProfiling, stopProfiling } from './profiler';
+import { startProfiling, stopProfiling } from 'playwright-core/lib/utils';
 import type { TestInfoError } from './types';
 import { serializeError } from '../util';
 

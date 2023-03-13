@@ -28,7 +28,7 @@ const packages = new Map();
 for (const package of fs.readdirSync(packagesDir))
   packages.set(package, packagesDir + '/' + package + '/src/');
 packages.set('injected', packagesDir + '/playwright-core/src/server/injected/');
-packages.set('isomorphic', packagesDir + '/playwright-core/src/server/isomorphic/');
+packages.set('isomorphic', packagesDir + '/playwright-core/src/utils/isomorphic/');
 
 const peerDependencies = ['electron', 'react', 'react-dom', '@zip.js/zip.js'];
 
@@ -167,7 +167,7 @@ async function innerCheckDeps(root) {
     if (!deps) {
       const depsListFile = path.join(depsDirectory, 'DEPS.list');
       deps = {};
-      let group;
+      let group = [];
       for (const line of fs.readFileSync(depsListFile, 'utf-8').split('\n').filter(Boolean).filter(l => !l.startsWith('#'))) {
         const groupMatch = line.match(/\[(.*)\]/);
         if (groupMatch) {
@@ -175,7 +175,9 @@ async function innerCheckDeps(root) {
           deps[groupMatch[1]] = group;
           continue;
         }
-        if (line.startsWith('@'))
+        if (line === '***')
+          group.push('***');
+        else if (line.startsWith('@'))
           group.push(line.replace(/@([\w-]+)\/(.*)/, (_, arg1, arg2) => packages.get(arg1) + arg2));
         else
           group.push(path.resolve(depsDirectory, line));
@@ -185,6 +187,8 @@ async function innerCheckDeps(root) {
 
     const mergedDeps = [...(deps['*'] || []), ...(deps[path.relative(depsDirectory, from)] || [])]
     for (const dep of mergedDeps) {
+      if (dep === '***')
+        return true;
       if (to === dep || toDirectory === dep)
         return true;
       if (dep.endsWith('**')) {

@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { escapeWithQuotes, toSnakeCase, toTitleCase } from '../../utils/isomorphic/stringUtils';
-import { type NestedSelectorBody, parseAttributeSelector, parseSelector, stringifySelector } from '../isomorphic/selectorParser';
-import type { ParsedSelector } from '../isomorphic/selectorParser';
+import { escapeWithQuotes, toSnakeCase, toTitleCase } from './stringUtils';
+import { type NestedSelectorBody, parseAttributeSelector, parseSelector, stringifySelector } from './selectorParser';
+import type { ParsedSelector } from './selectorParser';
 
 export type Language = 'javascript' | 'python' | 'java' | 'csharp';
 export type LocatorType = 'default' | 'role' | 'text' | 'label' | 'placeholder' | 'alt' | 'title' | 'test-id' | 'nth' | 'first' | 'last' | 'has-text' | 'has' | 'frame';
@@ -27,8 +27,17 @@ export interface LocatorFactory {
   generateLocator(base: LocatorBase, kind: LocatorType, body: string | RegExp, options?: LocatorOptions): string;
 }
 
-export function asLocator(lang: Language, selector: string, isFrameLocator: boolean = false): string {
-  return innerAsLocator(generators[lang], parseSelector(selector), isFrameLocator);
+export function asLocator(lang: Language, selector: string, isFrameLocator: boolean = false, playSafe: boolean = false): string {
+  if (playSafe) {
+    try {
+      return innerAsLocator(generators[lang], parseSelector(selector), isFrameLocator);
+    } catch (e) {
+      // Tolerate invalid input.
+      return selector;
+    }
+  } else {
+    return innerAsLocator(generators[lang], parseSelector(selector), isFrameLocator);
+  }
 }
 
 function innerAsLocator(factory: LocatorFactory, parsed: ParsedSelector, isFrameLocator: boolean = false): string {

@@ -30,7 +30,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@injected': path.resolve(__dirname, '../playwright-core/src/server/injected'),
-      '@isomorphic': path.resolve(__dirname, '../playwright-core/src/server/isomorphic'),
+      '@isomorphic': path.resolve(__dirname, '../playwright-core/src/utils/isomorphic'),
       '@protocol': path.resolve(__dirname, '../protocol/src'),
       '@trace': path.resolve(__dirname, '../trace/src'),
       '@web': path.resolve(__dirname, '../web/src'),
@@ -43,6 +43,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         index: path.resolve(__dirname, 'index.html'),
+        watch: path.resolve(__dirname, 'watch.html'),
         popout: path.resolve(__dirname, 'popout.html'),
       },
       output: {
