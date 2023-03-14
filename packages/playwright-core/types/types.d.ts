@@ -8184,17 +8184,12 @@ export interface BrowserContext {
 
   /**
    * @deprecated Browsers may cache credentials after successful authentication. Create a new browser context instead.
-   * @param httpCredentials If no origin is specified, the username and password are sent to any servers upon unauthorized responses.
+   * @param httpCredentials
    */
   setHTTPCredentials(httpCredentials: null|{
     username: string;
 
     password: string;
-
-    /**
-     * Restrain sending http credentials on specific origin (scheme://host:port).
-     */
-    origin?: string;
   }): Promise<void>;
 
   /**

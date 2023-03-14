@@ -1255,9 +1255,6 @@ its geolocation.
 - `httpCredentials` <[null]|[Object]>
   - `username` <[string]>
   - `password` <[string]>
-  - `origin` ?<[string]> Restrain sending http credentials on specific origin (scheme://host:port).
-
-If no origin is specified, the username and password are sent to any servers upon unauthorized responses.
 
 ## async method: BrowserContext.setOffline
 * since: v1.8
