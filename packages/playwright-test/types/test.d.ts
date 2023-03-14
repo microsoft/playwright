@@ -2245,6 +2245,11 @@ export interface TestInfo {
   stdout: Array<string|Buffer>;
 
   /**
+   * Test id matching the test case id in the reporter API.
+   */
+  testId: string;
+
+  /**
    * Timeout in milliseconds for the currently running test. Zero means no timeout. Learn more about
    * [various timeouts](https://playwright.dev/docs/test-timeouts).
    *

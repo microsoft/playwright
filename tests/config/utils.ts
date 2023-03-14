@@ -17,7 +17,7 @@
 import type { Frame, Page } from 'playwright-core';
 import { ZipFile } from '../../packages/playwright-core/lib/utils/zipFile';
 import type { StackFrame } from '../../packages/protocol/src/channels';
-import { parseClientSideCallMetadata } from '../../packages/trace/src/traceUtils';
+import { parseClientSideCallMetadata } from '../../packages/playwright-core/lib/utils/isomorphic/traceUtils';
 import type { ActionTraceEvent } from '../../packages/trace/src/trace';
 
 export async function attachFrame(page: Page, frameId: string, url: string): Promise<Frame> {
