@@ -442,3 +442,25 @@ it('should click in iframe with padding 2', async ({ page }) => {
   await locator.click();
   expect(await page.evaluate('window._clicked')).toBe(true);
 });
+
+it('should click in custom element', async ({ page }) => {
+  await page.setContent(`
+    <html>
+      <body>
+        <my-input></my-input>
+        <script>
+          class MyInput extends HTMLElement {
+            connectedCallback() {
+              this.attachShadow({mode:'open'});
+              this.shadowRoot.innerHTML = '<div><span><input type="text" /></span></div>';
+              this.shadowRoot.querySelector('input').addEventListener('click', () => window.__clicked = true);
+            }
+          }
+          customElements.define('my-input', MyInput);
+        </script>
+      </body>
+    </html>
+  `);
+  await page.locator('input').click();
+  expect(await page.evaluate('window.__clicked')).toBe(true);
+});
