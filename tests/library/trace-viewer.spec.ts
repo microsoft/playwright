@@ -24,6 +24,7 @@ const test = playwrightTest.extend<TraceViewerFixtures>(traceViewerFixtures);
 
 test.skip(({ trace }) => trace === 'on');
 test.slow();
+test.describe.configure({ mode: 'parallel' });
 
 let traceFile: string;
 
