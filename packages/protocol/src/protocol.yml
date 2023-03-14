@@ -1801,7 +1801,7 @@ Frame:
         force: boolean?
         timeout: number?
         noWaitAfter: boolean?
-        redactFromLogs: boolean?
+        secret: boolean?
       tracing:
         snapshot: true
         pausesBeforeInput: true
@@ -2101,7 +2101,7 @@ Frame:
         text: string
         delay: number?
         noWaitAfter: boolean?
-        redactFromLogs: boolean?
+        secret: boolean?
         timeout: number?
       tracing:
         snapshot: true
@@ -2403,7 +2403,7 @@ ElementHandle:
         force: boolean?
         timeout: number?
         noWaitAfter: boolean?
-        redactFromLogs: boolean?
+        secret: boolean?
       tracing:
         snapshot: true
         pausesBeforeInput: true
@@ -2637,7 +2637,7 @@ ElementHandle:
         text: string
         delay: number?
         noWaitAfter: boolean?
-        redactFromLogs: boolean?
+        secret: boolean?
         timeout: number?
       tracing:
         snapshot: true

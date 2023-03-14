@@ -1338,7 +1338,7 @@ scheme.FrameFillParams = tObject({
   force: tOptional(tBoolean),
   timeout: tOptional(tNumber),
   noWaitAfter: tOptional(tBoolean),
-  redactFromLogs: tOptional(tBoolean),
+  secret: tOptional(tBoolean),
 });
 scheme.FrameFillResult = tOptional(tObject({}));
 scheme.FrameFocusParams = tObject({
@@ -1555,7 +1555,7 @@ scheme.FrameTypeParams = tObject({
   text: tString,
   delay: tOptional(tNumber),
   noWaitAfter: tOptional(tBoolean),
-  redactFromLogs: tOptional(tBoolean),
+  secret: tOptional(tBoolean),
   timeout: tOptional(tNumber),
 });
 scheme.FrameTypeResult = tOptional(tObject({}));
@@ -1755,7 +1755,7 @@ scheme.ElementHandleFillParams = tObject({
   force: tOptional(tBoolean),
   timeout: tOptional(tNumber),
   noWaitAfter: tOptional(tBoolean),
-  redactFromLogs: tOptional(tBoolean),
+  secret: tOptional(tBoolean),
 });
 scheme.ElementHandleFillResult = tOptional(tObject({}));
 scheme.ElementHandleFocusParams = tOptional(tObject({}));
@@ -1909,7 +1909,7 @@ scheme.ElementHandleTypeParams = tObject({
   text: tString,
   delay: tOptional(tNumber),
   noWaitAfter: tOptional(tBoolean),
-  redactFromLogs: tOptional(tBoolean),
+  secret: tOptional(tBoolean),
   timeout: tOptional(tNumber),
 });
 scheme.ElementHandleTypeResult = tOptional(tObject({}));

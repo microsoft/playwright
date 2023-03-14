@@ -838,7 +838,7 @@ Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
 ### option: Frame.fill.noWaitAfter = %%-input-no-wait-after-%%
 * since: v1.8
 
-### option: Frame.fill.redactFromLogs = %%-input-redact-from-logs-%%
+### option: Frame.fill.secret = %%-input-secret-%%
 * since: v1.32
 
 ### option: Frame.fill.strict = %%-input-strict-%%
@@ -1707,7 +1707,7 @@ Time to wait between key presses in milliseconds. Defaults to 0.
 ### option: Frame.type.noWaitAfter = %%-input-no-wait-after-%%
 * since: v1.8
 
-### option: Frame.type.redactFromLogs = %%-input-redact-from-logs-%%
+### option: Frame.type.secret = %%-input-secret-%%
 * since: v1.32
 
 ### option: Frame.type.strict = %%-input-strict-%%

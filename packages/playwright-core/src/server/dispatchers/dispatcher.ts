@@ -330,7 +330,7 @@ function formatLogRecording(log: string[]): string {
 function maybeMaskSensitiveData(params: any) {
   if (!params || !isObject(params))
     return params;
-  if (!(params as any).redactFromLogs)
+  if (!(params as any).secret)
     return params;
   const redacted: any = { ...params };
   for (const name of ['text', 'value']) {

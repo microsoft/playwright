@@ -590,17 +590,17 @@ test('should mask sensitive input data', async ({ context, page, server }) => {
   await context.tracing.start({ snapshots: true });
   await page.goto(server.EMPTY_PAGE);
   await page.setContent('<input></input>');
-  await page.fill('input', secret, { redactFromLogs: true });
+  await page.fill('input', secret, { secret: true });
   await page.fill('input', '');
-  await page.type('input', secret, { redactFromLogs: true });
+  await page.type('input', secret, { secret: true });
   await page.fill('input', '');
-  await page.locator('input').fill(secret, { redactFromLogs: true });
+  await page.locator('input').fill(secret, { secret: true });
   await page.fill('input', '');
-  await page.locator('input').type(secret, { redactFromLogs: true });
+  await page.locator('input').type(secret, { secret: true });
   await page.fill('input', '');
-  await(await page.$('input')).fill(secret, { redactFromLogs: true });
+  await(await page.$('input')).fill(secret, { secret: true });
   await page.fill('input', '');
-  await(await page.$('input')).type(secret, { redactFromLogs: true });
+  await(await page.$('input')).type(secret, { secret: true });
 
   await page.close();
   await context.tracing.stop({ path: test.info().outputPath('trace.zip') });

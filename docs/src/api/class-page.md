@@ -2085,7 +2085,7 @@ Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
 ### option: Page.fill.noWaitAfter = %%-input-no-wait-after-%%
 * since: v1.8
 
-### option: Page.fill.redactFromLogs = %%-input-redact-from-logs-%%
+### option: Page.fill.secret = %%-input-secret-%%
 * since: v1.32
 
 ### option: Page.fill.strict = %%-input-strict-%%
@@ -3716,7 +3716,7 @@ Time to wait between key presses in milliseconds. Defaults to 0.
 ### option: Page.type.noWaitAfter = %%-input-no-wait-after-%%
 * since: v1.8
 
-### option: Page.type.redactFromLogs = %%-input-redact-from-logs-%%
+### option: Page.type.secret = %%-input-secret-%%
 * since: v1.32
 
 ### option: Page.type.strict = %%-input-strict-%%

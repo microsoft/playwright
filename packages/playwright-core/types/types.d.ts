@@ -2338,9 +2338,9 @@ export interface Page {
     noWaitAfter?: boolean;
 
     /**
-     * If set to true, the input value will be redacted from the logs and replaced with X symbols.
+     * If set to true, the input value will be redacted from the logs and replaced with "*" symbols.
      */
-    redactFromLogs?: boolean;
+    secret?: boolean;
 
     /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
@@ -4074,9 +4074,9 @@ export interface Page {
     noWaitAfter?: boolean;
 
     /**
-     * If set to true, the input value will be redacted from the logs and replaced with X symbols.
+     * If set to true, the input value will be redacted from the logs and replaced with "*" symbols.
      */
-    redactFromLogs?: boolean;
+    secret?: boolean;
 
     /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
@@ -5770,9 +5770,9 @@ export interface Frame {
     noWaitAfter?: boolean;
 
     /**
-     * If set to true, the input value will be redacted from the logs and replaced with X symbols.
+     * If set to true, the input value will be redacted from the logs and replaced with "*" symbols.
      */
-    redactFromLogs?: boolean;
+    secret?: boolean;
 
     /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
@@ -7041,9 +7041,9 @@ export interface Frame {
     noWaitAfter?: boolean;
 
     /**
-     * If set to true, the input value will be redacted from the logs and replaced with X symbols.
+     * If set to true, the input value will be redacted from the logs and replaced with "*" symbols.
      */
-    redactFromLogs?: boolean;
+    secret?: boolean;
 
     /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
@@ -9327,9 +9327,9 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     noWaitAfter?: boolean;
 
     /**
-     * If set to true, the input value will be redacted from the logs and replaced with X symbols.
+     * If set to true, the input value will be redacted from the logs and replaced with "*" symbols.
      */
-    redactFromLogs?: boolean;
+    secret?: boolean;
 
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed
@@ -9938,9 +9938,9 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     noWaitAfter?: boolean;
 
     /**
-     * If set to true, the input value will be redacted from the logs and replaced with X symbols.
+     * If set to true, the input value will be redacted from the logs and replaced with "*" symbols.
      */
-    redactFromLogs?: boolean;
+    secret?: boolean;
 
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed
@@ -10760,9 +10760,9 @@ export interface Locator {
     noWaitAfter?: boolean;
 
     /**
-     * If set to true, the input value will be redacted from the logs and replaced with X symbols.
+     * If set to true, the input value will be redacted from the logs and replaced with "*" symbols.
      */
-    redactFromLogs?: boolean;
+    secret?: boolean;
 
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed
@@ -11956,9 +11956,9 @@ export interface Locator {
     noWaitAfter?: boolean;
 
     /**
-     * If set to true, the input value will be redacted from the logs and replaced with X symbols.
+     * If set to true, the input value will be redacted from the logs and replaced with "*" symbols.
      */
-    redactFromLogs?: boolean;
+    secret?: boolean;
 
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed

@@ -849,7 +849,7 @@ Value to set for the `<input>`, `<textarea>` or `[contenteditable]` element.
 ### option: Locator.fill.noWaitAfter = %%-input-no-wait-after-%%
 * since: v1.14
 
-### option: Locator.fill.redactFromLogs = %%-input-redact-from-logs-%%
+### option: Locator.fill.secret = %%-input-secret-%%
 * since: v1.32
 
 ### option: Locator.fill.timeout = %%-input-timeout-%%
@@ -1996,7 +1996,7 @@ Time to wait between key presses in milliseconds. Defaults to 0.
 ### option: Locator.type.noWaitAfter = %%-input-no-wait-after-%%
 * since: v1.14
 
-### option: Locator.type.redactFromLogs = %%-input-redact-from-logs-%%
+### option: Locator.type.secret = %%-input-secret-%%
 * since: v1.32
 
 ### option: Locator.type.timeout = %%-input-timeout-%%

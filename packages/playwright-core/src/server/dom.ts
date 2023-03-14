@@ -569,7 +569,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async _fill(progress: Progress, value: string, options: types.NavigatingActionWaitOptions & types.ForceOptions & types.TextInputOptions): Promise<'error:notconnected' | 'done'> {
-    progress.log(`elementHandle.fill("${options.redactFromLogs ? maskString(value) : value}")`);
+    progress.log(`elementHandle.fill("${options.secret ? maskString(value) : value}")`);
     await progress.beforeInputAction(this);
     return this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
       progress.log('  waiting for element to be visible, enabled and editable');
@@ -583,7 +583,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       if (filled === 'needsinput') {
         progress.throwIfAborted();  // Avoid action that has side-effects.
         if (value) {
-          if (options.redactFromLogs)
+          if (options.secret)
             await this._addSecret(value);
           await this._page.keyboard.insertText(value);
         } else {
@@ -695,14 +695,14 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async _type(progress: Progress, text: string, options: { delay?: number } & types.NavigatingActionWaitOptions & types.TextInputOptions): Promise<'error:notconnected' | 'done'> {
-    progress.log(`elementHandle.type("${options.redactFromLogs ? maskString(text) : text}")`);
+    progress.log(`elementHandle.type("${options.secret ? maskString(text) : text}")`);
     await progress.beforeInputAction(this);
     return this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
       const result = await this._focus(progress, true /* resetSelectionIfNotFocused */);
       if (result !== 'done')
         return result;
       progress.throwIfAborted();  // Avoid action that has side-effects.
-      if (options.redactFromLogs)
+      if (options.secret)
         await this._addSecret(text);
       await this._page.keyboard.type(text, options);
       return 'done';
