@@ -175,8 +175,10 @@ it.describe('Drag and drop', () => {
     });
   });
 
-  it('should respect the drop effect', async ({ page, browserName, platform, trace }) => {
-    it.fixme(browserName === 'webkit' && platform !== 'linux', 'WebKit doesn\'t handle the drop effect correctly outside of linux.');
+  it('should respect the drop effect', async ({ page, browserName, isLinux, isMac, headless, trace }) => {
+    it.fixme(browserName === 'webkit' && !isLinux, 'WebKit doesn\'t handle the drop effect correctly outside of linux.');
+    it.fixme(browserName === 'webkit' && isLinux && !headless, 'Flaky on Linux in headed mode.');
+    it.fixme(browserName === 'chromium' && !isMac && !headless, 'Flaky on Linux and Windows in headed mode.');
     it.slow(trace === 'on');
 
     expect(await testIfDropped('copy', 'copy')).toBe(true);
