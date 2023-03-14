@@ -58,6 +58,16 @@ await page.getByRole('link', { name: 'next page' }).click();
 
 Only test what you control. Don't try to test links to external sites or third party servers that you do not control. Not only is it time consuming and can slow down your tests but also you can not control the content of the page you are linking to, or if there are cookie banners or overlay pages or anything else that might cause your test to fail.
 
+Instead, use the [Playwright Network API](/network.md#handle-requests) and guarantee the response needed. 
+
+```js
+await page.route('**/api/fetch_data_third_party_dependency', route => route.fulfill({
+  status: 200,
+  body: testData,
+}));
+await page.goto('https://example.com');
+```
+
 ### Testing with a database
 
 If working with a database then make sure you control the data. Test against a staging environment and make sure it doesn't change. For visual regression tests make sure the operating system and browser versions are the same.
