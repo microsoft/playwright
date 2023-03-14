@@ -58,6 +58,26 @@ test('should work with comments inside fixtures', async ({ runInlineTest }) => {
   expect(results[0].status).toBe('passed');
 });
 
+test('should throw a pretty error if fixtures use rest parameter', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend({
+        asdf: async ({...props}, use) => await use(123),
+      });
+      test('should not allow rest parameter inside tests', ({...all}) => {
+        expect(asdf).toBe(123);
+      });
+      test('should not allow rest parameter inside fixtures', ({asdf}) => {
+        expect(asdf).toBe(123);
+      });
+      `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('Fixtures cannot use rest parameters: ...all');
+  expect(result.output).toContain('Fixtures cannot use rest parameters: ...props');
+});
+
 test('should work with a sync test function', async ({ runInlineTest }) => {
   const { results } = await runInlineTest({
     'a.test.ts': `

@@ -239,7 +239,12 @@ function innerFixtureParameterNames(fn: Function, location: Location, onError: L
     onError({ message: 'First argument must use the object destructuring pattern: '  + firstParam, location });
     return [];
   }
-  const props = splitByComma(firstParam.substring(1, firstParam.length - 1)).map(prop => {
+  const firstParamWithoutBrackets = firstParam.substring(1, firstParam.length - 1);
+  if (firstParamWithoutBrackets.includes('...')) {
+    onError({ message: 'Fixtures cannot use rest parameters: ' + firstParamWithoutBrackets.trim(), location });
+    return [];
+  }
+  const props = splitByComma(firstParamWithoutBrackets).map(prop => {
     const colon = prop.indexOf(':');
     return colon === -1 ? prop.trim() : prop.substring(0, colon).trim();
   });
