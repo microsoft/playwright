@@ -31,7 +31,7 @@ test('should watch files', async ({ runUITest, writeFiles }) => {
   await page.getByRole('listitem').filter({ hasText: 'fails' }).getByTitle('Watch').click();
   await page.getByRole('listitem').filter({ hasText: 'fails' }).getByTitle('Run').click();
 
-  await expect.poll(dumpTestTree(page), { timeout: 0 }).toBe(`
+  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toBe(`
     ▼ ❌ a.test.ts
         ◯ passes
         ❌ fails 👁 <=
@@ -45,7 +45,7 @@ test('should watch files', async ({ runUITest, writeFiles }) => {
     `
   });
 
-  await expect.poll(dumpTestTree(page), { timeout: 0 }).toBe(`
+  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toBe(`
     ▼ ◯ a.test.ts
         ◯ passes
         ✅ fails 👁 <=

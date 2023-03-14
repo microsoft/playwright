@@ -15,21 +15,21 @@
 */
 
 import * as React from 'react';
+import './expandable.css';
 
 export const Expandable: React.FunctionComponent<React.PropsWithChildren<{
   title: JSX.Element | string,
   setExpanded: Function,
   expanded: boolean,
-  style?: React.CSSProperties,
-}>> = ({ title, children, setExpanded, expanded, style }) => {
-  return <div style={{ ...style, display: 'flex', flexDirection: 'column' }}>
-    <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', whiteSpace: 'nowrap' }}>
+}>> = ({ title, children, setExpanded, expanded }) => {
+  return <div className={'expandable' + (expanded ? ' expanded' : '')}>
+    <div className='expandable-title'>
       <div
         className={'codicon codicon-' + (expanded ? 'chevron-down' : 'chevron-right')}
         style={{ cursor: 'pointer', color: 'var(--vscode-foreground)', marginLeft: '5px' }}
         onClick={() => setExpanded(!expanded)} />
       {title}
     </div>
-    { expanded && <div style={{ margin: '5px 0 5px 20px' }}>{children}</div> }
+    { expanded && <div style={{ marginLeft: 25 }}>{children}</div> }
   </div>;
 };

@@ -46,6 +46,8 @@ class UIMode {
     config._internal.configCLIOverrides.updateSnapshots = undefined;
     config._internal.listOnly = false;
     config._internal.passWithNoTests = true;
+    for (const project of config.projects)
+      project._internal.deps = [];
 
     for (const p of config.projects)
       p.retries = 0;

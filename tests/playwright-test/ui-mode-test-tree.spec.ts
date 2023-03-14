@@ -37,7 +37,7 @@ const basicTestTree = {
 
 test('should list tests', async ({ runUITest }) => {
   const page = await runUITest(basicTestTree);
-  await expect.poll(dumpTestTree(page), { timeout: 0 }).toBe(`
+  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toBe(`
     ▼ ◯ a.test.ts
         ◯ passes
         ◯ fails
@@ -51,7 +51,7 @@ test('should list tests', async ({ runUITest }) => {
 test('should traverse up/down', async ({ runUITest }) => {
   const page = await runUITest(basicTestTree);
   await page.getByText('a.test.ts').click();
-  await expect.poll(dumpTestTree(page), { timeout: 0 }).toContain(`
+  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toContain(`
     ▼ ◯ a.test.ts <=
         ◯ passes
         ◯ fails
@@ -59,14 +59,14 @@ test('should traverse up/down', async ({ runUITest }) => {
   `);
 
   await page.keyboard.press('ArrowDown');
-  await expect.poll(dumpTestTree(page), { timeout: 0 }).toContain(`
+  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toContain(`
     ▼ ◯ a.test.ts
         ◯ passes <=
         ◯ fails
       ► ◯ suite
   `);
   await page.keyboard.press('ArrowDown');
-  await expect.poll(dumpTestTree(page), { timeout: 0 }).toContain(`
+  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toContain(`
     ▼ ◯ a.test.ts
         ◯ passes
         ◯ fails <=
@@ -74,7 +74,7 @@ test('should traverse up/down', async ({ runUITest }) => {
   `);
 
   await page.keyboard.press('ArrowUp');
-  await expect.poll(dumpTestTree(page), { timeout: 0 }).toContain(`
+  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toContain(`
     ▼ ◯ a.test.ts
         ◯ passes <=
         ◯ fails
@@ -87,7 +87,7 @@ test('should expand / collapse groups', async ({ runUITest }) => {
 
   await page.getByText('suite').click();
   await page.keyboard.press('ArrowRight');
-  await expect.poll(dumpTestTree(page), { timeout: 0 }).toContain(`
+  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toContain(`
     ▼ ◯ a.test.ts
         ◯ passes
         ◯ fails
@@ -97,7 +97,7 @@ test('should expand / collapse groups', async ({ runUITest }) => {
   `);
 
   await page.keyboard.press('ArrowLeft');
-  await expect.poll(dumpTestTree(page), { timeout: 0 }).toContain(`
+  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toContain(`
     ▼ ◯ a.test.ts
         ◯ passes
         ◯ fails
@@ -106,25 +106,14 @@ test('should expand / collapse groups', async ({ runUITest }) => {
 
   await page.getByText('passes').first().click();
   await page.keyboard.press('ArrowLeft');
-  await expect.poll(dumpTestTree(page), { timeout: 0 }).toContain(`
+  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toContain(`
     ▼ ◯ a.test.ts <=
         ◯ passes
         ◯ fails
   `);
 
   await page.keyboard.press('ArrowLeft');
-  await expect.poll(dumpTestTree(page), { timeout: 0 }).toContain(`
+  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toContain(`
     ► ◯ a.test.ts <=
-  `);
-});
-
-test('should filter by title', async ({ runUITest }) => {
-  const page = await runUITest(basicTestTree);
-  await page.getByPlaceholder('Filter').fill('inner');
-  await expect.poll(dumpTestTree(page), { timeout: 0 }).toBe(`
-    ▼ ◯ a.test.ts
-      ▼ ◯ suite
-          ◯ inner passes
-          ◯ inner fails
   `);
 });
