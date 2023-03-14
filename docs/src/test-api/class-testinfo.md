@@ -248,6 +248,12 @@ Optional description that will be reflected in a test report.
 
 Test function as passed to `test(title, testFunction)`.
 
+## property: TestInfo.testId
+* since: v1.32
+- type: <[string]>
+
+Test id matching the test case id in the reporter API.
+
 ## property: TestInfo.line
 * since: v1.10
 - type: <[int]>

@@ -17,7 +17,7 @@
 import fs from 'fs';
 import type EventEmitter from 'events';
 import type { ClientSideCallMetadata, StackFrame } from '@protocol/channels';
-import type { SerializedClientSideCallMetadata, SerializedStack, SerializedStackFrame } from '@trace/traceUtils';
+import type { SerializedClientSideCallMetadata, SerializedStack, SerializedStackFrame } from './isomorphic/traceUtils';
 import { yazl, yauzl } from '../zipBundle';
 import { ManualPromise } from './manualPromise';
 import type { ActionTraceEvent } from '@trace/trace';

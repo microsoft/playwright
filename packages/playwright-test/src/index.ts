@@ -24,6 +24,7 @@ import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWor
 import type { TestInfoImpl } from './worker/testInfo';
 import { rootTestType } from './common/testType';
 import { type ContextReuseMode } from './common/types';
+import { artifactsFolderName } from './isomorphic/folders';
 export { expect } from './matchers/expect';
 export { store } from './store';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
@@ -79,7 +80,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     let dir: string | undefined;
     await use(() => {
       if (!dir) {
-        dir = path.join(workerInfo.project.outputDir, '.playwright-artifacts-' + workerInfo.workerIndex);
+        dir = path.join(workerInfo.project.outputDir, artifactsFolderName(workerInfo.workerIndex));
         fs.mkdirSync(dir, { recursive: true });
       }
       return dir;
@@ -88,7 +89,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       await removeFolders([dir]);
   }, { scope: 'worker', _title: 'playwright configuration' } as any],
 
-  _browserOptions: [async ({ playwright, headless, channel, launchOptions, connectOptions }, use) => {
+  _browserOptions: [async ({ playwright, headless, channel, launchOptions, connectOptions, _artifactsDir }, use) => {
     const options: LaunchOptions = {
       handleSIGINT: false,
       timeout: 0,
@@ -98,6 +99,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       options.headless = headless;
     if (channel !== undefined)
       options.channel = channel;
+    options.tracesDir = path.join(_artifactsDir(), 'traces');
 
     for (const browserType of [playwright.chromium, playwright.firefox, playwright.webkit]) {
       (browserType as BrowserTypeImpl)._defaultLaunchOptions = options;
@@ -255,6 +257,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     const temporaryScreenshots: string[] = [];
     const testInfoImpl = testInfo as TestInfoImpl;
     const reusedContexts = new Set<BrowserContext>();
+    let traceOrdinal = 0;
 
     const createInstrumentationListener = (context?: BrowserContext) => {
       return {
@@ -287,7 +290,11 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       if (captureTrace) {
         const title = [path.relative(testInfo.project.testDir, testInfo.file) + ':' + testInfo.line, ...testInfo.titlePath.slice(1)].join(' › ');
         if (!(tracing as any)[kTracingStarted]) {
-          await tracing.start({ ...traceOptions, title });
+          const ordinalSuffix = traceOrdinal ? `-${traceOrdinal}` : '';
+          ++traceOrdinal;
+          const retrySuffix = testInfo.retry ? `-${testInfo.retry}` : '';
+          const name = `${testInfo.testId}${retrySuffix}${ordinalSuffix}`;
+          await tracing.start({ ...traceOptions, title, name });
           (tracing as any)[kTracingStarted] = true;
         } else {
           await tracing.startChunk({ title });
