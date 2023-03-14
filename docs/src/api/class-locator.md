@@ -961,7 +961,7 @@ var locator = page.FrameLocator("iframe").GetByText("Submit");
 await locator.ClickAsync();
 ```
 
-### param: Locator.frameLocator.selectorOrLocator = %%-find-selector-%%
+### param: Locator.frameLocator.selector = %%-find-selector-%%
 * since: v1.17
 
 ## async method: Locator.getAttribute
