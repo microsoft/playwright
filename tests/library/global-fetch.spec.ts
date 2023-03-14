@@ -97,6 +97,44 @@ it('should return error with wrong credentials', async ({ playwright, server }) 
   expect(response.status()).toBe(401);
 });
 
+it('should work with correct credentials and matching origin', async ({ playwright, server }) => {
+  server.setAuth('/empty.html', 'user', 'pass');
+  const request = await playwright.request.newContext({ httpCredentials: { username: 'user', password: 'pass', origin: server.PREFIX } });
+  const response = await request.get(server.EMPTY_PAGE);
+  expect(response.status()).toBe(200);
+});
+
+it('should work with correct credentials and matching origin case insensitive', async ({ playwright, server }) => {
+  server.setAuth('/empty.html', 'user', 'pass');
+  const request = await playwright.request.newContext({ httpCredentials: { username: 'user', password: 'pass', origin: server.PREFIX.toUpperCase() } });
+  const response = await request.get(server.EMPTY_PAGE);
+  expect(response.status()).toBe(200);
+});
+
+it('should return error with correct credentials and mismatching scheme', async ({ playwright, server }) => {
+  server.setAuth('/empty.html', 'user', 'pass');
+  const request = await playwright.request.newContext({ httpCredentials: { username: 'user', password: 'pass', origin: server.PREFIX.replace('http://', 'https://') } });
+  const response = await request.get(server.EMPTY_PAGE);
+  expect(response.status()).toBe(401);
+});
+
+it('should return error with correct credentials and mismatching hostname', async ({ playwright, server }) => {
+  server.setAuth('/empty.html', 'user', 'pass');
+  const hostname = new URL(server.PREFIX).hostname;
+  const origin = server.PREFIX.replace(hostname, 'mismatching-hostname');
+  const request = await playwright.request.newContext({ httpCredentials: { username: 'user', password: 'pass', origin: origin } });
+  const response = await request.get(server.EMPTY_PAGE);
+  expect(response.status()).toBe(401);
+});
+
+it('should return error with correct credentials and mismatching port', async ({ playwright, server }) => {
+  server.setAuth('/empty.html', 'user', 'pass');
+  const origin = server.PREFIX.replace(server.PORT.toString(), (server.PORT + 1).toString());
+  const request = await playwright.request.newContext({ httpCredentials: { username: 'user', password: 'pass', origin: origin } });
+  const response = await request.get(server.EMPTY_PAGE);
+  expect(response.status()).toBe(401);
+});
+
 it('should support WWW-Authenticate: Basic', async ({ playwright, server }) => {
   let credentials;
   server.setRoute('/empty.html', (req, res) => {
