@@ -41,7 +41,7 @@ import { Debugger } from './debugger';
 import { EventEmitter } from 'events';
 import { raceAgainstTimeout } from '../utils/timeoutRunner';
 import type { Language, LanguageGenerator } from './recorder/language';
-import { locatorOrSelectorAsSelector } from './isomorphic/locatorParser';
+import { locatorOrSelectorAsSelector } from '../utils/isomorphic/locatorParser';
 
 type BindingSource = { frame: Frame, page: Page };
 

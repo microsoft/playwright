@@ -28,7 +28,7 @@
 }
 
 .call-error .codicon {
-  color: red;
+  color: var(--vscode-errorForeground);
   position: relative;
   top: 2px;
   margin-right: 2px;
@@ -94,12 +94,6 @@
   color: var(--blue);
 }
 
-.call-error-message {
-  font-family: var(--vscode-editor-font-family);
-  font-weight: var(--vscode-editor-font-weight);
-  font-size: var(--vscode-editor-font-size);
-  background-color: var(--vscode-inputValidation-errorBackground);
-  white-space: pre;
-  overflow: auto;
+.call-tab .error-message {
   padding: 5px;
 }

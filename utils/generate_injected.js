@@ -29,23 +29,9 @@ const injectedScripts = [
   path.join(ROOT, 'packages', 'playwright-core', 'src', 'server', 'injected', 'recorder.ts'),
 ];
 
-const modulePrefix = `"use strict";
-let __export = (target, all) => {
-  for (var name in all)
-    target[name] = all[name];
-};
-let __commonJS = cb => function __require() {
-  let fn;
-  for (const name in cb) {
-    fn = cb[name];
-    break;
-  }
-  const exports = {};
-  fn(exports);
-  return exports;
-};
-let __toESM = mod => ({ ...mod, 'default': mod });
-let __toCommonJS = mod =>  ({ ...mod, __esModule: true });
+const modulePrefix = `
+var __export = (target, all) => {for (var name in all) target[name] = all[name];};
+var __toCommonJS = mod => ({ ...mod, __esModule: true });
 `;
 
 async function replaceEsbuildHeader(content, outFileJs) {
@@ -53,10 +39,10 @@ async function replaceEsbuildHeader(content, outFileJs) {
   if (sourcesStart === -1)
     throw new Error(`Did not find start of bundled code in ${outFileJs}`);
 
-  const preambule = content.substring(0, sourcesStart);
+  const preamble = content.substring(0, sourcesStart);
   // Replace standard esbuild definition with our own which do not depend on builtins.
   // See https://github.com/microsoft/playwright/issues/17029
-  if (preambule.indexOf('__toESM') !== -1 || preambule.indexOf('__toCommonJS') !== -1) {
+  if (preamble.indexOf('__toCommonJS') !== -1) {
     content = modulePrefix + content.substring(sourcesStart);
     await fs.promises.writeFile(outFileJs, content);
   }

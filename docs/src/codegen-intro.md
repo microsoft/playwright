@@ -1,6 +1,6 @@
 ---
 id: codegen-intro
-title: "Test Generator"
+title: "Test generator"
 ---
 
 Playwright comes with the ability to generate tests out of the box and is a great way to quickly get started with testing. It will open two windows, a browser window where you interact with the website you wish to test and the Playwright Inspector window where you can record your tests, copy the tests, clear your tests as well as change the language of your tests.

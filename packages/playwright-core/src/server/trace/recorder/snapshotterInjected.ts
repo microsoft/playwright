@@ -477,7 +477,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
             const name = element.attributes[i].name;
             if (nodeName === 'LINK' && name === 'integrity')
               continue;
-            if (nodeName === 'IFRAME' && (name === 'src' || name === 'sandbox'))
+            if (nodeName === 'IFRAME' && (name === 'src' || name === 'srcdoc' || name === 'sandbox'))
               continue;
             if (nodeName === 'FRAME' && name === 'src')
               continue;

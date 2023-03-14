@@ -24,7 +24,7 @@ import { assert } from 'playwright-core/lib/utils';
 class JUnitReporter implements Reporter {
   private config!: FullConfig;
   private suite!: Suite;
-  private timestamp!: number;
+  private timestamp!: Date;
   private startTime!: number;
   private totalTests = 0;
   private totalFailures = 0;
@@ -51,7 +51,7 @@ class JUnitReporter implements Reporter {
   onBegin(config: FullConfig, suite: Suite) {
     this.config = config;
     this.suite = suite;
-    this.timestamp = Date.now();
+    this.timestamp = new Date();
     this.startTime = monotonicTime();
   }
 
@@ -116,7 +116,7 @@ class JUnitReporter implements Reporter {
       name: 'testsuite',
       attributes: {
         name: suite.title,
-        timestamp: this.timestamp,
+        timestamp: this.timestamp.toISOString(),
         hostname: projectName,
         tests,
         failures,

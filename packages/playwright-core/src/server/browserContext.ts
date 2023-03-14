@@ -209,6 +209,7 @@ export abstract class BrowserContext extends SdkObject {
     await this.setGeolocation(this._options.geolocation);
     await this.setOffline(!!this._options.offline);
     await this.setUserAgent(this._options.userAgent);
+    await this.clearCache();
     await this._resetCookies();
 
     await page?.resetForReuse(metadata);
@@ -246,6 +247,7 @@ export abstract class BrowserContext extends SdkObject {
   abstract setUserAgent(userAgent: string | undefined): Promise<void>;
   abstract setOffline(offline: boolean): Promise<void>;
   abstract cancelDownload(uuid: string): Promise<void>;
+  abstract clearCache(): Promise<void>;
   protected abstract doGetCookies(urls: string[]): Promise<channels.NetworkCookie[]>;
   protected abstract doGrantPermissions(origin: string, permissions: string[]): Promise<void>;
   protected abstract doClearPermissions(): Promise<void>;

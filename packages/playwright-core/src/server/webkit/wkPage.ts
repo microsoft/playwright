@@ -570,7 +570,8 @@ export class WKPage implements PageDelegate {
         const objectId = JSON.parse(p.objectId);
         context = this._contextIdToContext.get(objectId.injectedScriptId);
       } else {
-        context = this._contextIdToContext.get(this._mainFrameContextId!);
+        // Pick any context if the parameter is a value.
+        context = [...this._contextIdToContext.values()].find(c => c.frame === this._page.mainFrame());
       }
       if (!context)
         return;
@@ -787,6 +788,8 @@ export class WKPage implements PageDelegate {
       scripts.push('delete window.ondevicemotion');
       scripts.push('delete window.ondeviceorientation');
     }
+    scripts.push('if (!window.safari) window.safari = {};');
+
     for (const binding of this._page.allBindings())
       scripts.push(binding.source);
     scripts.push(...this._browserContext.initScripts);

@@ -29,3 +29,5 @@ export { createPlaywright } from './playwright';
 
 export type { DispatcherScope } from './dispatchers/dispatcher';
 export type { Playwright } from './playwright';
+export { showTraceViewer } from './trace/viewer/traceViewer';
+export { serverSideCallMetadata } from './instrumentation';

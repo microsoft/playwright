@@ -33,16 +33,16 @@
 }
 
 .console-line.error {
-  background: #fff0f0;
-  border-top-color: #ffd6d6;
-  border-bottom-color: #ffd6d6;
-  color: red;
+  background: var(--vscode-inputValidation-errorBackground);
+  border-top-color: var(--vscode-inputValidation-errorBorder);
+  border-bottom-color: var(--vscode-inputValidation-errorBorder);
+  color: var(--vscode-errorForeground);
 }
 
 .console-line.warning {
-  background: #fffbe5;
-  border-top-color: #fff5c2;
-  border-bottom-color: #fff5c2;
+  background: var(--vscode-inputValidation-warningBackground);
+  border-top-color: var(--vscode-inputValidation-warningBorder);
+  border-bottom-color: var(--vscode-inputValidation-warningBorder);
 }
 
 .console-line .codicon {

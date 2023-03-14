@@ -28,7 +28,7 @@ import type { TestInfo } from './stable-test-runner';
 import { expect } from './stable-test-runner';
 import { test as base } from './stable-test-runner';
 
-const removeFolderAsync = promisify(rimraf);
+export const removeFolderAsync = promisify(rimraf);
 
 export type CliRunResult = {
   exitCode: number,
@@ -54,10 +54,10 @@ type TSCResult = {
   exitCode: number;
 };
 
-type Files = { [key: string]: string | Buffer };
+export type Files = { [key: string]: string | Buffer };
 type Params = { [key: string]: string | number | boolean | string[] };
 
-async function writeFiles(testInfo: TestInfo, files: Files, initial: boolean) {
+export async function writeFiles(testInfo: TestInfo, files: Files, initial: boolean) {
   const baseDir = testInfo.outputPath();
 
   if (initial && !Object.keys(files).some(name => name.includes('package.json'))) {
@@ -76,7 +76,7 @@ async function writeFiles(testInfo: TestInfo, files: Files, initial: boolean) {
   return baseDir;
 }
 
-const cliEntrypoint = path.join(__dirname, '../../packages/playwright-core/cli.js');
+export const cliEntrypoint = path.join(__dirname, '../../packages/playwright-core/cli.js');
 
 async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], baseDir: string, params: any, env: NodeJS.ProcessEnv, options: RunOptions): Promise<RunResult> {
   const paramList: string[] = [];
@@ -190,7 +190,7 @@ async function runPlaywrightCommand(childProcess: CommonFixtures['childProcess']
   return { exitCode, output: testProcess.output.toString() };
 }
 
-function cleanEnv(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+export function cleanEnv(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
   return {
     ...process.env,
     // BEGIN: Reserved CI
@@ -216,13 +216,14 @@ function cleanEnv(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
   };
 }
 
-type RunOptions = {
+export type RunOptions = {
   sendSIGINTAfter?: number;
   additionalArgs?: string[];
   cwd?: string,
 };
 type Fixtures = {
   writeFiles: (files: Files) => Promise<string>;
+  deleteFile: (file: string) => Promise<void>;
   runInlineTest: (files: Files, params?: Params, env?: NodeJS.ProcessEnv, options?: RunOptions) => Promise<RunResult>;
   runWatchTest: (files: Files, env?: NodeJS.ProcessEnv, options?: RunOptions) => Promise<TestChildProcess>;
   runTSC: (files: Files) => Promise<TSCResult>;
@@ -235,6 +236,13 @@ export const test = base
     .extend<Fixtures>({
       writeFiles: async ({}, use, testInfo) => {
         await use(files => writeFiles(testInfo, files, false));
+      },
+
+      deleteFile: async ({}, use, testInfo) => {
+        await use(async file => {
+          const baseDir = testInfo.outputPath();
+          await fs.promises.unlink(path.join(baseDir, file));
+        });
       },
 
       runInlineTest: async ({ childProcess }, use, testInfo: TestInfo) => {
@@ -254,7 +262,7 @@ export const test = base
           testProcess = watchPlaywrightTest(childProcess, baseDir, { ...env, PWTEST_CACHE_DIR: cacheDir }, options);
           return testProcess;
         });
-        await testProcess?.close();
+        await testProcess?.kill();
         await removeFolderAsync(cacheDir);
       },
 

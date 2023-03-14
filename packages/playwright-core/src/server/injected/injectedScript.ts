@@ -19,20 +19,20 @@ import { XPathEngine } from './xpathSelectorEngine';
 import { ReactEngine } from './reactSelectorEngine';
 import { VueEngine } from './vueSelectorEngine';
 import { createRoleEngine } from './roleSelectorEngine';
-import { parseAttributeSelector } from '../isomorphic/selectorParser';
-import type { NestedSelectorBody, ParsedSelector, ParsedSelectorPart } from '../isomorphic/selectorParser';
-import { allEngineNames, parseSelector, stringifySelector } from '../isomorphic/selectorParser';
+import { parseAttributeSelector } from '../../utils/isomorphic/selectorParser';
+import type { NestedSelectorBody, ParsedSelector, ParsedSelectorPart } from '../../utils/isomorphic/selectorParser';
+import { allEngineNames, parseSelector, stringifySelector } from '../../utils/isomorphic/selectorParser';
 import { type TextMatcher, elementMatchesText, elementText, type ElementText } from './selectorUtils';
 import { SelectorEvaluatorImpl } from './selectorEvaluator';
 import { enclosingShadowRootOrDocument, isElementVisible, parentElementOrShadowHost } from './domUtils';
-import type { CSSComplexSelectorList } from '../isomorphic/cssParser';
+import type { CSSComplexSelectorList } from '../../utils/isomorphic/cssParser';
 import { generateSelector } from './selectorGenerator';
 import type * as channels from '@protocol/channels';
 import { Highlight } from './highlight';
 import { getChecked, getAriaDisabled, getAriaLabelledByElements, getAriaRole, getElementAccessibleName } from './roleUtils';
 import { kLayoutSelectorNames, type LayoutSelectorName, layoutSelectorScore } from './layoutSelectorUtils';
-import { asLocator } from '../isomorphic/locatorGenerators';
-import type { Language } from '../isomorphic/locatorGenerators';
+import { asLocator } from '../../utils/isomorphic/locatorGenerators';
+import type { Language } from '../../utils/isomorphic/locatorGenerators';
 import { normalizeWhiteSpace } from '../../utils/isomorphic/stringUtils';
 
 type Predicate<T> = (progress: InjectedScriptProgress) => T | symbol;
@@ -380,7 +380,7 @@ export class InjectedScript {
     (() => {
       const module = {};
       ${source}
-      return module.exports;
+      return module.exports.default();
     })()`);
     return new constrFunction(this, params);
   }
@@ -1504,5 +1504,3 @@ function deepEquals(a: any, b: any): boolean {
 
   return false;
 }
-
-module.exports = InjectedScript;

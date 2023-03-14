@@ -714,6 +714,10 @@ export module Protocol {
        * Grouping list array (for rules involving @media/@supports). The array enumerates CSS groupings starting with the innermost one, going outwards.
        */
       groupings?: Grouping[];
+      /**
+       * <code>true</code> if this style is for a rule implicitly wrapping properties declared inside of CSSGrouping.
+       */
+      isImplicitlyNested?: boolean;
     }
     /**
      * Text range within a resource.
@@ -1541,6 +1545,10 @@ export module Protocol {
      */
     export type ChannelLevel = "off"|"basic"|"verbose";
     /**
+     * The reason the console is being cleared.
+     */
+    export type ClearReason = "console-api"|"main-frame-navigation";
+    /**
      * Logging channel.
      */
     export interface Channel {
@@ -1666,7 +1674,12 @@ export module Protocol {
     /**
      * Issued when console is cleared. This happens either upon <code>clearMessages</code> command or after page navigation.
      */
-    export type messagesClearedPayload = void;
+    export type messagesClearedPayload = {
+      /**
+       * The reason the console is being cleared.
+       */
+      reason: ClearReason;
+    }
     /**
      * Issued from console.takeHeapSnapshot.
      */
@@ -7619,6 +7632,17 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     }
     export type cancelDownloadReturnValue = {
     }
+    /**
+     * Clears browser memory cache.
+     */
+    export type clearMemoryCacheParameters = {
+      /**
+       * Browser context id.
+       */
+      browserContextId: ContextID;
+    }
+    export type clearMemoryCacheReturnValue = {
+    }
   }
   
   /**
@@ -9395,6 +9419,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Playwright.setLanguages": Playwright.setLanguagesParameters;
     "Playwright.setDownloadBehavior": Playwright.setDownloadBehaviorParameters;
     "Playwright.cancelDownload": Playwright.cancelDownloadParameters;
+    "Playwright.clearMemoryCache": Playwright.clearMemoryCacheParameters;
     "Runtime.parse": Runtime.parseParameters;
     "Runtime.evaluate": Runtime.evaluateParameters;
     "Runtime.awaitPromise": Runtime.awaitPromiseParameters;
@@ -9703,6 +9728,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Playwright.setLanguages": Playwright.setLanguagesReturnValue;
     "Playwright.setDownloadBehavior": Playwright.setDownloadBehaviorReturnValue;
     "Playwright.cancelDownload": Playwright.cancelDownloadReturnValue;
+    "Playwright.clearMemoryCache": Playwright.clearMemoryCacheReturnValue;
     "Runtime.parse": Runtime.parseReturnValue;
     "Runtime.evaluate": Runtime.evaluateReturnValue;
     "Runtime.awaitPromise": Runtime.awaitPromiseReturnValue;

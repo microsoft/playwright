@@ -16,13 +16,14 @@
 
 import fs from 'fs';
 import { mime } from 'playwright-core/lib/utilsBundle';
-import type { StackFrameData } from 'playwright-core/lib/utilsBundle';
+import type { StackFrame } from '@protocol/channels';
 import util from 'util';
 import path from 'path';
 import url from 'url';
 import { colors, debug, minimatch, parseStackTraceLine } from 'playwright-core/lib/utilsBundle';
 import type { TestInfoError, Location } from './common/types';
 import { calculateSha1, isRegExp, isString } from 'playwright-core/lib/utils';
+import type { RawStack } from 'playwright-core/lib/utils';
 
 const PLAYWRIGHT_TEST_PATH = path.join(__dirname, '..');
 const PLAYWRIGHT_CORE_PATH = path.dirname(require.resolve('playwright-core/package.json'));
@@ -30,34 +31,34 @@ const PLAYWRIGHT_CORE_PATH = path.dirname(require.resolve('playwright-core/packa
 export function filterStackTrace(e: Error) {
   if (process.env.PWDEBUGIMPL)
     return;
-  const stackLines = stringifyStackFrames(filteredStackTrace(e));
+  const stackLines = stringifyStackFrames(filteredStackTrace(e.stack?.split('\n') || []));
   const message = e.message;
   e.stack = `${e.name}: ${e.message}\n${stackLines.join('\n')}`;
   e.message = message;
 }
 
-export function filteredStackTrace(e: Error): StackFrameData[] {
-  const frames: StackFrameData[] = [];
-  for (const line of e.stack?.split('\n') || []) {
+export function filteredStackTrace(rawStack: RawStack): StackFrame[] {
+  const frames: StackFrame[] = [];
+  for (const line of rawStack) {
     const frame = parseStackTraceLine(line);
-    if (!frame || !frame.fileName)
+    if (!frame || !frame.file)
       continue;
-    if (!process.env.PWDEBUGIMPL && frame.fileName.startsWith(PLAYWRIGHT_TEST_PATH))
+    if (!process.env.PWDEBUGIMPL && frame.file.startsWith(PLAYWRIGHT_TEST_PATH))
       continue;
-    if (!process.env.PWDEBUGIMPL && frame.fileName.startsWith(PLAYWRIGHT_CORE_PATH))
+    if (!process.env.PWDEBUGIMPL && frame.file.startsWith(PLAYWRIGHT_CORE_PATH))
       continue;
     frames.push(frame);
   }
   return frames;
 }
 
-export function stringifyStackFrames(frames: StackFrameData[]): string[] {
+export function stringifyStackFrames(frames: StackFrame[]): string[] {
   const stackLines: string[] = [];
   for (const frame of frames) {
     if (frame.function)
-      stackLines.push(`    at ${frame.function} (${frame.fileName}:${frame.line}:${frame.column})`);
+      stackLines.push(`    at ${frame.function} (${frame.file}:${frame.line}:${frame.column})`);
     else
-      stackLines.push(`    at ${frame.fileName}:${frame.line}:${frame.column}`);
+      stackLines.push(`    at ${frame.file}:${frame.line}:${frame.column}`);
   }
   return stackLines;
 }

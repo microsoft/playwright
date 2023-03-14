@@ -1,7 +1,9 @@
 ---
 id: trace-viewer-intro
-title: "Trace Viewer"
+title: "Trace viewer"
 ---
+
+import LiteYouTube from '@site/src/components/LiteYouTube';
 
 Playwright Trace Viewer is a GUI tool that lets you explore recorded Playwright traces of your tests meaning you can go back and forward through each action of your test and visually see what was happening during each action.
 
@@ -11,7 +13,10 @@ Playwright Trace Viewer is a GUI tool that lets you explore recorded Playwright 
 - [How to open the HTML report](/trace-viewer-intro.md#opening-the-html-report)
 - [How to open and view the trace](/trace-viewer-intro.md#viewing-the-trace)
 
-
+<LiteYouTube
+    id="lfxjs--9ZQs"
+    title="Viewing Playwright Traces"
+/>
 ## Recording a Trace
 
 By default the [playwright.config](/test-configuration.md#record-test-trace) file will contain the configuration needed to create a `trace.zip` file for each test. Traces are setup to run `on-first-retry` meaning they will be run on the first retry of a failed test. Also `retries` are set to 2 when running on CI and 0 locally. This means the traces will be recorded on the first retry of a failed test but not on the first run and not on the second retry.

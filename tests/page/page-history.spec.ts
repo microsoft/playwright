@@ -185,12 +185,18 @@ it('page.reload should work with cross-origin redirect', async ({ page, server, 
   await expect(page).toHaveURL(server.CROSS_PROCESS_PREFIX + '/title.html');
 });
 
-it('page.reload should work on a page with a hash', async ({ page, server, browserName }) => {
+it('page.reload should work on a page with a hash', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/21145' });
-  it.fixme(browserName === 'firefox');
   await page.goto(server.EMPTY_PAGE + '#hash');
   await page.reload();
   await expect(page).toHaveURL(server.EMPTY_PAGE + '#hash');
+});
+
+it('page.reload should work on a page with a hash at the end', async ({ page, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/21430' });
+  await page.goto(server.EMPTY_PAGE + '#');
+  await page.reload();
+  await expect(page).toHaveURL(server.EMPTY_PAGE + '#');
 });
 
 it('page.goBack during renderer-initiated navigation', async ({ page, server }) => {
@@ -235,4 +241,62 @@ it('page.goForward during renderer-initiated navigation', async ({ page, server 
   // Form submit should be canceled, and goForward should eventually arrive
   // to the original one-style.html.
   await page.waitForSelector('text=hello');
+});
+
+it('regression test for issue 20791', async ({ page, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/20791' });
+  server.setRoute('/iframe.html', (req, res) => {
+    res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+    // iframe access parent frame to log a value from it.
+    res.end(`
+      <!doctype html>
+      <script type="text/javascript">
+        console.log(window.parent.foo);
+      </script>
+    `);
+  });
+  server.setRoute('/main.html', (req, res) => {
+    res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+    res.end(`
+      <!doctype html>
+      <iframe id=myframe src="about:blank"></iframe>
+      <script type="text/javascript">
+        setTimeout(() => window.foo = 'foo', 0);
+        setTimeout(() => myframe.contentDocument.location.href = '${server.PREFIX}/iframe.html', 0);
+      </script>
+    `);
+  });
+  const messages = [];
+  page.on('console', msg => messages.push(msg.text()));
+  await page.goto(server.PREFIX + '/main.html');
+  await expect.poll(() => messages).toEqual(['foo']);
+  await page.reload();
+  await expect.poll(() => messages).toEqual(['foo', 'foo']);
+});
+
+it('should reload proper page', async ({ page, server }) => {
+  let mainRequest = 0, popupRequest = 0;
+  server.setRoute('/main.html', (req, res) => {
+    res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+    res.end(`<!doctype html><h1>main: ${++mainRequest}</h1>`);
+  });
+  server.setRoute('/popup.html', (req, res) => {
+    res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+    res.end(`<!doctype html><h1>popup: ${++popupRequest}</h1>`);
+  });
+  await page.goto(server.PREFIX + '/main.html');
+  const [popup] = await Promise.all([
+    page.waitForEvent('popup'),
+    page.evaluate(() => window.open('/popup.html')),
+  ]);
+  await expect(page.locator('h1')).toHaveText('main: 1');
+  await expect(popup.locator('h1')).toHaveText('popup: 1');
+
+  await page.reload();
+  await expect(page.locator('h1')).toHaveText('main: 2');
+  await expect(popup.locator('h1')).toHaveText('popup: 1');
+
+  await popup.reload();
+  await expect(page.locator('h1')).toHaveText('main: 2');
+  await expect(popup.locator('h1')).toHaveText('popup: 2');
 });

@@ -28,7 +28,6 @@ import { TaskRunner } from './taskRunner';
 import type { Suite } from '../common/test';
 import type { FullConfigInternal, FullProjectInternal } from '../common/types';
 import { loadAllTests, loadGlobalHook } from './loadUtils';
-import { createFileMatcherFromArguments } from '../util';
 import type { Matcher } from '../util';
 
 const removeFolderAsync = promisify(rimraf);
@@ -92,9 +91,9 @@ function addRunTasks(taskRunner: TaskRunner<TaskRunnerState>, config: FullConfig
   return taskRunner;
 }
 
-export function createTaskRunnerForList(config: FullConfigInternal, reporter: Multiplexer): TaskRunner<TaskRunnerState> {
+export function createTaskRunnerForList(config: FullConfigInternal, reporter: Multiplexer, mode: 'in-process' | 'out-of-process'): TaskRunner<TaskRunnerState> {
   const taskRunner = new TaskRunner<TaskRunnerState>(reporter, config.globalTimeout);
-  taskRunner.addTask('load tests', createLoadTask('in-process', false));
+  taskRunner.addTask('load tests', createLoadTask(mode, false));
   taskRunner.addTask('report begin', async ({ reporter, rootSuite }) => {
     reporter.onBegin?.(config, rootSuite!);
     return () => reporter.onEnd();
@@ -158,9 +157,7 @@ function createRemoveOutputDirsTask(): Task<TaskRunnerState> {
 function createLoadTask(mode: 'out-of-process' | 'in-process', shouldFilterOnly: boolean, projectsToIgnore = new Set<FullProjectInternal>(), additionalFileMatcher?: Matcher): Task<TaskRunnerState> {
   return async (context, errors) => {
     const { config } = context;
-    const cliMatcher = config._internal.cliArgs.length ? createFileMatcherFromArguments(config._internal.cliArgs) : () => true;
-    const fileMatcher = (value: string) => cliMatcher(value) && (additionalFileMatcher ? additionalFileMatcher(value) : true);
-    context.rootSuite = await loadAllTests(mode, config, projectsToIgnore, fileMatcher, errors, shouldFilterOnly);
+    context.rootSuite = await loadAllTests(mode, config, projectsToIgnore, additionalFileMatcher, errors, shouldFilterOnly);
     // Fail when no tests.
     if (!context.rootSuite.allTests().length && !config._internal.passWithNoTests && !config.shard)
       throw new Error(`No tests found`);

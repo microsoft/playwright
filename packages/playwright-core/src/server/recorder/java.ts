@@ -24,7 +24,7 @@ import { toModifiers } from './utils';
 const deviceDescriptors = require('../deviceDescriptorsSource.json');
 import { JavaScriptFormatter } from './javascript';
 import { escapeWithQuotes } from '../../utils/isomorphic/stringUtils';
-import { asLocator } from '../isomorphic/locatorGenerators';
+import { asLocator } from '../../utils/isomorphic/locatorGenerators';
 
 export class JavaLanguageGenerator implements LanguageGenerator {
   id = 'java';

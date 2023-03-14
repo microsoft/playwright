@@ -154,12 +154,12 @@ test('should reuse context with trace if mode=when-possible', async ({ runInline
 
   const trace2 = await parseTrace(testInfo.outputPath('test-results', 'reuse-two', 'trace.zip'));
   expect(trace2.actions).toEqual([
+    'expect.toBe',
     'page.setContent',
     'page.fill',
     'locator.click',
   ]);
   expect(trace2.events.some(e => e.type === 'frame-snapshot')).toBe(true);
-  expect(fs.existsSync(testInfo.outputPath('test-results', 'reuse-two', 'trace-1.zip'))).toBe(false);
 });
 
 test('should work with manually closed pages', async ({ runInlineTest }) => {

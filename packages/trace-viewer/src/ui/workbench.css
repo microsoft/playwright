@@ -20,7 +20,7 @@
   justify-content: center;
   flex: auto;
   flex-direction: column;
-  background-color: white;
+  background-color: var(--vscode-editor-background);
   position: absolute;
   top: 0;
   right: 0;
@@ -102,8 +102,4 @@
 
 .workbench .header .title {
   margin-left: 16px;
-}
-
-.workbench .spacer {
-  flex: auto;
 }

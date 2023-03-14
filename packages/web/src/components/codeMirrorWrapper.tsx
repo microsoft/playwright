@@ -14,17 +14,15 @@
   limitations under the License.
 */
 
-import './source.css';
+import './codeMirrorWrapper.css';
 import * as React from 'react';
-import CodeMirror from 'codemirror';
-import 'codemirror/mode/javascript/javascript';
-import 'codemirror/mode/python/python';
-import 'codemirror/mode/clike/clike';
-import 'codemirror/lib/codemirror.css';
+import type { CodeMirror } from './codeMirrorModule';
+import { ansi2htmlMarkup } from './errorMessage';
 
 export type SourceHighlight = {
   line: number;
   type: 'running' | 'paused' | 'error';
+  message?: string;
 };
 
 export type Language = 'javascript' | 'python' | 'java' | 'csharp';
@@ -32,7 +30,7 @@ export type Language = 'javascript' | 'python' | 'java' | 'csharp';
 export interface SourceProps {
   text: string;
   language: Language;
-  readOnly: boolean;
+  readOnly?: boolean;
   // 1-based
   highlight?: SourceHighlight[];
   revealLine?: number;
@@ -46,66 +44,113 @@ export const CodeMirrorWrapper: React.FC<SourceProps> = ({
   text,
   language,
   readOnly,
-  highlight = [],
+  highlight,
   revealLine,
   lineNumbers,
   focusOnChange,
   wrapLines,
   onChange,
 }) => {
-  const codemirrorElement = React.createRef<HTMLDivElement>();
+  const codemirrorElement = React.useRef<HTMLDivElement>(null);
+  const [modulePromise] = React.useState<Promise<CodeMirror>>(import('./codeMirrorModule').then(m => m.default));
+  const codemirrorRef = React.useRef<{ cm: CodeMirror.Editor, highlight: SourceHighlight[], widgets: CodeMirror.LineWidget[] } | null>(null);
   const [codemirror, setCodemirror] = React.useState<CodeMirror.Editor>();
 
   React.useEffect(() => {
-    let mode;
-    if (language === 'javascript')
-      mode = 'javascript';
-    if (language === 'python')
-      mode = 'python';
-    if (language === 'java')
-      mode = 'text/x-java';
-    if (language === 'csharp')
-      mode = 'text/x-csharp';
+    (async () => {
+      // Always load the module first.
+      const CodeMirror = await modulePromise;
 
-    if (codemirror && codemirror.getOption('mode') === mode && codemirror.isReadOnly() === readOnly)
+      const element = codemirrorElement.current;
+      if (!element)
+        return;
+
+      let mode = 'javascript';
+      if (language === 'python')
+        mode = 'python';
+      if (language === 'java')
+        mode = 'text/x-java';
+      if (language === 'csharp')
+        mode = 'text/x-csharp';
+
+      if (codemirrorRef.current
+        && mode === codemirrorRef.current.cm.getOption('mode')
+        && !!readOnly === codemirrorRef.current.cm.getOption('readOnly')
+        && lineNumbers === codemirrorRef.current.cm.getOption('lineNumbers')
+        && wrapLines === codemirrorRef.current.cm.getOption('lineWrapping')) {
+        // No need to re-create codemirror.
+        return;
+      }
+
+      // Either configuration is different or we don't have a codemirror yet.
+      codemirrorRef.current?.cm?.getWrapperElement().remove();
+
+      const cm = CodeMirror(element, {
+        value: '',
+        mode,
+        readOnly: !!readOnly,
+        lineNumbers,
+        lineWrapping: wrapLines,
+      });
+      codemirrorRef.current = { cm, highlight: [], widgets: [] };
+      setCodemirror(cm);
+      return cm;
+    })();
+  }, [modulePromise, codemirror, codemirrorElement, language, lineNumbers, wrapLines, readOnly]);
+
+  React.useEffect(() => {
+    if (!codemirror)
       return;
+    codemirror.off('change', (codemirror as any).listenerSymbol);
+    (codemirror as any)[listenerSymbol] = undefined;
+    if (onChange) {
+      (codemirror as any)[listenerSymbol] = () => onChange(codemirror.getValue());
+      codemirror.on('change', (codemirror as any)[listenerSymbol]);
+    }
 
-    if (!codemirrorElement.current)
-      return;
-    if (codemirror)
-      codemirror.getWrapperElement().remove();
+    if (codemirror.getValue() !== text) {
+      codemirror.setValue(text);
+      if (focusOnChange) {
+        codemirror.execCommand('selectAll');
+        codemirror.focus();
+      }
+    }
 
-    const cm = CodeMirror(codemirrorElement.current, {
-      value: '',
-      mode,
-      readOnly,
-      lineNumbers,
-      lineWrapping: wrapLines,
-    });
-    if (onChange)
-      cm.on('change', () => onChange(cm.getValue()));
-    setCodemirror(cm);
-    updateEditor(cm, text, highlight, revealLine, focusOnChange);
-  }, [codemirror, codemirrorElement, text, language, highlight, revealLine, focusOnChange, lineNumbers, wrapLines, readOnly, onChange]);
+    // Line highlight.
+    for (const h of codemirrorRef.current!.highlight)
+      codemirror.removeLineClass(h.line - 1, 'wrap');
+    for (const h of highlight || [])
+      codemirror.addLineClass(h.line - 1, 'wrap', `source-line-${h.type}`);
+    codemirrorRef.current!.highlight = highlight || [];
 
-  if (codemirror)
-    updateEditor(codemirror, text, highlight, revealLine, focusOnChange);
+    // Error widgets.
+    for (const w of codemirrorRef.current!.widgets)
+      codemirror.removeLineWidget(w);
+    const widgets: CodeMirror.LineWidget[] = [];
+    for (const h of highlight || []) {
+      if (h.type !== 'error')
+        continue;
+
+      const line = codemirrorRef.current?.cm.getLine(h.line - 1);
+      if (line) {
+        const underlineWidgetElement = document.createElement('div');
+        underlineWidgetElement.className = 'source-line-error-underline';
+        underlineWidgetElement.innerHTML = '&nbsp;'.repeat(line.length || 1);
+        widgets.push(codemirror.addLineWidget(h.line, underlineWidgetElement, { above: true, coverGutter: false }));
+      }
+
+      const errorWidgetElement = document.createElement('div');
+      errorWidgetElement.innerHTML = ansi2htmlMarkup(h.message || '');
+      errorWidgetElement.className = 'source-line-error-widget';
+      widgets.push(codemirror.addLineWidget(h.line, errorWidgetElement, { above: true, coverGutter: false }));
+    }
+    codemirrorRef.current!.widgets = widgets;
+
+    if (revealLine && codemirrorRef.current!.cm.lineCount() >= revealLine)
+      codemirror.scrollIntoView({ line: revealLine - 1, ch: 0 }, 50);
+  }, [codemirror, text, highlight, revealLine, focusOnChange, onChange]);
 
   return <div className='cm-wrapper' ref={codemirrorElement}></div>;
 };
 
-function updateEditor(cm: CodeMirror.Editor, text: string, highlight: SourceHighlight[], revealLine?: number, focusOnChange?: boolean) {
-  if (cm.getValue() !== text) {
-    cm.setValue(text);
-    if (focusOnChange) {
-      cm.execCommand('selectAll');
-      cm.focus();
-    }
-  }
-  for (let i = 0; i < cm.lineCount(); ++i)
-    cm.removeLineClass(i, 'wrap');
-  for (const h of highlight)
-    cm.addLineClass(h.line - 1, 'wrap', `source-line-${h.type}`);
-  if (revealLine)
-    cm.scrollIntoView({ line: revealLine - 1, ch: 0 }, 50);
-}
+const listenerSymbol = Symbol('listener');

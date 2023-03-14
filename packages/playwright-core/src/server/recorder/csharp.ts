@@ -23,7 +23,7 @@ import type { MouseClickOptions } from './utils';
 import { toModifiers } from './utils';
 import { escapeWithQuotes } from '../../utils/isomorphic/stringUtils';
 const deviceDescriptors = require('../deviceDescriptorsSource.json');
-import { asLocator } from '../isomorphic/locatorGenerators';
+import { asLocator } from '../../utils/isomorphic/locatorGenerators';
 
 type CSharpLanguageMode = 'library' | 'mstest' | 'nunit';
 

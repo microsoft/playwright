@@ -56,14 +56,14 @@
 }
 
 .call-log-call.error {
-  background-color: #fff0f0;
+  background-color: var(--vscode-inputValidation-errorBackground);
   border-top: 1px solid var(--vscode-panel-border);
 }
 
 .call-log-call.error .call-log-call-header,
 .call-log-message.error,
 .call-log .codicon-error {
-  color: red;
+  color: var(--vscode-errorForeground);
 }
 
 .call-log-details {

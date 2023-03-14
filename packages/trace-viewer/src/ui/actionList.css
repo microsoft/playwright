@@ -45,11 +45,11 @@
 }
 
 .action-icons:hover {
-  border-bottom: 1px solid white;
+  border-bottom: 1px solid var(--vscode-sideBarTitle-foreground);
 }
 
 .action-error {
-  color: red;
+  color: var(--vscode-errorForeground);
   position: relative;
   margin-right: 2px;
   flex: none;

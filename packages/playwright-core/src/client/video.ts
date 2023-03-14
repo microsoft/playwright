@@ -18,22 +18,20 @@ import type { Page } from './page';
 import type * as api from '../../types/types';
 import type { Artifact } from './artifact';
 import type { Connection } from './connection';
+import { ManualPromise } from '../utils';
 
 export class Video implements api.Video {
   private _artifact: Promise<Artifact | null> | null = null;
-  private _artifactCallback = (artifact: Artifact) => {};
+  private _artifactReadyPromise = new ManualPromise<Artifact>();
   private _isRemote = false;
 
   constructor(page: Page, connection: Connection) {
     this._isRemote = connection.isRemote();
-    this._artifact = Promise.race([
-      new Promise<Artifact>(f => this._artifactCallback = f),
-      page._closedOrCrashedPromise.then(() => null),
-    ]);
+    this._artifact = page._closedOrCrashedRace.safeRace(this._artifactReadyPromise);
   }
 
   _artifactReady(artifact: Artifact) {
-    this._artifactCallback(artifact);
+    this._artifactReadyPromise.resolve(artifact);
   }
 
   async path(): Promise<string> {

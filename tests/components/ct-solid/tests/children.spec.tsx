@@ -42,3 +42,18 @@ test('render named children', async ({ mount }) => {
   await expect(component).toContainText('Main Content');
   await expect(component).toContainText('Footer');
 });
+
+test('render string as child', async ({ mount }) => {
+  const component = await mount(<DefaultChildren>{'string'}</DefaultChildren>);
+  await expect(component).toContainText('string');
+});
+
+test('render array as child', async ({ mount }) => {
+  const component = await mount(<DefaultChildren>{[4,2]}</DefaultChildren>);
+  await expect(component).toContainText('42');
+});
+
+test('render number as child', async ({ mount }) => {
+  const component = await mount(<DefaultChildren>{1337}</DefaultChildren>);
+  await expect(component).toContainText('1337');
+});

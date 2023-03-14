@@ -31,7 +31,9 @@ export default async () => {
       resolve();
   }));
   const browser = await playwright.chromium.connectOverCDP(`http://127.0.0.1:${cdpPort}`);
-  const chromeVersion = await browser.contexts()[0].pages()[0].evaluate(() => navigator.userAgent.match(/Chrome\/(.*?) /)[1]);
+  const page = browser.contexts()[0].pages()[0];
+  await page.goto('data:text/html,');
+  const chromeVersion = await page.evaluate(() => navigator.userAgent.match(/Chrome\/(.*?) /)[1]);
   process.env.PWTEST_WEBVIEW2_CHROMIUM_VERSION = chromeVersion;
   await browser.close();
   childProcess.spawnSync(`taskkill /pid ${spawnedProcess.pid} /T /F`, { shell: true });

@@ -17,8 +17,8 @@
 import type { ByRoleOptions } from '../../utils/isomorphic/locatorUtils';
 import { getByAltTextSelector, getByLabelSelector, getByPlaceholderSelector, getByRoleSelector, getByTestIdSelector, getByTextSelector, getByTitleSelector } from '../../utils/isomorphic/locatorUtils';
 import { escapeForTextSelector } from '../../utils/isomorphic/stringUtils';
-import { asLocator } from '../isomorphic/locatorGenerators';
-import type { Language } from '../isomorphic/locatorGenerators';
+import { asLocator } from '../../utils/isomorphic/locatorGenerators';
+import type { Language } from '../../utils/isomorphic/locatorGenerators';
 import { type InjectedScript } from './injectedScript';
 import { generateSelector } from './selectorGenerator';
 
@@ -128,4 +128,4 @@ class ConsoleAPI {
   }
 }
 
-module.exports = ConsoleAPI;
+export default ConsoleAPI;

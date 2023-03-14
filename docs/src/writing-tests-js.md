@@ -1,6 +1,6 @@
 ---
 id: writing-tests
-title: "Writing Tests"
+title: "Writing tests"
 ---
 
 Playwright tests are simple, they

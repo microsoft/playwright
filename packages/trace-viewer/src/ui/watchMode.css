@@ -1,0 +1,110 @@
+/*
+  Copyright (c) Microsoft Corporation.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
+
+.watch-mode-sidebar {
+  background-color: var(--vscode-sideBar-background);
+}
+
+.watch-mode-sidebar input[type=search] {
+  flex: auto;
+}
+
+.watch-mode-sidebar .toolbar-button:not([disabled]) .codicon-play {
+  color: var(--vscode-debugIcon-restartForeground);
+}
+
+.watch-mode-sidebar .toolbar-button:not([disabled]) .codicon-debug-stop {
+  color: var(--vscode-debugIcon-stopForeground);
+}
+
+.watch-mode-list-item {
+  flex: auto;
+}
+
+.watch-mode-list-item-title {
+  flex: auto;
+  text-overflow: ellipsis;
+  overflow: hidden
+}
+
+.watch-mode-sidebar .toolbar-button {
+  margin: 0;
+}
+
+.watch-mode .section-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  font-weight: bold;
+  margin: 5px;
+}
+
+.status-line {
+  flex: none;
+  line-height: 22px;
+  padding: 0 10px;
+  color: var(--vscode-statusBar-foreground);
+  background-color: var(--vscode-statusBar-background);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.status-line > div {
+  display: flex;
+  align-items: center;
+  margin: 0 5px;
+}
+
+.list-view {
+  margin-top: 5px;
+}
+
+.list-view-entry:not(.highlighted):not(.selected) .toolbar-button:not(.toggled) {
+  display: none;
+}
+
+.filters {
+  flex: none;
+  margin-left: 5px;
+  line-height: 24px;
+}
+
+.filters > span {
+  color: var(--vscode-panelTitle-inactiveForeground);
+  padding-left: 3px;
+}
+
+.filters > div {
+  display: inline-block;
+  margin: 0 5px;
+  user-select: none;
+  cursor: pointer;
+}
+
+.filters > div:hover,
+.filters > div.filters-toggled {
+  color: var(--vscode-notificationLink-foreground);
+}
+
+.watch-mode-sidebar input[type=search] {
+  padding: 0 5px;
+  line-height: 24px;
+  outline: none;
+  margin: 0 4px;
+  border: none;
+  color: var(--vscode-input-foreground);
+  background-color: var(--vscode-input-background);
+}

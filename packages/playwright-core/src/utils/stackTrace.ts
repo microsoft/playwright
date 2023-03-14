@@ -17,6 +17,7 @@
 import path from 'path';
 import { parseStackTraceLine } from '../utilsBundle';
 import { isUnderTest } from './';
+import type { StackFrame } from '@protocol/channels';
 
 export function rewriteErrorMessage<E extends Error>(e: E, newMessage: string): E {
   const lines: string[] = (e.stack?.split('\n') || []).filter(l => l.startsWith('    at '));
@@ -35,13 +36,6 @@ const internalStackPrefixes = [
 ];
 export const addInternalStackPrefix = (prefix: string) => internalStackPrefixes.push(prefix);
 
-export type StackFrame = {
-  file: string,
-  line?: number,
-  column?: number,
-  function?: string,
-};
-
 export type ParsedStackTrace = {
   allFrames: StackFrame[];
   frames: StackFrame[];
@@ -49,16 +43,18 @@ export type ParsedStackTrace = {
   apiName: string | undefined;
 };
 
-export function captureRawStack(): string {
+export type RawStack = string[];
+
+export function captureRawStack(): RawStack {
   const stackTraceLimit = Error.stackTraceLimit;
   Error.stackTraceLimit = 30;
   const error = new Error();
-  const stack = error.stack!;
+  const stack = error.stack || '';
   Error.stackTraceLimit = stackTraceLimit;
-  return stack;
+  return stack.split('\n');
 }
 
-export function captureLibraryStackTrace(rawStack?: string): ParsedStackTrace {
+export function captureLibraryStackTrace(rawStack?: RawStack): ParsedStackTrace {
   const stack = rawStack || captureRawStack();
 
   const isTesting = isUnderTest();
@@ -67,20 +63,15 @@ export function captureLibraryStackTrace(rawStack?: string): ParsedStackTrace {
     frameText: string;
     isPlaywrightLibrary: boolean;
   };
-  let parsedFrames = stack.split('\n').map(line => {
+  let parsedFrames = stack.map(line => {
     const frame = parseStackTraceLine(line);
-    if (!frame || !frame.fileName)
+    if (!frame || !frame.file)
       return null;
-    if (!process.env.PWDEBUGIMPL && isTesting && frame.fileName.includes(COVERAGE_PATH))
+    if (!process.env.PWDEBUGIMPL && isTesting && frame.file.includes(COVERAGE_PATH))
       return null;
-    const isPlaywrightLibrary = frame.fileName.startsWith(CORE_DIR);
+    const isPlaywrightLibrary = frame.file.startsWith(CORE_DIR);
     const parsed: ParsedFrame = {
-      frame: {
-        file: frame.fileName,
-        line: frame.line,
-        column: frame.column,
-        function: frame.function,
-      },
+      frame,
       frameText: line,
       isPlaywrightLibrary
     };
@@ -90,16 +81,7 @@ export function captureLibraryStackTrace(rawStack?: string): ParsedStackTrace {
   let apiName = '';
   const allFrames = parsedFrames;
 
-  // Use stack trap for the API annotation, if available.
-  for (let i = parsedFrames.length - 1; i >= 0; i--) {
-    const parsedFrame = parsedFrames[i];
-    if (parsedFrame.frame.function?.startsWith('__PWTRAP__[')) {
-      apiName = parsedFrame.frame.function!.substring('__PWTRAP__['.length, parsedFrame.frame.function!.length - 1);
-      break;
-    }
-  }
-
-  // Otherwise, deepest transition between non-client code calling into client
+  // Deepest transition between non-client code calling into client
   // code is the api entry.
   for (let i = 0; i < parsedFrames.length - 1; i++) {
     const parsedFrame = parsedFrames[i];
@@ -142,3 +124,8 @@ export function splitErrorMessage(message: string): { name: string, message: str
     message: separationIdx !== -1 && separationIdx + 2 <= message.length ? message.substring(separationIdx + 2) : message,
   };
 }
+
+export type ExpectZone = {
+  title: string;
+  wallTime: number;
+};

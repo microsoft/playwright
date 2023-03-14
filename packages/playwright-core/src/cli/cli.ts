@@ -600,13 +600,14 @@ async function waitForPage(page: Page, captureOptions: CaptureOptions) {
 }
 
 async function screenshot(options: Options, captureOptions: CaptureOptions, url: string, path: string) {
-  const { browser, context } = await launchContext(options, true);
+  const { context } = await launchContext(options, true);
   console.log('Navigating to ' + url);
   const page = await openPage(context, url);
   await waitForPage(page, captureOptions);
   console.log('Capturing screenshot into ' + path);
   await page.screenshot({ path, fullPage: !!captureOptions.fullPage });
-  await browser.close();
+  // launchContext takes care of closing the browser.
+  await page.close();
 }
 
 async function pdf(options: Options, captureOptions: CaptureOptions, url: string, path: string) {
@@ -614,13 +615,14 @@ async function pdf(options: Options, captureOptions: CaptureOptions, url: string
     console.error('PDF creation is only working with Chromium');
     process.exit(1);
   }
-  const { browser, context } = await launchContext({ ...options, browser: 'chromium' }, true);
+  const { context } = await launchContext({ ...options, browser: 'chromium' }, true);
   console.log('Navigating to ' + url);
   const page = await openPage(context, url);
   await waitForPage(page, captureOptions);
   console.log('Saving as pdf into ' + path);
   await page.pdf!({ path });
-  await browser.close();
+  // launchContext takes care of closing the browser.
+  await page.close();
 }
 
 function lookupBrowserType(options: Options): BrowserType {

@@ -134,6 +134,11 @@ A selector to query for.
 
 A selector to use when resolving DOM element.
 
+## find-selector-or-locator
+- `selectorOrLocator` <[string]|[Locator]>
+
+A selector or locator to use when resolving DOM element.
+
 ## wait-for-selector-state
 - `state` <[WaitForSelectorState]<"attached"|"detached"|"visible"|"hidden">>
 
@@ -450,7 +455,7 @@ Function to be evaluated in the worker context.
 * langs: js
 - `pageFunction` <[function]|[Electron]>
 
-Function to be evaluated in the worker context.
+Function to be evaluated in the main Electron process.
 
 ## python-context-option-viewport
 * langs: python

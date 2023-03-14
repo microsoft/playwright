@@ -22,31 +22,38 @@ export interface TabbedPaneTabModel {
   id: string;
   title: string | JSX.Element;
   count?: number;
-  render: () => React.ReactElement;
+  component?: React.ReactElement;
+  render?: () => React.ReactElement;
 }
 
 export const TabbedPane: React.FunctionComponent<{
   tabs: TabbedPaneTabModel[],
+  leftToolbar?: React.ReactElement[],
+  rightToolbar?: React.ReactElement[],
   selectedTab: string,
   setSelectedTab: (tab: string) => void
-}> = ({ tabs, selectedTab, setSelectedTab }) => {
+}> = ({ tabs, selectedTab, setSelectedTab, leftToolbar, rightToolbar }) => {
   return <div className='tabbed-pane'>
     <div className='vbox'>
-      <Toolbar>{
-        tabs.map(tab => (
+      <Toolbar>{[
+        ...leftToolbar || [],
+        ...tabs.map(tab => (
           <TabbedPaneTab
             id={tab.id}
             title={tab.title}
             count={tab.count}
             selected={selectedTab === tab.id}
             onSelect={setSelectedTab}
-          ></TabbedPaneTab>
-        ))
-      }</Toolbar>
+          ></TabbedPaneTab>)),
+        <div className='spacer'></div>,
+        ...rightToolbar || [],
+      ]}</Toolbar>
       {
         tabs.map(tab => {
+          if (tab.component)
+            return <div key={tab.id} className='tab-content' style={{ display: selectedTab === tab.id ? 'inherit' : 'none' }}>{tab.component}</div>;
           if (selectedTab === tab.id)
-            return <div key={tab.id} className='tab-content'>{tab.render()}</div>;
+            return <div key={tab.id} className='tab-content'>{tab.component || tab.render!()}</div>;
         })
       }
     </div>

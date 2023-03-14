@@ -12,7 +12,7 @@
       */
       "@html-reporter/*": ["./packages/html-reporter/src/*"],
       "@injected/*": ["./packages/playwright-core/src/server/injected/*"],
-      "@isomorphic/*": ["./packages/playwright-core/src/server/isomorphic/*"],
+      "@isomorphic/*": ["./packages/playwright-core/src/utils/isomorphic/*"],
       "@protocol/*": ["./packages/protocol/src/*"],
       "@recorder/*": ["./packages/recorder/src/*"],
       "@trace/*": ["./packages/trace/src/*"],
@@ -34,6 +34,7 @@
     "packages/*/lib",
     "packages/html-reporter",
     "packages/playwright-ct-react",
+    "packages/playwright-ct-react17",
     "packages/playwright-ct-solid",
     "packages/playwright-ct-svelte",
     "packages/playwright-ct-vue",

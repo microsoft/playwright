@@ -601,7 +601,7 @@ test('should show action source', async ({ showTraceViewer }) => {
 
   await page.click('text=Source');
   await expect(page.locator('.source-line-running')).toContainText('await page.getByText(\'Click\').click()');
-  await expect(page.locator('.stack-trace-frame.selected')).toHaveText(/doClick.*trace-viewer\.spec\.ts:[\d]+/);
+  await expect(page.getByTestId('stack-trace').locator('.list-view-entry.selected')).toHaveText(/doClick.*trace-viewer\.spec\.ts:[\d]+/);
 });
 
 test('should follow redirects', async ({ page, runAndTrace, server, asset }) => {
@@ -633,7 +633,7 @@ test('should follow redirects', async ({ page, runAndTrace, server, asset }) => 
 test('should include metainfo', async ({ showTraceViewer, browserName }) => {
   const traceViewer = await showTraceViewer([traceFile]);
   await traceViewer.page.locator('text=Metadata').click();
-  const callLine = traceViewer.page.locator('.call-line');
+  const callLine = traceViewer.page.locator('.metadata-view .call-line');
   await expect(callLine.getByText('start time')).toHaveText(/start time:[\d/,: ]+/);
   await expect(callLine.getByText('duration')).toHaveText(/duration:[\dms]+/);
   await expect(callLine.getByText('engine')).toHaveText(/engine:[\w]+/);

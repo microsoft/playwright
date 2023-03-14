@@ -20,13 +20,16 @@ import * as consoleApiSource from '../../../generated/consoleApiSource';
 import { HttpServer } from '../../../utils/httpServer';
 import { findChromiumChannel } from '../../registry';
 import { isUnderTest } from '../../../utils';
-import type { BrowserContext } from '../../browserContext';
 import { installAppIcon, syncLocalStorageWithSettings } from '../../chromium/crApp';
 import { serverSideCallMetadata } from '../../instrumentation';
 import { createPlaywright } from '../../playwright';
 import { ProgressController } from '../../progress';
+import type { Page } from '../../page';
 
-export async function showTraceViewer(traceUrls: string[], browserName: string, { headless = false, host, port }: { headless?: boolean, host?: string, port?: number }): Promise<BrowserContext | undefined> {
+type Options = { app?: string, headless?: boolean, host?: string, port?: number };
+
+export async function showTraceViewer(traceUrls: string[], browserName: string, options?: Options): Promise<Page> {
+  const { headless = false, host, port, app } = options || {};
   for (const traceUrl of traceUrls) {
     if (!traceUrl.startsWith('http://') && !traceUrl.startsWith('https://') && !fs.existsSync(traceUrl)) {
       // eslint-disable-next-line no-console
@@ -60,8 +63,6 @@ export async function showTraceViewer(traceUrls: string[], browserName: string, 
     '--window-size=1280,800',
     '--test-type=',
   ] : [];
-  if (isUnderTest())
-    args.push(`--remote-debugging-port=0`);
 
   const context = await traceViewerPlaywright[traceViewerBrowser as 'chromium'].launchPersistentContext(serverSideCallMetadata(), '', {
     // TODO: store language in the trace.
@@ -71,7 +72,7 @@ export async function showTraceViewer(traceUrls: string[], browserName: string, 
     ignoreDefaultArgs: ['--enable-automation'],
     headless,
     colorScheme: 'no-override',
-    useWebSocket: isUnderTest()
+    useWebSocket: isUnderTest(),
   });
 
   const controller = new ProgressController(serverSideCallMetadata(), context._browser);
@@ -81,9 +82,13 @@ export async function showTraceViewer(traceUrls: string[], browserName: string, 
   await context.extendInjectedScript(consoleApiSource.source);
   const [page] = context.pages();
 
+  if (isUnderTest())
+    process.stderr.write('DevTools listening on: ' + context._browser.options.wsEndpoint + '\n');
+
   if (traceViewerBrowser === 'chromium')
     await installAppIcon(page);
-  await syncLocalStorageWithSettings(page, 'traceviewer');
+  if (!isUnderTest())
+    await syncLocalStorageWithSettings(page, 'traceviewer');
 
   const params = traceUrls.map(t => `trace=${t}`);
   if (isUnderTest()) {
@@ -94,6 +99,6 @@ export async function showTraceViewer(traceUrls: string[], browserName: string, 
   }
 
   const searchQuery = params.length ? '?' + params.join('&') : '';
-  await page.mainFrame().goto(serverSideCallMetadata(), urlPrefix + `/trace/index.html${searchQuery}`);
-  return context;
+  await page.mainFrame().goto(serverSideCallMetadata(), urlPrefix + `/trace/${app || 'index.html'}${searchQuery}`);
+  return page;
 }

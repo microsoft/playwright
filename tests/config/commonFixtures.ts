@@ -83,18 +83,24 @@ export class TestChildProcess {
 
   async close() {
     if (!this.process.killed)
-      this._killProcessGroup();
+      this._killProcessGroup('SIGINT');
     return this.exited;
   }
 
-  private _killProcessGroup() {
+  async kill() {
+    if (!this.process.killed)
+      this._killProcessGroup('SIGKILL');
+    return this.exited;
+  }
+
+  private _killProcessGroup(signal: 'SIGINT' | 'SIGKILL') {
     if (!this.process.pid || this.process.killed)
       return;
     try {
       if (process.platform === 'win32')
         execSync(`taskkill /pid ${this.process.pid} /T /F /FI "MEMUSAGE gt 0"`, { stdio: 'ignore' });
       else
-        process.kill(-this.process.pid, 'SIGKILL');
+        process.kill(-this.process.pid, signal);
     } catch (e) {
       // the process might have already stopped
     }

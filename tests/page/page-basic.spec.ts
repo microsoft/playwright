@@ -257,3 +257,11 @@ it('has navigator.webdriver set to true', async ({ page, browserName }) => {
   it.skip(browserName === 'firefox');
   expect(await page.evaluate(() => navigator.webdriver)).toBe(true);
 });
+
+it('should iterate over page properties', async ({ page }) => {
+  const props = [];
+  for (const prop in page) {
+    if (page[prop] && typeof page[prop] === 'object')
+      props.push(page[prop][Symbol.iterator]);
+  }
+});

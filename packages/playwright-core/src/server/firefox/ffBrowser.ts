@@ -358,6 +358,11 @@ export class FFBrowserContext extends BrowserContext {
 
   onClosePersistent() {}
 
+  override async clearCache(): Promise<void> {
+    // Clearing only the context cache does not work: https://bugzilla.mozilla.org/show_bug.cgi?id=1819147
+    await this._browser._connection.send('Browser.clearCache');
+  }
+
   async doClose() {
     if (!this._browserContextId) {
       if (this._options.recordVideo) {

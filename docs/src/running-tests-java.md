@@ -1,6 +1,6 @@
 ---
 id: running-tests
-title: "Running Tests"
+title: "Running tests"
 ---
 
 Playwright tests can be run in a variety of ways. We recommend hooking it up to your favorite test runner, e.g. [JUnit](./test-runners.md) since it gives you the ability to run tests in parallel, run single test, etc.

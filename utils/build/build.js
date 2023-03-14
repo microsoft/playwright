@@ -263,7 +263,7 @@ for (const bundle of bundles) {
 for (const webPackage of ['html-reporter', 'recorder', 'trace-viewer']) {
   steps.push({
     command: 'npx',
-    args: ['vite', 'build', ...(watchMode ? ['--watch', '--sourcemap'] : [])],
+    args: ['vite', 'build', ...(watchMode ? ['--watch', '--sourcemap', '--minify=false'] : [])],
     shell: true,
     cwd: path.join(__dirname, '..', '..', 'packages', webPackage),
     concurrent: true,
@@ -272,7 +272,7 @@ for (const webPackage of ['html-reporter', 'recorder', 'trace-viewer']) {
 // Build/watch trace viewer service worker.
 steps.push({
   command: 'npx',
-  args: ['vite', '--config', 'vite.sw.config.ts', 'build', ...(watchMode ? ['--watch', '--sourcemap'] : [])],
+  args: ['vite', '--config', 'vite.sw.config.ts', 'build', ...(watchMode ? ['--watch', '--sourcemap', '--minify=false'] : [])],
   shell: true,
   cwd: path.join(__dirname, '..', '..', 'packages', 'trace-viewer'),
   concurrent: true,
@@ -283,7 +283,7 @@ steps.push({
 onChanges.push({
   inputs: [
     'packages/playwright-core/src/server/injected/**',
-    'packages/playwright-core/src/server/isomorphic/**',
+    'packages/playwright-core/src/utils/isomorphic/**',
     'utils/generate_injected.js',
   ],
   script: 'utils/generate_injected.js',

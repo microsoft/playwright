@@ -18,13 +18,14 @@ import { EventEmitter } from 'events';
 import type * as channels from '@protocol/channels';
 import { maybeFindValidator, ValidationError, type ValidatorContext } from '../protocol/validator';
 import { debugLogger } from '../common/debugLogger';
-import type { ParsedStackTrace } from '../utils/stackTrace';
+import type { ExpectZone, ParsedStackTrace } from '../utils/stackTrace';
 import { captureRawStack, captureLibraryStackTrace } from '../utils/stackTrace';
-import { isUnderTest } from '../utils';
+import { isString, isUnderTest } from '../utils';
 import { zones } from '../utils/zones';
 import type { ClientInstrumentation } from './clientInstrumentation';
 import type { Connection } from './connection';
 import type { Logger } from './types';
+import { asLocator } from '../utils/isomorphic/locatorGenerators';
 
 type Listener = (...args: any[]) => void;
 
@@ -132,15 +133,14 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
 
   private _createChannel(base: Object): T {
     const channel = new Proxy(base, {
-      get: (obj: any, prop) => {
+      get: (obj: any, prop: string | symbol) => {
         if (typeof prop === 'string') {
           const validator = maybeFindValidator(this._type, prop, 'Params');
           if (validator) {
             return (params: any) => {
               return this._wrapApiCall(apiZone => {
-                const { stackTrace, csi, callCookie } = apiZone.reported ? { csi: undefined, callCookie: undefined, stackTrace: null } : apiZone;
+                const { stackTrace, csi, callCookie, wallTime } = apiZone.reported ? { csi: undefined, callCookie: undefined, stackTrace: null, wallTime: undefined } : apiZone;
                 apiZone.reported = true;
-                const wallTime = Date.now();
                 if (csi && stackTrace && stackTrace.apiName)
                   csi.onApiCallBegin(renderCallWithParams(stackTrace.apiName, params), stackTrace, wallTime, callCookie);
                 return this._connection.sendMessageToServer(this, this._type, prop, validator(params, '', { tChannelImpl: tChannelImplToWire, binary: this._connection.isRemote() ? 'toBase64' : 'buffer' }), stackTrace, wallTime);
@@ -165,14 +165,20 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
     const stackTrace = captureLibraryStackTrace(stack);
     if (isInternal)
       delete stackTrace.apiName;
+
+    // Enclosing zone could have provided the apiName and wallTime.
+    const expectZone = zones.zoneData<ExpectZone>('expectZone', stack);
+    const wallTime = expectZone ? expectZone.wallTime : Date.now();
+    if (!isInternal && expectZone)
+      stackTrace.apiName = expectZone.title;
+
     const csi = isInternal ? undefined : this._instrumentation;
     const callCookie: any = {};
 
     const { apiName, frameTexts } = stackTrace;
-
     try {
       logApiCall(logger, `=> ${apiName} started`, isInternal);
-      const apiZone = { stackTrace, isInternal, reported: false, csi, callCookie };
+      const apiZone = { stackTrace, isInternal, reported: false, csi, callCookie, wallTime };
       const result = await zones.run<ApiZone, R>('apiZone', apiZone, async () => {
         return await func(apiZone);
       });
@@ -223,8 +229,18 @@ function renderCallWithParams(apiName: string, params: any) {
   const paramsArray = [];
   if (params) {
     for (const name of paramsToRender) {
-      if (params[name])
-        paramsArray.push(params[name]);
+      if (!(name in params))
+        continue;
+      let value;
+      if (name === 'selector' && isString(params[name]) && params[name].startsWith('internal:')) {
+        const getter = asLocator('javascript', params[name], false, true);
+        apiName = apiName.replace(/^locator\./, 'locator.' + getter + '.');
+        apiName = apiName.replace(/^page\./, 'page.' + getter + '.');
+        apiName = apiName.replace(/^frame\./, 'frame.' + getter + '.');
+      } else {
+        value = params[name];
+        paramsArray.push(value);
+      }
     }
   }
   const paramsText = paramsArray.length ? '(' + paramsArray.join(', ') + ')' : '';
@@ -243,4 +259,5 @@ type ApiZone = {
   reported: boolean;
   csi: ClientInstrumentation | undefined;
   callCookie: any;
+  wallTime: number;
 };

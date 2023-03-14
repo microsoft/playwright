@@ -30,7 +30,7 @@ export const CallLogView: React.FC<CallLogProps> = ({
   language,
   log,
 }) => {
-  const messagesEndRef = React.createRef<HTMLDivElement>();
+  const messagesEndRef = React.useRef<HTMLDivElement>(null);
   const [expandOverrides, setExpandOverrides] = React.useState<Map<string, boolean>>(new Map());
   React.useLayoutEffect(() => {
     if (log.find(callLog => callLog.reveal))

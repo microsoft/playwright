@@ -29,7 +29,7 @@
     "@babel/plugin-syntax-optional-catch-binding": "^7.8.3",
     "@babel/plugin-transform-modules-commonjs": "^7.19.6",
     "@babel/plugin-transform-react-jsx": "^7.20.7",
-    "@babel/preset-typescript": "^7.18.6"
+    "@babel/plugin-transform-typescript": "^7.20.2"
   },
   "devDependencies": {
     "@types/babel__code-frame": "^7.0.3",

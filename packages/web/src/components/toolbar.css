@@ -19,7 +19,7 @@
   box-shadow: var(--box-shadow);
   background-color: var(--vscode-sideBar-background);
   color: var(--vscode-sideBarTitle-foreground);
-  min-height: 32px;
+  min-height: 35px;
   align-items: center;
   flex: none;
   z-index: 2;
@@ -31,10 +31,10 @@
 }
 
 .toolbar input {
-  padding: 0 10px;
+  padding: 0 5px;
   line-height: 24px;
   outline: none;
-  margin-left: 10px;
+  margin: 0 4px;
 }
 
 .toolbar select {

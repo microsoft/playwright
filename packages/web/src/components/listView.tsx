@@ -17,50 +17,73 @@
 import * as React from 'react';
 import './listView.css';
 
-export type ListViewProps = {
-  items: any[],
-  itemKey: (item: any) => string,
-  itemRender: (item: any) => React.ReactNode,
-  itemIcon?: (item: any) => string | undefined,
-  itemIndent?: (item: any) => number | undefined,
-  itemType: (item: any) => 'error' | undefined,
-  selectedItem?: any,
-  onAccepted?: (item: any) => void,
-  onSelected?: (item: any) => void,
-  onHighlighted?: (item: any | undefined) => void,
-  showNoItemsMessage?: boolean,
+export type ListViewProps<T> = {
+  items: T[],
+  id?: (item: T) => string,
+  render: (item: T) => React.ReactNode,
+  icon?: (item: T) => string | undefined,
+  indent?: (item: T) => number | undefined,
+  isError?: (item: T) => boolean,
+  selectedItem?: T,
+  onAccepted?: (item: T) => void,
+  onSelected?: (item: T) => void,
+  onLeftArrow?: (item: T) => void,
+  onRightArrow?: (item: T) => void,
+  onHighlighted?: (item: T | undefined) => void,
+  onIconClicked?: (item: T) => void,
+  noItemsMessage?: string,
+  dataTestId?: string,
 };
 
-export const ListView: React.FC<ListViewProps> = ({
+export function ListView<T>({
   items = [],
-  itemKey,
-  itemRender,
-  itemIcon,
-  itemType,
-  itemIndent,
+  id,
+  render,
+  icon,
+  isError,
+  indent,
   selectedItem,
   onAccepted,
   onSelected,
+  onLeftArrow,
+  onRightArrow,
   onHighlighted,
-  showNoItemsMessage,
-}) => {
-  const itemListRef = React.createRef<HTMLDivElement>();
+  onIconClicked,
+  noItemsMessage,
+  dataTestId,
+}: ListViewProps<T>) {
+  const itemListRef = React.useRef<HTMLDivElement>(null);
   const [highlightedItem, setHighlightedItem] = React.useState<any>();
 
-  return <div className='list-view vbox'>
+  React.useEffect(() => {
+    onHighlighted?.(highlightedItem);
+  }, [onHighlighted, highlightedItem]);
+
+  return <div className='list-view vbox' role='list' data-testid={dataTestId}>
     <div
       className='list-view-content'
       tabIndex={0}
-      onDoubleClick={() => onAccepted?.(selectedItem)}
+      onDoubleClick={() => selectedItem && onAccepted?.(selectedItem)}
       onKeyDown={event => {
-        if (event.key === 'Enter') {
+        if (selectedItem && event.key === 'Enter') {
           onAccepted?.(selectedItem);
           return;
         }
-        if (event.key !== 'ArrowDown' &&  event.key !== 'ArrowUp')
+        if (event.key !== 'ArrowDown' &&  event.key !== 'ArrowUp' && event.key !== 'ArrowLeft' &&  event.key !== 'ArrowRight')
           return;
+
         event.stopPropagation();
         event.preventDefault();
+
+        if (selectedItem && event.key === 'ArrowLeft') {
+          onLeftArrow?.(selectedItem);
+          return;
+        }
+        if (selectedItem && event.key === 'ArrowRight') {
+          onRightArrow?.(selectedItem);
+          return;
+        }
+
         const index = selectedItem ? items.indexOf(selectedItem) : -1;
         let newIndex = index;
         if (event.key === 'ArrowDown') {
@@ -75,74 +98,51 @@ export const ListView: React.FC<ListViewProps> = ({
           else
             newIndex = Math.max(index - 1, 0);
         }
+
         const element = itemListRef.current?.children.item(newIndex);
-        scrollIntoViewIfNeeded(element);
+        scrollIntoViewIfNeeded(element || undefined);
         onHighlighted?.(undefined);
         onSelected?.(items[newIndex]);
       }}
       ref={itemListRef}
     >
-      {showNoItemsMessage && items.length === 0 && <div className='list-view-empty'>No items</div>}
-      {items.map(item => <ListItemView
-        key={itemKey(item)}
-        icon={itemIcon?.(item)}
-        type={itemType?.(item)}
-        indent={itemIndent?.(item)}
-        isHighlighted={item === highlightedItem}
-        isSelected={item === selectedItem}
-        onSelected={() => onSelected?.(item)}
-        onMouseEnter={() => {
-          setHighlightedItem(item);
-          onHighlighted?.(item);
-        }}
-        onMouseLeave={() => {
-          setHighlightedItem(undefined);
-          onHighlighted?.(undefined);
-        }}
-      >
-        {itemRender(item)}
-      </ListItemView>)}
+      {noItemsMessage && items.length === 0 && <div className='list-view-empty'>{noItemsMessage}</div>}
+      {items.map((item, index) => {
+        const selectedSuffix = selectedItem === item ? ' selected' : '';
+        const highlightedSuffix = highlightedItem === item ? ' highlighted' : '';
+        const errorSuffix = isError?.(item) ? ' error' : '';
+        const indentation = indent?.(item) || 0;
+        const rendered = render(item);
+        return <div
+          key={id?.(item) || index}
+          role='listitem'
+          className={'list-view-entry' + selectedSuffix + highlightedSuffix + errorSuffix}
+          onClick={() => onSelected?.(item)}
+          onMouseEnter={() => setHighlightedItem(item)}
+          onMouseLeave={() => setHighlightedItem(undefined)}
+        >
+          {indentation ? new Array(indentation).fill(0).map(() => <div className='list-view-indent'></div>) : undefined}
+          {icon && <div
+            className={'codicon ' + (icon(item) || 'codicon-blank')}
+            style={{ minWidth: 16, marginRight: 4 }}
+            onDoubleClick={e => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+            onClick={e => {
+              e.stopPropagation();
+              e.preventDefault();
+              onIconClicked?.(item);
+            }}
+          ></div>}
+          {typeof rendered === 'string' ? <div style={{ textOverflow: 'ellipsis', overflow: 'hidden' }}>{rendered}</div> : rendered}
+        </div>;
+      })}
     </div>
   </div>;
-};
+}
 
-const ListItemView: React.FC<{
-  key: string,
-  icon: string | undefined,
-  type: 'error' | undefined,
-  indent: number | undefined,
-  isHighlighted: boolean,
-  isSelected: boolean,
-  onSelected: () => void,
-  onMouseEnter: () => void,
-  onMouseLeave: () => void,
-  children: React.ReactNode | React.ReactNode[],
-}> = ({ key, icon, type, indent, onSelected, onMouseEnter, onMouseLeave, isHighlighted, isSelected, children }) => {
-  const selectedSuffix = isSelected ? ' selected' : '';
-  const highlightedSuffix = isHighlighted ? ' highlighted' : '';
-  const errorSuffix = type === 'error' ? ' error' : '';
-  const divRef = React.useRef<HTMLDivElement>(null);
-
-  React.useEffect(() => {
-    if (divRef.current && isSelected)
-      scrollIntoViewIfNeeded(divRef.current);
-  }, [isSelected]);
-
-  return <div
-    key={key}
-    className={'list-view-entry' + selectedSuffix + highlightedSuffix + errorSuffix}
-    onClick={onSelected}
-    onMouseEnter={onMouseEnter}
-    onMouseLeave={onMouseLeave}
-    ref={divRef}
-  >
-    {indent ? <div style={{ minWidth: indent * 16 }}></div> : undefined}
-    <div className={'codicon ' + (icon || 'blank')} style={{ minWidth: 16, marginRight: 4 }}></div>
-    {typeof children === 'string' ? <div style={{ textOverflow: 'ellipsis', overflow: 'hidden' }}>{children}</div> : children}
-  </div>;
-};
-
-function scrollIntoViewIfNeeded(element?: Element | null) {
+function scrollIntoViewIfNeeded(element: Element | undefined) {
   if (!element)
     return;
   if ((element as any)?.scrollIntoViewIfNeeded)

@@ -32,7 +32,7 @@ export class SocksInterceptor {
 
     let lastId = -1;
     this._channel = new Proxy(new EventEmitter(), {
-      get: (obj: any, prop) => {
+      get: (obj: any, prop: string | symbol) => {
         if ((prop in obj) || obj[prop] !== undefined || typeof prop !== 'string')
           return obj[prop];
         return (params: any) => {

@@ -19,7 +19,7 @@ import * as utilityScriptSource from '../generated/utilityScriptSource';
 import { serializeAsCallArgument } from './isomorphic/utilityScriptSerializers';
 import { type UtilityScript } from './injected/utilityScript';
 import { SdkObject } from './instrumentation';
-import { ManualPromise } from '../utils/manualPromise';
+import { ScopedRace } from '../utils/manualPromise';
 
 export type ObjectId = string;
 export type RemoteObject = {
@@ -62,7 +62,7 @@ export interface ExecutionContextDelegate {
 export class ExecutionContext extends SdkObject {
   private _delegate: ExecutionContextDelegate;
   private _utilityScriptPromise: Promise<JSHandle> | undefined;
-  private _destroyedPromise = new ManualPromise<Error>();
+  private _contextDestroyedRace = new ScopedRace();
 
   constructor(parent: SdkObject, delegate: ExecutionContextDelegate) {
     super(parent, 'execution-context');
@@ -70,14 +70,11 @@ export class ExecutionContext extends SdkObject {
   }
 
   contextDestroyed(error: Error) {
-    this._destroyedPromise.resolve(error);
+    this._contextDestroyedRace.scopeClosed(error);
   }
 
-  _raceAgainstContextDestroyed<T>(promise: Promise<T>): Promise<T> {
-    return Promise.race([
-      this._destroyedPromise.then(e => { throw e; }),
-      promise,
-    ]);
+  async _raceAgainstContextDestroyed<T>(promise: Promise<T>): Promise<T> {
+    return this._contextDestroyedRace.race(promise);
   }
 
   rawEvaluateJSON(expression: string): Promise<any> {
@@ -122,7 +119,7 @@ export class ExecutionContext extends SdkObject {
       (() => {
         const module = {};
         ${utilityScriptSource.source}
-        return new module.exports();
+        return new (module.exports.UtilityScript())();
       })();`;
       this._utilityScriptPromise = this._raceAgainstContextDestroyed(this._delegate.rawEvaluateHandle(source).then(objectId => new JSHandle(this, 'object', undefined, objectId)));
     }

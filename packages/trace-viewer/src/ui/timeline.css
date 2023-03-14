@@ -16,13 +16,13 @@
 
 .timeline-view {
   flex: none;
-  flex-basis: 60px;
   position: relative;
   display: flex;
   flex-direction: column;
   padding: 20px 0 5px;
   cursor: text;
   user-select: none;
+  margin-left: 10px;
 }
 
 .timeline-divider {
@@ -30,7 +30,7 @@
   width: 1px;
   top: 0;
   bottom: 0;
-  background-color: rgb(0 0 0 / 10%);
+  background-color: var(--vscode-panel-border);
 }
 
 .timeline-time {

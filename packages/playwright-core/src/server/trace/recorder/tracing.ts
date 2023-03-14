@@ -43,7 +43,7 @@ import type { SnapshotterBlob, SnapshotterDelegate } from './snapshotter';
 import { Snapshotter } from './snapshotter';
 import { yazl } from '../../../zipBundle';
 
-const version: VERSION = 3;
+const version: VERSION = 4;
 
 export type TracerOptions = {
   name?: string;
@@ -218,7 +218,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     await this._writeChain;
   }
 
-  async stopChunk(params: TracingTracingStopChunkParams): Promise<{ artifact?: Artifact, entries?: NameValue[], sourceEntries?: NameValue[] }> {
+  async stopChunk(params: TracingTracingStopChunkParams): Promise<{ artifact?: Artifact, entries?: NameValue[] }> {
     if (this._isStopping)
       throw new Error(`Tracing is already stopping`);
     this._isStopping = true;
@@ -227,7 +227,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       this._isStopping = false;
       if (params.mode !== 'discard')
         throw new Error(`Must start tracing before stopping`);
-      return { sourceEntries: [] };
+      return {};
     }
 
     const state = this._state!;
@@ -270,7 +270,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       if (params.mode === 'entries')
         return { entries };
       const artifact = await this._exportZip(entries, state).catch(() => undefined);
-      return { artifact, entries };
+      return { artifact };
     }).finally(() => {
       // Only reset trace sha1s, network resources are preserved between chunks.
       state.traceSha1s = new Set();
@@ -341,15 +341,25 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     }
     pendingCall.afterSnapshot = this._captureSnapshot('after', sdkObject, metadata);
     await pendingCall.afterSnapshot;
-    const event: trace.ActionTraceEvent = { type: 'action', metadata };
-    this._appendTraceEvent(event);
+    const event = createActionTraceEvent(metadata);
+    if (event)
+      this._appendTraceEvent(event);
     this._pendingCalls.delete(metadata.id);
   }
 
-  onEvent(sdkObject: SdkObject, metadata: CallMetadata) {
+  onEvent(sdkObject: SdkObject, event: trace.EventTraceEvent) {
     if (!sdkObject.attribution.context)
       return;
-    const event: trace.ActionTraceEvent = { type: 'event', metadata };
+    if (event.method === '__create__' && event.class === 'ConsoleMessage') {
+      const object: trace.ObjectTraceEvent = {
+        type: 'object',
+        class: event.class,
+        guid: event.params.guid,
+        initializer: event.params.initializer,
+      };
+      this._appendTraceEvent(object);
+      return;
+    }
     this._appendTraceEvent(event);
   }
 
@@ -466,4 +476,26 @@ function visitTraceEvent(object: any, sha1s: Set<string>): any {
 
 export function shouldCaptureSnapshot(metadata: CallMetadata): boolean {
   return commandsWithTracingSnapshots.has(metadata.type + '.' + metadata.method);
+}
+
+function createActionTraceEvent(metadata: CallMetadata): trace.ActionTraceEvent | null {
+  if (metadata.internal || metadata.method.startsWith('tracing'))
+    return null;
+  return {
+    type: 'action',
+    callId: metadata.id,
+    startTime: metadata.startTime,
+    endTime: metadata.endTime,
+    apiName: metadata.apiName || metadata.type + '.' + metadata.method,
+    class: metadata.type,
+    method: metadata.method,
+    params: metadata.params,
+    wallTime: metadata.wallTime || Date.now(),
+    log: metadata.log,
+    snapshots: metadata.snapshots,
+    error: metadata.error?.error,
+    result: metadata.result,
+    point: metadata.point,
+    pageId: metadata.pageId,
+  };
 }

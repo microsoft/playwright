@@ -17,24 +17,25 @@
 import * as React from 'react';
 import './stackTrace.css';
 import type { ActionTraceEvent } from '@trace/trace';
+import { ListView } from '@web/components/listView';
+// eslint-disable-next-line @typescript-eslint/consistent-type-imports
+import type { StackFrame } from '@protocol/channels';
+
+const StackFrameListView = ListView<StackFrame>;
 
 export const StackTraceView: React.FunctionComponent<{
   action: ActionTraceEvent | undefined,
   selectedFrame: number,
   setSelectedFrame: (index: number) => void
 }> = ({ action, setSelectedFrame, selectedFrame }) => {
-  const frames = action?.metadata.stack || [];
-  return <div className='stack-trace'>{
-    frames.map((frame, index) => {
-      // Windows frames are E:\path\to\file
+  const frames = action?.stack || [];
+  return <StackFrameListView
+    dataTestId='stack-trace'
+    items={frames}
+    selectedItem={frames[selectedFrame]}
+    render={frame => {
       const pathSep = frame.file[1] === ':' ? '\\' : '/';
-      return <div
-        key={index}
-        className={'stack-trace-frame' + (selectedFrame === index ? ' selected' : '')}
-        onClick={() => {
-          setSelectedFrame(index);
-        }}
-      >
+      return <>
         <span className='stack-trace-frame-function'>
           {frame.function || '(anonymous)'}
         </span>
@@ -44,8 +45,7 @@ export const StackTraceView: React.FunctionComponent<{
         <span className='stack-trace-frame-line'>
           {':' + frame.line}
         </span>
-      </div>;
-    })
-  }
-  </div>;
+      </>;
+    }}
+    onSelected={frame => setSelectedFrame(frames.indexOf(frame))} />;
 };

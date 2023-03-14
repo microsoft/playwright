@@ -139,8 +139,8 @@ export type EventTargetTraits<T> =
 
 export type StackFrame = {
   file: string,
-  line?: number,
-  column?: number,
+  line: number,
+  column: number,
   function?: string,
 };
 

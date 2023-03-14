@@ -294,7 +294,7 @@ it.describe('pause', () => {
     })().catch(e => e);
     const recorderPage = await recorderPageGetter();
     await recorderPage.click('[title="Resume (F8)"]');
-    await recorderPage.waitForSelector('.source-line-error');
+    await recorderPage.waitForSelector('.source-line-error-underline');
     expect(await sanitizeLog(recorderPage)).toEqual([
       'page.pause- XXms',
       'page.getByRole(\'button\').isChecked()- XXms',
