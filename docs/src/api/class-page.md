@@ -746,6 +746,9 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Page.check.timeout = %%-input-timeout-%%
 * since: v1.8
 
+### option: Page.check.timeout = %%-input-timeout-js-%%
+* since: v1.8
+
 ### option: Page.check.trial = %%-input-trial-%%
 * since: v1.11
 
@@ -793,6 +796,9 @@ When all steps combined have not finished during the specified [`option: timeout
 * since: v1.14
 
 ### option: Page.click.timeout = %%-input-timeout-%%
+* since: v1.8
+
+### option: Page.click.timeout = %%-input-timeout-js-%%
 * since: v1.8
 
 ### option: Page.click.trial = %%-input-trial-%%
@@ -889,6 +895,9 @@ When all steps combined have not finished during the specified [`option: timeout
 * since: v1.14
 
 ### option: Page.dblclick.timeout = %%-input-timeout-%%
+* since: v1.8
+
+### option: Page.dblclick.timeout = %%-input-timeout-js-%%
 * since: v1.8
 
 ### option: Page.dblclick.trial = %%-input-trial-%%
@@ -992,6 +1001,9 @@ Optional event-specific initialization properties.
 ### option: Page.dispatchEvent.timeout = %%-input-timeout-%%
 * since: v1.8
 
+### option: Page.dispatchEvent.timeout = %%-input-timeout-js-%%
+* since: v1.8
+
 ## async method: Page.dragAndDrop
 * since: v1.13
 
@@ -1065,6 +1077,9 @@ await Page.DragAndDropAsync("#source", "#target", new()
 * since: v1.14
 
 ### option: Page.dragAndDrop.timeout = %%-input-timeout-%%
+* since: v1.13
+
+### option: Page.dragAndDrop.timeout = %%-input-timeout-js-%%
 * since: v1.13
 
 ### option: Page.dragAndDrop.trial = %%-input-trial-%%
@@ -2091,6 +2106,9 @@ Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
 ### option: Page.fill.timeout = %%-input-timeout-%%
 * since: v1.8
 
+### option: Page.fill.timeout = %%-input-timeout-js-%%
+* since: v1.8
+
 ## async method: Page.focus
 * since: v1.8
 * discouraged: Use locator-based [`method: Locator.focus`] instead. Read more about [locators](../locators.md).
@@ -2105,6 +2123,9 @@ This method fetches an element with [`param: selector`] and focuses it. If there
 * since: v1.14
 
 ### option: Page.focus.timeout = %%-input-timeout-%%
+* since: v1.8
+
+### option: Page.focus.timeout = %%-input-timeout-js-%%
 * since: v1.8
 
 ## method: Page.frame
@@ -2260,6 +2281,9 @@ Attribute name to get the value for.
 ### option: Page.getAttribute.timeout = %%-input-timeout-%%
 * since: v1.8
 
+### option: Page.getAttribute.timeout = %%-input-timeout-js-%%
+* since: v1.8
+
 ## method: Page.getByAltText
 * since: v1.27
 - returns: <[Locator]>
@@ -2347,6 +2371,9 @@ Navigate to the previous page in history.
 ### option: Page.goBack.timeout = %%-navigation-timeout-%%
 * since: v1.8
 
+### option: Page.goBack.timeout = %%-navigation-timeout-js-%%
+* since: v1.8
+
 ## async method: Page.goForward
 * since: v1.8
 - returns: <[null]|[Response]>
@@ -2360,6 +2387,9 @@ Navigate to the next page in history.
 * since: v1.8
 
 ### option: Page.goForward.timeout = %%-navigation-timeout-%%
+* since: v1.8
+
+### option: Page.goForward.timeout = %%-navigation-timeout-js-%%
 * since: v1.8
 
 ## async method: Page.goto
@@ -2406,6 +2436,9 @@ it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/We
 ### option: Page.goto.timeout = %%-navigation-timeout-%%
 * since: v1.8
 
+### option: Page.goto.timeout = %%-navigation-timeout-js-%%
+* since: v1.8
+
 ### option: Page.goto.referer
 * since: v1.8
 - `referer` <[string]>
@@ -2447,6 +2480,9 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Page.hover.timeout = %%-input-timeout-%%
 * since: v1.8
 
+### option: Page.hover.timeout = %%-input-timeout-js-%%
+* since: v1.8
+
 ### option: Page.hover.trial = %%-input-trial-%%
 * since: v1.11
 
@@ -2469,6 +2505,9 @@ Returns `element.innerHTML`.
 ### option: Page.innerHTML.timeout = %%-input-timeout-%%
 * since: v1.8
 
+### option: Page.innerHTML.timeout = %%-input-timeout-js-%%
+* since: v1.8
+
 ## async method: Page.innerText
 * since: v1.8
 * discouraged: Use locator-based [`method: Locator.innerText`] instead. Read more about [locators](../locators.md).
@@ -2483,6 +2522,9 @@ Returns `element.innerText`.
 * since: v1.14
 
 ### option: Page.innerText.timeout = %%-input-timeout-%%
+* since: v1.8
+
+### option: Page.innerText.timeout = %%-input-timeout-js-%%
 * since: v1.8
 
 ## async method: Page.inputValue
@@ -2503,6 +2545,9 @@ Throws for non-input elements. However, if the element is inside the `<label>` e
 ### option: Page.inputValue.timeout = %%-input-timeout-%%
 * since: v1.13
 
+### option: Page.inputValue.timeout = %%-input-timeout-js-%%
+* since: v1.13
+
 ## async method: Page.isChecked
 * since: v1.8
 * discouraged: Use locator-based [`method: Locator.isChecked`] instead. Read more about [locators](../locators.md).
@@ -2517,6 +2562,9 @@ Returns whether the element is checked. Throws if the element is not a checkbox 
 * since: v1.14
 
 ### option: Page.isChecked.timeout = %%-input-timeout-%%
+* since: v1.8
+
+### option: Page.isChecked.timeout = %%-input-timeout-js-%%
 * since: v1.8
 
 ## method: Page.isClosed
@@ -2541,6 +2589,9 @@ Returns whether the element is disabled, the opposite of [enabled](../actionabil
 ### option: Page.isDisabled.timeout = %%-input-timeout-%%
 * since: v1.8
 
+### option: Page.isDisabled.timeout = %%-input-timeout-js-%%
+* since: v1.8
+
 ## async method: Page.isEditable
 * since: v1.8
 * discouraged: Use locator-based [`method: Locator.isEditable`] instead. Read more about [locators](../locators.md).
@@ -2557,6 +2608,9 @@ Returns whether the element is [editable](../actionability.md#editable).
 ### option: Page.isEditable.timeout = %%-input-timeout-%%
 * since: v1.8
 
+### option: Page.isEditable.timeout = %%-input-timeout-js-%%
+* since: v1.8
+
 ## async method: Page.isEnabled
 * since: v1.8
 * discouraged: Use locator-based [`method: Locator.isEnabled`] instead. Read more about [locators](../locators.md).
@@ -2571,6 +2625,9 @@ Returns whether the element is [enabled](../actionability.md#enabled).
 * since: v1.14
 
 ### option: Page.isEnabled.timeout = %%-input-timeout-%%
+* since: v1.8
+
+### option: Page.isEnabled.timeout = %%-input-timeout-js-%%
 * since: v1.8
 
 ## async method: Page.isHidden
@@ -3011,6 +3068,9 @@ Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
 ### option: Page.press.timeout = %%-input-timeout-%%
 * since: v1.8
 
+### option: Page.press.timeout = %%-input-timeout-js-%%
+* since: v1.8
+
 ## async method: Page.querySelector
 * since: v1.9
 * discouraged: Use locator-based [`method: Page.locator`] instead. Read more about [locators](../locators.md).
@@ -3054,6 +3114,9 @@ last redirect.
 * since: v1.8
 
 ### option: Page.reload.timeout = %%-navigation-timeout-%%
+* since: v1.8
+
+### option: Page.reload.timeout = %%-navigation-timeout-js-%%
 * since: v1.8
 
 ## property: Page.request
@@ -3280,7 +3343,7 @@ When set to `minimal`, only record information necessary for routing from HAR. T
 ### option: Page.routeFromHAR.url
 * since: v1.32
 - `content` <[HarContentPolicy]<"omit"|"embed"|"attach">>
-Optional setting to control resource content management. If `omit` is specified, content is not persisted. If `attach` is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is specified, content is stored inline the HAR file 
+Optional setting to control resource content management. If `omit` is specified, content is not persisted. If `attach` is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is specified, content is stored inline the HAR file
 
 ## async method: Page.screenshot
 * since: v1.8
@@ -3289,6 +3352,12 @@ Optional setting to control resource content management. If `omit` is specified,
 Returns the buffer with the captured screenshot.
 
 ### option: Page.screenshot.-inline- = %%-screenshot-options-common-list-v1.8-%%
+* since: v1.8
+
+### option: Page.screenshot.timeout = %%-input-timeout-%%
+* since: v1.8
+
+### option: Page.screenshot.timeout = %%-input-timeout-js-%%
 * since: v1.8
 
 ### option: Page.screenshot.fullPage = %%-screenshot-option-full-page-%%
@@ -3378,6 +3447,9 @@ await page.SelectOptionAsync("select#colors", new[] { "red", "green", "blue" });
 ### option: Page.selectOption.timeout = %%-input-timeout-%%
 * since: v1.8
 
+### option: Page.selectOption.timeout = %%-input-timeout-js-%%
+* since: v1.8
+
 ### param: Page.selectOption.element = %%-python-select-options-element-%%
 * since: v1.8
 
@@ -3430,6 +3502,9 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Page.setChecked.timeout = %%-input-timeout-%%
 * since: v1.15
 
+### option: Page.setChecked.timeout = %%-input-timeout-js-%%
+* since: v1.15
+
 ### option: Page.setChecked.trial = %%-input-trial-%%
 * since: v1.15
 
@@ -3443,6 +3518,9 @@ When all steps combined have not finished during the specified [`option: timeout
 HTML markup to assign to the page.
 
 ### option: Page.setContent.timeout = %%-navigation-timeout-%%
+* since: v1.8
+
+### option: Page.setContent.timeout = %%-navigation-timeout-js-%%
 * since: v1.8
 
 ### option: Page.setContent.waitUntil = %%-navigation-wait-until-%%
@@ -3524,6 +3602,9 @@ This method expects [`param: selector`] to point to an
 * since: v1.14
 
 ### option: Page.setInputFiles.timeout = %%-input-timeout-%%
+* since: v1.8
+
+### option: Page.setInputFiles.timeout = %%-input-timeout-js-%%
 * since: v1.8
 
 ## async method: Page.setViewportSize
@@ -3628,6 +3709,9 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Page.tap.timeout = %%-input-timeout-%%
 * since: v1.8
 
+### option: Page.tap.timeout = %%-input-timeout-js-%%
+* since: v1.8
+
 ### option: Page.tap.trial = %%-input-trial-%%
 * since: v1.11
 
@@ -3645,6 +3729,9 @@ Returns `element.textContent`.
 * since: v1.14
 
 ### option: Page.textContent.timeout = %%-input-timeout-%%
+* since: v1.8
+
+### option: Page.textContent.timeout = %%-input-timeout-js-%%
 * since: v1.8
 
 ## async method: Page.title
@@ -3719,6 +3806,9 @@ Time to wait between key presses in milliseconds. Defaults to 0.
 ### option: Page.type.timeout = %%-input-timeout-%%
 * since: v1.8
 
+### option: Page.type.timeout = %%-input-timeout-js-%%
+* since: v1.8
+
 ## async method: Page.uncheck
 * since: v1.8
 * discouraged: Use locator-based [`method: Locator.uncheck`] instead. Read more about [locators](../locators.md).
@@ -3754,6 +3844,9 @@ When all steps combined have not finished during the specified [`option: timeout
 * since: v1.14
 
 ### option: Page.uncheck.timeout = %%-input-timeout-%%
+* since: v1.8
+
+### option: Page.uncheck.timeout = %%-input-timeout-js-%%
 * since: v1.8
 
 ### option: Page.uncheck.trial = %%-input-trial-%%
@@ -3918,9 +4011,8 @@ frame = event_info.value
 * since: v1.8
 * langs: js
 - `optionsOrPredicate` ?<[function]|[Object]>
-  - `predicate` <[function]> receives the event data and resolves to truthy value when the waiting should resolve.
-  - `timeout` ?<[float]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to
-    disable timeout. The default value can be changed by using the [`method: BrowserContext.setDefaultTimeout`].
+  - `predicate` <[function]> Receives the event data and resolves to truthy value when the waiting should resolve.
+  - `timeout` ?<[float]> Maximum time to wait for in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout` option in the config, or by using the [`method: BrowserContext.setDefaultTimeout`] or [`method: Page.setDefaultTimeout`] methods.
 
 Either a predicate that receives an event or an options object. Optional.
 
@@ -4096,7 +4188,10 @@ Optional argument to pass to [`param: expression`].
 ### option: Page.waitForFunction.polling = %%-csharp-java-wait-for-function-polling-%%
 * since: v1.8
 
-### option: Page.waitForFunction.timeout = %%-wait-for-timeout-%%
+### option: Page.waitForFunction.timeout = %%-wait-for-function-timeout-%%
+* since: v1.8
+
+### option: Page.waitForFunction.timeout = %%-wait-for-function-timeout-js-%%
 * since: v1.8
 
 ## async method: Page.waitForLoadState
@@ -4185,6 +4280,9 @@ Console.WriteLine(await popup.TitleAsync()); // popup is ready to use.
 ### option: Page.waitForLoadState.timeout = %%-navigation-timeout-%%
 * since: v1.8
 
+### option: Page.waitForLoadState.timeout = %%-navigation-timeout-js-%%
+* since: v1.8
+
 ## async method: Page.waitForNavigation
 * since: v1.8
 * deprecated: This method is inherently racy, please use [`method: Page.waitForURL`] instead.
@@ -4263,6 +4361,9 @@ a navigation.
 * since: v1.8
 
 ### option: Page.waitForNavigation.timeout = %%-navigation-timeout-%%
+* since: v1.8
+
+### option: Page.waitForNavigation.timeout = %%-navigation-timeout-js-%%
 * since: v1.8
 
 ### param: Page.waitForNavigation.callback = %%-java-wait-for-event-callback-%%
@@ -4678,6 +4779,9 @@ class FrameExamples
 ### option: Page.waitForSelector.timeout = %%-input-timeout-%%
 * since: v1.8
 
+### option: Page.waitForSelector.timeout = %%-input-timeout-js-%%
+* since: v1.8
+
 ## async method: Page.waitForTimeout
 * since: v1.8
 
@@ -4755,6 +4859,9 @@ await page.WaitForURLAsync("**/target.html");
 * since: v1.11
 
 ### option: Page.waitForURL.timeout = %%-navigation-timeout-%%
+* since: v1.11
+
+### option: Page.waitForURL.timeout = %%-navigation-timeout-js-%%
 * since: v1.11
 
 ### option: Page.waitForURL.waitUntil = %%-navigation-wait-until-%%
