@@ -35,10 +35,12 @@ export const SourceTab: React.FunctionComponent<{
   const [lastAction, setLastAction] = React.useState<ActionTraceEvent | undefined>();
   const [selectedFrame, setSelectedFrame] = React.useState<number>(0);
 
-  if (lastAction !== action) {
-    setLastAction(action);
-    setSelectedFrame(0);
-  }
+  React.useEffect(() => {
+    if (lastAction !== action) {
+      setLastAction(action);
+      setSelectedFrame(0);
+    }
+  }, [action, lastAction, setLastAction, setSelectedFrame]);
 
   const stackInfo = React.useMemo<StackInfo>(() => {
     if (!action)

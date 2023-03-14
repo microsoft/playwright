@@ -22,6 +22,9 @@
 }
 
 .action-duration {
+  display: flex;
+  flex: none;
+  align-items: center;
   margin: 0 4px;
   color: var(--gray);
 }
