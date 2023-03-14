@@ -27,10 +27,16 @@ import type { Matcher, TestFileFilter } from '../util';
 import { buildProjectsClosure, collectFilesForProject, filterProjects } from './projectUtils';
 import { requireOrImport } from '../common/transform';
 import { buildFileSuiteForProject, filterByFocusedLine, filterByTestIds, filterOnly, filterTestsRemoveEmptySuites } from '../common/suiteUtils';
-import { filterForShard } from './testGroups';
+import { createTestGroups, filterForShard, type TestGroup } from './testGroups';
 import { dependenciesForTestFile } from '../common/compilationCache';
 
-export async function loadAllTests(mode: 'out-of-process' | 'in-process', config: FullConfigInternal, projectsToIgnore: Set<FullProjectInternal>, additionalFileMatcher: Matcher | undefined, errors: TestError[], shouldFilterOnly: boolean): Promise<Suite> {
+export type ProjectWithTestGroups = {
+  project: FullProjectInternal;
+  projectSuite: Suite;
+  testGroups: TestGroup[];
+};
+
+export async function loadAllTests(mode: 'out-of-process' | 'in-process', config: FullConfigInternal, projectsToIgnore: Set<FullProjectInternal>, additionalFileMatcher: Matcher | undefined, errors: TestError[], shouldFilterOnly: boolean): Promise<{ rootSuite: Suite, projectsWithTestGroups: ProjectWithTestGroups[] }> {
   const projects = filterProjects(config.projects, config._internal.cliProjectFilter);
 
   // Interpret cli parameters.
@@ -40,7 +46,7 @@ export async function loadAllTests(mode: 'out-of-process' | 'in-process', config
   const cliTitleMatcher = (title: string) => !grepInvertMatcher(title) && grepMatcher(title);
   const cliFileMatcher = config._internal.cliArgs.length ? createFileMatcherFromArguments(config._internal.cliArgs) : null;
 
-  let filesToRunByProject = new Map<FullProjectInternal, string[]>();
+  const filesToRunByProject = new Map<FullProjectInternal, string[]>();
   let topLevelProjects: FullProjectInternal[];
   let dependencyProjects: FullProjectInternal[];
   // Collect files, categorize top level and dependency projects.
@@ -74,24 +80,12 @@ export async function loadAllTests(mode: 'out-of-process' | 'in-process', config
     }
 
     const projectClosure = buildProjectsClosure([...filesToRunByProject.keys()]);
-    // Remove files for dependency projects, they'll be added back later.
-    for (const project of projectClosure.filter(p => p._internal.type === 'dependency'))
-      filesToRunByProject.delete(project);
-
-    // Shard only the top-level projects.
-    if (config.shard)
-      filesToRunByProject = filterForShard(config.shard, filesToRunByProject);
-
-    // Re-build the closure, project set might have changed.
-    const filteredProjectClosure = buildProjectsClosure([...filesToRunByProject.keys()]);
-    topLevelProjects = filteredProjectClosure.filter(p => p._internal.type === 'top-level');
-    dependencyProjects = filteredProjectClosure.filter(p => p._internal.type === 'dependency');
-
-    topLevelProjects = topLevelProjects.filter(p => !projectsToIgnore.has(p));
-    dependencyProjects = dependencyProjects.filter(p => !projectsToIgnore.has(p));
+    topLevelProjects = projectClosure.filter(p => p._internal.type === 'top-level' && !projectsToIgnore.has(p));
+    dependencyProjects = projectClosure.filter(p => p._internal.type === 'dependency' && !projectsToIgnore.has(p));
 
     // (Re-)add all files for dependent projects, disregard filters.
     for (const project of dependencyProjects) {
+      filesToRunByProject.delete(project);
       const files = allFilesForProject.get(project) || await collectFilesForProject(project, fsCache);
       filesToRunByProject.set(project, files);
     }
@@ -132,12 +126,9 @@ export async function loadAllTests(mode: 'out-of-process' | 'in-process', config
   // Create root suites with clones for the projects.
   const rootSuite = new Suite('', 'root');
 
-  // First iterate leaf projects to focus only, then add all other projects.
-  for (const project of topLevelProjects) {
-    const projectSuite = await createProjectSuite(fileSuites, project, { cliFileFilters, cliTitleMatcher, testIdMatcher: config._internal.testIdMatcher }, filesToRunByProject.get(project)!);
-    if (projectSuite)
-      rootSuite._addSuite(projectSuite);
-  }
+  // First iterate top-level projects to focus only, then add all other projects.
+  for (const project of topLevelProjects)
+    rootSuite._addSuite(await createProjectSuite(fileSuites, project, { cliFileFilters, cliTitleMatcher, testIdMatcher: config._internal.testIdMatcher }, filesToRunByProject.get(project)!));
 
   // Complain about only.
   if (config.forbidOnly) {
@@ -146,23 +137,60 @@ export async function loadAllTests(mode: 'out-of-process' | 'in-process', config
       errors.push(...createForbidOnlyErrors(onlyTestsAndSuites));
   }
 
-  // Filter only for leaf projects.
+  // Filter only for top-level projects.
   if (shouldFilterOnly)
     filterOnly(rootSuite);
+
+  // Create test groups for top-level projects.
+  let projectsWithTestGroups: ProjectWithTestGroups[] = [];
+  for (const projectSuite of rootSuite.suites) {
+    const project = projectSuite.project() as FullProjectInternal;
+    const testGroups = createTestGroups(projectSuite, config.workers);
+    projectsWithTestGroups.push({ project, projectSuite, testGroups });
+  }
+
+  // Shard only the top-level projects.
+  if (config.shard) {
+    const allTestGroups: TestGroup[] = [];
+    for (const { testGroups } of projectsWithTestGroups)
+      allTestGroups.push(...testGroups);
+    const shardedTestGroups = filterForShard(config.shard, allTestGroups);
+
+    const shardedTests = new Set<TestCase>();
+    for (const group of shardedTestGroups) {
+      for (const test of group.tests)
+        shardedTests.add(test);
+    }
+
+    // Update project suites and test groups.
+    for (const p of projectsWithTestGroups) {
+      p.testGroups = p.testGroups.filter(group => shardedTestGroups.has(group));
+      filterTestsRemoveEmptySuites(p.projectSuite, test => shardedTests.has(test));
+    }
+
+    // Remove now-empty top-level projects.
+    projectsWithTestGroups = projectsWithTestGroups.filter(p => p.testGroups.length > 0);
+
+    // Re-build the closure, project set might have changed.
+    const shardedProjectClosure = buildProjectsClosure(projectsWithTestGroups.map(p => p.project));
+    topLevelProjects = shardedProjectClosure.filter(p => p._internal.type === 'top-level' && !projectsToIgnore.has(p));
+    dependencyProjects = shardedProjectClosure.filter(p => p._internal.type === 'dependency' && !projectsToIgnore.has(p));
+  }
 
   // Prepend the projects that are dependencies.
   for (const project of dependencyProjects) {
     const projectSuite = await createProjectSuite(fileSuites, project, { cliFileFilters: [], cliTitleMatcher: undefined }, filesToRunByProject.get(project)!);
-    if (projectSuite)
-      rootSuite._prependSuite(projectSuite);
+    rootSuite._prependSuite(projectSuite);
+    const testGroups = createTestGroups(projectSuite, config.workers);
+    projectsWithTestGroups.push({ project, projectSuite, testGroups });
   }
 
-  return rootSuite;
+  return { rootSuite, projectsWithTestGroups };
 }
 
-async function createProjectSuite(fileSuits: Suite[], project: FullProjectInternal, options: { cliFileFilters: TestFileFilter[], cliTitleMatcher?: Matcher, testIdMatcher?: Matcher }, files: string[]): Promise<Suite | null> {
+async function createProjectSuite(fileSuites: Suite[], project: FullProjectInternal, options: { cliFileFilters: TestFileFilter[], cliTitleMatcher?: Matcher, testIdMatcher?: Matcher }, files: string[]): Promise<Suite> {
   const fileSuitesMap = new Map<string, Suite>();
-  for (const fileSuite of fileSuits)
+  for (const fileSuite of fileSuites)
     fileSuitesMap.set(fileSuite._requireFile, fileSuite);
 
   const projectSuite = new Suite(project.name, 'project');
