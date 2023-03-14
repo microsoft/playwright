@@ -29,66 +29,48 @@ const zipjs = zipImport as typeof zip;
 export class TraceModel {
   contextEntries: ContextEntry[] = [];
   pageEntries = new Map<string, PageEntry>();
-  private _snapshotStorage: PersistentSnapshotStorage | undefined;
-  private _entries = new Map<string, zip.Entry>();
+  private _snapshotStorage: BaseSnapshotStorage | undefined;
   private _version: number | undefined;
-  private _zipReader: zip.ZipReader | undefined;
+  private _backend!: TraceModelBackend;
 
   constructor() {
   }
 
-  private _formatUrl(trace: string) {
-    let url = trace.startsWith('http') || trace.startsWith('blob') ? trace : `file?path=${trace}`;
-    // Dropbox does not support cors.
-    if (url.startsWith('https://www.dropbox.com/'))
-      url = 'https://dl.dropboxusercontent.com/' + url.substring('https://www.dropbox.com/'.length);
-    return url;
-  }
-
   async load(traceURL: string, progress: (done: number, total: number) => void) {
-    this._zipReader = new zipjs.ZipReader( // @ts-ignore
-        new zipjs.HttpReader(this._formatUrl(traceURL), { mode: 'cors', preventHeadRequest: true }),
-        { useWebWorkers: false }) as zip.ZipReader;
+    this._backend = traceURL.endsWith('json') ? new FetchTraceModelBackend(traceURL) : new ZipTraceModelBackend(traceURL, progress);
 
     const ordinals: string[] = [];
     let hasSource = false;
-    for (const entry of await this._zipReader.getEntries({ onprogress: progress })) {
-      const match = entry.filename.match(/([\d]+-)?trace\.trace/);
+    for (const entryName of await this._backend.entryNames()) {
+      const match = entryName.match(/(.+-)?trace\.trace/);
       if (match)
         ordinals.push(match[1] || '');
-      if (entry.filename.includes('src@'))
+      if (entryName.includes('src@'))
         hasSource = true;
-      this._entries.set(entry.filename, entry);
     }
     if (!ordinals.length)
       throw new Error('Cannot find .trace file');
 
-    this._snapshotStorage = new PersistentSnapshotStorage(this._entries);
+    this._snapshotStorage = new PersistentSnapshotStorage(this._backend);
 
     for (const ordinal of ordinals) {
       const contextEntry = createEmptyContext();
       contextEntry.traceUrl = traceURL;
       contextEntry.hasSource = hasSource;
 
-      const traceWriter = new zipjs.TextWriter() as zip.TextWriter;
-      const traceEntry = this._entries.get(ordinal + 'trace.trace')!;
-      await traceEntry!.getData!(traceWriter);
-      for (const line of (await traceWriter.getData()).split('\n'))
+      const trace = await this._backend.readText(ordinal + 'trace.trace') || '';
+      for (const line of trace.split('\n'))
         this.appendEvent(contextEntry, line);
 
-      const networkWriter = new zipjs.TextWriter();
-      const networkEntry = this._entries.get(ordinal + 'trace.network')!;
-      await networkEntry?.getData?.(networkWriter);
-      for (const line of (await networkWriter.getData()).split('\n'))
+      const network = await this._backend.readText(ordinal + 'trace.network') || '';
+      for (const line of network.split('\n'))
         this.appendEvent(contextEntry, line);
 
-      const stacksWriter = new zipjs.TextWriter();
-      const stacksEntry = this._entries.get(ordinal + 'trace.stacks');
-      if (stacksEntry) {
-        await stacksEntry!.getData!(stacksWriter);
-        const stacks = parseClientSideCallMetadata(JSON.parse(await stacksWriter.getData()));
+      const stacks = await this._backend.readText(ordinal + 'trace.stacks');
+      if (stacks) {
+        const callMetadata = parseClientSideCallMetadata(JSON.parse(stacks));
         for (const action of contextEntry.actions)
-          action.stack = action.stack || stacks.get(action.callId);
+          action.stack = action.stack || callMetadata.get(action.callId);
       }
 
       contextEntry.actions.sort((a1, a2) => a1.startTime - a2.startTime);
@@ -97,25 +79,14 @@ export class TraceModel {
   }
 
   async hasEntry(filename: string): Promise<boolean> {
-    if (!this._zipReader)
-      return false;
-    for (const entry of await this._zipReader.getEntries()) {
-      if (entry.filename === filename)
-        return true;
-    }
-    return false;
+    return this._backend.hasEntry(filename);
   }
 
   async resourceForSha1(sha1: string): Promise<Blob | undefined> {
-    const entry = this._entries.get('resources/' + sha1);
-    if (!entry)
-      return;
-    const blobWriter = new zipjs.BlobWriter() as zip.BlobWriter;
-    await entry!.getData!(blobWriter);
-    return await blobWriter.getData();
+    return this._backend.readBlob('resources/' + sha1);
   }
 
-  storage(): PersistentSnapshotStorage {
+  storage(): BaseSnapshotStorage {
     return this._snapshotStorage!;
   }
 
@@ -289,18 +260,120 @@ export class TraceModel {
   }
 }
 
-export class PersistentSnapshotStorage extends BaseSnapshotStorage {
-  private _entries: Map<string, zip.Entry>;
+export interface TraceModelBackend {
+  entryNames(): Promise<string[]>;
+  hasEntry(entryName: string): Promise<boolean>;
+  readText(entryName: string): Promise<string | undefined>;
+  readBlob(entryName: string): Promise<Blob | undefined>;
+}
 
-  constructor(entries: Map<string, zip.Entry>) {
-    super();
-    this._entries = entries;
+class ZipTraceModelBackend implements TraceModelBackend {
+  private _zipReader: zip.ZipReader;
+  private _entriesPromise: Promise<Map<string, zip.Entry>>;
+
+  constructor(traceURL: string, progress: (done: number, total: number) => void) {
+    this._zipReader = new zipjs.ZipReader(
+        new zipjs.HttpReader(formatUrl(traceURL), { mode: 'cors', preventHeadRequest: true } as any),
+        { useWebWorkers: false }) as zip.ZipReader;
+    this._entriesPromise = this._zipReader.getEntries({ onprogress: progress }).then(entries => {
+      const map = new Map<string, zip.Entry>();
+      for (const entry of entries)
+        map.set(entry.filename, entry);
+      return map;
+    });
   }
 
-  async resourceContent(sha1: string): Promise<Blob | undefined> {
-    const entry = this._entries.get('resources/' + sha1)!;
-    const writer = new zipjs.BlobWriter();
+  async entryNames(): Promise<string[]> {
+    const entries = await this._entriesPromise;
+    return [...entries.keys()];
+  }
+
+  async hasEntry(entryName: string): Promise<boolean> {
+    const entries = await this._entriesPromise;
+    return entries.has(entryName);
+  }
+
+  async readText(entryName: string): Promise<string | undefined> {
+    const entries = await this._entriesPromise;
+    const entry = entries.get(entryName);
+    if (!entry)
+      return;
+    const writer = new zipjs.TextWriter();
+    await entry.getData?.(writer);
+    return writer.getData();
+  }
+
+  async readBlob(entryName: string): Promise<Blob | undefined> {
+    const entries = await this._entriesPromise;
+    const entry = entries.get(entryName);
+    if (!entry)
+      return;
+    const writer = new zipjs.BlobWriter() as zip.BlobWriter;
     await entry.getData!(writer);
     return writer.getData();
   }
+}
+
+class FetchTraceModelBackend implements TraceModelBackend {
+  private _entriesPromise: Promise<Map<string, string>>;
+
+  constructor(traceURL: string) {
+
+    this._entriesPromise = fetch('/trace/file?path=' + encodeURI(traceURL)).then(async response => {
+      const json = JSON.parse(await response.text());
+      const entries = new Map<string, string>();
+      for (const entry of json.entries)
+        entries.set(entry.name, entry.path);
+      return entries;
+    });
+  }
+
+  async entryNames(): Promise<string[]> {
+    const entries = await this._entriesPromise;
+    return [...entries.keys()];
+  }
+
+  async hasEntry(entryName: string): Promise<boolean> {
+    const entries = await this._entriesPromise;
+    return entries.has(entryName);
+  }
+
+  async readText(entryName: string): Promise<string | undefined> {
+    const response = await this._readEntry(entryName);
+    return response?.text();
+  }
+
+  async readBlob(entryName: string): Promise<Blob | undefined> {
+    const response = await this._readEntry(entryName);
+    return response?.blob();
+  }
+
+  private async _readEntry(entryName: string): Promise<Response | undefined> {
+    const entries = await this._entriesPromise;
+    const fileName = entries.get(entryName);
+    if (!fileName)
+      return;
+    return fetch('/trace/file?path=' + encodeURI(fileName));
+  }
+}
+
+export class PersistentSnapshotStorage extends BaseSnapshotStorage {
+  private _backend: TraceModelBackend;
+
+  constructor(backend: TraceModelBackend) {
+    super();
+    this._backend = backend;
+  }
+
+  async resourceContent(sha1: string): Promise<Blob | undefined> {
+    return this._backend.readBlob('resources/' + sha1);
+  }
+}
+
+function formatUrl(trace: string) {
+  let url = trace.startsWith('http') || trace.startsWith('blob') ? trace : `file?path=${trace}`;
+  // Dropbox does not support cors.
+  if (url.startsWith('https://www.dropbox.com/'))
+    url = 'https://dl.dropboxusercontent.com/' + url.substring('https://www.dropbox.com/'.length);
+  return url;
 }

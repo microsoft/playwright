@@ -31,12 +31,18 @@ type Options = { app?: string, headless?: boolean, host?: string, port?: number 
 export async function showTraceViewer(traceUrls: string[], browserName: string, options?: Options): Promise<Page> {
   const { headless = false, host, port, app } = options || {};
   for (const traceUrl of traceUrls) {
-    if (!traceUrl.startsWith('http://') && !traceUrl.startsWith('https://') && !fs.existsSync(traceUrl)) {
+    let traceFile = traceUrl;
+    // If .json is requested, we'll synthesize it.
+    if (traceUrl.endsWith('.json'))
+      traceFile = traceUrl.substring(0, traceUrl.length - '.json'.length);
+
+    if (!traceUrl.startsWith('http://') && !traceUrl.startsWith('https://') && !fs.existsSync(traceFile) && !fs.existsSync(traceFile + '.trace')) {
       // eslint-disable-next-line no-console
       console.error(`Trace file ${traceUrl} does not exist!`);
       process.exit(1);
     }
   }
+
   const server = new HttpServer();
   server.routePrefix('/trace', (request, response) => {
     const url = new URL('http://localhost' + request.url!);
@@ -45,7 +51,18 @@ export async function showTraceViewer(traceUrls: string[], browserName: string, 
       return true;
     if (relativePath.startsWith('/file')) {
       try {
-        return server.serveFile(request, response, url.searchParams.get('path')!);
+        const filePath = url.searchParams.get('path')!;
+        if (fs.existsSync(filePath))
+          return server.serveFile(request, response, url.searchParams.get('path')!);
+
+        // If .json is requested, we'll synthesize it for zip-less operation.
+        if (filePath.endsWith('.json')) {
+          const traceName = filePath.substring(0, filePath.length - '.json'.length);
+          response.statusCode = 200;
+          response.setHeader('Content-Type', 'application/json');
+          response.end(JSON.stringify(traceDescriptor(traceName)));
+          return true;
+        }
       } catch (e) {
         return false;
       }
@@ -101,4 +118,25 @@ export async function showTraceViewer(traceUrls: string[], browserName: string, 
   const searchQuery = params.length ? '?' + params.join('&') : '';
   await page.mainFrame().goto(serverSideCallMetadata(), urlPrefix + `/trace/${app || 'index.html'}${searchQuery}`);
   return page;
+}
+
+function traceDescriptor(traceName: string) {
+  const result: { entries: { name: string, path: string }[] } = {
+    entries: []
+  };
+
+  const traceDir = path.dirname(traceName);
+  const traceFile = path.basename(traceName);
+  for (const name of fs.readdirSync(traceDir)) {
+    // 23423423.trace => 23423423-trace.trace
+    if (name.startsWith(traceFile))
+      result.entries.push({ name: name.replace(traceFile, traceFile + '-trace'), path: path.join(traceDir, name) });
+  }
+
+  const resourcesDir = path.join(traceDir, 'resources');
+  if (fs.existsSync(resourcesDir)) {
+    for (const name of fs.readdirSync(resourcesDir))
+      result.entries.push({ name: 'resources/' + name, path: path.join(resourcesDir, name) });
+  }
+  return result;
 }
