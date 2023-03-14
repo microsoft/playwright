@@ -223,6 +223,9 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Frame.check.timeout = %%-input-timeout-%%
 * since: v1.8
 
+### option: Frame.check.timeout = %%-input-timeout-js-%%
+* since: v1.8
+
 ### option: Frame.check.trial = %%-input-trial-%%
 * since: v1.11
 
@@ -274,6 +277,9 @@ When all steps combined have not finished during the specified [`option: timeout
 * since: v1.14
 
 ### option: Frame.click.timeout = %%-input-timeout-%%
+* since: v1.8
+
+### option: Frame.click.timeout = %%-input-timeout-js-%%
 * since: v1.8
 
 ### option: Frame.click.trial = %%-input-trial-%%
@@ -333,6 +339,9 @@ When all steps combined have not finished during the specified [`option: timeout
 * since: v1.14
 
 ### option: Frame.dblclick.timeout = %%-input-timeout-%%
+* since: v1.8
+
+### option: Frame.dblclick.timeout = %%-input-timeout-js-%%
 * since: v1.8
 
 ### option: Frame.dblclick.trial = %%-input-trial-%%
@@ -437,6 +446,9 @@ Optional event-specific initialization properties.
 ### option: Frame.dispatchEvent.timeout = %%-input-timeout-%%
 * since: v1.8
 
+### option: Frame.dispatchEvent.timeout = %%-input-timeout-js-%%
+* since: v1.8
+
 ## async method: Frame.dragAndDrop
 * since: v1.13
 
@@ -456,6 +468,9 @@ Optional event-specific initialization properties.
 * since: v1.14
 
 ### option: Frame.dragAndDrop.timeout = %%-input-timeout-%%
+* since: v1.13
+
+### option: Frame.dragAndDrop.timeout = %%-input-timeout-js-%%
 * since: v1.13
 
 ### option: Frame.dragAndDrop.trial = %%-input-trial-%%
@@ -844,6 +859,9 @@ Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
 ### option: Frame.fill.timeout = %%-input-timeout-%%
 * since: v1.8
 
+### option: Frame.fill.timeout = %%-input-timeout-js-%%
+* since: v1.8
+
 ## async method: Frame.focus
 * since: v1.8
 * discouraged: Use locator-based [`method: Locator.focus`] instead. Read more about [locators](../locators.md).
@@ -858,6 +876,9 @@ This method fetches an element with [`param: selector`] and focuses it. If there
 * since: v1.14
 
 ### option: Frame.focus.timeout = %%-input-timeout-%%
+* since: v1.8
+
+### option: Frame.focus.timeout = %%-input-timeout-js-%%
 * since: v1.8
 
 ## async method: Frame.frameElement
@@ -962,6 +983,9 @@ Attribute name to get the value for.
 * since: v1.14
 
 ### option: Frame.getAttribute.timeout = %%-input-timeout-%%
+* since: v1.8
+
+### option: Frame.getAttribute.timeout = %%-input-timeout-js-%%
 * since: v1.8
 
 ## method: Frame.getByAltText
@@ -1078,6 +1102,9 @@ URL to navigate frame to. The url should include scheme, e.g. `https://`.
 ### option: Frame.goto.timeout = %%-navigation-timeout-%%
 * since: v1.8
 
+### option: Frame.goto.timeout = %%-navigation-timeout-js-%%
+* since: v1.8
+
 ### option: Frame.goto.referer
 * since: v1.8
 - `referer` <[string]>
@@ -1119,6 +1146,9 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Frame.hover.timeout = %%-input-timeout-%%
 * since: v1.8
 
+### option: Frame.hover.timeout = %%-input-timeout-js-%%
+* since: v1.8
+
 ### option: Frame.hover.trial = %%-input-trial-%%
 * since: v1.11
 
@@ -1141,6 +1171,9 @@ Returns `element.innerHTML`.
 ### option: Frame.innerHTML.timeout = %%-input-timeout-%%
 * since: v1.8
 
+### option: Frame.innerHTML.timeout = %%-input-timeout-js-%%
+* since: v1.8
+
 ## async method: Frame.innerText
 * since: v1.8
 * discouraged: Use locator-based [`method: Locator.innerText`] instead. Read more about [locators](../locators.md).
@@ -1155,6 +1188,9 @@ Returns `element.innerText`.
 * since: v1.14
 
 ### option: Frame.innerText.timeout = %%-input-timeout-%%
+* since: v1.8
+
+### option: Frame.innerText.timeout = %%-input-timeout-js-%%
 * since: v1.8
 
 ## async method: Frame.inputValue
@@ -1175,6 +1211,9 @@ Throws for non-input elements. However, if the element is inside the `<label>` e
 ### option: Frame.inputValue.timeout = %%-input-timeout-%%
 * since: v1.13
 
+### option: Frame.inputValue.timeout = %%-input-timeout-js-%%
+* since: v1.13
+
 ## async method: Frame.isChecked
 * since: v1.8
 * discouraged: Use locator-based [`method: Locator.isChecked`] instead. Read more about [locators](../locators.md).
@@ -1189,6 +1228,9 @@ Returns whether the element is checked. Throws if the element is not a checkbox 
 * since: v1.14
 
 ### option: Frame.isChecked.timeout = %%-input-timeout-%%
+* since: v1.8
+
+### option: Frame.isChecked.timeout = %%-input-timeout-js-%%
 * since: v1.8
 
 ## method: Frame.isDetached
@@ -1213,6 +1255,9 @@ Returns whether the element is disabled, the opposite of [enabled](../actionabil
 ### option: Frame.isDisabled.timeout = %%-input-timeout-%%
 * since: v1.8
 
+### option: Frame.isDisabled.timeout = %%-input-timeout-js-%%
+* since: v1.8
+
 ## async method: Frame.isEditable
 * since: v1.8
 * discouraged: Use locator-based [`method: Locator.isEditable`] instead. Read more about [locators](../locators.md).
@@ -1229,6 +1274,9 @@ Returns whether the element is [editable](../actionability.md#editable).
 ### option: Frame.isEditable.timeout = %%-input-timeout-%%
 * since: v1.8
 
+### option: Frame.isEditable.timeout = %%-input-timeout-js-%%
+* since: v1.8
+
 ## async method: Frame.isEnabled
 * since: v1.8
 - returns: <[boolean]>
@@ -1242,6 +1290,9 @@ Returns whether the element is [enabled](../actionability.md#enabled).
 * since: v1.14
 
 ### option: Frame.isEnabled.timeout = %%-input-timeout-%%
+* since: v1.8
+
+### option: Frame.isEnabled.timeout = %%-input-timeout-js-%%
 * since: v1.8
 
 ## async method: Frame.isHidden
@@ -1362,6 +1413,9 @@ Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
 * since: v1.14
 
 ### option: Frame.press.timeout = %%-input-timeout-%%
+* since: v1.8
+
+### option: Frame.press.timeout = %%-input-timeout-js-%%
 * since: v1.8
 
 ## async method: Frame.querySelector
@@ -1487,6 +1541,9 @@ await frame.SelectOptionAsync("select#colors", new[] { "red", "green", "blue" })
 ### option: Frame.selectOption.timeout = %%-input-timeout-%%
 * since: v1.8
 
+### option: Frame.selectOption.timeout = %%-input-timeout-js-%%
+* since: v1.8
+
 ### param: Frame.selectOption.element = %%-python-select-options-element-%%
 * since: v1.8
 
@@ -1539,6 +1596,9 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Frame.setChecked.timeout = %%-input-timeout-%%
 * since: v1.15
 
+### option: Frame.setChecked.timeout = %%-input-timeout-js-%%
+* since: v1.15
+
 ### option: Frame.setChecked.trial = %%-input-trial-%%
 * since: v1.15
 
@@ -1552,6 +1612,9 @@ When all steps combined have not finished during the specified [`option: timeout
 HTML markup to assign to the page.
 
 ### option: Frame.setContent.timeout = %%-navigation-timeout-%%
+* since: v1.8
+
+### option: Frame.setContent.timeout = %%-navigation-timeout-js-%%
 * since: v1.8
 
 ### option: Frame.setContent.waitUntil = %%-navigation-wait-until-%%
@@ -1580,6 +1643,9 @@ This method expects [`param: selector`] to point to an
 * since: v1.14
 
 ### option: Frame.setInputFiles.timeout = %%-input-timeout-%%
+* since: v1.8
+
+### option: Frame.setInputFiles.timeout = %%-input-timeout-js-%%
 * since: v1.8
 
 ## async method: Frame.tap
@@ -1623,6 +1689,9 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Frame.tap.timeout = %%-input-timeout-%%
 * since: v1.8
 
+### option: Frame.tap.timeout = %%-input-timeout-js-%%
+* since: v1.8
+
 ### option: Frame.tap.trial = %%-input-trial-%%
 * since: v1.11
 
@@ -1640,6 +1709,9 @@ Returns `element.textContent`.
 * since: v1.14
 
 ### option: Frame.textContent.timeout = %%-input-timeout-%%
+* since: v1.8
+
+### option: Frame.textContent.timeout = %%-input-timeout-js-%%
 * since: v1.8
 
 ## async method: Frame.title
@@ -1710,6 +1782,9 @@ Time to wait between key presses in milliseconds. Defaults to 0.
 ### option: Frame.type.timeout = %%-input-timeout-%%
 * since: v1.8
 
+### option: Frame.type.timeout = %%-input-timeout-js-%%
+* since: v1.8
+
 ## async method: Frame.uncheck
 * since: v1.8
 * discouraged: Use locator-based [`method: Locator.uncheck`] instead. Read more about [locators](../locators.md).
@@ -1745,6 +1820,9 @@ When all steps combined have not finished during the specified [`option: timeout
 * since: v1.14
 
 ### option: Frame.uncheck.timeout = %%-input-timeout-%%
+* since: v1.8
+
+### option: Frame.uncheck.timeout = %%-input-timeout-js-%%
 * since: v1.8
 
 ### option: Frame.uncheck.trial = %%-input-trial-%%
@@ -1891,7 +1969,10 @@ Optional argument to pass to [`param: expression`].
 ### option: Frame.waitForFunction.polling = %%-csharp-java-wait-for-function-polling-%%
 * since: v1.8
 
-### option: Frame.waitForFunction.timeout = %%-wait-for-timeout-%%
+### option: Frame.waitForFunction.timeout = %%-wait-for-function-timeout-%%
+* since: v1.8
+
+### option: Frame.waitForFunction.timeout = %%-wait-for-function-timeout-js-%%
 * since: v1.8
 
 ## async method: Frame.waitForLoadState
@@ -1933,6 +2014,9 @@ await frame.WaitForLoadStateAsync(); // Defaults to LoadState.Load
 * since: v1.8
 
 ### option: Frame.waitForLoadState.timeout = %%-navigation-timeout-%%
+* since: v1.8
+
+### option: Frame.waitForLoadState.timeout = %%-navigation-timeout-js-%%
 * since: v1.8
 
 ## async method: Frame.waitForNavigation
@@ -2010,6 +2094,9 @@ a navigation.
 * since: v1.8
 
 ### option: Frame.waitForNavigation.timeout = %%-navigation-timeout-%%
+* since: v1.8
+
+### option: Frame.waitForNavigation.timeout = %%-navigation-timeout-js-%%
 * since: v1.8
 
 ### param: Frame.waitForNavigation.callback = %%-java-wait-for-event-callback-%%
@@ -2143,6 +2230,9 @@ class FrameExamples
 ### option: Frame.waitForSelector.timeout = %%-input-timeout-%%
 * since: v1.8
 
+### option: Frame.waitForSelector.timeout = %%-input-timeout-js-%%
+* since: v1.8
+
 ## async method: Frame.waitForTimeout
 * since: v1.8
 
@@ -2193,6 +2283,9 @@ await frame.WaitForURLAsync("**/target.html");
 * since: v1.11
 
 ### option: Frame.waitForURL.timeout = %%-navigation-timeout-%%
+* since: v1.11
+
+### option: Frame.waitForURL.timeout = %%-navigation-timeout-js-%%
 * since: v1.11
 
 ### option: Frame.waitForURL.waitUntil = %%-navigation-wait-until-%%
