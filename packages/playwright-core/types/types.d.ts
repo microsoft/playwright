@@ -10125,6 +10125,11 @@ export interface Locator {
   /**
    * When locator points to a list of elements, returns array of locators, pointing to respective elements.
    *
+   * Note that [locator.all()](https://playwright.dev/docs/api/class-locator#locator-all) does not wait for elements to
+   * match the locator, and instead immediately returns whatever is present in the page. To avoid flakiness when
+   * elements are loaded dynamically, wait for the loading to finish before calling
+   * [locator.all()](https://playwright.dev/docs/api/class-locator#locator-all).
+   *
    * **Usage**
    *
    * ```js

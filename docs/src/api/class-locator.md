@@ -13,6 +13,8 @@ a way to find element(s) on the page at any moment. Locator can be created with 
 When locator points to a list of elements, returns array of locators, pointing
 to respective elements.
 
+Note that [`method: Locator.all`] does not wait for elements to match the locator, and instead immediately returns whatever is present in the page. To avoid flakiness when elements are loaded dynamically, wait for the loading to finish before calling [`method: Locator.all`].
+
 **Usage**
 
 ```js
