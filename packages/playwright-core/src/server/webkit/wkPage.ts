@@ -733,8 +733,6 @@ export class WKPage implements PageDelegate {
 
   async updateHttpCredentials() {
     const credentials = this._browserContext._options.httpCredentials || { username: '', password: '', origin: '' };
-    if (!credentials.origin) credentials.origin = '';
-
     await this._pageProxySession.send('Emulation.setAuthCredentials', { username: credentials.username, password: credentials.password, origin: credentials.origin });
   }
 
