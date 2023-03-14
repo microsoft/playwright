@@ -458,13 +458,13 @@ it('js redirect overrides url bar navigation ', async ({ page, server, browserNa
   if (browserName === 'chromium') {
     // Chromium prioritizes the url bar navigation over the js redirect.
     expect(error).toBeFalsy();
-    expect(page.url()).toBe(server.PREFIX + '/b');
+    await expect(page).toHaveURL(server.PREFIX + '/b');
   } else if (browserName === 'webkit') {
     expect(error.message).toContain('Navigation interrupted by another one');
-    expect(page.url()).toBe(server.PREFIX + '/c');
+    await expect(page).toHaveURL(server.PREFIX + '/c');
   } else if (browserName === 'firefox') {
     expect(error.message).toContain('NS_BINDING_ABORTED');
-    expect(page.url()).toBe(server.PREFIX + '/c');
+    await expect(page).toHaveURL(server.PREFIX + '/c');
   }
 });
 
