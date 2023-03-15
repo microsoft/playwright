@@ -22,21 +22,19 @@ import { TreeView } from '@web/components/treeView';
 import type { TreeState } from '@web/components/treeView';
 import { TeleReporterReceiver, TeleSuite } from '@testIsomorphic/teleReceiver';
 import type { TeleTestCase } from '@testIsomorphic/teleReceiver';
-import type { FullConfig, Suite, TestCase, TestResult, TestStep, Location } from '../../../playwright-test/types/testReporter';
+import type { FullConfig, Suite, TestCase, TestResult, Location } from '../../../playwright-test/types/testReporter';
 import { SplitView } from '@web/components/splitView';
 import { MultiTraceModel } from './modelUtil';
 import './watchMode.css';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { Toolbar } from '@web/components/toolbar';
 import type { ContextEntry } from '../entries';
-import type * as trace from '@trace/trace';
 import type { XtermDataSource } from '@web/components/xtermWrapper';
 import { XtermWrapper } from '@web/components/xtermWrapper';
 import { Expandable } from '@web/components/expandable';
 import { toggleTheme } from '@web/theme';
 
 let updateRootSuite: (rootSuite: Suite, progress: Progress) => void = () => {};
-let updateStepsProgress: () => void = () => {};
 let runWatchedTests = (fileName: string) => {};
 let xtermSize = { cols: 80, rows: 24 };
 
@@ -100,6 +98,15 @@ export const WatchModeView: React.FC<{}> = ({
     setProgress(newProgress);
   };
 
+  const outputDir = React.useMemo(() => {
+    let outputDir = '';
+    for (const p of rootSuite.value?.suites || []) {
+      outputDir = p.project()?.outputDir || '';
+      break;
+    }
+    return outputDir;
+  }, [rootSuite]);
+
   const runTests = (testIds: string[]) => {
     // Clear test results.
     {
@@ -122,7 +129,7 @@ export const WatchModeView: React.FC<{}> = ({
 
   const isRunningTest = !!runningState;
   const result = selectedTest?.results[0];
-  const isFinished = result && result.duration >= 0;
+
   return <div className='vbox watch-mode'>
     <SplitView sidebarSize={250} orientation='horizontal' sidebarIsFirst={true}>
       <div className='vbox'>
@@ -135,8 +142,7 @@ export const WatchModeView: React.FC<{}> = ({
           <XtermWrapper source={xtermDataSource}></XtermWrapper>;
         </div>
         <div className={'vbox' + (isShowingOutput ? ' hidden' : '')}>
-          {isFinished && <FinishedTraceView testResult={result} />}
-          {!isFinished && <InProgressTraceView testResult={result} />}
+          <TraceView outputDir={outputDir} testCase={selectedTest} result={result} />
         </div>
       </div>
       <div className='vbox watch-mode-sidebar'>
@@ -380,31 +386,36 @@ const TestList: React.FC<{
     noItemsMessage='No tests' />;
 };
 
-const InProgressTraceView: React.FC<{
-  testResult: TestResult | undefined,
-}> = ({ testResult }) => {
+const TraceView: React.FC<{
+  outputDir: string,
+  testCase: TestCase | undefined,
+  result: TestResult | undefined,
+}> = ({ outputDir, testCase, result }) => {
   const [model, setModel] = React.useState<MultiTraceModel | undefined>();
-  const [stepsProgress, setStepsProgress] = React.useState(0);
-  updateStepsProgress = () => setStepsProgress(stepsProgress + 1);
+  const [currentStep, setCurrentStep] = React.useState(0);
+  const pollTimer = React.useRef<NodeJS.Timeout | null>(null);
 
   React.useEffect(() => {
-    setModel(testResult ? stepsToModel(testResult) : undefined);
-  }, [stepsProgress, testResult]);
+    if (pollTimer.current)
+      clearTimeout(pollTimer.current);
 
-  return <Workbench model={model} hideTimelineBars={true} hideStackFrames={true} showSourcesFirst={true} />;
-};
-
-const FinishedTraceView: React.FC<{
-  testResult: TestResult,
-}> = ({ testResult }) => {
-  const [model, setModel] = React.useState<MultiTraceModel | undefined>();
-
-  React.useEffect(() => {
     // Test finished.
-    const attachment = testResult.attachments.find(a => a.name === 'trace');
-    if (attachment && attachment.path)
-      loadSingleTraceFile(attachment.path).then(setModel);
-  }, [testResult]);
+    const isFinished = result && result.duration >= 0;
+    if (isFinished) {
+      const attachment = result.attachments.find(a => a.name === 'trace');
+      if (attachment && attachment.path)
+        loadSingleTraceFile(attachment.path).then(setModel);
+      return;
+    }
+
+    const traceLocation = `${outputDir}/.playwright-artifacts-${result?.workerIndex}/traces/${testCase?.id}.json`;
+    // Start polling running test.
+    pollTimer.current = setTimeout(() => {
+      loadSingleTraceFile(traceLocation).then(setModel).then(() => {
+        setCurrentStep(currentStep + 1);
+      });
+    }, 250);
+  }, [result, outputDir, testCase, currentStep, setCurrentStep]);
 
   return <Workbench key='workbench' model={model} hideTimelineBars={true} hideStackFrames={true} showSourcesFirst={true} />;
 };
@@ -471,16 +482,6 @@ const refreshRootSuite = (eraseResults: boolean): Promise<void> => {
       else
         ++progress.passed;
       throttleUpdateRootSuite(rootSuite, progress);
-      // This will update selected trace viewer.
-      updateStepsProgress();
-    },
-
-    onStepBegin: () => {
-      updateStepsProgress();
-    },
-
-    onStepEnd: () => {
-      updateStepsProgress();
     },
   });
   return sendMessage('list', {});
@@ -740,67 +741,4 @@ async function loadSingleTraceFile(url: string): Promise<MultiTraceModel> {
   const response = await fetch(`contexts?${params.toString()}`);
   const contextEntries = await response.json() as ContextEntry[];
   return new MultiTraceModel(contextEntries);
-}
-
-function stepsToModel(result: TestResult): MultiTraceModel {
-  let startTime = Number.MAX_VALUE;
-  let endTime = Number.MIN_VALUE;
-  const actions: trace.ActionTraceEvent[] = [];
-
-  const flatSteps: TestStep[] = [];
-  const visit = (step: TestStep) => {
-    flatSteps.push(step);
-    step.steps.forEach(visit);
-  };
-  result.steps.forEach(visit);
-
-  for (const step of flatSteps) {
-    let callId: string;
-    if (step.category === 'pw:api')
-      callId = `call@${actions.length}`;
-    else if (step.category === 'expect')
-      callId = `expect@${actions.length}`;
-    else
-      continue;
-    const action: trace.ActionTraceEvent = {
-      type: 'action',
-      callId,
-      startTime: step.startTime.getTime(),
-      endTime: step.startTime.getTime() + step.duration,
-      apiName: step.title,
-      class: '',
-      method: '',
-      params: {},
-      wallTime: step.startTime.getTime(),
-      log: [],
-      snapshots: [],
-      error: step.error ? { name: 'Error', message: step.error.message || step.error.value || '' } : undefined,
-    };
-    if (startTime > action.startTime)
-      startTime = action.startTime;
-    if (endTime < action.endTime)
-      endTime = action.endTime;
-    actions.push(action);
-  }
-
-  const contextEntry: ContextEntry = {
-    traceUrl: '',
-    startTime,
-    endTime,
-    browserName: '',
-    options: {
-      viewport: undefined,
-      deviceScaleFactor: undefined,
-      isMobile: undefined,
-      userAgent: undefined
-    },
-    pages: [],
-    resources: [],
-    actions,
-    events: [],
-    initializers: {},
-    hasSource: false
-  };
-
-  return new MultiTraceModel([contextEntry]);
 }
