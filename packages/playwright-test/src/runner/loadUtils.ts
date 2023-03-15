@@ -36,99 +36,108 @@ export type ProjectWithTestGroups = {
   testGroups: TestGroup[];
 };
 
-export async function loadAllTests(mode: 'out-of-process' | 'in-process', config: FullConfigInternal, projectsToIgnore: Set<FullProjectInternal>, additionalFileMatcher: Matcher | undefined, errors: TestError[], shouldFilterOnly: boolean): Promise<{ rootSuite: Suite, projectsWithTestGroups: ProjectWithTestGroups[] }> {
-  const projects = filterProjects(config.projects, config._internal.cliProjectFilter);
-
-  // Interpret cli parameters.
-  const cliFileFilters = createFileFiltersFromArguments(config._internal.cliArgs);
-  const grepMatcher = config._internal.cliGrep ? createTitleMatcher(forceRegExp(config._internal.cliGrep)) : () => true;
-  const grepInvertMatcher = config._internal.cliGrepInvert ? createTitleMatcher(forceRegExp(config._internal.cliGrepInvert)) : () => false;
-  const cliTitleMatcher = (title: string) => !grepInvertMatcher(title) && grepMatcher(title);
+export async function collectProjectsAndTestFiles(config: FullConfigInternal, projectsToIgnore: Set<FullProjectInternal>, additionalFileMatcher: Matcher | undefined) {
+  const fsCache = new Map();
+  const sourceMapCache = new Map();
   const cliFileMatcher = config._internal.cliArgs.length ? createFileMatcherFromArguments(config._internal.cliArgs) : null;
 
+  // First collect all files for the projects in the command line, don't apply any file filters.
+  const allFilesForProject = new Map<FullProjectInternal, string[]>();
+  for (const project of filterProjects(config.projects, config._internal.cliProjectFilter)) {
+    if (projectsToIgnore.has(project))
+      continue;
+    const files = await collectFilesForProject(project, fsCache);
+    allFilesForProject.set(project, files);
+  }
+
+  // Filter files based on the file filters, eliminate the empty projects.
   const filesToRunByProject = new Map<FullProjectInternal, string[]>();
-  let topLevelProjects: FullProjectInternal[];
-  let dependencyProjects: FullProjectInternal[];
-  // Collect files, categorize top level and dependency projects.
-  {
-    const fsCache = new Map();
-    const sourceMapCache = new Map();
-
-    // First collect all files for the projects in the command line, don't apply any file filters.
-    const allFilesForProject = new Map<FullProjectInternal, string[]>();
-    for (const project of projects) {
-      if (projectsToIgnore.has(project))
-        continue;
-      const files = await collectFilesForProject(project, fsCache);
-      allFilesForProject.set(project, files);
-    }
-
-    // Filter files based on the file filters, eliminate the empty projects.
-    for (const [project, files] of allFilesForProject) {
-      const matchedFiles = await Promise.all(files.map(async file => {
-        if (additionalFileMatcher && !additionalFileMatcher(file))
+  for (const [project, files] of allFilesForProject) {
+    const matchedFiles = await Promise.all(files.map(async file => {
+      if (additionalFileMatcher && !additionalFileMatcher(file))
+        return;
+      if (cliFileMatcher) {
+        if (!cliFileMatcher(file) && !await isPotentiallyJavaScriptFileWithSourceMap(file, sourceMapCache))
           return;
-        if (cliFileMatcher) {
-          if (!cliFileMatcher(file) && !await isPotentiallyJavaScriptFileWithSourceMap(file, sourceMapCache))
-            return;
-        }
-        return file;
-      }));
-      const filteredFiles = matchedFiles.filter(Boolean) as string[];
-      if (filteredFiles.length)
-        filesToRunByProject.set(project, filteredFiles);
-    }
+      }
+      return file;
+    }));
+    const filteredFiles = matchedFiles.filter(Boolean) as string[];
+    if (filteredFiles.length)
+      filesToRunByProject.set(project, filteredFiles);
+  }
 
-    const projectClosure = buildProjectsClosure([...filesToRunByProject.keys()]);
-    topLevelProjects = projectClosure.filter(p => p._internal.type === 'top-level' && !projectsToIgnore.has(p));
-    dependencyProjects = projectClosure.filter(p => p._internal.type === 'dependency' && !projectsToIgnore.has(p));
-
-    // (Re-)add all files for dependent projects, disregard filters.
-    for (const project of dependencyProjects) {
+  // (Re-)add all files for dependent projects, disregard filters.
+  const projectClosure = buildProjectsClosure([...filesToRunByProject.keys()]).filter(p => !projectsToIgnore.has(p));
+  for (const project of projectClosure) {
+    if (project._internal.type === 'dependency') {
       filesToRunByProject.delete(project);
       const files = allFilesForProject.get(project) || await collectFilesForProject(project, fsCache);
       filesToRunByProject.set(project, files);
     }
   }
 
-  // Load all test files and create a preprocessed root. Child suites are files there.
-  const fileSuites: Suite[] = [];
-  {
-    const loaderHost = mode === 'out-of-process' ? new OutOfProcessLoaderHost(config) : new InProcessLoaderHost(config);
-    const allTestFiles = new Set<string>();
-    for (const files of filesToRunByProject.values())
-      files.forEach(file => allTestFiles.add(file));
-    for (const file of allTestFiles) {
-      const fileSuite = await loaderHost.loadTestFile(file, errors);
-      fileSuites.push(fileSuite);
-    }
-    await loaderHost.stop();
+  return filesToRunByProject;
+}
 
-    // Check that no test file imports another test file.
-    // Loader must be stopped first, since it popuplates the dependency tree.
-    for (const file of allTestFiles) {
-      for (const dependency of dependenciesForTestFile(file)) {
-        if (allTestFiles.has(dependency)) {
-          const importer = path.relative(config.rootDir, file);
-          const importee = path.relative(config.rootDir, dependency);
-          errors.push({
-            message: `Error: test file "${importer}" should not import test file "${importee}"`,
-            location: { file, line: 1, column: 1 },
-          });
-        }
+export async function loadFileSuites(mode: 'out-of-process' | 'in-process', config: FullConfigInternal, filesToRunByProject: Map<FullProjectInternal, string[]>, errors: TestError[]): Promise<Map<FullProjectInternal, Suite[]>> {
+  // Determine all files to load.
+  const allTestFiles = new Set<string>();
+  for (const files of filesToRunByProject.values())
+    files.forEach(file => allTestFiles.add(file));
+
+  // Load test files.
+  const fileSuiteByFile = new Map<string, Suite>();
+  const loaderHost = mode === 'out-of-process' ? new OutOfProcessLoaderHost(config) : new InProcessLoaderHost(config);
+  for (const file of allTestFiles) {
+    const fileSuite = await loaderHost.loadTestFile(file, errors);
+    fileSuiteByFile.set(file, fileSuite);
+    errors.push(...createDuplicateTitlesErrors(config, fileSuite));
+  }
+  await loaderHost.stop();
+
+  // Check that no test file imports another test file.
+  // Loader must be stopped first, since it popuplates the dependency tree.
+  for (const file of allTestFiles) {
+    for (const dependency of dependenciesForTestFile(file)) {
+      if (allTestFiles.has(dependency)) {
+        const importer = path.relative(config.rootDir, file);
+        const importee = path.relative(config.rootDir, dependency);
+        errors.push({
+          message: `Error: test file "${importer}" should not import test file "${importee}"`,
+          location: { file, line: 1, column: 1 },
+        });
       }
     }
   }
 
-  // Complain about duplicate titles.
-  errors.push(...createDuplicateTitlesErrors(config, fileSuites));
+  // Collect file suites for each project.
+  const fileSuitesByProject = new Map<FullProjectInternal, Suite[]>();
+  for (const [project, files] of filesToRunByProject) {
+    const suites = files.map(file => fileSuiteByFile.get(file)).filter(Boolean) as Suite[];
+    fileSuitesByProject.set(project, suites);
+  }
+  return fileSuitesByProject;
+}
 
-  // Create root suites with clones for the projects.
+export async function createRootSuiteAndTestGroups(config: FullConfigInternal, fileSuitesByProject: Map<FullProjectInternal, Suite[]>, errors: TestError[], shouldFilterOnly: boolean): Promise<{ rootSuite: Suite, projectsWithTestGroups: ProjectWithTestGroups[] }> {
+  // Create root suite, where each child will be a project suite with cloned file suites inside it.
   const rootSuite = new Suite('', 'root');
 
-  // First iterate top-level projects to focus only, then add all other projects.
-  for (const project of topLevelProjects)
-    rootSuite._addSuite(await createProjectSuite(fileSuites, project, { cliFileFilters, cliTitleMatcher, testIdMatcher: config._internal.testIdMatcher }, filesToRunByProject.get(project)!));
+  // First add top-level projects, so that we can filterOnly and shard just top-level.
+  {
+    // Interpret cli parameters.
+    const cliFileFilters = createFileFiltersFromArguments(config._internal.cliArgs);
+    const grepMatcher = config._internal.cliGrep ? createTitleMatcher(forceRegExp(config._internal.cliGrep)) : () => true;
+    const grepInvertMatcher = config._internal.cliGrepInvert ? createTitleMatcher(forceRegExp(config._internal.cliGrepInvert)) : () => false;
+    const cliTitleMatcher = (title: string) => !grepInvertMatcher(title) && grepMatcher(title);
+
+    // Clone file suites for top-level projects.
+    for (const [project, fileSuites] of fileSuitesByProject) {
+      if (project._internal.type === 'top-level')
+        rootSuite._addSuite(await createProjectSuite(fileSuites, project, { cliFileFilters, cliTitleMatcher, testIdMatcher: config._internal.testIdMatcher }));
+    }
+  }
 
   // Complain about only.
   if (config.forbidOnly) {
@@ -170,37 +179,34 @@ export async function loadAllTests(mode: 'out-of-process' | 'in-process', config
 
     // Remove now-empty top-level projects.
     projectsWithTestGroups = projectsWithTestGroups.filter(p => p.testGroups.length > 0);
-
-    // Re-build the closure, project set might have changed.
-    const shardedProjectClosure = buildProjectsClosure(projectsWithTestGroups.map(p => p.project));
-    topLevelProjects = shardedProjectClosure.filter(p => p._internal.type === 'top-level' && !projectsToIgnore.has(p));
-    dependencyProjects = shardedProjectClosure.filter(p => p._internal.type === 'dependency' && !projectsToIgnore.has(p));
   }
 
-  // Prepend the projects that are dependencies.
-  for (const project of dependencyProjects) {
-    const projectSuite = await createProjectSuite(fileSuites, project, { cliFileFilters: [], cliTitleMatcher: undefined }, filesToRunByProject.get(project)!);
-    rootSuite._prependSuite(projectSuite);
-    const testGroups = createTestGroups(projectSuite, config.workers);
-    projectsWithTestGroups.push({ project, projectSuite, testGroups });
+  // Now prepend dependency projects.
+  {
+    // Filtering only and sharding might have reduced the number of top-level projects.
+    // Build the project closure to only include dependencies that are still needed.
+    const projectClosure = new Set(buildProjectsClosure(projectsWithTestGroups.map(p => p.project)));
+
+    // Clone file suites for dependency projects.
+    for (const [project, fileSuites] of fileSuitesByProject) {
+      if (project._internal.type === 'dependency' && projectClosure.has(project)) {
+        const projectSuite = await createProjectSuite(fileSuites, project, { cliFileFilters: [], cliTitleMatcher: undefined });
+        rootSuite._prependSuite(projectSuite);
+        const testGroups = createTestGroups(projectSuite, config.workers);
+        projectsWithTestGroups.push({ project, projectSuite, testGroups });
+      }
+    }
   }
 
   return { rootSuite, projectsWithTestGroups };
 }
 
-async function createProjectSuite(fileSuites: Suite[], project: FullProjectInternal, options: { cliFileFilters: TestFileFilter[], cliTitleMatcher?: Matcher, testIdMatcher?: Matcher }, files: string[]): Promise<Suite> {
-  const fileSuitesMap = new Map<string, Suite>();
-  for (const fileSuite of fileSuites)
-    fileSuitesMap.set(fileSuite._requireFile, fileSuite);
-
+async function createProjectSuite(fileSuites: Suite[], project: FullProjectInternal, options: { cliFileFilters: TestFileFilter[], cliTitleMatcher?: Matcher, testIdMatcher?: Matcher }): Promise<Suite> {
   const projectSuite = new Suite(project.name, 'project');
   projectSuite._projectConfig = project;
   if (project._internal.fullyParallel)
     projectSuite._parallelMode = 'parallel';
-  for (const file of files) {
-    const fileSuite = fileSuitesMap.get(file);
-    if (!fileSuite)
-      continue;
+  for (const fileSuite of fileSuites) {
     for (let repeatEachIndex = 0; repeatEachIndex < project.repeatEach; repeatEachIndex++) {
       const builtSuite = buildFileSuiteForProject(project, fileSuite, repeatEachIndex);
       projectSuite._addSuite(builtSuite);
@@ -238,22 +244,20 @@ function createForbidOnlyErrors(onlyTestsAndSuites: (TestCase | Suite)[]): TestE
   return errors;
 }
 
-function createDuplicateTitlesErrors(config: FullConfigInternal, fileSuites: Suite[]): TestError[] {
+function createDuplicateTitlesErrors(config: FullConfigInternal, fileSuite: Suite): TestError[] {
   const errors: TestError[] = [];
-  for (const fileSuite of fileSuites) {
-    const testsByFullTitle = new Map<string, TestCase>();
-    for (const test of fileSuite.allTests()) {
-      const fullTitle = test.titlePath().slice(1).join(' › ');
-      const existingTest = testsByFullTitle.get(fullTitle);
-      if (existingTest) {
-        const error: TestError = {
-          message: `Error: duplicate test title "${fullTitle}", first declared in ${buildItemLocation(config.rootDir, existingTest)}`,
-          location: test.location,
-        };
-        errors.push(error);
-      }
-      testsByFullTitle.set(fullTitle, test);
+  const testsByFullTitle = new Map<string, TestCase>();
+  for (const test of fileSuite.allTests()) {
+    const fullTitle = test.titlePath().slice(1).join(' › ');
+    const existingTest = testsByFullTitle.get(fullTitle);
+    if (existingTest) {
+      const error: TestError = {
+        message: `Error: duplicate test title "${fullTitle}", first declared in ${buildItemLocation(config.rootDir, existingTest)}`,
+        location: test.location,
+      };
+      errors.push(error);
     }
+    testsByFullTitle.set(fullTitle, test);
   }
   return errors;
 }

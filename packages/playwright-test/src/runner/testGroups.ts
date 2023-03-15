@@ -131,6 +131,13 @@ export function createTestGroups(projectSuite: Suite, workers: number): TestGrou
 }
 
 export function filterForShard(shard: { total: number, current: number }, testGroups: TestGroup[]): Set<TestGroup> {
+  // Note that sharding works based on test groups.
+  // This means parallel files will be sharded by single tests,
+  // while non-parallel files will be sharded by the whole file.
+  //
+  // Shards are still balanced by the number of tests, not files,
+  // even in the case of non-paralleled files.
+
   let shardableTotal = 0;
   for (const group of testGroups)
     shardableTotal += group.tests.length;
