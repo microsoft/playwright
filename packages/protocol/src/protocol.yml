@@ -2925,6 +2925,7 @@ Tracing:
 
     tracingStartChunk:
       parameters:
+        name: string?
         title: string?
 
     tracingStopChunk:

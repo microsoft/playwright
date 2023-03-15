@@ -267,6 +267,13 @@ await context.Tracing.StopChunkAsync(new()
 
 Trace name to be shown in the Trace Viewer.
 
+### option: Tracing.startChunk.name
+* since: v1.32
+- `name` <[string]>
+
+If specified, the trace is going to be saved into the file with the
+given name inside the [`option: tracesDir`] folder specified in [`method: BrowserType.launch`].
+
 ## async method: Tracing.stop
 * since: v1.12
 

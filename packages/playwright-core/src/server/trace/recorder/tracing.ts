@@ -125,6 +125,8 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       const o = this._state.options;
       if (!o.screenshots !== !options.screenshots || !o.snapshots !== !options.snapshots)
         throw new Error('Tracing has been already started with different options');
+      if (options.name && options.name !== this._state.traceName)
+        await this._changeTraceName(this._state, options.name);
       return;
     }
     // TODO: passing the same name for two contexts makes them write into a single file
@@ -143,7 +145,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       this._harTracer.start();
   }
 
-  async startChunk(options: { title?: string } = {}) {
+  async startChunk(options: { name?: string, title?: string } = {}) {
     if (this._state && this._state.recording)
       await this.stopChunk({ mode: 'discard' });
 
@@ -158,6 +160,8 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     state.traceFile = path.join(state.tracesDir, `${state.traceName}${suffix}.trace`);
     state.recording = true;
 
+    if (options.name && options.name !== this._state.traceName)
+      this._changeTraceName(this._state, options.name);
     this._appendTraceOperation(async () => {
       await mkdirIfNeeded(state.traceFile);
       await fs.promises.appendFile(state.traceFile, JSON.stringify({ ...this._contextCreatedEvent, title: options.title, wallTime: Date.now() }) + '\n');
@@ -186,6 +190,16 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       return;
     for (const page of this._context.pages())
       page.setScreencastOptions(null);
+  }
+
+  private async _changeTraceName(state: RecordingState, name: string) {
+    await this._appendTraceOperation(async () => {
+      const oldNetworkFile = state.networkFile;
+      state.traceFile = path.join(state.tracesDir, name + '.trace');
+      state.networkFile = path.join(state.tracesDir, name + '.network');
+      // Network file survives across chunks, so make a copy with the new name.
+      await fs.promises.copyFile(oldNetworkFile, state.networkFile);
+    });
   }
 
   async stop() {
@@ -257,7 +271,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       if (params.mode === 'discard')
         return {};
 
-      // Har files are live, make a snapshot before returning the resulting entries.
+      // Network file survives across chunks, make a snapshot before returning the resulting entries.
       const networkFile = path.join(state.networkFile, '..', createGuid());
       await fs.promises.copyFile(state.networkFile, networkFile);
 

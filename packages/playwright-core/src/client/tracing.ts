@@ -34,13 +34,13 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
     this._includeSources = !!options.sources;
     await this._wrapApiCall(async () => {
       await this._channel.tracingStart(options);
-      await this._channel.tracingStartChunk({ title: options.title });
+      await this._channel.tracingStartChunk({ name: options.name, title: options.title });
     });
     this._metadataCollector = [];
     this._connection.startCollectingCallMetadata(this._metadataCollector);
   }
 
-  async startChunk(options: { title?: string } = {}) {
+  async startChunk(options: { name?: string, title?: string } = {}) {
     await this._channel.tracingStartChunk(options);
     this._metadataCollector = [];
     this._connection.startCollectingCallMetadata(this._metadataCollector);

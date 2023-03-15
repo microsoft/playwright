@@ -3749,9 +3749,11 @@ export type TracingTracingStartOptions = {
 };
 export type TracingTracingStartResult = void;
 export type TracingTracingStartChunkParams = {
+  name?: string,
   title?: string,
 };
 export type TracingTracingStartChunkOptions = {
+  name?: string,
   title?: string,
 };
 export type TracingTracingStartChunkResult = void;
