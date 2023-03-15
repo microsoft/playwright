@@ -43,6 +43,7 @@ const kRoleWithNameScore = 140;
 const kAltTextScore = 160;
 const kTextScore = 180;
 const kTitleScore = 200;
+const kTextScoreRegex = 250;
 const kPlaceholderScoreExact = kPlaceholderScore + kExactPenalty;
 const kLabelScoreExact = kLabelScore + kExactPenalty;
 const kRoleWithNameScoreExact = kRoleWithNameScore + kExactPenalty;
@@ -268,11 +269,10 @@ function buildTextCandidates(injectedScript: InjectedScript, element: Element, i
   const candidates: SelectorToken[][] = [];
 
   const escaped = escapeForTextSelector(text, false);
-  const exactEscaped = escapeForTextSelector(text, true);
 
   if (isTargetNode) {
     candidates.push([{ engine: 'internal:text', selector: escaped, score: kTextScore }]);
-    candidates.push([{ engine: 'internal:text', selector: exactEscaped, score: kTextScoreExact }]);
+    candidates.push([{ engine: 'internal:text', selector: escapeForTextSelector(text, true), score: kTextScoreExact }]);
   }
 
   const ariaRole = getAriaRole(element);
@@ -289,7 +289,8 @@ function buildTextCandidates(injectedScript: InjectedScript, element: Element, i
     candidate.push({ engine: 'css', selector: element.nodeName.toLowerCase(), score: kCSSTagNameScore });
   }
   candidates.push([...candidate, { engine: 'internal:has-text', selector: escaped, score: kTextScore }]);
-  candidates.push([...candidate, { engine: 'internal:has-text', selector: exactEscaped, score: kTextScoreExact }]);
+  if (text.length <= 80)
+    candidates.push([...candidate, { engine: 'internal:has-text', selector: '/^' + escapeRegExp(text) + '$/', score: kTextScoreRegex }]);
   penalizeScoreForLength(candidates);
   return candidates;
 }
@@ -466,4 +467,9 @@ function isGuidLike(id: string): boolean {
     lastCharacterType = characterType;
   }
   return transitionCount >= id.length / 4;
+}
+
+function escapeRegExp(s: string) {
+  // From https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions#escaping
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
 }

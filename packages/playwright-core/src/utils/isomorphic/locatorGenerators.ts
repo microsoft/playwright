@@ -75,8 +75,11 @@ function innerAsLocator(factory: LocatorFactory, parsed: ParsedSelector, isFrame
     }
     if (part.name === 'internal:has-text') {
       const { exact, text } = detectExact(part.body as string);
-      tokens.push(factory.generateLocator(base, 'has-text', text, { exact }));
-      continue;
+      // There is no locator equivalent for strict has-text, leave it as is.
+      if (!exact) {
+        tokens.push(factory.generateLocator(base, 'has-text', text, { exact }));
+        continue;
+      }
     }
     if (part.name === 'internal:has') {
       const inner = innerAsLocator(factory, (part.body as NestedSelectorBody).parsed);
