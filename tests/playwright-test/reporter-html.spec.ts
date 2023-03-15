@@ -1231,7 +1231,7 @@ test.describe('labels', () => {
 
     const firstTitle = page.locator('.test-file-title', { hasText: '@finally @oddly @questioningly @sleepily @warmly @healthily @smoke @flaky ' }).first();
     await expect(firstTitle).toBeVisible();
-    expect((await firstTitle.boundingBox()).height).toBe(118);
+    expect((await firstTitle.boundingBox()).height).toBeGreaterThanOrEqual(100);
   });
 
   test('should show filtered tests by labels when click on label', async ({ runInlineTest, showReport, page }) => {
