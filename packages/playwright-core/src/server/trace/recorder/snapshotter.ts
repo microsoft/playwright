@@ -104,14 +104,14 @@ export class Snapshotter {
     eventsHelper.removeEventListeners(this._eventListeners);
   }
 
-  async captureSnapshot(page: Page, snapshotName: string, element?: ElementHandle): Promise<void> {
+  async captureSnapshot(page: Page, callId: string, snapshotName: string, element?: ElementHandle): Promise<void> {
     // Prepare expression synchronously.
     const expression = `window["${this._snapshotStreamer}"].captureSnapshot(${JSON.stringify(snapshotName)})`;
 
     // In a best-effort manner, without waiting for it, mark target element.
-    element?.callFunctionNoReply((element: Element, snapshotName: string) => {
-      element.setAttribute('__playwright_target__', snapshotName);
-    }, snapshotName);
+    element?.callFunctionNoReply((element: Element, callId: string) => {
+      element.setAttribute('__playwright_target__', callId);
+    }, callId);
 
     // In each frame, in a non-stalling manner, capture the snapshots.
     const snapshots = page.frames().map(async frame => {
@@ -121,6 +121,7 @@ export class Snapshotter {
         return;
 
       const snapshot: FrameSnapshot = {
+        callId,
         snapshotName,
         pageId: page.guid,
         frameId: frame.guid,

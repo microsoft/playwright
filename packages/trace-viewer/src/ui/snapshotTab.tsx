@@ -42,11 +42,13 @@ export const SnapshotTab: React.FunctionComponent<{
   const [pickerVisible, setPickerVisible] = React.useState(false);
 
   const { snapshots, snapshotInfoUrl, snapshotUrl, pointX, pointY, popoutUrl  } = React.useMemo(() => {
-    const snapshotMap = new Map<string, { title: string, snapshotName: string }>();
-    for (const snapshot of action?.snapshots || [])
-      snapshotMap.set(snapshot.title, snapshot);
-    const actionSnapshot = snapshotMap.get('action') || snapshotMap.get('after');
-    const snapshots = [actionSnapshot ? { ...actionSnapshot, title: 'action' } : undefined, snapshotMap.get('before'), snapshotMap.get('after')].filter(Boolean) as { title: string, snapshotName: string }[];
+    const actionSnapshot = action?.inputSnapshot || action?.afterSnapshot;
+    const snapshots = [
+      actionSnapshot ? { title: 'action', snapshotName: actionSnapshot } : undefined,
+      action?.beforeSnapshot ? { title: 'before', snapshotName: action?.beforeSnapshot } : undefined,
+      action?.afterSnapshot ? { title: 'after', snapshotName: action.afterSnapshot } : undefined,
+    ].filter(Boolean) as { title: string, snapshotName: string }[];
+
     let snapshotUrl = 'data:text/html,<body style="background: #ddd"></body>';
     let popoutUrl: string | undefined;
     let snapshotInfoUrl: string | undefined;
@@ -60,7 +62,7 @@ export const SnapshotTab: React.FunctionComponent<{
         params.set('name', snapshot.snapshotName);
         snapshotUrl = new URL(`snapshot/${action.pageId}?${params.toString()}`, window.location.href).toString();
         snapshotInfoUrl = new URL(`snapshotInfo/${action.pageId}?${params.toString()}`, window.location.href).toString();
-        if (snapshot.snapshotName.includes('action')) {
+        if (snapshot.title === 'action') {
           pointX = action.point?.x;
           pointY = action.point?.y;
         }

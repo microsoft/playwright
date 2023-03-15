@@ -575,7 +575,6 @@ class ContextRecorder extends EventEmitter {
         method: action,
         params,
         log: [],
-        snapshots: [],
       };
       this._generator.willPerformAction(actionInContext);
 

@@ -29,19 +29,19 @@ const it = contextTest.extend<{ snapshotter: InMemorySnapshotter }>({
 it.describe('snapshots', () => {
   it('should collect snapshot', async ({ page, toImpl, snapshotter }) => {
     await page.setContent('<button>Hello</button>');
-    const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'snapshot');
+    const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'call@1', 'snapshot@call@1');
     expect(distillSnapshot(snapshot)).toBe('<BUTTON>Hello</BUTTON>');
   });
 
   it('should preserve BASE and other content on reset', async ({ page, toImpl, snapshotter, server }) => {
     await page.goto(server.EMPTY_PAGE);
-    const snapshot1 = await snapshotter.captureSnapshot(toImpl(page), 'snapshot1');
+    const snapshot1 = await snapshotter.captureSnapshot(toImpl(page), 'call@1', 'snapshot@call@1');
     const html1 = snapshot1.render().html;
     expect(html1).toContain(`<BASE href="${server.EMPTY_PAGE}"`);
     await snapshotter.reset();
-    const snapshot2 = await snapshotter.captureSnapshot(toImpl(page), 'snapshot2');
+    const snapshot2 = await snapshotter.captureSnapshot(toImpl(page), 'call@2', 'snapshot@call@2');
     const html2 = snapshot2.render().html;
-    expect(html2.replace(`"snapshot2"`, `"snapshot1"`)).toEqual(html1);
+    expect(html2.replace(`"call@2"`, `"call@1"`)).toEqual(html1);
   });
 
   it('should capture resources', async ({ page, toImpl, server, snapshotter }) => {
@@ -50,7 +50,7 @@ it.describe('snapshots', () => {
       route.fulfill({ body: 'button { color: red; }', }).catch(() => {});
     });
     await page.setContent('<link rel="stylesheet" href="style.css"><button>Hello</button>');
-    const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'snapshot');
+    const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'call@1', 'snapshot@call@1');
     const resource = snapshot.resourceByUrl(`http://localhost:${server.PORT}/style.css`);
     expect(resource).toBeTruthy();
   });
@@ -59,36 +59,36 @@ it.describe('snapshots', () => {
     await page.setContent('<button>Hello</button>');
     const snapshots = [];
     snapshotter.onSnapshotEvent(snapshot => snapshots.push(snapshot));
-    await snapshotter.captureSnapshot(toImpl(page), 'snapshot1');
-    await snapshotter.captureSnapshot(toImpl(page), 'snapshot2');
+    await snapshotter.captureSnapshot(toImpl(page), 'call@1', 'snapshot@call@1');
+    await snapshotter.captureSnapshot(toImpl(page), 'call@2', 'snapshot@call@2');
     expect(snapshots.length).toBe(2);
   });
 
   it('should respect inline CSSOM change', async ({ page, toImpl, snapshotter }) => {
     await page.setContent('<style>button { color: red; }</style><button>Hello</button>');
-    const snapshot1 = await snapshotter.captureSnapshot(toImpl(page), 'snapshot1');
+    const snapshot1 = await snapshotter.captureSnapshot(toImpl(page), 'call@1', 'snapshot@call@1');
     expect(distillSnapshot(snapshot1)).toBe('<STYLE>button { color: red; }</STYLE><BUTTON>Hello</BUTTON>');
 
     await page.evaluate(() => { (document.styleSheets[0].cssRules[0] as any).style.color = 'blue'; });
-    const snapshot2 = await snapshotter.captureSnapshot(toImpl(page), 'snapshot2');
+    const snapshot2 = await snapshotter.captureSnapshot(toImpl(page), 'call@2', 'snapshot@call@2');
     expect(distillSnapshot(snapshot2)).toBe('<STYLE>button { color: blue; }</STYLE><BUTTON>Hello</BUTTON>');
   });
 
   it('should respect node removal', async ({ page, toImpl, snapshotter }) => {
     await page.setContent('<div><button id="button1"></button><button id="button2"></button></div>');
-    const snapshot1 = await snapshotter.captureSnapshot(toImpl(page), 'snapshot1');
+    const snapshot1 = await snapshotter.captureSnapshot(toImpl(page), 'call@1', 'snapshot@call@1');
     expect(distillSnapshot(snapshot1)).toBe('<DIV><BUTTON id=\"button1\"></BUTTON><BUTTON id=\"button2\"></BUTTON></DIV>');
     await page.evaluate(() => document.getElementById('button2').remove());
-    const snapshot2 = await snapshotter.captureSnapshot(toImpl(page), 'snapshot2');
+    const snapshot2 = await snapshotter.captureSnapshot(toImpl(page), 'call@2', 'snapshot@call@2');
     expect(distillSnapshot(snapshot2)).toBe('<DIV><BUTTON id=\"button1\"></BUTTON></DIV>');
   });
 
   it('should respect attr removal', async ({ page, toImpl, snapshotter }) => {
     await page.setContent('<div id="div" attr1="1" attr2="2"></div>');
-    const snapshot1 = await snapshotter.captureSnapshot(toImpl(page), 'snapshot1');
+    const snapshot1 = await snapshotter.captureSnapshot(toImpl(page), 'call@1', 'snapshot@call@1');
     expect(distillSnapshot(snapshot1)).toBe('<DIV id=\"div\" attr1=\"1\" attr2=\"2\"></DIV>');
     await page.evaluate(() => document.getElementById('div').removeAttribute('attr2'));
-    const snapshot2 = await snapshotter.captureSnapshot(toImpl(page), 'snapshot2');
+    const snapshot2 = await snapshotter.captureSnapshot(toImpl(page), 'snapshot@call@2');
     expect(distillSnapshot(snapshot2)).toBe('<DIV id=\"div\" attr1=\"1\"></DIV>');
   });
 
@@ -96,21 +96,21 @@ it.describe('snapshots', () => {
     await page.goto(server.EMPTY_PAGE);
     await page.setContent('<!DOCTYPE foo><body>hi</body>');
 
-    const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'snapshot');
+    const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'call@1', 'snapshot@call@1');
     expect(distillSnapshot(snapshot)).toBe('<!DOCTYPE foo>hi');
   });
 
   it('should replace meta charset attr that specifies charset', async ({ page, server, toImpl, snapshotter }) => {
     await page.goto(server.EMPTY_PAGE);
     await page.setContent('<meta charset="shift-jis" />');
-    const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'snapshot');
+    const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'call@1', 'snapshot@call@1');
     expect(distillSnapshot(snapshot)).toBe('<META charset="utf-8">');
   });
 
   it('should replace meta content attr that specifies charset', async ({ page, server, toImpl, snapshotter }) => {
     await page.goto(server.EMPTY_PAGE);
     await page.setContent('<meta http-equiv="Content-Type" content="text/html; charset=Shift_JIS">');
-    const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'snapshot');
+    const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'call@1', 'snapshot@call@1');
     expect(distillSnapshot(snapshot)).toBe('<META http-equiv="Content-Type" content="text/html; charset=utf-8">');
   });
 
@@ -121,11 +121,11 @@ it.describe('snapshots', () => {
     });
     await page.setContent('<link rel="stylesheet" href="style.css"><button>Hello</button>');
 
-    const snapshot1 = await snapshotter.captureSnapshot(toImpl(page), 'snapshot1');
+    const snapshot1 = await snapshotter.captureSnapshot(toImpl(page), 'call@1', 'snapshot@call@1');
     expect(distillSnapshot(snapshot1)).toBe('<LINK rel=\"stylesheet\" href=\"style.css\"><BUTTON>Hello</BUTTON>');
 
     await page.evaluate(() => { (document.styleSheets[0].cssRules[0] as any).style.color = 'blue'; });
-    const snapshot2 = await snapshotter.captureSnapshot(toImpl(page), 'snapshot1');
+    const snapshot2 = await snapshotter.captureSnapshot(toImpl(page), 'call@1', 'snapshot@call@1');
     const resource = snapshot2.resourceByUrl(`http://localhost:${server.PORT}/style.css`);
     expect((await snapshotter.resourceContentForTest(resource.response.content._sha1)).toString()).toBe('button { color: blue; }');
   });
@@ -146,7 +146,7 @@ it.describe('snapshots', () => {
     await page.goto(server.EMPTY_PAGE);
 
     for (let counter = 0; ; ++counter) {
-      const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'snapshot' + counter);
+      const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'call@' + counter, 'snapshot@call@' + counter);
       const text = distillSnapshot(snapshot).replace(/frame@[^"]+["]/, '<id>"');
       if (text === '<FRAMESET><FRAME __playwright_src__=\"/snapshot/<id>\"></FRAME></FRAMESET>')
         break;
@@ -191,7 +191,7 @@ it.describe('snapshots', () => {
 
     // Marking iframe hierarchy is racy, do not expect snapshot, wait for it.
     for (let counter = 0; ; ++counter) {
-      const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'snapshot' + counter);
+      const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'call@' + counter, 'snapshot@call@' + counter);
       const text = distillSnapshot(snapshot).replace(/frame@[^"]+["]/, '<id>"');
       if (text === '<IFRAME __playwright_src__=\"/snapshot/<id>\"></IFRAME>')
         break;
@@ -203,31 +203,31 @@ it.describe('snapshots', () => {
     await page.setContent('<button>Hello</button><button>World</button>');
     {
       const handle = await page.$('text=Hello');
-      const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'snapshot', toImpl(handle));
-      expect(distillSnapshot(snapshot, false /* distillTarget */)).toBe('<BUTTON __playwright_target__=\"snapshot\">Hello</BUTTON><BUTTON>World</BUTTON>');
+      const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'call@1', 'snapshot@call@1', toImpl(handle));
+      expect(distillSnapshot(snapshot, false /* distillTarget */)).toBe('<BUTTON __playwright_target__=\"call@1\">Hello</BUTTON><BUTTON>World</BUTTON>');
     }
     {
       const handle = await page.$('text=World');
-      const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'snapshot2', toImpl(handle));
-      expect(distillSnapshot(snapshot, false /* distillTarget */)).toBe('<BUTTON __playwright_target__=\"snapshot\">Hello</BUTTON><BUTTON __playwright_target__=\"snapshot2\">World</BUTTON>');
+      const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'call@2', 'snapshot@call@2', toImpl(handle));
+      expect(distillSnapshot(snapshot, false /* distillTarget */)).toBe('<BUTTON __playwright_target__=\"call@1\">Hello</BUTTON><BUTTON __playwright_target__=\"call@2\">World</BUTTON>');
     }
   });
 
   it('should collect on attribute change', async ({ page, toImpl, snapshotter }) => {
     await page.setContent('<button>Hello</button>');
     {
-      const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'snapshot');
+      const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'call@1', 'snapshot@call@1');
       expect(distillSnapshot(snapshot)).toBe('<BUTTON>Hello</BUTTON>');
     }
     const handle = await page.$('text=Hello')!;
     await handle.evaluate(element => element.setAttribute('data', 'one'));
     {
-      const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'snapshot2');
+      const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'call@2', 'snapshot@call@2');
       expect(distillSnapshot(snapshot)).toBe('<BUTTON data="one">Hello</BUTTON>');
     }
     await handle.evaluate(element => element.setAttribute('data', 'two'));
     {
-      const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'snapshot2');
+      const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'snapshot@call@2');
       expect(distillSnapshot(snapshot)).toBe('<BUTTON data="two">Hello</BUTTON>');
     }
   });
@@ -251,11 +251,11 @@ it.describe('snapshots', () => {
       }
     });
 
-    const renderer1 = await snapshotter.captureSnapshot(toImpl(page), 'snapshot1');
+    const renderer1 = await snapshotter.captureSnapshot(toImpl(page), 'call1', 'snapshot@call@1');
     // Expect some adopted style sheets.
     expect(distillSnapshot(renderer1)).toContain('__playwright_style_sheet_');
 
-    const renderer2 = await snapshotter.captureSnapshot(toImpl(page), 'snapshot2');
+    const renderer2 = await snapshotter.captureSnapshot(toImpl(page), 'call2', 'snapshot@call@2');
     const snapshot2 = renderer2.snapshot();
     // Second snapshot should be just a copy of the first one.
     expect(snapshot2.html).toEqual([[1, 13]]);
@@ -263,7 +263,7 @@ it.describe('snapshots', () => {
 
   it('should not navigate on anchor clicks', async ({ page, toImpl, snapshotter }) => {
     await page.setContent('<a href="https://example.com">example.com</a>');
-    const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'snapshot');
+    const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'call@1', 'snapshot@call@1');
     expect(distillSnapshot(snapshot)).toBe('<A href="link://https://example.com">example.com</A>');
   });
 });

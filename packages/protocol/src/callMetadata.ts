@@ -36,8 +36,6 @@ export type CallMetadata = {
   wallTime?: number;
   location?: { file: string, line?: number, column?: number };
   log: string[];
-  afterSnapshot?: string;
-  snapshots: { title: string, snapshotName: string }[];
   error?: SerializedError;
   result?: any;
   point?: Point;

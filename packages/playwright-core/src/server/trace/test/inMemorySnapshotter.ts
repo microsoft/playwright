@@ -56,11 +56,11 @@ export class InMemorySnapshotter extends BaseSnapshotStorage implements Snapshot
     this._harTracer.stop();
   }
 
-  async captureSnapshot(page: Page, snapshotName: string, element?: ElementHandle): Promise<SnapshotRenderer> {
+  async captureSnapshot(page: Page, callId: string, snapshotName: string, element?: ElementHandle): Promise<SnapshotRenderer> {
     if (this._frameSnapshots.has(snapshotName))
       throw new Error('Duplicate snapshot name: ' + snapshotName);
 
-    this._snapshotter.captureSnapshot(page, snapshotName, element).catch(() => {});
+    this._snapshotter.captureSnapshot(page, callId, snapshotName, element).catch(() => {});
     return new Promise<SnapshotRenderer>(fulfill => {
       const disposable = this.onSnapshotEvent((renderer: SnapshotRenderer) => {
         if (renderer.snapshotName === snapshotName) {

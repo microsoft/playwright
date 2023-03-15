@@ -115,15 +115,15 @@ it('should support has:locator', async ({ page, trace }) => {
   await expect(page.locator(`div`, {
     has: page.locator(`text=world`)
   })).toHaveCount(1);
-  expect(await page.locator(`div`, {
+  expect(removeHighlight(await page.locator(`div`, {
     has: page.locator(`text=world`)
-  }).evaluate(e => e.outerHTML)).toBe(`<div><span>world</span></div>`);
+  }).evaluate(e => e.outerHTML))).toBe(`<div><span>world</span></div>`);
   await expect(page.locator(`div`, {
     has: page.locator(`text="hello"`)
   })).toHaveCount(1);
-  expect(await page.locator(`div`, {
+  expect(removeHighlight(await page.locator(`div`, {
     has: page.locator(`text="hello"`)
-  }).evaluate(e => e.outerHTML)).toBe(`<div><span>hello</span></div>`);
+  }).evaluate(e => e.outerHTML))).toBe(`<div><span>hello</span></div>`);
   await expect(page.locator(`div`, {
     has: page.locator(`xpath=./span`)
   })).toHaveCount(2);
@@ -133,9 +133,9 @@ it('should support has:locator', async ({ page, trace }) => {
   await expect(page.locator(`div`, {
     has: page.locator(`span`, { hasText: 'wor' })
   })).toHaveCount(1);
-  expect(await page.locator(`div`, {
+  expect(removeHighlight(await page.locator(`div`, {
     has: page.locator(`span`, { hasText: 'wor' })
-  }).evaluate(e => e.outerHTML)).toBe(`<div><span>world</span></div>`);
+  }).evaluate(e => e.outerHTML))).toBe(`<div><span>world</span></div>`);
   await expect(page.locator(`div`, {
     has: page.locator(`span`),
     hasText: 'wor',
@@ -180,3 +180,7 @@ it('alias methods coverage', async ({ page }) => {
   await expect(page.locator('div').getByRole('button')).toHaveCount(1);
   await expect(page.mainFrame().locator('button')).toHaveCount(1);
 });
+
+function removeHighlight(markup: string) {
+  return markup.replace(/\s__playwright_target__="[^"]+"/, '');
+}

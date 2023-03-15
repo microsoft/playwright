@@ -97,6 +97,8 @@ export type ResourceOverride = {
 };
 
 export type FrameSnapshot = {
+  // There was no callId in the original, we are intentionally regressing it.
+  callId: string;
   snapshotName?: string,
   pageId: string,
   frameId: string,

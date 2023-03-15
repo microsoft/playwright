@@ -51,23 +51,35 @@ export type ScreencastFrameTraceEvent = {
   timestamp: number,
 };
 
-export type ActionTraceEvent = {
-  type: 'action',
+export type BeforeActionTraceEvent = {
+  type: 'before',
   callId: string;
   startTime: number;
-  endTime: number;
   apiName: string;
   class: string;
   method: string;
   params: any;
   wallTime: number;
-  log: string[];
-  snapshots: { title: string, snapshotName: string }[];
+  beforeSnapshot?: string;
   stack?: StackFrame[];
+  pageId?: string;
+};
+
+export type InputActionTraceEvent = {
+  type: 'input',
+  callId: string;
+  inputSnapshot?: string;
+  point?: Point;
+};
+
+export type AfterActionTraceEvent = {
+  type: 'after',
+  callId: string;
+  endTime: number;
+  afterSnapshot?: string;
+  log: string[];
   error?: SerializedError['error'];
   result?: any;
-  point?: Point;
-  pageId?: string;
 };
 
 export type EventTraceEvent = {
@@ -96,10 +108,19 @@ export type FrameSnapshotTraceEvent = {
   snapshot: FrameSnapshot,
 };
 
+export type ActionTraceEvent = {
+  type: 'action',
+} & Omit<BeforeActionTraceEvent, 'type'>
+  & Omit<AfterActionTraceEvent, 'type'>
+  & Omit<InputActionTraceEvent, 'type'>;
+
 export type TraceEvent =
     ContextCreatedTraceEvent |
     ScreencastFrameTraceEvent |
     ActionTraceEvent |
+    BeforeActionTraceEvent |
+    InputActionTraceEvent |
+    AfterActionTraceEvent |
     EventTraceEvent |
     ObjectTraceEvent |
     ResourceSnapshotTraceEvent |

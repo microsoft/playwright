@@ -33,6 +33,7 @@ import type { XtermDataSource } from '@web/components/xtermWrapper';
 import { XtermWrapper } from '@web/components/xtermWrapper';
 import { Expandable } from '@web/components/expandable';
 import { toggleTheme } from '@web/theme';
+import { artifactsFolderName } from '@testIsomorphic/folders';
 
 let updateRootSuite: (rootSuite: Suite, progress: Progress) => void = () => {};
 let runWatchedTests = (fileName: string) => {};
@@ -392,30 +393,42 @@ const TraceView: React.FC<{
   result: TestResult | undefined,
 }> = ({ outputDir, testCase, result }) => {
   const [model, setModel] = React.useState<MultiTraceModel | undefined>();
-  const [currentStep, setCurrentStep] = React.useState(0);
+  const [counter, setCounter] = React.useState(0);
   const pollTimer = React.useRef<NodeJS.Timeout | null>(null);
 
   React.useEffect(() => {
     if (pollTimer.current)
       clearTimeout(pollTimer.current);
 
-    // Test finished.
-    const isFinished = result && result.duration >= 0;
-    if (isFinished) {
-      const attachment = result.attachments.find(a => a.name === 'trace');
-      if (attachment && attachment.path)
-        loadSingleTraceFile(attachment.path).then(setModel);
+    if (!result) {
+      setModel(undefined);
       return;
     }
 
-    const traceLocation = `${outputDir}/.playwright-artifacts-${result?.workerIndex}/traces/${testCase?.id}.json`;
+    // Test finished.
+    const attachment = result && result.duration >= 0 && result.attachments.find(a => a.name === 'trace');
+    if (attachment && attachment.path) {
+      loadSingleTraceFile(attachment.path).then(model => setModel(model));
+      return;
+    }
+
+    const traceLocation = `${outputDir}/${artifactsFolderName(result!.workerIndex)}/traces/${testCase?.id}.json`;
     // Start polling running test.
-    pollTimer.current = setTimeout(() => {
-      loadSingleTraceFile(traceLocation).then(setModel).then(() => {
-        setCurrentStep(currentStep + 1);
-      });
+    pollTimer.current = setTimeout(async () => {
+      try {
+        const model = await loadSingleTraceFile(traceLocation);
+        setModel(model);
+      } catch {
+        setModel(undefined);
+      } finally {
+        setCounter(counter + 1);
+      }
     }, 250);
-  }, [result, outputDir, testCase, currentStep, setCurrentStep]);
+    return () => {
+      if (pollTimer.current)
+        clearTimeout(pollTimer.current);
+    };
+  }, [result, outputDir, testCase, setModel, counter, setCounter]);
 
   return <Workbench key='workbench' model={model} hideTimelineBars={true} hideStackFrames={true} showSourcesFirst={true} />;
 };
