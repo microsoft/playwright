@@ -17,7 +17,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import type { APIRequestContext, BrowserContext, BrowserContextOptions, LaunchOptions, Page, Tracing, Video } from 'playwright-core';
-import type { BrowserType as BrowserTypeImpl } from 'playwright-core/lib/client/browserType';
 import * as playwrightLibrary from 'playwright-core';
 import { createGuid, debugMode, removeFolders, addInternalStackPrefix, mergeTraceFiles, saveTraceFile } from 'playwright-core/lib/utils';
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, TraceMode, VideoMode } from '../types/test';
@@ -102,13 +101,13 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     options.tracesDir = path.join(_artifactsDir(), 'traces');
 
     for (const browserType of [playwright.chromium, playwright.firefox, playwright.webkit]) {
-      (browserType as BrowserTypeImpl)._defaultLaunchOptions = options;
-      (browserType as BrowserTypeImpl)._defaultConnectOptions = connectOptions;
+      (browserType as any)._defaultLaunchOptions = options;
+      (browserType as any)._defaultConnectOptions = connectOptions;
     }
     await use(options);
     for (const browserType of [playwright.chromium, playwright.firefox, playwright.webkit]) {
-      (browserType as BrowserTypeImpl)._defaultLaunchOptions = undefined;
-      (browserType as BrowserTypeImpl)._defaultConnectOptions = undefined;
+      (browserType as any)._defaultLaunchOptions = undefined;
+      (browserType as any)._defaultConnectOptions = undefined;
     }
   }, { scope: 'worker', auto: true }],
 
@@ -386,6 +385,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     {
       (playwright.request as any)._onDidCreateContext = onDidCreateRequestContext;
       (playwright.request as any)._onWillCloseContext = onWillCloseRequestContext;
+      (playwright.request as any)._defaultContextOptions = _combinedContextOptions;
       const existingApiRequests: APIRequestContext[] =  Array.from((playwright.request as any)._contexts as Set<APIRequestContext>);
       await Promise.all(existingApiRequests.map(onDidCreateRequestContext));
     }
@@ -422,6 +422,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     const leftoverApiRequests: APIRequestContext[] =  Array.from((playwright.request as any)._contexts as Set<APIRequestContext>);
     (playwright.request as any)._onDidCreateContext = undefined;
     (playwright.request as any)._onWillCloseContext = undefined;
+    (playwright.request as any)._defaultContextOptions = undefined;
     testInfoImpl._onTestFailureImmediateCallbacks.delete(screenshotOnTestFailure);
 
     // 5. Collect artifacts from any non-closed contexts.
@@ -555,12 +556,11 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     await use(page);
   },
 
-  request: async ({ playwright, _combinedContextOptions }, use) => {
-    const request = await playwright.request.newContext(_combinedContextOptions);
+  request: async ({ playwright }, use) => {
+    const request = await playwright.request.newContext();
     await use(request);
     await request.dispose();
-  }
-
+  },
 });
 
 

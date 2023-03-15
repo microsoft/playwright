@@ -18,7 +18,7 @@ import type * as channels from '@protocol/channels';
 import { Browser } from './browser';
 import { BrowserContext, prepareBrowserContextParams } from './browserContext';
 import { ChannelOwner } from './channelOwner';
-import type { LaunchOptions, LaunchServerOptions, ConnectOptions, LaunchPersistentContextOptions, BrowserContextOptions } from './types';
+import type { LaunchOptions, LaunchServerOptions, ConnectOptions, LaunchPersistentContextOptions, BrowserContextOptions, Logger } from './types';
 import { Connection } from './connection';
 import { Events } from './events';
 import type { ChildProcess } from 'child_process';
@@ -48,10 +48,10 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
 
   // Instrumentation.
   _defaultContextOptions?: BrowserContextOptions;
-  _defaultLaunchOptions?: LaunchOptions;
-  _defaultConnectOptions?: ConnectOptions;
-  _onDidCreateContext?: (context: BrowserContext) => Promise<void>;
-  _onWillCloseContext?: (context: BrowserContext) => Promise<void>;
+  private _defaultLaunchOptions?: LaunchOptions;
+  private _defaultConnectOptions?: ConnectOptions;
+  private _onDidCreateContext?: (context: BrowserContext) => Promise<void>;
+  private _onWillCloseContext?: (context: BrowserContext) => Promise<void>;
 
   static from(browserType: channels.BrowserTypeChannel): BrowserType {
     return (browserType as any)._object;
@@ -84,8 +84,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     };
     return await this._wrapApiCall(async () => {
       const browser = Browser.from((await this._channel.launch(launchOptions)).browser);
-      browser._logger = logger;
-      browser._setBrowserType(this);
+      this._didLaunchBrowser(browser, options, logger);
       return browser;
     });
   }
@@ -126,10 +125,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     return await this._wrapApiCall(async () => {
       const result = await this._channel.launchPersistentContext(persistentParams);
       const context = BrowserContext.from(result.context);
-      context._options = contextParams;
-      context._logger = logger;
-      context._setBrowserType(this);
-      await this._onDidCreateContext?.(context);
+      await this._didCreateContext(context, contextParams, options, logger);
       return context;
     });
   }
@@ -200,9 +196,8 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
         }
         playwright._setSelectors(this._playwright.selectors);
         browser = Browser.from(playwright._initializer.preLaunchedBrowser!);
-        browser._logger = logger;
+        this._didLaunchBrowser(browser, {}, logger);
         browser._shouldCloseConnectionOnClose = true;
-        browser._setBrowserType(this);
         browser.on(Events.Browser.Disconnected, closePipe);
         return browser;
       }, deadline ? deadline - monotonicTime() : 0);
@@ -236,10 +231,28 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       timeout: params.timeout
     });
     const browser = Browser.from(result.browser);
+    this._didLaunchBrowser(browser, {}, params.logger);
     if (result.defaultContext)
-      browser._contexts.add(BrowserContext.from(result.defaultContext));
-    browser._logger = params.logger;
-    browser._setBrowserType(this);
+      await this._didCreateContext(BrowserContext.from(result.defaultContext), {}, {}, undefined);
     return browser;
+  }
+
+  _didLaunchBrowser(browser: Browser, browserOptions: LaunchOptions, logger: Logger | undefined) {
+    browser._browserType = this;
+    browser._options = browserOptions;
+    browser._logger = logger;
+  }
+
+  async _didCreateContext(context: BrowserContext, contextOptions: channels.BrowserNewContextParams, browserOptions: LaunchOptions, logger: Logger | undefined) {
+    context._logger = logger;
+    context._browserType = this;
+    this._contexts.add(context);
+    context._setOptions(contextOptions, browserOptions);
+    await this._onDidCreateContext?.(context);
+  }
+
+  async _willCloseContext(context: BrowserContext) {
+    this._contexts.delete(context);
+    await this._onWillCloseContext?.(context);
   }
 }

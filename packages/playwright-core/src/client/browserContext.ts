@@ -45,7 +45,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   _pages = new Set<Page>();
   private _routes: network.RouteHandler[] = [];
   readonly _browser: Browser | null = null;
-  private _browserType: BrowserType | undefined;
+  _browserType: BrowserType | undefined;
   readonly _bindings = new Map<string, (source: structs.BindingSource, ...args: any[]) => any>();
   _timeoutSettings = new TimeoutSettings();
   _ownerPage: Page | undefined;
@@ -72,6 +72,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     super(parent, type, guid, initializer, createInstrumentation());
     if (parent instanceof Browser)
       this._browser = parent;
+    this._browser?._contexts.add(this);
     this._isChromium = this._browser?._name === 'chromium';
     this.tracing = Tracing.from(initializer.tracing);
     this.request = APIRequestContext.from(initializer.requestContext);
@@ -105,11 +106,11 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     ]));
   }
 
-  _setBrowserType(browserType: BrowserType) {
-    this._browserType = browserType;
-    browserType._contexts.add(this);
+  _setOptions(contextOptions: channels.BrowserNewContextParams, browserOptions: LaunchOptions) {
+    this._options = contextOptions;
     if (this._options.recordHar)
       this._harRecorders.set('', { path: this._options.recordHar.path, content: this._options.recordHar.content });
+    this.tracing._tracesDir = browserOptions.tracesDir;
   }
 
   private _onPage(page: Page): void {
@@ -348,7 +349,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
       return;
     this._closeWasCalled = true;
     await this._wrapApiCall(async () => {
-      await this._browserType?._onWillCloseContext?.(this);
+      await this._browserType?._willCloseContext(this);
       for (const [harId, harParams] of this._harRecorders) {
         const har = await this._channel.harExport({ harId });
         const artifact = Artifact.from(har.artifact);
