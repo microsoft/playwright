@@ -162,6 +162,15 @@ it.describe('selector generator', () => {
     expect(await generate(page, 'a:has-text("Hello")')).toBe(`a >> internal:has-text="Hello world"i`);
   });
 
+  it('should use internal:has-text with regexp', async ({ page }) => {
+    await page.setContent(`
+      <span>Hello world</span>
+      <div><div>Hello <span>world</span></div>extra</div>
+      <a>Goodbye <span>world</span></a>
+    `);
+    expect(await generate(page, 'div div')).toBe(`div >> internal:has-text=/^Hello world$/`);
+  });
+
   it('should chain text after parent', async ({ page }) => {
     await page.setContent(`
       <div>Hello <span>world</span></div>
