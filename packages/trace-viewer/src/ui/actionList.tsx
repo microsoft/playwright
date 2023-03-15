@@ -50,7 +50,6 @@ export const ActionList: React.FC<ActionListProps> = ({
     onHighlighted={onHighlighted}
     isError={action => !!action.error?.message}
     render={action => renderAction(action, sdkLanguage, revealConsole)}
-    noItemsMessage='No actions'
   />;
 };
 
@@ -62,16 +61,21 @@ const renderAction = (
   const { errors, warnings } = modelUtil.stats(action);
   const locator = action.params.selector ? asLocator(sdkLanguage || 'javascript', action.params.selector) : undefined;
 
+  let time: string = '';
+  if (action.endTime)
+    time = msToString(action.endTime - action.startTime);
+  else if (action.error)
+    time = 'Timed out';
   return <>
     <div className='action-title'>
       <span>{action.apiName}</span>
       {locator && <div className='action-selector' title={locator}>{locator}</div>}
       {action.method === 'goto' && action.params.url && <div className='action-url' title={action.params.url}>{action.params.url}</div>}
     </div>
-    <div className='action-duration' style={{ flex: 'none' }}>{action.endTime ? msToString(action.endTime - action.startTime) : 'Timed Out'}</div>
+    <div className='action-duration' style={{ flex: 'none' }}>{time || <span className='codicon codicon-loading'></span>}</div>
     <div className='action-icons' onClick={() => revealConsole()}>
-      {!!errors && <div className='action-icon'><span className={'codicon codicon-error'}></span><span className="action-icon-value">{errors}</span></div>}
-      {!!warnings && <div className='action-icon'><span className={'codicon codicon-warning'}></span><span className="action-icon-value">{warnings}</span></div>}
+      {!!errors && <div className='action-icon'><span className='codicon codicon-error'></span><span className="action-icon-value">{errors}</span></div>}
+      {!!warnings && <div className='action-icon'><span className='codicon codicon-warning'></span><span className="action-icon-value">{warnings}</span></div>}
     </div>
   </>;
 };

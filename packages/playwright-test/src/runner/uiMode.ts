@@ -46,6 +46,8 @@ class UIMode {
     config._internal.configCLIOverrides.updateSnapshots = undefined;
     config._internal.listOnly = false;
     config._internal.passWithNoTests = true;
+    for (const project of config.projects)
+      project._internal.deps = [];
 
     for (const p of config.projects)
       p.retries = 0;
@@ -62,7 +64,7 @@ class UIMode {
       projectDirs.add(p.testDir);
     let coalescingTimer: NodeJS.Timeout | undefined;
     const watcher = chokidar.watch([...projectDirs], { ignoreInitial: true, persistent: true }).on('all', async event => {
-      if (event !== 'add' && event !== 'change')
+      if (event !== 'add' && event !== 'change' && event !== 'unlink')
         return;
       if (coalescingTimer)
         clearTimeout(coalescingTimer);

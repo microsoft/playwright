@@ -187,7 +187,7 @@ test('should not filter dependency by only', async ({ runInlineTest }) => {
   expect(result.outputLines).toEqual(['setup in setup', 'setup 2 in setup', 'test in browser']);
 });
 
-test('should not filter dependency by only 2', async ({ runInlineTest }) => {
+test('should filter dependency by only when running explicitly', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = { projects: [

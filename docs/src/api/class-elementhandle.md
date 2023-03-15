@@ -183,6 +183,9 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: ElementHandle.check.timeout = %%-input-timeout-%%
 * since: v1.8
 
+### option: ElementHandle.check.timeout = %%-input-timeout-js-%%
+* since: v1.8
+
 ### option: ElementHandle.check.trial = %%-input-trial-%%
 * since: v1.11
 
@@ -222,6 +225,9 @@ When all steps combined have not finished during the specified [`option: timeout
 * since: v1.8
 
 ### option: ElementHandle.click.timeout = %%-input-timeout-%%
+* since: v1.8
+
+### option: ElementHandle.click.timeout = %%-input-timeout-js-%%
 * since: v1.8
 
 ### option: ElementHandle.click.trial = %%-input-trial-%%
@@ -273,6 +279,9 @@ When all steps combined have not finished during the specified [`option: timeout
 * since: v1.8
 
 ### option: ElementHandle.dblclick.timeout = %%-input-timeout-%%
+* since: v1.8
+
+### option: ElementHandle.dblclick.timeout = %%-input-timeout-js-%%
 * since: v1.8
 
 ### option: ElementHandle.dblclick.trial = %%-input-trial-%%
@@ -519,6 +528,9 @@ Value to set for the `<input>`, `<textarea>` or `[contenteditable]` element.
 ### option: ElementHandle.fill.timeout = %%-input-timeout-%%
 * since: v1.8
 
+### option: ElementHandle.fill.timeout = %%-input-timeout-js-%%
+* since: v1.8
+
 ## async method: ElementHandle.focus
 * since: v1.8
 
@@ -562,6 +574,9 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: ElementHandle.hover.timeout = %%-input-timeout-%%
 * since: v1.8
 
+### option: ElementHandle.hover.timeout = %%-input-timeout-js-%%
+* since: v1.8
+
 ### option: ElementHandle.hover.trial = %%-input-trial-%%
 * since: v1.11
 
@@ -589,6 +604,9 @@ Returns `input.value` for the selected `<input>` or `<textarea>` or `<select>` e
 Throws for non-input elements. However, if the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), returns the value of the control.
 
 ### option: ElementHandle.inputValue.timeout = %%-input-timeout-%%
+* since: v1.13
+
+### option: ElementHandle.inputValue.timeout = %%-input-timeout-js-%%
 * since: v1.13
 
 ## async method: ElementHandle.isChecked
@@ -674,6 +692,9 @@ Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
 ### option: ElementHandle.press.timeout = %%-input-timeout-%%
 * since: v1.8
 
+### option: ElementHandle.press.timeout = %%-input-timeout-js-%%
+* since: v1.8
+
 ## async method: ElementHandle.querySelector
 * since: v1.9
 * langs:
@@ -714,6 +735,12 @@ Returns the buffer with the captured screenshot.
 ### option: ElementHandle.screenshot.-inline- = %%-screenshot-options-common-list-v1.8-%%
 * since: v1.8
 
+### option: ElementHandle.screenshot.timeout = %%-input-timeout-%%
+* since: v1.8
+
+### option: ElementHandle.screenshot.timeout = %%-input-timeout-js-%%
+* since: v1.8
+
 ## async method: ElementHandle.scrollIntoViewIfNeeded
 * since: v1.8
 
@@ -725,6 +752,9 @@ Throws when `elementHandle` does not point to an element
 [connected](https://developer.mozilla.org/en-US/docs/Web/API/Node/isConnected) to a Document or a ShadowRoot.
 
 ### option: ElementHandle.scrollIntoViewIfNeeded.timeout = %%-input-timeout-%%
+* since: v1.8
+
+### option: ElementHandle.scrollIntoViewIfNeeded.timeout = %%-input-timeout-js-%%
 * since: v1.8
 
 ## async method: ElementHandle.selectOption
@@ -805,6 +835,9 @@ await handle.SelectOptionAsync(new[] {
 ### option: ElementHandle.selectOption.timeout = %%-input-timeout-%%
 * since: v1.8
 
+### option: ElementHandle.selectOption.timeout = %%-input-timeout-js-%%
+* since: v1.8
+
 ### param: ElementHandle.selectOption.element = %%-python-select-options-element-%%
 * since: v1.8
 
@@ -829,6 +862,9 @@ If the element is inside the `<label>` element that has an associated [control](
 * since: v1.13
 
 ### option: ElementHandle.selectText.timeout = %%-input-timeout-%%
+* since: v1.8
+
+### option: ElementHandle.selectText.timeout = %%-input-timeout-js-%%
 * since: v1.8
 
 ## async method: ElementHandle.setChecked
@@ -862,6 +898,9 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: ElementHandle.setChecked.timeout = %%-input-timeout-%%
 * since: v1.15
 
+### option: ElementHandle.setChecked.timeout = %%-input-timeout-js-%%
+* since: v1.15
+
 ### option: ElementHandle.setChecked.trial = %%-input-trial-%%
 * since: v1.15
 
@@ -881,6 +920,9 @@ This method expects [ElementHandle] to point to an
 * since: v1.8
 
 ### option: ElementHandle.setInputFiles.timeout = %%-input-timeout-%%
+* since: v1.8
+
+### option: ElementHandle.setInputFiles.timeout = %%-input-timeout-js-%%
 * since: v1.8
 
 ## async method: ElementHandle.tap
@@ -914,6 +956,9 @@ When all steps combined have not finished during the specified [`option: timeout
 * since: v1.8
 
 ### option: ElementHandle.tap.timeout = %%-input-timeout-%%
+* since: v1.8
+
+### option: ElementHandle.tap.timeout = %%-input-timeout-js-%%
 * since: v1.8
 
 ### option: ElementHandle.tap.trial = %%-input-trial-%%
@@ -1009,6 +1054,9 @@ Time to wait between key presses in milliseconds. Defaults to 0.
 ### option: ElementHandle.type.timeout = %%-input-timeout-%%
 * since: v1.8
 
+### option: ElementHandle.type.timeout = %%-input-timeout-js-%%
+* since: v1.8
+
 ## async method: ElementHandle.uncheck
 * since: v1.8
 
@@ -1036,6 +1084,9 @@ When all steps combined have not finished during the specified [`option: timeout
 * since: v1.8
 
 ### option: ElementHandle.uncheck.timeout = %%-input-timeout-%%
+* since: v1.8
+
+### option: ElementHandle.uncheck.timeout = %%-input-timeout-js-%%
 * since: v1.8
 
 ### option: ElementHandle.uncheck.trial = %%-input-trial-%%
@@ -1066,6 +1117,9 @@ If the element does not satisfy the condition for the [`option: timeout`] millis
 A state to wait for, see below for more details.
 
 ### option: ElementHandle.waitForElementState.timeout = %%-input-timeout-%%
+* since: v1.8
+
+### option: ElementHandle.waitForElementState.timeout = %%-input-timeout-js-%%
 * since: v1.8
 
 ## async method: ElementHandle.waitForSelector
@@ -1129,6 +1183,9 @@ This method does not work across navigations, use [`method: Page.waitForSelector
 * since: v1.8
 
 ### option: ElementHandle.waitForSelector.timeout = %%-input-timeout-%%
+* since: v1.8
+
+### option: ElementHandle.waitForSelector.timeout = %%-input-timeout-js-%%
 * since: v1.8
 
 ### option: ElementHandle.waitForSelector.strict = %%-input-strict-%%

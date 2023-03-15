@@ -17,69 +17,135 @@
 import { test, expect } from './playwright-test-fixtures';
 
 const tests = {
-  'helper.ts': `
-    import { test as base, expect } from '@playwright/test';
-    export const headlessTest = base.extend({ headless: false });
-    export const headedTest = base.extend({ headless: true });
-  `,
   'a1.spec.ts': `
-    import { headlessTest, headedTest } from './helper';
-    headlessTest('test1', async () => {
-      console.log('test1-done');
+    import { test } from '@playwright/test';
+    test('test1', async () => {
+      console.log('\\n%%a1-test1-done');
+    });
+    test('test2', async () => {
+      console.log('\\n%%a1-test2-done');
+    });
+    test('test3', async () => {
+      console.log('\\n%%a1-test3-done');
+    });
+    test('test4', async () => {
+      console.log('\\n%%a1-test4-done');
     });
   `,
   'a2.spec.ts': `
-    import { headlessTest, headedTest } from './helper';
-    headedTest('test2', async () => {
-      console.log('test2-done');
+    import { test } from '@playwright/test';
+    test.describe.configure({ mode: 'parallel' });
+    test('test1', async () => {
+      console.log('\\n%%a2-test1-done');
+    });
+    test('test2', async () => {
+      console.log('\\n%%a2-test2-done');
     });
   `,
   'a3.spec.ts': `
-    import { headlessTest, headedTest } from './helper';
-    headlessTest('test3', async () => {
-      console.log('test3-done');
+    import { test } from '@playwright/test';
+    test.describe.configure({ mode: 'parallel' });
+    test('test1', async () => {
+      console.log('\\n%%a3-test1-done');
+    });
+    test('test2', async () => {
+      console.log('\\n%%a3-test2-done');
     });
   `,
-  'b1.spec.ts': `
-    import { headlessTest, headedTest } from './helper';
-    headlessTest('test4', async () => {
-      console.log('test4-done');
+  'a4.spec.ts': `
+    import { test } from '@playwright/test';
+    test('test1', async () => {
+      console.log('\\n%%a4-test1-done');
     });
-  `,
-  'b2.spec.ts': `
-    import { headlessTest, headedTest } from './helper';
-    headedTest('test5', async () => {
-      console.log('test5-done');
+    test('test2', async () => {
+      console.log('\\n%%a4-test2-done');
     });
   `,
 };
 
 test('should respect shard=1/2', async ({ runInlineTest }) => {
-  const result = await runInlineTest(tests, { shard: '1/2' });
+  const result = await runInlineTest(tests, { shard: '1/2', workers: 1 });
   expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(3);
+  expect(result.passed).toBe(5);
   expect(result.skipped).toBe(0);
-  expect(result.output).toContain('test1-done');
-  expect(result.output).toContain('test2-done');
-  expect(result.output).toContain('test3-done');
+  expect(result.outputLines).toEqual([
+    'a1-test1-done',
+    'a1-test2-done',
+    'a1-test3-done',
+    'a1-test4-done',
+    'a2-test1-done',
+  ]);
 });
 
 test('should respect shard=2/2', async ({ runInlineTest }) => {
-  const result = await runInlineTest(tests, { shard: '2/2' });
+  const result = await runInlineTest(tests, { shard: '2/2', workers: 1 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(5);
+  expect(result.skipped).toBe(0);
+  expect(result.outputLines).toEqual([
+    'a2-test2-done',
+    'a3-test1-done',
+    'a3-test2-done',
+    'a4-test1-done',
+    'a4-test2-done',
+  ]);
+});
+
+test('should respect shard=1/3', async ({ runInlineTest }) => {
+  const result = await runInlineTest(tests, { shard: '1/3', workers: 1 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(4);
+  expect(result.skipped).toBe(0);
+  expect(result.outputLines).toEqual([
+    'a1-test1-done',
+    'a1-test2-done',
+    'a1-test3-done',
+    'a1-test4-done',
+  ]);
+});
+
+test('should respect shard=2/3', async ({ runInlineTest }) => {
+  const result = await runInlineTest(tests, { shard: '2/3', workers: 1 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(3);
+  expect(result.skipped).toBe(0);
+  expect(result.outputLines).toEqual([
+    'a2-test1-done',
+    'a2-test2-done',
+    'a3-test1-done',
+  ]);
+});
+
+test('should respect shard=3/3', async ({ runInlineTest }) => {
+  const result = await runInlineTest(tests, { shard: '3/3', workers: 1 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(3);
+  expect(result.skipped).toBe(0);
+  expect(result.outputLines).toEqual([
+    'a3-test2-done',
+    'a4-test1-done',
+    'a4-test2-done',
+  ]);
+});
+
+test('should respect shard=3/4', async ({ runInlineTest }) => {
+  const result = await runInlineTest(tests, { shard: '3/4', workers: 1 });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(2);
   expect(result.skipped).toBe(0);
-  expect(result.output).toContain('test4-done');
-  expect(result.output).toContain('test5-done');
+  expect(result.outputLines).toEqual([
+    'a3-test1-done',
+    'a3-test2-done',
+  ]);
 });
 
 test('should not produce skipped tests for zero-sized shards', async ({ runInlineTest }) => {
-  const result = await runInlineTest(tests, { shard: '10/10' });
+  const result = await runInlineTest(tests, { shard: '10/10', workers: 1 });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(0);
   expect(result.skipped).toBe(0);
-  expect(result.output).not.toContain('-done');
+  expect(result.outputLines).toEqual([]);
 });
 
 test('should respect shard=1/2 in config', async ({ runInlineTest }) => {
@@ -88,13 +154,17 @@ test('should respect shard=1/2 in config', async ({ runInlineTest }) => {
     'playwright.config.js': `
       module.exports = { shard: { current: 1, total: 2 } };
     `,
-  });
+  }, { workers: 1 });
   expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(3);
+  expect(result.passed).toBe(5);
   expect(result.skipped).toBe(0);
-  expect(result.output).toContain('test1-done');
-  expect(result.output).toContain('test2-done');
-  expect(result.output).toContain('test3-done');
+  expect(result.outputLines).toEqual([
+    'a1-test1-done',
+    'a1-test2-done',
+    'a1-test3-done',
+    'a1-test4-done',
+    'a2-test1-done',
+  ]);
 });
 
 test('should work with workers=1 and --fully-parallel', async ({ runInlineTest }) => {
@@ -118,4 +188,40 @@ test('should work with workers=1 and --fully-parallel', async ({ runInlineTest }
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
   expect(result.skipped).toBe(1);
+});
+
+test('should skip dependency when project is sharded out', async ({ runInlineTest }) => {
+  const tests = {
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          { name: 'setup1', testMatch: /setup.ts/ },
+          { name: 'tests1', dependencies: ['setup1'] },
+          { name: 'setup2', testMatch: /setup.ts/ },
+          { name: 'tests2', dependencies: ['setup2'] },
+        ],
+      };
+    `,
+    'test.spec.ts': `
+      import { test } from '@playwright/test';
+      test('test', async ({}) => {
+        console.log('\\n%%test in ' + test.info().project.name);
+      });
+    `,
+    'setup.ts': `
+      import { test } from '@playwright/test';
+      test('setup', async ({}) => {
+        console.log('\\n%%setup in ' + test.info().project.name);
+      });
+    `,
+  };
+
+  const result = await runInlineTest(tests, { shard: '2/2', workers: 1 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(2);
+  expect(result.skipped).toBe(0);
+  expect(result.outputLines).toEqual([
+    'setup in setup2',
+    'test in tests2',
+  ]);
 });

@@ -123,14 +123,14 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
 
     if (this._state) {
       const o = this._state.options;
-      if (o.name !== options.name || !o.screenshots !== !options.screenshots || !o.snapshots !== !options.snapshots)
+      if (!o.screenshots !== !options.screenshots || !o.snapshots !== !options.snapshots)
         throw new Error('Tracing has been already started with different options');
       return;
     }
     // TODO: passing the same name for two contexts makes them write into a single file
     // and conflict.
     const traceName = options.name || createGuid();
-    // Init the state synchrounously.
+    // Init the state synchronously.
     this._state = { options, traceName, traceFile: '', networkFile: '', tracesDir: '', resourcesDir: '', filesCount: 0, traceSha1s: new Set(), networkSha1s: new Set(), recording: false };
     const state = this._state;
 

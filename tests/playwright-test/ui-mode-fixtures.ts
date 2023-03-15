@@ -38,10 +38,16 @@ export function dumpTestTree(page: Page): () => Promise<string> {
         return ' ';
       if (icon === 'circle-outline')
         return '◯';
+      if (icon === 'circle-slash')
+        return '⊘';
       if (icon === 'check')
         return '✅';
       if (icon === 'error')
         return '❌';
+      if (icon === 'eye')
+        return '👁';
+      if (icon === 'loading')
+        return '↻';
       return icon;
     }
 
@@ -52,8 +58,9 @@ export function dumpTestTree(page: Page): () => Promise<string> {
       const treeIcon = iconName(iconElements[0]);
       const statusIcon = iconName(iconElements[1]);
       const indent = listItem.querySelectorAll('.list-view-indent').length;
+      const watch = listItem.querySelector('.toolbar-button.eye.toggled') ? ' 👁' : '';
       const selected = listItem.classList.contains('selected') ? ' <=' : '';
-      result.push('    ' + '  '.repeat(indent) + treeIcon + ' ' + statusIcon + ' ' + listItem.textContent + selected);
+      result.push('    ' + '  '.repeat(indent) + treeIcon + ' ' + statusIcon + ' ' + listItem.textContent + watch + selected);
     }
     return '\n' + result.join('\n') + '\n  ';
   });
@@ -62,13 +69,14 @@ export function dumpTestTree(page: Page): () => Promise<string> {
 export const test = base
     .extend<Fixtures>({
       runUITest: async ({ childProcess, playwright, headless }, use, testInfo: TestInfo) => {
+        testInfo.slow();
         const cacheDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-test-cache-'));
         let testProcess: TestChildProcess | undefined;
         let browser: Browser | undefined;
         await use(async (files: Files, env: NodeJS.ProcessEnv = {}, options: RunOptions = {}) => {
           const baseDir = await writeFiles(testInfo, files, true);
           testProcess = childProcess({
-            command: ['node', cliEntrypoint, 'ui', ...(options.additionalArgs || [])],
+            command: ['node', cliEntrypoint, 'ui', '--workers=1', ...(options.additionalArgs || [])],
             env: {
               ...cleanEnv(env),
               PWTEST_UNDER_TEST: '1',

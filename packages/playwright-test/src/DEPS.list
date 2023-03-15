@@ -5,3 +5,6 @@ common/
 
 [cli.ts]
 **
+
+[index.ts]
+@testIsomorphic/**

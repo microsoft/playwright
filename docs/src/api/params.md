@@ -8,6 +8,7 @@ When to consider operation succeeded, defaults to `load`. Events can be either:
 * `'commit'` - consider operation to be finished when network response is received and the document started loading.
 
 ## navigation-timeout
+* langs: python, java, csharp
 - `timeout` <[float]>
 
 Maximum operation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout.
@@ -17,11 +18,27 @@ The default value can be changed by using the
 [`method: Page.setDefaultNavigationTimeout`] or
 [`method: Page.setDefaultTimeout`] methods.
 
-## wait-for-timeout
+## navigation-timeout-js
+* langs: js
 - `timeout` <[float]>
 
-maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default
-value can be changed by using the [`method: BrowserContext.setDefaultTimeout`].
+Maximum operation time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `navigationTimeout` option in the config, or by using the [`method: BrowserContext.setDefaultNavigationTimeout`],
+[`method: BrowserContext.setDefaultTimeout`],
+[`method: Page.setDefaultNavigationTimeout`] or
+[`method: Page.setDefaultTimeout`] methods.
+
+## wait-for-function-timeout
+* langs: python, java, csharp
+- `timeout` <[float]>
+
+Maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default
+value can be changed by using the [`method: BrowserContext.setDefaultTimeout`] or [`method: Page.setDefaultTimeout`] methods.
+
+## wait-for-function-timeout-js
+* langs: js
+- `timeout` <[float]>
+
+Maximum time to wait for in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout` option in the config, or by using the [`method: BrowserContext.setDefaultTimeout`] or [`method: Page.setDefaultTimeout`] methods.
 
 ## input-strict
 - `strict` <[boolean]>
@@ -30,10 +47,18 @@ When true, the call requires selector to resolve to a single element. If given s
 than one element, the call throws an exception.
 
 ## input-timeout
+* langs: python, java, csharp
 - `timeout` <[float]>
 
-Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
+Maximum time in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by
 using the [`method: BrowserContext.setDefaultTimeout`] or
+[`method: Page.setDefaultTimeout`] methods.
+
+## input-timeout-js
+* langs: js
+- `timeout` <[float]>
+
+Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout` option in the config, or by using the [`method: BrowserContext.setDefaultTimeout`] or
 [`method: Page.setDefaultTimeout`] methods.
 
 ## input-no-wait-after
@@ -1096,7 +1121,6 @@ When set to `"hide"`, screenshot will hide text caret. When set to `"initial"`, 
 - %%-screenshot-option-caret-%%
 - %%-screenshot-option-type-%%
 - %%-screenshot-option-mask-%%
-- %%-input-timeout-%%
 
 ## locator-get-by-test-id-test-id
 * since: v1.27

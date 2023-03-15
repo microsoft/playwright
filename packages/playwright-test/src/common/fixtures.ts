@@ -243,6 +243,11 @@ function innerFixtureParameterNames(fn: Function, location: Location, onError: L
     const colon = prop.indexOf(':');
     return colon === -1 ? prop.trim() : prop.substring(0, colon).trim();
   });
+  const restProperty = props.find(prop => prop.startsWith('...'));
+  if (restProperty) {
+    onError({ message: `Rest property "${restProperty}" is not supported. List all used fixtures explicitly, separated by comma.`, location });
+    return [];
+  }
   return props;
 }
 

@@ -223,6 +223,7 @@ export type RunOptions = {
 };
 type Fixtures = {
   writeFiles: (files: Files) => Promise<string>;
+  deleteFile: (file: string) => Promise<void>;
   runInlineTest: (files: Files, params?: Params, env?: NodeJS.ProcessEnv, options?: RunOptions) => Promise<RunResult>;
   runWatchTest: (files: Files, env?: NodeJS.ProcessEnv, options?: RunOptions) => Promise<TestChildProcess>;
   runTSC: (files: Files) => Promise<TSCResult>;
@@ -235,6 +236,13 @@ export const test = base
     .extend<Fixtures>({
       writeFiles: async ({}, use, testInfo) => {
         await use(files => writeFiles(testInfo, files, false));
+      },
+
+      deleteFile: async ({}, use, testInfo) => {
+        await use(async file => {
+          const baseDir = testInfo.outputPath();
+          await fs.promises.unlink(path.join(baseDir, file));
+        });
       },
 
       runInlineTest: async ({ childProcess }, use, testInfo: TestInfo) => {

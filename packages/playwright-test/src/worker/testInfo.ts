@@ -56,6 +56,7 @@ export class TestInfoImpl implements TestInfo {
   _lastStepId = 0;
 
   // ------------ TestInfo fields ------------
+  readonly testId: string;
   readonly repeatEachIndex: number;
   readonly retry: number;
   readonly workerIndex: number;
@@ -109,6 +110,7 @@ export class TestInfoImpl implements TestInfo {
     onStepEnd: (payload: StepEndPayload) => void,
   ) {
     this._test = test;
+    this.testId = test.id;
     this._onStepBegin = onStepBegin;
     this._onStepEnd = onStepEnd;
     this._startTime = monotonicTime();

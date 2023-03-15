@@ -20,20 +20,20 @@ import '@web/common.css';
 import React from 'react';
 import { TreeView } from '@web/components/treeView';
 import type { TreeState } from '@web/components/treeView';
-import { TeleReporterReceiver } from '../../../playwright-test/src/isomorphic/teleReceiver';
-import type { TeleTestCase } from '../../../playwright-test/src/isomorphic/teleReceiver';
+import { TeleReporterReceiver, TeleSuite } from '@testIsomorphic/teleReceiver';
+import type { TeleTestCase } from '@testIsomorphic/teleReceiver';
 import type { FullConfig, Suite, TestCase, TestResult, TestStep, Location } from '../../../playwright-test/types/testReporter';
 import { SplitView } from '@web/components/splitView';
 import { MultiTraceModel } from './modelUtil';
 import './watchMode.css';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { Toolbar } from '@web/components/toolbar';
-import { toggleTheme } from '@web/theme';
 import type { ContextEntry } from '../entries';
 import type * as trace from '@trace/trace';
 import type { XtermDataSource } from '@web/components/xtermWrapper';
 import { XtermWrapper } from '@web/components/xtermWrapper';
 import { Expandable } from '@web/components/expandable';
+import { toggleTheme } from '@web/theme';
 
 let updateRootSuite: (rootSuite: Suite, progress: Progress) => void = () => {};
 let updateStepsProgress: () => void = () => {};
@@ -52,39 +52,51 @@ const xtermDataSource: XtermDataSource = {
 
 export const WatchModeView: React.FC<{}> = ({
 }) => {
-  const [filterText, setFilterText] = useSetting<string>('test-ui-filter-text', '');
-  const [filterExpanded, setFilterExpanded] = useSetting<boolean>('test-ui-filter-expanded', false);
-  const [isShowingOutput, setIsShowingOutput] = useSetting<boolean>('test-ui-show-output', false);
+  const [filterText, setFilterText] = React.useState<string>('');
+  const [isShowingOutput, setIsShowingOutput] = React.useState<boolean>(false);
 
-  const [projects, setProjects] = React.useState<Map<string, boolean>>(new Map());
+  const [statusFilters, setStatusFilters] = React.useState<Map<string, boolean>>(new Map([
+    ['passed', false],
+    ['failed', false],
+    ['skipped', false],
+  ]));
+  const [projectFilters, setProjectFilters] = React.useState<Map<string, boolean>>(new Map());
   const [rootSuite, setRootSuite] = React.useState<{ value: Suite | undefined }>({ value: undefined });
   const [progress, setProgress] = React.useState<Progress>({ total: 0, passed: 0, failed: 0, skipped: 0 });
   const [selectedTest, setSelectedTest] = React.useState<TestCase | undefined>(undefined);
-  const [settingsVisible, setSettingsVisible] = React.useState<boolean>(false);
   const [visibleTestIds, setVisibleTestIds] = React.useState<string[]>([]);
+  const [isLoading, setIsLoading] = React.useState<boolean>(false);
   const [runningState, setRunningState] = React.useState<{ testIds: Set<string>, itemSelectedByUser?: boolean }>();
 
   const inputRef = React.useRef<HTMLInputElement>(null);
 
+  const reloadTests = () => {
+    setIsLoading(true);
+    updateRootSuite(new TeleSuite('', 'root'), { total: 0, passed: 0, failed: 0, skipped: 0 });
+    refreshRootSuite(true).then(() => {
+      setIsLoading(false);
+    });
+  };
+
   React.useEffect(() => {
     inputRef.current?.focus();
-    refreshRootSuite(true);
+    reloadTests();
   }, []);
 
   updateRootSuite = (rootSuite: Suite, newProgress: Progress) => {
-    for (const projectName of projects.keys()) {
+    for (const projectName of projectFilters.keys()) {
       if (!rootSuite.suites.find(s => s.title === projectName))
-        projects.delete(projectName);
+        projectFilters.delete(projectName);
     }
     for (const projectSuite of rootSuite.suites) {
-      if (!projects.has(projectSuite.title))
-        projects.set(projectSuite.title, false);
+      if (!projectFilters.has(projectSuite.title))
+        projectFilters.set(projectSuite.title, false);
     }
-    if (![...projects.values()].includes(true))
-      projects.set(projects.entries().next().value[0], true);
+    if (projectFilters.size && ![...projectFilters.values()].includes(true))
+      projectFilters.set(projectFilters.entries().next().value[0], true);
 
     setRootSuite({ value: rootSuite });
-    setProjects(new Map(projects));
+    setProjectFilters(new Map(projectFilters));
     setProgress(newProgress);
   };
 
@@ -108,24 +120,6 @@ export const WatchModeView: React.FC<{}> = ({
     });
   };
 
-  const updateFilter = (name: string, value: string) => {
-    const result: string[] = [];
-    const prefix = name + ':';
-    for (const t of filterText.split(' ')) {
-      if (t.startsWith(prefix)) {
-        if (value) {
-          result.push(prefix + value);
-          value = '';
-        }
-      } else {
-        result.push(t);
-      }
-    }
-    if (value)
-      result.unshift(prefix + value);
-    setFilterText(result.join(' '));
-  };
-
   const isRunningTest = !!runningState;
   const result = selectedTest?.results[0];
   const isFinished = result && result.duration >= 0;
@@ -134,7 +128,6 @@ export const WatchModeView: React.FC<{}> = ({
       <div className='vbox'>
         <div className={'vbox' + (isShowingOutput ? '' : ' hidden')}>
           <Toolbar>
-            <div className='section-title'>Output</div>
             <ToolbarButton icon='circle-slash' title='Clear output' onClick={() => xtermDataSource.clear()}></ToolbarButton>
             <div className='spacer'></div>
             <ToolbarButton icon='close' title='Close' onClick={() => setIsShowingOutput(false)}></ToolbarButton>
@@ -148,52 +141,42 @@ export const WatchModeView: React.FC<{}> = ({
       </div>
       <div className='vbox watch-mode-sidebar'>
         <Toolbar>
-          <div className='section-title' style={{ cursor: 'pointer' }} onClick={() => setSettingsVisible(false)}>Tests</div>
-          <ToolbarButton icon='play' title='Run' onClick={() => runTests(visibleTestIds)} disabled={isRunningTest}></ToolbarButton>
-          <ToolbarButton icon='debug-stop' title='Stop' onClick={() => sendMessageNoReply('stop')} disabled={!isRunningTest}></ToolbarButton>
-          <ToolbarButton icon='refresh' title='Reload' onClick={() => refreshRootSuite(true)} disabled={isRunningTest}></ToolbarButton>
+          <img src='icon-32x32.png' />
+          <div className='section-title'>Playwright</div>
           <div className='spacer'></div>
-          <ToolbarButton icon='gear' title='Toggle color mode' toggled={settingsVisible} onClick={() => { setSettingsVisible(!settingsVisible); }}></ToolbarButton>
-          <ToolbarButton icon='terminal' title='Toggle color mode' toggled={isShowingOutput} onClick={() => { setIsShowingOutput(!isShowingOutput); }}></ToolbarButton>
+          <ToolbarButton icon='color-mode' title='Toggle color mode' toggled={false} onClick={() => toggleTheme()} />
+          <ToolbarButton icon='refresh' title='Reload' onClick={() => reloadTests()} disabled={isRunningTest || isLoading}></ToolbarButton>
+          <ToolbarButton icon='terminal' title='Toggle output' toggled={isShowingOutput} onClick={() => { setIsShowingOutput(!isShowingOutput); }} />
         </Toolbar>
-        {!settingsVisible && <Expandable
-          title={<input ref={inputRef} type='search' placeholder='Filter (e.g. text, @tag)' spellCheck={false} value={filterText}
-            onChange={e => {
-              setFilterText(e.target.value);
-            }}
-            onKeyDown={e => {
-              if (e.key === 'Enter')
-                runTests(visibleTestIds);
-            }}></input>}
-          style={{ flex: 'none', marginTop: 8 }}
-          expanded={filterExpanded}
-          setExpanded={setFilterExpanded}>
-          <div className='filters'>
-            <span>Status:</span>
-            <div onClick={() => updateFilter('s', '')}>all</div>
-            {['failed', 'passed', 'skipped'].map(s => <div className={filterText.includes('s:' + s) ? 'filters-toggled' : ''} onClick={() => updateFilter('s', s)}>{s}</div>)}
-          </div>
-          {[...projects.values()].filter(v => v).length > 1 && <div className='filters'>
-            <span>Project:</span>
-            <div onClick={() => updateFilter('p', '')}>all</div>
-            {[...projects].filter(([k, v]) => v).map(([k, v]) => k).map(p => <div  className={filterText.includes('p:' + p) ? 'filters-toggled' : ''} onClick={() => updateFilter('p', p)}>{p}</div>)}
-          </div>}
-        </Expandable>}
+        <FiltersView
+          filterText={filterText}
+          setFilterText={setFilterText}
+          statusFilters={statusFilters}
+          setStatusFilters={setStatusFilters}
+          projectFilters={projectFilters}
+          setProjectFilters={setProjectFilters}
+          runTests={() => runTests(visibleTestIds)} />
+        <Toolbar>
+          <div className='section-title'>Tests</div>
+          <div className='spacer'></div>
+          <ToolbarButton icon='play' title='Run all' onClick={() => runTests(visibleTestIds)} disabled={isRunningTest || isLoading}></ToolbarButton>
+          <ToolbarButton icon='debug-stop' title='Stop' onClick={() => sendMessageNoReply('stop')} disabled={!isRunningTest || isLoading}></ToolbarButton>
+        </Toolbar>
         <TestList
-          projects={projects}
+          statusFilters={statusFilters}
+          projectFilters={projectFilters}
           filterText={filterText}
           rootSuite={rootSuite}
           runningState={runningState}
           runTests={runTests}
           onTestSelected={setSelectedTest}
-          isVisible={!settingsVisible}
           setVisibleTestIds={setVisibleTestIds} />
-        {settingsVisible && <SettingsView projects={projects} setProjects={setProjects} onClose={() => setSettingsVisible(false)}></SettingsView>}
       </div>
     </SplitView>
     <div className='status-line'>
       <div>Total: {progress.total}</div>
-      {isRunningTest && <div><span className='codicon codicon-loading'></span>Running {visibleTestIds.length}</div>}
+      {isRunningTest && <div><span className='codicon codicon-loading'></span>{`Running ${visibleTestIds.length}\u2026`}</div>}
+      {isLoading && <div><span className='codicon codicon-loading'></span> {'Loading\u2026'}</div>}
       {!isRunningTest && <div>Showing: {visibleTestIds.length}</div>}
       <div>{progress.passed} passed</div>
       <div>{progress.failed} failed</div>
@@ -202,29 +185,89 @@ export const WatchModeView: React.FC<{}> = ({
   </div>;
 };
 
-const TreeListView = TreeView<TreeItem>;
+const FiltersView: React.FC<{
+  filterText: string;
+  setFilterText: (text: string) => void;
+  statusFilters: Map<string, boolean>;
+  setStatusFilters: (filters: Map<string, boolean>) => void;
+  projectFilters: Map<string, boolean>;
+  setProjectFilters: (filters: Map<string, boolean>) => void;
+  runTests: () => void;
+}> = ({ filterText, setFilterText, statusFilters, setStatusFilters, projectFilters, setProjectFilters, runTests }) => {
+  const [expanded, setExpanded] = React.useState(false);
+  const inputRef = React.useRef<HTMLInputElement>(null);
+  React.useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
 
-export const TestList: React.FC<{
-  projects: Map<string, boolean>,
+  const statusLine = [...statusFilters.entries()].filter(([_, v]) => v).map(([s]) => s).join(' ') || 'all';
+  const projectsLine = [...projectFilters.entries()].filter(([_, v]) => v).map(([p]) => p).join(' ') || 'all';
+  return <div className='filters'>
+    <Expandable
+      expanded={expanded}
+      setExpanded={setExpanded}
+      title={<input ref={inputRef} type='search' placeholder='Filter (e.g. text, @tag)' spellCheck={false} value={filterText}
+        onChange={e => {
+          setFilterText(e.target.value);
+        }}
+        onKeyDown={e => {
+          if (e.key === 'Enter')
+            runTests();
+        }} />}>
+      {<div className='filter-title' title={statusLine} onClick={() => setExpanded(false)}><span className='filter-label'>Status:</span> {statusLine}</div>}
+      {[...statusFilters.entries()].map(([status, value]) => {
+        return <div className='filter-entry'>
+          <label>
+            <input type='checkbox' checked={value} onClick={() => {
+              const copy = new Map(statusFilters);
+              copy.set(status, !copy.get(status));
+              setStatusFilters(copy);
+            }}/>
+            <div>{status}</div>
+          </label>
+        </div>;
+      })}
+
+      {<div className='filter-title' title={projectsLine}><span className='filter-label'>Projects:</span> {projectsLine}</div>}
+      {[...projectFilters.entries()].map(([projectName, value]) => {
+        return <div className='filter-entry'>
+          <label>
+            <input type='checkbox' checked={value} onClick={() => {
+              const copy = new Map(projectFilters);
+              copy.set(projectName, !copy.get(projectName));
+              setProjectFilters(copy);
+            }}/>
+            <div>{projectName}</div>
+          </label>
+        </div>;
+      })}
+    </Expandable>
+    {!expanded && <div className='filter-summary' title={'Status: ' + statusLine + '\nProjects: ' + projectsLine} onClick={() => setExpanded(true)}>
+      <span className='filter-label'>Status:</span> {statusLine}
+      <span className='filter-label'>Projects:</span> {projectsLine}
+    </div>}
+  </div>;
+};
+
+const TestTreeView = TreeView<TreeItem>;
+
+const TestList: React.FC<{
+  statusFilters: Map<string, boolean>,
+  projectFilters: Map<string, boolean>,
   filterText: string,
   rootSuite: { value: Suite | undefined },
   runTests: (testIds: string[]) => void,
   runningState?: { testIds: Set<string>, itemSelectedByUser?: boolean },
-  isVisible: boolean,
   setVisibleTestIds: (testIds: string[]) => void,
   onTestSelected: (test: TestCase | undefined) => void,
-}> = ({ projects, filterText, rootSuite, runTests, runningState, isVisible, onTestSelected, setVisibleTestIds }) => {
+}> = ({ statusFilters, projectFilters, filterText, rootSuite, runTests, runningState, onTestSelected, setVisibleTestIds }) => {
   const [treeState, setTreeState] = React.useState<TreeState>({ expandedItems: new Map() });
   const [selectedTreeItemId, setSelectedTreeItemId] = React.useState<string | undefined>();
   const [watchedTreeIds] = React.useState<Set<string>>(new Set());
 
-  React.useEffect(() => {
-    refreshRootSuite(true);
-  }, []);
-
   const { rootItem, treeItemMap } = React.useMemo(() => {
-    const rootItem = createTree(rootSuite.value, projects);
-    filterTree(rootItem, filterText);
+    const rootItem = createTree(rootSuite.value, projectFilters);
+    filterTree(rootItem, filterText, statusFilters);
     hideOnlyTests(rootItem);
     const treeItemMap = new Map<string, TreeItem>();
     const visibleTestIds = new Set<string>();
@@ -237,7 +280,7 @@ export const TestList: React.FC<{
     visit(rootItem);
     setVisibleTestIds([...visibleTestIds]);
     return { rootItem, treeItemMap };
-  }, [filterText, rootSuite, projects, setVisibleTestIds]);
+  }, [filterText, rootSuite, statusFilters, projectFilters, setVisibleTestIds]);
 
   React.useEffect(() => {
     // Look for a first failure within the run batch to select it.
@@ -245,9 +288,9 @@ export const TestList: React.FC<{
       return;
     let selectedTreeItem: TreeItem | undefined;
     const visit = (treeItem: TreeItem) => {
+      treeItem.children.forEach(visit);
       if (selectedTreeItem)
         return;
-      treeItem.children.forEach(visit);
       if (treeItem.status === 'failed') {
         if (treeItem.kind === 'test' && runningState.testIds.has(treeItem.test.id))
           selectedTreeItem = treeItem;
@@ -296,10 +339,7 @@ export const TestList: React.FC<{
     runTests(testIds);
   };
 
-  if (!isVisible)
-    return <></>;
-
-  return <TreeListView
+  return <TestTreeView
     treeState={treeState}
     setTreeState={setTreeState}
     rootItem={rootItem}
@@ -336,42 +376,11 @@ export const TestList: React.FC<{
         runningState.itemSelectedByUser = true;
       setSelectedTreeItemId(treeItem.id);
     }}
+    autoExpandDeep={!!filterText}
     noItemsMessage='No tests' />;
 };
 
-export const SettingsView: React.FC<{
-  projects: Map<string, boolean>,
-  setProjects: (projectNames: Map<string, boolean>) => void,
-  onClose: () => void,
-}> = ({ projects, setProjects, onClose }) => {
-  return <div className='vbox'>
-    <div className='hbox' style={{ flex: 'none' }}>
-      <div className='section-title' style={{ marginTop: 10 }}>Projects</div>
-      <div className='spacer'></div>
-      <ToolbarButton icon='close' title='Close settings' toggled={false} onClick={onClose}></ToolbarButton>
-    </div>
-    {[...projects.entries()].map(([projectName, value]) => {
-      return <div style={{ display: 'flex', alignItems: 'center', lineHeight: '24px', marginLeft: 5 }}>
-        <input id={`project-${projectName}`} type='checkbox' checked={value} style={{ cursor: 'pointer' }} onClick={() => {
-          const copy = new Map(projects);
-          copy.set(projectName, !copy.get(projectName));
-          if (![...copy.values()].includes(true))
-            copy.set(projectName, true);
-          setProjects(copy);
-        }}/>
-        <label htmlFor={`project-${projectName}`} style={{ cursor: 'pointer' }}>
-          {projectName}
-        </label>
-      </div>;
-    })}
-    <div className='section-title'>Appearance</div>
-    <div style={{ marginLeft: 3 }}>
-      <ToolbarButton icon='color-mode' title='Toggle color mode' toggled={false} onClick={() => toggleTheme()}>Toggle color mode</ToolbarButton>
-    </div>
-  </div>;
-};
-
-export const InProgressTraceView: React.FC<{
+const InProgressTraceView: React.FC<{
   testResult: TestResult | undefined,
 }> = ({ testResult }) => {
   const [model, setModel] = React.useState<MultiTraceModel | undefined>();
@@ -385,7 +394,7 @@ export const InProgressTraceView: React.FC<{
   return <Workbench model={model} hideTimelineBars={true} hideStackFrames={true} showSourcesFirst={true} />;
 };
 
-export const FinishedTraceView: React.FC<{
+const FinishedTraceView: React.FC<{
   testResult: TestResult,
 }> = ({ testResult }) => {
   const [model, setModel] = React.useState<MultiTraceModel | undefined>();
@@ -424,11 +433,9 @@ const throttleUpdateRootSuite = (rootSuite: Suite, progress: Progress, immediate
     throttleTimer = setTimeout(throttledAction, 250);
 };
 
-const refreshRootSuite = (eraseResults: boolean) => {
-  if (!eraseResults) {
-    sendMessageNoReply('list');
-    return;
-  }
+const refreshRootSuite = (eraseResults: boolean): Promise<void> => {
+  if (!eraseResults)
+    return sendMessage('list', {});
 
   let rootSuite: Suite;
   const progress: Progress = {
@@ -476,12 +483,12 @@ const refreshRootSuite = (eraseResults: boolean) => {
       updateStepsProgress();
     },
   });
-  sendMessageNoReply('list');
+  return sendMessage('list', {});
 };
 
 (window as any).dispatch = (message: any) => {
   if (message.method === 'listChanged') {
-    refreshRootSuite(false);
+    refreshRootSuite(false).catch(() => {});
     return;
   }
 
@@ -576,7 +583,8 @@ type TestItem = TreeItemBase & {
 
 type TreeItem = GroupItem | TestCaseItem | TestItem;
 
-function createTree(rootSuite: Suite | undefined, projects: Map<string, boolean>): GroupItem {
+function createTree(rootSuite: Suite | undefined, projectFilters: Map<string, boolean>): GroupItem {
+  const filterProjects = [...projectFilters.values()].some(Boolean);
   const rootItem: GroupItem = {
     kind: 'group',
     id: 'root',
@@ -649,7 +657,7 @@ function createTree(rootSuite: Suite | undefined, projects: Map<string, boolean>
   };
 
   for (const projectSuite of rootSuite?.suites || []) {
-    if (!projects.get(projectSuite.title))
+    if (filterProjects && !projectFilters.get(projectSuite.title))
       continue;
     visitSuite(projectSuite.title, projectSuite, rootItem);
   }
@@ -686,21 +694,15 @@ function createTree(rootSuite: Suite | undefined, projects: Map<string, boolean>
   return rootItem;
 }
 
-function filterTree(rootItem: GroupItem, filterText: string) {
-  const trimmedFilterText = filterText.trim();
-  const filterTokens = trimmedFilterText.toLowerCase().split(' ');
-  const textTokens = filterTokens.filter(token => !token.match(/^[sp]:/));
-  const statuses = new Set(filterTokens.filter(t => t.startsWith('s:')).map(t => t.substring(2)));
-  if (statuses.size)
-    statuses.add('running');
-  const projects = new Set(filterTokens.filter(t => t.startsWith('p:')).map(t => t.substring(2)));
+function filterTree(rootItem: GroupItem, filterText: string, statusFilters: Map<string, boolean>) {
+  const tokens = filterText.trim().toLowerCase().split(' ');
+  const filtersStatuses = [...statusFilters.values()].some(Boolean);
 
   const filter = (testCase: TestCaseItem) => {
     const title = testCase.tests[0].titlePath().join(' ').toLowerCase();
-    if (!textTokens.every(token => title.includes(token)))
+    if (!tokens.every(token => title.includes(token)))
       return false;
-    testCase.children = (testCase.children as TestItem[]).filter(test => !statuses.size || statuses.has(test.status));
-    testCase.children = (testCase.children as TestItem[]).filter(test => !projects.size || projects.has(test.project));
+    testCase.children = (testCase.children as TestItem[]).filter(test => !filtersStatuses || statusFilters.get(test.status));
     testCase.tests = (testCase.children as TestItem[]).map(c => c.test);
     return !!testCase.children.length;
   };
@@ -801,18 +803,4 @@ function stepsToModel(result: TestResult): MultiTraceModel {
   };
 
   return new MultiTraceModel([contextEntry]);
-}
-
-function useSetting<S>(name: string, defaultValue: S): [S, React.Dispatch<React.SetStateAction<S>>] {
-  const string = localStorage.getItem(name);
-  let value = defaultValue;
-  if (string !== null)
-    value = JSON.parse(string);
-
-  const [state, setState] = React.useState<S>(value);
-  const setStateWrapper = (value: React.SetStateAction<S>) => {
-    localStorage.setItem(name, JSON.stringify(value));
-    setState(value);
-  };
-  return [state, setStateWrapper];
 }

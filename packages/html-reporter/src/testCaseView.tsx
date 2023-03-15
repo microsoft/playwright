@@ -53,7 +53,7 @@ export const TestCaseView: React.FC<{
       {!!test.projectName && <ProjectLink projectNames={projectNames} projectName={test.projectName}></ProjectLink>}
       {labels && <LabelsView labels={labels} />}
     </div>}
-    {annotations.size && <AutoChip header='Annotations'>
+    {annotations.size > 0 && <AutoChip header='Annotations'>
       {[...annotations].map(annotation => <TestCaseAnnotationView type={annotation[0]} descriptions={annotation[1]} />)}
     </AutoChip>}
     {test && <TabbedPane tabs={

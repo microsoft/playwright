@@ -15,7 +15,6 @@
  */
 
 import type { Suite, TestCase } from '../common/test';
-import type { FullProjectInternal } from '../common/types';
 
 export type TestGroup = {
   workerHash: string;
@@ -131,10 +130,10 @@ export function createTestGroups(projectSuite: Suite, workers: number): TestGrou
   return result;
 }
 
-export function filterForShard(shard: { total: number, current: number }, filesByProject: Map<FullProjectInternal, string[]>): Map<FullProjectInternal, string[]> {
+export function filterForShard(shard: { total: number, current: number }, testGroups: TestGroup[]): Set<TestGroup> {
   let shardableTotal = 0;
-  for (const files of filesByProject.values())
-    shardableTotal += files.length;
+  for (const group of testGroups)
+    shardableTotal += group.tests.length;
 
   // Each shard gets some tests.
   const shardSize = Math.floor(shardableTotal / shard.total);
@@ -144,17 +143,15 @@ export function filterForShard(shard: { total: number, current: number }, filesB
   const currentShard = shard.current - 1; // Make it zero-based for calculations.
   const from = shardSize * currentShard + Math.min(extraOne, currentShard);
   const to = from + shardSize + (currentShard < extraOne ? 1 : 0);
+
   let current = 0;
-  const result = new Map<FullProjectInternal, string[]>();
-  for (const [project, files] of filesByProject) {
-    const shardFiles: string[] = [];
-    for (const file of files) {
-      if (current >= from && current < to)
-        shardFiles.push(file);
-      ++current;
-    }
-    if (shardFiles.length)
-      result.set(project, shardFiles);
+  const result = new Set<TestGroup>();
+  for (const group of testGroups) {
+    // Any test group goes to the shard that contains the first test of this group.
+    // So, this shard gets any group that starts at [from; to)
+    if (current >= from && current < to)
+      result.add(group);
+    current += group.tests.length;
   }
   return result;
 }

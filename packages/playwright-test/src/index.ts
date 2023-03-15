@@ -17,12 +17,14 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import type { APIRequestContext, BrowserContext, BrowserContextOptions, LaunchOptions, Page, Tracing, Video } from 'playwright-core';
+import type { BrowserType as BrowserTypeImpl } from 'playwright-core/lib/client/browserType';
 import * as playwrightLibrary from 'playwright-core';
 import { createGuid, debugMode, removeFolders, addInternalStackPrefix, mergeTraceFiles, saveTraceFile } from 'playwright-core/lib/utils';
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, TraceMode, VideoMode } from '../types/test';
 import type { TestInfoImpl } from './worker/testInfo';
 import { rootTestType } from './common/testType';
 import { type ContextReuseMode } from './common/types';
+import { artifactsFolderName } from './isomorphic/folders';
 export { expect } from './matchers/expect';
 export { store } from './store';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
@@ -64,21 +66,11 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
   channel: [({ launchOptions }, use) => use(launchOptions.channel), { scope: 'worker', option: true }],
   launchOptions: [{}, { scope: 'worker', option: true }],
   connectOptions: [({}, use) => {
-    const wsEndpoint = process.env.PW_TEST_CONNECT_WS_ENDPOINT;
-    if (!wsEndpoint)
-      return use(undefined);
-    let headers = process.env.PW_TEST_CONNECT_HEADERS ? JSON.parse(process.env.PW_TEST_CONNECT_HEADERS) : undefined;
-    if (process.env.PW_TEST_REUSE_CONTEXT) {
-      headers = {
-        ...headers,
-        'x-playwright-reuse-context': '1',
-      };
-    }
-    return use({
-      wsEndpoint,
-      headers,
-      _exposeNetwork: process.env.PW_TEST_CONNECT_EXPOSE_NETWORK,
-    } as any);
+    // Usually, when connect options are specified (e.g, in the config or in the environment),
+    // all launch() calls are turned into connect() calls.
+    // However, when running in "reuse browser" mode and connecting to the reusable server,
+    // only the default "browser" fixture should turn into reused browser.
+    use(process.env.PW_TEST_REUSE_CONTEXT ? undefined : connectOptionsFromEnv());
   }, { scope: 'worker', option: true }],
   screenshot: ['off', { scope: 'worker', option: true }],
   video: ['off', { scope: 'worker', option: true }],
@@ -88,7 +80,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     let dir: string | undefined;
     await use(() => {
       if (!dir) {
-        dir = path.join(workerInfo.project.outputDir, '.playwright-artifacts-' + workerInfo.workerIndex);
+        dir = path.join(workerInfo.project.outputDir, artifactsFolderName(workerInfo.workerIndex));
         fs.mkdirSync(dir, { recursive: true });
       }
       return dir;
@@ -97,7 +89,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       await removeFolders([dir]);
   }, { scope: 'worker', _title: 'playwright configuration' } as any],
 
-  _browserOptions: [async ({ playwright, headless, channel, launchOptions, connectOptions }, use) => {
+  _browserOptions: [async ({ playwright, headless, channel, launchOptions, connectOptions, _artifactsDir }, use) => {
     const options: LaunchOptions = {
       handleSIGINT: false,
       timeout: 0,
@@ -107,21 +99,39 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       options.headless = headless;
     if (channel !== undefined)
       options.channel = channel;
+    options.tracesDir = path.join(_artifactsDir(), 'traces');
 
     for (const browserType of [playwright.chromium, playwright.firefox, playwright.webkit]) {
-      (browserType as any)._defaultLaunchOptions = options;
-      (browserType as any)._defaultConnectOptions = connectOptions;
+      (browserType as BrowserTypeImpl)._defaultLaunchOptions = options;
+      (browserType as BrowserTypeImpl)._defaultConnectOptions = connectOptions;
     }
     await use(options);
     for (const browserType of [playwright.chromium, playwright.firefox, playwright.webkit]) {
-      (browserType as any)._defaultLaunchOptions = undefined;
-      (browserType as any)._defaultConnectOptions = undefined;
+      (browserType as BrowserTypeImpl)._defaultLaunchOptions = undefined;
+      (browserType as BrowserTypeImpl)._defaultConnectOptions = undefined;
     }
   }, { scope: 'worker', auto: true }],
 
-  browser: [async ({ playwright, browserName }, use, testInfo) => {
+  browser: [async ({ playwright, browserName, _browserOptions }, use, testInfo) => {
     if (!['chromium', 'firefox', 'webkit'].includes(browserName))
       throw new Error(`Unexpected browserName "${browserName}", must be one of "chromium", "firefox" or "webkit"`);
+
+    // Support for "reuse browser" mode.
+    const connectOptions = connectOptionsFromEnv();
+    if (connectOptions && process.env.PW_TEST_REUSE_CONTEXT) {
+      const browser = await playwright[browserName].connect({
+        ...connectOptions,
+        headers: {
+          'x-playwright-reuse-context': '1',
+          'x-playwright-launch-options': JSON.stringify(_browserOptions),
+          ...connectOptions.headers,
+        },
+      });
+      await use(browser);
+      await browser.close();
+      return;
+    }
+
     const browser = await playwright[browserName].launch();
     await use(browser);
     await browser.close();
@@ -247,6 +257,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     const temporaryScreenshots: string[] = [];
     const testInfoImpl = testInfo as TestInfoImpl;
     const reusedContexts = new Set<BrowserContext>();
+    let traceOrdinal = 0;
 
     const createInstrumentationListener = (context?: BrowserContext) => {
       return {
@@ -279,7 +290,11 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       if (captureTrace) {
         const title = [path.relative(testInfo.project.testDir, testInfo.file) + ':' + testInfo.line, ...testInfo.titlePath.slice(1)].join(' › ');
         if (!(tracing as any)[kTracingStarted]) {
-          await tracing.start({ ...traceOptions, title });
+          const ordinalSuffix = traceOrdinal ? `-${traceOrdinal}` : '';
+          ++traceOrdinal;
+          const retrySuffix = testInfo.retry ? `-${testInfo.retry}` : '';
+          const name = `${testInfo.testId}${retrySuffix}${ordinalSuffix}`;
+          await tracing.start({ ...traceOptions, title, name });
           (tracing as any)[kTracingStarted] = true;
         } else {
           await tracing.startChunk({ title });
@@ -616,6 +631,18 @@ function normalizeScreenshotMode(screenshot: PlaywrightWorkerOptions['screenshot
 }
 
 const kTracingStarted = Symbol('kTracingStarted');
+
+function connectOptionsFromEnv() {
+  const wsEndpoint = process.env.PW_TEST_CONNECT_WS_ENDPOINT;
+  if (!wsEndpoint)
+    return undefined;
+  const headers = process.env.PW_TEST_CONNECT_HEADERS ? JSON.parse(process.env.PW_TEST_CONNECT_HEADERS) : undefined;
+  return {
+    wsEndpoint,
+    headers,
+    _exposeNetwork: process.env.PW_TEST_CONNECT_EXPOSE_NETWORK,
+  };
+}
 
 export const test = _baseTest.extend<TestFixtures, WorkerFixtures>(playwrightFixtures);
 

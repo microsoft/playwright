@@ -16,7 +16,7 @@
 
 import type * as trace from '@trace/trace';
 import type * as traceV3 from './versions/traceV3';
-import { parseClientSideCallMetadata } from '@trace/traceUtils';
+import { parseClientSideCallMetadata } from '@isomorphic/traceUtils';
 import type zip from '@zip.js/zip.js';
 // @ts-ignore
 import zipImport from '@zip.js/zip.js/dist/zip-no-worker-inflate.min.js';

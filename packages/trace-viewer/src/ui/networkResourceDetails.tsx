@@ -125,7 +125,7 @@ export const NetworkResourceDetails: React.FunctionComponent<{
 
   return <div
     className={'network-request ' + (selected ? 'selected' : '')} onClick={() => setSelected(index)}>
-    <Expandable expanded={expanded} setExpanded={setExpanded} style={{ width: '100%' }} title={ renderTitle() }>
+    <Expandable expanded={expanded} setExpanded={setExpanded} title={ renderTitle() }>
       <div className='network-request-details'>
         <div className='network-request-details-time'>{resource.time}ms</div>
         <div className='network-request-details-header'>URL</div>

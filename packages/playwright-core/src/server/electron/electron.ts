@@ -130,7 +130,7 @@ export class Electron extends SdkObject {
     controller.setLogName('browser');
     return controller.run(async progress => {
       let app: ElectronApplication | undefined = undefined;
-      const electronArguments = ['-r', require.resolve('./loader'), '--inspect=0', '--remote-debugging-port=0', ...args];
+      const electronArguments = ['--inspect=0', '--remote-debugging-port=0', ...args];
 
       if (os.platform() === 'linux') {
         const runningAsRoot = process.geteuid && process.geteuid() === 0;
@@ -160,6 +160,9 @@ export class Electron extends SdkObject {
           }
           throw error;
         }
+        // Only use our own loader for non-packaged apps.
+        // Packaged apps might have their own command line handling.
+        electronArguments.unshift('-r', require.resolve('./loader'));
       }
 
       // When debugging Playwright test that runs Electron, NODE_OPTIONS
