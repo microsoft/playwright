@@ -36,8 +36,6 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
       await this._channel.tracingStart(options);
       await this._channel.tracingStartChunk({ title: options.title });
     });
-    this._metadataCollector = [];
-    this._connection.startCollectingCallMetadata(this._metadataCollector);
   }
 
   async startChunk(options: { title?: string } = {}) {
