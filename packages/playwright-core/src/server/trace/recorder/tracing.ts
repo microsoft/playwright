@@ -61,7 +61,9 @@ type RecordingState = {
   filesCount: number,
   networkSha1s: Set<string>,
   traceSha1s: Set<string>,
-  recording: boolean;
+  recording: boolean,
+  pendingTraceEvents: trace.TraceEvent[],
+  flushPendingTraceEventsTimer: NodeJS.Timer | undefined,
 };
 
 const kScreencastOptions = { width: 800, height: 600, quality: 90 };
@@ -132,7 +134,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     // and conflict.
     const traceName = options.name || createGuid();
     // Init the state synchronously.
-    this._state = { options, traceName, traceFile: '', networkFile: '', tracesDir: '', resourcesDir: '', filesCount: 0, traceSha1s: new Set(), networkSha1s: new Set(), recording: false };
+    this._state = { options, traceName, traceFile: '', networkFile: '', tracesDir: '', resourcesDir: '', filesCount: 0, traceSha1s: new Set(), networkSha1s: new Set(), recording: false, pendingTraceEvents: [], flushPendingTraceEventsTimer: undefined };
     const state = this._state;
 
     state.tracesDir = await this._createTracesDirIfNeeded();
@@ -158,6 +160,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     state.filesCount++;
     state.traceFile = path.join(state.tracesDir, `${state.traceName}${suffix}.trace`);
     state.recording = true;
+    state.flushPendingTraceEventsTimer = setInterval(() => this._flushTraceEvents(state), 100);
 
     if (options.name && options.name !== this._state.traceName)
       this._changeTraceName(this._state, options.name);
@@ -228,6 +231,8 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   async dispose() {
     this._snapshotter?.dispose();
     this._harTracer.stop();
+    if (this._state?.flushPendingTraceEventsTimer)
+      clearInterval(this._state.flushPendingTraceEventsTimer);
     await this._writeChain;
   }
 
@@ -250,6 +255,9 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
 
     if (state.options.snapshots)
       await this._snapshotter?.stop();
+
+    clearInterval(state.flushPendingTraceEventsTimer);
+    this._flushTraceEvents(state);
 
     // Chain the export operation against write operations,
     // so that neither trace files nor sha1s change during the export.
@@ -405,9 +413,16 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   }
 
   private _appendTraceEvent(event: trace.TraceEvent) {
+    this._state!.pendingTraceEvents.push(event);
+  }
+
+  private _flushTraceEvents(state: RecordingState) {
+    if (!state.pendingTraceEvents.length)
+      return;
+    const lines = state.pendingTraceEvents.map(event => JSON.stringify(visitTraceEvent(event, state.traceSha1s)) + '\n');
+    state.pendingTraceEvents = [];
     this._appendTraceOperation(async () => {
-      const visited = visitTraceEvent(event, this._state!.traceSha1s);
-      await fs.promises.appendFile(this._state!.traceFile, JSON.stringify(visited) + '\n');
+      await fs.promises.appendFile(state.traceFile, lines.join(''));
     });
   }
 
