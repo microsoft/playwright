@@ -2092,6 +2092,7 @@ scheme.TracingTracingStartParams = tObject({
 });
 scheme.TracingTracingStartResult = tOptional(tObject({}));
 scheme.TracingTracingStartChunkParams = tObject({
+  name: tOptional(tString),
   title: tOptional(tString),
 });
 scheme.TracingTracingStartChunkResult = tOptional(tObject({}));

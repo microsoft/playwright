@@ -180,6 +180,58 @@ test('should collect two traces', async ({ context, page, server }, testInfo) =>
   }
 });
 
+test('should respect tracesDir and name', async ({ browserType, server }, testInfo) => {
+  const tracesDir = testInfo.outputPath('traces');
+  const browser = await browserType.launch({ tracesDir });
+  const context = await browser.newContext();
+  const page = await context.newPage();
+
+  await context.tracing.start({ name: 'name1', snapshots: true });
+  await page.goto(server.PREFIX + '/one-style.html');
+  await context.tracing.stopChunk({ path: testInfo.outputPath('trace1.zip') });
+  expect(fs.existsSync(path.join(tracesDir, 'name1.trace'))).toBe(true);
+  expect(fs.existsSync(path.join(tracesDir, 'name1.network'))).toBe(true);
+
+  await context.tracing.startChunk({ name: 'name2' });
+  await page.goto(server.PREFIX + '/har.html');
+  await context.tracing.stop({ path: testInfo.outputPath('trace2.zip') });
+  expect(fs.existsSync(path.join(tracesDir, 'name2.trace'))).toBe(true);
+  expect(fs.existsSync(path.join(tracesDir, 'name2.network'))).toBe(true);
+
+  await browser.close();
+
+  function resourceNames(resources: Map<string, Buffer>) {
+    return [...resources.keys()].map(file => {
+      return file.replace(/^resources\/.*\.(html|css)$/, 'resources/XXX.$1');
+    }).sort();
+  }
+
+  {
+    const { resources, actions } = await parseTrace(testInfo.outputPath('trace1.zip'));
+    expect(actions).toEqual(['page.goto']);
+    expect(resourceNames(resources)).toEqual([
+      'resources/XXX.css',
+      'resources/XXX.html',
+      'trace.network',
+      'trace.stacks',
+      'trace.trace',
+    ]);
+  }
+
+  {
+    const { resources, actions } = await parseTrace(testInfo.outputPath('trace2.zip'));
+    expect(actions).toEqual(['page.goto']);
+    expect(resourceNames(resources)).toEqual([
+      'resources/XXX.css',
+      'resources/XXX.html',
+      'resources/XXX.html',
+      'trace.network',
+      'trace.stacks',
+      'trace.trace',
+    ]);
+  }
+});
+
 test('should not include trace resources from the provious chunks', async ({ context, page, server, browserName }, testInfo) => {
   test.skip(browserName !== 'chromium', 'The number of screenshots is flaky in non-Chromium');
   await context.tracing.start({ screenshots: true, snapshots: true, sources: true });

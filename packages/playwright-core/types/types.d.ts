@@ -18263,6 +18263,13 @@ export interface Tracing {
    */
   startChunk(options?: {
     /**
+     * If specified, the trace is going to be saved into the file with the given name inside the `tracesDir` folder
+     * specified in
+     * [browserType.launch([options])](https://playwright.dev/docs/api/class-browsertype#browser-type-launch).
+     */
+    name?: string;
+
+    /**
      * Trace name to be shown in the Trace Viewer.
      */
     title?: string;
