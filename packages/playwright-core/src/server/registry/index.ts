@@ -884,7 +884,8 @@ export class Registry {
           const usedBrowserPath = descriptor.dir;
           const browserRevision = parseInt(descriptor.revision, 10);
           // Old browser installations don't have marker file.
-          const shouldHaveMarkerFile = (browserName === 'chromium' && browserRevision >= 786218) ||
+          // We switched chromium from 999999 to 1000, 300000 is the new Y2K.
+          const shouldHaveMarkerFile = (browserName === 'chromium' && (browserRevision >= 786218 || browserRevision < 300000)) ||
               (browserName === 'firefox' && browserRevision >= 1128) ||
               (browserName === 'webkit' && browserRevision >= 1307) ||
               // All new applications have a marker file right away.
