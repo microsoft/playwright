@@ -86,7 +86,7 @@ page.goto("https://example.com", wait_until="networkidle")
 
 ```csharp
 // Navigate and wait until network is idle
-await page.GotoAsync("https://example.com", new PageGotoOptions { WaitUntil = WaitUntilState.NetworkIdle });
+await page.GotoAsync("https://example.com", new() { WaitUntil = WaitUntilState.NetworkIdle });
 ```
 
 ### Wait for element

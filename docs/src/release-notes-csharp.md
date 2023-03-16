@@ -437,7 +437,7 @@ Note that the new methods [`method: Page.routeFromHAR`] and [`method: BrowserCon
   ```csharp
   var buttons = page.Locator("role=button");
   // ...
-  var submitLocator = buttons.Filter(new LocatorFilterOptions { HasText = "Sign up" });
+  var submitLocator = buttons.Filter(new() { HasText = "Sign up" });
   await submitLocator.ClickAsync();
   ```
 

@@ -286,11 +286,11 @@ browser.close()
 ```csharp
 await page.GotoAsync("https://keycode.info");
 await page.Keyboard.PressAsync("A");
-await page.ScreenshotAsync(new PageScreenshotOptions { Path = "A.png" });
+await page.ScreenshotAsync(new() { Path = "A.png" });
 await page.Keyboard.PressAsync("ArrowLeft");
-await page.ScreenshotAsync(new PageScreenshotOptions { Path = "ArrowLeft.png" });
+await page.ScreenshotAsync(new() { Path = "ArrowLeft.png" });
 await page.Keyboard.PressAsync("Shift+O");
-await page.ScreenshotAsync(new PageScreenshotOptions { Path = "O.png" });
+await page.ScreenshotAsync(new() { Path = "O.png" });
 await browser.CloseAsync();
 ```
 
@@ -341,7 +341,7 @@ page.keyboard.type("World", delay=100) # types slower, like a user
 
 ```csharp
 await page.Keyboard.TypeAsync("Hello"); // types instantly
-await page.Keyboard.TypeAsync("World", new KeyboardTypeOptions { Delay = 100 }); // types slower, like a user
+await page.Keyboard.TypeAsync("World", new() { Delay = 100 }); // types slower, like a user
 ```
 
 :::note

@@ -658,7 +658,7 @@ context = browser.new_context(
 ```
 
 ```csharp
-var context = await browser.NewContextAsync(new BrowserNewContextOptions { UserAgent = "My User Agent" });
+var context = await browser.NewContextAsync(new() { UserAgent = "My User Agent" });
 ```
 ## JavaScript Enabled
 
