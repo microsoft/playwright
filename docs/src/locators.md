@@ -553,19 +553,7 @@ By default, [`method: Page.getByTestId`] will locate elements based on the `data
 
 Set the test id to use a custom data attribute for your tests.
 
-```js tab=js-js
-// playwright.config.js
-// @ts-check
-
-const { defineConfig } = require('@playwright/test');
-module.exports = defineConfig({
-  use: {
-    testIdAttribute: 'data-pw'
-  },
-});
-```
-
-```js tab=js-ts
+```js tab=js-test
 // playwright.config.ts
 import { defineConfig } from '@playwright/test';
 
@@ -574,6 +562,11 @@ export default defineConfig({
     testIdAttribute: 'data-pw'
   }
 });
+```
+
+```js tab=js-library
+import playwright from 'playwright';
+playwright.selectors.setTestIdAttribute('data-pw');
 ```
 
 ```java

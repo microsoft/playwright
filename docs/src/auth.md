@@ -475,7 +475,7 @@ test.describe(() => {
 
 Use multiple [BrowserContext]s and [Page]s with different storage states in the same test.
 
-```js
+```ts
 // tests/example.spec.ts
 import { test } from '@playwright/test';
 

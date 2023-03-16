@@ -11,7 +11,7 @@ There are two ways to configure global setup and teardown: using a global setup 
 
 In this example the chromium, firefox and webkit projects depend on the setup project.
 
-```js
+```ts
 // playwright.config.ts
 import { defineConfig } from '@playwright/test';
 
@@ -46,7 +46,7 @@ You can use the `globalSetup` option in the [configuration file](#configuration-
 
 Similarly, use `globalTeardown` to run something once after all the tests. Alternatively, let `globalSetup` return a function that will be used as a global teardown. You can pass data such as port number, authentication tokens, etc. from your global setup to your tests using environment variables.
 
-```js
+```ts
 // playwright.config.ts/js
 import { defineConfig } from '@playwright/test';
 
@@ -62,7 +62,7 @@ export default defineConfig({
 
 Here is a global setup example that authenticates once and reuses authentication state in tests. It uses the `baseURL` and `storageState` options from the configuration file.
 
-```js
+```ts
 // global-setup.ts/js
 import { chromium, FullConfig } from '@playwright/test';
 
@@ -83,7 +83,7 @@ export default globalSetup;
 
 Specify `globalSetup`, `baseURL` and `storageState` in the configuration file.
 
-```js
+```ts
 // playwright.config.ts/js
 import { defineConfig } from '@playwright/test';
 export default defineConfig({
@@ -97,7 +97,7 @@ export default defineConfig({
 
 Tests start already authenticated because we specify `storageState` that was populated by global setup.
 
-```js
+```ts
 import { test } from '@playwright/test';
 
 test('test', async ({ page }) => {
@@ -108,7 +108,7 @@ test('test', async ({ page }) => {
 
 You can make arbitrary data available in your tests from your global setup file by setting them as environment variables via `process.env`.
 
-```js
+```ts
 // global-setup.ts/js
 import { FullConfig } from '@playwright/test';
 
@@ -123,8 +123,8 @@ export default globalSetup;
 
 Tests have access to the `process.env` properties set in the global setup.
 
-```js
-const { test } = require('@playwright/test');
+```ts
+import { test } from '@playwright/test';
 
 test('test', async ({ page }) => {
   // environment variables which are set in globalSetup are only available inside test().
@@ -142,7 +142,7 @@ test('test', async ({ page }) => {
 
 In some instances, it may be useful to capture a trace of failures encountered during the global setup. In order to do this, you must [start tracing](./api/class-tracing.md#tracing-start) in your setup, and you must ensure that you [stop tracing](./api/class-tracing.md#tracing-stop) if an error occurs before that error is thrown. This can be achieved by wrapping your setup in a `try...catch` block.  Here is an example that expands the global setup example to capture a trace.
 
-```js
+```ts
 // global-setup.ts/js
 import { chromium, FullConfig } from '@playwright/test';
 

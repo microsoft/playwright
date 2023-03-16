@@ -3332,6 +3332,19 @@ type ConnectOptions = {
  * value is stored in its own file inside './playwright' directory, configurable with
  * [testConfig.storeDir](https://playwright.dev/docs/api/class-testconfig#test-config-store-dir).
  *
+ * ```ts
+ * import { test, store } from '@playwright/test';
+ *
+ * test('get user name', async ({ page, context }) => {
+ *   await page.goto('/');
+ *   // Return mock user info from the store.
+ *   await page.route('**\/info/user', route => route.fulfill({ path: store.path('mocks/user.json')}))
+ *   await page.getByText('My Profile');
+ *   // Check that the name matches mock data.
+ *   await expect(page.getByLabel('Name')).toHaveText('John');
+ * });
+ * ```
+ *
  */
 export interface TestStore {
   /**

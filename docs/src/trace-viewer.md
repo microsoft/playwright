@@ -142,20 +142,7 @@ npx playwright show-report
 Traces should be run on continuous integration on the first retry of a failed test
 by setting the `trace: 'on-first-retry'` option in the test configuration file. This will produce a `trace.zip` file for each test that was retried.
 
-```js tab=js-js
-// @ts-check
-
-const { defineConfig } = require('@playwright/test');
-
-module.exports = defineConfig({
-  retries: 1,
-  use: {
-    trace: 'on-first-retry',
-  },
-});
-```
-
-```js tab=js-ts
+```js tab=js-test
 import { defineConfig } from '@playwright/test';
 export default defineConfig({
   retries: 1,
