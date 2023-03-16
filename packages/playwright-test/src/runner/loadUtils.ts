@@ -30,12 +30,6 @@ import { buildFileSuiteForProject, filterByFocusedLine, filterByTestIds, filterO
 import { createTestGroups, filterForShard, type TestGroup } from './testGroups';
 import { dependenciesForTestFile } from '../common/compilationCache';
 
-export type ProjectWithTestGroups = {
-  project: FullProjectInternal;
-  projectSuite: Suite;
-  testGroups: TestGroup[];
-};
-
 export async function collectProjectsAndTestFiles(config: FullConfigInternal, projectsToIgnore: Set<FullProjectInternal>, additionalFileMatcher: Matcher | undefined) {
   const fsCache = new Map();
   const sourceMapCache = new Map();
@@ -120,7 +114,7 @@ export async function loadFileSuites(mode: 'out-of-process' | 'in-process', conf
   return fileSuitesByProject;
 }
 
-export async function createRootSuiteAndTestGroups(config: FullConfigInternal, fileSuitesByProject: Map<FullProjectInternal, Suite[]>, errors: TestError[], shouldFilterOnly: boolean): Promise<{ rootSuite: Suite, projectsWithTestGroups: ProjectWithTestGroups[] }> {
+export async function createRootSuite(config: FullConfigInternal, fileSuitesByProject: Map<FullProjectInternal, Suite[]>, errors: TestError[], shouldFilterOnly: boolean): Promise<Suite> {
   // Create root suite, where each child will be a project suite with cloned file suites inside it.
   const rootSuite = new Suite('', 'root');
 
@@ -150,55 +144,39 @@ export async function createRootSuiteAndTestGroups(config: FullConfigInternal, f
   if (shouldFilterOnly)
     filterOnly(rootSuite);
 
-  // Create test groups for top-level projects.
-  let projectsWithTestGroups: ProjectWithTestGroups[] = [];
-  for (const projectSuite of rootSuite.suites) {
-    const project = projectSuite.project() as FullProjectInternal;
-    const testGroups = createTestGroups(projectSuite, config.workers);
-    projectsWithTestGroups.push({ project, projectSuite, testGroups });
-  }
-
   // Shard only the top-level projects.
   if (config.shard) {
-    const allTestGroups: TestGroup[] = [];
-    for (const { testGroups } of projectsWithTestGroups)
-      allTestGroups.push(...testGroups);
-    const shardedTestGroups = filterForShard(config.shard, allTestGroups);
+    // Create test groups for top-level projects.
+    const testGroups: TestGroup[] = [];
+    for (const projectSuite of rootSuite.suites)
+      testGroups.push(...createTestGroups(projectSuite, config.workers));
 
-    const shardedTests = new Set<TestCase>();
-    for (const group of shardedTestGroups) {
+    // Shard test groups.
+    const testGroupsInThisShard = filterForShard(config.shard, testGroups);
+    const testsInThisShard = new Set<TestCase>();
+    for (const group of testGroupsInThisShard) {
       for (const test of group.tests)
-        shardedTests.add(test);
+        testsInThisShard.add(test);
     }
 
-    // Update project suites and test groups.
-    for (const p of projectsWithTestGroups) {
-      p.testGroups = p.testGroups.filter(group => shardedTestGroups.has(group));
-      filterTestsRemoveEmptySuites(p.projectSuite, test => shardedTests.has(test));
-    }
-
-    // Remove now-empty top-level projects.
-    projectsWithTestGroups = projectsWithTestGroups.filter(p => p.testGroups.length > 0);
+    // Update project suites, removing empty ones.
+    filterTestsRemoveEmptySuites(rootSuite, test => testsInThisShard.has(test));
   }
 
   // Now prepend dependency projects.
   {
     // Filtering only and sharding might have reduced the number of top-level projects.
     // Build the project closure to only include dependencies that are still needed.
-    const projectClosure = new Set(buildProjectsClosure(projectsWithTestGroups.map(p => p.project)));
+    const projectClosure = new Set(buildProjectsClosure(rootSuite.suites.map(suite => suite.project() as FullProjectInternal)));
 
     // Clone file suites for dependency projects.
     for (const [project, fileSuites] of fileSuitesByProject) {
-      if (project._internal.type === 'dependency' && projectClosure.has(project)) {
-        const projectSuite = await createProjectSuite(fileSuites, project, { cliFileFilters: [], cliTitleMatcher: undefined });
-        rootSuite._prependSuite(projectSuite);
-        const testGroups = createTestGroups(projectSuite, config.workers);
-        projectsWithTestGroups.push({ project, projectSuite, testGroups });
-      }
+      if (project._internal.type === 'dependency' && projectClosure.has(project))
+        rootSuite._prependSuite(await createProjectSuite(fileSuites, project, { cliFileFilters: [], cliTitleMatcher: undefined }));
     }
   }
 
-  return { rootSuite, projectsWithTestGroups };
+  return rootSuite;
 }
 
 async function createProjectSuite(fileSuites: Suite[], project: FullProjectInternal, options: { cliFileFilters: TestFileFilter[], cliTitleMatcher?: Matcher, testIdMatcher?: Matcher }): Promise<Suite> {
