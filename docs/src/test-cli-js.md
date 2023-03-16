@@ -67,7 +67,7 @@ Here are the most common options available in the command line.
 
 ## Reference
 
-Complete set of Playwright Test options is available in the [configuration file](./test-advanced.md). Following options can be passed to a command line and take a priority over the configuration file:
+Complete set of Playwright Test options is available in the [configuration file](./test-use-options.md). Following options can be passed to a command line and take priority over the configuration file:
 
 - `--headed`: Run tests in headed browsers. Useful for debugging.
 
@@ -92,6 +92,8 @@ Complete set of Playwright Test options is available in the [configuration file]
 - `--max-failures <N>` or `-x`: Stop after the first `N` test failures. Passing `-x` stops after the first failure.
 
 - `--output <dir>`: Directory for artifacts produced by tests, defaults to `test-results`.
+
+- `--pass-with-no-tests`:  Allows the test suite to pass when no files are found.
 
 - `--project <name>`: Only run tests from one of the specified [projects](./test-advanced.md#projects). Defaults to running all projects defined in the configuration file.
 
