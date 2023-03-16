@@ -249,7 +249,7 @@ browser = playwright.chromium.launch( # or "firefox" or "webkit".
 ```
 
 ```csharp
-var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions {
+var browser = await playwright.Chromium.LaunchAsync(new() {
     IgnoreDefaultArgs = new[] { "--mute-audio" }
 })
 ```

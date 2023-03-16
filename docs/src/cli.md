@@ -317,7 +317,7 @@ using Microsoft.Playwright;
 using var playwright = await Playwright.CreateAsync();
 var chromium = playwright.Chromium;
 // Make sure to run headed.
-var browser = await chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = false });
+var browser = await chromium.LaunchAsync(new() { Headless = false });
 
 // Setup context however you like.
 var context = await browser.NewContextAsync(); // Pass any options

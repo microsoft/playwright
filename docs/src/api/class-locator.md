@@ -939,8 +939,8 @@ row_locator
 var rowLocator = page.Locator("tr");
 // ...
 await rowLocator
-    .Filter(new LocatorFilterOptions { HasText = "text in column 1" })
-    .Filter(new LocatorFilterOptions {
+    .Filter(new() { HasText = "text in column 1" })
+    .Filter(new() {
         Has = page.GetByRole(AriaRole.Button, new() { Name = "column 2 button" } )
     })
     .ScreenshotAsync();

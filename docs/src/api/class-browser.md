@@ -67,7 +67,7 @@ using Microsoft.Playwright;
 
 using var playwright = await Playwright.CreateAsync();
 var firefox = playwright.Firefox;
-var browser = await firefox.LaunchAsync(new BrowserTypeLaunchOptions { Headless = false });
+var browser = await firefox.LaunchAsync(new() { Headless = false });
 var page = await browser.NewPageAsync();
 await page.GotoAsync("https://www.bing.com");
 await browser.CloseAsync();

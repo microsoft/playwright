@@ -52,7 +52,7 @@ context.close()
 
 ```csharp
 using var playwright = await Playwright.CreateAsync();
-var browser = await playwright.Firefox.LaunchAsync(new BrowserTypeLaunchOptions { Headless = false });
+var browser = await playwright.Firefox.LaunchAsync(new() { Headless = false });
 // Create a new incognito browser context
 var context = await browser.NewContextAsync();
 // Create a new page inside context.
@@ -280,7 +280,7 @@ browser_context.add_init_script(path="preload.js")
 ```
 
 ```csharp
-await context.AddInitScriptAsync(new BrowserContextAddInitScriptOptions { ScriptPath = "preload.js" });
+await context.AddInitScriptAsync(scriptPath: "preload.js");
 ```
 
 :::note
@@ -538,7 +538,7 @@ with sync_playwright() as playwright:
 using Microsoft.Playwright;
 
 using var playwright = await Playwright.CreateAsync();
-var browser = await playwright.Webkit.LaunchAsync(new BrowserTypeLaunchOptions { Headless = false });
+var browser = await playwright.Webkit.LaunchAsync(new() { Headless = false });
 var context = await browser.NewContextAsync();
 
 await context.ExposeBindingAsync("pageURL", source => source.Page.Url);
@@ -800,7 +800,7 @@ class BrowserContextExamples
     public static async Task Main()
     {
         using var playwright = await Playwright.CreateAsync();
-        var browser = await playwright.Webkit.LaunchAsync(new BrowserTypeLaunchOptions { Headless = false });
+        var browser = await playwright.Webkit.LaunchAsync(new() { Headless = false });
         var context = await browser.NewContextAsync();
 
         await context.ExposeFunctionAsync("sha256", (string input) =>

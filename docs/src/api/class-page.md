@@ -86,7 +86,7 @@ class PageExamples
         await using var browser = await playwright.Webkit.LaunchAsync();
         var page = await browser.NewPageAsync();
         await page.GotoAsync("https://www.theverge.com");
-        await page.ScreenshotAsync(new PageScreenshotOptions { Path = "theverge.png" });
+        await page.ScreenshotAsync(new() { Path = "theverge.png" });
     }
 }
 ```
@@ -599,7 +599,7 @@ page.add_init_script(path="./preload.js")
 ```
 
 ```csharp
-await page.AddInitScriptAsync("./preload.js");
+await page.AddInitScriptAsync(scriptPath: "./preload.js");
 ```
 
 :::note
@@ -1180,13 +1180,13 @@ await page.EvaluateAsync("() => matchMedia('screen').matches");
 await page.EvaluateAsync("() => matchMedia('print').matches");
 // → false
 
-await page.EmulateMediaAsync(new PageEmulateMediaOptions { Media = Media.Print });
+await page.EmulateMediaAsync(new() { Media = Media.Print });
 await page.EvaluateAsync("() => matchMedia('screen').matches");
 // → false
 await page.EvaluateAsync("() => matchMedia('print').matches");
 // → true
 
-await page.EmulateMediaAsync(new PageEmulateMediaOptions { Media = Media.Screen });
+await page.EmulateMediaAsync(new() { Media = Media.Screen });
 await page.EvaluateAsync("() => matchMedia('screen').matches");
 // → true
 await page.EvaluateAsync("() => matchMedia('print').matches");
@@ -1233,7 +1233,7 @@ page.evaluate("matchMedia('(prefers-color-scheme: no-preference)').matches")
 ```
 
 ```csharp
-await page.EmulateMediaAsync(new PageEmulateMediaOptions { ColorScheme = ColorScheme.Dark });
+await page.EmulateMediaAsync(new() { ColorScheme = ColorScheme.Dark });
 await page.EvaluateAsync("matchMedia('(prefers-color-scheme: dark)').matches");
 // → true
 await page.EvaluateAsync("matchMedia('(prefers-color-scheme: light)').matches");
@@ -2805,8 +2805,8 @@ page.pdf(path="page.pdf")
 
 ```csharp
 // Generates a PDF with 'screen' media type
-await page.EmulateMediaAsync(new PageEmulateMediaOptions { Media = Media.Screen });
-await page.PdfAsync(new PagePdfOptions { Path = "page.pdf" });
+await page.EmulateMediaAsync(new() { Media = Media.Screen });
+await page.PdfAsync(new() { Path = "page.pdf" });
 ```
 
 The [`option: width`], [`option: height`], and [`option: margin`] options accept values labeled with units. Unlabeled
@@ -3037,11 +3037,11 @@ browser.close()
 var page = await browser.NewPageAsync();
 await page.GotoAsync("https://keycode.info");
 await page.PressAsync("body", "A");
-await page.ScreenshotAsync(new PageScreenshotOptions { Path = "A.png" });
+await page.ScreenshotAsync(new() { Path = "A.png" });
 await page.PressAsync("body", "ArrowLeft");
-await page.ScreenshotAsync(new PageScreenshotOptions { Path = "ArrowLeft.png" });
+await page.ScreenshotAsync(new() { Path = "ArrowLeft.png" });
 await page.PressAsync("body", "Shift+O");
-await page.ScreenshotAsync(new PageScreenshotOptions { Path = "O.png" });
+await page.ScreenshotAsync(new() { Path = "O.png" });
 ```
 
 ### param: Page.press.selector = %%-input-selector-%%
@@ -3259,7 +3259,7 @@ page.route("/api/**", handle_route)
 await page.RouteAsync("/api/**", async r =>
 {
   if (r.Request.PostData.Contains("my-string"))
-      await r.FulfillAsync(new RouteFulfillOptions { Body = "mocked-data" });
+      await r.FulfillAsync(new() { Body = "mocked-data" });
   else
       await r.ContinueAsync();
 });

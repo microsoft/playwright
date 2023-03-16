@@ -539,7 +539,7 @@ page.route("**/*", lambda route: route.continue_(method="POST"))
 await page.RouteAsync("**/*", async route => {
     var headers = new Dictionary<string, string>(route.Request.Headers.ToDictionary(x => x.Key, x => x.Value));
     headers.Remove("X-Secret");
-    await route.ContinueAsync(new RouteContinueOptions { Headers = headers });
+    await route.ContinueAsync(new() { Headers = headers });
 });
 
 // Continue requests as POST.
