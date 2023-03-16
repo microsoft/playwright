@@ -1059,6 +1059,16 @@ interface TestConfig {
    *
    * **Usage**
    *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   testDir: './tests',
+   *   snapshotPathTemplate: '{testDir}/__screenshots__/{testFilePath}/{arg}{ext}',
+   * });
+   * ```
+   *
    * **Details**
    *
    * The value might include some "tokens" that will be replaced with actual values during test execution.
@@ -1073,6 +1083,17 @@ interface TestConfig {
    * ```
    *
    * And the following `page-click.spec.ts` that uses `toHaveScreenshot()` call:
+   *
+   * ```js
+   * // page-click.spec.ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.describe('suite', () => {
+   *   test('test should work', async ({ page }) => {
+   *     await expect(page).toHaveScreenshot(['foo', 'bar', 'baz.png']);
+   *   });
+   * });
+   * ```
    *
    * The list of supported tokens:
    * - `{testDir}` - Project's
@@ -1103,6 +1124,20 @@ interface TestConfig {
    * Each token can be preceded with a single character that will be used **only if** this token has non-empty value.
    *
    * Consider the following config:
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   snapshotPathTemplate: '__screenshots__{/projectName}/{testFilePath}/{arg}{ext}',
+   *   testMatch: 'example.spec.ts',
+   *   projects: [
+   *     { use: { browserName: 'firefox' } },
+   *     { name: 'chromium', use: { browserName: 'chromium' } },
+   *   ],
+   * });
+   * ```
    *
    * In this config:
    * 1. First project **does not** have a name, so its snapshots will be stored in
@@ -5739,6 +5774,16 @@ interface TestProject {
    *
    * **Usage**
    *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   testDir: './tests',
+   *   snapshotPathTemplate: '{testDir}/__screenshots__/{testFilePath}/{arg}{ext}',
+   * });
+   * ```
+   *
    * **Details**
    *
    * The value might include some "tokens" that will be replaced with actual values during test execution.
@@ -5753,6 +5798,17 @@ interface TestProject {
    * ```
    *
    * And the following `page-click.spec.ts` that uses `toHaveScreenshot()` call:
+   *
+   * ```js
+   * // page-click.spec.ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.describe('suite', () => {
+   *   test('test should work', async ({ page }) => {
+   *     await expect(page).toHaveScreenshot(['foo', 'bar', 'baz.png']);
+   *   });
+   * });
+   * ```
    *
    * The list of supported tokens:
    * - `{testDir}` - Project's
@@ -5783,6 +5839,20 @@ interface TestProject {
    * Each token can be preceded with a single character that will be used **only if** this token has non-empty value.
    *
    * Consider the following config:
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   snapshotPathTemplate: '__screenshots__{/projectName}/{testFilePath}/{arg}{ext}',
+   *   testMatch: 'example.spec.ts',
+   *   projects: [
+   *     { use: { browserName: 'firefox' } },
+   *     { name: 'chromium', use: { browserName: 'chromium' } },
+   *   ],
+   * });
+   * ```
    *
    * In this config:
    * 1. First project **does not** have a name, so its snapshots will be stored in
