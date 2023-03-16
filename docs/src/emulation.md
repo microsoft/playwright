@@ -98,8 +98,25 @@ class Program
 
 The viewport is included in the device but you can override it for some tests with [`method: Page.setViewportSize`].
 
+```js tab=js-test
+// playwright.config.ts/js
+import { defineConfig } from '@playwright/test';
+export default defineConfig({
+  use: {
+    // Viewport used for all pages in the context.
+    viewport: { width: 1280, height: 720 },
+  },
+});
+```
 
+```js tab=js-library
+// Create context with given viewport
+const context = await browser.newContext({
+  viewport: { width: 1280, height: 1024 }
+});
+```
 
+Test file:
 
 ```js tab=js-test
 // example.spec.ts/js
@@ -129,7 +146,8 @@ const context = await browser.newContext({
   deviceScaleFactor: 2,
 });
 ```
-The same works inside a describe block.
+
+The same works inside a test file.
 
 ```js tab=js-test
 // example.spec.ts/js
@@ -220,6 +238,21 @@ await using var context = await browser.NewContextAsync(new()
 ## Locale & Timezone
 
 Emulate the user Locale and Timezone which can be set globally for all tests in the config and then overridden for particular tests.
+
+```js
+// playwright.config.ts/js
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  use: {
+    // Emulates the user locale.
+    locale: 'en-GB',
+    
+    // Emulates the user timezone.
+    timezoneId: 'Europe/Paris',
+  },
+});
+```
 
 ```js tab=js-test
 // example.spec.ts/js
@@ -374,6 +407,19 @@ await context.ClearPermissionsAsync();
 
 Grant `"geolocation"` permissions and set geolocation to a specific area.
 
+```js
+// playwright.config.ts/js
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  use: {
+    // Context geolocation
+    geolocation: { longitude: 12.492507, latitude: 41.889938 },
+    permissions: ['geolocation'],
+  },
+});
+```
+
 ```js tab=js-test
 // example.spec.ts/js
 import { test, expect } from '@playwright/test';
@@ -467,6 +513,16 @@ await context.SetGeolocationAsync(new Geolocation() { Longitude = 48.858455, Lat
 ## Color Scheme and Media
 
 Emulate the users `"colorScheme"`. Supported values are 'light', 'dark', 'no-preference'. You can also emulate the media type with [`method: Page.emulateMedia`].
+
+```js
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  use: {
+    colorScheme: 'dark',
+  },
+});
+```
 
 ```js tab=js-test
 // example.spec.ts/js
