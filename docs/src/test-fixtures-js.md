@@ -9,7 +9,7 @@ Playwright Test is based on the concept of test fixtures. Test fixtures are used
 
 You have already used test fixtures in your first test.
 
-```ts
+```js
 import { test, expect } from '@playwright/test';
 
 test('basic test', async ({ page }) => {
@@ -246,7 +246,7 @@ test('basic test', async ({ todoPage, page }) => {
 
 In addition to creating your own fixtures, you can also override existing fixtures to fit your needs. Consider the following example which overrides the `page` fixture by automatically navigating to some `baseURL`:
 
-```ts
+```js
 import { test as base } from '@playwright/test';
 
 export const test = base.extend({
@@ -259,7 +259,7 @@ export const test = base.extend({
 
 Notice that in this example, the `page` fixture is able to depend on other built-in fixtures such as [`property: TestOptions.baseURL`]. We can now configure `baseURL` in the configuration file, or locally in the test file with [`method: Test.use`].
 
-```ts
+```js
 // example.spec.ts
 
 test.use({ baseURL: 'https://playwright.dev' });
@@ -267,7 +267,7 @@ test.use({ baseURL: 'https://playwright.dev' });
 
 Fixtures can also be overridden where the base fixture is completely replaced with something different. For example, we could override the [`property: TestOptions.storageState`] fixture to provide our own data.
 
-```ts
+```js
 import { test as base } from '@playwright/test';
 
 export const test = base.extend({

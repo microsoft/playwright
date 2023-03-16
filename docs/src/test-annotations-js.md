@@ -15,7 +15,7 @@ Annotations can be used on a single test or a group of tests. Annotations can be
 
 You can focus some tests. When there are focused tests, only these tests run.
 
-```ts
+```js
 test.only('focus this test', async ({ page }) => {
   // Run only focused tests in the entire project.
 });
@@ -25,7 +25,7 @@ test.only('focus this test', async ({ page }) => {
 
 Mark a test as skipped.
 
-```ts
+```js
 test.skip('skip this test', async ({ page }) => {
   // This test is not run
 });
@@ -35,7 +35,7 @@ test.skip('skip this test', async ({ page }) => {
 
 You can skip certain test based on the condition.
 
-```ts
+```js
 test('skip this test', async ({ page, browserName }) => {
   test.skip(browserName === 'firefox', 'Still working on it');
 });
@@ -45,7 +45,7 @@ test('skip this test', async ({ page, browserName }) => {
 
 You can group tests to give them a logical name or to scope before/after hooks to the group.
 
-```ts
+```js
 import { test, expect } from '@playwright/test';
 
 test.describe('two tests', () => {
@@ -63,7 +63,7 @@ test.describe('two tests', () => {
 
 Sometimes you want to tag your tests as `@fast` or `@slow` and only run the tests that have the certain tag. We recommend that you use the `--grep` and `--grep-invert` command line flags for that:
 
-```ts
+```js
 import { test, expect } from '@playwright/test';
 
 test('Test login page @fast', async ({ page }) => {
@@ -91,7 +91,7 @@ npx playwright test --grep-invert @slow
 
 For example, you can run a group of tests just in Chromium by passing a callback.
 
-```ts
+```js
 // example.spec.ts
 
 test.describe('chromium only', () => {
@@ -115,7 +115,7 @@ test.describe('chromium only', () => {
 
 To avoid running `beforeEach` hooks, you can put annotations in the hook itself.
 
-```ts
+```js
 // example.spec.ts
 
 test.beforeEach(async ({ page, isMobile }) => {
@@ -135,7 +135,7 @@ test('user profile', async ({ page }) => {
 It's also possible to add custom metadata in the form of annotations to your tests. Annotations are key/value pairs accessible via [`test.info().annotations`](./api/class-testinfo#test-info-annotations). Many reporters show annotations, for example `'html'`.
 
 
-```ts
+```js
 // example.spec.ts
 
 test('user profile', async ({ page }) => {

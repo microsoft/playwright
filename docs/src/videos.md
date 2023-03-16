@@ -61,7 +61,7 @@ For multi-page scenarios, you can access the video file associated with the page
 [`method: Page.video`].
 
 
-```ts
+```js
 const path = await page.video().path();
 ```
 

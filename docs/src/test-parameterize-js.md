@@ -7,7 +7,7 @@ You can either parameterize tests on a test level or on a project level.
 
 ## Parameterized Tests
 
-```ts
+```js
 // example.spec.ts
 const people = ['Alice', 'Bob'];
 for (const name of people) {
@@ -52,7 +52,7 @@ export const test = base.extend<TestOptions>({
 
 We can use this option in the test, similarly to [fixtures](./test-fixtures.md).
 
-```ts
+```js
 // example.spec.ts
 import { test } from './my-test';
 
@@ -160,7 +160,7 @@ You can use environment variables to configure tests from the command line.
 
 For example, consider the following test file that needs a username and a password. It is usually a good idea not to store your secrets in the source code, so we'll need a way to pass secrets from outside.
 
-```ts
+```js
 // example.spec.ts
 test(`example test`, async ({ page }) => {
   // ...
@@ -189,7 +189,7 @@ npx playwright test
 
 Similarly, configuration file can also read environment variables passed through the command line.
 
-```ts
+```js
 // playwright.config.ts
 import { defineConfig } from '@playwright/test';
 
@@ -220,7 +220,7 @@ npx playwright test
 
 To make environment variables easier to manage, consider something like `.env` files. Here is an example that uses [`dotenv`](https://www.npmjs.com/package/dotenv) package to read environment variables directly in the configuration file.
 
-```ts
+```js
 // playwright.config.ts
 import { defineConfig } from '@playwright/test';
 import dotenv from 'dotenv';
@@ -270,7 +270,7 @@ See for example this CSV file, in our example `input.csv`:
 
 Based on this we'll generate some tests by using the [csv-parse](https://www.npmjs.com/package/csv-parse) library from NPM:
 
-```ts
+```js
 // foo.spec.ts
 import fs from 'fs';
 import path from 'path';

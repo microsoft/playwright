@@ -11,7 +11,7 @@ Note that each [test project](#projects) can provide its own [options][TestProje
 
 Here is an example that defines a common timeout and two projects. The "Smoke" project runs a small subset of tests without retries, and "Default" project runs all other tests with retries.
 
-```ts
+```js
 // playwright.config.ts
 import { defineConfig } from '@playwright/test';
 export default defineConfig({
@@ -125,7 +125,7 @@ The `port` (but not the `url`) gets passed over to Playwright as a [`property: T
 It is also recommended to specify [`property: TestOptions.baseURL`] in the config, so that tests could use relative urls.
 :::
 
-```ts
+```js
 // playwright.config.ts
 import { defineConfig } from '@playwright/test';
 export default defineConfig({
@@ -143,7 +143,7 @@ export default defineConfig({
 
 Now you can use a relative path when navigating the page:
 
-```ts
+```js
 // test.spec.ts
 import { test } from '@playwright/test';
 test('test', async ({ page }) => {
@@ -201,7 +201,7 @@ export default globalSetup;
 
 Specify `globalSetup`, `baseURL` and `storageState` in the configuration file.
 
-```ts
+```js
 // playwright.config.ts
 import { defineConfig } from '@playwright/test';
 export default defineConfig({
@@ -215,7 +215,7 @@ export default defineConfig({
 
 Tests start already authenticated because we specify `storageState` that was populated by global setup.
 
-```ts
+```js
 import { test } from '@playwright/test';
 
 test('test', async ({ page }) => {
@@ -250,7 +250,7 @@ export default globalSetup;
 
 Tests have access to the `process.env` properties set in the global setup.
 
-```ts
+```js
 import { test } from '@playwright/test';
 
 test('test', async ({ page }) => {
@@ -339,7 +339,7 @@ Playwright Test supports running multiple test projects at the same time. This i
 
 Here is an example that runs the same tests in different browsers:
 
-```ts
+```js
 // playwright.config.ts
 import { defineConfig, devices } from '@playwright/test';
 
@@ -376,7 +376,7 @@ Each project can be configured separately, and run different set of tests with d
 
 Here is an example that runs projects with different tests and configurations. The "Smoke" project runs a small subset of tests without retries, and "Default" project runs all other tests with retries.
 
-```ts
+```js
 // playwright.config.ts
 import { defineConfig } from '@playwright/test';
 export default defineConfig({
@@ -519,7 +519,7 @@ export default defineConfig({});
 
 Now we can use `toBeWithinRange` in the test.
 
-```ts
+```js
 // example.spec.ts
 import { test, expect } from '@playwright/test';
 

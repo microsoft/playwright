@@ -29,7 +29,7 @@ The following example demonstrates how to use Playwright to test issues creation
 
 GitHub API requires authorization, so we'll configure the token once for all tests. While at it, we'll also set the `baseURL` to simplify the tests. You can either put them in the configuration file, or in the test file with `test.use()`.
 
-```ts
+```js
 // playwright.config.ts
 import { defineConfig } from '@playwright/test';
 export default defineConfig({
@@ -160,7 +160,7 @@ While running tests inside browsers you may want to make calls to the HTTP API o
 The following test creates a new issue via API and then navigates to the list of all issues in the
 project to check that it appears at the top of the list.
 
-```ts
+```js
 import { test, expect } from '@playwright/test';
 
 const REPO = 'test-repo-1';
@@ -207,7 +207,7 @@ test('last created issue should be first in the list', async ({ page }) => {
 The following test creates a new issue via user interface in the browser and then uses checks if
 it was created via API:
 
-```ts
+```js
 import { test, expect } from '@playwright/test';
 
 const REPO = 'test-repo-1';

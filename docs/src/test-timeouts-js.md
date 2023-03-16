@@ -31,7 +31,7 @@ The same timeout value also applies to `beforeAll` and `afterAll` hooks, but the
 
 ### Set test timeout in the config
 
-```ts
+```js
 // playwright.config.ts
 import { defineConfig } from '@playwright/test';
 
@@ -44,7 +44,7 @@ API reference: [`property: TestConfig.timeout`].
 
 ### Set timeout for a single test
 
-```ts
+```js
 import { test, expect } from '@playwright/test';
 
 test('slow test', async ({ page }) => {
@@ -62,7 +62,7 @@ API reference: [`method: Test.setTimeout`] and [`method: Test.slow#1`].
 
 ### Change timeout from a `beforeEach` hook
 
-```ts
+```js
 import { test, expect } from '@playwright/test';
 
 test.beforeEach(async ({ page }, testInfo) => {
@@ -77,7 +77,7 @@ API reference: [`method: TestInfo.setTimeout`].
 
 `beforeAll` and `afterAll` hooks have a separate timeout, by default equal to test timeout. You can change it separately for each hook by calling [`method: TestInfo.setTimeout`] inside the hook.
 
-```ts
+```js
 import { test, expect } from '@playwright/test';
 
 test.beforeAll(async () => {
@@ -106,7 +106,7 @@ Call log:
 
 ### Set expect timeout in the config
 
-```ts
+```js
 // playwright.config.ts
 import { defineConfig } from '@playwright/test';
 
@@ -121,7 +121,7 @@ API reference: [`property: TestConfig.expect`].
 
 ### Set timeout for a single assertion
 
-```ts
+```js
 import { test, expect } from '@playwright/test';
 
 test('basic test', async ({ page }) => {
@@ -146,7 +146,7 @@ Playwright also allows to set a separate timeout for navigation actions like `pa
 
 ### Set action and navigation timeouts in the config
 
-```ts
+```js
 // playwright.config.ts
 import { defineConfig } from '@playwright/test';
 
@@ -162,7 +162,7 @@ API reference: [`property: TestOptions.actionTimeout`] and [`property: TestOptio
 
 ### Set timeout for a single action
 
-```ts
+```js
 import { test, expect } from '@playwright/test';
 
 test('basic test', async ({ page }) => {
@@ -185,7 +185,7 @@ Running 1000 tests using 10 workers
 
 You can set global timeout in the config.
 
-```ts
+```js
 // playwright.config.ts
 import { defineConfig } from '@playwright/test';
 

@@ -204,7 +204,7 @@ export default defineConfig({});
 
 Now we can use `toBeWithinRange` in the test.
 
-```ts
+```js
 // example.spec.ts
 import { test, expect } from '@playwright/test';
 

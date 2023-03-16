@@ -11,7 +11,7 @@ Playwright Test runs tests in worker processes. These processes are OS processes
 
 Consider the following snippet:
 
-```ts
+```js
 import { test } from '@playwright/test';
 
 test.describe('suite', () => {
@@ -90,7 +90,7 @@ Running 3 tests using 1 worker
 
 You can detect retries at runtime with [`property: TestInfo.retry`], which is accessible to any test, hook or fixture. Here is an example that clears some server-side state before a retry.
 
-```ts
+```js
 import { test, expect } from '@playwright/test';
 
 test('my test', async ({ page }, testInfo) => {
@@ -102,7 +102,7 @@ test('my test', async ({ page }, testInfo) => {
 
 You can specify retries for a specific group of tests or a single file with [`method: Test.describe.configure`].
 
-```ts
+```js
 import { test, expect } from '@playwright/test';
 
 test.describe(() => {
@@ -125,7 +125,7 @@ Use [`method: Test.describe.serial`] to group dependent tests to ensure they wil
 
 Consider the following snippet that uses `test.describe.serial`:
 
-```ts
+```js
 import { test } from '@playwright/test';
 
 test.describe.configure({ mode: 'serial' });

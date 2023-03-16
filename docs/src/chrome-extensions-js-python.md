@@ -101,7 +101,7 @@ To have the extension loaded when running tests you can use a test fixture to se
 
 First, add fixtures that will load the extension:
 
-```ts
+```js
 // fixtures.ts
 import { test as base, expect, chromium, type BrowserContext } from '@playwright/test';
 import path from 'path';
@@ -184,7 +184,7 @@ def extension_id(context) -> Generator[str, None, None]:
 
 Then use these fixtures in a test:
 
-```ts
+```js
 import { test, expect } from './fixtures';
 
 test('example test', async ({ page }) => {
@@ -216,7 +216,7 @@ def test_popup_page(page: Page, extension_id: str) -> None:
 ## Headless mode
 
 By default, Chrome's headless mode in Playwright does not support Chrome extensions. To overcome this limitation, you can run Chrome's persistent context with a new headless mode by using the following code:
-```ts
+```js
 // fixtures.ts
 // ...
 

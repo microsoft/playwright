@@ -27,7 +27,7 @@ If you're using (or are interested in using this this feature), please comment o
 
 You can use [`method: BrowserContext.serviceWorkers`] to list the Service [Worker]s, or specifically watch for the Service [Worker] if you anticipate a page will trigger its [registration](https://developer.mozilla.org/en-US/docs/Web/API/ServiceWorkerContainer/register):
 
-```ts
+```js
 const serviceWorkerPromise = context.waitForEvent('serviceworker');
 await page.goto('/example-with-a-service-worker.html');
 const serviceworker = await serviceWorkerPromise;
@@ -61,7 +61,7 @@ Worker serviceWorker = page.waitForRequest(() -> {
 
 There are more idiomatic methods of waiting for a Service Worker to be activated, but the following is an implementation agnostic method:
 
-```ts
+```js
 await page.evaluate(async () => {
   const registration = await window.navigator.serviceWorker.getRegistration();
   if (registration.active?.state === 'activated')
@@ -242,7 +242,7 @@ It's important to note that [`cache.add`](https://developer.mozilla.org/en-US/do
 
 Once the Service Worker is activated and handling FetchEvents, if the page makes the following requests:
 
-```ts
+```js
 await page.evaluate(() => fetch('/addressbook.json'));
 await page.evaluate(() => fetch('/foo'));
 await page.evaluate(() => fetch('/tracker.js'));
@@ -299,7 +299,7 @@ It's important to note:
 
 ## Routing Service Worker Requests Only
 
-```ts
+```js
 await context.route('**', async route => {
   if (route.request().serviceWorker()) {
     // NB: calling route.request().frame() here would THROW
