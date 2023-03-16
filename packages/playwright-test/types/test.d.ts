@@ -1800,19 +1800,8 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
 export type TestStatus = 'passed' | 'failed' | 'timedOut' | 'skipped' | 'interrupted';
 
 /**
- * `WorkerInfo` contains information about the worker that is running tests. It is available to
- * [test.beforeAll(hookFunction)](https://playwright.dev/docs/api/class-test#test-before-all) and
- * [test.afterAll(hookFunction)](https://playwright.dev/docs/api/class-test#test-after-all) hooks and worker-scoped
- * fixtures.
- *
- * ```js
- * import { test, expect } from '@playwright/test';
- *
- * test.beforeAll(async ({ browserName }, workerInfo) => {
- *   console.log(`Running ${browserName} in worker #${workerInfo.workerIndex}`);
- * });
- * ```
- *
+ * `WorkerInfo` contains information about the worker that is running tests and is available to worker-scoped
+ * fixtures. `WorkerInfo` is a subset of [TestInfo] that is available in many other places.
  */
 export interface WorkerInfo {
   /**
@@ -1844,9 +1833,11 @@ export interface WorkerInfo {
 }
 
 /**
- * `TestInfo` contains information about currently running test. It is available to any test function,
- * [test.beforeEach(hookFunction)](https://playwright.dev/docs/api/class-test#test-before-each) and
- * [test.afterEach(hookFunction)](https://playwright.dev/docs/api/class-test#test-after-each) hooks and test-scoped
+ * `TestInfo` contains information about currently running test. It is available to test functions,
+ * [test.beforeEach(hookFunction)](https://playwright.dev/docs/api/class-test#test-before-each),
+ * [test.afterEach(hookFunction)](https://playwright.dev/docs/api/class-test#test-after-each),
+ * [test.beforeAll(hookFunction)](https://playwright.dev/docs/api/class-test#test-before-all) and
+ * [test.afterAll(hookFunction)](https://playwright.dev/docs/api/class-test#test-after-all) hooks, and test-scoped
  * fixtures. `TestInfo` provides utilities to control test execution: attach files, update test timeout, determine
  * which test is currently running and whether it was retried, etc.
  *
