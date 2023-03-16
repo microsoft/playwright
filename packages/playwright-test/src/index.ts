@@ -239,7 +239,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
 
   _snapshotSuffix: [process.platform, { scope: 'worker' }],
 
-  _setupContextOptionsAndArtifacts: [async ({ playwright, _snapshotSuffix, _combinedContextOptions, _reuseContext, _artifactsDir, trace, screenshot, actionTimeout, navigationTimeout, testIdAttribute }, use, testInfo) => {
+  _setupContextOptionsAndArtifacts: [async ({ playwright, _snapshotSuffix, _combinedContextOptions, _artifactsDir, trace, screenshot, actionTimeout, navigationTimeout, testIdAttribute }, use, testInfo) => {
     if (testIdAttribute)
       playwrightLibrary.selectors.setTestIdAttribute(testIdAttribute);
     testInfo.snapshotSuffix = _snapshotSuffix;
@@ -376,11 +376,15 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       (browserType as any)._onDidCreateContext = onDidCreateBrowserContext;
       (browserType as any)._onWillCloseContext = onWillCloseContext;
       (browserType as any)._defaultContextOptions = _combinedContextOptions;
+      const promises: Promise<void>[] = [];
       const existingContexts = Array.from((browserType as any)._contexts) as BrowserContext[];
-      if (_reuseContext)
-        existingContexts.forEach(c => reusedContexts.add(c));
-      else
-        await Promise.all(existingContexts.map(onDidCreateBrowserContext));
+      for (const context of existingContexts) {
+        if ((context as any)[kIsReusedContext])
+          reusedContexts.add(context);
+        else
+          promises.push(onDidCreateBrowserContext(context));
+      }
+      await Promise.all(promises);
     }
     {
       (playwright.request as any)._onDidCreateContext = onDidCreateRequestContext;
@@ -540,6 +544,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
 
     const defaultContextOptions = (playwright.chromium as any)._defaultContextOptions as BrowserContextOptions;
     const context = await (browser as any)._newContextForReuse(defaultContextOptions);
+    (context as any)[kIsReusedContext] = true;
     await use(context);
   },
 
@@ -631,6 +636,7 @@ function normalizeScreenshotMode(screenshot: PlaywrightWorkerOptions['screenshot
 }
 
 const kTracingStarted = Symbol('kTracingStarted');
+const kIsReusedContext = Symbol('kReusedContext');
 
 function connectOptionsFromEnv() {
   const wsEndpoint = process.env.PW_TEST_CONNECT_WS_ENDPOINT;
