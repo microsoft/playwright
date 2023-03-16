@@ -19,11 +19,17 @@ import type { ResourceSnapshot } from '@trace/snapshot';
 import type * as trace from '@trace/trace';
 import type { ActionTraceEvent, EventTraceEvent } from '@trace/trace';
 import type { ContextEntry, PageEntry } from '../entries';
+import type { SerializedError, StackFrame } from '@protocol/channels';
 
 const contextSymbol = Symbol('context');
 const nextSymbol = Symbol('next');
 const eventsSymbol = Symbol('events');
 const resourcesSymbol = Symbol('resources');
+
+export type SourceModel = {
+  errors: { error: SerializedError['error'], location: StackFrame }[];
+  content: string | undefined;
+};
 
 export class MultiTraceModel {
   readonly startTime: number;
@@ -39,6 +45,8 @@ export class MultiTraceModel {
   readonly hasSource: boolean;
   readonly sdkLanguage: Language | undefined;
   readonly testIdAttributeName: string | undefined;
+  readonly sources: Map<string, SourceModel>;
+
 
   constructor(contexts: ContextEntry[]) {
     contexts.forEach(contextEntry => indexModel(contextEntry));
@@ -60,6 +68,7 @@ export class MultiTraceModel {
     this.actions.sort((a1, a2) => a1.startTime - a2.startTime);
     this.events.sort((a1, a2) => a1.time - a2.time);
     this.actions = dedupeActions(this.actions);
+    this.sources = collectSources(this.actions);
   }
 }
 
@@ -158,5 +167,21 @@ export function resourcesForAction(action: ActionTraceEvent): ResourceSnapshot[]
     return typeof resource._monotonicTime === 'number' && resource._monotonicTime > action.startTime && (!nextAction || resource._monotonicTime < nextAction.startTime);
   });
   (action as any)[resourcesSymbol] = result;
+  return result;
+}
+
+function collectSources(actions: trace.ActionTraceEvent[]): Map<string, SourceModel> {
+  const result = new Map<string, SourceModel>();
+  for (const action of actions) {
+    for (const frame of action.stack || []) {
+      let source = result.get(frame.file);
+      if (!source) {
+        source = { errors: [], content: undefined };
+        result.set(frame.file, source);
+      }
+    }
+    if (action.error && action.stack?.[0])
+      result.get(action.stack[0].file)!.errors.push({ error: action.error, location: action.stack?.[0] });
+  }
   return result;
 }
