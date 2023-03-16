@@ -11,18 +11,7 @@ Playwright Test runs tests in worker processes. These processes are OS processes
 
 Consider the following snippet:
 
-```js tab=js-js
-const { test } = require('@playwright/test');
-
-test.describe('suite', () => {
-  test.beforeAll(async () => { /* ... */ });
-  test('first good', async ({ page }) => { /* ... */ });
-  test('second flaky', async ({ page }) => { /* ... */ });
-  test('third good', async ({ page }) => { /* ... */ });
-});
-```
-
-```js tab=js-ts
+```js
 import { test } from '@playwright/test';
 
 test.describe('suite', () => {
@@ -101,17 +90,7 @@ Running 3 tests using 1 worker
 
 You can detect retries at runtime with [`property: TestInfo.retry`], which is accessible to any test, hook or fixture. Here is an example that clears some server-side state before a retry.
 
-```js tab=js-js
-const { test, expect } = require('@playwright/test');
-
-test('my test', async ({ page }, testInfo) => {
-  if (testInfo.retry)
-    await cleanSomeCachesOnTheServer();
-  // ...
-});
-```
-
-```js tab=js-ts
+```js
 import { test, expect } from '@playwright/test';
 
 test('my test', async ({ page }, testInfo) => {
@@ -123,24 +102,7 @@ test('my test', async ({ page }, testInfo) => {
 
 You can specify retries for a specific group of tests or a single file with [`method: Test.describe.configure`].
 
-```js tab=js-js
-const { test, expect } = require('@playwright/test');
-
-test.describe(() => {
-  // All tests in this describe group will get 2 retry attempts.
-  test.describe.configure({ retries: 2 });
-
-  test('test 1', async ({ page }) => {
-    // ...
-  });
-
-  test('test 2', async ({ page }) => {
-    // ...
-  });
-});
-```
-
-```js tab=js-ts
+```js
 import { test, expect } from '@playwright/test';
 
 test.describe(() => {
@@ -163,18 +125,7 @@ Use [`method: Test.describe.serial`] to group dependent tests to ensure they wil
 
 Consider the following snippet that uses `test.describe.serial`:
 
-```js tab=js-js
-const { test } = require('@playwright/test');
-
-test.describe.configure({ mode: 'serial' });
-
-test.beforeAll(async () => { /* ... */ });
-test('first good', async ({ page }) => { /* ... */ });
-test('second flaky', async ({ page }) => { /* ... */ });
-test('third good', async ({ page }) => { /* ... */ });
-```
-
-```js tab=js-ts
+```js
 import { test } from '@playwright/test';
 
 test.describe.configure({ mode: 'serial' });

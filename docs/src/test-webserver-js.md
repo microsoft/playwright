@@ -77,7 +77,7 @@ Now you can use a relative path when navigating the page:
 
 ```js
 // test.spec.js
-const { test } = require('@playwright/test');
+import { test } from '@playwright/test';
 
 test('test', async ({ page }) => {
   // This will navigate to http://127.0.0.1:3000/login

@@ -31,18 +31,7 @@ The same timeout value also applies to `beforeAll` and `afterAll` hooks, but the
 
 ### Set test timeout in the config
 
-```js tab=js-js
-// playwright.config.js
-// @ts-check
-
-const { defineConfig } = require('@playwright/test');
-
-module.exports = defineConfig({
-  timeout: 5 * 60 * 1000,
-});
-```
-
-```js tab=js-ts
+```js
 // playwright.config.ts
 import { defineConfig } from '@playwright/test';
 
@@ -55,21 +44,7 @@ API reference: [`property: TestConfig.timeout`].
 
 ### Set timeout for a single test
 
-```js tab=js-js
-const { test, expect } = require('@playwright/test');
-
-test('slow test', async ({ page }) => {
-  test.slow(); // Easy way to triple the default timeout
-  // ...
-});
-
-test('very slow test', async ({ page }) => {
-  test.setTimeout(120000);
-  // ...
-});
-```
-
-```js tab=js-ts
+```js
 import { test, expect } from '@playwright/test';
 
 test('slow test', async ({ page }) => {
@@ -87,16 +62,7 @@ API reference: [`method: Test.setTimeout`] and [`method: Test.slow#1`].
 
 ### Change timeout from a `beforeEach` hook
 
-```js tab=js-js
-const { test, expect } = require('@playwright/test');
-
-test.beforeEach(async ({ page }, testInfo) => {
-  // Extend timeout for all tests running this hook by 30 seconds.
-  testInfo.setTimeout(testInfo.timeout + 30000);
-});
-```
-
-```js tab=js-ts
+```js
 import { test, expect } from '@playwright/test';
 
 test.beforeEach(async ({ page }, testInfo) => {
@@ -111,16 +77,7 @@ API reference: [`method: TestInfo.setTimeout`].
 
 `beforeAll` and `afterAll` hooks have a separate timeout, by default equal to test timeout. You can change it separately for each hook by calling [`method: TestInfo.setTimeout`] inside the hook.
 
-```js tab=js-js
-const { test, expect } = require('@playwright/test');
-
-test.beforeAll(async () => {
-  // Set timeout for this hook.
-  test.setTimeout(60000);
-});
-```
-
-```js tab=js-ts
+```js
 import { test, expect } from '@playwright/test';
 
 test.beforeAll(async () => {
@@ -149,20 +106,7 @@ Call log:
 
 ### Set expect timeout in the config
 
-```js tab=js-js
-// playwright.config.js
-// @ts-check
-
-const { defineConfig } = require('@playwright/test');
-
-module.exports = defineConfig({
-  expect: {
-    timeout: 10 * 1000,
-  },
-});
-```
-
-```js tab=js-ts
+```js
 // playwright.config.ts
 import { defineConfig } from '@playwright/test';
 
@@ -177,15 +121,7 @@ API reference: [`property: TestConfig.expect`].
 
 ### Set timeout for a single assertion
 
-```js tab=js-js
-const { test, expect } = require('@playwright/test');
-
-test('basic test', async ({ page }) => {
-  await expect(page.getByRole('button')).toHaveText('Sign in', { timeout: 10000 });
-});
-```
-
-```js tab=js-ts
+```js
 import { test, expect } from '@playwright/test';
 
 test('basic test', async ({ page }) => {
@@ -210,21 +146,7 @@ Playwright also allows to set a separate timeout for navigation actions like `pa
 
 ### Set action and navigation timeouts in the config
 
-```js tab=js-js
-// playwright.config.js
-// @ts-check
-
-const { defineConfig } = require('@playwright/test');
-
-module.exports = defineConfig({
-  use: {
-    actionTimeout: 10 * 1000,
-    navigationTimeout: 30 * 1000,
-  },
-});
-```
-
-```js tab=js-ts
+```js
 // playwright.config.ts
 import { defineConfig } from '@playwright/test';
 
@@ -240,16 +162,7 @@ API reference: [`property: TestOptions.actionTimeout`] and [`property: TestOptio
 
 ### Set timeout for a single action
 
-```js tab=js-js
-const { test, expect } = require('@playwright/test');
-
-test('basic test', async ({ page }) => {
-  await page.goto('https://playwright.dev', { timeout: 30000 });
-  await page.getByText('Get Started').click({ timeout: 10000 });
-});
-```
-
-```js tab=js-ts
+```js
 import { test, expect } from '@playwright/test';
 
 test('basic test', async ({ page }) => {
@@ -272,18 +185,7 @@ Running 1000 tests using 10 workers
 
 You can set global timeout in the config.
 
-```js tab=js-js
-// playwright.config.js
-// @ts-check
-
-const { defineConfig } = require('@playwright/test');
-
-module.exports = defineConfig({
-  globalTimeout: 60 * 60 * 1000,
-});
-```
-
-```js tab=js-ts
+```js
 // playwright.config.ts
 import { defineConfig } from '@playwright/test';
 

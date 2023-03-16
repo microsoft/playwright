@@ -11,32 +11,10 @@ Note that each [test project](#projects) can provide its own [options][TestProje
 
 Here is an example that defines a common timeout and two projects. The "Smoke" project runs a small subset of tests without retries, and "Default" project runs all other tests with retries.
 
-```js tab=js-ts
+```js
 // playwright.config.ts
 import { defineConfig } from '@playwright/test';
 export default defineConfig({
-  timeout: 60000, // Timeout is shared between all tests.
-  projects: [
-    {
-      name: 'Smoke',
-      testMatch: /.*smoke.spec.ts/,
-      retries: 0,
-    },
-    {
-      name: 'Default',
-      testIgnore: /.*smoke.spec.ts/,
-      retries: 2,
-    },
-  ],
-});
-```
-
-```js tab=js-js
-// playwright.config.js
-// @ts-check
-const { defineConfig } = require('@playwright/test');
-
-module.exports = defineConfig({
   timeout: 60000, // Timeout is shared between all tests.
   projects: [
     {
@@ -147,7 +125,7 @@ The `port` (but not the `url`) gets passed over to Playwright as a [`property: T
 It is also recommended to specify [`property: TestOptions.baseURL`] in the config, so that tests could use relative urls.
 :::
 
-```js tab=js-ts
+```js
 // playwright.config.ts
 import { defineConfig } from '@playwright/test';
 export default defineConfig({
@@ -163,39 +141,11 @@ export default defineConfig({
 });
 ```
 
-```js tab=js-js
-// playwright.config.js
-// @ts-check
-const { defineConfig } = require('@playwright/test');
-
-module.exports = defineConfig({
-  webServer: {
-    command: 'npm run start',
-    url: 'http://localhost:3000/app/',
-    timeout: 120 * 1000,
-    reuseExistingServer: !process.env.CI,
-  },
-  use: {
-    baseURL: 'http://localhost:3000/app/',
-  },
-});
-```
-
 Now you can use a relative path when navigating the page:
 
-```js tab=js-ts
+```js
 // test.spec.ts
 import { test } from '@playwright/test';
-test('test', async ({ page }) => {
-  // baseURL is set in the config to http://localhost:3000/app/
-  // This will navigate to http://localhost:3000/app/login
-  await page.goto('./login');
-});
-```
-
-```js tab=js-js
-// test.spec.js
-const { test } = require('@playwright/test');
 test('test', async ({ page }) => {
   // baseURL is set in the config to http://localhost:3000/app/
   // This will navigate to http://localhost:3000/app/login
@@ -251,21 +201,7 @@ export default globalSetup;
 
 Specify `globalSetup`, `baseURL` and `storageState` in the configuration file.
 
-```js tab=js-js
-// playwright.config.js
-// @ts-check
-const { defineConfig } = require('@playwright/test');
-
-module.exports = defineConfig({
-  globalSetup: require.resolve('./global-setup'),
-  use: {
-    baseURL: 'http://localhost:3000/',
-    storageState: 'state.json',
-  },
-});
-```
-
-```js tab=js-ts
+```js
 // playwright.config.ts
 import { defineConfig } from '@playwright/test';
 export default defineConfig({
@@ -279,17 +215,8 @@ export default defineConfig({
 
 Tests start already authenticated because we specify `storageState` that was populated by global setup.
 
-```js tab=js-ts
+```js
 import { test } from '@playwright/test';
-
-test('test', async ({ page }) => {
-  await page.goto('/');
-  // You are signed in!
-});
-```
-
-```js tab=js-js
-const { test } = require('@playwright/test');
 
 test('test', async ({ page }) => {
   await page.goto('/');
@@ -323,23 +250,8 @@ export default globalSetup;
 
 Tests have access to the `process.env` properties set in the global setup.
 
-```js tab=js-ts
+```js
 import { test } from '@playwright/test';
-
-test('test', async ({ page }) => {
-  // environment variables which are set in globalSetup are only available inside test().
-  const { FOO, BAR } = process.env;
-
-  // FOO and BAR properties are populated.
-  expect(FOO).toEqual('some data');
-
-  const complexData = JSON.parse(BAR);
-  expect(BAR).toEqual({ some: 'data' });
-});
-```
-
-```js tab=js-js
-const { test } = require('@playwright/test');
 
 test('test', async ({ page }) => {
   // environment variables which are set in globalSetup are only available inside test().
@@ -426,32 +338,8 @@ Playwright Test supports running multiple test projects at the same time. This i
 ### Same tests, different configuration
 
 Here is an example that runs the same tests in different browsers:
-```js tab=js-js
-// playwright.config.js
-// @ts-check
-const { devices } = require('@playwright/test');
 
-const { defineConfig } = require('@playwright/test');
-
-module.exports = defineConfig({
-  projects: [
-    {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
-    },
-    {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
-    },
-    {
-      name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
-    },
-  ],
-});
-```
-
-```js tab=js-ts
+```js
 // playwright.config.ts
 import { defineConfig, devices } from '@playwright/test';
 
@@ -488,32 +376,10 @@ Each project can be configured separately, and run different set of tests with d
 
 Here is an example that runs projects with different tests and configurations. The "Smoke" project runs a small subset of tests without retries, and "Default" project runs all other tests with retries.
 
-```js tab=js-ts
+```js
 // playwright.config.ts
 import { defineConfig } from '@playwright/test';
 export default defineConfig({
-  timeout: 60000, // Timeout is shared between all tests.
-  projects: [
-    {
-      name: 'Smoke',
-      testMatch: /.*smoke.spec.ts/,
-      retries: 0,
-    },
-    {
-      name: 'Default',
-      testIgnore: /.*smoke.spec.ts/,
-      retries: 2,
-    },
-  ],
-});
-```
-
-```js tab=js-js
-// playwright.config.js
-// @ts-check
-const { defineConfig } = require('@playwright/test');
-
-module.exports = defineConfig({
   timeout: 60000, // Timeout is shared between all tests.
   projects: [
     {
@@ -605,7 +471,7 @@ In this example we add a custom `toBeWithinRange` function in the configuration 
 
 ```js tab=js-js
 // playwright.config.js
-const { expect } = require('@playwright/test');
+const { expect, defineConfig } = require('@playwright/test');
 
 expect.extend({
   toBeWithinRange(received, floor, ceiling) {
@@ -624,12 +490,12 @@ expect.extend({
   },
 });
 
-module.exports = {};
+module.exports = defineConfig({});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import { expect, PlaywrightTestConfig } from '@playwright/test';
+import { expect, defineConfig } from '@playwright/test';
 
 expect.extend({
   toBeWithinRange(received: number, floor: number, ceiling: number) {
@@ -648,22 +514,12 @@ expect.extend({
   },
 });
 
-import { defineConfig } from '@playwright/test';
 export default defineConfig({});
 ```
 
 Now we can use `toBeWithinRange` in the test.
-```js tab=js-js
-// example.spec.js
-const { test, expect } = require('@playwright/test');
 
-test('numeric ranges', () => {
-  expect(100).toBeWithinRange(90, 110);
-  expect(101).not.toBeWithinRange(0, 100);
-});
-```
-
-```js tab=js-ts
+```js
 // example.spec.ts
 import { test, expect } from '@playwright/test';
 

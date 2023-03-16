@@ -29,30 +29,10 @@ The following example demonstrates how to use Playwright to test issues creation
 
 GitHub API requires authorization, so we'll configure the token once for all tests. While at it, we'll also set the `baseURL` to simplify the tests. You can either put them in the configuration file, or in the test file with `test.use()`.
 
-```js tab=js-ts
+```js
 // playwright.config.ts
 import { defineConfig } from '@playwright/test';
 export default defineConfig({
-  use: {
-    // All requests we send go to this API endpoint.
-    baseURL: 'https://api.github.com',
-    extraHTTPHeaders: {
-      // We set this header per GitHub guidelines.
-      'Accept': 'application/vnd.github.v3+json',
-      // Add authorization token to all requests.
-      // Assuming personal access token available in the environment.
-      'Authorization': `token ${process.env.API_TOKEN}`,
-    },
-  }
-});
-```
-
-```js tab=js-js
-// playwright.config.js
-// @ts-check
-const { defineConfig } = require('@playwright/test');
-
-module.exports = defineConfig({
   use: {
     // All requests we send go to this API endpoint.
     baseURL: 'https://api.github.com',
@@ -138,7 +118,7 @@ test.afterAll(async ({ request }) => {
 Behind the scenes, [`request` fixture](./api/class-fixtures#fixtures-request) will actually call [`method: APIRequest.newContext`]. You can always do that manually if you'd like more control. Below is a standalone script that does the same as `beforeAll` and `afterAll` from above.
 
 ```js
-const { request } = require('@playwright/test');
+import { request } from '@playwright/test';
 const REPO = 'test-repo-1';
 const USER = 'github-username';
 
@@ -180,51 +160,8 @@ While running tests inside browsers you may want to make calls to the HTTP API o
 The following test creates a new issue via API and then navigates to the list of all issues in the
 project to check that it appears at the top of the list.
 
-```js tab=js-ts
+```js
 import { test, expect } from '@playwright/test';
-
-const REPO = 'test-repo-1';
-const USER = 'github-username';
-
-// Request context is reused by all tests in the file.
-let apiContext;
-
-test.beforeAll(async ({ playwright }) => {
-  apiContext = await playwright.request.newContext({
-    // All requests we send go to this API endpoint.
-    baseURL: 'https://api.github.com',
-    extraHTTPHeaders: {
-      // We set this header per GitHub guidelines.
-      'Accept': 'application/vnd.github.v3+json',
-      // Add authorization token to all requests.
-      // Assuming personal access token available in the environment.
-      'Authorization': `token ${process.env.API_TOKEN}`,
-    },
-  });
-})
-
-test.afterAll(async ({ }) => {
-  // Dispose all responses.
-  await apiContext.dispose();
-});
-
-test('last created issue should be first in the list', async ({ page }) => {
-  const newIssue = await apiContext.post(`/repos/${USER}/${REPO}/issues`, {
-    data: {
-      title: '[Feature] request 1',
-    }
-  });
-  expect(newIssue.ok()).toBeTruthy();
-
-  await page.goto(`https://github.com/${USER}/${REPO}/issues`);
-  const firstIssue = page.locator(`a[data-hovercard-type='issue']`).first();
-  await expect(firstIssue).toHaveText('[Feature] request 1');
-});
-```
-
-```js tab=js-js
-// @ts-check
-const { test, expect } = require('@playwright/test');
 
 const REPO = 'test-repo-1';
 const USER = 'github-username';
@@ -270,53 +207,8 @@ test('last created issue should be first in the list', async ({ page }) => {
 The following test creates a new issue via user interface in the browser and then uses checks if
 it was created via API:
 
-```js tab=js-ts
+```js
 import { test, expect } from '@playwright/test';
-
-const REPO = 'test-repo-1';
-const USER = 'github-username';
-
-// Request context is reused by all tests in the file.
-let apiContext;
-
-test.beforeAll(async ({ playwright }) => {
-  apiContext = await playwright.request.newContext({
-    // All requests we send go to this API endpoint.
-    baseURL: 'https://api.github.com',
-    extraHTTPHeaders: {
-      // We set this header per GitHub guidelines.
-      'Accept': 'application/vnd.github.v3+json',
-      // Add authorization token to all requests.
-      // Assuming personal access token available in the environment.
-      'Authorization': `token ${process.env.API_TOKEN}`,
-    },
-  });
-})
-
-test.afterAll(async ({ }) => {
-  // Dispose all responses.
-  await apiContext.dispose();
-});
-
-test('last created issue should be on the server', async ({ page, request }) => {
-  await page.goto(`https://github.com/${USER}/${REPO}/issues`);
-  await page.getByText('New Issue').click();
-  await page.getByRole('textbox', { name: 'Title' }).fill('Bug report 1');
-  await page.getByRole('textbox', { name: 'Comment body' }).fill('Bug description');
-  await page.getByText('Submit new issue').click();
-  const issueId = page.url().substr(page.url().lastIndexOf('/'));
-
-  const newIssue = await request.get(`https://api.github.com/repos/${USER}/${REPO}/issues/${issueId}`);
-  expect(newIssue.ok()).toBeTruthy();
-  expect(newIssue.json()).toEqual(expect.objectContaining({
-    title: 'Bug report 1'
-  }));
-});
-```
-
-```js tab=js-js
-// @ts-check
-const { test, expect } = require('@playwright/test');
 
 const REPO = 'test-repo-1';
 const USER = 'github-username';

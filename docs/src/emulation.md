@@ -10,7 +10,7 @@ With Playwright you can test your app on any browser as well as emulate a real d
 
 Playwright comes with a [registry of device parameters](https://github.com/microsoft/playwright/blob/main/packages/playwright-core/src/server/deviceDescriptorsSource.json) using [`property: Playwright.devices`] for selected desktop, tablet and mobile devices. It can be used to simulate browser behavior for a specific device such as user agent, screen size, viewport and if it has touch enabled. All tests will run with the specified device parameters. 
 
-```js tab=js-js
+```js tab=js-test
 // playwright.config.ts/js
 import { defineConfig, devices } from '@playwright/test'; // import devices
 
@@ -98,21 +98,27 @@ class Program
 
 The viewport is included in the device but you can override it for some tests with [`method: Page.setViewportSize`].
 
-
-```js
+```js tab=js-test
 // playwright.config.ts/js
 import { defineConfig } from '@playwright/test';
-
 export default defineConfig({
   use: {
     // Viewport used for all pages in the context.
     viewport: { width: 1280, height: 720 },
   },
-
 });
 ```
 
-```js tab=js-js
+```js tab=js-library
+// Create context with given viewport
+const context = await browser.newContext({
+  viewport: { width: 1280, height: 1024 }
+});
+```
+
+Test file:
+
+```js tab=js-test
 // example.spec.ts/js
 import { test, expect } from '@playwright/test';
 
@@ -140,9 +146,10 @@ const context = await browser.newContext({
   deviceScaleFactor: 2,
 });
 ```
-The same works inside a describe block.
 
-```js
+The same works inside a test file.
+
+```js tab=js-test
 // example.spec.ts/js
 import { test, expect } from '@playwright/test';
 
@@ -153,6 +160,14 @@ test.describe('specific viewport block', () => {
     // ...
   });
 });
+```
+
+```js tab=js-library
+// Create context with given viewport
+const context = await browser.newContext({
+  viewport: { width: 1600, height: 1200 }
+});
+const page = await context.newPage();
 ```
 
 ```java
@@ -239,7 +254,7 @@ export default defineConfig({
 });
 ```
 
-```js tab=js-js
+```js tab=js-test
 // example.spec.ts/js
 import { test, expect } from '@playwright/test';
 
@@ -294,7 +309,7 @@ await using var context = await browser.NewContextAsync(new()
 
 Allow app to show system notifications.
 
-```js tab=js-js
+```js tab=js-test
 // playwright.config.ts/js
 import { defineConfig } from '@playwright/test';
 
@@ -331,7 +346,7 @@ context = browser.new_context(
 
 Allow notifications for a specific domain.
 
-```js tab=js-js
+```js tab=js-test
 // example.spec.ts/js
 import { test } from '@playwright/test';
 
@@ -405,7 +420,7 @@ export default defineConfig({
 });
 ```
 
-```js tab=js-js
+```js tab=js-test
 // example.spec.ts/js
 import { test, expect } from '@playwright/test';
 
@@ -459,7 +474,7 @@ await using var context = await browser.NewContextAsync(new()
 
 Change the location later:
 
-```js tab=js-js
+```js tab=js-test
 // example.spec.ts/js
 import { test, expect } from '@playwright/test';
 
@@ -509,7 +524,7 @@ export default defineConfig({
 });
 ```
 
-```js tab=js-js
+```js tab=js-test
 // example.spec.ts/js
 import { test, expect } from '@playwright/test';
 
@@ -623,7 +638,7 @@ await page.EmulateMediaAsync(new()
 
 The User Agent is included in the device and therefore you  will rarely need to change it however if you do need to test a different user agent you can override it with the `userAgent` property.
 
-```js tab=js-js
+```js tab=js-test
 // example.spec.ts/js
 import { test, expect } from '@playwright/test';
 
@@ -664,7 +679,7 @@ var context = await browser.NewContextAsync(new() { UserAgent = "My User Agent" 
 
 Emulate a user scenario where JavaScript is disabled.
 
-```js tab=js-js
+```js tab=js-test
 // example.spec.ts/js
 import { test, expect } from '@playwright/test';
 

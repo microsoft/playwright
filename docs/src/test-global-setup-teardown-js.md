@@ -124,7 +124,7 @@ export default globalSetup;
 Tests have access to the `process.env` properties set in the global setup.
 
 ```js
-const { test } = require('@playwright/test');
+import { test } from '@playwright/test';
 
 test('test', async ({ page }) => {
   // environment variables which are set in globalSetup are only available inside test().

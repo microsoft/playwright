@@ -53,16 +53,7 @@ By default, tests in a single file are run in order. If you have many independen
 
 Note that parallel tests are executed in separate worker processes and cannot share any state or global variables. Each test executes all relevant hooks just for itself, including `beforeAll` and `afterAll`.
 
-```js tab=js-js
-const { test } = require('@playwright/test');
-
-test.describe.configure({ mode: 'parallel' });
-
-test('runs in parallel 1', async ({ page }) => { /* ... */ });
-test('runs in parallel 2', async ({ page }) => { /* ... */ });
-```
-
-```js tab=js-ts
+```js
 import { test } from '@playwright/test';
 
 test.describe.configure({ mode: 'parallel' });

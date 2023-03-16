@@ -226,37 +226,11 @@ Playwright comes with a range of tooling to help you write tests.
 
 Playwright makes it easy to test your site across all [browsers](./test-configuration#multiple-browsers) no matter what platform you are on. Testing across all browsers ensures your app works for all users. In your config file you can set up projects adding the name and which browser or device to use.
 
-```js tab=js-js
-// playwright.config.js
-// @ts-check
-const { devices } = require('@playwright/test');
-
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
-  projects: [
-    {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
-    },
-    {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
-    },
-    {
-      name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
-    },
-  ],
-};
-
-module.exports = config;
-```
-
-```js tab=js-ts
+```js
 // playwright.config.ts
-import { type PlaywrightTestConfig, devices } from '@playwright/test';
+import { defineConfig, devices } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   projects: [
     {
       name: 'chromium',
@@ -271,8 +245,7 @@ const config: PlaywrightTestConfig = {
       use: { ...devices['Desktop Safari'] },
     },
   ],
-};
-export default config;
+});
 ```
 
 ### Keep your Playwright dependency up to date

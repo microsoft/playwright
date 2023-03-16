@@ -27,13 +27,7 @@ If you're using (or are interested in using this this feature), please comment o
 
 You can use [`method: BrowserContext.serviceWorkers`] to list the Service [Worker]s, or specifically watch for the Service [Worker] if you anticipate a page will trigger its [registration](https://developer.mozilla.org/en-US/docs/Web/API/ServiceWorkerContainer/register):
 
-```js tab=js-ts
-const serviceWorkerPromise = context.waitForEvent('serviceworker');
-await page.goto('/example-with-a-service-worker.html');
-const serviceworker = await serviceWorkerPromise;
-```
-
-```js tab=js-js
+```js
 const serviceWorkerPromise = context.waitForEvent('serviceworker');
 await page.goto('/example-with-a-service-worker.html');
 const serviceworker = await serviceWorkerPromise;
@@ -67,16 +61,7 @@ Worker serviceWorker = page.waitForRequest(() -> {
 
 There are more idiomatic methods of waiting for a Service Worker to be activated, but the following is an implementation agnostic method:
 
-```js tab=js-ts
-await page.evaluate(async () => {
-  const registration = await window.navigator.serviceWorker.getRegistration();
-  if (registration.active?.state === 'activated')
-    return;
-  await new Promise(res => window.navigator.serviceWorker.addEventListener('controllerchange', res));
-});
-```
-
-```js tab=js-js
+```js
 await page.evaluate(async () => {
   const registration = await window.navigator.serviceWorker.getRegistration();
   if (registration.active?.state === 'activated')
@@ -257,14 +242,7 @@ It's important to note that [`cache.add`](https://developer.mozilla.org/en-US/do
 
 Once the Service Worker is activated and handling FetchEvents, if the page makes the following requests:
 
-```js tab=js-ts
-await page.evaluate(() => fetch('/addressbook.json'));
-await page.evaluate(() => fetch('/foo'));
-await page.evaluate(() => fetch('/tracker.js'));
-await page.evaluate(() => fetch('/fallthrough.txt'));
-```
-
-```js tab=js-js
+```js
 await page.evaluate(() => fetch('/addressbook.json'));
 await page.evaluate(() => fetch('/foo'));
 await page.evaluate(() => fetch('/tracker.js'));
@@ -321,22 +299,7 @@ It's important to note:
 
 ## Routing Service Worker Requests Only
 
-```js tab=js-ts
-await context.route('**', async route => {
-  if (route.request().serviceWorker()) {
-    // NB: calling route.request().frame() here would THROW
-    return route.fulfill({
-      contentType: 'text/plain',
-      status: 200,
-      body: 'from sw',
-    });
-  } else {
-    return route.continue();
-  }
-});
-```
-
-```js tab=js-js
+```js
 await context.route('**', async route => {
   if (route.request().serviceWorker()) {
     // NB: calling route.request().frame() here would THROW

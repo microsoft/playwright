@@ -68,7 +68,7 @@ Using the following, Playwright will run your WebView2 application as a sub-proc
 
 <!-- source code is available here to verify that the examples are working https://github.com/mxschmitt/playwright-webview2-demo -->
 
-```ts
+```js
 // webView2Test.ts
 import { test as base } from '@playwright/test';
 import fs from 'fs';
@@ -114,7 +114,7 @@ export const test = base.extend({
 export { expect } from '@playwright/test';
 ```
 
-```ts
+```js
 // example.spec.ts
 import { test, expect } from './webView2Test';
 

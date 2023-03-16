@@ -156,7 +156,7 @@ In this example we add a custom `toBeWithinRange` function in the configuration 
 
 ```js tab=js-js
 // playwright.config.js
-const { expect } = require('@playwright/test');
+const { expect, defineConfig } = require('@playwright/test');
 
 expect.extend({
   toBeWithinRange(received, floor, ceiling) {
@@ -175,12 +175,12 @@ expect.extend({
   },
 });
 
-module.exports = {};
+module.exports = defineConfig({});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import { expect, PlaywrightTestConfig } from '@playwright/test';
+import { expect, defineConfig } from '@playwright/test';
 
 expect.extend({
   toBeWithinRange(received: number, floor: number, ceiling: number) {
@@ -199,22 +199,12 @@ expect.extend({
   },
 });
 
-import { defineConfig } from '@playwright/test';
 export default defineConfig({});
 ```
 
 Now we can use `toBeWithinRange` in the test.
-```js tab=js-js
-// example.spec.js
-const { test, expect } = require('@playwright/test');
 
-test('numeric ranges', () => {
-  expect(100).toBeWithinRange(90, 110);
-  expect(101).not.toBeWithinRange(0, 100);
-});
-```
-
-```js tab=js-ts
+```js
 // example.spec.ts
 import { test, expect } from '@playwright/test';
 

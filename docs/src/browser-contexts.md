@@ -23,21 +23,7 @@ There are two different strategies when it comes to Test Isolation: start from s
 
 Playwright uses browser contexts to achieve Test Isolation. Each test has it's own Browser Context. Running the test creates a new browser context each time.  When using Playwright as a Test Runner, browser contexts are created by default. Otherwise, you can create browser contexts manually.
 
-```js tab=js-ts
-const { test } = require('@playwright/test');
-
-test('example test', async ({ page, context }) => {
-  // "context" is an isolated BrowserContext, created for this specific test.
-  // "page" belongs to this context.
-});
-
-test('another test', async ({ page, context }) => {
-  // "context" and "page" in this second test are completely
-  // isolated from the first test.
-});
-```
-
-```js tab=js-js
+```js tab=js-test
 import { test } from '@playwright/test';
 
 test('example test', async ({ page, context }) => {
@@ -87,22 +73,8 @@ Browser contexts can also be used to emulate multi-page scenarios involving mobi
 
 Playwright can create multiple browser contexts within a single scenario. This is useful when you want to test for multi-user functionality, like a chat.
 
-```js tab=js-js
+```js tab=js-test
 import { test } from '@playwright/test';
-
-test('admin and user', async ({ browser }) => {
-  // Create two isolated browser contexts
-  const adminContext = await browser.newContext();
-  const userContext = await browser.newContext();
-  
-  // Create pages and interact with contexts independently
-  const adminPage = await adminContext.newPage();
-  const userPage = await userContext.newPage();
-});
-```
-
-```js tab=js-ts
-const { test } = require('@playwright/test');
 
 test('admin and user', async ({ browser }) => {
   // Create two isolated browser contexts

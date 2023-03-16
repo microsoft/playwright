@@ -7,18 +7,7 @@ You can either parameterize tests on a test level or on a project level.
 
 ## Parameterized Tests
 
-```js tab=js-js
-// example.spec.js
-const people = ['Alice', 'Bob'];
-for (const name of people) {
-  test(`testing with ${name}`, async () => {
-    // ...
-  });
-  // You can also do it with test.describe() or with multiple tests as long the test name is unique.
-}
-```
-
-```js tab=js-ts
+```js
 // example.spec.ts
 const people = ['Alice', 'Bob'];
 for (const name of people) {
@@ -63,18 +52,7 @@ export const test = base.extend<TestOptions>({
 
 We can use this option in the test, similarly to [fixtures](./test-fixtures.md).
 
-```js tab=js-js
-// example.spec.js
-const { test } = require('./my-test');
-
-test('test 1', async ({ page, person }) => {
-  await page.goto(`/index.html`);
-  await expect(page.locator('#node')).toContainText(person);
-  // ...
-});
-```
-
-```js tab=js-ts
+```js
 // example.spec.ts
 import { test } from './my-test';
 
@@ -182,16 +160,7 @@ You can use environment variables to configure tests from the command line.
 
 For example, consider the following test file that needs a username and a password. It is usually a good idea not to store your secrets in the source code, so we'll need a way to pass secrets from outside.
 
-```js tab=js-js
-// example.spec.js
-test(`example test`, async ({ page }) => {
-  // ...
-  await page.getByLabel('User Name').fill(process.env.USERNAME);
-  await page.getByLabel('Password').fill(process.env.PASSWORD);
-});
-```
-
-```js tab=js-ts
+```js
 // example.spec.ts
 test(`example test`, async ({ page }) => {
   // ...
@@ -220,21 +189,7 @@ npx playwright test
 
 Similarly, configuration file can also read environment variables passed through the command line.
 
-
-```js tab=js-js
-// playwright.config.js
-// @ts-check
-
-const { defineConfig } = require('@playwright/test');
-
-module.exports = defineConfig({
-  use: {
-    baseURL: process.env.STAGING === '1' ? 'http://staging.example.test/' : 'http://example.test/',
-  }
-});
-```
-
-```js tab=js-ts
+```js
 // playwright.config.ts
 import { defineConfig } from '@playwright/test';
 
@@ -265,26 +220,7 @@ npx playwright test
 
 To make environment variables easier to manage, consider something like `.env` files. Here is an example that uses [`dotenv`](https://www.npmjs.com/package/dotenv) package to read environment variables directly in the configuration file.
 
-```js tab=js-js
-// playwright.config.js
-// @ts-check
-
-// Read from default ".env" file.
-require('dotenv').config();
-
-// Alternatively, read from "../my.env" file.
-require('dotenv').config({ path: path.resolve(__dirname, '..', 'my.env') });
-
-const { defineConfig } = require('@playwright/test');
-
-module.exports = defineConfig({
-  use: {
-    baseURL: process.env.STAGING === '1' ? 'http://staging.example.test/' : 'http://example.test/',
-  }
-});
-```
-
-```js tab=js-ts
+```js
 // playwright.config.ts
 import { defineConfig } from '@playwright/test';
 import dotenv from 'dotenv';
@@ -334,31 +270,12 @@ See for example this CSV file, in our example `input.csv`:
 
 Based on this we'll generate some tests by using the [csv-parse](https://www.npmjs.com/package/csv-parse) library from NPM:
 
-```js tab=js-ts
+```js
 // foo.spec.ts
 import fs from 'fs';
 import path from 'path';
 import { test } from '@playwright/test';
 import { parse } from 'csv-parse/sync';
-
-const records = parse(fs.readFileSync(path.join(__dirname, 'input.csv')), {
-  columns: true,
-  skip_empty_lines: true
-});
-
-for (const record of records) {
-  test(`fooo: ${record.test_case}`, async ({ page }) => {
-    console.log(record.test_case, record.some_value, record.some_other_value);
-  });
-}
-```
-
-```js tab=js-js
-// foo.spec.js
-const fs = require('fs');
-const path = require('path');
-const { test } = require('@playwright/test');
-const { parse } = require('csv-parse/sync');
 
 const records = parse(fs.readFileSync(path.join(__dirname, 'input.csv')), {
   columns: true,
