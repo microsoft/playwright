@@ -22,6 +22,8 @@ import { ChannelOwner } from './channelOwner';
 export class Tracing extends ChannelOwner<channels.TracingChannel> implements api.Tracing {
   private _includeSources = false;
   private _metadataCollector: channels.ClientSideCallMetadata[] = [];
+  _tracesDir: string | undefined;
+
   static from(channel: channels.TracingChannel): Tracing {
     return (channel as any)._object;
   }

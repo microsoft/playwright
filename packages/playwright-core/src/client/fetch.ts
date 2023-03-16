@@ -44,7 +44,7 @@ export type FetchOptions = {
   maxRedirects?: number,
 };
 
-type NewContextOptions = Omit<channels.PlaywrightNewRequestOptions, 'extraHTTPHeaders' | 'storageState'> & {
+type NewContextOptions = Omit<channels.PlaywrightNewRequestOptions, 'extraHTTPHeaders' | 'storageState' | 'tracesDir'> & {
   extraHTTPHeaders?: Headers,
   storageState?: string | StorageState,
 };
@@ -56,6 +56,7 @@ export class APIRequest implements api.APIRequest {
   readonly _contexts = new Set<APIRequestContext>();
 
   // Instrumentation.
+  _defaultContextOptions?: NewContextOptions & { tracesDir?: string };
   _onDidCreateContext?: (context: APIRequestContext) => Promise<void>;
   _onWillCloseContext?: (context: APIRequestContext) => Promise<void>;
 
@@ -64,16 +65,21 @@ export class APIRequest implements api.APIRequest {
   }
 
   async newContext(options: NewContextOptions = {}): Promise<APIRequestContext> {
+    options = { ...this._defaultContextOptions, ...options };
     const storageState = typeof options.storageState === 'string' ?
       JSON.parse(await fs.promises.readFile(options.storageState, 'utf8')) :
       options.storageState;
+    // We do not expose tracesDir in the API, so do not allow options to accidentally override it.
+    const tracesDir = this._defaultContextOptions?.tracesDir;
     const context = APIRequestContext.from((await this._playwright._channel.newRequest({
       ...options,
       extraHTTPHeaders: options.extraHTTPHeaders ? headersObjectToArray(options.extraHTTPHeaders) : undefined,
       storageState,
+      tracesDir,
     })).request);
     this._contexts.add(context);
     context._request = this;
+    context._tracing._tracesDir = tracesDir;
     await this._onDidCreateContext?.(context);
     return context;
   }
