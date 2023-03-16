@@ -66,7 +66,7 @@ export const Workbench: React.FunctionComponent<{
   const sourceTab: TabbedPaneTabModel = {
     id: 'source',
     title: 'Source',
-    render: () => <SourceTab action={activeAction} hideStackFrames={hideStackFrames}/>
+    render: () => <SourceTab action={activeAction} sources={model?.sources || new Map()} hideStackFrames={hideStackFrames}/>
   };
   const consoleTab: TabbedPaneTabModel = {
     id: 'console',

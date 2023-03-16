@@ -142,13 +142,12 @@ body.dark-mode .CodeMirror span.cm-type {
 }
 
 .CodeMirror .source-line-running {
-  background-color: #b3dbff7f;
+  background-color: var(--vscode-editor-selectionBackground);
   z-index: 2;
 }
 
 .CodeMirror .source-line-paused {
-  background-color: #b3dbff7f;
-  outline: 1px solid #008aff;
+  background-color: var(--vscode-editor-selectionHighlightBackground);
   z-index: 2;
 }
 
