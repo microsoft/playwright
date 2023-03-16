@@ -123,6 +123,7 @@ const testFiles = {
 };
 
 test.slow(true, 'Multiple browser launches in each test');
+test.describe.configure({ mode: 'parallel' });
 
 test('should work with screenshot: on', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({

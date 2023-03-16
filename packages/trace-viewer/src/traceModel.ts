@@ -37,7 +37,8 @@ export class TraceModel {
   }
 
   async load(traceURL: string, progress: (done: number, total: number) => void) {
-    this._backend = traceURL.endsWith('json') ? new FetchTraceModelBackend(traceURL) : new ZipTraceModelBackend(traceURL, progress);
+    const isLive = traceURL.endsWith('json');
+    this._backend = isLive ? new FetchTraceModelBackend(traceURL) : new ZipTraceModelBackend(traceURL, progress);
 
     const ordinals: string[] = [];
     let hasSource = false;
@@ -55,16 +56,25 @@ export class TraceModel {
 
     for (const ordinal of ordinals) {
       const contextEntry = createEmptyContext();
+      const actionMap = new Map<string, trace.ActionTraceEvent>();
       contextEntry.traceUrl = traceURL;
       contextEntry.hasSource = hasSource;
 
       const trace = await this._backend.readText(ordinal + 'trace.trace') || '';
       for (const line of trace.split('\n'))
-        this.appendEvent(contextEntry, line);
+        this.appendEvent(contextEntry, actionMap, line);
 
       const network = await this._backend.readText(ordinal + 'trace.network') || '';
       for (const line of network.split('\n'))
-        this.appendEvent(contextEntry, line);
+        this.appendEvent(contextEntry, actionMap, line);
+
+      contextEntry.actions = [...actionMap.values()].sort((a1, a2) => a1.startTime - a2.startTime);
+      if (!isLive) {
+        for (const action of contextEntry.actions) {
+          if (!action.endTime && !action.error)
+            action.error = { name: 'Error', message: 'Timed out' };
+        }
+      }
 
       const stacks = await this._backend.readText(ordinal + 'trace.stacks');
       if (stacks) {
@@ -73,7 +83,6 @@ export class TraceModel {
           action.stack = action.stack || callMetadata.get(action.callId);
       }
 
-      contextEntry.actions.sort((a1, a2) => a1.startTime - a2.startTime);
       this.contextEntries.push(contextEntry);
     }
   }
@@ -102,7 +111,7 @@ export class TraceModel {
     return pageEntry;
   }
 
-  appendEvent(contextEntry: ContextEntry, line: string) {
+  appendEvent(contextEntry: ContextEntry, actionMap: Map<string, trace.ActionTraceEvent>, line: string) {
     if (!line)
       return;
     const event = this._modernize(JSON.parse(line));
@@ -124,8 +133,27 @@ export class TraceModel {
         this._pageEntry(contextEntry, event.pageId).screencastFrames.push(event);
         break;
       }
+      case 'before': {
+        actionMap.set(event.callId, { ...event, type: 'action', endTime: 0, log: [] });
+        break;
+      }
+      case 'input': {
+        const existing = actionMap.get(event.callId);
+        existing!.inputSnapshot = event.inputSnapshot;
+        existing!.point = event.point;
+        break;
+      }
+      case 'after': {
+        const existing = actionMap.get(event.callId);
+        existing!.afterSnapshot = event.afterSnapshot;
+        existing!.endTime = event.endTime;
+        existing!.log = event.log;
+        existing!.result = event.result;
+        existing!.error = event.error;
+        break;
+      }
       case 'action': {
-        contextEntry!.actions.push(event);
+        actionMap.set(event.callId, event);
         break;
       }
       case 'event': {
@@ -144,10 +172,10 @@ export class TraceModel {
         this._snapshotStorage!.addFrameSnapshot(event.snapshot);
         break;
     }
-    if (event.type === 'action') {
+    if (event.type === 'action' || event.type === 'before')
       contextEntry.startTime = Math.min(contextEntry.startTime, event.startTime);
+    if (event.type === 'action' || event.type === 'after')
       contextEntry.endTime = Math.max(contextEntry.endTime, event.endTime);
-    }
     if (event.type === 'event') {
       contextEntry.startTime = Math.min(contextEntry.startTime, event.time);
       contextEntry.endTime = Math.max(contextEntry.endTime, event.time);
@@ -251,7 +279,9 @@ export class TraceModel {
       params: metadata.params,
       wallTime: metadata.wallTime || Date.now(),
       log: metadata.log,
-      snapshots: metadata.snapshots,
+      beforeSnapshot: metadata.snapshots.find(s => s.snapshotName === 'before')?.snapshotName,
+      inputSnapshot: metadata.snapshots.find(s => s.snapshotName === 'input')?.snapshotName,
+      afterSnapshot: metadata.snapshots.find(s => s.snapshotName === 'after')?.snapshotName,
       error: metadata.error?.error,
       result: metadata.result,
       point: metadata.point,

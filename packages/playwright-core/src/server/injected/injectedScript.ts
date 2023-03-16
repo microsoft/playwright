@@ -1087,14 +1087,14 @@ export class InjectedScript {
     }
   }
 
-  markTargetElements(markedElements: Set<Element>, snapshotName: string) {
+  markTargetElements(markedElements: Set<Element>, callId: string) {
     for (const e of this._markedTargetElements) {
       if (!markedElements.has(e))
         e.removeAttribute('__playwright_target__');
     }
     for (const e of markedElements) {
       if (!this._markedTargetElements.has(e))
-        e.setAttribute('__playwright_target__', snapshotName);
+        e.setAttribute('__playwright_target__', callId);
     }
     this._markedTargetElements = markedElements;
   }

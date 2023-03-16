@@ -1391,7 +1391,7 @@ export class Frame extends SdkObject {
         const injected = await context.injectedScript();
         progress.throwIfAborted();
 
-        const { log, matches, received, missingRecevied } = await injected.evaluate(async (injected, { info, options, snapshotName }) => {
+        const { log, matches, received, missingRecevied } = await injected.evaluate(async (injected, { info, options, callId }) => {
           const elements = info ? injected.querySelectorAll(info.parsed, document) : [];
           const isArray = options.expression === 'to.have.count' || options.expression.endsWith('.array');
           let log = '';
@@ -1401,10 +1401,10 @@ export class Frame extends SdkObject {
             throw injected.strictModeViolationError(info!.parsed, elements);
           else if (elements.length)
             log = `  locator resolved to ${injected.previewNode(elements[0])}`;
-          if (snapshotName)
-            injected.markTargetElements(new Set(elements), snapshotName);
+          if (callId)
+            injected.markTargetElements(new Set(elements), callId);
           return { log, ...(await injected.expect(elements[0], options, elements)) };
-        }, { info, options, snapshotName: progress.metadata.afterSnapshot });
+        }, { info, options, callId: metadata.id });
 
         if (log)
           progress.log(log);
@@ -1552,16 +1552,16 @@ export class Frame extends SdkObject {
         progress.throwIfAborted();
         if (!resolved)
           return continuePolling;
-        const { log, success, value } = await resolved.injected.evaluate((injected, { info, callbackText, taskData, snapshotName }) => {
+        const { log, success, value } = await resolved.injected.evaluate((injected, { info, callbackText, taskData, callId }) => {
           const callback = injected.eval(callbackText) as ElementCallback<T, R>;
           const element = injected.querySelector(info.parsed, document, info.strict);
           if (!element)
             return { success: false };
           const log = `  locator resolved to ${injected.previewNode(element)}`;
-          if (snapshotName)
-            injected.markTargetElements(new Set([element]), snapshotName);
+          if (callId)
+            injected.markTargetElements(new Set([element]), callId);
           return { log, success: true, value: callback(injected, element, taskData as T) };
-        }, { info: resolved.info, callbackText, taskData, snapshotName: progress.metadata.afterSnapshot });
+        }, { info: resolved.info, callbackText, taskData, callId: progress.metadata.id });
 
         if (log)
           progress.log(log);

@@ -18,7 +18,7 @@ import type { Frame, Page } from 'playwright-core';
 import { ZipFile } from '../../packages/playwright-core/lib/utils/zipFile';
 import type { StackFrame } from '../../packages/protocol/src/channels';
 import { parseClientSideCallMetadata } from '../../packages/playwright-core/lib/utils/isomorphic/traceUtils';
-import type { ActionTraceEvent } from '../../packages/trace/src/trace';
+import type { ActionTraceEvent, TraceEvent } from '../../packages/trace/src/trace';
 
 export async function attachFrame(page: Page, frameId: string, url: string): Promise<Frame> {
   const handle = await page.evaluateHandle(async ({ frameId, url }) => {
@@ -101,11 +101,36 @@ export async function parseTrace(file: string): Promise<{ events: any[], resourc
     resources.set(entry, await zipFS.read(entry));
   zipFS.close();
 
+  const actionMap = new Map<string, ActionTraceEvent>();
   const events: any[] = [];
   for (const traceFile of [...resources.keys()].filter(name => name.endsWith('.trace'))) {
     for (const line of resources.get(traceFile)!.toString().split('\n')) {
-      if (line)
-        events.push(JSON.parse(line));
+      if (line) {
+        const event = JSON.parse(line) as TraceEvent;
+        if (event.type === 'before') {
+          const action: ActionTraceEvent = {
+            ...event,
+            type: 'action',
+            endTime: 0,
+            log: []
+          };
+          events.push(action);
+          actionMap.set(event.callId, action);
+        } else if (event.type === 'input') {
+          const existing = actionMap.get(event.callId);
+          existing.inputSnapshot = event.inputSnapshot;
+          existing.point = event.point;
+        } else if (event.type === 'after') {
+          const existing = actionMap.get(event.callId);
+          existing.afterSnapshot = event.afterSnapshot;
+          existing.endTime = event.endTime;
+          existing.log = event.log;
+          existing.error = event.error;
+          existing.result = event.result;
+        } else {
+          events.push(event);
+        }
+      }
     }
   }
 

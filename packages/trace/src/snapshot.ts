@@ -39,6 +39,7 @@ export type ResourceOverride = {
 
 export type FrameSnapshot = {
   snapshotName?: string,
+  callId: string,
   pageId: string,
   frameId: string,
   frameUrl: string,

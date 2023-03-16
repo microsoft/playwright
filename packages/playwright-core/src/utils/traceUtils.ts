@@ -16,11 +16,11 @@
 
 import fs from 'fs';
 import type EventEmitter from 'events';
-import type { ClientSideCallMetadata, StackFrame } from '@protocol/channels';
+import type { ClientSideCallMetadata, SerializedError, StackFrame } from '@protocol/channels';
 import type { SerializedClientSideCallMetadata, SerializedStack, SerializedStackFrame } from './isomorphic/traceUtils';
 import { yazl, yauzl } from '../zipBundle';
 import { ManualPromise } from './manualPromise';
-import type { ActionTraceEvent } from '@trace/trace';
+import type { AfterActionTraceEvent, BeforeActionTraceEvent, TraceEvent } from '@trace/trace';
 import { calculateSha1 } from './crypto';
 import { monotonicTime } from './time';
 
@@ -96,7 +96,7 @@ export async function mergeTraceFiles(fileName: string, temporaryTraceFiles: str
   await mergePromise;
 }
 
-export async function saveTraceFile(fileName: string, traceEvents: ActionTraceEvent[], saveSources: boolean) {
+export async function saveTraceFile(fileName: string, traceEvents: TraceEvent[], saveSources: boolean) {
   const lines: string[] = traceEvents.map(e => JSON.stringify(e));
   const zipFile = new yazl.ZipFile();
   zipFile.addBuffer(Buffer.from(lines.join('\n')), 'trace.trace');
@@ -104,8 +104,10 @@ export async function saveTraceFile(fileName: string, traceEvents: ActionTraceEv
   if (saveSources) {
     const sourceFiles = new Set<string>();
     for (const event of traceEvents) {
-      for (const frame of event.stack || [])
-        sourceFiles.add(frame.file);
+      if (event.type === 'before') {
+        for (const frame of event.stack || [])
+          sourceFiles.add(frame.file);
+      }
     }
     for (const sourceFile of sourceFiles) {
       await fs.promises.readFile(sourceFile, 'utf8').then(source => {
@@ -120,20 +122,27 @@ export async function saveTraceFile(fileName: string, traceEvents: ActionTraceEv
   });
 }
 
-export function createTraceEventForExpect(apiName: string, expected: any, stack: StackFrame[], wallTime: number): ActionTraceEvent {
+export function createBeforeActionTraceEventForExpect(callId: string, apiName: string, expected: any, stack: StackFrame[]): BeforeActionTraceEvent {
   return {
-    type: 'action',
-    callId: 'expect@' + wallTime,
-    wallTime,
+    type: 'before',
+    callId,
+    wallTime: Date.now(),
     startTime: monotonicTime(),
-    endTime: 0,
     class: 'Test',
     method: 'step',
     apiName,
     params: { expected: generatePreview(expected) },
-    snapshots: [],
-    log: [],
     stack,
+  };
+}
+
+export function createAfterActionTraceEventForExpect(callId: string, error?: SerializedError['error']): AfterActionTraceEvent {
+  return {
+    type: 'after',
+    callId,
+    endTime: monotonicTime(),
+    log: [],
+    error,
   };
 }
 

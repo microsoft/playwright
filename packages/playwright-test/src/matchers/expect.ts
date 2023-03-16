@@ -14,7 +14,11 @@
  * limitations under the License.
  */
 
-import { captureRawStack, createTraceEventForExpect, monotonicTime, pollAgainstTimeout } from 'playwright-core/lib/utils';
+import {
+  captureRawStack,
+  createAfterActionTraceEventForExpect,
+  createBeforeActionTraceEventForExpect,
+  pollAgainstTimeout } from 'playwright-core/lib/utils';
 import type { ExpectZone } from 'playwright-core/lib/utils';
 import {
   toBeChecked,
@@ -71,6 +75,8 @@ export type SyncExpectationResult = {
 // Format substring but do not enclose in double quote marks.
 // The replacement is compatible with pretty-format package.
 const printSubstring = (val: string): string => val.replace(/"|\\/g, '\\$&');
+
+let lastCallId = 0;
 
 export const printReceivedStringContainExpectedSubstring = (
   received: string,
@@ -215,9 +221,9 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
       testInfo.currentStep = step;
 
       const generateTraceEvent = matcherName !== 'poll' && matcherName !== 'toPass';
-      const traceEvent = generateTraceEvent ? createTraceEventForExpect(defaultTitle, args[0], stackFrames, wallTime) : undefined;
-      if (traceEvent)
-        testInfo._traceEvents.push(traceEvent);
+      const callId = ++lastCallId;
+      if (generateTraceEvent)
+        testInfo._traceEvents.push(createBeforeActionTraceEventForExpect(`expect@${callId}`, defaultTitle, args[0], stackFrames));
 
       const reportStepError = (jestError: Error) => {
         const message = jestError.message;
@@ -243,11 +249,11 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
         }
 
         const serializerError = serializeError(jestError);
-        if (traceEvent) {
-          traceEvent.error = { name: jestError.name, message: jestError.message, stack: jestError.stack };
-          traceEvent.endTime = monotonicTime();
-          step.complete({ error: serializerError });
+        if (generateTraceEvent) {
+          const error = { name: jestError.name, message: jestError.message, stack: jestError.stack };
+          testInfo._traceEvents.push(createAfterActionTraceEventForExpect(`expect@${callId}`, error));
         }
+        step.complete({ error: serializerError });
         if (this._info.isSoft)
           testInfo._failWithError(serializerError, false /* isHardError */);
         else
@@ -255,8 +261,8 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
       };
 
       const finalizer = () => {
-        if (traceEvent)
-          traceEvent.endTime = monotonicTime();
+        if (generateTraceEvent)
+          testInfo._traceEvents.push(createAfterActionTraceEventForExpect(`expect@${callId}`));
         step.complete({});
       };
 

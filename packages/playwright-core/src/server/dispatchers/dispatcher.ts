@@ -259,7 +259,6 @@ export class DispatcherConnection {
       method,
       params: params || {},
       log: [],
-      snapshots: []
     };
 
     if (sdkObject && params?.info?.waitId) {

@@ -113,7 +113,8 @@ test('should not include buffers in the trace', async ({ context, page, server, 
   await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
   const { events } = await parseTrace(testInfo.outputPath('trace.zip'));
   const screenshotEvent = events.find(e => e.type === 'action' && e.apiName === 'page.screenshot');
-  expect(screenshotEvent.snapshots.length).toBe(2);
+  expect(screenshotEvent.beforeSnapshot).toBeTruthy();
+  expect(screenshotEvent.afterSnapshot).toBeTruthy();
   expect(screenshotEvent.result).toEqual({});
 });
 
@@ -405,7 +406,6 @@ test('should include interrupted actions', async ({ context, page, server }, tes
   const { events } = await parseTrace(testInfo.outputPath('trace.zip'));
   const clickEvent = events.find(e => e.apiName === 'page.click');
   expect(clickEvent).toBeTruthy();
-  expect(clickEvent.error.message).toBe('Action was interrupted');
 });
 
 test('should throw when starting with different options', async ({ context }) => {
@@ -448,8 +448,6 @@ test('should work with multiple chunks', async ({ context, page, server }, testI
     'page.click',
     'page.click',
   ]);
-  expect(trace1.events.find(e => e.apiName === 'page.click' && !!e.error)).toBeTruthy();
-  expect(trace1.events.find(e => e.apiName === 'page.click' && e.error?.message === 'Action was interrupted')).toBeTruthy();
   expect(trace1.events.some(e => e.type === 'frame-snapshot')).toBeTruthy();
   expect(trace1.events.some(e => e.type === 'resource-snapshot' && e.snapshot.request.url.endsWith('style.css'))).toBeTruthy();
 
