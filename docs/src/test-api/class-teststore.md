@@ -4,7 +4,7 @@
 
 Playwright Test provides a global `store` object that can be used to read/write values on the filesystem. Each value is stored in its own file inside './playwright' directory, configurable with [`property: TestConfig.storeDir`].
 
-```ts
+```js
 import { test, store } from '@playwright/test';
 
 test('get user name', async ({ page, context }) => {

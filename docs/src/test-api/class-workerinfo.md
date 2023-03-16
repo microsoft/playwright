@@ -4,15 +4,7 @@
 
 `WorkerInfo` contains information about the worker that is running tests. It is available to [`method: Test.beforeAll`] and [`method: Test.afterAll`] hooks and worker-scoped fixtures.
 
-```js tab=js-js
-const { test, expect } = require('@playwright/test');
-
-test.beforeAll(async ({ browserName }, workerInfo) => {
-  console.log(`Running ${browserName} in worker #${workerInfo.workerIndex}`);
-});
-```
-
-```js tab=js-ts
+```js
 import { test, expect } from '@playwright/test';
 
 test.beforeAll(async ({ browserName }, workerInfo) => {

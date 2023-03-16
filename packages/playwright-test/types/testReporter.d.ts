@@ -319,7 +319,7 @@ export interface FullResult {
  * import { Reporter, FullConfig, Suite, TestCase, TestResult, FullResult } from '@playwright/test/reporter';
  *
  * class MyReporter implements Reporter {
- *   constructor(options: {customOption: { customOption?: string } = {}) {
+ *   constructor(options: { customOption?: string } = {}) {
  *     console.log(`my-awesome-reporter setup with customOption set to ${options.customOption}`);
  *   }
  *

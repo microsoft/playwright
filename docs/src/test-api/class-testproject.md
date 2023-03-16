@@ -8,47 +8,7 @@ Playwright Test supports running multiple test projects at the same time. This i
 
 Here is an example configuration that runs every test in Chromium, Firefox and WebKit, both Desktop and Mobile versions.
 
-```js tab=js-js
-// playwright.config.js
-// @ts-check
-const { devices } = require('@playwright/test');
-
-const { defineConfig } = require('@playwright/test');
-
-module.exports = defineConfig({
-  // Options shared for all projects.
-  timeout: 30000,
-  use: {
-    ignoreHTTPSErrors: true,
-  },
-
-  // Options specific to each project.
-  projects: [
-    {
-      name: 'chromium',
-      use: devices['Desktop Chrome'],
-    },
-    {
-      name: 'firefox',
-      use: devices['Desktop Firefox'],
-    },
-    {
-      name: 'webkit',
-      use: devices['Desktop Safari'],
-    },
-    {
-      name: 'Mobile Chrome',
-      use: devices['Pixel 5'],
-    },
-    {
-      name: 'Mobile Safari',
-      use: devices['iPhone 12'],
-    },
-  ],
-});
-```
-
-```js tab=js-ts
+```js
 // playwright.config.ts
 import { defineConfig, devices } from '@playwright/test';
 
@@ -208,17 +168,7 @@ This directory is cleaned at the start. When running a test, a unique subdirecto
 
 Here is an example that uses [`method: TestInfo.outputPath`] to create a temporary file.
 
-```js tab=js-js
-const { test, expect } = require('@playwright/test');
-const fs = require('fs');
-
-test('example test', async ({}, testInfo) => {
-  const file = testInfo.outputPath('temporary-file.txt');
-  await fs.promises.writeFile(file, 'Put some data to the file', 'utf8');
-});
-```
-
-```js tab=js-ts
+```js
 import { test, expect } from '@playwright/test';
 import fs from 'fs';
 
@@ -256,48 +206,7 @@ Directory that will be recursively scanned for test files. Defaults to the direc
 
 Each project can use a different directory. Here is an example that runs smoke tests in three browsers and all other tests in stable Chrome browser.
 
-```js tab=js-js
-// playwright.config.js
-// @ts-check
-
-const { defineConfig } = require('@playwright/test');
-
-module.exports = defineConfig({
-  projects: [
-    {
-      name: 'Smoke Chromium',
-      testDir: './smoke-tests',
-      use: {
-        browserName: 'chromium',
-      }
-    },
-    {
-      name: 'Smoke WebKit',
-      testDir: './smoke-tests',
-      use: {
-        browserName: 'webkit',
-      }
-    },
-    {
-      name: 'Smoke Firefox',
-      testDir: './smoke-tests',
-      use: {
-        browserName: 'firefox',
-      }
-    },
-    {
-      name: 'Chrome Stable',
-      testDir: './',
-      use: {
-        browserName: 'chromium',
-        channel: 'chrome',
-      }
-    },
-  ],
-});
-```
-
-```js tab=js-ts
+```js
 // playwright.config.ts
 import { defineConfig } from '@playwright/test';
 
@@ -374,25 +283,7 @@ Use [`property: TestConfig.timeout`] to change this option for all projects.
 
 Options for all tests in this project, for example [`property: TestOptions.browserName`]. Learn more about [configuration](../test-configuration.md) and see [available options][TestOptions].
 
-```js tab=js-js
-// playwright.config.js
-// @ts-check
-
-const { defineConfig } = require('@playwright/test');
-
-module.exports = defineConfig({
-  projects: [
-    {
-      name: 'Chromium',
-      use: {
-        browserName: 'chromium',
-      },
-    },
-  ],
-});
-```
-
-```js tab=js-ts
+```js
 // playwright.config.ts
 import { defineConfig } from '@playwright/test';
 

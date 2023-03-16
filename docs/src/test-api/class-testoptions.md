@@ -6,23 +6,8 @@ Playwright Test provides many options to configure test environment, [Browser], 
 
 These options are usually provided in the [configuration file](../test-configuration.md) through [`property: TestConfig.use`] and [`property: TestProject.use`].
 
-```js tab=js-js
-// @ts-check
-
-const { defineConfig } = require('@playwright/test');
-
-module.exports = defineConfig({
-  use: {
-    headless: false,
-    viewport: { width: 1280, height: 720 },
-    ignoreHTTPSErrors: true,
-    video: 'on-first-retry',
-  },
-});
-```
-
-```js tab=js-ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+```js
+import { defineConfig } from '@playwright/test';
 export default defineConfig({
   use: {
     headless: false,
@@ -35,19 +20,7 @@ export default defineConfig({
 
 Alternatively, with [`method: Test.use`] you can override some options for a file.
 
-```js tab=js-js
-// example.spec.js
-const { test, expect } = require('@playwright/test');
-
-// Run tests in this file with portrait-like viewport.
-test.use({ viewport: { width: 600, height: 900 } });
-
-test('my portrait test', async ({ page }) => {
-  // ...
-});
-```
-
-```js tab=js-ts
+```js
 // example.spec.ts
 import { test, expect } from '@playwright/test';
 
@@ -71,20 +44,7 @@ test('my portrait test', async ({ page }) => {
 
 Name of the browser that runs tests. Defaults to `'chromium'`. Most of the time you should set `browserName` in your [TestConfig]:
 
-```js tab=js-js
-// playwright.config.js
-// @ts-check
-
-const { defineConfig } = require('@playwright/test');
-
-module.exports = defineConfig({
-  use: {
-    browserName: 'firefox',
-  },
-});
-```
-
-```js tab=js-ts
+```js
 // playwright.config.ts
 import { defineConfig, devices } from '@playwright/test';
 

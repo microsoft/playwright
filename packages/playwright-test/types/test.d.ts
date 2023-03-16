@@ -1889,9 +1889,9 @@ export interface TestInfo {
    *
    * ```js
    * import { test, expect } from '@playwright/test';
+   * import { download } from './my-custom-helpers';
    *
    * test('basic test', async ({}, testInfo) => {
-   *   const { download } = require('./my-custom-helpers');
    *   const tmpPath = await download('a');
    *   await testInfo.attach('downloaded', { path: tmpPath });
    * });
@@ -3332,6 +3332,19 @@ type ConnectOptions = {
  * value is stored in its own file inside './playwright' directory, configurable with
  * [testConfig.storeDir](https://playwright.dev/docs/api/class-testconfig#test-config-store-dir).
  *
+ * ```js
+ * import { test, store } from '@playwright/test';
+ *
+ * test('get user name', async ({ page, context }) => {
+ *   await page.goto('/');
+ *   // Return mock user info from the store.
+ *   await page.route('**\/info/user', route => route.fulfill({ path: store.path('mocks/user.json')}))
+ *   await page.getByText('My Profile');
+ *   // Check that the name matches mock data.
+ *   await expect(page.getByLabel('Name')).toHaveText('John');
+ * });
+ * ```
+ *
  */
 export interface TestStore {
   /**
@@ -3371,7 +3384,7 @@ export interface TestStore {
  * [testProject.use](https://playwright.dev/docs/api/class-testproject#test-project-use).
  *
  * ```js
- * import type { PlaywrightTestConfig } from '@playwright/test';
+ * import { defineConfig } from '@playwright/test';
  * export default defineConfig({
  *   use: {
  *     headless: false,
@@ -3498,7 +3511,7 @@ export type VideoMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry';
  * [testProject.use](https://playwright.dev/docs/api/class-testproject#test-project-use).
  *
  * ```js
- * import type { PlaywrightTestConfig } from '@playwright/test';
+ * import { defineConfig } from '@playwright/test';
  * export default defineConfig({
  *   use: {
  *     headless: false,

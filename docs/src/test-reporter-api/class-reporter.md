@@ -41,7 +41,7 @@ module.exports = MyReporter;
 import { Reporter, FullConfig, Suite, TestCase, TestResult, FullResult } from '@playwright/test/reporter';
 
 class MyReporter implements Reporter {
-  constructor(options: {customOption: { customOption?: string } = {}) {
+  constructor(options: { customOption?: string } = {}) {
     console.log(`my-awesome-reporter setup with customOption set to ${options.customOption}`);
   }
 
@@ -66,18 +66,7 @@ export default MyReporter;
 
 Now use this reporter with [`property: TestConfig.reporter`]. Learn more about [using reporters](../test-reporters.md).
 
-```js tab=js-js
-// playwright.config.js
-// @ts-check
-
-const { defineConfig } = require('@playwright/test');
-
-module.exports = defineConfig({
-  reporter: ['./my-awesome-reporter.js', { customOption: 'some value' }],
-});
-```
-
-```js tab=js-ts
+```js
 // playwright.config.ts
 import { defineConfig } from '@playwright/test';
 
