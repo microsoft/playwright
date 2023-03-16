@@ -21,8 +21,9 @@ import { ChannelOwner } from './channelOwner';
 
 export class Tracing extends ChannelOwner<channels.TracingChannel> implements api.Tracing {
   private _includeSources = false;
-  private _metadataCollector: channels.ClientSideCallMetadata[] = [];
   _tracesDir: string | undefined;
+  private _stacksId: string | undefined;
+  private _isTracing = false;
 
   static from(channel: channels.TracingChannel): Tracing {
     return (channel as any)._object;
@@ -34,18 +35,26 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
 
   async start(options: { name?: string, title?: string, snapshots?: boolean, screenshots?: boolean, sources?: boolean } = {}) {
     this._includeSources = !!options.sources;
-    await this._wrapApiCall(async () => {
+    const traceName = await this._wrapApiCall(async () => {
       await this._channel.tracingStart(options);
-      await this._channel.tracingStartChunk({ name: options.name, title: options.title });
+      const response = await this._channel.tracingStartChunk({ name: options.name, title: options.title });
+      return response.traceName;
     });
-    this._metadataCollector = [];
-    this._connection.startCollectingCallMetadata(this._metadataCollector);
+    await this._startCollectingStacks(traceName);
   }
 
   async startChunk(options: { name?: string, title?: string } = {}) {
-    await this._channel.tracingStartChunk(options);
-    this._metadataCollector = [];
-    this._connection.startCollectingCallMetadata(this._metadataCollector);
+    const { traceName } = await this._channel.tracingStartChunk(options);
+    await this._startCollectingStacks(traceName);
+  }
+
+  private async _startCollectingStacks(traceName: string) {
+    if (!this._isTracing) {
+      this._isTracing = true;
+      this._connection.setIsTracing(true);
+    }
+    const result = await this._connection.localUtils()._channel.tracingStarted({ tracesDir: this._tracesDir, traceName });
+    this._stacksId = result.stacksId;
   }
 
   async stopChunk(options: { path?: string } = {}) {
@@ -60,12 +69,16 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
   }
 
   private async _doStopChunk(filePath: string | undefined) {
-    this._connection.stopCollectingCallMetadata(this._metadataCollector);
-    const metadata = this._metadataCollector;
-    this._metadataCollector = [];
+    if (this._isTracing) {
+      this._isTracing = false;
+      this._connection.setIsTracing(false);
+    }
+
     if (!filePath) {
-      await this._channel.tracingStopChunk({ mode: 'discard' });
       // Not interested in artifacts.
+      await this._channel.tracingStopChunk({ mode: 'discard' });
+      if (this._stacksId)
+        await this._connection.localUtils()._channel.traceDiscarded({ stacksId: this._stacksId });
       return;
     }
 
@@ -73,23 +86,24 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
 
     if (isLocal) {
       const result = await this._channel.tracingStopChunk({ mode: 'entries' });
-      await this._connection.localUtils()._channel.zip({ zipFile: filePath, entries: result.entries!, metadata, mode: 'write', includeSources: this._includeSources });
+      await this._connection.localUtils()._channel.zip({ zipFile: filePath, entries: result.entries!, mode: 'write', stacksId: this._stacksId, includeSources: this._includeSources });
       return;
     }
 
     const result = await this._channel.tracingStopChunk({ mode: 'archive' });
 
     // The artifact may be missing if the browser closed while stopping tracing.
-    if (!result.artifact)
+    if (!result.artifact) {
+      if (this._stacksId)
+        await this._connection.localUtils()._channel.traceDiscarded({ stacksId: this._stacksId });
       return;
+    }
 
     // Save trace to the final local file.
     const artifact = Artifact.from(result.artifact);
     await artifact.saveAs(filePath);
     await artifact.delete();
 
-    // Add local sources to the remote trace if necessary.
-    if (metadata.length)
-      await this._connection.localUtils()._channel.zip({ zipFile: filePath, entries: [], metadata, mode: 'append', includeSources: this._includeSources });
+    await this._connection.localUtils()._channel.zip({ zipFile: filePath, entries: [], mode: 'append', stacksId: this._stacksId, includeSources: this._includeSources });
   }
 }

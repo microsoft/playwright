@@ -58,7 +58,7 @@ type RecordingState = {
   traceFile: string,
   tracesDir: string,
   resourcesDir: string,
-  filesCount: number,
+  chunkOrdinal: number,
   networkSha1s: Set<string>,
   traceSha1s: Set<string>,
   recording: boolean;
@@ -132,7 +132,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     // and conflict.
     const traceName = options.name || createGuid();
     // Init the state synchronously.
-    this._state = { options, traceName, traceFile: '', networkFile: '', tracesDir: '', resourcesDir: '', filesCount: 0, traceSha1s: new Set(), networkSha1s: new Set(), recording: false };
+    this._state = { options, traceName, traceFile: '', networkFile: '', tracesDir: '', resourcesDir: '', chunkOrdinal: 0, traceSha1s: new Set(), networkSha1s: new Set(), recording: false };
     const state = this._state;
 
     state.tracesDir = await this._createTracesDirIfNeeded();
@@ -144,7 +144,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       this._harTracer.start();
   }
 
-  async startChunk(options: { name?: string, title?: string } = {}) {
+  async startChunk(options: { name?: string, title?: string } = {}): Promise<{ traceName: string }> {
     if (this._state && this._state.recording)
       await this.stopChunk({ mode: 'discard' });
 
@@ -154,13 +154,14 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       throw new Error('Cannot start a trace chunk while stopping');
 
     const state = this._state;
-    const suffix = state.filesCount ? `-${state.filesCount}` : ``;
-    state.filesCount++;
+    const suffix = state.chunkOrdinal ? `-${state.chunkOrdinal}` : ``;
+    state.chunkOrdinal++;
     state.traceFile = path.join(state.tracesDir, `${state.traceName}${suffix}.trace`);
     state.recording = true;
 
     if (options.name && options.name !== this._state.traceName)
       this._changeTraceName(this._state, options.name);
+
     this._appendTraceOperation(async () => {
       await mkdirIfNeeded(state.traceFile);
       await fs.promises.appendFile(state.traceFile, JSON.stringify({ ...this._contextCreatedEvent, title: options.title, wallTime: Date.now() }) + '\n');
@@ -171,6 +172,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       this._startScreencast();
     if (state.options.snapshots)
       await this._snapshotter?.start();
+    return { traceName: state.traceName };
   }
 
   private _startScreencast() {
@@ -194,6 +196,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   private async _changeTraceName(state: RecordingState, name: string) {
     await this._appendTraceOperation(async () => {
       const oldNetworkFile = state.networkFile;
+      state.traceName = name;
       state.traceFile = path.join(state.tracesDir, name + '.trace');
       state.networkFile = path.join(state.tracesDir, name + '.network');
       // Network file survives across chunks, so make a copy with the new name.
@@ -258,7 +261,8 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
         return {};
 
       // Network file survives across chunks, make a snapshot before returning the resulting entries.
-      const networkFile = path.join(state.networkFile, '..', createGuid());
+      const suffix = state.chunkOrdinal ? `-${state.chunkOrdinal}` : ``;
+      const networkFile = path.join(state.tracesDir, state.traceName + `${suffix}.network`);
       await fs.promises.copyFile(state.networkFile, networkFile);
 
       const entries: NameValue[] = [];
