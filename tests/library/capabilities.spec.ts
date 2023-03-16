@@ -188,17 +188,23 @@ it('should set CloseEvent.wasClean to false when the server terminates a WebSock
   expect(wasClean).toBe(false);
 });
 
-it('serviceWorker should intercept document request', async ({ page, server, browserName }) => {
+it('serviceWorker should intercept document request', async ({ page, server }) => {
   server.setRoute('/sw.js', (req, res) => {
     res.setHeader('Content-Type', 'application/javascript');
     res.end(`
       self.addEventListener('fetch', event => {
         event.respondWith(new Response('intercepted'));
       });
+      self.addEventListener('activate', event => {
+        event.waitUntil(clients.claim());
+      });
     `);
   });
   await page.goto(server.EMPTY_PAGE);
-  await page.evaluate(() => navigator.serviceWorker.register('/sw.js'));
+  await page.evaluate(async () => {
+    await navigator.serviceWorker.register('/sw.js');
+    await new Promise(resolve => navigator.serviceWorker.oncontrollerchange = resolve);
+  });
   await page.reload();
   expect(await page.textContent('body')).toBe('intercepted');
 });
