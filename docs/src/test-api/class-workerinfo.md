@@ -4,7 +4,7 @@
 
 `WorkerInfo` contains information about the worker that is running tests. It is available to [`method: Test.beforeAll`] and [`method: Test.afterAll`] hooks and worker-scoped fixtures.
 
-```ts
+```js
 import { test, expect } from '@playwright/test';
 
 test.beforeAll(async ({ browserName }, workerInfo) => {

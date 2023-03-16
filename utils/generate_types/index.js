@@ -360,7 +360,7 @@ class TypesGenerator {
           flavor = match[3];
           line = line.replace(/tab=js-\w+/, '').replace(/```\w+/, '```ts');
         }
-        skipExample = !["html", "yml", "bash", "js", "ts"].includes(lang) || flavor !== 'ts';
+        skipExample = !["html", "yml", "bash", "js"].includes(lang) || flavor !== 'ts';
       } else if (skipExample && line.trim().startsWith('```')) {
         skipExample = false;
         continue;

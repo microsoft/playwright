@@ -6,7 +6,7 @@ Playwright Test is based on the concept of the [test fixtures](../test-fixtures.
 
 Playwright Test looks at each test declaration, analyses the set of fixtures the test needs and prepares those fixtures specifically for the test. Values prepared by the fixtures are merged into a single object that is available to the `test`, hooks, annotations and other fixtures as a first parameter.
 
-```ts
+```js
 import { test, expect } from '@playwright/test';
 
 test('basic test', async ({ page }) => {
@@ -28,7 +28,7 @@ Learn how to [configure browser](../test-configuration.md) and see [available op
 
 **Usage**
 
-```ts
+```js
 test.beforeAll(async ({ browser }) => {
   const page = await browser.newPage();
   // ...
@@ -43,7 +43,7 @@ Name of the browser that runs tests. Defaults to `'chromium'`. Useful to [annota
 
 **Usage**
 
-```ts
+```js
 test('skip this test in Firefox', async ({ page, browserName }) => {
   test.skip(browserName === 'firefox', 'Still working on it');
   // ...
@@ -62,7 +62,7 @@ Default [`property: Fixtures.page`] belongs to this context.
 
 **Usage**
 
-```ts
+```js
 test('example test', async ({ page, context }) => {
   await context.route('*external.com/*', route => route.abort());
   // ...
@@ -79,7 +79,7 @@ This is the most common fixture used in a test.
 
 **Usage**
 
-```ts
+```js
 import { test, expect } from '@playwright/test';
 
 test('basic test', async ({ page }) => {
@@ -99,7 +99,7 @@ Isolated [APIRequestContext] instance for each test.
 
 **Usage**
 
-```ts
+```js
 import { test, expect } from '@playwright/test';
 
 test('basic test', async ({ request }) => {

@@ -6,7 +6,7 @@ Playwright Test provides many options to configure test environment, [Browser], 
 
 These options are usually provided in the [configuration file](../test-configuration.md) through [`property: TestConfig.use`] and [`property: TestProject.use`].
 
-```ts
+```js
 import { defineConfig } from '@playwright/test';
 export default defineConfig({
   use: {
@@ -20,7 +20,7 @@ export default defineConfig({
 
 Alternatively, with [`method: Test.use`] you can override some options for a file.
 
-```ts
+```js
 // example.spec.ts
 import { test, expect } from '@playwright/test';
 
@@ -44,7 +44,7 @@ test('my portrait test', async ({ page }) => {
 
 Name of the browser that runs tests. Defaults to `'chromium'`. Most of the time you should set `browserName` in your [TestConfig]:
 
-```ts
+```js
 // playwright.config.ts
 import { defineConfig, devices } from '@playwright/test';
 

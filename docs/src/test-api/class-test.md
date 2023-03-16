@@ -4,7 +4,7 @@
 
 Playwright Test provides a `test` function to declare tests and `expect` function to write assertions.
 
-```ts
+```js
 import { test, expect } from '@playwright/test';
 
 test('basic test', async ({ page }) => {
@@ -21,7 +21,7 @@ Declares a test.
 
 **Usage**
 
-```ts
+```js
 import { test, expect } from '@playwright/test';
 
 test('basic test', async ({ page }) => {
@@ -57,7 +57,7 @@ Note that worker process is restarted on test failures, and `afterAll` hook runs
 
 **Usage**
 
-```ts
+```js
 test.afterAll(async () => {
   console.log('Done with tests');
   // ...
@@ -85,7 +85,7 @@ You can access all the same [Fixtures] as the test function itself, and also the
 
 **Usage**
 
-```ts
+```js
 // example.spec.ts
 import { test, expect } from '@playwright/test';
 
@@ -123,7 +123,7 @@ You can use [`method: Test.afterAll`] to teardown any resources set up in `befor
 
 **Usage**
 
-```ts
+```js
 // example.spec.ts
 import { test, expect } from '@playwright/test';
 
@@ -163,7 +163,7 @@ You can use [`method: Test.afterEach`] to teardown any resources set up in `befo
 
 **Usage**
 
-```ts
+```js
 // example.spec.ts
 import { test, expect } from '@playwright/test';
 
@@ -193,7 +193,7 @@ Declares a group of tests.
 
 **Usage**
 
-```ts
+```js
 test.describe('two tests', () => {
   test('one', async ({ page }) => {
     // ...
@@ -225,7 +225,7 @@ Declares an anonymous group of tests. This is convenient to give a group of test
 
 **Usage**
 
-```ts
+```js
 test.describe(() => {
   test.use({ colorScheme: 'dark' });
 
@@ -313,7 +313,7 @@ Declares a test group similarly to [`method: Test.describe#1`]. Tests in this gr
 
 **Usage**
 
-```ts
+```js
 test.describe.fixme('broken tests', () => {
   test('example', async ({ page }) => {
     // This test will not run
@@ -342,7 +342,7 @@ Declares a focused group of tests. If there are some focused tests or suites, al
 
 **Usage**
 
-```ts
+```js
 test.describe.only('focused group', () => {
   test('in the focused group', async ({ page }) => {
     // This test will run
@@ -375,7 +375,7 @@ Declares a group of tests that could be run in parallel. By default, tests in a 
 
 **Usage**
 
-```ts
+```js
 test.describe.parallel('group', () => {
   test('runs in parallel 1', async ({ page }) => {});
   test('runs in parallel 2', async ({ page }) => {});
@@ -406,7 +406,7 @@ Declares a focused group of tests that could be run in parallel. This is similar
 
 **Usage**
 
-```ts
+```js
 test.describe.parallel.only('group', () => {
   test('runs in parallel 1', async ({ page }) => {});
   test('runs in parallel 2', async ({ page }) => {});
@@ -439,7 +439,7 @@ Using serial is not recommended. It is usually better to make your tests isolate
 
 **Usage**
 
-```ts
+```js
 test.describe.serial('group', () => {
   test('runs first', async ({ page }) => {});
   test('runs second', async ({ page }) => {});
@@ -472,7 +472,7 @@ Using serial is not recommended. It is usually better to make your tests isolate
 
 **Usage**
 
-```ts
+```js
 test.describe.serial.only('group', () => {
   test('runs first', async ({ page }) => {
   });
@@ -503,7 +503,7 @@ Declares a skipped test group, similarly to [`method: Test.describe#1`]. Tests i
 
 **Usage**
 
-```ts
+```js
 test.describe.skip('skipped group', () => {
   test('example', async ({ page }) => {
     // This test will not run
@@ -600,7 +600,7 @@ export const test = base.extend<Options & { todoPage: TodoPage }>({
 
 Then use the fixture in the test.
 
-```ts
+```js
 // example.spec.ts
 import { test } from './my-test';
 
@@ -668,7 +668,7 @@ Unconditionally marks a test as "should fail". Playwright Test runs this test an
 
 **Usage**
 
-```ts
+```js
 import { test, expect } from '@playwright/test';
 
 test('not yet ready', async ({ page }) => {
@@ -684,7 +684,7 @@ Conditionally mark a test as "should fail" with an optional description.
 
 **Usage**
 
-```ts
+```js
 import { test, expect } from '@playwright/test';
 
 test('fail in WebKit', async ({ page, browserName }) => {
@@ -713,7 +713,7 @@ Conditionally mark all tests in a file or [`method: Test.describe#1`] group as "
 
 **Usage**
 
-```ts
+```js
 import { test, expect } from '@playwright/test';
 
 test.fail(({ browserName }) => browserName === 'webkit');
@@ -747,7 +747,7 @@ Declares a test to be fixed, similarly to [`method: Test.(call)`]. This test wil
 **Usage**
 
 
-```ts
+```js
 import { test, expect } from '@playwright/test';
 
 test.fixme('test to be fixed', async ({ page }) => {
@@ -776,7 +776,7 @@ Mark a test as "fixme", with the intention to fix it. Test is immediately aborte
 
 **Usage**
 
-```ts
+```js
 import { test, expect } from '@playwright/test';
 
 test('test to be fixed', async ({ page }) => {
@@ -787,7 +787,7 @@ test('test to be fixed', async ({ page }) => {
 
 Mark all tests in a file or [`method: Test.describe#1`] group as "fixme".
 
-```ts
+```js
 import { test, expect } from '@playwright/test';
 
 test.fixme();
@@ -808,7 +808,7 @@ Conditionally mark a test as "fixme" with an optional description.
 
 **Usage**
 
-```ts
+```js
 import { test, expect } from '@playwright/test';
 
 test('broken in WebKit', async ({ page, browserName }) => {
@@ -840,7 +840,7 @@ Conditionally mark all tests in a file or [`method: Test.describe#1`] group as "
 
 **Usage**
 
-```ts
+```js
 import { test, expect } from '@playwright/test';
 
 test.fixme(({ browserName }) => browserName === 'webkit');
@@ -875,7 +875,7 @@ Returns information about the currently running test. This method can only be ca
 
 **Usage**
 
-```ts
+```js
 test('example test', async ({ page }) => {
   // ...
   await test.info().attach('screenshot', { body: await page.screenshot(), contentType: 'image/png' });
@@ -890,7 +890,7 @@ Declares a focused test. If there are some focused tests or suites, all of them 
 
 **Usage**
 
-```ts
+```js
 test.only('focus this test', async ({ page }) => {
   // Run only focused tests in the entire project.
 });
@@ -920,7 +920,7 @@ Timeout for the currently running test is available through [`property: TestInfo
 
 * Changing test timeout.
 
-  ```ts
+  ```js
   test('very slow test', async ({ page }) => {
     test.setTimeout(120000);
     // ...
@@ -929,7 +929,7 @@ Timeout for the currently running test is available through [`property: TestInfo
 
 * Changing timeout from a slow `beforeEach` or `afterEach` hook. Note that this affects the test timeout that is shared with `beforeEach`/`afterEach` hooks.
 
-  ```ts
+  ```js
   test.beforeEach(async ({ page }, testInfo) => {
     // Extend timeout for all tests running this hook by 30 seconds.
     test.setTimeout(testInfo.timeout + 30000);
@@ -938,7 +938,7 @@ Timeout for the currently running test is available through [`property: TestInfo
 
 * Changing timeout for a `beforeAll` or `afterAll` hook. Note this affects the hook's timeout, not the test timeout.
 
-  ```ts
+  ```js
   test.beforeAll(async () => {
     // Set timeout for this hook.
     test.setTimeout(60000);
@@ -947,7 +947,7 @@ Timeout for the currently running test is available through [`property: TestInfo
 
 * Changing timeout for all tests in a [`method: Test.describe#1`] group.
 
-  ```ts
+  ```js
   test.describe('group', () => {
     // Applies to all tests in this group.
     test.describe.configure({ timeout: 60000 });
@@ -973,7 +973,7 @@ Declares a skipped test, similarly to [`method: Test.(call)`]. Skipped test is n
 
 **Usage**
 
-```ts
+```js
 import { test, expect } from '@playwright/test';
 
 test.skip('broken test', async ({ page }) => {
@@ -1002,7 +1002,7 @@ Unconditionally skip a test. Test is immediately aborted when you call [`method:
 
 **Usage**
 
-```ts
+```js
 import { test, expect } from '@playwright/test';
 
 test('skipped test', async ({ page }) => {
@@ -1013,7 +1013,7 @@ test('skipped test', async ({ page }) => {
 
 Unconditionally skip all tests in a file or [`method: Test.describe#1`] group:
 
-```ts
+```js
 import { test, expect } from '@playwright/test';
 
 test.skip();
@@ -1034,7 +1034,7 @@ Conditionally skip a test with an optional description.
 
 **Usage**
 
-```ts
+```js
 import { test, expect } from '@playwright/test';
 
 test('skip in WebKit', async ({ page, browserName }) => {
@@ -1045,7 +1045,7 @@ test('skip in WebKit', async ({ page, browserName }) => {
 
 Skip from [`method: Test.beforeEach`] hook:
 
-```ts
+```js
 import { test, expect } from '@playwright/test';
 
 test.beforeEach(async ({ page }) => {
@@ -1076,7 +1076,7 @@ Conditionally skips all tests in a file or [`method: Test.describe#1`] group.
 
 **Usage**
 
-```ts
+```js
 import { test, expect } from '@playwright/test';
 
 test.skip(({ browserName }) => browserName === 'webkit');
@@ -1115,7 +1115,7 @@ Unconditionally marks a test as "slow". Slow test will be given triple the defau
 
 **Usage**
 
-```ts
+```js
 import { test, expect } from '@playwright/test';
 
 test('slow test', async ({ page }) => {
@@ -1131,7 +1131,7 @@ Conditionally mark a test as "slow" with an optional description. Slow test will
 
 **Usage**
 
-```ts
+```js
 import { test, expect } from '@playwright/test';
 
 test('slow in WebKit', async ({ page, browserName }) => {
@@ -1160,7 +1160,7 @@ Conditionally mark all tests in a file or [`method: Test.describe#1`] group as "
 
 **Usage**
 
-```ts
+```js
 import { test, expect } from '@playwright/test';
 
 test.slow(({ browserName }) => browserName === 'webkit');
@@ -1194,7 +1194,7 @@ Declares a test step.
 
 **Usage**
 
-```ts
+```js
 import { test, expect } from '@playwright/test';
 
 test('test', async ({ page }) => {
@@ -1208,7 +1208,7 @@ test('test', async ({ page }) => {
 
 The method returns the value retuned by the step callback.
 
-```ts
+```js
 import { test, expect } from '@playwright/test';
 
 test('test', async ({ page }) => {
@@ -1242,7 +1242,7 @@ Specifies options or fixtures to use in a single test file or a [`method: Test.d
 
 **Usage**
 
-```ts
+```js
 import { test, expect } from '@playwright/test';
 
 test.use({ locale: 'en-US' });
@@ -1258,7 +1258,7 @@ test('test with locale', async ({ page }) => {
 
 It is also possible to override a fixture by providing a function.
 
-```ts
+```js
 import { test, expect } from '@playwright/test';
 
 test.use({

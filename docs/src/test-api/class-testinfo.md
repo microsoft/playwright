@@ -4,7 +4,7 @@
 
 `TestInfo` contains information about currently running test. It is available to any test function, [`method: Test.beforeEach`] and [`method: Test.afterEach`] hooks and test-scoped fixtures. `TestInfo` provides utilities to control test execution: attach files, update test timeout, determine which test is currently running and whether it was retried, etc.
 
-```ts
+```js
 import { test, expect } from '@playwright/test';
 
 test('basic test', async ({ page }, testInfo) => {
@@ -43,7 +43,7 @@ Attach a value or a file from disk to the current test. Some reporters show test
 
 For example, you can attach a screenshot to the test:
 
-```ts
+```js
 import { test, expect } from '@playwright/test';
 
 test('basic test', async ({ page }, testInfo) => {
@@ -55,7 +55,7 @@ test('basic test', async ({ page }, testInfo) => {
 
 Or you can attach files returned by your APIs:
 
-```ts
+```js
 import { test, expect } from '@playwright/test';
 import { download } from './my-custom-helpers';
 
@@ -142,7 +142,7 @@ Expected status for the currently running test. This is usually `'passed'`, exce
 
 Expected status is usually compared with the actual [`property: TestInfo.status`]:
 
-```ts
+```js
 import { test, expect } from '@playwright/test';
 
 test.afterEach(async ({}, testInfo) => {
@@ -242,7 +242,7 @@ Absolute path to the output directory for this specific test run. Each test run 
 
 Returns a path inside the [`property: TestInfo.outputDir`] where the test can safely put a temporary file. Guarantees that tests running in parallel will not interfere with each other.
 
-```ts
+```js
 import { test, expect } from '@playwright/test';
 import fs from 'fs';
 
@@ -288,7 +288,7 @@ Specifies a unique repeat index when running in "repeat each" mode. This mode is
 
 Specifies the retry number when the test is retried after a failure. The first test run has [`property: TestInfo.retry`] equal to zero, the first retry has it equal to one, and so on. Learn more about [retries](../test-retries.md#retries).
 
-```ts
+```js
 import { test, expect } from '@playwright/test';
 
 test.beforeEach(async ({}, testInfo) => {
@@ -312,7 +312,7 @@ Changes the timeout for the currently running test. Zero means no timeout. Learn
 
 Timeout is usually specified in the [configuration file](../test-configuration.md), but it could be useful to change the timeout in certain scenarios:
 
-```ts
+```js
 import { test, expect } from '@playwright/test';
 
 test.beforeEach(async ({ page }, testInfo) => {
@@ -407,7 +407,7 @@ Actual status for the currently running test. Available after the test has finis
 
 Status is usually compared with the [`property: TestInfo.expectedStatus`]:
 
-```ts
+```js
 import { test, expect } from '@playwright/test';
 
 test.afterEach(async ({}, testInfo) => {
@@ -436,7 +436,7 @@ Timeout in milliseconds for the currently running test. Zero means no timeout. L
 
 Timeout is usually specified in the [configuration file](../test-configuration.md)
 
-```ts
+```js
 import { test, expect } from '@playwright/test';
 
 test.beforeEach(async ({ page }, testInfo) => {
