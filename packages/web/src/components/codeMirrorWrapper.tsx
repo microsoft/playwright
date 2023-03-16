@@ -53,7 +53,7 @@ export const CodeMirrorWrapper: React.FC<SourceProps> = ({
 }) => {
   const codemirrorElement = React.useRef<HTMLDivElement>(null);
   const [modulePromise] = React.useState<Promise<CodeMirror>>(import('./codeMirrorModule').then(m => m.default));
-  const codemirrorRef = React.useRef<{ cm: CodeMirror.Editor, highlight: SourceHighlight[], widgets: CodeMirror.LineWidget[] } | null>(null);
+  const codemirrorRef = React.useRef<{ cm: CodeMirror.Editor, highlight?: SourceHighlight[], widgets?: CodeMirror.LineWidget[] } | null>(null);
   const [codemirror, setCodemirror] = React.useState<CodeMirror.Editor>();
 
   React.useEffect(() => {
@@ -92,7 +92,7 @@ export const CodeMirrorWrapper: React.FC<SourceProps> = ({
         lineNumbers,
         lineWrapping: wrapLines,
       });
-      codemirrorRef.current = { cm, highlight: [], widgets: [] };
+      codemirrorRef.current = { cm };
       setCodemirror(cm);
       return cm;
     })();
@@ -108,43 +108,47 @@ export const CodeMirrorWrapper: React.FC<SourceProps> = ({
       codemirror.on('change', (codemirror as any)[listenerSymbol]);
     }
 
+    let valueChanged = false;
     if (codemirror.getValue() !== text) {
       codemirror.setValue(text);
+      valueChanged = true;
       if (focusOnChange) {
         codemirror.execCommand('selectAll');
         codemirror.focus();
       }
     }
 
-    // Line highlight.
-    for (const h of codemirrorRef.current!.highlight)
-      codemirror.removeLineClass(h.line - 1, 'wrap');
-    for (const h of highlight || [])
-      codemirror.addLineClass(h.line - 1, 'wrap', `source-line-${h.type}`);
-    codemirrorRef.current!.highlight = highlight || [];
+    if (valueChanged || JSON.stringify(highlight) !== JSON.stringify(codemirrorRef.current!.highlight)) {
+      // Line highlight.
+      for (const h of codemirrorRef.current!.highlight || [])
+        codemirror.removeLineClass(h.line - 1, 'wrap');
+      for (const h of highlight || [])
+        codemirror.addLineClass(h.line - 1, 'wrap', `source-line-${h.type}`);
 
-    // Error widgets.
-    for (const w of codemirrorRef.current!.widgets)
-      codemirror.removeLineWidget(w);
-    const widgets: CodeMirror.LineWidget[] = [];
-    for (const h of highlight || []) {
-      if (h.type !== 'error')
-        continue;
+      // Error widgets.
+      for (const w of codemirrorRef.current!.widgets || [])
+        codemirror.removeLineWidget(w);
+      const widgets: CodeMirror.LineWidget[] = [];
+      for (const h of highlight || []) {
+        if (h.type !== 'error')
+          continue;
 
-      const line = codemirrorRef.current?.cm.getLine(h.line - 1);
-      if (line) {
-        const underlineWidgetElement = document.createElement('div');
-        underlineWidgetElement.className = 'source-line-error-underline';
-        underlineWidgetElement.innerHTML = '&nbsp;'.repeat(line.length || 1);
-        widgets.push(codemirror.addLineWidget(h.line, underlineWidgetElement, { above: true, coverGutter: false }));
+        const line = codemirrorRef.current?.cm.getLine(h.line - 1);
+        if (line) {
+          const underlineWidgetElement = document.createElement('div');
+          underlineWidgetElement.className = 'source-line-error-underline';
+          underlineWidgetElement.innerHTML = '&nbsp;'.repeat(line.length || 1);
+          widgets.push(codemirror.addLineWidget(h.line, underlineWidgetElement, { above: true, coverGutter: false }));
+        }
+
+        const errorWidgetElement = document.createElement('div');
+        errorWidgetElement.innerHTML = ansi2htmlMarkup(h.message || '');
+        errorWidgetElement.className = 'source-line-error-widget';
+        widgets.push(codemirror.addLineWidget(h.line, errorWidgetElement, { above: true, coverGutter: false }));
       }
-
-      const errorWidgetElement = document.createElement('div');
-      errorWidgetElement.innerHTML = ansi2htmlMarkup(h.message || '');
-      errorWidgetElement.className = 'source-line-error-widget';
-      widgets.push(codemirror.addLineWidget(h.line, errorWidgetElement, { above: true, coverGutter: false }));
+      codemirrorRef.current!.highlight = highlight;
+      codemirrorRef.current!.widgets = widgets;
     }
-    codemirrorRef.current!.widgets = widgets;
 
     if (revealLine && codemirrorRef.current!.cm.lineCount() >= revealLine)
       codemirror.scrollIntoView({ line: revealLine - 1, ch: 0 }, 50);
