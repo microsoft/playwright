@@ -319,7 +319,7 @@ export interface FullResult {
  * import { Reporter, FullConfig, Suite, TestCase, TestResult, FullResult } from '@playwright/test/reporter';
  *
  * class MyReporter implements Reporter {
- *   constructor(options: {customOption: { customOption?: string } = {}) {
+ *   constructor(options: { customOption?: string } = {}) {
  *     console.log(`my-awesome-reporter setup with customOption set to ${options.customOption}`);
  *   }
  *
@@ -346,7 +346,7 @@ export interface FullResult {
  * [testConfig.reporter](https://playwright.dev/docs/api/class-testconfig#test-config-reporter). Learn more about
  * [using reporters](https://playwright.dev/docs/test-reporters).
  *
- * ```js
+ * ```ts
  * // playwright.config.ts
  * import { defineConfig } from '@playwright/test';
  *
