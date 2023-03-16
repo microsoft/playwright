@@ -2,15 +2,7 @@
 * since: v1.10
 * langs: js
 
-`WorkerInfo` contains information about the worker that is running tests. It is available to [`method: Test.beforeAll`] and [`method: Test.afterAll`] hooks and worker-scoped fixtures.
-
-```js
-import { test, expect } from '@playwright/test';
-
-test.beforeAll(async ({ browserName }, workerInfo) => {
-  console.log(`Running ${browserName} in worker #${workerInfo.workerIndex}`);
-});
-```
+`WorkerInfo` contains information about the worker that is running tests and is available to worker-scoped fixtures. `WorkerInfo` is a subset of [TestInfo] that is available in many other places.
 
 ## property: WorkerInfo.config
 * since: v1.10
