@@ -271,6 +271,8 @@ export class Chromium extends BrowserType {
       chromeArguments.push('about:blank');
     else
       chromeArguments.push('--no-startup-window');
+    if (process.env.PWTEST_DISABLE_GPU)
+      chromeArguments.push('--disable-gpu');
     return chromeArguments;
   }
 
