@@ -80,15 +80,41 @@ export function copy(text: string) {
 }
 
 export function useSetting<S>(name: string, defaultValue: S): [S, React.Dispatch<React.SetStateAction<S>>] {
-  const string = localStorage.getItem(name);
-  let value = defaultValue;
-  if (string !== null)
-    value = JSON.parse(string);
-
+  const value = settings.getObject(name, defaultValue);
   const [state, setState] = React.useState<S>(value);
   const setStateWrapper = (value: React.SetStateAction<S>) => {
-    localStorage.setItem(name, JSON.stringify(value));
+    settings.setObject(name, value);
     setState(value);
   };
   return [state, setStateWrapper];
 }
+
+export class Settings {
+  getString(name: string, defaultValue: string): string {
+    return localStorage[name] || defaultValue;
+  }
+
+  setString(name: string, value: string) {
+    localStorage[name] = value;
+    if ((window as any).saveSettings)
+      (window as any).saveSettings();
+  }
+
+  getObject<T>(name: string, defaultValue: T): T {
+    if (!localStorage[name])
+      return defaultValue;
+    try {
+      return JSON.parse(localStorage[name]);
+    } catch {
+      return defaultValue;
+    }
+  }
+
+  setObject<T>(name: string, value: T) {
+    localStorage[name] = JSON.stringify(value);
+    if ((window as any).saveSettings)
+      (window as any).saveSettings();
+  }
+}
+
+export const settings = new Settings();

@@ -20,7 +20,7 @@ import '@web/common.css';
 import React from 'react';
 import { TreeView } from '@web/components/treeView';
 import type { TreeState } from '@web/components/treeView';
-import { TeleReporterReceiver, TeleSuite } from '@testIsomorphic/teleReceiver';
+import { baseFullConfig, TeleReporterReceiver, TeleSuite } from '@testIsomorphic/teleReceiver';
 import type { TeleTestCase } from '@testIsomorphic/teleReceiver';
 import type { FullConfig, Suite, TestCase, TestResult, Location } from '../../../playwright-test/types/testReporter';
 import { SplitView } from '@web/components/splitView';
@@ -34,8 +34,9 @@ import { XtermWrapper } from '@web/components/xtermWrapper';
 import { Expandable } from '@web/components/expandable';
 import { toggleTheme } from '@web/theme';
 import { artifactsFolderName } from '@testIsomorphic/folders';
+import { settings } from '@web/uiUtils';
 
-let updateRootSuite: (rootSuite: Suite, progress: Progress) => void = () => {};
+let updateRootSuite: (config: FullConfig, rootSuite: Suite, progress: Progress) => void = () => {};
 let runWatchedTests = (fileName: string) => {};
 let xtermSize = { cols: 80, rows: 24 };
 
@@ -49,6 +50,11 @@ const xtermDataSource: XtermDataSource = {
   },
 };
 
+type TestModel = {
+  config: FullConfig | undefined;
+  rootSuite: Suite | undefined;
+};
+
 export const WatchModeView: React.FC<{}> = ({
 }) => {
   const [filterText, setFilterText] = React.useState<string>('');
@@ -60,7 +66,7 @@ export const WatchModeView: React.FC<{}> = ({
     ['skipped', false],
   ]));
   const [projectFilters, setProjectFilters] = React.useState<Map<string, boolean>>(new Map());
-  const [rootSuite, setRootSuite] = React.useState<{ value: Suite | undefined }>({ value: undefined });
+  const [testModel, setTestModel] = React.useState<TestModel>({ config: undefined, rootSuite: undefined });
   const [progress, setProgress] = React.useState<Progress>({ total: 0, passed: 0, failed: 0, skipped: 0 });
   const [selectedTest, setSelectedTest] = React.useState<TestCase | undefined>(undefined);
   const [visibleTestIds, setVisibleTestIds] = React.useState<string[]>([]);
@@ -71,7 +77,7 @@ export const WatchModeView: React.FC<{}> = ({
 
   const reloadTests = () => {
     setIsLoading(true);
-    updateRootSuite(new TeleSuite('', 'root'), { total: 0, passed: 0, failed: 0, skipped: 0 });
+    updateRootSuite(baseFullConfig, new TeleSuite('', 'root'), { total: 0, passed: 0, failed: 0, skipped: 0 });
     refreshRootSuite(true).then(() => {
       setIsLoading(false);
     });
@@ -82,19 +88,20 @@ export const WatchModeView: React.FC<{}> = ({
     reloadTests();
   }, []);
 
-  updateRootSuite = (rootSuite: Suite, newProgress: Progress) => {
+  updateRootSuite = (config: FullConfig, rootSuite: Suite, newProgress: Progress) => {
+    const selectedProjects = config.configFile ? settings.getObject<string[] | undefined>(config.configFile + ':projects', undefined) : undefined;
     for (const projectName of projectFilters.keys()) {
       if (!rootSuite.suites.find(s => s.title === projectName))
         projectFilters.delete(projectName);
     }
     for (const projectSuite of rootSuite.suites) {
       if (!projectFilters.has(projectSuite.title))
-        projectFilters.set(projectSuite.title, false);
+        projectFilters.set(projectSuite.title, !!selectedProjects?.includes(projectSuite.title));
     }
-    if (projectFilters.size && ![...projectFilters.values()].includes(true))
+    if (!selectedProjects && projectFilters.size && ![...projectFilters.values()].includes(true))
       projectFilters.set(projectFilters.entries().next().value[0], true);
 
-    setRootSuite({ value: rootSuite });
+    setTestModel({ config, rootSuite });
     setProjectFilters(new Map(projectFilters));
     setProgress(newProgress);
   };
@@ -103,11 +110,11 @@ export const WatchModeView: React.FC<{}> = ({
     // Clear test results.
     {
       const testIdSet = new Set(testIds);
-      for (const test of rootSuite.value?.allTests() || []) {
+      for (const test of testModel.rootSuite?.allTests() || []) {
         if (testIdSet.has(test.id))
           (test as TeleTestCase)._createTestResult('pending');
       }
-      setRootSuite({ ...rootSuite });
+      setTestModel({ ...testModel });
     }
 
     const time = '  [' + new Date().toLocaleTimeString() + ']';
@@ -154,6 +161,7 @@ export const WatchModeView: React.FC<{}> = ({
           setStatusFilters={setStatusFilters}
           projectFilters={projectFilters}
           setProjectFilters={setProjectFilters}
+          testModel={testModel}
           runTests={() => runTests(visibleTestIds)} />
         <Toolbar>
           <div className='section-title'>Tests</div>
@@ -165,7 +173,7 @@ export const WatchModeView: React.FC<{}> = ({
           statusFilters={statusFilters}
           projectFilters={projectFilters}
           filterText={filterText}
-          rootSuite={rootSuite}
+          testModel={testModel}
           runningState={runningState}
           runTests={runTests}
           onTestSelected={setSelectedTest}
@@ -191,8 +199,9 @@ const FiltersView: React.FC<{
   setStatusFilters: (filters: Map<string, boolean>) => void;
   projectFilters: Map<string, boolean>;
   setProjectFilters: (filters: Map<string, boolean>) => void;
+  testModel: TestModel | undefined,
   runTests: () => void;
-}> = ({ filterText, setFilterText, statusFilters, setStatusFilters, projectFilters, setProjectFilters, runTests }) => {
+}> = ({ filterText, setFilterText, statusFilters, setStatusFilters, projectFilters, setProjectFilters, testModel, runTests }) => {
   const [expanded, setExpanded] = React.useState(false);
   const inputRef = React.useRef<HTMLInputElement>(null);
   React.useEffect(() => {
@@ -235,6 +244,9 @@ const FiltersView: React.FC<{
               const copy = new Map(projectFilters);
               copy.set(projectName, !copy.get(projectName));
               setProjectFilters(copy);
+              const configFile = testModel?.config?.configFile;
+              if (configFile)
+                settings.setObject(configFile + ':projects', [...copy.entries()].filter(([_, v]) => v).map(([k]) => k));
             }}/>
             <div>{projectName}</div>
           </label>
@@ -254,18 +266,18 @@ const TestList: React.FC<{
   statusFilters: Map<string, boolean>,
   projectFilters: Map<string, boolean>,
   filterText: string,
-  rootSuite: { value: Suite | undefined },
+  testModel: { rootSuite: Suite | undefined, config: FullConfig | undefined },
   runTests: (testIds: string[]) => void,
   runningState?: { testIds: Set<string>, itemSelectedByUser?: boolean },
   setVisibleTestIds: (testIds: string[]) => void,
   onTestSelected: (test: TestCase | undefined) => void,
-}> = ({ statusFilters, projectFilters, filterText, rootSuite, runTests, runningState, onTestSelected, setVisibleTestIds }) => {
+}> = ({ statusFilters, projectFilters, filterText, testModel, runTests, runningState, onTestSelected, setVisibleTestIds }) => {
   const [treeState, setTreeState] = React.useState<TreeState>({ expandedItems: new Map() });
   const [selectedTreeItemId, setSelectedTreeItemId] = React.useState<string | undefined>();
   const [watchedTreeIds] = React.useState<Set<string>>(new Set());
 
   const { rootItem, treeItemMap } = React.useMemo(() => {
-    const rootItem = createTree(rootSuite.value, projectFilters);
+    const rootItem = createTree(testModel.rootSuite, projectFilters);
     filterTree(rootItem, filterText, statusFilters);
     hideOnlyTests(rootItem);
     const treeItemMap = new Map<string, TreeItem>();
@@ -279,7 +291,7 @@ const TestList: React.FC<{
     visit(rootItem);
     setVisibleTestIds([...visibleTestIds]);
     return { rootItem, treeItemMap };
-  }, [filterText, rootSuite, statusFilters, projectFilters, setVisibleTestIds]);
+  }, [filterText, testModel, statusFilters, projectFilters, setVisibleTestIds]);
 
   React.useEffect(() => {
     // Look for a first failure within the run batch to select it.
@@ -439,15 +451,15 @@ declare global {
 let receiver: TeleReporterReceiver | undefined;
 
 let throttleTimer: NodeJS.Timeout | undefined;
-let throttleData: { rootSuite: Suite, progress: Progress } | undefined;
+let throttleData: { config: FullConfig, rootSuite: Suite, progress: Progress } | undefined;
 const throttledAction = () => {
   clearTimeout(throttleTimer);
   throttleTimer = undefined;
-  updateRootSuite(throttleData!.rootSuite, throttleData!.progress);
+  updateRootSuite(throttleData!.config, throttleData!.rootSuite, throttleData!.progress);
 };
 
-const throttleUpdateRootSuite = (rootSuite: Suite, progress: Progress, immediate = false) => {
-  throttleData = { rootSuite, progress };
+const throttleUpdateRootSuite = (config: FullConfig, rootSuite: Suite, progress: Progress, immediate = false) => {
+  throttleData = { config, rootSuite, progress };
   if (immediate)
     throttledAction();
   else if (!throttleTimer)
@@ -465,23 +477,25 @@ const refreshRootSuite = (eraseResults: boolean): Promise<void> => {
     failed: 0,
     skipped: 0,
   };
+  let config: FullConfig;
   receiver = new TeleReporterReceiver({
-    onBegin: (config: FullConfig, suite: Suite) => {
+    onBegin: (c: FullConfig, suite: Suite) => {
       if (!rootSuite)
         rootSuite = suite;
+      config = c;
       progress.total = suite.allTests().length;
       progress.passed = 0;
       progress.failed = 0;
       progress.skipped = 0;
-      throttleUpdateRootSuite(rootSuite, progress, true);
+      throttleUpdateRootSuite(config, rootSuite, progress, true);
     },
 
     onEnd: () => {
-      throttleUpdateRootSuite(rootSuite, progress, true);
+      throttleUpdateRootSuite(config, rootSuite, progress, true);
     },
 
     onTestBegin: () => {
-      throttleUpdateRootSuite(rootSuite, progress);
+      throttleUpdateRootSuite(config, rootSuite, progress);
     },
 
     onTestEnd: (test: TestCase) => {
@@ -491,7 +505,7 @@ const refreshRootSuite = (eraseResults: boolean): Promise<void> => {
         ++progress.failed;
       else
         ++progress.passed;
-      throttleUpdateRootSuite(rootSuite, progress);
+      throttleUpdateRootSuite(config, rootSuite, progress);
     },
   });
   return sendMessage('list', {});
