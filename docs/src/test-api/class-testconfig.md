@@ -475,23 +475,6 @@ export default defineConfig({
 });
 ```
 
-## property: TestConfig.storeDir
-* since: v1.32
-- type: ?<[string]>
-
-Directory where the values accessible via [TestStore] are persisted. All pahts in [TestStore] are relative to `storeDir`. Defaults to `./playwright`.
-
-**Usage**
-
-```js
-// playwright.config.ts
-import { defineConfig } from '@playwright/test';
-
-export default defineConfig({
-  storeDir: './playwright-store',
-});
-```
-
 ## property: TestConfig.testDir
 * since: v1.10
 - type: ?<[string]>

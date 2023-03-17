@@ -111,7 +111,7 @@ export class ConfigLoader {
       config.snapshotDir = path.resolve(configDir, config.snapshotDir);
 
     this._fullConfig._internal.configDir = configDir;
-    this._fullConfig._internal.storeDir = path.resolve(configDir, config.storeDir || 'playwright');
+    this._fullConfig._internal.storeDir = path.resolve(configDir, (config as any)._storeDir || 'playwright');
     this._fullConfig.configFile = configFile;
     this._fullConfig.rootDir = config.testDir || configDir;
     this._fullConfig._internal.globalOutputDir = takeFirst(config.outputDir, throwawayArtifactsPath, baseFullConfig._internal.globalOutputDir);
