@@ -21,26 +21,33 @@ import { debug, rimraf } from 'playwright-core/lib/utilsBundle';
 import { Dispatcher } from './dispatcher';
 import type { TestRunnerPluginRegistration } from '../plugins';
 import type { Multiplexer } from '../reporters/multiplexer';
-import type { TestGroup } from '../runner/testGroups';
+import { createTestGroups, type TestGroup } from '../runner/testGroups';
 import type { Task } from './taskRunner';
 import { TaskRunner } from './taskRunner';
 import type { Suite } from '../common/test';
 import type { FullConfigInternal, FullProjectInternal } from '../common/types';
-import { collectProjectsAndTestFiles, createRootSuiteAndTestGroups, loadFileSuites, loadGlobalHook, type ProjectWithTestGroups } from './loadUtils';
+import { collectProjectsAndTestFiles, createRootSuite, loadFileSuites, loadGlobalHook } from './loadUtils';
 import type { Matcher } from '../util';
 
 const removeFolderAsync = promisify(rimraf);
 const readDirAsync = promisify(fs.readdir);
 
+type ProjectWithTestGroups = {
+  project: FullProjectInternal;
+  projectSuite: Suite;
+  testGroups: TestGroup[];
+};
+
+type Phase = {
+  dispatcher: Dispatcher,
+  projects: ProjectWithTestGroups[]
+};
+
 export type TaskRunnerState = {
   reporter: Multiplexer;
   config: FullConfigInternal;
   rootSuite?: Suite;
-  projectsWithTestGroups?: ProjectWithTestGroups[];
-  phases: {
-    dispatcher: Dispatcher,
-    projects: ProjectWithTestGroups[]
-  }[];
+  phases: Phase[];
 };
 
 export function createTaskRunner(config: FullConfigInternal, reporter: Multiplexer): TaskRunner<TaskRunnerState> {
@@ -153,9 +160,7 @@ function createLoadTask(mode: 'out-of-process' | 'in-process', shouldFilterOnly:
     const { config } = context;
     const filesToRunByProject = await collectProjectsAndTestFiles(config, projectsToIgnore, additionalFileMatcher);
     const fileSuitesByProject = await loadFileSuites(mode, config, filesToRunByProject, errors);
-    const loaded = await createRootSuiteAndTestGroups(config, fileSuitesByProject, errors, shouldFilterOnly);
-    context.rootSuite = loaded.rootSuite;
-    context.projectsWithTestGroups = loaded.projectsWithTestGroups;
+    context.rootSuite = await createRootSuite(config, fileSuitesByProject, errors, shouldFilterOnly);
     // Fail when no tests.
     if (!context.rootSuite.allTests().length && !config._internal.passWithNoTests && !config.shard)
       throw new Error(`No tests found`);
@@ -167,24 +172,32 @@ function createPhasesTask(): Task<TaskRunnerState> {
     context.config._internal.maxConcurrentTestGroups = 0;
 
     const processed = new Set<FullProjectInternal>();
-    for (let i = 0; i < context.projectsWithTestGroups!.length; i++) {
+    const projectToSuite = new Map(context.rootSuite!.suites.map(suite => [suite.project() as FullProjectInternal, suite]));
+    for (let i = 0; i < projectToSuite.size; i++) {
       // Find all projects that have all their dependencies processed by previous phases.
-      const phase: ProjectWithTestGroups[] = [];
-      for (const projectWithTestGroups of context.projectsWithTestGroups!) {
-        if (processed.has(projectWithTestGroups.project))
+      const phaseProjects: FullProjectInternal[] = [];
+      for (const project of projectToSuite.keys()) {
+        if (processed.has(project))
           continue;
-        if (projectWithTestGroups.project._internal.deps.find(p => !processed.has(p)))
+        if (project._internal.deps.find(p => !processed.has(p)))
           continue;
-        phase.push(projectWithTestGroups);
+        phaseProjects.push(project);
       }
 
       // Create a new phase.
-      for (const projectWithTestGroups of phase)
-        processed.add(projectWithTestGroups.project);
-      if (phase.length) {
-        const testGroupsInPhase = phase.reduce((acc, projectWithTestGroups) => acc + projectWithTestGroups.testGroups.length, 0);
-        debug('pw:test:task')(`created phase #${context.phases.length} with ${phase.map(p => p.project.name).sort()} projects, ${testGroupsInPhase} testGroups`);
-        context.phases.push({ dispatcher: new Dispatcher(context.config, context.reporter), projects: phase });
+      for (const project of phaseProjects)
+        processed.add(project);
+      if (phaseProjects.length) {
+        let testGroupsInPhase = 0;
+        const phase: Phase = { dispatcher: new Dispatcher(context.config, context.reporter), projects: [] };
+        context.phases.push(phase);
+        for (const project of phaseProjects) {
+          const projectSuite = projectToSuite.get(project)!;
+          const testGroups = createTestGroups(projectSuite, context.config.workers);
+          phase.projects.push({ project, projectSuite, testGroups });
+          testGroupsInPhase += testGroups.length;
+        }
+        debug('pw:test:task')(`created phase #${context.phases.length} with ${phase.projects.map(p => p.project.name).sort()} projects, ${testGroupsInPhase} testGroups`);
         context.config._internal.maxConcurrentTestGroups = Math.max(context.config._internal.maxConcurrentTestGroups, testGroupsInPhase);
       }
     }
