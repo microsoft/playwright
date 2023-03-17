@@ -376,7 +376,7 @@ it('should update har.zip for page with different options', async ({ contextFact
   const harPath = testInfo.outputPath('har.zip');
   const context1 = await contextFactory();
   const page1 = await context1.newPage();
-  await page1.routeFromHAR(harPath, { 'update': true, 'content': 'embed', 'mode': 'full' });
+  await page1.routeFromHAR(harPath, { update: true, updateContent: 'embed', updateMode: 'full' });
   await page1.goto(server.PREFIX + '/one-style.html');
   await context1.close();
 

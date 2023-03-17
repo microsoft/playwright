@@ -3335,15 +3335,17 @@ If specified, updates the given HAR with the actual network information instead 
 
 A glob pattern, regular expression or predicate to match the request URL. Only requests with URL matching the pattern will be served from the HAR file. If not specified, all requests are served from the HAR file.
 
-### option: Page.routeFromHAR.mode
+### option: Page.routeFromHAR.updateMode
 * since: v1.32
-- `mode` <[HarMode]<"full"|"minimal">>
+- `updateMode` <[HarMode]<"full"|"minimal">>
+
 When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page, cookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to `full`.
 
-### option: Page.routeFromHAR.url
+### option: Page.routeFromHAR.updateContent
 * since: v1.32
-- `content` <[HarContentPolicy]<"omit"|"embed"|"attach">>
-Optional setting to control resource content management. If `omit` is specified, content is not persisted. If `attach` is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is specified, content is stored inline the HAR file
+- `updateContent` <[RouteFromHarUpdateContentPolicy]<"embed"|"attach">>
+
+Optional setting to control resource content management. If `attach` is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is specified, content is stored inline the HAR file.
 
 ## async method: Page.screenshot
 * since: v1.8
