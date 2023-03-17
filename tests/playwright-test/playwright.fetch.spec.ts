@@ -51,7 +51,7 @@ test('should use baseURL in request fixture', async ({ runInlineTest, server }) 
   expect(result.passed).toBe(1);
 });
 
-test('should stop tracing on requestContex.dispose()', async ({ runInlineTest, server }) => {
+test('should stop tracing on requestContext.dispose()', async ({ runInlineTest, server }) => {
   server.setRoute('/slow', (req, resp) => {
     resp.writeHead(200, {
       'Content-Type': 'text/plain; charset=utf-8',
@@ -59,7 +59,7 @@ test('should stop tracing on requestContex.dispose()', async ({ runInlineTest, s
     });
     setTimeout(() => {
       resp.end('Hi!');
-    }, 500);
+    }, 5000);
   });
   const result = await runInlineTest({
     'playwright.config.ts': `
@@ -79,7 +79,7 @@ test('should stop tracing on requestContex.dispose()', async ({ runInlineTest, s
         await request.get('${server.PREFIX}/slow');
       });
     `,
-  }, { workers: 1, timeout: 1000 });
+  }, { workers: 1, timeout: 3000 });
   expect(result.output).not.toContain('ENOENT');
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
