@@ -17,36 +17,36 @@
 // @ts-check
 // This file is injected into the registry as text, no dependencies are allowed.
 
-import * as React from 'react';
-import { createRoot } from 'react-dom/client';
+import * as __pwReact from 'react';
+import { createRoot as __pwCreateRoot } from 'react-dom/client';
 
 /** @typedef {import('../playwright-test/types/component').Component} Component */
 /** @typedef {import('react').FunctionComponent} FrameworkComponent */
 
 /** @type {Map<string, FrameworkComponent>} */
-const registry = new Map();
+const __pwRegistry = new Map();
 /** @type {Map<Element, import('react-dom/client').Root>} */
-const rootRegistry = new Map();
+const __pwRootRegistry = new Map();
 
 /**
  * @param {{[key: string]: FrameworkComponent}} components
  */
-export function register(components) {
+export function pwRegister(components) {
   for (const [name, value] of Object.entries(components))
-    registry.set(name, value);
+    __pwRegistry.set(name, value);
 }
 
 /**
  * @param {Component} component
  */
-function render(component) {
+function __pwRender(component) {
   if (typeof component !== 'object' || Array.isArray(component))
     return component;
 
-  let componentFunc = registry.get(component.type);
+  let componentFunc = __pwRegistry.get(component.type);
   if (!componentFunc) {
     // Lookup by shorthand.
-    for (const [name, value] of registry) {
+    for (const [name, value] of __pwRegistry) {
       if (component.type.endsWith(`_${name}`)) {
         componentFunc = value;
         break;
@@ -55,17 +55,17 @@ function render(component) {
   }
 
   if (!componentFunc && component.type[0].toUpperCase() === component.type[0])
-    throw new Error(`Unregistered component: ${component.type}. Following components are registered: ${[...registry.keys()]}`);
+    throw new Error(`Unregistered component: ${component.type}. Following components are registered: ${[...__pwRegistry.keys()]}`);
 
   const componentFuncOrString = componentFunc || component.type;
 
   if (component.kind !== 'jsx')
     throw new Error('Object mount notation is not supported');
 
-  return React.createElement(componentFuncOrString, component.props, ...component.children.map(child => {
+  return __pwReact.createElement(componentFuncOrString, component.props, ...component.children.map(child => {
     if (typeof child === 'string')
       return child;
-    return render(child);
+    return __pwRender(child);
   }).filter(child => {
     if (typeof child === 'string')
       return !!child.trim();
@@ -74,21 +74,21 @@ function render(component) {
 }
 
 window.playwrightMount = async (component, rootElement, hooksConfig) => {
-  let App = () => render(component);
+  let App = () => __pwRender(component);
   for (const hook of window.__pw_hooks_before_mount || []) {
     const wrapper = await hook({ App, hooksConfig });
     if (wrapper)
       App = () => wrapper;
   }
 
-  if (rootRegistry.has(rootElement)) {
+  if (__pwRootRegistry.has(rootElement)) {
     throw new Error(
         'Attempting to mount a component into an container that already has a React root'
     );
   }
 
-  const root = createRoot(rootElement);
-  rootRegistry.set(rootElement, root);
+  const root = __pwCreateRoot(rootElement);
+  __pwRootRegistry.set(rootElement, root);
   root.render(App());
 
   for (const hook of window.__pw_hooks_after_mount || [])
@@ -96,18 +96,18 @@ window.playwrightMount = async (component, rootElement, hooksConfig) => {
 };
 
 window.playwrightUnmount = async rootElement => {
-  const root = rootRegistry.get(rootElement);
+  const root = __pwRootRegistry.get(rootElement);
   if (root === undefined)
     throw new Error('Component was not mounted');
 
   root.unmount();
-  rootRegistry.delete(rootElement);
+  __pwRootRegistry.delete(rootElement);
 };
 
 window.playwrightUpdate = async (rootElement, component) => {
-  const root = rootRegistry.get(rootElement);
+  const root = __pwRootRegistry.get(rootElement);
   if (root === undefined)
     throw new Error('Component was not mounted');
 
-  root.render(render(/** @type {Component} */ (component)));
+  root.render(__pwRender(/** @type {Component} */ (component)));
 };

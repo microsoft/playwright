@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { register } from './registerSource.mjs';
+import { pwRegister } from './registerSource.mjs';
 
 export default components => {
-  register(components);
+  pwRegister(components);
 };
