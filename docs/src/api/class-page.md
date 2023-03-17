@@ -4786,8 +4786,8 @@ class FrameExamples
 * since: v1.32
 * langs: java
 
-The method will block until the predicate returns true. All Playwright events will
-be dispatched while the method is waiting for the predicate.
+The method will block until the codition returns true. All Playwright events will
+be dispatched while the method is waiting for the codition.
 
 **Usage**
 
@@ -4800,11 +4800,11 @@ page.getByText("Submit button").click();
 page.waitForCondition(() -> messages.size() > 3);
 ```
 
-### param: Page.waitForCondition.predicate
+### param: Page.waitForCondition.condition
 * since: v1.32
-- `predicate` <[BooleanSupplier]>
+- `condition` <[BooleanSupplier]>
 
-Predicate to wait for.
+Codition to wait for.
 
 ### option: Page.waitForCondition.timeout = %%-wait-for-function-timeout-%%
 * since: v1.32

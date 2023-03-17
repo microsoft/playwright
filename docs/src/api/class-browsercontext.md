@@ -1328,8 +1328,8 @@ Optional handler function used to register a routing with [`method: BrowserConte
 * since: v1.32
 * langs: java
 
-The method will block until the predicate returns true. All Playwright events will
-be dispatched while the method is waiting for the predicate.
+The method will block until the condition returns true. All Playwright events will
+be dispatched while the method is waiting for the condition.
 
 **Usage**
 
@@ -1347,11 +1347,11 @@ page2.getByText("Submit button").click();
 context.waitForCondition(() -> failedUrls.size() > 3);
 ```
 
-### param: BrowserContext.waitForCondition.predicate
+### param: BrowserContext.waitForCondition.condition
 * since: v1.32
-- `predicate` <[BooleanSupplier]>
+- `condition` <[BooleanSupplier]>
 
-Predicate to wait for.
+Condition to wait for.
 
 ### option: BrowserContext.waitForCondition.timeout = %%-wait-for-function-timeout-%%
 * since: v1.32
