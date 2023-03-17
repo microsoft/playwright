@@ -15,7 +15,7 @@
  */
 
 import type { WriteStream } from 'tty';
-import type { ProcessInitParams, TtyParams } from './ipc';
+import type { EnvProducedPayload, ProcessInitParams, TtyParams } from './ipc';
 import { startProfiling, stopProfiling } from 'playwright-core/lib/utils';
 import type { TestInfoError } from './types';
 import { serializeError } from '../util';
@@ -53,6 +53,8 @@ process.on('SIGTERM', () => {});
 
 let processRunner: ProcessRunner;
 let processName: string;
+const startingEnv = { ...process.env };
+
 process.on('message', async message => {
   if (message.method === '__init__') {
     const { processParams, runnerParams, runnerScript } = message.params as { processParams: ProcessInitParams, runnerParams: any, runnerScript: string };
@@ -65,6 +67,9 @@ process.on('message', async message => {
     return;
   }
   if (message.method === '__stop__') {
+    const keys = new Set([...Object.keys(process.env), ...Object.keys(startingEnv)]);
+    const producedEnv: EnvProducedPayload = [...keys].filter(key => startingEnv[key] !== process.env[key]).map(key => [key, process.env[key] ?? null]);
+    sendMessageToParent({ method: '__env_produced__', params: producedEnv });
     await gracefullyCloseAndExit();
     return;
   }

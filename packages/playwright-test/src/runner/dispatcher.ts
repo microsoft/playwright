@@ -35,6 +35,8 @@ type TestData = {
   resultByWorkerIndex: Map<number, TestResultData>;
 };
 
+export type EnvByProjectId = Map<string, Record<string, string | undefined>>;
+
 export class Dispatcher {
   private _workerSlots: { busy: boolean, worker?: WorkerHost }[] = [];
   private _queue: TestGroup[] = [];
@@ -47,6 +49,9 @@ export class Dispatcher {
   private _reporter: Reporter;
   private _hasWorkerErrors = false;
   private _failureCount = 0;
+
+  private _extraEnvByProjectId: EnvByProjectId = new Map();
+  private _producedEnvByProjectId: EnvByProjectId = new Map();
 
   constructor(config: FullConfigInternal, reporter: Reporter) {
     this._config = config;
@@ -164,7 +169,8 @@ export class Dispatcher {
     return workersWithSameHash > this._queuedOrRunningHashCount.get(worker.hash())!;
   }
 
-  async run(testGroups: TestGroup[]) {
+  async run(testGroups: TestGroup[], extraEnvByProjectId: EnvByProjectId) {
+    this._extraEnvByProjectId = extraEnvByProjectId;
     this._queue = testGroups;
     for (const group of testGroups) {
       this._queuedOrRunningHashCount.set(group.workerHash, 1 + (this._queuedOrRunningHashCount.get(group.workerHash) || 0));
@@ -452,7 +458,7 @@ export class Dispatcher {
   }
 
   _createWorker(testGroup: TestGroup, parallelIndex: number, loaderData: SerializedConfig) {
-    const worker = new WorkerHost(testGroup, parallelIndex, loaderData);
+    const worker = new WorkerHost(testGroup, parallelIndex, loaderData, this._extraEnvByProjectId.get(testGroup.projectId) || {});
     const handleOutput = (params: TestOutputPayload) => {
       const chunk = chunkFromParams(params);
       if (worker.didFail()) {
@@ -481,7 +487,15 @@ export class Dispatcher {
       for (const error of params.fatalErrors)
         this._reporter.onError?.(error);
     });
+    worker.on('exit', () => {
+      const producedEnv = this._producedEnvByProjectId.get(testGroup.projectId) || {};
+      this._producedEnvByProjectId.set(testGroup.projectId, { ...producedEnv, ...worker.producedEnv() });
+    });
     return worker;
+  }
+
+  producedEnvByProjectId() {
+    return this._producedEnvByProjectId;
   }
 
   async stop() {

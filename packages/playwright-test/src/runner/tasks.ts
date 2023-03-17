@@ -18,7 +18,7 @@ import fs from 'fs';
 import path from 'path';
 import { promisify } from 'util';
 import { debug, rimraf } from 'playwright-core/lib/utilsBundle';
-import { Dispatcher } from './dispatcher';
+import { Dispatcher, type EnvByProjectId } from './dispatcher';
 import type { TestRunnerPluginRegistration } from '../plugins';
 import type { Multiplexer } from '../reporters/multiplexer';
 import { createTestGroups, type TestGroup } from '../runner/testGroups';
@@ -217,6 +217,7 @@ function createRunTestsTask(): Task<TaskRunnerState> {
   return async context => {
     const { phases } = context;
     const successfulProjects = new Set<FullProjectInternal>();
+    const extraEnvByProjectId: EnvByProjectId = new Map();
 
     for (const { dispatcher, projects } of phases) {
       // Each phase contains dispatcher and a set of test groups.
@@ -224,6 +225,12 @@ function createRunTestsTask(): Task<TaskRunnerState> {
       // that depend on the projects that failed previously.
       const phaseTestGroups: TestGroup[] = [];
       for (const { project, testGroups } of projects) {
+        // Inherit extra enviroment variables from dependencies.
+        let extraEnv: Record<string, string | undefined> = {};
+        for (const dep of project._internal.deps)
+          extraEnv = { ...extraEnv, ...extraEnvByProjectId.get(dep._internal.id) };
+        extraEnvByProjectId.set(project._internal.id, extraEnv);
+
         const hasFailedDeps = project._internal.deps.some(p => !successfulProjects.has(p));
         if (!hasFailedDeps) {
           phaseTestGroups.push(...testGroups);
@@ -236,8 +243,12 @@ function createRunTestsTask(): Task<TaskRunnerState> {
       }
 
       if (phaseTestGroups.length) {
-        await dispatcher!.run(phaseTestGroups);
+        await dispatcher!.run(phaseTestGroups, extraEnvByProjectId);
         await dispatcher.stop();
+        for (const [projectId, envProduced] of dispatcher.producedEnvByProjectId()) {
+          const extraEnv = extraEnvByProjectId.get(projectId) || {};
+          extraEnvByProjectId.set(projectId, { ...extraEnv, ...envProduced });
+        }
       }
 
       // If the worker broke, fail everything, we have no way of knowing which
