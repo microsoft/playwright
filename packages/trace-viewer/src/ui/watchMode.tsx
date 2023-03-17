@@ -99,15 +99,6 @@ export const WatchModeView: React.FC<{}> = ({
     setProgress(newProgress);
   };
 
-  const outputDir = React.useMemo(() => {
-    let outputDir = '';
-    for (const p of rootSuite.value?.suites || []) {
-      outputDir = p.project()?.outputDir || '';
-      break;
-    }
-    return outputDir;
-  }, [rootSuite]);
-
   const runTests = (testIds: string[]) => {
     // Clear test results.
     {
@@ -130,6 +121,7 @@ export const WatchModeView: React.FC<{}> = ({
 
   const isRunningTest = !!runningState;
   const result = selectedTest?.results[0];
+  const outputDir = selectedTest ? outputDirForTestCase(selectedTest) : undefined;
 
   return <div className='vbox watch-mode'>
     <SplitView sidebarSize={250} orientation='horizontal' sidebarIsFirst={true}>
@@ -388,7 +380,7 @@ const TestList: React.FC<{
 };
 
 const TraceView: React.FC<{
-  outputDir: string,
+  outputDir: string | undefined,
   testCase: TestCase | undefined,
   result: TestResult | undefined,
 }> = ({ outputDir, testCase, result }) => {
@@ -409,6 +401,11 @@ const TraceView: React.FC<{
     const attachment = result && result.duration >= 0 && result.attachments.find(a => a.name === 'trace');
     if (attachment && attachment.path) {
       loadSingleTraceFile(attachment.path).then(model => setModel(model));
+      return;
+    }
+
+    if (!outputDir) {
+      setModel(undefined);
       return;
     }
 
@@ -533,6 +530,14 @@ const sendMessageNoReply = (method: string, params?: any) => {
     // eslint-disable-next-line no-console
     console.error(e);
   });
+};
+
+const outputDirForTestCase = (testCase: TestCase): string | undefined => {
+  for (let suite: Suite | undefined = testCase.parent; suite; suite = suite.parent) {
+    if (suite.project())
+      return suite.project()?.outputDir;
+  }
+  return undefined;
 };
 
 const fileNameForTreeItem = (treeItem?: TreeItem): string | undefined => {

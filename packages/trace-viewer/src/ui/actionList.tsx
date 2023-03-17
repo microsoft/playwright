@@ -43,6 +43,7 @@ export const ActionList: React.FC<ActionListProps> = ({
   revealConsole = () => {},
 }) => {
   return <ActionListView
+    dataTestId='action-list'
     items={actions}
     id={action => action.callId}
     selectedItem={selectedAction}
