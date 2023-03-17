@@ -92,8 +92,9 @@ it('should work with glob', async () => {
   expect(globToRegex('http://localhost:3000/signin-oidc*').test('http://localhost:3000/signin-oidcnice')).toBeTruthy();
 });
 
-it('should intercept network activity from worker', async function({ page, server, isAndroid }) {
+it('should intercept network activity from worker', async function({ page, server, isAndroid, browserName, browserMajorVersion }) {
   it.skip(isAndroid);
+  it.fixme(browserName === 'firefox' && browserMajorVersion === 112, 'https://github.com/microsoft/playwright/issues/21760');
 
   await page.goto(server.EMPTY_PAGE);
   server.setRoute('/data_for_worker', (req, res) => res.end('failed to intercept'));

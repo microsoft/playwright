@@ -142,7 +142,8 @@ it('should attribute network activity for worker inside iframe to the iframe', a
   expect(request.frame()).toBe(frame);
 });
 
-it('should report network activity', async function({ page, server }) {
+it('should report network activity', async function({ page, server, browserName, browserMajorVersion }) {
+  it.fixme(browserName === 'firefox' && browserMajorVersion === 112, 'https://github.com/microsoft/playwright/issues/21760');
   const [worker] = await Promise.all([
     page.waitForEvent('worker'),
     page.goto(server.PREFIX + '/worker/worker.html'),
@@ -158,7 +159,8 @@ it('should report network activity', async function({ page, server }) {
   expect(response.ok()).toBe(true);
 });
 
-it('should report network activity on worker creation', async function({ page, server }) {
+it('should report network activity on worker creation', async function({ page, server, browserName, browserMajorVersion }) {
+  it.fixme(browserName === 'firefox' && browserMajorVersion === 112, 'https://github.com/microsoft/playwright/issues/21760');
   // Chromium needs waitForDebugger enabled for this one.
   await page.goto(server.EMPTY_PAGE);
   const url = server.PREFIX + '/one-style.css';
