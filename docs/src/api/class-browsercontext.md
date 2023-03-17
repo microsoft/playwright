@@ -1324,6 +1324,38 @@ Optional handler function used to register a routing with [`method: BrowserConte
 
 Optional handler function used to register a routing with [`method: BrowserContext.route`].
 
+## async method: BrowserContext.waitForCondition
+* since: v1.32
+* langs: java
+
+The method will block until the predicate returns true. All Playwright events will
+be dispatched while the method is waiting for the predicate.
+
+**Usage**
+
+Use the method to wait for a condition that depends on page events:
+
+```java
+List<String> failedUrls = new ArrayList<>();
+context.onResponse(response -> {
+  if (!response.ok()) {
+    failedUrls.add(response.url());
+  }
+});
+page1.getByText("Create user").click();
+page2.getByText("Submit button").click();
+context.waitForCondition(() -> failedUrls.size() > 3);
+```
+
+### param: BrowserContext.waitForCondition.predicate
+* since: v1.32
+- `predicate` <[BooleanSupplier]>
+
+Predicate to wait for.
+
+### option: BrowserContext.waitForCondition.timeout = %%-wait-for-function-timeout-%%
+* since: v1.32
+
 ## async method: BrowserContext.waitForEvent
 * since: v1.8
 * langs: js, python
