@@ -123,7 +123,7 @@ It is recommended to always pin your Docker image to a specific version if possi
 ### Base images
 
 We currently publish images based on the following [Ubuntu](https://hub.docker.com/_/ubuntu) versions:
-- **Ubuntu 22.04 LTS** (Jammy Jellyfish), image tags include `jammy` (not published for Java and .NET)
+- **Ubuntu 22.04 LTS** (Jammy Jellyfish), image tags include `jammy` (not published for Java)
 - **Ubuntu 20.04 LTS** (Focal Fossa), image tags include `focal`
 
 #### Alpine
