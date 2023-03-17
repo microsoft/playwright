@@ -82,6 +82,7 @@ export const test = base
               PWTEST_UNDER_TEST: '1',
               PWTEST_CACHE_DIR: cacheDir,
               PWTEST_HEADED_FOR_TEST: headless ? '0' : '1',
+              PWTEST_PRINT_WS_ENDPOINT: '1',
             },
             cwd: options.cwd ? path.resolve(baseDir, options.cwd) : baseDir,
           });
