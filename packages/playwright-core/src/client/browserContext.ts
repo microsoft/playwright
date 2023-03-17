@@ -266,20 +266,20 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     await this._updateInterceptionPatterns();
   }
 
-  async _recordIntoHAR(har: string, page: Page | null, options: { url?: string | RegExp, notFound?: 'abort' | 'fallback', update?: boolean, content?: 'omit' | 'attach' | 'embed' | undefined, mode?: 'minimal' | 'full'} = {}): Promise<void> {
+  async _recordIntoHAR(har: string, page: Page | null, options: { url?: string | RegExp, notFound?: 'abort' | 'fallback', update?: boolean, updateContent?: 'attach' | 'embed', updateMode?: 'minimal' | 'full'} = {}): Promise<void> {
     const { harId } = await this._channel.harStart({
       page: page?._channel,
       options: prepareRecordHarOptions({
         path: har,
-        content: options.content ?? 'attach',
-        mode: options.mode ?? 'minimal',
+        content: options.updateContent ?? 'attach',
+        mode: options.updateMode ?? 'minimal',
         urlFilter: options.url
       })!
     });
-    this._harRecorders.set(harId, { path: har, content: options.content ?? 'attach' });
+    this._harRecorders.set(harId, { path: har, content: options.updateContent ?? 'attach' });
   }
 
-  async routeFromHAR(har: string, options: { url?: string | RegExp, notFound?: 'abort' | 'fallback', update?: boolean, content?: 'omit' | 'attach' | 'embed' | undefined, mode?: 'minimal' | 'full' } = {}): Promise<void> {
+  async routeFromHAR(har: string, options: { url?: string | RegExp, notFound?: 'abort' | 'fallback', update?: boolean, updateContent?: 'attach' | 'embed', updateMode?: 'minimal' | 'full' } = {}): Promise<void> {
     if (options.update) {
       await this._recordIntoHAR(har, null, options);
       return;
