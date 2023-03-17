@@ -197,11 +197,6 @@ type ConnectOptions = {
   timeout?: number;
 };
 
-export interface TestStore {
-  get<T>(path: string): Promise<T | undefined>;
-  set<T>(path: string, value: T | undefined): Promise<void>;
-}
-
 export interface PlaywrightWorkerOptions {
   browserName: BrowserName;
   defaultBrowserType: BrowserName;
@@ -376,7 +371,6 @@ export default test;
 
 export const _baseTest: TestType<{}, {}>;
 export const expect: Expect;
-export const store: TestStore;
 
 /**
  * Defines Playwright config

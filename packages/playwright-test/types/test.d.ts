@@ -1150,24 +1150,6 @@ interface TestConfig {
   snapshotPathTemplate?: string;
 
   /**
-   * Directory where the values accessible via [TestStore] are persisted. All pahts in [TestStore] are relative to
-   * `storeDir`. Defaults to `./playwright`.
-   *
-   * **Usage**
-   *
-   * ```js
-   * // playwright.config.ts
-   * import { defineConfig } from '@playwright/test';
-   *
-   * export default defineConfig({
-   *   storeDir: './playwright-store',
-   * });
-   * ```
-   *
-   */
-  storeDir?: string;
-
-  /**
    * Directory that will be recursively scanned for test files. Defaults to the directory of the configuration file.
    *
    * **Usage**
@@ -3319,55 +3301,6 @@ type ConnectOptions = {
 };
 
 /**
- * Playwright Test provides a global `store` object that can be used to read/write values on the filesystem. Each
- * value is stored in its own file inside './playwright' directory, configurable with
- * [testConfig.storeDir](https://playwright.dev/docs/api/class-testconfig#test-config-store-dir).
- *
- * ```js
- * import { test, store } from '@playwright/test';
- *
- * test('get user name', async ({ page, context }) => {
- *   await page.goto('/');
- *   // Return mock user info from the store.
- *   await page.route('**\/info/user', route => route.fulfill({ path: store.path('mocks/user.json')}))
- *   await page.getByText('My Profile');
- *   // Check that the name matches mock data.
- *   await expect(page.getByLabel('Name')).toHaveText('John');
- * });
- * ```
- *
- */
-export interface TestStore {
-  /**
-   * Get named item from the store. Returns undefined if there is no value with given path.
-   * @param path Item path.
-   */
-  get<T>(path: string): Promise<T | undefined>;
-  /**
-   * Set value to the store.
-   * @param path Item path.
-   * @param value Item value. The value must be serializable to JSON. Passing `undefined` deletes the entry with given path.
-   */
-  set<T>(path: string, value: T | undefined): Promise<void>;
-  /**
-   * Delete named item from the store. Does nothing if the path is not in the store.
-   * @param path Item path.
-   */
-  delete(path: string): Promise<void>;
-
-  /**
-   * Returns absolute path of the corresponding store entry on the file system.
-   * @param path Path of the item in the store.
-   */
-  path(path: string): string;
-
-  /**
-   * Returns absolute path of the store root directory.
-   */
-  root(): string;
-}
-
-/**
  * Playwright Test provides many options to configure test environment, [Browser], [BrowserContext] and more.
  *
  * These options are usually provided in the [configuration file](https://playwright.dev/docs/test-configuration) through
@@ -4317,7 +4250,6 @@ export default test;
 
 export const _baseTest: TestType<{}, {}>;
 export const expect: Expect;
-export const store: TestStore;
 
 /**
  * Defines Playwright config

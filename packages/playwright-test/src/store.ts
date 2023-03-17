@@ -16,12 +16,11 @@
 
 import fs from 'fs';
 import path from 'path';
-import type { TestStore } from '../types/test';
 import { currentConfig } from './common/globals';
 import { mime } from 'playwright-core/lib/utilsBundle';
 import { isJsonMimeType, isString, isTextualMimeType } from 'playwright-core/lib/utils';
 
-class JsonStore implements TestStore {
+class JsonStore {
   async delete(name: string) {
     const file = this.path(name);
     await fs.promises.rm(file, { force: true });
