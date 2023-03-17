@@ -61,6 +61,25 @@ test('should run visible', async ({ runUITest }) => {
   `);
 });
 
+test('should run on hover', async ({ runUITest }) => {
+  const page = await runUITest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('passes', () => {});
+      test('fails', () => { expect(1).toBe(2); });
+    `,
+  });
+
+  await page.getByText('passes').hover();
+  await page.getByRole('listitem').filter({ hasText: 'passes' }).getByTitle('Run').click();
+
+  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toBe(`
+    ▼ ◯ a.test.ts
+        ✅ passes <=
+        ◯ fails
+  `);
+});
+
 test('should run on double click', async ({ runUITest }) => {
   const page = await runUITest({
     'a.test.ts': `
