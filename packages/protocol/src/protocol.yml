@@ -500,14 +500,12 @@ LocalUtils:
         entries:
           type: array
           items: NameValue
+        stacksId: string?
         mode:
           type: enum
           literals:
             - write
             - append
-        metadata:
-          type: array
-          items: ClientSideCallMetadata
         includeSources: boolean
 
     harOpen:
@@ -562,6 +560,21 @@ LocalUtils:
         socksProxyRedirectPortForTest: number?
       returns:
         pipe: JsonPipe
+
+    tracingStarted:
+      parameters:
+        tracesDir: string?
+        traceName: string
+      returns:
+        stacksId: string
+
+    addStackToTracingNoReply:
+      parameters:
+        callData: ClientSideCallMetadata
+
+    traceDiscarded:
+      parameters:
+        stacksId: string
 
 Root:
   type: interface
@@ -2927,6 +2940,8 @@ Tracing:
       parameters:
         name: string?
         title: string?
+      returns:
+        traceName: string
 
     tracingStopChunk:
       parameters:

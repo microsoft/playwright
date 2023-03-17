@@ -39,6 +39,7 @@ class UIMode {
 
   constructor(config: FullConfigInternal) {
     this._config = config;
+    process.env.PW_LIVE_TRACE_STACKS = '1';
     config._internal.configCLIOverrides.forbidOnly = false;
     config._internal.configCLIOverrides.globalTimeout = 0;
     config._internal.configCLIOverrides.repeatEach = 0;

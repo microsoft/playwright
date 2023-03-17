@@ -402,16 +402,19 @@ export interface LocalUtilsChannel extends LocalUtilsEventTarget, Channel {
   harClose(params: LocalUtilsHarCloseParams, metadata?: CallMetadata): Promise<LocalUtilsHarCloseResult>;
   harUnzip(params: LocalUtilsHarUnzipParams, metadata?: CallMetadata): Promise<LocalUtilsHarUnzipResult>;
   connect(params: LocalUtilsConnectParams, metadata?: CallMetadata): Promise<LocalUtilsConnectResult>;
+  tracingStarted(params: LocalUtilsTracingStartedParams, metadata?: CallMetadata): Promise<LocalUtilsTracingStartedResult>;
+  addStackToTracingNoReply(params: LocalUtilsAddStackToTracingNoReplyParams, metadata?: CallMetadata): Promise<LocalUtilsAddStackToTracingNoReplyResult>;
+  traceDiscarded(params: LocalUtilsTraceDiscardedParams, metadata?: CallMetadata): Promise<LocalUtilsTraceDiscardedResult>;
 }
 export type LocalUtilsZipParams = {
   zipFile: string,
   entries: NameValue[],
+  stacksId?: string,
   mode: 'write' | 'append',
-  metadata: ClientSideCallMetadata[],
   includeSources: boolean,
 };
 export type LocalUtilsZipOptions = {
-
+  stacksId?: string,
 };
 export type LocalUtilsZipResult = void;
 export type LocalUtilsHarOpenParams = {
@@ -476,6 +479,30 @@ export type LocalUtilsConnectOptions = {
 export type LocalUtilsConnectResult = {
   pipe: JsonPipeChannel,
 };
+export type LocalUtilsTracingStartedParams = {
+  tracesDir?: string,
+  traceName: string,
+};
+export type LocalUtilsTracingStartedOptions = {
+  tracesDir?: string,
+};
+export type LocalUtilsTracingStartedResult = {
+  stacksId: string,
+};
+export type LocalUtilsAddStackToTracingNoReplyParams = {
+  callData: ClientSideCallMetadata,
+};
+export type LocalUtilsAddStackToTracingNoReplyOptions = {
+
+};
+export type LocalUtilsAddStackToTracingNoReplyResult = void;
+export type LocalUtilsTraceDiscardedParams = {
+  stacksId: string,
+};
+export type LocalUtilsTraceDiscardedOptions = {
+
+};
+export type LocalUtilsTraceDiscardedResult = void;
 
 export interface LocalUtilsEvents {
 }
@@ -3756,7 +3783,9 @@ export type TracingTracingStartChunkOptions = {
   name?: string,
   title?: string,
 };
-export type TracingTracingStartChunkResult = void;
+export type TracingTracingStartChunkResult = {
+  traceName: string,
+};
 export type TracingTracingStopChunkParams = {
   mode: 'archive' | 'discard' | 'entries',
 };

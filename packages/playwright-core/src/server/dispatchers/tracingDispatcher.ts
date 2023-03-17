@@ -38,7 +38,7 @@ export class TracingDispatcher extends Dispatcher<Tracing, channels.TracingChann
   }
 
   async tracingStartChunk(params: channels.TracingTracingStartChunkParams): Promise<channels.TracingTracingStartChunkResult> {
-    await this._object.startChunk(params);
+    return await this._object.startChunk(params);
   }
 
   async tracingStopChunk(params: channels.TracingTracingStopChunkParams): Promise<channels.TracingTracingStopChunkResult> {

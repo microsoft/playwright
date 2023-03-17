@@ -18,6 +18,8 @@ import { test, expect } from './playwright-test-fixtures';
 import { parseTrace } from '../config/utils';
 import fs from 'fs';
 
+test.describe.configure({ mode: 'parallel' });
+
 test('should stop tracing with trace: on-first-retry, when not retrying', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.ts': `

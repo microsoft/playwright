@@ -220,8 +220,8 @@ scheme.LocalUtilsInitializer = tOptional(tObject({}));
 scheme.LocalUtilsZipParams = tObject({
   zipFile: tString,
   entries: tArray(tType('NameValue')),
+  stacksId: tOptional(tString),
   mode: tEnum(['write', 'append']),
-  metadata: tArray(tType('ClientSideCallMetadata')),
   includeSources: tBoolean,
 });
 scheme.LocalUtilsZipResult = tOptional(tObject({}));
@@ -268,6 +268,21 @@ scheme.LocalUtilsConnectParams = tObject({
 scheme.LocalUtilsConnectResult = tObject({
   pipe: tChannel(['JsonPipe']),
 });
+scheme.LocalUtilsTracingStartedParams = tObject({
+  tracesDir: tOptional(tString),
+  traceName: tString,
+});
+scheme.LocalUtilsTracingStartedResult = tObject({
+  stacksId: tString,
+});
+scheme.LocalUtilsAddStackToTracingNoReplyParams = tObject({
+  callData: tType('ClientSideCallMetadata'),
+});
+scheme.LocalUtilsAddStackToTracingNoReplyResult = tOptional(tObject({}));
+scheme.LocalUtilsTraceDiscardedParams = tObject({
+  stacksId: tString,
+});
+scheme.LocalUtilsTraceDiscardedResult = tOptional(tObject({}));
 scheme.RootInitializer = tOptional(tObject({}));
 scheme.RootInitializeParams = tObject({
   sdkLanguage: tEnum(['javascript', 'python', 'java', 'csharp']),
@@ -2095,7 +2110,9 @@ scheme.TracingTracingStartChunkParams = tObject({
   name: tOptional(tString),
   title: tOptional(tString),
 });
-scheme.TracingTracingStartChunkResult = tOptional(tObject({}));
+scheme.TracingTracingStartChunkResult = tObject({
+  traceName: tString,
+});
 scheme.TracingTracingStopChunkParams = tObject({
   mode: tEnum(['archive', 'discard', 'entries']),
 });
