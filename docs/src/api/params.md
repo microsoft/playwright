@@ -1430,34 +1430,40 @@ await page.GetByAltText("Playwright logo").ClickAsync();
 
 ## template-locator-get-by-label-text
 
-Allows locating input elements by the text of the associated label.
+Allows locating input elements by the text of the associated `<label>` or `aria-labelledby` element, or by the `aria-label` attribute.
 
 **Usage**
 
-For example, this method will find the input by label text "Password" in the following DOM:
+For example, this method will find inputs by label "Username" and "Password" in the following DOM:
 
 ```html
+<input aria-label="Username">
 <label for="password-input">Password:</label>
 <input id="password-input">
 ```
 
 ```js
+await page.getByLabel('Username').fill('john');
 await page.getByLabel('Password').fill('secret');
 ```
 
 ```java
+page.getByLabel("Username").fill("john");
 page.getByLabel("Password").fill("secret");
 ```
 
 ```python async
+await page.get_by_label("Username").fill("john")
 await page.get_by_label("Password").fill("secret")
 ```
 
 ```python sync
+page.get_by_label("Username").fill("john")
 page.get_by_label("Password").fill("secret")
 ```
 
 ```csharp
+await page.GetByLabel("Username").FillAsync("john");
 await page.GetByLabel("Password").FillAsync("secret");
 ```
 

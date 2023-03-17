@@ -2482,18 +2482,21 @@ export interface Page {
   }): Locator;
 
   /**
-   * Allows locating input elements by the text of the associated label.
+   * Allows locating input elements by the text of the associated `<label>` or `aria-labelledby` element, or by the
+   * `aria-label` attribute.
    *
    * **Usage**
    *
-   * For example, this method will find the input by label text "Password" in the following DOM:
+   * For example, this method will find inputs by label "Username" and "Password" in the following DOM:
    *
    * ```html
+   * <input aria-label="Username">
    * <label for="password-input">Password:</label>
    * <input id="password-input">
    * ```
    *
    * ```js
+   * await page.getByLabel('Username').fill('john');
    * await page.getByLabel('Password').fill('secret');
    * ```
    *
@@ -5892,18 +5895,21 @@ export interface Frame {
   }): Locator;
 
   /**
-   * Allows locating input elements by the text of the associated label.
+   * Allows locating input elements by the text of the associated `<label>` or `aria-labelledby` element, or by the
+   * `aria-label` attribute.
    *
    * **Usage**
    *
-   * For example, this method will find the input by label text "Password" in the following DOM:
+   * For example, this method will find inputs by label "Username" and "Password" in the following DOM:
    *
    * ```html
+   * <input aria-label="Username">
    * <label for="password-input">Password:</label>
    * <input id="password-input">
    * ```
    *
    * ```js
+   * await page.getByLabel('Username').fill('john');
    * await page.getByLabel('Password').fill('secret');
    * ```
    *
@@ -10848,18 +10854,21 @@ export interface Locator {
   }): Locator;
 
   /**
-   * Allows locating input elements by the text of the associated label.
+   * Allows locating input elements by the text of the associated `<label>` or `aria-labelledby` element, or by the
+   * `aria-label` attribute.
    *
    * **Usage**
    *
-   * For example, this method will find the input by label text "Password" in the following DOM:
+   * For example, this method will find inputs by label "Username" and "Password" in the following DOM:
    *
    * ```html
+   * <input aria-label="Username">
    * <label for="password-input">Password:</label>
    * <input id="password-input">
    * ```
    *
    * ```js
+   * await page.getByLabel('Username').fill('john');
    * await page.getByLabel('Password').fill('secret');
    * ```
    *
@@ -16685,18 +16694,21 @@ export interface FrameLocator {
   }): Locator;
 
   /**
-   * Allows locating input elements by the text of the associated label.
+   * Allows locating input elements by the text of the associated `<label>` or `aria-labelledby` element, or by the
+   * `aria-label` attribute.
    *
    * **Usage**
    *
-   * For example, this method will find the input by label text "Password" in the following DOM:
+   * For example, this method will find inputs by label "Username" and "Password" in the following DOM:
    *
    * ```html
+   * <input aria-label="Username">
    * <label for="password-input">Password:</label>
    * <input id="password-input">
    * ```
    *
    * ```js
+   * await page.getByLabel('Username').fill('john');
    * await page.getByLabel('Password').fill('secret');
    * ```
    *
