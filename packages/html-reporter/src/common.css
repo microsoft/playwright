@@ -254,6 +254,10 @@ article, aside, details, figcaption, figure, footer, header, main, menu, nav, se
   color: var(--color-fg-muted) !important;
 }
 
+.color-attention {
+  color: var(--color-attention-fg) !important;
+}
+
 .octicon {
   display: inline-block;
   overflow: visible !important;

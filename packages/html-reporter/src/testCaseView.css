@@ -35,11 +35,23 @@
 }
 
 .test-case-title {
+  --title-size: 32px !important;
   flex: none;
   padding: 8px;
   font-weight: 400;
-  font-size: 32px !important;
+  font-size: var(--title-size);
   line-height: 1.25 !important;
+  cursor: pointer;
+}
+
+.test-case-title .octicon {
+  width: var(--title-size);
+  height: var(--title-size);
+  opacity: 0;
+}
+
+.test-case-title:hover .octicon {
+  opacity: 1;
 }
 
 .test-case-location {

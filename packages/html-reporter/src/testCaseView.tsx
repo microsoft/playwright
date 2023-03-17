@@ -23,6 +23,7 @@ import { ProjectLink } from './links';
 import { statusIcon } from './statusIcon';
 import './testCaseView.css';
 import { TestResultView } from './testResultView';
+import * as icons from './icons';
 
 export const TestCaseView: React.FC<{
   projectNames: string[],
@@ -31,6 +32,7 @@ export const TestCaseView: React.FC<{
   run: number,
 }> = ({ projectNames, test, run, anchor }) => {
   const [selectedResultIndex, setSelectedResultIndex] = React.useState(run);
+  const [copyIcon, setCopyIcon] = React.useState(icons.copy());
 
   const annotations = new Map<string, (string | undefined)[]>();
   test?.annotations.forEach(annotation => {
@@ -39,9 +41,18 @@ export const TestCaseView: React.FC<{
     annotations.set(annotation.type, list);
   });
 
+  const handleCopy = (value: string) => {
+    navigator.clipboard.writeText(value).then(() => {
+      setCopyIcon(icons.check());
+      setTimeout(() => setCopyIcon(icons.copy()), 3000);
+    }, () => {
+      setCopyIcon(icons.alert());
+    });
+  };
+
   return <div className='test-case-column vbox'>
     {test && <div className='test-case-path'>{test.path.join(' › ')}</div>}
-    {test && <div className='test-case-title'>{test?.title}</div>}
+    {test && <div className='test-case-title' onClick={() => handleCopy(test.title)}>{test.title} {copyIcon}</div> }
     {test && <div className='test-case-location'>{test.location.file}:{test.location.line}</div>}
     {test && !!test.projectName && <ProjectLink projectNames={projectNames} projectName={test.projectName}></ProjectLink>}
     {annotations.size > 0 && <AutoChip header='Annotations'>
