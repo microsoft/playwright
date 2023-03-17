@@ -42,6 +42,7 @@ import { EventEmitter } from 'events';
 import { raceAgainstTimeout } from '../utils/timeoutRunner';
 import type { Language, LanguageGenerator } from './recorder/language';
 import { locatorOrSelectorAsSelector } from '../utils/isomorphic/locatorParser';
+import { eventsHelper, type RegisteredListener } from './../utils/eventsHelper';
 
 type BindingSource = { frame: Frame, page: Page };
 
@@ -349,6 +350,7 @@ class ContextRecorder extends EventEmitter {
   private _throttledOutputFile: ThrottledFile | null = null;
   private _orderedLanguages: LanguageGenerator[] = [];
   private _testIdAttributeName: string = 'data-testid';
+  private _listeners: RegisteredListener[] = [];
 
   constructor(context: BrowserContext, params: channels.BrowserContextRecorderSupplementEnableParams) {
     super();
@@ -387,9 +389,9 @@ class ContextRecorder extends EventEmitter {
     context.on(BrowserContext.Events.BeforeClose, () => {
       this._throttledOutputFile?.flush();
     });
-    process.on('exit', () => {
+    this._listeners.push(eventsHelper.addEventListener(process, 'exit', () => {
       this._throttledOutputFile?.flush();
-    });
+    }));
     this._generator = generator;
   }
 
@@ -447,6 +449,7 @@ class ContextRecorder extends EventEmitter {
     for (const timer of this._timers)
       clearTimeout(timer);
     this._timers.clear();
+    eventsHelper.removeEventListeners(this._listeners);
   }
 
   private async _onPage(page: Page) {
