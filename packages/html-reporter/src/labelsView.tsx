@@ -26,11 +26,9 @@ export const LabelsView: React.FC<React.PropsWithChildren<{
   if (!labels.length)
     return null;
 
-  const encodedTags = labels.map(tag => encodeTag(tag));
-
   return (
     <>
-      {encodedTags.map(tag => (
+      {labels.map(tag => (
         <React.Fragment key={tag}>
           <Route predicate={testFilesRoutePredicate}>
             <LabelClick key={tag} tag={tag} />
@@ -83,11 +81,6 @@ export const LabelLink: React.FC<React.PropsWithChildren<{
     </span>
   </a>;
 };
-
-function encodeTag(tag: string) {
-  const encoded = encodeURIComponent(tag);
-  return tag === encoded ? tag : `"${encoded.replace(/%22/g, '%5C%22')}"`;
-}
 
 export function escapeRegExp(string: string) {
   const reRegExpChar = /[\\^$.*+?()[\]{}|]/g;
