@@ -46,8 +46,8 @@ export class OutOfProcessLoaderHost {
   private _processHost: ProcessHost;
 
   constructor(config: FullConfigInternal) {
-    this._processHost = new ProcessHost(require.resolve('../loader/loaderMain.js'), 'loader');
-    this._startPromise = this._processHost.startRunner(serializeConfig(config), true, {});
+    this._processHost = new ProcessHost(require.resolve('../loader/loaderMain.js'), 'loader', {});
+    this._startPromise = this._processHost.startRunner(serializeConfig(config), true);
   }
 
   async loadTestFile(file: string, testErrors: TestError[]): Promise<Suite> {

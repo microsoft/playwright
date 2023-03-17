@@ -38,6 +38,50 @@ test('should run projects with dependencies', async ({ runInlineTest }) => {
   expect(result.outputLines).toEqual(['A', 'B', 'C']);
 });
 
+test('should inherit env changes from dependencies', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { projects: [
+        { name: 'A', testMatch: '**/a.spec.ts' },
+        { name: 'B', testMatch: '**/b.spec.ts' },
+        { name: 'C', testMatch: '**/c.spec.ts', dependencies: ['A'] },
+        { name: 'D', testMatch: '**/d.spec.ts', dependencies: ['B'] },
+      ] };
+    `,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({}, testInfo) => {
+        process.env.SET_IN_A = 'valuea';
+        delete process.env.SET_OUTSIDE;
+        console.log('\\n%%A');
+      });
+    `,
+    'b.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({}, testInfo) => {
+        process.env.SET_IN_B = 'valueb';
+        console.log('\\n%%B');
+      });
+    `,
+    'c.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({}, testInfo) => {
+        console.log('\\n%%C-' + process.env.SET_IN_A + '-' + process.env.SET_IN_B + '-' + process.env.SET_OUTSIDE);
+      });
+    `,
+    'd.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({}, testInfo) => {
+        console.log('\\n%%D-' + process.env.SET_IN_A + '-' + process.env.SET_IN_B + '-' + process.env.SET_OUTSIDE);
+      });
+    `,
+  }, {}, { SET_OUTSIDE: 'outside' });
+  expect(result.passed).toBe(4);
+  expect(result.failed).toBe(0);
+  expect(result.skipped).toBe(0);
+  expect(result.outputLines.sort()).toEqual(['A', 'B', 'C-valuea-undefined-undefined', 'D-undefined-valueb-outside']);
+});
+
 test('should not run projects with dependencies when --no-deps is passed', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
