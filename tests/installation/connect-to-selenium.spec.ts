@@ -18,6 +18,7 @@ import path from 'path';
 import { test } from './npmTest';
 
 test('connect to selenium', async ({ exec, tmpWorkspace }, testInfo) => {
+  test.fixme(true, 'https://github.com/microsoft/playwright/issues/21733');
   test.skip(os.platform() !== 'linux');
 
   await exec('npm i --foreground-scripts playwright-core');
