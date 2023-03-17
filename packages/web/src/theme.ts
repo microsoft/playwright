@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import { settings } from './uiUtils';
+
 export function applyTheme() {
   if ((document as any).playwrightThemeInitialized)
     return;
@@ -26,14 +28,14 @@ export function applyTheme() {
     document.body.classList.add('inactive');
   }, false);
 
-  const currentTheme = localStorage.getItem('theme');
+  const currentTheme = settings.getString('theme', 'light-mode');
   const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
   if (currentTheme === 'dark-mode' || prefersDarkScheme.matches)
     document.body.classList.add('dark-mode');
 }
 
 export function toggleTheme() {
-  const oldTheme = localStorage.getItem('theme');
+  const oldTheme = settings.getString('theme', 'light-mode');
   let newTheme: string;
   if (oldTheme === 'dark-mode')
     newTheme = 'light-mode';
@@ -43,7 +45,7 @@ export function toggleTheme() {
   if (oldTheme)
     document.body.classList.remove(oldTheme);
   document.body.classList.add(newTheme);
-  localStorage.setItem('theme', newTheme);
+  settings.setString('theme', newTheme);
 }
 
 export function isDarkTheme() {
