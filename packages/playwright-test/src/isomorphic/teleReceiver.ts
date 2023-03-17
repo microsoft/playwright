@@ -396,9 +396,13 @@ export class TeleTestCase implements reporterTypes.TestCase {
     return status === 'expected' || status === 'flaky' || status === 'skipped';
   }
 
-  _createTestResult(id: string): reporterTypes.TestResult {
+  _clearResults() {
     this.results = [];
     this.resultsMap.clear();
+  }
+
+  _createTestResult(id: string): reporterTypes.TestResult {
+    this._clearResults();
     const result: TeleTestResult = {
       retry: this.results.length,
       parallelIndex: -1,

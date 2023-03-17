@@ -122,6 +122,12 @@ export const WatchModeView: React.FC<{}> = ({
     setProgress({ total: testIds.length, passed: 0, failed: 0, skipped: 0 });
     setRunningState({ testIds: new Set(testIds) });
     sendMessage('run', { testIds }).then(() => {
+      // Clear pending tests in case of interrupt.
+      for (const test of testModel.rootSuite?.allTests() || []) {
+        if (test.results[0]?.duration === -1)
+          (test as TeleTestCase)._clearResults();
+      }
+      setTestModel({ ...testModel });
       setRunningState(undefined);
     });
   };
@@ -667,8 +673,10 @@ function createTree(rootSuite: Suite | undefined, projectFilters: Map<string, bo
       let status: 'none' | 'running' | 'passed' | 'failed' | 'skipped' = 'none';
       if (test.results.some(r => r.duration === -1))
         status = 'running';
-      else if (test.results.length && test.outcome() === 'skipped')
+      else if (test.results.length && test.results[0].status === 'skipped')
         status = 'skipped';
+      else if (test.results.length && test.results[0].status === 'interrupted')
+        status = 'none';
       else if (test.results.length && test.outcome() !== 'expected')
         status = 'failed';
       else if (test.results.length && test.outcome() === 'expected')
