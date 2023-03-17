@@ -52,7 +52,7 @@ export const TestCaseView: React.FC<{
 
   return <div className='test-case-column vbox'>
     {test && <div className='test-case-path'>{test.path.join(' › ')}</div>}
-    {test && <div className='test-case-title' onClick={() => handleCopy(test.title)}>{test.title} {copyIcon}</div> }
+    {test && <div className='test-case-title' onClick={() => handleCopy(test.title)}>{test.title} {copyIcon}</div>}
     {test && <div className='test-case-location'>{test.location.file}:{test.location.line}</div>}
     {test && !!test.projectName && <ProjectLink projectNames={projectNames} projectName={test.projectName}></ProjectLink>}
     {annotations.size > 0 && <AutoChip header='Annotations'>
