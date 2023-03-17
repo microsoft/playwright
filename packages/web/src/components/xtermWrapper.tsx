@@ -47,6 +47,7 @@ export const XtermWrapper: React.FC<{ source: XtermDataSource }> = ({
       const newTerminal = new Terminal({
         convertEol: true,
         fontSize: 13,
+        scrollback: 10000,
         fontFamily: 'var(--vscode-editor-font-family)',
         theme: isDarkTheme() ? darkTheme : lightTheme
       });
