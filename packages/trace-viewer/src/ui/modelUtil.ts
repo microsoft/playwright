@@ -22,7 +22,8 @@ import type { ContextEntry, PageEntry } from '../entries';
 import type { SerializedError, StackFrame } from '@protocol/channels';
 
 const contextSymbol = Symbol('context');
-const nextSymbol = Symbol('next');
+const nextInContextSymbol = Symbol('next');
+const prevInListSymbol = Symbol('prev');
 const eventsSymbol = Symbol('events');
 const resourcesSymbol = Symbol('resources');
 
@@ -78,7 +79,7 @@ function indexModel(context: ContextEntry) {
   for (let i = 0; i < context.actions.length; ++i) {
     const action = context.actions[i] as any;
     action[contextSymbol] = context;
-    action[nextSymbol] = context.actions[i + 1];
+    action[nextInContextSymbol] = context.actions[i + 1];
   }
   for (const event of context.events)
     (event as any)[contextSymbol] = context;
@@ -114,15 +115,22 @@ function dedupeActions(actions: ActionTraceEvent[]) {
     result.push(expectAction);
   }
 
-  return result.sort((a1, a2) => a1.startTime - a2.startTime);
+  result.sort((a1, a2) => a1.startTime - a2.startTime);
+  for (let i = 1; i < result.length; ++i)
+    (result[i] as any)[prevInListSymbol] = result[i - 1];
+  return result;
 }
 
 export function context(action: ActionTraceEvent): ContextEntry {
   return (action as any)[contextSymbol];
 }
 
-function next(action: ActionTraceEvent): ActionTraceEvent {
-  return (action as any)[nextSymbol];
+function nextInContext(action: ActionTraceEvent): ActionTraceEvent {
+  return (action as any)[nextInContextSymbol];
+}
+
+export function prevInList(action: ActionTraceEvent): ActionTraceEvent {
+  return (action as any)[prevInListSymbol];
 }
 
 export function stats(action: ActionTraceEvent): { errors: number, warnings: number } {
@@ -149,7 +157,7 @@ export function eventsForAction(action: ActionTraceEvent): EventTraceEvent[] {
   if (result)
     return result;
 
-  const nextAction = next(action);
+  const nextAction = nextInContext(action);
   result = context(action).events.filter(event => {
     return event.time >= action.startTime && (!nextAction || event.time < nextAction.startTime);
   });
@@ -162,7 +170,7 @@ export function resourcesForAction(action: ActionTraceEvent): ResourceSnapshot[]
   if (result)
     return result;
 
-  const nextAction = next(action);
+  const nextAction = nextInContext(action);
   result = context(action).resources.filter(resource => {
     return typeof resource._monotonicTime === 'number' && resource._monotonicTime > action.startTime && (!nextAction || resource._monotonicTime < nextAction.startTime);
   });
