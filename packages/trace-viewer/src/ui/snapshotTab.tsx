@@ -18,7 +18,7 @@ import './snapshotTab.css';
 import * as React from 'react';
 import { useMeasure } from './helpers';
 import type { ActionTraceEvent } from '@trace/trace';
-import { context } from './modelUtil';
+import { context, prevInList } from './modelUtil';
 import { CodeMirrorWrapper } from '@web/components/codeMirrorWrapper';
 import { Toolbar } from '@web/components/toolbar';
 import { ToolbarButton } from '@web/components/toolbarButton';
@@ -36,49 +36,46 @@ export const SnapshotTab: React.FunctionComponent<{
   testIdAttributeName: string,
 }> = ({ action, sdkLanguage, testIdAttributeName }) => {
   const [measure, ref] = useMeasure<HTMLDivElement>();
-  const [snapshotIndex, setSnapshotIndex] = React.useState(0);
+  const [snapshotTab, setSnapshotTab] = React.useState<'action'|'before'|'after'>('action');
   const [isInspecting, setIsInspecting] = React.useState(false);
   const [highlightedLocator, setHighlightedLocator] = React.useState<string>('');
   const [pickerVisible, setPickerVisible] = React.useState(false);
 
-  const { snapshots, snapshotInfoUrl, snapshotUrl, pointX, pointY, popoutUrl  } = React.useMemo(() => {
-    const actionSnapshot = action?.inputSnapshot || action?.afterSnapshot;
-    const snapshots = [
-      actionSnapshot ? { title: 'action', snapshotName: actionSnapshot } : undefined,
-      action?.beforeSnapshot ? { title: 'before', snapshotName: action?.beforeSnapshot } : undefined,
-      action?.afterSnapshot ? { title: 'after', snapshotName: action.afterSnapshot } : undefined,
-    ].filter(Boolean) as { title: string, snapshotName: string }[];
+  const { snapshots } = React.useMemo(() => {
+    if (!action)
+      return { snapshots: {} };
 
-    let snapshotUrl = 'data:text/html,<body style="background: #ddd"></body>';
-    let popoutUrl: string | undefined;
-    let snapshotInfoUrl: string | undefined;
-    let pointX: number | undefined;
-    let pointY: number | undefined;
-    if (action) {
-      const snapshot = snapshots[snapshotIndex];
-      if (snapshot && snapshot.snapshotName) {
-        const params = new URLSearchParams();
-        params.set('trace', context(action).traceUrl);
-        params.set('name', snapshot.snapshotName);
-        snapshotUrl = new URL(`snapshot/${action.pageId}?${params.toString()}`, window.location.href).toString();
-        snapshotInfoUrl = new URL(`snapshotInfo/${action.pageId}?${params.toString()}`, window.location.href).toString();
-        if (snapshot.title === 'action') {
-          pointX = action.point?.x;
-          pointY = action.point?.y;
-        }
-        const popoutParams = new URLSearchParams();
-        popoutParams.set('r', snapshotUrl);
-        popoutParams.set('trace', context(action).traceUrl);
-        popoutUrl = new URL(`popout.html?${popoutParams.toString()}`, window.location.href).toString();
-      }
+    // if the action has no beforeSnapshot, use the last available afterSnapshot.
+    let beforeSnapshot = action.beforeSnapshot ? { action, snapshotName: action.beforeSnapshot } : undefined;
+    let a = action;
+    while (!beforeSnapshot && a) {
+      a = prevInList(a);
+      beforeSnapshot = a?.afterSnapshot ? { action: a, snapshotName: a?.afterSnapshot } : undefined;
     }
-    return { snapshots, snapshotInfoUrl, snapshotUrl, pointX, pointY, popoutUrl };
-  }, [action, snapshotIndex]);
+    const afterSnapshot = action.afterSnapshot ? { action, snapshotName: action.afterSnapshot } : beforeSnapshot;
+    const actionSnapshot = action.inputSnapshot ? { action, snapshotName: action.inputSnapshot } : afterSnapshot;
+    return { snapshots: { action: actionSnapshot, before: beforeSnapshot, after: afterSnapshot } };
+  }, [action]);
 
-  React.useEffect(() => {
-    if (snapshots.length >= 1 && snapshotIndex >= snapshots.length)
-      setSnapshotIndex(snapshots.length - 1);
-  }, [snapshotIndex, snapshots]);
+  const { snapshotInfoUrl, snapshotUrl, pointX, pointY, popoutUrl } = React.useMemo(() => {
+    const snapshot = snapshots[snapshotTab];
+    if (!snapshot)
+      return { snapshotUrl: kBlankSnapshotUrl };
+
+    const params = new URLSearchParams();
+    params.set('trace', context(snapshot.action).traceUrl);
+    params.set('name', snapshot.snapshotName);
+    const snapshotUrl = new URL(`snapshot/${snapshot.action.pageId}?${params.toString()}`, window.location.href).toString();
+    const snapshotInfoUrl = new URL(`snapshotInfo/${snapshot.action.pageId}?${params.toString()}`, window.location.href).toString();
+
+    const pointX = snapshotTab === 'action' ? snapshot.action.point?.x : undefined;
+    const pointY = snapshotTab === 'action' ? snapshot.action.point?.y : undefined;
+    const popoutParams = new URLSearchParams();
+    popoutParams.set('r', snapshotUrl);
+    popoutParams.set('trace', context(snapshot.action).traceUrl);
+    const popoutUrl = new URL(`popout.html?${popoutParams.toString()}`, window.location.href).toString();
+    return { snapshots, snapshotInfoUrl, snapshotUrl, pointX, pointY, popoutUrl };
+  }, [snapshots, snapshotTab]);
 
   const iframeRef = React.useRef<HTMLIFrameElement>(null);
   const [snapshotInfo, setSnapshotInfo] = React.useState({ viewport: kDefaultViewport, url: '' });
@@ -141,12 +138,12 @@ export const SnapshotTab: React.FunctionComponent<{
         setIsInspecting(!pickerVisible);
       }}>Pick locator</ToolbarButton>
       <div style={{ width: 5 }}></div>
-      {snapshots.map((snapshot, index) => {
+      {['action', 'before', 'after'].map(tab => {
         return <TabbedPaneTab
-          id={snapshot.title}
-          title={renderTitle(snapshot.title)}
-          selected={snapshotIndex === index}
-          onSelect={() => setSnapshotIndex(index)}
+          id={tab}
+          title={renderTitle(tab)}
+          selected={snapshotTab === tab}
+          onSelect={() => setSnapshotTab(tab as 'action' | 'before' | 'after')}
         ></TabbedPaneTab>;
       })}
       <div style={{ flex: 'auto' }}></div>
@@ -168,7 +165,7 @@ export const SnapshotTab: React.FunctionComponent<{
       }}></ToolbarButton>
     </Toolbar>}
     <div ref={ref} className='snapshot-wrapper'>
-      { snapshots.length ? <div className='snapshot-container' style={{
+      <div className='snapshot-container' style={{
         width: snapshotContainerSize.width + 'px',
         height: snapshotContainerSize.height + 'px',
         transform: `translate(${translate.x}px, ${translate.y}px) scale(${scale})`,
@@ -189,8 +186,7 @@ export const SnapshotTab: React.FunctionComponent<{
           </div>
         </div>
         <iframe ref={iframeRef} id='snapshot' name='snapshot'></iframe>
-      </div> : <div className='no-snapshot'>Action does not have snapshots</div>
-      }
+      </div>
     </div>
   </div>;
 };
@@ -215,8 +211,13 @@ export const InspectModeController: React.FunctionComponent<{
 }> = ({ iframe, isInspecting, sdkLanguage, testIdAttributeName, highlightedLocator, setHighlightedLocator }) => {
   React.useEffect(() => {
     const win = iframe?.contentWindow as any;
-    if (!win || !isInspecting && !highlightedLocator && !win._recorder)
+    try {
+      if (!win || !isInspecting && !highlightedLocator && !win._recorder)
+        return;
+    } catch {
+      // Potential cross-origin exception.
       return;
+    }
     let recorder: Recorder | undefined = win._recorder;
     if (!recorder) {
       const injectedScript = new InjectedScript(win, false, sdkLanguage, testIdAttributeName, 1, 'chromium', []);
@@ -240,3 +241,4 @@ export const InspectModeController: React.FunctionComponent<{
 };
 
 const kDefaultViewport = { width: 1280, height: 720 };
+const kBlankSnapshotUrl = 'data:text/html,<body style="background: #ddd"></body>';
