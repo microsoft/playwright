@@ -445,7 +445,7 @@ const TraceView: React.FC<{
     };
   }, [result, outputDir, testCase, setModel, counter, setCounter]);
 
-  return <Workbench key='workbench' model={model} hideTimelineBars={true} hideStackFrames={true} showSourcesFirst={true} />;
+  return <Workbench key='workbench' model={model} hideTimelineBars={true} hideStackFrames={true} showSourcesFirst={true} defaultSourceLocation={testCase?.location} />;
 };
 
 declare global {
