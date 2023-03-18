@@ -30,13 +30,15 @@ import type { TabbedPaneTabModel } from '@web/components/tabbedPane';
 import { Timeline } from './timeline';
 import './workbench.css';
 import { MetadataView } from './metadataView';
+import type { Location } from '../../../playwright-test/types/testReporter';
 
 export const Workbench: React.FunctionComponent<{
   model?: MultiTraceModel,
   hideTimelineBars?: boolean,
   hideStackFrames?: boolean,
   showSourcesFirst?: boolean,
-}> = ({ model, hideTimelineBars, hideStackFrames, showSourcesFirst }) => {
+  defaultSourceLocation?: Location,
+}> = ({ model, hideTimelineBars, hideStackFrames, showSourcesFirst, defaultSourceLocation }) => {
   const [selectedAction, setSelectedAction] = React.useState<ActionTraceEvent | undefined>(undefined);
   const [highlightedAction, setHighlightedAction] = React.useState<ActionTraceEvent | undefined>();
   const [selectedNavigatorTab, setSelectedNavigatorTab] = React.useState<string>('actions');
@@ -66,7 +68,7 @@ export const Workbench: React.FunctionComponent<{
   const sourceTab: TabbedPaneTabModel = {
     id: 'source',
     title: 'Source',
-    render: () => <SourceTab action={activeAction} sources={model?.sources || new Map()} hideStackFrames={hideStackFrames}/>
+    render: () => <SourceTab action={activeAction} sources={model?.sources || new Map()} hideStackFrames={hideStackFrames} fallbackLocation={defaultSourceLocation}/>
   };
   const consoleTab: TabbedPaneTabModel = {
     id: 'console',
