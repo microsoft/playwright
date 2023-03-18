@@ -94,6 +94,7 @@ test('selenium grid 3.141.59 hub + node chromium', async ({ browserName, childPr
 });
 
 test('selenium grid 4.4.0 standalone chromium', async ({ browserName, childProcess, waitForPort, browserType }, testInfo) => {
+  test.fixme(true, 'https://github.com/microsoft/playwright/issues/21733');
   test.skip(browserName !== 'chromium');
 
   const port = testInfo.workerIndex + 15123;
@@ -117,6 +118,7 @@ test('selenium grid 4.4.0 standalone chromium', async ({ browserName, childProce
 });
 
 test('selenium grid 4.4.0 hub + node chromium', async ({ browserName, childProcess, waitForPort, browserType }, testInfo) => {
+  test.fixme(true, 'https://github.com/microsoft/playwright/issues/21733');
   test.skip(browserName !== 'chromium');
 
   const port = testInfo.workerIndex + 15123;
