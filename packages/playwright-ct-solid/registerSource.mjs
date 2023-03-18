@@ -17,38 +17,38 @@
 // @ts-check
 // This file is injected into the registry as text, no dependencies are allowed.
 
-import { render as solidRender, createComponent as solidCreateComponent } from 'solid-js/web';
-import h from 'solid-js/h';
+import { render as __pwSolidRender, createComponent as __pwSolidCreateComponent } from 'solid-js/web';
+import __pwH from 'solid-js/h';
 
 /** @typedef {import('../playwright-test/types/component').Component} Component */
 /** @typedef {() => import('solid-js').JSX.Element} FrameworkComponent */
 
 /** @type {Map<string, FrameworkComponent>} */
-const registry = new Map();
+const __pwRegistry = new Map();
 
 /**
  * @param {{[key: string]: FrameworkComponent}} components
  */
-export function register(components) {
+export function pwRegister(components) {
   for (const [name, value] of Object.entries(components))
-    registry.set(name, value);
+    __pwRegistry.set(name, value);
 }
 
-function createChild(child) {
-  return typeof child === 'string' ? child : createComponent(child);
+function __pwCreateChild(child) {
+  return typeof child === 'string' ? child : __pwCreateComponent(child);
 }
 
 /**
  * @param {Component} component
  */
-function createComponent(component) {
+function __pwCreateComponent(component) {
   if (typeof component !== 'object' || Array.isArray(component))
     return component;
 
-  let Component = registry.get(component.type);
+  let Component = __pwRegistry.get(component.type);
   if (!Component) {
     // Lookup by shorthand.
-    for (const [name, value] of registry) {
+    for (const [name, value] of __pwRegistry) {
       if (component.type.endsWith(`_${name}`)) {
         Component = value;
         break;
@@ -57,43 +57,43 @@ function createComponent(component) {
   }
 
   if (!Component && component.type[0].toUpperCase() === component.type[0])
-    throw new Error(`Unregistered component: ${component.type}. Following components are registered: ${[...registry.keys()]}`);
+    throw new Error(`Unregistered component: ${component.type}. Following components are registered: ${[...__pwRegistry.keys()]}`);
 
   if (component.kind !== 'jsx')
     throw new Error('Object mount notation is not supported');
 
   const children = component.children.reduce((/** @type {any[]} */ children, current) => {
-    const child = createChild(current);
+    const child = __pwCreateChild(current);
     if (typeof child !== 'string' || !!child.trim())
       children.push(child);
     return children;
   }, []);
 
   if (!Component)
-    return h(component.type, component.props, children);
+    return __pwH(component.type, component.props, children);
 
-  return solidCreateComponent(Component, { ...component.props, children });
+  return __pwSolidCreateComponent(Component, { ...component.props, children });
 }
 
-const unmountKey = Symbol('unmountKey');
+const __pwUnmountKey = Symbol('unmountKey');
 
 window.playwrightMount = async (component, rootElement, hooksConfig) => {
-  let App = () => createComponent(component);
+  let App = () => __pwCreateComponent(component);
   for (const hook of window.__pw_hooks_before_mount || []) {
     const wrapper = await hook({ App, hooksConfig });
     if (wrapper)
       App = () => wrapper;
   }
 
-  const unmount = solidRender(App, rootElement);
-  rootElement[unmountKey] = unmount;
+  const unmount = __pwSolidRender(App, rootElement);
+  rootElement[__pwUnmountKey] = unmount;
 
   for (const hook of window.__pw_hooks_after_mount || [])
     await hook({ hooksConfig });
 };
 
 window.playwrightUnmount = async rootElement => {
-  const unmount = rootElement[unmountKey];
+  const unmount = rootElement[__pwUnmountKey];
   if (!unmount)
     throw new Error('Component was not mounted');
 

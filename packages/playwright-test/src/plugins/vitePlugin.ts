@@ -307,8 +307,9 @@ function vitePlugin(registerSource: string, relativeTemplateDir: string, buildIn
       const indexTs = path.join(relativeTemplateDir, 'index.ts');
       const indexTsx = path.join(relativeTemplateDir, 'index.tsx');
       const indexJs = path.join(relativeTemplateDir, 'index.js');
+      const indexJsx = path.join(relativeTemplateDir, 'index.jsx');
       const idResolved = path.resolve(id);
-      if (!idResolved.endsWith(indexTs) && !idResolved.endsWith(indexTsx) && !idResolved.endsWith(indexJs))
+      if (!idResolved.endsWith(indexTs) && !idResolved.endsWith(indexTsx) && !idResolved.endsWith(indexJs) && !idResolved.endsWith(indexJsx))
         return;
 
       const folder = path.dirname(id);
@@ -323,7 +324,7 @@ function vitePlugin(registerSource: string, relativeTemplateDir: string, buildIn
           lines.push(`import ${alias} from '${importPath}';`);
       }
 
-      lines.push(`register({ ${[...componentRegistry.keys()].join(',\n  ')} });`);
+      lines.push(`pwRegister({ ${[...componentRegistry.keys()].join(',\n  ')} });`);
       return {
         code: lines.join('\n'),
         map: { mappings: '' }

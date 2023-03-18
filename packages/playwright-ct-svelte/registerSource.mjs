@@ -18,28 +18,28 @@
 
 // This file is injected into the registry as text, no dependencies are allowed.
 
-import { detach, insert, noop } from 'svelte/internal';
+import { detach as __pwDetach, insert as __pwInsert, noop as __pwNoop } from 'svelte/internal';
 
 /** @typedef {import('../playwright-test/types/component').Component} Component */
 /** @typedef {any} FrameworkComponent */
 /** @typedef {import('svelte').SvelteComponent} SvelteComponent */
 
 /** @type {Map<string, FrameworkComponent>} */
-const registry = new Map();
+const __pwRegistry = new Map();
 
 /**
  * @param {{[key: string]: FrameworkComponent}} components
  */
-export function register(components) {
+export function pwRegister(components) {
   for (const [name, value] of Object.entries(components))
-    registry.set(name, value);
+    __pwRegistry.set(name, value);
 }
 
 /**
  * TODO: remove this function when the following issue is fixed:
  * https://github.com/sveltejs/svelte/issues/2588
  */
-function createSlots(slots) {
+function __pwCreateSlots(slots) {
   const svelteSlots = {};
 
   for (const slotName in slots) {
@@ -52,27 +52,27 @@ function createSlots(slots) {
   function createSlotFn(element) {
     return function() {
       return {
-        c: noop,
+        c: __pwNoop,
         m: function mount(target, anchor) {
-          insert(target, element, anchor);
+          __pwInsert(target, element, anchor);
         },
         d: function destroy(detaching) {
-          if (detaching) detach(element);
+          if (detaching) __pwDetach(element);
         },
-        l: noop,
+        l: __pwNoop,
       };
     };
   }
   return svelteSlots;
 }
 
-const svelteComponentKey = Symbol('svelteComponent');
+const __pwSvelteComponentKey = Symbol('svelteComponent');
 
 window.playwrightMount = async (component, rootElement, hooksConfig) => {
-  let componentCtor = registry.get(component.type);
+  let componentCtor = __pwRegistry.get(component.type);
   if (!componentCtor) {
     // Lookup by shorthand.
-    for (const [name, value] of registry) {
+    for (const [name, value] of __pwRegistry) {
       if (component.type.endsWith(`_${name}_svelte`)) {
         componentCtor = value;
         break;
@@ -81,7 +81,7 @@ window.playwrightMount = async (component, rootElement, hooksConfig) => {
   }
 
   if (!componentCtor)
-    throw new Error(`Unregistered component: ${component.type}. Following components are registered: ${[...registry.keys()]}`);
+    throw new Error(`Unregistered component: ${component.type}. Following components are registered: ${[...__pwRegistry.keys()]}`);
 
   if (component.kind !== 'object')
     throw new Error('JSX mount notation is not supported');
@@ -94,11 +94,11 @@ window.playwrightMount = async (component, rootElement, hooksConfig) => {
     target: rootElement,
     props: {
       ...component.options?.props,
-      $$slots: createSlots(component.options?.slots),
+      $$slots: __pwCreateSlots(component.options?.slots),
       $$scope: {},
     }
   }));
-  rootElement[svelteComponentKey] = svelteComponent;
+  rootElement[__pwSvelteComponentKey] = svelteComponent;
 
   for (const [key, listener] of Object.entries(component.options?.on || {}))
     svelteComponent.$on(key, event => listener(event.detail));
@@ -108,14 +108,14 @@ window.playwrightMount = async (component, rootElement, hooksConfig) => {
 };
 
 window.playwrightUnmount = async rootElement => {
-  const svelteComponent = /** @type {SvelteComponent} */ (rootElement[svelteComponentKey]);
+  const svelteComponent = /** @type {SvelteComponent} */ (rootElement[__pwSvelteComponentKey]);
   if (!svelteComponent)
     throw new Error('Component was not mounted');
   svelteComponent.$destroy();
 };
 
 window.playwrightUpdate = async (rootElement, component) => {
-  const svelteComponent = /** @type {SvelteComponent} */ (rootElement[svelteComponentKey]);
+  const svelteComponent = /** @type {SvelteComponent} */ (rootElement[__pwSvelteComponentKey]);
   if (!svelteComponent)
     throw new Error('Component was not mounted');
 
