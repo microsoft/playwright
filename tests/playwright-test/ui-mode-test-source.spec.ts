@@ -42,15 +42,24 @@ test('should show selected test in sources', async ({ runUITest }) => {
 
   await page.getByTestId('test-tree').getByText('first').click();
   await expect(
+      page.getByTestId('source-code').locator('.source-tab-file-name')
+  ).toHaveText('a.test.ts');
+  await expect(
       page.locator('.CodeMirror .source-line-running'),
   ).toHaveText(`3    test('first', () => {});`);
 
   await page.getByTestId('test-tree').getByText('second').click();
   await expect(
+      page.getByTestId('source-code').locator('.source-tab-file-name')
+  ).toHaveText('a.test.ts');
+  await expect(
       page.locator('.CodeMirror .source-line-running'),
   ).toHaveText(`4    test('second', () => {});`);
 
   await page.getByTestId('test-tree').getByText('third').click();
+  await expect(
+      page.getByTestId('source-code').locator('.source-tab-file-name')
+  ).toHaveText('b.test.ts');
   await expect(
       page.locator('.CodeMirror .source-line-running'),
   ).toHaveText(`3    test('third', () => {});`);

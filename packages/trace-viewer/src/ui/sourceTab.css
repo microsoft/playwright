@@ -21,3 +21,13 @@
   display: flex;
   flex-direction: row;
 }
+
+.source-tab-file-name {
+  height: 24px;
+  margin-left: 8px;
+  display: flex;
+  align-items: center;
+  background-color: var(--vscode-breadcrumb-background);
+  box-shadow: var(--vscode-scrollbar-shadow) 0 6px 6px -6px;
+  z-index: 200;
+}

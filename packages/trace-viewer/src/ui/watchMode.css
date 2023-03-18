@@ -40,16 +40,9 @@
   overflow: hidden
 }
 
-.watch-mode-sidebar .toolbar {
-  min-height: 24px;
-}
-
-.watch-mode-sidebar .toolbar-button {
-  margin: 0;
-}
-
 .watch-mode .section-title {
   display: flex;
+  flex: auto;
   flex-direction: row;
   align-items: center;
   font-size: 11px;
@@ -58,6 +51,7 @@
   text-overflow: ellipsis;
   overflow: hidden;
   padding: 8px;
+  height: 30px;
 }
 
 .watch-mode-sidebar img {
@@ -68,20 +62,19 @@
 }
 
 .status-line {
-  flex: none;
+  flex: auto;
+  white-space: nowrap;
   line-height: 22px;
-  padding: 0 10px;
-  color: var(--vscode-statusBar-foreground);
-  background-color: var(--vscode-statusBar-background);
+  padding-left: 10px;
   display: flex;
   flex-direction: row;
   align-items: center;
+  height: 30px;
 }
 
 .status-line > div {
-  display: flex;
-  align-items: center;
-  margin: 0 5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .list-view-entry:not(.highlighted):not(.selected) .toolbar-button:not(.toggled) {
@@ -103,7 +96,6 @@
   flex: none;
   display: flex;
   flex-direction: column;
-  margin-top: 8px;
 }
 
 .filter-title,
@@ -120,7 +112,7 @@
 }
 
 .filter-summary {
-  line-height: 24px;
+  line-height: 21px;
   margin-top: 2px;
   margin-left: 20px;
 }

@@ -149,9 +149,9 @@ export const CodeMirrorWrapper: React.FC<SourceProps> = ({
       codemirrorRef.current!.highlight = highlight;
       codemirrorRef.current!.widgets = widgets;
     }
-
-    if (revealLine && codemirrorRef.current!.cm.lineCount() >= revealLine)
-      codemirror.scrollIntoView({ line: revealLine - 1, ch: 0 }, 50);
+    // Line-less locations have line = 0, but they mean to reveal the file.
+    if (typeof revealLine === 'number' && codemirrorRef.current!.cm.lineCount() >= revealLine)
+      codemirror.scrollIntoView({ line: Math.max(0, revealLine - 1), ch: 0 }, 50);
   }, [codemirror, text, highlight, revealLine, focusOnChange, onChange]);
 
   return <div className='cm-wrapper' ref={codemirrorElement}></div>;
