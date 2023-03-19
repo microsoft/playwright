@@ -34,10 +34,10 @@ import { XtermWrapper } from '@web/components/xtermWrapper';
 import { Expandable } from '@web/components/expandable';
 import { toggleTheme } from '@web/theme';
 import { artifactsFolderName } from '@testIsomorphic/folders';
-import { settings } from '@web/uiUtils';
+import { settings, useSetting } from '@web/uiUtils';
 
 let updateRootSuite: (config: FullConfig, rootSuite: Suite, progress: Progress | undefined) => void = () => {};
-let runWatchedTests = (fileName: string) => {};
+let runWatchedTests = (fileNames: string[]) => {};
 let xtermSize = { cols: 80, rows: 24 };
 
 const xtermDataSource: XtermDataSource = {
@@ -72,6 +72,7 @@ export const WatchModeView: React.FC<{}> = ({
   const [visibleTestIds, setVisibleTestIds] = React.useState<string[]>([]);
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
   const [runningState, setRunningState] = React.useState<{ testIds: Set<string>, itemSelectedByUser?: boolean } | undefined>();
+  const [watchAll, setWatchAll] = useSetting<boolean>('watch-all', false);
 
   const inputRef = React.useRef<HTMLInputElement>(null);
 
@@ -157,8 +158,9 @@ export const WatchModeView: React.FC<{}> = ({
         <Toolbar noShadow={true}>
           <img src='icon-32x32.png' />
           <div className='section-title'>Playwright</div>
-          <ToolbarButton icon='color-mode' title='Toggle color mode' toggled={false} onClick={() => toggleTheme()} />
+          <ToolbarButton icon='color-mode' title='Toggle color mode' onClick={() => toggleTheme()} />
           <ToolbarButton icon='refresh' title='Reload' onClick={() => reloadTests()} disabled={isRunningTest || isLoading}></ToolbarButton>
+          <ToolbarButton icon='eye' title='Watch all' toggled={watchAll} onClick={() => setWatchAll(!watchAll)}></ToolbarButton>
           <ToolbarButton icon='terminal' title='Toggle output' toggled={isShowingOutput} onClick={() => { setIsShowingOutput(!isShowingOutput); }} />
         </Toolbar>
         <FiltersView
@@ -189,7 +191,8 @@ export const WatchModeView: React.FC<{}> = ({
           runningState={runningState}
           runTests={runTests}
           onItemSelected={setSelectedItem}
-          setVisibleTestIds={setVisibleTestIds} />
+          setVisibleTestIds={setVisibleTestIds}
+          watchAll={watchAll} />
       </div>
     </SplitView>
   </div>;
@@ -272,20 +275,25 @@ const TestList: React.FC<{
   testModel: { rootSuite: Suite | undefined, config: FullConfig | undefined },
   runTests: (testIds: string[]) => void,
   runningState?: { testIds: Set<string>, itemSelectedByUser?: boolean },
+  watchAll?: boolean,
   setVisibleTestIds: (testIds: string[]) => void,
   onItemSelected: (item: { testCase?: TestCase, location?: Location }) => void,
-}> = ({ statusFilters, projectFilters, filterText, testModel, runTests, runningState, onItemSelected, setVisibleTestIds }) => {
+}> = ({ statusFilters, projectFilters, filterText, testModel, runTests, runningState, watchAll, onItemSelected, setVisibleTestIds }) => {
   const [treeState, setTreeState] = React.useState<TreeState>({ expandedItems: new Map() });
   const [selectedTreeItemId, setSelectedTreeItemId] = React.useState<string | undefined>();
-  const [watchedTreeIds, innerSetWatchedTreeIds] = React.useState<{ value: Set<string> }>({ value: new Set() });
+  const [watchedTreeIds, setWatchedTreeIds] = React.useState<{ value: Set<string> }>({ value: new Set() });
 
-  const { rootItem, treeItemMap } = React.useMemo(() => {
+  // Build the test tree.
+  const { rootItem, treeItemMap, fileNames } = React.useMemo(() => {
     const rootItem = createTree(testModel.rootSuite, projectFilters);
     filterTree(rootItem, filterText, statusFilters);
     hideOnlyTests(rootItem);
     const treeItemMap = new Map<string, TreeItem>();
     const visibleTestIds = new Set<string>();
+    const fileNames = new Set<string>();
     const visit = (treeItem: TreeItem) => {
+      if (treeItem.kind === 'group' && treeItem.location.file)
+        fileNames.add(treeItem.location.file);
       if (treeItem.kind === 'case')
         treeItem.tests.forEach(t => visibleTestIds.add(t.id));
       treeItem.children.forEach(visit);
@@ -293,11 +301,11 @@ const TestList: React.FC<{
     };
     visit(rootItem);
     setVisibleTestIds([...visibleTestIds]);
-    return { rootItem, treeItemMap };
+    return { rootItem, treeItemMap, fileNames };
   }, [filterText, testModel, statusFilters, projectFilters, setVisibleTestIds]);
 
+  // Look for a first failure within the run batch to select it.
   React.useEffect(() => {
-    // Look for a first failure within the run batch to select it.
     if (!runningState || runningState.itemSelectedByUser)
       return;
     let selectedTreeItem: TreeItem | undefined;
@@ -318,6 +326,7 @@ const TestList: React.FC<{
       setSelectedTreeItemId(selectedTreeItem.id);
   }, [runningState, setSelectedTreeItemId, rootItem]);
 
+  // Compute selected item.
   const { selectedTreeItem } = React.useMemo(() => {
     const selectedTreeItem = selectedTreeItemId ? treeItemMap.get(selectedTreeItemId) : undefined;
     const location = selectedTreeItem?.location;
@@ -330,27 +339,45 @@ const TestList: React.FC<{
     return { selectedTreeItem };
   }, [onItemSelected, selectedTreeItemId, treeItemMap]);
 
-  const setWatchedTreeIds = (watchedTreeIds: Set<string>) => {
-    const fileNames = new Set<string>();
-    for (const itemId of watchedTreeIds) {
-      const treeItem = treeItemMap.get(itemId)!;
-      fileNames.add(fileNameForTreeItem(treeItem)!);
+  // Update watch all.
+  React.useEffect(() => {
+    if (watchAll) {
+      sendMessageNoReply('watch', { fileNames: [...fileNames] });
+    } else {
+      const fileNames = new Set<string>();
+      for (const itemId of watchedTreeIds.value) {
+        const treeItem = treeItemMap.get(itemId)!;
+        const fileName = fileNameForTreeItem(treeItem);
+        if (fileName)
+          fileNames.add(fileName);
+      }
+      sendMessageNoReply('watch', { fileNames: [...fileNames] });
     }
-    sendMessageNoReply('watch', { fileNames: [...fileNames] });
-    innerSetWatchedTreeIds({ value: watchedTreeIds });
-  };
+  }, [rootItem, fileNames, watchAll, watchedTreeIds, treeItemMap]);
 
   const runTreeItem = (treeItem: TreeItem) => {
     setSelectedTreeItemId(treeItem.id);
     runTests(collectTestIds(treeItem));
   };
 
-  runWatchedTests = (fileName: string) => {
+  runWatchedTests = (fileNames: string[]) => {
     const testIds: string[] = [];
-    for (const treeId of watchedTreeIds.value) {
-      const treeItem = treeItemMap.get(treeId)!;
-      if (fileNameForTreeItem(treeItem) === fileName)
-        testIds.push(...collectTestIds(treeItem));
+    const set = new Set(fileNames);
+    if (watchAll) {
+      const visit = (treeItem: TreeItem) => {
+        const fileName = fileNameForTreeItem(treeItem);
+        if (fileName && set.has(fileName))
+          testIds.push(...collectTestIds(treeItem));
+        treeItem.children.forEach(visit);
+      };
+      visit(rootItem);
+    } else {
+      for (const treeId of watchedTreeIds.value) {
+        const treeItem = treeItemMap.get(treeId)!;
+        const fileName = fileNameForTreeItem(treeItem);
+        if (fileName && set.has(fileName))
+          testIds.push(...collectTestIds(treeItem));
+      }
     }
     runTests(testIds);
   };
@@ -365,13 +392,13 @@ const TestList: React.FC<{
         <div className='watch-mode-list-item-title'>{treeItem.title}</div>
         <ToolbarButton icon='play' title='Run' onClick={() => runTreeItem(treeItem)} disabled={!!runningState}></ToolbarButton>
         <ToolbarButton icon='go-to-file' title='Open in VS Code' onClick={() => sendMessageNoReply('open', { location: locationToOpen(treeItem) })}></ToolbarButton>
-        <ToolbarButton icon='eye' title='Watch' onClick={() => {
+        {!watchAll && <ToolbarButton icon='eye' title='Watch' onClick={() => {
           if (watchedTreeIds.value.has(treeItem.id))
             watchedTreeIds.value.delete(treeItem.id);
           else
             watchedTreeIds.value.add(treeItem.id);
-          setWatchedTreeIds(watchedTreeIds.value);
-        }} toggled={watchedTreeIds.value.has(treeItem.id)}></ToolbarButton>
+          setWatchedTreeIds({ ...watchedTreeIds });
+        }} toggled={watchedTreeIds.value.has(treeItem.id)}></ToolbarButton>}
       </div>;
     }}
     icon={treeItem => {
@@ -532,8 +559,8 @@ const refreshRootSuite = (eraseResults: boolean): Promise<void> => {
     return;
   }
 
-  if (message.method === 'fileChanged') {
-    runWatchedTests(message.params.fileName);
+  if (message.method === 'filesChanged') {
+    runWatchedTests(message.params.fileNames);
     return;
   }
 

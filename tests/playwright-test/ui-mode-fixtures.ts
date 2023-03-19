@@ -69,7 +69,8 @@ export function dumpTestTree(page: Page): () => Promise<string> {
 export const test = base
     .extend<Fixtures>({
       runUITest: async ({ childProcess, playwright, headless }, use, testInfo: TestInfo) => {
-        testInfo.slow();
+        if (process.env.CI)
+          testInfo.slow();
         const cacheDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-test-cache-'));
         let testProcess: TestChildProcess | undefined;
         let browser: Browser | undefined;

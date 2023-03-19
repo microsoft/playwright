@@ -18,7 +18,7 @@ import { showTraceViewer } from 'playwright-core/lib/server';
 import type { Page } from 'playwright-core/lib/server/page';
 import { isUnderTest, ManualPromise } from 'playwright-core/lib/utils';
 import type { FullResult } from '../../reporter';
-import { clearCompilationCache, dependenciesForTestFile } from '../common/compilationCache';
+import { clearCompilationCache, collectAffectedTestFiles, dependenciesForTestFile } from '../common/compilationCache';
 import type { FullConfigInternal } from '../common/types';
 import { Multiplexer } from '../reporters/multiplexer';
 import { TeleReporterEmitter } from '../reporters/teleEmitter';
@@ -34,7 +34,7 @@ class UIMode {
   private _page!: Page;
   private _testRun: { run: Promise<FullResult['status']>, stop: ManualPromise<void> } | undefined;
   globalCleanup: (() => Promise<FullResult['status']>) | undefined;
-  private _testWatcher: FSWatcher | undefined;
+  private _testWatcher: { watcher: FSWatcher, watchedFiles: string[], collector: Set<string>, timer?: NodeJS.Timeout } | undefined;
   private _originalStderr: (buffer: string | Uint8Array) => void;
 
   constructor(config: FullConfigInternal) {
@@ -187,22 +187,40 @@ class UIMode {
   }
 
   private async _watchFiles(fileNames: string[]) {
-    if (this._testWatcher)
-      await this._testWatcher.close();
-    if (!fileNames.length)
-      return;
-
     const files = new Set<string>();
     for (const fileName of fileNames) {
       files.add(fileName);
       dependenciesForTestFile(fileName).forEach(file => files.add(file));
     }
+    const watchedFiles = [...files].sort();
+    if (this._testWatcher && JSON.stringify(this._testWatcher.watchedFiles.toString()) === JSON.stringify(watchedFiles))
+      return;
 
-    this._testWatcher = chokidar.watch([...files], { ignoreInitial: true }).on('all', async (event, file) => {
+    if (this._testWatcher) {
+      if (this._testWatcher.collector.size)
+        this._dispatchEvent({ method: 'filesChanged', params: { fileNames: [...this._testWatcher.collector] } });
+      clearTimeout(this._testWatcher.timer);
+      this._testWatcher.watcher.close().then(() => {});
+      this._testWatcher = undefined;
+    }
+
+    if (!watchedFiles.length)
+      return;
+
+    const collector = new Set<string>();
+    const watcher = chokidar.watch(watchedFiles, { ignoreInitial: true }).on('all', async (event, file) => {
       if (event !== 'add' && event !== 'change')
         return;
-      this._dispatchEvent({ method: 'fileChanged', params: { fileName: file } });
+      collectAffectedTestFiles(file, collector);
+      if (this._testWatcher!.timer)
+        clearTimeout(this._testWatcher!.timer);
+      this._testWatcher!.timer = setTimeout(() => {
+        const fileNames = [...collector];
+        collector.clear();
+        this._dispatchEvent({ method: 'filesChanged', params: { fileNames } });
+      }, 250);
     });
+    this._testWatcher = { watcher, watchedFiles, collector };
   }
 
   private async _stopTests() {
