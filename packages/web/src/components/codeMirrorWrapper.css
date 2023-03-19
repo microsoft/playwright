@@ -109,7 +109,7 @@ body.dark-mode .CodeMirror span.cm-type {
 }
 
 .CodeMirror-cursor {
-  border-left: 1px solid #bebebe;
+  border-left: 1px solid var(--vscode-editor-foreground) !important;
 }
 
 .CodeMirror div.CodeMirror-selected {

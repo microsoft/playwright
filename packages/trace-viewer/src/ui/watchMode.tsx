@@ -22,7 +22,7 @@ import { TreeView } from '@web/components/treeView';
 import type { TreeState } from '@web/components/treeView';
 import { baseFullConfig, TeleReporterReceiver, TeleSuite } from '@testIsomorphic/teleReceiver';
 import type { TeleTestCase } from '@testIsomorphic/teleReceiver';
-import type { FullConfig, Suite, TestCase, TestResult, Location } from '../../../playwright-test/types/testReporter';
+import type { FullConfig, Suite, TestCase, Location } from '../../../playwright-test/types/testReporter';
 import { SplitView } from '@web/components/splitView';
 import { MultiTraceModel } from './modelUtil';
 import './watchMode.css';
@@ -36,7 +36,7 @@ import { toggleTheme } from '@web/theme';
 import { artifactsFolderName } from '@testIsomorphic/folders';
 import { settings } from '@web/uiUtils';
 
-let updateRootSuite: (config: FullConfig, rootSuite: Suite, progress: Progress) => void = () => {};
+let updateRootSuite: (config: FullConfig, rootSuite: Suite, progress: Progress | undefined) => void = () => {};
 let runWatchedTests = (fileName: string) => {};
 let xtermSize = { cols: 80, rows: 24 };
 
@@ -67,17 +67,17 @@ export const WatchModeView: React.FC<{}> = ({
   ]));
   const [projectFilters, setProjectFilters] = React.useState<Map<string, boolean>>(new Map());
   const [testModel, setTestModel] = React.useState<TestModel>({ config: undefined, rootSuite: undefined });
-  const [progress, setProgress] = React.useState<Progress>({ total: 0, passed: 0, failed: 0, skipped: 0 });
-  const [selectedTest, setSelectedTest] = React.useState<TestCase | undefined>(undefined);
+  const [progress, setProgress] = React.useState<Progress & { total: number } | undefined>();
+  const [selectedItem, setSelectedItem] = React.useState<{ location?: Location, testCase?: TestCase }>({});
   const [visibleTestIds, setVisibleTestIds] = React.useState<string[]>([]);
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
-  const [runningState, setRunningState] = React.useState<{ testIds: Set<string>, itemSelectedByUser?: boolean }>();
+  const [runningState, setRunningState] = React.useState<{ testIds: Set<string>, itemSelectedByUser?: boolean } | undefined>();
 
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   const reloadTests = () => {
     setIsLoading(true);
-    updateRootSuite(baseFullConfig, new TeleSuite('', 'root'), { total: 0, passed: 0, failed: 0, skipped: 0 });
+    updateRootSuite(baseFullConfig, new TeleSuite('', 'root'), undefined);
     refreshRootSuite(true).then(() => {
       setIsLoading(false);
     });
@@ -88,7 +88,7 @@ export const WatchModeView: React.FC<{}> = ({
     reloadTests();
   }, []);
 
-  updateRootSuite = (config: FullConfig, rootSuite: Suite, newProgress: Progress) => {
+  updateRootSuite = (config: FullConfig, rootSuite: Suite, newProgress: Progress | undefined) => {
     const selectedProjects = config.configFile ? settings.getObject<string[] | undefined>(config.configFile + ':projects', undefined) : undefined;
     for (const projectName of projectFilters.keys()) {
       if (!rootSuite.suites.find(s => s.title === projectName))
@@ -103,7 +103,10 @@ export const WatchModeView: React.FC<{}> = ({
 
     setTestModel({ config, rootSuite });
     setProjectFilters(new Map(projectFilters));
-    setProgress(newProgress);
+    if (runningState && newProgress)
+      setProgress({ ...newProgress, total: runningState.testIds.size });
+    else if (!newProgress)
+      setProgress(undefined);
   };
 
   const runTests = (testIds: string[]) => {
@@ -133,29 +136,27 @@ export const WatchModeView: React.FC<{}> = ({
   };
 
   const isRunningTest = !!runningState;
-  const result = selectedTest?.results[0];
-  const outputDir = selectedTest ? outputDirForTestCase(selectedTest) : undefined;
 
   return <div className='vbox watch-mode'>
     <SplitView sidebarSize={250} orientation='horizontal' sidebarIsFirst={true}>
       <div className='vbox'>
         <div className={'vbox' + (isShowingOutput ? '' : ' hidden')}>
           <Toolbar>
+            <div className='section-title' style={{ flex: 'none' }}>Output</div>
             <ToolbarButton icon='circle-slash' title='Clear output' onClick={() => xtermDataSource.clear()}></ToolbarButton>
             <div className='spacer'></div>
             <ToolbarButton icon='close' title='Close' onClick={() => setIsShowingOutput(false)}></ToolbarButton>
           </Toolbar>
-          <XtermWrapper source={xtermDataSource}></XtermWrapper>;
+          <XtermWrapper source={xtermDataSource}></XtermWrapper>
         </div>
         <div className={'vbox' + (isShowingOutput ? ' hidden' : '')}>
-          <TraceView outputDir={outputDir} testCase={selectedTest} result={result} />
+          <TraceView item={selectedItem} rootDir={testModel.config?.rootDir} />
         </div>
       </div>
       <div className='vbox watch-mode-sidebar'>
-        <Toolbar>
+        <Toolbar noShadow={true}>
           <img src='icon-32x32.png' />
           <div className='section-title'>Playwright</div>
-          <div className='spacer'></div>
           <ToolbarButton icon='color-mode' title='Toggle color mode' toggled={false} onClick={() => toggleTheme()} />
           <ToolbarButton icon='refresh' title='Reload' onClick={() => reloadTests()} disabled={isRunningTest || isLoading}></ToolbarButton>
           <ToolbarButton icon='terminal' title='Toggle output' toggled={isShowingOutput} onClick={() => { setIsShowingOutput(!isShowingOutput); }} />
@@ -169,9 +170,14 @@ export const WatchModeView: React.FC<{}> = ({
           setProjectFilters={setProjectFilters}
           testModel={testModel}
           runTests={() => runTests(visibleTestIds)} />
-        <Toolbar>
-          <div className='section-title'>Tests</div>
-          <div className='spacer'></div>
+        <Toolbar noMinHeight={true}>
+          {!isRunningTest && !progress && <div className='section-title'>Tests</div>}
+          {!isRunningTest && progress && <div data-testid='status-line' className='status-line'>
+            <div>{progress.passed}/{progress.total} passed ({(progress.passed / progress.total) * 100 | 0}%)</div>
+          </div>}
+          {isRunningTest && progress && <div data-testid='status-line' className='status-line'>
+            <div>Running {progress.passed}/{runningState.testIds.size} passed ({(progress.passed / runningState.testIds.size) * 100 | 0}%)</div>
+          </div>}
           <ToolbarButton icon='play' title='Run all' onClick={() => runTests(visibleTestIds)} disabled={isRunningTest || isLoading}></ToolbarButton>
           <ToolbarButton icon='debug-stop' title='Stop' onClick={() => sendMessageNoReply('stop')} disabled={!isRunningTest || isLoading}></ToolbarButton>
         </Toolbar>
@@ -182,19 +188,10 @@ export const WatchModeView: React.FC<{}> = ({
           testModel={testModel}
           runningState={runningState}
           runTests={runTests}
-          onTestSelected={setSelectedTest}
+          onItemSelected={setSelectedItem}
           setVisibleTestIds={setVisibleTestIds} />
       </div>
     </SplitView>
-    <div className='status-line'>
-      <div>Total: {progress.total}</div>
-      {isRunningTest && <div><span className='codicon codicon-loading'></span>{`Running ${visibleTestIds.length}\u2026`}</div>}
-      {isLoading && <div><span className='codicon codicon-loading'></span> {'Loading\u2026'}</div>}
-      {!isRunningTest && <div>Showing: {visibleTestIds.length}</div>}
-      <div>{progress.passed} passed</div>
-      <div>{progress.failed} failed</div>
-      <div>{progress.skipped} skipped</div>
-    </div>
   </div>;
 };
 
@@ -276,11 +273,11 @@ const TestList: React.FC<{
   runTests: (testIds: string[]) => void,
   runningState?: { testIds: Set<string>, itemSelectedByUser?: boolean },
   setVisibleTestIds: (testIds: string[]) => void,
-  onTestSelected: (test: TestCase | undefined) => void,
-}> = ({ statusFilters, projectFilters, filterText, testModel, runTests, runningState, onTestSelected, setVisibleTestIds }) => {
+  onItemSelected: (item: { testCase?: TestCase, location?: Location }) => void,
+}> = ({ statusFilters, projectFilters, filterText, testModel, runTests, runningState, onItemSelected, setVisibleTestIds }) => {
   const [treeState, setTreeState] = React.useState<TreeState>({ expandedItems: new Map() });
   const [selectedTreeItemId, setSelectedTreeItemId] = React.useState<string | undefined>();
-  const [watchedTreeIds] = React.useState<Set<string>>(new Set());
+  const [watchedTreeIds, innerSetWatchedTreeIds] = React.useState<{ value: Set<string> }>({ value: new Set() });
 
   const { rootItem, treeItemMap } = React.useMemo(() => {
     const rootItem = createTree(testModel.rootSuite, projectFilters);
@@ -323,14 +320,15 @@ const TestList: React.FC<{
 
   const { selectedTreeItem } = React.useMemo(() => {
     const selectedTreeItem = selectedTreeItemId ? treeItemMap.get(selectedTreeItemId) : undefined;
+    const location = selectedTreeItem?.location;
     let selectedTest: TestCase | undefined;
     if (selectedTreeItem?.kind === 'test')
       selectedTest = selectedTreeItem.test;
     else if (selectedTreeItem?.kind === 'case' && selectedTreeItem.tests.length === 1)
       selectedTest = selectedTreeItem.tests[0];
-    onTestSelected(selectedTest);
+    onItemSelected({ testCase: selectedTest, location });
     return { selectedTreeItem };
-  }, [onTestSelected, selectedTreeItemId, treeItemMap]);
+  }, [onItemSelected, selectedTreeItemId, treeItemMap]);
 
   const setWatchedTreeIds = (watchedTreeIds: Set<string>) => {
     const fileNames = new Set<string>();
@@ -339,6 +337,7 @@ const TestList: React.FC<{
       fileNames.add(fileNameForTreeItem(treeItem)!);
     }
     sendMessageNoReply('watch', { fileNames: [...fileNames] });
+    innerSetWatchedTreeIds({ value: watchedTreeIds });
   };
 
   const runTreeItem = (treeItem: TreeItem) => {
@@ -348,7 +347,7 @@ const TestList: React.FC<{
 
   runWatchedTests = (fileName: string) => {
     const testIds: string[] = [];
-    for (const treeId of watchedTreeIds) {
+    for (const treeId of watchedTreeIds.value) {
       const treeItem = treeItemMap.get(treeId)!;
       if (fileNameForTreeItem(treeItem) === fileName)
         testIds.push(...collectTestIds(treeItem));
@@ -367,12 +366,12 @@ const TestList: React.FC<{
         <ToolbarButton icon='play' title='Run' onClick={() => runTreeItem(treeItem)} disabled={!!runningState}></ToolbarButton>
         <ToolbarButton icon='go-to-file' title='Open in VS Code' onClick={() => sendMessageNoReply('open', { location: locationToOpen(treeItem) })}></ToolbarButton>
         <ToolbarButton icon='eye' title='Watch' onClick={() => {
-          if (watchedTreeIds.has(treeItem.id))
-            watchedTreeIds.delete(treeItem.id);
+          if (watchedTreeIds.value.has(treeItem.id))
+            watchedTreeIds.value.delete(treeItem.id);
           else
-            watchedTreeIds.add(treeItem.id);
-          setWatchedTreeIds(watchedTreeIds);
-        }} toggled={watchedTreeIds.has(treeItem.id)}></ToolbarButton>
+            watchedTreeIds.value.add(treeItem.id);
+          setWatchedTreeIds(watchedTreeIds.value);
+        }} toggled={watchedTreeIds.value.has(treeItem.id)}></ToolbarButton>
       </div>;
     }}
     icon={treeItem => {
@@ -398,13 +397,18 @@ const TestList: React.FC<{
 };
 
 const TraceView: React.FC<{
-  outputDir: string | undefined,
-  testCase: TestCase | undefined,
-  result: TestResult | undefined,
-}> = ({ outputDir, testCase, result }) => {
+  item: { location?: Location, testCase?: TestCase },
+  rootDir?: string,
+}> = ({ item, rootDir }) => {
   const [model, setModel] = React.useState<MultiTraceModel | undefined>();
   const [counter, setCounter] = React.useState(0);
   const pollTimer = React.useRef<NodeJS.Timeout | null>(null);
+
+  const { outputDir, result } = React.useMemo(() => {
+    const outputDir = item.testCase ? outputDirForTestCase(item.testCase) : undefined;
+    const result = item.testCase?.results[0];
+    return { outputDir, result };
+  }, [item]);
 
   React.useEffect(() => {
     if (pollTimer.current)
@@ -427,7 +431,7 @@ const TraceView: React.FC<{
       return;
     }
 
-    const traceLocation = `${outputDir}/${artifactsFolderName(result!.workerIndex)}/traces/${testCase?.id}.json`;
+    const traceLocation = `${outputDir}/${artifactsFolderName(result!.workerIndex)}/traces/${item.testCase?.id}.json`;
     // Start polling running test.
     pollTimer.current = setTimeout(async () => {
       try {
@@ -443,9 +447,16 @@ const TraceView: React.FC<{
       if (pollTimer.current)
         clearTimeout(pollTimer.current);
     };
-  }, [result, outputDir, testCase, setModel, counter, setCounter]);
+  }, [result, outputDir, item, setModel, counter, setCounter]);
 
-  return <Workbench key='workbench' model={model} hideTimelineBars={true} hideStackFrames={true} showSourcesFirst={true} defaultSourceLocation={testCase?.location} />;
+  return <Workbench
+    key='workbench'
+    model={model}
+    hideTimelineBars={true}
+    hideStackFrames={true}
+    showSourcesFirst={true}
+    rootDir={rootDir}
+    defaultSourceLocation={item.location} />;
 };
 
 declare global {
@@ -478,7 +489,6 @@ const refreshRootSuite = (eraseResults: boolean): Promise<void> => {
 
   let rootSuite: Suite;
   const progress: Progress = {
-    total: 0,
     passed: 0,
     failed: 0,
     skipped: 0,
@@ -489,7 +499,6 @@ const refreshRootSuite = (eraseResults: boolean): Promise<void> => {
       if (!rootSuite)
         rootSuite = suite;
       config = c;
-      progress.total = suite.allTests().length;
       progress.passed = 0;
       progress.failed = 0;
       progress.skipped = 0;
@@ -587,7 +596,6 @@ const collectTestIds = (treeItem?: TreeItem): string[] => {
 };
 
 type Progress = {
-  total: number;
   passed: number;
   failed: number;
   skipped: number;

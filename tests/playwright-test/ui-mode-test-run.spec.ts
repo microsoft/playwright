@@ -59,6 +59,27 @@ test('should run visible', async ({ runUITest }) => {
         ✅ passes
         ⊘ skipped
   `);
+
+  await expect(page.getByTestId('status-line')).toHaveText('4/8 passed (50%)');
+});
+
+test('should show running progress', async ({ runUITest }) => {
+  const page = await runUITest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test 1', async () => {});
+      test('test 2', async () => new Promise(() => {}));
+      test('test 3', async () => {});
+      test('test 4', async () => {});
+    `,
+  });
+
+  await page.getByTitle('Run all').click();
+  await expect(page.getByTestId('status-line')).toHaveText('Running 1/4 passed (25%)');
+  await page.getByTitle('Stop').click();
+  await expect(page.getByTestId('status-line')).toHaveText('1/4 passed (25%)');
+  await page.getByTitle('Reload').click();
+  await expect(page.getByTestId('status-line')).toBeHidden();
 });
 
 test('should run on hover', async ({ runUITest }) => {
