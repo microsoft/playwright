@@ -254,3 +254,31 @@ test('should stop', async ({ runUITest }) => {
         ◯ test 3
   `);
 });
+
+test('should run folder', async ({ runUITest }) => {
+  const page = await runUITest({
+    'a/folder-b/folder-c/inC.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('passes', () => {});
+    `,
+    'a/folder-b/in-b.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('passes', () => {});
+    `,
+    'a/in-a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('passes', () => {});
+    `,
+  });
+
+  await page.getByText('folder-b').hover();
+  await page.getByRole('listitem').filter({ hasText: 'folder-b' }).getByTitle('Run').click();
+
+  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toContain(`
+    ▼ ✅ folder-b <=
+      ► ✅ folder-c
+      ► ✅ in-b.test.ts
+    ▼ ◯ in-a.test.ts
+        ◯ passes
+  `);
+});

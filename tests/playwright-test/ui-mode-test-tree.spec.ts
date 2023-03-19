@@ -117,3 +117,28 @@ test('should expand / collapse groups', async ({ runUITest }) => {
     ► ◯ a.test.ts <=
   `);
 });
+
+test('should merge folder trees', async ({ runUITest }) => {
+  const page = await runUITest({
+    'a/b/c/inC.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('passes', () => {});
+    `,
+    'a/b/in-b.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('passes', () => {});
+    `,
+    'a/in-a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('passes', () => {});
+    `,
+  });
+
+  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toContain(`
+    ▼ ◯ b
+      ► ◯ c
+      ► ◯ in-b.test.ts
+    ▼ ◯ in-a.test.ts
+        ◯ passes
+  `);
+});
