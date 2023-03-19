@@ -29,6 +29,12 @@ test('should watch files', async ({ runUITest, writeFiles }) => {
 
   await page.getByText('fails').click();
   await page.getByRole('listitem').filter({ hasText: 'fails' }).getByTitle('Watch').click();
+  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toBe(`
+    ▼ ◯ a.test.ts
+        ◯ passes
+        ◯ fails 👁 <=
+  `);
+
   await page.getByRole('listitem').filter({ hasText: 'fails' }).getByTitle('Run').click();
 
   await expect.poll(dumpTestTree(page), { timeout: 15000 }).toBe(`

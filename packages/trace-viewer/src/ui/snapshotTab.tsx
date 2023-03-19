@@ -137,7 +137,6 @@ export const SnapshotTab: React.FunctionComponent<{
         setHighlightedLocator('');
         setIsInspecting(!pickerVisible);
       }}>Pick locator</ToolbarButton>
-      <div style={{ width: 5 }}></div>
       {['action', 'before', 'after'].map(tab => {
         return <TabbedPaneTab
           id={tab}

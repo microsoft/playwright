@@ -21,7 +21,7 @@
   color: var(--vscode-sideBarTitle-foreground);
   background: transparent;
   padding: 4px;
-  margin: 0 4px;
+  margin: 0 2px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -42,4 +42,8 @@
 
 .toolbar-button.toggled {
   color: var(--vscode-notificationLink-foreground);
+}
+
+.toolbar-button.toggled .codicon {
+  font-weight: bold;
 }

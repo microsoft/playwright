@@ -153,4 +153,5 @@ body.dark-mode .window-header {
 
 .snapshot-tab .cm-wrapper {
   line-height: 23px;
+  margin-right: 4px;
 }
