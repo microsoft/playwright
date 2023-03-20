@@ -152,7 +152,7 @@ export default defineConfig({
 ```
 ## Dependencies
 
-Dependencies are a list of projects that need to run before the tests in another project run. They can be useful for configuring the global setup actions so that one project depends on this running first. By using project dependencies, the [HTML report](./test-reporters.md#html-reporter) will show the setup tests and the [trace viewer](/trace-viewer.md) will record traces of the setup. You can use the inspector to inspect the DOM snapshot of the trace of your setup tests and you can also use [fixtures](./test-fixtures.md) inside your setup.
+Dependencies are a list of projects that need to run before the tests in another project run. They can be useful for configuring the global setup actions so that one project depends on this running first. When using project dependencies, [test reporters](./test-reporters.md) will show the setup tests and the [trace viewer](/trace-viewer.md) will record traces of the setup. You can use the inspector to inspect the DOM snapshot of the trace of your setup tests and you can also use [fixtures](./test-fixtures.md) inside your setup.
 
 In this example the chromium, firefox and webkit projects depend on the setup project.
 
