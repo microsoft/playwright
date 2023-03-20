@@ -192,7 +192,8 @@ export const WatchModeView: React.FC<{}> = ({
           runTests={runTests}
           onItemSelected={setSelectedItem}
           setVisibleTestIds={setVisibleTestIds}
-          watchAll={watchAll} />
+          watchAll={watchAll}
+          isLoading={isLoading} />
       </div>
     </SplitView>
   </div>;
@@ -276,9 +277,10 @@ const TestList: React.FC<{
   runTests: (testIds: string[]) => void,
   runningState?: { testIds: Set<string>, itemSelectedByUser?: boolean },
   watchAll?: boolean,
+  isLoading?: boolean,
   setVisibleTestIds: (testIds: string[]) => void,
   onItemSelected: (item: { testCase?: TestCase, location?: Location }) => void,
-}> = ({ statusFilters, projectFilters, filterText, testModel, runTests, runningState, watchAll, onItemSelected, setVisibleTestIds }) => {
+}> = ({ statusFilters, projectFilters, filterText, testModel, runTests, runningState, watchAll, isLoading, onItemSelected, setVisibleTestIds }) => {
   const [treeState, setTreeState] = React.useState<TreeState>({ expandedItems: new Map() });
   const [selectedTreeItemId, setSelectedTreeItemId] = React.useState<string | undefined>();
   const [watchedTreeIds, setWatchedTreeIds] = React.useState<{ value: Set<string> }>({ value: new Set() });
@@ -420,7 +422,7 @@ const TestList: React.FC<{
       setSelectedTreeItemId(treeItem.id);
     }}
     autoExpandDeep={!!filterText}
-    noItemsMessage='No tests' />;
+    noItemsMessage={isLoading ? 'Loading\u2026' : 'No tests'} />;
 };
 
 const TraceView: React.FC<{
@@ -661,7 +663,7 @@ type TreeItem = GroupItem | TestCaseItem | TestItem;
 function getFileItem(rootItem: GroupItem, filePath: string[], isFile: boolean, fileItems: Map<string, GroupItem>): GroupItem {
   if (filePath.length === 0)
     return rootItem;
-  const fileName = filePath.join('/');
+  const fileName = filePath.join(pathSeparator);
   const existingFileItem = fileItems.get(fileName);
   if (existingFileItem)
     return existingFileItem;
@@ -763,7 +765,7 @@ function createTree(rootSuite: Suite | undefined, projectFilters: Map<string, bo
     if (filterProjects && !projectFilters.get(projectSuite.title))
       continue;
     for (const fileSuite of projectSuite.suites) {
-      const fileItem = getFileItem(rootItem, fileSuite.location!.file.split(/[\\\/]/), true, fileMap);
+      const fileItem = getFileItem(rootItem, fileSuite.location!.file.split(pathSeparator), true, fileMap);
       visitSuite(projectSuite.title, fileSuite, fileItem);
     }
   }
@@ -805,6 +807,7 @@ function createTree(rootSuite: Suite | undefined, projectFilters: Map<string, bo
   let shortRoot = rootItem;
   while (shortRoot.children.length === 1 && shortRoot.children[0].kind === 'group' && shortRoot.children[0].subKind === 'folder')
     shortRoot = shortRoot.children[0];
+  shortRoot.location = rootItem.location;
   return shortRoot;
 }
 
@@ -855,3 +858,5 @@ async function loadSingleTraceFile(url: string): Promise<MultiTraceModel> {
   const contextEntries = await response.json() as ContextEntry[];
   return new MultiTraceModel(contextEntries);
 }
+
+const pathSeparator = navigator.userAgent.toLowerCase().includes('windows') ? '\\' : '/';
