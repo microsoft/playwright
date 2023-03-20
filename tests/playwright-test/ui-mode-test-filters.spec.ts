@@ -148,3 +148,33 @@ test('should filter by project', async ({ runUITest }) => {
 
   await expect(page.getByText('Projects: foo bar')).toBeVisible();
 });
+
+test('should not hide filtered while running', async ({ runUITest, createLatch }) => {
+  const latch = createLatch();
+  const page = await runUITest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('passes', () => {});
+      test('fails', async () => {
+        ${latch.blockingCode}
+        expect(1).toBe(2);
+      });
+    `,
+  });
+  await page.getByTitle('Run all').click();
+  latch.open();
+  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toBe(`
+    ▼ ❌ a.test.ts
+        ✅ passes
+        ❌ fails <=
+  `);
+
+  latch.close();
+  await page.getByText('Status:').click();
+  await page.getByLabel('failed').setChecked(true);
+  await page.getByTitle('Run all').click();
+  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toBe(`
+    ▼ ↻ a.test.ts
+        ↻ fails <=
+  `);
+});

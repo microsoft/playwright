@@ -127,7 +127,7 @@
 
 .timeline-bar.frame_waitforeventinfo,
 .timeline-bar.page_waitforeventinfo {
-  --action-color: var(--gray);
+  --action-color: var(--vscode-editorCodeLens-foreground);
 }
 
 .timeline-label {
