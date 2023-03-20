@@ -37,13 +37,16 @@ export const Workbench: React.FunctionComponent<{
   hideTimelineBars?: boolean,
   hideStackFrames?: boolean,
   showSourcesFirst?: boolean,
+  rootDir?: string,
   defaultSourceLocation?: Location,
-}> = ({ model, hideTimelineBars, hideStackFrames, showSourcesFirst, defaultSourceLocation }) => {
+}> = ({ model, hideTimelineBars, hideStackFrames, showSourcesFirst, rootDir, defaultSourceLocation }) => {
   const [selectedAction, setSelectedAction] = React.useState<ActionTraceEvent | undefined>(undefined);
   const [highlightedAction, setHighlightedAction] = React.useState<ActionTraceEvent | undefined>();
   const [selectedNavigatorTab, setSelectedNavigatorTab] = React.useState<string>('actions');
   const [selectedPropertiesTab, setSelectedPropertiesTab] = React.useState<string>(showSourcesFirst ? 'source' : 'call');
   const activeAction = model ? highlightedAction || selectedAction : undefined;
+
+  const sources = React.useMemo(() => model?.sources || new Map(), [model]);
 
   React.useEffect(() => {
     if (selectedAction && model?.actions.includes(selectedAction))
@@ -68,7 +71,12 @@ export const Workbench: React.FunctionComponent<{
   const sourceTab: TabbedPaneTabModel = {
     id: 'source',
     title: 'Source',
-    render: () => <SourceTab action={activeAction} sources={model?.sources || new Map()} hideStackFrames={hideStackFrames} fallbackLocation={defaultSourceLocation}/>
+    render: () => <SourceTab
+      action={activeAction}
+      sources={sources}
+      hideStackFrames={hideStackFrames}
+      rootDir={rootDir}
+      fallbackLocation={defaultSourceLocation} />
   };
   const consoleTab: TabbedPaneTabModel = {
     id: 'console',

@@ -29,8 +29,9 @@ export const SourceTab: React.FunctionComponent<{
   action: ActionTraceEvent | undefined,
   sources: Map<string, SourceModel>,
   hideStackFrames?: boolean,
+  rootDir?: string,
   fallbackLocation?: StackFrame,
-}> = ({ action, sources, hideStackFrames, fallbackLocation }) => {
+}> = ({ action, sources, hideStackFrames, rootDir, fallbackLocation }) => {
   const [lastAction, setLastAction] = React.useState<ActionTraceEvent | undefined>();
   const [selectedFrame, setSelectedFrame] = React.useState<number>(0);
 
@@ -41,7 +42,7 @@ export const SourceTab: React.FunctionComponent<{
     }
   }, [action, lastAction, setLastAction, setSelectedFrame]);
 
-  const { source, targetLine, highlight } = useAsyncMemo<{ source: SourceModel, targetLine: number, highlight: SourceHighlight[] }>(async () => {
+  const { source, highlight, targetLine, fileName } = useAsyncMemo<{ source: SourceModel, targetLine?: number, fileName?: string, highlight: SourceHighlight[] }>(async () => {
     const location = action?.stack?.[selectedFrame] || fallbackLocation;
     if (!location?.file)
       return { source: { errors: [], content: undefined }, targetLine: 0, highlight: [] };
@@ -54,6 +55,7 @@ export const SourceTab: React.FunctionComponent<{
     }
 
     const targetLine = location.line || 0;
+    const fileName = rootDir && location.file.startsWith(rootDir) ? location.file.substring(rootDir.length + 1) : location.file;
     const highlight: SourceHighlight[] = source.errors.map(e => ({ type: 'error', line: e.location.line, message: e.error!.message }));
     highlight.push({ line: targetLine, type: 'running' });
 
@@ -68,11 +70,14 @@ export const SourceTab: React.FunctionComponent<{
         source.content = `<Unable to read "${location.file}">`;
       }
     }
-    return { source, targetLine, highlight };
-  }, [action, selectedFrame, fallbackLocation], { source: { errors: [], content: 'Loading\u2026' }, targetLine: 0, highlight: [] });
+    return { source, highlight, targetLine, fileName };
+  }, [action, selectedFrame, rootDir, fallbackLocation], { source: { errors: [], content: 'Loading\u2026' }, highlight: [] });
 
   return <SplitView sidebarSize={200} orientation='horizontal' sidebarHidden={hideStackFrames}>
-    <CodeMirrorWrapper text={source.content || ''} language='javascript' highlight={highlight} revealLine={targetLine} readOnly={true} lineNumbers={true} />
+    <div className='vbox' data-testid='source-code'>
+      {fileName && <div className='source-tab-file-name'>{fileName}</div>}
+      <CodeMirrorWrapper text={source.content || ''} language='javascript' highlight={highlight} revealLine={targetLine} readOnly={true} lineNumbers={true} />
+    </div>
     <StackTraceView action={action} selectedFrame={selectedFrame} setSelectedFrame={setSelectedFrame} />
   </SplitView>;
 };

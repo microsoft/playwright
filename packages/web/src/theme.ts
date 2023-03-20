@@ -34,9 +34,12 @@ export function applyTheme() {
     document.body.classList.add('dark-mode');
 }
 
+type Theme = 'dark-mode' | 'light-mode';
+
+const listeners = new Set<(theme: Theme) => void>();
 export function toggleTheme() {
   const oldTheme = settings.getString('theme', 'light-mode');
-  let newTheme: string;
+  let newTheme: Theme;
   if (oldTheme === 'dark-mode')
     newTheme = 'light-mode';
   else
@@ -46,8 +49,18 @@ export function toggleTheme() {
     document.body.classList.remove(oldTheme);
   document.body.classList.add(newTheme);
   settings.setString('theme', newTheme);
+  for (const listener of listeners)
+    listener(newTheme);
 }
 
-export function isDarkTheme() {
-  return document.body.classList.contains('dark-mode');
+export function addThemeListener(listener: (theme: 'light-mode' | 'dark-mode') => void) {
+  listeners.add(listener);
+}
+
+export function removeThemeListener(listener: (theme: Theme) => void) {
+  listeners.delete(listener);
+}
+
+export function currentTheme(): Theme {
+  return document.body.classList.contains('dark-mode') ? 'dark-mode' : 'light-mode';
 }

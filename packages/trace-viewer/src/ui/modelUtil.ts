@@ -66,7 +66,7 @@ export class MultiTraceModel {
     this.events = ([] as EventTraceEvent[]).concat(...contexts.map(c => c.events));
     this.hasSource = contexts.some(c => c.hasSource);
 
-    this.actions.sort((a1, a2) => a1.startTime - a2.startTime);
+    this.actions.sort((a1, a2) => (a1.startTime - a2.startTime) || (a1.endTime - a2.endTime));
     this.events.sort((a1, a2) => a1.time - a2.time);
     this.actions = dedupeActions(this.actions);
     this.sources = collectSources(this.actions);

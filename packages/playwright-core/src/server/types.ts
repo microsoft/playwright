@@ -149,7 +149,7 @@ export type NormalizedContinueOverrides = {
 
 export type EmulatedSize = { viewport: Size, screen: Size };
 
-export type LaunchOptions = channels.BrowserTypeLaunchOptions & { useWebSocket?: boolean };
+export type LaunchOptions = channels.BrowserTypeLaunchOptions & { useWebSocket?: boolean, ignoreChromiumSwitches?: boolean };
 
 export type ProtocolLogger = (direction: 'send' | 'receive', message: object) => void;
 

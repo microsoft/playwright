@@ -129,7 +129,10 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
       args,
       noDefaultViewport: true,
       colorScheme: 'no-override',
-      ignoreDefaultArgs: ['--enable-automation'],
+      // Moving the mouse while starting Chromium on macOS kills the mouse.
+      // There is no exact switch that we can blame, but removing all reduces the
+      // probability of this happening by a couple of orders.
+      ignoreChromiumSwitches: true,
       headless: !!process.env.PWTEST_CLI_HEADLESS || (isUnderTest() && !headed),
       useWebSocket: !!process.env.PWTEST_RECORDER_PORT,
       handleSIGINT,
