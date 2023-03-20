@@ -107,7 +107,6 @@ test('should allow declare fields', async ({ runInlineTest }) => {
 
 test('should be able to access |this| inside class properties', async ({ runInlineTest }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/21794' });
-  test.fixme();
   const result = await runInlineTest({
     'example.spec.ts': `
       import { test, expect } from '@playwright/test';
