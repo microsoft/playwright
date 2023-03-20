@@ -639,7 +639,8 @@ type TreeItemBase = {
 };
 
 type GroupItem = TreeItemBase & {
-  kind: 'group',
+  kind: 'group';
+  subKind: 'folder' | 'file' | 'describe';
   children: (TestCaseItem | GroupItem)[];
 };
 
@@ -657,10 +658,34 @@ type TestItem = TreeItemBase & {
 
 type TreeItem = GroupItem | TestCaseItem | TestItem;
 
+function getFileItem(rootItem: GroupItem, filePath: string[], isFile: boolean, fileItems: Map<string, GroupItem>): GroupItem {
+  if (filePath.length === 0)
+    return rootItem;
+  const fileName = filePath.join('/');
+  const existingFileItem = fileItems.get(fileName);
+  if (existingFileItem)
+    return existingFileItem;
+  const parentFileItem = getFileItem(rootItem, filePath.slice(0, filePath.length - 1), false, fileItems);
+  const fileItem: GroupItem = {
+    kind: 'group',
+    subKind: isFile ? 'file' : 'folder',
+    id: fileName,
+    title: filePath[filePath.length - 1],
+    location: { file: fileName, line: 0, column: 0 },
+    parent: parentFileItem,
+    children: [],
+    status: 'none',
+  };
+  parentFileItem.children.push(fileItem);
+  fileItems.set(fileName, fileItem);
+  return fileItem;
+}
+
 function createTree(rootSuite: Suite | undefined, projectFilters: Map<string, boolean>): GroupItem {
   const filterProjects = [...projectFilters.values()].some(Boolean);
   const rootItem: GroupItem = {
     kind: 'group',
+    subKind: 'folder',
     id: 'root',
     title: '',
     location: { file: '', line: 0, column: 0 },
@@ -676,6 +701,7 @@ function createTree(rootSuite: Suite | undefined, projectFilters: Map<string, bo
       if (!group) {
         group = {
           kind: 'group',
+          subKind: 'describe',
           id: parentGroup.id + '\x1e' + title,
           title,
           location: suite.location!,
@@ -732,18 +758,26 @@ function createTree(rootSuite: Suite | undefined, projectFilters: Map<string, bo
     }
   };
 
+  const fileMap = new Map<string, GroupItem>();
   for (const projectSuite of rootSuite?.suites || []) {
     if (filterProjects && !projectFilters.get(projectSuite.title))
       continue;
-    visitSuite(projectSuite.title, projectSuite, rootItem);
+    for (const fileSuite of projectSuite.suites) {
+      const fileItem = getFileItem(rootItem, fileSuite.location!.file.split(/[\\\/]/), true, fileMap);
+      visitSuite(projectSuite.title, fileSuite, fileItem);
+    }
   }
 
   const sortAndPropagateStatus = (treeItem: TreeItem) => {
     for (const child of treeItem.children)
       sortAndPropagateStatus(child);
 
-    if (treeItem.kind === 'group' && treeItem.parent)
-      treeItem.children.sort((a, b) => a.location.line - b.location.line);
+    if (treeItem.kind === 'group') {
+      treeItem.children.sort((a, b) => {
+        const fc = a.location.file.localeCompare(b.location.file);
+        return fc || a.location.line - b.location.line;
+      });
+    }
 
     let allPassed = treeItem.children.length > 0;
     let allSkipped = treeItem.children.length > 0;
@@ -767,7 +801,11 @@ function createTree(rootSuite: Suite | undefined, projectFilters: Map<string, bo
       treeItem.status = 'passed';
   };
   sortAndPropagateStatus(rootItem);
-  return rootItem;
+
+  let shortRoot = rootItem;
+  while (shortRoot.children.length === 1 && shortRoot.children[0].kind === 'group' && shortRoot.children[0].subKind === 'folder')
+    shortRoot = shortRoot.children[0];
+  return shortRoot;
 }
 
 function filterTree(rootItem: GroupItem, filterText: string, statusFilters: Map<string, boolean>) {
