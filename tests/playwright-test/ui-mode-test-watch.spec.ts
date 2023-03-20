@@ -219,3 +219,46 @@ test('should watch new file', async ({ runUITest, writeFiles }) => {
         ✅ test
   `);
 });
+
+test('should queue watches', async ({ runUITest, writeFiles, createLatch }) => {
+  const latch = createLatch();
+  const page = await runUITest({
+    'a.test.ts': `import { test } from '@playwright/test'; test('test', () => {});`,
+    'b.test.ts': `import { test } from '@playwright/test'; test('test', async () => {
+      ${latch.blockingCode}
+    });`,
+    'c.test.ts': `import { test } from '@playwright/test'; test('test', () => {});`,
+    'd.test.ts': `import { test } from '@playwright/test'; test('test', () => {});`,
+  });
+
+  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toBe(`
+    ▼ ◯ a.test.ts
+        ◯ test
+    ▼ ◯ b.test.ts
+        ◯ test
+    ▼ ◯ c.test.ts
+        ◯ test
+    ▼ ◯ d.test.ts
+        ◯ test
+  `);
+
+  await page.getByTitle('Watch all').click();
+  await page.getByTitle('Run all').click();
+
+  await expect(page.getByTestId('status-line')).toHaveText('Running 1/4 passed (25%)', { timeout: 15000 });
+
+  await writeFiles({
+    'a.test.ts': `import { test } from '@playwright/test'; test('test', () => {});`,
+    'b.test.ts': `import { test } from '@playwright/test'; test('test', () => {});`,
+    'c.test.ts': `import { test } from '@playwright/test'; test('test', () => {});`,
+  });
+
+  // Now watches should not kick in.
+  await new Promise(f => setTimeout(f, 1000));
+  await expect(page.getByTestId('status-line')).toHaveText('Running 1/4 passed (25%)', { timeout: 15000 });
+
+  // Allow test to finish and new watch to  kick in.
+  latch.open();
+
+  await expect(page.getByTestId('status-line')).toHaveText('3/3 passed (100%)', { timeout: 15000 });
+});
