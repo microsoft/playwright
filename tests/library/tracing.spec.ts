@@ -430,7 +430,7 @@ test('should work with multiple chunks', async ({ context, page, server }, testI
   await context.tracing.startChunk();
   await page.setContent('<button>Click</button>');
   await page.click('"Click"');
-  page.click('"ClickNoButton"').catch(() =>  {});
+  page.click('"ClickNoButton"', { timeout: 0 }).catch(() =>  {});
   await context.tracing.stopChunk({ path: testInfo.outputPath('trace.zip') });
 
   await context.tracing.startChunk();
