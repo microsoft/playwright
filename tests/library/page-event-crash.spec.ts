@@ -17,7 +17,7 @@
 
 import { contextTest as testBase, expect } from '../config/browserTest';
 
-const test = testBase.extend<{ crash: () => void }>({
+const test = testBase.extend<{ crash: () => void }, { dummy: string }>({
   crash: async ({ page, toImpl, browserName }, run) => {
     run(() => {
       if (browserName === 'chromium')
@@ -27,11 +27,10 @@ const test = testBase.extend<{ crash: () => void }>({
       else if (browserName === 'firefox')
         toImpl(page)._delegate._session.send('Page.crash', {}).catch(e => {});
     });
-  }
+  },
+  // Force a separate worker to avoid messing up with other tests.
+  dummy: ['', { scope: 'worker' }],
 });
-
-// Force a separate worker to avoid messing up with other tests.
-test.use({ launchOptions: {} });
 
 test('should emit crash event when page crashes', async ({ page, crash }) => {
   await page.setContent(`<div>This page should crash</div>`);
