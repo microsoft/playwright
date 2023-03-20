@@ -75,3 +75,23 @@ test('should treat enums equally', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 });
+
+test('should be able to access |this| inside class properties', async ({ runInlineTest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/21794' });
+  const result = await runInlineTest({
+    'example.spec.ts': `
+      import { test, expect } from '@playwright/test';
+
+      class Foo {
+        constructor(private readonly incoming: number) {}
+        value = this.incoming;
+      }
+
+      test('works', () => {
+        expect(new Foo(42).value).toBe(42);
+      })
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
