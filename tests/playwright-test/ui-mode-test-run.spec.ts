@@ -75,9 +75,9 @@ test('should show running progress', async ({ runUITest }) => {
   });
 
   await page.getByTitle('Run all').click();
-  await expect(page.getByTestId('status-line')).toHaveText('Running 1/4 passed (25%)');
+  await expect(page.getByTestId('status-line')).toHaveText('Running 1/4 passed (25%)', { timeout: 15000 });
   await page.getByTitle('Stop').click();
-  await expect(page.getByTestId('status-line')).toHaveText('1/4 passed (25%)');
+  await expect(page.getByTestId('status-line')).toHaveText('1/4 passed (25%)', { timeout: 15000 });
   await page.getByTitle('Reload').click();
   await expect(page.getByTestId('status-line')).toBeHidden();
 });

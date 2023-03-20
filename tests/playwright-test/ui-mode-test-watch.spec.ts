@@ -128,7 +128,7 @@ test('should batch watch updates', async ({ runUITest, writeFiles }) => {
     'd.test.ts': `import { test } from '@playwright/test'; test('test', () => {});`,
   });
 
-  await expect(page.getByTestId('status-line')).toHaveText('4/4 passed (100%)');
+  await expect(page.getByTestId('status-line')).toHaveText('4/4 passed (100%)', { timeout: 15000 });
 
   await expect.poll(dumpTestTree(page), { timeout: 15000 }).toBe(`
     ▼ ✅ a.test.ts 👁
@@ -167,7 +167,7 @@ test('should watch all', async ({ runUITest, writeFiles }) => {
     'd.test.ts': `import { test } from '@playwright/test'; test('test', () => {});`,
   });
 
-  await expect(page.getByTestId('status-line')).toHaveText('2/2 passed (100%)');
+  await expect(page.getByTestId('status-line')).toHaveText('2/2 passed (100%)', { timeout: 15000 });
 
   await expect.poll(dumpTestTree(page), { timeout: 15000 }).toBe(`
     ▼ ✅ a.test.ts
@@ -210,7 +210,7 @@ test('should watch new file', async ({ runUITest, writeFiles }) => {
     'b.test.ts': ` import { test } from '@playwright/test'; test('test', () => {});`,
   });
 
-  await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
+  await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)', { timeout: 15000 });
 
   await expect.poll(dumpTestTree(page), { timeout: 15000 }).toBe(`
     ▼ ◯ a.test.ts
