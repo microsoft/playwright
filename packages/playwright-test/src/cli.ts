@@ -30,7 +30,6 @@ import type { FullResult } from '../reporter';
 
 export function addTestCommands(program: Command) {
   addTestCommand(program);
-  addUICommand(program);
   addShowReportCommand(program);
   addListFilesCommand(program);
 }
@@ -38,7 +37,7 @@ export function addTestCommands(program: Command) {
 function addTestCommand(program: Command) {
   const command = program.command('test [test-filter...]');
   command.description('run tests with Playwright Test');
-  const options = [...sharedOptions, ...testOnlyOptions].sort((a, b) => a[0].replace(/-/g, '').localeCompare(b[0].replace(/-/g, '')));
+  const options = testOptions.sort((a, b) => a[0].replace(/-/g, '').localeCompare(b[0].replace(/-/g, '')));
   options.forEach(([name, description]) => command.option(name, description));
   command.action(async (args, opts) => {
     try {
@@ -57,30 +56,6 @@ Examples:
   $ npx playwright test some.spec.ts:42
   $ npx playwright test --headed
   $ npx playwright test --project=webkit`);
-}
-
-function addUICommand(program: Command) {
-  const command = program.command('ui [test-filter...]');
-  command.description('open Playwright Test interactive UI');
-  sharedOptions.forEach(([name, description]) => command.option(name, description));
-  command.action(async (args, opts) => {
-    try {
-      opts.ui = true;
-      await runTests(args, opts);
-    } catch (e) {
-      console.error(e);
-      process.exit(1);
-    }
-  });
-  command.addHelpText('afterAll', `
-Arguments [test-filter...]:
-  Pass arguments to filter test files. Each argument is treated as a regular expression. Matching is performed against the absolute file paths.
-
-Examples:
-  $ npx playwright ui my.spec.ts
-  $ npx playwright ui some.spec.ts:42
-  $ npx playwright ui --headed
-  $ npx playwright ui --project=webkit`);
 }
 
 function addListFilesCommand(program: Command) {
@@ -259,35 +234,32 @@ function restartWithExperimentalTsEsm(configFile: string | null): boolean {
 
 const kTraceModes: TraceMode[] = ['on', 'off', 'on-first-retry', 'retain-on-failure'];
 
-const sharedOptions: [string, string][] = [
-  ['--headed', `Run tests in headed browsers (default: headless)`],
-  ['-c, --config <file>', `Configuration file, or a test directory with optional ${kDefaultConfigFiles.map(file => `"${file}"`).join('/')}`],
-  ['--fully-parallel', `Run all tests in parallel (default: false)`],
-  ['--ignore-snapshots', `Ignore screenshot and snapshot expectations`],
-  ['-j, --workers <workers>', `Number of concurrent workers or percentage of logical CPU cores, use 1 to run in a single worker (default: 50%)`],
-  ['--max-failures <N>', `Stop after the first N failures`],
-  ['--no-deps', 'Do not run project dependencies'],
-  ['--output <dir>', `Folder for output artifacts (default: "test-results")`],
-  ['--quiet', `Suppress stdio`],
-  ['--reporter <reporter>', `Reporter to use, comma-separated, can be ${builtInReporters.map(name => `"${name}"`).join(', ')} (default: "${baseFullConfig.reporter[0]}")`],
-  ['--project <project-name...>', `Only run tests from the specified list of projects (default: run all projects)`],
-  ['--timeout <timeout>', `Specify test timeout threshold in milliseconds, zero for unlimited (default: ${defaultTimeout})`],
-  ['-x', `Stop after the first failure`],
-];
-
-const testOnlyOptions: [string, string][] = [
+const testOptions: [string, string][] = [
   ['--browser <browser>', `Browser to use for tests, one of "all", "chromium", "firefox" or "webkit" (default: "chromium")`],
+  ['-c, --config <file>', `Configuration file, or a test directory with optional ${kDefaultConfigFiles.map(file => `"${file}"`).join('/')}`],
   ['--debug', `Run tests with Playwright Inspector. Shortcut for "PWDEBUG=1" environment variable and "--timeout=0 --max-failures=1 --headed --workers=1" options`],
   ['--forbid-only', `Fail if test.only is called (default: false)`],
+  ['--fully-parallel', `Run all tests in parallel (default: false)`],
   ['--global-timeout <timeout>', `Maximum time this test suite can run in milliseconds (default: unlimited)`],
   ['-g, --grep <grep>', `Only run tests matching this regular expression (default: ".*")`],
   ['-gv, --grep-invert <grep>', `Only run tests that do not match this regular expression`],
+  ['--headed', `Run tests in headed browsers (default: headless)`],
+  ['--ignore-snapshots', `Ignore screenshot and snapshot expectations`],
   ['--list', `Collect all the tests and report them, but do not run`],
+  ['--max-failures <N>', `Stop after the first N failures`],
+  ['--no-deps', 'Do not run project dependencies'],
+  ['--output <dir>', `Folder for output artifacts (default: "test-results")`],
   ['--pass-with-no-tests', `Makes test run succeed even if no tests were found`],
+  ['--project <project-name...>', `Only run tests from the specified list of projects (default: run all projects)`],
+  ['--quiet', `Suppress stdio`],
   ['--repeat-each <N>', `Run each test N times (default: 1)`],
+  ['--reporter <reporter>', `Reporter to use, comma-separated, can be ${builtInReporters.map(name => `"${name}"`).join(', ')} (default: "${baseFullConfig.reporter[0]}")`],
   ['--retries <retries>', `Maximum retry count for flaky tests, zero for no retries (default: no retries)`],
   ['--shard <shard>', `Shard tests and execute only the selected shard, specify in the form "current/all", 1-based, for example "3/5"`],
+  ['--timeout <timeout>', `Specify test timeout threshold in milliseconds, zero for unlimited (default: ${defaultTimeout})`],
   ['--trace <mode>', `Force tracing mode, can be ${kTraceModes.map(mode => `"${mode}"`).join(', ')}`],
   ['--ui', `Run tests in interactive UI mode`],
   ['-u, --update-snapshots', `Update snapshots with actual results (default: only create missing snapshots)`],
+  ['-j, --workers <workers>', `Number of concurrent workers or percentage of logical CPU cores, use 1 to run in a single worker (default: 50%)`],
+  ['-x', `Stop after the first failure`],
 ];
