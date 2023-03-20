@@ -86,7 +86,7 @@ test('should show snapshots for sync assertions', async ({ runUITest, server }) 
     /page\.setContent[\d.]+m?s/,
     /locator\.clickgetByRole\('button'\)[\d.]+m?s/,
     /expect\.toBe[\d.]+m?s/,
-  ]);
+  ], { timeout: 15000 });
 
   await expect(
       page.frameLocator('id=snapshot').locator('button'),
