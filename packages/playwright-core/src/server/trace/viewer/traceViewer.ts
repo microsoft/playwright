@@ -86,11 +86,8 @@ export async function showTraceViewer(traceUrls: string[], browserName: string, 
     channel: findChromiumChannel(traceViewerPlaywright.options.sdkLanguage),
     args,
     noDefaultViewport: true,
-    // Moving the mouse while starting Chromium on macOS kills the mouse.
-    // There is no exact switch that we can blame, but removing all reduces the
-    // probability of this happening by a couple of orders.
-    ignoreChromiumSwitches: true,
     headless,
+    ignoreDefaultArgs: ['--enable-automation'],
     colorScheme: 'no-override',
     useWebSocket: isUnderTest(),
   });

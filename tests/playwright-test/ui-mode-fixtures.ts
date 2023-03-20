@@ -21,9 +21,16 @@ import type { TestChildProcess } from '../config/commonFixtures';
 import { cleanEnv, cliEntrypoint, removeFolderAsync, test as base, writeFiles } from './playwright-test-fixtures';
 import type { Files, RunOptions } from './playwright-test-fixtures';
 import type { Browser, Page, TestInfo } from './stable-test-runner';
+import { createGuid } from '../../packages/playwright-core/src/utils/crypto';
+
+type Latch = {
+  blockingCode: string;
+  open: () => void;
+};
 
 type Fixtures = {
   runUITest: (files: Files, env?: NodeJS.ProcessEnv, options?: RunOptions) => Promise<Page>;
+  createLatch: () => Latch;
 };
 
 export function dumpTestTree(page: Page): () => Promise<string> {
@@ -99,6 +106,21 @@ export const test = base
         await testProcess?.close();
         await removeFolderAsync(cacheDir);
       },
+      createLatch: async ({}, use, testInfo) => {
+        await use(() => {
+          const latchFile = path.join(testInfo.project.outputDir, createGuid() + '.latch');
+          return {
+            blockingCode: `await ((${waitForLatch})(${JSON.stringify(latchFile)}))`,
+            open: () => fs.writeFileSync(latchFile, 'ok'),
+          };
+        });
+      },
     });
 
 export { expect } from './stable-test-runner';
+
+async function waitForLatch(latchFile: string) {
+  const fs = require('fs');
+  while (!fs.existsSync(latchFile))
+    await new Promise(f => setTimeout(f, 250));
+}
