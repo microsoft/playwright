@@ -96,14 +96,16 @@ class UIMode {
 
   async showUI() {
     this._page = await showTraceViewer([], 'chromium', { app: 'watch.html', headless: isUnderTest() && process.env.PWTEST_HEADED_FOR_TEST !== '1' });
-    process.stdout.write = (chunk: string | Buffer) => {
-      this._dispatchEvent({ method: 'stdio', params: chunkToPayload('stdout', chunk) });
-      return true;
-    };
-    process.stderr.write = (chunk: string | Buffer) => {
-      this._dispatchEvent({ method: 'stdio', params: chunkToPayload('stderr', chunk) });
-      return true;
-    };
+    if (!process.env.PWTEST_DEBUG) {
+      process.stdout.write = (chunk: string | Buffer) => {
+        this._dispatchEvent({ method: 'stdio', params: chunkToPayload('stdout', chunk) });
+        return true;
+      };
+      process.stderr.write = (chunk: string | Buffer) => {
+        this._dispatchEvent({ method: 'stdio', params: chunkToPayload('stderr', chunk) });
+        return true;
+      };
+    }
     const exitPromise = new ManualPromise();
     this._page.on('close', () => exitPromise.resolve());
     let queue = Promise.resolve();
@@ -193,7 +195,7 @@ class UIMode {
       dependenciesForTestFile(fileName).forEach(file => files.add(file));
     }
     const watchedFiles = [...files].sort();
-    if (this._testWatcher && JSON.stringify(this._testWatcher.watchedFiles.toString()) === JSON.stringify(watchedFiles))
+    if (this._testWatcher && JSON.stringify(this._testWatcher.watchedFiles) === JSON.stringify(watchedFiles))
       return;
 
     if (this._testWatcher) {

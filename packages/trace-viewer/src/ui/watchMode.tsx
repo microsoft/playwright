@@ -69,10 +69,11 @@ export const WatchModeView: React.FC<{}> = ({
   const [testModel, setTestModel] = React.useState<TestModel>({ config: undefined, rootSuite: undefined });
   const [progress, setProgress] = React.useState<Progress & { total: number } | undefined>();
   const [selectedItem, setSelectedItem] = React.useState<{ location?: Location, testCase?: TestCase }>({});
-  const [visibleTestIds, setVisibleTestIds] = React.useState<string[]>([]);
+  const [visibleTestIds, setVisibleTestIds] = React.useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
   const [runningState, setRunningState] = React.useState<{ testIds: Set<string>, itemSelectedByUser?: boolean } | undefined>();
   const [watchAll, setWatchAll] = useSetting<boolean>('watch-all', false);
+  const runTestPromiseChain = React.useRef(Promise.resolve());
 
   const inputRef = React.useRef<HTMLInputElement>(null);
 
@@ -110,22 +111,26 @@ export const WatchModeView: React.FC<{}> = ({
       setProgress(undefined);
   };
 
-  const runTests = (testIds: string[]) => {
-    // Clear test results.
-    {
-      const testIdSet = new Set(testIds);
-      for (const test of testModel.rootSuite?.allTests() || []) {
-        if (testIdSet.has(test.id))
-          (test as TeleTestCase)._createTestResult('pending');
-      }
-      setTestModel({ ...testModel });
-    }
+  const runTests = React.useCallback((mode: 'queue-if-busy' | 'bounce-if-busy', testIds: Set<string>) => {
+    if (mode === 'bounce-if-busy' && runningState)
+      return;
 
-    const time = '  [' + new Date().toLocaleTimeString() + ']';
-    xtermDataSource.write('\x1B[2m—'.repeat(Math.max(0, xtermSize.cols - time.length)) + time + '\x1B[22m');
-    setProgress({ total: testIds.length, passed: 0, failed: 0, skipped: 0 });
-    setRunningState({ testIds: new Set(testIds) });
-    sendMessage('run', { testIds }).then(() => {
+    runTestPromiseChain.current = runTestPromiseChain.current.then(async () => {
+      // Clear test results.
+      {
+        for (const test of testModel.rootSuite?.allTests() || []) {
+          if (testIds.has(test.id))
+            (test as TeleTestCase)._createTestResult('pending');
+        }
+        setTestModel({ ...testModel });
+      }
+
+      const time = '  [' + new Date().toLocaleTimeString() + ']';
+      xtermDataSource.write('\x1B[2m—'.repeat(Math.max(0, xtermSize.cols - time.length)) + time + '\x1B[22m');
+      setProgress({ total: testIds.size, passed: 0, failed: 0, skipped: 0 });
+      setRunningState({ testIds });
+
+      await sendMessage('run', { testIds: [...testIds] });
       // Clear pending tests in case of interrupt.
       for (const test of testModel.rootSuite?.allTests() || []) {
         if (test.results[0]?.duration === -1)
@@ -134,7 +139,7 @@ export const WatchModeView: React.FC<{}> = ({
       setTestModel({ ...testModel });
       setRunningState(undefined);
     });
-  };
+  }, [runningState, testModel]);
 
   const isRunningTest = !!runningState;
 
@@ -171,7 +176,7 @@ export const WatchModeView: React.FC<{}> = ({
           projectFilters={projectFilters}
           setProjectFilters={setProjectFilters}
           testModel={testModel}
-          runTests={() => runTests(visibleTestIds)} />
+          runTests={() => runTests('bounce-if-busy', visibleTestIds)} />
         <Toolbar noMinHeight={true}>
           {!isRunningTest && !progress && <div className='section-title'>Tests</div>}
           {!isRunningTest && progress && <div data-testid='status-line' className='status-line'>
@@ -180,7 +185,7 @@ export const WatchModeView: React.FC<{}> = ({
           {isRunningTest && progress && <div data-testid='status-line' className='status-line'>
             <div>Running {progress.passed}/{runningState.testIds.size} passed ({(progress.passed / runningState.testIds.size) * 100 | 0}%)</div>
           </div>}
-          <ToolbarButton icon='play' title='Run all' onClick={() => runTests(visibleTestIds)} disabled={isRunningTest || isLoading}></ToolbarButton>
+          <ToolbarButton icon='play' title='Run all' onClick={() => runTests('bounce-if-busy', visibleTestIds)} disabled={isRunningTest || isLoading}></ToolbarButton>
           <ToolbarButton icon='debug-stop' title='Stop' onClick={() => sendMessageNoReply('stop')} disabled={!isRunningTest || isLoading}></ToolbarButton>
         </Toolbar>
         <TestList
@@ -274,11 +279,11 @@ const TestList: React.FC<{
   projectFilters: Map<string, boolean>,
   filterText: string,
   testModel: { rootSuite: Suite | undefined, config: FullConfig | undefined },
-  runTests: (testIds: string[]) => void,
+  runTests: (mode: 'bounce-if-busy' | 'queue-if-busy', testIds: Set<string>) => void,
   runningState?: { testIds: Set<string>, itemSelectedByUser?: boolean },
   watchAll?: boolean,
   isLoading?: boolean,
-  setVisibleTestIds: (testIds: string[]) => void,
+  setVisibleTestIds: (testIds: Set<string>) => void,
   onItemSelected: (item: { testCase?: TestCase, location?: Location }) => void,
 }> = ({ statusFilters, projectFilters, filterText, testModel, runTests, runningState, watchAll, isLoading, onItemSelected, setVisibleTestIds }) => {
   const [treeState, setTreeState] = React.useState<TreeState>({ expandedItems: new Map() });
@@ -302,7 +307,7 @@ const TestList: React.FC<{
       treeItemMap.set(treeItem.id, treeItem);
     };
     visit(rootItem);
-    setVisibleTestIds([...visibleTestIds]);
+    setVisibleTestIds(visibleTestIds);
     return { rootItem, treeItemMap, fileNames };
   }, [filterText, testModel, statusFilters, projectFilters, setVisibleTestIds]);
 
@@ -349,7 +354,7 @@ const TestList: React.FC<{
       const fileNames = new Set<string>();
       for (const itemId of watchedTreeIds.value) {
         const treeItem = treeItemMap.get(itemId)!;
-        const fileName = fileNameForTreeItem(treeItem);
+        const fileName = treeItem.location.file;
         if (fileName)
           fileNames.add(fileName);
       }
@@ -359,29 +364,30 @@ const TestList: React.FC<{
 
   const runTreeItem = (treeItem: TreeItem) => {
     setSelectedTreeItemId(treeItem.id);
-    runTests(collectTestIds(treeItem));
+    runTests('bounce-if-busy', collectTestIds(treeItem));
   };
 
-  runWatchedTests = (fileNames: string[]) => {
+  runWatchedTests = (changedTestFiles: string[]) => {
     const testIds: string[] = [];
-    const set = new Set(fileNames);
+    const set = new Set(changedTestFiles);
     if (watchAll) {
       const visit = (treeItem: TreeItem) => {
-        const fileName = fileNameForTreeItem(treeItem);
+        const fileName = treeItem.location.file;
         if (fileName && set.has(fileName))
           testIds.push(...collectTestIds(treeItem));
-        treeItem.children.forEach(visit);
+        if (treeItem.kind === 'group' && treeItem.subKind === 'folder')
+          treeItem.children.forEach(visit);
       };
       visit(rootItem);
     } else {
       for (const treeId of watchedTreeIds.value) {
         const treeItem = treeItemMap.get(treeId)!;
-        const fileName = fileNameForTreeItem(treeItem);
+        const fileName = treeItem.location.file;
         if (fileName && set.has(fileName))
           testIds.push(...collectTestIds(treeItem));
       }
     }
-    runTests(testIds);
+    runTests('queue-if-busy', new Set(testIds));
   };
 
   return <TestTreeView
@@ -598,25 +604,22 @@ const outputDirForTestCase = (testCase: TestCase): string | undefined => {
   return undefined;
 };
 
-const fileNameForTreeItem = (treeItem?: TreeItem): string | undefined => {
-  return treeItem?.location.file;
-};
-
 const locationToOpen = (treeItem?: TreeItem) => {
   if (!treeItem)
     return;
   return treeItem.location.file + ':' + treeItem.location.line;
 };
 
-const collectTestIds = (treeItem?: TreeItem): string[] => {
+const collectTestIds = (treeItem?: TreeItem): Set<string> => {
+  const testIds = new Set<string>();
   if (!treeItem)
-    return [];
-  const testIds: string[] = [];
+    return testIds;
+
   const visit = (treeItem: TreeItem) => {
     if (treeItem.kind === 'case')
-      testIds.push(...treeItem.tests.map(t => t.id));
+      treeItem.tests.map(t => t.id).forEach(id => testIds.add(id));
     else if (treeItem.kind === 'test')
-      testIds.push(treeItem.id);
+      testIds.add(treeItem.id);
     else
       treeItem.children?.forEach(visit);
   };
