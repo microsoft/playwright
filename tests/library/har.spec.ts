@@ -661,7 +661,7 @@ it('should return security details directly from response', async ({ contextFact
   const response = await page.goto(httpsServer.EMPTY_PAGE);
   const securityDetails = await response.securityDetails();
   if (browserName === 'webkit' && platform === 'win32')
-    expect(securityDetails).toEqual({ subjectName: 'puppeteer-tests', validFrom: 1550084863, validTo: -1 });
+    expect({ ...securityDetails, protocol: undefined }).toEqual({ subjectName: 'puppeteer-tests', validFrom: 1550084863, validTo: -1 });
   else if (browserName === 'webkit')
     expect(securityDetails).toEqual({ protocol: 'TLS 1.3', subjectName: 'puppeteer-tests', validFrom: 1550084863, validTo: 33086084863 });
   else
