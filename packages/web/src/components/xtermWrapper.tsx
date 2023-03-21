@@ -101,7 +101,7 @@ export const XtermWrapper: React.FC<{ source: XtermDataSource }> = ({
       terminal.current.terminal.options.theme = theme === 'dark-mode' ? darkTheme : lightTheme;
   }, [theme]);
 
-  return <div className='xterm-wrapper' style={{ flex: 'auto' }} ref={xtermElement}></div>;
+  return <div data-testid='output' className='xterm-wrapper' style={{ flex: 'auto' }} ref={xtermElement}></div>;
 };
 
 const lightTheme: ITheme = {
