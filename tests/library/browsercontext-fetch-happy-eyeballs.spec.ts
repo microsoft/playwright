@@ -60,3 +60,9 @@ it('https post should work with ignoreHTTPSErrors option', async ({ context, htt
   expect(interceptedHostnameLookup).toBe('localhost');
 });
 
+
+it('should work with ip6 and port as the host', async ({ request, server }) => {
+  const response = await request.get(`http://[::1]:${server.PORT}/simple.json`);
+  expect(response.url()).toBe(`http://[::1]:${server.PORT}/simple.json`);
+  expect(response).toBeOK();
+});
