@@ -66,9 +66,8 @@ export class MultiTraceModel {
     this.events = ([] as EventTraceEvent[]).concat(...contexts.map(c => c.events));
     this.hasSource = contexts.some(c => c.hasSource);
 
-    this.actions.sort((a1, a2) => (a1.startTime - a2.startTime) || (a1.endTime - a2.endTime));
     this.events.sort((a1, a2) => a1.time - a2.time);
-    this.actions = dedupeActions(this.actions);
+    this.actions = dedupeAndSortActions(this.actions);
     this.sources = collectSources(this.actions);
   }
 }
@@ -85,7 +84,7 @@ function indexModel(context: ContextEntry) {
     (event as any)[contextSymbol] = context;
 }
 
-function dedupeActions(actions: ActionTraceEvent[]) {
+function dedupeAndSortActions(actions: ActionTraceEvent[]) {
   const callActions = actions.filter(a => a.callId.startsWith('call@'));
   const expectActions = actions.filter(a => a.callId.startsWith('expect@'));
 
@@ -115,7 +114,7 @@ function dedupeActions(actions: ActionTraceEvent[]) {
     result.push(expectAction);
   }
 
-  result.sort((a1, a2) => a1.startTime - a2.startTime);
+  result.sort((a1, a2) => (a1.wallTime - a2.wallTime));
   for (let i = 1; i < result.length; ++i)
     (result[i] as any)[prevInListSymbol] = result[i - 1];
   return result;

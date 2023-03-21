@@ -33,7 +33,7 @@ export type CallMetadata = {
   // through the dispatcher, so is always excluded from inspector / tracing.
   isServerSide?: boolean;
   // Client wall time.
-  wallTime?: number;
+  wallTime: number;
   location?: { file: string, line?: number, column?: number };
   log: string[];
   error?: SerializedError;
