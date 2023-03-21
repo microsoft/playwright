@@ -226,6 +226,8 @@ export class PlaywrightConnection {
   }
 
   private async _createOwnedSocksProxy(playwright: Playwright): Promise<SocksProxy | undefined> {
+    if (!this._options.socksProxyPattern)
+      return;
     const socksProxy = new SocksProxy();
     socksProxy.setPattern(this._options.socksProxyPattern);
     playwright.options.socksProxyPort = await socksProxy.listen(0);
