@@ -77,31 +77,63 @@ export const SnapshotTab: React.FunctionComponent<{
     return { snapshots, snapshotInfoUrl, snapshotUrl, pointX, pointY, popoutUrl };
   }, [snapshots, snapshotTab]);
 
-  const iframeRef = React.useRef<HTMLIFrameElement>(null);
+  const iframeRef0 = React.useRef<HTMLIFrameElement>(null);
+  const iframeRef1 = React.useRef<HTMLIFrameElement>(null);
   const [snapshotInfo, setSnapshotInfo] = React.useState({ viewport: kDefaultViewport, url: '' });
+  const [isLoading, setIsLoading] = React.useState(false);
+  const loadingRef = React.useRef({ iteration: 0, visibleIframe: 0 });
+
   React.useEffect(() => {
     (async () => {
+      const thisIteration = loadingRef.current.iteration + 1;
+      const newVisibleIframe = 1 - loadingRef.current.visibleIframe;
+      loadingRef.current.iteration = thisIteration;
+      setIsLoading(true);
+
+      const newSnapshotInfo = { url: '', viewport: kDefaultViewport };
       if (snapshotInfoUrl) {
         const response = await fetch(snapshotInfoUrl);
         const info = await response.json();
-        if (!info.error)
-          setSnapshotInfo(info);
-      } else {
-        setSnapshotInfo({ viewport: kDefaultViewport, url: '' });
+        if (!info.error) {
+          newSnapshotInfo.url = info.url;
+          newSnapshotInfo.viewport = info.viewport;
+        }
       }
-      if (!iframeRef.current)
+
+      // Interrupted by another load - bail out.
+      if (loadingRef.current.iteration !== thisIteration)
         return;
-      try {
-        const newUrl = snapshotUrl + (pointX === undefined ? '' : `&pointX=${pointX}&pointY=${pointY}`);
-        // Try preventing history entry from being created.
-        if (iframeRef.current.contentWindow)
-          iframeRef.current.contentWindow.location.replace(newUrl);
-        else
-          iframeRef.current.src = newUrl;
-      } catch (e) {
+
+      const iframe = [iframeRef0, iframeRef1][newVisibleIframe].current;
+      if (iframe) {
+        try {
+          let loadedCallback = () => {};
+          const loadedPromise = new Promise<void>(f => loadedCallback = f);
+          iframe.addEventListener('load', loadedCallback);
+          iframe.addEventListener('error', loadedCallback);
+
+          const newUrl = snapshotUrl + (pointX === undefined ? '' : `&pointX=${pointX}&pointY=${pointY}`);
+          // Try preventing history entry from being created.
+          if (iframe.contentWindow)
+            iframe.contentWindow.location.replace(newUrl);
+          else
+            iframe.src = newUrl;
+
+          await loadedPromise;
+          iframe.removeEventListener('load', loadedCallback);
+          iframe.removeEventListener('error', loadedCallback);
+        } catch (e) {
+        }
       }
+      // Interrupted by another load - bail out.
+      if (loadingRef.current.iteration !== thisIteration)
+        return;
+
+      loadingRef.current.visibleIframe = newVisibleIframe;
+      setSnapshotInfo(newSnapshotInfo);
+      setIsLoading(false);
     })();
-  }, [iframeRef, snapshotUrl, snapshotInfoUrl, pointX, pointY]);
+  }, [iframeRef0, iframeRef1, snapshotUrl, snapshotInfoUrl, pointX, pointY, loadingRef]);
 
   const windowHeaderHeight = 40;
   const snapshotContainerSize = {
@@ -130,7 +162,14 @@ export const SnapshotTab: React.FunctionComponent<{
       testIdAttributeName={testIdAttributeName}
       highlightedLocator={highlightedLocator}
       setHighlightedLocator={setHighlightedLocator}
-      iframe={iframeRef.current} />
+      iframe={iframeRef0.current} />
+    <InspectModeController
+      isInspecting={isInspecting}
+      sdkLanguage={sdkLanguage}
+      testIdAttributeName={testIdAttributeName}
+      highlightedLocator={highlightedLocator}
+      setHighlightedLocator={setHighlightedLocator}
+      iframe={iframeRef1.current} />
     <Toolbar>
       <ToolbarButton title='Pick locator' disabled={!popoutUrl} toggled={pickerVisible} onClick={() => {
         setPickerVisible(!pickerVisible);
@@ -184,7 +223,10 @@ export const SnapshotTab: React.FunctionComponent<{
             </div>
           </div>
         </div>
-        <iframe ref={iframeRef} id='snapshot' name='snapshot'></iframe>
+        <div className={`snapshot-switcher ${isLoading ? 'snapshot-loading' : ''}`}>
+          <iframe ref={iframeRef0} name='snapshot' className={loadingRef.current.visibleIframe === 0 ? 'snapshot-visible' : ''}></iframe>
+          <iframe ref={iframeRef1} name='snapshot' className={loadingRef.current.visibleIframe === 1 ? 'snapshot-visible' : ''}></iframe>
+        </div>
       </div>
     </div>
   </div>;
@@ -210,14 +252,17 @@ export const InspectModeController: React.FunctionComponent<{
 }> = ({ iframe, isInspecting, sdkLanguage, testIdAttributeName, highlightedLocator, setHighlightedLocator }) => {
   React.useEffect(() => {
     const win = iframe?.contentWindow as any;
+    let recorder: Recorder | undefined;
     try {
-      if (!win || !isInspecting && !highlightedLocator && !win._recorder)
+      if (!win)
+        return;
+      recorder = win._recorder;
+      if (!recorder && !isInspecting && !highlightedLocator)
         return;
     } catch {
-      // Potential cross-origin exception.
+      // Potential cross-origin exception when accessing win._recorder.
       return;
     }
-    let recorder: Recorder | undefined = win._recorder;
     if (!recorder) {
       const injectedScript = new InjectedScript(win, false, sdkLanguage, testIdAttributeName, 1, 'chromium', []);
       recorder = new Recorder(injectedScript, {

@@ -51,7 +51,7 @@ class TraceViewerPage {
     this.consoleStacks = page.locator('.console-stack');
     this.stackFrames = page.getByTestId('stack-trace').locator('.list-view-entry');
     this.networkRequests = page.locator('.network-request-title');
-    this.snapshotContainer = page.locator('.snapshot-container iframe');
+    this.snapshotContainer = page.locator('.snapshot-container iframe.snapshot-visible[name=snapshot]');
   }
 
   async actionIconsText(action: string) {
@@ -97,14 +97,12 @@ class TraceViewerPage {
   }
 
   async snapshotFrame(actionName: string, ordinal: number = 0, hasSubframe: boolean = false): Promise<Frame> {
-    const existing = this.page.mainFrame().childFrames()[0];
-    await Promise.all([
-      existing ? existing.waitForNavigation() as any : Promise.resolve(),
-      this.selectAction(actionName, ordinal),
-    ]);
-    while (this.page.frames().length < (hasSubframe ? 3 : 2))
+    await this.selectAction(actionName, ordinal);
+    await this.page.waitForFunction(() => !document.querySelector('.snapshot-switcher').classList.contains('snapshot-loading'));
+    while (this.page.frames().length < (hasSubframe ? 4 : 3))
       await this.page.waitForEvent('frameattached');
-    return this.page.mainFrame().childFrames()[0];
+    const iframe = await this.page.$('iframe.snapshot-visible[name=snapshot]');
+    return iframe.contentFrame();
   }
 }
 
