@@ -130,7 +130,7 @@ function clientRequestArgsToHostName(options: http.ClientRequestArgs): string {
   if (options.hostname)
     return options.hostname;
   if (options.host)
-    return options.host.split(':')[0];
+    return options.host;
   throw new Error('Either options.hostname or options.host must be provided');
 }
 
