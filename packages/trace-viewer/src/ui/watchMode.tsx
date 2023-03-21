@@ -610,6 +610,10 @@ const sendMessage = async (method: string, params: any) => {
 };
 
 const sendMessageNoReply = (method: string, params?: any) => {
+  if ((window as any)._overrideProtocolForTest) {
+    (window as any)._overrideProtocolForTest({ method, params }).catch(() => {});
+    return;
+  }
   sendMessage(method, params).catch((e: Error) => {
     // eslint-disable-next-line no-console
     console.error(e);
