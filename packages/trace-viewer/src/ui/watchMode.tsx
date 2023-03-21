@@ -22,7 +22,7 @@ import { TreeView } from '@web/components/treeView';
 import type { TreeState } from '@web/components/treeView';
 import { baseFullConfig, TeleReporterReceiver, TeleSuite } from '@testIsomorphic/teleReceiver';
 import type { TeleTestCase } from '@testIsomorphic/teleReceiver';
-import type { FullConfig, Suite, TestCase, Location } from '../../../playwright-test/types/testReporter';
+import type { FullConfig, Suite, TestCase, Location, TestError } from '../../../playwright-test/types/testReporter';
 import { SplitView } from '@web/components/splitView';
 import { MultiTraceModel } from './modelUtil';
 import './watchMode.css';
@@ -368,8 +368,8 @@ const TestList: React.FC<{
     } else {
       const fileNames = new Set<string>();
       for (const itemId of watchedTreeIds.value) {
-        const treeItem = treeItemMap.get(itemId)!;
-        const fileName = treeItem.location.file;
+        const treeItem = treeItemMap.get(itemId);
+        const fileName = treeItem?.location.file;
         if (fileName)
           fileNames.add(fileName);
       }
@@ -396,8 +396,8 @@ const TestList: React.FC<{
       visit(rootItem);
     } else {
       for (const treeId of watchedTreeIds.value) {
-        const treeItem = treeItemMap.get(treeId)!;
-        const fileName = treeItem.location.file;
+        const treeItem = treeItemMap.get(treeId);
+        const fileName = treeItem?.location.file;
         if (fileName && set.has(fileName))
           testIds.push(...collectTestIds(treeItem));
       }
@@ -576,6 +576,10 @@ const refreshRootSuite = (eraseResults: boolean): Promise<void> => {
       else
         ++progress.passed;
       throttleUpdateRootSuite(config, rootSuite, progress);
+    },
+
+    onError: (error: TestError) => {
+      xtermDataSource.write((error.stack || error.value || '') + '\n');
     },
   });
   return sendMessage('list', {});
