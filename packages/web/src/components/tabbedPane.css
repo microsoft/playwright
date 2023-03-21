@@ -20,6 +20,10 @@
   overflow: hidden;
 }
 
+.tabbed-pane .toolbar {
+  background-color: var(--vscode-sideBar-background);
+}
+
 .tabbed-pane .tab-content {
   display: flex;
   flex: auto;
@@ -28,7 +32,6 @@
 
 .tabbed-pane-tab {
   padding: 2px 10px 0 10px;
-  margin-right: 4px;
   cursor: pointer;
   display: flex;
   flex: none;

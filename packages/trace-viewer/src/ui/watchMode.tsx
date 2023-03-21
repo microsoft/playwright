@@ -162,7 +162,7 @@ export const WatchModeView: React.FC<{}> = ({
         </div>
       </div>
       <div className='vbox watch-mode-sidebar'>
-        <Toolbar noShadow={true}>
+        <Toolbar noShadow={true} noMinHeight={true}>
           <img src='icon-32x32.png' />
           <div className='section-title'>Playwright</div>
           <ToolbarButton icon='color-mode' title='Toggle color mode' onClick={() => toggleTheme()} />
@@ -238,40 +238,43 @@ const FiltersView: React.FC<{
           if (e.key === 'Enter')
             runTests();
         }} />}>
-      {<div className='filter-title' title={statusLine} onClick={() => setExpanded(false)}><span className='filter-label'>Status:</span> {statusLine}</div>}
-      {[...statusFilters.entries()].map(([status, value]) => {
-        return <div className='filter-entry'>
-          <label>
-            <input type='checkbox' checked={value} onClick={() => {
-              const copy = new Map(statusFilters);
-              copy.set(status, !copy.get(status));
-              setStatusFilters(copy);
-            }}/>
-            <div>{status}</div>
-          </label>
-        </div>;
-      })}
-
-      {<div className='filter-title' title={projectsLine}><span className='filter-label'>Projects:</span> {projectsLine}</div>}
-      {[...projectFilters.entries()].map(([projectName, value]) => {
-        return <div className='filter-entry'>
-          <label>
-            <input type='checkbox' checked={value} onClick={() => {
-              const copy = new Map(projectFilters);
-              copy.set(projectName, !copy.get(projectName));
-              setProjectFilters(copy);
-              const configFile = testModel?.config?.configFile;
-              if (configFile)
-                settings.setObject(configFile + ':projects', [...copy.entries()].filter(([_, v]) => v).map(([k]) => k));
-            }}/>
-            <div>{projectName}</div>
-          </label>
-        </div>;
-      })}
     </Expandable>
-    {!expanded && <div className='filter-summary' title={'Status: ' + statusLine + '\nProjects: ' + projectsLine} onClick={() => setExpanded(true)}>
+    <div className='filter-summary' title={'Status: ' + statusLine + '\nProjects: ' + projectsLine} onClick={() => setExpanded(!expanded)}>
       <span className='filter-label'>Status:</span> {statusLine}
       <span className='filter-label'>Projects:</span> {projectsLine}
+    </div>
+    {expanded && <div className='hbox' style={{ marginLeft: 14 }}>
+      <div className='filter-list'>
+        {[...statusFilters.entries()].map(([status, value]) => {
+          return <div className='filter-entry'>
+            <label>
+              <input type='checkbox' checked={value} onClick={() => {
+                const copy = new Map(statusFilters);
+                copy.set(status, !copy.get(status));
+                setStatusFilters(copy);
+              }}/>
+              <div>{status}</div>
+            </label>
+          </div>;
+        })}
+      </div>
+      <div className='filter-list'>
+        {[...projectFilters.entries()].map(([projectName, value]) => {
+          return <div className='filter-entry'>
+            <label>
+              <input type='checkbox' checked={value} onClick={() => {
+                const copy = new Map(projectFilters);
+                copy.set(projectName, !copy.get(projectName));
+                setProjectFilters(copy);
+                const configFile = testModel?.config?.configFile;
+                if (configFile)
+                  settings.setObject(configFile + ':projects', [...copy.entries()].filter(([_, v]) => v).map(([k]) => k));
+              }}/>
+              <div>{projectName}</div>
+            </label>
+          </div>;
+        })}
+      </div>
     </div>}
   </div>;
 };
@@ -404,15 +407,17 @@ const TestList: React.FC<{
       return <div className='hbox watch-mode-list-item'>
         <div className='watch-mode-list-item-title'>{treeItem.title}</div>
         {!!treeItem.duration && <div className='watch-mode-list-item-time'>{msToString(treeItem.duration)}</div>}
-        <ToolbarButton icon='play' title='Run' onClick={() => runTreeItem(treeItem)} disabled={!!runningState}></ToolbarButton>
-        <ToolbarButton icon='go-to-file' title='Open in VS Code' onClick={() => sendMessageNoReply('open', { location: locationToOpen(treeItem) })}></ToolbarButton>
-        {!watchAll && <ToolbarButton icon='eye' title='Watch' onClick={() => {
-          if (watchedTreeIds.value.has(treeItem.id))
-            watchedTreeIds.value.delete(treeItem.id);
-          else
-            watchedTreeIds.value.add(treeItem.id);
-          setWatchedTreeIds({ ...watchedTreeIds });
-        }} toggled={watchedTreeIds.value.has(treeItem.id)}></ToolbarButton>}
+        <Toolbar noMinHeight={true} noShadow={true}>
+          <ToolbarButton icon='play' title='Run' onClick={() => runTreeItem(treeItem)} disabled={!!runningState}></ToolbarButton>
+          <ToolbarButton icon='go-to-file' title='Open in VS Code' onClick={() => sendMessageNoReply('open', { location: locationToOpen(treeItem) })}></ToolbarButton>
+          {!watchAll && <ToolbarButton icon='eye' title='Watch' onClick={() => {
+            if (watchedTreeIds.value.has(treeItem.id))
+              watchedTreeIds.value.delete(treeItem.id);
+            else
+              watchedTreeIds.value.add(treeItem.id);
+            setWatchedTreeIds({ ...watchedTreeIds });
+          }} toggled={watchedTreeIds.value.has(treeItem.id)}></ToolbarButton>}
+        </Toolbar>
       </div>;
     }}
     icon={treeItem => {

@@ -145,6 +145,10 @@ body.dark-mode ::-webkit-scrollbar-track:hover {
   animation: spin 1s infinite linear;
 }
 
+::placeholder {
+  color: var(--vscode-input-placeholderForeground);
+}
+
 @keyframes spin {
   100% {
     transform: rotate(360deg);
