@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Fixtures, Frame, Locator, Page, Browser, BrowserContext } from '@playwright/test';
+import type { Fixtures, FrameLocator, Locator, Page, Browser, BrowserContext } from '@playwright/test';
 import { showTraceViewer } from '../../packages/playwright-core/lib/server';
 
 type BaseTestFixtures = {
@@ -96,13 +96,11 @@ class TraceViewerPage {
     return result.sort();
   }
 
-  async snapshotFrame(actionName: string, ordinal: number = 0, hasSubframe: boolean = false): Promise<Frame> {
+  async snapshotFrame(actionName: string, ordinal: number = 0, hasSubframe: boolean = false): Promise<FrameLocator> {
     await this.selectAction(actionName, ordinal);
-    await this.page.waitForFunction(() => !document.querySelector('.snapshot-switcher').classList.contains('snapshot-loading'));
     while (this.page.frames().length < (hasSubframe ? 4 : 3))
       await this.page.waitForEvent('frameattached');
-    const iframe = await this.page.$('iframe.snapshot-visible[name=snapshot]');
-    return iframe.contentFrame();
+    return this.page.frameLocator('iframe.snapshot-visible[name=snapshot]');
   }
 }
 

@@ -89,7 +89,7 @@ test('should show snapshots for sync assertions', async ({ runUITest, server }) 
   ], { timeout: 15000 });
 
   await expect(
-      page.frameLocator('id=snapshot').locator('button'),
+      page.frameLocator('iframe.snapshot-visible[name=snapshot]').locator('button'),
       'verify snapshot'
   ).toHaveText('Submit');
 });

@@ -80,7 +80,6 @@ export const SnapshotTab: React.FunctionComponent<{
   const iframeRef0 = React.useRef<HTMLIFrameElement>(null);
   const iframeRef1 = React.useRef<HTMLIFrameElement>(null);
   const [snapshotInfo, setSnapshotInfo] = React.useState({ viewport: kDefaultViewport, url: '' });
-  const [isLoading, setIsLoading] = React.useState(false);
   const loadingRef = React.useRef({ iteration: 0, visibleIframe: 0 });
 
   React.useEffect(() => {
@@ -88,7 +87,6 @@ export const SnapshotTab: React.FunctionComponent<{
       const thisIteration = loadingRef.current.iteration + 1;
       const newVisibleIframe = 1 - loadingRef.current.visibleIframe;
       loadingRef.current.iteration = thisIteration;
-      setIsLoading(true);
 
       const newSnapshotInfo = { url: '', viewport: kDefaultViewport };
       if (snapshotInfoUrl) {
@@ -106,9 +104,9 @@ export const SnapshotTab: React.FunctionComponent<{
 
       const iframe = [iframeRef0, iframeRef1][newVisibleIframe].current;
       if (iframe) {
+        let loadedCallback = () => {};
+        const loadedPromise = new Promise<void>(f => loadedCallback = f);
         try {
-          let loadedCallback = () => {};
-          const loadedPromise = new Promise<void>(f => loadedCallback = f);
           iframe.addEventListener('load', loadedCallback);
           iframe.addEventListener('error', loadedCallback);
 
@@ -120,9 +118,10 @@ export const SnapshotTab: React.FunctionComponent<{
             iframe.src = newUrl;
 
           await loadedPromise;
+        } catch {
+        } finally {
           iframe.removeEventListener('load', loadedCallback);
           iframe.removeEventListener('error', loadedCallback);
-        } catch (e) {
         }
       }
       // Interrupted by another load - bail out.
@@ -131,9 +130,8 @@ export const SnapshotTab: React.FunctionComponent<{
 
       loadingRef.current.visibleIframe = newVisibleIframe;
       setSnapshotInfo(newSnapshotInfo);
-      setIsLoading(false);
     })();
-  }, [iframeRef0, iframeRef1, snapshotUrl, snapshotInfoUrl, pointX, pointY, loadingRef]);
+  }, [snapshotUrl, snapshotInfoUrl, pointX, pointY]);
 
   const windowHeaderHeight = 40;
   const snapshotContainerSize = {
@@ -223,7 +221,7 @@ export const SnapshotTab: React.FunctionComponent<{
             </div>
           </div>
         </div>
-        <div className={`snapshot-switcher ${isLoading ? 'snapshot-loading' : ''}`}>
+        <div className='snapshot-switcher'>
           <iframe ref={iframeRef0} name='snapshot' className={loadingRef.current.visibleIframe === 0 ? 'snapshot-visible' : ''}></iframe>
           <iframe ref={iframeRef1} name='snapshot' className={loadingRef.current.visibleIframe === 1 ? 'snapshot-visible' : ''}></iframe>
         </div>
