@@ -90,7 +90,7 @@ export const test = base
         await use(async (files: Files, env: NodeJS.ProcessEnv = {}, options: RunOptions = {}) => {
           const baseDir = await writeFiles(testInfo, files, true);
           testProcess = childProcess({
-            command: ['node', cliEntrypoint, 'ui', '--workers=1', ...(options.additionalArgs || [])],
+            command: ['node', cliEntrypoint, 'test', '--ui', '--workers=1', ...(options.additionalArgs || [])],
             env: {
               ...cleanEnv(env),
               PWTEST_UNDER_TEST: '1',
