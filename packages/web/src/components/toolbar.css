@@ -17,12 +17,11 @@
 .toolbar {
   position: relative;
   display: flex;
-  background-color: var(--vscode-sideBar-background);
   color: var(--vscode-sideBarTitle-foreground);
   min-height: 35px;
   align-items: center;
   flex: none;
-  padding-right: 2px;
+  padding-right: 4px;
 }
 
 .toolbar:after {

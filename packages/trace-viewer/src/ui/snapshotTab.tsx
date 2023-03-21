@@ -150,7 +150,7 @@ export const SnapshotTab: React.FunctionComponent<{
         window.open(popoutUrl || '', '_blank');
       }}></ToolbarButton>
     </Toolbar>
-    {pickerVisible && <Toolbar>
+    {pickerVisible && <Toolbar noMinHeight={true}>
       <ToolbarButton icon='microscope' title='Pick locator' disabled={!popoutUrl} toggled={isInspecting} onClick={() => {
         setIsInspecting(!isInspecting);
       }}></ToolbarButton>
