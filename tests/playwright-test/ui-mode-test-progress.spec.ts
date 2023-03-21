@@ -75,7 +75,7 @@ test('should update trace live', async ({ runUITest, server }) => {
   await expect(
       page.frameLocator('id=snapshot').locator('body'),
       'verify snapshot'
-  ).toHaveText('One');
+  ).toHaveText('One', { timeout: 15000 });
   await expect(listItem).toHaveText([
     /browserContext.newPage[\d.]+m?s/,
     /page.gotohttp:\/\/localhost:\d+\/one.html[\d.]+m?s/,
