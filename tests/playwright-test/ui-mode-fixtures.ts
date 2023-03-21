@@ -26,6 +26,7 @@ import { createGuid } from '../../packages/playwright-core/src/utils/crypto';
 type Latch = {
   blockingCode: string;
   open: () => void;
+  close: () => void;
 };
 
 type Fixtures = {
@@ -33,8 +34,8 @@ type Fixtures = {
   createLatch: () => Latch;
 };
 
-export function dumpTestTree(page: Page): () => Promise<string> {
-  return () => page.getByTestId('test-tree').evaluate(async treeElement => {
+export function dumpTestTree(page: Page, options: { time?: boolean } = {}): () => Promise<string> {
+  return () => page.getByTestId('test-tree').evaluate(async (treeElement, options) => {
     function iconName(iconElement: Element): string {
       const icon = iconElement.className.replace('codicon codicon-', '');
       if (icon === 'chevron-right')
@@ -55,6 +56,8 @@ export function dumpTestTree(page: Page): () => Promise<string> {
         return '👁';
       if (icon === 'loading')
         return '↻';
+      if (icon === 'clock')
+        return '🕦';
       return icon;
     }
 
@@ -67,10 +70,13 @@ export function dumpTestTree(page: Page): () => Promise<string> {
       const indent = listItem.querySelectorAll('.list-view-indent').length;
       const watch = listItem.querySelector('.toolbar-button.eye.toggled') ? ' 👁' : '';
       const selected = listItem.classList.contains('selected') ? ' <=' : '';
-      result.push('    ' + '  '.repeat(indent) + treeIcon + ' ' + statusIcon + ' ' + listItem.textContent + watch + selected);
+      const title = listItem.querySelector('.watch-mode-list-item-title').textContent;
+      const timeElement = options.time ? listItem.querySelector('.watch-mode-list-item-time') : undefined;
+      const time = timeElement ? ' ' + timeElement.textContent.replace(/\d+m?s/, 'XXms') : '';
+      result.push('    ' + '  '.repeat(indent) + treeIcon + ' ' + statusIcon + ' ' + title + time + watch + selected);
     }
     return '\n' + result.join('\n') + '\n  ';
-  });
+  }, options);
 }
 
 export const test = base
@@ -112,6 +118,7 @@ export const test = base
           return {
             blockingCode: `await ((${waitForLatch})(${JSON.stringify(latchFile)}))`,
             open: () => fs.writeFileSync(latchFile, 'ok'),
+            close: () => fs.unlinkSync(latchFile),
           };
         });
       },
