@@ -161,7 +161,8 @@ class UIMode {
     const context: TaskRunnerState = { config: this._config, reporter, phases: [] };
     clearCompilationCache();
     reporter.onConfigure(this._config);
-    await taskRunner.run(context, 0);
+    const status = await taskRunner.run(context, 0);
+    reporter.onExit({ status });
   }
 
   private async _runTests(testIds: string[]) {
