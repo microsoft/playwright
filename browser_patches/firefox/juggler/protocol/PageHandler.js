@@ -4,8 +4,9 @@
 
 "use strict";
 
-const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
+const {Helper, EventWatcher} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {NetUtil} = ChromeUtils.import('resource://gre/modules/NetUtil.jsm');
 const {NetworkObserver, PageNetwork} = ChromeUtils.import('chrome://juggler/content/NetworkObserver.js');
 const {PageTarget} = ChromeUtils.import('chrome://juggler/content/TargetRegistry.js');
 const {setTimeout} = ChromeUtils.import('resource://gre/modules/Timer.jsm');
@@ -79,6 +80,9 @@ class PageHandler {
       return (...args) => this._session.emitEvent(eventName, ...args);
     }
 
+    this._isDragging = false;
+    this._lastMousePosition = { x: 0, y: 0 };
+
     this._reportedFrameIds = new Set();
     this._networkEventsForUnreportedFrameIds = new Map();
 
@@ -89,13 +93,11 @@ class PageHandler {
     // to be ignored by the protocol clients.
     this._isPageReady = false;
 
-    // Whether the page is about to go cross-process after navigation.
-    this._isTransferringCrossProcessNavigation = false;
-    this._mainFrameId = undefined;
-    this._lastMainFrameNavigationId = undefined;
-
     if (this._pageTarget.videoRecordingInfo())
       this._onVideoRecordingStarted();
+
+    this._pageEventSink = {};
+    helper.decorateAsEventEmitter(this._pageEventSink);
 
     this._eventListeners = [
       helper.on(this._pageTarget, PageTarget.Events.DialogOpened, this._onDialogOpened.bind(this)),
@@ -105,7 +107,6 @@ class PageHandler {
       }),
       helper.on(this._pageTarget, PageTarget.Events.ScreencastStarted, this._onVideoRecordingStarted.bind(this)),
       helper.on(this._pageTarget, PageTarget.Events.ScreencastFrame, this._onScreencastFrame.bind(this)),
-      helper.on(this._pageTarget, PageTarget.Events.TopBrowsingContextReplaced, this._onTopBrowsingContextReplaced.bind(this)),
       helper.on(this._pageNetwork, PageNetwork.Events.Request, this._handleNetworkEvent.bind(this, 'Network.requestWillBeSent')),
       helper.on(this._pageNetwork, PageNetwork.Events.Response, this._handleNetworkEvent.bind(this, 'Network.responseReceived')),
       helper.on(this._pageNetwork, PageNetwork.Events.RequestFinished, this._handleNetworkEvent.bind(this, 'Network.requestFinished')),
@@ -119,10 +120,11 @@ class PageHandler {
         pageFrameDetached: emitProtocolEvent('Page.frameDetached'),
         pageLinkClicked: emitProtocolEvent('Page.linkClicked'),
         pageWillOpenNewWindowAsynchronously: emitProtocolEvent('Page.willOpenNewWindowAsynchronously'),
-        pageNavigationAborted: params => this._handleNavigationEvent('Page.navigationAborted', params),
-        pageNavigationCommitted: params => this._handleNavigationEvent('Page.navigationCommitted', params),
-        pageNavigationStarted: params => this._handleNavigationEvent('Page.navigationStarted', params),
+        pageNavigationAborted: emitProtocolEvent('Page.navigationAborted'),
+        pageNavigationCommitted: emitProtocolEvent('Page.navigationCommitted'),
+        pageNavigationStarted: emitProtocolEvent('Page.navigationStarted'),
         pageReady: this._onPageReady.bind(this),
+        pageInputEvent: (event) => this._pageEventSink.emit(event.type, event),
         pageSameDocumentNavigation: emitProtocolEvent('Page.sameDocumentNavigation'),
         pageUncaughtError: emitProtocolEvent('Page.uncaughtError'),
         pageWorkerCreated: this._onWorkerCreated.bind(this),
@@ -162,28 +164,6 @@ class PageHandler {
 
   _onScreencastFrame(params) {
     this._session.emitEvent('Page.screencastFrame', params);
-  }
-
-  _onTopBrowsingContextReplaced() {
-    this._isTransferringCrossProcessNavigation = true;
-  }
-
-  _handleNavigationEvent(event, params) {
-    if (this._isTransferringCrossProcessNavigation && params.frameId === this._mainFrameId) {
-      // During a cross-process navigation, http channel in the new process might not be
-      // the same as the original one in the old process, for example after a redirect/interception.
-      // Therefore, the new proces has a new navigationId.
-      //
-      // To preserve protocol consistency, we replace the new navigationId with
-      // the old navigationId.
-      params.navigationId = this._lastMainFrameNavigationId || params.navigationId;
-      if (event === 'Page.navigationCommitted' || event === 'Page.navigationAborted')
-        this._isTransferringCrossProcessNavigation = false;
-    }
-
-    if (event === 'Page.navigationStarted' && params.frameId === this._mainFrameId)
-      this._lastMainFrameNavigationId = params.navigationId;
-    this._session.emitEvent(event, params);
   }
 
   _onPageReady(event) {
@@ -239,8 +219,6 @@ class PageHandler {
   }
 
   _onFrameAttached({frameId, parentFrameId}) {
-    if (!parentFrameId)
-      this._mainFrameId = frameId;
     this._session.emitEvent('Page.frameAttached', {frameId, parentFrameId});
     this._reportedFrameIds.add(frameId);
     const events = this._networkEventsForUnreportedFrameIds.get(frameId) || [];
@@ -319,7 +297,7 @@ class PageHandler {
   }
 
   async ['Page.bringToFront'](options) {
-    this._pageTarget._window.focus();
+    await this._pageTarget.activateAndRun(() => {});
   }
 
   async ['Page.setCacheDisabled'](options) {
@@ -385,8 +363,51 @@ class PageHandler {
     return await this._contentPage.send('getContentQuads', options);
   }
 
-  async ['Page.navigate'](options) {
-    return await this._contentPage.send('navigate', options);
+  async ['Page.navigate']({frameId, url, referer}) {
+    const browsingContext = this._pageTarget.frameIdToBrowsingContext(frameId);
+    let sameDocumentNavigation = false;
+    try {
+      const uri = NetUtil.newURI(url);
+      // This is the same check that verifes browser-side if this is the same-document navigation.
+      // See CanonicalBrowsingContext::SupportsLoadingInParent.
+      sameDocumentNavigation = browsingContext.currentURI && uri.hasRef && uri.equalsExceptRef(browsingContext.currentURI);
+    } catch (e) {
+      throw new Error(`Invalid url: "${url}"`);
+    }
+    let referrerURI = null;
+    let referrerInfo = null;
+    if (referer) {
+      try {
+        referrerURI = NetUtil.newURI(referer);
+        const ReferrerInfo = Components.Constructor(
+          '@mozilla.org/referrer-info;1',
+          'nsIReferrerInfo',
+          'init'
+        );
+        referrerInfo = new ReferrerInfo(Ci.nsIHttpChannel.REFERRER_POLICY_UNSET, true, referrerURI);
+      } catch (e) {
+        throw new Error(`Invalid referer: "${referer}"`);
+      }
+    }
+
+    let navigationId;
+    const unsubscribe = helper.addObserver((browsingContext, topic, loadIdentifier) => {
+      navigationId = helper.toProtocolNavigationId(loadIdentifier);
+    }, 'juggler-navigation-started-browser');
+    browsingContext.loadURI(url, {
+      triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal(),
+      loadFlags: Ci.nsIWebNavigation.LOAD_FLAGS_IS_LINK,
+      referrerInfo,
+      // postData: null,
+      // headers: null,
+      // Fake user activation.
+      hasValidUserGestureActivation: true,
+    });
+    unsubscribe();
+
+    return {
+      navigationId: sameDocumentNavigation ? null : navigationId,
+    };
   }
 
   async ['Page.goBack']({}) {
@@ -422,8 +443,22 @@ class PageHandler {
     return await this._pageTarget.setInitScripts(scripts);
   }
 
-  async ['Page.dispatchKeyEvent'](options) {
-    return await this._contentPage.send('dispatchKeyEvent', options);
+  async ['Page.dispatchKeyEvent']({type, keyCode, code, key, repeat, location, text}) {
+    // key events don't fire if we are dragging.
+    if (this._isDragging) {
+      if (type === 'keydown' && key === 'Escape') {
+        await this._contentPage.send('dispatchDragEvent', {
+          type: 'dragover',
+          x: this._lastMousePosition.x,
+          y: this._lastMousePosition.y,
+          modifiers: 0
+        });
+        await this._contentPage.send('dispatchDragEvent', {type: 'dragend'});
+        this._isDragging = false;
+      }
+      return;
+    }
+    return await this._contentPage.send('dispatchKeyEvent', {type, keyCode, code, key, repeat, location, text});
   }
 
   async ['Page.dispatchTouchEvent'](options) {
@@ -434,8 +469,86 @@ class PageHandler {
     return await this._contentPage.send('dispatchTapEvent', options);
   }
 
-  async ['Page.dispatchMouseEvent'](options) {
-    return await this._contentPage.send('dispatchMouseEvent', options);
+  async ['Page.dispatchMouseEvent']({type, x, y, button, clickCount, modifiers, buttons}) {
+    const boundingBox = this._pageTarget._linkedBrowser.getBoundingClientRect();
+
+    const win = this._pageTarget._window;
+    const sendEvents = async (types) => {
+      // We must switch to proper tab in the tabbed browser so that
+      // event is dispatched to a proper renderer.
+      await this._pageTarget.activateAndRun(() => {
+        for (const type of types) {
+          // This dispatches to the renderer synchronously.
+          win.windowUtils.sendMouseEvent(
+            type,
+            x + boundingBox.left,
+            y + boundingBox.top,
+            button,
+            clickCount,
+            modifiers,
+            false /* aIgnoreRootScrollFrame */,
+            undefined /* pressure */,
+            undefined /* inputSource */,
+            true /* isDOMEventSynthesized */,
+            undefined /* isWidgetEventSynthesized */,
+            buttons);
+        }
+      });
+    };
+
+    if (type === 'mousedown') {
+      if (this._isDragging)
+        return;
+
+      const eventNames = button === 2 ? ['mousedown', 'contextmenu'] : ['mousedown'];
+      const watcher = new EventWatcher(this._pageEventSink, eventNames);
+      await sendEvents(eventNames);
+      await watcher.ensureEventsAndDispose(eventNames);
+      return;
+    }
+
+    if (type === 'mousemove') {
+      this._lastMousePosition = { x, y };
+      if (this._isDragging) {
+        const watcher = new EventWatcher(this._pageEventSink, ['dragover']);
+        await this._contentPage.send('dispatchDragEvent', {type:'dragover', x, y, modifiers});
+        await watcher.ensureEventsAndDispose(['dragover']);
+        return;
+      }
+
+      const watcher = new EventWatcher(this._pageEventSink, ['dragstart', 'mousemove', 'juggler-drag-finalized']);
+      await sendEvents(['mousemove']);
+
+      // The order of events after 'mousemove' is sent:
+      // 1. [dragstart] - might or might NOT be emitted
+      // 2. [mousemove] - always emitted
+      // 3. [juggler-drag-finalized] - only emitted if dragstart was emitted.
+
+      await watcher.ensureEvent('mousemove');
+      if (watcher.hasEvent('dragstart')) {
+        const eventObject = await watcher.ensureEvent('juggler-drag-finalized');
+        this._isDragging = eventObject.dragSessionStarted;
+      }
+      watcher.dispose();
+      return;
+    }
+
+    if (type === 'mouseup') {
+      if (this._isDragging) {
+        const watcher = new EventWatcher(this._pageEventSink, ['dragover', 'dragend']);
+        await this._contentPage.send('dispatchDragEvent', {type: 'dragover', x, y, modifiers});
+        await this._contentPage.send('dispatchDragEvent', {type: 'drop', x, y, modifiers});
+        await this._contentPage.send('dispatchDragEvent', {type: 'dragend', x, y, modifiers});
+        // NOTE: 'drop' event might not be dispatched at all, depending on dropAction.
+        await watcher.ensureEventsAndDispose(['dragover', 'dragend']);
+        this._isDragging = false;
+      } else {
+        const watcher = new EventWatcher(this._pageEventSink, ['mouseup']);
+        await sendEvents(['mouseup']);
+        await watcher.ensureEventsAndDispose(['mouseup']);
+      }
+      return;
+    }
   }
 
   async ['Page.dispatchWheelEvent']({x, y, button, deltaX, deltaY, deltaZ, modifiers }) {
@@ -446,18 +559,20 @@ class PageHandler {
     const lineOrPageDeltaX = deltaX > 0 ? Math.floor(deltaX) : Math.ceil(deltaX);
     const lineOrPageDeltaY = deltaY > 0 ? Math.floor(deltaY) : Math.ceil(deltaY);
 
-    const win = this._pageTarget._window;
-    win.windowUtils.sendWheelEvent(
-      x,
-      y,
-      deltaX,
-      deltaY,
-      deltaZ,
-      deltaMode,
-      modifiers,
-      lineOrPageDeltaX,
-      lineOrPageDeltaY,
-      0 /* options */);
+    await this._pageTarget.activateAndRun(() => {
+      const win = this._pageTarget._window;
+      win.windowUtils.sendWheelEvent(
+        x,
+        y,
+        deltaX,
+        deltaY,
+        deltaZ,
+        deltaMode,
+        modifiers,
+        lineOrPageDeltaX,
+        lineOrPageDeltaY,
+        0 /* options */);
+    });
   }
 
   async ['Page.insertText'](options) {

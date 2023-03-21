@@ -792,7 +792,19 @@ static NSSet *dataTypes()
       decisionHandler(WKNavigationResponsePolicyAllow);
       return;
     }
+
     NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)navigationResponse.response;
+
+    NSString *contentType = [httpResponse valueForHTTPHeaderField:@"Content-Type"];
+    if (!navigationResponse.canShowMIMEType && (contentType && [contentType length] > 0)) {
+        decisionHandler(WKNavigationResponsePolicyDownload);
+        return;
+    }
+
+    if (contentType && ([contentType isEqualToString:@"application/pdf"] || [contentType isEqualToString:@"text/pdf"])) {
+        decisionHandler(WKNavigationResponsePolicyDownload);
+        return;
+    }
 
     NSString *disposition = [[httpResponse allHeaderFields] objectForKey:@"Content-Disposition"];
     if (disposition && [disposition hasPrefix:@"attachment"]) {

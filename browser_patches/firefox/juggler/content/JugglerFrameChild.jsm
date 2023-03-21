@@ -17,8 +17,18 @@ class JugglerFrameChild extends JSWindowActorChild {
   }
 
   handleEvent(aEvent) {
+    if (this._agents && aEvent.type === 'DOMWillOpenModalDialog') {
+      this._agents.channel.pause();
+      return;
+    }
+    if (this._agents && aEvent.type === 'DOMModalDialogClosed') {
+      this._agents.channel.resumeSoon();
+      return;
+    }
     if (this._agents && aEvent.target === this.document)
       this._agents.pageAgent.onWindowEvent(aEvent);
+    if (this._agents && aEvent.target === this.document)
+      this._agents.frameTree.onWindowEvent(aEvent);
   }
 
   actorCreated() {

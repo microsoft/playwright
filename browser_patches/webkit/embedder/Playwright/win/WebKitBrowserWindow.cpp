@@ -100,7 +100,7 @@ WebKitBrowserWindow::WebKitBrowserWindow(BrowserWindowClient& client, HWND mainW
     WKPagePolicyClientV1 policyClient = { };
     policyClient.base.version = 1;
     policyClient.base.clientInfo = this;
-    policyClient.decidePolicyForResponse_deprecatedForUseWithV0 = decidePolicyForResponse;
+    policyClient.decidePolicyForResponse = decidePolicyForResponse;
     policyClient.decidePolicyForNavigationAction = decidePolicyForNavigationAction;
     WKPageSetPagePolicyClient(page, &policyClient.base);
 
@@ -402,9 +402,10 @@ void WebKitBrowserWindow::decidePolicyForNavigationAction(WKPageRef page, WKFram
     WKFramePolicyListenerUse(listener);
 }
 
-void WebKitBrowserWindow::decidePolicyForResponse(WKPageRef page, WKFrameRef frame, WKURLResponseRef response, WKURLRequestRef request, WKFramePolicyListenerRef listener, WKTypeRef userData, const void* clientInfo)
+void WebKitBrowserWindow::decidePolicyForResponse(WKPageRef page, WKFrameRef frame, WKURLResponseRef response, WKURLRequestRef request, bool canShowMIMEType, WKFramePolicyListenerRef listener, WKTypeRef userData, const void* clientInfo)
 {
-    if (WKURLResponseIsAttachment(response))
+    // Safari renders resources without content-type as text.
+    if (WKURLResponseIsAttachment(response) || (!WKStringIsEmpty(WKURLResponseCopyMIMEType(response)) && !canShowMIMEType))
         WKFramePolicyListenerDownload(listener);
     else
         WKFramePolicyListenerUse(listener);
