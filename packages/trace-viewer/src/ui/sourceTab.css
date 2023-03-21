@@ -29,5 +29,5 @@
   align-items: center;
   background-color: var(--vscode-breadcrumb-background);
   box-shadow: var(--vscode-scrollbar-shadow) 0 6px 6px -6px;
-  z-index: 200;
+  z-index: 10;
 }
