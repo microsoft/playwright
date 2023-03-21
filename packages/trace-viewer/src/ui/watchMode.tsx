@@ -75,6 +75,7 @@ export const WatchModeView: React.FC<{}> = ({
   const [watchAll, setWatchAll] = useSetting<boolean>('watch-all', false);
   const [watchedTreeIds, setWatchedTreeIds] = React.useState<{ value: Set<string> }>({ value: new Set() });
   const runTestPromiseChain = React.useRef(Promise.resolve());
+  const runTestBacklog = React.useRef<Set<string>>(new Set());
 
   const inputRef = React.useRef<HTMLInputElement>(null);
 
@@ -117,7 +118,13 @@ export const WatchModeView: React.FC<{}> = ({
     if (mode === 'bounce-if-busy' && runningState)
       return;
 
+    runTestBacklog.current = new Set([...runTestBacklog.current, ...testIds]);
     runTestPromiseChain.current = runTestPromiseChain.current.then(async () => {
+      const testIds = runTestBacklog.current;
+      runTestBacklog.current = new Set();
+      if (!testIds.size)
+        return;
+
       // Clear test results.
       {
         for (const test of testModel.rootSuite?.allTests() || []) {
