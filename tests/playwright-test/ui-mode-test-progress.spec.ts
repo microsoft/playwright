@@ -73,7 +73,7 @@ test('should update trace live', async ({ runUITest, server }) => {
   onePromise.resolve();
 
   await expect(
-      page.frameLocator('id=snapshot').locator('body'),
+      page.frameLocator('iframe.snapshot-visible[name=snapshot]').locator('body'),
       'verify snapshot'
   ).toHaveText('One', { timeout: 15000 });
   await expect(listItem).toHaveText([
@@ -99,7 +99,7 @@ test('should update trace live', async ({ runUITest, server }) => {
   twoPromise.resolve();
 
   await expect(
-      page.frameLocator('id=snapshot').locator('body'),
+      page.frameLocator('iframe.snapshot-visible[name=snapshot]').locator('body'),
       'verify snapshot'
   ).toHaveText('Two');
 
