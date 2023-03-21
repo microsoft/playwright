@@ -43,6 +43,7 @@ class SimpleChannel {
       dispose: () => {},
     };
     this._ready = false;
+    this._paused = false;
     this._disposed = false;
   }
 
@@ -78,6 +79,23 @@ class SimpleChannel {
     //    channel ends have a "parent-child" relation, i.e. one end is always created before the other one.
     // 5. Once channel end receives either `READY` or `READY_ACK`, it transitions to `ready` state.
     this.transport.sendMessage('READY');
+  }
+
+  pause() {
+    this._paused = true;
+  }
+
+  resumeSoon() {
+    if (!this._paused)
+      return;
+    this._paused = false;
+    this._setTimeout(() => this._deliverBufferedIncomingMessages(), 0);
+  }
+
+  _setTimeout(cb, timeout) {
+    // Lazy load on first call.
+    this._setTimeout = ChromeUtils.import('resource://gre/modules/Timer.jsm').setTimeout;
+    this._setTimeout(cb, timeout);
   }
 
   _markAsReady() {
@@ -121,13 +139,16 @@ class SimpleChannel {
     if (this._handlers.has(namespace))
       throw new Error('ERROR: double-register for namespace ' + namespace);
     this._handlers.set(namespace, handler);
-    // Try to re-deliver all pending messages.
+    this._deliverBufferedIncomingMessages();
+    return () => this.unregister(namespace);
+  }
+
+  _deliverBufferedIncomingMessages() {
     const bufferedRequests = this._bufferedIncomingMessages;
     this._bufferedIncomingMessages = [];
     for (const data of bufferedRequests) {
       this._onMessage(data);
     }
-    return () => this.unregister(namespace);
   }
 
   unregister(namespace) {
@@ -154,7 +175,7 @@ class SimpleChannel {
     return promise;
   }
 
-  async _onMessage(data) {
+  _onMessage(data) {
     if (data === 'READY') {
       this.transport.sendMessage('READY_ACK');
       this._markAsReady();
@@ -164,6 +185,13 @@ class SimpleChannel {
       this._markAsReady();
       return;
     }
+    if (this._paused)
+      this._bufferedIncomingMessages.push(data);
+    else
+      this._onMessageInternal(data);
+  }
+
+  async _onMessageInternal(data) {
     if (data.responseId) {
       const message = this._pendingMessages.get(data.responseId);
       if (!message) {

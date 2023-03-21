@@ -659,7 +659,6 @@ const Page = {
     'navigationStarted': {
       frameId: t.String,
       navigationId: t.String,
-      url: t.String,
     },
     'navigationCommitted': {
       frameId: t.String,
@@ -823,7 +822,6 @@ const Page = {
       },
       returns: {
         navigationId: t.Nullable(t.String),
-        navigationURL: t.Nullable(t.String),
       }
     },
     'goBack': {
@@ -907,7 +905,7 @@ const Page = {
     },
     'dispatchMouseEvent': {
       params: {
-        type: t.String,
+        type: t.Enum(['mousedown', 'mousemove', 'mouseup']),
         button: t.Number,
         x: t.Number,
         y: t.Number,

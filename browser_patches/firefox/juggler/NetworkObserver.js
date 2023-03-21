@@ -119,7 +119,7 @@ class NetworkRequest {
     this._frameId = helper.browsingContextToFrameId(browsingContext);
 
     this.requestId = httpChannel.channelId + '';
-    this.navigationId = httpChannel.isMainDocumentChannel ? this.requestId : undefined;
+    this.navigationId = httpChannel.isMainDocumentChannel ? helper.toProtocolNavigationId(browsingContext.jugglerCurrentLoadIdentifier) : undefined;
 
     this._redirectedIndex = 0;
     if (redirectedFrom) {

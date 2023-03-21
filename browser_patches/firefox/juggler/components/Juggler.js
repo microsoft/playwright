@@ -35,6 +35,8 @@ ActorManagerParent.addJSWindowActors({
         DOMDocElementInserted: {},
         // Also, listening to DOMContentLoaded.
         DOMContentLoaded: {},
+        DOMWillOpenModalDialog: {},
+        DOMModalDialogClosed: {},
       },
     },
     allFrames: true,

@@ -57,12 +57,21 @@ class FrameTree {
     const flags = Ci.nsIWebProgress.NOTIFY_STATE_DOCUMENT |
                   Ci.nsIWebProgress.NOTIFY_LOCATION;
     this._eventListeners = [
+      helper.addObserver((docShell, topic, loadIdentifier) => {
+        const frame = this._docShellToFrame.get(docShell);
+        if (!frame)
+          return;
+        frame._pendingNavigationId = helper.toProtocolNavigationId(loadIdentifier);
+        this.emit(FrameTree.Events.NavigationStarted, frame);
+      }, 'juggler-navigation-started-renderer'),
       helper.addObserver(this._onDOMWindowCreated.bind(this), 'content-document-global-created'),
       helper.addObserver(this._onDOMWindowCreated.bind(this), 'juggler-dom-window-reused'),
       helper.addObserver(subject => this._onDocShellCreated(subject.QueryInterface(Ci.nsIDocShell)), 'webnavigation-create'),
       helper.addObserver(subject => this._onDocShellDestroyed(subject.QueryInterface(Ci.nsIDocShell)), 'webnavigation-destroy'),
       helper.addProgressListener(webProgress, this, flags),
     ];
+
+    this._mouseEventListeners = [];
   }
 
   workers() {
@@ -222,6 +231,60 @@ class FrameTree {
     this._wdm.removeListener(this._wdmListener);
     this._runtime.dispose();
     helper.removeListeners(this._eventListeners);
+    helper.removeListeners(this._mouseEventListeners);
+  }
+
+  _onMouseEvent(eventType, eventObject) {
+    this.emit(FrameTree.Events.MouseEvent, {
+      type: eventType,
+      eventObject,
+    });
+  }
+
+  onWindowEvent(event) {
+    if (event.type !== 'DOMDocElementInserted' || !event.target.ownerGlobal)
+      return;
+
+    const docShell = event.target.ownerGlobal.docShell;
+    const frame = this._docShellToFrame.get(docShell);
+    if (!frame) {
+      dump(`WARNING: ${event.type} for unknown frame ${docShell.browsingContext.id}\n`);
+      return;
+    }
+    if (frame._pendingNavigationId) {
+      const url = docShell.domWindow ? docShell.domWindow.location.href : 'about:blank';
+      this._frameNavigationCommitted(frame, url);
+    }
+
+    if (frame === this._mainFrame) {
+      helper.removeListeners(this._mouseEventListeners);
+      const chromeEventHandler = docShell.chromeEventHandler;
+      const options = {
+        mozSystemGroup: true,
+        capture: true,
+      };
+      this._mouseEventListeners = [
+        helper.addEventListener(chromeEventHandler, 'dragover', this._onMouseEvent.bind(this, 'dragover'), options),
+        helper.addEventListener(chromeEventHandler, 'dragend', this._onMouseEvent.bind(this, 'dragend'), options),
+        helper.addEventListener(chromeEventHandler, 'contextmenu', this._onMouseEvent.bind(this, 'contextmenu'), options),
+        helper.addEventListener(chromeEventHandler, 'mousedown', this._onMouseEvent.bind(this, 'mousedown'), options),
+        helper.addEventListener(chromeEventHandler, 'mouseup', this._onMouseEvent.bind(this, 'mouseup'), options),
+        helper.addEventListener(chromeEventHandler, 'mousemove', this._onMouseEvent.bind(this, 'mousemove'), options),
+        helper.addEventListener(chromeEventHandler, 'dragstart', this._onMouseEvent.bind(this, 'dragstart'), options),
+      ];
+    }
+  }
+
+  _frameNavigationCommitted(frame, url) {
+    for (const subframe of frame._children)
+      this._detachFrame(subframe);
+    const navigationId = frame._pendingNavigationId;
+    frame._pendingNavigationId = null;
+    frame._lastCommittedNavigationId = navigationId;
+    frame._url = url;
+    this.emit(FrameTree.Events.NavigationCommitted, frame);
+    if (frame === this._mainFrame)
+      this.forcePageReady();
   }
 
   onStateChange(progress, request, flag, status) {
@@ -230,10 +293,8 @@ class FrameTree {
     const channel = request.QueryInterface(Ci.nsIChannel);
     const docShell = progress.DOMWindow.docShell;
     const frame = this._docShellToFrame.get(docShell);
-    if (!frame) {
-      dump(`WARNING: got a state changed event for un-tracked docshell!\n`);
+    if (!frame)
       return;
-    }
 
     if (!channel.isDocument) {
       // Somehow, we can get worker requests here,
@@ -241,32 +302,11 @@ class FrameTree {
       return;
     }
 
-    const isStart = flag & Ci.nsIWebProgressListener.STATE_START;
-    const isTransferring = flag & Ci.nsIWebProgressListener.STATE_TRANSFERRING;
     const isStop = flag & Ci.nsIWebProgressListener.STATE_STOP;
-
-    if (isStart) {
-      // Starting a new navigation.
-      frame._pendingNavigationId = channelId(channel);
-      frame._pendingNavigationURL = channel.URI.spec;
-      this.emit(FrameTree.Events.NavigationStarted, frame);
-    } else if (isTransferring || (isStop && frame._pendingNavigationId && !status)) {
-      // Navigation is committed.
-      for (const subframe of frame._children)
-        this._detachFrame(subframe);
-      const navigationId = frame._pendingNavigationId;
-      frame._pendingNavigationId = null;
-      frame._pendingNavigationURL = null;
-      frame._lastCommittedNavigationId = navigationId;
-      frame._url = channel.URI.spec;
-      this.emit(FrameTree.Events.NavigationCommitted, frame);
-      if (frame === this._mainFrame)
-        this.forcePageReady();
-    } else if (isStop && frame._pendingNavigationId && status) {
+    if (isStop && frame._pendingNavigationId && status) {
       // Navigation is aborted.
       const navigationId = frame._pendingNavigationId;
       frame._pendingNavigationId = null;
-      frame._pendingNavigationURL = null;
       // Always report download navigation as failure to match other browsers.
       const errorText = helper.getNetworkErrorStatusText(status);
       this.emit(FrameTree.Events.NavigationAborted, frame, navigationId, errorText);
@@ -307,6 +347,8 @@ class FrameTree {
     const frame = new Frame(this, this._runtime, docShell, parentFrame);
     this._docShellToFrame.set(docShell, frame);
     this._frameIdToFrame.set(frame.id(), frame);
+    if (docShell.domWindow && docShell.domWindow.location)
+      frame._url = docShell.domWindow.location.href;
     this.emit(FrameTree.Events.FrameAttached, frame);
     // Create execution context **after** reporting frame.
     // This is our protocol contract.
@@ -355,6 +397,7 @@ FrameTree.Events = {
   NavigationAborted: 'navigationaborted',
   SameDocumentNavigation: 'samedocumentnavigation',
   PageReady: 'pageready',
+  MouseEvent: 'mouseevent',
 };
 
 class IsolatedWorld {
@@ -374,8 +417,6 @@ class Frame {
     this._frameId = helper.browsingContextToFrameId(this._docShell.browsingContext);
     this._parentFrame = null;
     this._url = '';
-    if (docShell.domWindow && docShell.domWindow.location)
-      this._url = docShell.domWindow.location.href;
     if (parentFrame) {
       this._parentFrame = parentFrame;
       parentFrame._children.add(this);
@@ -383,7 +424,6 @@ class Frame {
 
     this._lastCommittedNavigationId = null;
     this._pendingNavigationId = null;
-    this._pendingNavigationURL = null;
 
     this._textInputProcessor = null;
 
@@ -569,10 +609,6 @@ class Frame {
 
   pendingNavigationId() {
     return this._pendingNavigationId;
-  }
-
-  pendingNavigationURL() {
-    return this._pendingNavigationURL;
   }
 
   lastCommittedNavigationId() {

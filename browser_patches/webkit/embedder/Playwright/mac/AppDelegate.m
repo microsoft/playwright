@@ -180,7 +180,7 @@ const NSActivityOptions ActivityOptions =
         _WKWebsiteDataStoreConfiguration *configuration = [[[_WKWebsiteDataStoreConfiguration alloc] init] autorelease];
         if (_userDataDir) {
             // Local storage state should be stored in separate dirs for persistent contexts.
-            [configuration setShouldUseCustomStoragePaths:YES];
+            [configuration setUnifiedOriginStorageLevel:_WKUnifiedOriginStorageLevelNone];
 
             NSURL *cookieFile = [NSURL fileURLWithPath:[NSString stringWithFormat:@"%@/cookie.db", _userDataDir]];
             [configuration _setCookieStorageFile:cookieFile];
@@ -234,6 +234,8 @@ const NSActivityOptions ActivityOptions =
         configuration.preferences._developerExtrasEnabled = YES;
         configuration.preferences._mediaDevicesEnabled = YES;
         configuration.preferences._mockCaptureDevicesEnabled = YES;
+        // Enable WebM support.
+        configuration.preferences._alternateWebMPlayerEnabled = YES;
         configuration.preferences._hiddenPageDOMTimerThrottlingEnabled = NO;
         configuration.preferences._hiddenPageDOMTimerThrottlingAutoIncreases = NO;
         configuration.preferences._pageVisibilityBasedProcessSuppressionEnabled = NO;
@@ -477,7 +479,19 @@ const NSActivityOptions ActivityOptions =
       decisionHandler(WKNavigationResponsePolicyAllow);
       return;
     }
+
     NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)navigationResponse.response;
+
+    NSString *contentType = [httpResponse valueForHTTPHeaderField:@"Content-Type"];
+    if (!navigationResponse.canShowMIMEType && (contentType && [contentType length] > 0)) {
+        decisionHandler(WKNavigationResponsePolicyDownload);
+        return;
+    }
+
+    if (contentType && ([contentType isEqualToString:@"application/pdf"] || [contentType isEqualToString:@"text/pdf"])) {
+        decisionHandler(WKNavigationResponsePolicyDownload);
+        return;
+    }
 
     NSString *disposition = [[httpResponse allHeaderFields] objectForKey:@"Content-Disposition"];
     if (disposition && [disposition hasPrefix:@"attachment"]) {
