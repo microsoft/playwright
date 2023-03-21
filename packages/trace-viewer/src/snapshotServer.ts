@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-import type { SnapshotStorage } from './snapshotStorage';
 import type { URLSearchParams } from 'url';
-import type { SnapshotRenderer } from './snapshotRenderer';
+import type { SnapshotStorage, SnapshotRenderer } from './snapshotRenderer';
 import type { ResourceSnapshot } from '@trace/snapshot';
 
 type Point = { x: number, y: number };

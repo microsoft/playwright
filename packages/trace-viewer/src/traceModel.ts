@@ -22,14 +22,14 @@ import type zip from '@zip.js/zip.js';
 import zipImport from '@zip.js/zip.js/dist/zip-no-worker-inflate.min.js';
 import type { ContextEntry, PageEntry } from './entries';
 import { createEmptyContext } from './entries';
-import { BaseSnapshotStorage } from './snapshotStorage';
+import { SnapshotStorage } from './snapshotRenderer';
 
 const zipjs = zipImport as typeof zip;
 
 export class TraceModel {
   contextEntries: ContextEntry[] = [];
   pageEntries = new Map<string, PageEntry>();
-  private _snapshotStorage: BaseSnapshotStorage | undefined;
+  private _snapshotStorage: SnapshotStorage | undefined;
   private _version: number | undefined;
   private _backend!: TraceModelBackend;
 
@@ -52,7 +52,7 @@ export class TraceModel {
     if (!ordinals.length)
       throw new Error('Cannot find .trace file');
 
-    this._snapshotStorage = new PersistentSnapshotStorage(this._backend);
+    this._snapshotStorage = new SnapshotStorage(sha1 => this._backend.readBlob('resources/' + sha1));
 
     for (const ordinal of ordinals) {
       const contextEntry = createEmptyContext();
@@ -95,7 +95,7 @@ export class TraceModel {
     return this._backend.readBlob('resources/' + sha1);
   }
 
-  storage(): BaseSnapshotStorage {
+  storage(): SnapshotStorage {
     return this._snapshotStorage!;
   }
 
@@ -384,19 +384,6 @@ class FetchTraceModelBackend implements TraceModelBackend {
     if (!fileName)
       return;
     return fetch('/trace/file?path=' + encodeURI(fileName));
-  }
-}
-
-export class PersistentSnapshotStorage extends BaseSnapshotStorage {
-  private _backend: TraceModelBackend;
-
-  constructor(backend: TraceModelBackend) {
-    super();
-    this._backend = backend;
-  }
-
-  async resourceContent(sha1: string): Promise<Blob | undefined> {
-    return this._backend.readBlob('resources/' + sha1);
   }
 }
 
