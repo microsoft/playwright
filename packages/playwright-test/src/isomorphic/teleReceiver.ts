@@ -301,6 +301,7 @@ export class TeleReporterReceiver {
     test.id = payload.testId;
     test.expectedStatus = payload.expectedStatus;
     test.timeout = payload.timeout;
+    test.location = payload.location;
     test.annotations = payload.annotations;
     test.retries = payload.retries;
     return test;
