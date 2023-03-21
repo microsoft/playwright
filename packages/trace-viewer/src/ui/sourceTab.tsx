@@ -17,7 +17,7 @@
 import type { ActionTraceEvent } from '@trace/trace';
 import { SplitView } from '@web/components/splitView';
 import * as React from 'react';
-import { useAsyncMemo } from './helpers';
+import { useAsyncMemo } from '@web/uiUtils';
 import './sourceTab.css';
 import { StackTraceView } from './stackTrace';
 import { CodeMirrorWrapper } from '@web/components/codeMirrorWrapper';

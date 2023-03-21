@@ -20,6 +20,7 @@ import type { ITheme, Terminal } from 'xterm';
 import type { FitAddon } from 'xterm-addon-fit';
 import type { XtermModule } from './xtermModule';
 import { currentTheme, addThemeListener, removeThemeListener } from '@web/theme';
+import { useMeasure } from '@web/uiUtils';
 
 export type XtermDataSource = {
   pending: (string | Uint8Array)[];
@@ -31,10 +32,10 @@ export type XtermDataSource = {
 export const XtermWrapper: React.FC<{ source: XtermDataSource }> = ({
   source,
 }) => {
-  const xtermElement = React.useRef<HTMLDivElement>(null);
+  const [measure, xtermElement] = useMeasure<HTMLDivElement>();
   const [theme, setTheme] = React.useState(currentTheme());
   const [modulePromise] = React.useState<Promise<XtermModule>>(import('./xtermModule').then(m => m.default));
-  const terminal = React.useRef<{ terminal: Terminal, fitAddon: FitAddon }| null>(null);
+  const terminal = React.useRef<{ terminal: Terminal, fitAddon: FitAddon } | null>(null);
 
   React.useEffect(() => {
     addThemeListener(setTheme);
@@ -44,7 +45,6 @@ export const XtermWrapper: React.FC<{ source: XtermDataSource }> = ({
   React.useEffect(() => {
     const oldSourceWrite = source.write;
     const oldSourceClear = source.clear;
-    let resizeObserver: ResizeObserver | undefined;
 
     (async () => {
       // Always load the module first.
@@ -53,15 +53,19 @@ export const XtermWrapper: React.FC<{ source: XtermDataSource }> = ({
       if (!element)
         return;
 
-      if (terminal.current && terminal)
+      const terminalTheme = theme === 'dark-mode' ? darkTheme : lightTheme;
+      if (terminal.current && terminal.current.terminal.options.theme === terminalTheme)
         return;
+
+      if (terminal.current)
+        element.textContent = '';
 
       const newTerminal = new Terminal({
         convertEol: true,
         fontSize: 13,
         scrollback: 10000,
         fontFamily: 'var(--vscode-editor-font-family)',
-        theme: theme === 'dark-mode' ? darkTheme : lightTheme
+        theme: terminalTheme,
       });
 
       const fitAddon = new FitAddon();
@@ -79,27 +83,23 @@ export const XtermWrapper: React.FC<{ source: XtermDataSource }> = ({
       newTerminal.open(element);
       fitAddon.fit();
       terminal.current = { terminal: newTerminal, fitAddon };
-      resizeObserver = new ResizeObserver(() => {
-        // Fit reads data from the terminal itself, which updates lazily, probably on some timer
-        // or mutation observer. Work around it.
-        setTimeout(() => {
-          fitAddon.fit();
-          source.resize(newTerminal.cols, newTerminal.rows);
-        }, 100);
-      });
-      resizeObserver.observe(element);
     })();
     return () => {
       source.clear = oldSourceClear;
       source.write = oldSourceWrite;
-      resizeObserver?.disconnect();
     };
   }, [modulePromise, terminal, xtermElement, source, theme]);
 
   React.useEffect(() => {
-    if (terminal.current)
-      terminal.current.terminal.options.theme = theme === 'dark-mode' ? darkTheme : lightTheme;
-  }, [theme]);
+    // Fit reads data from the terminal itself, which updates lazily, probably on some timer
+    // or mutation observer. Work around it.
+    setTimeout(() => {
+      if (!terminal.current)
+        return;
+      terminal.current.fitAddon.fit();
+      source.resize(terminal.current.terminal.cols, terminal.current.terminal.rows);
+    }, 250);
+  }, [measure, source]);
 
   return <div data-testid='output' className='xterm-wrapper' style={{ flex: 'auto' }} ref={xtermElement}></div>;
 };
