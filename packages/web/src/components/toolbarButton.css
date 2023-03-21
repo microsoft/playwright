@@ -21,7 +21,6 @@
   color: var(--vscode-sideBarTitle-foreground);
   background: transparent;
   padding: 4px;
-  margin: 0 2px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;

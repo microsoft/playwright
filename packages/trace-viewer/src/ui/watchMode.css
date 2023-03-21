@@ -47,6 +47,7 @@
   user-select: none;
 }
 
+.list-view-entry.selected .watch-mode-list-item-time,
 .list-view-entry.highlighted .watch-mode-list-item-time {
   display: none;
 }
@@ -67,7 +68,7 @@
 
 .watch-mode-sidebar img {
   flex: none;
-  margin-left: 4px;
+  margin-left: 6px;
   width: 24px;
   height: 24px;
 }
@@ -107,6 +108,11 @@
   flex: none;
   display: flex;
   flex-direction: column;
+  margin: 2px 0;
+}
+
+.filter-list {
+  padding: 0 10px 10px 10px;
 }
 
 .filter-title,
@@ -123,13 +129,16 @@
 }
 
 .filter-summary {
-  line-height: 21px;
-  margin-top: 2px;
-  margin-left: 20px;
+  line-height: 24px;
+  margin-left: 24px;
 }
 
 .filter-summary .filter-label {
   margin-left: 5px;
+}
+
+.filter-entry {
+  line-height: 24px;
 }
 
 .filter-entry label {

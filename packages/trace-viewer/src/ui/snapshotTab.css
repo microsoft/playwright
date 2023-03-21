@@ -24,6 +24,10 @@
   overflow: hidden;
 }
 
+.snapshot-tab .toolbar {
+  background-color: var(--vscode-sideBar-background);
+}
+
 .snapshot-controls {
   flex: none;
   background-color: var(--vscode-sideBar-background);
