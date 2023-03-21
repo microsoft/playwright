@@ -14,16 +14,12 @@
  * limitations under the License.
  */
 
-import dns from 'dns';
 import EventEmitter from 'events';
 import type { AddressInfo } from 'net';
 import net from 'net';
-import util from 'util';
 import { debugLogger } from './debugLogger';
-import { createSocket } from '../utils/network';
+import { createSocket } from '../utils/happy-eyeballs';
 import { assert, createGuid,  } from '../utils';
-
-const dnsLookupAsync = util.promisify(dns.lookup);
 
 // https://tools.ietf.org/html/rfc1928
 
@@ -412,9 +408,7 @@ export class SocksProxy extends EventEmitter implements SocksConnectionClient {
 
   private async _handleDirect(request: SocksSocketRequestedPayload) {
     try {
-      // TODO: Node.js 17 does resolve localhost to ipv6
-      const { address } = await dnsLookupAsync(request.host === 'localhost' ? '127.0.0.1' : request.host);
-      const socket = await createSocket(address, request.port);
+      const socket = await createSocket(request.host, request.port);
       socket.on('data', data => this._connections.get(request.uid)?.sendData(data));
       socket.on('error', error => {
         this._connections.get(request.uid)?.error(error.message);
@@ -538,15 +532,11 @@ export class SocksProxyHandler extends EventEmitter {
     }
 
     if (host === 'local.playwright')
-      host = '127.0.0.1';
-    // Node.js 17 does resolve localhost to ipv6
-    if (host === 'localhost')
-      host = '127.0.0.1';
+      host = 'localhost';
     try {
       if (this._redirectPortForTest)
         port = this._redirectPortForTest;
-      const { address } = await dnsLookupAsync(host);
-      const socket = await createSocket(address, port);
+      const socket = await createSocket(host, port);
       socket.on('data', data => {
         const payload: SocksSocketDataPayload = { uid, data };
         this.emit(SocksProxyHandler.Events.SocksData, payload);

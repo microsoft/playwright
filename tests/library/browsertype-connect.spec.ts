@@ -30,7 +30,7 @@ import type { Browser, ConnectOptions } from 'playwright-core';
 type ExtraFixtures = {
   connect: (wsEndpoint: string, options?: ConnectOptions, redirectPortForTest?: number) => Promise<Browser>,
   dummyServerPort: number,
-  ipV6ServerUrl: string,
+  ipV6ServerPort: number,
 };
 const test = playwrightTest.extend<ExtraFixtures>({
   connect: async ({ browserType }, use) => {
@@ -56,14 +56,14 @@ const test = playwrightTest.extend<ExtraFixtures>({
     await new Promise<Error>(resolve => server.close(resolve));
   },
 
-  ipV6ServerUrl: async ({}, use) => {
+  ipV6ServerPort: async ({}, use) => {
     test.skip(!!process.env.INSIDE_DOCKER, 'docker does not support IPv6 by default');
     const server = http.createServer((req: http.IncomingMessage, res: http.ServerResponse) => {
       res.end('<html><body>from-ipv6-server</body></html>');
     });
     await new Promise<void>(resolve => server.listen(0, '::1', resolve));
     const address = server.address() as net.AddressInfo;
-    await use('http://[::1]:' + address.port);
+    await use(address.port);
     await new Promise<Error>(resolve => server.close(resolve));
   },
 });
@@ -145,12 +145,24 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       }
     });
 
-    test('should be able to visit ipv6', async ({ connect, startRemoteServer, ipV6ServerUrl }) => {
+    test('should be able to visit ipv6', async ({ connect, startRemoteServer, ipV6ServerPort }) => {
       test.fail(!!process.env.INSIDE_DOCKER, 'docker does not support IPv6 by default');
       const remoteServer = await startRemoteServer(kind);
       const browser = await connect(remoteServer.wsEndpoint());
       const page = await browser.newPage();
-      await page.goto(ipV6ServerUrl);
+      const ipV6Url = 'http://[::1]:' + ipV6ServerPort;
+      await page.goto(ipV6Url);
+      expect(await page.content()).toContain('from-ipv6-server');
+      await browser.close();
+    });
+
+    test('should be able to visit ipv6 through localhost', async ({ connect, startRemoteServer, ipV6ServerPort }) => {
+      test.fail(!!process.env.INSIDE_DOCKER, 'docker does not support IPv6 by default');
+      const remoteServer = await startRemoteServer(kind);
+      const browser = await connect(remoteServer.wsEndpoint());
+      const page = await browser.newPage();
+      const ipV6Url = 'http://localhost:' + ipV6ServerPort;
+      await page.goto(ipV6Url);
       expect(await page.content()).toContain('from-ipv6-server');
       await browser.close();
     });
@@ -715,6 +727,26 @@ for (const kind of ['launchServer', 'run-server'] as const) {
         const page = await browser.newPage();
         await page.goto(`http://127.0.0.1:${examplePort}/foo.html`);
         expect(await page.content()).toContain('from-dummy-server');
+        expect(reachedOriginalTarget).toBe(false);
+      });
+
+      test('should proxy ipv6 localhost requests @smoke', async ({ startRemoteServer, server, browserName, connect, platform, ipV6ServerPort }, testInfo) => {
+        test.skip(browserName === 'webkit' && platform === 'darwin', 'no localhost proxying');
+
+        let reachedOriginalTarget = false;
+        server.setRoute('/foo.html', async (req, res) => {
+          reachedOriginalTarget = true;
+          res.end('<html><body></body></html>');
+        });
+        const examplePort = 20_000 + testInfo.workerIndex * 3;
+        const remoteServer = await startRemoteServer(kind);
+        const browser = await connect(remoteServer.wsEndpoint(), { _exposeNetwork: '*' } as any, ipV6ServerPort);
+        const page = await browser.newPage();
+        await page.goto(`http://[::1]:${examplePort}/foo.html`);
+        expect(await page.content()).toContain('from-ipv6-server');
+        const page2 = await browser.newPage();
+        await page2.goto(`http://localhost:${examplePort}/foo.html`);
+        expect(await page2.content()).toContain('from-ipv6-server');
         expect(reachedOriginalTarget).toBe(false);
       });
 
