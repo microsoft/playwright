@@ -413,7 +413,7 @@ const TestList: React.FC<{
     render={treeItem => {
       return <div className='hbox watch-mode-list-item'>
         <div className='watch-mode-list-item-title'>{treeItem.title}</div>
-        {!!treeItem.duration && <div className='watch-mode-list-item-time'>{msToString(treeItem.duration)}</div>}
+        {!!treeItem.duration && treeItem.status !== 'skipped' && <div className='watch-mode-list-item-time'>{msToString(treeItem.duration)}</div>}
         <Toolbar noMinHeight={true} noShadow={true}>
           <ToolbarButton icon='play' title='Run' onClick={() => runTreeItem(treeItem)} disabled={!!runningState}></ToolbarButton>
           <ToolbarButton icon='go-to-file' title='Open in VS Code' onClick={() => sendMessageNoReply('open', { location: locationToOpen(treeItem) })}></ToolbarButton>

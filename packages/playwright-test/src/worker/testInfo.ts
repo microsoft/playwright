@@ -249,7 +249,6 @@ export class TestInfoImpl implements TestInfo {
       stepId,
       ...data,
       location,
-      wallTime: Date.now(),
     };
     this._onStepBegin(payload);
     return step;

@@ -489,7 +489,7 @@ function createBeforeActionTraceEvent(metadata: CallMetadata): trace.BeforeActio
     class: metadata.type,
     method: metadata.method,
     params: metadata.params,
-    wallTime: metadata.wallTime || Date.now(),
+    wallTime: metadata.wallTime,
     pageId: metadata.pageId,
   };
 }
