@@ -238,7 +238,7 @@ test('should stop', async ({ runUITest }) => {
         ⊘ test 0
         ✅ test 1
         ↻ test 2
-        ↻ test 3
+        🕦 test 3
   `);
 
   await expect(page.getByTitle('Run all')).toBeDisabled();
@@ -281,4 +281,28 @@ test('should run folder', async ({ runUITest }) => {
     ▼ ◯ in-a.test.ts
         ◯ passes
   `);
+});
+
+test('should show time', async ({ runUITest }) => {
+  const page = await runUITest(basicTestTree);
+  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toContain(`
+    ▼ ◯ a.test.ts
+  `);
+
+  await page.getByTitle('Run all').click();
+
+  await expect.poll(dumpTestTree(page, { time: true }), { timeout: 15000 }).toBe(`
+    ▼ ❌ a.test.ts
+        ✅ passes XXms
+        ❌ fails XXms <=
+      ► ❌ suite
+    ▼ ❌ b.test.ts
+        ✅ passes XXms
+        ❌ fails XXms
+    ▼ ✅ c.test.ts
+        ✅ passes XXms
+        ⊘ skipped
+  `);
+
+  await expect(page.getByTestId('status-line')).toHaveText('4/8 passed (50%)');
 });

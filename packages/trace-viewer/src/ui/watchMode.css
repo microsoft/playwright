@@ -37,7 +37,18 @@
 .watch-mode-list-item-title {
   flex: auto;
   text-overflow: ellipsis;
-  overflow: hidden
+  overflow: hidden;
+}
+
+.watch-mode-list-item-time {
+  flex: none;
+  color: var(--vscode-editorCodeLens-foreground);
+  margin: 0 4px;
+  user-select: none;
+}
+
+.list-view-entry.highlighted .watch-mode-list-item-time {
+  display: none;
 }
 
 .watch-mode .section-title {
@@ -56,7 +67,7 @@
 
 .watch-mode-sidebar img {
   flex: none;
-  margin: 0 4px;
+  margin-left: 4px;
   width: 24px;
   height: 24px;
 }
