@@ -19,10 +19,11 @@ import * as React from 'react';
 import { msToString } from './uiUtils';
 import { Chip } from './chip';
 import type { Filter } from './filter';
-import { generateTraceUrl, Link, ProjectLink } from './links';
+import { generateTraceUrl, Link, navigate, ProjectLink } from './links';
 import { statusIcon } from './statusIcon';
 import './testFileView.css';
 import { video, image, trace } from './icons';
+import { hashStringToInt, matchTags } from './labelUtils';
 
 export const TestFileView: React.FC<React.PropsWithChildren<{
   report: HTMLReport;
@@ -31,6 +32,8 @@ export const TestFileView: React.FC<React.PropsWithChildren<{
   setFileExpanded: (fileId: string, expanded: boolean) => void;
   filter: Filter;
 }>> = ({ file, report, isFileExpanded, setFileExpanded, filter }) => {
+  const labels = React.useCallback((test: TestCaseSummary) => matchTags(test?.title).sort((a, b) => a.localeCompare(b)), []);
+
   return <Chip
     expanded={isFileExpanded(file.fileId)}
     noInsets={true}
@@ -40,14 +43,21 @@ export const TestFileView: React.FC<React.PropsWithChildren<{
     </span>}>
     {file.tests.filter(t => filter.matches(t)).map(test =>
       <div key={`test-${test.testId}`} className={'test-file-test test-file-test-outcome-' + test.outcome}>
-        <div style={{ textOverflow: 'ellipsis', overflow: 'hidden' }}>
-          <span style={{ float: 'right', minWidth: '50px', textAlign: 'right' }}>{msToString(test.duration)}</span>
-          {report.projectNames.length > 1 && !!test.projectName &&
-              <span style={{ float: 'right' }}><ProjectLink projectNames={report.projectNames} projectName={test.projectName}></ProjectLink></span>}
-          {statusIcon(test.outcome)}
-          <Link href={`#?testId=${test.testId}`} title={[...test.path, test.title].join(' › ')}>
-            <span className='test-file-title'>{[...test.path, test.title].join(' › ')}</span>
-          </Link>
+        <div className='hbox' style={{ alignItems: 'flex-start' }}>
+          <div className="hbox">
+            <span className="test-file-test-status-icon">
+              {statusIcon(test.outcome)}
+            </span>
+            <span>
+              <Link href={`#?testId=${test.testId}`} title={[...test.path, test.title].join(' › ')}>
+                <span className='test-file-title'>{[...test.path, test.title].join(' › ')}</span>
+              </Link>
+              {report.projectNames.length > 1 && !!test.projectName &&
+              <ProjectLink projectNames={report.projectNames} projectName={test.projectName} />}
+              <LabelsClickView labels={labels(test)} />
+            </span>
+          </div>
+          <span style={{ minWidth: '50px', textAlign: 'right' }}>{msToString(test.duration)}</span>
         </div>
         <div className='test-file-details-row'>
           <Link href={`#?testId=${test.testId}`} title={[...test.path, test.title].join(' › ')} className='test-file-path-link'>
@@ -78,3 +88,40 @@ function traceBadge(test: TestCaseSummary): JSX.Element | undefined {
   const firstTraces = test.results.map(result => result.attachments.filter(attachment => attachment.name === 'trace')).filter(traces => traces.length > 0)[0];
   return firstTraces ? <Link href={generateTraceUrl(firstTraces)} title='View trace' className='test-file-badge'>{trace()}</Link> : undefined;
 }
+
+const LabelsClickView: React.FC<React.PropsWithChildren<{
+  labels: string[],
+}>> = ({ labels }) => {
+
+  const onClickHandle = (e: React.MouseEvent, tag: string) => {
+    e.preventDefault();
+    const searchParams = new URLSearchParams(window.location.hash.slice(1));
+    let q = searchParams.get('q')?.toString() || '';
+
+    // if metaKey or ctrlKey is pressed, add tag to search query without replacing existing tags
+    // if metaKey or ctrlKey is pressed and tag is already in search query, remove tag from search query
+    if (e.metaKey || e.ctrlKey) {
+      if (!q.includes(`@${tag}`))
+        q = `${q} @${tag}`.trim();
+      else
+        q = q.split(' ').filter(t => t !== `@${tag}`).join(' ').trim();
+      // if metaKey or ctrlKey is not pressed, replace existing tags with new tag
+    } else {
+      if (!q.includes('@'))
+        q = `${q} @${tag}`.trim();
+      else
+        q = (q.split(' ').filter(t => !t.startsWith('@')).join(' ').trim() + ` @${tag}`).trim();
+    }
+    navigate(q ? `#?q=${q}` : '#');
+  };
+
+  return labels.length > 0 ? (
+    <>
+      {labels.map(tag => (
+        <span style={{ margin: '6px 0 0 6px', cursor: 'pointer' }} className={'label label-color-' + (hashStringToInt(tag))} onClick={e => onClickHandle(e, tag)}>
+          {tag}
+        </span>
+      ))}
+    </>
+  ) : null;
+};

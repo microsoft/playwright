@@ -1017,3 +1017,629 @@ test.describe('report location', () => {
     expect(fs.existsSync(testInfo.outputPath('foo', 'bar', 'baz', 'my-report'))).toBe(true);
   });
 });
+
+test.describe('labels', () => {
+  test('should show labels in the test row', async ({ runInlineTest, showReport, page }) => {
+    const result = await runInlineTest({
+      'playwright.config.js': `
+        module.exports = {
+          retries: 1,
+          projects: [
+            { name: 'chromium', use: { browserName: 'chromium' } },
+            { name: 'firefox', use: { browserName: 'firefox' } },
+            { name: 'webkit', use: { browserName: 'webkit' } },
+          ],
+        };
+      `,
+      'a.test.js': `
+        const { expect, test } = require('@playwright/test');
+        test('@smoke @passed passed', async ({}) => {
+          expect(1).toBe(1);
+        });
+      `,
+      'b.test.js': `
+        const { expect, test } = require('@playwright/test');
+        test('@smoke @failed failed', async ({}) => {
+          expect(1).toBe(2);
+        });
+      `,
+      'c.test.js': `
+        const { expect, test } = require('@playwright/test');
+        test('@regression @failed failed', async ({}) => {
+          expect(1).toBe(2);
+        });
+        test('@regression @flaky flaky', async ({}, testInfo) => {
+          if (testInfo.retry)
+            expect(1).toBe(1);
+          else
+            expect(1).toBe(2);
+        });
+        test.skip('@regression skipped', async ({}) => {
+          expect(1).toBe(2);
+        });
+      `,
+    }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+
+    expect(result.exitCode).toBe(1);
+    expect(result.passed).toBe(3);
+    expect(result.failed).toBe(6);
+
+    await showReport();
+
+    await expect(page.locator('.test-file-test .label')).toHaveCount(42);
+    await expect(page.locator('.test-file-test', { has: page.getByText('@regression @failed failed', { exact: true }) }).locator('.label')).toHaveText([
+      'chromium',
+      'failed',
+      'regression',
+      'firefox',
+      'failed',
+      'regression',
+      'webkit',
+      'failed',
+      'regression'
+    ]);
+    await expect(page.locator('.test-file-test', { has: page.getByText('@regression @flaky flaky', { exact: true }) }).locator('.label')).toHaveText([
+      'chromium',
+      'flaky',
+      'regression',
+      'firefox',
+      'flaky',
+      'regression',
+      'webkit',
+      'flaky',
+      'regression',
+    ]);
+    await expect(page.locator('.test-file-test', { has: page.getByText('@regression skipped', { exact: true }) }).locator('.label')).toHaveText([
+      'chromium',
+      'regression',
+      'firefox',
+      'regression',
+      'webkit',
+      'regression',
+    ]);
+    await expect(page.locator('.test-file-test', { has: page.getByText('@smoke @passed passed', { exact: true }) }).locator('.label')).toHaveText([
+      'chromium',
+      'passed',
+      'smoke',
+      'firefox',
+      'passed',
+      'smoke',
+      'webkit',
+      'passed',
+      'smoke'
+    ]);
+    await expect(page.locator('.test-file-test', { has: page.getByText('@smoke @failed failed', { exact: true }) }).locator('.label')).toHaveText([
+      'chromium',
+      'failed',
+      'smoke',
+      'firefox',
+      'failed',
+      'smoke',
+      'webkit',
+      'failed',
+      'smoke',
+    ]);
+  });
+
+  test('project label still shows up without test labels', async ({ runInlineTest, showReport, page }) => {
+    const result = await runInlineTest({
+      'playwright.config.js': `
+        module.exports = {
+          projects: [
+            { name: 'chromium', use: { browserName: 'chromium' } },
+            { name: 'firefox', use: { browserName: 'firefox' } },
+            { name: 'webkit', use: { browserName: 'webkit' } },
+          ],
+        };
+      `,
+      'a.test.js': `
+        const { expect, test } = require('@playwright/test');
+        test('pass', async ({}) => {
+          expect(1).toBe(1);
+        });
+      `,
+    }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.passed).toBe(3);
+
+    await showReport();
+
+    await expect(page.locator('.test-file-test .label')).toHaveCount(3);
+    await expect(page.locator('.test-file-test', { has: page.getByText('pass', { exact: true }) }).locator('.label')).toHaveText(['chromium', 'firefox', 'webkit']);
+    await page.locator('.test-file-test', { has: page.getByText('chromium', { exact: true }) }).locator('.test-file-title').click();
+    await expect(page).toHaveURL(/testId/);
+    await expect(page.locator('.label')).toHaveCount(1);
+    await expect(page.locator('.label')).toHaveText('chromium');
+    await page.goBack();
+    await page.locator('.test-file-test', { has: page.getByText('firefox', { exact: true }) }).locator('.test-file-title').click();
+    await expect(page).toHaveURL(/testId/);
+    await expect(page.locator('.label')).toHaveCount(1);
+    await expect(page.locator('.label')).toHaveText('firefox');
+    await page.goBack();
+    await page.locator('.test-file-test', { has: page.getByText('webkit', { exact: true }) }).locator('.test-file-title').click();
+    await expect(page).toHaveURL(/testId/);
+    await expect(page.locator('.label')).toHaveCount(1);
+    await expect(page.locator('.label')).toHaveText('webkit');
+  });
+
+  test('testCaseView - after click test label and go back, testCaseView should be visible', async ({ runInlineTest, showReport, page }) => {
+    const result = await runInlineTest({
+      'playwright.config.js': `
+        module.exports = {
+          projects: [
+            { name: 'chromium', use: { browserName: 'chromium' } },
+            { name: 'firefox', use: { browserName: 'firefox' } },
+            { name: 'webkit', use: { browserName: 'webkit' } },
+          ],
+        };
+      `,
+      'a.test.js': `
+        const { expect, test } = require('@playwright/test');
+        test('@flaky pass', async ({}) => {
+          expect(1).toBe(1);
+        });
+      `,
+    }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.passed).toBe(3);
+
+    await showReport();
+
+    const searchInput = page.locator('.subnav-search-input');
+
+    await expect(page.locator('.test-file-test .label')).toHaveCount(6);
+    await expect(page.locator('.test-file-test', { has: page.getByText('chromium', { exact: true }) }).locator('.label')).toHaveText(['chromium', 'flaky']);
+    await page.locator('.test-file-test', { has: page.getByText('chromium', { exact: true }) }).locator('.test-file-title').click();
+    await expect(page).toHaveURL(/testId/);
+    await expect(page.locator('.label')).toHaveCount(2);
+    await expect(page.locator('.label')).toHaveText(['chromium', 'flaky']);
+    await page.locator('.label', { has: page.getByText('flaky', { exact: true }) }).click();
+    await expect(page).not.toHaveURL(/testId/);
+    await expect(searchInput).toHaveValue('@flaky');
+    await page.goBack();
+    await expect(page).toHaveURL(/testId/);
+    await expect(page.locator('.label')).toHaveCount(2);
+    await expect(page.locator('.label')).toHaveText(['chromium', 'flaky']);
+  });
+
+  test('tests with long title should not ellipsis', async ({ runInlineTest, showReport, page }) => {
+    const result = await runInlineTest({
+      'playwright.config.js': `
+        module.exports = {
+          projects: [
+            { name: 'chromium', use: { browserName: 'chromium' } },
+            { name: 'firefox', use: { browserName: 'firefox' } },
+            { name: 'webkit', use: { browserName: 'webkit' } },
+          ],
+        };
+      `,
+      'a.test.js': `
+        const { expect, test } = require('@playwright/test');
+        test('@finally @oddly @questioningly @sleepily @warmly @healthily @smoke @flaky this is a very long test title that should not overflow and should be truncated. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.', async ({}) => {
+          expect(1).toBe(1);
+        });
+      `,
+    }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.passed).toBe(3);
+    expect(result.failed).toBe(0);
+
+    await showReport();
+
+    const firstTitle = page.locator('.test-file-title', { hasText: '@finally @oddly @questioningly @sleepily @warmly @healthily @smoke @flaky ' }).first();
+    await expect(firstTitle).toBeVisible();
+    expect((await firstTitle.boundingBox()).height).toBeGreaterThanOrEqual(100);
+  });
+
+  test('should show filtered tests by labels when click on label', async ({ runInlineTest, showReport, page }) => {
+    const result = await runInlineTest({
+      'a.test.js': `
+        const { expect, test } = require('@playwright/test');
+        test('@regression passes', async ({}) => {
+          expect(1).toBe(1);
+        });
+      `,
+      'b.test.js': `
+        const { expect, test } = require('@playwright/test');
+        test('@smoke fails', async ({}) => {
+          expect(1).toBe(2);
+        });
+      `,
+    }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+
+    expect(result.exitCode).toBe(1);
+    expect(result.passed).toBe(1);
+    expect(result.failed).toBe(1);
+
+    await showReport();
+
+    const searchInput = page.locator('.subnav-search-input');
+    const smokeLabelButton =  page.locator('.test-file-test', { has: page.getByText('@smoke fails', { exact: true }) }).locator('.label', { hasText: 'smoke' });
+
+    await expect(smokeLabelButton).toBeVisible();
+    await smokeLabelButton.click();
+    await expect(searchInput).toHaveValue('@smoke');
+    await expect(page.locator('.test-file-test')).toHaveCount(1);
+    await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(0);
+    await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(1);
+    await expect(page.locator('.test-file-test .test-file-title')).toHaveText('@smoke fails');
+
+    const regressionLabelButton =  page.locator('.test-file-test', { has: page.getByText('@regression passes', { exact: true }) }).locator('.label', { hasText: 'regression' });
+
+    await expect(regressionLabelButton).not.toBeVisible();
+
+    await searchInput.clear();
+
+    await expect(regressionLabelButton).toBeVisible();
+    await expect(page.locator('.chip')).toHaveCount(2);
+    await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(1);
+    await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(1);
+
+    await regressionLabelButton.click();
+    await expect(searchInput).toHaveValue('@regression');
+    await expect(page.locator('.test-file-test')).toHaveCount(1);
+    await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(1);
+    await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(0);
+    await expect(page.locator('.test-file-test .test-file-title')).toHaveText('@regression passes');
+  });
+
+  test('click label should change URL', async ({ runInlineTest, showReport, page }) => {
+    const result = await runInlineTest({
+      'a.test.js': `
+        const { expect, test } = require('@playwright/test');
+        test('@regression passes', async ({}) => {
+          expect(1).toBe(1);
+        });
+      `,
+      'b.test.js': `
+        const { expect, test } = require('@playwright/test');
+        test('@smoke fails', async ({}) => {
+          expect(1).toBe(2);
+        });
+      `,
+    }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+
+    expect(result.exitCode).toBe(1);
+    expect(result.passed).toBe(1);
+    expect(result.failed).toBe(1);
+
+    await showReport();
+
+    const searchInput = page.locator('.subnav-search-input');
+
+    const smokeLabelButton =  page.locator('.test-file-test', { has: page.getByText('@smoke fails', { exact: true }) }).locator('.label', { hasText: 'smoke' });
+    await smokeLabelButton.click();
+    await expect(page).toHaveURL(/@smoke/);
+    await searchInput.clear();
+    await page.keyboard.press('Enter');
+    await expect(searchInput).toHaveValue('');
+    await expect(page).not.toHaveURL(/@smoke/);
+
+    const regressionLabelButton =  page.locator('.test-file-test', { has: page.getByText('@regression passes', { exact: true }) }).locator('.label', { hasText: 'regression' });
+    await regressionLabelButton.click();
+    await expect(page).toHaveURL(/@regression/);
+    await searchInput.clear();
+    await page.keyboard.press('Enter');
+    await expect(searchInput).toHaveValue('');
+    await expect(page).not.toHaveURL(/@regression/);
+  });
+
+  test('labels whould be applied together with status filter', async ({ runInlineTest, showReport, page }) => {
+    const result = await runInlineTest({
+      'a.test.js': `
+        const { expect, test } = require('@playwright/test');
+        test('@regression passes', async ({}) => {
+          expect(1).toBe(1);
+        });
+
+        test('@smoke passes', async ({}) => {
+          expect(1).toBe(1);
+        });
+      `,
+      'b.test.js': `
+        const { expect, test } = require('@playwright/test');
+        test('@smoke fails', async ({}) => {
+          expect(1).toBe(2);
+        });
+
+        test('@regression fails', async ({}) => {
+          expect(1).toBe(2);
+        });
+      `,
+    }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+
+    expect(result.exitCode).toBe(1);
+    expect(result.passed).toBe(2);
+    expect(result.failed).toBe(2);
+
+    await showReport();
+
+    const searchInput = page.locator('.subnav-search-input');
+    const passedNavMenu = page.locator('.subnav-item:has-text("Passed")');
+    const failedNavMenu = page.locator('.subnav-item:has-text("Failed")');
+    const allNavMenu = page.locator('.subnav-item:has-text("All")');
+    const smokeLabelButton =  page.locator('.test-file-test', { has: page.getByText('@smoke fails', { exact: true }) }).locator('.label', { hasText: 'smoke' });
+    const regressionLabelButton =  page.locator('.test-file-test', { has: page.getByText('@regression passes', { exact: true }) }).locator('.label', { hasText: 'regression' });
+
+    await failedNavMenu.click();
+    await smokeLabelButton.click();
+    await expect(page.locator('.test-file-test')).toHaveCount(1);
+    await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(0);
+    await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(1);
+    await expect(page.locator('.test-file-test .test-file-title')).toHaveText('@smoke fails');
+    await expect(searchInput).toHaveValue('s:failed @smoke');
+    await expect(page).toHaveURL(/s:failed%20@smoke/);
+
+    await passedNavMenu.click();
+    await regressionLabelButton.click();
+    await expect(page.locator('.test-file-test')).toHaveCount(1);
+    await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(1);
+    await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(0);
+    await expect(page.locator('.test-file-test .test-file-title')).toHaveText('@regression passes');
+    await expect(searchInput).toHaveValue('s:passed @regression');
+    await expect(page).toHaveURL(/s:passed%20@regression/);
+
+    await allNavMenu.click();
+    await regressionLabelButton.click();
+    await expect(page.locator('.test-file-test')).toHaveCount(2);
+    await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(1);
+    await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(1);
+    await expect(page.locator('.test-file-test .test-file-title')).toHaveCount(2);
+    await expect(searchInput).toHaveValue('@regression');
+    await expect(page).toHaveURL(/@regression/);
+  });
+
+  test('tests should be filtered by label input in search field', async ({ runInlineTest, showReport, page }) => {
+    const result = await runInlineTest({
+      'a.test.js': `
+        const { expect, test } = require('@playwright/test');
+        test('@regression passes', async ({}) => {
+          expect(1).toBe(1);
+        });
+
+        test('@smoke passes', async ({}) => {
+          expect(1).toBe(1);
+        });
+      `,
+      'b.test.js': `
+        const { expect, test } = require('@playwright/test');
+        test('@smoke fails', async ({}) => {
+          expect(1).toBe(2);
+        });
+
+        test('@regression fails', async ({}) => {
+          expect(1).toBe(2);
+        });
+      `,
+    }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+
+    expect(result.exitCode).toBe(1);
+    expect(result.passed).toBe(2);
+    expect(result.failed).toBe(2);
+
+    await showReport();
+
+    const searchInput = page.locator('.subnav-search-input');
+
+    await searchInput.fill('@smoke');
+    await searchInput.press('Enter');
+    await expect(page.locator('.test-file-test')).toHaveCount(2);
+    await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(1);
+    await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(1);
+    await expect(page.locator('.test-file-test .test-file-title')).toHaveCount(2);
+    await expect(searchInput).toHaveValue('@smoke');
+    await expect(page).toHaveURL(/%40smoke/);
+
+    await searchInput.fill('@regression');
+    await searchInput.press('Enter');
+    await expect(page.locator('.test-file-test')).toHaveCount(2);
+    await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(1);
+    await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(1);
+    await expect(page.locator('.test-file-test .test-file-title')).toHaveCount(2);
+    await expect(searchInput).toHaveValue('@regression');
+    await expect(page).toHaveURL(/%40regression/);
+  });
+
+  test('if label contains similar words only one label should be selected', async ({ runInlineTest, showReport, page }) => {
+    const result = await runInlineTest({
+      'a.test.js': `
+        const { expect, test } = require('@playwright/test');
+        test('@company passes', async ({}) => {
+          expect(1).toBe(1);
+        });
+      `,
+      'b.test.js': `
+        const { expect, test } = require('@playwright/test');
+        test('@company_information fails', async ({}) => {
+          expect(1).toBe(2);
+        });
+      `,
+      'c.test.js': `
+        const { expect, test } = require('@playwright/test');
+        test('@company_information_widget fails', async ({}) => {
+          expect(1).toBe(2);
+        });
+      `,
+    }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+
+    expect(result.exitCode).toBe(1);
+    expect(result.passed).toBe(1);
+    expect(result.failed).toBe(2);
+
+    await showReport();
+
+    await expect(page.locator('.chip')).toHaveCount(3);
+    await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(1);
+    await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(1);
+    await expect(page.locator('.chip', { hasText: 'c.test.js' })).toHaveCount(1);
+
+    await expect(page.locator('.test-file-test')).toHaveCount(3);
+    await expect(page.locator('.test-file-test .test-file-title')).toHaveCount(3);
+    await expect(page.locator('.test-file-test .test-file-title', { hasText: '@company passes' })).toHaveCount(1);
+    await expect(page.locator('.test-file-test .test-file-title', { hasText: '@company_information fails' })).toHaveCount(1);
+    await expect(page.locator('.test-file-test .test-file-title', { hasText: '@company_information_widget fails' })).toHaveCount(1);
+
+    const searchInput = page.locator('.subnav-search-input');
+    const companyLabelButton = page.locator('.test-file-test', { has: page.getByText('@company passes') }).locator('.label', { hasText: 'company' });
+    const companyInformationLabelButton = page.locator('.test-file-test', { has: page.getByText('@company_information fails') }).locator('.label', { hasText: 'company_information' });
+    const companyInformationWidgetLabelButton = page.locator('.test-file-test', { has: page.getByText('@company_information_widget fails') }).locator('.label', { hasText: 'company_information_widget' });
+
+    await expect(companyLabelButton).toBeVisible();
+    await expect(companyInformationLabelButton).toBeVisible();
+    await expect(companyInformationWidgetLabelButton).toBeVisible();
+
+    await companyLabelButton.click();
+    await expect(page.locator('.chip')).toHaveCount(1);
+    await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(1);
+    await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(0);
+    await expect(page.locator('.chip', { hasText: 'c.test.js' })).toHaveCount(0);
+
+    await searchInput.clear();
+
+    await companyInformationLabelButton.click();
+    await expect(page.locator('.chip')).toHaveCount(1);
+    await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(0);
+    await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(1);
+    await expect(page.locator('.chip', { hasText: 'c.test.js' })).toHaveCount(0);
+
+    await searchInput.clear();
+
+    await companyInformationWidgetLabelButton.click();
+    await expect(page.locator('.chip')).toHaveCount(1);
+    await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(0);
+    await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(0);
+    await expect(page.locator('.chip', { hasText: 'c.test.js' })).toHaveCount(1);
+
+    await searchInput.clear();
+
+    await expect(page.locator('.test-file-test')).toHaveCount(3);
+    await expect(page.locator('.test-file-test .test-file-title', { hasText: '@company passes' })).toHaveCount(1);
+    await expect(page.locator('.test-file-test .test-file-title', { hasText: '@company_information fails' })).toHaveCount(1);
+    await expect(page.locator('.test-file-test .test-file-title', { hasText: '@company_information_widget fails' })).toHaveCount(1);
+  });
+
+  test('handling of meta or ctrl key', async ({ runInlineTest, showReport, page,  }) => {
+    const result = await runInlineTest({
+      'a.test.js': `
+        const { expect, test } = require('@playwright/test');
+        test('@smoke @regression passes', async ({}) => {
+          expect(1).toBe(1);
+        });
+      `,
+      'b.test.js': `
+        const { expect, test } = require('@playwright/test');
+        test('@smoke @flaky passes', async ({}) => {
+          expect(1).toBe(1);
+        });
+      `,
+      'c.test.js': `
+        const { expect, test } = require('@playwright/test');
+        test('@regression @flaky passes', async ({}) => {
+          expect(1).toBe(1);
+        });
+      `,
+    }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.passed).toBe(3);
+    expect(result.failed).toBe(0);
+
+    await showReport();
+
+    const smokeButton = page.locator('.label', { hasText: 'smoke' }).first();
+    const regressionButton = page.locator('.label', { hasText: 'regression' }).first();
+    const flakyButton = page.locator('.label', { hasText: 'flaky' }).first();
+    const searchInput = page.locator('.subnav-search-input');
+
+    await expect(page.locator('.chip')).toHaveCount(3);
+    await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(1);
+    await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(1);
+    await expect(page.locator('.chip', { hasText: 'c.test.js' })).toHaveCount(1);
+
+    await page.keyboard.down(process.platform === 'darwin' ? 'Meta' : 'Control');
+    await smokeButton.click();
+
+    await expect(searchInput).toHaveValue('@smoke');
+    await expect(page).toHaveURL(/@smoke/);
+    await expect(page.locator('.chip')).toHaveCount(2);
+    await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(1);
+    await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(1);
+    await expect(page.locator('.chip', { hasText: 'c.test.js' })).toHaveCount(0);
+
+    await regressionButton.click();
+
+    await expect(searchInput).toHaveValue('@smoke @regression');
+    await expect(page).toHaveURL(/@smoke%20@regression/);
+    await expect(page.locator('.chip')).toHaveCount(1);
+    await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(1);
+    await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(0);
+    await expect(page.locator('.chip', { hasText: 'c.test.js' })).toHaveCount(0);
+
+    await smokeButton.click();
+
+    await expect(searchInput).toHaveValue('@regression');
+    await expect(page).toHaveURL(/@regression/);
+    await expect(page.locator('.chip')).toHaveCount(2);
+    await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(1);
+    await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(0);
+    await expect(page.locator('.chip', { hasText: 'c.test.js' })).toHaveCount(1);
+
+    await flakyButton.click();
+
+    await expect(searchInput).toHaveValue('@regression @flaky');
+    await expect(page).toHaveURL(/@regression%20@flaky/);
+    await expect(page.locator('.chip')).toHaveCount(1);
+    await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(0);
+    await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(0);
+    await expect(page.locator('.chip', { hasText: 'c.test.js' })).toHaveCount(1);
+
+    await regressionButton.click();
+
+    await expect(searchInput).toHaveValue('@flaky');
+    await expect(page).toHaveURL(/@flaky/);
+    await expect(page.locator('.chip')).toHaveCount(2);
+    await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(0);
+    await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(1);
+    await expect(page.locator('.chip', { hasText: 'c.test.js' })).toHaveCount(1);
+
+    await flakyButton.click();
+
+    await expect(searchInput).toHaveValue('');
+    await expect(page).not.toHaveURL(/@/);
+    await expect(page.locator('.chip')).toHaveCount(3);
+    await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(1);
+    await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(1);
+    await expect(page.locator('.chip', { hasText: 'c.test.js' })).toHaveCount(1);
+
+    await page.keyboard.up(process.platform === 'darwin' ? 'Meta' : 'Control');
+    await smokeButton.click();
+
+    await expect(searchInput).toHaveValue('@smoke');
+    await expect(page).toHaveURL(/@smoke/);
+    await expect(page.locator('.chip')).toHaveCount(2);
+    await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(1);
+    await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(1);
+    await expect(page.locator('.chip', { hasText: 'c.test.js' })).toHaveCount(0);
+
+    await regressionButton.click();
+
+    await expect(searchInput).toHaveValue('@regression');
+    await expect(page).toHaveURL(/@regression/);
+    await expect(page.locator('.chip')).toHaveCount(2);
+    await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(1);
+    await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(0);
+    await expect(page.locator('.chip', { hasText: 'c.test.js' })).toHaveCount(1);
+
+    await flakyButton.click();
+
+    await expect(searchInput).toHaveValue('@flaky');
+    await expect(page).toHaveURL(/@flaky/);
+    await expect(page.locator('.chip')).toHaveCount(2);
+    await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(0);
+    await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(1);
+    await expect(page.locator('.chip', { hasText: 'c.test.js' })).toHaveCount(1);
+  });
+});

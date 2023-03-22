@@ -14,12 +14,14 @@
   limitations under the License.
 */
 
+import { escapeRegExp } from './labelUtils';
 import type { TestCaseSummary } from './types';
 
 export class Filter {
   project: string[] = [];
   status: string[] = [];
   text: string[] = [];
+  labels: string[] = [];
 
   empty(): boolean {
     return this.project.length + this.status.length + this.text.length === 0;
@@ -30,6 +32,7 @@ export class Filter {
     const project = new Set<string>();
     const status = new Set<string>();
     const text: string[] = [];
+    const labels = new Set<string>();
     for (const token of tokens) {
       if (token.startsWith('p:')) {
         project.add(token.slice(2));
@@ -39,6 +42,10 @@ export class Filter {
         status.add(token.slice(2));
         continue;
       }
+      if (token.startsWith('@')) {
+        labels.add(token);
+        continue;
+      }
       text.push(token.toLowerCase());
     }
 
@@ -46,6 +53,7 @@ export class Filter {
     filter.text = text;
     filter.project = [...project];
     filter.status = [...status];
+    filter.labels = [...labels];
     return filter;
   }
 
@@ -102,7 +110,7 @@ export class Filter {
       const searchValues: SearchValues = {
         text: (status + ' ' + test.projectName + ' ' + test.path.join(' ') + test.title).toLowerCase(),
         project: test.projectName.toLowerCase(),
-        status: status as any
+        status: status as any,
       };
       (test as any).searchValues = searchValues;
     }
@@ -118,9 +126,13 @@ export class Filter {
       if (!matches)
         return false;
     }
-
     if (this.text.length) {
       const matches = this.text.filter(t => searchValues.text.includes(t)).length === this.text.length;
+      if (!matches)
+        return false;
+    }
+    if (this.labels.length) {
+      const matches = this.labels.every(l => searchValues.text?.match(new RegExp(`(\\s|^)${escapeRegExp(l)}(\\s|$)`, 'g')));
       if (!matches)
         return false;
     }
