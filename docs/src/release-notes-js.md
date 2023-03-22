@@ -12,7 +12,7 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 New UI Mode lets you explore, run and debug tests. Comes with a built-in watch mode.
 
-<img width="1392" alt="Playwright UI Mode" src="https://user-images.githubusercontent.com/746130/227004851-3901a691-4f8e-43d6-8d6b-cbfeafaeb999.png">
+![Playwright UI Mode](https://user-images.githubusercontent.com/746130/227004851-3901a691-4f8e-43d6-8d6b-cbfeafaeb999.png)
 
 Engage with a new flag `--ui`:
 
