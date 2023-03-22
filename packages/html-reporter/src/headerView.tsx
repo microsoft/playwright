@@ -50,7 +50,7 @@ export const HeaderView: React.FC<React.PropsWithChildren<{
       <form className='subnav-search' onSubmit={
         event => {
           event.preventDefault();
-          navigate(`#?q=${filterText ? decodeURIComponent(filterText) : ''}`);
+          navigate(`#?q=${filterText ? encodeURIComponent(filterText) : ''}`);
         }
       }>
         {icons.search()}

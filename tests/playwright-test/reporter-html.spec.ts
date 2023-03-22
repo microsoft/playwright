@@ -1431,7 +1431,7 @@ test.describe('labels', () => {
     await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(1);
     await expect(page.locator('.test-file-test .test-file-title')).toHaveCount(2);
     await expect(searchInput).toHaveValue('@smoke');
-    await expect(page).toHaveURL(/@smoke/);
+    await expect(page).toHaveURL(/%40smoke/);
 
     await searchInput.fill('@regression');
     await searchInput.press('Enter');
@@ -1440,7 +1440,7 @@ test.describe('labels', () => {
     await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(1);
     await expect(page.locator('.test-file-test .test-file-title')).toHaveCount(2);
     await expect(searchInput).toHaveValue('@regression');
-    await expect(page).toHaveURL(/@regression/);
+    await expect(page).toHaveURL(/%40regression/);
   });
 
   test('if label contains similar words only one label should be selected', async ({ runInlineTest, showReport, page }) => {

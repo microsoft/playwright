@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import { escapeRegExp } from './labelsView';
+import { escapeRegExp } from './labelUtils';
 import type { TestCaseSummary } from './types';
 
 export class Filter {
@@ -111,7 +111,6 @@ export class Filter {
         text: (status + ' ' + test.projectName + ' ' + test.path.join(' ') + test.title).toLowerCase(),
         project: test.projectName.toLowerCase(),
         status: status as any,
-        labels: (test.path.join(' ') + test.title).toLowerCase(),
       };
       (test as any).searchValues = searchValues;
     }
@@ -133,7 +132,7 @@ export class Filter {
         return false;
     }
     if (this.labels.length) {
-      const matches = this.labels.filter(l => searchValues.labels?.match(new RegExp(`(\\s|^)${escapeRegExp(l)}(\\s|$)`, 'g'))).length === this.labels.length;
+      const matches = this.labels.every(l => searchValues.text?.match(new RegExp(`(\\s|^)${escapeRegExp(l)}(\\s|$)`, 'g')));
       if (!matches)
         return false;
     }
@@ -146,6 +145,5 @@ type SearchValues = {
   text: string;
   project: string;
   status: 'passed' | 'failed' | 'flaky' | 'skipped';
-  labels?: string;
 };
 
