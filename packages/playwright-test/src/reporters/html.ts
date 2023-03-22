@@ -43,6 +43,7 @@ type HtmlReportOpenOption = 'always' | 'never' | 'on-failure';
 type HtmlReporterOptions = {
   configDir: string,
   outputFolder?: string,
+  _internalResolvedOutputFolder?: string,
   open?: HtmlReportOpenOption,
   host?: string,
   port?: number,
@@ -138,7 +139,7 @@ function reportFolderFromEnv(): string | undefined {
   return undefined;
 }
 
-function defaultReportFolder(searchForPackageJson: string): string {
+export function defaultReportFolder(searchForPackageJson: string): string {
   let basePath = getPackageJsonPath(searchForPackageJson);
   if (basePath)
     basePath = path.dirname(basePath);

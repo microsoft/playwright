@@ -29,6 +29,7 @@ import { Multiplexer } from '../reporters/multiplexer';
 import type { Suite } from '../common/test';
 import type { BuiltInReporter, FullConfigInternal } from '../common/config';
 import { loadReporter } from './loadUtils';
+import { BlobReporter } from '../reporters/blob';
 
 export async function createReporter(config: FullConfigInternal, mode: 'list' | 'watch' | 'run' | 'ui', additionalReporters: Reporter[] = []): Promise<Multiplexer> {
   const defaultReporters: {[key in BuiltInReporter]: new(arg: any) => Reporter} = {
@@ -40,6 +41,7 @@ export async function createReporter(config: FullConfigInternal, mode: 'list' | 
     junit: JUnitReporter,
     null: EmptyReporter,
     html: mode === 'ui' ? LineReporter : HtmlReporter,
+    blob: BlobReporter,
   };
   const reporters: Reporter[] = [];
   if (mode === 'watch') {

@@ -23,6 +23,7 @@ import { Runner } from './runner/runner';
 import { stopProfiling, startProfiling } from 'playwright-core/lib/utils';
 import { experimentalLoaderOption, fileIsModule } from './util';
 import { showHTMLReport } from './reporters/html';
+import { createMergedReport } from './reporters/blob';
 import { ConfigLoader, kDefaultConfigFiles, resolveConfigFile } from './common/configLoader';
 import type { ConfigCLIOverrides } from './common/ipc';
 import type { FullResult } from '../reporter';
@@ -34,6 +35,7 @@ export function addTestCommands(program: Command) {
   addTestCommand(program);
   addShowReportCommand(program);
   addListFilesCommand(program);
+  addMergeReportsCommand(program);
 }
 
 function addTestCommand(program: Command) {
@@ -89,6 +91,28 @@ Examples:
   $ npx playwright show-report
   $ npx playwright show-report playwright-report`);
 }
+
+function addMergeReportsCommand(program: Command) {
+  const command = program.command('merge-reports [dir]');
+  command.description('merge multiple blob reports (for sharded tests) into a single report');
+  command.action(async (dir, options) => {
+    try {
+      await mergeReports(dir, options);
+    } catch (e) {
+      console.error(e);
+      process.exit(1);
+    }
+  });
+  command.option('-c, --config <file>', `Configuration file, or a test directory with optional ${kDefaultConfigFiles.map(file => `"${file}"`).join('/')}. Can be used to specify additional configuration for the output report.`);
+  command.option('--reporter <reporter>', 'Output report type', 'html');
+  command.addHelpText('afterAll', `
+Arguments [dir]:
+  Directory containing shard reports.
+
+Examples:
+  $ npx playwright merge-reports playwright-report`);
+}
+
 
 async function runTests(args: string[], opts: { [key: string]: any }) {
   await startProfiling();
@@ -172,6 +196,22 @@ async function listTestFiles(opts: { [key: string]: any }) {
   write(JSON.stringify(report), () => {
     process.exit(0);
   });
+}
+
+async function mergeReports(reportDir: string | undefined, opts: { [key: string]: any }) {
+  const dir = path.resolve(process.cwd(), reportDir || 'playwright-report');
+  const resolvedConfigFile = opts.config ? resolveConfigFile(opts.config)! : null;
+  if (restartWithExperimentalTsEsm(resolvedConfigFile))
+    return;
+
+  const configLoader = new ConfigLoader();
+  if (resolvedConfigFile)
+    await configLoader.loadConfigFile(resolvedConfigFile);
+  else
+    await configLoader.loadEmptyConfig(process.cwd());
+  const config = configLoader.fullConfig();
+
+  await createMergedReport(config, dir, opts.reporter || 'html');
 }
 
 function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrides {
