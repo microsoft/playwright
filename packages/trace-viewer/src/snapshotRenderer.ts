@@ -16,52 +16,6 @@
 
 import type { FrameSnapshot, NodeSnapshot, RenderedFrameSnapshot, ResourceSnapshot } from '@trace/snapshot';
 
-export class SnapshotStorage {
-  private _blobLoader: (sha1: string) => Promise<Blob | undefined>;
-  private _resources: ResourceSnapshot[] = [];
-  private _frameSnapshots = new Map<string, {
-    raw: FrameSnapshot[],
-    renderers: SnapshotRenderer[]
-  }>();
-
-  constructor(blobLoader: (sha1: string) => Promise<Blob | undefined>) {
-    this._blobLoader = blobLoader;
-  }
-
-  addResource(resource: ResourceSnapshot): void {
-    resource.request.url = rewriteURLForCustomProtocol(resource.request.url);
-    this._resources.push(resource);
-  }
-
-  addFrameSnapshot(snapshot: FrameSnapshot) {
-    for (const override of snapshot.resourceOverrides)
-      override.url = rewriteURLForCustomProtocol(override.url);
-    let frameSnapshots = this._frameSnapshots.get(snapshot.frameId);
-    if (!frameSnapshots) {
-      frameSnapshots = {
-        raw: [],
-        renderers: [],
-      };
-      this._frameSnapshots.set(snapshot.frameId, frameSnapshots);
-      if (snapshot.isMainFrame)
-        this._frameSnapshots.set(snapshot.pageId, frameSnapshots);
-    }
-    frameSnapshots.raw.push(snapshot);
-    const renderer = new SnapshotRenderer(this._resources, frameSnapshots.raw, frameSnapshots.raw.length - 1);
-    frameSnapshots.renderers.push(renderer);
-    return renderer;
-  }
-
-  snapshotByName(pageOrFrameId: string, snapshotName: string): SnapshotRenderer | undefined {
-    const snapshot = this._frameSnapshots.get(pageOrFrameId);
-    return snapshot?.renderers.find(r => r.snapshotName === snapshotName);
-  }
-
-  async resourceContent(sha1: string): Promise<Blob | undefined> {
-    return this._blobLoader(sha1);
-  }
-}
-
 export class SnapshotRenderer {
   private _snapshots: FrameSnapshot[];
   private _index: number;

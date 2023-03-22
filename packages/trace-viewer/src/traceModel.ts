@@ -22,7 +22,7 @@ import type zip from '@zip.js/zip.js';
 import zipImport from '@zip.js/zip.js/dist/zip-no-worker-inflate.min.js';
 import type { ContextEntry, PageEntry } from './entries';
 import { createEmptyContext } from './entries';
-import { SnapshotStorage } from './snapshotRenderer';
+import { SnapshotStorage } from './snapshotStorage';
 
 const zipjs = zipImport as typeof zip;
 
@@ -52,7 +52,7 @@ export class TraceModel {
     if (!ordinals.length)
       throw new Error('Cannot find .trace file');
 
-    this._snapshotStorage = new SnapshotStorage(sha1 => this._backend.readBlob('resources/' + sha1));
+    this._snapshotStorage = new SnapshotStorage();
 
     for (const ordinal of ordinals) {
       const contextEntry = createEmptyContext();
