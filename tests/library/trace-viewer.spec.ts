@@ -693,7 +693,7 @@ test('should not crash with broken locator', async ({ page, runAndTrace, server 
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/21832' });
   const traceViewer = await runAndTrace(async () => {
     try {
-      await page.locator("[class*=github-btn] a]").click();
+      await page.locator('[class*=github-btn] a]').click();
     } catch (e) {
     }
   });
