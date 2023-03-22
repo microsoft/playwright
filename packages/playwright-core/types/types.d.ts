@@ -11447,6 +11447,23 @@ export interface Locator {
   nth(index: number): Locator;
 
   /**
+   * Creates a locator that matches either of the two locators.
+   *
+   * **Usage**
+   *
+   * If your page shows a username input that is labelled either `Username` or `Login`, depending on some external
+   * factors you do not control, you can match both.
+   *
+   * ```js
+   * const input = page.getByLabel('Username').or(page.getByLabel('Login'));
+   * await input.fill('John');
+   * ```
+   *
+   * @param locator Alternative locator to match.
+   */
+  or(locator: Locator): Locator;
+
+  /**
    * A page this locator belongs to.
    */
   page(): Page;

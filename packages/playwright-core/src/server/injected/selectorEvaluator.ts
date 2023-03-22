@@ -518,7 +518,7 @@ function previousSiblingInContext(element: Element, context: QueryContext): Elem
   return element.previousElementSibling || undefined;
 }
 
-function sortInDOMOrder(elements: Element[]): Element[] {
+export function sortInDOMOrder(elements: Iterable<Element>): Element[] {
   type SortEntry = { children: Element[], taken: boolean };
 
   const elementToEntry = new Map<Element, SortEntry>();
@@ -540,7 +540,8 @@ function sortInDOMOrder(elements: Element[]): Element[] {
     elementToEntry.set(element, entry);
     return entry;
   }
-  elements.forEach(e => append(e).taken = true);
+  for (const e of elements)
+    append(e).taken = true;
 
   function visit(element: Element) {
     const entry = elementToEntry.get(element)!;

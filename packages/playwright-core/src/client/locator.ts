@@ -192,6 +192,12 @@ export class Locator implements api.Locator {
     return new Locator(this._frame, this._selector + ` >> nth=${index}`);
   }
 
+  or(locator: Locator): Locator {
+    if (locator._frame !== this._frame)
+      throw new Error(`Locators must belong to the same frame.`);
+    return new Locator(this._frame, this._selector + ` >> internal:or=` + JSON.stringify(locator._selector));
+  }
+
   async focus(options?: TimeoutOptions): Promise<void> {
     return this._frame.focus(this._selector, { strict: true, ...options });
   }
