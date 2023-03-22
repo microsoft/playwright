@@ -49,7 +49,7 @@ async function loadTrace(traceUrl: string, traceFileName: string | null, clientI
     else
       throw new Error(`Could not load trace from ${traceUrl}. Make sure a valid Playwright Trace is accessible over this url.`);
   }
-  const snapshotServer = new SnapshotServer(traceModel.storage());
+  const snapshotServer = new SnapshotServer(traceModel.storage(), sha1 => traceModel.resourceForSha1(sha1));
   loadedTraces.set(traceUrl, { traceModel, snapshotServer });
   return traceModel;
 }

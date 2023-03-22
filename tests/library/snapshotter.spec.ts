@@ -57,11 +57,9 @@ it.describe('snapshots', () => {
 
   it('should collect multiple', async ({ page, toImpl, snapshotter }) => {
     await page.setContent('<button>Hello</button>');
-    const snapshots = [];
-    snapshotter.onSnapshotEvent(snapshot => snapshots.push(snapshot));
     await snapshotter.captureSnapshot(toImpl(page), 'call@1', 'snapshot@call@1');
     await snapshotter.captureSnapshot(toImpl(page), 'call@2', 'snapshot@call@2');
-    expect(snapshots.length).toBe(2);
+    expect(snapshotter.snapshotCount()).toBe(2);
   });
 
   it('should respect inline CSSOM change', async ({ page, toImpl, snapshotter }) => {
@@ -88,7 +86,7 @@ it.describe('snapshots', () => {
     const snapshot1 = await snapshotter.captureSnapshot(toImpl(page), 'call@1', 'snapshot@call@1');
     expect(distillSnapshot(snapshot1)).toBe('<DIV id=\"div\" attr1=\"1\" attr2=\"2\"></DIV>');
     await page.evaluate(() => document.getElementById('div').removeAttribute('attr2'));
-    const snapshot2 = await snapshotter.captureSnapshot(toImpl(page), 'snapshot@call@2');
+    const snapshot2 = await snapshotter.captureSnapshot(toImpl(page), 'call@2', 'snapshot@call@2');
     expect(distillSnapshot(snapshot2)).toBe('<DIV id=\"div\" attr1=\"1\"></DIV>');
   });
 
@@ -125,7 +123,7 @@ it.describe('snapshots', () => {
     expect(distillSnapshot(snapshot1)).toBe('<LINK rel=\"stylesheet\" href=\"style.css\"><BUTTON>Hello</BUTTON>');
 
     await page.evaluate(() => { (document.styleSheets[0].cssRules[0] as any).style.color = 'blue'; });
-    const snapshot2 = await snapshotter.captureSnapshot(toImpl(page), 'call@1', 'snapshot@call@1');
+    const snapshot2 = await snapshotter.captureSnapshot(toImpl(page), 'call@2', 'snapshot@call@2');
     const resource = snapshot2.resourceByUrl(`http://localhost:${server.PORT}/style.css`);
     expect((await snapshotter.resourceContentForTest(resource.response.content._sha1)).toString()).toBe('button { color: blue; }');
   });
@@ -171,7 +169,7 @@ it.describe('snapshots', () => {
 
     // Marking iframe hierarchy is racy, do not expect snapshot, wait for it.
     for (let counter = 0; ; ++counter) {
-      const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'snapshot' + counter);
+      const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'call@' + counter, 'snapshot@call@' + counter);
       const text = distillSnapshot(snapshot).replace(/frame@[^"]+["]/, '<id>"');
       if (text === '<IFRAME __playwright_src__=\"/snapshot/<id>\"></IFRAME>')
         break;
@@ -227,7 +225,7 @@ it.describe('snapshots', () => {
     }
     await handle.evaluate(element => element.setAttribute('data', 'two'));
     {
-      const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'snapshot@call@2');
+      const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'call@3', 'snapshot@call@3');
       expect(distillSnapshot(snapshot)).toBe('<BUTTON data="two">Hello</BUTTON>');
     }
   });
@@ -251,11 +249,11 @@ it.describe('snapshots', () => {
       }
     });
 
-    const renderer1 = await snapshotter.captureSnapshot(toImpl(page), 'call1', 'snapshot@call@1');
+    const renderer1 = await snapshotter.captureSnapshot(toImpl(page), 'call@1', 'snapshot@call@1');
     // Expect some adopted style sheets.
     expect(distillSnapshot(renderer1)).toContain('__playwright_style_sheet_');
 
-    const renderer2 = await snapshotter.captureSnapshot(toImpl(page), 'call2', 'snapshot@call@2');
+    const renderer2 = await snapshotter.captureSnapshot(toImpl(page), 'call@2', 'snapshot@call@2');
     const snapshot2 = renderer2.snapshot();
     // Second snapshot should be just a copy of the first one.
     expect(snapshot2.html).toEqual([[1, 13]]);

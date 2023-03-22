@@ -20,7 +20,7 @@ export class SnapshotRenderer {
   private _snapshots: FrameSnapshot[];
   private _index: number;
   readonly snapshotName: string | undefined;
-  _resources: ResourceSnapshot[];
+  private _resources: ResourceSnapshot[];
   private _snapshot: FrameSnapshot;
   private _callId: string;
 
