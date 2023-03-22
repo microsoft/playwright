@@ -14,22 +14,25 @@
  * limitations under the License.
  */
 
-import type { FullConfig, FullResult, Reporter, TestError, TestResult, TestStep } from '../../types/testReporter';
+import type { FullConfig, FullResult, Reporter, TestError, TestResult, TestStep, Location } from '../../types/testReporter';
 import type { Suite, TestCase } from '../common/test';
 import type { JsonConfig, JsonProject, JsonSuite, JsonTestCase, JsonTestResultEnd, JsonTestResultStart, JsonTestStepEnd, JsonTestStepStart } from '../isomorphic/teleReceiver';
 import type { SuitePrivate } from '../../types/reporterPrivate';
 import type { FullConfigInternal, FullProjectInternal } from '../common/types';
 import { createGuid } from 'playwright-core/lib/utils';
 import { serializeRegexPatterns } from '../isomorphic/teleReceiver';
+import path from 'path';
 
 export class TeleReporterEmitter implements Reporter {
   private _messageSink: (message: any) => void;
+  private _rootDir!: string;
 
   constructor(messageSink: (message: any) => void) {
     this._messageSink = messageSink;
   }
 
   onBegin(config: FullConfig, suite: Suite) {
+    this._rootDir = config.rootDir;
     const projects: any[] = [];
     for (const projectSuite of suite.suites) {
       const report = this._serializeProject(projectSuite);
@@ -113,7 +116,7 @@ export class TeleReporterEmitter implements Reporter {
   private _serializeConfig(config: FullConfig): JsonConfig {
     return {
       rootDir: config.rootDir,
-      configFile: config.configFile,
+      configFile: this._relativePath(config.configFile),
       listOnly: (config as FullConfigInternal)._internal.listOnly,
     };
   }
@@ -124,10 +127,10 @@ export class TeleReporterEmitter implements Reporter {
       id: (project as FullProjectInternal)._internal.id,
       metadata: project.metadata,
       name: project.name,
-      outputDir: project.outputDir,
+      outputDir: this._relativePath(project.outputDir),
       repeatEach: project.repeatEach,
       retries: project.retries,
-      testDir: project.testDir,
+      testDir: this._relativePath(project.testDir),
       testIgnore: serializeRegexPatterns(project.testIgnore),
       testMatch: serializeRegexPatterns(project.testMatch),
       timeout: project.timeout,
@@ -137,7 +140,7 @@ export class TeleReporterEmitter implements Reporter {
       grep: serializeRegexPatterns(project.grep),
       grepInvert: serializeRegexPatterns(project.grepInvert || []),
       dependencies: project.dependencies,
-      snapshotDir: project.snapshotDir,
+      snapshotDir: this._relativePath(project.snapshotDir),
     };
     return report;
   }
@@ -148,7 +151,7 @@ export class TeleReporterEmitter implements Reporter {
       title: suite.title,
       fileId: (suite as SuitePrivate)._fileId,
       parallelMode: (suite as SuitePrivate)._parallelMode,
-      location: suite.location,
+      location: this._relativeLocation(suite.location),
       suites: suite.suites.map(s => this._serializeSuite(s)),
       tests: suite.tests.map(t => this._serializeTest(t)),
     };
@@ -159,7 +162,7 @@ export class TeleReporterEmitter implements Reporter {
     return {
       testId: test.id,
       title: test.title,
-      location: test.location,
+      location: this._relativeLocation(test.location),
       expectedStatus: test.expectedStatus,
       timeout: test.timeout,
       annotations: test.annotations,
@@ -193,7 +196,7 @@ export class TeleReporterEmitter implements Reporter {
       title: step.title,
       category: step.category,
       startTime: step.startTime.toISOString(),
-      location: step.location,
+      location: this._relativeLocation(step.location),
     };
   }
 
@@ -203,6 +206,25 @@ export class TeleReporterEmitter implements Reporter {
       duration: step.duration,
       error: step.error,
     };
+  }
+
+  private _relativeLocation(location: Location): Location;
+  private _relativeLocation(location?: Location): Location | undefined;
+  private _relativeLocation(location: Location | undefined): Location | undefined {
+    if (!location)
+      return location;
+    return {
+      ...location,
+      file: this._relativePath(location.file),
+    };
+  }
+
+  private _relativePath(absolutePath: string): string;
+  private _relativePath(absolutePath?: string): string | undefined;
+  private _relativePath(absolutePath?: string): string | undefined {
+    if (!absolutePath)
+      return absolutePath;
+    return path.relative(this._rootDir, absolutePath);
   }
 }
 
