@@ -23,7 +23,7 @@ import { parseAttributeSelector } from '../../utils/isomorphic/selectorParser';
 import type { NestedSelectorBody, ParsedSelector, ParsedSelectorPart } from '../../utils/isomorphic/selectorParser';
 import { allEngineNames, parseSelector, stringifySelector } from '../../utils/isomorphic/selectorParser';
 import { type TextMatcher, elementMatchesText, elementText, type ElementText } from './selectorUtils';
-import { SelectorEvaluatorImpl } from './selectorEvaluator';
+import { SelectorEvaluatorImpl, sortInDOMOrder } from './selectorEvaluator';
 import { enclosingShadowRootOrDocument, isElementVisible, parentElementOrShadowHost } from './domUtils';
 import type { CSSComplexSelectorList } from '../../utils/isomorphic/cssParser';
 import { generateSelector } from './selectorGenerator';
@@ -113,6 +113,7 @@ export class InjectedScript {
     this._engines.set('visible', this._createVisibleEngine());
     this._engines.set('internal:control', this._createControlEngine());
     this._engines.set('internal:has', this._createHasEngine());
+    this._engines.set('internal:or', { queryAll: () => [] });
     this._engines.set('internal:label', this._createInternalLabelEngine());
     this._engines.set('internal:text', this._createTextEngine(true, true));
     this._engines.set('internal:has-text', this._createInternalHasTextEngine());
@@ -169,6 +170,14 @@ export class InjectedScript {
     return new Set<Element>(list.slice(nth, nth + 1));
   }
 
+  private _queryOr(elements: Set<Element>, part: ParsedSelectorPart): Set<Element> {
+    const list = [...elements];
+    let nth = +part.body;
+    if (nth === -1)
+      nth = list.length - 1;
+    return new Set<Element>(list.slice(nth, nth + 1));
+  }
+
   private _queryLayoutSelector(elements: Set<Element>, part: ParsedSelectorPart, originalRoot: Node): Set<Element> {
     const name = part.name as LayoutSelectorName;
     const body = part.body as NestedSelectorBody;
@@ -210,6 +219,9 @@ export class InjectedScript {
       for (const part of selector.parts) {
         if (part.name === 'nth') {
           roots = this._queryNth(roots, part);
+        } else if (part.name === 'internal:or') {
+          const orElements = this.querySelectorAll((part.body as NestedSelectorBody).parsed, root);
+          roots = new Set(sortInDOMOrder(new Set([...roots, ...orElements])));
         } else if (kLayoutSelectorNames.includes(part.name as LayoutSelectorName)) {
           roots = this._queryLayoutSelector(roots, part, root);
         } else {

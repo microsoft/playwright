@@ -19,7 +19,7 @@ import { type NestedSelectorBody, parseAttributeSelector, parseSelector, stringi
 import type { ParsedSelector } from './selectorParser';
 
 export type Language = 'javascript' | 'python' | 'java' | 'csharp';
-export type LocatorType = 'default' | 'role' | 'text' | 'label' | 'placeholder' | 'alt' | 'title' | 'test-id' | 'nth' | 'first' | 'last' | 'has-text' | 'has' | 'frame';
+export type LocatorType = 'default' | 'role' | 'text' | 'label' | 'placeholder' | 'alt' | 'title' | 'test-id' | 'nth' | 'first' | 'last' | 'has-text' | 'has' | 'frame' | 'or';
 export type LocatorBase = 'page' | 'locator' | 'frame-locator';
 
 type LocatorOptions = { attrs?: { name: string, value: string | boolean | number}[], exact?: boolean, name?: string | RegExp };
@@ -84,6 +84,11 @@ function innerAsLocator(factory: LocatorFactory, parsed: ParsedSelector, isFrame
     if (part.name === 'internal:has') {
       const inner = innerAsLocator(factory, (part.body as NestedSelectorBody).parsed);
       tokens.push(factory.generateLocator(base, 'has', inner));
+      continue;
+    }
+    if (part.name === 'internal:or') {
+      const inner = innerAsLocator(factory, (part.body as NestedSelectorBody).parsed);
+      tokens.push(factory.generateLocator(base, 'or', inner));
       continue;
     }
     if (part.name === 'internal:label') {
@@ -195,6 +200,8 @@ export class JavaScriptLocatorFactory implements LocatorFactory {
         return `filter({ hasText: ${this.toHasText(body as string)} })`;
       case 'has':
         return `filter({ has: ${body} })`;
+      case 'or':
+        return `or(${body})`;
       case 'test-id':
         return `getByTestId(${this.quote(body as string)})`;
       case 'text':
@@ -263,6 +270,8 @@ export class PythonLocatorFactory implements LocatorFactory {
         return `filter(has_text=${this.toHasText(body as string)})`;
       case 'has':
         return `filter(has=${body})`;
+      case 'or':
+        return `or_(${body})`;
       case 'test-id':
         return `get_by_test_id(${this.quote(body as string)})`;
       case 'text':
@@ -340,6 +349,8 @@ export class JavaLocatorFactory implements LocatorFactory {
         return `filter(new ${clazz}.FilterOptions().setHasText(${this.toHasText(body)}))`;
       case 'has':
         return `filter(new ${clazz}.FilterOptions().setHas(${body}))`;
+      case 'or':
+        return `or(${body})`;
       case 'test-id':
         return `getByTestId(${this.quote(body as string)})`;
       case 'text':
@@ -411,6 +422,8 @@ export class CSharpLocatorFactory implements LocatorFactory {
         return `Filter(new() { ${this.toHasText(body)} })`;
       case 'has':
         return `Filter(new() { Has = ${body} })`;
+      case 'or':
+        return `Or(${body})`;
       case 'test-id':
         return `GetByTestId(${this.quote(body as string)})`;
       case 'text':
