@@ -6,6 +6,47 @@ toc_max_heading_level: 2
 
 import LiteYouTube from '@site/src/components/LiteYouTube';
 
+## Version 1.32
+
+### Introducing UI Mode (preview)
+
+New UI Mode lets you explore, run and debug tests. Comes with a built-in watch mode.
+
+<img width="1392" alt="Playwright UI Mode" src="https://user-images.githubusercontent.com/746130/227004851-3901a691-4f8e-43d6-8d6b-cbfeafaeb999.png">
+
+Engage with a new flag `--ui`:
+
+```sh
+npx playwright test --ui
+```
+
+### New APIs
+
+- New options [`option: updateMode`] and [`option: updateContent`] in [`method: Page.routeFromHAR`] and [`method: BrowserContext.routeFromHAR`].
+- Chaining existing locator objects, see [locator docs](./locators.md#chaining-locators) for details.
+- New property [`property: TestInfo.testId`].
+- New option [`option: name`] in method [`method: Tracing.startChunk`].
+
+
+### ⚠️ Breaking change in component tests
+
+Note: **component tests only**, does not affect end-to-end tests.
+
+* `@playwright/experimental-ct-react` now supports **React 18 only**.
+* If you're running component tests with React 16 or 17, please replace
+  `@playwright/experimental-ct-react` with `@playwright/experimental-ct-react17`.
+
+### Browser Versions
+
+* Chromium 112.0.5615.29	
+* Mozilla Firefox 111.0
+* WebKit 16.4
+
+This version was also tested against the following stable channels:
+
+* Google Chrome 111
+* Microsoft Edge 111
+
 ## Version 1.31
 
 <LiteYouTube
