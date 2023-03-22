@@ -689,6 +689,19 @@ test('should include requestUrl in route.fulfill', async ({ page, runAndTrace, b
   await expect(callLine.getByText('requestUrl')).toContainText('http://test.com');
 });
 
+test('should not crash with broken locator', async ({ page, runAndTrace, server }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/21832' });
+  const traceViewer = await runAndTrace(async () => {
+    try {
+      await page.locator("[class*=github-btn] a]").click();
+    } catch (e) {
+    }
+  });
+  await expect(traceViewer.page).toHaveTitle('Playwright Trace Viewer');
+  const header = traceViewer.page.getByText('Playwright', { exact: true });
+  await expect(header).toBeVisible();
+});
+
 test('should include requestUrl in route.continue', async ({ page, runAndTrace, server }) => {
   await page.route('**/*', route => {
     route.continue({ url: server.EMPTY_PAGE });
