@@ -17,8 +17,7 @@
 import './filmStrip.css';
 import type { Boundaries, Size } from '../geometry';
 import * as React from 'react';
-import { useMeasure } from './helpers';
-import { upperBound } from '@web/uiUtils';
+import { useMeasure, upperBound } from '@web/uiUtils';
 import type { PageEntry } from '../entries';
 import type { MultiTraceModel } from './modelUtil';
 

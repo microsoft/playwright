@@ -16,13 +16,12 @@
 
 import './snapshotTab.css';
 import * as React from 'react';
-import { useMeasure } from './helpers';
 import type { ActionTraceEvent } from '@trace/trace';
 import { context, prevInList } from './modelUtil';
 import { CodeMirrorWrapper } from '@web/components/codeMirrorWrapper';
 import { Toolbar } from '@web/components/toolbar';
 import { ToolbarButton } from '@web/components/toolbarButton';
-import { copy } from '@web/uiUtils';
+import { copy, useMeasure } from '@web/uiUtils';
 import { InjectedScript } from '@injected/injectedScript';
 import { Recorder  } from '@injected/recorder';
 import { asLocator } from '@isomorphic/locatorGenerators';
