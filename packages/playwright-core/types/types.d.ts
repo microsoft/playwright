@@ -13402,8 +13402,16 @@ export interface ElectronApplication {
    *   // ...
    * ```
    *
+   * @param options
    */
-  firstWindow(): Promise<Page>;
+  firstWindow(options?: {
+    /**
+     * maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The
+     * default value can be changed by using the
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout).
+     */
+    timeout?: number;
+  }): Promise<Page>;
 
   /**
    * Returns the main process for this Electron Application.
