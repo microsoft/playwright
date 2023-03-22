@@ -549,7 +549,7 @@ const refreshRootSuite = (eraseResults: boolean): Promise<void> => {
     skipped: 0,
   };
   let config: FullConfig;
-  receiver = new TeleReporterReceiver({
+  receiver = new TeleReporterReceiver(pathSeparator, {
     onBegin: (c: FullConfig, suite: Suite) => {
       if (!rootSuite)
         rootSuite = suite;
