@@ -591,8 +591,8 @@ const refreshRootSuite = (eraseResults: boolean): Promise<void> => {
     return;
   }
 
-  if (message.method === 'filesChanged') {
-    runWatchedTests(message.params.fileNames);
+  if (message.method === 'testFilesChanged') {
+    runWatchedTests(message.params.testFileNames);
     return;
   }
 

@@ -34,7 +34,8 @@ class UIMode {
   private _page!: Page;
   private _testRun: { run: Promise<FullResult['status']>, stop: ManualPromise<void> } | undefined;
   globalCleanup: (() => Promise<FullResult['status']>) | undefined;
-  private _testWatcher: { watcher: FSWatcher, watchedFiles: string[], collector: Set<string>, timer?: NodeJS.Timeout } | undefined;
+  private _globalWatcher: Watcher;
+  private _testWatcher: Watcher;
   private _originalStderr: (buffer: string | Uint8Array) => void;
 
   constructor(config: FullConfigInternal) {
@@ -56,24 +57,12 @@ class UIMode {
     config._internal.configCLIOverrides.use.trace = { mode: 'on', sources: false };
 
     this._originalStderr = process.stderr.write.bind(process.stderr);
-    this._installGlobalWatcher();
-  }
-
-  private _installGlobalWatcher(): FSWatcher {
-    const projectDirs = new Set<string>();
-    for (const p of this._config.projects)
-      projectDirs.add(p.testDir);
-    let coalescingTimer: NodeJS.Timeout | undefined;
-    const watcher = chokidar.watch([...projectDirs], { ignoreInitial: true, persistent: true }).on('all', async event => {
-      if (event !== 'add' && event !== 'change' && event !== 'unlink')
-        return;
-      if (coalescingTimer)
-        clearTimeout(coalescingTimer);
-      coalescingTimer = setTimeout(() => {
-        this._dispatchEvent({ method: 'listChanged' });
-      }, 200);
+    this._globalWatcher = new Watcher('deep', () => this._dispatchEvent({ method: 'listChanged' }));
+    this._testWatcher = new Watcher('flat', events => {
+      const collector = new Set<string>();
+      events.forEach(f => collectAffectedTestFiles(f.file, collector));
+      this._dispatchEvent({ method: 'testFilesChanged', params: { testFileNames: [...collector] } });
     });
-    return watcher;
   }
 
   async runGlobalSetup(): Promise<FullResult['status']> {
@@ -163,6 +152,11 @@ class UIMode {
     reporter.onConfigure(this._config);
     const status = await taskRunner.run(context, 0);
     reporter.onExit({ status });
+
+    const projectDirs = new Set<string>();
+    for (const p of this._config.projects)
+      projectDirs.add(p.testDir);
+    this._globalWatcher.update([...projectDirs], false);
   }
 
   private async _runTests(testIds: string[]) {
@@ -195,35 +189,7 @@ class UIMode {
       files.add(fileName);
       dependenciesForTestFile(fileName).forEach(file => files.add(file));
     }
-    const watchedFiles = [...files].sort();
-    if (this._testWatcher && JSON.stringify(this._testWatcher.watchedFiles) === JSON.stringify(watchedFiles))
-      return;
-
-    if (this._testWatcher) {
-      if (this._testWatcher.collector.size)
-        this._dispatchEvent({ method: 'filesChanged', params: { fileNames: [...this._testWatcher.collector] } });
-      clearTimeout(this._testWatcher.timer);
-      this._testWatcher.watcher.close().then(() => {});
-      this._testWatcher = undefined;
-    }
-
-    if (!watchedFiles.length)
-      return;
-
-    const collector = new Set<string>();
-    const watcher = chokidar.watch(watchedFiles, { ignoreInitial: true }).on('all', async (event, file) => {
-      if (event !== 'add' && event !== 'change')
-        return;
-      collectAffectedTestFiles(file, collector);
-      if (this._testWatcher!.timer)
-        clearTimeout(this._testWatcher!.timer);
-      this._testWatcher!.timer = setTimeout(() => {
-        const fileNames = [...collector];
-        collector.clear();
-        this._dispatchEvent({ method: 'filesChanged', params: { fileNames } });
-      }, 250);
-    });
-    this._testWatcher = { watcher, watchedFiles, collector };
+    this._testWatcher.update([...files], true);
   }
 
   private async _stopTests() {
@@ -255,4 +221,55 @@ function chunkToPayload(type: 'stdout' | 'stderr', chunk: Buffer | string): Stdi
   if (chunk instanceof Buffer)
     return { type, buffer: chunk.toString('base64') };
   return { type, text: chunk };
+}
+
+type FSEvent = { event: 'add' | 'addDir' | 'change' | 'unlink' | 'unlinkDir', file: string };
+
+class Watcher {
+  private _onChange: (events: FSEvent[]) => void;
+  private _watchedFiles: string[] = [];
+  private _collector: FSEvent[] = [];
+  private _fsWatcher: FSWatcher | undefined;
+  private _throttleTimer: NodeJS.Timeout | undefined;
+  private _mode: string;
+
+  constructor(mode: 'flat' | 'deep', onChange: (events: FSEvent[]) => void) {
+    this._mode = mode;
+    this._onChange = onChange;
+  }
+
+  update(watchedFiles: string[], reportPending: boolean) {
+    if (JSON.stringify(this._watchedFiles) === JSON.stringify(watchedFiles))
+      return;
+
+    if (reportPending)
+      this._reportEventsIfAny();
+
+    this._watchedFiles = watchedFiles;
+    this._fsWatcher?.close().then(() => {});
+    this._fsWatcher = undefined;
+    this._collector.length = 0;
+    clearTimeout(this._throttleTimer);
+    this._throttleTimer = undefined;
+
+    if (!this._watchedFiles.length)
+      return;
+
+    this._fsWatcher = chokidar.watch(watchedFiles, { ignoreInitial: true }).on('all', async (event, file) => {
+      if (this._throttleTimer)
+        clearTimeout(this._throttleTimer);
+      if (this._mode === 'flat' && event !== 'add' && event !== 'change')
+        return;
+      if (this._mode === 'deep' && event !== 'add' && event !== 'change' && event !== 'unlink' && event !== 'addDir' && event !== 'unlinkDir')
+        return;
+      this._collector.push({ event, file });
+      this._throttleTimer = setTimeout(() => this._reportEventsIfAny(), 250);
+    });
+  }
+
+  private _reportEventsIfAny() {
+    if (this._collector.length)
+      this._onChange(this._collector.slice());
+    this._collector.length = 0;
+  }
 }
