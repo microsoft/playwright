@@ -310,7 +310,7 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
 
   async abort(errorCode?: string) {
     this._checkNotHandled();
-    await this._raceWithTargetClose(this._channel.abort({ errorCode }));
+    await this._raceWithTargetClose(this._channel.abort({ requestUrl: this.request()._initializer.url, errorCode }));
     this._reportHandled(true);
   }
 
@@ -384,6 +384,7 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
       headers['content-length'] = String(length);
 
     await this._raceWithTargetClose(this._channel.fulfill({
+      requestUrl: this.request()._initializer.url,
       status: statusOption || 200,
       headers: headersObjectToArray(headers),
       body,
@@ -414,6 +415,7 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
     const options = this.request()._fallbackOverridesForContinue();
     return await this._wrapApiCall(async () => {
       await this._raceWithTargetClose(this._channel.continue({
+        requestUrl: this.request()._initializer.url,
         url: options.url,
         method: options.method,
         headers: options.headers ? headersObjectToArray(options.headers) : undefined,

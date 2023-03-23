@@ -1974,6 +1974,7 @@ scheme.RouteRedirectNavigationRequestParams = tObject({
 scheme.RouteRedirectNavigationRequestResult = tOptional(tObject({}));
 scheme.RouteAbortParams = tObject({
   errorCode: tOptional(tString),
+  requestUrl: tString,
 });
 scheme.RouteAbortResult = tOptional(tObject({}));
 scheme.RouteContinueParams = tObject({
@@ -1981,6 +1982,7 @@ scheme.RouteContinueParams = tObject({
   method: tOptional(tString),
   headers: tOptional(tArray(tType('NameValue'))),
   postData: tOptional(tBinary),
+  requestUrl: tString,
 });
 scheme.RouteContinueResult = tOptional(tObject({}));
 scheme.RouteFulfillParams = tObject({
@@ -1989,6 +1991,7 @@ scheme.RouteFulfillParams = tObject({
   body: tOptional(tString),
   isBase64: tOptional(tBoolean),
   fetchResponseUid: tOptional(tString),
+  requestUrl: tString,
 });
 scheme.RouteFulfillResult = tOptional(tObject({}));
 scheme.ResourceTiming = tObject({
