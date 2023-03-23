@@ -2740,6 +2740,7 @@ Route:
     abort:
       parameters:
         errorCode: string?
+        requestUrl: string
 
     continue:
       parameters:
@@ -2749,6 +2750,7 @@ Route:
           type: array?
           items: NameValue
         postData: binary?
+        requestUrl: string
 
     fulfill:
       parameters:
@@ -2760,6 +2762,7 @@ Route:
         body: string?
         isBase64: boolean?
         fetchResponseUid: string?
+        requestUrl: string
 
 ResourceTiming:
   type: object
