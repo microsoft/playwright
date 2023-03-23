@@ -31,7 +31,7 @@ import { open } from '../utilsBundle';
 
 class UIMode {
   private _config: FullConfigInternal;
-  private _page!: Page;
+  private _page: Page | undefined;
   private _testRun: { run: Promise<FullResult['status']>, stop: ManualPromise<void> } | undefined;
   globalCleanup: (() => Promise<FullResult['status']>) | undefined;
   private _testWatcher: { watcher: FSWatcher, watchedFiles: string[], collector: Set<string>, timer?: NodeJS.Timeout } | undefined;
@@ -148,7 +148,8 @@ class UIMode {
   }
 
   private _dispatchEvent(message: any) {
-    // eslint-disable-next-line no-console
+    if (!this._page)
+      return;
     this._page.mainFrame().evaluateExpression(dispatchFuncSource, true, message).catch(e => this._originalStderr(String(e)));
   }
 
