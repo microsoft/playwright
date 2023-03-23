@@ -25,7 +25,7 @@ import { ManualPromise } from '../../../utils/manualPromise';
 import type { RegisteredListener } from '../../../utils/eventsHelper';
 import { eventsHelper } from '../../../utils/eventsHelper';
 import { assert, createGuid, monotonicTime } from '../../../utils';
-import { mkdirIfNeeded, removeFolders } from '../../../utils/fileUtils';
+import { removeFolders } from '../../../utils/fileUtils';
 import { Artifact } from '../../artifact';
 import { BrowserContext } from '../../browserContext';
 import { ElementHandle } from '../../dom';
@@ -67,7 +67,6 @@ type RecordingState = {
 const kScreencastOptions = { width: 800, height: 600, quality: 90 };
 
 export class Tracing extends SdkObject implements InstrumentationListener, SnapshotterDelegate, HarTracerDelegate {
-  private _writeChain = Promise.resolve();
   private _snapshotter?: Snapshotter;
   private _harTracer: HarTracer;
   private _screencastListeners: RegisteredListener[] = [];
@@ -78,6 +77,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   private _tracesTmpDir: string | undefined;
   private _allResources = new Set<string>();
   private _contextCreatedEvent: trace.ContextCreatedTraceEvent;
+  private _fs = new CachingFS();
 
   constructor(context: BrowserContext | APIRequestContext, tracesDir: string | undefined) {
     super(context, 'tracing');
@@ -139,7 +139,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     state.resourcesDir = path.join(state.tracesDir, 'resources');
     state.traceFile = path.join(state.tracesDir, traceName + '.trace');
     state.networkFile = path.join(state.tracesDir, traceName + '.network');
-    this._writeChain = fs.promises.mkdir(state.resourcesDir, { recursive: true }).then(() => fs.promises.writeFile(state.networkFile, ''));
+    this._fs.appendText(state.networkFile, '');
     if (options.snapshots)
       this._harTracer.start();
   }
@@ -162,10 +162,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     if (options.name && options.name !== this._state.traceName)
       this._changeTraceName(this._state, options.name);
 
-    this._appendTraceOperation(async () => {
-      await mkdirIfNeeded(state.traceFile);
-      await fs.promises.appendFile(state.traceFile, JSON.stringify({ ...this._contextCreatedEvent, title: options.title, wallTime: Date.now() }) + '\n');
-    });
+    this._fs.appendText(state.traceFile, JSON.stringify({ ...this._contextCreatedEvent, title: options.title, wallTime: Date.now() }) + '\n');
 
     this._context.instrumentation.addListener(this, this._context);
     if (state.options.screenshots)
@@ -194,14 +191,12 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   }
 
   private async _changeTraceName(state: RecordingState, name: string) {
-    await this._appendTraceOperation(async () => {
-      const oldNetworkFile = state.networkFile;
-      state.traceName = name;
-      state.traceFile = path.join(state.tracesDir, name + '.trace');
-      state.networkFile = path.join(state.tracesDir, name + '.network');
-      // Network file survives across chunks, so make a copy with the new name.
-      await fs.promises.copyFile(oldNetworkFile, state.networkFile);
-    });
+    const oldNetworkFile = state.networkFile;
+    state.traceName = name;
+    state.traceFile = path.join(state.tracesDir, name + '.trace');
+    state.networkFile = path.join(state.tracesDir, name + '.network');
+    // Network file survives across chunks, so make a copy with the new name.
+    await this._fs.copyFile(oldNetworkFile, state.networkFile);
   }
 
   async stop() {
@@ -212,7 +207,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     if (this._state.recording)
       throw new Error(`Must stop trace file before stopping tracing`);
     this._harTracer.stop();
-    await this._writeChain;
+    await this._fs.flush();
     this._state = undefined;
   }
 
@@ -231,7 +226,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   async dispose() {
     this._snapshotter?.dispose();
     this._harTracer.stop();
-    await this._writeChain;
+    await this._fs.flush();
   }
 
   async stopChunk(params: TracingTracingStopChunkParams): Promise<{ artifact?: Artifact, entries?: NameValue[] }> {
@@ -239,36 +234,45 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       throw new Error(`Tracing is already stopping`);
     this._isStopping = true;
 
-    if (!this._state || !this._state.recording) {
+    const state = this._state;
+    if (!state || !state.recording) {
       this._isStopping = false;
       if (params.mode !== 'discard')
         throw new Error(`Must start tracing before stopping`);
       return {};
     }
 
-    const state = this._state!;
     this._context.instrumentation.removeListener(this);
-    if (this._state?.options.screenshots)
+    if (state.options.screenshots)
       this._stopScreencast();
 
     if (state.options.snapshots)
       await this._snapshotter?.stop();
 
-    // Chain the export operation against write operations,
-    // so that neither trace files nor sha1s change during the export.
-    return await this._appendTraceOperation(async () => {
-      if (params.mode === 'discard')
-        return {};
+    // Extract the list of resources collected to this moment.
+    // Network recording will keep adding to it, and we don't want any new
+    // resources in this chunk.
+    const sha1s = new Set([...state.traceSha1s, ...state.networkSha1s]);
 
-      // Network file survives across chunks, make a snapshot before returning the resulting entries.
-      const suffix = state.chunkOrdinal ? `-${state.chunkOrdinal}` : ``;
-      const networkFile = path.join(state.tracesDir, state.traceName + `${suffix}.network`);
-      await fs.promises.copyFile(state.networkFile, networkFile);
+    // Network file survives across chunks, make a snapshot before returning the resulting entries.
+    const suffix = state.chunkOrdinal ? `-${state.chunkOrdinal}` : ``;
+    const networkFile = path.join(state.tracesDir, state.traceName + `${suffix}.network`);
+    this._fs.copyFile(state.networkFile, networkFile);
+
+    // Chain the export operation against write operations,
+    // so that files that are not modified while being zipped.
+    return await this._fs.flushLockAndRun(async () => {
+      // Closing the browser removes tracesDir and writing/archiving fails.
+      // In this case, we return nothing - clients are ready for it.
+      // In theory, we can also surface errors to the user.
+      const hadErrors = this._fs.getAndResetHadErrorsFlag();
+      if (params.mode === 'discard' || hadErrors)
+        return {};
 
       const entries: NameValue[] = [];
       entries.push({ name: 'trace.trace', value: state.traceFile });
       entries.push({ name: 'trace.network', value: networkFile });
-      for (const sha1 of new Set([...state.traceSha1s, ...state.networkSha1s]))
+      for (const sha1 of sha1s)
         entries.push({ name: path.join('resources', sha1), value: path.join(state.resourcesDir, sha1) });
 
       if (params.mode === 'entries')
@@ -280,12 +284,12 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       state.traceSha1s = new Set();
       this._isStopping = false;
       state.recording = false;
-    }) || { };
+    });
   }
 
-  private _exportZip(entries: NameValue[], state: RecordingState): Promise<Artifact | undefined> {
+  private _exportZip(entries: NameValue[], state: RecordingState): Promise<Artifact> {
     const zipFile = new yazl.ZipFile();
-    const result = new ManualPromise<Artifact | undefined>();
+    const result = new ManualPromise<Artifact>();
     (zipFile as any as EventEmitter).on('error', error => result.reject(error));
     for (const entry of entries)
       zipFile.addFile(entry.value, entry.name);
@@ -368,10 +372,8 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
 
   onEntryFinished(entry: har.Entry) {
     const event: trace.ResourceSnapshotTraceEvent = { type: 'resource-snapshot', snapshot: entry };
-    this._appendTraceOperation(async () => {
-      const visited = visitTraceEvent(event, this._state!.networkSha1s);
-      await fs.promises.appendFile(this._state!.networkFile, JSON.stringify(visited) + '\n');
-    });
+    const visited = visitTraceEvent(event, this._state!.networkSha1s);
+    this._fs.appendText(this._state!.networkFile, JSON.stringify(visited) + '\n');
   }
 
   onContentBlob(sha1: string, buffer: Buffer) {
@@ -409,10 +411,8 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   }
 
   private _appendTraceEvent(event: trace.TraceEvent) {
-    this._appendTraceOperation(async () => {
-      const visited = visitTraceEvent(event, this._state!.traceSha1s);
-      await fs.promises.appendFile(this._state!.traceFile, JSON.stringify(visited) + '\n');
-    });
+    const visited = visitTraceEvent(event, this._state!.traceSha1s);
+    this._fs.appendText(this._state!.traceFile, JSON.stringify(visited) + '\n');
   }
 
   private _appendResource(sha1: string, buffer: Buffer) {
@@ -420,33 +420,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       return;
     this._allResources.add(sha1);
     const resourcePath = path.join(this._state!.resourcesDir, sha1);
-    this._appendTraceOperation(async () => {
-      // Note: 'wx' flag only writes when the file does not exist.
-      // See https://nodejs.org/api/fs.html#file-system-flags.
-      // This way tracing never have to write the same resource twice.
-      await fs.promises.writeFile(resourcePath, buffer, { flag: 'wx' }).catch(() => {});
-    });
-  }
-
-  private async _appendTraceOperation<T>(cb: () => Promise<T>): Promise<T | undefined> {
-    // This method serializes all writes to the trace.
-    let error: Error | undefined;
-    let result: T | undefined;
-    this._writeChain = this._writeChain.then(async () => {
-      // This check is here because closing the browser removes the tracesDir and tracing
-      // dies trying to archive.
-      if (this._context instanceof BrowserContext && !this._context._browser.isConnected())
-        return;
-      try {
-        result = await cb();
-      } catch (e) {
-        error = e;
-      }
-    });
-    await this._writeChain;
-    if (error)
-      throw error;
-    return result;
+    this._fs.writeFile(resourcePath, buffer, true /* skipIfExists */);
   }
 }
 
@@ -470,7 +444,7 @@ function visitTraceEvent(object: any, sha1s: Set<string>): any {
   return object;
 }
 
-export function shouldCaptureSnapshot(metadata: CallMetadata): boolean {
+function shouldCaptureSnapshot(metadata: CallMetadata): boolean {
   return commandsWithTracingSnapshots.has(metadata.type + '.' + metadata.method);
 }
 
@@ -511,4 +485,71 @@ function createAfterActionTraceEvent(metadata: CallMetadata): trace.AfterActionT
     error: metadata.error?.error,
     result: metadata.result,
   };
+}
+
+class CachingFS {
+  private _writeChain = Promise.resolve();
+  private _dirsCreated = new Set<string>();
+  private _hadErrors = false;
+
+  private async _appendOperation<T>(cb: () => Promise<T>): Promise<T> {
+    // This method serializes all writes in a single chain.
+    let result: { value: T } | { error: Error };
+    this._writeChain = this._writeChain.then(async () => {
+      try {
+        result = { value: await cb() };
+      } catch (error) {
+        result = { error };
+      }
+    });
+    await this._writeChain;
+    if ('error' in result!)
+      throw result.error;
+    return result!.value;
+  }
+
+  private async _makeDirIfNeeded(filePath: string) {
+    const dir = path.dirname(filePath);
+    if (!this._dirsCreated.has(dir)) {
+      await fs.promises.mkdir(dir, { recursive: true }).catch(() => this._hadErrors = true);
+      this._dirsCreated.add(dir);
+    }
+  }
+
+  async appendText(filePath: string, text: string) {
+    return this._appendOperation(async () => {
+      await this._makeDirIfNeeded(filePath);
+      await fs.promises.appendFile(filePath, text).catch(() => this._hadErrors = true);
+    });
+  }
+
+  async writeFile(filePath: string, data: string | Buffer, skipIfExists: boolean) {
+    return this._appendOperation(async () => {
+      await this._makeDirIfNeeded(filePath);
+      // Note: 'wx' flag only writes when the file does not exist.
+      // See https://nodejs.org/api/fs.html#file-system-flags.
+      // This way tracing never have to write the same resource twice.
+      await fs.promises.writeFile(filePath, data, { flag: skipIfExists ? 'wx' : 'w' }).catch(() => {});
+    });
+  }
+
+  async copyFile(src: string, dst: string) {
+    return this._appendOperation(async () => {
+      await fs.promises.copyFile(src, dst).catch(() => this._hadErrors = true);
+    });
+  }
+
+  async flushLockAndRun<T>(operation: () => Promise<T>): Promise<T> {
+    return this._appendOperation(operation);
+  }
+
+  async flush() {
+    return this._appendOperation(() => Promise.resolve());
+  }
+
+  getAndResetHadErrorsFlag() {
+    const result = this._hadErrors;
+    this._hadErrors = false;
+    return result;
+  }
 }

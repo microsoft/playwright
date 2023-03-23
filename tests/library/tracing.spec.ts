@@ -233,6 +233,27 @@ test('should respect tracesDir and name', async ({ browserType, server }, testIn
   }
 });
 
+test('should survive browser.close with auto-created traces dir', async ({ browserType }, testInfo) => {
+  const oldTracesDir = (browserType as any)._defaultLaunchOptions.tracesDir;
+  (browserType as any)._defaultLaunchOptions.tracesDir = undefined;
+
+  const browser = await browserType.launch();
+  const page = await browser.newPage();
+  await page.context().tracing.start();
+  await page.setContent(`
+    <script>
+      setInterval(() => {
+        for (let i = 0; i < 100; i++)
+          console.log('hello');
+      }, 1);
+    </script>
+  `);
+  await new Promise(f => setTimeout(f, 500));
+  await browser.close();
+
+  (browserType as any)._defaultLaunchOptions.tracesDir = oldTracesDir;
+});
+
 test('should not include trace resources from the provious chunks', async ({ context, page, server, browserName }, testInfo) => {
   test.skip(browserName !== 'chromium', 'The number of screenshots is flaky in non-Chromium');
   await context.tracing.start({ screenshots: true, snapshots: true, sources: true });
