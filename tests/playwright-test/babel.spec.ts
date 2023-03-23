@@ -104,14 +104,16 @@ test('should work with |const| Type Parameters', async ({ runInlineTest }) => {
 
       test('works', () => {
         type HasNames = { names: readonly string[] };
-        function getNamesExactly<const T extends HasNames>(arg: T): T["names"] {
+        function getNamesExactly<const T extends HasNames>(arg: T): T['names'] {
         //                       ^^^^^
             return arg.names;
         }
-        const names = getNamesExactly({ names: ["Alice", "Bob", "Eve"] });
+        const names = getNamesExactly({ names: ['Alice', 'Bob', 'Eve'] });
+        console.log('names: ' + names.join(', '))
       })
     `,
   });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
+  expect(result.output).toContain('names: Alice, Bob, Eve');
 });
