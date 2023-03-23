@@ -90,6 +90,7 @@ export type JsonTestResultEnd = {
 
 export type JsonTestStepStart = {
   id: string;
+  parentStepId?: string;
   title: string;
   category: string,
   startTime: string;
@@ -193,19 +194,21 @@ export class TeleReporterReceiver {
   private _onStepBegin(testId: string, resultId: string, payload: JsonTestStepStart) {
     const test = this._tests.get(testId)!;
     const result = test.resultsMap.get(resultId)!;
+    const parentStep = payload.parentStepId ? result.stepMap.get(payload.parentStepId) : undefined;
+
     const step: TestStep = {
       titlePath: () => [],
       title: payload.title,
       category: payload.category,
       location: this._absoluteLocation(payload.location),
+      parent: parentStep,
       startTime: new Date(payload.startTime),
       duration: 0,
       steps: [],
     };
-    // TODO: implement nested steps.
     result.stepMap.set(payload.id, step);
-    result.stepStack[result.stepStack.length - 1].steps.push(step);
-    result.stepStack.push(step);
+    if (parentStep)
+      parentStep.steps.push(step);
     this._reporter.onStepBegin?.(test, result, step);
   }
 
@@ -213,9 +216,6 @@ export class TeleReporterReceiver {
     const test = this._tests.get(testId)!;
     const result = test.resultsMap.get(resultId)!;
     const step = result.stepMap.get(payload.id)!;
-    const i = result.stepStack.indexOf(step);
-    if (i !== -1)
-      result.stepStack.splice(i, 1);
     step.duration = payload.duration;
     step.error = payload.error;
     this._reporter.onStepEnd?.(test, result, step);
@@ -444,9 +444,7 @@ export class TeleTestCase implements reporterTypes.TestCase {
       steps: [],
       errors: [],
       stepMap: new Map(),
-      stepStack: [],
     };
-    result.stepStack.push(result);
     this.results.push(result);
     this.resultsMap.set(id, result);
     return result;
@@ -455,7 +453,6 @@ export class TeleTestCase implements reporterTypes.TestCase {
 
 export type TeleTestResult = reporterTypes.TestResult & {
   stepMap: Map<string, reporterTypes.TestStep>;
-  stepStack: (reporterTypes.TestStep | reporterTypes.TestResult)[];
   statusEx: reporterTypes.TestResult['status'] | 'scheduled' | 'running';
 };
 

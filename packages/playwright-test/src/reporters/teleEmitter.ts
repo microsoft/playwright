@@ -193,6 +193,7 @@ export class TeleReporterEmitter implements Reporter {
   private _serializeStepStart(step: TestStep): JsonTestStepStart {
     return {
       id: (step as any)[idSymbol],
+      parentStepId: (step.parent as any)?.[idSymbol],
       title: step.title,
       category: step.category,
       startTime: step.startTime.toISOString(),
