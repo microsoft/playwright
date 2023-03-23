@@ -60,7 +60,7 @@ const renderAction = (
   revealConsole: () => void
 ) => {
   const { errors, warnings } = modelUtil.stats(action);
-  const locator = action.params.selector ? asLocator(sdkLanguage || 'javascript', action.params.selector) : undefined;
+  const locator = action.params.selector ? asLocator(sdkLanguage || 'javascript', action.params.selector, false /* isFrameLocator */, true /* playSafe */) : undefined;
 
   let time: string = '';
   if (action.endTime)
