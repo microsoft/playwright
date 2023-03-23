@@ -36,7 +36,7 @@ or
 
 **Config file**
 
-```js
+```ts
 // playwright.config.ts
 import { defineConfig, devices } from '@playwright/test';
 
@@ -51,7 +51,7 @@ export default defineConfig({
 
 **Test file (self-contained)**
 
-```js
+```ts
 it('should check the box using setChecked', async ({ page }) => {
   await page.setContent(`<input id='checkbox' type='checkbox'></input>`);
   await page.getByRole('checkbox').check();
