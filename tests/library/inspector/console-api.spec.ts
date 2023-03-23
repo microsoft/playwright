@@ -67,6 +67,11 @@ it('should support playwright.locator({ has })', async ({ page }) => {
   expect(await page.evaluate(`playwright.locator('div', { has: playwright.locator('text=Hello') }).element.innerHTML`)).toContain('span');
 });
 
+it('should support playwright.or()', async ({ page }) => {
+  await page.setContent('<div>Hi</div><span>Hello</span>');
+  expect(await page.evaluate(`playwright.locator('div').or(playwright.locator('span')).elements.map(e => e.innerHTML)`)).toEqual(['Hi', 'Hello']);
+});
+
 it('should support playwright.getBy*', async ({ page }) => {
   await page.setContent('<span>Hello</span><span title="world">World</span>');
   expect(await page.evaluate(`playwright.getByText('hello').element.innerHTML`)).toContain('Hello');

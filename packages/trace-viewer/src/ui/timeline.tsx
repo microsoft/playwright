@@ -16,11 +16,10 @@
 */
 
 import type { ActionTraceEvent, EventTraceEvent } from '@trace/trace';
-import { msToString } from '@web/uiUtils';
+import { msToString, useMeasure } from '@web/uiUtils';
 import * as React from 'react';
 import type { Boundaries } from '../geometry';
 import { FilmStrip } from './filmStrip';
-import { useMeasure } from './helpers';
 import type { MultiTraceModel } from './modelUtil';
 import './timeline.css';
 

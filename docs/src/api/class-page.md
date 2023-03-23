@@ -3335,15 +3335,17 @@ If specified, updates the given HAR with the actual network information instead 
 
 A glob pattern, regular expression or predicate to match the request URL. Only requests with URL matching the pattern will be served from the HAR file. If not specified, all requests are served from the HAR file.
 
-### option: Page.routeFromHAR.mode
+### option: Page.routeFromHAR.updateMode
 * since: v1.32
-- `mode` <[HarMode]<"full"|"minimal">>
+- `updateMode` <[HarMode]<"full"|"minimal">>
+
 When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page, cookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to `full`.
 
-### option: Page.routeFromHAR.url
+### option: Page.routeFromHAR.updateContent
 * since: v1.32
-- `content` <[HarContentPolicy]<"omit"|"embed"|"attach">>
-Optional setting to control resource content management. If `omit` is specified, content is not persisted. If `attach` is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is specified, content is stored inline the HAR file
+- `updateContent` <[RouteFromHarUpdateContentPolicy]<"embed"|"attach">>
+
+Optional setting to control resource content management. If `attach` is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is specified, content is stored inline the HAR file.
 
 ## async method: Page.screenshot
 * since: v1.8
@@ -4781,6 +4783,33 @@ class FrameExamples
 
 ### option: Page.waitForSelector.timeout = %%-input-timeout-js-%%
 * since: v1.8
+
+## async method: Page.waitForCondition
+* since: v1.32
+* langs: java
+
+The method will block until the codition returns true. All Playwright events will
+be dispatched while the method is waiting for the codition.
+
+**Usage**
+
+Use the method to wait for a condition that depends on page events:
+
+```java
+List<String> messages = new ArrayList<>();
+page.onConsoleMessage(m -> messages.add(m.text()));
+page.getByText("Submit button").click();
+page.waitForCondition(() -> messages.size() > 3);
+```
+
+### param: Page.waitForCondition.condition
+* since: v1.32
+- `condition` <[BooleanSupplier]>
+
+Codition to wait for.
+
+### option: Page.waitForCondition.timeout = %%-wait-for-function-timeout-%%
+* since: v1.32
 
 ## async method: Page.waitForTimeout
 * since: v1.8

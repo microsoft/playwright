@@ -257,3 +257,12 @@ it('getBy coverage', async ({ page, server }) => {
   const input4 = page.frameLocator('iframe').getByTitle('Title');
   await expect(input4).toHaveValue('');
 });
+
+it('wait for hidden should succeed when frame is not in dom', async ({ page }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/21879' });
+  it.fixme();
+  await page.goto('about:blank');
+  const button = page.frameLocator('iframe1').locator('button');
+  expect(await button.isHidden()).toBeTruthy();
+  await button.waitFor({ state: 'hidden', timeout: 1000 });
+});

@@ -123,6 +123,8 @@ export type TeardownErrorsPayload = {
   fatalErrors: TestInfoError[];
 };
 
+export type EnvProducedPayload = [string, string | null][];
+
 export function serializeConfig(config: FullConfigInternal): SerializedConfig {
   const result: SerializedConfig = {
     configFile: config.configFile,

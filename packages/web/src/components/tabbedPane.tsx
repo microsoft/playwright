@@ -53,7 +53,7 @@ export const TabbedPane: React.FunctionComponent<{
           if (tab.component)
             return <div key={tab.id} className='tab-content' style={{ display: selectedTab === tab.id ? 'inherit' : 'none' }}>{tab.component}</div>;
           if (selectedTab === tab.id)
-            return <div key={tab.id} className='tab-content'>{tab.component || tab.render!()}</div>;
+            return <div key={tab.id} className='tab-content'>{tab.render!()}</div>;
         })
       }
     </div>

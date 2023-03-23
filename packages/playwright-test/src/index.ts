@@ -25,7 +25,7 @@ import { rootTestType } from './common/testType';
 import { type ContextReuseMode } from './common/types';
 import { artifactsFolderName } from './isomorphic/folders';
 export { expect } from './matchers/expect';
-export { store } from './store';
+export { store as _store } from './store';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
 
 addInternalStackPrefix(path.dirname(require.resolve('../package.json')));

@@ -55,7 +55,7 @@ export const ProjectLink: React.FunctionComponent<{
   const encoded = encodeURIComponent(projectName);
   const value = projectName === encoded ? projectName : `"${encoded.replace(/%22/g, '%5C%22')}"`;
   return <Link href={`#?q=p:${value}`}>
-    <span className={'label label-color-' + (projectNames.indexOf(projectName) % 6)}>
+    <span className={'label label-color-' + (projectNames.indexOf(projectName) % 6)} style={{ margin: '6px 0 0 6px' }}>
       {projectName}
     </span>
   </Link>;

@@ -31,12 +31,15 @@ export const HeaderView: React.FC<React.PropsWithChildren<{
   projectNames: string[],
 }>> = ({ stats, filterText, setFilterText, projectNames }) => {
   React.useEffect(() => {
-    (async () => {
-      window.addEventListener('popstate', () => {
-        const params = new URLSearchParams(window.location.hash.slice(1));
-        setFilterText(params.get('q') || '');
-      });
-    })();
+    const popstateFn = () => {
+      const params = new URLSearchParams(window.location.hash.slice(1));
+      setFilterText(params.get('q') || '');
+    };
+    window.addEventListener('popstate', popstateFn);
+
+    return () => {
+      window.removeEventListener('popstate', popstateFn);
+    };
   }, [setFilterText]);
 
   return (<>

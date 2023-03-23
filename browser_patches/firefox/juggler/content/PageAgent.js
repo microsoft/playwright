@@ -4,12 +4,15 @@
 
 "use strict";
 const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+
 const Ci = Components.interfaces;
 const Cr = Components.results;
 const Cu = Components.utils;
 
 const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 const {NetUtil} = ChromeUtils.import('resource://gre/modules/NetUtil.jsm');
+const {setTimeout} = ChromeUtils.import('resource://gre/modules/Timer.jsm');
+
 const dragService = Cc["@mozilla.org/widget/dragservice;1"].getService(
   Ci.nsIDragService
 );
@@ -61,7 +64,6 @@ class PageAgent {
     const docShell = frameTree.mainFrame().docShell();
     this._docShell = docShell;
     this._initialDPPX = docShell.contentViewer.overrideDPPX;
-    this._dragging = false;
 
     // Dispatch frameAttached events for all initial frames
     for (const frame of this._frameTree.frames()) {
@@ -114,6 +116,16 @@ class PageAgent {
       helper.on(this._frameTree, 'websocketframesent', event => this._browserPage.emit('webSocketFrameSent', event)),
       helper.on(this._frameTree, 'websocketframereceived', event => this._browserPage.emit('webSocketFrameReceived', event)),
       helper.on(this._frameTree, 'websocketclosed', event => this._browserPage.emit('webSocketClosed', event)),
+      helper.on(this._frameTree, 'mouseevent', event => {
+        this._browserPage.emit('pageInputEvent', { type: event.type });
+        if (event.type === 'dragstart') {
+          // After the dragStart event is dispatched and handled by Web,
+          // it might or might not create a new drag session, depending on its preventing default.
+          setTimeout(() => {
+            this._browserPage.emit('pageInputEvent', { type: 'juggler-drag-finalized', dragSessionStarted: !!dragService.getCurrentSession() });
+          }, 0);
+        }
+      }),
       helper.addObserver(this._onWindowOpen.bind(this), 'webNavigation-createdNavigationTarget-from-js'),
       this._runtime.events.onErrorFromWorker((domWindow, message, stack) => {
         const frame = this._frameTree.frameForDocShell(domWindow.docShell);
@@ -135,13 +147,12 @@ class PageAgent {
         crash: this._crash.bind(this),
         describeNode: this._describeNode.bind(this),
         dispatchKeyEvent: this._dispatchKeyEvent.bind(this),
-        dispatchMouseEvent: this._dispatchMouseEvent.bind(this),
+        dispatchDragEvent: this._dispatchDragEvent.bind(this),
         dispatchTouchEvent: this._dispatchTouchEvent.bind(this),
         dispatchTapEvent: this._dispatchTapEvent.bind(this),
         getContentQuads: this._getContentQuads.bind(this),
         getFullAXTree: this._getFullAXTree.bind(this),
         insertText: this._insertText.bind(this),
-        navigate: this._navigate.bind(this),
         scrollIntoViewIfNeeded: this._scrollIntoViewIfNeeded.bind(this),
         setCacheDisabled: this._setCacheDisabled.bind(this),
         setFileInputFiles: this._setFileInputFiles.bind(this),
@@ -286,7 +297,6 @@ class PageAgent {
     this._browserPage.emit('pageNavigationStarted', {
       frameId: frame.id(),
       navigationId: frame.pendingNavigationId(),
-      url: frame.pendingNavigationURL(),
     });
   }
 
@@ -344,39 +354,6 @@ class PageAgent {
       workerData.dispose();
     this._workerData.clear();
     helper.removeListeners(this._eventListeners);
-  }
-
-  async _navigate({frameId, url, referer}) {
-    try {
-      const uri = NetUtil.newURI(url);
-    } catch (e) {
-      throw new Error(`Invalid url: "${url}"`);
-    }
-    let referrerURI = null;
-    let referrerInfo = null;
-    if (referer) {
-      try {
-        referrerURI = NetUtil.newURI(referer);
-        const ReferrerInfo = Components.Constructor(
-          '@mozilla.org/referrer-info;1',
-          'nsIReferrerInfo',
-          'init'
-        );
-        referrerInfo = new ReferrerInfo(Ci.nsIHttpChannel.REFERRER_POLICY_UNSET, true, referrerURI);
-      } catch (e) {
-        throw new Error(`Invalid referer: "${referer}"`);
-      }
-    }
-    const frame = this._frameTree.frame(frameId);
-    const docShell = frame.docShell().QueryInterface(Ci.nsIWebNavigation);
-    docShell.loadURI(url, {
-      triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal(),
-      flags: Ci.nsIWebNavigation.LOAD_FLAGS_NONE,
-      referrerInfo,
-      postData: null,
-      headers: null,
-    });
-    return {navigationId: frame.pendingNavigationId(), navigationURL: frame.pendingNavigationURL()};
   }
 
   async _adoptNode({frameId, objectId, executionContextId}) {
@@ -485,12 +462,6 @@ class PageAgent {
   }
 
   async _dispatchKeyEvent({type, keyCode, code, key, repeat, location, text}) {
-    // key events don't fire if we are dragging.
-    if (this._dragging) {
-      if (type === 'keydown' && key === 'Escape')
-        this._cancelDragIfNeeded();
-      return;
-    }
     const frame = this._frameTree.mainFrame();
     const tip = frame.textInputProcessor();
     if (key === 'Meta' && Services.appinfo.OS !== 'Darwin')
@@ -532,7 +503,9 @@ class PageAgent {
       touchPoints.map(point => point.radiusY === undefined ? 1.0 : point.radiusY),
       touchPoints.map(point => point.rotationAngle === undefined ? 0.0 : point.rotationAngle),
       touchPoints.map(point => point.force === undefined ? 1.0 : point.force),
-      touchPoints.length,
+      touchPoints.map(point => 0),
+      touchPoints.map(point => 0),
+      touchPoints.map(point => 0),
       modifiers);
     return {defaultPrevented};
   }
@@ -609,20 +582,13 @@ class PageAgent {
       true /*disablePointerEvent*/);
   }
 
-  _startDragSessionIfNeeded() {
-    const sess = dragService.getCurrentSession();
-    if (sess) return;
-    dragService.startDragSessionForTests(
-      Ci.nsIDragService.DRAGDROP_ACTION_MOVE |
-        Ci.nsIDragService.DRAGDROP_ACTION_COPY |
-        Ci.nsIDragService.DRAGDROP_ACTION_LINK
-    );
-  }
+  async _dispatchDragEvent({type, x, y, modifiers}) {
+    const session = dragService.getCurrentSession();
+    const dropEffect = session.dataTransfer.dropEffect;
 
-  _simulateDragEvent(type, x, y, modifiers) {
-    if (type !== 'drop' || dragService.dragAction) {
-      const window = this._frameTree.mainFrame().domWindow();
-      window.windowUtils.sendMouseEvent(
+    if ((type === 'drop' && dropEffect !== 'none') || type ===  'dragover') {
+      const win = this._frameTree.mainFrame().domWindow();
+      win.windowUtils.sendMouseEvent(
         type,
         x,
         y,
@@ -636,69 +602,13 @@ class PageAgent {
         undefined /*isWidgetEventSynthesized*/,
         0, /*buttons*/
       );
+      return;
     }
-    if (type === 'drop')
-      this._cancelDragIfNeeded();
-  }
-
-  _cancelDragIfNeeded() {
-    this._dragging = false;
-    const sess = dragService.getCurrentSession();
-    if (sess)
-      dragService.endDragSession(true);
-  }
-
-  async _dispatchMouseEvent({type, x, y, button, clickCount, modifiers, buttons}) {
-    this._startDragSessionIfNeeded();
-    const trapDrag = subject => {
-      this._dragging = true;
-    }
-
-    // Don't send mouse events if there is an active drag
-    if (!this._dragging) {
-      const frame = this._frameTree.mainFrame();
-
-      obs.addObserver(trapDrag, 'on-datatransfer-available');
-      frame.domWindow().windowUtils.sendMouseEvent(
-        type,
-        x,
-        y,
-        button,
-        clickCount,
-        modifiers,
-        false /*aIgnoreRootScrollFrame*/,
-        undefined /*pressure*/,
-        undefined /*inputSource*/,
-        true /*isDOMEventSynthesized*/,
-        false /*isWidgetEventSynthesized*/,
-        buttons);
-      obs.removeObserver(trapDrag, 'on-datatransfer-available');
-
-      if (type === 'mousedown' && button === 2) {
-        frame.domWindow().windowUtils.sendMouseEvent(
-          'contextmenu',
-          x,
-          y,
-          button,
-          clickCount,
-          modifiers,
-          false /*aIgnoreRootScrollFrame*/,
-          undefined /*pressure*/,
-          undefined /*inputSource*/,
-          undefined /*isDOMEventSynthesized*/,
-          undefined /*isWidgetEventSynthesized*/,
-          buttons);
-      }
-    }
-
-    // update drag state
-    if (this._dragging) {
-      if (type === 'mousemove')
-        this._simulateDragEvent('dragover', x, y, modifiers);
-      else if (type === 'mouseup') // firefox will do drops when any mouse button is released
-        this._simulateDragEvent('drop', x, y, modifiers);
-    } else {
-      this._cancelDragIfNeeded();
+    if (type === 'dragend') {
+      const session = dragService.getCurrentSession();
+      if (session)
+        dragService.endDragSession(true);
+      return;
     }
   }
 

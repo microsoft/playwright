@@ -15,43 +15,28 @@
  */
 
 import type { FrameSnapshot, ResourceSnapshot } from '@trace/snapshot';
-import { EventEmitter } from './events';
 import { rewriteURLForCustomProtocol, SnapshotRenderer } from './snapshotRenderer';
 
-export interface SnapshotStorage {
-  resources(): ResourceSnapshot[];
-  resourceContent(sha1: string): Promise<Blob | undefined>;
-  snapshotByName(pageOrFrameId: string, snapshotName: string): SnapshotRenderer | undefined;
-  snapshotByIndex(frameId: string, index: number): SnapshotRenderer | undefined;
-}
-
-export abstract class BaseSnapshotStorage  implements SnapshotStorage {
-  protected _resources: ResourceSnapshot[] = [];
-  protected _frameSnapshots = new Map<string, {
+export class SnapshotStorage {
+  private _resources: ResourceSnapshot[] = [];
+  private _frameSnapshots = new Map<string, {
     raw: FrameSnapshot[],
-    renderer: SnapshotRenderer[]
+    renderers: SnapshotRenderer[]
   }>();
-  private _didSnapshot = new EventEmitter<SnapshotRenderer>();
-  readonly onSnapshotEvent = this._didSnapshot.event;
-
-  clear() {
-    this._resources = [];
-    this._frameSnapshots.clear();
-  }
 
   addResource(resource: ResourceSnapshot): void {
     resource.request.url = rewriteURLForCustomProtocol(resource.request.url);
     this._resources.push(resource);
   }
 
-  addFrameSnapshot(snapshot: FrameSnapshot): void {
+  addFrameSnapshot(snapshot: FrameSnapshot) {
     for (const override of snapshot.resourceOverrides)
       override.url = rewriteURLForCustomProtocol(override.url);
     let frameSnapshots = this._frameSnapshots.get(snapshot.frameId);
     if (!frameSnapshots) {
       frameSnapshots = {
         raw: [],
-        renderer: [],
+        renderers: [],
       };
       this._frameSnapshots.set(snapshot.frameId, frameSnapshots);
       if (snapshot.isMainFrame)
@@ -59,23 +44,12 @@ export abstract class BaseSnapshotStorage  implements SnapshotStorage {
     }
     frameSnapshots.raw.push(snapshot);
     const renderer = new SnapshotRenderer(this._resources, frameSnapshots.raw, frameSnapshots.raw.length - 1);
-    frameSnapshots.renderer.push(renderer);
-    this._didSnapshot.fire(renderer);
-  }
-
-  abstract resourceContent(sha1: string): Promise<Blob | undefined>;
-
-  resources(): ResourceSnapshot[] {
-    return this._resources.slice();
+    frameSnapshots.renderers.push(renderer);
+    return renderer;
   }
 
   snapshotByName(pageOrFrameId: string, snapshotName: string): SnapshotRenderer | undefined {
     const snapshot = this._frameSnapshots.get(pageOrFrameId);
-    return snapshot?.renderer.find(r => r.snapshotName === snapshotName);
-  }
-
-  snapshotByIndex(frameId: string, index: number): SnapshotRenderer | undefined {
-    const snapshot = this._frameSnapshots.get(frameId);
-    return snapshot?.renderer[index];
+    return snapshot?.renderers.find(r => r.snapshotName === snapshotName);
   }
 }

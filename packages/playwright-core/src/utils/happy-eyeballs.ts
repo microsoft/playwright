@@ -48,6 +48,23 @@ class HttpsHappyEyeballsAgent extends https.Agent {
 export const httpsHappyEyeballsAgent = new HttpsHappyEyeballsAgent();
 export const httpHappyEyeballsAgent = new HttpHappyEyeballsAgent();
 
+export async function createSocket(host: string, port: number): Promise<net.Socket> {
+  return new Promise((resolve, reject) => {
+    if (net.isIP(host)) {
+      const socket = net.createConnection({ host, port });
+      socket.on('connect', () => resolve(socket));
+      socket.on('error', error => reject(error));
+    } else {
+      createConnectionAsync({ host, port }, (err, socket) => {
+        if (err)
+          reject(err);
+        if (socket)
+          resolve(socket);
+      }, /* useTLS */ false).catch(err => reject(err));
+    }
+  });
+}
+
 async function createConnectionAsync(options: http.ClientRequestArgs, oncreate: ((err: Error | null, socket?: net.Socket) => void) | undefined, useTLS: boolean) {
   const lookup = (options as any).__testHookLookup || lookupAddresses;
   const hostname = clientRequestArgsToHostName(options);
@@ -130,7 +147,7 @@ function clientRequestArgsToHostName(options: http.ClientRequestArgs): string {
   if (options.hostname)
     return options.hostname;
   if (options.host)
-    return options.host.split(':')[0];
+    return options.host;
   throw new Error('Either options.hostname or options.host must be provided');
 }
 

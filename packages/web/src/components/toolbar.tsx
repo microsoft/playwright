@@ -17,11 +17,15 @@
 import './toolbar.css';
 import * as React from 'react';
 
-export interface ToolbarProps {
-}
+type ToolbarProps = {
+  noShadow?: boolean;
+  noMinHeight?: boolean;
+};
 
 export const Toolbar: React.FC<React.PropsWithChildren<ToolbarProps>> = ({
-  children
+  noShadow,
+  children,
+  noMinHeight
 }) => {
-  return <div className='toolbar'>{children}</div>;
+  return <div className={'toolbar' + (noShadow ? ' no-shadow' : '') + (noMinHeight ? ' no-min-height' : '')}>{children}</div>;
 };

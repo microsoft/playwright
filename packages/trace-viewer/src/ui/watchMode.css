@@ -37,19 +37,24 @@
 .watch-mode-list-item-title {
   flex: auto;
   text-overflow: ellipsis;
-  overflow: hidden
+  overflow: hidden;
 }
 
-.watch-mode-sidebar .toolbar {
-  min-height: 24px;
+.watch-mode-list-item-time {
+  flex: none;
+  color: var(--vscode-editorCodeLens-foreground);
+  margin: 0 4px;
+  user-select: none;
 }
 
-.watch-mode-sidebar .toolbar-button {
-  margin: 0;
+.list-view-entry.selected .watch-mode-list-item-time,
+.list-view-entry.highlighted .watch-mode-list-item-time {
+  display: none;
 }
 
 .watch-mode .section-title {
   display: flex;
+  flex: auto;
   flex-direction: row;
   align-items: center;
   font-size: 11px;
@@ -58,30 +63,30 @@
   text-overflow: ellipsis;
   overflow: hidden;
   padding: 8px;
+  height: 30px;
 }
 
 .watch-mode-sidebar img {
   flex: none;
-  margin: 0 4px;
+  margin-left: 6px;
   width: 24px;
   height: 24px;
 }
 
 .status-line {
-  flex: none;
+  flex: auto;
+  white-space: nowrap;
   line-height: 22px;
-  padding: 0 10px;
-  color: var(--vscode-statusBar-foreground);
-  background-color: var(--vscode-statusBar-background);
+  padding-left: 10px;
   display: flex;
   flex-direction: row;
   align-items: center;
+  height: 30px;
 }
 
 .status-line > div {
-  display: flex;
-  align-items: center;
-  margin: 0 5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .list-view-entry:not(.highlighted):not(.selected) .toolbar-button:not(.toggled) {
@@ -103,7 +108,11 @@
   flex: none;
   display: flex;
   flex-direction: column;
-  margin-top: 8px;
+  margin: 2px 0;
+}
+
+.filter-list {
+  padding: 0 10px 10px 10px;
 }
 
 .filter-title,
@@ -121,12 +130,15 @@
 
 .filter-summary {
   line-height: 24px;
-  margin-top: 2px;
-  margin-left: 20px;
+  margin-left: 24px;
 }
 
 .filter-summary .filter-label {
   margin-left: 5px;
+}
+
+.filter-entry {
+  line-height: 24px;
 }
 
 .filter-entry label {

@@ -2482,18 +2482,21 @@ export interface Page {
   }): Locator;
 
   /**
-   * Allows locating input elements by the text of the associated label.
+   * Allows locating input elements by the text of the associated `<label>` or `aria-labelledby` element, or by the
+   * `aria-label` attribute.
    *
    * **Usage**
    *
-   * For example, this method will find the input by label text "Password" in the following DOM:
+   * For example, this method will find inputs by label "Username" and "Password" in the following DOM:
    *
    * ```html
+   * <input aria-label="Username">
    * <label for="password-input">Password:</label>
    * <input id="password-input">
    * ```
    *
    * ```js
+   * await page.getByLabel('Username').fill('john');
    * await page.getByLabel('Password').fill('secret');
    * ```
    *
@@ -3556,10 +3559,6 @@ export interface Page {
    * @param options
    */
   routeFromHAR(har: string, options?: {
-    content?: "omit"|"embed"|"attach";
-
-    mode?: "full"|"minimal";
-
     /**
      * - If set to 'abort' any request not found in the HAR file will be aborted.
      * - If set to 'fallback' missing requests will be sent to the network.
@@ -3574,6 +3573,18 @@ export interface Page {
      * [browserContext.close()](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) is called.
      */
     update?: boolean;
+
+    /**
+     * Optional setting to control resource content management. If `attach` is specified, resources are persisted as
+     * separate files or entries in the ZIP archive. If `embed` is specified, content is stored inline the HAR file.
+     */
+    updateContent?: "embed"|"attach";
+
+    /**
+     * When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page,
+     * cookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to `full`.
+     */
+    updateMode?: "full"|"minimal";
 
     /**
      * A glob pattern, regular expression or predicate to match the request URL. Only requests with URL matching the
@@ -5892,18 +5903,21 @@ export interface Frame {
   }): Locator;
 
   /**
-   * Allows locating input elements by the text of the associated label.
+   * Allows locating input elements by the text of the associated `<label>` or `aria-labelledby` element, or by the
+   * `aria-label` attribute.
    *
    * **Usage**
    *
-   * For example, this method will find the input by label text "Password" in the following DOM:
+   * For example, this method will find inputs by label "Username" and "Password" in the following DOM:
    *
    * ```html
+   * <input aria-label="Username">
    * <label for="password-input">Password:</label>
    * <input id="password-input">
    * ```
    *
    * ```js
+   * await page.getByLabel('Username').fill('john');
    * await page.getByLabel('Password').fill('secret');
    * ```
    *
@@ -8064,20 +8078,6 @@ export interface BrowserContext {
    */
   routeFromHAR(har: string, options?: {
     /**
-     * Optional setting to control resource content management. If `omit` is specified, content is not persisted. If
-     * `attach` is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is
-     * specified, content is stored inline the HAR file
-     */
-    content?: "omit"|"embed"|"attach";
-
-    /**
-     * When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page,
-     * cookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to
-     * `minimal`.
-     */
-    mode?: "full"|"minimal";
-
-    /**
      * - If set to 'abort' any request not found in the HAR file will be aborted.
      * - If set to 'fallback' falls through to the next route handler in the handler chain.
      *
@@ -8091,6 +8091,19 @@ export interface BrowserContext {
      * [browserContext.close()](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) is called.
      */
     update?: boolean;
+
+    /**
+     * Optional setting to control resource content management. If `attach` is specified, resources are persisted as
+     * separate files or entries in the ZIP archive. If `embed` is specified, content is stored inline the HAR file.
+     */
+    updateContent?: "embed"|"attach";
+
+    /**
+     * When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page,
+     * cookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to
+     * `minimal`.
+     */
+    updateMode?: "full"|"minimal";
 
     /**
      * A glob pattern, regular expression or predicate to match the request URL. Only requests with URL matching the
@@ -10848,18 +10861,21 @@ export interface Locator {
   }): Locator;
 
   /**
-   * Allows locating input elements by the text of the associated label.
+   * Allows locating input elements by the text of the associated `<label>` or `aria-labelledby` element, or by the
+   * `aria-label` attribute.
    *
    * **Usage**
    *
-   * For example, this method will find the input by label text "Password" in the following DOM:
+   * For example, this method will find inputs by label "Username" and "Password" in the following DOM:
    *
    * ```html
+   * <input aria-label="Username">
    * <label for="password-input">Password:</label>
    * <input id="password-input">
    * ```
    *
    * ```js
+   * await page.getByLabel('Username').fill('john');
    * await page.getByLabel('Password').fill('secret');
    * ```
    *
@@ -11429,6 +11445,23 @@ export interface Locator {
    * @param index
    */
   nth(index: number): Locator;
+
+  /**
+   * Creates a locator that matches either of the two locators.
+   *
+   * **Usage**
+   *
+   * If your page shows a username input that is labelled either `Username` or `Login`, depending on some external
+   * factors you do not control, you can match both.
+   *
+   * ```js
+   * const input = page.getByLabel('Username').or(page.getByLabel('Login'));
+   * await input.fill('John');
+   * ```
+   *
+   * @param locator Alternative locator to match.
+   */
+  or(locator: Locator): Locator;
 
   /**
    * A page this locator belongs to.
@@ -16685,18 +16718,21 @@ export interface FrameLocator {
   }): Locator;
 
   /**
-   * Allows locating input elements by the text of the associated label.
+   * Allows locating input elements by the text of the associated `<label>` or `aria-labelledby` element, or by the
+   * `aria-label` attribute.
    *
    * **Usage**
    *
-   * For example, this method will find the input by label text "Password" in the following DOM:
+   * For example, this method will find inputs by label "Username" and "Password" in the following DOM:
    *
    * ```html
+   * <input aria-label="Username">
    * <label for="password-input">Password:</label>
    * <input id="password-input">
    * ```
    *
    * ```js
+   * await page.getByLabel('Username').fill('john');
    * await page.getByLabel('Password').fill('secret');
    * ```
    *

@@ -18,6 +18,7 @@ import './codeMirrorWrapper.css';
 import * as React from 'react';
 import type { CodeMirror } from './codeMirrorModule';
 import { ansi2htmlMarkup } from './errorMessage';
+import { useMeasure } from '../uiUtils';
 
 export type SourceHighlight = {
   line: number;
@@ -51,7 +52,7 @@ export const CodeMirrorWrapper: React.FC<SourceProps> = ({
   wrapLines,
   onChange,
 }) => {
-  const codemirrorElement = React.useRef<HTMLDivElement>(null);
+  const [measure, codemirrorElement] = useMeasure<HTMLDivElement>();
   const [modulePromise] = React.useState<Promise<CodeMirror>>(import('./codeMirrorModule').then(m => m.default));
   const codemirrorRef = React.useRef<{ cm: CodeMirror.Editor, highlight?: SourceHighlight[], widgets?: CodeMirror.LineWidget[] } | null>(null);
   const [codemirror, setCodemirror] = React.useState<CodeMirror.Editor>();
@@ -97,6 +98,11 @@ export const CodeMirrorWrapper: React.FC<SourceProps> = ({
       return cm;
     })();
   }, [modulePromise, codemirror, codemirrorElement, language, lineNumbers, wrapLines, readOnly]);
+
+  React.useEffect(() => {
+    if (codemirrorRef.current)
+      codemirrorRef.current.cm.setSize(measure.width, measure.height);
+  }, [measure]);
 
   React.useEffect(() => {
     if (!codemirror)
@@ -149,9 +155,9 @@ export const CodeMirrorWrapper: React.FC<SourceProps> = ({
       codemirrorRef.current!.highlight = highlight;
       codemirrorRef.current!.widgets = widgets;
     }
-
-    if (revealLine && codemirrorRef.current!.cm.lineCount() >= revealLine)
-      codemirror.scrollIntoView({ line: revealLine - 1, ch: 0 }, 50);
+    // Line-less locations have line = 0, but they mean to reveal the file.
+    if (typeof revealLine === 'number' && codemirrorRef.current!.cm.lineCount() >= revealLine)
+      codemirror.scrollIntoView({ line: Math.max(0, revealLine - 1), ch: 0 }, 50);
   }, [codemirror, text, highlight, revealLine, focusOnChange, onChange]);
 
   return <div className='cm-wrapper' ref={codemirrorElement}></div>;

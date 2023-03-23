@@ -86,8 +86,8 @@ export async function showTraceViewer(traceUrls: string[], browserName: string, 
     channel: findChromiumChannel(traceViewerPlaywright.options.sdkLanguage),
     args,
     noDefaultViewport: true,
-    ignoreDefaultArgs: ['--enable-automation'],
     headless,
+    ignoreDefaultArgs: ['--enable-automation'],
     colorScheme: 'no-override',
     useWebSocket: isUnderTest(),
   });
@@ -99,7 +99,7 @@ export async function showTraceViewer(traceUrls: string[], browserName: string, 
   await context.extendInjectedScript(consoleApiSource.source);
   const [page] = context.pages();
 
-  if (isUnderTest())
+  if (process.env.PWTEST_PRINT_WS_ENDPOINT)
     process.stderr.write('DevTools listening on: ' + context._browser.options.wsEndpoint + '\n');
 
   if (traceViewerBrowser === 'chromium')

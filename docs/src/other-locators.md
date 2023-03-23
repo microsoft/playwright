@@ -457,7 +457,40 @@ var parentLocator = page.GetByRole(AriaRole.Button).Locator("..");
 ```
 
 
-### Locating only visible elements
+
+## Combining two alternative locators
+
+If you'd like to target one of the two or more elements, and you don't know which one it will be, use [`method: Locator.or`] to create a locator that matches any of the alternatives.
+
+For example, to fill the username input that is labelled either `Username` or `Login`, depending on some external factors:
+
+```js
+const input = page.getByLabel('Username').or(page.getByLabel('Login'));
+await input.fill('John');
+```
+
+```java
+Locator input = page.getByLabel("Username").or(page.getByLabel("Login"));
+input.fill("John");
+```
+
+```python async
+input = page.get_by_label("Username").or_(page.get_by_label("Login"))
+await input.fill("John")
+```
+
+```python sync
+input = page.get_by_label("Username").or_(page.get_by_label("Login"))
+input.fill("John")
+```
+
+```csharp
+var input = page.GetByLabel("Username").Or(page.GetByLabel("Login"));
+await input.FillAsync("John");
+```
+
+
+## Locating only visible elements
 
 :::note
 It's usually better to find a [more reliable way](./locators.md#quick-guide) to uniquely identify the element instead of checking the visibility.

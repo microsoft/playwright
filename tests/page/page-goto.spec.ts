@@ -419,8 +419,10 @@ it('should fail when replaced by another navigation', async ({ page, server, bro
   }
 });
 
-it('js redirect overrides url bar navigation ', async ({ page, server, browserName }) => {
-  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/21574' });
+it('js redirect overrides url bar navigation ', async ({ page, server, browserName, trace }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/20749' });
+  it.skip(trace === 'on', 'tracing waits for snapshot that never arrives because pending navigation');
+
   server.setRoute('/a', (req, res) => {
     res.writeHead(200, { 'content-type': 'text/html' });
     res.end(`

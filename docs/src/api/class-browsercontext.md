@@ -1124,17 +1124,17 @@ If specified, updates the given HAR with the actual network information instead 
 
 A glob pattern, regular expression or predicate to match the request URL. Only requests with URL matching the pattern will be served from the HAR file. If not specified, all requests are served from the HAR file.
 
-### option: BrowserContext.routeFromHAR.mode
+### option: BrowserContext.routeFromHAR.updateMode
 * since: v1.32
-- `mode` <[HarMode]<"full"|"minimal">>
+- `updateMode` <[HarMode]<"full"|"minimal">>
 
 When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page, cookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to `minimal`.
 
-### option: BrowserContext.routeFromHAR.content
+### option: BrowserContext.routeFromHAR.updateContent
 * since: v1.32
-- `content` <[HarContentPolicy]<"omit"|"embed"|"attach">>
+- `updateContent` <[RouteFromHarUpdateContentPolicy]<"embed"|"attach">>
 
-Optional setting to control resource content management. If `omit` is specified, content is not persisted. If `attach` is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is specified, content is stored inline the HAR file
+Optional setting to control resource content management. If `attach` is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is specified, content is stored inline the HAR file.
 
 ## method: BrowserContext.serviceWorkers
 * since: v1.11
@@ -1323,6 +1323,38 @@ Optional handler function used to register a routing with [`method: BrowserConte
 - `handler` ?<[function]\([Route]\)>
 
 Optional handler function used to register a routing with [`method: BrowserContext.route`].
+
+## async method: BrowserContext.waitForCondition
+* since: v1.32
+* langs: java
+
+The method will block until the condition returns true. All Playwright events will
+be dispatched while the method is waiting for the condition.
+
+**Usage**
+
+Use the method to wait for a condition that depends on page events:
+
+```java
+List<String> failedUrls = new ArrayList<>();
+context.onResponse(response -> {
+  if (!response.ok()) {
+    failedUrls.add(response.url());
+  }
+});
+page1.getByText("Create user").click();
+page2.getByText("Submit button").click();
+context.waitForCondition(() -> failedUrls.size() > 3);
+```
+
+### param: BrowserContext.waitForCondition.condition
+* since: v1.32
+- `condition` <[BooleanSupplier]>
+
+Condition to wait for.
+
+### option: BrowserContext.waitForCondition.timeout = %%-wait-for-function-timeout-%%
+* since: v1.32
 
 ## async method: BrowserContext.waitForEvent
 * since: v1.8

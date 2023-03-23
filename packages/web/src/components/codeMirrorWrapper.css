@@ -109,7 +109,7 @@ body.dark-mode .CodeMirror span.cm-type {
 }
 
 .CodeMirror-cursor {
-  border-left: 1px solid #bebebe;
+  border-left: 1px solid var(--vscode-editor-foreground) !important;
 }
 
 .CodeMirror div.CodeMirror-selected {
@@ -122,8 +122,11 @@ body.dark-mode .CodeMirror span.cm-type {
   border-right: none;
 }
 
+.CodeMirror .CodeMirror-gutter-elt {
+  background-color: var(--vscode-editorGutter-background);
+}
+
 .CodeMirror .CodeMirror-gutterwrapper {
-  background: var(--vscode-editor-background);
   border-right: 1px solid var(--vscode-editorGroup-border);
   color: var(--vscode-editorLineNumber-foreground);
 }

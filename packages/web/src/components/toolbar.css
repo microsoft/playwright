@@ -15,19 +15,34 @@
 */
 
 .toolbar {
+  position: relative;
   display: flex;
-  box-shadow: var(--box-shadow);
-  background-color: var(--vscode-sideBar-background);
   color: var(--vscode-sideBarTitle-foreground);
   min-height: 35px;
   align-items: center;
   flex: none;
-  z-index: 2;
+  padding-right: 4px;
 }
 
-.toolbar-linewrap {
+.toolbar:after {
+  content: '';
   display: block;
-  flex: auto;
+  position: absolute;
+  pointer-events: none;
+  top: 0;
+  bottom: 0;
+  left: -2px;
+  right: -2px;
+  box-shadow: var(--vscode-scrollbar-shadow) 0 6px 6px -6px;
+  z-index: 100;
+}
+
+.toolbar.no-shadow:after {
+  box-shadow: none;
+}
+
+.toolbar.no-min-height {
+  min-height: 0;
 }
 
 .toolbar input {

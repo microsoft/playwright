@@ -20,7 +20,7 @@ export class SnapshotRenderer {
   private _snapshots: FrameSnapshot[];
   private _index: number;
   readonly snapshotName: string | undefined;
-  _resources: ResourceSnapshot[];
+  private _resources: ResourceSnapshot[];
   private _snapshot: FrameSnapshot;
   private _callId: string;
 
@@ -104,7 +104,7 @@ export class SnapshotRenderer {
     const prefix = snapshot.doctype ? `<!DOCTYPE ${snapshot.doctype}>` : '';
     html = prefix + [
       '<style>*,*::before,*::after { visibility: hidden }</style>',
-      `<style>*[__playwright_target__="${this._callId}"] { background-color: #6fa8dc7f; }</style>`,
+      `<style>*[__playwright_target__="${this._callId}"] { outline: 2px solid #006ab1 !important; background-color: #6fa8dc7f !important; }</style>`,
       `<script>${snapshotScript()}</script>`
     ].join('') + html;
 

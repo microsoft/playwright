@@ -17,6 +17,17 @@ class Helper {
     objectToDecorate.emit = emitter.emit.bind(emitter);
   }
 
+  collectAllBrowsingContexts(rootBrowsingContext, allBrowsingContexts = []) {
+    allBrowsingContexts.push(rootBrowsingContext);
+    for (const child of rootBrowsingContext.children)
+      this.collectAllBrowsingContexts(child, allBrowsingContexts);
+    return allBrowsingContexts;
+  }
+
+  toProtocolNavigationId(loadIdentifier) {
+    return `nav-${loadIdentifier}`;
+  }
+
   addObserver(handler, topic) {
     Services.obs.addObserver(handler, topic);
     return () => Services.obs.removeObserver(handler, topic);
@@ -27,11 +38,11 @@ class Helper {
     return () => receiver.removeMessageListener(eventName, handler);
   }
 
-  addEventListener(receiver, eventName, handler) {
-    receiver.addEventListener(eventName, handler);
+  addEventListener(receiver, eventName, handler, options) {
+    receiver.addEventListener(eventName, handler, options);
     return () => {
       try {
-        receiver.removeEventListener(eventName, handler);
+        receiver.removeEventListener(eventName, handler, options);
       } catch (e) {
         // This could fail when window has navigated cross-process
         // and we remove the listener from WindowProxy.
@@ -49,11 +60,11 @@ class Helper {
     });
   }
 
-  on(receiver, eventName, handler) {
+  on(receiver, eventName, handler, options) {
     // The toolkit/modules/EventEmitter.jsm dispatches event name as a first argument.
     // Fire event listeners without it for convenience.
     const handlerWrapper = (_, ...args) => handler(...args);
-    receiver.on(eventName, handlerWrapper);
+    receiver.on(eventName, handlerWrapper, options);
     return () => receiver.off(eventName, handlerWrapper);
   }
 
@@ -144,10 +155,72 @@ class Helper {
   browsingContextToFrameId(browsingContext) {
     if (!browsingContext)
       return undefined;
-    return 'frame-' + browsingContext.id;
+    if (!browsingContext.parent)
+      return 'mainframe-' + browsingContext.browserId;
+    return 'subframe-' + browsingContext.id;
   }
 }
 
-var EXPORTED_SYMBOLS = [ "Helper" ];
+const helper = new Helper();
+
+class EventWatcher {
+  constructor(receiver, eventNames) {
+    this._events = [];
+    this._pendingPromises = [];
+    this._eventListeners = eventNames.map(eventName =>
+      helper.on(receiver, eventName, this._onEvent.bind(this, eventName)),
+    );
+  }
+
+  _onEvent(eventName, eventObject) {
+    this._events.push({eventName, eventObject});
+    for (const promise of this._pendingPromises)
+      promise.resolve();
+    this._pendingPromises = [];
+  }
+
+  async ensureEvent(aEventName, predicate) {
+    if (typeof aEventName !== 'string')
+      throw new Error('ERROR: ensureEvent expects a "string" as its first argument');
+    while (true) {
+      const result = this.getEvent(aEventName, predicate);
+      if (result)
+        return result;
+      await new Promise((resolve, reject) => this._pendingPromises.push({resolve, reject}));
+    }
+  }
+
+  async ensureEvents(eventNames, predicate) {
+    if (!Array.isArray(eventNames))
+      throw new Error('ERROR: ensureEvents expects an array of event names as its first argument');
+    return await Promise.all(eventNames.map(eventName => this.ensureEvent(eventName, predicate)));
+  }
+
+  async ensureEventsAndDispose(eventNames, predicate) {
+    if (!Array.isArray(eventNames))
+      throw new Error('ERROR: ensureEventsAndDispose expects an array of event names as its first argument');
+    const result = await this.ensureEvents(eventNames, predicate);
+    this.dispose();
+    return result;
+  }
+
+  getEvent(aEventName, predicate = (eventObject) => true) {
+    return this._events.find(({eventName, eventObject}) => eventName === aEventName && predicate(eventObject))?.eventObject;
+  }
+
+  hasEvent(aEventName, predicate) {
+    return !!this.getEvent(aEventName, predicate);
+  }
+
+  dispose() {
+    for (const promise of this._pendingPromises)
+      promise.reject(new Error('EventWatcher is being disposed'));
+    this._pendingPromises = [];
+    helper.removeListeners(this._eventListeners);
+  }
+}
+
+var EXPORTED_SYMBOLS = [ "Helper", "EventWatcher" ];
 this.Helper = Helper;
+this.EventWatcher = EventWatcher;
 

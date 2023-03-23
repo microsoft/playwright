@@ -217,9 +217,8 @@ it('webkit should define window.safari', async ({ page, server, browserName }) =
   expect(defined).toBeTruthy();
 });
 
-it('make sure that XMLHttpRequest upload events are emitted correctly', async ({ page, server, browserName, platform }) => {
+it('make sure that XMLHttpRequest upload events are emitted correctly', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/21489' });
-  it.fixme(browserName === 'webkit' && platform === 'win32');
 
   await page.goto(server.EMPTY_PAGE);
   const events = await page.evaluate(async () => {

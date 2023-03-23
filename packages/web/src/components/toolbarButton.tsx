@@ -41,6 +41,7 @@ export const ToolbarButton: React.FC<React.PropsWithChildren<ToolbarButtonProps>
     className={className}
     onMouseDown={preventDefault}
     onClick={onClick}
+    onDoubleClick={preventDefault}
     title={title}
     disabled={!!disabled}>
     {icon && <span className={`codicon codicon-${icon}`} style={children ? { marginRight: 5 } : {}}></span>}
@@ -48,4 +49,7 @@ export const ToolbarButton: React.FC<React.PropsWithChildren<ToolbarButtonProps>
   </button>;
 };
 
-const preventDefault = (e: any) => e.preventDefault();
+const preventDefault = (e: any) => {
+  e.stopPropagation();
+  e.preventDefault();
+};

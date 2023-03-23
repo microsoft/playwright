@@ -106,34 +106,6 @@ test('should include custom error message with web-first assertions', async ({ r
   ].join('\n'));
 });
 
-test('should work with default expect prototype functions', async ({ runTSC, runInlineTest }) => {
-  const spec = `
-    import { test, expect } from '@playwright/test';
-    test('pass', async () => {
-      const expected = [1, 2, 3, 4, 5, 6];
-      test.expect([4, 1, 6, 7, 3, 5, 2, 5, 4, 6]).toEqual(
-        expect.arrayContaining(expected),
-      );
-      expect('foo').toEqual(expect.any(String));
-      expect('foo').toEqual(expect.anything());
-      expect('hello world').toEqual(expect.not.stringContaining('text'));
-    });
-  `;
-  {
-    const result = await runTSC({
-      'a.spec.ts': spec,
-    });
-    expect(result.exitCode).toBe(0);
-  }
-  {
-    const result = await runInlineTest({
-      'a.spec.ts': spec,
-    });
-    expect(result.exitCode).toBe(0);
-    expect(result.passed).toBe(1);
-  }
-});
-
 test('should work with generic matchers', async ({ runTSC }) => {
   const result = await runTSC({
     'a.spec.ts': `
@@ -173,6 +145,7 @@ test('should work with generic matchers', async ({ runTSC }) => {
         y: expect.any(Number),
       }));
       expect('abc').toEqual(expect.stringContaining('bc'));
+      expect('hello world').toEqual(expect.not.stringContaining('text'));
       expect(['Alicia', 'Roberto', 'Evelina']).toEqual(
         expect.arrayContaining([
           expect.stringMatching(/^Alic/),

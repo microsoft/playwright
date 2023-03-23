@@ -73,7 +73,7 @@ private:
     static WKRect getWindowFrame(WKPageRef page, const void *clientInfo);
     static void didNotHandleKeyEvent(WKPageRef, WKNativeEventPtr, const void*);
     static void decidePolicyForNavigationAction(WKPageRef, WKFrameRef, WKFrameNavigationType, WKEventModifiers, WKEventMouseButton, WKFrameRef, WKURLRequestRef, WKFramePolicyListenerRef, WKTypeRef, const void* clientInfo);
-    static void decidePolicyForResponse(WKPageRef, WKFrameRef, WKURLResponseRef, WKURLRequestRef, WKFramePolicyListenerRef, WKTypeRef, const void*);
+    static void decidePolicyForResponse(WKPageRef, WKFrameRef, WKURLResponseRef, WKURLRequestRef, bool, WKFramePolicyListenerRef, WKTypeRef, const void*);
 
     BrowserWindowClient& m_client;
     WKRetainPtr<WKViewRef> m_view;

@@ -27,9 +27,13 @@ export class WorkerHost extends ProcessHost {
   currentTestId: string | null = null;
   private _params: WorkerInitParams;
 
-  constructor(testGroup: TestGroup, parallelIndex: number, config: SerializedConfig) {
+  constructor(testGroup: TestGroup, parallelIndex: number, config: SerializedConfig, extraEnv: Record<string, string | undefined>) {
     const workerIndex = lastWorkerIndex++;
-    super(require.resolve('../worker/workerMain.js'), `worker-${workerIndex}`);
+    super(require.resolve('../worker/workerMain.js'), `worker-${workerIndex}`, {
+      ...extraEnv,
+      FORCE_COLOR: '1',
+      DEBUG_COLORS: '1',
+    });
     this.workerIndex = workerIndex;
     this.parallelIndex = parallelIndex;
     this._hash = testGroup.workerHash;
@@ -44,10 +48,7 @@ export class WorkerHost extends ProcessHost {
   }
 
   async start() {
-    await this.startRunner(this._params, false, {
-      FORCE_COLOR: '1',
-      DEBUG_COLORS: '1',
-    });
+    await this.startRunner(this._params, false);
   }
 
   runTestGroup(runPayload: RunPayload) {

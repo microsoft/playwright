@@ -260,7 +260,7 @@ test('should capture iframe with sandbox attribute', async ({ page, server, runA
 
   // Render snapshot, check expectations.
   const snapshotFrame = await traceViewer.snapshotFrame('page.evaluate', 0, true);
-  const button = await snapshotFrame.childFrames()[0].waitForSelector('button');
+  const button = snapshotFrame.frameLocator('iframe').locator('button');
   expect(await button.textContent()).toBe('Hello iframe');
 });
 
@@ -283,8 +283,8 @@ test('should capture data-url svg iframe', async ({ page, server, runAndTrace })
 
   // Render snapshot, check expectations.
   const snapshotFrame = await traceViewer.snapshotFrame('page.evaluate', 0, true);
-  await expect(snapshotFrame.childFrames()[0].locator('svg')).toBeVisible();
-  const content = await snapshotFrame.childFrames()[0].content();
+  await expect(snapshotFrame.frameLocator('iframe').locator('svg')).toBeVisible();
+  const content = await snapshotFrame.frameLocator('iframe').locator(':root').innerHTML();
   expect(content).toContain(`d="M16.5 3c-1.74 0-3.41.81-4.5 2.09C10.91 3.81 9.24 3 7.5 3 4.42 3 2 5.42 2 8.5c0 3.78 3.4 6.86 8.55 11.54L12 21.35l1.45-1.32C18.6 15.36 22 12.28 22 8.5 22 5.42 19.58 3 16.5 3zm-4.4 15.55l-.1.1-.1-.1C7.14 14.24 4 11.39 4 8.5 4 6.5 5.5 5 7.5 5c1.54 0 3.04.99 3.57 2.36h1.87C13.46 5.99 14.96 5 16.5 5c2 0 3.5 1.5 3.5 3.5 0 2.89-3.14 5.74-7.9 10.05z"`);
 });
 
@@ -313,19 +313,9 @@ test('should contain adopted style sheets', async ({ page, runAndTrace, browserN
   });
 
   const frame = await traceViewer.snapshotFrame('page.evaluate');
-  await frame.waitForSelector('button');
-  const buttonColor = await frame.$eval('button', button => {
-    return window.getComputedStyle(button).color;
-  });
-  expect(buttonColor).toBe('rgb(255, 0, 0)');
-  const divColor = await frame.$eval('div', div => {
-    return window.getComputedStyle(div).color;
-  });
-  expect(divColor).toBe('rgb(0, 0, 255)');
-  const spanColor = await frame.$eval('span', span => {
-    return window.getComputedStyle(span).color;
-  });
-  expect(spanColor).toBe('rgb(0, 0, 255)');
+  await expect(frame.locator('button')).toHaveCSS('color', 'rgb(255, 0, 0)');
+  await expect(frame.locator('div')).toHaveCSS('color', 'rgb(0, 0, 255)');
+  await expect(frame.locator('span')).toHaveCSS('color', 'rgb(0, 0, 255)');
 });
 
 test('should work with adopted style sheets and replace/replaceSync', async ({ page, runAndTrace, browserName }) => {
@@ -350,27 +340,15 @@ test('should work with adopted style sheets and replace/replaceSync', async ({ p
 
   {
     const frame = await traceViewer.snapshotFrame('page.evaluate', 0);
-    await frame.waitForSelector('button');
-    const buttonColor = await frame.$eval('button', button => {
-      return window.getComputedStyle(button).color;
-    });
-    expect(buttonColor).toBe('rgb(255, 0, 0)');
+    await expect(frame.locator('button')).toHaveCSS('color', 'rgb(255, 0, 0)');
   }
   {
     const frame = await traceViewer.snapshotFrame('page.evaluate', 1);
-    await frame.waitForSelector('button');
-    const buttonColor = await frame.$eval('button', button => {
-      return window.getComputedStyle(button).color;
-    });
-    expect(buttonColor).toBe('rgb(0, 0, 255)');
+    await expect(frame.locator('button')).toHaveCSS('color', 'rgb(0, 0, 255)');
   }
   {
     const frame = await traceViewer.snapshotFrame('page.evaluate', 2);
-    await frame.waitForSelector('button');
-    const buttonColor = await frame.$eval('button', button => {
-      return window.getComputedStyle(button).color;
-    });
-    expect(buttonColor).toBe('rgb(0, 255, 0)');
+    await expect(frame.locator('button')).toHaveCSS('color', 'rgb(0, 255, 0)');
   }
 });
 
@@ -402,8 +380,7 @@ test('should restore scroll positions', async ({ page, runAndTrace, browserName 
 
   // Render snapshot, check expectations.
   const frame = await traceViewer.snapshotFrame('scrollIntoViewIfNeeded');
-  const div = await frame.waitForSelector('div');
-  expect(await div.evaluate(div => div.scrollTop)).toBe(136);
+  expect(await frame.locator('div').evaluate(div => div.scrollTop)).toBe(136);
 });
 
 test('should restore control values', async ({ page, runAndTrace }) => {
@@ -450,13 +427,10 @@ test('should restore control values', async ({ page, runAndTrace }) => {
   await expect(textarea).toHaveText('old');
   await expect(textarea).toHaveValue('hello');
 
-  expect(await frame.$eval('option >> nth=0', o => o.hasAttribute('selected'))).toBe(false);
-  expect(await frame.$eval('option >> nth=1', o => o.hasAttribute('selected'))).toBe(true);
-  expect(await frame.$eval('option >> nth=2', o => o.hasAttribute('selected'))).toBe(false);
-  expect(await frame.locator('select').evaluate(s => {
-    const options = [...(s as HTMLSelectElement).selectedOptions];
-    return options.map(option => option.value);
-  })).toEqual(['opt1', 'opt3']);
+  expect(await frame.locator('option >> nth=0').evaluate(o => o.hasAttribute('selected'))).toBe(false);
+  expect(await frame.locator('option >> nth=1').evaluate(o => o.hasAttribute('selected'))).toBe(true);
+  expect(await frame.locator('option >> nth=2').evaluate(o => o.hasAttribute('selected'))).toBe(false);
+  await expect(frame.locator('select')).toHaveValues(['opt1', 'opt3']);
 });
 
 test('should work with meta CSP', async ({ page, runAndTrace, browserName }) => {
@@ -479,9 +453,8 @@ test('should work with meta CSP', async ({ page, runAndTrace, browserName }) => 
 
   // Render snapshot, check expectations.
   const frame = await traceViewer.snapshotFrame('$eval');
-  await frame.waitForSelector('div');
   // Should render shadow dom with post-processing script.
-  expect(await frame.textContent('span')).toBe('World');
+  await expect(frame.locator('span')).toHaveText('World');
 });
 
 test('should handle multiple headers', async ({ page, server, runAndTrace, browserName }) => {
@@ -497,9 +470,8 @@ test('should handle multiple headers', async ({ page, server, runAndTrace, brows
   });
 
   const frame = await traceViewer.snapshotFrame('setContent');
-  await frame.waitForSelector('div');
-  const padding = await frame.$eval('body', body => window.getComputedStyle(body).paddingLeft);
-  expect(padding).toBe('42px');
+  await frame.locator('div').waitFor();
+  await expect(frame.locator('body')).toHaveCSS('padding-left', '42px');
 });
 
 test('should handle src=blob', async ({ page, server, runAndTrace, browserName }) => {
@@ -521,14 +493,12 @@ test('should handle src=blob', async ({ page, server, runAndTrace, browserName }
   });
 
   const frame = await traceViewer.snapshotFrame('page.evaluate');
-  const img = await frame.waitForSelector('img');
-  const size = await img.evaluate(e => (e as HTMLImageElement).naturalWidth);
+  const size = await frame.locator('img').evaluate(e => (e as HTMLImageElement).naturalWidth);
   expect(size).toBe(10);
 });
 
 test('should register custom elements', async ({ page, server, runAndTrace }) => {
   const traceViewer = await runAndTrace(async () => {
-    page.on('console', console.log);
     await page.goto(server.EMPTY_PAGE);
     await page.evaluate(() => {
       customElements.define('my-element', class extends HTMLElement {
@@ -719,6 +689,19 @@ test('should include requestUrl in route.fulfill', async ({ page, runAndTrace, b
   await expect(callLine.getByText('requestUrl')).toContainText('http://test.com');
 });
 
+test('should not crash with broken locator', async ({ page, runAndTrace, server }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/21832' });
+  const traceViewer = await runAndTrace(async () => {
+    try {
+      await page.locator('[class*=github-btn] a]').click();
+    } catch (e) {
+    }
+  });
+  await expect(traceViewer.page).toHaveTitle('Playwright Trace Viewer');
+  const header = traceViewer.page.getByText('Playwright', { exact: true });
+  await expect(header).toBeVisible();
+});
+
 test('should include requestUrl in route.continue', async ({ page, runAndTrace, server }) => {
   await page.route('**/*', route => {
     route.continue({ url: server.EMPTY_PAGE });
@@ -767,8 +750,7 @@ test('should serve overridden request', async ({ page, runAndTrace, server }) =>
   });
   // Render snapshot, check expectations.
   const snapshotFrame = await traceViewer.snapshotFrame('page.goto');
-  const color = await snapshotFrame.locator('body').evaluate(body => getComputedStyle(body).backgroundColor);
-  expect(color).toBe('rgb(255, 0, 0)');
+  await expect(snapshotFrame.locator('body')).toHaveCSS('background-color', 'rgb(255, 0, 0)');
 });
 
 test('should display waitForLoadState even if did not wait for it', async ({ runAndTrace, server, page }) => {
@@ -803,7 +785,7 @@ test('should pick locator', async ({ page, runAndTrace, server }) => {
   });
   const snapshot = await traceViewer.snapshotFrame('page.setContent');
   await traceViewer.page.getByTitle('Pick locator').click();
-  await snapshot.click('button');
+  await snapshot.locator('button').click();
   await expect(traceViewer.page.locator('.cm-wrapper')).toContainText(`getByRole('button', { name: 'Submit' })`);
 });
 

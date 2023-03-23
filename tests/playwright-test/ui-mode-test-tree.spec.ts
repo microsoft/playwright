@@ -85,7 +85,7 @@ test('should traverse up/down', async ({ runUITest }) => {
 test('should expand / collapse groups', async ({ runUITest }) => {
   const page = await runUITest(basicTestTree);
 
-  await page.getByText('suite').click();
+  await page.getByTestId('test-tree').getByText('suite').click();
   await page.keyboard.press('ArrowRight');
   await expect.poll(dumpTestTree(page), { timeout: 15000 }).toContain(`
     ▼ ◯ a.test.ts
@@ -104,7 +104,7 @@ test('should expand / collapse groups', async ({ runUITest }) => {
       ► ◯ suite <=
   `);
 
-  await page.getByText('passes').first().click();
+  await page.getByTestId('test-tree').getByText('passes').first().click();
   await page.keyboard.press('ArrowLeft');
   await expect.poll(dumpTestTree(page), { timeout: 15000 }).toContain(`
     ▼ ◯ a.test.ts <=
@@ -115,5 +115,30 @@ test('should expand / collapse groups', async ({ runUITest }) => {
   await page.keyboard.press('ArrowLeft');
   await expect.poll(dumpTestTree(page), { timeout: 15000 }).toContain(`
     ► ◯ a.test.ts <=
+  `);
+});
+
+test('should merge folder trees', async ({ runUITest }) => {
+  const page = await runUITest({
+    'a/b/c/inC.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('passes', () => {});
+    `,
+    'a/b/in-b.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('passes', () => {});
+    `,
+    'a/in-a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('passes', () => {});
+    `,
+  });
+
+  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toContain(`
+    ▼ ◯ b
+      ► ◯ c
+      ► ◯ in-b.test.ts
+    ▼ ◯ in-a.test.ts
+        ◯ passes
   `);
 });

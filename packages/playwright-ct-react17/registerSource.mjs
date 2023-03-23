@@ -17,34 +17,35 @@
 // @ts-check
 // This file is injected into the registry as text, no dependencies are allowed.
 
-import React from 'react';
-import ReactDOM from 'react-dom';
+// Don't clash with the user land.
+import __pwReact from 'react';
+import __pwReactDOM from 'react-dom';
 
 /** @typedef {import('../playwright-test/types/component').Component} Component */
 /** @typedef {import('react').FunctionComponent} FrameworkComponent */
 
 /** @type {Map<string, FrameworkComponent>} */
-const registry = new Map();
+const __pwRegistry = new Map();
 
 /**
  * @param {{[key: string]: FrameworkComponent}} components
  */
-export function register(components) {
+export function pwRegister(components) {
   for (const [name, value] of Object.entries(components))
-    registry.set(name, value);
+    __pwRegistry.set(name, value);
 }
 
 /**
  * @param {Component} component
  */
-function render(component) {
+function __pwRender(component) {
   if (typeof component !== 'object' || Array.isArray(component))
     return component;
 
-  let componentFunc = registry.get(component.type);
+  let componentFunc = __pwRegistry.get(component.type);
   if (!componentFunc) {
     // Lookup by shorthand.
-    for (const [name, value] of registry) {
+    for (const [name, value] of __pwRegistry) {
       if (component.type.endsWith(`_${name}`)) {
         componentFunc = value;
         break;
@@ -53,17 +54,17 @@ function render(component) {
   }
 
   if (!componentFunc && component.type[0].toUpperCase() === component.type[0])
-    throw new Error(`Unregistered component: ${component.type}. Following components are registered: ${[...registry.keys()]}`);
+    throw new Error(`Unregistered component: ${component.type}. Following components are registered: ${[...__pwRegistry.keys()]}`);
 
   const componentFuncOrString = componentFunc || component.type;
 
   if (component.kind !== 'jsx')
     throw new Error('Object mount notation is not supported');
 
-  return React.createElement(componentFuncOrString, component.props, ...component.children.map(child => {
+  return __pwReact.createElement(componentFuncOrString, component.props, ...component.children.map(child => {
     if (typeof child === 'string')
       return child;
-    return render(child);
+    return __pwRender(child);
   }).filter(child => {
     if (typeof child === 'string')
       return !!child.trim();
@@ -72,24 +73,24 @@ function render(component) {
 }
 
 window.playwrightMount = async (component, rootElement, hooksConfig) => {
-  let App = () => render(component);
+  let App = () => __pwRender(component);
   for (const hook of window.__pw_hooks_before_mount || []) {
     const wrapper = await hook({ App, hooksConfig });
     if (wrapper)
       App = () => wrapper;
   }
 
-  ReactDOM.render(App(), rootElement);
+  __pwReactDOM.render(App(), rootElement);
 
   for (const hook of window.__pw_hooks_after_mount || [])
     await hook({ hooksConfig });
 };
 
 window.playwrightUnmount = async rootElement => {
-  if (!ReactDOM.unmountComponentAtNode(rootElement))
+  if (!__pwReactDOM.unmountComponentAtNode(rootElement))
     throw new Error('Component was not mounted');
 };
 
 window.playwrightUpdate = async (rootElement, component) => {
-  ReactDOM.render(render(/** @type {Component} */(component)), rootElement);
+  __pwReactDOM.render(__pwRender(/** @type {Component} */(component)), rootElement);
 };

@@ -24,6 +24,10 @@
   overflow: hidden;
 }
 
+.snapshot-tab .toolbar {
+  background-color: var(--vscode-sideBar-background);
+}
+
 .snapshot-controls {
   flex: none;
   background-color: var(--vscode-sideBar-background);
@@ -72,11 +76,25 @@
   box-shadow: 0 12px 28px 0 rgba(0,0,0,.2),0 2px 4px 0 rgba(0,0,0,.1);
 }
 
-iframe#snapshot {
+.snapshot-switcher {
   width: 100%;
   height: calc(100% - var(--window-header-height));
+  position: relative;
+}
+
+iframe[name=snapshot] {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   border: none;
   background: white;
+  visibility: hidden;
+}
+
+iframe.snapshot-visible[name=snapshot] {
+  visibility: visible;
 }
 
 .no-snapshot {
@@ -153,4 +171,5 @@ body.dark-mode .window-header {
 
 .snapshot-tab .cm-wrapper {
   line-height: 23px;
+  margin-right: 4px;
 }

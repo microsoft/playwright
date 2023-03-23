@@ -1495,6 +1495,51 @@ var banana = await page.GetByRole(AriaRole.Listitem).Nth(2);
 * since: v1.14
 - `index` <[int]>
 
+
+## method: Locator.or
+* since: v1.33
+* langs:
+  - alias-python: or_
+- returns: <[Locator]>
+
+Creates a locator that matches either of the two locators.
+
+**Usage**
+
+If your page shows a username input that is labelled either `Username` or `Login`, depending on some external factors you do not control, you can match both.
+
+```js
+const input = page.getByLabel('Username').or(page.getByLabel('Login'));
+await input.fill('John');
+```
+
+```java
+Locator input = page.getByLabel("Username").or(page.getByLabel("Login"));
+input.fill("John");
+```
+
+```python async
+input = page.get_by_label("Username").or_(page.get_by_label("Login"))
+await input.fill("John")
+```
+
+```python sync
+input = page.get_by_label("Username").or_(page.get_by_label("Login"))
+input.fill("John")
+```
+
+```csharp
+var input = page.GetByLabel("Username").Or(page.GetByLabel("Login"));
+await input.FillAsync("John");
+```
+
+### param: Locator.or.locator
+* since: v1.33
+- `locator` <[Locator]>
+
+Alternative locator to match.
+
+
 ## method: Locator.page
 * since: v1.19
 - returns: <[Page]>

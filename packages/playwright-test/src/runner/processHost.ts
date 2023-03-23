@@ -17,7 +17,7 @@
 import child_process from 'child_process';
 import { EventEmitter } from 'events';
 import { debug } from 'playwright-core/lib/utilsBundle';
-import type { ProcessInitParams } from '../common/ipc';
+import type { EnvProducedPayload, ProcessInitParams } from '../common/ipc';
 import type { ProtocolResponse } from '../common/process';
 
 export type ProcessExitData = {
@@ -35,17 +35,20 @@ export class ProcessHost extends EventEmitter {
   private _lastMessageId = 0;
   private _callbacks = new Map<number, { resolve: (result: any) => void, reject: (error: Error) => void }>();
   private _processName: string;
+  private _producedEnv: Record<string, string | undefined> = {};
+  private _extraEnv: Record<string, string | undefined>;
 
-  constructor(runnerScript: string, processName: string) {
+  constructor(runnerScript: string, processName: string, env: Record<string, string | undefined>) {
     super();
     this._runnerScript = runnerScript;
     this._processName = processName;
+    this._extraEnv = env;
   }
 
-  async startRunner(runnerParams: any, inheritStdio: boolean, env: NodeJS.ProcessEnv) {
+  async startRunner(runnerParams: any, inheritStdio: boolean) {
     this.process = child_process.fork(require.resolve('../common/process'), {
       detached: false,
-      env: { ...process.env, ...env },
+      env: { ...process.env, ...this._extraEnv },
       stdio: inheritStdio ? ['ignore', 'inherit', 'inherit', 'ipc'] : ['ignore', 'ignore', process.env.PW_RUNNER_DEBUG ? 'inherit' : 'ignore', 'ipc'],
     });
     this.process.on('exit', (code, signal) => {
@@ -56,7 +59,10 @@ export class ProcessHost extends EventEmitter {
     this.process.on('message', (message: any) => {
       if (debug.enabled('pw:test:protocol'))
         debug('pw:test:protocol')('◀ RECV ' + JSON.stringify(message));
-      if (message.method === '__dispatch__') {
+      if (message.method === '__env_produced__') {
+        const producedEnv: EnvProducedPayload = message.params;
+        this._producedEnv = Object.fromEntries(producedEnv.map(e => [e[0], e[1] ?? undefined]));
+      } else if (message.method === '__dispatch__') {
         const { id, error, method, params, result } = message.params as ProtocolResponse;
         if (id && this._callbacks.has(id)) {
           const { resolve, reject } = this._callbacks.get(id)!;
@@ -137,6 +143,10 @@ export class ProcessHost extends EventEmitter {
 
   didSendStop() {
     return this._didSendStop;
+  }
+
+  producedEnv() {
+    return this._producedEnv;
   }
 
   private send(message: { method: string, params?: any }) {
