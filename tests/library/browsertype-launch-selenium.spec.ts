@@ -22,8 +22,8 @@ import { start } from '../../packages/playwright-core/lib/outofprocess';
 
 const chromeDriver = process.env.PWTEST_CHROMEDRIVER;
 const brokenDriver = path.join(__dirname, '..', 'assets', 'selenium-grid', 'broken-selenium-driver.js');
-const standalone_3_141_59 = path.join(__dirname, '..', 'assets', 'selenium-grid', 'selenium-server-standalone-3.141.59.jar');
-const selenium_4_4_0 = path.join(__dirname, '..', 'assets', 'selenium-grid', 'selenium-server-4.4.0.jar');
+const standalone_3_141_59 = path.join(process.env.PWTEST_SELENIUM, 'selenium-server-standalone-3.141.59.jar');
+const selenium_4_4_0 = path.join(process.env.PWTEST_SELENIUM, 'selenium-server-4.4.0.jar');
 
 function writeSeleniumConfig(testInfo: TestInfo, port: number) {
   const template = path.join(__dirname, '..', 'assets', 'selenium-grid', `selenium-config-standalone.json`);
