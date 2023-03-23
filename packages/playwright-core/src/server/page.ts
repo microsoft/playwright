@@ -121,7 +121,6 @@ export class Page extends SdkObject {
   static Events = {
     Close: 'close',
     Crash: 'crash',
-    Console: 'console',
     Dialog: 'dialog',
     Download: 'download',
     FileChooser: 'filechooser',
@@ -141,6 +140,7 @@ export class Page extends SdkObject {
   private _closedPromise = new ManualPromise<void>();
   private _disconnected = false;
   private _initialized = false;
+  private _consoleMessagesBeforeInitialized: ConsoleMessage[] = [];
   readonly _disconnectedPromise = new ManualPromise<Error>();
   readonly _crashedPromise = new ManualPromise<Error>();
   readonly _browserContext: BrowserContext;
@@ -208,12 +208,18 @@ export class Page extends SdkObject {
     }
     this._initialized = true;
     this.emitOnContext(contextEvent, this);
-    // I may happen that page initialization finishes after Close event has already been sent,
+
+    for (const message of this._consoleMessagesBeforeInitialized)
+      this.emitOnContext(BrowserContext.Events.Console, message);
+    this._consoleMessagesBeforeInitialized = [];
+
+    // It may happen that page initialization finishes after Close event has already been sent,
     // in that case we fire another Close event to ensure that each reported Page will have
     // corresponding Close event after it is reported on the context.
     if (this.isClosed())
       this.emit(Page.Events.Close);
-    this.instrumentation.onPageOpen(this);
+    else
+      this.instrumentation.onPageOpen(this);
   }
 
   initializedOrUndefined() {
@@ -351,10 +357,18 @@ export class Page extends SdkObject {
   _addConsoleMessage(type: string, args: js.JSHandle[], location: types.ConsoleMessageLocation, text?: string) {
     const message = new ConsoleMessage(this, type, text, args, location);
     const intercepted = this._frameManager.interceptConsoleMessage(message);
-    if (intercepted || !this.listenerCount(Page.Events.Console))
+    if (intercepted) {
       args.forEach(arg => arg.dispose());
+      return;
+    }
+
+    // Console message may come before page is ready. In this case, postpone the message
+    // until page is initialized, and dispatch it to the client later, either on the live Page,
+    // or on the "errored" Page.
+    if (this._initialized)
+      this.emitOnContext(BrowserContext.Events.Console, message);
     else
-      this.emit(Page.Events.Console, message);
+      this._consoleMessagesBeforeInitialized.push(message);
   }
 
   async reload(metadata: CallMetadata, options: types.NavigateOptions): Promise<network.Response | null> {

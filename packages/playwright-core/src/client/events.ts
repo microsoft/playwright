@@ -35,6 +35,7 @@ export const Events = {
   },
 
   BrowserContext: {
+    Console: 'console',
     Close: 'close',
     Page: 'page',
     BackgroundPage: 'backgroundpage',

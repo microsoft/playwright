@@ -122,7 +122,7 @@ test('should contain action info', async ({ showTraceViewer }) => {
 test('should render events', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer([traceFile]);
   const events = await traceViewer.eventBars();
-  expect(events).toContain('page_console');
+  expect(events).toContain('browsercontext_console');
 });
 
 test('should render console', async ({ showTraceViewer, browserName }) => {

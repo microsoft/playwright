@@ -1028,8 +1028,8 @@ export class Frame extends SdkObject {
     let cspMessage: ConsoleMessage | undefined;
     const actionPromise = func().then(r => result = r).catch(e => error = e);
     const errorPromise = new Promise<void>(resolve => {
-      listeners.push(eventsHelper.addEventListener(this._page, Page.Events.Console, (message: ConsoleMessage) => {
-        if (message.type() === 'error' && message.text().includes('Content Security Policy')) {
+      listeners.push(eventsHelper.addEventListener(this._page._browserContext, BrowserContext.Events.Console, (message: ConsoleMessage) => {
+        if (message.page() === this._page && message.type() === 'error' && message.text().includes('Content Security Policy')) {
           cspMessage = message;
           resolve();
         }
