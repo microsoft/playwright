@@ -265,7 +265,7 @@ export const InspectModeController: React.FunctionComponent<{
       recorder = new Recorder(injectedScript, {
         async setSelector(selector: string) {
           recorder!.setUIState({ mode: 'none', language: sdkLanguage, testIdAttributeName });
-          setHighlightedLocator(asLocator('javascript', selector, false));
+          setHighlightedLocator(asLocator('javascript', selector, false /* isFrameLocator */, true /* playSafe */));
         }
       });
       win._recorder = recorder;
