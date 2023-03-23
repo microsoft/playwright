@@ -4,7 +4,7 @@
     "display": "browser",
     "start_url": "watch.html",
     "name": "Playwright Test",
-    "short_name": "Trace Viewer",
+    "short_name": "Playwright Test",
     "icons": [
         {
             "src": "icon-192x192.png",

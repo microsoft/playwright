@@ -787,3 +787,9 @@ test('should update highlight when typing', async ({ page, runAndTrace, server }
   await traceViewer.page.keyboard.type('button');
   await expect(snapshot.locator('x-pw-glass')).toBeVisible();
 });
+
+test('should open trace-1.31', async ({ showTraceViewer }) => {
+  const traceViewer = await showTraceViewer([path.join(__dirname, '../assets/trace-1.31.zip')]);
+  const snapshot = await traceViewer.snapshotFrame('locator.click');
+  await expect(snapshot.locator('[__playwright_target__]')).toHaveText(['Submit']);
+});

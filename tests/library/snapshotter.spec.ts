@@ -41,7 +41,7 @@ it.describe('snapshots', () => {
     await snapshotter.reset();
     const snapshot2 = await snapshotter.captureSnapshot(toImpl(page), 'call@2', 'snapshot@call@2');
     const html2 = snapshot2.render().html;
-    expect(html2.replace(`"call@2"`, `"call@1"`)).toEqual(html1);
+    expect(html2.replace(/call@2/g, `call@1`)).toEqual(html1);
   });
 
   it('should capture resources', async ({ page, toImpl, server, snapshotter }) => {
