@@ -22,8 +22,8 @@ import { start } from '../../packages/playwright-core/lib/outofprocess';
 
 const chromeDriver = process.env.PWTEST_CHROMEDRIVER;
 const brokenDriver = path.join(__dirname, '..', 'assets', 'selenium-grid', 'broken-selenium-driver.js');
-const standalone_3_141_59 = path.join(__dirname, '..', 'assets', 'selenium-grid', 'selenium-server-standalone-3.141.59.jar');
-const selenium_4_4_0 = path.join(__dirname, '..', 'assets', 'selenium-grid', 'selenium-server-4.4.0.jar');
+let standalone_3_141_59: string;
+let selenium_4_4_0: string;
 
 function writeSeleniumConfig(testInfo: TestInfo, port: number) {
   const template = path.join(__dirname, '..', 'assets', 'selenium-grid', `selenium-config-standalone.json`);
@@ -36,6 +36,11 @@ function writeSeleniumConfig(testInfo: TestInfo, port: number) {
 test.skip(({ mode }) => mode !== 'default', 'Using test hooks');
 test.skip(!chromeDriver);
 test.slow();
+
+test.beforeAll(() => {
+  standalone_3_141_59 = path.join(process.env.PWTEST_SELENIUM!, 'selenium-server-standalone-3.141.59.jar');
+  selenium_4_4_0 = path.join(process.env.PWTEST_SELENIUM!, 'selenium-server-4.4.0.jar');
+});
 
 test('selenium grid 3.141.59 standalone chromium', async ({ browserName, childProcess, waitForPort, browserType }, testInfo) => {
   test.skip(browserName !== 'chromium');
