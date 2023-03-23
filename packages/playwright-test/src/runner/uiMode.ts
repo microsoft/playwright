@@ -24,7 +24,7 @@ import { Multiplexer } from '../reporters/multiplexer';
 import { TeleReporterEmitter } from '../reporters/teleEmitter';
 import { createReporter } from './reporters';
 import type { TaskRunnerState } from './tasks';
-import { createTaskRunnerForList, createTaskRunnerForWatch, createTaskRunnerForWatchSetup } from './tasks';
+import { createTaskRunnerForList, createTaskRunnerForUIMode, createTaskRunnerForGlobalSetup } from './tasks';
 import { chokidar } from '../utilsBundle';
 import type { FSWatcher } from 'chokidar';
 import { open } from '../utilsBundle';
@@ -67,7 +67,7 @@ class UIMode {
 
   async runGlobalSetup(): Promise<FullResult['status']> {
     const reporter = await createReporter(this._config, 'run');
-    const taskRunner = createTaskRunnerForWatchSetup(this._config, reporter);
+    const taskRunner = createTaskRunnerForGlobalSetup(this._config, reporter);
     reporter.onConfigure(this._config);
     const context: TaskRunnerState = {
       config: this._config,
@@ -169,7 +169,7 @@ class UIMode {
 
     const runReporter = new TeleReporterEmitter(e => this._dispatchEvent(e));
     const reporter = await createReporter(this._config, 'ui', [runReporter]);
-    const taskRunner = createTaskRunnerForWatch(this._config, reporter);
+    const taskRunner = createTaskRunnerForUIMode(this._config, reporter);
     const context: TaskRunnerState = { config: this._config, reporter, phases: [] };
     clearCompilationCache();
     reporter.onConfigure(this._config);

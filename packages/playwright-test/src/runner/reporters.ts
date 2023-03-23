@@ -31,7 +31,7 @@ import type { FullConfigInternal } from '../common/types';
 import { loadReporter } from './loadUtils';
 import type { BuiltInReporter } from '../common/configLoader';
 
-export async function createReporter(config: FullConfigInternal, mode: 'list' | 'watch' | 'run' | 'ui', additionalReporters: Reporter[] = []): Promise<Multiplexer> {
+export async function createReporter(config: FullConfigInternal, mode: 'list' | 'run' | 'ui', additionalReporters: Reporter[] = []): Promise<Multiplexer> {
   const defaultReporters: {[key in BuiltInReporter]: new(arg: any) => Reporter} = {
     dot: mode === 'list' ? ListModeReporter : DotReporter,
     line: mode === 'list' ? ListModeReporter : LineReporter,
@@ -43,23 +43,19 @@ export async function createReporter(config: FullConfigInternal, mode: 'list' | 
     html: mode === 'ui' ? LineReporter : HtmlReporter,
   };
   const reporters: Reporter[] = [];
-  if (mode === 'watch') {
-    reporters.push(new ListReporter());
-  } else {
-    for (const r of config.reporter) {
-      const [name, arg] = r;
-      if (name in defaultReporters) {
-        reporters.push(new defaultReporters[name as keyof typeof defaultReporters](arg));
-      } else {
-        const reporterConstructor = await loadReporter(config, name);
-        reporters.push(new reporterConstructor(arg));
-      }
+  for (const r of config.reporter) {
+    const [name, arg] = r;
+    if (name in defaultReporters) {
+      reporters.push(new defaultReporters[name as keyof typeof defaultReporters](arg));
+    } else {
+      const reporterConstructor = await loadReporter(config, name);
+      reporters.push(new reporterConstructor(arg));
     }
-    reporters.push(...additionalReporters);
-    if (process.env.PW_TEST_REPORTER) {
-      const reporterConstructor = await loadReporter(config, process.env.PW_TEST_REPORTER);
-      reporters.push(new reporterConstructor());
-    }
+  }
+  reporters.push(...additionalReporters);
+  if (process.env.PW_TEST_REPORTER) {
+    const reporterConstructor = await loadReporter(config, process.env.PW_TEST_REPORTER);
+    reporters.push(new reporterConstructor());
   }
 
   const someReporterPrintsToStdio = reporters.some(r => {
