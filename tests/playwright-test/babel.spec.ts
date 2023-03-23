@@ -95,3 +95,23 @@ test('should be able to access |this| inside class properties', async ({ runInli
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 });
+
+test('should work with |const| Type Parameters', async ({ runInlineTest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/21900' });
+  const result = await runInlineTest({
+    'example.spec.ts': `
+      import { test, expect } from '@playwright/test';
+
+      test('works', () => {
+        type HasNames = { names: readonly string[] };
+        function getNamesExactly<const T extends HasNames>(arg: T): T["names"] {
+        //                       ^^^^^
+            return arg.names;
+        }
+        const names = getNamesExactly({ names: ["Alice", "Bob", "Eve"] });
+      })
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
