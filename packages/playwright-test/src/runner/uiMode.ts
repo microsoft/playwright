@@ -66,7 +66,7 @@ class UIMode {
   }
 
   async runGlobalSetup(): Promise<FullResult['status']> {
-    const reporter = await createReporter(this._config, 'watch');
+    const reporter = await createReporter(this._config, 'run');
     const taskRunner = createTaskRunnerForWatchSetup(this._config, reporter);
     reporter.onConfigure(this._config);
     const context: TaskRunnerState = {
@@ -75,6 +75,7 @@ class UIMode {
       phases: [],
     };
     const { status, cleanup: globalCleanup } = await taskRunner.runDeferCleanup(context, 0);
+    await reporter.onExit({ status });
     if (status !== 'passed') {
       await globalCleanup();
       return status;
@@ -151,7 +152,7 @@ class UIMode {
     clearCompilationCache();
     reporter.onConfigure(this._config);
     const status = await taskRunner.run(context, 0);
-    reporter.onExit({ status });
+    await reporter.onExit({ status });
 
     const projectDirs = new Set<string>();
     for (const p of this._config.projects)
