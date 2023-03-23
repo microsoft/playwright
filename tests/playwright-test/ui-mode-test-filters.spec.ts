@@ -178,3 +178,28 @@ test('should not hide filtered while running', async ({ runUITest, createLatch }
         ↻ fails <=
   `);
 });
+
+test('should filter skipped', async ({ runUITest, createLatch }) => {
+  const page = await runUITest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('passes', () => {});
+      test.skip('fails', async () => {
+        expect(1).toBe(2);
+      });
+    `,
+  });
+  await page.getByTitle('Run all').click();
+  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toBe(`
+    ▼ ✅ a.test.ts
+        ✅ passes
+        ⊘ fails
+  `);
+
+  await page.getByText('Status:').click();
+  await page.getByLabel('skipped').setChecked(true);
+  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toBe(`
+    ▼ ⊘ a.test.ts
+        ⊘ fails
+  `);
+});

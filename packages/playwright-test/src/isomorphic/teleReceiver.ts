@@ -175,6 +175,7 @@ export class TeleReporterReceiver {
     testResult.workerIndex = payload.workerIndex;
     testResult.parallelIndex = payload.parallelIndex;
     testResult.startTime = new Date(payload.startTime);
+    testResult.statusEx = 'running';
     this._reporter.onTestBegin?.(test, testResult);
   }
 
@@ -183,6 +184,7 @@ export class TeleReporterReceiver {
     const result = test.resultsMap.get(payload.id)!;
     result.duration = payload.duration;
     result.status = payload.status;
+    result.statusEx = payload.status;
     result.errors = payload.errors;
     result.attachments = payload.attachments;
     this._reporter.onTestEnd?.(test, result);
@@ -380,7 +382,7 @@ export class TeleSuite implements SuitePrivate {
 export class TeleTestCase implements reporterTypes.TestCase {
   title: string;
   fn = () => {};
-  results: reporterTypes.TestResult[] = [];
+  results: TeleTestResult[] = [];
   location: Location;
   parent!: TeleSuite;
 
@@ -426,7 +428,7 @@ export class TeleTestCase implements reporterTypes.TestCase {
     this.resultsMap.clear();
   }
 
-  _createTestResult(id: string): reporterTypes.TestResult {
+  _createTestResult(id: string): TeleTestResult {
     this._clearResults();
     const result: TeleTestResult = {
       retry: this.results.length,
@@ -438,6 +440,7 @@ export class TeleTestCase implements reporterTypes.TestCase {
       stderr: [],
       attachments: [],
       status: 'skipped',
+      statusEx: 'scheduled',
       steps: [],
       errors: [],
       stepMap: new Map(),
@@ -453,6 +456,7 @@ export class TeleTestCase implements reporterTypes.TestCase {
 export type TeleTestResult = reporterTypes.TestResult & {
   stepMap: Map<string, reporterTypes.TestStep>;
   stepStack: (reporterTypes.TestStep | reporterTypes.TestResult)[];
+  statusEx: reporterTypes.TestResult['status'] | 'scheduled' | 'running';
 };
 
 export type TeleFullProject = FullProject & { id: string };
