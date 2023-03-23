@@ -231,7 +231,7 @@ class Watcher {
   private _collector: FSEvent[] = [];
   private _fsWatcher: FSWatcher | undefined;
   private _throttleTimer: NodeJS.Timeout | undefined;
-  private _mode: string;
+  private _mode: 'flat' | 'deep';
 
   constructor(mode: 'flat' | 'deep', onChange: (events: FSEvent[]) => void) {
     this._mode = mode;
