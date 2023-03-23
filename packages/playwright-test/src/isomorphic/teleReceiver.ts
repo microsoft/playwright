@@ -206,9 +206,9 @@ export class TeleReporterReceiver {
       duration: 0,
       steps: [],
     };
-    result.stepMap.set(payload.id, step);
     if (parentStep)
       parentStep.steps.push(step);
+    result.stepMap.set(payload.id, step);
     this._reporter.onStepBegin?.(test, result, step);
   }
 
