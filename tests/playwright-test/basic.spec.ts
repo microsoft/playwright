@@ -394,6 +394,24 @@ test('test.{skip,fixme} should define a skipped test', async ({ runInlineTest })
   expect(result.output).not.toContain('%%dontseethis');
 });
 
+test('should report unhandled error during test and not report timeout', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('unhandled rejection', async () => {
+        setTimeout(() => {
+          throw new Error('Unhandled');
+        }, 0);
+        await new Promise(f => setTimeout(f, 100));
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output).toContain('Error: Unhandled');
+  expect(result.output).not.toContain('Test timeout of 30000ms exceeded');
+});
+
 test('should report unhandled rejection during worker shutdown', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
