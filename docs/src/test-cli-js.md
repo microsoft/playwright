@@ -59,6 +59,11 @@ Here are the most common options available in the command line.
   ```bash
   npx playwright test --debug
   ```
+  
+  -- Run tests in interactive UI mode, with a built-in watch mode (Preview)
+  ```bash
+  npx playwright test --ui
+  ```
 
 - Ask for help
   ```bash
