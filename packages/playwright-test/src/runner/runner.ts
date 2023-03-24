@@ -66,8 +66,6 @@ export class Runner {
       phases: [],
     };
 
-    reporter.onConfigure(config);
-
     if (!listOnly && config._internal.ignoreSnapshots) {
       reporter.onStdOut(colors.dim([
         'NOTE: running with "ignoreSnapshots" option. All of the following asserts are silently ignored:',

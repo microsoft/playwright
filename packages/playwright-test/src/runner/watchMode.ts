@@ -121,7 +121,6 @@ export async function runWatchModeLoop(config: FullConfigInternal): Promise<Full
     phases: [],
   };
   const taskRunner = createTaskRunnerForWatchSetup(config, reporter);
-  reporter.onConfigure(config);
   const { status, cleanup: globalCleanup } = await taskRunner.runDeferCleanup(context, 0);
   if (status !== 'passed')
     return await globalCleanup();
@@ -282,7 +281,7 @@ async function runTests(config: FullConfigInternal, failedTestIdCollector: Set<s
     title?: string,
   }) {
   printConfiguration(config, options?.title);
-  const reporter = new Multiplexer([new ListReporter()]);
+  const reporter = new Multiplexer([new ListReporter()], config);
   const taskRunner = createTaskRunnerForWatch(config, reporter, options?.projectsToIgnore, options?.additionalFileMatcher);
   const context: TaskRunnerState = {
     config,
@@ -290,7 +289,6 @@ async function runTests(config: FullConfigInternal, failedTestIdCollector: Set<s
     phases: [],
   };
   clearCompilationCache();
-  reporter.onConfigure(config);
   const taskStatus = await taskRunner.run(context, 0);
   let status: FullResult['status'] = 'passed';
 

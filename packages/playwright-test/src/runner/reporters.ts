@@ -74,7 +74,7 @@ export async function createReporter(config: FullConfigInternal, mode: 'list' | 
     else
       reporters.unshift(!process.env.CI ? new LineReporter({ omitFailures: true }) : new DotReporter());
   }
-  return new Multiplexer(reporters);
+  return new Multiplexer(reporters, config);
 }
 
 export class ListModeReporter implements Reporter {

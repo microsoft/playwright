@@ -79,7 +79,6 @@ class UIMode {
   async runGlobalSetup(): Promise<FullResult['status']> {
     const reporter = await createReporter(this._config, 'watch');
     const taskRunner = createTaskRunnerForWatchSetup(this._config, reporter);
-    reporter.onConfigure(this._config);
     const context: TaskRunnerState = {
       config: this._config,
       reporter,
@@ -152,13 +151,12 @@ class UIMode {
 
   private async _listTests() {
     const listReporter = new TeleReporterEmitter(e => this._dispatchEvent(e));
-    const reporter = new Multiplexer([listReporter]);
+    const reporter = new Multiplexer([listReporter], this._config);
     this._config._internal.listOnly = true;
     this._config._internal.testIdMatcher = undefined;
     const taskRunner = createTaskRunnerForList(this._config, reporter, 'out-of-process');
     const context: TaskRunnerState = { config: this._config, reporter, phases: [] };
     clearCompilationCache();
-    reporter.onConfigure(this._config);
     await taskRunner.run(context, 0);
   }
 
@@ -174,7 +172,6 @@ class UIMode {
     const taskRunner = createTaskRunnerForWatch(this._config, reporter);
     const context: TaskRunnerState = { config: this._config, reporter, phases: [] };
     clearCompilationCache();
-    reporter.onConfigure(this._config);
     const stop = new ManualPromise();
     const run = taskRunner.run(context, 0, stop).then(async status => {
       await reporter.onExit({ status });

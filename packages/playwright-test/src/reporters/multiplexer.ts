@@ -25,19 +25,16 @@ type StdIOChunk = {
 
 export class Multiplexer implements Reporter {
   private _reporters: Reporter[];
+  private _config: FullConfig;
   private _deferred: { error?: TestError, stdout?: StdIOChunk, stderr?: StdIOChunk }[] | null = [];
-  private _config!: FullConfig;
 
-  constructor(reporters: Reporter[]) {
+  constructor(reporters: Reporter[], config: FullConfig) {
     this._reporters = reporters;
+    this._config = config;
   }
 
   printsToStdio() {
     return this._reporters.some(r => r.printsToStdio ? r.printsToStdio() : true);
-  }
-
-  onConfigure(config: FullConfig) {
-    this._config = config;
   }
 
   onBegin(config: FullConfig, suite: Suite) {
