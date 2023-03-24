@@ -23,6 +23,6 @@ test('emit a event when a slot is clicked', async ({ mount }) => {
       <span v-on:click={() => (clickFired = true)}>Main Content</span>
     </DefaultSlot>
   );
-  await component.locator('text=Main Content').click();
+  await component.getByText('Main Content').click();
   expect(clickFired).toBeTruthy();
 });
