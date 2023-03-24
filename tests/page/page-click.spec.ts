@@ -26,6 +26,7 @@ async function giveItAChanceToClick(page) {
 it('should click the button @smoke', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/button.html');
   await page.click('button');
+  expect(1).toBe(2);
   expect(await page.evaluate('result')).toBe('Clicked');
 });
 

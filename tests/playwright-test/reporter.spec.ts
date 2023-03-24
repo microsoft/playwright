@@ -58,11 +58,21 @@ class Reporter {
   onStepEnd(test, result, step) {
     if (step.error?.stack)
       step.error.stack = '<stack>';
+    if (step.error?.message)
+      step.error.message = stripAnsiEscapes(step.error.message);
+    if (step.error?.location)
+      step.error.location = '<location>';
     if (step.error?.message.includes('getaddrinfo'))
       step.error.message = '<message>';
     console.log('%%%% end', JSON.stringify(this.distillStep(step)));
   }
 }
+
+const ansiRegex = new RegExp('([\\\\u001B\\\\u009B][[\\\\]()#;?]*(?:(?:(?:[a-zA-Z\\\\d]*(?:;[-a-zA-Z\\\\d\\\\/#&.:=?%@~_]*)*)?\\\\u0007)|(?:(?:\\\\d{1,4}(?:;\\\\d{0,4})*)?[\\\\dA-PR-TZcf-ntqry=><~])))', 'g');
+function stripAnsiEscapes(str) {
+  return str.replace(ansiRegex, '');
+}
+
 module.exports = Reporter;
 `;
 
@@ -257,7 +267,7 @@ test('should report expect steps', async ({ runInlineTest }) => {
     `begin {\"title\":\"expect.toBeTruthy\",\"category\":\"expect\"}`,
     `end {\"title\":\"expect.toBeTruthy\",\"category\":\"expect\"}`,
     `begin {\"title\":\"expect.toBeTruthy\",\"category\":\"expect\"}`,
-    `end {\"title\":\"expect.toBeTruthy\",\"category\":\"expect\",\"error\":{\"message\":\"\\u001b[2mexpect(\\u001b[22m\\u001b[31mreceived\\u001b[39m\\u001b[2m).\\u001b[22mtoBeTruthy\\u001b[2m()\\u001b[22m\\n\\nReceived: \\u001b[31mfalse\\u001b[39m\",\"stack\":\"<stack>\"}}`,
+    `end {\"title\":\"expect.toBeTruthy\",\"category\":\"expect\",\"error\":{\"message\":\"Error: expect(received).toBeTruthy()\\n\\nReceived: false\\n\\n  3 |       test('fail', async ({}) => {\\n  4 |         expect(true).toBeTruthy();\\n> 5 |         expect(false).toBeTruthy();\\n    |                       ^\\n  6 |       });\\n  7 |       test('pass', async ({}) => {\\n  8 |         expect(false).not.toBeTruthy();\",\"stack\":\"<stack>\",\"location\":\"<location>\"}}`,
     `begin {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
     `end {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
     `begin {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
@@ -336,9 +346,9 @@ test('should report api steps', async ({ runInlineTest }) => {
     `begin {\"title\":\"locator.getByRole('button').click\",\"category\":\"pw:api\"}`,
     `end {\"title\":\"locator.getByRole('button').click\",\"category\":\"pw:api\"}`,
     `begin {"title":"apiRequestContext.get(http://localhost2)","category":"pw:api"}`,
-    `end {"title":"apiRequestContext.get(http://localhost2)","category":"pw:api","error":{"message":"<message>","stack":"<stack>"}}`,
+    `end {\"title\":\"apiRequestContext.get(http://localhost2)\",\"category\":\"pw:api\",\"error\":{\"message\":\"<message>\",\"stack\":\"<stack>\",\"location\":\"<location>\"}}`,
     `begin {"title":"apiRequestContext.get(http://localhost2)","category":"pw:api"}`,
-    `end {"title":"apiRequestContext.get(http://localhost2)","category":"pw:api","error":{"message":"<message>","stack":"<stack>"}}`,
+    `end {\"title\":\"apiRequestContext.get(http://localhost2)\",\"category\":\"pw:api\",\"error\":{\"message\":\"<message>\",\"stack\":\"<stack>\",\"location\":\"<location>\"}}`,
     `begin {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
     `begin {\"title\":\"apiRequestContext.dispose\",\"category\":\"pw:api\"}`,
     `end {\"title\":\"apiRequestContext.dispose\",\"category\":\"pw:api\"}`,
@@ -397,7 +407,7 @@ test('should report api step failure', async ({ runInlineTest }) => {
     `begin {\"title\":\"page.setContent\",\"category\":\"pw:api\"}`,
     `end {\"title\":\"page.setContent\",\"category\":\"pw:api\"}`,
     `begin {\"title\":\"page.click(input)\",\"category\":\"pw:api\"}`,
-    `end {\"title\":\"page.click(input)\",\"category\":\"pw:api\",\"error\":{\"message\":\"page.click: Timeout 1ms exceeded.\\n=========================== logs ===========================\\nwaiting for locator('input')\\n============================================================\",\"stack\":\"<stack>\"}}`,
+    `end {\"title\":\"page.click(input)\",\"category\":\"pw:api\",\"error\":{\"message\":\"TimeoutError: page.click: Timeout 1ms exceeded.\\n=========================== logs ===========================\\nwaiting for locator('input')\\n============================================================\\n\\n  3 |       test('fail', async ({ page }) => {\\n  4 |         await page.setContent('<button></button>');\\n> 5 |         await page.click('input', { timeout: 1 });\\n    |                    ^\\n  6 |       });\\n  7 |     \",\"stack\":\"<stack>\",\"location\":\"<location>\"}}`,
     `begin {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
     `begin {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
     `end {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
@@ -492,9 +502,8 @@ test('should report no-tests error to reporter', async ({ runInlineTest }) => {
       };
     `
   }, { 'reporter': '' });
-
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain(`%%got error: No tests found`);
+  expect(result.output).toContain(`%%got error: Error: No tests found`);
 });
 
 test('should report require error to reporter', async ({ runInlineTest }) => {
@@ -511,7 +520,7 @@ test('should report require error to reporter', async ({ runInlineTest }) => {
   }, { 'reporter': '' });
 
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain(`%%got error: Oh my!`);
+  expect(result.output).toContain(`%%got error: Error: Oh my!`);
 });
 
 test('should report global setup error to reporter', async ({ runInlineTest }) => {
@@ -535,7 +544,7 @@ test('should report global setup error to reporter', async ({ runInlineTest }) =
   }, { 'reporter': '' });
 
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain(`%%got error: Oh my!`);
+  expect(result.output).toContain(`%%got error: Error: Oh my!`);
 });
 
 test('should report correct tests/suites when using grep', async ({ runInlineTest }) => {

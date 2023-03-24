@@ -337,10 +337,9 @@ export function formatResultFailure(config: FullConfig, test: TestCase, result: 
   }
 
   for (const error of result.errors) {
-    const formattedError = formatError(config, error, highlightCode, test.location.file);
     errorDetails.push({
-      message: indent(formattedError.message, initialIndent),
-      location: formattedError.location,
+      message: indent(formatError(error, highlightCode), initialIndent),
+      location: error.location,
     });
   }
   return errorDetails;
@@ -377,11 +376,25 @@ function formatTestHeader(config: FullConfig, test: TestCase, indent: string, in
   return separator(header);
 }
 
-export function formatError(config: FullConfig, error: TestError, highlightCode: boolean, file?: string): ErrorDetails {
+export function formatError(error: TestError, highlightCode: boolean): string {
+  const stack = error.stack;
+  if (!stack)
+    return error.message || error.value || '';
+  if (!highlightCode)
+    return stripAnsiEscapes(stack);
+  // Dim stack trace.
+  const parsedStack = prepareErrorStack(stack);
+  const tokens = [];
+  tokens.push(parsedStack.message);
+  tokens.push(colors.dim(parsedStack.stackLines.join('\n')));
+  return tokens.join('\n');
+}
+
+export function addSnippetToError(config: FullConfig, error: TestError, file?: string) {
   const message = error.message || error.value || '';
   const stack = error.stack;
   if (!stack && !error.location)
-    return { message };
+    return;
 
   const tokens = [];
 
@@ -397,7 +410,7 @@ export function formatError(config: FullConfig, error: TestError, highlightCode:
   if (location) {
     try {
       const source = fs.readFileSync(location.file, 'utf8');
-      const codeFrame = codeFrameColumns(source, { start: location }, { highlightCode });
+      const codeFrame = codeFrameColumns(source, { start: location }, { highlightCode: true });
       // Convert /var/folders to /private/var/folders on Mac.
       if (!file || fs.realpathSync(file) !== location.file) {
         tokens.push('');
@@ -409,15 +422,14 @@ export function formatError(config: FullConfig, error: TestError, highlightCode:
       // Failed to read the source file - that's ok.
     }
   }
+
+  error.message = tokens.join('\n');
   if (parsedStack) {
     tokens.push('');
-    tokens.push(colors.dim(parsedStack.stackLines.join('\n')));
+    tokens.push(...parsedStack.stackLines);
+    error.stack = tokens.join('\n');
+    error.location ??= location;
   }
-
-  return {
-    location,
-    message: tokens.join('\n'),
-  };
 }
 
 export function separator(text: string = ''): string {

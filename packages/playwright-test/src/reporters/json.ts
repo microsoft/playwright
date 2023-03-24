@@ -203,7 +203,10 @@ class JSONReporter implements Reporter {
   }
 
   private _serializeError(error: TestError): JSONReportError {
-    return formatError(this.config, error, true);
+    return {
+      message: formatError(error, true),
+      location: error.location,
+    };
   }
 
   private _serializeTestStep(step: TestStep): JSONReportTestStep {
