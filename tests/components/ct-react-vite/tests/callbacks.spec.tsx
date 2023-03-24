@@ -23,6 +23,6 @@ test('execute callback when a child node is clicked', async ({ mount }) => {
       <span onClick={() => (clickFired = true)}>Main Content</span>
     </DefaultChildren>
   );
-  await component.locator('text=Main Content').click();
+  await component.getByText('Main Content').click();
   expect(clickFired).toBeTruthy();
 });

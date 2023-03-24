@@ -22,12 +22,12 @@ test('render a component as child', async ({ mount }) => {
 test('render multiple children', async ({ mount }) => {
   const component = await mount(
     <DefaultChildren>
-      <div id="one">One</div>
-      <div id="two">Two</div>
+      <div data-testid="one">One</div>
+      <div data-testid="two">Two</div>
     </DefaultChildren>
   );
-  await expect(component.locator('#one')).toContainText('One');
-  await expect(component.locator('#two')).toContainText('Two');
+  await expect(component.getByTestId('one')).toContainText('One');
+  await expect(component.getByTestId('two')).toContainText('Two');
 });
 
 test('render named children', async ({ mount }) => {
