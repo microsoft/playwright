@@ -154,7 +154,6 @@ export class TeleReporterReceiver {
 
   private _onBegin(config: JsonConfig, projects: JsonProject[]) {
     this._rootDir = config.rootDir;
-    const removeMissing = config.listOnly;
     for (const project of projects) {
       let projectSuite = this._rootSuite.suites.find(suite => suite.project()!.id === project.id);
       if (!projectSuite) {
@@ -164,7 +163,24 @@ export class TeleReporterReceiver {
       }
       const p = this._parseProject(project);
       projectSuite.project = () => p;
-      this._mergeSuitesInto(project.suites, projectSuite, removeMissing);
+      this._mergeSuitesInto(project.suites, projectSuite);
+
+      // Remove deleted tests when listing. Empty suites will be auto-filtered
+      // in the UI layer.
+      if (config.listOnly) {
+        const testIds = new Set<string>();
+        const collectIds = (suite: JsonSuite) => {
+          suite.tests.map(t => t.testId).forEach(testId => testIds.add(testId));
+          suite.suites.forEach(collectIds);
+        };
+        project.suites.forEach(collectIds);
+
+        const filterTests = (suite: TeleSuite) => {
+          suite.tests = suite.tests.filter(t => testIds.has(t.id));
+          suite.suites.forEach(filterTests);
+        };
+        filterTests(projectSuite);
+      }
     }
     this._reporter.onBegin?.(this._parseConfig(config), this._rootSuite);
   }
@@ -266,7 +282,7 @@ export class TeleReporterReceiver {
     };
   }
 
-  private _mergeSuitesInto(jsonSuites: JsonSuite[], parent: TeleSuite, removeMissing: boolean) {
+  private _mergeSuitesInto(jsonSuites: JsonSuite[], parent: TeleSuite) {
     for (const jsonSuite of jsonSuites) {
       let targetSuite = parent.suites.find(s => s.title === jsonSuite.title);
       if (!targetSuite) {
@@ -277,16 +293,12 @@ export class TeleReporterReceiver {
       targetSuite.location = this._absoluteLocation(jsonSuite.location);
       targetSuite._fileId = jsonSuite.fileId;
       targetSuite._parallelMode = jsonSuite.parallelMode;
-      this._mergeSuitesInto(jsonSuite.suites, targetSuite, removeMissing);
-      this._mergeTestsInto(jsonSuite.tests, targetSuite, removeMissing);
-    }
-    if (removeMissing) {
-      const suiteMap = new Map(parent.suites.map(p => [p.title, p]));
-      parent.suites = jsonSuites.map(s => suiteMap.get(s.title)).filter(Boolean) as TeleSuite[];
+      this._mergeSuitesInto(jsonSuite.suites, targetSuite);
+      this._mergeTestsInto(jsonSuite.tests, targetSuite);
     }
   }
 
-  private _mergeTestsInto(jsonTests: JsonTestCase[], parent: TeleSuite, removeMissing: boolean) {
+  private _mergeTestsInto(jsonTests: JsonTestCase[], parent: TeleSuite) {
     for (const jsonTest of jsonTests) {
       let targetTest = parent.tests.find(s => s.title === jsonTest.title);
       if (!targetTest) {
@@ -296,10 +308,6 @@ export class TeleReporterReceiver {
         this._tests.set(targetTest.id, targetTest);
       }
       this._updateTest(jsonTest, targetTest);
-    }
-    if (removeMissing) {
-      const testMap = new Map(parent.tests.map(p => [p.title, p]));
-      parent.tests = jsonTests.map(s => testMap.get(s.title)).filter(Boolean) as TeleTestCase[];
     }
   }
 
