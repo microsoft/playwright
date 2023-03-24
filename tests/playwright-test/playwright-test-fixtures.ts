@@ -20,7 +20,7 @@ import * as os from 'os';
 import * as path from 'path';
 import { rimraf, PNG } from 'playwright-core/lib/utilsBundle';
 import { promisify } from 'util';
-import type { CommonFixtures, CommonWorkerFixtures } from '../config/commonFixtures';
+import type { CommonFixtures, CommonWorkerFixtures, TestChildProcess } from '../config/commonFixtures';
 import { commonFixtures } from '../config/commonFixtures';
 import type { ServerFixtures, ServerWorkerOptions } from '../config/serverFixtures';
 import { serverFixtures } from '../config/serverFixtures';
@@ -155,6 +155,22 @@ async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], b
   };
 }
 
+function watchPlaywrightTest(childProcess: CommonFixtures['childProcess'], baseDir: string, env: NodeJS.ProcessEnv, options: RunOptions): TestChildProcess {
+  const args = ['test', '--workers=2'];
+  if (options.additionalArgs)
+    args.push(...options.additionalArgs);
+  const cwd = options.cwd ? path.resolve(baseDir, options.cwd) : baseDir;
+
+  const command = ['node', cliEntrypoint];
+  command.push(...args);
+  const testProcess = childProcess({
+    command,
+    env: cleanEnv({ PWTEST_WATCH: '1', ...env }),
+    cwd,
+  });
+  return testProcess;
+}
+
 async function runPlaywrightCommand(childProcess: CommonFixtures['childProcess'], cwd: string, commandWithArguments: string[], env: NodeJS.ProcessEnv, sendSIGINTAfter?: number): Promise<CliRunResult> {
   const command = ['node', cliEntrypoint];
   command.push(...commandWithArguments);
@@ -209,6 +225,7 @@ type Fixtures = {
   writeFiles: (files: Files) => Promise<string>;
   deleteFile: (file: string) => Promise<void>;
   runInlineTest: (files: Files, params?: Params, env?: NodeJS.ProcessEnv, options?: RunOptions) => Promise<RunResult>;
+  runWatchTest: (files: Files, env?: NodeJS.ProcessEnv, options?: RunOptions) => Promise<TestChildProcess>;
   runTSC: (files: Files) => Promise<TSCResult>;
   nodeVersion: { major: number, minor: number, patch: number };
 };
@@ -234,6 +251,18 @@ export const test = base
           const baseDir = await writeFiles(testInfo, files, true);
           return await runPlaywrightTest(childProcess, baseDir, params, { ...env, PWTEST_CACHE_DIR: cacheDir }, options);
         });
+        await removeFolderAsync(cacheDir);
+      },
+
+      runWatchTest: async ({ childProcess }, use, testInfo: TestInfo) => {
+        const cacheDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-test-cache-'));
+        let testProcess: TestChildProcess | undefined;
+        await use(async (files: Files, env: NodeJS.ProcessEnv = {}, options: RunOptions = {}) => {
+          const baseDir = await writeFiles(testInfo, files, true);
+          testProcess = watchPlaywrightTest(childProcess, baseDir, { ...env, PWTEST_CACHE_DIR: cacheDir }, options);
+          return testProcess;
+        });
+        await testProcess?.kill();
         await removeFolderAsync(cacheDir);
       },
 
