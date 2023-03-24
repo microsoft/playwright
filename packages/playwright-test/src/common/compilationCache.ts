@@ -78,10 +78,15 @@ export function getFromCompilationCache(filename: string, code: string, moduleUr
 
   return {
     addToCache: (code: string, map: any) => {
-      fs.mkdirSync(path.dirname(cachePath), { recursive: true });
+      // Make sure we create cache folders with 777 permissions.
+      // Based on the stackoveflow answer: https://stackoverflow.com/a/34721366/314883
+      // See https://github.com/microsoft/playwright/issues/21859
+      const oldmask = process.umask(0);
+      fs.mkdirSync(path.dirname(cachePath), { recursive: true, mode: 0o777 });
       if (map)
         fs.writeFileSync(sourceMapPath, JSON.stringify(map), 'utf8');
       fs.writeFileSync(codePath, code, 'utf8');
+      process.umask(oldmask);
       _innerAddToCompilationCache(filename, { codePath, sourceMapPath, moduleUrl });
     }
   };
