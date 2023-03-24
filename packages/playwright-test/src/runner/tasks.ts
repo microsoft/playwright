@@ -58,13 +58,13 @@ export function createTaskRunner(config: FullConfigInternal, reporter: Multiplex
   return taskRunner;
 }
 
-export function createTaskRunnerForGlobalSetup(config: FullConfigInternal, reporter: Multiplexer): TaskRunner<TaskRunnerState> {
+export function createTaskRunnerForWatchSetup(config: FullConfigInternal, reporter: Multiplexer): TaskRunner<TaskRunnerState> {
   const taskRunner = new TaskRunner<TaskRunnerState>(reporter, 0);
   addGlobalSetupTasks(taskRunner, config);
   return taskRunner;
 }
 
-export function createTaskRunnerForUIMode(config: FullConfigInternal, reporter: Multiplexer, projectsToIgnore?: Set<FullProjectInternal>, additionalFileMatcher?: Matcher): TaskRunner<TaskRunnerState> {
+export function createTaskRunnerForWatch(config: FullConfigInternal, reporter: Multiplexer, projectsToIgnore?: Set<FullProjectInternal>, additionalFileMatcher?: Matcher): TaskRunner<TaskRunnerState> {
   const taskRunner = new TaskRunner<TaskRunnerState>(reporter, 0);
   taskRunner.addTask('load tests', createLoadTask('out-of-process', true, projectsToIgnore, additionalFileMatcher));
   addRunTasks(taskRunner, config);

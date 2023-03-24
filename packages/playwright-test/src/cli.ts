@@ -146,6 +146,8 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   let status: FullResult['status'];
   if (opts.ui)
     status = await runner.uiAllTests();
+  else if (process.env.PWTEST_WATCH)
+    status = await runner.watchAllTests();
   else
     status = await runner.runAllTests();
   await stopProfiling('runner');
