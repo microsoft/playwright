@@ -806,7 +806,7 @@ Consider the following DOM structure where we want to click on the buy button of
 
 ### Filter by text
 
-Locators can be filtered by text with the [`method: Locator.filter`] method. It will search for a particular string somewhere inside the element, possibly in a descendant element, case-insensitively. You can also pass a regular expression.
+Locators can be filtered by text with the [`method: Locator.filter#1`] method. It will search for a particular string somewhere inside the element, possibly in a descendant element, case-insensitively. You can also pass a regular expression.
 
 ```js
 await page
@@ -883,7 +883,7 @@ await page
     .ClickAsync();
 ```
 
-### Filter by another locator
+### Filter by child/descendant
 
 Locators support an option to only select elements that have a descendant matching another locator. You can therefore filter by any other locator such as a [`method: Locator.getByRole`], [`method: Locator.getByTestId`], [`method: Locator.getByText`] etc.
 
@@ -984,6 +984,30 @@ await Expect(page
 ```
 
 Note that the inner locator is matched starting from the outer one, not from the document root.
+
+### Filter by matching an additional locator
+
+Method [`method: Locator.filter#2`] narrows down an existing locator by matching an additional locator. For example, you can combine [`method: Page.getByRole`] and [`method: Page.getByTitle`] to match by both role and title.
+
+```js
+const button = page.getByRole('button').filter(page.getByTitle('Subscribe'));
+```
+
+```java
+Locator button = page.getByRole(AriaRole.BUTTON).filter(page.getByTitle("Subscribe"));
+```
+
+```python async
+button = page.get_by_role("button").filter(page.getByTitle("Subscribe"))
+```
+
+```python sync
+button = page.get_by_role("button").filter(page.getByTitle("Subscribe"))
+```
+
+```csharp
+var button = page.GetByRole(AriaRole.Button).Filter(page.GetByTitle("Subscribe"));
+```
 
 ## Chaining Locators
 
@@ -1198,7 +1222,7 @@ await page.GetByText("orange").ClickAsync();
 ```
 
 #### Filter by text
-Use the [`method: Locator.filter`] to locate a specific item in a list.
+Use the [`method: Locator.filter#1`] to locate a specific item in a list.
 
 For example, consider the following DOM structure:
 
@@ -1303,7 +1327,7 @@ However, use this method with caution. Often times, the page might change, and t
 
 ### Chaining filters
 
-When you have elements with various similarities, you can use the [`method: Locator.filter`] method to select the right one. You can also chain multiple filters to narrow down the selection.
+When you have elements with various similarities, you can use the [`method: Locator.filter#1`] method to select the right one. You can also chain multiple filters to narrow down the selection.
 
 For example, consider the following DOM structure:
 

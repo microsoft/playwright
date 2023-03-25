@@ -967,7 +967,7 @@ If a selector needs to include `>>` in the body, it should be escaped inside a s
 ### Intermediate matches
 
 :::warning
-We recommend [filtering by another locator](./locators.md#filter-by-another-locator) to locate elements that contain other elements.
+We recommend [filtering by another locator](./locators.md#filter-by-childdescendant) to locate elements that contain other elements.
 :::
 
 By default, chained selectors resolve to an element queried by the last selector. A selector can be prefixed with `*` to capture elements that are queried by an intermediate selector.

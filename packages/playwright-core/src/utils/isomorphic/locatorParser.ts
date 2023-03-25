@@ -102,7 +102,7 @@ function shiftParams(template: string, sub: number) {
 
 function transform(template: string, params: TemplateParams, testIdAttributeName: string): string {
   // Recursively handle filter(has=).
-  // TODO: handle or(locator) as well.
+  // TODO: handle or(locator) and filter(locator).
   while (true) {
     const hasMatch = template.match(/filter\(,?has=/);
     if (!hasMatch)

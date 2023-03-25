@@ -114,6 +114,7 @@ export class InjectedScript {
     this._engines.set('internal:control', this._createControlEngine());
     this._engines.set('internal:has', this._createHasEngine());
     this._engines.set('internal:or', { queryAll: () => [] });
+    this._engines.set('internal:and', { queryAll: () => [] });
     this._engines.set('internal:label', this._createInternalLabelEngine());
     this._engines.set('internal:text', this._createTextEngine(true, true));
     this._engines.set('internal:has-text', this._createInternalHasTextEngine());
@@ -170,14 +171,6 @@ export class InjectedScript {
     return new Set<Element>(list.slice(nth, nth + 1));
   }
 
-  private _queryOr(elements: Set<Element>, part: ParsedSelectorPart): Set<Element> {
-    const list = [...elements];
-    let nth = +part.body;
-    if (nth === -1)
-      nth = list.length - 1;
-    return new Set<Element>(list.slice(nth, nth + 1));
-  }
-
   private _queryLayoutSelector(elements: Set<Element>, part: ParsedSelectorPart, originalRoot: Node): Set<Element> {
     const name = part.name as LayoutSelectorName;
     const body = part.body as NestedSelectorBody;
@@ -222,6 +215,9 @@ export class InjectedScript {
         } else if (part.name === 'internal:or') {
           const orElements = this.querySelectorAll((part.body as NestedSelectorBody).parsed, root);
           roots = new Set(sortInDOMOrder(new Set([...roots, ...orElements])));
+        } else if (part.name === 'internal:and') {
+          const andElements = this.querySelectorAll((part.body as NestedSelectorBody).parsed, root);
+          roots = new Set(andElements.filter(e => roots.has(e)));
         } else if (kLayoutSelectorNames.includes(part.name as LayoutSelectorName)) {
           roots = this._queryLayoutSelector(roots, part, root);
         } else {
