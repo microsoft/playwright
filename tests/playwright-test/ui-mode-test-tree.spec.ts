@@ -142,3 +142,83 @@ test('should merge folder trees', async ({ runUITest }) => {
         ◯ passes
   `);
 });
+
+test('should list parametrized tests', async ({ runUITest }) => {
+  const page = await runUITest({
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      test.describe('cookies', () => {
+        for (const country of ['FR', 'DE', 'LT']) {
+          test.describe(() => {
+            test('test ' + country, async ({}) => {});
+          });
+        }
+      })
+    `
+  });
+
+  await page.getByText('cookies').click();
+  await page.keyboard.press('ArrowRight');
+  await page.getByText('<anonymous>').click();
+  await page.keyboard.press('ArrowRight');
+
+  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toBe(`
+    ▼ ◯ a.test.ts
+      ▼ ◯ cookies
+        ▼ ◯ <anonymous> <=
+            ◯ test FR
+            ◯ test DE
+            ◯ test LT
+  `);
+});
+
+test('should update parametrized tests', async ({ runUITest, writeFiles }) => {
+  const page = await runUITest({
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      test.describe('cookies', () => {
+        for (const country of ['FR', 'DE', 'LT']) {
+          test.describe(() => {
+            test('test ' + country, async ({}) => {});
+          });
+        }
+      })
+    `
+  });
+
+  await page.getByText('cookies').click();
+  await page.keyboard.press('ArrowRight');
+  await page.getByText('<anonymous>').click();
+  await page.keyboard.press('ArrowRight');
+
+  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toBe(`
+    ▼ ◯ a.test.ts
+      ▼ ◯ cookies
+        ▼ ◯ <anonymous> <=
+            ◯ test FR
+            ◯ test DE
+            ◯ test LT
+  `);
+
+  writeFiles({
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      test.describe('cookies', () => {
+        for (const country of ['FR', 'LT']) {
+          test.describe(() => {
+            test('test ' + country, async ({}) => {});
+          });
+        }
+      })
+    `
+  });
+
+
+  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toBe(`
+    ▼ ◯ a.test.ts
+      ▼ ◯ cookies
+        ▼ ◯ <anonymous> <=
+            ◯ test FR
+            ◯ test LT
+  `);
+});
