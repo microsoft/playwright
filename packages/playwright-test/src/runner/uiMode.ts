@@ -28,6 +28,7 @@ import { createTaskRunnerForList, createTaskRunnerForWatch, createTaskRunnerForW
 import { chokidar } from '../utilsBundle';
 import type { FSWatcher } from 'chokidar';
 import { open } from '../utilsBundle';
+import ListReporter from '../reporters/list';
 
 class UIMode {
   private _config: FullConfigInternal;
@@ -66,7 +67,7 @@ class UIMode {
   }
 
   async runGlobalSetup(): Promise<FullResult['status']> {
-    const reporter = await createReporter(this._config, 'run');
+    const reporter = new Multiplexer([new ListReporter()]);
     const taskRunner = createTaskRunnerForWatchSetup(this._config, reporter);
     reporter.onConfigure(this._config);
     const context: TaskRunnerState = {
