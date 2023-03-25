@@ -735,7 +735,7 @@ function createTree(rootSuite: Suite | undefined, projectFilters: Map<string, bo
 
   const visitSuite = (projectName: string, parentSuite: Suite, parentGroup: GroupItem) => {
     for (const suite of parentSuite.suites) {
-      const title = suite.title;
+      const title = suite.title || '<anonymous>';
       let group = parentGroup.children.find(item => item.title === title) as GroupItem | undefined;
       if (!group) {
         group = {
