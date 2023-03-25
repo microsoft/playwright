@@ -37,7 +37,7 @@ export class InMemorySnapshotter implements SnapshotterDelegate, HarTracerDelega
 
   constructor(context: BrowserContext) {
     this._snapshotter = new Snapshotter(context, this);
-    this._harTracer = new HarTracer(context, null, this, { content: 'attach', includeTraceInfo: true, recordRequestOverrides: false, waitForContentOnStop: false, skipScripts: true });
+    this._harTracer = new HarTracer(context, null, this, { updateContent: 'attach', includeTraceInfo: true, recordRequestOverrides: false, waitForContentOnStop: false, skipScripts: true });
     this._storage = new SnapshotStorage();
   }
 

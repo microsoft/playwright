@@ -24,9 +24,9 @@ import type { AddressInfo } from 'net';
 import type { Log } from '../../packages/trace/src/har';
 import { parseHar } from '../config/utils';
 
-async function pageWithHar(contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>, testInfo: any, options: { outputPath?: string, content?: 'embed' | 'attach' | 'omit', omitContent?: boolean } = {}) {
+async function pageWithHar(contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>, testInfo: any, options: { outputPath?: string, updateContent?: 'embed' | 'attach' | 'omit', omitContent?: boolean } = {}) {
   const harPath = testInfo.outputPath(options.outputPath || 'test.har');
-  const context = await contextFactory({ recordHar: { path: harPath, content: options.content, omitContent: options.omitContent }, ignoreHTTPSErrors: true });
+  const context = await contextFactory({ recordHar: { path: harPath, updateContent: options.updateContent, omitContent: options.omitContent }, ignoreHTTPSErrors: true });
   const page = await context.newPage();
   return {
     page,

@@ -42,7 +42,7 @@ export interface HarTracerDelegate {
 }
 
 type HarTracerOptions = {
-  content: 'omit' | 'attach' | 'embed';
+  updateContent: 'omit' | 'attach' | 'embed';
   skipScripts: boolean;
   includeTraceInfo: boolean;
   recordRequestOverrides: boolean;

@@ -150,7 +150,7 @@ scheme.SerializedError = tObject({
 });
 scheme.RecordHarOptions = tObject({
   path: tString,
-  content: tOptional(tEnum(['embed', 'attach', 'omit'])),
+  updateContent: tOptional(tEnum(['embed', 'attach', 'omit'])),
   mode: tOptional(tEnum(['full', 'minimal'])),
   urlGlob: tOptional(tString),
   urlRegexSource: tOptional(tString),

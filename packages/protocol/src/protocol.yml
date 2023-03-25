@@ -239,7 +239,7 @@ RecordHarOptions:
   type: object
   properties:
     path: string
-    content:
+    updateContent:
       type: enum?
       literals:
       - embed

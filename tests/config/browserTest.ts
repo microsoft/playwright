@@ -45,7 +45,7 @@ type BrowserTestTestFixtures = PageTestFixtures & {
   launchPersistent: (options?: Parameters<BrowserType['launchPersistentContext']>[1]) => Promise<{ context: BrowserContext, page: Page }>;
   startRemoteServer: StartRemoteServer;
   contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>;
-  pageWithHar(options?: { outputPath?: string, content?: 'embed' | 'attach' | 'omit', omitContent?: boolean }): Promise<{ context: BrowserContext, page: Page, getLog: () => Promise<Log>, getZip: () => Promise<Map<string, Buffer>> }>
+  pageWithHar(options?: { outputPath?: string, updateContent?: 'embed' | 'attach' | 'omit', omitContent?: boolean }): Promise<{ context: BrowserContext, page: Page, getLog: () => Promise<Log>, getZip: () => Promise<Map<string, Buffer>> }>
 };
 
 const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>({
@@ -146,9 +146,9 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
     }
   },
   pageWithHar: async ({ contextFactory }, use, testInfo) => {
-    const pageWithHar = async (options: { outputPath?: string, content?: 'embed' | 'attach' | 'omit', omitContent?: boolean } = {}) => {
+    const pageWithHar = async (options: { outputPath?: string, updateContent?: 'embed' | 'attach' | 'omit', omitContent?: boolean } = {}) => {
       const harPath = testInfo.outputPath(options.outputPath || 'test.har');
-      const context = await contextFactory({ recordHar: { path: harPath, content: options.content, omitContent: options.omitContent }, ignoreHTTPSErrors: true });
+      const context = await contextFactory({ recordHar: { path: harPath, updateContent: options.updateContent, omitContent: options.omitContent }, ignoreHTTPSErrors: true });
       const page = await context.newPage();
       return {
         page,

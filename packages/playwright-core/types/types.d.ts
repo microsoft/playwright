@@ -12441,7 +12441,7 @@ export interface BrowserType<Unused = {}> {
       content?: "omit"|"embed"|"attach";
 
       /**
-       * Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, `content: 'attach'` is used by
+       * Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, `updateContent: 'attach'` is used by
        * default.
        */
       path: string;
@@ -13828,7 +13828,7 @@ export interface AndroidDevice {
       content?: "omit"|"embed"|"attach";
 
       /**
-       * Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, `content: 'attach'` is used by
+       * Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, `updateContent: 'attach'` is used by
        * default.
        */
       path: string;
@@ -15689,7 +15689,7 @@ export interface Browser extends EventEmitter {
       content?: "omit"|"embed"|"attach";
 
       /**
-       * Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, `content: 'attach'` is used by
+       * Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, `updateContent: 'attach'` is used by
        * default.
        */
       path: string;
@@ -16497,7 +16497,7 @@ export interface Electron {
       content?: "omit"|"embed"|"attach";
 
       /**
-       * Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, `content: 'attach'` is used by
+       * Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, `updateContent: 'attach'` is used by
        * default.
        */
       path: string;
@@ -18768,7 +18768,7 @@ export interface BrowserContextOptions {
     content?: "omit"|"embed"|"attach";
 
     /**
-     * Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, `content: 'attach'` is used by
+     * Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, `updateContent: 'attach'` is used by
      * default.
      */
     path: string;
