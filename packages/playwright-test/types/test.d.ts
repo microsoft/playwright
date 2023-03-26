@@ -3400,6 +3400,7 @@ export interface PlaywrightWorkerOptions {
    * - `'on'`: Record trace for each test.
    * - `'retain-on-failure'`: Record trace for each test, but remove all traces from successful test runs.
    * - `'on-first-retry'`: Record trace only when retrying a test for the first time.
+   * - `'on-all-retries'`: Record traces only when retrying for all retries.
    *
    * For more control, pass an object that specifies `mode` and trace features to enable.
    *
@@ -3424,7 +3425,7 @@ export interface PlaywrightWorkerOptions {
 }
 
 export type ScreenshotMode = 'off' | 'on' | 'only-on-failure';
-export type TraceMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry';
+export type TraceMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry' | 'on-all-retries';
 export type VideoMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry';
 
 /**

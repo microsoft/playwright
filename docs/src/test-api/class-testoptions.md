@@ -172,7 +172,7 @@ Custom attribute to be used in [`method: Page.getByTestId`]. `data-testid` is us
 ## property: TestOptions.trace
 * since: v1.10
 - type: <[Object]|[TraceMode]<"off"|"on"|"retain-on-failure"|"on-first-retry">>
-  - `mode` <[TraceMode]<"off"|"on"|"retain-on-failure"|"on-first-retry">> Trace recording mode.
+  - `mode` <[TraceMode]<"off"|"on"|"retain-on-failure"|"on-first-retry"|"on-all-retries">> Trace recording mode.
   - `screenshots` ?<[boolean]> Whether to capture screenshots during tracing. Screenshots are used to build a timeline preview. Defaults to true. Optional.
   - `snapshots` ?<[boolean]> Whether to capture DOM snapshot on every action. Defaults to true. Optional.
   - `sources` ?<[boolean]> Whether to include source files for trace actions. Defaults to true. Optional.
@@ -182,6 +182,7 @@ Whether to record trace for each test. Defaults to `'off'`.
 * `'on'`: Record trace for each test.
 * `'retain-on-failure'`: Record trace for each test, but remove all traces from successful test runs.
 * `'on-first-retry'`: Record trace only when retrying a test for the first time.
+* `'on-all-retries'`: Record traces only when retrying for all retries.
 
 For more control, pass an object that specifies `mode` and trace features to enable.
 

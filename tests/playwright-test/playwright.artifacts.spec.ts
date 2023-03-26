@@ -301,6 +301,41 @@ test('should work with trace: on-first-retry', async ({ runInlineTest }, testInf
   ]);
 });
 
+test('should work with trace: on-all-retries', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    ...testFiles,
+    'playwright.config.ts': `
+      module.exports = { use: { trace: 'on-all-retries' } };
+    `,
+  }, { workers: 1, retries: 2 });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(5);
+  expect(result.failed).toBe(5);
+  expect(listFiles(testInfo.outputPath('test-results'))).toEqual([
+    'artifacts-failing-retry1',
+    '  trace.zip',
+    'artifacts-failing-retry2',
+    '  trace.zip',
+    'artifacts-own-context-failing-retry1',
+    '  trace.zip',
+    'artifacts-own-context-failing-retry2',
+    '  trace.zip',
+    'artifacts-persistent-failing-retry1',
+    '  trace.zip',
+    'artifacts-persistent-failing-retry2',
+    '  trace.zip',
+    'artifacts-shared-shared-failing-retry1',
+    '  trace.zip',
+    'artifacts-shared-shared-failing-retry2',
+    '  trace.zip',
+    'artifacts-two-contexts-failing-retry1',
+    '  trace.zip',
+    'artifacts-two-contexts-failing-retry2',
+    '  trace.zip',
+  ]);
+});
+
 test('should take screenshot when page is closed in afterEach', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
