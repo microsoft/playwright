@@ -246,7 +246,7 @@ function convertContextOptions(options: BrowserContextOptions): any {
   const result: any = { ...options };
   if (options.recordHar) {
     result['record_har_path'] = options.recordHar.path;
-    result['record_har_content'] = options.recordHar.content;
+    result['record_har_content'] = options.recordHar.updateContent;
     result['record_har_mode'] = options.recordHar.mode;
     result['record_har_omit_content'] = options.recordHar.omitContent;
     result['record_har_url_filter'] = options.recordHar.urlFilter;

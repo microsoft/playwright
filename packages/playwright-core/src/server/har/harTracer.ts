@@ -195,7 +195,7 @@ export class HarTracer {
     if (!this._options.omitCookies)
       harEntry.request.cookies = event.cookies;
     harEntry.request.headers = Object.entries(event.headers).map(([name, value]) => ({ name, value }));
-    harEntry.request.postData = this._postDataForBuffer(event.postData || null, event.headers['content-type'],  this._options.content);
+    harEntry.request.postData = this._postDataForBuffer(event.postData || null, event.headers['content-type'],  this._options.updateContent);
     if (!this._options.omitSizes)
       harEntry.request.bodySize = event.postData?.length || 0;
     (event as any)[this._entrySymbol] = harEntry;
@@ -250,7 +250,7 @@ export class HarTracer {
     if (pageEntry)
       harEntry.pageref = pageEntry.id;
     this._recordRequestHeadersAndCookies(harEntry, request.headers());
-    harEntry.request.postData = this._postDataForRequest(request, this._options.content);
+    harEntry.request.postData = this._postDataForRequest(request, this._options.updateContent);
     if (!this._options.omitSizes)
       harEntry.request.bodySize = request.bodySize();
     if (request.redirectedFrom()) {
@@ -277,7 +277,7 @@ export class HarTracer {
       return;
     harEntry.request.method = request.method();
     harEntry.request.url = request.url();
-    harEntry.request.postData = this._postDataForRequest(request, this._options.content);
+    harEntry.request.postData = this._postDataForRequest(request, this._options.updateContent);
     this._recordRequestHeadersAndCookies(harEntry, request.headers());
   }
 
@@ -386,7 +386,7 @@ export class HarTracer {
     if (!this._options.omitSizes)
       content.size = buffer.length;
 
-    if (this._options.content === 'embed') {
+    if (this._options.updateContent === 'embed') {
       // Sometimes, we can receive a font/media file with textual mime type. Browser
       // still interprets them correctly, but the 'content-type' header is obviously wrong.
       if (isTextualMimeType(content.mimeType) && resourceType !== 'font') {
@@ -395,7 +395,7 @@ export class HarTracer {
         content.text = buffer.toString('base64');
         content.encoding = 'base64';
       }
-    } else if (this._options.content === 'attach') {
+    } else if (this._options.updateContent === 'attach') {
       const sha1 = calculateSha1(buffer) + '.' + (mime.getExtension(content.mimeType) || 'dat');
       if (this._options.includeTraceInfo)
         content._sha1 = sha1;

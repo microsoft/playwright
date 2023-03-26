@@ -40,9 +40,9 @@ export class HarRecorder {
     this._artifact = new Artifact(context, path.join(context._browser.options.artifactsDir, `${createGuid()}.har`));
     const urlFilterRe = options.urlRegexSource !== undefined && options.urlRegexFlags !== undefined ? new RegExp(options.urlRegexSource, options.urlRegexFlags) : undefined;
     const expectsZip = options.path.endsWith('.zip');
-    const content = options.content || (expectsZip ? 'attach' : 'embed');
+    const updateContent = options.updateContent || (expectsZip ? 'attach' : 'embed');
     this._tracer = new HarTracer(context, page, this, {
-      content,
+      updateContent,
       slimMode: options.mode === 'minimal',
       includeTraceInfo: false,
       recordRequestOverrides: true,
@@ -50,7 +50,7 @@ export class HarRecorder {
       skipScripts: false,
       urlFilter: urlFilterRe ?? options.urlGlob,
     });
-    this._zipFile = content === 'attach' || expectsZip ? new yazl.ZipFile() : null;
+    this._zipFile = updateContent === 'attach' || expectsZip ? new yazl.ZipFile() : null;
     this._tracer.start();
   }
 

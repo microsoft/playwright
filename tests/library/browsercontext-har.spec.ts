@@ -236,7 +236,7 @@ it('should round-trip har.zip', async ({ contextFactory, server }, testInfo) => 
 
 it('should produce extracted zip', async ({ contextFactory, server }, testInfo) => {
   const harPath = testInfo.outputPath('har.har');
-  const context1 = await contextFactory({ recordHar: { mode: 'minimal', path: harPath, content: 'attach' } });
+  const context1 = await contextFactory({ recordHar: { mode: 'minimal', path: harPath, updateContent: 'attach' } });
   const page1 = await context1.newPage();
   await page1.goto(server.PREFIX + '/one-style.html');
   await context1.close();

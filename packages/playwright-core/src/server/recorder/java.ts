@@ -213,8 +213,8 @@ function formatContextOptions(contextOptions: BrowserContextOptions, deviceName:
     lines.push(`  .setLocale(${quote(options.locale)})`);
   if (options.proxy)
     lines.push(`  .setProxy(new Proxy(${quote(options.proxy.server)}))`);
-  if (options.recordHar?.content)
-    lines.push(`  .setRecordHarContent(HarContentPolicy.${options.recordHar?.content.toUpperCase()})`);
+  if (options.recordHar?.updateContent)
+    lines.push(`  .setRecordHarContent(HarContentPolicy.${options.recordHar?.updateContent.toUpperCase()})`);
   if (options.recordHar?.mode)
     lines.push(`  .setRecordHarMode(HarMode.${options.recordHar?.mode.toUpperCase()})`);
   if (options.recordHar?.omitContent)

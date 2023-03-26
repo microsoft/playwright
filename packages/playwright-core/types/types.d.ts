@@ -12438,11 +12438,11 @@ export interface BrowserType<Unused = {}> {
        * specified, content is stored inline the HAR file as per HAR specification. Defaults to `attach` for `.zip` output
        * files and to `embed` for all other file extensions.
        */
-      content?: "omit"|"embed"|"attach";
+      updateContent?: "omit"|"embed"|"attach";
 
       /**
-       * Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, `updateContent: 'attach'` is used by
-       * default.
+       * Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, `updateContent: 'attach'` is
+       * used by default.
        */
       path: string;
 
@@ -13825,11 +13825,11 @@ export interface AndroidDevice {
        * specified, content is stored inline the HAR file as per HAR specification. Defaults to `attach` for `.zip` output
        * files and to `embed` for all other file extensions.
        */
-      content?: "omit"|"embed"|"attach";
+      updateContent?: "omit"|"embed"|"attach";
 
       /**
-       * Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, `updateContent: 'attach'` is used by
-       * default.
+       * Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, `updateContent: 'attach'` is
+       * used by default.
        */
       path: string;
 
@@ -15686,11 +15686,11 @@ export interface Browser extends EventEmitter {
        * specified, content is stored inline the HAR file as per HAR specification. Defaults to `attach` for `.zip` output
        * files and to `embed` for all other file extensions.
        */
-      content?: "omit"|"embed"|"attach";
+      updateContent?: "omit"|"embed"|"attach";
 
       /**
-       * Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, `updateContent: 'attach'` is used by
-       * default.
+       * Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, `updateContent: 'attach'` is
+       * used by default.
        */
       path: string;
 
@@ -16494,11 +16494,11 @@ export interface Electron {
        * specified, content is stored inline the HAR file as per HAR specification. Defaults to `attach` for `.zip` output
        * files and to `embed` for all other file extensions.
        */
-      content?: "omit"|"embed"|"attach";
+      updateContent?: "omit"|"embed"|"attach";
 
       /**
-       * Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, `updateContent: 'attach'` is used by
-       * default.
+       * Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, `updateContent: 'attach'` is
+       * used by default.
        */
       path: string;
 
@@ -18765,11 +18765,11 @@ export interface BrowserContextOptions {
      * specified, content is stored inline the HAR file as per HAR specification. Defaults to `attach` for `.zip` output
      * files and to `embed` for all other file extensions.
      */
-    content?: "omit"|"embed"|"attach";
+    updateContent?: "omit"|"embed"|"attach";
 
     /**
-     * Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, `updateContent: 'attach'` is used by
-     * default.
+     * Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, `updateContent: 'attach'` is
+     * used by default.
      */
     path: string;
 

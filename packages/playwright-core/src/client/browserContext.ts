@@ -57,7 +57,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   readonly _backgroundPages = new Set<Page>();
   readonly _serviceWorkers = new Set<Worker>();
   readonly _isChromium: boolean;
-  private _harRecorders = new Map<string, { path: string, content: 'embed' | 'attach' | 'omit' | undefined }>();
+  private _harRecorders = new Map<string, { path: string, updateContent: 'embed' | 'attach' | 'omit' | undefined }>();
   private _closeWasCalled = false;
 
   static from(context: channels.BrowserContextChannel): BrowserContext {
@@ -109,7 +109,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   _setOptions(contextOptions: channels.BrowserNewContextParams, browserOptions: LaunchOptions) {
     this._options = contextOptions;
     if (this._options.recordHar)
-      this._harRecorders.set('', { path: this._options.recordHar.path, content: this._options.recordHar.content });
+      this._harRecorders.set('', { path: this._options.recordHar.path, updateContent: this._options.recordHar.updateContent });
     this.tracing._tracesDir = browserOptions.tracesDir;
   }
 
@@ -271,12 +271,12 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
       page: page?._channel,
       options: prepareRecordHarOptions({
         path: har,
-        content: options.updateContent ?? 'attach',
+        updateContent: options.updateContent ?? 'attach',
         mode: options.updateMode ?? 'minimal',
         urlFilter: options.url
       })!
     });
-    this._harRecorders.set(harId, { path: har, content: options.updateContent ?? 'attach' });
+    this._harRecorders.set(harId, { path: har, updateContent: options.updateContent ?? 'attach' });
   }
 
   async routeFromHAR(har: string, options: { url?: string | RegExp, notFound?: 'abort' | 'fallback', update?: boolean, updateContent?: 'attach' | 'embed', updateMode?: 'minimal' | 'full' } = {}): Promise<void> {
@@ -353,8 +353,8 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
       for (const [harId, harParams] of this._harRecorders) {
         const har = await this._channel.harExport({ harId });
         const artifact = Artifact.from(har.artifact);
-        // Server side will compress artifact if content is attach or if file is .zip.
-        const isCompressed = harParams.content === 'attach' || harParams.path.endsWith('.zip');
+        // Server side will compress artifact if updateContent is attach or if file is .zip.
+        const isCompressed = harParams.updateContent === 'attach' || harParams.path.endsWith('.zip');
         const needCompressed = harParams.path.endsWith('.zip');
         if (isCompressed && !needCompressed) {
           await artifact.saveAs(harParams.path + '.tmp');
@@ -399,7 +399,7 @@ function prepareRecordHarOptions(options: BrowserContextOptions['recordHar']): c
     return;
   return {
     path: options.path,
-    content: options.updateContent || (options.omitContent ? 'omit' : undefined),
+    updateContent: options.updateContent || (options.omitContent ? 'omit' : undefined),
     urlGlob: isString(options.urlFilter) ? options.urlFilter : undefined,
     urlRegexSource: isRegExp(options.urlFilter) ? options.urlFilter.source : undefined,
     urlRegexFlags: isRegExp(options.urlFilter) ? options.urlFilter.flags : undefined,

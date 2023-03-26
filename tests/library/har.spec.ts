@@ -318,7 +318,7 @@ it('should use attach mode for zip extension', async ({ contextFactory, server }
 });
 
 it('should omit content', async ({ contextFactory, server }, testInfo) => {
-  const { page, getLog } = await pageWithHar(contextFactory, testInfo, { content: 'omit', outputPath: 'test.har' });
+  const { page, getLog } = await pageWithHar(contextFactory, testInfo, { updateContent: 'omit', outputPath: 'test.har' });
   await page.goto(server.PREFIX + '/har.html');
   await page.evaluate(() => fetch('/pptr.png').then(r => r.arrayBuffer()));
   const log = await getLog();
@@ -336,7 +336,7 @@ it('should omit content legacy', async ({ contextFactory, server }, testInfo) =>
 });
 
 it('should attach content', async ({ contextFactory, server }, testInfo) => {
-  const { page, getZip } = await pageWithHar(contextFactory, testInfo, { content: 'attach', outputPath: 'test.har.zip' });
+  const { page, getZip } = await pageWithHar(contextFactory, testInfo, { updateContent: 'attach', outputPath: 'test.har.zip' });
   await page.goto(server.PREFIX + '/har.html');
   await page.evaluate(() => fetch('/pptr.png').then(r => r.arrayBuffer()));
   const zip = await getZip();
