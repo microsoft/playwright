@@ -44,6 +44,7 @@ import type { Artifact } from './artifact';
 
 export abstract class BrowserContext extends SdkObject {
   static Events = {
+    Console: 'console',
     Close: 'close',
     Page: 'page',
     Request: 'request',

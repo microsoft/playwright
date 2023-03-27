@@ -1394,6 +1394,7 @@ export type BrowserContextInitializer = {
 };
 export interface BrowserContextEventTarget {
   on(event: 'bindingCall', callback: (params: BrowserContextBindingCallEvent) => void): this;
+  on(event: 'console', callback: (params: BrowserContextConsoleEvent) => void): this;
   on(event: 'close', callback: (params: BrowserContextCloseEvent) => void): this;
   on(event: 'page', callback: (params: BrowserContextPageEvent) => void): this;
   on(event: 'route', callback: (params: BrowserContextRouteEvent) => void): this;
@@ -1434,6 +1435,9 @@ export interface BrowserContextChannel extends BrowserContextEventTarget, EventT
 }
 export type BrowserContextBindingCallEvent = {
   binding: BindingCallChannel,
+};
+export type BrowserContextConsoleEvent = {
+  message: ConsoleMessageChannel,
 };
 export type BrowserContextCloseEvent = {};
 export type BrowserContextPageEvent = {
@@ -1677,6 +1681,7 @@ export type BrowserContextUpdateSubscriptionResult = void;
 
 export interface BrowserContextEvents {
   'bindingCall': BrowserContextBindingCallEvent;
+  'console': BrowserContextConsoleEvent;
   'close': BrowserContextCloseEvent;
   'page': BrowserContextPageEvent;
   'route': BrowserContextRouteEvent;
@@ -1702,7 +1707,6 @@ export type PageInitializer = {
 export interface PageEventTarget {
   on(event: 'bindingCall', callback: (params: PageBindingCallEvent) => void): this;
   on(event: 'close', callback: (params: PageCloseEvent) => void): this;
-  on(event: 'console', callback: (params: PageConsoleEvent) => void): this;
   on(event: 'crash', callback: (params: PageCrashEvent) => void): this;
   on(event: 'dialog', callback: (params: PageDialogEvent) => void): this;
   on(event: 'download', callback: (params: PageDownloadEvent) => void): this;
@@ -1755,9 +1759,6 @@ export type PageBindingCallEvent = {
   binding: BindingCallChannel,
 };
 export type PageCloseEvent = {};
-export type PageConsoleEvent = {
-  message: ConsoleMessageChannel,
-};
 export type PageCrashEvent = {};
 export type PageDialogEvent = {
   dialog: DialogChannel,
@@ -2201,7 +2202,6 @@ export type PageUpdateSubscriptionResult = void;
 export interface PageEvents {
   'bindingCall': PageBindingCallEvent;
   'close': PageCloseEvent;
-  'console': PageConsoleEvent;
   'crash': PageCrashEvent;
   'dialog': PageDialogEvent;
   'download': PageDownloadEvent;
@@ -3687,6 +3687,7 @@ export interface WebSocketEvents {
 
 // ----------- ConsoleMessage -----------
 export type ConsoleMessageInitializer = {
+  page: PageChannel,
   type: string,
   text: string,
   args: JSHandleChannel[],
