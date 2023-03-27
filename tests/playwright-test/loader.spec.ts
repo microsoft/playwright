@@ -689,3 +689,18 @@ test('should support dynamic import', async ({ runInlineTest, nodeVersion }) => 
   expect(result.passed).toBe(2);
   expect(result.exitCode).toBe(0);
 });
+
+test('should allow test.extend.ts file', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'test.extend.ts': `
+      export { test, expect } from '@playwright/test';
+    `,
+    'a.test.ts': `
+      import { test, expect } from './test.extend';
+      test('pass1', async () => {
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
