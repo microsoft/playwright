@@ -13,8 +13,8 @@ configurations for common CI providers.
 3 steps to get your tests running on CI:
 
 1. **Ensure CI agent can run browsers**: Use [our Docker image](./docker.md)
-   in Linux agents or install your dependencies using the [CLI](./cli.md#install-system-dependencies).
-1. **Install Playwright**:
+   in Linux agents or install your dependencies using the [CLI](./browsers#install-system-dependencies).
+2. **Install Playwright**:
    ```bash js
    # Install NPM packages
    npm ci
@@ -35,7 +35,7 @@ configurations for common CI providers.
    pwsh bin/Debug/netX/playwright.ps1 install --with-deps
    ```
 
-1. **Run your tests**:
+3. **Run your tests**:
    ```bash js
    npx playwright test
    ```
@@ -51,7 +51,7 @@ configurations for common CI providers.
 
 ## CI configurations
 
-The [Command line tools](./cli.md#install-system-dependencies) can be used to install all operating system dependencies on GitHub Actions.
+The [Command line tools](./browsers#install-system-dependencies) can be used to install all operating system dependencies on GitHub Actions.
 
 ### GitHub Actions
 
@@ -291,7 +291,7 @@ For Windows or macOS agents, no additional configuration required, just install 
 For Linux agents, you can use [our Docker container](./docker.md) with Azure
 Pipelines support [running containerized
 jobs](https://docs.microsoft.com/en-us/azure/devops/pipelines/process/container-phases?view=azure-devops).
-Alternatively, you can use [Command line tools](./cli.md#install-system-dependencies) to install all necessary dependencies.
+Alternatively, you can use [Command line tools](./browsers#install-system-dependencies) to install all necessary dependencies.
 
 For running the Playwright tests use this pipeline task:
 ```yml
