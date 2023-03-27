@@ -234,7 +234,7 @@ export class ConfigLoader {
       snapshotDir,
       snapshotPathTemplate,
       testIgnore: takeFirst(projectConfig.testIgnore, config.testIgnore, []),
-      testMatch: takeFirst(projectConfig.testMatch, config.testMatch, '**/?(*.)@(spec|test).*'),
+      testMatch: takeFirst(projectConfig.testMatch, config.testMatch, '**/?(*.)@(spec|test).?(m)[jt]s?(x)'),
       timeout: takeFirst(projectConfig.timeout, config.timeout, defaultTimeout),
       use: mergeObjects(config.use, projectConfig.use),
       dependencies: projectConfig.dependencies || [],
