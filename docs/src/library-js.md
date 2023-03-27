@@ -171,7 +171,7 @@ firefox.launch({ headless: false, slowMo: 50 });
 
 ## Record scripts
 
-[Command line tools](./cli.md) can be used to record user interactions and generate JavaScript code.
+[Command line tools](./test-cli.md) can be used to record user interactions and generate JavaScript code.
 
 ```bash
 npx playwright codegen wikipedia.org
