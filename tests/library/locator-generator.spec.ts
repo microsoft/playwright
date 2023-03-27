@@ -238,6 +238,15 @@ it('reverse engineer ordered locators', async ({ page }) => {
   });
 });
 
+it('reverse engineer parent()', async ({ page }) => {
+  expect.soft(generate(page.locator('div').parent())).toEqual({
+    csharp: `Locator(\"div\").Parent`,
+    java: `locator(\"div\").parent()`,
+    javascript: `locator('div').parent()`,
+    python: `locator(\"div\").parent`,
+  });
+});
+
 it('reverse engineer locators with regex', async ({ page }) => {
   expect.soft(generate(page.getByText(/he\/\sl\nlo/))).toEqual({
     csharp: `GetByText(new Regex(\"he\\\\/\\\\sl\\\\nlo\"))`,

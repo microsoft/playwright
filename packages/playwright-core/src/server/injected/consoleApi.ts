@@ -57,6 +57,7 @@ class Locator {
     self.first = (): Locator => self.locator('nth=0');
     self.last = (): Locator => self.locator('nth=-1');
     self.nth = (index: number): Locator => self.locator(`nth=${index}`);
+    self.parent = (): Locator => self.locator(`..`);
     self.or = (locator: Locator): Locator => new Locator(injectedScript, selectorBase + ` >> internal:or=` + JSON.stringify((locator as any)[selectorSymbol]));
   }
 }
@@ -90,6 +91,7 @@ class ConsoleAPI {
     delete this._injectedScript.window.playwright.last;
     delete this._injectedScript.window.playwright.nth;
     delete this._injectedScript.window.playwright.or;
+    delete this._injectedScript.window.playwright.parent;
   }
 
   private _querySelector(selector: string, strict: boolean): (Element | undefined) {

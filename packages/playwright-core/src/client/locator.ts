@@ -198,6 +198,10 @@ export class Locator implements api.Locator {
     return new Locator(this._frame, this._selector + ` >> internal:or=` + JSON.stringify(locator._selector));
   }
 
+  parent() {
+    return this.locator('..');
+  }
+
   async focus(options?: TimeoutOptions): Promise<void> {
     return this._frame.focus(this._selector, { strict: true, ...options });
   }

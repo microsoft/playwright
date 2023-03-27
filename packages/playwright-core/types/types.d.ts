@@ -11469,6 +11469,11 @@ export interface Locator {
   page(): Page;
 
   /**
+   * Returns a locator matching the parent element.
+   */
+  parent(): Locator;
+
+  /**
    * Focuses the matching element and presses a combination of the keys.
    *
    * **Usage**

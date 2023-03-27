@@ -193,6 +193,11 @@ it('alias methods coverage', async ({ page }) => {
   await expect(page.mainFrame().locator('button')).toHaveCount(1);
 });
 
+it('locator.parent', async ({ page }) => {
+  await page.setContent(`<div id=target><button>Submit</button></div>`);
+  await expect(page.locator('button').parent()).toHaveId('target');
+});
+
 function removeHighlight(markup: string) {
   return markup.replace(/\s__playwright_target__="[^"]+"/, '');
 }

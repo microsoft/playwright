@@ -1546,6 +1546,14 @@ Alternative locator to match.
 
 A page this locator belongs to.
 
+
+## method: Locator.parent
+* since: v1.33
+- returns: <[Locator]>
+
+Returns a locator matching the parent element.
+
+
 ## async method: Locator.press
 * since: v1.14
 

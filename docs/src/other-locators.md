@@ -432,28 +432,28 @@ await page.Locator("button").Locator("nth=-1").ClickAsync();
 
 ## Parent element locator
 
-The parent element could be selected with `..`, which is a short form for `xpath=..`.
+The parent element could be selected with [`method: Locator.parent`].
 
 For example:
 
 ```js
-const parentLocator = page.getByRole('button').locator('..');
+const parentLocator = page.getByRole('button').parent();
 ```
 
 ```java
-Locator parentLocator = page.getByRole(AriaRole.BUTTON).locator("..");
+Locator parentLocator = page.getByRole(AriaRole.BUTTON).parent();
 ```
 
 ```python async
-parent_locator = page.get_by_role("button").locator('..')
+parent_locator = page.get_by_role("button").parent
 ```
 
 ```python sync
-parent_locator = page.get_by_role("button").locator('..')
+parent_locator = page.get_by_role("button").parent
 ```
 
 ```csharp
-var parentLocator = page.GetByRole(AriaRole.Button).Locator("..");
+var parentLocator = page.GetByRole(AriaRole.Button).Parent;
 ```
 
 

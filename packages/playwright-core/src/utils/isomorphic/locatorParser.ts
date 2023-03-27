@@ -148,6 +148,7 @@ function transform(template: string, params: TemplateParams, testIdAttributeName
       .replace(/first(\(\))?/g, 'nth=0')
       .replace(/last(\(\))?/g, 'nth=-1')
       .replace(/nth\(([^)]+)\)/g, 'nth=$1')
+      .replace(/parent(\(\))?/g, 'parent')
       .replace(/filter\(,?hastext=([^)]+)\)/g, 'internal:has-text=$1')
       .replace(/filter\(,?has2=([^)]+)\)/g, 'internal:has=$1')
       .replace(/,exact=false/g, '')
@@ -167,6 +168,8 @@ function transform(template: string, params: TemplateParams, testIdAttributeName
 
   // Substitute params.
   return parts.map(t => {
+    if (t === 'parent')
+      return '..';
     if (!t.startsWith('internal:') || t === 'internal:control')
       return t.replace(/\$(\d+)/g, (_, ordinal) => { const param = params[+ordinal - 1]; return param.text; });
     t = t.includes('[') ? t.replace(/\]/, '') + ']' : t;

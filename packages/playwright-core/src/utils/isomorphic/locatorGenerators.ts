@@ -19,7 +19,7 @@ import { type NestedSelectorBody, parseAttributeSelector, parseSelector, stringi
 import type { ParsedSelector } from './selectorParser';
 
 export type Language = 'javascript' | 'python' | 'java' | 'csharp';
-export type LocatorType = 'default' | 'role' | 'text' | 'label' | 'placeholder' | 'alt' | 'title' | 'test-id' | 'nth' | 'first' | 'last' | 'has-text' | 'has' | 'frame' | 'or';
+export type LocatorType = 'default' | 'role' | 'text' | 'label' | 'placeholder' | 'alt' | 'title' | 'test-id' | 'nth' | 'first' | 'last' | 'has-text' | 'has' | 'frame' | 'parent' | 'or';
 export type LocatorBase = 'page' | 'locator' | 'frame-locator';
 
 type LocatorOptions = { attrs?: { name: string, value: string | boolean | number}[], exact?: boolean, name?: string | RegExp };
@@ -136,6 +136,10 @@ function innerAsLocator(factory: LocatorFactory, parsed: ParsedSelector, isFrame
         continue;
       }
     }
+    if (part.name === 'xpath' && part.body === '..') {
+      tokens.push(factory.generateLocator(base, 'parent', ''));
+      continue;
+    }
 
     let locatorType: LocatorType = 'default';
 
@@ -214,6 +218,8 @@ export class JavaScriptLocatorFactory implements LocatorFactory {
         return this.toCallWithExact('getByLabel', body, !!options.exact);
       case 'title':
         return this.toCallWithExact('getByTitle', body, !!options.exact);
+      case 'parent':
+        return `parent()`;
       default:
         throw new Error('Unknown selector kind ' + kind);
     }
@@ -284,6 +290,8 @@ export class PythonLocatorFactory implements LocatorFactory {
         return this.toCallWithExact('get_by_label', body, !!options.exact);
       case 'title':
         return this.toCallWithExact('get_by_title', body, !!options.exact);
+      case 'parent':
+        return `parent`;
       default:
         throw new Error('Unknown selector kind ' + kind);
     }
@@ -363,6 +371,8 @@ export class JavaLocatorFactory implements LocatorFactory {
         return this.toCallWithExact(clazz, 'getByLabel', body, !!options.exact);
       case 'title':
         return this.toCallWithExact(clazz, 'getByTitle', body, !!options.exact);
+      case 'parent':
+        return `parent()`;
       default:
         throw new Error('Unknown selector kind ' + kind);
     }
@@ -436,6 +446,8 @@ export class CSharpLocatorFactory implements LocatorFactory {
         return this.toCallWithExact('GetByLabel', body, !!options.exact);
       case 'title':
         return this.toCallWithExact('GetByTitle', body, !!options.exact);
+      case 'parent':
+        return `Parent`;
       default:
         throw new Error('Unknown selector kind ' + kind);
     }
