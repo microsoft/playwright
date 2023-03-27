@@ -47,8 +47,11 @@ class ListReporter extends BaseReporter {
 
   override onBegin(config: FullConfig, suite: Suite) {
     super.onBegin(config, suite);
-    console.log(this.generateStartingMessage());
-    console.log();
+    const startingMessage = this.generateStartingMessage();
+    if (startingMessage) {
+      console.log(startingMessage);
+      console.log();
+    }
   }
 
   onTestBegin(test: TestCase, result: TestResult) {

@@ -111,14 +111,14 @@ export default defineConfig({
       name: 'staging',
       use: {
         baseURL: 'staging.example.com',
-      }
+      },
       retries: 2,
     },
     {
       name: 'production',
       use: {
         baseURL: 'production.example.com',
-      }
+      },
       retries: 0,
     },
   ],

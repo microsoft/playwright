@@ -53,6 +53,7 @@ export class TestInfoImpl implements TestInfo {
   readonly _traceEvents: trace.TraceEvent[] = [];
   readonly _onTestFailureImmediateCallbacks = new Map<() => Promise<void>, string>(); // fn -> title
   _didTimeout = false;
+  _wasInterrupted = false;
   _lastStepId = 0;
 
   // ------------ TestInfo fields ------------
@@ -184,7 +185,7 @@ export class TestInfoImpl implements TestInfo {
     const timeoutError = await this._timeoutManager.runWithTimeout(cb);
     // When interrupting, we arrive here with a timeoutError, but we should not
     // consider it a timeout.
-    if (this.status !== 'interrupted' && timeoutError && !this._didTimeout) {
+    if (!this._wasInterrupted && timeoutError && !this._didTimeout) {
       this._didTimeout = true;
       this.errors.push(timeoutError);
       // Do not overwrite existing failure upon hook/teardown timeout.
@@ -252,6 +253,15 @@ export class TestInfoImpl implements TestInfo {
     };
     this._onStepBegin(payload);
     return step;
+  }
+
+  _interrupt() {
+    // Mark as interrupted so we can ignore TimeoutError thrown by interrupt() call.
+    this._wasInterrupted = true;
+    this._timeoutManager.interrupt();
+    // Do not overwrite existing failure (for example, unhandled rejection) with "interrupted".
+    if (this.status === 'passed')
+      this.status = 'interrupted';
   }
 
   _failWithError(error: TestInfoError, isHardError: boolean) {

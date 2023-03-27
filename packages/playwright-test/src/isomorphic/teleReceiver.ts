@@ -90,6 +90,7 @@ export type JsonTestResultEnd = {
 
 export type JsonTestStepStart = {
   id: string;
+  parentStepId?: string;
   title: string;
   category: string,
   startTime: string;
@@ -153,7 +154,6 @@ export class TeleReporterReceiver {
 
   private _onBegin(config: JsonConfig, projects: JsonProject[]) {
     this._rootDir = config.rootDir;
-    const removeMissing = config.listOnly;
     for (const project of projects) {
       let projectSuite = this._rootSuite.suites.find(suite => suite.project()!.id === project.id);
       if (!projectSuite) {
@@ -163,7 +163,24 @@ export class TeleReporterReceiver {
       }
       const p = this._parseProject(project);
       projectSuite.project = () => p;
-      this._mergeSuitesInto(project.suites, projectSuite, removeMissing);
+      this._mergeSuitesInto(project.suites, projectSuite);
+
+      // Remove deleted tests when listing. Empty suites will be auto-filtered
+      // in the UI layer.
+      if (config.listOnly) {
+        const testIds = new Set<string>();
+        const collectIds = (suite: JsonSuite) => {
+          suite.tests.map(t => t.testId).forEach(testId => testIds.add(testId));
+          suite.suites.forEach(collectIds);
+        };
+        project.suites.forEach(collectIds);
+
+        const filterTests = (suite: TeleSuite) => {
+          suite.tests = suite.tests.filter(t => testIds.has(t.id));
+          suite.suites.forEach(filterTests);
+        };
+        filterTests(projectSuite);
+      }
     }
     this._reporter.onBegin?.(this._parseConfig(config), this._rootSuite);
   }
@@ -175,6 +192,7 @@ export class TeleReporterReceiver {
     testResult.workerIndex = payload.workerIndex;
     testResult.parallelIndex = payload.parallelIndex;
     testResult.startTime = new Date(payload.startTime);
+    testResult.statusEx = 'running';
     this._reporter.onTestBegin?.(test, testResult);
   }
 
@@ -183,6 +201,7 @@ export class TeleReporterReceiver {
     const result = test.resultsMap.get(payload.id)!;
     result.duration = payload.duration;
     result.status = payload.status;
+    result.statusEx = payload.status;
     result.errors = payload.errors;
     result.attachments = payload.attachments;
     this._reporter.onTestEnd?.(test, result);
@@ -191,19 +210,21 @@ export class TeleReporterReceiver {
   private _onStepBegin(testId: string, resultId: string, payload: JsonTestStepStart) {
     const test = this._tests.get(testId)!;
     const result = test.resultsMap.get(resultId)!;
+    const parentStep = payload.parentStepId ? result.stepMap.get(payload.parentStepId) : undefined;
+
     const step: TestStep = {
       titlePath: () => [],
       title: payload.title,
       category: payload.category,
       location: this._absoluteLocation(payload.location),
+      parent: parentStep,
       startTime: new Date(payload.startTime),
       duration: 0,
       steps: [],
     };
-    // TODO: implement nested steps.
+    if (parentStep)
+      parentStep.steps.push(step);
     result.stepMap.set(payload.id, step);
-    result.stepStack[result.stepStack.length - 1].steps.push(step);
-    result.stepStack.push(step);
     this._reporter.onStepBegin?.(test, result, step);
   }
 
@@ -211,9 +232,6 @@ export class TeleReporterReceiver {
     const test = this._tests.get(testId)!;
     const result = test.resultsMap.get(resultId)!;
     const step = result.stepMap.get(payload.id)!;
-    const i = result.stepStack.indexOf(step);
-    if (i !== -1)
-      result.stepStack.splice(i, 1);
     step.duration = payload.duration;
     step.error = payload.error;
     this._reporter.onStepEnd?.(test, result, step);
@@ -264,7 +282,7 @@ export class TeleReporterReceiver {
     };
   }
 
-  private _mergeSuitesInto(jsonSuites: JsonSuite[], parent: TeleSuite, removeMissing: boolean) {
+  private _mergeSuitesInto(jsonSuites: JsonSuite[], parent: TeleSuite) {
     for (const jsonSuite of jsonSuites) {
       let targetSuite = parent.suites.find(s => s.title === jsonSuite.title);
       if (!targetSuite) {
@@ -275,16 +293,12 @@ export class TeleReporterReceiver {
       targetSuite.location = this._absoluteLocation(jsonSuite.location);
       targetSuite._fileId = jsonSuite.fileId;
       targetSuite._parallelMode = jsonSuite.parallelMode;
-      this._mergeSuitesInto(jsonSuite.suites, targetSuite, removeMissing);
-      this._mergeTestsInto(jsonSuite.tests, targetSuite, removeMissing);
-    }
-    if (removeMissing) {
-      const suiteMap = new Map(parent.suites.map(p => [p.title, p]));
-      parent.suites = jsonSuites.map(s => suiteMap.get(s.title)).filter(Boolean) as TeleSuite[];
+      this._mergeSuitesInto(jsonSuite.suites, targetSuite);
+      this._mergeTestsInto(jsonSuite.tests, targetSuite);
     }
   }
 
-  private _mergeTestsInto(jsonTests: JsonTestCase[], parent: TeleSuite, removeMissing: boolean) {
+  private _mergeTestsInto(jsonTests: JsonTestCase[], parent: TeleSuite) {
     for (const jsonTest of jsonTests) {
       let targetTest = parent.tests.find(s => s.title === jsonTest.title);
       if (!targetTest) {
@@ -294,10 +308,6 @@ export class TeleReporterReceiver {
         this._tests.set(targetTest.id, targetTest);
       }
       this._updateTest(jsonTest, targetTest);
-    }
-    if (removeMissing) {
-      const testMap = new Map(parent.tests.map(p => [p.title, p]));
-      parent.tests = jsonTests.map(s => testMap.get(s.title)).filter(Boolean) as TeleTestCase[];
     }
   }
 
@@ -380,7 +390,7 @@ export class TeleSuite implements SuitePrivate {
 export class TeleTestCase implements reporterTypes.TestCase {
   title: string;
   fn = () => {};
-  results: reporterTypes.TestResult[] = [];
+  results: TeleTestResult[] = [];
   location: Location;
   parent!: TeleSuite;
 
@@ -426,7 +436,7 @@ export class TeleTestCase implements reporterTypes.TestCase {
     this.resultsMap.clear();
   }
 
-  _createTestResult(id: string): reporterTypes.TestResult {
+  _createTestResult(id: string): TeleTestResult {
     this._clearResults();
     const result: TeleTestResult = {
       retry: this.results.length,
@@ -438,12 +448,11 @@ export class TeleTestCase implements reporterTypes.TestCase {
       stderr: [],
       attachments: [],
       status: 'skipped',
+      statusEx: 'scheduled',
       steps: [],
       errors: [],
       stepMap: new Map(),
-      stepStack: [],
     };
-    result.stepStack.push(result);
     this.results.push(result);
     this.resultsMap.set(id, result);
     return result;
@@ -452,7 +461,7 @@ export class TeleTestCase implements reporterTypes.TestCase {
 
 export type TeleTestResult = reporterTypes.TestResult & {
   stepMap: Map<string, reporterTypes.TestStep>;
-  stepStack: (reporterTypes.TestStep | reporterTypes.TestResult)[];
+  statusEx: reporterTypes.TestResult['status'] | 'scheduled' | 'running';
 };
 
 export type TeleFullProject = FullProject & { id: string };

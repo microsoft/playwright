@@ -90,6 +90,7 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
       const file = require.resolve('../../webpack/recorder/' + uri);
       fs.promises.readFile(file).then(buffer => {
         route.fulfill({
+          requestUrl: route.request().url(),
           status: 200,
           headers: [
             { name: 'Content-Type', value: mime.getType(path.extname(file)) || 'application/octet-stream' }

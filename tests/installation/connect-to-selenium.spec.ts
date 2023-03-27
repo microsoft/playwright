@@ -21,6 +21,14 @@ test('connect to selenium', async ({ exec, tmpWorkspace }, testInfo) => {
   test.skip(os.platform() !== 'linux');
 
   await exec('npm i --foreground-scripts playwright-core');
-  await exec(`node download-chromedriver.js ${path.join(tmpWorkspace)}`);
-  await exec(`npm run test -- --reporter=list selenium.spec --output=${testInfo.outputPath('tmp-test-results')}`, { cwd: path.join(__dirname, '..', '..'), env: { PWTEST_CHROMEDRIVER: path.join(tmpWorkspace, 'chromedriver') } });
+  await exec(`node download-chromedriver.js ${tmpWorkspace}`);
+  const seleniumPath = path.join(tmpWorkspace, 'selenium');
+  await exec(`node download-selenium.js ${seleniumPath}`);
+  await exec(`npm run test -- --reporter=list selenium.spec --output=${testInfo.outputPath('tmp-test-results')}`, {
+    cwd: path.join(__dirname, '..', '..'),
+    env: {
+      PWTEST_CHROMEDRIVER: path.join(tmpWorkspace, 'chromedriver'),
+      PWTEST_SELENIUM: seleniumPath,
+    },
+  });
 });

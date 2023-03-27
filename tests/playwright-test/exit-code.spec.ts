@@ -163,7 +163,6 @@ test('should exit with code 0 with --pass-with-no-tests', async ({ runInlineTest
     `,
   }, undefined, undefined, { additionalArgs: ['--pass-with-no-tests'] });
   expect(result.exitCode).toBe(0);
-  expect(result.output).toContain(`Running 0 tests using 0 workers`);
 });
 
 test('should exit with code 1 when config is not found', async ({ runInlineTest }) => {

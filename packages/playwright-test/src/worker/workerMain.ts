@@ -99,12 +99,7 @@ export class WorkerMain extends ProcessRunner {
   private _stop(): Promise<void> {
     if (!this._isStopped) {
       this._isStopped = true;
-
-      // Interrupt current action.
-      this._currentTest?._timeoutManager.interrupt();
-
-      if (this._currentTest && this._currentTest.status === 'passed')
-        this._currentTest.status = 'interrupted';
+      this._currentTest?._interrupt();
     }
     return this._runFinished;
   }
