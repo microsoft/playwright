@@ -448,6 +448,7 @@ ContextOptions:
       properties:
         username: string
         password: string
+        origin: string?
     deviceScaleFactor: number?
     isMobile: boolean?
     hasTouch: boolean?
@@ -654,6 +655,7 @@ Playwright:
           properties:
             username: string
             password: string
+            origin: string?
         proxy:
           type: object?
           properties:
@@ -1065,6 +1067,7 @@ BrowserContext:
           properties:
             username: string
             password: string
+            origin: string?
 
     setNetworkInterceptionPatterns:
       parameters:
@@ -3088,6 +3091,7 @@ Electron:
           properties:
             username: string
             password: string
+            origin: string?
         ignoreHTTPSErrors: boolean?
         locale: string?
         offline: boolean?

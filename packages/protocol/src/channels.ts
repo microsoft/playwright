@@ -573,6 +573,7 @@ export type PlaywrightNewRequestParams = {
   httpCredentials?: {
     username: string,
     password: string,
+    origin?: string,
   },
   proxy?: {
     server: string,
@@ -595,6 +596,7 @@ export type PlaywrightNewRequestOptions = {
   httpCredentials?: {
     username: string,
     password: string,
+    origin?: string,
   },
   proxy?: {
     server: string,
@@ -953,6 +955,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
   httpCredentials?: {
     username: string,
     password: string,
+    origin?: string,
   },
   deviceScaleFactor?: number,
   isMobile?: boolean,
@@ -1023,6 +1026,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   httpCredentials?: {
     username: string,
     password: string,
+    origin?: string,
   },
   deviceScaleFactor?: number,
   isMobile?: boolean,
@@ -1118,6 +1122,7 @@ export type BrowserNewContextParams = {
   httpCredentials?: {
     username: string,
     password: string,
+    origin?: string,
   },
   deviceScaleFactor?: number,
   isMobile?: boolean,
@@ -1175,6 +1180,7 @@ export type BrowserNewContextOptions = {
   httpCredentials?: {
     username: string,
     password: string,
+    origin?: string,
   },
   deviceScaleFactor?: number,
   isMobile?: boolean,
@@ -1235,6 +1241,7 @@ export type BrowserNewContextForReuseParams = {
   httpCredentials?: {
     username: string,
     password: string,
+    origin?: string,
   },
   deviceScaleFactor?: number,
   isMobile?: boolean,
@@ -1292,6 +1299,7 @@ export type BrowserNewContextForReuseOptions = {
   httpCredentials?: {
     username: string,
     password: string,
+    origin?: string,
   },
   deviceScaleFactor?: number,
   isMobile?: boolean,
@@ -1556,12 +1564,14 @@ export type BrowserContextSetHTTPCredentialsParams = {
   httpCredentials?: {
     username: string,
     password: string,
+    origin?: string,
   },
 };
 export type BrowserContextSetHTTPCredentialsOptions = {
   httpCredentials?: {
     username: string,
     password: string,
+    origin?: string,
   },
 };
 export type BrowserContextSetHTTPCredentialsResult = void;
@@ -3965,6 +3975,7 @@ export type ElectronLaunchParams = {
   httpCredentials?: {
     username: string,
     password: string,
+    origin?: string,
   },
   ignoreHTTPSErrors?: boolean,
   locale?: string,
@@ -3998,6 +4009,7 @@ export type ElectronLaunchOptions = {
   httpCredentials?: {
     username: string,
     password: string,
+    origin?: string,
   },
   ignoreHTTPSErrors?: boolean,
   locale?: string,
@@ -4367,6 +4379,7 @@ export type AndroidDeviceLaunchBrowserParams = {
   httpCredentials?: {
     username: string,
     password: string,
+    origin?: string,
   },
   deviceScaleFactor?: number,
   isMobile?: boolean,
@@ -4422,6 +4435,7 @@ export type AndroidDeviceLaunchBrowserOptions = {
   httpCredentials?: {
     username: string,
     password: string,
+    origin?: string,
   },
   deviceScaleFactor?: number,
   isMobile?: boolean,

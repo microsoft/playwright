@@ -328,6 +328,7 @@ scheme.PlaywrightNewRequestParams = tObject({
   httpCredentials: tOptional(tObject({
     username: tString,
     password: tString,
+    origin: tOptional(tString),
   })),
   proxy: tOptional(tObject({
     server: tString,
@@ -543,6 +544,7 @@ scheme.BrowserTypeLaunchPersistentContextParams = tObject({
   httpCredentials: tOptional(tObject({
     username: tString,
     password: tString,
+    origin: tOptional(tString),
   })),
   deviceScaleFactor: tOptional(tNumber),
   isMobile: tOptional(tBoolean),
@@ -614,6 +616,7 @@ scheme.BrowserNewContextParams = tObject({
   httpCredentials: tOptional(tObject({
     username: tString,
     password: tString,
+    origin: tOptional(tString),
   })),
   deviceScaleFactor: tOptional(tNumber),
   isMobile: tOptional(tBoolean),
@@ -674,6 +677,7 @@ scheme.BrowserNewContextForReuseParams = tObject({
   httpCredentials: tOptional(tObject({
     username: tString,
     password: tString,
+    origin: tOptional(tString),
   })),
   deviceScaleFactor: tOptional(tNumber),
   isMobile: tOptional(tBoolean),
@@ -845,6 +849,7 @@ scheme.BrowserContextSetHTTPCredentialsParams = tObject({
   httpCredentials: tOptional(tObject({
     username: tString,
     password: tString,
+    origin: tOptional(tString),
   })),
 });
 scheme.BrowserContextSetHTTPCredentialsResult = tOptional(tObject({}));
@@ -2201,6 +2206,7 @@ scheme.ElectronLaunchParams = tObject({
   httpCredentials: tOptional(tObject({
     username: tString,
     password: tString,
+    origin: tOptional(tString),
   })),
   ignoreHTTPSErrors: tOptional(tBoolean),
   locale: tOptional(tString),
@@ -2409,6 +2415,7 @@ scheme.AndroidDeviceLaunchBrowserParams = tObject({
   httpCredentials: tOptional(tObject({
     username: tString,
     password: tString,
+    origin: tOptional(tString),
   })),
   deviceScaleFactor: tOptional(tNumber),
   isMobile: tOptional(tBoolean),

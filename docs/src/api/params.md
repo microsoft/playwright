@@ -560,8 +560,10 @@ Whether to emulate network being offline. Defaults to `false`.
 - `httpCredentials` <[Object]>
   - `username` <[string]>
   - `password` <[string]>
+  - `origin` ?<[string]> Restrain sending http credentials on specific origin (scheme://host:port).
 
 Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
+If no origin is specified, the username and password are sent to any servers upon unauthorized responses.
 
 ## context-option-colorscheme
 * langs: js, java

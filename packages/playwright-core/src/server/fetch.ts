@@ -339,7 +339,7 @@ export abstract class APIRequestContext extends SdkObject {
         }
         if (response.statusCode === 401 && !getHeader(options.headers, 'authorization')) {
           const auth = response.headers['www-authenticate'];
-          const credentials = this._defaultOptions().httpCredentials;
+          const credentials = this._getHttpCredentials(url);
           if (auth?.trim().startsWith('Basic') && credentials) {
             const { username, password } = credentials;
             const encoded = Buffer.from(`${username || ''}:${password || ''}`).toString('base64');
@@ -425,6 +425,12 @@ export abstract class APIRequestContext extends SdkObject {
         request.write(postData);
       request.end();
     });
+  }
+
+  private _getHttpCredentials(url: URL) {
+    if (!this._defaultOptions().httpCredentials?.origin || url.origin.toLowerCase() === this._defaultOptions().httpCredentials?.origin?.toLowerCase())
+      return this._defaultOptions().httpCredentials;
+    return undefined;
   }
 }
 
