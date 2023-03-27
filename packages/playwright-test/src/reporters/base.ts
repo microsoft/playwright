@@ -386,6 +386,7 @@ export function formatError(error: TestError, highlightCode: boolean): string {
   const parsedStack = prepareErrorStack(stack);
   const tokens = [];
   tokens.push(parsedStack.message);
+  tokens.push('');
   tokens.push(colors.dim(parsedStack.stackLines.join('\n')));
   return tokens.join('\n');
 }
@@ -401,7 +402,10 @@ export function addSnippetToError(config: FullConfig, error: TestError, file?: s
   // Now that we filter out internals from our stack traces, we can safely render
   // the helper / original exception locations.
   const parsedStack = stack ? prepareErrorStack(stack) : undefined;
-  tokens.push(parsedStack?.message || message);
+  let stackMessage = parsedStack?.message;
+  if (stackMessage?.startsWith('Error: '))
+    stackMessage = stackMessage.substring('Error: '.length);
+  tokens.push(stackMessage || message);
 
   let location = error.location;
   if (parsedStack && !location)
@@ -425,7 +429,6 @@ export function addSnippetToError(config: FullConfig, error: TestError, file?: s
 
   error.message = tokens.join('\n');
   if (parsedStack) {
-    tokens.push('');
     tokens.push(...parsedStack.stackLines);
     error.stack = tokens.join('\n');
     error.location ??= location;

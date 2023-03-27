@@ -103,11 +103,11 @@ export class Multiplexer implements Reporter {
   }
 
   onError(error: TestError) {
-    addSnippetToError(this._config, error);
     if (this._deferred) {
       this._deferred.push({ error });
       return;
     }
+    addSnippetToError(this._config, error);
     for (const reporter of this._reporters)
       wrap(() => reporter.onError?.(error));
   }
