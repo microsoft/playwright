@@ -53,7 +53,11 @@ class Locator {
     self.getByText = (text: string | RegExp, options?: { exact?: boolean }): Locator => self.locator(getByTextSelector(text, options));
     self.getByTitle = (text: string | RegExp, options?: { exact?: boolean }): Locator => self.locator(getByTitleSelector(text, options));
     self.getByRole = (role: string, options: ByRoleOptions = {}): Locator => self.locator(getByRoleSelector(role, options));
-    self.filter = (options?: { hasText?: string | RegExp, has?: Locator }): Locator => new Locator(injectedScript, selector, options);
+    self.filter = (optionsOrLocator?: { hasText?: string | RegExp, has?: Locator } | Locator): Locator => {
+      if (optionsOrLocator instanceof Locator)
+        return new Locator(injectedScript, selectorBase + ` >> internal:and=` + JSON.stringify((optionsOrLocator as any)[selectorSymbol]));
+      return new Locator(injectedScript, selector, optionsOrLocator);
+    };
     self.first = (): Locator => self.locator('nth=0');
     self.last = (): Locator => self.locator('nth=-1');
     self.nth = (index: number): Locator => self.locator(`nth=${index}`);

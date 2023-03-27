@@ -38,7 +38,7 @@ Note: **component tests only**, does not affect end-to-end tests.
 
 ### Browser Versions
 
-* Chromium 112.0.5615.29	
+* Chromium 112.0.5615.29
 * Mozilla Firefox 111.0
 * WebKit 16.4
 
@@ -786,7 +786,7 @@ WebServer is now considered "ready" if request to the specified port has any of 
 
   Read more in [our documentation](./locators.md#locate-by-role).
 
-- New [`method: Locator.filter`] API to filter an existing locator
+- New [`method: Locator.filter#1`] API to filter an existing locator
 
   ```js
   const buttons = page.locator('role=button');

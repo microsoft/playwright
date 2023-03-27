@@ -1233,7 +1233,7 @@ Learn more about [`aria-selected`](https://www.w3.org/TR/wai-aria-1.2/#aria-sele
 
 ## template-locator-locator
 
-The method finds an element matching the specified selector in the locator's subtree. It also accepts filter options, similar to [`method: Locator.filter`] method.
+The method finds an element matching the specified selector in the locator's subtree. It also accepts filter options, similar to [`method: Locator.filter#1`] method.
 
 [Learn more about locators](../locators.md).
 
@@ -1293,7 +1293,7 @@ use: {
 
 Allows locating elements that contain given text.
 
-See also [`method: Locator.filter`] that allows to match by another criteria, like an accessible role, and then filter by the text content.
+See also [`method: Locator.filter#1`] that allows to match by another criteria, like an accessible role, and then filter by the text content.
 
 
 **Usage**

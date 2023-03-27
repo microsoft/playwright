@@ -359,6 +359,13 @@ it('asLocator internal:or', async () => {
   expect.soft(asLocator('csharp', 'div >> internal:or="span >> article"', false)).toBe(`Locator("div").Or(Locator("span").Locator("article"))`);
 });
 
+it('asLocator internal:and', async () => {
+  expect.soft(asLocator('javascript', 'div >> internal:and="span >> article"', false)).toBe(`locator('div').filter(locator('span').locator('article'))`);
+  expect.soft(asLocator('python', 'div >> internal:and="span >> article"', false)).toBe(`locator("div").filter(locator("span").locator("article"))`);
+  expect.soft(asLocator('java', 'div >> internal:and="span >> article"', false)).toBe(`locator("div").filter(locator("span").locator("article"))`);
+  expect.soft(asLocator('csharp', 'div >> internal:and="span >> article"', false)).toBe(`Locator("div").Filter(Locator("span").Locator("article"))`);
+});
+
 it('parse locators strictly', () => {
   const selector = 'div >> internal:has-text=\"Goodbye world\"i >> span';
 
