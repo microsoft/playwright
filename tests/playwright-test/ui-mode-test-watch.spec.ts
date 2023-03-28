@@ -19,7 +19,7 @@ import { test, expect, dumpTestTree } from './ui-mode-fixtures';
 test.describe.configure({ mode: 'parallel' });
 
 test('should watch files', async ({ runUITest, writeFiles }) => {
-  const page = await runUITest({
+  const { page } = await runUITest({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('passes', () => {});
@@ -59,7 +59,7 @@ test('should watch files', async ({ runUITest, writeFiles }) => {
 });
 
 test('should watch e2e deps', async ({ runUITest, writeFiles }) => {
-  const page = await runUITest({
+  const { page } = await runUITest({
     'playwright.config.ts': `
       import { defineConfig } from '@playwright/test';
       export default defineConfig({ testDir: 'tests' });
@@ -94,7 +94,7 @@ test('should watch e2e deps', async ({ runUITest, writeFiles }) => {
 });
 
 test('should batch watch updates', async ({ runUITest, writeFiles }) => {
-  const page = await runUITest({
+  const { page } = await runUITest({
     'a.test.ts': `import { test } from '@playwright/test'; test('test', () => {});`,
     'b.test.ts': `import { test } from '@playwright/test'; test('test', () => {});`,
     'c.test.ts': `import { test } from '@playwright/test'; test('test', () => {});`,
@@ -143,7 +143,7 @@ test('should batch watch updates', async ({ runUITest, writeFiles }) => {
 });
 
 test('should watch all', async ({ runUITest, writeFiles }) => {
-  const page = await runUITest({
+  const { page } = await runUITest({
     'a.test.ts': `import { test } from '@playwright/test'; test('test', () => {});`,
     'b.test.ts': `import { test } from '@playwright/test'; test('test', () => {});`,
     'c.test.ts': `import { test } from '@playwright/test'; test('test', () => {});`,
@@ -182,7 +182,7 @@ test('should watch all', async ({ runUITest, writeFiles }) => {
 });
 
 test('should watch new file', async ({ runUITest, writeFiles }) => {
-  const page = await runUITest({
+  const { page } = await runUITest({
     'a.test.ts': `import { test } from '@playwright/test'; test('test', () => {});`,
   });
 
@@ -222,7 +222,7 @@ test('should watch new file', async ({ runUITest, writeFiles }) => {
 
 test('should queue watches', async ({ runUITest, writeFiles, createLatch }) => {
   const latch = createLatch();
-  const page = await runUITest({
+  const { page } = await runUITest({
     'a.test.ts': `import { test } from '@playwright/test'; test('test', () => {});`,
     'b.test.ts': `import { test } from '@playwright/test'; test('test', async () => {
       ${latch.blockingCode}

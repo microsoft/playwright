@@ -32,7 +32,7 @@ test('should update trace live', async ({ runUITest, server }) => {
     res.end('<html>Two</html>');
   });
 
-  const page = await runUITest({
+  const { page } = await runUITest({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('live test', async ({ page }) => {
