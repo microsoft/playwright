@@ -432,28 +432,60 @@ await page.Locator("button").Locator("nth=-1").ClickAsync();
 
 ## Parent element locator
 
-The parent element could be selected with `..`, which is a short form for `xpath=..`.
+When you need to target a parent element of some other element, most of the time you should [`method: Locator.filter#1`] by the child locator. For example, consider the following DOM structure:
 
-For example:
+```html
+<li><label>Hello</label></li>
+<li><label>World</label></li>
+```
+
+If you'd like to target the parent `<li>` of a label with text `"Hello"`, using [`method: Locator.filter#1`] works best:
 
 ```js
-const parentLocator = page.getByRole('button').locator('..');
+const child = page.getByText('Hello');
+const parent = page.getByRole('listitem').filter({ has: child });
 ```
 
 ```java
-Locator parentLocator = page.getByRole(AriaRole.BUTTON).locator("..");
+Locator child = page.getByText("Hello");
+Locator parent = page.getByRole(AriaRole.LISTITEM).filter(new Locator.FilterOptions().setHas(child));
 ```
 
 ```python async
-parent_locator = page.get_by_role("button").locator('..')
+child = page.get_by_text("Hello")
+parent = page.get_by_role("listitem").filter(has=child)
 ```
 
 ```python sync
-parent_locator = page.get_by_role("button").locator('..')
+child = page.get_by_text("Hello")
+parent = page.get_by_role("listitem").filter(has=child)
 ```
 
 ```csharp
-var parentLocator = page.GetByRole(AriaRole.Button).Locator("..");
+var child = page.GetByText("Hello");
+var parent = page.GetByRole(AriaRole.Listitem).Filter(new () { Has = child });
+```
+
+Alternatively, if you cannot find a suitable locator for the parent element, use `xpath=..`. Note that this method is not as reliable, because any changes to the DOM structure will break your tests. Prefer [`method: Locator.filter#1`] when possible.
+
+```js
+const parent = page.getByText('Hello').locator('xpath=..');
+```
+
+```java
+Locator parent = page.getByText("Hello").locator("xpath=..");
+```
+
+```python async
+parent = page.get_by_text("Hello").locator('xpath=..')
+```
+
+```python sync
+parent = page.get_by_text("Hello").locator('xpath=..')
+```
+
+```csharp
+var parent = page.GetByText("Hello").Locator("xpath=..");
 ```
 
 
