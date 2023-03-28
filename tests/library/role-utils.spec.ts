@@ -15,9 +15,18 @@
  */
 
 import { contextTest as test, expect } from '../config/browserTest';
+import type { Page } from 'playwright-core';
 import fs from 'fs';
 
 test.skip(({ mode }) => mode !== 'default');
+
+async function getNameAndRole(page: Page, selector: string) {
+  return await page.$eval(selector, e => {
+    const name = (window as any).__injectedScript.getElementAccessibleName(e);
+    const role = (window as any).__injectedScript.getAriaRole(e);
+    return { name, role };
+  });
+}
 
 const ranges = [
   'name_test_case_539-manual.html',
@@ -159,8 +168,7 @@ test('accessible name with slots', async ({ page }) => {
       })();
     </script>
   `);
-  const name1 = await page.$eval('button', e => (window as any).__injectedScript.getElementAccessibleName(e));
-  expect.soft(name1).toBe('foo');
+  expect.soft(await getNameAndRole(page, 'button')).toEqual({ role: 'button', name: 'foo' });
 
   // Text "foo" is assigned to the slot, should be used instead of slot content.
   await page.setContent(`
@@ -179,8 +187,7 @@ test('accessible name with slots', async ({ page }) => {
       })();
     </script>
   `);
-  const name2 = await page.$eval('button', e => (window as any).__injectedScript.getElementAccessibleName(e));
-  expect.soft(name2).toBe('foo');
+  expect.soft(await getNameAndRole(page, 'button')).toEqual({ role: 'button', name: 'foo' });
 
   // Nothing is assigned to the slot, should use slot content.
   await page.setContent(`
@@ -199,8 +206,7 @@ test('accessible name with slots', async ({ page }) => {
       })();
     </script>
   `);
-  const name3 = await page.$eval('button', e => (window as any).__injectedScript.getElementAccessibleName(e));
-  expect.soft(name3).toBe('pre');
+  expect.soft(await getNameAndRole(page, 'button')).toEqual({ role: 'button', name: 'pre' });
 });
 
 test('accessible name nested treeitem', async ({ page }) => {
@@ -213,8 +219,25 @@ test('accessible name nested treeitem', async ({ page }) => {
       </div>
     </div>
   `);
-  const name = await page.$eval('#target', e => (window as any).__injectedScript.getElementAccessibleName(e));
-  expect.soft(name).toBe('Top-level');
+  expect.soft(await getNameAndRole(page, '#target')).toEqual({ role: 'treeitem', name: 'Top-level' });
+});
+
+test('svg title', async ({ page }) => {
+  await page.setContent(`
+    <div>
+      <svg width="162" height="30" viewBox="0 0 162 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <title>Submit</title>
+        <g>
+          <title>Hello</title>
+        </g>
+        <a href="example.com" xlink:title="a link"><circle cx="50" cy="40" r="35" /></a>
+      </svg>
+    </div>
+  `);
+
+  expect.soft(await getNameAndRole(page, 'svg')).toEqual({ role: 'img', name: 'Submit' });
+  expect.soft(await getNameAndRole(page, 'g')).toEqual({ role: null, name: 'Hello' });
+  expect.soft(await getNameAndRole(page, 'a')).toEqual({ role: 'link', name: 'a link' });
 });
 
 function toArray(x: any): any[] {
