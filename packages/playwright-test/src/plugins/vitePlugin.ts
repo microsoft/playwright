@@ -41,7 +41,7 @@ type CtConfig = BasePlaywrightTestConfig['use'] & {
   ctViteConfig?: InlineConfig | (() => Promise<InlineConfig>);
 };
 
-const importReactRE = /(^|\n)import\s+(\*\s+as\s+)?React(,|\s+)/;
+const importReactRE = /(^|\n|;)import\s+(\*\s+as\s+)?React(,|\s+)/;
 const compiledReactRE = /(const|var)\s+React\s*=/;
 
 export function createPlugin(
