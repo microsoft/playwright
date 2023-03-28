@@ -659,7 +659,7 @@ interface TestConfig {
    * Path to the global setup file. This file will be required and run before all the tests. It must export a single
    * function that takes a [`TestConfig`] argument.
    *
-   * Learn more about [global setup and teardown](https://playwright.dev/docs/test-advanced#global-setup-and-teardown).
+   * Learn more about [global setup and teardown](https://playwright.dev/docs/test-global-setup-teardown).
    *
    * **Usage**
    *
@@ -680,7 +680,7 @@ interface TestConfig {
    * function. See also
    * [testConfig.globalSetup](https://playwright.dev/docs/api/class-testconfig#test-config-global-setup).
    *
-   * Learn more about [global setup and teardown](https://playwright.dev/docs/test-advanced#global-setup-and-teardown).
+   * Learn more about [global setup and teardown](https://playwright.dev/docs/test-global-setup-teardown).
    *
    * **Usage**
    *
@@ -1408,7 +1408,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    * Path to the global setup file. This file will be required and run before all the tests. It must export a single
    * function that takes a [`TestConfig`] argument.
    *
-   * Learn more about [global setup and teardown](https://playwright.dev/docs/test-advanced#global-setup-and-teardown).
+   * Learn more about [global setup and teardown](https://playwright.dev/docs/test-global-setup-teardown).
    *
    * **Usage**
    *
@@ -1428,7 +1428,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    * function. See also
    * [testConfig.globalSetup](https://playwright.dev/docs/api/class-testconfig#test-config-global-setup).
    *
-   * Learn more about [global setup and teardown](https://playwright.dev/docs/test-advanced#global-setup-and-teardown).
+   * Learn more about [global setup and teardown](https://playwright.dev/docs/test-global-setup-teardown).
    *
    * **Usage**
    *
