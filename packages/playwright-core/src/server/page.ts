@@ -121,7 +121,6 @@ export class Page extends SdkObject {
   static Events = {
     Close: 'close',
     Crash: 'crash',
-    Dialog: 'dialog',
     Download: 'download',
     FileChooser: 'filechooser',
     // Can't use just 'error' due to node.js special treatment of error events.
@@ -140,7 +139,7 @@ export class Page extends SdkObject {
   private _closedPromise = new ManualPromise<void>();
   private _disconnected = false;
   private _initialized = false;
-  private _consoleMessagesBeforeInitialized: ConsoleMessage[] = [];
+  private _eventsToEmitAfterInitialized: { event: string | symbol, args: any[] }[] = [];
   readonly _disconnectedPromise = new ManualPromise<Error>();
   readonly _crashedPromise = new ManualPromise<Error>();
   readonly _browserContext: BrowserContext;
@@ -209,9 +208,9 @@ export class Page extends SdkObject {
     this._initialized = true;
     this.emitOnContext(contextEvent, this);
 
-    for (const message of this._consoleMessagesBeforeInitialized)
-      this.emitOnContext(BrowserContext.Events.Console, message);
-    this._consoleMessagesBeforeInitialized = [];
+    for (const { event, args } of this._eventsToEmitAfterInitialized)
+      this._browserContext.emit(event, ...args);
+    this._eventsToEmitAfterInitialized = [];
 
     // It may happen that page initialization finishes after Close event has already been sent,
     // in that case we fire another Close event to ensure that each reported Page will have
@@ -230,6 +229,19 @@ export class Page extends SdkObject {
     if (this._isServerSideOnly)
       return;
     this._browserContext.emit(event, ...args);
+  }
+
+  emitOnContextOnceInitialized(event: string | symbol, ...args: any[]) {
+    if (this._isServerSideOnly)
+      return;
+    // Some events, like console messages, may come before page is ready.
+    // In this case, postpone the event until page is initialized,
+    // and dispatch it to the client later, either on the live Page,
+    // or on the "errored" Page.
+    if (this._initialized)
+      this._browserContext.emit(event, ...args);
+    else
+      this._eventsToEmitAfterInitialized.push({ event, args });
   }
 
   async resetForReuse(metadata: CallMetadata) {
@@ -361,14 +373,7 @@ export class Page extends SdkObject {
       args.forEach(arg => arg.dispose());
       return;
     }
-
-    // Console message may come before page is ready. In this case, postpone the message
-    // until page is initialized, and dispatch it to the client later, either on the live Page,
-    // or on the "errored" Page.
-    if (this._initialized)
-      this.emitOnContext(BrowserContext.Events.Console, message);
-    else
-      this._consoleMessagesBeforeInitialized.push(message);
+    this.emitOnContextOnceInitialized(BrowserContext.Events.Console, message);
   }
 
   async reload(metadata: CallMetadata, options: types.NavigateOptions): Promise<network.Response | null> {

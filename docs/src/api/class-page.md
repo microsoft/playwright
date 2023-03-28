@@ -285,6 +285,8 @@ try {
 
 Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Listener **must** either [`method: Dialog.accept`] or [`method: Dialog.dismiss`] the dialog - otherwise the page will [freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop#never_blocking) waiting for the dialog, and actions like click will never finish.
 
+**Usage**
+
 ```js
 page.on('dialog', dialog => {
   dialog.accept();
@@ -309,7 +311,7 @@ page.RequestFailed += (_, request) =>
 ```
 
 :::note
-When no [`event: Page.dialog`] listeners are present, all dialogs are automatically dismissed.
+When no [`event: Page.dialog`] or [`event: BrowserContext.dialog`] listeners are present, all dialogs are automatically dismissed.
 :::
 
 ## event: Page.DOMContentLoaded

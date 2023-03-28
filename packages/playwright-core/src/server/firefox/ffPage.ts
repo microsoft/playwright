@@ -34,6 +34,7 @@ import type { Progress } from '../progress';
 import { splitErrorMessage } from '../../utils/stackTrace';
 import { debugLogger } from '../../common/debugLogger';
 import { ManualPromise } from '../../utils/manualPromise';
+import { BrowserContext } from '../browserContext';
 
 export const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
@@ -257,7 +258,7 @@ export class FFPage implements PageDelegate {
   }
 
   _onDialogOpened(params: Protocol.Page.dialogOpenedPayload) {
-    this._page.emit(Page.Events.Dialog, new dialog.Dialog(
+    this._page.emitOnContext(BrowserContext.Events.Dialog, new dialog.Dialog(
         this._page,
         params.type,
         params.message,

@@ -1396,6 +1396,7 @@ export interface BrowserContextEventTarget {
   on(event: 'bindingCall', callback: (params: BrowserContextBindingCallEvent) => void): this;
   on(event: 'console', callback: (params: BrowserContextConsoleEvent) => void): this;
   on(event: 'close', callback: (params: BrowserContextCloseEvent) => void): this;
+  on(event: 'dialog', callback: (params: BrowserContextDialogEvent) => void): this;
   on(event: 'page', callback: (params: BrowserContextPageEvent) => void): this;
   on(event: 'route', callback: (params: BrowserContextRouteEvent) => void): this;
   on(event: 'video', callback: (params: BrowserContextVideoEvent) => void): this;
@@ -1440,6 +1441,9 @@ export type BrowserContextConsoleEvent = {
   message: ConsoleMessageChannel,
 };
 export type BrowserContextCloseEvent = {};
+export type BrowserContextDialogEvent = {
+  dialog: DialogChannel,
+};
 export type BrowserContextPageEvent = {
   page: PageChannel,
 };
@@ -1683,6 +1687,7 @@ export interface BrowserContextEvents {
   'bindingCall': BrowserContextBindingCallEvent;
   'console': BrowserContextConsoleEvent;
   'close': BrowserContextCloseEvent;
+  'dialog': BrowserContextDialogEvent;
   'page': BrowserContextPageEvent;
   'route': BrowserContextRouteEvent;
   'video': BrowserContextVideoEvent;
@@ -1708,7 +1713,6 @@ export interface PageEventTarget {
   on(event: 'bindingCall', callback: (params: PageBindingCallEvent) => void): this;
   on(event: 'close', callback: (params: PageCloseEvent) => void): this;
   on(event: 'crash', callback: (params: PageCrashEvent) => void): this;
-  on(event: 'dialog', callback: (params: PageDialogEvent) => void): this;
   on(event: 'download', callback: (params: PageDownloadEvent) => void): this;
   on(event: 'fileChooser', callback: (params: PageFileChooserEvent) => void): this;
   on(event: 'frameAttached', callback: (params: PageFrameAttachedEvent) => void): this;
@@ -1760,9 +1764,6 @@ export type PageBindingCallEvent = {
 };
 export type PageCloseEvent = {};
 export type PageCrashEvent = {};
-export type PageDialogEvent = {
-  dialog: DialogChannel,
-};
 export type PageDownloadEvent = {
   url: string,
   suggestedFilename: string,
@@ -2203,7 +2204,6 @@ export interface PageEvents {
   'bindingCall': PageBindingCallEvent;
   'close': PageCloseEvent;
   'crash': PageCrashEvent;
-  'dialog': PageDialogEvent;
   'download': PageDownloadEvent;
   'fileChooser': PageFileChooserEvent;
   'frameAttached': PageFrameAttachedEvent;
@@ -3740,6 +3740,7 @@ export interface BindingCallEvents {
 
 // ----------- Dialog -----------
 export type DialogInitializer = {
+  page?: PageChannel,
   type: string,
   message: string,
   defaultValue: string,
