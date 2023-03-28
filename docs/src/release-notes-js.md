@@ -1524,7 +1524,7 @@ Step information is exposed in reporters API.
 
 #### 🌎 Launch web server before running tests
 
-To launch a server during the tests, use the [`webServer`](./test-advanced#launching-a-development-web-server-during-the-tests) option in the configuration file. The server will wait for a given url to be available before running the tests, and the url will be passed over to Playwright as a [`baseURL`](./api/class-fixtures#fixtures-base-url) when creating a context.
+To launch a server during the tests, use the [`webServer`](./test-webserver) option in the configuration file. The server will wait for a given url to be available before running the tests, and the url will be passed over to Playwright as a [`baseURL`](./api/class-fixtures#fixtures-base-url) when creating a context.
 
 ```ts
 // playwright.config.ts
@@ -1539,7 +1539,7 @@ export default defineConfig({
 });
 ```
 
-Learn more in the [documentation](./test-advanced#launching-a-development-web-server-during-the-tests).
+Learn more in the [documentation](./test-webserver).
 
 ### Browser Versions
 
