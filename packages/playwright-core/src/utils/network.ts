@@ -71,7 +71,7 @@ export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.Inco
   const requestCallback = (res: http.IncomingMessage) => {
     const statusCode = res.statusCode || 0;
     if (statusCode >= 300 && statusCode < 400 && res.headers.location)
-      httpRequest({ ...params, url: res.headers.location }, onResponse, onError);
+      httpRequest({ ...params, url: new URL.URL(res.headers.location, params.url).toString() }, onResponse, onError);
     else
       onResponse(res);
   };

@@ -457,6 +457,32 @@ test('should send Accept header', async ({ runInlineTest, server }) => {
   expect(acceptHeader).toBe('*/*');
 });
 
+test('should follow redirects', async ({ runInlineTest, server }) => {
+  server.setRedirect('/redirect', '/redirected-to');
+  server.setRoute('/redirected-to', (req, res) => {
+    res.end('<html><body>hello</body></html>');
+  });
+  const result = await runInlineTest({
+    'test.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('connect to the server', async ({baseURL, page}) => {
+        await page.goto('http://localhost:${server.PORT}/redirect');
+        expect(await page.textContent('body')).toBe('hello');
+      });
+    `,
+    'playwright.config.ts': `
+      module.exports = {
+        webServer: {
+          command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${server.PORT}',
+          url: 'http://localhost:${server.PORT}/redirect',
+          reuseExistingServer: true,
+        }
+      };
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+});
+
 test('should create multiple servers', async ({ runInlineTest }, { workerIndex }) => {
   const port = workerIndex * 2 + 10500;
   const result = await runInlineTest({
