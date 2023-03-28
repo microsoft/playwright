@@ -41,6 +41,7 @@ import { createInstrumentation } from './clientInstrumentation';
 import { rewriteErrorMessage } from '../utils/stackTrace';
 import { HarRouter } from './harRouter';
 import { ConsoleMessage } from './consoleMessage';
+import { Dialog } from './dialog';
 
 export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel> implements api.BrowserContext {
   _pages = new Set<Page>();
@@ -99,6 +100,19 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
       const page = consoleMessage.page();
       if (page)
         page.emit(Events.Page.Console, consoleMessage);
+    });
+    this._channel.on('dialog', ({ dialog }) => {
+      const dialogObject = Dialog.from(dialog);
+      let hasListeners = this.emit(Events.BrowserContext.Dialog, dialogObject);
+      const page = dialogObject.page();
+      if (page)
+        hasListeners = page.emit(Events.Page.Dialog, dialogObject) || hasListeners;
+      if (!hasListeners) {
+        if (dialogObject.type() === 'beforeunload')
+          dialog.accept({}).catch(() => {});
+        else
+          dialog.dismiss().catch(() => {});
+      }
     });
     this._channel.on('request', ({ request, page }) => this._onRequest(network.Request.from(request), Page.fromNullable(page)));
     this._channel.on('requestFailed', ({ request, failureText, responseEndTiming, page }) => this._onRequestFailed(network.Request.from(request), responseEndTiming, failureText, Page.fromNullable(page)));

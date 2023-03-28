@@ -73,3 +73,90 @@ test('console event should work in immediately closed popup', async ({ page, bro
   expect(message.text()).toBe('hello');
   expect(message.page()).toBe(popup);
 });
+
+test('dialog event should work @smoke', async ({ page }) => {
+  const promise = page.evaluate(() => prompt('hey?'));
+  const [dialog1, dialog2] = await Promise.all([
+    page.context().waitForEvent('dialog'),
+    page.waitForEvent('dialog'),
+  ]);
+
+  expect(dialog1).toBe(dialog2);
+  expect(dialog1.message()).toBe('hey?');
+  expect(dialog1.page()).toBe(page);
+  await dialog1.accept('hello');
+  expect(await promise).toBe('hello');
+});
+
+test('dialog event should work in popup', async ({ page }) => {
+  const promise = page.evaluate(() => {
+    const win = window.open('');
+    return (win as any).prompt('hey?');
+  });
+
+  const [dialog, popup] = await Promise.all([
+    page.context().waitForEvent('dialog'),
+    page.waitForEvent('popup'),
+  ]);
+
+  expect(dialog.message()).toBe('hey?');
+  expect(dialog.page()).toBe(popup);
+  await dialog.accept('hello');
+  expect(await promise).toBe('hello');
+});
+
+test('dialog event should work in popup 2', async ({ page, browserName }) => {
+  test.fixme(browserName === 'firefox', 'dialog from javascript: url is not reported at all');
+
+  const promise = page.evaluate(async () => {
+    window.open('javascript:prompt("hey?")');
+  });
+
+  const dialog = await page.context().waitForEvent('dialog');
+
+  expect(dialog.message()).toBe('hey?');
+  expect(dialog.page()).toBe(null);
+  await dialog.accept('hello');
+  await promise;
+});
+
+test('dialog event should work in immdiately closed popup', async ({ page }) => {
+  const promise = page.evaluate(async () => {
+    const win = window.open();
+    const result = (win as any).prompt('hey?');
+    win.close();
+    return result;
+  });
+
+  const [dialog, popup] = await Promise.all([
+    page.context().waitForEvent('dialog'),
+    page.waitForEvent('popup'),
+  ]);
+
+  expect(dialog.message()).toBe('hey?');
+  expect(dialog.page()).toBe(popup);
+  await dialog.accept('hello');
+  expect(await promise).toBe('hello');
+});
+
+test('dialog event should work with inline script tag', async ({ page, server }) => {
+  server.setRoute('/popup.html', (req, res) => {
+    res.setHeader('content-type', 'text/html');
+    res.end(`<script>window.result = prompt('hey?')</script>`);
+  });
+
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`<a href='popup.html' target=_blank>Click me</a>`);
+
+  const promise = page.click('a');
+  const [dialog, popup] = await Promise.all([
+    page.context().waitForEvent('dialog'),
+    page.context().waitForEvent('page'),
+  ]);
+
+  expect(dialog.message()).toBe('hey?');
+  expect(dialog.page()).toBe(popup);
+  await dialog.accept('hello');
+  await promise;
+  await expect.poll(() => popup.evaluate('window.result')).toBe('hello');
+});

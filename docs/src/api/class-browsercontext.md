@@ -154,6 +154,42 @@ context.Console += async (_, msg) =>
 await page.EvaluateAsync("console.log('hello', 5, { foo: 'bar' })");
 ```
 
+
+## event: BrowserContext.dialog
+* since: v1.33
+- argument: <[Dialog]>
+
+Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Listener **must** either [`method: Dialog.accept`] or [`method: Dialog.dismiss`] the dialog - otherwise the page will [freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop#never_blocking) waiting for the dialog, and actions like click will never finish.
+
+**Usage**
+
+```js
+context.on('dialog', dialog => {
+  dialog.accept();
+});
+```
+
+```java
+context.onDialog(dialog -> {
+  dialog.accept();
+});
+```
+
+```python
+context.on("dialog", lambda dialog: dialog.accept())
+```
+
+```csharp
+context.RequestFailed += (_, request) =>
+{
+    Console.WriteLine(request.Url + " " + request.Failure);
+};
+```
+
+:::note
+When no [`event: Page.dialog`] or [`event: BrowserContext.dialog`] listeners are present, all dialogs are automatically dismissed.
+:::
+
 ## event: BrowserContext.page
 * since: v1.8
 - argument: <[Page]>

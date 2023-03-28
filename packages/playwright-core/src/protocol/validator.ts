@@ -759,6 +759,9 @@ scheme.BrowserContextConsoleEvent = tObject({
   message: tChannel(['ConsoleMessage']),
 });
 scheme.BrowserContextCloseEvent = tOptional(tObject({}));
+scheme.BrowserContextDialogEvent = tObject({
+  dialog: tChannel(['Dialog']),
+});
 scheme.BrowserContextPageEvent = tObject({
   page: tChannel(['Page']),
 });
@@ -933,9 +936,6 @@ scheme.PageBindingCallEvent = tObject({
 });
 scheme.PageCloseEvent = tOptional(tObject({}));
 scheme.PageCrashEvent = tOptional(tObject({}));
-scheme.PageDialogEvent = tObject({
-  dialog: tChannel(['Dialog']),
-});
 scheme.PageDownloadEvent = tObject({
   url: tString,
   suggestedFilename: tString,
@@ -2097,6 +2097,7 @@ scheme.BindingCallResolveParams = tObject({
 });
 scheme.BindingCallResolveResult = tOptional(tObject({}));
 scheme.DialogInitializer = tObject({
+  page: tOptional(tChannel(['Page'])),
   type: tString,
   message: tString,
   defaultValue: tString,
