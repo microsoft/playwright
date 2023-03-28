@@ -65,7 +65,10 @@ export const fixtures: Fixtures<
             });
           },
           update: async (options: JsxComponent | Omit<MountOptions, 'hooksConfig'>) => {
-            if (isJsxApi(options)) return await innerUpdate(page, options);
+            if (isJsxApi(options))
+              return await innerUpdate(page, options);
+            if (options?.props && !isJson(options.props))
+              throw new Error('The update function props are not JSON serializable.');
             await innerUpdate(page, component, options);
           }
         });
