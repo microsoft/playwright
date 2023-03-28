@@ -82,12 +82,12 @@ const jsonType: Record<string, Function> = {
   array: (value: any) => Array.isArray(value) && value.every(isJson),
   object: (value: any) => typeof value === 'object' && value !== null && !Array.isArray(value)
     && Object.values(value).every(isJson),
-}
+};
 
 function isJson(value: any): boolean {
   const valueType = Array.isArray(value) ? 'array' : typeof value;
   const validate = jsonType[valueType];
-  if (validate) 
+  if (validate)
     return validate(value);
   return false;
 }
