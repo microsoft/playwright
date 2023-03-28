@@ -41,14 +41,17 @@ type JsonObject = { [Key in string]?: JsonValue };
 
 type Slot = string | string[];
 
-export interface MountOptions<HooksConfig extends JsonObject, Props extends JsonObject> {
+export interface MountOptions<
+  HooksConfig extends JsonObject,
+  Props extends Record<string, unknown>
+> {
   props?: Props;
   slots?: Record<string, Slot> & { default?: Slot };
   on?: Record<string, Function>;
   hooksConfig?: HooksConfig;
 }
 
-interface MountResult<Props extends JsonObject> extends Locator {
+interface MountResult<Props extends Record<string, unknown>> extends Locator {
   unmount(): Promise<void>;
   update(options: Omit<MountOptions<never, Props>, 'hooksConfig'>): Promise<void>;
 }
@@ -62,9 +65,12 @@ export interface ComponentFixtures {
   mount(component: JSX.Element): Promise<MountResultJsx>;
   mount<HooksConfig extends JsonObject>(
     component: any,
-    options?: MountOptions<HooksConfig, JsonObject>
-  ): Promise<MountResult<JsonObject>>;
-  mount<HooksConfig extends JsonObject, Props extends JsonObject = JsonObject>(
+    options?: MountOptions<HooksConfig, Record<string, unknown>>
+  ): Promise<MountResult<Record<string, unknown>>>;
+  mount<
+    HooksConfig extends JsonObject,
+    Props extends Record<string, unknown> = Record<string, unknown>
+  >(
     component: any,
     options: MountOptions<HooksConfig, never> & { props: Props }
   ): Promise<MountResult<Props>>;
