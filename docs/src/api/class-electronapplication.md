@@ -135,12 +135,13 @@ Convenience method that waits for the first application window to be opened.
   // ...
 ```
 
-### param: ElectronApplication.firstWindow.options
+### option: ElectronApplication.firstWindow.timeout
 * since: v1.33
-* langs: js
-- `options` ?<[Object]>
-  - `timeout` ?<[float]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to
-    disable timeout. The default value can be changed by using the [`method: BrowserContext.setDefaultTimeout`].
+- `timeout` ?<[float]>
+
+Maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds).
+Pass `0` to disable timeout. The default value can be changed by using the
+[`method: BrowserContext.setDefaultTimeout`].
 
 ## method: ElectronApplication.process
 * since: v1.21
