@@ -129,6 +129,11 @@ const kImplicitRoleByTagName: { [tagName: string]: (e: Element) => string | null
   'STRONG': () => 'strong',
   'SUB': () => 'subscript',
   'SUP': () => 'superscript',
+  // For <svg> we default to Chrome behavior:
+  // - Chrome reports 'img'.
+  // - Firefox reports 'diagram' that is not in official ARIA spec yet.
+  // - Safari reports 'no role', but still computes accessible name.
+  'SVG': () => 'img',
   'TABLE': () => 'table',
   'TBODY': () => 'rowgroup',
   'TD': (e: Element) => {
@@ -167,7 +172,8 @@ const kPresentationInheritanceParents: { [tagName: string]: string[] } = {
 };
 
 function getImplicitAriaRole(element: Element): string | null {
-  const implicitRole = kImplicitRoleByTagName[element.tagName]?.(element) || '';
+  // Elements from the svg namespace do not have uppercase tagName.
+  const implicitRole = kImplicitRoleByTagName[element.tagName.toUpperCase()]?.(element) || '';
   if (!implicitRole)
     return null;
   // Inherit presentation role when required.
@@ -578,16 +584,23 @@ function getElementAccessibleNameInternal(element: Element, options: AccessibleN
       return title;
     }
 
-    // https://www.w3.org/TR/svg-aam-1.0/
-    if (element.tagName === 'SVG' && (element as SVGElement).ownerSVGElement) {
+    // https://www.w3.org/TR/svg-aam-1.0/#mapping_additional_nd
+    if (element.tagName.toUpperCase() === 'SVG' || (element as SVGElement).ownerSVGElement) {
       options.visitedElements.add(element);
       for (let child = element.firstElementChild; child; child = child.nextElementSibling) {
-        if (child.tagName === 'TITLE' && (element as SVGElement).ownerSVGElement) {
+        if (child.tagName.toUpperCase() === 'TITLE' && (child as SVGElement).ownerSVGElement) {
           return getElementAccessibleNameInternal(child, {
             ...childOptions,
-            embeddedInTextAlternativeElement: true,
+            embeddedInLabelledBy: 'self',
           });
         }
+      }
+    }
+    if ((element as SVGElement).ownerSVGElement && element.tagName.toUpperCase() === 'A') {
+      const title = element.getAttribute('xlink:title') || '';
+      if (title.trim()) {
+        options.visitedElements.add(element);
+        return title;
       }
     }
   }
