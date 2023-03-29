@@ -232,6 +232,8 @@ function getAriaBoolean(attr: string | null) {
 }
 
 // https://www.w3.org/TR/wai-aria-1.2/#tree_exclusion, but including "none" and "presentation" roles
+// Not implemented:
+//   `Any descendants of elements that have the characteristic "Children Presentational: True"`
 // https://www.w3.org/TR/wai-aria-1.2/#aria-hidden
 export function isElementHiddenForAria(element: Element, cache: Map<Element, boolean>): boolean {
   if (['STYLE', 'SCRIPT', 'NOSCRIPT', 'TEMPLATE'].includes(element.tagName))
@@ -242,17 +244,30 @@ export function isElementHiddenForAria(element: Element, cache: Map<Element, boo
   const isSlot = element.nodeName === 'SLOT';
   if (!isOptionInsideSelect && !isSlot && !isElementStyleVisibilityVisible(element))
     return true;
-  return belongsToDisplayNoneOrAriaHidden(element, cache);
+  return belongsToDisplayNoneOrAriaHiddenOrNonSlotted(element, cache);
 }
 
-function belongsToDisplayNoneOrAriaHidden(element: Element, cache: Map<Element, boolean>): boolean {
+function belongsToDisplayNoneOrAriaHiddenOrNonSlotted(element: Element, cache: Map<Element, boolean>): boolean {
   if (!cache.has(element)) {
-    const style = getElementComputedStyle(element);
-    let hidden = !style || style.display === 'none' || getAriaBoolean(element.getAttribute('aria-hidden')) === true;
+    let hidden = false;
+
+    // When parent has a shadow root, all light dom children must be assigned to a slot,
+    // otherwise they are not rendered and considered hidden for aria.
+    // Note: we can remove this logic once WebKit supports `Element.checkVisibility`.
+    if (element.parentElement && element.parentElement.shadowRoot && !element.assignedSlot)
+      hidden = true;
+
+    // display:none and aria-hidden=true are considered hidden for aria.
+    if (!hidden) {
+      const style = getElementComputedStyle(element);
+      hidden = !style || style.display === 'none' || getAriaBoolean(element.getAttribute('aria-hidden')) === true;
+    }
+
+    // Check recursively.
     if (!hidden) {
       const parent = parentElementOrShadowHost(element);
       if (parent)
-        hidden = hidden || belongsToDisplayNoneOrAriaHidden(parent, cache);
+        hidden = belongsToDisplayNoneOrAriaHiddenOrNonSlotted(parent, cache);
     }
     cache.set(element, hidden);
   }
