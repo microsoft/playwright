@@ -86,6 +86,20 @@ assertThat(locator).not().containsText("error");
 await Expect(locator).Not.ToContainTextAsync("error");
 ```
 
+## async method: LocatorAssertions.NotToBeAttached
+* since: v1.33
+* langs: python
+
+The opposite of [`method: LocatorAssertions.toBeAttached`].
+
+### option: LocatorAssertions.NotToBeAttached.attached
+* since: v1.33
+- `attached` <[boolean]>
+
+### option: LocatorAssertions.NotToBeAttached.timeout = %%-csharp-java-python-assertions-timeout-%%
+* since: v1.33
+
+
 ## async method: LocatorAssertions.NotToBeChecked
 * since: v1.20
 * langs: python
@@ -376,6 +390,47 @@ Expected options currently selected.
 
 ### option: LocatorAssertions.NotToHaveValues.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.23
+
+
+## async method: LocatorAssertions.toBeAttached
+* since: v1.33
+* langs:
+  - alias-java: isAttached
+
+Ensures that [Locator] points to an [attached](../actionability.md#attached) DOM node.
+
+**Usage**
+
+```js
+await expect(page.getByText('Hidden text')).toBeAttached();
+```
+
+```java
+assertThat(page.getByText("Hidden text")).isAttached();
+```
+
+```python async
+await expect(page.get_by_text("Hidden text")).to_be_attached()
+```
+
+```python sync
+expect(page.get_by_text("Hidden text")).to_be_attached()
+```
+
+```csharp
+await Expect(Page.GetByText("Hidden text")).ToBeAttachedAsync();
+```
+
+### option: LocatorAssertions.toBeAttached.attached
+* since: v1.33
+- `attached` <[boolean]>
+
+### option: LocatorAssertions.toBeAttached.timeout = %%-js-assertions-timeout-%%
+* since: v1.33
+
+### option: LocatorAssertions.toBeAttached.timeout = %%-csharp-java-python-assertions-timeout-%%
+* since: v1.33
+
 
 ## async method: LocatorAssertions.toBeChecked
 * since: v1.20
@@ -781,31 +836,23 @@ Ensures that [Locator] points to an [attached](../actionability.md#attached) and
 **Usage**
 
 ```js
-const locator = page.locator('.my-element');
-await expect(locator).toBeVisible();
+await expect(page.getByText('Welcome')).toBeVisible();
 ```
 
 ```java
-assertThat(page.locator(".my-element")).isVisible();
+assertThat(page.getByText("Welcome")).isVisible();
 ```
 
 ```python async
-from playwright.async_api import expect
-
-locator = page.locator('.my-element')
-await expect(locator).to_be_visible()
+await expect(page.get_by_text("Welcome")).to_be_visible()
 ```
 
 ```python sync
-from playwright.sync_api import expect
-
-locator = page.locator('.my-element')
-expect(locator).to_be_visible()
+expect(page.get_by_text("Welcome")).to_be_visible()
 ```
 
 ```csharp
-var locator = Page.Locator(".my-element");
-await Expect(locator).ToBeVisibleAsync();
+await Expect(Page.GetByText("Welcome")).ToBeVisibleAsync();
 ```
 
 ### option: LocatorAssertions.toBeVisible.visible
