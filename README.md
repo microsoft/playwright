@@ -118,7 +118,7 @@ test.use({
 
 test('Mobile and geolocation', async ({ page }) => {
   await page.goto('https://maps.google.com');
-  await page.locator('text="Your location"').click();
+  await page.getByText('Your location').click();
   await page.waitForRequest(/.*preview\/pwa/);
   await page.screenshot({ path: 'colosseum-iphone.png' });
 });
