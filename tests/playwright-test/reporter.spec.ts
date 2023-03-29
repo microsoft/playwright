@@ -648,11 +648,11 @@ test('test and step error should have code snippet', async ({ runInlineTest }) =
     class Reporter {
       onStepEnd(test, result, step) {
         console.log('\\n%%onStepEnd: ' + step.error?.snippet?.length);
-        fs.writeFileSync('${stepErrorFile.replaceAll('\\', '\\\\')}', step.error?.snippet);
+        fs.writeFileSync('${stepErrorFile.replace(/\\/g, '\\\\')}', step.error?.snippet);
       }
       onTestEnd(test, result) {
         console.log('\\n%%onTestEnd: ' + result.error?.snippet?.length);
-        fs.writeFileSync('${testErrorFile.replaceAll('\\', '\\\\')}', result.error?.snippet);
+        fs.writeFileSync('${testErrorFile.replace(/\\/g, '\\\\')}', result.error?.snippet);
       }
       onError(error) {
         console.log('\\n%%onError: ' + error.snippet?.length);
@@ -700,7 +700,7 @@ test('onError should have code snippet', async ({ runInlineTest }) => {
     class Reporter {
       onError(error) {
         console.log('\\n%%onError: ' + error.snippet?.length);
-        fs.writeFileSync('${errorFile.replaceAll('\\', '\\\\')}', error.snippet);
+        fs.writeFileSync('${errorFile.replace(/\\/g, '\\\\')}', error.snippet);
       }
     }
     module.exports = Reporter;`,
