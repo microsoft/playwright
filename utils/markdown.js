@@ -45,6 +45,7 @@
  *    type: 'code',
  *    lines: string[],
  *    codeLang: string,
+ *    title?: string,
  *  }} MarkdownCodeNode */
 
 /** @typedef {MarkdownBaseNode & {
@@ -162,12 +163,20 @@ function buildTree(lines) {
 
     // Remaining items respect indent-based nesting.
     const [, indent, content] = /** @type {string[]} */ (line.match('^([ ]*)(.*)'));
+    const [codeLang, title] = (() => {
+      const lang = content.substring(3);
+      const match = lang.match(/ title="(.+)"/);
+      if (match)
+        return [lang.substring(0, match.index), match[1]];
+      return [lang, undefined];
+    })();
     if (content.startsWith('```')) {
       /** @type {MarkdownNode} */
       const node = {
         type: 'code',
         lines: [],
-        codeLang: content.substring(3)
+        codeLang,
+        title,
       };
       line = lines[++i];
       while (!line.trim().startsWith('```')) {
@@ -312,7 +321,7 @@ function innerRenderMdNode(indent, node, lastNode, result, options) {
 
   if (node.type === 'code') {
     newLine();
-    result.push(`${indent}\`\`\`${node.codeLang}`);
+    result.push(`${indent}\`\`\`${node.codeLang}${node.title ? ' title="' + node.title + '"' : ''}`);
     for (const line of node.lines)
       result.push(indent + line);
     result.push(`${indent}\`\`\``);

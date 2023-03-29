@@ -31,7 +31,7 @@ timeouts and racy checks in their tests altogether.
 
 Take a look at the following example to see how to write a test.
 
-```js
+```js title="tests/example.spec.ts"
 import { test, expect } from '@playwright/test';
 
 test('has title', async ({ page }) => {
@@ -152,7 +152,7 @@ Here is the list of the most popular async assertions. Note that there are [many
 
 Playwright Test is based on the concept of [test fixtures](./test-fixtures.md) such as the [built in page fixture](./test-fixtures#built-in-fixtures), which is passed into your test. Pages are isolated between tests due to the Browser Context, which is equivalent to a brand new browser profile, where every test gets a fresh environment, even when multiple tests run in a single Browser.
 
-```js
+```js title="tests/example.spec.ts"
 test('basic test', async ({ page }) => {
   ...
 ```
@@ -161,7 +161,7 @@ test('basic test', async ({ page }) => {
 
 You can use various [test hooks](./api/class-test.md) such as `test.describe` to declare a group of tests and `test.beforeEach` and `test.afterEach` which are executed before/after each test. Other hooks include the `test.beforeAll` and `test.afterAll` which are executed once per worker before/after all tests.
 
-```js
+```js title="tests/example.spec.ts"
 import { test, expect } from "@playwright/test";
 
 test.describe("navigation", () => {
