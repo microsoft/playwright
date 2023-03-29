@@ -521,3 +521,50 @@ test.describe('Some describe', ()=>{
   expect(result.output).not.toContain('a.spec.js');
   expect(result.output).toContain('gherkin.feature:1');
 });
+
+test('should inherit env changes from projects to global teardown', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          { name: 'A', testMatch: '**/a.spec.ts' },
+          { name: 'B', testMatch: '**/b.spec.ts' },
+        ],
+        globalSetup: './globalSetup.ts',
+        globalTeardown: './globalTeardown.ts',
+      };
+    `,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({}, testInfo) => {
+        process.env.SET_IN_A = 'valuea';
+        delete process.env.SET_OUTSIDE;
+      });
+    `,
+    'b.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({}, testInfo) => {
+        process.env.SET_IN_B = 'valueb';
+      });
+    `,
+    'globalSetup.ts': `
+      export default function() {
+        console.log('\\n%% setup: ' + process.env.SET_OUTSIDE + '-' + process.env.SET_IN_A + '-' + process.env.SET_IN_B);
+        return () => {
+          console.log('\\n%% teardown: ' + process.env.SET_OUTSIDE + '-' + process.env.SET_IN_A + '-' + process.env.SET_IN_B);
+        };
+      };
+    `,
+    'globalTeardown.ts': `
+      export default function() {
+        console.log('\\n%% globalTeardown: ' + process.env.SET_OUTSIDE + '-' + process.env.SET_IN_A + '-' + process.env.SET_IN_B);
+      };
+    `,
+  }, {}, { SET_OUTSIDE: 'outside' });
+  expect(result.passed).toBe(2);
+  expect(result.outputLines).toEqual([
+    'setup: outside-undefined-undefined',
+    'teardown: undefined-valuea-valueb',
+    'globalTeardown: undefined-valuea-valueb',
+  ]);
+});

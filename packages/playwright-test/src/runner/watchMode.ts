@@ -119,6 +119,7 @@ export async function runWatchModeLoop(config: FullConfigInternal): Promise<Full
     config,
     reporter,
     phases: [],
+    envProducedByAllWorkers: {},
   };
   const taskRunner = createTaskRunnerForWatchSetup(config, reporter);
   reporter.onConfigure(config);
@@ -288,6 +289,7 @@ async function runTests(config: FullConfigInternal, failedTestIdCollector: Set<s
     config,
     reporter,
     phases: [],
+    envProducedByAllWorkers: {},
   };
   clearCompilationCache();
   reporter.onConfigure(config);

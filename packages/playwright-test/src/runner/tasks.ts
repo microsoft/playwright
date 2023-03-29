@@ -48,6 +48,7 @@ export type TaskRunnerState = {
   config: FullConfigInternal;
   rootSuite?: Suite;
   phases: Phase[];
+  envProducedByAllWorkers: Record<string, string | undefined>;
 };
 
 export function createTaskRunner(config: FullConfigInternal, reporter: Multiplexer): TaskRunner<TaskRunnerState> {
@@ -121,11 +122,15 @@ function createPluginBeginTask(plugin: TestRunnerPluginRegistration): Task<TaskR
 }
 
 function createGlobalSetupTask(): Task<TaskRunnerState> {
-  return async ({ config }) => {
+  return async context => {
+    const { config } = context;
     const setupHook = config.globalSetup ? await loadGlobalHook(config, config.globalSetup) : undefined;
     const teardownHook = config.globalTeardown ? await loadGlobalHook(config, config.globalTeardown) : undefined;
     const globalSetupResult = setupHook ? await setupHook(config) : undefined;
     return async () => {
+      // Inherit env produced by tests (especially "setup" projects) for global teardown to use.
+      for (const [key, value] of Object.entries(context.envProducedByAllWorkers))
+        process.env[key] = value;
       if (typeof globalSetupResult === 'function')
         await globalSetupResult();
       await teardownHook?.(config);
@@ -248,6 +253,7 @@ function createRunTestsTask(): Task<TaskRunnerState> {
         for (const [projectId, envProduced] of dispatcher.producedEnvByProjectId()) {
           const extraEnv = extraEnvByProjectId.get(projectId) || {};
           extraEnvByProjectId.set(projectId, { ...extraEnv, ...envProduced });
+          context.envProducedByAllWorkers = { ...context.envProducedByAllWorkers, ...envProduced };
         }
       }
 

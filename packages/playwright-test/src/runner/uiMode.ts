@@ -74,6 +74,7 @@ class UIMode {
       config: this._config,
       reporter,
       phases: [],
+      envProducedByAllWorkers: {},
     };
     const { status, cleanup: globalCleanup } = await taskRunner.runDeferCleanup(context, 0);
     await reporter.onExit({ status });
@@ -149,7 +150,7 @@ class UIMode {
     this._config._internal.listOnly = true;
     this._config._internal.testIdMatcher = undefined;
     const taskRunner = createTaskRunnerForList(this._config, reporter, 'out-of-process');
-    const context: TaskRunnerState = { config: this._config, reporter, phases: [] };
+    const context: TaskRunnerState = { config: this._config, reporter, phases: [], envProducedByAllWorkers: {} };
     clearCompilationCache();
     reporter.onConfigure(this._config);
     const status = await taskRunner.run(context, 0);
@@ -171,7 +172,7 @@ class UIMode {
     const runReporter = new TeleReporterEmitter(e => this._dispatchEvent(e));
     const reporter = await createReporter(this._config, 'ui', [runReporter]);
     const taskRunner = createTaskRunnerForWatch(this._config, reporter);
-    const context: TaskRunnerState = { config: this._config, reporter, phases: [] };
+    const context: TaskRunnerState = { config: this._config, reporter, phases: [], envProducedByAllWorkers: {} };
     clearCompilationCache();
     reporter.onConfigure(this._config);
     const stop = new ManualPromise();

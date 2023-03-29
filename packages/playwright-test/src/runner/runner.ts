@@ -64,6 +64,7 @@ export class Runner {
       config,
       reporter,
       phases: [],
+      envProducedByAllWorkers: {},
     };
 
     reporter.onConfigure(config);
