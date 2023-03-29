@@ -286,3 +286,21 @@ test('should respect --trace', async ({ runInlineTest }, testInfo) => {
   expect(result.passed).toBe(1);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-test-1', 'trace.zip'))).toBeTruthy();
 });
+
+test('should respect PW_TEST_DISABLE_TRACING', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      export default { use: { trace: 'on' } };
+    `,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test 1', async ({ page }) => {
+        await page.goto('about:blank');
+      });
+    `,
+  }, {}, { PW_TEST_DISABLE_TRACING: '1' });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-test-1', 'trace.zip'))).toBe(false);
+});
