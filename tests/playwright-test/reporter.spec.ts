@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import { test, expect } from './playwright-test-fixtures';
+import { test, expect, stripAnsi } from './playwright-test-fixtures';
+import fs from 'fs';
 
 const smallReporterJS = `
 class Reporter {
@@ -636,4 +637,90 @@ test('parallelIndex is presented in onTestEnd', async ({ runInlineTest }) => {
   }, { 'reporter': '', 'workers': 1 });
 
   expect(result.output).toContain('parallelIndex: 0');
+});
+
+test('test and step error should have code snippet', async ({ runInlineTest }) => {
+  const testErrorFile = test.info().outputPath('testError.txt');
+  const stepErrorFile = test.info().outputPath('testError.txt');
+  const result = await runInlineTest({
+    'reporter.ts': `
+    import fs from 'fs';
+    class Reporter {
+      onStepEnd(test, result, step) {
+        console.log('\\n%%onStepEnd: ' + step.error?.snippet?.length);
+        fs.writeFileSync('${stepErrorFile}', step.error?.snippet);
+      }
+      onTestEnd(test, result) {
+        console.log('\\n%%onTestEnd: ' + result.error?.snippet?.length);
+        fs.writeFileSync('${testErrorFile}', result.error?.snippet);
+      }
+      onError(error) {
+        console.log('\\n%%onError: ' + error.snippet?.length);
+      }
+    }
+    module.exports = Reporter;`,
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: './reporter',
+      };
+    `,
+    'a.spec.js': `
+      const { test, expect } = require('@playwright/test');
+      test('test', async () => {
+        await test.step('step', async () => {
+          expect(1).toBe(2);
+        });
+      });
+    `,
+  }, { 'reporter': '', 'workers': 1 });
+
+  expect(result.output).toContain('onTestEnd: 522');
+  expect(result.output).toContain('onStepEnd: 522');
+  expect(stripAnsi(fs.readFileSync(testErrorFile, 'utf8'))).toBe(`  3 |       test('test', async () => {
+  4 |         await test.step('step', async () => {
+> 5 |           expect(1).toBe(2);
+    |                     ^
+  6 |         });
+  7 |       });
+  8 |     `);
+  expect(stripAnsi(fs.readFileSync(stepErrorFile, 'utf8'))).toBe(`  3 |       test('test', async () => {
+  4 |         await test.step('step', async () => {
+> 5 |           expect(1).toBe(2);
+    |                     ^
+  6 |         });
+  7 |       });
+  8 |     `);
+});
+
+test('onError should have code snippet', async ({ runInlineTest }) => {
+  const errorFile = test.info().outputPath('error.txt');
+  const result = await runInlineTest({
+    'reporter.ts': `
+    import fs from 'fs';
+    class Reporter {
+      onError(error) {
+        console.log('\\n%%onError: ' + error.snippet?.length);
+        fs.writeFileSync('${errorFile}', error.snippet);
+      }
+    }
+    module.exports = Reporter;`,
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: './reporter',
+      };
+    `,
+    'a.spec.js': `
+      const { test, expect } = require('@playwright/test');
+      throw new Error('test');
+    `,
+  }, { 'reporter': '', 'workers': 1 });
+
+  expect(result.output).toContain('onError: 396');
+  expect(stripAnsi(fs.readFileSync(errorFile, 'utf8'))).toBe(`   at a.spec.js:3
+
+  1 |
+  2 |       const { test, expect } = require('@playwright/test');
+> 3 |       throw new Error('test');
+    |             ^
+  4 |     `);
 });
