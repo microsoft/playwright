@@ -1153,6 +1153,12 @@ export class InjectedScript {
       // expect(locator).not.toBeVisible() passes when there is no element.
       if (options.isNot && options.expression === 'to.be.visible')
         return { matches: false };
+      // expect(locator).toBeAttached({ attached: false }) passes when there is no element.
+      if (!options.isNot && options.expression === 'to.be.detached')
+        return { matches: true };
+      // expect(locator).not.toBeAttached() passes when there is no element.
+      if (options.isNot && options.expression === 'to.be.attached')
+        return { matches: false };
       // expect(locator).not.toBeInViewport() passes when there is no element.
       if (options.isNot && options.expression === 'to.be.in.viewport')
         return { matches: false };
@@ -1191,6 +1197,10 @@ export class InjectedScript {
         elementState = this.elementState(element, 'hidden');
       } else if (expression === 'to.be.visible') {
         elementState = this.elementState(element, 'visible');
+      } else if (expression === 'to.be.attached') {
+        elementState = true;
+      } else if (expression === 'to.be.detached') {
+        elementState = false;
       }
 
       if (elementState !== undefined) {

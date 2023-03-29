@@ -34,6 +34,17 @@ interface APIResponseEx extends APIResponse {
   _fetchLog(): Promise<string[]>;
 }
 
+export function toBeAttached(
+  this: ReturnType<Expect['getState']>,
+  locator: LocatorEx,
+  options?: { attached?: boolean, timeout?: number },
+) {
+  return toBeTruthy.call(this, 'toBeAttached', locator, 'Locator', async (isNot, timeout) => {
+    const attached = !options || options.attached === undefined || options.attached === true;
+    return await locator._expect(attached ? 'to.be.attached' : 'to.be.detached', { isNot, timeout });
+  }, options);
+}
+
 export function toBeChecked(
   this: ReturnType<Expect['getState']>,
   locator: LocatorEx,
