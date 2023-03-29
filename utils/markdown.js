@@ -163,13 +163,7 @@ function buildTree(lines) {
 
     // Remaining items respect indent-based nesting.
     const [, indent, content] = /** @type {string[]} */ (line.match('^([ ]*)(.*)'));
-    const [codeLang, title] = (() => {
-      const lang = content.substring(3);
-      const match = lang.match(/ title="(.+)"/);
-      if (match)
-        return [lang.substring(0, match.index), match[1]];
-      return [lang, undefined];
-    })();
+    const [codeLang, title] = parseCodeBlockMetadata(content);
     if (content.startsWith('```')) {
       /** @type {MarkdownNode} */
       const node = {
@@ -256,6 +250,18 @@ function buildTree(lines) {
     appendNode(indent, node);
   }
   return root.children;
+}
+
+/**
+ * @param {String} firstLine 
+ * @returns {[string, string|undefined]}
+ */
+function parseCodeBlockMetadata(firstLine) {
+  const withoutBackticks = firstLine.substring(3);
+  const match = withoutBackticks.match(/ title="(.+)"$/);
+  if (match)
+    return [withoutBackticks.substring(0, match.index), match[1]];
+  return [withoutBackticks, undefined];
 }
 
 /**
