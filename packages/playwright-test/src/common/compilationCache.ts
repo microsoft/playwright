@@ -27,7 +27,11 @@ export type MemoryCache = {
 };
 
 const version = 13;
-const cacheDir = process.env.PWTEST_CACHE_DIR || path.join(os.tmpdir(), 'playwright-transform-cache');
+
+const DEFAULT_CACHE_DIR_WIN32 = path.join(os.tmpdir(), `playwright-transform-cache`);
+const DEFAULT_CACHE_DIR_POSIX = path.join(os.tmpdir(), `playwright-transform-cache-` + os.userInfo().username);
+
+const cacheDir = process.env.PWTEST_CACHE_DIR || (process.platform === 'win32' ? DEFAULT_CACHE_DIR_WIN32 : DEFAULT_CACHE_DIR_POSIX);
 
 const sourceMaps: Map<string, string> = new Map();
 const memoryCache = new Map<string, MemoryCache>();
