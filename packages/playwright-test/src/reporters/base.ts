@@ -337,9 +337,10 @@ export function formatResultFailure(config: FullConfig, test: TestCase, result: 
   }
 
   for (const error of result.errors) {
+    const formattedError = formatError(config, error, highlightCode);
     errorDetails.push({
-      message: indent(formatError(error, highlightCode), initialIndent),
-      location: error.location,
+      message: indent(formattedError.message, initialIndent),
+      location: formattedError.location,
     });
   }
   return errorDetails;
@@ -376,62 +377,62 @@ function formatTestHeader(config: FullConfig, test: TestCase, indent: string, in
   return separator(header);
 }
 
-export function formatError(error: TestError, highlightCode: boolean): string {
-  const stack = error.stack;
-  if (!stack)
-    return error.message || error.value || '';
-  if (!highlightCode)
-    return stripAnsiEscapes(stack);
-  // Dim stack trace.
-  const parsedStack = prepareErrorStack(stack);
-  const tokens = [];
-  tokens.push(parsedStack.message);
-  tokens.push('');
-  tokens.push(colors.dim(parsedStack.stackLines.join('\n')));
-  return tokens.join('\n');
-}
-
-export function addSnippetToError(config: FullConfig, error: TestError, file?: string) {
+export function formatError(config: FullConfig, error: TestError, highlightCode: boolean): ErrorDetails {
   const message = error.message || error.value || '';
   const stack = error.stack;
   if (!stack && !error.location)
-    return;
+    return { message };
 
   const tokens = [];
 
   // Now that we filter out internals from our stack traces, we can safely render
   // the helper / original exception locations.
   const parsedStack = stack ? prepareErrorStack(stack) : undefined;
-  let stackMessage = parsedStack?.message;
-  if (stackMessage?.startsWith('Error: '))
-    stackMessage = stackMessage.substring('Error: '.length);
-  tokens.push(stackMessage || message);
+  tokens.push(parsedStack?.message || message);
+
+  if (error.snippet) {
+    let snippet = error.snippet;
+    if (!highlightCode)
+      snippet = stripAnsiEscapes(snippet);
+    tokens.push('');
+    tokens.push(snippet);
+  }
+
+  if (parsedStack) {
+    tokens.push('');
+    tokens.push(colors.dim(parsedStack.stackLines.join('\n')));
+  }
 
   let location = error.location;
   if (parsedStack && !location)
     location = parsedStack.location;
 
-  if (location) {
-    try {
-      const source = fs.readFileSync(location.file, 'utf8');
-      const codeFrame = codeFrameColumns(source, { start: location }, { highlightCode: true });
-      // Convert /var/folders to /private/var/folders on Mac.
-      if (!file || fs.realpathSync(file) !== location.file) {
-        tokens.push('');
-        tokens.push(colors.gray(`   at `) + `${relativeFilePath(config, location.file)}:${location.line}`);
-      }
-      tokens.push('');
-      tokens.push(codeFrame);
-    } catch (e) {
-      // Failed to read the source file - that's ok.
-    }
-  }
+  return {
+    location,
+    message: tokens.join('\n'),
+  };
+}
 
-  error.message = tokens.join('\n');
-  if (parsedStack) {
-    tokens.push(...parsedStack.stackLines);
-    error.stack = tokens.join('\n');
-    error.location ??= location;
+export function addSnippetToError(config: FullConfig, error: TestError, file?: string) {
+  let location = error.location;
+  if (error.stack)
+    location = prepareErrorStack(error.stack).location;
+  if (!location)
+    return;
+
+  try {
+    const tokens = [];
+    const source = fs.readFileSync(location.file, 'utf8');
+    const codeFrame = codeFrameColumns(source, { start: location }, { highlightCode: true });
+    // Convert /var/folders to /private/var/folders on Mac.
+    if (!file || fs.realpathSync(file) !== location.file) {
+      tokens.push(colors.gray(`   at `) + `${relativeFilePath(config, location.file)}:${location.line}`);
+      tokens.push('');
+    }
+    tokens.push(codeFrame);
+    error.snippet = tokens.join('\n');
+  } catch (e) {
+    // Failed to read the source file - that's ok.
   }
 }
 

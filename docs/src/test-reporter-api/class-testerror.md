@@ -27,3 +27,9 @@ The value that was thrown. Set when anything except the [Error] (or its subclass
 - type: ?<[Location]>
 
 Error location in the source code.
+
+## property: TestError.snippet
+* since: v1.33
+- type: ?<[string]>
+
+Source code snippet with highlighted error.

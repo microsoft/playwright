@@ -101,6 +101,6 @@ export class ListModeReporter implements Reporter {
 
   onError(error: TestError) {
     // eslint-disable-next-line no-console
-    console.error('\n' + formatError(error, false));
+    console.error('\n' + formatError(this.config, error, false).message);
   }
 }
