@@ -26,9 +26,9 @@
     }
   },
   "dependencies": {
-    "@vitejs/plugin-vue": "^4.0.0",
+    "@vitejs/plugin-vue": "^4.1.0",
     "@playwright/test": "1.33.0-next",
-    "vite": "^4.1.1"
+    "vite": "^4.2.1"
   },
   "bin": {
     "playwright": "./cli.js"
