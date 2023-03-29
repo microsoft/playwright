@@ -6,6 +6,7 @@
     "composite": true,
     "lib": [],
     "jsx": "react-jsx",
-    "types": ["node"]
+    "types": ["node"],
+    "ignoreDeprecations": "5.0"
   }
 }
