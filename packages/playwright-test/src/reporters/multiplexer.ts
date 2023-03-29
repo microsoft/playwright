@@ -16,6 +16,7 @@
 
 import type { FullConfig, TestCase, TestError, TestResult, FullResult, TestStep, Reporter } from '../../types/testReporter';
 import { Suite } from '../common/test';
+import { addSnippetToError } from './base';
 
 type StdIOChunk = {
   chunk: string | Buffer;
@@ -81,6 +82,7 @@ export class Multiplexer implements Reporter {
   }
 
   onTestEnd(test: TestCase, result: TestResult) {
+    this._addSnippetToTestErrors(test, result);
     for (const reporter of this._reporters)
       wrap(() => reporter.onTestEnd?.(test, result));
   }
@@ -105,6 +107,7 @@ export class Multiplexer implements Reporter {
       this._deferred.push({ error });
       return;
     }
+    addSnippetToError(this._config, error);
     for (const reporter of this._reporters)
       wrap(() => reporter.onError?.(error));
   }
@@ -115,9 +118,21 @@ export class Multiplexer implements Reporter {
   }
 
   onStepEnd(test: TestCase, result: TestResult, step: TestStep) {
+    this._addSnippetToStepError(test, step);
     for (const reporter of this._reporters)
       wrap(() => (reporter as any).onStepEnd?.(test, result, step));
   }
+
+  private _addSnippetToTestErrors(test: TestCase, result: TestResult) {
+    for (const error of result.errors)
+      addSnippetToError(this._config, error, test.location.file);
+  }
+
+  private _addSnippetToStepError(test: TestCase, step: TestStep) {
+    if (step.error)
+      addSnippetToError(this._config, step.error, test.location.file);
+  }
+
 }
 
 function wrap(callback: () => void) {

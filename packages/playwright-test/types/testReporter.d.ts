@@ -585,6 +585,11 @@ export interface TestError {
   message?: string;
 
   /**
+   * Source code snippet with highlighted error.
+   */
+  snippet?: string;
+
+  /**
    * Error stack. Set when [Error] (or its subclass) has been thrown.
    */
   stack?: string;

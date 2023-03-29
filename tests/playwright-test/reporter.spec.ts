@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import { test, expect } from './playwright-test-fixtures';
+import { test, expect, stripAnsi } from './playwright-test-fixtures';
+import fs from 'fs';
 
 const smallReporterJS = `
 class Reporter {
@@ -58,6 +59,8 @@ class Reporter {
   onStepEnd(test, result, step) {
     if (step.error?.stack)
       step.error.stack = '<stack>';
+    if (step.error?.snippet)
+      step.error.snippet = '<snippet>';
     if (step.error?.message.includes('getaddrinfo'))
       step.error.message = '<message>';
     console.log('%%%% end', JSON.stringify(this.distillStep(step)));
@@ -257,7 +260,7 @@ test('should report expect steps', async ({ runInlineTest }) => {
     `begin {\"title\":\"expect.toBeTruthy\",\"category\":\"expect\"}`,
     `end {\"title\":\"expect.toBeTruthy\",\"category\":\"expect\"}`,
     `begin {\"title\":\"expect.toBeTruthy\",\"category\":\"expect\"}`,
-    `end {\"title\":\"expect.toBeTruthy\",\"category\":\"expect\",\"error\":{\"message\":\"\\u001b[2mexpect(\\u001b[22m\\u001b[31mreceived\\u001b[39m\\u001b[2m).\\u001b[22mtoBeTruthy\\u001b[2m()\\u001b[22m\\n\\nReceived: \\u001b[31mfalse\\u001b[39m\",\"stack\":\"<stack>\"}}`,
+    `end {\"title\":\"expect.toBeTruthy\",\"category\":\"expect\",\"error\":{\"message\":\"\\u001b[2mexpect(\\u001b[22m\\u001b[31mreceived\\u001b[39m\\u001b[2m).\\u001b[22mtoBeTruthy\\u001b[2m()\\u001b[22m\\n\\nReceived: \\u001b[31mfalse\\u001b[39m\",\"stack\":\"<stack>\",\"snippet\":\"<snippet>\"}}`,
     `begin {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
     `end {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
     `begin {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
@@ -336,9 +339,9 @@ test('should report api steps', async ({ runInlineTest }) => {
     `begin {\"title\":\"locator.getByRole('button').click\",\"category\":\"pw:api\"}`,
     `end {\"title\":\"locator.getByRole('button').click\",\"category\":\"pw:api\"}`,
     `begin {"title":"apiRequestContext.get(http://localhost2)","category":"pw:api"}`,
-    `end {"title":"apiRequestContext.get(http://localhost2)","category":"pw:api","error":{"message":"<message>","stack":"<stack>"}}`,
+    `end {"title":"apiRequestContext.get(http://localhost2)","category":"pw:api","error":{"message":"<message>","stack":"<stack>","snippet":"<snippet>"}}`,
     `begin {"title":"apiRequestContext.get(http://localhost2)","category":"pw:api"}`,
-    `end {"title":"apiRequestContext.get(http://localhost2)","category":"pw:api","error":{"message":"<message>","stack":"<stack>"}}`,
+    `end {"title":"apiRequestContext.get(http://localhost2)","category":"pw:api","error":{"message":"<message>","stack":"<stack>","snippet":"<snippet>"}}`,
     `begin {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
     `begin {\"title\":\"apiRequestContext.dispose\",\"category\":\"pw:api\"}`,
     `end {\"title\":\"apiRequestContext.dispose\",\"category\":\"pw:api\"}`,
@@ -397,7 +400,7 @@ test('should report api step failure', async ({ runInlineTest }) => {
     `begin {\"title\":\"page.setContent\",\"category\":\"pw:api\"}`,
     `end {\"title\":\"page.setContent\",\"category\":\"pw:api\"}`,
     `begin {\"title\":\"page.click(input)\",\"category\":\"pw:api\"}`,
-    `end {\"title\":\"page.click(input)\",\"category\":\"pw:api\",\"error\":{\"message\":\"page.click: Timeout 1ms exceeded.\\n=========================== logs ===========================\\nwaiting for locator('input')\\n============================================================\",\"stack\":\"<stack>\"}}`,
+    `end {\"title\":\"page.click(input)\",\"category\":\"pw:api\",\"error\":{\"message\":\"page.click: Timeout 1ms exceeded.\\n=========================== logs ===========================\\nwaiting for locator('input')\\n============================================================\",\"stack\":\"<stack>\",\"snippet\":\"<snippet>\"}}`,
     `begin {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
     `begin {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
     `end {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
@@ -634,4 +637,90 @@ test('parallelIndex is presented in onTestEnd', async ({ runInlineTest }) => {
   }, { 'reporter': '', 'workers': 1 });
 
   expect(result.output).toContain('parallelIndex: 0');
+});
+
+test('test and step error should have code snippet', async ({ runInlineTest }) => {
+  const testErrorFile = test.info().outputPath('testError.txt');
+  const stepErrorFile = test.info().outputPath('stepError.txt');
+  const result = await runInlineTest({
+    'reporter.ts': `
+    import fs from 'fs';
+    class Reporter {
+      onStepEnd(test, result, step) {
+        console.log('\\n%%onStepEnd: ' + step.error?.snippet?.length);
+        fs.writeFileSync('${stepErrorFile.replace(/\\/g, '\\\\')}', step.error?.snippet);
+      }
+      onTestEnd(test, result) {
+        console.log('\\n%%onTestEnd: ' + result.error?.snippet?.length);
+        fs.writeFileSync('${testErrorFile.replace(/\\/g, '\\\\')}', result.error?.snippet);
+      }
+      onError(error) {
+        console.log('\\n%%onError: ' + error.snippet?.length);
+      }
+    }
+    module.exports = Reporter;`,
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: './reporter',
+      };
+    `,
+    'a.spec.js': `
+      const { test, expect } = require('@playwright/test');
+      test('test', async () => {
+        await test.step('step', async () => {
+          expect(1).toBe(2);
+        });
+      });
+    `,
+  }, { 'reporter': '', 'workers': 1 });
+
+  expect(result.output).toContain('onTestEnd: 522');
+  expect(result.output).toContain('onStepEnd: 522');
+  expect(stripAnsi(fs.readFileSync(testErrorFile, 'utf8'))).toBe(`  3 |       test('test', async () => {
+  4 |         await test.step('step', async () => {
+> 5 |           expect(1).toBe(2);
+    |                     ^
+  6 |         });
+  7 |       });
+  8 |     `);
+  expect(stripAnsi(fs.readFileSync(stepErrorFile, 'utf8'))).toBe(`  3 |       test('test', async () => {
+  4 |         await test.step('step', async () => {
+> 5 |           expect(1).toBe(2);
+    |                     ^
+  6 |         });
+  7 |       });
+  8 |     `);
+});
+
+test('onError should have code snippet', async ({ runInlineTest }) => {
+  const errorFile = test.info().outputPath('error.txt');
+  const result = await runInlineTest({
+    'reporter.ts': `
+    import fs from 'fs';
+    class Reporter {
+      onError(error) {
+        console.log('\\n%%onError: ' + error.snippet?.length);
+        fs.writeFileSync('${errorFile.replace(/\\/g, '\\\\')}', error.snippet);
+      }
+    }
+    module.exports = Reporter;`,
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: './reporter',
+      };
+    `,
+    'a.spec.js': `
+      const { test, expect } = require('@playwright/test');
+      throw new Error('test');
+    `,
+  }, { 'reporter': '', 'workers': 1 });
+
+  expect(result.output).toContain('onError: 396');
+  expect(stripAnsi(fs.readFileSync(errorFile, 'utf8'))).toBe(`   at a.spec.js:3
+
+  1 |
+  2 |       const { test, expect } = require('@playwright/test');
+> 3 |       throw new Error('test');
+    |             ^
+  4 |     `);
 });
