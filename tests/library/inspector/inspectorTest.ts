@@ -73,12 +73,8 @@ export const test = contextTest.extend<CLITestArgs>({
       cli = new CLIMock(childProcess, browserName, channel, headless, cliArgs, launchOptions.executablePath, noAutoExit);
       return cli;
     });
-    if (cli) {
-      // In case of a timeout, the CLI stays most likely alive. We need to kill it.
-      if (testInfo.status !== 'passed')
-        await cli.process.kill();
-      await cli.exited.catch(() => {});
-    }
+    // In case of a timeout, the CLI stays most likely alive. We need to kill it.
+    await cli?.process.kill();
   },
 
   openRecorder: async ({ page, recorderPageGetter }, run) => {
