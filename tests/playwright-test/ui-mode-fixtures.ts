@@ -30,7 +30,7 @@ type Latch = {
 };
 
 type Fixtures = {
-  runUITest: (files: Files, env?: NodeJS.ProcessEnv, options?: RunOptions) => Promise<Page>;
+  runUITest: (files: Files, env?: NodeJS.ProcessEnv, options?: RunOptions) => Promise<{ page: Page, testProcess: TestChildProcess }>;
   createLatch: () => Latch;
 };
 
@@ -106,7 +106,7 @@ export const test = base
           browser = await playwright.chromium.connectOverCDP(wsEndpoint);
           const [context] = browser.contexts();
           const [page] = context.pages();
-          return page;
+          return { page, testProcess };
         });
         await browser?.close();
         await testProcess?.close();

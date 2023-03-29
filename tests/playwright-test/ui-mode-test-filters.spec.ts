@@ -36,7 +36,7 @@ const basicTestTree = {
 };
 
 test('should filter by title', async ({ runUITest }) => {
-  const page = await runUITest(basicTestTree);
+  const { page } = await runUITest(basicTestTree);
   await page.getByPlaceholder('Filter').fill('inner');
   await expect.poll(dumpTestTree(page), { timeout: 15000 }).toBe(`
     ▼ ◯ a.test.ts
@@ -47,7 +47,7 @@ test('should filter by title', async ({ runUITest }) => {
 });
 
 test('should filter by status', async ({ runUITest }) => {
-  const page = await runUITest(basicTestTree);
+  const { page } = await runUITest(basicTestTree);
 
   await page.getByTitle('Run all').click();
 
@@ -91,7 +91,7 @@ test('should filter by status', async ({ runUITest }) => {
 });
 
 test('should filter by project', async ({ runUITest }) => {
-  const page = await runUITest({
+  const { page } = await runUITest({
     ...basicTestTree,
     'playwright.config.ts': `
       import { defineConfig } from '@playwright/test';
@@ -151,7 +151,7 @@ test('should filter by project', async ({ runUITest }) => {
 
 test('should not hide filtered while running', async ({ runUITest, createLatch }) => {
   const latch = createLatch();
-  const page = await runUITest({
+  const { page } = await runUITest({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('passes', () => {});
@@ -180,7 +180,7 @@ test('should not hide filtered while running', async ({ runUITest, createLatch }
 });
 
 test('should filter skipped', async ({ runUITest, createLatch }) => {
-  const page = await runUITest({
+  const { page } = await runUITest({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('passes', () => {});

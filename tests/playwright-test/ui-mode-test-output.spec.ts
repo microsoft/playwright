@@ -19,7 +19,7 @@ import { test, expect } from './ui-mode-fixtures';
 test.describe.configure({ mode: 'parallel' });
 
 test('should print load errors', async ({ runUITest }) => {
-  const page = await runUITest({
+  const { page } = await runUITest({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('syntax error', () => {
@@ -32,7 +32,7 @@ test('should print load errors', async ({ runUITest }) => {
 });
 
 test('should work after theme switch', async ({ runUITest, writeFiles }) => {
-  const page = await runUITest({
+  const { page } = await runUITest({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('syntax error', async () => {

@@ -31,7 +31,7 @@ const basicTestTree = {
 };
 
 test('should show selected test in sources', async ({ runUITest }) => {
-  const page = await runUITest(basicTestTree);
+  const { page } = await runUITest(basicTestTree);
   await expect.poll(dumpTestTree(page), { timeout: 15000 }).toBe(`
     ▼ ◯ a.test.ts
         ◯ first
