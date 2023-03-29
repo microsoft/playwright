@@ -33,11 +33,13 @@
     },
     {
       "name": "webkit",
-      "revision": "1816",
+      "revision": "1818",
       "installByDefault": true,
       "revisionOverrides": {
         "mac10.14": "1446",
         "mac10.15": "1616",
+        "mac11": "1816",
+        "mac11-arm64": "1816",
         "ubuntu18.04": "1728"
       },
       "browserVersion": "16.4"
