@@ -415,7 +415,7 @@ export function formatError(config: FullConfig, error: TestError, highlightCode:
 
 export function addSnippetToError(config: FullConfig, error: TestError, file?: string) {
   let location = error.location;
-  if (error.stack)
+  if (error.stack && !location)
     location = prepareErrorStack(error.stack).location;
   if (!location)
     return;

@@ -641,7 +641,7 @@ test('parallelIndex is presented in onTestEnd', async ({ runInlineTest }) => {
 
 test('test and step error should have code snippet', async ({ runInlineTest }) => {
   const testErrorFile = test.info().outputPath('testError.txt');
-  const stepErrorFile = test.info().outputPath('testError.txt');
+  const stepErrorFile = test.info().outputPath('stepError.txt');
   const result = await runInlineTest({
     'reporter.ts': `
     import fs from 'fs';
