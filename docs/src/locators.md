@@ -1009,6 +1009,30 @@ button = page.get_by_role("button").filter(page.getByTitle("Subscribe"))
 var button = page.GetByRole(AriaRole.Button).Filter(page.GetByTitle("Subscribe"));
 ```
 
+### Filter by **not** matching an additional locator
+
+Method [`method: Locator.not`] narrows down an existing locator by ensuring that target element **does not match** an additional locator. For example, you can combine [`method: Page.getByRole`] and [`method: Page.getByTitle`] to match by role and ensure that title does not match.
+
+```js
+const button = page.getByRole('button').not(page.getByTitle('Subscribe'));
+```
+
+```java
+Locator button = page.getByRole(AriaRole.BUTTON).not(page.getByTitle("Subscribe"));
+```
+
+```python async
+button = page.get_by_role("button").not_(page.getByTitle("Subscribe"))
+```
+
+```python sync
+button = page.get_by_role("button").not_(page.getByTitle("Subscribe"))
+```
+
+```csharp
+var button = page.GetByRole(AriaRole.Button).Not(page.GetByTitle("Subscribe"));
+```
+
 ## Chaining Locators
 
 You can chain methods that create a locator, like [`method: Page.getByText`] or [`method: Locator.getByRole`], to narrow down the search to a particular part of the page.

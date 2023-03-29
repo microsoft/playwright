@@ -199,6 +199,12 @@ export class Locator implements api.Locator {
     return new Locator(this._frame, this._selector + ` >> nth=${index}`);
   }
 
+  not(locator: Locator): Locator {
+    if (locator._frame !== this._frame)
+      throw new Error(`Locators must belong to the same frame.`);
+    return new Locator(this._frame, this._selector + ` >> internal:not=` + JSON.stringify(locator._selector));
+  }
+
   or(locator: Locator): Locator {
     if (locator._frame !== this._frame)
       throw new Error(`Locators must belong to the same frame.`);

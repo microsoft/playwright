@@ -11659,6 +11659,21 @@ export interface Locator {
   }): Locator;
 
   /**
+   * Creates a locator that **matches this** locator, but **not the argument** locator.
+   *
+   * **Usage**
+   *
+   * The following example finds a button that does not have title `"Subscribe"`.
+   *
+   * ```js
+   * const button = page.getByRole('button').not(page.getByTitle('Subscribe'));
+   * ```
+   *
+   * @param locator Locator that must not match.
+   */
+  not(locator: Locator): Locator;
+
+  /**
    * Returns locator to the n-th matching element. It's zero based, `nth(0)` selects the first element.
    *
    * **Usage**

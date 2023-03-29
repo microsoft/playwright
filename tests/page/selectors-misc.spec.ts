@@ -427,6 +427,19 @@ it('should work with internal:and=', async ({ page, server }) => {
   expect(await page.$$eval(`.bar >> internal:and="span"`, els => els.map(e => e.textContent))).toEqual(['world2']);
 });
 
+it('should work with internal:not=', async ({ page, server }) => {
+  await page.setContent(`
+    <div class=foo>hello</div>
+    <div class=bar>world</div>
+  `);
+  expect(await page.$$eval(`div >> internal:not="span"`, els => els.map(e => e.textContent))).toEqual(['hello', 'world']);
+  expect(await page.$$eval(`div >> internal:not=".foo"`, els => els.map(e => e.textContent))).toEqual(['world']);
+  expect(await page.$$eval(`div >> internal:not=".bar"`, els => els.map(e => e.textContent))).toEqual(['hello']);
+  expect(await page.$$eval(`div >> internal:not="div"`, els => els.map(e => e.textContent))).toEqual([]);
+  expect(await page.$$eval(`span >> internal:not="div"`, els => els.map(e => e.textContent))).toEqual([]);
+  expect(await page.$$eval(`.foo >> internal:not=".bar"`, els => els.map(e => e.textContent))).toEqual(['hello']);
+});
+
 it('chaining should work with large DOM @smoke', async ({ page, server }) => {
   await page.evaluate(() => {
     let last = document.body;
