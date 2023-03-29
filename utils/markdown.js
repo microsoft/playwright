@@ -163,8 +163,8 @@ function buildTree(lines) {
 
     // Remaining items respect indent-based nesting.
     const [, indent, content] = /** @type {string[]} */ (line.match('^([ ]*)(.*)'));
-    const [codeLang, title] = parseCodeBlockMetadata(content);
     if (content.startsWith('```')) {
+      const [codeLang, title] = parseCodeBlockMetadata(content);
       /** @type {MarkdownNode} */
       const node = {
         type: 'code',
