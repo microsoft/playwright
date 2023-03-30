@@ -15,6 +15,7 @@
  */
 
 import type { Fixtures, FrameLocator, Locator, Page, Browser, BrowserContext } from '@playwright/test';
+import { step } from './baseTest';
 import { showTraceViewer } from '../../packages/playwright-core/lib/server';
 
 type BaseTestFixtures = {
@@ -96,6 +97,7 @@ class TraceViewerPage {
     return result.sort();
   }
 
+  @step
   async snapshotFrame(actionName: string, ordinal: number = 0, hasSubframe: boolean = false): Promise<FrameLocator> {
     await this.selectAction(actionName, ordinal);
     while (this.page.frames().length < (hasSubframe ? 4 : 3))
