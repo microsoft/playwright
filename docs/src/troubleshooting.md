@@ -42,8 +42,9 @@ Running TypeScript tests in `"type": "module"` project requires Node.js 16 or hi
 
 It's known that Playwright is not working as expected when some Microsoft Edge / Google Chrome policy settings are set. The following shows some of them, there might be more that affect Playwright's functionalities. If you find any other policy settings that break functionality, please file an issue and we'll add it to this document. You can see a list of applied policies by running `chrome://policy` in the browser.
 
-- `UserDataDir` - This policy is used to specify the location of the user data directory. Playwright uses a temporary directory for user data, so this policy is not compatible with Playwright. See discussion in [this bug](https://github.com/microsoft/playwright/issues/17448).
+-  `BrowserSignin` - This policy may prevent Playwright from launching the browser without signing in. Playwright will fail to launch browser if the policy forces users to sign-in to use the browser. See discussion in [this bug](https://github.com/microsoft/playwright/issues/22016)
 - `ExtensionInstallForcelist` - This policy is used to specify a list of extensions that should be installed. Playwright's browser close will not work if this policy is set. See discussion in [this bug](https://github.com/microsoft/playwright/issues/17299).
+- `UserDataDir` - This policy is used to specify the location of the user data directory. Playwright uses a temporary directory for user data, so this policy is not compatible with Playwright. See discussion in [this bug](https://github.com/microsoft/playwright/issues/17448).
 
 ## .NET requirements
 * langs: csharp
