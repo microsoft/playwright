@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import { ActionTraceEvent } from '@trace/trace';
+import type { ActionTraceEvent } from '@trace/trace';
 import { msToString } from '@web/uiUtils';
 import { ListView } from '@web/components/listView';
 import * as React from 'react';
