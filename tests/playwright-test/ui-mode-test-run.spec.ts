@@ -306,3 +306,27 @@ test('should show time', async ({ runUITest }) => {
 
   await expect(page.getByTestId('status-line')).toHaveText('4/8 passed (50%)');
 });
+
+test('should show test.fail as passing', async ({ runUITest }) => {
+  const { page } = await runUITest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('should fail', () => {
+        test.fail();
+        expect(1).toBe(2);
+      });
+    `,
+  });
+  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toContain(`
+    ▼ ◯ a.test.ts
+  `);
+
+  await page.getByTitle('Run all').click();
+
+  await expect.poll(dumpTestTree(page, { time: true }), { timeout: 15000 }).toBe(`
+    ▼ ✅ a.test.ts
+        ✅ should fail XXms
+  `);
+
+  await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
+});

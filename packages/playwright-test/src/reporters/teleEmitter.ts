@@ -16,7 +16,7 @@
 
 import type { FullConfig, FullResult, Reporter, TestError, TestResult, TestStep, Location } from '../../types/testReporter';
 import type { Suite, TestCase } from '../common/test';
-import type { JsonConfig, JsonProject, JsonSuite, JsonTestCase, JsonTestResultEnd, JsonTestResultStart, JsonTestStepEnd, JsonTestStepStart } from '../isomorphic/teleReceiver';
+import type { JsonConfig, JsonProject, JsonSuite, JsonTestCase, JsonTestEnd, JsonTestResultEnd, JsonTestResultStart, JsonTestStepEnd, JsonTestStepStart } from '../isomorphic/teleReceiver';
 import type { SuitePrivate } from '../../types/reporterPrivate';
 import type { FullConfigInternal, FullProjectInternal } from '../common/types';
 import { createGuid } from 'playwright-core/lib/utils';
@@ -53,10 +53,16 @@ export class TeleReporterEmitter implements Reporter {
   }
 
   onTestEnd(test: TestCase, result: TestResult): void {
+    const testEnd: JsonTestEnd = {
+      testId: test.id,
+      expectedStatus: test.expectedStatus,
+      annotations: test.annotations,
+      timeout: test.timeout,
+    };
     this._messageSink({
       method: 'onTestEnd',
       params: {
-        testId: test.id,
+        test: testEnd,
         result: this._serializeResultEnd(result),
       }
     });
@@ -163,9 +169,6 @@ export class TeleReporterEmitter implements Reporter {
       testId: test.id,
       title: test.title,
       location: this._relativeLocation(test.location),
-      expectedStatus: test.expectedStatus,
-      timeout: test.timeout,
-      annotations: test.annotations,
       retries: test.retries,
     };
   }
