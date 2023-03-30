@@ -184,6 +184,17 @@ it('should support locator.filter(locator)', async ({ page }) => {
   await expect(page.locator('span').filter(page.getByTestId(/bar|foo/))).toHaveCount(2);
 });
 
+it('should support locator.not', async ({ page }) => {
+  await page.setContent(`<div class=foo>hello</div><div class=bar>world</div>`);
+  await expect(page.locator('div').not(page.locator('span'))).toHaveCount(2);
+  await expect(page.locator('div').not(page.locator('span'))).toHaveText(['hello', 'world']);
+  await expect(page.locator('div').not(page.locator('.foo'))).toHaveText(['world']);
+  await expect(page.locator('div').not(page.locator('.bar'))).toHaveText(['hello']);
+  await expect(page.locator('.foo').not(page.locator('.bar'))).toHaveText(['hello']);
+  await expect(page.locator('.foo').not(page.locator('div'))).toHaveText([]);
+  await expect(page.locator('div').not(page.locator('div'))).toHaveText([]);
+});
+
 it('should enforce same frame for has/leftOf/rightOf/above/below/near', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/frames/two-frames.html');
   const child = page.frames()[1];
