@@ -452,7 +452,7 @@ Note that the new methods [`method: Page.routeFromHAR`] and [`method: BrowserCon
 
   Read more in [our documentation](./locators.md#locate-by-role).
 
-- New [`method: Locator.filter#1`] API to filter an existing locator
+- New [`method: Locator.filter`] API to filter an existing locator
 
   ```csharp
   var buttons = page.Locator("role=button");

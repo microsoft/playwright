@@ -53,14 +53,11 @@ class Locator {
     self.getByText = (text: string | RegExp, options?: { exact?: boolean }): Locator => self.locator(getByTextSelector(text, options));
     self.getByTitle = (text: string | RegExp, options?: { exact?: boolean }): Locator => self.locator(getByTitleSelector(text, options));
     self.getByRole = (role: string, options: ByRoleOptions = {}): Locator => self.locator(getByRoleSelector(role, options));
-    self.filter = (optionsOrLocator?: { hasText?: string | RegExp, has?: Locator } | Locator): Locator => {
-      if (optionsOrLocator instanceof Locator)
-        return new Locator(injectedScript, selectorBase + ` >> internal:and=` + JSON.stringify((optionsOrLocator as any)[selectorSymbol]));
-      return new Locator(injectedScript, selector, optionsOrLocator);
-    };
+    self.filter = (options?: { hasText?: string | RegExp, has?: Locator }): Locator => new Locator(injectedScript, selector, options);
     self.first = (): Locator => self.locator('nth=0');
     self.last = (): Locator => self.locator('nth=-1');
     self.nth = (index: number): Locator => self.locator(`nth=${index}`);
+    self.and = (locator: Locator): Locator => new Locator(injectedScript, selectorBase + ` >> internal:and=` + JSON.stringify((locator as any)[selectorSymbol]));
     self.or = (locator: Locator): Locator => new Locator(injectedScript, selectorBase + ` >> internal:or=` + JSON.stringify((locator as any)[selectorSymbol]));
     self.not = (locator: Locator): Locator => new Locator(injectedScript, selectorBase + ` >> internal:not=` + JSON.stringify((locator as any)[selectorSymbol]));
   }
@@ -94,6 +91,7 @@ class ConsoleAPI {
     delete this._injectedScript.window.playwright.first;
     delete this._injectedScript.window.playwright.last;
     delete this._injectedScript.window.playwright.nth;
+    delete this._injectedScript.window.playwright.and;
     delete this._injectedScript.window.playwright.or;
     delete this._injectedScript.window.playwright.not;
   }

@@ -2695,7 +2695,7 @@ export interface Page {
   /**
    * Allows locating elements that contain given text.
    *
-   * See also [locator.filter([options])](https://playwright.dev/docs/api/class-locator#locator-filter-1) that allows to
+   * See also [locator.filter([options])](https://playwright.dev/docs/api/class-locator#locator-filter) that allows to
    * match by another criteria, like an accessible role, and then filter by the text content.
    *
    * **Usage**
@@ -6119,7 +6119,7 @@ export interface Frame {
   /**
    * Allows locating elements that contain given text.
    *
-   * See also [locator.filter([options])](https://playwright.dev/docs/api/class-locator#locator-filter-1) that allows to
+   * See also [locator.filter([options])](https://playwright.dev/docs/api/class-locator#locator-filter) that allows to
    * match by another criteria, like an accessible role, and then filter by the text content.
    *
    * **Usage**
@@ -10388,6 +10388,21 @@ export interface Locator {
   allTextContents(): Promise<Array<string>>;
 
   /**
+   * Creates a locator that matches both this locator and the argument locator.
+   *
+   * **Usage**
+   *
+   * The following example finds a button with a specific title.
+   *
+   * ```js
+   * const button = page.getByRole('button').and(page.getByTitle('Subscribe'));
+   * ```
+   *
+   * @param locator Additional locator to match.
+   */
+  and(locator: Locator): Locator;
+
+  /**
    * Calls [blur](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/blur) on the element.
    * @param options
    */
@@ -10996,21 +11011,6 @@ export interface Locator {
   }): Locator;
 
   /**
-   * Creates a locator that matches both this locator and the argument locator.
-   *
-   * **Usage**
-   *
-   * The following example finds a button with a specific title.
-   *
-   * ```js
-   * const button = page.getByRole('button').filter(page.getByTitle('Subscribe'));
-   * ```
-   *
-   * @param locator Additional locator to match.
-   */
-  filter(locator: Locator): Locator;
-
-  /**
    * Returns locator to the first matching element.
    */
   first(): Locator;
@@ -11290,7 +11290,7 @@ export interface Locator {
   /**
    * Allows locating elements that contain given text.
    *
-   * See also [locator.filter([options])](https://playwright.dev/docs/api/class-locator#locator-filter-1) that allows to
+   * See also [locator.filter([options])](https://playwright.dev/docs/api/class-locator#locator-filter) that allows to
    * match by another criteria, like an accessible role, and then filter by the text content.
    *
    * **Usage**
@@ -11634,7 +11634,7 @@ export interface Locator {
 
   /**
    * The method finds an element matching the specified selector in the locator's subtree. It also accepts filter
-   * options, similar to [locator.filter([options])](https://playwright.dev/docs/api/class-locator#locator-filter-1)
+   * options, similar to [locator.filter([options])](https://playwright.dev/docs/api/class-locator#locator-filter)
    * method.
    *
    * [Learn more about locators](https://playwright.dev/docs/locators).
@@ -17202,7 +17202,7 @@ export interface FrameLocator {
   /**
    * Allows locating elements that contain given text.
    *
-   * See also [locator.filter([options])](https://playwright.dev/docs/api/class-locator#locator-filter-1) that allows to
+   * See also [locator.filter([options])](https://playwright.dev/docs/api/class-locator#locator-filter) that allows to
    * match by another criteria, like an accessible role, and then filter by the text content.
    *
    * **Usage**
@@ -17286,7 +17286,7 @@ export interface FrameLocator {
 
   /**
    * The method finds an element matching the specified selector in the locator's subtree. It also accepts filter
-   * options, similar to [locator.filter([options])](https://playwright.dev/docs/api/class-locator#locator-filter-1)
+   * options, similar to [locator.filter([options])](https://playwright.dev/docs/api/class-locator#locator-filter)
    * method.
    *
    * [Learn more about locators](https://playwright.dev/docs/locators).

@@ -786,7 +786,7 @@ WebServer is now considered "ready" if request to the specified url has any of t
 
   Read more in [our documentation](./locators.md#locate-by-role).
 
-- New [`method: Locator.filter#1`] API to filter an existing locator
+- New [`method: Locator.filter`] API to filter an existing locator
 
   ```js
   const buttons = page.locator('role=button');

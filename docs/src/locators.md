@@ -806,7 +806,7 @@ Consider the following DOM structure where we want to click on the buy button of
 
 ### Filter by text
 
-Locators can be filtered by text with the [`method: Locator.filter#1`] method. It will search for a particular string somewhere inside the element, possibly in a descendant element, case-insensitively. You can also pass a regular expression.
+Locators can be filtered by text with the [`method: Locator.filter`] method. It will search for a particular string somewhere inside the element, possibly in a descendant element, case-insensitively. You can also pass a regular expression.
 
 ```js
 await page
@@ -987,26 +987,26 @@ Note that the inner locator is matched starting from the outer one, not from the
 
 ### Filter by matching an additional locator
 
-Method [`method: Locator.filter#2`] narrows down an existing locator by matching an additional locator. For example, you can combine [`method: Page.getByRole`] and [`method: Page.getByTitle`] to match by both role and title.
+Method [`method: Locator.and`] narrows down an existing locator by matching an additional locator. For example, you can combine [`method: Page.getByRole`] and [`method: Page.getByTitle`] to match by both role and title.
 
 ```js
-const button = page.getByRole('button').filter(page.getByTitle('Subscribe'));
+const button = page.getByRole('button').and(page.getByTitle('Subscribe'));
 ```
 
 ```java
-Locator button = page.getByRole(AriaRole.BUTTON).filter(page.getByTitle("Subscribe"));
+Locator button = page.getByRole(AriaRole.BUTTON).and(page.getByTitle("Subscribe"));
 ```
 
 ```python async
-button = page.get_by_role("button").filter(page.getByTitle("Subscribe"))
+button = page.get_by_role("button").and_(page.getByTitle("Subscribe"))
 ```
 
 ```python sync
-button = page.get_by_role("button").filter(page.getByTitle("Subscribe"))
+button = page.get_by_role("button").and_(page.getByTitle("Subscribe"))
 ```
 
 ```csharp
-var button = page.GetByRole(AriaRole.Button).Filter(page.GetByTitle("Subscribe"));
+var button = page.GetByRole(AriaRole.Button).And(page.GetByTitle("Subscribe"));
 ```
 
 ### Filter by **not** matching an additional locator
@@ -1246,7 +1246,7 @@ await page.GetByText("orange").ClickAsync();
 ```
 
 #### Filter by text
-Use the [`method: Locator.filter#1`] to locate a specific item in a list.
+Use the [`method: Locator.filter`] to locate a specific item in a list.
 
 For example, consider the following DOM structure:
 
@@ -1351,7 +1351,7 @@ However, use this method with caution. Often times, the page might change, and t
 
 ### Chaining filters
 
-When you have elements with various similarities, you can use the [`method: Locator.filter#1`] method to select the right one. You can also chain multiple filters to narrow down the selection.
+When you have elements with various similarities, you can use the [`method: Locator.filter`] method to select the right one. You can also chain multiple filters to narrow down the selection.
 
 For example, consider the following DOM structure:
 
