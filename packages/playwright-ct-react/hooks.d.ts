@@ -19,8 +19,8 @@ type JsonValue = JsonPrimitive | JsonObject | JsonArray;
 type JsonArray = JsonValue[];
 type JsonObject = { [Key in string]?: JsonValue };
 export declare function beforeMount<HooksConfig extends JsonObject>(
-  callback: (params: { hooksConfig: HooksConfig; App: () => JSX.Element }) => Promise<void | JSX.Element>
+  callback: (params: { hooksConfig?: HooksConfig; App: () => JSX.Element }) => Promise<void | JSX.Element>
 ): void;
 export declare function afterMount<HooksConfig extends JsonObject>(
-  callback: (params: { hooksConfig: HooksConfig }) => Promise<void>
+  callback: (params: { hooksConfig?: HooksConfig }) => Promise<void>
 ): void;
