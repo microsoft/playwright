@@ -213,7 +213,7 @@ export class JavaScriptLocatorFactory implements LocatorFactory {
       case 'or':
         return `or(${body})`;
       case 'and':
-        return `filter(${body})`;
+        return `and(${body})`;
       case 'not':
         return `not(${body})`;
       case 'test-id':
@@ -287,7 +287,7 @@ export class PythonLocatorFactory implements LocatorFactory {
       case 'or':
         return `or_(${body})`;
       case 'and':
-        return `filter(${body})`;
+        return `and_(${body})`;
       case 'not':
         return `not_(${body})`;
       case 'test-id':
@@ -370,7 +370,7 @@ export class JavaLocatorFactory implements LocatorFactory {
       case 'or':
         return `or(${body})`;
       case 'and':
-        return `filter(${body})`;
+        return `and(${body})`;
       case 'not':
         return `not(${body})`;
       case 'test-id':
@@ -447,7 +447,7 @@ export class CSharpLocatorFactory implements LocatorFactory {
       case 'or':
         return `Or(${body})`;
       case 'and':
-        return `Filter(${body})`;
+        return `And(${body})`;
       case 'not':
         return `Not(${body})`;
       case 'test-id':

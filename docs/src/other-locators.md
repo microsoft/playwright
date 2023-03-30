@@ -432,14 +432,14 @@ await page.Locator("button").Locator("nth=-1").ClickAsync();
 
 ## Parent element locator
 
-When you need to target a parent element of some other element, most of the time you should [`method: Locator.filter#1`] by the child locator. For example, consider the following DOM structure:
+When you need to target a parent element of some other element, most of the time you should [`method: Locator.filter`] by the child locator. For example, consider the following DOM structure:
 
 ```html
 <li><label>Hello</label></li>
 <li><label>World</label></li>
 ```
 
-If you'd like to target the parent `<li>` of a label with text `"Hello"`, using [`method: Locator.filter#1`] works best:
+If you'd like to target the parent `<li>` of a label with text `"Hello"`, using [`method: Locator.filter`] works best:
 
 ```js
 const child = page.getByText('Hello');
@@ -466,7 +466,7 @@ var child = page.GetByText("Hello");
 var parent = page.GetByRole(AriaRole.Listitem).Filter(new () { Has = child });
 ```
 
-Alternatively, if you cannot find a suitable locator for the parent element, use `xpath=..`. Note that this method is not as reliable, because any changes to the DOM structure will break your tests. Prefer [`method: Locator.filter#1`] when possible.
+Alternatively, if you cannot find a suitable locator for the parent element, use `xpath=..`. Note that this method is not as reliable, because any changes to the DOM structure will break your tests. Prefer [`method: Locator.filter`] when possible.
 
 ```js
 const parent = page.getByText('Hello').locator('xpath=..');

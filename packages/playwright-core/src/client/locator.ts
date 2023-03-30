@@ -168,15 +168,8 @@ export class Locator implements api.Locator {
     return new FrameLocator(this._frame, this._selector + ' >> ' + selector);
   }
 
-  filter(options?: LocatorOptions): Locator;
-  filter(locator: Locator): Locator;
-  filter(optionsOrLocator?: LocatorOptions | Locator): Locator {
-    if (optionsOrLocator instanceof Locator) {
-      if (optionsOrLocator._frame !== this._frame)
-        throw new Error(`Locators must belong to the same frame.`);
-      return new Locator(this._frame, this._selector + ` >> internal:and=` + JSON.stringify(optionsOrLocator._selector));
-    }
-    return new Locator(this._frame, this._selector, optionsOrLocator);
+  filter(options?: LocatorOptions): Locator {
+    return new Locator(this._frame, this._selector, options);
   }
 
   async elementHandle(options?: TimeoutOptions): Promise<ElementHandle<SVGElement | HTMLElement>> {
@@ -185,6 +178,12 @@ export class Locator implements api.Locator {
 
   async elementHandles(): Promise<api.ElementHandle<SVGElement | HTMLElement>[]> {
     return this._frame.$$(this._selector);
+  }
+
+  and(locator: Locator): Locator {
+    if (locator._frame !== this._frame)
+      throw new Error(`Locators must belong to the same frame.`);
+    return new Locator(this._frame, this._selector + ` >> internal:and=` + JSON.stringify(locator._selector));
   }
 
   first(): Locator {

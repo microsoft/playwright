@@ -98,6 +98,45 @@ String[] texts = page.getByRole(AriaRole.LINK).allTextContents();
 var texts = await page.GetByRole(AriaRole.Link).AllTextContentsAsync();
 ```
 
+## method: Locator.and
+* since: v1.33
+* langs:
+  - alias-python: and_
+- returns: <[Locator]>
+
+Creates a locator that matches both this locator and the argument locator.
+
+**Usage**
+
+The following example finds a button with a specific title.
+
+```js
+const button = page.getByRole('button').and(page.getByTitle('Subscribe'));
+```
+
+```java
+Locator button = page.getByRole(AriaRole.BUTTON).and(page.getByTitle("Subscribe"));
+```
+
+```python async
+button = page.get_by_role("button").and_(page.getByTitle("Subscribe"))
+```
+
+```python sync
+button = page.get_by_role("button").and_(page.getByTitle("Subscribe"))
+```
+
+```csharp
+var button = page.GetByRole(AriaRole.Button).And(page.GetByTitle("Subscribe"));
+```
+
+### param: Locator.and.locator
+* since: v1.33
+- `locator` <[Locator]>
+
+Additional locator to match.
+
+
 ## async method: Locator.blur
 * since: v1.28
 
@@ -888,7 +927,7 @@ Value to set for the `<input>`, `<textarea>` or `[contenteditable]` element.
 ### option: Locator.fill.timeout = %%-input-timeout-js-%%
 * since: v1.14
 
-## method: Locator.filter#1
+## method: Locator.filter
 * since: v1.22
 - returns: <[Locator]>
 
@@ -946,45 +985,8 @@ await rowLocator
     .ScreenshotAsync();
 ```
 
-### option: Locator.filter#1.-inline- = %%-locator-options-list-v1.14-%%
+### option: Locator.filter.-inline- = %%-locator-options-list-v1.14-%%
 * since: v1.22
-
-
-## method: Locator.filter#2
-* since: v1.33
-- returns: <[Locator]>
-
-Creates a locator that matches both this locator and the argument locator.
-
-**Usage**
-
-The following example finds a button with a specific title.
-
-```js
-const button = page.getByRole('button').filter(page.getByTitle('Subscribe'));
-```
-
-```java
-Locator button = page.getByRole(AriaRole.BUTTON).filter(page.getByTitle("Subscribe"));
-```
-
-```python async
-button = page.get_by_role("button").filter(page.getByTitle("Subscribe"))
-```
-
-```python sync
-button = page.get_by_role("button").filter(page.getByTitle("Subscribe"))
-```
-
-```csharp
-var button = page.GetByRole(AriaRole.Button).Filter(page.GetByTitle("Subscribe"));
-```
-
-### param: Locator.filter#2.locator
-* since: v1.33
-- `locator` <[Locator]>
-
-Additional locator to match.
 
 
 ## method: Locator.first

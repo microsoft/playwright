@@ -360,10 +360,10 @@ it('asLocator internal:or', async () => {
 });
 
 it('asLocator internal:and', async () => {
-  expect.soft(asLocator('javascript', 'div >> internal:and="span >> article"', false)).toBe(`locator('div').filter(locator('span').locator('article'))`);
-  expect.soft(asLocator('python', 'div >> internal:and="span >> article"', false)).toBe(`locator("div").filter(locator("span").locator("article"))`);
-  expect.soft(asLocator('java', 'div >> internal:and="span >> article"', false)).toBe(`locator("div").filter(locator("span").locator("article"))`);
-  expect.soft(asLocator('csharp', 'div >> internal:and="span >> article"', false)).toBe(`Locator("div").Filter(Locator("span").Locator("article"))`);
+  expect.soft(asLocator('javascript', 'div >> internal:and="span >> article"', false)).toBe(`locator('div').and(locator('span').locator('article'))`);
+  expect.soft(asLocator('python', 'div >> internal:and="span >> article"', false)).toBe(`locator("div").and_(locator("span").locator("article"))`);
+  expect.soft(asLocator('java', 'div >> internal:and="span >> article"', false)).toBe(`locator("div").and(locator("span").locator("article"))`);
+  expect.soft(asLocator('csharp', 'div >> internal:and="span >> article"', false)).toBe(`Locator("div").And(Locator("span").Locator("article"))`);
 });
 
 it('asLocator internal:not', async () => {
