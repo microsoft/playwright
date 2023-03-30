@@ -102,6 +102,42 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
       this._observer = new MutationObserver(list => this._handleMutations(list));
       const observerConfig = { attributes: true, subtree: true };
       this._observer.observe(document, observerConfig);
+      this._refreshListenersWhenNeeded();
+    }
+
+    private _refreshListenersWhenNeeded() {
+      this._refreshListeners();
+
+      const customEventName = '__playwright_snapshotter_global_listeners_check__';
+
+      let seenEvent = false;
+      const handleCustomEvent = () => seenEvent = true;
+      window.addEventListener(customEventName, handleCustomEvent);
+
+      const observer = new MutationObserver(entries => {
+        // Check for new documentElement in case we need to reinstall document listeners.
+        const newDocumentElement = entries.some(entry => Array.from(entry.addedNodes).includes(document.documentElement));
+        if (newDocumentElement) {
+          // New documentElement - let's check whether listeners are still here.
+          seenEvent = false;
+          window.dispatchEvent(new CustomEvent(customEventName));
+          if (!seenEvent) {
+            // Listener did not fire. Reattach the listener and notify.
+            window.addEventListener(customEventName, handleCustomEvent);
+            this._refreshListeners();
+          }
+        }
+      });
+      observer.observe(document, { childList: true });
+    }
+
+    private _refreshListeners() {
+      (document as any).addEventListener('__playwright_target__', (event: CustomEvent) => {
+        if (!event.detail)
+          return;
+        const callId = event.detail as string;
+        (event.target as any).__playwright_target__ = callId;
+      });
     }
 
     private _interceptNativeMethod(obj: any, method: string, cb: (thisObj: any, result: any) => void) {
@@ -283,7 +319,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
       // TODO: remove after chromium is fixed?
       const elementsToRestoreScrollPosition = new Set<Node>();
       const findElementsToRestoreScrollPositionRecursively = (element: Element) => {
-        let shouldAdd = element.hasAttribute(kTargetAttribute);
+        let shouldAdd = '__playwright_target__' in element;
         for (let child = element.firstElementChild; child; child = child.nextElementSibling)
           shouldAdd = shouldAdd || findElementsToRestoreScrollPositionRecursively(child);
         if (element.shadowRoot) {
@@ -422,6 +458,11 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
             ++shadowDomNesting;
             visitChild(element.shadowRoot);
             --shadowDomNesting;
+          }
+          if ('__playwright_target__' in element) {
+            expectValue(kTargetAttribute);
+            expectValue(element['__playwright_target__']);
+            attrs[kTargetAttribute] = element['__playwright_target__'] as string;
           }
         }
 

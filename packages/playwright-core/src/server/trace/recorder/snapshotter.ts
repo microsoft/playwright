@@ -110,7 +110,13 @@ export class Snapshotter {
 
     // In a best-effort manner, without waiting for it, mark target element.
     element?.callFunctionNoReply((element: Element, callId: string) => {
-      element.setAttribute('__playwright_target__', callId);
+      const customEvent = new CustomEvent('__playwright_target__', {
+        bubbles: true,
+        cancelable: true,
+        detail: callId,
+        composed: false,
+      });
+      element.dispatchEvent(customEvent);
     }, callId);
 
     // In each frame, in a non-stalling manner, capture the snapshots.
