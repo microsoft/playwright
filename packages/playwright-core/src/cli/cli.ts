@@ -35,6 +35,7 @@ import { spawn } from 'child_process';
 import { wrapInASCIIBox, isLikelyNpxGlobal, assert } from '../utils';
 import type { Executable } from '../server';
 import { registry, writeDockerVersion } from '../server';
+import { addContainerCLI } from '../containers/';
 
 const packageJSON = require('../../package.json');
 
@@ -288,6 +289,8 @@ program
 Examples:
 
   $ show-trace https://example.com/trace.zip`);
+
+addContainerCLI(program);
 
 if (!process.env.PW_LANG_NAME) {
   let playwrightTestPackagePath = null;
@@ -559,13 +562,15 @@ async function openPage(context: BrowserContext, url: string | undefined): Promi
 
 async function open(options: Options, url: string | undefined, language: string) {
   const { context, launchOptions, contextOptions } = await launchContext(options, !!process.env.PWTEST_CLI_HEADLESS, process.env.PWTEST_CLI_EXECUTABLE_PATH);
-  await context._enableRecorder({
-    language,
-    launchOptions,
-    contextOptions,
-    device: options.device,
-    saveStorage: options.saveStorage,
-  });
+  if (!process.env.PW_DISABLE_RECORDER) {
+    await context._enableRecorder({
+      language,
+      launchOptions,
+      contextOptions,
+      device: options.device,
+      saveStorage: options.saveStorage,
+    });
+  }
   await openPage(context, url);
   if (process.env.PWTEST_CLI_EXIT)
     await Promise.all(context.pages().map(p => p.close()));
