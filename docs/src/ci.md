@@ -14,7 +14,7 @@ configurations for common CI providers.
 
 1. **Ensure CI agent can run browsers**: Use [our Docker image](./docker.md)
    in Linux agents or install your dependencies using the [CLI](./browsers#install-system-dependencies).
-2. **Install Playwright**:
+1. **Install Playwright**:
    ```bash js
    # Install NPM packages
    npm ci
@@ -35,7 +35,7 @@ configurations for common CI providers.
    pwsh bin/Debug/netX/playwright.ps1 install --with-deps
    ```
 
-3. **Run your tests**:
+1. **Run your tests**:
    ```bash js
    npx playwright test
    ```
