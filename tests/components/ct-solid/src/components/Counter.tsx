@@ -12,7 +12,7 @@ import { createSignal } from "solid-js";
   const [remountCount, setRemountCount] = createSignal(_remountCount++);
   return <div onClick={() => props.onClick?.('hello')}>
      <div data-testid="props">{ props.count }</div>
-     <div data-testid="remount-count">{ remountCount }</div>
+     <div data-testid="remount-count">{remountCount()}</div>
      { props.children }
    </div>
  }

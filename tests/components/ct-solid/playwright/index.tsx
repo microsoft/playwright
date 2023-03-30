@@ -11,7 +11,7 @@ beforeMount<HooksConfig>(async ({ hooksConfig, App }) => {
   console.log(`Before mount: ${JSON.stringify(hooksConfig)}`);
 
   if (hooksConfig?.routing)
-    return <Router><App /></Router>;
+    return <Router><>{App()}</></Router>;
 });
 
 afterMount<HooksConfig>(async () => {
