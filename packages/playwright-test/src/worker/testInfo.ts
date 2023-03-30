@@ -16,7 +16,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { monotonicTime } from 'playwright-core/lib/utils';
+import { captureRawStack, monotonicTime, zones } from 'playwright-core/lib/utils';
 import type { TestInfoError, TestInfo, TestStatus } from '../../types/test';
 import type { StepBeginPayload, StepEndPayload, WorkerInitParams } from '../common/ipc';
 import type { TestCase } from '../common/test';
@@ -33,10 +33,9 @@ export type TestInfoErrorState = {
 
 interface TestStepInternal {
   complete(result: { error?: Error | TestInfoError }): void;
+  stepId: string;
   title: string;
   category: string;
-  canHaveChildren: boolean;
-  forceNoParent: boolean;
   wallTime: number;
   location?: Location;
   refinedTitle?: string;
@@ -195,26 +194,34 @@ export class TestInfoImpl implements TestInfo {
     this.duration = this._timeoutManager.defaultSlotTimings().elapsed | 0;
   }
 
-  async _runFn(fn: Function, skips?: 'allowSkips'): Promise<TestInfoError | undefined> {
+  async _runFn(fn: () => Promise<void>, skips?: 'allowSkips', stepInfo?: Omit<TestStepInternal, 'complete' | 'wallTime' | 'parentStepId' | 'stepId'>): Promise<TestInfoError | undefined> {
+    const step = stepInfo ? this._addStep({ ...stepInfo, wallTime: Date.now() }) : undefined;
     try {
-      await fn();
+      if (step)
+        await zones.run('stepZone', step, fn);
+      else
+        await fn();
+      step?.complete({});
     } catch (error) {
       if (skips === 'allowSkips' && error instanceof SkipError) {
         if (this.status === 'passed')
           this.status = 'skipped';
       } else {
         const serialized = serializeError(error);
+        step?.complete({ error: serialized });
         this._failWithError(serialized, true /* isHardError */);
         return serialized;
       }
     }
   }
 
-  _addStep(data: Omit<TestStepInternal, 'complete'>): TestStepInternal {
+  _addStep(data: Omit<TestStepInternal, 'complete' | 'stepId'>): TestStepInternal {
     const stepId = `${data.category}@${data.title}@${++this._lastStepId}`;
+    const parentStep = zones.zoneData<TestStepInternal>('stepZone', captureRawStack());
     let callbackHandled = false;
     const firstErrorIndex = this.errors.length;
     const step: TestStepInternal = {
+      stepId,
       ...data,
       complete: result => {
         if (callbackHandled)
@@ -248,6 +255,7 @@ export class TestInfoImpl implements TestInfo {
     const payload: StepBeginPayload = {
       testId: this._test.id,
       stepId,
+      parentStepId: parentStep ? parentStep.stepId : undefined,
       ...data,
       location,
     };
@@ -292,16 +300,18 @@ export class TestInfoImpl implements TestInfo {
     this._hasHardError = state.hasHardError;
   }
 
-  async _runAsStep<T>(cb: () => Promise<T>, stepInfo: Omit<TestStepInternal, 'complete' | 'wallTime'>): Promise<T> {
+  async _runAsStep<T>(cb: (step: TestStepInternal) => Promise<T>, stepInfo: Omit<TestStepInternal, 'complete' | 'wallTime' | 'parentStepId' | 'stepId'>): Promise<T> {
     const step = this._addStep({ ...stepInfo, wallTime: Date.now() });
-    try {
-      const result = await cb();
-      step.complete({});
-      return result;
-    } catch (e) {
-      step.complete({ error: e instanceof SkipError ? undefined : serializeError(e) });
-      throw e;
-    }
+    return await zones.run('stepZone', step, async () => {
+      try {
+        const result = await cb(step);
+        step.complete({});
+        return result;
+      } catch (e) {
+        step.complete({ error: e instanceof SkipError ? undefined : serializeError(e) });
+        throw e;
+      }
+    });
   }
 
   _isFailure() {
