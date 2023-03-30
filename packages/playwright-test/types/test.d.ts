@@ -3342,6 +3342,8 @@ export interface PlaywrightWorkerOptions {
    * Name of the browser that runs tests. Defaults to `'chromium'`. Most of the time you should set `browserName` in
    * your [TestConfig]:
    *
+   * **Usage**
+   *
    * ```js
    * // playwright.config.ts
    * import { defineConfig, devices } from '@playwright/test';
@@ -3357,6 +3359,18 @@ export interface PlaywrightWorkerOptions {
   browserName: BrowserName;
   defaultBrowserType: BrowserName;
   /**
+   * **Usage**
+   *
+   * ```js
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   use: {
+   *     headless: false
+   *   },
+   * });
+   * ```
+   *
    * Whether to run browser in headless mode. More details for
    * [Chromium](https://developers.google.com/web/updates/2017/04/headless-chrome) and
    * [Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode). Defaults to `true` unless the
@@ -3364,6 +3378,18 @@ export interface PlaywrightWorkerOptions {
    */
   headless: boolean;
   /**
+   * **Usage**
+   *
+   * ```js
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   use: {
+   *     channel: 'chrome',
+   *   }
+   * });
+   * ```
+   *
    * Browser distribution channel.  Supported values are "chrome", "chrome-beta", "chrome-dev", "chrome-canary",
    * "msedge", "msedge-beta", "msedge-dev", "msedge-canary". Read more about using
    * [Google Chrome and Microsoft Edge](https://playwright.dev/docs/browsers#google-chrome--microsoft-edge).
@@ -3375,9 +3401,38 @@ export interface PlaywrightWorkerOptions {
    * options [testOptions.headless](https://playwright.dev/docs/api/class-testoptions#test-options-headless) and
    * [testOptions.channel](https://playwright.dev/docs/api/class-testoptions#test-options-channel) take priority over
    * this.
+   *
+   * **Usage**
+   *
+   * ```js
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   use: {
+   *     launchOptions: {
+   *       slowMo: 50,
+   *     },
+   *   },
+   * });
+   * ```
+   *
    */
   launchOptions: LaunchOptions;
   /**
+   * **Usage**
+   *
+   * ```js
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   use: {
+   *     connectOptions: {
+   *       timeout: 3000
+   *     },
+   *   },
+   * });
+   * ```
+   *
    * When connect options are specified, default
    * [fixtures.browser](https://playwright.dev/docs/api/class-fixtures#fixtures-browser),
    * [fixtures.context](https://playwright.dev/docs/api/class-fixtures#fixtures-context) and
@@ -3393,6 +3448,18 @@ export interface PlaywrightWorkerOptions {
    * - `'on'`: Capture screenshot after each test.
    * - `'only-on-failure'`: Capture screenshot after each test failure.
    *
+   * **Usage**
+   *
+   * ```js
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   use: {
+   *     screenshot: 'only-on-failure',
+   *   },
+   * });
+   * ```
+   *
    * Learn more about [automatic screenshots](https://playwright.dev/docs/test-configuration#automatic-screenshots).
    */
   screenshot: ScreenshotMode | { mode: ScreenshotMode } & Pick<PageScreenshotOptions, 'fullPage' | 'omitBackground'>;
@@ -3404,6 +3471,18 @@ export interface PlaywrightWorkerOptions {
    * - `'on-first-retry'`: Record trace only when retrying a test for the first time.
    *
    * For more control, pass an object that specifies `mode` and trace features to enable.
+   *
+   * **Usage**
+   *
+   * ```js
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   use: {
+   *     trace: 'on-first-retry'
+   *   },
+   * });
+   * ```
    *
    * Learn more about [recording trace](https://playwright.dev/docs/test-configuration#record-test-trace).
    */
@@ -3419,6 +3498,18 @@ export interface PlaywrightWorkerOptions {
    * equal to [testOptions.viewport](https://playwright.dev/docs/api/class-testoptions#test-options-viewport) scaled
    * down to fit into 800x800. If `viewport` is not configured explicitly the video size defaults to 800x450. Actual
    * picture of each page will be scaled down if necessary to fit the specified size.
+   *
+   * **Usage**
+   *
+   * ```js
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   use: {
+   *     video: 'on-first-retry',
+   *   },
+   * });
+   * ```
    *
    * Learn more about [recording video](https://playwright.dev/docs/test-configuration#record-video).
    */
@@ -3466,70 +3557,270 @@ export type VideoMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry';
  */
 export interface PlaywrightTestOptions {
   /**
+   * **Usage**
+   *
+   * ```js
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   acceptDownloads: false,
+   * });
+   * ```
+   *
    * Whether to automatically download all the attachments. Defaults to `true` where all the downloads are accepted.
    */
   acceptDownloads: boolean;
   /**
+   * **Usage**
+   *
+   * ```js
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   use: {
+   *     bypassCSP: true,
+   *   }
+   * });
+   * ```
+   *
    * Toggles bypassing page's Content-Security-Policy.
    */
   bypassCSP: boolean;
   /**
+   * **Usage**
+   *
+   * ```js
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   use: {
+   *     colorScheme: 'dark',
+   *   },
+   * });
+   * ```
+   *
    * Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See
    * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
    * Passing `null` resets emulation to system defaults. Defaults to `'light'`.
    */
   colorScheme: ColorScheme;
   /**
+   * **Usage**
+   *
+   * ```js
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   use: {
+   *     deviceScaleFactor: 2
+   *   },
+   * });
+   * ```
+   *
    * Specify device scale factor (can be thought of as dpr). Defaults to `1`.
    */
   deviceScaleFactor: number | undefined;
   /**
+   * **Usage**
+   *
+   * ```js
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   use: {
+   *     extraHTTPHeaders: {
+   *       'X-My-Header': 'value',
+   *     },
+   *   },
+   * });
+   * ```
+   *
    * An object containing additional HTTP headers to be sent with every request.
    */
   extraHTTPHeaders: ExtraHTTPHeaders | undefined;
+  /**
+   * **Usage**
+   *
+   * ```js
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   use: {
+   *     geolocation: { longitude: 12.492507, latitude: 41.889938 },
+   *   },
+   * });
+   * ```
+   *
+   */
   geolocation: Geolocation | undefined;
   /**
+   * **Usage**
+   *
+   * ```js
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   use: {
+   *     hasTouch: true
+   *   },
+   * });
+   * ```
+   *
    * Specifies if viewport supports touch events. Defaults to false.
    */
   hasTouch: boolean;
   /**
+   * **Usage**
+   *
+   * ```js
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   use: {
+   *     httpCredentials: {
+   *       username: 'user',
+   *       password: 'pass',
+   *     },
+   *   },
+   * });
+   * ```
+   *
    * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication). If no
    * origin is specified, the username and password are sent to any servers upon unauthorized responses.
    */
   httpCredentials: HTTPCredentials | undefined;
   /**
+   * **Usage**
+   *
+   * ```js
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   use: {
+   *     ignoreHTTPSErrors: true,
+   *   },
+   * });
+   * ```
+   *
    * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
    */
   ignoreHTTPSErrors: boolean;
   /**
+   * **Usage**
+   *
+   * ```js
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   use: {
+   *     isMobile: false,
+   *   },
+   * });
+   * ```
+   *
    * Whether the `meta viewport` tag is taken into account and touch events are enabled. Defaults to `false`. Not
    * supported in Firefox.
    */
   isMobile: boolean;
   /**
+   * **Usage**
+   *
+   * ```js
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   use: {
+   *     javaScriptEnabled: false,
+   *   },
+   * });
+   * ```
+   *
    * Whether or not to enable JavaScript in the context. Defaults to `true`.
    */
   javaScriptEnabled: boolean;
   /**
+   * **Usage**
+   *
+   * ```js
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   use: {
+   *     locale: 'it-IT',
+   *   },
+   * });
+   * ```
+   *
    * Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value,
    * `Accept-Language` request header value as well as number and date formatting rules.
    */
   locale: string | undefined;
   /**
+   * **Usage**
+   *
+   * ```js
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   use: {
+   *     offline: true
+   *   },
+   * });
+   * ```
+   *
    * Whether to emulate network being offline. Defaults to `false`.
    */
   offline: boolean;
   /**
+   * **Usage**
+   *
+   * ```js
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   use: {
+   *     permissions: ['notifications'],
+   *   },
+   * });
+   * ```
+   *
    * A list of permissions to grant to all pages in this context. See
    * [browserContext.grantPermissions(permissions[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-grant-permissions)
    * for more details.
    */
   permissions: string[] | undefined;
   /**
+   * **Usage**
+   *
+   * ```js
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   use: {
+   *     proxy: {
+   *       server: 'http://myproxy.com:3128',
+   *       bypass: 'localhost',
+   *     },
+   *   },
+   * });
+   * ```
+   *
    * Network proxy settings.
    */
   proxy: Proxy | undefined;
   /**
+   * **Usage**
+   *
+   * ```js
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   use: {
+   *     storageState: 'storage-state.json',
+   *   },
+   * });
+   * ```
+   *
    * Populates context with given storage state. This option can be used to initialize context with logged-in
    * information obtained via
    * [browserContext.storageState([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-storage-state).
@@ -3537,16 +3828,52 @@ export interface PlaywrightTestOptions {
    */
   storageState: StorageState | undefined;
   /**
+   * **Usage**
+   *
+   * ```js
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   use: {
+   *     timezoneId: 'Europe/Rome',
+   *   },
+   * });
+   * ```
+   *
    * Changes the timezone of the context. See
    * [ICU's metaZones.txt](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1)
    * for a list of supported timezone IDs.
    */
   timezoneId: string | undefined;
   /**
+   * **Usage**
+   *
+   * ```js
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   use: {
+   *     userAgent: 'some custom ua',
+   *   },
+   * });
+   * ```
+   *
    * Specific user agent to use in this context.
    */
   userAgent: string | undefined;
   /**
+   * **Usage**
+   *
+   * ```js
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   use: {
+   *     viewport: { width: 100, height: 100 },
+   *   },
+   * });
+   * ```
+   *
    * Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Use `null` to disable the consistent
    * viewport emulation.
    *
@@ -3555,6 +3882,19 @@ export interface PlaywrightTestOptions {
    */
   viewport: ViewportSize | null;
   /**
+   * **Usage**
+   *
+   * ```js
+   * import { defineConfig, devices } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   use: {
+   *     /* Base URL to use in actions like `await page.goto('/')`. *\/
+   *     baseURL: process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://localhost:3000',
+   *   },
+   * });
+   * ```
+   *
    * When using [page.goto(url[, options])](https://playwright.dev/docs/api/class-page#page-goto),
    * [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route),
    * [page.waitForURL(url[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-url),
@@ -3576,6 +3916,21 @@ export interface PlaywrightTestOptions {
    * [browser.newContext([options])](https://playwright.dev/docs/api/class-browser#browser-new-context). Specific
    * options like [testOptions.viewport](https://playwright.dev/docs/api/class-testoptions#test-options-viewport) take
    * priority over this.
+   *
+   * **Usage**
+   *
+   * ```js
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   use: {
+   *     contextOptions: {
+   *       viewport: viewport: { width: 1280, height: 720 },
+   *     },
+   *   },
+   * });
+   * ```
+   *
    */
   contextOptions: BrowserContextOptions;
   /**
@@ -3583,6 +3938,19 @@ export interface PlaywrightTestOptions {
    *
    * This is a default timeout for all Playwright actions, same as configured via
    * [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout).
+   *
+   * **Usage**
+   *
+   * ```js
+   * import { defineConfig, devices } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   use: {
+   *     /* Maximum time each action such as `click()` can take. Defaults to 0 (no limit). *\/
+   *     actionTimeout: 0,
+   *   },
+   * });
+   * ```
    *
    * Learn more about [various timeouts](https://playwright.dev/docs/test-timeouts).
    */
@@ -3593,10 +3961,34 @@ export interface PlaywrightTestOptions {
    * This is a default navigation timeout, same as configured via
    * [page.setDefaultNavigationTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-navigation-timeout).
    *
+   * **Usage**
+   *
+   * ```js
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   use: {
+   *     navigationTimeout: 3000,
+   *   },
+   * });
+   * ```
+   *
    * Learn more about [various timeouts](https://playwright.dev/docs/test-timeouts).
    */
   navigationTimeout: number;
   /**
+   * **Usage**
+   *
+   * ```js
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   use: {
+   *     serviceWorkers: 'allow'
+   *   },
+   * });
+   * ```
+   *
    * Whether to allow sites to register Service workers. Defaults to `'allow'`.
    * - `'allow'`: [Service Workers](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API) can be
    *   registered.
@@ -3607,6 +3999,19 @@ export interface PlaywrightTestOptions {
    * Custom attribute to be used in
    * [page.getByTestId(testId)](https://playwright.dev/docs/api/class-page#page-get-by-test-id). `data-testid` is used
    * by default.
+   *
+   * **Usage**
+   *
+   * ```js
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   use: {
+   *     testIdAttribute: 'pw-test-id',
+   *   },
+   * });
+   * ```
+   *
    */
   testIdAttribute: string;
 }
