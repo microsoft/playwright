@@ -405,7 +405,7 @@ it('should absolutize relative selectors', async ({ page, server }) => {
   await page.setContent(`<div><span>Hi</span></div>`);
   expect(await page.$eval('div >> >span', e => e.textContent)).toBe('Hi');
   expect(await page.locator('div').locator('>span').textContent()).toBe('Hi');
-  expect((await page.$eval('div:has(> span)', e => e.outerHTML)).replace(/\s__playwright_target__="[^"]+"/, '')).toBe('<div><span>Hi</span></div>');
+  expect(await page.$eval('div:has(> span)', e => e.outerHTML)).toBe('<div><span>Hi</span></div>');
   expect(await page.$('div:has(> div)')).toBe(null);
 });
 
