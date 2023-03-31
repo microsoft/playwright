@@ -260,9 +260,11 @@ it('getBy coverage', async ({ page, server }) => {
 
 it('wait for hidden should succeed when frame is not in dom', async ({ page }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/21879' });
-  it.fixme();
   await page.goto('about:blank');
   const button = page.frameLocator('iframe1').locator('button');
   expect(await button.isHidden()).toBeTruthy();
   await button.waitFor({ state: 'hidden', timeout: 1000 });
+  await button.waitFor({ state: 'detached', timeout: 1000 });
+  const error = await button.waitFor({ state: 'attached', timeout: 1000 }).catch(e => e);
+  expect(error.message).toContain('Timeout 1000ms exceeded');
 });

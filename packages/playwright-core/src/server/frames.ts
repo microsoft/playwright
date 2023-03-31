@@ -787,8 +787,11 @@ export class Frame extends SdkObject {
       const promise = this.retryWithProgressAndTimeouts(progress, [0, 20, 50, 100, 100, 500], async continuePolling => {
         const resolved = await this.selectors.resolveInjectedForSelector(selector, options, scope);
         progress.throwIfAborted();
-        if (!resolved)
+        if (!resolved) {
+          if (state === 'hidden' || state === 'detached')
+            return null;
           return continuePolling;
+        }
         const result = await resolved.injected.evaluateHandle((injected, { info, root }) => {
           const elements = injected.querySelectorAll(info.parsed, root || document);
           const element: Element | undefined  = elements[0];
