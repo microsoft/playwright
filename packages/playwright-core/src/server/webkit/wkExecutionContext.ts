@@ -116,6 +116,10 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
   async releaseHandle(objectId: js.ObjectId): Promise<void> {
     await this._session.send('Runtime.releaseObject', { objectId });
   }
+
+  objectCount(objectId: js.ObjectId): Promise<number> {
+    throw new Error('Method not implemented in WebKit.');
+  }
 }
 
 function potentiallyUnserializableValue(remoteObject: Protocol.Runtime.RemoteObject): any {
