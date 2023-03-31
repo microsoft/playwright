@@ -19,7 +19,7 @@ import type zip from '@zip.js/zip.js';
 // @ts-ignore
 import * as zipImport from '@zip.js/zip.js/lib/zip-no-worker-inflate.js';
 import * as React from 'react';
-import * as ReactDOM from 'react-dom';
+import ReactDOM from 'react-dom/client';
 import './colors.css';
 import type { LoadedReport } from './loadedReport';
 import { ReportView } from './reportView';
@@ -38,7 +38,7 @@ const ReportLoader: React.FC = () => {
 };
 
 window.onload = () => {
-  ReactDOM.render(<ReportLoader />, document.querySelector('#root'));
+  ReactDOM.createRoot(document.querySelector('#root')!).render(<ReportLoader />);
 };
 
 class ZipReport implements LoadedReport {

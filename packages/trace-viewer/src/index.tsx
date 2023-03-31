@@ -18,7 +18,7 @@ import '@web/common.css';
 import { applyTheme } from '@web/theme';
 import '@web/third_party/vscode/codicon.css';
 import React from 'react';
-import * as ReactDOM from 'react-dom';
+import ReactDOM from 'react-dom/client';
 import { WorkbenchLoader } from './ui/workbenchLoader';
 
 (async () => {
@@ -37,5 +37,5 @@ import { WorkbenchLoader } from './ui/workbenchLoader';
     setInterval(function() { fetch('ping'); }, 10000);
   }
 
-  ReactDOM.render(<WorkbenchLoader/>, document.querySelector('#root'));
+  ReactDOM.createRoot(document.querySelector('#root')!).render(<WorkbenchLoader />);
 })();

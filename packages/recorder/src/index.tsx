@@ -18,10 +18,10 @@ import '@web/common.css';
 import { applyTheme } from '@web/theme';
 import '@web/third_party/vscode/codicon.css';
 import * as React from 'react';
-import * as ReactDOM from 'react-dom';
+import ReactDOM from 'react-dom/client';
 import { Main } from './main';
 
 (async () => {
   applyTheme();
-  ReactDOM.render(<Main/>, document.querySelector('#root'));
+  ReactDOM.createRoot(document.querySelector('#root')!).render(<Main />);
 })();

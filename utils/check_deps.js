@@ -141,13 +141,11 @@ async function innerCheckDeps(root) {
         return;
       }
 
-      if (importName.startsWith('@'))
-        deps.add(importName.split('/').slice(0, 2).join('/'));
-      else
-        deps.add(importName.split('/')[0]);
+      const dependencyName = importName.startsWith('@') ? importName.split('/').slice(0, 2).join('/') : importName.split('/')[0];
+      deps.add(dependencyName);
 
-      if (!allowExternalImport(importName, packageJSON))
-        errors.push(`Disallowed external dependency ${importName} from ${path.relative(root, fileName)}`);
+      if (!allowExternalImport(dependencyName, packageJSON))
+        errors.push(`Disallowed external dependency ${dependencyName} from ${path.relative(root, fileName)}`);
     }
     ts.forEachChild(node, x => visit(x, fileName));
   }
