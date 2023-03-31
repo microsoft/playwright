@@ -102,6 +102,14 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
   async releaseHandle(objectId: js.ObjectId): Promise<void> {
     await releaseObject(this._client, objectId);
   }
+
+  async objectCount(objectId: js.ObjectId): Promise<number> {
+    const result = await this._client.send('Runtime.queryObjects', {
+      prototypeObjectId: objectId
+    });
+    const match = result.objects.description!.match(/Array\((\d+)\)/)!;
+    return +match[1];
+  }
 }
 
 function rewriteError(error: Error): Protocol.Runtime.evaluateReturnValue {
