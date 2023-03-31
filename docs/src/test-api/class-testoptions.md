@@ -41,7 +41,9 @@ test('my portrait test', async ({ page }) => {
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
-  acceptDownloads: false,
+  use: {
+    acceptDownloads: false,
+  },
 });
 ```
 
@@ -56,7 +58,7 @@ import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://localhost:3000',
+    baseURL: 'http://localhost:3000',
   },
 });
 ```
@@ -164,7 +166,7 @@ import { defineConfig } from '@playwright/test';
 export default defineConfig({
   use: {
     connectOptions: {
-      timeout: 3000
+      wsEndpoint: 'ws://localhost:5678',
     },
   },
 });
@@ -186,7 +188,7 @@ import { defineConfig } from '@playwright/test';
 export default defineConfig({
   use: {
     contextOptions: {
-      viewport: viewport: { width: 1280, height: 720 },
+      reducedMotion: 'reduce',
     },
   },
 });
@@ -346,7 +348,7 @@ import { defineConfig } from '@playwright/test';
 export default defineConfig({
   use: {
     launchOptions: {
-      slowMo: 50,
+      args: ['--load-extension=/path/to/extension'],
     },
   },
 });
