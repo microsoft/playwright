@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
+// eslint-disable-next-line spaced-comment
+/// <reference lib="webworker" />
+
 import { MultiMap } from './multimap';
 import { unwrapPopoutUrl } from './snapshotRenderer';
 import { SnapshotServer } from './snapshotServer';
 import { TraceModel } from './traceModel';
 
-// @ts-ignore
 declare const self: ServiceWorkerGlobalScope;
 
 self.addEventListener('install', function(event: any) {
@@ -55,7 +57,6 @@ async function loadTrace(traceUrl: string, traceFileName: string | null, clientI
   return traceModel;
 }
 
-// @ts-ignore
 async function doFetch(event: FetchEvent): Promise<Response> {
   const request = event.request;
   const client = await self.clients.get(event.clientId);
@@ -141,7 +142,6 @@ async function gc() {
   const usedTraces = new Set<string>();
 
   for (const [clientId, traceUrls] of clientIdToTraceUrls) {
-    // @ts-ignore
     if (!clients.find(c => c.id === clientId))
       clientIdToTraceUrls.deleteAll(clientId);
     else
@@ -154,7 +154,6 @@ async function gc() {
   }
 }
 
-// @ts-ignore
 self.addEventListener('fetch', function(event: FetchEvent) {
   event.respondWith(doFetch(event));
 });
