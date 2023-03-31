@@ -24,13 +24,13 @@ type JsonObject = { [Key in string]?: JsonValue };
 
 export declare function beforeMount<HooksConfig extends JsonObject>(
   callback: (params: { 
-    hooksConfig: HooksConfig, 
+    hooksConfig?: HooksConfig, 
     Vue: VueConstructor<Vue>, 
   }) => Promise<void | ComponentOptions<Vue> & Record<string, unknown>>
 ): void;
 export declare function afterMount<HooksConfig extends JsonObject>(
   callback: (params: {
-    hooksConfig: HooksConfig;
+    hooksConfig?: HooksConfig;
     instance: CombinedVueInstance<
       Vue,
       object,
