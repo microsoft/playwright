@@ -240,6 +240,32 @@ test('svg title', async ({ page }) => {
   expect.soft(await getNameAndRole(page, 'a')).toEqual({ role: 'link', name: 'a link' });
 });
 
+test('native controls', async ({ page }) => {
+  await page.setContent(`
+    <label for="text1">TEXT1</label><input id="text1" type=text>
+    <input id="text2" type=text title="TEXT2">
+    <input id="text3" type=text placeholder="TEXT3">
+
+    <label for="image1">IMAGE1</label><input id="image1" type=image>
+    <input id="image2" type=image alt="IMAGE2">
+
+    <label for="button1">BUTTON1</label><button id="button1" role="combobox">button</button>
+    <button id="button2" role="combobox">BUTTON2</button>
+    <button id="button3">BUTTON3</button>
+    <button id="button4" title="BUTTON4"></button>
+  `);
+
+  expect.soft(await getNameAndRole(page, '#text1')).toEqual({ role: 'textbox', name: 'TEXT1' });
+  expect.soft(await getNameAndRole(page, '#text2')).toEqual({ role: 'textbox', name: 'TEXT2' });
+  expect.soft(await getNameAndRole(page, '#text3')).toEqual({ role: 'textbox', name: 'TEXT3' });
+  expect.soft(await getNameAndRole(page, '#image1')).toEqual({ role: 'button', name: 'IMAGE1' });
+  expect.soft(await getNameAndRole(page, '#image2')).toEqual({ role: 'button', name: 'IMAGE2' });
+  expect.soft(await getNameAndRole(page, '#button1')).toEqual({ role: 'combobox', name: 'BUTTON1' });
+  expect.soft(await getNameAndRole(page, '#button2')).toEqual({ role: 'combobox', name: '' });
+  expect.soft(await getNameAndRole(page, '#button3')).toEqual({ role: 'button', name: 'BUTTON3' });
+  expect.soft(await getNameAndRole(page, '#button4')).toEqual({ role: 'button', name: 'BUTTON4' });
+});
+
 function toArray(x: any): any[] {
   return Array.isArray(x) ? x : [x];
 }
