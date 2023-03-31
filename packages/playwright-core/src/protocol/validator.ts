@@ -267,6 +267,7 @@ scheme.LocalUtilsConnectParams = tObject({
 });
 scheme.LocalUtilsConnectResult = tObject({
   pipe: tChannel(['JsonPipe']),
+  headers: tArray(tType('NameValue')),
 });
 scheme.LocalUtilsTracingStartedParams = tObject({
   tracesDir: tOptional(tString),

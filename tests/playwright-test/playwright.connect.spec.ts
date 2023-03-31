@@ -31,6 +31,12 @@ test('should work with connectOptions', async ({ runInlineTest }) => {
     'global-setup.ts': `
       import { chromium } from '@playwright/test';
       module.exports = async () => {
+        process.env.DEBUG = 'pw:browser';
+        process.env.PWTEST_SERVER_WS_HEADERS =
+          'x-playwright-debug-log: a-debug-log-string\\r\\n' +
+          'x-playwright-attachment: attachment-a=value-a\\r\\n' +
+          'x-playwright-debug-log: b-debug-log-string\\r\\n' +
+          'x-playwright-attachment: attachment-b=value-b';
         const server = await chromium.launchServer();
         process.env.CONNECT_WS_ENDPOINT = server.wsEndpoint();
         return () => server.close();
@@ -48,6 +54,20 @@ test('should work with connectOptions', async ({ runInlineTest }) => {
   });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
+  expect(result.output).toContain('a-debug-log-string');
+  expect(result.output).toContain('b-debug-log-string');
+  expect(result.results[0].attachments).toEqual([
+    {
+      name: 'attachment-a',
+      contentType: 'text/plain',
+      body: 'dmFsdWUtYQ=='
+    },
+    {
+      name: 'attachment-b',
+      contentType: 'text/plain',
+      body: 'dmFsdWUtYg=='
+    }
+  ]);
 });
 
 test('should throw with bad connectOptions', async ({ runInlineTest }) => {

@@ -478,6 +478,7 @@ export type LocalUtilsConnectOptions = {
 };
 export type LocalUtilsConnectResult = {
   pipe: JsonPipeChannel,
+  headers: NameValue[],
 };
 export type LocalUtilsTracingStartedParams = {
   tracesDir?: string,

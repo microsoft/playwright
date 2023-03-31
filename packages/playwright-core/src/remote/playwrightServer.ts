@@ -88,6 +88,11 @@ export class PlaywrightServer {
     const browserSemaphore = new Semaphore(this._options.maxConnections);
     const controllerSemaphore = new Semaphore(1);
     const reuseBrowserSemaphore = new Semaphore(1);
+    if (process.env.PWTEST_SERVER_WS_HEADERS) {
+      this._wsServer.on('headers', (headers, request) => {
+        headers.push(process.env.PWTEST_SERVER_WS_HEADERS!);
+      });
+    }
     this._wsServer.on('connection', (ws, request) => {
       const url = new URL('http://localhost' + (request.url || ''));
       const browserHeader = request.headers['x-playwright-browser'];
