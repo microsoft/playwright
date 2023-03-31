@@ -26,6 +26,13 @@ import { WorkbenchLoader } from './ui/workbenchLoader';
   if (window.location.protocol !== 'file:') {
     if (window.location.href.includes('isUnderTest=true'))
       await new Promise(f => setTimeout(f, 1000));
+    // If a user does a force reload (Cmd+R), there might be an old service worker
+    // that is still running BUT it is NOT controlling the page which is by spec.
+    // In this case, we unregister all service workers first.
+    if (!navigator.serviceWorker.controller) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(registrations.map(r => r.unregister()));
+    }
     navigator.serviceWorker.register('sw.bundle.js');
     if (!navigator.serviceWorker.controller) {
       await new Promise<void>(f => {
