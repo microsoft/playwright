@@ -272,8 +272,6 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
             location: stackTrace?.frames[0] as any,
             category: 'pw:api',
             title: apiCall,
-            canHaveChildren: false,
-            forceNoParent: false,
             wallTime,
           });
           userData.userObject = step;

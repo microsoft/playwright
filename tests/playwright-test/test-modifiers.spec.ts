@@ -599,3 +599,23 @@ test('should report skipped tests in-order with correct properties', async ({ ru
     'retries-3',
   ]);
 });
+
+test('should skip tests if beforeEach has skip', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test.beforeEach(() => {
+        test.skip();
+      });
+      test('no marker', () => {
+        console.log('skip-me');
+      });
+    `,
+  });
+  const expectTest = expectTestHelper(result);
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(0);
+  expect(result.skipped).toBe(1);
+  expectTest('no marker', 'skipped', 'skipped', ['skip']);
+  expect(result.output).not.toContain('skip-me');
+});

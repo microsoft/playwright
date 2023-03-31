@@ -82,10 +82,9 @@ export type TestEndPayload = {
 export type StepBeginPayload = {
   testId: string;
   stepId: string;
+  parentStepId: string | undefined;
   title: string;
   category: string;
-  canHaveChildren: boolean;
-  forceNoParent: boolean;
   wallTime: number;  // milliseconds since unix epoch
   location?: { file: string, line: number, column: number };
 };

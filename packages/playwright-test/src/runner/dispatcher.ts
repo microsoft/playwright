@@ -28,7 +28,6 @@ import type { FullConfigInternal } from '../common/types';
 type TestResultData = {
   result: TestResult;
   steps: Map<string, TestStep>;
-  stepStack: Set<TestStep>;
 };
 type TestData = {
   test: TestCase;
@@ -218,7 +217,7 @@ export class Dispatcher {
     const onTestBegin = (params: TestBeginPayload) => {
       const data = this._testById.get(params.testId)!;
       const result = data.test._appendTestResult();
-      data.resultByWorkerIndex.set(worker.workerIndex, { result, stepStack: new Set(), steps: new Map() });
+      data.resultByWorkerIndex.set(worker.workerIndex, { result, steps: new Map() });
       result.parallelIndex = worker.parallelIndex;
       result.workerIndex = worker.workerIndex;
       result.startTime = new Date(params.startWallTime);
@@ -267,8 +266,8 @@ export class Dispatcher {
         // The test has finished, but steps are still coming. Just ignore them.
         return;
       }
-      const { result, steps, stepStack } = runData;
-      const parentStep = params.forceNoParent ? undefined : [...stepStack].pop();
+      const { result, steps } = runData;
+      const parentStep = params.parentStepId ? steps.get(params.parentStepId) : undefined;
       const step: TestStep = {
         title: params.title,
         titlePath: () => {
@@ -284,8 +283,6 @@ export class Dispatcher {
       };
       steps.set(params.stepId, step);
       (parentStep || result).steps.push(step);
-      if (params.canHaveChildren)
-        stepStack.add(step);
       this._reporter.onStepBegin?.(data.test, result, step);
     };
     worker.on('stepBegin', onStepBegin);
@@ -297,7 +294,7 @@ export class Dispatcher {
         // The test has finished, but steps are still coming. Just ignore them.
         return;
       }
-      const { result, steps, stepStack } = runData;
+      const { result, steps } = runData;
       const step = steps.get(params.stepId);
       if (!step) {
         this._reporter.onStdErr?.('Internal error: step end without step begin: ' + params.stepId, data.test, result);
@@ -308,7 +305,6 @@ export class Dispatcher {
       step.duration = params.wallTime - step.startTime.getTime();
       if (params.error)
         step.error = params.error;
-      stepStack.delete(step);
       steps.delete(params.stepId);
       this._reporter.onStepEnd?.(data.test, result, step);
     };

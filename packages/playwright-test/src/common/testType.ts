@@ -19,7 +19,6 @@ import { currentlyLoadingFileSuite, currentTestInfo, setCurrentlyLoadingFileSuit
 import { TestCase, Suite } from './test';
 import { wrapFunctionWithLocation } from './transform';
 import type { Fixtures, FixturesWithLocation, Location, TestType } from './types';
-import { serializeError } from '../util';
 
 const testTypeSymbol = Symbol('testType');
 
@@ -212,22 +211,11 @@ export class TestTypeImpl {
     const testInfo = currentTestInfo();
     if (!testInfo)
       throw new Error(`test.step() can only be called from a test`);
-    const step = testInfo._addStep({
+    return testInfo._runAsStep(body, {
       category: 'test.step',
       title,
       location,
-      canHaveChildren: true,
-      forceNoParent: false,
-      wallTime: Date.now(),
     });
-    try {
-      const result = await body();
-      step.complete({});
-      return result;
-    } catch (e) {
-      step.complete({ error: serializeError(e) });
-      throw e;
-    }
   }
 
   private _extend(location: Location, fixtures: Fixtures) {

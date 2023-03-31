@@ -216,8 +216,6 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
         location: stackFrames[0],
         category: 'expect',
         title: trimLongString(customMessage || defaultTitle, 1024),
-        canHaveChildren: true,
-        forceNoParent: false,
         wallTime
       });
       testInfo.currentStep = step;
