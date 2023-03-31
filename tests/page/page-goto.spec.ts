@@ -300,9 +300,7 @@ it('should throw if networkidle2 is passed as an option', async ({ page, server 
 it('should fail when main resources failed to load', async ({ page, browserName, isWindows, mode }) => {
   let error = null;
   await page.goto('http://localhost:44123/non-existing-url').catch(e => error = e);
-  if (mode === 'service')
-    expect(error.message).toContain('net::ERR_SOCKS_CONNECTION_FAILED');
-  else if (browserName === 'chromium')
+  if (browserName === 'chromium')
     expect(error.message).toContain('net::ERR_CONNECTION_REFUSED');
   else if (browserName === 'webkit' && isWindows)
     expect(error.message).toContain(`Couldn\'t connect to server`);
