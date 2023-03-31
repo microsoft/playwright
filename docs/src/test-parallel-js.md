@@ -175,6 +175,10 @@ When you **disable parallel test execution**, Playwright Test runs test files in
 
 ### Use a "test list" file
 
+:::warning
+Tests lists are discouraged and supported as a best-effort only. Some fetures such as VS Code Extension and tracing may not work properly with test lists.
+:::
+
 You can put your tests in helper functions in multiple files. Consider the following example where tests are not defined directly in the file, but rather in a wrapper function.
 
 ```js
