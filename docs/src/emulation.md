@@ -433,7 +433,6 @@ context.clear_permissions()
 await context.ClearPermissionsAsync();
 ```
 
-Learn more about [available permissions](./class-browsercontext#browser-context-grant-permissions).
 ## Geolocation
 
 Grant `"geolocation"` permissions and set geolocation to a specific area.
