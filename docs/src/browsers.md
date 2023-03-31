@@ -340,6 +340,10 @@ While Playwright can download and use the recent Chromium build, it can operate 
 
 Available channels are `chrome`, `msedge`, `chrome-beta`, `msedge-beta` or `msedge-dev`.
 
+:::warning
+Certain Enterprise Browser Policies may impact Playwright's ability to launch and control Google Chrome and Microsoft Edge. Running in an environment with browser policies is outside of the Playwright project's scope. See [this page](./troubleshooting.md##incompatible-microsoft-edge--google-chrome-policy-settings) for some known issues.
+:::
+
 ```js
 import { defineConfig, devices } from '@playwright/test';
 

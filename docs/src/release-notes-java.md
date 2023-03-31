@@ -922,7 +922,7 @@ This version of Playwright was also tested against the following stable channels
 ## Version 1.8
 
 - [Selecting elements based on layout](./other-locators.md#css-matching-elements-based-on-layout) with `:left-of()`, `:right-of()`, `:above()` and `:below()`.
-- Playwright now includes [command line interface](./cli.md), former playwright-cli.
+- Playwright now includes command line interface, former playwright-cli.
   ```bash java
   mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="--help"
   ```

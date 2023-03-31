@@ -36,7 +36,7 @@ const basicTestTree = {
 };
 
 test('should list tests', async ({ runUITest }) => {
-  const page = await runUITest(basicTestTree);
+  const { page } = await runUITest(basicTestTree);
   await expect.poll(dumpTestTree(page), { timeout: 15000 }).toBe(`
     ▼ ◯ a.test.ts
         ◯ passes
@@ -49,7 +49,7 @@ test('should list tests', async ({ runUITest }) => {
 });
 
 test('should traverse up/down', async ({ runUITest }) => {
-  const page = await runUITest(basicTestTree);
+  const { page } = await runUITest(basicTestTree);
   await page.getByText('a.test.ts').click();
   await expect.poll(dumpTestTree(page), { timeout: 15000 }).toContain(`
     ▼ ◯ a.test.ts <=
@@ -83,7 +83,7 @@ test('should traverse up/down', async ({ runUITest }) => {
 });
 
 test('should expand / collapse groups', async ({ runUITest }) => {
-  const page = await runUITest(basicTestTree);
+  const { page } = await runUITest(basicTestTree);
 
   await page.getByTestId('test-tree').getByText('suite').click();
   await page.keyboard.press('ArrowRight');
@@ -119,7 +119,7 @@ test('should expand / collapse groups', async ({ runUITest }) => {
 });
 
 test('should merge folder trees', async ({ runUITest }) => {
-  const page = await runUITest({
+  const { page } = await runUITest({
     'a/b/c/inC.test.ts': `
       import { test, expect } from '@playwright/test';
       test('passes', () => {});
@@ -144,7 +144,7 @@ test('should merge folder trees', async ({ runUITest }) => {
 });
 
 test('should list parametrized tests', async ({ runUITest }) => {
-  const page = await runUITest({
+  const { page } = await runUITest({
     'a.test.ts': `
       import { test } from '@playwright/test';
       test.describe('cookies', () => {
@@ -173,7 +173,7 @@ test('should list parametrized tests', async ({ runUITest }) => {
 });
 
 test('should update parametrized tests', async ({ runUITest, writeFiles }) => {
-  const page = await runUITest({
+  const { page } = await runUITest({
     'a.test.ts': `
       import { test } from '@playwright/test';
       test.describe('cookies', () => {

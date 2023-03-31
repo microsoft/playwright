@@ -883,7 +883,7 @@ await page
     .ClickAsync();
 ```
 
-### Filter by another locator
+### Filter by child/descendant
 
 Locators support an option to only select elements that have a descendant matching another locator. You can therefore filter by any other locator such as a [`method: Locator.getByRole`], [`method: Locator.getByTestId`], [`method: Locator.getByText`] etc.
 
@@ -984,6 +984,54 @@ await Expect(page
 ```
 
 Note that the inner locator is matched starting from the outer one, not from the document root.
+
+### Filter by matching an additional locator
+
+Method [`method: Locator.and`] narrows down an existing locator by matching an additional locator. For example, you can combine [`method: Page.getByRole`] and [`method: Page.getByTitle`] to match by both role and title.
+
+```js
+const button = page.getByRole('button').and(page.getByTitle('Subscribe'));
+```
+
+```java
+Locator button = page.getByRole(AriaRole.BUTTON).and(page.getByTitle("Subscribe"));
+```
+
+```python async
+button = page.get_by_role("button").and_(page.getByTitle("Subscribe"))
+```
+
+```python sync
+button = page.get_by_role("button").and_(page.getByTitle("Subscribe"))
+```
+
+```csharp
+var button = page.GetByRole(AriaRole.Button).And(page.GetByTitle("Subscribe"));
+```
+
+### Filter by **not** matching an additional locator
+
+Method [`method: Locator.not`] narrows down an existing locator by ensuring that target element **does not match** an additional locator. For example, you can combine [`method: Page.getByRole`] and [`method: Page.getByTitle`] to match by role and ensure that title does not match.
+
+```js
+const button = page.getByRole('button').not(page.getByTitle('Subscribe'));
+```
+
+```java
+Locator button = page.getByRole(AriaRole.BUTTON).not(page.getByTitle("Subscribe"));
+```
+
+```python async
+button = page.get_by_role("button").not_(page.getByTitle("Subscribe"))
+```
+
+```python sync
+button = page.get_by_role("button").not_(page.getByTitle("Subscribe"))
+```
+
+```csharp
+var button = page.GetByRole(AriaRole.Button).Not(page.GetByTitle("Subscribe"));
+```
 
 ## Chaining Locators
 

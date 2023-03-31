@@ -51,6 +51,8 @@ export const fixtures: Fixtures<
 
     mount: async ({ page }, use) => {
       await use(async (component: JsxComponent | string, options?: MountOptions) => {
+        if (options?.props && !isJson(options.props))
+          throw new Error('The mount function props are not JSON serializable.');
         const selector = await (page as any)._wrapApiCall(async () => {
           return await innerMount(page, component, options);
         }, true);
@@ -63,7 +65,10 @@ export const fixtures: Fixtures<
             });
           },
           update: async (options: JsxComponent | Omit<MountOptions, 'hooksConfig'>) => {
-            if (isJsxApi(options)) return await innerUpdate(page, options);
+            if (isJsxApi(options))
+              return await innerUpdate(page, options);
+            if (options?.props && !isJson(options.props))
+              throw new Error('The update function props are not JSON serializable.');
             await innerUpdate(page, component, options);
           }
         });
@@ -71,6 +76,24 @@ export const fixtures: Fixtures<
       boundCallbacksForMount = [];
     },
   };
+
+const jsonType: Record<string, Function> = {
+  string: (value: any) => typeof value === 'string',
+  number: (value: any) => typeof value === 'number',
+  boolean: (value: any) => typeof value === 'boolean',
+  null: (value: any) => value === null,
+  array: (value: any) => Array.isArray(value) && value.every(isJson),
+  object: (value: any) => typeof value === 'object' && value !== null && !Array.isArray(value)
+    && Object.values(value).every(isJson),
+};
+
+function isJson(value: any): boolean {
+  const valueType = Array.isArray(value) ? 'array' : typeof value;
+  const validate = jsonType[valueType];
+  if (validate)
+    return validate(value);
+  return false;
+}
 
 function isJsxApi(options: Record<string, unknown>): options is JsxComponent {
   return options?.kind === 'jsx';

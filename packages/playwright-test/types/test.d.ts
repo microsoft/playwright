@@ -347,7 +347,8 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
    * Only the files matching one of these patterns are executed as test files. Matching is performed against the
    * absolute file path. Strings are treated as glob patterns.
    *
-   * By default, Playwright Test looks for files matching `.*(test|spec)\.(js|ts|mjs)`.
+   * By default, Playwright looks for files matching the following glob pattern: `**\/?(*.)@(spec|test).?(m)[jt]s?(x)`.
+   * This means JavaScript or TypeScript files with `".test"` or `".spec"` suffix, for example `login-screen.spec.ts`.
    *
    * Use [testConfig.testMatch](https://playwright.dev/docs/api/class-testconfig#test-config-test-match) to change this
    * option for all projects.
@@ -469,7 +470,7 @@ interface TestConfig {
    * export default defineConfig({
    *   webServer: {
    *     command: 'npm run start',
-   *     port: 3000,
+   *     url: 'http://127.0.0.1:3000',
    *     timeout: 120 * 1000,
    *     reuseExistingServer: !process.env.CI,
    *   },
@@ -500,19 +501,19 @@ interface TestConfig {
    *   webServer: [
    *     {
    *       command: 'npm run start',
-   *       port: 3000,
+   *       url: 'http://127.0.0.1:3000',
    *       timeout: 120 * 1000,
    *       reuseExistingServer: !process.env.CI,
    *     },
    *     {
    *       command: 'npm run backend',
-   *       port: 3333,
+   *       url: 'http://127.0.0.1:3333',
    *       timeout: 120 * 1000,
    *       reuseExistingServer: !process.env.CI,
    *     }
    *   ],
    *   use: {
-   *     baseURL: 'http://localhost:3000/',
+   *     baseURL: 'http://127.0.0.1:3000',
    *   },
    * });
    * ```
@@ -1190,7 +1191,8 @@ interface TestConfig {
    * Only the files matching one of these patterns are executed as test files. Matching is performed against the
    * absolute file path. Strings are treated as glob patterns.
    *
-   * By default, Playwright Test looks for files matching `.*(test|spec)\.(js|ts|mjs)`.
+   * By default, Playwright looks for files matching the following glob pattern: `**\/?(*.)@(spec|test).?(m)[jt]s?(x)`.
+   * This means JavaScript or TypeScript files with `".test"` or `".spec"` suffix, for example `login-screen.spec.ts`.
    *
    * **Usage**
    *
@@ -1726,7 +1728,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    * export default defineConfig({
    *   webServer: {
    *     command: 'npm run start',
-   *     port: 3000,
+   *     url: 'http://127.0.0.1:3000',
    *     timeout: 120 * 1000,
    *     reuseExistingServer: !process.env.CI,
    *   },
@@ -1757,19 +1759,19 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *   webServer: [
    *     {
    *       command: 'npm run start',
-   *       port: 3000,
+   *       url: 'http://127.0.0.1:3000',
    *       timeout: 120 * 1000,
    *       reuseExistingServer: !process.env.CI,
    *     },
    *     {
    *       command: 'npm run backend',
-   *       port: 3333,
+   *       url: 'http://127.0.0.1:3333',
    *       timeout: 120 * 1000,
    *       reuseExistingServer: !process.env.CI,
    *     }
    *   ],
    *   use: {
-   *     baseURL: 'http://localhost:3000/',
+   *     baseURL: 'http://127.0.0.1:3000',
    *   },
    * });
    * ```
@@ -3491,7 +3493,8 @@ export interface PlaywrightTestOptions {
    */
   hasTouch: boolean;
   /**
-   * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
+   * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication). If no
+   * origin is specified, the username and password are sent to any servers upon unauthorized responses.
    */
   httpCredentials: HTTPCredentials | undefined;
   /**
@@ -4319,6 +4322,26 @@ interface APIResponseAssertions {
  */
 interface LocatorAssertions {
   /**
+   * Ensures that [Locator] points to an [attached](https://playwright.dev/docs/actionability#attached) DOM node.
+   *
+   * **Usage**
+   *
+   * ```js
+   * await expect(page.getByText('Hidden text')).toBeAttached();
+   * ```
+   *
+   * @param options
+   */
+  toBeAttached(options?: {
+    attached?: boolean;
+
+    /**
+     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
    * Ensures the [Locator] points to a checked input.
    *
    * **Usage**
@@ -4500,8 +4523,7 @@ interface LocatorAssertions {
    * **Usage**
    *
    * ```js
-   * const locator = page.locator('.my-element');
-   * await expect(locator).toBeVisible();
+   * await expect(page.getByText('Welcome')).toBeVisible();
    * ```
    *
    * @param options
@@ -5852,7 +5874,8 @@ interface TestProject {
    * Only the files matching one of these patterns are executed as test files. Matching is performed against the
    * absolute file path. Strings are treated as glob patterns.
    *
-   * By default, Playwright Test looks for files matching `.*(test|spec)\.(js|ts|mjs)`.
+   * By default, Playwright looks for files matching the following glob pattern: `**\/?(*.)@(spec|test).?(m)[jt]s?(x)`.
+   * This means JavaScript or TypeScript files with `".test"` or `".spec"` suffix, for example `login-screen.spec.ts`.
    *
    * Use [testConfig.testMatch](https://playwright.dev/docs/api/class-testconfig#test-config-test-match) to change this
    * option for all projects.

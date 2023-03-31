@@ -81,6 +81,11 @@ export class TestChildProcess {
     this.exitCode = this.exited.then(r => r.exitCode);
   }
 
+  outputLines(): string[] {
+    const strippedOutput = stripAnsi(this.output);
+    return strippedOutput.split('\n').filter(line => line.startsWith('%%')).map(line => line.substring(2).trim());
+  }
+
   async close() {
     if (!this.process.killed)
       this._killProcessGroup('SIGINT');

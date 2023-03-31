@@ -309,7 +309,6 @@ it.describe('page screenshot', () => {
   });
 
   it('should work for webgl', async ({ page, server, browserName, channel, browserMajorVersion }) => {
-    it.fixme(channel === 'msedge' && browserMajorVersion === 110, 'https://github.com/microsoft/playwright/issues/21549');
     it.fixme(browserName === 'firefox');
 
     await page.setViewportSize({ width: 640, height: 480 });

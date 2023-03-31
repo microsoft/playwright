@@ -36,7 +36,7 @@ const basicTestTree = {
 };
 
 test('should pick new / deleted files', async ({ runUITest, writeFiles, deleteFile }) => {
-  const page = await runUITest(basicTestTree);
+  const { page } = await runUITest(basicTestTree);
   await expect.poll(dumpTestTree(page), { timeout: 15000 }).toBe(`
     ▼ ◯ a.test.ts
         ◯ passes
@@ -81,7 +81,7 @@ test('should pick new / deleted files', async ({ runUITest, writeFiles, deleteFi
 });
 
 test('should pick new / deleted tests', async ({ runUITest, writeFiles, deleteFile }) => {
-  const page = await runUITest(basicTestTree);
+  const { page } = await runUITest(basicTestTree);
   await expect.poll(dumpTestTree(page), { timeout: 15000 }).toBe(`
     ▼ ◯ a.test.ts
         ◯ passes
@@ -130,7 +130,7 @@ test('should pick new / deleted tests', async ({ runUITest, writeFiles, deleteFi
 });
 
 test('should pick new / deleted nested tests', async ({ runUITest, writeFiles, deleteFile }) => {
-  const page = await runUITest(basicTestTree);
+  const { page } = await runUITest(basicTestTree);
   await expect.poll(dumpTestTree(page), { timeout: 15000 }).toContain(`
     ▼ ◯ a.test.ts
         ◯ passes
@@ -170,7 +170,7 @@ test('should pick new / deleted nested tests', async ({ runUITest, writeFiles, d
 });
 
 test('should update test locations', async ({ runUITest, writeFiles, deleteFile }) => {
-  const page = await runUITest({
+  const { page } = await runUITest({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('passes', () => {});

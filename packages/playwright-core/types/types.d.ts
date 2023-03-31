@@ -878,9 +878,9 @@ export interface Page {
    * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also
    * emitted if the page throws an error or a warning.
    *
-   * The arguments passed into `console.log` appear as arguments on the event handler.
+   * The arguments passed into `console.log` are available on the [ConsoleMessage] event handler argument.
    *
-   * An example of handling `console` event:
+   * **Usage**
    *
    * ```js
    * page.on('console', async msg => {
@@ -889,7 +889,7 @@ export interface Page {
    *     values.push(await arg.jsonValue());
    *   console.log(...values);
    * });
-   * await page.evaluate(() => console.log('hello', 5, {foo: 'bar'}));
+   * await page.evaluate(() => console.log('hello', 5, { foo: 'bar' }));
    * ```
    *
    */
@@ -922,14 +922,17 @@ export interface Page {
    * will [freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop#never_blocking) waiting for the
    * dialog, and actions like click will never finish.
    *
+   * **Usage**
+   *
    * ```js
    * page.on('dialog', dialog => {
    *   dialog.accept();
    * });
    * ```
    *
-   * **NOTE** When no [page.on('dialog')](https://playwright.dev/docs/api/class-page#page-event-dialog) listeners are
-   * present, all dialogs are automatically dismissed.
+   * **NOTE** When no [page.on('dialog')](https://playwright.dev/docs/api/class-page#page-event-dialog) or
+   * [browserContext.on('dialog')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-dialog)
+   * listeners are present, all dialogs are automatically dismissed.
    */
   on(event: 'dialog', listener: (dialog: Dialog) => void): this;
 
@@ -1171,9 +1174,9 @@ export interface Page {
    * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also
    * emitted if the page throws an error or a warning.
    *
-   * The arguments passed into `console.log` appear as arguments on the event handler.
+   * The arguments passed into `console.log` are available on the [ConsoleMessage] event handler argument.
    *
-   * An example of handling `console` event:
+   * **Usage**
    *
    * ```js
    * page.on('console', async msg => {
@@ -1182,7 +1185,7 @@ export interface Page {
    *     values.push(await arg.jsonValue());
    *   console.log(...values);
    * });
-   * await page.evaluate(() => console.log('hello', 5, {foo: 'bar'}));
+   * await page.evaluate(() => console.log('hello', 5, { foo: 'bar' }));
    * ```
    *
    */
@@ -1215,14 +1218,17 @@ export interface Page {
    * will [freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop#never_blocking) waiting for the
    * dialog, and actions like click will never finish.
    *
+   * **Usage**
+   *
    * ```js
    * page.on('dialog', dialog => {
    *   dialog.accept();
    * });
    * ```
    *
-   * **NOTE** When no [page.on('dialog')](https://playwright.dev/docs/api/class-page#page-event-dialog) listeners are
-   * present, all dialogs are automatically dismissed.
+   * **NOTE** When no [page.on('dialog')](https://playwright.dev/docs/api/class-page#page-event-dialog) or
+   * [browserContext.on('dialog')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-dialog)
+   * listeners are present, all dialogs are automatically dismissed.
    */
   addListener(event: 'dialog', listener: (dialog: Dialog) => void): this;
 
@@ -1559,9 +1565,9 @@ export interface Page {
    * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also
    * emitted if the page throws an error or a warning.
    *
-   * The arguments passed into `console.log` appear as arguments on the event handler.
+   * The arguments passed into `console.log` are available on the [ConsoleMessage] event handler argument.
    *
-   * An example of handling `console` event:
+   * **Usage**
    *
    * ```js
    * page.on('console', async msg => {
@@ -1570,7 +1576,7 @@ export interface Page {
    *     values.push(await arg.jsonValue());
    *   console.log(...values);
    * });
-   * await page.evaluate(() => console.log('hello', 5, {foo: 'bar'}));
+   * await page.evaluate(() => console.log('hello', 5, { foo: 'bar' }));
    * ```
    *
    */
@@ -1603,14 +1609,17 @@ export interface Page {
    * will [freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop#never_blocking) waiting for the
    * dialog, and actions like click will never finish.
    *
+   * **Usage**
+   *
    * ```js
    * page.on('dialog', dialog => {
    *   dialog.accept();
    * });
    * ```
    *
-   * **NOTE** When no [page.on('dialog')](https://playwright.dev/docs/api/class-page#page-event-dialog) listeners are
-   * present, all dialogs are automatically dismissed.
+   * **NOTE** When no [page.on('dialog')](https://playwright.dev/docs/api/class-page#page-event-dialog) or
+   * [browserContext.on('dialog')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-dialog)
+   * listeners are present, all dialogs are automatically dismissed.
    */
   prependListener(event: 'dialog', listener: (dialog: Dialog) => void): this;
 
@@ -4197,9 +4206,9 @@ export interface Page {
    * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also
    * emitted if the page throws an error or a warning.
    *
-   * The arguments passed into `console.log` appear as arguments on the event handler.
+   * The arguments passed into `console.log` are available on the [ConsoleMessage] event handler argument.
    *
-   * An example of handling `console` event:
+   * **Usage**
    *
    * ```js
    * page.on('console', async msg => {
@@ -4208,7 +4217,7 @@ export interface Page {
    *     values.push(await arg.jsonValue());
    *   console.log(...values);
    * });
-   * await page.evaluate(() => console.log('hello', 5, {foo: 'bar'}));
+   * await page.evaluate(() => console.log('hello', 5, { foo: 'bar' }));
    * ```
    *
    */
@@ -4241,14 +4250,17 @@ export interface Page {
    * will [freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop#never_blocking) waiting for the
    * dialog, and actions like click will never finish.
    *
+   * **Usage**
+   *
    * ```js
    * page.on('dialog', dialog => {
    *   dialog.accept();
    * });
    * ```
    *
-   * **NOTE** When no [page.on('dialog')](https://playwright.dev/docs/api/class-page#page-event-dialog) listeners are
-   * present, all dialogs are automatically dismissed.
+   * **NOTE** When no [page.on('dialog')](https://playwright.dev/docs/api/class-page#page-event-dialog) or
+   * [browserContext.on('dialog')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-dialog)
+   * listeners are present, all dialogs are automatically dismissed.
    */
   waitForEvent(event: 'dialog', optionsOrPredicate?: { predicate?: (dialog: Dialog) => boolean | Promise<boolean>, timeout?: number } | ((dialog: Dialog) => boolean | Promise<boolean>)): Promise<Dialog>;
 
@@ -7450,6 +7462,48 @@ export interface BrowserContext {
   on(event: 'close', listener: (browserContext: BrowserContext) => void): this;
 
   /**
+   * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also
+   * emitted if the page throws an error or a warning.
+   *
+   * The arguments passed into `console.log` and the page are available on the [ConsoleMessage] event handler argument.
+   *
+   * **Usage**
+   *
+   * ```js
+   * context.on('console', async msg => {
+   *   const values = [];
+   *   for (const arg of msg.args())
+   *     values.push(await arg.jsonValue());
+   *   console.log(...values);
+   * });
+   * await page.evaluate(() => console.log('hello', 5, { foo: 'bar' }));
+   * ```
+   *
+   */
+  on(event: 'console', listener: (consoleMessage: ConsoleMessage) => void): this;
+
+  /**
+   * Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Listener **must**
+   * either [dialog.accept([promptText])](https://playwright.dev/docs/api/class-dialog#dialog-accept) or
+   * [dialog.dismiss()](https://playwright.dev/docs/api/class-dialog#dialog-dismiss) the dialog - otherwise the page
+   * will [freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop#never_blocking) waiting for the
+   * dialog, and actions like click will never finish.
+   *
+   * **Usage**
+   *
+   * ```js
+   * context.on('dialog', dialog => {
+   *   dialog.accept();
+   * });
+   * ```
+   *
+   * **NOTE** When no [page.on('dialog')](https://playwright.dev/docs/api/class-page#page-event-dialog) or
+   * [browserContext.on('dialog')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-dialog)
+   * listeners are present, all dialogs are automatically dismissed.
+   */
+  on(event: 'dialog', listener: (dialog: Dialog) => void): this;
+
+  /**
    * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event
    * will also fire for popup pages. See also
    * [page.on('popup')](https://playwright.dev/docs/api/class-page#page-event-popup) to receive events about popups
@@ -7530,6 +7584,16 @@ export interface BrowserContext {
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
+  once(event: 'console', listener: (consoleMessage: ConsoleMessage) => void): this;
+
+  /**
+   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
+   */
+  once(event: 'dialog', listener: (dialog: Dialog) => void): this;
+
+  /**
+   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
+   */
   once(event: 'page', listener: (page: Page) => void): this;
 
   /**
@@ -7576,6 +7640,48 @@ export interface BrowserContext {
    * - The [browser.close()](https://playwright.dev/docs/api/class-browser#browser-close) method was called.
    */
   addListener(event: 'close', listener: (browserContext: BrowserContext) => void): this;
+
+  /**
+   * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also
+   * emitted if the page throws an error or a warning.
+   *
+   * The arguments passed into `console.log` and the page are available on the [ConsoleMessage] event handler argument.
+   *
+   * **Usage**
+   *
+   * ```js
+   * context.on('console', async msg => {
+   *   const values = [];
+   *   for (const arg of msg.args())
+   *     values.push(await arg.jsonValue());
+   *   console.log(...values);
+   * });
+   * await page.evaluate(() => console.log('hello', 5, { foo: 'bar' }));
+   * ```
+   *
+   */
+  addListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => void): this;
+
+  /**
+   * Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Listener **must**
+   * either [dialog.accept([promptText])](https://playwright.dev/docs/api/class-dialog#dialog-accept) or
+   * [dialog.dismiss()](https://playwright.dev/docs/api/class-dialog#dialog-dismiss) the dialog - otherwise the page
+   * will [freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop#never_blocking) waiting for the
+   * dialog, and actions like click will never finish.
+   *
+   * **Usage**
+   *
+   * ```js
+   * context.on('dialog', dialog => {
+   *   dialog.accept();
+   * });
+   * ```
+   *
+   * **NOTE** When no [page.on('dialog')](https://playwright.dev/docs/api/class-page#page-event-dialog) or
+   * [browserContext.on('dialog')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-dialog)
+   * listeners are present, all dialogs are automatically dismissed.
+   */
+  addListener(event: 'dialog', listener: (dialog: Dialog) => void): this;
 
   /**
    * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event
@@ -7658,6 +7764,16 @@ export interface BrowserContext {
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
+  removeListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => void): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  removeListener(event: 'dialog', listener: (dialog: Dialog) => void): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
   removeListener(event: 'page', listener: (page: Page) => void): this;
 
   /**
@@ -7694,6 +7810,16 @@ export interface BrowserContext {
    * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'close', listener: (browserContext: BrowserContext) => void): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  off(event: 'console', listener: (consoleMessage: ConsoleMessage) => void): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  off(event: 'dialog', listener: (dialog: Dialog) => void): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
@@ -7744,6 +7870,48 @@ export interface BrowserContext {
    * - The [browser.close()](https://playwright.dev/docs/api/class-browser#browser-close) method was called.
    */
   prependListener(event: 'close', listener: (browserContext: BrowserContext) => void): this;
+
+  /**
+   * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also
+   * emitted if the page throws an error or a warning.
+   *
+   * The arguments passed into `console.log` and the page are available on the [ConsoleMessage] event handler argument.
+   *
+   * **Usage**
+   *
+   * ```js
+   * context.on('console', async msg => {
+   *   const values = [];
+   *   for (const arg of msg.args())
+   *     values.push(await arg.jsonValue());
+   *   console.log(...values);
+   * });
+   * await page.evaluate(() => console.log('hello', 5, { foo: 'bar' }));
+   * ```
+   *
+   */
+  prependListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => void): this;
+
+  /**
+   * Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Listener **must**
+   * either [dialog.accept([promptText])](https://playwright.dev/docs/api/class-dialog#dialog-accept) or
+   * [dialog.dismiss()](https://playwright.dev/docs/api/class-dialog#dialog-dismiss) the dialog - otherwise the page
+   * will [freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop#never_blocking) waiting for the
+   * dialog, and actions like click will never finish.
+   *
+   * **Usage**
+   *
+   * ```js
+   * context.on('dialog', dialog => {
+   *   dialog.accept();
+   * });
+   * ```
+   *
+   * **NOTE** When no [page.on('dialog')](https://playwright.dev/docs/api/class-page#page-event-dialog) or
+   * [browserContext.on('dialog')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-dialog)
+   * listeners are present, all dialogs are automatically dismissed.
+   */
+  prependListener(event: 'dialog', listener: (dialog: Dialog) => void): this;
 
   /**
    * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event
@@ -8283,6 +8451,48 @@ export interface BrowserContext {
    * - The [browser.close()](https://playwright.dev/docs/api/class-browser#browser-close) method was called.
    */
   waitForEvent(event: 'close', optionsOrPredicate?: { predicate?: (browserContext: BrowserContext) => boolean | Promise<boolean>, timeout?: number } | ((browserContext: BrowserContext) => boolean | Promise<boolean>)): Promise<BrowserContext>;
+
+  /**
+   * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also
+   * emitted if the page throws an error or a warning.
+   *
+   * The arguments passed into `console.log` and the page are available on the [ConsoleMessage] event handler argument.
+   *
+   * **Usage**
+   *
+   * ```js
+   * context.on('console', async msg => {
+   *   const values = [];
+   *   for (const arg of msg.args())
+   *     values.push(await arg.jsonValue());
+   *   console.log(...values);
+   * });
+   * await page.evaluate(() => console.log('hello', 5, { foo: 'bar' }));
+   * ```
+   *
+   */
+  waitForEvent(event: 'console', optionsOrPredicate?: { predicate?: (consoleMessage: ConsoleMessage) => boolean | Promise<boolean>, timeout?: number } | ((consoleMessage: ConsoleMessage) => boolean | Promise<boolean>)): Promise<ConsoleMessage>;
+
+  /**
+   * Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Listener **must**
+   * either [dialog.accept([promptText])](https://playwright.dev/docs/api/class-dialog#dialog-accept) or
+   * [dialog.dismiss()](https://playwright.dev/docs/api/class-dialog#dialog-dismiss) the dialog - otherwise the page
+   * will [freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop#never_blocking) waiting for the
+   * dialog, and actions like click will never finish.
+   *
+   * **Usage**
+   *
+   * ```js
+   * context.on('dialog', dialog => {
+   *   dialog.accept();
+   * });
+   * ```
+   *
+   * **NOTE** When no [page.on('dialog')](https://playwright.dev/docs/api/class-page#page-event-dialog) or
+   * [browserContext.on('dialog')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-dialog)
+   * listeners are present, all dialogs are automatically dismissed.
+   */
+  waitForEvent(event: 'dialog', optionsOrPredicate?: { predicate?: (dialog: Dialog) => boolean | Promise<boolean>, timeout?: number } | ((dialog: Dialog) => boolean | Promise<boolean>)): Promise<Dialog>;
 
   /**
    * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event
@@ -10178,6 +10388,21 @@ export interface Locator {
   allTextContents(): Promise<Array<string>>;
 
   /**
+   * Creates a locator that matches both this locator and the argument locator.
+   *
+   * **Usage**
+   *
+   * The following example finds a button with a specific title.
+   *
+   * ```js
+   * const button = page.getByRole('button').and(page.getByTitle('Subscribe'));
+   * ```
+   *
+   * @param locator Additional locator to match.
+   */
+  and(locator: Locator): Locator;
+
+  /**
    * Calls [blur](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/blur) on the element.
    * @param options
    */
@@ -11434,6 +11659,21 @@ export interface Locator {
   }): Locator;
 
   /**
+   * Creates a locator that **matches this** locator, but **not the argument** locator.
+   *
+   * **Usage**
+   *
+   * The following example finds a button that does not have title `"Subscribe"`.
+   *
+   * ```js
+   * const button = page.getByRole('button').not(page.getByTitle('Subscribe'));
+   * ```
+   *
+   * @param locator Locator that must not match.
+   */
+  not(locator: Locator): Locator;
+
+  /**
    * Returns locator to the n-th matching element. It's zero based, `nth(0)` selects the first element.
    *
    * **Usage**
@@ -12340,12 +12580,18 @@ export interface BrowserType<Unused = {}> {
     headless?: boolean;
 
     /**
-     * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
+     * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication). If no
+     * origin is specified, the username and password are sent to any servers upon unauthorized responses.
      */
     httpCredentials?: {
       username: string;
 
       password: string;
+
+      /**
+       * Restrain sending http credentials on specific origin (scheme://host:port).
+       */
+      origin?: string;
     };
 
     /**
@@ -13733,12 +13979,18 @@ export interface AndroidDevice {
     hasTouch?: boolean;
 
     /**
-     * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
+     * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication). If no
+     * origin is specified, the username and password are sent to any servers upon unauthorized responses.
      */
     httpCredentials?: {
       username: string;
 
       password: string;
+
+      /**
+       * Restrain sending http credentials on specific origin (scheme://host:port).
+       */
+      origin?: string;
     };
 
     /**
@@ -14443,12 +14695,18 @@ export interface APIRequest {
     extraHTTPHeaders?: { [key: string]: string; };
 
     /**
-     * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
+     * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication). If no
+     * origin is specified, the username and password are sent to any servers upon unauthorized responses.
      */
     httpCredentials?: {
       username: string;
 
       password: string;
+
+      /**
+       * Restrain sending http credentials on specific origin (scheme://host:port).
+       */
+      origin?: string;
     };
 
     /**
@@ -15590,12 +15848,18 @@ export interface Browser extends EventEmitter {
     hasTouch?: boolean;
 
     /**
-     * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
+     * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication). If no
+     * origin is specified, the username and password are sent to any servers upon unauthorized responses.
      */
     httpCredentials?: {
       username: string;
 
       password: string;
+
+      /**
+       * Restrain sending http credentials on specific origin (scheme://host:port).
+       */
+      origin?: string;
     };
 
     /**
@@ -16047,6 +16311,11 @@ export interface ConsoleMessage {
   };
 
   /**
+   * The page that produced this console message, if any.
+   */
+  page(): Page|null;
+
+  /**
    * The text of the console message.
    */
   text(): string;
@@ -16242,6 +16511,11 @@ export interface Dialog {
    * A message displayed in the dialog.
    */
   message(): string;
+
+  /**
+   * The page that initiated this dialog, if available.
+   */
+  page(): Page|null;
 
   /**
    * Returns dialog's type, can be one of `alert`, `beforeunload`, `confirm` or `prompt`.
@@ -16451,12 +16725,18 @@ export interface Electron {
     };
 
     /**
-     * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
+     * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication). If no
+     * origin is specified, the username and password are sent to any servers upon unauthorized responses.
      */
     httpCredentials?: {
       username: string;
 
       password: string;
+
+      /**
+       * Restrain sending http credentials on specific origin (scheme://host:port).
+       */
+      origin?: string;
     };
 
     /**
@@ -18673,7 +18953,8 @@ export interface BrowserContextOptions {
   hasTouch?: boolean;
 
   /**
-   * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
+   * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication). If no
+   * origin is specified, the username and password are sent to any servers upon unauthorized responses.
    */
   httpCredentials?: HTTPCredentials;
 
@@ -18968,6 +19249,11 @@ export interface HTTPCredentials {
   username: string;
 
   password: string;
+
+  /**
+   * Restrain sending http credentials on specific origin (scheme://host:port).
+   */
+  origin?: string;
 }
 
 export interface Geolocation {

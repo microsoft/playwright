@@ -16,6 +16,8 @@
 
 import { test, expect } from './playwright-test-fixtures';
 
+test.slow();
+
 test('should check types of fixtures', async ({ runTSC }) => {
   const result = await runTSC({
     'helper.ts': `
@@ -72,9 +74,9 @@ test('should check types of fixtures', async ({ runTSC }) => {
         baz: true,
       });
       const fail9 = test.extend<{ foo: string }>({
+        // @ts-expect-error
         foo: [ async ({}, use) => {
           await use('foo');
-        // @ts-expect-error
         }, { scope: 'test', auto: true } ],
       });
       const fail10 = test.extend<{}, {}>({

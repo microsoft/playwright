@@ -446,3 +446,36 @@ test('errors', async ({ page }) => {
   const e8 = await page.$('role=treeitem[expanded="none"]').catch(e => e);
   expect(e8.message).toContain(`"expanded" must be one of true, false`);
 });
+
+test('hidden with shadow dom slots', async ({ page }) => {
+  await page.setContent(`
+    <div make-hidden>
+      <button>hidden1</button>
+    </div>
+    <div make-hidden>
+      <span><button>hidden2</button></v>
+    </div>
+    <div>
+      <button>visible1</button>
+    </div>
+    <div>
+      <span><button>visible2</button></span>
+    </div>
+    <script>
+      for (const div of document.querySelectorAll('div')) {
+        const hidden = div.hasAttribute('make-hidden');
+        div.attachShadow({ mode: 'open' }).innerHTML = hidden ? 'nothing to see here' : '<slot></slot>';
+      }
+    </script>
+  `);
+  expect(await page.locator(`role=button`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<button>visible1</button>`,
+    `<button>visible2</button>`,
+  ]);
+  expect(await page.locator(`role=button[include-hidden]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<button>hidden1</button>`,
+    `<button>hidden2</button>`,
+    `<button>visible1</button>`,
+    `<button>visible2</button>`,
+  ]);
+});

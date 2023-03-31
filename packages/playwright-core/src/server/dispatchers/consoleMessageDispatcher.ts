@@ -23,12 +23,13 @@ import { ElementHandleDispatcher } from './elementHandlerDispatcher';
 export class ConsoleMessageDispatcher extends Dispatcher<ConsoleMessage, channels.ConsoleMessageChannel, PageDispatcher> implements channels.ConsoleMessageChannel {
   _type_ConsoleMessage = true;
 
-  constructor(scope: PageDispatcher, message: ConsoleMessage) {
-    super(scope, message, 'ConsoleMessage', {
+  constructor(page: PageDispatcher, message: ConsoleMessage) {
+    super(page, message, 'ConsoleMessage', {
       type: message.type(),
       text: message.text(),
-      args: message.args().map(a => ElementHandleDispatcher.fromJSHandle(scope, a)),
+      args: message.args().map(a => ElementHandleDispatcher.fromJSHandle(page, a)),
       location: message.location(),
+      page,
     });
   }
 }

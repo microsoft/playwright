@@ -36,7 +36,7 @@ export class CRNetworkManager {
   private _parentManager: CRNetworkManager | null;
   private _requestIdToRequest = new Map<string, InterceptableRequest>();
   private _requestIdToRequestWillBeSentEvent = new Map<string, Protocol.Network.requestWillBeSentPayload>();
-  private _credentials: {username: string, password: string} | null = null;
+  private _credentials: {origin?: string, username: string, password: string} | null = null;
   private _attemptedAuthentications = new Set<string>();
   private _userRequestInterceptionEnabled = false;
   private _protocolRequestInterceptionEnabled = false;
@@ -161,17 +161,24 @@ export class CRNetworkManager {
 
   _onAuthRequired(event: Protocol.Fetch.authRequiredPayload) {
     let response: 'Default' | 'CancelAuth' | 'ProvideCredentials' = 'Default';
+    const shouldProvideCredentials = this._shouldProvideCredentials(event.request.url);
     if (this._attemptedAuthentications.has(event.requestId)) {
       response = 'CancelAuth';
-    } else if (this._credentials) {
+    } else if (shouldProvideCredentials) {
       response = 'ProvideCredentials';
       this._attemptedAuthentications.add(event.requestId);
     }
-    const { username, password } = this._credentials || { username: undefined, password: undefined };
+    const { username, password } =  shouldProvideCredentials && this._credentials ? this._credentials : { username: undefined, password: undefined };
     this._client._sendMayFail('Fetch.continueWithAuth', {
       requestId: event.requestId,
       authChallengeResponse: { response, username, password },
     });
+  }
+
+  _shouldProvideCredentials(url: string): boolean {
+    if (!this._credentials)
+      return false;
+    return !this._credentials.origin || new URL(url).origin.toLowerCase() === this._credentials.origin.toLowerCase();
   }
 
   _onRequestPaused(workerFrame: frames.Frame | undefined, event: Protocol.Fetch.requestPausedPayload) {

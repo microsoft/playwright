@@ -18,7 +18,7 @@ import { test, expect } from './ui-mode-fixtures';
 test.describe.configure({ mode: 'parallel' });
 
 test('should merge trace events', async ({ runUITest, server }) => {
-  const page = await runUITest({
+  const { page } = await runUITest({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('trace test', async ({ page }) => {
@@ -46,7 +46,7 @@ test('should merge trace events', async ({ runUITest, server }) => {
 });
 
 test('should locate sync assertions in source', async ({ runUITest, server }) => {
-  const page = await runUITest({
+  const { page } = await runUITest({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('trace test', async ({}) => {
@@ -64,7 +64,7 @@ test('should locate sync assertions in source', async ({ runUITest, server }) =>
 });
 
 test('should show snapshots for sync assertions', async ({ runUITest, server }) => {
-  const page = await runUITest({
+  const { page } = await runUITest({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('trace test', async ({ page }) => {

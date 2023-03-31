@@ -129,6 +129,11 @@ const kImplicitRoleByTagName: { [tagName: string]: (e: Element) => string | null
   'STRONG': () => 'strong',
   'SUB': () => 'subscript',
   'SUP': () => 'superscript',
+  // For <svg> we default to Chrome behavior:
+  // - Chrome reports 'img'.
+  // - Firefox reports 'diagram' that is not in official ARIA spec yet.
+  // - Safari reports 'no role', but still computes accessible name.
+  'SVG': () => 'img',
   'TABLE': () => 'table',
   'TBODY': () => 'rowgroup',
   'TD': (e: Element) => {
@@ -167,7 +172,8 @@ const kPresentationInheritanceParents: { [tagName: string]: string[] } = {
 };
 
 function getImplicitAriaRole(element: Element): string | null {
-  const implicitRole = kImplicitRoleByTagName[element.tagName]?.(element) || '';
+  // Elements from the svg namespace do not have uppercase tagName.
+  const implicitRole = kImplicitRoleByTagName[element.tagName.toUpperCase()]?.(element) || '';
   if (!implicitRole)
     return null;
   // Inherit presentation role when required.
@@ -226,6 +232,8 @@ function getAriaBoolean(attr: string | null) {
 }
 
 // https://www.w3.org/TR/wai-aria-1.2/#tree_exclusion, but including "none" and "presentation" roles
+// Not implemented:
+//   `Any descendants of elements that have the characteristic "Children Presentational: True"`
 // https://www.w3.org/TR/wai-aria-1.2/#aria-hidden
 export function isElementHiddenForAria(element: Element, cache: Map<Element, boolean>): boolean {
   if (['STYLE', 'SCRIPT', 'NOSCRIPT', 'TEMPLATE'].includes(element.tagName))
@@ -236,17 +244,30 @@ export function isElementHiddenForAria(element: Element, cache: Map<Element, boo
   const isSlot = element.nodeName === 'SLOT';
   if (!isOptionInsideSelect && !isSlot && !isElementStyleVisibilityVisible(element))
     return true;
-  return belongsToDisplayNoneOrAriaHidden(element, cache);
+  return belongsToDisplayNoneOrAriaHiddenOrNonSlotted(element, cache);
 }
 
-function belongsToDisplayNoneOrAriaHidden(element: Element, cache: Map<Element, boolean>): boolean {
+function belongsToDisplayNoneOrAriaHiddenOrNonSlotted(element: Element, cache: Map<Element, boolean>): boolean {
   if (!cache.has(element)) {
-    const style = getElementComputedStyle(element);
-    let hidden = !style || style.display === 'none' || getAriaBoolean(element.getAttribute('aria-hidden')) === true;
+    let hidden = false;
+
+    // When parent has a shadow root, all light dom children must be assigned to a slot,
+    // otherwise they are not rendered and considered hidden for aria.
+    // Note: we can remove this logic once WebKit supports `Element.checkVisibility`.
+    if (element.parentElement && element.parentElement.shadowRoot && !element.assignedSlot)
+      hidden = true;
+
+    // display:none and aria-hidden=true are considered hidden for aria.
+    if (!hidden) {
+      const style = getElementComputedStyle(element);
+      hidden = !style || style.display === 'none' || getAriaBoolean(element.getAttribute('aria-hidden')) === true;
+    }
+
+    // Check recursively.
     if (!hidden) {
       const parent = parentElementOrShadowHost(element);
       if (parent)
-        hidden = hidden || belongsToDisplayNoneOrAriaHidden(parent, cache);
+        hidden = belongsToDisplayNoneOrAriaHiddenOrNonSlotted(parent, cache);
     }
     cache.set(element, hidden);
   }
@@ -578,16 +599,23 @@ function getElementAccessibleNameInternal(element: Element, options: AccessibleN
       return title;
     }
 
-    // https://www.w3.org/TR/svg-aam-1.0/
-    if (element.tagName === 'SVG' && (element as SVGElement).ownerSVGElement) {
+    // https://www.w3.org/TR/svg-aam-1.0/#mapping_additional_nd
+    if (element.tagName.toUpperCase() === 'SVG' || (element as SVGElement).ownerSVGElement) {
       options.visitedElements.add(element);
       for (let child = element.firstElementChild; child; child = child.nextElementSibling) {
-        if (child.tagName === 'TITLE' && (element as SVGElement).ownerSVGElement) {
+        if (child.tagName.toUpperCase() === 'TITLE' && (child as SVGElement).ownerSVGElement) {
           return getElementAccessibleNameInternal(child, {
             ...childOptions,
-            embeddedInTextAlternativeElement: true,
+            embeddedInLabelledBy: 'self',
           });
         }
+      }
+    }
+    if ((element as SVGElement).ownerSVGElement && element.tagName.toUpperCase() === 'A') {
+      const title = element.getAttribute('xlink:title') || '';
+      if (title.trim()) {
+        options.visitedElements.add(element);
+        return title;
       }
     }
   }

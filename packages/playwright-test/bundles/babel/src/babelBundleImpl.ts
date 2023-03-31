@@ -31,7 +31,9 @@ export function babelTransform(filename: string, isTypeScript: boolean, isModule
 
   if (isTypeScript) {
     plugins.push(
+        [require('@babel/plugin-proposal-decorators'), { version: '2022-03' }],
         [require('@babel/plugin-proposal-class-properties')],
+        [require('@babel/plugin-proposal-class-static-block')],
         [require('@babel/plugin-proposal-numeric-separator')],
         [require('@babel/plugin-proposal-logical-assignment-operators')],
         [require('@babel/plugin-proposal-nullish-coalescing-operator')],

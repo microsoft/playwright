@@ -31,9 +31,7 @@ import { Artifact } from './artifact';
 import type { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';
 import { evaluationScript } from './clientHelper';
-import { ConsoleMessage } from './consoleMessage';
 import { Coverage } from './coverage';
-import { Dialog } from './dialog';
 import { Download } from './download';
 import { determineScreenshotType, ElementHandle } from './elementHandle';
 import { Events } from './events';
@@ -124,17 +122,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
 
     this._channel.on('bindingCall', ({ binding }) => this._onBinding(BindingCall.from(binding)));
     this._channel.on('close', () => this._onClose());
-    this._channel.on('console', ({ message }) => this.emit(Events.Page.Console, ConsoleMessage.from(message)));
     this._channel.on('crash', () => this._onCrash());
-    this._channel.on('dialog', ({ dialog }) => {
-      const dialogObj = Dialog.from(dialog);
-      if (!this.emit(Events.Page.Dialog, dialogObj)) {
-        if (dialogObj.type() === 'beforeunload')
-          dialog.accept({}).catch(() => {});
-        else
-          dialog.dismiss().catch(() => {});
-      }
-    });
     this._channel.on('download', ({ url, suggestedFilename, artifact }) => {
       const artifactObject = Artifact.from(artifact);
       this.emit(Events.Page.Download, new Download(this, url, suggestedFilename, artifactObject));

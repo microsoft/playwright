@@ -715,7 +715,7 @@ You can record network activity as an HTTP Archive file (HAR). Later on, this ar
 
 ### Recording HAR with CLI
 
-Open the browser with [Playwright CLI](./cli.md) and pass `--save-har` option to produce a HAR file. Optionally, use `--save-har-glob` to only save requests you are interested in, for example API endpoints. If the har file name ends with `.zip`, artifacts are written as separate files and are all compressed into a single `zip`.
+Open the browser with Playwright CLI and pass `--save-har` option to produce a HAR file. Optionally, use `--save-har-glob` to only save requests you are interested in, for example API endpoints. If the har file name ends with `.zip`, artifacts are written as separate files and are all compressed into a single `zip`.
 
 ```bash js
 # Save API requests from example.com as "example.har" archive.

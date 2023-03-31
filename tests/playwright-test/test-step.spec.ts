@@ -457,3 +457,175 @@ test('should mark step as failed when soft expect fails', async ({ runInlineTest
     { title: 'After Hooks', category: 'hook' }
   ]);
 });
+
+test('should nest steps based on zones', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': stepHierarchyReporter,
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: './reporter',
+      };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test.beforeAll(async () => {
+        await test.step('in beforeAll', () => {});
+      });
+      
+      test.afterAll(async () => {
+        await test.step('in afterAll', () => {});
+      });
+      
+      test.beforeEach(async () => {
+        await test.step('in beforeEach', () => {});
+      });
+      
+      test.afterEach(async () => {
+        await test.step('in afterEach', () => {});
+      });
+      
+      test.only('foo', async ({ page }) => {
+        await test.step('grand', async () => {
+          await Promise.all([
+            test.step('parent1', async () => {
+              await test.step('child1', async () => {
+                await page.click('body');
+              });
+            }),
+            test.step('parent2', async () => {
+              await test.step('child2', async () => {
+                await expect(page.locator('body')).toBeVisible();
+              });
+            }),
+          ]);
+        });
+      });      
+    `
+  }, { reporter: '', workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  const objects = result.outputLines.map(line => JSON.parse(line));
+  expect(objects).toEqual([
+    {
+      title: 'Before Hooks',
+      category: 'hook',
+      steps: [
+        {
+          title: 'beforeAll hook',
+          category: 'hook',
+          steps: [
+            {
+              title: 'in beforeAll',
+              category: 'test.step',
+              location: { file: 'a.test.ts', line: 'number', column: 'number' }
+            }
+          ],
+          location: { file: 'a.test.ts', line: 'number', column: 'number' }
+        },
+        {
+          title: 'beforeEach hook',
+          category: 'hook',
+          steps: [
+            {
+              title: 'in beforeEach',
+              category: 'test.step',
+              location: { file: 'a.test.ts', line: 'number', column: 'number' }
+            }
+          ],
+          location: { file: 'a.test.ts', line: 'number', column: 'number' }
+        },
+        {
+          title: 'browserContext.newPage',
+          category: 'pw:api'
+        }
+      ]
+    },
+    {
+      title: 'grand',
+      category: 'test.step',
+      steps: [
+        {
+          title: 'parent1',
+          category: 'test.step',
+          steps: [
+            {
+              title: 'child1',
+              category: 'test.step',
+              location: { file: 'a.test.ts', line: 'number', column: 'number' },
+              steps: [
+                {
+                  title: 'page.click(body)',
+                  category: 'pw:api',
+                  location: { file: 'a.test.ts', line: 'number', column: 'number' }
+                }
+              ]
+            }
+          ],
+          location: {
+            file: 'a.test.ts',
+            line: 'number',
+            column: 'number'
+          }
+        },
+        {
+          title: 'parent2',
+          category: 'test.step',
+          steps: [
+            {
+              title: 'child2',
+              category: 'test.step',
+              location: { file: 'a.test.ts', line: 'number', column: 'number' },
+              steps: [
+                {
+                  title: 'expect.toBeVisible',
+                  category: 'expect',
+                  location: { file: 'a.test.ts', line: 'number', column: 'number' }
+                }
+              ]
+            }
+          ],
+          location: { file: 'a.test.ts', line: 'number', column: 'number' }
+        }
+      ],
+      location: {
+        file: 'a.test.ts',
+        line: 'number',
+        column: 'number'
+      }
+    },
+    {
+      title: 'After Hooks',
+      category: 'hook',
+      steps: [
+        {
+          title: 'afterEach hook',
+          category: 'hook',
+          steps: [
+            {
+              title: 'in afterEach',
+              category: 'test.step',
+              location: { file: 'a.test.ts', line: 'number', column: 'number' }
+            }
+          ],
+          location: { file: 'a.test.ts', line: 'number', column: 'number' }
+        },
+        {
+          title: 'afterAll hook',
+          category: 'hook',
+          steps: [
+            {
+              title: 'in afterAll',
+              category: 'test.step',
+              location: { file: 'a.test.ts', line: 'number', column: 'number' }
+            }
+          ],
+          location: { file: 'a.test.ts', line: 'number', column: 'number' }
+        },
+        {
+          title: 'browserContext.close',
+          category: 'pw:api'
+        }
+      ]
+    }
+  ]);
+});

@@ -37,7 +37,8 @@ class UIMode {
   globalCleanup: (() => Promise<FullResult['status']>) | undefined;
   private _globalWatcher: Watcher;
   private _testWatcher: Watcher;
-  private _originalStderr: (buffer: string | Uint8Array) => void;
+  private _originalStdoutWrite: NodeJS.WriteStream['write'];
+  private _originalStderrWrite: NodeJS.WriteStream['write'];
 
   constructor(config: FullConfigInternal) {
     this._config = config;
@@ -57,7 +58,8 @@ class UIMode {
     config._internal.configCLIOverrides.use = config._internal.configCLIOverrides.use || {};
     config._internal.configCLIOverrides.use.trace = { mode: 'on', sources: false };
 
-    this._originalStderr = process.stderr.write.bind(process.stderr);
+    this._originalStdoutWrite = process.stdout.write;
+    this._originalStderrWrite = process.stderr.write;
     this._globalWatcher = new Watcher('deep', () => this._dispatchEvent({ method: 'listChanged' }));
     this._testWatcher = new Watcher('flat', events => {
       const collector = new Set<string>();
@@ -111,7 +113,7 @@ class UIMode {
         return;
       }
       if (method === 'open' && params.location) {
-        open('vscode://file/' + params.location).catch(e => this._originalStderr(String(e)));
+        open('vscode://file/' + params.location).catch(e => this._originalStderrWrite.call(process.stderr, String(e)));
         return;
       }
       if (method === 'resizeTerminal') {
@@ -129,6 +131,11 @@ class UIMode {
       await queue;
     });
     await exitPromise;
+
+    if (!process.env.PWTEST_DEBUG) {
+      process.stdout.write = this._originalStdoutWrite;
+      process.stderr.write = this._originalStderrWrite;
+    }
   }
 
   private async _queueListOrRun(method: string, params: any) {
@@ -140,7 +147,7 @@ class UIMode {
 
   private _dispatchEvent(message: any) {
     // eslint-disable-next-line no-console
-    this._page.mainFrame().evaluateExpression(dispatchFuncSource, true, message).catch(e => this._originalStderr(String(e)));
+    this._page.mainFrame().evaluateExpression(dispatchFuncSource, true, message).catch(e => this._originalStderrWrite.call(process.stderr, String(e)));
   }
 
   private async _listTests() {

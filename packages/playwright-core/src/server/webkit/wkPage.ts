@@ -44,6 +44,7 @@ import { WKProvisionalPage } from './wkProvisionalPage';
 import { WKWorkers } from './wkWorkers';
 import { debugLogger } from '../../common/debugLogger';
 import { ManualPromise } from '../../utils/manualPromise';
+import { BrowserContext } from '../browserContext';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
@@ -607,7 +608,7 @@ export class WKPage implements PageDelegate {
   }
 
   _onDialog(event: Protocol.Dialog.javascriptDialogOpeningPayload) {
-    this._page.emit(Page.Events.Dialog, new dialog.Dialog(
+    this._page.emitOnContext(BrowserContext.Events.Dialog, new dialog.Dialog(
         this._page,
         event.type as dialog.DialogType,
         event.message,
@@ -732,8 +733,8 @@ export class WKPage implements PageDelegate {
   }
 
   async updateHttpCredentials() {
-    const credentials = this._browserContext._options.httpCredentials || { username: '', password: '' };
-    await this._pageProxySession.send('Emulation.setAuthCredentials', { username: credentials.username, password: credentials.password });
+    const credentials = this._browserContext._options.httpCredentials || { username: '', password: '', origin: '' };
+    await this._pageProxySession.send('Emulation.setAuthCredentials', { username: credentials.username, password: credentials.password, origin: credentials.origin });
   }
 
   async updateFileChooserInterception() {

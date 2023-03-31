@@ -66,10 +66,14 @@ export type JsonTestCase = {
   testId: string;
   title: string;
   location: JsonLocation;
+  retries: number;
+};
+
+export type JsonTestEnd = {
+  testId: string;
   expectedStatus: TestStatus;
   timeout: number;
   annotations: { type: string, description?: string }[];
-  retries: number;
 };
 
 export type JsonTestResultStart = {
@@ -127,7 +131,7 @@ export class TeleReporterReceiver {
       return;
     }
     if (method === 'onTestEnd') {
-      this._onTestEnd(params.testId, params.result);
+      this._onTestEnd(params.test, params.result);
       return;
     }
     if (method === 'onStepBegin') {
@@ -196,8 +200,11 @@ export class TeleReporterReceiver {
     this._reporter.onTestBegin?.(test, testResult);
   }
 
-  private _onTestEnd(testId: string, payload: JsonTestResultEnd) {
-    const test = this._tests.get(testId)!;
+  private _onTestEnd(testEndPayload: JsonTestEnd, payload: JsonTestResultEnd) {
+    const test = this._tests.get(testEndPayload.testId)!;
+    test.timeout = testEndPayload.timeout;
+    test.expectedStatus = testEndPayload.expectedStatus;
+    test.annotations = testEndPayload.annotations;
     const result = test.resultsMap.get(payload.id)!;
     result.duration = payload.duration;
     result.status = payload.status;
@@ -313,10 +320,7 @@ export class TeleReporterReceiver {
 
   private _updateTest(payload: JsonTestCase, test: TeleTestCase): TeleTestCase {
     test.id = payload.testId;
-    test.expectedStatus = payload.expectedStatus;
-    test.timeout = payload.timeout;
     test.location = this._absoluteLocation(payload.location);
-    test.annotations = payload.annotations;
     test.retries = payload.retries;
     return test;
   }

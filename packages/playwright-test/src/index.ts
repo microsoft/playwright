@@ -239,7 +239,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
 
   _snapshotSuffix: [process.platform, { scope: 'worker' }],
 
-  _setupContextOptionsAndArtifacts: [async ({ playwright, _snapshotSuffix, _combinedContextOptions, _artifactsDir, trace, screenshot, actionTimeout, navigationTimeout, testIdAttribute }, use, testInfo) => {
+  _setupContextOptionsAndArtifacts: [async ({ playwright, _contextReuseMode, _snapshotSuffix, _combinedContextOptions, _artifactsDir, trace, screenshot, actionTimeout, navigationTimeout, testIdAttribute }, use, testInfo) => {
     if (testIdAttribute)
       playwrightLibrary.selectors.setTestIdAttribute(testIdAttribute);
     testInfo.snapshotSuffix = _snapshotSuffix;
@@ -251,7 +251,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     const traceMode = normalizeTraceMode(trace);
     const defaultTraceOptions = { screenshots: true, snapshots: true, sources: true };
     const traceOptions = typeof trace === 'string' ? defaultTraceOptions : { ...defaultTraceOptions, ...trace, mode: undefined };
-    const captureTrace = shouldCaptureTrace(traceMode, testInfo);
+    const captureTrace = shouldCaptureTrace(traceMode, testInfo) && !process.env.PW_TEST_DISABLE_TRACING;
     const temporaryTraceFiles: string[] = [];
     const temporaryScreenshots: string[] = [];
     const testInfoImpl = testInfo as TestInfoImpl;
@@ -272,8 +272,6 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
             location: stackTrace?.frames[0] as any,
             category: 'pw:api',
             title: apiCall,
-            canHaveChildren: false,
-            forceNoParent: false,
             wallTime,
           });
           userData.userObject = step;
@@ -603,7 +601,7 @@ type ParsedStackTrace = {
   apiName: string;
 };
 
-export function normalizeVideoMode(video: VideoMode | 'retry-with-video' | { mode: VideoMode } | undefined): VideoMode {
+function normalizeVideoMode(video: VideoMode | 'retry-with-video' | { mode: VideoMode } | undefined): VideoMode {
   if (!video)
     return 'off';
   let videoMode = typeof video === 'string' ? video : video.mode;
@@ -616,7 +614,7 @@ function shouldCaptureVideo(videoMode: VideoMode, testInfo: TestInfo) {
   return (videoMode === 'on' || videoMode === 'retain-on-failure' || (videoMode === 'on-first-retry' && testInfo.retry === 1));
 }
 
-export function normalizeTraceMode(trace: TraceMode | 'retry-with-trace' | { mode: TraceMode } | undefined): TraceMode {
+function normalizeTraceMode(trace: TraceMode | 'retry-with-trace' | { mode: TraceMode } | undefined): TraceMode {
   if (!trace)
     return 'off';
   let traceMode = typeof trace === 'string' ? trace : trace.mode;

@@ -41,7 +41,7 @@ type CtConfig = BasePlaywrightTestConfig['use'] & {
   ctViteConfig?: InlineConfig | (() => Promise<InlineConfig>);
 };
 
-const importReactRE = /(^|\n)import\s+(\*\s+as\s+)?React(,|\s+)/;
+const importReactRE = /(^|\n|;)import\s+(\*\s+as\s+)?React(,|\s+)/;
 const compiledReactRE = /(const|var)\s+React\s*=/;
 
 export function createPlugin(
@@ -104,9 +104,6 @@ export function createPlugin(
 
       viteConfig.root = rootDir;
       viteConfig.preview = { port, ...viteConfig.preview };
-      viteConfig.build = {
-        outDir
-      };
 
       // React heuristic. If we see a component in a file with .js extension,
       // consider it a potential JSX-in-JS scenario and enable JSX loader for all
@@ -138,6 +135,7 @@ export function createPlugin(
       viteConfig.css.devSourcemap = true;
       viteConfig.build = {
         ...viteConfig.build,
+        outDir,
         target: 'esnext',
         minify: false,
         rollupOptions: {

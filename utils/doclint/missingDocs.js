@@ -35,14 +35,14 @@ module.exports = function lint(documentation, jsSources, apiFileName) {
       continue;
     }
     for (const [methodName, params] of methods) {
-      const member = docClass.membersArray.find(m => m.alias === methodName && m.kind !== 'event');
-      if (!member) {
+      const members = docClass.membersArray.filter(m => m.alias === methodName && m.kind !== 'event');
+      if (!members.length) {
         errors.push(`Missing documentation for "${className}.${methodName}"`);
         continue;
       }
-      const memberParams = paramsForMember(member);
       for (const paramName of params) {
-        if (!memberParams.has(paramName))
+        const found = members.some(member => paramsForMember(member).has(paramName));
+        if (!found)
           errors.push(`Missing documentation for "${className}.${methodName}.${paramName}"`);
       }
     }

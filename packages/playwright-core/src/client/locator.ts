@@ -180,6 +180,12 @@ export class Locator implements api.Locator {
     return this._frame.$$(this._selector);
   }
 
+  and(locator: Locator): Locator {
+    if (locator._frame !== this._frame)
+      throw new Error(`Locators must belong to the same frame.`);
+    return new Locator(this._frame, this._selector + ` >> internal:and=` + JSON.stringify(locator._selector));
+  }
+
   first(): Locator {
     return new Locator(this._frame, this._selector + ' >> nth=0');
   }
@@ -190,6 +196,12 @@ export class Locator implements api.Locator {
 
   nth(index: number): Locator {
     return new Locator(this._frame, this._selector + ` >> nth=${index}`);
+  }
+
+  not(locator: Locator): Locator {
+    if (locator._frame !== this._frame)
+      throw new Error(`Locators must belong to the same frame.`);
+    return new Locator(this._frame, this._selector + ` >> internal:not=` + JSON.stringify(locator._selector));
   }
 
   or(locator: Locator): Locator {

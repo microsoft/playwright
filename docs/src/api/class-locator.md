@@ -98,6 +98,45 @@ String[] texts = page.getByRole(AriaRole.LINK).allTextContents();
 var texts = await page.GetByRole(AriaRole.Link).AllTextContentsAsync();
 ```
 
+## method: Locator.and
+* since: v1.33
+* langs:
+  - alias-python: and_
+- returns: <[Locator]>
+
+Creates a locator that matches both this locator and the argument locator.
+
+**Usage**
+
+The following example finds a button with a specific title.
+
+```js
+const button = page.getByRole('button').and(page.getByTitle('Subscribe'));
+```
+
+```java
+Locator button = page.getByRole(AriaRole.BUTTON).and(page.getByTitle("Subscribe"));
+```
+
+```python async
+button = page.get_by_role("button").and_(page.getByTitle("Subscribe"))
+```
+
+```python sync
+button = page.get_by_role("button").and_(page.getByTitle("Subscribe"))
+```
+
+```csharp
+var button = page.GetByRole(AriaRole.Button).And(page.GetByTitle("Subscribe"));
+```
+
+### param: Locator.and.locator
+* since: v1.33
+- `locator` <[Locator]>
+
+Additional locator to match.
+
+
 ## async method: Locator.blur
 * since: v1.28
 
@@ -949,6 +988,7 @@ await rowLocator
 ### option: Locator.filter.-inline- = %%-locator-options-list-v1.14-%%
 * since: v1.22
 
+
 ## method: Locator.first
 * since: v1.14
 - returns: <[Locator]>
@@ -1462,6 +1502,46 @@ var banana = await page.GetByRole(AriaRole.Listitem).Last(1);
 
 ### option: Locator.locator.-inline- = %%-locator-options-list-v1.14-%%
 * since: v1.14
+
+
+## method: Locator.not
+* since: v1.33
+* langs:
+  - alias-python: not_
+- returns: <[Locator]>
+
+Creates a locator that **matches this** locator, but **not the argument** locator.
+
+**Usage**
+
+The following example finds a button that does not have title `"Subscribe"`.
+
+```js
+const button = page.getByRole('button').not(page.getByTitle('Subscribe'));
+```
+
+```java
+Locator button = page.getByRole(AriaRole.BUTTON).not(page.getByTitle("Subscribe"));
+```
+
+```python async
+button = page.get_by_role("button").not_(page.getByTitle("Subscribe"))
+```
+
+```python sync
+button = page.get_by_role("button").not_(page.getByTitle("Subscribe"))
+```
+
+```csharp
+var button = page.GetByRole(AriaRole.Button).Not(page.GetByTitle("Subscribe"));
+```
+
+### param: Locator.not.locator
+* since: v1.33
+- `locator` <[Locator]>
+
+Locator that must not match.
+
 
 ## method: Locator.nth
 * since: v1.14

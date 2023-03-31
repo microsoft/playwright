@@ -337,7 +337,7 @@ export function formatResultFailure(config: FullConfig, test: TestCase, result: 
   }
 
   for (const error of result.errors) {
-    const formattedError = formatError(config, error, highlightCode, test.location.file);
+    const formattedError = formatError(config, error, highlightCode);
     errorDetails.push({
       message: indent(formattedError.message, initialIndent),
       location: formattedError.location,
@@ -377,7 +377,7 @@ function formatTestHeader(config: FullConfig, test: TestCase, indent: string, in
   return separator(header);
 }
 
-export function formatError(config: FullConfig, error: TestError, highlightCode: boolean, file?: string): ErrorDetails {
+export function formatError(config: FullConfig, error: TestError, highlightCode: boolean): ErrorDetails {
   const message = error.message || error.value || '';
   const stack = error.stack;
   if (!stack && !error.location)
@@ -390,34 +390,50 @@ export function formatError(config: FullConfig, error: TestError, highlightCode:
   const parsedStack = stack ? prepareErrorStack(stack) : undefined;
   tokens.push(parsedStack?.message || message);
 
-  let location = error.location;
-  if (parsedStack && !location)
-    location = parsedStack.location;
-
-  if (location) {
-    try {
-      const source = fs.readFileSync(location.file, 'utf8');
-      const codeFrame = codeFrameColumns(source, { start: location }, { highlightCode });
-      // Convert /var/folders to /private/var/folders on Mac.
-      if (!file || fs.realpathSync(file) !== location.file) {
-        tokens.push('');
-        tokens.push(colors.gray(`   at `) + `${relativeFilePath(config, location.file)}:${location.line}`);
-      }
-      tokens.push('');
-      tokens.push(codeFrame);
-    } catch (e) {
-      // Failed to read the source file - that's ok.
-    }
+  if (error.snippet) {
+    let snippet = error.snippet;
+    if (!highlightCode)
+      snippet = stripAnsiEscapes(snippet);
+    tokens.push('');
+    tokens.push(snippet);
   }
+
   if (parsedStack) {
     tokens.push('');
     tokens.push(colors.dim(parsedStack.stackLines.join('\n')));
   }
 
+  let location = error.location;
+  if (parsedStack && !location)
+    location = parsedStack.location;
+
   return {
     location,
     message: tokens.join('\n'),
   };
+}
+
+export function addSnippetToError(config: FullConfig, error: TestError, file?: string) {
+  let location = error.location;
+  if (error.stack && !location)
+    location = prepareErrorStack(error.stack).location;
+  if (!location)
+    return;
+
+  try {
+    const tokens = [];
+    const source = fs.readFileSync(location.file, 'utf8');
+    const codeFrame = codeFrameColumns(source, { start: location }, { highlightCode: true });
+    // Convert /var/folders to /private/var/folders on Mac.
+    if (!file || fs.realpathSync(file) !== location.file) {
+      tokens.push(colors.gray(`   at `) + `${relativeFilePath(config, location.file)}:${location.line}`);
+      tokens.push('');
+    }
+    tokens.push(codeFrame);
+    error.snippet = tokens.join('\n');
+  } catch (e) {
+    // Failed to read the source file - that's ok.
+  }
 }
 
 export function separator(text: string = ''): string {

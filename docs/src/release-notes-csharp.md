@@ -831,7 +831,7 @@ await button.ClickAsync("button >> visible=true");
 #### Highlights
 
 - Playwright for .NET v1.12 is now stable!
-- Ships with the [codegen](./cli.md#generate-code) and [trace viewer](./trace-viewer.md) tools out-of-the-box
+- Ships with the [codegen](./codegen.md) and [trace viewer](./trace-viewer.md) tools out-of-the-box
 
 #### Browser Versions
 

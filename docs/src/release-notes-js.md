@@ -38,7 +38,7 @@ Note: **component tests only**, does not affect end-to-end tests.
 
 ### Browser Versions
 
-* Chromium 112.0.5615.29	
+* Chromium 112.0.5615.29
 * Mozilla Firefox 111.0
 * WebKit 16.4
 
@@ -509,13 +509,13 @@ export default defineConfig({
   webServer: [
     {
       command: 'npm run start',
-      port: 3000,
+      url: 'http://127.0.0.1:3000',
       timeout: 120 * 1000,
       reuseExistingServer: !process.env.CI,
     },
     {
       command: 'npm run backend',
-      port: 3333,
+      url: 'http://127.0.0.1:3333',
       timeout: 120 * 1000,
       reuseExistingServer: !process.env.CI,
     }
@@ -729,7 +729,7 @@ Read more about [component testing with Playwright](./test-components).
 
 ### ⚠️ Breaking Changes ⚠️
 
-WebServer is now considered "ready" if request to the specified port has any of the following HTTP status codes:
+WebServer is now considered "ready" if request to the specified url has any of the following HTTP status codes:
 
 * `200-299`
 * `300-399` (new)
@@ -1524,7 +1524,7 @@ Step information is exposed in reporters API.
 
 #### 🌎 Launch web server before running tests
 
-To launch a server during the tests, use the [`webServer`](./test-advanced#launching-a-development-web-server-during-the-tests) option in the configuration file. The server will wait for a given port to be available before running the tests, and the port will be passed over to Playwright as a [`baseURL`](./api/class-fixtures#fixtures-base-url) when creating a context.
+To launch a server during the tests, use the [`webServer`](./test-advanced#launching-a-development-web-server-during-the-tests) option in the configuration file. The server will wait for a given url to be available before running the tests, and the url will be passed over to Playwright as a [`baseURL`](./api/class-fixtures#fixtures-base-url) when creating a context.
 
 ```ts
 // playwright.config.ts
@@ -1532,7 +1532,7 @@ import { defineConfig } from '@playwright/test';
 export default defineConfig({
   webServer: {
     command: 'npm run start', // command to launch
-    port: 3000, // port to await for
+    url: 'http://127.0.0.1:3000', // url to await for
     timeout: 120 * 1000,
     reuseExistingServer: !process.env.CI,
   },
@@ -1765,7 +1765,7 @@ This version of Playwright was also tested against the following stable channels
 ## Version 1.8
 
 - [Selecting elements based on layout](./other-locators.md#css-matching-elements-based-on-layout) with `:left-of()`, `:right-of()`, `:above()` and `:below()`.
-- Playwright now includes [command line interface](./cli.md), former playwright-cli.
+- Playwright now includes [command line interface](./test-cli.md), former playwright-cli.
   ```bash js
   npx playwright --help
   ```

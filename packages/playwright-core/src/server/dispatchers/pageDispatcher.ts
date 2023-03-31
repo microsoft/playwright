@@ -20,8 +20,6 @@ import { Page, Worker } from '../page';
 import type * as channels from '@protocol/channels';
 import { Dispatcher, existingDispatcher } from './dispatcher';
 import { parseError, serializeError } from '../../protocol/serializers';
-import { ConsoleMessageDispatcher } from './consoleMessageDispatcher';
-import { DialogDispatcher } from './dialogDispatcher';
 import { FrameDispatcher } from './frameDispatcher';
 import { RequestDispatcher } from './networkDispatchers';
 import { ResponseDispatcher } from './networkDispatchers';
@@ -76,9 +74,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
       this._dispatchEvent('close');
       this._dispose();
     });
-    this.addObjectListener(Page.Events.Console, message => this._dispatchEvent('console', { message: new ConsoleMessageDispatcher(this, message) }));
     this.addObjectListener(Page.Events.Crash, () => this._dispatchEvent('crash'));
-    this.addObjectListener(Page.Events.Dialog, dialog => this._dispatchEvent('dialog', { dialog: new DialogDispatcher(this, dialog) }));
     this.addObjectListener(Page.Events.Download, (download: Download) => {
       // Artifact can outlive the page, so bind to the context scope.
       this._dispatchEvent('download', { url: download.url, suggestedFilename: download.suggestedFilename(), artifact: ArtifactDispatcher.from(parentScope, download.artifact) });

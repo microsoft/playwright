@@ -414,6 +414,32 @@ it('should work with internal:or=', async ({ page, server }) => {
   expect(await page.locator(`span >> internal:or="article"`).textContent()).toBe('world');
 });
 
+it('should work with internal:and=', async ({ page, server }) => {
+  await page.setContent(`
+    <div class=foo>hello</div><div class=bar>world</div>
+    <span class=foo>hello2</span><span class=bar>world2</span>
+  `);
+  expect(await page.$$eval(`div >> internal:and="span"`, els => els.map(e => e.textContent))).toEqual([]);
+  expect(await page.$$eval(`div >> internal:and=".foo"`, els => els.map(e => e.textContent))).toEqual(['hello']);
+  expect(await page.$$eval(`div >> internal:and=".bar"`, els => els.map(e => e.textContent))).toEqual(['world']);
+  expect(await page.$$eval(`span >> internal:and="span"`, els => els.map(e => e.textContent))).toEqual(['hello2', 'world2']);
+  expect(await page.$$eval(`.foo >> internal:and="div"`, els => els.map(e => e.textContent))).toEqual(['hello']);
+  expect(await page.$$eval(`.bar >> internal:and="span"`, els => els.map(e => e.textContent))).toEqual(['world2']);
+});
+
+it('should work with internal:not=', async ({ page, server }) => {
+  await page.setContent(`
+    <div class=foo>hello</div>
+    <div class=bar>world</div>
+  `);
+  expect(await page.$$eval(`div >> internal:not="span"`, els => els.map(e => e.textContent))).toEqual(['hello', 'world']);
+  expect(await page.$$eval(`div >> internal:not=".foo"`, els => els.map(e => e.textContent))).toEqual(['world']);
+  expect(await page.$$eval(`div >> internal:not=".bar"`, els => els.map(e => e.textContent))).toEqual(['hello']);
+  expect(await page.$$eval(`div >> internal:not="div"`, els => els.map(e => e.textContent))).toEqual([]);
+  expect(await page.$$eval(`span >> internal:not="div"`, els => els.map(e => e.textContent))).toEqual([]);
+  expect(await page.$$eval(`.foo >> internal:not=".bar"`, els => els.map(e => e.textContent))).toEqual(['hello']);
+});
+
 it('chaining should work with large DOM @smoke', async ({ page, server }) => {
   await page.evaluate(() => {
     let last = document.body;

@@ -8,7 +8,7 @@ title: "Troubleshooting"
 Playwright does self-inspection every time it runs to make sure the browsers can be launched successfully. If there are missing
 dependencies, playwright will print instructions to acquire them.
 
-See also in the [Command line tools](./cli.md#install-system-dependencies)
+See also in the [browsers](./browsers.md#install-system-dependencies) doc
 which has a command to install all necessary dependencies automatically for Ubuntu
 LTS releases.
 
@@ -42,8 +42,9 @@ Running TypeScript tests in `"type": "module"` project requires Node.js 16 or hi
 
 It's known that Playwright is not working as expected when some Microsoft Edge / Google Chrome policy settings are set. The following shows some of them, there might be more that affect Playwright's functionalities. If you find any other policy settings that break functionality, please file an issue and we'll add it to this document. You can see a list of applied policies by running `chrome://policy` in the browser.
 
-- `UserDataDir` - This policy is used to specify the location of the user data directory. Playwright uses a temporary directory for user data, so this policy is not compatible with Playwright. See discussion in [this bug](https://github.com/microsoft/playwright/issues/17448).
+-  `BrowserSignin` - This policy may prevent Playwright from launching the browser without signing in. Playwright will fail to launch browser if the policy forces users to sign-in to use the browser. See discussion in [this bug](https://github.com/microsoft/playwright/issues/22016)
 - `ExtensionInstallForcelist` - This policy is used to specify a list of extensions that should be installed. Playwright's browser close will not work if this policy is set. See discussion in [this bug](https://github.com/microsoft/playwright/issues/17299).
+- `UserDataDir` - This policy is used to specify the location of the user data directory. Playwright uses a temporary directory for user data, so this policy is not compatible with Playwright. See discussion in [this bug](https://github.com/microsoft/playwright/issues/17448).
 
 ## .NET requirements
 * langs: csharp
@@ -88,7 +89,7 @@ dependencies to run the browsers.
 Only Debian 11, Ubuntu 20.04 and 22.04 are officially supported.
 :::
 
-See also in the [Command line tools](./cli.md#install-system-dependencies)
+See also in the [browsers](./browsers.md#install-system-dependencies) doc
 which has a command to install all necessary dependencies automatically for Ubuntu
 LTS releases.
 

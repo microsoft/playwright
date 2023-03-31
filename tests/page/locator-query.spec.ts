@@ -115,15 +115,15 @@ it('should support has:locator', async ({ page, trace }) => {
   await expect(page.locator(`div`, {
     has: page.locator(`text=world`)
   })).toHaveCount(1);
-  expect(removeHighlight(await page.locator(`div`, {
+  expect(await page.locator(`div`, {
     has: page.locator(`text=world`)
-  }).evaluate(e => e.outerHTML))).toBe(`<div><span>world</span></div>`);
+  }).evaluate(e => e.outerHTML)).toBe(`<div><span>world</span></div>`);
   await expect(page.locator(`div`, {
     has: page.locator(`text="hello"`)
   })).toHaveCount(1);
-  expect(removeHighlight(await page.locator(`div`, {
+  expect(await page.locator(`div`, {
     has: page.locator(`text="hello"`)
-  }).evaluate(e => e.outerHTML))).toBe(`<div><span>hello</span></div>`);
+  }).evaluate(e => e.outerHTML)).toBe(`<div><span>hello</span></div>`);
   await expect(page.locator(`div`, {
     has: page.locator(`xpath=./span`)
   })).toHaveCount(2);
@@ -133,9 +133,9 @@ it('should support has:locator', async ({ page, trace }) => {
   await expect(page.locator(`div`, {
     has: page.locator(`span`, { hasText: 'wor' })
   })).toHaveCount(1);
-  expect(removeHighlight(await page.locator(`div`, {
+  expect(await page.locator(`div`, {
     has: page.locator(`span`, { hasText: 'wor' })
-  }).evaluate(e => e.outerHTML))).toBe(`<div><span>world</span></div>`);
+  }).evaluate(e => e.outerHTML)).toBe(`<div><span>world</span></div>`);
   await expect(page.locator(`div`, {
     has: page.locator(`span`),
     hasText: 'wor',
@@ -171,6 +171,30 @@ it('should support locator.or', async ({ page }) => {
   await expect(page.locator('span').or(page.locator('article'))).toHaveText('world');
 });
 
+it('should support locator.and', async ({ page }) => {
+  await page.setContent(`
+    <div data-testid=foo>hello</div><div data-testid=bar>world</div>
+    <span data-testid=foo>hello2</span><span data-testid=bar>world2</span>
+  `);
+  await expect(page.locator('div').and(page.locator('div'))).toHaveCount(2);
+  await expect(page.locator('div').and(page.getByTestId('foo'))).toHaveText(['hello']);
+  await expect(page.locator('div').and(page.getByTestId('bar'))).toHaveText(['world']);
+  await expect(page.getByTestId('foo').and(page.locator('div'))).toHaveText(['hello']);
+  await expect(page.getByTestId('bar').and(page.locator('span'))).toHaveText(['world2']);
+  await expect(page.locator('span').and(page.getByTestId(/bar|foo/))).toHaveCount(2);
+});
+
+it('should support locator.not', async ({ page }) => {
+  await page.setContent(`<div class=foo>hello</div><div class=bar>world</div>`);
+  await expect(page.locator('div').not(page.locator('span'))).toHaveCount(2);
+  await expect(page.locator('div').not(page.locator('span'))).toHaveText(['hello', 'world']);
+  await expect(page.locator('div').not(page.locator('.foo'))).toHaveText(['world']);
+  await expect(page.locator('div').not(page.locator('.bar'))).toHaveText(['hello']);
+  await expect(page.locator('.foo').not(page.locator('.bar'))).toHaveText(['hello']);
+  await expect(page.locator('.foo').not(page.locator('div'))).toHaveText([]);
+  await expect(page.locator('div').not(page.locator('div'))).toHaveText([]);
+});
+
 it('should enforce same frame for has/leftOf/rightOf/above/below/near', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/frames/two-frames.html');
   const child = page.frames()[1];
@@ -192,7 +216,3 @@ it('alias methods coverage', async ({ page }) => {
   await expect(page.locator('div').getByRole('button')).toHaveCount(1);
   await expect(page.mainFrame().locator('button')).toHaveCount(1);
 });
-
-function removeHighlight(markup: string) {
-  return markup.replace(/\s__playwright_target__="[^"]+"/, '');
-}

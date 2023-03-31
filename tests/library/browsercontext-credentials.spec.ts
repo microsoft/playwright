@@ -76,3 +76,64 @@ it('should return resource body', async ({ browser, server }) => {
   expect((await response.body()).toString()).toContain('Playground');
   await context.close();
 });
+
+it('should work with correct credentials and matching origin', async ({ browser, server }) => {
+  server.setAuth('/empty.html', 'user', 'pass');
+  const context = await browser.newContext({
+    httpCredentials: { username: 'user', password: 'pass', origin: server.PREFIX }
+  });
+  const page = await context.newPage();
+  const response = await page.goto(server.EMPTY_PAGE);
+  expect(response.status()).toBe(200);
+  await context.close();
+});
+
+it('should work with correct credentials and matching origin case insensitive', async ({ browser, server }) => {
+  server.setAuth('/empty.html', 'user', 'pass');
+  const context = await browser.newContext({
+    httpCredentials: { username: 'user', password: 'pass', origin: server.PREFIX.toUpperCase() }
+  });
+  const page = await context.newPage();
+  const response = await page.goto(server.EMPTY_PAGE);
+  expect(response.status()).toBe(200);
+  await context.close();
+});
+
+it('should fail with correct credentials and mismatching scheme', async ({ browser, server, browserName, headless }) => {
+  it.fail(browserName === 'chromium' && !headless);
+  server.setAuth('/empty.html', 'user', 'pass');
+  const context = await browser.newContext({
+    httpCredentials: { username: 'user', password: 'pass', origin: server.PREFIX.replace('http://', 'https://') }
+  });
+  const page = await context.newPage();
+  const response = await page.goto(server.EMPTY_PAGE);
+  expect(response.status()).toBe(401);
+  await context.close();
+});
+
+it('should fail with correct credentials and mismatching hostname', async ({ browser, server, browserName, headless }) => {
+  it.fail(browserName === 'chromium' && !headless);
+  server.setAuth('/empty.html', 'user', 'pass');
+  const hostname = new URL(server.PREFIX).hostname;
+  const origin = server.PREFIX.replace(hostname, 'mismatching-hostname');
+  const context = await browser.newContext({
+    httpCredentials: { username: 'user', password: 'pass', origin: origin }
+  });
+  const page = await context.newPage();
+  const response = await page.goto(server.EMPTY_PAGE);
+  expect(response.status()).toBe(401);
+  await context.close();
+});
+
+it('should fail with correct credentials and mismatching port', async ({ browser, server, browserName, headless }) => {
+  it.fail(browserName === 'chromium' && !headless);
+  server.setAuth('/empty.html', 'user', 'pass');
+  const origin = server.PREFIX.replace(server.PORT.toString(), (server.PORT + 1).toString());
+  const context = await browser.newContext({
+    httpCredentials: { username: 'user', password: 'pass', origin: origin }
+  });
+  const page = await context.newPage();
+  const response = await page.goto(server.EMPTY_PAGE);
+  expect(response.status()).toBe(401);
+  await context.close();
+});

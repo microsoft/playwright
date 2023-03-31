@@ -40,7 +40,7 @@ const basicTestTree = {
 };
 
 test('should run visible', async ({ runUITest }) => {
-  const page = await runUITest(basicTestTree);
+  const { page } = await runUITest(basicTestTree);
   await expect.poll(dumpTestTree(page), { timeout: 15000 }).toContain(`
     ▼ ◯ a.test.ts
   `);
@@ -64,7 +64,7 @@ test('should run visible', async ({ runUITest }) => {
 });
 
 test('should show running progress', async ({ runUITest }) => {
-  const page = await runUITest({
+  const { page } = await runUITest({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('test 1', async () => {});
@@ -83,7 +83,7 @@ test('should show running progress', async ({ runUITest }) => {
 });
 
 test('should run on hover', async ({ runUITest }) => {
-  const page = await runUITest({
+  const { page } = await runUITest({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('passes', () => {});
@@ -102,7 +102,7 @@ test('should run on hover', async ({ runUITest }) => {
 });
 
 test('should run on double click', async ({ runUITest }) => {
-  const page = await runUITest({
+  const { page } = await runUITest({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('passes', () => {});
@@ -120,7 +120,7 @@ test('should run on double click', async ({ runUITest }) => {
 });
 
 test('should run on Enter', async ({ runUITest }) => {
-  const page = await runUITest({
+  const { page } = await runUITest({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('passes', () => {});
@@ -139,7 +139,7 @@ test('should run on Enter', async ({ runUITest }) => {
 });
 
 test('should run by project', async ({ runUITest }) => {
-  const page = await runUITest({
+  const { page } = await runUITest({
     ...basicTestTree,
     'playwright.config.ts': `
       import { defineConfig } from '@playwright/test';
@@ -218,7 +218,7 @@ test('should run by project', async ({ runUITest }) => {
 });
 
 test('should stop', async ({ runUITest }) => {
-  const page = await runUITest({
+  const { page } = await runUITest({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('test 0', () => { test.skip(); });
@@ -256,7 +256,7 @@ test('should stop', async ({ runUITest }) => {
 });
 
 test('should run folder', async ({ runUITest }) => {
-  const page = await runUITest({
+  const { page } = await runUITest({
     'a/folder-b/folder-c/inC.test.ts': `
       import { test, expect } from '@playwright/test';
       test('passes', () => {});
@@ -284,7 +284,7 @@ test('should run folder', async ({ runUITest }) => {
 });
 
 test('should show time', async ({ runUITest }) => {
-  const page = await runUITest(basicTestTree);
+  const { page } = await runUITest(basicTestTree);
   await expect.poll(dumpTestTree(page), { timeout: 15000 }).toContain(`
     ▼ ◯ a.test.ts
   `);
@@ -305,4 +305,28 @@ test('should show time', async ({ runUITest }) => {
   `);
 
   await expect(page.getByTestId('status-line')).toHaveText('4/8 passed (50%)');
+});
+
+test('should show test.fail as passing', async ({ runUITest }) => {
+  const { page } = await runUITest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('should fail', () => {
+        test.fail();
+        expect(1).toBe(2);
+      });
+    `,
+  });
+  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toContain(`
+    ▼ ◯ a.test.ts
+  `);
+
+  await page.getByTitle('Run all').click();
+
+  await expect.poll(dumpTestTree(page, { time: true }), { timeout: 15000 }).toBe(`
+    ▼ ✅ a.test.ts
+        ✅ should fail XXms
+  `);
+
+  await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
 });

@@ -21,6 +21,7 @@ import {
   pollAgainstTimeout } from 'playwright-core/lib/utils';
 import type { ExpectZone } from 'playwright-core/lib/utils';
 import {
+  toBeAttached,
   toBeChecked,
   toBeDisabled,
   toBeEditable,
@@ -130,6 +131,7 @@ expect.poll = (actual: unknown, messageOrOptions: ExpectMessageOrOptions) => {
 
 expectLibrary.setState({ expand: false });
 const customMatchers = {
+  toBeAttached,
   toBeChecked,
   toBeDisabled,
   toBeEditable,
@@ -214,8 +216,6 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
         location: stackFrames[0],
         category: 'expect',
         title: trimLongString(customMessage || defaultTitle, 1024),
-        canHaveChildren: true,
-        forceNoParent: false,
         wallTime
       });
       testInfo.currentStep = step;

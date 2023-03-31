@@ -517,7 +517,7 @@ export default defineConfig({
 
 Only the files matching one of these patterns are executed as test files. Matching is performed against the absolute file path. Strings are treated as glob patterns.
 
-By default, Playwright Test looks for files matching `.*(test|spec)\.(js|ts|mjs)`.
+By default, Playwright looks for files matching the following glob pattern: `**/?(*.)@(spec|test).?(m)[jt]s?(x)`. This means JavaScript or TypeScript files with `".test"` or `".spec"` suffix, for example `login-screen.spec.ts`.
 
 **Usage**
 
@@ -624,7 +624,7 @@ import { defineConfig } from '@playwright/test';
 export default defineConfig({
   webServer: {
     command: 'npm run start',
-    port: 3000,
+    url: 'http://127.0.0.1:3000',
     timeout: 120 * 1000,
     reuseExistingServer: !process.env.CI,
   },
@@ -655,19 +655,19 @@ export default defineConfig({
   webServer: [
     {
       command: 'npm run start',
-      port: 3000,
+      url: 'http://127.0.0.1:3000',
       timeout: 120 * 1000,
       reuseExistingServer: !process.env.CI,
     },
     {
       command: 'npm run backend',
-      port: 3333,
+      url: 'http://127.0.0.1:3333',
       timeout: 120 * 1000,
       reuseExistingServer: !process.env.CI,
     }
   ],
   use: {
-    baseURL: 'http://localhost:3000/',
+    baseURL: 'http://127.0.0.1:3000',
   },
 });
 ```

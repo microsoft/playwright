@@ -16,7 +16,7 @@
 
 import type { RawStack } from './stackTrace';
 
-export type ZoneType = 'apiZone' | 'expectZone';
+export type ZoneType = 'apiZone' | 'expectZone' | 'stepZone';
 
 class ZoneManager {
   lastZoneId = 0;
