@@ -24,7 +24,7 @@ import { baseFullConfig, TeleReporterReceiver, TeleSuite } from '@testIsomorphic
 import type { TeleTestCase } from '@testIsomorphic/teleReceiver';
 import type { FullConfig, Suite, TestCase, Location, TestError } from '../../../playwright-test/types/testReporter';
 import { SplitView } from '@web/components/splitView';
-import { MultiTraceModel } from './modelUtil';
+import { idForAction, MultiTraceModel } from './modelUtil';
 import './watchMode.css';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { Toolbar } from '@web/components/toolbar';
@@ -35,6 +35,7 @@ import { Expandable } from '@web/components/expandable';
 import { toggleTheme } from '@web/theme';
 import { artifactsFolderName } from '@testIsomorphic/folders';
 import { msToString, settings, useSetting } from '@web/uiUtils';
+import type { ActionTraceEvent } from '@trace/trace';
 
 let updateRootSuite: (config: FullConfig, rootSuite: Suite, progress: Progress | undefined) => void = () => {};
 let runWatchedTests = (fileNames: string[]) => {};
@@ -468,6 +469,12 @@ const TraceView: React.FC<{
     return { outputDir, result };
   }, [item]);
 
+  // Preserve user selection upon live-reloading trace model by persisting the action id.
+  // This avoids auto-selection of the last action every time we reload the model.
+  const [selectedActionId, setSelectedActionId] = React.useState<string | undefined>();
+  const onSelectionChanged = React.useCallback((action: ActionTraceEvent) => setSelectedActionId(idForAction(action)), [setSelectedActionId]);
+  const initialSelection = selectedActionId ? model?.actions.find(a => idForAction(a) === selectedActionId) : undefined;
+
   React.useEffect(() => {
     if (pollTimer.current)
       clearTimeout(pollTimer.current);
@@ -514,6 +521,8 @@ const TraceView: React.FC<{
     hideStackFrames={true}
     showSourcesFirst={true}
     rootDir={rootDir}
+    initialSelection={initialSelection}
+    onSelectionChanged={onSelectionChanged}
     defaultSourceLocation={item.location} />;
 };
 
