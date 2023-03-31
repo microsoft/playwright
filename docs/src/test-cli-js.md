@@ -59,7 +59,7 @@ Here are the most common options available in the command line.
   ```bash
   npx playwright test --debug
   ```
-  
+
   -- Run tests in interactive UI mode, with a built-in watch mode (Preview)
   ```bash
   npx playwright test --ui
@@ -96,7 +96,7 @@ Complete set of Playwright Test options is available in the [configuration file]
 | `--retries <number>` | The maximum number of [retries](./test-retries.md#retries) for flaky tests, defaults to zero (no retries). |
 | `--shard <shard>` | [Shard](./test-parallel.md#shard-tests-between-multiple-machines) tests and execute only selected shard, specified in the form `current/all`, 1-based, for example `3/5`.|
 | `--timeout <number>` | Maximum timeout in milliseconds for each test, defaults to 30 seconds. Learn more about [various timeouts](./test-timeouts.md).|
-| `--trace <mode>` | Force tracing mode, can be `on`, `off`, `on-first-retry`, `retain-on-failure` |
+| `--trace <mode>` | Force tracing mode, can be `on`, `off`, `on-first-retry`, `on-all-retries`, `retain-on-failure` |
 | `--ignore-snapshots` | Whether to ignore [snapshots](./test-snapshots.md). Use this when snapshot expectations are known to be different, e.g. running tests on Linux against Windows screenshots. |
 | `--update-snapshots` or `-u` | Whether to update [snapshots](./test-snapshots.md) with actual results instead of comparing them. Use this when snapshot expectations have changed.|
 | `--workers <number>` or `-j <number>`| The maximum number of concurrent worker processes that run in [parallel](./test-parallel.md). |

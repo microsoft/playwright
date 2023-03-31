@@ -400,7 +400,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
 
     // 3. Determine whether we need the artifacts.
     const testFailed = testInfo.status !== testInfo.expectedStatus;
-    const preserveTrace = captureTrace && (traceMode === 'on' || (testFailed && traceMode === 'retain-on-failure') || (traceMode === 'on-first-retry' && testInfo.retry === 1));
+    const preserveTrace = captureTrace && (traceMode === 'on' || (testFailed && traceMode === 'retain-on-failure') || (traceMode === 'on-first-retry' && testInfo.retry === 1) || (traceMode === 'on-all-retries' && testInfo.retry > 0));
     const captureScreenshots = screenshotMode === 'on' || (screenshotMode === 'only-on-failure' && testFailed);
 
     const screenshotAttachments: string[] = [];
@@ -626,7 +626,7 @@ function normalizeTraceMode(trace: TraceMode | 'retry-with-trace' | { mode: Trac
 }
 
 function shouldCaptureTrace(traceMode: TraceMode, testInfo: TestInfo) {
-  return traceMode === 'on' || traceMode === 'retain-on-failure' || (traceMode === 'on-first-retry' && testInfo.retry === 1);
+  return traceMode === 'on' || traceMode === 'retain-on-failure' || (traceMode === 'on-first-retry' && testInfo.retry === 1) || (traceMode === 'on-all-retries' && testInfo.retry > 0);
 }
 
 function normalizeScreenshotMode(screenshot: PlaywrightWorkerOptions['screenshot'] | undefined): ScreenshotMode {
