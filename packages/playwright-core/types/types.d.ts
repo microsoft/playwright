@@ -12478,7 +12478,8 @@ export interface BrowserType<Unused = {}> {
     colorScheme?: null|"light"|"dark"|"no-preference";
 
     /**
-     * Specify device scale factor (can be thought of as dpr). Defaults to `1`.
+     * Specify device scale factor (can be thought of as dpr). Defaults to `1`. Learn more about
+     * [emulating devices with device scale factor](https://playwright.dev/docs/emulation#devices).
      */
     deviceScaleFactor?: number;
 
@@ -12552,7 +12553,8 @@ export interface BrowserType<Unused = {}> {
     handleSIGTERM?: boolean;
 
     /**
-     * Specifies if viewport supports touch events. Defaults to false.
+     * Specifies if viewport supports touch events. Defaults to false. Learn more about
+     * [mobile emulation](https://playwright.dev/docs/emulation#devices).
      */
     hasTouch?: boolean;
 
@@ -12592,18 +12594,20 @@ export interface BrowserType<Unused = {}> {
 
     /**
      * Whether the `meta viewport` tag is taken into account and touch events are enabled. Defaults to `false`. Not
-     * supported in Firefox.
+     * supported in Firefox. Learn more about [mobile emulation](https://playwright.dev/docs/emulation#isMobile).
      */
     isMobile?: boolean;
 
     /**
-     * Whether or not to enable JavaScript in the context. Defaults to `true`.
+     * Whether or not to enable JavaScript in the context. Defaults to `true`. Learn more about
+     * [disabling JavaScript](https://playwright.dev/docs/emulation#javascript-enabled).
      */
     javaScriptEnabled?: boolean;
 
     /**
      * Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value,
-     * `Accept-Language` request header value as well as number and date formatting rules.
+     * `Accept-Language` request header value as well as number and date formatting rules. Learn more about emulation in
+     * our [emulation guide](https://playwright.dev/docs/emulation#locale--timezone).
      */
     locale?: string;
 
@@ -12613,7 +12617,8 @@ export interface BrowserType<Unused = {}> {
     logger?: Logger;
 
     /**
-     * Whether to emulate network being offline. Defaults to `false`.
+     * Whether to emulate network being offline. Defaults to `false`. Learn more about
+     * [network emulation](https://playwright.dev/docs/emulation#offline).
      */
     offline?: boolean;
 
@@ -13925,7 +13930,8 @@ export interface AndroidDevice {
     command?: string;
 
     /**
-     * Specify device scale factor (can be thought of as dpr). Defaults to `1`.
+     * Specify device scale factor (can be thought of as dpr). Defaults to `1`. Learn more about
+     * [emulating devices with device scale factor](https://playwright.dev/docs/emulation#devices).
      */
     deviceScaleFactor?: number;
 
@@ -13959,7 +13965,8 @@ export interface AndroidDevice {
     };
 
     /**
-     * Specifies if viewport supports touch events. Defaults to false.
+     * Specifies if viewport supports touch events. Defaults to false. Learn more about
+     * [mobile emulation](https://playwright.dev/docs/emulation#devices).
      */
     hasTouch?: boolean;
 
@@ -13985,18 +13992,20 @@ export interface AndroidDevice {
 
     /**
      * Whether the `meta viewport` tag is taken into account and touch events are enabled. Defaults to `false`. Not
-     * supported in Firefox.
+     * supported in Firefox. Learn more about [mobile emulation](https://playwright.dev/docs/emulation#isMobile).
      */
     isMobile?: boolean;
 
     /**
-     * Whether or not to enable JavaScript in the context. Defaults to `true`.
+     * Whether or not to enable JavaScript in the context. Defaults to `true`. Learn more about
+     * [disabling JavaScript](https://playwright.dev/docs/emulation#javascript-enabled).
      */
     javaScriptEnabled?: boolean;
 
     /**
      * Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value,
-     * `Accept-Language` request header value as well as number and date formatting rules.
+     * `Accept-Language` request header value as well as number and date formatting rules. Learn more about emulation in
+     * our [emulation guide](https://playwright.dev/docs/emulation#locale--timezone).
      */
     locale?: string;
 
@@ -14006,7 +14015,8 @@ export interface AndroidDevice {
     logger?: Logger;
 
     /**
-     * Whether to emulate network being offline. Defaults to `false`.
+     * Whether to emulate network being offline. Defaults to `false`. Learn more about
+     * [network emulation](https://playwright.dev/docs/emulation#offline).
      */
     offline?: boolean;
 
@@ -15794,7 +15804,8 @@ export interface Browser extends EventEmitter {
     colorScheme?: null|"light"|"dark"|"no-preference";
 
     /**
-     * Specify device scale factor (can be thought of as dpr). Defaults to `1`.
+     * Specify device scale factor (can be thought of as dpr). Defaults to `1`. Learn more about
+     * [emulating devices with device scale factor](https://playwright.dev/docs/emulation#devices).
      */
     deviceScaleFactor?: number;
 
@@ -15828,7 +15839,8 @@ export interface Browser extends EventEmitter {
     };
 
     /**
-     * Specifies if viewport supports touch events. Defaults to false.
+     * Specifies if viewport supports touch events. Defaults to false. Learn more about
+     * [mobile emulation](https://playwright.dev/docs/emulation#devices).
      */
     hasTouch?: boolean;
 
@@ -15854,18 +15866,20 @@ export interface Browser extends EventEmitter {
 
     /**
      * Whether the `meta viewport` tag is taken into account and touch events are enabled. Defaults to `false`. Not
-     * supported in Firefox.
+     * supported in Firefox. Learn more about [mobile emulation](https://playwright.dev/docs/emulation#isMobile).
      */
     isMobile?: boolean;
 
     /**
-     * Whether or not to enable JavaScript in the context. Defaults to `true`.
+     * Whether or not to enable JavaScript in the context. Defaults to `true`. Learn more about
+     * [disabling JavaScript](https://playwright.dev/docs/emulation#javascript-enabled).
      */
     javaScriptEnabled?: boolean;
 
     /**
      * Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value,
-     * `Accept-Language` request header value as well as number and date formatting rules.
+     * `Accept-Language` request header value as well as number and date formatting rules. Learn more about emulation in
+     * our [emulation guide](https://playwright.dev/docs/emulation#locale--timezone).
      */
     locale?: string;
 
@@ -15875,7 +15889,8 @@ export interface Browser extends EventEmitter {
     logger?: Logger;
 
     /**
-     * Whether to emulate network being offline. Defaults to `false`.
+     * Whether to emulate network being offline. Defaults to `false`. Learn more about
+     * [network emulation](https://playwright.dev/docs/emulation#offline).
      */
     offline?: boolean;
 
@@ -16019,6 +16034,8 @@ export interface Browser extends EventEmitter {
     serviceWorkers?: "allow"|"block";
 
     /**
+     * Learn more about [storage state and auth](https://playwright.dev/docs/auth).
+     *
      * Populates context with given storage state. This option can be used to initialize context with logged-in
      * information obtained via
      * [browserContext.storageState([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-storage-state).
@@ -16731,12 +16748,14 @@ export interface Electron {
 
     /**
      * Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value,
-     * `Accept-Language` request header value as well as number and date formatting rules.
+     * `Accept-Language` request header value as well as number and date formatting rules. Learn more about emulation in
+     * our [emulation guide](https://playwright.dev/docs/emulation#locale--timezone).
      */
     locale?: string;
 
     /**
-     * Whether to emulate network being offline. Defaults to `false`.
+     * Whether to emulate network being offline. Defaults to `false`. Learn more about
+     * [network emulation](https://playwright.dev/docs/emulation#offline).
      */
     offline?: boolean;
 
@@ -18914,7 +18933,8 @@ export interface BrowserContextOptions {
   colorScheme?: null|"light"|"dark"|"no-preference";
 
   /**
-   * Specify device scale factor (can be thought of as dpr). Defaults to `1`.
+   * Specify device scale factor (can be thought of as dpr). Defaults to `1`. Learn more about
+   * [emulating devices with device scale factor](https://playwright.dev/docs/emulation#devices).
    */
   deviceScaleFactor?: number;
 
@@ -18933,7 +18953,8 @@ export interface BrowserContextOptions {
   geolocation?: Geolocation;
 
   /**
-   * Specifies if viewport supports touch events. Defaults to false.
+   * Specifies if viewport supports touch events. Defaults to false. Learn more about
+   * [mobile emulation](https://playwright.dev/docs/emulation#devices).
    */
   hasTouch?: boolean;
 
@@ -18950,18 +18971,20 @@ export interface BrowserContextOptions {
 
   /**
    * Whether the `meta viewport` tag is taken into account and touch events are enabled. Defaults to `false`. Not
-   * supported in Firefox.
+   * supported in Firefox. Learn more about [mobile emulation](https://playwright.dev/docs/emulation#isMobile).
    */
   isMobile?: boolean;
 
   /**
-   * Whether or not to enable JavaScript in the context. Defaults to `true`.
+   * Whether or not to enable JavaScript in the context. Defaults to `true`. Learn more about
+   * [disabling JavaScript](https://playwright.dev/docs/emulation#javascript-enabled).
    */
   javaScriptEnabled?: boolean;
 
   /**
    * Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value,
-   * `Accept-Language` request header value as well as number and date formatting rules.
+   * `Accept-Language` request header value as well as number and date formatting rules. Learn more about emulation in
+   * our [emulation guide](https://playwright.dev/docs/emulation#locale--timezone).
    */
   locale?: string;
 
@@ -18971,7 +18994,8 @@ export interface BrowserContextOptions {
   logger?: Logger;
 
   /**
-   * Whether to emulate network being offline. Defaults to `false`.
+   * Whether to emulate network being offline. Defaults to `false`. Learn more about
+   * [network emulation](https://playwright.dev/docs/emulation#offline).
    */
   offline?: boolean;
 
@@ -19115,6 +19139,8 @@ export interface BrowserContextOptions {
   serviceWorkers?: "allow"|"block";
 
   /**
+   * Learn more about [storage state and auth](https://playwright.dev/docs/auth).
+   *
    * Populates context with given storage state. This option can be used to initialize context with logged-in
    * information obtained via
    * [browserContext.storageState([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-storage-state).

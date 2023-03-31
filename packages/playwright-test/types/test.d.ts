@@ -3384,9 +3384,15 @@ export interface PlaywrightWorkerOptions {
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
-   *   use: {
-   *     channel: 'chrome',
-   *   }
+   *   projects: [
+   *     {
+   *       name: 'Microsoft Edge',
+   *       use: {
+   *         ...devices['Desktop Edge'],
+   *         channel: 'msedge'
+   *       },
+   *     },
+   *   ]
    * });
    * ```
    *
@@ -3408,11 +3414,15 @@ export interface PlaywrightWorkerOptions {
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
-   *   use: {
-   *     launchOptions: {
-   *       slowMo: 50,
+   *   projects: [
+   *     {
+   *       name: 'chromium',
+   *       use: { ...devices['Desktop Chrome'] },
+   *       launchOptions: {
+   *         args: ['--load-extension=/path/to/extension'],
    *     },
-   *   },
+   *     }
+   *   ]
    * });
    * ```
    *
@@ -3427,7 +3437,7 @@ export interface PlaywrightWorkerOptions {
    * export default defineConfig({
    *   use: {
    *     connectOptions: {
-   *       timeout: 3000
+   *       wsEndpoint: 'ws://localhost:5678',
    *     },
    *   },
    * });
@@ -3563,7 +3573,9 @@ export interface PlaywrightTestOptions {
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
-   *   acceptDownloads: false,
+   *   use: {
+   *     acceptDownloads: false,
+   *   },
    * });
    * ```
    *
@@ -3612,12 +3624,14 @@ export interface PlaywrightTestOptions {
    *
    * export default defineConfig({
    *   use: {
-   *     deviceScaleFactor: 2
+   *     viewport: { width: 2560, height: 1440 },
+   *     deviceScaleFactor: 2,
    *   },
    * });
    * ```
    *
-   * Specify device scale factor (can be thought of as dpr). Defaults to `1`.
+   * Specify device scale factor (can be thought of as dpr). Defaults to `1`. Learn more about
+   * [emulating devices with device scale factor](https://playwright.dev/docs/emulation#devices).
    */
   deviceScaleFactor: number | undefined;
   /**
@@ -3651,6 +3665,7 @@ export interface PlaywrightTestOptions {
    * });
    * ```
    *
+   * Learn more about [geolocation](https://playwright.dev/docs/emulation#color-scheme-and-media).
    */
   geolocation: Geolocation | undefined;
   /**
@@ -3666,7 +3681,8 @@ export interface PlaywrightTestOptions {
    * });
    * ```
    *
-   * Specifies if viewport supports touch events. Defaults to false.
+   * Specifies if viewport supports touch events. Defaults to false. Learn more about
+   * [mobile emulation](https://playwright.dev/docs/emulation#devices).
    */
   hasTouch: boolean;
   /**
@@ -3719,7 +3735,7 @@ export interface PlaywrightTestOptions {
    * ```
    *
    * Whether the `meta viewport` tag is taken into account and touch events are enabled. Defaults to `false`. Not
-   * supported in Firefox.
+   * supported in Firefox. Learn more about [mobile emulation](https://playwright.dev/docs/emulation#isMobile).
    */
   isMobile: boolean;
   /**
@@ -3735,7 +3751,8 @@ export interface PlaywrightTestOptions {
    * });
    * ```
    *
-   * Whether or not to enable JavaScript in the context. Defaults to `true`.
+   * Whether or not to enable JavaScript in the context. Defaults to `true`. Learn more about
+   * [disabling JavaScript](https://playwright.dev/docs/emulation#javascript-enabled).
    */
   javaScriptEnabled: boolean;
   /**
@@ -3752,7 +3769,8 @@ export interface PlaywrightTestOptions {
    * ```
    *
    * Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value,
-   * `Accept-Language` request header value as well as number and date formatting rules.
+   * `Accept-Language` request header value as well as number and date formatting rules. Learn more about emulation in
+   * our [emulation guide](https://playwright.dev/docs/emulation#locale--timezone).
    */
   locale: string | undefined;
   /**
@@ -3768,7 +3786,8 @@ export interface PlaywrightTestOptions {
    * });
    * ```
    *
-   * Whether to emulate network being offline. Defaults to `false`.
+   * Whether to emulate network being offline. Defaults to `false`. Learn more about
+   * [network emulation](https://playwright.dev/docs/emulation#offline).
    */
   offline: boolean;
   /**
@@ -3820,6 +3839,8 @@ export interface PlaywrightTestOptions {
    *   },
    * });
    * ```
+   *
+   * Learn more about [storage state and auth](https://playwright.dev/docs/auth).
    *
    * Populates context with given storage state. This option can be used to initialize context with logged-in
    * information obtained via
@@ -3890,7 +3911,7 @@ export interface PlaywrightTestOptions {
    * export default defineConfig({
    *   use: {
    *     /* Base URL to use in actions like `await page.goto('/')`. *\/
-   *     baseURL: process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://localhost:3000',
+   *     baseURL: 'http://localhost:3000',
    *   },
    * });
    * ```
@@ -3925,7 +3946,7 @@ export interface PlaywrightTestOptions {
    * export default defineConfig({
    *   use: {
    *     contextOptions: {
-   *       viewport: viewport: { width: 1280, height: 720 },
+   *       reducedMotion: 'reduce',
    *     },
    *   },
    * });

@@ -129,12 +129,17 @@ export default defineConfig({
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
-  use: {
-    channel: 'chrome',
-  }
+  projects: [
+    {
+      name: 'Microsoft Edge',
+      use: { 
+        ...devices['Desktop Edge'], 
+        channel: 'msedge' 
+      },
+    },
+  ]
 });
 ```
-
 ## property: TestOptions.colorScheme = %%-context-option-colorscheme-%%
 * since: v1.10
 
@@ -204,7 +209,8 @@ import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
   use: {
-    deviceScaleFactor: 2
+    viewport: { width: 2560, height: 1440 },
+    deviceScaleFactor: 2,
   },
 });
 ```
@@ -240,6 +246,7 @@ export default defineConfig({
   },
 });
 ```
+Learn more about [geolocation](../emulation.md#color-scheme-and-media).
 
 ## property: TestOptions.hasTouch = %%-context-option-hastouch-%%
 * since: v1.10
@@ -334,6 +341,7 @@ export default defineConfig({
 });
 ```
 
+
 ## property: TestOptions.launchOptions
 * since: v1.10
 - type: <[Object]>
@@ -346,11 +354,15 @@ Options used to launch the browser, as passed to [`method: BrowserType.launch`].
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
-  use: {
-    launchOptions: {
-      args: ['--load-extension=/path/to/extension'],
+  projects: [
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
+      launchOptions: {
+        args: ['--load-extension=/path/to/extension'],
     },
-  },
+    }
+  ]
 });
 ```
 
