@@ -47,7 +47,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
   readonly world: types.World | null;
 
   constructor(delegate: js.ExecutionContextDelegate, frame: frames.Frame, world: types.World|null) {
-    super(frame, delegate);
+    super(frame, delegate, world || 'content-script');
     this.frame = frame;
     this.world = world;
   }
@@ -114,7 +114,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
         );
         })();
       `;
-      this._injectedScriptPromise = this.rawEvaluateHandle(source).then(objectId => new js.JSHandle(this, 'object', undefined, objectId));
+      this._injectedScriptPromise = this.rawEvaluateHandle(source).then(objectId => new js.JSHandle(this, 'object', 'InjectedScript', objectId));
     }
     return this._injectedScriptPromise;
   }
@@ -455,6 +455,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         // Do not await here, just in case the renderer is stuck (e.g. on alert)
         // and we won't be able to cleanup.
         hitTargetInterceptionHandle!.evaluate(h => h.stop()).catch(e => {});
+        hitTargetInterceptionHandle!.dispose();
       });
     }
 
@@ -470,7 +471,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       if (restoreModifiers)
         await this._page.keyboard._ensureModifiers(restoreModifiers);
       if (hitTargetInterceptionHandle) {
-        const stopHitTargetInterception = hitTargetInterceptionHandle.evaluate(h => h.stop()).catch(e => 'done' as const);
+        const stopHitTargetInterception = hitTargetInterceptionHandle.evaluate(h => h.stop()).catch(e => 'done' as const).finally(() => {
+          hitTargetInterceptionHandle?.dispose();
+        });
         if (!options.noWaitAfter) {
           // When noWaitAfter is passed, we do not want to accidentally stall on
           // non-committed navigation blocking the evaluate.
