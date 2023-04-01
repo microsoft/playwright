@@ -4189,7 +4189,7 @@ interface GenericAssertions<R> {
 
 type BaseMatchers<R, T> = GenericAssertions<R> & PlaywrightTest.Matchers<R, T>;
 
-type MakeMatchers<R, T> = BaseMatchers<R, T> & {
+export type MakeMatchers<R, T> = BaseMatchers<R, T> & {
     /**
      * If you know how to test something, `.not` lets you test its opposite.
      */
