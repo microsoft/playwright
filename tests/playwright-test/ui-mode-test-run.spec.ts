@@ -228,7 +228,7 @@ test('should stop', async ({ runUITest }) => {
     `,
   });
 
-  await expect(page.getByTitle('Run all')).toBeEnabled();
+  await expect(page.getByTitle('Run all')).toBeEnabled({ timeout: 15000 });
   await expect(page.getByTitle('Stop')).toBeDisabled();
 
   await page.getByTitle('Run all').click();

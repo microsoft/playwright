@@ -132,6 +132,42 @@ test('should not throw with trace: on-first-retry and two retries in the same wo
   expect(result.flaky).toBe(6);
 });
 
+test('should not mixup network files between contexts', async ({ runInlineTest, server }, testInfo) => {
+  // NOTE: this test reproduces the issue 10% of the time. Running with --repeat-each=20 helps.
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22089' });
+
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      export default { use: { trace: 'on' } };
+    `,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+
+      let page1, page2;
+
+      test.beforeAll(async ({ browser }) => {
+        page1 = await browser.newPage();
+        await page1.goto("${server.EMPTY_PAGE}");
+
+        page2 = await browser.newPage();
+        await page2.goto("${server.EMPTY_PAGE}");
+      });
+
+      test.afterAll(async () => {
+        await page1.close();
+        await page2.close();
+      });
+
+      test('example', async ({ page }) => {
+        await page.goto("${server.EMPTY_PAGE}");
+      });
+    `,
+  }, { workers: 1, timeout: 15000 });
+  expect(result.exitCode).toEqual(0);
+  expect(result.passed).toBe(1);
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-example', 'trace.zip'))).toBe(true);
+});
+
 test('should save sources when requested', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
