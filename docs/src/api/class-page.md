@@ -4654,6 +4654,8 @@ changed by using the [`method: BrowserContext.setDefaultTimeout`] or [`method: P
 
 ## async method: Page.waitForSelector
 * since: v1.8
+* discouraged: Use web assertions that assert visibility or a locator-based [`method: Locator.waitFor`] instead.
+  Read more about [locators](../locators.md).
 - returns: <[null]|[ElementHandle]>
 
 Returns when element specified by selector satisfies [`option: state`] option. Returns `null` if waiting for `hidden` or
@@ -4814,6 +4816,8 @@ Codition to wait for.
 
 ## async method: Page.waitForTimeout
 * since: v1.8
+* discouraged: Never wait for timeout in production. Tests that wait for time are
+  inherently flaky. Use [Locator] actions and web assertions that wait automatically.
 
 Waits for the given [`param: timeout`] in milliseconds.
 
