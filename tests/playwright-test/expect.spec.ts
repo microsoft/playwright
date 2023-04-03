@@ -611,21 +611,23 @@ test('should print expected/received on Ctrl+C', async ({ runInlineTest }) => {
   expect(result.output).toContain('Received string: "Text content"');
 });
 
-test('should print timed out error message', async ({ runInlineTest }) => {
+test('should not print timed out error message when test times out', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
 
       test('fail', async ({ page }) => {
         await page.setContent('<div id=node>Text content</div>');
-        await expect(page.locator('no-such-thing')).toHaveText('hey', { timeout: 1000 });
+        await expect(page.locator('no-such-thing')).toHaveText('hey', { timeout: 5000 });
       });
       `,
-  }, { workers: 1 });
+  }, { workers: 1, timeout: 3000 });
   expect(result.failed).toBe(1);
   expect(result.exitCode).toBe(1);
   const output = result.output;
-  expect(output).toContain('Timed out 1000ms waiting for expect(received).toHaveText(expected)');
+  expect(output).toContain('Test timeout of 3000ms exceeded');
+  expect(output).not.toContain('Timed out 5000ms waiting for expect');
+  expect(output).toContain('Error: expect(received).toHaveText(expected)');
 });
 
 test('should not leak long expect message strings', async ({ runInlineTest }) => {

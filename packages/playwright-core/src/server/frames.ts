@@ -41,6 +41,7 @@ import type { ScreenshotOptions } from './screenshotter';
 import type { InputFilesItems } from './dom';
 import { asLocator } from '../utils/isomorphic/locatorGenerators';
 import { FrameSelectors } from './frameSelectors';
+import { TimeoutError } from '../common/errors';
 
 type ContextData = {
   contextPromise: ManualPromise<dom.FrameExecutionContext | Error>;
@@ -1435,7 +1436,7 @@ export class Frame extends SdkObject {
       const result: { matches: boolean, received?: any, log?: string[], timedOut?: boolean } = { matches: options.isNot, log: metadata.log };
       if (lastIntermediateResult.isSet)
         result.received = lastIntermediateResult.received;
-      else
+      if (e instanceof TimeoutError)
         result.timedOut = true;
       return result;
     });
