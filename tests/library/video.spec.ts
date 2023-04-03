@@ -292,7 +292,7 @@ it.describe('screencast', () => {
     expect(fs.existsSync(path)).toBeTruthy();
   });
 
-  it.only('should work with weird screen resolution', async ({ browser }, testInfo) => {
+  it('should work with weird screen resolution', async ({ browser }, testInfo) => {
     it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22069' });
     const videosPath = testInfo.outputPath('');
     const size = { width: 1904, height: 609 };
