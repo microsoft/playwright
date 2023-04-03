@@ -18663,7 +18663,7 @@ export interface WebSocket {
   /**
    * Fired when the websocket has an error.
    */
-  on(event: 'socketerror', listener: (string: String) => void): this;
+  on(event: 'socketerror', listener: (string: string) => void): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
@@ -18693,7 +18693,7 @@ export interface WebSocket {
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
-  once(event: 'socketerror', listener: (string: String) => void): this;
+  once(event: 'socketerror', listener: (string: string) => void): this;
 
   /**
    * Fired when the websocket closes.
@@ -18723,7 +18723,7 @@ export interface WebSocket {
   /**
    * Fired when the websocket has an error.
    */
-  addListener(event: 'socketerror', listener: (string: String) => void): this;
+  addListener(event: 'socketerror', listener: (string: string) => void): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
@@ -18753,7 +18753,7 @@ export interface WebSocket {
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'socketerror', listener: (string: String) => void): this;
+  removeListener(event: 'socketerror', listener: (string: string) => void): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
@@ -18783,7 +18783,7 @@ export interface WebSocket {
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  off(event: 'socketerror', listener: (string: String) => void): this;
+  off(event: 'socketerror', listener: (string: string) => void): this;
 
   /**
    * Fired when the websocket closes.
@@ -18813,7 +18813,7 @@ export interface WebSocket {
   /**
    * Fired when the websocket has an error.
    */
-  prependListener(event: 'socketerror', listener: (string: String) => void): this;
+  prependListener(event: 'socketerror', listener: (string: string) => void): this;
 
   /**
    * Indicates that the web socket has been closed.
@@ -18873,7 +18873,7 @@ export interface WebSocket {
   /**
    * Fired when the websocket has an error.
    */
-  waitForEvent(event: 'socketerror', optionsOrPredicate?: { predicate?: (string: String) => boolean | Promise<boolean>, timeout?: number } | ((string: String) => boolean | Promise<boolean>)): Promise<String>;
+  waitForEvent(event: 'socketerror', optionsOrPredicate?: { predicate?: (string: string) => boolean | Promise<boolean>, timeout?: number } | ((string: string) => boolean | Promise<boolean>)): Promise<string>;
 
 }
 

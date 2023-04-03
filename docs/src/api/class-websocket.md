@@ -18,6 +18,11 @@ Fired when the websocket receives a frame.
 
 ## event: WebSocket.frameReceived
 * since: v1.9
+* langs: python
+- argument: <[string]|[Buffer]> frame payload
+
+## event: WebSocket.frameReceived
+* since: v1.9
 * langs: csharp, java
 - argument: <[WebSocketFrame]>
 
@@ -30,12 +35,17 @@ Fired when the websocket sends a frame.
 
 ## event: WebSocket.frameSent
 * since: v1.9
+* langs: python
+- argument: <[string]|[Buffer]> frame payload
+
+## event: WebSocket.frameSent
+* since: v1.9
 * langs: csharp, java
 - argument: <[WebSocketFrame]>
 
 ## event: WebSocket.socketError
 * since: v1.9
-- argument: <[String]>
+- argument: <[string]>
 
 Fired when the websocket has an error.
 
