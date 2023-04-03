@@ -1381,9 +1381,10 @@ export class Frame extends SdkObject {
   private async _expectInternal(metadata: CallMetadata, selector: string, options: FrameExpectParams, oneShot: boolean, timeout: number, lastIntermediateResult: { received?: any, isSet: boolean }): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }> {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
-      if (oneShot)
+      if (oneShot) {
         progress.log(`${metadata.apiName}${timeout ? ` with timeout ${timeout}ms` : ''}`);
-      progress.log(`waiting for ${this._asLocator(selector)}`);
+        progress.log(`waiting for ${this._asLocator(selector)}`);
+      }
       return await this.retryWithProgressAndTimeouts(progress, [100, 250, 500, 1000], async continuePolling => {
         const selectorInFrame = await this.selectors.resolveFrameForSelector(selector, { strict: true });
         progress.throwIfAborted();
