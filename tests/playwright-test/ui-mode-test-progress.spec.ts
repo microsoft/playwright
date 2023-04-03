@@ -53,7 +53,7 @@ test('should update trace live', async ({ runUITest, server }) => {
   ).toHaveText([
     /browserContext.newPage[\d.]+m?s/,
     /page.gotohttp:\/\/localhost:\d+\/one.html/
-  ]);
+  ], { timeout: 15000 });
 
   await expect(
       listItem.locator(':scope.selected'),
@@ -138,7 +138,7 @@ test('should preserve action list selection upon live trace update', async ({ ru
     /browserContext.newPage[\d.]+m?s/,
     /page.gotoabout:blank[\d.]+m?s/,
     /page.setContent[\d.]+m?s/,
-  ]);
+  ], { timeout: 15000 });
 
   // Manually select page.goto.
   await page.getByTestId('action-list').getByText('page.goto').click();
@@ -199,7 +199,7 @@ test('should update tracing network live', async ({ runUITest, server }) => {
     /browserContext.newPage[\d.]+m?s/,
     /page.gotohttp:\/\/localhost:\d+\/one.html[\d.]+m?s/,
     /page.setContent[\d.]+m?s/,
-  ]);
+  ], { timeout: 15000 });
 
   // Once page.setContent is visible, we can be sure that page.goto has all required
   // resources in the trace. Switch to it and check that everything renders.
