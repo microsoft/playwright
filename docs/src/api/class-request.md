@@ -284,7 +284,7 @@ Returns resource size information for given request.
     to retrieve the resource. The value is given in milliseconds relative to `startTime`, -1 if not available.
   - `requestStart` <[float]> Time immediately before the browser starts requesting the resource from the server,
     cache, or local resource. The value is given in milliseconds relative to `startTime`, -1 if not available.
-  - `responseStart` <[float]> Time immediately after the browser starts requesting the resource from the server,
+  - `responseStart` <[float]> Time immediately after the browser receives the first byte of the response from the server,
     cache, or local resource. The value is given in milliseconds relative to `startTime`, -1 if not available.
   - `responseEnd` <[float]> Time immediately after the browser receives the last byte of the resource or immediately
     before the transport connection is closed, whichever comes first. The value is given in milliseconds relative to
