@@ -67,6 +67,13 @@ export class JSHandle<T = any> extends ChannelOwner<channels.JSHandleChannel> im
     return await this._channel.dispose();
   }
 
+  async _objectCount() {
+    return this._wrapApiCall(async () => {
+      const { count } = await this._channel.objectCount();
+      return count;
+    });
+  }
+
   override toString(): string {
     return this._preview;
   }

@@ -19,7 +19,7 @@ import { BrowserContext, prepareBrowserContextParams } from './browserContext';
 import type { Page } from './page';
 import { ChannelOwner } from './channelOwner';
 import { Events } from './events';
-import type { LaunchOptions, BrowserContextOptions } from './types';
+import type { LaunchOptions, BrowserContextOptions, HeadersArray } from './types';
 import { isSafeCloseError, kBrowserClosedError } from '../common/errors';
 import type * as api from '../../types/types';
 import { CDPSession } from './cdpSession';
@@ -33,6 +33,9 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
   _browserType!: BrowserType;
   _options: LaunchOptions = {};
   readonly _name: string;
+
+  // Used from @playwright/test fixtures.
+  _connectHeaders?: HeadersArray;
 
   static from(browser: channels.BrowserChannel): Browser {
     return (browser as any)._object;

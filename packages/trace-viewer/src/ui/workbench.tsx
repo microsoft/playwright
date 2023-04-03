@@ -39,7 +39,9 @@ export const Workbench: React.FunctionComponent<{
   showSourcesFirst?: boolean,
   rootDir?: string,
   defaultSourceLocation?: Location,
-}> = ({ model, hideTimelineBars, hideStackFrames, showSourcesFirst, rootDir, defaultSourceLocation }) => {
+  initialSelection?: ActionTraceEvent,
+  onSelectionChanged?: (action: ActionTraceEvent) => void,
+}> = ({ model, hideTimelineBars, hideStackFrames, showSourcesFirst, rootDir, defaultSourceLocation, initialSelection, onSelectionChanged }) => {
   const [selectedAction, setSelectedAction] = React.useState<ActionTraceEvent | undefined>(undefined);
   const [highlightedAction, setHighlightedAction] = React.useState<ActionTraceEvent | undefined>();
   const [selectedNavigatorTab, setSelectedNavigatorTab] = React.useState<string>('actions');
@@ -52,11 +54,18 @@ export const Workbench: React.FunctionComponent<{
     if (selectedAction && model?.actions.includes(selectedAction))
       return;
     const failedAction = model?.actions.find(a => a.error);
-    if (failedAction)
+    if (initialSelection && model?.actions.includes(initialSelection))
+      setSelectedAction(initialSelection);
+    else if (failedAction)
       setSelectedAction(failedAction);
     else if (model?.actions.length)
       setSelectedAction(model.actions[model.actions.length - 1]);
-  }, [model, selectedAction, setSelectedAction, setSelectedPropertiesTab]);
+  }, [model, selectedAction, setSelectedAction, setSelectedPropertiesTab, initialSelection]);
+
+  const onActionSelected = React.useCallback((action: ActionTraceEvent) => {
+    setSelectedAction(action);
+    onSelectionChanged?.(action);
+  }, [setSelectedAction, onSelectionChanged]);
 
   const { errors, warnings } = activeAction ? modelUtil.stats(activeAction) : { errors: 0, warnings: 0 };
   const consoleCount = errors + warnings;
@@ -107,7 +116,7 @@ export const Workbench: React.FunctionComponent<{
     <Timeline
       model={model}
       selectedAction={activeAction}
-      onSelected={action => setSelectedAction(action)}
+      onSelected={onActionSelected}
       hideTimelineBars={hideTimelineBars}
     />
     <SplitView sidebarSize={250} orientation='vertical'>
@@ -123,12 +132,8 @@ export const Workbench: React.FunctionComponent<{
                 sdkLanguage={sdkLanguage}
                 actions={model?.actions || []}
                 selectedAction={model ? selectedAction : undefined}
-                onSelected={action => {
-                  setSelectedAction(action);
-                }}
-                onHighlighted={action => {
-                  setHighlightedAction(action);
-                }}
+                onSelected={onActionSelected}
+                onHighlighted={setHighlightedAction}
                 revealConsole={() => setSelectedPropertiesTab('console')}
               />
             },

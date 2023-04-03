@@ -57,15 +57,18 @@ export interface ExecutionContextDelegate {
   getProperties(context: ExecutionContext, objectId: ObjectId): Promise<Map<string, JSHandle>>;
   createHandle(context: ExecutionContext, remoteObject: RemoteObject): JSHandle;
   releaseHandle(objectId: ObjectId): Promise<void>;
+  objectCount(objectId: ObjectId): Promise<number>;
 }
 
 export class ExecutionContext extends SdkObject {
   private _delegate: ExecutionContextDelegate;
   private _utilityScriptPromise: Promise<JSHandle> | undefined;
   private _contextDestroyedRace = new ScopedRace();
+  readonly worldNameForTest: string;
 
-  constructor(parent: SdkObject, delegate: ExecutionContextDelegate) {
+  constructor(parent: SdkObject, delegate: ExecutionContextDelegate, worldNameForTest: string) {
     super(parent, 'execution-context');
+    this.worldNameForTest = worldNameForTest;
     this._delegate = delegate;
   }
 
@@ -121,9 +124,13 @@ export class ExecutionContext extends SdkObject {
         ${utilityScriptSource.source}
         return new (module.exports.UtilityScript())();
       })();`;
-      this._utilityScriptPromise = this._raceAgainstContextDestroyed(this._delegate.rawEvaluateHandle(source).then(objectId => new JSHandle(this, 'object', undefined, objectId)));
+      this._utilityScriptPromise = this._raceAgainstContextDestroyed(this._delegate.rawEvaluateHandle(source).then(objectId => new JSHandle(this, 'object', 'UtilityScript', objectId)));
     }
     return this._utilityScriptPromise;
+  }
+
+  async objectCount(objectId: ObjectId): Promise<number> {
+    return this._delegate.objectCount(objectId);
   }
 
   async doSlowMo() {
@@ -148,6 +155,8 @@ export class JSHandle<T = any> extends SdkObject {
     this._value = value;
     this._objectType = type;
     this._preview = this._objectId ? preview || `JSHandle@${this._objectType}` : String(value);
+    if (this._objectId && (globalThis as any).leakedJSHandles)
+      (globalThis as any).leakedJSHandles.set(this, new Error('Leaked JSHandle'));
   }
 
   callFunctionNoReply(func: Function, arg: any) {
@@ -206,8 +215,11 @@ export class JSHandle<T = any> extends SdkObject {
     if (this._disposed)
       return;
     this._disposed = true;
-    if (this._objectId)
+    if (this._objectId) {
       this._context.releaseHandle(this._objectId).catch(e => {});
+      if ((globalThis as any).leakedJSHandles)
+        (globalThis as any).leakedJSHandles.delete(this);
+    }
   }
 
   override toString(): string {
@@ -222,10 +234,20 @@ export class JSHandle<T = any> extends SdkObject {
     return this._preview;
   }
 
+  worldNameForTest(): string {
+    return this._context.worldNameForTest;
+  }
+
   _setPreview(preview: string) {
     this._preview = preview;
     if (this._previewCallback)
       this._previewCallback(preview);
+  }
+
+  async objectCount(): Promise<number> {
+    if (!this._objectId)
+      throw new Error('Can only count objects for a handle that points to the constructor prototype');
+    return this._context.objectCount(this._objectId);
   }
 }
 

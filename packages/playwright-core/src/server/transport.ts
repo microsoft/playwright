@@ -21,6 +21,7 @@ import type { ClientRequest, IncomingMessage } from 'http';
 import type { Progress } from './progress';
 import { makeWaitForNextTask } from '../utils';
 import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent } from '../utils/happy-eyeballs';
+import type { HeadersArray } from './types';
 
 export type ProtocolRequest = {
   id: number;
@@ -55,6 +56,7 @@ export class WebSocketTransport implements ConnectionTransport {
   onmessage?: (message: ProtocolResponse) => void;
   onclose?: () => void;
   readonly wsEndpoint: string;
+  readonly headers: HeadersArray = [];
 
   static async connect(progress: (Progress|undefined), url: string, headers?: { [key: string]: string; }, followRedirects?: boolean): Promise<WebSocketTransport> {
     const logUrl = stripQueryParams(url);
@@ -102,6 +104,10 @@ export class WebSocketTransport implements ConnectionTransport {
       headers,
       followRedirects,
       agent: (/^(https|wss):\/\//.test(url)) ? httpsHappyEyeballsAgent : httpHappyEyeballsAgent
+    });
+    this._ws.on('upgrade', request => {
+      for (let i = 0; i < request.rawHeaders.length; i += 2)
+        this.headers.push({ name: request.rawHeaders[i], value: request.rawHeaders[i + 1] });
     });
     this._progress = progress;
     // The 'ws' module in node sometimes sends us multiple messages in a single task.

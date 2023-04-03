@@ -463,7 +463,7 @@ function getElementAccessibleNameInternal(element: Element, options: AccessibleN
 
   // step 2e.
   if (!['presentation', 'none'].includes(role)) {
-    // https://w3c.github.io/html-aam/#input-type-button-input-type-submit-and-input-type-reset
+    // https://w3c.github.io/html-aam/#input-type-button-input-type-submit-and-input-type-reset-accessible-name-computation
     if (element.tagName === 'INPUT' && ['button', 'submit', 'reset'].includes((element as HTMLInputElement).type)) {
       options.visitedElements.add(element);
       const value = (element as HTMLInputElement).value || '';
@@ -477,7 +477,7 @@ function getElementAccessibleNameInternal(element: Element, options: AccessibleN
       return title;
     }
 
-    // https://w3c.github.io/html-aam/#input-type-image
+    // https://w3c.github.io/html-aam/#input-type-image-accessible-name-computation
     if (element.tagName === 'INPUT' && (element as HTMLInputElement).type === 'image') {
       options.visitedElements.add(element);
       const alt = element.getAttribute('alt') || '';
@@ -504,8 +504,24 @@ function getElementAccessibleNameInternal(element: Element, options: AccessibleN
       return 'Submit';
     }
 
-    // https://w3c.github.io/html-aam/#input-type-text-input-type-password-input-type-search-input-type-tel-input-type-url-and-textarea-element
-    // https://w3c.github.io/html-aam/#other-form-elements
+    // https://w3c.github.io/html-aam/#button-element-accessible-name-computation
+    if (element.tagName === 'BUTTON') {
+      options.visitedElements.add(element);
+      const labels = (element as HTMLButtonElement).labels || [];
+      if (labels.length) {
+        return [...labels].map(label => getElementAccessibleNameInternal(label, {
+          ...options,
+          embeddedInLabel: 'self',
+          embeddedInTextAlternativeElement: false,
+          embeddedInLabelledBy: 'none',
+          embeddedInTargetElement: 'none',
+        })).filter(accessibleName => !!accessibleName).join(' ');
+      }
+      // From here, fallthrough to step 2f.
+    }
+
+    // https://w3c.github.io/html-aam/#input-type-text-input-type-password-input-type-number-input-type-search-input-type-tel-input-type-email-input-type-url-and-textarea-element-accessible-name-computation
+    // https://w3c.github.io/html-aam/#other-form-elements-accessible-name-computation
     // For "other form elements", we count select and any other input.
     if (element.tagName === 'TEXTAREA' || element.tagName === 'SELECT' || element.tagName === 'INPUT') {
       options.visitedElements.add(element);

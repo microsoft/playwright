@@ -561,6 +561,9 @@ LocalUtils:
         socksProxyRedirectPortForTest: number?
       returns:
         pipe: JsonPipe
+        headers:
+          type: array
+          items: NameValue
 
     tracingStarted:
       parameters:
@@ -2291,6 +2294,10 @@ JSHandle:
     jsonValue:
       returns:
         value: SerializedValue
+
+    objectCount:
+      returns:
+        count: number
 
   events:
 

@@ -97,7 +97,7 @@ Here is what the typical Action snapshot looks like:
 
 Notice how it highlights both, the DOM Node as well as the exact click position.
 
-## Call 
+## Call
 
 See what action was called, the time and duration as well as parameters, return value and log.
 
@@ -126,7 +126,7 @@ See the source code for your entire test.
 ## Recording a trace locally
 * langs: js
 
-To record a trace during development mode set the `--trace` flag to `on` when running your tests. 
+To record a trace during development mode set the `--trace` flag to `on` when running your tests.
 
 ```bash
 npx playwright test --trace on
@@ -168,6 +168,7 @@ await context.tracing.stop({ path: 'trace.zip' });
 
 Available options to record a trace:
 - `'on-first-retry'` - Record a trace only when retrying a test for the first time.
+- `'on-all-retries'` - Record traces for all test retries.
 - `'off'` - Do not record a trace.
 - `'on'` - Record a trace for each test. (not recommended as it's performance heavy)
 - `'retain-on-failure'` - Record a trace for each test, but remove it from successful test runs.

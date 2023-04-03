@@ -109,3 +109,104 @@ test('should update trace live', async ({ runUITest, server }) => {
     /page.gotohttp:\/\/localhost:\d+\/two.html[\d.]+m?s/
   ]);
 });
+
+test('should preserve action list selection upon live trace update', async ({ runUITest, server, createLatch }) => {
+  const latch = createLatch();
+
+  const { page } = await runUITest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('live test', async ({ page }) => {
+        await page.goto('about:blank');
+        await page.setContent('hello');
+        ${latch.blockingCode}
+        await page.setContent('world');
+        await new Promise(() => {});
+      });
+    `,
+  });
+
+  // Start test.
+  await page.getByText('live test').dblclick();
+
+  // It should wait on the latch.
+  const listItem = page.getByTestId('action-list').getByRole('listitem');
+  await expect(
+      listItem,
+      'action list'
+  ).toHaveText([
+    /browserContext.newPage[\d.]+m?s/,
+    /page.gotoabout:blank[\d.]+m?s/,
+    /page.setContent[\d.]+m?s/,
+  ]);
+
+  // Manually select page.goto.
+  await page.getByTestId('action-list').getByText('page.goto').click();
+
+  // Generate more actions and check that we are still on the page.goto action.
+  latch.open();
+  await expect(
+      listItem,
+      'action list'
+  ).toHaveText([
+    /browserContext.newPage[\d.]+m?s/,
+    /page.gotoabout:blank[\d.]+m?s/,
+    /page.setContent[\d.]+m?s/,
+    /page.setContent[\d.]+m?s/,
+  ]);
+  await expect(
+      listItem.locator(':scope.selected'),
+      'selected action stays the same'
+  ).toHaveText(/page.goto/);
+});
+
+test('should update tracing network live', async ({ runUITest, server }) => {
+  server.setRoute('/style.css', async (req, res) => {
+    res.end('body { background: red; }');
+  });
+
+  server.setRoute('/one.html', async (req, res) => {
+    res.end(`
+      <head>
+        <link rel=stylesheet href="./style.css"></link>
+      </head>
+      <body>
+        One
+      </body>
+    `);
+  });
+
+  const { page } = await runUITest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('live test', async ({ page }) => {
+        await page.goto('${server.PREFIX}/one.html');
+        await page.setContent('hello');
+        await new Promise(() => {});
+      });
+    `,
+  });
+
+  // Start test.
+  await page.getByText('live test').dblclick();
+
+  // It should wait on the latch.
+  const listItem = page.getByTestId('action-list').getByRole('listitem');
+  await expect(
+      listItem,
+      'action list'
+  ).toHaveText([
+    /browserContext.newPage[\d.]+m?s/,
+    /page.gotohttp:\/\/localhost:\d+\/one.html[\d.]+m?s/,
+    /page.setContent[\d.]+m?s/,
+  ]);
+
+  // Once page.setContent is visible, we can be sure that page.goto has all required
+  // resources in the trace. Switch to it and check that everything renders.
+  await page.getByTestId('action-list').getByText('page.goto').click();
+
+  await expect(
+      page.frameLocator('iframe.snapshot-visible[name=snapshot]').locator('body'),
+      'verify background'
+  ).toHaveCSS('background-color', 'rgb(255, 0, 0)', { timeout: 15000 });
+});

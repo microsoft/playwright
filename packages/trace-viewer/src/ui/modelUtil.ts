@@ -120,6 +120,10 @@ function dedupeAndSortActions(actions: ActionTraceEvent[]) {
   return result;
 }
 
+export function idForAction(action: ActionTraceEvent) {
+  return `${action.pageId || 'none'}:${action.callId}`;
+}
+
 export function context(action: ActionTraceEvent): ContextEntry {
   return (action as any)[contextSymbol];
 }

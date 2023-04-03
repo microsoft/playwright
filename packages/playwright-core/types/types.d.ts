@@ -611,6 +611,10 @@ export interface Page {
   waitForFunction<R>(pageFunction: PageFunction<void, R>, arg?: any, options?: PageWaitForFunctionOptions): Promise<SmartHandle<R>>;
 
   /**
+   * **NOTE** Use web assertions that assert visibility or a locator-based
+   * [locator.waitFor([options])](https://playwright.dev/docs/api/class-locator#locator-wait-for) instead. Read more
+   * about [locators](https://playwright.dev/docs/locators).
+   *
    * Returns when element specified by selector satisfies `state` option. Returns `null` if waiting for `hidden` or
    * `detached`.
    *
@@ -645,6 +649,10 @@ export interface Page {
    */
   waitForSelector<K extends keyof HTMLElementTagNameMap>(selector: K, options?: PageWaitForSelectorOptionsNotHidden): Promise<ElementHandleForTag<K>>;
   /**
+   * **NOTE** Use web assertions that assert visibility or a locator-based
+   * [locator.waitFor([options])](https://playwright.dev/docs/api/class-locator#locator-wait-for) instead. Read more
+   * about [locators](https://playwright.dev/docs/locators).
+   *
    * Returns when element specified by selector satisfies `state` option. Returns `null` if waiting for `hidden` or
    * `detached`.
    *
@@ -679,6 +687,10 @@ export interface Page {
    */
   waitForSelector(selector: string, options?: PageWaitForSelectorOptionsNotHidden): Promise<ElementHandle<SVGElement | HTMLElement>>;
   /**
+   * **NOTE** Use web assertions that assert visibility or a locator-based
+   * [locator.waitFor([options])](https://playwright.dev/docs/api/class-locator#locator-wait-for) instead. Read more
+   * about [locators](https://playwright.dev/docs/locators).
+   *
    * Returns when element specified by selector satisfies `state` option. Returns `null` if waiting for `hidden` or
    * `detached`.
    *
@@ -713,6 +725,10 @@ export interface Page {
    */
   waitForSelector<K extends keyof HTMLElementTagNameMap>(selector: K, options: PageWaitForSelectorOptions): Promise<ElementHandleForTag<K> | null>;
   /**
+   * **NOTE** Use web assertions that assert visibility or a locator-based
+   * [locator.waitFor([options])](https://playwright.dev/docs/api/class-locator#locator-wait-for) instead. Read more
+   * about [locators](https://playwright.dev/docs/locators).
+   *
    * Returns when element specified by selector satisfies `state` option. Returns `null` if waiting for `hidden` or
    * `detached`.
    *
@@ -4558,6 +4574,9 @@ export interface Page {
   }): Promise<Response>;
 
   /**
+   * **NOTE** Never wait for timeout in production. Tests that wait for time are inherently flaky. Use [Locator] actions and web
+   * assertions that wait automatically.
+   *
    * Waits for the given `timeout` in milliseconds.
    *
    * Note that `page.waitForTimeout()` should only be used for debugging. Tests using the timer in production are going
@@ -5202,6 +5221,10 @@ export interface Frame {
   waitForFunction<R>(pageFunction: PageFunction<void, R>, arg?: any, options?: PageWaitForFunctionOptions): Promise<SmartHandle<R>>;
 
   /**
+   * **NOTE** Use web assertions that assert visibility or a locator-based
+   * [locator.waitFor([options])](https://playwright.dev/docs/api/class-locator#locator-wait-for) instead. Read more
+   * about [locators](https://playwright.dev/docs/locators).
+   *
    * Returns when element specified by selector satisfies `state` option. Returns `null` if waiting for `hidden` or
    * `detached`.
    *
@@ -5236,6 +5259,10 @@ export interface Frame {
    */
   waitForSelector<K extends keyof HTMLElementTagNameMap>(selector: K, options?: PageWaitForSelectorOptionsNotHidden): Promise<ElementHandleForTag<K>>;
   /**
+   * **NOTE** Use web assertions that assert visibility or a locator-based
+   * [locator.waitFor([options])](https://playwright.dev/docs/api/class-locator#locator-wait-for) instead. Read more
+   * about [locators](https://playwright.dev/docs/locators).
+   *
    * Returns when element specified by selector satisfies `state` option. Returns `null` if waiting for `hidden` or
    * `detached`.
    *
@@ -5270,6 +5297,10 @@ export interface Frame {
    */
   waitForSelector(selector: string, options?: PageWaitForSelectorOptionsNotHidden): Promise<ElementHandle<SVGElement | HTMLElement>>;
   /**
+   * **NOTE** Use web assertions that assert visibility or a locator-based
+   * [locator.waitFor([options])](https://playwright.dev/docs/api/class-locator#locator-wait-for) instead. Read more
+   * about [locators](https://playwright.dev/docs/locators).
+   *
    * Returns when element specified by selector satisfies `state` option. Returns `null` if waiting for `hidden` or
    * `detached`.
    *
@@ -5304,6 +5335,10 @@ export interface Frame {
    */
   waitForSelector<K extends keyof HTMLElementTagNameMap>(selector: K, options: PageWaitForSelectorOptions): Promise<ElementHandleForTag<K> | null>;
   /**
+   * **NOTE** Use web assertions that assert visibility or a locator-based
+   * [locator.waitFor([options])](https://playwright.dev/docs/api/class-locator#locator-wait-for) instead. Read more
+   * about [locators](https://playwright.dev/docs/locators).
+   *
    * Returns when element specified by selector satisfies `state` option. Returns `null` if waiting for `hidden` or
    * `detached`.
    *
@@ -13402,8 +13437,16 @@ export interface ElectronApplication {
    *   // ...
    * ```
    *
+   * @param options
    */
-  firstWindow(): Promise<Page>;
+  firstWindow(options?: {
+    /**
+     * Maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The
+     * default value can be changed by using the
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout).
+     */
+    timeout?: number;
+  }): Promise<Page>;
 
   /**
    * Returns the main process for this Electron Application.
