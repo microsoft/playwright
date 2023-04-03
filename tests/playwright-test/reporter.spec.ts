@@ -33,6 +33,9 @@ class Reporter {
   onEnd() {
     console.log('\\n%%end');
   }
+  onExit() {
+    console.log('\\n%%exit');
+  }
 }
 module.exports = Reporter;
 `;
@@ -176,6 +179,7 @@ test('should work without a file extension', async ({ runInlineTest }) => {
   expect(result.outputLines).toEqual([
     'begin',
     'end',
+    'exit',
   ]);
 });
 
@@ -205,6 +209,7 @@ test('should report onEnd after global teardown', async ({ runInlineTest }) => {
     'begin',
     'global teardown',
     'end',
+    'exit',
   ]);
 });
 
@@ -227,6 +232,7 @@ test('should load reporter from node_modules', async ({ runInlineTest }) => {
   expect(result.outputLines).toEqual([
     'begin',
     'end',
+    'exit',
   ]);
 });
 

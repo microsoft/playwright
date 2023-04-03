@@ -16,7 +16,7 @@
 
 import type { TestBeginPayload, TestEndPayload, DonePayload, TestOutputPayload, StepBeginPayload, StepEndPayload, TeardownErrorsPayload, RunPayload, SerializedConfig } from '../common/ipc';
 import { serializeConfig } from '../common/ipc';
-import type { TestResult, Reporter, TestStep, TestError } from '../../types/testReporter';
+import type { TestResult, TestStep, TestError } from '../../types/testReporter';
 import type { Suite } from '../common/test';
 import type { ProcessExitData } from './processHost';
 import type { TestCase } from '../common/test';
@@ -24,6 +24,7 @@ import { ManualPromise } from 'playwright-core/lib/utils';
 import { WorkerHost } from './workerHost';
 import type { TestGroup } from './testGroups';
 import type { FullConfigInternal } from '../common/types';
+import type { Multiplexer } from '../reporters/multiplexer';
 
 type TestResultData = {
   result: TestResult;
@@ -45,14 +46,14 @@ export class Dispatcher {
 
   private _testById = new Map<string, TestData>();
   private _config: FullConfigInternal;
-  private _reporter: Reporter;
+  private _reporter: Multiplexer;
   private _hasWorkerErrors = false;
   private _failureCount = 0;
 
   private _extraEnvByProjectId: EnvByProjectId = new Map();
   private _producedEnvByProjectId: EnvByProjectId = new Map();
 
-  constructor(config: FullConfigInternal, reporter: Reporter) {
+  constructor(config: FullConfigInternal, reporter: Multiplexer) {
     this._config = config;
     this._reporter = reporter;
   }
