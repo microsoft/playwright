@@ -432,3 +432,26 @@ it('should handle custom dataTransfer', async ({ page, browserName, isWindows })
     data: 'Hello World',
   });
 });
+
+it('what happens when dragging element is destroyed', async ({ page, browserName }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/21621' });
+  it.fixme(browserName === 'firefox', `hangs without any response for Page.dispatchMouseEvent({ type: 'mouseup' })`);
+
+  await page.setContent(`
+    <button draggable="true">Draggable</button>
+    <div id=target>drop here</div>
+  `);
+
+  await page.evaluate(() => {
+    document.querySelector('#target').addEventListener('dragover', event => {
+      document.querySelector('button')?.remove();
+    }, false);
+
+    document.querySelector('#target').addEventListener('drop', event => {
+      document.querySelector('#target').textContent = 'dropped';
+    }, false);
+  });
+
+  await page.locator('button').dragTo(page.locator('div'));
+  await expect(page.locator('div')).toHaveText('drop here');
+});
