@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-import type { Suite, Reporter } from '../../types/testReporter';
+import type { Suite } from '../../types/testReporter';
 import type { FullConfig } from '../common/types';
+import type { Multiplexer } from '../reporters/multiplexer';
 
 export interface TestRunnerPlugin {
   name: string;
-  setup?(config: FullConfig, configDir: string, reporter: Reporter): Promise<void>;
+  setup?(config: FullConfig, configDir: string, reporter: Multiplexer): Promise<void>;
   begin?(suite: Suite): Promise<void>;
   end?(): Promise<void>;
   teardown?(): Promise<void>;

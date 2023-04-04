@@ -372,6 +372,8 @@ export interface FullResult {
  *   [testResult.error](https://playwright.dev/docs/api/class-testresult#test-result-error) and more.
  * - [reporter.onEnd(result)](https://playwright.dev/docs/api/class-reporter#reporter-on-end) is called once after
  *   all tests that should run had finished.
+ * - [reporter.onExit()](https://playwright.dev/docs/api/class-reporter#reporter-on-exit) is called immediately
+ *   before the test runner exits.
  *
  * Additionally,
  * [reporter.onStdOut(chunk, test, result)](https://playwright.dev/docs/api/class-reporter#reporter-on-std-out) and
@@ -409,6 +411,13 @@ export interface Reporter {
    * @param error The error.
    */
   onError?(error: TestError): void;
+
+  /**
+   * Called immediately before test runner exists. At this point all the reporters have recived the
+   * [reporter.onEnd(result)](https://playwright.dev/docs/api/class-reporter#reporter-on-end) signal, so all the reports
+   * should be build. You can run the code that uploads the reports in this hook.
+   */
+  onExit?(): Promise<void>;
 
   /**
    * Called when something has been written to the standard error in the worker process.

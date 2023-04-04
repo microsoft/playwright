@@ -112,7 +112,7 @@ class HtmlReporter implements Reporter {
     this._buildResult = await builder.build({ ...this.config.metadata, duration }, reports);
   }
 
-  async _onExit() {
+  async onExit() {
     if (process.env.CI || !this._buildResult)
       return;
 

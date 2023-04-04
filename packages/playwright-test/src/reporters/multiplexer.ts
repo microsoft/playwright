@@ -24,7 +24,7 @@ type StdIOChunk = {
   result?: TestResult;
 };
 
-export class Multiplexer implements Reporter {
+export class Multiplexer {
   private _reporters: Reporter[];
   private _deferred: { error?: TestError, stdout?: StdIOChunk, stderr?: StdIOChunk }[] | null = [];
   private _config!: FullConfig;
@@ -99,7 +99,7 @@ export class Multiplexer implements Reporter {
       await Promise.resolve().then(() => reporter.onEnd?.(result)).catch(e => console.error('Error in reporter', e));
 
     for (const reporter of this._reporters)
-      await Promise.resolve().then(() => (reporter as any)._onExit?.()).catch(e => console.error('Error in reporter', e));
+      await Promise.resolve().then(() => reporter.onExit?.()).catch(e => console.error('Error in reporter', e));
   }
 
   onError(error: TestError) {
