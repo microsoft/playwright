@@ -1160,15 +1160,7 @@ BrowserContext:
       parameters:
         binding: BindingCall
 
-    console:
-      parameters:
-        message: ConsoleMessage
-
     close:
-
-    dialog:
-      parameters:
-        dialog: Dialog
 
     page:
       parameters:
@@ -1584,7 +1576,15 @@ Page:
 
     close:
 
+    console:
+      parameters:
+        message: ConsoleMessage
+
     crash:
+
+    dialog:
+      parameters:
+        dialog: Dialog
 
     download:
       parameters:
@@ -2883,7 +2883,6 @@ ConsoleMessage:
   type: interface
 
   initializer:
-    page: Page
     type: string
     text: string
     args:
@@ -2925,7 +2924,6 @@ Dialog:
   type: interface
 
   initializer:
-    page: Page?
     type: string
     message: string
     defaultValue: string

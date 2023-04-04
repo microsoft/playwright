@@ -41,10 +41,6 @@ export class Dialog extends SdkObject {
     this._page._frameManager.dialogDidOpen(this);
   }
 
-  page() {
-    return this._page;
-  }
-
   type(): string {
     return this._type;
   }
