@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
 import path from 'path';
-import readline from 'readline';
 import type { Reporter, TestError } from '../../types/testReporter';
 import { InProcessLoaderHost, OutOfProcessLoaderHost } from './loaderHost';
 import { Suite } from '../common/test';
@@ -29,6 +27,8 @@ import { requireOrImport } from '../common/transform';
 import { buildFileSuiteForProject, filterByFocusedLine, filterByTestIds, filterOnly, filterTestsRemoveEmptySuites } from '../common/suiteUtils';
 import { createTestGroups, filterForShard, type TestGroup } from './testGroups';
 import { dependenciesForTestFile } from '../common/compilationCache';
+import { sourceMapSupport } from '../utilsBundle';
+import type { RawSourceMap } from 'source-map';
 
 export async function collectProjectsAndTestFiles(config: FullConfigInternal, projectsToIgnore: Set<FullProjectInternal>, additionalFileMatcher: Matcher | undefined) {
   const fsCache = new Map();
@@ -47,15 +47,16 @@ export async function collectProjectsAndTestFiles(config: FullConfigInternal, pr
   // Filter files based on the file filters, eliminate the empty projects.
   const filesToRunByProject = new Map<FullProjectInternal, string[]>();
   for (const [project, files] of allFilesForProject) {
-    const matchedFiles = await Promise.all(files.map(async file => {
-      if (additionalFileMatcher && !additionalFileMatcher(file))
-        return;
-      if (cliFileMatcher) {
-        if (!cliFileMatcher(file) && !await isPotentiallyJavaScriptFileWithSourceMap(file, sourceMapCache))
-          return;
-      }
-      return file;
-    }));
+    const matchedFiles = files.filter(file => {
+      const hasMatchingSources = sourceMapSources(file, sourceMapCache).some(source => {
+        if (additionalFileMatcher && !additionalFileMatcher(source))
+          return false;
+        if (cliFileMatcher && !cliFileMatcher(source))
+          return false;
+        return true;
+      });
+      return hasMatchingSources;
+    });
     const filteredFiles = matchedFiles.filter(Boolean) as string[];
     if (filteredFiles.length)
       filesToRunByProject.set(project, filteredFiles);
@@ -263,29 +264,20 @@ export function loadReporter(config: FullConfigInternal, file: string): Promise<
   return requireOrImportDefaultFunction(path.resolve(config.rootDir, file), true);
 }
 
-async function isPotentiallyJavaScriptFileWithSourceMap(file: string, cache: Map<string, boolean>): Promise<boolean> {
+function sourceMapSources(file: string, cache: Map<string, string[]>): string[] {
+  let sources = [file];
   if (!file.endsWith('.js'))
-    return false;
+    return sources;
   if (cache.has(file))
     return cache.get(file)!;
 
   try {
-    const stream = fs.createReadStream(file);
-    const rl = readline.createInterface({ input: stream, crlfDelay: Infinity });
-    let lastLine: string | undefined;
-    rl.on('line', line => {
-      lastLine = line;
-    });
-    await new Promise((fulfill, reject) => {
-      rl.on('close', fulfill);
-      rl.on('error', reject);
-      stream.on('error', reject);
-    });
-    const hasSourceMap = !!lastLine && lastLine.startsWith('//# sourceMappingURL=');
-    cache.set(file, hasSourceMap);
-    return hasSourceMap;
-  } catch (e) {
-    cache.set(file, true);
-    return true;
+    const sourceMap = sourceMapSupport.retrieveSourceMap(file);
+    const sourceMapData: RawSourceMap | undefined = typeof sourceMap?.map === 'string' ? JSON.parse(sourceMap.map) : sourceMap?.map;
+    if (sourceMapData?.sources)
+      sources = sourceMapData.sources.map(source => path.resolve(path.dirname(file), source));
+  } finally {
+    cache.set(file, sources);
+    return sources;
   }
 }

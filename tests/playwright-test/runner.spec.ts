@@ -503,21 +503,26 @@ test('should not load tests not matching filter', async ({ runInlineTest }) => {
 });
 
 test('should filter by sourcemapped file names', async ({ runInlineTest }) => {
-  const fileWithSourceMap = `` +
-`import {test} from '@playwright/test';
-test.describe('Some describe', ()=>{
-  test('Some test', async ()=>{
-    console.log('test')
-  })
-})
-//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbImdoZXJraW4uZmVhdHVyZSJdLCJuYW1lcyI6WyJOb25lIl0sIm1hcHBpbmdzIjoiQUFBQUE7QUFBQUE7QUFBQUE7QUFBQUE7QUFBQUE7QUFBQUEiLCJmaWxlIjoiZ2hlcmtpbi5mZWF0dXJlIiwic291cmNlc0NvbnRlbnQiOlsiVGVzdCJdfQ==`;
-
   const result = await runInlineTest({
-    'playwright.config.js': `export default { projects: [{}, {}] }`,
-    'a.spec.js': fileWithSourceMap,
+    'gherkin.spec.js': `
+
+import { test } from '@playwright/test';
+test('should run', () => {});
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbImdoZXJraW4uZmVhdHVyZSJdLCJuYW1lcyI6WyJOb25lIl0sIm1hcHBpbmdzIjoiQUFBQUE7QUFBQUE7QUFBQUE7QUFBQUE7QUFBQUE7QUFBQUEiLCJmaWxlIjoiZ2hlcmtpbi5mZWF0dXJlIiwic291cmNlc0NvbnRlbnQiOlsiVGVzdCJdfQ==`,
+
+    'another.spec.js': `
+
+throw new Error('should not load another.spec.js');
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbImFub3RoZXIuZmVhdHVyZSJdLCJuYW1lcyI6WyJOb25lIl0sIm1hcHBpbmdzIjoiQUFBQUE7QUFBQUE7QUFBQUE7QUFBQUE7QUFBQUE7QUFBQUEiLCJmaWxlIjoiZ2hlcmtpbi5mZWF0dXJlIiwic291cmNlc0NvbnRlbnQiOlsiVGVzdCJdfQ==`,
+
+    'nomap.spec.js': `
+
+throw new Error('should not load nomap.spec.js');`,
   }, {}, {}, { additionalArgs: ['gherkin.feature'] });
   expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(2);
-  expect(result.output).not.toContain('a.spec.js');
+  expect(result.passed).toBe(1);
+  expect(result.output).not.toContain('spec.js');
+  expect(result.output).not.toContain('another.feature.js');
+  expect(result.output).not.toContain('should not load');
   expect(result.output).toContain('gherkin.feature:1');
 });
