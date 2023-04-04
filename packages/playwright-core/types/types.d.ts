@@ -894,9 +894,9 @@ export interface Page {
    * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also
    * emitted if the page throws an error or a warning.
    *
-   * The arguments passed into `console.log` are available on the [ConsoleMessage] event handler argument.
+   * The arguments passed into `console.log` appear as arguments on the event handler.
    *
-   * **Usage**
+   * An example of handling `console` event:
    *
    * ```js
    * page.on('console', async msg => {
@@ -905,7 +905,7 @@ export interface Page {
    *     values.push(await arg.jsonValue());
    *   console.log(...values);
    * });
-   * await page.evaluate(() => console.log('hello', 5, { foo: 'bar' }));
+   * await page.evaluate(() => console.log('hello', 5, {foo: 'bar'}));
    * ```
    *
    */
@@ -1187,9 +1187,9 @@ export interface Page {
    * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also
    * emitted if the page throws an error or a warning.
    *
-   * The arguments passed into `console.log` are available on the [ConsoleMessage] event handler argument.
+   * The arguments passed into `console.log` appear as arguments on the event handler.
    *
-   * **Usage**
+   * An example of handling `console` event:
    *
    * ```js
    * page.on('console', async msg => {
@@ -1198,7 +1198,7 @@ export interface Page {
    *     values.push(await arg.jsonValue());
    *   console.log(...values);
    * });
-   * await page.evaluate(() => console.log('hello', 5, { foo: 'bar' }));
+   * await page.evaluate(() => console.log('hello', 5, {foo: 'bar'}));
    * ```
    *
    */
@@ -1575,9 +1575,9 @@ export interface Page {
    * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also
    * emitted if the page throws an error or a warning.
    *
-   * The arguments passed into `console.log` are available on the [ConsoleMessage] event handler argument.
+   * The arguments passed into `console.log` appear as arguments on the event handler.
    *
-   * **Usage**
+   * An example of handling `console` event:
    *
    * ```js
    * page.on('console', async msg => {
@@ -1586,7 +1586,7 @@ export interface Page {
    *     values.push(await arg.jsonValue());
    *   console.log(...values);
    * });
-   * await page.evaluate(() => console.log('hello', 5, { foo: 'bar' }));
+   * await page.evaluate(() => console.log('hello', 5, {foo: 'bar'}));
    * ```
    *
    */
@@ -4213,9 +4213,9 @@ export interface Page {
    * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also
    * emitted if the page throws an error or a warning.
    *
-   * The arguments passed into `console.log` are available on the [ConsoleMessage] event handler argument.
+   * The arguments passed into `console.log` appear as arguments on the event handler.
    *
-   * **Usage**
+   * An example of handling `console` event:
    *
    * ```js
    * page.on('console', async msg => {
@@ -4224,7 +4224,7 @@ export interface Page {
    *     values.push(await arg.jsonValue());
    *   console.log(...values);
    * });
-   * await page.evaluate(() => console.log('hello', 5, { foo: 'bar' }));
+   * await page.evaluate(() => console.log('hello', 5, {foo: 'bar'}));
    * ```
    *
    */
@@ -7485,27 +7485,6 @@ export interface BrowserContext {
   on(event: 'close', listener: (browserContext: BrowserContext) => void): this;
 
   /**
-   * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also
-   * emitted if the page throws an error or a warning.
-   *
-   * The arguments passed into `console.log` and the page are available on the [ConsoleMessage] event handler argument.
-   *
-   * **Usage**
-   *
-   * ```js
-   * context.on('console', async msg => {
-   *   const values = [];
-   *   for (const arg of msg.args())
-   *     values.push(await arg.jsonValue());
-   *   console.log(...values);
-   * });
-   * await page.evaluate(() => console.log('hello', 5, { foo: 'bar' }));
-   * ```
-   *
-   */
-  on(event: 'console', listener: (consoleMessage: ConsoleMessage) => void): this;
-
-  /**
    * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event
    * will also fire for popup pages. See also
    * [page.on('popup')](https://playwright.dev/docs/api/class-page#page-event-popup) to receive events about popups
@@ -7586,11 +7565,6 @@ export interface BrowserContext {
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
-  once(event: 'console', listener: (consoleMessage: ConsoleMessage) => void): this;
-
-  /**
-   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
-   */
   once(event: 'page', listener: (page: Page) => void): this;
 
   /**
@@ -7637,27 +7611,6 @@ export interface BrowserContext {
    * - The [browser.close()](https://playwright.dev/docs/api/class-browser#browser-close) method was called.
    */
   addListener(event: 'close', listener: (browserContext: BrowserContext) => void): this;
-
-  /**
-   * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also
-   * emitted if the page throws an error or a warning.
-   *
-   * The arguments passed into `console.log` and the page are available on the [ConsoleMessage] event handler argument.
-   *
-   * **Usage**
-   *
-   * ```js
-   * context.on('console', async msg => {
-   *   const values = [];
-   *   for (const arg of msg.args())
-   *     values.push(await arg.jsonValue());
-   *   console.log(...values);
-   * });
-   * await page.evaluate(() => console.log('hello', 5, { foo: 'bar' }));
-   * ```
-   *
-   */
-  addListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => void): this;
 
   /**
    * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event
@@ -7740,11 +7693,6 @@ export interface BrowserContext {
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => void): this;
-
-  /**
-   * Removes an event listener added by `on` or `addListener`.
-   */
   removeListener(event: 'page', listener: (page: Page) => void): this;
 
   /**
@@ -7781,11 +7729,6 @@ export interface BrowserContext {
    * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'close', listener: (browserContext: BrowserContext) => void): this;
-
-  /**
-   * Removes an event listener added by `on` or `addListener`.
-   */
-  off(event: 'console', listener: (consoleMessage: ConsoleMessage) => void): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
@@ -7836,27 +7779,6 @@ export interface BrowserContext {
    * - The [browser.close()](https://playwright.dev/docs/api/class-browser#browser-close) method was called.
    */
   prependListener(event: 'close', listener: (browserContext: BrowserContext) => void): this;
-
-  /**
-   * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also
-   * emitted if the page throws an error or a warning.
-   *
-   * The arguments passed into `console.log` and the page are available on the [ConsoleMessage] event handler argument.
-   *
-   * **Usage**
-   *
-   * ```js
-   * context.on('console', async msg => {
-   *   const values = [];
-   *   for (const arg of msg.args())
-   *     values.push(await arg.jsonValue());
-   *   console.log(...values);
-   * });
-   * await page.evaluate(() => console.log('hello', 5, { foo: 'bar' }));
-   * ```
-   *
-   */
-  prependListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => void): this;
 
   /**
    * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event
@@ -8396,27 +8318,6 @@ export interface BrowserContext {
    * - The [browser.close()](https://playwright.dev/docs/api/class-browser#browser-close) method was called.
    */
   waitForEvent(event: 'close', optionsOrPredicate?: { predicate?: (browserContext: BrowserContext) => boolean | Promise<boolean>, timeout?: number } | ((browserContext: BrowserContext) => boolean | Promise<boolean>)): Promise<BrowserContext>;
-
-  /**
-   * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also
-   * emitted if the page throws an error or a warning.
-   *
-   * The arguments passed into `console.log` and the page are available on the [ConsoleMessage] event handler argument.
-   *
-   * **Usage**
-   *
-   * ```js
-   * context.on('console', async msg => {
-   *   const values = [];
-   *   for (const arg of msg.args())
-   *     values.push(await arg.jsonValue());
-   *   console.log(...values);
-   * });
-   * await page.evaluate(() => console.log('hello', 5, { foo: 'bar' }));
-   * ```
-   *
-   */
-  waitForEvent(event: 'console', optionsOrPredicate?: { predicate?: (consoleMessage: ConsoleMessage) => boolean | Promise<boolean>, timeout?: number } | ((consoleMessage: ConsoleMessage) => boolean | Promise<boolean>)): Promise<ConsoleMessage>;
 
   /**
    * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event
@@ -16241,11 +16142,6 @@ export interface ConsoleMessage {
      */
     columnNumber: number;
   };
-
-  /**
-   * The page that produced this console message, if any.
-   */
-  page(): Page|null;
 
   /**
    * The text of the console message.

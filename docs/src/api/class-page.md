@@ -163,11 +163,12 @@ Emitted when the page closes.
   - alias-java: consoleMessage
 - argument: <[ConsoleMessage]>
 
-Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also emitted if the page throws an error or a warning.
+Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also
+emitted if the page throws an error or a warning.
 
-The arguments passed into `console.log` are available on the [ConsoleMessage] event handler argument.
+The arguments passed into `console.log` appear as arguments on the event handler.
 
-**Usage**
+An example of handling `console` event:
 
 ```js
 page.on('console', async msg => {
@@ -176,7 +177,7 @@ page.on('console', async msg => {
     values.push(await arg.jsonValue());
   console.log(...values);
 });
-await page.evaluate(() => console.log('hello', 5, { foo: 'bar' }));
+await page.evaluate(() => console.log('hello', 5, {foo: 'bar'}));
 ```
 
 ```java
@@ -184,7 +185,7 @@ page.onConsoleMessage(msg -> {
   for (int i = 0; i < msg.args().size(); ++i)
     System.out.println(i + ": " + msg.args().get(i).jsonValue());
 });
-page.evaluate("() => console.log('hello', 5, { foo: 'bar' })");
+page.evaluate("() => console.log('hello', 5, {foo: 'bar'})");
 ```
 
 ```python async
@@ -195,7 +196,7 @@ async def print_args(msg):
     print(values)
 
 page.on("console", print_args)
-await page.evaluate("console.log('hello', 5, { foo: 'bar' })")
+await page.evaluate("console.log('hello', 5, {foo: 'bar'})")
 ```
 
 ```python sync
@@ -204,7 +205,7 @@ def print_args(msg):
         print(arg.json_value())
 
 page.on("console", print_args)
-page.evaluate("console.log('hello', 5, { foo: 'bar' })")
+page.evaluate("console.log('hello', 5, {foo: 'bar'})")
 ```
 
 ```csharp

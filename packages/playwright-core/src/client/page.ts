@@ -31,6 +31,7 @@ import { Artifact } from './artifact';
 import type { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';
 import { evaluationScript } from './clientHelper';
+import { ConsoleMessage } from './consoleMessage';
 import { Coverage } from './coverage';
 import { Dialog } from './dialog';
 import { Download } from './download';
@@ -123,6 +124,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
 
     this._channel.on('bindingCall', ({ binding }) => this._onBinding(BindingCall.from(binding)));
     this._channel.on('close', () => this._onClose());
+    this._channel.on('console', ({ message }) => this.emit(Events.Page.Console, ConsoleMessage.from(message)));
     this._channel.on('crash', () => this._onCrash());
     this._channel.on('dialog', ({ dialog }) => {
       const dialogObj = Dialog.from(dialog);

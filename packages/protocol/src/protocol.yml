@@ -1160,10 +1160,6 @@ BrowserContext:
       parameters:
         binding: BindingCall
 
-    console:
-      parameters:
-        message: ConsoleMessage
-
     close:
 
     page:
@@ -1579,6 +1575,10 @@ Page:
         binding: BindingCall
 
     close:
+
+    console:
+      parameters:
+        message: ConsoleMessage
 
     crash:
 
@@ -2883,7 +2883,6 @@ ConsoleMessage:
   type: interface
 
   initializer:
-    page: Page
     type: string
     text: string
     args:

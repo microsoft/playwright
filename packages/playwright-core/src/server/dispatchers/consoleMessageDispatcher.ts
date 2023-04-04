@@ -16,22 +16,19 @@
 
 import type { ConsoleMessage } from '../console';
 import type * as channels from '@protocol/channels';
-import { PageDispatcher } from './pageDispatcher';
-import type { BrowserContextDispatcher } from './browserContextDispatcher';
+import type { PageDispatcher } from './pageDispatcher';
 import { Dispatcher } from './dispatcher';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
 
-export class ConsoleMessageDispatcher extends Dispatcher<ConsoleMessage, channels.ConsoleMessageChannel, BrowserContextDispatcher> implements channels.ConsoleMessageChannel {
+export class ConsoleMessageDispatcher extends Dispatcher<ConsoleMessage, channels.ConsoleMessageChannel, PageDispatcher> implements channels.ConsoleMessageChannel {
   _type_ConsoleMessage = true;
 
-  constructor(scope: BrowserContextDispatcher, message: ConsoleMessage) {
-    const page = PageDispatcher.from(scope, message.page());
+  constructor(scope: PageDispatcher, message: ConsoleMessage) {
     super(scope, message, 'ConsoleMessage', {
       type: message.type(),
       text: message.text(),
-      args: message.args().map(a => ElementHandleDispatcher.fromJSHandle(page, a)),
+      args: message.args().map(a => ElementHandleDispatcher.fromJSHandle(scope, a)),
       location: message.location(),
-      page,
     });
   }
 }

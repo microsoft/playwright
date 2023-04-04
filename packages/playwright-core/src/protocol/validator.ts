@@ -756,9 +756,6 @@ scheme.BrowserContextInitializer = tObject({
 scheme.BrowserContextBindingCallEvent = tObject({
   binding: tChannel(['BindingCall']),
 });
-scheme.BrowserContextConsoleEvent = tObject({
-  message: tChannel(['ConsoleMessage']),
-});
 scheme.BrowserContextCloseEvent = tOptional(tObject({}));
 scheme.BrowserContextPageEvent = tObject({
   page: tChannel(['Page']),
@@ -933,6 +930,9 @@ scheme.PageBindingCallEvent = tObject({
   binding: tChannel(['BindingCall']),
 });
 scheme.PageCloseEvent = tOptional(tObject({}));
+scheme.PageConsoleEvent = tObject({
+  message: tChannel(['ConsoleMessage']),
+});
 scheme.PageCrashEvent = tOptional(tObject({}));
 scheme.PageDialogEvent = tObject({
   dialog: tChannel(['Dialog']),
@@ -2079,7 +2079,6 @@ scheme.WebSocketSocketErrorEvent = tObject({
 });
 scheme.WebSocketCloseEvent = tOptional(tObject({}));
 scheme.ConsoleMessageInitializer = tObject({
-  page: tChannel(['Page']),
   type: tString,
   text: tString,
   args: tArray(tChannel(['ElementHandle', 'JSHandle'])),
