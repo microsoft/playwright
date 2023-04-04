@@ -43,7 +43,6 @@ import { raceAgainstTimeout } from '../utils/timeoutRunner';
 import type { Language, LanguageGenerator } from './recorder/language';
 import { locatorOrSelectorAsSelector } from '../utils/isomorphic/locatorParser';
 import { eventsHelper, type RegisteredListener } from './../utils/eventsHelper';
-import type { Dialog } from './dialog';
 
 type BindingSource = { frame: Frame, page: Page };
 
@@ -426,10 +425,9 @@ class ContextRecorder extends EventEmitter {
   }
 
   async install() {
-    this._context.on(BrowserContext.Events.Page, (page: Page) => this._onPage(page));
+    this._context.on(BrowserContext.Events.Page, page => this._onPage(page));
     for (const page of this._context.pages())
       this._onPage(page);
-    this._context.on(BrowserContext.Events.Dialog, (dialog: Dialog) => this._onDialog(dialog.page()));
 
     // Input actions that potentially lead to navigation are intercepted on the page and are
     // performed by the Playwright.
@@ -473,6 +471,7 @@ class ContextRecorder extends EventEmitter {
         this._onFrameNavigated(frame, page);
     });
     page.on(Page.Events.Download, () => this._onDownload(page));
+    page.on(Page.Events.Dialog, () => this._onDialog(page));
     const suffix = this._pageAliases.size ? String(++this._lastPopupOrdinal) : '';
     const pageAlias = 'page' + suffix;
     this._pageAliases.set(page, pageAlias);

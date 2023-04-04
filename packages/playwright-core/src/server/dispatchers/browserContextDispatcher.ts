@@ -34,7 +34,6 @@ import * as path from 'path';
 import { createGuid, urlMatches } from '../../utils';
 import { WritableStreamDispatcher } from './writableStreamDispatcher';
 import { ConsoleMessageDispatcher } from './consoleMessageDispatcher';
-import { DialogDispatcher } from './dialogDispatcher';
 
 export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channels.BrowserContextChannel, DispatcherScope> implements channels.BrowserContextChannel {
   _type_EventTarget = true;
@@ -81,8 +80,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       this._dispatchEvent('close');
       this._dispose();
     });
-    this.addObjectListener(BrowserContext.Events.Console, message => this._dispatchEvent('console', { message: new ConsoleMessageDispatcher(PageDispatcher.from(this, message.page()), message) }));
-    this.addObjectListener(BrowserContext.Events.Dialog, dialog => this._dispatchEvent('dialog', { dialog: new DialogDispatcher(this, dialog) }));
+    this.addObjectListener(BrowserContext.Events.Console, message => this._dispatchEvent('console', { message: new ConsoleMessageDispatcher(this, message) }));
 
     if (context._browser.options.name === 'chromium') {
       for (const page of (context as CRBrowserContext).backgroundPages())

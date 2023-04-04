@@ -37,7 +37,6 @@ export const Events = {
   BrowserContext: {
     Console: 'console',
     Close: 'close',
-    Dialog: 'dialog',
     Page: 'page',
     BackgroundPage: 'backgroundpage',
     ServiceWorker: 'serviceworker',

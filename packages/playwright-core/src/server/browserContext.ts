@@ -46,7 +46,6 @@ export abstract class BrowserContext extends SdkObject {
   static Events = {
     Console: 'console',
     Close: 'close',
-    Dialog: 'dialog',
     Page: 'page',
     Request: 'request',
     Response: 'response',
