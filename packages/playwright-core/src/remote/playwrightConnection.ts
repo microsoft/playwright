@@ -282,4 +282,5 @@ const defaultLaunchOptions: LaunchOptions = {
 
 const optionsThatAllowBrowserReuse: (keyof LaunchOptions)[] = [
   'headless',
+  'tracesDir',
 ];
