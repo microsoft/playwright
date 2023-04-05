@@ -378,8 +378,8 @@ test('should include stdio', async ({ runInlineTest, page, showReport }) => {
       });
     `,
   }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
-  expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(1);
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
 
   await showReport();
   await page.click('text=fails');
