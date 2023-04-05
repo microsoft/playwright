@@ -104,3 +104,61 @@ test('should print output', async ({ runInlineTest }) => {
     'full-line',
   ].join('\n'));
 });
+
+test('should render failed test steps', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('passes', async ({}) => {
+        await test.step('outer 1.0', async () => {
+          await test.step('inner 1.1', async () => {
+            expect(1).toBe(2);
+          });
+        });
+      });
+    `,
+  }, { reporter: 'line' });
+  const text = result.output;
+  expect(text).toContain('1) a.test.ts:3:11 › passes › outer 1.0 › inner 1.1 ──');
+  expect(result.exitCode).toBe(1);
+});
+
+test('should not render more than one failed test steps in header', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('passes', async ({}) => {
+        await test.step('outer 1.0', async () => {
+          await test.step('inner 1.1', async () => {
+            expect.soft(1).toBe(2);
+          });
+          await test.step('inner 1.2', async () => {
+            expect.soft(1).toBe(2);
+          });
+        });
+      });
+    `,
+  }, { reporter: 'line' });
+  const text = result.output;
+  expect(text).toContain('1) a.test.ts:3:11 › passes › outer 1.0 ──');
+  expect(result.exitCode).toBe(1);
+});
+
+test('should not render more than one failed test steps in header (2)', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('passes', async ({}) => {
+        await test.step('outer 1.0', async () => {
+          await test.step('inner 1.1', async () => {
+            expect.soft(1).toBe(2);
+          });
+        });
+        expect.soft(1).toBe(2);
+      });
+    `,
+  }, { reporter: 'line' });
+  const text = result.output;
+  expect(text).toContain('1) a.test.ts:3:11 › passes ──');
+  expect(result.exitCode).toBe(1);
+});
