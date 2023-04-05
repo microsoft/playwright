@@ -618,7 +618,7 @@ const refreshRootSuite = (eraseResults: boolean): Promise<void> => {
     return;
   }
 
-  receiver?.dispatch(message).catch(() => {});
+  receiver?.dispatch(message)?.catch(() => {});
 };
 
 const sendMessage = async (method: string, params: any) => {
