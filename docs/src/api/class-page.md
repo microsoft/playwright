@@ -2687,6 +2687,9 @@ Returns whether the element is [visible](../actionability.md#visible). [`option:
 ### option: Page.locator.hasNot = %%-locator-option-has-not-%%
 * since: v1.33
 
+### option: Page.locator.hasNotText = %%-locator-option-has-not-text-%%
+* since: v1.33
+
 ## method: Page.mainFrame
 * since: v1.8
 - returns: <[Frame]>

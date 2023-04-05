@@ -59,6 +59,8 @@ it('should support playwright.locator.values', async ({ page }) => {
   expect(await page.evaluate(`playwright.locator('div', { hasText: /ELL/ }).elements.length`)).toBe(0);
   expect(await page.evaluate(`playwright.locator('div', { hasText: /ELL/i }).elements.length`)).toBe(1);
   expect(await page.evaluate(`playwright.locator('div', { hasText: /Hello/ }).elements.length`)).toBe(1);
+  expect(await page.evaluate(`playwright.locator('div', { hasNotText: /Bar/ }).elements.length`)).toBe(0);
+  expect(await page.evaluate(`playwright.locator('div', { hasNotText: /Hello/ }).elements.length`)).toBe(1);
 });
 
 it('should support playwright.locator({ has })', async ({ page }) => {
