@@ -14,6 +14,11 @@
  * limitations under the License.
  */
 
+type JsonPrimitive = string | number | boolean | null;
+type JsonValue = JsonPrimitive | JsonObject | JsonArray;
+type JsonArray = JsonValue[];
+export type JsonObject = { [Key in string]?: JsonValue };
+
 export type JsxComponent = {
   kind: 'jsx',
   type: string,
