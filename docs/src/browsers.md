@@ -132,7 +132,7 @@ playwright install --with-deps chromium
 pwsh bin/Debug/netX/playwright.ps1 install --with-deps chromium
 ```
 
-## Update Playwright regulary
+## Update Playwright regularly
 * langs: js
 
 By keeping your Playwright version up to date you will be able to use new features and test your app on the latest browser versions and catch failures before the latest browser version is released to the public.
