@@ -26,6 +26,18 @@ import { SnapshotStorage } from './snapshotStorage';
 
 const zipjs = zipImport as typeof zip;
 
+type Progress = (done: number, total: number) => void;
+
+const splitProgress = (progress: Progress, weights: number[]): Progress[] => {
+  const doneList = new Array(weights.length).fill(0);
+  return new Array(weights.length).fill(0).map((_, i) => {
+    return (done: number, total: number) => {
+      doneList[i] = done / total * weights[i] * 1000;
+      progress(doneList.reduce((a, b) => a + b, 0), 1000);
+    };
+  });
+};
+
 export class TraceModel {
   contextEntries: ContextEntry[] = [];
   pageEntries = new Map<string, PageEntry>();
@@ -38,7 +50,9 @@ export class TraceModel {
 
   async load(traceURL: string, progress: (done: number, total: number) => void) {
     const isLive = traceURL.endsWith('json');
-    this._backend = isLive ? new FetchTraceModelBackend(traceURL) : new ZipTraceModelBackend(traceURL, progress);
+    // Allow 10% to hop from sw to page.
+    const [fetchProgress, unzipProgress] = splitProgress(progress, [0.5, 0.4, 0.1]);
+    this._backend = isLive ? new FetchTraceModelBackend(traceURL) : new ZipTraceModelBackend(traceURL, fetchProgress);
 
     const ordinals: string[] = [];
     let hasSource = false;
@@ -54,6 +68,9 @@ export class TraceModel {
 
     this._snapshotStorage = new SnapshotStorage();
 
+    // 3 * ordinals progress increments below.
+    const total = ordinals.length * 3;
+    let done = 0;
     for (const ordinal of ordinals) {
       const contextEntry = createEmptyContext();
       const actionMap = new Map<string, trace.ActionTraceEvent>();
@@ -63,10 +80,12 @@ export class TraceModel {
       const trace = await this._backend.readText(ordinal + 'trace.trace') || '';
       for (const line of trace.split('\n'))
         this.appendEvent(contextEntry, actionMap, line);
+      unzipProgress(++done, total);
 
       const network = await this._backend.readText(ordinal + 'trace.network') || '';
       for (const line of network.split('\n'))
         this.appendEvent(contextEntry, actionMap, line);
+      unzipProgress(++done, total);
 
       contextEntry.actions = [...actionMap.values()].sort((a1, a2) => a1.startTime - a2.startTime);
       if (!isLive) {
@@ -82,6 +101,7 @@ export class TraceModel {
         for (const action of contextEntry.actions)
           action.stack = action.stack || callMetadata.get(action.callId);
       }
+      unzipProgress(++done, total);
 
       this.contextEntries.push(contextEntry);
     }
