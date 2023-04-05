@@ -157,6 +157,9 @@ it('should support locator.filter', async ({ page, trace }) => {
     has: page.locator('span'),
     hasText: 'world',
   })).toHaveCount(1);
+  await expect(page.locator(`div`).filter({ hasNot: page.locator('span', { hasText: 'world' }) })).toHaveCount(1);
+  await expect(page.locator(`div`).filter({ hasNot: page.locator('section') })).toHaveCount(2);
+  await expect(page.locator(`div`).filter({ hasNot: page.locator('span') })).toHaveCount(0);
 });
 
 it('should support locator.or', async ({ page }) => {
