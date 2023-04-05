@@ -5911,7 +5911,8 @@ interface TestConfigWebServer {
 
   /**
    * The url on your http server that is expected to return a 2xx, 3xx, 400, 401, 402, or 403 status code when the
-   * server is ready to accept connections. Exactly one of `port` or `url` is required.
+   * server is ready to accept connections. Redirects (3xx status codes) are being followed and the new location is
+   * checked. Exactly one of `port` or `url` is required.
    */
   url?: string;
 
