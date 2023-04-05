@@ -19,7 +19,7 @@ import { type NestedSelectorBody, parseAttributeSelector, parseSelector, stringi
 import type { ParsedSelector } from './selectorParser';
 
 export type Language = 'javascript' | 'python' | 'java' | 'csharp';
-export type LocatorType = 'default' | 'role' | 'text' | 'label' | 'placeholder' | 'alt' | 'title' | 'test-id' | 'nth' | 'first' | 'last' | 'has-text' | 'has-not-text' | 'has' | 'hasNot' | 'frame' | 'or' | 'and' | 'not';
+export type LocatorType = 'default' | 'role' | 'text' | 'label' | 'placeholder' | 'alt' | 'title' | 'test-id' | 'nth' | 'first' | 'last' | 'has-text' | 'has-not-text' | 'has' | 'hasNot' | 'frame' | 'or';
 export type LocatorBase = 'page' | 'locator' | 'frame-locator';
 
 type LocatorOptions = { attrs?: { name: string, value: string | boolean | number}[], exact?: boolean, name?: string | RegExp };
@@ -102,16 +102,6 @@ function innerAsLocator(factory: LocatorFactory, parsed: ParsedSelector, isFrame
     if (part.name === 'internal:or') {
       const inner = innerAsLocator(factory, (part.body as NestedSelectorBody).parsed);
       tokens.push(factory.generateLocator(base, 'or', inner));
-      continue;
-    }
-    if (part.name === 'internal:and') {
-      const inner = innerAsLocator(factory, (part.body as NestedSelectorBody).parsed);
-      tokens.push(factory.generateLocator(base, 'and', inner));
-      continue;
-    }
-    if (part.name === 'internal:not') {
-      const inner = innerAsLocator(factory, (part.body as NestedSelectorBody).parsed);
-      tokens.push(factory.generateLocator(base, 'not', inner));
       continue;
     }
     if (part.name === 'internal:label') {
@@ -229,10 +219,6 @@ export class JavaScriptLocatorFactory implements LocatorFactory {
         return `filter({ hasNot: ${body} })`;
       case 'or':
         return `or(${body})`;
-      case 'and':
-        return `and(${body})`;
-      case 'not':
-        return `not(${body})`;
       case 'test-id':
         return `getByTestId(${this.quote(body as string)})`;
       case 'text':
@@ -307,10 +293,6 @@ export class PythonLocatorFactory implements LocatorFactory {
         return `filter(has_not=${body})`;
       case 'or':
         return `or_(${body})`;
-      case 'and':
-        return `and_(${body})`;
-      case 'not':
-        return `not_(${body})`;
       case 'test-id':
         return `get_by_test_id(${this.quote(body as string)})`;
       case 'text':
@@ -394,10 +376,6 @@ export class JavaLocatorFactory implements LocatorFactory {
         return `filter(new ${clazz}.FilterOptions().setHasNot(${body}))`;
       case 'or':
         return `or(${body})`;
-      case 'and':
-        return `and(${body})`;
-      case 'not':
-        return `not(${body})`;
       case 'test-id':
         return `getByTestId(${this.quote(body as string)})`;
       case 'text':
@@ -475,10 +453,6 @@ export class CSharpLocatorFactory implements LocatorFactory {
         return `Filter(new() { HasNot = ${body} })`;
       case 'or':
         return `Or(${body})`;
-      case 'and':
-        return `And(${body})`;
-      case 'not':
-        return `Not(${body})`;
       case 'test-id':
         return `GetByTestId(${this.quote(body as string)})`;
       case 'text':

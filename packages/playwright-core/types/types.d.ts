@@ -10241,21 +10241,6 @@ export interface Locator {
   allTextContents(): Promise<Array<string>>;
 
   /**
-   * Creates a locator that matches both this locator and the argument locator.
-   *
-   * **Usage**
-   *
-   * The following example finds a button with a specific title.
-   *
-   * ```js
-   * const button = page.getByRole('button').and(page.getByTitle('Subscribe'));
-   * ```
-   *
-   * @param locator Additional locator to match.
-   */
-  and(locator: Locator): Locator;
-
-  /**
    * Calls [blur](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/blur) on the element.
    * @param options
    */
@@ -11538,21 +11523,6 @@ export interface Locator {
      */
     hasText?: string|RegExp;
   }): Locator;
-
-  /**
-   * Creates a locator that **matches this** locator, but **not the argument** locator.
-   *
-   * **Usage**
-   *
-   * The following example finds a button that does not have title `"Subscribe"`.
-   *
-   * ```js
-   * const button = page.getByRole('button').not(page.getByTitle('Subscribe'));
-   * ```
-   *
-   * @param locator Locator that must not match.
-   */
-  not(locator: Locator): Locator;
 
   /**
    * Returns locator to the n-th matching element. It's zero based, `nth(0)` selects the first element.
