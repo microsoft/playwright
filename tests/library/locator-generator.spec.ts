@@ -291,6 +291,15 @@ it('reverse engineer hasText', async ({ page }) => {
   });
 });
 
+it('reverse engineer hasNotText', async ({ page }) => {
+  expect.soft(generate(page.getByText('Hello').filter({ hasNotText: 'wo"rld\n' }))).toEqual({
+    csharp: `GetByText("Hello").Filter(new() { HasNotText = "wo\\"rld\\n" })`,
+    java: `getByText("Hello").filter(new Locator.FilterOptions().setHasNotText("wo\\"rld\\n"))`,
+    javascript: `getByText('Hello').filter({ hasNotText: 'wo"rld\\n' })`,
+    python: `get_by_text("Hello").filter(has_not_text="wo\\"rld\\n")`,
+  });
+});
+
 it('reverse engineer has', async ({ page }) => {
   expect.soft(generate(page.getByText('Hello').filter({ has: page.locator('div').getByText('bye') }))).toEqual({
     csharp: `GetByText("Hello").Filter(new() { Has = Locator("div").GetByText("bye") })`,
@@ -370,6 +379,7 @@ it.describe(() => {
     });
 
     expect.soft(asLocator('javascript', 'div >> internal:has-text="foo"s', false)).toBe(`locator('div').locator('internal:has-text="foo"s')`);
+    expect.soft(asLocator('javascript', 'div >> internal:has-not-text="foo"s', false)).toBe(`locator('div').locator('internal:has-not-text="foo"s')`);
   });
 });
 

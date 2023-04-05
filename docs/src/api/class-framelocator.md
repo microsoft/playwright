@@ -205,6 +205,9 @@ Returns locator to the last matching frame.
 ### option: FrameLocator.locator.hasNot = %%-locator-option-has-not-%%
 * since: v1.33
 
+### option: FrameLocator.locator.hasNotText = %%-locator-option-has-not-text-%%
+* since: v1.33
+
 ## method: FrameLocator.nth
 * since: v1.17
 - returns: <[FrameLocator]>

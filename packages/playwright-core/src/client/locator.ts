@@ -29,6 +29,7 @@ import { getByAltTextSelector, getByLabelSelector, getByPlaceholderSelector, get
 
 export type LocatorOptions = {
   hasText?: string | RegExp;
+  hasNotText?: string | RegExp;
   has?: Locator;
   hasNot?: Locator;
 };
@@ -43,6 +44,9 @@ export class Locator implements api.Locator {
 
     if (options?.hasText)
       this._selector += ` >> internal:has-text=${escapeForTextSelector(options.hasText, false)}`;
+
+    if (options?.hasNotText)
+      this._selector += ` >> internal:has-not-text=${escapeForTextSelector(options.hasNotText, false)}`;
 
     if (options?.has) {
       const locator = options.has;

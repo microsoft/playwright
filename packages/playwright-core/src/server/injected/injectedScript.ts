@@ -119,6 +119,7 @@ export class InjectedScript {
     this._engines.set('internal:label', this._createInternalLabelEngine());
     this._engines.set('internal:text', this._createTextEngine(true, true));
     this._engines.set('internal:has-text', this._createInternalHasTextEngine());
+    this._engines.set('internal:has-not-text', this._createInternalHasNotTextEngine());
     this._engines.set('internal:attr', this._createNamedAttributeEngine());
     this._engines.set('internal:testid', this._createNamedAttributeEngine());
     this._engines.set('internal:role', createRoleEngine(true));
@@ -305,6 +306,19 @@ export class InjectedScript {
         const text = elementText(this._evaluator._cacheText, element);
         const { matcher } = createTextMatcher(selector, true);
         return matcher(text) ? [element] : [];
+      }
+    };
+  }
+
+  private _createInternalHasNotTextEngine(): SelectorEngine {
+    return {
+      queryAll: (root: SelectorRoot, selector: string): Element[] => {
+        if (root.nodeType !== 1 /* Node.ELEMENT_NODE */)
+          return [];
+        const element = root as Element;
+        const text = elementText(this._evaluator._cacheText, element);
+        const { matcher } = createTextMatcher(selector, true);
+        return matcher(text) ? [] : [element];
       }
     };
   }

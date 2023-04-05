@@ -1037,6 +1037,11 @@ For example, `article` that does not have `div` matches `<article><span>Playwrig
 
 Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
 
+## locator-option-has-not-text
+- `hasNotText` <[string]|[RegExp]>
+
+Matches elements that do not contain specified text somewhere inside, possibly in a child or a descendant element. When passed a [string], matching is case-insensitive and searches for a substring.
+
 ## locator-options-list-v1.14
 - %%-locator-option-has-text-%%
 - %%-locator-option-has-%%

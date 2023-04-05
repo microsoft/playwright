@@ -883,6 +883,36 @@ await page
     .ClickAsync();
 ```
 
+Alternatively, filter by **not having** text:
+
+```js
+// 5 in-stock items
+await expect(page.getByRole('listitem').filter({ hasNotText: 'Out of stock' })).toHaveCount(5);
+```
+
+```java
+// 5 in-stock items
+assertThat(page.getByRole(AriaRole.LISTITEM)
+    .filter(new Locator.FilterOptions().setHasNotText("Out of stock")))
+    .hasCount(5);
+```
+
+```python async
+# 5 in-stock items
+await expect(page.get_by_role("listitem").filter(has_not_text="Out of stock")).to_have_count(5)
+```
+
+```python sync
+# 5 in-stock items
+expect(page.get_by_role("listitem").filter(has_not_text="Out of stock")).to_have_count(5)
+```
+
+```csharp
+// 5 in-stock items
+await Expect(page.getByRole(AriaRole.Listitem).Filter(new() { HasNotText = "Out of stock" }))
+    .ToHaveCountAsync(5);
+```
+
 ### Filter by child/descendant
 
 Locators support an option to only select elements that have or have not a descendant matching another locator. You can therefore filter by any other locator such as a [`method: Locator.getByRole`], [`method: Locator.getByTestId`], [`method: Locator.getByText`] etc.

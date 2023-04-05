@@ -29,11 +29,13 @@ class Locator {
   element: Element | undefined;
   elements: Element[] | undefined;
 
-  constructor(injectedScript: InjectedScript, selector: string, options?: { hasText?: string | RegExp, has?: Locator, hasNot?: Locator }) {
+  constructor(injectedScript: InjectedScript, selector: string, options?: { hasText?: string | RegExp, hasNotText?: string | RegExp, has?: Locator, hasNot?: Locator }) {
     (this as any)[selectorSymbol] = selector;
     (this as any)[injectedScriptSymbol] = injectedScript;
     if (options?.hasText)
       selector += ` >> internal:has-text=${escapeForTextSelector(options.hasText, false)}`;
+    if (options?.hasNotText)
+      selector += ` >> internal:has-not-text=${escapeForTextSelector(options.hasNotText, false)}`;
     if (options?.has)
       selector += ` >> internal:has=` + JSON.stringify((options.has as any)[selectorSymbol]);
     if (options?.hasNot)

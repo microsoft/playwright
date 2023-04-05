@@ -3226,6 +3226,12 @@ export interface Page {
     hasNot?: Locator;
 
     /**
+     * Matches elements that do not contain specified text somewhere inside, possibly in a child or a descendant element.
+     * When passed a [string], matching is case-insensitive and searches for a substring.
+     */
+    hasNotText?: string|RegExp;
+
+    /**
      * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. When
      * passed a [string], matching is case-insensitive and searches for a substring. For example, `"Playwright"` matches
      * `<article><div>Playwright</div></article>`.
@@ -6609,6 +6615,12 @@ export interface Frame {
      * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
      */
     hasNot?: Locator;
+
+    /**
+     * Matches elements that do not contain specified text somewhere inside, possibly in a child or a descendant element.
+     * When passed a [string], matching is case-insensitive and searches for a substring.
+     */
+    hasNotText?: string|RegExp;
 
     /**
      * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. When
@@ -10852,6 +10864,12 @@ export interface Locator {
     hasNot?: Locator;
 
     /**
+     * Matches elements that do not contain specified text somewhere inside, possibly in a child or a descendant element.
+     * When passed a [string], matching is case-insensitive and searches for a substring.
+     */
+    hasNotText?: string|RegExp;
+
+    /**
      * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. When
      * passed a [string], matching is case-insensitive and searches for a substring. For example, `"Playwright"` matches
      * `<article><div>Playwright</div></article>`.
@@ -11506,6 +11524,12 @@ export interface Locator {
      * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
      */
     hasNot?: Locator;
+
+    /**
+     * Matches elements that do not contain specified text somewhere inside, possibly in a child or a descendant element.
+     * When passed a [string], matching is case-insensitive and searches for a substring.
+     */
+    hasNotText?: string|RegExp;
 
     /**
      * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. When
@@ -17168,6 +17192,12 @@ export interface FrameLocator {
      * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
      */
     hasNot?: Locator;
+
+    /**
+     * Matches elements that do not contain specified text somewhere inside, possibly in a child or a descendant element.
+     * When passed a [string], matching is case-insensitive and searches for a substring.
+     */
+    hasNotText?: string|RegExp;
 
     /**
      * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. When
