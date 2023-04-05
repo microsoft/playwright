@@ -11548,12 +11548,16 @@ export interface Locator {
    *
    * **Usage**
    *
-   * If your page shows a username input that is labelled either `Username` or `Login`, depending on some external
-   * factors you do not control, you can match both.
+   * Consider a scenario where you'd like to click on a "New email" button, but sometimes a security settings dialog
+   * shows up instead. In this case, you can wait for either a "New email" button, or a dialog and act accordingly.
    *
    * ```js
-   * const input = page.getByLabel('Username').or(page.getByLabel('Login'));
-   * await input.fill('John');
+   * const newEmail = page.getByRole('button', { name: 'New' });
+   * const dialog = page.getByText('Confirm security settings');
+   * await expect(newEmail.or(dialog)).toBeVisible();
+   * if (await dialog.isVisible())
+   *   await page.getByRole('button', { name: 'Dismiss' }).click();
+   * await newEmail.click();
    * ```
    *
    * @param locator Alternative locator to match.
