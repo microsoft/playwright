@@ -107,6 +107,11 @@ export type JsonTestStepEnd = {
   error?: TestError;
 };
 
+export type JsonEvent = {
+  method: string;
+  params: any
+};
+
 export class TeleReporterReceiver {
   private _rootSuite: TeleSuite;
   private _pathSeparator: string;
@@ -120,8 +125,8 @@ export class TeleReporterReceiver {
     this._reporter = reporter;
   }
 
-  dispatch(message: any) {
-    const { method, params }: { method: string, params: any } = message;
+  async dispatch(message: JsonEvent) {
+    const { method, params } = message;
     if (method === 'onBegin') {
       this._onBegin(params.config, params.projects);
       return;
@@ -151,7 +156,11 @@ export class TeleReporterReceiver {
       return;
     }
     if (method === 'onEnd') {
-      this._onEnd(params.result);
+      await this._onEnd(params.result);
+      return;
+    }
+    if (method === 'onExit') {
+      await this._onExit();
       return;
     }
   }
@@ -258,8 +267,12 @@ export class TeleReporterReceiver {
       this._reporter.onStdErr?.(chunk, test, result);
   }
 
-  private _onEnd(result: FullResult) {
-    this._reporter.onEnd?.(result);
+  private async _onEnd(result: FullResult) {
+    await this._reporter.onEnd?.(result);
+  }
+
+  private async _onExit() {
+    await this._reporter.onExit?.();
   }
 
   private _parseConfig(config: JsonConfig): FullConfig {
