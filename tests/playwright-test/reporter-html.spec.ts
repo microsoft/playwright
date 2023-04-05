@@ -354,7 +354,6 @@ test('should use different path if attachments base url option is provided', asy
 
   await showReport();
   await page.click('text=passes');
-  await expect(page.locator('text=Screenshots')).toBeVisible();
 
   await expect(page.locator('div').filter({ hasText: /^Screenshotsscreenshot$/ }).getByRole('img')).toHaveAttribute('src', /(https:\/\/some-url\.com\/)[^/\s]+?\.[^/\s]+/);
   await expect(page.getByRole('link', { name: 'screenshot' })).toHaveAttribute('href', /(https:\/\/some-url\.com\/)[^/\s]+?\.[^/\s]+/);
