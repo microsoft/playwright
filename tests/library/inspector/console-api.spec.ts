@@ -80,16 +80,6 @@ it('should support locator.or()', async ({ page }) => {
   expect(await page.evaluate(`playwright.locator('div').or(playwright.locator('span')).elements.map(e => e.innerHTML)`)).toEqual(['Hi', 'Hello']);
 });
 
-it('should support locator.not()', async ({ page }) => {
-  await page.setContent('<div class=foo>Hi</div><div class=bar>Hello</div>');
-  expect(await page.evaluate(`playwright.locator('div').not(playwright.locator('.foo')).elements.map(e => e.innerHTML)`)).toEqual(['Hello']);
-});
-
-it('should support locator.and()', async ({ page }) => {
-  await page.setContent('<div data-testid=Hey>Hi</div>');
-  expect(await page.evaluate(`playwright.locator('div').and(playwright.getByTestId('Hey')).elements.map(e => e.innerHTML)`)).toEqual(['Hi']);
-});
-
 it('should support playwright.getBy*', async ({ page }) => {
   await page.setContent('<span>Hello</span><span title="world">World</span>');
   expect(await page.evaluate(`playwright.getByText('hello').element.innerHTML`)).toContain('Hello');
