@@ -72,6 +72,7 @@ function parseLocator(locator: string, testIdAttributeName: string): string {
       .replace(/get_by_test_id/g, 'getbytestid')
       .replace(/get_by_([\w]+)/g, 'getby$1')
       .replace(/has_text/g, 'hastext')
+      .replace(/has_not/g, 'hasnot')
       .replace(/frame_locator/g, 'framelocator')
       .replace(/[{}\s]/g, '')
       .replace(/new\(\)/g, '')
@@ -102,10 +103,10 @@ function shiftParams(template: string, sub: number) {
 }
 
 function transform(template: string, params: TemplateParams, testIdAttributeName: string): string {
-  // Recursively handle filter(has=).
+  // Recursively handle filter(has=, hasnot=).
   // TODO: handle or(locator), not(locator), and(locator).
   while (true) {
-    const hasMatch = template.match(/filter\(,?has=/);
+    const hasMatch = template.match(/filter\(,?(has|hasnot)=/);
     if (!hasMatch)
       break;
 
@@ -129,6 +130,7 @@ function transform(template: string, params: TemplateParams, testIdAttributeName
     const hasSelector = JSON.stringify(transform(hasTemplate, hasParams, testIdAttributeName));
 
     // Replace filter(has=...) with filter(has2=$5). Use has2 to avoid matching the same filter again.
+    // Replace filter(hasnot=...) with filter(hasnot2=$5). Use hasnot2 to avoid matching the same filter again.
     template = template.substring(0, start - 1) + `2=$${paramsCountBeforeHas + 1}` + shiftParams(template.substring(end), paramsCountInHas - 1);
 
     // Replace inner params with $5 value.
@@ -151,6 +153,7 @@ function transform(template: string, params: TemplateParams, testIdAttributeName
       .replace(/nth\(([^)]+)\)/g, 'nth=$1')
       .replace(/filter\(,?hastext=([^)]+)\)/g, 'internal:has-text=$1')
       .replace(/filter\(,?has2=([^)]+)\)/g, 'internal:has=$1')
+      .replace(/filter\(,?hasnot2=([^)]+)\)/g, 'internal:has-not=$1')
       .replace(/,exact=false/g, '')
       .replace(/,exact=true/g, 's')
       .replace(/\,/g, '][');
@@ -180,7 +183,7 @@ function transform(template: string, params: TemplateParams, testIdAttributeName
         })
         .replace(/\$(\d+)(i|s)?/g, (_, ordinal, suffix) => {
           const param = params[+ordinal - 1];
-          if (t.startsWith('internal:has='))
+          if (t.startsWith('internal:has=') || t.startsWith('internal:has-not='))
             return param.text;
           if (t.startsWith('internal:attr') || t.startsWith('internal:testid') || t.startsWith('internal:role'))
             return escapeForAttributeSelector(param.text, suffix === 's');

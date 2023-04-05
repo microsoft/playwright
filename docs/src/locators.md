@@ -885,7 +885,7 @@ await page
 
 ### Filter by child/descendant
 
-Locators support an option to only select elements that have a descendant matching another locator. You can therefore filter by any other locator such as a [`method: Locator.getByRole`], [`method: Locator.getByTestId`], [`method: Locator.getByText`] etc.
+Locators support an option to only select elements that have or have not a descendant matching another locator. You can therefore filter by any other locator such as a [`method: Locator.getByRole`], [`method: Locator.getByTestId`], [`method: Locator.getByText`] etc.
 
 ```html card
 <ul>
@@ -979,6 +979,47 @@ await Expect(page
     .GetByRole(AriaRole.Listitem)
     .Filter(new() {
         Has = page.GetByRole(AriaRole.Heading, new() { Name = "Product 2" })
+    })
+    .toHaveCountAsync(1);
+```
+
+We can also filter by **not having** a matching element inside
+
+```js
+await expect(page
+    .getByRole('listitem')
+    .filter({ hasNot: page.getByText('Product 2') }))
+    .toHaveCount(1);
+```
+
+```java
+assertThat(page
+    .getByRole(AriaRole.LISTITEM)
+    .filter(new Locator.FilterOptions().setHasNot(page.getByText("Product 2")))
+    .hasCount(1);
+```
+
+```python async
+await expect(
+    page.get_by_role("listitem").filter(
+        has_not=page.get_by_role("heading", name="Product 2")
+    )
+).to_have_count(1)
+```
+
+```python sync
+expect(
+    page.get_by_role("listitem").filter(
+        has_not=page.get_by_role("heading", name="Product 2")
+    )
+).to_have_count(1)
+```
+
+```csharp
+await Expect(page
+    .GetByRole(AriaRole.Listitem)
+    .Filter(new() {
+        HasNot = page.GetByRole(AriaRole.Heading, new() { Name = "Product 2" })
     })
     .toHaveCountAsync(1);
 ```

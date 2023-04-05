@@ -988,6 +988,8 @@ await rowLocator
 ### option: Locator.filter.-inline- = %%-locator-options-list-v1.14-%%
 * since: v1.22
 
+### option: Locator.filter.hasNot = %%-locator-option-has-not-%%
+* since: v1.33
 
 ## method: Locator.first
 * since: v1.14
@@ -1502,6 +1504,9 @@ var banana = await page.GetByRole(AriaRole.Listitem).Last(1);
 
 ### option: Locator.locator.-inline- = %%-locator-options-list-v1.14-%%
 * since: v1.14
+
+### option: Locator.locator.hasNot = %%-locator-option-has-not-%%
+* since: v1.33
 
 
 ## method: Locator.not

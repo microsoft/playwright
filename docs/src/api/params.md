@@ -1029,6 +1029,14 @@ For example, `article` that has `text=Playwright` matches `<article><div>Playwri
 
 Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
 
+## locator-option-has-not
+- `hasNot` <[Locator]>
+
+Matches elements that do not contain an element that matches an inner locator. Inner locator is queried against the outer one.
+For example, `article` that does not have `div` matches `<article><span>Playwright</span></article>`.
+
+Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
+
 ## locator-options-list-v1.14
 - %%-locator-option-has-text-%%
 - %%-locator-option-has-%%

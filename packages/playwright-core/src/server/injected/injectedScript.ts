@@ -112,6 +112,7 @@ export class InjectedScript {
     this._engines.set('visible', this._createVisibleEngine());
     this._engines.set('internal:control', this._createControlEngine());
     this._engines.set('internal:has', this._createHasEngine());
+    this._engines.set('internal:has-not', this._createHasNotEngine());
     this._engines.set('internal:or', { queryAll: () => [] });
     this._engines.set('internal:and', { queryAll: () => [] });
     this._engines.set('internal:not', { queryAll: () => [] });
@@ -373,6 +374,16 @@ export class InjectedScript {
         return [];
       const has = !!this.querySelector(body.parsed, root, false);
       return has ? [root as Element] : [];
+    };
+    return { queryAll };
+  }
+
+  private _createHasNotEngine(): SelectorEngine {
+    const queryAll = (root: SelectorRoot, body: NestedSelectorBody) => {
+      if (root.nodeType !== 1 /* Node.ELEMENT_NODE */)
+        return [];
+      const has = !!this.querySelector(body.parsed, root, false);
+      return has ? [] : [root as Element];
     };
     return { queryAll };
   }

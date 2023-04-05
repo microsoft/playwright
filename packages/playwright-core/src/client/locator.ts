@@ -30,6 +30,7 @@ import { getByAltTextSelector, getByLabelSelector, getByPlaceholderSelector, get
 export type LocatorOptions = {
   hasText?: string | RegExp;
   has?: Locator;
+  hasNot?: Locator;
 };
 
 export class Locator implements api.Locator {
@@ -48,6 +49,13 @@ export class Locator implements api.Locator {
       if (locator._frame !== frame)
         throw new Error(`Inner "has" locator must belong to the same frame.`);
       this._selector += ` >> internal:has=` + JSON.stringify(locator._selector);
+    }
+
+    if (options?.hasNot) {
+      const locator = options.hasNot;
+      if (locator._frame !== frame)
+        throw new Error(`Inner "hasNot" locator must belong to the same frame.`);
+      this._selector += ` >> internal:has-not=` + JSON.stringify(locator._selector);
     }
   }
 

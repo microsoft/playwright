@@ -3218,6 +3218,14 @@ export interface Page {
     has?: Locator;
 
     /**
+     * Matches elements that do not contain an element that matches an inner locator. Inner locator is queried against the
+     * outer one. For example, `article` that does not have `div` matches `<article><span>Playwright</span></article>`.
+     *
+     * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
+     */
+    hasNot?: Locator;
+
+    /**
      * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. When
      * passed a [string], matching is case-insensitive and searches for a substring. For example, `"Playwright"` matches
      * `<article><div>Playwright</div></article>`.
@@ -6593,6 +6601,14 @@ export interface Frame {
      * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
      */
     has?: Locator;
+
+    /**
+     * Matches elements that do not contain an element that matches an inner locator. Inner locator is queried against the
+     * outer one. For example, `article` that does not have `div` matches `<article><span>Playwright</span></article>`.
+     *
+     * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
+     */
+    hasNot?: Locator;
 
     /**
      * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. When
@@ -10828,6 +10844,14 @@ export interface Locator {
     has?: Locator;
 
     /**
+     * Matches elements that do not contain an element that matches an inner locator. Inner locator is queried against the
+     * outer one. For example, `article` that does not have `div` matches `<article><span>Playwright</span></article>`.
+     *
+     * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
+     */
+    hasNot?: Locator;
+
+    /**
      * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. When
      * passed a [string], matching is case-insensitive and searches for a substring. For example, `"Playwright"` matches
      * `<article><div>Playwright</div></article>`.
@@ -11474,6 +11498,14 @@ export interface Locator {
      * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
      */
     has?: Locator;
+
+    /**
+     * Matches elements that do not contain an element that matches an inner locator. Inner locator is queried against the
+     * outer one. For example, `article` that does not have `div` matches `<article><span>Playwright</span></article>`.
+     *
+     * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
+     */
+    hasNot?: Locator;
 
     /**
      * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. When
@@ -17124,6 +17156,14 @@ export interface FrameLocator {
      * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
      */
     has?: Locator;
+
+    /**
+     * Matches elements that do not contain an element that matches an inner locator. Inner locator is queried against the
+     * outer one. For example, `article` that does not have `div` matches `<article><span>Playwright</span></article>`.
+     *
+     * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
+     */
+    hasNot?: Locator;
 
     /**
      * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. When
