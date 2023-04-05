@@ -435,7 +435,6 @@ it('should handle custom dataTransfer', async ({ page, browserName, isWindows })
 
 it('what happens when dragging element is destroyed', async ({ page, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/21621' });
-  it.fixme(browserName === 'firefox', `hangs without any response for Page.dispatchMouseEvent({ type: 'mouseup' })`);
 
   await page.setContent(`
     <button draggable="true">Draggable</button>
