@@ -144,17 +144,17 @@ export class BaseReporter implements Reporter {
     if (unexpected.length) {
       tokens.push(colors.red(`  ${unexpected.length} failed`));
       for (const test of unexpected)
-        tokens.push(colors.red(formatTestHeader(this.config, test, '    ')));
+        tokens.push(colors.red(formatTestHeader(this.config, test, { indent: '    ' })));
     }
     if (interrupted.length) {
       tokens.push(colors.yellow(`  ${interrupted.length} interrupted`));
       for (const test of interrupted)
-        tokens.push(colors.yellow(formatTestHeader(this.config, test, '    ')));
+        tokens.push(colors.yellow(formatTestHeader(this.config, test, { indent: '    ' })));
     }
     if (flaky.length) {
       tokens.push(colors.yellow(`  ${flaky.length} flaky`));
       for (const test of flaky)
-        tokens.push(colors.yellow(formatTestHeader(this.config, test, '    ')));
+        tokens.push(colors.yellow(formatTestHeader(this.config, test, { indent: '    ' })));
     }
     if (skipped)
       tokens.push(colors.yellow(`  ${skipped} skipped`));
@@ -251,7 +251,7 @@ export function formatFailure(config: FullConfig, test: TestCase, options: {inde
   const lines: string[] = [];
   const title = formatTestTitle(config, test);
   const annotations: Annotation[] = [];
-  const header = formatTestHeader(config, test, '  ', index);
+  const header = formatTestHeader(config, test, { indent: '  ', index, mode: 'error' });
   lines.push(colors.red(header));
   for (const result of test.results) {
     const resultLines: string[] = [];
@@ -371,10 +371,31 @@ export function formatTestTitle(config: FullConfig, test: TestCase, step?: TestS
   return `${projectTitle}${location} › ${titles.join(' › ')}${stepSuffix(step)}`;
 }
 
-function formatTestHeader(config: FullConfig, test: TestCase, indent: string, index?: number): string {
+function formatTestHeader(config: FullConfig, test: TestCase, options: { indent?: string, index?: number, mode?: 'default' | 'error' } = {}): string {
   const title = formatTestTitle(config, test);
-  const header = `${indent}${index ? index + ') ' : ''}${title}`;
-  return separator(header);
+  const header = `${options.indent || ''}${options.index ? options.index + ') ' : ''}${title}`;
+  let fullHeader = header;
+
+  // Render the path to the deepest failing test.step.
+  if (options.mode === 'error') {
+    const stepPaths = new Set<string>();
+    for (const result of test.results.filter(r => !!r.errors.length)) {
+      const stepPath: string[] = [];
+      const visit = (steps: TestStep[]) => {
+        const errors = steps.filter(s => s.error);
+        if (errors.length > 1)
+          return;
+        if (errors.length === 1 && errors[0].category === 'test.step') {
+          stepPath.push(errors[0].title);
+          visit(errors[0].steps);
+        }
+      };
+      visit(result.steps);
+      stepPaths.add(['', ...stepPath].join(' › '));
+    }
+    fullHeader = header + (stepPaths.size === 1 ? stepPaths.values().next().value : '');
+  }
+  return separator(fullHeader);
 }
 
 export function formatError(config: FullConfig, error: TestError, highlightCode: boolean): ErrorDetails {
