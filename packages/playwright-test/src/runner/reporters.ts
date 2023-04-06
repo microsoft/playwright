@@ -48,11 +48,12 @@ export async function createReporter(config: FullConfigInternal, mode: 'list' | 
   } else {
     for (const r of config.reporter) {
       const [name, arg] = r;
+      const options = { ...arg, configDir: config._internal.configDir };
       if (name in defaultReporters) {
-        reporters.push(new defaultReporters[name as keyof typeof defaultReporters](arg));
+        reporters.push(new defaultReporters[name as keyof typeof defaultReporters](options));
       } else {
         const reporterConstructor = await loadReporter(config, name);
-        reporters.push(new reporterConstructor(arg));
+        reporters.push(new reporterConstructor(options));
       }
     }
     reporters.push(...additionalReporters);
