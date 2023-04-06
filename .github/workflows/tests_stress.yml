@@ -16,6 +16,7 @@ on:
 
 env:
   FORCE_COLOR: 1
+  ELECTRON_SKIP_BINARY_DOWNLOAD: 1
 
 jobs:
   test_components:
