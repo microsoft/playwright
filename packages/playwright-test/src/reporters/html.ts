@@ -394,7 +394,7 @@ class HtmlBuilder {
         try {
           const buffer = fs.readFileSync(a.path);
           const sha1 = calculateSha1(buffer) + path.extname(a.path);
-          fileName = path.join(this._attachmentsBaseURL, sha1);
+          fileName = this._attachmentsBaseURL + sha1;
           fs.mkdirSync(path.join(this._reportFolder, 'data'), { recursive: true });
           fs.writeFileSync(path.join(this._reportFolder, 'data', sha1), buffer);
         } catch (e) {
@@ -435,7 +435,7 @@ class HtmlBuilder {
         return {
           name: a.name,
           contentType: a.contentType,
-          path: path.join(this._attachmentsBaseURL, sha1),
+          path: this._attachmentsBaseURL + sha1,
         };
       }
 
