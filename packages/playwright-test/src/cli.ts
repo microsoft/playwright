@@ -103,11 +103,11 @@ function addMergeReportsCommand(program: Command) {
       process.exit(1);
     }
   });
-  command.option('-c, --config <file>', `Configuration file, or a test directory with optional ${kDefaultConfigFiles.map(file => `"${file}"`).join('/')}. Can be used to specify additional configuration for the output report.`);
-  command.option('--reporter <reporter>', 'Output report type', 'html');
+  command.option('-c, --config <file>', `Configuration file. Can be used to specify additional configuration for the output report.`);
+  command.option('--reporter <reporter>', 'Output report type', 'list');
   command.addHelpText('afterAll', `
 Arguments [dir]:
-  Directory containing shard reports.
+  Directory containing blob reports.
 
 Examples:
   $ npx playwright merge-reports playwright-report`);
@@ -199,19 +199,26 @@ async function listTestFiles(opts: { [key: string]: any }) {
 }
 
 async function mergeReports(reportDir: string | undefined, opts: { [key: string]: any }) {
-  const dir = path.resolve(process.cwd(), reportDir || 'playwright-report');
-  const resolvedConfigFile = opts.config ? resolveConfigFile(opts.config)! : null;
-  if (restartWithExperimentalTsEsm(resolvedConfigFile))
+  let configFile = opts.config;
+  if (configFile) {
+    configFile = path.resolve(process.cwd(), configFile);
+    if (!fs.existsSync(configFile))
+      throw new Error(`${configFile} does not exist`);
+    if (!fs.statSync(configFile).isFile())
+      throw new Error(`${configFile} is not a file`);
+  }
+  if (restartWithExperimentalTsEsm(configFile))
     return;
 
   const configLoader = new ConfigLoader();
-  if (resolvedConfigFile)
-    await configLoader.loadConfigFile(resolvedConfigFile);
+  if (configFile)
+    await configLoader.loadConfigFile(configFile);
   else
     await configLoader.loadEmptyConfig(process.cwd());
   const config = configLoader.fullConfig();
 
-  await createMergedReport(config, dir, opts.reporter || 'html');
+  const dir = path.resolve(process.cwd(), reportDir || 'playwright-report');
+  await createMergedReport(config, dir, opts.reporter || 'list');
 }
 
 function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrides {

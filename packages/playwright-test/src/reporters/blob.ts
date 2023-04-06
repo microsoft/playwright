@@ -19,66 +19,103 @@ import fs from 'fs';
 import path from 'path';
 import { ManualPromise, ZipFile } from 'playwright-core/lib/utils';
 import { yazl } from 'playwright-core/lib/zipBundle';
+import { Readable } from 'stream';
+import type { Reporter } from '../../types/testReporter';
 import type { FullConfig, FullResult } from '../../types/testReporter';
+import type { BuiltInReporter } from '../common/configLoader';
 import type { Suite } from '../common/test';
 import type { FullConfigInternal } from '../common/types';
-import { type JsonEvent, type JsonProject, type JsonSuite, TeleReporterReceiver } from '../isomorphic/teleReceiver';
+import { TeleReporterReceiver, type JsonEvent, type JsonProject, type JsonSuite } from '../isomorphic/teleReceiver';
+import DotReporter from '../reporters/dot';
+import EmptyReporter from '../reporters/empty';
+import GitHubReporter from '../reporters/github';
+import JSONReporter from '../reporters/json';
+import JUnitReporter from '../reporters/junit';
+import LineReporter from '../reporters/line';
+import ListReporter from '../reporters/list';
 import HtmlReporter, { defaultReportFolder } from './html';
 import { TeleReporterEmitter } from './teleEmitter';
+import { loadReporter } from '../runner/loadUtils';
 
 
 type BlobReporterOptions = {
+  configDir: string;
   outputDir?: string;
 };
 
 export class BlobReporter extends TeleReporterEmitter {
   private _messages: any[] = [];
   private _options: BlobReporterOptions;
-  private _outputFile: string | undefined;
+  private _outputFile!: string;
 
-  constructor(options: BlobReporterOptions = {}) {
+  constructor(options: BlobReporterOptions) {
     super(message => this._messages.push(message));
     this._options = options;
   }
+
   override onBegin(config: FullConfig<{}, {}>, suite: Suite): void {
     super.onBegin(config, suite);
-    const outputDir = this._resolveOutputDir(config as FullConfigInternal);
+    this._computeOutputFileName(config);
+  }
+
+  override async onEnd(result: FullResult): Promise<void> {
+    await super.onEnd(result);
+    fs.mkdirSync(path.dirname(this._outputFile), { recursive: true });
+    const lines = this._messages.map(m => JSON.stringify(m) + '\n');
+    await zipReport(this._outputFile, lines);
+  }
+
+  private _computeOutputFileName(config: FullConfig) {
+    const outputDir = this._resolveOutputDir();
     let shardSuffix = '';
     if (config.shard) {
-      const paddedNumber = String(config.shard.current).padStart(String(config.shard.total).length, '0');
+      const paddedNumber = `${config.shard.current}`.padStart(`${config.shard.total}`.length, '0');
       shardSuffix = `-${paddedNumber}-of-${config.shard.total}`;
     }
     this._outputFile = path.join(outputDir, `report${shardSuffix}.zip`);
   }
 
-  override async onEnd(result: FullResult): Promise<void> {
-    await super.onEnd(result);
-    if (!this._outputFile)
-      return;
-
-    const reportString = JSON.stringify(this._messages, undefined, 2);
-    fs.mkdirSync(path.dirname(this._outputFile), { recursive: true });
-    await zipReport(this._outputFile, reportString);
-  }
-
-  private _resolveOutputDir(config: FullConfigInternal): string {
+  private _resolveOutputDir(): string {
     const { outputDir } = this._options;
     if (outputDir)
-      return path.resolve(config._internal.configDir, outputDir);
-    return defaultReportFolder(config._internal.configDir);
+      return path.resolve(this._options.configDir, outputDir);
+    return defaultReportFolder(this._options.configDir);
   }
 }
 
 export async function createMergedReport(config: FullConfigInternal, dir: string, reporterName?: string) {
   const shardFiles = await sortedShardFiles(dir);
-  console.log(`Merging ${shardFiles}`);
   const events = await mergeEvents(dir, shardFiles);
-  console.log(`Writing ${reporterName} report to ${dir}`);
 
-  // TODO: use reporterName.
-  const reporter = new HtmlReporter({ _internalResolvedOutputFolder: dir });
+  const defaultReporters: {[key in BuiltInReporter]: new(arg: any) => Reporter} = {
+    dot: DotReporter,
+    line: LineReporter,
+    list: ListReporter,
+    github: GitHubReporter,
+    json: JSONReporter,
+    junit: JUnitReporter,
+    null: EmptyReporter,
+    html: HtmlReporter,
+    blob: BlobReporter,
+  };
+  reporterName ??= 'list';
+
+  const arg = config.reporter.find(([reporter, arg]) => reporter === reporterName)?.[1];
+  const options = {
+    ...arg,
+    configDir: process.cwd(),
+    outputFolder: dir
+  };
+
+  let reporter: Reporter | undefined;
+  if (reporterName in defaultReporters) {
+    reporter = new defaultReporters[reporterName as keyof typeof defaultReporters](options);
+  } else {
+    const reporterConstructor = await loadReporter(config, reporterName);
+    reporter = new reporterConstructor(options);
+  }
+
   const receiver = new TeleReporterReceiver(path.sep, reporter);
-  // TODO: handle onError.
   for (const event of events)
     await receiver.dispatch(event);
   console.log(`Done.`);
@@ -91,11 +128,11 @@ async function mergeEvents(dir: string, shardFiles: string[]) {
   for (const file of shardFiles) {
     const zipFile = new ZipFile(path.join(dir, file));
     const entryNames = await zipFile.entries();
-    const reportEntryName = entryNames.find(e => e.endsWith('.json'));
+    const reportEntryName = entryNames.find(e => e.endsWith('.jsonl'));
     if (!reportEntryName)
-      throw new Error(`Zip file ${file} does not contain a .json file`);
+      throw new Error(`Zip file ${file} does not contain a .jsonl file`);
     const reportJson = await zipFile.read(reportEntryName);
-    const parsedEvents = JSON.parse(reportJson.toString()) as JsonEvent[];
+    const parsedEvents = reportJson.toString().split('\n').filter(line => line.length).map(line => JSON.parse(line)) as JsonEvent[];
     for (const event of parsedEvents) {
       // TODO: show remaining events?
       if (event.method === 'onError')
@@ -171,11 +208,13 @@ async function sortedShardFiles(dir: string) {
   return files.filter(file => file.endsWith('.zip')).sort();
 }
 
-async function zipReport(zipFileName: string, content: string | Buffer) {
+async function zipReport(zipFileName: string, lines: string[]) {
   const zipFile = new yazl.ZipFile();
   const result = new ManualPromise<undefined>();
   (zipFile as any as EventEmitter).on('error', error => result.reject(error));
-  zipFile.addBuffer(Buffer.from(content), 'report.json');
+  // TODO: feed events on the fly.
+  const content = Readable.from(lines);
+  zipFile.addReadStream(content, 'report.jsonl');
   zipFile.end();
   zipFile.outputStream.pipe(fs.createWriteStream(zipFileName)).on('close', () => {
     result.resolve(undefined);

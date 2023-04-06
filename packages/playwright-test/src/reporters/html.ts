@@ -43,7 +43,6 @@ type HtmlReportOpenOption = 'always' | 'never' | 'on-failure';
 type HtmlReporterOptions = {
   configDir: string,
   outputFolder?: string,
-  _internalResolvedOutputFolder?: string,
   open?: HtmlReportOpenOption,
   host?: string,
   port?: number,
