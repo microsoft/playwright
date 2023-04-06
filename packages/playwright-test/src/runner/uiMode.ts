@@ -23,8 +23,7 @@ import type { FullConfigInternal } from '../common/types';
 import { Multiplexer } from '../reporters/multiplexer';
 import { TeleReporterEmitter } from '../reporters/teleEmitter';
 import { createReporter } from './reporters';
-import type { TaskRunnerState } from './tasks';
-import { createTaskRunnerForList, createTaskRunnerForWatch, createTaskRunnerForWatchSetup } from './tasks';
+import { TestRun, createTaskRunnerForList, createTaskRunnerForWatch, createTaskRunnerForWatchSetup } from './tasks';
 import { chokidar } from '../utilsBundle';
 import type { FSWatcher } from 'chokidar';
 import { open } from '../utilsBundle';
@@ -72,12 +71,8 @@ class UIMode {
     const reporter = new Multiplexer([new ListReporter()]);
     const taskRunner = createTaskRunnerForWatchSetup(this._config, reporter);
     reporter.onConfigure(this._config);
-    const context: TaskRunnerState = {
-      config: this._config,
-      reporter,
-      phases: [],
-    };
-    const { status, cleanup: globalCleanup } = await taskRunner.runDeferCleanup(context, 0);
+    const testRun = new TestRun(this._config, reporter);
+    const { status, cleanup: globalCleanup } = await taskRunner.runDeferCleanup(testRun, 0);
     await reporter.onExit({ status });
     if (status !== 'passed') {
       await globalCleanup();
@@ -156,10 +151,10 @@ class UIMode {
     this._config._internal.listOnly = true;
     this._config._internal.testIdMatcher = undefined;
     const taskRunner = createTaskRunnerForList(this._config, reporter, 'out-of-process');
-    const context: TaskRunnerState = { config: this._config, reporter, phases: [] };
+    const testRun = new TestRun(this._config, reporter);
     clearCompilationCache();
     reporter.onConfigure(this._config);
-    const status = await taskRunner.run(context, 0);
+    const status = await taskRunner.run(testRun, 0);
     await reporter.onExit({ status });
 
     const projectDirs = new Set<string>();
@@ -178,11 +173,11 @@ class UIMode {
     const runReporter = new TeleReporterEmitter(e => this._dispatchEvent(e));
     const reporter = await createReporter(this._config, 'ui', [runReporter]);
     const taskRunner = createTaskRunnerForWatch(this._config, reporter);
-    const context: TaskRunnerState = { config: this._config, reporter, phases: [] };
+    const testRun = new TestRun(this._config, reporter);
     clearCompilationCache();
     reporter.onConfigure(this._config);
     const stop = new ManualPromise();
-    const run = taskRunner.run(context, 0, stop).then(async status => {
+    const run = taskRunner.run(testRun, 0, stop).then(async status => {
       await reporter.onExit({ status });
       this._testRun = undefined;
       this._config._internal.testIdMatcher = undefined;
