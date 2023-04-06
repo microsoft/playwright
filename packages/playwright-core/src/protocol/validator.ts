@@ -561,6 +561,12 @@ scheme.BrowserTypeLaunchPersistentContextParams = tObject({
       width: tNumber,
       height: tNumber,
     })),
+    quality: tOptional(tObject({
+      qmin: tOptional(tNumber),
+      qmax: tOptional(tNumber),
+      crf: tOptional(tNumber),
+      bitrate: tOptional(tString),
+    })),
   })),
   recordHar: tOptional(tType('RecordHarOptions')),
   strictSelectors: tOptional(tBoolean),
@@ -633,6 +639,12 @@ scheme.BrowserNewContextParams = tObject({
       width: tNumber,
       height: tNumber,
     })),
+    quality: tOptional(tObject({
+      qmin: tOptional(tNumber),
+      qmax: tOptional(tNumber),
+      crf: tOptional(tNumber),
+      bitrate: tOptional(tString),
+    })),
   })),
   recordHar: tOptional(tType('RecordHarOptions')),
   strictSelectors: tOptional(tBoolean),
@@ -693,6 +705,12 @@ scheme.BrowserNewContextForReuseParams = tObject({
     size: tOptional(tObject({
       width: tNumber,
       height: tNumber,
+    })),
+    quality: tOptional(tObject({
+      qmin: tOptional(tNumber),
+      qmax: tOptional(tNumber),
+      crf: tOptional(tNumber),
+      bitrate: tOptional(tString),
     })),
   })),
   recordHar: tOptional(tType('RecordHarOptions')),
@@ -2437,6 +2455,12 @@ scheme.AndroidDeviceLaunchBrowserParams = tObject({
     size: tOptional(tObject({
       width: tNumber,
       height: tNumber,
+    })),
+    quality: tOptional(tObject({
+      qmin: tOptional(tNumber),
+      qmax: tOptional(tNumber),
+      crf: tOptional(tNumber),
+      bitrate: tOptional(tString),
     })),
   })),
   recordHar: tOptional(tType('RecordHarOptions')),

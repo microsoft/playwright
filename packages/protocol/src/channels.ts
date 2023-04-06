@@ -972,6 +972,12 @@ export type BrowserTypeLaunchPersistentContextParams = {
       width: number,
       height: number,
     },
+    quality?: {
+      qmin?: number,
+      qmax?: number,
+      crf?: number,
+      bitrate?: string,
+    },
   },
   recordHar?: RecordHarOptions,
   strictSelectors?: boolean,
@@ -1042,6 +1048,12 @@ export type BrowserTypeLaunchPersistentContextOptions = {
     size?: {
       width: number,
       height: number,
+    },
+    quality?: {
+      qmin?: number,
+      qmax?: number,
+      crf?: number,
+      bitrate?: string,
     },
   },
   recordHar?: RecordHarOptions,
@@ -1139,6 +1151,12 @@ export type BrowserNewContextParams = {
       width: number,
       height: number,
     },
+    quality?: {
+      qmin?: number,
+      qmax?: number,
+      crf?: number,
+      bitrate?: string,
+    },
   },
   recordHar?: RecordHarOptions,
   strictSelectors?: boolean,
@@ -1196,6 +1214,12 @@ export type BrowserNewContextOptions = {
     size?: {
       width: number,
       height: number,
+    },
+    quality?: {
+      qmin?: number,
+      qmax?: number,
+      crf?: number,
+      bitrate?: string,
     },
   },
   recordHar?: RecordHarOptions,
@@ -1258,6 +1282,12 @@ export type BrowserNewContextForReuseParams = {
       width: number,
       height: number,
     },
+    quality?: {
+      qmin?: number,
+      qmax?: number,
+      crf?: number,
+      bitrate?: string,
+    },
   },
   recordHar?: RecordHarOptions,
   strictSelectors?: boolean,
@@ -1315,6 +1345,12 @@ export type BrowserNewContextForReuseOptions = {
     size?: {
       width: number,
       height: number,
+    },
+    quality?: {
+      qmin?: number,
+      qmax?: number,
+      crf?: number,
+      bitrate?: string,
     },
   },
   recordHar?: RecordHarOptions,
@@ -4402,6 +4438,12 @@ export type AndroidDeviceLaunchBrowserParams = {
       width: number,
       height: number,
     },
+    quality?: {
+      qmin?: number,
+      qmax?: number,
+      crf?: number,
+      bitrate?: string,
+    },
   },
   recordHar?: RecordHarOptions,
   strictSelectors?: boolean,
@@ -4457,6 +4499,12 @@ export type AndroidDeviceLaunchBrowserOptions = {
     size?: {
       width: number,
       height: number,
+    },
+    quality?: {
+      qmin?: number,
+      qmax?: number,
+      crf?: number,
+      bitrate?: string,
     },
   },
   recordHar?: RecordHarOptions,

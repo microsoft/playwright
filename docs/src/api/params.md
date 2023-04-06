@@ -679,6 +679,11 @@ When set to `minimal`, only record information necessary for routing from HAR. T
     Actual picture of each page will be scaled down if necessary to fit the specified size.
     - `width` <[int]> Video frame width.
     - `height` <[int]> Video frame height.
+  - `quality` ?<[Object]> Optional quality parameters. If not specified, it will default to `qmin=0,qmax=50,crf=8,bitrate=1M`. Only works on Chromium as for now. [See Documentation](https://trac.ffmpeg.org/wiki/Encode/VP8#VariableBitrate)
+    - `qmin` ?<[int]> The minimum quantizer (default 0, range 0–63).
+    - `qmax` ?<[int]> The maximum quantizer (default 50, range `qmin`–63).
+    - `crf` ?<[int]> Enable constant quality mode.
+    - `bitrate` ?<[string]> Target bitrate.
 
 Enables video recording for all pages into `recordVideo.dir` directory. If not specified videos are not recorded. Make
 sure to await [`method: BrowserContext.close`] for videos to be saved.

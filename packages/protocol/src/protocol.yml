@@ -482,6 +482,13 @@ ContextOptions:
           properties:
             width: number
             height: number
+        quality:
+          type: object?
+          properties:
+            qmin: number?
+            qmax: number?
+            crf: number?
+            bitrate: string?
     recordHar: RecordHarOptions?
     strictSelectors: boolean?
     serviceWorkers:

@@ -12591,6 +12591,32 @@ export interface BrowserType<Unused = {}> {
          */
         height: number;
       };
+
+      /**
+       * Optional quality parameters. If not specified, it will default to `qmin=0,qmax=50,crf=8,bitrate=1M`. Only works on
+       * Chromium as for now. [See Documentation](https://trac.ffmpeg.org/wiki/Encode/VP8#VariableBitrate)
+       */
+      quality?: {
+        /**
+         * The minimum quantizer (default 0, range 0–63).
+         */
+        qmin?: number;
+
+        /**
+         * The maximum quantizer (default 50, range `qmin`–63).
+         */
+        qmax?: number;
+
+        /**
+         * Enable constant quality mode.
+         */
+        crf?: number;
+
+        /**
+         * Target bitrate.
+         */
+        bitrate?: string;
+      };
     };
 
     /**
@@ -13991,6 +14017,32 @@ export interface AndroidDevice {
          * Video frame height.
          */
         height: number;
+      };
+
+      /**
+       * Optional quality parameters. If not specified, it will default to `qmin=0,qmax=50,crf=8,bitrate=1M`. Only works on
+       * Chromium as for now. [See Documentation](https://trac.ffmpeg.org/wiki/Encode/VP8#VariableBitrate)
+       */
+      quality?: {
+        /**
+         * The minimum quantizer (default 0, range 0–63).
+         */
+        qmin?: number;
+
+        /**
+         * The maximum quantizer (default 50, range `qmin`–63).
+         */
+        qmax?: number;
+
+        /**
+         * Enable constant quality mode.
+         */
+        crf?: number;
+
+        /**
+         * Target bitrate.
+         */
+        bitrate?: string;
       };
     };
 
@@ -15865,6 +15917,32 @@ export interface Browser extends EventEmitter {
          */
         height: number;
       };
+
+      /**
+       * Optional quality parameters. If not specified, it will default to `qmin=0,qmax=50,crf=8,bitrate=1M`. Only works on
+       * Chromium as for now. [See Documentation](https://trac.ffmpeg.org/wiki/Encode/VP8#VariableBitrate)
+       */
+      quality?: {
+        /**
+         * The minimum quantizer (default 0, range 0–63).
+         */
+        qmin?: number;
+
+        /**
+         * The maximum quantizer (default 50, range `qmin`–63).
+         */
+        qmax?: number;
+
+        /**
+         * Enable constant quality mode.
+         */
+        crf?: number;
+
+        /**
+         * Target bitrate.
+         */
+        bitrate?: string;
+      };
     };
 
     /**
@@ -16678,6 +16756,32 @@ export interface Electron {
          * Video frame height.
          */
         height: number;
+      };
+
+      /**
+       * Optional quality parameters. If not specified, it will default to `qmin=0,qmax=50,crf=8,bitrate=1M`. Only works on
+       * Chromium as for now. [See Documentation](https://trac.ffmpeg.org/wiki/Encode/VP8#VariableBitrate)
+       */
+      quality?: {
+        /**
+         * The minimum quantizer (default 0, range 0–63).
+         */
+        qmin?: number;
+
+        /**
+         * The maximum quantizer (default 50, range `qmin`–63).
+         */
+        qmax?: number;
+
+        /**
+         * Enable constant quality mode.
+         */
+        crf?: number;
+
+        /**
+         * Target bitrate.
+         */
+        bitrate?: string;
       };
     };
 
@@ -18964,6 +19068,32 @@ export interface BrowserContextOptions {
        * Video frame height.
        */
       height: number;
+    };
+
+    /**
+     * Optional quality parameters. If not specified, it will default to `qmin=0,qmax=50,crf=8,bitrate=1M`. Only works on
+     * Chromium as for now. [See Documentation](https://trac.ffmpeg.org/wiki/Encode/VP8#VariableBitrate)
+     */
+    quality?: {
+      /**
+       * The minimum quantizer (default 0, range 0–63).
+       */
+      qmin?: number;
+
+      /**
+       * The maximum quantizer (default 50, range `qmin`–63).
+       */
+      qmax?: number;
+
+      /**
+       * Enable constant quality mode.
+       */
+      crf?: number;
+
+      /**
+       * Target bitrate.
+       */
+      bitrate?: string;
     };
   };
 
