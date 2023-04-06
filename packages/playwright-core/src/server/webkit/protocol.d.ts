@@ -1237,7 +1237,7 @@ export module Protocol {
     /**
      * The type of rendering context backing the canvas element.
      */
-    export type ContextType = "canvas-2d"|"bitmaprenderer"|"webgl"|"webgl2";
+    export type ContextType = "canvas-2d"|"offscreen-canvas-2d"|"bitmaprenderer"|"webgl"|"webgl2";
     export type ProgramType = "compute"|"render";
     export type ShaderType = "compute"|"fragment"|"vertex";
     /**
@@ -7652,7 +7652,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     /**
      * The type of the recording.
      */
-    export type Type = "canvas-2d"|"canvas-bitmaprenderer"|"canvas-webgl"|"canvas-webgl2";
+    export type Type = "canvas-2d"|"offscreen-canvas-2d"|"canvas-bitmaprenderer"|"canvas-webgl"|"canvas-webgl2";
     export type Initiator = "frontend"|"console"|"auto-capture";
     /**
      * Information about the initial state of the recorded object.
