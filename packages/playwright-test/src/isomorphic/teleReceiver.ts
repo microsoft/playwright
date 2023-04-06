@@ -118,6 +118,7 @@ export class TeleReporterReceiver {
   private _reporter: Reporter;
   private _tests = new Map<string, TeleTestCase>();
   private _rootDir!: string;
+  private _clearPreviousResultsWhenTestBegins: boolean = false;
 
   constructor(pathSeparator: string, reporter: Reporter) {
     this._rootSuite = new TeleSuite('', 'root');
@@ -161,6 +162,10 @@ export class TeleReporterReceiver {
       return this._onExit();
   }
 
+  _setClearPreviousResultsWhenTestBegins() {
+    this._clearPreviousResultsWhenTestBegins = true;
+  }
+
   private _onBegin(config: JsonConfig, projects: JsonProject[]) {
     this._rootDir = config.rootDir;
     for (const project of projects) {
@@ -196,6 +201,8 @@ export class TeleReporterReceiver {
 
   private _onTestBegin(testId: string, payload: JsonTestResultStart) {
     const test = this._tests.get(testId)!;
+    if (this._clearPreviousResultsWhenTestBegins)
+      test._clearResults();
     const testResult = test._createTestResult(payload.id);
     testResult.retry = payload.retry;
     testResult.workerIndex = payload.workerIndex;
@@ -450,7 +457,6 @@ export class TeleTestCase implements reporterTypes.TestCase {
   }
 
   _createTestResult(id: string): TeleTestResult {
-    this._clearResults();
     const result: TeleTestResult = {
       retry: this.results.length,
       parallelIndex: -1,
