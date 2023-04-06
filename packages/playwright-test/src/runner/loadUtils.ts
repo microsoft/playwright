@@ -23,6 +23,7 @@ import type { FullConfigInternal, FullProjectInternal } from '../common/types';
 import { createFileMatcherFromArguments, createFileFiltersFromArguments, createTitleMatcher, errorWithFile, forceRegExp } from '../util';
 import type { Matcher, TestFileFilter } from '../util';
 import { buildProjectsClosure, collectFilesForProject, filterProjects } from './projectUtils';
+import type { TestRun } from './tasks';
 import { requireOrImport } from '../common/transform';
 import { buildFileSuiteForProject, filterByFocusedLine, filterByTestIds, filterOnly, filterTestsRemoveEmptySuites } from '../common/suiteUtils';
 import { createTestGroups, filterForShard, type TestGroup } from './testGroups';
@@ -30,7 +31,8 @@ import { dependenciesForTestFile } from '../common/compilationCache';
 import { sourceMapSupport } from '../utilsBundle';
 import type { RawSourceMap } from 'source-map';
 
-export async function collectProjectsAndTestFiles(config: FullConfigInternal, projectsToIgnore: Set<FullProjectInternal>, additionalFileMatcher: Matcher | undefined) {
+export async function collectProjectsAndTestFiles(testRun: TestRun, additionalFileMatcher: Matcher | undefined) {
+  const config = testRun.config;
   const fsCache = new Map();
   const sourceMapCache = new Map();
   const cliFileMatcher = config._internal.cliArgs.length ? createFileMatcherFromArguments(config._internal.cliArgs) : null;
@@ -38,8 +40,6 @@ export async function collectProjectsAndTestFiles(config: FullConfigInternal, pr
   // First collect all files for the projects in the command line, don't apply any file filters.
   const allFilesForProject = new Map<FullProjectInternal, string[]>();
   for (const project of filterProjects(config.projects, config._internal.cliProjectFilter)) {
-    if (projectsToIgnore.has(project))
-      continue;
     const files = await collectFilesForProject(project, fsCache);
     allFilesForProject.set(project, files);
   }
@@ -63,22 +63,26 @@ export async function collectProjectsAndTestFiles(config: FullConfigInternal, pr
   }
 
   // (Re-)add all files for dependent projects, disregard filters.
-  const projectClosure = buildProjectsClosure([...filesToRunByProject.keys()]).filter(p => !projectsToIgnore.has(p));
-  for (const project of projectClosure) {
-    if (project._internal.type === 'dependency') {
+  const projectClosure = buildProjectsClosure([...filesToRunByProject.keys()]);
+  for (const [project, type] of projectClosure) {
+    if (type === 'dependency') {
       filesToRunByProject.delete(project);
       const files = allFilesForProject.get(project) || await collectFilesForProject(project, fsCache);
       filesToRunByProject.set(project, files);
     }
   }
 
-  return filesToRunByProject;
+  testRun.projects = [...filesToRunByProject.keys()];
+  testRun.projectFiles = filesToRunByProject;
+  testRun.projectType = projectClosure;
+  testRun.projectSuites = new Map();
 }
 
-export async function loadFileSuites(mode: 'out-of-process' | 'in-process', config: FullConfigInternal, filesToRunByProject: Map<FullProjectInternal, string[]>, errors: TestError[]): Promise<Map<FullProjectInternal, Suite[]>> {
+export async function loadFileSuites(testRun: TestRun, mode: 'out-of-process' | 'in-process', errors: TestError[]) {
   // Determine all files to load.
+  const config = testRun.config;
   const allTestFiles = new Set<string>();
-  for (const files of filesToRunByProject.values())
+  for (const files of testRun.projectFiles.values())
     files.forEach(file => allTestFiles.add(file));
 
   // Load test files.
@@ -107,15 +111,14 @@ export async function loadFileSuites(mode: 'out-of-process' | 'in-process', conf
   }
 
   // Collect file suites for each project.
-  const fileSuitesByProject = new Map<FullProjectInternal, Suite[]>();
-  for (const [project, files] of filesToRunByProject) {
+  for (const [project, files] of testRun.projectFiles) {
     const suites = files.map(file => fileSuiteByFile.get(file)).filter(Boolean) as Suite[];
-    fileSuitesByProject.set(project, suites);
+    testRun.projectSuites.set(project, suites);
   }
-  return fileSuitesByProject;
 }
 
-export async function createRootSuite(config: FullConfigInternal, fileSuitesByProject: Map<FullProjectInternal, Suite[]>, errors: TestError[], shouldFilterOnly: boolean): Promise<Suite> {
+export async function createRootSuite(testRun: TestRun, errors: TestError[], shouldFilterOnly: boolean): Promise<Suite> {
+  const config = testRun.config;
   // Create root suite, where each child will be a project suite with cloned file suites inside it.
   const rootSuite = new Suite('', 'root');
 
@@ -128,8 +131,8 @@ export async function createRootSuite(config: FullConfigInternal, fileSuitesByPr
     const cliTitleMatcher = (title: string) => !grepInvertMatcher(title) && grepMatcher(title);
 
     // Clone file suites for top-level projects.
-    for (const [project, fileSuites] of fileSuitesByProject) {
-      if (project._internal.type === 'top-level')
+    for (const [project, fileSuites] of testRun.projectSuites) {
+      if (testRun.projectType.get(project) === 'top-level')
         rootSuite._addSuite(await createProjectSuite(fileSuites, project, { cliFileFilters, cliTitleMatcher, testIdMatcher: config._internal.testIdMatcher }));
     }
   }
@@ -168,11 +171,11 @@ export async function createRootSuite(config: FullConfigInternal, fileSuitesByPr
   {
     // Filtering only and sharding might have reduced the number of top-level projects.
     // Build the project closure to only include dependencies that are still needed.
-    const projectClosure = new Set(buildProjectsClosure(rootSuite.suites.map(suite => suite.project() as FullProjectInternal)));
+    const projectClosure = new Map(buildProjectsClosure(rootSuite.suites.map(suite => suite.project() as FullProjectInternal)));
 
     // Clone file suites for dependency projects.
-    for (const [project, fileSuites] of fileSuitesByProject) {
-      if (project._internal.type === 'dependency' && projectClosure.has(project))
+    for (const [project, fileSuites] of testRun.projectSuites) {
+      if (testRun.projectType.get(project) === 'dependency' && projectClosure.has(project))
         rootSuite._prependSuite(await createProjectSuite(fileSuites, project, { cliFileFilters: [], cliTitleMatcher: undefined }));
     }
   }

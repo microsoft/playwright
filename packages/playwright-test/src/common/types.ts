@@ -66,7 +66,6 @@ export interface FullConfigInternal extends FullConfigPublic {
 
 type ProjectInternal = {
   id: string;
-  type: 'top-level' | 'dependency';
   fullConfig: FullConfigInternal;
   fullyParallel: boolean;
   expect: Project['expect'];

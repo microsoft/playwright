@@ -216,7 +216,6 @@ export class ConfigLoader {
     return {
       _internal: {
         id: '',
-        type: 'top-level',
         fullConfig: fullConfig,
         fullyParallel: takeFirst(projectConfig.fullyParallel, config.fullyParallel, undefined),
         expect: takeFirst(projectConfig.expect, config.expect, {}),

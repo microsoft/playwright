@@ -20,8 +20,7 @@ import type { FullResult } from '../../types/testReporter';
 import { webServerPluginsForConfig } from '../plugins/webServerPlugin';
 import { collectFilesForProject, filterProjects } from './projectUtils';
 import { createReporter } from './reporters';
-import { createTaskRunner, createTaskRunnerForList } from './tasks';
-import type { TaskRunnerState } from './tasks';
+import { TestRun, createTaskRunner, createTaskRunnerForList } from './tasks';
 import type { FullConfigInternal } from '../common/types';
 import { colors } from 'playwright-core/lib/utilsBundle';
 import { runWatchModeLoop } from './watchMode';
@@ -60,12 +59,7 @@ export class Runner {
     const taskRunner = listOnly ? createTaskRunnerForList(config, reporter, 'in-process')
       : createTaskRunner(config, reporter);
 
-    const context: TaskRunnerState = {
-      config,
-      reporter,
-      phases: [],
-    };
-
+    const testRun = new TestRun(config, reporter);
     reporter.onConfigure(config);
 
     if (!listOnly && config._internal.ignoreSnapshots) {
@@ -77,9 +71,9 @@ export class Runner {
       ].join('\n')));
     }
 
-    const taskStatus = await taskRunner.run(context, deadline);
+    const taskStatus = await taskRunner.run(testRun, deadline);
     let status: FullResult['status'] = 'passed';
-    if (context.phases.find(p => p.dispatcher.hasWorkerErrors()) || context.rootSuite?.allTests().some(test => !test.ok()))
+    if (testRun.phases.find(p => p.dispatcher.hasWorkerErrors()) || testRun.rootSuite?.allTests().some(test => !test.ok()))
       status = 'failed';
     if (status === 'passed' && taskStatus !== 'passed')
       status = taskStatus;

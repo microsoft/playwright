@@ -49,24 +49,22 @@ export function filterProjects(projects: FullProjectInternal[], projectNames?: s
   return result;
 }
 
-export function buildProjectsClosure(projects: FullProjectInternal[]): FullProjectInternal[] {
-  const result = new Set<FullProjectInternal>();
+export function buildProjectsClosure(projects: FullProjectInternal[]): Map<FullProjectInternal, 'top-level' | 'dependency'> {
+  const result = new Map<FullProjectInternal, 'top-level' | 'dependency'>();
   const visit = (depth: number, project: FullProjectInternal) => {
     if (depth > 100) {
       const error = new Error('Circular dependency detected between projects.');
       error.stack = '';
       throw error;
     }
-    if (depth)
-      project._internal.type = 'dependency';
-    result.add(project);
+    result.set(project, depth ? 'dependency' : 'top-level');
     project._internal.deps.map(visit.bind(undefined, depth + 1));
   };
   for (const p of projects)
-    p._internal.type = 'top-level';
+    result.set(p, 'top-level');
   for (const p of projects)
     visit(0, p);
-  return [...result];
+  return result;
 }
 
 export async function collectFilesForProject(project: FullProjectInternal, fsCache = new Map<string, string[]>()): Promise<string[]> {

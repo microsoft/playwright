@@ -20,8 +20,7 @@ import type { FullConfigInternal, FullProjectInternal } from '../common/types';
 import { Multiplexer } from '../reporters/multiplexer';
 import { createFileMatcher, createFileMatcherFromArguments } from '../util';
 import type { Matcher } from '../util';
-import { createTaskRunnerForWatch, createTaskRunnerForWatchSetup } from './tasks';
-import type { TaskRunnerState } from './tasks';
+import { TestRun, createTaskRunnerForWatch, createTaskRunnerForWatchSetup } from './tasks';
 import { buildProjectsClosure, filterProjects } from './projectUtils';
 import { clearCompilationCache, collectAffectedTestFiles } from '../common/compilationCache';
 import type { FullResult } from 'packages/playwright-test/reporter';
@@ -45,13 +44,13 @@ class FSWatcher {
     const projects = filterProjects(config.projects, config._internal.cliProjectFilter);
     const projectClosure = buildProjectsClosure(projects);
     const projectFilters = new Map<FullProjectInternal, Matcher>();
-    for (const project of projectClosure) {
+    for (const [project, type] of projectClosure) {
       const testMatch = createFileMatcher(project.testMatch);
       const testIgnore = createFileMatcher(project.testIgnore);
       projectFilters.set(project, file => {
         if (!file.startsWith(project.testDir) || !testMatch(file) || testIgnore(file))
           return false;
-        return project._internal.type === 'dependency' || commandLineFileMatcher(file);
+        return type === 'dependency' || commandLineFileMatcher(file);
       });
     }
 
@@ -60,7 +59,7 @@ class FSWatcher {
     if (this._watcher)
       await this._watcher.close();
 
-    this._watcher = chokidar.watch(projectClosure.map(p => p.testDir), { ignoreInitial: true }).on('all', async (event, file) => {
+    this._watcher = chokidar.watch([...projectClosure.keys()].map(p => p.testDir), { ignoreInitial: true }).on('all', async (event, file) => {
       if (event !== 'add' && event !== 'change')
         return;
 
@@ -115,14 +114,10 @@ export async function runWatchModeLoop(config: FullConfigInternal): Promise<Full
 
   // Perform global setup.
   const reporter = await createReporter(config, 'watch');
-  const context: TaskRunnerState = {
-    config,
-    reporter,
-    phases: [],
-  };
+  const testRun = new TestRun(config, reporter);
   const taskRunner = createTaskRunnerForWatchSetup(config, reporter);
   reporter.onConfigure(config);
-  const { status, cleanup: globalCleanup } = await taskRunner.runDeferCleanup(context, 0);
+  const { status, cleanup: globalCleanup } = await taskRunner.runDeferCleanup(testRun, 0);
   if (status !== 'passed')
     return await globalCleanup();
 
@@ -266,14 +261,13 @@ async function runChangedTests(config: FullConfigInternal, failedTestIdCollector
   // Prepare to exclude all the projects that do not depend on this file, as if they did not exist.
   const projects = filterProjects(config.projects, config._internal.cliProjectFilter);
   const projectClosure = buildProjectsClosure(projects);
-  const affectedProjects = affectedProjectsClosure(projectClosure, [...filesByProject.keys()]);
-  const affectsAnyDependency = [...affectedProjects].some(p => p._internal.type === 'dependency');
-  const projectsToIgnore = new Set(projectClosure.filter(p => !affectedProjects.has(p)));
+  const affectedProjects = affectedProjectsClosure([...projectClosure.keys()], [...filesByProject.keys()]);
+  const affectsAnyDependency = [...affectedProjects].some(p => projectClosure.get(p) === 'dependency');
 
   // If there are affected dependency projects, do the full run, respect the original CLI.
   // if there are no affected dependency projects, intersect CLI with dirty files
   const additionalFileMatcher = affectsAnyDependency ? () => true : (file: string) => testFiles.has(file);
-  await runTests(config, failedTestIdCollector, { projectsToIgnore, additionalFileMatcher, title: title || 'files changed' });
+  await runTests(config, failedTestIdCollector, { additionalFileMatcher, title: title || 'files changed' });
 }
 
 async function runTests(config: FullConfigInternal, failedTestIdCollector: Set<string>, options?: {
@@ -283,19 +277,15 @@ async function runTests(config: FullConfigInternal, failedTestIdCollector: Set<s
   }) {
   printConfiguration(config, options?.title);
   const reporter = new Multiplexer([new ListReporter()]);
-  const taskRunner = createTaskRunnerForWatch(config, reporter, options?.projectsToIgnore, options?.additionalFileMatcher);
-  const context: TaskRunnerState = {
-    config,
-    reporter,
-    phases: [],
-  };
+  const taskRunner = createTaskRunnerForWatch(config, reporter, options?.additionalFileMatcher);
+  const testRun = new TestRun(config, reporter);
   clearCompilationCache();
   reporter.onConfigure(config);
-  const taskStatus = await taskRunner.run(context, 0);
+  const taskStatus = await taskRunner.run(testRun, 0);
   let status: FullResult['status'] = 'passed';
 
   let hasFailedTests = false;
-  for (const test of context.rootSuite?.allTests() || []) {
+  for (const test of testRun.rootSuite?.allTests() || []) {
     if (test.outcome() === 'unexpected') {
       failedTestIdCollector.add(test.id);
       hasFailedTests = true;
@@ -304,7 +294,7 @@ async function runTests(config: FullConfigInternal, failedTestIdCollector: Set<s
     }
   }
 
-  if (context.phases.find(p => p.dispatcher.hasWorkerErrors()) || hasFailedTests)
+  if (testRun.phases.find(p => p.dispatcher.hasWorkerErrors()) || hasFailedTests)
     status = 'failed';
   if (status === 'passed' && taskStatus !== 'passed')
     status = taskStatus;
