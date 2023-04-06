@@ -87,19 +87,19 @@ export class TestChildProcess {
   }
 
   async close() {
-    if (!this.process.killed)
+    if (this.process.kill(0))
       this._killProcessGroup('SIGINT');
     return this.exited;
   }
 
   async kill() {
-    if (!this.process.killed)
+    if (this.process.kill(0))
       this._killProcessGroup('SIGKILL');
     return this.exited;
   }
 
   private _killProcessGroup(signal: 'SIGINT' | 'SIGKILL') {
-    if (!this.process.pid || this.process.killed)
+    if (!this.process.pid || !this.process.kill(0))
       return;
     try {
       if (process.platform === 'win32')
@@ -150,7 +150,16 @@ export const commonFixtures: Fixtures<CommonFixtures, CommonWorkerFixtures> = {
       processes.push(process);
       return process;
     });
-    await Promise.all(processes.map(child => child.close()));
+    await Promise.all(processes.map(async child => {
+      await Promise.race([
+        child.exited,
+        new Promise(f => setTimeout(f, 3_000)),
+      ]);
+      if (child.process.kill(0)) {
+        await child.kill();
+        throw new Error(`Process ${child.params.command.join(' ')} is still running. Leaking process?\nOutput:${child.output}`);
+      }
+    }));
     if (testInfo.status !== 'passed' && testInfo.status !== 'skipped' && !process.env.PWTEST_DEBUG) {
       for (const process of processes) {
         console.log('====== ' + process.params.command.join(' '));

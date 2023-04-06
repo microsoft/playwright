@@ -73,8 +73,8 @@ export const test = contextTest.extend<CLITestArgs>({
       cli = new CLIMock(childProcess, browserName, channel, headless, cliArgs, launchOptions.executablePath, noAutoExit);
       return cli;
     });
-    if (cli)
-      await cli.exited.catch(() => {});
+    // Discard any exit error and let childProcess fixture report leaking processes (processwes which do not exit).
+    cli?.exited.catch(() => {});
   },
 
   openRecorder: async ({ page, recorderPageGetter }, run) => {
