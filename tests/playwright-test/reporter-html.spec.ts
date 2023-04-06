@@ -348,7 +348,7 @@ test('should use different path if attachments base url option is provided', asy
         await page.evaluate('2 + 2');
       });
     `
-  }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+  }, {}, { PW_TEST_HTML_REPORT_OPEN: 'never' });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 
