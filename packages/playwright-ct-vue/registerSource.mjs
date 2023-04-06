@@ -21,7 +21,7 @@ import { createApp as __pwCreateApp, setDevtoolsHook as __pwSetDevtoolsHook, h a
 import { compile as __pwCompile } from '@vue/compiler-dom';
 import * as __pwVue from 'vue';
 
-/** @typedef {import('@playwright/test/types/component').Component} Component */
+/** @typedef {import('@playwright/test/types/experimentalComponent').Component} Component */
 /** @typedef {import('vue').Component} FrameworkComponent */
 
 /** @type {Map<string, FrameworkComponent>} */

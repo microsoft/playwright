@@ -15,7 +15,7 @@
  */
 
 import type { Fixtures, Locator, Page, BrowserContextOptions, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, BrowserContext, ContextReuseMode, FullConfigInternal } from './common/types';
-import type { Component, JsxComponent, MountOptions } from '../types/component';
+import type { Component, JsxComponent, MountOptions } from '../types/experimentalComponent';
 
 let boundCallbacksForMount: Function[] = [];
 
