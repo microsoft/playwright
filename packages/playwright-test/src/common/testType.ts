@@ -18,7 +18,9 @@ import { expect } from '../matchers/expect';
 import { currentlyLoadingFileSuite, currentTestInfo, setCurrentlyLoadingFileSuite } from './globals';
 import { TestCase, Suite } from './test';
 import { wrapFunctionWithLocation } from './transform';
-import type { Fixtures, FixturesWithLocation, Location, TestType } from './types';
+import type { FixturesWithLocation } from './config';
+import type { Fixtures, TestType } from '../../types/test';
+import type { Location } from '../../types/testReporter';
 
 const testTypeSymbol = Symbol('testType');
 

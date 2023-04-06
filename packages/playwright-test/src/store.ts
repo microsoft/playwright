@@ -49,7 +49,7 @@ class JsonStore {
     const config = currentConfig();
     if (!config)
       throw new Error('Cannot access store before config is loaded');
-    return config._internal.storeDir;
+    return config.storeDir;
   }
 
   async set<T>(name: string, value: T | undefined) {

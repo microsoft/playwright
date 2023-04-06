@@ -16,7 +16,9 @@
 
 import { formatLocation } from '../util';
 import * as crypto from 'crypto';
-import type { Fixtures, FixturesWithLocation, Location } from './types';
+import type { Fixtures } from '../../types/test';
+import type { Location } from '../../types/testReporter';
+import type { FixturesWithLocation } from './config';
 
 export type FixtureScope = 'test' | 'worker';
 type FixtureAuto = boolean | 'all-hooks-included';

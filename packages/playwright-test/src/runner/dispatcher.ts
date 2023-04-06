@@ -23,7 +23,7 @@ import type { TestCase } from '../common/test';
 import { ManualPromise } from 'playwright-core/lib/utils';
 import { WorkerHost } from './workerHost';
 import type { TestGroup } from './testGroups';
-import type { FullConfigInternal } from '../common/types';
+import type { FullConfigInternal } from '../common/config';
 import type { Multiplexer } from '../reporters/multiplexer';
 
 type TestResultData = {
@@ -180,7 +180,7 @@ export class Dispatcher {
     this._isStopped = false;
     this._workerSlots = [];
     // 1. Allocate workers.
-    for (let i = 0; i < this._config.workers; i++)
+    for (let i = 0; i < this._config.config.workers; i++)
       this._workerSlots.push({ busy: false });
     // 2. Schedule enough jobs.
     for (let i = 0; i < this._workerSlots.length; i++)
@@ -504,7 +504,7 @@ export class Dispatcher {
   }
 
   private _hasReachedMaxFailures() {
-    const maxFailures = this._config.maxFailures;
+    const maxFailures = this._config.config.maxFailures;
     return maxFailures > 0 && this._failureCount >= maxFailures;
   }
 
@@ -512,7 +512,7 @@ export class Dispatcher {
     if (result.status !== 'skipped' && result.status !== test.expectedStatus)
       ++this._failureCount;
     this._reporter.onTestEnd?.(test, result);
-    const maxFailures = this._config.maxFailures;
+    const maxFailures = this._config.config.maxFailures;
     if (maxFailures && this._failureCount === maxFailures)
       this.stop().catch(e => {});
   }

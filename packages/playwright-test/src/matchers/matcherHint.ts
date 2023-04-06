@@ -15,7 +15,7 @@
  */
 
 import { colors } from 'playwright-core/lib/utilsBundle';
-import type { Expect } from '../common/types';
+import type { Expect } from '../../types/test';
 
 export function matcherHint(state: ReturnType<Expect['getState']>, matcherName: string, a: any, b: any, matcherOptions: any, timeout?: number) {
   const message = state.utils.matcherHint(matcherName, a, b, matcherOptions);

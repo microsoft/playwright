@@ -17,7 +17,7 @@
 
 import type { ExpectedTextValue } from '@protocol/channels';
 import { isRegExp, isString } from 'playwright-core/lib/utils';
-import type { Expect } from '../common/types';
+import type { Expect } from '../../types/test';
 import { expectTypes, callLogText } from '../util';
 import {
   printReceivedStringContainExpectedResult,

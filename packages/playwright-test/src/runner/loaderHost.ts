@@ -19,7 +19,7 @@ import { serializeConfig } from '../common/ipc';
 import { ProcessHost } from './processHost';
 import { Suite } from '../common/test';
 import { loadTestFile } from '../common/testLoader';
-import type { FullConfigInternal } from '../common/types';
+import type { FullConfigInternal } from '../common/config';
 import { PoolBuilder } from '../common/poolBuilder';
 import { addToCompilationCache } from '../common/compilationCache';
 
@@ -33,7 +33,7 @@ export class InProcessLoaderHost {
   }
 
   async loadTestFile(file: string, testErrors: TestError[]): Promise<Suite> {
-    const result = await loadTestFile(file, this._config.rootDir, testErrors);
+    const result = await loadTestFile(file, this._config.config.rootDir, testErrors);
     this._poolBuilder.buildPools(result, testErrors);
     return result;
   }

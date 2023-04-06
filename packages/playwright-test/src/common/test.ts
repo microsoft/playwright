@@ -19,7 +19,9 @@ import type * as reporterTypes from '../../types/testReporter';
 import type { SuitePrivate } from '../../types/reporterPrivate';
 import type { TestTypeImpl } from './testType';
 import { rootTestType } from './testType';
-import type { Annotation, FixturesWithLocation, FullProject, FullProjectInternal, Location } from './types';
+import type { Annotation, FixturesWithLocation, FullProjectInternal } from './config';
+import type { FullProject } from '../../types/test';
+import type { Location } from '../../types/testReporter';
 
 class Base {
   title: string;
@@ -197,7 +199,7 @@ export class Suite extends Base implements SuitePrivate {
   }
 
   project(): FullProject | undefined {
-    return this._projectConfig || this.parent?.project();
+    return this._projectConfig?.project || this.parent?.project();
   }
 }
 

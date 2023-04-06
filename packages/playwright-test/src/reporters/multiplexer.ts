@@ -16,6 +16,7 @@
 
 import type { FullConfig, TestCase, TestError, TestResult, FullResult, TestStep, Reporter } from '../../types/testReporter';
 import { Suite } from '../common/test';
+import type { FullConfigInternal } from '../common/config';
 import { addSnippetToError } from './base';
 
 type StdIOChunk = {
@@ -27,7 +28,7 @@ type StdIOChunk = {
 export class Multiplexer {
   private _reporters: Reporter[];
   private _deferred: { error?: TestError, stdout?: StdIOChunk, stderr?: StdIOChunk }[] | null = [];
-  private _config!: FullConfig;
+  private _config!: FullConfigInternal;
 
   constructor(reporters: Reporter[]) {
     this._reporters = reporters;
@@ -37,7 +38,7 @@ export class Multiplexer {
     return this._reporters.some(r => r.printsToStdio ? r.printsToStdio() : true);
   }
 
-  onConfigure(config: FullConfig) {
+  onConfigure(config: FullConfigInternal) {
     this._config = config;
   }
 
@@ -92,7 +93,7 @@ export class Multiplexer {
   async onExit(result: FullResult) {
     if (this._deferred) {
       // onBegin was not reported, emit it.
-      this.onBegin(this._config, new Suite('', 'root'));
+      this.onBegin(this._config.config, new Suite('', 'root'));
     }
 
     for (const reporter of this._reporters)
@@ -107,7 +108,7 @@ export class Multiplexer {
       this._deferred.push({ error });
       return;
     }
-    addSnippetToError(this._config, error);
+    addSnippetToError(this._config.config, error);
     for (const reporter of this._reporters)
       wrap(() => reporter.onError?.(error));
   }
@@ -125,12 +126,12 @@ export class Multiplexer {
 
   private _addSnippetToTestErrors(test: TestCase, result: TestResult) {
     for (const error of result.errors)
-      addSnippetToError(this._config, error, test.location.file);
+      addSnippetToError(this._config.config, error, test.location.file);
   }
 
   private _addSnippetToStepError(test: TestCase, step: TestStep) {
     if (step.error)
-      addSnippetToError(this._config, step.error, test.location.file);
+      addSnippetToError(this._config.config, step.error, test.location.file);
   }
 
 }

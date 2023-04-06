@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import type { Suite } from '../../types/testReporter';
-import type { FullConfig } from '../common/types';
+import type { FullConfig, Suite } from '../../types/testReporter';
 import type { Multiplexer } from '../reporters/multiplexer';
 
 export interface TestRunnerPlugin {

@@ -21,7 +21,7 @@ import type { TestBeginPayload, TestEndPayload, RunPayload, DonePayload, WorkerI
 import { setCurrentTestInfo, setIsWorkerProcess } from '../common/globals';
 import { ConfigLoader } from '../common/configLoader';
 import type { Suite, TestCase } from '../common/test';
-import type { Annotation, FullConfigInternal, FullProjectInternal, TestInfoError } from '../common/types';
+import type { Annotation, FullConfigInternal, FullProjectInternal } from '../common/config';
 import { FixtureRunner } from './fixtureRunner';
 import { ManualPromise } from 'playwright-core/lib/utils';
 import { TestInfoImpl } from './testInfo';
@@ -31,6 +31,7 @@ import { loadTestFile } from '../common/testLoader';
 import { buildFileSuiteForProject, filterTestsRemoveEmptySuites } from '../common/suiteUtils';
 import { PoolBuilder } from '../common/poolBuilder';
 import { addToCompilationCache } from '../common/compilationCache';
+import type { TestInfoError } from '../../types/test';
 
 const removeFolderAsync = util.promisify(rimraf);
 
@@ -150,7 +151,7 @@ export class WorkerMain extends ProcessRunner {
 
   private async _teardownScopes() {
     // TODO: separate timeout for teardown?
-    const timeoutManager = new TimeoutManager(this._project.timeout);
+    const timeoutManager = new TimeoutManager(this._project.project.timeout);
     timeoutManager.setCurrentRunnable({ type: 'teardown' });
     const timeoutError = await timeoutManager.runWithTimeout(async () => {
       await this._fixtureRunner.teardownScope('test', timeoutManager);
@@ -189,9 +190,8 @@ export class WorkerMain extends ProcessRunner {
     if (this._config)
       return;
 
-    const configLoader = await ConfigLoader.deserialize(this._params.config);
-    this._config = configLoader.fullConfig();
-    this._project = this._config.projects.find(p => p._internal.id === this._params.projectId)!;
+    this._config = await ConfigLoader.deserialize(this._params.config);
+    this._project = this._config.projects.find(p => p.id === this._params.projectId)!;
     this._poolBuilder = PoolBuilder.createForWorker(this._project);
   }
 
@@ -201,7 +201,7 @@ export class WorkerMain extends ProcessRunner {
     let fatalUnknownTestIds;
     try {
       await this._loadIfNeeded();
-      const fileSuite = await loadTestFile(runPayload.file, this._config.rootDir);
+      const fileSuite = await loadTestFile(runPayload.file, this._config.config.rootDir);
       const suite = buildFileSuiteForProject(this._project, fileSuite, this._params.repeatEachIndex);
       const hasEntries = filterTestsRemoveEmptySuites(suite, test => entries.has(test.id));
       if (hasEntries) {
@@ -332,7 +332,7 @@ export class WorkerMain extends ProcessRunner {
           this._extraSuiteAnnotations.set(suite, extraAnnotations);
           didFailBeforeAllForSuite = suite;  // Assume failure, unless reset below.
           // Separate timeout for each "beforeAll" modifier.
-          const timeSlot = { timeout: this._project.timeout, elapsed: 0 };
+          const timeSlot = { timeout: this._project.project.timeout, elapsed: 0 };
           await this._runModifiersForSuite(suite, testInfo, 'worker', timeSlot, extraAnnotations);
         }
 
@@ -385,7 +385,7 @@ export class WorkerMain extends ProcessRunner {
     let afterHooksSlot: TimeSlot | undefined;
     if (testInfo._didTimeout) {
       // A timed-out test gets a full additional timeout to run after hooks.
-      afterHooksSlot = { timeout: this._project.timeout, elapsed: 0 };
+      afterHooksSlot = { timeout: this._project.project.timeout, elapsed: 0 };
       testInfo._timeoutManager.setCurrentRunnable({ type: 'afterEach', slot: afterHooksSlot });
     }
     await testInfo._runAsStep(async step => {
@@ -450,7 +450,7 @@ export class WorkerMain extends ProcessRunner {
             const afterAllError = await this._runAfterAllHooksForSuite(suite, testInfo);
             firstAfterHooksError = firstAfterHooksError || afterAllError;
           }
-          const teardownSlot = { timeout: this._project.timeout, elapsed: 0 };
+          const teardownSlot = { timeout: this._project.project.timeout, elapsed: 0 };
           // Attribute to 'test' so that users understand they should probably increate the test timeout to fix this issue.
           testInfo._timeoutManager.setCurrentRunnable({ type: 'test', slot: teardownSlot });
           debugTest(`tearing down test scope started`);
@@ -476,8 +476,8 @@ export class WorkerMain extends ProcessRunner {
     setCurrentTestInfo(null);
     this.dispatchEvent('testEnd', buildTestEndPayload(testInfo));
 
-    const preserveOutput = this._config.preserveOutput === 'always' ||
-      (this._config.preserveOutput === 'failures-only' && testInfo._isFailure());
+    const preserveOutput = this._config.config.preserveOutput === 'always' ||
+      (this._config.config.preserveOutput === 'failures-only' && testInfo._isFailure());
     if (!preserveOutput)
       await removeFolderAsync(testInfo.outputDir).catch(e => {});
   }
@@ -512,7 +512,7 @@ export class WorkerMain extends ProcessRunner {
       debugTest(`${hook.type} hook at "${formatLocation(hook.location)}" started`);
       try {
         // Separate time slot for each "beforeAll" hook.
-        const timeSlot = { timeout: this._project.timeout, elapsed: 0 };
+        const timeSlot = { timeout: this._project.project.timeout, elapsed: 0 };
         testInfo._timeoutManager.setCurrentRunnable({ type: 'beforeAll', location: hook.location, slot: timeSlot });
         await testInfo._runAsStep(() => this._fixtureRunner.resolveParametersAndRunFunction(hook.fn, testInfo, 'all-hooks-only'), {
           category: 'hook',
@@ -540,7 +540,7 @@ export class WorkerMain extends ProcessRunner {
       debugTest(`${hook.type} hook at "${formatLocation(hook.location)}" started`);
       const afterAllError = await testInfo._runFn(async () => {
         // Separate time slot for each "afterAll" hook.
-        const timeSlot = { timeout: this._project.timeout, elapsed: 0 };
+        const timeSlot = { timeout: this._project.project.timeout, elapsed: 0 };
         testInfo._timeoutManager.setCurrentRunnable({ type: 'afterAll', location: hook.location, slot: timeSlot });
         await testInfo._runAsStep(() => this._fixtureRunner.resolveParametersAndRunFunction(hook.fn, testInfo, 'all-hooks-only'), {
           category: 'hook',
