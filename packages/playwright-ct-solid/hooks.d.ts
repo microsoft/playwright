@@ -15,7 +15,7 @@
  */
 
 import { JSXElement } from "solid-js";
-import type { JsonObject } from '@playwright/test/types/component';
+import type { JsonObject } from '@playwright/test/types/experimentalComponent';
 
 export declare function beforeMount<HooksConfig extends JsonObject>(
   callback: (params: { hooksConfig?: HooksConfig, App: () => JSXElement }) => Promise<void | JSXElement>

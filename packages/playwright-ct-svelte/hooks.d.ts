@@ -15,7 +15,7 @@
  */
 
 import type { SvelteComponent } from 'svelte';
-import type { JsonObject } from '@playwright/test/types/component';
+import type { JsonObject } from '@playwright/test/types/experimentalComponent';
 
 export declare function beforeMount<HooksConfig extends JsonObject>(
   callback: (params: { hooksConfig?: HooksConfig }) => Promise<void>
