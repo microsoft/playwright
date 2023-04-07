@@ -343,29 +343,3 @@ export function resolveConfigFile(configFileOrDirectory: string): string | null 
     return configFile!;
   }
 }
-<<<<<<< HEAD
-||||||| parent of 572933ac5 (feat: blob reporter)
-
-export const builtInReporters = ['list', 'line', 'dot', 'json', 'junit', 'null', 'github', 'html'] as const;
-export type BuiltInReporter = typeof builtInReporters[number];
-
-export function toReporters(reporters: BuiltInReporter | ReporterDescription[] | undefined): ReporterDescription[] | undefined {
-  if (!reporters)
-    return;
-  if (typeof reporters === 'string')
-    return [[reporters]];
-  return reporters;
-}
-=======
-
-export const builtInReporters = ['list', 'line', 'dot', 'json', 'junit', 'null', 'github', 'html', 'blob'] as const;
-export type BuiltInReporter = typeof builtInReporters[number];
-
-export function toReporters(reporters: BuiltInReporter | ReporterDescription[] | undefined): ReporterDescription[] | undefined {
-  if (!reporters)
-    return;
-  if (typeof reporters === 'string')
-    return [[reporters]];
-  return reporters;
-}
->>>>>>> 572933ac5 (feat: blob reporter)

@@ -20,11 +20,9 @@ import path from 'path';
 import { ManualPromise, ZipFile } from 'playwright-core/lib/utils';
 import { yazl } from 'playwright-core/lib/zipBundle';
 import { Readable } from 'stream';
-import type { Reporter } from '../../types/testReporter';
-import type { FullConfig, FullResult } from '../../types/testReporter';
-import type { BuiltInReporter } from '../common/configLoader';
+import type { FullConfig, FullResult, Reporter } from '../../types/testReporter';
+import type { BuiltInReporter, FullConfigInternal } from '../common/config';
 import type { Suite } from '../common/test';
-import type { FullConfigInternal } from '../common/types';
 import { TeleReporterReceiver, type JsonEvent, type JsonProject, type JsonSuite } from '../isomorphic/teleReceiver';
 import DotReporter from '../reporters/dot';
 import EmptyReporter from '../reporters/empty';
@@ -33,9 +31,9 @@ import JSONReporter from '../reporters/json';
 import JUnitReporter from '../reporters/junit';
 import LineReporter from '../reporters/line';
 import ListReporter from '../reporters/list';
+import { loadReporter } from '../runner/loadUtils';
 import HtmlReporter, { defaultReportFolder } from './html';
 import { TeleReporterEmitter } from './teleEmitter';
-import { loadReporter } from '../runner/loadUtils';
 
 
 type BlobReporterOptions = {
@@ -100,7 +98,7 @@ export async function createMergedReport(config: FullConfigInternal, dir: string
   };
   reporterName ??= 'list';
 
-  const arg = config.reporter.find(([reporter, arg]) => reporter === reporterName)?.[1];
+  const arg = config.config.reporter.find(([reporter, arg]) => reporter === reporterName)?.[1];
   const options = {
     ...arg,
     configDir: process.cwd(),

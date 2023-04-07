@@ -174,8 +174,6 @@ function watchPlaywrightTest(childProcess: CommonFixtures['childProcess'], baseD
 async function runPlaywrightCommand(childProcess: CommonFixtures['childProcess'], cwd: string, commandWithArguments: string[], env: NodeJS.ProcessEnv, sendSIGINTAfter?: number): Promise<CliRunResult> {
   const command = ['node', cliEntrypoint];
   command.push(...commandWithArguments);
-  // console.log('command', command.join(' '));
-  // console.log('env', cleanEnv(env));
   const testProcess = childProcess({
     command,
     env: cleanEnv(env),

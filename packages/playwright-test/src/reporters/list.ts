@@ -197,14 +197,6 @@ class ListReporter extends BaseReporter {
 
   private _appendLine(text: string, prefix: string) {
     const line = prefix + this.fitToScreen(text, prefix);
-    if (!(this as any)._done) {
-      (this as any)._done = true;
-      process.stdout.write('XXX ' + process.stdout.isTTY + ' || ' + process.env.PWTEST_TTY_WIDTH + '\n');
-      process.stdout.write('XXX PW_TEST_DEBUG_REPORTERS = ' + process.env.PW_TEST_DEBUG_REPORTERS + '\n');
-      // for (const name in process.env)
-      //   process.stdout.write('   ' + name + ': ' + process.env[name] + '\n');
-    }
-    // process.stdout.write('XXX ' + process.env + '\n');
     if (process.env.PW_TEST_DEBUG_REPORTERS) {
       process.stdout.write(this._lastRow + ' : ' + line + '\n');
     } else {

@@ -211,12 +211,7 @@ async function mergeReports(reportDir: string | undefined, opts: { [key: string]
     return;
 
   const configLoader = new ConfigLoader();
-  if (configFile)
-    await configLoader.loadConfigFile(configFile);
-  else
-    await configLoader.loadEmptyConfig(process.cwd());
-  const config = configLoader.fullConfig();
-
+  const config = await (configFile ? configLoader.loadConfigFile(configFile) : configLoader.loadEmptyConfig(process.cwd()));
   const dir = path.resolve(process.cwd(), reportDir || 'playwright-report');
   await createMergedReport(config, dir, opts.reporter || 'list');
 }
