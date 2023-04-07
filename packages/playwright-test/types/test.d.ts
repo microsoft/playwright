@@ -3147,7 +3147,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * **Details**
    *
-   * The method returns the value retuned by the step callback.
+   * The method returns the value returned by the step callback.
    *
    * ```js
    * import { test, expect } from '@playwright/test';
