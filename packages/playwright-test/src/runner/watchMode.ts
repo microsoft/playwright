@@ -108,7 +108,7 @@ class FSWatcher {
 
 export async function runWatchModeLoop(config: FullConfigInternal): Promise<FullResult['status']> {
   // Reset the settings that don't apply to watch.
-  config.passWithNoTests = true;
+  config.cliPassWithNoTests = true;
   for (const p of config.projects)
     p.project.retries = 0;
 

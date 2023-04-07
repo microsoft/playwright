@@ -49,7 +49,7 @@ export class Runner {
 
   async runAllTests(): Promise<FullResult['status']> {
     const config = this._config;
-    const listOnly = config.listOnly;
+    const listOnly = config.cliListOnly;
     const deadline = config.config.globalTimeout ? monotonicTime() + config.config.globalTimeout : 0;
 
     // Legacy webServer support.

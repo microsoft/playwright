@@ -42,13 +42,8 @@ class UIMode {
   constructor(config: FullConfigInternal) {
     this._config = config;
     process.env.PW_LIVE_TRACE_STACKS = '1';
-    config.configCLIOverrides.forbidOnly = false;
-    config.configCLIOverrides.globalTimeout = 0;
-    config.configCLIOverrides.repeatEach = 0;
-    config.configCLIOverrides.shard = undefined;
-    config.configCLIOverrides.updateSnapshots = undefined;
-    config.listOnly = false;
-    config.passWithNoTests = true;
+    config.cliListOnly = false;
+    config.cliPassWithNoTests = true;
     for (const project of config.projects)
       project.deps = [];
 
@@ -148,7 +143,7 @@ class UIMode {
   private async _listTests() {
     const listReporter = new TeleReporterEmitter(e => this._dispatchEvent(e));
     const reporter = new Multiplexer([listReporter]);
-    this._config.listOnly = true;
+    this._config.cliListOnly = true;
     this._config.testIdMatcher = undefined;
     const taskRunner = createTaskRunnerForList(this._config, reporter, 'out-of-process');
     const testRun = new TestRun(this._config, reporter);
@@ -167,7 +162,7 @@ class UIMode {
     await this._stopTests();
 
     const testIdSet = testIds ? new Set<string>(testIds) : null;
-    this._config.listOnly = false;
+    this._config.cliListOnly = false;
     this._config.testIdMatcher = id => !testIdSet || testIdSet.has(id);
 
     const runReporter = new TeleReporterEmitter(e => this._dispatchEvent(e));
