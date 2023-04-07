@@ -25,7 +25,7 @@ import { HttpServer, assert, calculateSha1, monotonicTime, copyFileAndMakeWritab
 import type { JsonAttachment, JsonReport, JsonSuite, JsonTestCase, JsonTestResult, JsonTestStep } from './raw';
 import RawReporter from './raw';
 import { stripAnsiEscapes } from './base';
-import { getPackageJsonPath, sanitizeForFilePath } from '../util';
+import { determinePackageManager, getPackageJsonPath, sanitizeForFilePath } from '../util';
 import type { Metadata } from '../common/types';
 import type { ZipFile } from 'playwright-core/lib/zipBundle';
 import { yazl } from 'playwright-core/lib/zipBundle';
@@ -122,12 +122,15 @@ class HtmlReporter implements Reporter {
     if (shouldOpen) {
       await showHTMLReport(this._outputFolder, this._options.host, this._options.port, singleTestId);
     } else {
+      const userPackageManager = determinePackageManager();
       const relativeReportPath = this._outputFolder === standaloneDefaultFolder() ? '' : ' ' + path.relative(process.cwd(), this._outputFolder);
       console.log('');
       console.log('To open last HTML report run:');
-      console.log(colors.cyan(`
-  npx playwright show-report${relativeReportPath}
-`));
+      console.log(
+          colors.cyan(`
+${userPackageManager === 'npm' ? 'npx' : userPackageManager} playwright show-report${relativeReportPath}
+          `)
+      );
     }
   }
 }

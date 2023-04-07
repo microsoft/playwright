@@ -305,3 +305,12 @@ export function envWithoutExperimentalLoaderOptions(): NodeJS.ProcessEnv {
     result.NODE_OPTIONS = result.NODE_OPTIONS.replace(substring, '').trim() || undefined;
   return result;
 }
+
+export function determinePackageManager() {
+  if (process.env.npm_config_user_agent) {
+    if (process.env.npm_config_user_agent.includes('yarn')) return 'yarn';
+    if (process.env.npm_config_user_agent.includes('pnpm')) return 'pnpm';
+    return 'npm';
+  }
+  return 'npm';
+}
