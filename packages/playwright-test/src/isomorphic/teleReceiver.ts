@@ -15,7 +15,8 @@
  */
 
 import type { FullConfig, FullResult, Location, Reporter, TestError, TestResult, TestStatus, TestStep } from '../../types/testReporter';
-import type { Annotation, FullProject, Metadata } from '../common/types';
+import type { Annotation } from '../common/config';
+import type { FullProject, Metadata } from '../../types/test';
 import type * as reporterTypes from '../../types/testReporter';
 import type { SuitePrivate } from '../../types/reporterPrivate';
 

@@ -23,10 +23,12 @@ import { Runner } from './runner/runner';
 import { stopProfiling, startProfiling } from 'playwright-core/lib/utils';
 import { experimentalLoaderOption, fileIsModule } from './util';
 import { showHTMLReport } from './reporters/html';
-import { baseFullConfig, builtInReporters, ConfigLoader, defaultTimeout, kDefaultConfigFiles, resolveConfigFile } from './common/configLoader';
-import type { TraceMode } from './common/types';
+import { ConfigLoader, kDefaultConfigFiles, resolveConfigFile } from './common/configLoader';
 import type { ConfigCLIOverrides } from './common/ipc';
 import type { FullResult } from '../reporter';
+import type { TraceMode } from '../types/test';
+import { baseFullConfig, builtInReporters, defaultTimeout } from './common/config';
+import type { FullConfigInternal } from './common/config';
 
 export function addTestCommands(program: Command) {
   addTestCommand(program);
@@ -127,20 +129,18 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
     return;
 
   const configLoader = new ConfigLoader(overrides);
+  let config: FullConfigInternal;
   if (resolvedConfigFile)
-    await configLoader.loadConfigFile(resolvedConfigFile);
+    config = await configLoader.loadConfigFile(resolvedConfigFile, opts.deps === false);
   else
-    await configLoader.loadEmptyConfig(configFileOrDirectory);
-  if (opts.deps === false)
-    configLoader.ignoreProjectDependencies();
+    config = await configLoader.loadEmptyConfig(configFileOrDirectory);
 
-  const config = configLoader.fullConfig();
-  config._internal.cliArgs = args;
-  config._internal.cliGrep = opts.grep as string | undefined;
-  config._internal.cliGrepInvert = opts.grepInvert as string | undefined;
-  config._internal.listOnly = !!opts.list;
-  config._internal.cliProjectFilter = opts.project || undefined;
-  config._internal.passWithNoTests = !!opts.passWithNoTests;
+  config.cliArgs = args;
+  config.cliGrep = opts.grep as string | undefined;
+  config.cliGrepInvert = opts.grepInvert as string | undefined;
+  config.listOnly = !!opts.list;
+  config.cliProjectFilter = opts.project || undefined;
+  config.passWithNoTests = !!opts.passWithNoTests;
 
   const runner = new Runner(config);
   let status: FullResult['status'];
@@ -166,8 +166,8 @@ async function listTestFiles(opts: { [key: string]: any }) {
     return;
 
   const configLoader = new ConfigLoader();
-  const runner = new Runner(configLoader.fullConfig());
-  await configLoader.loadConfigFile(resolvedConfigFile);
+  const config = await configLoader.loadConfigFile(resolvedConfigFile);
+  const runner = new Runner(config);
   const report = await runner.listTestFiles(opts.project);
   write(JSON.stringify(report), () => {
     process.exit(0);

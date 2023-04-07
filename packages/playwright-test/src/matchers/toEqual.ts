@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Expect } from '../common/types';
+import type { Expect } from '../../types/test';
 import { expectTypes } from '../util';
 import { callLogText } from '../util';
 import { matcherHint } from './matcherHint';
