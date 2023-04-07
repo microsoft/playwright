@@ -172,7 +172,7 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
   {
     // Filtering only and sharding might have reduced the number of top-level projects.
     // Build the project closure to only include dependencies that are still needed.
-    const projectClosure = new Map(buildProjectsClosure(rootSuite.suites.map(suite => suite._projectConfig!)));
+    const projectClosure = new Map(buildProjectsClosure(rootSuite.suites.map(suite => suite._fullProject!)));
 
     // Clone file suites for dependency projects.
     for (const [project, fileSuites] of testRun.projectSuites) {
@@ -186,7 +186,7 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
 
 async function createProjectSuite(fileSuites: Suite[], project: FullProjectInternal, options: { cliFileFilters: TestFileFilter[], cliTitleMatcher?: Matcher, testIdMatcher?: Matcher }): Promise<Suite> {
   const projectSuite = new Suite(project.project.name, 'project');
-  projectSuite._projectConfig = project;
+  projectSuite._fullProject = project;
   if (project.fullyParallel)
     projectSuite._parallelMode = 'parallel';
   for (const fileSuite of fileSuites) {

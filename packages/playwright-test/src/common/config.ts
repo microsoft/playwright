@@ -153,10 +153,6 @@ export class FullProjectInternal {
   id = '';
   deps: FullProjectInternal[] = [];
 
-  static from(project: FullProject): FullProjectInternal {
-    return (project as any)[projectInternalSymbol];
-  }
-
   constructor(configDir: string, config: Config, fullConfig: FullConfigInternal, projectConfig: Project, configCLIOverrides: ConfigCLIOverrides, throwawayArtifactsPath: string) {
     this.fullConfig = fullConfig;
     const testDir = takeFirst(pathResolve(configDir, projectConfig.testDir), pathResolve(configDir, config.testDir), fullConfig.configDir);

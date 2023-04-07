@@ -180,7 +180,7 @@ function createPhasesTask(): Task<TestRun> {
     let maxConcurrentTestGroups = 0;
 
     const processed = new Set<FullProjectInternal>();
-    const projectToSuite = new Map(testRun.rootSuite!.suites.map(suite => [suite._projectConfig!, suite]));
+    const projectToSuite = new Map(testRun.rootSuite!.suites.map(suite => [suite._fullProject!, suite]));
     for (let i = 0; i < projectToSuite.size; i++) {
       // Find all projects that have all their dependencies processed by previous phases.
       const phaseProjects: FullProjectInternal[] = [];
