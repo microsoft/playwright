@@ -21,7 +21,6 @@ import type { FullConfig, TestCase, Suite, TestResult, TestError, FullResult, Te
 import type { SuitePrivate } from '../../types/reporterPrivate';
 import { codeFrameColumns } from '../common/babelBundle';
 import { monotonicTime } from 'playwright-core/lib/utils';
-import { FullConfigInternal } from '../common/config';
 
 export type TestResultOutput = { chunk: string | Buffer, type: 'stdout' | 'stderr' };
 export const kOutputSymbol = Symbol('output');
@@ -122,7 +121,7 @@ export class BaseReporter implements Reporter {
   }
 
   protected generateStartingMessage() {
-    const jobs = Math.min(this.config.workers, FullConfigInternal.from(this.config).maxConcurrentTestGroups);
+    const jobs = this.config.workers;
     const shardDetails = this.config.shard ? `, shard ${this.config.shard.current} of ${this.config.shard.total}` : '';
     if (!this.totalTestCount)
       return '';

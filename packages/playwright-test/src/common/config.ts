@@ -38,7 +38,6 @@ export class FullConfigInternal {
   configDir = '';
   configCLIOverrides: ConfigCLIOverrides = {};
   storeDir = '';
-  maxConcurrentTestGroups = 0;
   ignoreSnapshots = false;
   webServers: Exclude<FullConfig['webServer'], null>[] = [];
   plugins: TestRunnerPluginRegistration[] = [];

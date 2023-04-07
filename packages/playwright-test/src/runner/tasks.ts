@@ -177,7 +177,7 @@ function createLoadTask(mode: 'out-of-process' | 'in-process', shouldFilterOnly:
 
 function createPhasesTask(): Task<TestRun> {
   return async testRun => {
-    testRun.config.maxConcurrentTestGroups = 0;
+    let maxConcurrentTestGroups = 0;
 
     const processed = new Set<FullProjectInternal>();
     const projectToSuite = new Map(testRun.rootSuite!.suites.map(suite => [suite._projectConfig!, suite]));
@@ -206,9 +206,11 @@ function createPhasesTask(): Task<TestRun> {
           testGroupsInPhase += testGroups.length;
         }
         debug('pw:test:task')(`created phase #${testRun.phases.length} with ${phase.projects.map(p => p.project.project.name).sort()} projects, ${testGroupsInPhase} testGroups`);
-        testRun.config.maxConcurrentTestGroups = Math.max(testRun.config.maxConcurrentTestGroups, testGroupsInPhase);
+        maxConcurrentTestGroups = Math.max(maxConcurrentTestGroups, testGroupsInPhase);
       }
     }
+
+    testRun.config.config.workers = Math.min(testRun.config.config.workers, maxConcurrentTestGroups);
   };
 }
 

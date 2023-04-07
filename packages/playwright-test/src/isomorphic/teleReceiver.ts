@@ -28,6 +28,7 @@ export type JsonConfig = {
   rootDir: string;
   configFile: string | undefined;
   listOnly: boolean;
+  workers: number;
 };
 
 export type JsonPattern = {
@@ -283,6 +284,7 @@ export class TeleReporterReceiver {
     const fullConfig = baseFullConfig;
     fullConfig.rootDir = config.rootDir;
     fullConfig.configFile = config.configFile;
+    fullConfig.workers = config.workers;
     return fullConfig;
   }
 
