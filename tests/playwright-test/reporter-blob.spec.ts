@@ -57,7 +57,7 @@ test('should merge into html', async ({ runInlineTest, mergeReports, showReport,
     'playwright.config.ts': `
       module.exports = {
         retries: 1,
-        reporter: [['blob', { outputDir: '${reportDir}' }]]
+        reporter: [['blob', { outputDir: '${reportDir.replace(/\\/g, '/')}' }]]
       };
     `,
     'a.test.js': `
@@ -121,7 +121,7 @@ test('be able to merge incomplete shards', async ({ runInlineTest, mergeReports,
     'playwright.config.ts': `
       module.exports = {
         retries: 1,
-        reporter: [['blob', { outputDir: '${reportDir}' }]]
+        reporter: [['blob', { outputDir: '${reportDir.replace(/\\/g, '/')}' }]]
       };
     `,
     'a.test.js': `
@@ -176,7 +176,7 @@ test('merge into list report by default', async ({ runInlineTest, mergeReports }
     'playwright.config.ts': `
       module.exports = {
         retries: 1,
-        reporter: [['blob', { outputDir: '${reportDir}' }]]
+        reporter: [['blob', { outputDir: '${reportDir.replace(/\\/g, '/')}' }]]
       };
     `,
     'a.test.js': `
