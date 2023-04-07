@@ -93,7 +93,7 @@ export class ListModeReporter implements Reporter {
       const location = `${path.relative(config.rootDir, test.location.file)}:${test.location.line}:${test.location.column}`;
       const projectTitle = projectName ? `[${projectName}] › ` : '';
       // eslint-disable-next-line no-console
-      console.log(`  ${projectTitle}${location} › ${titles.join(' ')}`);
+      console.log(`  ${projectTitle}${location} › ${titles.join(' › ')}`);
       files.add(test.location.file);
     }
     // eslint-disable-next-line no-console
