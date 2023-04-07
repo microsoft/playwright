@@ -38,7 +38,6 @@ export class FullConfigInternal {
   configDir = '';
   configCLIOverrides: ConfigCLIOverrides = {};
   storeDir = '';
-  maxConcurrentTestGroups = 0;
   ignoreSnapshots = false;
   webServers: Exclude<FullConfig['webServer'], null>[] = [];
   plugins: TestRunnerPluginRegistration[] = [];
@@ -246,7 +245,7 @@ export function toReporters(reporters: BuiltInReporter | ReporterDescription[] |
   return reporters;
 }
 
-export const builtInReporters = ['list', 'line', 'dot', 'json', 'junit', 'null', 'github', 'html'] as const;
+export const builtInReporters = ['list', 'line', 'dot', 'json', 'junit', 'null', 'github', 'html', 'blob'] as const;
 export type BuiltInReporter = typeof builtInReporters[number];
 
 export type ContextReuseMode = 'none' | 'force' | 'when-possible';

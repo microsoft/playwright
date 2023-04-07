@@ -124,6 +124,7 @@ export class TeleReporterEmitter implements Reporter {
       rootDir: config.rootDir,
       configFile: this._relativePath(config.configFile),
       listOnly: FullConfigInternal.from(config).listOnly,
+      workers: config.workers,
     };
   }
 
