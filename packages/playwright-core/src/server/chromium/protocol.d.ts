@@ -811,7 +811,7 @@ CORS RFC1918 enforcement.
       resourceIPAddressSpace?: Network.IPAddressSpace;
       clientSecurityState?: Network.ClientSecurityState;
     }
-    export type AttributionReportingIssueType = "PermissionPolicyDisabled"|"PermissionPolicyNotDelegated"|"UntrustworthyReportingOrigin"|"InsecureContext"|"InvalidHeader"|"InvalidRegisterTriggerHeader"|"InvalidEligibleHeader"|"TooManyConcurrentRequests"|"SourceAndTriggerHeaders"|"SourceIgnored"|"TriggerIgnored";
+    export type AttributionReportingIssueType = "PermissionPolicyDisabled"|"UntrustworthyReportingOrigin"|"InsecureContext"|"InvalidHeader"|"InvalidRegisterTriggerHeader"|"InvalidEligibleHeader"|"TooManyConcurrentRequests"|"SourceAndTriggerHeaders"|"SourceIgnored"|"TriggerIgnored"|"OsSourceIgnored"|"OsTriggerIgnored"|"InvalidRegisterOsSourceHeader"|"InvalidRegisterOsTriggerHeader"|"WebAndOsHeaders";
     /**
      * Details for issues around "Attribution Reporting API" usage.
 Explainer: https://github.com/WICG/attribution-reporting-api
@@ -841,7 +841,7 @@ instead of "limited-quirks".
       url: string;
       location?: SourceCodeLocation;
     }
-    export type GenericIssueErrorType = "CrossOriginPortalPostMessageError"|"FormLabelForNameError"|"FormDuplicateIdForInputError"|"FormInputWithNoLabelError"|"FormAutocompleteAttributeEmptyError"|"FormEmptyIdAndNameAttributesForInputError"|"FormAriaLabelledByToNonExistingId"|"FormInputAssignedAutocompleteValueToIdOrNameAttributeError"|"FormLabelHasNeitherForNorNestedInput"|"FormLabelForMatchesNonExistingIdError"|"FormHasPasswordFieldWithoutUsernameFieldError";
+    export type GenericIssueErrorType = "CrossOriginPortalPostMessageError"|"FormLabelForNameError"|"FormDuplicateIdForInputError"|"FormInputWithNoLabelError"|"FormAutocompleteAttributeEmptyError"|"FormEmptyIdAndNameAttributesForInputError"|"FormAriaLabelledByToNonExistingId"|"FormInputAssignedAutocompleteValueToIdOrNameAttributeError"|"FormLabelHasNeitherForNorNestedInput"|"FormLabelForMatchesNonExistingIdError"|"FormInputHasWrongButWellIntendedAutocompleteValueError";
     /**
      * Depending on the concrete errorType, different properties are set.
      */
@@ -1705,6 +1705,10 @@ stylesheet rules) this rule came from.
        * Rule selector data.
        */
       selectorList: SelectorList;
+      /**
+       * Array of selectors from ancestor style rules, sorted by distance from the current rule.
+       */
+      nestingSelectors?: string[];
       /**
        * Parent stylesheet's origin.
        */
@@ -10891,15 +10895,6 @@ dependent on the reason:
        */
       children: BackForwardCacheNotRestoredExplanationTree[];
     }
-    /**
-     * List of FinalStatus reasons for Prerender2.
-     */
-    export type PrerenderFinalStatus = "Activated"|"Destroyed"|"LowEndDevice"|"InvalidSchemeRedirect"|"InvalidSchemeNavigation"|"InProgressNavigation"|"NavigationRequestBlockedByCsp"|"MainFrameNavigation"|"MojoBinderPolicy"|"RendererProcessCrashed"|"RendererProcessKilled"|"Download"|"TriggerDestroyed"|"NavigationNotCommitted"|"NavigationBadHttpStatus"|"ClientCertRequested"|"NavigationRequestNetworkError"|"MaxNumOfRunningPrerendersExceeded"|"CancelAllHostsForTesting"|"DidFailLoad"|"Stop"|"SslCertificateError"|"LoginAuthRequested"|"UaChangeRequiresReload"|"BlockedByClient"|"AudioOutputDeviceRequested"|"MixedContent"|"TriggerBackgrounded"|"EmbedderTriggeredAndCrossOriginRedirected"|"MemoryLimitExceeded"|"FailToGetMemoryUsage"|"DataSaverEnabled"|"HasEffectiveUrl"|"ActivatedBeforeStarted"|"InactivePageRestriction"|"StartFailed"|"TimeoutBackgrounded"|"CrossSiteRedirect"|"CrossSiteNavigation"|"SameSiteCrossOriginRedirect"|"SameSiteCrossOriginNavigation"|"SameSiteCrossOriginRedirectNotOptIn"|"SameSiteCrossOriginNavigationNotOptIn"|"ActivationNavigationParameterMismatch"|"ActivatedInBackground"|"EmbedderHostDisallowed"|"ActivationNavigationDestroyedBeforeSuccess"|"TabClosedByUserGesture"|"TabClosedWithoutUserGesture"|"PrimaryMainFrameRendererProcessCrashed"|"PrimaryMainFrameRendererProcessKilled"|"ActivationFramePolicyNotCompatible"|"PreloadingDisabled"|"BatterySaverEnabled"|"ActivatedDuringMainFrameNavigation"|"PreloadingUnsupportedByWebContents";
-    /**
-     * Preloading status values, see also PreloadingTriggeringOutcome. This
-status is shared by prefetchStatusUpdated and prerenderStatusUpdated.
-     */
-    export type PreloadingStatus = "Pending"|"Running"|"Ready"|"Success"|"Failure"|"NotSupported";
     
     export type domContentEventFiredPayload = {
       timestamp: Network.MonotonicTime;
@@ -11171,46 +11166,6 @@ when bfcache navigation fails.
        * Tree structure of reasons why the page could not be cached for each frame.
        */
       notRestoredExplanationsTree?: BackForwardCacheNotRestoredExplanationTree;
-    }
-    /**
-     * Fired when a prerender attempt is completed.
-     */
-    export type prerenderAttemptCompletedPayload = {
-      /**
-       * The frame id of the frame initiating prerendering.
-       */
-      initiatingFrameId: FrameId;
-      prerenderingUrl: string;
-      finalStatus: PrerenderFinalStatus;
-      /**
-       * This is used to give users more information about the name of the API call
-that is incompatible with prerender and has caused the cancellation of the attempt
-       */
-      disallowedApiMethod?: string;
-    }
-    /**
-     * TODO(crbug/1384419): Create a dedicated domain for preloading.
-Fired when a prefetch attempt is updated.
-     */
-    export type prefetchStatusUpdatedPayload = {
-      /**
-       * The frame id of the frame initiating prefetch.
-       */
-      initiatingFrameId: FrameId;
-      prefetchUrl: string;
-      status: PreloadingStatus;
-    }
-    /**
-     * TODO(crbug/1384419): Create a dedicated domain for preloading.
-Fired when a prerender attempt is updated.
-     */
-    export type prerenderStatusUpdatedPayload = {
-      /**
-       * The frame id of the frame initiating prerender.
-       */
-      initiatingFrameId: FrameId;
-      prerenderingUrl: string;
-      status: PreloadingStatus;
     }
     export type loadEventFiredPayload = {
       timestamp: Network.MonotonicTime;
@@ -12832,7 +12787,7 @@ For cached script it is the last time the cache entry was validated.
     /**
      * Enum of possible storage types.
      */
-    export type StorageType = "appcache"|"cookies"|"file_systems"|"indexeddb"|"local_storage"|"shader_cache"|"websql"|"service_workers"|"cache_storage"|"interest_groups"|"shared_storage"|"all"|"other";
+    export type StorageType = "appcache"|"cookies"|"file_systems"|"indexeddb"|"local_storage"|"shader_cache"|"websql"|"service_workers"|"cache_storage"|"interest_groups"|"shared_storage"|"storage_buckets"|"all"|"other";
     /**
      * Usage for a storage type.
      */
@@ -12974,6 +12929,20 @@ SharedStorageAccessType.workletSet.
        */
       ignoreIfPresent?: boolean;
     }
+    export type StorageBucketsDurability = "relaxed"|"strict";
+    export interface StorageBucketInfo {
+      storageKey: SerializedStorageKey;
+      id: string;
+      name: string;
+      isDefault: boolean;
+      expiration: Network.TimeSinceEpoch;
+      /**
+       * Storage quota (bytes).
+       */
+      quota: number;
+      persistent: boolean;
+      durability: StorageBucketsDurability;
+    }
     
     /**
      * A cache's contents have been modified.
@@ -13074,6 +13043,12 @@ The following parameters are included in all events.
 presence/absence depends on `type`.
        */
       params: SharedStorageAccessParams;
+    }
+    export type storageBucketCreatedOrUpdatedPayload = {
+      bucket: StorageBucketInfo;
+    }
+    export type storageBucketDeletedPayload = {
+      bucketId: string;
     }
     
     /**
@@ -13397,6 +13372,24 @@ Leaves other stored data, including the issuer's Redemption Records, intact.
       enable: boolean;
     }
     export type setSharedStorageTrackingReturnValue = {
+    }
+    /**
+     * Set tracking for a storage key's buckets.
+     */
+    export type setStorageBucketTrackingParameters = {
+      storageKey: string;
+      enable: boolean;
+    }
+    export type setStorageBucketTrackingReturnValue = {
+    }
+    /**
+     * Deletes the Storage Bucket with the given storage key and bucket name.
+     */
+    export type deleteStorageBucketParameters = {
+      storageKey: string;
+      bucketName: string;
+    }
+    export type deleteStorageBucketReturnValue = {
     }
   }
   
@@ -15373,7 +15366,63 @@ See also:
 - https://github.com/WICG/nav-speculation/blob/main/triggers.md
        */
       sourceText: string;
+      /**
+       * Error information
+`errorMessage` is null iff `errorType` is null.
+       */
+      errorType?: RuleSetErrorType;
+      /**
+       * TODO(https://crbug.com/1425354): Replace this property with structured error.
+       */
+      errorMessage?: string;
     }
+    export type RuleSetErrorType = "SourceIsNotJsonObject"|"InvalidRulesSkipped";
+    /**
+     * The type of preloading attempted. It corresponds to
+mojom::SpeculationAction (although PrefetchWithSubresources is omitted as it
+isn't being used by clients).
+     */
+    export type SpeculationAction = "Prefetch"|"Prerender";
+    /**
+     * Corresponds to mojom::SpeculationTargetHint.
+See https://github.com/WICG/nav-speculation/blob/main/triggers.md#window-name-targeting-hints
+     */
+    export type SpeculationTargetHint = "Blank"|"Self";
+    /**
+     * A key that identifies a preloading attempt.
+
+The url used is the url specified by the trigger (i.e. the initial URL), and
+not the final url that is navigated to. For example, prerendering allows
+same-origin main frame navigations during the attempt, but the attempt is
+still keyed with the initial URL.
+     */
+    export interface PreloadingAttemptKey {
+      loaderId: Network.LoaderId;
+      action: SpeculationAction;
+      url: string;
+      targetHint?: SpeculationTargetHint;
+    }
+    /**
+     * Lists sources for a preloading attempt, specifically the ids of rule sets
+that had a speculation rule that triggered the attempt, and the
+BackendNodeIds of <a href> or <area href> elements that triggered the
+attempt (in the case of attempts triggered by a document rule). It is
+possible for mulitple rule sets and links to trigger a single attempt.
+     */
+    export interface PreloadingAttemptSource {
+      key: PreloadingAttemptKey;
+      ruleSetIds: RuleSetId[];
+      nodeIds: DOM.BackendNodeId[];
+    }
+    /**
+     * List of FinalStatus reasons for Prerender2.
+     */
+    export type PrerenderFinalStatus = "Activated"|"Destroyed"|"LowEndDevice"|"InvalidSchemeRedirect"|"InvalidSchemeNavigation"|"InProgressNavigation"|"NavigationRequestBlockedByCsp"|"MainFrameNavigation"|"MojoBinderPolicy"|"RendererProcessCrashed"|"RendererProcessKilled"|"Download"|"TriggerDestroyed"|"NavigationNotCommitted"|"NavigationBadHttpStatus"|"ClientCertRequested"|"NavigationRequestNetworkError"|"MaxNumOfRunningPrerendersExceeded"|"CancelAllHostsForTesting"|"DidFailLoad"|"Stop"|"SslCertificateError"|"LoginAuthRequested"|"UaChangeRequiresReload"|"BlockedByClient"|"AudioOutputDeviceRequested"|"MixedContent"|"TriggerBackgrounded"|"EmbedderTriggeredAndCrossOriginRedirected"|"MemoryLimitExceeded"|"FailToGetMemoryUsage"|"DataSaverEnabled"|"HasEffectiveUrl"|"ActivatedBeforeStarted"|"InactivePageRestriction"|"StartFailed"|"TimeoutBackgrounded"|"CrossSiteRedirectInInitialNavigation"|"CrossSiteNavigationInInitialNavigation"|"SameSiteCrossOriginRedirectNotOptInInInitialNavigation"|"SameSiteCrossOriginNavigationNotOptInInInitialNavigation"|"ActivationNavigationParameterMismatch"|"ActivatedInBackground"|"EmbedderHostDisallowed"|"ActivationNavigationDestroyedBeforeSuccess"|"TabClosedByUserGesture"|"TabClosedWithoutUserGesture"|"PrimaryMainFrameRendererProcessCrashed"|"PrimaryMainFrameRendererProcessKilled"|"ActivationFramePolicyNotCompatible"|"PreloadingDisabled"|"BatterySaverEnabled"|"ActivatedDuringMainFrameNavigation"|"PreloadingUnsupportedByWebContents"|"CrossSiteRedirectInMainFrameNavigation"|"CrossSiteNavigationInMainFrameNavigation"|"SameSiteCrossOriginRedirectNotOptInInMainFrameNavigation"|"SameSiteCrossOriginNavigationNotOptInInMainFrameNavigation";
+    /**
+     * Preloading status values, see also PreloadingTriggeringOutcome. This
+status is shared by prefetchStatusUpdated and prerenderStatusUpdated.
+     */
+    export type PreloadingStatus = "Pending"|"Running"|"Ready"|"Success"|"Failure"|"NotSupported";
     
     /**
      * Upsert. Currently, it is only emitted when a rule set added.
@@ -15384,6 +15433,54 @@ See also:
     export type ruleSetRemovedPayload = {
       id: RuleSetId;
     }
+    /**
+     * Fired when a prerender attempt is completed.
+     */
+    export type prerenderAttemptCompletedPayload = {
+      key: PreloadingAttemptKey;
+      /**
+       * The frame id of the frame initiating prerendering.
+       */
+      initiatingFrameId: Page.FrameId;
+      prerenderingUrl: string;
+      finalStatus: PrerenderFinalStatus;
+      /**
+       * This is used to give users more information about the name of the API call
+that is incompatible with prerender and has caused the cancellation of the attempt
+       */
+      disallowedApiMethod?: string;
+    }
+    /**
+     * Fired when a prefetch attempt is updated.
+     */
+    export type prefetchStatusUpdatedPayload = {
+      key: PreloadingAttemptKey;
+      /**
+       * The frame id of the frame initiating prefetch.
+       */
+      initiatingFrameId: Page.FrameId;
+      prefetchUrl: string;
+      status: PreloadingStatus;
+    }
+    /**
+     * Fired when a prerender attempt is updated.
+     */
+    export type prerenderStatusUpdatedPayload = {
+      key: PreloadingAttemptKey;
+      /**
+       * The frame id of the frame initiating prerender.
+       */
+      initiatingFrameId: Page.FrameId;
+      prerenderingUrl: string;
+      status: PreloadingStatus;
+    }
+    /**
+     * Send a list of sources for all preloading attempts in a document.
+     */
+    export type preloadingAttemptSourcesUpdatedPayload = {
+      loaderId: Network.LoaderId;
+      preloadingAttemptSources: PreloadingAttemptSource[];
+    }
     
     export type enableParameters = {
     }
@@ -15392,6 +15489,81 @@ See also:
     export type disableParameters = {
     }
     export type disableReturnValue = {
+    }
+  }
+  
+  /**
+   * This domain allows interacting with the FedCM dialog.
+   */
+  export module FedCm {
+    /**
+     * Whether this is a sign-up or sign-in action for this account, i.e.
+whether this account has ever been used to sign in to this RP before.
+     */
+    export type LoginState = "SignIn"|"SignUp";
+    /**
+     * Corresponds to IdentityRequestAccount
+     */
+    export interface Account {
+      accountId: string;
+      email: string;
+      name: string;
+      givenName: string;
+      pictureUrl: string;
+      idpConfigUrl: string;
+      idpSigninUrl: string;
+      loginState: LoginState;
+      /**
+       * These two are only set if the loginState is signUp
+       */
+      termsOfServiceUrl?: string;
+      privacyPolicyUrl?: string;
+    }
+    
+    export type dialogShownPayload = {
+      dialogId: string;
+      accounts: Account[];
+      /**
+       * These exist primarily so that the caller can verify the
+RP context was used appropriately.
+       */
+      title: string;
+      subtitle?: string;
+    }
+    
+    export type enableParameters = {
+      /**
+       * Allows callers to disable the promise rejection delay that would
+normally happen, if this is unimportant to what's being tested.
+(step 4 of https://fedidcg.github.io/FedCM/#browser-api-rp-sign-in)
+       */
+      disableRejectionDelay?: boolean;
+    }
+    export type enableReturnValue = {
+    }
+    export type disableParameters = {
+    }
+    export type disableReturnValue = {
+    }
+    export type selectAccountParameters = {
+      dialogId: string;
+      accountIndex: number;
+    }
+    export type selectAccountReturnValue = {
+    }
+    export type dismissDialogParameters = {
+      dialogId: string;
+      triggerCooldown?: boolean;
+    }
+    export type dismissDialogReturnValue = {
+    }
+    /**
+     * Resets the cooldown time, if any, to allow the next FedCM call to show
+a dialog even if one was recently dismissed by the user.
+     */
+    export type resetCooldownParameters = {
+    }
+    export type resetCooldownReturnValue = {
     }
   }
   
@@ -18105,9 +18277,6 @@ Error was thrown.
     "Page.javascriptDialogOpening": Page.javascriptDialogOpeningPayload;
     "Page.lifecycleEvent": Page.lifecycleEventPayload;
     "Page.backForwardCacheNotUsed": Page.backForwardCacheNotUsedPayload;
-    "Page.prerenderAttemptCompleted": Page.prerenderAttemptCompletedPayload;
-    "Page.prefetchStatusUpdated": Page.prefetchStatusUpdatedPayload;
-    "Page.prerenderStatusUpdated": Page.prerenderStatusUpdatedPayload;
     "Page.loadEventFired": Page.loadEventFiredPayload;
     "Page.navigatedWithinDocument": Page.navigatedWithinDocumentPayload;
     "Page.screencastFrame": Page.screencastFramePayload;
@@ -18128,6 +18297,8 @@ Error was thrown.
     "Storage.indexedDBListUpdated": Storage.indexedDBListUpdatedPayload;
     "Storage.interestGroupAccessed": Storage.interestGroupAccessedPayload;
     "Storage.sharedStorageAccessed": Storage.sharedStorageAccessedPayload;
+    "Storage.storageBucketCreatedOrUpdated": Storage.storageBucketCreatedOrUpdatedPayload;
+    "Storage.storageBucketDeleted": Storage.storageBucketDeletedPayload;
     "Target.attachedToTarget": Target.attachedToTargetPayload;
     "Target.detachedFromTarget": Target.detachedFromTargetPayload;
     "Target.receivedMessageFromTarget": Target.receivedMessageFromTargetPayload;
@@ -18164,6 +18335,11 @@ Error was thrown.
     "DeviceAccess.deviceRequestPrompted": DeviceAccess.deviceRequestPromptedPayload;
     "Preload.ruleSetUpdated": Preload.ruleSetUpdatedPayload;
     "Preload.ruleSetRemoved": Preload.ruleSetRemovedPayload;
+    "Preload.prerenderAttemptCompleted": Preload.prerenderAttemptCompletedPayload;
+    "Preload.prefetchStatusUpdated": Preload.prefetchStatusUpdatedPayload;
+    "Preload.prerenderStatusUpdated": Preload.prerenderStatusUpdatedPayload;
+    "Preload.preloadingAttemptSourcesUpdated": Preload.preloadingAttemptSourcesUpdatedPayload;
+    "FedCm.dialogShown": FedCm.dialogShownPayload;
     "Console.messageAdded": Console.messageAddedPayload;
     "Debugger.breakpointResolved": Debugger.breakpointResolvedPayload;
     "Debugger.paused": Debugger.pausedPayload;
@@ -18601,6 +18777,8 @@ Error was thrown.
     "Storage.clearSharedStorageEntries": Storage.clearSharedStorageEntriesParameters;
     "Storage.resetSharedStorageBudget": Storage.resetSharedStorageBudgetParameters;
     "Storage.setSharedStorageTracking": Storage.setSharedStorageTrackingParameters;
+    "Storage.setStorageBucketTracking": Storage.setStorageBucketTrackingParameters;
+    "Storage.deleteStorageBucket": Storage.deleteStorageBucketParameters;
     "SystemInfo.getInfo": SystemInfo.getInfoParameters;
     "SystemInfo.getFeatureState": SystemInfo.getFeatureStateParameters;
     "SystemInfo.getProcessInfo": SystemInfo.getProcessInfoParameters;
@@ -18660,6 +18838,11 @@ Error was thrown.
     "DeviceAccess.cancelPrompt": DeviceAccess.cancelPromptParameters;
     "Preload.enable": Preload.enableParameters;
     "Preload.disable": Preload.disableParameters;
+    "FedCm.enable": FedCm.enableParameters;
+    "FedCm.disable": FedCm.disableParameters;
+    "FedCm.selectAccount": FedCm.selectAccountParameters;
+    "FedCm.dismissDialog": FedCm.dismissDialogParameters;
+    "FedCm.resetCooldown": FedCm.resetCooldownParameters;
     "Console.clearMessages": Console.clearMessagesParameters;
     "Console.disable": Console.disableParameters;
     "Console.enable": Console.enableParameters;
@@ -19155,6 +19338,8 @@ Error was thrown.
     "Storage.clearSharedStorageEntries": Storage.clearSharedStorageEntriesReturnValue;
     "Storage.resetSharedStorageBudget": Storage.resetSharedStorageBudgetReturnValue;
     "Storage.setSharedStorageTracking": Storage.setSharedStorageTrackingReturnValue;
+    "Storage.setStorageBucketTracking": Storage.setStorageBucketTrackingReturnValue;
+    "Storage.deleteStorageBucket": Storage.deleteStorageBucketReturnValue;
     "SystemInfo.getInfo": SystemInfo.getInfoReturnValue;
     "SystemInfo.getFeatureState": SystemInfo.getFeatureStateReturnValue;
     "SystemInfo.getProcessInfo": SystemInfo.getProcessInfoReturnValue;
@@ -19214,6 +19399,11 @@ Error was thrown.
     "DeviceAccess.cancelPrompt": DeviceAccess.cancelPromptReturnValue;
     "Preload.enable": Preload.enableReturnValue;
     "Preload.disable": Preload.disableReturnValue;
+    "FedCm.enable": FedCm.enableReturnValue;
+    "FedCm.disable": FedCm.disableReturnValue;
+    "FedCm.selectAccount": FedCm.selectAccountReturnValue;
+    "FedCm.dismissDialog": FedCm.dismissDialogReturnValue;
+    "FedCm.resetCooldown": FedCm.resetCooldownReturnValue;
     "Console.clearMessages": Console.clearMessagesReturnValue;
     "Console.disable": Console.disableReturnValue;
     "Console.enable": Console.enableReturnValue;
