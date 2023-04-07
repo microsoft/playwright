@@ -16,7 +16,8 @@
 
 import { colors } from 'playwright-core/lib/utilsBundle';
 import { TimeoutRunner, TimeoutRunnerError } from 'playwright-core/lib/utils';
-import type { Location, TestInfoError } from '../common/types';
+import type { TestInfoError } from '../../types/test';
+import type { Location } from '../../types/testReporter';
 
 export type TimeSlot = {
   timeout: number;

@@ -18,7 +18,7 @@ import { FixturePool } from './fixtures';
 import type { LoadError } from './fixtures';
 import type { Suite, TestCase } from './test';
 import type { TestTypeImpl } from './testType';
-import type { FullProjectInternal } from './types';
+import type { FullProjectInternal } from './config';
 import { formatLocation } from '../util';
 import type { TestError } from '../../reporter';
 
@@ -74,8 +74,8 @@ export class PoolBuilder {
   private _buildTestTypePool(testType: TestTypeImpl, testErrors?: TestError[]): FixturePool {
     if (!this._testTypePools.has(testType)) {
       const optionOverrides = {
-        overrides: this._project?.use ?? {},
-        location: { file: `project#${this._project?._internal.id}`, line: 1, column: 1 }
+        overrides: this._project?.project?.use ?? {},
+        location: { file: `project#${this._project?.id}`, line: 1, column: 1 }
       };
       const pool = new FixturePool(testType.fixtures, e => this._handleLoadError(e, testErrors), undefined, undefined, optionOverrides);
       this._testTypePools.set(testType, pool);

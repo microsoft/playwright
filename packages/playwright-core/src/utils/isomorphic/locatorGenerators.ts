@@ -19,7 +19,7 @@ import { type NestedSelectorBody, parseAttributeSelector, parseSelector, stringi
 import type { ParsedSelector } from './selectorParser';
 
 export type Language = 'javascript' | 'python' | 'java' | 'csharp';
-export type LocatorType = 'default' | 'role' | 'text' | 'label' | 'placeholder' | 'alt' | 'title' | 'test-id' | 'nth' | 'first' | 'last' | 'has-text' | 'has' | 'frame' | 'or' | 'and' | 'not';
+export type LocatorType = 'default' | 'role' | 'text' | 'label' | 'placeholder' | 'alt' | 'title' | 'test-id' | 'nth' | 'first' | 'last' | 'has-text' | 'has-not-text' | 'has' | 'hasNot' | 'frame' | 'or';
 export type LocatorBase = 'page' | 'locator' | 'frame-locator';
 
 type LocatorOptions = { attrs?: { name: string, value: string | boolean | number}[], exact?: boolean, name?: string | RegExp };
@@ -81,24 +81,27 @@ function innerAsLocator(factory: LocatorFactory, parsed: ParsedSelector, isFrame
         continue;
       }
     }
+    if (part.name === 'internal:has-not-text') {
+      const { exact, text } = detectExact(part.body as string);
+      // There is no locator equivalent for strict has-not-text, leave it as is.
+      if (!exact) {
+        tokens.push(factory.generateLocator(base, 'has-not-text', text, { exact }));
+        continue;
+      }
+    }
     if (part.name === 'internal:has') {
       const inner = innerAsLocator(factory, (part.body as NestedSelectorBody).parsed);
       tokens.push(factory.generateLocator(base, 'has', inner));
       continue;
     }
+    if (part.name === 'internal:has-not') {
+      const inner = innerAsLocator(factory, (part.body as NestedSelectorBody).parsed);
+      tokens.push(factory.generateLocator(base, 'hasNot', inner));
+      continue;
+    }
     if (part.name === 'internal:or') {
       const inner = innerAsLocator(factory, (part.body as NestedSelectorBody).parsed);
       tokens.push(factory.generateLocator(base, 'or', inner));
-      continue;
-    }
-    if (part.name === 'internal:and') {
-      const inner = innerAsLocator(factory, (part.body as NestedSelectorBody).parsed);
-      tokens.push(factory.generateLocator(base, 'and', inner));
-      continue;
-    }
-    if (part.name === 'internal:not') {
-      const inner = innerAsLocator(factory, (part.body as NestedSelectorBody).parsed);
-      tokens.push(factory.generateLocator(base, 'not', inner));
       continue;
     }
     if (part.name === 'internal:label') {
@@ -208,14 +211,14 @@ export class JavaScriptLocatorFactory implements LocatorFactory {
         return `getByRole(${this.quote(body as string)}${attrString})`;
       case 'has-text':
         return `filter({ hasText: ${this.toHasText(body as string)} })`;
+      case 'has-not-text':
+        return `filter({ hasNotText: ${this.toHasText(body as string)} })`;
       case 'has':
         return `filter({ has: ${body} })`;
+      case 'hasNot':
+        return `filter({ hasNot: ${body} })`;
       case 'or':
         return `or(${body})`;
-      case 'and':
-        return `and(${body})`;
-      case 'not':
-        return `not(${body})`;
       case 'test-id':
         return `getByTestId(${this.quote(body as string)})`;
       case 'text':
@@ -282,14 +285,14 @@ export class PythonLocatorFactory implements LocatorFactory {
         return `get_by_role(${this.quote(body as string)}${attrString})`;
       case 'has-text':
         return `filter(has_text=${this.toHasText(body as string)})`;
+      case 'has-not-text':
+        return `filter(has_not_text=${this.toHasText(body as string)})`;
       case 'has':
         return `filter(has=${body})`;
+      case 'hasNot':
+        return `filter(has_not=${body})`;
       case 'or':
         return `or_(${body})`;
-      case 'and':
-        return `and_(${body})`;
-      case 'not':
-        return `not_(${body})`;
       case 'test-id':
         return `get_by_test_id(${this.quote(body as string)})`;
       case 'text':
@@ -365,14 +368,14 @@ export class JavaLocatorFactory implements LocatorFactory {
         return `getByRole(AriaRole.${toSnakeCase(body as string).toUpperCase()}${attrString})`;
       case 'has-text':
         return `filter(new ${clazz}.FilterOptions().setHasText(${this.toHasText(body)}))`;
+      case 'has-not-text':
+        return `filter(new ${clazz}.FilterOptions().setHasNotText(${this.toHasText(body)}))`;
       case 'has':
         return `filter(new ${clazz}.FilterOptions().setHas(${body}))`;
+      case 'hasNot':
+        return `filter(new ${clazz}.FilterOptions().setHasNot(${body}))`;
       case 'or':
         return `or(${body})`;
-      case 'and':
-        return `and(${body})`;
-      case 'not':
-        return `not(${body})`;
       case 'test-id':
         return `getByTestId(${this.quote(body as string)})`;
       case 'text':
@@ -442,14 +445,14 @@ export class CSharpLocatorFactory implements LocatorFactory {
         return `GetByRole(AriaRole.${toTitleCase(body as string)}${attrString})`;
       case 'has-text':
         return `Filter(new() { ${this.toHasText(body)} })`;
+      case 'has-not-text':
+        return `Filter(new() { ${this.toHasNotText(body)} })`;
       case 'has':
         return `Filter(new() { Has = ${body} })`;
+      case 'hasNot':
+        return `Filter(new() { HasNot = ${body} })`;
       case 'or':
         return `Or(${body})`;
-      case 'and':
-        return `And(${body})`;
-      case 'not':
-        return `Not(${body})`;
       case 'test-id':
         return `GetByTestId(${this.quote(body as string)})`;
       case 'text':
@@ -484,6 +487,12 @@ export class CSharpLocatorFactory implements LocatorFactory {
     if (isRegExp(body))
       return `HasTextRegex = ${this.regexToString(body)}`;
     return `HasText = ${this.quote(body)}`;
+  }
+
+  private toHasNotText(body: string | RegExp) {
+    if (isRegExp(body))
+      return `HasNotTextRegex = ${this.regexToString(body)}`;
+    return `HasNotText = ${this.quote(body)}`;
   }
 
   private quote(text: string) {

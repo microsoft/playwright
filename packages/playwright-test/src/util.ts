@@ -21,7 +21,8 @@ import util from 'util';
 import path from 'path';
 import url from 'url';
 import { colors, debug, minimatch, parseStackTraceLine } from 'playwright-core/lib/utilsBundle';
-import type { TestInfoError, Location } from './common/types';
+import type { TestInfoError } from './../types/test';
+import type { Location } from './../types/testReporter';
 import { calculateSha1, isRegExp, isString } from 'playwright-core/lib/utils';
 import type { RawStack } from 'playwright-core/lib/utils';
 

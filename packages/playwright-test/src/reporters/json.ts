@@ -20,7 +20,7 @@ import type { FullConfig, TestCase, Suite, TestResult, TestError, TestStep, Full
 import { formatError, prepareErrorStack } from './base';
 import { MultiMap } from 'playwright-core/lib/utils';
 import { assert } from 'playwright-core/lib/utils';
-import type { FullProjectInternal } from '../common/types';
+import { FullProjectInternal } from '../common/config';
 
 export function toPosixPath(aPath: string): string {
   return aPath.split(path.sep).join(path.posix.sep);
@@ -64,7 +64,7 @@ class JSONReporter implements Reporter {
             repeatEach: project.repeatEach,
             retries: project.retries,
             metadata: project.metadata,
-            id: (project as FullProjectInternal)._internal.id,
+            id: FullProjectInternal.from(project).id,
             name: project.name,
             testDir: toPosixPath(project.testDir),
             testIgnore: serializePatterns(project.testIgnore),
@@ -81,7 +81,7 @@ class JSONReporter implements Reporter {
   private _mergeSuites(suites: Suite[]): JSONReportSuite[] {
     const fileSuites = new MultiMap<string, JSONReportSuite>();
     for (const projectSuite of suites) {
-      const projectId = (projectSuite.project() as FullProjectInternal)._internal.id;
+      const projectId = FullProjectInternal.from(projectSuite.project()!).id;
       const projectName = projectSuite.project()!.name;
       for (const fileSuite of projectSuite.suites) {
         const file = fileSuite.location!.file;

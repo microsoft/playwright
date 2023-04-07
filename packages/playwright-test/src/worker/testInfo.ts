@@ -17,11 +17,12 @@
 import fs from 'fs';
 import path from 'path';
 import { captureRawStack, monotonicTime, zones } from 'playwright-core/lib/utils';
-import type { TestInfoError, TestInfo, TestStatus } from '../../types/test';
+import type { TestInfoError, TestInfo, TestStatus, FullProject, FullConfig } from '../../types/test';
 import type { StepBeginPayload, StepEndPayload, WorkerInitParams } from '../common/ipc';
 import type { TestCase } from '../common/test';
 import { TimeoutManager } from './timeoutManager';
-import type { Annotation, FullConfigInternal, FullProjectInternal, Location } from '../common/types';
+import type { Annotation, FullConfigInternal, FullProjectInternal } from '../common/config';
+import type { Location } from '../../types/testReporter';
 import { getContainedPath, normalizeAndSaveAttachment, sanitizeForFilePath, serializeError, trimLongString } from '../util';
 import type * as trace from '@trace/trace';
 
@@ -54,6 +55,8 @@ export class TestInfoImpl implements TestInfo {
   _didTimeout = false;
   _wasInterrupted = false;
   _lastStepId = 0;
+  readonly _projectInternal: FullProjectInternal;
+  readonly _configInternal: FullConfigInternal;
 
   // ------------ TestInfo fields ------------
   readonly testId: string;
@@ -61,8 +64,8 @@ export class TestInfoImpl implements TestInfo {
   readonly retry: number;
   readonly workerIndex: number;
   readonly parallelIndex: number;
-  readonly project: FullProjectInternal;
-  config: FullConfigInternal;
+  readonly project: FullProject;
+  readonly config: FullConfig;
   readonly title: string;
   readonly titlePath: string[];
   readonly file: string;
@@ -101,8 +104,8 @@ export class TestInfoImpl implements TestInfo {
   }
 
   constructor(
-    config: FullConfigInternal,
-    project: FullProjectInternal,
+    configInternal: FullConfigInternal,
+    projectInternal: FullProjectInternal,
     workerParams: WorkerInitParams,
     test: TestCase,
     retry: number,
@@ -120,8 +123,10 @@ export class TestInfoImpl implements TestInfo {
     this.retry = retry;
     this.workerIndex = workerParams.workerIndex;
     this.parallelIndex =  workerParams.parallelIndex;
-    this.project = project;
-    this.config = config;
+    this._projectInternal = projectInternal;
+    this.project = projectInternal.project;
+    this._configInternal = configInternal;
+    this.config = configInternal.config;
     this.title = test.title;
     this.titlePath = test.titlePath();
     this.file = test.location.file;
@@ -138,8 +143,8 @@ export class TestInfoImpl implements TestInfo {
       const fullTitleWithoutSpec = test.titlePath().slice(1).join(' ');
 
       let testOutputDir = trimLongString(sanitizedRelativePath + '-' + sanitizeForFilePath(fullTitleWithoutSpec));
-      if (project._internal.id)
-        testOutputDir += '-' + sanitizeForFilePath(project._internal.id);
+      if (projectInternal.id)
+        testOutputDir += '-' + sanitizeForFilePath(projectInternal.id);
       if (this.retry)
         testOutputDir += '-retry' + this.retry;
       if (this.repeatEachIndex)
@@ -345,7 +350,7 @@ export class TestInfoImpl implements TestInfo {
     const parsedRelativeTestFilePath = path.parse(relativeTestFilePath);
     const projectNamePathSegment = sanitizeForFilePath(this.project.name);
 
-    const snapshotPath = this.project.snapshotPathTemplate
+    const snapshotPath = (this._projectInternal.snapshotPathTemplate || '')
         .replace(/\{(.)?testDir\}/g, '$1' + this.project.testDir)
         .replace(/\{(.)?snapshotDir\}/g, '$1' + this.project.snapshotDir)
         .replace(/\{(.)?snapshotSuffix\}/g, this.snapshotSuffix ? '$1' + this.snapshotSuffix : '')
@@ -358,7 +363,7 @@ export class TestInfoImpl implements TestInfo {
         .replace(/\{(.)?arg\}/g, '$1' + path.join(parsedSubPath.dir, parsedSubPath.name))
         .replace(/\{(.)?ext\}/g, parsedSubPath.ext ? '$1' + parsedSubPath.ext : '');
 
-    return path.normalize(path.resolve(this.config._internal.configDir, snapshotPath));
+    return path.normalize(path.resolve(this._configInternal.configDir, snapshotPath));
   }
 
   skip(...args: [arg?: any, description?: string]) {

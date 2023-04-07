@@ -15,7 +15,8 @@
  */
 
 import type { FullConfig, FullResult, Location, Reporter, TestError, TestResult, TestStatus, TestStep } from '../../types/testReporter';
-import type { Annotation, FullProject, Metadata } from '../common/types';
+import type { Annotation } from '../common/config';
+import type { FullProject, Metadata } from '../../types/test';
 import type * as reporterTypes from '../../types/testReporter';
 import type { SuitePrivate } from '../../types/reporterPrivate';
 
@@ -107,12 +108,18 @@ export type JsonTestStepEnd = {
   error?: TestError;
 };
 
+export type JsonEvent = {
+  method: string;
+  params: any
+};
+
 export class TeleReporterReceiver {
   private _rootSuite: TeleSuite;
   private _pathSeparator: string;
   private _reporter: Reporter;
   private _tests = new Map<string, TeleTestCase>();
   private _rootDir!: string;
+  private _clearPreviousResultsWhenTestBegins: boolean = false;
 
   constructor(pathSeparator: string, reporter: Reporter) {
     this._rootSuite = new TeleSuite('', 'root');
@@ -120,8 +127,8 @@ export class TeleReporterReceiver {
     this._reporter = reporter;
   }
 
-  dispatch(message: any) {
-    const { method, params }: { method: string, params: any } = message;
+  dispatch(message: JsonEvent): Promise<void> | undefined {
+    const { method, params } = message;
     if (method === 'onBegin') {
       this._onBegin(params.config, params.projects);
       return;
@@ -150,10 +157,14 @@ export class TeleReporterReceiver {
       this._onStdIO(params.type, params.testId, params.resultId, params.data, params.isBase64);
       return;
     }
-    if (method === 'onEnd') {
-      this._onEnd(params.result);
-      return;
-    }
+    if (method === 'onEnd')
+      return this._onEnd(params.result);
+    if (method === 'onExit')
+      return this._onExit();
+  }
+
+  _setClearPreviousResultsWhenTestBegins() {
+    this._clearPreviousResultsWhenTestBegins = true;
   }
 
   private _onBegin(config: JsonConfig, projects: JsonProject[]) {
@@ -191,6 +202,8 @@ export class TeleReporterReceiver {
 
   private _onTestBegin(testId: string, payload: JsonTestResultStart) {
     const test = this._tests.get(testId)!;
+    if (this._clearPreviousResultsWhenTestBegins)
+      test._clearResults();
     const testResult = test._createTestResult(payload.id);
     testResult.retry = payload.retry;
     testResult.workerIndex = payload.workerIndex;
@@ -258,8 +271,12 @@ export class TeleReporterReceiver {
       this._reporter.onStdErr?.(chunk, test, result);
   }
 
-  private _onEnd(result: FullResult) {
-    this._reporter.onEnd?.(result);
+  private _onEnd(result: FullResult): Promise<void> | undefined {
+    return this._reporter.onEnd?.(result) || undefined;
+  }
+
+  private _onExit(): Promise<void> | undefined {
+    return this._reporter.onExit?.();
   }
 
   private _parseConfig(config: JsonConfig): FullConfig {
@@ -441,7 +458,6 @@ export class TeleTestCase implements reporterTypes.TestCase {
   }
 
   _createTestResult(id: string): TeleTestResult {
-    this._clearResults();
     const result: TeleTestResult = {
       retry: this.results.length,
       parallelIndex: -1,

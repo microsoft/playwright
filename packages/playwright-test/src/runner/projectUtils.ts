@@ -18,7 +18,7 @@ import fs from 'fs';
 import path from 'path';
 import { minimatch } from 'playwright-core/lib/utilsBundle';
 import { promisify } from 'util';
-import type { FullProjectInternal } from '../common/types';
+import type { FullProjectInternal } from '../common/config';
 import { createFileMatcher } from '../util';
 
 const readFileAsync = promisify(fs.readFile);
@@ -35,12 +35,12 @@ export function filterProjects(projects: FullProjectInternal[], projectNames?: s
     unknownProjects.set(name, n);
   });
   const result = projects.filter(project => {
-    const name = project.name.toLocaleLowerCase();
+    const name = project.project.name.toLocaleLowerCase();
     unknownProjects.delete(name);
     return projectsToFind.has(name);
   });
   if (unknownProjects.size) {
-    const names = projects.map(p => p.name).filter(name => !!name);
+    const names = projects.map(p => p.project.name).filter(name => !!name);
     if (!names.length)
       throw new Error(`No named projects are specified in the configuration file`);
     const unknownProjectNames = Array.from(unknownProjects.values()).map(n => `"${n}"`).join(', ');
@@ -49,32 +49,30 @@ export function filterProjects(projects: FullProjectInternal[], projectNames?: s
   return result;
 }
 
-export function buildProjectsClosure(projects: FullProjectInternal[]): FullProjectInternal[] {
-  const result = new Set<FullProjectInternal>();
+export function buildProjectsClosure(projects: FullProjectInternal[]): Map<FullProjectInternal, 'top-level' | 'dependency'> {
+  const result = new Map<FullProjectInternal, 'top-level' | 'dependency'>();
   const visit = (depth: number, project: FullProjectInternal) => {
     if (depth > 100) {
       const error = new Error('Circular dependency detected between projects.');
       error.stack = '';
       throw error;
     }
-    if (depth)
-      project._internal.type = 'dependency';
-    result.add(project);
-    project._internal.deps.map(visit.bind(undefined, depth + 1));
+    result.set(project, depth ? 'dependency' : 'top-level');
+    project.deps.map(visit.bind(undefined, depth + 1));
   };
   for (const p of projects)
-    p._internal.type = 'top-level';
+    result.set(p, 'top-level');
   for (const p of projects)
     visit(0, p);
-  return [...result];
+  return result;
 }
 
 export async function collectFilesForProject(project: FullProjectInternal, fsCache = new Map<string, string[]>()): Promise<string[]> {
   const extensions = ['.js', '.ts', '.mjs', '.tsx', '.jsx'];
   const testFileExtension = (file: string) => extensions.includes(path.extname(file));
-  const allFiles = await cachedCollectFiles(project.testDir, project._internal.respectGitIgnore, fsCache);
-  const testMatch = createFileMatcher(project.testMatch);
-  const testIgnore = createFileMatcher(project.testIgnore);
+  const allFiles = await cachedCollectFiles(project.project.testDir, project.respectGitIgnore, fsCache);
+  const testMatch = createFileMatcher(project.project.testMatch);
+  const testIgnore = createFileMatcher(project.project.testIgnore);
   const testFiles = allFiles.filter(file => {
     if (!testFileExtension(file))
       return false;

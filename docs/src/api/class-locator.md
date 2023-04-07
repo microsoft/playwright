@@ -98,44 +98,6 @@ String[] texts = page.getByRole(AriaRole.LINK).allTextContents();
 var texts = await page.GetByRole(AriaRole.Link).AllTextContentsAsync();
 ```
 
-## method: Locator.and
-* since: v1.33
-* langs:
-  - alias-python: and_
-- returns: <[Locator]>
-
-Creates a locator that matches both this locator and the argument locator.
-
-**Usage**
-
-The following example finds a button with a specific title.
-
-```js
-const button = page.getByRole('button').and(page.getByTitle('Subscribe'));
-```
-
-```java
-Locator button = page.getByRole(AriaRole.BUTTON).and(page.getByTitle("Subscribe"));
-```
-
-```python async
-button = page.get_by_role("button").and_(page.getByTitle("Subscribe"))
-```
-
-```python sync
-button = page.get_by_role("button").and_(page.getByTitle("Subscribe"))
-```
-
-```csharp
-var button = page.GetByRole(AriaRole.Button).And(page.GetByTitle("Subscribe"));
-```
-
-### param: Locator.and.locator
-* since: v1.33
-- `locator` <[Locator]>
-
-Additional locator to match.
-
 
 ## async method: Locator.blur
 * since: v1.28
@@ -988,6 +950,11 @@ await rowLocator
 ### option: Locator.filter.-inline- = %%-locator-options-list-v1.14-%%
 * since: v1.22
 
+### option: Locator.filter.hasNot = %%-locator-option-has-not-%%
+* since: v1.33
+
+### option: Locator.filter.hasNotText = %%-locator-option-has-not-text-%%
+* since: v1.33
 
 ## method: Locator.first
 * since: v1.14
@@ -1503,44 +1470,11 @@ var banana = await page.GetByRole(AriaRole.Listitem).Last(1);
 ### option: Locator.locator.-inline- = %%-locator-options-list-v1.14-%%
 * since: v1.14
 
-
-## method: Locator.not
+### option: Locator.locator.hasNot = %%-locator-option-has-not-%%
 * since: v1.33
-* langs:
-  - alias-python: not_
-- returns: <[Locator]>
 
-Creates a locator that **matches this** locator, but **not the argument** locator.
-
-**Usage**
-
-The following example finds a button that does not have title `"Subscribe"`.
-
-```js
-const button = page.getByRole('button').not(page.getByTitle('Subscribe'));
-```
-
-```java
-Locator button = page.getByRole(AriaRole.BUTTON).not(page.getByTitle("Subscribe"));
-```
-
-```python async
-button = page.get_by_role("button").not_(page.getByTitle("Subscribe"))
-```
-
-```python sync
-button = page.get_by_role("button").not_(page.getByTitle("Subscribe"))
-```
-
-```csharp
-var button = page.GetByRole(AriaRole.Button).Not(page.GetByTitle("Subscribe"));
-```
-
-### param: Locator.not.locator
+### option: Locator.locator.hasNotText = %%-locator-option-has-not-text-%%
 * since: v1.33
-- `locator` <[Locator]>
-
-Locator that must not match.
 
 
 ## method: Locator.nth
@@ -1586,31 +1520,51 @@ Creates a locator that matches either of the two locators.
 
 **Usage**
 
-If your page shows a username input that is labelled either `Username` or `Login`, depending on some external factors you do not control, you can match both.
+Consider a scenario where you'd like to click on a "New email" button, but sometimes a security settings dialog shows up instead. In this case, you can wait for either a "New email" button, or a dialog and act accordingly.
 
 ```js
-const input = page.getByLabel('Username').or(page.getByLabel('Login'));
-await input.fill('John');
+const newEmail = page.getByRole('button', { name: 'New' });
+const dialog = page.getByText('Confirm security settings');
+await expect(newEmail.or(dialog)).toBeVisible();
+if (await dialog.isVisible())
+  await page.getByRole('button', { name: 'Dismiss' }).click();
+await newEmail.click();
 ```
 
 ```java
-Locator input = page.getByLabel("Username").or(page.getByLabel("Login"));
-input.fill("John");
+Locator newEmail = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("New"));
+Locator dialog = page.getByText("Confirm security settings");
+assertThat(newEmail.or(dialog)).isVisible();
+if (dialog.isVisible())
+  page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Dismiss")).click();
+newEmail.click();
 ```
 
 ```python async
-input = page.get_by_label("Username").or_(page.get_by_label("Login"))
-await input.fill("John")
+new_email = page.get_by_role("button", name="New")
+dialog = page.get_by_text("Confirm security settings")
+await expect(new_email.or_(dialog)).to_be_visible()
+if (await dialog.is_visible())
+  await page.get_by_role("button", name="Dismiss").click()
+await new_email.click()
 ```
 
 ```python sync
-input = page.get_by_label("Username").or_(page.get_by_label("Login"))
-input.fill("John")
+new_email = page.get_by_role("button", name="New")
+dialog = page.get_by_text("Confirm security settings")
+expect(new_email.or_(dialog)).to_be_visible()
+if (dialog.is_visible())
+  page.get_by_role("button", name="Dismiss").click()
+new_email.click()
 ```
 
 ```csharp
-var input = page.GetByLabel("Username").Or(page.GetByLabel("Login"));
-await input.FillAsync("John");
+var newEmail = page.GetByRole(AriaRole.Button, new() { Name = "New" });
+var dialog = page.GetByText("Confirm security settings");
+await Expect(newEmail.Or(dialog)).ToBeVisibleAsync();
+if (await dialog.IsVisibleAsync())
+  await page.GetByRole(AriaRole.Button, new() { Name = "Dismiss" }).ClickAsync();
+await newEmail.ClickAsync();
 ```
 
 ### param: Locator.or.locator

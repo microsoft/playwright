@@ -23,11 +23,10 @@ import { parse, traverse, types as t } from '../common/babelBundle';
 import { stoppable } from '../utilsBundle';
 import type { ComponentInfo } from '../common/tsxTransform';
 import { collectComponentUsages, componentInfo } from '../common/tsxTransform';
-import type { FullConfig } from '../common/types';
 import { assert, calculateSha1 } from 'playwright-core/lib/utils';
 import type { AddressInfo } from 'net';
 import { getPlaywrightVersion } from 'playwright-core/lib/utils';
-import type { PlaywrightTestConfig as BasePlaywrightTestConfig } from '@playwright/test';
+import type { PlaywrightTestConfig as BasePlaywrightTestConfig, FullConfig } from '@playwright/test';
 import type { PluginContext } from 'rollup';
 import { setExternalDependencies } from '../common/compilationCache';
 

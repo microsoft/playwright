@@ -17,7 +17,7 @@
 import type { SerializedConfig } from '../common/ipc';
 import { ConfigLoader } from '../common/configLoader';
 import { ProcessRunner } from '../common/process';
-import type { FullConfigInternal } from '../common/types';
+import type { FullConfigInternal } from '../common/config';
 import { loadTestFile } from '../common/testLoader';
 import type { TestError } from '../../reporter';
 import { addToCompilationCache, serializeCompilationCache } from '../common/compilationCache';
@@ -36,14 +36,14 @@ export class LoaderMain extends ProcessRunner {
 
   private _config(): Promise<FullConfigInternal> {
     if (!this._configPromise)
-      this._configPromise = ConfigLoader.deserialize(this._serializedConfig).then(configLoader => configLoader.fullConfig());
+      this._configPromise = ConfigLoader.deserialize(this._serializedConfig);
     return this._configPromise;
   }
 
   async loadTestFile(params: { file: string }) {
     const testErrors: TestError[] = [];
     const config = await this._config();
-    const fileSuite = await loadTestFile(params.file, config.rootDir, testErrors);
+    const fileSuite = await loadTestFile(params.file, config.config.rootDir, testErrors);
     this._poolBuilder.buildPools(fileSuite);
     return { fileSuite: fileSuite._deepSerialize(), testErrors };
   }

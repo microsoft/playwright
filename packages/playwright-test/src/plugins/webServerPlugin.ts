@@ -21,7 +21,7 @@ import { raceAgainstTimeout, launchProcess, httpRequest } from 'playwright-core/
 
 import type { FullConfig } from '../../types/testReporter';
 import type { TestRunnerPlugin } from '.';
-import type { FullConfigInternal } from '../common/types';
+import type { FullConfigInternal } from '../common/config';
 import { envWithoutExperimentalLoaderOptions } from '../util';
 import type { Multiplexer } from '../reporters/multiplexer';
 
@@ -204,9 +204,9 @@ export const webServer = (options: WebServerPluginOptions): TestRunnerPlugin => 
 };
 
 export const webServerPluginsForConfig = (config: FullConfigInternal): TestRunnerPlugin[] => {
-  const shouldSetBaseUrl = !!config.webServer;
+  const shouldSetBaseUrl = !!config.config.webServer;
   const webServerPlugins = [];
-  for (const webServerConfig of config._internal.webServers) {
+  for (const webServerConfig of config.webServers) {
     if ((!webServerConfig.port && !webServerConfig.url) || (webServerConfig.port && webServerConfig.url))
       throw new Error(`Exactly one of 'port' or 'url' is required in config.webServer.`);
 

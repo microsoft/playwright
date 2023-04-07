@@ -2801,8 +2801,8 @@ export interface Page {
      * When to consider operation succeeded, defaults to `load`. Events can be either:
      * - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
      * - `'load'` - consider operation to be finished when the `load` event is fired.
-     * - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500`
-     *   ms.
+     * - `'networkidle'` - **DISCOURAGED** consider operation to be finished when there are no network connections for
+     *   at least `500` ms. Don't use this method for testing, rely on web assertions to assess readiness instead.
      * - `'commit'` - consider operation to be finished when network response is received and the document started
      *   loading.
      */
@@ -2831,8 +2831,8 @@ export interface Page {
      * When to consider operation succeeded, defaults to `load`. Events can be either:
      * - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
      * - `'load'` - consider operation to be finished when the `load` event is fired.
-     * - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500`
-     *   ms.
+     * - `'networkidle'` - **DISCOURAGED** consider operation to be finished when there are no network connections for
+     *   at least `500` ms. Don't use this method for testing, rely on web assertions to assess readiness instead.
      * - `'commit'` - consider operation to be finished when network response is received and the document started
      *   loading.
      */
@@ -2885,8 +2885,8 @@ export interface Page {
      * When to consider operation succeeded, defaults to `load`. Events can be either:
      * - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
      * - `'load'` - consider operation to be finished when the `load` event is fired.
-     * - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500`
-     *   ms.
+     * - `'networkidle'` - **DISCOURAGED** consider operation to be finished when there are no network connections for
+     *   at least `500` ms. Don't use this method for testing, rely on web assertions to assess readiness instead.
      * - `'commit'` - consider operation to be finished when network response is received and the document started
      *   loading.
      */
@@ -3218,6 +3218,20 @@ export interface Page {
     has?: Locator;
 
     /**
+     * Matches elements that do not contain an element that matches an inner locator. Inner locator is queried against the
+     * outer one. For example, `article` that does not have `div` matches `<article><span>Playwright</span></article>`.
+     *
+     * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
+     */
+    hasNot?: Locator;
+
+    /**
+     * Matches elements that do not contain specified text somewhere inside, possibly in a child or a descendant element.
+     * When passed a [string], matching is case-insensitive and searches for a substring.
+     */
+    hasNotText?: string|RegExp;
+
+    /**
      * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. When
      * passed a [string], matching is case-insensitive and searches for a substring. For example, `"Playwright"` matches
      * `<article><div>Playwright</div></article>`.
@@ -3489,8 +3503,8 @@ export interface Page {
      * When to consider operation succeeded, defaults to `load`. Events can be either:
      * - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
      * - `'load'` - consider operation to be finished when the `load` event is fired.
-     * - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500`
-     *   ms.
+     * - `'networkidle'` - **DISCOURAGED** consider operation to be finished when there are no network connections for
+     *   at least `500` ms. Don't use this method for testing, rely on web assertions to assess readiness instead.
      * - `'commit'` - consider operation to be finished when network response is received and the document started
      *   loading.
      */
@@ -3798,8 +3812,8 @@ export interface Page {
      * When to consider operation succeeded, defaults to `load`. Events can be either:
      * - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
      * - `'load'` - consider operation to be finished when the `load` event is fired.
-     * - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500`
-     *   ms.
+     * - `'networkidle'` - **DISCOURAGED** consider operation to be finished when there are no network connections for
+     *   at least `500` ms. Don't use this method for testing, rely on web assertions to assess readiness instead.
      * - `'commit'` - consider operation to be finished when network response is received and the document started
      *   loading.
      */
@@ -4429,7 +4443,8 @@ export interface Page {
    * document, the method resolves immediately. Can be one of:
    * - `'load'` - wait for the `load` event to be fired.
    * - `'domcontentloaded'` - wait for the `DOMContentLoaded` event to be fired.
-   * - `'networkidle'` - wait until there are no network connections for at least `500` ms.
+   * - `'networkidle'` - **DISCOURAGED** wait until there are no network connections for at least `500` ms. Don't use
+   * this method for testing, rely on web assertions to assess readiness instead.
    * @param options
    */
   waitForLoadState(state?: "load"|"domcontentloaded"|"networkidle", options?: {
@@ -4490,8 +4505,8 @@ export interface Page {
      * When to consider operation succeeded, defaults to `load`. Events can be either:
      * - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
      * - `'load'` - consider operation to be finished when the `load` event is fired.
-     * - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500`
-     *   ms.
+     * - `'networkidle'` - **DISCOURAGED** consider operation to be finished when there are no network connections for
+     *   at least `500` ms. Don't use this method for testing, rely on web assertions to assess readiness instead.
      * - `'commit'` - consider operation to be finished when network response is received and the document started
      *   loading.
      */
@@ -4611,8 +4626,8 @@ export interface Page {
      * When to consider operation succeeded, defaults to `load`. Events can be either:
      * - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
      * - `'load'` - consider operation to be finished when the `load` event is fired.
-     * - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500`
-     *   ms.
+     * - `'networkidle'` - **DISCOURAGED** consider operation to be finished when there are no network connections for
+     *   at least `500` ms. Don't use this method for testing, rely on web assertions to assess readiness instead.
      * - `'commit'` - consider operation to be finished when network response is received and the document started
      *   loading.
      */
@@ -6263,8 +6278,8 @@ export interface Frame {
      * When to consider operation succeeded, defaults to `load`. Events can be either:
      * - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
      * - `'load'` - consider operation to be finished when the `load` event is fired.
-     * - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500`
-     *   ms.
+     * - `'networkidle'` - **DISCOURAGED** consider operation to be finished when there are no network connections for
+     *   at least `500` ms. Don't use this method for testing, rely on web assertions to assess readiness instead.
      * - `'commit'` - consider operation to be finished when network response is received and the document started
      *   loading.
      */
@@ -6595,6 +6610,20 @@ export interface Frame {
     has?: Locator;
 
     /**
+     * Matches elements that do not contain an element that matches an inner locator. Inner locator is queried against the
+     * outer one. For example, `article` that does not have `div` matches `<article><span>Playwright</span></article>`.
+     *
+     * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
+     */
+    hasNot?: Locator;
+
+    /**
+     * Matches elements that do not contain specified text somewhere inside, possibly in a child or a descendant element.
+     * When passed a [string], matching is case-insensitive and searches for a substring.
+     */
+    hasNotText?: string|RegExp;
+
+    /**
      * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. When
      * passed a [string], matching is case-insensitive and searches for a substring. For example, `"Playwright"` matches
      * `<article><div>Playwright</div></article>`.
@@ -6858,8 +6887,8 @@ export interface Frame {
      * When to consider operation succeeded, defaults to `load`. Events can be either:
      * - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
      * - `'load'` - consider operation to be finished when the `load` event is fired.
-     * - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500`
-     *   ms.
+     * - `'networkidle'` - **DISCOURAGED** consider operation to be finished when there are no network connections for
+     *   at least `500` ms. Don't use this method for testing, rely on web assertions to assess readiness instead.
      * - `'commit'` - consider operation to be finished when network response is received and the document started
      *   loading.
      */
@@ -7178,7 +7207,8 @@ export interface Frame {
    * document, the method resolves immediately. Can be one of:
    * - `'load'` - wait for the `load` event to be fired.
    * - `'domcontentloaded'` - wait for the `DOMContentLoaded` event to be fired.
-   * - `'networkidle'` - wait until there are no network connections for at least `500` ms.
+   * - `'networkidle'` - **DISCOURAGED** wait until there are no network connections for at least `500` ms. Don't use
+   * this method for testing, rely on web assertions to assess readiness instead.
    * @param options
    */
   waitForLoadState(state?: "load"|"domcontentloaded"|"networkidle", options?: {
@@ -7238,8 +7268,8 @@ export interface Frame {
      * When to consider operation succeeded, defaults to `load`. Events can be either:
      * - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
      * - `'load'` - consider operation to be finished when the `load` event is fired.
-     * - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500`
-     *   ms.
+     * - `'networkidle'` - **DISCOURAGED** consider operation to be finished when there are no network connections for
+     *   at least `500` ms. Don't use this method for testing, rely on web assertions to assess readiness instead.
      * - `'commit'` - consider operation to be finished when network response is received and the document started
      *   loading.
      */
@@ -7285,8 +7315,8 @@ export interface Frame {
      * When to consider operation succeeded, defaults to `load`. Events can be either:
      * - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
      * - `'load'` - consider operation to be finished when the `load` event is fired.
-     * - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500`
-     *   ms.
+     * - `'networkidle'` - **DISCOURAGED** consider operation to be finished when there are no network connections for
+     *   at least `500` ms. Don't use this method for testing, rely on web assertions to assess readiness instead.
      * - `'commit'` - consider operation to be finished when network response is received and the document started
      *   loading.
      */
@@ -10213,21 +10243,6 @@ export interface Locator {
   allTextContents(): Promise<Array<string>>;
 
   /**
-   * Creates a locator that matches both this locator and the argument locator.
-   *
-   * **Usage**
-   *
-   * The following example finds a button with a specific title.
-   *
-   * ```js
-   * const button = page.getByRole('button').and(page.getByTitle('Subscribe'));
-   * ```
-   *
-   * @param locator Additional locator to match.
-   */
-  and(locator: Locator): Locator;
-
-  /**
    * Calls [blur](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/blur) on the element.
    * @param options
    */
@@ -10826,6 +10841,20 @@ export interface Locator {
      * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
      */
     has?: Locator;
+
+    /**
+     * Matches elements that do not contain an element that matches an inner locator. Inner locator is queried against the
+     * outer one. For example, `article` that does not have `div` matches `<article><span>Playwright</span></article>`.
+     *
+     * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
+     */
+    hasNot?: Locator;
+
+    /**
+     * Matches elements that do not contain specified text somewhere inside, possibly in a child or a descendant element.
+     * When passed a [string], matching is case-insensitive and searches for a substring.
+     */
+    hasNotText?: string|RegExp;
 
     /**
      * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. When
@@ -11476,27 +11505,26 @@ export interface Locator {
     has?: Locator;
 
     /**
+     * Matches elements that do not contain an element that matches an inner locator. Inner locator is queried against the
+     * outer one. For example, `article` that does not have `div` matches `<article><span>Playwright</span></article>`.
+     *
+     * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
+     */
+    hasNot?: Locator;
+
+    /**
+     * Matches elements that do not contain specified text somewhere inside, possibly in a child or a descendant element.
+     * When passed a [string], matching is case-insensitive and searches for a substring.
+     */
+    hasNotText?: string|RegExp;
+
+    /**
      * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. When
      * passed a [string], matching is case-insensitive and searches for a substring. For example, `"Playwright"` matches
      * `<article><div>Playwright</div></article>`.
      */
     hasText?: string|RegExp;
   }): Locator;
-
-  /**
-   * Creates a locator that **matches this** locator, but **not the argument** locator.
-   *
-   * **Usage**
-   *
-   * The following example finds a button that does not have title `"Subscribe"`.
-   *
-   * ```js
-   * const button = page.getByRole('button').not(page.getByTitle('Subscribe'));
-   * ```
-   *
-   * @param locator Locator that must not match.
-   */
-  not(locator: Locator): Locator;
 
   /**
    * Returns locator to the n-th matching element. It's zero based, `nth(0)` selects the first element.
@@ -11516,12 +11544,16 @@ export interface Locator {
    *
    * **Usage**
    *
-   * If your page shows a username input that is labelled either `Username` or `Login`, depending on some external
-   * factors you do not control, you can match both.
+   * Consider a scenario where you'd like to click on a "New email" button, but sometimes a security settings dialog
+   * shows up instead. In this case, you can wait for either a "New email" button, or a dialog and act accordingly.
    *
    * ```js
-   * const input = page.getByLabel('Username').or(page.getByLabel('Login'));
-   * await input.fill('John');
+   * const newEmail = page.getByRole('button', { name: 'New' });
+   * const dialog = page.getByText('Confirm security settings');
+   * await expect(newEmail.or(dialog)).toBeVisible();
+   * if (await dialog.isVisible())
+   *   await page.getByRole('button', { name: 'Dismiss' }).click();
+   * await newEmail.click();
    * ```
    *
    * @param locator Alternative locator to match.
@@ -17126,6 +17158,20 @@ export interface FrameLocator {
     has?: Locator;
 
     /**
+     * Matches elements that do not contain an element that matches an inner locator. Inner locator is queried against the
+     * outer one. For example, `article` that does not have `div` matches `<article><span>Playwright</span></article>`.
+     *
+     * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
+     */
+    hasNot?: Locator;
+
+    /**
+     * Matches elements that do not contain specified text somewhere inside, possibly in a child or a descendant element.
+     * When passed a [string], matching is case-insensitive and searches for a substring.
+     */
+    hasNotText?: string|RegExp;
+
+    /**
      * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. When
      * passed a [string], matching is case-insensitive and searches for a substring. For example, `"Playwright"` matches
      * `<article><div>Playwright</div></article>`.
@@ -17755,8 +17801,8 @@ export interface Request {
     requestStart: number;
 
     /**
-     * Time immediately after the browser starts requesting the resource from the server, cache, or local resource. The
-     * value is given in milliseconds relative to `startTime`, -1 if not available.
+     * Time immediately after the browser receives the first byte of the response from the server, cache, or local
+     * resource. The value is given in milliseconds relative to `startTime`, -1 if not available.
      */
     responseStart: number;
 

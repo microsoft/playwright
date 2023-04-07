@@ -59,15 +59,14 @@
 }
 
 .progress {
-  position: relative;
-  margin: auto;
-  width: 400px;
-  height: 10px;
-  border: 1px solid #aaa;
+  width: 100%;
+  height: 3px;
+  margin-top: -3px;
+  z-index: 10;
 }
 
 .inner-progress {
-  background-color: #aaa;
+  background-color: var(--vscode-progressBar-background);
   height: 100%;
 }
 

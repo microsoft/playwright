@@ -1345,6 +1345,12 @@ Returns whether the element is [visible](../actionability.md#visible). [`option:
 ### option: Frame.locator.-inline- = %%-locator-options-list-v1.14-%%
 * since: v1.14
 
+### option: Frame.locator.hasNot = %%-locator-option-has-not-%%
+* since: v1.33
+
+### option: Frame.locator.hasNotText = %%-locator-option-has-not-text-%%
+* since: v1.33
+
 ## method: Frame.name
 * since: v1.8
 - returns: <[string]>

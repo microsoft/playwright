@@ -883,9 +883,39 @@ await page
     .ClickAsync();
 ```
 
+Alternatively, filter by **not having** text:
+
+```js
+// 5 in-stock items
+await expect(page.getByRole('listitem').filter({ hasNotText: 'Out of stock' })).toHaveCount(5);
+```
+
+```java
+// 5 in-stock items
+assertThat(page.getByRole(AriaRole.LISTITEM)
+    .filter(new Locator.FilterOptions().setHasNotText("Out of stock")))
+    .hasCount(5);
+```
+
+```python async
+# 5 in-stock items
+await expect(page.get_by_role("listitem").filter(has_not_text="Out of stock")).to_have_count(5)
+```
+
+```python sync
+# 5 in-stock items
+expect(page.get_by_role("listitem").filter(has_not_text="Out of stock")).to_have_count(5)
+```
+
+```csharp
+// 5 in-stock items
+await Expect(page.getByRole(AriaRole.Listitem).Filter(new() { HasNotText = "Out of stock" }))
+    .ToHaveCountAsync(5);
+```
+
 ### Filter by child/descendant
 
-Locators support an option to only select elements that have a descendant matching another locator. You can therefore filter by any other locator such as a [`method: Locator.getByRole`], [`method: Locator.getByTestId`], [`method: Locator.getByText`] etc.
+Locators support an option to only select elements that have or have not a descendant matching another locator. You can therefore filter by any other locator such as a [`method: Locator.getByRole`], [`method: Locator.getByTestId`], [`method: Locator.getByText`] etc.
 
 ```html card
 <ul>
@@ -983,55 +1013,48 @@ await Expect(page
     .toHaveCountAsync(1);
 ```
 
+We can also filter by **not having** a matching element inside
+
+```js
+await expect(page
+    .getByRole('listitem')
+    .filter({ hasNot: page.getByText('Product 2') }))
+    .toHaveCount(1);
+```
+
+```java
+assertThat(page
+    .getByRole(AriaRole.LISTITEM)
+    .filter(new Locator.FilterOptions().setHasNot(page.getByText("Product 2")))
+    .hasCount(1);
+```
+
+```python async
+await expect(
+    page.get_by_role("listitem").filter(
+        has_not=page.get_by_role("heading", name="Product 2")
+    )
+).to_have_count(1)
+```
+
+```python sync
+expect(
+    page.get_by_role("listitem").filter(
+        has_not=page.get_by_role("heading", name="Product 2")
+    )
+).to_have_count(1)
+```
+
+```csharp
+await Expect(page
+    .GetByRole(AriaRole.Listitem)
+    .Filter(new() {
+        HasNot = page.GetByRole(AriaRole.Heading, new() { Name = "Product 2" })
+    })
+    .toHaveCountAsync(1);
+```
+
 Note that the inner locator is matched starting from the outer one, not from the document root.
-
-### Filter by matching an additional locator
-
-Method [`method: Locator.and`] narrows down an existing locator by matching an additional locator. For example, you can combine [`method: Page.getByRole`] and [`method: Page.getByTitle`] to match by both role and title.
-
-```js
-const button = page.getByRole('button').and(page.getByTitle('Subscribe'));
-```
-
-```java
-Locator button = page.getByRole(AriaRole.BUTTON).and(page.getByTitle("Subscribe"));
-```
-
-```python async
-button = page.get_by_role("button").and_(page.getByTitle("Subscribe"))
-```
-
-```python sync
-button = page.get_by_role("button").and_(page.getByTitle("Subscribe"))
-```
-
-```csharp
-var button = page.GetByRole(AriaRole.Button).And(page.GetByTitle("Subscribe"));
-```
-
-### Filter by **not** matching an additional locator
-
-Method [`method: Locator.not`] narrows down an existing locator by ensuring that target element **does not match** an additional locator. For example, you can combine [`method: Page.getByRole`] and [`method: Page.getByTitle`] to match by role and ensure that title does not match.
-
-```js
-const button = page.getByRole('button').not(page.getByTitle('Subscribe'));
-```
-
-```java
-Locator button = page.getByRole(AriaRole.BUTTON).not(page.getByTitle("Subscribe"));
-```
-
-```python async
-button = page.get_by_role("button").not_(page.getByTitle("Subscribe"))
-```
-
-```python sync
-button = page.get_by_role("button").not_(page.getByTitle("Subscribe"))
-```
-
-```csharp
-var button = page.GetByRole(AriaRole.Button).Not(page.GetByTitle("Subscribe"));
-```
 
 ## Chaining Locators
 

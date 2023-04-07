@@ -59,6 +59,8 @@ it('should support playwright.locator.values', async ({ page }) => {
   expect(await page.evaluate(`playwright.locator('div', { hasText: /ELL/ }).elements.length`)).toBe(0);
   expect(await page.evaluate(`playwright.locator('div', { hasText: /ELL/i }).elements.length`)).toBe(1);
   expect(await page.evaluate(`playwright.locator('div', { hasText: /Hello/ }).elements.length`)).toBe(1);
+  expect(await page.evaluate(`playwright.locator('div', { hasNotText: /Bar/ }).elements.length`)).toBe(0);
+  expect(await page.evaluate(`playwright.locator('div', { hasNotText: /Hello/ }).elements.length`)).toBe(1);
 });
 
 it('should support playwright.locator({ has })', async ({ page }) => {
@@ -67,19 +69,15 @@ it('should support playwright.locator({ has })', async ({ page }) => {
   expect(await page.evaluate(`playwright.locator('div', { has: playwright.locator('text=Hello') }).element.innerHTML`)).toContain('span');
 });
 
+it('should support playwright.locator({ hasNot })', async ({ page }) => {
+  await page.setContent('<div>Hi</div><div><span>Hello</span></div>');
+  expect(await page.evaluate(`playwright.locator('div', { hasNot: playwright.locator('span') }).element.innerHTML`)).toContain('Hi');
+  expect(await page.evaluate(`playwright.locator('div', { hasNot: playwright.locator('text=Hello') }).element.innerHTML`)).toContain('Hi');
+});
+
 it('should support locator.or()', async ({ page }) => {
   await page.setContent('<div>Hi</div><span>Hello</span>');
   expect(await page.evaluate(`playwright.locator('div').or(playwright.locator('span')).elements.map(e => e.innerHTML)`)).toEqual(['Hi', 'Hello']);
-});
-
-it('should support locator.not()', async ({ page }) => {
-  await page.setContent('<div class=foo>Hi</div><div class=bar>Hello</div>');
-  expect(await page.evaluate(`playwright.locator('div').not(playwright.locator('.foo')).elements.map(e => e.innerHTML)`)).toEqual(['Hello']);
-});
-
-it('should support locator.and()', async ({ page }) => {
-  await page.setContent('<div data-testid=Hey>Hi</div>');
-  expect(await page.evaluate(`playwright.locator('div').and(playwright.getByTestId('Hey')).elements.map(e => e.innerHTML)`)).toEqual(['Hi']);
 });
 
 it('should support playwright.getBy*', async ({ page }) => {

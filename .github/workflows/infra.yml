@@ -10,6 +10,9 @@ on:
       - main
       - release-*
 
+env:
+  ELECTRON_SKIP_BINARY_DOWNLOAD: 1
+
 jobs:
   doc-and-lint:
     name: "docs & lint"

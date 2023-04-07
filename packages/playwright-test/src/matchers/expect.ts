@@ -47,7 +47,7 @@ import {
   toPass
 } from './matchers';
 import { toMatchSnapshot, toHaveScreenshot } from './toMatchSnapshot';
-import type { Expect } from '../common/types';
+import type { Expect } from '../../types/test';
 import { currentTestInfo, currentExpectTimeout } from '../common/globals';
 import { filteredStackTrace, serializeError, stringifyStackFrames, trimLongString } from '../util';
 import {

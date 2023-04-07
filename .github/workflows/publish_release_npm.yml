@@ -4,6 +4,9 @@ on:
   release:
     types: [published]
 
+env:
+  ELECTRON_SKIP_BINARY_DOWNLOAD: 1
+
 jobs:
   publish-npm-release:
     name: "publish to NPM"
@@ -20,10 +23,10 @@ jobs:
     - run: npm run build
     - run: npx playwright install-deps
     - run: utils/publish_all_packages.sh --release-candidate
-      if: "github.event.release.prerelease"
+      if: github.event.release.prerelease
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
     - run: utils/publish_all_packages.sh --release
-      if: "!github.event.release.prerelease"
+      if: !github.event.release.prerelease
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

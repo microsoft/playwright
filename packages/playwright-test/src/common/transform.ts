@@ -18,7 +18,7 @@ import path from 'path';
 import fs from 'fs';
 import { sourceMapSupport, pirates } from '../utilsBundle';
 import url from 'url';
-import type { Location } from './types';
+import type { Location } from '../../types/testReporter';
 import type { TsConfigLoaderResult } from '../third_party/tsconfig-loader';
 import { tsConfigLoader } from '../third_party/tsconfig-loader';
 import Module from 'module';

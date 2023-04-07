@@ -26,7 +26,7 @@ import type { JsonAttachment, JsonReport, JsonSuite, JsonTestCase, JsonTestResul
 import RawReporter from './raw';
 import { stripAnsiEscapes } from './base';
 import { getPackageJsonPath, sanitizeForFilePath } from '../util';
-import type { FullConfigInternal, Metadata } from '../common/types';
+import type { Metadata } from '../../types/test';
 import type { ZipFile } from 'playwright-core/lib/zipBundle';
 import { yazl } from 'playwright-core/lib/zipBundle';
 import { mime } from 'playwright-core/lib/utilsBundle';
@@ -41,6 +41,7 @@ const kMissingContentType = 'x-playwright/missing';
 
 type HtmlReportOpenOption = 'always' | 'never' | 'on-failure';
 type HtmlReporterOptions = {
+  configDir: string,
   outputFolder?: string,
   open?: HtmlReportOpenOption,
   host?: string,
@@ -49,7 +50,7 @@ type HtmlReporterOptions = {
 };
 
 class HtmlReporter implements Reporter {
-  private config!: FullConfigInternal;
+  private config!: FullConfig;
   private suite!: Suite;
   private _montonicStartTime: number = 0;
   private _options: HtmlReporterOptions;
@@ -58,7 +59,7 @@ class HtmlReporter implements Reporter {
   private _open: string | undefined;
   private _buildResult: { ok: boolean, singleTestId: string | undefined } | undefined;
 
-  constructor(options: HtmlReporterOptions = {}) {
+  constructor(options: HtmlReporterOptions) {
     this._options = options;
   }
 
@@ -68,7 +69,7 @@ class HtmlReporter implements Reporter {
 
   onBegin(config: FullConfig, suite: Suite) {
     this._montonicStartTime = monotonicTime();
-    this.config = config as FullConfigInternal;
+    this.config = config;
     const { outputFolder, open, attachmentsBaseURL } = this._resolveOptions();
     this._outputFolder = outputFolder;
     this._open = open;
@@ -95,9 +96,9 @@ class HtmlReporter implements Reporter {
   _resolveOptions(): { outputFolder: string, open: HtmlReportOpenOption, attachmentsBaseURL: string } {
     let { outputFolder } = this._options;
     if (outputFolder)
-      outputFolder = path.resolve(this.config._internal.configDir, outputFolder);
+      outputFolder = path.resolve(this._options.configDir, outputFolder);
     return {
-      outputFolder: reportFolderFromEnv() ?? outputFolder ?? defaultReportFolder(this.config._internal.configDir),
+      outputFolder: reportFolderFromEnv() ?? outputFolder ?? defaultReportFolder(this._options.configDir),
       open: process.env.PW_TEST_HTML_REPORT_OPEN as any || this._options.open || 'on-failure',
       attachmentsBaseURL: this._options.attachmentsBaseURL || 'data/'
     };

@@ -157,6 +157,11 @@ it('should support locator.filter', async ({ page, trace }) => {
     has: page.locator('span'),
     hasText: 'world',
   })).toHaveCount(1);
+  await expect(page.locator(`div`).filter({ hasNot: page.locator('span', { hasText: 'world' }) })).toHaveCount(1);
+  await expect(page.locator(`div`).filter({ hasNot: page.locator('section') })).toHaveCount(2);
+  await expect(page.locator(`div`).filter({ hasNot: page.locator('span') })).toHaveCount(0);
+  await expect(page.locator(`div`).filter({ hasNotText: 'hello' })).toHaveCount(1);
+  await expect(page.locator(`div`).filter({ hasNotText: 'foo' })).toHaveCount(2);
 });
 
 it('should support locator.or', async ({ page }) => {
@@ -169,30 +174,6 @@ it('should support locator.or', async ({ page }) => {
   await expect(page.locator('article').or(page.locator('span'))).toHaveText('world');
   await expect(page.locator('div').or(page.locator('article'))).toHaveText('hello');
   await expect(page.locator('span').or(page.locator('article'))).toHaveText('world');
-});
-
-it('should support locator.and', async ({ page }) => {
-  await page.setContent(`
-    <div data-testid=foo>hello</div><div data-testid=bar>world</div>
-    <span data-testid=foo>hello2</span><span data-testid=bar>world2</span>
-  `);
-  await expect(page.locator('div').and(page.locator('div'))).toHaveCount(2);
-  await expect(page.locator('div').and(page.getByTestId('foo'))).toHaveText(['hello']);
-  await expect(page.locator('div').and(page.getByTestId('bar'))).toHaveText(['world']);
-  await expect(page.getByTestId('foo').and(page.locator('div'))).toHaveText(['hello']);
-  await expect(page.getByTestId('bar').and(page.locator('span'))).toHaveText(['world2']);
-  await expect(page.locator('span').and(page.getByTestId(/bar|foo/))).toHaveCount(2);
-});
-
-it('should support locator.not', async ({ page }) => {
-  await page.setContent(`<div class=foo>hello</div><div class=bar>world</div>`);
-  await expect(page.locator('div').not(page.locator('span'))).toHaveCount(2);
-  await expect(page.locator('div').not(page.locator('span'))).toHaveText(['hello', 'world']);
-  await expect(page.locator('div').not(page.locator('.foo'))).toHaveText(['world']);
-  await expect(page.locator('div').not(page.locator('.bar'))).toHaveText(['hello']);
-  await expect(page.locator('.foo').not(page.locator('.bar'))).toHaveText(['hello']);
-  await expect(page.locator('.foo').not(page.locator('div'))).toHaveText([]);
-  await expect(page.locator('div').not(page.locator('div'))).toHaveText([]);
 });
 
 it('should enforce same frame for has/leftOf/rightOf/above/below/near', async ({ page, server }) => {
