@@ -590,6 +590,10 @@ scheme.BrowserCloseParams = tOptional(tObject({}));
 scheme.BrowserCloseResult = tOptional(tObject({}));
 scheme.BrowserKillForTestsParams = tOptional(tObject({}));
 scheme.BrowserKillForTestsResult = tOptional(tObject({}));
+scheme.BrowserDefaultUserAgentForTestParams = tOptional(tObject({}));
+scheme.BrowserDefaultUserAgentForTestResult = tObject({
+  userAgent: tString,
+});
 scheme.BrowserNewContextParams = tObject({
   noDefaultViewport: tOptional(tBoolean),
   viewport: tOptional(tObject({
