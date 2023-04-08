@@ -28,7 +28,7 @@ import { ConfigLoader, kDefaultConfigFiles, resolveConfigFile } from './common/c
 import type { ConfigCLIOverrides } from './common/ipc';
 import type { FullResult } from '../reporter';
 import type { TraceMode } from '../types/test';
-import { baseFullConfig, builtInReporters, defaultTimeout } from './common/config';
+import { builtInReporters, defaultReporter, defaultTimeout } from './common/config';
 import type { FullConfigInternal } from './common/config';
 
 export function addTestCommands(program: Command) {
@@ -117,41 +117,13 @@ Examples:
 async function runTests(args: string[], opts: { [key: string]: any }) {
   await startProfiling();
 
-  const overrides = overridesFromOptions(opts);
-  if (opts.browser) {
-    const browserOpt = opts.browser.toLowerCase();
-    if (!['all', 'chromium', 'firefox', 'webkit'].includes(browserOpt))
-      throw new Error(`Unsupported browser "${opts.browser}", must be one of "all", "chromium", "firefox" or "webkit"`);
-    const browserNames = browserOpt === 'all' ? ['chromium', 'firefox', 'webkit'] : [browserOpt];
-    overrides.projects = browserNames.map(browserName => {
-      return {
-        name: browserName,
-        use: { browserName },
-      };
-    });
-  }
-
-  if (opts.headed || opts.debug)
-    overrides.use = { headless: false };
-  if (!opts.ui && opts.debug) {
-    overrides.maxFailures = 1;
-    overrides.timeout = 0;
-    overrides.workers = 1;
-    process.env.PWDEBUG = '1';
-  }
-  if (!opts.ui && opts.trace) {
-    if (!kTraceModes.includes(opts.trace))
-      throw new Error(`Unsupported trace mode "${opts.trace}", must be one of ${kTraceModes.map(mode => `"${mode}"`).join(', ')}`);
-    overrides.use = overrides.use || {};
-    overrides.use.trace = opts.trace;
-  }
-
   // When no --config option is passed, let's look for the config file in the current directory.
   const configFileOrDirectory = opts.config ? path.resolve(process.cwd(), opts.config) : process.cwd();
   const resolvedConfigFile = resolveConfigFile(configFileOrDirectory);
   if (restartWithExperimentalTsEsm(resolvedConfigFile))
     return;
 
+  const overrides = overridesFromOptions(opts);
   const configLoader = new ConfigLoader(overrides);
   let config: FullConfigInternal;
   if (resolvedConfigFile)
@@ -162,9 +134,9 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   config.cliArgs = args;
   config.cliGrep = opts.grep as string | undefined;
   config.cliGrepInvert = opts.grepInvert as string | undefined;
-  config.listOnly = !!opts.list;
+  config.cliListOnly = !!opts.list;
   config.cliProjectFilter = opts.project || undefined;
-  config.passWithNoTests = !!opts.passWithNoTests;
+  config.cliPassWithNoTests = !!opts.passWithNoTests;
 
   const runner = new Runner(config);
   let status: FullResult['status'];
@@ -218,7 +190,7 @@ async function mergeReports(reportDir: string | undefined, opts: { [key: string]
 
 function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrides {
   const shardPair = options.shard ? options.shard.split('/').map((t: string) => parseInt(t, 10)) : undefined;
-  return {
+  const overrides: ConfigCLIOverrides = {
     forbidOnly: options.forbidOnly ? true : undefined,
     fullyParallel: options.fullyParallel ? true : undefined,
     globalTimeout: options.globalTimeout ? parseInt(options.globalTimeout, 10) : undefined,
@@ -234,6 +206,35 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
     updateSnapshots: options.updateSnapshots ? 'all' as const : undefined,
     workers: options.workers,
   };
+
+  if (options.browser) {
+    const browserOpt = options.browser.toLowerCase();
+    if (!['all', 'chromium', 'firefox', 'webkit'].includes(browserOpt))
+      throw new Error(`Unsupported browser "${options.browser}", must be one of "all", "chromium", "firefox" or "webkit"`);
+    const browserNames = browserOpt === 'all' ? ['chromium', 'firefox', 'webkit'] : [browserOpt];
+    overrides.projects = browserNames.map(browserName => {
+      return {
+        name: browserName,
+        use: { browserName },
+      };
+    });
+  }
+
+  if (options.headed || options.debug)
+    overrides.use = { headless: false };
+  if (!options.ui && options.debug) {
+    overrides.maxFailures = 1;
+    overrides.timeout = 0;
+    overrides.workers = 1;
+    process.env.PWDEBUG = '1';
+  }
+  if (!options.ui && options.trace) {
+    if (!kTraceModes.includes(options.trace))
+      throw new Error(`Unsupported trace mode "${options.trace}", must be one of ${kTraceModes.map(mode => `"${mode}"`).join(', ')}`);
+    overrides.use = overrides.use || {};
+    overrides.use.trace = options.trace;
+  }
+  return overrides;
 }
 
 function resolveReporter(id: string) {
@@ -295,7 +296,7 @@ const testOptions: [string, string][] = [
   ['--project <project-name...>', `Only run tests from the specified list of projects (default: run all projects)`],
   ['--quiet', `Suppress stdio`],
   ['--repeat-each <N>', `Run each test N times (default: 1)`],
-  ['--reporter <reporter>', `Reporter to use, comma-separated, can be ${builtInReporters.map(name => `"${name}"`).join(', ')} (default: "${baseFullConfig.reporter[0]}")`],
+  ['--reporter <reporter>', `Reporter to use, comma-separated, can be ${builtInReporters.map(name => `"${name}"`).join(', ')} (default: "${defaultReporter}")`],
   ['--retries <retries>', `Maximum retry count for flaky tests, zero for no retries (default: no retries)`],
   ['--shard <shard>', `Shard tests and execute only the selected shard, specify in the form "current/all", 1-based, for example "3/5"`],
   ['--timeout <timeout>', `Specify test timeout threshold in milliseconds, zero for unlimited (default: ${defaultTimeout})`],

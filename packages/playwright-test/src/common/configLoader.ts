@@ -20,9 +20,9 @@ import { isRegExp } from 'playwright-core/lib/utils';
 import type { ConfigCLIOverrides, SerializedConfig } from './ipc';
 import { requireOrImport } from './transform';
 import type { Config, Project } from '../../types/test';
-import { errorWithFile, getPackageJsonPath, mergeObjects } from '../util';
+import { errorWithFile } from '../util';
 import { setCurrentConfig } from './globals';
-import { FullConfigInternal, takeFirst, toReporters } from './config';
+import { FullConfigInternal } from './config';
 
 const kDefineConfigWasUsed = Symbol('defineConfigWasUsed');
 export const defineConfig = (config: any) => {
@@ -68,61 +68,9 @@ export class ConfigLoader {
   private async _loadConfig(config: Config, configDir: string, configFile?: string): Promise<FullConfigInternal> {
     // 1. Validate data provided in the config file.
     validateConfig(configFile || '<default config>', config);
-
-    // 2. Override settings from CLI.
-    config.forbidOnly = takeFirst(this._configCLIOverrides.forbidOnly, config.forbidOnly);
-    config.fullyParallel = takeFirst(this._configCLIOverrides.fullyParallel, config.fullyParallel);
-    config.globalTimeout = takeFirst(this._configCLIOverrides.globalTimeout, config.globalTimeout);
-    config.maxFailures = takeFirst(this._configCLIOverrides.maxFailures, config.maxFailures);
-    config.outputDir = takeFirst(this._configCLIOverrides.outputDir, config.outputDir);
-    config.quiet = takeFirst(this._configCLIOverrides.quiet, config.quiet);
-    config.repeatEach = takeFirst(this._configCLIOverrides.repeatEach, config.repeatEach);
-    config.retries = takeFirst(this._configCLIOverrides.retries, config.retries);
-    if (this._configCLIOverrides.reporter)
-      config.reporter = toReporters(this._configCLIOverrides.reporter as any);
-    config.shard = takeFirst(this._configCLIOverrides.shard, config.shard);
-    config.timeout = takeFirst(this._configCLIOverrides.timeout, config.timeout);
-    config.updateSnapshots = takeFirst(this._configCLIOverrides.updateSnapshots, config.updateSnapshots);
-    config.ignoreSnapshots = takeFirst(this._configCLIOverrides.ignoreSnapshots, config.ignoreSnapshots);
-    if (this._configCLIOverrides.projects && config.projects)
-      throw new Error(`Cannot use --browser option when configuration file defines projects. Specify browserName in the projects instead.`);
-    config.projects = takeFirst(this._configCLIOverrides.projects, config.projects as any);
-    config.workers = takeFirst(this._configCLIOverrides.workers, config.workers);
-    config.use = mergeObjects(config.use, this._configCLIOverrides.use);
-    for (const project of config.projects || [])
-      this._applyCLIOverridesToProject(project);
-
-    // 3. Resolve config.
-    const packageJsonPath = getPackageJsonPath(configDir);
-    const packageJsonDir = packageJsonPath ? path.dirname(packageJsonPath) : undefined;
-    const throwawayArtifactsPath = packageJsonDir || process.cwd();
-
-    // Resolve script hooks relative to the root dir.
-    if (config.globalSetup)
-      config.globalSetup = resolveScript(config.globalSetup, configDir);
-    if (config.globalTeardown)
-      config.globalTeardown = resolveScript(config.globalTeardown, configDir);
-    // Resolve all config dirs relative to configDir.
-    if (config.testDir !== undefined)
-      config.testDir = path.resolve(configDir, config.testDir);
-    if (config.outputDir !== undefined)
-      config.outputDir = path.resolve(configDir, config.outputDir);
-    if (config.snapshotDir !== undefined)
-      config.snapshotDir = path.resolve(configDir, config.snapshotDir);
-
-    const fullConfig = new FullConfigInternal(configDir, configFile, config, throwawayArtifactsPath);
+    const fullConfig = new FullConfigInternal(configDir, configFile, config, this._configCLIOverrides);
     fullConfig.defineConfigWasUsed = !!(config as any)[kDefineConfigWasUsed];
-    fullConfig.configCLIOverrides = this._configCLIOverrides;
     return fullConfig;
-  }
-
-  private _applyCLIOverridesToProject(projectConfig: Project) {
-    projectConfig.fullyParallel = takeFirst(this._configCLIOverrides.fullyParallel, projectConfig.fullyParallel);
-    projectConfig.outputDir = takeFirst(this._configCLIOverrides.outputDir, projectConfig.outputDir);
-    projectConfig.repeatEach = takeFirst(this._configCLIOverrides.repeatEach, projectConfig.repeatEach);
-    projectConfig.retries = takeFirst(this._configCLIOverrides.retries, projectConfig.retries);
-    projectConfig.timeout = takeFirst(this._configCLIOverrides.timeout, projectConfig.timeout);
-    projectConfig.use = mergeObjects(projectConfig.use, this._configCLIOverrides.use);
   }
 }
 
@@ -303,13 +251,6 @@ function validateProject(file: string, project: Project, title: string) {
     if (!project.use || typeof project.use !== 'object')
       throw errorWithFile(file, `${title}.use must be an object`);
   }
-}
-
-function resolveScript(id: string, rootDir: string) {
-  const localPath = path.resolve(rootDir, id);
-  if (fs.existsSync(localPath))
-    return localPath;
-  return require.resolve(id, { paths: [rootDir] });
 }
 
 export const kDefaultConfigFiles = ['playwright.config.ts', 'playwright.config.js', 'playwright.config.mjs'];

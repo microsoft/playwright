@@ -170,7 +170,7 @@ function createLoadTask(mode: 'out-of-process' | 'in-process', shouldFilterOnly:
     await loadFileSuites(testRun, mode, errors);
     testRun.rootSuite = await createRootSuite(testRun, errors, shouldFilterOnly);
     // Fail when no tests.
-    if (!testRun.rootSuite.allTests().length && !testRun.config.passWithNoTests && !testRun.config.config.shard)
+    if (!testRun.rootSuite.allTests().length && !testRun.config.cliPassWithNoTests && !testRun.config.config.shard)
       throw new Error(`No tests found`);
   };
 }
