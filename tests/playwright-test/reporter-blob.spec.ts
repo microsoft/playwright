@@ -55,6 +55,8 @@ const test = baseTest.extend<{
         }
       });
 
+test.use({ channel: 'chrome' });
+
 test('should merge into html', async ({ runInlineTest, mergeReports, showReport, page }) => {
   const reportDir = test.info().outputPath('blob-report');
   const files = {
