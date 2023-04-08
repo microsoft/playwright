@@ -59,6 +59,10 @@ export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChann
     await this._object.killForTests();
   }
 
+  async defaultUserAgentForTest(): Promise<channels.BrowserDefaultUserAgentForTestResult> {
+    return { userAgent: this._object.userAgent() };
+  }
+
   async newBrowserCDPSession(): Promise<channels.BrowserNewBrowserCDPSessionResult> {
     if (!this._object.options.isChromium)
       throw new Error(`CDP session is only available in Chromium`);

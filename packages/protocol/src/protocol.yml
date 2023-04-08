@@ -897,6 +897,10 @@ Browser:
 
     killForTests:
 
+    defaultUserAgentForTest:
+      returns:
+        userAgent: string
+
     newContext:
       parameters:
         $mixin: ContextOptions
