@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/experimental-ct-react';
+import { test, expect } from '@playwright/experimental-ct-react17';
 import Button from '@/components/Button';
 import DefaultChildren from '@/components/DefaultChildren';
 import MultipleChildren from '@/components/MultipleChildren';

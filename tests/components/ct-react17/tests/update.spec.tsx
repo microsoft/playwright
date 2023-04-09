@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/experimental-ct-react';
+import { test, expect } from '@playwright/experimental-ct-react17';
 import Counter from '@/components/Counter';
 
 test('update props without remounting', async ({ mount }) => {
