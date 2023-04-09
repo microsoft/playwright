@@ -21,7 +21,7 @@
 import __pwReact from 'react';
 import __pwReactDOM from 'react-dom';
 
-/** @typedef {import('../playwright-test/types/component').Component} Component */
+/** @typedef {import('../playwright-test/types/experimentalComponent').Component} Component */
 /** @typedef {import('react').FunctionComponent} FrameworkComponent */
 
 /** @type {Map<string, FrameworkComponent>} */
