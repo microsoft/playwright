@@ -15,7 +15,7 @@
  */
 
 import path from 'path';
-import type { Reporter, TestError } from '../../types/testReporter';
+import type { FullConfig, Reporter, TestError } from '../../types/testReporter';
 import { formatError } from '../reporters/base';
 import DotReporter from '../reporters/dot';
 import EmptyReporter from '../reporters/empty';
@@ -27,9 +27,9 @@ import LineReporter from '../reporters/line';
 import ListReporter from '../reporters/list';
 import { Multiplexer } from '../reporters/multiplexer';
 import type { Suite } from '../common/test';
-import type { FullConfigInternal } from '../common/types';
+import type { BuiltInReporter, FullConfigInternal } from '../common/config';
 import { loadReporter } from './loadUtils';
-import type { BuiltInReporter } from '../common/configLoader';
+import { BlobReporter } from '../reporters/blob';
 
 export async function createReporter(config: FullConfigInternal, mode: 'list' | 'watch' | 'run' | 'ui', additionalReporters: Reporter[] = []): Promise<Multiplexer> {
   const defaultReporters: {[key in BuiltInReporter]: new(arg: any) => Reporter} = {
@@ -41,14 +41,15 @@ export async function createReporter(config: FullConfigInternal, mode: 'list' | 
     junit: JUnitReporter,
     null: EmptyReporter,
     html: mode === 'ui' ? LineReporter : HtmlReporter,
+    blob: BlobReporter,
   };
   const reporters: Reporter[] = [];
   if (mode === 'watch') {
     reporters.push(new ListReporter());
   } else {
-    for (const r of config.reporter) {
+    for (const r of config.config.reporter) {
       const [name, arg] = r;
-      const options = { ...arg, configDir: config._internal.configDir };
+      const options = { ...arg, configDir: config.configDir };
       if (name in defaultReporters) {
         reporters.push(new defaultReporters[name as keyof typeof defaultReporters](options));
       } else {
@@ -79,9 +80,9 @@ export async function createReporter(config: FullConfigInternal, mode: 'list' | 
 }
 
 export class ListModeReporter implements Reporter {
-  private config!: FullConfigInternal;
+  private config!: FullConfig;
 
-  onBegin(config: FullConfigInternal, suite: Suite): void {
+  onBegin(config: FullConfig, suite: Suite): void {
     this.config = config;
     // eslint-disable-next-line no-console
     console.log(`Listing tests:`);
@@ -93,7 +94,7 @@ export class ListModeReporter implements Reporter {
       const location = `${path.relative(config.rootDir, test.location.file)}:${test.location.line}:${test.location.column}`;
       const projectTitle = projectName ? `[${projectName}] › ` : '';
       // eslint-disable-next-line no-console
-      console.log(`  ${projectTitle}${location} › ${titles.join(' ')}`);
+      console.log(`  ${projectTitle}${location} › ${titles.join(' › ')}`);
       files.add(test.location.file);
     }
     // eslint-disable-next-line no-console

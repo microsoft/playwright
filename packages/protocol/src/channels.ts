@@ -1083,6 +1083,7 @@ export interface BrowserChannel extends BrowserEventTarget, Channel {
   _type_Browser: boolean;
   close(params?: BrowserCloseParams, metadata?: CallMetadata): Promise<BrowserCloseResult>;
   killForTests(params?: BrowserKillForTestsParams, metadata?: CallMetadata): Promise<BrowserKillForTestsResult>;
+  defaultUserAgentForTest(params?: BrowserDefaultUserAgentForTestParams, metadata?: CallMetadata): Promise<BrowserDefaultUserAgentForTestResult>;
   newContext(params: BrowserNewContextParams, metadata?: CallMetadata): Promise<BrowserNewContextResult>;
   newContextForReuse(params: BrowserNewContextForReuseParams, metadata?: CallMetadata): Promise<BrowserNewContextForReuseResult>;
   newBrowserCDPSession(params?: BrowserNewBrowserCDPSessionParams, metadata?: CallMetadata): Promise<BrowserNewBrowserCDPSessionResult>;
@@ -1096,6 +1097,11 @@ export type BrowserCloseResult = void;
 export type BrowserKillForTestsParams = {};
 export type BrowserKillForTestsOptions = {};
 export type BrowserKillForTestsResult = void;
+export type BrowserDefaultUserAgentForTestParams = {};
+export type BrowserDefaultUserAgentForTestOptions = {};
+export type BrowserDefaultUserAgentForTestResult = {
+  userAgent: string,
+};
 export type BrowserNewContextParams = {
   noDefaultViewport?: boolean,
   viewport?: {

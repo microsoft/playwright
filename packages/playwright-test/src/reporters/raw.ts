@@ -23,7 +23,7 @@ import { formatResultFailure } from './base';
 import { toPosixPath, serializePatterns } from './json';
 import { MultiMap } from 'playwright-core/lib/utils';
 import { codeFrameColumns } from '../common/babelBundle';
-import type { Metadata } from '../common/types';
+import type { Metadata } from '../../types/test';
 import type { SuitePrivate } from '../../types/reporterPrivate';
 
 export type JsonLocation = Location;

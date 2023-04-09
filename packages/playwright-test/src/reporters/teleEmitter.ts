@@ -18,10 +18,12 @@ import type { FullConfig, FullResult, Reporter, TestError, TestResult, TestStep,
 import type { Suite, TestCase } from '../common/test';
 import type { JsonConfig, JsonProject, JsonSuite, JsonTestCase, JsonTestEnd, JsonTestResultEnd, JsonTestResultStart, JsonTestStepEnd, JsonTestStepStart } from '../isomorphic/teleReceiver';
 import type { SuitePrivate } from '../../types/reporterPrivate';
-import type { FullConfigInternal, FullProjectInternal } from '../common/types';
+import { FullConfigInternal } from '../common/config';
 import { createGuid } from 'playwright-core/lib/utils';
 import { serializeRegexPatterns } from '../isomorphic/teleReceiver';
 import path from 'path';
+import type { FullProject } from '../../types/test';
+import { uniqueProjectIds } from './base';
 
 export class TeleReporterEmitter implements Reporter {
   private _messageSink: (message: any) => void;
@@ -34,8 +36,9 @@ export class TeleReporterEmitter implements Reporter {
   onBegin(config: FullConfig, suite: Suite) {
     this._rootDir = config.rootDir;
     const projects: any[] = [];
+    const projectIds = uniqueProjectIds(config.projects);
     for (const projectSuite of suite.suites) {
-      const report = this._serializeProject(projectSuite);
+      const report = this._serializeProject(projectSuite, projectIds);
       projects.push(report);
     }
     this._messageSink({ method: 'onBegin', params: { config: this._serializeConfig(config), projects } });
@@ -123,14 +126,15 @@ export class TeleReporterEmitter implements Reporter {
     return {
       rootDir: config.rootDir,
       configFile: this._relativePath(config.configFile),
-      listOnly: (config as FullConfigInternal)._internal.listOnly,
+      listOnly: FullConfigInternal.from(config).cliListOnly,
+      workers: config.workers,
     };
   }
 
-  private _serializeProject(suite: Suite): JsonProject {
+  private _serializeProject(suite: Suite, projectIds: Map<FullProject, string>): JsonProject {
     const project = suite.project()!;
     const report: JsonProject = {
-      id: (project as FullProjectInternal)._internal.id,
+      id: projectIds.get(project)!,
       metadata: project.metadata,
       name: project.name,
       outputDir: this._relativePath(project.outputDir),

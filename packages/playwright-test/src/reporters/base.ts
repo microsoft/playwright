@@ -19,10 +19,9 @@ import fs from 'fs';
 import path from 'path';
 import type { FullConfig, TestCase, Suite, TestResult, TestError, FullResult, TestStep, Location, Reporter } from '../../types/testReporter';
 import type { SuitePrivate } from '../../types/reporterPrivate';
-import type { FullConfigInternal } from '../common/types';
 import { codeFrameColumns } from '../common/babelBundle';
 import { monotonicTime } from 'playwright-core/lib/utils';
-
+import type { FullProject } from '../../types/test';
 export type TestResultOutput = { chunk: string | Buffer, type: 'stdout' | 'stderr' };
 export const kOutputSymbol = Symbol('output');
 
@@ -49,7 +48,7 @@ type TestSummary = {
 
 export class BaseReporter implements Reporter {
   duration = 0;
-  config!: FullConfigInternal;
+  config!: FullConfig;
   suite!: Suite;
   totalTestCount = 0;
   result!: FullResult;
@@ -66,7 +65,7 @@ export class BaseReporter implements Reporter {
 
   onBegin(config: FullConfig, suite: Suite) {
     this.monotonicStartTime = monotonicTime();
-    this.config = config as FullConfigInternal;
+    this.config = config;
     this.suite = suite;
     this.totalTestCount = suite.allTests().length;
   }
@@ -122,7 +121,7 @@ export class BaseReporter implements Reporter {
   }
 
   protected generateStartingMessage() {
-    const jobs = Math.min(this.config.workers, this.config._internal.maxConcurrentTestGroups);
+    const jobs = this.config.workers;
     const shardDetails = this.config.shard ? `, shard ${this.config.shard.current} of ${this.config.shard.total}` : '';
     if (!this.totalTestCount)
       return '';
@@ -522,6 +521,23 @@ function fitToWidth(line: string, width: number, prefix?: string): string {
     }
   }
   return taken.reverse().join('');
+}
+
+export function uniqueProjectIds(projects: FullProject[]): Map<FullProject, string> {
+  const usedNames = new Set<string>();
+  const result = new Map<FullProject, string>();
+  for (const p of projects) {
+    const name = p.name || '';
+    for (let i = 0; i < projects.length; ++i) {
+      const candidate = name + (i ? i : '');
+      if (usedNames.has(candidate))
+        continue;
+      result.set(p, candidate);
+      usedNames.add(candidate);
+      break;
+    }
+  }
+  return result;
 }
 
 function belongsToNodeModules(file: string) {

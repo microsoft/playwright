@@ -26,7 +26,7 @@ import type { JsonAttachment, JsonReport, JsonSuite, JsonTestCase, JsonTestResul
 import RawReporter from './raw';
 import { stripAnsiEscapes } from './base';
 import { determinePackageManager, getPackageJsonPath, sanitizeForFilePath } from '../util';
-import type { Metadata } from '../common/types';
+import type { Metadata } from '../../types/test';
 import type { ZipFile } from 'playwright-core/lib/zipBundle';
 import { yazl } from 'playwright-core/lib/zipBundle';
 import { mime } from 'playwright-core/lib/utilsBundle';
@@ -145,7 +145,7 @@ function reportFolderFromEnv(): string | undefined {
   return undefined;
 }
 
-function defaultReportFolder(searchForPackageJson: string): string {
+export function defaultReportFolder(searchForPackageJson: string): string {
   let basePath = getPackageJsonPath(searchForPackageJson);
   if (basePath)
     basePath = path.dirname(basePath);

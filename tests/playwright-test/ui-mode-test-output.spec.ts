@@ -56,3 +56,21 @@ test('should work after theme switch', async ({ runUITest, writeFiles }) => {
   await page.getByTitle('Run all').click();
   await expect(page.getByTestId('output')).toContainText(`Hello world 2`);
 });
+
+test('should print buffers', async ({ runUITest }) => {
+  const { page } = await runUITest({
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      import { PassThrough } from 'stream';
+      test('print', () => {
+        const writable = new PassThrough();
+        writable.pipe(process.stdout);
+        const red = Buffer.from('G1szMW1IRUxMTxtbMzlt', 'base64');
+        writable.write(red);
+      });
+    `,
+  });
+  await page.getByTitle('Toggle output').click();
+  await page.getByTitle('Run all').click();
+  await expect(page.getByTestId('output')).toContainText('HELLO', { timeout: 15000 });
+});

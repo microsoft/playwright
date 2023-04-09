@@ -19,7 +19,9 @@ import type * as reporterTypes from '../../types/testReporter';
 import type { SuitePrivate } from '../../types/reporterPrivate';
 import type { TestTypeImpl } from './testType';
 import { rootTestType } from './testType';
-import type { Annotation, FixturesWithLocation, FullProject, FullProjectInternal, Location } from './types';
+import type { Annotation, FixturesWithLocation, FullProjectInternal } from './config';
+import type { FullProject } from '../../types/test';
+import type { Location } from '../../types/testReporter';
 
 class Base {
   title: string;
@@ -49,7 +51,7 @@ export class Suite extends Base implements SuitePrivate {
   _staticAnnotations: Annotation[] = [];
   _modifiers: Modifier[] = [];
   _parallelMode: 'default' | 'serial' | 'parallel' = 'default';
-  _projectConfig: FullProjectInternal | undefined;
+  _fullProject: FullProjectInternal | undefined;
   _fileId: string | undefined;
   readonly _type: 'root' | 'project' | 'file' | 'describe';
 
@@ -192,12 +194,12 @@ export class Suite extends Base implements SuitePrivate {
     const suite = Suite._parse(data);
     suite._use = this._use.slice();
     suite._hooks = this._hooks.slice();
-    suite._projectConfig = this._projectConfig;
+    suite._fullProject = this._fullProject;
     return suite;
   }
 
   project(): FullProject | undefined {
-    return this._projectConfig || this.parent?.project();
+    return this._fullProject?.project || this.parent?.project();
   }
 }
 

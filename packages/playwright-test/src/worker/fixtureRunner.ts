@@ -15,11 +15,12 @@
  */
 
 import { formatLocation, debugTest } from '../util';
-import type { Location, WorkerInfo } from '../common/types';
 import { ManualPromise } from 'playwright-core/lib/utils';
 import type { TestInfoImpl } from './testInfo';
 import type { FixtureDescription, TimeoutManager } from './timeoutManager';
 import { fixtureParameterNames, type FixturePool, type FixtureRegistration, type FixtureScope } from '../common/fixtures';
+import type { WorkerInfo } from '../../types/test';
+import type { Location } from '../../types/testReporter';
 
 class Fixture {
   runner: FixtureRunner;

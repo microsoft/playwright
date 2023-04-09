@@ -21,7 +21,7 @@ import { webServerPluginsForConfig } from '../plugins/webServerPlugin';
 import { collectFilesForProject, filterProjects } from './projectUtils';
 import { createReporter } from './reporters';
 import { TestRun, createTaskRunner, createTaskRunnerForList } from './tasks';
-import type { FullConfigInternal } from '../common/types';
+import type { FullConfigInternal } from '../common/config';
 import { colors } from 'playwright-core/lib/utilsBundle';
 import { runWatchModeLoop } from './watchMode';
 import { runUIMode } from './uiMode';
@@ -49,11 +49,11 @@ export class Runner {
 
   async runAllTests(): Promise<FullResult['status']> {
     const config = this._config;
-    const listOnly = config._internal.listOnly;
-    const deadline = config.globalTimeout ? monotonicTime() + config.globalTimeout : 0;
+    const listOnly = config.cliListOnly;
+    const deadline = config.config.globalTimeout ? monotonicTime() + config.config.globalTimeout : 0;
 
     // Legacy webServer support.
-    webServerPluginsForConfig(config).forEach(p => config._internal.plugins.push({ factory: p }));
+    webServerPluginsForConfig(config).forEach(p => config.plugins.push({ factory: p }));
 
     const reporter = await createReporter(config, listOnly ? 'list' : 'run');
     const taskRunner = listOnly ? createTaskRunnerForList(config, reporter, 'in-process')
@@ -62,7 +62,7 @@ export class Runner {
     const testRun = new TestRun(config, reporter);
     reporter.onConfigure(config);
 
-    if (!listOnly && config._internal.ignoreSnapshots) {
+    if (!listOnly && config.ignoreSnapshots) {
       reporter.onStdOut(colors.dim([
         'NOTE: running with "ignoreSnapshots" option. All of the following asserts are silently ignored:',
         '- expect().toMatchSnapshot()',
@@ -89,13 +89,13 @@ export class Runner {
 
   async watchAllTests(): Promise<FullResult['status']> {
     const config = this._config;
-    webServerPluginsForConfig(config).forEach(p => config._internal.plugins.push({ factory: p }));
+    webServerPluginsForConfig(config).forEach(p => config.plugins.push({ factory: p }));
     return await runWatchModeLoop(config);
   }
 
   async uiAllTests(): Promise<FullResult['status']> {
     const config = this._config;
-    webServerPluginsForConfig(config).forEach(p => config._internal.plugins.push({ factory: p }));
+    webServerPluginsForConfig(config).forEach(p => config.plugins.push({ factory: p }));
     return await runUIMode(config);
   }
 }

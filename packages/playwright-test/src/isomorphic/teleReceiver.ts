@@ -15,7 +15,8 @@
  */
 
 import type { FullConfig, FullResult, Location, Reporter, TestError, TestResult, TestStatus, TestStep } from '../../types/testReporter';
-import type { Annotation, FullProject, Metadata } from '../common/types';
+import type { Annotation } from '../common/config';
+import type { FullProject, Metadata } from '../../types/test';
 import type * as reporterTypes from '../../types/testReporter';
 import type { SuitePrivate } from '../../types/reporterPrivate';
 
@@ -27,6 +28,7 @@ export type JsonConfig = {
   rootDir: string;
   configFile: string | undefined;
   listOnly: boolean;
+  workers: number;
 };
 
 export type JsonPattern = {
@@ -261,7 +263,7 @@ export class TeleReporterReceiver {
   }
 
   private _onStdIO(type: 'stdout' | 'stderr', testId: string | undefined, resultId: string | undefined, data: string, isBase64: boolean) {
-    const chunk = isBase64 ? Buffer.from(data, 'base64') : data;
+    const chunk = isBase64 ? ((globalThis as any).Buffer ? Buffer.from(data, 'base64') : atob(data)) : data;
     const test = testId ? this._tests.get(testId) : undefined;
     const result = test && resultId ? test.resultsMap.get(resultId) : undefined;
     if (type === 'stdout')
@@ -282,6 +284,7 @@ export class TeleReporterReceiver {
     const fullConfig = baseFullConfig;
     fullConfig.rootDir = config.rootDir;
     fullConfig.configFile = config.configFile;
+    fullConfig.workers = config.workers;
     return fullConfig;
   }
 

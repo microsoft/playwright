@@ -19,7 +19,7 @@ import type { Page } from 'playwright-core/lib/server/page';
 import { isUnderTest, ManualPromise } from 'playwright-core/lib/utils';
 import type { FullResult } from '../../reporter';
 import { clearCompilationCache, collectAffectedTestFiles, dependenciesForTestFile } from '../common/compilationCache';
-import type { FullConfigInternal } from '../common/types';
+import type { FullConfigInternal } from '../common/config';
 import { Multiplexer } from '../reporters/multiplexer';
 import { TeleReporterEmitter } from '../reporters/teleEmitter';
 import { createReporter } from './reporters';
@@ -42,20 +42,15 @@ class UIMode {
   constructor(config: FullConfigInternal) {
     this._config = config;
     process.env.PW_LIVE_TRACE_STACKS = '1';
-    config._internal.configCLIOverrides.forbidOnly = false;
-    config._internal.configCLIOverrides.globalTimeout = 0;
-    config._internal.configCLIOverrides.repeatEach = 0;
-    config._internal.configCLIOverrides.shard = undefined;
-    config._internal.configCLIOverrides.updateSnapshots = undefined;
-    config._internal.listOnly = false;
-    config._internal.passWithNoTests = true;
+    config.cliListOnly = false;
+    config.cliPassWithNoTests = true;
     for (const project of config.projects)
-      project._internal.deps = [];
+      project.deps = [];
 
     for (const p of config.projects)
-      p.retries = 0;
-    config._internal.configCLIOverrides.use = config._internal.configCLIOverrides.use || {};
-    config._internal.configCLIOverrides.use.trace = { mode: 'on', sources: false };
+      p.project.retries = 0;
+    config.configCLIOverrides.use = config.configCLIOverrides.use || {};
+    config.configCLIOverrides.use.trace = { mode: 'on', sources: false };
 
     this._originalStdoutWrite = process.stdout.write;
     this._originalStderrWrite = process.stderr.write;
@@ -148,8 +143,8 @@ class UIMode {
   private async _listTests() {
     const listReporter = new TeleReporterEmitter(e => this._dispatchEvent(e));
     const reporter = new Multiplexer([listReporter]);
-    this._config._internal.listOnly = true;
-    this._config._internal.testIdMatcher = undefined;
+    this._config.cliListOnly = true;
+    this._config.testIdMatcher = undefined;
     const taskRunner = createTaskRunnerForList(this._config, reporter, 'out-of-process');
     const testRun = new TestRun(this._config, reporter);
     clearCompilationCache();
@@ -159,7 +154,7 @@ class UIMode {
 
     const projectDirs = new Set<string>();
     for (const p of this._config.projects)
-      projectDirs.add(p.testDir);
+      projectDirs.add(p.project.testDir);
     this._globalWatcher.update([...projectDirs], false);
   }
 
@@ -167,8 +162,8 @@ class UIMode {
     await this._stopTests();
 
     const testIdSet = testIds ? new Set<string>(testIds) : null;
-    this._config._internal.listOnly = false;
-    this._config._internal.testIdMatcher = id => !testIdSet || testIdSet.has(id);
+    this._config.cliListOnly = false;
+    this._config.testIdMatcher = id => !testIdSet || testIdSet.has(id);
 
     const runReporter = new TeleReporterEmitter(e => this._dispatchEvent(e));
     const reporter = await createReporter(this._config, 'ui', [runReporter]);
@@ -180,7 +175,7 @@ class UIMode {
     const run = taskRunner.run(testRun, 0, stop).then(async status => {
       await reporter.onExit({ status });
       this._testRun = undefined;
-      this._config._internal.testIdMatcher = undefined;
+      this._config.testIdMatcher = undefined;
       return status;
     });
     this._testRun = { run, stop };

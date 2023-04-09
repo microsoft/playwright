@@ -16146,8 +16146,8 @@ export interface BrowserServer {
  * const msg = await msgPromise;
  *
  * // Deconstruct console log arguments
- * await msg.args[0].jsonValue() // hello
- * await msg.args[1].jsonValue() // 42
+ * await msg.args()[0].jsonValue() // hello
+ * await msg.args()[1].jsonValue() // 42
  * ```
  *
  */

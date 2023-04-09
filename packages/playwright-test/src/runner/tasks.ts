@@ -24,7 +24,7 @@ import type { Multiplexer } from '../reporters/multiplexer';
 import { createTestGroups, type TestGroup } from '../runner/testGroups';
 import type { Task } from './taskRunner';
 import { TaskRunner } from './taskRunner';
-import type { FullConfigInternal, FullProjectInternal } from '../common/types';
+import type { FullConfigInternal, FullProjectInternal } from '../common/config';
 import { collectProjectsAndTestFiles, createRootSuite, loadFileSuites, loadGlobalHook } from './loadUtils';
 import type { Matcher } from '../util';
 import type { Suite } from '../common/test';
@@ -60,7 +60,7 @@ export class TestRun {
 }
 
 export function createTaskRunner(config: FullConfigInternal, reporter: Multiplexer): TaskRunner<TestRun> {
-  const taskRunner = new TaskRunner<TestRun>(reporter, config.globalTimeout);
+  const taskRunner = new TaskRunner<TestRun>(reporter, config.config.globalTimeout);
   addGlobalSetupTasks(taskRunner, config);
   taskRunner.addTask('load tests', createLoadTask('in-process', true));
   addRunTasks(taskRunner, config);
@@ -81,9 +81,9 @@ export function createTaskRunnerForWatch(config: FullConfigInternal, reporter: M
 }
 
 function addGlobalSetupTasks(taskRunner: TaskRunner<TestRun>, config: FullConfigInternal) {
-  for (const plugin of config._internal.plugins)
+  for (const plugin of config.plugins)
     taskRunner.addTask('plugin setup', createPluginSetupTask(plugin));
-  if (config.globalSetup || config.globalTeardown)
+  if (config.config.globalSetup || config.config.globalTeardown)
     taskRunner.addTask('global setup', createGlobalSetupTask());
   taskRunner.addTask('clear output', createRemoveOutputDirsTask());
 }
@@ -91,10 +91,10 @@ function addGlobalSetupTasks(taskRunner: TaskRunner<TestRun>, config: FullConfig
 function addRunTasks(taskRunner: TaskRunner<TestRun>, config: FullConfigInternal) {
   taskRunner.addTask('create phases', createPhasesTask());
   taskRunner.addTask('report begin', async ({ reporter, rootSuite }) => {
-    reporter.onBegin?.(config, rootSuite!);
+    reporter.onBegin?.(config.config, rootSuite!);
     return () => reporter.onEnd();
   });
-  for (const plugin of config._internal.plugins)
+  for (const plugin of config.plugins)
     taskRunner.addTask('plugin begin', createPluginBeginTask(plugin));
   taskRunner.addTask('start workers', createWorkersTask());
   taskRunner.addTask('test suite', createRunTestsTask());
@@ -102,10 +102,10 @@ function addRunTasks(taskRunner: TaskRunner<TestRun>, config: FullConfigInternal
 }
 
 export function createTaskRunnerForList(config: FullConfigInternal, reporter: Multiplexer, mode: 'in-process' | 'out-of-process'): TaskRunner<TestRun> {
-  const taskRunner = new TaskRunner<TestRun>(reporter, config.globalTimeout);
+  const taskRunner = new TaskRunner<TestRun>(reporter, config.config.globalTimeout);
   taskRunner.addTask('load tests', createLoadTask(mode, false));
   taskRunner.addTask('report begin', async ({ reporter, rootSuite }) => {
-    reporter.onBegin?.(config, rootSuite!);
+    reporter.onBegin?.(config.config, rootSuite!);
     return () => reporter.onEnd();
   });
   return taskRunner;
@@ -117,7 +117,7 @@ function createPluginSetupTask(plugin: TestRunnerPluginRegistration): Task<TestR
       plugin.instance = await plugin.factory();
     else
       plugin.instance = plugin.factory;
-    await plugin.instance?.setup?.(config, config._internal.configDir, reporter);
+    await plugin.instance?.setup?.(config.config, config.configDir, reporter);
     return () => plugin.instance?.teardown?.();
   };
 }
@@ -131,13 +131,13 @@ function createPluginBeginTask(plugin: TestRunnerPluginRegistration): Task<TestR
 
 function createGlobalSetupTask(): Task<TestRun> {
   return async ({ config }) => {
-    const setupHook = config.globalSetup ? await loadGlobalHook(config, config.globalSetup) : undefined;
-    const teardownHook = config.globalTeardown ? await loadGlobalHook(config, config.globalTeardown) : undefined;
-    const globalSetupResult = setupHook ? await setupHook(config) : undefined;
+    const setupHook = config.config.globalSetup ? await loadGlobalHook(config, config.config.globalSetup) : undefined;
+    const teardownHook = config.config.globalTeardown ? await loadGlobalHook(config, config.config.globalTeardown) : undefined;
+    const globalSetupResult = setupHook ? await setupHook(config.config) : undefined;
     return async () => {
       if (typeof globalSetupResult === 'function')
         await globalSetupResult();
-      await teardownHook?.(config);
+      await teardownHook?.(config.config);
     };
   };
 }
@@ -146,8 +146,8 @@ function createRemoveOutputDirsTask(): Task<TestRun> {
   return async ({ config }) => {
     const outputDirs = new Set<string>();
     for (const p of config.projects) {
-      if (!config._internal.cliProjectFilter || config._internal.cliProjectFilter.includes(p.name))
-        outputDirs.add(p.outputDir);
+      if (!config.cliProjectFilter || config.cliProjectFilter.includes(p.project.name))
+        outputDirs.add(p.project.outputDir);
     }
 
     await Promise.all(Array.from(outputDirs).map(outputDir => removeFolderAsync(outputDir).catch(async (error: any) => {
@@ -170,24 +170,24 @@ function createLoadTask(mode: 'out-of-process' | 'in-process', shouldFilterOnly:
     await loadFileSuites(testRun, mode, errors);
     testRun.rootSuite = await createRootSuite(testRun, errors, shouldFilterOnly);
     // Fail when no tests.
-    if (!testRun.rootSuite.allTests().length && !testRun.config._internal.passWithNoTests && !testRun.config.shard)
+    if (!testRun.rootSuite.allTests().length && !testRun.config.cliPassWithNoTests && !testRun.config.config.shard)
       throw new Error(`No tests found`);
   };
 }
 
 function createPhasesTask(): Task<TestRun> {
   return async testRun => {
-    testRun.config._internal.maxConcurrentTestGroups = 0;
+    let maxConcurrentTestGroups = 0;
 
     const processed = new Set<FullProjectInternal>();
-    const projectToSuite = new Map(testRun.rootSuite!.suites.map(suite => [suite.project() as FullProjectInternal, suite]));
+    const projectToSuite = new Map(testRun.rootSuite!.suites.map(suite => [suite._fullProject!, suite]));
     for (let i = 0; i < projectToSuite.size; i++) {
       // Find all projects that have all their dependencies processed by previous phases.
       const phaseProjects: FullProjectInternal[] = [];
       for (const project of projectToSuite.keys()) {
         if (processed.has(project))
           continue;
-        if (project._internal.deps.find(p => !processed.has(p)))
+        if (project.deps.find(p => !processed.has(p)))
           continue;
         phaseProjects.push(project);
       }
@@ -201,14 +201,16 @@ function createPhasesTask(): Task<TestRun> {
         testRun.phases.push(phase);
         for (const project of phaseProjects) {
           const projectSuite = projectToSuite.get(project)!;
-          const testGroups = createTestGroups(projectSuite, testRun.config.workers);
+          const testGroups = createTestGroups(projectSuite, testRun.config.config.workers);
           phase.projects.push({ project, projectSuite, testGroups });
           testGroupsInPhase += testGroups.length;
         }
-        debug('pw:test:task')(`created phase #${testRun.phases.length} with ${phase.projects.map(p => p.project.name).sort()} projects, ${testGroupsInPhase} testGroups`);
-        testRun.config._internal.maxConcurrentTestGroups = Math.max(testRun.config._internal.maxConcurrentTestGroups, testGroupsInPhase);
+        debug('pw:test:task')(`created phase #${testRun.phases.length} with ${phase.projects.map(p => p.project.project.name).sort()} projects, ${testGroupsInPhase} testGroups`);
+        maxConcurrentTestGroups = Math.max(maxConcurrentTestGroups, testGroupsInPhase);
       }
     }
+
+    testRun.config.config.workers = Math.min(testRun.config.config.workers, maxConcurrentTestGroups);
   };
 }
 
@@ -235,11 +237,11 @@ function createRunTestsTask(): Task<TestRun> {
       for (const { project, testGroups } of projects) {
         // Inherit extra enviroment variables from dependencies.
         let extraEnv: Record<string, string | undefined> = {};
-        for (const dep of project._internal.deps)
-          extraEnv = { ...extraEnv, ...extraEnvByProjectId.get(dep._internal.id) };
-        extraEnvByProjectId.set(project._internal.id, extraEnv);
+        for (const dep of project.deps)
+          extraEnv = { ...extraEnv, ...extraEnvByProjectId.get(dep.id) };
+        extraEnvByProjectId.set(project.id, extraEnv);
 
-        const hasFailedDeps = project._internal.deps.some(p => !successfulProjects.has(p));
+        const hasFailedDeps = project.deps.some(p => !successfulProjects.has(p));
         if (!hasFailedDeps) {
           phaseTestGroups.push(...testGroups);
         } else {
@@ -263,7 +265,7 @@ function createRunTestsTask(): Task<TestRun> {
       // projects failed.
       if (!dispatcher.hasWorkerErrors()) {
         for (const { project, projectSuite } of projects) {
-          const hasFailedDeps = project._internal.deps.some(p => !successfulProjects.has(p));
+          const hasFailedDeps = project.deps.some(p => !successfulProjects.has(p));
           if (!hasFailedDeps && !projectSuite.allTests().some(test => !test.ok()))
             successfulProjects.add(project);
         }
