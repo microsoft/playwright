@@ -22,7 +22,7 @@ import path from 'path';
 import url from 'url';
 import { colors, debug, minimatch, parseStackTraceLine } from 'playwright-core/lib/utilsBundle';
 import type { TestInfoError, Location } from './common/types';
-import { calculateSha1, isRegExp, isString } from 'playwright-core/lib/utils';
+import { calculateSha1, getFromENV, isRegExp, isString } from 'playwright-core/lib/utils';
 import type { RawStack } from 'playwright-core/lib/utils';
 
 const PLAYWRIGHT_TEST_PATH = path.join(__dirname, '..');
@@ -307,9 +307,10 @@ export function envWithoutExperimentalLoaderOptions(): NodeJS.ProcessEnv {
 }
 
 export function determinePackageManager() {
-  if (process.env.npm_config_user_agent) {
-    if (process.env.npm_config_user_agent.includes('yarn')) return 'yarn';
-    if (process.env.npm_config_user_agent.includes('pnpm')) return 'pnpm';
+  const userAgent = getFromENV('user_agent');
+  if (userAgent) {
+    if (userAgent.includes('yarn')) return 'yarn';
+    if (userAgent.includes('pnpm')) return 'pnpm';
     return 'npm';
   }
   return 'npm';

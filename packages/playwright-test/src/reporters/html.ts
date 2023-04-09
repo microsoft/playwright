@@ -123,12 +123,16 @@ class HtmlReporter implements Reporter {
       await showHTMLReport(this._outputFolder, this._options.host, this._options.port, singleTestId);
     } else {
       const userPackageManager = determinePackageManager();
+      let packageManagerCommand = 'npx';
+      if (userPackageManager !== 'npm')
+        packageManagerCommand = userPackageManager === 'yarn' ?  'yarn' : 'pnpm exec';
+
       const relativeReportPath = this._outputFolder === standaloneDefaultFolder() ? '' : ' ' + path.relative(process.cwd(), this._outputFolder);
       console.log('');
       console.log('To open last HTML report run:');
       console.log(
           colors.cyan(`
-${userPackageManager === 'npm' ? 'npx' : userPackageManager} playwright show-report${relativeReportPath}
+${packageManagerCommand} playwright show-report${relativeReportPath}
           `)
       );
     }
