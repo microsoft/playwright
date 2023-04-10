@@ -709,10 +709,10 @@ it('should download links with data url', async ({ page, isWindows, browserName 
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/21892' });
   it.fixme(browserName === 'webkit' && isWindows);
   await page.setContent('<a download="SomeFile.txt" href="data:text/plain;charset=utf8;,hello world">Download!</a>');
-  const donwloadPromise = page.waitForEvent("download");
+  const donwloadPromise = page.waitForEvent('download');
   await page.getByText('Download').click();
   const download = await donwloadPromise;
-  expect(download.suggestedFilename()).toBe("SomeFile.txt");
+  expect(download.suggestedFilename()).toBe('SomeFile.txt');
 });
 
 async function assertDownloadToPDF(download: Download, filePath: string) {
