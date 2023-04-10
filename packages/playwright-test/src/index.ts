@@ -322,7 +322,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     const preserveTrace = () => {
       const testFailed = testInfo.status !== testInfo.expectedStatus;
       return captureTrace && (traceMode === 'on' || (testFailed && traceMode === 'retain-on-failure') || (traceMode === 'on-first-retry' && testInfo.retry === 1) || (traceMode === 'on-all-retries' && testInfo.retry > 0));
-    }
+    };
 
     const startedCollectingArtifacts = Symbol('startedCollectingArtifacts');
     const stopTracing = async (tracing: Tracing) => {
@@ -405,6 +405,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     await use();
 
     // 3. Determine whether we need the artifacts.
+    const testFailed = testInfo.status !== testInfo.expectedStatus;
     const captureScreenshots = screenshotMode === 'on' || (screenshotMode === 'only-on-failure' && testFailed);
 
     const screenshotAttachments: string[] = [];
