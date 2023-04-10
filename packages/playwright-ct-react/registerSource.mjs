@@ -23,11 +23,11 @@ import { createRoot as __pwCreateRoot } from 'react-dom/client';
 /** @typedef {import('../playwright-test/types/experimentalComponent').Component} Component */
 /** @typedef {import('react').FunctionComponent} FrameworkComponent */
 
-/** @type {Map<string, Promise<FrameworkComponent>} */
-const __pwRegistry = new Map();
+/** @type {Map<string, () => Promise<FrameworkComponent>>} */
+const __pwLoaderRegistry = new Map();
 
-/** @type {Map<string, FrameworkComponent} */
-const __pwRegistryResolved = new Map();
+/** @type {Map<string, FrameworkComponent>} */
+const __pwRegistry = new Map();
 
 /** @type {Map<Element, import('react-dom/client').Root>} */
 const __pwRootRegistry = new Map();
@@ -37,48 +37,42 @@ const __pwRootRegistry = new Map();
  */
 export function pwRegister(components) {
   for (const [name, value] of Object.entries(components))
-    __pwRegistry.set(name, value);
+    __pwLoaderRegistry.set(name, value);
 }
 
 /**
  * @param {Component} component
  */
-async function __pwResolveAllComponents(component) {
+async function __pwResolveComponent(component) {
   if (typeof component !== 'object' || Array.isArray(component))
     return
 
-  let __pwRegistryKey = component.type
-
-  let componentLoaderFunc = __pwRegistry.get(component.type);
-
-  if (!componentLoaderFunc) {
+  let componentFuncLoader = __pwLoaderRegistry.get(component.type);
+  if (!componentFuncLoader) {
     // Lookup by shorthand.
-    for (const [name, value] of __pwRegistry) {
+    for (const [name, value] of __pwLoaderRegistry) {
       if (component.type.endsWith(`_${name}`)) {
-        __pwRegistryKey = name
-        componentLoaderFunc = value;
+        componentFuncLoader = value;
         break;
       }
     }
   }
 
-  if(componentLoaderFunc) {
-    __pwRegistryResolved.set(__pwRegistryKey, await componentLoaderFunc())
-  } else {
-    __pwRegistryResolved.set(__pwRegistryKey, component.type)
-  }
+  if(componentFuncLoader)
+    __pwRegistry.set(component.type, await componentFuncLoader())
 
-  await Promise.all(component.children.map(child => __pwResolveAllComponents(child)))
+  if ('children' in component)
+    await Promise.all(component.children.map(child => __pwResolveComponent(child)))
 }
 
 function __pwRender(component) {
   if (typeof component !== 'object' || Array.isArray(component))
     return component;
 
-  let componentFunc = __pwRegistryResolved.get(component.type);
+  let componentFunc = __pwRegistry.get(component.type);
   if (!componentFunc) {
     // Lookup by shorthand.
-    for (const [name, value] of __pwRegistryResolved) {
+    for (const [name, value] of __pwRegistry) {
       if (component.type.endsWith(`_${name}`)) {
         componentFunc = value;
         break;
@@ -87,7 +81,7 @@ function __pwRender(component) {
   }
 
   if (!componentFunc && component.type[0].toUpperCase() === component.type[0])
-    throw new Error(`Unregistered component: ${component.type}. Following components are registered: ${[...__pwRegistryResolved.keys()]}`);
+    throw new Error(`Unregistered component: ${component.type}. Following components are registered: ${[...__pwRegistry.keys()]}`);
 
   const componentFuncOrString = componentFunc || component.type;
 
@@ -106,9 +100,8 @@ function __pwRender(component) {
 }
 
 window.playwrightMount = async (component, rootElement, hooksConfig) => {
-  await __pwResolveAllComponents(component);
+  await __pwResolveComponent(component);
   let App = () => __pwRender(component);
-
   for (const hook of window.__pw_hooks_before_mount || []) {
     const wrapper = await hook({ App, hooksConfig });
     if (wrapper)
@@ -139,7 +132,7 @@ window.playwrightUnmount = async rootElement => {
 };
 
 window.playwrightUpdate = async (rootElement, component) => {
-  await __pwResolveAllComponents(component);
+  await __pwResolveComponent(component);
   const root = __pwRootRegistry.get(rootElement);
   if (root === undefined)
     throw new Error('Component was not mounted');
