@@ -24,11 +24,14 @@ import __pwReactDOM from 'react-dom';
 /** @typedef {import('../playwright-test/types/experimentalComponent').Component} Component */
 /** @typedef {import('react').FunctionComponent} FrameworkComponent */
 
-/** @type {Map<string, FrameworkComponent>} */
+/** @type {Map<string, Promise<FrameworkComponent>} */
 const __pwRegistry = new Map();
 
+/** @type {Map<string, FrameworkComponent} */
+const __pwRegistryResolved = new Map();
+
 /**
- * @param {{[key: string]: FrameworkComponent}} components
+ * @param {{[key: string]: () => Promise<FrameworkComponent>}} components
  */
 export function pwRegister(components) {
   for (const [name, value] of Object.entries(components))
@@ -38,14 +41,45 @@ export function pwRegister(components) {
 /**
  * @param {Component} component
  */
+async function __pwResolveAllComponents(component) {
+  if (typeof component !== 'object' || Array.isArray(component))
+    return
+
+  let __pwRegistryKey = component.type
+
+  let componentLoaderFunc = __pwRegistry.get(component.type);
+
+  if (!componentLoaderFunc) {
+    // Lookup by shorthand.
+    for (const [name, value] of __pwRegistry) {
+      if (component.type.endsWith(`_${name}`)) {
+        __pwRegistryKey = name
+        componentLoaderFunc = value;
+        break;
+      }
+    }
+  }
+
+  if(componentLoaderFunc) {
+    __pwRegistryResolved.set(__pwRegistryKey, await componentLoaderFunc())
+  } else {
+    __pwRegistryResolved.set(__pwRegistryKey, component.type)
+  }
+
+  await Promise.all(component.children.map(child => __pwResolveAllComponents(child)))
+}
+
+/**
+ * @param {Component} component
+ */
 function __pwRender(component) {
   if (typeof component !== 'object' || Array.isArray(component))
     return component;
 
-  let componentFunc = __pwRegistry.get(component.type);
+  let componentFunc = __pwRegistryResolved.get(component.type);
   if (!componentFunc) {
     // Lookup by shorthand.
-    for (const [name, value] of __pwRegistry) {
+    for (const [name, value] of __pwRegistryResolved) {
       if (component.type.endsWith(`_${name}`)) {
         componentFunc = value;
         break;
@@ -54,7 +88,7 @@ function __pwRender(component) {
   }
 
   if (!componentFunc && component.type[0].toUpperCase() === component.type[0])
-    throw new Error(`Unregistered component: ${component.type}. Following components are registered: ${[...__pwRegistry.keys()]}`);
+    throw new Error(`Unregistered component: ${component.type}. Following components are registered: ${[...__pwRegistryResolved.keys()]}`);
 
   const componentFuncOrString = componentFunc || component.type;
 
@@ -73,6 +107,7 @@ function __pwRender(component) {
 }
 
 window.playwrightMount = async (component, rootElement, hooksConfig) => {
+  await __pwResolveAllComponents(component);
   let App = () => __pwRender(component);
   for (const hook of window.__pw_hooks_before_mount || []) {
     const wrapper = await hook({ App, hooksConfig });
@@ -92,5 +127,6 @@ window.playwrightUnmount = async rootElement => {
 };
 
 window.playwrightUpdate = async (rootElement, component) => {
+  await __pwResolveAllComponents(component);
   __pwReactDOM.render(__pwRender(/** @type {Component} */(component)), rootElement);
 };
