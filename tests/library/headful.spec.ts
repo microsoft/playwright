@@ -65,6 +65,22 @@ it('should not crash when creating second context', async ({ browser }) => {
   }
 });
 
+it('should click when viewport size is larger than screen', async ({ page, browserName }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22082' });
+  it.fixme(browserName === 'firefox');
+  await page.setViewportSize({
+    width: 3000,
+    height: 3000,
+  });
+  await page.setContent(`
+    <style>
+      html, body { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
+    </style>
+    <button style="position: absolute; right: 0; bottom: 0;">Button in the bottom-right corner</button>
+  `);
+  await page.locator('button').click();
+});
+
 it('should click background tab', async ({ page, server }) => {
   await page.setContent(`<button>Hello</button><a target=_blank href="${server.EMPTY_PAGE}">empty.html</a>`);
   await page.click('a');
