@@ -26,12 +26,6 @@ import type { Location } from '../../types/testReporter';
 import { getContainedPath, normalizeAndSaveAttachment, sanitizeForFilePath, serializeError, trimLongString } from '../util';
 import type * as trace from '@trace/trace';
 
-export type TestInfoErrorState = {
-  status: TestStatus,
-  errors: TestInfoError[],
-  hasHardError: boolean,
-};
-
 interface TestStepInternal {
   complete(result: { error?: Error | TestInfoError }): void;
   stepId: string;
@@ -289,20 +283,6 @@ export class TestInfoImpl implements TestInfo {
     if (this.status === 'passed' || this.status === 'skipped')
       this.status = 'failed';
     this.errors.push(error);
-  }
-
-  _saveErrorState(): TestInfoErrorState {
-    return {
-      hasHardError: this._hasHardError,
-      status: this.status,
-      errors: this.errors.slice(),
-    };
-  }
-
-  _restoreErrorState(state: TestInfoErrorState) {
-    this.status = state.status;
-    this.errors = state.errors.slice();
-    this._hasHardError = state.hasHardError;
   }
 
   async _runAsStep<T>(cb: (step: TestStepInternal) => Promise<T>, stepInfo: Omit<TestStepInternal, 'complete' | 'wallTime' | 'parentStepId' | 'stepId'>): Promise<T> {

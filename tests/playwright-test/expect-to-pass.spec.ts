@@ -35,17 +35,10 @@ test('should retry predicate', async ({ runInlineTest }) => {
         }).toPass();
         expect(i).toBe(3);
       });
-      test('should retry expect.soft assertions', async () => {
-        let i = 0;
-        await test.expect(() => {
-          expect.soft(++i).toBe(3);
-        }).toPass();
-        expect(i).toBe(3);
-      });
     `
   });
   expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(3);
+  expect(result.passed).toBe(2);
 });
 
 test('should respect timeout', async ({ runInlineTest }) => {
@@ -159,74 +152,12 @@ test('should use custom message', async ({ runInlineTest }) => {
   expect(result.failed).toBe(1);
 });
 
-test('should swallow all soft errors inside toPass matcher, if successful', async ({ runInlineTest }) => {
-  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/20437' });
-
-  const result = await runInlineTest({
-    'a.spec.ts': `
-      import { test, expect } from '@playwright/test';
-      test('should respect soft', async () => {
-        expect.soft('before-toPass').toBe('zzzz');
-        let i = 0;
-        await test.expect(() => {
-          ++i;
-          expect.soft('inside-toPass-' + i).toBe('inside-toPass-2');
-        }).toPass({ timeout: 1000 });
-        expect.soft('after-toPass').toBe('zzzz');
-      });
-    `
-  });
-  expect(result.output).toContain('Received: "before-toPass"');
-  expect(result.output).toContain('Received: "after-toPass"');
-  expect(result.output).not.toContain('Received: "inside-toPass-1"');
-  expect(result.exitCode).toBe(1);
-  expect(result.failed).toBe(1);
-});
-
-test('should work with no.toPass and failing soft assertion', async ({ runInlineTest }) => {
-  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/20518' });
-
-  const result = await runInlineTest({
-    'a.spec.ts': `
-      import { test, expect } from '@playwright/test';
-      test('should work', async () => {
-        await test.expect(() => {
-          expect.soft(1).toBe(2);
-        }).not.toPass({ timeout: 1000 });
-      });
-    `
-  });
-  expect(result.exitCode).toBe(0);
-  expect(result.failed).toBe(0);
-  expect(result.passed).toBe(1);
-});
-
-test('should show only soft errors on last toPass pass', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'a.spec.ts': `
-      import { test, expect } from '@playwright/test';
-      test('should respect soft', async () => {
-        let i = 0;
-        await test.expect(() => {
-          ++i;
-          expect.soft('inside-toPass-' + i).toBe('0');
-        }).toPass({ timeout: 1000, intervals: [100, 100, 100000] });
-      });
-    `
-  });
-  expect(result.output).not.toContain('Received: "inside-toPass-1"');
-  expect(result.output).not.toContain('Received: "inside-toPass-2"');
-  expect(result.output).toContain('Received: "inside-toPass-3"');
-  expect(result.exitCode).toBe(1);
-  expect(result.failed).toBe(1);
-});
-
 test('should work with soft', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
       import { test, expect } from '@playwright/test';
       test('should respect soft', async () => {
-        await test.expect.soft(() => {
+        await expect.soft(() => {
           expect(1).toBe(3);
         }).toPass({ timeout: 1000 });
         expect.soft(2).toBe(3);
