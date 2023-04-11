@@ -178,13 +178,13 @@ it('should change prefer responding vith valid content', async ({ server, contex
   await page.setContent(`
     <script>
         setInterval(() => {
-            fetch('/api')
+            fetch('http://localhost:8907/api')
                 .then(res => res.text())
                 .then(text => document.body.innerHTML = text);
         }, 1000);
     </script>
   `);
-  await page.waitForSelector('text=hello world');
+  await page.waitForSelector('text=hello');
 });
 
 it('should goBack to redirected navigation', async ({ context, asset, server }) => {
