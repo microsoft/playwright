@@ -170,6 +170,23 @@ it('should change document URL after redirected navigation on click', async ({ s
   expect(await page.evaluate(() => location.href)).toBe('https://www.theverge.com/');
 });
 
+it('should change prefer responding vith valid content', async ({ server, context, asset }) => {
+  const path = asset('har-unstable-network.har');
+  await context.routeFromHAR(path, { url: /api/ });
+  const page = await context.newPage();
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`
+    <script>
+        setInterval(() => {
+            fetch('/api')
+                .then(res => res.text())
+                .then(text => document.body.innerHTML = text);
+        }, 1000);
+    </script>
+  `);
+  await page.waitForSelector('text=hello world');
+});
+
 it('should goBack to redirected navigation', async ({ context, asset, server }) => {
   const path = asset('har-redirect.har');
   await context.routeFromHAR(path, { url: /.*theverge.*/ });
