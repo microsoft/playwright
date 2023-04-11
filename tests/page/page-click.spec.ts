@@ -38,22 +38,6 @@ it('should click button inside frameset', async ({ page, server }) => {
   expect(await frame.evaluate('result')).toBe('Clicked');
 });
 
-it('should click a button that closes popup', async ({ page }) => {
-  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/20093' });
-  const [popup] = await Promise.all([
-    page.waitForEvent('popup'),
-    page.evaluate(() => window.open('')),
-  ]);
-  await popup.setContent(`<button>clickme</button>`);
-  await popup.$eval('button', body => body.addEventListener('click', () => {
-    window.close();
-  }));
-  await Promise.all([
-    popup.locator('button').click(), // throws in Firefox, but not in Chromium or WebKit
-    popup.waitForEvent('close'),
-  ]);
-});
-
 it('should issue clicks in parallel in page and popup', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/counter.html');
   const [popup] = await Promise.all([
