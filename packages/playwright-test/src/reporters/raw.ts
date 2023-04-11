@@ -18,7 +18,6 @@ import fs from 'fs';
 import path from 'path';
 import type { FullConfig, Location, Suite, TestCase, TestResult, TestStatus, TestStep } from '../../types/testReporter';
 import { assert } from 'playwright-core/lib/utils';
-import { sanitizeForFilePath } from '../util';
 import { formatResultFailure } from './base';
 import { toPosixPath, serializePatterns } from './json';
 import { MultiMap } from 'playwright-core/lib/utils';
@@ -102,40 +101,18 @@ export type JsonTestStep = {
 };
 
 class RawReporter {
-  private config!: FullConfig;
-  private suite!: Suite;
-  private stepsInFile = new MultiMap<string, JsonTestStep>();
+  static generateProjectReport(config: FullConfig, suite: Suite): JsonReport {
+    return new RawReporter(config)._generateProjectReport(suite);
+  }
 
-  onBegin(config: FullConfig, suite: Suite) {
+  private readonly config!: FullConfig;
+  private readonly stepsInFile = new MultiMap<string, JsonTestStep>();
+
+  private constructor(config: FullConfig) {
     this.config = config;
-    this.suite = suite;
   }
 
-  async onEnd() {
-    const projectSuites = this.suite.suites;
-    for (const suite of projectSuites) {
-      const project = suite.project();
-      assert(project, 'Internal Error: Invalid project structure');
-      const reportFolder = path.join(project.outputDir, 'report');
-      fs.mkdirSync(reportFolder, { recursive: true });
-      let reportFile: string | undefined;
-      for (let i = 0; i < 10; ++i) {
-        reportFile = path.join(reportFolder, sanitizeForFilePath(project.name || 'project') + (i ? '-' + i : '') + '.report');
-        try {
-          if (fs.existsSync(reportFile))
-            continue;
-        } catch (e) {
-        }
-        break;
-      }
-      if (!reportFile)
-        throw new Error('Internal error, could not create report file');
-      const report = this.generateProjectReport(this.config, suite);
-      fs.writeFileSync(reportFile, JSON.stringify(report, undefined, 2));
-    }
-  }
-
-  generateAttachments(attachments: TestResult['attachments'], ioStreams?: Pick<TestResult, 'stdout' | 'stderr'>): JsonAttachment[] {
+  private _generateAttachments(attachments: TestResult['attachments'], ioStreams?: Pick<TestResult, 'stdout' | 'stderr'>): JsonAttachment[] {
     const out: JsonAttachment[] = [];
     for (const attachment of attachments) {
       if (attachment.body) {
@@ -163,12 +140,11 @@ class RawReporter {
     return out;
   }
 
-  generateProjectReport(config: FullConfig, suite: Suite): JsonReport {
-    this.config = config;
+  private _generateProjectReport(suite: Suite): JsonReport {
     const project = suite.project();
     assert(project, 'Internal Error: Invalid project structure');
     const report: JsonReport = {
-      config: filterOutPrivateFields(config),
+      config: filterOutPrivateFields(this.config),
       project: {
         metadata: project.metadata,
         name: project.name,
@@ -247,7 +223,7 @@ class RawReporter {
       duration: result.duration,
       status: result.status,
       errors: formatResultFailure(this.config, test, result, '', true).map(error => error.message),
-      attachments: this.generateAttachments(result.attachments, result),
+      attachments: this._generateAttachments(result.attachments, result),
       steps: dedupeSteps(result.steps.map(step => this._serializeStep(test, step)))
     };
   }

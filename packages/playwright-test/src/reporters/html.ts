@@ -103,11 +103,7 @@ class HtmlReporter implements Reporter {
   async onEnd() {
     const duration = monotonicTime() - this._montonicStartTime;
     const projectSuites = this.suite.suites;
-    const reports = projectSuites.map(suite => {
-      const rawReporter = new RawReporter();
-      const report = rawReporter.generateProjectReport(this.config, suite);
-      return report;
-    });
+    const reports = projectSuites.map(suite => RawReporter.generateProjectReport(this.config, suite));
     await removeFolders([this._outputFolder]);
     const builder = new HtmlBuilder(this._outputFolder);
     this._buildResult = await builder.build({ ...this.config.metadata, duration }, reports);
