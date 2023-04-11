@@ -4,6 +4,9 @@ on:
   repository_dispatch:
     types: [roll_into_pw]
 
+env:
+  ELECTRON_SKIP_BINARY_DOWNLOAD: 1
+
 jobs:
   roll:
     runs-on: ubuntu-20.04

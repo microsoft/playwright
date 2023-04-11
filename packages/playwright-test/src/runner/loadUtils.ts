@@ -14,32 +14,33 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
 import path from 'path';
-import readline from 'readline';
-import type { Reporter, TestError } from '../../types/testReporter';
+import type { FullConfig, Reporter, TestError } from '../../types/testReporter';
 import { InProcessLoaderHost, OutOfProcessLoaderHost } from './loaderHost';
 import { Suite } from '../common/test';
 import type { TestCase } from '../common/test';
-import type { FullConfigInternal, FullProjectInternal } from '../common/types';
+import type { FullProjectInternal } from '../common/config';
+import type { FullConfigInternal } from '../common/config';
 import { createFileMatcherFromArguments, createFileFiltersFromArguments, createTitleMatcher, errorWithFile, forceRegExp } from '../util';
 import type { Matcher, TestFileFilter } from '../util';
 import { buildProjectsClosure, collectFilesForProject, filterProjects } from './projectUtils';
+import type { TestRun } from './tasks';
 import { requireOrImport } from '../common/transform';
 import { buildFileSuiteForProject, filterByFocusedLine, filterByTestIds, filterOnly, filterTestsRemoveEmptySuites } from '../common/suiteUtils';
 import { createTestGroups, filterForShard, type TestGroup } from './testGroups';
 import { dependenciesForTestFile } from '../common/compilationCache';
+import { sourceMapSupport } from '../utilsBundle';
+import type { RawSourceMap } from 'source-map';
 
-export async function collectProjectsAndTestFiles(config: FullConfigInternal, projectsToIgnore: Set<FullProjectInternal>, additionalFileMatcher: Matcher | undefined) {
+export async function collectProjectsAndTestFiles(testRun: TestRun, additionalFileMatcher: Matcher | undefined) {
+  const config = testRun.config;
   const fsCache = new Map();
   const sourceMapCache = new Map();
-  const cliFileMatcher = config._internal.cliArgs.length ? createFileMatcherFromArguments(config._internal.cliArgs) : null;
+  const cliFileMatcher = config.cliArgs.length ? createFileMatcherFromArguments(config.cliArgs) : null;
 
   // First collect all files for the projects in the command line, don't apply any file filters.
   const allFilesForProject = new Map<FullProjectInternal, string[]>();
-  for (const project of filterProjects(config.projects, config._internal.cliProjectFilter)) {
-    if (projectsToIgnore.has(project))
-      continue;
+  for (const project of filterProjects(config.projects, config.cliProjectFilter)) {
     const files = await collectFilesForProject(project, fsCache);
     allFilesForProject.set(project, files);
   }
@@ -47,37 +48,42 @@ export async function collectProjectsAndTestFiles(config: FullConfigInternal, pr
   // Filter files based on the file filters, eliminate the empty projects.
   const filesToRunByProject = new Map<FullProjectInternal, string[]>();
   for (const [project, files] of allFilesForProject) {
-    const matchedFiles = await Promise.all(files.map(async file => {
-      if (additionalFileMatcher && !additionalFileMatcher(file))
-        return;
-      if (cliFileMatcher) {
-        if (!cliFileMatcher(file) && !await isPotentiallyJavaScriptFileWithSourceMap(file, sourceMapCache))
-          return;
-      }
-      return file;
-    }));
+    const matchedFiles = files.filter(file => {
+      const hasMatchingSources = sourceMapSources(file, sourceMapCache).some(source => {
+        if (additionalFileMatcher && !additionalFileMatcher(source))
+          return false;
+        if (cliFileMatcher && !cliFileMatcher(source))
+          return false;
+        return true;
+      });
+      return hasMatchingSources;
+    });
     const filteredFiles = matchedFiles.filter(Boolean) as string[];
     if (filteredFiles.length)
       filesToRunByProject.set(project, filteredFiles);
   }
 
   // (Re-)add all files for dependent projects, disregard filters.
-  const projectClosure = buildProjectsClosure([...filesToRunByProject.keys()]).filter(p => !projectsToIgnore.has(p));
-  for (const project of projectClosure) {
-    if (project._internal.type === 'dependency') {
+  const projectClosure = buildProjectsClosure([...filesToRunByProject.keys()]);
+  for (const [project, type] of projectClosure) {
+    if (type === 'dependency') {
       filesToRunByProject.delete(project);
       const files = allFilesForProject.get(project) || await collectFilesForProject(project, fsCache);
       filesToRunByProject.set(project, files);
     }
   }
 
-  return filesToRunByProject;
+  testRun.projects = [...filesToRunByProject.keys()];
+  testRun.projectFiles = filesToRunByProject;
+  testRun.projectType = projectClosure;
+  testRun.projectSuites = new Map();
 }
 
-export async function loadFileSuites(mode: 'out-of-process' | 'in-process', config: FullConfigInternal, filesToRunByProject: Map<FullProjectInternal, string[]>, errors: TestError[]): Promise<Map<FullProjectInternal, Suite[]>> {
+export async function loadFileSuites(testRun: TestRun, mode: 'out-of-process' | 'in-process', errors: TestError[]) {
   // Determine all files to load.
+  const config = testRun.config;
   const allTestFiles = new Set<string>();
-  for (const files of filesToRunByProject.values())
+  for (const files of testRun.projectFiles.values())
     files.forEach(file => allTestFiles.add(file));
 
   // Load test files.
@@ -95,8 +101,8 @@ export async function loadFileSuites(mode: 'out-of-process' | 'in-process', conf
   for (const file of allTestFiles) {
     for (const dependency of dependenciesForTestFile(file)) {
       if (allTestFiles.has(dependency)) {
-        const importer = path.relative(config.rootDir, file);
-        const importee = path.relative(config.rootDir, dependency);
+        const importer = path.relative(config.config.rootDir, file);
+        const importee = path.relative(config.config.rootDir, dependency);
         errors.push({
           message: `Error: test file "${importer}" should not import test file "${importee}"`,
           location: { file, line: 1, column: 1 },
@@ -106,35 +112,34 @@ export async function loadFileSuites(mode: 'out-of-process' | 'in-process', conf
   }
 
   // Collect file suites for each project.
-  const fileSuitesByProject = new Map<FullProjectInternal, Suite[]>();
-  for (const [project, files] of filesToRunByProject) {
+  for (const [project, files] of testRun.projectFiles) {
     const suites = files.map(file => fileSuiteByFile.get(file)).filter(Boolean) as Suite[];
-    fileSuitesByProject.set(project, suites);
+    testRun.projectSuites.set(project, suites);
   }
-  return fileSuitesByProject;
 }
 
-export async function createRootSuite(config: FullConfigInternal, fileSuitesByProject: Map<FullProjectInternal, Suite[]>, errors: TestError[], shouldFilterOnly: boolean): Promise<Suite> {
+export async function createRootSuite(testRun: TestRun, errors: TestError[], shouldFilterOnly: boolean): Promise<Suite> {
+  const config = testRun.config;
   // Create root suite, where each child will be a project suite with cloned file suites inside it.
   const rootSuite = new Suite('', 'root');
 
   // First add top-level projects, so that we can filterOnly and shard just top-level.
   {
     // Interpret cli parameters.
-    const cliFileFilters = createFileFiltersFromArguments(config._internal.cliArgs);
-    const grepMatcher = config._internal.cliGrep ? createTitleMatcher(forceRegExp(config._internal.cliGrep)) : () => true;
-    const grepInvertMatcher = config._internal.cliGrepInvert ? createTitleMatcher(forceRegExp(config._internal.cliGrepInvert)) : () => false;
+    const cliFileFilters = createFileFiltersFromArguments(config.cliArgs);
+    const grepMatcher = config.cliGrep ? createTitleMatcher(forceRegExp(config.cliGrep)) : () => true;
+    const grepInvertMatcher = config.cliGrepInvert ? createTitleMatcher(forceRegExp(config.cliGrepInvert)) : () => false;
     const cliTitleMatcher = (title: string) => !grepInvertMatcher(title) && grepMatcher(title);
 
     // Clone file suites for top-level projects.
-    for (const [project, fileSuites] of fileSuitesByProject) {
-      if (project._internal.type === 'top-level')
-        rootSuite._addSuite(await createProjectSuite(fileSuites, project, { cliFileFilters, cliTitleMatcher, testIdMatcher: config._internal.testIdMatcher }));
+    for (const [project, fileSuites] of testRun.projectSuites) {
+      if (testRun.projectType.get(project) === 'top-level')
+        rootSuite._addSuite(await createProjectSuite(fileSuites, project, { cliFileFilters, cliTitleMatcher, testIdMatcher: config.testIdMatcher }));
     }
   }
 
   // Complain about only.
-  if (config.forbidOnly) {
+  if (config.config.forbidOnly) {
     const onlyTestsAndSuites = rootSuite._getOnlyItems();
     if (onlyTestsAndSuites.length > 0)
       errors.push(...createForbidOnlyErrors(onlyTestsAndSuites));
@@ -145,14 +150,14 @@ export async function createRootSuite(config: FullConfigInternal, fileSuitesByPr
     filterOnly(rootSuite);
 
   // Shard only the top-level projects.
-  if (config.shard) {
+  if (config.config.shard) {
     // Create test groups for top-level projects.
     const testGroups: TestGroup[] = [];
     for (const projectSuite of rootSuite.suites)
-      testGroups.push(...createTestGroups(projectSuite, config.workers));
+      testGroups.push(...createTestGroups(projectSuite, config.config.workers));
 
     // Shard test groups.
-    const testGroupsInThisShard = filterForShard(config.shard, testGroups);
+    const testGroupsInThisShard = filterForShard(config.config.shard, testGroups);
     const testsInThisShard = new Set<TestCase>();
     for (const group of testGroupsInThisShard) {
       for (const test of group.tests)
@@ -167,11 +172,11 @@ export async function createRootSuite(config: FullConfigInternal, fileSuitesByPr
   {
     // Filtering only and sharding might have reduced the number of top-level projects.
     // Build the project closure to only include dependencies that are still needed.
-    const projectClosure = new Set(buildProjectsClosure(rootSuite.suites.map(suite => suite.project() as FullProjectInternal)));
+    const projectClosure = new Map(buildProjectsClosure(rootSuite.suites.map(suite => suite._fullProject!)));
 
     // Clone file suites for dependency projects.
-    for (const [project, fileSuites] of fileSuitesByProject) {
-      if (project._internal.type === 'dependency' && projectClosure.has(project))
+    for (const [project, fileSuites] of testRun.projectSuites) {
+      if (testRun.projectType.get(project) === 'dependency' && projectClosure.has(project))
         rootSuite._prependSuite(await createProjectSuite(fileSuites, project, { cliFileFilters: [], cliTitleMatcher: undefined }));
     }
   }
@@ -180,12 +185,12 @@ export async function createRootSuite(config: FullConfigInternal, fileSuitesByPr
 }
 
 async function createProjectSuite(fileSuites: Suite[], project: FullProjectInternal, options: { cliFileFilters: TestFileFilter[], cliTitleMatcher?: Matcher, testIdMatcher?: Matcher }): Promise<Suite> {
-  const projectSuite = new Suite(project.name, 'project');
-  projectSuite._projectConfig = project;
-  if (project._internal.fullyParallel)
+  const projectSuite = new Suite(project.project.name, 'project');
+  projectSuite._fullProject = project;
+  if (project.fullyParallel)
     projectSuite._parallelMode = 'parallel';
   for (const fileSuite of fileSuites) {
-    for (let repeatEachIndex = 0; repeatEachIndex < project.repeatEach; repeatEachIndex++) {
+    for (let repeatEachIndex = 0; repeatEachIndex < project.project.repeatEach; repeatEachIndex++) {
       const builtSuite = buildFileSuiteForProject(project, fileSuite, repeatEachIndex);
       projectSuite._addSuite(builtSuite);
     }
@@ -194,8 +199,8 @@ async function createProjectSuite(fileSuites: Suite[], project: FullProjectInter
   filterByFocusedLine(projectSuite, options.cliFileFilters);
   filterByTestIds(projectSuite, options.testIdMatcher);
 
-  const grepMatcher = createTitleMatcher(project.grep);
-  const grepInvertMatcher = project.grepInvert ? createTitleMatcher(project.grepInvert) : null;
+  const grepMatcher = createTitleMatcher(project.project.grep);
+  const grepInvertMatcher = project.project.grepInvert ? createTitleMatcher(project.project.grepInvert) : null;
 
   const titleMatcher = (test: TestCase) => {
     const grepTitle = test.titlePath().join(' ');
@@ -230,7 +235,7 @@ function createDuplicateTitlesErrors(config: FullConfigInternal, fileSuite: Suit
     const existingTest = testsByFullTitle.get(fullTitle);
     if (existingTest) {
       const error: TestError = {
-        message: `Error: duplicate test title "${fullTitle}", first declared in ${buildItemLocation(config.rootDir, existingTest)}`,
+        message: `Error: duplicate test title "${fullTitle}", first declared in ${buildItemLocation(config.config.rootDir, existingTest)}`,
         location: test.location,
       };
       errors.push(error);
@@ -255,37 +260,28 @@ async function requireOrImportDefaultFunction(file: string, expectConstructor: b
   return func;
 }
 
-export function loadGlobalHook(config: FullConfigInternal, file: string): Promise<(config: FullConfigInternal) => any> {
-  return requireOrImportDefaultFunction(path.resolve(config.rootDir, file), false);
+export function loadGlobalHook(config: FullConfigInternal, file: string): Promise<(config: FullConfig) => any> {
+  return requireOrImportDefaultFunction(path.resolve(config.config.rootDir, file), false);
 }
 
 export function loadReporter(config: FullConfigInternal, file: string): Promise<new (arg?: any) => Reporter> {
-  return requireOrImportDefaultFunction(path.resolve(config.rootDir, file), true);
+  return requireOrImportDefaultFunction(path.resolve(config.config.rootDir, file), true);
 }
 
-async function isPotentiallyJavaScriptFileWithSourceMap(file: string, cache: Map<string, boolean>): Promise<boolean> {
+function sourceMapSources(file: string, cache: Map<string, string[]>): string[] {
+  let sources = [file];
   if (!file.endsWith('.js'))
-    return false;
+    return sources;
   if (cache.has(file))
     return cache.get(file)!;
 
   try {
-    const stream = fs.createReadStream(file);
-    const rl = readline.createInterface({ input: stream, crlfDelay: Infinity });
-    let lastLine: string | undefined;
-    rl.on('line', line => {
-      lastLine = line;
-    });
-    await new Promise((fulfill, reject) => {
-      rl.on('close', fulfill);
-      rl.on('error', reject);
-      stream.on('error', reject);
-    });
-    const hasSourceMap = !!lastLine && lastLine.startsWith('//# sourceMappingURL=');
-    cache.set(file, hasSourceMap);
-    return hasSourceMap;
-  } catch (e) {
-    cache.set(file, true);
-    return true;
+    const sourceMap = sourceMapSupport.retrieveSourceMap(file);
+    const sourceMapData: RawSourceMap | undefined = typeof sourceMap?.map === 'string' ? JSON.parse(sourceMap.map) : sourceMap?.map;
+    if (sourceMapData?.sources)
+      sources = sourceMapData.sources.map(source => path.resolve(path.dirname(file), source));
+  } finally {
+    cache.set(file, sources);
+    return sources;
   }
 }

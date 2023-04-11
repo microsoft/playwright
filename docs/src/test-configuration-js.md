@@ -10,7 +10,7 @@ Playwright has many options to configure how your tests are run. You can specify
 Here are some of the most common configuration options.
 
 ```js
-import { defineConfig } from '@playwright/test';
+import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   // Look for test files in the "tests" directory, relative to this configuration file.

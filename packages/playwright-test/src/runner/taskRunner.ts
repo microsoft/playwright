@@ -16,22 +16,23 @@
 
 import { debug } from 'playwright-core/lib/utilsBundle';
 import { ManualPromise, monotonicTime } from 'playwright-core/lib/utils';
-import type { FullResult, Reporter, TestError } from '../../reporter';
+import type { FullResult, TestError } from '../../reporter';
 import { SigIntWatcher } from './sigIntWatcher';
 import { serializeError } from '../util';
+import type { Multiplexer } from '../reporters/multiplexer';
 
 type TaskTeardown = () => Promise<any> | undefined;
 export type Task<Context> = (context: Context, errors: TestError[]) => Promise<TaskTeardown | void> | undefined;
 
 export class TaskRunner<Context> {
   private _tasks: { name: string, task: Task<Context> }[] = [];
-  private _reporter: Reporter;
+  private _reporter: Multiplexer;
   private _hasErrors = false;
   private _interrupted = false;
   private _isTearDown = false;
   private _globalTimeoutForError: number;
 
-  constructor(reporter: Reporter, globalTimeoutForError: number) {
+  constructor(reporter: Multiplexer, globalTimeoutForError: number) {
     this._reporter = reporter;
     this._globalTimeoutForError = globalTimeoutForError;
   }

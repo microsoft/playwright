@@ -16,6 +16,7 @@
 
 import type { FullConfig, TestCase, TestError, TestResult, FullResult, TestStep, Reporter } from '../../types/testReporter';
 import { Suite } from '../common/test';
+import type { FullConfigInternal } from '../common/config';
 import { addSnippetToError } from './base';
 
 type StdIOChunk = {
@@ -24,10 +25,10 @@ type StdIOChunk = {
   result?: TestResult;
 };
 
-export class Multiplexer implements Reporter {
+export class Multiplexer {
   private _reporters: Reporter[];
   private _deferred: { error?: TestError, stdout?: StdIOChunk, stderr?: StdIOChunk }[] | null = [];
-  private _config!: FullConfig;
+  private _config!: FullConfigInternal;
 
   constructor(reporters: Reporter[]) {
     this._reporters = reporters;
@@ -37,7 +38,7 @@ export class Multiplexer implements Reporter {
     return this._reporters.some(r => r.printsToStdio ? r.printsToStdio() : true);
   }
 
-  onConfigure(config: FullConfig) {
+  onConfigure(config: FullConfigInternal) {
     this._config = config;
   }
 
@@ -92,14 +93,14 @@ export class Multiplexer implements Reporter {
   async onExit(result: FullResult) {
     if (this._deferred) {
       // onBegin was not reported, emit it.
-      this.onBegin(this._config, new Suite('', 'root'));
+      this.onBegin(this._config.config, new Suite('', 'root'));
     }
 
     for (const reporter of this._reporters)
       await Promise.resolve().then(() => reporter.onEnd?.(result)).catch(e => console.error('Error in reporter', e));
 
     for (const reporter of this._reporters)
-      await Promise.resolve().then(() => (reporter as any)._onExit?.()).catch(e => console.error('Error in reporter', e));
+      await Promise.resolve().then(() => reporter.onExit?.()).catch(e => console.error('Error in reporter', e));
   }
 
   onError(error: TestError) {
@@ -107,7 +108,7 @@ export class Multiplexer implements Reporter {
       this._deferred.push({ error });
       return;
     }
-    addSnippetToError(this._config, error);
+    addSnippetToError(this._config.config, error);
     for (const reporter of this._reporters)
       wrap(() => reporter.onError?.(error));
   }
@@ -125,12 +126,12 @@ export class Multiplexer implements Reporter {
 
   private _addSnippetToTestErrors(test: TestCase, result: TestResult) {
     for (const error of result.errors)
-      addSnippetToError(this._config, error, test.location.file);
+      addSnippetToError(this._config.config, error, test.location.file);
   }
 
   private _addSnippetToStepError(test: TestCase, step: TestStep) {
     if (step.error)
-      addSnippetToError(this._config, step.error, test.location.file);
+      addSnippetToError(this._config.config, step.error, test.location.file);
   }
 
 }

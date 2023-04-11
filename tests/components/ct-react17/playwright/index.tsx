@@ -1,4 +1,4 @@
-import { beforeMount, afterMount } from '@playwright/experimental-ct-react/hooks';
+import { beforeMount, afterMount } from '@playwright/experimental-ct-react17/hooks';
 import { BrowserRouter } from 'react-router-dom';
 import '../src/assets/index.css';
 

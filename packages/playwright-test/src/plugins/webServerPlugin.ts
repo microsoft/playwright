@@ -19,10 +19,11 @@ import net from 'net';
 import { debug } from 'playwright-core/lib/utilsBundle';
 import { raceAgainstTimeout, launchProcess, httpRequest } from 'playwright-core/lib/utils';
 
-import type { FullConfig, Reporter } from '../../types/testReporter';
+import type { FullConfig } from '../../types/testReporter';
 import type { TestRunnerPlugin } from '.';
-import type { FullConfigInternal } from '../common/types';
+import type { FullConfigInternal } from '../common/config';
 import { envWithoutExperimentalLoaderOptions } from '../util';
+import type { Multiplexer } from '../reporters/multiplexer';
 
 
 export type WebServerPluginOptions = {
@@ -47,7 +48,7 @@ export class WebServerPlugin implements TestRunnerPlugin {
   private _processExitedPromise!: Promise<any>;
   private _options: WebServerPluginOptions;
   private _checkPortOnly: boolean;
-  private _reporter?: Reporter;
+  private _reporter?: Multiplexer;
   name = 'playwright:webserver';
 
   constructor(options: WebServerPluginOptions, checkPortOnly: boolean) {
@@ -55,7 +56,7 @@ export class WebServerPlugin implements TestRunnerPlugin {
     this._checkPortOnly = checkPortOnly;
   }
 
-  public async setup(config: FullConfig, configDir: string, reporter: Reporter) {
+  public async setup(config: FullConfig, configDir: string, reporter: Multiplexer) {
     this._reporter = reporter;
     this._isAvailable = getIsAvailableFunction(this._options.url, this._checkPortOnly, !!this._options.ignoreHTTPSErrors, this._reporter.onStdErr?.bind(this._reporter));
     this._options.cwd = this._options.cwd ? path.resolve(configDir, this._options.cwd) : configDir;
@@ -146,7 +147,7 @@ async function isPortUsed(port: number): Promise<boolean> {
   return await innerIsPortUsed('127.0.0.1') || await innerIsPortUsed('::1');
 }
 
-async function isURLAvailable(url: URL, ignoreHTTPSErrors: boolean, onStdErr: Reporter['onStdErr']) {
+async function isURLAvailable(url: URL, ignoreHTTPSErrors: boolean, onStdErr: Multiplexer['onStdErr']) {
   let statusCode = await httpStatusCode(url, ignoreHTTPSErrors, onStdErr);
   if (statusCode === 404 && url.pathname === '/') {
     const indexUrl = new URL(url);
@@ -156,7 +157,7 @@ async function isURLAvailable(url: URL, ignoreHTTPSErrors: boolean, onStdErr: Re
   return statusCode >= 200 && statusCode < 404;
 }
 
-async function httpStatusCode(url: URL, ignoreHTTPSErrors: boolean, onStdErr: Reporter['onStdErr']): Promise<number> {
+async function httpStatusCode(url: URL, ignoreHTTPSErrors: boolean, onStdErr: Multiplexer['onStdErr']): Promise<number> {
   return new Promise(resolve => {
     debugWebServer(`HTTP GET: ${url}`);
     httpRequest({
@@ -189,7 +190,7 @@ async function waitFor(waitFn: () => Promise<boolean>, cancellationToken: { canc
   }
 }
 
-function getIsAvailableFunction(url: string, checkPortOnly: boolean, ignoreHTTPSErrors: boolean, onStdErr: Reporter['onStdErr']) {
+function getIsAvailableFunction(url: string, checkPortOnly: boolean, ignoreHTTPSErrors: boolean, onStdErr: Multiplexer['onStdErr']) {
   const urlObject = new URL(url);
   if (!checkPortOnly)
     return () => isURLAvailable(urlObject, ignoreHTTPSErrors, onStdErr);
@@ -203,9 +204,9 @@ export const webServer = (options: WebServerPluginOptions): TestRunnerPlugin => 
 };
 
 export const webServerPluginsForConfig = (config: FullConfigInternal): TestRunnerPlugin[] => {
-  const shouldSetBaseUrl = !!config.webServer;
+  const shouldSetBaseUrl = !!config.config.webServer;
   const webServerPlugins = [];
-  for (const webServerConfig of config._internal.webServers) {
+  for (const webServerConfig of config.webServers) {
     if ((!webServerConfig.port && !webServerConfig.url) || (webServerConfig.port && webServerConfig.url))
       throw new Error(`Exactly one of 'port' or 'url' is required in config.webServer.`);
 

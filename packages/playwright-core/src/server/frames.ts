@@ -41,6 +41,7 @@ import type { ScreenshotOptions } from './screenshotter';
 import type { InputFilesItems } from './dom';
 import { asLocator } from '../utils/isomorphic/locatorGenerators';
 import { FrameSelectors } from './frameSelectors';
+import { TimeoutError } from '../common/errors';
 
 type ContextData = {
   contextPromise: ManualPromise<dom.FrameExecutionContext | Error>;
@@ -1031,8 +1032,8 @@ export class Frame extends SdkObject {
     let cspMessage: ConsoleMessage | undefined;
     const actionPromise = func().then(r => result = r).catch(e => error = e);
     const errorPromise = new Promise<void>(resolve => {
-      listeners.push(eventsHelper.addEventListener(this._page._browserContext, BrowserContext.Events.Console, (message: ConsoleMessage) => {
-        if (message.page() === this._page && message.type() === 'error' && message.text().includes('Content Security Policy')) {
+      listeners.push(eventsHelper.addEventListener(this._page, Page.Events.Console, (message: ConsoleMessage) => {
+        if (message.type() === 'error' && message.text().includes('Content Security Policy')) {
           cspMessage = message;
           resolve();
         }
@@ -1381,9 +1382,10 @@ export class Frame extends SdkObject {
   private async _expectInternal(metadata: CallMetadata, selector: string, options: FrameExpectParams, oneShot: boolean, timeout: number, lastIntermediateResult: { received?: any, isSet: boolean }): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }> {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
-      if (oneShot)
+      if (oneShot) {
         progress.log(`${metadata.apiName}${timeout ? ` with timeout ${timeout}ms` : ''}`);
-      progress.log(`waiting for ${this._asLocator(selector)}`);
+        progress.log(`waiting for ${this._asLocator(selector)}`);
+      }
       return await this.retryWithProgressAndTimeouts(progress, [100, 250, 500, 1000], async continuePolling => {
         const selectorInFrame = await this.selectors.resolveFrameForSelector(selector, { strict: true });
         progress.throwIfAborted();
@@ -1434,7 +1436,7 @@ export class Frame extends SdkObject {
       const result: { matches: boolean, received?: any, log?: string[], timedOut?: boolean } = { matches: options.isNot, log: metadata.log };
       if (lastIntermediateResult.isSet)
         result.received = lastIntermediateResult.received;
-      else
+      if (e instanceof TimeoutError)
         result.timedOut = true;
       return result;
     });

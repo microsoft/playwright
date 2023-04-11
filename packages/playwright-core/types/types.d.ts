@@ -894,9 +894,9 @@ export interface Page {
    * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also
    * emitted if the page throws an error or a warning.
    *
-   * The arguments passed into `console.log` are available on the [ConsoleMessage] event handler argument.
+   * The arguments passed into `console.log` appear as arguments on the event handler.
    *
-   * **Usage**
+   * An example of handling `console` event:
    *
    * ```js
    * page.on('console', async msg => {
@@ -905,7 +905,7 @@ export interface Page {
    *     values.push(await arg.jsonValue());
    *   console.log(...values);
    * });
-   * await page.evaluate(() => console.log('hello', 5, { foo: 'bar' }));
+   * await page.evaluate(() => console.log('hello', 5, {foo: 'bar'}));
    * ```
    *
    */
@@ -938,17 +938,14 @@ export interface Page {
    * will [freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop#never_blocking) waiting for the
    * dialog, and actions like click will never finish.
    *
-   * **Usage**
-   *
    * ```js
    * page.on('dialog', dialog => {
    *   dialog.accept();
    * });
    * ```
    *
-   * **NOTE** When no [page.on('dialog')](https://playwright.dev/docs/api/class-page#page-event-dialog) or
-   * [browserContext.on('dialog')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-dialog)
-   * listeners are present, all dialogs are automatically dismissed.
+   * **NOTE** When no [page.on('dialog')](https://playwright.dev/docs/api/class-page#page-event-dialog) listeners are
+   * present, all dialogs are automatically dismissed.
    */
   on(event: 'dialog', listener: (dialog: Dialog) => void): this;
 
@@ -1190,9 +1187,9 @@ export interface Page {
    * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also
    * emitted if the page throws an error or a warning.
    *
-   * The arguments passed into `console.log` are available on the [ConsoleMessage] event handler argument.
+   * The arguments passed into `console.log` appear as arguments on the event handler.
    *
-   * **Usage**
+   * An example of handling `console` event:
    *
    * ```js
    * page.on('console', async msg => {
@@ -1201,7 +1198,7 @@ export interface Page {
    *     values.push(await arg.jsonValue());
    *   console.log(...values);
    * });
-   * await page.evaluate(() => console.log('hello', 5, { foo: 'bar' }));
+   * await page.evaluate(() => console.log('hello', 5, {foo: 'bar'}));
    * ```
    *
    */
@@ -1234,17 +1231,14 @@ export interface Page {
    * will [freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop#never_blocking) waiting for the
    * dialog, and actions like click will never finish.
    *
-   * **Usage**
-   *
    * ```js
    * page.on('dialog', dialog => {
    *   dialog.accept();
    * });
    * ```
    *
-   * **NOTE** When no [page.on('dialog')](https://playwright.dev/docs/api/class-page#page-event-dialog) or
-   * [browserContext.on('dialog')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-dialog)
-   * listeners are present, all dialogs are automatically dismissed.
+   * **NOTE** When no [page.on('dialog')](https://playwright.dev/docs/api/class-page#page-event-dialog) listeners are
+   * present, all dialogs are automatically dismissed.
    */
   addListener(event: 'dialog', listener: (dialog: Dialog) => void): this;
 
@@ -1581,9 +1575,9 @@ export interface Page {
    * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also
    * emitted if the page throws an error or a warning.
    *
-   * The arguments passed into `console.log` are available on the [ConsoleMessage] event handler argument.
+   * The arguments passed into `console.log` appear as arguments on the event handler.
    *
-   * **Usage**
+   * An example of handling `console` event:
    *
    * ```js
    * page.on('console', async msg => {
@@ -1592,7 +1586,7 @@ export interface Page {
    *     values.push(await arg.jsonValue());
    *   console.log(...values);
    * });
-   * await page.evaluate(() => console.log('hello', 5, { foo: 'bar' }));
+   * await page.evaluate(() => console.log('hello', 5, {foo: 'bar'}));
    * ```
    *
    */
@@ -1625,17 +1619,14 @@ export interface Page {
    * will [freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop#never_blocking) waiting for the
    * dialog, and actions like click will never finish.
    *
-   * **Usage**
-   *
    * ```js
    * page.on('dialog', dialog => {
    *   dialog.accept();
    * });
    * ```
    *
-   * **NOTE** When no [page.on('dialog')](https://playwright.dev/docs/api/class-page#page-event-dialog) or
-   * [browserContext.on('dialog')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-dialog)
-   * listeners are present, all dialogs are automatically dismissed.
+   * **NOTE** When no [page.on('dialog')](https://playwright.dev/docs/api/class-page#page-event-dialog) listeners are
+   * present, all dialogs are automatically dismissed.
    */
   prependListener(event: 'dialog', listener: (dialog: Dialog) => void): this;
 
@@ -2810,8 +2801,8 @@ export interface Page {
      * When to consider operation succeeded, defaults to `load`. Events can be either:
      * - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
      * - `'load'` - consider operation to be finished when the `load` event is fired.
-     * - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500`
-     *   ms.
+     * - `'networkidle'` - **DISCOURAGED** consider operation to be finished when there are no network connections for
+     *   at least `500` ms. Don't use this method for testing, rely on web assertions to assess readiness instead.
      * - `'commit'` - consider operation to be finished when network response is received and the document started
      *   loading.
      */
@@ -2840,8 +2831,8 @@ export interface Page {
      * When to consider operation succeeded, defaults to `load`. Events can be either:
      * - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
      * - `'load'` - consider operation to be finished when the `load` event is fired.
-     * - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500`
-     *   ms.
+     * - `'networkidle'` - **DISCOURAGED** consider operation to be finished when there are no network connections for
+     *   at least `500` ms. Don't use this method for testing, rely on web assertions to assess readiness instead.
      * - `'commit'` - consider operation to be finished when network response is received and the document started
      *   loading.
      */
@@ -2894,8 +2885,8 @@ export interface Page {
      * When to consider operation succeeded, defaults to `load`. Events can be either:
      * - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
      * - `'load'` - consider operation to be finished when the `load` event is fired.
-     * - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500`
-     *   ms.
+     * - `'networkidle'` - **DISCOURAGED** consider operation to be finished when there are no network connections for
+     *   at least `500` ms. Don't use this method for testing, rely on web assertions to assess readiness instead.
      * - `'commit'` - consider operation to be finished when network response is received and the document started
      *   loading.
      */
@@ -3227,6 +3218,20 @@ export interface Page {
     has?: Locator;
 
     /**
+     * Matches elements that do not contain an element that matches an inner locator. Inner locator is queried against the
+     * outer one. For example, `article` that does not have `div` matches `<article><span>Playwright</span></article>`.
+     *
+     * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
+     */
+    hasNot?: Locator;
+
+    /**
+     * Matches elements that do not contain specified text somewhere inside, possibly in a child or a descendant element.
+     * When passed a [string], matching is case-insensitive and searches for a substring.
+     */
+    hasNotText?: string|RegExp;
+
+    /**
      * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. When
      * passed a [string], matching is case-insensitive and searches for a substring. For example, `"Playwright"` matches
      * `<article><div>Playwright</div></article>`.
@@ -3498,8 +3503,8 @@ export interface Page {
      * When to consider operation succeeded, defaults to `load`. Events can be either:
      * - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
      * - `'load'` - consider operation to be finished when the `load` event is fired.
-     * - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500`
-     *   ms.
+     * - `'networkidle'` - **DISCOURAGED** consider operation to be finished when there are no network connections for
+     *   at least `500` ms. Don't use this method for testing, rely on web assertions to assess readiness instead.
      * - `'commit'` - consider operation to be finished when network response is received and the document started
      *   loading.
      */
@@ -3807,8 +3812,8 @@ export interface Page {
      * When to consider operation succeeded, defaults to `load`. Events can be either:
      * - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
      * - `'load'` - consider operation to be finished when the `load` event is fired.
-     * - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500`
-     *   ms.
+     * - `'networkidle'` - **DISCOURAGED** consider operation to be finished when there are no network connections for
+     *   at least `500` ms. Don't use this method for testing, rely on web assertions to assess readiness instead.
      * - `'commit'` - consider operation to be finished when network response is received and the document started
      *   loading.
      */
@@ -4222,9 +4227,9 @@ export interface Page {
    * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also
    * emitted if the page throws an error or a warning.
    *
-   * The arguments passed into `console.log` are available on the [ConsoleMessage] event handler argument.
+   * The arguments passed into `console.log` appear as arguments on the event handler.
    *
-   * **Usage**
+   * An example of handling `console` event:
    *
    * ```js
    * page.on('console', async msg => {
@@ -4233,7 +4238,7 @@ export interface Page {
    *     values.push(await arg.jsonValue());
    *   console.log(...values);
    * });
-   * await page.evaluate(() => console.log('hello', 5, { foo: 'bar' }));
+   * await page.evaluate(() => console.log('hello', 5, {foo: 'bar'}));
    * ```
    *
    */
@@ -4266,17 +4271,14 @@ export interface Page {
    * will [freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop#never_blocking) waiting for the
    * dialog, and actions like click will never finish.
    *
-   * **Usage**
-   *
    * ```js
    * page.on('dialog', dialog => {
    *   dialog.accept();
    * });
    * ```
    *
-   * **NOTE** When no [page.on('dialog')](https://playwright.dev/docs/api/class-page#page-event-dialog) or
-   * [browserContext.on('dialog')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-dialog)
-   * listeners are present, all dialogs are automatically dismissed.
+   * **NOTE** When no [page.on('dialog')](https://playwright.dev/docs/api/class-page#page-event-dialog) listeners are
+   * present, all dialogs are automatically dismissed.
    */
   waitForEvent(event: 'dialog', optionsOrPredicate?: { predicate?: (dialog: Dialog) => boolean | Promise<boolean>, timeout?: number } | ((dialog: Dialog) => boolean | Promise<boolean>)): Promise<Dialog>;
 
@@ -4441,7 +4443,8 @@ export interface Page {
    * document, the method resolves immediately. Can be one of:
    * - `'load'` - wait for the `load` event to be fired.
    * - `'domcontentloaded'` - wait for the `DOMContentLoaded` event to be fired.
-   * - `'networkidle'` - wait until there are no network connections for at least `500` ms.
+   * - `'networkidle'` - **DISCOURAGED** wait until there are no network connections for at least `500` ms. Don't use
+   * this method for testing, rely on web assertions to assess readiness instead.
    * @param options
    */
   waitForLoadState(state?: "load"|"domcontentloaded"|"networkidle", options?: {
@@ -4502,8 +4505,8 @@ export interface Page {
      * When to consider operation succeeded, defaults to `load`. Events can be either:
      * - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
      * - `'load'` - consider operation to be finished when the `load` event is fired.
-     * - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500`
-     *   ms.
+     * - `'networkidle'` - **DISCOURAGED** consider operation to be finished when there are no network connections for
+     *   at least `500` ms. Don't use this method for testing, rely on web assertions to assess readiness instead.
      * - `'commit'` - consider operation to be finished when network response is received and the document started
      *   loading.
      */
@@ -4623,8 +4626,8 @@ export interface Page {
      * When to consider operation succeeded, defaults to `load`. Events can be either:
      * - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
      * - `'load'` - consider operation to be finished when the `load` event is fired.
-     * - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500`
-     *   ms.
+     * - `'networkidle'` - **DISCOURAGED** consider operation to be finished when there are no network connections for
+     *   at least `500` ms. Don't use this method for testing, rely on web assertions to assess readiness instead.
      * - `'commit'` - consider operation to be finished when network response is received and the document started
      *   loading.
      */
@@ -6275,8 +6278,8 @@ export interface Frame {
      * When to consider operation succeeded, defaults to `load`. Events can be either:
      * - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
      * - `'load'` - consider operation to be finished when the `load` event is fired.
-     * - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500`
-     *   ms.
+     * - `'networkidle'` - **DISCOURAGED** consider operation to be finished when there are no network connections for
+     *   at least `500` ms. Don't use this method for testing, rely on web assertions to assess readiness instead.
      * - `'commit'` - consider operation to be finished when network response is received and the document started
      *   loading.
      */
@@ -6607,6 +6610,20 @@ export interface Frame {
     has?: Locator;
 
     /**
+     * Matches elements that do not contain an element that matches an inner locator. Inner locator is queried against the
+     * outer one. For example, `article` that does not have `div` matches `<article><span>Playwright</span></article>`.
+     *
+     * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
+     */
+    hasNot?: Locator;
+
+    /**
+     * Matches elements that do not contain specified text somewhere inside, possibly in a child or a descendant element.
+     * When passed a [string], matching is case-insensitive and searches for a substring.
+     */
+    hasNotText?: string|RegExp;
+
+    /**
      * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. When
      * passed a [string], matching is case-insensitive and searches for a substring. For example, `"Playwright"` matches
      * `<article><div>Playwright</div></article>`.
@@ -6870,8 +6887,8 @@ export interface Frame {
      * When to consider operation succeeded, defaults to `load`. Events can be either:
      * - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
      * - `'load'` - consider operation to be finished when the `load` event is fired.
-     * - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500`
-     *   ms.
+     * - `'networkidle'` - **DISCOURAGED** consider operation to be finished when there are no network connections for
+     *   at least `500` ms. Don't use this method for testing, rely on web assertions to assess readiness instead.
      * - `'commit'` - consider operation to be finished when network response is received and the document started
      *   loading.
      */
@@ -7190,7 +7207,8 @@ export interface Frame {
    * document, the method resolves immediately. Can be one of:
    * - `'load'` - wait for the `load` event to be fired.
    * - `'domcontentloaded'` - wait for the `DOMContentLoaded` event to be fired.
-   * - `'networkidle'` - wait until there are no network connections for at least `500` ms.
+   * - `'networkidle'` - **DISCOURAGED** wait until there are no network connections for at least `500` ms. Don't use
+   * this method for testing, rely on web assertions to assess readiness instead.
    * @param options
    */
   waitForLoadState(state?: "load"|"domcontentloaded"|"networkidle", options?: {
@@ -7250,8 +7268,8 @@ export interface Frame {
      * When to consider operation succeeded, defaults to `load`. Events can be either:
      * - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
      * - `'load'` - consider operation to be finished when the `load` event is fired.
-     * - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500`
-     *   ms.
+     * - `'networkidle'` - **DISCOURAGED** consider operation to be finished when there are no network connections for
+     *   at least `500` ms. Don't use this method for testing, rely on web assertions to assess readiness instead.
      * - `'commit'` - consider operation to be finished when network response is received and the document started
      *   loading.
      */
@@ -7297,8 +7315,8 @@ export interface Frame {
      * When to consider operation succeeded, defaults to `load`. Events can be either:
      * - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
      * - `'load'` - consider operation to be finished when the `load` event is fired.
-     * - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500`
-     *   ms.
+     * - `'networkidle'` - **DISCOURAGED** consider operation to be finished when there are no network connections for
+     *   at least `500` ms. Don't use this method for testing, rely on web assertions to assess readiness instead.
      * - `'commit'` - consider operation to be finished when network response is received and the document started
      *   loading.
      */
@@ -7497,48 +7515,6 @@ export interface BrowserContext {
   on(event: 'close', listener: (browserContext: BrowserContext) => void): this;
 
   /**
-   * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also
-   * emitted if the page throws an error or a warning.
-   *
-   * The arguments passed into `console.log` and the page are available on the [ConsoleMessage] event handler argument.
-   *
-   * **Usage**
-   *
-   * ```js
-   * context.on('console', async msg => {
-   *   const values = [];
-   *   for (const arg of msg.args())
-   *     values.push(await arg.jsonValue());
-   *   console.log(...values);
-   * });
-   * await page.evaluate(() => console.log('hello', 5, { foo: 'bar' }));
-   * ```
-   *
-   */
-  on(event: 'console', listener: (consoleMessage: ConsoleMessage) => void): this;
-
-  /**
-   * Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Listener **must**
-   * either [dialog.accept([promptText])](https://playwright.dev/docs/api/class-dialog#dialog-accept) or
-   * [dialog.dismiss()](https://playwright.dev/docs/api/class-dialog#dialog-dismiss) the dialog - otherwise the page
-   * will [freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop#never_blocking) waiting for the
-   * dialog, and actions like click will never finish.
-   *
-   * **Usage**
-   *
-   * ```js
-   * context.on('dialog', dialog => {
-   *   dialog.accept();
-   * });
-   * ```
-   *
-   * **NOTE** When no [page.on('dialog')](https://playwright.dev/docs/api/class-page#page-event-dialog) or
-   * [browserContext.on('dialog')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-dialog)
-   * listeners are present, all dialogs are automatically dismissed.
-   */
-  on(event: 'dialog', listener: (dialog: Dialog) => void): this;
-
-  /**
    * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event
    * will also fire for popup pages. See also
    * [page.on('popup')](https://playwright.dev/docs/api/class-page#page-event-popup) to receive events about popups
@@ -7619,16 +7595,6 @@ export interface BrowserContext {
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
-  once(event: 'console', listener: (consoleMessage: ConsoleMessage) => void): this;
-
-  /**
-   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
-   */
-  once(event: 'dialog', listener: (dialog: Dialog) => void): this;
-
-  /**
-   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
-   */
   once(event: 'page', listener: (page: Page) => void): this;
 
   /**
@@ -7675,48 +7641,6 @@ export interface BrowserContext {
    * - The [browser.close()](https://playwright.dev/docs/api/class-browser#browser-close) method was called.
    */
   addListener(event: 'close', listener: (browserContext: BrowserContext) => void): this;
-
-  /**
-   * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also
-   * emitted if the page throws an error or a warning.
-   *
-   * The arguments passed into `console.log` and the page are available on the [ConsoleMessage] event handler argument.
-   *
-   * **Usage**
-   *
-   * ```js
-   * context.on('console', async msg => {
-   *   const values = [];
-   *   for (const arg of msg.args())
-   *     values.push(await arg.jsonValue());
-   *   console.log(...values);
-   * });
-   * await page.evaluate(() => console.log('hello', 5, { foo: 'bar' }));
-   * ```
-   *
-   */
-  addListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => void): this;
-
-  /**
-   * Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Listener **must**
-   * either [dialog.accept([promptText])](https://playwright.dev/docs/api/class-dialog#dialog-accept) or
-   * [dialog.dismiss()](https://playwright.dev/docs/api/class-dialog#dialog-dismiss) the dialog - otherwise the page
-   * will [freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop#never_blocking) waiting for the
-   * dialog, and actions like click will never finish.
-   *
-   * **Usage**
-   *
-   * ```js
-   * context.on('dialog', dialog => {
-   *   dialog.accept();
-   * });
-   * ```
-   *
-   * **NOTE** When no [page.on('dialog')](https://playwright.dev/docs/api/class-page#page-event-dialog) or
-   * [browserContext.on('dialog')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-dialog)
-   * listeners are present, all dialogs are automatically dismissed.
-   */
-  addListener(event: 'dialog', listener: (dialog: Dialog) => void): this;
 
   /**
    * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event
@@ -7799,16 +7723,6 @@ export interface BrowserContext {
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => void): this;
-
-  /**
-   * Removes an event listener added by `on` or `addListener`.
-   */
-  removeListener(event: 'dialog', listener: (dialog: Dialog) => void): this;
-
-  /**
-   * Removes an event listener added by `on` or `addListener`.
-   */
   removeListener(event: 'page', listener: (page: Page) => void): this;
 
   /**
@@ -7845,16 +7759,6 @@ export interface BrowserContext {
    * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'close', listener: (browserContext: BrowserContext) => void): this;
-
-  /**
-   * Removes an event listener added by `on` or `addListener`.
-   */
-  off(event: 'console', listener: (consoleMessage: ConsoleMessage) => void): this;
-
-  /**
-   * Removes an event listener added by `on` or `addListener`.
-   */
-  off(event: 'dialog', listener: (dialog: Dialog) => void): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
@@ -7905,48 +7809,6 @@ export interface BrowserContext {
    * - The [browser.close()](https://playwright.dev/docs/api/class-browser#browser-close) method was called.
    */
   prependListener(event: 'close', listener: (browserContext: BrowserContext) => void): this;
-
-  /**
-   * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also
-   * emitted if the page throws an error or a warning.
-   *
-   * The arguments passed into `console.log` and the page are available on the [ConsoleMessage] event handler argument.
-   *
-   * **Usage**
-   *
-   * ```js
-   * context.on('console', async msg => {
-   *   const values = [];
-   *   for (const arg of msg.args())
-   *     values.push(await arg.jsonValue());
-   *   console.log(...values);
-   * });
-   * await page.evaluate(() => console.log('hello', 5, { foo: 'bar' }));
-   * ```
-   *
-   */
-  prependListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => void): this;
-
-  /**
-   * Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Listener **must**
-   * either [dialog.accept([promptText])](https://playwright.dev/docs/api/class-dialog#dialog-accept) or
-   * [dialog.dismiss()](https://playwright.dev/docs/api/class-dialog#dialog-dismiss) the dialog - otherwise the page
-   * will [freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop#never_blocking) waiting for the
-   * dialog, and actions like click will never finish.
-   *
-   * **Usage**
-   *
-   * ```js
-   * context.on('dialog', dialog => {
-   *   dialog.accept();
-   * });
-   * ```
-   *
-   * **NOTE** When no [page.on('dialog')](https://playwright.dev/docs/api/class-page#page-event-dialog) or
-   * [browserContext.on('dialog')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-dialog)
-   * listeners are present, all dialogs are automatically dismissed.
-   */
-  prependListener(event: 'dialog', listener: (dialog: Dialog) => void): this;
 
   /**
    * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event
@@ -8486,48 +8348,6 @@ export interface BrowserContext {
    * - The [browser.close()](https://playwright.dev/docs/api/class-browser#browser-close) method was called.
    */
   waitForEvent(event: 'close', optionsOrPredicate?: { predicate?: (browserContext: BrowserContext) => boolean | Promise<boolean>, timeout?: number } | ((browserContext: BrowserContext) => boolean | Promise<boolean>)): Promise<BrowserContext>;
-
-  /**
-   * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also
-   * emitted if the page throws an error or a warning.
-   *
-   * The arguments passed into `console.log` and the page are available on the [ConsoleMessage] event handler argument.
-   *
-   * **Usage**
-   *
-   * ```js
-   * context.on('console', async msg => {
-   *   const values = [];
-   *   for (const arg of msg.args())
-   *     values.push(await arg.jsonValue());
-   *   console.log(...values);
-   * });
-   * await page.evaluate(() => console.log('hello', 5, { foo: 'bar' }));
-   * ```
-   *
-   */
-  waitForEvent(event: 'console', optionsOrPredicate?: { predicate?: (consoleMessage: ConsoleMessage) => boolean | Promise<boolean>, timeout?: number } | ((consoleMessage: ConsoleMessage) => boolean | Promise<boolean>)): Promise<ConsoleMessage>;
-
-  /**
-   * Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Listener **must**
-   * either [dialog.accept([promptText])](https://playwright.dev/docs/api/class-dialog#dialog-accept) or
-   * [dialog.dismiss()](https://playwright.dev/docs/api/class-dialog#dialog-dismiss) the dialog - otherwise the page
-   * will [freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop#never_blocking) waiting for the
-   * dialog, and actions like click will never finish.
-   *
-   * **Usage**
-   *
-   * ```js
-   * context.on('dialog', dialog => {
-   *   dialog.accept();
-   * });
-   * ```
-   *
-   * **NOTE** When no [page.on('dialog')](https://playwright.dev/docs/api/class-page#page-event-dialog) or
-   * [browserContext.on('dialog')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-dialog)
-   * listeners are present, all dialogs are automatically dismissed.
-   */
-  waitForEvent(event: 'dialog', optionsOrPredicate?: { predicate?: (dialog: Dialog) => boolean | Promise<boolean>, timeout?: number } | ((dialog: Dialog) => boolean | Promise<boolean>)): Promise<Dialog>;
 
   /**
    * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event
@@ -10423,21 +10243,6 @@ export interface Locator {
   allTextContents(): Promise<Array<string>>;
 
   /**
-   * Creates a locator that matches both this locator and the argument locator.
-   *
-   * **Usage**
-   *
-   * The following example finds a button with a specific title.
-   *
-   * ```js
-   * const button = page.getByRole('button').and(page.getByTitle('Subscribe'));
-   * ```
-   *
-   * @param locator Additional locator to match.
-   */
-  and(locator: Locator): Locator;
-
-  /**
    * Calls [blur](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/blur) on the element.
    * @param options
    */
@@ -11036,6 +10841,20 @@ export interface Locator {
      * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
      */
     has?: Locator;
+
+    /**
+     * Matches elements that do not contain an element that matches an inner locator. Inner locator is queried against the
+     * outer one. For example, `article` that does not have `div` matches `<article><span>Playwright</span></article>`.
+     *
+     * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
+     */
+    hasNot?: Locator;
+
+    /**
+     * Matches elements that do not contain specified text somewhere inside, possibly in a child or a descendant element.
+     * When passed a [string], matching is case-insensitive and searches for a substring.
+     */
+    hasNotText?: string|RegExp;
 
     /**
      * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. When
@@ -11686,27 +11505,26 @@ export interface Locator {
     has?: Locator;
 
     /**
+     * Matches elements that do not contain an element that matches an inner locator. Inner locator is queried against the
+     * outer one. For example, `article` that does not have `div` matches `<article><span>Playwright</span></article>`.
+     *
+     * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
+     */
+    hasNot?: Locator;
+
+    /**
+     * Matches elements that do not contain specified text somewhere inside, possibly in a child or a descendant element.
+     * When passed a [string], matching is case-insensitive and searches for a substring.
+     */
+    hasNotText?: string|RegExp;
+
+    /**
      * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. When
      * passed a [string], matching is case-insensitive and searches for a substring. For example, `"Playwright"` matches
      * `<article><div>Playwright</div></article>`.
      */
     hasText?: string|RegExp;
   }): Locator;
-
-  /**
-   * Creates a locator that **matches this** locator, but **not the argument** locator.
-   *
-   * **Usage**
-   *
-   * The following example finds a button that does not have title `"Subscribe"`.
-   *
-   * ```js
-   * const button = page.getByRole('button').not(page.getByTitle('Subscribe'));
-   * ```
-   *
-   * @param locator Locator that must not match.
-   */
-  not(locator: Locator): Locator;
 
   /**
    * Returns locator to the n-th matching element. It's zero based, `nth(0)` selects the first element.
@@ -11726,12 +11544,16 @@ export interface Locator {
    *
    * **Usage**
    *
-   * If your page shows a username input that is labelled either `Username` or `Login`, depending on some external
-   * factors you do not control, you can match both.
+   * Consider a scenario where you'd like to click on a "New email" button, but sometimes a security settings dialog
+   * shows up instead. In this case, you can wait for either a "New email" button, or a dialog and act accordingly.
    *
    * ```js
-   * const input = page.getByLabel('Username').or(page.getByLabel('Login'));
-   * await input.fill('John');
+   * const newEmail = page.getByRole('button', { name: 'New' });
+   * const dialog = page.getByText('Confirm security settings');
+   * await expect(newEmail.or(dialog)).toBeVisible();
+   * if (await dialog.isVisible())
+   *   await page.getByRole('button', { name: 'Dismiss' }).click();
+   * await newEmail.click();
    * ```
    *
    * @param locator Alternative locator to match.
@@ -16324,8 +16146,8 @@ export interface BrowserServer {
  * const msg = await msgPromise;
  *
  * // Deconstruct console log arguments
- * await msg.args[0].jsonValue() // hello
- * await msg.args[1].jsonValue() // 42
+ * await msg.args()[0].jsonValue() // hello
+ * await msg.args()[1].jsonValue() // 42
  * ```
  *
  */
@@ -16352,11 +16174,6 @@ export interface ConsoleMessage {
      */
     columnNumber: number;
   };
-
-  /**
-   * The page that produced this console message, if any.
-   */
-  page(): Page|null;
 
   /**
    * The text of the console message.
@@ -16554,11 +16371,6 @@ export interface Dialog {
    * A message displayed in the dialog.
    */
   message(): string;
-
-  /**
-   * The page that initiated this dialog, if available.
-   */
-  page(): Page|null;
 
   /**
    * Returns dialog's type, can be one of `alert`, `beforeunload`, `confirm` or `prompt`.
@@ -17346,6 +17158,20 @@ export interface FrameLocator {
     has?: Locator;
 
     /**
+     * Matches elements that do not contain an element that matches an inner locator. Inner locator is queried against the
+     * outer one. For example, `article` that does not have `div` matches `<article><span>Playwright</span></article>`.
+     *
+     * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
+     */
+    hasNot?: Locator;
+
+    /**
+     * Matches elements that do not contain specified text somewhere inside, possibly in a child or a descendant element.
+     * When passed a [string], matching is case-insensitive and searches for a substring.
+     */
+    hasNotText?: string|RegExp;
+
+    /**
      * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. When
      * passed a [string], matching is case-insensitive and searches for a substring. For example, `"Playwright"` matches
      * `<article><div>Playwright</div></article>`.
@@ -17975,8 +17801,8 @@ export interface Request {
     requestStart: number;
 
     /**
-     * Time immediately after the browser starts requesting the resource from the server, cache, or local resource. The
-     * value is given in milliseconds relative to `startTime`, -1 if not available.
+     * Time immediately after the browser receives the first byte of the response from the server, cache, or local
+     * resource. The value is given in milliseconds relative to `startTime`, -1 if not available.
      */
     responseStart: number;
 
@@ -18721,7 +18547,7 @@ export interface WebSocket {
   /**
    * Fired when the websocket has an error.
    */
-  on(event: 'socketerror', listener: (string: String) => void): this;
+  on(event: 'socketerror', listener: (string: string) => void): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
@@ -18751,7 +18577,7 @@ export interface WebSocket {
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
-  once(event: 'socketerror', listener: (string: String) => void): this;
+  once(event: 'socketerror', listener: (string: string) => void): this;
 
   /**
    * Fired when the websocket closes.
@@ -18781,7 +18607,7 @@ export interface WebSocket {
   /**
    * Fired when the websocket has an error.
    */
-  addListener(event: 'socketerror', listener: (string: String) => void): this;
+  addListener(event: 'socketerror', listener: (string: string) => void): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
@@ -18811,7 +18637,7 @@ export interface WebSocket {
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'socketerror', listener: (string: String) => void): this;
+  removeListener(event: 'socketerror', listener: (string: string) => void): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
@@ -18841,7 +18667,7 @@ export interface WebSocket {
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  off(event: 'socketerror', listener: (string: String) => void): this;
+  off(event: 'socketerror', listener: (string: string) => void): this;
 
   /**
    * Fired when the websocket closes.
@@ -18871,7 +18697,7 @@ export interface WebSocket {
   /**
    * Fired when the websocket has an error.
    */
-  prependListener(event: 'socketerror', listener: (string: String) => void): this;
+  prependListener(event: 'socketerror', listener: (string: string) => void): this;
 
   /**
    * Indicates that the web socket has been closed.
@@ -18931,7 +18757,7 @@ export interface WebSocket {
   /**
    * Fired when the websocket has an error.
    */
-  waitForEvent(event: 'socketerror', optionsOrPredicate?: { predicate?: (string: String) => boolean | Promise<boolean>, timeout?: number } | ((string: String) => boolean | Promise<boolean>)): Promise<String>;
+  waitForEvent(event: 'socketerror', optionsOrPredicate?: { predicate?: (string: string) => boolean | Promise<boolean>, timeout?: number } | ((string: string) => boolean | Promise<boolean>)): Promise<string>;
 
 }
 

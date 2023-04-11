@@ -16,11 +16,7 @@
 
 import { ComponentOptions } from 'vue';
 import { CombinedVueInstance, Vue, VueConstructor } from 'vue/types/vue';
- 
-type JsonPrimitive = string | number | boolean | null;
-type JsonValue = JsonPrimitive | JsonObject | JsonArray;
-type JsonArray = JsonValue[];
-type JsonObject = { [Key in string]?: JsonValue };
+import type { JsonObject } from '@playwright/test/types/experimentalComponent';
 
 export declare function beforeMount<HooksConfig extends JsonObject>(
   callback: (params: { 

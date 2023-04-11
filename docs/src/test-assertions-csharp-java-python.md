@@ -9,7 +9,7 @@ title: "Assertions"
 | :- | :- |
 | [`method: LocatorAssertions.toBeChecked`] | Checkbox is checked |
 | [`method: LocatorAssertions.toBeDisabled`] | Element is disabled |
-| [`method: LocatorAssertions.toBeEditable`] | Element is enabled |
+| [`method: LocatorAssertions.toBeEditable`] | Element is editable |
 | [`method: LocatorAssertions.toBeEmpty`] | Container is empty |
 | [`method: LocatorAssertions.toBeEnabled`] | Element is enabled |
 | [`method: LocatorAssertions.toBeFocused`] | Element is focused |

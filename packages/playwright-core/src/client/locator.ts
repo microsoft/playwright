@@ -29,7 +29,9 @@ import { getByAltTextSelector, getByLabelSelector, getByPlaceholderSelector, get
 
 export type LocatorOptions = {
   hasText?: string | RegExp;
+  hasNotText?: string | RegExp;
   has?: Locator;
+  hasNot?: Locator;
 };
 
 export class Locator implements api.Locator {
@@ -43,11 +45,21 @@ export class Locator implements api.Locator {
     if (options?.hasText)
       this._selector += ` >> internal:has-text=${escapeForTextSelector(options.hasText, false)}`;
 
+    if (options?.hasNotText)
+      this._selector += ` >> internal:has-not-text=${escapeForTextSelector(options.hasNotText, false)}`;
+
     if (options?.has) {
       const locator = options.has;
       if (locator._frame !== frame)
         throw new Error(`Inner "has" locator must belong to the same frame.`);
       this._selector += ` >> internal:has=` + JSON.stringify(locator._selector);
+    }
+
+    if (options?.hasNot) {
+      const locator = options.hasNot;
+      if (locator._frame !== frame)
+        throw new Error(`Inner "hasNot" locator must belong to the same frame.`);
+      this._selector += ` >> internal:has-not=` + JSON.stringify(locator._selector);
     }
   }
 
@@ -180,12 +192,6 @@ export class Locator implements api.Locator {
     return this._frame.$$(this._selector);
   }
 
-  and(locator: Locator): Locator {
-    if (locator._frame !== this._frame)
-      throw new Error(`Locators must belong to the same frame.`);
-    return new Locator(this._frame, this._selector + ` >> internal:and=` + JSON.stringify(locator._selector));
-  }
-
   first(): Locator {
     return new Locator(this._frame, this._selector + ' >> nth=0');
   }
@@ -196,12 +202,6 @@ export class Locator implements api.Locator {
 
   nth(index: number): Locator {
     return new Locator(this._frame, this._selector + ` >> nth=${index}`);
-  }
-
-  not(locator: Locator): Locator {
-    if (locator._frame !== this._frame)
-      throw new Error(`Locators must belong to the same frame.`);
-    return new Locator(this._frame, this._selector + ` >> internal:not=` + JSON.stringify(locator._selector));
   }
 
   or(locator: Locator): Locator {

@@ -50,6 +50,7 @@ export class WKBrowser extends Browser {
       browser._browserSession.send('Playwright.enable'),
     ];
     if (options.persistent) {
+      options.persistent.userAgent ||= DEFAULT_USER_AGENT;
       browser._defaultContext = new WKBrowserContext(browser, undefined, options.persistent);
       promises.push((browser._defaultContext as WKBrowserContext)._initialize());
     }

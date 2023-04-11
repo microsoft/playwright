@@ -16,7 +16,7 @@
 
 import type { TestInfoImpl } from '../worker/testInfo';
 import type { Suite } from './test';
-import type { FullConfigInternal } from './types';
+import type { FullConfigInternal } from './config';
 
 let currentTestInfoValue: TestInfoImpl | null = null;
 export function setCurrentTestInfo(testInfo: TestInfoImpl | null) {
@@ -38,7 +38,7 @@ export function currentExpectTimeout(options: { timeout?: number }) {
   const testInfo = currentTestInfo();
   if (options.timeout !== undefined)
     return options.timeout;
-  let defaultExpectTimeout = testInfo?.project._internal.expect?.timeout;
+  let defaultExpectTimeout = testInfo?._projectInternal?.expect?.timeout;
   if (typeof defaultExpectTimeout === 'undefined')
     defaultExpectTimeout = 5000;
   return defaultExpectTimeout;

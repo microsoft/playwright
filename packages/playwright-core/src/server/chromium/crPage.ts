@@ -845,7 +845,7 @@ class FrameSession {
   _onDialog(event: Protocol.Page.javascriptDialogOpeningPayload) {
     if (!this._page._frameManager.frame(this._targetId))
       return; // Our frame/subtree may be gone already.
-    this._page.emitOnContext(BrowserContext.Events.Dialog, new dialog.Dialog(
+    this._page.emit(Page.Events.Dialog, new dialog.Dialog(
         this._page,
         event.type,
         event.message,

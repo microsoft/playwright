@@ -8,6 +8,9 @@ on:
     branches:
       - release-*
 
+env:
+  ELECTRON_SKIP_BINARY_DOWNLOAD: 1
+
 jobs:
   publish-canary:
     name: "publish canary NPM & Publish canary Docker"

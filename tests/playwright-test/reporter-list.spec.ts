@@ -87,7 +87,7 @@ test('render steps', async ({ runInlineTest }) => {
   ]);
 });
 
-test('render steps inlint', async ({ runInlineTest }) => {
+test('render steps inline', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -207,6 +207,24 @@ test('should truncate long test names', async ({ runInlineTest }) => {
   expect(lines[6]).toBe(`     4 …› a.test.ts:10:12 › skipped very long name`);
 
   expect(lines[7]).toBe(`  -  4 …› a.test.ts:10:12 › skipped very long name`);
+});
+
+test('render failed test steps', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('passes', async ({}) => {
+        await test.step('outer 1.0', async () => {
+          await test.step('inner 1.1', async () => {
+            expect(1).toBe(2);
+          });
+        });
+      });
+    `,
+  }, { reporter: 'list' });
+  const text = result.output;
+  expect(text).toContain('1) a.test.ts:3:11 › passes › outer 1.0 › inner 1.1 ──');
+  expect(result.exitCode).toBe(1);
 });
 
 function simpleAnsiRenderer(text, ttyWidth) {

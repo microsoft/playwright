@@ -292,6 +292,24 @@ it.describe('screencast', () => {
     expect(fs.existsSync(path)).toBeTruthy();
   });
 
+  it('should work with weird screen resolution', async ({ browser }, testInfo) => {
+    it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22069' });
+    const videosPath = testInfo.outputPath('');
+    const size = { width: 1904, height: 609 };
+    const context = await browser.newContext({
+      recordVideo: {
+        dir: videosPath,
+        size
+      },
+      viewport: size,
+    });
+    const page = await context.newPage();
+    const path = await page.video()!.path();
+    expect(path).toContain(videosPath);
+    await context.close();
+    expect(fs.existsSync(path)).toBeTruthy();
+  });
+
   it('should expose video path blank popup', async ({ browser }, testInfo) => {
     const videosPath = testInfo.outputPath('');
     const size = { width: 320, height: 240 };

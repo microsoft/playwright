@@ -137,12 +137,6 @@ Returns when the dialog has been dismissed.
 
 A message displayed in the dialog.
 
-## method: Dialog.page
-* since: v1.33
-- returns: <[Page]|[null]>
-
-The page that initiated this dialog, if available.
-
 ## method: Dialog.type
 * since: v1.8
 - returns: <[string]>

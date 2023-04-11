@@ -129,8 +129,10 @@ export const WatchModeView: React.FC<{}> = ({
       // Clear test results.
       {
         for (const test of testModel.rootSuite?.allTests() || []) {
-          if (testIds.has(test.id))
+          if (testIds.has(test.id)) {
+            (test as TeleTestCase)._clearResults();
             (test as TeleTestCase)._createTestResult('pending');
+          }
         }
         setTestModel({ ...testModel });
       }
@@ -594,6 +596,7 @@ const refreshRootSuite = (eraseResults: boolean): Promise<void> => {
       xtermDataSource.write((error.stack || error.value || '') + '\n');
     },
   });
+  receiver._setClearPreviousResultsWhenTestBegins();
   return sendMessage('list', {});
 };
 
@@ -618,7 +621,7 @@ const refreshRootSuite = (eraseResults: boolean): Promise<void> => {
     return;
   }
 
-  receiver?.dispatch(message);
+  receiver?.dispatch(message)?.catch(() => {});
 };
 
 const sendMessage = async (method: string, params: any) => {

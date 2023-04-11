@@ -125,10 +125,10 @@ export const WorkbenchLoader: React.FunctionComponent<{
       <div className='spacer'></div>
       <ToolbarButton icon='color-mode' title='Toggle color mode' toggled={false} onClick={() => toggleTheme()}></ToolbarButton>
     </div>
-    <Workbench model={model} />
     {!!progress.total && <div className='progress'>
       <div className='inner-progress' style={{ width: (100 * progress.done / progress.total) + '%' }}></div>
     </div>}
+    <Workbench model={model} />
     {fileForLocalModeError && <div className='drop-target'>
       <div>Trace Viewer uses Service Workers to show traces. To view trace:</div>
       <div style={{ paddingTop: 20 }}>

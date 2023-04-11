@@ -53,3 +53,19 @@ it('should double click the button', async ({ page, server }) => {
   expect(await page.evaluate('double')).toBe(true);
   expect(await page.evaluate('result')).toBe('Clicked');
 });
+
+it('should click if the target element is removed in pointerup event', async ({ page, browserName }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/21995' });
+  it.fixme(browserName === 'firefox');
+  await page.setContent(`<button id=clickme>Clickable</button>`);
+  await page.$eval('#clickme', element => element.addEventListener('pointerup', () => element.remove(), false));
+  await page.locator('#clickme').click();
+});
+
+it('should click if the target element is removed in pointerdown event', async ({ page, browserName }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/21995' });
+  it.fixme(browserName === 'firefox');
+  await page.setContent(`<button id=clickme>Clickable</button>`);
+  await page.$eval('#clickme', element => element.addEventListener('pointerdown', () => element.remove(), false));
+  await page.locator('#clickme').click();
+});

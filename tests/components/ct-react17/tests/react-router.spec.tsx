@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/experimental-ct-react';
+import { test, expect } from '@playwright/experimental-ct-react17';
 import App from '@/App';
 import type { HooksConfig } from '../playwright';
 

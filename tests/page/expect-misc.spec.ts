@@ -341,3 +341,32 @@ test.describe('toBeInViewport', () => {
     await expect(page.locator('h1')).toBeInViewport();
   });
 });
+
+test('toHaveCount should not produce logs twice', async ({ page }) => {
+  await page.setContent('<select><option>One</option></select>');
+  const error = await expect(page.locator('option')).toHaveCount(2, { timeout: 2000 }).catch(e => e);
+  const waitingForMessage = `waiting for locator('option')`;
+  expect(error.message).toContain(waitingForMessage);
+  expect(error.message).toContain(`locator resolved to 1 element`);
+  expect(error.message).toContain(`unexpected value "1"`);
+  expect(error.message.replace(waitingForMessage, '<redacted>')).not.toContain(waitingForMessage);
+});
+
+test('toHaveText should not produce logs twice', async ({ page }) => {
+  await page.setContent('<div>hello</div>');
+  const error = await expect(page.locator('div')).toHaveText('world', { timeout: 2000 }).catch(e => e);
+  const waitingForMessage = `waiting for locator('div')`;
+  expect(error.message).toContain(waitingForMessage);
+  expect(error.message).toContain(`locator resolved to <div>hello</div>`);
+  expect(error.message).toContain(`unexpected value "hello"`);
+  expect(error.message.replace(waitingForMessage, '<redacted>')).not.toContain(waitingForMessage);
+});
+
+test('toHaveText that does not match should not produce logs twice', async ({ page }) => {
+  await page.setContent('<div>hello</div>');
+  const error = await expect(page.locator('span')).toHaveText('world', { timeout: 2000 }).catch(e => e);
+  const waitingForMessage = `waiting for locator('span')`;
+  expect(error.message).toContain(waitingForMessage);
+  expect(error.message).not.toContain('locator resolved to');
+  expect(error.message.replace(waitingForMessage, '<redacted>')).not.toContain(waitingForMessage);
+});

@@ -81,6 +81,7 @@ Here is a typical order of reporter calls:
 * [`method: Reporter.onStepBegin`] and [`method: Reporter.onStepEnd`] are called for each executed step inside the test. When steps are executed, test run has not finished yet.
 * [`method: Reporter.onTestEnd`] is called when test run has finished. By this time, [TestResult] is complete and you can use [`property: TestResult.status`], [`property: TestResult.error`] and more.
 * [`method: Reporter.onEnd`] is called once after all tests that should run had finished.
+* [`method: Reporter.onExit`] is called immediately before the test runner exits.
 
 Additionally, [`method: Reporter.onStdOut`] and [`method: Reporter.onStdErr`] are called when standard output is produced in the worker process, possibly during a test execution,
 and [`method: Reporter.onError`] is called when something went wrong outside of the test execution.
@@ -131,6 +132,12 @@ Called on some global error, for example unhandled exception in the worker proce
 
 The error.
 
+## optional async method: Reporter.onExit
+* since: v1.33
+
+Called immediately before test runner exists. At this point all the reporters
+have recived the [`method: Reporter.onEnd`] signal, so all the reports should
+be build. You can run the code that uploads the reports in this hook.
 
 ## optional method: Reporter.onStdErr
 * since: v1.10

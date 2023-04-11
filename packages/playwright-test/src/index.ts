@@ -22,7 +22,7 @@ import { createGuid, debugMode, addInternalStackPrefix, mergeTraceFiles, saveTra
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, TraceMode, VideoMode } from '../types/test';
 import type { TestInfoImpl } from './worker/testInfo';
 import { rootTestType } from './common/testType';
-import { type ContextReuseMode } from './common/types';
+import { type ContextReuseMode } from './common/config';
 import { artifactsFolderName } from './isomorphic/folders';
 export { expect } from './matchers/expect';
 export { store as _store } from './store';
@@ -319,16 +319,22 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       (context as any)._instrumentation.addListener(createInstrumentationListener());
     };
 
+    const preserveTrace = () => {
+      const testFailed = testInfo.status !== testInfo.expectedStatus;
+      return captureTrace && (traceMode === 'on' || (testFailed && traceMode === 'retain-on-failure') || (traceMode === 'on-first-retry' && testInfo.retry === 1) || (traceMode === 'on-all-retries' && testInfo.retry > 0));
+    };
+
     const startedCollectingArtifacts = Symbol('startedCollectingArtifacts');
     const stopTracing = async (tracing: Tracing) => {
       if ((tracing as any)[startedCollectingArtifacts])
         return;
       (tracing as any)[startedCollectingArtifacts] = true;
       if (captureTrace) {
-        // Export trace for now. We'll know whether we have to preserve it
-        // after the test finishes.
-        const tracePath = path.join(_artifactsDir(), createGuid() + '.zip');
-        temporaryTraceFiles.push(tracePath);
+        let tracePath;
+        if (preserveTrace()) {
+          tracePath = path.join(_artifactsDir(), createGuid() + '.zip');
+          temporaryTraceFiles.push(tracePath);
+        }
         await tracing.stopChunk({ path: tracePath });
       }
     };
@@ -400,7 +406,6 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
 
     // 3. Determine whether we need the artifacts.
     const testFailed = testInfo.status !== testInfo.expectedStatus;
-    const preserveTrace = captureTrace && (traceMode === 'on' || (testFailed && traceMode === 'retain-on-failure') || (traceMode === 'on-first-retry' && testInfo.retry === 1) || (traceMode === 'on-all-retries' && testInfo.retry > 0));
     const captureScreenshots = screenshotMode === 'on' || (screenshotMode === 'only-on-failure' && testFailed);
 
     const screenshotAttachments: string[] = [];
@@ -445,9 +450,8 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       await stopTracing(tracing);
     })));
 
-
     // 6. Save test trace.
-    if (preserveTrace) {
+    if (preserveTrace()) {
       const events = (testInfo as any)._traceEvents;
       if (events.length) {
         const tracePath = path.join(_artifactsDir(), createGuid() + '.zip');
@@ -458,7 +462,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
 
     // 7. Either remove or attach temporary traces and screenshots for contexts closed
     // before the test has finished.
-    if (preserveTrace && temporaryTraceFiles.length) {
+    if (preserveTrace() && temporaryTraceFiles.length) {
       const tracePath = testInfo.outputPath(`trace.zip`);
       await mergeTraceFiles(tracePath, temporaryTraceFiles);
       testInfo.attachments.push({ name: 'trace', path: tracePath, contentType: 'application/zip' });
