@@ -108,12 +108,12 @@ See our [Continuous Integration guides](./ci.md) for sample configs.
 See [all available image tags].
 
 Docker images are published automatically by GitHub Actions. We currently publish images with the
-following tags (`v1.20.0` in this case is an example:):
+following tags (`v1.33.0` in this case is an example:):
 - `:next` - tip-of-tree image version based on Ubuntu 22.04 LTS (Jammy Jellyfish).
 - `:next-jammy` - tip-of-tree image version based on Ubuntu 22.04 LTS (Jammy Jellyfish).
-- `:v1.33.0` - Playwright v1.20.0 release docker image based on Ubuntu 22.04 LTS (Jammy Jellyfish).
-- `:v1.33.0-jammy` - Playwright v1.20.0 release docker image based on Ubuntu 22.04 LTS (Jammy Jellyfish).
-- `:v1.33.0-focal` - Playwright v1.20.0 release docker image based on Ubuntu 20.04 LTS (Focal Fossa).
+- `:v1.33.0` - Playwright v1.33.0 release docker image based on Ubuntu 22.04 LTS (Jammy Jellyfish).
+- `:v1.33.0-jammy` - Playwright v1.33.0 release docker image based on Ubuntu 22.04 LTS (Jammy Jellyfish).
+- `:v1.33.0-focal` - Playwright v1.33.0 release docker image based on Ubuntu 20.04 LTS (Focal Fossa).
 - `:sha-XXXXXXX` - docker image for every commit that changed
   docker files or browsers, marked with a [short sha](https://git-scm.com/book/en/v2/Git-Tools-Revision-Selection#Short-SHA-1) (first 7 digits of the SHA commit).
 
