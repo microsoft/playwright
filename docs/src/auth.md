@@ -28,17 +28,14 @@ Add-Content -path .gitignore "`r`nplaywright/.auth"
 ```
 
 ## Basic: shared account in all tests
-
-- langs: js
+* langs: js
 
 This is the **recommended** approach for tests **without server-side state**. Authenticate once in the **setup project**, save the authentication state, and then reuse it to bootstrap each test already authenticated.
 
 **When to use**
-
 - When you can imagine all your tests running at the same time with the same account, without affecting each other.
 
 **When not to use**
-
 - Your tests modify server-side state. For example, one test checks the rendering of the settings page, while the other test is changing the setting, and you run tests in parallel. In this case, tests must use different accounts.
 - Your authentication is browser-specific.
 
@@ -48,25 +45,23 @@ Create `auth.setup.ts` that will prepare authenticated browser state for all oth
 
 ```js
 // auth.setup.ts
-import { test as setup } from "@playwright/test";
+import { test as setup } from '@playwright/test';
 
-const authFile = "playwright/.auth/user.json";
+const authFile = 'playwright/.auth/user.json';
 
-setup("authenticate", async ({ page }) => {
+setup('authenticate', async ({ page }) => {
   // Perform authentication steps. Replace these actions with your own.
-  await page.goto("https://github.com/login");
-  await page.getByLabel("Username or email address").fill("username");
-  await page.getByLabel("Password").fill("password");
-  await page.getByRole("button", { name: "Sign in" }).click();
+  await page.goto('https://github.com/login');
+  await page.getByLabel('Username or email address').fill('username');
+  await page.getByLabel('Password').fill('password');
+  await page.getByRole('button', { name: 'Sign in' }).click();
   // Wait until the page receives the cookies.
   //
   // Sometimes login flow sets cookies in the process of several redirects.
   // Wait for the final URL to ensure that the cookies are actually set.
-  await page.waitForURL("https://github.com/");
+  await page.waitForURL('https://github.com/');
   // Alternatively, you can wait until the page reaches a state where all cookies are set.
-  await expect(
-    page.getByRole("button", { name: "View profile and more" })
-  ).toBeVisible();
+  await expect(page.getByRole('button', { name: 'View profile and more' })).toBeVisible();
 
   // End of authentication steps.
 
@@ -78,31 +73,31 @@ Create a new `setup` project in the config and declare it as a dependency for al
 
 ```js
 // playwright.config.ts
-import { defineConfig, devices } from "@playwright/test";
+import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   projects: [
     // Setup project
-    { name: "setup", testMatch: /.*\.setup\.ts/ },
+    { name: 'setup', testMatch: /.*\.setup\.ts/ },
 
     {
-      name: "chromium",
+      name: 'chromium',
       use: {
-        ...devices["Desktop Chrome"],
+        ...devices['Desktop Chrome'],
         // Use prepared auth state.
-        storageState: "playwright/.auth/user.json",
+        storageState: 'playwright/.auth/user.json',
       },
-      dependencies: ["setup"],
+      dependencies: ['setup'],
     },
 
     {
-      name: "firefox",
+      name: 'firefox',
       use: {
-        ...devices["Desktop Firefox"],
+        ...devices['Desktop Firefox'],
         // Use prepared auth state.
-        storageState: "playwright/.auth/user.json",
+        storageState: 'playwright/.auth/user.json',
       },
-      dependencies: ["setup"],
+      dependencies: ['setup'],
     },
   ],
 });
@@ -112,25 +107,23 @@ Tests start already authenticated because we specified `storageState` in the con
 
 ```js
 // tests/example.spec.ts
-import { test } from "@playwright/test";
+import { test } from '@playwright/test';
 
-test("test", async ({ page }) => {
+test('test', async ({ page }) => {
   // page is authenticated
 });
 ```
 
-## Moderate: one account per parallel worker
 
-- langs: js
+## Moderate: one account per parallel worker
+* langs: js
 
 This is the **recommended** approach for tests that **modify server-side state**. In Playwright, worker processes run in parallel. In this approach, each parallel worker is authenticated once. All tests ran by worker are reusing the same authentication state. We will need multiple testing accounts, one per each parallel worker.
 
 **When to use**
-
 - Your tests modify shared server-side state. For example, one test checks the rendering of the settings page, while the other test is changing the setting.
 
 **When not to use**
-
 - Your tests do not modify any shared server-side state. In this case, all tests can use a single shared account.
 
 **Details**
@@ -199,16 +192,16 @@ Now, each test file should import `test` from our fixtures file instead of `@pla
 // tests/example.spec.ts
 
 // Important: import our fixtures.
-import { test, expect } from "../playwright/fixtures";
+import { test, expect } from '../playwright/fixtures';
 
-test("test", async ({ page }) => {
+test('test', async ({ page }) => {
   // page is authenticated
 });
 ```
 
-## Signing in before each test
 
-- langs: java, python, csharp
+## Signing in before each test
+* langs: java, python, csharp
 
 The Playwright API can [automate interaction](./input.md) with a login form.
 
@@ -262,8 +255,7 @@ Redoing login for every test can slow down test execution. To mitigate that, reu
 existing authentication state instead.
 
 ## Reusing signed in state
-
-- langs: java, csharp, python
+* langs: java, csharp, python
 
 Playwright provides a way to reuse the signed-in state in the tests. That way you can log
 in only once and then skip the log in step for all of the tests.
@@ -313,14 +305,13 @@ var context = await browser.NewContextAsync(new()
 });
 ```
 
+
 ## Advanced scenarios
 
 ### Authenticate with API request
-
-- langs: js
+* langs: js
 
 **When to use**
-
 - Your web application supports authenticating via API that is easier/faster than interacting with the app UI.
 
 **Details**
@@ -331,17 +322,17 @@ In the [setup project](#basic-shared-account-in-all-tests):
 
 ```js
 // auth.setup.ts
-import { test as setup } from "@playwright/test";
+import { test as setup } from '@playwright/test';
 
-const authFile = "playwright/.auth/user.json";
+const authFile = 'playwright/.auth/user.json';
 
-setup("authenticate", async ({ request }) => {
+setup('authenticate', async ({ request }) => {
   // Send authentication request. Replace with your own.
-  await request.post("https://github.com/login", {
+  await request.post('https://github.com/login', {
     form: {
-      user: "user",
-      password: "password",
-    },
+      'user': 'user',
+      'password': 'password'
+    }
   });
   await request.storageState({ path: authFile });
 });
@@ -397,11 +388,9 @@ export const test = baseTest.extend<{}, { workerStorageState: string }>({
 ```
 
 ### Multiple signed in roles
-
-- langs: js
+* langs: js
 
 **When to use**
-
 - You have more than one role in your end to end tests, but you can reuse accounts across all tests.
 
 **Details**
@@ -410,48 +399,44 @@ We will authenticate multiple times in the setup project.
 
 ```js
 // auth.setup.ts
-import { test as setup } from "@playwright/test";
+import { test as setup } from '@playwright/test';
 
-const adminFile = "playwright/.auth/admin.json";
+const adminFile = 'playwright/.auth/admin.json';
 
-setup("authenticate as admin", async ({ page }) => {
+setup('authenticate as admin', async ({ page }) => {
   // Perform authentication steps. Replace these actions with your own.
-  await page.goto("https://github.com/login");
-  await page.getByLabel("Username or email address").fill("admin");
-  await page.getByLabel("Password").fill("password");
-  await page.getByRole("button", { name: "Sign in" }).click();
+  await page.goto('https://github.com/login');
+  await page.getByLabel('Username or email address').fill('admin');
+  await page.getByLabel('Password').fill('password');
+  await page.getByRole('button', { name: 'Sign in' }).click();
   // Wait until the page receives the cookies.
   //
   // Sometimes login flow sets cookies in the process of several redirects.
   // Wait for the final URL to ensure that the cookies are actually set.
-  await page.waitForURL("https://github.com/");
+  await page.waitForURL('https://github.com/');
   // Alternatively, you can wait until the page reaches a state where all cookies are set.
-  await expect(
-    page.getByRole("button", { name: "View profile and more" })
-  ).toBeVisible();
+  await expect(page.getByRole('button', { name: 'View profile and more' })).toBeVisible();
 
   // End of authentication steps.
 
   await page.context().storageState({ path: adminFile });
 });
 
-const userFile = "playwright/.auth/user.json";
+const userFile = 'playwright/.auth/user.json';
 
-setup("authenticate as user", async ({ page }) => {
+setup('authenticate as user', async ({ page }) => {
   // Perform authentication steps. Replace these actions with your own.
-  await page.goto("https://github.com/login");
-  await page.getByLabel("Username or email address").fill("user");
-  await page.getByLabel("Password").fill("password");
-  await page.getByRole("button", { name: "Sign in" }).click();
+  await page.goto('https://github.com/login');
+  await page.getByLabel('Username or email address').fill('user');
+  await page.getByLabel('Password').fill('password');
+  await page.getByRole('button', { name: 'Sign in' }).click();
   // Wait until the page receives the cookies.
   //
   // Sometimes login flow sets cookies in the process of several redirects.
   // Wait for the final URL to ensure that the cookies are actually set.
-  await page.waitForURL("https://github.com/");
+  await page.waitForURL('https://github.com/');
   // Alternatively, you can wait until the page reaches a state where all cookies are set.
-  await expect(
-    page.getByRole("button", { name: "View profile and more" })
-  ).toBeVisible();
+  await expect(page.getByRole('button', { name: 'View profile and more' })).toBeVisible();
 
   // End of authentication steps.
 
@@ -463,29 +448,27 @@ After that, specify `storageState` for each test file or test group, **instead o
 
 ```js
 // tests/example.spec.ts
-import { test } from "@playwright/test";
+import { test } from '@playwright/test';
 
-test.use({ storageState: "playwright/.auth/admin.json" });
+test.use({ storageState: 'playwright/.auth/admin.json' });
 
-test("admin test", async ({ page }) => {
+test('admin test', async ({ page }) => {
   // page is authenticated as admin
 });
 
 test.describe(() => {
-  test.use({ storageState: "playwright/.auth/user.json" });
+  test.use({ storageState: 'playwright/.auth/user.json' });
 
-  test("user test", async ({ page }) => {
+  test('user test', async ({ page }) => {
     // page is authenticated as a user
   });
 });
 ```
 
 ### Testing multiple roles together
-
-- langs: js
+* langs: js
 
 **When to use**
-
 - You need to test how multiple authenticated roles interact together, in a single test.
 
 **Details**
@@ -494,19 +477,15 @@ Use multiple [BrowserContexts] and [Pages] with different storage states in the 
 
 ```js
 // tests/example.spec.ts
-import { test } from "@playwright/test";
+import { test } from '@playwright/test';
 
-test("admin and user", async ({ browser }) => {
+test('admin and user', async ({ browser }) => {
   // adminContext and all pages inside, including adminPage, are signed in as "admin".
-  const adminContext = await browser.newContext({
-    storageState: "playwright/.auth/admin.json",
-  });
+  const adminContext = await browser.newContext({ storageState: 'playwright/.auth/admin.json' });
   const adminPage = await adminContext.newPage();
 
   // userContext and all pages inside, including userPage, are signed in as "user".
-  const userContext = await browser.newContext({
-    storageState: "playwright/.auth/user.json",
-  });
+  const userContext = await browser.newContext({ storageState: 'playwright/.auth/user.json' });
   const userPage = await userContext.newPage();
 
   // ... interact with both adminPage and userPage ...
@@ -517,11 +496,9 @@ test("admin and user", async ({ browser }) => {
 ```
 
 ### Testing multiple roles with POM fixtures
-
-- langs: js
+* langs: js
 
 **When to use**
-
 - You need to test how multiple authenticated roles interact together, in a single test.
 
 **Details**
@@ -532,7 +509,7 @@ Below is an example that [creates fixtures](./test-fixtures.md#creating-a-fixtur
 
 ```js
 // playwright/fixtures.ts
-import { test as base, Page, Browser, Locator } from "@playwright/test";
+import { test as base, Page, Browser, Locator } from '@playwright/test';
 
 // Page Object Model for the "admin" page.
 // Here you can add locators and helper methods specific to the admin page.
@@ -545,7 +522,7 @@ class AdminPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.greeting = page.locator("#greeting");
+    this.greeting = page.locator('#greeting');
   }
 }
 
@@ -560,50 +537,45 @@ class UserPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.greeting = page.locator("#greeting");
+    this.greeting = page.locator('#greeting');
   }
 }
 
 // Declare the types of your fixtures.
 type MyFixtures = {
-  adminPage: AdminPage,
-  userPage: UserPage,
+  adminPage: AdminPage;
+  userPage: UserPage;
 };
 
-export * from "@playwright/test";
-export const test =
-  base.extend <
-  MyFixtures >
-  {
-    adminPage: async ({ browser }, use) => {
-      const context = await browser.newContext({
-        storageState: "playwright/.auth/admin.json",
-      });
-      const adminPage = new AdminPage(await context.newPage());
-      await use(adminPage);
-      await context.close();
-    },
-    userPage: async ({ browser }, use) => {
-      const context = await browser.newContext({
-        storageState: "playwright/.auth/user.json",
-      });
-      const userPage = new UserPage(await context.newPage());
-      await use(userPage);
-      await context.close();
-    },
-  };
+export * from '@playwright/test';
+export const test = base.extend<MyFixtures>({
+  adminPage: async ({ browser }, use) => {
+    const context = await browser.newContext({ storageState: 'playwright/.auth/admin.json' });
+    const adminPage = new AdminPage(await context.newPage());
+    await use(adminPage);
+    await context.close();
+  },
+  userPage: async ({ browser }, use) => {
+    const context = await browser.newContext({ storageState: 'playwright/.auth/user.json' });
+    const userPage = new UserPage(await context.newPage());
+    await use(userPage);
+    await context.close();
+  },
+});
+
 
 // tests/example.spec.ts
 // Import test with our new fixtures.
-import { test, expect } from "./fixtures";
+import { test, expect } from './fixtures';
 
 // Use adminPage and userPage fixtures in the test.
-test("admin and user", async ({ adminPage, userPage }) => {
+test('admin and user', async ({ adminPage, userPage }) => {
   // ... interact with both adminPage and userPage ...
-  await expect(adminPage.greeting).toHaveText("Welcome, Admin");
-  await expect(userPage.greeting).toHaveText("Welcome, User");
+  await expect(adminPage.greeting).toHaveText('Welcome, Admin');
+  await expect(userPage.greeting).toHaveText('Welcome, User');
 });
 ```
+
 
 ### Session storage
 
@@ -611,21 +583,13 @@ Reusing authenticated state covers [cookies](https://developer.mozilla.org/en-US
 
 ```js
 // Get session storage and store as env variable
-const sessionStorage = await page.evaluate(() =>
-  JSON.stringify(sessionStorage)
-);
-await fs.writeFileSync(
-  "playwright/.auth/session.json",
-  JSON.stringify(sessionStorage),
-  "utf-8"
-);
+const sessionStorage = await page.evaluate(() => JSON.stringify(sessionStorage));
+await fs.writeFileSync('playwright/.auth/session.json', JSON.stringify(sessionStorage), 'utf-8');
 
 // Set session storage in a new context
-const sessionStorage = JSON.parse(
-  await fs.readFileSync("playwright/.auth/session.json", "utf-8")
-);
-await context.addInitScript((storage) => {
-  if (window.location.hostname === "example.com") {
+const sessionStorage = JSON.parse(await fs.readFileSync('playwright/.auth/session.json', 'utf-8'));
+await context.addInitScript(storage => {
+  if (window.location.hostname === 'example.com') {
     const entries = JSON.parse(storage);
     for (const [key, value] of Object.entries(entries)) {
       window.sessionStorage.setItem(key, value);
