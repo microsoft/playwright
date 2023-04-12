@@ -142,10 +142,10 @@ export class TestChildProcess {
       return;
     }
 
-    // In case of POSIX and `SIGINT` signal, send it to the main process only.
+    // In case of POSIX and `SIGINT` signal, send it to the main process group only.
     if (signal === 'SIGINT') {
       try {
-        process.kill(this.process.pid, 'SIGINT');
+        process.kill(-this.process.pid, 'SIGINT');
       } catch (e) {
         // the process might have already stopped
       }
