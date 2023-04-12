@@ -104,7 +104,7 @@ export class TestChildProcess {
     this.process.stderr.on('data', appendChunk);
     this.process.stdout.on('data', appendChunk);
 
-    const killProcessGroup = this._killProcess.bind(this, 'SIGKILL');
+    const killProcessGroup = this._killProcessTree.bind(this, 'SIGKILL');
     process.on('exit', killProcessGroup);
     this.exited = new Promise(f => {
       this.process.on('exit', (exitCode, signal) => f({ exitCode, signal }));
@@ -119,11 +119,11 @@ export class TestChildProcess {
   }
 
   async kill(signal: 'SIGINT' | 'SIGKILL' = 'SIGKILL') {
-    this._killProcess(signal);
+    this._killProcessTree(signal);
     return this.exited;
   }
 
-  private _killProcess(signal: 'SIGINT' | 'SIGKILL') {
+  private _killProcessTree(signal: 'SIGINT' | 'SIGKILL') {
     if (!this.process.pid || !this.process.kill(0))
       return;
 
