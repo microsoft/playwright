@@ -170,7 +170,7 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
     }).toString(), true, sources, 'main').catch(() => {});
 
     // Testing harness for runCLI mode.
-    if ((process.env.PWTEST_CLI_IS_UNDER_TEST) && sources.length)
+    if (process.env.PWTEST_CLI_IS_UNDER_TEST && sources.length)
       (process as any)._didSetSourcesForTest(sources[0].text);
   }
 
