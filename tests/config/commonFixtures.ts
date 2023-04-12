@@ -18,6 +18,7 @@ import type { Fixtures } from '@playwright/test';
 import type { ChildProcess } from 'child_process';
 import { execSync, spawn } from 'child_process';
 import net from 'net';
+import fs from 'fs';
 import { stripAnsi } from './utils';
 
 type TestChildParams = {
@@ -32,28 +33,59 @@ import childProcess from 'child_process';
 
 type ProcessData = {
   pid: number, // process ID
-  pgid: number, // process groupd ID
+  pgrp: number, // process groupd ID
   children: Set<ProcessData>, // direct children of the process
 };
 
-function buildProcessTreePosix(pid: number): ProcessData {
+function readAllProcessesLinux(): { pid: number, ppid: number, pgrp: number }[] {
+  const result: {pid: number, ppid: number, pgrp: number}[] = [];
+  for (const dir of fs.readdirSync('/proc')) {
+    const pid = +dir;
+    if (isNaN(pid))
+      continue;
+    try {
+      const statFile = fs.readFileSync(`/proc/${pid}/stat`, 'utf8');
+      // Format of /proc/*/stat is described https://man7.org/linux/man-pages/man5/proc.5.html
+      const match = statFile.match(/^(?<pid>\d+)\s+\((?<comm>.*)\)\s+(?<state>R|S|D|Z|T|t|W|X|x|K|W|P)\s+(?<ppid>\d+)\s+(?<pgrp>\d+)/);
+      if (match) {
+        result.push({
+          pid: +match.groups.pid,
+          ppid: +match.groups.ppid,
+          pgrp: +match.groups.pgrp,
+        });
+      }
+    } catch (e) {
+      // We don't have access to some /proc/<pid>/stat file.
+    }
+  }
+  return result;
+}
+
+function readAllProcessesMacOS(): { pid: number, ppid: number, pgrp: number }[] {
+  const result: {pid: number, ppid: number, pgrp: number}[] = [];
   const processTree = childProcess.spawnSync('ps', ['-eo', 'pid,pgid,ppid']);
   const lines = processTree.stdout.toString().trim().split('\n');
-
-  const pidToProcess = new Map<number, ProcessData>();
-  const edges: { pid: number, ppid: number }[] = [];
   for (const line of lines) {
-    const [pid, pgid, ppid] = line.trim().split(/\s+/).map(token => +token);
+    const [pid, pgrp, ppid] = line.trim().split(/\s+/).map(token => +token);
     // On linux, the very first line of `ps` is the header with "PID PGID PPID".
-    if (isNaN(pid) || isNaN(pgid) || isNaN(ppid))
+    if (isNaN(pid) || isNaN(pgrp) || isNaN(ppid))
       continue;
-    pidToProcess.set(pid, { pid, pgid, children: new Set() });
-    edges.push({ pid, ppid });
+    result.push({ pid, ppid, pgrp });
   }
-  for (const { pid, ppid } of edges) {
+  return result;
+}
+
+function buildProcessTreePosix(pid: number): ProcessData {
+  // Certain Linux distributions might not have `ps` installed.
+  const allProcesses = process.platform === 'darwin' ? readAllProcessesMacOS() : readAllProcessesLinux();
+  const pidToProcess = new Map<number, ProcessData>();
+  for (const { pid, pgrp } of allProcesses)
+    pidToProcess.set(pid, { pid, pgrp, children: new Set() });
+  for (const { pid, ppid } of allProcesses) {
     const parent = pidToProcess.get(ppid);
     const child = pidToProcess.get(pid);
-    // On POSIX, certain processes might not have parent (e.g. PID=1 and occasionally PID=2).
+    // On POSIX, certain processes might not have parent (e.g. PID=1 and occasionally PID=2)
+    // or we might not have access to it proc info.
     if (parent && child)
       parent.children.add(child);
   }
@@ -151,13 +183,13 @@ export class TestChildProcess {
     const rootProcess = buildProcessTreePosix(this.process.pid);
     const descendantProcessGroups = (function flatten(processData: ProcessData, result: Set<number> = new Set()) {
       // Process can nullify its own process group with `setpgid`. Use its PID instead.
-      result.add(processData.pgid || processData.pid);
+      result.add(processData.pgrp || processData.pid);
       processData.children.forEach(child => flatten(child, result));
       return result;
     })(rootProcess);
-    for (const pgid of descendantProcessGroups) {
+    for (const pgrp of descendantProcessGroups) {
       try {
-        process.kill(-pgid, 'SIGKILL');
+        process.kill(-pgrp, 'SIGKILL');
       } catch (e) {
         // the process might have already stopped
       }
