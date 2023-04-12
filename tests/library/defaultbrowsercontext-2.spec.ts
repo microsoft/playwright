@@ -233,7 +233,8 @@ it('should support har option', async ({ launchPersistent, asset }) => {
   await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(255, 0, 0)');
 });
 
-it('user agent is up to date', async ({ launchPersistent, browser }) => {
+it('user agent is up to date', async ({ launchPersistent, browser, mode }) => {
+  it.skip(mode !== 'default');
   const { userAgent } = await (browser as any)._channel.defaultUserAgentForTest();
   const { context, page } = await launchPersistent();
   expect(await page.evaluate(() => navigator.userAgent)).toBe(userAgent);
