@@ -1,5 +1,5 @@
 ---
-id: test-api-testing
+id: api-testing
 title: "API testing"
 ---
 
