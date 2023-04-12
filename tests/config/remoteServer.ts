@@ -49,8 +49,7 @@ export class RunServer implements PlaywrightServer {
   }
 
   async close() {
-    await this._process.close();
-    await this._process.exitCode;
+    await this._process.kill('SIGINT');
   }
 }
 
@@ -150,7 +149,7 @@ export class RemoteServer implements PlaywrightServer {
       await this._browser.close();
       this._browser = undefined;
     }
-    await this._process.close();
+    await this._process.kill('SIGINT');
     await this.childExitCode();
   }
 }

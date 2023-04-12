@@ -19,20 +19,32 @@ test('codegen should work', async ({ exec }) => {
   await exec('npm i --foreground-scripts playwright');
 
   await test.step('codegen without arguments', async () => {
-    const result = await exec('npx playwright codegen', { env: { PWTEST_CLI_EXIT: '1' } });
-    expect(result).toContain(`@playwright/test`);
+    const result = await exec('npx playwright codegen', {
+      env: {
+        PWTEST_CLI_IS_UNDER_TEST: '1',
+        PWTEST_CLI_AUTO_EXIT_WHEN: '@playwright/test',
+      }
+    });
     expect(result).toContain(`{ page }`);
   });
 
   await test.step('codegen --target=javascript', async () => {
-    const result = await exec('npx playwright codegen --target=javascript', { env: { PWTEST_CLI_EXIT: '1' } });
+    const result = await exec('npx playwright codegen --target=javascript', {
+      env: {
+        PWTEST_CLI_IS_UNDER_TEST: '1',
+        PWTEST_CLI_AUTO_EXIT_WHEN: 'context.close',
+      }
+    });
     expect(result).toContain(`playwright`);
-    expect(result).toContain(`page.close`);
   });
 
   await test.step('codegen --target=python', async () => {
-    const result = await exec('npx playwright codegen --target=python', { env: { PWTEST_CLI_EXIT: '1' } });
-    expect(result).toContain(`chromium.launch`);
+    const result = await exec('npx playwright codegen --target=python', {
+      env: {
+        PWTEST_CLI_IS_UNDER_TEST: '1',
+        PWTEST_CLI_AUTO_EXIT_WHEN: 'chromium.launch',
+      },
+    });
     expect(result).toContain(`browser.close`);
   });
 });
