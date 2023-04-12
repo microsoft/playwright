@@ -105,7 +105,7 @@ test.describe('cli codegen', () => {
   });
 
   test('should upload a single file', async ({ page, openRecorder, browserName, asset, isLinux }) => {
-    test.fixme(browserName === 'firefox' && isLinux, 'https://github.com/microsoft/playwright/issues/21550');
+    test.fixme(browserName === 'firefox' && isLinux, 'https://bugzilla.mozilla.org/show_bug.cgi?id=1827551');
     const recorder = await openRecorder();
     await recorder.setContentAndWait(`
     <form>
@@ -136,7 +136,7 @@ test.describe('cli codegen', () => {
   });
 
   test('should upload multiple files', async ({ page, openRecorder, browserName, asset, isLinux }) => {
-    test.fixme(browserName === 'firefox' && isLinux, 'https://github.com/microsoft/playwright/issues/21550');
+    test.fixme(browserName === 'firefox' && isLinux, 'https://bugzilla.mozilla.org/show_bug.cgi?id=1827551');
     const recorder = await openRecorder();
     await recorder.setContentAndWait(`
     <form>
@@ -167,7 +167,7 @@ test.describe('cli codegen', () => {
   });
 
   test('should clear files', async ({ page, openRecorder, browserName, asset, isLinux }) => {
-    test.fixme(browserName === 'firefox' && isLinux, 'https://github.com/microsoft/playwright/issues/21550');
+    test.fixme(browserName === 'firefox' && isLinux, 'https://bugzilla.mozilla.org/show_bug.cgi?id=1827551');
     const recorder = await openRecorder();
     await recorder.setContentAndWait(`
     <form>
