@@ -50,6 +50,6 @@ export const webView2Test = baseTest.extend<TraceViewerFixtures>(traceViewerFixt
     const browser = await playwright.chromium.connectOverCDP(`http://127.0.0.1:${cdpPort}`);
     await use(browser);
     await browser.close();
-    await spawnedProcess.close();
+    await spawnedProcess.kill('SIGINT');
   }, { scope: 'worker' }],
 });

@@ -34,7 +34,6 @@ test('should print the correct imports and context options', async ({ browserNam
   });
   const context = await browser.newContext();`;
   await cli.waitFor(expectedResult);
-  expect(cli.text()).toContain(expectedResult);
 });
 
 test('should print the correct context options for custom settings', async ({ browserName, channel, runCLI }) => {
@@ -49,7 +48,6 @@ test('should print the correct context options for custom settings', async ({ br
     colorScheme: 'light'
   });`;
   await cli.waitFor(expectedResult);
-  expect(cli.text()).toContain(expectedResult);
 });
 
 
@@ -67,7 +65,6 @@ test('should print the correct context options when using a device', async ({ br
     ...devices['Pixel 2'],
   });`;
   await cli.waitFor(expectedResult);
-  expect(cli.text()).toContain(expectedResult);
 });
 
 test('should print the correct context options when using a device and additional options', async ({ browserName, channel, runCLI }) => {
@@ -85,13 +82,14 @@ test('should print the correct context options when using a device and additiona
     colorScheme: 'light'
   });`;
   await cli.waitFor(expectedResult);
-  expect(cli.text()).toContain(expectedResult);
 });
 
 test('should save the codegen output to a file if specified', async ({ browserName, channel, runCLI }, testInfo) => {
   const tmpFile = testInfo.outputPath('script.js');
-  const cli = runCLI(['--output', tmpFile, '--target=javascript', emptyHTML]);
-  await cli.exited;
+  const cli = runCLI(['--output', tmpFile, '--target=javascript', emptyHTML], {
+    autoExitWhen: 'await page.goto', // We have to wait for the initial navigation to be recorded.
+  });
+  await cli.waitForCleanExit();
   const content = fs.readFileSync(tmpFile);
   expect(content.toString()).toBe(`const { ${browserName} } = require('playwright');
 

@@ -16,9 +16,11 @@
 
 import { contextTest } from '../../config/browserTest';
 import type { Page } from 'playwright-core';
+import { step } from '../../config/baseTest';
 import * as path from 'path';
 import type { Source } from '../../../packages/recorder/src/recorderTypes';
 import type { CommonFixtures, TestChildProcess } from '../../config/commonFixtures';
+import { stripAnsi } from '../../config/utils';
 import { expect } from '@playwright/test';
 export { expect } from '@playwright/test';
 
@@ -26,7 +28,7 @@ type CLITestArgs = {
   recorderPageGetter: () => Promise<Page>;
   closeRecorder: () => Promise<void>;
   openRecorder: () => Promise<Recorder>;
-  runCLI: (args: string[], options?: { noAutoExit?: boolean }) => CLIMock;
+  runCLI: (args: string[], options?: { autoExitWhen?: string }) => CLIMock;
 };
 
 const codegenLang2Id: Map<string, string> = new Map([
@@ -68,13 +70,9 @@ export const test = contextTest.extend<CLITestArgs>({
     process.env.PWTEST_RECORDER_PORT = String(10907 + testInfo.workerIndex);
     testInfo.skip(mode === 'service');
 
-    let cli: CLIMock | undefined;
-    await run((cliArgs, { noAutoExit } = {}) => {
-      cli = new CLIMock(childProcess, browserName, channel, headless, cliArgs, launchOptions.executablePath, noAutoExit);
-      return cli;
+    await run((cliArgs, { autoExitWhen } = {}) => {
+      return new CLIMock(childProcess, browserName, channel, headless, cliArgs, launchOptions.executablePath, autoExitWhen);
     });
-    // Discard any exit error and let childProcess fixture report leaking processes (processwes which do not exit).
-    cli?.exited.catch(() => {});
   },
 
   openRecorder: async ({ page, recorderPageGetter }, run) => {
@@ -135,7 +133,7 @@ class Recorder {
       const w = window as any;
       const source = (w.playwrightSourcesEchoForTest || []).find((s: Source) => s.id === params.languageId);
       return source && source.text.includes(params.text) ? w.playwrightSourcesEchoForTest : null;
-    }, { text, languageId: codegenLang2Id.get(file) }, { timeout: 8000, polling: 300 });
+    }, { text, languageId: codegenLang2Id.get(file) }, { timeout: 0, polling: 300 });
     const sources: Source[] = await handle.jsonValue();
     for (const source of sources) {
       if (!codegenLangId2lang.has(source.id))
@@ -199,11 +197,8 @@ class Recorder {
 
 class CLIMock {
   process: TestChildProcess;
-  private waitForText: string;
-  private waitForCallback: () => void;
-  exited: Promise<void>;
 
-  constructor(childProcess: CommonFixtures['childProcess'], browserName: string, channel: string | undefined, headless: boolean | undefined, args: string[], executablePath: string | undefined, noAutoExit: boolean | undefined) {
+  constructor(childProcess: CommonFixtures['childProcess'], browserName: string, channel: string | undefined, headless: boolean | undefined, args: string[], executablePath: string | undefined, autoExitWhen: string | undefined) {
     const nodeArgs = [
       'node',
       path.join(__dirname, '..', '..', '..', 'packages', 'playwright-core', 'lib', 'cli', 'cli.js'),
@@ -216,47 +211,28 @@ class CLIMock {
     this.process = childProcess({
       command: nodeArgs,
       env: {
+        PWTEST_CLI_AUTO_EXIT_WHEN: autoExitWhen,
         PWTEST_CLI_IS_UNDER_TEST: '1',
-        PWTEST_CLI_EXIT: !noAutoExit ? '1' : undefined,
         PWTEST_CLI_HEADLESS: headless ? '1' : undefined,
         PWTEST_CLI_EXECUTABLE_PATH: executablePath,
         DEBUG: (process.env.DEBUG ?? '') + ',pw:browser*',
       },
     });
-    this.process.onOutput = () => {
-      if (this.waitForCallback && this.process.output.includes(this.waitForText))
-        this.waitForCallback();
-    };
-    this.exited = this.process.cleanExit();
   }
 
-  async waitFor(text: string, timeout = 10_000): Promise<void> {
-    if (this.process.output.includes(text))
-      return Promise.resolve();
-    this.waitForText = text;
-    return new Promise((f, r) => {
-      this.waitForCallback = f;
-      if (timeout) {
-        setTimeout(() => {
-          r(new Error('Timed out waiting for text:\n' + text + '\n\nReceived:\n' + this.text()));
-        }, timeout);
-      }
-    });
+  @step
+  async waitFor(text: string): Promise<void> {
+    await expect(() => {
+      expect(this.text()).toContain(text);
+    }).toPass();
+  }
+
+  @step
+  async waitForCleanExit() {
+    return this.process.cleanExit();
   }
 
   text() {
-    return removeAnsiColors(this.process.output);
+    return stripAnsi(this.process.output);
   }
-
-  exit(signal: NodeJS.Signals | number) {
-    this.process.process.kill(signal);
-  }
-}
-
-function removeAnsiColors(input: string): string {
-  const pattern = [
-    '[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)',
-    '(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~]))'
-  ].join('|');
-  return input.replace(new RegExp(pattern, 'g'), '');
 }
