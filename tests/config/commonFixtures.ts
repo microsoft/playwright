@@ -37,7 +37,7 @@ type ProcessData = {
 };
 
 function buildProcessTreePosix(pid: number): ProcessData {
-  const processTree = childProcess.spawnSync('ps', ['-eo pid,pgid,ppid']);
+  const processTree = childProcess.spawnSync('ps', ['-eo', 'pid,pgid,ppid']);
   const lines = processTree.stdout.toString().trim().split('\n');
 
   const pidToProcess = new Map<number, ProcessData>();
@@ -48,19 +48,14 @@ function buildProcessTreePosix(pid: number): ProcessData {
     if (isNaN(pid) || isNaN(pgid) || isNaN(ppid))
       continue;
     pidToProcess.set(pid, { pid, pgid, children: new Set() });
-    // The first process does not have any parent, so this edge
-    // is safe to ignore.
-    if (pid !== 1)
-      edges.push({ pid, ppid });
+    edges.push({ pid, ppid });
   }
   for (const { pid, ppid } of edges) {
     const parent = pidToProcess.get(ppid);
     const child = pidToProcess.get(pid);
-    if (!parent || !child) {
-      console.log(lines.join('\n'));
-      console.log(`ppid: ${ppid} pid: ${pid}`);
-    }
-    parent.children.add(child);
+    // On POSIX, certain processes might not have parent (e.g. PID=1 and occasionally PID=2).
+    if (parent && child)
+      parent.children.add(child);
   }
   return pidToProcess.get(pid);
 }
@@ -155,7 +150,8 @@ export class TestChildProcess {
     // In case of POSIX and `SIGKILL` signal, we should send it to all descendant process groups.
     const rootProcess = buildProcessTreePosix(this.process.pid);
     const descendantProcessGroups = (function flatten(processData: ProcessData, result: Set<number> = new Set()) {
-      result.add(processData.pgid);
+      // Process can nullify its own process group with `setpgid`. Use its PID instead.
+      result.add(processData.pgid || processData.pid);
       processData.children.forEach(child => flatten(child, result));
       return result;
     })(rootProcess);
