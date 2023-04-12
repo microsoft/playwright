@@ -915,7 +915,7 @@ This version was also tested against the following stable channels:
   };
   ```
 
-- [Trace Viewer](./trace-viewer) now shows [API testing requests](./test-api-testing).
+- [Trace Viewer](./trace-viewer) now shows [API testing requests](./api-testing).
 - [`method: Locator.highlight`] visually reveals element(s) for easier debugging.
 
 ### Announcements
@@ -1235,11 +1235,11 @@ test('context fetch', async ({ request }) => {
 });
 ```
 
-Read more about it in our [API testing guide](./test-api-testing).
+Read more about it in our [API testing guide](./api-testing).
 
 #### Response Interception
 
-It is now possible to do response interception by combining [API Testing](./test-api-testing) with [request interception](./network#modify-requests).
+It is now possible to do response interception by combining [API Testing](./api-testing) with [request interception](./network#modify-requests).
 
 For example, we can blur all the images on the page:
 
