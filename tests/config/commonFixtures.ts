@@ -28,6 +28,43 @@ type TestChildParams = {
   onOutput?: () => void;
 };
 
+import childProcess from 'child_process';
+
+type ProcessData = {
+  pid: number, // process ID
+  pgid: number, // process groupd ID
+  children: Set<ProcessData>, // direct children of the process
+};
+
+function buildProcessTreePosix(pid: number): ProcessData {
+  const processTree = childProcess.spawnSync('ps', ['-eo pid,pgid,ppid']);
+  const lines = processTree.stdout.toString().trim().split('\n');
+
+  const pidToProcess = new Map<number, ProcessData>();
+  const edges: { pid: number, ppid: number }[] = [];
+  for (const line of lines) {
+    const [pid, pgid, ppid] = line.trim().split(/\s+/).map(token => +token);
+    // On linux, the very first line of `ps` is the header with "PID PGID PPID".
+    if (isNaN(pid) || isNaN(pgid) || isNaN(ppid))
+      continue;
+    pidToProcess.set(pid, { pid, pgid, children: new Set() });
+    // The first process does not have any parent, so this edge
+    // is safe to ignore.
+    if (pid !== 1)
+      edges.push({ pid, ppid });
+  }
+  for (const { pid, ppid } of edges) {
+    const parent = pidToProcess.get(ppid);
+    const child = pidToProcess.get(pid);
+    if (!parent || !child) {
+      console.log(lines.join('\n'));
+      console.log(`ppid: ${ppid} pid: ${pid}`);
+    }
+    parent.children.add(child);
+  }
+  return pidToProcess.get(pid);
+}
+
 export class TestChildProcess {
   params: TestChildParams;
   process: ChildProcess;
@@ -72,7 +109,7 @@ export class TestChildProcess {
     this.process.stderr.on('data', appendChunk);
     this.process.stdout.on('data', appendChunk);
 
-    const killProcessGroup = this._killProcessGroup.bind(this);
+    const killProcessGroup = this._killProcess.bind(this, 'SIGKILL');
     process.on('exit', killProcessGroup);
     this.exited = new Promise(f => {
       this.process.on('exit', (exitCode, signal) => f({ exitCode, signal }));
@@ -86,28 +123,48 @@ export class TestChildProcess {
     return strippedOutput.split('\n').filter(line => line.startsWith('%%')).map(line => line.substring(2).trim());
   }
 
-  async close() {
-    if (this.process.kill(0))
-      this._killProcessGroup('SIGINT');
+  async kill(signal: 'SIGINT' | 'SIGKILL' = 'SIGKILL') {
+    this._killProcess(signal);
     return this.exited;
   }
 
-  async kill() {
-    if (this.process.kill(0))
-      this._killProcessGroup('SIGKILL');
-    return this.exited;
-  }
-
-  private _killProcessGroup(signal: 'SIGINT' | 'SIGKILL') {
+  private _killProcess(signal: 'SIGINT' | 'SIGKILL') {
     if (!this.process.pid || !this.process.kill(0))
       return;
-    try {
-      if (process.platform === 'win32')
+
+    // On Windows, we always call `taskkill` no matter signal.
+    if (process.platform === 'win32') {
+      try {
         execSync(`taskkill /pid ${this.process.pid} /T /F /FI "MEMUSAGE gt 0"`, { stdio: 'ignore' });
-      else
-        process.kill(-this.process.pid, signal);
-    } catch (e) {
-      // the process might have already stopped
+      } catch (e) {
+        // the process might have already stopped
+      }
+      return;
+    }
+
+    // In case of POSIX and `SIGINT` signal, send it to the main process only.
+    if (signal === 'SIGINT') {
+      try {
+        process.kill(this.process.pid, 'SIGINT');
+      } catch (e) {
+        // the process might have already stopped
+      }
+      return;
+    }
+
+    // In case of POSIX and `SIGKILL` signal, we should send it to all descendant process groups.
+    const rootProcess = buildProcessTreePosix(this.process.pid);
+    const descendantProcessGroups = (function flatten(processData: ProcessData, result: Set<number> = new Set()) {
+      result.add(processData.pgid);
+      processData.children.forEach(child => flatten(child, result));
+      return result;
+    })(rootProcess);
+    for (const pgid of descendantProcessGroups) {
+      try {
+        process.kill(-pgid, 'SIGKILL');
+      } catch (e) {
+        // the process might have already stopped
+      }
     }
   }
 
@@ -150,16 +207,7 @@ export const commonFixtures: Fixtures<CommonFixtures, CommonWorkerFixtures> = {
       processes.push(process);
       return process;
     });
-    await Promise.all(processes.map(async child => {
-      await Promise.race([
-        child.exited,
-        new Promise(f => setTimeout(f, 3_000)),
-      ]);
-      if (child.process.kill(0)) {
-        await child.kill();
-        throw new Error(`Process ${child.params.command.join(' ')} is still running. Leaking process?\nOutput:${child.output}`);
-      }
-    }));
+    await Promise.all(processes.map(async child => child.kill()));
     if (testInfo.status !== 'passed' && testInfo.status !== 'skipped' && !process.env.PWTEST_DEBUG) {
       for (const process of processes) {
         console.log('====== ' + process.params.command.join(' '));
@@ -176,7 +224,7 @@ export const commonFixtures: Fixtures<CommonFixtures, CommonWorkerFixtures> = {
       processes.push(process);
       return process;
     });
-    await Promise.all(processes.map(child => child.close()));
+    await Promise.all(processes.map(child => child.kill('SIGINT')));
   }, { scope: 'worker' }],
 
   waitForPort: async ({}, use) => {

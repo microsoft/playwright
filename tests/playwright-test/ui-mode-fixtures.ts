@@ -109,7 +109,7 @@ export const test = base
           return { page, testProcess };
         });
         await browser?.close();
-        await testProcess?.close();
+        await testProcess?.kill('SIGINT');
         await removeFolderAsync(cacheDir);
       },
       createLatch: async ({}, use, testInfo) => {

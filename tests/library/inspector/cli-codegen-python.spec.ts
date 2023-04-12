@@ -32,7 +32,6 @@ def run(playwright: Playwright) -> None:
     browser = playwright.${browserName}.launch(${launchOptions(channel)})
     context = browser.new_context()`;
   await cli.waitFor(expectedResult);
-  expect(cli.text()).toContain(expectedResult);
 });
 
 test('should print the correct context options for custom settings', async ({ runCLI, channel, browserName }) => {
@@ -44,7 +43,6 @@ def run(playwright: Playwright) -> None:
     browser = playwright.${browserName}.launch(${launchOptions(channel)})
     context = browser.new_context(color_scheme="light")`;
   await cli.waitFor(expectedResult);
-  expect(cli.text()).toContain(expectedResult);
 });
 
 test('should print the correct context options when using a device', async ({ browserName, channel, runCLI }) => {
@@ -58,7 +56,6 @@ def run(playwright: Playwright) -> None:
     browser = playwright.chromium.launch(${launchOptions(channel)})
     context = browser.new_context(**playwright.devices["Pixel 2"])`;
   await cli.waitFor(expectedResult);
-  expect(cli.text()).toContain(expectedResult);
 });
 
 test('should print the correct context options when using a device and additional options', async ({ browserName, channel, runCLI }) => {
@@ -72,13 +69,14 @@ def run(playwright: Playwright) -> None:
     browser = playwright.webkit.launch(${launchOptions(channel)})
     context = browser.new_context(**playwright.devices["iPhone 11"], color_scheme="light")`;
   await cli.waitFor(expectedResult);
-  expect(cli.text()).toContain(expectedResult);
 });
 
 test('should save the codegen output to a file if specified', async ({ runCLI, channel, browserName }, testInfo) => {
   const tmpFile = testInfo.outputPath('example.py');
-  const cli = runCLI(['--target=python', '--output', tmpFile, emptyHTML]);
-  await cli.exited;
+  const cli = runCLI(['--target=python', '--output', tmpFile, emptyHTML], {
+    autoExitWhen: 'page.goto',
+  });
+  await cli.waitForCleanExit();
   const content = fs.readFileSync(tmpFile);
   expect(content.toString()).toBe(`from playwright.sync_api import Playwright, sync_playwright, expect
 

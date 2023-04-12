@@ -34,7 +34,6 @@ async def run(playwright: Playwright) -> None:
     browser = await playwright.${browserName}.launch(${launchOptions(channel)})
     context = await browser.new_context()`;
   await cli.waitFor(expectedResult);
-  expect(cli.text()).toContain(expectedResult);
 });
 
 test('should print the correct context options for custom settings', async ({ browserName, channel, runCLI }) => {
@@ -48,7 +47,6 @@ async def run(playwright: Playwright) -> None:
     browser = await playwright.${browserName}.launch(${launchOptions(channel)})
     context = await browser.new_context(color_scheme="light")`;
   await cli.waitFor(expectedResult);
-  expect(cli.text()).toContain(expectedResult);
 });
 
 test('should print the correct context options when using a device', async ({ browserName, channel, runCLI }) => {
@@ -64,7 +62,6 @@ async def run(playwright: Playwright) -> None:
     browser = await playwright.chromium.launch(${launchOptions(channel)})
     context = await browser.new_context(**playwright.devices["Pixel 2"])`;
   await cli.waitFor(expectedResult);
-  expect(cli.text()).toContain(expectedResult);
 });
 
 test('should print the correct context options when using a device and additional options', async ({ browserName, channel, runCLI }) => {
@@ -80,13 +77,14 @@ async def run(playwright: Playwright) -> None:
     browser = await playwright.webkit.launch(${launchOptions(channel)})
     context = await browser.new_context(**playwright.devices["iPhone 11"], color_scheme="light")`;
   await cli.waitFor(expectedResult);
-  expect(cli.text()).toContain(expectedResult);
 });
 
 test('should save the codegen output to a file if specified', async ({ browserName, channel, runCLI }, testInfo) => {
   const tmpFile = testInfo.outputPath('example.py');
-  const cli = runCLI(['--target=python-async', '--output', tmpFile, emptyHTML]);
-  await cli.exited;
+  const cli = runCLI(['--target=python-async', '--output', tmpFile, emptyHTML], {
+    autoExitWhen: 'page.goto',
+  });
+  await cli.waitForCleanExit();
   const content = fs.readFileSync(tmpFile);
   expect(content.toString()).toBe(`import asyncio
 
@@ -148,11 +146,11 @@ asyncio.run(main())
 
 test('should work with --save-har', async ({ runCLI }, testInfo) => {
   const harFileName = testInfo.outputPath('har.har');
-  const cli = runCLI(['--target=python-async', `--save-har=${harFileName}`]);
   const expectedResult = `context = await browser.new_context(record_har_mode="minimal", record_har_path=${JSON.stringify(harFileName)}, service_workers="block")`;
-  await cli.waitFor(expectedResult).catch(e => e);
-  expect(cli.text()).toContain(expectedResult);
-  await cli.exited;
+  const cli = runCLI(['--target=python-async', `--save-har=${harFileName}`], {
+    autoExitWhen: expectedResult,
+  });
+  await cli.waitForCleanExit();
   const json = JSON.parse(fs.readFileSync(harFileName, 'utf-8'));
   expect(json.log.creator.name).toBe('Playwright');
 });
