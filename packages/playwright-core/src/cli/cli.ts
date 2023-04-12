@@ -419,7 +419,8 @@ async function launchContext(options: Options, headless: boolean, executablePath
       process.stdout.write('\n-------------8<-------------\n');
       process.stdout.write(text);
       process.stdout.write('\n-------------8<-------------\n');
-      if (process.env.PWTEST_CLI_AUTO_EXIT_WHEN && text.includes(process.env.PWTEST_CLI_AUTO_EXIT_WHEN))
+      const autoExitCondition = process.env.PWTEST_CLI_AUTO_EXIT_WHEN;
+      if (autoExitCondition && text.includes(autoExitCondition))
         Promise.all(context.pages().map(async p => p.close()));
     };
     // Make sure we exit abnormally when browser crashes.
@@ -560,8 +561,12 @@ async function openPage(context: BrowserContext, url: string | undefined): Promi
     else if (!url.startsWith('http') && !url.startsWith('file://') && !url.startsWith('about:') && !url.startsWith('data:'))
       url = 'http://' + url;
     await page.goto(url).catch(error => {
-      if (!error.message.includes('Navigation failed because page was closed'))
+      if (process.env.PWTEST_CLI_AUTO_EXIT_WHEN && error.message.includes('Navigation failed because page was closed')) {
+        // Tests with PWTEST_CLI_AUTO_EXIT_WHEN might close page too fast, resulting
+        // in a stray navigation aborted error. We should ignore it.
+      } else {
         throw error;
+      }
     });
   }
   return page;
