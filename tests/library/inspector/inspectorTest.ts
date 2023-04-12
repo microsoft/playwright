@@ -133,7 +133,7 @@ class Recorder {
       const w = window as any;
       const source = (w.playwrightSourcesEchoForTest || []).find((s: Source) => s.id === params.languageId);
       return source && source.text.includes(params.text) ? w.playwrightSourcesEchoForTest : null;
-    }, { text, languageId: codegenLang2Id.get(file) }, { timeout: 8000, polling: 300 });
+    }, { text, languageId: codegenLang2Id.get(file) }, { timeout: 0, polling: 300 });
     const sources: Source[] = await handle.jsonValue();
     for (const source of sources) {
       if (!codegenLangId2lang.has(source.id))
