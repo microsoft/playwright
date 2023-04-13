@@ -717,7 +717,7 @@ export default defineConfig({
 
 ```java
 BrowserContext context = browser.newContext(new Browser.NewContextOptions()
-  .offline(true));
+  .setOffline(true));
 ```
 
 ```python async
