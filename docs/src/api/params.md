@@ -307,8 +307,8 @@ When using [`method: Page.goto`], [`method: Page.route`], [`method: Page.waitFor
   - `width` <[int]> page width in pixels.
   - `height` <[int]> page height in pixels.
 
-Emulates consistent viewport for each page. Defaults to an 1280x720 viewport.
-Use `null` to disable the consistent viewport emulation.
+Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. 
+Use `null` to disable the consistent viewport emulation. Learn more about [viewport emulation](../emulation#viewport).
 
 :::note
 The `null` value opts out from the default presets, makes viewport depend on the
@@ -324,7 +324,7 @@ tests non-deterministic.
   - `height` <[int]> page height in pixels.
 
 Emulates consistent viewport for each page. Defaults to an 1280x720 viewport.
-Use `ViewportSize.NoViewport` to disable the consistent viewport emulation.
+Use `ViewportSize.NoViewport` to disable the consistent viewport emulation. Learn more about [viewport emulation](../emulation.md#viewport).
 
 :::note
 The `ViewportSize.NoViewport` value opts out from the default presets,
@@ -489,7 +489,7 @@ Function to be evaluated in the main Electron process.
   - `width` <[int]> page width in pixels.
   - `height` <[int]> page height in pixels.
 
-Sets a consistent viewport for each page. Defaults to an 1280x720 viewport. `no_viewport` disables the fixed viewport. Learn more about [viewport emulation](../emulation.md#viewport)
+Sets a consistent viewport for each page. Defaults to an 1280x720 viewport. `no_viewport` disables the fixed viewport. Learn more about [viewport emulation](../emulation.md#viewport).
 
 ## python-context-option-no-viewport
 * langs: python

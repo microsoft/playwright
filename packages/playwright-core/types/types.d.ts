@@ -12593,8 +12593,9 @@ export interface BrowserType<Unused = {}> {
     ignoreHTTPSErrors?: boolean;
 
     /**
-     * Whether the `meta viewport` tag is taken into account and touch events are enabled. Defaults to `false`. Not
-     * supported in Firefox. Learn more about [mobile emulation](https://playwright.dev/docs/emulation#isMobile).
+     * Whether the `meta viewport` tag is taken into account and touch events are enabled. isMobile is a part of device,
+     * so you don't actually need to set it manually. Defaults to `false` and is not supported in Firefox. Learn more
+     * about [mobile emulation](https://playwright.dev/docs/emulation#isMobile).
      */
     isMobile?: boolean;
 
@@ -12815,8 +12816,8 @@ export interface BrowserType<Unused = {}> {
     videosPath?: string;
 
     /**
-     * Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Use `null` to disable the consistent
-     * viewport emulation.
+     * Emulates consistent viewport for each page. Defaults to an 1280x720 viewport.  Use `null` to disable the consistent
+     * viewport emulation. Learn more about [viewport emulation](https://playwright.dev/docs/emulation#viewport).
      *
      * **NOTE** The `null` value opts out from the default presets, makes viewport depend on the host window size defined
      * by the operating system. It makes the execution of the tests non-deterministic.
@@ -13991,8 +13992,9 @@ export interface AndroidDevice {
     ignoreHTTPSErrors?: boolean;
 
     /**
-     * Whether the `meta viewport` tag is taken into account and touch events are enabled. Defaults to `false`. Not
-     * supported in Firefox. Learn more about [mobile emulation](https://playwright.dev/docs/emulation#isMobile).
+     * Whether the `meta viewport` tag is taken into account and touch events are enabled. isMobile is a part of device,
+     * so you don't actually need to set it manually. Defaults to `false` and is not supported in Firefox. Learn more
+     * about [mobile emulation](https://playwright.dev/docs/emulation#isMobile).
      */
     isMobile?: boolean;
 
@@ -14196,8 +14198,8 @@ export interface AndroidDevice {
     videosPath?: string;
 
     /**
-     * Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Use `null` to disable the consistent
-     * viewport emulation.
+     * Emulates consistent viewport for each page. Defaults to an 1280x720 viewport.  Use `null` to disable the consistent
+     * viewport emulation. Learn more about [viewport emulation](https://playwright.dev/docs/emulation#viewport).
      *
      * **NOTE** The `null` value opts out from the default presets, makes viewport depend on the host window size defined
      * by the operating system. It makes the execution of the tests non-deterministic.
@@ -15865,8 +15867,9 @@ export interface Browser extends EventEmitter {
     ignoreHTTPSErrors?: boolean;
 
     /**
-     * Whether the `meta viewport` tag is taken into account and touch events are enabled. Defaults to `false`. Not
-     * supported in Firefox. Learn more about [mobile emulation](https://playwright.dev/docs/emulation#isMobile).
+     * Whether the `meta viewport` tag is taken into account and touch events are enabled. isMobile is a part of device,
+     * so you don't actually need to set it manually. Defaults to `false` and is not supported in Firefox. Learn more
+     * about [mobile emulation](https://playwright.dev/docs/emulation#isMobile).
      */
     isMobile?: boolean;
 
@@ -16130,8 +16133,8 @@ export interface Browser extends EventEmitter {
     videosPath?: string;
 
     /**
-     * Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Use `null` to disable the consistent
-     * viewport emulation.
+     * Emulates consistent viewport for each page. Defaults to an 1280x720 viewport.  Use `null` to disable the consistent
+     * viewport emulation. Learn more about [viewport emulation](https://playwright.dev/docs/emulation#viewport).
      *
      * **NOTE** The `null` value opts out from the default presets, makes viewport depend on the host window size defined
      * by the operating system. It makes the execution of the tests non-deterministic.
@@ -18970,8 +18973,9 @@ export interface BrowserContextOptions {
   ignoreHTTPSErrors?: boolean;
 
   /**
-   * Whether the `meta viewport` tag is taken into account and touch events are enabled. Defaults to `false`. Not
-   * supported in Firefox. Learn more about [mobile emulation](https://playwright.dev/docs/emulation#isMobile).
+   * Whether the `meta viewport` tag is taken into account and touch events are enabled. isMobile is a part of device,
+   * so you don't actually need to set it manually. Defaults to `false` and is not supported in Firefox. Learn more
+   * about [mobile emulation](https://playwright.dev/docs/emulation#isMobile).
    */
   isMobile?: boolean;
 
@@ -19235,8 +19239,8 @@ export interface BrowserContextOptions {
   videosPath?: string;
 
   /**
-   * Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Use `null` to disable the consistent
-   * viewport emulation.
+   * Emulates consistent viewport for each page. Defaults to an 1280x720 viewport.  Use `null` to disable the consistent
+   * viewport emulation. Learn more about [viewport emulation](https://playwright.dev/docs/emulation#viewport).
    *
    * **NOTE** The `null` value opts out from the default presets, makes viewport depend on the host window size defined
    * by the operating system. It makes the execution of the tests non-deterministic.

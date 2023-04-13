@@ -722,13 +722,13 @@ BrowserContext context = browser.newContext(new Browser.NewContextOptions()
 
 ```python async
 context = await browser.new_context(
-  offline=true
+  offline=True
 )
 ```
 
 ```python sync
 context = browser.new_context(
-  offline=true
+  offline=True
 )
 ```
 
@@ -736,7 +736,6 @@ context = browser.new_context(
 var context = await browser.NewContextAsync(new() { Offline = true });
 ```
 ## JavaScript Enabled
-* langs: js
 
 Emulate a user scenario where JavaScript is disabled.
 
@@ -754,4 +753,25 @@ test('test with no JavaScript', async ({ page }) => {
 const context = await browser.newContext({
   javaScriptEnabled: false
 });
+```
+
+```java
+BrowserContext context = browser.newContext(new Browser.NewContextOptions()
+  .javaScriptEnabled(false));
+```
+
+```python async
+context = await browser.new_context(
+  javaScript_enabled=False
+)
+```
+
+```python sync
+context = browser.new_context(
+  javaScript_enabled=False
+)
+```
+
+```csharp
+var context = await browser.NewContextAsync(new() { JavaScriptEnabled = true });
 ```
