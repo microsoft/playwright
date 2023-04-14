@@ -7889,6 +7889,10 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        */
       symbol?: Runtime.RemoteObject;
       /**
+       * True if the property is a private field.
+       */
+      isPrivate?: boolean;
+      /**
        * True if the property value came from a native getter.
        */
       nativeGetter?: boolean;
