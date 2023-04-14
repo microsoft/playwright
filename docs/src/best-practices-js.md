@@ -143,9 +143,9 @@ You can also use the [VS Code Extension](./getting-started-vscode.md) to generat
 Assertions are a way to verify that the expected result and the actual result matched or not. By using [web first assertions](./test-assertions.md) Playwright will wait until the expected condition is met. For example, when testing an alert message, a test would click a button that makes a message appear and check that the alert message is there. If the alert message takes half a second to appear, assertions such as `toBeVisible()` will wait and retry if needed.
 
 ```js
-👍 await expect(page.getByText('welcome')).toBeVisible();
+👍 await expect(page.getByRole('alertdialog', { name: 'Subscribed!' })).toBeVisible();
 
-👎 expect(await page.getByText('welcome').isVisible()).toBe(true);
+👎 expect(page.getByRole('alertdialog', { name: 'Subscribed!' }).isVisible()).toBe(true);
 ```
 
 #### Don't use manual assertions
