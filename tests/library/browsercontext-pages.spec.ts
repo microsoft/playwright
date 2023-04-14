@@ -17,6 +17,7 @@
 
 import { browserTest as it, expect } from '../config/browserTest';
 import { attachFrame, chromiumVersionLessThan } from '../config/utils';
+import os from 'os';
 
 it('should not be visible in context.pages', async ({ contextFactory }) => {
   const context = await contextFactory();
@@ -94,8 +95,13 @@ it('should click the button with offset with page scale', async ({ browser, serv
   const round = x => Math.round(x + 0.01);
   let expected = { x: 28, y: 18 };  // 20;10 + 8px of border in each direction
   if (browserName === 'webkit') {
-    // WebKit rounds down during css -> dip -> css conversion.
-    expected = { x: 26, y: 17 };
+    // WebKit for macOS 12 has different expectations starting r1829.
+    if (parseInt(os.release(), 10) < 21) {
+      // WebKit rounds down during css -> dip -> css conversion.
+      expected = { x: 26, y: 17 };
+    } else {
+      expected = { x: 29, y: 19 };
+    }
   } else if (browserName === 'chromium' && headless) {
     // Headless Chromium rounds down during css -> dip -> css conversion.
     expected = { x: 27, y: 18 };
