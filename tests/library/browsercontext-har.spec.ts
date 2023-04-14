@@ -171,6 +171,8 @@ it('should change document URL after redirected navigation on click', async ({ s
 });
 
 it('should change prefer responding vith valid content', async ({ server, context, asset }) => {
+  // when some responses are not valid, we should return response with valid content at least once.
+  // Otherwise, clients with retry logic will get stuck in an infinite loop.
   const path = asset('har-unstable-network.har');
   await context.routeFromHAR(path, { url: /api/ });
   const page = await context.newPage();
