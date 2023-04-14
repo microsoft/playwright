@@ -54,7 +54,12 @@ Example:
     process.exit(1);
   }
   const browsersJSON = require(path.join(CORE_PATH, 'browsers.json'));
-  const browserName = args[0].toLowerCase();
+  const browserName = {
+    'cr': 'chromium',
+    'ff': 'firefox',
+    'ff-beta': 'firefox-beta',
+    'wk': 'webkit',
+  }[args[0].toLowerCase()] ?? args[0].toLowerCase();
   const descriptors = [browsersJSON.browsers.find(b => b.name === browserName)];
   if (browserName === 'chromium')
     descriptors.push(browsersJSON.browsers.find(b => b.name === 'chromium-with-symbols'));

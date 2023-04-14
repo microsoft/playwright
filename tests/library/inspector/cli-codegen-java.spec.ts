@@ -37,7 +37,6 @@ public class Example {
         ${launchOptions(channel)});
       BrowserContext context = browser.newContext();`;
   await cli.waitFor(expectedResult);
-  expect(cli.text()).toContain(expectedResult);
 });
 
 test('should print the correct context options for custom settings', async ({ runCLI, browserName }) => {
@@ -45,7 +44,6 @@ test('should print the correct context options for custom settings', async ({ ru
   const expectedResult = `BrowserContext context = browser.newContext(new Browser.NewContextOptions()
         .setColorScheme(ColorScheme.LIGHT));`;
   await cli.waitFor(expectedResult);
-  expect(cli.text()).toContain(expectedResult);
 });
 
 test('should print the correct context options when using a device', async ({ browserName, runCLI }) => {
@@ -93,14 +91,15 @@ test('should print load/save storage_state', async ({ runCLI, browserName }, tes
 
 test('should work with --save-har', async ({ runCLI }, testInfo) => {
   const harFileName = testInfo.outputPath('har.har');
-  const cli = runCLI(['--target=java', `--save-har=${harFileName}`]);
   const expectedResult = `BrowserContext context = browser.newContext(new Browser.NewContextOptions()
         .setRecordHarMode(HarMode.MINIMAL)
         .setRecordHarPath(Paths.get(${JSON.stringify(harFileName)}))
         .setServiceWorkers(ServiceWorkerPolicy.BLOCK));`;
-  await cli.waitFor(expectedResult).catch(e => e);
-  expect(cli.text()).toContain(expectedResult);
-  await cli.exited;
+  const cli = runCLI(['--target=java', `--save-har=${harFileName}`], {
+    autoExitWhen: expectedResult,
+  });
+
+  await cli.waitForCleanExit();
   const json = JSON.parse(fs.readFileSync(harFileName, 'utf-8'));
   expect(json.log.creator.name).toBe('Playwright');
 });

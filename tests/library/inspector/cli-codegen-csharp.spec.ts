@@ -43,8 +43,7 @@ class Program
             ${launchOptions(channel)}
         });
         var context = await browser.NewContextAsync();`;
-  await cli.waitFor(expectedResult).catch(e => e);
-  expect(cli.text()).toContain(expectedResult);
+  await cli.waitFor(expectedResult);
 });
 
 test('should print the correct context options for custom settings', async ({ browserName, channel, runCLI }) => {
@@ -87,7 +86,6 @@ test('should print the correct context options for custom settings', async ({ br
             },
         });`;
   await cli.waitFor(expectedResult);
-  expect(cli.text()).toContain(expectedResult);
 });
 
 test('should print the correct context options when using a device', async ({ browserName, channel, runCLI }) => {
@@ -102,7 +100,6 @@ test('should print the correct context options when using a device', async ({ br
         });
         var context = await browser.NewContextAsync(playwright.Devices["Pixel 2"]);`;
   await cli.waitFor(expectedResult);
-  expect(cli.text()).toContain(expectedResult);
 });
 
 test('should print the correct context options when using a device and additional options', async ({ browserName, channel, runCLI }) => {
@@ -147,9 +144,7 @@ test('should print the correct context options when using a device and additiona
                 Width = 1280,
             },
         });`;
-
   await cli.waitFor(expectedResult);
-  expect(cli.text()).toContain(expectedResult);
 });
 
 test('should print load/save storageState', async ({ browserName, channel, runCLI }, testInfo) => {
@@ -179,7 +174,6 @@ test('should print load/save storageState', async ({ browserName, channel, runCL
 
 test('should work with --save-har', async ({ runCLI }, testInfo) => {
   const harFileName = testInfo.outputPath('har.har');
-  const cli = runCLI(['--target=csharp', `--save-har=${harFileName}`]);
   const expectedResult = `
         var context = await browser.NewContextAsync(new BrowserNewContextOptions
         {
@@ -187,9 +181,10 @@ test('should work with --save-har', async ({ runCLI }, testInfo) => {
             RecordHarPath = ${JSON.stringify(harFileName)},
             ServiceWorkers = ServiceWorkerPolicy.Block,
         });`;
-  await cli.waitFor(expectedResult).catch(e => e);
-  expect(cli.text()).toContain(expectedResult);
-  await cli.exited;
+  const cli = runCLI(['--target=csharp', `--save-har=${harFileName}`], {
+    autoExitWhen: expectedResult,
+  });
+  await cli.waitForCleanExit();
   const json = JSON.parse(fs.readFileSync(harFileName, 'utf-8'));
   expect(json.log.creator.name).toBe('Playwright');
 });

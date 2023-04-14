@@ -18,6 +18,7 @@ import type { Fixtures } from '@playwright/test';
 import type { ChildProcess } from 'child_process';
 import { execSync, spawn } from 'child_process';
 import net from 'net';
+import fs from 'fs';
 import { stripAnsi } from './utils';
 
 type TestChildParams = {
@@ -27,6 +28,69 @@ type TestChildParams = {
   shell?: boolean,
   onOutput?: () => void;
 };
+
+import childProcess from 'child_process';
+
+type ProcessData = {
+  pid: number, // process ID
+  pgrp: number, // process groupd ID
+  children: Set<ProcessData>, // direct children of the process
+};
+
+function readAllProcessesLinux(): { pid: number, ppid: number, pgrp: number }[] {
+  const result: {pid: number, ppid: number, pgrp: number}[] = [];
+  for (const dir of fs.readdirSync('/proc')) {
+    const pid = +dir;
+    if (isNaN(pid))
+      continue;
+    try {
+      const statFile = fs.readFileSync(`/proc/${pid}/stat`, 'utf8');
+      // Format of /proc/*/stat is described https://man7.org/linux/man-pages/man5/proc.5.html
+      const match = statFile.match(/^(?<pid>\d+)\s+\((?<comm>.*)\)\s+(?<state>R|S|D|Z|T|t|W|X|x|K|W|P)\s+(?<ppid>\d+)\s+(?<pgrp>\d+)/);
+      if (match) {
+        result.push({
+          pid: +match.groups.pid,
+          ppid: +match.groups.ppid,
+          pgrp: +match.groups.pgrp,
+        });
+      }
+    } catch (e) {
+      // We don't have access to some /proc/<pid>/stat file.
+    }
+  }
+  return result;
+}
+
+function readAllProcessesMacOS(): { pid: number, ppid: number, pgrp: number }[] {
+  const result: {pid: number, ppid: number, pgrp: number}[] = [];
+  const processTree = childProcess.spawnSync('ps', ['-eo', 'pid,pgid,ppid']);
+  const lines = processTree.stdout.toString().trim().split('\n');
+  for (const line of lines) {
+    const [pid, pgrp, ppid] = line.trim().split(/\s+/).map(token => +token);
+    // On linux, the very first line of `ps` is the header with "PID PGID PPID".
+    if (isNaN(pid) || isNaN(pgrp) || isNaN(ppid))
+      continue;
+    result.push({ pid, ppid, pgrp });
+  }
+  return result;
+}
+
+function buildProcessTreePosix(pid: number): ProcessData {
+  // Certain Linux distributions might not have `ps` installed.
+  const allProcesses = process.platform === 'darwin' ? readAllProcessesMacOS() : readAllProcessesLinux();
+  const pidToProcess = new Map<number, ProcessData>();
+  for (const { pid, pgrp } of allProcesses)
+    pidToProcess.set(pid, { pid, pgrp, children: new Set() });
+  for (const { pid, ppid } of allProcesses) {
+    const parent = pidToProcess.get(ppid);
+    const child = pidToProcess.get(pid);
+    // On POSIX, certain processes might not have parent (e.g. PID=1 and occasionally PID=2)
+    // or we might not have access to it proc info.
+    if (parent && child)
+      parent.children.add(child);
+  }
+  return pidToProcess.get(pid);
+}
 
 export class TestChildProcess {
   params: TestChildParams;
@@ -72,7 +136,7 @@ export class TestChildProcess {
     this.process.stderr.on('data', appendChunk);
     this.process.stdout.on('data', appendChunk);
 
-    const killProcessGroup = this._killProcessGroup.bind(this);
+    const killProcessGroup = this._killProcessTree.bind(this, 'SIGKILL');
     process.on('exit', killProcessGroup);
     this.exited = new Promise(f => {
       this.process.on('exit', (exitCode, signal) => f({ exitCode, signal }));
@@ -86,28 +150,49 @@ export class TestChildProcess {
     return strippedOutput.split('\n').filter(line => line.startsWith('%%')).map(line => line.substring(2).trim());
   }
 
-  async close() {
-    if (this.process.kill(0))
-      this._killProcessGroup('SIGINT');
+  async kill(signal: 'SIGINT' | 'SIGKILL' = 'SIGKILL') {
+    this._killProcessTree(signal);
     return this.exited;
   }
 
-  async kill() {
-    if (this.process.kill(0))
-      this._killProcessGroup('SIGKILL');
-    return this.exited;
-  }
-
-  private _killProcessGroup(signal: 'SIGINT' | 'SIGKILL') {
+  private _killProcessTree(signal: 'SIGINT' | 'SIGKILL') {
     if (!this.process.pid || !this.process.kill(0))
       return;
-    try {
-      if (process.platform === 'win32')
+
+    // On Windows, we always call `taskkill` no matter signal.
+    if (process.platform === 'win32') {
+      try {
         execSync(`taskkill /pid ${this.process.pid} /T /F /FI "MEMUSAGE gt 0"`, { stdio: 'ignore' });
-      else
-        process.kill(-this.process.pid, signal);
-    } catch (e) {
-      // the process might have already stopped
+      } catch (e) {
+        // the process might have already stopped
+      }
+      return;
+    }
+
+    // In case of POSIX and `SIGINT` signal, send it to the main process group only.
+    if (signal === 'SIGINT') {
+      try {
+        process.kill(-this.process.pid, 'SIGINT');
+      } catch (e) {
+        // the process might have already stopped
+      }
+      return;
+    }
+
+    // In case of POSIX and `SIGKILL` signal, we should send it to all descendant process groups.
+    const rootProcess = buildProcessTreePosix(this.process.pid);
+    const descendantProcessGroups = (function flatten(processData: ProcessData, result: Set<number> = new Set()) {
+      // Process can nullify its own process group with `setpgid`. Use its PID instead.
+      result.add(processData.pgrp || processData.pid);
+      processData.children.forEach(child => flatten(child, result));
+      return result;
+    })(rootProcess);
+    for (const pgrp of descendantProcessGroups) {
+      try {
+        process.kill(-pgrp, 'SIGKILL');
+      } catch (e) {
+        // the process might have already stopped
+      }
     }
   }
 
@@ -150,16 +235,7 @@ export const commonFixtures: Fixtures<CommonFixtures, CommonWorkerFixtures> = {
       processes.push(process);
       return process;
     });
-    await Promise.all(processes.map(async child => {
-      await Promise.race([
-        child.exited,
-        new Promise(f => setTimeout(f, 3_000)),
-      ]);
-      if (child.process.kill(0)) {
-        await child.kill();
-        throw new Error(`Process ${child.params.command.join(' ')} is still running. Leaking process?\nOutput:${child.output}`);
-      }
-    }));
+    await Promise.all(processes.map(async child => child.kill()));
     if (testInfo.status !== 'passed' && testInfo.status !== 'skipped' && !process.env.PWTEST_DEBUG) {
       for (const process of processes) {
         console.log('====== ' + process.params.command.join(' '));
@@ -176,7 +252,7 @@ export const commonFixtures: Fixtures<CommonFixtures, CommonWorkerFixtures> = {
       processes.push(process);
       return process;
     });
-    await Promise.all(processes.map(child => child.close()));
+    await Promise.all(processes.map(child => child.kill('SIGINT')));
   }, { scope: 'worker' }],
 
   waitForPort: async ({}, use) => {
