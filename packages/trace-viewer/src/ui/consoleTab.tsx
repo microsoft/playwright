@@ -19,6 +19,7 @@ import type { ActionTraceEvent } from '@trace/trace';
 import * as React from 'react';
 import './consoleTab.css';
 import * as modelUtil from './modelUtil';
+import { formatString } from './consoleLog';
 
 export const ConsoleTab: React.FunctionComponent<{
   action: ActionTraceEvent | undefined,
@@ -44,6 +45,8 @@ export const ConsoleTab: React.FunctionComponent<{
   return <div className='console-tab'>{
     entries.map((entry, index) => {
       const { message, error } = entry;
+      const formattedString = formatString(message?.text);
+      if (formattedString && message)  message.text = formattedString;
       if (message) {
         const url = message.location.url;
         const filename = url ? url.substring(url.lastIndexOf('/') + 1) : '<anonymous>';
@@ -80,3 +83,4 @@ function iconClass(message: channels.ConsoleMessageInitializer): string {
   }
   return 'blank';
 }
+

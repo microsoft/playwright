@@ -21,7 +21,7 @@ import { browserTest, contextTest as test, expect } from '../config/browserTest'
 import { parseTrace } from '../config/utils';
 import type { StackFrame } from '@protocol/channels';
 import type { ActionTraceEvent } from '../../packages/trace/src/trace';
-
+import { formatString } from '../../packages/trace-viewer/src/ui/consoleLog';
 test.skip(({ trace }) => trace === 'on');
 
 test('should collect trace with resources, but no js', async ({ context, page, server }, testInfo) => {
@@ -102,6 +102,22 @@ test('should not collect snapshots by default', async ({ context, page, server }
   const { events } = await parseTrace(testInfo.outputPath('trace.zip'));
   expect(events.some(e => e.type === 'frame-snapshot')).toBeFalsy();
   expect(events.some(e => e.type === 'resource-snapshot')).toBeFalsy();
+});
+
+test('should properly format substitution strings in trace console', async ({ browserName, context, page, server }, testInfo) => {
+  test.skip(browserName !== 'chromium', 'This is only a problem in chromium');
+  await context.tracing.start();
+  await page.goto(server.EMPTY_PAGE);
+  await page.evaluate(() => {
+    console.log('%s %s', 'Hello', 'World!');
+  });
+  await page.close();
+  await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
+
+  const { events } = await parseTrace(testInfo.outputPath('trace.zip'));
+  const message_object = events.find(e => e.class === 'ConsoleMessage');
+  const msg = message_object.initializer.text;
+  expect(formatString(msg) === 'Hello World!').toBeTruthy();
 });
 
 test('should not include buffers in the trace', async ({ context, page, server, mode }, testInfo) => {
