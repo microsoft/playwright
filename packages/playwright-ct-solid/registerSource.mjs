@@ -23,15 +23,43 @@ import __pwH from 'solid-js/h';
 /** @typedef {import('../playwright-test/types/experimentalComponent').Component} Component */
 /** @typedef {() => import('solid-js').JSX.Element} FrameworkComponent */
 
+/** @type {Map<string, () => Promise<FrameworkComponent>>} */
+const __pwLoaderRegistry = new Map();
+
 /** @type {Map<string, FrameworkComponent>} */
 const __pwRegistry = new Map();
 
 /**
- * @param {{[key: string]: FrameworkComponent}} components
+ * @param {{[key: string]: () => Promise<FrameworkComponent>}} components
  */
 export function pwRegister(components) {
   for (const [name, value] of Object.entries(components))
-    __pwRegistry.set(name, value);
+    __pwLoaderRegistry.set(name, value);
+}
+
+/**
+ * @param {Component} component
+ */
+async function __pwResolveComponent(component) {
+  if (typeof component !== 'object' || Array.isArray(component))
+    return
+
+  let componentFuncLoader = __pwLoaderRegistry.get(component.type);
+  if (!componentFuncLoader) {
+    // Lookup by shorthand.
+    for (const [name, value] of __pwLoaderRegistry) {
+      if (component.type.endsWith(`_${name}`)) {
+        componentFuncLoader = value;
+        break;
+      }
+    }
+  }
+
+  if(componentFuncLoader)
+    __pwRegistry.set(component.type, await componentFuncLoader())
+
+  if ('children' in component)
+    await Promise.all(component.children.map(child => __pwResolveComponent(child)))
 }
 
 function __pwCreateChild(child) {
@@ -78,6 +106,7 @@ function __pwCreateComponent(component) {
 const __pwUnmountKey = Symbol('unmountKey');
 
 window.playwrightMount = async (component, rootElement, hooksConfig) => {
+  await __pwResolveComponent(component);
   let App = () => __pwCreateComponent(component);
   for (const hook of window.__pw_hooks_before_mount || []) {
     const wrapper = await hook({ App, hooksConfig });

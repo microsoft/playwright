@@ -23,15 +23,43 @@ import __pwVue, { h as __pwH } from 'vue';
 /** @typedef {import('../playwright-test/types/experimentalComponent').Component} Component */
 /** @typedef {import('vue').Component} FrameworkComponent */
 
+/** @type {Map<string, () => Promise<FrameworkComponent>>} */
+const __pwLoaderRegistry = new Map();
+
 /** @type {Map<string, FrameworkComponent>} */
 const __pwRegistry = new Map();
 
 /**
- * @param {{[key: string]: FrameworkComponent}} components
+ * @param {{[key: string]: () => Promise<FrameworkComponent>}} components
  */
 export function pwRegister(components) {
   for (const [name, value] of Object.entries(components))
-    __pwRegistry.set(name, value);
+    __pwLoaderRegistry.set(name, value);
+}
+
+/**
+ * @param {Component} component
+ */
+async function __pwResolveComponent(component) {
+  if (typeof component !== 'object' || Array.isArray(component))
+    return
+
+  let componentFuncLoader = __pwLoaderRegistry.get(component.type);
+  if (!componentFuncLoader) {
+    // Lookup by shorthand.
+    for (const [name, value] of __pwLoaderRegistry) {
+      if (component.type.endsWith(`_${name}`)) {
+        componentFuncLoader = value;
+        break;
+      }
+    }
+  }
+
+  if(componentFuncLoader)
+    __pwRegistry.set(component.type, await componentFuncLoader())
+
+  if ('children' in component)
+    await Promise.all(component.children.map(child => __pwResolveComponent(child)))
 }
 
 /**
@@ -157,6 +185,7 @@ const instanceKey = Symbol('instanceKey');
 const wrapperKey = Symbol('wrapperKey');
 
 window.playwrightMount = async (component, rootElement, hooksConfig) => {
+  await __pwResolveComponent(component);
   let options = {};
   for (const hook of window.__pw_hooks_before_mount || [])
     options = await hook({ hooksConfig, Vue: __pwVue });
@@ -184,25 +213,26 @@ window.playwrightUnmount = async rootElement => {
   component.$el.remove();
 };
 
-window.playwrightUpdate = async (element, options) => {
-  const wrapper = /** @type {any} */(element)[wrapperKey];
+window.playwrightUpdate = async (rootElement, component) => {
+  await __pwResolveComponent(component);
+  const wrapper = /** @type {any} */(rootElement)[wrapperKey];
   if (!wrapper)
     throw new Error('Component was not mounted');
 
-  const component = wrapper.componentInstance;
-  const { nodeData, slots } = __pwCreateComponent(options);
+  const componentInstance = wrapper.componentInstance;
+  const { nodeData, slots } = __pwCreateComponent(component);
 
   for (const [name, value] of Object.entries(nodeData.on || {})) {
-    component.$on(name, value);
-    component.$listeners[name] = value;
+    componentInstance.$on(name, value);
+    componentInstance.$listeners[name] = value;
   }
 
-  Object.assign(component.$scopedSlots, nodeData.scopedSlots);
-  component.$slots.default = slots;
+  Object.assign(componentInstance.$scopedSlots, nodeData.scopedSlots);
+  componentInstance.$slots.default = slots;
 
   for (const [key, value] of Object.entries(nodeData.props || {}))
-    component[key] = value;
+    componentInstance[key] = value;
 
   if (!Object.keys(nodeData.props || {}).length)
-    component.$forceUpdate();
+    componentInstance.$forceUpdate();
 };
