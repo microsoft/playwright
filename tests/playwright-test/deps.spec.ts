@@ -423,3 +423,51 @@ test('should run setup project with zero tests recursively', async ({ runInlineT
   expect(result.passed).toBe(2);
   expect(result.outputLines).toEqual(['A', 'C']);
 });
+
+test('grep should work', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          { name: 'A', testMatch: /a\\.test\\.ts/ },
+          { name: 'B', testMatch: /b\\.test\\.ts/, dependencies: ['A'] },
+        ],
+      };`,
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      test('test @tag1', async () => { console.log('\\n%% test1a'); });
+    `,
+    'b.test.ts': `
+      import { test } from '@playwright/test';
+      test('test @tag2', async () => { console.log('\\n%% test2b'); });
+  `,
+  }, { 'grep': '@tag1' });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.output).toContain('%% test1');
+});
+
+test('grep-invert should work', async ({ runInlineTest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22405' });
+  test.fixme();
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          { name: 'A', testMatch: /a\\.test\\.ts/ },
+          { name: 'B', testMatch: /b\\.test\\.ts/, dependencies: ['A'] },
+        ],
+      };`,
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      test('test @tag1', async () => { console.log('\\n%% test1a'); });
+    `,
+    'b.test.ts': `
+      import { test } from '@playwright/test';
+      test('test @tag2', async () => { console.log('\\n%% test2b'); });
+  `,
+  }, { 'grep-invert': '@tag1' });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.output).toContain('%% test2');
+});
