@@ -987,7 +987,7 @@ EventTarget:
             event: string?
             message: string?
             error: string?
-      tracing:
+      flags:
         snapshot: true
 
 BrowserContext:
@@ -1270,7 +1270,7 @@ Page:
           - active
           - none
           - no-override
-      tracing:
+      flags:
         snapshot: true
 
     exposeBinding:
@@ -1284,7 +1284,8 @@ Page:
         waitUntil: LifecycleEvent?
       returns:
         response: Response?
-      tracing:
+      flags:
+        slowMo: true
         snapshot: true
 
     goForward:
@@ -1293,7 +1294,8 @@ Page:
         waitUntil: LifecycleEvent?
       returns:
         response: Response?
-      tracing:
+      flags:
+        slowMo: true
         snapshot: true
 
     reload:
@@ -1302,7 +1304,8 @@ Page:
         waitUntil: LifecycleEvent?
       returns:
         response: Response?
-      tracing:
+      flags:
+        slowMo: true
         snapshot: true
 
     expectScreenshot:
@@ -1336,7 +1339,7 @@ Page:
         log:
           type: array?
           items: string
-      tracing:
+      flags:
         snapshot: true
 
     screenshot:
@@ -1353,7 +1356,7 @@ Page:
         $mixin: CommonScreenshotOptions
       returns:
         binary: binary
-      tracing:
+      flags:
         snapshot: true
 
     setExtraHTTPHeaders:
@@ -1380,39 +1383,44 @@ Page:
           properties:
             width: number
             height: number
-      tracing:
+      flags:
         snapshot: true
 
     keyboardDown:
       parameters:
         key: string
-      tracing:
+      flags:
+        slowMo: true
         snapshot: true
 
     keyboardUp:
       parameters:
         key: string
-      tracing:
+      flags:
+        slowMo: true
         snapshot: true
 
     keyboardInsertText:
       parameters:
         text: string
-      tracing:
+      flags:
+        slowMo: true
         snapshot: true
 
     keyboardType:
       parameters:
         text: string
         delay: number?
-      tracing:
+      flags:
+        slowMo: true
         snapshot: true
 
     keyboardPress:
       parameters:
         key: string
         delay: number?
-      tracing:
+      flags:
+        slowMo: true
         snapshot: true
 
     mouseMove:
@@ -1420,7 +1428,8 @@ Page:
         x: number
         y: number
         steps: number?
-      tracing:
+      flags:
+        slowMo: true
         snapshot: true
 
     mouseDown:
@@ -1432,7 +1441,8 @@ Page:
           - right
           - middle
         clickCount: number?
-      tracing:
+      flags:
+        slowMo: true
         snapshot: true
 
     mouseUp:
@@ -1444,7 +1454,8 @@ Page:
           - right
           - middle
         clickCount: number?
-      tracing:
+      flags:
+        slowMo: true
         snapshot: true
 
     mouseClick:
@@ -1459,21 +1470,24 @@ Page:
           - right
           - middle
         clickCount: number?
-      tracing:
+      flags:
+        slowMo: true
         snapshot: true
 
     mouseWheel:
       parameters:
         deltaX: number
         deltaY: number
-      tracing:
+      flags:
+        slowMo: true
         snapshot: true
 
     touchscreenTap:
       parameters:
         x: number
         y: number
-      tracing:
+      flags:
+        slowMo: true
         snapshot: true
 
     accessibilitySnapshot:
@@ -1653,7 +1667,7 @@ Frame:
         arg: SerializedArgument
       returns:
         value: SerializedValue
-      tracing:
+      flags:
         snapshot: true
 
     evalOnSelectorAll:
@@ -1664,7 +1678,7 @@ Frame:
         arg: SerializedArgument
       returns:
         value: SerializedValue
-      tracing:
+      flags:
         snapshot: true
 
     addScriptTag:
@@ -1674,7 +1688,7 @@ Frame:
         type: string?
       returns:
         element: ElementHandle
-      tracing:
+      flags:
         snapshot: true
 
     addStyleTag:
@@ -1683,7 +1697,7 @@ Frame:
         content: string?
       returns:
         element: ElementHandle
-      tracing:
+      flags:
         snapshot: true
 
     blur:
@@ -1691,7 +1705,8 @@ Frame:
         selector: string
         strict: boolean?
         timeout: number?
-      tracing:
+      flags:
+        slowMo: true
         snapshot: true
 
     check:
@@ -1703,7 +1718,8 @@ Frame:
         position: Point?
         timeout: number?
         trial: boolean?
-      tracing:
+      flags:
+        slowMo: true
         snapshot: true
         pausesBeforeInput: true
 
@@ -1733,7 +1749,8 @@ Frame:
         clickCount: number?
         timeout: number?
         trial: boolean?
-      tracing:
+      flags:
+        slowMo: true
         snapshot: true
         pausesBeforeInput: true
 
@@ -1752,7 +1769,8 @@ Frame:
         sourcePosition: Point?
         targetPosition: Point?
         strict: boolean?
-      tracing:
+      flags:
+        slowMo: true
         snapshot: true
         pausesBeforeInput: true
 
@@ -1781,7 +1799,8 @@ Frame:
           - middle
         timeout: number?
         trial: boolean?
-      tracing:
+      flags:
+        slowMo: true
         snapshot: true
         pausesBeforeInput: true
 
@@ -1792,7 +1811,8 @@ Frame:
         type: string
         eventInit: SerializedArgument
         timeout: number?
-      tracing:
+      flags:
+        slowMo: true
         snapshot: true
 
     evaluateExpression:
@@ -1803,7 +1823,7 @@ Frame:
         arg: SerializedArgument
       returns:
         value: SerializedValue
-      tracing:
+      flags:
         snapshot: true
 
     evaluateExpressionHandle:
@@ -1813,7 +1833,7 @@ Frame:
         arg: SerializedArgument
       returns:
         handle: JSHandle
-      tracing:
+      flags:
         snapshot: true
 
     fill:
@@ -1824,7 +1844,8 @@ Frame:
         force: boolean?
         timeout: number?
         noWaitAfter: boolean?
-      tracing:
+      flags:
+        slowMo: true
         snapshot: true
         pausesBeforeInput: true
 
@@ -1833,7 +1854,8 @@ Frame:
         selector: string
         strict: boolean?
         timeout: number?
-      tracing:
+      flags:
+        slowMo: true
         snapshot: true
 
     frameElement:
@@ -1852,7 +1874,7 @@ Frame:
         timeout: number?
       returns:
         value: string?
-      tracing:
+      flags:
         snapshot: true
 
     goto:
@@ -1863,7 +1885,8 @@ Frame:
         referer: string?
       returns:
         response: Response?
-      tracing:
+      flags:
+        slowMo: true
         snapshot: true
 
     hover:
@@ -1884,7 +1907,8 @@ Frame:
         timeout: number?
         trial: boolean?
         noWaitAfter: boolean?
-      tracing:
+      flags:
+        slowMo: true
         snapshot: true
         pausesBeforeInput: true
 
@@ -1895,7 +1919,7 @@ Frame:
         timeout: number?
       returns:
         value: string
-      tracing:
+      flags:
         snapshot: true
 
     innerText:
@@ -1905,7 +1929,7 @@ Frame:
         timeout: number?
       returns:
         value: string
-      tracing:
+      flags:
         snapshot: true
 
     inputValue:
@@ -1915,7 +1939,7 @@ Frame:
         timeout: number?
       returns:
         value: string
-      tracing:
+      flags:
         snapshot: true
 
     isChecked:
@@ -1925,7 +1949,7 @@ Frame:
         timeout: number?
       returns:
         value: boolean
-      tracing:
+      flags:
         snapshot: true
 
     isDisabled:
@@ -1935,7 +1959,7 @@ Frame:
         timeout: number?
       returns:
         value: boolean
-      tracing:
+      flags:
         snapshot: true
 
     isEnabled:
@@ -1945,7 +1969,7 @@ Frame:
         timeout: number?
       returns:
         value: boolean
-      tracing:
+      flags:
         snapshot: true
 
     isHidden:
@@ -1954,7 +1978,7 @@ Frame:
         strict: boolean?
       returns:
         value: boolean
-      tracing:
+      flags:
         snapshot: true
 
     isVisible:
@@ -1963,7 +1987,7 @@ Frame:
         strict: boolean?
       returns:
         value: boolean
-      tracing:
+      flags:
         snapshot: true
 
     isEditable:
@@ -1973,7 +1997,7 @@ Frame:
         timeout: number?
       returns:
         value: boolean
-      tracing:
+      flags:
         snapshot: true
 
     press:
@@ -1984,7 +2008,8 @@ Frame:
         delay: number?
         noWaitAfter: boolean?
         timeout: number?
-      tracing:
+      flags:
+        slowMo: true
         snapshot: true
         pausesBeforeInput: true
 
@@ -2032,7 +2057,8 @@ Frame:
         values:
           type: array
           items: string
-      tracing:
+      flags:
+        slowMo: true
         snapshot: true
         pausesBeforeInput: true
 
@@ -2041,7 +2067,7 @@ Frame:
         html: string
         timeout: number?
         waitUntil: LifecycleEvent?
-      tracing:
+      flags:
         snapshot: true
 
     setInputFiles:
@@ -2058,7 +2084,8 @@ Frame:
               buffer: binary
         timeout: number?
         noWaitAfter: boolean?
-      tracing:
+      flags:
+        slowMo: true
         snapshot: true
         pausesBeforeInput: true
 
@@ -2076,7 +2103,8 @@ Frame:
           items: WritableStream
         timeout: number?
         noWaitAfter: boolean?
-      tracing:
+      flags:
+        slowMo: true
         snapshot: true
         pausesBeforeInput: true
 
@@ -2098,7 +2126,8 @@ Frame:
         position: Point?
         timeout: number?
         trial: boolean?
-      tracing:
+      flags:
+        slowMo: true
         snapshot: true
         pausesBeforeInput: true
 
@@ -2109,7 +2138,7 @@ Frame:
         timeout: number?
       returns:
         value: string?
-      tracing:
+      flags:
         snapshot: true
 
     title:
@@ -2124,7 +2153,8 @@ Frame:
         delay: number?
         noWaitAfter: boolean?
         timeout: number?
-      tracing:
+      flags:
+        slowMo: true
         snapshot: true
         pausesBeforeInput: true
 
@@ -2137,14 +2167,15 @@ Frame:
         position: Point?
         timeout: number?
         trial: boolean?
-      tracing:
+      flags:
+        slowMo: true
         snapshot: true
         pausesBeforeInput: true
 
     waitForTimeout:
       parameters:
         timeout: number
-      tracing:
+      flags:
         snapshot: true
 
     waitForFunction:
@@ -2157,7 +2188,7 @@ Frame:
         pollingInterval: number?
       returns:
         handle: JSHandle
-      tracing:
+      flags:
         snapshot: true
 
     waitForSelector:
@@ -2175,7 +2206,7 @@ Frame:
         omitReturnValue: boolean?
       returns:
         element: ElementHandle?
-      tracing:
+      flags:
         snapshot: true
 
     expect:
@@ -2198,7 +2229,7 @@ Frame:
         log:
           type: array?
           items: string
-      tracing:
+      flags:
         snapshot: true
 
   events:
@@ -2266,7 +2297,7 @@ JSHandle:
         arg: SerializedArgument
       returns:
         value: SerializedValue
-      tracing:
+      flags:
         snapshot: true
 
     evaluateExpressionHandle:
@@ -2276,7 +2307,7 @@ JSHandle:
         arg: SerializedArgument
       returns:
         handle: JSHandle
-      tracing:
+      flags:
         snapshot: true
 
     getPropertyList:
@@ -2327,7 +2358,7 @@ ElementHandle:
         arg: SerializedArgument
       returns:
         value: SerializedValue
-      tracing:
+      flags:
         snapshot: true
 
     evalOnSelectorAll:
@@ -2338,7 +2369,7 @@ ElementHandle:
         arg: SerializedArgument
       returns:
         value: SerializedValue
-      tracing:
+      flags:
         snapshot: true
 
     boundingBox:
@@ -2352,7 +2383,8 @@ ElementHandle:
         position: Point?
         timeout: number?
         trial: boolean?
-      tracing:
+      flags:
+        slowMo: true
         snapshot: true
         pausesBeforeInput: true
 
@@ -2380,7 +2412,8 @@ ElementHandle:
         clickCount: number?
         timeout: number?
         trial: boolean?
-      tracing:
+      flags:
+        slowMo: true
         snapshot: true
         pausesBeforeInput: true
 
@@ -2411,7 +2444,8 @@ ElementHandle:
           - middle
         timeout: number?
         trial: boolean?
-      tracing:
+      flags:
+        slowMo: true
         snapshot: true
         pausesBeforeInput: true
 
@@ -2419,7 +2453,8 @@ ElementHandle:
       parameters:
         type: string
         eventInit: SerializedArgument
-      tracing:
+      flags:
+        slowMo: true
         snapshot: true
 
     fill:
@@ -2428,12 +2463,14 @@ ElementHandle:
         force: boolean?
         timeout: number?
         noWaitAfter: boolean?
-      tracing:
+      flags:
+        slowMo: true
         snapshot: true
         pausesBeforeInput: true
 
     focus:
-      tracing:
+      flags:
+        slowMo: true
         snapshot: true
 
     getAttribute:
@@ -2458,62 +2495,63 @@ ElementHandle:
         timeout: number?
         trial: boolean?
         noWaitAfter: boolean?
-      tracing:
+      flags:
+        slowMo: true
         snapshot: true
         pausesBeforeInput: true
 
     innerHTML:
       returns:
         value: string
-      tracing:
+      flags:
         snapshot: true
 
     innerText:
       returns:
         value: string
-      tracing:
+      flags:
         snapshot: true
 
     inputValue:
       returns:
         value: string
-      tracing:
+      flags:
         snapshot: true
 
     isChecked:
       returns:
         value: boolean
-      tracing:
+      flags:
         snapshot: true
 
     isDisabled:
       returns:
         value: boolean
-      tracing:
+      flags:
         snapshot: true
 
     isEditable:
       returns:
         value: boolean
-      tracing:
+      flags:
         snapshot: true
 
     isEnabled:
       returns:
         value: boolean
-      tracing:
+      flags:
         snapshot: true
 
     isHidden:
       returns:
         value: boolean
-      tracing:
+      flags:
         snapshot: true
 
     isVisible:
       returns:
         value: boolean
-      tracing:
+      flags:
         snapshot: true
 
     ownerFrame:
@@ -2526,7 +2564,8 @@ ElementHandle:
         delay: number?
         timeout: number?
         noWaitAfter: boolean?
-      tracing:
+      flags:
+        slowMo: true
         snapshot: true
         pausesBeforeInput: true
 
@@ -2557,13 +2596,14 @@ ElementHandle:
         $mixin: CommonScreenshotOptions
       returns:
         binary: binary
-      tracing:
+      flags:
         snapshot: true
 
     scrollIntoViewIfNeeded:
       parameters:
         timeout: number?
-      tracing:
+      flags:
+        slowMo: true
         snapshot: true
 
     selectOption:
@@ -2587,7 +2627,8 @@ ElementHandle:
         values:
           type: array
           items: string
-      tracing:
+      flags:
+        slowMo: true
         snapshot: true
         pausesBeforeInput: true
 
@@ -2595,7 +2636,8 @@ ElementHandle:
       parameters:
         force: boolean?
         timeout: number?
-      tracing:
+      flags:
+        slowMo: true
         snapshot: true
 
     setInputFiles:
@@ -2610,7 +2652,8 @@ ElementHandle:
               buffer: binary
         timeout: number?
         noWaitAfter: boolean?
-      tracing:
+      flags:
+        slowMo: true
         snapshot: true
         pausesBeforeInput: true
 
@@ -2626,7 +2669,8 @@ ElementHandle:
           items: WritableStream
         timeout: number?
         noWaitAfter: boolean?
-      tracing:
+      flags:
+        slowMo: true
         snapshot: true
         pausesBeforeInput: true
 
@@ -2646,14 +2690,15 @@ ElementHandle:
         position: Point?
         timeout: number?
         trial: boolean?
-      tracing:
+      flags:
+        slowMo: true
         snapshot: true
         pausesBeforeInput: true
 
     textContent:
       returns:
         value: string?
-      tracing:
+      flags:
         snapshot: true
 
     type:
@@ -2662,7 +2707,8 @@ ElementHandle:
         delay: number?
         noWaitAfter: boolean?
         timeout: number?
-      tracing:
+      flags:
+        slowMo: true
         snapshot: true
         pausesBeforeInput: true
 
@@ -2673,7 +2719,8 @@ ElementHandle:
         position: Point?
         timeout: number?
         trial: boolean?
-      tracing:
+      flags:
+        slowMo: true
         snapshot: true
         pausesBeforeInput: true
 
@@ -2689,7 +2736,7 @@ ElementHandle:
           - disabled
           - editable
         timeout: number?
-      tracing:
+      flags:
         snapshot: true
 
     waitForSelector:
@@ -2706,7 +2753,7 @@ ElementHandle:
           - hidden
       returns:
         element: ElementHandle?
-      tracing:
+      flags:
         snapshot: true
 
 
