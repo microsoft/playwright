@@ -18,7 +18,7 @@ import { colors, rimraf } from 'playwright-core/lib/utilsBundle';
 import util from 'util';
 import { debugTest, formatLocation, relativeFilePath, serializeError } from '../util';
 import type { TestBeginPayload, TestEndPayload, RunPayload, DonePayload, WorkerInitParams, TeardownErrorsPayload, TestOutputPayload } from '../common/ipc';
-import { setCurrentTestInfo, setIsWorkerProcess } from '../common/globals';
+import { setCurrentTestInfo, setIsWorkerProcess, setRunningTestBody } from '../common/globals';
 import { ConfigLoader } from '../common/configLoader';
 import type { Suite, TestCase } from '../common/test';
 import type { Annotation, FullConfigInternal, FullProjectInternal } from '../common/config';
@@ -369,8 +369,13 @@ export class WorkerMain extends ProcessRunner {
       await testInfo._runFn(async () => {
         // Now run the test itself.
         debugTest(`test function started`);
+        setRunningTestBody(true);
         const fn = test.fn; // Extract a variable to get a better stack trace ("myTest" vs "TestCase.myTest [as fn]").
-        await fn(params, testInfo);
+        try {
+          await fn(params, testInfo);
+        } finally {
+          setRunningTestBody(false);
+        }
         debugTest(`test function finished`);
       }, 'allowSkips');
     });

@@ -24,6 +24,7 @@ import type { TestInfoImpl } from './worker/testInfo';
 import { rootTestType } from './common/testType';
 import { type ContextReuseMode } from './common/config';
 import { artifactsFolderName } from './isomorphic/folders';
+import { runningTestBody } from './common/globals';
 export { expect } from './matchers/expect';
 export { store as _store } from './store';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
@@ -331,7 +332,10 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       (tracing as any)[startedCollectingArtifacts] = true;
       if (captureTrace) {
         let tracePath;
-        if (preserveTrace()) {
+        // Create a trace file if we know that:
+        // - it is's going to be used due to the config setting and the test status or
+        // - we are inside a test and the user manually closed the context.
+        if (preserveTrace() || runningTestBody()) {
           tracePath = path.join(_artifactsDir(), createGuid() + '.zip');
           temporaryTraceFiles.push(tracePath);
         }
