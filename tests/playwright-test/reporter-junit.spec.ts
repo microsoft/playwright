@@ -404,9 +404,8 @@ test('should embed attachments to a custom testcase property, if explicitly requ
         const file = testInfo.outputPath('evidence1.txt');
         require('fs').writeFileSync(file, 'hello', 'utf8');
         testInfo.attachments.push({ name: 'evidence1.txt', path: file, contentType: 'text/plain' });
+        testInfo.attachments.push({ name: 'evidence1_without_extension', path: file, contentType: 'text/plain' });
         testInfo.attachments.push({ name: 'evidence2.txt', body: Buffer.from('world'), contentType: 'text/plain' });
-        // await testInfo.attach('evidence1.txt', { path: file, contentType: 'text/plain' });
-        // await testInfo.attach('evidence2.txt', { body: Buffer.from('world'), contentType: 'text/plain' });
         console.log('log here');
       });
     `
@@ -418,8 +417,10 @@ test('should embed attachments to a custom testcase property, if explicitly requ
   expect(testcase['properties'][0]['property'][0]['$']['name']).toBe('testrun_evidence');
   expect(testcase['properties'][0]['property'][0]['item'][0]['$']['name']).toBe('evidence1.txt');
   expect(testcase['properties'][0]['property'][0]['item'][0]['_']).toBe('\naGVsbG8=\n');
-  expect(testcase['properties'][0]['property'][0]['item'][1]['$']['name']).toBe('evidence2.txt');
-  expect(testcase['properties'][0]['property'][0]['item'][1]['_']).toBe('\nd29ybGQ=\n');
+  expect(testcase['properties'][0]['property'][0]['item'][1]['$']['name']).toBe('evidence1_without_extension.txt');
+  expect(testcase['properties'][0]['property'][0]['item'][1]['_']).toBe('\naGVsbG8=\n');
+  expect(testcase['properties'][0]['property'][0]['item'][2]['$']['name']).toBe('evidence2.txt');
+  expect(testcase['properties'][0]['property'][0]['item'][2]['_']).toBe('\nd29ybGQ=\n');
   expect(testcase['system-out'].length).toBe(1);
   expect(testcase['system-out'][0].trim()).toBe([
     `log here`
