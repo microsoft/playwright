@@ -347,8 +347,9 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
    * Only the files matching one of these patterns are executed as test files. Matching is performed against the
    * absolute file path. Strings are treated as glob patterns.
    *
-   * By default, Playwright looks for files matching the following glob pattern: `**\/?(*.)@(spec|test).?(m)[jt]s?(x)`.
-   * This means JavaScript or TypeScript files with `".test"` or `".spec"` suffix, for example `login-screen.spec.ts`.
+   * By default, Playwright looks for files matching the following glob pattern: `**\/*.@(spec|test).?(m)[jt]s?(x)`. This
+   * means JavaScript or TypeScript files with `".test"` or `".spec"` suffix, for example
+   * `login-screen.wrong-credentials.spec.ts`.
    *
    * Use [testConfig.testMatch](https://playwright.dev/docs/api/class-testconfig#test-config-test-match) to change this
    * option for all projects.
@@ -1191,8 +1192,9 @@ interface TestConfig {
    * Only the files matching one of these patterns are executed as test files. Matching is performed against the
    * absolute file path. Strings are treated as glob patterns.
    *
-   * By default, Playwright looks for files matching the following glob pattern: `**\/?(*.)@(spec|test).?(m)[jt]s?(x)`.
-   * This means JavaScript or TypeScript files with `".test"` or `".spec"` suffix, for example `login-screen.spec.ts`.
+   * By default, Playwright looks for files matching the following glob pattern: `**\/*.@(spec|test).?(m)[jt]s?(x)`. This
+   * means JavaScript or TypeScript files with `".test"` or `".spec"` suffix, for example
+   * `login-screen.wrong-credentials.spec.ts`.
    *
    * **Usage**
    *
@@ -5875,8 +5877,9 @@ interface TestProject {
    * Only the files matching one of these patterns are executed as test files. Matching is performed against the
    * absolute file path. Strings are treated as glob patterns.
    *
-   * By default, Playwright looks for files matching the following glob pattern: `**\/?(*.)@(spec|test).?(m)[jt]s?(x)`.
-   * This means JavaScript or TypeScript files with `".test"` or `".spec"` suffix, for example `login-screen.spec.ts`.
+   * By default, Playwright looks for files matching the following glob pattern: `**\/*.@(spec|test).?(m)[jt]s?(x)`. This
+   * means JavaScript or TypeScript files with `".test"` or `".spec"` suffix, for example
+   * `login-screen.wrong-credentials.spec.ts`.
    *
    * Use [testConfig.testMatch](https://playwright.dev/docs/api/class-testconfig#test-config-test-match) to change this
    * option for all projects.
