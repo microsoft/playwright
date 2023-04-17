@@ -15,6 +15,7 @@
  */
 
 import * as fs from 'fs';
+import path from 'path';
 import type { HttpServer } from '../../packages/playwright-core/src/utils';
 import { startHtmlReportServer } from '../../packages/playwright-test/lib/reporters/html';
 import { type CliRunResult, type RunOptions, stripAnsi } from './playwright-test-fixtures';
@@ -110,7 +111,7 @@ test('should merge into html', async ({ runInlineTest, mergeReports, showReport,
   const { exitCode } = await mergeReports(reportDir, {}, { additionalArgs: ['--reporter', 'html'] });
   expect(exitCode).toBe(0);
 
-  await showReport(reportDir);
+  await showReport(path.join(reportDir, 'merged-report'));
 
   await expect(page.locator('.subnav-item:has-text("All") .counter')).toHaveText('10');
   await expect(page.locator('.subnav-item:has-text("Passed") .counter')).toHaveText('3');
@@ -169,7 +170,7 @@ test('be able to merge incomplete shards', async ({ runInlineTest, mergeReports,
   const { exitCode } = await mergeReports(reportDir, {}, { additionalArgs: ['--reporter', 'html'] });
   expect(exitCode).toBe(0);
 
-  await showReport(reportDir);
+  await showReport(path.join(reportDir, 'merged-report'));
 
   await expect(page.locator('.subnav-item:has-text("All") .counter')).toHaveText('6');
   await expect(page.locator('.subnav-item:has-text("Passed") .counter')).toHaveText('2');
@@ -256,4 +257,58 @@ test('merge into list report by default', async ({ runInlineTest, mergeReports }
     `9 :      10 b.test.js:9:12 › skipped 2`,
     `9 :   -  10 b.test.js:9:12 › skipped 2`
   ]);
+});
+
+test('preserve attachments', async ({ runInlineTest, mergeReports, showReport, page }) => {
+  test.slow();
+  const reportDir = test.info().outputPath('blob-report');
+  const files = {
+    'playwright.config.ts': `
+      module.exports = {
+        retries: 1,
+        reporter: [['blob', { outputDir: '${reportDir.replace(/\\/g, '/')}' }]]
+      };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      import fs from 'fs';
+
+      test('first', async ({}) => {
+        const attachmentPath = test.info().outputPath('foo.txt');
+        fs.writeFileSync(attachmentPath, 'hello!');
+        await test.info().attach('file-attachment', {path: attachmentPath});
+
+        console.log('console info');
+        console.error('console error');
+      });
+      test('failing 1', async ({}) => {
+        await test.info().attach('text-attachment', { body: 'hi!' });
+        expect(1).toBe(2);
+      });
+      test.skip('skipped 1', async ({}) => {});
+    `,
+    'b.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('math 2', async ({}) => { });
+      test('failing 2', async ({}) => {
+        expect(1).toBe(2);
+      });
+      test.skip('skipped 2', async ({}) => {});
+    `
+  };
+  await runInlineTest(files, { shard: `1/2` });
+
+  const reportFiles = await fs.promises.readdir(reportDir);
+  reportFiles.sort();
+  expect(reportFiles).toEqual(['report-1-of-2.zip']);
+  const { exitCode } = await mergeReports(reportDir, {}, { additionalArgs: ['--reporter', 'html'] });
+  expect(exitCode).toBe(0);
+
+  await showReport(path.join(reportDir, 'merged-report'));
+  await page.getByText('first').click();
+  await expect(page.getByText('file-attachment')).toBeVisible();
+  await page.goBack();
+
+  await page.getByText('failing 1').click();
+  await expect(page.getByText('\'text-attachment\', { body: \'hi!\'')).toBeVisible();
 });
