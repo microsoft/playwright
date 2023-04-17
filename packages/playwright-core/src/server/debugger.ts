@@ -18,7 +18,7 @@ import { EventEmitter } from 'events';
 import { debugMode, isUnderTest, monotonicTime } from '../utils';
 import { BrowserContext } from './browserContext';
 import type { CallMetadata, InstrumentationListener, SdkObject } from './instrumentation';
-import { commandsWithTracingSnapshots, pausesBeforeInputActions } from '../protocol/debug';
+import { commandsWithTracingSnapshots, pausesBeforeInputActions, slowMoActions } from '../protocol/debug';
 
 const symbol = Symbol('Debugger');
 
@@ -141,5 +141,5 @@ function shouldPauseBeforeStep(metadata: CallMetadata): boolean {
 }
 
 export function shouldSlowMo(metadata: CallMetadata): boolean {
-  return commandsWithTracingSnapshots.has(metadata.type + '.' + metadata.method);
+  return slowMoActions.has(metadata.type + '.' + metadata.method);
 }
