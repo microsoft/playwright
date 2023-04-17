@@ -67,6 +67,13 @@ export async function writeFiles(testInfo: TestInfo, files: Files, initial: bool
     };
   }
 
+  if (initial && !Object.keys(files).some(name => name.includes('tsconfig.json') || name.includes('jsconfig.json'))) {
+    files = {
+      ...files,
+      'tsconfig.json': `{}`,
+    };
+  }
+
   await Promise.all(Object.keys(files).map(async name => {
     const fullName = path.join(baseDir, name);
     await fs.promises.mkdir(path.dirname(fullName), { recursive: true });

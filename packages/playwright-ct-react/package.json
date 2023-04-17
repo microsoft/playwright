@@ -26,9 +26,8 @@
     }
   },
   "dependencies": {
-    "@vitejs/plugin-react": "^3.1.0",
-    "@playwright/test": "1.33.0-next",
-    "vite": "^4.2.1"
+    "@playwright/experimental-ct-core": "1.33.0-next",
+    "@vitejs/plugin-react": "^3.1.0"
   },
   "bin": {
     "playwright": "./cli.js"
