@@ -26,14 +26,6 @@ export function currentTestInfo(): TestInfoImpl | null {
   return currentTestInfoValue;
 }
 
-let isRunningTestBody: boolean = false;
-export function setRunningTestBody(value: boolean) {
-  isRunningTestBody = value;
-}
-export function runningTestBody(): boolean {
-  return isRunningTestBody;
-}
-
 let currentFileSuite: Suite | undefined;
 export function setCurrentlyLoadingFileSuite(suite: Suite | undefined) {
   currentFileSuite = suite;
