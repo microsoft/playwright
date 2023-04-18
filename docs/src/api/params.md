@@ -252,8 +252,9 @@ Specify environment variables that will be visible to the browser. Defaults to `
       - `name` <[string]>
       - `value` <[string]>
 
-Populates context with given storage state. This option can be used to initialize context with logged-in information
-obtained via [`method: BrowserContext.storageState`]. Either a path to the file with saved storage, or an object with the following fields:
+Learn more about [storage state and auth](../auth.md).
+
+Populates context with given storage state. This option can be used to initialize context with logged-in information obtained via [`method: BrowserContext.storageState`]. Either a path to the file with saved storage, or an object with the following fields:
 
 ## csharp-java-context-option-storage-state
 * langs: csharp, java
@@ -306,8 +307,8 @@ When using [`method: Page.goto`], [`method: Page.route`], [`method: Page.waitFor
   - `width` <[int]> page width in pixels.
   - `height` <[int]> page height in pixels.
 
-Emulates consistent viewport for each page. Defaults to an 1280x720 viewport.
-Use `null` to disable the consistent viewport emulation.
+Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. 
+Use `null` to disable the consistent viewport emulation. Learn more about [viewport emulation](../emulation#viewport).
 
 :::note
 The `null` value opts out from the default presets, makes viewport depend on the
@@ -323,7 +324,7 @@ tests non-deterministic.
   - `height` <[int]> page height in pixels.
 
 Emulates consistent viewport for each page. Defaults to an 1280x720 viewport.
-Use `ViewportSize.NoViewport` to disable the consistent viewport emulation.
+Use `ViewportSize.NoViewport` to disable the consistent viewport emulation. Learn more about [viewport emulation](../emulation.md#viewport).
 
 :::note
 The `ViewportSize.NoViewport` value opts out from the default presets,
@@ -488,7 +489,7 @@ Function to be evaluated in the main Electron process.
   - `width` <[int]> page width in pixels.
   - `height` <[int]> page height in pixels.
 
-Sets a consistent viewport for each page. Defaults to an 1280x720 viewport. `no_viewport` disables the fixed viewport.
+Sets a consistent viewport for each page. Defaults to an 1280x720 viewport. `no_viewport` disables the fixed viewport. Learn more about [viewport emulation](../emulation.md#viewport).
 
 ## python-context-option-no-viewport
 * langs: python
@@ -504,23 +505,22 @@ Specific user agent to use in this context.
 ## context-option-devicescalefactor
 - `deviceScaleFactor` <[float]>
 
-Specify device scale factor (can be thought of as dpr). Defaults to `1`.
+Specify device scale factor (can be thought of as dpr). Defaults to `1`. Learn more about [emulating devices with device scale factor](../emulation.md#devices).
 
 ## context-option-ismobile
 - `isMobile` <[boolean]>
 
-Whether the `meta viewport` tag is taken into account and touch events are enabled. Defaults to `false`. Not supported
-in Firefox.
+Whether the `meta viewport` tag is taken into account and touch events are enabled. isMobile is a part of device, so you don't actually need to set it manually. Defaults to `false` and is not supported in Firefox. Learn more about [mobile emulation](../emulation.md#isMobile).
 
 ## context-option-hastouch
 - `hasTouch` <[boolean]>
 
-Specifies if viewport supports touch events. Defaults to false.
+Specifies if viewport supports touch events. Defaults to false. Learn more about [mobile emulation](../emulation.md#devices).
 
 ## context-option-javascriptenabled
 - `javaScriptEnabled` <[boolean]>
 
-Whether or not to enable JavaScript in the context. Defaults to `true`.
+Whether or not to enable JavaScript in the context. Defaults to `true`. Learn more about [disabling JavaScript](../emulation.md#javascript-enabled).
 
 ## context-option-timezoneid
 - `timezoneId` <[string]>
@@ -537,8 +537,7 @@ for a list of supported timezone IDs.
 ## context-option-locale
 - `locale` <[string]>
 
-Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value, `Accept-Language`
-request header value as well as number and date formatting rules.
+Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value, `Accept-Language` request header value as well as number and date formatting rules. Learn more about emulation in our [emulation guide](../emulation.md#locale--timezone).
 
 ## context-option-permissions
 - `permissions` <[Array]<[string]>>
@@ -554,7 +553,7 @@ An object containing additional HTTP headers to be sent with every request.
 ## context-option-offline
 - `offline` <[boolean]>
 
-Whether to emulate network being offline. Defaults to `false`.
+Whether to emulate network being offline. Defaults to `false`. Learn more about [network emulation](../emulation.md#offline).
 
 ## context-option-httpcredentials
 - `httpCredentials` <[Object]>
