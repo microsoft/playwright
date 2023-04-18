@@ -89,7 +89,7 @@ Complete set of Playwright Test options is available in the [configuration file]
 | `--max-failures <N>` or `-x`| Stop after the first `N` test failures. Passing `-x` stops after the first failure.|
 | `--output <dir>` | Directory for artifacts produced by tests, defaults to `test-results`. |
 | `--pass-with-no-tests` | Allows the test suite to pass when no files are found. |
-| `--project <name>` | Only run tests from one of the specified [projects](./test-advanced.md#projects). Defaults to running all projects defined in the configuration file.|
+| `--project <name>` | Only run tests from one of the specified [projects](./test-projects.md). Defaults to running all projects defined in the configuration file.|
 | `--quiet` | Whether to suppress stdout and stderr from the tests. |
 | `--repeat-each <N>` | Run each test `N` times, defaults to one. |
 | `--reporter <reporter>` | Choose a reporter: minimalist `dot`, concise `line` or detailed `list`. See [reporters](./test-reporters.md) for more information. |
