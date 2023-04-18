@@ -73,7 +73,7 @@ export class ArtifactDispatcher extends Dispatcher<Artifact, channels.ArtifactCh
           return;
         }
         try {
-          const readable = fs.createReadStream(localPath);
+          const readable = fs.createReadStream(localPath, { highWaterMark: 1024 * 1024 });
           const stream = new StreamDispatcher(this, readable);
           // Resolve with a stream, so that client starts saving the data.
           resolve({ stream });
@@ -94,7 +94,7 @@ export class ArtifactDispatcher extends Dispatcher<Artifact, channels.ArtifactCh
     const fileName = await this._object.localPathAfterFinished();
     if (!fileName)
       return {};
-    const readable = fs.createReadStream(fileName);
+    const readable = fs.createReadStream(fileName, { highWaterMark: 1024 * 1024 });
     return { stream: new StreamDispatcher(this, readable) };
   }
 
