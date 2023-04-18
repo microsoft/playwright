@@ -7820,6 +7820,10 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        */
       valuePreview?: ObjectPreview;
       /**
+       * True if this is a private field.
+       */
+      isPrivate?: boolean;
+      /**
        * True if this is an internal property.
        */
       internal?: boolean;
