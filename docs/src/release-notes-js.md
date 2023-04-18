@@ -915,7 +915,7 @@ This version was also tested against the following stable channels:
   };
   ```
 
-- [Trace Viewer](./trace-viewer) now shows [API testing requests](./test-api-testing).
+- [Trace Viewer](./trace-viewer) now shows [API testing requests](./api-testing).
 - [`method: Locator.highlight`] visually reveals element(s) for easier debugging.
 
 ### Announcements
@@ -1235,11 +1235,11 @@ test('context fetch', async ({ request }) => {
 });
 ```
 
-Read more about it in our [API testing guide](./test-api-testing).
+Read more about it in our [API testing guide](./api-testing).
 
 #### Response Interception
 
-It is now possible to do response interception by combining [API Testing](./test-api-testing) with [request interception](./network#modify-requests).
+It is now possible to do response interception by combining [API Testing](./api-testing) with [request interception](./network#modify-requests).
 
 For example, we can blur all the images on the page:
 
@@ -1524,7 +1524,7 @@ Step information is exposed in reporters API.
 
 #### 🌎 Launch web server before running tests
 
-To launch a server during the tests, use the [`webServer`](./test-advanced#launching-a-development-web-server-during-the-tests) option in the configuration file. The server will wait for a given url to be available before running the tests, and the url will be passed over to Playwright as a [`baseURL`](./api/class-fixtures#fixtures-base-url) when creating a context.
+To launch a server during the tests, use the [`webServer`](./test-webserver) option in the configuration file. The server will wait for a given url to be available before running the tests, and the url will be passed over to Playwright as a [`baseURL`](./api/class-fixtures#fixtures-base-url) when creating a context.
 
 ```ts
 // playwright.config.ts
@@ -1539,7 +1539,7 @@ export default defineConfig({
 });
 ```
 
-Learn more in the [documentation](./test-advanced#launching-a-development-web-server-during-the-tests).
+Learn more in the [documentation](./test-webserver).
 
 ### Browser Versions
 

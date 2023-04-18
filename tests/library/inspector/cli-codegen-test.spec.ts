@@ -27,7 +27,6 @@ test('should print the correct imports and context options', async ({ runCLI }) 
 test('test', async ({ page }) => {
 });`;
   await cli.waitFor(expectedResult);
-  expect(cli.text()).toContain(expectedResult);
 });
 
 test('should print the correct context options for custom settings', async ({ browserName, channel, runCLI }) => {
@@ -40,7 +39,6 @@ test.use({
 
 test('test', async ({ page }) => {`;
   await cli.waitFor(expectedResult);
-  expect(cli.text()).toContain(expectedResult);
 });
 
 
@@ -56,7 +54,6 @@ test.use({
 
 test('test', async ({ page }) => {`;
   await cli.waitFor(expectedResult);
-  expect(cli.text()).toContain(expectedResult);
 });
 
 test('should print the correct context options when using a device and additional options', async ({ browserName, channel, runCLI }) => {
@@ -72,7 +69,6 @@ test.use({
 
 test('test', async ({ page }) => {`;
   await cli.waitFor(expectedResult);
-  expect(cli.text()).toContain(expectedResult);
 });
 
 test('should print load storageState', async ({ browserName, channel, runCLI }, testInfo) => {
@@ -86,21 +82,20 @@ test.use({
 });
 
 test('test', async ({ page }) => {`;
-
   await cli.waitFor(expectedResult);
 });
 
 test('should work with --save-har', async ({ runCLI }, testInfo) => {
   const harFileName = testInfo.outputPath('har.har');
-  const cli = runCLI(['--target=playwright-test', `--save-har=${harFileName}`]);
   const expectedResult = `
   recordHar: {
     mode: 'minimal',
     path: '${harFileName.replace(/\\/g, '\\\\')}'
   }`;
-  await cli.waitFor(expectedResult).catch(e => e);
-  expect(cli.text()).toContain(expectedResult);
-  await cli.exited;
+  const cli = runCLI(['--target=playwright-test', `--save-har=${harFileName}`], {
+    autoExitWhen: expectedResult,
+  });
+  await cli.waitForCleanExit();
   const json = JSON.parse(fs.readFileSync(harFileName, 'utf-8'));
   expect(json.log.creator.name).toBe('Playwright');
 });

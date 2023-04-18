@@ -95,7 +95,7 @@ export default defineConfig({
 
 Path to the global setup file. This file will be required and run before all the tests. It must export a single function that takes a [`TestConfig`] argument.
 
-Learn more about [global setup and teardown](../test-advanced.md#global-setup-and-teardown).
+Learn more about [global setup and teardown](../test-global-setup-teardown.md).
 
 **Usage**
 
@@ -114,7 +114,7 @@ export default defineConfig({
 
 Path to the global teardown file. This file will be required and run after all the tests. It must export a single function. See also [`property: TestConfig.globalSetup`].
 
-Learn more about [global setup and teardown](../test-advanced.md#global-setup-and-teardown).
+Learn more about [global setup and teardown](../test-global-setup-teardown.md).
 
 **Usage**
 
@@ -517,7 +517,7 @@ export default defineConfig({
 
 Only the files matching one of these patterns are executed as test files. Matching is performed against the absolute file path. Strings are treated as glob patterns.
 
-By default, Playwright looks for files matching the following glob pattern: `**/?(*.)@(spec|test).?(m)[jt]s?(x)`. This means JavaScript or TypeScript files with `".test"` or `".spec"` suffix, for example `login-screen.spec.ts`.
+By default, Playwright looks for files matching the following glob pattern: `**/*.@(spec|test).?(m)[jt]s?(x)`. This means JavaScript or TypeScript files with `".test"` or `".spec"` suffix, for example `login-screen.wrong-credentials.spec.ts`.
 
 **Usage**
 

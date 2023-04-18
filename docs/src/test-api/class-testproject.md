@@ -263,7 +263,7 @@ Use [`property: TestConfig.testIgnore`] to change this option for all projects.
 
 Only the files matching one of these patterns are executed as test files. Matching is performed against the absolute file path. Strings are treated as glob patterns.
 
-By default, Playwright looks for files matching the following glob pattern: `**/?(*.)@(spec|test).?(m)[jt]s?(x)`. This means JavaScript or TypeScript files with `".test"` or `".spec"` suffix, for example `login-screen.spec.ts`.
+By default, Playwright looks for files matching the following glob pattern: `**/*.@(spec|test).?(m)[jt]s?(x)`. This means JavaScript or TypeScript files with `".test"` or `".spec"` suffix, for example `login-screen.wrong-credentials.spec.ts`.
 
 Use [`property: TestConfig.testMatch`] to change this option for all projects.
 

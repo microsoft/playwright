@@ -23,7 +23,7 @@ import { start } from '../../packages/playwright-core/lib/outofprocess';
 const chromeDriver = process.env.PWTEST_CHROMEDRIVER;
 const brokenDriver = path.join(__dirname, '..', 'assets', 'selenium-grid', 'broken-selenium-driver.js');
 let standalone_3_141_59: string;
-let selenium_4_4_0: string;
+let selenium_4_8_3: string;
 
 function writeSeleniumConfig(testInfo: TestInfo, port: number) {
   const template = path.join(__dirname, '..', 'assets', 'selenium-grid', `selenium-config-standalone.json`);
@@ -39,7 +39,7 @@ test.slow();
 
 test.beforeAll(() => {
   standalone_3_141_59 = path.join(process.env.PWTEST_SELENIUM!, 'selenium-server-standalone-3.141.59.jar');
-  selenium_4_4_0 = path.join(process.env.PWTEST_SELENIUM!, 'selenium-server-4.4.0.jar');
+  selenium_4_8_3 = path.join(process.env.PWTEST_SELENIUM!, 'selenium-server-4.8.3.jar');
 });
 
 test('selenium grid 3.141.59 standalone chromium', async ({ browserName, childProcess, waitForPort, browserType }, testInfo) => {
@@ -98,13 +98,12 @@ test('selenium grid 3.141.59 hub + node chromium', async ({ browserName, childPr
   await node.waitForOutput('Removing session');
 });
 
-test('selenium grid 4.4.0 standalone chromium', async ({ browserName, childProcess, waitForPort, browserType }, testInfo) => {
-  test.fixme(true, 'https://github.com/microsoft/playwright/issues/21733');
+test('selenium grid 4.8.3 standalone chromium', async ({ browserName, childProcess, waitForPort, browserType }, testInfo) => {
   test.skip(browserName !== 'chromium');
 
   const port = testInfo.workerIndex + 15123;
   const grid = childProcess({
-    command: ['java', `-Dwebdriver.chrome.driver=${chromeDriver}`, '-jar', selenium_4_4_0, 'standalone', '--config', writeSeleniumConfig(testInfo, port)],
+    command: ['java', `-Dwebdriver.chrome.driver=${chromeDriver}`, '-jar', selenium_4_8_3, 'standalone', '--config', writeSeleniumConfig(testInfo, port)],
     cwd: __dirname,
   });
   await waitForPort(port);
@@ -122,20 +121,19 @@ test('selenium grid 4.4.0 standalone chromium', async ({ browserName, childProce
   await grid.waitForOutput('Deleted session');
 });
 
-test('selenium grid 4.4.0 hub + node chromium', async ({ browserName, childProcess, waitForPort, browserType }, testInfo) => {
-  test.fixme(true, 'https://github.com/microsoft/playwright/issues/21733');
+test('selenium grid 4.8.3 hub + node chromium', async ({ browserName, childProcess, waitForPort, browserType }, testInfo) => {
   test.skip(browserName !== 'chromium');
 
   const port = testInfo.workerIndex + 15123;
   const hub = childProcess({
-    command: ['java', '-jar', selenium_4_4_0, 'hub', '--port', String(port)],
+    command: ['java', '-jar', selenium_4_8_3, 'hub', '--port', String(port)],
     cwd: __dirname,
   });
   await waitForPort(port);
   const __testHookSeleniumRemoteURL = `http://127.0.0.1:${port}/`;
 
   const node = childProcess({
-    command: ['java', `-Dwebdriver.chrome.driver=${chromeDriver}`, '-jar', selenium_4_4_0, 'node', '--grid-url', `http://127.0.0.1:${port}`, '--port', String(port + 1)],
+    command: ['java', `-Dwebdriver.chrome.driver=${chromeDriver}`, '-jar', selenium_4_8_3, 'node', '--grid-url', `http://127.0.0.1:${port}`, '--port', String(port + 1)],
     cwd: __dirname,
   });
   await Promise.all([
@@ -155,12 +153,12 @@ test('selenium grid 4.4.0 hub + node chromium', async ({ browserName, childProce
   await hub.waitForOutput('Deleted session');
 });
 
-test('selenium grid 4.4.0 standalone chromium broken driver', async ({ browserName, childProcess, waitForPort, browserType }, testInfo) => {
+test('selenium grid 4.8.3 standalone chromium broken driver', async ({ browserName, childProcess, waitForPort, browserType }, testInfo) => {
   test.skip(browserName !== 'chromium');
 
   const port = testInfo.workerIndex + 15123;
   const grid = childProcess({
-    command: ['java', `-Dwebdriver.chrome.driver=${brokenDriver}`, '-jar', selenium_4_4_0, 'standalone', '--config', writeSeleniumConfig(testInfo, port)],
+    command: ['java', `-Dwebdriver.chrome.driver=${brokenDriver}`, '-jar', selenium_4_8_3, 'standalone', '--config', writeSeleniumConfig(testInfo, port)],
     cwd: __dirname,
   });
   await waitForPort(port);

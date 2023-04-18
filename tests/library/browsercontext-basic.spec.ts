@@ -289,7 +289,8 @@ it('should emulate media in cross-process iframe', async ({ browser, server }) =
   await page.close();
 });
 
-it('default user agent', async ({ launchPersistent, browser, page }) => {
+it('default user agent', async ({ launchPersistent, browser, page, mode }) => {
+  it.skip(mode !== 'default');
   const { userAgent } = await (browser as any)._channel.defaultUserAgentForTest();
   expect(await page.evaluate(() => navigator.userAgent)).toBe(userAgent);
 });

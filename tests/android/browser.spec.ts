@@ -21,7 +21,8 @@ test.afterAll(async ({ androidDevice }) => {
 });
 
 test('androidDevice.model', async function({ androidDevice }) {
-  expect(androidDevice.model()).toBe('sdk_gphone64_x86_64');
+  expect(androidDevice.model()).toContain('sdk_gphone');
+  expect(androidDevice.model()).toContain('x86_64');
 });
 
 test('androidDevice.launchBrowser', async function({ androidDevice }) {

@@ -414,7 +414,16 @@ async function launchContext(options: Options, headless: boolean, executablePath
 
   const browser = await browserType.launch(launchOptions);
 
-  if (process.env.PWTEST_CLI_EXIT) {
+  if (process.env.PWTEST_CLI_IS_UNDER_TEST) {
+    (process as any)._didSetSourcesForTest = (text: string) => {
+      process.stdout.write('\n-------------8<-------------\n');
+      process.stdout.write(text);
+      process.stdout.write('\n-------------8<-------------\n');
+      const autoExitCondition = process.env.PWTEST_CLI_AUTO_EXIT_WHEN;
+      if (autoExitCondition && text.includes(autoExitCondition))
+        Promise.all(context.pages().map(async p => p.close()));
+    };
+    // Make sure we exit abnormally when browser crashes.
     const logs: string[] = [];
     require('playwright-core/lib/utilsBundle').debug.log = (...args: any[]) => {
       const line = require('util').format(...args) + '\n';
@@ -425,7 +434,6 @@ async function launchContext(options: Options, headless: boolean, executablePath
       const hasCrashLine = logs.some(line => line.includes('process did exit:') && !line.includes('process did exit: exitCode=0, signal=null'));
       if (hasCrashLine) {
         process.stderr.write('Detected browser crash.\n');
-        // Make sure we exit abnormally when browser crashes.
         process.exit(1);
       }
     });
@@ -552,7 +560,14 @@ async function openPage(context: BrowserContext, url: string | undefined): Promi
       url = 'file://' + path.resolve(url);
     else if (!url.startsWith('http') && !url.startsWith('file://') && !url.startsWith('about:') && !url.startsWith('data:'))
       url = 'http://' + url;
-    await page.goto(url);
+    await page.goto(url).catch(error => {
+      if (process.env.PWTEST_CLI_AUTO_EXIT_WHEN && error.message.includes('Navigation failed because page was closed')) {
+        // Tests with PWTEST_CLI_AUTO_EXIT_WHEN might close page too fast, resulting
+        // in a stray navigation aborted error. We should ignore it.
+      } else {
+        throw error;
+      }
+    });
   }
   return page;
 }
@@ -567,8 +582,6 @@ async function open(options: Options, url: string | undefined, language: string)
     saveStorage: options.saveStorage,
   });
   await openPage(context, url);
-  if (process.env.PWTEST_CLI_EXIT)
-    await Promise.all(context.pages().map(p => p.close()));
 }
 
 async function codegen(options: Options, url: string | undefined, language: string, outputFile?: string) {
@@ -584,8 +597,6 @@ async function codegen(options: Options, url: string | undefined, language: stri
     handleSIGINT: false,
   });
   await openPage(context, url);
-  if (process.env.PWTEST_CLI_EXIT)
-    await Promise.all(context.pages().map(p => p.close()));
 }
 
 async function waitForPage(page: Page, captureOptions: CaptureOptions) {

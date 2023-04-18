@@ -27,15 +27,16 @@ test('should print the correct imports and context options', async ({ runCLI }) 
 
 def test_example(page: Page) -> None:`;
   await cli.waitFor(expectedResult);
-  expect(cli.text()).toContain(expectedResult);
 });
 
 test('should print the correct context options when using a device and lang', async ({ browserName, runCLI }, testInfo) => {
   test.skip(browserName !== 'webkit');
 
   const tmpFile = testInfo.outputPath('script.js');
-  const cli = runCLI(['--target=python-pytest', '--device=iPhone 11', '--lang=en-US', '--output', tmpFile, emptyHTML]);
-  await cli.exited;
+  const cli = runCLI(['--target=python-pytest', '--device=iPhone 11', '--lang=en-US', '--output', tmpFile, emptyHTML], {
+    autoExitWhen: 'page.goto',
+  });
+  await cli.waitForCleanExit();
   const content = fs.readFileSync(tmpFile);
   expect(content.toString()).toBe(`import pytest
 
@@ -54,8 +55,10 @@ def test_example(page: Page) -> None:
 
 test('should save the codegen output to a file if specified', async ({ runCLI }, testInfo) => {
   const tmpFile = testInfo.outputPath('test_example.py');
-  const cli = runCLI(['--target=python-pytest', '--output', tmpFile, emptyHTML]);
-  await cli.exited;
+  const cli = runCLI(['--target=python-pytest', '--output', tmpFile, emptyHTML], {
+    autoExitWhen: 'page.goto',
+  });
+  await cli.waitForCleanExit();
   const content = fs.readFileSync(tmpFile);
   expect(content.toString()).toBe(`from playwright.sync_api import Page, expect
 

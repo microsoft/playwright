@@ -7,8 +7,8 @@
     "paths": {
       /*
         The following two serve different purposes:
-         - @foo is for importing types only,
-         - foo/lib means require dependency
+         - @foo/* is for importing types only,
+         - .../lib/* means require dependency
       */
       "@html-reporter/*": ["./packages/html-reporter/src/*"],
       "@injected/*": ["./packages/playwright-core/src/server/injected/*"],
@@ -19,6 +19,7 @@
       "@trace/*": ["./packages/trace/src/*"],
       "@web/*": ["./packages/web/src/*"],
       "playwright-core/lib/*": ["./packages/playwright-core/src/*"],
+      "@playwright/test/lib/*": ["./packages/playwright-test/src/*"],
     },
     "esModuleInterop": true,
     "strict": true,
