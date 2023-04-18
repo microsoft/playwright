@@ -149,3 +149,33 @@ test('expect should not leak', async ({ page, mode, browserName, toImpl }) => {
     expect(counts.main + counts.utility).toBeLessThan(25);
   }
 });
+
+test('waitFor should not leak', async ({ page, mode, browserName, toImpl }) => {
+  test.skip(mode !== 'default');
+
+  await page.setContent(`
+    <button>static button 1</button>
+    <button>static button 2</button>
+    <div id="buttons"></div>
+  `);
+
+  for (let i = 0; i < 25; ++i) {
+    await page.evaluate(i => {
+      const element = document.createElement('button');
+      element.textContent = 'dynamic ' + i;
+      document.getElementById('buttons').appendChild(element);
+    }, i);
+    await page.locator('#buttons > button').waitFor();
+    await page.evaluate(() => {
+      document.getElementById('buttons').textContent = '';
+    });
+  }
+
+  expect(leakedJSHandles()).toBeFalsy();
+
+  if (browserName === 'chromium') {
+    const counts = await objectCounts(toImpl(page), 'HTMLButtonElement');
+    expect(counts.main + counts.utility).toBeGreaterThanOrEqual(2);
+    expect(counts.main + counts.utility).toBeLessThan(25);
+  }
+});
