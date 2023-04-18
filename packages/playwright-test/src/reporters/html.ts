@@ -46,6 +46,7 @@ type HtmlReporterOptions = {
   open?: HtmlReportOpenOption,
   host?: string,
   port?: number,
+  attachmentsBaseURL?: string,
 };
 
 class HtmlReporter implements Reporter {
@@ -54,6 +55,7 @@ class HtmlReporter implements Reporter {
   private _montonicStartTime: number = 0;
   private _options: HtmlReporterOptions;
   private _outputFolder!: string;
+  private _attachmentsBaseURL!: string;
   private _open: string | undefined;
   private _buildResult: { ok: boolean, singleTestId: string | undefined } | undefined;
 
@@ -68,9 +70,10 @@ class HtmlReporter implements Reporter {
   onBegin(config: FullConfig, suite: Suite) {
     this._montonicStartTime = monotonicTime();
     this.config = config;
-    const { outputFolder, open } = this._resolveOptions();
+    const { outputFolder, open, attachmentsBaseURL } = this._resolveOptions();
     this._outputFolder = outputFolder;
     this._open = open;
+    this._attachmentsBaseURL = attachmentsBaseURL;
     const reportedWarnings = new Set<string>();
     for (const project of config.projects) {
       if (outputFolder.startsWith(project.outputDir) || project.outputDir.startsWith(outputFolder)) {
@@ -90,13 +93,14 @@ class HtmlReporter implements Reporter {
     this.suite = suite;
   }
 
-  _resolveOptions(): { outputFolder: string, open: HtmlReportOpenOption } {
+  _resolveOptions(): { outputFolder: string, open: HtmlReportOpenOption, attachmentsBaseURL: string } {
     let { outputFolder } = this._options;
     if (outputFolder)
       outputFolder = path.resolve(this._options.configDir, outputFolder);
     return {
       outputFolder: reportFolderFromEnv() ?? outputFolder ?? defaultReportFolder(this._options.configDir),
       open: process.env.PW_TEST_HTML_REPORT_OPEN as any || this._options.open || 'on-failure',
+      attachmentsBaseURL: this._options.attachmentsBaseURL || 'data/'
     };
   }
 
@@ -109,7 +113,7 @@ class HtmlReporter implements Reporter {
       return report;
     });
     await removeFolders([this._outputFolder]);
-    const builder = new HtmlBuilder(this._outputFolder);
+    const builder = new HtmlBuilder(this._outputFolder, this._attachmentsBaseURL);
     this._buildResult = await builder.build({ ...this.config.metadata, duration }, reports);
   }
 
@@ -198,11 +202,13 @@ class HtmlBuilder {
   private _testPath = new Map<string, string[]>();
   private _dataZipFile: ZipFile;
   private _hasTraces = false;
+  private _attachmentsBaseURL: string;
 
-  constructor(outputDir: string) {
+  constructor(outputDir: string, attachmentsBaseURL: string) {
     this._reportFolder = outputDir;
     fs.mkdirSync(this._reportFolder, { recursive: true });
     this._dataZipFile = new yazl.ZipFile();
+    this._attachmentsBaseURL = attachmentsBaseURL;
   }
 
   async build(metadata: Metadata & { duration: number }, rawReports: JsonReport[]): Promise<{ ok: boolean, singleTestId: string | undefined }> {
@@ -389,7 +395,7 @@ class HtmlBuilder {
         try {
           const buffer = fs.readFileSync(a.path);
           const sha1 = calculateSha1(buffer) + path.extname(a.path);
-          fileName = 'data/' + sha1;
+          fileName = this._attachmentsBaseURL + sha1;
           fs.mkdirSync(path.join(this._reportFolder, 'data'), { recursive: true });
           fs.writeFileSync(path.join(this._reportFolder, 'data', sha1), buffer);
         } catch (e) {
@@ -430,7 +436,7 @@ class HtmlBuilder {
         return {
           name: a.name,
           contentType: a.contentType,
-          path: 'data/' + sha1,
+          path: this._attachmentsBaseURL + sha1,
         };
       }
 
