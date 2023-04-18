@@ -815,6 +815,10 @@ export class Frame extends SdkObject {
           result.dispose();
           return continuePolling;
         }
+        if (options.omitReturnValue) {
+          result.dispose();
+          return null;
+        }
         const element = state === 'attached' || state === 'visible' ? await result.evaluateHandle(r => r.element) : null;
         result.dispose();
         if (!element)
