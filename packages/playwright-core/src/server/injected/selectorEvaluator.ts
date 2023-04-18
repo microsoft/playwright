@@ -139,7 +139,7 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
     const selector = this._checkSelector(s);
     this.begin();
     try {
-      return this._cached<Element[]>(this._cacheQuery, selector, [context.scope, context.pierceShadow], () => {
+      return this._cached<Element[]>(this._cacheQuery, JSON.stringify(selector), [context.scope, context.pierceShadow], () => {
         if (Array.isArray(selector))
           return this._queryEngine(isEngine, context, selector);
 
@@ -196,7 +196,7 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
     if (!simple.functions.length)
       return this._queryCSS(context, simple.css || '*');
 
-    return this._cached<Element[]>(this._cacheQuerySimple, simple, [context.scope, context.pierceShadow], () => {
+    return this._cached<Element[]>(this._cacheQuerySimple, JSON.stringify(simple), [context.scope, context.pierceShadow], () => {
       let css = simple.css;
       const funcs = simple.functions;
       if (css === '*' && funcs.length)
