@@ -20,11 +20,11 @@
     "./lib/cli": "./lib/cli.js",
     "./lib/common/babelBundle": "./lib/common/babelBundle.js",
     "./lib/common/compilationCache": "./lib/common/compilationCache.js",
-    "./lib/common/tsxTransform": "./lib/common/tsxTransform.js",
     "./lib/internalsForTest": "./lib/internalsForTest.js",
     "./lib/experimentalLoader": "./lib/experimentalLoader.js",
     "./lib/mount": "./lib/mount.js",
     "./lib/plugins": "./lib/plugins/index.js",
+    "./lib/util": "./lib/util.js",
     "./lib/utilsBundle": "./lib/utilsBundle.js",
     "./reporter": "./reporter.js"
   },
