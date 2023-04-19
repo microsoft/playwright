@@ -23,6 +23,7 @@ import { toBeTruthy } from './toBeTruthy';
 import { toEqual } from './toEqual';
 import { toExpectedTextValues, toMatchText } from './toMatchText';
 import { constructURLBasedOnBaseURL, isTextualMimeType, pollAgainstTimeout } from 'playwright-core/lib/utils';
+import { currentTestInfo } from '../common/globals';
 
 interface LocatorEx extends Locator {
   _expect(expression: string, options: Omit<FrameExpectOptions, 'expectedValue'> & { expectedValue?: any }): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }>;
@@ -337,9 +338,12 @@ export async function toPass(
     timeout?: number,
   } = {},
 ) {
+  const testInfo = currentTestInfo();
   const timeout = options.timeout !== undefined ? options.timeout : 0;
 
   const result = await pollAgainstTimeout<Error|undefined>(async () => {
+    if (testInfo && currentTestInfo() !== testInfo)
+      return { continuePolling: false, result: undefined };
     try {
       await callback();
       return { continuePolling: this.isNot, result: undefined };
