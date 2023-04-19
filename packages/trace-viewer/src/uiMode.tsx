@@ -19,7 +19,7 @@ import '@web/common.css';
 import { applyTheme } from '@web/theme';
 import '@web/third_party/vscode/codicon.css';
 import * as ReactDOM from 'react-dom';
-import { WatchModeView } from './ui/watchMode';
+import { UIModeView } from './ui/uiModeView';
 
 (async () => {
   applyTheme();
@@ -37,5 +37,5 @@ import { WatchModeView } from './ui/watchMode';
     setInterval(function() { fetch('ping'); }, 10000);
   }
 
-  ReactDOM.render(<WatchModeView></WatchModeView>, document.querySelector('#root'));
+  ReactDOM.render(<UIModeView></UIModeView>, document.querySelector('#root'));
 })();

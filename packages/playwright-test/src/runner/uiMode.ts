@@ -80,7 +80,7 @@ class UIMode {
   }
 
   async showUI() {
-    this._page = await showTraceViewer([], 'chromium', { app: 'watch.html', headless: isUnderTest() && process.env.PWTEST_HEADED_FOR_TEST !== '1' });
+    this._page = await showTraceViewer([], 'chromium', { app: 'uiMode.html', headless: isUnderTest() && process.env.PWTEST_HEADED_FOR_TEST !== '1' });
     if (!process.env.PWTEST_DEBUG) {
       process.stdout.write = (chunk: string | Buffer) => {
         this._dispatchEvent({ method: 'stdio', params: chunkToPayload('stdout', chunk) });
