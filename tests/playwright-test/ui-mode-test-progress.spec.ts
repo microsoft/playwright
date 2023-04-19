@@ -16,7 +16,6 @@
 
 import { ManualPromise } from '../../packages/playwright-core/lib/utils/manualPromise';
 import { test, expect } from './ui-mode-fixtures';
-test.describe.configure({ mode: 'parallel' });
 
 test('should update trace live', async ({ runUITest, server }) => {
   const onePromise = new ManualPromise();
