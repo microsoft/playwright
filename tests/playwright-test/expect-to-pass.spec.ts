@@ -182,3 +182,25 @@ test('should not accept TimeoutError', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
 });
+
+test('should not spin forever', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      let log;
+      test('spill toPass', async () => {
+        expect(() => {
+          log?.push('poll');
+          throw new Error('Polling');
+        }).toPass().catch();
+      });
+      test('should not see toPass', async () => {
+        log = [];
+        await new Promise(f => setTimeout(f, 1000));
+        expect(log.length).toBe(0);
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(2);
+});
