@@ -220,6 +220,10 @@ window.playwrightUpdate = async (rootElement, component) => {
     throw new Error('Component was not mounted');
 
   const componentInstance = wrapper.componentInstance;
+
+  if (!componentInstance)
+    throw new Error('Updating a native HTML element is not supported');
+
   const { nodeData, slots } = __pwCreateComponent(component);
 
   for (const [name, value] of Object.entries(nodeData.on || {})) {
