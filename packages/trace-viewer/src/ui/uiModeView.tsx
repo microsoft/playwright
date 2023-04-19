@@ -22,10 +22,10 @@ import { TreeView } from '@web/components/treeView';
 import type { TreeState } from '@web/components/treeView';
 import { baseFullConfig, TeleReporterReceiver, TeleSuite } from '@testIsomorphic/teleReceiver';
 import type { TeleTestCase } from '@testIsomorphic/teleReceiver';
-import type { FullConfig, Suite, TestCase, Location, TestError } from '../../../playwright-test/types/testReporter';
+import type { FullConfig, Suite, TestCase, Location, TestError } from '@playwright/test/types/testReporter';
 import { SplitView } from '@web/components/splitView';
 import { idForAction, MultiTraceModel } from './modelUtil';
-import './watchMode.css';
+import './uiModeView.css';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { Toolbar } from '@web/components/toolbar';
 import type { ContextEntry } from '../entries';
@@ -56,7 +56,7 @@ type TestModel = {
   rootSuite: Suite | undefined;
 };
 
-export const WatchModeView: React.FC<{}> = ({
+export const UIModeView: React.FC<{}> = ({
 }) => {
   const [filterText, setFilterText] = React.useState<string>('');
   const [isShowingOutput, setIsShowingOutput] = React.useState<boolean>(false);
@@ -155,7 +155,7 @@ export const WatchModeView: React.FC<{}> = ({
 
   const isRunningTest = !!runningState;
 
-  return <div className='vbox watch-mode'>
+  return <div className='vbox ui-mode'>
     <SplitView sidebarSize={250} orientation='horizontal' sidebarIsFirst={true}>
       <div className='vbox'>
         <div className={'vbox' + (isShowingOutput ? '' : ' hidden')}>
@@ -171,7 +171,7 @@ export const WatchModeView: React.FC<{}> = ({
           <TraceView item={selectedItem} rootDir={testModel.config?.rootDir} />
         </div>
       </div>
-      <div className='vbox watch-mode-sidebar'>
+      <div className='vbox ui-mode-sidebar'>
         <Toolbar noShadow={true} noMinHeight={true}>
           <img src='icon-32x32.png' />
           <div className='section-title'>Playwright</div>
@@ -417,9 +417,9 @@ const TestList: React.FC<{
     rootItem={rootItem}
     dataTestId='test-tree'
     render={treeItem => {
-      return <div className='hbox watch-mode-list-item'>
-        <div className='watch-mode-list-item-title'>{treeItem.title}</div>
-        {!!treeItem.duration && treeItem.status !== 'skipped' && <div className='watch-mode-list-item-time'>{msToString(treeItem.duration)}</div>}
+      return <div className='hbox ui-mode-list-item'>
+        <div className='ui-mode-list-item-title'>{treeItem.title}</div>
+        {!!treeItem.duration && treeItem.status !== 'skipped' && <div className='ui-mode-list-item-time'>{msToString(treeItem.duration)}</div>}
         <Toolbar noMinHeight={true} noShadow={true}>
           <ToolbarButton icon='play' title='Run' onClick={() => runTreeItem(treeItem)} disabled={!!runningState}></ToolbarButton>
           <ToolbarButton icon='go-to-file' title='Open in VS Code' onClick={() => sendMessageNoReply('open', { location: locationToOpen(treeItem) })}></ToolbarButton>
