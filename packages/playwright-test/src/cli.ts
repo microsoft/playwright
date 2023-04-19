@@ -93,7 +93,7 @@ Examples:
 }
 
 function addMergeReportsCommand(program: Command) {
-  const command = program.command('merge-reports [dir]');
+  const command = program.command('merge-reports [dir]', { hidden: true });
   command.description('merge multiple blob reports (for sharded tests) into a single report');
   command.action(async (dir, options) => {
     try {
