@@ -23,7 +23,7 @@ import type { TsConfigLoaderResult } from '../third_party/tsconfig-loader';
 import { tsConfigLoader } from '../third_party/tsconfig-loader';
 import Module from 'module';
 import type { BabelTransformFunction } from './babelBundle';
-import { fileIsModule } from '../util';
+import { fileIsModule, js2ts } from '../util';
 import { getFromCompilationCache, currentFileDepsCollector, belongsToNodeModules } from './compilationCache';
 
 type ParsedTsConfigData = {
@@ -132,18 +132,6 @@ export function resolveHook(filename: string, specifier: string): string | undef
   return js2ts(path.resolve(path.dirname(filename), specifier));
 }
 
-export function js2ts(resolved: string): string | undefined {
-  const match = resolved.match(/(.*)(\.js|\.jsx|\.mjs)$/);
-  if (!match || fs.existsSync(resolved))
-    return;
-  const tsResolved = match[1] + match[2].replace('js', 'ts');
-  if (fs.existsSync(tsResolved))
-    return tsResolved;
-  const tsxResolved = match[1] + match[2].replace('js', 'tsx');
-  if (fs.existsSync(tsxResolved))
-    return tsxResolved;
-}
-
 export function transformHook(code: string, filename: string, moduleUrl?: string): string {
   const { cachedCode, addToCache } = getFromCompilationCache(filename, code, moduleUrl);
   if (cachedCode)
@@ -161,7 +149,7 @@ export function transformHook(code: string, filename: string, moduleUrl?: string
 
   try {
     const { babelTransform }: { babelTransform: BabelTransformFunction } = require('./babelBundle');
-    const { code, map } = babelTransform(filename, isTypeScript, !!moduleUrl, hasPreprocessor ? scriptPreprocessor : undefined, [require.resolve('./tsxTransform')]);
+    const { code, map } = babelTransform(filename, isTypeScript, !!moduleUrl, hasPreprocessor ? scriptPreprocessor : undefined);
     if (code)
       addToCache!(code, map);
     return code || '';

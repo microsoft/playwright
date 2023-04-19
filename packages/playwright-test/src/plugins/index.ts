@@ -20,6 +20,7 @@ import type { Multiplexer } from '../reporters/multiplexer';
 export interface TestRunnerPlugin {
   name: string;
   setup?(config: FullConfig, configDir: string, reporter: Multiplexer): Promise<void>;
+  babelPlugins?(): Promise<[string, any?][]>;
   begin?(suite: Suite): Promise<void>;
   end?(): Promise<void>;
   teardown?(): Promise<void>;
@@ -28,6 +29,7 @@ export interface TestRunnerPlugin {
 export type TestRunnerPluginRegistration = {
   factory: TestRunnerPlugin | (() => TestRunnerPlugin | Promise<TestRunnerPlugin>);
   instance?: TestRunnerPlugin;
+  babelPlugins?: [string, any?][];
 };
 
 export { webServer } from './webServerPlugin';

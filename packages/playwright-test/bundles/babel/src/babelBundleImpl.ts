@@ -26,7 +26,14 @@ export { parse } from '@babel/parser';
 import traverseFunction from '@babel/traverse';
 export const traverse = traverseFunction;
 
-export function babelTransform(filename: string, isTypeScript: boolean, isModule: boolean, scriptPreprocessor: string | undefined, additionalPlugin: babel.PluginObj): BabelFileResult {
+
+let additionalPlugins: [string, any?][] = [];
+
+export function setBabelPlugins(plugins: [string, any?][]) {
+  additionalPlugins = plugins;
+}
+
+export function babelTransform(filename: string, isTypeScript: boolean, isModule: boolean, scriptPreprocessor: string | undefined): BabelFileResult {
   const plugins = [];
 
   if (isTypeScript) {
@@ -72,7 +79,7 @@ export function babelTransform(filename: string, isTypeScript: boolean, isModule
     plugins.push([require('@babel/plugin-syntax-import-assertions')]);
   }
 
-  plugins.unshift(additionalPlugin);
+  plugins.unshift(...additionalPlugins.map(([name, options]) => [require(name), options]));
 
   if (scriptPreprocessor)
     plugins.push([scriptPreprocessor]);

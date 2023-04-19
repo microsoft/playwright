@@ -19,7 +19,7 @@ import type { PlaywrightTestConfig as BasePlaywrightTestConfig, FullConfig } fro
 
 import type { InlineConfig, Plugin, ResolveFn, ResolvedConfig } from 'vite';
 import type { TestRunnerPlugin } from '../../playwright-test/src/plugins';
-import type { ComponentInfo } from '../../playwright-test/src/common/tsxTransform';
+import type { ComponentInfo } from './tsxTransform';
 import type { AddressInfo } from 'net';
 import type { PluginContext } from 'rollup';
 
@@ -27,10 +27,10 @@ import fs from 'fs';
 import path from 'path';
 import { parse, traverse, types as t } from '@playwright/test/lib/common/babelBundle';
 import { stoppable } from '@playwright/test/lib/utilsBundle';
-import { collectComponentUsages, componentInfo } from '@playwright/test/lib/common/tsxTransform';
 import { assert, calculateSha1 } from 'playwright-core/lib/utils';
 import { getPlaywrightVersion } from 'playwright-core/lib/utils';
 import { setExternalDependencies } from '@playwright/test/lib/common/compilationCache';
+import { collectComponentUsages, componentInfo } from './tsxTransform';
 
 let stoppableServer: any;
 const playwrightVersion = getPlaywrightVersion();
@@ -57,6 +57,10 @@ export function createPlugin(
       config = configObject;
       configDir = configDirectory;
     },
+
+    babelPlugins: async () => [
+      [require.resolve('./tsxTransform')]
+    ],
 
     begin: async (suite: Suite) => {
       const use = config.projects[0].use as CtConfig;

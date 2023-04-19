@@ -15,9 +15,9 @@
  */
 
 import path from 'path';
-import type { T, BabelAPI } from './babelBundle';
-import { types, declare, traverse } from './babelBundle';
-import { js2ts } from './transform';
+import type { T, BabelAPI } from '../../playwright-test/src/common/babelBundle';
+import { types, declare, traverse } from '@playwright/test/lib/common/babelBundle';
+import { js2ts } from '@playwright/test/lib/util';
 const t: typeof T = types;
 
 const fullNames = new Map<string, string | undefined>();

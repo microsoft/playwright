@@ -118,6 +118,7 @@ function createPluginSetupTask(plugin: TestRunnerPluginRegistration): Task<TestR
     else
       plugin.instance = plugin.factory;
     await plugin.instance?.setup?.(config.config, config.configDir, reporter);
+    plugin.babelPlugins = await plugin.instance?.babelPlugins?.() || [];
     return () => plugin.instance?.teardown?.();
   };
 }
