@@ -20,7 +20,7 @@
 import * as __pwReact from 'react';
 import { createRoot as __pwCreateRoot } from 'react-dom/client';
 
-/** @typedef {import('../playwright-test/types/experimentalComponent').Component} Component */
+/** @typedef {import('../playwright-ct-core/types/component').Component} Component */
 /** @typedef {import('react').FunctionComponent} FrameworkComponent */
 
 /** @type {Map<string, FrameworkComponent>} */
