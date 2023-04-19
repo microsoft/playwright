@@ -509,7 +509,7 @@ const TraceView: React.FC<{
       } finally {
         setCounter(counter + 1);
       }
-    }, 250);
+    }, 500);
     return () => {
       if (pollTimer.current)
         clearTimeout(pollTimer.current);
