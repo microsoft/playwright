@@ -77,6 +77,7 @@ export const UIModeView: React.FC<{}> = ({
   const [watchedTreeIds, setWatchedTreeIds] = React.useState<{ value: Set<string> }>({ value: new Set() });
   const runTestPromiseChain = React.useRef(Promise.resolve());
   const runTestBacklog = React.useRef<Set<string>>(new Set());
+  const [collapseAllCount, setCollapseAllCount] = React.useState(0);
 
   const inputRef = React.useRef<HTMLInputElement>(null);
 
@@ -199,6 +200,9 @@ export const UIModeView: React.FC<{}> = ({
           <ToolbarButton icon='play' title='Run all' onClick={() => runTests('bounce-if-busy', visibleTestIds)} disabled={isRunningTest || isLoading}></ToolbarButton>
           <ToolbarButton icon='debug-stop' title='Stop' onClick={() => sendMessageNoReply('stop')} disabled={!isRunningTest || isLoading}></ToolbarButton>
           <ToolbarButton icon='eye' title='Watch all' toggled={watchAll} onClick={() => setWatchAll(!watchAll)}></ToolbarButton>
+          <ToolbarButton icon='collapse-all' title='Collapse all' onClick={() => {
+            setCollapseAllCount(collapseAllCount + 1);
+          }} />
         </Toolbar>
         <TestList
           statusFilters={statusFilters}
@@ -212,7 +216,8 @@ export const UIModeView: React.FC<{}> = ({
           watchAll={watchAll}
           watchedTreeIds={watchedTreeIds}
           setWatchedTreeIds={setWatchedTreeIds}
-          isLoading={isLoading} />
+          isLoading={isLoading}
+          requestedCollapseAllCount={collapseAllCount} />
       </div>
     </SplitView>
   </div>;
@@ -304,9 +309,11 @@ const TestList: React.FC<{
   isLoading?: boolean,
   setVisibleTestIds: (testIds: Set<string>) => void,
   onItemSelected: (item: { testCase?: TestCase, location?: Location }) => void,
-}> = ({ statusFilters, projectFilters, filterText, testModel, runTests, runningState, watchAll, watchedTreeIds, setWatchedTreeIds, isLoading, onItemSelected, setVisibleTestIds }) => {
+  requestedCollapseAllCount: number,
+}> = ({ statusFilters, projectFilters, filterText, testModel, runTests, runningState, watchAll, watchedTreeIds, setWatchedTreeIds, isLoading, onItemSelected, setVisibleTestIds, requestedCollapseAllCount }) => {
   const [treeState, setTreeState] = React.useState<TreeState>({ expandedItems: new Map() });
   const [selectedTreeItemId, setSelectedTreeItemId] = React.useState<string | undefined>();
+  const [collapseAllCount, setCollapseAllCount] = React.useState(requestedCollapseAllCount);
 
   // Build the test tree.
   const { rootItem, treeItemMap, fileNames } = React.useMemo(() => {
@@ -334,6 +341,17 @@ const TestList: React.FC<{
 
   // Look for a first failure within the run batch to select it.
   React.useEffect(() => {
+    // If collapse was requested, clear the expanded items and return w/o selected item.
+    if (collapseAllCount !== requestedCollapseAllCount) {
+      treeState.expandedItems.clear();
+      for (const item of treeItemMap.keys())
+        treeState.expandedItems.set(item, false);
+      setCollapseAllCount(requestedCollapseAllCount);
+      setSelectedTreeItemId(undefined);
+      setTreeState({ ...treeState });
+      return;
+    }
+
     if (!runningState || runningState.itemSelectedByUser)
       return;
     let selectedTreeItem: TreeItem | undefined;
@@ -352,7 +370,7 @@ const TestList: React.FC<{
 
     if (selectedTreeItem)
       setSelectedTreeItemId(selectedTreeItem.id);
-  }, [runningState, setSelectedTreeItemId, rootItem]);
+  }, [runningState, setSelectedTreeItemId, rootItem, collapseAllCount, setCollapseAllCount, requestedCollapseAllCount, treeState, setTreeState, treeItemMap]);
 
   // Compute selected item.
   const { selectedTreeItem } = React.useMemo(() => {
