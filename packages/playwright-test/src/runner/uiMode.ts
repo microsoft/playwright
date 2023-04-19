@@ -47,8 +47,10 @@ class UIMode {
     for (const project of config.projects)
       project.deps = [];
 
-    for (const p of config.projects)
+    for (const p of config.projects) {
       p.project.retries = 0;
+      p.project.repeatEach = 1;
+    }
     config.configCLIOverrides.use = config.configCLIOverrides.use || {};
     config.configCLIOverrides.use.trace = { mode: 'on', sources: false };
 
