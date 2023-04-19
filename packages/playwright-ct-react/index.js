@@ -15,7 +15,7 @@
  */
 
 const { test: baseTest, expect, devices, defineConfig: originalDefineConfig } = require('@playwright/test');
-const { fixtures } = require('@playwright/test/lib/mount');
+const { fixtures } = require('@playwright/experimental-ct-core/lib/mount');
 const path = require('path');
 
 const plugin = () => {

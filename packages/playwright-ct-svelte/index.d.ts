@@ -23,7 +23,7 @@ import type {
   PlaywrightWorkerOptions,
   Locator,
 } from '@playwright/test';
-import type { JsonObject } from '@playwright/test/types/experimentalComponent';
+import type { JsonObject } from '@playwright/experimental-ct-core/types/component';
 import type { InlineConfig } from 'vite';
 import type { SvelteComponent, ComponentProps } from 'svelte/types/runtime';
 

@@ -20,7 +20,7 @@
 
 import { detach as __pwDetach, insert as __pwInsert, noop as __pwNoop } from 'svelte/internal';
 
-/** @typedef {import('../playwright-test/types/experimentalComponent').Component} Component */
+/** @typedef {import('../playwright-ct-core/types/component').Component} Component */
 /** @typedef {any} FrameworkComponent */
 /** @typedef {import('svelte').SvelteComponent} SvelteComponent */
 
