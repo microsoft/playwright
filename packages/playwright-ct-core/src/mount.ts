@@ -40,7 +40,7 @@ export const fixtures: Fixtures<
 
     page: async ({ page }, use, info) => {
       if (!((info as any)._configInternal as FullConfigInternal).defineConfigWasUsed)
-        throw new Error('Component testing requires the use of the defineConfig() in your playwright-ct.config.{ts,js}: https://aka.ms/playwright/ct-define-config');
+        throw new Error('Component testing requires the use of the `defineConfig()` in your playwright-ct.config.{ts,js}: https://aka.ms/playwright/ct-define-config');
       await (page as any)._wrapApiCall(async () => {
         await page.exposeFunction('__ct_dispatch', (ordinal: number, args: any[]) => {
           boundCallbacksForMount[ordinal](...args);
@@ -57,6 +57,11 @@ export const fixtures: Fixtures<
         const selector = await (page as any)._wrapApiCall(async () => {
           return await innerMount(page, component, options);
         }, true);
+
+        page.goto = () => { throw new Error('`page.goto()` is not supported in component testing'); };
+        page.goBack = () => { throw new Error('`page.goBack()` is not supported in component testing'); };
+        page.goForward = () => { throw new Error('`page.goForward()` is not supported in component testing'); };
+
         const locator = page.locator(selector);
         return Object.assign(locator, {
           unmount: async () => {
