@@ -57,7 +57,7 @@ export class TraceModel {
     const ordinals: string[] = [];
     let hasSource = false;
     for (const entryName of await this._backend.entryNames()) {
-      const match = entryName.match(/(.+-)?trace\.trace/);
+      const match = entryName.match(/(.+)\.trace/);
       if (match)
         ordinals.push(match[1] || '');
       if (entryName.includes('src@'))
@@ -77,12 +77,12 @@ export class TraceModel {
       contextEntry.traceUrl = traceURL;
       contextEntry.hasSource = hasSource;
 
-      const trace = await this._backend.readText(ordinal + 'trace.trace') || '';
+      const trace = await this._backend.readText(ordinal + '.trace') || '';
       for (const line of trace.split('\n'))
         this.appendEvent(contextEntry, actionMap, line);
       unzipProgress(++done, total);
 
-      const network = await this._backend.readText(ordinal + 'trace.network') || '';
+      const network = await this._backend.readText(ordinal + '.network') || '';
       for (const line of network.split('\n'))
         this.appendEvent(contextEntry, actionMap, line);
       unzipProgress(++done, total);
@@ -95,7 +95,7 @@ export class TraceModel {
         }
       }
 
-      const stacks = await this._backend.readText(ordinal + 'trace.stacks');
+      const stacks = await this._backend.readText(ordinal + '.stacks');
       if (stacks) {
         const callMetadata = parseClientSideCallMetadata(JSON.parse(stacks));
         for (const action of contextEntry.actions)
