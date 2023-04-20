@@ -39,6 +39,14 @@ class Reporter {
     };
   }
 
+  onStdOut(data) {
+    process.stdout.write(data.toString());
+  }
+
+  onStdErr(data) {
+    process.stderr.write(data.toString());
+  }
+
   async onEnd() {
     const processSuite = (suite: Suite) => {
       for (const child of suite.suites)
@@ -160,6 +168,51 @@ test('should report api step hierarchy', async ({ runInlineTest }) => {
           title: 'browserContext.close',
         },
       ],
+    },
+  ]);
+});
+
+test('should report before hooks step error', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': stepHierarchyReporter,
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: './reporter',
+      };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test.beforeEach(async ({}) => {
+        throw new Error('oh my');
+      });
+      test('pass', async ({}) => {
+      });
+    `
+  }, { reporter: '', workers: 1 });
+
+  expect(result.exitCode).toBe(1);
+  const objects = result.output.split('\n').filter(line => line.startsWith('%% ')).map(line => line.substring(3).trim()).filter(Boolean).map(line => JSON.parse(line));
+  expect(objects).toEqual([
+    {
+      category: 'hook',
+      title: 'Before Hooks',
+      error: '<error>',
+      steps: [
+        {
+          category: 'hook',
+          title: 'beforeEach hook',
+          error: '<error>',
+          location: {
+            column: 'number',
+            file: 'a.test.ts',
+            line: 'number',
+          },
+        }
+      ],
+    },
+    {
+      category: 'hook',
+      title: 'After Hooks',
     },
   ]);
 });
@@ -382,16 +435,18 @@ test('should report custom expect steps', async ({ runInlineTest }) => {
   ]);
 });
 
-test('should return value from step', async ({ runInlineTest }) => {
+test('should not pass arguments and return value from step', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('steps with return values', async ({ page }) => {
-        const v1 = await test.step('my step', () => {
+        const v1 = await test.step('my step', (...args) => {
+          expect(args.length).toBe(0);
           return 10;
         });
         console.log('v1 = ' + v1);
-        const v2 = await test.step('my step', async () => {
+        const v2 = await test.step('my step', async (...args) => {
+          expect(args.length).toBe(0);
           return new Promise(f => setTimeout(() => f(v1 + 10), 100));
         });
         console.log('v2 = ' + v2);
@@ -471,19 +526,19 @@ test('should nest steps based on zones', async ({ runInlineTest }) => {
       test.beforeAll(async () => {
         await test.step('in beforeAll', () => {});
       });
-      
+
       test.afterAll(async () => {
         await test.step('in afterAll', () => {});
       });
-      
+
       test.beforeEach(async () => {
         await test.step('in beforeEach', () => {});
       });
-      
+
       test.afterEach(async () => {
         await test.step('in afterEach', () => {});
       });
-      
+
       test.only('foo', async ({ page }) => {
         await test.step('grand', async () => {
           await Promise.all([
@@ -499,7 +554,7 @@ test('should nest steps based on zones', async ({ runInlineTest }) => {
             }),
           ]);
         });
-      });      
+      });
     `
   }, { reporter: '', workers: 1 });
 
