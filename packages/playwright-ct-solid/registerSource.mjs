@@ -20,7 +20,7 @@
 import { render as __pwSolidRender, createComponent as __pwSolidCreateComponent } from 'solid-js/web';
 import __pwH from 'solid-js/h';
 
-/** @typedef {import('../playwright-test/types/experimentalComponent').Component} Component */
+/** @typedef {import('../playwright-ct-core/types/component').Component} Component */
 /** @typedef {() => import('solid-js').JSX.Element} FrameworkComponent */
 
 /** @type {Map<string, FrameworkComponent>} */

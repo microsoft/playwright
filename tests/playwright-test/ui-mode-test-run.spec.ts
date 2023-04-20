@@ -330,3 +330,32 @@ test('should show test.fail as passing', async ({ runUITest }) => {
 
   await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
 });
+
+test('should ignore repeatEach', async ({ runUITest }) => {
+  const { page } = await runUITest({
+    'playwright.config.ts': `
+      import { defineConfig } from '@playwright/test';
+      export default defineConfig({
+        repeatEach: 3,
+      });
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('should pass', () => {
+        expect(1).toBe(1);
+      });
+    `,
+  });
+  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toContain(`
+    ▼ ◯ a.test.ts
+  `);
+
+  await page.getByTitle('Run all').click();
+
+  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toBe(`
+    ▼ ✅ a.test.ts
+        ✅ should pass
+  `);
+
+  await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
+});

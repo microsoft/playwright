@@ -22,10 +22,10 @@ import { TreeView } from '@web/components/treeView';
 import type { TreeState } from '@web/components/treeView';
 import { baseFullConfig, TeleReporterReceiver, TeleSuite } from '@testIsomorphic/teleReceiver';
 import type { TeleTestCase } from '@testIsomorphic/teleReceiver';
-import type { FullConfig, Suite, TestCase, Location, TestError } from '../../../playwright-test/types/testReporter';
+import type { FullConfig, Suite, TestCase, Location, TestError } from '@playwright/test/types/testReporter';
 import { SplitView } from '@web/components/splitView';
 import { idForAction, MultiTraceModel } from './modelUtil';
-import './watchMode.css';
+import './uiModeView.css';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { Toolbar } from '@web/components/toolbar';
 import type { ContextEntry } from '../entries';
@@ -56,7 +56,7 @@ type TestModel = {
   rootSuite: Suite | undefined;
 };
 
-export const WatchModeView: React.FC<{}> = ({
+export const UIModeView: React.FC<{}> = ({
 }) => {
   const [filterText, setFilterText] = React.useState<string>('');
   const [isShowingOutput, setIsShowingOutput] = React.useState<boolean>(false);
@@ -77,6 +77,7 @@ export const WatchModeView: React.FC<{}> = ({
   const [watchedTreeIds, setWatchedTreeIds] = React.useState<{ value: Set<string> }>({ value: new Set() });
   const runTestPromiseChain = React.useRef(Promise.resolve());
   const runTestBacklog = React.useRef<Set<string>>(new Set());
+  const [collapseAllCount, setCollapseAllCount] = React.useState(0);
 
   const inputRef = React.useRef<HTMLInputElement>(null);
 
@@ -155,7 +156,7 @@ export const WatchModeView: React.FC<{}> = ({
 
   const isRunningTest = !!runningState;
 
-  return <div className='vbox watch-mode'>
+  return <div className='vbox ui-mode'>
     <SplitView sidebarSize={250} orientation='horizontal' sidebarIsFirst={true}>
       <div className='vbox'>
         <div className={'vbox' + (isShowingOutput ? '' : ' hidden')}>
@@ -171,7 +172,7 @@ export const WatchModeView: React.FC<{}> = ({
           <TraceView item={selectedItem} rootDir={testModel.config?.rootDir} />
         </div>
       </div>
-      <div className='vbox watch-mode-sidebar'>
+      <div className='vbox ui-mode-sidebar'>
         <Toolbar noShadow={true} noMinHeight={true}>
           <img src='icon-32x32.png' />
           <div className='section-title'>Playwright</div>
@@ -199,6 +200,9 @@ export const WatchModeView: React.FC<{}> = ({
           <ToolbarButton icon='play' title='Run all' onClick={() => runTests('bounce-if-busy', visibleTestIds)} disabled={isRunningTest || isLoading}></ToolbarButton>
           <ToolbarButton icon='debug-stop' title='Stop' onClick={() => sendMessageNoReply('stop')} disabled={!isRunningTest || isLoading}></ToolbarButton>
           <ToolbarButton icon='eye' title='Watch all' toggled={watchAll} onClick={() => setWatchAll(!watchAll)}></ToolbarButton>
+          <ToolbarButton icon='collapse-all' title='Collapse all' onClick={() => {
+            setCollapseAllCount(collapseAllCount + 1);
+          }} />
         </Toolbar>
         <TestList
           statusFilters={statusFilters}
@@ -212,7 +216,8 @@ export const WatchModeView: React.FC<{}> = ({
           watchAll={watchAll}
           watchedTreeIds={watchedTreeIds}
           setWatchedTreeIds={setWatchedTreeIds}
-          isLoading={isLoading} />
+          isLoading={isLoading}
+          requestedCollapseAllCount={collapseAllCount} />
       </div>
     </SplitView>
   </div>;
@@ -304,9 +309,11 @@ const TestList: React.FC<{
   isLoading?: boolean,
   setVisibleTestIds: (testIds: Set<string>) => void,
   onItemSelected: (item: { testCase?: TestCase, location?: Location }) => void,
-}> = ({ statusFilters, projectFilters, filterText, testModel, runTests, runningState, watchAll, watchedTreeIds, setWatchedTreeIds, isLoading, onItemSelected, setVisibleTestIds }) => {
+  requestedCollapseAllCount: number,
+}> = ({ statusFilters, projectFilters, filterText, testModel, runTests, runningState, watchAll, watchedTreeIds, setWatchedTreeIds, isLoading, onItemSelected, setVisibleTestIds, requestedCollapseAllCount }) => {
   const [treeState, setTreeState] = React.useState<TreeState>({ expandedItems: new Map() });
   const [selectedTreeItemId, setSelectedTreeItemId] = React.useState<string | undefined>();
+  const [collapseAllCount, setCollapseAllCount] = React.useState(requestedCollapseAllCount);
 
   // Build the test tree.
   const { rootItem, treeItemMap, fileNames } = React.useMemo(() => {
@@ -334,6 +341,17 @@ const TestList: React.FC<{
 
   // Look for a first failure within the run batch to select it.
   React.useEffect(() => {
+    // If collapse was requested, clear the expanded items and return w/o selected item.
+    if (collapseAllCount !== requestedCollapseAllCount) {
+      treeState.expandedItems.clear();
+      for (const item of treeItemMap.keys())
+        treeState.expandedItems.set(item, false);
+      setCollapseAllCount(requestedCollapseAllCount);
+      setSelectedTreeItemId(undefined);
+      setTreeState({ ...treeState });
+      return;
+    }
+
     if (!runningState || runningState.itemSelectedByUser)
       return;
     let selectedTreeItem: TreeItem | undefined;
@@ -352,7 +370,7 @@ const TestList: React.FC<{
 
     if (selectedTreeItem)
       setSelectedTreeItemId(selectedTreeItem.id);
-  }, [runningState, setSelectedTreeItemId, rootItem]);
+  }, [runningState, setSelectedTreeItemId, rootItem, collapseAllCount, setCollapseAllCount, requestedCollapseAllCount, treeState, setTreeState, treeItemMap]);
 
   // Compute selected item.
   const { selectedTreeItem } = React.useMemo(() => {
@@ -417,9 +435,9 @@ const TestList: React.FC<{
     rootItem={rootItem}
     dataTestId='test-tree'
     render={treeItem => {
-      return <div className='hbox watch-mode-list-item'>
-        <div className='watch-mode-list-item-title'>{treeItem.title}</div>
-        {!!treeItem.duration && treeItem.status !== 'skipped' && <div className='watch-mode-list-item-time'>{msToString(treeItem.duration)}</div>}
+      return <div className='hbox ui-mode-list-item'>
+        <div className='ui-mode-list-item-title'>{treeItem.title}</div>
+        {!!treeItem.duration && treeItem.status !== 'skipped' && <div className='ui-mode-list-item-time'>{msToString(treeItem.duration)}</div>}
         <Toolbar noMinHeight={true} noShadow={true}>
           <ToolbarButton icon='play' title='Run' onClick={() => runTreeItem(treeItem)} disabled={!!runningState}></ToolbarButton>
           <ToolbarButton icon='go-to-file' title='Open in VS Code' onClick={() => sendMessageNoReply('open', { location: locationToOpen(treeItem) })}></ToolbarButton>
@@ -509,7 +527,7 @@ const TraceView: React.FC<{
       } finally {
         setCounter(counter + 1);
       }
-    }, 250);
+    }, 500);
     return () => {
       if (pollTimer.current)
         clearTimeout(pollTimer.current);

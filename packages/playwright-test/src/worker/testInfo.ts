@@ -193,21 +193,15 @@ export class TestInfoImpl implements TestInfo {
     this.duration = this._timeoutManager.defaultSlotTimings().elapsed | 0;
   }
 
-  async _runFn(fn: () => Promise<void>, skips?: 'allowSkips', stepInfo?: Omit<TestStepInternal, 'complete' | 'wallTime' | 'parentStepId' | 'stepId'>): Promise<TestInfoError | undefined> {
-    const step = stepInfo ? this._addStep({ ...stepInfo, wallTime: Date.now() }) : undefined;
+  async _runAndFailOnError(fn: () => Promise<void>, skips?: 'allowSkips'): Promise<TestInfoError | undefined> {
     try {
-      if (step)
-        await zones.run('stepZone', step, fn);
-      else
-        await fn();
-      step?.complete({});
+      await fn();
     } catch (error) {
       if (skips === 'allowSkips' && error instanceof SkipError) {
         if (this.status === 'passed')
           this.status = 'skipped';
       } else {
         const serialized = serializeError(error);
-        step?.complete({ error: serialized });
         this._failWithError(serialized, true /* isHardError */);
         return serialized;
       }
@@ -285,7 +279,7 @@ export class TestInfoImpl implements TestInfo {
     this.errors.push(error);
   }
 
-  async _runAsStep<T>(cb: (step: TestStepInternal) => Promise<T>, stepInfo: Omit<TestStepInternal, 'complete' | 'wallTime' | 'parentStepId' | 'stepId'>): Promise<T> {
+  async _runAsStep<T>(stepInfo: Omit<TestStepInternal, 'complete' | 'wallTime' | 'parentStepId' | 'stepId'>, cb: (step: TestStepInternal) => Promise<T>): Promise<T> {
     const step = this._addStep({ ...stepInfo, wallTime: Date.now() });
     return await zones.run('stepZone', step, async () => {
       try {

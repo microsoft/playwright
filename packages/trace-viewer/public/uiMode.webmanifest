@@ -2,7 +2,7 @@
     "theme_color": "#000",
     "background_color": "#fff",
     "display": "browser",
-    "start_url": "watch.html",
+    "start_url": "uiMode.html",
     "name": "Playwright Test",
     "short_name": "Playwright Test",
     "icons": [

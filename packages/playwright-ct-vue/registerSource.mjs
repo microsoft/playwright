@@ -253,6 +253,9 @@ window.playwrightUpdate = async (rootElement, options) => {
   if (!wrapper)
     throw new Error('Component was not mounted');
 
+  if (!wrapper.component)
+    throw new Error('Updating a native HTML element is not supported');
+  
   const { slots, listeners, props } = __pwCreateComponent(options);
 
   wrapper.component.slots = __pwWrapFunctions(slots);

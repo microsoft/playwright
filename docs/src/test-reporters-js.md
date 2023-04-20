@@ -183,6 +183,16 @@ export default defineConfig({
 });
 ```
 
+If you are uploading attachments from data folder to other location, you can use `attachmentsBaseURL` option to let html report where to look for them.
+
+```js
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  reporter: [['html', { attachmentsBaseURL: 'https://external-storage.com/' }]],
+});
+```
+
 A quick way of opening the last test run report is:
 
 ```bash

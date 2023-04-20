@@ -14,21 +14,23 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
-import type { Suite } from '../../types/testReporter';
-import path from 'path';
-import type { InlineConfig, Plugin, ResolveFn, ResolvedConfig } from 'vite';
-import type { TestRunnerPlugin } from '.';
-import { parse, traverse, types as t } from '../common/babelBundle';
-import { stoppable } from '../utilsBundle';
-import type { ComponentInfo } from '../common/tsxTransform';
-import { collectComponentUsages, componentInfo } from '../common/tsxTransform';
-import { assert, calculateSha1 } from 'playwright-core/lib/utils';
-import type { AddressInfo } from 'net';
-import { getPlaywrightVersion } from 'playwright-core/lib/utils';
+import type { Suite } from '@playwright/test/reporter';
 import type { PlaywrightTestConfig as BasePlaywrightTestConfig, FullConfig } from '@playwright/test';
+
+import type { InlineConfig, Plugin, ResolveFn, ResolvedConfig } from 'vite';
+import type { TestRunnerPlugin } from '../../playwright-test/src/plugins';
+import type { ComponentInfo } from './tsxTransform';
+import type { AddressInfo } from 'net';
 import type { PluginContext } from 'rollup';
-import { setExternalDependencies } from '../common/compilationCache';
+
+import fs from 'fs';
+import path from 'path';
+import { parse, traverse, types as t } from '@playwright/test/lib/common/babelBundle';
+import { stoppable } from '@playwright/test/lib/utilsBundle';
+import { assert, calculateSha1 } from 'playwright-core/lib/utils';
+import { getPlaywrightVersion } from 'playwright-core/lib/utils';
+import { setExternalDependencies } from '@playwright/test/lib/common/compilationCache';
+import { collectComponentUsages, componentInfo } from './tsxTransform';
 
 let stoppableServer: any;
 const playwrightVersion = getPlaywrightVersion();
@@ -55,6 +57,10 @@ export function createPlugin(
       config = configObject;
       configDir = configDirectory;
     },
+
+    babelPlugins: async () => [
+      [require.resolve('./tsxTransform')]
+    ],
 
     begin: async (suite: Suite) => {
       const use = config.projects[0].use as CtConfig;

@@ -20,7 +20,7 @@
 
 import __pwVue, { h as __pwH } from 'vue';
 
-/** @typedef {import('../playwright-test/types/experimentalComponent').Component} Component */
+/** @typedef {import('../playwright-ct-core/types/component').Component} Component */
 /** @typedef {import('vue').Component} FrameworkComponent */
 
 /** @type {Map<string, FrameworkComponent>} */
@@ -190,6 +190,9 @@ window.playwrightUpdate = async (element, options) => {
     throw new Error('Component was not mounted');
 
   const component = wrapper.componentInstance;
+  if (!component)
+    throw new Error('Updating a native HTML element is not supported');
+
   const { nodeData, slots } = __pwCreateComponent(options);
 
   for (const [name, value] of Object.entries(nodeData.on || {})) {

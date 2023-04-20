@@ -392,3 +392,65 @@ for (const mode of ['off', 'retain-on-failure', 'on-first-retry', 'on-all-retrie
     expect(result.passed).toBe(1);
   });
 }
+
+test(`trace:retain-on-failure should create trace if context is closed before failure in the test`, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { use: { trace: 'retain-on-failure' } };
+    `,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('passing test', async ({ page, context }) => {
+        await page.goto('about:blank');
+        await context.close();
+        expect(1).toBe(2);
+      });
+    `,
+  }, { trace: 'retain-on-failure' });
+  const tracePath = test.info().outputPath('test-results', 'a-passing-test', 'trace.zip');
+  const trace = await parseTrace(tracePath);
+  expect(trace.actions).toContain('page.goto');
+  expect(result.failed).toBe(1);
+});
+
+test(`trace:retain-on-failure should create trace if context is closed before failure in afterEach`, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { use: { trace: 'retain-on-failure' } };
+    `,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('passing test', async ({ page, context }) => {
+      });
+      test.afterEach(async ({ page, context }) => {
+        await page.goto('about:blank');
+        await context.close();
+        expect(1).toBe(2);
+      });
+    `,
+  }, { trace: 'retain-on-failure' });
+  const tracePath = test.info().outputPath('test-results', 'a-passing-test', 'trace.zip');
+  const trace = await parseTrace(tracePath);
+  expect(trace.actions).toContain('page.goto');
+  expect(result.failed).toBe(1);
+});
+
+test(`trace:retain-on-failure should create trace if request context is disposed before failure`, async ({ runInlineTest, server }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { use: { trace: 'retain-on-failure' } };
+    `,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('passing test', async ({ request }) => {
+        expect(await request.get('${server.EMPTY_PAGE}')).toBeOK();
+        await request.dispose();
+        expect(1).toBe(2);
+      });
+    `,
+  }, { trace: 'retain-on-failure' });
+  const tracePath = test.info().outputPath('test-results', 'a-passing-test', 'trace.zip');
+  const trace = await parseTrace(tracePath);
+  expect(trace.actions).toContain('apiRequestContext.get');
+  expect(result.failed).toBe(1);
+});

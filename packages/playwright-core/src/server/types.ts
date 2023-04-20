@@ -25,7 +25,7 @@ export type StrictOptions = {
 
 export type QueryOnSelectorOptions = StrictOptions & TimeoutOptions;
 
-export type WaitForElementOptions = TimeoutOptions & StrictOptions & { state?: 'attached' | 'detached' | 'visible' | 'hidden' };
+export type WaitForElementOptions = TimeoutOptions & StrictOptions & { state?: 'attached' | 'detached' | 'visible' | 'hidden' } & { omitReturnValue?: boolean };
 
 export type WaitForFunctionOptions = TimeoutOptions & { pollingInterval?: number };
 

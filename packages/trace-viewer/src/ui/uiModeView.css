@@ -14,45 +14,45 @@
   limitations under the License.
 */
 
-.watch-mode-sidebar {
+.ui-mode-sidebar {
   background-color: var(--vscode-sideBar-background);
 }
 
-.watch-mode-sidebar input[type=search] {
+.ui-mode-sidebar input[type=search] {
   flex: auto;
 }
 
-.watch-mode-sidebar .toolbar-button:not([disabled]) .codicon-play {
+.ui-mode-sidebar .toolbar-button:not([disabled]) .codicon-play {
   color: var(--vscode-debugIcon-restartForeground);
 }
 
-.watch-mode-sidebar .toolbar-button:not([disabled]) .codicon-debug-stop {
+.ui-mode-sidebar .toolbar-button:not([disabled]) .codicon-debug-stop {
   color: var(--vscode-debugIcon-stopForeground);
 }
 
-.watch-mode-list-item {
+.ui-mode-list-item {
   flex: auto;
 }
 
-.watch-mode-list-item-title {
+.ui-mode-list-item-title {
   flex: auto;
   text-overflow: ellipsis;
   overflow: hidden;
 }
 
-.watch-mode-list-item-time {
+.ui-mode-list-item-time {
   flex: none;
   color: var(--vscode-editorCodeLens-foreground);
   margin: 0 4px;
   user-select: none;
 }
 
-.list-view-entry.selected .watch-mode-list-item-time,
-.list-view-entry.highlighted .watch-mode-list-item-time {
+.list-view-entry.selected .ui-mode-list-item-time,
+.list-view-entry.highlighted .ui-mode-list-item-time {
   display: none;
 }
 
-.watch-mode .section-title {
+.ui-mode .section-title {
   display: flex;
   flex: auto;
   flex-direction: row;
@@ -66,7 +66,7 @@
   height: 30px;
 }
 
-.watch-mode-sidebar img {
+.ui-mode-sidebar img {
   flex: none;
   margin-left: 6px;
   width: 24px;
@@ -93,7 +93,7 @@
   display: none;
 }
 
-.watch-mode-sidebar input[type=search] {
+.ui-mode-sidebar input[type=search] {
   flex: auto;
   padding: 0 5px;
   line-height: 24px;

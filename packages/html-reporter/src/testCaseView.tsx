@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import type { TestCase } from './types';
+import type { TestCase, TestCaseAnnotation } from './types';
 import * as React from 'react';
 import { TabbedPane } from './tabbedPane';
 import { AutoChip } from './chip';
@@ -36,12 +36,6 @@ export const TestCaseView: React.FC<{
   const [copyIcon, setCopyIcon] = React.useState(icons.copy());
   const [copied, setCopied] = React.useState(false);
 
-  const annotations = new Map<string, (string | undefined)[]>();
-  test?.annotations.forEach(annotation => {
-    const list = annotations.get(annotation.type) || [];
-    list.push(annotation.description);
-    annotations.set(annotation.type, list);
-  });
   const labels = React.useMemo(() => {
     if (!test)
       return undefined;
@@ -68,11 +62,11 @@ export const TestCaseView: React.FC<{
     {test && <div className='test-case-title' onClick={() => handleCopy(test.title)}>{test.title} {copyIcon}</div>}
     {test && <div className='test-case-location'>{test.location.file}:{test.location.line}</div>}
     {test && (!!test.projectName || labels) && <div className='test-case-project-labels-row'>
-      {!!test.projectName && <ProjectLink projectNames={projectNames} projectName={test.projectName}></ProjectLink>}
+      {test && !!test.projectName && <ProjectLink projectNames={projectNames} projectName={test.projectName}></ProjectLink>}
       {labels && <LabelsLinkView labels={labels} />}
     </div>}
-    {annotations.size > 0 && <AutoChip header='Annotations'>
-      {[...annotations].map(annotation => <TestCaseAnnotationView type={annotation[0]} descriptions={annotation[1]} />)}
+    {test && !!test.annotations.length && <AutoChip header='Annotations'>
+      {test?.annotations.map(annotation => <TestCaseAnnotationView annotation={annotation} />)}
     </AutoChip>}
     {test && <TabbedPane tabs={
       test.results.map((result, index) => ({
@@ -91,17 +85,11 @@ function renderAnnotationDescription(description: string) {
   return description;
 }
 
-function TestCaseAnnotationView({ type, descriptions }: { type: string, descriptions: (string | undefined)[] }) {
-  const filteredDescriptions = descriptions.filter(Boolean) as string[];
+function TestCaseAnnotationView({ annotation: { type, description } }: { annotation: TestCaseAnnotation }) {
   return (
     <div className='test-case-annotation'>
       <span style={{ fontWeight: 'bold' }}>{type}</span>
-      {!!filteredDescriptions.length && <span>: {filteredDescriptions.map((d, i) => {
-        const rendered = renderAnnotationDescription(d);
-        if (i < filteredDescriptions.length - 1)
-          return <>{rendered}, </>;
-        return rendered;
-      })}</span>}
+      {description && <span>: {renderAnnotationDescription(description)}</span>}
     </div>
   );
 }

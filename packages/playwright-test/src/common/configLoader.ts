@@ -23,6 +23,7 @@ import type { Config, Project } from '../../types/test';
 import { errorWithFile } from '../util';
 import { setCurrentConfig } from './globals';
 import { FullConfigInternal } from './config';
+import { setBabelPlugins } from './babelBundle';
 
 const kDefineConfigWasUsed = Symbol('defineConfigWasUsed');
 export const defineConfig = (config: any) => {
@@ -40,6 +41,8 @@ export class ConfigLoader {
 
   static async deserialize(data: SerializedConfig): Promise<FullConfigInternal> {
     const loader = new ConfigLoader(data.configCLIOverrides);
+    setBabelPlugins(data.babelTransformPlugins);
+
     if (data.configFile)
       return await loader.loadConfigFile(data.configFile);
     return await loader.loadEmptyConfig(data.configDir);

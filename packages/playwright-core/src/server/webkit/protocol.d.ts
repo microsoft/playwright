@@ -7820,6 +7820,10 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        */
       valuePreview?: ObjectPreview;
       /**
+       * True if this is a private field.
+       */
+      isPrivate?: boolean;
+      /**
        * True if this is an internal property.
        */
       internal?: boolean;
@@ -7888,6 +7892,10 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        * Property symbol object, if the property is a symbol.
        */
       symbol?: Runtime.RemoteObject;
+      /**
+       * True if the property is a private field.
+       */
+      isPrivate?: boolean;
       /**
        * True if the property value came from a native getter.
        */

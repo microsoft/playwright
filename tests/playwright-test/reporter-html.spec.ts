@@ -329,6 +329,42 @@ test('should include screenshot on failure', async ({ runInlineTest, page, showR
   expect(src).toBeTruthy();
 });
 
+test('should use different path if attachments base url option is provided', async ({ runInlineTest, page, showReport }, testInfo) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        use: {
+          viewport: { width: 200, height: 200 },
+          screenshot: 'on',
+          video: 'on',
+          trace: 'on',
+        },
+        reporter: [['html', { attachmentsBaseURL: 'https://some-url.com/' }]]
+      };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('passes', async ({ page }) => {
+        await page.evaluate('2 + 2');
+      });
+    `
+  }, {}, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+
+  await showReport();
+  await page.click('text=passes');
+
+  await expect(page.locator('div').filter({ hasText: /^Screenshotsscreenshot$/ }).getByRole('img')).toHaveAttribute('src', /(https:\/\/some-url\.com\/)[^/\s]+?\.[^/\s]+/);
+  await expect(page.getByRole('link', { name: 'screenshot' })).toHaveAttribute('href', /(https:\/\/some-url\.com\/)[^/\s]+?\.[^/\s]+/);
+
+  await expect(page.locator('video').locator('source')).toHaveAttribute('src', /(https:\/\/some-url\.com\/)[^/\s]+?\.[^/\s]+/);
+  await expect(page.getByRole('link', { name: 'video' })).toHaveAttribute('href', /(https:\/\/some-url\.com\/)[^/\s]+?\.[^/\s]+/);
+
+  await expect(page.getByRole('link', { name: 'trace' })).toHaveAttribute('href', /(https:\/\/some-url\.com\/)[^/\s]+?\.[^/\s]+/);
+  await expect(page.locator('div').filter({ hasText: /^Tracestrace$/ }).getByRole('link').first()).toHaveAttribute('href', /trace=(https:\/\/some-url\.com\/)[^/\s]+?\.[^/\s]+/);
+});
+
 test('should include stdio', async ({ runInlineTest, page, showReport }) => {
   const result = await runInlineTest({
     'a.test.js': `
@@ -566,11 +602,6 @@ test('should render annotations', async ({ runInlineTest, page, showReport }) =>
     'a.test.js': `
       import { test, expect } from '@playwright/test';
       test('skipped test', async ({ page }) => {
-        test.info().annotations.push({ type: 'issue', description: '#123'});
-        test.info().annotations.push({ type: 'issue', description: '#456'});
-        test.info().annotations.push({ type: 'issue', description: 'https://playwright.dev'});
-        test.info().annotations.push({ type: 'issue' });
-        test.info().annotations.push({ type: 'empty' });
         test.skip(true, 'I am not interested in this test');
       });
     `,
@@ -580,11 +611,7 @@ test('should render annotations', async ({ runInlineTest, page, showReport }) =>
 
   await showReport();
   await page.click('text=skipped test');
-  await expect(page.locator('.test-case-annotation')).toHaveText([
-    'issue: #123, #456, https://playwright.dev',
-    'empty',
-    'skip: I am not interested in this test',
-  ]);
+  await expect(page.locator('.test-case-annotation')).toHaveText('skip: I am not interested in this test');
 });
 
 test('should render annotations as link if needed', async ({ runInlineTest, page, showReport, server }) => {
