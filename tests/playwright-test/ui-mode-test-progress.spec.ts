@@ -210,3 +210,36 @@ test('should update tracing network live', async ({ runUITest, server }) => {
       'verify background'
   ).toHaveCSS('background-color', 'rgb(255, 0, 0)', { timeout: 15000 });
 });
+
+test('should show trace w/ multiple contexts', async ({ runUITest, server, createLatch }) => {
+  const latch = createLatch();
+
+  const { page } = await runUITest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test.beforeEach(async ({ request }) => {
+        await request.get('${server.EMPTY_PAGE}');
+      });
+      test('live test', async ({ page }) => {
+        await page.goto('about:blank');
+        ${latch.blockingCode}
+      });
+    `,
+  });
+
+  // Start test.
+  await page.getByText('live test').dblclick();
+
+  // It should wait on the latch.
+  const listItem = page.getByTestId('action-list').getByRole('listitem');
+  await expect(
+      listItem,
+      'action list'
+  ).toHaveText([
+    /apiRequestContext.get[\d.]+m?s/,
+    /browserContext.newPage[\d.]+m?s/,
+    /page.gotoabout:blank[\d.]+m?s/,
+  ], { timeout: 15000 });
+
+  latch.open();
+});

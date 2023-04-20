@@ -397,7 +397,8 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     {
       (playwright.request as any)._onDidCreateContext = onDidCreateRequestContext;
       (playwright.request as any)._onWillCloseContext = onWillCloseRequestContext;
-      (playwright.request as any)._defaultContextOptions = _combinedContextOptions;
+      (playwright.request as any)._defaultContextOptions = { ..._combinedContextOptions };
+      (playwright.request as any)._defaultContextOptions.tracesDir = path.join(_artifactsDir(), 'traces');
       const existingApiRequests: APIRequestContext[] =  Array.from((playwright.request as any)._contexts as Set<APIRequestContext>);
       await Promise.all(existingApiRequests.map(onDidCreateRequestContext));
     }
