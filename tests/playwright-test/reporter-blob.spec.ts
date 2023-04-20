@@ -58,6 +58,7 @@ const test = baseTest.extend<{
 test.use({ channel: 'chrome' });
 
 test('should merge into html', async ({ runInlineTest, mergeReports, showReport, page }) => {
+  test.slow();
   const reportDir = test.info().outputPath('blob-report');
   const files = {
     'playwright.config.ts': `
@@ -122,6 +123,7 @@ test('should merge into html', async ({ runInlineTest, mergeReports, showReport,
 });
 
 test('be able to merge incomplete shards', async ({ runInlineTest, mergeReports, showReport, page }) => {
+  test.slow();
   const reportDir = test.info().outputPath('blob-report');
   const files = {
     'playwright.config.ts': `
