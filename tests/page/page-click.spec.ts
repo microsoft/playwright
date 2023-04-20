@@ -143,9 +143,7 @@ it('should select the text by triple clicking', async ({ page, server }) => {
   })).toBe(text);
 });
 
-it('should click offscreen buttons', async ({ page, server, browserName, headless }) => {
-  it.fixme(!headless && browserName === 'firefox' && process.platform === 'darwin', 'https://github.com/microsoft/playwright/issues/20993');
-
+it('should click offscreen buttons', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/offscreenbuttons.html');
   const messages = [];
   page.on('console', msg => messages.push(msg.text()));
