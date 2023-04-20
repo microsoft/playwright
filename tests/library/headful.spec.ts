@@ -81,6 +81,31 @@ it('should click when viewport size is larger than screen', async ({ page, brows
   await page.locator('button').click();
 });
 
+it('should dispatch click events to oversized viewports', async ({ page, browserName }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22082' });
+  it.fixme(browserName === 'firefox');
+  // Some prime numbers for width/height.
+  const width = 2971;
+  const height = 3067;
+  await page.setViewportSize({ width, height });
+  await page.evaluate(() => {
+    window.events = [];
+    window.addEventListener('click', event => window.events.push({ x: event.clientX, y: event.clientY }), false);
+  });
+  const expectedEvents = [];
+  // Allow a little padding from the edges of viewport.
+  for (let i = 3; i < 23; ++i) {
+    const x = width - i;
+    const y = height - i;
+    expectedEvents.push({ x, y });
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    await page.mouse.up();
+  }
+  const actualEvents = await page.evaluate(() => window.events);
+  expect(expectedEvents).toEqual(actualEvents);
+});
+
 it('should click background tab', async ({ page, server }) => {
   await page.setContent(`<button>Hello</button><a target=_blank href="${server.EMPTY_PAGE}">empty.html</a>`);
   await page.click('a');
