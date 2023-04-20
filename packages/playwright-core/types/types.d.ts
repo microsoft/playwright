@@ -18207,6 +18207,11 @@ export interface Route {
     postData?: string|Buffer|Serializable;
 
     /**
+     * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
+     */
+    timeout?: number;
+
+    /**
      * If set changes the request URL. New URL must have same protocol as original one.
      */
     url?: string;
