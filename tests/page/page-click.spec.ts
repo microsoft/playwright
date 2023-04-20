@@ -144,8 +144,6 @@ it('should select the text by triple clicking', async ({ page, server }) => {
 });
 
 it('should click offscreen buttons', async ({ page, server, browserName, headless }) => {
-  it.fixme(!headless && browserName === 'firefox' && process.platform === 'darwin', 'https://github.com/microsoft/playwright/issues/20993');
-
   await page.goto(server.PREFIX + '/offscreenbuttons.html');
   const messages = [];
   page.on('console', msg => messages.push(msg.text()));
@@ -414,7 +412,6 @@ it('should click the button with em border with offset', async ({ page, server, 
 });
 
 it('should click a very large button with offset', async ({ page, server, browserName }) => {
-
   await page.goto(server.PREFIX + '/input/button.html');
   await page.$eval('button', button => button.style.borderWidth = '8px');
   await page.$eval('button', button => button.style.height = button.style.width = '2000px');
@@ -426,7 +423,6 @@ it('should click a very large button with offset', async ({ page, server, browse
 });
 
 it('should click a button in scrolling container with offset', async ({ page, server, browserName }) => {
-
   await page.goto(server.PREFIX + '/input/button.html');
   await page.$eval('button', button => {
     const container = document.createElement('div');
