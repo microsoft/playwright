@@ -21,11 +21,12 @@
 import __pwVue, { h as __pwH } from 'vue';
 
 /** @typedef {import('../playwright-ct-core/types/component').Component} Component */
+/** @typedef {import('../playwright-ct-core/types/component').JsxComponent} JsxComponent */
+/** @typedef {import('../playwright-ct-core/types/component').ObjectComponent} ObjectComponent */
 /** @typedef {import('vue').Component} FrameworkComponent */
 
 /** @type {Map<string, () => Promise<FrameworkComponent>>} */
 const __pwLoaderRegistry = new Map();
-
 /** @type {Map<string, FrameworkComponent>} */
 const __pwRegistry = new Map();
 
@@ -39,24 +40,35 @@ export function pwRegister(components) {
 
 /**
  * @param {Component} component
+ * @returns {component is JsxComponent | ObjectComponent}
+ */
+function isComponent(component) {
+  return !(typeof component !== 'object' || Array.isArray(component));
+}
+
+/**
+ * @param {Component} component
  */
 async function __pwResolveComponent(component) {
-  if (typeof component !== 'object' || Array.isArray(component))
+  if (!isComponent(component))
     return
 
-  let componentFuncLoader = __pwLoaderRegistry.get(component.type);
-  if (!componentFuncLoader) {
+  let componentFactory = __pwLoaderRegistry.get(component.type);
+  if (!componentFactory) {
     // Lookup by shorthand.
     for (const [name, value] of __pwLoaderRegistry) {
-      if (component.type.endsWith(`_${name}`)) {
-        componentFuncLoader = value;
+      if (component.type.endsWith(`_${name}_vue`)) {
+        componentFactory = value;
         break;
       }
     }
   }
 
-  if(componentFuncLoader)
-    __pwRegistry.set(component.type, await componentFuncLoader())
+  if (!componentFactory && component.type[0].toUpperCase() === component.type[0])
+    throw new Error(`Unregistered component: ${component.type}. Following components are registered: ${[...__pwRegistry.keys()]}`);
+
+  if(componentFactory)
+    __pwRegistry.set(component.type, await componentFactory())
 
   if ('children' in component)
     await Promise.all(component.children.map(child => __pwResolveComponent(child)))
@@ -87,25 +99,7 @@ function __pwComponentHasKeyInProps(Component, key) {
  * @param {Component} component
  */
 function __pwCreateComponent(component) {
-  /**
-   * @type {import('vue').Component | string | undefined}
-   */
-  let componentFunc = __pwRegistry.get(component.type);
-  if (!componentFunc) {
-    // Lookup by shorthand.
-    for (const [name, value] of __pwRegistry) {
-      if (component.type.endsWith(`_${name}_vue`)) {
-        componentFunc = value;
-        break;
-      }
-    }
-  }
-
-  if (!componentFunc && component.type[0].toUpperCase() === component.type[0])
-    throw new Error(`Unregistered component: ${component.type}. Following components are registered: ${[...__pwRegistry.keys()]}`);
-
-  componentFunc = componentFunc || component.type;
-
+  const componentFunc = __pwRegistry.get(component.type) || component.type;
   const isVueComponent = componentFunc !== component.type;
 
   /**
@@ -213,29 +207,29 @@ window.playwrightUnmount = async rootElement => {
   component.$el.remove();
 };
 
-window.playwrightUpdate = async (rootElement, component) => {
-  await __pwResolveComponent(component);
-  const wrapper = /** @type {any} */(rootElement)[wrapperKey];
+window.playwrightUpdate = async (element, options) => {
+  await __pwResolveComponent(options);
+  const wrapper = /** @type {any} */(element)[wrapperKey];
   if (!wrapper)
     throw new Error('Component was not mounted');
 
-  const componentInstance = wrapper.componentInstance;
-  if (!componentInstance)
+  const component = wrapper.componentInstance;
+  if (!component)
     throw new Error('Updating a native HTML element is not supported');
 
-  const { nodeData, slots } = __pwCreateComponent(component);
+  const { nodeData, slots } = __pwCreateComponent(options);
 
   for (const [name, value] of Object.entries(nodeData.on || {})) {
-    componentInstance.$on(name, value);
-    componentInstance.$listeners[name] = value;
+    component.$on(name, value);
+    component.$listeners[name] = value;
   }
 
-  Object.assign(componentInstance.$scopedSlots, nodeData.scopedSlots);
-  componentInstance.$slots.default = slots;
+  Object.assign(component.$scopedSlots, nodeData.scopedSlots);
+  component.$slots.default = slots;
 
   for (const [key, value] of Object.entries(nodeData.props || {}))
-    componentInstance[key] = value;
+    component[key] = value;
 
   if (!Object.keys(nodeData.props || {}).length)
-    componentInstance.$forceUpdate();
+    component.$forceUpdate();
 };
