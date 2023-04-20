@@ -34,6 +34,7 @@ export const TestCaseView: React.FC<{
 }> = ({ projectNames, test, run, anchor }) => {
   const [selectedResultIndex, setSelectedResultIndex] = React.useState(run);
   const [copyIcon, setCopyIcon] = React.useState(icons.copy());
+  const [copied, setCopied] = React.useState(false);
 
   const annotations = new Map<string, (string | undefined)[]>();
   test?.annotations.forEach(annotation => {
@@ -47,13 +48,19 @@ export const TestCaseView: React.FC<{
     return matchTags(test.title).sort((a, b) => a.localeCompare(b));
   }, [test]);
 
+  React.useEffect(() => {
+    if (!copied)
+      return;
+    setCopyIcon(icons.check());
+    const timer = setTimeout(() => {
+      setCopyIcon(icons.copy());
+      setCopied(false);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [copied]);
+
   const handleCopy = (value: string) => {
-    navigator.clipboard.writeText(value).then(() => {
-      setCopyIcon(icons.check());
-      setTimeout(() => setCopyIcon(icons.copy()), 3000);
-    }, () => {
-      setCopyIcon(icons.alert());
-    });
+    navigator.clipboard.writeText(value).then(() => setCopied(true), () => setCopyIcon(icons.alert()));
   };
 
   return <div className='test-case-column vbox'>
