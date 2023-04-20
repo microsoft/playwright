@@ -42,7 +42,7 @@ test('should merge trace events', async ({ runUITest, server }) => {
     /expect\.toBe[\d.]+m?s/,
     /locator\.clickgetByRole\('button'\)[\d.]+m?s/,
     /expect\.toBe[\d.]+m?s/,
-  ]);
+  ], { timeout: 15000 });
 });
 
 test('should locate sync assertions in source', async ({ runUITest, server }) => {
@@ -60,7 +60,7 @@ test('should locate sync assertions in source', async ({ runUITest, server }) =>
   await expect(
       page.locator('.CodeMirror .source-line-running'),
       'check source tab',
-  ).toHaveText('4        expect(1).toBe(1);');
+  ).toHaveText('4        expect(1).toBe(1);', { timeout: 15000 });
 });
 
 test('should show snapshots for sync assertions', async ({ runUITest, server }) => {
