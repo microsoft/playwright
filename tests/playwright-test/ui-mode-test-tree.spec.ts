@@ -222,3 +222,23 @@ test('should update parametrized tests', async ({ runUITest, writeFiles }) => {
             ◯ test LT
   `);
 });
+
+test('should collapse all', async ({ runUITest }) => {
+  const { page } = await runUITest(basicTestTree);
+
+  await page.getByTestId('test-tree').getByText('suite').click();
+  await page.keyboard.press('ArrowRight');
+  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toContain(`
+    ▼ ◯ a.test.ts
+        ◯ passes
+        ◯ fails
+      ▼ ◯ suite <=
+          ◯ inner passes
+          ◯ inner fails
+  `);
+
+  await page.getByTitle('Collapse all').click();
+  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toContain(`
+    ► ◯ a.test.ts
+  `);
+});
