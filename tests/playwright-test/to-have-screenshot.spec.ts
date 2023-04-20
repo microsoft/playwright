@@ -199,8 +199,7 @@ test('should report toHaveScreenshot step with expectation name in title', async
       test('is a test', async ({ page }) => {
         // Named expectation.
         await expect(page).toHaveScreenshot('foo.png', { timeout: 2000 });
-        // Anonymous expectation.
-        await expect(page).toHaveScreenshot({ timeout: 2000 });
+        await expect(page).toHaveScreenshot({ name: 'is-a-test-1.png', timeout: 2000 });
       });
     `
   }, { 'reporter': '', 'workers': 1, 'update-snapshots': true });

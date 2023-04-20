@@ -33,7 +33,6 @@ interface TestStepInternal {
   category: string;
   wallTime: number;
   location?: Location;
-  refinedTitle?: string;
 }
 
 export class TestInfoImpl implements TestInfo {
@@ -77,7 +76,6 @@ export class TestInfoImpl implements TestInfo {
   readonly outputDir: string;
   readonly snapshotDir: string;
   errors: TestInfoError[] = [];
-  currentStep: TestStepInternal | undefined;
 
   get error(): TestInfoError | undefined {
     return this.errors[0];
@@ -234,7 +232,6 @@ export class TestInfoImpl implements TestInfo {
         }
         const payload: StepEndPayload = {
           testId: this._test.id,
-          refinedTitle: step.refinedTitle,
           stepId,
           wallTime: Date.now(),
           error,

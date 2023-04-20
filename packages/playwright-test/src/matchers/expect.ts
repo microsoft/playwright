@@ -46,7 +46,7 @@ import {
   toHaveValues,
   toPass
 } from './matchers';
-import { toMatchSnapshot, toHaveScreenshot } from './toMatchSnapshot';
+import { toMatchSnapshot, toHaveScreenshot, toHaveScreenshotStepTitle } from './toMatchSnapshot';
 import type { Expect } from '../../types/test';
 import { currentTestInfo, currentExpectTimeout } from '../common/globals';
 import { filteredStackTrace, serializeError, stringifyStackFrames, trimLongString } from '../util';
@@ -210,7 +210,9 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
       const rawStack = captureRawStack();
       const stackFrames = filteredStackTrace(rawStack);
       const customMessage = this._info.message || '';
-      const defaultTitle = `expect${this._info.isPoll ? '.poll' : ''}${this._info.isSoft ? '.soft' : ''}${this._info.isNot ? '.not' : ''}.${matcherName}`;
+      const argsSuffix = computeArgsSuffix(matcherName, args);
+
+      const defaultTitle = `expect${this._info.isPoll ? '.poll' : ''}${this._info.isSoft ? '.soft' : ''}${this._info.isNot ? '.not' : ''}.${matcherName}${argsSuffix}`;
       const wallTime = Date.now();
       const step = testInfo._addStep({
         location: stackFrames[0],
@@ -218,7 +220,6 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
         title: trimLongString(customMessage || defaultTitle, 1024),
         wallTime
       });
-      testInfo.currentStep = step;
 
       const generateTraceEvent = matcherName !== 'poll' && matcherName !== 'toPass';
       const callId = ++lastCallId;
@@ -312,6 +313,13 @@ async function pollMatcher(matcherName: any, isNot: boolean, pollIntervals: numb
 
     throw new Error(message);
   }
+}
+
+function computeArgsSuffix(matcherName: string, args: any[]) {
+  let value = '';
+  if (matcherName === 'toHaveScreenshot')
+    value = toHaveScreenshotStepTitle(...args);
+  return value ? `(${value})` : '';
 }
 
 expectLibrary.extend(customMatchers);
