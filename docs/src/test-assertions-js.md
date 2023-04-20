@@ -121,7 +121,17 @@ The same works with soft assertions:
 expect.soft(value, 'my soft assertion').toBe(56);
 ```
 
-## Polling
+## expect.configurte
+
+You can create your own pre-configured `expect` instance to have its own
+defaults such as `timeout`, `soft` and `poll`.
+
+```js
+const slowExpect = expect.configure({ timeout: 10000 });
+await slowExpect(locator).toHaveText('Submit);
+```
+
+## expect.poll
 
 You can convert any synchronous `expect` to an asynchronous polling one using `expect.poll`.
 
@@ -152,7 +162,7 @@ await expect.poll(async () => {
 }).toBe(200);
 ```
 
-## Retrying
+## expect.toPass
 
 You can retry blocks of code until they are passing successfully.
 

@@ -34,10 +34,18 @@ export function currentlyLoadingFileSuite() {
   return currentFileSuite;
 }
 
+let currentExpectConfigureTimeout: number | undefined;
+
+export function setCurrentExpectConfigureTimeout(timeout: number | undefined) {
+  currentExpectConfigureTimeout = timeout;
+}
+
 export function currentExpectTimeout(options: { timeout?: number }) {
   const testInfo = currentTestInfo();
   if (options.timeout !== undefined)
     return options.timeout;
+  if (currentExpectConfigureTimeout !== undefined)
+    return currentExpectConfigureTimeout;
   let defaultExpectTimeout = testInfo?._projectInternal?.expect?.timeout;
   if (typeof defaultExpectTimeout === 'undefined')
     defaultExpectTimeout = 5000;
