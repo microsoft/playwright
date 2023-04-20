@@ -89,8 +89,8 @@ it('should dispatch click events to oversized viewports', async ({ page, browser
   const height = 3067;
   await page.setViewportSize({ width, height });
   await page.evaluate(() => {
-    window.events = [];
-    window.addEventListener('click', event => window.events.push({ x: event.clientX, y: event.clientY }), false);
+    window['events'] = [];
+    window.addEventListener('click', event => window['events'].push({ x: event.clientX, y: event.clientY }), false);
   });
   const expectedEvents = [];
   // Allow a little padding from the edges of viewport.
@@ -102,7 +102,7 @@ it('should dispatch click events to oversized viewports', async ({ page, browser
     await page.mouse.down();
     await page.mouse.up();
   }
-  const actualEvents = await page.evaluate(() => window.events);
+  const actualEvents = await page.evaluate(() => window['events']);
   expect(expectedEvents).toEqual(actualEvents);
 });
 
