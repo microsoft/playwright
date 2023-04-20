@@ -65,9 +65,8 @@ it('should not crash when creating second context', async ({ browser }) => {
   }
 });
 
-it('should click when viewport size is larger than screen', async ({ page, browserName }) => {
+it('should click when viewport size is larger than screen', async ({ page }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22082' });
-  it.fixme(browserName === 'firefox');
   await page.setViewportSize({
     width: 3000,
     height: 3000,
@@ -81,9 +80,8 @@ it('should click when viewport size is larger than screen', async ({ page, brows
   await page.locator('button').click();
 });
 
-it('should dispatch click events to oversized viewports', async ({ page, browserName }) => {
+it('should dispatch click events to oversized viewports', async ({ page }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22082' });
-  it.fixme(browserName === 'firefox');
   // Some prime numbers for width/height.
   const width = 2971;
   const height = 3067;
