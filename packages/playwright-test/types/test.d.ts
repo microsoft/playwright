@@ -6365,6 +6365,11 @@ interface TestConfigWebServer {
   reuseExistingServer?: boolean;
 
   /**
+   * If `true`, it will forward the stdout of the webserver to the current process. Stderr is always getting forwarded.
+   */
+  forwardOutput?: boolean;
+
+  /**
    * Current working directory of the spawned process, defaults to the directory of the configuration file.
    */
   cwd?: string;
