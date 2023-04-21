@@ -301,8 +301,6 @@ export class Dispatcher {
         this._reporter.onStdErr?.('Internal error: step end without step begin: ' + params.stepId, data.test, result);
         return;
       }
-      if (params.refinedTitle)
-        step.title = params.refinedTitle;
       step.duration = params.wallTime - step.startTime.getTime();
       if (params.error)
         step.error = params.error;
