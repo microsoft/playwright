@@ -818,9 +818,12 @@ function addPageBinding(bindingName: string, needsHandle: boolean, utilityScript
       handles.set(seq, args[0]);
       payload = { name: bindingName, seq };
     } else {
-      const serializedArgs = args.map(a => utilityScriptSerializers.serializeAsCallArgument(a, v => {
-        return { fallThrough: v };
-      }));
+      const serializedArgs = [];
+      for (let i = 0; i < args.length; i++) {
+        serializedArgs[i] = utilityScriptSerializers.serializeAsCallArgument(args[i], v => {
+          return { fallThrough: v };
+        });
+      }
       payload = { name: bindingName, seq, serializedArgs };
     }
     binding(JSON.stringify(payload));
