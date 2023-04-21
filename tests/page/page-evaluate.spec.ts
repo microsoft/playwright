@@ -688,7 +688,7 @@ it('should work with busted Array.prototype.map/push', async ({ page, server }) 
     });
     res.end(`<script>
       Array.prototype.map = null;
-      Array.prototype.map = null;
+      Array.prototype.push = null;
     </script>`);
   });
   await page.goto(server.PREFIX + '/test');
