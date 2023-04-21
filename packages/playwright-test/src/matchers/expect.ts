@@ -48,7 +48,7 @@ import {
   toPass
 } from './matchers';
 import { toMatchSnapshot, toHaveScreenshot, toHaveScreenshotStepTitle } from './toMatchSnapshot';
-import type { Expect } from '../../types/test';
+import type { Expect, TestInfo } from '../../types/test';
 import { currentTestInfo, currentExpectTimeout, setCurrentExpectConfigureTimeout } from '../common/globals';
 import { filteredStackTrace, serializeError, stringifyStackFrames, trimLongString } from '../util';
 import {
@@ -58,6 +58,7 @@ import {
   printReceived,
 } from '../common/expectBundle';
 import { zones } from 'playwright-core/lib/utils';
+import type { AfterActionTraceEvent } from '../../../trace/src/trace';
 
 // from expect/build/types
 export type SyncExpectationResult = {
@@ -243,6 +244,7 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
 
       const defaultTitle = `expect${this._info.isPoll ? '.poll' : ''}${this._info.isSoft ? '.soft' : ''}${this._info.isNot ? '.not' : ''}.${matcherName}${argsSuffix}`;
       const wallTime = Date.now();
+      const initialAttachments = new Set(testInfo.attachments.slice());
       const step = testInfo._addStep({
         location: stackFrames[0],
         category: 'expect',
@@ -281,7 +283,7 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
         const serializerError = serializeError(jestError);
         if (generateTraceEvent) {
           const error = { name: jestError.name, message: jestError.message, stack: jestError.stack };
-          testInfo._traceEvents.push(createAfterActionTraceEventForExpect(`expect@${callId}`, error));
+          testInfo._traceEvents.push(createAfterActionTraceEventForExpect(`expect@${callId}`, serializeAttachments(testInfo.attachments, initialAttachments), error));
         }
         step.complete({ error: serializerError });
         if (this._info.isSoft)
@@ -292,7 +294,7 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
 
       const finalizer = () => {
         if (generateTraceEvent)
-          testInfo._traceEvents.push(createAfterActionTraceEventForExpect(`expect@${callId}`));
+          testInfo._traceEvents.push(createAfterActionTraceEventForExpect(`expect@${callId}`, serializeAttachments(testInfo.attachments, initialAttachments)));
         step.complete({});
       };
 
@@ -361,6 +363,17 @@ function computeArgsSuffix(matcherName: string, args: any[]) {
   if (matcherName === 'toHaveScreenshot')
     value = toHaveScreenshotStepTitle(...args);
   return value ? `(${value})` : '';
+}
+
+function serializeAttachments(attachments: TestInfo['attachments'], initialAttachments: Set<TestInfo['attachments'][0]>): AfterActionTraceEvent['attachments'] {
+  return attachments.filter(a => !initialAttachments.has(a)).map(a => {
+    return {
+      name: a.name,
+      contentType: a.contentType,
+      path: a.path,
+      body: a.body?.toString('base64'),
+    };
+  });
 }
 
 expectLibrary.extend(customMatchers);
