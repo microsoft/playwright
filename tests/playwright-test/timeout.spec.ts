@@ -331,6 +331,9 @@ test('test timeout should still run hooks before fixtures teardown', async ({ ru
         await new Promise(f => setTimeout(f, 500));
         console.log('\\n%%afterAll-2');
       });
+      test.afterEach(async () => {
+        console.log('\\n%%afterEach');
+      });
       test('test fail', async ({}) => {
         test.setTimeout(100);
         console.log('\\n%%test');
@@ -344,9 +347,10 @@ test('test timeout should still run hooks before fixtures teardown', async ({ ru
   expect(result.outputLines).toEqual([
     'before-auto',
     'test',
+    'afterEach',
+    'after-auto',
     'afterAll-1',
     'afterAll-2',
-    'after-auto',
   ]);
 });
 
