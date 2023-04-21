@@ -130,7 +130,8 @@ expect.poll = (actual: unknown, messageOrOptions: ExpectMessageOrOptions) => {
 };
 
 expectLibrary.setState({ expand: false });
-const customMatchers = {
+
+const customAsyncMatchers = {
   toBeAttached,
   toBeChecked,
   toBeDisabled,
@@ -154,9 +155,13 @@ const customMatchers = {
   toHaveURL,
   toHaveValue,
   toHaveValues,
-  toMatchSnapshot,
   toHaveScreenshot,
   toPass,
+};
+
+const customMatchers = {
+  ...customAsyncMatchers,
+  toMatchSnapshot,
 };
 
 type Generator = () => any;
@@ -198,7 +203,7 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
       return new Proxy(matcher, this);
     }
     if (this._info.isPoll) {
-      if ((customMatchers as any)[matcherName] || matcherName === 'resolves' || matcherName === 'rejects')
+      if ((customAsyncMatchers as any)[matcherName] || matcherName === 'resolves' || matcherName === 'rejects')
         throw new Error(`\`expect.poll()\` does not support "${matcherName}" matcher.`);
       matcher = (...args: any[]) => pollMatcher(matcherName, this._info.isNot, this._info.pollIntervals, currentExpectTimeout({ timeout: this._info.pollTimeout }), this._info.generator!, ...args);
     }
@@ -267,17 +272,27 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
         step.complete({});
       };
 
-      try {
-        const expectZone: ExpectZone = { title: defaultTitle, wallTime };
-        const result = zones.run<ExpectZone, any>('expectZone', expectZone, () => {
-          return matcher.call(target, ...args);
-        });
-        if (result instanceof Promise)
-          return result.then(() => finalizer()).catch(reportStepError);
-        else
+      // Process the async matchers separately to preserve the zones in the stacks.
+      if (this._info.isPoll || matcherName in customAsyncMatchers) {
+        return (async () => {
+          try {
+            const expectZone: ExpectZone = { title: defaultTitle, wallTime };
+            await zones.run<ExpectZone, any>('expectZone', expectZone, async () => {
+              await matcher.call(target, ...args);
+            });
+            finalizer();
+          } catch (e) {
+            reportStepError(e);
+          }
+        })();
+      } else {
+        try {
+          const result = matcher.call(target, ...args);
           finalizer();
-      } catch (e) {
-        reportStepError(e);
+          return result;
+        } catch (e) {
+          reportStepError(e);
+        }
       }
     };
   }
