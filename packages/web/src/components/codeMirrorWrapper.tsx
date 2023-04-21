@@ -107,7 +107,7 @@ export const CodeMirrorWrapper: React.FC<SourceProps> = ({
   React.useEffect(() => {
     if (!codemirror)
       return;
-    codemirror.off('change', (codemirror as any)[listenerSymbol]);
+    codemirror.off('change', (codemirror as any).listenerSymbol);
     (codemirror as any)[listenerSymbol] = undefined;
     if (onChange) {
       (codemirror as any)[listenerSymbol] = () => onChange(codemirror.getValue());
