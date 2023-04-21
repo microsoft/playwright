@@ -122,11 +122,11 @@ export async function saveTraceFile(fileName: string, traceEvents: TraceEvent[],
   });
 }
 
-export function createBeforeActionTraceEventForExpect(callId: string, apiName: string, expected: any, stack: StackFrame[]): BeforeActionTraceEvent {
+export function createBeforeActionTraceEventForExpect(callId: string, apiName: string, wallTime: number, expected: any, stack: StackFrame[]): BeforeActionTraceEvent {
   return {
     type: 'before',
     callId,
-    wallTime: Date.now(),
+    wallTime,
     startTime: monotonicTime(),
     class: 'Test',
     method: 'step',
