@@ -104,15 +104,9 @@ export const CodeMirrorWrapper: React.FC<SourceProps> = ({
       codemirrorRef.current.cm.setSize(measure.width, measure.height);
   }, [measure]);
 
-  React.useEffect(() => {
+  React.useLayoutEffect(() => {
     if (!codemirror)
       return;
-    codemirror.off('change', (codemirror as any).listenerSymbol);
-    (codemirror as any)[listenerSymbol] = undefined;
-    if (onChange) {
-      (codemirror as any)[listenerSymbol] = () => onChange(codemirror.getValue());
-      codemirror.on('change', (codemirror as any)[listenerSymbol]);
-    }
 
     let valueChanged = false;
     if (codemirror.getValue() !== text) {
@@ -155,12 +149,22 @@ export const CodeMirrorWrapper: React.FC<SourceProps> = ({
       codemirrorRef.current!.highlight = highlight;
       codemirrorRef.current!.widgets = widgets;
     }
+
     // Line-less locations have line = 0, but they mean to reveal the file.
     if (typeof revealLine === 'number' && codemirrorRef.current!.cm.lineCount() >= revealLine)
       codemirror.scrollIntoView({ line: Math.max(0, revealLine - 1), ch: 0 }, 50);
+
+    let changeListener: () => void | undefined;
+    if (onChange) {
+      changeListener = () => onChange(codemirror.getValue());
+      codemirror.on('change', changeListener);
+    }
+
+    return () => {
+      if (changeListener)
+        codemirror.off('change', changeListener);
+    };
   }, [codemirror, text, highlight, revealLine, focusOnChange, onChange]);
 
   return <div className='cm-wrapper' ref={codemirrorElement}></div>;
 };
-
-const listenerSymbol = Symbol('listener');

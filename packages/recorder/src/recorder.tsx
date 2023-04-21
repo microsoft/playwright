@@ -104,6 +104,12 @@ export const Recorder: React.FC<RecorderProps> = ({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [paused]);
 
+  const onEditorChange = React.useCallback((text: string) => {
+    setLocator(text);
+    const source = sources.find(s => s.id === fileId);
+    window.dispatch({ event: 'selectorUpdated', params: { selector: text, language: source?.language || 'javascript' } });
+  }, [sources, fileId]);
+
   return <div className='recorder'>
     <Toolbar>
       <ToolbarButton icon='record' title='Record' toggled={mode === 'recording'} onClick={() => {
@@ -139,10 +145,7 @@ export const Recorder: React.FC<RecorderProps> = ({
           <ToolbarButton icon='microscope' title='Pick locator' toggled={mode === 'inspecting'} onClick={() => {
             window.dispatch({ event: 'setMode', params: { mode: mode === 'inspecting' ? 'none' : 'inspecting' } }).catch(() => { });
           }}>Pick locator</ToolbarButton>
-          <CodeMirrorWrapper text={locator} language={source.language} readOnly={false} focusOnChange={true} wrapLines={true} onChange={text => {
-            setLocator(text);
-            window.dispatch({ event: 'selectorUpdated', params: { selector: text, language: source.language } });
-          }} />
+          <CodeMirrorWrapper text={locator} language={source.language} readOnly={false} focusOnChange={true} wrapLines={true} onChange={onEditorChange} />
           <ToolbarButton icon='files' title='Copy' onClick={() => {
             copy(locator);
           }}></ToolbarButton>
