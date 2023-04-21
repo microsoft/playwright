@@ -224,7 +224,7 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
       const generateTraceEvent = matcherName !== 'poll' && matcherName !== 'toPass';
       const callId = ++lastCallId;
       if (generateTraceEvent)
-        testInfo._traceEvents.push(createBeforeActionTraceEventForExpect(`expect@${callId}`, defaultTitle, args[0], stackFrames));
+        testInfo._traceEvents.push(createBeforeActionTraceEventForExpect(`expect@${callId}`, defaultTitle, wallTime, args[0], stackFrames));
 
       const reportStepError = (jestError: Error) => {
         const message = jestError.message;
