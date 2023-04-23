@@ -170,7 +170,7 @@ it('should change document URL after redirected navigation on click', async ({ s
   expect(await page.evaluate(() => location.href)).toBe('https://www.theverge.com/');
 });
 
-it('should change prefer responding vith valid content', async ({ server, context, asset }) => {
+it('should prefer responding with valid content', async ({ server, context, asset }) => {
   // when some responses are not valid, we should return response with valid content at least once.
   // Otherwise, clients with retry logic will get stuck in an infinite loop.
   const path = asset('har-unstable-network.har');
