@@ -24,9 +24,9 @@
 
 /* eslint-disable */
 
-import * as path from 'path';
-import * as fs from 'fs';
-import { json5 } from '../utilsBundle';
+import * as path from "path";
+import * as fs from "fs";
+import ts from "typescript";
 
 /**
  * Typing for the parts of tsconfig that we care about
@@ -100,7 +100,7 @@ function resolveConfigPath(cwd: string): string | undefined {
 
 export function walkForTsConfig(
   directory: string,
-  existsSync: (path: string) => boolean = fs.existsSync
+  existsSync: (path: string) => boolean = fs.existsSync,
 ): string | undefined {
   const tsconfigPath = path.join(directory, "./tsconfig.json");
   if (existsSync(tsconfigPath)) {
@@ -125,79 +125,24 @@ function loadTsconfig(
   configFilePath: string,
   existsSync: (path: string) => boolean = fs.existsSync,
   readFileSync: (filename: string) => string = (filename: string) =>
-    fs.readFileSync(filename, "utf8")
+    fs.readFileSync(filename, "utf8"),
 ): Tsconfig | undefined {
   if (!existsSync(configFilePath)) {
     return undefined;
   }
 
-  const configString = readFileSync(configFilePath);
-  const cleanedJson = StripBom(configString);
-  let config: Tsconfig = json5.parse(cleanedJson);
-  let extendedConfig = config.extends;
-
-  if (extendedConfig) {
-    if (
-      typeof extendedConfig === "string" &&
-      extendedConfig.indexOf(".json") === -1
-    ) {
-      extendedConfig += ".json";
-    }
-    const currentDir = path.dirname(configFilePath);
-    let extendedConfigPath = path.join(currentDir, extendedConfig);
-    if (
-      extendedConfig.indexOf("/") !== -1 &&
-      extendedConfig.indexOf(".") !== -1 &&
-      !existsSync(extendedConfigPath)
-    ) {
-      extendedConfigPath = path.join(
-        currentDir,
-        "node_modules",
-        extendedConfig
-      );
-    }
-
-    const base =
-      loadTsconfig(extendedConfigPath, existsSync, readFileSync) || {};
-
-    // baseUrl should be interpreted as relative to the base tsconfig,
-    // but we need to update it so it is relative to the original tsconfig being loaded
-    if (base.compilerOptions && base.compilerOptions.baseUrl) {
-      const extendsDir = path.dirname(extendedConfig);
-      base.compilerOptions.baseUrl = path.join(
-        extendsDir,
-        base.compilerOptions.baseUrl
-      );
-    }
-
-    config = {
-      ...base,
-      ...config,
-      compilerOptions: {
-        ...base.compilerOptions,
-        ...config.compilerOptions,
-      },
-    };
-  }
-
-  if (path.basename(configFilePath) === 'jsconfig.json' && config.compilerOptions?.allowJs === undefined) {
-    config.compilerOptions = config.compilerOptions || {};
-    config.compilerOptions.allowJs = true;
-  }
-
-  return config;
-}
-
-function StripBom(string: string) {
-	if (typeof string !== 'string') {
-		throw new TypeError(`Expected a string, got ${typeof string}`);
-	}
-
-	// Catches EFBBBF (UTF-8 BOM) because the buffer-to-string
-	// conversion translates it to FEFF (UTF-16 BOM).
-	if (string.charCodeAt(0) === 0xFEFF) {
-		return string.slice(1);
-	}
-
-	return string;
+  const { baseUrl, paths, strict, allowJs } = ts.parseJsonConfigFileContent(
+    ts.readConfigFile(configFilePath, ts.sys.readFile).config,
+    ts.sys,
+    path.dirname(configFilePath),
+  ).options;
+  const ret: Tsconfig = {
+    compilerOptions: {
+      ...baseUrl === undefined ? {} : { baseUrl },
+      ...paths === undefined ? {} : { paths },
+      ...strict === undefined ? {} : { strict },
+      ...allowJs === undefined ? {} : { allowJs },
+    },
+  };
+  return ret;
 }
