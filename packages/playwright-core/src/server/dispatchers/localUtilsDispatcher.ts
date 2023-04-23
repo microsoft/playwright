@@ -306,9 +306,8 @@ class HarBackend {
           const matchingHeaders = countMatchingHeaders(candidate.request.headers, headers);
           list.push({ candidate, matchingHeaders });
         }
+        list.reverse();
         list.sort((a, b) => b.matchingHeaders - a.matchingHeaders);
-        while (list[0].candidate.time < 0 && list.some(entry => entry.candidate.time >= 0))
-          list.shift();
         entry = list[0].candidate;
       }
 
