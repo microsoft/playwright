@@ -33,7 +33,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18
     - run: npm i -g npm@8
     - run: npm ci
       env:
@@ -57,14 +57,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-11, macos-12]
+        os: [macos-12, macos-13]
         browser: [chromium, firefox, webkit]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18
     - run: npm i -g npm@8
     - run: npm ci
       env:
@@ -93,7 +93,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18
     - run: npm i -g npm@8
     - run: npm ci
       env:
@@ -120,9 +120,9 @@ jobs:
       matrix:
         include:
         - os: ubuntu-latest
-          node_version: "^18.0.0"
+          node_version: 16
         - os: ubuntu-latest
-          node_version: "^16.0.0"
+          node_version: 20
     timeout-minutes: 30
     steps:
     - uses: actions/checkout@v3
@@ -155,7 +155,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18
     - run: npm i -g npm@8
     - run: npm ci
       env:
@@ -187,7 +187,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18
     - run: npm i -g npm@8
     - run: npm ci
       env:
@@ -223,7 +223,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18
     - run: npm i -g npm@8
     - run: npm ci
       env:
@@ -246,7 +246,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18
     - run: npm i -g npm@8
     - run: npm ci
       env:
@@ -272,7 +272,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18
     - run: npm i -g npm@8
     - run: npm ci
       env:
@@ -299,7 +299,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18
     - run: npm i -g npm@8
     - run: npm ci
       env:
@@ -329,7 +329,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18
     - run: npm i -g npm@8
     - run: npm ci
       env:
@@ -364,7 +364,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18
     - run: npm i -g npm@8
     - run: npm ci
       env:
@@ -395,7 +395,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18
     - run: npm i -g npm@8
     - run: npm ci
       env:
@@ -421,7 +421,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18
     - run: npm i -g npm@8
     - run: npm ci
       env:
@@ -448,7 +448,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18
     - run: npm i -g npm@8
     - run: npm ci
       env:
@@ -474,7 +474,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18
     - run: npm i -g npm@8
     - run: npm ci
       env:
@@ -501,7 +501,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18
     - run: npm i -g npm@8
     - run: npm ci
       env:
@@ -528,7 +528,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18
     - run: npm i -g npm@8
     - run: npm ci
       env:
@@ -554,7 +554,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18
     - run: npm i -g npm@8
     - run: npm ci
       env:
@@ -580,7 +580,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18
     - run: npm i -g npm@8
     - run: npm ci
       env:
@@ -607,7 +607,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18
     - run: npm i -g npm@8
     - run: npm ci
       env:
@@ -633,7 +633,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18
     - run: npm i -g npm@8
     - run: npm ci
       env:
@@ -659,7 +659,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18
     - run: npm i -g npm@8
     - run: npm ci
       env:
@@ -686,7 +686,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18
     - run: npm i -g npm@8
     - run: npm ci
       env:
@@ -712,7 +712,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18
     - run: npm i -g npm@8
     - run: npm ci
       env:
@@ -738,7 +738,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18
     - run: npm i -g npm@8
     - run: npm ci
       env:
@@ -765,7 +765,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18
     - run: npm i -g npm@8
     - run: npm ci
       env:
@@ -791,7 +791,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18
     - run: npm i -g npm@8
     - run: npm ci
     - run: npm run build
