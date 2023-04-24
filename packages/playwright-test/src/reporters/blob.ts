@@ -183,9 +183,7 @@ function patchAttachmentPaths(events: JsonEvent[], rootDir: string) {
       if (!attachment.path)
         continue;
 
-      console.log('path old ', attachment.path)
       attachment.path = path.join(rootDir, attachment.path);
-      console.log('     new ', attachment.path)
     }
   }
 }
