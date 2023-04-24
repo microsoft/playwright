@@ -23,7 +23,7 @@
 
 .image-diff-view .image-wrapper img {
   flex: auto;
-  box-shadow: var(--box-shadow-thick);
+  box-shadow: none;
   margin: 24px auto;
   min-width: 200px;
   max-width: 80%;
