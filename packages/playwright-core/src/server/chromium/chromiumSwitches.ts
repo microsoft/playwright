@@ -17,7 +17,7 @@
 
 // No dependencies as it is used from the Electron loader.
 
-export const chromiumSwitches = [
+const defaultChromiumSwitches = [
   '--disable-field-trial-config', // https://source.chromium.org/chromium/chromium/src/+/main:testing/variations/README.md
   '--disable-background-networking',
   '--enable-features=NetworkService,NetworkServiceInProcess',
@@ -41,7 +41,6 @@ export const chromiumSwitches = [
   '--disable-popup-blocking',
   '--disable-prompt-on-repost',
   '--disable-renderer-backgrounding',
-  '--disable-sync',
   '--force-color-profile=srgb',
   '--metrics-recording-only',
   '--no-first-run',
@@ -52,3 +51,7 @@ export const chromiumSwitches = [
   '--no-service-autorun',
   '--export-tagged-pdf'
 ];
+
+export const androidChromiumSwitches = [...defaultChromiumSwitches];
+
+export const desktopChromiumSwitches = [...defaultChromiumSwitches, '--disable-sync'];

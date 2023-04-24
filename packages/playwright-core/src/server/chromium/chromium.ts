@@ -48,7 +48,7 @@ import type http from 'http';
 import { registry } from '../registry';
 import { ManualPromise } from '../../utils/manualPromise';
 import { validateBrowserContextOptions } from '../browserContext';
-import { chromiumSwitches } from './chromiumSwitches';
+import { desktopChromiumSwitches } from './chromiumSwitches';
 
 const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');
 
@@ -283,7 +283,7 @@ export class Chromium extends BrowserType {
       throw new Error('Playwright manages remote debugging connection itself.');
     if (args.find(arg => !arg.startsWith('-')))
       throw new Error('Arguments can not specify page to be opened');
-    const chromeArguments = [...chromiumSwitches];
+    const chromeArguments = [...desktopChromiumSwitches];
 
     if (os.platform() === 'darwin') {
       // See https://github.com/microsoft/playwright/issues/7362

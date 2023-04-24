@@ -35,7 +35,7 @@ import { gracefullyCloseSet } from '../../utils/processLauncher';
 import { TimeoutSettings } from '../../common/timeoutSettings';
 import type * as channels from '@protocol/channels';
 import { SdkObject, serverSideCallMetadata } from '../instrumentation';
-import { chromiumSwitches } from '../chromium/chromiumSwitches';
+import { androidChromiumSwitches } from '../chromium/chromiumSwitches';
 import { registry } from '../registry';
 
 const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');
@@ -278,7 +278,7 @@ export class AndroidDevice extends SdkObject {
       '--disable-fre',
       '--no-default-browser-check',
       `--remote-debugging-socket-name=${socketName}`,
-      ...chromiumSwitches,
+      ...androidChromiumSwitches,
       ...this._innerDefaultArgs(options)
     ];
     return chromeArguments;

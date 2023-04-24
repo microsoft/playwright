@@ -15,13 +15,13 @@
  */
 
 const { app } = require('electron');
-const { chromiumSwitches } = require('../chromium/chromiumSwitches');
+const { desktopChromiumSwitches } = require('../chromium/chromiumSwitches');
 
 // [Electron, -r, loader.js, --inspect=0, --remote-debugging-port=0, ...args]
 process.argv.splice(1, 4);
 
 
-for (const arg of chromiumSwitches) {
+for (const arg of desktopChromiumSwitches) {
   const match = arg.match(/--([^=]*)=?(.*)/)!;
   app.commandLine.appendSwitch(match[1], match[2]);
 }
