@@ -98,9 +98,7 @@ export class Firefox extends BrowserType {
 
 // Prefs for quick fixes that didn't make it to the build.
 // Should all be moved to `playwright.cfg`.
-const kBandaidFirefoxUserPrefs = {
-  'webgl.forbid-software': false
-};
+const kBandaidFirefoxUserPrefs = {};
 
 const kDisableFissionFirefoxUserPrefs = {
   'browser.tabs.remote.useCrossOriginEmbedderPolicy': false,
