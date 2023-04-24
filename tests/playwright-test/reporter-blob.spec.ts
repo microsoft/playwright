@@ -15,7 +15,6 @@
  */
 
 import * as fs from 'fs';
-import path from 'path';
 import type { HttpServer } from '../../packages/playwright-core/src/utils';
 import { startHtmlReportServer } from '../../packages/playwright-test/lib/reporters/html';
 import { type CliRunResult, type RunOptions, stripAnsi } from './playwright-test-fixtures';
