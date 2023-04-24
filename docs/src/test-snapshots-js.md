@@ -43,7 +43,7 @@ The snapshot name `example-test-1-chromium-darwin.png` consists of a few parts:
 If you are not on the same operating system as your CI system, you can use Docker to generate/update the screenshots:
 
 ```bash
-docker run --rm --network host -v $(pwd):/work/ -w /work/ -it mcr.microsoft.com/playwright:v1.33.0-jammy /bin/bash
+docker run --rm --network host -v $(pwd):/work/ -w /work/ -it mcr.microsoft.com/playwright:v1.34.0-jammy /bin/bash
 npm install
 npx playwright test --update-snapshots
 ```

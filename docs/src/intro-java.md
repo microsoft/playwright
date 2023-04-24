@@ -58,7 +58,7 @@ public class App {
     <dependency>
       <groupId>com.microsoft.playwright</groupId>
       <artifactId>playwright</artifactId>
-      <version>1.33.0</version>
+      <version>1.34.0</version>
     </dependency>
   </dependencies>
   <build>
