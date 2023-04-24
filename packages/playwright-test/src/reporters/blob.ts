@@ -17,6 +17,7 @@
 import type { EventEmitter } from 'events';
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
 import { ManualPromise, ZipFile, calculateSha1, removeFolders } from 'playwright-core/lib/utils';
 import { mime } from 'playwright-core/lib/utilsBundle';
 import { yazl } from 'playwright-core/lib/zipBundle';
@@ -112,7 +113,7 @@ export class BlobReporter extends TeleReporterEmitter {
 
 export async function createMergedReport(config: FullConfigInternal, dir: string, reporterName?: string) {
   const shardFiles = await sortedShardFiles(dir);
-  const resourceDir = path.join(dir, 'temp');
+  const resourceDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-report-'));
   await fs.promises.mkdir(resourceDir, { recursive: true });
   try {
     const shardReports = await extractReports(dir, shardFiles, resourceDir);
@@ -136,7 +137,6 @@ export async function createMergedReport(config: FullConfigInternal, dir: string
     const options = {
       ...arg,
       configDir: process.cwd(),
-      outputFolder: path.join(dir, 'merged-report')
     };
 
     let reporter: Reporter | undefined;
@@ -175,7 +175,7 @@ async function extractReports(dir: string, shardFiles: string[], resourceDir: st
   return reports;
 }
 
-function patchAttachmentPaths(events: JsonEvent[], rootDir: string) {
+function patchAttachmentPaths(events: JsonEvent[], resourceDir: string) {
   for (const event of events) {
     if (event.method !== 'onTestEnd')
       continue;
@@ -183,7 +183,7 @@ function patchAttachmentPaths(events: JsonEvent[], rootDir: string) {
       if (!attachment.path)
         continue;
 
-      attachment.path = path.join(rootDir, attachment.path);
+      attachment.path = path.join(resourceDir, attachment.path);
     }
   }
 }

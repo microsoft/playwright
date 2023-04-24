@@ -29,17 +29,17 @@ const test = baseTest.extend<{
   showReport: (reportFolder?: string) => Promise<void>,
   mergeReports: (reportFolder: string, env?: NodeJS.ProcessEnv, options?: RunOptions) => Promise<CliRunResult>
       }>({
-        showReport: async ({ page }, use, testInfo) => {
+        showReport: async ({ page }, use) => {
           let server: HttpServer | undefined;
           await use(async (reportFolder?: string) => {
-            reportFolder ??=  testInfo.outputPath('playwright-report');
+            reportFolder ??=  test.info().outputPath('playwright-report');
             server = startHtmlReportServer(reportFolder) as HttpServer;
             const location = await server.start();
             await page.goto(location);
           });
           await server?.stop();
         },
-        mergeReports: async ({ childProcess, page }, use, testInfo) => {
+        mergeReports: async ({ childProcess }, use) => {
           await use(async (reportFolder: string, env: NodeJS.ProcessEnv = {}, options: RunOptions = {}) => {
             const command = ['node', cliEntrypoint, 'merge-reports', reportFolder];
             if (options.additionalArgs)
@@ -48,7 +48,7 @@ const test = baseTest.extend<{
             const testProcess = childProcess({
               command,
               env: cleanEnv(env),
-              // cwd,
+              cwd: test.info().outputDir,
             });
             const { exitCode } = await testProcess.exited;
             return { exitCode, output: testProcess.output.toString() };
@@ -111,7 +111,7 @@ test('should merge into html', async ({ runInlineTest, mergeReports, showReport,
   const { exitCode } = await mergeReports(reportDir, {}, { additionalArgs: ['--reporter', 'html'] });
   expect(exitCode).toBe(0);
 
-  await showReport(path.join(reportDir, 'merged-report'));
+  await showReport();
 
   await expect(page.locator('.subnav-item:has-text("All") .counter')).toHaveText('10');
   await expect(page.locator('.subnav-item:has-text("Passed") .counter')).toHaveText('3');
@@ -170,7 +170,7 @@ test('be able to merge incomplete shards', async ({ runInlineTest, mergeReports,
   const { exitCode } = await mergeReports(reportDir, {}, { additionalArgs: ['--reporter', 'html'] });
   expect(exitCode).toBe(0);
 
-  await showReport(path.join(reportDir, 'merged-report'));
+  await showReport();
 
   await expect(page.locator('.subnav-item:has-text("All") .counter')).toHaveText('6');
   await expect(page.locator('.subnav-item:has-text("Passed") .counter')).toHaveText('2');
@@ -304,7 +304,7 @@ test('preserve attachments', async ({ runInlineTest, mergeReports, showReport, p
   const { exitCode } = await mergeReports(reportDir, {}, { additionalArgs: ['--reporter', 'html'] });
   expect(exitCode).toBe(0);
 
-  await showReport(path.join(reportDir, 'merged-report'));
+  await showReport();
   await page.getByText('first').click();
   await expect(page.getByText('file-attachment')).toBeVisible();
   await page.goBack();
