@@ -37,5 +37,13 @@
   "types": "types/types.d.ts",
   "bin": {
     "playwright": "./cli.js"
+  },
+  "peerDependencies": {
+    "@playwright/test": "*"
+  },
+  "peerDependenciesMeta": {
+    "@playwright/test": {
+      "optional": true
+    }
   }
 }
