@@ -526,7 +526,7 @@ test('should not run hooks if modifier throws', async ({ runInlineTest }) => {
         throw new Error('Oh my');
       });
       test.beforeAll(() => {
-        console.log('%%beforeEach');
+        console.log('%%beforeAll');
       });
       test.beforeEach(() => {
         console.log('%%beforeEach');
@@ -535,7 +535,7 @@ test('should not run hooks if modifier throws', async ({ runInlineTest }) => {
         console.log('%%afterEach');
       });
       test.afterAll(() => {
-        console.log('%%beforeEach');
+        console.log('%%afterAll');
       });
       test('skipped1', () => {
         console.log('%%skipped1');

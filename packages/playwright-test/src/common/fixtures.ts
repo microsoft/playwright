@@ -199,12 +199,16 @@ export class FixturePool {
     return hash.digest('hex');
   }
 
-  validateFunction(fn: Function, prefix: string, location: Location) {
+  validateFunction(fn: Function, prefix: string, location: Location): { dependsOnWorkerFixturesOnly: boolean } {
+    let dependsOnWorkerFixturesOnly = true;
     for (const name of fixtureParameterNames(fn, location, e => this._onLoadError(e))) {
       const registration = this.registrations.get(name);
       if (!registration)
         this._addLoadError(`${prefix} has unknown parameter "${name}".`, location);
+      if (registration?.scope === 'test')
+        dependsOnWorkerFixturesOnly = false;
     }
+    return { dependsOnWorkerFixturesOnly };
   }
 
   resolveDependency(registration: FixtureRegistration, name: string): FixtureRegistration | undefined {

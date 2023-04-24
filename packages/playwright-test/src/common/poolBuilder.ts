@@ -63,8 +63,11 @@ export class PoolBuilder {
         pool = new FixturePool(parent._use, e => this._handleLoadError(e, testErrors), pool, parent._type === 'describe');
       for (const hook of parent._hooks)
         pool.validateFunction(hook.fn, hook.type + ' hook', hook.location);
-      for (const modifier of parent._modifiers)
-        pool.validateFunction(modifier.fn, modifier.type + ' modifier', modifier.location);
+      for (const modifier of parent._modifiers) {
+        // Turn modifiers into hooks.
+        const { dependsOnWorkerFixturesOnly } = pool.validateFunction(modifier.fn, modifier.type + ' modifier', modifier.location);
+        parent._hooks.unshift({ type: dependsOnWorkerFixturesOnly ? 'beforeAll' : 'beforeEach', modifier: { type: modifier.type, description: modifier.description }, fn: modifier.fn, location: modifier.location });
+      }
     }
 
     pool.validateFunction(test.fn, 'Test', test.location);

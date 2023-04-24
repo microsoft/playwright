@@ -325,30 +325,25 @@ export class WorkerMain extends ProcessRunner {
         // Note: wrap all preparation steps together, because failure/skip in any of them
         // prevents further setup and/or test from running.
         const beforeHooksError = await testInfo._runAndFailOnError(async () => {
-          // Run "beforeAll" modifiers on parent suites, unless already run during previous tests.
-          for (const suite of suites) {
-            if (this._extraSuiteAnnotations.has(suite))
-              continue;
-            const extraAnnotations: Annotation[] = [];
-            this._extraSuiteAnnotations.set(suite, extraAnnotations);
-            didFailBeforeAllForSuite = suite;  // Assume failure, unless reset below.
-            // Separate timeout for each "beforeAll" modifier.
-            const timeSlot = { timeout: this._project.project.timeout, elapsed: 0 };
-            await this._runModifiersForSuite(suite, testInfo, 'worker', timeSlot, extraAnnotations);
-          }
-
-          // Run "beforeAll" hooks, unless already run during previous tests.
+          // Run "beforeAll" modifiers and hooks, unless already run during previous tests.
           for (const suite of suites) {
             didFailBeforeAllForSuite = suite;  // Assume failure, unless reset below.
-            await this._runBeforeAllHooksForSuite(suite, testInfo);
+            if (!this._extraSuiteAnnotations.has(suite)) {
+              const extraAnnotations: Annotation[] = [];
+              this._extraSuiteAnnotations.set(suite, extraAnnotations);
+              await this._runBeforeAllHooksForSuite(suite, testInfo, extraAnnotations);
+            }
+            if (!this._activeSuites.has(suite)) {
+              this._activeSuites.add(suite);
+              await this._runBeforeAllHooksForSuite(suite, testInfo);
+            }
           }
 
           // Running "beforeAll" succeeded for all suites!
           didFailBeforeAllForSuite = undefined;
 
           // Run "beforeEach" modifiers.
-          for (const suite of suites)
-            await this._runModifiersForSuite(suite, testInfo, 'test', undefined);
+          await this._runEachHooksForSuites(suites, 'beforeEach', testInfo, undefined, 'modifiers');
 
           // Run "beforeEach" hooks. Once started with "beforeEach", we must run all "afterEach" hooks as well.
           shouldRunAfterEachHooks = true;
@@ -477,48 +472,31 @@ export class WorkerMain extends ProcessRunner {
       await removeFolderAsync(testInfo.outputDir).catch(e => {});
   }
 
-  private async _runModifiersForSuite(suite: Suite, testInfo: TestInfoImpl, scope: 'worker' | 'test', timeSlot: TimeSlot | undefined, extraAnnotations?: Annotation[]) {
-    for (const modifier of suite._modifiers) {
-      const actualScope = this._fixtureRunner.dependsOnWorkerFixturesOnly(modifier.fn, modifier.location) ? 'worker' : 'test';
-      if (actualScope !== scope)
-        continue;
-      debugTest(`modifier at "${formatLocation(modifier.location)}" started`);
-      testInfo._timeoutManager.setCurrentRunnable({ type: modifier.type, location: modifier.location, slot: timeSlot });
-      const result = await testInfo._runAsStep({
-        category: 'hook',
-        title: `${modifier.type} modifier`,
-        location: modifier.location,
-      }, () => this._fixtureRunner.resolveParametersAndRunFunction(modifier.fn, testInfo, scope));
-      debugTest(`modifier at "${formatLocation(modifier.location)}" finished`);
-      if (result && extraAnnotations)
-        extraAnnotations.push({ type: modifier.type, description: modifier.description });
-      testInfo[modifier.type](!!result, modifier.description);
-    }
-  }
-
-  private async _runBeforeAllHooksForSuite(suite: Suite, testInfo: TestInfoImpl) {
-    if (this._activeSuites.has(suite))
-      return;
-    this._activeSuites.add(suite);
+  private async _runBeforeAllHooksForSuite(suite: Suite, testInfo: TestInfoImpl, extraAnnotationsForModifiers?: Annotation[]) {
     let beforeAllError: Error | undefined;
     for (const hook of suite._hooks) {
       if (hook.type !== 'beforeAll')
         continue;
-      debugTest(`${hook.type} hook at "${formatLocation(hook.location)}" started`);
+      if (!shouldRunModifierHook(!!hook.modifier, !!extraAnnotationsForModifiers))
+        continue;
+      const title = hook.modifier ? `${hook.modifier.type} modifier` : `${hook.type} hook`;
+      debugTest(`${title} at "${formatLocation(hook.location)}" started`);
+      let hookResult;
       try {
         // Separate time slot for each "beforeAll" hook.
         const timeSlot = { timeout: this._project.project.timeout, elapsed: 0 };
-        testInfo._timeoutManager.setCurrentRunnable({ type: 'beforeAll', location: hook.location, slot: timeSlot });
-        await testInfo._runAsStep({
-          category: 'hook',
-          title: `${hook.type} hook`,
-          location: hook.location,
-        }, () => this._fixtureRunner.resolveParametersAndRunFunction(hook.fn, testInfo, 'all-hooks-only'));
+        testInfo._timeoutManager.setCurrentRunnable({ type: hook.modifier?.type ?? 'beforeAll', location: hook.location, slot: timeSlot });
+        hookResult = await testInfo._runAsStep({ category: 'hook', title, location: hook.location }, () => this._fixtureRunner.resolveParametersAndRunFunction(hook.fn, testInfo, 'all-hooks-only'));
       } catch (e) {
         // Always run all the hooks, and capture the first error.
         beforeAllError = beforeAllError || e;
       }
       debugTest(`${hook.type} hook at "${formatLocation(hook.location)}" finished`);
+      if (hook.modifier) {
+        if (hookResult && extraAnnotationsForModifiers)
+          extraAnnotationsForModifiers.push({ type: hook.modifier.type, description: hook.modifier.description });
+        testInfo[hook.modifier.type](!!hookResult, hook.modifier.description);
+      }
     }
     if (beforeAllError)
       throw beforeAllError;
@@ -549,25 +527,34 @@ export class WorkerMain extends ProcessRunner {
     return firstError;
   }
 
-  private async _runEachHooksForSuites(suites: Suite[], type: 'beforeEach' | 'afterEach', testInfo: TestInfoImpl, timeSlot: TimeSlot | undefined) {
+  private async _runEachHooksForSuites(suites: Suite[], type: 'beforeEach' | 'afterEach', testInfo: TestInfoImpl, timeSlot: TimeSlot | undefined, modifiers?: 'modifiers') {
     const hooks = suites.map(suite => suite._hooks.filter(hook => hook.type === type)).flat();
     let error: Error | undefined;
     for (const hook of hooks) {
+      if (!shouldRunModifierHook(!!hook.modifier, modifiers === 'modifiers'))
+        continue;
+      let hookResult;
       try {
-        testInfo._timeoutManager.setCurrentRunnable({ type, location: hook.location, slot: timeSlot });
-        await testInfo._runAsStep({
+        testInfo._timeoutManager.setCurrentRunnable({ type: hook.modifier?.type ?? type, location: hook.location, slot: timeSlot });
+        hookResult = await testInfo._runAsStep({
           category: 'hook',
-          title: `${hook.type} hook`,
+          title: hook.modifier ? `${hook.modifier.type} modifier` : `${hook.type} hook`,
           location: hook.location,
         }, () => this._fixtureRunner.resolveParametersAndRunFunction(hook.fn, testInfo, 'test'));
       } catch (e) {
         // Always run all the hooks, and capture the first error.
         error = error || e;
       }
+      if (hook.modifier)
+        testInfo[hook.modifier.type](!!hookResult, hook.modifier.description);
     }
     if (error)
       throw error;
   }
+}
+
+function shouldRunModifierHook(isModifier: boolean, runModifiers: boolean) {
+  return isModifier === runModifiers;
 }
 
 function buildTestBeginPayload(testInfo: TestInfoImpl): TestBeginPayload {
