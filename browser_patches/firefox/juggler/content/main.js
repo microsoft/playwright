@@ -85,7 +85,7 @@ function initialize(browsingContext, docShell, actor) {
   docShell.overrideHasFocus = true;
   docShell.forceActiveState = true;
   docShell.disallowBFCache = true;
-  data.frameTree = new FrameTree(docShell);
+  data.frameTree = new FrameTree(browsingContext);
   for (const [name, value] of Object.entries(contextCrossProcessCookie.settings)) {
     if (value !== undefined)
       applySetting[name](value);

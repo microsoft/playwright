@@ -426,9 +426,11 @@ class PageHandler {
     return { success: true };
   }
 
-  async ['Page.reload']({}) {
-    const browsingContext = this._pageTarget.linkedBrowser().browsingContext;
-    browsingContext.reload(Ci.nsIWebNavigation.LOAD_FLAGS_NONE);
+  async ['Page.reload']() {
+    await this._pageTarget.activateAndRun(() => {
+      const doc = this._pageTarget._tab.linkedBrowser.ownerDocument;
+      doc.getElementById('Browser:Reload').doCommand();
+    });
   }
 
   async ['Page.describeNode'](options) {
@@ -470,88 +472,91 @@ class PageHandler {
   }
 
   async ['Page.dispatchMouseEvent']({type, x, y, button, clickCount, modifiers, buttons}) {
-    const boundingBox = this._pageTarget._linkedBrowser.getBoundingClientRect();
+    this._pageTarget.ensureContextMenuClosed();
 
+    const boundingBox = this._pageTarget._linkedBrowser.getBoundingClientRect();
     const win = this._pageTarget._window;
     const sendEvents = async (types) => {
-      // We must switch to proper tab in the tabbed browser so that
-      // event is dispatched to a proper renderer.
-      await this._pageTarget.activateAndRun(() => {
-        for (const type of types) {
-          // This dispatches to the renderer synchronously.
-          win.windowUtils.sendMouseEvent(
-            type,
-            x + boundingBox.left,
-            y + boundingBox.top,
-            button,
-            clickCount,
-            modifiers,
-            false /* aIgnoreRootScrollFrame */,
-            undefined /* pressure */,
-            undefined /* inputSource */,
-            true /* isDOMEventSynthesized */,
-            undefined /* isWidgetEventSynthesized */,
-            buttons);
-        }
-      });
+      for (const type of types) {
+        // This dispatches to the renderer synchronously.
+        win.windowUtils.sendMouseEvent(
+          type,
+          x + boundingBox.left,
+          y + boundingBox.top,
+          button,
+          clickCount,
+          modifiers,
+          false /* aIgnoreRootScrollFrame */,
+          undefined /* pressure */,
+          undefined /* inputSource */,
+          true /* isDOMEventSynthesized */,
+          undefined /* isWidgetEventSynthesized */,
+          buttons);
+      }
     };
 
-    if (type === 'mousedown') {
-      if (this._isDragging)
-        return;
+    // We must switch to proper tab in the tabbed browser so that
+    // 1. Event is dispatched to a proper renderer.
+    // 2. We receive an ack from the renderer for the dispatched event.
+    await this._pageTarget.activateAndRun(async () => {
+      if (type === 'mousedown') {
+        if (this._isDragging)
+          return;
 
-      const eventNames = button === 2 ? ['mousedown', 'contextmenu'] : ['mousedown'];
-      const watcher = new EventWatcher(this._pageEventSink, eventNames);
-      await sendEvents(eventNames);
-      await watcher.ensureEventsAndDispose(eventNames);
-      return;
-    }
-
-    if (type === 'mousemove') {
-      this._lastMousePosition = { x, y };
-      if (this._isDragging) {
-        const watcher = new EventWatcher(this._pageEventSink, ['dragover']);
-        await this._contentPage.send('dispatchDragEvent', {type:'dragover', x, y, modifiers});
-        await watcher.ensureEventsAndDispose(['dragover']);
+        const eventNames = button === 2 ? ['mousedown', 'contextmenu'] : ['mousedown'];
+        const watcher = new EventWatcher(this._pageEventSink, eventNames);
+        await sendEvents(eventNames);
+        await watcher.ensureEventsAndDispose(eventNames);
         return;
       }
 
-      const watcher = new EventWatcher(this._pageEventSink, ['dragstart', 'mousemove', 'juggler-drag-finalized']);
-      await sendEvents(['mousemove']);
+      if (type === 'mousemove') {
+        this._lastMousePosition = { x, y };
+        if (this._isDragging) {
+          const watcher = new EventWatcher(this._pageEventSink, ['dragover']);
+          await this._contentPage.send('dispatchDragEvent', {type:'dragover', x, y, modifiers});
+          await watcher.ensureEventsAndDispose(['dragover']);
+          return;
+        }
 
-      // The order of events after 'mousemove' is sent:
-      // 1. [dragstart] - might or might NOT be emitted
-      // 2. [mousemove] - always emitted
-      // 3. [juggler-drag-finalized] - only emitted if dragstart was emitted.
+        const watcher = new EventWatcher(this._pageEventSink, ['dragstart', 'mousemove', 'juggler-drag-finalized']);
+        await sendEvents(['mousemove']);
 
-      await watcher.ensureEvent('mousemove');
-      if (watcher.hasEvent('dragstart')) {
-        const eventObject = await watcher.ensureEvent('juggler-drag-finalized');
-        this._isDragging = eventObject.dragSessionStarted;
+        // The order of events after 'mousemove' is sent:
+        // 1. [dragstart] - might or might NOT be emitted
+        // 2. [mousemove] - always emitted
+        // 3. [juggler-drag-finalized] - only emitted if dragstart was emitted.
+
+        await watcher.ensureEvent('mousemove');
+        if (watcher.hasEvent('dragstart')) {
+          const eventObject = await watcher.ensureEvent('juggler-drag-finalized');
+          this._isDragging = eventObject.dragSessionStarted;
+        }
+        watcher.dispose();
+        return;
       }
-      watcher.dispose();
-      return;
-    }
 
-    if (type === 'mouseup') {
-      if (this._isDragging) {
-        const watcher = new EventWatcher(this._pageEventSink, ['dragover', 'dragend']);
-        await this._contentPage.send('dispatchDragEvent', {type: 'dragover', x, y, modifiers});
-        await this._contentPage.send('dispatchDragEvent', {type: 'drop', x, y, modifiers});
-        await this._contentPage.send('dispatchDragEvent', {type: 'dragend', x, y, modifiers});
-        // NOTE: 'drop' event might not be dispatched at all, depending on dropAction.
-        await watcher.ensureEventsAndDispose(['dragover', 'dragend']);
-        this._isDragging = false;
-      } else {
-        const watcher = new EventWatcher(this._pageEventSink, ['mouseup']);
-        await sendEvents(['mouseup']);
-        await watcher.ensureEventsAndDispose(['mouseup']);
+      if (type === 'mouseup') {
+        if (this._isDragging) {
+          const watcher = new EventWatcher(this._pageEventSink, ['dragover', 'dragend']);
+          await this._contentPage.send('dispatchDragEvent', {type: 'dragover', x, y, modifiers});
+          await this._contentPage.send('dispatchDragEvent', {type: 'drop', x, y, modifiers});
+          await this._contentPage.send('dispatchDragEvent', {type: 'dragend', x, y, modifiers});
+          // NOTE: 'drop' event might not be dispatched at all, depending on dropAction.
+          await watcher.ensureEventsAndDispose(['dragover', 'dragend']);
+          this._isDragging = false;
+        } else {
+          const watcher = new EventWatcher(this._pageEventSink, ['mouseup']);
+          await sendEvents(['mouseup']);
+          await watcher.ensureEventsAndDispose(['mouseup']);
+        }
+        return;
       }
-      return;
-    }
+    });
   }
 
   async ['Page.dispatchWheelEvent']({x, y, button, deltaX, deltaY, deltaZ, modifiers }) {
+    this._pageTarget.ensureContextMenuClosed();
     const boundingBox = this._pageTarget._linkedBrowser.getBoundingClientRect();
     x += boundingBox.left;
     y += boundingBox.top;

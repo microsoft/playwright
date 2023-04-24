@@ -188,6 +188,7 @@ networkTypes.HTTPHeader = {
 networkTypes.HTTPCredentials = {
   username: t.String,
   password: t.String,
+  origin: t.Optional(t.String),
 };
 
 networkTypes.SecurityDetails = {
@@ -281,6 +282,7 @@ const Browser = {
         headers: t.Array(networkTypes.HTTPHeader),
       },
     },
+    'clearCache': {},
     'setBrowserProxy': {
       params: {
         type: t.Enum(['http', 'https', 'socks', 'socks4']),
@@ -841,9 +843,7 @@ const Page = {
       },
     },
     'reload': {
-      params: {
-        frameId: t.String,
-      },
+      params: { },
     },
     'adoptNode': {
       params: {
