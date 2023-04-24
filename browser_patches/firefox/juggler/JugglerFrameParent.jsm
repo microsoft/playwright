@@ -15,6 +15,13 @@ class JugglerFrameParent extends JSWindowActorParent {
   receiveMessage() { }
 
   async actorCreated() {
+    // Actors are registered per the WindowGlobalParent / WindowGlobalChild pair. We are only
+    // interested in those WindowGlobalParent actors that are matching current browsingContext
+    // window global.
+    // See https://github.com/mozilla/gecko-dev/blob/cd2121e7d83af1b421c95e8c923db70e692dab5f/testing/mochitest/BrowserTestUtils/BrowserTestUtilsParent.sys.mjs#L15
+    if (!this.manager?.isCurrentGlobal)
+      return;
+
     // Only interested in main frames for now.
     if (this.browsingContext.parent)
       return;

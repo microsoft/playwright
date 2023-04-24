@@ -386,7 +386,7 @@ class PageTarget {
     const tabBrowser = ownerWindow.gBrowser;
     // Serialize all tab-switching commands per tabbed browser
     // to disallow concurrent tab switching.
-    tabBrowser.__serializedChain = (tabBrowser.__serializedChain ?? Promise.resolve()).then(async () => {
+    const result = (tabBrowser.__serializedChain ?? Promise.resolve()).then(async () => {
       this._window.focus();
       if (tabBrowser.selectedTab !== this._tab) {
         const promise = helper.awaitEvent(ownerWindow, 'TabSwitchDone');
@@ -395,7 +395,8 @@ class PageTarget {
       }
       await callback();
     });
-    return tabBrowser.__serializedChain;
+    tabBrowser.__serializedChain = result.catch(error => { /* swallow errors to keep chain running */ });
+    return result;
   }
 
   frameIdToBrowsingContext(frameId) {
@@ -702,7 +703,17 @@ class PageTarget {
     screencastService.stopVideoRecording(screencastId);
   }
 
+  ensureContextMenuClosed() {
+    // Close context menu, if any, since it might capture mouse events on Linux
+    // and prevent browser shutdown on MacOS.
+    const doc = this._linkedBrowser.ownerDocument;
+    const contextMenu = doc.getElementById("contentAreaContextMenu");
+    if (contextMenu)
+      contextMenu.hidePopup();
+  }
+
   dispose() {
+    this.ensureContextMenuClosed();
     this._disposed = true;
     if (this._videoRecordingInfo)
       this._stopVideoRecording();
