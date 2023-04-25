@@ -6,6 +6,61 @@ toc_max_heading_level: 2
 
 import LiteYouTube from '@site/src/components/LiteYouTube';
 
+## Version 1.33
+
+### Locators Update
+
+* Use [`method: Locator.or`] to create a locator that matches either of the two locators.
+  Consider a scenario where   you'd like to click on a "New email" button, but sometimes a security settings dialog shows up instead.
+  In this case, you can wait for either a "New email" button, or a dialog and act accordingly:
+
+    ```js
+    const newEmail = page.getByRole('button', { name: 'New' });
+    const dialog = page.getByText('Confirm security settings');
+    await expect(newEmail.or(dialog)).toBeVisible();
+    if (await dialog.isVisible())
+      await page.getByRole('button', { name: 'Dismiss' }).click();
+    await newEmail.click();
+    ```
+* Use new options [`option: hasNot`] and [`option: hasNotText`] in [`method: Locator.filter`]
+  to find elements that **do not match** certain conditions.
+
+    ```js
+    const rowLocator = page.locator('tr');
+    await rowLocator
+        .filter({ hasNotText: 'text in column 1' })
+        .filter({ hasNot: page.getByRole('button', { name: 'column 2 button' }) })
+        .screenshot();
+    ```
+* Use new web-first assertion [`method: LocatorAssertions.toBeAttached`] to ensure that the element
+  is present in the page's DOM. Do not confuse with the [`method: LocatorAssertions.toBeVisible`] that ensures that
+  element is both attached & visible.
+
+### New APIs
+
+- [`method: Locator.or`]
+- New option [`option: hasNot`] in [`method: Locator.filter`]
+- New option [`option: hasNotText`] in [`method: Locator.filter`]
+- [`method: LocatorAssertions.toBeAttached`]
+- New option [`option: timeout`] in [`method: Route.fetch`]
+- [`method: Reporter.onExit`]
+
+### ⚠️ Breaking change
+
+* The `mcr.microsoft.com/playwright:v1.34.0-focal` now serves a Playwright image based on Ubuntu Jammy.
+  To use the focal-based image, please use `mcr.microsoft.com/playwright:v1.34.0-focal` instead.
+
+### Browser Versions
+
+* Chromium 113.0.5672.53
+* Mozilla Firefox 112.0
+* WebKit 16.4
+
+This version was also tested against the following stable channels:
+
+* Google Chrome 112
+* Microsoft Edge 112
+
 ## Version 1.32
 
 ### Introducing UI Mode (preview)
