@@ -22,7 +22,7 @@ To open UI mode, run the following command:
 
 ### Filtering tests
 
-Filter tests by text or @tag or by passed, failed or skipped tests. You can also filter by [projects](./test-projects) as set in your `playwright.config` file. If you are using project dependencies make sure to run your setup tests first before running the tests that depend on them. The UI mode will not take into consideration the setup tests and therefore you will have to manually run them first.
+Filter tests by text or `@tag` or by passed, failed or skipped tests. You can also filter by [projects](./test-projects) as set in your `playwright.config` file. If you are using project dependencies make sure to run your setup tests first before running the tests that depend on them. The UI mode will not take into consideration the setup tests and therefore you will have to manually run them first.
 
 ![filtering tests in ui mode](https://user-images.githubusercontent.com/13063165/234307854-adb49634-a588-4ea7-aa0e-2c31e845caf9.png)
 
@@ -34,7 +34,7 @@ Once you launch UI Mode you will see a list of all your test files. You can run 
 
 ### Viewing test traces
 
-Traces are shown for each test that has been run so to see the trace click on one of the test names. Note that you won't see any trace results if you click on the name of the test file or the name of a describe block.
+Traces are shown for each test that has been run, so to see the trace, click on one of the test names. Note that you won't see any trace results if you click on the name of the test file or the name of a describe block.
 
 ![running tests in ui mode and visually seeing a trace](https://user-images.githubusercontent.com/13063165/234294773-d643a2b4-8c3a-4cb1-aca4-11327d3654c1.png)
 
@@ -52,7 +52,7 @@ As you hover over each action of your test the source code for the test is highl
 
 ### Pop out and inspect the DOM
 
-Pop out the DOM snapshot into it's own window for a better debugging experience by clicking on the pop out icon above the DOM snapshot. From there you can open the dev tools and inspect the HTML, CSS, Console etc. Go back to UI Mode and click on another action and pop that one out to easily compare the two side by side or debug each individually.
+Pop out the DOM snapshot into it's own window for a better debugging experience by clicking on the pop out icon above the DOM snapshot. From there you can open the browser DevTools and inspect the HTML, CSS, Console etc. Go back to UI Mode and click on another action and pop that one out to easily compare the two side by side or debug each individually.
 
 ![pop out dom snapshot](https://user-images.githubusercontent.com/13063165/234293178-4754c4a1-880d-46bc-971c-f85ef2672eff.png)
 

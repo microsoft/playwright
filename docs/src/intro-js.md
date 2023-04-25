@@ -86,7 +86,7 @@ npx playwright test
 
 See our doc on [Running Tests](./running-tests.md) to learn more about running tests in headed mode, running multiple tests, running specific tests etc.
 
-Run your tests with [UI Mode](./ui-mode.md) for a better developer experience with time travel debugging, watch mode and more.
+Run your tests with [UI Mode](./test-ui-mode.md) for a better developer experience with time travel debugging, watch mode and more.
 
 ```bash
 npx playwright test --ui
