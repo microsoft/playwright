@@ -14,7 +14,7 @@ You can run a single test, a set of tests or all tests. Tests can be run on one 
 
 ## Run tests in UI Mode
 
-Run your tests with [UI Mode](./ui-mode.md) for a better developer experience with time travel debugging, watch mode and more.
+Run your tests with [UI Mode](./test-ui-mode.md) for a better developer experience with time travel debugging, watch mode and more.
 
   ```bash
   npx playwright test --ui

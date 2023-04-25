@@ -1,5 +1,5 @@
 ---
-id: ui-mode
+id: test-ui-mode
 title: "UI Mode"
 ---
 
