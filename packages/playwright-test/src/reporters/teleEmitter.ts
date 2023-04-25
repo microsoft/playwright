@@ -193,8 +193,12 @@ export class TeleReporterEmitter implements Reporter {
       duration: result.duration,
       status: result.status,
       errors: result.errors,
-      attachments: result.attachments,
+      attachments: this._serializeAttachments(result.attachments),
     };
+  }
+
+  _serializeAttachments(attachments: TestResult['attachments']): TestResult['attachments'] {
+    return attachments;
   }
 
   private _serializeStepStart(step: TestStep): JsonTestStepStart {

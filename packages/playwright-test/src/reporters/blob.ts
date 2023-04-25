@@ -17,13 +17,15 @@
 import type { EventEmitter } from 'events';
 import fs from 'fs';
 import path from 'path';
-import { ManualPromise, ZipFile } from 'playwright-core/lib/utils';
+import os from 'os';
+import { ManualPromise, ZipFile, calculateSha1, removeFolders } from 'playwright-core/lib/utils';
+import { mime } from 'playwright-core/lib/utilsBundle';
 import { yazl } from 'playwright-core/lib/zipBundle';
 import { Readable } from 'stream';
-import type { FullConfig, FullResult, Reporter } from '../../types/testReporter';
+import type { FullConfig, FullResult, Reporter, TestResult } from '../../types/testReporter';
 import type { BuiltInReporter, FullConfigInternal } from '../common/config';
 import type { Suite } from '../common/test';
-import { TeleReporterReceiver, type JsonEvent, type JsonProject, type JsonSuite } from '../isomorphic/teleReceiver';
+import { TeleReporterReceiver, type JsonEvent, type JsonProject, type JsonSuite, type JsonTestResultEnd } from '../isomorphic/teleReceiver';
 import DotReporter from '../reporters/dot';
 import EmptyReporter from '../reporters/empty';
 import GitHubReporter from '../reporters/github';
@@ -44,7 +46,9 @@ type BlobReporterOptions = {
 export class BlobReporter extends TeleReporterEmitter {
   private _messages: any[] = [];
   private _options: BlobReporterOptions;
-  private _outputFile!: string;
+
+  private readonly _zipFile = new yazl.ZipFile();
+  private readonly _zipFinishPromise = new ManualPromise<undefined>();
 
   constructor(options: BlobReporterOptions) {
     super(message => this._messages.push(message));
@@ -53,14 +57,40 @@ export class BlobReporter extends TeleReporterEmitter {
 
   override onBegin(config: FullConfig<{}, {}>, suite: Suite): void {
     super.onBegin(config, suite);
-    this._computeOutputFileName(config);
+    this._initializeZipFile(config);
   }
 
   override async onEnd(result: FullResult): Promise<void> {
     await super.onEnd(result);
-    fs.mkdirSync(path.dirname(this._outputFile), { recursive: true });
     const lines = this._messages.map(m => JSON.stringify(m) + '\n');
-    await zipReport(this._outputFile, lines);
+    const content = Readable.from(lines);
+    this._zipFile.addReadStream(content, 'report.jsonl');
+    this._zipFile.end();
+    await this._zipFinishPromise;
+  }
+
+  override _serializeAttachments(attachments: TestResult['attachments']): TestResult['attachments'] {
+    return attachments.map(attachment => {
+      if (!attachment.path || !fs.statSync(attachment.path).isFile())
+        return attachment;
+      const sha1 = calculateSha1(attachment.path);
+      const extension = mime.getExtension(attachment.contentType) || 'dat';
+      const newPath = `resources/${sha1}.${extension}`;
+      this._zipFile.addFile(attachment.path, newPath);
+      return {
+        ...attachment,
+        path: newPath,
+      };
+    });
+  }
+
+  private _initializeZipFile(config: FullConfig) {
+    (this._zipFile as any as EventEmitter).on('error', error => this._zipFinishPromise.reject(error));
+    const zipFileName = this._computeOutputFileName(config);
+    fs.mkdirSync(path.dirname(zipFileName), { recursive: true });
+    this._zipFile.outputStream.pipe(fs.createWriteStream(zipFileName)).on('close', () => {
+      this._zipFinishPromise.resolve(undefined);
+    });
   }
 
   private _computeOutputFileName(config: FullConfig) {
@@ -70,7 +100,7 @@ export class BlobReporter extends TeleReporterEmitter {
       const paddedNumber = `${config.shard.current}`.padStart(`${config.shard.total}`.length, '0');
       shardSuffix = `-${paddedNumber}-of-${config.shard.total}`;
     }
-    this._outputFile = path.join(outputDir, `report${shardSuffix}.zip`);
+    return path.join(outputDir, `report${shardSuffix}.zip`);
   }
 
   private _resolveOutputDir(): string {
@@ -83,58 +113,95 @@ export class BlobReporter extends TeleReporterEmitter {
 
 export async function createMergedReport(config: FullConfigInternal, dir: string, reporterName?: string) {
   const shardFiles = await sortedShardFiles(dir);
-  const events = await mergeEvents(dir, shardFiles);
+  const resourceDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-report-'));
+  await fs.promises.mkdir(resourceDir, { recursive: true });
+  try {
+    const shardReports = await extractReports(dir, shardFiles, resourceDir);
+    const events = mergeEvents(shardReports);
+    patchAttachmentPaths(events, resourceDir);
 
-  const defaultReporters: {[key in BuiltInReporter]: new(arg: any) => Reporter} = {
-    dot: DotReporter,
-    line: LineReporter,
-    list: ListReporter,
-    github: GitHubReporter,
-    json: JSONReporter,
-    junit: JUnitReporter,
-    null: EmptyReporter,
-    html: HtmlReporter,
-    blob: BlobReporter,
-  };
-  reporterName ??= 'list';
+    const defaultReporters: {[key in BuiltInReporter]: new(arg: any) => Reporter} = {
+      dot: DotReporter,
+      line: LineReporter,
+      list: ListReporter,
+      github: GitHubReporter,
+      json: JSONReporter,
+      junit: JUnitReporter,
+      null: EmptyReporter,
+      html: HtmlReporter,
+      blob: BlobReporter,
+    };
+    reporterName ??= 'list';
 
-  const arg = config.config.reporter.find(([reporter, arg]) => reporter === reporterName)?.[1];
-  const options = {
-    ...arg,
-    configDir: process.cwd(),
-    outputFolder: dir
-  };
+    const arg = config.config.reporter.find(([reporter, arg]) => reporter === reporterName)?.[1];
+    const options = {
+      ...arg,
+      configDir: process.cwd(),
+    };
 
-  let reporter: Reporter | undefined;
-  if (reporterName in defaultReporters) {
-    reporter = new defaultReporters[reporterName as keyof typeof defaultReporters](options);
-  } else {
-    const reporterConstructor = await loadReporter(config, reporterName);
-    reporter = new reporterConstructor(options);
+    let reporter: Reporter | undefined;
+    if (reporterName in defaultReporters) {
+      reporter = new defaultReporters[reporterName as keyof typeof defaultReporters](options);
+    } else {
+      const reporterConstructor = await loadReporter(config, reporterName);
+      reporter = new reporterConstructor(options);
+    }
+
+    const receiver = new TeleReporterReceiver(path.sep, reporter);
+    for (const event of events)
+      await receiver.dispatch(event);
+  } finally {
+    await removeFolders([resourceDir]);
   }
-
-  const receiver = new TeleReporterReceiver(path.sep, reporter);
-  for (const event of events)
-    await receiver.dispatch(event);
   console.log(`Done.`);
 }
 
-async function mergeEvents(dir: string, shardFiles: string[]) {
-  const events: JsonEvent[] = [];
-  const beginEvents: JsonEvent[] = [];
-  const endEvents: JsonEvent[] = [];
+async function extractReports(dir: string, shardFiles: string[], resourceDir: string): Promise<string[]> {
+  const reports = [];
   for (const file of shardFiles) {
     const zipFile = new ZipFile(path.join(dir, file));
     const entryNames = await zipFile.entries();
-    const reportEntryName = entryNames.find(e => e.endsWith('.jsonl'));
-    if (!reportEntryName)
-      throw new Error(`Zip file ${file} does not contain a .jsonl file`);
-    const reportJson = await zipFile.read(reportEntryName);
-    const parsedEvents = reportJson.toString().split('\n').filter(line => line.length).map(line => JSON.parse(line)) as JsonEvent[];
+    for (const entryName of entryNames) {
+      const content = await zipFile.read(entryName);
+      if (entryName.endsWith('report.jsonl')) {
+        reports.push(content.toString());
+      } else {
+        const fileName = path.join(resourceDir, entryName);
+        await fs.promises.mkdir(path.dirname(fileName), { recursive: true });
+        await fs.promises.writeFile(fileName, content);
+      }
+    }
+  }
+  return reports;
+}
+
+function patchAttachmentPaths(events: JsonEvent[], resourceDir: string) {
+  for (const event of events) {
+    if (event.method !== 'onTestEnd')
+      continue;
+    for (const attachment of (event.params.result as JsonTestResultEnd).attachments) {
+      if (!attachment.path)
+        continue;
+
+      attachment.path = path.join(resourceDir, attachment.path);
+    }
+  }
+}
+
+function parseEvents(reportJsonl: string): JsonEvent[] {
+  return reportJsonl.toString().split('\n').filter(line => line.length).map(line => JSON.parse(line)) as JsonEvent[];
+}
+
+function mergeEvents(shardReports: string[]) {
+  const events: JsonEvent[] = [];
+  const beginEvents: JsonEvent[] = [];
+  const endEvents: JsonEvent[] = [];
+  for (const reportJsonl of shardReports) {
+    const parsedEvents = parseEvents(reportJsonl);
     for (const event of parsedEvents) {
       // TODO: show remaining events?
       if (event.method === 'onError')
-        throw new Error('Error in shard: ' + file);
+        throw new Error('Error in shard');
       if (event.method === 'onBegin')
         beginEvents.push(event);
       else if (event.method === 'onEnd')
@@ -142,7 +209,6 @@ async function mergeEvents(dir: string, shardFiles: string[]) {
       else
         events.push(event);
     }
-
   }
   return [mergeBeginEvents(beginEvents), ...events, mergeEndEvents(endEvents)];
 }
@@ -211,18 +277,4 @@ function mergeEndEvents(endEvents: JsonEvent[]): JsonEvent {
 async function sortedShardFiles(dir: string) {
   const files = await fs.promises.readdir(dir);
   return files.filter(file => file.endsWith('.zip')).sort();
-}
-
-async function zipReport(zipFileName: string, lines: string[]) {
-  const zipFile = new yazl.ZipFile();
-  const result = new ManualPromise<undefined>();
-  (zipFile as any as EventEmitter).on('error', error => result.reject(error));
-  // TODO: feed events on the fly.
-  const content = Readable.from(lines);
-  zipFile.addReadStream(content, 'report.jsonl');
-  zipFile.end();
-  zipFile.outputStream.pipe(fs.createWriteStream(zipFileName)).on('close', () => {
-    result.resolve(undefined);
-  });
-  await result;
 }
