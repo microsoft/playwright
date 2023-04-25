@@ -1857,7 +1857,7 @@ const { firefox } = require('playwright');  // Or 'chromium' or 'webkit'.
   const browser = await firefox.launch();
   const page = await browser.newPage();
   const watchDog = page.mainFrame().waitForFunction('window.innerWidth < 100');
-  page.setViewportSize({width: 50, height: 50});
+  await page.setViewportSize({width: 50, height: 50});
   await watchDog;
   await browser.close();
 })();

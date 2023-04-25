@@ -5170,7 +5170,7 @@ export interface Frame {
    *   const browser = await firefox.launch();
    *   const page = await browser.newPage();
    *   const watchDog = page.mainFrame().waitForFunction('window.innerWidth < 100');
-   *   page.setViewportSize({width: 50, height: 50});
+   *   await page.setViewportSize({width: 50, height: 50});
    *   await watchDog;
    *   await browser.close();
    * })();
@@ -5204,7 +5204,7 @@ export interface Frame {
    *   const browser = await firefox.launch();
    *   const page = await browser.newPage();
    *   const watchDog = page.mainFrame().waitForFunction('window.innerWidth < 100');
-   *   page.setViewportSize({width: 50, height: 50});
+   *   await page.setViewportSize({width: 50, height: 50});
    *   await watchDog;
    *   await browser.close();
    * })();
@@ -18301,7 +18301,7 @@ export interface Selectors {
    * An example of registering selector engine that queries elements based on a tag name:
    *
    * ```js
-   * const { selectors, firefox } = require('playwright');  // Or 'chromium' or 'webkit'.
+   * const { selectors, firefox } = require('@playwright/test');  // Or 'chromium' or 'webkit'.
    *
    * (async () => {
    *   // Must be a function that evaluates to a selector engine instance.
