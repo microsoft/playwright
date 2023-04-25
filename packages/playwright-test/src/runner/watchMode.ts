@@ -26,7 +26,6 @@ import { clearCompilationCache, collectAffectedTestFiles } from '../common/compi
 import type { FullResult } from 'packages/playwright-test/reporter';
 import { chokidar } from '../utilsBundle';
 import type { FSWatcher as CFSWatcher } from 'chokidar';
-import { createReporter } from './reporters';
 import { colors } from 'playwright-core/lib/utilsBundle';
 import { enquirer } from '../utilsBundle';
 import { separator } from '../reporters/base';
@@ -113,7 +112,7 @@ export async function runWatchModeLoop(config: FullConfigInternal): Promise<Full
     p.project.retries = 0;
 
   // Perform global setup.
-  const reporter = await createReporter(config, 'watch');
+  const reporter = new Multiplexer([new ListReporter()]);
   const testRun = new TestRun(config, reporter);
   const taskRunner = createTaskRunnerForWatchSetup(config, reporter);
   reporter.onConfigure(config);
