@@ -30,13 +30,7 @@ import type { FullResult } from '../reporter';
 import type { TraceMode } from '../types/test';
 import { builtInReporters, defaultReporter, defaultTimeout } from './common/config';
 import type { FullConfigInternal } from './common/config';
-
-export function addTestCommands(program: Command) {
-  addTestCommand(program);
-  addShowReportCommand(program);
-  addListFilesCommand(program);
-  addMergeReportsCommand(program);
-}
+import program from 'playwright-core/lib/cli/program';
 
 function addTestCommand(program: Command) {
   const command = program.command('test [test-filter...]');
@@ -260,7 +254,7 @@ function restartWithExperimentalTsEsm(configFile: string | null): boolean {
   if (!fileIsModule(configFile))
     return false;
   const NODE_OPTIONS = (process.env.NODE_OPTIONS || '') + experimentalLoaderOption();
-  const innerProcess = require('child_process').fork(require.resolve('playwright-core/cli'), process.argv.slice(2), {
+  const innerProcess = require('child_process').fork(require.resolve('./cli'), process.argv.slice(2), {
     env: {
       ...process.env,
       NODE_OPTIONS,
@@ -306,3 +300,10 @@ const testOptions: [string, string][] = [
   ['-j, --workers <workers>', `Number of concurrent workers or percentage of logical CPU cores, use 1 to run in a single worker (default: 50%)`],
   ['-x', `Stop after the first failure`],
 ];
+
+addTestCommand(program);
+addShowReportCommand(program);
+addListFilesCommand(program);
+addMergeReportsCommand(program);
+
+program.parse(process.argv);
