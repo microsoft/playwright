@@ -816,8 +816,8 @@ it.describe('page screenshot animations', () => {
     ]);
   });
 
-  it('should work with 200x200', async ({ page, server, browserName, headless }) => {
-    it.fixme(browserName === 'webkit' && headless);
+  it('should work with 200x200', async ({ page, server, browserName, headless, platform }) => {
+    it.fixme(browserName === 'webkit' && platform === 'win32' && headless);
 
     await page.setViewportSize({ width: 200, height: 200 });
     await page.goto(server.PREFIX + '/grid.html');
