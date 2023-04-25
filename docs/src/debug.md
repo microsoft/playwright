@@ -111,6 +111,12 @@ configures Playwright for debugging and opens the inspector. Additional useful d
 - Browsers launch in headed mode
 - Default timeout is set to 0 (= no timeout)
 
+#### Configure source location
+* langs: java
+
+To tell Playwright where to look for the source code that you are debugging, pass
+a list of the source directories via `PLAYWRIGHT_JAVA_SRC` environment variable. Paths in
+the list should be separated by : on macOS and Linux, and by ; on Windows.
 
 ```bash tab=bash-bash lang=java
 # Source directories in the list are separated by : on macos and linux and by ; on win.
