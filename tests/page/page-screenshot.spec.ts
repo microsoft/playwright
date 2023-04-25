@@ -815,6 +815,14 @@ it.describe('page screenshot animations', () => {
       'onfinish', 'animationend'
     ]);
   });
+
+  it('should work with 200x200', async ({ page, server, browserName, headless }) => {
+    it.fixme(browserName === 'webkit' && headless);
+
+    await page.setViewportSize({ width: 200, height: 200 });
+    await page.goto(server.PREFIX + '/grid.html');
+    expect(await page.screenshot()).toMatchSnapshot('screenshot-200x200.png');
+  });
 });
 
 it('should throw if screenshot size is too large', async ({ page, browserName, isMac }) => {
