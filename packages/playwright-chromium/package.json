@@ -18,7 +18,6 @@
       "require": "./index.js",
       "default": "./index.js"
     },
-    "./cli": "./cli.js",
     "./package.json": "./package.json"
   },
   "bin": {
