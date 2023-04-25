@@ -195,6 +195,21 @@ it.describe('download event', () => {
     await page.close();
   });
 
+  it('should save to a path with question mark in name', async ({ browser, server }, testInfo) => {
+    it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22576' });
+    const page = await browser.newPage();
+    await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      page.click('a')
+    ]);
+    const userPath = testInfo.outputPath('download\?.txt');
+    await download.saveAs(userPath);
+    expect(fs.existsSync(userPath)).toBeTruthy();
+    expect(fs.readFileSync(userPath).toString()).toBe('Hello world');
+    await page.close();
+  });
+
   it('should save to overwritten filepath', async ({ browser, server }, testInfo) => {
     const page = await browser.newPage();
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
