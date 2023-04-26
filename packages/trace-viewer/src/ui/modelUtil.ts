@@ -109,6 +109,8 @@ function dedupeAndSortActions(actions: ActionTraceEvent[]) {
     if (callAction) {
       if (expectAction.error)
         callAction.error = expectAction.error;
+      if (expectAction.attachments)
+        callAction.attachments = expectAction.attachments;
       continue;
     }
     result.push(expectAction);

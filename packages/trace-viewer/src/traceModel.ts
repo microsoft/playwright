@@ -170,6 +170,7 @@ export class TraceModel {
         existing!.log = event.log;
         existing!.result = event.result;
         existing!.error = event.error;
+        existing!.attachments = event.attachments;
         break;
       }
       case 'action': {

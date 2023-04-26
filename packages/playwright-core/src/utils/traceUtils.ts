@@ -97,9 +97,7 @@ export async function mergeTraceFiles(fileName: string, temporaryTraceFiles: str
 }
 
 export async function saveTraceFile(fileName: string, traceEvents: TraceEvent[], saveSources: boolean) {
-  const lines: string[] = traceEvents.map(e => JSON.stringify(e));
   const zipFile = new yazl.ZipFile();
-  zipFile.addBuffer(Buffer.from(lines.join('\n')), 'trace.trace');
 
   if (saveSources) {
     const sourceFiles = new Set<string>();
@@ -115,6 +113,25 @@ export async function saveTraceFile(fileName: string, traceEvents: TraceEvent[],
       }).catch(() => {});
     }
   }
+
+  const sha1s = new Set<string>();
+  for (const event of traceEvents.filter(e => e.type === 'after') as AfterActionTraceEvent[]) {
+    for (const attachment of (event.attachments || []).filter(a => !!a.path)) {
+      await fs.promises.readFile(attachment.path!).then(content => {
+        const sha1 = calculateSha1(content);
+        if (sha1s.has(sha1))
+          return;
+        sha1s.add(sha1);
+        zipFile.addBuffer(content, 'resources/' + sha1);
+        attachment.sha1 = sha1;
+        delete attachment.path;
+      }).catch();
+    }
+  }
+
+  const traceContent = Buffer.from(traceEvents.map(e => JSON.stringify(e)).join('\n'));
+  zipFile.addBuffer(traceContent, 'trace.trace');
+
   await new Promise(f => {
     zipFile.end(undefined, () => {
       zipFile.outputStream.pipe(fs.createWriteStream(fileName)).on('close', f);
@@ -136,12 +153,13 @@ export function createBeforeActionTraceEventForExpect(callId: string, apiName: s
   };
 }
 
-export function createAfterActionTraceEventForExpect(callId: string, error?: SerializedError['error']): AfterActionTraceEvent {
+export function createAfterActionTraceEventForExpect(callId: string, attachments: AfterActionTraceEvent['attachments'], error?: SerializedError['error']): AfterActionTraceEvent {
   return {
     type: 'after',
     callId,
     endTime: monotonicTime(),
     log: [],
+    attachments,
     error,
   };
 }
