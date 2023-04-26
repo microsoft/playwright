@@ -29,6 +29,7 @@ import { TeleReporterReceiver, type JsonEvent, type JsonProject, type JsonSuite,
 import { createReporters } from '../runner/reporters';
 import { defaultReportFolder } from './html';
 import { TeleReporterEmitter } from './teleEmitter';
+import { Multiplexer } from './multiplexer';
 
 
 type BlobReporterOptions = {
@@ -104,7 +105,7 @@ export class BlobReporter extends TeleReporterEmitter {
   }
 }
 
-export async function createMergedReport(config: FullConfigInternal, dir: string, reporterName?: string) {
+export async function createMergedReport(config: FullConfigInternal, dir: string, reporterNames: string[]) {
   const shardFiles = await sortedShardFiles(dir);
   const resourceDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-report-'));
   await fs.promises.mkdir(resourceDir, { recursive: true });
@@ -113,10 +114,8 @@ export async function createMergedReport(config: FullConfigInternal, dir: string
     const events = mergeEvents(shardReports);
     patchAttachmentPaths(events, resourceDir);
 
-    reporterName ??= 'list';
-
-    const reporters = await createReporters(config, 'merge', [reporterName]);
-    const receiver = new TeleReporterReceiver(path.sep, reporters[0]);
+    const reporters = await createReporters(config, 'merge', reporterNames);
+    const receiver = new TeleReporterReceiver(path.sep, new Multiplexer(reporters));
     for (const event of events)
       await receiver.dispatch(event);
   } finally {
