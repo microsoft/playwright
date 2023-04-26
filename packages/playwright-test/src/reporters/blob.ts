@@ -16,25 +16,18 @@
 
 import type { EventEmitter } from 'events';
 import fs from 'fs';
-import path from 'path';
 import os from 'os';
+import path from 'path';
 import { ManualPromise, ZipFile, calculateSha1, removeFolders } from 'playwright-core/lib/utils';
 import { mime } from 'playwright-core/lib/utilsBundle';
 import { yazl } from 'playwright-core/lib/zipBundle';
 import { Readable } from 'stream';
-import type { FullConfig, FullResult, Reporter, TestResult } from '../../types/testReporter';
-import type { BuiltInReporter, FullConfigInternal } from '../common/config';
+import type { FullConfig, FullResult, TestResult } from '../../types/testReporter';
+import type { FullConfigInternal } from '../common/config';
 import type { Suite } from '../common/test';
 import { TeleReporterReceiver, type JsonEvent, type JsonProject, type JsonSuite, type JsonTestResultEnd } from '../isomorphic/teleReceiver';
-import DotReporter from '../reporters/dot';
-import EmptyReporter from '../reporters/empty';
-import GitHubReporter from '../reporters/github';
-import JSONReporter from '../reporters/json';
-import JUnitReporter from '../reporters/junit';
-import LineReporter from '../reporters/line';
-import ListReporter from '../reporters/list';
-import { loadReporter } from '../runner/loadUtils';
-import HtmlReporter, { defaultReportFolder } from './html';
+import { createReporters } from '../runner/reporters';
+import { defaultReportFolder } from './html';
 import { TeleReporterEmitter } from './teleEmitter';
 
 
@@ -120,40 +113,15 @@ export async function createMergedReport(config: FullConfigInternal, dir: string
     const events = mergeEvents(shardReports);
     patchAttachmentPaths(events, resourceDir);
 
-    const defaultReporters: {[key in BuiltInReporter]: new(arg: any) => Reporter} = {
-      dot: DotReporter,
-      line: LineReporter,
-      list: ListReporter,
-      github: GitHubReporter,
-      json: JSONReporter,
-      junit: JUnitReporter,
-      null: EmptyReporter,
-      html: HtmlReporter,
-      blob: BlobReporter,
-    };
     reporterName ??= 'list';
 
-    const arg = config.config.reporter.find(([reporter, arg]) => reporter === reporterName)?.[1];
-    const options = {
-      ...arg,
-      configDir: process.cwd(),
-    };
-
-    let reporter: Reporter | undefined;
-    if (reporterName in defaultReporters) {
-      reporter = new defaultReporters[reporterName as keyof typeof defaultReporters](options);
-    } else {
-      const reporterConstructor = await loadReporter(config, reporterName);
-      reporter = new reporterConstructor(options);
-    }
-
-    const receiver = new TeleReporterReceiver(path.sep, reporter);
+    const reporters = await createReporters(config, 'merge', [reporterName]);
+    const receiver = new TeleReporterReceiver(path.sep, reporters[0]);
     for (const event of events)
       await receiver.dispatch(event);
   } finally {
     await removeFolders([resourceDir]);
   }
-  console.log(`Done.`);
 }
 
 async function extractReports(dir: string, shardFiles: string[], resourceDir: string): Promise<string[]> {

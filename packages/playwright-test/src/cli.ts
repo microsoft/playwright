@@ -185,6 +185,8 @@ async function mergeReports(reportDir: string | undefined, opts: { [key: string]
   const configLoader = new ConfigLoader();
   const config = await (configFile ? configLoader.loadConfigFile(configFile) : configLoader.loadEmptyConfig(process.cwd()));
   const dir = path.resolve(process.cwd(), reportDir || 'playwright-report');
+  if (!(await fs.promises.stat(dir)).isDirectory())
+    throw new Error('Directory does not exist: ' + dir);
   await createMergedReport(config, dir, opts.reporter || 'list');
 }
 

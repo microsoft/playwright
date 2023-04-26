@@ -22,7 +22,7 @@ import { clearCompilationCache, collectAffectedTestFiles, dependenciesForTestFil
 import type { FullConfigInternal } from '../common/config';
 import { Multiplexer } from '../reporters/multiplexer';
 import { TeleReporterEmitter } from '../reporters/teleEmitter';
-import { createReporter } from './reporters';
+import { createReporters } from './reporters';
 import { TestRun, createTaskRunnerForList, createTaskRunnerForWatch, createTaskRunnerForWatchSetup } from './tasks';
 import { chokidar } from '../utilsBundle';
 import type { FSWatcher } from 'chokidar';
@@ -167,8 +167,9 @@ class UIMode {
     this._config.cliListOnly = false;
     this._config.testIdMatcher = id => !testIdSet || testIdSet.has(id);
 
-    const runReporter = new TeleReporterEmitter(e => this._dispatchEvent(e));
-    const reporter = await createReporter(this._config, 'ui', [runReporter]);
+    const reporters = await createReporters(this._config, 'ui');
+    reporters.push(new TeleReporterEmitter(e => this._dispatchEvent(e)));
+    const reporter = new Multiplexer(reporters);
     const taskRunner = createTaskRunnerForWatch(this._config, reporter);
     const testRun = new TestRun(this._config, reporter);
     clearCompilationCache();
