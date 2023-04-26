@@ -115,7 +115,7 @@ function createMatchers(actual: unknown, info: ExpectMetaInfo): any {
 }
 
 function createExpect(info: ExpectMetaInfo) {
-  const expect: Expect = new Proxy(expectLibrary, {
+  const expectInstance: Expect = new Proxy(expectLibrary, {
     apply: function(target: any, thisArg: any, argumentsList: [unknown, ExpectMessage?]) {
       const [actual, messageOrOptions] = argumentsList;
       const message = isString(messageOrOptions) ? messageOrOptions : messageOrOptions?.message || info.message;
@@ -126,19 +126,29 @@ function createExpect(info: ExpectMetaInfo) {
         newInfo.generator = actual as any;
       }
       return createMatchers(actual, newInfo);
-    }
+    },
+
+    get: function(target: any, property: string) {
+      if (property === 'configure')
+        return configure;
+
+      if (property === 'soft') {
+        return (actual: unknown, messageOrOptions?: ExpectMessage) => {
+          return configure({ soft: true })(actual, messageOrOptions) as any;
+        };
+      }
+
+      if (property === 'poll') {
+        return (actual: unknown, messageOrOptions?: ExpectMessage & { timeout?: number, intervals?: number[] }) => {
+          const poll = isString(messageOrOptions) ? {} : messageOrOptions || {};
+          return configure({ poll })(actual, messageOrOptions) as any;
+        };
+      }
+      return expectLibrary[property];
+    },
   });
 
-  expect.soft = (actual: unknown, messageOrOptions?: ExpectMessage) => {
-    return expect.configure({ soft: true })(actual, messageOrOptions) as any;
-  };
-
-  expect.poll = (actual: unknown, messageOrOptions?: ExpectMessage & { timeout?: number, intervals?: number[] }) => {
-    const poll = isString(messageOrOptions) ? {} : messageOrOptions || {};
-    return expect.configure({ poll })(actual, messageOrOptions) as any;
-  };
-
-  expect.configure = (configuration: { message?: string, timeout?: number, soft?: boolean, poll?: boolean | { timeout?: number, intervals?: number[] } }) => {
+  const configure = (configuration: { message?: string, timeout?: number, soft?: boolean, poll?: boolean | { timeout?: number, intervals?: number[] } }) => {
     const newInfo = { ...info };
     if ('message' in configuration)
       newInfo.message = configuration.message;
@@ -156,7 +166,7 @@ function createExpect(info: ExpectMetaInfo) {
     return createExpect(newInfo);
   };
 
-  return expect;
+  return expectInstance;
 }
 
 export const expect: Expect = createExpect({});

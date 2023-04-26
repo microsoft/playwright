@@ -158,3 +158,16 @@ test('should configure soft poll', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(result.outputLines).toEqual(['woof-woof']);
 });
+
+test('should configure soft after poll', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('should pass', async () => {
+        await expect.poll(() => true).toBe(true);
+        expect.soft(1).toBe(1);
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+});
