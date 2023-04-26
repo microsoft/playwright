@@ -28,7 +28,6 @@ import { ChannelOwner } from './channelOwner';
 import { RawHeaders } from './network';
 import type { FilePayload, Headers, StorageState } from './types';
 import type { Playwright } from './playwright';
-import { createInstrumentation } from './clientInstrumentation';
 import { Tracing } from './tracing';
 
 export type FetchOptions = {
@@ -57,8 +56,6 @@ export class APIRequest implements api.APIRequest {
 
   // Instrumentation.
   _defaultContextOptions?: NewContextOptions & { tracesDir?: string };
-  _onDidCreateContext?: (context: APIRequestContext) => Promise<void>;
-  _onWillCloseContext?: (context: APIRequestContext) => Promise<void>;
 
   constructor(playwright: Playwright) {
     this._playwright = playwright;
@@ -80,7 +77,7 @@ export class APIRequest implements api.APIRequest {
     this._contexts.add(context);
     context._request = this;
     context._tracing._tracesDir = tracesDir;
-    await this._onDidCreateContext?.(context);
+    await context._instrumentation.onDidCreateRequestContext(context);
     return context;
   }
 }
@@ -94,12 +91,12 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
   }
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.APIRequestContextInitializer) {
-    super(parent, type, guid, initializer, createInstrumentation());
+    super(parent, type, guid, initializer);
     this._tracing = Tracing.from(initializer.tracing);
   }
 
   async dispose(): Promise<void> {
-    await this._request?._onWillCloseContext?.(this);
+    await this._instrumentation.onWillCloseRequestContext(this);
     await this._channel.dispose();
     this._request?._contexts.delete(this);
   }

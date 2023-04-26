@@ -691,6 +691,9 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   async pause() {
     if (require('inspector').url())
       return;
+    this._browserContext.setDefaultNavigationTimeout(0);
+    this._browserContext.setDefaultTimeout(0);
+    this._instrumentation?.onWillPause();
     await this._closedOrCrashedRace.safeRace(this.context()._channel.pause());
   }
 

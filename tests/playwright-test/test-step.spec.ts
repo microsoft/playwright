@@ -97,6 +97,14 @@ test('should report api step hierarchy', async ({ runInlineTest }) => {
       steps: [
         {
           category: 'pw:api',
+          title: 'browserType.launch',
+        },
+        {
+          category: 'pw:api',
+          title: 'browser.newContext',
+        },
+        {
+          category: 'pw:api',
           title: 'browserContext.newPage',
         },
       ],
@@ -244,6 +252,14 @@ test('should not report nested after hooks', async ({ runInlineTest }) => {
       steps: [
         {
           category: 'pw:api',
+          title: 'browserType.launch',
+        },
+        {
+          category: 'pw:api',
+          title: 'browser.newContext',
+        },
+        {
+          category: 'pw:api',
           title: 'browserContext.newPage',
         },
       ],
@@ -349,6 +365,14 @@ test('should report expect step locations', async ({ runInlineTest }) => {
       category: 'hook',
       title: 'Before Hooks',
       steps: [
+        {
+          category: 'pw:api',
+          title: 'browserType.launch',
+        },
+        {
+          category: 'pw:api',
+          title: 'browser.newContext',
+        },
         {
           category: 'pw:api',
           title: 'browserContext.newPage',
@@ -588,6 +612,14 @@ test('should nest steps based on zones', async ({ runInlineTest }) => {
             }
           ],
           location: { file: 'a.test.ts', line: 'number', column: 'number' }
+        },
+        {
+          title: 'browserType.launch',
+          category: 'pw:api'
+        },
+        {
+          category: 'pw:api',
+          title: 'browser.newContext',
         },
         {
           title: 'browserContext.newPage',

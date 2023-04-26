@@ -15,6 +15,7 @@
  */
 
 import type { RawStack } from './stackTrace';
+import { captureRawStack } from './stackTrace';
 
 export type ZoneType = 'apiZone' | 'expectZone' | 'stepZone';
 
@@ -22,15 +23,13 @@ class ZoneManager {
   lastZoneId = 0;
   readonly _zones = new Map<number, Zone<any>>();
 
-  run<T, R>(type: ZoneType, data: T, func: (data: T) => R | Promise<R>): R | Promise<R> {
+  run<T, R>(type: ZoneType, data: T, func: (data: T) => R): R {
     return new Zone<T>(this, ++this.lastZoneId, type, data).run(func);
   }
 
   zoneData<T>(type: ZoneType, rawStack: RawStack): T | null {
     for (const line of rawStack) {
-      const index = line.indexOf('__PWZONE__[');
-      if (index !== -1) {
-        const zoneId = + line.substring(index + '__PWZONE__['.length, line.indexOf(']', index));
+      for (const zoneId of zoneIds(line)) {
         const zone = this._zones.get(zoneId);
         if (zone && zone.type === type)
           return zone.data;
@@ -38,6 +37,22 @@ class ZoneManager {
     }
     return null;
   }
+
+  preserve<T>(callback: () => Promise<T>): Promise<T> {
+    const rawStack = captureRawStack();
+    const refs: number[] = [];
+    for (const line of rawStack)
+      refs.push(...zoneIds(line));
+    Object.defineProperty(callback, 'name', { value: `__PWZONE__[${refs.join(',')}]-refs` });
+    return callback();
+  }
+}
+
+function zoneIds(line: string): number[] {
+  const index = line.indexOf('__PWZONE__[');
+  if (index === -1)
+    return [];
+  return line.substring(index + '__PWZONE__['.length, line.indexOf(']', index)).split(',').map(s => +s);
 }
 
 class Zone<T> {
@@ -55,16 +70,16 @@ class Zone<T> {
     this.wallTime = Date.now();
   }
 
-  run<R>(func: (data: T) => R | Promise<R>): R | Promise<R> {
+  run<R>(func: (data: T) => R): R {
     this._manager._zones.set(this.id, this);
-    Object.defineProperty(func, 'name', { value: `__PWZONE__[${this.id}]` });
+    Object.defineProperty(func, 'name', { value: `__PWZONE__[${this.id}]-${this.type}` });
     return runWithFinally(() => func(this.data), () => {
       this._manager._zones.delete(this.id);
     });
   }
 }
 
-export function runWithFinally<R>(func: () => R | Promise<R>, finallyFunc: Function): R | Promise<R> {
+export function runWithFinally<R>(func: () => R, finallyFunc: Function): R {
   try {
     const result = func();
     if (result instanceof Promise) {
@@ -74,7 +89,7 @@ export function runWithFinally<R>(func: () => R | Promise<R>, finallyFunc: Funct
       }).catch(e => {
         finallyFunc();
         throw e;
-      });
+      }) as any;
     }
     finallyFunc();
     return result;

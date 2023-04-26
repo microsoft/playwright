@@ -37,7 +37,6 @@ import { Tracing } from './tracing';
 import type { BrowserType } from './browserType';
 import { Artifact } from './artifact';
 import { APIRequestContext } from './fetch';
-import { createInstrumentation } from './clientInstrumentation';
 import { rewriteErrorMessage } from '../utils/stackTrace';
 import { HarRouter } from './harRouter';
 
@@ -69,7 +68,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   }
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.BrowserContextInitializer) {
-    super(parent, type, guid, initializer, createInstrumentation());
+    super(parent, type, guid, initializer);
     if (parent instanceof Browser)
       this._browser = parent;
     this._browser?._contexts.add(this);

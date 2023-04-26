@@ -44,6 +44,7 @@ import { APIRequestContext } from './fetch';
 import { LocalUtils } from './localUtils';
 import { Tracing } from './tracing';
 import { findValidator, ValidationError, type ValidatorContext } from '../protocol/validator';
+import { createInstrumentation } from './clientInstrumentation';
 
 class Root extends ChannelOwner<channels.RootChannel> {
   constructor(connection: Connection) {
@@ -72,6 +73,7 @@ export class Connection extends EventEmitter {
   // Some connections allow resolving in-process dispatchers.
   toImpl: ((client: ChannelOwner) => any) | undefined;
   private _tracingCount = 0;
+  readonly _instrumentation = createInstrumentation();
 
   constructor(localUtils?: LocalUtils) {
     super();
