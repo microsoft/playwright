@@ -41,7 +41,6 @@ export const chromiumSwitches = [
   '--disable-popup-blocking',
   '--disable-prompt-on-repost',
   '--disable-renderer-backgrounding',
-  '--disable-sync',
   '--force-color-profile=srgb',
   '--metrics-recording-only',
   '--no-first-run',
