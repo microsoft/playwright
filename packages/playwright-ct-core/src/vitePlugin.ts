@@ -322,9 +322,9 @@ function vitePlugin(registerSource: string, relativeTemplateDir: string, buildIn
       for (const [alias, value] of componentRegistry) {
         const importPath = value.isModuleOrAlias ? value.importPath : './' + path.relative(folder, value.importPath).replace(/\\/g, '/');
         if (value.importedName)
-          lines.push(`import { ${value.importedName} as ${alias} } from '${importPath}';`);
+          lines.push(`const ${alias} = () => import('${importPath}').then((mod) => mod.${value.importedName});`);
         else
-          lines.push(`import ${alias} from '${importPath}';`);
+          lines.push(`const ${alias} = () => import('${importPath}').then((mod) => mod.default);`);
       }
 
       lines.push(`pwRegister({ ${[...componentRegistry.keys()].join(',\n  ')} });`);

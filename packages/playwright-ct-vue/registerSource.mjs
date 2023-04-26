@@ -21,18 +21,58 @@ import { createApp as __pwCreateApp, setDevtoolsHook as __pwSetDevtoolsHook, h a
 import { compile as __pwCompile } from '@vue/compiler-dom';
 import * as __pwVue from 'vue';
 
-/** @typedef {import('@playwright/test/types/experimentalComponent').Component} Component */
+/** @typedef {import('../playwright-ct-core/types/component').Component} Component */
+/** @typedef {import('../playwright-ct-core/types/component').JsxComponent} JsxComponent */
+/** @typedef {import('../playwright-ct-core/types/component').ObjectComponent} ObjectComponent */
 /** @typedef {import('vue').Component} FrameworkComponent */
 
+/** @type {Map<string, () => Promise<FrameworkComponent>>} */
+const __pwLoaderRegistry = new Map();
 /** @type {Map<string, FrameworkComponent>} */
 const __pwRegistry = new Map();
 
 /**
- * @param {{[key: string]: FrameworkComponent}} components
+ * @param {{[key: string]: () => Promise<FrameworkComponent>}} components
  */
 export function pwRegister(components) {
   for (const [name, value] of Object.entries(components))
-    __pwRegistry.set(name, value);
+    __pwLoaderRegistry.set(name, value);
+}
+
+/**
+ * @param {Component} component
+ * @returns {component is JsxComponent | ObjectComponent}
+ */
+function isComponent(component) {
+  return !(typeof component !== 'object' || Array.isArray(component));
+}
+
+/**
+ * @param {Component} component
+ */
+async function __pwResolveComponent(component) {
+  if (!isComponent(component))
+    return
+
+  let componentFactory = __pwLoaderRegistry.get(component.type);
+  if (!componentFactory) {
+    // Lookup by shorthand.
+    for (const [name, value] of __pwLoaderRegistry) {
+      if (component.type.endsWith(`_${name}_vue`)) {
+        componentFactory = value;
+        break;
+      }
+    }
+  }
+
+  if (!componentFactory && component.type[0].toUpperCase() === component.type[0])
+    throw new Error(`Unregistered component: ${component.type}. Following components are registered: ${[...__pwRegistry.keys()]}`);
+
+  if(componentFactory)
+    __pwRegistry.set(component.type, await componentFactory())
+
+  if ('children' in component)
+    await Promise.all(component.children.map(child => __pwResolveComponent(child)))
 }
 
 const __pwAllListeners = new Map();
@@ -95,23 +135,7 @@ function __pwCreateComponent(component) {
   if (typeof component === 'string')
     return component;
 
-  /**
-   * @type {import('vue').Component | string | undefined}
-   */
   let componentFunc = __pwRegistry.get(component.type);
-  if (!componentFunc) {
-    // Lookup by shorthand.
-    for (const [name, value] of __pwRegistry) {
-      if (component.type.endsWith(`_${name}_vue`)) {
-        componentFunc = value;
-        break;
-      }
-    }
-  }
-
-  if (!componentFunc && component.type[0].toUpperCase() === component.type[0])
-    throw new Error(`Unregistered component: ${component.type}. Following components are registered: ${[...__pwRegistry.keys()]}`);
-
   componentFunc = componentFunc || component.type;
 
   const isVueComponent = componentFunc !== component.type;
@@ -223,6 +247,7 @@ const __pwAppKey = Symbol('appKey');
 const __pwWrapperKey = Symbol('wrapperKey');
 
 window.playwrightMount = async (component, rootElement, hooksConfig) => {
+  await __pwResolveComponent(component);
   const app = __pwCreateApp({
     render: () => {
       const wrapper = __pwCreateWrapper(component);
@@ -248,7 +273,8 @@ window.playwrightUnmount = async rootElement => {
   app.unmount();
 };
 
-window.playwrightUpdate = async (rootElement, options) => {
+window.playwrightUpdate = async (rootElement, component) => {
+  await __pwResolveComponent(component);
   const wrapper = rootElement[__pwWrapperKey];
   if (!wrapper)
     throw new Error('Component was not mounted');
@@ -256,7 +282,7 @@ window.playwrightUpdate = async (rootElement, options) => {
   if (!wrapper.component)
     throw new Error('Updating a native HTML element is not supported');
   
-  const { slots, listeners, props } = __pwCreateComponent(options);
+  const { slots, listeners, props } = __pwCreateComponent(component);
 
   wrapper.component.slots = __pwWrapFunctions(slots);
   __pwAllListeners.set(wrapper, listeners);

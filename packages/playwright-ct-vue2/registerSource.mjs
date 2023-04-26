@@ -21,17 +21,57 @@
 import __pwVue, { h as __pwH } from 'vue';
 
 /** @typedef {import('../playwright-ct-core/types/component').Component} Component */
+/** @typedef {import('../playwright-ct-core/types/component').JsxComponent} JsxComponent */
+/** @typedef {import('../playwright-ct-core/types/component').ObjectComponent} ObjectComponent */
 /** @typedef {import('vue').Component} FrameworkComponent */
 
+/** @type {Map<string, () => Promise<FrameworkComponent>>} */
+const __pwLoaderRegistry = new Map();
 /** @type {Map<string, FrameworkComponent>} */
 const __pwRegistry = new Map();
 
 /**
- * @param {{[key: string]: FrameworkComponent}} components
+ * @param {{[key: string]: () => Promise<FrameworkComponent>}} components
  */
 export function pwRegister(components) {
   for (const [name, value] of Object.entries(components))
-    __pwRegistry.set(name, value);
+    __pwLoaderRegistry.set(name, value);
+}
+
+/**
+ * @param {Component} component
+ * @returns {component is JsxComponent | ObjectComponent}
+ */
+function isComponent(component) {
+  return !(typeof component !== 'object' || Array.isArray(component));
+}
+
+/**
+ * @param {Component} component
+ */
+async function __pwResolveComponent(component) {
+  if (!isComponent(component))
+    return
+
+  let componentFactory = __pwLoaderRegistry.get(component.type);
+  if (!componentFactory) {
+    // Lookup by shorthand.
+    for (const [name, value] of __pwLoaderRegistry) {
+      if (component.type.endsWith(`_${name}_vue`)) {
+        componentFactory = value;
+        break;
+      }
+    }
+  }
+
+  if (!componentFactory && component.type[0].toUpperCase() === component.type[0])
+    throw new Error(`Unregistered component: ${component.type}. Following components are registered: ${[...__pwRegistry.keys()]}`);
+
+  if(componentFactory)
+    __pwRegistry.set(component.type, await componentFactory())
+
+  if ('children' in component)
+    await Promise.all(component.children.map(child => __pwResolveComponent(child)))
 }
 
 /**
@@ -59,25 +99,7 @@ function __pwComponentHasKeyInProps(Component, key) {
  * @param {Component} component
  */
 function __pwCreateComponent(component) {
-  /**
-   * @type {import('vue').Component | string | undefined}
-   */
-  let componentFunc = __pwRegistry.get(component.type);
-  if (!componentFunc) {
-    // Lookup by shorthand.
-    for (const [name, value] of __pwRegistry) {
-      if (component.type.endsWith(`_${name}_vue`)) {
-        componentFunc = value;
-        break;
-      }
-    }
-  }
-
-  if (!componentFunc && component.type[0].toUpperCase() === component.type[0])
-    throw new Error(`Unregistered component: ${component.type}. Following components are registered: ${[...__pwRegistry.keys()]}`);
-
-  componentFunc = componentFunc || component.type;
-
+  const componentFunc = __pwRegistry.get(component.type) || component.type;
   const isVueComponent = componentFunc !== component.type;
 
   /**
@@ -157,6 +179,7 @@ const instanceKey = Symbol('instanceKey');
 const wrapperKey = Symbol('wrapperKey');
 
 window.playwrightMount = async (component, rootElement, hooksConfig) => {
+  await __pwResolveComponent(component);
   let options = {};
   for (const hook of window.__pw_hooks_before_mount || [])
     options = await hook({ hooksConfig, Vue: __pwVue });
@@ -185,6 +208,7 @@ window.playwrightUnmount = async rootElement => {
 };
 
 window.playwrightUpdate = async (element, options) => {
+  await __pwResolveComponent(options);
   const wrapper = /** @type {any} */(element)[wrapperKey];
   if (!wrapper)
     throw new Error('Component was not mounted');
