@@ -22,6 +22,8 @@ import type { SuitePrivate } from '../../types/reporterPrivate';
 import { codeFrameColumns } from '../common/babelBundle';
 import { monotonicTime } from 'playwright-core/lib/utils';
 import type { FullProject } from '../../types/test';
+import type { TestCase as TestCaseImpl } from '../common/test';
+
 export type TestResultOutput = { chunk: string | Buffer, type: 'stdout' | 'stderr' };
 export const kOutputSymbol = Symbol('output');
 
@@ -67,7 +69,7 @@ export class BaseReporter implements Reporter {
     this.monotonicStartTime = monotonicTime();
     this.config = config;
     this.suite = suite;
-    this.totalTestCount = suite.allTests().length;
+    this.totalTestCount = suite.allTests().filter(test => (test as TestCaseImpl)._kind === 'test').length;
   }
 
   onStdOut(chunk: string | Buffer, test?: TestCase, result?: TestResult) {

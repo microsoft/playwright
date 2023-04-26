@@ -196,7 +196,7 @@ test('parallel mode should minimize running beforeAll/afterAll hooks', async ({ 
     `,
   }, { workers: 1 });
   expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(4);
+  expect(result.passed).toBe(6);
   expect(countTimes(result.output, '%%beforeAll')).toBe(1);
   expect(countTimes(result.output, '%%afterAll')).toBe(1);
 });
@@ -219,7 +219,7 @@ test('parallel mode should minimize running beforeAll/afterAll hooks 2', async (
     `,
   }, { workers: 2 });
   expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(4);
+  expect(result.passed).toBe(6);
   expect(countTimes(result.output, '%%beforeAll')).toBe(2);
   expect(countTimes(result.output, '%%afterAll')).toBe(2);
 });

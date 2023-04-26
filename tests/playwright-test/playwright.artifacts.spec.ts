@@ -134,7 +134,7 @@ test('should work with screenshot: on', async ({ runInlineTest }, testInfo) => {
   }, { workers: 1 });
 
   expect(result.exitCode).toBe(1);
-  expect(result.passed).toBe(5);
+  expect(result.passed).toBe(7);
   expect(result.failed).toBe(5);
   expect(listFiles(testInfo.outputPath('test-results'))).toEqual([
     'artifacts-failing',
@@ -148,6 +148,10 @@ test('should work with screenshot: on', async ({ runInlineTest }, testInfo) => {
     'artifacts-persistent-failing',
     '  test-failed-1.png',
     'artifacts-persistent-passing',
+    '  test-finished-1.png',
+    'artifacts-shared-afterAll-worker0',
+    '  test-finished-1.png',
+    'artifacts-shared-beforeAll-worker0',
     '  test-finished-1.png',
     'artifacts-shared-shared-failing',
     '  test-failed-1.png',
@@ -171,7 +175,7 @@ test('should work with screenshot: only-on-failure', async ({ runInlineTest }, t
   }, { workers: 1 });
 
   expect(result.exitCode).toBe(1);
-  expect(result.passed).toBe(5);
+  expect(result.passed).toBe(7);
   expect(result.failed).toBe(5);
   expect(listFiles(testInfo.outputPath('test-results'))).toEqual([
     'artifacts-failing',
@@ -225,7 +229,7 @@ test('should work with trace: on', async ({ runInlineTest }, testInfo) => {
   }, { workers: 1 });
 
   expect(result.exitCode).toBe(1);
-  expect(result.passed).toBe(5);
+  expect(result.passed).toBe(7);
   expect(result.failed).toBe(5);
   expect(listFiles(testInfo.outputPath('test-results'))).toEqual([
     'artifacts-failing',
@@ -239,6 +243,10 @@ test('should work with trace: on', async ({ runInlineTest }, testInfo) => {
     'artifacts-persistent-failing',
     '  trace.zip',
     'artifacts-persistent-passing',
+    '  trace.zip',
+    'artifacts-shared-afterAll-worker0',
+    '  trace.zip',
+    'artifacts-shared-beforeAll-worker0',
     '  trace.zip',
     'artifacts-shared-shared-failing',
     '  trace.zip',
@@ -260,7 +268,7 @@ test('should work with trace: retain-on-failure', async ({ runInlineTest }, test
   }, { workers: 1 });
 
   expect(result.exitCode).toBe(1);
-  expect(result.passed).toBe(5);
+  expect(result.passed).toBe(7);
   expect(result.failed).toBe(5);
   expect(listFiles(testInfo.outputPath('test-results'))).toEqual([
     'artifacts-failing',
@@ -285,7 +293,7 @@ test('should work with trace: on-first-retry', async ({ runInlineTest }, testInf
   }, { workers: 1, retries: 1 });
 
   expect(result.exitCode).toBe(1);
-  expect(result.passed).toBe(5);
+  expect(result.passed).toBe(7);
   expect(result.failed).toBe(5);
   expect(listFiles(testInfo.outputPath('test-results'))).toEqual([
     'artifacts-failing-retry1',
@@ -293,6 +301,10 @@ test('should work with trace: on-first-retry', async ({ runInlineTest }, testInf
     'artifacts-own-context-failing-retry1',
     '  trace.zip',
     'artifacts-persistent-failing-retry1',
+    '  trace.zip',
+    'artifacts-shared-afterAll-worker1-retry1',
+    '  trace.zip',
+    'artifacts-shared-beforeAll-worker1-retry1',
     '  trace.zip',
     'artifacts-shared-shared-failing-retry1',
     '  trace.zip',
@@ -310,7 +322,7 @@ test('should work with trace: on-all-retries', async ({ runInlineTest }, testInf
   }, { workers: 1, retries: 2 });
 
   expect(result.exitCode).toBe(1);
-  expect(result.passed).toBe(5);
+  expect(result.passed).toBe(7);
   expect(result.failed).toBe(5);
   expect(listFiles(testInfo.outputPath('test-results'))).toEqual([
     'artifacts-failing-retry1',
@@ -324,6 +336,14 @@ test('should work with trace: on-all-retries', async ({ runInlineTest }, testInf
     'artifacts-persistent-failing-retry1',
     '  trace.zip',
     'artifacts-persistent-failing-retry2',
+    '  trace.zip',
+    'artifacts-shared-afterAll-worker1-retry1',
+    '  trace.zip',
+    'artifacts-shared-afterAll-worker2-retry2',
+    '  trace.zip',
+    'artifacts-shared-beforeAll-worker1-retry1',
+    '  trace.zip',
+    'artifacts-shared-beforeAll-worker2-retry2',
     '  trace.zip',
     'artifacts-shared-shared-failing-retry1',
     '  trace.zip',

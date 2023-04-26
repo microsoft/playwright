@@ -162,7 +162,7 @@ test('test.describe.serial should work with retry and beforeAll failure', async 
     `,
   }, { retries: 1 });
   expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(1);
+  expect(result.passed).toBe(2);
   expect(result.flaky).toBe(1);
   expect(result.failed).toBe(0);
   expect(result.skipped).toBe(0);
@@ -199,7 +199,7 @@ test('test.describe.serial should work with retry and afterAll failure', async (
     `,
   }, { retries: 1 });
   expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(1);
+  expect(result.passed).toBe(2);
   expect(result.flaky).toBe(1);
   expect(result.failed).toBe(0);
   expect(result.skipped).toBe(0);

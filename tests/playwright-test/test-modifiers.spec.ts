@@ -444,7 +444,7 @@ test('test.skip with worker fixtures only should skip before hooks and tests', a
   });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
-  expect(result.skipped).toBe(2);
+  expect(result.skipped).toBe(3);
   expect(result.report.suites[0].specs[0].tests[0].annotations).toEqual([]);
   expect(result.report.suites[0].suites![0].specs[0].tests[0].annotations).toEqual([{ type: 'skip', description: 'reason' }]);
   expect(result.report.suites[0].suites![0].suites![0].specs[0].tests[0].annotations).toEqual([{ type: 'skip', description: 'reason' }]);
@@ -463,6 +463,9 @@ test('test.skip without a callback in describe block should skip hooks', async (
       test.beforeAll(() => {
         console.log('%%beforeAll');
       });
+      test.afterAll(() => {
+        console.log('%%afterAll');
+      });
       test.beforeEach(() => {
         console.log('%%beforeEach');
       });
@@ -478,8 +481,10 @@ test('test.skip without a callback in describe block should skip hooks', async (
     `,
   });
   expect(result.exitCode).toBe(0);
-  expect(result.skipped).toBe(2);
+  expect(result.skipped).toBe(4);
   expect(result.report.suites[0].specs[0].tests[0].annotations).toEqual([{ type: 'skip', description: 'reason' }]);
+  expect(result.report.suites[0].specs[1].tests[0].annotations).toEqual([{ type: 'skip', description: 'reason' }]);
+  expect(result.report.suites[0].specs[2].tests[0].annotations).toEqual([{ type: 'skip', description: 'reason' }]);
   expect(result.report.suites[0].suites![0].specs[0].tests[0].annotations).toEqual([{ type: 'skip', description: 'reason' }]);
   expect(result.output).not.toContain('%%');
 });
@@ -517,7 +522,7 @@ test('modifier timeout should be reported', async ({ runInlineTest }) => {
   expect(result.output).toContain('3 |       test.skip(async () => new Promise(() => {}));');
 });
 
-test('should not run hooks if modifier throws', async ({ runInlineTest }) => {
+test('should run afterAll if modifier throws during beforeAll', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -526,7 +531,7 @@ test('should not run hooks if modifier throws', async ({ runInlineTest }) => {
         throw new Error('Oh my');
       });
       test.beforeAll(() => {
-        console.log('%%beforeEach');
+        console.log('%%beforeAll');
       });
       test.beforeEach(() => {
         console.log('%%beforeEach');
@@ -535,7 +540,7 @@ test('should not run hooks if modifier throws', async ({ runInlineTest }) => {
         console.log('%%afterEach');
       });
       test.afterAll(() => {
-        console.log('%%beforeEach');
+        console.log('%%afterAll');
       });
       test('skipped1', () => {
         console.log('%%skipped1');
@@ -546,6 +551,7 @@ test('should not run hooks if modifier throws', async ({ runInlineTest }) => {
   expect(result.failed).toBe(1);
   expect(result.outputLines).toEqual([
     'modifier',
+    'afterAll',
   ]);
 });
 

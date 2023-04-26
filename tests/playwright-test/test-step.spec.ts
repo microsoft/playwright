@@ -564,19 +564,20 @@ test('should nest steps based on zones', async ({ runInlineTest }) => {
     {
       title: 'Before Hooks',
       category: 'hook',
+    },
+    {
+      title: 'in beforeAll',
+      category: 'test.step',
+      location: { file: 'a.test.ts', line: 'number', column: 'number' }
+    },
+    {
+      title: 'After Hooks',
+      category: 'hook',
+    },
+    {
+      title: 'Before Hooks',
+      category: 'hook',
       steps: [
-        {
-          title: 'beforeAll hook',
-          category: 'hook',
-          steps: [
-            {
-              title: 'in beforeAll',
-              category: 'test.step',
-              location: { file: 'a.test.ts', line: 'number', column: 'number' }
-            }
-          ],
-          location: { file: 'a.test.ts', line: 'number', column: 'number' }
-        },
         {
           title: 'beforeEach hook',
           category: 'hook',
@@ -665,22 +666,23 @@ test('should nest steps based on zones', async ({ runInlineTest }) => {
           location: { file: 'a.test.ts', line: 'number', column: 'number' }
         },
         {
-          title: 'afterAll hook',
-          category: 'hook',
-          steps: [
-            {
-              title: 'in afterAll',
-              category: 'test.step',
-              location: { file: 'a.test.ts', line: 'number', column: 'number' }
-            }
-          ],
-          location: { file: 'a.test.ts', line: 'number', column: 'number' }
-        },
-        {
           title: 'browserContext.close',
           category: 'pw:api'
         }
       ]
-    }
+    },
+    {
+      title: 'Before Hooks',
+      category: 'hook',
+    },
+    {
+      title: 'in afterAll',
+      category: 'test.step',
+      location: { file: 'a.test.ts', line: 'number', column: 'number' }
+    },
+    {
+      title: 'After Hooks',
+      category: 'hook',
+    },
   ]);
 });

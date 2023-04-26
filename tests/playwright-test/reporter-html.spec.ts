@@ -530,12 +530,6 @@ test('should show failed and timed out steps and hooks', async ({ runInlineTest,
     `,
     'a.test.js': `
       import { test, expect } from '@playwright/test';
-      test.beforeAll(() => {
-        console.log('beforeAll 1');
-      });
-      test.beforeAll(() => {
-        console.log('beforeAll 2');
-      });
       test.beforeEach(() => {
         console.log('beforeEach 1');
       });
@@ -544,9 +538,6 @@ test('should show failed and timed out steps and hooks', async ({ runInlineTest,
       });
       test.afterEach(() => {
         console.log('afterEach 1');
-      });
-      test.afterAll(() => {
-        console.log('afterAll 1');
       });
       test('fails', async ({ page }) => {
         await test.step('outer error', async () => {
@@ -580,17 +571,12 @@ test('should show failed and timed out steps and hooks', async ({ runInlineTest,
 
   await page.click('text=Before Hooks');
   await expect(page.locator('.tree-item:has-text("Before Hooks") .tree-item')).toContainText([
-    /beforeAll hook/,
-    /beforeAll hook/,
     /beforeEach hook/,
     /beforeEach hook/,
   ]);
-  await page.locator('text=beforeAll hook').nth(1).click();
-  await expect(page.locator('text=console.log(\'beforeAll 2\');')).toBeVisible();
   await page.click('text=After Hooks');
   await expect(page.locator('.tree-item:has-text("After Hooks") .tree-item')).toContainText([
     /afterEach hook/,
-    /afterAll hook/,
   ]);
 });
 

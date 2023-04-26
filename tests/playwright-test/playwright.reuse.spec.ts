@@ -546,8 +546,9 @@ test('should survive serial mode with tracing and reuse', async ({ runInlineTest
   }, { workers: 1 }, { PW_TEST_REUSE_CONTEXT: '1' });
 
   expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(2);
+  expect(result.passed).toBe(3);
 
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'reuse-beforeAll-worker0', 'trace.zip'))).toBe(true);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'reuse-one', 'trace.zip'))).toBe(true);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'reuse-two', 'trace.zip'))).toBe(true);
 });

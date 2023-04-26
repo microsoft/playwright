@@ -45,7 +45,7 @@ export class Suite extends Base implements SuitePrivate {
   parent?: Suite;
   _use: FixturesWithLocation[] = [];
   _entries: (Suite | TestCase)[] = [];
-  _hooks: { type: 'beforeEach' | 'afterEach' | 'beforeAll' | 'afterAll', fn: Function, location: Location }[] = [];
+  _eachHooks: { type: 'beforeEach' | 'afterEach', fn: Function, location: Location }[] = [];
   _timeout: number | undefined;
   _retries: number | undefined;
   _staticAnnotations: Annotation[] = [];
@@ -81,6 +81,28 @@ export class Suite extends Base implements SuitePrivate {
   _prependSuite(suite: Suite) {
     suite.parent = this;
     this._entries.unshift(suite);
+  }
+
+  _sortHooksAndTests() {
+    // Although one can declare hooks and tests in any order,
+    // it is convenient to see them reported as: beforeAll, tests, afterAll.
+    const beforeHooks: TestCase[] = [];
+    const afterHooks: TestCase[] = [];
+    const otherEntries: (TestCase | Suite)[] = [];
+    for (const entry of this._entries) {
+      if (entry instanceof Suite) {
+        entry._sortHooksAndTests();
+        otherEntries.push(entry);
+        continue;
+      }
+      if (entry._kind === 'beforeAll')
+        beforeHooks.push(entry);
+      else if (entry._kind === 'afterAll')
+        afterHooks.push(entry);
+      else
+        otherEntries.push(entry);
+    }
+    this._entries = [...beforeHooks, ...otherEntries, ...afterHooks];
   }
 
   allTests(): TestCase[] {
@@ -149,10 +171,10 @@ export class Suite extends Base implements SuitePrivate {
     return suite;
   }
 
-  forEachTest(visitor: (test: TestCase, suite: Suite) => void) {
+  _forEachTest(visitor: (test: TestCase, suite: Suite) => void) {
     for (const entry of this._entries) {
       if (entry instanceof Suite)
-        entry.forEachTest(visitor);
+        entry._forEachTest(visitor);
       else
         visitor(entry, this);
     }
@@ -171,7 +193,7 @@ export class Suite extends Base implements SuitePrivate {
       staticAnnotations: this._staticAnnotations.slice(),
       modifiers: this._modifiers.slice(),
       parallelMode: this._parallelMode,
-      hooks: this._hooks.map(h => ({ type: h.type, location: h.location })),
+      eachHooks: this._eachHooks.map(h => ({ type: h.type, location: h.location })),
     };
   }
 
@@ -185,7 +207,7 @@ export class Suite extends Base implements SuitePrivate {
     suite._staticAnnotations = data.staticAnnotations;
     suite._modifiers = data.modifiers;
     suite._parallelMode = data.parallelMode;
-    suite._hooks = data.hooks.map((h: any) => ({ type: h.type, location: h.location, fn: () => { } }));
+    suite._eachHooks = data.eachHooks.map((h: any) => ({ type: h.type, location: h.location, fn: () => { } }));
     return suite;
   }
 
@@ -193,7 +215,8 @@ export class Suite extends Base implements SuitePrivate {
     const data = this._serialize();
     const suite = Suite._parse(data);
     suite._use = this._use.slice();
-    suite._hooks = this._hooks.slice();
+    suite._eachHooks = this._eachHooks.slice();
+    suite._modifiers = this._modifiers.slice();
     suite._fullProject = this._fullProject;
     return suite;
   }
@@ -202,6 +225,8 @@ export class Suite extends Base implements SuitePrivate {
     return this._fullProject?.project || this.parent?.project();
   }
 }
+
+type TestKind = 'test' | 'beforeAll' | 'afterAll';
 
 export class TestCase extends Base implements reporterTypes.TestCase {
   fn: Function;
@@ -215,6 +240,7 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   retries = 0;
   repeatEachIndex = 0;
 
+  _kind: TestKind;
   _testType: TestTypeImpl;
   id = '';
   _pool: FixturePool | undefined;
@@ -224,10 +250,11 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   // Annotations known statically before running the test, e.g. `test.skip()` or `test.describe.skip()`.
   _staticAnnotations: Annotation[] = [];
 
-  constructor(title: string, fn: Function, testType: TestTypeImpl, location: Location) {
+  constructor(kind: TestKind, title: string, fn: Function, testType: TestTypeImpl, location: Location) {
     super(title);
     this.fn = fn;
     this._testType = testType;
+    this._kind = kind;
     this.location = location;
   }
 
@@ -255,7 +282,7 @@ export class TestCase extends Base implements reporterTypes.TestCase {
 
   _serialize(): any {
     return {
-      kind: 'test',
+      kind: this._kind,
       title: this.title,
       location: this.location,
       only: this._only,
@@ -267,7 +294,7 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   }
 
   static _parse(data: any): TestCase {
-    const test = new TestCase(data.title, () => {}, rootTestType, data.location);
+    const test = new TestCase(data.kind, data.title, () => {}, rootTestType, data.location);
     test._only = data.only;
     test._requireFile = data.requireFile;
     test._poolDigest = data.poolDigest;
@@ -286,7 +313,8 @@ export class TestCase extends Base implements reporterTypes.TestCase {
 
   _appendTestResult(): reporterTypes.TestResult {
     const result: reporterTypes.TestResult = {
-      retry: this.results.length,
+      // Hooks are never retried on their own, but could be executed in multiple parallel workers.
+      retry: this._kind === 'test' ? this.results.length : 0,
       parallelIndex: -1,
       workerIndex: -1,
       duration: 0,

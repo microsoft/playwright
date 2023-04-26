@@ -51,7 +51,7 @@ test('should stop tracing with trace: on-first-retry, when not retrying', async 
   }, { workers: 1, retries: 1 });
 
   expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(1);
+  expect(result.passed).toBe(3);
   expect(result.flaky).toBe(1);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-shared-flaky-retry1', 'trace.zip'))).toBeTruthy();
 });
@@ -164,7 +164,7 @@ test('should not mixup network files between contexts', async ({ runInlineTest, 
     `,
   }, { workers: 1, timeout: 15000 });
   expect(result.exitCode).toEqual(0);
-  expect(result.passed).toBe(1);
+  expect(result.passed).toBe(3);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-example', 'trace.zip'))).toBe(true);
 });
 
@@ -242,7 +242,7 @@ test('should work in serial mode', async ({ runInlineTest }, testInfo) => {
   }, { workers: 1 });
 
   expect(result.exitCode).toBe(1);
-  expect(result.passed).toBe(1);
+  expect(result.passed).toBe(3);
   expect(result.failed).toBe(1);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-serial-passes', 'trace.zip'))).toBeFalsy();
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-serial-fails', 'trace.zip'))).toBeTruthy();
@@ -272,12 +272,14 @@ test('should not override trace file in afterAll', async ({ runInlineTest, serve
   }, { workers: 1 });
 
   expect(result.exitCode).toBe(1);
-  expect(result.passed).toBe(1);
+  expect(result.passed).toBe(2);
   expect(result.failed).toBe(1);
   const trace1 = await parseTrace(testInfo.outputPath('test-results', 'a-test-1', 'trace.zip'));
-  expect(trace1.actions).toEqual(['browserContext.newPage', 'page.goto', 'apiRequestContext.get']);
+  expect(trace1.actions).toEqual(['browserContext.newPage', 'page.goto']);
   const error = await parseTrace(testInfo.outputPath('test-results', 'a-test-2', 'trace.zip')).catch(e => e);
-  expect(error).toBeTruthy();
+  expect(error.message).toBeTruthy();
+  const error2 = await parseTrace(testInfo.outputPath('test-results', 'a-afterAll-worker0', 'trace.zip')).catch(e => e);
+  expect(error2.message).toBeTruthy();
 });
 
 test('should retain traces for interrupted tests', async ({ runInlineTest }, testInfo) => {

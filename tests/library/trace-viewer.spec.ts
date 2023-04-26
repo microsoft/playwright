@@ -318,6 +318,10 @@ test('should contain adopted style sheets', async ({ page, runAndTrace, browserN
   await expect(frame.locator('span')).toHaveCSS('color', 'rgb(0, 0, 255)');
 });
 
+test.describe(() => {
+
+  test.beforeAll(() => {});
+
 test('should work with adopted style sheets and replace/replaceSync', async ({ page, runAndTrace, browserName }) => {
   test.skip(browserName !== 'chromium', 'Constructed stylesheets are only in Chromium.');
 
@@ -350,6 +354,8 @@ test('should work with adopted style sheets and replace/replaceSync', async ({ p
     const frame = await traceViewer.snapshotFrame('page.evaluate', 2);
     await expect(frame.locator('button')).toHaveCSS('color', 'rgb(0, 255, 0)');
   }
+});
+
 });
 
 test('should restore scroll positions', async ({ page, runAndTrace, browserName }) => {

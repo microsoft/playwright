@@ -41,7 +41,7 @@ export class PoolBuilder {
   }
 
   buildPools(suite: Suite, testErrors?: TestError[]) {
-    suite.forEachTest(test => {
+    suite._forEachTest(test => {
       const pool = this._buildPoolForTest(test, testErrors);
       if (this._type === 'loader')
         test._poolDigest = pool.digest;
@@ -61,13 +61,13 @@ export class PoolBuilder {
     for (const parent of parents) {
       if (parent._use.length)
         pool = new FixturePool(parent._use, e => this._handleLoadError(e, testErrors), pool, parent._type === 'describe');
-      for (const hook of parent._hooks)
+      for (const hook of parent._eachHooks)
         pool.validateFunction(hook.fn, hook.type + ' hook', hook.location);
       for (const modifier of parent._modifiers)
         pool.validateFunction(modifier.fn, modifier.type + ' modifier', modifier.location);
     }
 
-    pool.validateFunction(test.fn, 'Test', test.location);
+    pool.validateFunction(test.fn, test._kind === 'test' ? 'Test' : test._kind + ' hook', test.location);
     return pool;
   }
 

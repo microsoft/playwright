@@ -86,7 +86,7 @@ export class TestTypeImpl {
     const suite = this._currentSuite(location, 'test()');
     if (!suite)
       return;
-    const test = new TestCase(title, fn, this, location);
+    const test = new TestCase('test', title, fn, this, location);
     test._requireFile = suite._requireFile;
     suite._addTest(test);
 
@@ -131,11 +131,19 @@ export class TestTypeImpl {
     setCurrentlyLoadingFileSuite(suite);
   }
 
-  private _hook(name: 'beforeEach' | 'afterEach' | 'beforeAll' | 'afterAll', location: Location, fn: Function) {
-    const suite = this._currentSuite(location, `test.${name}()`);
+  private _hook(kind: 'beforeEach' | 'afterEach' | 'beforeAll' | 'afterAll', location: Location, fn: Function) {
+    const suite = this._currentSuite(location, `test.${kind}()`);
     if (!suite)
       return;
-    suite._hooks.push({ type: name, fn, location });
+    if (kind === 'beforeEach' || kind === 'afterEach') {
+      suite._eachHooks.push({ type: kind, fn, location });
+    } else {
+      const index = suite.tests.filter(test => test._kind === kind).length;
+      const title = index ? `${kind}${index}` : kind;
+      const hook = new TestCase(kind, title, fn, this, location);
+      hook._requireFile = suite._requireFile;
+      suite._addTest(hook);
+    }
   }
 
   private _configure(location: Location, options: { mode?: 'parallel' | 'serial', retries?: number, timeout?: number }) {

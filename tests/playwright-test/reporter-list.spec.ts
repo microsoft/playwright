@@ -163,6 +163,34 @@ test('render retries', async ({ runInlineTest }) => {
   ]);
 });
 
+test('render hooks', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test.describe.configure({ mode: 'parallel' });
+      test.beforeAll(async () => {
+        if (test.info().workerIndex === 0)
+          await new Promise(f => setTimeout(f, 3000));
+      });
+      test('test1', () => {});
+      test('test2', () => {});
+    `,
+  }, { reporter: 'list', workers: '2' }, { PW_TEST_DEBUG_REPORTERS: '1', PWTEST_TTY_WIDTH: '80' });
+  const text = result.output;
+  const lines = text.split('\n').filter(l => l.match(/^\d :/)).map(l => l.replace(/\d+(\.\d+)?m?s/, 'XXms'));
+
+  expect(lines.sort()).toEqual([
+    `0 :        a.test.ts:4:12 › beforeAll`,
+    `0 :   ${POSITIVE_STATUS_MARK}   a.test.ts:4:12 › beforeAll (XXms)`,
+    `1 :        a.test.ts:4:12 › beforeAll`,
+    `1 :   ${POSITIVE_STATUS_MARK}   a.test.ts:4:12 › beforeAll (XXms)`,
+    `2 :      1 a.test.ts:9:11 › test2`,
+    `2 :   ${POSITIVE_STATUS_MARK} 1 a.test.ts:9:11 › test2 (XXms)`,
+    `3 :      2 a.test.ts:8:11 › test1`,
+    `3 :   ${POSITIVE_STATUS_MARK} 2 a.test.ts:8:11 › test1 (XXms)`,
+  ]);
+});
+
 test('should truncate long test names', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `

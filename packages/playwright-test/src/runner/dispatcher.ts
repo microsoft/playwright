@@ -58,6 +58,25 @@ export class Dispatcher {
     this._reporter = reporter;
   }
 
+  private _appendAndReportSkippedTestResult(test: TestCase) {
+    const result = test._appendTestResult();
+    result.status = 'skipped';
+    this._reporter.onTestBegin(test, result);
+    test.annotations = [...test._staticAnnotations];
+    this._reportTestEnd(test, result);
+  }
+
+  private _allRelatedHooksForTestGroup(group: TestGroup) {
+    const hooks = new Set<TestCase>();
+    for (const test of group.tests) {
+      for (let suite: Suite | undefined = test.parent; suite; suite = suite.parent) {
+        for (const hook of suite.tests.filter(test => test._kind !== 'test'))
+          hooks.add(hook);
+      }
+    }
+    return hooks;
+  }
+
   private _processFullySkippedJobs() {
     // If all the tests in a group are skipped, we report them immediately
     // without sending anything to a worker. This avoids creating unnecessary worker processes.
@@ -72,13 +91,10 @@ export class Dispatcher {
       if (!allTestsSkipped)
         break;
 
-      for (const test of group.tests) {
-        const result = test._appendTestResult();
-        result.status = 'skipped';
-        this._reporter.onTestBegin(test, result);
-        test.annotations = [...test._staticAnnotations];
-        this._reportTestEnd(test, result);
-      }
+      for (const hook of this._allRelatedHooksForTestGroup(group))
+        this._appendAndReportSkippedTestResult(hook);
+      for (const test of group.tests)
+        this._appendAndReportSkippedTestResult(test);
       this._queue.shift();
     }
 
@@ -174,6 +190,8 @@ export class Dispatcher {
     this._queue = testGroups;
     for (const group of testGroups) {
       this._queuedOrRunningHashCount.set(group.workerHash, 1 + (this._queuedOrRunningHashCount.get(group.workerHash) || 0));
+      for (const hook of this._allRelatedHooksForTestGroup(group))
+        this._testById.set(hook.id, { test: hook, resultByWorkerIndex: new Map() });
       for (const test of group.tests)
         this._testById.set(test.id, { test, resultByWorkerIndex: new Map() });
     }
@@ -214,6 +232,7 @@ export class Dispatcher {
 
     const remainingByTestId = new Map(testGroup.tests.map(e => [e.id, e]));
     const failedTestIds = new Set<string>();
+    let runningHookId: string | undefined;
 
     const onTestBegin = (params: TestBeginPayload) => {
       const data = this._testById.get(params.testId)!;
@@ -224,11 +243,14 @@ export class Dispatcher {
       result.startTime = new Date(params.startWallTime);
       this._reporter.onTestBegin(data.test, result);
       worker.currentTestId = params.testId;
+      if (data.test._kind !== 'test')
+        runningHookId = data.test.id;
     };
     worker.addListener('testBegin', onTestBegin);
 
     const onTestEnd = (params: TestEndPayload) => {
       remainingByTestId.delete(params.testId);
+      runningHookId = undefined;
       if (this._hasReachedMaxFailures()) {
         // Do not show more than one error to avoid confusion, but report
         // as interrupted to indicate that we did actually start the test.
@@ -378,9 +400,21 @@ export class Dispatcher {
       }
       // Handle tests that should be skipped because of the setup failure.
       massSkipTestsFromRemaining(new Set(params.skipTestsDueToSetupFailure), []);
+
       // Handle unexpected worker exit.
-      if (params.unexpectedExitError)
+      if (params.unexpectedExitError) {
         massSkipTestsFromRemaining(new Set(remaining.map(test => test.id)), [params.unexpectedExitError], true /* onlyStartedTests */);
+
+        // When worker exited during hook, there could be nothing in "remaining", but we should
+        // report the hook as failed.
+        const runningHookData = runningHookId ? this._testById.get(runningHookId) : undefined;
+        const runningHookResult = runningHookData?.resultByWorkerIndex.get(worker.workerIndex);
+        if (runningHookResult) {
+          runningHookResult.result.errors = [params.unexpectedExitError];
+          runningHookResult.result.status = 'failed';
+          this._reportTestEnd(runningHookData!.test, runningHookResult.result);
+        }
+      }
 
       const retryCandidates = new Set<string>();
       const serialSuitesWithFailures = new Set<Suite>();
@@ -425,7 +459,7 @@ export class Dispatcher {
 
       for (const testId of retryCandidates) {
         const pair = this._testById.get(testId)!;
-        if (!this._isStopped && pair.test.results.length < pair.test.retries + 1)
+        if (!this._isStopped && pair.test._kind === 'test' && pair.test.results.length < pair.test.retries + 1)
           remaining.push(pair.test);
       }
 

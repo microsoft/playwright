@@ -65,10 +65,14 @@ test('hooks should work with fixtures', async ({ runInlineTest }) => {
           '+w',
           '+t',
           'beforeAll-17-42',
-          'beforeEach-17-42',
-          'test-17-42',
-          'afterEach-17-42',
-          'afterAll-17-42',
+          '-t',
+          '+t',
+          'beforeEach-17-43',
+          'test-17-43',
+          'afterEach-17-43',
+          '-t',
+          '+t',
+          'afterAll-17-44',
           '-t',
           '+t',
         ]);
@@ -221,7 +225,7 @@ test('beforeAll hooks are skipped when no tests in the suite are run', async ({ 
     `,
   });
   expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(1);
+  expect(result.passed).toBe(2);
   expect(result.output).toContain('%%beforeAll2');
   expect(result.output).not.toContain('%%beforeAll1');
 });
@@ -250,7 +254,7 @@ test('beforeAll/afterAll hooks are skipped when no tests in the suite are run 2'
   });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(0);
-  expect(result.skipped).toBe(2);
+  expect(result.skipped).toBe(6);
   expect(result.output).not.toContain('%%beforeAll');
   expect(result.output).not.toContain('%%afterAll');
 });
@@ -327,7 +331,7 @@ test('afterAll exception should fail the test', async ({ runInlineTest }) => {
     `,
   });
   expect(result.exitCode).toBe(1);
-  expect(result.passed).toBe(0);
+  expect(result.passed).toBe(1);
   expect(result.failed).toBe(1);
   expect(result.output).toContain('From the afterAll');
 });
@@ -383,7 +387,7 @@ test('beforeAll failure should prevent the test, but not afterAll', async ({ run
   });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
-  expect(result.skipped).toBe(1);
+  expect(result.skipped).toBe(2);
   expect(result.outputLines).toEqual([
     'beforeAll',
     'afterAll',
@@ -458,8 +462,10 @@ test('afterAll error should not mask beforeAll', async ({ runInlineTest }) => {
     `,
   });
   expect(result.exitCode).toBe(1);
-  expect(result.failed).toBe(1);
+  expect(result.failed).toBe(2);
+  expect(result.skipped).toBe(1);
   expect(result.output).toContain('from beforeAll');
+  expect(result.output).toContain('from afterAll');
 });
 
 test('beforeAll timeout should be reported and prevent more tests', async ({ runInlineTest }) => {
@@ -483,7 +489,7 @@ test('beforeAll timeout should be reported and prevent more tests', async ({ run
   }, { timeout: 1000 });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
-  expect(result.skipped).toBe(1);
+  expect(result.skipped).toBe(2);
   expect(result.outputLines).toEqual([
     'beforeAll',
     'afterAll',
@@ -516,7 +522,7 @@ test('afterAll timeout should be reported, run other afterAll hooks, and continu
     `,
   }, { timeout: 1000 });
   expect(result.exitCode).toBe(1);
-  expect(result.passed).toBe(1);
+  expect(result.passed).toBe(3);
   expect(result.failed).toBe(1);
   expect(result.skipped).toBe(0);
   expect(result.outputLines).toEqual([
@@ -549,7 +555,8 @@ test('beforeAll and afterAll timeouts at the same time should be reported', asyn
     `,
   }, { timeout: 1000 });
   expect(result.exitCode).toBe(1);
-  expect(result.failed).toBe(1);
+  expect(result.failed).toBe(2);
+  expect(result.skipped).toBe(1);
   expect(result.outputLines).toEqual([
     'beforeAll',
     'afterAll',
@@ -642,10 +649,10 @@ test('should not hang and report results when worker process suddenly exits duri
     `
   }, { reporter: 'line' });
   expect(result.exitCode).toBe(1);
-  expect(result.passed).toBe(0);
+  expect(result.passed).toBe(1);
   expect(result.failed).toBe(1);
   expect(result.output).toContain('Internal error: worker process exited unexpectedly');
-  expect(result.output).toContain('[1/1] a.spec.js:3:11 › failing due to afterall');
+  expect(result.output).toContain('1) a.spec.js:4:12 › afterAll');
 });
 
 test('unhandled rejection during beforeAll should be reported and prevent more tests', async ({ runInlineTest }) => {
@@ -672,7 +679,7 @@ test('unhandled rejection during beforeAll should be reported and prevent more t
   });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
-  expect(result.skipped).toBe(1);
+  expect(result.skipped).toBe(2);
   expect(result.outputLines).toEqual([
     'beforeAll',
     'afterAll',
@@ -708,7 +715,7 @@ test('beforeAll and afterAll should have a separate timeout', async ({ runInline
     `,
   }, { timeout: '500' });
   expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(1);
+  expect(result.passed).toBe(5);
   expect(result.outputLines).toEqual([
     'beforeAll',
     'beforeAll2',
@@ -733,7 +740,7 @@ test('test.setTimeout should work separately in beforeAll', async ({ runInlineTe
     `,
   }, { timeout: 3000 });
   expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(1);
+  expect(result.passed).toBe(2);
   expect(result.outputLines).toEqual([
     'beforeAll',
     'test',
@@ -755,7 +762,7 @@ test('test.setTimeout should work separately in afterAll', async ({ runInlineTes
     `,
   }, { timeout: '1000' });
   expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(1);
+  expect(result.passed).toBe(2);
   expect(result.outputLines).toEqual([
     'test',
     'afterAll',
@@ -771,10 +778,10 @@ test('beforeAll failure should only prevent tests that are affected', async ({ r
           console.log('\\n%%beforeAll');
           throw new Error('oh my');
         });
-        test('failed', () => {
+        test('skipped1', () => {
           console.log('\\n%%test1');
         });
-        test('skipped', () => {
+        test('skipped2', () => {
           console.log('\\n%%test2');
         });
       });
@@ -785,7 +792,7 @@ test('beforeAll failure should only prevent tests that are affected', async ({ r
   });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
-  expect(result.skipped).toBe(1);
+  expect(result.skipped).toBe(2);
   expect(result.passed).toBe(1);
   expect(result.outputLines).toEqual([
     'beforeAll',
@@ -804,7 +811,7 @@ test('afterAll should run if last test was skipped', async ({ runInlineTest }) =
   });
   expect(result.exitCode).toBe(0);
   expect(result.skipped).toBe(1);
-  expect(result.passed).toBe(1);
+  expect(result.passed).toBe(2);
   expect(result.output).toContain('after-all');
 });
 
@@ -819,7 +826,7 @@ test('afterAll should run if last test was skipped 2', async ({ runInlineTest })
   });
   expect(result.exitCode).toBe(0);
   expect(result.skipped).toBe(1);
-  expect(result.passed).toBe(1);
+  expect(result.passed).toBe(2);
   expect(result.output).toContain('after-all');
 });
 

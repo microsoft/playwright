@@ -196,6 +196,7 @@ async function createProjectSuite(fileSuites: Suite[], project: FullProjectInter
     }
   }
 
+  // TODO: make these filters work for beforeAll/afterAll hooks.
   filterByFocusedLine(projectSuite, options.cliFileFilters);
   filterByTestIds(projectSuite, options.testIdMatcher);
 
@@ -231,6 +232,8 @@ function createDuplicateTitlesErrors(config: FullConfigInternal, fileSuite: Suit
   const errors: TestError[] = [];
   const testsByFullTitle = new Map<string, TestCase>();
   for (const test of fileSuite.allTests()) {
+    if (test._kind !== 'test')
+      continue;
     const fullTitle = test.titlePath().slice(1).join(' › ');
     const existingTest = testsByFullTitle.get(fullTitle);
     if (existingTest) {

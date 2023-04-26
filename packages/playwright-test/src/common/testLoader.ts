@@ -50,6 +50,8 @@ export async function loadTestFile(file: string, rootDir: string, testErrors?: T
     setCurrentlyLoadingFileSuite(undefined);
   }
 
+  suite._sortHooksAndTests();
+
   {
     // Test locations that we discover potentially have different file name.
     // This could be due to either

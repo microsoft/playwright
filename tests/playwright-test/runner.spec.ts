@@ -57,6 +57,32 @@ test('it should not allow multiple tests with the same name in multiple files', 
   expect(result.output).toContain(`tests${path.sep}example2.spec.js:4`);
 });
 
+test('should not check duplicate titles of multiple hooks', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'tests/example.spec.js': `
+      import { test, expect } from '@playwright/test';
+      test.beforeAll(() => {});
+      test.beforeAll(() => {});
+      test.afterAll(() => {});
+      test.afterAll(() => {});
+      test.describe('suite', () => {
+        test.beforeAll(() => {});
+        test.beforeAll(() => {});
+        test.afterAll(() => {});
+        test.afterAll(() => {});
+        test('test1', () => {});
+      });
+      test.describe(() => {
+        test.beforeAll(() => {});
+        test.afterAll(() => {});
+        test('test2', () => {});
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.output).not.toContain(`duplicate test title`);
+});
+
 test('it should not allow a focused test when forbid-only is used', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'tests/focused-test.spec.js': `

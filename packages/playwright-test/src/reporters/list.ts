@@ -18,6 +18,7 @@
 import { colors, ms as milliseconds } from 'playwright-core/lib/utilsBundle';
 import { BaseReporter, formatError, formatTestTitle, stepSuffix, stripAnsiEscapes } from './base';
 import type { FullConfig, FullResult, Suite, TestCase, TestError, TestResult, TestStep } from '../../types/testReporter';
+import type { TestCase as TestCaseImpl } from '../common/test';
 
 // Allow it in the Visual Studio Code Terminal and the new Windows Terminal
 const DOES_NOT_SUPPORT_UTF8_IN_TERMINAL = process.platform === 'win32' && process.env.TERM_PROGRAM !== 'vscode' && !process.env.WT_SESSION;
@@ -27,9 +28,10 @@ const NEGATIVE_STATUS_MARK = DOES_NOT_SUPPORT_UTF8_IN_TERMINAL ? 'x' : '✘';
 class ListReporter extends BaseReporter {
   private _lastRow = 0;
   private _lastColumn = 0;
-  private _testRows = new Map<TestCase, number>();
+  private _resultRows = new Map<TestResult, number>();
   private _stepRows = new Map<TestStep, number>();
   private _resultIndex = new Map<TestResult, string>();
+  private _lastResultIndex = 0;
   private _stepIndex = new Map<TestStep, string>();
   private _needNewLine = false;
   private readonly _liveTerminal: string | boolean | undefined;
@@ -57,9 +59,9 @@ class ListReporter extends BaseReporter {
   onTestBegin(test: TestCase, result: TestResult) {
     if (this._liveTerminal)
       this._maybeWriteNewLine();
-    this._resultIndex.set(result, String(this._resultIndex.size + 1));
+    this._resultIndex.set(result, (test as TestCaseImpl)._kind === 'test' ? String(++this._lastResultIndex) : ' '.repeat(String(this._lastResultIndex).length));
     if (this._liveTerminal) {
-      this._testRows.set(test, this._lastRow);
+      this._resultRows.set(result, this._lastRow);
       const index = this._resultIndex.get(result)!;
       const prefix = this._testPrefix(index, '');
       const line = colors.dim(formatTestTitle(this.config, test)) + this._retrySuffix(result);
@@ -80,16 +82,16 @@ class ListReporter extends BaseReporter {
   onStepBegin(test: TestCase, result: TestResult, step: TestStep) {
     if (step.category !== 'test.step')
       return;
-    const testIndex = this._resultIndex.get(result)!;
+    const resultIndex = this._resultIndex.get(result)!;
     if (!this._printSteps) {
       if (this._liveTerminal)
-        this._updateLine(this._testRows.get(test)!, colors.dim(formatTestTitle(this.config, test, step)) + this._retrySuffix(result), this._testPrefix(testIndex, ''));
+        this._updateLine(this._resultRows.get(result)!, colors.dim(formatTestTitle(this.config, test, step)) + this._retrySuffix(result), this._testPrefix(resultIndex, ''));
       return;
     }
 
     const ordinal = ((result as any)[lastStepOrdinalSymbol] || 0) + 1;
     (result as any)[lastStepOrdinalSymbol] = ordinal;
-    const stepIndex = `${testIndex}.${ordinal}`;
+    const stepIndex = `${resultIndex}.${ordinal}`;
     this._stepIndex.set(step, stepIndex);
 
     if (this._liveTerminal)
@@ -106,10 +108,10 @@ class ListReporter extends BaseReporter {
     if (step.category !== 'test.step')
       return;
 
-    const testIndex = this._resultIndex.get(result)!;
+    const resultIndex = this._resultIndex.get(result)!;
     if (!this._printSteps) {
       if (this._liveTerminal)
-        this._updateLine(this._testRows.get(test)!, colors.dim(formatTestTitle(this.config, test, step.parent)) + this._retrySuffix(result), this._testPrefix(testIndex, ''));
+        this._updateLine(this._resultRows.get(result)!, colors.dim(formatTestTitle(this.config, test, step.parent)) + this._retrySuffix(result), this._testPrefix(resultIndex, ''));
       return;
     }
 
@@ -183,7 +185,7 @@ class ListReporter extends BaseReporter {
       text += this._retrySuffix(result) + colors.dim(` (${milliseconds(result.duration)})`);
     }
 
-    this._updateOrAppendLine(this._testRows.get(test)!, text, prefix);
+    this._updateOrAppendLine(this._resultRows.get(result)!, text, prefix);
   }
 
   private _updateOrAppendLine(row: number, text: string, prefix: string) {

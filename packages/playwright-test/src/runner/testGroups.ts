@@ -62,6 +62,9 @@ export function createTestGroups(projectSuite: Suite, workers: number): TestGrou
   };
 
   for (const test of projectSuite.allTests()) {
+    if (test._kind !== 'test')
+      continue;
+
     let withWorkerHash = groups.get(test._workerHash);
     if (!withWorkerHash) {
       withWorkerHash = new Map();
@@ -85,7 +88,7 @@ export function createTestGroups(projectSuite: Suite, workers: number): TestGrou
       if (parent._parallelMode === 'serial')
         outerMostSerialSuite = parent;
       insideParallel = insideParallel || parent._parallelMode === 'parallel';
-      hasAllHooks = hasAllHooks || parent._hooks.some(hook => hook.type === 'beforeAll' || hook.type === 'afterAll');
+      hasAllHooks = hasAllHooks || parent.tests.some(test => test._kind !== 'test');
     }
 
     if (insideParallel) {

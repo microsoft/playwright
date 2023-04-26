@@ -187,3 +187,29 @@ test('test.use() should throw if called from beforeAll ', async ({ runInlineTest
   expect(result.output).toContain('Playwright Test did not expect test.use() to be called here');
 });
 
+test('beforeAll should use correct test.use() values', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test.use({ foo: 'foo' });
+      test.beforeAll(({ foo }) => {
+        console.log('\\n%%beforeAll: ' + foo);
+      });
+      test.describe(() => {
+        test.use({ foo: 'bar' });
+        test('example', ({ foo }) => {
+          console.log('\\n%%test: ' + foo);
+        });
+        test.afterAll(({ foo }) => {
+          console.log('\\n%%afterAll: ' + foo);
+        });
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.outputLines).toEqual([
+    'beforeAll: foo',
+    'test: bar',
+    'afterAll: bar',
+  ]);
+});

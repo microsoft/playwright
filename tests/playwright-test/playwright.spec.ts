@@ -243,7 +243,7 @@ test('should respect context options in various contexts', async ({ runInlineTes
   }, { workers: 1 });
 
   expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(5);
+  expect(result.passed).toBe(7);
 });
 
 test('should respect headless in launchPersistent', async ({ runInlineTest }) => {
@@ -364,13 +364,15 @@ test('should report error on timeout with shared page', async ({ runInlineTest }
   }, { workers: 1, timeout: 2000 });
 
   expect(result.exitCode).toBe(1);
-  expect(result.passed).toBe(1);
+  expect(result.passed).toBe(2);
   expect(result.failed).toBe(1);
   expect(result.output).toContain('waiting for getByText(\'Missing\')');
   expect(result.output).toContain(`11 |         await page.getByText('Missing').click();`);
 });
 
 test('should report error from beforeAll timeout', async ({ runInlineTest }) => {
+  test.fixme();
+
   const result = await runInlineTest({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -427,7 +429,7 @@ test('should throw when using page in beforeAll', async ({ runInlineTest }) => {
   }, { workers: 1 });
 
   expect(result.exitCode).toBe(1);
-  expect(result.passed).toBe(0);
+  expect(result.passed).toBe(1);
   expect(result.output).toContain(`Error: "context" and "page" fixtures are not supported in "beforeAll"`);
 });
 

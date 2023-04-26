@@ -265,7 +265,7 @@ test('fixture time in beforeAll hook should not affect test', async ({ runInline
     `
   });
   expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(1);
+  expect(result.passed).toBe(2);
 });
 
 test('fixture timeout in beforeAll hook should not affect test', async ({ runInlineTest }) => {
@@ -288,7 +288,7 @@ test('fixture timeout in beforeAll hook should not affect test', async ({ runInl
     `
   });
   expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(1);
+  expect(result.passed).toBe(2);
 });
 
 test('fixture time in beforeEach hook should affect test', async ({ runInlineTest }) => {
@@ -344,9 +344,9 @@ test('test timeout should still run hooks before fixtures teardown', async ({ ru
   expect(result.outputLines).toEqual([
     'before-auto',
     'test',
+    'after-auto',
     'afterAll-1',
     'afterAll-2',
-    'after-auto',
   ]);
 });
 
@@ -384,7 +384,7 @@ test('should not include fixtures with own timeout and beforeAll in test duratio
     `
   }, { timeout: 5000 });
   expect(result.exitCode).toBe(0);
-  const duration = result.results[0].duration;
+  const duration = result.results[1].duration;
   expect(duration).toBeGreaterThanOrEqual(300 * 4);  // Includes test, beforeEach, afterEach and bar.
   expect(duration).toBeLessThan(300 * 4 + 1000);  // Does not include beforeAll and foo.
 });

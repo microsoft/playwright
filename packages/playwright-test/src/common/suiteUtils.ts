@@ -27,17 +27,23 @@ export function filterSuite(suite: Suite, suiteFilter: (suites: Suite) => boolea
     if (!suiteFilter(child))
       filterSuite(child, suiteFilter, testFilter);
   }
-  const filteredTests = suite.tests.filter(testFilter);
+  const filteredTests = suite.tests.filter(test => test._kind !== 'test' || testFilter(test)); // Always keep all hooks.
   const entries = new Set([...suite.suites, ...filteredTests]);
   suite._entries = suite._entries.filter(e => entries.has(e)); // Preserve the order.
 }
 
 export function filterTestsRemoveEmptySuites(suite: Suite, filter: (test: TestCase) => boolean): boolean {
   const filteredSuites = suite.suites.filter(child => filterTestsRemoveEmptySuites(child, filter));
-  const filteredTests = suite.tests.filter(filter);
+  const filteredTests = suite.tests.filter(test => test._kind === 'test' && filter(test));
   const entries = new Set([...filteredSuites, ...filteredTests]);
-  suite._entries = suite._entries.filter(e => entries.has(e)); // Preserve the order.
-  return !!suite._entries.length;
+  if (!entries.size) {
+    suite._entries = [];
+    return false;
+  }
+  // Keep all hooks if at least one test or child suite is left.
+  const hooks = new Set<TestCase | Suite>(suite.tests.filter(test => test._kind !== 'test'));
+  suite._entries = suite._entries.filter(e => entries.has(e) || hooks.has(e)); // Preserve the order.
+  return true;
 }
 
 export function buildFileSuiteForProject(project: FullProjectInternal, suite: Suite, repeatEachIndex: number): Suite {
@@ -49,7 +55,7 @@ export function buildFileSuiteForProject(project: FullProjectInternal, suite: Su
   result._fileId = fileId;
 
   // Assign test properties with project-specific values.
-  result.forEachTest((test, suite) => {
+  result._forEachTest((test, suite) => {
     suite._fileId = fileId;
     const repeatEachIndexSuffix = repeatEachIndex ? ` (repeat:${repeatEachIndex})` : '';
 
@@ -95,10 +101,11 @@ export function filterOnly(suite: Suite) {
 
 export function filterSuiteWithOnlySemantics(suite: Suite, suiteFilter: (suites: Suite) => boolean, testFilter: (test: TestCase) => boolean) {
   const onlySuites = suite.suites.filter(child => filterSuiteWithOnlySemantics(child, suiteFilter, testFilter) || suiteFilter(child));
-  const onlyTests = suite.tests.filter(testFilter);
+  const onlyTests = suite.tests.filter(test => test._kind === 'test' && testFilter(test));
   const onlyEntries = new Set([...onlySuites, ...onlyTests]);
   if (onlyEntries.size) {
-    suite._entries = suite._entries.filter(e => onlyEntries.has(e)); // Preserve the order.
+    const hooks = new Set<TestCase | Suite>(suite.tests.filter(test => test._kind !== 'test'));
+    suite._entries = suite._entries.filter(e => onlyEntries.has(e) || hooks.has(e)); // Preserve the order.
     return true;
   }
   return false;
