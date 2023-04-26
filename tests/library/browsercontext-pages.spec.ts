@@ -80,7 +80,7 @@ it('should click the button with deviceScaleFactor set', async ({ browser, serve
   await context.close();
 });
 
-it('should click the button with offset with page scale', async ({ browser, server, headless, browserName, browserVersion }) => {
+it('should click the button with offset with page scale', async ({ browser, server, headless, browserName, browserVersion, isMac }) => {
   it.skip(browserName === 'firefox');
 
   const context = await browser.newContext({ viewport: { width: 400, height: 400 }, isMobile: true });
@@ -96,7 +96,7 @@ it('should click the button with offset with page scale', async ({ browser, serv
   let expected = { x: 28, y: 18 };  // 20;10 + 8px of border in each direction
   if (browserName === 'webkit') {
     // WebKit for macOS 12 has different expectations starting r1829.
-    if (parseInt(os.release(), 10) < 21) {
+    if (isMac && parseInt(os.release(), 10) < 21) {
       // WebKit rounds down during css -> dip -> css conversion.
       expected = { x: 26, y: 17 };
     } else {
