@@ -162,7 +162,8 @@ it.describe('screencast', () => {
     expect(error.message).toContain('"videoSize" option requires "videosPath" to be specified');
   });
 
-  it('should work with old options', async ({ browser, browserName, trace }, testInfo) => {
+  it('should work with old options', async ({ browser, browserName, trace, headless, isWindows }, testInfo) => {
+    it.fixme(browserName === 'firefox' && !headless && isWindows, 'https://github.com/microsoft/playwright/issues/22618');
     const videosPath = testInfo.outputPath('');
     // Firefox does not have a mobile variant and has a large minimum size (500 on windows and 450 elsewhere).
     const size = browserName === 'firefox' ? { width: 500, height: 400 } : { width: 320, height: 240 };
@@ -186,7 +187,8 @@ it.describe('screencast', () => {
     expect(error.message).toContain('recordVideo.dir: expected string, got undefined');
   });
 
-  it('should capture static page', async ({ browser, browserName, trace }, testInfo) => {
+  it('should capture static page', async ({ browser, browserName, trace, headless, isWindows }, testInfo) => {
+    it.fixme(browserName === 'firefox' && !headless && isWindows, 'https://github.com/microsoft/playwright/issues/22618');
     // Firefox does not have a mobile variant and has a large minimum size (500 on windows and 450 elsewhere).
     const size = browserName === 'firefox' ? { width: 500, height: 400 } : { width: 320, height: 240 };
     const context = await browser.newContext({
@@ -709,10 +711,11 @@ it.describe('screencast', () => {
     expectAll(pixels, almostRed);
   });
 
-  it('should capture full viewport on hidpi', async ({ browserType, browserName, headless, isWindows }, testInfo) => {
+  it('should capture full viewport on hidpi', async ({ browserType, browserName, headless, isWindows, isLinux }, testInfo) => {
     it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22411' });
     it.fixme(browserName === 'chromium' && !headless, 'The square is not on the video');
     it.fixme(browserName === 'firefox' && isWindows, 'https://github.com/microsoft/playwright/issues/14405');
+    it.fixme(browserName === 'webkit' && isLinux, 'https://github.com/microsoft/playwright/issues/22617');
     const size = { width: 600, height: 400 };
     const browser = await browserType.launch();
 
