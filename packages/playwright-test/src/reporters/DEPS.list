@@ -5,4 +5,4 @@
 ../utilsBundle.ts
 
 [blob.ts]
-../runner/loadUtils.ts
+../runner/reporters.ts

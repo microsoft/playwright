@@ -19,12 +19,13 @@ import { monotonicTime } from 'playwright-core/lib/utils';
 import type { FullResult } from '../../types/testReporter';
 import { webServerPluginsForConfig } from '../plugins/webServerPlugin';
 import { collectFilesForProject, filterProjects } from './projectUtils';
-import { createReporter } from './reporters';
+import { createReporters } from './reporters';
 import { TestRun, createTaskRunner, createTaskRunnerForList } from './tasks';
 import type { FullConfigInternal } from '../common/config';
 import { colors } from 'playwright-core/lib/utilsBundle';
 import { runWatchModeLoop } from './watchMode';
 import { runUIMode } from './uiMode';
+import { Multiplexer } from '../reporters/multiplexer';
 
 export class Runner {
   private _config: FullConfigInternal;
@@ -68,7 +69,7 @@ export class Runner {
     // Legacy webServer support.
     webServerPluginsForConfig(config).forEach(p => config.plugins.push({ factory: p }));
 
-    const reporter = await createReporter(config, listOnly ? 'list' : 'run');
+    const reporter = new Multiplexer(await createReporters(config, listOnly ? 'list' : 'run'));
     const taskRunner = listOnly ? createTaskRunnerForList(config, reporter, 'in-process')
       : createTaskRunner(config, reporter);
 
