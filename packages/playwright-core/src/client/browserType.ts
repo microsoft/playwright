@@ -51,8 +51,6 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
   _defaultContextOptions?: BrowserContextOptions;
   private _defaultLaunchOptions?: LaunchOptions;
   private _defaultConnectOptions?: ConnectOptions;
-  private _onDidCreateContext?: (context: BrowserContext) => Promise<void>;
-  private _onWillCloseContext?: (context: BrowserContext) => Promise<void>;
 
   static from(browserType: channels.BrowserTypeChannel): BrowserType {
     return (browserType as any)._object;
@@ -254,11 +252,11 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     context._browserType = this;
     this._contexts.add(context);
     context._setOptions(contextOptions, browserOptions);
-    await this._onDidCreateContext?.(context);
+    await this._instrumentation.onDidCreateBrowserContext(context);
   }
 
   async _willCloseContext(context: BrowserContext) {
     this._contexts.delete(context);
-    await this._onWillCloseContext?.(context);
+    await this._instrumentation.onWillCloseBrowserContext(context);
   }
 }
