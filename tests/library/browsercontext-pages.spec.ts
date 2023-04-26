@@ -92,25 +92,14 @@ it('should click the button with offset with page scale', async ({ browser, serv
   });
   await page.click('button', { position: { x: 20, y: 10 } });
   expect(await page.evaluate('result')).toBe('Clicked');
-  const round = x => Math.round(x + 0.01);
-  let expected = { x: 28, y: 18 };  // 20;10 + 8px of border in each direction
-  if (browserName === 'webkit') {
-    // WebKit for macOS 12 has different expectations starting r1829.
-    if (isMac && parseInt(os.release(), 10) < 21) {
-      // WebKit rounds down during css -> dip -> css conversion.
-      expected = { x: 26, y: 17 };
-    } else {
-      expected = { x: 29, y: 19 };
-    }
-  } else if (browserName === 'chromium' && headless) {
-    // Headless Chromium rounds down during css -> dip -> css conversion.
-    expected = { x: 27, y: 18 };
-  } else if (browserName === 'chromium' && !headless && !chromiumVersionLessThan(browserVersion, '92.0.4498.0')) {
-    // New headed Chromium rounds down during css -> dip -> css conversion as well.
-    expected = { x: 27, y: 18 };
-  }
-  expect(round(await page.evaluate('pageX'))).toBe(expected.x);
-  expect(round(await page.evaluate('pageY'))).toBe(expected.y);
+  const expectCloseTo = (expected, actual) => {
+    if (Math.abs(expected - actual) > 2)
+      throw new Error(`Expected: ${expected}\nReceived: ${actual}`);
+  };
+  // Expect 20;10 + 8px of border in each direction. Allow some delta as different
+  // browsers round up or down differently during css -> dip -> css conversion.
+  expectCloseTo(28, await page.evaluate('pageX'));
+  expectCloseTo(18, await page.evaluate('pageY'));
   await context.close();
 });
 
