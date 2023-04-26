@@ -16,8 +16,7 @@
  */
 
 import { browserTest as it, expect } from '../config/browserTest';
-import { attachFrame, chromiumVersionLessThan } from '../config/utils';
-import os from 'os';
+import { attachFrame } from '../config/utils';
 
 it('should not be visible in context.pages', async ({ contextFactory }) => {
   const context = await contextFactory();
