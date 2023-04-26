@@ -658,3 +658,26 @@ test('should check ipv4 and ipv6 with happy eyeballs when URL is passed', async 
   expect(result.output).toContain(`HTTP GET: http://localhost:${port}/`);
   expect(result.output).toContain('WebServer available');
 });
+
+test('should forward stdout when set to "pipe"', async ({ runInlineTest }, { workerIndex }) => {
+  const port = workerIndex * 2 + 10500;
+  const result = await runInlineTest({
+    'test.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({}) => {});
+    `,
+    'playwright.config.ts': `
+      module.exports = {
+        webServer: {
+          command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port}',
+          port: ${port},
+          stdout: 'pipe',
+        }
+      };
+    `,
+  }, undefined);
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.output).toContain('[WebServer] listening');
+  expect(result.output).toContain('[WebServer] error from server'); // stderr is always getting forwarded
+});

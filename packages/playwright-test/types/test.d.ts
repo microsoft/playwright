@@ -6371,6 +6371,12 @@ interface TestConfigWebServer {
   reuseExistingServer?: boolean;
 
   /**
+   * If `"pipe"`, it will pipe the stdout of the command to the process stdout. If `"ignore"`, it will ignore the stdout
+   * of the command. Default to `"ignore"`.
+   */
+  stdout?: "pipe"|"ignore";
+
+  /**
    * Current working directory of the spawned process, defaults to the directory of the configuration file.
    */
   cwd?: string;
