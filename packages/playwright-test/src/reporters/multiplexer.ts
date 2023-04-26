@@ -15,47 +15,18 @@
  */
 
 import type { FullConfig, TestCase, TestError, TestResult, FullResult, TestStep, Reporter } from '../../types/testReporter';
-import { Suite } from '../common/test';
-import type { FullConfigInternal } from '../common/config';
-import { addSnippetToError } from './base';
+import type { Suite } from '../common/test';
 
-type StdIOChunk = {
-  chunk: string | Buffer;
-  test?: TestCase;
-  result?: TestResult;
-};
-
-export class Multiplexer {
+export class Multiplexer implements Reporter {
   private _reporters: Reporter[];
-  private _deferred: { error?: TestError, stdout?: StdIOChunk, stderr?: StdIOChunk }[] | null = [];
-  private _config!: FullConfigInternal;
 
   constructor(reporters: Reporter[]) {
     this._reporters = reporters;
   }
 
-  printsToStdio() {
-    return this._reporters.some(r => r.printsToStdio ? r.printsToStdio() : true);
-  }
-
-  onConfigure(config: FullConfigInternal) {
-    this._config = config;
-  }
-
   onBegin(config: FullConfig, suite: Suite) {
     for (const reporter of this._reporters)
       wrap(() => reporter.onBegin?.(config, suite));
-
-    const deferred = this._deferred!;
-    this._deferred = null;
-    for (const item of deferred) {
-      if (item.error)
-        this.onError(item.error);
-      if (item.stdout)
-        this.onStdOut(item.stdout.chunk, item.stdout.test, item.stdout.result);
-      if (item.stderr)
-        this.onStdErr(item.stderr.chunk, item.stderr.test, item.stderr.result);
-    }
   }
 
   onTestBegin(test: TestCase, result: TestResult) {
@@ -64,76 +35,52 @@ export class Multiplexer {
   }
 
   onStdOut(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
-    if (this._deferred) {
-      this._deferred.push({ stdout: { chunk, test, result } });
-      return;
-    }
     for (const reporter of this._reporters)
       wrap(() => reporter.onStdOut?.(chunk, test, result));
   }
 
   onStdErr(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
-    if (this._deferred) {
-      this._deferred.push({ stderr: { chunk, test, result } });
-      return;
-    }
-
     for (const reporter of this._reporters)
       wrap(() => reporter.onStdErr?.(chunk, test, result));
   }
 
   onTestEnd(test: TestCase, result: TestResult) {
-    this._addSnippetToTestErrors(test, result);
     for (const reporter of this._reporters)
       wrap(() => reporter.onTestEnd?.(test, result));
   }
 
-  async onEnd() { }
-
-  async onExit(result: FullResult) {
-    if (this._deferred) {
-      // onBegin was not reported, emit it.
-      this.onBegin(this._config.config, new Suite('', 'root'));
-    }
-
+  async onEnd(result: FullResult) {
     for (const reporter of this._reporters)
-      await Promise.resolve().then(() => reporter.onEnd?.(result)).catch(e => console.error('Error in reporter', e));
+      await wrapAsync(() => reporter.onEnd?.(result));
+  }
 
+  async onExit() {
     for (const reporter of this._reporters)
-      await Promise.resolve().then(() => reporter.onExit?.()).catch(e => console.error('Error in reporter', e));
+      await wrapAsync(() => reporter.onExit?.());
   }
 
   onError(error: TestError) {
-    if (this._deferred) {
-      this._deferred.push({ error });
-      return;
-    }
-    addSnippetToError(this._config.config, error);
     for (const reporter of this._reporters)
       wrap(() => reporter.onError?.(error));
   }
 
   onStepBegin(test: TestCase, result: TestResult, step: TestStep) {
     for (const reporter of this._reporters)
-      wrap(() => (reporter as any).onStepBegin?.(test, result, step));
+      wrap(() => reporter.onStepBegin?.(test, result, step));
   }
 
   onStepEnd(test: TestCase, result: TestResult, step: TestStep) {
-    this._addSnippetToStepError(test, step);
     for (const reporter of this._reporters)
-      wrap(() => (reporter as any).onStepEnd?.(test, result, step));
+      wrap(() => reporter.onStepEnd?.(test, result, step));
   }
+}
 
-  private _addSnippetToTestErrors(test: TestCase, result: TestResult) {
-    for (const error of result.errors)
-      addSnippetToError(this._config.config, error, test.location.file);
+async function wrapAsync(callback: () => void | Promise<void>) {
+  try {
+    await callback();
+  } catch (e) {
+    console.error('Error in reporter', e);
   }
-
-  private _addSnippetToStepError(test: TestCase, step: TestStep) {
-    if (step.error)
-      addSnippetToError(this._config.config, step.error, test.location.file);
-  }
-
 }
 
 function wrap(callback: () => void) {

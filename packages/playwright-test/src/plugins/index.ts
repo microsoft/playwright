@@ -15,11 +15,11 @@
  */
 
 import type { FullConfig, Suite } from '../../types/testReporter';
-import type { Multiplexer } from '../reporters/multiplexer';
+import type { InternalReporter } from '../reporters/internalReporter';
 
 export interface TestRunnerPlugin {
   name: string;
-  setup?(config: FullConfig, configDir: string, reporter: Multiplexer): Promise<void>;
+  setup?(config: FullConfig, configDir: string, reporter: InternalReporter): Promise<void>;
   babelPlugins?(): Promise<[string, any?][]>;
   begin?(suite: Suite): Promise<void>;
   end?(): Promise<void>;

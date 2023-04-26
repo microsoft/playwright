@@ -25,7 +25,7 @@ import type { FullConfigInternal } from '../common/config';
 import { colors } from 'playwright-core/lib/utilsBundle';
 import { runWatchModeLoop } from './watchMode';
 import { runUIMode } from './uiMode';
-import { Multiplexer } from '../reporters/multiplexer';
+import { InternalReporter } from '../reporters/internalReporter';
 
 export class Runner {
   private _config: FullConfigInternal;
@@ -69,7 +69,7 @@ export class Runner {
     // Legacy webServer support.
     webServerPluginsForConfig(config).forEach(p => config.plugins.push({ factory: p }));
 
-    const reporter = new Multiplexer(await createReporters(config, listOnly ? 'list' : 'run'));
+    const reporter = new InternalReporter(await createReporters(config, listOnly ? 'list' : 'run'));
     const taskRunner = listOnly ? createTaskRunnerForList(config, reporter, 'in-process')
       : createTaskRunner(config, reporter);
 

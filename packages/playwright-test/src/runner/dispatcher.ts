@@ -24,7 +24,7 @@ import { ManualPromise } from 'playwright-core/lib/utils';
 import { WorkerHost } from './workerHost';
 import type { TestGroup } from './testGroups';
 import type { FullConfigInternal } from '../common/config';
-import type { Multiplexer } from '../reporters/multiplexer';
+import type { InternalReporter } from '../reporters/internalReporter';
 
 type TestResultData = {
   result: TestResult;
@@ -46,14 +46,14 @@ export class Dispatcher {
 
   private _testById = new Map<string, TestData>();
   private _config: FullConfigInternal;
-  private _reporter: Multiplexer;
+  private _reporter: InternalReporter;
   private _hasWorkerErrors = false;
   private _failureCount = 0;
 
   private _extraEnvByProjectId: EnvByProjectId = new Map();
   private _producedEnvByProjectId: EnvByProjectId = new Map();
 
-  constructor(config: FullConfigInternal, reporter: Multiplexer) {
+  constructor(config: FullConfigInternal, reporter: InternalReporter) {
     this._config = config;
     this._reporter = reporter;
   }
@@ -75,7 +75,7 @@ export class Dispatcher {
       for (const test of group.tests) {
         const result = test._appendTestResult();
         result.status = 'skipped';
-        this._reporter.onTestBegin?.(test, result);
+        this._reporter.onTestBegin(test, result);
         test.annotations = [...test._staticAnnotations];
         this._reportTestEnd(test, result);
       }
@@ -222,7 +222,7 @@ export class Dispatcher {
       result.parallelIndex = worker.parallelIndex;
       result.workerIndex = worker.workerIndex;
       result.startTime = new Date(params.startWallTime);
-      this._reporter.onTestBegin?.(data.test, result);
+      this._reporter.onTestBegin(data.test, result);
       worker.currentTestId = params.testId;
     };
     worker.addListener('testBegin', onTestBegin);
@@ -284,7 +284,7 @@ export class Dispatcher {
       };
       steps.set(params.stepId, step);
       (parentStep || result).steps.push(step);
-      this._reporter.onStepBegin?.(data.test, result, step);
+      this._reporter.onStepBegin(data.test, result, step);
     };
     worker.on('stepBegin', onStepBegin);
 
@@ -298,14 +298,14 @@ export class Dispatcher {
       const { result, steps } = runData;
       const step = steps.get(params.stepId);
       if (!step) {
-        this._reporter.onStdErr?.('Internal error: step end without step begin: ' + params.stepId, data.test, result);
+        this._reporter.onStdErr('Internal error: step end without step begin: ' + params.stepId, data.test, result);
         return;
       }
       step.duration = params.wallTime - step.startTime.getTime();
       if (params.error)
         step.error = params.error;
       steps.delete(params.stepId);
-      this._reporter.onStepEnd?.(data.test, result, step);
+      this._reporter.onStepEnd(data.test, result, step);
     };
     worker.on('stepEnd', onStepEnd);
 
@@ -342,7 +342,7 @@ export class Dispatcher {
               if (onlyStartedTests)
                 return true;
               result = data.test._appendTestResult();
-              this._reporter.onTestBegin?.(test, result);
+              this._reporter.onTestBegin(test, result);
             }
             result.errors = [...errors];
             result.error = result.errors[0];
@@ -358,7 +358,7 @@ export class Dispatcher {
           // Let's just fail the test run.
           this._hasWorkerErrors = true;
           for (const error of params.fatalErrors)
-            this._reporter.onError?.(error);
+            this._reporter.onError(error);
         }
       };
 
@@ -410,7 +410,7 @@ export class Dispatcher {
 
         // Emulate a "skipped" run, and drop this test from remaining.
         const result = test._appendTestResult();
-        this._reporter.onTestBegin?.(test, result);
+        this._reporter.onTestBegin(test, result);
         result.status = 'skipped';
         this._reportTestEnd(test, result);
         return false;
@@ -470,17 +470,17 @@ export class Dispatcher {
     worker.on('stdOut', (params: TestOutputPayload) => {
       const { chunk, test, result } = handleOutput(params);
       result?.stdout.push(chunk);
-      this._reporter.onStdOut?.(chunk, test, result);
+      this._reporter.onStdOut(chunk, test, result);
     });
     worker.on('stdErr', (params: TestOutputPayload) => {
       const { chunk, test, result } = handleOutput(params);
       result?.stderr.push(chunk);
-      this._reporter.onStdErr?.(chunk, test, result);
+      this._reporter.onStdErr(chunk, test, result);
     });
     worker.on('teardownErrors', (params: TeardownErrorsPayload) => {
       this._hasWorkerErrors = true;
       for (const error of params.fatalErrors)
-        this._reporter.onError?.(error);
+        this._reporter.onError(error);
     });
     worker.on('exit', () => {
       const producedEnv = this._producedEnvByProjectId.get(testGroup.projectId) || {};
@@ -509,7 +509,7 @@ export class Dispatcher {
   private _reportTestEnd(test: TestCase, result: TestResult) {
     if (result.status !== 'skipped' && result.status !== test.expectedStatus)
       ++this._failureCount;
-    this._reporter.onTestEnd?.(test, result);
+    this._reporter.onTestEnd(test, result);
     const maxFailures = this._config.config.maxFailures;
     if (maxFailures && this._failureCount === maxFailures)
       this.stop().catch(e => {});
