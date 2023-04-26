@@ -6365,9 +6365,10 @@ interface TestConfigWebServer {
   reuseExistingServer?: boolean;
 
   /**
-   * If `true`, it will forward the stdout of the webserver to the current process. Stderr is always getting forwarded.
+   * If `"pipe"`, it will pipe the stdout of the command to the process stdout. If `"ignore"`, it will ignore the stdout
+   * of the command. Default to `"ignore"`.
    */
-  forwardOutput?: boolean;
+  stdout?: "pipe"|"ignore";
 
   /**
    * Current working directory of the spawned process, defaults to the directory of the configuration file.

@@ -659,7 +659,7 @@ test('should check ipv4 and ipv6 with happy eyeballs when URL is passed', async 
   expect(result.output).toContain('WebServer available');
 });
 
-test('should forward stdout via forwardOutput', async ({ runInlineTest }, { workerIndex }) => {
+test('should forward stdout when set to "pipe"', async ({ runInlineTest }, { workerIndex }) => {
   const port = workerIndex * 2 + 10500;
   const result = await runInlineTest({
     'test.spec.ts': `
@@ -671,7 +671,7 @@ test('should forward stdout via forwardOutput', async ({ runInlineTest }, { work
         webServer: {
           command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port}',
           port: ${port},
-          forwardOutput: true,
+          stdout: 'pipe',
         }
       };
     `,
