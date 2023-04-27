@@ -1670,3 +1670,51 @@ test.describe('labels', () => {
     await expect(page.locator('.chip', { hasText: 'c.test.js' })).toHaveCount(1);
   });
 });
+
+test('should list tests in the right order', async ({ runInlineTest, showReport, page }) => {
+  await runInlineTest({
+    'main.spec.ts': `
+      import firstTest from './first';
+      import secondTest from './second';
+      import { test, expect } from '@playwright/test';
+
+      test.describe('main', () => {
+        test.describe('first', firstTest);
+        test.describe('second', secondTest);
+        test('fails', () => {
+          expect(1).toBe(2);
+        });
+      });
+    `,
+    'first.ts': `
+      import { test, expect } from '@playwright/test';
+
+      // comments to change the line number
+      // comment
+      // comment
+      // comment
+      // comment
+      // comment
+      // comment
+      export default function() {
+        test('passes', () => {});
+      }
+    `,
+    'second.ts': `
+      import { test, expect } from '@playwright/test';
+
+      export default function() {
+        test('passes', () => {});
+      }
+    `,
+  }, { reporter: 'html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+
+  await showReport();
+
+  // Failing test first, then sorted by the run order.
+  await expect(page.locator('.test-file-test')).toHaveText([
+    /main › fails\d+m?smain.spec.ts:9/,
+    /main › first › passes\d+m?sfirst.ts:12/,
+    /main › second › passes\d+m?ssecond.ts:5/,
+  ]);
+});

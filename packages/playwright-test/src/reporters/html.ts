@@ -258,9 +258,7 @@ class HtmlBuilder {
       const testCaseSummaryComparator = (t1: TestCaseSummary, t2: TestCaseSummary) => {
         const w1 = (t1.outcome === 'unexpected' ? 1000 : 0) +  (t1.outcome === 'flaky' ? 1 : 0);
         const w2 = (t2.outcome === 'unexpected' ? 1000 : 0) +  (t2.outcome === 'flaky' ? 1 : 0);
-        if (w2 - w1)
-          return w2 - w1;
-        return t1.location.line - t2.location.line;
+        return w2 - w1;
       };
       testFileSummary.tests.sort(testCaseSummaryComparator);
 
