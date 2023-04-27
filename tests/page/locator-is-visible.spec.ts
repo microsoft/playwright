@@ -85,3 +85,29 @@ it('isVisible inside a role=button', async ({ page }) => {
   await span.waitFor({ state: 'hidden' });
   await page.locator('[role=button]').waitFor({ state: 'visible' });
 });
+
+it.describe('nested inline elements visible', () => {
+  it('inline -> inline -> block: visible', async ({ page }) => {
+    await page.setContent(`<ng-card><ng-title><div style="width: 100px; height: 100px;"></div></ng-title></ng-card>`);
+    const card = page.locator('ng-card');
+    expect(await card.isVisible()).toBe(true);
+    expect(await card.isHidden()).toBe(false);
+    expect(await page.isVisible('ng-card')).toBe(true);
+    expect(await page.isHidden('ng-card')).toBe(false);
+    await expect(card).toBeVisible();
+    await expect(card).not.toBeHidden();
+    await card.waitFor();
+  });
+
+  it('inline -> inline + empty block: hidden', async ({ page }) => {
+    await page.setContent(`<ng-card><ng-title></ng-title><div></div></ng-card>`);
+    const card = page.locator('ng-card');
+    expect(await card.isVisible()).toBe(false);
+    expect(await card.isHidden()).toBe(true);
+    expect(await page.isVisible('ng-card')).toBe(false);
+    expect(await page.isHidden('ng-card')).toBe(true);
+    await expect(card).not.toBeVisible();
+    await expect(card).toBeHidden();
+    await card.waitFor({ state: 'hidden' });
+  });
+});

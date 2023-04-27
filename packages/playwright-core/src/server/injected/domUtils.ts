@@ -100,7 +100,21 @@ export function isElementVisible(element: Element): boolean {
   if (!isElementStyleVisibilityVisible(element, style))
     return false;
   const rect = element.getBoundingClientRect();
-  return rect.width > 0 && rect.height > 0;
+  const visible = rect.width > 0 && rect.height > 0;
+  // webkit will report visible nested inline elements to be hidden with zero width
+  if (!visible && style.display === 'inline' && rect.height > 0) {
+    for (let child = element.firstChild; child; child = child.nextSibling) {
+      // webkit has already count all the other children into boudning client rect and form a result of hidden,
+      // so here we only need to check the inline children to see if there are any visible inline children
+      if (child.nodeType === 1 /* Node.ELEMENT_NODE */) {
+        const style = getElementComputedStyle(child as Element);
+        if (style?.display === 'inline' && isElementVisible(child as Element))
+          return true;
+      }
+    }
+    return false;
+  }
+  return visible;
 }
 
 function isVisibleTextNode(node: Text) {
