@@ -27,7 +27,7 @@ addopts = --headed --browser firefox
 - `--headed`: Run tests in headed mode (default: headless).
 - `--browser`: Run tests in a different browser `chromium`, `firefox`, or `webkit`. It can be specified multiple times (default: `chromium`).
 - `--browser-channel` [Browser channel](./browsers.md) to be used.
-- `--slowmo` Run tests with slow mo.
+- `--slowmo` Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on (default: 0).
 - `--device` [Device](./emulation.md) to be emulated.
 - `--output` Directory for artifacts produced by tests (default: `test-results`).
 - `--tracing` Whether to record a [trace](./trace-viewer.md) for each test. `on`, `off`, or `retain-on-failure` (default: `off`).
@@ -98,6 +98,8 @@ Run tests with slow mo with the `--slowmo` argument.
 ```bash
 pytest --slowmo 100
 ```
+
+Slows down Playwright operations by 100 milliseconds. 
 
 ### Skip test by browser
 
