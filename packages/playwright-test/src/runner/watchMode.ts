@@ -17,7 +17,7 @@
 import readline from 'readline';
 import { createGuid, ManualPromise } from 'playwright-core/lib/utils';
 import type { FullConfigInternal, FullProjectInternal } from '../common/config';
-import { Multiplexer } from '../reporters/multiplexer';
+import { InternalReporter } from '../reporters/internalReporter';
 import { createFileMatcher, createFileMatcherFromArguments } from '../util';
 import type { Matcher } from '../util';
 import { TestRun, createTaskRunnerForWatch, createTaskRunnerForWatchSetup } from './tasks';
@@ -112,7 +112,7 @@ export async function runWatchModeLoop(config: FullConfigInternal): Promise<Full
     p.project.retries = 0;
 
   // Perform global setup.
-  const reporter = new Multiplexer([new ListReporter()]);
+  const reporter = new InternalReporter([new ListReporter()]);
   const testRun = new TestRun(config, reporter);
   const taskRunner = createTaskRunnerForWatchSetup(config, reporter);
   reporter.onConfigure(config);
@@ -275,7 +275,7 @@ async function runTests(config: FullConfigInternal, failedTestIdCollector: Set<s
     title?: string,
   }) {
   printConfiguration(config, options?.title);
-  const reporter = new Multiplexer([new ListReporter()]);
+  const reporter = new InternalReporter([new ListReporter()]);
   const taskRunner = createTaskRunnerForWatch(config, reporter, options?.additionalFileMatcher);
   const testRun = new TestRun(config, reporter);
   clearCompilationCache();

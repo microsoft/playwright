@@ -20,7 +20,7 @@ import { isUnderTest, ManualPromise } from 'playwright-core/lib/utils';
 import type { FullResult } from '../../reporter';
 import { clearCompilationCache, collectAffectedTestFiles, dependenciesForTestFile } from '../common/compilationCache';
 import type { FullConfigInternal } from '../common/config';
-import { Multiplexer } from '../reporters/multiplexer';
+import { InternalReporter } from '../reporters/internalReporter';
 import { TeleReporterEmitter } from '../reporters/teleEmitter';
 import { createReporters } from './reporters';
 import { TestRun, createTaskRunnerForList, createTaskRunnerForWatch, createTaskRunnerForWatchSetup } from './tasks';
@@ -65,7 +65,7 @@ class UIMode {
   }
 
   async runGlobalSetup(): Promise<FullResult['status']> {
-    const reporter = new Multiplexer([new ListReporter()]);
+    const reporter = new InternalReporter([new ListReporter()]);
     const taskRunner = createTaskRunnerForWatchSetup(this._config, reporter);
     reporter.onConfigure(this._config);
     const testRun = new TestRun(this._config, reporter);
@@ -144,7 +144,7 @@ class UIMode {
 
   private async _listTests() {
     const listReporter = new TeleReporterEmitter(e => this._dispatchEvent(e));
-    const reporter = new Multiplexer([listReporter]);
+    const reporter = new InternalReporter([listReporter]);
     this._config.cliListOnly = true;
     this._config.testIdMatcher = undefined;
     const taskRunner = createTaskRunnerForList(this._config, reporter, 'out-of-process');
@@ -169,7 +169,7 @@ class UIMode {
 
     const reporters = await createReporters(this._config, 'ui');
     reporters.push(new TeleReporterEmitter(e => this._dispatchEvent(e)));
-    const reporter = new Multiplexer(reporters);
+    const reporter = new InternalReporter(reporters);
     const taskRunner = createTaskRunnerForWatch(this._config, reporter);
     const testRun = new TestRun(this._config, reporter);
     clearCompilationCache();

@@ -20,7 +20,7 @@ import { promisify } from 'util';
 import { debug, rimraf } from 'playwright-core/lib/utilsBundle';
 import { Dispatcher, type EnvByProjectId } from './dispatcher';
 import type { TestRunnerPluginRegistration } from '../plugins';
-import type { Multiplexer } from '../reporters/multiplexer';
+import type { InternalReporter } from '../reporters/internalReporter';
 import { createTestGroups, type TestGroup } from '../runner/testGroups';
 import type { Task } from './taskRunner';
 import { TaskRunner } from './taskRunner';
@@ -44,7 +44,7 @@ export type Phase = {
 };
 
 export class TestRun {
-  readonly reporter: Multiplexer;
+  readonly reporter: InternalReporter;
   readonly config: FullConfigInternal;
   rootSuite: Suite | undefined = undefined;
   readonly phases: Phase[] = [];
@@ -53,13 +53,13 @@ export class TestRun {
   projectType: Map<FullProjectInternal, 'top-level' | 'dependency'> = new Map();
   projectSuites: Map<FullProjectInternal, Suite[]> = new Map();
 
-  constructor(config: FullConfigInternal, reporter: Multiplexer) {
+  constructor(config: FullConfigInternal, reporter: InternalReporter) {
     this.config = config;
     this.reporter = reporter;
   }
 }
 
-export function createTaskRunner(config: FullConfigInternal, reporter: Multiplexer): TaskRunner<TestRun> {
+export function createTaskRunner(config: FullConfigInternal, reporter: InternalReporter): TaskRunner<TestRun> {
   const taskRunner = new TaskRunner<TestRun>(reporter, config.config.globalTimeout);
   addGlobalSetupTasks(taskRunner, config);
   taskRunner.addTask('load tests', createLoadTask('in-process', true));
@@ -67,13 +67,13 @@ export function createTaskRunner(config: FullConfigInternal, reporter: Multiplex
   return taskRunner;
 }
 
-export function createTaskRunnerForWatchSetup(config: FullConfigInternal, reporter: Multiplexer): TaskRunner<TestRun> {
+export function createTaskRunnerForWatchSetup(config: FullConfigInternal, reporter: InternalReporter): TaskRunner<TestRun> {
   const taskRunner = new TaskRunner<TestRun>(reporter, 0);
   addGlobalSetupTasks(taskRunner, config);
   return taskRunner;
 }
 
-export function createTaskRunnerForWatch(config: FullConfigInternal, reporter: Multiplexer, additionalFileMatcher?: Matcher): TaskRunner<TestRun> {
+export function createTaskRunnerForWatch(config: FullConfigInternal, reporter: InternalReporter, additionalFileMatcher?: Matcher): TaskRunner<TestRun> {
   const taskRunner = new TaskRunner<TestRun>(reporter, 0);
   taskRunner.addTask('load tests', createLoadTask('out-of-process', true, additionalFileMatcher));
   addRunTasks(taskRunner, config);
@@ -91,7 +91,7 @@ function addGlobalSetupTasks(taskRunner: TaskRunner<TestRun>, config: FullConfig
 function addRunTasks(taskRunner: TaskRunner<TestRun>, config: FullConfigInternal) {
   taskRunner.addTask('create phases', createPhasesTask());
   taskRunner.addTask('report begin', async ({ reporter, rootSuite }) => {
-    reporter.onBegin?.(config.config, rootSuite!);
+    reporter.onBegin(config.config, rootSuite!);
     return () => reporter.onEnd();
   });
   for (const plugin of config.plugins)
@@ -101,11 +101,11 @@ function addRunTasks(taskRunner: TaskRunner<TestRun>, config: FullConfigInternal
   return taskRunner;
 }
 
-export function createTaskRunnerForList(config: FullConfigInternal, reporter: Multiplexer, mode: 'in-process' | 'out-of-process'): TaskRunner<TestRun> {
+export function createTaskRunnerForList(config: FullConfigInternal, reporter: InternalReporter, mode: 'in-process' | 'out-of-process'): TaskRunner<TestRun> {
   const taskRunner = new TaskRunner<TestRun>(reporter, config.config.globalTimeout);
   taskRunner.addTask('load tests', createLoadTask(mode, false));
   taskRunner.addTask('report begin', async ({ reporter, rootSuite }) => {
-    reporter.onBegin?.(config.config, rootSuite!);
+    reporter.onBegin(config.config, rootSuite!);
     return () => reporter.onEnd();
   });
   return taskRunner;
