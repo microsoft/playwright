@@ -108,7 +108,7 @@ export class Filter {
       if (test.outcome === 'skipped')
         status = 'skipped';
       const searchValues: SearchValues = {
-        text: (status + ' ' + test.projectName + ' ' + test.path.join(' ') + test.title).toLowerCase(),
+        text: (status + ' ' + test.projectName + ' ' + test.path.join(' ') + ' ' + test.title).toLowerCase(),
         project: test.projectName.toLowerCase(),
         status: status as any,
       };
