@@ -98,7 +98,7 @@ function addMergeReportsCommand(program: Command) {
     }
   });
   command.option('-c, --config <file>', `Configuration file. Can be used to specify additional configuration for the output report.`);
-  command.option('--reporter <reporter>', 'Output report type', 'list');
+  command.option('--reporter <reporter...>', 'Output report type', 'list');
   command.addHelpText('afterAll', `
 Arguments [dir]:
   Directory containing blob reports.
@@ -178,10 +178,10 @@ async function mergeReports(reportDir: string | undefined, opts: { [key: string]
 
   const configLoader = new ConfigLoader();
   const config = await (configFile ? configLoader.loadConfigFile(configFile) : configLoader.loadEmptyConfig(process.cwd()));
-  const dir = path.resolve(process.cwd(), reportDir || 'playwright-report');
+  const dir = path.resolve(process.cwd(), reportDir || '');
   if (!(await fs.promises.stat(dir)).isDirectory())
     throw new Error('Directory does not exist: ' + dir);
-  await createMergedReport(config, dir, opts.reporter || 'list');
+  await createMergedReport(config, dir, opts.reporter || ['list']);
 }
 
 function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrides {
