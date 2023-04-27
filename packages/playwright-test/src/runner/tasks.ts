@@ -28,6 +28,7 @@ import type { FullConfigInternal, FullProjectInternal } from '../common/config';
 import { collectProjectsAndTestFiles, createRootSuite, loadFileSuites, loadGlobalHook } from './loadUtils';
 import type { Matcher } from '../util';
 import type { Suite } from '../common/test';
+import { buildDependentProjects, buildTeardownToSetupMap } from './projectUtils';
 
 const removeFolderAsync = promisify(rimraf);
 const readDirAsync = promisify(fs.readdir);
@@ -182,13 +183,23 @@ function createPhasesTask(): Task<TestRun> {
 
     const processed = new Set<FullProjectInternal>();
     const projectToSuite = new Map(testRun.rootSuite!.suites.map(suite => [suite._fullProject!, suite]));
+    const allProjects = [...projectToSuite.keys()];
+    const teardownToSetup = buildTeardownToSetupMap(allProjects);
+    const teardownToSetupDependents = new Map<FullProjectInternal, FullProjectInternal[]>();
+    for (const [teardown, setup] of teardownToSetup) {
+      const closure = buildDependentProjects(setup, allProjects);
+      closure.delete(teardown);
+      teardownToSetupDependents.set(teardown, [...closure]);
+    }
+
     for (let i = 0; i < projectToSuite.size; i++) {
       // Find all projects that have all their dependencies processed by previous phases.
       const phaseProjects: FullProjectInternal[] = [];
       for (const project of projectToSuite.keys()) {
         if (processed.has(project))
           continue;
-        if (project.deps.find(p => !processed.has(p)))
+        const projectsThatShouldFinishFirst = [...project.deps, ...(teardownToSetupDependents.get(project) || [])];
+        if (projectsThatShouldFinishFirst.find(p => !processed.has(p)))
           continue;
         phaseProjects.push(project);
       }
@@ -229,6 +240,7 @@ function createRunTestsTask(): Task<TestRun> {
     const { phases } = testRun;
     const successfulProjects = new Set<FullProjectInternal>();
     const extraEnvByProjectId: EnvByProjectId = new Map();
+    const teardownToSetup = buildTeardownToSetupMap(phases.map(phase => phase.projects.map(p => p.project)).flat());
 
     for (const { dispatcher, projects } of phases) {
       // Each phase contains dispatcher and a set of test groups.
@@ -240,6 +252,9 @@ function createRunTestsTask(): Task<TestRun> {
         let extraEnv: Record<string, string | undefined> = {};
         for (const dep of project.deps)
           extraEnv = { ...extraEnv, ...extraEnvByProjectId.get(dep.id) };
+        const setupForTeardown = teardownToSetup.get(project);
+        if (setupForTeardown)
+          extraEnv = { ...extraEnv, ...extraEnvByProjectId.get(setupForTeardown.id) };
         extraEnvByProjectId.set(project.id, extraEnv);
 
         const hasFailedDeps = project.deps.some(p => !successfulProjects.has(p));

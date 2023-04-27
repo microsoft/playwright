@@ -308,6 +308,8 @@ function affectedProjectsClosure(projectClosure: FullProjectInternal[], affected
         if (result.has(dep))
           result.add(p);
       }
+      if (p.teardown && result.has(p.teardown))
+        result.add(p);
     }
   }
   return result;

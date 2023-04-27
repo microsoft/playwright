@@ -48,6 +48,7 @@ export type JsonProject = {
   repeatEach: number;
   retries: number;
   suites: JsonSuite[];
+  teardown?: string;
   testDir: string;
   testIgnore: JsonPattern[];
   testMatch: JsonPattern[];
@@ -303,6 +304,7 @@ export class TeleReporterReceiver {
       grep: parseRegexPatterns(project.grep) as RegExp[],
       grepInvert: parseRegexPatterns(project.grepInvert) as RegExp[],
       dependencies: project.dependencies,
+      teardown: project.teardown,
       snapshotDir: this._absolutePath(project.snapshotDir),
       use: {},
     };

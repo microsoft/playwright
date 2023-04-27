@@ -57,7 +57,7 @@ behaves as if they were not specified.
 Using dependencies allows global setup to produce traces and other artifacts,
 see the setup steps in the test report, etc.
 
-For example:
+**Usage**
 
 ```js
 // playwright.config.ts
@@ -197,6 +197,52 @@ The maximum number of retry attempts given to failed tests. Learn more about [te
 Use [`method: Test.describe.configure`] to change the number of retries for a specific file or a group of tests.
 
 Use [`property: TestConfig.retries`] to change this option for all projects.
+
+## property: TestProject.teardown
+* since: v1.34
+- type: ?<[string]>
+
+Name of a project that needs to run after this and any dependent projects have finished. Teardown is useful to cleanup any resources acquired by this project.
+
+Passing `--no-deps` argument ignores [`property: TestProject.teardown`] and behaves as if it was not specified.
+
+**Usage**
+
+A common pattern is a "setup" dependency that has a corresponding "teardown":
+
+```js
+// playwright.config.ts
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  projects: [
+    {
+      name: 'setup',
+      testMatch: /global.setup\.ts/,
+      teardown: 'teardown',
+    },
+    {
+      name: 'teardown',
+      testMatch: /global.teardown\.ts/,
+    },
+    {
+      name: 'chromium',
+      use: devices['Desktop Chrome'],
+      dependencies: ['setup'],
+    },
+    {
+      name: 'firefox',
+      use: devices['Desktop Firefox'],
+      dependencies: ['setup'],
+    },
+    {
+      name: 'webkit',
+      use: devices['Desktop Safari'],
+      dependencies: ['setup'],
+    },
+  ],
+});
+```
 
 ## property: TestProject.testDir
 * since: v1.10
