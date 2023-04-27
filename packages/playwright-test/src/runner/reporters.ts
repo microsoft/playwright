@@ -31,7 +31,7 @@ import { loadReporter } from './loadUtils';
 import { BlobReporter } from '../reporters/blob';
 import type { ReporterDescription } from '../../types/test';
 
-export async function createReporters(config: FullConfigInternal, mode: 'list' | 'run' | 'ui' | 'merge', reporterNames?: string[]): Promise<Reporter[]> {
+export async function createReporters(config: FullConfigInternal, mode: 'list' | 'run' | 'ui' | 'merge', descriptions?: ReporterDescription[]): Promise<Reporter[]> {
   const defaultReporters: {[key in BuiltInReporter]: new(arg: any) => Reporter} = {
     dot: mode === 'list' ? ListModeReporter : DotReporter,
     line: mode === 'list' ? ListModeReporter : LineReporter,
@@ -44,9 +44,7 @@ export async function createReporters(config: FullConfigInternal, mode: 'list' |
     blob: BlobReporter,
   };
   const reporters: Reporter[] = [];
-  const descriptions: ReporterDescription[] = reporterNames ?
-    reporterNames.map(name => [name, config.config.reporter.find(([reporterName]) => reporterName === name)]) :
-    config.config.reporter;
+  descriptions ??= config.config.reporter;
   for (const r of descriptions) {
     const [name, arg] = r;
     const options = { ...arg, configDir: config.configDir };
