@@ -23,7 +23,7 @@ import { Runner } from './runner/runner';
 import { stopProfiling, startProfiling } from 'playwright-core/lib/utils';
 import { experimentalLoaderOption, fileIsModule } from './util';
 import { showHTMLReport } from './reporters/html';
-import { createMergedReport } from './reporters/blob';
+import { createMergedReport } from './reporters/merge';
 import { ConfigLoader, kDefaultConfigFiles, resolveConfigFile } from './common/configLoader';
 import type { ConfigCLIOverrides } from './common/ipc';
 import type { FullResult } from '../reporter';
