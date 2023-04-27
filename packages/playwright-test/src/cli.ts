@@ -31,6 +31,7 @@ import type { TraceMode } from '../types/test';
 import { builtInReporters, defaultReporter, defaultTimeout } from './common/config';
 import type { FullConfigInternal } from './common/config';
 import program from 'playwright-core/lib/cli/program';
+import type { ReporterDescription } from '..';
 
 function addTestCommand(program: Command) {
   const command = program.command('test [test-filter...]');
@@ -98,7 +99,7 @@ function addMergeReportsCommand(program: Command) {
     }
   });
   command.option('-c, --config <file>', `Configuration file. Can be used to specify additional configuration for the output report.`);
-  command.option('--reporter <reporter...>', 'Output report type', 'list');
+  command.option('--reporter <reporter>', `Reporter to use, comma-separated, can be ${builtInReporters.map(name => `"${name}"`).join(', ')} (default: "${defaultReporter}")`);
   command.addHelpText('afterAll', `
 Arguments [dir]:
   Directory containing blob reports.
@@ -181,7 +182,12 @@ async function mergeReports(reportDir: string | undefined, opts: { [key: string]
   const dir = path.resolve(process.cwd(), reportDir || '');
   if (!(await fs.promises.stat(dir)).isDirectory())
     throw new Error('Directory does not exist: ' + dir);
-  await createMergedReport(config, dir, opts.reporter || ['list']);
+  let reporterDescriptions: ReporterDescription[] | undefined = resolveReporterOption(opts.reporter);
+  if (!reporterDescriptions && configFile)
+    reporterDescriptions = config.config.reporter;
+  if (!reporterDescriptions)
+    reporterDescriptions = [[defaultReporter]];
+  await createMergedReport(config, dir, reporterDescriptions!);
 }
 
 function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrides {
@@ -195,7 +201,7 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
     quiet: options.quiet ? options.quiet : undefined,
     repeatEach: options.repeatEach ? parseInt(options.repeatEach, 10) : undefined,
     retries: options.retries ? parseInt(options.retries, 10) : undefined,
-    reporter: (options.reporter && options.reporter.length) ? options.reporter.split(',').map((r: string) => [resolveReporter(r)]) : undefined,
+    reporter: resolveReporterOption(options.reporter),
     shard: shardPair ? { current: shardPair[0], total: shardPair[1] } : undefined,
     timeout: options.timeout ? parseInt(options.timeout, 10) : undefined,
     ignoreSnapshots: options.ignoreSnapshots ? !!options.ignoreSnapshots : undefined,
@@ -231,6 +237,12 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
     overrides.use.trace = options.trace;
   }
   return overrides;
+}
+
+function resolveReporterOption(reporter?: string): ReporterDescription[] | undefined {
+  if (!reporter || !reporter.length)
+    return undefined;
+  return reporter.split(',').map((r: string) => [resolveReporter(r)]);
 }
 
 function resolveReporter(id: string) {

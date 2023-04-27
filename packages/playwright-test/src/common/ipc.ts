@@ -16,7 +16,7 @@
 
 import { serializeCompilationCache } from './compilationCache';
 import type { FullConfigInternal } from './config';
-import type { TestInfoError, TestStatus } from '../../types/test';
+import type { ReporterDescription, TestInfoError, TestStatus } from '../../types/test';
 
 export type ConfigCLIOverrides = {
   forbidOnly?: boolean;
@@ -27,7 +27,7 @@ export type ConfigCLIOverrides = {
   quiet?: boolean;
   repeatEach?: number;
   retries?: number;
-  reporter?: string;
+  reporter?: ReporterDescription[];
   shard?: { current: number, total: number };
   timeout?: number;
   ignoreSnapshots?: boolean;

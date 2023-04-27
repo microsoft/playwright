@@ -84,7 +84,7 @@ export class FullConfigInternal {
       maxFailures: takeFirst(configCLIOverrides.maxFailures, config.maxFailures, 0),
       metadata: takeFirst(config.metadata, {}),
       preserveOutput: takeFirst(config.preserveOutput, 'always'),
-      reporter: takeFirst(configCLIOverrides.reporter ? toReporters(configCLIOverrides.reporter as any) : undefined, resolveReporters(config.reporter, configDir), [[defaultReporter]]),
+      reporter: takeFirst(configCLIOverrides.reporter, resolveReporters(config.reporter, configDir), [[defaultReporter]]),
       reportSlowTests: takeFirst(config.reportSlowTests, { max: 5, threshold: 15000 }),
       quiet: takeFirst(configCLIOverrides.quiet, config.quiet, false),
       projects: [],
