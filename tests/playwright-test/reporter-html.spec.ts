@@ -1261,18 +1261,23 @@ test.describe('labels', () => {
     expect((await firstTitle.boundingBox()).height).toBeGreaterThanOrEqual(100);
   });
 
-  test('should show filtered tests by labels when click on label', async ({ runInlineTest, showReport, page }) => {
+  test('with describe. should show filtered tests by labels when click on label', async ({ runInlineTest, showReport, page }) => {
     const result = await runInlineTest({
       'a.test.js': `
         const { expect, test } = require('@playwright/test');
-        test('@regression passes', async ({}) => {
-          expect(1).toBe(1);
+        test.describe('Error Pages', () => {
+          test('@regression passes', async ({}) => {
+            expect(1).toBe(1);
+          });
         });
       `,
       'b.test.js': `
         const { expect, test } = require('@playwright/test');
-        test('@smoke fails', async ({}) => {
-          expect(1).toBe(2);
+
+        test.describe('Error Pages', () => {
+          test('@smoke fails', async ({}) => {
+            expect(1).toBe(2);
+          });
         });
       `,
     }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
@@ -1284,7 +1289,7 @@ test.describe('labels', () => {
     await showReport();
 
     const searchInput = page.locator('.subnav-search-input');
-    const smokeLabelButton =  page.locator('.test-file-test', { has: page.getByText('@smoke fails', { exact: true }) }).locator('.label', { hasText: 'smoke' });
+    const smokeLabelButton =  page.locator('.test-file-test', { has: page.getByText('Error Pages › @smoke fails', { exact: true }) }).locator('.label', { hasText: 'smoke' });
 
     await expect(smokeLabelButton).toBeVisible();
     await smokeLabelButton.click();
@@ -1292,9 +1297,9 @@ test.describe('labels', () => {
     await expect(page.locator('.test-file-test')).toHaveCount(1);
     await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(0);
     await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(1);
-    await expect(page.locator('.test-file-test .test-file-title')).toHaveText('@smoke fails');
+    await expect(page.locator('.test-file-test .test-file-title')).toHaveText('Error Pages › @smoke fails');
 
-    const regressionLabelButton =  page.locator('.test-file-test', { has: page.getByText('@regression passes', { exact: true }) }).locator('.label', { hasText: 'regression' });
+    const regressionLabelButton =  page.locator('.test-file-test', { has: page.getByText('Error Pages › @regression passes', { exact: true }) }).locator('.label', { hasText: 'regression' });
 
     await expect(regressionLabelButton).not.toBeVisible();
 
@@ -1310,7 +1315,7 @@ test.describe('labels', () => {
     await expect(page.locator('.test-file-test')).toHaveCount(1);
     await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(1);
     await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(0);
-    await expect(page.locator('.test-file-test .test-file-title')).toHaveText('@regression passes');
+    await expect(page.locator('.test-file-test .test-file-title')).toHaveText('Error Pages › @regression passes');
   });
 
   test('click label should change URL', async ({ runInlineTest, showReport, page }) => {

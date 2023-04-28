@@ -118,7 +118,7 @@ const LabelsClickView: React.FC<React.PropsWithChildren<{
   return labels.length > 0 ? (
     <>
       {labels.map(tag => (
-        <span style={{ margin: '6px 0 0 6px', cursor: 'pointer' }} className={'label label-color-' + (hashStringToInt(tag))} onClick={e => onClickHandle(e, tag)}>
+        <span key={tag} style={{ margin: '6px 0 0 6px', cursor: 'pointer' }} className={'label label-color-' + (hashStringToInt(tag))} onClick={e => onClickHandle(e, tag)}>
           {tag}
         </span>
       ))}
