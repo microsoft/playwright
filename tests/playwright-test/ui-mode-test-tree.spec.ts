@@ -37,7 +37,7 @@ const basicTestTree = {
 
 test('should list tests', async ({ runUITest }) => {
   const { page } = await runUITest(basicTestTree);
-  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toBe(`
+  await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ◯ a.test.ts
         ◯ passes
         ◯ fails
@@ -51,7 +51,7 @@ test('should list tests', async ({ runUITest }) => {
 test('should traverse up/down', async ({ runUITest }) => {
   const { page } = await runUITest(basicTestTree);
   await page.getByText('a.test.ts').click();
-  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toContain(`
+  await expect.poll(dumpTestTree(page)).toContain(`
     ▼ ◯ a.test.ts <=
         ◯ passes
         ◯ fails
@@ -59,14 +59,14 @@ test('should traverse up/down', async ({ runUITest }) => {
   `);
 
   await page.keyboard.press('ArrowDown');
-  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toContain(`
+  await expect.poll(dumpTestTree(page)).toContain(`
     ▼ ◯ a.test.ts
         ◯ passes <=
         ◯ fails
       ► ◯ suite
   `);
   await page.keyboard.press('ArrowDown');
-  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toContain(`
+  await expect.poll(dumpTestTree(page)).toContain(`
     ▼ ◯ a.test.ts
         ◯ passes
         ◯ fails <=
@@ -74,7 +74,7 @@ test('should traverse up/down', async ({ runUITest }) => {
   `);
 
   await page.keyboard.press('ArrowUp');
-  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toContain(`
+  await expect.poll(dumpTestTree(page)).toContain(`
     ▼ ◯ a.test.ts
         ◯ passes <=
         ◯ fails
@@ -87,7 +87,7 @@ test('should expand / collapse groups', async ({ runUITest }) => {
 
   await page.getByTestId('test-tree').getByText('suite').click();
   await page.keyboard.press('ArrowRight');
-  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toContain(`
+  await expect.poll(dumpTestTree(page)).toContain(`
     ▼ ◯ a.test.ts
         ◯ passes
         ◯ fails
@@ -97,7 +97,7 @@ test('should expand / collapse groups', async ({ runUITest }) => {
   `);
 
   await page.keyboard.press('ArrowLeft');
-  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toContain(`
+  await expect.poll(dumpTestTree(page)).toContain(`
     ▼ ◯ a.test.ts
         ◯ passes
         ◯ fails
@@ -106,14 +106,14 @@ test('should expand / collapse groups', async ({ runUITest }) => {
 
   await page.getByTestId('test-tree').getByText('passes').first().click();
   await page.keyboard.press('ArrowLeft');
-  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toContain(`
+  await expect.poll(dumpTestTree(page)).toContain(`
     ▼ ◯ a.test.ts <=
         ◯ passes
         ◯ fails
   `);
 
   await page.keyboard.press('ArrowLeft');
-  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toContain(`
+  await expect.poll(dumpTestTree(page)).toContain(`
     ► ◯ a.test.ts <=
   `);
 });
@@ -134,7 +134,7 @@ test('should merge folder trees', async ({ runUITest }) => {
     `,
   });
 
-  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toContain(`
+  await expect.poll(dumpTestTree(page)).toContain(`
     ▼ ◯ b
       ► ◯ c
       ► ◯ in-b.test.ts
@@ -162,7 +162,7 @@ test('should list parametrized tests', async ({ runUITest }) => {
   await page.getByText('<anonymous>').click();
   await page.keyboard.press('ArrowRight');
 
-  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toBe(`
+  await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ◯ a.test.ts
       ▼ ◯ cookies
         ▼ ◯ <anonymous> <=
@@ -191,7 +191,7 @@ test('should update parametrized tests', async ({ runUITest, writeFiles }) => {
   await page.getByText('<anonymous>').click();
   await page.keyboard.press('ArrowRight');
 
-  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toBe(`
+  await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ◯ a.test.ts
       ▼ ◯ cookies
         ▼ ◯ <anonymous> <=
@@ -214,7 +214,7 @@ test('should update parametrized tests', async ({ runUITest, writeFiles }) => {
   });
 
 
-  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toBe(`
+  await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ◯ a.test.ts
       ▼ ◯ cookies
         ▼ ◯ <anonymous> <=
@@ -228,7 +228,7 @@ test('should collapse all', async ({ runUITest }) => {
 
   await page.getByTestId('test-tree').getByText('suite').click();
   await page.keyboard.press('ArrowRight');
-  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toContain(`
+  await expect.poll(dumpTestTree(page)).toContain(`
     ▼ ◯ a.test.ts
         ◯ passes
         ◯ fails
@@ -238,7 +238,7 @@ test('should collapse all', async ({ runUITest }) => {
   `);
 
   await page.getByTitle('Collapse all').click();
-  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toContain(`
+  await expect.poll(dumpTestTree(page)).toContain(`
     ► ◯ a.test.ts
   `);
 });

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { createImage } from './playwright-test-fixtures';
 import { test, expect } from './ui-mode-fixtures';
 test.describe.configure({ mode: 'parallel' });
 
@@ -42,7 +43,7 @@ test('should merge trace events', async ({ runUITest, server }) => {
     /expect\.toBe[\d.]+m?s/,
     /locator\.clickgetByRole\('button'\)[\d.]+m?s/,
     /expect\.toBe[\d.]+m?s/,
-  ], { timeout: 15000 });
+  ]);
 });
 
 test('should merge web assertion events', async ({  runUITest }, testInfo) => {
@@ -66,7 +67,7 @@ test('should merge web assertion events', async ({  runUITest }, testInfo) => {
     /browserContext\.newPage[\d.]+m?s/,
     /page\.setContent[\d.]+m?s/,
     /expect\.toBeVisiblelocator\('button'\)[\d.]+m?s/,
-  ], { timeout: 15000 });
+  ]);
 });
 
 test('should merge screenshot assertions', async ({  runUITest }, testInfo) => {
@@ -90,7 +91,7 @@ test('should merge screenshot assertions', async ({  runUITest }, testInfo) => {
     /browserContext\.newPage[\d.]+m?s/,
     /page\.setContent[\d.]+m?s/,
     /expect\.toHaveScreenshot[\d.]+m?s/,
-  ], { timeout: 15000 });
+  ]);
 });
 
 test('should locate sync assertions in source', async ({ runUITest, server }) => {
@@ -108,7 +109,7 @@ test('should locate sync assertions in source', async ({ runUITest, server }) =>
   await expect(
       page.locator('.CodeMirror .source-line-running'),
       'check source tab',
-  ).toHaveText('4        expect(1).toBe(1);', { timeout: 15000 });
+  ).toHaveText('4        expect(1).toBe(1);');
 });
 
 test('should show snapshots for sync assertions', async ({ runUITest, server }) => {
@@ -134,10 +135,35 @@ test('should show snapshots for sync assertions', async ({ runUITest, server }) 
     /page\.setContent[\d.]+m?s/,
     /locator\.clickgetByRole\('button'\)[\d.]+m?s/,
     /expect\.toBe[\d.]+m?s/,
-  ], { timeout: 15000 });
+  ]);
 
   await expect(
       page.frameLocator('iframe.snapshot-visible[name=snapshot]').locator('button'),
       'verify snapshot'
   ).toHaveText('Submit');
+});
+
+test('should show image diff', async ({ runUITest, server }) => {
+  const { page } = await runUITest({
+    'playwright.config.js': `
+      module.exports = {
+        snapshotPathTemplate: '{arg}{ext}'
+      };
+    `,
+    'snapshot.png': createImage(100, 100, 255, 0, 0),
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('vrt test', async ({ page }) => {
+        await page.setViewportSize({ width: 100, height: 100 });
+        await expect(page).toHaveScreenshot('snapshot.png', { timeout: 2000 });
+      });
+    `,
+  });
+
+  await page.getByText('vrt test').dblclick();
+  await page.getByText(/Log/).click();
+  await expect(page.getByText('Diff', { exact: true })).toBeVisible();
+  await expect(page.getByText('Actual', { exact: true })).toBeVisible();
+  await expect(page.getByText('Expected', { exact: true })).toBeVisible();
+  await expect(page.locator('.image-diff-view .image-wrapper img')).toBeVisible();
 });
