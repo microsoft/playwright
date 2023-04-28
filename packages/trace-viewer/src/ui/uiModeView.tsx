@@ -483,10 +483,9 @@ const TraceView: React.FC<{
   const [counter, setCounter] = React.useState(0);
   const pollTimer = React.useRef<NodeJS.Timeout | null>(null);
 
-  const { outputDir, result } = React.useMemo(() => {
+  const { outputDir } = React.useMemo(() => {
     const outputDir = item.testCase ? outputDirForTestCase(item.testCase) : undefined;
-    const result = item.testCase?.results[0];
-    return { outputDir, result };
+    return { outputDir };
   }, [item]);
 
   // Preserve user selection upon live-reloading trace model by persisting the action id.
@@ -499,6 +498,7 @@ const TraceView: React.FC<{
     if (pollTimer.current)
       clearTimeout(pollTimer.current);
 
+    const result = item.testCase?.results[0];
     if (!result) {
       setModel(undefined);
       return;
@@ -532,7 +532,7 @@ const TraceView: React.FC<{
       if (pollTimer.current)
         clearTimeout(pollTimer.current);
     };
-  }, [result, outputDir, item, setModel, counter, setCounter]);
+  }, [outputDir, item, setModel, counter, setCounter]);
 
   return <Workbench
     key='workbench'
