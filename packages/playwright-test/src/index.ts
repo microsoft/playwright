@@ -48,7 +48,8 @@ type TestFixtures = PlaywrightTestArgs & PlaywrightTestOptions & {
   _combinedContextOptions: BrowserContextOptions,
   _contextReuseMode: ContextReuseMode,
   _reuseContext: boolean,
-  _setupContextOptionsAndArtifacts: void;
+  _setupContextOptions: void;
+  _setupArtifacts: void;
   _contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>;
 };
 type WorkerFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions & {
@@ -241,13 +242,29 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
 
   _snapshotSuffix: [process.platform, { scope: 'worker' }],
 
-  _setupContextOptionsAndArtifacts: [async ({ playwright, _contextReuseMode, _snapshotSuffix, _combinedContextOptions, _artifactsDir, trace, screenshot, actionTimeout, navigationTimeout, testIdAttribute }, use, testInfo) => {
+  _setupContextOptions: [async ({ playwright, _snapshotSuffix, _combinedContextOptions, _artifactsDir, actionTimeout, navigationTimeout, testIdAttribute }, use, testInfo) => {
     if (testIdAttribute)
       playwrightLibrary.selectors.setTestIdAttribute(testIdAttribute);
     testInfo.snapshotSuffix = _snapshotSuffix;
     if (debugMode())
       testInfo.setTimeout(0);
+    for (const browserType of [playwright.chromium, playwright.firefox, playwright.webkit]) {
+      (browserType as any)._defaultContextOptions = _combinedContextOptions;
+      (browserType as any)._defaultContextTimeout = actionTimeout || 0;
+      (browserType as any)._defaultContextNavigationTimeout = navigationTimeout || 0;
+    }
+    (playwright.request as any)._defaultContextOptions = { ..._combinedContextOptions };
+    (playwright.request as any)._defaultContextOptions.tracesDir = path.join(_artifactsDir(), 'traces');
+    await use();
+    (playwright.request as any)._defaultContextOptions = undefined;
+    for (const browserType of [playwright.chromium, playwright.firefox, playwright.webkit]) {
+      (browserType as any)._defaultContextOptions = undefined;
+      (browserType as any)._defaultContextTimeout = undefined;
+      (browserType as any)._defaultContextNavigationTimeout = undefined;
+    }
+  }, { auto: 'all-hooks-included',  _title: 'context configuration' } as any],
 
+  _setupArtifacts: [async ({ playwright, _artifactsDir, trace, screenshot }, use, testInfo) => {
     const screenshotMode = normalizeScreenshotMode(screenshot);
     const screenshotOptions = typeof screenshot === 'string' ? undefined : screenshot;
     const traceMode = normalizeTraceMode(trace);
@@ -280,8 +297,6 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
         testInfo.setTimeout(0);
       },
       onDidCreateBrowserContext: async (context: BrowserContext) => {
-        context.setDefaultTimeout(actionTimeout || 0);
-        context.setDefaultNavigationTimeout(navigationTimeout || 0);
         await startTraceChunkOnContextCreation(context.tracing);
         attachConnectedHeaderIfNeeded(testInfo, context.browser());
       },
@@ -374,7 +389,6 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     const instrumentation = (playwright as any)._instrumentation as ClientInstrumentation;
     instrumentation.addListener(csiListener);
     for (const browserType of [playwright.chromium, playwright.firefox, playwright.webkit]) {
-      (browserType as any)._defaultContextOptions = _combinedContextOptions;
       const promises: (Promise<void> | undefined)[] = [];
       const existingContexts = Array.from((browserType as any)._contexts) as BrowserContext[];
       for (const context of existingContexts) {
@@ -386,8 +400,6 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       await Promise.all(promises);
     }
     {
-      (playwright.request as any)._defaultContextOptions = { ..._combinedContextOptions };
-      (playwright.request as any)._defaultContextOptions.tracesDir = path.join(_artifactsDir(), 'traces');
       const existingApiRequests: APIRequestContext[] =  Array.from((playwright.request as any)._contexts as Set<APIRequestContext>);
       await Promise.all(existingApiRequests.map(c => csiListener.onDidCreateRequestContext?.(c as any)));
     }
@@ -413,12 +425,9 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     instrumentation.removeListener(csiListener);
 
     const leftoverContexts: BrowserContext[] = [];
-    for (const browserType of [playwright.chromium, playwright.firefox, playwright.webkit]) {
+    for (const browserType of [playwright.chromium, playwright.firefox, playwright.webkit])
       leftoverContexts.push(...(browserType as any)._contexts);
-      (browserType as any)._defaultContextOptions = undefined;
-    }
     const leftoverApiRequests: APIRequestContext[] =  Array.from((playwright.request as any)._contexts as Set<APIRequestContext>);
-    (playwright.request as any)._defaultContextOptions = undefined;
     testInfoImpl._onTestFailureImmediateCallbacks.delete(screenshotOnTestFailure);
 
     // 5. Collect artifacts from any non-closed contexts.
@@ -461,7 +470,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       else
         await fs.promises.unlink(file).catch(() => {});
     }));
-  }, { auto: 'all-hooks-included',  _title: 'playwright configuration' } as any],
+  }, { auto: 'all-hooks-included',  _title: 'trace recording' } as any],
 
   _contextFactory: [async ({ browser, video, _artifactsDir, _reuseContext }, use, testInfo) => {
     const testInfoImpl = testInfo as TestInfoImpl;
