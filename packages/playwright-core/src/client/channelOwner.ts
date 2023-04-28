@@ -39,17 +39,17 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
   readonly _channel: T;
   readonly _initializer: channels.InitializerTraits<T>;
   _logger: Logger | undefined;
-  _instrumentation: ClientInstrumentation | undefined;
+  readonly _instrumentation: ClientInstrumentation;
   private _eventToSubscriptionMapping: Map<string, string> = new Map();
 
-  constructor(parent: ChannelOwner | Connection, type: string, guid: string, initializer: channels.InitializerTraits<T>, instrumentation?: ClientInstrumentation) {
+  constructor(parent: ChannelOwner | Connection, type: string, guid: string, initializer: channels.InitializerTraits<T>) {
     super();
     this.setMaxListeners(0);
     this._connection = parent instanceof ChannelOwner ? parent._connection : parent;
     this._type = type;
     this._guid = guid;
     this._parent = parent instanceof ChannelOwner ? parent : undefined;
-    this._instrumentation = instrumentation || this._parent?._instrumentation;
+    this._instrumentation = this._connection._instrumentation;
 
     this._connection._objects.set(guid, this);
     if (this._parent) {
@@ -179,7 +179,7 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
     try {
       logApiCall(logger, `=> ${apiName} started`, isInternal);
       const apiZone = { stackTrace, isInternal, reported: false, csi, callCookie, wallTime };
-      const result = await zones.run<ApiZone, R>('apiZone', apiZone, async () => {
+      const result = await zones.run<ApiZone, Promise<R>>('apiZone', apiZone, async () => {
         return await func(apiZone);
       });
       csi?.onApiCallEnd(callCookie);

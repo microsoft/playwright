@@ -15,7 +15,7 @@
  */
 
 import { formatLocation, debugTest } from '../util';
-import { ManualPromise } from 'playwright-core/lib/utils';
+import { ManualPromise, zones } from 'playwright-core/lib/utils';
 import type { TestInfoImpl } from './testInfo';
 import type { FixtureDescription, TimeoutManager } from './timeoutManager';
 import { fixtureParameterNames, type FixturePool, type FixtureRegistration, type FixtureScope } from '../common/fixtures';
@@ -98,7 +98,10 @@ class Fixture {
         throw e;
     };
     try {
-      const result = this.registration.fn(params, useFunc, info);
+      const result = zones.preserve(async () => {
+        return await this.registration.fn(params, useFunc, info);
+      });
+
       if (result instanceof Promise)
         this._selfTeardownComplete = result.catch(handleError);
       else

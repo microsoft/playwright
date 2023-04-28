@@ -86,11 +86,13 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
   }
 
   async newPage(options: BrowserContextOptions = {}): Promise<Page> {
-    const context = await this.newContext(options);
-    const page = await context.newPage();
-    page._ownedContext = context;
-    context._ownerPage = page;
-    return page;
+    return await this._wrapApiCall(async () => {
+      const context = await this.newContext(options);
+      const page = await context.newPage();
+      page._ownedContext = context;
+      context._ownerPage = page;
+      return page;
+    });
   }
 
   isConnected(): boolean {
