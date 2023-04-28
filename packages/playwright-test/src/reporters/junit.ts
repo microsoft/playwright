@@ -32,7 +32,7 @@ class JUnitReporter implements Reporter {
   private outputFile: string | undefined;
   private stripANSIControlSequences = false;
 
-  constructor(options: { outputFile?: string, stripANSIControlSequences?: boolean, embedAnnotationsAsProperties?: boolean, textContentAnnotations?: string[] } = {}) {
+  constructor(options: { outputFile?: string, stripANSIControlSequences?: boolean } = {}) {
     this.outputFile = options.outputFile || reportOutputNameFromEnv();
     this.stripANSIControlSequences = options.stripANSIControlSequences || false;
   }
