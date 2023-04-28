@@ -23,6 +23,7 @@ import { yazl } from 'playwright-core/lib/zipBundle';
 import { Readable } from 'stream';
 import type { FullConfig, FullResult, TestResult } from '../../types/testReporter';
 import type { Suite } from '../common/test';
+import { defaultReportFolder } from './html';
 import { TeleReporterEmitter } from './teleEmitter';
 
 
@@ -82,12 +83,19 @@ export class BlobReporter extends TeleReporterEmitter {
   }
 
   private _computeOutputFileName(config: FullConfig) {
-    const outputDir = path.resolve(this._options.configDir, this._options.outputDir || '');
+    const outputDir = this._resolveOutputDir();
     let shardSuffix = '';
     if (config.shard) {
       const paddedNumber = `${config.shard.current}`.padStart(`${config.shard.total}`.length, '0');
       shardSuffix = `-${paddedNumber}-of-${config.shard.total}`;
     }
     return path.join(outputDir, `report${shardSuffix}.zip`);
+  }
+
+  private _resolveOutputDir(): string {
+    const { outputDir } = this._options;
+    if (outputDir)
+      return path.resolve(this._options.configDir, outputDir);
+    return defaultReportFolder(this._options.configDir);
   }
 }

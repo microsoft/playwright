@@ -142,7 +142,7 @@ function reportFolderFromEnv(): string | undefined {
   return undefined;
 }
 
-function defaultReportFolder(searchForPackageJson: string): string {
+export function defaultReportFolder(searchForPackageJson: string): string {
   let basePath = getPackageJsonPath(searchForPackageJson);
   if (basePath)
     basePath = path.dirname(basePath);
