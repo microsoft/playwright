@@ -41,13 +41,13 @@ const basicTestTree = {
 
 test('should run visible', async ({ runUITest }) => {
   const { page } = await runUITest(basicTestTree);
-  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toContain(`
+  await expect.poll(dumpTestTree(page)).toContain(`
     ▼ ◯ a.test.ts
   `);
 
   await page.getByTitle('Run all').click();
 
-  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toBe(`
+  await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ❌ a.test.ts
         ✅ passes
         ❌ fails <=
@@ -75,9 +75,9 @@ test('should show running progress', async ({ runUITest }) => {
   });
 
   await page.getByTitle('Run all').click();
-  await expect(page.getByTestId('status-line')).toHaveText('Running 1/4 passed (25%)', { timeout: 15000 });
+  await expect(page.getByTestId('status-line')).toHaveText('Running 1/4 passed (25%)');
   await page.getByTitle('Stop').click();
-  await expect(page.getByTestId('status-line')).toHaveText('1/4 passed (25%)', { timeout: 15000 });
+  await expect(page.getByTestId('status-line')).toHaveText('1/4 passed (25%)');
   await page.getByTitle('Reload').click();
   await expect(page.getByTestId('status-line')).toBeHidden();
 });
@@ -94,7 +94,7 @@ test('should run on hover', async ({ runUITest }) => {
   await page.getByText('passes').hover();
   await page.getByRole('listitem').filter({ hasText: 'passes' }).getByTitle('Run').click();
 
-  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toBe(`
+  await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ◯ a.test.ts
         ✅ passes <=
         ◯ fails
@@ -112,7 +112,7 @@ test('should run on double click', async ({ runUITest }) => {
 
   await page.getByText('passes').dblclick();
 
-  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toBe(`
+  await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ◯ a.test.ts
         ✅ passes <=
         ◯ fails
@@ -131,7 +131,7 @@ test('should run on Enter', async ({ runUITest }) => {
   await page.getByText('fails').click();
   await page.keyboard.press('Enter');
 
-  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toBe(`
+  await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ❌ a.test.ts
         ◯ passes
         ❌ fails <=
@@ -154,7 +154,7 @@ test('should run by project', async ({ runUITest }) => {
 
   await page.getByTitle('Run all').click();
 
-  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toBe(`
+  await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ❌ a.test.ts
         ✅ passes
         ❌ fails <=
@@ -170,7 +170,7 @@ test('should run by project', async ({ runUITest }) => {
   await page.getByText('Status:').click();
   await page.getByLabel('bar').setChecked(true);
 
-  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toBe(`
+  await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ❌ a.test.ts
       ► ◯ passes
       ► ❌ fails <=
@@ -188,7 +188,7 @@ test('should run by project', async ({ runUITest }) => {
   await page.getByTestId('test-tree').getByText('passes').first().click();
   await page.keyboard.press('ArrowRight');
 
-  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toContain(`
+  await expect.poll(dumpTestTree(page)).toContain(`
     ▼ ❌ a.test.ts
       ▼ ◯ passes <=
           ✅ foo
@@ -199,7 +199,7 @@ test('should run by project', async ({ runUITest }) => {
   await expect(page.getByText('Projects: foo bar')).toBeVisible();
 
   await page.getByTitle('Run all').click();
-  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toBe(`
+  await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ❌ a.test.ts
       ▼ ✅ passes
           ✅ foo
@@ -228,12 +228,12 @@ test('should stop', async ({ runUITest }) => {
     `,
   });
 
-  await expect(page.getByTitle('Run all')).toBeEnabled({ timeout: 15000 });
+  await expect(page.getByTitle('Run all')).toBeEnabled();
   await expect(page.getByTitle('Stop')).toBeDisabled();
 
   await page.getByTitle('Run all').click();
 
-  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toBe(`
+  await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ↻ a.test.ts
         ⊘ test 0
         ✅ test 1
@@ -246,7 +246,7 @@ test('should stop', async ({ runUITest }) => {
 
   await page.getByTitle('Stop').click();
 
-  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toBe(`
+  await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ◯ a.test.ts
         ⊘ test 0
         ✅ test 1
@@ -274,7 +274,7 @@ test('should run folder', async ({ runUITest }) => {
   await page.getByText('folder-b').hover();
   await page.getByRole('listitem').filter({ hasText: 'folder-b' }).getByTitle('Run').click();
 
-  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toContain(`
+  await expect.poll(dumpTestTree(page)).toContain(`
     ▼ ✅ folder-b <=
       ► ✅ folder-c
       ► ✅ in-b.test.ts
@@ -285,13 +285,13 @@ test('should run folder', async ({ runUITest }) => {
 
 test('should show time', async ({ runUITest }) => {
   const { page } = await runUITest(basicTestTree);
-  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toContain(`
+  await expect.poll(dumpTestTree(page)).toContain(`
     ▼ ◯ a.test.ts
   `);
 
   await page.getByTitle('Run all').click();
 
-  await expect.poll(dumpTestTree(page, { time: true }), { timeout: 15000 }).toBe(`
+  await expect.poll(dumpTestTree(page, { time: true })).toBe(`
     ▼ ❌ a.test.ts
         ✅ passes XXms
         ❌ fails XXms <=
@@ -317,13 +317,13 @@ test('should show test.fail as passing', async ({ runUITest }) => {
       });
     `,
   });
-  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toContain(`
+  await expect.poll(dumpTestTree(page)).toContain(`
     ▼ ◯ a.test.ts
   `);
 
   await page.getByTitle('Run all').click();
 
-  await expect.poll(dumpTestTree(page, { time: true }), { timeout: 15000 }).toBe(`
+  await expect.poll(dumpTestTree(page, { time: true })).toBe(`
     ▼ ✅ a.test.ts
         ✅ should fail XXms
   `);
@@ -346,13 +346,13 @@ test('should ignore repeatEach', async ({ runUITest }) => {
       });
     `,
   });
-  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toContain(`
+  await expect.poll(dumpTestTree(page)).toContain(`
     ▼ ◯ a.test.ts
   `);
 
   await page.getByTitle('Run all').click();
 
-  await expect.poll(dumpTestTree(page), { timeout: 15000 }).toBe(`
+  await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ✅ a.test.ts
         ✅ should pass
   `);

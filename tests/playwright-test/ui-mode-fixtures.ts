@@ -124,7 +124,8 @@ export const test = base
       },
     });
 
-export { expect } from './stable-test-runner';
+import { expect as baseExpect } from './stable-test-runner';
+export const expect = baseExpect.configure({ timeout: 15000 });
 
 async function waitForLatch(latchFile: string) {
   const fs = require('fs');
