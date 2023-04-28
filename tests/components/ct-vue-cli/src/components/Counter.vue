@@ -1,7 +1,7 @@
 <template>
   <button @click="$emit('submit', 'hello')">
-    <div data-testid="props">{{ count }}</div>
-    <div data-testid="remount-count">{{ remountCount }}</div>
+    <span data-testid="props">{{ count }}</span>
+    <span data-testid="remount-count">{{ remountCount }}</span>
     <slot name="main" />
     <slot />
   </button>

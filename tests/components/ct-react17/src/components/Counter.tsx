@@ -18,8 +18,8 @@ import { useLayoutEffect, useRef, useState } from "react"
      }
    }, [])
    return <button onClick={() => props.onClick?.('hello')}>
-     <div data-testid="props">{ props.count }</div>
-     <div data-testid="remount-count">{ remountCount }</div>
+     <span data-testid="props">{ props.count }</span>
+     <span data-testid="remount-count">{ remountCount }</span>
      { props.children }
    </button>
  }
