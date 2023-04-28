@@ -36,7 +36,7 @@ export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject {
 
 // [internal] !!! DO NOT ADD TO THIS !!!
 // [internal] It is part of the public API and is computed from the user's config.
-// [internal] If you need new fields internally, add them to FullConfigInternal instead.
+// [internal] If you need new fields internally, add them to FullProjectInternal instead.
 export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
   grep: RegExp | RegExp[];
   grepInvert: RegExp | RegExp[] | null;
@@ -47,6 +47,7 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
   outputDir: string;
   repeatEach: number;
   retries: number;
+  teardown?: string;
   testDir: string;
   testIgnore: string | RegExp | (string | RegExp)[];
   testMatch: string | RegExp | (string | RegExp)[];

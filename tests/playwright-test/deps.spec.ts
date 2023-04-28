@@ -43,9 +43,10 @@ test('should inherit env changes from dependencies', async ({ runInlineTest }) =
     'playwright.config.ts': `
       module.exports = { projects: [
         { name: 'A', testMatch: '**/a.spec.ts' },
-        { name: 'B', testMatch: '**/b.spec.ts' },
+        { name: 'B', testMatch: '**/b.spec.ts', teardown: 'E' },
         { name: 'C', testMatch: '**/c.spec.ts', dependencies: ['A'] },
         { name: 'D', testMatch: '**/d.spec.ts', dependencies: ['B'] },
+        { name: 'E', testMatch: '**/e.spec.ts' },
       ] };
     `,
     'a.spec.ts': `
@@ -75,11 +76,17 @@ test('should inherit env changes from dependencies', async ({ runInlineTest }) =
         console.log('\\n%%D-' + process.env.SET_IN_A + '-' + process.env.SET_IN_B + '-' + process.env.SET_OUTSIDE);
       });
     `,
+    'e.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({}, testInfo) => {
+        console.log('\\n%%E-' + process.env.SET_IN_A + '-' + process.env.SET_IN_B + '-' + process.env.SET_OUTSIDE);
+      });
+    `,
   }, {}, { SET_OUTSIDE: 'outside' });
-  expect(result.passed).toBe(4);
+  expect(result.passed).toBe(5);
   expect(result.failed).toBe(0);
   expect(result.skipped).toBe(0);
-  expect(result.outputLines.sort()).toEqual(['A', 'B', 'C-valuea-undefined-undefined', 'D-undefined-valueb-outside']);
+  expect(result.outputLines.sort()).toEqual(['A', 'B', 'C-valuea-undefined-undefined', 'D-undefined-valueb-outside', 'E-undefined-valueb-outside']);
 });
 
 test('should not run projects with dependencies when --no-deps is passed', async ({ runInlineTest }) => {
@@ -422,4 +429,133 @@ test('should run setup project with zero tests recursively', async ({ runInlineT
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(2);
   expect(result.outputLines).toEqual(['A', 'C']);
+});
+
+test('should run project with teardown', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          { name: 'A', teardown: 'B' },
+          { name: 'B' },
+        ],
+      };`,
+    'test.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test', async ({}, testInfo) => {
+        console.log('\\n%%' + testInfo.project.name);
+      });
+    `,
+  }, { workers: 1 }, undefined, { additionalArgs: ['--project=A'] });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(2);
+  expect(result.outputLines).toEqual(['A', 'B']);
+});
+
+test('should run teardown after depedents', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          { name: 'A', teardown: 'E' },
+          { name: 'B', dependencies: ['A'] },
+          { name: 'C', dependencies: ['B'], teardown: 'D' },
+          { name: 'D' },
+          { name: 'E' },
+        ],
+      };`,
+    'test.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test', async ({}, testInfo) => {
+        console.log('\\n%%' + testInfo.project.name);
+      });
+    `,
+  }, { workers: 1 }, undefined, { additionalArgs: ['--project=C'] });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(5);
+  expect(result.outputLines).toEqual(['A', 'B', 'C', 'D', 'E']);
+});
+
+test('should run teardown after failure', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          { name: 'A', teardown: 'D' },
+          { name: 'B', dependencies: ['A'] },
+          { name: 'C', dependencies: ['B'] },
+          { name: 'D' },
+        ],
+      };`,
+    'test.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test', async ({}, testInfo) => {
+        console.log('\\n%%' + testInfo.project.name);
+        if (testInfo.project.name === 'A')
+          throw new Error('ouch');
+      });
+    `,
+  }, { workers: 1 }, undefined, { additionalArgs: ['--project=C'] });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.skipped).toBe(2);
+  expect(result.outputLines).toEqual(['A', 'D']);
+});
+
+test('should complain about teardown being a dependency', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          { name: 'A', teardown: 'B' },
+          { name: 'B' },
+          { name: 'C', dependencies: ['B'] },
+        ],
+      };`,
+    'test.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test', () => {});
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain(`Project C must not depend on a teardown project B`);
+});
+
+test('should complain about teardown having a dependency', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          { name: 'A', teardown: 'B' },
+          { name: 'B', dependencies: ['C'] },
+          { name: 'C' },
+        ],
+      };`,
+    'test.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test', () => {});
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain(`Teardown project B must not have dependencies`);
+});
+
+test('should complain about teardown used multiple times', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          { name: 'A', teardown: 'C' },
+          { name: 'B', teardown: 'C' },
+          { name: 'C' },
+        ],
+      };`,
+    'test.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test', () => {});
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain(`Project C can not be designated as teardown to multiple projects (A and B)`);
 });

@@ -55,8 +55,10 @@ export class ConfigLoader {
     const fullConfig = await this._loadConfig(config, path.dirname(file), file);
     setCurrentConfig(fullConfig);
     if (ignoreProjectDependencies) {
-      for (const project of fullConfig.projects)
+      for (const project of fullConfig.projects) {
         project.deps = [];
+        project.teardown = undefined;
+      }
     }
     this._fullConfig = fullConfig;
     return fullConfig;

@@ -151,6 +151,7 @@ export class TeleReporterEmitter implements Reporter {
       grepInvert: serializeRegexPatterns(project.grepInvert || []),
       dependencies: project.dependencies,
       snapshotDir: this._relativePath(project.snapshotDir),
+      teardown: project.teardown,
     };
     return report;
   }

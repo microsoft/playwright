@@ -193,7 +193,7 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
    * Using dependencies allows global setup to produce traces and other artifacts, see the setup steps in the test
    * report, etc.
    *
-   * For example:
+   * **Usage**
    *
    * ```js
    * // playwright.config.ts
@@ -284,6 +284,54 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
    * option for all projects.
    */
   retries: number;
+  /**
+   * Name of a project that needs to run after this and any dependent projects have finished. Teardown is useful to
+   * cleanup any resources acquired by this project.
+   *
+   * Passing `--no-deps` argument ignores
+   * [testProject.teardown](https://playwright.dev/docs/api/class-testproject#test-project-teardown) and behaves as if
+   * it was not specified.
+   *
+   * **Usage**
+   *
+   * A common pattern is a "setup" dependency that has a corresponding "teardown":
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   projects: [
+   *     {
+   *       name: 'setup',
+   *       testMatch: /global.setup\.ts/,
+   *       teardown: 'teardown',
+   *     },
+   *     {
+   *       name: 'teardown',
+   *       testMatch: /global.teardown\.ts/,
+   *     },
+   *     {
+   *       name: 'chromium',
+   *       use: devices['Desktop Chrome'],
+   *       dependencies: ['setup'],
+   *     },
+   *     {
+   *       name: 'firefox',
+   *       use: devices['Desktop Firefox'],
+   *       dependencies: ['setup'],
+   *     },
+   *     {
+   *       name: 'webkit',
+   *       use: devices['Desktop Safari'],
+   *       dependencies: ['setup'],
+   *     },
+   *   ],
+   * });
+   * ```
+   *
+   */
+  teardown?: string;
   /**
    * Directory that will be recursively scanned for test files. Defaults to the directory of the configuration file.
    *
@@ -5932,7 +5980,7 @@ interface TestProject {
    * Using dependencies allows global setup to produce traces and other artifacts, see the setup steps in the test
    * report, etc.
    *
-   * For example:
+   * **Usage**
    *
    * ```js
    * // playwright.config.ts
@@ -6244,6 +6292,55 @@ interface TestProject {
    * 1. Forward slashes `"/"` can be used as path separators on any platform.
    */
   snapshotPathTemplate?: string;
+
+  /**
+   * Name of a project that needs to run after this and any dependent projects have finished. Teardown is useful to
+   * cleanup any resources acquired by this project.
+   *
+   * Passing `--no-deps` argument ignores
+   * [testProject.teardown](https://playwright.dev/docs/api/class-testproject#test-project-teardown) and behaves as if
+   * it was not specified.
+   *
+   * **Usage**
+   *
+   * A common pattern is a "setup" dependency that has a corresponding "teardown":
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   projects: [
+   *     {
+   *       name: 'setup',
+   *       testMatch: /global.setup\.ts/,
+   *       teardown: 'teardown',
+   *     },
+   *     {
+   *       name: 'teardown',
+   *       testMatch: /global.teardown\.ts/,
+   *     },
+   *     {
+   *       name: 'chromium',
+   *       use: devices['Desktop Chrome'],
+   *       dependencies: ['setup'],
+   *     },
+   *     {
+   *       name: 'firefox',
+   *       use: devices['Desktop Firefox'],
+   *       dependencies: ['setup'],
+   *     },
+   *     {
+   *       name: 'webkit',
+   *       use: devices['Desktop Safari'],
+   *       dependencies: ['setup'],
+   *     },
+   *   ],
+   * });
+   * ```
+   *
+   */
+  teardown?: string;
 
   /**
    * Directory that will be recursively scanned for test files. Defaults to the directory of the configuration file.

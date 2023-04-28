@@ -44,8 +44,10 @@ class UIMode {
     process.env.PW_LIVE_TRACE_STACKS = '1';
     config.cliListOnly = false;
     config.cliPassWithNoTests = true;
-    for (const project of config.projects)
+    for (const project of config.projects) {
       project.deps = [];
+      project.teardown = undefined;
+    }
 
     for (const p of config.projects) {
       p.project.retries = 0;
