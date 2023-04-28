@@ -17,11 +17,11 @@
 import { config as loadEnv } from 'dotenv';
 loadEnv({ path: path.join(__dirname, '..', '..', '.env') });
 
-import type { Config } from './stable-test-runner';
+import { defineConfig } from './stable-test-runner';
 import * as path from 'path';
 
 const outputDir = path.join(__dirname, '..', '..', 'test-results');
-const config: Config = {
+export default defineConfig({
   timeout: 30000,
   forbidOnly: !!process.env.CI,
   workers: process.env.CI ? 2 : undefined,
@@ -45,6 +45,4 @@ const config: Config = {
   ] : [
     ['list']
   ],
-};
-
-export default config;
+});
