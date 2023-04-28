@@ -47,7 +47,7 @@ const compiledReactRE = /(const|var)\s+React\s*=/;
 
 export function createPlugin(
   registerSourceFile: string,
-  frameworkPluginFactory: () => Promise<Plugin>): TestRunnerPlugin {
+  frameworkPluginFactory?: () => Promise<Plugin>): TestRunnerPlugin {
   let configDir: string;
   let config: FullConfig;
   return {
@@ -127,9 +127,10 @@ export function createPlugin(
       }
       const { build, preview } = require('vite');
       // Build config unconditionally, either build or build & preview will use it.
-      viteConfig.plugins = viteConfig.plugins || [
-        await frameworkPluginFactory()
-      ];
+      viteConfig.plugins ??= [];
+      if (frameworkPluginFactory && !viteConfig.plugins.length)
+        viteConfig.plugins = [await frameworkPluginFactory()];
+
       // But only add out own plugin when we actually build / transform.
       if (sourcesDirty)
         viteConfig.plugins.push(vitePlugin(registerSource, relativeTemplateDir, buildInfo, componentRegistry));
