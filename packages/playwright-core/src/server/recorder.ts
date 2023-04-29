@@ -173,7 +173,7 @@ export class Recorder implements InstrumentationListener {
         actionPoint,
         actionSelector,
         language: this._currentLanguage,
-        testIdAttributeName: this._context.selectors().testIdAttributeName(),
+        testIdAttributeName: this._contextRecorder.testIdAttributeName(),
       };
       return uiState;
     });
@@ -349,7 +349,6 @@ class ContextRecorder extends EventEmitter {
   private _recorderSources: Source[];
   private _throttledOutputFile: ThrottledFile | null = null;
   private _orderedLanguages: LanguageGenerator[] = [];
-  private _testIdAttributeName: string = 'data-testid';
   private _listeners: RegisteredListener[] = [];
 
   constructor(context: BrowserContext, params: channels.BrowserContextRecorderSupplementEnableParams) {
@@ -542,6 +541,10 @@ class ContextRecorder extends EventEmitter {
     return fallback;
   }
 
+  testIdAttributeName(): string {
+    return this._params.testIdAttributeName || this._context.selectors().testIdAttributeName() || 'data-testid';
+  }
+
   private async _findFrameSelector(frame: Frame, parent: Frame): Promise<string | undefined> {
     try {
       const frameElement = await frame.frameElement();
@@ -549,7 +552,9 @@ class ContextRecorder extends EventEmitter {
         return;
       const utility = await parent._utilityContext();
       const injected = await utility.injectedScript();
-      const selector = await injected.evaluate((injected, element) => injected.generateSelector(element as Element, this._testIdAttributeName), frameElement);
+      const selector = await injected.evaluate((injected, element) => {
+        return injected.generateSelector(element as Element, '', true);
+      }, frameElement);
       return selector;
     } catch (e) {
     }
