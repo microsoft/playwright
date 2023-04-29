@@ -152,7 +152,7 @@ export class InjectedScript {
     return result;
   }
 
-  generateSelector(targetElement: Element, testIdAttributeName: string): string {
+  generateSelector(targetElement: Element, testIdAttributeName: string, omitInternalEngines?: boolean): string {
     return generateSelector(this, targetElement, testIdAttributeName).selector;
   }
 

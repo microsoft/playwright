@@ -27,7 +27,7 @@ export { expect } from '@playwright/test';
 type CLITestArgs = {
   recorderPageGetter: () => Promise<Page>;
   closeRecorder: () => Promise<void>;
-  openRecorder: () => Promise<Recorder>;
+  openRecorder: (options?: { testIdAttributeName: string }) => Promise<Recorder>;
   runCLI: (args: string[], options?: { autoExitWhen?: string }) => CLIMock;
 };
 
@@ -76,8 +76,8 @@ export const test = contextTest.extend<CLITestArgs>({
   },
 
   openRecorder: async ({ page, recorderPageGetter }, run) => {
-    await run(async () => {
-      await (page.context() as any)._enableRecorder({ language: 'javascript', mode: 'recording' });
+    await run(async (options?: { testIdAttributeName?: string }) => {
+      await (page.context() as any)._enableRecorder({ language: 'javascript', mode: 'recording', ...options });
       return new Recorder(page, await recorderPageGetter());
     });
   },

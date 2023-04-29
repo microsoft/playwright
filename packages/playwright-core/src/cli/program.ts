@@ -64,8 +64,9 @@ commandWithOpenOptions('codegen [url]', 'open page and generate code for user ac
       ['-o, --output <file name>', 'saves the generated script to a file'],
       ['--target <language>', `language to generate, one of javascript, playwright-test, python, python-async, python-pytest, csharp, csharp-mstest, csharp-nunit, java`, codegenId()],
       ['--save-trace <filename>', 'record a trace for the session and save it to a file'],
+      ['--test-id-attribute <attributeName>', 'use the specified attribute to generate data test ID selectors'],
     ]).action(function(url, options) {
-  codegen(options, url, options.target, options.output).catch(logErrorAndExit);
+  codegen(options, url).catch(logErrorAndExit);
 }).addHelpText('afterAll', `
 Examples:
 
@@ -527,7 +528,8 @@ async function open(options: Options, url: string | undefined, language: string)
   await openPage(context, url);
 }
 
-async function codegen(options: Options, url: string | undefined, language: string, outputFile?: string) {
+async function codegen(options: Options & { target: string, output?: string, testIdAttribute?: string }, url: string | undefined) {
+  const { target: language, output: outputFile, testIdAttribute: testIdAttributeName } = options;
   const { context, launchOptions, contextOptions } = await launchContext(options, !!process.env.PWTEST_CLI_HEADLESS, process.env.PWTEST_CLI_EXECUTABLE_PATH);
   await context._enableRecorder({
     language,
@@ -536,6 +538,7 @@ async function codegen(options: Options, url: string | undefined, language: stri
     device: options.device,
     saveStorage: options.saveStorage,
     mode: 'recording',
+    testIdAttributeName,
     outputFile: outputFile ? path.resolve(outputFile) : undefined,
     handleSIGINT: false,
   });

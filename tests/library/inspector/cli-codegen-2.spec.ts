@@ -536,3 +536,17 @@ test.describe('cli codegen', () => {
   });
 
 });
+
+test('should --test-id-attribute', async ({ page, openRecorder }) => {
+  const recorder = await openRecorder({ testIdAttributeName: 'my-test-id' });
+
+  await recorder.setContentAndWait(`<div my-test-id="foo">Hello</div>`);
+  await page.click('[my-test-id=foo]');
+  const sources = await recorder.waitForOutput('JavaScript', `page.getByTestId`);
+
+  expect.soft(sources.get('JavaScript').text).toContain(`await page.getByTestId('foo').click()`);
+  expect.soft(sources.get('Java').text).toContain(`page.getByTestId("foo").click()`);
+  expect.soft(sources.get('Python').text).toContain(`page.get_by_test_id("foo").click()`);
+  expect.soft(sources.get('Python Async').text).toContain(`await page.get_by_test_id("foo").click()`);
+  expect.soft(sources.get('C#').text).toContain(`await page.GetByTestId("foo").ClickAsync();`);
+});

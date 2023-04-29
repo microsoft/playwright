@@ -375,6 +375,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
       device?: string,
       saveStorage?: string,
       mode?: 'recording' | 'inspecting',
+      testIdAttributeName?: string,
       outputFile?: string,
       handleSIGINT?: boolean,
   }) {
