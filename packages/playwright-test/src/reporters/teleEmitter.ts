@@ -122,6 +122,10 @@ export class TeleReporterEmitter implements Reporter {
     this._messageSink({ method: 'onEnd', params: { result } });
   }
 
+  async onExit() {
+    this._messageSink({ method: 'onExit' });
+  }
+
   private _serializeConfig(config: FullConfig): JsonConfig {
     return {
       rootDir: config.rootDir,

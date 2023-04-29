@@ -57,6 +57,105 @@ const test = baseTest.extend<{
 
 test.use({ channel: 'chrome' });
 
+const echoReporterJs = `
+class EchoReporter {
+  onBegin(config, suite) {
+    console.log('onBegin');
+  }
+  onTestBegin(test, result) {
+    console.log('onTestBegin');
+  }
+  onStdOut(chunk, test, result) {
+    console.log('onStdOut');
+  }
+  onStdErr(chunk, test, result) {
+    console.log('onStdErr');
+  }
+  onTestEnd(test, result) {
+    console.log('onTestEnd');
+  }
+  onEnd(result) {
+    console.log('onEnd');
+  }
+  onExit() {
+    console.log('onExit');
+  }
+  onError(error) {
+    console.log('onError');
+  }
+  onStepBegin(test, result, step) {
+  }
+  onStepEnd(test, result, step) {
+  }
+}
+module.exports = EchoReporter;
+`
+
+test('should call methods in right order', async ({ runInlineTest, mergeReports, showReport, page }) => {
+  test.slow();
+  const reportDir = test.info().outputPath('blob-report');
+  const files = {
+    'echo-reporter.js': echoReporterJs,
+    'playwright.config.ts': `
+      module.exports = {
+        retries: 1,
+        reporter: [['blob', { outputDir: '${reportDir.replace(/\\/g, '/')}' }]]
+      };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('math 1', async ({}) => {
+        expect(1 + 1).toBe(2);
+      });
+      test('failing 1', async ({}) => {
+        expect(1).toBe(2);
+      });
+      test('flaky 1', async ({}) => {
+        expect(test.info().retry).toBe(1);
+      });
+      test.skip('skipped 1', async ({}) => {});
+    `,
+    'b.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('math 2', async ({}) => {
+        expect(1 + 1).toBe(2);
+      });
+      test('failing 2', async ({}) => {
+        expect(1).toBe(2);
+      });
+      test.skip('skipped 2', async ({}) => {});
+    `,
+    'c.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('math 3', async ({}) => {
+        expect(1 + 1).toBe(2);
+      });
+      test('flaky 2', async ({}) => {
+        expect(test.info().retry).toBe(1);
+      });
+      test.skip('skipped 3', async ({}) => {});
+    `
+  };
+  await runInlineTest(files, { shard: `1/3` });
+  await runInlineTest(files, { shard: `3/3` });
+  const reportFiles = await fs.promises.readdir(reportDir);
+  reportFiles.sort();
+  expect(reportFiles).toEqual(['report-1-of-3.zip', 'report-3-of-3.zip']);
+  const { exitCode, output } = await mergeReports(reportDir, {}, { additionalArgs: ['--reporter', test.info().outputPath('echo-reporter.js')] });
+  expect(exitCode).toBe(0);
+  const lines = output.split('\n').filter(l => l.trim().length);
+  expect(lines[0]).toBe('onBegin');
+  expect(lines).toContain('onTestBegin');
+  expect(lines).toContain('onEnd');
+  expect(lines).toContain('onExit');
+  expect(lines.indexOf('onBegin')).toBeLessThan(lines.indexOf('onTestBegin'));
+  expect(lines[lines.length - 2]).toBe('onEnd');
+  expect(lines[lines.length - 1]).toBe('onExit');
+  expect(lines.filter(l => l === 'onBegin').length).toBe(1);
+  expect(lines.filter(l => l === 'onEnd').length).toBe(1);
+  expect(lines.filter(l => l === 'onExit').length).toBe(1);
+});
+
 test('should merge into html', async ({ runInlineTest, mergeReports, showReport, page }) => {
   test.slow();
   const reportDir = test.info().outputPath('blob-report');
@@ -107,9 +206,11 @@ test('should merge into html', async ({ runInlineTest, mergeReports, showReport,
   const reportFiles = await fs.promises.readdir(reportDir);
   reportFiles.sort();
   expect(reportFiles).toEqual(['report-1-of-3.zip', 'report-2-of-3.zip', 'report-3-of-3.zip']);
-  const { exitCode } = await mergeReports(reportDir, {}, { additionalArgs: ['--reporter', 'html'] });
+  const { exitCode, output } = await mergeReports(reportDir, { 'PW_TEST_HTML_REPORT_OPEN': 'never' }, { additionalArgs: ['--reporter', 'html'] });
   expect(exitCode).toBe(0);
 
+  expect(output).toContain('To open last HTML report run:');
+  
   await showReport();
 
   await expect(page.locator('.subnav-item:has-text("All") .counter')).toHaveText('10');
@@ -166,7 +267,7 @@ test('be able to merge incomplete shards', async ({ runInlineTest, mergeReports,
   const reportFiles = await fs.promises.readdir(reportDir);
   reportFiles.sort();
   expect(reportFiles).toEqual(['report-1-of-3.zip', 'report-3-of-3.zip']);
-  const { exitCode } = await mergeReports(reportDir, {}, { additionalArgs: ['--reporter', 'html'] });
+  const { exitCode } = await mergeReports(reportDir, { 'PW_TEST_HTML_REPORT_OPEN': 'never' }, { additionalArgs: ['--reporter', 'html'] });
   expect(exitCode).toBe(0);
 
   await showReport();
@@ -300,7 +401,7 @@ test('preserve attachments', async ({ runInlineTest, mergeReports, showReport, p
   const reportFiles = await fs.promises.readdir(reportDir);
   reportFiles.sort();
   expect(reportFiles).toEqual(['report-1-of-2.zip']);
-  const { exitCode } = await mergeReports(reportDir, {}, { additionalArgs: ['--reporter', 'html'] });
+  const { exitCode } = await mergeReports(reportDir, { 'PW_TEST_HTML_REPORT_OPEN': 'never' }, { additionalArgs: ['--reporter', 'html'] });
   expect(exitCode).toBe(0);
 
   await showReport();
@@ -354,7 +455,7 @@ test('multiple output reports', async ({ runInlineTest, mergeReports, showReport
   const reportFiles = await fs.promises.readdir(reportDir);
   reportFiles.sort();
   expect(reportFiles).toEqual(['report-1-of-2.zip']);
-  const { exitCode, output } = await mergeReports(reportDir, { 'PW_TEST_DEBUG_REPORTERS': '1' }, { additionalArgs: ['--reporter', 'html,line'] });
+  const { exitCode, output } = await mergeReports(reportDir, { 'PW_TEST_HTML_REPORT_OPEN': 'never', 'PW_TEST_DEBUG_REPORTERS': '1' }, { additionalArgs: ['--reporter', 'html,line'] });
   expect(exitCode).toBe(0);
 
   // Check that line reporter was called.
@@ -374,7 +475,7 @@ test('multiple output reports based on config', async ({ runInlineTest, mergeRep
   const files = {
     'merged/playwright.config.ts': `
       module.exports = {
-        reporter: [['blob', { outputDir: 'merged-blob' }], ['html', { outputFolder: 'html' }], ['line']]
+        reporter: [['blob', { outputDir: 'merged-blob' }], ['html', { outputFolder: 'html', open: 'never' }], ['line']]
       };
     `,
     'playwright.config.ts': `

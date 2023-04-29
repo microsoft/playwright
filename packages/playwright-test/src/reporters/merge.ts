@@ -93,11 +93,13 @@ function mergeEvents(shardReports: string[]) {
         beginEvents.push(event);
       else if (event.method === 'onEnd')
         endEvents.push(event);
+      else if (event.method === 'onExit')
+        continue;
       else
         events.push(event);
     }
   }
-  return [mergeBeginEvents(beginEvents), ...events, mergeEndEvents(endEvents)];
+  return [mergeBeginEvents(beginEvents), ...events, mergeEndEvents(endEvents), { method: 'onExit', params: undefined }];
 }
 
 function mergeBeginEvents(beginEvents: JsonEvent[]): JsonEvent {
