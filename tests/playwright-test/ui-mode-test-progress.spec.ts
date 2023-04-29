@@ -15,7 +15,7 @@
  */
 
 import { ManualPromise } from '../../packages/playwright-core/lib/utils/manualPromise';
-import { test, expect } from './ui-mode-fixtures';
+import { test, expect, dumpTestTree } from './ui-mode-fixtures';
 
 test('should update trace live', async ({ runUITest, server }) => {
   const onePromise = new ManualPromise();
@@ -241,4 +241,48 @@ test('should show trace w/ multiple contexts', async ({ runUITest, server, creat
   ]);
 
   latch.open();
+});
+
+
+test('should show live trace for serial', async ({ runUITest, server, createLatch }) => {
+  const latch = createLatch();
+
+  const { page } = await runUITest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      let page;
+      test.describe.configure({ mode: 'serial' });
+      test.beforeAll(async ({ browser }) => {
+        page = await browser.newPage();
+      });
+      test('one', async ({ }) => {
+        await page.setContent('<input id=checkbox type=checkbox></input>');
+        await page.locator('input').check();
+        await expect(page.locator('input')).toBeChecked();
+      });
+
+      test('two', async ({ }) => {
+        await page.locator('input').uncheck();
+        await expect(page.locator('input')).not.toBeChecked();
+        ${latch.blockingCode}
+      });
+    `,
+  });
+
+  await expect.poll(dumpTestTree(page)).toBe(`
+    ▼ ◯ a.test.ts
+        ◯ one
+        ◯ two
+  `);
+  await page.getByText('two', { exact: true }).click();
+  await page.getByTitle('Run all').click();
+
+  const listItem = page.getByTestId('action-list').getByRole('listitem');
+  await expect(
+      listItem,
+      'action list'
+  ).toHaveText([
+    /locator.unchecklocator\('input'\)[\d.]+m?s/,
+    /expect.not.toBeCheckedlocator\('input'\)[\d.]/,
+  ]);
 });

@@ -325,15 +325,15 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     const startTraceChunkOnContextCreation = async (tracing: Tracing) => {
       if (captureTrace) {
         const title = [path.relative(testInfo.project.testDir, testInfo.file) + ':' + testInfo.line, ...testInfo.titlePath.slice(1)].join(' › ');
+        const ordinalSuffix = traceOrdinal ? `-${traceOrdinal}` : '';
+        ++traceOrdinal;
+        const retrySuffix = testInfo.retry ? `-${testInfo.retry}` : '';
+        const name = `${testInfo.testId}${retrySuffix}${ordinalSuffix}`;
         if (!(tracing as any)[kTracingStarted]) {
-          const ordinalSuffix = traceOrdinal ? `-${traceOrdinal}` : '';
-          ++traceOrdinal;
-          const retrySuffix = testInfo.retry ? `-${testInfo.retry}` : '';
-          const name = `${testInfo.testId}${retrySuffix}${ordinalSuffix}`;
           await tracing.start({ ...traceOptions, title, name });
           (tracing as any)[kTracingStarted] = true;
         } else {
-          await tracing.startChunk({ title });
+          await tracing.startChunk({ title, name });
         }
       } else {
         if ((tracing as any)[kTracingStarted]) {
