@@ -214,8 +214,10 @@ export class Dispatcher {
 
     const remainingByTestId = new Map(testGroup.tests.map(e => [e.id, e]));
     const failedTestIds = new Set<string>();
+    let runningTest = false;
 
     const onTestBegin = (params: TestBeginPayload) => {
+      runningTest = true;
       const data = this._testById.get(params.testId)!;
       const result = data.test._appendTestResult();
       data.resultByWorkerIndex.set(worker.workerIndex, { result, steps: new Map() });
@@ -228,6 +230,7 @@ export class Dispatcher {
     worker.addListener('testBegin', onTestBegin);
 
     const onTestEnd = (params: TestEndPayload) => {
+      runningTest = false;
       remainingByTestId.delete(params.testId);
       if (this._hasReachedMaxFailures()) {
         // Do not show more than one error to avoid confusion, but report
@@ -339,7 +342,7 @@ export class Dispatcher {
             if (runData) {
               result = runData.result;
             } else {
-              if (onlyStartedTests)
+              if (onlyStartedTests && runningTest)
                 return true;
               result = data.test._appendTestResult();
               this._reporter.onTestBegin(test, result);
