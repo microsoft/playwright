@@ -89,7 +89,7 @@ class EchoReporter {
   }
 }
 module.exports = EchoReporter;
-`
+`;
 
 test('should call methods in right order', async ({ runInlineTest, mergeReports, showReport, page }) => {
   test.slow();
