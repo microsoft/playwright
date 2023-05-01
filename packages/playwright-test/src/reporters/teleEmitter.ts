@@ -123,7 +123,6 @@ export class TeleReporterEmitter implements Reporter {
   }
 
   async onExit() {
-    this._messageSink({ method: 'onExit' });
   }
 
   private _serializeConfig(config: FullConfig): JsonConfig {

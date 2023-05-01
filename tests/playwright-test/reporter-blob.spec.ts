@@ -210,7 +210,7 @@ test('should merge into html', async ({ runInlineTest, mergeReports, showReport,
   expect(exitCode).toBe(0);
 
   expect(output).toContain('To open last HTML report run:');
-  
+
   await showReport();
 
   await expect(page.locator('.subnav-item:has-text("All") .counter')).toHaveText('10');

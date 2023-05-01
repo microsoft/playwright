@@ -93,8 +93,6 @@ function mergeEvents(shardReports: string[]) {
         beginEvents.push(event);
       else if (event.method === 'onEnd')
         endEvents.push(event);
-      else if (event.method === 'onExit')
-        continue;
       else
         events.push(event);
     }
