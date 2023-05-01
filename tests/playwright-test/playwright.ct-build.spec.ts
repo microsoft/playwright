@@ -175,6 +175,7 @@ test('should extract component list', async ({ runInlineTest }, testInfo) => {
         ],
         deps: [
           expect.stringContaining('clashingNames1.tsx'),
+          expect.stringContaining('jsx-runtime.js'),
           expect.stringContaining('clashingNames2.tsx'),
         ],
       });
@@ -187,6 +188,7 @@ test('should extract component list', async ({ runInlineTest }, testInfo) => {
         ],
         deps: [
           expect.stringContaining('defaultExport.tsx'),
+          expect.stringContaining('jsx-runtime.js'),
         ]
       });
     }
@@ -199,6 +201,7 @@ test('should extract component list', async ({ runInlineTest }, testInfo) => {
         ],
         deps: [
           expect.stringContaining('components.tsx'),
+          expect.stringContaining('jsx-runtime.js'),
         ]
       });
     }
@@ -210,6 +213,7 @@ test('should extract component list', async ({ runInlineTest }, testInfo) => {
         ],
         deps: [
           expect.stringContaining('button.tsx'),
+          expect.stringContaining('jsx-runtime.js'),
         ]
       });
     }

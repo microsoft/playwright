@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "@playwright/experimental-ct-core": "1.34.0-next",
-    "vite-plugin-solid": "^2.6.1"
+    "vite-plugin-solid": "^2.7.0"
   },
   "devDependencies": {
     "solid-js": "^1.7.0"
