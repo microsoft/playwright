@@ -31,17 +31,10 @@ class JUnitReporter implements Reporter {
   private totalSkipped = 0;
   private outputFile: string | undefined;
   private stripANSIControlSequences = false;
-  private embedAnnotationsAsProperties = false;
-  private textContentAnnotations: string[] | undefined;
-  private embedAttachmentsAsProperty: string | undefined;
 
-
-  constructor(options: { outputFile?: string, stripANSIControlSequences?: boolean, embedAnnotationsAsProperties?: boolean, textContentAnnotations?: string[], embedAttachmentsAsProperty?: string } = {}) {
+  constructor(options: { outputFile?: string, stripANSIControlSequences?: boolean } = {}) {
     this.outputFile = options.outputFile || reportOutputNameFromEnv();
     this.stripANSIControlSequences = options.stripANSIControlSequences || false;
-    this.embedAnnotationsAsProperties = options.embedAnnotationsAsProperties || false;
-    this.textContentAnnotations = options.textContentAnnotations || [];
-    this.embedAttachmentsAsProperty = options.embedAttachmentsAsProperty;
   }
 
   printsToStdio() {
@@ -153,71 +146,15 @@ class JUnitReporter implements Reporter {
       children: [] as XMLEntry[]
     };
 
-    if (this.embedAnnotationsAsProperties && test.annotations) {
-      for (const annotation of test.annotations) {
-        if (this.textContentAnnotations?.includes(annotation.type)) {
-          const property: XMLEntry = {
-            name: 'property',
-            attributes: {
-              name: annotation.type
-            },
-            text: annotation.description
-          };
-          properties.children?.push(property);
-        } else {
-          const property: XMLEntry = {
-            name: 'property',
-            attributes: {
-              name: annotation.type,
-              value: (annotation?.description ? annotation.description : '')
-            }
-          };
-          properties.children?.push(property);
-        }
-      }
-    }
-
-    const systemErr: string[] = [];
-    // attachments are optionally embed as base64 encoded content on inner <item> elements
-    if (this.embedAttachmentsAsProperty) {
-      const evidence: XMLEntry = {
+    for (const annotation of test.annotations) {
+      const property: XMLEntry = {
         name: 'property',
         attributes: {
-          name: this.embedAttachmentsAsProperty
-        },
-        children: [] as XMLEntry[]
-      };
-      for (const result of test.results) {
-        for (const attachment of result.attachments) {
-          let contents;
-          if (attachment.body) {
-            contents = attachment.body.toString('base64');
-          } else {
-            if (!attachment.path)
-              continue;
-            try {
-              if (fs.existsSync(attachment.path))
-                contents = fs.readFileSync(attachment.path, { encoding: 'base64' });
-              else
-                systemErr.push(`\nWarning: attachment ${attachment.path} is missing`);
-            } catch (e) {
-            }
-          }
-
-          if (contents) {
-            const item: XMLEntry = {
-              name: 'item',
-              attributes: {
-                name: attachment.name
-              },
-              text: contents
-            };
-            evidence.children?.push(item);
-          }
-
+          name: annotation.type,
+          value: (annotation?.description ? annotation.description : '')
         }
-      }
-      properties.children?.push(evidence);
+      };
+      properties.children?.push(property);
     }
 
     if (properties.children?.length)
@@ -240,21 +177,20 @@ class JUnitReporter implements Reporter {
     }
 
     const systemOut: string[] = [];
+    const systemErr: string[] = [];
     for (const result of test.results) {
       systemOut.push(...result.stdout.map(item => item.toString()));
       systemErr.push(...result.stderr.map(item => item.toString()));
-      if (!this.embedAttachmentsAsProperty) {
-        for (const attachment of result.attachments) {
-          if (!attachment.path)
-            continue;
-          try {
-            const attachmentPath = path.relative(this.config.rootDir, attachment.path);
-            if (fs.existsSync(attachment.path))
-              systemOut.push(`\n[[ATTACHMENT|${attachmentPath}]]\n`);
-            else
-              systemErr.push(`\nWarning: attachment ${attachmentPath} is missing`);
-          } catch (e) {
-          }
+      for (const attachment of result.attachments) {
+        if (!attachment.path)
+          continue;
+        try {
+          const attachmentPath = path.relative(this.config.rootDir, attachment.path);
+          if (fs.existsSync(attachment.path))
+            systemOut.push(`\n[[ATTACHMENT|${attachmentPath}]]\n`);
+          else
+            systemErr.push(`\nWarning: attachment ${attachmentPath} is missing`);
+        } catch (e) {
         }
       }
     }
