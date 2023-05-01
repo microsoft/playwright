@@ -97,7 +97,7 @@ function mergeEvents(shardReports: string[]) {
         events.push(event);
     }
   }
-  return [mergeBeginEvents(beginEvents), ...events, mergeEndEvents(endEvents)];
+  return [mergeBeginEvents(beginEvents), ...events, mergeEndEvents(endEvents), { method: 'onExit', params: undefined }];
 }
 
 function mergeBeginEvents(beginEvents: JsonEvent[]): JsonEvent {
