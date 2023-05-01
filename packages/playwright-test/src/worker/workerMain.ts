@@ -18,7 +18,7 @@ import { colors, rimraf } from 'playwright-core/lib/utilsBundle';
 import util from 'util';
 import { debugTest, formatLocation, relativeFilePath, serializeError } from '../util';
 import type { TestBeginPayload, TestEndPayload, RunPayload, DonePayload, WorkerInitParams, TeardownErrorsPayload, TestOutputPayload } from '../common/ipc';
-import { setCurrentTestInfo, setIsWorkerProcess } from '../common/globals';
+import { setCurrentTestInfo, setIsWorkerProcess, currentTestInstrumentation } from '../common/globals';
 import { ConfigLoader } from '../common/configLoader';
 import type { Suite, TestCase } from '../common/test';
 import type { Annotation, FullConfigInternal, FullProjectInternal } from '../common/config';
@@ -325,6 +325,8 @@ export class WorkerMain extends ProcessRunner {
         // Note: wrap all preparation steps together, because failure/skip in any of them
         // prevents further setup and/or test from running.
         const beforeHooksError = await testInfo._runAndFailOnError(async () => {
+          await currentTestInstrumentation()?.willStartTest(testInfo);
+
           // Run "beforeAll" modifiers on parent suites, unless already run during previous tests.
           for (const suite of suites) {
             if (this._extraSuiteAnnotations.has(suite))
@@ -395,18 +397,11 @@ export class WorkerMain extends ProcessRunner {
         // Note: do not wrap all teardown steps together, because failure in any of them
         // does not prevent further teardown steps from running.
 
-        // Run "immediately upon test failure" callbacks.
-        if (testInfo._isFailure()) {
-          const onFailureError = await testInfo._runAndFailOnError(async () => {
-            testInfo._timeoutManager.setCurrentRunnable({ type: 'test', slot: afterHooksSlot });
-            for (const [fn, title] of testInfo._onTestFailureImmediateCallbacks) {
-              debugTest(`on-failure callback started`);
-              await testInfo._runAsStep({ category: 'hook', title }, fn);
-              debugTest(`on-failure callback finished`);
-            }
-          });
-          firstAfterHooksError = firstAfterHooksError || onFailureError;
-        }
+        // Run "immediately upon test function finish" callback.
+        debugTest(`on-test-function-finish callback started`);
+        const didFinishTestFunctionError = await testInfo._runAndFailOnError(async () => await currentTestInstrumentation()?.didFinishTestFunction(testInfo));
+        firstAfterHooksError = firstAfterHooksError || didFinishTestFunctionError;
+        debugTest(`on-test-function-finish callback finished`);
 
         // Run "afterEach" hooks, unless we failed at beforeAll stage.
         if (shouldRunAfterEachHooks) {
@@ -463,6 +458,10 @@ export class WorkerMain extends ProcessRunner {
           firstAfterHooksError = firstAfterHooksError || workerScopeError;
         });
       }
+
+      const didRunTestError = await testInfo._runAndFailOnError(async () => await currentTestInstrumentation()?.didFinishTest(testInfo));
+      firstAfterHooksError = firstAfterHooksError || didRunTestError;
+
       if (firstAfterHooksError)
         step.complete({ error: firstAfterHooksError });
     });

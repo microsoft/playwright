@@ -281,6 +281,10 @@ test('should not report nested after hooks', async ({ runInlineTest }) => {
           category: 'pw:api',
           title: 'browserContext.close',
         },
+        {
+          category: 'pw:api',
+          title: 'browser.close',
+        },
       ],
     },
   ]);

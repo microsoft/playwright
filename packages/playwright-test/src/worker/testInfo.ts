@@ -44,7 +44,6 @@ export class TestInfoImpl implements TestInfo {
   readonly _startWallTime: number;
   private _hasHardError: boolean = false;
   readonly _traceEvents: trace.TraceEvent[] = [];
-  readonly _onTestFailureImmediateCallbacks = new Map<() => Promise<void>, string>(); // fn -> title
   _didTimeout = false;
   _wasInterrupted = false;
   _lastStepId = 0;

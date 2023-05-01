@@ -424,7 +424,9 @@ test('should report api step failure', async ({ runInlineTest }) => {
     `begin {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
     `begin {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
     `end {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
-    `end {\"title\":\"After Hooks\",\"category\":\"hook\",\"steps\":[{\"title\":\"browserContext.close\",\"category\":\"pw:api\"}]}`,
+    `begin {\"title\":\"browser.close\",\"category\":\"pw:api\"}`,
+    `end {\"title\":\"browser.close\",\"category\":\"pw:api\"}`,
+    `end {\"title\":\"After Hooks\",\"category\":\"hook\",\"steps\":[{\"title\":\"browserContext.close\",\"category\":\"pw:api\"},{\"title\":\"browser.close\",\"category\":\"pw:api\"}]}`,
   ]);
 });
 
