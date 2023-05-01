@@ -69,3 +69,16 @@ export function setCurrentConfig(config: FullConfigInternal | null) {
 export function currentConfig(): FullConfigInternal | null {
   return currentConfigValue;
 }
+
+export interface TestInstrumentation {
+  willStartTest(testInfo: TestInfoImpl): Promise<void>;
+  didFinishTestFunction(testInfo: TestInfoImpl): Promise<void>;
+  didFinishTest(testInfo: TestInfoImpl): Promise<void>;
+}
+let testInstrumentation: TestInstrumentation | undefined;
+export function setCurrentTestInstrumentation(instrumentation: TestInstrumentation | undefined) {
+  testInstrumentation = instrumentation;
+}
+export function currentTestInstrumentation() {
+  return testInstrumentation;
+}

@@ -26,6 +26,7 @@ import { type ContextReuseMode } from './common/config';
 import { artifactsFolderName } from './isomorphic/folders';
 import type { ClientInstrumentation, ClientInstrumentationListener } from '../../playwright-core/src/client/clientInstrumentation';
 import type { ParsedStackTrace } from '../../playwright-core/src/utils/stackTrace';
+import { currentTestInfo, setCurrentTestInstrumentation } from './common/globals';
 export { expect } from './matchers/expect';
 export { store as _store } from './store';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
@@ -49,12 +50,12 @@ type TestFixtures = PlaywrightTestArgs & PlaywrightTestOptions & {
   _contextReuseMode: ContextReuseMode,
   _reuseContext: boolean,
   _setupContextOptions: void;
-  _setupArtifacts: void;
   _contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>;
 };
 type WorkerFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions & {
   _browserOptions: LaunchOptions;
   _artifactsDir: () => string;
+  _setupArtifacts: void;
   _snapshotSuffix: string;
 };
 
@@ -264,15 +265,15 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     }
   }, { auto: 'all-hooks-included',  _title: 'context configuration' } as any],
 
-  _setupArtifacts: [async ({ playwright, _artifactsDir, trace, screenshot }, use, testInfo) => {
-    const artifactsRecorder = new ArtifactsRecorder(playwright, _artifactsDir(), trace, screenshot);
-    const testInfoImpl = testInfo as TestInfoImpl;
+  _setupArtifacts: [async ({ playwright, _artifactsDir, trace, screenshot }, use) => {
+    let artifactsRecorder: ArtifactsRecorder | undefined;
 
     const csiListener: ClientInstrumentationListener = {
       onApiCallBegin: (apiCall: string, stackTrace: ParsedStackTrace | null, wallTime: number, userData: any) => {
-        if (apiCall.startsWith('expect.'))
+        const testInfo = currentTestInfo();
+        if (!testInfo || apiCall.startsWith('expect.') || apiCall.includes('setTestIdAttribute'))
           return { userObject: null };
-        const step = testInfoImpl._addStep({
+        const step = testInfo._addStep({
           location: stackTrace?.frames[0] as any,
           category: 'pw:api',
           title: apiCall,
@@ -285,35 +286,65 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
         step?.complete({ error });
       },
       onWillPause: () => {
-        testInfo.setTimeout(0);
+        currentTestInfo()?.setTimeout(0);
       },
       onDidCreateBrowserContext: async (context: BrowserContext) => {
-        await artifactsRecorder.didCreateBrowserContext(context);
-        attachConnectedHeaderIfNeeded(testInfo, context.browser());
+        await artifactsRecorder?.didCreateBrowserContext(context);
+        const testInfo = currentTestInfo();
+        if (testInfo)
+          attachConnectedHeaderIfNeeded(testInfo, context.browser());
       },
       onDidCreateRequestContext: async (context: APIRequestContext) => {
-        await artifactsRecorder.didCreateRequestContext(context);
+        await artifactsRecorder?.didCreateRequestContext(context);
       },
       onWillCloseBrowserContext: async (context: BrowserContext) => {
-        await artifactsRecorder.willCloseBrowserContext(context);
+        await artifactsRecorder?.willCloseBrowserContext(context);
       },
       onWillCloseRequestContext: async (context: APIRequestContext) => {
-        await artifactsRecorder.willCloseRequestContext(context);
+        await artifactsRecorder?.willCloseRequestContext(context);
       },
     };
 
-    // 1. Setup instrumentation and process existing contexts.
-    const instrumentation = (playwright as any)._instrumentation as ClientInstrumentation;
-    instrumentation.addListener(csiListener);
-    await artifactsRecorder.testStarted(testInfoImpl);
+    const willStartTest = async (testInfo: TestInfoImpl) => {
+      artifactsRecorder = new ArtifactsRecorder(playwright, _artifactsDir(), trace, screenshot);
+      await artifactsRecorder.willStartTest(testInfo);
+    };
+
+    const didFinishTestFunction = async (testInfo: TestInfoImpl) => {
+      await artifactsRecorder?.didFinishTestFunction();
+    };
+
+    const didFinishTest = async (testInfo: TestInfoImpl) => {
+      await artifactsRecorder?.didFinishTest();
+      artifactsRecorder = undefined;
+    };
+
+    // 1. Setup instrumentation.
+    const clientInstrumentation = (playwright as any)._instrumentation as ClientInstrumentation;
+    clientInstrumentation.addListener(csiListener);
+    setCurrentTestInstrumentation({ willStartTest, didFinishTestFunction, didFinishTest });
+
+    // 2. Setup for the first test in the worker.
+    {
+      const firstTestInfo = currentTestInfo();
+      if (firstTestInfo)
+        await willStartTest(firstTestInfo);
+    }
 
     // 2. Run the test.
     await use();
 
-    // 3. Cleanup instrumentation.
-    await artifactsRecorder.testFinished();
-    instrumentation.removeListener(csiListener);
-  }, { auto: 'all-hooks-included',  _title: 'trace recording' } as any],
+    // 3. Teardown for the last test in the worker.
+    {
+      const lastTestInfo = currentTestInfo();
+      if (lastTestInfo)
+        await didFinishTest(lastTestInfo);
+    }
+
+    // 4. Cleanup instrumentation.
+    setCurrentTestInstrumentation(undefined);
+    clientInstrumentation.removeListener(csiListener);
+  }, { scope: 'worker', auto: 'all-hooks-included',  _title: 'trace recording' } as any],
 
   _contextFactory: [async ({ browser, video, _artifactsDir, _reuseContext }, use, testInfo) => {
     const testInfoImpl = testInfo as TestInfoImpl;
@@ -526,7 +557,6 @@ class ArtifactsRecorder {
   private _traceOrdinal = 0;
   private _screenshottedSymbol: symbol;
   private _startedCollectingArtifacts: symbol;
-  private _screenshotOnTestFailureBound: () => Promise<void>;
 
   constructor(playwright: Playwright, artifactsDir: string, trace: TraceOption, screenshot: ScreenshotOption) {
     this._playwright = playwright;
@@ -538,10 +568,9 @@ class ArtifactsRecorder {
     this._traceOptions = typeof trace === 'string' ? defaultTraceOptions : { ...defaultTraceOptions, ...trace, mode: undefined };
     this._screenshottedSymbol = Symbol('screenshotted');
     this._startedCollectingArtifacts = Symbol('startedCollectingArtifacts');
-    this._screenshotOnTestFailureBound = this._screenshotOnTestFailure.bind(this);
   }
 
-  async testStarted(testInfo: TestInfoImpl) {
+  async willStartTest(testInfo: TestInfoImpl) {
     this._testInfo = testInfo;
     this._captureTrace = shouldCaptureTrace(this._traceMode, testInfo) && !process.env.PW_TEST_DISABLE_TRACING;
 
@@ -561,10 +590,6 @@ class ArtifactsRecorder {
       const existingApiRequests: APIRequestContext[] =  Array.from((this._playwright.request as any)._contexts as Set<APIRequestContext>);
       await Promise.all(existingApiRequests.map(c => this.didCreateRequestContext(c)));
     }
-
-    // Setup "screenshot on failure" callback.
-    if (this._screenshotMode === 'on' || this._screenshotMode === 'only-on-failure')
-      testInfo._onTestFailureImmediateCallbacks.set(this._screenshotOnTestFailureBound, 'Screenshot on failure');
   }
 
   async didCreateBrowserContext(context: BrowserContext) {
@@ -594,14 +619,18 @@ class ArtifactsRecorder {
     await this._stopTracing(tracing, (context as any)[kStartedContextTearDown]);
   }
 
-  async testFinished() {
+  async didFinishTestFunction() {
+    if (this._testInfo._isFailure() && (this._screenshotMode === 'on' || this._screenshotMode === 'only-on-failure'))
+      await this._screenshotOnTestFailure();
+  }
+
+  async didFinishTest() {
     const captureScreenshots = this._screenshotMode === 'on' || (this._screenshotMode === 'only-on-failure' && this._testInfo.status !== this._testInfo.expectedStatus);
 
     const leftoverContexts: BrowserContext[] = [];
     for (const browserType of [this._playwright.chromium, this._playwright.firefox, this._playwright.webkit])
       leftoverContexts.push(...(browserType as any)._contexts);
     const leftoverApiRequests: APIRequestContext[] =  Array.from((this._playwright.request as any)._contexts as Set<APIRequestContext>);
-    this._testInfo._onTestFailureImmediateCallbacks.delete(this._screenshotOnTestFailureBound);
 
     // Collect traces/screenshots for remaining contexts.
     await Promise.all(leftoverContexts.map(async context => {
