@@ -88,7 +88,7 @@ const LabelsLinkView: React.FC<React.PropsWithChildren<{
   return labels.length > 0 ? (
     <>
       {labels.map(tag => (
-        <a style={{ textDecoration: 'none', color: 'var(--color-fg-default)' }} href={`#?q=@${tag}`} >
+        <a key={tag} style={{ textDecoration: 'none', color: 'var(--color-fg-default)' }} href={`#?q=@${tag}`} >
           <span style={{ margin: '6px 0 0 6px', cursor: 'pointer' }} className={'label label-color-' + (hashStringToInt(tag))}>
             {tag}
           </span>

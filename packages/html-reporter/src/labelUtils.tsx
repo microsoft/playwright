@@ -25,7 +25,7 @@ export function escapeRegExp(string: string) {
 
 // match all tags in test title
 export function matchTags(title: string): string[] {
-  return title.match(/@(\w+)/g)?.map(tag => tag.slice(1)) || [];
+  return title.match(/@([\S]+)/g)?.map(tag => tag.slice(1)) || [];
 }
 
 // hash string to integer in range [0, 6] for color index, to get same color for same tag

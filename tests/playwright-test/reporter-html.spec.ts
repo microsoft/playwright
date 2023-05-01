@@ -1261,12 +1261,15 @@ test.describe('labels', () => {
     expect((await firstTitle.boundingBox()).height).toBeGreaterThanOrEqual(100);
   });
 
-  test('with describe. should show filtered tests by labels when click on label', async ({ runInlineTest, showReport, page }) => {
+  test('with describe. with dash. should show filtered tests by labels when click on label', async ({ runInlineTest, showReport, page }) => {
     const result = await runInlineTest({
       'a.test.js': `
         const { expect, test } = require('@playwright/test');
         test.describe('Error Pages', () => {
           test('@regression passes', async ({}) => {
+            expect(1).toBe(1);
+          });
+          test('@GCC-1508 passes', async ({}) => {
             expect(1).toBe(1);
           });
         });
@@ -1278,13 +1281,16 @@ test.describe('labels', () => {
           test('@smoke fails', async ({}) => {
             expect(1).toBe(2);
           });
+          test('@GCC-1510 fails', async ({}) => {
+            expect(1).toBe(2);
+          });
         });
       `,
     }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
 
     expect(result.exitCode).toBe(1);
-    expect(result.passed).toBe(1);
-    expect(result.failed).toBe(1);
+    expect(result.passed).toBe(2);
+    expect(result.failed).toBe(2);
 
     await showReport();
 
@@ -1316,6 +1322,71 @@ test.describe('labels', () => {
     await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(1);
     await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(0);
     await expect(page.locator('.test-file-test .test-file-title')).toHaveText('Error Pages › @regression passes');
+
+    await searchInput.clear();
+
+    const tagWithDash = page.locator('.test-file-test', { has: page.getByText('Error Pages › @GCC-1508 passes', { exact: true }) }).locator('.label', { hasText: 'GCC-1508' });
+
+    await tagWithDash.click();
+    await expect(searchInput).toHaveValue('@GCC-1508');
+    await expect(page.locator('.test-file-test')).toHaveCount(1);
+    await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(1);
+    await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(0);
+    await expect(page.locator('.test-file-test .test-file-title')).toHaveText('Error Pages › @GCC-1508 passes');
+
+    await searchInput.clear();
+
+    const tagWithDash2 = page.locator('.test-file-test', { has: page.getByText('Error Pages › @GCC-1510 fails', { exact: true }) }).locator('.label', { hasText: 'GCC-1510' });
+
+    await tagWithDash2.click();
+    await expect(searchInput).toHaveValue('@GCC-1510');
+    await expect(page.locator('.test-file-test')).toHaveCount(1);
+    await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(0);
+    await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(1);
+    await expect(page.locator('.test-file-test .test-file-title')).toHaveText('Error Pages › @GCC-1510 fails');
+  });
+
+  test('tags with special symbols', async ({ runInlineTest, showReport, page }) => {
+    const result = await runInlineTest({
+      'a.test.js': `
+        const { expect, test } = require('@playwright/test');
+        const tags = ['@smoke:p1', '@issue[123]', '@issue#123', '@$$$', '@tl/dr'];
+
+        test.describe('Error Pages', () => {
+          tags.forEach(tag => {
+            test(tag + ' passes', async ({}) => {
+              expect(1).toBe(1);
+            });
+          });
+        });
+      `,
+    }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.passed).toBe(5);
+
+    await showReport();
+    const tags = ['smoke:p1', 'issue[123]', 'issue#123', '$$$', 'tl/dr'];
+    const searchInput = page.locator('.subnav-search-input');
+
+    for (const tag of tags) {
+      const tagButton = page.locator('.label').getByText(tag, { exact: true });
+      await expect(tagButton).toBeVisible();
+
+      await tagButton.click();
+      await expect(page.locator('.test-file-test')).toHaveCount(1);
+      await expect(page.locator('.chip')).toHaveCount(1);
+      await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(1);
+      await expect(page.locator('.test-file-test .test-file-title')).toHaveText(`Error Pages › @${tag} passes`);
+
+      const testTitle = page.locator('.test-file-test .test-file-title', { hasText: `${tag} passes` });
+      await testTitle.click();
+      await expect(page.locator('.test-case-title', { hasText: `${tag} passes` })).toBeVisible();
+      await expect(page.locator('.label', { hasText: tag })).toBeVisible();
+
+      await page.goBack();
+      await searchInput.clear();
+    }
   });
 
   test('click label should change URL', async ({ runInlineTest, showReport, page }) => {
