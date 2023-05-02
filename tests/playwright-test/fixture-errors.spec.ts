@@ -415,19 +415,19 @@ test('should give enough time for fixture teardown', async ({ runInlineTest }) =
         fixture: async ({ }, use) => {
           await use();
           console.log('\\n%%teardown start');
-          await new Promise(f => setTimeout(f, 800));
+          await new Promise(f => setTimeout(f, 2000));
           console.log('\\n%%teardown finished');
         },
       });
       test('fast enough but close', async ({ fixture }) => {
-        test.setTimeout(1000);
-        await new Promise(f => setTimeout(f, 800));
+        test.setTimeout(3000);
+        await new Promise(f => setTimeout(f, 2000));
       });
     `,
   });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
-  expect(result.output).toContain('Test finished within timeout of 1000ms, but tearing down "fixture" ran out of time.');
+  expect(result.output).toContain('Test finished within timeout of 3000ms, but tearing down "fixture" ran out of time.');
   expect(result.outputLines).toEqual([
     'teardown start',
     'teardown finished',
