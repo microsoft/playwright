@@ -701,6 +701,10 @@ test('should nest steps based on zones', async ({ runInlineTest }) => {
           location: { file: 'a.test.ts', line: 'number', column: 'number' }
         },
         {
+          title: 'browserContext.close',
+          category: 'pw:api'
+        },
+        {
           title: 'afterAll hook',
           category: 'hook',
           steps: [
@@ -712,10 +716,6 @@ test('should nest steps based on zones', async ({ runInlineTest }) => {
           ],
           location: { file: 'a.test.ts', line: 'number', column: 'number' }
         },
-        {
-          title: 'browserContext.close',
-          category: 'pw:api'
-        }
       ]
     }
   ]);
