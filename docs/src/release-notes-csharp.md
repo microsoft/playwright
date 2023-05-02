@@ -17,7 +17,7 @@ toc_max_heading_level: 2
     var dialog = page.GetByText("Confirm security settings");
     await Expect(newEmail.Or(dialog)).ToBeVisibleAsync();
     if (await dialog.IsVisibleAsync())
-      await page.GetByRole(AriaRole.Button, new () { NameString = "Dismiss" }).ClickAsync();
+      await page.GetByRole(AriaRole.Button, new () { Name = "Dismiss" }).ClickAsync();
     await newEmail.ClickAsync();
     ```
 * Use new options [`option: hasNot`] and [`option: hasNotText`] in [`method: Locator.filter`]
