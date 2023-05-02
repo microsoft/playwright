@@ -13,7 +13,7 @@ toc_max_heading_level: 2
   In this case, you can wait for either a "New email" button, or a dialog and act accordingly:
 
     ```csharp
-    var newEmail = page.GetByRole(AriaRole.Button, new() { NameString = "New" });
+    var newEmail = page.GetByRole(AriaRole.Button, new() { Name = "New" });
     var dialog = page.GetByText("Confirm security settings");
     await Expect(newEmail.Or(dialog)).ToBeVisibleAsync();
     if (await dialog.IsVisibleAsync())
