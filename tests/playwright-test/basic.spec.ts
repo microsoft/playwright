@@ -43,7 +43,7 @@ test('should timeout', async ({ runInlineTest }) => {
   expect(exitCode).toBe(1);
   expect(passed).toBe(0);
   expect(failed).toBe(1);
-  expect(output).toContain('Test timeout of 100ms exceeded.');
+  expect(output).toContain('Test timeout of 100ms exceeded');
 });
 
 test('should succeed', async ({ runInlineTest }) => {
