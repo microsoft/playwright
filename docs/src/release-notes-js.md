@@ -47,8 +47,8 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 ### ⚠️ Breaking change
 
-* The `mcr.microsoft.com/playwright:v1.34.0` now serves a Playwright image based on Ubuntu Jammy.
-  To use the focal-based image, please use `mcr.microsoft.com/playwright:v1.34.0-focal` instead.
+* The `mcr.microsoft.com/playwright:v1.33.0` now serves a Playwright image based on Ubuntu Jammy.
+  To use the focal-based image, please use `mcr.microsoft.com/playwright:v1.33.0-focal` instead.
 
 ### Browser Versions
 
