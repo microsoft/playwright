@@ -44,8 +44,8 @@ toc_max_heading_level: 2
 
 ### ⚠️ Breaking change
 
-* The `mcr.microsoft.com/playwright/dotnet:v1.34.0` now serves a Playwright image based on Ubuntu Jammy.
-  To use the focal-based image, please use `mcr.microsoft.com/playwright/dotnet:v1.34.0-focal` instead.
+* The `mcr.microsoft.com/playwright/dotnet:v1.33.0` now serves a Playwright image based on Ubuntu Jammy.
+  To use the focal-based image, please use `mcr.microsoft.com/playwright/dotnet:v1.33.0-focal` instead.
 
 ### Browser Versions
 
