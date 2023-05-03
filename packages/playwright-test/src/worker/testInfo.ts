@@ -34,6 +34,8 @@ interface TestStepInternal {
   wallTime: number;
   location?: Location;
   steps: TestStepInternal[];
+  laxParent?: boolean;
+  endWallTime?: number;
   error?: TestInfoError;
 }
 
@@ -210,16 +212,31 @@ export class TestInfoImpl implements TestInfo {
 
   _addStep(data: Omit<TestStepInternal, 'complete' | 'stepId' | 'steps'>): TestStepInternal {
     const stepId = `${data.category}@${data.title}@${++this._lastStepId}`;
-    const parentStep = zones.zoneData<TestStepInternal>('stepZone', captureRawStack());
-    let callbackHandled = false;
+    let parentStep = zones.zoneData<TestStepInternal>('stepZone', captureRawStack());
+
+    // For out-of-stack calls, locate the enclosing step.
+    let isLaxParent = false;
+    if (!parentStep && data.laxParent) {
+      const visit = (step: TestStepInternal) => {
+        // Never nest into under another lax element, it could be a series
+        // of no-reply actions, ala page.continue().
+        if (!step.endWallTime && step.category === data.category && !step.laxParent)
+          parentStep = step;
+        step.steps.forEach(visit);
+      };
+      this._steps.forEach(visit);
+      isLaxParent = !!parentStep;
+    }
+
     const step: TestStepInternal = {
       stepId,
       ...data,
+      laxParent: isLaxParent,
       steps: [],
       complete: result => {
-        if (callbackHandled)
+        if (step.endWallTime)
           return;
-        callbackHandled = true;
+        step.endWallTime = Date.now();
         let error: TestInfoError | undefined;
         if (result.error instanceof Error) {
           // Step function threw an error.
@@ -236,7 +253,7 @@ export class TestInfoImpl implements TestInfo {
         const payload: StepEndPayload = {
           testId: this._test.id,
           stepId,
-          wallTime: Date.now(),
+          wallTime: step.endWallTime,
           error,
         };
         this._onStepEnd(payload);

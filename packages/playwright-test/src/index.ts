@@ -278,6 +278,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
           category: 'pw:api',
           title: apiCall,
           wallTime,
+          laxParent: true,
         });
         userData.userObject = step;
       },
