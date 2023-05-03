@@ -9,11 +9,11 @@ toc_max_heading_level: 2
 ### Locators Update
 
 * Use [`method: Locator.or`] to create a locator that matches either of the two locators.
-  Consider a scenario where   you'd like to click on a "New email" button, but sometimes a security settings dialog shows up instead.
+  Consider a scenario where you'd like to click on a "New email" button, but sometimes a security settings dialog shows up instead.
   In this case, you can wait for either a "New email" button, or a dialog and act accordingly:
 
     ```java
-    Locator newEmail = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("New"));
+    Locator newEmail = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("New email"));
     Locator dialog = page.getByText("Confirm security settings");
     assertThat(newEmail.or(dialog)).isVisible();
     if (dialog.isVisible())

@@ -13,21 +13,21 @@ toc_max_heading_level: 2
   In this case, you can wait for either a "New email" button, or a dialog and act accordingly:
 
     ```csharp
-    var newEmail = page.GetByRole(AriaRole.Button, new() { Name = "New" });
-    var dialog = page.GetByText("Confirm security settings");
+    var newEmail = Page.GetByRole(AriaRole.Button, new() { Name = "New email" });
+    var dialog = Page.GetByText("Confirm security settings");
     await Expect(newEmail.Or(dialog)).ToBeVisibleAsync();
     if (await dialog.IsVisibleAsync())
-      await page.GetByRole(AriaRole.Button, new () { Name = "Dismiss" }).ClickAsync();
+      await Page.GetByRole(AriaRole.Button, new() { Name = "Dismiss" }).ClickAsync();
     await newEmail.ClickAsync();
     ```
 * Use new options [`option: hasNot`] and [`option: hasNotText`] in [`method: Locator.filter`]
   to find elements that **do not match** certain conditions.
 
     ```csharp
-    var rowLocator = page.Locator("tr");
+    var rowLocator = Page.Locator("tr");
     await rowLocator
-        .Filter(new () { HasNotText = "text in column 1" })
-        .Filter(new () { HasNot = page.GetByRole(AriaRole.Button, new () { Name = "column 2 button" }))
+        .Filter(new() { HasNotText = "text in column 1" })
+        .Filter(new() { HasNot = Page.GetByRole(AriaRole.Button, new() { Name = "column 2 button" })})
         .ScreenshotAsync();
     ```
 * Use new web-first assertion [`method: LocatorAssertions.toBeAttached`] to ensure that the element
