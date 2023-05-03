@@ -47,7 +47,7 @@ export type RawStack = string[];
 
 export function captureRawStack(): RawStack {
   const stackTraceLimit = Error.stackTraceLimit;
-  Error.stackTraceLimit = 30;
+  Error.stackTraceLimit = 50;
   const error = new Error();
   const stack = error.stack || '';
   Error.stackTraceLimit = stackTraceLimit;
