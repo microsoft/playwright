@@ -11,11 +11,11 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 ### Locators Update
 
 * Use [`method: Locator.or`] to create a locator that matches either of the two locators.
-  Consider a scenario where   you'd like to click on a "New email" button, but sometimes a security settings dialog shows up instead.
+  Consider a scenario where you'd like to click on a "New email" button, but sometimes a security settings dialog shows up instead.
   In this case, you can wait for either a "New email" button, or a dialog and act accordingly:
 
     ```js
-    const newEmail = page.getByRole('button', { name: 'New' });
+    const newEmail = page.getByRole('button', { name: 'New email' });
     const dialog = page.getByText('Confirm security settings');
     await expect(newEmail.or(dialog)).toBeVisible();
     if (await dialog.isVisible())
