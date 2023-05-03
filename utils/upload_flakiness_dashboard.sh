@@ -72,6 +72,7 @@ EMBED_METADATA_SCRIPT=$(cat <<EOF
   const json = require('./' + process.argv[1]);
   json.metadata = {
     runURL: process.env.BUILD_URL,
+    uuid: require('crypto').randomUUID(),
     osName: process.env.HOST_OS_NAME,
     arch: process.env.HOST_ARCH,
     osVersion: process.env.HOST_OS_VERSION,
@@ -101,4 +102,3 @@ EOF
 
 az storage blob upload --connection-string "${FLAKINESS_CONNECTION_STRING}" -c uploads-permanent -f "${REPORT_NAME}.gz" -n "${UTC_DATE}-${REPORT_NAME}.gz"
 rm -rf "${REPORT_NAME}.gz"
-
