@@ -38,11 +38,11 @@ function validateTsConfig(tsconfig: TsConfigLoaderResult): ParsedTsConfigData | 
     return;
   // Make 'baseUrl' absolute, because it is relative to the tsconfig.json, not to cwd.
   const absoluteBaseUrl = path.resolve(path.dirname(tsconfig.tsConfigPath), tsconfig.baseUrl);
-  const paths = tsconfig.paths || { '*': ['*'] };
+  const pathsFallback = [{ key: '*', values: ['*'] }];
   return {
     allowJs: tsconfig.allowJs,
     absoluteBaseUrl,
-    paths: Object.entries(paths).map(([key, values]) => ({ key, values }))
+    paths: Object.entries(tsconfig.paths || {}).map(([key, values]) => ({ key, values })).concat(pathsFallback)
   };
 }
 
