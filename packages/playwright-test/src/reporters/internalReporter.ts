@@ -14,11 +14,14 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
+import { colors } from 'playwright-core/lib/utilsBundle';
+import { codeFrameColumns } from '../common/babelBundle';
 import type { FullConfig, TestCase, TestError, TestResult, FullResult, TestStep, Reporter } from '../../types/testReporter';
 import { Suite } from '../common/test';
 import type { FullConfigInternal } from '../common/config';
-import { addSnippetToError } from './base';
 import { Multiplexer } from './multiplexer';
+import { prepareErrorStack, relativeFilePath } from './base';
 
 type StdIOChunk = {
   chunk: string | Buffer;
@@ -96,7 +99,7 @@ export class InternalReporter {
       this._deferred.push({ error });
       return;
     }
-    addSnippetToError(this._config.config, error);
+    addLocationAndSnippetToError(this._config.config, error);
     this._multiplexer.onError(error);
   }
 
@@ -111,11 +114,34 @@ export class InternalReporter {
 
   private _addSnippetToTestErrors(test: TestCase, result: TestResult) {
     for (const error of result.errors)
-      addSnippetToError(this._config.config, error, test.location.file);
+      addLocationAndSnippetToError(this._config.config, error, test.location.file);
   }
 
   private _addSnippetToStepError(test: TestCase, step: TestStep) {
     if (step.error)
-      addSnippetToError(this._config.config, step.error, test.location.file);
+      addLocationAndSnippetToError(this._config.config, step.error, test.location.file);
+  }
+}
+
+function addLocationAndSnippetToError(config: FullConfig, error: TestError, file?: string) {
+  if (error.stack && !error.location)
+    error.location = prepareErrorStack(error.stack).location;
+  const location = error.location;
+  if (!location)
+    return;
+
+  try {
+    const tokens = [];
+    const source = fs.readFileSync(location.file, 'utf8');
+    const codeFrame = codeFrameColumns(source, { start: location }, { highlightCode: true });
+    // Convert /var/folders to /private/var/folders on Mac.
+    if (!file || fs.realpathSync(file) !== location.file) {
+      tokens.push(colors.gray(`   at `) + `${relativeFilePath(config, location.file)}:${location.line}`);
+      tokens.push('');
+    }
+    tokens.push(codeFrame);
+    error.snippet = tokens.join('\n');
+  } catch (e) {
+    // Failed to read the source file - that's ok.
   }
 }

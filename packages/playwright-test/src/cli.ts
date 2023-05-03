@@ -21,17 +21,18 @@ import fs from 'fs';
 import path from 'path';
 import { Runner } from './runner/runner';
 import { stopProfiling, startProfiling } from 'playwright-core/lib/utils';
-import { experimentalLoaderOption, fileIsModule } from './util';
+import { experimentalLoaderOption, fileIsModule, serializeError } from './util';
 import { showHTMLReport } from './reporters/html';
 import { createMergedReport } from './reporters/merge';
 import { ConfigLoader, kDefaultConfigFiles, resolveConfigFile } from './common/configLoader';
 import type { ConfigCLIOverrides } from './common/ipc';
-import type { FullResult } from '../reporter';
+import type { FullResult, TestError } from '../reporter';
 import type { TraceMode } from '../types/test';
 import { builtInReporters, defaultReporter, defaultTimeout } from './common/config';
 import type { FullConfigInternal } from './common/config';
 import program from 'playwright-core/lib/cli/program';
 import type { ReporterDescription } from '..';
+import { prepareErrorStack } from './reporters/base';
 
 function addTestCommand(program: Command) {
   const command = program.command('test [test-filter...]');
@@ -149,20 +150,29 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
 
 async function listTestFiles(opts: { [key: string]: any }) {
   // Redefine process.stdout.write in case config decides to pollute stdio.
-  const write = process.stdout.write.bind(process.stdout);
+  const stdoutWrite = process.stdout.write.bind(process.stdout);
   process.stdout.write = (() => {}) as any;
+  process.stderr.write = (() => {}) as any;
   const configFileOrDirectory = opts.config ? path.resolve(process.cwd(), opts.config) : process.cwd();
   const resolvedConfigFile = resolveConfigFile(configFileOrDirectory)!;
   if (restartWithExperimentalTsEsm(resolvedConfigFile))
     return;
 
-  const configLoader = new ConfigLoader();
-  const config = await configLoader.loadConfigFile(resolvedConfigFile);
-  const runner = new Runner(config);
-  const report = await runner.listTestFiles(opts.project);
-  write(JSON.stringify(report), () => {
-    process.exit(0);
-  });
+  try {
+    const configLoader = new ConfigLoader();
+    const config = await configLoader.loadConfigFile(resolvedConfigFile);
+    const runner = new Runner(config);
+    const report = await runner.listTestFiles(opts.project);
+    stdoutWrite(JSON.stringify(report), () => {
+      process.exit(0);
+    });
+  } catch (e) {
+    const error: TestError = serializeError(e);
+    error.location = prepareErrorStack(e.stack).location;
+    stdoutWrite(JSON.stringify({ error }), () => {
+      process.exit(0);
+    });
+  }
 }
 
 async function mergeReports(reportDir: string | undefined, opts: { [key: string]: any }) {

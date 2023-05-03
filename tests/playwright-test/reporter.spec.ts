@@ -62,6 +62,8 @@ class Reporter {
   onStepEnd(test, result, step) {
     if (step.error?.stack)
       step.error.stack = '<stack>';
+    if (step.error?.location)
+      step.error.location = '<location>';
     if (step.error?.snippet)
       step.error.snippet = '<snippet>';
     if (step.error?.message.includes('getaddrinfo'))
@@ -266,7 +268,7 @@ test('should report expect steps', async ({ runInlineTest }) => {
     `begin {\"title\":\"expect.toBeTruthy\",\"category\":\"expect\"}`,
     `end {\"title\":\"expect.toBeTruthy\",\"category\":\"expect\"}`,
     `begin {\"title\":\"expect.toBeTruthy\",\"category\":\"expect\"}`,
-    `end {\"title\":\"expect.toBeTruthy\",\"category\":\"expect\",\"error\":{\"message\":\"\\u001b[2mexpect(\\u001b[22m\\u001b[31mreceived\\u001b[39m\\u001b[2m).\\u001b[22mtoBeTruthy\\u001b[2m()\\u001b[22m\\n\\nReceived: \\u001b[31mfalse\\u001b[39m\",\"stack\":\"<stack>\",\"snippet\":\"<snippet>\"}}`,
+    `end {\"title\":\"expect.toBeTruthy\",\"category\":\"expect\",\"error\":{\"message\":\"\\u001b[2mexpect(\\u001b[22m\\u001b[31mreceived\\u001b[39m\\u001b[2m).\\u001b[22mtoBeTruthy\\u001b[2m()\\u001b[22m\\n\\nReceived: \\u001b[31mfalse\\u001b[39m\",\"stack\":\"<stack>\",\"location\":\"<location>\",\"snippet\":\"<snippet>\"}}`,
     `begin {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
     `end {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
     `begin {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
@@ -355,9 +357,9 @@ test('should report api steps', async ({ runInlineTest }) => {
     `begin {\"title\":\"locator.getByRole('button').click\",\"category\":\"pw:api\"}`,
     `end {\"title\":\"locator.getByRole('button').click\",\"category\":\"pw:api\"}`,
     `begin {"title":"apiRequestContext.get(http://localhost2)","category":"pw:api"}`,
-    `end {"title":"apiRequestContext.get(http://localhost2)","category":"pw:api","error":{"message":"<message>","stack":"<stack>","snippet":"<snippet>"}}`,
+    `end {"title":"apiRequestContext.get(http://localhost2)","category":"pw:api","error":{"message":"<message>","stack":"<stack>","location":"<location>","snippet":"<snippet>"}}`,
     `begin {"title":"apiRequestContext.get(http://localhost2)","category":"pw:api"}`,
-    `end {"title":"apiRequestContext.get(http://localhost2)","category":"pw:api","error":{"message":"<message>","stack":"<stack>","snippet":"<snippet>"}}`,
+    `end {"title":"apiRequestContext.get(http://localhost2)","category":"pw:api","error":{"message":"<message>","stack":"<stack>","location":"<location>","snippet":"<snippet>"}}`,
     `begin {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
     `begin {\"title\":\"apiRequestContext.dispose\",\"category\":\"pw:api\"}`,
     `end {\"title\":\"apiRequestContext.dispose\",\"category\":\"pw:api\"}`,
@@ -420,7 +422,7 @@ test('should report api step failure', async ({ runInlineTest }) => {
     `begin {\"title\":\"page.setContent\",\"category\":\"pw:api\"}`,
     `end {\"title\":\"page.setContent\",\"category\":\"pw:api\"}`,
     `begin {\"title\":\"page.click(input)\",\"category\":\"pw:api\"}`,
-    `end {\"title\":\"page.click(input)\",\"category\":\"pw:api\",\"error\":{\"message\":\"page.click: Timeout 1ms exceeded.\\n=========================== logs ===========================\\nwaiting for locator('input')\\n============================================================\",\"stack\":\"<stack>\",\"snippet\":\"<snippet>\"}}`,
+    `end {\"title\":\"page.click(input)\",\"category\":\"pw:api\",\"error\":{\"message\":\"page.click: Timeout 1ms exceeded.\\n=========================== logs ===========================\\nwaiting for locator('input')\\n============================================================\",\"stack\":\"<stack>\",\"location\":\"<location>\",\"snippet\":\"<snippet>\"}}`,
     `begin {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
     `begin {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
     `end {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
