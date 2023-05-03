@@ -575,6 +575,14 @@ export class FFPage implements PageDelegate {
   async inputActionEpilogue(): Promise<void> {
   }
 
+  async resetForReuse(): Promise<void> {
+    // Firefox sometimes keeps the last mouse position in the page,
+    // which affects things like hovered state.
+    // See https://github.com/microsoft/playwright/issues/22432.
+    // Move mouse to (-1, -1) to avoid anything being hovered.
+    await this.rawMouse.move(-1, -1, 'none', new Set(), new Set(), false);
+  }
+
   async getFrameElement(frame: frames.Frame): Promise<dom.ElementHandle> {
     const parent = frame.parentFrame();
     if (!parent)

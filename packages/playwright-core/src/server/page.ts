@@ -94,6 +94,8 @@ export interface PageDelegate {
   inputActionEpilogue(): Promise<void>;
   // Work around for asynchronously dispatched CSP errors in Firefox.
   readonly cspErrorsAsynchronousForInlineScipts?: boolean;
+  // Work around for mouse position in Firefox.
+  resetForReuse(): Promise<void>;
 }
 
 type EmulatedSize = { screen: types.Size, viewport: types.Size };
@@ -265,6 +267,8 @@ export class Page extends SdkObject {
       this._delegate.updateEmulateMedia(),
       this._delegate.updateFileChooserInterception(),
     ]);
+
+    await this._delegate.resetForReuse();
   }
 
   _didClose() {
