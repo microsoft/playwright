@@ -118,8 +118,7 @@ export class FFBrowser extends Browser {
   }
 
   _onDownloadCreated(payload: Protocol.Browser.downloadCreatedPayload) {
-    const ffPage = this._ffPages.get(payload.pageTargetId)!;
-    assert(ffPage);
+    const ffPage = this._ffPages.get(payload.pageTargetId);
     if (!ffPage)
       return;
 

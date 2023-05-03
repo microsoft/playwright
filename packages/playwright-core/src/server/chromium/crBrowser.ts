@@ -243,7 +243,12 @@ export class CRBrowser extends Browser {
 
   _onDownloadWillBegin(payload: Protocol.Browser.downloadWillBeginPayload) {
     const page = this._findOwningPage(payload.frameId);
-    assert(page, 'Download started in unknown page: ' + JSON.stringify(payload));
+    if (!page) {
+      // There might be no page when download originates from something unusual, like
+      // a DevTools window or maybe an extension page.
+      // See https://github.com/microsoft/playwright/issues/22551.
+      return;
+    }
     page.willBeginDownload();
 
     let originPage = page._initializedPage;
