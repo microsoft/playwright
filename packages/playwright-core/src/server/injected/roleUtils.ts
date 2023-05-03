@@ -398,10 +398,11 @@ function getElementAccessibleNameInternal(element: Element, options: AccessibleN
     return '';
   }
 
+  const labelledBy = getAriaLabelledByElements(element);
+
   // step 2b.
   if (options.embeddedInLabelledBy === 'none') {
-    const refs = getAriaLabelledByElements(element) || [];
-    const accessibleName = refs.map(ref => getElementAccessibleNameInternal(ref, {
+    const accessibleName = (labelledBy || []).map(ref => getElementAccessibleNameInternal(ref, {
       ...options,
       embeddedInLabelledBy: 'self',
       embeddedInTargetElement: 'none',
@@ -417,7 +418,7 @@ function getElementAccessibleNameInternal(element: Element, options: AccessibleN
   // step 2c.
   if (options.embeddedInLabel !== 'none' || options.embeddedInLabelledBy !== 'none') {
     const isOwnLabel = [...(element as (HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement)).labels || []].includes(element as any);
-    const isOwnLabelledBy = getIdRefs(element, element.getAttribute('aria-labelledby')).includes(element);
+    const isOwnLabelledBy = (labelledBy || []).includes(element);
     if (!isOwnLabel && !isOwnLabelledBy) {
       if (role === 'textbox') {
         options.visitedElements.add(element);
@@ -464,6 +465,11 @@ function getElementAccessibleNameInternal(element: Element, options: AccessibleN
   // step 2e.
   if (!['presentation', 'none'].includes(role)) {
     // https://w3c.github.io/html-aam/#input-type-button-input-type-submit-and-input-type-reset-accessible-name-computation
+    //
+    // SPEC DIFFERENCE.
+    // Spec says to ignore this when aria-labelledby is defined.
+    // WebKit follows the spec, while Chromium and Firefox do not.
+    // We align with Chromium and Firefox here.
     if (element.tagName === 'INPUT' && ['button', 'submit', 'reset'].includes((element as HTMLInputElement).type)) {
       options.visitedElements.add(element);
       const value = (element as HTMLInputElement).value || '';
@@ -478,16 +484,13 @@ function getElementAccessibleNameInternal(element: Element, options: AccessibleN
     }
 
     // https://w3c.github.io/html-aam/#input-type-image-accessible-name-computation
+    //
+    // SPEC DIFFERENCE.
+    // Spec says to ignore this when aria-labelledby is defined, but all browsers take it into account.
     if (element.tagName === 'INPUT' && (element as HTMLInputElement).type === 'image') {
       options.visitedElements.add(element);
-      const alt = element.getAttribute('alt') || '';
-      if (alt.trim())
-        return alt;
-      // SPEC DIFFERENCE.
-      // Spec does not mention "label" elements, but we account for labels
-      // to pass "name_test_case_616-manual.html"
       const labels = (element as HTMLInputElement).labels || [];
-      if (labels.length) {
+      if (labels.length && options.embeddedInLabelledBy === 'none') {
         return [...labels].map(label => getElementAccessibleNameInternal(label, {
           ...options,
           embeddedInLabel: 'self',
@@ -496,6 +499,9 @@ function getElementAccessibleNameInternal(element: Element, options: AccessibleN
           embeddedInTargetElement: 'none',
         })).filter(accessibleName => !!accessibleName).join(' ');
       }
+      const alt = element.getAttribute('alt') || '';
+      if (alt.trim())
+        return alt;
       const title = element.getAttribute('title') || '';
       if (title.trim())
         return title;
@@ -505,7 +511,7 @@ function getElementAccessibleNameInternal(element: Element, options: AccessibleN
     }
 
     // https://w3c.github.io/html-aam/#button-element-accessible-name-computation
-    if (element.tagName === 'BUTTON') {
+    if (!labelledBy && element.tagName === 'BUTTON') {
       options.visitedElements.add(element);
       const labels = (element as HTMLButtonElement).labels || [];
       if (labels.length) {
@@ -523,7 +529,9 @@ function getElementAccessibleNameInternal(element: Element, options: AccessibleN
     // https://w3c.github.io/html-aam/#input-type-text-input-type-password-input-type-number-input-type-search-input-type-tel-input-type-email-input-type-url-and-textarea-element-accessible-name-computation
     // https://w3c.github.io/html-aam/#other-form-elements-accessible-name-computation
     // For "other form elements", we count select and any other input.
-    if (element.tagName === 'TEXTAREA' || element.tagName === 'SELECT' || element.tagName === 'INPUT') {
+    //
+    // Note: WebKit does not follow the spec and uses placeholder when aria-labelledby is present.
+    if (!labelledBy && (element.tagName === 'TEXTAREA' || element.tagName === 'SELECT' || element.tagName === 'INPUT')) {
       options.visitedElements.add(element);
       const labels = (element as (HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement)).labels || [];
       if (labels.length) {
@@ -545,7 +553,7 @@ function getElementAccessibleNameInternal(element: Element, options: AccessibleN
     }
 
     // https://w3c.github.io/html-aam/#fieldset-and-legend-elements
-    if (element.tagName === 'FIELDSET') {
+    if (!labelledBy && element.tagName === 'FIELDSET') {
       options.visitedElements.add(element);
       for (let child = element.firstElementChild; child; child = child.nextElementSibling) {
         if (child.tagName === 'LEGEND') {
@@ -560,7 +568,7 @@ function getElementAccessibleNameInternal(element: Element, options: AccessibleN
     }
 
     // https://w3c.github.io/html-aam/#figure-and-figcaption-elements
-    if (element.tagName === 'FIGURE') {
+    if (!labelledBy && element.tagName === 'FIGURE') {
       options.visitedElements.add(element);
       for (let child = element.firstElementChild; child; child = child.nextElementSibling) {
         if (child.tagName === 'FIGCAPTION') {
@@ -575,6 +583,9 @@ function getElementAccessibleNameInternal(element: Element, options: AccessibleN
     }
 
     // https://w3c.github.io/html-aam/#img-element
+    //
+    // SPEC DIFFERENCE.
+    // Spec says to ignore this when aria-labelledby is defined, but all browsers take it into account.
     if (element.tagName === 'IMG') {
       options.visitedElements.add(element);
       const alt = element.getAttribute('alt') || '';
