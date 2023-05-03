@@ -348,7 +348,7 @@ test('should report api steps', async ({ runInlineTest }) => {
     `end {\"title\":\"Before Hooks\",\"category\":\"hook\",\"steps\":[{\"title\":\"browserType.launch\",\"category\":\"pw:api\"},{\"title\":\"browser.newContext\",\"category\":\"pw:api\"},{\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"},{\"title\":\"apiRequest.newContext\",\"category\":\"pw:api\"}]}`,
     `begin {\"title\":\"page.waitForNavigation\",\"category\":\"pw:api\"}`,
     `begin {\"title\":\"page.goto(data:text/html,<button></button>)\",\"category\":\"pw:api\"}`,
-    `end {\"title\":\"page.waitForNavigation\",\"category\":\"pw:api\"}`,
+    `end {\"title\":\"page.waitForNavigation\",\"category\":\"pw:api\",\"steps\":[{\"title\":\"page.goto(data:text/html,<button></button>)\",\"category\":\"pw:api\"}]}`,
     `end {\"title\":\"page.goto(data:text/html,<button></button>)\",\"category\":\"pw:api\"}`,
     `begin {\"title\":\"page.click(button)\",\"category\":\"pw:api\"}`,
     `end {\"title\":\"page.click(button)\",\"category\":\"pw:api\"}`,
