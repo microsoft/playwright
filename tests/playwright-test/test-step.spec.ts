@@ -720,3 +720,117 @@ test('should nest steps based on zones', async ({ runInlineTest }) => {
     }
   ]);
 });
+
+test('should not mark page.close as failed when page.click fails', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': stepHierarchyReporter,
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: './reporter',
+      };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      let page: Page;
+
+      test.beforeAll(async ({ browser }) => {
+        page = await browser.newPage();
+      });
+
+      test.afterAll(async () => {
+        await page.close();
+      });
+
+      test('fails', async () => {
+        test.setTimeout(2000);
+        await page.setContent('hello');
+        await page.click('div');
+      });
+    `
+  }, { reporter: '' });
+
+  expect(result.exitCode).toBe(1);
+  const objects = result.output.split('\n').filter(line => line.startsWith('%% ')).map(line => line.substring(3).trim()).filter(Boolean).map(line => JSON.parse(line));
+  expect(objects).toEqual([
+    {
+      category: 'hook',
+      title: 'Before Hooks',
+      steps: [
+        {
+          category: 'hook',
+          title: 'beforeAll hook',
+          location: {
+            column: 'number',
+            file: 'a.test.ts',
+            line: 'number',
+          },
+          steps: [
+            {
+              category: 'pw:api',
+              title: 'browserType.launch',
+            },
+            {
+              category: 'pw:api',
+              title: 'browser.newPage',
+              location: {
+                column: 'number',
+                file: 'a.test.ts',
+                line: 'number',
+              },
+            },
+          ],
+        },
+      ],
+    },
+    {
+      category: 'pw:api',
+      title: 'page.setContent',
+      location: {
+        column: 'number',
+        file: 'a.test.ts',
+        line: 'number',
+      },
+    },
+    {
+      category: 'pw:api',
+      title: 'page.click(div)',
+      location: {
+        column: 'number',
+        file: 'a.test.ts',
+        line: 'number',
+      },
+      error: '<error>',
+    },
+
+    {
+      category: 'hook',
+      title: 'After Hooks',
+      steps: [
+        {
+          category: 'hook',
+          title: 'afterAll hook',
+          location: {
+            column: 'number',
+            file: 'a.test.ts',
+            line: 'number',
+          },
+          steps: [
+            {
+              category: 'pw:api',
+              title: 'page.close',
+              location: {
+                column: 'number',
+                file: 'a.test.ts',
+                line: 'number',
+              },
+            },
+          ],
+        },
+        {
+          category: 'pw:api',
+          title: 'browser.close',
+        },
+      ],
+    },
+  ]);
+});

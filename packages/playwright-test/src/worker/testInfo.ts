@@ -33,6 +33,8 @@ interface TestStepInternal {
   category: string;
   wallTime: number;
   location?: Location;
+  steps: TestStepInternal[];
+  error?: TestInfoError;
 }
 
 export class TestInfoImpl implements TestInfo {
@@ -49,6 +51,7 @@ export class TestInfoImpl implements TestInfo {
   _lastStepId = 0;
   readonly _projectInternal: FullProjectInternal;
   readonly _configInternal: FullConfigInternal;
+  readonly _steps: TestStepInternal[] = [];
 
   // ------------ TestInfo fields ------------
   readonly testId: string;
@@ -205,14 +208,14 @@ export class TestInfoImpl implements TestInfo {
     }
   }
 
-  _addStep(data: Omit<TestStepInternal, 'complete' | 'stepId'>): TestStepInternal {
+  _addStep(data: Omit<TestStepInternal, 'complete' | 'stepId' | 'steps'>): TestStepInternal {
     const stepId = `${data.category}@${data.title}@${++this._lastStepId}`;
     const parentStep = zones.zoneData<TestStepInternal>('stepZone', captureRawStack());
     let callbackHandled = false;
-    const firstErrorIndex = this.errors.length;
     const step: TestStepInternal = {
       stepId,
       ...data,
+      steps: [],
       complete: result => {
         if (callbackHandled)
           return;
@@ -225,10 +228,11 @@ export class TestInfoImpl implements TestInfo {
           // Internal API step reported an error.
           error = result.error;
         } else {
-          // There was some other error (porbably soft expect) during step execution.
-          // Report step as failed to make it easier to spot.
-          error = this.errors[firstErrorIndex];
+          // One of the child steps failed (probably soft expect).
+          // Report this step as failed to make it easier to spot.
+          error = step.steps.map(s => s.error).find(e => !!e);
         }
+        step.error = error;
         const payload: StepEndPayload = {
           testId: this._test.id,
           stepId,
@@ -238,6 +242,8 @@ export class TestInfoImpl implements TestInfo {
         this._onStepEnd(payload);
       }
     };
+    const parentStepList = parentStep ? parentStep.steps : this._steps;
+    parentStepList.push(step);
     const hasLocation = data.location && !data.location.file.includes('@playwright');
     // Sanitize location that comes from user land, it might have extra properties.
     const location = data.location && hasLocation ? { file: data.location.file, line: data.location.line, column: data.location.column } : undefined;
@@ -275,7 +281,7 @@ export class TestInfoImpl implements TestInfo {
     this.errors.push(error);
   }
 
-  async _runAsStep<T>(stepInfo: Omit<TestStepInternal, 'complete' | 'wallTime' | 'parentStepId' | 'stepId'>, cb: (step: TestStepInternal) => Promise<T>): Promise<T> {
+  async _runAsStep<T>(stepInfo: Omit<TestStepInternal, 'complete' | 'wallTime' | 'parentStepId' | 'stepId' | 'steps'>, cb: (step: TestStepInternal) => Promise<T>): Promise<T> {
     const step = this._addStep({ ...stepInfo, wallTime: Date.now() });
     return await zones.run('stepZone', step, async () => {
       try {
