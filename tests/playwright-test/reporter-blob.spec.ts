@@ -533,3 +533,64 @@ test('multiple output reports based on config', async ({ runInlineTest, mergeRep
   expect((await fs.promises.stat(test.info().outputPath('merged/merged-blob/report.zip'))).isFile).toBeTruthy();
 
 });
+
+test('onError in the report', async ({ runInlineTest, mergeReports, showReport, page }) => {
+  test.slow();
+  const reportDir = test.info().outputPath('blob-report');
+  const files = {
+    'playwright.config.ts': `
+      module.exports = {
+        retries: 1,
+        reporter: [['blob', { outputDir: '${reportDir.replace(/\\/g, '/')}' }]]
+      };
+    `,
+    'a.test.ts': `
+      import { test as base, expect } from '@playwright/test';
+
+      const test = base.extend<{}, { errorInTearDown: string }>({
+        errorInTearDown: [async ({ }, use) => {
+          await use('');
+          throw new Error('Error in teardown');
+        }, { scope: 'worker' }],
+      });
+
+      test('test', async ({ page, errorInTearDown }) => {
+      });
+      test('pass', async ({ page, errorInTearDown }) => {
+      });
+      test.skip('skipped 1', async ({}) => {});
+    `,
+    'b.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('math 2', async ({}) => { });
+      test('failing 2', async ({}) => {
+        expect(1).toBe(2);
+      });
+      test.skip('skipped 2', async ({}) => {});
+    `,
+    'c.test.ts': `
+      import { test, expect } from '@playwright/test';
+
+      test('math 3', async ({}) => {
+        expect(1 + 1).toBe(2);
+      });
+      test('flaky 2', async ({}) => {
+        expect(test.info().retry).toBe(1);
+      });
+      test.skip('skipped 3', async ({}) => {});
+    `
+  };
+  const result = await runInlineTest(files, { shard: `1/3` });
+  expect(result.exitCode).toBe(1);
+
+  const { exitCode } = await mergeReports(reportDir, {}, { additionalArgs: ['--reporter', 'html'] });
+  expect(exitCode).toBe(0);
+
+  await showReport();
+
+  await expect(page.locator('.subnav-item:has-text("All") .counter')).toHaveText('3');
+  await expect(page.locator('.subnav-item:has-text("Passed") .counter')).toHaveText('2');
+  await expect(page.locator('.subnav-item:has-text("Failed") .counter')).toHaveText('0');
+  await expect(page.locator('.subnav-item:has-text("Flaky") .counter')).toHaveText('0');
+  await expect(page.locator('.subnav-item:has-text("Skipped") .counter')).toHaveText('1');
+});
