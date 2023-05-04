@@ -110,6 +110,14 @@ it('page.reload should work', async ({ page, server }) => {
   expect(await page.evaluate(() => window['_foo'])).toBe(undefined);
 });
 
+it('page.reload should not push history entry', async ({ page, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22640' });
+  await page.goto(server.EMPTY_PAGE);
+  console.log(await page.evaluate('history.length'));
+  await page.reload();
+  console.log(await page.evaluate('history.length'));
+});
+
 it('page.reload should work with data url', async ({ page, server }) => {
   await page.goto('data:text/html,hello');
   expect(await page.content()).toContain('hello');
