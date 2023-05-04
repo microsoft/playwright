@@ -125,6 +125,12 @@ List of arguments passed to a `console` function call. See also [`event: Page.co
 
 URL of the resource followed by 0-based line and column numbers in the resource formatted as `URL:line:column`.
 
+## method: ConsoleMessage.page
+* since: v1.33
+- returns: <[Page]|[null]>
+
+The page that produced this console message, if any.
+
 ## method: ConsoleMessage.text
 * since: v1.8
 - returns: <[string]>

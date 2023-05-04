@@ -163,12 +163,11 @@ Emitted when the page closes.
   - alias-java: consoleMessage
 - argument: <[ConsoleMessage]>
 
-Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also
-emitted if the page throws an error or a warning.
+Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also emitted if the page throws an error or a warning.
 
-The arguments passed into `console.log` appear as arguments on the event handler.
+The arguments passed into `console.log` are available on the [ConsoleMessage] event handler argument.
 
-An example of handling `console` event:
+**Usage**
 
 ```js
 page.on('console', async msg => {
@@ -177,7 +176,7 @@ page.on('console', async msg => {
     values.push(await arg.jsonValue());
   console.log(...values);
 });
-await page.evaluate(() => console.log('hello', 5, {foo: 'bar'}));
+await page.evaluate(() => console.log('hello', 5, { foo: 'bar' }));
 ```
 
 ```java
@@ -185,7 +184,7 @@ page.onConsoleMessage(msg -> {
   for (int i = 0; i < msg.args().size(); ++i)
     System.out.println(i + ": " + msg.args().get(i).jsonValue());
 });
-page.evaluate("() => console.log('hello', 5, {foo: 'bar'})");
+page.evaluate("() => console.log('hello', 5, { foo: 'bar' })");
 ```
 
 ```python async
@@ -196,7 +195,7 @@ async def print_args(msg):
     print(values)
 
 page.on("console", print_args)
-await page.evaluate("console.log('hello', 5, {foo: 'bar'})")
+await page.evaluate("console.log('hello', 5, { foo: 'bar' })")
 ```
 
 ```python sync
@@ -205,7 +204,7 @@ def print_args(msg):
         print(arg.json_value())
 
 page.on("console", print_args)
-page.evaluate("console.log('hello', 5, {foo: 'bar'})")
+page.evaluate("console.log('hello', 5, { foo: 'bar' })")
 ```
 
 ```csharp
@@ -286,6 +285,8 @@ try {
 
 Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Listener **must** either [`method: Dialog.accept`] or [`method: Dialog.dismiss`] the dialog - otherwise the page will [freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop#never_blocking) waiting for the dialog, and actions like click will never finish.
 
+**Usage**
+
 ```js
 page.on('dialog', dialog => {
   dialog.accept();
@@ -310,7 +311,7 @@ page.RequestFailed += (_, request) =>
 ```
 
 :::note
-When no [`event: Page.dialog`] listeners are present, all dialogs are automatically dismissed.
+When no [`event: Page.dialog`] or [`event: BrowserContext.dialog`] listeners are present, all dialogs are automatically dismissed.
 :::
 
 ## event: Page.DOMContentLoaded

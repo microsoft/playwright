@@ -19,6 +19,7 @@ import { JSHandle } from './jsHandle';
 import type * as channels from '@protocol/channels';
 import { ChannelOwner } from './channelOwner';
 import type * as api from '../../types/types';
+import { Page } from './page';
 
 type ConsoleMessageLocation = channels.ConsoleMessageInitializer['location'];
 
@@ -27,8 +28,18 @@ export class ConsoleMessage extends ChannelOwner<channels.ConsoleMessageChannel>
     return (message as any)._object;
   }
 
+  private _page: Page | null;
+
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.ConsoleMessageInitializer) {
     super(parent, type, guid, initializer);
+    // Note: currently, we only report console messages for pages and they always have a page.
+    // However, in the future we might report console messages for service workers or something else,
+    // where page() would be null.
+    this._page = Page.fromNullable(initializer.page);
+  }
+
+  page() {
+    return this._page;
   }
 
   type(): string {
