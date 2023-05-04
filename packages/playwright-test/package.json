@@ -23,6 +23,7 @@
     "./lib/internalsForTest": "./lib/internalsForTest.js",
     "./lib/experimentalLoader": "./lib/experimentalLoader.js",
     "./lib/plugins": "./lib/plugins/index.js",
+    "./jsx-runtime": "./jsx-runtime.js",
     "./lib/util": "./lib/util.js",
     "./lib/utilsBundle": "./lib/utilsBundle.js",
     "./reporter": "./reporter.js"

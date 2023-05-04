@@ -474,6 +474,33 @@ test('should load a jsx/tsx files', async ({ runInlineTest }) => {
   expect(exitCode).toBe(0);
 });
 
+test('should load jsx with top-level component', async ({ runInlineTest }) => {
+  const { exitCode, passed } = await runInlineTest({
+    'a.spec.tsx': `
+      import { test, expect } from '@playwright/test';
+      const component = <div>Hello <span>world</span></div>;
+      test('succeeds', () => {
+        expect(component).toEqual({
+          type: 'div',
+          props: {
+            children: [
+              'Hello ',
+              {
+                type: 'span',
+                props: {
+                  children: 'world'
+                },
+              }
+            ]
+          },
+        });
+      });
+    `,
+  });
+  expect(passed).toBe(1);
+  expect(exitCode).toBe(0);
+});
+
 test('should load a jsx/tsx files with fragments', async ({ runInlineTest }) => {
   const { exitCode, passed } = await runInlineTest({
     'helper.tsx': `
