@@ -471,7 +471,7 @@ const TestList: React.FC<{
         runningState.itemSelectedByUser = true;
       setSelectedTreeItemId(treeItem.id);
     }}
-    autoExpandDeep={!!filterText}
+    autoExpandDepth={filterText ? 5 : 1}
     noItemsMessage={isLoading ? 'Loading\u2026' : 'No tests'} />;
 };
 

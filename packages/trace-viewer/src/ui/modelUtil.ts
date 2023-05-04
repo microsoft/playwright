@@ -62,12 +62,11 @@ export class MultiTraceModel {
     this.startTime = contexts.map(c => c.startTime).reduce((prev, cur) => Math.min(prev, cur), Number.MAX_VALUE);
     this.endTime = contexts.map(c => c.endTime).reduce((prev, cur) => Math.max(prev, cur), Number.MIN_VALUE);
     this.pages = ([] as PageEntry[]).concat(...contexts.map(c => c.pages));
-    this.actions = ([] as ActionTraceEvent[]).concat(...contexts.map(c => c.actions));
+    this.actions = mergeActions(contexts);
     this.events = ([] as EventTraceEvent[]).concat(...contexts.map(c => c.events));
     this.hasSource = contexts.some(c => c.hasSource);
 
     this.events.sort((a1, a2) => a1.time - a2.time);
-    this.actions = dedupeAndSortActions(this.actions);
     this.sources = collectSources(this.actions);
   }
 }
@@ -84,41 +83,50 @@ function indexModel(context: ContextEntry) {
     (event as any)[contextSymbol] = context;
 }
 
-function dedupeAndSortActions(actions: ActionTraceEvent[]) {
-  const callActions = actions.filter(a => a.callId.startsWith('call@'));
-  const expectActions = actions.filter(a => a.callId.startsWith('expect@'));
+function mergeActions(contexts: ContextEntry[]) {
+  const map = new Map<number, ActionTraceEvent>();
 
-  // Call startTime/endTime are server-side times.
-  // Expect startTime/endTime are client-side times.
-  // If there are call times, adjust expect startTime/endTime to align with callTime.
-  if (callActions.length && expectActions.length) {
-    const offset = callActions[0].startTime - callActions[0].wallTime!;
-    for (const expectAction of expectActions) {
-      const duration = expectAction.endTime - expectAction.startTime;
-      expectAction.startTime = expectAction.wallTime! + offset;
-      expectAction.endTime = expectAction.startTime + duration;
-    }
-  }
-  const callActionsByKey = new Map<string, ActionTraceEvent>();
-  for (const action of callActions)
-    callActionsByKey.set(action.apiName + '@' + action.wallTime, action);
+  // Protocol call aka isPrimary contexts have startTime/endTime as server-side times.
+  // Step aka non-isPrimary contexts have startTime/endTime are client-side times.
+  // Adjust expect startTime/endTime on non-primary contexts to put them on a single timeline.
+  let offset = 0;
+  const primaryContexts = contexts.filter(context => context.isPrimary);
+  const nonPrimaryContexts = contexts.filter(context => !context.isPrimary);
 
-  const result = [...callActions];
-  for (const expectAction of expectActions) {
-    const callAction = callActionsByKey.get(expectAction.apiName + '@' + expectAction.wallTime);
-    if (callAction) {
-      if (expectAction.error)
-        callAction.error = expectAction.error;
-      if (expectAction.attachments)
-        callAction.attachments = expectAction.attachments;
-      continue;
-    }
-    result.push(expectAction);
+  for (const context of primaryContexts) {
+    for (const action of context.actions)
+      map.set(action.wallTime, action);
+    if (!offset && context.actions.length)
+      offset = context.actions[0].startTime - context.actions[0].wallTime;
   }
 
-  result.sort((a1, a2) => (a1.wallTime - a2.wallTime));
+  for (const context of nonPrimaryContexts) {
+    for (const action of context.actions) {
+      if (offset) {
+        const duration = action.endTime - action.startTime;
+        if (action.startTime)
+          action.startTime = action.wallTime + offset;
+        if (action.endTime)
+          action.endTime = action.startTime + duration;
+      }
+
+      const existing = map.get(action.wallTime);
+      if (existing && existing.apiName === action.apiName) {
+        if (action.error)
+          existing.error = action.error;
+        if (action.attachments)
+          existing.attachments = action.attachments;
+        continue;
+      }
+      map.set(action.wallTime, action);
+    }
+  }
+
+  const result = [...map.values()];
+  result.sort((a1, a2) => a1.wallTime - a2.wallTime);
   for (let i = 1; i < result.length; ++i)
     (result[i] as any)[prevInListSymbol] = result[i - 1];
+
   return result;
 }
 

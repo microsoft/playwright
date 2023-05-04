@@ -15,9 +15,11 @@
  */
 
 import { MultiMap } from './multimap';
+import { splitProgress } from './progress';
 import { unwrapPopoutUrl } from './snapshotRenderer';
 import { SnapshotServer } from './snapshotServer';
 import { TraceModel } from './traceModel';
+import { FetchTraceModelBackend, ZipTraceModelBackend } from './traceModelBackends';
 
 // @ts-ignore
 declare const self: ServiceWorkerGlobalScope;
@@ -40,7 +42,10 @@ async function loadTrace(traceUrl: string, traceFileName: string | null, clientI
   clientIdToTraceUrls.set(clientId, traceUrl);
   const traceModel = new TraceModel();
   try {
-    await traceModel.load(traceUrl, progress);
+    // Allow 10% to hop from sw to page.
+    const [fetchProgress, unzipProgress] = splitProgress(progress, [0.5, 0.4, 0.1]);
+    const backend = traceUrl.endsWith('json') ? new FetchTraceModelBackend(traceUrl) : new ZipTraceModelBackend(traceUrl, fetchProgress);
+    await traceModel.load(backend, unzipProgress);
   } catch (error: any) {
     if (error?.message?.includes('Cannot find .trace file') && await traceModel.hasEntry('index.html'))
       throw new Error('Could not load trace. Did you upload a Playwright HTML report instead? Make sure to extract the archive first and then double-click the index.html file or put it on a web server.');

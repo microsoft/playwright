@@ -40,3 +40,4 @@ export * from './traceUtils';
 export * from './userAgent';
 export * from './zipFile';
 export * from './zones';
+export * from './isomorphic/locatorGenerators';

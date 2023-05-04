@@ -16,12 +16,13 @@
 
 import type { ActionTraceEvent } from '@trace/trace';
 import { msToString } from '@web/uiUtils';
-import { ListView } from '@web/components/listView';
 import * as React from 'react';
 import './actionList.css';
 import * as modelUtil from './modelUtil';
 import { asLocator } from '@isomorphic/locatorGenerators';
 import type { Language } from '@isomorphic/locatorGenerators';
+import type { TreeState } from '@web/components/treeView';
+import { TreeView } from '@web/components/treeView';
 
 export interface ActionListProps {
   actions: ActionTraceEvent[],
@@ -32,25 +33,60 @@ export interface ActionListProps {
   revealConsole: () => void,
 }
 
-const ActionListView = ListView<ActionTraceEvent>;
+type ActionTreeItem = {
+  id: string;
+  children: ActionTreeItem[];
+  parent: ActionTreeItem | undefined;
+  action?: ActionTraceEvent;
+};
+
+const ActionTreeView = TreeView<ActionTreeItem>;
 
 export const ActionList: React.FC<ActionListProps> = ({
-  actions = [],
+  actions,
   selectedAction,
   sdkLanguage,
-  onSelected = () => {},
-  onHighlighted = () => {},
-  revealConsole = () => {},
+  onSelected,
+  onHighlighted,
+  revealConsole,
 }) => {
-  return <ActionListView
+  const [treeState, setTreeState] = React.useState<TreeState>({ expandedItems: new Map() });
+  const { rootItem, itemMap } = React.useMemo(() => {
+    const itemMap = new Map<string, ActionTreeItem>();
+
+    for (const action of actions) {
+      itemMap.set(action.callId, {
+        id: action.callId,
+        parent: undefined,
+        children: [],
+        action,
+      });
+    }
+
+    const rootItem: ActionTreeItem = { id: '', parent: undefined, children: [] };
+    for (const item of itemMap.values()) {
+      const parent = item.action!.parentId ? itemMap.get(item.action!.parentId) || rootItem : rootItem;
+      parent.children.push(item);
+      item.parent = parent;
+    }
+    return { rootItem, itemMap };
+  }, [actions]);
+
+  const { selectedItem } = React.useMemo(() => {
+    const selectedItem = selectedAction ? itemMap.get(selectedAction.callId) : undefined;
+    return { selectedItem };
+  }, [itemMap, selectedAction]);
+
+  return <ActionTreeView
     dataTestId='action-list'
-    items={actions}
-    id={action => action.callId}
-    selectedItem={selectedAction}
-    onSelected={onSelected}
-    onHighlighted={onHighlighted}
-    isError={action => !!action.error?.message}
-    render={action => renderAction(action, sdkLanguage, revealConsole)}
+    rootItem={rootItem}
+    treeState={treeState}
+    setTreeState={setTreeState}
+    selectedItem={selectedItem}
+    onSelected={item => onSelected(item.action!)}
+    onHighlighted={item => onHighlighted(item?.action)}
+    isError={item => !!item.action?.error?.message}
+    render={item => renderAction(item.action!, sdkLanguage, revealConsole)}
   />;
 };
 

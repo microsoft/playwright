@@ -87,11 +87,49 @@ test('should record api trace', async ({ runInlineTest, server }, testInfo) => {
   expect(result.failed).toBe(1);
   // One trace file for request context and one for each APIRequestContext
   const trace1 = await parseTrace(testInfo.outputPath('test-results', 'a-pass', 'trace.zip'));
-  expect(trace1.actions).toEqual(['browserContext.newPage', 'page.goto', 'apiRequestContext.get']);
+  expect(trace1.apiNames).toEqual([
+    'Before Hooks',
+    'apiRequest.newContext',
+    'tracing.start',
+    'browserType.launch',
+    'browser.newContext',
+    'tracing.start',
+    'browserContext.newPage',
+    'page.goto',
+    'apiRequestContext.get',
+    'After Hooks',
+    'browserContext.close',
+    'tracing.stopChunk',
+    'apiRequestContext.dispose',
+  ]);
   const trace2 = await parseTrace(testInfo.outputPath('test-results', 'a-api-pass', 'trace.zip'));
-  expect(trace2.actions).toEqual(['apiRequestContext.get']);
+  expect(trace2.apiNames).toEqual([
+    'Before Hooks',
+    'apiRequest.newContext',
+    'tracing.start',
+    'apiRequestContext.get',
+    'After Hooks',
+    'tracing.stopChunk',
+  ]);
   const trace3 = await parseTrace(testInfo.outputPath('test-results', 'a-fail', 'trace.zip'));
-  expect(trace3.actions).toEqual(['browserContext.newPage', 'page.goto', 'apiRequestContext.get', 'expect.toBe']);
+  expect(trace3.apiNames).toEqual([
+    'Before Hooks',
+    'tracing.startChunk',
+    'apiRequest.newContext',
+    'tracing.start',
+    'browser.newContext',
+    'tracing.start',
+    'browserContext.newPage',
+    'page.goto',
+    'apiRequestContext.get',
+    'expect.toBe',
+    'After Hooks',
+    'browserContext.close',
+    'tracing.stopChunk',
+    'apiRequestContext.dispose',
+    'browser.close',
+    'tracing.stopChunk',
+  ]);
 });
 
 
@@ -275,7 +313,25 @@ test('should not override trace file in afterAll', async ({ runInlineTest, serve
   expect(result.passed).toBe(1);
   expect(result.failed).toBe(1);
   const trace1 = await parseTrace(testInfo.outputPath('test-results', 'a-test-1', 'trace.zip'));
-  expect(trace1.actions).toEqual(['browserContext.newPage', 'page.goto', 'apiRequestContext.get']);
+
+  expect(trace1.apiNames).toEqual([
+    'Before Hooks',
+    'browserType.launch',
+    'browser.newContext',
+    'tracing.start',
+    'browserContext.newPage',
+    'page.goto',
+    'After Hooks',
+    'browserContext.close',
+    'afterAll hook',
+    'apiRequest.newContext',
+    'tracing.start',
+    'apiRequestContext.get',
+    'tracing.stopChunk',
+    'apiRequestContext.dispose',
+    'browser.close',
+  ]);
+
   const error = await parseTrace(testInfo.outputPath('test-results', 'a-test-2', 'trace.zip')).catch(e => e);
   expect(error).toBeTruthy();
 });
@@ -409,7 +465,7 @@ test(`trace:retain-on-failure should create trace if context is closed before fa
   }, { trace: 'retain-on-failure' });
   const tracePath = test.info().outputPath('test-results', 'a-passing-test', 'trace.zip');
   const trace = await parseTrace(tracePath);
-  expect(trace.actions).toContain('page.goto');
+  expect(trace.apiNames).toContain('page.goto');
   expect(result.failed).toBe(1);
 });
 
@@ -431,7 +487,7 @@ test(`trace:retain-on-failure should create trace if context is closed before fa
   }, { trace: 'retain-on-failure' });
   const tracePath = test.info().outputPath('test-results', 'a-passing-test', 'trace.zip');
   const trace = await parseTrace(tracePath);
-  expect(trace.actions).toContain('page.goto');
+  expect(trace.apiNames).toContain('page.goto');
   expect(result.failed).toBe(1);
 });
 
@@ -451,6 +507,6 @@ test(`trace:retain-on-failure should create trace if request context is disposed
   }, { trace: 'retain-on-failure' });
   const tracePath = test.info().outputPath('test-results', 'a-passing-test', 'trace.zip');
   const trace = await parseTrace(tracePath);
-  expect(trace.actions).toContain('apiRequestContext.get');
+  expect(trace.apiNames).toContain('apiRequestContext.get');
   expect(result.failed).toBe(1);
 });

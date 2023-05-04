@@ -287,7 +287,7 @@ export function fileIsModule(file: string): boolean {
   return folderIsModule(folder);
 }
 
-export function folderIsModule(folder: string): boolean {
+function folderIsModule(folder: string): boolean {
   const packageJsonPath = getPackageJsonPath(folder);
   if (!packageJsonPath)
     return false;

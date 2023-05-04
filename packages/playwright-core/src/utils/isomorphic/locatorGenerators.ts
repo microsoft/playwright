@@ -520,6 +520,6 @@ const generators: Record<Language, LocatorFactory> = {
   csharp: new CSharpLocatorFactory(),
 };
 
-export function isRegExp(obj: any): obj is RegExp {
+function isRegExp(obj: any): obj is RegExp {
   return obj instanceof RegExp;
 }

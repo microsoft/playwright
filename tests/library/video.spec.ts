@@ -22,7 +22,7 @@ import { spawnSync } from 'child_process';
 import { PNG, jpegjs } from 'playwright-core/lib/utilsBundle';
 import { registry } from '../../packages/playwright-core/lib/server';
 import { rewriteErrorMessage } from '../../packages/playwright-core/lib/utils/stackTrace';
-import { parseTrace } from '../config/utils';
+import { parseTraceRaw } from '../config/utils';
 
 const ffmpeg = registry.findExecutable('ffmpeg')!.executablePath('javascript');
 
@@ -773,7 +773,7 @@ it.describe('screencast', () => {
     const videoFile = await page.video().path();
     expectRedFrames(videoFile, size);
 
-    const { events, resources } = await parseTrace(traceFile);
+    const { events, resources } = await parseTraceRaw(traceFile);
     const frame = events.filter(e => e.type === 'screencast-frame').pop();
     const buffer = resources.get('resources/' + frame.sha1);
     const image = jpegjs.decode(buffer);

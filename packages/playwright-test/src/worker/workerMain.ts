@@ -462,12 +462,11 @@ export class WorkerMain extends ProcessRunner {
         });
       }
 
-      const didRunTestError = await testInfo._runAndFailOnError(async () => await currentTestInstrumentation()?.didFinishTest(testInfo));
-      firstAfterHooksError = firstAfterHooksError || didRunTestError;
-
       if (firstAfterHooksError)
         step.complete({ error: firstAfterHooksError });
     });
+
+    await testInfo._runAndFailOnError(async () => await currentTestInstrumentation()?.didFinishTest(testInfo));
 
     this._currentTest = null;
     setCurrentTestInfo(null);

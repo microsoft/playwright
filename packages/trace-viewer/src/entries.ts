@@ -19,6 +19,7 @@ import type { ResourceSnapshot } from '@trace/snapshot';
 import type * as trace from '@trace/trace';
 
 export type ContextEntry = {
+  isPrimary: boolean;
   traceUrl: string;
   startTime: number;
   endTime: number;
@@ -47,6 +48,7 @@ export type PageEntry = {
 };
 export function createEmptyContext(): ContextEntry {
   return {
+    isPrimary: false,
     traceUrl: '',
     startTime: Number.MAX_SAFE_INTEGER,
     endTime: 0,

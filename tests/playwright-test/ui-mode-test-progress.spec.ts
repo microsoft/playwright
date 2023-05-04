@@ -103,9 +103,12 @@ test('should update trace live', async ({ runUITest, server }) => {
   ).toHaveText('Two');
 
   await expect(listItem).toHaveText([
+    /Before Hooks[\d.]+m?s/,
     /browserContext.newPage[\d.]+m?s/,
-    /page.gotohttp:\/\/localhost:\d+\/one.html[\d.]+m?s/,
-    /page.gotohttp:\/\/localhost:\d+\/two.html[\d.]+m?s/
+    /page.gotohttp:\/\/localhost:\d+\/one.html/,
+    /page.gotohttp:\/\/localhost:\d+\/two.html/,
+    /After Hooks[\d.]+m?s/,
+    /browserContext.close[\d.]+m?s/,
   ]);
 });
 
