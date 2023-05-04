@@ -15,11 +15,9 @@
  */
 
 import { colors, ms as milliseconds, parseStackTraceLine } from 'playwright-core/lib/utilsBundle';
-import fs from 'fs';
 import path from 'path';
 import type { FullConfig, TestCase, Suite, TestResult, TestError, FullResult, TestStep, Location, Reporter } from '../../types/testReporter';
 import type { SuitePrivate } from '../../types/reporterPrivate';
-import { codeFrameColumns } from '../common/babelBundle';
 import { monotonicTime } from 'playwright-core/lib/utils';
 import type { FullProject } from '../../types/test';
 export type TestResultOutput = { chunk: string | Buffer, type: 'stdout' | 'stderr' };
@@ -431,29 +429,6 @@ export function formatError(config: FullConfig, error: TestError, highlightCode:
     location,
     message: tokens.join('\n'),
   };
-}
-
-export function addSnippetToError(config: FullConfig, error: TestError, file?: string) {
-  let location = error.location;
-  if (error.stack && !location)
-    location = prepareErrorStack(error.stack).location;
-  if (!location)
-    return;
-
-  try {
-    const tokens = [];
-    const source = fs.readFileSync(location.file, 'utf8');
-    const codeFrame = codeFrameColumns(source, { start: location }, { highlightCode: true });
-    // Convert /var/folders to /private/var/folders on Mac.
-    if (!file || fs.realpathSync(file) !== location.file) {
-      tokens.push(colors.gray(`   at `) + `${relativeFilePath(config, location.file)}:${location.line}`);
-      tokens.push('');
-    }
-    tokens.push(codeFrame);
-    error.snippet = tokens.join('\n');
-  } catch (e) {
-    // Failed to read the source file - that's ok.
-  }
 }
 
 export function separator(text: string = ''): string {
