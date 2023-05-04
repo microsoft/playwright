@@ -19,7 +19,6 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { sourceMapSupport } from '../utilsBundle';
-import { sanitizeForFilePath } from '../util';
 
 export type MemoryCache = {
   codePath: string;
