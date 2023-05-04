@@ -924,7 +924,7 @@ scheme.BrowserContextCreateTempFileResult = tObject({
   writableStream: tChannel(['WritableStream']),
 });
 scheme.BrowserContextUpdateSubscriptionParams = tObject({
-  event: tEnum(['request', 'response', 'requestFinished', 'requestFailed']),
+  event: tEnum(['console', 'dialog', 'request', 'response', 'requestFinished', 'requestFailed']),
   enabled: tBoolean,
 });
 scheme.BrowserContextUpdateSubscriptionResult = tOptional(tObject({}));
@@ -1217,7 +1217,7 @@ scheme.PageStopCSSCoverageResult = tObject({
 scheme.PageBringToFrontParams = tOptional(tObject({}));
 scheme.PageBringToFrontResult = tOptional(tObject({}));
 scheme.PageUpdateSubscriptionParams = tObject({
-  event: tEnum(['fileChooser', 'request', 'response', 'requestFinished', 'requestFailed']),
+  event: tEnum(['console', 'dialog', 'fileChooser', 'request', 'response', 'requestFinished', 'requestFailed']),
   enabled: tBoolean,
 });
 scheme.PageUpdateSubscriptionResult = tOptional(tObject({}));

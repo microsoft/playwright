@@ -1684,7 +1684,7 @@ export type BrowserContextCreateTempFileResult = {
   writableStream: WritableStreamChannel,
 };
 export type BrowserContextUpdateSubscriptionParams = {
-  event: 'request' | 'response' | 'requestFinished' | 'requestFailed',
+  event: 'console' | 'dialog' | 'request' | 'response' | 'requestFinished' | 'requestFailed',
   enabled: boolean,
 };
 export type BrowserContextUpdateSubscriptionOptions = {
@@ -2201,7 +2201,7 @@ export type PageBringToFrontParams = {};
 export type PageBringToFrontOptions = {};
 export type PageBringToFrontResult = void;
 export type PageUpdateSubscriptionParams = {
-  event: 'fileChooser' | 'request' | 'response' | 'requestFinished' | 'requestFailed',
+  event: 'console' | 'dialog' | 'fileChooser' | 'request' | 'response' | 'requestFinished' | 'requestFailed',
   enabled: boolean,
 };
 export type PageUpdateSubscriptionOptions = {

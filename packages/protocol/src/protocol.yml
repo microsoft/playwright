@@ -1153,6 +1153,8 @@ BrowserContext:
         event:
           type: enum
           literals:
+          - console
+          - dialog
           - request
           - response
           - requestFinished
@@ -1588,6 +1590,8 @@ Page:
         event:
           type: enum
           literals:
+          - console
+          - dialog
           - fileChooser
           - request
           - response
