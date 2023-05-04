@@ -30,7 +30,9 @@ export type MemoryCache = {
 const version = 13;
 
 const DEFAULT_CACHE_DIR_WIN32 = path.join(os.tmpdir(), `playwright-transform-cache`);
-const DEFAULT_CACHE_DIR_POSIX = path.join(os.tmpdir(), `playwright-transform-cache-` + sanitizeForFilePath(os.userInfo().username));
+// Use geteuid() instead of more natural os.userInfo().username
+// See https://github.com/microsoft/playwright/issues/22721
+const DEFAULT_CACHE_DIR_POSIX = path.join(os.tmpdir(), `playwright-transform-cache-` + process.geteuid());
 
 const cacheDir = process.env.PWTEST_CACHE_DIR || (process.platform === 'win32' ? DEFAULT_CACHE_DIR_WIN32 : DEFAULT_CACHE_DIR_POSIX);
 
