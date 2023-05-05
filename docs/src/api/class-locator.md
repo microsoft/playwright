@@ -105,6 +105,45 @@ var texts = await page.GetByRole(AriaRole.Link).AllTextContentsAsync();
 ```
 
 
+## method: Locator.and
+* since: v1.33
+* langs:
+  - alias-python: and_
+- returns: <[Locator]>
+
+Creates a locator that matches both this locator and the argument locator.
+
+**Usage**
+
+The following example finds a button with a specific title.
+
+```js
+const button = page.getByRole('button').and(page.getByTitle('Subscribe'));
+```
+
+```java
+Locator button = page.getByRole(AriaRole.BUTTON).and(page.getByTitle("Subscribe"));
+```
+
+```python async
+button = page.get_by_role("button").and_(page.getByTitle("Subscribe"))
+```
+
+```python sync
+button = page.get_by_role("button").and_(page.getByTitle("Subscribe"))
+```
+
+```csharp
+var button = page.GetByRole(AriaRole.Button).And(page.GetByTitle("Subscribe"));
+```
+
+### param: Locator.and.locator
+* since: v1.33
+- `locator` <[Locator]>
+
+Additional locator to match.
+
+
 ## async method: Locator.blur
 * since: v1.28
 

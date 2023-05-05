@@ -10454,6 +10454,21 @@ export interface Locator {
   allTextContents(): Promise<Array<string>>;
 
   /**
+   * Creates a locator that matches both this locator and the argument locator.
+   *
+   * **Usage**
+   *
+   * The following example finds a button with a specific title.
+   *
+   * ```js
+   * const button = page.getByRole('button').and(page.getByTitle('Subscribe'));
+   * ```
+   *
+   * @param locator Additional locator to match.
+   */
+  and(locator: Locator): Locator;
+
+  /**
    * Calls [blur](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/blur) on the element.
    * @param options
    */

@@ -61,6 +61,7 @@ class Locator {
     self.first = (): Locator => self.locator('nth=0');
     self.last = (): Locator => self.locator('nth=-1');
     self.nth = (index: number): Locator => self.locator(`nth=${index}`);
+    self.and = (locator: Locator): Locator => new Locator(injectedScript, selectorBase + ` >> internal:and=` + JSON.stringify((locator as any)[selectorSymbol]));
     self.or = (locator: Locator): Locator => new Locator(injectedScript, selectorBase + ` >> internal:or=` + JSON.stringify((locator as any)[selectorSymbol]));
   }
 }
@@ -93,6 +94,7 @@ class ConsoleAPI {
     delete this._injectedScript.window.playwright.first;
     delete this._injectedScript.window.playwright.last;
     delete this._injectedScript.window.playwright.nth;
+    delete this._injectedScript.window.playwright.and;
     delete this._injectedScript.window.playwright.or;
   }
 

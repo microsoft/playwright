@@ -383,6 +383,13 @@ it.describe(() => {
   });
 });
 
+it('asLocator internal:and', async () => {
+  expect.soft(asLocator('javascript', 'div >> internal:and="span >> article"', false)).toBe(`locator('div').and(locator('span').locator('article'))`);
+  expect.soft(asLocator('python', 'div >> internal:and="span >> article"', false)).toBe(`locator("div").and_(locator("span").locator("article"))`);
+  expect.soft(asLocator('java', 'div >> internal:and="span >> article"', false)).toBe(`locator("div").and(locator("span").locator("article"))`);
+  expect.soft(asLocator('csharp', 'div >> internal:and="span >> article"', false)).toBe(`Locator("div").And(Locator("span").Locator("article"))`);
+});
+
 it('asLocator internal:or', async () => {
   expect.soft(asLocator('javascript', 'div >> internal:or="span >> article"', false)).toBe(`locator('div').or(locator('span').locator('article'))`);
   expect.soft(asLocator('python', 'div >> internal:or="span >> article"', false)).toBe(`locator("div").or_(locator("span").locator("article"))`);
