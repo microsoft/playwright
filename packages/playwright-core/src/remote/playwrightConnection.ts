@@ -57,6 +57,7 @@ export class PlaywrightConnection {
     this._ws = ws;
     this._preLaunched = preLaunched;
     this._options = options;
+    options.launchOptions = filterLaunchOptions(options.launchOptions);
     if (clientType === 'reuse-browser' || clientType === 'pre-launched-browser-or-android')
       assert(preLaunched.playwright);
     if (clientType === 'pre-launched-browser-or-android')
@@ -269,6 +270,21 @@ function launchOptionsHash(options: LaunchOptions) {
   for (const key of optionsThatAllowBrowserReuse)
     delete copy[key];
   return JSON.stringify(copy);
+}
+
+function filterLaunchOptions(options: LaunchOptions) {
+  return {
+    channel: options.channel,
+    args: options.args,
+    ignoreAllDefaultArgs: options.ignoreAllDefaultArgs,
+    ignoreDefaultArgs: options.ignoreDefaultArgs,
+    timeout: options.timeout,
+    headless: options.headless,
+    proxy: options.proxy,
+    chromiumSandbox: options.chromiumSandbox,
+    firefoxUserPrefs: options.firefoxUserPrefs,
+    slowMo: options.slowMo,
+  };
 }
 
 const defaultLaunchOptions: LaunchOptions = {
