@@ -73,6 +73,12 @@ export async function collectProjectsAndTestFiles(testRun: TestRun, additionalFi
     }
   }
 
+  // Apply overrides that are only applicable to top-level projects.
+  for (const [project, type] of projectClosure) {
+    if (type === 'top-level')
+      project.project.repeatEach = project.fullConfig.configCLIOverrides.repeatEach ?? project.project.repeatEach;
+  }
+
   testRun.projects = [...filesToRunByProject.keys()];
   testRun.projectFiles = filesToRunByProject;
   testRun.projectType = projectClosure;
