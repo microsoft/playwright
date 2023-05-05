@@ -145,6 +145,8 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     this.once(Events.Page.Crash, () => this._closedOrCrashedRace.scopeClosed(new Error(kBrowserOrContextClosedError)));
 
     this._setEventToSubscriptionMapping(new Map<string, channels.PageUpdateSubscriptionParams['event']>([
+      [Events.Page.Console, 'console'],
+      [Events.Page.Dialog, 'dialog'],
       [Events.Page.Request, 'request'],
       [Events.Page.Response, 'response'],
       [Events.Page.RequestFinished, 'requestFinished'],

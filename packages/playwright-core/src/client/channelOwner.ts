@@ -67,8 +67,11 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
 
   private _updateSubscription(event: string | symbol, enabled: boolean) {
     const protocolEvent = this._eventToSubscriptionMapping.get(String(event));
-    if (protocolEvent)
-      (this._channel as any).updateSubscription({ event: protocolEvent, enabled }).catch(() => {});
+    if (protocolEvent) {
+      this._wrapApiCall(async () => {
+        await (this._channel as any).updateSubscription({ event: protocolEvent, enabled });
+      }, true).catch(() => {});
+    }
   }
 
   override on(event: string | symbol, listener: Listener): this {

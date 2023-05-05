@@ -107,6 +107,10 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
       if (page)
         hasListeners = page.emit(Events.Page.Dialog, dialogObject) || hasListeners;
       if (!hasListeners) {
+        // Although we do similar handling on the server side, we still need this logic
+        // on the client side due to a possible race condition between two async calls:
+        // a) removing "dialog" listener subscription (client->server)
+        // b) actual "dialog" event (server->client)
         if (dialogObject.type() === 'beforeunload')
           dialog.accept({}).catch(() => {});
         else
@@ -120,6 +124,8 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this._closedPromise = new Promise(f => this.once(Events.BrowserContext.Close, f));
 
     this._setEventToSubscriptionMapping(new Map<string, channels.BrowserContextUpdateSubscriptionParams['event']>([
+      [Events.BrowserContext.Console, 'console'],
+      [Events.BrowserContext.Dialog, 'dialog'],
       [Events.BrowserContext.Request, 'request'],
       [Events.BrowserContext.Response, 'response'],
       [Events.BrowserContext.RequestFinished, 'requestFinished'],

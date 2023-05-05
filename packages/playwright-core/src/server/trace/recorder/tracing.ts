@@ -38,12 +38,12 @@ import type { HarTracerDelegate } from '../../har/harTracer';
 import { HarTracer } from '../../har/harTracer';
 import type { FrameSnapshot } from '@trace/snapshot';
 import type * as trace from '@trace/trace';
-import type { VERSION } from '@trace/trace';
 import type { SnapshotterBlob, SnapshotterDelegate } from './snapshotter';
 import { Snapshotter } from './snapshotter';
 import { yazl } from '../../../zipBundle';
+import type { ConsoleMessage } from '../../console';
 
-const version: VERSION = 4;
+const version: trace.VERSION = 4;
 
 export type TracerOptions = {
   name?: string;
@@ -71,6 +71,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   private _snapshotter?: Snapshotter;
   private _harTracer: HarTracer;
   private _screencastListeners: RegisteredListener[] = [];
+  private _eventListeners: RegisteredListener[] = [];
   private _context: BrowserContext | APIRequestContext;
   private _state: RecordingState | undefined;
   private _isStopping = false;
@@ -168,6 +169,9 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     });
 
     this._context.instrumentation.addListener(this, this._context);
+    this._eventListeners.push(
+        eventsHelper.addEventListener(this._context, BrowserContext.Events.Console, this._onConsoleMessage.bind(this)),
+    );
     if (state.options.screenshots)
       this._startScreencast();
     if (state.options.snapshots)
@@ -248,6 +252,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
 
     const state = this._state!;
     this._context.instrumentation.removeListener(this);
+    eventsHelper.removeEventListeners(this._eventListeners);
     if (this._state?.options.screenshots)
       this._stopScreencast();
 
@@ -354,14 +359,8 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   onEvent(sdkObject: SdkObject, event: trace.EventTraceEvent) {
     if (!sdkObject.attribution.context)
       return;
-    if (event.method === '__create__' && event.class === 'ConsoleMessage') {
-      const object: trace.ObjectTraceEvent = {
-        type: 'object',
-        class: event.class,
-        guid: event.params.guid,
-        initializer: event.params.initializer,
-      };
-      this._appendTraceEvent(object);
+    if (event.method === 'console' || (event.method === '__create__' && event.class === 'ConsoleMessage')) {
+      // Console messages are handled separately.
       return;
     }
     this._appendTraceEvent(event);
@@ -388,6 +387,30 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
 
   onFrameSnapshot(snapshot: FrameSnapshot): void {
     this._appendTraceEvent({ type: 'frame-snapshot', snapshot });
+  }
+
+  private _onConsoleMessage(message: ConsoleMessage) {
+    const object: trace.ObjectTraceEvent = {
+      type: 'object',
+      class: 'ConsoleMessage',
+      guid: message.guid,
+      initializer: {
+        type: message.type(),
+        text: message.text(),
+        location: message.location(),
+      },
+    };
+    this._appendTraceEvent(object);
+
+    const event: trace.EventTraceEvent = {
+      type: 'event',
+      class: 'BrowserContext',
+      method: 'console',
+      params: { message: { guid: message.guid } },
+      time: monotonicTime(),
+      pageId: message.page().guid,
+    };
+    this._appendTraceEvent(event);
   }
 
   private _startScreencastInPage(page: Page) {
