@@ -559,3 +559,25 @@ test('should complain about teardown used multiple times', async ({ runInlineTes
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain(`Project C can not be designated as teardown to multiple projects (A and B)`);
 });
+
+test('should only apply --repeat-each to top-level', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          { name: 'A' },
+          { name: 'B', dependencies: ['A'] },
+          { name: 'C', dependencies: ['A'] },
+        ],
+      };`,
+    'test.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test', async ({}, testInfo) => {
+        console.log('\\n%%' + testInfo.project.name);
+      });
+    `,
+  }, { 'workers': 1, 'repeat-each': 2 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(5);
+  expect(result.outputLines).toEqual(['A', 'B', 'B', 'C', 'C']);
+});

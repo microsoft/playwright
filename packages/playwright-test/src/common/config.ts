@@ -164,7 +164,9 @@ export class FullProjectInternal {
       grep: takeFirst(projectConfig.grep, config.grep, defaultGrep),
       grepInvert: takeFirst(projectConfig.grepInvert, config.grepInvert, null),
       outputDir: takeFirst(configCLIOverrides.outputDir, pathResolve(configDir, projectConfig.outputDir), pathResolve(configDir, config.outputDir), path.join(throwawayArtifactsPath, 'test-results')),
-      repeatEach: takeFirst(configCLIOverrides.repeatEach, projectConfig.repeatEach, config.repeatEach, 1),
+      // Note: we either apply the cli override for repeatEach or not, depending on whether the
+      // project is top-level vs dependency. See collectProjectsAndTestFiles in loadUtils.
+      repeatEach: takeFirst(projectConfig.repeatEach, config.repeatEach, 1),
       retries: takeFirst(configCLIOverrides.retries, projectConfig.retries, config.retries, 0),
       metadata: takeFirst(projectConfig.metadata, config.metadata, undefined),
       name: takeFirst(projectConfig.name, config.name, ''),
