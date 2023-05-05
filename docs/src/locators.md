@@ -1056,6 +1056,25 @@ await Expect(page
 
 Note that the inner locator is matched starting from the outer one, not from the document root.
 
+### Filter by matching an additional locator
+
+Method [`method: Locator.and`] narrows down an existing locator by matching an additional locator. For example, you can combine [`method: Page.getByRole`] and [`method: Page.getByTitle`] to match by both role and title.
+```js
+const button = page.getByRole('button').and(page.getByTitle('Subscribe'));
+```
+```java
+Locator button = page.getByRole(AriaRole.BUTTON).and(page.getByTitle("Subscribe"));
+```
+```python async
+button = page.get_by_role("button").and_(page.getByTitle("Subscribe"))
+```
+```python sync
+button = page.get_by_role("button").and_(page.getByTitle("Subscribe"))
+```
+```csharp
+var button = page.GetByRole(AriaRole.Button).And(page.GetByTitle("Subscribe"));
+```
+
 ## Chaining Locators
 
 You can chain methods that create a locator, like [`method: Page.getByText`] or [`method: Locator.getByRole`], to narrow down the search to a particular part of the page.

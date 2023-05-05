@@ -80,6 +80,7 @@ function parseLocator(locator: string, testIdAttributeName: string): string {
       .replace(/new[\w]+\.[\w]+options\(\)/g, '')
       .replace(/\.set([\w]+)\(([^)]+)\)/g, (_, group1, group2) => ',' + group1.toLowerCase() + '=' + group2.toLowerCase())
       .replace(/\.or_\(/g, 'or(') // Python has "or_" instead of "or".
+      .replace(/\.and_\(/g, 'and(') // Python has "and_" instead of "and".
       .replace(/:/g, '=')
       .replace(/,re\.ignorecase/g, 'i')
       .replace(/,pattern.case_insensitive/g, 'i')
@@ -104,7 +105,7 @@ function shiftParams(template: string, sub: number) {
 
 function transform(template: string, params: TemplateParams, testIdAttributeName: string): string {
   // Recursively handle filter(has=, hasnot=).
-  // TODO: handle or(locator).
+  // TODO: handle and(locator), or(locator).
   while (true) {
     const hasMatch = template.match(/filter\(,?(has|hasnot)=/);
     if (!hasMatch)

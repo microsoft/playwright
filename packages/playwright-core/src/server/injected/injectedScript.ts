@@ -113,6 +113,7 @@ export class InjectedScript {
     this._engines.set('internal:control', this._createControlEngine());
     this._engines.set('internal:has', this._createHasEngine());
     this._engines.set('internal:has-not', this._createHasNotEngine());
+    this._engines.set('internal:and', { queryAll: () => [] });
     this._engines.set('internal:or', { queryAll: () => [] });
     this._engines.set('internal:label', this._createInternalLabelEngine());
     this._engines.set('internal:text', this._createTextEngine(true, true));
@@ -212,6 +213,9 @@ export class InjectedScript {
       for (const part of selector.parts) {
         if (part.name === 'nth') {
           roots = this._queryNth(roots, part);
+        } else if (part.name === 'internal:and') {
+          const andElements = this.querySelectorAll((part.body as NestedSelectorBody).parsed, root);
+          roots = new Set(andElements.filter(e => roots.has(e)));
         } else if (part.name === 'internal:or') {
           const orElements = this.querySelectorAll((part.body as NestedSelectorBody).parsed, root);
           roots = new Set(sortInDOMOrder(new Set([...roots, ...orElements])));

@@ -409,6 +409,19 @@ it('should work with internal:has-not=', async ({ page }) => {
   expect(await page.$$eval(`section >> internal:has-not="article"`, els => els.length)).toBe(2);
 });
 
+it('should work with internal:and=', async ({ page, server }) => {
+  await page.setContent(`
+    <div class=foo>hello</div><div class=bar>world</div>
+    <span class=foo>hello2</span><span class=bar>world2</span>
+  `);
+  expect(await page.$$eval(`div >> internal:and="span"`, els => els.map(e => e.textContent))).toEqual([]);
+  expect(await page.$$eval(`div >> internal:and=".foo"`, els => els.map(e => e.textContent))).toEqual(['hello']);
+  expect(await page.$$eval(`div >> internal:and=".bar"`, els => els.map(e => e.textContent))).toEqual(['world']);
+  expect(await page.$$eval(`span >> internal:and="span"`, els => els.map(e => e.textContent))).toEqual(['hello2', 'world2']);
+  expect(await page.$$eval(`.foo >> internal:and="div"`, els => els.map(e => e.textContent))).toEqual(['hello']);
+  expect(await page.$$eval(`.bar >> internal:and="span"`, els => els.map(e => e.textContent))).toEqual(['world2']);
+});
+
 it('should work with internal:or=', async ({ page, server }) => {
   await page.setContent(`
     <div>hello</div>
