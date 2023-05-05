@@ -169,6 +169,10 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
 
   async exposeBinding(params: channels.BrowserContextExposeBindingParams): Promise<void> {
     await this._context.exposeBinding(params.name, !!params.needsHandle, (source, ...args) => {
+      // When reusing the context, we might have some bindings called late enough,
+      // after context and page dispatchers have been disposed.
+      if (this._disposed)
+        return;
       const pageDispatcher = PageDispatcher.from(this, source.page);
       const binding = new BindingCallDispatcher(pageDispatcher, params.name, !!params.needsHandle, source, args);
       this._dispatchEvent('bindingCall', { binding });
