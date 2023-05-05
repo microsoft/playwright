@@ -182,3 +182,23 @@ test('should not cache resources', async ({ reusedContext, server }) => {
     expect(requestCountMap.get('/simple.json')).toBe(2);
   }
 });
+
+test('should ignore binding from beforeunload', async ({ reusedContext }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22803' });
+
+  let context = await reusedContext();
+
+  let called = false;
+  await context.exposeFunction('binding', () => called = true);
+
+  let page = await context.newPage();
+  await page.evaluate(() => {
+    window.addEventListener('beforeunload', () => window['binding']());
+  });
+
+  context = await reusedContext();
+  page = context.pages()[0];
+  await page.setContent('hello');
+
+  expect(called).toBe(false);
+});
