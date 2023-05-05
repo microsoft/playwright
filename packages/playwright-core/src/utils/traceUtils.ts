@@ -139,21 +139,22 @@ export async function saveTraceFile(fileName: string, traceEvents: TraceEvent[],
   });
 }
 
-export function createBeforeActionTraceEventForExpect(callId: string, apiName: string, wallTime: number, expected: any, stack: StackFrame[]): BeforeActionTraceEvent {
+export function createBeforeActionTraceEventForStep(callId: string, parentId: string | undefined, apiName: string, params: Record<string, any> | undefined, wallTime: number, stack: StackFrame[]): BeforeActionTraceEvent {
   return {
     type: 'before',
     callId,
+    parentId,
     wallTime,
     startTime: monotonicTime(),
     class: 'Test',
     method: 'step',
     apiName,
-    params: { expected: generatePreview(expected) },
+    params: Object.fromEntries(Object.entries(params || {}).map(([name, value]) => [name, generatePreview(value)])),
     stack,
   };
 }
 
-export function createAfterActionTraceEventForExpect(callId: string, attachments: AfterActionTraceEvent['attachments'], error?: SerializedError['error']): AfterActionTraceEvent {
+export function createAfterActionTraceEventForStep(callId: string, attachments: AfterActionTraceEvent['attachments'], error?: SerializedError['error']): AfterActionTraceEvent {
   return {
     type: 'after',
     callId,

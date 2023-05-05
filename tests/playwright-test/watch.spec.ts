@@ -92,8 +92,8 @@ test('should print dependencies in ESM mode', async ({ runInlineTest, nodeVersio
   const output = result.output;
   const deps = JSON.parse(output.match(/###(.*)###/)![1]);
   expect(deps).toEqual({
-    'a.test.ts': ['helperA.ts'],
-    'b.test.ts': ['helperA.ts', 'helperB.ts'],
+    'a.test.ts': ['helperA.ts', 'index.mjs'],
+    'b.test.ts': ['helperA.ts', 'helperB.ts', 'index.mjs'],
   });
 });
 

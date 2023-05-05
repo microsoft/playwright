@@ -144,22 +144,29 @@ test('should reuse context with trace if mode=when-possible', async ({ runInline
   expect(result.passed).toBe(2);
 
   const trace1 = await parseTrace(testInfo.outputPath('test-results', 'reuse-one', 'trace.zip'));
-  expect(trace1.actions).toEqual([
+  expect(trace1.apiNames).toEqual([
+    'Before Hooks',
+    'browserType.launch',
     'browserContext.newPage',
     'page.setContent',
     'page.click',
+    'After Hooks',
+    'tracing.stopChunk',
   ]);
-  expect(trace1.events.some(e => e.type === 'frame-snapshot')).toBe(true);
+  expect(trace1.traceModel.storage().snapshotsForTest().length).toBeGreaterThan(0);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'reuse-one', 'trace-1.zip'))).toBe(false);
 
   const trace2 = await parseTrace(testInfo.outputPath('test-results', 'reuse-two', 'trace.zip'));
-  expect(trace2.actions).toEqual([
+  expect(trace2.apiNames).toEqual([
+    'Before Hooks',
     'expect.toBe',
     'page.setContent',
     'page.fill',
     'locator.click',
+    'After Hooks',
+    'tracing.stopChunk',
   ]);
-  expect(trace2.events.some(e => e.type === 'frame-snapshot')).toBe(true);
+  expect(trace2.traceModel.storage().snapshotsForTest().length).toBeGreaterThan(0);
 });
 
 test('should work with manually closed pages', async ({ runInlineTest }) => {
@@ -481,19 +488,19 @@ test('should reset tracing', async ({ runInlineTest }, testInfo) => {
   expect(result.passed).toBe(2);
 
   const trace1 = await parseTrace(traceFile1);
-  expect(trace1.actions).toEqual([
+  expect(trace1.apiNames).toEqual([
     'page.setContent',
     'page.click',
   ]);
-  expect(trace1.events.some(e => e.type === 'frame-snapshot')).toBe(true);
+  expect(trace1.traceModel.storage().snapshotsForTest().length).toBeGreaterThan(0);
 
   const trace2 = await parseTrace(traceFile2);
-  expect(trace2.actions).toEqual([
+  expect(trace2.apiNames).toEqual([
     'page.setContent',
     'page.fill',
     'locator.click',
   ]);
-  expect(trace2.events.some(e => e.type === 'frame-snapshot')).toBe(true);
+  expect(trace1.traceModel.storage().snapshotsForTest().length).toBeGreaterThan(0);
 });
 
 test('should not delete others contexts', async ({ runInlineTest }) => {

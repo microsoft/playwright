@@ -16,28 +16,19 @@
 
 import type * as trace from '@trace/trace';
 import type * as traceV3 from './versions/traceV3';
-import { parseClientSideCallMetadata } from '@isomorphic/traceUtils';
-import type zip from '@zip.js/zip.js';
-// @ts-ignore
-import zipImport from '@zip.js/zip.js/dist/zip-no-worker-inflate.min.js';
+import { parseClientSideCallMetadata } from '../../../packages/playwright-core/src/utils/isomorphic/traceUtils';
 import type { ContextEntry, PageEntry } from './entries';
 import { createEmptyContext } from './entries';
 import { SnapshotStorage } from './snapshotStorage';
 
-const zipjs = zipImport as typeof zip;
-
-type Progress = (done: number, total: number) => void;
-
-const splitProgress = (progress: Progress, weights: number[]): Progress[] => {
-  const doneList = new Array(weights.length).fill(0);
-  return new Array(weights.length).fill(0).map((_, i) => {
-    return (done: number, total: number) => {
-      doneList[i] = done / total * weights[i] * 1000;
-      progress(doneList.reduce((a, b) => a + b, 0), 1000);
-    };
-  });
-};
-
+export interface TraceModelBackend {
+  entryNames(): Promise<string[]>;
+  hasEntry(entryName: string): Promise<boolean>;
+  readText(entryName: string): Promise<string | undefined>;
+  readBlob(entryName: string): Promise<Blob | undefined>;
+  isLive(): boolean;
+  traceURL(): string;
+}
 export class TraceModel {
   contextEntries: ContextEntry[] = [];
   pageEntries = new Map<string, PageEntry>();
@@ -48,11 +39,8 @@ export class TraceModel {
   constructor() {
   }
 
-  async load(traceURL: string, progress: (done: number, total: number) => void) {
-    const isLive = traceURL.endsWith('json');
-    // Allow 10% to hop from sw to page.
-    const [fetchProgress, unzipProgress] = splitProgress(progress, [0.5, 0.4, 0.1]);
-    this._backend = isLive ? new FetchTraceModelBackend(traceURL) : new ZipTraceModelBackend(traceURL, fetchProgress);
+  async load(backend: TraceModelBackend, unzipProgress: (done: number, total: number) => void) {
+    this._backend = backend;
 
     const ordinals: string[] = [];
     let hasSource = false;
@@ -74,7 +62,7 @@ export class TraceModel {
     for (const ordinal of ordinals) {
       const contextEntry = createEmptyContext();
       const actionMap = new Map<string, trace.ActionTraceEvent>();
-      contextEntry.traceUrl = traceURL;
+      contextEntry.traceUrl = backend.traceURL();
       contextEntry.hasSource = hasSource;
 
       const trace = await this._backend.readText(ordinal + '.trace') || '';
@@ -88,7 +76,7 @@ export class TraceModel {
       unzipProgress(++done, total);
 
       contextEntry.actions = [...actionMap.values()].sort((a1, a2) => a1.startTime - a2.startTime);
-      if (!isLive) {
+      if (!backend.isLive()) {
         for (const action of contextEntry.actions) {
           if (!action.endTime && !action.error)
             action.error = { name: 'Error', message: 'Timed out' };
@@ -140,6 +128,7 @@ export class TraceModel {
     switch (event.type) {
       case 'context-options': {
         this._version = event.version;
+        contextEntry.isPrimary = true;
         contextEntry.browserName = event.browserName;
         contextEntry.title = event.title;
         contextEntry.platform = event.platform;
@@ -309,109 +298,4 @@ export class TraceModel {
       pageId: metadata.pageId,
     };
   }
-}
-
-export interface TraceModelBackend {
-  entryNames(): Promise<string[]>;
-  hasEntry(entryName: string): Promise<boolean>;
-  readText(entryName: string): Promise<string | undefined>;
-  readBlob(entryName: string): Promise<Blob | undefined>;
-}
-
-class ZipTraceModelBackend implements TraceModelBackend {
-  private _zipReader: zip.ZipReader;
-  private _entriesPromise: Promise<Map<string, zip.Entry>>;
-
-  constructor(traceURL: string, progress: (done: number, total: number) => void) {
-    this._zipReader = new zipjs.ZipReader(
-        new zipjs.HttpReader(formatUrl(traceURL), { mode: 'cors', preventHeadRequest: true } as any),
-        { useWebWorkers: false }) as zip.ZipReader;
-    this._entriesPromise = this._zipReader.getEntries({ onprogress: progress }).then(entries => {
-      const map = new Map<string, zip.Entry>();
-      for (const entry of entries)
-        map.set(entry.filename, entry);
-      return map;
-    });
-  }
-
-  async entryNames(): Promise<string[]> {
-    const entries = await this._entriesPromise;
-    return [...entries.keys()];
-  }
-
-  async hasEntry(entryName: string): Promise<boolean> {
-    const entries = await this._entriesPromise;
-    return entries.has(entryName);
-  }
-
-  async readText(entryName: string): Promise<string | undefined> {
-    const entries = await this._entriesPromise;
-    const entry = entries.get(entryName);
-    if (!entry)
-      return;
-    const writer = new zipjs.TextWriter();
-    await entry.getData?.(writer);
-    return writer.getData();
-  }
-
-  async readBlob(entryName: string): Promise<Blob | undefined> {
-    const entries = await this._entriesPromise;
-    const entry = entries.get(entryName);
-    if (!entry)
-      return;
-    const writer = new zipjs.BlobWriter() as zip.BlobWriter;
-    await entry.getData!(writer);
-    return writer.getData();
-  }
-}
-
-class FetchTraceModelBackend implements TraceModelBackend {
-  private _entriesPromise: Promise<Map<string, string>>;
-
-  constructor(traceURL: string) {
-
-    this._entriesPromise = fetch('/trace/file?path=' + encodeURI(traceURL)).then(async response => {
-      const json = JSON.parse(await response.text());
-      const entries = new Map<string, string>();
-      for (const entry of json.entries)
-        entries.set(entry.name, entry.path);
-      return entries;
-    });
-  }
-
-  async entryNames(): Promise<string[]> {
-    const entries = await this._entriesPromise;
-    return [...entries.keys()];
-  }
-
-  async hasEntry(entryName: string): Promise<boolean> {
-    const entries = await this._entriesPromise;
-    return entries.has(entryName);
-  }
-
-  async readText(entryName: string): Promise<string | undefined> {
-    const response = await this._readEntry(entryName);
-    return response?.text();
-  }
-
-  async readBlob(entryName: string): Promise<Blob | undefined> {
-    const response = await this._readEntry(entryName);
-    return response?.blob();
-  }
-
-  private async _readEntry(entryName: string): Promise<Response | undefined> {
-    const entries = await this._entriesPromise;
-    const fileName = entries.get(entryName);
-    if (!fileName)
-      return;
-    return fetch('/trace/file?path=' + encodeURI(fileName));
-  }
-}
-
-function formatUrl(trace: string) {
-  let url = trace.startsWith('http') || trace.startsWith('blob') ? trace : `file?path=${trace}`;
-  // Dropbox does not support cors.
-  if (url.startsWith('https://www.dropbox.com/'))
-    url = 'https://dl.dropboxusercontent.com/' + url.substring('https://www.dropbox.com/'.length);
-  return url;
 }

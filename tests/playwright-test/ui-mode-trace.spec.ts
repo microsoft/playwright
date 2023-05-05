@@ -38,11 +38,15 @@ test('should merge trace events', async ({ runUITest, server }) => {
       listItem,
       'action list'
   ).toHaveText([
-    /browserContext\.newPage[\d.]+m?s/,
-    /page\.setContent[\d.]+m?s/,
-    /expect\.toBe[\d.]+m?s/,
-    /locator\.clickgetByRole\('button'\)[\d.]+m?s/,
-    /expect\.toBe[\d.]+m?s/,
+    /Before Hooks[\d.]+m?s/,
+    /browserContext.newPage[\d.]+m?s/,
+    /page.setContent[\d.]+m?s/,
+    /expect.toBe[\d.]+m?s/,
+    /locator.clickgetByRole\('button'\)[\d.]+m?s/,
+    /expect.toBe[\d.]+m?s/,
+    /After Hooks[\d.]+m?s/,
+    /browserContext.close[\d.]+m?s/,
+
   ]);
 });
 
@@ -64,9 +68,12 @@ test('should merge web assertion events', async ({  runUITest }, testInfo) => {
       listItem,
       'action list'
   ).toHaveText([
-    /browserContext\.newPage[\d.]+m?s/,
-    /page\.setContent[\d.]+m?s/,
-    /expect\.toBeVisiblelocator\('button'\)[\d.]+m?s/,
+    /Before Hooks[\d.]+m?s/,
+    /browserContext.newPage[\d.]+m?s/,
+    /page.setContent[\d.]+m?s/,
+    /expect.toBeVisiblelocator\('button'\)[\d.]+m?s/,
+    /After Hooks[\d.]+m?s/,
+    /browserContext.close[\d.]+m?s/,
   ]);
 });
 
@@ -84,13 +91,16 @@ test('should merge screenshot assertions', async ({  runUITest }, testInfo) => {
   await page.getByText('trace test').dblclick();
 
   const listItem = page.getByTestId('action-list').getByRole('listitem');
+  // TODO: fixme.
   await expect(
       listItem,
       'action list'
   ).toHaveText([
-    /browserContext\.newPage[\d.]+m?s/,
+    /Before Hooks[\d.]+m?s/,
+    /browserContext.newPage[\d.]+m?s/,
     /page\.setContent[\d.]+m?s/,
     /expect\.toHaveScreenshot[\d.]+m?s/,
+    /After Hooks/,
   ]);
 });
 
@@ -105,6 +115,7 @@ test('should locate sync assertions in source', async ({ runUITest, server }) =>
   });
 
   await page.getByText('trace test').dblclick();
+  await page.getByText('expect.toBe').click();
 
   await expect(
       page.locator('.CodeMirror .source-line-running'),
@@ -131,10 +142,13 @@ test('should show snapshots for sync assertions', async ({ runUITest, server }) 
       listItem,
       'action list'
   ).toHaveText([
+    /Before Hooks[\d.]+m?s/,
     /browserContext\.newPage[\d.]+m?s/,
     /page\.setContent[\d.]+m?s/,
     /locator\.clickgetByRole\('button'\)[\d.]+m?s/,
     /expect\.toBe[\d.]+m?s/,
+    /After Hooks[\d.]+m?s/,
+    /browserContext.close[\d.]+m?s/,
   ]);
 
   await expect(

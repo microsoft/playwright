@@ -58,11 +58,12 @@ export type BeforeActionTraceEvent = {
   apiName: string;
   class: string;
   method: string;
-  params: any;
+  params: Record<string, any>;
   wallTime: number;
   beforeSnapshot?: string;
   stack?: StackFrame[];
   pageId?: string;
+  parentId?: string;
 };
 
 export type InputActionTraceEvent = {

@@ -18,7 +18,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import type { APIRequestContext, BrowserContext, Browser, BrowserContextOptions, LaunchOptions, Page, Tracing, Video } from 'playwright-core';
 import * as playwrightLibrary from 'playwright-core';
-import { createGuid, debugMode, addInternalStackPrefix, mergeTraceFiles, saveTraceFile, removeFolders } from 'playwright-core/lib/utils';
+import { createGuid, debugMode, addInternalStackPrefix, mergeTraceFiles, saveTraceFile, removeFolders, isString, asLocator } from 'playwright-core/lib/utils';
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, TraceMode, VideoMode } from '../types/test';
 import type { TestInfoImpl } from './worker/testInfo';
 import { rootTestType } from './common/testType';
@@ -269,14 +269,16 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     let artifactsRecorder: ArtifactsRecorder | undefined;
 
     const csiListener: ClientInstrumentationListener = {
-      onApiCallBegin: (apiCall: string, stackTrace: ParsedStackTrace | null, wallTime: number, userData: any) => {
+      onApiCallBegin: (apiName: string, params: Record<string, any>, stackTrace: ParsedStackTrace | null, wallTime: number, userData: any) => {
         const testInfo = currentTestInfo();
-        if (!testInfo || apiCall.startsWith('expect.') || apiCall.includes('setTestIdAttribute'))
+        if (!testInfo || apiName.startsWith('expect.') || apiName.includes('setTestIdAttribute'))
           return { userObject: null };
         const step = testInfo._addStep({
           location: stackTrace?.frames[0] as any,
           category: 'pw:api',
-          title: apiCall,
+          title: renderApiCall(apiName, params),
+          apiName,
+          params,
           wallTime,
           laxParent: true,
         });
@@ -743,6 +745,30 @@ class ArtifactsRecorder {
       await tracing.stopChunk({ path: tracePath });
     }
   }
+}
+
+const paramsToRender = ['url', 'selector', 'text', 'key'];
+
+function renderApiCall(apiName: string, params: any) {
+  const paramsArray = [];
+  if (params) {
+    for (const name of paramsToRender) {
+      if (!(name in params))
+        continue;
+      let value;
+      if (name === 'selector' && isString(params[name]) && params[name].startsWith('internal:')) {
+        const getter = asLocator('javascript', params[name], false, true);
+        apiName = apiName.replace(/^locator\./, 'locator.' + getter + '.');
+        apiName = apiName.replace(/^page\./, 'page.' + getter + '.');
+        apiName = apiName.replace(/^frame\./, 'frame.' + getter + '.');
+      } else {
+        value = params[name];
+        paramsArray.push(value);
+      }
+    }
+  }
+  const paramsText = paramsArray.length ? '(' + paramsArray.join(', ') + ')' : '';
+  return apiName + paramsText;
 }
 
 export const test = _baseTest.extend<TestFixtures, WorkerFixtures>(playwrightFixtures);

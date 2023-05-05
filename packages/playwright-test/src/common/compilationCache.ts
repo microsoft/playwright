@@ -187,9 +187,9 @@ const kPlaywrightCoveragePrefix = path.resolve(__dirname, '../../../../tests/con
 export function belongsToNodeModules(file: string) {
   if (file.includes(`${path.sep}node_modules${path.sep}`))
     return true;
-  if (file.startsWith(kPlaywrightInternalPrefix))
+  if (file.startsWith(kPlaywrightInternalPrefix) && file.endsWith('.js'))
     return true;
-  if (file.startsWith(kPlaywrightCoveragePrefix))
+  if (file.startsWith(kPlaywrightCoveragePrefix) && file.endsWith('.js'))
     return true;
   return false;
 }

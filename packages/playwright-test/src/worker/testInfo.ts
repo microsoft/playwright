@@ -16,7 +16,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { captureRawStack, monotonicTime, zones } from 'playwright-core/lib/utils';
+import { captureRawStack, createAfterActionTraceEventForStep, createBeforeActionTraceEventForStep, monotonicTime, zones } from 'playwright-core/lib/utils';
 import type { TestInfoError, TestInfo, TestStatus, FullProject, FullConfig } from '../../types/test';
 import type { StepBeginPayload, StepEndPayload, WorkerInitParams } from '../common/ipc';
 import type { TestCase } from '../common/test';
@@ -36,6 +36,8 @@ interface TestStepInternal {
   steps: TestStepInternal[];
   laxParent?: boolean;
   endWallTime?: number;
+  apiName?: string;
+  params?: Record<string, any>;
   error?: TestInfoError;
 }
 
@@ -228,6 +230,8 @@ export class TestInfoImpl implements TestInfo {
       isLaxParent = !!parentStep;
     }
 
+    const initialAttachments = new Set(this.attachments);
+
     const step: TestStepInternal = {
       stepId,
       ...data,
@@ -257,6 +261,8 @@ export class TestInfoImpl implements TestInfo {
           error,
         };
         this._onStepEnd(payload);
+        const errorForTrace = error ? { name: '', message: error.message || '', stack: error.stack } : undefined;
+        this._traceEvents.push(createAfterActionTraceEventForStep(stepId, serializeAttachments(this.attachments, initialAttachments), errorForTrace));
       }
     };
     const parentStepList = parentStep ? parentStep.steps : this._steps;
@@ -268,10 +274,13 @@ export class TestInfoImpl implements TestInfo {
       testId: this._test.id,
       stepId,
       parentStepId: parentStep ? parentStep.stepId : undefined,
-      ...data,
+      title: data.title,
+      category: data.category,
+      wallTime: data.wallTime,
       location,
     };
     this._onStepBegin(payload);
+    this._traceEvents.push(createBeforeActionTraceEventForStep(stepId, parentStep?.stepId, data.apiName || data.title, data.params, data.wallTime, data.location ? [data.location] : []));
     return step;
   }
 
@@ -378,6 +387,17 @@ export class TestInfoImpl implements TestInfo {
   setTimeout(timeout: number) {
     this._timeoutManager.setTimeout(timeout);
   }
+}
+
+function serializeAttachments(attachments: TestInfo['attachments'], initialAttachments: Set<TestInfo['attachments'][0]>): trace.AfterActionTraceEvent['attachments'] {
+  return attachments.filter(a => !initialAttachments.has(a)).map(a => {
+    return {
+      name: a.name,
+      contentType: a.contentType,
+      path: a.path,
+      body: a.body?.toString('base64'),
+    };
+  });
 }
 
 class SkipError extends Error {
