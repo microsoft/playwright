@@ -239,7 +239,7 @@ jobs:
     name: 'Playwright Tests'
     runs-on: ubuntu-latest
     container:
-      image: mcr.microsoft.com/playwright:v1.34.0-jammy
+      image: mcr.microsoft.com/playwright/dotnet:v1.33.0-jammy
     steps:
       - uses: actions/checkout@v3
       - name: Setup dotnet
@@ -248,7 +248,7 @@ jobs:
           dotnet-version: 6.0.x
       - run: dotnet build
       - name: Ensure browsers are installed
-        run: pwsh bin\Debug\net6.0\playwright.ps1 install --with-deps
+        run: pwsh bin/Debug/net6.0/playwright.ps1 install --with-deps
       - name: Run your tests
         run: dotnet test
 ```
@@ -348,7 +348,7 @@ jobs:
               inputs:
                 searchFolder: 'my-e2e-tests/test-results'
                 testResultsFormat: 'JUnit'
-                testResultsFiles: 'e2e-junit-results.xml' 
+                testResultsFiles: 'e2e-junit-results.xml'
                 mergeTestResults: true
                 failTaskOnFailedTests: true
                 testRunTitle: 'My End-To-End Tests'
@@ -393,7 +393,7 @@ Sharding in CircleCI is indexed with 0 which means that you will need to overrid
       executor: pw-jammy-development
       parallelism: 4
       steps:
-        - run: SHARD="$((${CIRCLE_NODE_INDEX}+1))"; npx playwright test -- --shard=${SHARD}/${CIRCLE_NODE_TOTAL}      
+        - run: SHARD="$((${CIRCLE_NODE_INDEX}+1))"; npx playwright test -- --shard=${SHARD}/${CIRCLE_NODE_TOTAL}
   ```
 
 ### Jenkins
