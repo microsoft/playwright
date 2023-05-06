@@ -150,11 +150,16 @@ export abstract class APIRequestContext extends SdkObject {
         setHeader(headers, name, value);
     }
 
+    const requestUrl = new URL(params.url, defaults.baseURL);
+    if (params.params) {
+      for (const { name, value } of params.params)
+        requestUrl.searchParams.set(name, value);
+    }
+
     const method = params.method?.toUpperCase() || 'GET';
     const proxy = defaults.proxy;
     let agent;
-    if (proxy && proxy.server !== 'per-context') {
-      // TODO: support bypass proxy
+    if (proxy && proxy.server !== 'per-context' && !shouldBypassProxy(requestUrl, proxy.bypass)) {
       const proxyOpts = url.parse(proxy.server);
       if (proxyOpts.protocol?.startsWith('socks')) {
         agent = new SocksProxyAgent({
@@ -183,12 +188,6 @@ export abstract class APIRequestContext extends SdkObject {
     // rejectUnauthorized = undefined is treated as true in node 12.
     if (params.ignoreHTTPSErrors || defaults.ignoreHTTPSErrors)
       options.rejectUnauthorized = false;
-
-    const requestUrl = new URL(params.url, defaults.baseURL);
-    if (params.params) {
-      for (const { name, value } of params.params)
-        requestUrl.searchParams.set(name, value);
-    }
 
     const postData = serializePostData(params, headers);
     if (postData)
@@ -705,4 +704,17 @@ function getHeader(headers: HeadersObject, name: string) {
 
 function removeHeader(headers: { [name: string]: string }, name: string) {
   delete headers[name];
+}
+
+function shouldBypassProxy(url: URL, bypass?: string): boolean {
+  if (!bypass)
+    return false;
+  const domains = bypass.split(',').map(s => {
+    s = s.trim();
+    if (!s.startsWith('.'))
+      s = '.' + s;
+    return s;
+  });
+  const domain = '.' + url.hostname;
+  return domains.some(d => domain.endsWith(d));
 }
