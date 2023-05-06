@@ -208,10 +208,14 @@ test('should report toHaveScreenshot step with expectation name in title', async
   expect(result.outputLines).toEqual([
     `end browserType.launch`,
     `end browser.newContext`,
+    `end fixture: context`,
     `end browserContext.newPage`,
+    `end fixture: page`,
     `end Before Hooks`,
     `end expect.toHaveScreenshot(foo.png)`,
     `end expect.toHaveScreenshot(is-a-test-1.png)`,
+    `end fixture: page`,
+    `end fixture: context`,
     `end browserContext.close`,
     `end After Hooks`,
   ]);

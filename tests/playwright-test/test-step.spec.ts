@@ -100,12 +100,24 @@ test('should report api step hierarchy', async ({ runInlineTest }) => {
           title: 'browserType.launch',
         },
         {
-          category: 'pw:api',
-          title: 'browser.newContext',
+          category: 'fixture',
+          title: 'fixture: context',
+          steps: [
+            {
+              category: 'pw:api',
+              title: 'browser.newContext',
+            },
+          ]
         },
         {
-          category: 'pw:api',
-          title: 'browserContext.newPage',
+          category: 'fixture',
+          title: 'fixture: page',
+          steps: [
+            {
+              category: 'pw:api',
+              title: 'browserContext.newPage',
+            },
+          ]
         },
       ],
     },
@@ -171,6 +183,14 @@ test('should report api step hierarchy', async ({ runInlineTest }) => {
       category: 'hook',
       title: 'After Hooks',
       steps: [
+        {
+          category: 'fixture',
+          title: 'fixture: page',
+        },
+        {
+          category: 'fixture',
+          title: 'fixture: context',
+        },
         {
           category: 'pw:api',
           title: 'browserContext.close',
@@ -255,12 +275,24 @@ test('should not report nested after hooks', async ({ runInlineTest }) => {
           title: 'browserType.launch',
         },
         {
-          category: 'pw:api',
-          title: 'browser.newContext',
+          category: 'fixture',
+          title: 'fixture: context',
+          steps: [
+            {
+              category: 'pw:api',
+              title: 'browser.newContext',
+            },
+          ]
         },
         {
-          category: 'pw:api',
-          title: 'browserContext.newPage',
+          category: 'fixture',
+          title: 'fixture: page',
+          steps: [
+            {
+              category: 'pw:api',
+              title: 'browserContext.newPage',
+            },
+          ]
         },
       ],
     },
@@ -277,6 +309,14 @@ test('should not report nested after hooks', async ({ runInlineTest }) => {
       category: 'hook',
       title: 'After Hooks',
       steps: [
+        {
+          category: 'fixture',
+          title: 'fixture: page',
+        },
+        {
+          category: 'fixture',
+          title: 'fixture: context',
+        },
         {
           category: 'pw:api',
           title: 'browserContext.close',
@@ -332,16 +372,20 @@ test('should report test.step from fixtures', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
   expect(result.outputLines).toEqual([
     `begin Before Hooks`,
+    `begin fixture: foo`,
     `begin setup foo`,
     `end setup foo`,
+    `end fixture: foo`,
     `end Before Hooks`,
     `begin test step`,
     `begin inside foo`,
     `end inside foo`,
     `end test step`,
     `begin After Hooks`,
+    `begin fixture: foo`,
     `begin teardown foo`,
     `end teardown foo`,
+    `end fixture: foo`,
     `end After Hooks`,
   ]);
 });
@@ -374,12 +418,24 @@ test('should report expect step locations', async ({ runInlineTest }) => {
           title: 'browserType.launch',
         },
         {
-          category: 'pw:api',
-          title: 'browser.newContext',
+          category: 'fixture',
+          title: 'fixture: context',
+          steps: [
+            {
+              category: 'pw:api',
+              title: 'browser.newContext',
+            },
+          ]
         },
         {
-          category: 'pw:api',
-          title: 'browserContext.newPage',
+          category: 'fixture',
+          title: 'fixture: page',
+          steps: [
+            {
+              category: 'pw:api',
+              title: 'browserContext.newPage',
+            },
+          ]
         },
       ],
     },
@@ -396,6 +452,14 @@ test('should report expect step locations', async ({ runInlineTest }) => {
       category: 'hook',
       title: 'After Hooks',
       steps: [
+        {
+          category: 'fixture',
+          title: 'fixture: page',
+        },
+        {
+          category: 'fixture',
+          title: 'fixture: context',
+        },
         {
           category: 'pw:api',
           title: 'browserContext.close',
@@ -622,13 +686,25 @@ test('should nest steps based on zones', async ({ runInlineTest }) => {
           category: 'pw:api'
         },
         {
-          category: 'pw:api',
-          title: 'browser.newContext',
+          category: 'fixture',
+          title: 'fixture: context',
+          steps: [
+            {
+              category: 'pw:api',
+              title: 'browser.newContext',
+            },
+          ]
         },
         {
-          title: 'browserContext.newPage',
-          category: 'pw:api'
-        }
+          category: 'fixture',
+          title: 'fixture: page',
+          steps: [
+            {
+              category: 'pw:api',
+              title: 'browserContext.newPage',
+            },
+          ]
+        },
       ]
     },
     {
@@ -699,6 +775,14 @@ test('should nest steps based on zones', async ({ runInlineTest }) => {
             }
           ],
           location: { file: 'a.test.ts', line: 'number', column: 'number' }
+        },
+        {
+          category: 'fixture',
+          title: 'fixture: page',
+        },
+        {
+          category: 'fixture',
+          title: 'fixture: context',
         },
         {
           title: 'browserContext.close',
@@ -856,8 +940,26 @@ test('should nest page.continue insize page.goto steps', async ({ runInlineTest 
       category: 'hook',
       steps: [
         { title: 'browserType.launch', category: 'pw:api' },
-        { title: 'browser.newContext', category: 'pw:api' },
-        { title: 'browserContext.newPage', category: 'pw:api' },
+        {
+          category: 'fixture',
+          title: 'fixture: context',
+          steps: [
+            {
+              category: 'pw:api',
+              title: 'browser.newContext',
+            },
+          ]
+        },
+        {
+          category: 'fixture',
+          title: 'fixture: page',
+          steps: [
+            {
+              category: 'pw:api',
+              title: 'browserContext.newPage',
+            },
+          ]
+        },
       ],
     },
     {
@@ -881,6 +983,14 @@ test('should nest page.continue insize page.goto steps', async ({ runInlineTest 
       title: 'After Hooks',
       category: 'hook',
       steps: [
+        {
+          category: 'fixture',
+          title: 'fixture: page',
+        },
+        {
+          category: 'fixture',
+          title: 'fixture: context',
+        },
         { title: 'browserContext.close', category: 'pw:api' },
       ],
     },
