@@ -194,7 +194,7 @@ jobs:
     name: 'Playwright Tests'
     runs-on: ubuntu-latest
     container:
-      image: mcr.microsoft.com/playwright:v1.34.0-jammy
+      image: mcr.microsoft.com/playwright/python:v1.34.0-jammy
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python
@@ -218,7 +218,7 @@ jobs:
     name: 'Playwright Tests'
     runs-on: ubuntu-latest
     container:
-      image: mcr.microsoft.com/playwright:v1.34.0-jammy
+      image: mcr.microsoft.com/playwright/java:v1.34.0-jammy
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-java@v3
@@ -239,7 +239,7 @@ jobs:
     name: 'Playwright Tests'
     runs-on: ubuntu-latest
     container:
-      image: mcr.microsoft.com/playwright/dotnet:v1.33.0-jammy
+      image: mcr.microsoft.com/playwright/dotnet:v1.34.0-jammy
     steps:
       - uses: actions/checkout@v3
       - name: Setup dotnet
