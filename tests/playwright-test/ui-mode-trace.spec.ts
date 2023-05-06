@@ -45,8 +45,9 @@ test('should merge trace events', async ({ runUITest, server }) => {
     /locator.clickgetByRole\('button'\)[\d.]+m?s/,
     /expect.toBe[\d.]+m?s/,
     /After Hooks[\d.]+m?s/,
+    /fixture: page[\d.]+m?s/,
+    /fixture: context[\d.]+m?s/,
     /browserContext.close[\d.]+m?s/,
-
   ]);
 });
 
@@ -73,6 +74,8 @@ test('should merge web assertion events', async ({  runUITest }, testInfo) => {
     /page.setContent[\d.]+m?s/,
     /expect.toBeVisiblelocator\('button'\)[\d.]+m?s/,
     /After Hooks[\d.]+m?s/,
+    /fixture: page[\d.]+m?s/,
+    /fixture: context[\d.]+m?s/,
     /browserContext.close[\d.]+m?s/,
   ]);
 });
@@ -148,6 +151,8 @@ test('should show snapshots for sync assertions', async ({ runUITest, server }) 
     /locator\.clickgetByRole\('button'\)[\d.]+m?s/,
     /expect\.toBe[\d.]+m?s/,
     /After Hooks[\d.]+m?s/,
+    /fixture: page[\d.]+m?s/,
+    /fixture: context[\d.]+m?s/,
     /browserContext.close[\d.]+m?s/,
   ]);
 

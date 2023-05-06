@@ -26,7 +26,7 @@ import type { Location } from '../../types/testReporter';
 import { getContainedPath, normalizeAndSaveAttachment, sanitizeForFilePath, serializeError, trimLongString } from '../util';
 import type * as trace from '@trace/trace';
 
-interface TestStepInternal {
+export interface TestStepInternal {
   complete(result: { error?: Error | TestInfoError }): void;
   stepId: string;
   title: string;
@@ -56,6 +56,8 @@ export class TestInfoImpl implements TestInfo {
   readonly _projectInternal: FullProjectInternal;
   readonly _configInternal: FullConfigInternal;
   readonly _steps: TestStepInternal[] = [];
+  _beforeHooksStep: TestStepInternal | undefined;
+  _afterHooksStep: TestStepInternal | undefined;
 
   // ------------ TestInfo fields ------------
   readonly testId: string;
@@ -212,9 +214,10 @@ export class TestInfoImpl implements TestInfo {
     }
   }
 
-  _addStep(data: Omit<TestStepInternal, 'complete' | 'stepId' | 'steps'>): TestStepInternal {
+  _addStep(data: Omit<TestStepInternal, 'complete' | 'stepId' | 'steps'>, parentStep?: TestStepInternal): TestStepInternal {
     const stepId = `${data.category}@${data.title}@${++this._lastStepId}`;
-    let parentStep = zones.zoneData<TestStepInternal>('stepZone', captureRawStack());
+    if (!parentStep)
+      parentStep = zones.zoneData<TestStepInternal>('stepZone', captureRawStack()) || undefined;
 
     // For out-of-stack calls, locate the enclosing step.
     let isLaxParent = false;

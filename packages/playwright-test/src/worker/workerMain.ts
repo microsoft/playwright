@@ -322,6 +322,7 @@ export class WorkerMain extends ProcessRunner {
 
       let testFunctionParams: object | null = null;
       await testInfo._runAsStep({ category: 'hook', title: 'Before Hooks' }, async step => {
+        testInfo._beforeHooksStep = step;
         // Note: wrap all preparation steps together, because failure/skip in any of them
         // prevents further setup and/or test from running.
         const beforeHooksError = await testInfo._runAndFailOnError(async () => {
@@ -392,6 +393,7 @@ export class WorkerMain extends ProcessRunner {
       testInfo._timeoutManager.setCurrentRunnable({ type: 'afterEach', slot: afterHooksSlot });
     }
     await testInfo._runAsStep({ category: 'hook', title: 'After Hooks' }, async step => {
+      testInfo._afterHooksStep = step;
       let firstAfterHooksError: TestInfoError | undefined;
       await testInfo._runWithTimeout(async () => {
         // Note: do not wrap all teardown steps together, because failure in any of them

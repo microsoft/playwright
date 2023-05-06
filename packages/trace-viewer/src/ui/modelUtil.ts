@@ -84,7 +84,7 @@ function indexModel(context: ContextEntry) {
 }
 
 function mergeActions(contexts: ContextEntry[]) {
-  const map = new Map<number, ActionTraceEvent>();
+  const map = new Map<string, ActionTraceEvent>();
 
   // Protocol call aka isPrimary contexts have startTime/endTime as server-side times.
   // Step aka non-isPrimary contexts have startTime/endTime are client-side times.
@@ -95,7 +95,7 @@ function mergeActions(contexts: ContextEntry[]) {
 
   for (const context of primaryContexts) {
     for (const action of context.actions)
-      map.set(action.wallTime, action);
+      map.set(`${action.apiName}@${action.wallTime}`, action);
     if (!offset && context.actions.length)
       offset = context.actions[0].startTime - context.actions[0].wallTime;
   }
@@ -110,7 +110,8 @@ function mergeActions(contexts: ContextEntry[]) {
           action.endTime = action.startTime + duration;
       }
 
-      const existing = map.get(action.wallTime);
+      const key = `${action.apiName}@${action.wallTime}`;
+      const existing = map.get(key);
       if (existing && existing.apiName === action.apiName) {
         if (action.error)
           existing.error = action.error;
@@ -118,7 +119,7 @@ function mergeActions(contexts: ContextEntry[]) {
           existing.attachments = action.attachments;
         continue;
       }
-      map.set(action.wallTime, action);
+      map.set(key, action);
     }
   }
 

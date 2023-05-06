@@ -147,10 +147,14 @@ test('should reuse context with trace if mode=when-possible', async ({ runInline
   expect(trace1.apiNames).toEqual([
     'Before Hooks',
     'browserType.launch',
+    'fixture: context',
+    'fixture: page',
     'browserContext.newPage',
     'page.setContent',
     'page.click',
     'After Hooks',
+    'fixture: page',
+    'fixture: context',
     'tracing.stopChunk',
   ]);
   expect(trace1.traceModel.storage().snapshotsForTest().length).toBeGreaterThan(0);
@@ -159,11 +163,15 @@ test('should reuse context with trace if mode=when-possible', async ({ runInline
   const trace2 = await parseTrace(testInfo.outputPath('test-results', 'reuse-two', 'trace.zip'));
   expect(trace2.apiNames).toEqual([
     'Before Hooks',
+    'fixture: context',
+    'fixture: page',
     'expect.toBe',
     'page.setContent',
     'page.fill',
     'locator.click',
     'After Hooks',
+    'fixture: page',
+    'fixture: context',
     'tracing.stopChunk',
   ]);
   expect(trace2.traceModel.storage().snapshotsForTest().length).toBeGreaterThan(0);
