@@ -1745,6 +1745,95 @@ test.describe('labels', () => {
     await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(1);
     await expect(page.locator('.chip', { hasText: 'c.test.js' })).toHaveCount(1);
   });
+
+  test('labels in describe title should be working', async ({ runInlineTest, showReport, page }) => {
+    const result = await runInlineTest({
+      'playwright.config.js': `
+          module.exports = {
+            projects: [
+              { name: 'chromium', use: { browserName: 'chromium' } },
+              { name: 'firefox', use: { browserName: 'firefox' } },
+              { name: 'webkit', use: { browserName: 'webkit' } },
+            ],
+          };
+        `,
+      'a.test.js': `
+          const { expect, test } = require('@playwright/test');
+          test.describe('Root describe', () => {
+            test.describe('@Monitoring', () => {
+              test('Test passed -- @call @call-details @e2e @regression #VQ457', async ({}) => {
+                expect(1).toBe(1);
+              });
+            });
+          });
+        `,
+      'b.test.js': `
+          const { expect, test } = require('@playwright/test');
+          test.describe('Root describe', () => {
+            test.describe('@Notifications', () => {
+              test('Test failed -- @call @call-details @e2e @regression #VQ458', async ({}) => {
+                expect(1).toBe(0);
+              });
+            });
+          });
+        `,
+      'c.test.js': `
+          const { expect, test } = require('@playwright/test');
+          test('Test without describe -- @call @call-details @e2e @regression #VQ459', async ({}) => {
+            expect(1).toBe(0);
+          });
+        `,
+    }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+
+    expect(result.exitCode).toBe(1);
+    expect(result.passed).toBe(3);
+    expect(result.failed).toBe(6);
+
+    await showReport();
+    await expect(page.locator('.test-file-test .label')).toHaveCount(51);
+    await expect(page.locator('.test-file-test .label').getByText('call', { exact: true })).toHaveCount(9);
+    await expect(page.locator('.test-file-test .label').getByText('call-details', { exact: true })).toHaveCount(9);
+    await expect(page.locator('.test-file-test .label').getByText('e2e', { exact: true })).toHaveCount(9);
+    await expect(page.locator('.test-file-test .label').getByText('regression', { exact: true })).toHaveCount(9);
+    await expect(page.locator('.test-file-test .label').getByText('Monitoring', { exact: true })).toHaveCount(3);
+    await expect(page.locator('.test-file-test .label').getByText('Notifications', { exact: true })).toHaveCount(3);
+
+    const searchInput = page.locator('.subnav-search-input');
+
+    const monitoringLabelButton = page.locator('.label').getByText('Monitoring', { exact: true });
+    await monitoringLabelButton.first().click();
+    await expect(page.locator('.test-file-test')).toHaveCount(3);
+    await expect(page.locator('.test-file-test').getByText('Root describe › @Monitoring › Test passed -- @call @call-details @e2e @regression #VQ457', { exact: true })).toHaveCount(3);
+    await searchInput.clear();
+
+    const notificationsLabelButton = page.locator('.label').getByText('Notifications', { exact: true });
+    await notificationsLabelButton.first().click();
+    await expect(page.locator('.test-file-test')).toHaveCount(3);
+    await expect(page.locator('.test-file-test').getByText('Root describe › @Notifications › Test failed -- @call @call-details @e2e @regression #VQ458', { exact: true })).toHaveCount(3);
+    await searchInput.clear();
+    await page.keyboard.press('Enter');
+
+    const notificationsChromiumTestCase = page.locator('.test-file-test', { hasText: 'Root describe › @Notifications › Test failed -- @call @call-details @e2e @regression #VQ458' })
+        .filter({ has: page.locator('.label', { hasText: 'chromium' }) });
+    await expect(notificationsChromiumTestCase).toHaveCount(1);
+    await notificationsChromiumTestCase.locator('.test-file-title').click();
+    await expect(page).toHaveURL(/testId/);
+    await expect(page.locator('.test-case-path')).toHaveText('Root describe › @Notifications');
+    await expect(page.locator('.test-case-title')).toHaveText('Test failed -- @call @call-details @e2e @regression #VQ458');
+    await expect(page.locator('.label')).toHaveText(['chromium', 'call', 'call-details', 'e2e', 'Notifications', 'regression']);
+
+    await page.goBack();
+    await expect(page).not.toHaveURL(/testId/);
+
+    const monitoringFirefoxTestCase = page.locator('.test-file-test', { hasText: 'Root describe › @Monitoring › Test passed -- @call @call-details @e2e @regression #VQ457' })
+        .filter({ has: page.locator('.label', { hasText: 'firefox' }) });
+    await expect(monitoringFirefoxTestCase).toHaveCount(1);
+    await monitoringFirefoxTestCase.locator('.test-file-title').click();
+    await expect(page).toHaveURL(/testId/);
+    await expect(page.locator('.test-case-path')).toHaveText('Root describe › @Monitoring');
+    await expect(page.locator('.test-case-title')).toHaveText('Test passed -- @call @call-details @e2e @regression #VQ457');
+    await expect(page.locator('.label')).toHaveText(['firefox', 'call', 'call-details', 'e2e', 'Monitoring', 'regression']);
+  });
 });
 
 test('should list tests in the right order', async ({ runInlineTest, showReport, page }) => {
