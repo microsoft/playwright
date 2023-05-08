@@ -194,7 +194,7 @@ jobs:
     name: 'Playwright Tests'
     runs-on: ubuntu-latest
     container:
-      image: mcr.microsoft.com/playwright:v1.34.0-jammy
+      image: mcr.microsoft.com/playwright/python:v1.34.0-jammy
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python
@@ -206,8 +206,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r local-requirements.txt
           pip install -e .
-      - name: Ensure browsers are installed
-        run: python -m playwright install --with-deps
       - name: Run your tests
         run: pytest
 ```
@@ -218,7 +216,7 @@ jobs:
     name: 'Playwright Tests'
     runs-on: ubuntu-latest
     container:
-      image: mcr.microsoft.com/playwright:v1.34.0-jammy
+      image: mcr.microsoft.com/playwright/java:v1.34.0-jammy
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-java@v3
@@ -227,8 +225,6 @@ jobs:
           java-version: '17'
       - name: Build & Install
         run: mvn -B install -D skipTests --no-transfer-progress
-      - name: Install Playwright
-        run: mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install --with-deps"
       - name: Run tests
         run: mvn test
 ```
@@ -239,7 +235,7 @@ jobs:
     name: 'Playwright Tests'
     runs-on: ubuntu-latest
     container:
-      image: mcr.microsoft.com/playwright:v1.34.0-jammy
+      image: mcr.microsoft.com/playwright/dotnet:v1.34.0-jammy
     steps:
       - uses: actions/checkout@v3
       - name: Setup dotnet
@@ -247,8 +243,6 @@ jobs:
         with:
           dotnet-version: 6.0.x
       - run: dotnet build
-      - name: Ensure browsers are installed
-        run: pwsh bin\Debug\net6.0\playwright.ps1 install --with-deps
       - name: Run your tests
         run: dotnet test
 ```
@@ -348,7 +342,7 @@ jobs:
               inputs:
                 searchFolder: 'my-e2e-tests/test-results'
                 testResultsFormat: 'JUnit'
-                testResultsFiles: 'e2e-junit-results.xml' 
+                testResultsFiles: 'e2e-junit-results.xml'
                 mergeTestResults: true
                 failTaskOnFailedTests: true
                 testRunTitle: 'My End-To-End Tests'
@@ -393,7 +387,7 @@ Sharding in CircleCI is indexed with 0 which means that you will need to overrid
       executor: pw-jammy-development
       parallelism: 4
       steps:
-        - run: SHARD="$((${CIRCLE_NODE_INDEX}+1))"; npx playwright test -- --shard=${SHARD}/${CIRCLE_NODE_TOTAL}      
+        - run: SHARD="$((${CIRCLE_NODE_INDEX}+1))"; npx playwright test -- --shard=${SHARD}/${CIRCLE_NODE_TOTAL}
   ```
 
 ### Jenkins
