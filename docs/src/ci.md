@@ -206,8 +206,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r local-requirements.txt
           pip install -e .
-      - name: Ensure browsers are installed
-        run: python -m playwright install --with-deps
       - name: Run your tests
         run: pytest
 ```
@@ -227,8 +225,6 @@ jobs:
           java-version: '17'
       - name: Build & Install
         run: mvn -B install -D skipTests --no-transfer-progress
-      - name: Install Playwright
-        run: mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install --with-deps"
       - name: Run tests
         run: mvn test
 ```
@@ -247,8 +243,6 @@ jobs:
         with:
           dotnet-version: 6.0.x
       - run: dotnet build
-      - name: Ensure browsers are installed
-        run: pwsh bin/Debug/net6.0/playwright.ps1 install --with-deps
       - name: Run your tests
         run: dotnet test
 ```
