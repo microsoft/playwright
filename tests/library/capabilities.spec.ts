@@ -250,3 +250,22 @@ it('window.GestureEvent in WebKit', async ({ page, server, browserName }) => {
   const type = await page.evaluate(() => typeof (window as any).GestureEvent);
   expect(type).toBe(browserName === 'webkit' ? 'function' : 'undefined');
 });
+
+it('requestFullscreen', async ({ page, server, browserName, headless, isLinux }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22832' });
+  it.skip(browserName === 'chromium' && headless, 'fullscreenchange is not fired in headless Chromium');
+  it.fixme(browserName === 'webkit' && headless && !isLinux);
+  await page.goto(server.EMPTY_PAGE);
+  await page.evaluate(() => {
+    const result = new Promise(resolve => document.addEventListener('fullscreenchange', resolve));
+    document.documentElement.requestFullscreen();
+    return result;
+  });
+  expect(await page.evaluate(() => document.fullscreenElement === document.documentElement)).toBeTruthy();
+  await page.evaluate(() => {
+    const result = new Promise(resolve => document.addEventListener('fullscreenchange', resolve));
+    document.exitFullscreen();
+    return result;
+  });
+  expect(await page.evaluate(() => !!document.fullscreenElement)).toBeFalsy();
+});
