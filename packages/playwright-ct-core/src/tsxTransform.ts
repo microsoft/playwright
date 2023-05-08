@@ -17,7 +17,7 @@
 import path from 'path';
 import type { T, BabelAPI } from '../../playwright-test/src/common/babelBundle';
 import { types, declare, traverse } from '@playwright/test/lib/common/babelBundle';
-import { js2ts } from '@playwright/test/lib/util';
+import { resolveImportSpecifierExtension } from '@playwright/test/lib/util';
 const t: typeof T = types;
 
 const fullNames = new Map<string, string | undefined>();
@@ -176,9 +176,9 @@ export function componentInfo(specifier: T.ImportSpecifier | T.ImportDefaultSpec
   const isModuleOrAlias = !importSource.startsWith('.');
   const unresolvedImportPath = path.resolve(path.dirname(filename), importSource);
   // Support following notations for Button.tsx:
-  // - import { Button } from './Button.js' - via js2ts, it handles tsx too
+  // - import { Button } from './Button.js' - via resolveImportSpecifierExtension
   // - import { Button } from './Button' - via require.resolve
-  const importPath = isModuleOrAlias ? importSource : js2ts(unresolvedImportPath) || require.resolve(unresolvedImportPath);
+  const importPath = isModuleOrAlias ? importSource : resolveImportSpecifierExtension(unresolvedImportPath) || require.resolve(unresolvedImportPath);
   const prefix = importPath.replace(/[^\w_\d]/g, '_');
   const pathInfo = { importPath, isModuleOrAlias };
 

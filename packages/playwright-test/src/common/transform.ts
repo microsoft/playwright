@@ -15,7 +15,6 @@
  */
 
 import path from 'path';
-import fs from 'fs';
 import { sourceMapSupport, pirates } from '../utilsBundle';
 import url from 'url';
 import type { Location } from '../../types/testReporter';
@@ -23,7 +22,7 @@ import type { TsConfigLoaderResult } from '../third_party/tsconfig-loader';
 import { tsConfigLoader } from '../third_party/tsconfig-loader';
 import Module from 'module';
 import type { BabelTransformFunction } from './babelBundle';
-import { fileIsModule, js2ts } from '../util';
+import { fileIsModule, resolveImportSpecifierExtension } from '../util';
 import { getFromCompilationCache, currentFileDepsCollector, belongsToNodeModules } from './compilationCache';
 
 type ParsedTsConfigData = {
@@ -69,7 +68,7 @@ export function resolveHook(filename: string, specifier: string): string | undef
     return;
 
   if (isRelativeSpecifier(specifier))
-    return js2ts(path.resolve(path.dirname(filename), specifier));
+    return resolveImportSpecifierExtension(path.resolve(path.dirname(filename), specifier));
 
   const isTypeScript = filename.endsWith('.ts') || filename.endsWith('.tsx');
   const tsconfig = loadAndValidateTsconfigForFile(filename);
@@ -106,22 +105,14 @@ export function resolveHook(filename: string, specifier: string): string | undef
         continue;
 
       for (const value of values) {
-        let candidate: string = value;
-
+        let candidate = value;
         if (value.includes('*'))
           candidate = candidate.replace('*', matchedPartOfSpecifier);
         candidate = path.resolve(tsconfig.absoluteBaseUrl, candidate.replace(/\//g, path.sep));
-        const ts = js2ts(candidate);
-        if (ts) {
+        const existing = resolveImportSpecifierExtension(candidate);
+        if (existing) {
           longestPrefixLength = keyPrefix.length;
-          pathMatchedByLongestPrefix = ts;
-        } else {
-          for (const ext of ['', '.js', '.ts', '.mjs', '.cjs', '.jsx', '.tsx', '.cjs', '.mts', '.cts']) {
-            if (fs.existsSync(candidate + ext)) {
-              longestPrefixLength = keyPrefix.length;
-              pathMatchedByLongestPrefix = candidate + ext;
-            }
-          }
+          pathMatchedByLongestPrefix = existing;
         }
       }
     }
@@ -129,7 +120,11 @@ export function resolveHook(filename: string, specifier: string): string | undef
       return pathMatchedByLongestPrefix;
   }
 
-  return js2ts(path.resolve(path.dirname(filename), specifier));
+  if (path.isAbsolute(specifier)) {
+    // Handle absolute file paths like `import '/path/to/file'`
+    // Do not handle module imports like `import 'fs'`
+    return resolveImportSpecifierExtension(specifier);
+  }
 }
 
 export function transformHook(code: string, filename: string, moduleUrl?: string): string {
