@@ -226,8 +226,7 @@ Playwright comes with a range of tooling to help you write tests.
 
 Playwright makes it easy to test your site across all [browsers](./test-configuration#multiple-browsers) no matter what platform you are on. Testing across all browsers ensures your app works for all users. In your config file you can set up projects adding the name and which browser or device to use.
 
-```js
-// playwright.config.ts
+```js title="playwright.config.ts"
 import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({

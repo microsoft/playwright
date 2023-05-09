@@ -70,7 +70,7 @@ export default defineConfig({
 
 Filter tests by glob patterns or regular expressions.
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -89,7 +89,7 @@ export default defineConfig({
 
 ## Advanced Configuration
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -119,7 +119,7 @@ export default defineConfig({
 
 Configuration for the expect assertion library.
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -154,8 +154,7 @@ You can extend Playwright assertions by providing custom matchers. These matcher
 
 In this example we add a custom `toBeWithinRange` function in the configuration file. Custom matcher should return a `message` callback and a `pass` flag indicating whether the assertion passed.
 
-```js tab=js-js
-// playwright.config.js
+```js tab=js-js title="playwright.config.ts"
 const { expect, defineConfig } = require('@playwright/test');
 
 expect.extend({
@@ -178,8 +177,7 @@ expect.extend({
 module.exports = defineConfig({});
 ```
 
-```js tab=js-ts
-// playwright.config.ts
+```js tab=js-ts title="playwright.config.ts"
 import { expect, defineConfig } from '@playwright/test';
 
 expect.extend({

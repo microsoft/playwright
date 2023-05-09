@@ -31,8 +31,7 @@ The same timeout value also applies to `beforeAll` and `afterAll` hooks, but the
 
 ### Set test timeout in the config
 
-```js
-// playwright.config.ts
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -106,8 +105,7 @@ Call log:
 
 ### Set expect timeout in the config
 
-```js
-// playwright.config.ts
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -146,8 +144,7 @@ Playwright also allows to set a separate timeout for navigation actions like `pa
 
 ### Set action and navigation timeouts in the config
 
-```js
-// playwright.config.ts
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -185,8 +182,7 @@ Running 1000 tests using 10 workers
 
 You can set global timeout in the config.
 
-```js
-// playwright.config.ts
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({

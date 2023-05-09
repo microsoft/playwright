@@ -66,8 +66,7 @@ export default MyReporter;
 
 Now use this reporter with [`property: TestConfig.reporter`]. Learn more about [using reporters](../test-reporters.md).
 
-```js
-// playwright.config.ts
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({

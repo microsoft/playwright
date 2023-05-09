@@ -30,7 +30,7 @@ npx playwright test --workers 4
 
 In the configuration file:
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -64,7 +64,7 @@ test('runs in parallel 2', async ({ page }) => { /* ... */ });
 
 Alternatively, you can opt-in all tests into this fully-parallel mode in the configuration file:
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -74,7 +74,7 @@ export default defineConfig({
 
 You can also opt in for fully-parallel mode for just a few projects:
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -148,7 +148,7 @@ npx playwright test --max-failures=10
 
 Setting in the configuration file:
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -218,8 +218,7 @@ test.describe(featureATests);
 
 Now **disable parallel execution** by setting workers to one, and specify your test list file.
 
-```js
-// playwright.config.ts
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({

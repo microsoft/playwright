@@ -61,7 +61,7 @@ npx playwright test --retries=3
 
 You can configure retries in the configuration file:
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({

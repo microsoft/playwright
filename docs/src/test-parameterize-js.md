@@ -65,8 +65,7 @@ test('test 1', async ({ page, person }) => {
 
 Now, we can run tests in multiple configurations by using projects.
 
-```js tab=js-js
-// playwright.config.js
+```js tab=js-js title="playwright.config.ts"
 // @ts-check
 
 module.exports = defineConfig({
@@ -83,8 +82,7 @@ module.exports = defineConfig({
 });
 ```
 
-```js tab=js-ts
-// playwright.config.ts
+```js tab=js-ts title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 import type { TestOptions } from './my-test';
 
@@ -189,8 +187,7 @@ npx playwright test
 
 Similarly, configuration file can also read environment variables passed through the command line.
 
-```js
-// playwright.config.ts
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -220,8 +217,7 @@ npx playwright test
 
 To make environment variables easier to manage, consider something like `.env` files. Here is an example that uses [`dotenv`](https://www.npmjs.com/package/dotenv) package to read environment variables directly in the configuration file.
 
-```js
-// playwright.config.ts
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 import dotenv from 'dotenv';
 import path from 'path';

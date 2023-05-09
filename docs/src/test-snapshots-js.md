@@ -71,7 +71,7 @@ test('example test', async ({ page }) => {
 
 If you'd like to share the default value among all the tests in the project, you can specify it in the playwright config, either globally or per project:
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 export default defineConfig({
   expect: {
