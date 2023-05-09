@@ -25,6 +25,7 @@ import type { TeleTestCase } from '@testIsomorphic/teleReceiver';
 import type { FullConfig, Suite, TestCase, Location, TestError } from '@playwright/test/types/testReporter';
 import { SplitView } from '@web/components/splitView';
 import { idForAction, MultiTraceModel } from './modelUtil';
+import type { SourceLocation } from './modelUtil';
 import './uiModeView.css';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { Toolbar } from '@web/components/toolbar';
@@ -37,7 +38,7 @@ import { artifactsFolderName } from '@testIsomorphic/folders';
 import { msToString, settings, useSetting } from '@web/uiUtils';
 import type { ActionTraceEvent } from '@trace/trace';
 
-let updateRootSuite: (config: FullConfig, rootSuite: Suite, progress: Progress | undefined) => void = () => {};
+let updateRootSuite: (config: FullConfig, rootSuite: Suite, loadErrors: TestError[], progress: Progress | undefined) => void = () => {};
 let runWatchedTests = (fileNames: string[]) => {};
 let xtermSize = { cols: 80, rows: 24 };
 
@@ -54,6 +55,7 @@ const xtermDataSource: XtermDataSource = {
 type TestModel = {
   config: FullConfig | undefined;
   rootSuite: Suite | undefined;
+  loadErrors: TestError[];
 };
 
 export const UIModeView: React.FC<{}> = ({
@@ -67,9 +69,9 @@ export const UIModeView: React.FC<{}> = ({
     ['skipped', false],
   ]));
   const [projectFilters, setProjectFilters] = React.useState<Map<string, boolean>>(new Map());
-  const [testModel, setTestModel] = React.useState<TestModel>({ config: undefined, rootSuite: undefined });
+  const [testModel, setTestModel] = React.useState<TestModel>({ config: undefined, rootSuite: undefined, loadErrors: [] });
   const [progress, setProgress] = React.useState<Progress & { total: number } | undefined>();
-  const [selectedItem, setSelectedItem] = React.useState<{ location?: Location, testCase?: TestCase }>({});
+  const [selectedItem, setSelectedItem] = React.useState<{ testFile?: SourceLocation, testCase?: TestCase }>({});
   const [visibleTestIds, setVisibleTestIds] = React.useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
   const [runningState, setRunningState] = React.useState<{ testIds: Set<string>, itemSelectedByUser?: boolean } | undefined>();
@@ -81,21 +83,21 @@ export const UIModeView: React.FC<{}> = ({
 
   const inputRef = React.useRef<HTMLInputElement>(null);
 
-  const reloadTests = () => {
+  const reloadTests = React.useCallback(() => {
     setIsLoading(true);
     setWatchedTreeIds({ value: new Set() });
-    updateRootSuite(baseFullConfig, new TeleSuite('', 'root'), undefined);
+    updateRootSuite(baseFullConfig, new TeleSuite('', 'root'), [], undefined);
     refreshRootSuite(true).then(() => {
       setIsLoading(false);
     });
-  };
+  }, []);
 
   React.useEffect(() => {
     inputRef.current?.focus();
     reloadTests();
-  }, []);
+  }, [reloadTests]);
 
-  updateRootSuite = (config: FullConfig, rootSuite: Suite, newProgress: Progress | undefined) => {
+  updateRootSuite = React.useCallback((config: FullConfig, rootSuite: Suite, loadErrors: TestError[], newProgress: Progress | undefined) => {
     const selectedProjects = config.configFile ? settings.getObject<string[] | undefined>(config.configFile + ':projects', undefined) : undefined;
     for (const projectName of projectFilters.keys()) {
       if (!rootSuite.suites.find(s => s.title === projectName))
@@ -108,13 +110,13 @@ export const UIModeView: React.FC<{}> = ({
     if (!selectedProjects && projectFilters.size && ![...projectFilters.values()].includes(true))
       projectFilters.set(projectFilters.entries().next().value[0], true);
 
-    setTestModel({ config, rootSuite });
+    setTestModel({ config, rootSuite, loadErrors });
     setProjectFilters(new Map(projectFilters));
     if (runningState && newProgress)
       setProgress({ ...newProgress, total: runningState.testIds.size });
     else if (!newProgress)
       setProgress(undefined);
-  };
+  }, [projectFilters, runningState]);
 
   const runTests = React.useCallback((mode: 'queue-if-busy' | 'bounce-if-busy', testIds: Set<string>) => {
     if (mode === 'bounce-if-busy' && runningState)
@@ -300,7 +302,7 @@ const TestList: React.FC<{
   statusFilters: Map<string, boolean>,
   projectFilters: Map<string, boolean>,
   filterText: string,
-  testModel: { rootSuite: Suite | undefined, config: FullConfig | undefined },
+  testModel: TestModel,
   runTests: (mode: 'bounce-if-busy' | 'queue-if-busy', testIds: Set<string>) => void,
   runningState?: { testIds: Set<string>, itemSelectedByUser?: boolean },
   watchAll: boolean,
@@ -308,7 +310,7 @@ const TestList: React.FC<{
   setWatchedTreeIds: (ids: { value: Set<string> }) => void,
   isLoading?: boolean,
   setVisibleTestIds: (testIds: Set<string>) => void,
-  onItemSelected: (item: { testCase?: TestCase, location?: Location }) => void,
+  onItemSelected: (item: { testCase?: TestCase, testFile?: SourceLocation }) => void,
   requestedCollapseAllCount: number,
 }> = ({ statusFilters, projectFilters, filterText, testModel, runTests, runningState, watchAll, watchedTreeIds, setWatchedTreeIds, isLoading, onItemSelected, setVisibleTestIds, requestedCollapseAllCount }) => {
   const [treeState, setTreeState] = React.useState<TreeState>({ expandedItems: new Map() });
@@ -317,7 +319,7 @@ const TestList: React.FC<{
 
   // Build the test tree.
   const { rootItem, treeItemMap, fileNames } = React.useMemo(() => {
-    let rootItem = createTree(testModel.rootSuite, projectFilters);
+    let rootItem = createTree(testModel.rootSuite, testModel.loadErrors, projectFilters);
     filterTree(rootItem, filterText, statusFilters, runningState?.testIds);
     sortAndPropagateStatus(rootItem);
     rootItem = shortenRoot(rootItem);
@@ -375,15 +377,25 @@ const TestList: React.FC<{
   // Compute selected item.
   const { selectedTreeItem } = React.useMemo(() => {
     const selectedTreeItem = selectedTreeItemId ? treeItemMap.get(selectedTreeItemId) : undefined;
-    const location = selectedTreeItem?.location;
+    let testFile: SourceLocation | undefined;
+    if (selectedTreeItem) {
+      testFile = {
+        file: selectedTreeItem.location.file,
+        line: selectedTreeItem.location.line,
+        source: {
+          errors: testModel.loadErrors.filter(e => e.location?.file === selectedTreeItem.location.file).map(e => ({ line: e.location!.line, message: e.message! })),
+          content: undefined,
+        }
+      };
+    }
     let selectedTest: TestCase | undefined;
     if (selectedTreeItem?.kind === 'test')
       selectedTest = selectedTreeItem.test;
     else if (selectedTreeItem?.kind === 'case' && selectedTreeItem.tests.length === 1)
       selectedTest = selectedTreeItem.tests[0];
-    onItemSelected({ testCase: selectedTest, location });
+    onItemSelected({ testCase: selectedTest, testFile });
     return { selectedTreeItem };
-  }, [onItemSelected, selectedTreeItemId, treeItemMap]);
+  }, [onItemSelected, selectedTreeItemId, testModel, treeItemMap]);
 
   // Update watch all.
   React.useEffect(() => {
@@ -471,12 +483,13 @@ const TestList: React.FC<{
         runningState.itemSelectedByUser = true;
       setSelectedTreeItemId(treeItem.id);
     }}
+    isError={treeItem => treeItem.kind === 'group' ? treeItem.hasLoadErrors : false}
     autoExpandDepth={filterText ? 5 : 1}
     noItemsMessage={isLoading ? 'Loading\u2026' : 'No tests'} />;
 };
 
 const TraceView: React.FC<{
-  item: { location?: Location, testCase?: TestCase },
+  item: { testFile?: SourceLocation, testCase?: TestCase },
   rootDir?: string,
 }> = ({ item, rootDir }) => {
   const [model, setModel] = React.useState<MultiTraceModel | undefined>();
@@ -543,7 +556,7 @@ const TraceView: React.FC<{
     rootDir={rootDir}
     initialSelection={initialSelection}
     onSelectionChanged={onSelectionChanged}
-    defaultSourceLocation={item.location} />;
+    fallbackLocation={item.testFile} />;
 };
 
 declare global {
@@ -555,15 +568,15 @@ declare global {
 let receiver: TeleReporterReceiver | undefined;
 
 let throttleTimer: NodeJS.Timeout | undefined;
-let throttleData: { config: FullConfig, rootSuite: Suite, progress: Progress } | undefined;
+let throttleData: { config: FullConfig, rootSuite: Suite, loadErrors: TestError[], progress: Progress } | undefined;
 const throttledAction = () => {
   clearTimeout(throttleTimer);
   throttleTimer = undefined;
-  updateRootSuite(throttleData!.config, throttleData!.rootSuite, throttleData!.progress);
+  updateRootSuite(throttleData!.config, throttleData!.rootSuite, throttleData!.loadErrors, throttleData!.progress);
 };
 
-const throttleUpdateRootSuite = (config: FullConfig, rootSuite: Suite, progress: Progress, immediate = false) => {
-  throttleData = { config, rootSuite, progress };
+const throttleUpdateRootSuite = (config: FullConfig, rootSuite: Suite, loadErrors: TestError[], progress: Progress, immediate = false) => {
+  throttleData = { config, rootSuite, loadErrors, progress };
   if (immediate)
     throttledAction();
   else if (!throttleTimer)
@@ -575,6 +588,7 @@ const refreshRootSuite = (eraseResults: boolean): Promise<void> => {
     return sendMessage('list', {});
 
   let rootSuite: Suite;
+  let loadErrors: TestError[];
   const progress: Progress = {
     passed: 0,
     failed: 0,
@@ -583,21 +597,23 @@ const refreshRootSuite = (eraseResults: boolean): Promise<void> => {
   let config: FullConfig;
   receiver = new TeleReporterReceiver(pathSeparator, {
     onBegin: (c: FullConfig, suite: Suite) => {
-      if (!rootSuite)
+      if (!rootSuite) {
         rootSuite = suite;
+        loadErrors = [];
+      }
       config = c;
       progress.passed = 0;
       progress.failed = 0;
       progress.skipped = 0;
-      throttleUpdateRootSuite(config, rootSuite, progress, true);
+      throttleUpdateRootSuite(config, rootSuite, loadErrors, progress, true);
     },
 
     onEnd: () => {
-      throttleUpdateRootSuite(config, rootSuite, progress, true);
+      throttleUpdateRootSuite(config, rootSuite, loadErrors, progress, true);
     },
 
     onTestBegin: () => {
-      throttleUpdateRootSuite(config, rootSuite, progress);
+      throttleUpdateRootSuite(config, rootSuite, loadErrors, progress);
     },
 
     onTestEnd: (test: TestCase) => {
@@ -607,11 +623,13 @@ const refreshRootSuite = (eraseResults: boolean): Promise<void> => {
         ++progress.failed;
       else
         ++progress.passed;
-      throttleUpdateRootSuite(config, rootSuite, progress);
+      throttleUpdateRootSuite(config, rootSuite, loadErrors, progress);
     },
 
     onError: (error: TestError) => {
       xtermDataSource.write((error.stack || error.value || '') + '\n');
+      loadErrors.push(error);
+      throttleUpdateRootSuite(config, rootSuite, loadErrors, progress);
     },
   });
   receiver._setClearPreviousResultsWhenTestBegins();
@@ -708,6 +726,7 @@ type TreeItemBase = {
 type GroupItem = TreeItemBase & {
   kind: 'group';
   subKind: 'folder' | 'file' | 'describe';
+  hasLoadErrors: boolean;
   children: (TestCaseItem | GroupItem)[];
 };
 
@@ -743,13 +762,14 @@ function getFileItem(rootItem: GroupItem, filePath: string[], isFile: boolean, f
     parent: parentFileItem,
     children: [],
     status: 'none',
+    hasLoadErrors: false,
   };
   parentFileItem.children.push(fileItem);
   fileItems.set(fileName, fileItem);
   return fileItem;
 }
 
-function createTree(rootSuite: Suite | undefined, projectFilters: Map<string, boolean>): GroupItem {
+function createTree(rootSuite: Suite | undefined, loadErrors: TestError[], projectFilters: Map<string, boolean>): GroupItem {
   const filterProjects = [...projectFilters.values()].some(Boolean);
   const rootItem: GroupItem = {
     kind: 'group',
@@ -761,6 +781,7 @@ function createTree(rootSuite: Suite | undefined, projectFilters: Map<string, bo
     parent: undefined,
     children: [],
     status: 'none',
+    hasLoadErrors: false,
   };
 
   const visitSuite = (projectName: string, parentSuite: Suite, parentGroup: GroupItem) => {
@@ -778,6 +799,7 @@ function createTree(rootSuite: Suite | undefined, projectFilters: Map<string, bo
           parent: parentGroup,
           children: [],
           status: 'none',
+          hasLoadErrors: false,
         };
         parentGroup.children.push(group);
       }
@@ -842,6 +864,12 @@ function createTree(rootSuite: Suite | undefined, projectFilters: Map<string, bo
       const fileItem = getFileItem(rootItem, fileSuite.location!.file.split(pathSeparator), true, fileMap);
       visitSuite(projectSuite.title, fileSuite, fileItem);
     }
+    for (const loadError of loadErrors) {
+      if (!loadError.location)
+        continue;
+      const fileItem = getFileItem(rootItem, loadError.location.file.split(pathSeparator), true, fileMap);
+      fileItem.hasLoadErrors = true;
+    }
   }
   return rootItem;
 }
@@ -869,7 +897,7 @@ function filterTree(rootItem: GroupItem, filterText: string, statusFilters: Map<
           newChildren.push(child);
       } else {
         visit(child);
-        if (child.children.length)
+        if (child.children.length || child.hasLoadErrors)
           newChildren.push(child);
       }
     }

@@ -61,10 +61,6 @@
   background-color: transparent !important;
 }
 
-.list-view-content:focus .list-view-entry.error.selected {
-  outline: 1px solid var(--vscode-inputValidation-errorBorder);
-}
-
 .list-view-content:focus .list-view-entry.selected .codicon {
   color: var(--vscode-list-activeSelectionForeground) !important;
 }
@@ -78,5 +74,4 @@
 
 .list-view-entry.error {
   color: var(--vscode-list-errorForeground);
-  background-color: var(--vscode-inputValidation-errorBackground);
 }

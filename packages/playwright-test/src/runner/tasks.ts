@@ -63,7 +63,7 @@ export class TestRun {
 export function createTaskRunner(config: FullConfigInternal, reporter: InternalReporter): TaskRunner<TestRun> {
   const taskRunner = new TaskRunner<TestRun>(reporter, config.config.globalTimeout);
   addGlobalSetupTasks(taskRunner, config);
-  taskRunner.addTask('load tests', createLoadTask('in-process', true));
+  taskRunner.addTask('load tests', createLoadTask('in-process', { filterOnly: true, failOnLoadErrors: true }));
   addRunTasks(taskRunner, config);
   return taskRunner;
 }
@@ -76,7 +76,7 @@ export function createTaskRunnerForWatchSetup(config: FullConfigInternal, report
 
 export function createTaskRunnerForWatch(config: FullConfigInternal, reporter: InternalReporter, additionalFileMatcher?: Matcher): TaskRunner<TestRun> {
   const taskRunner = new TaskRunner<TestRun>(reporter, 0);
-  taskRunner.addTask('load tests', createLoadTask('out-of-process', true, additionalFileMatcher));
+  taskRunner.addTask('load tests', createLoadTask('out-of-process', { filterOnly: true, failOnLoadErrors: false, additionalFileMatcher }));
   addRunTasks(taskRunner, config);
   return taskRunner;
 }
@@ -104,7 +104,7 @@ function addRunTasks(taskRunner: TaskRunner<TestRun>, config: FullConfigInternal
 
 export function createTaskRunnerForList(config: FullConfigInternal, reporter: InternalReporter, mode: 'in-process' | 'out-of-process'): TaskRunner<TestRun> {
   const taskRunner = new TaskRunner<TestRun>(reporter, config.config.globalTimeout);
-  taskRunner.addTask('load tests', createLoadTask(mode, false));
+  taskRunner.addTask('load tests', createLoadTask(mode, { filterOnly: false, failOnLoadErrors: false }));
   taskRunner.addTask('report begin', async ({ reporter, rootSuite }) => {
     reporter.onBegin(config.config, rootSuite!);
     return () => reporter.onEnd();
@@ -166,11 +166,11 @@ function createRemoveOutputDirsTask(): Task<TestRun> {
   };
 }
 
-function createLoadTask(mode: 'out-of-process' | 'in-process', shouldFilterOnly: boolean, additionalFileMatcher?: Matcher): Task<TestRun> {
-  return async (testRun, errors) => {
-    await collectProjectsAndTestFiles(testRun, additionalFileMatcher);
-    await loadFileSuites(testRun, mode, errors);
-    testRun.rootSuite = await createRootSuite(testRun, errors, shouldFilterOnly);
+function createLoadTask(mode: 'out-of-process' | 'in-process', options: { filterOnly: boolean, failOnLoadErrors: boolean, additionalFileMatcher?: Matcher }): Task<TestRun> {
+  return async (testRun, errors, softErrors) => {
+    await collectProjectsAndTestFiles(testRun, options.additionalFileMatcher);
+    await loadFileSuites(testRun, mode, options.failOnLoadErrors ? errors : softErrors);
+    testRun.rootSuite = await createRootSuite(testRun, options.failOnLoadErrors ? errors : softErrors, !!options.filterOnly);
     // Fail when no tests.
     if (!testRun.rootSuite.allTests().length && !testRun.config.cliPassWithNoTests && !testRun.config.config.shard)
       throw new Error(`No tests found`);
