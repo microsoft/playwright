@@ -397,7 +397,6 @@ it(`should support proxy.bypass`, async ({ browser, browserType, browserName, co
   }
 
   {
-    proxyServer.connectHosts = [];
     const error = await context.request.get('http://1.non.existent.domain.for.the.test/target.html').catch(e => e);
     expect(error.message).toBeTruthy();
     expect(proxyServer.connectHosts).toEqual([]);
