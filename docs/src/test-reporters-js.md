@@ -328,3 +328,4 @@ export default defineConfig({
 * [Monocart](https://github.com/cenfun/monocart-reporter)
 * [Tesults](https://www.tesults.com/docs/playwright)
 * [ReportPortal](https://github.com/reportportal/agent-js-playwright)
+* [Currents](https://www.npmjs.com/package/@currents/playwright)
