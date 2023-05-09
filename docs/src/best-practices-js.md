@@ -40,11 +40,9 @@ test('second', async ({ page }) => {
 
 You can also reuse the signed-in state in the tests with [global setup](/auth.md#reuse-signed-in-state). That way you can log in only once and then skip the log in step for all of the tests.
 
-### Write fewer tests but longer tests
+### Use Soft assertions
 
-When it comes to end to end testing having long tests is not a bad thing. It's ok to have multiple actions and assertions in your test so you can test complete App flows. You should avoid separating your assertions into individual test blocks as it doesn't really bring much value and just slows down the running of your tests.
-
-If your test does fail, Playwright will give you an error message showing what part of the test failed which you can see either in VS Code, the terminal, the HTML report, or the trace viewer. You can also use [soft assertions](/test-assertions.md#soft-assertions) which do not terminate test execution but mark the test as failed.
+If your test fails, Playwright will give you an error message showing what part of the test failed which you can see either in VS Code, the terminal, the HTML report, or the trace viewer. However, you can also use [soft assertions](/test-assertions.md#soft-assertions) which do not terminate test execution but mark the test as failed.
 
 ```js
 // Make a few checks that will not stop the test when failed...
