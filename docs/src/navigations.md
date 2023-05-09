@@ -23,7 +23,6 @@ events:
 - page executes some scripts and loads resources like stylesheets and images
 - [`event: Page.load`] event is fired
 - page executes dynamically loaded scripts
-- `networkidle` is fired when no new network requests are made for 500 ms
 
 ## Scenarios initiated by browser UI
 
@@ -57,36 +56,6 @@ page.goto("https://example.com")
 ```csharp
 // Navigate the page
 await page.GotoAsync("https://example.com");
-```
-
-### Custom wait
-
-Override the default behavior to wait until a specific event, like `networkidle`.
-
-```js
-// Navigate and wait until network is idle
-await page.goto('https://example.com', { waitUntil: 'networkidle' });
-```
-
-```java
-// Navigate and wait until network is idle
-page.navigate("https://example.com", new Page.NavigateOptions()
-  .setWaitUntil(WaitUntilState.NETWORKIDLE));
-```
-
-```python async
-# Navigate and wait until network is idle
-await page.goto("https://example.com", wait_until="networkidle")
-```
-
-```python sync
-# Navigate and wait until network is idle
-page.goto("https://example.com", wait_until="networkidle")
-```
-
-```csharp
-// Navigate and wait until network is idle
-await page.GotoAsync("https://example.com", new() { WaitUntil = WaitUntilState.NetworkIdle });
 ```
 
 ### Wait for element
@@ -195,35 +164,6 @@ await page.GetByText("Login").ClickAsync();
 
 // Fill will auto-wait for element on navigated page
 await page.GetByLabel("User Name").FillAsync("John Doe");
-```
-
-### Custom wait
-
-`locator.click` can be combined with [`method: Page.waitForLoadState`] to wait for a loading event.
-
-```js
-await page.getByRole('button').click(); // Click triggers navigation
-await page.waitForLoadState('networkidle'); // This resolves after 'networkidle'
-```
-
-```java
-page.locator("button").click(); // Click triggers navigation
-page.waitForLoadState(LoadState.NETWORKIDLE); // This resolves after "networkidle"
-```
-
-```python async
-await page.locator("button").click()  # Click triggers navigation
-await page.wait_for_load_state("networkidle")  # This waits for the "networkidle"
-```
-
-```python sync
-page.locator("button").click()  # Click triggers navigation
-page.wait_for_load_state("networkidle")  # This waits for the "networkidle"
-```
-
-```csharp
-await page.Locator("button").ClickAsync(); // Click triggers navigation
-await page.WaitForLoadStateAsync(LoadState.NetworkIdle); // This resolves after "networkidle"
 ```
 
 ### Wait for element
