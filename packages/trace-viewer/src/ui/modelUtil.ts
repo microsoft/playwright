@@ -122,6 +122,8 @@ function mergeActions(contexts: ContextEntry[]) {
           existing.error = action.error;
         if (action.attachments)
           existing.attachments = action.attachments;
+        if (action.parentId)
+          existing.parentId = action.parentId;
         continue;
       }
       map.set(key, action);
