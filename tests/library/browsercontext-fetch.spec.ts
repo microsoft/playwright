@@ -370,6 +370,58 @@ it('should pass proxy credentials', async ({ browserType, server, proxyServer })
   await browser.close();
 });
 
+it(`should support proxy.bypass`, async ({ browser, browserType, browserName, contextOptions, server, proxyServer }) => {
+  server.setRoute('/target.html', async (req, res) => {
+    res.end('Served by the proxy');
+  });
+  // FYI: using long and weird domain names to avoid ATT DNS hijacking
+  // that resolves everything to some weird search results page.
+  //
+  // @see https://gist.github.com/CollinChaffin/24f6c9652efb3d6d5ef2f5502720ef00
+  proxyServer.forwardTo(server.PORT);
+  const context = await browser.newContext({
+    ...contextOptions,
+    proxy: { server: `localhost:${proxyServer.PORT}`, bypass: `1.non.existent.domain.for.the.test, 2.non.existent.domain.for.the.test, .another.test` }
+  });
+
+  {
+    const res = await context.request.get(server.CROSS_PROCESS_PREFIX + '/target.html');
+    expect(await res.text()).toContain('Served by the proxy');
+    expect(proxyServer.connectHosts).toContain(new URL(server.CROSS_PROCESS_PREFIX).host);
+    proxyServer.connectHosts = [];
+  }
+
+  {
+    const res = await context.request.get('http://0.non.existent.domain.for.the.test/target.html');
+    expect(await res.text()).toContain('Served by the proxy');
+    proxyServer.connectHosts = [];
+  }
+
+  {
+    const error = await context.request.get('http://1.non.existent.domain.for.the.test/target.html').catch(e => e);
+    expect(error.message).toBeTruthy();
+    expect(proxyServer.connectHosts).toEqual([]);
+  }
+
+  {
+    const error = await context.request.get('http://2.non.existent.domain.for.the.test/target.html').catch(e => e);
+    expect(error.message).toBeTruthy();
+    expect(proxyServer.connectHosts).toEqual([]);
+  }
+
+  {
+    const error = await context.request.get('http://foo.is.the.another.test/target.html').catch(e => e);
+    expect(error.message).toBeTruthy();
+    expect(proxyServer.connectHosts).toEqual([]);
+  }
+
+  {
+    const res = await context.request.get('http://3.non.existent.domain.for.the.test/target.html');
+    expect(await res.text()).toContain('Served by the proxy');
+  }
+});
+
+
 it('should work with http credentials', async ({ context, server }) => {
   server.setAuth('/empty.html', 'user', 'pass');
 
