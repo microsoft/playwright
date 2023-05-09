@@ -394,6 +394,7 @@ it(`should support proxy.bypass`, async ({ browser, browserType, browserName, co
   {
     const res = await context.request.get('http://0.non.existent.domain.for.the.test/target.html');
     expect(await res.text()).toContain('Served by the proxy');
+    proxyServer.connectHosts = [];
   }
 
   {
@@ -418,8 +419,6 @@ it(`should support proxy.bypass`, async ({ browser, browserType, browserName, co
     const res = await context.request.get('http://3.non.existent.domain.for.the.test/target.html');
     expect(await res.text()).toContain('Served by the proxy');
   }
-
-  await browser.close();
 });
 
 
