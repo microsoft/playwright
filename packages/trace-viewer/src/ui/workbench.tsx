@@ -30,7 +30,6 @@ import type { TabbedPaneTabModel } from '@web/components/tabbedPane';
 import { Timeline } from './timeline';
 import './workbench.css';
 import { MetadataView } from './metadataView';
-import type { Location } from '../../../playwright-test/types/testReporter';
 
 export const Workbench: React.FunctionComponent<{
   model?: MultiTraceModel,
@@ -38,10 +37,10 @@ export const Workbench: React.FunctionComponent<{
   hideStackFrames?: boolean,
   showSourcesFirst?: boolean,
   rootDir?: string,
-  defaultSourceLocation?: Location,
+  fallbackLocation?: modelUtil.SourceLocation,
   initialSelection?: ActionTraceEvent,
   onSelectionChanged?: (action: ActionTraceEvent) => void,
-}> = ({ model, hideTimelineBars, hideStackFrames, showSourcesFirst, rootDir, defaultSourceLocation, initialSelection, onSelectionChanged }) => {
+}> = ({ model, hideTimelineBars, hideStackFrames, showSourcesFirst, rootDir, fallbackLocation, initialSelection, onSelectionChanged }) => {
   const [selectedAction, setSelectedAction] = React.useState<ActionTraceEvent | undefined>(undefined);
   const [highlightedAction, setHighlightedAction] = React.useState<ActionTraceEvent | undefined>();
   const [selectedNavigatorTab, setSelectedNavigatorTab] = React.useState<string>('actions');
@@ -85,7 +84,7 @@ export const Workbench: React.FunctionComponent<{
       sources={sources}
       hideStackFrames={hideStackFrames}
       rootDir={rootDir}
-      fallbackLocation={defaultSourceLocation} />
+      fallbackLocation={fallbackLocation} />
   };
   const consoleTab: TabbedPaneTabModel = {
     id: 'console',

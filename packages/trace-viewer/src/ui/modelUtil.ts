@@ -19,7 +19,6 @@ import type { ResourceSnapshot } from '@trace/snapshot';
 import type * as trace from '@trace/trace';
 import type { ActionTraceEvent, EventTraceEvent } from '@trace/trace';
 import type { ContextEntry, PageEntry } from '../entries';
-import type { SerializedError, StackFrame } from '@protocol/channels';
 
 const contextSymbol = Symbol('context');
 const nextInContextSymbol = Symbol('next');
@@ -27,8 +26,14 @@ const prevInListSymbol = Symbol('prev');
 const eventsSymbol = Symbol('events');
 const resourcesSymbol = Symbol('resources');
 
+export type SourceLocation = {
+  file: string;
+  line: number;
+  source: SourceModel;
+};
+
 export type SourceModel = {
-  errors: { error: SerializedError['error'], location: StackFrame }[];
+  errors: { line: number, message: string }[];
   content: string | undefined;
 };
 
@@ -203,7 +208,7 @@ function collectSources(actions: trace.ActionTraceEvent[]): Map<string, SourceMo
       }
     }
     if (action.error && action.stack?.[0])
-      result.get(action.stack[0].file)!.errors.push({ error: action.error, location: action.stack?.[0] });
+      result.get(action.stack[0].file)!.errors.push({ line: action.stack?.[0].line || 0, message: action.error.message });
   }
   return result;
 }

@@ -64,3 +64,39 @@ test('should show selected test in sources', async ({ runUITest }) => {
       page.locator('.CodeMirror .source-line-running'),
   ).toHaveText(`3    test('third', () => {});`);
 });
+
+test('should show syntax errors in file', async ({ runUITest }) => {
+  const { page } = await runUITest({
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      const a = 1;
+      a = 2;
+      test('first', () => {});
+      test('second', () => {});
+    `,
+    'b.test.ts': `
+      import { test } from '@playwright/test';
+      test('third', () => {});
+    `,
+  });
+  await expect.poll(dumpTestTree(page)).toBe(`
+      ◯ a.test.ts
+    ▼ ◯ b.test.ts
+        ◯ third
+  `);
+
+  await page.getByTestId('test-tree').getByText('a.test.ts').click();
+  await expect(
+      page.getByTestId('source-code').locator('.source-tab-file-name')
+  ).toHaveText('a.test.ts');
+  await expect(
+      page.locator('.CodeMirror .source-line-running'),
+  ).toHaveText(`4      a = 2;`);
+
+  await expect(
+      page.locator('.CodeMirror-linewidget')
+  ).toHaveText([
+    '            ',
+    'Assignment to constant variable.'
+  ]);
+});

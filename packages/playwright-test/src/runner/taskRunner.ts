@@ -22,7 +22,7 @@ import { serializeError } from '../util';
 import type { InternalReporter } from '../reporters/internalReporter';
 
 type TaskTeardown = () => Promise<any> | undefined;
-export type Task<Context> = (context: Context, errors: TestError[]) => Promise<TaskTeardown | void> | undefined;
+export type Task<Context> = (context: Context, errors: TestError[], softErrors: TestError[]) => Promise<TaskTeardown | void> | undefined;
 
 export class TaskRunner<Context> {
   private _tasks: { name: string, task: Task<Context> }[] = [];
@@ -62,15 +62,16 @@ export class TaskRunner<Context> {
           break;
         debug('pw:test:task')(`"${name}" started`);
         const errors: TestError[] = [];
+        const softErrors: TestError[] = [];
         try {
-          const teardown = await task(context, errors);
+          const teardown = await task(context, errors, softErrors);
           if (teardown)
             teardownRunner._tasks.unshift({ name: `teardown for ${name}`, task: teardown });
         } catch (e) {
           debug('pw:test:task')(`error in "${name}": `, e);
           errors.push(serializeError(e));
         } finally {
-          for (const error of errors)
+          for (const error of [...softErrors, ...errors])
             this._reporter.onError?.(error);
           if (errors.length) {
             if (!this._isTearDown)
