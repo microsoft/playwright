@@ -36,7 +36,7 @@ export const TestCaseView: React.FC<{
   const labels = React.useMemo(() => {
     if (!test)
       return undefined;
-    return matchTags(test.title).sort((a, b) => a.localeCompare(b));
+    return matchTags(test.path.join(' ') + ' ' + test.title).sort((a, b) => a.localeCompare(b));
   }, [test]);
 
   return <div className='test-case-column vbox'>

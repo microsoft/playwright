@@ -32,7 +32,7 @@ export const TestFileView: React.FC<React.PropsWithChildren<{
   setFileExpanded: (fileId: string, expanded: boolean) => void;
   filter: Filter;
 }>> = ({ file, report, isFileExpanded, setFileExpanded, filter }) => {
-  const labels = React.useCallback((test: TestCaseSummary) => matchTags(test?.title).sort((a, b) => a.localeCompare(b)), []);
+  const labels = React.useCallback((test: TestCaseSummary) => matchTags(test.path.join(' ') + ' ' + test?.title).sort((a, b) => a.localeCompare(b)), []);
 
   return <Chip
     expanded={isFileExpanded(file.fileId)}
