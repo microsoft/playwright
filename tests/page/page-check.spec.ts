@@ -145,3 +145,21 @@ it('should check the box using setChecked', async ({ page }) => {
   await page.setChecked('input', false);
   expect(await page.evaluate(() => window['checkbox'].checked)).toBe(false);
 });
+
+it('do not update console count on unhandled rejections', async ({ page }) => {
+  const messages: string[] = [];
+  const consoleEventListener = m => messages.push(m.text());
+  page.addListener('console', consoleEventListener);
+
+  await page.evaluate(() => {
+    const fail = async () => Promise.reject(new Error('error'));
+    console.log('begin');
+    fail();
+    fail();
+    fail().catch(() => {
+      console.log('end');
+    });
+  });
+
+  await expect.poll(() => messages).toEqual(['begin', 'end']);
+});

@@ -550,6 +550,7 @@ export class WKPage implements PageDelegate {
         stack = '';
       }
 
+      this._lastConsoleMessage = null;
       const error = new Error(message);
       error.stack = stack;
       error.name = name;
