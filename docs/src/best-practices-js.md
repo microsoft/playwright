@@ -40,18 +40,6 @@ test('second', async ({ page }) => {
 
 You can also reuse the signed-in state in the tests with [global setup](/auth.md#reuse-signed-in-state). That way you can log in only once and then skip the log in step for all of the tests.
 
-### Use Soft assertions
-
-If your test fails, Playwright will give you an error message showing what part of the test failed which you can see either in VS Code, the terminal, the HTML report, or the trace viewer. However, you can also use [soft assertions](/test-assertions.md#soft-assertions) which do not terminate test execution but mark the test as failed.
-
-```js
-// Make a few checks that will not stop the test when failed...
-await expect.soft(page.getByTestId('status')).toHaveText('Success');
-
-// ... and continue the test to check more things.
-await page.getByRole('link', { name: 'next page' }).click();
-```
-
 ### Avoid testing third-party dependencies
 
 Only test what you control. Don't try to test links to external sites or third party servers that you do not control. Not only is it time consuming and can slow down your tests but also you can not control the content of the page you are linking to, or if there are cookie banners or overlay pages or anything else that might cause your test to fail.
@@ -284,4 +272,18 @@ Playwright can [shard](./test-parallel.md#shard-tests-between-multiple-machines)
 
 ```js
 npx playwright test --shard=1/3
+```
+
+## Productivity tips
+
+### Use Soft assertions
+
+If your test fails, Playwright will give you an error message showing what part of the test failed which you can see either in VS Code, the terminal, the HTML report, or the trace viewer. However, you can also use [soft assertions](/test-assertions.md#soft-assertions) which do not terminate test execution but mark the test as failed.
+
+```js
+// Make a few checks that will not stop the test when failed...
+await expect.soft(page.getByTestId('status')).toHaveText('Success');
+
+// ... and continue the test to check more things.
+await page.getByRole('link', { name: 'next page' }).click();
 ```
