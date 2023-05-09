@@ -307,14 +307,26 @@ export function envWithoutExperimentalLoaderOptions(): NodeJS.ProcessEnv {
   return result;
 }
 
-export function js2ts(resolved: string): string | undefined {
-  const match = resolved.match(/(.*)(\.js|\.jsx|\.mjs)$/);
-  if (!match || fs.existsSync(resolved))
-    return;
-  const tsResolved = match[1] + match[2].replace('js', 'ts');
-  if (fs.existsSync(tsResolved))
-    return tsResolved;
-  const tsxResolved = match[1] + match[2].replace('js', 'tsx');
-  if (fs.existsSync(tsxResolved))
-    return tsxResolved;
+// This follows the --moduleResolution=bundler strategy from tsc.
+// https://devblogs.microsoft.com/typescript/announcing-typescript-5-0-beta/#moduleresolution-bundler
+const kExtLookups = new Map([
+  ['.js', ['.jsx', '.ts', '.tsx']],
+  ['.jsx', ['.tsx']],
+  ['.cjs', ['.cts']],
+  ['.mjs', ['.mts']],
+  ['', ['.js', '.ts', '.jsx', '.tsx', '.cjs', '.mjs', '.cts', '.mts']],
+]);
+export function resolveImportSpecifierExtension(resolved: string): string | undefined {
+  if (fs.existsSync(resolved))
+    return resolved;
+  for (const [ext, others] of kExtLookups) {
+    if (!resolved.endsWith(ext))
+      continue;
+    for (const other of others) {
+      const modified = resolved.substring(0, resolved.length - ext.length) + other;
+      if (fs.existsSync(modified))
+        return modified;
+    }
+    break;  // Do not try '' when a more specific extesion like '.jsx' matched.
+  }
 }
