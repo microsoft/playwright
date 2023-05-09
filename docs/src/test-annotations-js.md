@@ -87,6 +87,18 @@ Or if you want the opposite, you can skip the tests with a certain tag:
 npx playwright test --grep-invert @slow
 ```
 
+To run tests containing either tag (logical `OR` operator):
+
+```bash
+npx playwright test --grep "@fast|@slow"
+```
+
+Or run tests containing both tags (logical `AND` operator) using regex lookaheads:
+
+```bash
+npx playwright test --grep "(?=.*@fast)(?=.*@slow)"
+```
+
 ## Conditionally skip a group of tests
 
 For example, you can run a group of tests just in Chromium by passing a callback.
