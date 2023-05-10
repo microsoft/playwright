@@ -236,7 +236,7 @@ This includes any config that needs to be run before or after mounting the compo
   ```js
   // src/pages/ProductsPage.spec.tsx
   import { test, expect } from '@playwright/experimental-ct-react';
-  import type { HooksConfig } from 'playwright';
+  import type { HooksConfig } from '@playwright/test';
   import { ProductsPage } from './pages/ProductsPage';
 
   test('configure routing through hooks config', async ({ page, mount }) => {
@@ -271,7 +271,7 @@ This includes any config that needs to be run before or after mounting the compo
   ```js
   // src/pages/ProductsPage.spec.tsx
   import { test, expect } from '@playwright/experimental-ct-solid';
-  import type { HooksConfig } from 'playwright';
+  import type { HooksConfig } from '@playwright/test';
   import { ProductsPage } from './pages/ProductsPage';
 
   test('configure routing through hooks config', async ({ page, mount }) => {
@@ -306,7 +306,7 @@ This includes any config that needs to be run before or after mounting the compo
   ```js
   // src/pages/ProductsPage.spec.ts
   import { test, expect } from '@playwright/experimental-ct-vue';
-  import type { HooksConfig } from 'playwright';
+  import type { HooksConfig } from '@playwright/test';
   import ProductsPage from './pages/ProductsPage.vue';
 
   test('configure routing through hooks config', async ({ page, mount }) => {
@@ -343,7 +343,7 @@ This includes any config that needs to be run before or after mounting the compo
   ```js
   // src/pages/ProductsPage.spec.ts
   import { test, expect } from '@playwright/experimental-ct-vue2';
-  import type { HooksConfig } from 'playwright';
+  import type { HooksConfig } from '@playwright/test';
   import ProductsPage from './pages/ProductsPage.vue';
 
   test('configure routing through hooks config', async ({ page, mount }) => {
@@ -599,7 +599,7 @@ Pinia needs to be initialized in `playwright/index.{js,ts,jsx,tsx}`. If you do t
 ```js
   // src/pinia.spec.ts
   import { test, expect } from '@playwright/experimental-ct-vue';
-  import type { HooksConfig } from 'playwright';
+  import type { HooksConfig } from '@playwright/test';
   import Store from './Store.vue';
 
   test('override initialState ', async ({ mount }) => {

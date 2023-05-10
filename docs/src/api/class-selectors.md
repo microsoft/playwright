@@ -14,7 +14,7 @@ Selectors must be registered before creating the page.
 An example of registering selector engine that queries elements based on a tag name:
 
 ```js
-const { selectors, firefox } = require('playwright');  // Or 'chromium' or 'webkit'.
+const { selectors, firefox } = require('@playwright/test');  // Or 'chromium' or 'webkit'.
 
 (async () => {
   // Must be a function that evaluates to a selector engine instance.
