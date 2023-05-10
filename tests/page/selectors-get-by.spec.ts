@@ -117,6 +117,11 @@ it('getByLabel should work with aria-label', async ({ page }) => {
   expect(await page.getByLabel('Name').evaluate(e => e.id)).toBe('target');
 });
 
+it('getByLabel should ignore empty aria-label', async ({ page }) => {
+  await page.setContent(`<label for=target>Last Name</label><input id=target type=text aria-label>`);
+  expect(await page.getByLabel('Last Name').evaluate(e => e.id)).toBe('target');
+});
+
 it('getByLabel should prioritize aria-labelledby over aria-label', async ({ page }) => {
   await page.setContent(`<label id=other-label>Other</label><input id=target aria-label="Name" aria-labelledby=other-label>`);
   expect(await page.getByLabel('Other').evaluate(e => e.id)).toBe('target');
