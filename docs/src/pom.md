@@ -14,7 +14,6 @@ Page objects **simplify authoring** by creating a higher-level API which suits y
 We will create a `PlaywrightDevPage` helper class to encapsulate common operations on the `playwright.dev` page. Internally, it will use the `page` object.
 
 ```js tab=js-js title="playwright-dev-page.js"
-// 
 const { expect } = require('@playwright/test');
 
 exports.PlaywrightDevPage = class PlaywrightDevPage {
@@ -81,7 +80,6 @@ export class PlaywrightDevPage {
 ```
 
 ```js tab=js-library title="models/PlaywrightDevPage.js"
-// 
 class PlaywrightDevPage {
   /**
    * @param {import('playwright').Page} page 
@@ -109,7 +107,6 @@ module.exports = { PlaywrightDevPage };
 Now we can use the `PlaywrightDevPage` class in our tests.
 
 ```js tab=js-js title="example.spec.js"
-// 
 const { test, expect } = require('@playwright/test');
 const { PlaywrightDevPage } = require('./playwright-dev-page');
 
