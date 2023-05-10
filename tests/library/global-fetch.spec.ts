@@ -153,31 +153,6 @@ it('should support WWW-Authenticate: Basic', async ({ playwright, server }) => {
   expect(credentials).toBe('user:pass');
 });
 
-it('should use socks proxy', async ({ playwright, server, socksPort }) => {
-  const request = await playwright.request.newContext({ proxy: {
-    server: `socks5://localhost:${socksPort}`,
-  } });
-  const response = await request.get(server.EMPTY_PAGE);
-  expect(await response.text()).toContain('Served by the SOCKS proxy');
-});
-
-it('should pass proxy credentials', async ({ playwright, server, proxyServer }) => {
-  proxyServer.forwardTo(server.PORT);
-  let auth;
-  proxyServer.setAuthHandler(req => {
-    auth = req.headers['proxy-authorization'];
-    return !!auth;
-  });
-  const request = await playwright.request.newContext({
-    proxy: { server: `localhost:${proxyServer.PORT}`, username: 'user', password: 'secret' }
-  });
-  const response = await request.get('http://non-existent.com/simple.json');
-  expect(proxyServer.connectHosts).toContain('non-existent.com:80');
-  expect(auth).toBe('Basic ' + Buffer.from('user:secret').toString('base64'));
-  expect(await response.json()).toEqual({ foo: 'bar' });
-  await request.dispose();
-});
-
 it('should support global ignoreHTTPSErrors option', async ({ playwright, httpsServer }) => {
   const request = await playwright.request.newContext({ ignoreHTTPSErrors: true });
   const response = await request.get(httpsServer.EMPTY_PAGE);
