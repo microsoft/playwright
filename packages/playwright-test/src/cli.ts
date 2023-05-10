@@ -101,6 +101,7 @@ function addMergeReportsCommand(program: Command) {
   });
   command.option('-c, --config <file>', `Configuration file. Can be used to specify additional configuration for the output report.`);
   command.option('--reporter <reporter>', `Reporter to use, comma-separated, can be ${builtInReporters.map(name => `"${name}"`).join(', ')} (default: "${defaultReporter}")`);
+  command.option('--baseURL <url>', `Base URL where resources have been uploaded. If specified Playwright will generate links to attachments relative to this URL.`);
   command.addHelpText('afterAll', `
 Arguments [dir]:
   Directory containing blob reports.
@@ -197,7 +198,7 @@ async function mergeReports(reportDir: string | undefined, opts: { [key: string]
     reporterDescriptions = config.config.reporter;
   if (!reporterDescriptions)
     reporterDescriptions = [[defaultReporter]];
-  await createMergedReport(config, dir, reporterDescriptions!);
+  await createMergedReport(config, dir, reporterDescriptions!, opts.baseURL);
 }
 
 function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrides {

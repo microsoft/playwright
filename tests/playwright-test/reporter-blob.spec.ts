@@ -15,6 +15,8 @@
  */
 
 import * as fs from 'fs';
+import path from 'path';
+import url from 'url';
 import type { HttpServer } from '../../packages/playwright-core/src/utils';
 import { startHtmlReportServer } from '../../packages/playwright-test/lib/reporters/html';
 import { type CliRunResult, type RunOptions, stripAnsi } from './playwright-test-fixtures';
@@ -411,6 +413,85 @@ test('preserve attachments', async ({ runInlineTest, mergeReports, showReport, p
 
   await page.getByText('failing 1').click();
   await expect(page.getByText('\'text-attachment\', { body: \'hi!\'')).toBeVisible();
+});
+
+test('generate html with attachment urls', async ({ runInlineTest, mergeReports, page, server }) => {
+  test.slow();
+  const reportDir = test.info().outputPath('blob-report');
+  const files = {
+    'playwright.config.ts': `
+      module.exports = {
+        retries: 1,
+        use: {
+          trace: 'on'
+        },
+        reporter: [['blob', { outputDir: '${reportDir.replace(/\\/g, '/')}', attachmentsBaseURL: '${server.PREFIX}/blob-report/' }]]
+      };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      import fs from 'fs';
+
+      test('first', async ({}) => {
+        const attachmentPath = test.info().outputPath('foo.txt');
+        fs.writeFileSync(attachmentPath, 'hello!');
+        await test.info().attach('file-attachment', {path: attachmentPath});
+
+        console.log('console info');
+        console.error('console error');
+      });
+      test('failing 1', async ({}) => {
+        await test.info().attach('text-attachment', { body: 'hi!' });
+        expect(1).toBe(2);
+      });
+      test.skip('skipped 1', async ({}) => {});
+    `,
+    'b.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('math 2', async ({}) => { });
+      test('failing 2', async ({}) => {
+        expect(1).toBe(2);
+      });
+      test.skip('skipped 2', async ({}) => {});
+    `
+  };
+  await runInlineTest(files, { shard: `1/2` });
+
+  const reportFiles = await fs.promises.readdir(reportDir);
+  reportFiles.sort();
+  expect(reportFiles).toEqual([expect.stringMatching(/report-1-of-2.*.jsonl/), 'resources']);
+  const { exitCode } = await mergeReports(reportDir, { 'PW_TEST_HTML_REPORT_OPEN': 'never' }, { additionalArgs: ['--reporter', 'html'] });
+  expect(exitCode).toBe(0);
+
+  const oldSeveFile = server.serveFile;
+  server.serveFile = async (req, res) => {
+    const pathName = url.parse(req.url!).pathname!;
+    const filePath = path.join(test.info().outputDir, pathName.substring(1));
+    return oldSeveFile.call(server, req, res, filePath);
+  };
+
+  // Check file attachment.
+  await page.goto(`${server.PREFIX}/playwright-report/index.html`);
+  await page.getByText('first').click();
+  await expect(page.getByText('file-attachment')).toBeVisible();
+
+  // Check file attachment content.
+  const popupPromise = page.waitForEvent('popup');
+  await page.getByText('file-attachment').click();
+  const popup = await popupPromise;
+  await expect(popup.locator('body')).toHaveText('hello!');
+  await popup.close();
+  await page.goBack();
+
+  // Check inline attachment.
+  await page.getByText('failing 1').click();
+  await expect(page.getByText('\'text-attachment\', { body: \'hi!\'')).toBeVisible();
+  await page.goBack();
+
+  // Check that trace loads.
+  await page.locator('div').filter({ hasText: /^a\.test\.js:13$/ }).getByRole('link', { name: 'View trace' }).click();
+  await expect(page).toHaveTitle('Playwright Trace Viewer');
+  await expect(page.getByTestId('action-list').locator('div').filter({ hasText: /^expect\.toBe$/ })).toBeVisible();
 });
 
 test('multiple output reports', async ({ runInlineTest, mergeReports, showReport, page }) => {

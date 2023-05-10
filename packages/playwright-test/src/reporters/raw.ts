@@ -75,6 +75,7 @@ export type JsonAttachment = {
   name: string;
   body?: string | Buffer;
   path?: string;
+  url?: string;
   contentType: string;
 };
 
@@ -143,6 +144,12 @@ class RawReporter {
           name: attachment.name,
           contentType: attachment.contentType,
           body: attachment.body
+        });
+      } else if (attachment.url) {
+        out.push({
+          name: attachment.name,
+          contentType: attachment.contentType,
+          url: attachment.url
         });
       } else if (attachment.path) {
         out.push({

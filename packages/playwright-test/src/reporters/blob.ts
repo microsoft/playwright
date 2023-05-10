@@ -27,6 +27,7 @@ import { TeleReporterEmitter } from './teleEmitter';
 type BlobReporterOptions = {
   configDir: string;
   outputDir?: string;
+  attachmentsBaseURL?: string;
 };
 
 export class BlobReporter extends TeleReporterEmitter {
@@ -68,9 +69,11 @@ export class BlobReporter extends TeleReporterEmitter {
       const extension = mime.getExtension(attachment.contentType) || 'dat';
       const newPath = `resources/${sha1}.${extension}`;
       this._startCopyingFile(attachment.path, path.join(this._outputDir, newPath));
+      const url = this._options.attachmentsBaseURL ? this._options.attachmentsBaseURL + newPath : undefined;
       return {
         ...attachment,
         path: newPath,
+        url
       };
     });
   }
