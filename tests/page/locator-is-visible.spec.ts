@@ -85,3 +85,23 @@ it('isVisible inside a role=button', async ({ page }) => {
   await span.waitFor({ state: 'hidden' });
   await page.locator('[role=button]').waitFor({ state: 'visible' });
 });
+
+it('isVisible during navigation should not throw', async ({ page, server }) => {
+  for (let i = 0; i < 20; i++) {
+    // Make sure previous navigation finishes, to avoid page.setContent throwing.
+    await page.waitForTimeout(100);
+    await page.setContent(`
+      <script>
+        setTimeout(() => {
+          window.location.href = ${JSON.stringify(server.EMPTY_PAGE)};
+        }, Math.random(50));
+      </script>
+    `);
+    expect(await page.locator('div').isVisible()).toBe(false);
+  }
+});
+
+it('isVisible with invalid selector should throw', async ({ page }) => {
+  const error = await page.locator('hey=what').isVisible().catch(e => e);
+  expect(error.message).toContain('Unknown engine "hey" while parsing selector hey=what');
+});

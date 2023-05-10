@@ -1288,7 +1288,11 @@ export class Frame extends SdkObject {
         const state = element ? injected.elementState(element, 'visible') : false;
         return state === 'error:notconnected' ? false : state;
       }, { info: resolved.info });
-    }, this._page._timeoutSettings.timeout({}));
+    }, this._page._timeoutSettings.timeout({})).catch(e => {
+      if (js.isJavaScriptErrorInEvaluate(e) || isInvalidSelectorError(e) || isSessionClosedError(e))
+        throw e;
+      return false;
+    });
   }
 
   async isHidden(metadata: CallMetadata, selector: string, options: types.StrictOptions = {}): Promise<boolean> {
