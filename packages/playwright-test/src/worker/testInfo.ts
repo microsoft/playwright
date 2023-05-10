@@ -332,7 +332,7 @@ export class TestInfoImpl implements TestInfo {
 
   async attach(name: string, options: { path?: string, body?: string | Buffer, contentType?: string } = {}) {
     const step = this._addStep({
-      title: 'attach',
+      title: `attach  "${name}"`,
       category: 'attach',
       wallTime: Date.now(),
     });
@@ -404,7 +404,7 @@ function serializeAttachments(attachments: TestInfo['attachments'], initialAttac
       name: a.name,
       contentType: a.contentType,
       path: a.path,
-      body: a.body?.toString('base64'),
+      base64: a.body?.toString('base64'),
     };
   });
 }

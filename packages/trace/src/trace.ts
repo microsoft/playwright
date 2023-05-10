@@ -85,7 +85,7 @@ export type AfterActionTraceEvent = {
     contentType: string;
     path?: string;
     sha1?: string;
-    body?: string;  // base64
+    base64?: string;
   }[];
   result?: any;
 };

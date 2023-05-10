@@ -116,16 +116,24 @@ export async function saveTraceFile(fileName: string, traceEvents: TraceEvent[],
 
   const sha1s = new Set<string>();
   for (const event of traceEvents.filter(e => e.type === 'after') as AfterActionTraceEvent[]) {
-    for (const attachment of (event.attachments || []).filter(a => !!a.path)) {
-      await fs.promises.readFile(attachment.path!).then(content => {
-        const sha1 = calculateSha1(content);
-        attachment.sha1 = sha1;
-        delete attachment.path;
-        if (sha1s.has(sha1))
-          return;
-        sha1s.add(sha1);
-        zipFile.addBuffer(content, 'resources/' + sha1);
-      }).catch();
+    for (const attachment of (event.attachments || [])) {
+      let contentPromise: Promise<Buffer> | undefined;
+      if (attachment.path)
+        contentPromise = fs.promises.readFile(attachment.path);
+      else if (attachment.base64)
+        contentPromise = Promise.resolve(Buffer.from(attachment.base64, 'base64'));
+      if (!contentPromise)
+        continue;
+
+      const content = await contentPromise;
+      const sha1 = calculateSha1(content);
+      attachment.sha1 = sha1;
+      delete attachment.path;
+      delete attachment.base64;
+      if (sha1s.has(sha1))
+        continue;
+      sha1s.add(sha1);
+      zipFile.addBuffer(content, 'resources/' + sha1);
     }
   }
 
