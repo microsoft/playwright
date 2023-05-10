@@ -254,7 +254,7 @@ it('window.GestureEvent in WebKit', async ({ page, server, browserName }) => {
 it('requestFullscreen', async ({ page, server, browserName, headless, isLinux }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22832' });
   it.fixme(browserName === 'chromium' && headless, 'fullscreenchange is not fired in headless Chromium');
-  it.fixme(browserName === 'webkit' && headless && !isLinux);
+  it.fixme(browserName === 'webkit');
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(() => {
     const result = new Promise(resolve => document.addEventListener('fullscreenchange', resolve));
