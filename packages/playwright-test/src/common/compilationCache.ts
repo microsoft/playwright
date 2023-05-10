@@ -28,14 +28,15 @@ export type MemoryCache = {
 
 const version = 13;
 
-const DEFAULT_CACHE_DIR_WIN32 = () => path.join(os.tmpdir(), `playwright-transform-cache`);
-// Use geteuid() instead of more natural os.userInfo().username
-// Also note, that process.geteuid() is not available on windows,
-// so this is a function to be called on POSIX only.
-// See https://github.com/microsoft/playwright/issues/22721
-const DEFAULT_CACHE_DIR_POSIX = () => path.join(os.tmpdir(), `playwright-transform-cache-` + process.geteuid());
-
-const cacheDir = process.env.PWTEST_CACHE_DIR || (process.platform === 'win32' ? DEFAULT_CACHE_DIR_WIN32() : DEFAULT_CACHE_DIR_POSIX());
+const cacheDir = process.env.PWTEST_CACHE_DIR || (() => {
+  if (process.platform === 'win32')
+    return path.join(os.tmpdir(), `playwright-transform-cache`);
+  // Use `geteuid()` instead of more natural `os.userInfo().username`
+  // since `os.userInfo()` is not always available.
+  // Note: `process.geteuid()` is not available on windows.
+  // See https://github.com/microsoft/playwright/issues/22721
+  return path.join(os.tmpdir(), `playwright-transform-cache-` + process.geteuid());
+})();
 
 const sourceMaps: Map<string, string> = new Map();
 const memoryCache = new Map<string, MemoryCache>();
