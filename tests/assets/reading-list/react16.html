@@ -50,7 +50,7 @@ class NewBook extends React.Component {
   }
 
   render() {
-    return e(React.Fragment, null, 
+    return e(React.Fragment, null,
       e('input', {onInput: this.onInput.bind(this)}, null),
       e('button', {
         onClick: () => this.props.onNewBook(this.state),
@@ -101,9 +101,13 @@ class App extends React.Component {
   }
 }
 
-window.mountApp = element => ReactDOM.render(e(App, null, null), element);
+window.mountApp = element => {
+  const root = ReactDOM.render(e(App, null, null), element);
+  const unmount = () => ReactDOM.unmountComponentAtNode(element);
+  return {root, unmount};
+};
 window.app = window.mountApp(document.getElementById('root'));
 
-window.mountNestedApp = () => window.mountApp(window.app.mountPoint.current);
+window.mountNestedApp = () => window.mountApp(window.app.root.mountPoint.current);
 
 </script>

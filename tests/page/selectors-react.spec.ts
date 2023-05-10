@@ -156,6 +156,19 @@ for (const [name, url] of Object.entries(reacts)) {
       });
       await expect(page.locator(`_react=BookItem`)).toHaveCount(6);
     });
+
+    it('should work with multiroot react after unmount', async ({ page }) => {
+      await expect(page.locator(`_react=BookItem`)).toHaveCount(3);
+
+      await page.evaluate(() => {
+        const anotherRoot = document.createElement('div');
+        document.body.append(anotherRoot);
+        // @ts-ignore
+        const newRoot = window.mountApp(anotherRoot);
+        newRoot.unmount();
+      });
+      await expect(page.locator(`_react=BookItem`)).toHaveCount(3);
+    });
   });
 }
 

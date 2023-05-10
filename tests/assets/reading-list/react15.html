@@ -102,8 +102,12 @@ class App extends React.Component {
   }
 }
 
-window.mountApp = element => ReactDOM.render(e(App, null, null), element);
+window.mountApp = element => {
+  const root = ReactDOM.render(e(App, null, null), element);
+  const unmount = () => ReactDOM.unmountComponentAtNode(element);
+  return {root, unmount};
+};
 window.app = window.mountApp(document.getElementById('root'));
-window.mountNestedApp = () => window.mountApp(window.app.refs.mountPoint);
+window.mountNestedApp = () => window.mountApp(window.app.root.refs.mountPoint);
 
 </script>
