@@ -12,7 +12,7 @@ npx playwright test --reporter=line
 
 For more control, you can specify reporters programmatically in the [configuration file](./test-configuration.md).
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -24,7 +24,7 @@ export default defineConfig({
 
 You can use multiple reporters at the same time. For example  you can use `'list'` for nice terminal output and `'json'` to get a comprehensive json file with the test results.
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -39,7 +39,7 @@ export default defineConfig({
 
 You can use different reporters locally and on CI. For example, using concise `'dot'` reporter avoids too much output. This is the default on CI.
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -60,7 +60,7 @@ List reporter is default (except on CI where the `dot` reporter is default). It 
 npx playwright test --reporter=list
 ```
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -87,7 +87,7 @@ Running 124 tests using 6 workers
 
 You can opt into the step rendering via passing the following config option:
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -103,7 +103,7 @@ Line reporter is more concise than the list reporter. It uses a single line to r
 npx playwright test --reporter=line
 ```
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -133,7 +133,7 @@ Dot reporter is very concise - it only produces a single character per successfu
 npx playwright test --reporter=dot
 ```
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -162,7 +162,7 @@ By default, HTML report is opened automatically if some of the tests failed. You
 
 You can also configure `host` and `port` that are used to serve the HTML report.
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -175,7 +175,7 @@ that location using the `PLAYWRIGHT_HTML_REPORT` environment variable or a repor
 
 In configuration file, pass options directly:
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -185,7 +185,7 @@ export default defineConfig({
 
 If you are uploading attachments from data folder to other location, you can use `attachmentsBaseURL` option to let html report where to look for them.
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -230,7 +230,7 @@ npx playwright test --reporter=json
 
 In configuration file, pass options directly:
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -260,7 +260,7 @@ npx playwright test --reporter=junit
 
 In configuration file, pass options directly:
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -274,7 +274,7 @@ You can use the built in `github` reporter to get automatic failure annotations 
 
 Note that all other reporters work on GitHub Actions as well, but do not provide annotations.
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -315,7 +315,7 @@ export default MyReporter;
 
 Now use this reporter with [`property: TestConfig.reporter`].
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({

@@ -612,8 +612,7 @@ test('test 1', async ({ todoPage }) => {
 
 Configure the option in config file.
 
-```js tab=js-js
-// playwright.config.js
+```js tab=js-js title="playwright.config.ts"
 // @ts-check
 
 module.exports = defineConfig({
@@ -630,8 +629,7 @@ module.exports = defineConfig({
 });
 ```
 
-```js tab=js-ts
-// playwright.config.ts
+```js tab=js-ts title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 import { Options } from './my-test';
 

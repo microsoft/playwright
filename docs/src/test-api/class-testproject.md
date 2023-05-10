@@ -8,8 +8,7 @@ Playwright Test supports running multiple test projects at the same time. This i
 
 Here is an example configuration that runs every test in Chromium, Firefox and WebKit, both Desktop and Mobile versions.
 
-```js
-// playwright.config.ts
+```js title="playwright.config.ts"
 import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
@@ -59,8 +58,7 @@ see the setup steps in the test report, etc.
 
 **Usage**
 
-```js
-// playwright.config.ts
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -210,8 +208,7 @@ Passing `--no-deps` argument ignores [`property: TestProject.teardown`] and beha
 
 A common pattern is a "setup" dependency that has a corresponding "teardown":
 
-```js
-// playwright.config.ts
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -252,8 +249,7 @@ Directory that will be recursively scanned for test files. Defaults to the direc
 
 Each project can use a different directory. Here is an example that runs smoke tests in three browsers and all other tests in stable Chrome browser.
 
-```js
-// playwright.config.ts
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -329,8 +325,7 @@ Use [`property: TestConfig.timeout`] to change this option for all projects.
 
 Options for all tests in this project, for example [`property: TestOptions.browserName`]. Learn more about [configuration](../test-configuration.md) and see [available options][TestOptions].
 
-```js
-// playwright.config.ts
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({

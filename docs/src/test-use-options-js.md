@@ -9,7 +9,7 @@ In addition to configuring the test runner you can also configure [Emulation](#e
 
 Set the base URL and storage state for all tests:
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -34,7 +34,7 @@ export default defineConfig({
 With Playwright you can emulate a real device such as a mobile phone or tablet. See our [guide on projects](./test-projects.md) for more info on emulating devices. You can also emulate the `"geolocation"`, `"locale"` and `"timezone"` for all tests or for a specific test as well as set the `"permissions"` to show notifications or change the `"colorScheme"`. See our [Emulation](./emulation.md) guide to learn more.
 
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -73,7 +73,7 @@ export default defineConfig({
 
 Available options to configure networking:
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -127,7 +127,7 @@ With Playwright you can capture screenshots, record videos as well as traces of 
 
 Trace files, screenshots and videos will appear in the test output directory, typically `test-results`.
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -153,7 +153,7 @@ export default defineConfig({
 
 ### Other Options
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -192,7 +192,7 @@ export default defineConfig({
 
 Any options accepted by [`method: BrowserType.launch`] or [`method: Browser.newContext`] can be put into `launchOptions` or `contextOptions` respectively in the `use` section.
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -210,7 +210,7 @@ However, most common ones like `headless` or `viewport` are available directly i
 
 If using the built-in `browser` fixture, calling [`method: Browser.newContext`] will create a context with options inherited from the config:
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -242,7 +242,7 @@ test('should inherit use options on context when using built-in browser fixture'
 You can configure Playwright globally, per project, or per test. For example, you can set the locale to be used globally by adding `locale` to the `use` option of the Playwright config, and then override it for a specific project using the `project` option in the config. You can also override it for a specific test by adding `test.use({})` in the test file and passing in the options.
 
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({

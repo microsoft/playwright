@@ -541,7 +541,7 @@ await context.SetGeolocationAsync(new Geolocation() { Longitude = 48.858455, Lat
 
 Emulate the users `"colorScheme"`. Supported values are 'light', 'dark', 'no-preference'. You can also emulate the media type with [`method: Page.emulateMedia`].
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -705,7 +705,7 @@ var context = await browser.NewContextAsync(new() { UserAgent = "My User Agent" 
 
 Emulate the network being offline.
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({

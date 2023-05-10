@@ -553,8 +553,7 @@ By default, [`method: Page.getByTestId`] will locate elements based on the `data
 
 Set the test id to use a custom data attribute for your tests.
 
-```js
-// playwright.config.ts
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({

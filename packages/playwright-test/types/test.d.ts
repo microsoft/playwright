@@ -3360,6 +3360,7 @@ type ConnectOptions = {
  * [testProject.use](https://playwright.dev/docs/api/class-testproject#test-project-use).
  *
  * ```js
+ * // playwright.config.ts
  * import { defineConfig } from '@playwright/test';
  * export default defineConfig({
  *   use: {
@@ -3412,6 +3413,7 @@ export interface PlaywrightWorkerOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -3431,6 +3433,7 @@ export interface PlaywrightWorkerOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -3461,6 +3464,7 @@ export interface PlaywrightWorkerOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -3482,6 +3486,7 @@ export interface PlaywrightWorkerOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -3511,6 +3516,7 @@ export interface PlaywrightWorkerOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -3536,6 +3542,7 @@ export interface PlaywrightWorkerOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -3563,6 +3570,7 @@ export interface PlaywrightWorkerOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -3589,6 +3597,7 @@ export type VideoMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry';
  * [testProject.use](https://playwright.dev/docs/api/class-testproject#test-project-use).
  *
  * ```js
+ * // playwright.config.ts
  * import { defineConfig } from '@playwright/test';
  * export default defineConfig({
  *   use: {
@@ -3621,6 +3630,7 @@ export interface PlaywrightTestOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -3637,6 +3647,7 @@ export interface PlaywrightTestOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -3653,6 +3664,7 @@ export interface PlaywrightTestOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -3671,6 +3683,7 @@ export interface PlaywrightTestOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -3689,6 +3702,7 @@ export interface PlaywrightTestOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -3707,6 +3721,7 @@ export interface PlaywrightTestOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -3723,6 +3738,7 @@ export interface PlaywrightTestOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -3740,6 +3756,7 @@ export interface PlaywrightTestOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -3760,6 +3777,7 @@ export interface PlaywrightTestOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -3776,6 +3794,7 @@ export interface PlaywrightTestOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -3794,6 +3813,7 @@ export interface PlaywrightTestOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -3811,6 +3831,7 @@ export interface PlaywrightTestOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -3829,6 +3850,7 @@ export interface PlaywrightTestOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -3846,6 +3868,7 @@ export interface PlaywrightTestOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -3864,6 +3887,7 @@ export interface PlaywrightTestOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -3883,6 +3907,7 @@ export interface PlaywrightTestOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -3904,6 +3929,7 @@ export interface PlaywrightTestOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -3922,6 +3948,7 @@ export interface PlaywrightTestOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -3938,6 +3965,7 @@ export interface PlaywrightTestOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -3993,6 +4021,7 @@ export interface PlaywrightTestOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -4037,6 +4066,7 @@ export interface PlaywrightTestOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -4053,6 +4083,7 @@ export interface PlaywrightTestOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -4076,6 +4107,7 @@ export interface PlaywrightTestOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({

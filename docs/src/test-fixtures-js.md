@@ -905,8 +905,7 @@ export { expect } from '@playwright/test';
 
 We can now use `todoPage` fixture as usual, and set the `defaultItem` option in the config file.
 
-```js tab=js-js
-// playwright.config.js
+```js tab=js-js title="playwright.config.ts"
 // @ts-check
 
 const { defineConfig } = require('@playwright/test');
@@ -924,8 +923,7 @@ module.exports = defineConfig({
 });
 ```
 
-```js tab=js-ts
-// playwright.config.ts
+```js tab=js-ts title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 import { MyOptions } from './my-test';
 
