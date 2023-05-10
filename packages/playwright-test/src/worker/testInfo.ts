@@ -331,7 +331,13 @@ export class TestInfoImpl implements TestInfo {
   // ------------ TestInfo methods ------------
 
   async attach(name: string, options: { path?: string, body?: string | Buffer, contentType?: string } = {}) {
+    const step = this._addStep({
+      title: 'attach',
+      category: 'attach',
+      wallTime: Date.now(),
+    });
     this.attachments.push(await normalizeAndSaveAttachment(this.outputPath(), name, options));
+    step.complete({});
   }
 
   outputPath(...pathSegments: string[]){
