@@ -67,7 +67,7 @@
  * maxColumns?: number,
  * omitLastCR?: boolean,
  * flattenText?: boolean
- * renderCodeBlockTitles?: boolean
+ * renderCodeBlockTitlesInHeader?: boolean
  * }} RenderOptions
  */
 
@@ -328,7 +328,9 @@ function innerRenderMdNode(indent, node, lastNode, result, options) {
 
   if (node.type === 'code') {
     newLine();
-    result.push(`${indent}\`\`\`${node.codeLang}${(options?.renderCodeBlockTitles && node.title) ? ' title="' + node.title + '"' : ''}`);
+    result.push(`${indent}\`\`\`${node.codeLang}${(options?.renderCodeBlockTitlesInHeader && node.title) ? ' title="' + node.title + '"' : ''}`);
+    if (!options?.renderCodeBlockTitlesInHeader && node.title)
+      result.push(`${indent}// ${node.title}`);
     for (const line of node.lines)
       result.push(indent + line);
     result.push(`${indent}\`\`\``);

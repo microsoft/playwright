@@ -347,6 +347,7 @@ export interface FullResult {
  * [using reporters](https://playwright.dev/docs/test-reporters).
  *
  * ```js
+ * // playwright.config.ts
  * import { defineConfig } from '@playwright/test';
  *
  * export default defineConfig({
