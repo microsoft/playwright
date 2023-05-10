@@ -346,7 +346,7 @@ export interface FullResult {
  * [testConfig.reporter](https://playwright.dev/docs/api/class-testconfig#test-config-reporter). Learn more about
  * [using reporters](https://playwright.dev/docs/test-reporters).
  *
- * ```js title="playwright.config.ts"
+ * ```js
  * import { defineConfig } from '@playwright/test';
  *
  * export default defineConfig({
