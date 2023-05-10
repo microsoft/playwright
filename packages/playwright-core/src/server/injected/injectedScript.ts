@@ -328,7 +328,7 @@ export class InjectedScript {
           let labels: Element[] | NodeListOf<Element> | null | undefined = getAriaLabelledByElements(element);
           if (labels === null) {
             const ariaLabel = element.getAttribute('aria-label');
-            if (ariaLabel !== null)
+            if (ariaLabel !== null && !!ariaLabel.trim())
               return matcher({ full: ariaLabel, immediate: [ariaLabel] });
           }
           if (labels === null)
