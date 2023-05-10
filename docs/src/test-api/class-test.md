@@ -548,8 +548,7 @@ Extends the `test` object by defining fixtures and/or options that can be used i
 
 First define a fixture and/or an option.
 
-```js tab=js-js
-// my-test.js
+```js tab=js-js title="my-test.js"
 const base = require('@playwright/test');
 const { TodoPage } = require('./todo-page');
 

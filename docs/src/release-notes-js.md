@@ -657,7 +657,6 @@ test('should work', async ({ mount }) => {
 ```
 
 ```js title="playwright/index.js"
-// playwright/index.js
 import router from 'next/router';
 import { beforeMount } from '@playwright/experimental-ct-react/hooks';
 
@@ -802,8 +801,7 @@ WebServer is now considered "ready" if request to the specified url has any of t
 
   Here is what a typical component test looks like:
 
-  ```ts
-  // App.spec.tsx
+  ```ts title="App.spec.tsx"
   import { test, expect } from '@playwright/experimental-ct-react';
   import App from './App';
 

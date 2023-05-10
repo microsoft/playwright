@@ -68,8 +68,7 @@ Using the following, Playwright will run your WebView2 application as a sub-proc
 
 <!-- source code is available here to verify that the examples are working https://github.com/mxschmitt/playwright-webview2-demo -->
 
-```js
-// webView2Test.ts
+```js title="webView2Test.ts"
 import { test as base } from '@playwright/test';
 import fs from 'fs';
 import os from 'os';
@@ -124,8 +123,7 @@ test('test WebView2', async ({ page }) => {
 });
 ```
 
-```java
-// WebView2Process.java
+```java title="WebView2Process.java"
 package com.example;
 
 import java.io.BufferedReader;
@@ -199,8 +197,7 @@ public class WebView2Process {
 }
 ```
 
-```java
-// TestExample.java
+```java title="TestExample.java"
 package com.example;
 
 import com.microsoft.playwright.Browser;
@@ -247,8 +244,7 @@ public class TestExample {
 }
 ```
 
-```python
-# conftest.py
+```python title="conftest.py"
 import os
 import socket
 import tempfile
@@ -330,8 +326,7 @@ def _find_free_port(port=9000, max_port=65535):
     raise IOError("no free ports")
 ```
 
-```python
-# test_webview2.py
+```python title="test_webview2.py"
 from playwright.sync_api import Page, expect
 
 

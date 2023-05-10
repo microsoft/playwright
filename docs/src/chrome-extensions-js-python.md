@@ -101,8 +101,7 @@ To have the extension loaded when running tests you can use a test fixture to se
 
 First, add fixtures that will load the extension:
 
-```js
-// fixtures.ts
+```js title="fixtures.ts"
 import { test as base, expect, chromium, type BrowserContext } from '@playwright/test';
 import path from 'path';
 
@@ -142,8 +141,7 @@ export const test = base.extend<{
 export const expect = test.expect;
 ```
 
-```python
-# conftest.py
+```python title="conftest.py"
 from typing import Generator
 from pathlib import Path
 from playwright.sync_api import Playwright, BrowserContext
@@ -198,8 +196,7 @@ test('popup page', async ({ page, extensionId }) => {
 });
 ```
 
-```python
-# test_foo.py
+```python title="test_foo.py"
 from playwright.sync_api import expect, Page
 
 
@@ -232,8 +229,7 @@ const context = await chromium.launchPersistentContext('', {
 // ...
 ```
 
-```python
-# conftest.py
+```python title="conftest.py"
 path_to_extension = Path(__file__).parent.joinpath("my-extension")
 context = playwright.chromium.launch_persistent_context(
     "",

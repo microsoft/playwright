@@ -23,8 +23,8 @@ Playwright Test supports running multiple test projects at the same time. In the
 
 We declare the option `person` and set the value in the config. The first project runs with the value `Alice` and the second with the value `Bob`.
 
-```js tab=js-js
-// my-test.js
+```js tab=js-js title="my-test.js"
+// 
 const base = require('@playwright/test');
 
 exports.test = base.test.extend({
@@ -34,8 +34,7 @@ exports.test = base.test.extend({
 });
 ```
 
-```js tab=js-ts
-// my-test.ts
+```js tab=js-ts title="my-test.ts"
 import { test as base } from '@playwright/test';
 
 export type TestOptions = {
@@ -100,8 +99,8 @@ export default defineConfig<TestOptions>({
 
 We can also use the option in a fixture. Learn more about [fixtures](./test-fixtures.md).
 
-```js tab=js-js
-// my-test.js
+```js tab=js-js title="my-test.js"
+// 
 const base = require('@playwright/test');
 
 exports.test = base.test.extend({
@@ -121,8 +120,7 @@ exports.test = base.test.extend({
 });
 ```
 
-```js tab=js-ts
-// my-test.ts
+```js tab=js-ts title="my-test.ts"
 import { test as base } from '@playwright/test';
 
 export type TestOptions = {

@@ -20,8 +20,7 @@ Get started by installing Playwright and running the example file to see it in a
 }>
 <TabItem value="java">
 
-```java
-// src/main/java/org/example/App.java
+```java title="src/main/java/org/example/App.java"
 package org.example;
 
 import com.microsoft.playwright.*;

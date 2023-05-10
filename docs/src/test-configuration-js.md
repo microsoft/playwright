@@ -220,7 +220,6 @@ For TypeScript, also add the following to your [`global.d.ts`](https://www.types
 You don't need it for JavaScript.
 
 ```js title="global.d.ts"
-// global.d.ts
 export {};
 
 declare global {

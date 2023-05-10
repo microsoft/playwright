@@ -551,8 +551,9 @@ export const test = base.extend<MyFixtures>({
   },
 });
 
+```
 
-// tests/example.spec.ts
+```js title="tests/example.spec.ts"
 // Import test with our new fixtures.
 import { test, expect } from './fixtures';
 

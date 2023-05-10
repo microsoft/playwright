@@ -60,8 +60,7 @@ export default defineConfig({
 
 Here is a global setup example that authenticates once and reuses authentication state in tests. It uses the `baseURL` and `storageState` options from the configuration file.
 
-```js
-// global-setup.ts/js
+```js title="global-setup.ts"
 import { chromium, FullConfig } from '@playwright/test';
 
 async function globalSetup(config: FullConfig) {

@@ -207,7 +207,7 @@ export default function createTests() {
 You can create a test list file that will control the order of tests - first run `feature-b` tests, then `feature-a` tests. Note how each test file is wrapped in a `test.describe()` block that calls the function where tests are defined. This way `test.use()` calls only affect tests from a single file.
 
 
-```js title="test-list.ts"
+```js title="test.list.ts"
 import { test } from '@playwright/test';
 import featureBTests from './feature-b.spec.ts';
 import featureATests from './feature-a.spec.ts';

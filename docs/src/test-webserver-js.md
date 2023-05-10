@@ -77,7 +77,6 @@ export default defineConfig({
 Now you can use a relative path when navigating the page:
 
 ```js title="test.spec.ts"
-// test.spec.js
 import { test } from '@playwright/test';
 
 test('test', async ({ page }) => {
