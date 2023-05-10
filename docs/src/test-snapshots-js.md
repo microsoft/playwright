@@ -5,8 +5,7 @@ title: "Visual comparisons"
 
 Playwright Test includes the ability to produce and visually compare screenshots using `await expect(page).toHaveScreenshot()`. On first execution, Playwright test will generate reference screenshots. Subsequent runs will compare against the reference.
 
-```js
-// example.spec.ts
+```js title="example.spec.ts"
 import { test, expect } from '@playwright/test';
 
 test('example test', async ({ page }) => {
@@ -59,8 +58,7 @@ npx playwright test --update-snapshots
 
 Playwright Test uses the [pixelmatch](https://github.com/mapbox/pixelmatch) library. You can [pass various options](./test-assertions#page-assertions-to-have-screenshot-2) to modify its behavior:
 
-```js
-// example.spec.ts
+```js title="example.spec.ts"
 import { test, expect } from '@playwright/test';
 
 test('example test', async ({ page }) => {
@@ -84,8 +82,7 @@ Apart from screenshots, you can use `expect(value).toMatchSnapshot(snapshotName)
 
 Here we compare text content against the reference.
 
-```js
-// example.spec.ts
+```js title="example.spec.ts"
 import { test, expect } from '@playwright/test';
 
 test('example test', async ({ page }) => {

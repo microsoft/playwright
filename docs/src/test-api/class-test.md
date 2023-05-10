@@ -85,8 +85,7 @@ You can access all the same [Fixtures] as the test function itself, and also the
 
 **Usage**
 
-```js
-// example.spec.ts
+```js title="example.spec.ts"
 import { test, expect } from '@playwright/test';
 
 test.afterEach(async ({ page }, testInfo) => {
@@ -123,8 +122,7 @@ You can use [`method: Test.afterAll`] to teardown any resources set up in `befor
 
 **Usage**
 
-```js
-// example.spec.ts
+```js title="example.spec.ts"
 import { test, expect } from '@playwright/test';
 
 test.beforeAll(async () => {
@@ -163,8 +161,7 @@ You can use [`method: Test.afterEach`] to teardown any resources set up in `befo
 
 **Usage**
 
-```js
-// example.spec.ts
+```js title="example.spec.ts"
 import { test, expect } from '@playwright/test';
 
 test.beforeEach(async ({ page }, testInfo) => {
@@ -600,8 +597,7 @@ export const test = base.extend<Options & { todoPage: TodoPage }>({
 
 Then use the fixture in the test.
 
-```js
-// example.spec.ts
+```js title="example.spec.ts"
 import { test } from './my-test';
 
 test('test 1', async ({ todoPage }) => {

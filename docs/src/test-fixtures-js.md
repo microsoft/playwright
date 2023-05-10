@@ -123,8 +123,7 @@ export class TodoPage {
   </div>
 </details>
 
-```js
-// todo.spec.js
+```js title="todo.spec.ts"
 const { test } = require('@playwright/test');
 const { TodoPage } = require('./todo-page');
 
@@ -547,8 +546,7 @@ export const test = base.extend({
 
 Notice that in this example, the `page` fixture is able to depend on other built-in fixtures such as [`property: TestOptions.baseURL`]. We can now configure `baseURL` in the configuration file, or locally in the test file with [`method: Test.use`].
 
-```js
-// example.spec.ts
+```js title="example.spec.ts"
 
 test.use({ baseURL: 'https://playwright.dev' });
 ```

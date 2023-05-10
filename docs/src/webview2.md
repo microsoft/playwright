@@ -114,8 +114,7 @@ export const test = base.extend({
 export { expect } from '@playwright/test';
 ```
 
-```js
-// example.spec.ts
+```js title="example.spec.ts"
 import { test, expect } from './webView2Test';
 
 test('test WebView2', async ({ page }) => {

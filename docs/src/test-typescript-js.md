@@ -43,8 +43,7 @@ Here is an example `tsconfig.json` that works with Playwright Test:
 
 You can now import using the mapped paths:
 
-```js
-// example.spec.ts
+```js title="example.spec.ts"
 import { test, expect } from '@playwright/test';
 import { username, password } from '@myhelper/credentials';
 

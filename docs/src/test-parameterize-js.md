@@ -7,8 +7,7 @@ You can either parameterize tests on a test level or on a project level.
 
 ## Parameterized Tests
 
-```js
-// example.spec.ts
+```js title="example.spec.ts"
 const people = ['Alice', 'Bob'];
 for (const name of people) {
   test(`testing with ${name}`, async () => {
@@ -52,8 +51,7 @@ export const test = base.extend<TestOptions>({
 
 We can use this option in the test, similarly to [fixtures](./test-fixtures.md).
 
-```js
-// example.spec.ts
+```js title="example.spec.ts"
 import { test } from './my-test';
 
 test('test 1', async ({ page, person }) => {
@@ -158,8 +156,7 @@ You can use environment variables to configure tests from the command line.
 
 For example, consider the following test file that needs a username and a password. It is usually a good idea not to store your secrets in the source code, so we'll need a way to pass secrets from outside.
 
-```js
-// example.spec.ts
+```js title="example.spec.ts"
 test(`example test`, async ({ page }) => {
   // ...
   await page.getByLabel('User Name').fill(process.env.USERNAME);
@@ -266,8 +263,7 @@ See for example this CSV file, in our example `input.csv`:
 
 Based on this we'll generate some tests by using the [csv-parse](https://www.npmjs.com/package/csv-parse) library from NPM:
 
-```js
-// foo.spec.ts
+```js title="test.spec.ts"
 import fs from 'fs';
 import path from 'path';
 import { test } from '@playwright/test';
@@ -279,7 +275,7 @@ const records = parse(fs.readFileSync(path.join(__dirname, 'input.csv')), {
 });
 
 for (const record of records) {
-  test(`fooo: ${record.test_case}`, async ({ page }) => {
+  test(`foo: ${record.test_case}`, async ({ page }) => {
     console.log(record.test_case, record.some_value, record.some_other_value);
   });
 }
