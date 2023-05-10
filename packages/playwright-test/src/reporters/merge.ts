@@ -15,9 +15,7 @@
  */
 
 import fs from 'fs';
-import os from 'os';
 import path from 'path';
-import { ZipFile, removeFolders } from 'playwright-core/lib/utils';
 import type { ReporterDescription } from '../../types/test';
 import type { FullResult } from '../../types/testReporter';
 import type { FullConfigInternal } from '../common/config';
@@ -27,39 +25,13 @@ import { Multiplexer } from './multiplexer';
 
 export async function createMergedReport(config: FullConfigInternal, dir: string, reporterDescriptions: ReporterDescription[]) {
   const shardFiles = await sortedShardFiles(dir);
-  const resourceDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-report-'));
-  await fs.promises.mkdir(resourceDir, { recursive: true });
-  try {
-    const shardReports = await extractReports(dir, shardFiles, resourceDir);
-    const events = mergeEvents(shardReports);
-    patchAttachmentPaths(events, resourceDir);
+  const events = await mergeEvents(dir, shardFiles);
+  patchAttachmentPaths(events, dir);
 
-    const reporters = await createReporters(config, 'merge', reporterDescriptions);
-    const receiver = new TeleReporterReceiver(path.sep, new Multiplexer(reporters));
-    for (const event of events)
-      await receiver.dispatch(event);
-  } finally {
-    await removeFolders([resourceDir]);
-  }
-}
-
-async function extractReports(dir: string, shardFiles: string[], resourceDir: string): Promise<string[]> {
-  const reports = [];
-  for (const file of shardFiles) {
-    const zipFile = new ZipFile(path.join(dir, file));
-    const entryNames = await zipFile.entries();
-    for (const entryName of entryNames) {
-      const content = await zipFile.read(entryName);
-      if (entryName.endsWith('report.jsonl')) {
-        reports.push(content.toString());
-      } else {
-        const fileName = path.join(resourceDir, entryName);
-        await fs.promises.mkdir(path.dirname(fileName), { recursive: true });
-        await fs.promises.writeFile(fileName, content);
-      }
-    }
-  }
-  return reports;
+  const reporters = await createReporters(config, 'merge', reporterDescriptions);
+  const receiver = new TeleReporterReceiver(path.sep, new Multiplexer(reporters));
+  for (const event of events)
+    await receiver.dispatch(event);
 }
 
 function patchAttachmentPaths(events: JsonEvent[], resourceDir: string) {
@@ -79,11 +51,12 @@ function parseEvents(reportJsonl: string): JsonEvent[] {
   return reportJsonl.toString().split('\n').filter(line => line.length).map(line => JSON.parse(line)) as JsonEvent[];
 }
 
-function mergeEvents(shardReports: string[]) {
+async function mergeEvents(dir: string, shardReportFiles: string[]) {
   const events: JsonEvent[] = [];
   const beginEvents: JsonEvent[] = [];
   const endEvents: JsonEvent[] = [];
-  for (const reportJsonl of shardReports) {
+  for (const reportFile of shardReportFiles) {
+    const reportJsonl = await fs.promises.readFile(path.join(dir, reportFile), 'utf8');
     const parsedEvents = parseEvents(reportJsonl);
     for (const event of parsedEvents) {
       if (event.method === 'onBegin')
@@ -160,5 +133,5 @@ function mergeEndEvents(endEvents: JsonEvent[]): JsonEvent {
 
 async function sortedShardFiles(dir: string) {
   const files = await fs.promises.readdir(dir);
-  return files.filter(file => file.endsWith('.zip')).sort();
+  return files.filter(file => file.endsWith('.jsonl')).sort();
 }
