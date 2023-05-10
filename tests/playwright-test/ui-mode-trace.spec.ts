@@ -176,7 +176,7 @@ test('should show image diff', async ({ runUITest, server }) => {
   });
 
   await page.getByText('vrt test').dblclick();
-  await page.getByText(/Log/).click();
+  await page.getByText(/Attachments/).click();
   await expect(page.getByText('Diff', { exact: true })).toBeVisible();
   await expect(page.getByText('Actual', { exact: true })).toBeVisible();
   await expect(page.getByText('Expected', { exact: true })).toBeVisible();

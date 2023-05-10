@@ -1,0 +1,40 @@
+/*
+  Copyright (c) Microsoft Corporation.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
+
+.attachments-tab {
+  flex: auto;
+  line-height: 24px;
+  white-space: pre;
+  overflow: auto;
+  user-select: text;
+}
+
+.attachments-section {
+  padding-left: 6px;
+  font-weight: bold;
+  text-transform: uppercase;
+  font-size: 10px;
+  color: var(--vscode-sideBarTitle-foreground);
+  line-height: 24px;
+}
+
+.attachments-section:not(:first-child) {
+  border-top: 1px solid var(--vscode-panel-border);
+}
+
+.attachment-item {
+  margin: 4px 8px;
+}

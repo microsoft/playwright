@@ -30,6 +30,7 @@ import type { TabbedPaneTabModel } from '@web/components/tabbedPane';
 import { Timeline } from './timeline';
 import './workbench.css';
 import { MetadataView } from './metadataView';
+import { AttachmentsTab } from './attachmentsTab';
 
 export const Workbench: React.FunctionComponent<{
   model?: MultiTraceModel,
@@ -98,17 +99,24 @@ export const Workbench: React.FunctionComponent<{
     count: networkCount,
     render: () => <NetworkTab action={activeAction} />
   };
+  const attachmentsTab: TabbedPaneTabModel = {
+    id: 'attachments',
+    title: 'Attachments',
+    render: () => <AttachmentsTab action={activeAction} />
+  };
 
   const tabs: TabbedPaneTabModel[] = showSourcesFirst ? [
     sourceTab,
     consoleTab,
     networkTab,
     callTab,
+    attachmentsTab,
   ] : [
     callTab,
     consoleTab,
     networkTab,
     sourceTab,
+    attachmentsTab,
   ];
 
   return <div className='vbox'>

@@ -23,8 +23,6 @@ import { CopyToClipboard } from './copyToClipboard';
 import { asLocator } from '@isomorphic/locatorGenerators';
 import type { Language } from '@isomorphic/locatorGenerators';
 import { ErrorMessage } from '@web/components/errorMessage';
-import { ImageDiffView } from '@web/components/imageDiffView';
-import type { TestAttachment } from '@web/components/imageDiffView';
 
 export const CallTab: React.FunctionComponent<{
   action: ActionTraceEvent | undefined,
@@ -41,18 +39,7 @@ export const CallTab: React.FunctionComponent<{
   const wallTime = action.wallTime ? new Date(action.wallTime).toLocaleString() : null;
   const duration = action.endTime ? msToString(action.endTime - action.startTime) : 'Timed Out';
 
-  const expected = action.attachments?.find(a => a.name.endsWith('-expected.png') && (a.path || a.sha1)) as TestAttachment | undefined;
-  const actual = action.attachments?.find(a => a.name.endsWith('-actual.png') && (a.path || a.sha1)) as TestAttachment | undefined;
-  const diff = action.attachments?.find(a => a.name.endsWith('-diff.png') && (a.path || a.sha1)) as TestAttachment | undefined;
-
   return <div className='call-tab'>
-    { expected && actual && <div className='call-section'>Image diff</div> }
-    { expected && actual && <ImageDiffView imageDiff={{
-      name: 'Image diff',
-      expected: { attachment: { ...expected, path: attachmentURL(expected) }, title: 'Expected' },
-      actual: { attachment: { ...actual, path: attachmentURL(actual) } },
-      diff: diff ? { attachment: { ...diff, path: attachmentURL(diff) } } : undefined,
-    }} /> }
     {!!error && <ErrorMessage error={error} />}
     {!!error && <div className='call-section'>Call</div>}
     <div className='call-line'>{action.apiName}</div>
@@ -159,16 +146,4 @@ function parseSerializedValue(value: SerializedValue, handles: any[] | undefined
     return handles[value.h];
   }
   return '<object>';
-}
-
-function attachmentURL(attachment: {
-  name: string;
-  contentType: string;
-  path?: string;
-  sha1?: string;
-  body?: string;
-}) {
-  if (attachment.sha1)
-    return 'sha1/' + attachment.sha1;
-  return 'file?path=' + attachment.path;
 }

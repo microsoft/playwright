@@ -44,7 +44,7 @@ export const SourceTab: React.FunctionComponent<{
   const { source, highlight, targetLine, fileName } = useAsyncMemo<{ source: SourceModel, targetLine?: number, fileName?: string, highlight: SourceHighlight[] }>(async () => {
     const actionLocation = action?.stack?.[selectedFrame];
     const shouldUseFallback = !actionLocation?.file;
-    if (shouldUseFallback && !shouldUseFallback)
+    if (shouldUseFallback && !fallbackLocation)
       return { source: { file: '', errors: [], content: undefined }, targetLine: 0, highlight: [] };
 
     const file = shouldUseFallback ? fallbackLocation!.file : actionLocation.file;
