@@ -20,7 +20,7 @@ import { createPlaywright, DispatcherConnection, RootDispatcher, PlaywrightDispa
 import { Browser } from '../server/browser';
 import { serverSideCallMetadata } from '../server/instrumentation';
 import { SocksProxy } from '../common/socksProxy';
-import { assert } from '../utils';
+import { assert, isUnderTest } from '../utils';
 import type { LaunchOptions } from '../server/types';
 import { AndroidDevice } from '../server/android/android';
 import { DebugControllerDispatcher } from '../server/dispatchers/debugControllerDispatcher';
@@ -272,7 +272,7 @@ function launchOptionsHash(options: LaunchOptions) {
   return JSON.stringify(copy);
 }
 
-function filterLaunchOptions(options: LaunchOptions) {
+function filterLaunchOptions(options: LaunchOptions): LaunchOptions {
   return {
     channel: options.channel,
     args: options.args,
@@ -284,6 +284,7 @@ function filterLaunchOptions(options: LaunchOptions) {
     chromiumSandbox: options.chromiumSandbox,
     firefoxUserPrefs: options.firefoxUserPrefs,
     slowMo: options.slowMo,
+    executablePath: isUnderTest() ? options.executablePath : undefined,
   };
 }
 

@@ -30,6 +30,10 @@ export class RunServer implements PlaywrightServer {
   async _start(childProcess: CommonFixtures['childProcess']) {
     this._process = childProcess({
       command: ['node', path.join(__dirname, '..', '..', 'packages', 'playwright-core', 'lib', 'cli', 'cli.js'), 'run-server'],
+      env: {
+        ...process.env,
+        PWTEST_UNDER_TEST: '1',
+      },
     });
 
     let wsEndpointCallback;
