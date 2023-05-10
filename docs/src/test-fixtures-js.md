@@ -41,8 +41,7 @@ Here is how typical test environment setup differs between traditional test styl
   <summary>Click to expand the code for the <code>TodoPage</code></summary>
   <div>
 
-```js tab=js-js
-// todo-page.js
+```js tab=js-js title="todo-page.js"
 export class TodoPage {
   /**
    * @param {import('@playwright/test').Page} page
@@ -83,8 +82,7 @@ export class TodoPage {
 }
 ```
 
-```js tab=js-ts
-// todo-page.ts
+```js tab=js-ts title="todo-page.ts"
 import { Page, Locator } from '@playwright/test';
 
 export class TodoPage {
@@ -123,8 +121,7 @@ export class TodoPage {
   </div>
 </details>
 
-```js
-// todo.spec.js
+```js title="todo.spec.ts"
 const { test } = require('@playwright/test');
 const { TodoPage } = require('./todo-page');
 
@@ -168,8 +165,7 @@ Fixtures have a number of advantages over before/after hooks:
   <summary>Click to expand the code for the <code>TodoPage</code></summary>
   <div>
 
-```js tab=js-js
-// todo-page.js
+```js tab=js-js title="todo-page.js"
 export class TodoPage {
   /**
    * @param {import('@playwright/test').Page} page
@@ -210,8 +206,7 @@ export class TodoPage {
 }
 ```
 
-```js tab=js-ts
-// todo-page.ts
+```js tab=js-ts title="todo-page.ts"
 import { Page, Locator } from '@playwright/test';
 
 export class TodoPage {
@@ -249,8 +244,7 @@ export class TodoPage {
   </div>
 </details>
 
-```js tab=js-js
-// todo.spec.js
+```js tab=js-js title="todo.spec.js"
 const base = require('@playwright/test');
 const { TodoPage } = require('./todo-page');
 
@@ -277,8 +271,7 @@ test('should remove an item', async ({ todoPage }) => {
 });
 ```
 
-```js tab=js-ts
-// example.spec.ts
+```js tab=js-ts title="example.spec.ts"
 import { test as base } from '@playwright/test';
 import { TodoPage } from './todo-page';
 
@@ -314,8 +307,7 @@ Below we create two fixtures `todoPage` and `settingsPage` that follow the [Page
 <details>
   <summary>Click to expand the code for the <code>TodoPage</code> and <code>SettingsPage</code></summary>
   <div>
-```js tab=js-js
-// todo-page.js
+```js tab=js-js title="todo-page.js"
 export class TodoPage {
   /**
    * @param {import('@playwright/test').Page} page
@@ -356,8 +348,7 @@ export class TodoPage {
 }
 ```
 
-```js tab=js-ts
-// todo-page.ts
+```js tab=js-ts title="todo-page.ts"
 import { Page, Locator } from '@playwright/test';
 
 export class TodoPage {
@@ -395,8 +386,7 @@ export class TodoPage {
 
 SettingsPage is similar:
 
-```js tab=js-js
-// settings-page.js
+```js tab=js-js title="settings-page.js"
 export class SettingsPage {
   /**
    * @param {import('@playwright/test').Page} page
@@ -411,8 +401,7 @@ export class SettingsPage {
 }
 ```
 
-```js tab=js-ts
-// settings-page.ts
+```js tab=js-ts title="settings-page.ts"
 import { Page } from '@playwright/test';
 
 export class SettingsPage {
@@ -428,8 +417,7 @@ export class SettingsPage {
   </div>
 </details>
 
-```js tab=js-js
-// my-test.js
+```js tab=js-js title="my-test.js"
 const base = require('@playwright/test');
 const { TodoPage } = require('./todo-page');
 const { SettingsPage } = require('./settings-page');
@@ -458,8 +446,7 @@ exports.test = base.test.extend({
 exports.expect = base.expect;
 ```
 
-```js tab=js-ts
-// my-test.ts
+```js tab=js-ts title="my-test.ts"
 import { test as base } from '@playwright/test';
 import { TodoPage } from './todo-page';
 import { SettingsPage } from './settings-page';
@@ -547,8 +534,7 @@ export const test = base.extend({
 
 Notice that in this example, the `page` fixture is able to depend on other built-in fixtures such as [`property: TestOptions.baseURL`]. We can now configure `baseURL` in the configuration file, or locally in the test file with [`method: Test.use`].
 
-```js
-// example.spec.ts
+```js title="example.spec.ts"
 
 test.use({ baseURL: 'https://playwright.dev' });
 ```
@@ -572,8 +558,7 @@ Playwright Test uses [worker processes](./test-parallel.md) to run test files. S
 
 Below we'll create an `account` fixture that will be shared by all tests in the same worker, and override the `page` fixture to login into this account for each test. To generate unique accounts, we'll use the [`property: WorkerInfo.workerIndex`] that is available to any test or fixture. Note the tuple-like syntax for the worker fixture - we have to pass `{scope: 'worker'}` so that test runner sets up this fixture once per worker.
 
-```js tab=js-js
-// my-test.js
+```js tab=js-js title="my-test.js"
 const base = require('@playwright/test');
 
 exports.test = base.test.extend({
@@ -613,8 +598,7 @@ exports.test = base.test.extend({
 exports.expect = base.expect;
 ```
 
-```js tab=js-ts
-// my-test.ts
+```js tab=js-ts title="my-test.ts"
 import { test as base } from '@playwright/test';
 
 type Account = {
@@ -666,8 +650,7 @@ Automatic fixtures are set up for each test/worker, even when the test does not 
 
 Here is an example fixture that automatically attaches debug logs when the test fails, so we can later review the logs in the reporter. Note how it uses [TestInfo] object that is available in each test/fixture to retrieve metadata about the test being run.
 
-```js tab=js-js
-// my-test.js
+```js tab=js-js title="my-test.js"
 const debug = require('debug');
 const fs = require('fs');
 const base = require('@playwright/test');
@@ -692,8 +675,7 @@ exports.test = base.test.extend({
 });
 ```
 
-```js tab=js-ts
-// my-test.ts
+```js tab=js-ts title="my-test.ts"
 import * as debug from 'debug';
 import * as fs from 'fs';
 import { test as base } from '@playwright/test';
@@ -768,8 +750,7 @@ Below we'll create a `defaultItem` option in addition to the `todoPage` fixture 
   <summary>Click to expand the code for the <code>TodoPage</code></summary>
   <div>
 
-```js tab=js-js
-// todo-page.js
+```js tab=js-js title="todo-page.js"
 export class TodoPage {
   /**
    * @param {import('@playwright/test').Page} page
@@ -810,8 +791,7 @@ export class TodoPage {
 }
 ```
 
-```js tab=js-ts
-// todo-page.ts
+```js tab=js-ts title="todo-page.ts"
 import { Page, Locator } from '@playwright/test';
 
 export class TodoPage {
@@ -850,8 +830,7 @@ export class TodoPage {
   </div>
 </details>
 
-```js tab=js-js
-// my-test.js
+```js tab=js-js title="my-test.js"
 const base = require('@playwright/test');
 const { TodoPage } = require('./todo-page');
 
@@ -872,8 +851,7 @@ exports.test = base.test.extend({
 exports.expect = base.expect;
 ```
 
-```js tab=js-ts
-// my-test.ts
+```js tab=js-ts title="my-test.ts"
 import { test as base } from '@playwright/test';
 import { TodoPage } from './todo-page';
 

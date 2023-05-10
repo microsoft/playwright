@@ -202,8 +202,7 @@ export default defineConfig({});
 
 Now we can use `toBeWithinRange` in the test.
 
-```js
-// example.spec.ts
+```js title="example.spec.ts"
 import { test, expect } from '@playwright/test';
 
 test('numeric ranges', () => {
@@ -220,8 +219,7 @@ For TypeScript, also add the following to your [`global.d.ts`](https://www.types
 
 You don't need it for JavaScript.
 
-```js
-// global.d.ts
+```js title="global.d.ts"
 export {};
 
 declare global {

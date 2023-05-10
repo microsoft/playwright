@@ -125,8 +125,7 @@ python -m asyncio
 
 You can use Playwright with [Pyinstaller](https://www.pyinstaller.org/) to create standalone executables.
 
-```py
-# main.py
+```py title="main.py"
 from playwright.sync_api import sync_playwright
 
 with sync_playwright() as p:

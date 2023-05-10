@@ -615,8 +615,7 @@ Use these to configure your app for tests.
 
 For example, this could be used to setup App router in Vue.js:
 
-```js
-// src/component.spec.ts
+```js title="src/component.spec.ts"
 import { test } from '@playwright/experimental-ct-vue';
 import { Component } from './mycomponent';
 
@@ -629,8 +628,7 @@ test('should work', async ({ mount }) => {
 });
 ```
 
-```js
-// playwright/index.ts
+```js title="playwright/index.ts"
 import { router } from '../router';
 import { beforeMount } from '@playwright/experimental-ct-vue/hooks';
 
@@ -641,8 +639,7 @@ beforeMount(async ({ app, hooksConfig }) => {
 
 A similar configuration in Next.js would look like this:
 
-```js
-// src/component.spec.jsx
+```js title="src/component.spec.jsx"
 import { test } from '@playwright/experimental-ct-react';
 import { Component } from './mycomponent';
 
@@ -659,8 +656,7 @@ test('should work', async ({ mount }) => {
 });
 ```
 
-```js
-// playwright/index.js
+```js title="playwright/index.js"
 import router from 'next/router';
 import { beforeMount } from '@playwright/experimental-ct-react/hooks';
 
@@ -805,8 +801,7 @@ WebServer is now considered "ready" if request to the specified url has any of t
 
   Here is what a typical component test looks like:
 
-  ```ts
-  // App.spec.tsx
+  ```ts title="App.spec.tsx"
   import { test, expect } from '@playwright/experimental-ct-react';
   import App from './App';
 

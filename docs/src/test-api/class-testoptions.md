@@ -20,8 +20,7 @@ export default defineConfig({
 
 Alternatively, with [`method: Test.use`] you can override some options for a file.
 
-```js
-// example.spec.ts
+```js title="example.spec.ts"
 import { test, expect } from '@playwright/test';
 
 // Run tests in this file with portrait-like viewport.

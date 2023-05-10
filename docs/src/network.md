@@ -11,8 +11,7 @@ Playwright provides APIs to **monitor** and **modify** network traffic, both HTT
 
 You don't have to configure anything to mock network requests. Just define a custom [Route] that mocks network for a browser context.
 
-```js
-// example.spec.ts
+```js title="example.spec.ts"
 import { test, expect } from '@playwright/test';
 
 test.beforeEach(async ({ context }) => {
@@ -28,8 +27,7 @@ test('loads page without css', async ({ page }) => {
 
 Alternatively, you can use [`method: Page.route`] to mock network in a single page.
 
-```js
-// example.spec.ts
+```js title="example.spec.ts"
 import { test, expect } from '@playwright/test';
 
 test('loads page without images', async ({ page }) => {

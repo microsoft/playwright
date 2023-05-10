@@ -13,8 +13,7 @@ Page objects **simplify authoring** by creating a higher-level API which suits y
 
 We will create a `PlaywrightDevPage` helper class to encapsulate common operations on the `playwright.dev` page. Internally, it will use the `page` object.
 
-```js tab=js-js
-// playwright-dev-page.js
+```js tab=js-js title="playwright-dev-page.js"
 const { expect } = require('@playwright/test');
 
 exports.PlaywrightDevPage = class PlaywrightDevPage {
@@ -46,8 +45,7 @@ exports.PlaywrightDevPage = class PlaywrightDevPage {
 }
 ```
 
-```js tab=js-ts
-// playwright-dev-page.ts
+```js tab=js-ts title="playwright-dev-page.ts"
 import { expect, Locator, Page } from '@playwright/test';
 
 export class PlaywrightDevPage {
@@ -81,8 +79,7 @@ export class PlaywrightDevPage {
 }
 ```
 
-```js tab=js-library
-// models/PlaywrightDevPage.js
+```js tab=js-library title="models/PlaywrightDevPage.js"
 class PlaywrightDevPage {
   /**
    * @param {import('playwright').Page} page 
@@ -109,8 +106,7 @@ module.exports = { PlaywrightDevPage };
 
 Now we can use the `PlaywrightDevPage` class in our tests.
 
-```js tab=js-js
-// example.spec.js
+```js tab=js-js title="example.spec.js"
 const { test, expect } = require('@playwright/test');
 const { PlaywrightDevPage } = require('./playwright-dev-page');
 
@@ -138,8 +134,7 @@ test('should show Page Object Model article', async ({ page }) => {
 });
 ```
 
-```js tab=js-ts
-// example.spec.ts
+```js tab=js-ts title="example.spec.ts"
 import { test, expect } from '@playwright/test';
 import { PlaywrightDevPage } from './playwright-dev-page';
 
@@ -167,8 +162,7 @@ test('should show Page Object Model article', async ({ page }) => {
 });
 ```
 
-```js tab=js-library
-// example.spec.js
+```js tab=js-library title="example.spec.js"
 const { PlaywrightDevPage } = require('./playwright-dev-page');
 
 // In the test
@@ -192,8 +186,7 @@ await expect(playwrightDev.tocList).toHaveText([
 
 Page object models wrap over a Playwright [Page].
 
-```java
-// models/SearchPage.java
+```java title="models/SearchPage.java"
 package models;
 
 import com.microsoft.playwright;
@@ -218,8 +211,7 @@ public class SearchPage {
 }
 ```
 
-```python async
-# models/search.py
+```python async title="models/search.py"
 class SearchPage:
     def __init__(self, page):
         self.page = page
@@ -233,8 +225,7 @@ class SearchPage:
         await self.search_term_input.press("Enter")
 ```
 
-```python sync
-# models/search.py
+```python sync title="models/search.py"
 class SearchPage:
     def __init__(self, page):
         self.page = page
@@ -292,8 +283,7 @@ searchPage.navigate();
 searchPage.search("search query");
 ```
 
-```python async
-# test_search.py
+```python async title="test_search.py"
 from models.search import SearchPage
 
 # in the test
@@ -303,8 +293,7 @@ await search_page.navigate()
 await search_page.search("search query")
 ```
 
-```python sync
-# test_search.py
+```python sync title="test_search.py"
 from models.search import SearchPage
 
 # in the test

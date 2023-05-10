@@ -1666,8 +1666,7 @@ tests/
 
 And the following `page-click.spec.ts` that uses `toHaveScreenshot()` call:
 
-```js
-// page-click.spec.ts
+```js title="page-click.spec.ts"
 import { test, expect } from '@playwright/test';
 
 test.describe('suite', () => {

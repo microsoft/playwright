@@ -163,8 +163,7 @@ It is usually better to make your tests isolated, so they can be efficiently run
 
 Playwright Test creates an isolated [Page] object for each test. However, if you'd like to reuse a single [Page] object between multiple tests, you can create your own in [`method: Test.beforeAll`] and close it in [`method: Test.afterAll`].
 
-```js tab=js-js
-// example.spec.js
+```js tab=js-js title="example.spec.js"
 // @ts-check
 
 const { test } = require('@playwright/test');
@@ -191,9 +190,7 @@ test('runs second', async () => {
 });
 ```
 
-```js tab=js-ts
-// example.spec.ts
-
+```js tab=js-ts title="example.spec.ts"
 import { test, Page } from '@playwright/test';
 
 test.describe.configure({ mode: 'serial' });

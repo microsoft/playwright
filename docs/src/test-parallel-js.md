@@ -181,8 +181,7 @@ Tests lists are discouraged and supported as a best-effort only. Some features s
 
 You can put your tests in helper functions in multiple files. Consider the following example where tests are not defined directly in the file, but rather in a wrapper function.
 
-```js
-// feature-a.spec.ts
+```js title="feature-a.spec.ts"
 import { test, expect } from '@playwright/test';
 
 export default function createTests() {
@@ -191,7 +190,9 @@ export default function createTests() {
   });
 }
 
-// feature-b.spec.ts
+```
+
+```js title="feature-b.spec.ts"
 import { test, expect } from '@playwright/test';
 
 export default function createTests() {
@@ -206,8 +207,7 @@ export default function createTests() {
 You can create a test list file that will control the order of tests - first run `feature-b` tests, then `feature-a` tests. Note how each test file is wrapped in a `test.describe()` block that calls the function where tests are defined. This way `test.use()` calls only affect tests from a single file.
 
 
-```js
-// test.list.ts
+```js title="test.list.ts"
 import { test } from '@playwright/test';
 import featureBTests from './feature-b.spec.ts';
 import featureATests from './feature-a.spec.ts';
