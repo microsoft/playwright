@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-import type { EventEmitter } from 'events';
 import fs from 'fs';
 import path from 'path';
-import { ManualPromise, calculateSha1 } from 'playwright-core/lib/utils';
+import { calculateSha1, createGuid } from 'playwright-core/lib/utils';
 import { mime } from 'playwright-core/lib/utilsBundle';
-import { yazl } from 'playwright-core/lib/zipBundle';
 import { Readable } from 'stream';
 import type { FullConfig, FullResult, TestResult } from '../../types/testReporter';
 import type { Suite } from '../common/test';
@@ -34,9 +32,10 @@ type BlobReporterOptions = {
 export class BlobReporter extends TeleReporterEmitter {
   private _messages: any[] = [];
   private _options: BlobReporterOptions;
+  private _copyFilePromises = new Set<Promise<void>>();
 
-  private readonly _zipFile = new yazl.ZipFile();
-  private readonly _zipFinishPromise = new ManualPromise<undefined>();
+  private _outputDir!: string;
+  private _reportFile!: string;
 
   constructor(options: BlobReporterOptions) {
     super(message => this._messages.push(message));
@@ -44,17 +43,21 @@ export class BlobReporter extends TeleReporterEmitter {
   }
 
   override onBegin(config: FullConfig<{}, {}>, suite: Suite): void {
+    this._outputDir = path.resolve(this._options.configDir, this._options.outputDir || 'blob-report');
+    fs.mkdirSync(path.join(this._outputDir, 'resources'), { recursive: true });
+    this._reportFile = this._computeOutputFileName(config);
     super.onBegin(config, suite);
-    this._initializeZipFile(config);
   }
 
   override async onEnd(result: FullResult): Promise<void> {
     await super.onEnd(result);
     const lines = this._messages.map(m => JSON.stringify(m) + '\n');
     const content = Readable.from(lines);
-    this._zipFile.addReadStream(content, 'report.jsonl');
-    this._zipFile.end();
-    await this._zipFinishPromise;
+    await Promise.all([
+      ...this._copyFilePromises,
+      // Requires Node v14.18.0+
+      fs.promises.writeFile(this._reportFile, content as any).catch(e => console.error(`Failed to write report ${this._reportFile}: ${e}`))
+    ]);
   }
 
   override _serializeAttachments(attachments: TestResult['attachments']): TestResult['attachments'] {
@@ -64,7 +67,7 @@ export class BlobReporter extends TeleReporterEmitter {
       const sha1 = calculateSha1(attachment.path);
       const extension = mime.getExtension(attachment.contentType) || 'dat';
       const newPath = `resources/${sha1}.${extension}`;
-      this._zipFile.addFile(attachment.path, newPath);
+      this._startCopyingFile(attachment.path, path.join(this._outputDir, newPath));
       return {
         ...attachment,
         path: newPath,
@@ -72,22 +75,19 @@ export class BlobReporter extends TeleReporterEmitter {
     });
   }
 
-  private _initializeZipFile(config: FullConfig) {
-    (this._zipFile as any as EventEmitter).on('error', error => this._zipFinishPromise.reject(error));
-    const zipFileName = this._computeOutputFileName(config);
-    fs.mkdirSync(path.dirname(zipFileName), { recursive: true });
-    this._zipFile.outputStream.pipe(fs.createWriteStream(zipFileName)).on('close', () => {
-      this._zipFinishPromise.resolve(undefined);
-    });
-  }
-
   private _computeOutputFileName(config: FullConfig) {
-    const outputDir = path.resolve(this._options.configDir, this._options.outputDir || '');
     let shardSuffix = '';
     if (config.shard) {
       const paddedNumber = `${config.shard.current}`.padStart(`${config.shard.total}`.length, '0');
-      shardSuffix = `-${paddedNumber}-of-${config.shard.total}`;
+      shardSuffix = `${paddedNumber}-of-${config.shard.total}-`;
     }
-    return path.join(outputDir, `report${shardSuffix}.zip`);
+    return path.join(this._outputDir, `report-${shardSuffix}${createGuid()}.jsonl`);
+  }
+
+  private _startCopyingFile(from: string, to: string) {
+    const copyPromise: Promise<void> = fs.promises.copyFile(from, to)
+        .catch(e => { console.error(`Failed to copy file from "${from}" to "${to}": ${e}`); })
+        .then(() => { this._copyFilePromises.delete(copyPromise); });
+    this._copyFilePromises.add(copyPromise);
   }
 }
