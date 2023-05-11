@@ -403,12 +403,21 @@ test('preserve attachments', async ({ runInlineTest, mergeReports, showReport, p
   const reportFiles = await fs.promises.readdir(reportDir);
   reportFiles.sort();
   expect(reportFiles).toEqual([expect.stringMatching(/report-1-of-2.*.jsonl/), 'resources']);
-  const { exitCode } = await mergeReports(reportDir, { 'PW_TEST_HTML_REPORT_OPEN': 'never' }, { additionalArgs: ['--reporter', 'html'] });
+  const { exitCode } = await mergeReports(reportDir, { 'PW_TEST_HTML_REPORT_OPEN': 'never' }, { additionalArgs: ['--reporter', 'html', '--resolve-paths'] });
   expect(exitCode).toBe(0);
 
   await showReport();
+
+  // Check file attachment.
   await page.getByText('first').click();
   await expect(page.getByText('file-attachment')).toBeVisible();
+
+  // Check file attachment content.
+  const popupPromise = page.waitForEvent('popup');
+  await page.getByText('file-attachment').click();
+  const popup = await popupPromise;
+  await expect(popup.locator('body')).toHaveText('hello!');
+  await popup.close();
   await page.goBack();
 
   await page.getByText('failing 1').click();
@@ -463,15 +472,19 @@ test('generate html with attachment urls', async ({ runInlineTest, mergeReports,
   const { exitCode } = await mergeReports(reportDir, { 'PW_TEST_HTML_REPORT_OPEN': 'never' }, { additionalArgs: ['--reporter', 'html'] });
   expect(exitCode).toBe(0);
 
+  const htmlReportDir = test.info().outputPath('playwright-report');
+  for (const entry of await fs.promises.readdir(htmlReportDir))
+    await (fs.promises as any).cp(path.join(htmlReportDir, entry), path.join(reportDir, entry), { recursive: true });
+
   const oldSeveFile = server.serveFile;
   server.serveFile = async (req, res) => {
     const pathName = url.parse(req.url!).pathname!;
-    const filePath = path.join(test.info().outputDir, pathName.substring(1));
+    const filePath = path.join(reportDir, pathName.substring(1));
     return oldSeveFile.call(server, req, res, filePath);
   };
 
   // Check file attachment.
-  await page.goto(`${server.PREFIX}/playwright-report/index.html`);
+  await page.goto(`${server.PREFIX}/index.html`);
   await page.getByText('first').click();
   await expect(page.getByText('file-attachment')).toBeVisible();
 

@@ -47,6 +47,7 @@ type HtmlReporterOptions = {
   host?: string,
   port?: number,
   attachmentsBaseURL?: string,
+  _attachmentPathsAbsolute?: boolean,
 };
 
 class HtmlReporter implements Reporter {
@@ -113,7 +114,7 @@ class HtmlReporter implements Reporter {
       return report;
     });
     await removeFolders([this._outputFolder]);
-    const builder = new HtmlBuilder(this._outputFolder, this._attachmentsBaseURL);
+    const builder = new HtmlBuilder(this._outputFolder, this._attachmentsBaseURL, !!this._options._attachmentPathsAbsolute);
     this._buildResult = await builder.build({ ...this.config.metadata, duration }, reports);
   }
 
@@ -203,12 +204,14 @@ class HtmlBuilder {
   private _dataZipFile: ZipFile;
   private _hasTraces = false;
   private _attachmentsBaseURL: string;
+  private _copyAttachments: boolean;
 
-  constructor(outputDir: string, attachmentsBaseURL: string) {
+  constructor(outputDir: string, attachmentsBaseURL: string, copyAttachments: boolean) {
     this._reportFolder = outputDir;
     fs.mkdirSync(this._reportFolder, { recursive: true });
     this._dataZipFile = new yazl.ZipFile();
     this._attachmentsBaseURL = attachmentsBaseURL;
+    this._copyAttachments = copyAttachments;
   }
 
   async build(metadata: Metadata & { duration: number }, rawReports: JsonReport[]): Promise<{ ok: boolean, singleTestId: string | undefined }> {
@@ -390,18 +393,20 @@ class HtmlBuilder {
 
       if (a.path) {
         let fileName = a.path;
-        try {
-          const buffer = fs.readFileSync(a.path);
-          const sha1 = calculateSha1(buffer) + path.extname(a.path);
-          fileName = this._attachmentsBaseURL + sha1;
-          fs.mkdirSync(path.join(this._reportFolder, 'data'), { recursive: true });
-          fs.writeFileSync(path.join(this._reportFolder, 'data', sha1), buffer);
-        } catch (e) {
-          return {
-            name: `Missing attachment "${a.name}"`,
-            contentType: kMissingContentType,
-            body: `Attachment file ${fileName} is missing`,
-          };
+        if (this._copyAttachments) {
+          try {
+            const buffer = fs.readFileSync(a.path);
+            const sha1 = calculateSha1(buffer) + path.extname(a.path);
+            fileName = this._attachmentsBaseURL + sha1;
+            fs.mkdirSync(path.join(this._reportFolder, 'data'), { recursive: true });
+            fs.writeFileSync(path.join(this._reportFolder, 'data', sha1), buffer);
+          } catch (e) {
+            return {
+              name: `Missing attachment "${a.name}"`,
+              contentType: kMissingContentType,
+              body: `Attachment file ${fileName} is missing`,
+            };
+          }
         }
         return {
           name: a.name,

@@ -101,6 +101,7 @@ function addMergeReportsCommand(program: Command) {
   });
   command.option('-c, --config <file>', `Configuration file. Can be used to specify additional configuration for the output report.`);
   command.option('--reporter <reporter>', `Reporter to use, comma-separated, can be ${builtInReporters.map(name => `"${name}"`).join(', ')} (default: "${defaultReporter}")`);
+  command.option('--resolve-paths', `Resolve attachment paths to absolute local paths.`);
   command.addHelpText('afterAll', `
 Arguments [dir]:
   Directory containing blob reports.
@@ -197,7 +198,7 @@ async function mergeReports(reportDir: string | undefined, opts: { [key: string]
     reporterDescriptions = config.config.reporter;
   if (!reporterDescriptions)
     reporterDescriptions = [[defaultReporter]];
-  await createMergedReport(config, dir, reporterDescriptions!);
+  await createMergedReport(config, dir, reporterDescriptions!, !!opts.resolvePaths);
 }
 
 function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrides {
