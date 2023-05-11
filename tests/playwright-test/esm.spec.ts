@@ -392,3 +392,47 @@ test('should resolve .js import to .tsx file in ESM mode for components', async 
   expect(result.passed).toBe(1);
   expect(result.exitCode).toBe(0);
 });
+
+test('should load cjs config and test in non-ESM mode', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'package.json': `{ "type": "module" }`,
+    'playwright.config.cjs': `
+      const fs = require('fs');
+      module.exports = { projects: [{name: 'foo'}] };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('check project name', ({}, testInfo) => {
+        expect(testInfo.project.name).toBe('foo');
+      });
+    `,
+    'b.spec.cjs': `
+      const { test, expect } = require('@playwright/test');
+      test('check project name', ({}, testInfo) => {
+        expect(testInfo.project.name).toBe('foo');
+      });
+    `,
+  });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(2);
+});
+
+test('should disallow ESM when config is cjs', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'package.json': `{ "type": "module" }`,
+    'playwright.config.cjs': `
+      const fs = require('fs');
+      module.exports = { projects: [{name: 'foo'}] };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('check project name', ({}, testInfo) => {
+        expect(testInfo.project.name).toBe('foo');
+      });
+    `,
+  });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('Unknown file extension ".ts"');
+});
