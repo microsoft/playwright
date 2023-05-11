@@ -150,3 +150,16 @@ browserTest('should drag with high dpi', async ({ browser, server }) => {
   expect(await page.$eval('#target', target => target.contains(document.querySelector('#source')))).toBe(true); // could not find source in target
   await page.close();
 });
+
+it('WebKit Windows headed should have a minimal viewport', async ({ contextFactory, browserName, headless, isWindows }) => {
+  it.skip(browserName !== 'webkit' || headless || !isWindows, 'Not relevant for this browser');
+
+  await expect(contextFactory({
+    viewport: { 'width': 100, 'height': 100 },
+  })).rejects.toThrow('WebKit on Windows has a minimal viewport of 250x250.');
+
+  const context = await contextFactory();
+  const page = await context.newPage();
+  await expect(page.setViewportSize({ width: 100, height: 100 })).rejects.toThrow('WebKit on Windows has a minimal viewport of 250x250.');
+  await context.close();
+});

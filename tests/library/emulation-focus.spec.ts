@@ -102,8 +102,8 @@ it('should change document.activeElement', async ({ page, server }) => {
 });
 
 it('should not affect screenshots', async ({ page, server, browserName, headless, isWindows }) => {
-  it.fixme(browserName === 'webkit' && isWindows && !headless, 'https://github.com/microsoft/playwright/issues/22616');
-  it.skip(browserName === 'firefox' && !headless, 'Firefox headede produces a different image');
+  it.skip(browserName === 'webkit' && isWindows && !headless, 'WebKit/Windows/headed has a larger minimal viewport. See https://github.com/microsoft/playwright/issues/22616');
+  it.skip(browserName === 'firefox' && !headless, 'Firefox headed produces a different image');
 
   const page2 = await page.context().newPage();
   await Promise.all([
