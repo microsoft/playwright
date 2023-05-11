@@ -212,6 +212,7 @@ export class WKBrowserContext extends BrowserContext {
 
   constructor(browser: WKBrowser, browserContextId: string | undefined, options: channels.BrowserNewContextParams) {
     super(browser, options, browserContextId);
+    this._validateEmulatedViewport(options.viewport);
     this._authenticateProxyViaHeader();
   }
 
@@ -360,5 +361,12 @@ export class WKBrowserContext extends BrowserContext {
 
   async cancelDownload(uuid: string) {
     await this._browser._browserSession.send('Playwright.cancelDownload', { uuid });
+  }
+
+  _validateEmulatedViewport(viewportSize?: types.Size | null) {
+    if (!viewportSize)
+      return;
+    if (process.platform === 'win32' && this._browser.options.headful && (viewportSize.width < 250 || viewportSize.height < 250))
+      throw new Error(`WebKit on Windows has a minimal viewport of 250x250.`);
   }
 }

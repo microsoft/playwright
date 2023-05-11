@@ -681,6 +681,7 @@ export class WKPage implements PageDelegate {
   }
 
   async updateEmulatedViewportSize(): Promise<void> {
+    this._browserContext._validateEmulatedViewport(this._page.viewportSize());
     await this._updateViewport();
   }
 
