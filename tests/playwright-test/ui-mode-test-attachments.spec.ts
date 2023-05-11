@@ -16,9 +16,7 @@
 
 import { test, expect } from './ui-mode-fixtures';
 
-test.describe.configure({ mode: 'parallel' });
-
-test('should contain attachments', async ({ runUITest }) => {
+test('should contain file attachment', async ({ runUITest }) => {
   const { page } = await runUITest({
     'a.test.ts': `
       import { test } from '@playwright/test';
@@ -31,11 +29,33 @@ test('should contain attachments', async ({ runUITest }) => {
   await page.getByTitle('Run all').click();
   await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
   await page.getByText('Attachments').click();
-  await page.getByText('attach', { exact: true }).click();
+  await page.getByText('attach "note"', { exact: true }).click();
   const popupPromise = page.waitForEvent('popup');
   await page.getByRole('link', { name: 'note' }).click();
   const popup = await popupPromise;
   await popup.waitForLoadState();
   const content = await popup.content();
   expect(content).toContain('attach test');
+});
+
+test('should contain string attachment', async ({ runUITest }) => {
+  const { page } = await runUITest({
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      test('attach test', async () => {
+        await test.info().attach('note', { body: 'text42' });
+      });
+    `,
+  });
+  await page.getByText('attach test').click();
+  await page.getByTitle('Run all').click();
+  await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
+  await page.getByText('Attachments').click();
+  await page.getByText('attach "note"', { exact: true }).click();
+  const popupPromise = page.waitForEvent('popup');
+  await page.getByRole('link', { name: 'note' }).click();
+  const popup = await popupPromise;
+  await popup.waitForLoadState();
+  const content = await popup.content();
+  expect(content).toContain('text42');
 });
