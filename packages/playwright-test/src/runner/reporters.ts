@@ -31,7 +31,7 @@ import { loadReporter } from './loadUtils';
 import { BlobReporter } from '../reporters/blob';
 import type { ReporterDescription } from '../../types/test';
 
-export async function createReporters(config: FullConfigInternal, mode: 'list' | 'run' | 'ui' | 'merge', descriptions?: ReporterDescription[], attachmentPathsAbsolute?: boolean): Promise<Reporter[]> {
+export async function createReporters(config: FullConfigInternal, mode: 'list' | 'run' | 'ui' | 'merge', descriptions?: ReporterDescription[]): Promise<Reporter[]> {
   const defaultReporters: {[key in BuiltInReporter]: new(arg: any) => Reporter} = {
     dot: mode === 'list' ? ListModeReporter : DotReporter,
     line: mode === 'list' ? ListModeReporter : LineReporter,
@@ -47,7 +47,7 @@ export async function createReporters(config: FullConfigInternal, mode: 'list' |
   descriptions ??= config.config.reporter;
   for (const r of descriptions) {
     const [name, arg] = r;
-    const options = { ...arg, configDir: config.configDir, _attachmentPathsAbsolute: attachmentPathsAbsolute };
+    const options = { ...arg, configDir: config.configDir };
     if (name in defaultReporters) {
       reporters.push(new defaultReporters[name as keyof typeof defaultReporters](options));
     } else {

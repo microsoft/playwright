@@ -29,7 +29,7 @@ export async function createMergedReport(config: FullConfigInternal, dir: string
   if (resolvePaths)
     patchAttachmentPaths(events, dir);
 
-  const reporters = await createReporters(config, 'merge', reporterDescriptions, resolvePaths);
+  const reporters = await createReporters(config, 'merge', reporterDescriptions);
   const receiver = new TeleReporterReceiver(path.sep, new Multiplexer(reporters));
   for (const event of events)
     await receiver.dispatch(event);
@@ -44,7 +44,6 @@ function patchAttachmentPaths(events: JsonEvent[], resourceDir: string) {
         continue;
 
       attachment.path = path.join(resourceDir, attachment.path);
-      console.log('attachment.path ', attachment.path);
     }
   }
 }
