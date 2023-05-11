@@ -99,6 +99,7 @@ export function babelTransform(filename: string, isTypeScript: boolean, isModule
       [require('@babel/preset-typescript'), { onlyRemoveTypeImports: false }],
     ],
     plugins,
+    compact: false,
     sourceMaps: 'both',
   } as babel.TransformOptions)!;
 }
