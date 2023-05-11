@@ -395,8 +395,8 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
    * Only the files matching one of these patterns are executed as test files. Matching is performed against the
    * absolute file path. Strings are treated as glob patterns.
    *
-   * By default, Playwright looks for files matching the following glob pattern: `**\/*.@(spec|test).?(m)[jt]s?(x)`. This
-   * means JavaScript or TypeScript files with `".test"` or `".spec"` suffix, for example
+   * By default, Playwright looks for files matching the following glob pattern: `**\/*.@(spec|test).?(c|m)[jt]s?(x)`.
+   * This means JavaScript or TypeScript files with `".test"` or `".spec"` suffix, for example
    * `login-screen.wrong-credentials.spec.ts`.
    *
    * Use [testConfig.testMatch](https://playwright.dev/docs/api/class-testconfig#test-config-test-match) to change this
@@ -1240,8 +1240,8 @@ interface TestConfig {
    * Only the files matching one of these patterns are executed as test files. Matching is performed against the
    * absolute file path. Strings are treated as glob patterns.
    *
-   * By default, Playwright looks for files matching the following glob pattern: `**\/*.@(spec|test).?(m)[jt]s?(x)`. This
-   * means JavaScript or TypeScript files with `".test"` or `".spec"` suffix, for example
+   * By default, Playwright looks for files matching the following glob pattern: `**\/*.@(spec|test).?(c|m)[jt]s?(x)`.
+   * This means JavaScript or TypeScript files with `".test"` or `".spec"` suffix, for example
    * `login-screen.wrong-credentials.spec.ts`.
    *
    * **Usage**
@@ -6439,8 +6439,8 @@ interface TestProject {
    * Only the files matching one of these patterns are executed as test files. Matching is performed against the
    * absolute file path. Strings are treated as glob patterns.
    *
-   * By default, Playwright looks for files matching the following glob pattern: `**\/*.@(spec|test).?(m)[jt]s?(x)`. This
-   * means JavaScript or TypeScript files with `".test"` or `".spec"` suffix, for example
+   * By default, Playwright looks for files matching the following glob pattern: `**\/*.@(spec|test).?(c|m)[jt]s?(x)`.
+   * This means JavaScript or TypeScript files with `".test"` or `".spec"` suffix, for example
    * `login-screen.wrong-credentials.spec.ts`.
    *
    * Use [testConfig.testMatch](https://playwright.dev/docs/api/class-testconfig#test-config-test-match) to change this

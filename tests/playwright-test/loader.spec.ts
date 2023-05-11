@@ -224,9 +224,27 @@ test('should load esm when package.json has type module', async ({ runInlineTest
   expect(result.passed).toBe(1);
 });
 
-test('should load esm config files', async ({ runInlineTest }) => {
+test('should load mjs config file', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.mjs': `
+      import * as fs from 'fs';
+      export default { projects: [{name: 'foo'}] };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('check project name', ({}, testInfo) => {
+        expect(testInfo.project.name).toBe('foo');
+      });
+    `
+  });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
+test('should load mts config file', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.mts': `
       import * as fs from 'fs';
       export default { projects: [{name: 'foo'}] };
     `,
