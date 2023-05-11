@@ -276,6 +276,12 @@ export interface Page {
    * await page.addInitScript({ path: './preload.js' });
    * ```
    *
+   * ```js
+   * await page.addInitScript(mock => {
+   *   window.mock = mock;
+   * }, mock);
+   * ```
+   *
    * **NOTE** The order of evaluation of multiple scripts installed via
    * [browserContext.addInitScript(script[, arg])](https://playwright.dev/docs/api/class-browsercontext#browser-context-add-init-script)
    * and [page.addInitScript(script[, arg])](https://playwright.dev/docs/api/class-page#page-add-init-script) is not
@@ -7289,6 +7295,9 @@ export interface Frame {
   }): Promise<null|Response>;
 
   /**
+   * **NOTE** Never wait for timeout in production. Tests that wait for time are inherently flaky. Use [Locator] actions and web
+   * assertions that wait automatically.
+   *
    * Waits for the given `timeout` in milliseconds.
    *
    * Note that `frame.waitForTimeout()` should only be used for debugging. Tests using the timer in production are going

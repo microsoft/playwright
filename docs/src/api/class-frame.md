@@ -2243,6 +2243,8 @@ class FrameExamples
 
 ## async method: Frame.waitForTimeout
 * since: v1.8
+* discouraged: Never wait for timeout in production. Tests that wait for time are
+  inherently flaky. Use [Locator] actions and web assertions that wait automatically.
 
 Waits for the given [`param: timeout`] in milliseconds.
 

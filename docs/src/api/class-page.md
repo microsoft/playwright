@@ -584,6 +584,12 @@ Math.random = () => 42;
 await page.addInitScript({ path: './preload.js' });
 ```
 
+```js
+await page.addInitScript(mock => {
+  window.mock = mock;
+}, mock);
+```
+
 ```java
 // In your playwright script, assuming the preload.js file is in same directory
 page.addInitScript(Paths.get("./preload.js"));
