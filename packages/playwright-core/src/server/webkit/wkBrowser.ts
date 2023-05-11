@@ -366,7 +366,7 @@ export class WKBrowserContext extends BrowserContext {
   _validateEmulatedViewport(viewportSize?: types.Size | null) {
     if (!viewportSize)
       return;
-    if (process.platform === 'win32' && this._browser.options.headful && (viewportSize.width < 250 || viewportSize.height < 250))
-      throw new Error(`WebKit on Windows has a minimal viewport of 250x250.`);
+    if (process.platform === 'win32' && this._browser.options.headful && (viewportSize.width < 250 || viewportSize.height < 240))
+      throw new Error(`WebKit on Windows has a minimal viewport of 250x240.`);
   }
 }
