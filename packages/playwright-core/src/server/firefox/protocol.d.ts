@@ -590,6 +590,7 @@ export module Protocol {
         width: number;
         height: number;
       };
+      quality?: number;
       omitDeviceScaleFactor?: boolean;
     };
     export type screenshotReturnValue = {
