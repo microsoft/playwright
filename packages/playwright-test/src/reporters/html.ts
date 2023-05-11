@@ -388,24 +388,20 @@ class HtmlBuilder {
         return a;
       }
 
-      if (a.path || a.url) {
+      if (a.path) {
         let fileName = a.path;
-        if (a.url) {
-          fileName = a.url;
-        } else if (a.path) {
-          try {
-            const buffer = fs.readFileSync(a.path);
-            const sha1 = calculateSha1(buffer) + path.extname(a.path);
-            fileName = this._attachmentsBaseURL + sha1;
-            fs.mkdirSync(path.join(this._reportFolder, 'data'), { recursive: true });
-            fs.writeFileSync(path.join(this._reportFolder, 'data', sha1), buffer);
-          } catch (e) {
-            return {
-              name: `Missing attachment "${a.name}"`,
-              contentType: kMissingContentType,
-              body: `Attachment file ${fileName} is missing`,
-            };
-          }
+        try {
+          const buffer = fs.readFileSync(a.path);
+          const sha1 = calculateSha1(buffer) + path.extname(a.path);
+          fileName = this._attachmentsBaseURL + sha1;
+          fs.mkdirSync(path.join(this._reportFolder, 'data'), { recursive: true });
+          fs.writeFileSync(path.join(this._reportFolder, 'data', sha1), buffer);
+        } catch (e) {
+          return {
+            name: `Missing attachment "${a.name}"`,
+            contentType: kMissingContentType,
+            body: `Attachment file ${fileName} is missing`,
+          };
         }
         return {
           name: a.name,

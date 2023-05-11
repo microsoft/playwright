@@ -31,7 +31,7 @@ export class ZipTraceModelBackend implements TraceModelBackend {
   constructor(traceURL: string, progress: Progress) {
     this._traceURL = traceURL;
     this._zipReader = new zipjs.ZipReader(
-        new zipjs.HttpReader(formatUrl(traceURL), { preventHeadRequest: true } as any),
+        new zipjs.HttpReader(formatUrl(traceURL), { mode: 'cors', preventHeadRequest: true } as any),
         { useWebWorkers: false }) as zip.ZipReader;
     this._entriesPromise = this._zipReader.getEntries({ onprogress: progress }).then(entries => {
       const map = new Map<string, zip.Entry>();

@@ -79,7 +79,6 @@ export type TestAttachment = {
   name: string;
   body?: string;
   path?: string;
-  url?: string;
   contentType: string;
 };
 

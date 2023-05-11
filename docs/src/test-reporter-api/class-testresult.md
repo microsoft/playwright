@@ -11,7 +11,6 @@ A result of a single [TestCase] run.
   - `contentType` <[string]> Content type of this attachment to properly present in the report, for example `'application/json'` or `'image/png'`.
   - `path` ?<[string]> Optional path on the filesystem to the attached file.
   - `body` ?<[Buffer]> Optional attachment body used instead of a file.
-  - `url` ?<[string]> Optional URL of the attachment.
 
 The list of files or buffers attached during the test execution through [`property: TestInfo.attachments`].
 

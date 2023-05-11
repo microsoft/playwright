@@ -233,11 +233,6 @@ export interface TestResult {
      * Optional attachment body used instead of a file.
      */
     body?: Buffer;
-
-    /**
-     * Optional URL of the attachment.
-     */
-    url?: string;
   }>;
 
   /**
