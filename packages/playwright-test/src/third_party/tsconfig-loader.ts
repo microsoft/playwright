@@ -39,6 +39,7 @@ interface Tsconfig {
     strict?: boolean;
     allowJs?: boolean;
   };
+  references?: any[];
 }
 
 export interface TsConfigLoaderResult {
@@ -123,20 +124,19 @@ export function walkForTsConfig(
 
 function loadTsconfig(
   configFilePath: string,
-  existsSync: (path: string) => boolean = fs.existsSync,
-  readFileSync: (filename: string) => string = (filename: string) =>
-    fs.readFileSync(filename, "utf8")
 ): Tsconfig | undefined {
-  if (!existsSync(configFilePath)) {
+  if (!fs.existsSync(configFilePath)) {
     return undefined;
   }
 
-  const configString = readFileSync(configFilePath);
+  const configString = fs.readFileSync(configFilePath, 'utf-8');
   const cleanedJson = StripBom(configString);
-  let config: Tsconfig = json5.parse(cleanedJson);
-  let extendedConfig = config.extends;
+  const parsedConfig: Tsconfig = json5.parse(cleanedJson);
 
-  if (extendedConfig) {
+  let config: Tsconfig = {};
+
+  const extendsArray = Array.isArray(parsedConfig.extends) ? parsedConfig.extends : (parsedConfig.extends ? [parsedConfig.extends] : []);
+  for (let extendedConfig of extendsArray) {
     if (
       typeof extendedConfig === "string" &&
       extendedConfig.indexOf(".json") === -1
@@ -148,7 +148,7 @@ function loadTsconfig(
     if (
       extendedConfig.indexOf("/") !== -1 &&
       extendedConfig.indexOf(".") !== -1 &&
-      !existsSync(extendedConfigPath)
+      !fs.existsSync(extendedConfigPath)
     ) {
       extendedConfigPath = path.join(
         currentDir,
@@ -158,7 +158,7 @@ function loadTsconfig(
     }
 
     const base =
-      loadTsconfig(extendedConfigPath, existsSync, readFileSync) || {};
+      loadTsconfig(extendedConfigPath) || {};
 
     // baseUrl should be interpreted as relative to the base tsconfig,
     // but we need to update it so it is relative to the original tsconfig being loaded
@@ -170,15 +170,13 @@ function loadTsconfig(
       );
     }
 
-    config = {
-      ...base,
-      ...config,
-      compilerOptions: {
-        ...base.compilerOptions,
-        ...config.compilerOptions,
-      },
-    };
+    config = mergeConfigs(config, base);
   }
+
+  config = mergeConfigs(config, parsedConfig);
+  // The only top-level property that is excluded from inheritance is "references".
+  // https://www.typescriptlang.org/tsconfig#extends
+  config.references = parsedConfig.references;
 
   if (path.basename(configFilePath) === 'jsconfig.json' && config.compilerOptions?.allowJs === undefined) {
     config.compilerOptions = config.compilerOptions || {};
@@ -186,6 +184,17 @@ function loadTsconfig(
   }
 
   return config;
+}
+
+function mergeConfigs(base: Tsconfig, override: Tsconfig): Tsconfig {
+  return {
+    ...base,
+    ...override,
+    compilerOptions: {
+      ...base.compilerOptions,
+      ...override.compilerOptions,
+    },
+  };
 }
 
 function StripBom(string: string) {

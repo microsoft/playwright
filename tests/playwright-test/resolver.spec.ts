@@ -469,3 +469,39 @@ test('should respect path resolver for JS and TS files from jsconfig.json', asyn
   expect(result.passed).toBe(2);
   expect(result.exitCode).toBe(0);
 });
+
+test('should support extends in tsconfig.json', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'tsconfig.json': `{
+      "extends": ["./tsconfig.base1.json", "./tsconfig.base2.json"],
+    }`,
+    'tsconfig.base1.json': `{
+      "extends": "./tsconfig.base.json",
+    }`,
+    'tsconfig.base2.json': `{
+      "compilerOptions": {
+        "baseUrl": "dir",
+      },
+    }`,
+    'tsconfig.base.json': `{
+      "compilerOptions": {
+        "paths": {
+          "util/*": ["./foo/bar/util/*"],
+        },
+      },
+    }`,
+    'a.test.ts': `
+      const { foo } = require('util/file');
+      import { test, expect } from '@playwright/test';
+      test('test', ({}, testInfo) => {
+        expect(foo).toBe('foo');
+      });
+    `,
+    'dir/foo/bar/util/file.ts': `
+      module.exports = { foo: 'foo' };
+    `,
+  });
+
+  expect(result.passed).toBe(1);
+  expect(result.exitCode).toBe(0);
+});
