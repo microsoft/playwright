@@ -64,7 +64,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
   browserName: [({ defaultBrowserType }, use) => use(defaultBrowserType), { scope: 'worker', option: true }],
   playwright: [async ({}, use) => {
     await use(require('playwright-core'));
-  }, { scope: 'worker' }],
+  }, { scope: 'worker', _hideStep: true } as any],
   headless: [({ launchOptions }, use) => use(launchOptions.headless ?? true), { scope: 'worker', option: true }],
   channel: [({ launchOptions }, use) => use(launchOptions.channel), { scope: 'worker', option: true }],
   launchOptions: [{}, { scope: 'worker', option: true }],
@@ -131,13 +131,17 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
         },
       });
       await use(browser);
-      await browser.close();
+      await (browser as any)._wrapApiCall(async () => {
+        await browser.close();
+      }, true);
       return;
     }
 
     const browser = await playwright[browserName].launch();
     await use(browser);
-    await browser.close();
+    await (browser as any)._wrapApiCall(async () => {
+      await browser.close();
+    }, true);
   }, { scope: 'worker', timeout: 0 }],
 
   acceptDownloads: [({ contextOptions }, use) => use(contextOptions.acceptDownloads ?? true), { option: true }],
@@ -383,8 +387,9 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     let counter = 0;
     await Promise.all([...contexts.keys()].map(async context => {
       (context as any)[kStartedContextTearDown] = true;
-      await context.close();
-
+      await (context as any)._wrapApiCall(async () => {
+        await context.close();
+      }, true);
       const testFailed = testInfo.status !== testInfo.expectedStatus;
       const preserveVideo = captureVideo && (videoMode === 'on' || (testFailed && videoMode === 'retain-on-failure') || (videoMode === 'on-first-retry' && testInfo.retry === 1));
       if (preserveVideo) {

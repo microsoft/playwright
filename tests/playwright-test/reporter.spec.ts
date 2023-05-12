@@ -278,8 +278,10 @@ test('should report expect steps', async ({ runInlineTest }) => {
     `begin {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
     `end {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
     `begin {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
+    `begin {\"title\":\"fixture: browser\",\"category\":\"fixture\"}`,
     `begin {\"title\":\"browserType.launch\",\"category\":\"pw:api\"}`,
     `end {\"title\":\"browserType.launch\",\"category\":\"pw:api\"}`,
+    `end {\"title\":\"fixture: browser\",\"category\":\"fixture\",\"steps\":[{\"title\":\"browserType.launch\",\"category\":\"pw:api\"}]}`,
     `begin {\"title\":\"fixture: context\",\"category\":\"fixture\"}`,
     `begin {\"title\":\"browser.newContext\",\"category\":\"pw:api\"}`,
     `end {\"title\":\"browser.newContext\",\"category\":\"pw:api\"}`,
@@ -288,7 +290,7 @@ test('should report expect steps', async ({ runInlineTest }) => {
     `begin {\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}`,
     `end {\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}`,
     `end {\"title\":\"fixture: page\",\"category\":\"fixture\",\"steps\":[{\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}]}`,
-    `end {\"title\":\"Before Hooks\",\"category\":\"hook\",\"steps\":[{\"title\":\"browserType.launch\",\"category\":\"pw:api\"},{\"title\":\"fixture: context\",\"category\":\"fixture\",\"steps\":[{\"title\":\"browser.newContext\",\"category\":\"pw:api\"}]},{\"title\":\"fixture: page\",\"category\":\"fixture\",\"steps\":[{\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}]}]}`,
+    `end {\"title\":\"Before Hooks\",\"category\":\"hook\",\"steps\":[{\"title\":\"fixture: browser\",\"category\":\"fixture\",\"steps\":[{\"title\":\"browserType.launch\",\"category\":\"pw:api\"}]},{\"title\":\"fixture: context\",\"category\":\"fixture\",\"steps\":[{\"title\":\"browser.newContext\",\"category\":\"pw:api\"}]},{\"title\":\"fixture: page\",\"category\":\"fixture\",\"steps\":[{\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}]}]}`,
     `begin {\"title\":\"expect.not.toHaveTitle\",\"category\":\"expect\"}`,
     `end {\"title\":\"expect.not.toHaveTitle\",\"category\":\"expect\"}`,
     `begin {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
@@ -296,9 +298,7 @@ test('should report expect steps', async ({ runInlineTest }) => {
     `end {\"title\":\"fixture: page\",\"category\":\"fixture\"}`,
     `begin {\"title\":\"fixture: context\",\"category\":\"fixture\"}`,
     `end {\"title\":\"fixture: context\",\"category\":\"fixture\"}`,
-    `begin {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
-    `end {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
-    `end {\"title\":\"After Hooks\",\"category\":\"hook\",\"steps\":[{\"title\":\"fixture: page\",\"category\":\"fixture\"},{\"title\":\"fixture: context\",\"category\":\"fixture\"},{\"title\":\"browserContext.close\",\"category\":\"pw:api\"}]}`,
+    `end {\"title\":\"After Hooks\",\"category\":\"hook\",\"steps\":[{\"title\":\"fixture: page\",\"category\":\"fixture\"},{\"title\":\"fixture: context\",\"category\":\"fixture\"}]}`,
   ]);
 });
 
@@ -347,8 +347,10 @@ test('should report api steps', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
   expect(result.outputLines).toEqual([
     `begin {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
+    `begin {\"title\":\"fixture: browser\",\"category\":\"fixture\"}`,
     `begin {\"title\":\"browserType.launch\",\"category\":\"pw:api\"}`,
     `end {\"title\":\"browserType.launch\",\"category\":\"pw:api\"}`,
+    `end {\"title\":\"fixture: browser\",\"category\":\"fixture\",\"steps\":[{\"title\":\"browserType.launch\",\"category\":\"pw:api\"}]}`,
     `begin {\"title\":\"fixture: context\",\"category\":\"fixture\"}`,
     `begin {\"title\":\"browser.newContext\",\"category\":\"pw:api\"}`,
     `end {\"title\":\"browser.newContext\",\"category\":\"pw:api\"}`,
@@ -361,7 +363,7 @@ test('should report api steps', async ({ runInlineTest }) => {
     `begin {\"title\":\"apiRequest.newContext\",\"category\":\"pw:api\"}`,
     `end {\"title\":\"apiRequest.newContext\",\"category\":\"pw:api\"}`,
     `end {\"title\":\"fixture: request\",\"category\":\"fixture\",\"steps\":[{\"title\":\"apiRequest.newContext\",\"category\":\"pw:api\"}]}`,
-    `end {\"title\":\"Before Hooks\",\"category\":\"hook\",\"steps\":[{\"title\":\"browserType.launch\",\"category\":\"pw:api\"},{\"title\":\"fixture: context\",\"category\":\"fixture\",\"steps\":[{\"title\":\"browser.newContext\",\"category\":\"pw:api\"}]},{\"title\":\"fixture: page\",\"category\":\"fixture\",\"steps\":[{\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}]},{\"title\":\"fixture: request\",\"category\":\"fixture\",\"steps\":[{\"title\":\"apiRequest.newContext\",\"category\":\"pw:api\"}]}]}`,
+    `end {\"title\":\"Before Hooks\",\"category\":\"hook\",\"steps\":[{\"title\":\"fixture: browser\",\"category\":\"fixture\",\"steps\":[{\"title\":\"browserType.launch\",\"category\":\"pw:api\"}]},{\"title\":\"fixture: context\",\"category\":\"fixture\",\"steps\":[{\"title\":\"browser.newContext\",\"category\":\"pw:api\"}]},{\"title\":\"fixture: page\",\"category\":\"fixture\",\"steps\":[{\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}]},{\"title\":\"fixture: request\",\"category\":\"fixture\",\"steps\":[{\"title\":\"apiRequest.newContext\",\"category\":\"pw:api\"}]}]}`,
     `begin {\"title\":\"page.waitForNavigation\",\"category\":\"pw:api\"}`,
     `begin {\"title\":\"page.goto(data:text/html,<button></button>)\",\"category\":\"pw:api\"}`,
     `end {\"title\":\"page.waitForNavigation\",\"category\":\"pw:api\",\"steps\":[{\"title\":\"page.goto(data:text/html,<button></button>)\",\"category\":\"pw:api\"}]}`,
@@ -383,9 +385,7 @@ test('should report api steps', async ({ runInlineTest }) => {
     `end {\"title\":\"fixture: page\",\"category\":\"fixture\"}`,
     `begin {\"title\":\"fixture: context\",\"category\":\"fixture\"}`,
     `end {\"title\":\"fixture: context\",\"category\":\"fixture\"}`,
-    `begin {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
-    `end {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
-    `end {\"title\":\"After Hooks\",\"category\":\"hook\",\"steps\":[{\"title\":\"fixture: request\",\"category\":\"fixture\",\"steps\":[{\"title\":\"apiRequestContext.dispose\",\"category\":\"pw:api\"}]},{\"title\":\"fixture: page\",\"category\":\"fixture\"},{\"title\":\"fixture: context\",\"category\":\"fixture\"},{\"title\":\"browserContext.close\",\"category\":\"pw:api\"}]}`,
+    `end {\"title\":\"After Hooks\",\"category\":\"hook\",\"steps\":[{\"title\":\"fixture: request\",\"category\":\"fixture\",\"steps\":[{\"title\":\"apiRequestContext.dispose\",\"category\":\"pw:api\"}]},{\"title\":\"fixture: page\",\"category\":\"fixture\"},{\"title\":\"fixture: context\",\"category\":\"fixture\"}]}`,
     `begin {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
     `begin {\"title\":\"beforeAll hook\",\"category\":\"hook\"}`,
     `begin {\"title\":\"browser.newPage\",\"category\":\"pw:api\"}`,
@@ -432,8 +432,10 @@ test('should report api step failure', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(result.outputLines).toEqual([
     `begin {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
+    `begin {\"title\":\"fixture: browser\",\"category\":\"fixture\"}`,
     `begin {\"title\":\"browserType.launch\",\"category\":\"pw:api\"}`,
     `end {\"title\":\"browserType.launch\",\"category\":\"pw:api\"}`,
+    `end {\"title\":\"fixture: browser\",\"category\":\"fixture\",\"steps\":[{\"title\":\"browserType.launch\",\"category\":\"pw:api\"}]}`,
     `begin {\"title\":\"fixture: context\",\"category\":\"fixture\"}`,
     `begin {\"title\":\"browser.newContext\",\"category\":\"pw:api\"}`,
     `end {\"title\":\"browser.newContext\",\"category\":\"pw:api\"}`,
@@ -442,7 +444,7 @@ test('should report api step failure', async ({ runInlineTest }) => {
     `begin {\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}`,
     `end {\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}`,
     `end {\"title\":\"fixture: page\",\"category\":\"fixture\",\"steps\":[{\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}]}`,
-    `end {\"title\":\"Before Hooks\",\"category\":\"hook\",\"steps\":[{\"title\":\"browserType.launch\",\"category\":\"pw:api\"},{\"title\":\"fixture: context\",\"category\":\"fixture\",\"steps\":[{\"title\":\"browser.newContext\",\"category\":\"pw:api\"}]},{\"title\":\"fixture: page\",\"category\":\"fixture\",\"steps\":[{\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}]}]}`,
+    `end {\"title\":\"Before Hooks\",\"category\":\"hook\",\"steps\":[{\"title\":\"fixture: browser\",\"category\":\"fixture\",\"steps\":[{\"title\":\"browserType.launch\",\"category\":\"pw:api\"}]},{\"title\":\"fixture: context\",\"category\":\"fixture\",\"steps\":[{\"title\":\"browser.newContext\",\"category\":\"pw:api\"}]},{\"title\":\"fixture: page\",\"category\":\"fixture\",\"steps\":[{\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}]}]}`,
     `begin {\"title\":\"page.setContent\",\"category\":\"pw:api\"}`,
     `end {\"title\":\"page.setContent\",\"category\":\"pw:api\"}`,
     `begin {\"title\":\"page.click(input)\",\"category\":\"pw:api\"}`,
@@ -452,11 +454,9 @@ test('should report api step failure', async ({ runInlineTest }) => {
     `end {\"title\":\"fixture: page\",\"category\":\"fixture\"}`,
     `begin {\"title\":\"fixture: context\",\"category\":\"fixture\"}`,
     `end {\"title\":\"fixture: context\",\"category\":\"fixture\"}`,
-    `begin {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
-    `end {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
-    `begin {\"title\":\"browser.close\",\"category\":\"pw:api\"}`,
-    `end {\"title\":\"browser.close\",\"category\":\"pw:api\"}`,
-    `end {\"title\":\"After Hooks\",\"category\":\"hook\",\"steps\":[{\"title\":\"fixture: page\",\"category\":\"fixture\"},{\"title\":\"fixture: context\",\"category\":\"fixture\"},{\"title\":\"browserContext.close\",\"category\":\"pw:api\"},{\"title\":\"browser.close\",\"category\":\"pw:api\"}]}`,
+    `begin {\"title\":\"fixture: browser\",\"category\":\"fixture\"}`,
+    `end {\"title\":\"fixture: browser\",\"category\":\"fixture\"}`,
+    `end {\"title\":\"After Hooks\",\"category\":\"hook\",\"steps\":[{\"title\":\"fixture: page\",\"category\":\"fixture\"},{\"title\":\"fixture: context\",\"category\":\"fixture\"},{\"title\":\"fixture: browser\",\"category\":\"fixture\"}]}`,
   ]);
 });
 
@@ -506,8 +506,10 @@ test('should show nice stacks for locators', async ({ runInlineTest }) => {
   expect(result.output).not.toContain('Internal error');
   expect(result.outputLines).toEqual([
     `begin {"title":"Before Hooks","category":"hook"}`,
+    `begin {\"title\":\"fixture: browser\",\"category\":\"fixture\"}`,
     `begin {\"title\":\"browserType.launch\",\"category\":\"pw:api\"}`,
     `end {\"title\":\"browserType.launch\",\"category\":\"pw:api\"}`,
+    `end {\"title\":\"fixture: browser\",\"category\":\"fixture\",\"steps\":[{\"title\":\"browserType.launch\",\"category\":\"pw:api\"}]}`,
     `begin {\"title\":\"fixture: context\",\"category\":\"fixture\"}`,
     `begin {\"title\":\"browser.newContext\",\"category\":\"pw:api\"}`,
     `end {\"title\":\"browser.newContext\",\"category\":\"pw:api\"}`,
@@ -516,7 +518,7 @@ test('should show nice stacks for locators', async ({ runInlineTest }) => {
     `begin {"title":"browserContext.newPage","category":"pw:api"}`,
     `end {"title":"browserContext.newPage","category":"pw:api"}`,
     `end {\"title\":\"fixture: page\",\"category\":\"fixture\",\"steps\":[{\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}]}`,
-    `end {\"title\":\"Before Hooks\",\"category\":\"hook\",\"steps\":[{\"title\":\"browserType.launch\",\"category\":\"pw:api\"},{\"title\":\"fixture: context\",\"category\":\"fixture\",\"steps\":[{\"title\":\"browser.newContext\",\"category\":\"pw:api\"}]},{\"title\":\"fixture: page\",\"category\":\"fixture\",\"steps\":[{\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}]}]}`,
+    `end {\"title\":\"Before Hooks\",\"category\":\"hook\",\"steps\":[{\"title\":\"fixture: browser\",\"category\":\"fixture\",\"steps\":[{\"title\":\"browserType.launch\",\"category\":\"pw:api\"}]},{\"title\":\"fixture: context\",\"category\":\"fixture\",\"steps\":[{\"title\":\"browser.newContext\",\"category\":\"pw:api\"}]},{\"title\":\"fixture: page\",\"category\":\"fixture\",\"steps\":[{\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}]}]}`,
     `begin {"title":"page.setContent","category":"pw:api"}`,
     `end {"title":"page.setContent","category":"pw:api"}`,
     `begin {"title":"locator.evaluate(button)","category":"pw:api"}`,
@@ -526,9 +528,7 @@ test('should show nice stacks for locators', async ({ runInlineTest }) => {
     `end {\"title\":\"fixture: page\",\"category\":\"fixture\"}`,
     `begin {\"title\":\"fixture: context\",\"category\":\"fixture\"}`,
     `end {\"title\":\"fixture: context\",\"category\":\"fixture\"}`,
-    `begin {"title":"browserContext.close","category":"pw:api"}`,
-    `end {"title":"browserContext.close","category":"pw:api"}`,
-    `end {\"title\":\"After Hooks\",\"category\":\"hook\",\"steps\":[{\"title\":\"fixture: page\",\"category\":\"fixture\"},{\"title\":\"fixture: context\",\"category\":\"fixture\"},{\"title\":\"browserContext.close\",\"category\":\"pw:api\"}]}`,
+    `end {\"title\":\"After Hooks\",\"category\":\"hook\",\"steps\":[{\"title\":\"fixture: page\",\"category\":\"fixture\"},{\"title\":\"fixture: context\",\"category\":\"fixture\"}]}`,
   ]);
 });
 

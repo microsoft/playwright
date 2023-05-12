@@ -109,7 +109,6 @@ test('should update trace live', async ({ runUITest, server }) => {
     /After Hooks[\d.]+m?s/,
     /fixture: page[\d.]+m?s/,
     /fixture: context[\d.]+m?s/,
-    /browserContext.close[\d.]+m?s/,
   ]);
 });
 

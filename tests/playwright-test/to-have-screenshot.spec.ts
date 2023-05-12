@@ -207,6 +207,7 @@ test('should report toHaveScreenshot step with expectation name in title', async
   expect(result.exitCode).toBe(0);
   expect(result.outputLines).toEqual([
     `end browserType.launch`,
+    `end fixture: browser`,
     `end browser.newContext`,
     `end fixture: context`,
     `end browserContext.newPage`,
@@ -216,7 +217,6 @@ test('should report toHaveScreenshot step with expectation name in title', async
     `end expect.toHaveScreenshot(is-a-test-1.png)`,
     `end fixture: page`,
     `end fixture: context`,
-    `end browserContext.close`,
     `end After Hooks`,
   ]);
 });

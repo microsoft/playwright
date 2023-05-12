@@ -192,7 +192,7 @@ test('should not spin forever', async ({ runInlineTest }) => {
         expect(() => {
           log?.push('poll');
           throw new Error('Polling');
-        }).toPass().catch();
+        }).toPass().catch(() => {});
       });
       test('should not see toPass', async () => {
         log = [];

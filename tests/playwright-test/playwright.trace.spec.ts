@@ -92,6 +92,7 @@ test('should record api trace', async ({ runInlineTest, server }, testInfo) => {
     'fixture: request',
     'apiRequest.newContext',
     'tracing.start',
+    'fixture: browser',
     'browserType.launch',
     'fixture: context',
     'browser.newContext',
@@ -103,7 +104,6 @@ test('should record api trace', async ({ runInlineTest, server }, testInfo) => {
     'After Hooks',
     'fixture: page',
     'fixture: context',
-    'browserContext.close',
     'fixture: request',
     'tracing.stopChunk',
     'apiRequestContext.dispose',
@@ -135,11 +135,9 @@ test('should record api trace', async ({ runInlineTest, server }, testInfo) => {
     'After Hooks',
     'fixture: page',
     'fixture: context',
-    'browserContext.close',
     'fixture: request',
     'tracing.stopChunk',
     'apiRequestContext.dispose',
-    'browser.close',
     'tracing.stopChunk',
   ]);
 });
@@ -328,6 +326,7 @@ test('should not override trace file in afterAll', async ({ runInlineTest, serve
 
   expect(trace1.apiNames).toEqual([
     'Before Hooks',
+    'fixture: browser',
     'browserType.launch',
     'fixture: context',
     'browser.newContext',
@@ -338,7 +337,6 @@ test('should not override trace file in afterAll', async ({ runInlineTest, serve
     'After Hooks',
     'fixture: page',
     'fixture: context',
-    'browserContext.close',
     'afterAll hook',
     'fixture: request',
     'apiRequest.newContext',
@@ -347,7 +345,7 @@ test('should not override trace file in afterAll', async ({ runInlineTest, serve
     'fixture: request',
     'tracing.stopChunk',
     'apiRequestContext.dispose',
-    'browser.close',
+    'fixture: browser',
   ]);
 
   const error = await parseTrace(testInfo.outputPath('test-results', 'a-test-2', 'trace.zip')).catch(e => e);

@@ -49,6 +49,8 @@ export type FixtureRegistration = {
   super?: FixtureRegistration;
   // Whether this fixture is an option override value set from the config.
   optionOverride?: boolean;
+  // Do not generate the step for this fixture.
+  hideStep?: boolean;
 };
 export type LoadError = {
   message: string;
@@ -101,7 +103,7 @@ export class FixturePool {
     for (const entry of Object.entries(fixtures)) {
       const name = entry[0];
       let value = entry[1];
-      let options: { auto: FixtureAuto, scope: FixtureScope, option: boolean, timeout: number | undefined, customTitle: string | undefined } | undefined;
+      let options: { auto: FixtureAuto, scope: FixtureScope, option: boolean, timeout: number | undefined, customTitle: string | undefined, hideStep: boolean | undefined } | undefined;
       if (isFixtureTuple(value)) {
         options = {
           auto: value[1].auto ?? false,
@@ -109,6 +111,7 @@ export class FixturePool {
           option: !!value[1].option,
           timeout: value[1].timeout,
           customTitle: (value[1] as any)._title,
+          hideStep: (value[1] as any)._hideStep,
         };
         value = value[0];
       }
@@ -125,9 +128,9 @@ export class FixturePool {
           continue;
         }
       } else if (previous) {
-        options = { auto: previous.auto, scope: previous.scope, option: previous.option, timeout: previous.timeout, customTitle: previous.customTitle };
+        options = { auto: previous.auto, scope: previous.scope, option: previous.option, timeout: previous.timeout, customTitle: previous.customTitle, hideStep: undefined };
       } else if (!options) {
-        options = { auto: false, scope: 'test', option: false, timeout: undefined, customTitle: undefined };
+        options = { auto: false, scope: 'test', option: false, timeout: undefined, customTitle: undefined, hideStep: undefined };
       }
 
       if (!kScopeOrder.includes(options.scope)) {
@@ -149,7 +152,7 @@ export class FixturePool {
       }
 
       const deps = fixtureParameterNames(fn, location, e => this._onLoadError(e));
-      const registration: FixtureRegistration = { id: '', name, location, scope: options.scope, fn, auto: options.auto, option: options.option, timeout: options.timeout, customTitle: options.customTitle, deps, super: previous, optionOverride: isOptionsOverride };
+      const registration: FixtureRegistration = { id: '', name, location, scope: options.scope, fn, auto: options.auto, option: options.option, timeout: options.timeout, customTitle: options.customTitle, hideStep: options.hideStep, deps, super: previous, optionOverride: isOptionsOverride };
       registrationId(registration);
       this.registrations.set(name, registration);
     }
