@@ -32,7 +32,7 @@ type BlobReporterOptions = {
 export class BlobReporter extends TeleReporterEmitter {
   private _messages: any[] = [];
   private _options: BlobReporterOptions;
-  private _runGuid: string;
+  private _salt: string;
   private _copyFilePromises = new Set<Promise<void>>();
 
   private _outputDir!: string;
@@ -41,7 +41,7 @@ export class BlobReporter extends TeleReporterEmitter {
   constructor(options: BlobReporterOptions) {
     super(message => this._messages.push(message));
     this._options = options;
-    this._runGuid = createGuid();
+    this._salt = createGuid();
   }
 
   override onBegin(config: FullConfig<{}, {}>, suite: Suite): void {
@@ -67,7 +67,7 @@ export class BlobReporter extends TeleReporterEmitter {
       if (!attachment.path || !fs.statSync(attachment.path).isFile())
         return attachment;
       // Add run guid to avoid clashes between shards.
-      const sha1 = calculateSha1(attachment.path + this._runGuid);
+      const sha1 = calculateSha1(attachment.path + this._salt);
       const extension = mime.getExtension(attachment.contentType) || 'dat';
       const newPath = `resources/${sha1}.${extension}`;
       this._startCopyingFile(attachment.path, path.join(this._outputDir, newPath));
@@ -84,7 +84,7 @@ export class BlobReporter extends TeleReporterEmitter {
       const paddedNumber = `${config.shard.current}`.padStart(`${config.shard.total}`.length, '0');
       shardSuffix = `${paddedNumber}-of-${config.shard.total}-`;
     }
-    return path.join(this._outputDir, `report-${shardSuffix}${this._runGuid}.jsonl`);
+    return path.join(this._outputDir, `report-${shardSuffix}${createGuid()}.jsonl`);
   }
 
   private _startCopyingFile(from: string, to: string) {
