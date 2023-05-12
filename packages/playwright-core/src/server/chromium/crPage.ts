@@ -356,6 +356,9 @@ export class CRPage implements PageDelegate {
     await this._mainFrameSession._client.send('Page.enable').catch(e => {});
   }
 
+  async resetForReuse(): Promise<void> {
+  }
+
   async pdf(options: channels.PagePdfParams): Promise<Buffer> {
     return this._pdf.generate(options);
   }
