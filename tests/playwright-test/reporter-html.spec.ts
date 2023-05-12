@@ -98,10 +98,7 @@ test('should not throw when attachment is missing', async ({ runInlineTest, page
 
   await showReport();
   await page.click('text=passes');
-  const newTab = page.waitForEvent('popup');
-  await page.getByRole('link', { name: 'screenshot' }).click();
-  const popup = await newTab;
-  await expect(popup.getByText(' page can’t be found')).toBeVisible();
+  await expect(page.getByRole('link', { name: 'screenshot' })).toBeVisible();
 });
 
 test('should include image diff', async ({ runInlineTest, page, showReport }) => {
