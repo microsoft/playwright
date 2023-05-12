@@ -411,3 +411,28 @@ test('should work with https enabled', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 });
+
+test('list compilation cache should not clash with the run one', async ({ runInlineTest }) => {
+  const listResult = await runInlineTest({
+    'playwright.config.ts': playwrightConfig,
+    'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
+    'playwright/index.ts': ``,
+    'src/button.tsx': `
+      export const Button = () => <button>Button</button>;
+    `,
+    'src/button.spec.tsx': `
+      import { test, expect } from '@playwright/experimental-ct-react';
+      import { Button } from './button';
+      test('pass', async ({ mount }) => {
+        const component = await mount(<Button></Button>);
+        await expect(component).toHaveText('Button');
+      });
+    `,
+  }, { workers: 1 }, {}, { additionalArgs: ['--list'] });
+  expect(listResult.exitCode).toBe(0);
+  expect(listResult.passed).toBe(0);
+
+  const runResult = await runInlineTest({}, { workers: 1 });
+  expect(runResult.exitCode).toBe(0);
+  expect(runResult.passed).toBe(1);
+});

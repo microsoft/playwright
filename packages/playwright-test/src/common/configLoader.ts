@@ -18,12 +18,11 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { isRegExp } from 'playwright-core/lib/utils';
 import type { ConfigCLIOverrides, SerializedConfig } from './ipc';
-import { requireOrImport } from './transform';
+import { requireOrImport, setBabelPlugins } from './transform';
 import type { Config, Project } from '../../types/test';
 import { errorWithFile } from '../util';
 import { setCurrentConfig } from './globals';
 import { FullConfigInternal } from './config';
-import { setBabelPlugins } from './babelBundle';
 
 const kDefineConfigWasUsed = Symbol('defineConfigWasUsed');
 export const defineConfig = (config: any) => {

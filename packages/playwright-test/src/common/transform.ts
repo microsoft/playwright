@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import crypto from 'crypto';
 import path from 'path';
 import { sourceMapSupport, pirates } from '../utilsBundle';
 import url from 'url';
@@ -21,9 +22,11 @@ import type { Location } from '../../types/testReporter';
 import type { TsConfigLoaderResult } from '../third_party/tsconfig-loader';
 import { tsConfigLoader } from '../third_party/tsconfig-loader';
 import Module from 'module';
-import type { BabelTransformFunction } from './babelBundle';
+import type { BabelPlugin, BabelTransformFunction } from './babelBundle';
 import { fileIsModule, resolveImportSpecifierExtension } from '../util';
 import { getFromCompilationCache, currentFileDepsCollector, belongsToNodeModules } from './compilationCache';
+
+const version = require('../../package.json').version;
 
 type ParsedTsConfigData = {
   absoluteBaseUrl: string;
@@ -31,6 +34,12 @@ type ParsedTsConfigData = {
   allowJs: boolean;
 };
 const cachedTSConfigs = new Map<string, ParsedTsConfigData | undefined>();
+
+let babelPlugins: BabelPlugin[] = [];
+
+export function setBabelPlugins(plugins: BabelPlugin[]) {
+  babelPlugins = plugins;
+}
 
 function validateTsConfig(tsconfig: TsConfigLoaderResult): ParsedTsConfigData | undefined {
   if (!tsconfig.tsConfigPath || !tsconfig.baseUrl)
@@ -57,8 +66,6 @@ function loadAndValidateTsconfigForFile(file: string): ParsedTsConfigData | unde
 }
 
 const pathSeparator = process.platform === 'win32' ? ';' : ':';
-const scriptPreprocessor = process.env.PW_TEST_SOURCE_TRANSFORM ?
-  require(process.env.PW_TEST_SOURCE_TRANSFORM) : undefined;
 const builtins = new Set(Module.builtinModules);
 
 export function resolveHook(filename: string, specifier: string): string | undefined {
@@ -128,15 +135,17 @@ export function resolveHook(filename: string, specifier: string): string | undef
 }
 
 export function transformHook(code: string, filename: string, moduleUrl?: string): string {
-  const { cachedCode, addToCache } = getFromCompilationCache(filename, code, moduleUrl);
-  if (cachedCode)
-    return cachedCode;
-
   const isTypeScript = filename.endsWith('.ts') || filename.endsWith('.tsx');
   const hasPreprocessor =
       process.env.PW_TEST_SOURCE_TRANSFORM &&
       process.env.PW_TEST_SOURCE_TRANSFORM_SCOPE &&
       process.env.PW_TEST_SOURCE_TRANSFORM_SCOPE.split(pathSeparator).some(f => filename.startsWith(f));
+  const pluginsPrologue = babelPlugins;
+  const pluginsEpilogue = hasPreprocessor ? [[process.env.PW_TEST_SOURCE_TRANSFORM!]] as BabelPlugin[] : [];
+  const hash = calculateHash(code, filename, !!moduleUrl, pluginsPrologue, pluginsEpilogue);
+  const { cachedCode, addToCache } = getFromCompilationCache(filename, hash, moduleUrl);
+  if (cachedCode)
+    return cachedCode;
 
   // We don't use any browserslist data, but babel checks it anyway.
   // Silence the annoying warning.
@@ -144,7 +153,7 @@ export function transformHook(code: string, filename: string, moduleUrl?: string
 
   try {
     const { babelTransform }: { babelTransform: BabelTransformFunction } = require('./babelBundle');
-    const { code, map } = babelTransform(filename, isTypeScript, !!moduleUrl, hasPreprocessor ? scriptPreprocessor : undefined);
+    const { code, map } = babelTransform(filename, isTypeScript, !!moduleUrl, pluginsPrologue, pluginsEpilogue);
     if (code)
       addToCache!(code, map);
     return code || '';
@@ -153,6 +162,18 @@ export function transformHook(code: string, filename: string, moduleUrl?: string
     // that could be filtered out.
     throw new Error(e.message);
   }
+}
+
+function calculateHash(content: string, filePath: string, isModule: boolean, pluginsPrologue: BabelPlugin[], pluginsEpilogue: BabelPlugin[]): string {
+  const hash = crypto.createHash('sha1')
+      .update(isModule ? 'esm' : 'no_esm')
+      .update(content)
+      .update(filePath)
+      .update(version)
+      .update(pluginsPrologue.map(p => p[0]).join(','))
+      .update(pluginsEpilogue.map(p => p[0]).join(','))
+      .digest('hex');
+  return hash;
 }
 
 export async function requireOrImport(file: string) {
