@@ -37,8 +37,6 @@ type TestEntry = {
   testCaseSummary: TestCaseSummary
 };
 
-const kMissingContentType = 'x-playwright/missing';
-
 type HtmlReportOpenOption = 'always' | 'never' | 'on-failure';
 type HtmlReporterOptions = {
   configDir: string,
@@ -397,11 +395,6 @@ class HtmlBuilder {
           fs.mkdirSync(path.join(this._reportFolder, 'data'), { recursive: true });
           fs.writeFileSync(path.join(this._reportFolder, 'data', sha1), buffer);
         } catch (e) {
-          return {
-            name: `Missing attachment "${a.name}"`,
-            contentType: kMissingContentType,
-            body: `Attachment file ${fileName} is missing`,
-          };
         }
         return {
           name: a.name,

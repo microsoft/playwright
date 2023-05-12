@@ -23,10 +23,11 @@ import { TeleReporterReceiver, type JsonEvent, type JsonProject, type JsonSuite,
 import { createReporters } from '../runner/reporters';
 import { Multiplexer } from './multiplexer';
 
-export async function createMergedReport(config: FullConfigInternal, dir: string, reporterDescriptions: ReporterDescription[]) {
+export async function createMergedReport(config: FullConfigInternal, dir: string, reporterDescriptions: ReporterDescription[], resolvePaths: boolean) {
   const shardFiles = await sortedShardFiles(dir);
   const events = await mergeEvents(dir, shardFiles);
-  patchAttachmentPaths(events, dir);
+  if (resolvePaths)
+    patchAttachmentPaths(events, dir);
 
   const reporters = await createReporters(config, 'merge', reporterDescriptions);
   const receiver = new TeleReporterReceiver(path.sep, new Multiplexer(reporters));
