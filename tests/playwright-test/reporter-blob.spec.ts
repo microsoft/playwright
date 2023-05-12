@@ -507,6 +507,77 @@ test('generate html with attachment urls', async ({ runInlineTest, mergeReports,
   await expect(page.getByTestId('action-list').locator('div').filter({ hasText: /^expect\.toBe$/ })).toBeVisible();
 });
 
+test('resource names should not clash between runs', async ({ runInlineTest, showReport, mergeReports, page }) => {
+  test.slow();
+  const reportDir = test.info().outputPath('blob-report');
+  const files = {
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: [['blob', { outputDir: '${reportDir.replace(/\\/g, '/')}' }]]
+      };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      import fs from 'fs';
+      import path from 'path';
+
+      test('first', async ({}) => {
+        const attachmentPath = path.join(test.info().config.rootDir, 'foo.txt');
+        fs.writeFileSync(attachmentPath, 'hello!');
+        test.info().attachments.push({ name: 'file-attachment', path: attachmentPath, contentType: 'text/plain' });
+      });
+    `,
+    'b.test.js': `
+      import { test, expect } from '@playwright/test';
+      import fs from 'fs';
+      import path from 'path';
+
+      test('failing 2', async ({}) => {
+        const attachmentPath = path.join(test.info().config.rootDir, 'foo.txt');
+        fs.writeFileSync(attachmentPath, 'bye!');
+        test.info().attachments.push({ name: 'file-attachment', path: attachmentPath, contentType: 'text/plain' });
+      });
+    `
+  };
+  await runInlineTest(files, { shard: `1/2` });
+  await runInlineTest(files, { shard: `2/2` });
+
+  const reportFiles = await fs.promises.readdir(reportDir);
+  reportFiles.sort();
+  expect(reportFiles).toEqual([expect.stringMatching(/report-1-of-2.*.jsonl/), expect.stringMatching(/report-2-of-2.*.jsonl/), 'resources']);
+
+  const { exitCode } = await mergeReports(reportDir, {}, { additionalArgs: ['--reporter', 'html'] });
+  expect(exitCode).toBe(0);
+
+  await showReport();
+
+  // Check first attachment content.
+  {
+    await page.getByText('first').click();
+    await expect(page.getByText('file-attachment')).toBeVisible();
+
+    const popupPromise = page.waitForEvent('popup');
+    await page.getByText('file-attachment').click();
+    const popup = await popupPromise;
+    await expect(popup.locator('body')).toHaveText('hello!');
+    await popup.close();
+    await page.goBack();
+  }
+
+  // Check second attachment content.
+  {
+    await page.getByText('failing 2').click();
+    await expect(page.getByText('file-attachment')).toBeVisible();
+
+    const popupPromise = page.waitForEvent('popup');
+    await page.getByText('file-attachment').click();
+    const popup = await popupPromise;
+    await expect(popup.locator('body')).toHaveText('bye!');
+    await popup.close();
+    await page.goBack();
+  }
+});
+
 test('multiple output reports', async ({ runInlineTest, mergeReports, showReport, page }) => {
   test.slow();
   const reportDir = test.info().outputPath('blob-report');
