@@ -16,7 +16,7 @@
  */
 
 import { kBrowserClosedError } from '../../common/errors';
-import { assert, getAsBooleanFromENV } from '../../utils';
+import { assert } from '../../utils';
 import type { BrowserOptions } from '../browser';
 import { Browser } from '../browser';
 import { assertBrowserContextIsNotOwned, BrowserContext, verifyGeolocation } from '../browserContext';
