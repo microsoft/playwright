@@ -163,7 +163,6 @@ it.describe('screencast', () => {
   });
 
   it('should work with old options', async ({ browser, browserName, trace, headless, isWindows }, testInfo) => {
-    it.fixme(browserName === 'firefox' && !headless && isWindows, 'https://github.com/microsoft/playwright/issues/22618');
     const videosPath = testInfo.outputPath('');
     // Firefox does not have a mobile variant and has a large minimum size (500 on windows and 450 elsewhere).
     const size = browserName === 'firefox' ? { width: 500, height: 400 } : { width: 320, height: 240 };
@@ -188,7 +187,6 @@ it.describe('screencast', () => {
   });
 
   it('should capture static page', async ({ browser, browserName, trace, headless, isWindows }, testInfo) => {
-    it.fixme(browserName === 'firefox' && !headless && isWindows, 'https://github.com/microsoft/playwright/issues/22618');
     // Firefox does not have a mobile variant and has a large minimum size (500 on windows and 450 elsewhere).
     const size = browserName === 'firefox' ? { width: 500, height: 400 } : { width: 320, height: 240 };
     const context = await browser.newContext({
