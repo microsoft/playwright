@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import crypto from 'crypto';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -25,8 +24,6 @@ export type MemoryCache = {
   sourceMapPath: string;
   moduleUrl?: string;
 };
-
-const version = 13;
 
 const cacheDir = process.env.PWTEST_CACHE_DIR || (() => {
   if (process.platform === 'win32')
@@ -68,7 +65,7 @@ function _innerAddToCompilationCache(filename: string, options: { codePath: stri
   memoryCache.set(filename, options);
 }
 
-export function getFromCompilationCache(filename: string, code: string, moduleUrl?: string): { cachedCode?: string, addToCache?: (code: string, map?: any) => void } {
+export function getFromCompilationCache(filename: string, hash: string, moduleUrl?: string): { cachedCode?: string, addToCache?: (code: string, map?: any) => void } {
   // First check the memory cache by filename, this cache will always work in the worker,
   // because we just compiled this file in the loader.
   const cache = memoryCache.get(filename);
@@ -76,8 +73,7 @@ export function getFromCompilationCache(filename: string, code: string, moduleUr
     return { cachedCode: fs.readFileSync(cache.codePath, 'utf-8') };
 
   // Then do the disk cache, this cache works between the Playwright Test runs.
-  const isModule = !!moduleUrl;
-  const cachePath = calculateCachePath(code, filename, isModule);
+  const cachePath = calculateCachePath(filename, hash);
   const codePath = cachePath + '.js';
   const sourceMapPath = cachePath + '.map';
   if (fs.existsSync(codePath)) {
@@ -121,14 +117,7 @@ export function addToCompilationCache(payload: any) {
     externalDependencies.set(entry[0], new Set(entry[1]));
 }
 
-function calculateCachePath(content: string, filePath: string, isModule: boolean): string {
-  const hash = crypto.createHash('sha1')
-      .update(process.env.PW_TEST_SOURCE_TRANSFORM || '')
-      .update(isModule ? 'esm' : 'no_esm')
-      .update(content)
-      .update(filePath)
-      .update(String(version))
-      .digest('hex');
+function calculateCachePath(filePath: string, hash: string): string {
   const fileName = path.basename(filePath, path.extname(filePath)).replace(/\W/g, '') + '_' + hash;
   return path.join(cacheDir, hash[0] + hash[1], fileName);
 }
