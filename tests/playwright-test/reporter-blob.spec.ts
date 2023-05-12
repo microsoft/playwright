@@ -434,7 +434,7 @@ test('generate html with attachment urls', async ({ runInlineTest, mergeReports,
         use: {
           trace: 'on'
         },
-        reporter: [['blob', { outputDir: '${reportDir.replace(/\\/g, '/')}', attachmentsBaseURL: '${server.PREFIX}/blob-report/' }]]
+        reporter: [['blob', { outputDir: '${reportDir.replace(/\\/g, '/')}' }]]
       };
     `,
     'a.test.js': `
@@ -444,7 +444,7 @@ test('generate html with attachment urls', async ({ runInlineTest, mergeReports,
       test('first', async ({}) => {
         const attachmentPath = test.info().outputPath('foo.txt');
         fs.writeFileSync(attachmentPath, 'hello!');
-        await test.info().attach('file-attachment', {path: attachmentPath});
+        await test.info().attach('file-attachment', { path: attachmentPath });
 
         console.log('console info');
         console.error('console error');
