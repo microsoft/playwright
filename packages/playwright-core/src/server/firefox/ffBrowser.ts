@@ -42,8 +42,6 @@ export class FFBrowser extends Browser {
     if ((options as any).__testHookOnConnectToBrowser)
       await (options as any).__testHookOnConnectToBrowser();
     let firefoxUserPrefs = options.persistent ? {} : options.originalLaunchOptions.firefoxUserPrefs ?? {};
-    if (getAsBooleanFromENV('PLAYWRIGHT_DISABLE_FIREFOX_CROSS_PROCESS'))
-      firefoxUserPrefs = { ...kDisableFissionFirefoxUserPrefs, ...firefoxUserPrefs };
     if (Object.keys(kBandaidFirefoxUserPrefs).length)
       firefoxUserPrefs = { ...kBandaidFirefoxUserPrefs, ...firefoxUserPrefs };
     const promises: Promise<any>[] = [
@@ -421,10 +419,3 @@ function toJugglerProxyOptions(proxy: types.ProxySettings) {
 // Should all be moved to `playwright.cfg`.
 const kBandaidFirefoxUserPrefs = {};
 
-const kDisableFissionFirefoxUserPrefs = {
-  'browser.tabs.remote.useCrossOriginEmbedderPolicy': false,
-  'browser.tabs.remote.useCrossOriginOpenerPolicy': false,
-  'browser.tabs.remote.separatePrivilegedMozillaWebContentProcess': false,
-  'fission.autostart': false,
-  'browser.tabs.remote.systemTriggeredAboutBlankAnywhere': true,
-};
