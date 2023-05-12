@@ -93,7 +93,7 @@ it('should work with glob', async () => {
 });
 
 it('should intercept network activity from worker', async function({ page, server, isAndroid, browserName, browserMajorVersion }) {
-  it.fixme(browserName === 'firefox' && browserMajorVersion >= 112, 'https://github.com/microsoft/playwright/issues/21760');
+  it.skip(browserName === 'firefox' && browserMajorVersion < 114, 'https://github.com/microsoft/playwright/issues/21760');
   it.skip(isAndroid);
 
   await page.goto(server.EMPTY_PAGE);
