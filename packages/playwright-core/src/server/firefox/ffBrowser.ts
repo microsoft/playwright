@@ -16,7 +16,7 @@
  */
 
 import { kBrowserClosedError } from '../../common/errors';
-import { assert } from '../../utils';
+import { assert, getAsBooleanFromENV } from '../../utils';
 import type { BrowserOptions } from '../browser';
 import { Browser } from '../browser';
 import { assertBrowserContextIsNotOwned, BrowserContext, verifyGeolocation } from '../browserContext';
@@ -41,8 +41,16 @@ export class FFBrowser extends Browser {
     const browser = new FFBrowser(connection, options);
     if ((options as any).__testHookOnConnectToBrowser)
       await (options as any).__testHookOnConnectToBrowser();
+    let firefoxUserPrefs = options.persistent ? {} : options.originalLaunchOptions.firefoxUserPrefs ?? {};
+    if (getAsBooleanFromENV('PLAYWRIGHT_DISABLE_FIREFOX_CROSS_PROCESS'))
+      firefoxUserPrefs = { ...kDisableFissionFirefoxUserPrefs, ...firefoxUserPrefs };
+    if (Object.keys(kBandaidFirefoxUserPrefs).length)
+      firefoxUserPrefs = { ...kBandaidFirefoxUserPrefs, ...firefoxUserPrefs };
     const promises: Promise<any>[] = [
-      connection.send('Browser.enable', { attachToDefaultContext: !!options.persistent }),
+      connection.send('Browser.enable', {
+        attachToDefaultContext: !!options.persistent,
+        userPrefs: Object.entries(firefoxUserPrefs).map(([name, value]) => ({ name, value })),
+      }),
       browser._initVersion(),
     ];
     if (options.persistent) {
@@ -408,3 +416,15 @@ function toJugglerProxyOptions(proxy: types.ProxySettings) {
     password: proxy.password
   };
 }
+
+// Prefs for quick fixes that didn't make it to the build.
+// Should all be moved to `playwright.cfg`.
+const kBandaidFirefoxUserPrefs = {};
+
+const kDisableFissionFirefoxUserPrefs = {
+  'browser.tabs.remote.useCrossOriginEmbedderPolicy': false,
+  'browser.tabs.remote.useCrossOriginOpenerPolicy': false,
+  'browser.tabs.remote.separatePrivilegedMozillaWebContentProcess': false,
+  'fission.autostart': false,
+  'browser.tabs.remote.systemTriggeredAboutBlankAnywhere': true,
+};
