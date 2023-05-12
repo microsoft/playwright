@@ -228,8 +228,9 @@ it.describe('page screenshot', () => {
     await verifyViewport(page, 500, 500);
   });
 
-  it('should allow transparency', async ({ page, browserName }) => {
+  it('should allow transparency', async ({ page, browserName, platform, headless }) => {
     it.fail(browserName === 'firefox');
+    it.fail(browserName === 'webkit' && platform === 'win32' && !headless, 'WebKit/Windows/headed has a minimal viewport');
 
     await page.setViewportSize({ width: 50, height: 150 });
     await page.setContent(`
