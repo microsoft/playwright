@@ -65,7 +65,7 @@ test('should show selected test in sources', async ({ runUITest }) => {
   ).toHaveText(`3    test('third', () => {});`);
 });
 
-test('should show syntax errors in file', async ({ runUITest }) => {
+test('should show top-level errors in file', async ({ runUITest }) => {
   const { page } = await runUITest({
     'a.test.ts': `
       import { test } from '@playwright/test';
@@ -98,5 +98,33 @@ test('should show syntax errors in file', async ({ runUITest }) => {
   ).toHaveText([
     '            ',
     'Assignment to constant variable.'
+  ]);
+});
+
+test('should show syntax errors in file', async ({ runUITest }) => {
+  const { page } = await runUITest({
+    'a.test.ts': `
+      import { test } from '@playwright/test'&
+      test('first', () => {});
+      test('second', () => {});
+    `,
+  });
+  await expect.poll(dumpTestTree(page)).toBe(`
+      ◯ a.test.ts
+  `);
+
+  await page.getByTestId('test-tree').getByText('a.test.ts').click();
+  await expect(
+      page.getByTestId('source-code').locator('.source-tab-file-name')
+  ).toHaveText('a.test.ts');
+  await expect(
+      page.locator('.CodeMirror .source-line-running'),
+  ).toHaveText(`2      import { test } from '@playwright/test'&`);
+
+  await expect(
+      page.locator('.CodeMirror-linewidget')
+  ).toHaveText([
+    '                                              ',
+    /Missing semicolon./
   ]);
 });

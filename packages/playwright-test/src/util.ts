@@ -29,13 +29,15 @@ import type { RawStack } from 'playwright-core/lib/utils';
 const PLAYWRIGHT_TEST_PATH = path.join(__dirname, '..');
 const PLAYWRIGHT_CORE_PATH = path.dirname(require.resolve('playwright-core/package.json'));
 
-export function filterStackTrace(e: Error) {
+export function filterStackTrace(e: Error): { message: string, stack: string } {
   if (process.env.PWDEBUGIMPL)
-    return;
+    return { message: e.message, stack: e.stack || '' };
+
   const stackLines = stringifyStackFrames(filteredStackTrace(e.stack?.split('\n') || []));
-  const message = e.message;
-  e.stack = `${e.name}: ${e.message}\n${stackLines.join('\n')}`;
-  e.message = message;
+  return {
+    message: e.message,
+    stack: `${e.name}: ${e.message}\n${stackLines.join('\n')}`
+  };
 }
 
 export function filteredStackTrace(rawStack: RawStack): StackFrame[] {
@@ -65,13 +67,8 @@ export function stringifyStackFrames(frames: StackFrame[]): string[] {
 }
 
 export function serializeError(error: Error | any): TestInfoError {
-  if (error instanceof Error) {
-    filterStackTrace(error);
-    return {
-      message: error.message,
-      stack: error.stack
-    };
-  }
+  if (error instanceof Error)
+    return filterStackTrace(error);
   return {
     value: util.inspect(error)
   };

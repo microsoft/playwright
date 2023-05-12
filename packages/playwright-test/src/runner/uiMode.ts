@@ -149,7 +149,7 @@ class UIMode {
     const reporter = new InternalReporter([listReporter]);
     this._config.cliListOnly = true;
     this._config.testIdMatcher = undefined;
-    const taskRunner = createTaskRunnerForList(this._config, reporter, 'out-of-process');
+    const taskRunner = createTaskRunnerForList(this._config, reporter, 'out-of-process', { failOnLoadErrors: false });
     const testRun = new TestRun(this._config, reporter);
     clearCompilationCache();
     reporter.onConfigure(this._config);

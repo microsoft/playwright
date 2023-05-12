@@ -15,11 +15,12 @@
  */
 
 import path from 'path';
+import util from 'util';
 import type { TestError } from '../../reporter';
 import { isWorkerProcess, setCurrentlyLoadingFileSuite } from './globals';
 import { Suite } from './test';
 import { requireOrImport } from './transform';
-import { serializeError } from '../util';
+import { filterStackTrace } from '../util';
 import { startCollectingFileDeps, stopCollectingFileDeps } from './compilationCache';
 
 export const defaultTimeout = 30000;
@@ -44,7 +45,7 @@ export async function loadTestFile(file: string, rootDir: string, testErrors?: T
   } catch (e) {
     if (!testErrors)
       throw e;
-    testErrors.push(serializeError(e));
+    testErrors.push(serializeLoadError(file, e));
   } finally {
     stopCollectingFileDeps(file);
     setCurrentlyLoadingFileSuite(undefined);
@@ -71,4 +72,19 @@ export async function loadTestFile(file: string, rootDir: string, testErrors?: T
   }
 
   return suite;
+}
+
+function serializeLoadError(file: string, error: Error | any): TestError {
+  if (error instanceof Error) {
+    const result: TestError = filterStackTrace(error);
+    // Babel parse errors have location.
+    const loc = (error as any).loc;
+    result.location = loc ? {
+      file,
+      line: loc.line || 0,
+      column: loc.column || 0,
+    } : undefined;
+    return result;
+  }
+  return { value: util.inspect(error) };
 }
