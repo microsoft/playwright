@@ -280,10 +280,12 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
           jestError.stack = jestError.name + ': ' + newMessage + '\n' + stringifyStackFrames(stackFrames).join('\n');
         }
 
-        const serializerError = serializeError(jestError);
-        step.complete({ error: serializerError });
+        const serializedError = serializeError(jestError);
+        // Serialized error has filtered stack trace.
+        jestError.stack = serializedError.stack;
+        step.complete({ error: serializedError });
         if (this._info.isSoft)
-          testInfo._failWithError(serializerError, false /* isHardError */);
+          testInfo._failWithError(serializedError, false /* isHardError */);
         else
           throw jestError;
       };

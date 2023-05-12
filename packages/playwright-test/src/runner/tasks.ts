@@ -102,9 +102,9 @@ function addRunTasks(taskRunner: TaskRunner<TestRun>, config: FullConfigInternal
   return taskRunner;
 }
 
-export function createTaskRunnerForList(config: FullConfigInternal, reporter: InternalReporter, mode: 'in-process' | 'out-of-process'): TaskRunner<TestRun> {
+export function createTaskRunnerForList(config: FullConfigInternal, reporter: InternalReporter, mode: 'in-process' | 'out-of-process', options: { failOnLoadErrors: boolean }): TaskRunner<TestRun> {
   const taskRunner = new TaskRunner<TestRun>(reporter, config.config.globalTimeout);
-  taskRunner.addTask('load tests', createLoadTask(mode, { filterOnly: false, failOnLoadErrors: false }));
+  taskRunner.addTask('load tests', createLoadTask(mode, { ...options, filterOnly: false }));
   taskRunner.addTask('report begin', async ({ reporter, rootSuite }) => {
     reporter.onBegin(config.config, rootSuite!);
     return () => reporter.onEnd();
@@ -172,7 +172,7 @@ function createLoadTask(mode: 'out-of-process' | 'in-process', options: { filter
     await loadFileSuites(testRun, mode, options.failOnLoadErrors ? errors : softErrors);
     testRun.rootSuite = await createRootSuite(testRun, options.failOnLoadErrors ? errors : softErrors, !!options.filterOnly);
     // Fail when no tests.
-    if (!testRun.rootSuite.allTests().length && !testRun.config.cliPassWithNoTests && !testRun.config.config.shard)
+    if (options.failOnLoadErrors && !testRun.rootSuite.allTests().length && !testRun.config.cliPassWithNoTests && !testRun.config.config.shard)
       throw new Error(`No tests found`);
   };
 }

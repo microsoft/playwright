@@ -134,7 +134,7 @@ export function resolveHook(filename: string, specifier: string): string | undef
   }
 }
 
-export function transformHook(code: string, filename: string, moduleUrl?: string): string {
+export function transformHook(preloadedCode: string, filename: string, moduleUrl?: string): string {
   const isTypeScript = filename.endsWith('.ts') || filename.endsWith('.tsx');
   const hasPreprocessor =
       process.env.PW_TEST_SOURCE_TRANSFORM &&
@@ -142,7 +142,7 @@ export function transformHook(code: string, filename: string, moduleUrl?: string
       process.env.PW_TEST_SOURCE_TRANSFORM_SCOPE.split(pathSeparator).some(f => filename.startsWith(f));
   const pluginsPrologue = babelPlugins;
   const pluginsEpilogue = hasPreprocessor ? [[process.env.PW_TEST_SOURCE_TRANSFORM!]] as BabelPlugin[] : [];
-  const hash = calculateHash(code, filename, !!moduleUrl, pluginsPrologue, pluginsEpilogue);
+  const hash = calculateHash(preloadedCode, filename, !!moduleUrl, pluginsPrologue, pluginsEpilogue);
   const { cachedCode, addToCache } = getFromCompilationCache(filename, hash, moduleUrl);
   if (cachedCode)
     return cachedCode;
@@ -151,17 +151,11 @@ export function transformHook(code: string, filename: string, moduleUrl?: string
   // Silence the annoying warning.
   process.env.BROWSERSLIST_IGNORE_OLD_DATA = 'true';
 
-  try {
-    const { babelTransform }: { babelTransform: BabelTransformFunction } = require('./babelBundle');
-    const { code, map } = babelTransform(filename, isTypeScript, !!moduleUrl, pluginsPrologue, pluginsEpilogue);
-    if (code)
-      addToCache!(code, map);
-    return code || '';
-  } catch (e) {
-    // Re-throw error with a playwright-test stack
-    // that could be filtered out.
-    throw new Error(e.message);
-  }
+  const { babelTransform }: { babelTransform: BabelTransformFunction } = require('./babelBundle');
+  const { code, map } = babelTransform(filename, isTypeScript, !!moduleUrl, pluginsPrologue, pluginsEpilogue);
+  if (code)
+    addToCache!(code, map);
+  return code || '';
 }
 
 function calculateHash(content: string, filePath: string, isModule: boolean, pluginsPrologue: BabelPlugin[], pluginsEpilogue: BabelPlugin[]): string {
