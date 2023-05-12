@@ -15,7 +15,6 @@
  */
 
 import { escapeForAttributeSelector, escapeForTextSelector } from '../../utils/isomorphic/stringUtils';
-import { asLocator } from './locatorGenerators';
 import type { Language } from './locatorGenerators';
 import { parseSelector } from './selectorParser';
 
@@ -105,7 +104,7 @@ function shiftParams(template: string, sub: number) {
 
 function transform(template: string, params: TemplateParams, testIdAttributeName: string): string {
   // Recursively handle filter(has=, hasnot=).
-  // TODO: handle and(locator), or(locator).
+  // TODO: handle and(locator), or(locator), locator(has=, hasnot=).
   while (true) {
     const hasMatch = template.match(/filter\(,?(has|hasnot)=/);
     if (!hasMatch)
@@ -143,6 +142,9 @@ function transform(template: string, params: TemplateParams, testIdAttributeName
   // Transform to selector engines.
   template = template
       .replace(/framelocator\(([^)]+)\)/g, '$1.internal:control=enter-frame')
+      .replace(/locator\(([^)]+),hastext=([^),]+)\)/g, 'locator($1).internal:has-text=$2')
+      .replace(/locator\(([^)]+),hasnottext=([^),]+)\)/g, 'locator($1).internal:has-not-text=$2')
+      .replace(/locator\(([^)]+),hastext=([^),]+)\)/g, 'locator($1).internal:has-text=$2')
       .replace(/locator\(([^)]+)\)/g, '$1')
       .replace(/getbyrole\(([^)]+)\)/g, 'internal:role=$1')
       .replace(/getbytext\(([^)]+)\)/g, 'internal:text=$1')
@@ -202,14 +204,8 @@ export function locatorOrSelectorAsSelector(language: Language, locator: string,
   } catch (e) {
   }
   try {
-    const selector = parseLocator(locator, testIdAttributeName);
-    if (digestForComparison(asLocator(language, selector)) === digestForComparison(locator))
-      return selector;
+    return parseLocator(locator, testIdAttributeName);
   } catch (e) {
   }
   return '';
-}
-
-function digestForComparison(locator: string) {
-  return locator.replace(/\s/g, '').replace(/["`]/g, '\'');
 }

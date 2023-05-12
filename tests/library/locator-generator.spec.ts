@@ -269,6 +269,12 @@ it('reverse engineer locators with regex', async ({ page }) => {
 });
 
 it('reverse engineer hasText', async ({ page }) => {
+  expect.soft(parseLocator('javascript', `locator('div', { hasText: 'foo' })`)).toBe('div >> internal:has-text="foo"i');
+  expect.soft(parseLocator('python', `locator("div", has_text="foo")`)).toBe('div >> internal:has-text="foo"i');
+  expect.soft(parseLocator('java', `locator("div", new Page.LocatorOptions().setHasText("foo"))`)).toBe('div >> internal:has-text="foo"i');
+  expect.soft(parseLocator('csharp', `Locator("div", new() { HasText = "foo" })`)).toBe('div >> internal:has-text="foo"i');
+  expect.soft(parseLocator('javascript', `locator('div', { hasText: 'foo', hasNotText: 'bar' })`)).toBe('div >> internal:has-text="foo"i >> internal:has-not-text="bar"i');
+
   expect.soft(generate(page.getByText('Hello').filter({ hasText: 'wo"rld\n' }))).toEqual({
     csharp: `GetByText("Hello").Filter(new() { HasText = "wo\\"rld\\n" })`,
     java: `getByText("Hello").filter(new Locator.FilterOptions().setHasText("wo\\"rld\\n"))`,
@@ -419,6 +425,5 @@ it('parse locators strictly', () => {
   // Extra symbols
   expect.soft(parseLocator('csharp', `Locator("div").Filter(new() { HasText = "Goodbye world" }).Locator("span"))`)).not.toBe(selector);
   expect.soft(parseLocator('java', `locator("div").filter(new Locator.FilterOptions().setHasText("Goodbye world"))..locator("span")`)).not.toBe(selector);
-  expect.soft(parseLocator('javascript', `locator('div').filter({ hasText: 'Goodbye world' }}).locator('span')`)).not.toBe(selector);
   expect.soft(parseLocator('python', `locator("div").filter(has_text=="Goodbye world").locator("span")`)).not.toBe(selector);
 });
