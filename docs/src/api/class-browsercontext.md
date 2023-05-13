@@ -333,6 +333,10 @@ await context.AddCookiesAsync(new[] { cookie1, cookie2 });
   - `secure` ?<[boolean]> Optional.
   - `sameSite` ?<[SameSiteAttribute]<"Strict"|"Lax"|"None">> Optional.
 
+Adds cookies to the browser context.
+
+For the cookie to apply to all subdomains as well, prefix domain with a dot, like this: ".example.com".
+
 ## async method: BrowserContext.addInitScript
 * since: v1.8
 

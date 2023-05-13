@@ -8066,7 +8066,9 @@ export interface BrowserContext {
    * await browserContext.addCookies([cookieObject1, cookieObject2]);
    * ```
    *
-   * @param cookies
+   * @param cookies Adds cookies to the browser context.
+   *
+   * For the cookie to apply to all subdomains as well, prefix domain with a dot, like this: ".example.com".
    */
   addCookies(cookies: Array<{
     name: string;
@@ -16157,11 +16159,10 @@ export interface Browser extends EventEmitter {
      * Populates context with given storage state. This option can be used to initialize context with logged-in
      * information obtained via
      * [browserContext.storageState([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-storage-state).
-     * Either a path to the file with saved storage, or an object with the following fields:
      */
     storageState?: string|{
       /**
-       * cookies to set for context
+       * Cookies to set for context
        */
       cookies: Array<{
         name: string;
@@ -16169,12 +16170,13 @@ export interface Browser extends EventEmitter {
         value: string;
 
         /**
-         * domain and path are required
+         * Domain and path are required. For the cookie to apply to all subdomains as well, prefix domain with a dot, like
+         * this: ".example.com"
          */
         domain: string;
 
         /**
-         * domain and path are required
+         * Domain and path are required
          */
         path: string;
 
@@ -19282,11 +19284,10 @@ export interface BrowserContextOptions {
    * Populates context with given storage state. This option can be used to initialize context with logged-in
    * information obtained via
    * [browserContext.storageState([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-storage-state).
-   * Either a path to the file with saved storage, or an object with the following fields:
    */
   storageState?: string|{
     /**
-     * cookies to set for context
+     * Cookies to set for context
      */
     cookies: Array<{
       name: string;
@@ -19294,12 +19295,13 @@ export interface BrowserContextOptions {
       value: string;
 
       /**
-       * domain and path are required
+       * Domain and path are required. For the cookie to apply to all subdomains as well, prefix domain with a dot, like
+       * this: ".example.com"
        */
       domain: string;
 
       /**
-       * domain and path are required
+       * Domain and path are required
        */
       path: string;
 
@@ -19788,7 +19790,7 @@ export interface PageScreenshotOptions {
   caret?: "hide"|"initial";
 
   /**
-   * An object which specifies clipping of the resulting image. Should have the following fields:
+   * An object which specifies clipping of the resulting image.
    */
   clip?: {
     /**
