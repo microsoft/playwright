@@ -32,6 +32,7 @@ type BlobReporterOptions = {
 export class BlobReporter extends TeleReporterEmitter {
   private _messages: any[] = [];
   private _options: BlobReporterOptions;
+  private _salt: string;
   private _copyFilePromises = new Set<Promise<void>>();
 
   private _outputDir!: string;
@@ -40,6 +41,7 @@ export class BlobReporter extends TeleReporterEmitter {
   constructor(options: BlobReporterOptions) {
     super(message => this._messages.push(message));
     this._options = options;
+    this._salt = createGuid();
   }
 
   override onBegin(config: FullConfig<{}, {}>, suite: Suite): void {
@@ -64,7 +66,8 @@ export class BlobReporter extends TeleReporterEmitter {
     return attachments.map(attachment => {
       if (!attachment.path || !fs.statSync(attachment.path).isFile())
         return attachment;
-      const sha1 = calculateSha1(attachment.path);
+      // Add run guid to avoid clashes between shards.
+      const sha1 = calculateSha1(attachment.path + this._salt);
       const extension = mime.getExtension(attachment.contentType) || 'dat';
       const newPath = `resources/${sha1}.${extension}`;
       this._startCopyingFile(attachment.path, path.join(this._outputDir, newPath));
