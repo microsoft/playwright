@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { formatLocation, debugTest } from '../util';
+import { formatLocation, debugTest, filterStackFile, serializeError } from '../util';
 import { ManualPromise, zones } from 'playwright-core/lib/utils';
 import type { TestInfoImpl, TestStepInternal } from './testInfo';
 import type { FixtureDescription, TimeoutManager } from './timeoutManager';
@@ -76,7 +76,8 @@ class Fixture {
 
     // Break the regustration function into before/after steps. Create these before/after stacks
     // w/o scopes, and create single mutable step that will be converted into the after step.
-    const shouldGenerateStep = !this.registration.name.startsWith('_') && !this.registration.option && this.registration.scope === 'test';
+    const shouldGenerateStep = !this.registration.hideStep && !this.registration.name.startsWith('_') && !this.registration.option;
+    const isInternalFixture = this.registration.location && filterStackFile(this.registration.location.file);
     let mutableStepOnStack: TestStepInternal | undefined;
     let afterStep: TestStepInternal | undefined;
 
@@ -97,6 +98,7 @@ class Fixture {
           wallTime: Date.now(),
           title: `fixture: ${this.registration.name}`,
           category: 'fixture',
+          location: isInternalFixture ? this.registration.location : undefined,
         }, testInfo._afterHooksStep);
         mutableStepOnStack!.stepId = afterStep.stepId;
       }
@@ -121,6 +123,7 @@ class Fixture {
         await testInfo._runAsStep({
           title: `fixture: ${this.registration.name}`,
           category: 'fixture',
+          location: isInternalFixture ? this.registration.location : undefined,
         }, async step => {
           mutableStepOnStack = step;
           return await this.registration.fn(params, useFunc, info);
@@ -137,8 +140,10 @@ class Fixture {
     await useFuncStarted;
     if (shouldGenerateStep) {
       mutableStepOnStack?.complete({});
-      this._selfTeardownComplete?.finally(() => {
+      this._selfTeardownComplete?.then(() => {
         afterStep?.complete({});
+      }).catch(e => {
+        afterStep?.complete({ error: serializeError(e) });
       });
     }
     testInfo._timeoutManager.setCurrentFixture(undefined);

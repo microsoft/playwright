@@ -146,6 +146,7 @@ test('should reuse context with trace if mode=when-possible', async ({ runInline
   const trace1 = await parseTrace(testInfo.outputPath('test-results', 'reuse-one', 'trace.zip'));
   expect(trace1.apiNames).toEqual([
     'Before Hooks',
+    'fixture: browser',
     'browserType.launch',
     'fixture: context',
     'fixture: page',

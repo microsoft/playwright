@@ -131,7 +131,14 @@ function mergeActions(contexts: ContextEntry[]) {
   }
 
   const result = [...map.values()];
-  result.sort((a1, a2) => a1.wallTime - a2.wallTime);
+  result.sort((a1, a2) => {
+    if (a2.parentId === a1.callId)
+      return -1;
+    if (a1.parentId === a2.callId)
+      return 1;
+    return a1.wallTime - a2.wallTime || a1.startTime - a2.startTime;
+  });
+
   for (let i = 1; i < result.length; ++i)
     (result[i] as any)[prevInListSymbol] = result[i - 1];
 

@@ -40,15 +40,21 @@ export function filterStackTrace(e: Error): { message: string, stack: string } {
   };
 }
 
+export function filterStackFile(file: string) {
+  if (!process.env.PWDEBUGIMPL && file.startsWith(PLAYWRIGHT_TEST_PATH))
+    return false;
+  if (!process.env.PWDEBUGIMPL && file.startsWith(PLAYWRIGHT_CORE_PATH))
+    return false;
+  return true;
+}
+
 export function filteredStackTrace(rawStack: RawStack): StackFrame[] {
   const frames: StackFrame[] = [];
   for (const line of rawStack) {
     const frame = parseStackTraceLine(line);
     if (!frame || !frame.file)
       continue;
-    if (!process.env.PWDEBUGIMPL && frame.file.startsWith(PLAYWRIGHT_TEST_PATH))
-      continue;
-    if (!process.env.PWDEBUGIMPL && frame.file.startsWith(PLAYWRIGHT_CORE_PATH))
+    if (!filterStackFile(frame.file))
       continue;
     frames.push(frame);
   }

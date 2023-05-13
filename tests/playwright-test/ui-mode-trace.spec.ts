@@ -46,7 +46,6 @@ test('should merge trace events', async ({ runUITest, server }) => {
     /After Hooks[\d.]+m?s/,
     /fixture: page[\d.]+m?s/,
     /fixture: context[\d.]+m?s/,
-    /browserContext.close[\d.]+m?s/,
   ]);
 });
 
@@ -74,7 +73,6 @@ test('should merge web assertion events', async ({  runUITest }, testInfo) => {
     /After Hooks[\d.]+m?s/,
     /fixture: page[\d.]+m?s/,
     /fixture: context[\d.]+m?s/,
-    /browserContext.close[\d.]+m?s/,
   ]);
 });
 
@@ -149,7 +147,6 @@ test('should show snapshots for sync assertions', async ({ runUITest, server }) 
     /After Hooks[\d.]+m?s/,
     /fixture: page[\d.]+m?s/,
     /fixture: context[\d.]+m?s/,
-    /browserContext.close[\d.]+m?s/,
   ]);
 
   await expect(

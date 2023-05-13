@@ -74,7 +74,7 @@ export const Workbench: React.FunctionComponent<{
 
   const callTab: TabbedPaneTabModel = {
     id: 'call',
-    title: showSourcesFirst ? 'Log' : 'Call',
+    title: 'Call',
     render: () => <CallTab action={activeAction} sdkLanguage={sdkLanguage} />
   };
   const sourceTab: TabbedPaneTabModel = {
