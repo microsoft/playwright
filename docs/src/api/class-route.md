@@ -264,7 +264,7 @@ page.route("**/*", route -> {
 
 ```python async
 # Handle GET requests.
-def handle_post(route):
+def handle_get(route):
     if route.request.method != "GET":
         route.fallback()
         return
@@ -285,7 +285,7 @@ await page.route("**/*", handle_post)
 
 ```python sync
 # Handle GET requests.
-def handle_post(route):
+def handle_get(route):
     if route.request.method != "GET":
         route.fallback()
         return
