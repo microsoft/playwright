@@ -3922,7 +3922,6 @@ export interface PlaywrightTestOptions {
    * Populates context with given storage state. This option can be used to initialize context with logged-in
    * information obtained via
    * [browserContext.storageState([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-storage-state).
-   * Either a path to the file with saved storage, or an object with the following fields:
    */
   storageState: StorageState | undefined;
   /**
@@ -5587,7 +5586,7 @@ interface PageAssertions {
     caret?: "hide"|"initial";
 
     /**
-     * An object which specifies clipping of the resulting image. Should have the following fields:
+     * An object which specifies clipping of the resulting image.
      */
     clip?: {
       /**
@@ -5694,7 +5693,7 @@ interface PageAssertions {
     caret?: "hide"|"initial";
 
     /**
-     * An object which specifies clipping of the resulting image. Should have the following fields:
+     * An object which specifies clipping of the resulting image.
      */
     clip?: {
       /**
