@@ -228,14 +228,14 @@ it.describe('page screenshot', () => {
     await verifyViewport(page, 500, 500);
   });
 
-  it('should allow transparency', async ({ page, browserName }) => {
+  it('should allow transparency', async ({ page, browserName, platform, headless }) => {
     it.fail(browserName === 'firefox');
 
-    await page.setViewportSize({ width: 50, height: 150 });
+    await page.setViewportSize({ width: 300, height: 300 });
     await page.setContent(`
       <style>
         body { margin: 0 }
-        div { width: 50px; height: 50px; }
+        div { width: 300px; height: 100px; }
       </style>
       <div style="background:black"></div>
       <div style="background:white"></div>

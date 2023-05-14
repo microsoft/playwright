@@ -47,14 +47,14 @@ it('should return correct outerWidth and outerHeight', async ({ page }) => {
 
 it('should emulate device width', async ({ page, server }) => {
   expect(page.viewportSize()).toEqual({ width: 1280, height: 720 });
-  await page.setViewportSize({ width: 200, height: 200 });
-  expect(await page.evaluate(() => window.screen.width)).toBe(200);
-  expect(await page.evaluate(() => matchMedia('(min-device-width: 100px)').matches)).toBe(true);
-  expect(await page.evaluate(() => matchMedia('(min-device-width: 300px)').matches)).toBe(false);
-  expect(await page.evaluate(() => matchMedia('(max-device-width: 100px)').matches)).toBe(false);
-  expect(await page.evaluate(() => matchMedia('(max-device-width: 300px)').matches)).toBe(true);
-  expect(await page.evaluate(() => matchMedia('(device-width: 500px)').matches)).toBe(false);
-  expect(await page.evaluate(() => matchMedia('(device-width: 200px)').matches)).toBe(true);
+  await page.setViewportSize({ width: 300, height: 300 });
+  expect(await page.evaluate(() => window.screen.width)).toBe(300);
+  expect(await page.evaluate(() => matchMedia('(min-device-width: 200px)').matches)).toBe(true);
+  expect(await page.evaluate(() => matchMedia('(min-device-width: 400px)').matches)).toBe(false);
+  expect(await page.evaluate(() => matchMedia('(max-device-width: 200px)').matches)).toBe(false);
+  expect(await page.evaluate(() => matchMedia('(max-device-width: 400px)').matches)).toBe(true);
+  expect(await page.evaluate(() => matchMedia('(device-width: 600px)').matches)).toBe(false);
+  expect(await page.evaluate(() => matchMedia('(device-width: 300px)').matches)).toBe(true);
   await page.setViewportSize({ width: 500, height: 500 });
   expect(await page.evaluate(() => window.screen.width)).toBe(500);
   expect(await page.evaluate(() => matchMedia('(min-device-width: 400px)').matches)).toBe(true);
@@ -67,14 +67,14 @@ it('should emulate device width', async ({ page, server }) => {
 
 it('should emulate device height', async ({ page, server }) => {
   expect(page.viewportSize()).toEqual({ width: 1280, height: 720 });
-  await page.setViewportSize({ width: 200, height: 200 });
-  expect(await page.evaluate(() => window.screen.height)).toBe(200);
-  expect(await page.evaluate(() => matchMedia('(min-device-height: 100px)').matches)).toBe(true);
-  expect(await page.evaluate(() => matchMedia('(min-device-height: 300px)').matches)).toBe(false);
-  expect(await page.evaluate(() => matchMedia('(max-device-height: 100px)').matches)).toBe(false);
-  expect(await page.evaluate(() => matchMedia('(max-device-height: 300px)').matches)).toBe(true);
-  expect(await page.evaluate(() => matchMedia('(device-height: 500px)').matches)).toBe(false);
-  expect(await page.evaluate(() => matchMedia('(device-height: 200px)').matches)).toBe(true);
+  await page.setViewportSize({ width: 300, height: 300 });
+  expect(await page.evaluate(() => window.screen.height)).toBe(300);
+  expect(await page.evaluate(() => matchMedia('(min-device-height: 200px)').matches)).toBe(true);
+  expect(await page.evaluate(() => matchMedia('(min-device-height: 400px)').matches)).toBe(false);
+  expect(await page.evaluate(() => matchMedia('(max-device-height: 200px)').matches)).toBe(false);
+  expect(await page.evaluate(() => matchMedia('(max-device-height: 400px)').matches)).toBe(true);
+  expect(await page.evaluate(() => matchMedia('(device-height: 600px)').matches)).toBe(false);
+  expect(await page.evaluate(() => matchMedia('(device-height: 300px)').matches)).toBe(true);
   await page.setViewportSize({ width: 500, height: 500 });
   expect(await page.evaluate(() => window.screen.height)).toBe(500);
   expect(await page.evaluate(() => matchMedia('(min-device-height: 400px)').matches)).toBe(true);
@@ -156,10 +156,10 @@ it('WebKit Windows headed should have a minimal viewport', async ({ contextFacto
 
   await expect(contextFactory({
     viewport: { 'width': 100, 'height': 100 },
-  })).rejects.toThrow('WebKit on Windows has a minimal viewport of 250x250.');
+  })).rejects.toThrow('WebKit on Windows has a minimal viewport of 250x240.');
 
   const context = await contextFactory();
   const page = await context.newPage();
-  await expect(page.setViewportSize({ width: 100, height: 100 })).rejects.toThrow('WebKit on Windows has a minimal viewport of 250x250.');
+  await expect(page.setViewportSize({ width: 100, height: 100 })).rejects.toThrow('WebKit on Windows has a minimal viewport of 250x240.');
   await context.close();
 });
