@@ -68,7 +68,7 @@ setup('authenticate', async ({ page }) => {
 });
 ```
 
-Create a new `setup` project in the config and declare it as a dependency for all your testing projects. This project will always run and authenticate before all the tests. All testing projects should use the authenticated state as `storageState`.
+Create a new `setup` project in the config and declare it as a [dependency](./test-projects.md#dependencies) for all your testing projects. This project will always run and authenticate before all the tests. All testing projects should use the authenticated state as `storageState`.
 
 ```js title="playwright.config.ts"
 import { defineConfig, devices } from '@playwright/test';
