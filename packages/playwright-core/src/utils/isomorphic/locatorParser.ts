@@ -15,7 +15,7 @@
  */
 
 import { escapeForAttributeSelector, escapeForTextSelector } from '../../utils/isomorphic/stringUtils';
-import { asLocator } from './locatorGenerators';
+import { asLocators } from './locatorGenerators';
 import type { Language } from './locatorGenerators';
 import { parseSelector } from './selectorParser';
 
@@ -78,7 +78,7 @@ function parseLocator(locator: string, testIdAttributeName: string): string {
       .replace(/[{}\s]/g, '')
       .replace(/new\(\)/g, '')
       .replace(/new[\w]+\.[\w]+options\(\)/g, '')
-      .replace(/\.set([\w]+)\(([^)]+)\)/g, (_, group1, group2) => ',' + group1.toLowerCase() + '=' + group2.toLowerCase())
+      .replace(/\.set/g, ',set')
       .replace(/\.or_\(/g, 'or(') // Python has "or_" instead of "or".
       .replace(/\.and_\(/g, 'and(') // Python has "and_" instead of "and".
       .replace(/:/g, '=')
@@ -104,10 +104,10 @@ function shiftParams(template: string, sub: number) {
 }
 
 function transform(template: string, params: TemplateParams, testIdAttributeName: string): string {
-  // Recursively handle filter(has=, hasnot=).
-  // TODO: handle and(locator), or(locator).
+  // Recursively handle filter(has=, hasnot=, sethas(), sethasnot()).
+  // TODO: handle and(locator), or(locator), locator(has=, hasnot=, sethas(), sethasnot()).
   while (true) {
-    const hasMatch = template.match(/filter\(,?(has|hasnot)=/);
+    const hasMatch = template.match(/filter\(,?(has=|hasnot=|sethas\(|sethasnot\()/);
     if (!hasMatch)
       break;
 
@@ -124,6 +124,15 @@ function transform(template: string, params: TemplateParams, testIdAttributeName
         break;
     }
 
+    // Replace Java sethas(...) and sethasnot(...) with has=... and hasnot=...
+    let prefix = template.substring(0, start);
+    let extraSymbol = 0;
+    if (['sethas(', 'sethasnot('].includes(hasMatch[1])) {
+      // Eat extra ) symbol at the end of sethas(...)
+      extraSymbol = 1;
+      prefix = prefix.replace(/sethas\($/, 'has=').replace(/sethasnot\($/, 'hasnot=');
+    }
+
     const paramsCountBeforeHas = countParams(template.substring(0, start));
     const hasTemplate = shiftParams(template.substring(start, end), paramsCountBeforeHas);
     const paramsCountInHas = countParams(hasTemplate);
@@ -132,7 +141,7 @@ function transform(template: string, params: TemplateParams, testIdAttributeName
 
     // Replace filter(has=...) with filter(has2=$5). Use has2 to avoid matching the same filter again.
     // Replace filter(hasnot=...) with filter(hasnot2=$5). Use hasnot2 to avoid matching the same filter again.
-    template = template.substring(0, start - 1) + `2=$${paramsCountBeforeHas + 1}` + shiftParams(template.substring(end), paramsCountInHas - 1);
+    template = prefix.replace(/=$/, '2=') + `$${paramsCountBeforeHas + 1}` + shiftParams(template.substring(end + extraSymbol), paramsCountInHas - 1);
 
     // Replace inner params with $5 value.
     const paramsBeforeHas = params.slice(0, paramsCountBeforeHas);
@@ -142,7 +151,11 @@ function transform(template: string, params: TemplateParams, testIdAttributeName
 
   // Transform to selector engines.
   template = template
+      .replace(/\,set([\w]+)\(([^)]+)\)/g, (_, group1, group2) => ',' + group1.toLowerCase() + '=' + group2.toLowerCase())
       .replace(/framelocator\(([^)]+)\)/g, '$1.internal:control=enter-frame')
+      .replace(/locator\(([^)]+),hastext=([^),]+)\)/g, 'locator($1).internal:has-text=$2')
+      .replace(/locator\(([^)]+),hasnottext=([^),]+)\)/g, 'locator($1).internal:has-not-text=$2')
+      .replace(/locator\(([^)]+),hastext=([^),]+)\)/g, 'locator($1).internal:has-text=$2')
       .replace(/locator\(([^)]+)\)/g, '$1')
       .replace(/getbyrole\(([^)]+)\)/g, 'internal:role=$1')
       .replace(/getbytext\(([^)]+)\)/g, 'internal:text=$1')
@@ -203,7 +216,9 @@ export function locatorOrSelectorAsSelector(language: Language, locator: string,
   }
   try {
     const selector = parseLocator(locator, testIdAttributeName);
-    if (digestForComparison(asLocator(language, selector)) === digestForComparison(locator))
+    const locators = asLocators(language, selector);
+    const digest = digestForComparison(locator);
+    if (locators.some(candidate => digestForComparison(candidate) === digest))
       return selector;
   } catch (e) {
   }
