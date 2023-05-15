@@ -54,6 +54,7 @@ function compareImages(mimeType: string, actualBuffer: Buffer | string, expected
     return { errorMessage: 'Actual result should be a Buffer.' };
 
   let actual: ImageData = mimeType === 'image/png' ? PNG.sync.read(actualBuffer) : jpegjs.decode(actualBuffer, { maxMemoryUsageInMB: JPEG_JS_MAX_BUFFER_SIZE_IN_MB });
+  validateBuffer(expectedBuffer, mimeType);
   let expected: ImageData = mimeType === 'image/png' ? PNG.sync.read(expectedBuffer) : jpegjs.decode(expectedBuffer, { maxMemoryUsageInMB: JPEG_JS_MAX_BUFFER_SIZE_IN_MB });
   const size = { width: Math.max(expected.width, actual.width), height: Math.max(expected.height, actual.height) };
   let sizesMismatchError = '';
@@ -90,6 +91,14 @@ function compareImages(mimeType: string, actualBuffer: Buffer | string, expected
   if (pixelsMismatchError || sizesMismatchError)
     return { errorMessage: sizesMismatchError + pixelsMismatchError, diff: PNG.sync.write(diff) };
   return null;
+}
+
+function validateBuffer(buffer: Buffer, mimeType: string): void {
+  if (mimeType === 'image/png') {
+    const pngMagicNumber = [137, 80, 78, 71, 13, 10, 26, 10];
+    if (buffer.length < pngMagicNumber.length || !pngMagicNumber.every((byte, index) => buffer[index] === byte))
+      throw new Error('could not decode image as PNG.');
+  }
 }
 
 function compareText(actual: Buffer | string, expectedBuffer: Buffer): ComparatorResult {

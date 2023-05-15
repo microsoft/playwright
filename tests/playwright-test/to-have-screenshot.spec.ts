@@ -1152,6 +1152,23 @@ test('should respect comparator in config', async ({ runInlineTest }) => {
   expect(result.report.suites[0].specs[0].tests[1].status).toBe('unexpected');
 });
 
+test('should throw pretty error if expected PNG file is not a PNG', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    ...playwrightConfig({
+      snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
+    }),
+    '__screenshots__/a.spec.js/snapshot.png': 'not a png',
+    'a.spec.js': `
+      const { test, expect } = require('@playwright/test');
+      test('is a test', async ({ page }) => {
+        await expect(page).toHaveScreenshot('snapshot.png');
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('could not decode image as PNG.');
+});
+
 function playwrightConfig(obj: any) {
   return {
     'playwright.config.js': `
