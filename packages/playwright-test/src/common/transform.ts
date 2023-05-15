@@ -134,15 +134,15 @@ export function resolveHook(filename: string, specifier: string): string | undef
   }
 }
 
-export function transformHook(preloadedCode: string, filename: string, moduleUrl?: string): string {
-  const isTypeScript = filename.endsWith('.ts') || filename.endsWith('.tsx');
+export function transformHook(originalCode: string, filename: string, moduleUrl?: string): string {
+  const isTypeScript = filename.endsWith('.ts') || filename.endsWith('.tsx') || filename.endsWith('.mts') || filename.endsWith('.cts');
   const hasPreprocessor =
       process.env.PW_TEST_SOURCE_TRANSFORM &&
       process.env.PW_TEST_SOURCE_TRANSFORM_SCOPE &&
       process.env.PW_TEST_SOURCE_TRANSFORM_SCOPE.split(pathSeparator).some(f => filename.startsWith(f));
   const pluginsPrologue = babelPlugins;
   const pluginsEpilogue = hasPreprocessor ? [[process.env.PW_TEST_SOURCE_TRANSFORM!]] as BabelPlugin[] : [];
-  const hash = calculateHash(preloadedCode, filename, !!moduleUrl, pluginsPrologue, pluginsEpilogue);
+  const hash = calculateHash(originalCode, filename, !!moduleUrl, pluginsPrologue, pluginsEpilogue);
   const { cachedCode, addToCache } = getFromCompilationCache(filename, hash, moduleUrl);
   if (cachedCode)
     return cachedCode;
@@ -152,7 +152,7 @@ export function transformHook(preloadedCode: string, filename: string, moduleUrl
   process.env.BROWSERSLIST_IGNORE_OLD_DATA = 'true';
 
   const { babelTransform }: { babelTransform: BabelTransformFunction } = require('./babelBundle');
-  const { code, map } = babelTransform(filename, isTypeScript, !!moduleUrl, pluginsPrologue, pluginsEpilogue);
+  const { code, map } = babelTransform(originalCode, filename, isTypeScript, !!moduleUrl, pluginsPrologue, pluginsEpilogue);
   if (code)
     addToCache!(code, map);
   return code || '';

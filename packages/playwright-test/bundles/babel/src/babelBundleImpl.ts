@@ -83,9 +83,9 @@ function babelTransformOptions(isTypeScript: boolean, isModule: boolean, plugins
       // breaks playwright evaluates.
       setPublicClassFields: true,
     },
-    presets: [
+    presets: isTypeScript ? [
       [require('@babel/preset-typescript'), { onlyRemoveTypeImports: false }],
-    ],
+    ] : [],
     plugins: [
       ...pluginsPrologue.map(([name, options]) => [require(name), options]),
       ...plugins,
@@ -98,7 +98,7 @@ function babelTransformOptions(isTypeScript: boolean, isModule: boolean, plugins
 
 let isTransforming = false;
 
-export function babelTransform(filename: string, isTypeScript: boolean, isModule: boolean, pluginsPrologue: [string, any?][], pluginsEpilogue: [string, any?][]): BabelFileResult {
+export function babelTransform(code: string, filename: string, isTypeScript: boolean, isModule: boolean, pluginsPrologue: [string, any?][], pluginsEpilogue: [string, any?][]): BabelFileResult {
   if (isTransforming)
     return {};
 
@@ -106,7 +106,7 @@ export function babelTransform(filename: string, isTypeScript: boolean, isModule
   isTransforming = true;
   try {
     const options = babelTransformOptions(isTypeScript, isModule, pluginsPrologue, pluginsEpilogue);
-    return babel.transformFileSync(filename, options)!;
+    return babel.transform(code, { filename, ...options })!;
   } finally {
     isTransforming = false;
   }
