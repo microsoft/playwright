@@ -312,6 +312,8 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
       } else {
         try {
           const result = matcher.call(target, ...args);
+          if (result instanceof Promise)
+            return result.then(finalizer).catch(reportStepError);
           finalizer();
           return result;
         } catch (e) {

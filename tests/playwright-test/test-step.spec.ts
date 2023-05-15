@@ -480,7 +480,7 @@ test('should report custom expect steps', async ({ runInlineTest }) => {
     'reporter.ts': stepHierarchyReporter,
     'playwright.config.ts': `
       module.exports = {
-        reporter: './reporter',
+        reporter: [['./reporter'], ['line']],
       };
     `,
     'a.test.ts': `
@@ -501,16 +501,27 @@ test('should report custom expect steps', async ({ runInlineTest }) => {
             };
           }
         },
+
+        async toBeFailingAsync(received) {
+          await new Promise(f => setTimeout(f, 0));
+          return {
+            message: () => "It fails!",
+            pass: false,
+          };
+        },
       });
 
       import { test, expect } from '@playwright/test';
-      test('pass', async ({}) => {
+      test('fail', async ({}) => {
         expect(15).toBeWithinRange(10, 20);
+        await expect(1).toBeFailingAsync(22);
       });
     `
   }, { reporter: '', workers: 1 });
 
-  expect(result.exitCode).toBe(0);
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output).toContain('It fails!');
   const objects = result.outputLines.map(line => JSON.parse(line));
   expect(objects).toEqual([
     {
@@ -525,6 +536,16 @@ test('should report custom expect steps', async ({ runInlineTest }) => {
         line: 'number',
       },
       title: 'expect.toBeWithinRange',
+    },
+    {
+      category: 'expect',
+      location: {
+        column: 'number',
+        file: 'a.test.ts',
+        line: 'number',
+      },
+      title: 'expect.toBeFailingAsync',
+      error: '<error>',
     },
     {
       category: 'hook',
