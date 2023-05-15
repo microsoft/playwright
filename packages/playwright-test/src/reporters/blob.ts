@@ -44,6 +44,10 @@ export class BlobReporter extends TeleReporterEmitter {
     this._salt = createGuid();
   }
 
+  printsToStdio() {
+    return false;
+  }
+
   override onBegin(config: FullConfig<{}, {}>, suite: Suite): void {
     this._outputDir = path.resolve(this._options.configDir, this._options.outputDir || 'blob-report');
     fs.mkdirSync(path.join(this._outputDir, 'resources'), { recursive: true });
