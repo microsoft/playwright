@@ -225,3 +225,62 @@ test('should skip dependency when project is sharded out', async ({ runInlineTes
     'test in tests2',
   ]);
 });
+
+test('should not shard mode:default suites', async ({ runInlineTest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22891' });
+
+  const tests = {
+    'a1.spec.ts': `
+      import { test } from '@playwright/test';
+      test('test0', async ({ }) => {
+        console.log('\\n%%test0');
+      });
+      test('test1', async ({ }) => {
+        console.log('\\n%%test1');
+      });
+    `,
+    'a2.spec.ts': `
+      import { test } from '@playwright/test';
+      test.describe.configure({ mode: 'parallel' });
+
+      test.describe(() => {
+        test.describe.configure({ mode: 'default' });
+        test.beforeAll(() => {
+          console.log('\\n%%beforeAll1');
+        });
+        test('test2', async ({ }) => {
+          console.log('\\n%%test2');
+        });
+        test('test3', async ({ }) => {
+          console.log('\\n%%test3');
+        });
+      });
+
+      test.describe(() => {
+        test.describe.configure({ mode: 'default' });
+        test.beforeAll(() => {
+          console.log('\\n%%beforeAll2');
+        });
+        test('test4', async ({ }) => {
+          console.log('\\n%%test4');
+        });
+        test('test5', async ({ }) => {
+          console.log('\\n%%test5');
+        });
+      });
+  `,
+  };
+
+  {
+    const result = await runInlineTest(tests, { shard: '2/3', workers: 1 });
+    expect(result.exitCode).toBe(0);
+    expect(result.passed).toBe(2);
+    expect(result.outputLines).toEqual(['beforeAll1', 'test2', 'test3']);
+  }
+  {
+    const result = await runInlineTest(tests, { shard: '3/3', workers: 1 });
+    expect(result.exitCode).toBe(0);
+    expect(result.passed).toBe(2);
+    expect(result.outputLines).toEqual(['beforeAll2', 'test4', 'test5']);
+  }
+});
