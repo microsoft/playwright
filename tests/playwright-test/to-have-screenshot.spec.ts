@@ -1158,15 +1158,20 @@ test('should throw pretty error if expected PNG file is not a PNG', async ({ run
       snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
     }),
     '__screenshots__/a.spec.js/snapshot.png': 'not a png',
+    '__screenshots__/a.spec.js/snapshot.jpg': 'not a jpg',
     'a.spec.js': `
       const { test, expect } = require('@playwright/test');
-      test('is a test', async ({ page }) => {
+      test('png', async ({ page }) => {
         await expect(page).toHaveScreenshot('snapshot.png');
+      });
+      test('jpg', async ({ page }) => {
+        expect(await page.screenshot({ type: 'jpeg' })).toMatchSnapshot('snapshot.jpg')
       });
     `,
   });
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain('could not decode image as PNG.');
+  expect(result.output).toContain('could not decode image as JPEG.');
 });
 
 function playwrightConfig(obj: any) {
