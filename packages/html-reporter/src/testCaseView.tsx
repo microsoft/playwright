@@ -24,6 +24,7 @@ import { statusIcon } from './statusIcon';
 import './testCaseView.css';
 import { TestResultView } from './testResultView';
 import { hashStringToInt, matchTags } from './labelUtils';
+import { msToString } from './uiUtils';
 
 export const TestCaseView: React.FC<{
   projectNames: string[],
@@ -42,7 +43,11 @@ export const TestCaseView: React.FC<{
   return <div className='test-case-column vbox'>
     {test && <div className='test-case-path'>{test.path.join(' › ')}</div>}
     {test && <div className='test-case-title'>{test?.title}</div>}
-    {test && <div className='test-case-location'>{test.location.file}:{test.location.line}</div>}
+    {test && <div className='hbox'>
+      <div className='test-case-location'>{test.location.file}:{test.location.line}</div>
+      <div style={{ flex: 'auto' }}></div>
+      <div className='test-case-duration'>{msToString(test.duration)}</div>
+    </div>}
     {test && (!!test.projectName || labels) && <div className='test-case-project-labels-row'>
       {test && !!test.projectName && <ProjectLink projectNames={projectNames} projectName={test.projectName}></ProjectLink>}
       {labels && <LabelsLinkView labels={labels} />}

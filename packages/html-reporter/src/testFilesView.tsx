@@ -19,13 +19,16 @@ import * as React from 'react';
 import type { Filter } from './filter';
 import { TestFileView } from './testFileView';
 import './testFileView.css';
+import { msToString } from './uiUtils';
 
 export const TestFilesView: React.FC<{
   report?: HTMLReport,
   expandedFiles: Map<string, boolean>,
   setExpandedFiles: (value: Map<string, boolean>) => void,
   filter: Filter,
-}> = ({ report, filter, expandedFiles, setExpandedFiles }) => {
+  stats: { duration: number },
+  projectNames: string[],
+}> = ({ report, filter, expandedFiles, setExpandedFiles, projectNames, stats }) => {
   const filteredFiles = React.useMemo(() => {
     const result: { file: TestFileSummary, defaultExpanded: boolean }[] = [];
     let visibleTests = 0;
@@ -38,6 +41,11 @@ export const TestFilesView: React.FC<{
     return result;
   }, [report, filter]);
   return <>
+    <div className='p-2' style={{ display: 'flex' }}>
+      {projectNames.length === 1 && !!projectNames[0] && <div data-testid="project-name" style={{ color: 'var(--color-fg-subtle)' }}>Project: {projectNames[0]}</div>}
+      <div style={{ flex: 'auto' }}></div>
+      <div data-testid="overall-duration" style={{ color: 'var(--color-fg-subtle)' }}>Total time: {msToString(stats.duration)}</div>
+    </div>
     {report && filteredFiles.map(({ file, defaultExpanded }) => {
       return <TestFileView
         key={`file-${file.fileId}`}
