@@ -236,7 +236,7 @@ it('make sure that XMLHttpRequest upload events are emitted correctly', async ({
 
 it('loading in HTMLImageElement.prototype', async ({ page, server, browserName, isMac }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22738' });
-  it.skip(browserName === 'webkit' && isMac && parseInt(os.release(), 10) < 21, 'Does not work on macOS 11');
+  it.skip(browserName === 'webkit' && isMac && parseInt(os.release(), 10) < 21, 'macOS 11 is frozen');
   await page.goto(server.EMPTY_PAGE);
   const defined = await page.evaluate(() => 'loading' in HTMLImageElement.prototype);
   expect(defined).toBeTruthy();
