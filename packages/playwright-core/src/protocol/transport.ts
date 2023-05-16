@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import type { ChildProcess } from 'child_process';
 import { makeWaitForNextTask } from '../utils';
 
 export interface WritableStream {
@@ -101,30 +100,5 @@ export class PipeTransport {
           this.onmessage(message.toString('utf-8'));
       });
     }
-  }
-}
-
-export class IpcTransport {
-  private _process: NodeJS.Process | ChildProcess;
-  private _waitForNextTask = makeWaitForNextTask();
-  onmessage?: (message: string) => void;
-  onclose?: () => void;
-
-  constructor(process: NodeJS.Process | ChildProcess) {
-    this._process = process;
-    this._process.on('message', message => this._waitForNextTask(() => {
-      if (message === '<eof>')
-        this.onclose?.();
-      else
-        this.onmessage?.(message);
-    }));
-  }
-
-  send(message: string) {
-    this._process.send!(message);
-  }
-
-  close() {
-    this._process.send!('<eof>');
   }
 }
