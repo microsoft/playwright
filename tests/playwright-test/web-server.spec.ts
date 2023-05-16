@@ -679,5 +679,27 @@ test('should forward stdout when set to "pipe"', async ({ runInlineTest }, { wor
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
   expect(result.output).toContain('[WebServer] listening');
-  expect(result.output).toContain('[WebServer] error from server'); // stderr is always getting forwarded
+  expect(result.output).toContain('[WebServer] error from server'); // stderr is piped by default
+});
+
+test('should be able to ignore "stderr"', async ({ runInlineTest }, { workerIndex }) => {
+  const port = workerIndex * 2 + 10500;
+  const result = await runInlineTest({
+    'test.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({}) => {});
+    `,
+    'playwright.config.ts': `
+      module.exports = {
+        webServer: {
+          command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port}',
+          port: ${port},
+          stderr: 'ignore',
+        }
+      };
+    `,
+  }, undefined);
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.output).not.toContain('error from server');
 });

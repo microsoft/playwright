@@ -35,6 +35,7 @@ export type WebServerPluginOptions = {
   cwd?: string;
   env?: { [key: string]: string; };
   stdout?: 'pipe' | 'ignore';
+  stderr?: 'pipe' | 'ignore';
 };
 
 const DEFAULT_ENVIRONMENT_VARIABLES = {
@@ -107,7 +108,10 @@ export class WebServerPlugin implements TestRunnerPlugin {
 
     debugWebServer(`Process started`);
 
-    launchedProcess.stderr!.on('data', line => this._reporter!.onStdErr?.('[WebServer] ' + line.toString()));
+    launchedProcess.stderr!.on('data', line => {
+      if (debugWebServer.enabled || (this._options.stderr === 'pipe' || !this._options.stderr))
+        this._reporter!.onStdErr?.('[WebServer] ' + line.toString());
+    });
     launchedProcess.stdout!.on('data', line => {
       if (debugWebServer.enabled || this._options.stdout === 'pipe')
         this._reporter!.onStdOut?.('[WebServer] ' + line.toString());
