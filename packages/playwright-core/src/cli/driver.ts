@@ -21,7 +21,7 @@ import * as playwright from '../..';
 import type { BrowserType } from '../client/browserType';
 import type { LaunchServerOptions } from '../client/types';
 import { createPlaywright, DispatcherConnection, RootDispatcher, PlaywrightDispatcher } from '../server';
-import { IpcTransport, PipeTransport } from '../protocol/transport';
+import { PipeTransport } from '../protocol/transport';
 import { PlaywrightServer } from '../remote/playwrightServer';
 import { gracefullyCloseAll } from '../utils/processLauncher';
 
@@ -36,14 +36,19 @@ export function runDriver() {
     const playwright = createPlaywright(sdkLanguage);
     return new PlaywrightDispatcher(rootScope, playwright);
   });
-  const transport = process.send ? new IpcTransport(process) : new PipeTransport(process.stdout, process.stdin);
-  transport.onmessage = message => dispatcherConnection.dispatch(JSON.parse(message));
+  const transport = new PipeTransport(process.stdout, process.stdin);
+  transport.onmessage = (message: string) => dispatcherConnection.dispatch(JSON.parse(message));
   dispatcherConnection.onmessage = message => transport.send(JSON.stringify(message));
   transport.onclose = () => {
     // Drop any messages during shutdown on the floor.
     dispatcherConnection.onmessage = () => {};
     selfDestruct();
   };
+  // Ignore the SIGINT signal in the driver process so the parent can gracefully close the connection.
+  // We still will destruct everything (close browsers and exit) when the transport pipe closes.
+  process.on('SIGINT', () => {
+    // Keep the process running.
+  });
 }
 
 export type RunServerOptions = {
