@@ -42,7 +42,8 @@
   line-height: 1.25 !important;
 }
 
-.test-case-location {
+.test-case-location,
+.test-case-duration {
   flex: none;
   align-items: center;
   padding: 0 8px 24px;
