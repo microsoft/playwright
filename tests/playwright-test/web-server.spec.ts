@@ -701,5 +701,5 @@ test('should be able to ignore "stderr"', async ({ runInlineTest }, { workerInde
   }, undefined);
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
-  expect(result.output).not.toContain('[WebServer] error from server');
+  expect(result.output).not.toContain('error from server');
 });

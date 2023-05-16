@@ -6505,8 +6505,7 @@ interface TestConfigWebServer {
   stdout?: "pipe"|"ignore";
 
   /**
-   * If `"pipe"`, it will pipe the stderr of the command to the process stderr. If `"ignore"`, it will ignore the stderr
-   * of the command. Default to `"pipe"`.
+   * Whether to pipe the stderr of the command to the process stderr or ignore it. Defaults to `"pipe"`.
    */
   stderr?: "pipe"|"ignore";
 
