@@ -6505,6 +6505,12 @@ interface TestConfigWebServer {
   stdout?: "pipe"|"ignore";
 
   /**
+   * If `"pipe"`, it will pipe the stderr of the command to the process stderr. If `"ignore"`, it will ignore the stderr
+   * of the command. Default to `"pipe"`.
+   */
+  stderr?: "pipe"|"ignore";
+
+  /**
    * Current working directory of the spawned process, defaults to the directory of the configuration file.
    */
   cwd?: string;
