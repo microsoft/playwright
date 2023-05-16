@@ -21,6 +21,7 @@ import type { HttpServer } from '../../packages/playwright-core/src/utils';
 import { startHtmlReportServer } from '../../packages/playwright-test/lib/reporters/html';
 import { type CliRunResult, type RunOptions, stripAnsi } from './playwright-test-fixtures';
 import { cleanEnv, cliEntrypoint, expect, test as baseTest } from './playwright-test-fixtures';
+import type { PlaywrightTestConfig } from 'packages/playwright-test';
 
 const DOES_NOT_SUPPORT_UTF8_IN_TERMINAL = process.platform === 'win32' && process.env.TERM_PROGRAM !== 'vscode' && !process.env.WT_SESSION;
 const POSITIVE_STATUS_MARK = DOES_NOT_SUPPORT_UTF8_IN_TERMINAL ? 'ok' : '✓ ';
@@ -758,4 +759,91 @@ test('onError in the report', async ({ runInlineTest, mergeReports, showReport, 
   await expect(page.locator('.subnav-item:has-text("Failed") .counter')).toHaveText('0');
   await expect(page.locator('.subnav-item:has-text("Flaky") .counter')).toHaveText('0');
   await expect(page.locator('.subnav-item:has-text("Skipped") .counter')).toHaveText('1');
+});
+
+test('preserve config fields', async ({ runInlineTest, mergeReports }) => {
+  test.slow();
+  const reportDir = test.info().outputPath('blob-report');
+  const config: PlaywrightTestConfig = {
+    // Runner options:
+    globalTimeout: 202300,
+    maxFailures: 3,
+    metadata: {
+      'a': 'b',
+      'b': 100,
+    },
+    workers: 1,
+    retries: 1,
+    reporter: [['blob', { outputDir: `${reportDir.replace(/\\/g, '/')}` }]],
+    // Reporter options:
+    reportSlowTests: {
+      max: 7,
+      threshold: 15_000,
+    },
+    quiet: true
+  };
+  const files = {
+    'echo-reporter.js': `
+      import fs from 'fs';
+
+      class EchoReporter {
+        onBegin(config, suite) {
+          fs.writeFileSync('config.json', JSON.stringify(config));
+        }
+      }
+      module.exports = EchoReporter;
+    `,
+    'playwright.config.ts': `
+      module.exports = ${JSON.stringify(config, null, 2)};
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('math 1', async ({}) => {
+        expect(1 + 1).toBe(2);
+      });
+    `,
+    'b.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('math 2', async ({}) => {
+        expect(1 + 1).toBe(2);
+      });
+    `,
+    'c.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('math 3', async ({}) => {
+        expect(1 + 1).toBe(2);
+      });
+    `
+  };
+
+  await runInlineTest(files, { shard: `1/3` });
+  await runInlineTest(files, { shard: `3/3` });
+
+  const mergeConfig = {
+    reportSlowTests: {
+      max: 2,
+      threshold: 1_000,
+    },
+    quiet: false
+  };
+  await fs.promises.writeFile(test.info().outputPath('merge.config.ts'), `module.exports = ${JSON.stringify(mergeConfig, null, 2)};`);
+
+  const reportFiles = await fs.promises.readdir(reportDir);
+  reportFiles.sort();
+  expect(reportFiles).toEqual([expect.stringMatching(/report-1-of-3.*.jsonl/), expect.stringMatching(/report-3-of-3.*.jsonl/), 'resources']);
+  const { exitCode } = await mergeReports(reportDir, {}, { additionalArgs: ['--reporter', test.info().outputPath('echo-reporter.js'), '-c', test.info().outputPath('merge.config.ts')] });
+  expect(exitCode).toBe(0);
+  const json = JSON.parse(fs.readFileSync(test.info().outputPath('config.json')).toString());
+  // Test shard parameters.
+  expect(json.rootDir).toBe(test.info().outputDir);
+  expect(json.globalTimeout).toBe(config.globalTimeout);
+  expect(json.maxFailures).toBe(config.maxFailures);
+  expect(json.metadata).toEqual(config.metadata);
+  expect(json.workers).toBe(2);
+  expect(json.version).toBeTruthy();
+  expect(json.version).not.toEqual(test.info().config.version);
+  // Reporter config parameters.
+  expect(json.reportSlowTests).toEqual(mergeConfig.reportSlowTests);
+  expect(json.configFile).toEqual(test.info().outputPath('merge.config.ts'));
+  expect(json.quiet).toEqual(mergeConfig.quiet);
 });

@@ -16,21 +16,22 @@
 
 import fs from 'fs';
 import path from 'path';
-import type { ReporterDescription } from '../../types/test';
+import type { FullConfig, ReporterDescription } from '../../types/test';
 import type { FullResult } from '../../types/testReporter';
 import type { FullConfigInternal } from '../common/config';
-import { TeleReporterReceiver, type JsonEvent, type JsonProject, type JsonSuite, type JsonTestResultEnd } from '../isomorphic/teleReceiver';
+import { TeleReporterReceiver, type JsonEvent, type JsonProject, type JsonSuite, type JsonTestResultEnd, type JsonConfig } from '../isomorphic/teleReceiver';
 import { createReporters } from '../runner/reporters';
 import { Multiplexer } from './multiplexer';
 
 export async function createMergedReport(config: FullConfigInternal, dir: string, reporterDescriptions: ReporterDescription[], resolvePaths: boolean) {
   const shardFiles = await sortedShardFiles(dir);
-  const events = await mergeEvents(dir, shardFiles);
+  const events = await mergeEvents(dir, shardFiles, config.config);
   if (resolvePaths)
     patchAttachmentPaths(events, dir);
 
   const reporters = await createReporters(config, 'merge', reporterDescriptions);
-  const receiver = new TeleReporterReceiver(path.sep, new Multiplexer(reporters));
+  const receiver = new TeleReporterReceiver(path.sep, new Multiplexer(reporters), config.config);
+
   for (const event of events)
     await receiver.dispatch(event);
 }
@@ -52,7 +53,7 @@ function parseEvents(reportJsonl: string): JsonEvent[] {
   return reportJsonl.toString().split('\n').filter(line => line.length).map(line => JSON.parse(line)) as JsonEvent[];
 }
 
-async function mergeEvents(dir: string, shardReportFiles: string[]) {
+async function mergeEvents(dir: string, shardReportFiles: string[], reportConfig: FullConfig) {
   const events: JsonEvent[] = [];
   const beginEvents: JsonEvent[] = [];
   const endEvents: JsonEvent[] = [];
@@ -68,16 +69,25 @@ async function mergeEvents(dir: string, shardReportFiles: string[]) {
         events.push(event);
     }
   }
-  return [mergeBeginEvents(beginEvents), ...events, mergeEndEvents(endEvents), { method: 'onExit', params: undefined }];
+  return [mergeBeginEvents(beginEvents, reportConfig), ...events, mergeEndEvents(endEvents), { method: 'onExit', params: undefined }];
 }
 
-function mergeBeginEvents(beginEvents: JsonEvent[]): JsonEvent {
+function mergeBeginEvents(beginEvents: JsonEvent[], reportConfig: FullConfig): JsonEvent {
   if (!beginEvents.length)
     throw new Error('No begin events found');
   const projects: JsonProject[] = [];
-  let totalWorkers = 0;
+  let config: JsonConfig = {
+    configFile: undefined,
+    globalTimeout: 0,
+    maxFailures: 0,
+    metadata: {},
+    rootDir: '',
+    version: '',
+    workers: 0,
+    listOnly: false
+  };
   for (const event of beginEvents) {
-    totalWorkers += event.params.config.workers;
+    config = mergeConfigs(config, event.params.config);
     const shardProjects: JsonProject[] = event.params.projects;
     for (const shardProject of shardProjects) {
       const mergedProject = projects.find(p => p.id === shardProject.id);
@@ -87,17 +97,24 @@ function mergeBeginEvents(beginEvents: JsonEvent[]): JsonEvent {
         mergeJsonSuites(shardProject.suites, mergedProject);
     }
   }
-  const config = {
-    ...beginEvents[0].params.config,
-    workers: totalWorkers,
-    shard: undefined
-  };
   return {
     method: 'onBegin',
     params: {
       config,
       projects,
     }
+  };
+}
+
+function mergeConfigs(to: JsonConfig, from: JsonConfig): JsonConfig {
+  return {
+    ...to,
+    ...from,
+    metadata: {
+      ...to.metadata,
+      ...from.metadata,
+    },
+    workers: to.workers + from.workers,
   };
 }
 
