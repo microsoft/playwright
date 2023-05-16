@@ -260,9 +260,7 @@ test('should load mts config file', async ({ runInlineTest }) => {
   expect(result.passed).toBe(1);
 });
 
-test('should load ts from esm when package.json has type module', async ({ runInlineTest, nodeVersion }) => {
-  // We only support experimental esm mode on Node 16+
-  test.skip(nodeVersion.major < 16);
+test('should load ts from esm when package.json has type module', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.js': `
       import * as fs from 'fs';
@@ -442,9 +440,7 @@ test('should work with cross-imports - 2', async ({ runInlineTest }) => {
   expect(result.output).toContain('TEST-2');
 });
 
-test('should load web server w/o esm loader in esm module', async ({ runInlineTest, nodeVersion }) => {
-  // We only support experimental esm mode on Node 16+
-  test.skip(nodeVersion.major < 16);
+test('should load web server w/o esm loader in esm module', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       export default {
@@ -769,9 +765,7 @@ test('should resolve no-extension import of module into .ts file', async ({ runI
   expect(result.exitCode).toBe(0);
 });
 
-test('should support node imports', async ({ runInlineTest, nodeVersion }) => {
-  // We only support experimental esm mode on Node 16+
-  test.skip(nodeVersion.major < 16);
+test('should support node imports', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': 'export default {}',
     'package.json': JSON.stringify({
@@ -820,7 +814,7 @@ test('should complain when one test file imports another', async ({ runInlineTes
   expect(result.output).toContain(`test file "a.test.ts" should not import test file "b.test.ts"`);
 });
 
-test('should support dynamic import', async ({ runInlineTest, nodeVersion }) => {
+test('should support dynamic import', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'helper.ts': `
       module.exports.foo = 'foo';
