@@ -439,6 +439,17 @@ test.describe('cli codegen', () => {
     expect(models.hovered).toBe('#checkbox');
   });
 
+  test('should reset hover model on action when element detaches', async ({ page, openRecorder }) => {
+    const recorder = await openRecorder();
+
+    await recorder.setContentAndWait(`<input id="checkbox" onclick="document.getElementById('checkbox').remove()">`);
+    const [models] = await Promise.all([
+      recorder.waitForActionPerformed(),
+      page.click('input')
+    ]);
+    expect(models.hovered).toBe(null);
+  });
+
   test('should update active model on action', async ({ page, openRecorder, browserName, headless }) => {
     test.fixme(browserName === 'webkit');
 
