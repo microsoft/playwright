@@ -117,3 +117,44 @@ test('should respect connectOptions.timeout', async ({ runInlineTest }) => {
   expect(result.passed).toBe(0);
   expect(result.output).toContain('browserType.launch: Timeout 1ms exceeded.');
 });
+
+test('should print debug log when failed to connect', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.js': `
+      module.exports = {
+        globalSetup: './global-setup',
+        use: {
+          connectOptions: {
+            wsEndpoint: process.env.CONNECT_WS_ENDPOINT,
+          },
+        },
+      };
+    `,
+    'global-setup.ts': `
+      import { chromium } from '@playwright/test';
+      import ws from 'ws';
+      import http from 'http';
+      module.exports = async () => {
+        const server = http.createServer(() => {});
+        server.on('upgrade', async (request, socket, head) => {
+          socket.write('HTTP/1.1 401 Unauthorized\\r\\nx-playwright-debug-log: b-debug-log-string\\r\\n\\r\\nUnauthorized body');
+          socket.destroy();
+        });
+        server.listen(0);
+        await new Promise(f => server.once('listening', f));
+        process.env.CONNECT_WS_ENDPOINT = 'ws://localhost:' + server.address().port;
+        return () => new Promise(f => server.close(f));
+      };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('fail', async ({ page }) => {
+        await page.setContent('<div>FAIL</div>');
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output).toContain('b-debug-log-string');
+  expect(result.results[0].attachments).toEqual([]);
+});

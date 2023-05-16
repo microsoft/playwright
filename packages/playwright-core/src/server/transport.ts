@@ -58,10 +58,10 @@ export class WebSocketTransport implements ConnectionTransport {
   readonly wsEndpoint: string;
   readonly headers: HeadersArray = [];
 
-  static async connect(progress: (Progress|undefined), url: string, headers?: { [key: string]: string; }, followRedirects?: boolean): Promise<WebSocketTransport> {
+  static async connect(progress: (Progress|undefined), url: string, headers?: { [key: string]: string; }, followRedirects?: boolean, debugLogHeader?: string): Promise<WebSocketTransport> {
     const logUrl = stripQueryParams(url);
     progress?.log(`<ws connecting> ${logUrl}`);
-    const transport = new WebSocketTransport(progress, url, logUrl, headers, followRedirects);
+    const transport = new WebSocketTransport(progress, url, logUrl, headers, followRedirects, debugLogHeader);
     let success = false;
     progress?.cleanupWhenAborted(async () => {
       if (!success)
@@ -78,6 +78,10 @@ export class WebSocketTransport implements ConnectionTransport {
         transport._ws.close();
       });
       transport._ws.on('unexpected-response', (request: ClientRequest, response: IncomingMessage) => {
+        for (let i = 0; i < response.rawHeaders.length; i += 2) {
+          if (debugLogHeader && response.rawHeaders[i] === debugLogHeader)
+            progress?.log(response.rawHeaders[i + 1]);
+        }
         const chunks: Buffer[] = [];
         const errorPrefix = `${logUrl} ${response.statusCode} ${response.statusMessage}`;
         response.on('data', chunk => chunks.push(chunk));
@@ -93,7 +97,7 @@ export class WebSocketTransport implements ConnectionTransport {
     return transport;
   }
 
-  constructor(progress: Progress|undefined, url: string, logUrl: string, headers?: { [key: string]: string; }, followRedirects?: boolean) {
+  constructor(progress: Progress|undefined, url: string, logUrl: string, headers?: { [key: string]: string; }, followRedirects?: boolean, debugLogHeader?: string) {
     this.wsEndpoint = url;
     this._logUrl = logUrl;
     this._ws = new ws(url, [], {
@@ -105,9 +109,12 @@ export class WebSocketTransport implements ConnectionTransport {
       followRedirects,
       agent: (/^(https|wss):\/\//.test(url)) ? httpsHappyEyeballsAgent : httpHappyEyeballsAgent
     });
-    this._ws.on('upgrade', request => {
-      for (let i = 0; i < request.rawHeaders.length; i += 2)
-        this.headers.push({ name: request.rawHeaders[i], value: request.rawHeaders[i + 1] });
+    this._ws.on('upgrade', response => {
+      for (let i = 0; i < response.rawHeaders.length; i += 2) {
+        this.headers.push({ name: response.rawHeaders[i], value: response.rawHeaders[i + 1] });
+        if (debugLogHeader && response.rawHeaders[i] === debugLogHeader)
+          progress?.log(response.rawHeaders[i + 1]);
+      }
     });
     this._progress = progress;
     // The 'ws' module in node sometimes sends us multiple messages in a single task.
