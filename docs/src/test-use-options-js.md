@@ -3,7 +3,7 @@ id: test-use-options
 title: "Test use options"
 ---
 
-In addition to configuring the test runner you can also configure [Emulation](#emulation-options), [Network](#network-options) and [Recording](#recording-options) for the [Browser] or [BrowserContext],. These options are passed to the `use: {}` object in the Playwright config.
+In addition to configuring the test runner you can also configure [Emulation](#emulation-options), [Network](#network-options) and [Recording](#recording-options) for the [Browser] or [BrowserContext]. These options are passed to the `use: {}` object in the Playwright config.
 
 ### Basic Options
 
