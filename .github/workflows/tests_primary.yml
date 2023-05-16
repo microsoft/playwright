@@ -55,6 +55,11 @@ jobs:
     - run: npm run build
     - run: npx playwright install --with-deps ${{ matrix.browser }} chromium
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --project=${{ matrix.browser }}
+      env:
+        PWTEST_BLOB_REPORT: 1
+    - name: Upload artifacts to Azure Blob Storage
+      if: always()
+      run: az storage blob upload-batch -s test-results/blob-report -d '$web/run-${{ github.run_id }}-${{ github.sha }}-test_linux' --connection-string "${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}"
     - run: node tests/config/checkCoverage.js ${{ matrix.browser }}
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
@@ -64,6 +69,29 @@ jobs:
       with:
         name: ${{ matrix.browser }}-${{ matrix.os }}-test-results
         path: test-results
+
+  merge_test_linux:
+    if: ${{ always() }}
+    needs: [test_linux]
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
+      with:
+        node-version: 16
+    - name: Install dependencies
+      run: npm ci
+    - name: Download Blob Reports from Azure Blob Storage
+      run: |
+        az storage blob download-batch -d . -s '$web'  --pattern 'run-${{ github.run_id }}-${{ github.sha }}-test_linux/*.jsonl' --connection-string "${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}"
+    - name: Merge into HTML Report
+      run: |
+        npx playwright merge-reports --reporter html --attachments missing 'run-${{ github.run_id }}-${{ github.sha }}-test_linux'
+    - name: Upload HTML Report to Azure Blob Storage
+      run: |
+        az storage blob upload-batch -s playwright-report -d '$web/run-${{ github.run_id }}-${{ github.sha }}-test_linux' --connection-string "${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}"
+        echo "Report url: https://mspwblobreport.z1.web.core.windows.net/run-${{ github.run_id }}-${{ github.sha }}-test_linux/index.html"
 
   test_linux_chromium_tot:
     name: ${{ matrix.os }} (chromium tip-of-tree)
@@ -102,6 +130,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
+        shard: [1/2, 2/2]
         node-version: [16]
         include:
           - os: ubuntu-latest
@@ -118,13 +147,43 @@ jobs:
         DEBUG: pw:install
     - run: npm run build
     - run: npx playwright install --with-deps
-    - run: npm run ttest
+    - run: npm run ttest -- --shard ${{ matrix.shard }}
+      env:
+        PWTEST_BLOB_REPORT: 1
       if: matrix.os != 'ubuntu-latest'
-    - run: xvfb-run npm run ttest
+    - run: xvfb-run npm run ttest --  --shard ${{ matrix.shard }}
+      env:
+        PWTEST_BLOB_REPORT: 1
       if: matrix.os == 'ubuntu-latest'
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
+    - name: Upload artifacts to Azure Blob Storage
+      if: always()
+      run: az storage blob upload-batch -s test-results/blob-report -d '$web/run-${{ github.run_id }}-${{ github.sha }}-test_test_runner' --connection-string "${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}"
+
+  merge_test_test_runner:
+    if: ${{ always() }}
+    needs: [test_test_runner]
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
+      with:
+        node-version: 16
+    - name: Install dependencies
+      run: npm ci
+    - name: Download Blob Reports from Azure Blob Storage
+      run: |
+        az storage blob download-batch -d . -s '$web'  --pattern 'run-${{ github.run_id }}-${{ github.sha }}-test_test_runner/*.jsonl' --connection-string "${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}"
+    - name: Merge into HTML Report
+      run: |
+        npx playwright merge-reports --reporter html --attachments missing 'run-${{ github.run_id }}-${{ github.sha }}-test_test_runner'
+    - name: Upload HTML Report to Azure Blob Storage
+      run: |
+        az storage blob upload-batch -s playwright-report -d '$web/run-${{ github.run_id }}-${{ github.sha }}-test_test_runner' --connection-string "${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}"
+        echo "Report url: https://mspwblobreport.z1.web.core.windows.net/run-${{ github.run_id }}-${{ github.sha }}-test_test_runner/index.html"
 
   test_web_components:
     name: Web Components
