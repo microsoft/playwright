@@ -127,10 +127,15 @@ export class TeleReporterEmitter implements Reporter {
 
   private _serializeConfig(config: FullConfig): JsonConfig {
     return {
-      rootDir: config.rootDir,
       configFile: this._relativePath(config.configFile),
-      listOnly: FullConfigInternal.from(config)?.cliListOnly,
+      globalTimeout: config.globalTimeout,
+      maxFailures: config.maxFailures,
+      metadata: config.metadata,
+      rootDir: config.rootDir,
+      version: config.version,
       workers: config.workers,
+
+      listOnly: FullConfigInternal.from(config)?.cliListOnly,
     };
   }
 
