@@ -249,8 +249,9 @@ export class Recorder {
   }
 
   private _updateModelForHoveredElement() {
-    if (!this._hoveredElement) {
+    if (!this._hoveredElement || !this._hoveredElement.isConnected) {
       this._hoveredModel = null;
+      this._hoveredElement = null;
       this._updateHighlight();
       return;
     }
