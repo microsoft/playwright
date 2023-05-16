@@ -88,24 +88,6 @@ test('should configure soft', async ({ runInlineTest }) => {
   expect(result.output).toContain('woof-woof');
 });
 
-test('should configure poll', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'a.spec.ts': `
-      import { test, expect } from '@playwright/test';
-      const pollingExpect = expect.configure({ poll: { timeout: 1000, intervals: [0, 10000] } });
-      test('should fail', async () => {
-        let probes = 0;
-        const startTime = Date.now();
-        await pollingExpect(() => ++probes).toBe(3).catch(() => {});
-        // Probe at 0 and epsilon.
-        expect(probes).toBe(2);
-        expect(Date.now() - startTime).toBeLessThan(5000);
-      });
-    `
-  });
-  expect(result.exitCode).toBe(0);
-});
-
 test('should chain configure', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'expect-test.spec.ts': `
@@ -143,11 +125,11 @@ test('should configure soft poll', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
       import { test, expect } from '@playwright/test';
-      const pollingExpect = expect.configure({ soft: true, poll: { timeout: 1000, intervals: [0, 10000] } });
+      const softExpect = expect.configure({ soft: true });
       test('should fail', async () => {
         let probes = 0;
         const startTime = Date.now();
-        await pollingExpect(() => ++probes).toBe(3);
+        await softExpect.poll(() => ++probes, { timeout: 1000, intervals: [0, 10000] }).toBe(3);
         // Probe at 0 and epsilon.
         expect(probes).toBe(2);
         expect(Date.now() - startTime).toBeLessThan(5000);

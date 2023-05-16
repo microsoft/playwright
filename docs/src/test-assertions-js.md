@@ -121,10 +121,10 @@ The same works with soft assertions:
 expect.soft(value, 'my soft assertion').toBe(56);
 ```
 
-## expect.configurte
+## expect.configure
 
 You can create your own pre-configured `expect` instance to have its own
-defaults such as `timeout`, `soft` and `poll`.
+defaults such as `timeout` and `soft`.
 
 ```js
 const slowExpect = expect.configure({ timeout: 10000 });
