@@ -49,7 +49,7 @@ export default defineConfig({
     locale: 'en-GB',
 
     // Grants specified permissions to the browser context.
-    permissions: 'geolocation',
+    permissions: ['geolocation'],
 
     // Emulates the user timezone.
     timezoneId: 'Europe/Paris',
