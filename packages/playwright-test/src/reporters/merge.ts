@@ -76,7 +76,7 @@ function mergeBeginEvents(beginEvents: JsonEvent[], reportConfig: FullConfig): J
   if (!beginEvents.length)
     throw new Error('No begin events found');
   const projects: JsonProject[] = [];
-  const config: JsonConfig = {
+  let config: JsonConfig = {
     configFile: undefined,
     globalTimeout: 0,
     maxFailures: 0,
@@ -87,7 +87,7 @@ function mergeBeginEvents(beginEvents: JsonEvent[], reportConfig: FullConfig): J
     listOnly: false
   };
   for (const event of beginEvents) {
-    mergeConfigs(config, event.params.config);
+    config = mergeConfigs(config, event.params.config);
     const shardProjects: JsonProject[] = event.params.projects;
     for (const shardProject of shardProjects) {
       const mergedProject = projects.find(p => p.id === shardProject.id);
@@ -106,12 +106,16 @@ function mergeBeginEvents(beginEvents: JsonEvent[], reportConfig: FullConfig): J
   };
 }
 
-function mergeConfigs(to: JsonConfig, from: JsonConfig) {
-  const { metadata, workers, ...rest } = from;
-  Object.assign(to, rest);
-  for (const key of Object.keys(metadata))
-    to.metadata[key] = metadata[key];
-  to.workers += workers;
+function mergeConfigs(to: JsonConfig, from: JsonConfig): JsonConfig {
+  return {
+    ...to,
+    ...from,
+    metadata: {
+      ...to.metadata,
+      ...from.metadata,
+    },
+    workers: to.workers + from.workers,
+  };
 }
 
 function mergeJsonSuites(jsonSuites: JsonSuite[], parent: JsonSuite | JsonProject) {

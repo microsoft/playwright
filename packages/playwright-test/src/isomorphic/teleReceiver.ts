@@ -283,7 +283,7 @@ export class TeleReporterReceiver {
   }
 
   private _parseConfig(config: JsonConfig): FullConfig {
-    const result = Object.assign({}, baseFullConfig, config);
+    const result = { ...baseFullConfig, ...config };
     if (this._reportConfig) {
       result.configFile = this._reportConfig.configFile;
       result.reportSlowTests = this._reportConfig.reportSlowTests;
