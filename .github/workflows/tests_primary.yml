@@ -58,7 +58,7 @@ jobs:
       env:
         PWTEST_BLOB_REPORT: 1
     - name: Upload artifacts to Azure Blob Storage
-      if: always()
+      if: always() && github.event_name != 'pull_request'
       run: az storage blob upload-batch -s test-results/blob-report -d '$web/run-${{ github.run_id }}-${{ github.sha }}-test_linux' --connection-string "${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}"
     - run: node tests/config/checkCoverage.js ${{ matrix.browser }}
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
@@ -71,7 +71,7 @@ jobs:
         path: test-results
 
   merge_test_linux:
-    if: ${{ always() }}
+    if: ${{ always() && github.event_name != 'pull_request' }}
     needs: [test_linux]
     timeout-minutes: 10
     runs-on: ubuntu-latest
@@ -159,11 +159,11 @@ jobs:
       if: always()
       shell: bash
     - name: Upload artifacts to Azure Blob Storage
-      if: always()
+      if: always() && github.event_name != 'pull_request'
       run: az storage blob upload-batch -s test-results/blob-report -d '$web/run-${{ github.run_id }}-${{ github.sha }}-test_test_runner' --connection-string "${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}"
 
   merge_test_test_runner:
-    if: ${{ always() }}
+    if: ${{ always() && github.event_name != 'pull_request' }}
     needs: [test_test_runner]
     timeout-minutes: 10
     runs-on: ubuntu-latest
