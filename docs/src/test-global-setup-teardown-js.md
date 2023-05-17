@@ -49,10 +49,8 @@ Similarly, use `globalTeardown` to run something once after all the tests. Alter
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
-  use: {
-    globalSetup: require.resolve('./global-setup'),
-    globalTeardown: require.resolve('./global-teardown'),
-  },
+  globalSetup: require.resolve('./global-setup'),
+  globalTeardown: require.resolve('./global-teardown'),
 });
 ```
 
