@@ -80,8 +80,11 @@ jobs:
     - uses: actions/setup-node@v3
       with:
         node-version: 16
-    - name: Install dependencies
-      run: npm ci
+    - run: npm ci
+      env:
+        DEBUG: pw:install
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+    - run: npm run build
     - name: Download Blob Reports from Azure Blob Storage
       run: |
         az storage blob download-batch -d . -s '$web'  --pattern 'run-${{ github.run_id }}-${{ github.sha }}-test_linux/*.jsonl' --connection-string "${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}"
@@ -176,8 +179,11 @@ jobs:
     - uses: actions/setup-node@v3
       with:
         node-version: 16
-    - name: Install dependencies
-      run: npm ci
+    - run: npm ci
+      env:
+        DEBUG: pw:install
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+    - run: npm run build
     - name: Download Blob Reports from Azure Blob Storage
       run: |
         az storage blob download-batch -d . -s '$web'  --pattern 'run-${{ github.run_id }}-${{ github.sha }}-test_test_runner/*.jsonl' --connection-string "${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}"
