@@ -254,6 +254,8 @@ export const deps: any = {
     ],
     webkit: [
       'libenchant-2-2',
+      'libflite1',
+      'libx264-155',
       'libatk-bridge2.0-0',
       'libatk1.0-0',
       'libcairo2',
