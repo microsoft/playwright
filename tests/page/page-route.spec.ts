@@ -57,12 +57,12 @@ it('should unroute', async ({ page, server }) => {
     intercepted.push(4);
     route.fallback();
   };
-  await page.route('**/empty.html', handler4);
+  await page.route(/empty.html/, handler4);
   await page.goto(server.EMPTY_PAGE);
   expect(intercepted).toEqual([4, 3, 2, 1]);
 
   intercepted = [];
-  await page.unroute('**/empty.html', handler4);
+  await page.unroute(/empty.html/, handler4);
   await page.goto(server.EMPTY_PAGE);
   expect(intercepted).toEqual([3, 2, 1]);
 

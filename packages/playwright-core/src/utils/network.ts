@@ -109,6 +109,12 @@ export function fetchData(params: HTTPRequestParams, onError?: (params: HTTPRequ
   });
 }
 
+export function urlMatchesEqual(match1: URLMatch, match2: URLMatch) {
+  if (isRegExp(match1) && isRegExp(match2))
+    return match1.source === match2.source && match1.flags === match2.flags;
+  return match1 === match2;
+}
+
 export function urlMatches(baseURL: string | undefined, urlString: string, match: URLMatch | undefined): boolean {
   if (match === undefined || match === '')
     return true;
