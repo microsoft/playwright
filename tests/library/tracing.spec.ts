@@ -21,6 +21,7 @@ import { browserTest, contextTest as test, expect } from '../config/browserTest'
 import { parseTraceRaw } from '../config/utils';
 import type { StackFrame } from '@protocol/channels';
 import type { ActionTraceEvent } from '../../packages/trace/src/trace';
+import { artifactsFolderName } from '../../packages/playwright-test/src/isomorphic/folders';
 
 test.skip(({ trace }) => trace === 'on');
 
@@ -634,6 +635,69 @@ test('should store postData for global request', async ({ request, server }, tes
   }));
 });
 
+test('should not flush console events', async ({ context, page }, testInfo) => {
+  await context.tracing.start();
+  const promise = new Promise<void>(f => {
+    let counter = 0;
+    page.on('console', () => {
+      if (++counter === 100)
+        f();
+    });
+  });
+
+  await page.evaluate(() => {
+    setTimeout(() => {
+      for (let i = 0; i < 100; ++i)
+        console.log('hello ' + i);
+    }, 10);
+    return 31415926;
+  });
+
+  await promise;
+
+  const dir = path.join(testInfo.project.outputDir, artifactsFolderName(testInfo.workerIndex), 'traces');
+
+  let content: string;
+  await expect(async () => {
+    const traceName = fs.readdirSync(dir).find(name => name.endsWith('.trace'));
+    content = await fs.promises.readFile(path.join(dir, traceName), 'utf8');
+    expect(content).toContain('page.evaluate');
+    expect(content).toContain('31415926');
+  }).toPass();
+  expect(content).not.toContain('hello 0');
+
+  await page.evaluate(() => 42);
+
+  await expect(async () => {
+    const traceName = fs.readdirSync(dir).find(name => name.endsWith('.trace'));
+    const content = await fs.promises.readFile(path.join(dir, traceName), 'utf8');
+    expect(content).toContain('hello 0');
+    expect(content).toContain('hello 99');
+  }).toPass();
+});
+
+test('should flush console events on tracing stop', async ({ context, page }, testInfo) => {
+  await context.tracing.start();
+  const promise = new Promise<void>(f => {
+    let counter = 0;
+    page.on('console', () => {
+      if (++counter === 100)
+        f();
+    });
+  });
+  await page.evaluate(() => {
+    setTimeout(() => {
+      for (let i = 0; i < 100; ++i)
+        console.log('hello ' + i);
+    });
+  });
+  await promise;
+  const tracePath = testInfo.outputPath('trace.zip');
+  await context.tracing.stop({ path: tracePath });
+  const trace = await parseTraceRaw(tracePath);
+  const events = trace.events.filter(e => e.method === 'console');
+  expect(events).toHaveLength(100);
+});
 
 function expectRed(pixels: Buffer, offset: number) {
   const r = pixels.readUInt8(offset);

@@ -54,8 +54,8 @@ export type TracerOptions = {
 type RecordingState = {
   options: TracerOptions,
   traceName: string,
-  networkFile: string,
-  traceFile: string,
+  networkFile: { file: string, buffer: trace.TraceEvent[] },
+  traceFile: { file: string, buffer: trace.TraceEvent[] },
   tracesDir: string,
   resourcesDir: string,
   chunkOrdinal: number,
@@ -132,15 +132,24 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     // TODO: passing the same name for two contexts makes them write into a single file
     // and conflict.
     const traceName = options.name || createGuid();
-    // Init the state synchronously.
-    this._state = { options, traceName, traceFile: '', networkFile: '', tracesDir: '', resourcesDir: '', chunkOrdinal: 0, traceSha1s: new Set(), networkSha1s: new Set(), recording: false };
-    const state = this._state;
 
-    state.tracesDir = await this._createTracesDirIfNeeded();
-    state.resourcesDir = path.join(state.tracesDir, 'resources');
-    state.traceFile = path.join(state.tracesDir, traceName + '.trace');
-    state.networkFile = path.join(state.tracesDir, traceName + '.network');
-    this._writeChain = fs.promises.mkdir(state.resourcesDir, { recursive: true }).then(() => fs.promises.writeFile(state.networkFile, ''));
+    const tracesDir = this._createTracesDirIfNeeded();
+
+    // Init the state synchronously.
+    this._state = {
+      options,
+      traceName,
+      tracesDir,
+      traceFile: { file: path.join(tracesDir, traceName + '.trace'), buffer: [] },
+      networkFile: { file: path.join(tracesDir, traceName + '.network'), buffer: [] },
+      resourcesDir: path.join(tracesDir, 'resources'),
+      chunkOrdinal: 0,
+      traceSha1s: new Set(),
+      networkSha1s: new Set(),
+      recording: false
+    };
+    const state = this._state;
+    this._writeChain = fs.promises.mkdir(state.resourcesDir, { recursive: true }).then(() => fs.promises.writeFile(state.networkFile.file, ''));
     if (options.snapshots)
       this._harTracer.start();
   }
@@ -157,15 +166,19 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     const state = this._state;
     const suffix = state.chunkOrdinal ? `-${state.chunkOrdinal}` : ``;
     state.chunkOrdinal++;
-    state.traceFile = path.join(state.tracesDir, `${state.traceName}${suffix}.trace`);
+    state.traceFile = {
+      file: path.join(state.tracesDir, `${state.traceName}${suffix}.trace`),
+      buffer: [],
+    };
     state.recording = true;
 
     if (options.name && options.name !== this._state.traceName)
       this._changeTraceName(this._state, options.name);
 
     this._appendTraceOperation(async () => {
-      await mkdirIfNeeded(state.traceFile);
-      await fs.promises.appendFile(state.traceFile, JSON.stringify({ ...this._contextCreatedEvent, title: options.title, wallTime: Date.now() }) + '\n');
+      await mkdirIfNeeded(state.traceFile.file);
+      const event: trace.TraceEvent = { ...this._contextCreatedEvent, title: options.title, wallTime: Date.now() };
+      await appendEventAndFlushIfNeeded(state.traceFile, event);
     });
 
     this._context.instrumentation.addListener(this, this._context);
@@ -199,12 +212,21 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
 
   private async _changeTraceName(state: RecordingState, name: string) {
     await this._appendTraceOperation(async () => {
+      await flushTraceFile(state.traceFile);
+      await flushTraceFile(state.networkFile);
+
       const oldNetworkFile = state.networkFile;
       state.traceName = name;
-      state.traceFile = path.join(state.tracesDir, name + '.trace');
-      state.networkFile = path.join(state.tracesDir, name + '.network');
+      state.traceFile = {
+        file: path.join(state.tracesDir, name + '.trace'),
+        buffer: [],
+      };
+      state.networkFile = {
+        file: path.join(state.tracesDir, name + '.network'),
+        buffer: [],
+      };
       // Network file survives across chunks, so make a copy with the new name.
-      await fs.promises.copyFile(oldNetworkFile, state.networkFile);
+      await fs.promises.copyFile(oldNetworkFile.file, state.networkFile.file);
     });
   }
 
@@ -225,10 +247,10 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       await removeFolders([this._tracesTmpDir]);
   }
 
-  private async _createTracesDirIfNeeded() {
+  private _createTracesDirIfNeeded() {
     if (this._precreatedTracesDir)
       return this._precreatedTracesDir;
-    this._tracesTmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-tracing-'));
+    this._tracesTmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'playwright-tracing-'));
     return this._tracesTmpDir;
   }
 
@@ -265,6 +287,9 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       if (params.mode === 'discard')
         return {};
 
+      await flushTraceFile(state.traceFile);
+      await flushTraceFile(state.networkFile);
+
       // Network file survives across chunks, make a snapshot before returning the resulting entries.
       // We should pick a name starting with "traceName" and ending with .network.
       // Something like <traceName>someSuffixHere.network.
@@ -272,10 +297,10 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       // We can use <traceName>-<guid>.network, but "-pwnetcopy-0" suffix is more readable
       // and makes it easier to debug future issues.
       const networkFile = path.join(state.tracesDir, state.traceName + `-pwnetcopy-${state.chunkOrdinal}.network`);
-      await fs.promises.copyFile(state.networkFile, networkFile);
+      await fs.promises.copyFile(state.networkFile.file, networkFile);
 
       const entries: NameValue[] = [];
-      entries.push({ name: 'trace.trace', value: state.traceFile });
+      entries.push({ name: 'trace.trace', value: state.traceFile.file });
       entries.push({ name: 'trace.network', value: networkFile });
       for (const sha1 of new Set([...state.traceSha1s, ...state.networkSha1s]))
         entries.push({ name: path.join('resources', sha1), value: path.join(state.resourcesDir, sha1) });
@@ -373,7 +398,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     const event: trace.ResourceSnapshotTraceEvent = { type: 'resource-snapshot', snapshot: entry };
     this._appendTraceOperation(async () => {
       const visited = visitTraceEvent(event, this._state!.networkSha1s);
-      await fs.promises.appendFile(this._state!.networkFile, JSON.stringify(visited) + '\n');
+      await appendEventAndFlushIfNeeded(this._state!.networkFile, visited);
     });
   }
 
@@ -438,7 +463,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   private _appendTraceEvent(event: trace.TraceEvent) {
     this._appendTraceOperation(async () => {
       const visited = visitTraceEvent(event, this._state!.traceSha1s);
-      await fs.promises.appendFile(this._state!.traceFile, JSON.stringify(visited) + '\n');
+      await appendEventAndFlushIfNeeded(this._state!.traceFile, visited);
     });
   }
 
@@ -538,4 +563,20 @@ function createAfterActionTraceEvent(metadata: CallMetadata): trace.AfterActionT
     error: metadata.error?.error,
     result: metadata.result,
   };
+}
+
+async function appendEventAndFlushIfNeeded(file: { file: string, buffer: trace.TraceEvent[] }, event: trace.TraceEvent) {
+  file.buffer.push(event);
+
+  // Do not flush events, they are too noisy.
+  if (event.type === 'event' || event.type === 'object')
+    return;
+
+  await flushTraceFile(file);
+}
+
+async function flushTraceFile(file: { file: string, buffer: trace.TraceEvent[] }) {
+  const data = file.buffer.map(e => Buffer.from(JSON.stringify(e) + '\n'));
+  await fs.promises.appendFile(file.file, Buffer.concat(data));
+  file.buffer = [];
 }
