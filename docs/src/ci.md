@@ -52,7 +52,16 @@ configurations for common CI providers.
 ## Workers
 * langs: js
 
-We recommend setting workers to 1 in CI environments to prioritize stability and reproducibility. Running tests sequentially ensures each test gets the full system resources, avoiding potential conflicts. However, if you have a powerful self-hosted CI system, you may enable parallel tests. For wider parallelization, consider sharding - distributing tests across multiple CI jobs.
+We recommend setting [workers](/api/class-testconfig.md#test-config-workers) to "1" in CI environments to prioritize stability and reproducibility. Running tests sequentially ensures each test gets the full system resources, avoiding potential conflicts. However, if you have a powerful self-hosted CI system, you may enable [parallel](/test-parallel.md) tests. For wider parallelization, consider [sharding](./test-parallel.md#shard-tests-between-multiple-machines) - distributing tests across multiple CI jobs.
+
+```js title="playwright.config.js"
+import { defineConfig, devices } from '@playwright/test';
+
+export default defineConfig({
+  // Opt out of parallel tests on CI.
+  workers: process.env.CI ? 1 : undefined,
+});
+```
 
 
 ## CI configurations
