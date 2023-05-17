@@ -28,7 +28,7 @@ import { Events } from './events';
 import { TimeoutSettings } from '../common/timeoutSettings';
 import { Waiter } from './waiter';
 import type { URLMatch, Headers, WaitForEventOptions, BrowserContextOptions, StorageState, LaunchOptions } from './types';
-import { headersObjectToArray, isRegExp, isString } from '../utils';
+import { headersObjectToArray, isRegExp, isString, urlMatchesEqual } from '../utils';
 import { mkdirIfNeeded } from '../utils/fileUtils';
 import type * as api from '../../types/types';
 import type * as structs from '../../types/structs';
@@ -316,7 +316,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   }
 
   async unroute(url: URLMatch, handler?: network.RouteHandlerCallback): Promise<void> {
-    this._routes = this._routes.filter(route => route.url !== url || (handler && route.handler !== handler));
+    this._routes = this._routes.filter(route => !urlMatchesEqual(route.url, url) || (handler && route.handler !== handler));
     await this._updateInterceptionPatterns();
   }
 
