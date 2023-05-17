@@ -285,7 +285,7 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
    */
   retries: number;
   /**
-   * Name of a project that needs to run after this and any dependent projects have finished. Teardown is useful to
+   * Name of a project that needs to run after this and all dependent projects have finished. Teardown is useful to
    * cleanup any resources acquired by this project.
    *
    * Passing `--no-deps` argument ignores
@@ -6325,7 +6325,7 @@ interface TestProject {
   snapshotPathTemplate?: string;
 
   /**
-   * Name of a project that needs to run after this and any dependent projects have finished. Teardown is useful to
+   * Name of a project that needs to run after this and all dependent projects have finished. Teardown is useful to
    * cleanup any resources acquired by this project.
    *
    * Passing `--no-deps` argument ignores

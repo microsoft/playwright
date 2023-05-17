@@ -209,7 +209,7 @@ function resolveReporters(reporters: Config['reporter'], rootDir: string): Repor
 }
 
 function resolveProjectDependencies(projects: FullProjectInternal[]) {
-  const teardownToSetup = new Map<FullProjectInternal, FullProjectInternal>();
+  const teardownSet = new Set<FullProjectInternal>();
   for (const project of projects) {
     for (const dependencyName of project.project.dependencies) {
       const dependencies = projects.filter(p => p.project.name === dependencyName);
@@ -227,18 +227,16 @@ function resolveProjectDependencies(projects: FullProjectInternal[]) {
         throw new Error(`Project teardowns should have unique names, reading ${project.project.teardown}`);
       const teardown = teardowns[0];
       project.teardown = teardown;
-      if (teardownToSetup.has(teardown))
-        throw new Error(`Project ${teardown.project.name} can not be designated as teardown to multiple projects (${teardownToSetup.get(teardown)!.project.name} and ${project.project.name})`);
-      teardownToSetup.set(teardown, project);
+      teardownSet.add(teardown);
     }
   }
-  for (const teardown of teardownToSetup.keys()) {
+  for (const teardown of teardownSet) {
     if (teardown.deps.length)
       throw new Error(`Teardown project ${teardown.project.name} must not have dependencies`);
   }
   for (const project of projects) {
     for (const dep of project.deps) {
-      if (teardownToSetup.has(dep))
+      if (teardownSet.has(dep))
         throw new Error(`Project ${project.project.name} must not depend on a teardown project ${dep.project.name}`);
     }
   }

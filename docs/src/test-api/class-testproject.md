@@ -200,7 +200,7 @@ Use [`property: TestConfig.retries`] to change this option for all projects.
 * since: v1.34
 - type: ?<[string]>
 
-Name of a project that needs to run after this and any dependent projects have finished. Teardown is useful to cleanup any resources acquired by this project.
+Name of a project that needs to run after this and all dependent projects have finished. Teardown is useful to cleanup any resources acquired by this project.
 
 Passing `--no-deps` argument ignores [`property: TestProject.teardown`] and behaves as if it was not specified.
 

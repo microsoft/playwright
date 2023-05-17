@@ -541,23 +541,26 @@ test('should complain about teardown having a dependency', async ({ runInlineTes
   expect(result.output).toContain(`Teardown project B must not have dependencies`);
 });
 
-test('should complain about teardown used multiple times', async ({ runInlineTest }) => {
+test('should support the same teardown used multiple times', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = {
         projects: [
-          { name: 'A', teardown: 'C' },
-          { name: 'B', teardown: 'C' },
-          { name: 'C' },
+          { name: 'A', teardown: 'D' },
+          { name: 'B', teardown: 'D' },
+          { name: 'D' },
         ],
       };`,
     'test.spec.ts': `
       import { test, expect } from '@playwright/test';
-      test('test', () => {});
+      test('test', async ({}, testInfo) => {
+        console.log('\\n%%' + testInfo.project.name);
+      });
     `,
-  });
-  expect(result.exitCode).toBe(1);
-  expect(result.output).toContain(`Project C can not be designated as teardown to multiple projects (A and B)`);
+  }, { workers: 1 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(3);
+  expect(result.outputLines).toEqual(['A', 'B', 'D']);
 });
 
 test('should only apply --repeat-each to top-level', async ({ runInlineTest }) => {
