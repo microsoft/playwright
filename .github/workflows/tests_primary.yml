@@ -33,13 +33,13 @@ jobs:
       matrix:
         browser: [chromium, firefox, webkit]
         os: [ubuntu-22.04]
-        node-version: [14]
+        node-version: [16]
         include:
           - os: ubuntu-22.04
-            node-version: 16
+            node-version: 18
             browser: chromium
           - os: ubuntu-22.04
-            node-version: 18
+            node-version: 20
             browser: chromium
     runs-on: ${{ matrix.os }}
     steps:
@@ -47,7 +47,6 @@ jobs:
     - uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
-    - run: npm i -g npm@8
     - run: npm ci
       env:
         DEBUG: pw:install
@@ -108,7 +107,6 @@ jobs:
     - uses: actions/setup-node@v3
       with:
         node-version: 16
-    - run: npm i -g npm@8
     - run: npm ci
       env:
         DEBUG: pw:install
@@ -148,7 +146,6 @@ jobs:
     - uses: actions/setup-node@v3
       with:
         node-version: ${{matrix.node-version}}
-    - run: npm i -g npm@8
     - run: npm ci
       env:
         DEBUG: pw:install
@@ -204,7 +201,6 @@ jobs:
       with:
         # Component tests require Node.js 16+ (they require ESM via TS)
         node-version: 16
-    - run: npm i -g npm@8
     - run: npm ci
       env:
         DEBUG: pw:install
@@ -215,7 +211,7 @@ jobs:
       if: always()
 
   test-package-installations:
-    name: "Installation Test ${{ matrix.os }} (${{ matrix.node_version }})"
+    name: "Installation Test ${{ matrix.os }}"
     runs-on: ${{ matrix.os  }}
     strategy:
       fail-fast: false
@@ -224,15 +220,12 @@ jobs:
         - ubuntu-latest
         - macos-latest
         - windows-latest
-        node_version:
-        - "^14.1.0"  # pre 14.1, zip extraction was broken (https://github.com/microsoft/playwright/issues/1988)
     timeout-minutes: 30
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: ${{ matrix.node_version }}
-    - run: npm i -g npm@8
+        node-version: 16
     - run: npm ci
       env:
         DEBUG: pw:install
