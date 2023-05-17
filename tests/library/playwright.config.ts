@@ -52,7 +52,7 @@ const reporters = () => {
   if (process.env.PWTEST_BLOB_REPORT === '1')
     result.push(['blob', { outputDir: path.join(outputDir, 'blob-report') }]);
   return result;
-}
+};
 const config: Config<CoverageWorkerOptions & PlaywrightWorkerOptions & PlaywrightTestOptions & TestModeWorkerOptions> = {
   testDir,
   outputDir,

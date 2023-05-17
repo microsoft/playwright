@@ -31,7 +31,7 @@ const reporters = () => {
   if (process.env.PWTEST_BLOB_REPORT === '1')
     result.push(['blob', { outputDir: path.join(outputDir, 'blob-report') }]);
   return result;
-}
+};
 export default defineConfig({
   timeout: 30000,
   forbidOnly: !!process.env.CI,
