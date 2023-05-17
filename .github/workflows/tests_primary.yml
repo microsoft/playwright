@@ -130,8 +130,8 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        shard: [1/2, 2/2]
         node-version: [16]
+        shard: [1/2, 2/2]
         include:
           - os: ubuntu-latest
             node-version: 18
