@@ -538,12 +538,15 @@ class PageHandler {
 
       if (type === 'mouseup') {
         if (this._isDragging) {
-          const watcher = new EventWatcher(this._pageEventSink, ['dragover', 'dragend']);
+          const watcher = new EventWatcher(this._pageEventSink, ['dragover']);
           await this._contentPage.send('dispatchDragEvent', {type: 'dragover', x, y, modifiers});
           await this._contentPage.send('dispatchDragEvent', {type: 'drop', x, y, modifiers});
           await this._contentPage.send('dispatchDragEvent', {type: 'dragend', x, y, modifiers});
-          // NOTE: 'drop' event might not be dispatched at all, depending on dropAction.
-          await watcher.ensureEventsAndDispose(['dragover', 'dragend']);
+          // NOTE:
+          // - 'drop' event might not be dispatched at all, depending on dropAction.
+          // - 'dragend' event might not be dispatched at all, if the source element was removed
+          //   during drag. However, it'll be dispatched synchronously in the renderer.
+          await watcher.ensureEventsAndDispose(['dragover']);
           this._isDragging = false;
         } else {
           const watcher = new EventWatcher(this._pageEventSink, ['mouseup']);
