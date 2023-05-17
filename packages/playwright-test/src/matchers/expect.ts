@@ -136,14 +136,14 @@ function createExpect(info: ExpectMetaInfo) {
       if (property === 'poll') {
         return (actual: unknown, messageOrOptions?: ExpectMessage & { timeout?: number, intervals?: number[] }) => {
           const poll = isString(messageOrOptions) ? {} : messageOrOptions || {};
-          return configure({ poll })(actual, messageOrOptions) as any;
+          return configure({ _poll: poll })(actual, messageOrOptions) as any;
         };
       }
       return expectLibrary[property];
     },
   });
 
-  const configure = (configuration: { message?: string, timeout?: number, soft?: boolean, poll?: boolean | { timeout?: number, intervals?: number[] } }) => {
+  const configure = (configuration: { message?: string, timeout?: number, soft?: boolean, _poll?: boolean | { timeout?: number, intervals?: number[] } }) => {
     const newInfo = { ...info };
     if ('message' in configuration)
       newInfo.message = configuration.message;
@@ -151,11 +151,11 @@ function createExpect(info: ExpectMetaInfo) {
       newInfo.timeout = configuration.timeout;
     if ('soft' in configuration)
       newInfo.isSoft = configuration.soft;
-    if ('poll' in configuration) {
-      newInfo.isPoll = !!configuration.poll;
-      if (typeof configuration.poll === 'object') {
-        newInfo.pollTimeout = configuration.poll.timeout;
-        newInfo.pollIntervals = configuration.poll.intervals;
+    if ('_poll' in configuration) {
+      newInfo.isPoll = !!configuration._poll;
+      if (typeof configuration._poll === 'object') {
+        newInfo.pollTimeout = configuration._poll.timeout;
+        newInfo.pollIntervals = configuration._poll.intervals;
       }
     }
     return createExpect(newInfo);
