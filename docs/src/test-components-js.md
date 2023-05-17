@@ -216,8 +216,7 @@ This includes any config that needs to be run before or after mounting the compo
 }>
   <TabItem value="react">
 
-  ```js
-  // playwright/index.tsx
+  ```js title="playwright/index.tsx"
   import { beforeMount, afterMount } from '@playwright/experimental-ct-react/hooks';
   import { BrowserRouter } from 'react-router-dom';
 
@@ -233,10 +232,9 @@ This includes any config that needs to be run before or after mounting the compo
 
   #### In your test file:
 
-  ```js
-  // src/pages/ProductsPage.spec.tsx
+  ```js title="src/pages/ProductsPage.spec.tsx"
   import { test, expect } from '@playwright/experimental-ct-react';
-  import type { HooksConfig } from 'playwright';
+  import type { HooksConfig } from '@playwright/test';
   import { ProductsPage } from './pages/ProductsPage';
 
   test('configure routing through hooks config', async ({ page, mount }) => {
@@ -251,8 +249,7 @@ This includes any config that needs to be run before or after mounting the compo
 
   <TabItem value="solid">
 
-  ```js
-  // playwright/index.tsx
+  ```js title="playwright/index.tsx"
   import { beforeMount, afterMount } from '@playwright/experimental-ct-solid/hooks';
   import { Router } from '@solidjs/router';
 
@@ -268,10 +265,9 @@ This includes any config that needs to be run before or after mounting the compo
 
   #### In your test file:
 
-  ```js
-  // src/pages/ProductsPage.spec.tsx
+  ```js title="src/pages/ProductsPage.spec.tsx"
   import { test, expect } from '@playwright/experimental-ct-solid';
-  import type { HooksConfig } from 'playwright';
+  import type { HooksConfig } from '@playwright/test';
   import { ProductsPage } from './pages/ProductsPage';
 
   test('configure routing through hooks config', async ({ page, mount }) => {
@@ -286,8 +282,7 @@ This includes any config that needs to be run before or after mounting the compo
 
   <TabItem value="vue3">
 
-  ```js
-  // playwright/index.ts
+  ```js title="playwright/index.ts"
   import { beforeMount, afterMount } from '@playwright/experimental-ct-vue/hooks';
   import { router } from '../src/router';
 
@@ -303,10 +298,9 @@ This includes any config that needs to be run before or after mounting the compo
 
   #### In your test file:
 
-  ```js
-  // src/pages/ProductsPage.spec.ts
+  ```js title="src/pages/ProductsPage.spec.ts"
   import { test, expect } from '@playwright/experimental-ct-vue';
-  import type { HooksConfig } from 'playwright';
+  import type { HooksConfig } from '@playwright/test';
   import ProductsPage from './pages/ProductsPage.vue';
 
   test('configure routing through hooks config', async ({ page, mount }) => {
@@ -321,8 +315,7 @@ This includes any config that needs to be run before or after mounting the compo
 
   <TabItem value="vue2">
   
-  ```js
-  // playwright/index.ts
+  ```js title="playwright/index.ts"
   import { beforeMount, afterMount } from '@playwright/experimental-ct-vue2/hooks';
   import Router from 'vue-router';
   import { router } from '../src/router';
@@ -340,10 +333,9 @@ This includes any config that needs to be run before or after mounting the compo
   ```
    #### In your test file:
 
-  ```js
-  // src/pages/ProductsPage.spec.ts
+  ```js title="src/pages/ProductsPage.spec.ts"
   import { test, expect } from '@playwright/experimental-ct-vue2';
-  import type { HooksConfig } from 'playwright';
+  import type { HooksConfig } from '@playwright/test';
   import ProductsPage from './pages/ProductsPage.vue';
 
   test('configure routing through hooks config', async ({ page, mount }) => {
@@ -567,8 +559,7 @@ export default defineConfig({
 
 Pinia needs to be initialized in `playwright/index.{js,ts,jsx,tsx}`. If you do this inside a `beforeMount` hook, the `initialState` can be overwritten on a per-test basis:
 
-```js
-  // playwright/index.ts
+```js title="playwright/index.ts"
   import { beforeMount, afterMount } from '@playwright/experimental-ct-vue/hooks';
   import { createTestingPinia } from '@pinia/testing';
   import type { StoreState } from 'pinia';
@@ -596,10 +587,9 @@ Pinia needs to be initialized in `playwright/index.{js,ts,jsx,tsx}`. If you do t
 
   #### In your test file:
 
-```js
-  // src/pinia.spec.ts
+```js title="src/pinia.spec.ts"
   import { test, expect } from '@playwright/experimental-ct-vue';
-  import type { HooksConfig } from 'playwright';
+  import type { HooksConfig } from '@playwright/test';
   import Store from './Store.vue';
 
   test('override initialState ', async ({ mount }) => {

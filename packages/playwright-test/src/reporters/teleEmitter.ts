@@ -122,12 +122,20 @@ export class TeleReporterEmitter implements Reporter {
     this._messageSink({ method: 'onEnd', params: { result } });
   }
 
+  async onExit() {
+  }
+
   private _serializeConfig(config: FullConfig): JsonConfig {
     return {
-      rootDir: config.rootDir,
       configFile: this._relativePath(config.configFile),
-      listOnly: FullConfigInternal.from(config).cliListOnly,
+      globalTimeout: config.globalTimeout,
+      maxFailures: config.maxFailures,
+      metadata: config.metadata,
+      rootDir: config.rootDir,
+      version: config.version,
       workers: config.workers,
+
+      listOnly: FullConfigInternal.from(config)?.cliListOnly,
     };
   }
 
@@ -151,6 +159,7 @@ export class TeleReporterEmitter implements Reporter {
       grepInvert: serializeRegexPatterns(project.grepInvert || []),
       dependencies: project.dependencies,
       snapshotDir: this._relativePath(project.snapshotDir),
+      teardown: project.teardown,
     };
     return report;
   }
@@ -193,8 +202,12 @@ export class TeleReporterEmitter implements Reporter {
       duration: result.duration,
       status: result.status,
       errors: result.errors,
-      attachments: result.attachments,
+      attachments: this._serializeAttachments(result.attachments),
     };
+  }
+
+  _serializeAttachments(attachments: TestResult['attachments']): TestResult['attachments'] {
+    return attachments;
   }
 
   private _serializeStepStart(step: TestStep): JsonTestStepStart {

@@ -29,13 +29,23 @@ import type { RawStack } from 'playwright-core/lib/utils';
 const PLAYWRIGHT_TEST_PATH = path.join(__dirname, '..');
 const PLAYWRIGHT_CORE_PATH = path.dirname(require.resolve('playwright-core/package.json'));
 
-export function filterStackTrace(e: Error) {
+export function filterStackTrace(e: Error): { message: string, stack: string } {
   if (process.env.PWDEBUGIMPL)
-    return;
+    return { message: e.message, stack: e.stack || '' };
+
   const stackLines = stringifyStackFrames(filteredStackTrace(e.stack?.split('\n') || []));
-  const message = e.message;
-  e.stack = `${e.name}: ${e.message}\n${stackLines.join('\n')}`;
-  e.message = message;
+  return {
+    message: e.message,
+    stack: `${e.name}: ${e.message}\n${stackLines.join('\n')}`
+  };
+}
+
+export function filterStackFile(file: string) {
+  if (!process.env.PWDEBUGIMPL && file.startsWith(PLAYWRIGHT_TEST_PATH))
+    return false;
+  if (!process.env.PWDEBUGIMPL && file.startsWith(PLAYWRIGHT_CORE_PATH))
+    return false;
+  return true;
 }
 
 export function filteredStackTrace(rawStack: RawStack): StackFrame[] {
@@ -44,9 +54,7 @@ export function filteredStackTrace(rawStack: RawStack): StackFrame[] {
     const frame = parseStackTraceLine(line);
     if (!frame || !frame.file)
       continue;
-    if (!process.env.PWDEBUGIMPL && frame.file.startsWith(PLAYWRIGHT_TEST_PATH))
-      continue;
-    if (!process.env.PWDEBUGIMPL && frame.file.startsWith(PLAYWRIGHT_CORE_PATH))
+    if (!filterStackFile(frame.file))
       continue;
     frames.push(frame);
   }
@@ -65,13 +73,8 @@ export function stringifyStackFrames(frames: StackFrame[]): string[] {
 }
 
 export function serializeError(error: Error | any): TestInfoError {
-  if (error instanceof Error) {
-    filterStackTrace(error);
-    return {
-      message: error.message,
-      stack: error.stack
-    };
-  }
+  if (error instanceof Error)
+    return filterStackTrace(error);
   return {
     value: util.inspect(error)
   };
@@ -280,14 +283,15 @@ export async function normalizeAndSaveAttachment(outputPath: string, name: strin
 }
 
 export function fileIsModule(file: string): boolean {
-  if (file.endsWith('.mjs'))
+  if (file.endsWith('.mjs') || file.endsWith('.mts'))
     return true;
-
+  if (file.endsWith('.cjs') || file.endsWith('.cts'))
+    return false;
   const folder = path.dirname(file);
   return folderIsModule(folder);
 }
 
-export function folderIsModule(folder: string): boolean {
+function folderIsModule(folder: string): boolean {
   const packageJsonPath = getPackageJsonPath(folder);
   if (!packageJsonPath)
     return false;
@@ -307,14 +311,26 @@ export function envWithoutExperimentalLoaderOptions(): NodeJS.ProcessEnv {
   return result;
 }
 
-export function js2ts(resolved: string): string | undefined {
-  const match = resolved.match(/(.*)(\.js|\.jsx|\.mjs)$/);
-  if (!match || fs.existsSync(resolved))
-    return;
-  const tsResolved = match[1] + match[2].replace('js', 'ts');
-  if (fs.existsSync(tsResolved))
-    return tsResolved;
-  const tsxResolved = match[1] + match[2].replace('js', 'tsx');
-  if (fs.existsSync(tsxResolved))
-    return tsxResolved;
+// This follows the --moduleResolution=bundler strategy from tsc.
+// https://devblogs.microsoft.com/typescript/announcing-typescript-5-0-beta/#moduleresolution-bundler
+const kExtLookups = new Map([
+  ['.js', ['.jsx', '.ts', '.tsx']],
+  ['.jsx', ['.tsx']],
+  ['.cjs', ['.cts']],
+  ['.mjs', ['.mts']],
+  ['', ['.js', '.ts', '.jsx', '.tsx', '.cjs', '.mjs', '.cts', '.mts']],
+]);
+export function resolveImportSpecifierExtension(resolved: string): string | undefined {
+  if (fs.existsSync(resolved))
+    return resolved;
+  for (const [ext, others] of kExtLookups) {
+    if (!resolved.endsWith(ext))
+      continue;
+    for (const other of others) {
+      const modified = resolved.substring(0, resolved.length - ext.length) + other;
+      if (fs.existsSync(modified))
+        return modified;
+    }
+    break;  // Do not try '' when a more specific extesion like '.jsx' matched.
+  }
 }

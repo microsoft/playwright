@@ -58,11 +58,12 @@ export type BeforeActionTraceEvent = {
   apiName: string;
   class: string;
   method: string;
-  params: any;
+  params: Record<string, any>;
   wallTime: number;
   beforeSnapshot?: string;
   stack?: StackFrame[];
   pageId?: string;
+  parentId?: string;
 };
 
 export type InputActionTraceEvent = {
@@ -79,6 +80,13 @@ export type AfterActionTraceEvent = {
   afterSnapshot?: string;
   log: string[];
   error?: SerializedError['error'];
+  attachments?: {
+    name: string;
+    contentType: string;
+    path?: string;
+    sha1?: string;
+    base64?: string;
+  }[];
   result?: any;
 };
 

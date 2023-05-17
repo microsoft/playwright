@@ -8,6 +8,10 @@ export module Protocol {
       browserContextId?: string;
       openerId?: string;
     };
+    export type UserPreference = {
+      name: string;
+      value: any;
+    };
     export type CookieOptions = {
       name: string;
       value: string;
@@ -71,6 +75,10 @@ export module Protocol {
     }
     export type enableParameters = {
       attachToDefaultContext: boolean;
+      userPrefs?: {
+        name: string;
+        value: any;
+      }[];
     };
     export type enableReturnValue = void;
     export type createBrowserContextParameters = {
@@ -590,6 +598,7 @@ export module Protocol {
         width: number;
         height: number;
       };
+      quality?: number;
       omitDeviceScaleFactor?: boolean;
     };
     export type screenshotReturnValue = {

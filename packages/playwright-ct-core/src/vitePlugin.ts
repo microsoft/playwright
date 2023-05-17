@@ -47,7 +47,7 @@ const compiledReactRE = /(const|var)\s+React\s*=/;
 
 export function createPlugin(
   registerSourceFile: string,
-  frameworkPluginFactory: () => Promise<Plugin>): TestRunnerPlugin {
+  frameworkPluginFactory?: () => Promise<Plugin>): TestRunnerPlugin {
   let configDir: string;
   let config: FullConfig;
   return {
@@ -127,9 +127,10 @@ export function createPlugin(
       }
       const { build, preview } = require('vite');
       // Build config unconditionally, either build or build & preview will use it.
-      viteConfig.plugins = viteConfig.plugins || [
-        await frameworkPluginFactory()
-      ];
+      viteConfig.plugins ??= [];
+      if (frameworkPluginFactory && !viteConfig.plugins.length)
+        viteConfig.plugins = [await frameworkPluginFactory()];
+
       // But only add out own plugin when we actually build / transform.
       if (sourcesDirty)
         viteConfig.plugins.push(vitePlugin(registerSource, relativeTemplateDir, buildInfo, componentRegistry));
@@ -322,9 +323,9 @@ function vitePlugin(registerSource: string, relativeTemplateDir: string, buildIn
       for (const [alias, value] of componentRegistry) {
         const importPath = value.isModuleOrAlias ? value.importPath : './' + path.relative(folder, value.importPath).replace(/\\/g, '/');
         if (value.importedName)
-          lines.push(`import { ${value.importedName} as ${alias} } from '${importPath}';`);
+          lines.push(`const ${alias} = () => import('${importPath}').then((mod) => mod.${value.importedName});`);
         else
-          lines.push(`import ${alias} from '${importPath}';`);
+          lines.push(`const ${alias} = () => import('${importPath}').then((mod) => mod.default);`);
       }
 
       lines.push(`pwRegister({ ${[...componentRegistry.keys()].join(',\n  ')} });`);

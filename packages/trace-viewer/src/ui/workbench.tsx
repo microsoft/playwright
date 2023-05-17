@@ -30,7 +30,7 @@ import type { TabbedPaneTabModel } from '@web/components/tabbedPane';
 import { Timeline } from './timeline';
 import './workbench.css';
 import { MetadataView } from './metadataView';
-import type { Location } from '../../../playwright-test/types/testReporter';
+import { AttachmentsTab } from './attachmentsTab';
 
 export const Workbench: React.FunctionComponent<{
   model?: MultiTraceModel,
@@ -38,10 +38,10 @@ export const Workbench: React.FunctionComponent<{
   hideStackFrames?: boolean,
   showSourcesFirst?: boolean,
   rootDir?: string,
-  defaultSourceLocation?: Location,
+  fallbackLocation?: modelUtil.SourceLocation,
   initialSelection?: ActionTraceEvent,
   onSelectionChanged?: (action: ActionTraceEvent) => void,
-}> = ({ model, hideTimelineBars, hideStackFrames, showSourcesFirst, rootDir, defaultSourceLocation, initialSelection, onSelectionChanged }) => {
+}> = ({ model, hideTimelineBars, hideStackFrames, showSourcesFirst, rootDir, fallbackLocation, initialSelection, onSelectionChanged }) => {
   const [selectedAction, setSelectedAction] = React.useState<ActionTraceEvent | undefined>(undefined);
   const [highlightedAction, setHighlightedAction] = React.useState<ActionTraceEvent | undefined>();
   const [selectedNavigatorTab, setSelectedNavigatorTab] = React.useState<string>('actions');
@@ -74,7 +74,7 @@ export const Workbench: React.FunctionComponent<{
 
   const callTab: TabbedPaneTabModel = {
     id: 'call',
-    title: showSourcesFirst ? 'Log' : 'Call',
+    title: 'Call',
     render: () => <CallTab action={activeAction} sdkLanguage={sdkLanguage} />
   };
   const sourceTab: TabbedPaneTabModel = {
@@ -85,7 +85,7 @@ export const Workbench: React.FunctionComponent<{
       sources={sources}
       hideStackFrames={hideStackFrames}
       rootDir={rootDir}
-      fallbackLocation={defaultSourceLocation} />
+      fallbackLocation={fallbackLocation} />
   };
   const consoleTab: TabbedPaneTabModel = {
     id: 'console',
@@ -99,17 +99,24 @@ export const Workbench: React.FunctionComponent<{
     count: networkCount,
     render: () => <NetworkTab action={activeAction} />
   };
+  const attachmentsTab: TabbedPaneTabModel = {
+    id: 'attachments',
+    title: 'Attachments',
+    render: () => <AttachmentsTab action={activeAction} />
+  };
 
   const tabs: TabbedPaneTabModel[] = showSourcesFirst ? [
     sourceTab,
     consoleTab,
     networkTab,
     callTab,
+    attachmentsTab,
   ] : [
     callTab,
     consoleTab,
     networkTab,
     sourceTab,
+    attachmentsTab,
   ];
 
   return <div className='vbox'>

@@ -681,6 +681,21 @@ it('should work with overridden Object.defineProperty', async ({ page, server })
   expect(await page.evaluate('1+2')).toBe(3);
 });
 
+it('should work with busted Array.prototype.map/push', async ({ page, server }) => {
+  server.setRoute('/test', (req, res) => {
+    res.writeHead(200, {
+      'content-type': 'text/html',
+    });
+    res.end(`<script>
+      Array.prototype.map = null;
+      Array.prototype.push = null;
+    </script>`);
+  });
+  await page.goto(server.PREFIX + '/test');
+  expect(await page.evaluate('1+2')).toBe(3);
+  expect(await ((await page.evaluateHandle('1+2')).jsonValue())).toBe(3);
+});
+
 it('should work with overridden globalThis.Window/Document/Node', async ({ page, server }) => {
   const testCases = [
     // @ts-ignore

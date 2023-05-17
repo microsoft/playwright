@@ -164,6 +164,43 @@ test('should respect baseurl w/o paths', async ({ runInlineTest }) => {
   expect(result.output).not.toContain(`Could not`);
 });
 
+test('should fallback to *:* when baseurl and paths are specified', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'foo/bar/util/b.ts': `
+      export const foo = 42;
+    `,
+    'shared/x.ts': `
+      export const x = 43;
+    `,
+    'dir2/tsconfig.json': `{
+      "compilerOptions": {
+        "target": "ES2019",
+        "module": "commonjs",
+        "lib": ["esnext", "dom", "DOM.Iterable"],
+        "baseUrl": "..",
+        "paths": {
+          "shared/*": ["./shared/*"],
+        },
+      },
+    }`,
+    'dir2/inner.spec.ts': `
+      // This import should pick up ../foo/bar/util/b due to baseUrl and *:* fallback.
+      import { foo } from 'foo/bar/util/b';
+      // This import should pick up ../shared/x due to baseUrl+paths.
+      import { x } from 'shared/x';
+      import { test, expect } from '@playwright/test';
+      test('test', ({}, testInfo) => {
+        expect(foo).toBe(42);
+        expect(x).toBe(43);
+      });
+    `,
+  });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.output).not.toContain(`Could not`);
+});
+
 test('should respect complex path resolver', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
@@ -430,5 +467,41 @@ test('should respect path resolver for JS and TS files from jsconfig.json', asyn
   });
 
   expect(result.passed).toBe(2);
+  expect(result.exitCode).toBe(0);
+});
+
+test('should support extends in tsconfig.json', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'tsconfig.json': `{
+      "extends": ["./tsconfig.base1.json", "./tsconfig.base2.json"],
+    }`,
+    'tsconfig.base1.json': `{
+      "extends": "./tsconfig.base.json",
+    }`,
+    'tsconfig.base2.json': `{
+      "compilerOptions": {
+        "baseUrl": "dir",
+      },
+    }`,
+    'tsconfig.base.json': `{
+      "compilerOptions": {
+        "paths": {
+          "util/*": ["./foo/bar/util/*"],
+        },
+      },
+    }`,
+    'a.test.ts': `
+      const { foo } = require('util/file');
+      import { test, expect } from '@playwright/test';
+      test('test', ({}, testInfo) => {
+        expect(foo).toBe('foo');
+      });
+    `,
+    'dir/foo/bar/util/file.ts': `
+      module.exports = { foo: 'foo' };
+    `,
+  });
+
+  expect(result.passed).toBe(1);
   expect(result.exitCode).toBe(0);
 });

@@ -22,46 +22,72 @@ import __pwReact from 'react';
 import __pwReactDOM from 'react-dom';
 
 /** @typedef {import('../playwright-ct-core/types/component').Component} Component */
+/** @typedef {import('../playwright-ct-core/types/component').JsxComponent} JsxComponent */
+/** @typedef {import('../playwright-ct-core/types/component').ObjectComponent} ObjectComponent */
 /** @typedef {import('react').FunctionComponent} FrameworkComponent */
 
-/** @type {Map<string, FrameworkComponent>} */
+/** @type {Map<string, () => Promise<FrameworkComponent>>} */
+const __pwLoaderRegistry = new Map();
+/** @type {Map<string, FrameworkComponent} */
 const __pwRegistry = new Map();
 
 /**
- * @param {{[key: string]: FrameworkComponent}} components
+ * @param {{[key: string]: () => Promise<FrameworkComponent>}} components
  */
 export function pwRegister(components) {
   for (const [name, value] of Object.entries(components))
-    __pwRegistry.set(name, value);
+    __pwLoaderRegistry.set(name, value);
+}
+
+/**
+ * @param {Component} component
+ * @returns {component is JsxComponent | ObjectComponent}
+ */
+function isComponent(component) {
+  return !(typeof component !== 'object' || Array.isArray(component));
+}
+
+/**
+ * @param {Component} component
+ */
+async function __pwResolveComponent(component) {
+  if (!isComponent(component))
+    return
+
+  let componentFactory = __pwLoaderRegistry.get(component.type);
+  if (!componentFactory) {
+    // Lookup by shorthand.
+    for (const [name, value] of __pwLoaderRegistry) {
+      if (component.type.endsWith(`_${name}`)) {
+        componentFactory = value;
+        break;
+      }
+    }
+  }
+
+  if (!componentFactory && component.type[0].toUpperCase() === component.type[0])
+    throw new Error(`Unregistered component: ${component.type}. Following components are registered: ${[...__pwRegistry.keys()]}`);
+
+  if(componentFactory)
+    __pwRegistry.set(component.type, await componentFactory())
+
+  if ('children' in component)
+    await Promise.all(component.children.map(child => __pwResolveComponent(child)))
 }
 
 /**
  * @param {Component} component
  */
 function __pwRender(component) {
-  if (typeof component !== 'object' || Array.isArray(component))
+  if (!isComponent(component))
     return component;
 
-  let componentFunc = __pwRegistry.get(component.type);
-  if (!componentFunc) {
-    // Lookup by shorthand.
-    for (const [name, value] of __pwRegistry) {
-      if (component.type.endsWith(`_${name}`)) {
-        componentFunc = value;
-        break;
-      }
-    }
-  }
-
-  if (!componentFunc && component.type[0].toUpperCase() === component.type[0])
-    throw new Error(`Unregistered component: ${component.type}. Following components are registered: ${[...__pwRegistry.keys()]}`);
-
-  const componentFuncOrString = componentFunc || component.type;
-
+  const componentFunc = __pwRegistry.get(component.type);
+    
   if (component.kind !== 'jsx')
     throw new Error('Object mount notation is not supported');
 
-  return __pwReact.createElement(componentFuncOrString, component.props, ...component.children.map(child => {
+  return __pwReact.createElement(componentFunc || component.type, component.props, ...component.children.map(child => {
     if (typeof child === 'string')
       return child;
     return __pwRender(child);
@@ -73,6 +99,7 @@ function __pwRender(component) {
 }
 
 window.playwrightMount = async (component, rootElement, hooksConfig) => {
+  await __pwResolveComponent(component);
   let App = () => __pwRender(component);
   for (const hook of window.__pw_hooks_before_mount || []) {
     const wrapper = await hook({ App, hooksConfig });
@@ -92,5 +119,6 @@ window.playwrightUnmount = async rootElement => {
 };
 
 window.playwrightUpdate = async (rootElement, component) => {
+  await __pwResolveComponent(component);
   __pwReactDOM.render(__pwRender(/** @type {Component} */(component)), rootElement);
 };

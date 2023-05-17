@@ -193,7 +193,7 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
    * Using dependencies allows global setup to produce traces and other artifacts, see the setup steps in the test
    * report, etc.
    *
-   * For example:
+   * **Usage**
    *
    * ```js
    * // playwright.config.ts
@@ -285,6 +285,54 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
    */
   retries: number;
   /**
+   * Name of a project that needs to run after this and all dependent projects have finished. Teardown is useful to
+   * cleanup any resources acquired by this project.
+   *
+   * Passing `--no-deps` argument ignores
+   * [testProject.teardown](https://playwright.dev/docs/api/class-testproject#test-project-teardown) and behaves as if
+   * it was not specified.
+   *
+   * **Usage**
+   *
+   * A common pattern is a "setup" dependency that has a corresponding "teardown":
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   projects: [
+   *     {
+   *       name: 'setup',
+   *       testMatch: /global.setup\.ts/,
+   *       teardown: 'teardown',
+   *     },
+   *     {
+   *       name: 'teardown',
+   *       testMatch: /global.teardown\.ts/,
+   *     },
+   *     {
+   *       name: 'chromium',
+   *       use: devices['Desktop Chrome'],
+   *       dependencies: ['setup'],
+   *     },
+   *     {
+   *       name: 'firefox',
+   *       use: devices['Desktop Firefox'],
+   *       dependencies: ['setup'],
+   *     },
+   *     {
+   *       name: 'webkit',
+   *       use: devices['Desktop Safari'],
+   *       dependencies: ['setup'],
+   *     },
+   *   ],
+   * });
+   * ```
+   *
+   */
+  teardown?: string;
+  /**
    * Directory that will be recursively scanned for test files. Defaults to the directory of the configuration file.
    *
    * Each project can use a different directory. Here is an example that runs smoke tests in three browsers and all
@@ -347,8 +395,8 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
    * Only the files matching one of these patterns are executed as test files. Matching is performed against the
    * absolute file path. Strings are treated as glob patterns.
    *
-   * By default, Playwright looks for files matching the following glob pattern: `**\/*.@(spec|test).?(m)[jt]s?(x)`. This
-   * means JavaScript or TypeScript files with `".test"` or `".spec"` suffix, for example
+   * By default, Playwright looks for files matching the following glob pattern: `**\/*.@(spec|test).?(c|m)[jt]s?(x)`.
+   * This means JavaScript or TypeScript files with `".test"` or `".spec"` suffix, for example
    * `login-screen.wrong-credentials.spec.ts`.
    *
    * Use [testConfig.testMatch](https://playwright.dev/docs/api/class-testconfig#test-config-test-match) to change this
@@ -1192,8 +1240,8 @@ interface TestConfig {
    * Only the files matching one of these patterns are executed as test files. Matching is performed against the
    * absolute file path. Strings are treated as glob patterns.
    *
-   * By default, Playwright looks for files matching the following glob pattern: `**\/*.@(spec|test).?(m)[jt]s?(x)`. This
-   * means JavaScript or TypeScript files with `".test"` or `".spec"` suffix, for example
+   * By default, Playwright looks for files matching the following glob pattern: `**\/*.@(spec|test).?(c|m)[jt]s?(x)`.
+   * This means JavaScript or TypeScript files with `".test"` or `".spec"` suffix, for example
    * `login-screen.wrong-credentials.spec.ts`.
    *
    * **Usage**
@@ -3312,6 +3360,7 @@ type ConnectOptions = {
  * [testProject.use](https://playwright.dev/docs/api/class-testproject#test-project-use).
  *
  * ```js
+ * // playwright.config.ts
  * import { defineConfig } from '@playwright/test';
  * export default defineConfig({
  *   use: {
@@ -3364,6 +3413,7 @@ export interface PlaywrightWorkerOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -3383,6 +3433,7 @@ export interface PlaywrightWorkerOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -3413,6 +3464,7 @@ export interface PlaywrightWorkerOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -3434,6 +3486,7 @@ export interface PlaywrightWorkerOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -3463,6 +3516,7 @@ export interface PlaywrightWorkerOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -3488,6 +3542,7 @@ export interface PlaywrightWorkerOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -3515,6 +3570,7 @@ export interface PlaywrightWorkerOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -3541,6 +3597,7 @@ export type VideoMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry';
  * [testProject.use](https://playwright.dev/docs/api/class-testproject#test-project-use).
  *
  * ```js
+ * // playwright.config.ts
  * import { defineConfig } from '@playwright/test';
  * export default defineConfig({
  *   use: {
@@ -3573,6 +3630,7 @@ export interface PlaywrightTestOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -3589,6 +3647,7 @@ export interface PlaywrightTestOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -3605,6 +3664,7 @@ export interface PlaywrightTestOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -3623,6 +3683,7 @@ export interface PlaywrightTestOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -3641,6 +3702,7 @@ export interface PlaywrightTestOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -3659,6 +3721,7 @@ export interface PlaywrightTestOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -3675,6 +3738,7 @@ export interface PlaywrightTestOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -3692,6 +3756,7 @@ export interface PlaywrightTestOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -3712,6 +3777,7 @@ export interface PlaywrightTestOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -3728,6 +3794,7 @@ export interface PlaywrightTestOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -3746,6 +3813,7 @@ export interface PlaywrightTestOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -3763,6 +3831,7 @@ export interface PlaywrightTestOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -3781,6 +3850,7 @@ export interface PlaywrightTestOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -3798,6 +3868,7 @@ export interface PlaywrightTestOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -3816,6 +3887,7 @@ export interface PlaywrightTestOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -3835,6 +3907,7 @@ export interface PlaywrightTestOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -3849,13 +3922,13 @@ export interface PlaywrightTestOptions {
    * Populates context with given storage state. This option can be used to initialize context with logged-in
    * information obtained via
    * [browserContext.storageState([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-storage-state).
-   * Either a path to the file with saved storage, or an object with the following fields:
    */
   storageState: StorageState | undefined;
   /**
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -3874,6 +3947,7 @@ export interface PlaywrightTestOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -3890,6 +3964,7 @@ export interface PlaywrightTestOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -3945,6 +4020,7 @@ export interface PlaywrightTestOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -3989,6 +4065,7 @@ export interface PlaywrightTestOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -4005,6 +4082,7 @@ export interface PlaywrightTestOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -4028,6 +4106,7 @@ export interface PlaywrightTestOptions {
    * **Usage**
    *
    * ```js
+   * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
@@ -4654,6 +4733,12 @@ export type Expect = {
      not: BaseMatchers<Promise<void>, T>;
   };
   extend(matchers: any): void;
+  configure: (configuration: {
+    message?: string,
+    timeout?: number,
+    soft?: boolean,
+    poll?: boolean | { timeout?: number, intervals?: number[] },
+  }) => Expect;
   getState(): {
     expand?: boolean;
     isNot: boolean;
@@ -5501,7 +5586,7 @@ interface PageAssertions {
     caret?: "hide"|"initial";
 
     /**
-     * An object which specifies clipping of the resulting image. Should have the following fields:
+     * An object which specifies clipping of the resulting image.
      */
     clip?: {
       /**
@@ -5608,7 +5693,7 @@ interface PageAssertions {
     caret?: "hide"|"initial";
 
     /**
-     * An object which specifies clipping of the resulting image. Should have the following fields:
+     * An object which specifies clipping of the resulting image.
      */
     clip?: {
       /**
@@ -5926,7 +6011,7 @@ interface TestProject {
    * Using dependencies allows global setup to produce traces and other artifacts, see the setup steps in the test
    * report, etc.
    *
-   * For example:
+   * **Usage**
    *
    * ```js
    * // playwright.config.ts
@@ -6240,6 +6325,55 @@ interface TestProject {
   snapshotPathTemplate?: string;
 
   /**
+   * Name of a project that needs to run after this and all dependent projects have finished. Teardown is useful to
+   * cleanup any resources acquired by this project.
+   *
+   * Passing `--no-deps` argument ignores
+   * [testProject.teardown](https://playwright.dev/docs/api/class-testproject#test-project-teardown) and behaves as if
+   * it was not specified.
+   *
+   * **Usage**
+   *
+   * A common pattern is a "setup" dependency that has a corresponding "teardown":
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   projects: [
+   *     {
+   *       name: 'setup',
+   *       testMatch: /global.setup\.ts/,
+   *       teardown: 'teardown',
+   *     },
+   *     {
+   *       name: 'teardown',
+   *       testMatch: /global.teardown\.ts/,
+   *     },
+   *     {
+   *       name: 'chromium',
+   *       use: devices['Desktop Chrome'],
+   *       dependencies: ['setup'],
+   *     },
+   *     {
+   *       name: 'firefox',
+   *       use: devices['Desktop Firefox'],
+   *       dependencies: ['setup'],
+   *     },
+   *     {
+   *       name: 'webkit',
+   *       use: devices['Desktop Safari'],
+   *       dependencies: ['setup'],
+   *     },
+   *   ],
+   * });
+   * ```
+   *
+   */
+  teardown?: string;
+
+  /**
    * Directory that will be recursively scanned for test files. Defaults to the directory of the configuration file.
    *
    * Each project can use a different directory. Here is an example that runs smoke tests in three browsers and all
@@ -6304,8 +6438,8 @@ interface TestProject {
    * Only the files matching one of these patterns are executed as test files. Matching is performed against the
    * absolute file path. Strings are treated as glob patterns.
    *
-   * By default, Playwright looks for files matching the following glob pattern: `**\/*.@(spec|test).?(m)[jt]s?(x)`. This
-   * means JavaScript or TypeScript files with `".test"` or `".spec"` suffix, for example
+   * By default, Playwright looks for files matching the following glob pattern: `**\/*.@(spec|test).?(c|m)[jt]s?(x)`.
+   * This means JavaScript or TypeScript files with `".test"` or `".spec"` suffix, for example
    * `login-screen.wrong-credentials.spec.ts`.
    *
    * Use [testConfig.testMatch](https://playwright.dev/docs/api/class-testconfig#test-config-test-match) to change this
@@ -6363,6 +6497,17 @@ interface TestConfigWebServer {
    * when running tests locally.
    */
   reuseExistingServer?: boolean;
+
+  /**
+   * If `"pipe"`, it will pipe the stdout of the command to the process stdout. If `"ignore"`, it will ignore the stdout
+   * of the command. Default to `"ignore"`.
+   */
+  stdout?: "pipe"|"ignore";
+
+  /**
+   * Whether to pipe the stderr of the command to the process stderr or ignore it. Defaults to `"pipe"`.
+   */
+  stderr?: "pipe"|"ignore";
 
   /**
    * Current working directory of the spawned process, defaults to the directory of the configuration file.

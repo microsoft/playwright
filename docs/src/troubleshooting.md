@@ -74,11 +74,11 @@ The browser binaries for Chromium, Firefox and WebKit work across the 3 platform
 
 ### Windows
 
-Works with Windows and Windows Subsystem for Linux (WSL).
+Works with Windows 10+, Windows Server 2016+ and Windows Subsystem for Linux (WSL).
 
 ### macOS
 
-Requires 11 (Big Sur) or above.
+Requires 12 (Monterey) or above.
 
 ### Linux
 

@@ -44,8 +44,14 @@ test('hooks should work with fixtures', async ({ runInlineTest }) => {
         test.beforeAll(async ({ w, t }) => {
           global.logs.push('beforeAll-' + w + '-' + t);
         });
+        test.beforeAll(async ({ w, t }) => {
+          global.logs.push('beforeAll2-' + w + '-' + t);
+        });
         test.afterAll(async ({ w, t }) => {
           global.logs.push('afterAll-' + w + '-' + t);
+        });
+        test.afterAll(async ({ w, t }) => {
+          global.logs.push('afterAll2-' + w + '-' + t);
         });
 
         test.beforeEach(async ({ w, t }) => {
@@ -65,10 +71,20 @@ test('hooks should work with fixtures', async ({ runInlineTest }) => {
           '+w',
           '+t',
           'beforeAll-17-42',
-          'beforeEach-17-42',
-          'test-17-42',
-          'afterEach-17-42',
-          'afterAll-17-42',
+          '-t',
+          '+t',
+          'beforeAll2-17-43',
+          '-t',
+          '+t',
+          'beforeEach-17-44',
+          'test-17-44',
+          'afterEach-17-44',
+          '-t',
+          '+t',
+          'afterAll-17-45',
+          '-t',
+          '+t',
+          'afterAll2-17-46',
           '-t',
           '+t',
         ]);

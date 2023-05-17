@@ -14,17 +14,19 @@
  * limitations under the License.
  */
 
+import crypto from 'crypto';
 import path from 'path';
-import fs from 'fs';
 import { sourceMapSupport, pirates } from '../utilsBundle';
 import url from 'url';
 import type { Location } from '../../types/testReporter';
 import type { TsConfigLoaderResult } from '../third_party/tsconfig-loader';
 import { tsConfigLoader } from '../third_party/tsconfig-loader';
 import Module from 'module';
-import type { BabelTransformFunction } from './babelBundle';
-import { fileIsModule, js2ts } from '../util';
+import type { BabelPlugin, BabelTransformFunction } from './babelBundle';
+import { fileIsModule, resolveImportSpecifierExtension } from '../util';
 import { getFromCompilationCache, currentFileDepsCollector, belongsToNodeModules } from './compilationCache';
+
+const version = require('../../package.json').version;
 
 type ParsedTsConfigData = {
   absoluteBaseUrl: string;
@@ -33,16 +35,22 @@ type ParsedTsConfigData = {
 };
 const cachedTSConfigs = new Map<string, ParsedTsConfigData | undefined>();
 
+let babelPlugins: BabelPlugin[] = [];
+
+export function setBabelPlugins(plugins: BabelPlugin[]) {
+  babelPlugins = plugins;
+}
+
 function validateTsConfig(tsconfig: TsConfigLoaderResult): ParsedTsConfigData | undefined {
   if (!tsconfig.tsConfigPath || !tsconfig.baseUrl)
     return;
   // Make 'baseUrl' absolute, because it is relative to the tsconfig.json, not to cwd.
   const absoluteBaseUrl = path.resolve(path.dirname(tsconfig.tsConfigPath), tsconfig.baseUrl);
-  const paths = tsconfig.paths || { '*': ['*'] };
+  const pathsFallback = [{ key: '*', values: ['*'] }];
   return {
     allowJs: tsconfig.allowJs,
     absoluteBaseUrl,
-    paths: Object.entries(paths).map(([key, values]) => ({ key, values }))
+    paths: Object.entries(tsconfig.paths || {}).map(([key, values]) => ({ key, values })).concat(pathsFallback)
   };
 }
 
@@ -58,8 +66,6 @@ function loadAndValidateTsconfigForFile(file: string): ParsedTsConfigData | unde
 }
 
 const pathSeparator = process.platform === 'win32' ? ';' : ':';
-const scriptPreprocessor = process.env.PW_TEST_SOURCE_TRANSFORM ?
-  require(process.env.PW_TEST_SOURCE_TRANSFORM) : undefined;
 const builtins = new Set(Module.builtinModules);
 
 export function resolveHook(filename: string, specifier: string): string | undefined {
@@ -69,7 +75,7 @@ export function resolveHook(filename: string, specifier: string): string | undef
     return;
 
   if (isRelativeSpecifier(specifier))
-    return js2ts(path.resolve(path.dirname(filename), specifier));
+    return resolveImportSpecifierExtension(path.resolve(path.dirname(filename), specifier));
 
   const isTypeScript = filename.endsWith('.ts') || filename.endsWith('.tsx');
   const tsconfig = loadAndValidateTsconfigForFile(filename);
@@ -106,22 +112,14 @@ export function resolveHook(filename: string, specifier: string): string | undef
         continue;
 
       for (const value of values) {
-        let candidate: string = value;
-
+        let candidate = value;
         if (value.includes('*'))
           candidate = candidate.replace('*', matchedPartOfSpecifier);
         candidate = path.resolve(tsconfig.absoluteBaseUrl, candidate.replace(/\//g, path.sep));
-        const ts = js2ts(candidate);
-        if (ts) {
+        const existing = resolveImportSpecifierExtension(candidate);
+        if (existing) {
           longestPrefixLength = keyPrefix.length;
-          pathMatchedByLongestPrefix = ts;
-        } else {
-          for (const ext of ['', '.js', '.ts', '.mjs', '.cjs', '.jsx', '.tsx', '.cjs', '.mts', '.cts']) {
-            if (fs.existsSync(candidate + ext)) {
-              longestPrefixLength = keyPrefix.length;
-              pathMatchedByLongestPrefix = candidate + ext;
-            }
-          }
+          pathMatchedByLongestPrefix = existing;
         }
       }
     }
@@ -129,35 +127,47 @@ export function resolveHook(filename: string, specifier: string): string | undef
       return pathMatchedByLongestPrefix;
   }
 
-  return js2ts(path.resolve(path.dirname(filename), specifier));
+  if (path.isAbsolute(specifier)) {
+    // Handle absolute file paths like `import '/path/to/file'`
+    // Do not handle module imports like `import 'fs'`
+    return resolveImportSpecifierExtension(specifier);
+  }
 }
 
-export function transformHook(code: string, filename: string, moduleUrl?: string): string {
-  const { cachedCode, addToCache } = getFromCompilationCache(filename, code, moduleUrl);
-  if (cachedCode)
-    return cachedCode;
-
-  const isTypeScript = filename.endsWith('.ts') || filename.endsWith('.tsx');
+export function transformHook(originalCode: string, filename: string, moduleUrl?: string): string {
+  const isTypeScript = filename.endsWith('.ts') || filename.endsWith('.tsx') || filename.endsWith('.mts') || filename.endsWith('.cts');
   const hasPreprocessor =
       process.env.PW_TEST_SOURCE_TRANSFORM &&
       process.env.PW_TEST_SOURCE_TRANSFORM_SCOPE &&
       process.env.PW_TEST_SOURCE_TRANSFORM_SCOPE.split(pathSeparator).some(f => filename.startsWith(f));
+  const pluginsPrologue = babelPlugins;
+  const pluginsEpilogue = hasPreprocessor ? [[process.env.PW_TEST_SOURCE_TRANSFORM!]] as BabelPlugin[] : [];
+  const hash = calculateHash(originalCode, filename, !!moduleUrl, pluginsPrologue, pluginsEpilogue);
+  const { cachedCode, addToCache } = getFromCompilationCache(filename, hash, moduleUrl);
+  if (cachedCode)
+    return cachedCode;
 
   // We don't use any browserslist data, but babel checks it anyway.
   // Silence the annoying warning.
   process.env.BROWSERSLIST_IGNORE_OLD_DATA = 'true';
 
-  try {
-    const { babelTransform }: { babelTransform: BabelTransformFunction } = require('./babelBundle');
-    const { code, map } = babelTransform(filename, isTypeScript, !!moduleUrl, hasPreprocessor ? scriptPreprocessor : undefined);
-    if (code)
-      addToCache!(code, map);
-    return code || '';
-  } catch (e) {
-    // Re-throw error with a playwright-test stack
-    // that could be filtered out.
-    throw new Error(e.message);
-  }
+  const { babelTransform }: { babelTransform: BabelTransformFunction } = require('./babelBundle');
+  const { code, map } = babelTransform(originalCode, filename, isTypeScript, !!moduleUrl, pluginsPrologue, pluginsEpilogue);
+  if (code)
+    addToCache!(code, map);
+  return code || '';
+}
+
+function calculateHash(content: string, filePath: string, isModule: boolean, pluginsPrologue: BabelPlugin[], pluginsEpilogue: BabelPlugin[]): string {
+  const hash = crypto.createHash('sha1')
+      .update(isModule ? 'esm' : 'no_esm')
+      .update(content)
+      .update(filePath)
+      .update(version)
+      .update(pluginsPrologue.map(p => p[0]).join(','))
+      .update(pluginsEpilogue.map(p => p[0]).join(','))
+      .digest('hex');
+  return hash;
 }
 
 export async function requireOrImport(file: string) {

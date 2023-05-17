@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { createImage } from './playwright-test-fixtures';
 import { test, expect } from './ui-mode-fixtures';
 test.describe.configure({ mode: 'parallel' });
 
@@ -37,11 +38,67 @@ test('should merge trace events', async ({ runUITest, server }) => {
       listItem,
       'action list'
   ).toHaveText([
-    /browserContext\.newPage[\d.]+m?s/,
+    /Before Hooks[\d.]+m?s/,
+    /page.setContent[\d.]+m?s/,
+    /expect.toBe[\d.]+m?s/,
+    /locator.clickgetByRole\('button'\)[\d.]+m?s/,
+    /expect.toBe[\d.]+m?s/,
+    /After Hooks[\d.]+m?s/,
+    /fixture: page[\d.]+m?s/,
+    /fixture: context[\d.]+m?s/,
+  ]);
+});
+
+test('should merge web assertion events', async ({  runUITest }, testInfo) => {
+  const { page } = await runUITest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('trace test', async ({ page }) => {
+        await page.setContent('<button>Submit</button>');
+        await expect(page.locator('button')).toBeVisible();
+      });
+    `,
+  });
+
+  await page.getByText('trace test').dblclick();
+
+  const listItem = page.getByTestId('action-list').getByRole('listitem');
+  await expect(
+      listItem,
+      'action list'
+  ).toHaveText([
+    /Before Hooks[\d.]+m?s/,
+    /page.setContent[\d.]+m?s/,
+    /expect.toBeVisiblelocator\('button'\)[\d.]+m?s/,
+    /After Hooks[\d.]+m?s/,
+    /fixture: page[\d.]+m?s/,
+    /fixture: context[\d.]+m?s/,
+  ]);
+});
+
+test('should merge screenshot assertions', async ({  runUITest }, testInfo) => {
+  const { page } = await runUITest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('trace test', async ({ page }) => {
+        await page.setContent('<button>Submit</button>');
+        await expect(page.locator('button')).toHaveScreenshot();
+      });
+    `,
+  });
+
+  await page.getByText('trace test').dblclick();
+
+  const listItem = page.getByTestId('action-list').getByRole('listitem');
+  // TODO: fixme.
+  await expect(
+      listItem,
+      'action list'
+  ).toHaveText([
+    /Before Hooks[\d.]+m?s/,
     /page\.setContent[\d.]+m?s/,
-    /expect\.toBe[\d.]+m?s/,
-    /locator\.clickgetByRole\('button'\)[\d.]+m?s/,
-    /expect\.toBe[\d.]+m?s/,
+    /expect\.toHaveScreenshot[\d.]+m?s/,
+    /After Hooks/,
   ]);
 });
 
@@ -56,6 +113,7 @@ test('should locate sync assertions in source', async ({ runUITest, server }) =>
   });
 
   await page.getByText('trace test').dblclick();
+  await page.getByText('expect.toBe').click();
 
   await expect(
       page.locator('.CodeMirror .source-line-running'),
@@ -82,14 +140,42 @@ test('should show snapshots for sync assertions', async ({ runUITest, server }) 
       listItem,
       'action list'
   ).toHaveText([
-    /browserContext\.newPage[\d.]+m?s/,
+    /Before Hooks[\d.]+m?s/,
     /page\.setContent[\d.]+m?s/,
     /locator\.clickgetByRole\('button'\)[\d.]+m?s/,
     /expect\.toBe[\d.]+m?s/,
-  ], { timeout: 15000 });
+    /After Hooks[\d.]+m?s/,
+    /fixture: page[\d.]+m?s/,
+    /fixture: context[\d.]+m?s/,
+  ]);
 
   await expect(
       page.frameLocator('iframe.snapshot-visible[name=snapshot]').locator('button'),
       'verify snapshot'
   ).toHaveText('Submit');
+});
+
+test('should show image diff', async ({ runUITest, server }) => {
+  const { page } = await runUITest({
+    'playwright.config.js': `
+      module.exports = {
+        snapshotPathTemplate: '{arg}{ext}'
+      };
+    `,
+    'snapshot.png': createImage(100, 100, 255, 0, 0),
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('vrt test', async ({ page }) => {
+        await page.setViewportSize({ width: 100, height: 100 });
+        await expect(page).toHaveScreenshot('snapshot.png', { timeout: 2000 });
+      });
+    `,
+  });
+
+  await page.getByText('vrt test').dblclick();
+  await page.getByText(/Attachments/).click();
+  await expect(page.getByText('Diff', { exact: true })).toBeVisible();
+  await expect(page.getByText('Actual', { exact: true })).toBeVisible();
+  await expect(page.getByText('Expected', { exact: true })).toBeVisible();
+  await expect(page.locator('.image-diff-view .image-wrapper img')).toBeVisible();
 });

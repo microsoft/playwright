@@ -101,7 +101,7 @@ Choose a specific profile, various profiles or all profiles to run tests on.
 
 By setting up projects we can also run a group of tests with different timeouts or retries or run a group of tests against different environments. For example we can run our tests against a staging environment with 2 retries as well as against a production environment with 0 retries.
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -131,7 +131,7 @@ We can split tests into projects and use filters to run a subset of tests. For e
 
 Here is an example that defines a common timeout and two projects. The "Smoke" project runs a small subset of tests without retries, and "Default" project runs all other tests with retries.
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -156,8 +156,7 @@ Dependencies are a list of projects that need to run before the tests in another
 
 In this example the chromium, firefox and webkit projects depend on the setup project.
 
-```js
-// playwright.config.ts
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({

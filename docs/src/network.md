@@ -11,8 +11,7 @@ Playwright provides APIs to **monitor** and **modify** network traffic, both HTT
 
 You don't have to configure anything to mock network requests. Just define a custom [Route] that mocks network for a browser context.
 
-```js
-// example.spec.ts
+```js title="example.spec.ts"
 import { test, expect } from '@playwright/test';
 
 test.beforeEach(async ({ context }) => {
@@ -28,8 +27,7 @@ test('loads page without css', async ({ page }) => {
 
 Alternatively, you can use [`method: Page.route`] to mock network in a single page.
 
-```js
-// example.spec.ts
+```js title="example.spec.ts"
 import { test, expect } from '@playwright/test';
 
 test('loads page without images', async ({ page }) => {
@@ -45,7 +43,7 @@ test('loads page without images', async ({ page }) => {
 
 Perform HTTP Authentication.
 
-```js tab=js-test
+```js tab=js-test title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 export default defineConfig({
   use: {
@@ -113,7 +111,7 @@ bypass proxy for.
 
 Here is an example of a global proxy:
 
-```js tab=js-test
+```js tab=js-test title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 export default defineConfig({
   use: {
@@ -174,7 +172,7 @@ await using var browser = await BrowserType.LaunchAsync(new()
 
 When specifying proxy for each context individually, **Chromium on Windows** needs a hint that proxy will be set. This is done via passing a non-empty proxy server to the browser itself. Here is an example of a context-specific proxy:
 
-```js tab=js-test
+```js tab=js-test title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 export default defineConfig({
   use: {

@@ -49,6 +49,18 @@ export function filterProjects(projects: FullProjectInternal[], projectNames?: s
   return result;
 }
 
+export function buildTeardownToSetupsMap(projects: FullProjectInternal[]): Map<FullProjectInternal, FullProjectInternal[]> {
+  const result = new Map<FullProjectInternal, FullProjectInternal[]>();
+  for (const project of projects) {
+    if (project.teardown) {
+      const setups = result.get(project.teardown) || [];
+      setups.push(project);
+      result.set(project.teardown, setups);
+    }
+  }
+  return result;
+}
+
 export function buildProjectsClosure(projects: FullProjectInternal[]): Map<FullProjectInternal, 'top-level' | 'dependency'> {
   const result = new Map<FullProjectInternal, 'top-level' | 'dependency'>();
   const visit = (depth: number, project: FullProjectInternal) => {
@@ -59,6 +71,8 @@ export function buildProjectsClosure(projects: FullProjectInternal[]): Map<FullP
     }
     result.set(project, depth ? 'dependency' : 'top-level');
     project.deps.map(visit.bind(undefined, depth + 1));
+    if (project.teardown)
+      visit(depth + 1, project.teardown);
   };
   for (const p of projects)
     result.set(p, 'top-level');
@@ -67,9 +81,33 @@ export function buildProjectsClosure(projects: FullProjectInternal[]): Map<FullP
   return result;
 }
 
+export function buildDependentProjects(forProjects: FullProjectInternal[], projects: FullProjectInternal[]): Set<FullProjectInternal> {
+  const reverseDeps = new Map<FullProjectInternal, FullProjectInternal[]>(projects.map(p => ([p, []])));
+  for (const project of projects) {
+    for (const dep of project.deps)
+      reverseDeps.get(dep)!.push(project);
+  }
+  const result = new Set<FullProjectInternal>();
+  const visit = (depth: number, project: FullProjectInternal) => {
+    if (depth > 100) {
+      const error = new Error('Circular dependency detected between projects.');
+      error.stack = '';
+      throw error;
+    }
+    result.add(project);
+    for (const reverseDep of reverseDeps.get(project)!)
+      visit(depth + 1, reverseDep);
+    if (project.teardown)
+      visit(depth + 1, project.teardown);
+  };
+  for (const forProject of forProjects)
+    visit(0, forProject);
+  return result;
+}
+
 export async function collectFilesForProject(project: FullProjectInternal, fsCache = new Map<string, string[]>()): Promise<string[]> {
-  const extensions = ['.js', '.ts', '.mjs', '.tsx', '.jsx'];
-  const testFileExtension = (file: string) => extensions.includes(path.extname(file));
+  const extensions = new Set(['.js', '.ts', '.mjs', '.mts', '.cjs', '.cts', '.jsx', '.tsx', '.mjsx', '.mtsx', '.cjsx', '.ctsx']);
+  const testFileExtension = (file: string) => extensions.has(path.extname(file));
   const allFiles = await cachedCollectFiles(project.project.testDir, project.respectGitIgnore, fsCache);
   const testMatch = createFileMatcher(project.project.testMatch);
   const testIgnore = createFileMatcher(project.project.testIgnore);

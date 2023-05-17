@@ -15,7 +15,7 @@
  */
 
 import { Connection } from './client/connection';
-import { IpcTransport } from './protocol/transport';
+import { PipeTransport } from './protocol/transport';
 import type { Playwright } from './client/playwright';
 import * as childProcess from 'child_process';
 import * as path from 'path';
@@ -32,12 +32,10 @@ class PlaywrightClient {
   _playwright: Promise<Playwright>;
   _driverProcess: childProcess.ChildProcess;
   private _closePromise = new ManualPromise<void>();
-  private _transport: IpcTransport;
-  private _stopped = false;
 
   constructor(env: any) {
     this._driverProcess = childProcess.fork(path.join(__dirname, 'cli', 'cli.js'), ['run-driver'], {
-      stdio: ['inherit', 'inherit', 'inherit', 'ipc'],
+      stdio: 'pipe',
       detached: true,
       env: {
         ...process.env,
@@ -49,25 +47,23 @@ class PlaywrightClient {
 
     const connection = new Connection();
     connection.markAsRemote();
-    this._transport = new IpcTransport(this._driverProcess);
-    connection.onmessage = message => this._transport.send(JSON.stringify(message));
-    this._transport.onmessage = message => connection.dispatch(JSON.parse(message));
-    this._transport.onclose = () => this._closePromise.resolve();
+    const transport = new PipeTransport(this._driverProcess.stdin!, this._driverProcess.stdout!);
+    connection.onmessage = message => transport.send(JSON.stringify(message));
+    transport.onmessage = message => connection.dispatch(JSON.parse(message));
+    transport.onclose = () => this._closePromise.resolve();
 
     this._playwright = connection.initializePlaywright();
   }
 
   async stop() {
-    this._stopped = true;
-    this._transport.close();
+    this._driverProcess.removeListener('exit', this._onExit);
+    this._driverProcess.stdin!.destroy();
+    this._driverProcess.stdout!.destroy();
+    this._driverProcess.stderr!.destroy();
     await this._closePromise;
   }
 
   private _onExit(exitCode: number | null, signal: string | null) {
-    if (this._stopped)
-      this._closePromise.resolve();
-    else
-      throw new Error(`Server closed with exitCode=${exitCode} signal=${signal}`);
+    throw new Error(`Server closed with exitCode=${exitCode} signal=${signal}`);
   }
-
 }

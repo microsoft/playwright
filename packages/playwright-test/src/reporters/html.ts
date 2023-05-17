@@ -37,8 +37,6 @@ type TestEntry = {
   testCaseSummary: TestCaseSummary
 };
 
-const kMissingContentType = 'x-playwright/missing';
-
 type HtmlReportOpenOption = 'always' | 'never' | 'on-failure';
 type HtmlReporterOptions = {
   configDir: string,
@@ -142,7 +140,7 @@ function reportFolderFromEnv(): string | undefined {
   return undefined;
 }
 
-export function defaultReportFolder(searchForPackageJson: string): string {
+function defaultReportFolder(searchForPackageJson: string): string {
   let basePath = getPackageJsonPath(searchForPackageJson);
   if (basePath)
     basePath = path.dirname(basePath);
@@ -258,9 +256,7 @@ class HtmlBuilder {
       const testCaseSummaryComparator = (t1: TestCaseSummary, t2: TestCaseSummary) => {
         const w1 = (t1.outcome === 'unexpected' ? 1000 : 0) +  (t1.outcome === 'flaky' ? 1 : 0);
         const w2 = (t2.outcome === 'unexpected' ? 1000 : 0) +  (t2.outcome === 'flaky' ? 1 : 0);
-        if (w2 - w1)
-          return w2 - w1;
-        return t1.location.line - t2.location.line;
+        return w2 - w1;
       };
       testFileSummary.tests.sort(testCaseSummaryComparator);
 
@@ -399,11 +395,6 @@ class HtmlBuilder {
           fs.mkdirSync(path.join(this._reportFolder, 'data'), { recursive: true });
           fs.writeFileSync(path.join(this._reportFolder, 'data', sha1), buffer);
         } catch (e) {
-          return {
-            name: `Missing attachment "${a.name}"`,
-            contentType: kMissingContentType,
-            body: `Attachment file ${fileName} is missing`,
-          };
         }
         return {
           name: a.name,

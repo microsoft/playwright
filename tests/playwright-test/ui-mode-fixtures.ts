@@ -124,7 +124,10 @@ export const test = base
       },
     });
 
-export { expect } from './stable-test-runner';
+import { expect as baseExpect } from './stable-test-runner';
+
+// Slow tests are 90s.
+export const expect = baseExpect.configure({ timeout: process.env.CI ? 75000 : 25000 });
 
 async function waitForLatch(latchFile: string) {
   const fs = require('fs');

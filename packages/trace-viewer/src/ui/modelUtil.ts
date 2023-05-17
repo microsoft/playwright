@@ -19,7 +19,6 @@ import type { ResourceSnapshot } from '@trace/snapshot';
 import type * as trace from '@trace/trace';
 import type { ActionTraceEvent, EventTraceEvent } from '@trace/trace';
 import type { ContextEntry, PageEntry } from '../entries';
-import type { SerializedError, StackFrame } from '@protocol/channels';
 
 const contextSymbol = Symbol('context');
 const nextInContextSymbol = Symbol('next');
@@ -27,8 +26,14 @@ const prevInListSymbol = Symbol('prev');
 const eventsSymbol = Symbol('events');
 const resourcesSymbol = Symbol('resources');
 
+export type SourceLocation = {
+  file: string;
+  line: number;
+  source: SourceModel;
+};
+
 export type SourceModel = {
-  errors: { error: SerializedError['error'], location: StackFrame }[];
+  errors: { line: number, message: string }[];
   content: string | undefined;
 };
 
@@ -62,12 +67,11 @@ export class MultiTraceModel {
     this.startTime = contexts.map(c => c.startTime).reduce((prev, cur) => Math.min(prev, cur), Number.MAX_VALUE);
     this.endTime = contexts.map(c => c.endTime).reduce((prev, cur) => Math.max(prev, cur), Number.MIN_VALUE);
     this.pages = ([] as PageEntry[]).concat(...contexts.map(c => c.pages));
-    this.actions = ([] as ActionTraceEvent[]).concat(...contexts.map(c => c.actions));
+    this.actions = mergeActions(contexts);
     this.events = ([] as EventTraceEvent[]).concat(...contexts.map(c => c.events));
     this.hasSource = contexts.some(c => c.hasSource);
 
     this.events.sort((a1, a2) => a1.time - a2.time);
-    this.actions = dedupeAndSortActions(this.actions);
     this.sources = collectSources(this.actions);
   }
 }
@@ -84,39 +88,60 @@ function indexModel(context: ContextEntry) {
     (event as any)[contextSymbol] = context;
 }
 
-function dedupeAndSortActions(actions: ActionTraceEvent[]) {
-  const callActions = actions.filter(a => a.callId.startsWith('call@'));
-  const expectActions = actions.filter(a => a.callId.startsWith('expect@'));
+function mergeActions(contexts: ContextEntry[]) {
+  const map = new Map<string, ActionTraceEvent>();
 
-  // Call startTime/endTime are server-side times.
-  // Expect startTime/endTime are client-side times.
-  // If there are call times, adjust expect startTime/endTime to align with callTime.
-  if (callActions.length && expectActions.length) {
-    const offset = callActions[0].startTime - callActions[0].wallTime!;
-    for (const expectAction of expectActions) {
-      const duration = expectAction.endTime - expectAction.startTime;
-      expectAction.startTime = expectAction.wallTime! + offset;
-      expectAction.endTime = expectAction.startTime + duration;
-    }
-  }
-  const callActionsByKey = new Map<string, ActionTraceEvent>();
-  for (const action of callActions)
-    callActionsByKey.set(action.apiName + '@' + action.wallTime, action);
+  // Protocol call aka isPrimary contexts have startTime/endTime as server-side times.
+  // Step aka non-isPrimary contexts have startTime/endTime are client-side times.
+  // Adjust expect startTime/endTime on non-primary contexts to put them on a single timeline.
+  let offset = 0;
+  const primaryContexts = contexts.filter(context => context.isPrimary);
+  const nonPrimaryContexts = contexts.filter(context => !context.isPrimary);
 
-  const result = [...callActions];
-  for (const expectAction of expectActions) {
-    const callAction = callActionsByKey.get(expectAction.apiName + '@' + expectAction.wallTime);
-    if (callAction) {
-      if (expectAction.error)
-        callAction.error = expectAction.error;
-      continue;
-    }
-    result.push(expectAction);
+  for (const context of primaryContexts) {
+    for (const action of context.actions)
+      map.set(`${action.apiName}@${action.wallTime}`, action);
+    if (!offset && context.actions.length)
+      offset = context.actions[0].startTime - context.actions[0].wallTime;
   }
 
-  result.sort((a1, a2) => (a1.wallTime - a2.wallTime));
+  for (const context of nonPrimaryContexts) {
+    for (const action of context.actions) {
+      if (offset) {
+        const duration = action.endTime - action.startTime;
+        if (action.startTime)
+          action.startTime = action.wallTime + offset;
+        if (action.endTime)
+          action.endTime = action.startTime + duration;
+      }
+
+      const key = `${action.apiName}@${action.wallTime}`;
+      const existing = map.get(key);
+      if (existing && existing.apiName === action.apiName) {
+        if (action.error)
+          existing.error = action.error;
+        if (action.attachments)
+          existing.attachments = action.attachments;
+        if (action.parentId)
+          existing.parentId = action.parentId;
+        continue;
+      }
+      map.set(key, action);
+    }
+  }
+
+  const result = [...map.values()];
+  result.sort((a1, a2) => {
+    if (a2.parentId === a1.callId)
+      return -1;
+    if (a1.parentId === a2.callId)
+      return 1;
+    return a1.wallTime - a2.wallTime || a1.startTime - a2.startTime;
+  });
+
   for (let i = 1; i < result.length; ++i)
     (result[i] as any)[prevInListSymbol] = result[i - 1];
+
   return result;
 }
 
@@ -192,7 +217,7 @@ function collectSources(actions: trace.ActionTraceEvent[]): Map<string, SourceMo
       }
     }
     if (action.error && action.stack?.[0])
-      result.get(action.stack[0].file)!.errors.push({ error: action.error, location: action.stack?.[0] });
+      result.get(action.stack[0].file)!.errors.push({ line: action.stack?.[0].line || 0, message: action.error.message });
   }
   return result;
 }

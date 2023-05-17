@@ -111,26 +111,6 @@ configures Playwright for debugging and opens the inspector. Additional useful d
 - Browsers launch in headed mode
 - Default timeout is set to 0 (= no timeout)
 
-
-```bash tab=bash-bash lang=java
-# Source directories in the list are separated by : on macos and linux and by ; on win.
-PWDEBUG=1 PLAYWRIGHT_JAVA_SRC=<java source dirs> mvn test
-```
-
-```batch tab=bash-batch lang=java
-# Source directories in the list are separated by : on macos and linux and by ; on win.
-set PLAYWRIGHT_JAVA_SRC=<java source dirs>
-set PWDEBUG=1
-mvn test
-```
-
-```powershell tab=bash-powershell lang=java
-# Source directories in the list are separated by : on macos and linux and by ; on win.
-$env:PLAYWRIGHT_JAVA_SRC="<java source dirs>"
-$env:PWDEBUG=1
-mvn test
-```
-
 ```bash tab=bash-bash lang=python
 PWDEBUG=1 pytest -s
 ```
@@ -157,6 +137,32 @@ dotnet test
 ```powershell tab=bash-powershell lang=csharp
 $env:PWDEBUG=1
 dotnet test
+```
+
+#### Configure source location
+* langs: java
+
+To tell Playwright where to look for the source code that you are debugging, pass
+a list of the source directories via `PLAYWRIGHT_JAVA_SRC` environment variable. Paths in
+the list should be separated by : on macOS and Linux, and by ; on Windows.
+
+```bash tab=bash-bash lang=java
+# Source directories in the list are separated by : on macos and linux and by ; on win.
+PWDEBUG=1 PLAYWRIGHT_JAVA_SRC=<java source dirs> mvn test
+```
+
+```batch tab=bash-batch lang=java
+# Source directories in the list are separated by : on macos and linux and by ; on win.
+set PLAYWRIGHT_JAVA_SRC=<java source dirs>
+set PWDEBUG=1
+mvn test
+```
+
+```powershell tab=bash-powershell lang=java
+# Source directories in the list are separated by : on macos and linux and by ; on win.
+$env:PLAYWRIGHT_JAVA_SRC="<java source dirs>"
+$env:PWDEBUG=1
+mvn test
 ```
 
 ### Stepping through your tests

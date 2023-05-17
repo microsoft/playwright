@@ -4,5 +4,5 @@
 ../util.ts
 ../utilsBundle.ts
 
-[blob.ts]
-../runner/loadUtils.ts
+[merge.ts]
+../runner/reporters.ts

@@ -38,6 +38,7 @@ export const CallTab: React.FunctionComponent<{
   const paramKeys = Object.keys(params);
   const wallTime = action.wallTime ? new Date(action.wallTime).toLocaleString() : null;
   const duration = action.endTime ? msToString(action.endTime - action.startTime) : 'Timed Out';
+
   return <div className='call-tab'>
     {!!error && <ErrorMessage error={error} />}
     {!!error && <div className='call-section'>Call</div>}

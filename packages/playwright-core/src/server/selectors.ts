@@ -38,7 +38,7 @@ export class Selectors {
       'nth', 'visible', 'internal:control',
       'internal:has', 'internal:has-not',
       'internal:has-text', 'internal:has-not-text',
-      'internal:or',
+      'internal:and', 'internal:or',
       'role', 'internal:attr', 'internal:label', 'internal:text', 'internal:role', 'internal:testid',
     ]);
     this._builtinEnginesInMainWorld = new Set([

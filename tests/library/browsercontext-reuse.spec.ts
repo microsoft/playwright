@@ -182,3 +182,55 @@ test('should not cache resources', async ({ reusedContext, server }) => {
     expect(requestCountMap.get('/simple.json')).toBe(2);
   }
 });
+
+test('should ignore binding from beforeunload', async ({ reusedContext }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22803' });
+
+  let context = await reusedContext();
+
+  let called = false;
+  await context.exposeFunction('binding', () => called = true);
+
+  let page = await context.newPage();
+  await page.evaluate(() => {
+    window.addEventListener('beforeunload', () => window['binding']());
+  });
+
+  context = await reusedContext();
+  page = context.pages()[0];
+  await page.setContent('hello');
+
+  expect(called).toBe(false);
+});
+
+test('should reset mouse position', async ({ reusedContext, browserName, platform }) => {
+  // Note: this test only reproduces the issue locally when run with --repeat-each=20.
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22432' });
+  test.fixme(browserName === 'chromium' && platform !== 'darwin', 'chromium keeps hover on linux/win');
+
+  const pageContent = `
+    <style>
+      div { height: 30px; background: blue; }
+      div:hover { background: red; }
+      html, body { margin: 0; padding: 0; }
+    </style>
+    <div id=one>one</div>
+    <div id=two>two</div>
+  `;
+
+  let context = await reusedContext();
+  let page = await context.newPage();
+  await page.setContent(pageContent);
+  await expect(page.locator('#one')).toHaveCSS('background-color', 'rgb(0, 0, 255)');
+  await expect(page.locator('#two')).toHaveCSS('background-color', 'rgb(0, 0, 255)');
+
+  await page.mouse.move(10, 45);
+  await expect(page.locator('#one')).toHaveCSS('background-color', 'rgb(0, 0, 255)');
+  await expect(page.locator('#two')).toHaveCSS('background-color', 'rgb(255, 0, 0)');
+
+  context = await reusedContext();
+  page = context.pages()[0];
+  await page.setContent(pageContent);
+  await expect(page.locator('#one')).toHaveCSS('background-color', 'rgb(0, 0, 255)');
+  await expect(page.locator('#two')).toHaveCSS('background-color', 'rgb(0, 0, 255)');
+});

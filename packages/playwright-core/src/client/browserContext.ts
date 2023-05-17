@@ -37,9 +37,10 @@ import { Tracing } from './tracing';
 import type { BrowserType } from './browserType';
 import { Artifact } from './artifact';
 import { APIRequestContext } from './fetch';
-import { createInstrumentation } from './clientInstrumentation';
 import { rewriteErrorMessage } from '../utils/stackTrace';
 import { HarRouter } from './harRouter';
+import { ConsoleMessage } from './consoleMessage';
+import { Dialog } from './dialog';
 
 export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel> implements api.BrowserContext {
   _pages = new Set<Page>();
@@ -69,7 +70,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   }
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.BrowserContextInitializer) {
-    super(parent, type, guid, initializer, createInstrumentation());
+    super(parent, type, guid, initializer);
     if (parent instanceof Browser)
       this._browser = parent;
     this._browser?._contexts.add(this);
@@ -92,6 +93,30 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
       this._serviceWorkers.add(serviceWorker);
       this.emit(Events.BrowserContext.ServiceWorker, serviceWorker);
     });
+    this._channel.on('console', ({ message }) => {
+      const consoleMessage = ConsoleMessage.from(message);
+      this.emit(Events.BrowserContext.Console, consoleMessage);
+      const page = consoleMessage.page();
+      if (page)
+        page.emit(Events.Page.Console, consoleMessage);
+    });
+    this._channel.on('dialog', ({ dialog }) => {
+      const dialogObject = Dialog.from(dialog);
+      let hasListeners = this.emit(Events.BrowserContext.Dialog, dialogObject);
+      const page = dialogObject.page();
+      if (page)
+        hasListeners = page.emit(Events.Page.Dialog, dialogObject) || hasListeners;
+      if (!hasListeners) {
+        // Although we do similar handling on the server side, we still need this logic
+        // on the client side due to a possible race condition between two async calls:
+        // a) removing "dialog" listener subscription (client->server)
+        // b) actual "dialog" event (server->client)
+        if (dialogObject.type() === 'beforeunload')
+          dialog.accept({}).catch(() => {});
+        else
+          dialog.dismiss().catch(() => {});
+      }
+    });
     this._channel.on('request', ({ request, page }) => this._onRequest(network.Request.from(request), Page.fromNullable(page)));
     this._channel.on('requestFailed', ({ request, failureText, responseEndTiming, page }) => this._onRequestFailed(network.Request.from(request), responseEndTiming, failureText, Page.fromNullable(page)));
     this._channel.on('requestFinished', params => this._onRequestFinished(params));
@@ -99,6 +124,8 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this._closedPromise = new Promise(f => this.once(Events.BrowserContext.Close, f));
 
     this._setEventToSubscriptionMapping(new Map<string, channels.BrowserContextUpdateSubscriptionParams['event']>([
+      [Events.BrowserContext.Console, 'console'],
+      [Events.BrowserContext.Dialog, 'dialog'],
       [Events.BrowserContext.Request, 'request'],
       [Events.BrowserContext.Response, 'response'],
       [Events.BrowserContext.RequestFinished, 'requestFinished'],
@@ -376,6 +403,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
       device?: string,
       saveStorage?: string,
       mode?: 'recording' | 'inspecting',
+      testIdAttributeName?: string,
       outputFile?: string,
       handleSIGINT?: boolean,
   }) {

@@ -125,8 +125,9 @@ it('should clear upon cross-process navigation', async function({ server, page }
   expect(page.workers().length).toBe(0);
 });
 
-it('should attribute network activity for worker inside iframe to the iframe', async function({ page, server, browserName }) {
-  it.fixme(browserName === 'firefox' || browserName === 'chromium');
+it('should attribute network activity for worker inside iframe to the iframe', async function({ page, server, browserName, browserMajorVersion }) {
+  it.fixme(browserName === 'chromium');
+  it.skip(browserName === 'firefox' && browserMajorVersion < 114, 'https://github.com/microsoft/playwright/issues/21760');
 
   await page.goto(server.PREFIX + '/empty.html');
   const [worker, frame] = await Promise.all([
@@ -143,7 +144,7 @@ it('should attribute network activity for worker inside iframe to the iframe', a
 });
 
 it('should report network activity', async function({ page, server, browserName, browserMajorVersion }) {
-  it.fixme(browserName === 'firefox' && browserMajorVersion >= 112, 'https://github.com/microsoft/playwright/issues/21760');
+  it.skip(browserName === 'firefox' && browserMajorVersion < 114, 'https://github.com/microsoft/playwright/issues/21760');
   const [worker] = await Promise.all([
     page.waitForEvent('worker'),
     page.goto(server.PREFIX + '/worker/worker.html'),
@@ -160,7 +161,7 @@ it('should report network activity', async function({ page, server, browserName,
 });
 
 it('should report network activity on worker creation', async function({ page, server, browserName, browserMajorVersion }) {
-  it.fixme(browserName === 'firefox' && browserMajorVersion >= 112, 'https://github.com/microsoft/playwright/issues/21760');
+  it.skip(browserName === 'firefox' && browserMajorVersion < 114, 'https://github.com/microsoft/playwright/issues/21760');
   // Chromium needs waitForDebugger enabled for this one.
   await page.goto(server.EMPTY_PAGE);
   const url = server.PREFIX + '/one-style.css';

@@ -36,12 +36,12 @@ test('soft expects should work', async ({ runInlineTest }) => {
       import { test, expect } from '@playwright/test';
       test('should work', () => {
         test.expect.soft(1+1).toBe(3);
-        console.log('woof-woof');
+        console.log('%% woof-woof');
       });
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain('woof-woof');
+  expect(result.outputLines).toEqual(['woof-woof']);
 });
 
 test('should report a mixture of soft and non-soft errors', async ({ runInlineTest }) => {

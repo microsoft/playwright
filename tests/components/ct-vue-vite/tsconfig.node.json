@@ -1,9 +1,8 @@
 {
-  "extends": "./tsconfig.app.json",
-  "include": ["playwright", "env.d.ts", "src/**/*"],
+  "extends": "@vue/tsconfig/tsconfig.node.json",
+  "include": ["vite.config.*", "playwright.config.*"],
   "compilerOptions": {
     "composite": true,
-    "lib": [],
     "types": ["node"],
     "ignoreDeprecations": "5.0"
   }

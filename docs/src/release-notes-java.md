@@ -4,6 +4,67 @@ title: "Release notes"
 toc_max_heading_level: 2
 ---
 
+## Version 1.33
+
+### Locators Update
+
+* Use [`method: Locator.or`] to create a locator that matches either of the two locators.
+  Consider a scenario where you'd like to click on a "New email" button, but sometimes a security settings dialog shows up instead.
+  In this case, you can wait for either a "New email" button, or a dialog and act accordingly:
+
+    ```java
+    Locator newEmail = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("New email"));
+    Locator dialog = page.getByText("Confirm security settings");
+    assertThat(newEmail.or(dialog)).isVisible();
+    if (dialog.isVisible())
+      page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Dismiss")).click();
+    newEmail.click();
+    ```
+* Use new options [`option: hasNot`] and [`option: hasNotText`] in [`method: Locator.filter`]
+  to find elements that **do not match** certain conditions.
+
+    ```java
+    Locator rowLocator = page.locator("tr");
+    rowLocator
+        .filter(new Locator.FilterOptions().setHasNotText("text in column 1"))
+        .filter(new Locator.FilterOptions().setHasNot(
+          page.getByRole(AriaRole.BUTTON,
+            new Page.GetByRoleOptions().setName("column 2 button" ))))
+        .screenshot();
+    ```
+* Use new web-first assertion [`method: LocatorAssertions.toBeAttached`] to ensure that the element
+  is present in the page's DOM. Do not confuse with the [`method: LocatorAssertions.toBeVisible`] that ensures that
+  element is both attached & visible.
+
+### New APIs
+
+- [`method: Locator.or`]
+- New option [`option: hasNot`] in [`method: Locator.filter`]
+- New option [`option: hasNotText`] in [`method: Locator.filter`]
+- [`method: LocatorAssertions.toBeAttached`]
+- New option [`option: timeout`] in [`method: Route.fetch`]
+
+### Other highlights
+
+- Native support for Apple Silicon - Playwright now runs without Rosetta
+- Added Ubuntu 22.04 (Jammy) Docker image
+
+### ⚠️ Breaking change
+
+* The `mcr.microsoft.com/playwright/java:v1.33.0` now serves a Playwright image based on Ubuntu Jammy.
+  To use the focal-based image, please use `mcr.microsoft.com/playwright/java:v1.33.0-focal` instead.
+
+### Browser Versions
+
+* Chromium 113.0.5672.53
+* Mozilla Firefox 112.0
+* WebKit 16.4
+
+This version was also tested against the following stable channels:
+
+* Google Chrome 112
+* Microsoft Edge 112
+
 ## Version 1.32
 
 ### New APIs

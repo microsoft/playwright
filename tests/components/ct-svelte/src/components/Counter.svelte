@@ -6,9 +6,9 @@ const dispatch = createEventDispatcher();
 update();
 </script>
 
-<div on:click={() => dispatch('submit', 'hello')}>
-  <div data-testid="props">{count}</div>
-  <div data-testid="remount-count">{remountCount}</div>
+<button on:click={() => dispatch('submit', 'hello')}>
+  <span data-testid="props">{count}</span>
+  <span data-testid="remount-count">{remountCount}</span>
   <slot name="main" />
   <slot />
-</div>
+</button>

@@ -87,12 +87,23 @@ Or if you want the opposite, you can skip the tests with a certain tag:
 npx playwright test --grep-invert @slow
 ```
 
+To run tests containing either tag (logical `OR` operator):
+
+```bash
+npx playwright test --grep "@fast|@slow"
+```
+
+Or run tests containing both tags (logical `AND` operator) using regex lookaheads:
+
+```bash
+npx playwright test --grep "(?=.*@fast)(?=.*@slow)"
+```
+
 ## Conditionally skip a group of tests
 
 For example, you can run a group of tests just in Chromium by passing a callback.
 
-```js
-// example.spec.ts
+```js title="example.spec.ts"
 
 test.describe('chromium only', () => {
   test.skip(({ browserName }) => browserName !== 'chromium', 'Chromium only!');
@@ -115,8 +126,7 @@ test.describe('chromium only', () => {
 
 To avoid running `beforeEach` hooks, you can put annotations in the hook itself.
 
-```js
-// example.spec.ts
+```js title="example.spec.ts"
 
 test.beforeEach(async ({ page, isMobile }) => {
   test.fixme(isMobile, 'Settings page does not work in mobile yet');
@@ -135,8 +145,7 @@ test('user profile', async ({ page }) => {
 It's also possible to add custom metadata in the form of annotations to your tests. Annotations are key/value pairs accessible via [`test.info().annotations`](./api/class-testinfo#test-info-annotations). Many reporters show annotations, for example `'html'`.
 
 
-```js
-// example.spec.ts
+```js title="example.spec.ts"
 
 test('user profile', async ({ page }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/<some-issue>' });

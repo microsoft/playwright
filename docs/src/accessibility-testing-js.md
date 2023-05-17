@@ -223,8 +223,7 @@ The following example demonstrates creating and using a test fixture that covers
 
 This example fixture creates an `AxeBuilder` object which is pre-configured with shared `withTags()` and `exclude()` configuration.
 
-```js tab=js-ts
-// axe-test.ts
+```js tab=js-ts title="axe-test.ts"
 import { test as base } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 

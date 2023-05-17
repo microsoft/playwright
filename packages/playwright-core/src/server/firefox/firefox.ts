@@ -16,7 +16,6 @@
  */
 
 import * as os from 'os';
-import fs from 'fs';
 import path from 'path';
 import { FFBrowser } from './ffBrowser';
 import { kBrowserCloseMessageId } from './ffConnection';
@@ -26,7 +25,7 @@ import type { ConnectionTransport } from '../transport';
 import type { BrowserOptions, PlaywrightOptions } from '../browser';
 import type * as types from '../types';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
-import { getAsBooleanFromENV, wrapInASCIIBox } from '../../utils';
+import { wrapInASCIIBox } from '../../utils';
 
 export class Firefox extends BrowserType {
   constructor(playwrightOptions: PlaywrightOptions) {
@@ -67,17 +66,6 @@ export class Firefox extends BrowserType {
       throw new Error('Pass userDataDir parameter to `browserType.launchPersistentContext(userDataDir, ...)` instead of specifying --profile argument');
     if (args.find(arg => arg.startsWith('-juggler')))
       throw new Error('Use the port parameter instead of -juggler argument');
-    let firefoxUserPrefs = isPersistent ? undefined : options.firefoxUserPrefs;
-    if (getAsBooleanFromENV('PLAYWRIGHT_DISABLE_FIREFOX_CROSS_PROCESS'))
-      firefoxUserPrefs = { ...kDisableFissionFirefoxUserPrefs, ...firefoxUserPrefs };
-    if (Object.keys(kBandaidFirefoxUserPrefs).length)
-      firefoxUserPrefs = { ...kBandaidFirefoxUserPrefs, ...firefoxUserPrefs };
-    if (firefoxUserPrefs) {
-      const lines: string[] = [];
-      for (const [name, value] of Object.entries(firefoxUserPrefs))
-        lines.push(`user_pref(${JSON.stringify(name)}, ${JSON.stringify(value)});`);
-      fs.writeFileSync(path.join(userDataDir, 'user.js'), lines.join('\n'));
-    }
     const firefoxArguments = ['-no-remote'];
     if (headless) {
       firefoxArguments.push('-headless');
@@ -96,14 +84,3 @@ export class Firefox extends BrowserType {
   }
 }
 
-// Prefs for quick fixes that didn't make it to the build.
-// Should all be moved to `playwright.cfg`.
-const kBandaidFirefoxUserPrefs = {};
-
-const kDisableFissionFirefoxUserPrefs = {
-  'browser.tabs.remote.useCrossOriginEmbedderPolicy': false,
-  'browser.tabs.remote.useCrossOriginOpenerPolicy': false,
-  'browser.tabs.remote.separatePrivilegedMozillaWebContentProcess': false,
-  'fission.autostart': false,
-  'browser.tabs.remote.systemTriggeredAboutBlankAnywhere': true,
-};

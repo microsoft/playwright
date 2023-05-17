@@ -50,7 +50,6 @@ test('should toggle filters', async ({ page, mount }) => {
     }}
     filterText=''
     setFilterText={(filterText: string) => filters.push(filterText)}
-    projectNames={[]}
   >
   </HeaderView>);
   await component.locator('a', { hasText: 'All' }).click();
@@ -63,53 +62,4 @@ test('should toggle filters', async ({ page, mount }) => {
   await component.locator('a', { hasText: 'Skipped' }).click();
   await expect(page).toHaveURL(/#\?q=s:skipped/);
   expect(filters).toEqual(['', 's:passed', 's:failed', 's:flaky', 's:skipped']);
-});
-
-test('should show the project names', async ({ mount }) => {
-  const stats = {
-    total: 100,
-    expected: 42,
-    unexpected: 31,
-    flaky: 17,
-    skipped: 10,
-    ok: false,
-    duration: 100000
-  };
-  await test.step('with 1 project', async () => {
-    const component = await mount(<HeaderView
-      stats={stats}
-      filterText=''
-      setFilterText={() => {}}
-      projectNames={['my-project']}
-    >
-    </HeaderView>);
-    await expect(component.getByText('Project: my-project')).toBeVisible();
-
-    await component.unmount();
-  });
-  await test.step('with 1 project and empty projectName', async () => {
-    const component = await mount(<HeaderView
-      stats={stats}
-      filterText=''
-      setFilterText={() => {}}
-      projectNames={['']}
-    >
-    </HeaderView>);
-    await expect(component.getByText('Project:')).toBeHidden();
-
-    await component.unmount();
-  });
-  await test.step('with more than 1 project', async () => {
-    const component = await mount(<HeaderView
-      stats={stats}
-      filterText=''
-      setFilterText={() => {}}
-      projectNames={['great-project', 'my-project']}
-    >
-    </HeaderView>);
-    await expect(component.getByText('my-project')).toBeHidden();
-    await expect(component.getByText('great-project')).toBeHidden();
-
-    await component.unmount();
-  });
 });

@@ -50,10 +50,17 @@ export const ReportView: React.FC<{
 
   return <div className='htmlreport vbox px-4 pb-4'>
     <main>
-      {report?.json() && <HeaderView stats={report.json().stats} filterText={filterText} setFilterText={setFilterText} projectNames={report.json().projectNames}></HeaderView>}
+      {report?.json() && <HeaderView stats={report.json().stats} filterText={filterText} setFilterText={setFilterText}></HeaderView>}
       {report?.json().metadata && <MetadataView {...report?.json().metadata as Metainfo} />}
       <Route predicate={testFilesRoutePredicate}>
-        <TestFilesView report={report?.json()} filter={filter} expandedFiles={expandedFiles} setExpandedFiles={setExpandedFiles}></TestFilesView>
+        <TestFilesView
+          report={report?.json()}
+          filter={filter}
+          expandedFiles={expandedFiles}
+          setExpandedFiles={setExpandedFiles}
+          projectNames={report?.json().projectNames || []}
+          stats={report?.json().stats || { duration: 0 }}
+        />
       </Route>
       <Route predicate={testCaseRoutePredicate}>
         {!!report && <TestCaseViewLoader report={report}></TestCaseViewLoader>}

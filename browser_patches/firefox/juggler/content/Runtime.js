@@ -311,8 +311,9 @@ class ExecutionContext {
     this._id = generateId();
     this._auxData = auxData;
     this._jsonStringifyObject = this._debuggee.executeInGlobal(`((stringify, object) => {
-      const oldToJSON = Date.prototype.toJSON;
-      Date.prototype.toJSON = undefined;
+      const oldToJSON = Date.prototype?.toJSON;
+      if (oldToJSON)
+        Date.prototype.toJSON = undefined;
       const oldArrayToJSON = Array.prototype.toJSON;
       const oldArrayHadToJSON = Array.prototype.hasOwnProperty('toJSON');
       if (oldArrayHadToJSON)
@@ -325,7 +326,8 @@ class ExecutionContext {
         return value;
       });
 
-      Date.prototype.toJSON = oldToJSON;
+      if (oldToJSON)
+        Date.prototype.toJSON = oldToJSON;
       if (oldArrayHadToJSON)
         Array.prototype.toJSON = oldArrayToJSON;
 

@@ -6,8 +6,7 @@ Playwright Test provides many options to configure how your tests are collected 
 
 Playwright Test supports running multiple test projects at the same time. Project-specific options should be put to [`property: TestConfig.projects`], but top-level [TestConfig] can also define base options shared between all projects.
 
-```js
-// playwright.config.ts
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -38,8 +37,7 @@ Configuration for the `expect` assertion library. Learn more about [various time
 
 **Usage**
 
-```js
-// playwright.config.ts
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -60,8 +58,7 @@ Whether to exit with an error if any tests or groups are marked as [`method: Tes
 
 **Usage**
 
-```js
-// playwright.config.ts
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -80,8 +77,7 @@ You can configure entire test run to concurrently execute all tests in all files
 
 **Usage**
 
-```js
-// playwright.config.ts
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -99,8 +95,7 @@ Learn more about [global setup and teardown](../test-global-setup-teardown.md).
 
 **Usage**
 
-```js
-// playwright.config.ts
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -118,8 +113,7 @@ Learn more about [global setup and teardown](../test-global-setup-teardown.md).
 
 **Usage**
 
-```js
-// playwright.config.ts
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -135,8 +129,7 @@ Maximum time in milliseconds the whole test suite can run. Zero timeout (default
 
 **Usage**
 
-```js
-// playwright.config.ts
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -154,8 +147,7 @@ Filter to only run tests with a title matching one of the patterns. For example,
 
 **Usage**
 
-```js
-// playwright.config.ts
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -173,8 +165,7 @@ Filter to only run tests with a title **not** matching one of the patterns. This
 
 **Usage**
 
-```js
-// playwright.config.ts
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -190,8 +181,7 @@ Whether to skip snapshot expectations, such as `expect(value).toMatchSnapshot()`
 
 **Usage**
 
-```js
-// playwright.config.ts
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -209,8 +199,7 @@ Also available in the [command line](../test-cli.md) with the `--max-failures` a
 
 **Usage**
 
-```js
-// playwright.config.ts
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -226,8 +215,7 @@ Metadata that will be put directly to the test report serialized as JSON.
 
 **Usage**
 
-```js
-// playwright.config.ts
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -243,8 +231,7 @@ Config name is visible in the report and during test execution, unless overridde
 
 **Usage**
 
-```js
-// playwright.config.ts
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -260,8 +247,7 @@ The output directory for files created during test execution. Defaults to `<pack
 
 **Usage**
 
-```js
-// playwright.config.ts
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -295,8 +281,7 @@ The base directory, relative to the config file, for snapshot files created with
 
 **Usage**
 
-```js
-// playwright.config.ts
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -325,8 +310,7 @@ Whether to preserve test output in the [`property: TestConfig.outputDir`]. Defau
 
 **Usage**
 
-```js
-// playwright.config.ts
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -343,8 +327,7 @@ Playwright Test supports running multiple test projects at the same time. See [T
 
 **Usage**
 
-```js
-// playwright.config.ts
+```js title="playwright.config.ts"
 import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
@@ -362,8 +345,7 @@ Whether to suppress stdio and stderr output from the tests.
 
 **Usage**
 
-```js
-// playwright.config.ts
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -379,8 +361,7 @@ The number of times to repeat each test, useful for debugging flaky tests.
 
 **Usage**
 
-```js
-// playwright.config.ts
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -405,8 +386,7 @@ Learn more in the [reporters guide](../test-reporters.md).
 
 **Usage**
 
-```js
-// playwright.config.ts
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -424,8 +404,7 @@ Whether to report slow test files. Pass `null` to disable this feature.
 
 **Usage**
 
-```js
-// playwright.config.ts
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -445,8 +424,7 @@ The maximum number of retry attempts given to failed tests. By default failing t
 
 **Usage**
 
-```js
-// playwright.config.ts
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -466,8 +444,7 @@ Learn more about [parallelism and sharding](../test-parallel.md) with Playwright
 
 **Usage**
 
-```js
-// playwright.config.ts
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -483,8 +460,7 @@ Directory that will be recursively scanned for test files. Defaults to the direc
 
 **Usage**
 
-```js
-// playwright.config.ts
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -502,8 +478,7 @@ For example, `'**/test-assets/**'` will ignore any files in the `test-assets` di
 
 **Usage**
 
-```js
-// playwright.config.ts
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -517,12 +492,11 @@ export default defineConfig({
 
 Only the files matching one of these patterns are executed as test files. Matching is performed against the absolute file path. Strings are treated as glob patterns.
 
-By default, Playwright looks for files matching the following glob pattern: `**/*.@(spec|test).?(m)[jt]s?(x)`. This means JavaScript or TypeScript files with `".test"` or `".spec"` suffix, for example `login-screen.wrong-credentials.spec.ts`.
+By default, Playwright looks for files matching the following glob pattern: `**/*.@(spec|test).?(c|m)[jt]s?(x)`. This means JavaScript or TypeScript files with `".test"` or `".spec"` suffix, for example `login-screen.wrong-credentials.spec.ts`.
 
 **Usage**
 
-```js
-// playwright.config.ts
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -540,8 +514,7 @@ This is a base timeout for all tests. In addition, each test can configure its o
 
 **Usage**
 
-```js
-// playwright.config.ts
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -562,8 +535,7 @@ Learn more about [snapshots](../test-snapshots.md).
 
 **Usage**
 
-```js
-// playwright.config.ts
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -579,8 +551,7 @@ Global options for all tests, for example [`property: TestOptions.browserName`].
 
 **Usage**
 
-```js
-// playwright.config.ts
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -599,6 +570,8 @@ export default defineConfig({
   - `ignoreHTTPSErrors` ?<[boolean]> Whether to ignore HTTPS errors when fetching the `url`. Defaults to `false`.
   - `timeout` ?<[int]> How long to wait for the process to start up and be available in milliseconds. Defaults to 60000.
   - `reuseExistingServer` ?<[boolean]> If true, it will re-use an existing server on the `port` or `url` when available. If no server is running on that `port` or `url`, it will run the command to start a new server. If `false`, it will throw if an existing process is listening on the `port` or `url`. This should be commonly set to `!process.env.CI` to allow the local dev server when running tests locally.
+  - `stdout` ?<["pipe"|"ignore"]> If `"pipe"`, it will pipe the stdout of the command to the process stdout. If `"ignore"`, it will ignore the stdout of the command. Default to `"ignore"`.
+  - `stderr` ?<["pipe"|"ignore"]> Whether to pipe the stderr of the command to the process stderr or ignore it. Defaults to `"pipe"`.
   - `cwd` ?<[string]> Current working directory of the spawned process, defaults to the directory of the configuration file.
   - `env` ?<[Object]<[string], [string]>> Environment variables to set for the command, `process.env` by default.
 
@@ -618,8 +591,7 @@ It is also recommended to specify [`property: TestOptions.baseURL`] in the confi
 
 **Usage**
 
-```js
-// playwright.config.ts
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 export default defineConfig({
   webServer: {
@@ -636,8 +608,7 @@ export default defineConfig({
 
 Now you can use a relative path when navigating the page:
 
-```js
-// test.spec.ts
+```js title="test.spec.ts"
 import { test } from '@playwright/test';
 
 test('test', async ({ page }) => {
@@ -648,8 +619,7 @@ test('test', async ({ page }) => {
 
 Multiple web servers (or background processes) can be launched:
 
-```js
-// playwright.config.ts
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 export default defineConfig({
   webServer: [
@@ -684,8 +654,7 @@ Defaults to half of the number of logical CPU cores. Learn more about [paralleli
 
 **Usage**
 
-```js
-// playwright.config.ts
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({

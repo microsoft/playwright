@@ -9,7 +9,7 @@
 ../utils
 ../utilsBundle.ts
 
-[cli.ts]
+[program.ts]
 ../server/trace/viewer/traceViewer.ts
 ../server/
 ../containers/

@@ -85,3 +85,16 @@ it('should make a copy of default options', async ({ browser, server }) => {
   expect(request.headers['user-agent']).toBe('foobar');
   await context.close();
 });
+
+it('custom user agent for download', async ({ server, contextFactory, browserName }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22843' });
+  it.skip(browserName === 'chromium');
+  const context = await contextFactory({ userAgent: 'MyCustomUA' });
+  const page = await context.newPage();
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`<a id="download" download="name" href="/download">Download</a>`);
+  const serverRequest = server.waitForRequest('/download');
+  page.click('#download').catch(e => {});
+  const req = await serverRequest;
+  expect(req.headers['user-agent']).toBe('MyCustomUA');
+});

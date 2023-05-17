@@ -63,14 +63,17 @@ test.beforeAll(async function recordTrace({ browser, browserName, browserType, s
   await page.setViewportSize({ width: 500, height: 600 });
 
   // Go through instrumentation to exercise reentrant stack traces.
-  (browserType as any)._onWillCloseContext = async () => {
-    await page.hover('body');
-    await page.close();
-    traceFile = path.join(workerInfo.project.outputDir, String(workerInfo.workerIndex), browserName, 'trace.zip');
-    await context.tracing.stop({ path: traceFile });
+  const csi = {
+    onWillCloseBrowserContext: async () => {
+      await page.hover('body');
+      await page.close();
+      traceFile = path.join(workerInfo.project.outputDir, String(workerInfo.workerIndex), browserName, 'trace.zip');
+      await context.tracing.stop({ path: traceFile });
+    }
   };
+  (browserType as any)._instrumentation.addListener(csi);
   await context.close();
-  (browserType as any)._onWillCloseContext = undefined;
+  (browserType as any)._instrumentation.removeListener(csi);
 });
 
 test('should show empty trace viewer', async ({ showTraceViewer }, testInfo) => {
@@ -122,7 +125,7 @@ test('should contain action info', async ({ showTraceViewer }) => {
 test('should render events', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer([traceFile]);
   const events = await traceViewer.eventBars();
-  expect(events).toContain('page_console');
+  expect(events).toContain('browsercontext_console');
 });
 
 test('should render console', async ({ showTraceViewer, browserName }) => {

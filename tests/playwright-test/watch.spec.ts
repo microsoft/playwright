@@ -57,8 +57,7 @@ test('should print dependencies in CJS mode', async ({ runInlineTest }) => {
   });
 });
 
-test('should print dependencies in ESM mode', async ({ runInlineTest, nodeVersion }) => {
-  test.skip(nodeVersion.major < 16);
+test('should print dependencies in ESM mode', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'package.json': `{ "type": "module" }`,
     'playwright.config.ts': `
@@ -92,8 +91,8 @@ test('should print dependencies in ESM mode', async ({ runInlineTest, nodeVersio
   const output = result.output;
   const deps = JSON.parse(output.match(/###(.*)###/)![1]);
   expect(deps).toEqual({
-    'a.test.ts': ['helperA.ts'],
-    'b.test.ts': ['helperA.ts', 'helperB.ts'],
+    'a.test.ts': ['helperA.ts', 'index.mjs'],
+    'b.test.ts': ['helperA.ts', 'helperB.ts', 'index.mjs'],
   });
 });
 
@@ -375,8 +374,7 @@ test('should run on changed deps', async ({ runWatchTest, writeFiles }) => {
   await testProcess.waitForOutput('Waiting for file changes.');
 });
 
-test('should run on changed deps in ESM', async ({ runWatchTest, writeFiles, nodeVersion }) => {
-  test.skip(nodeVersion.major < 16);
+test('should run on changed deps in ESM', async ({ runWatchTest, writeFiles }) => {
   const testProcess = await runWatchTest({
     'playwright.config.ts': `export default {};`,
     'package.json': `{ "type": "module" }`,
@@ -652,8 +650,7 @@ test('should run CT on indirect deps change', async ({ runWatchTest, writeFiles 
   await testProcess.waitForOutput('Waiting for file changes.');
 });
 
-test('should run CT on indirect deps change ESM mode', async ({ runWatchTest, writeFiles, nodeVersion }) => {
-  test.skip(nodeVersion.major < 16);
+test('should run CT on indirect deps change ESM mode', async ({ runWatchTest, writeFiles }) => {
   const testProcess = await runWatchTest({
     'playwright.config.ts': `
       import { defineConfig } from '@playwright/experimental-ct-react';

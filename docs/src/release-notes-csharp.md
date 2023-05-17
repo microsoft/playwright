@@ -4,6 +4,61 @@ title: "Release notes"
 toc_max_heading_level: 2
 ---
 
+## Version 1.33
+
+### Locators Update
+
+* Use [`method: Locator.or`] to create a locator that matches either of the two locators.
+  Consider a scenario where   you'd like to click on a "New email" button, but sometimes a security settings dialog shows up instead.
+  In this case, you can wait for either a "New email" button, or a dialog and act accordingly:
+
+    ```csharp
+    var newEmail = Page.GetByRole(AriaRole.Button, new() { Name = "New email" });
+    var dialog = Page.GetByText("Confirm security settings");
+    await Expect(newEmail.Or(dialog)).ToBeVisibleAsync();
+    if (await dialog.IsVisibleAsync())
+      await Page.GetByRole(AriaRole.Button, new() { Name = "Dismiss" }).ClickAsync();
+    await newEmail.ClickAsync();
+    ```
+* Use new options [`option: hasNot`] and [`option: hasNotText`] in [`method: Locator.filter`]
+  to find elements that **do not match** certain conditions.
+
+    ```csharp
+    var rowLocator = Page.Locator("tr");
+    await rowLocator
+        .Filter(new() { HasNotText = "text in column 1" })
+        .Filter(new() { HasNot = Page.GetByRole(AriaRole.Button, new() { Name = "column 2 button" })})
+        .ScreenshotAsync();
+    ```
+* Use new web-first assertion [`method: LocatorAssertions.toBeAttached`] to ensure that the element
+  is present in the page's DOM. Do not confuse with the [`method: LocatorAssertions.toBeVisible`] that ensures that
+  element is both attached & visible.
+
+### New APIs
+
+- [`method: Locator.or`]
+- New option [`option: hasNot`] in [`method: Locator.filter`]
+- New option [`option: hasNotText`] in [`method: Locator.filter`]
+- [`method: LocatorAssertions.toBeAttached`]
+- New option [`option: timeout`] in [`method: Route.fetch`]
+
+### ⚠️ Breaking change
+
+* The `mcr.microsoft.com/playwright/dotnet:v1.33.0` now serves a Playwright image based on Ubuntu Jammy.
+  To use the focal-based image, please use `mcr.microsoft.com/playwright/dotnet:v1.33.0-focal` instead.
+
+### Browser Versions
+
+* Chromium 113.0.5672.53
+* Mozilla Firefox 112.0
+* WebKit 16.4
+
+This version was also tested against the following stable channels:
+
+* Google Chrome 112
+* Microsoft Edge 112
+
+
 ## Version 1.32
 
 ### New APIs

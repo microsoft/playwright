@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-import crypto from 'crypto';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { sourceMapSupport } from '../utilsBundle';
-import { sanitizeForFilePath } from '../util';
 
 export type MemoryCache = {
   codePath: string;
@@ -27,12 +25,15 @@ export type MemoryCache = {
   moduleUrl?: string;
 };
 
-const version = 13;
-
-const DEFAULT_CACHE_DIR_WIN32 = path.join(os.tmpdir(), `playwright-transform-cache`);
-const DEFAULT_CACHE_DIR_POSIX = path.join(os.tmpdir(), `playwright-transform-cache-` + sanitizeForFilePath(os.userInfo().username));
-
-const cacheDir = process.env.PWTEST_CACHE_DIR || (process.platform === 'win32' ? DEFAULT_CACHE_DIR_WIN32 : DEFAULT_CACHE_DIR_POSIX);
+const cacheDir = process.env.PWTEST_CACHE_DIR || (() => {
+  if (process.platform === 'win32')
+    return path.join(os.tmpdir(), `playwright-transform-cache`);
+  // Use `geteuid()` instead of more natural `os.userInfo().username`
+  // since `os.userInfo()` is not always available.
+  // Note: `process.geteuid()` is not available on windows.
+  // See https://github.com/microsoft/playwright/issues/22721
+  return path.join(os.tmpdir(), `playwright-transform-cache-` + process.geteuid());
+})();
 
 const sourceMaps: Map<string, string> = new Map();
 const memoryCache = new Map<string, MemoryCache>();
@@ -64,7 +65,7 @@ function _innerAddToCompilationCache(filename: string, options: { codePath: stri
   memoryCache.set(filename, options);
 }
 
-export function getFromCompilationCache(filename: string, code: string, moduleUrl?: string): { cachedCode?: string, addToCache?: (code: string, map?: any) => void } {
+export function getFromCompilationCache(filename: string, hash: string, moduleUrl?: string): { cachedCode?: string, addToCache?: (code: string, map?: any) => void } {
   // First check the memory cache by filename, this cache will always work in the worker,
   // because we just compiled this file in the loader.
   const cache = memoryCache.get(filename);
@@ -72,8 +73,7 @@ export function getFromCompilationCache(filename: string, code: string, moduleUr
     return { cachedCode: fs.readFileSync(cache.codePath, 'utf-8') };
 
   // Then do the disk cache, this cache works between the Playwright Test runs.
-  const isModule = !!moduleUrl;
-  const cachePath = calculateCachePath(code, filename, isModule);
+  const cachePath = calculateCachePath(filename, hash);
   const codePath = cachePath + '.js';
   const sourceMapPath = cachePath + '.map';
   if (fs.existsSync(codePath)) {
@@ -117,14 +117,7 @@ export function addToCompilationCache(payload: any) {
     externalDependencies.set(entry[0], new Set(entry[1]));
 }
 
-function calculateCachePath(content: string, filePath: string, isModule: boolean): string {
-  const hash = crypto.createHash('sha1')
-      .update(process.env.PW_TEST_SOURCE_TRANSFORM || '')
-      .update(isModule ? 'esm' : 'no_esm')
-      .update(content)
-      .update(filePath)
-      .update(String(version))
-      .digest('hex');
+function calculateCachePath(filePath: string, hash: string): string {
   const fileName = path.basename(filePath, path.extname(filePath)).replace(/\W/g, '') + '_' + hash;
   return path.join(cacheDir, hash[0] + hash[1], fileName);
 }
@@ -187,9 +180,9 @@ const kPlaywrightCoveragePrefix = path.resolve(__dirname, '../../../../tests/con
 export function belongsToNodeModules(file: string) {
   if (file.includes(`${path.sep}node_modules${path.sep}`))
     return true;
-  if (file.startsWith(kPlaywrightInternalPrefix))
+  if (file.startsWith(kPlaywrightInternalPrefix) && file.endsWith('.js'))
     return true;
-  if (file.startsWith(kPlaywrightCoveragePrefix))
+  if (file.startsWith(kPlaywrightCoveragePrefix) && file.endsWith('.js'))
     return true;
   return false;
 }

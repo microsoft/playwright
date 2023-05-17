@@ -110,7 +110,6 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
       }
     }
 
-    testInfo.currentStep!.refinedTitle = `${testInfo.currentStep!.title}(${path.basename(this.snapshotName)})`;
     options = {
       ...configOptions,
       ...options,
@@ -287,6 +286,18 @@ export function toMatchSnapshot(
 }
 
 type HaveScreenshotOptions = ImageComparatorOptions & Omit<PageScreenshotOptions, 'type' | 'quality' | 'path'>;
+
+export function toHaveScreenshotStepTitle(
+  nameOrOptions: NameOrSegments | { name?: NameOrSegments } & HaveScreenshotOptions = {},
+  optOptions: HaveScreenshotOptions = {}
+): string {
+  let name: NameOrSegments | undefined;
+  if (typeof nameOrOptions === 'object' && !Array.isArray(nameOrOptions))
+    name = nameOrOptions.name;
+  else
+    name = nameOrOptions;
+  return Array.isArray(name) ? name.join(path.sep) : name || '';
+}
 
 export async function toHaveScreenshot(
   this: ReturnType<Expect['getState']>,

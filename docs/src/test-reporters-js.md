@@ -12,7 +12,7 @@ npx playwright test --reporter=line
 
 For more control, you can specify reporters programmatically in the [configuration file](./test-configuration.md).
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -24,7 +24,7 @@ export default defineConfig({
 
 You can use multiple reporters at the same time. For example  you can use `'list'` for nice terminal output and `'json'` to get a comprehensive json file with the test results.
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -39,7 +39,7 @@ export default defineConfig({
 
 You can use different reporters locally and on CI. For example, using concise `'dot'` reporter avoids too much output. This is the default on CI.
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -60,7 +60,7 @@ List reporter is default (except on CI where the `dot` reporter is default). It 
 npx playwright test --reporter=list
 ```
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -87,7 +87,7 @@ Running 124 tests using 6 workers
 
 You can opt into the step rendering via passing the following config option:
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -103,7 +103,7 @@ Line reporter is more concise than the list reporter. It uses a single line to r
 npx playwright test --reporter=line
 ```
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -133,7 +133,7 @@ Dot reporter is very concise - it only produces a single character per successfu
 npx playwright test --reporter=dot
 ```
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -162,7 +162,7 @@ By default, HTML report is opened automatically if some of the tests failed. You
 
 You can also configure `host` and `port` that are used to serve the HTML report.
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -175,7 +175,7 @@ that location using the `PLAYWRIGHT_HTML_REPORT` environment variable or a repor
 
 In configuration file, pass options directly:
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -185,7 +185,7 @@ export default defineConfig({
 
 If you are uploading attachments from data folder to other location, you can use `attachmentsBaseURL` option to let html report where to look for them.
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -230,7 +230,7 @@ npx playwright test --reporter=json
 
 In configuration file, pass options directly:
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -260,85 +260,11 @@ npx playwright test --reporter=junit
 
 In configuration file, pass options directly:
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
   reporter: [['junit', { outputFile: 'results.xml' }]],
-});
-```
-
-The JUnit reporter provides support for embedding additional information on the `testcase` elements using inner `properties`. This is based on an [evolved JUnit XML format](https://docs.getxray.app/display/XRAYCLOUD/Taking+advantage+of+JUnit+XML+reports) from Xray Test Management, but can also be used by other tools if they support this way of embedding additional information for test results; please check it first.
-
-In configuration file, a set of options can be used to configure this behavior. A full example, in this case for Xray, follows ahead.
-
-```js
-import { defineConfig } from '@playwright/test';
-
-// JUnit reporter config for Xray
-const xrayOptions = {
-  // Whether to add <properties> with all annotations; default is false
-  embedAnnotationsAsProperties: true,
-
-  // By default, annotation is reported as <property name='' value=''>.
-  // These annotations are reported as <property name=''>value</property>.
-  textContentAnnotations: ['test_description'],
-
-  // This will create a "testrun_evidence" property that contains all attachments. Each attachment is added as an inner <item> element.
-  // Disables [[ATTACHMENT|path]] in the <system-out>.
-  embedAttachmentsAsProperty: 'testrun_evidence',
-
-  // Where to put the report.
-  outputFile: './xray-report.xml'
-};
-
-export default defineConfig({
-  reporter: [['junit', xrayOptions]]
-});
-```
-
-In the previous configuration sample, all annotations will be added as `<property>` elements on the JUnit XML report. The annotation type is mapped to the `name` attribute of the `<property>`, and the annotation description will be added as a `value` attribute. In this case, the exception will be the annotation type `testrun_evidence` whose description will be added as inner content on the respective `<property>`.
-Annotations can be used to, for example, link a Playwright test with an existing Test in Xray or to link a test with an existing story/requirement in Jira (i.e., "cover" it).
-
-```js
-// example.spec.ts/js
-import { test } from '@playwright/test';
-
-test('using specific annotations for passing test metadata to Xray', async ({}, testInfo) => {
-  testInfo.annotations.push({ type: 'test_id', description: '1234' });
-  testInfo.annotations.push({ type: 'test_key', description: 'CALC-2' });
-  testInfo.annotations.push({ type: 'test_summary', description: 'sample summary' });
-  testInfo.annotations.push({ type: 'requirements', description: 'CALC-5,CALC-6' });
-  testInfo.annotations.push({ type: 'test_description', description: 'sample description' });
-});
-```
-
-Please note that the semantics of these properties will depend on the tool that will process this evolved report format; there are no standard property names/annotations.
-
-If the configuration option `embedAttachmentsAsProperty` is defined, then a `property` with its name is created. Attachments, including their contents, will be embedded on the JUnit XML report inside `<item>` elements under this `property`. Attachments are obtained from the `TestInfo` object, using either a path or a body, and are added as base64 encoded content.
-Embedding attachments can be used to attach screenshots or any other relevant evidence; nevertheless, use it wisely as it affects the report size.
-
-The following configuration sample enables embedding attachments by using the `testrun_evidence` element on the JUnit XML report:
-
-```js
-import { defineConfig } from '@playwright/test';
-
-export default defineConfig({
-  reporter: [['junit', { embedAttachmentsAsProperty: 'testrun_evidence', outputFile: 'results.xml' }]],
-});
-```
-
-The following test adds attachments:
-
-```js
-// example.spec.ts/js
-import { test } from '@playwright/test';
-
-test('embed attachments, including its content, on the JUnit report', async ({}, testInfo) => {
-  const file = testInfo.outputPath('evidence1.txt');
-  require('fs').writeFileSync(file, 'hello', 'utf8');
-  await testInfo.attach('evidence1.txt', { path: file, contentType: 'text/plain' });
-  await testInfo.attach('evidence2.txt', { body: Buffer.from('world'), contentType: 'text/plain' });
 });
 ```
 
@@ -348,7 +274,7 @@ You can use the built in `github` reporter to get automatic failure annotations 
 
 Note that all other reporters work on GitHub Actions as well, but do not provide annotations.
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -362,8 +288,7 @@ export default defineConfig({
 
 You can create a custom reporter by implementing a class with some of the reporter methods. Learn more about the [Reporter] API.
 
-```js
-// my-awesome-reporter.ts
+```js title="my-awesome-reporter.ts"
 import { FullConfig, FullResult, Reporter, Suite, TestCase, TestResult } from '@playwright/test/reporter';
 
 class MyReporter implements Reporter {
@@ -389,7 +314,7 @@ export default MyReporter;
 
 Now use this reporter with [`property: TestConfig.reporter`].
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -402,3 +327,4 @@ export default defineConfig({
 * [Monocart](https://github.com/cenfun/monocart-reporter)
 * [Tesults](https://www.tesults.com/docs/playwright)
 * [ReportPortal](https://github.com/reportportal/agent-js-playwright)
+* [Currents](https://www.npmjs.com/package/@currents/playwright)

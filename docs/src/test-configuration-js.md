@@ -70,7 +70,7 @@ export default defineConfig({
 
 Filter tests by glob patterns or regular expressions.
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -85,11 +85,11 @@ export default defineConfig({
 | Option | Description |
 | :- | :- |
 | [`property: TestConfig.testIgnore`] | Glob patterns or regular expressions that should be ignored when looking for the test files. For example, `'*test-assets'` |
-| [`property: TestConfig.testMatch`] | Glob patterns or regular expressions that match test files. For example, `'*todo-tests/*.spec.ts'`. By default, Playwright runs `.*(test|spec)\.(js|ts|mjs)` files. |
+| [`property: TestConfig.testMatch`] | Glob patterns or regular expressions that match test files. For example, `'*todo-tests/*.spec.ts'`. By default, Playwright runs <code>.*(test&#124;spec)\.(js&#124;ts&#124;mjs)</code> files. |
 
 ## Advanced Configuration
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -119,7 +119,7 @@ export default defineConfig({
 
 Configuration for the expect assertion library.
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -154,8 +154,7 @@ You can extend Playwright assertions by providing custom matchers. These matcher
 
 In this example we add a custom `toBeWithinRange` function in the configuration file. Custom matcher should return a `message` callback and a `pass` flag indicating whether the assertion passed.
 
-```js tab=js-js
-// playwright.config.js
+```js tab=js-js title="playwright.config.ts"
 const { expect, defineConfig } = require('@playwright/test');
 
 expect.extend({
@@ -178,8 +177,7 @@ expect.extend({
 module.exports = defineConfig({});
 ```
 
-```js tab=js-ts
-// playwright.config.ts
+```js tab=js-ts title="playwright.config.ts"
 import { expect, defineConfig } from '@playwright/test';
 
 expect.extend({
@@ -204,8 +202,7 @@ export default defineConfig({});
 
 Now we can use `toBeWithinRange` in the test.
 
-```js
-// example.spec.ts
+```js title="example.spec.ts"
 import { test, expect } from '@playwright/test';
 
 test('numeric ranges', () => {
@@ -222,8 +219,7 @@ For TypeScript, also add the following to your [`global.d.ts`](https://www.types
 
 You don't need it for JavaScript.
 
-```js
-// global.d.ts
+```js title="global.d.ts"
 export {};
 
 declare global {

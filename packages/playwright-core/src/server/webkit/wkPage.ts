@@ -44,6 +44,7 @@ import { WKProvisionalPage } from './wkProvisionalPage';
 import { WKWorkers } from './wkWorkers';
 import { debugLogger } from '../../common/debugLogger';
 import { ManualPromise } from '../../utils/manualPromise';
+import { BrowserContext } from '../browserContext';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
@@ -549,6 +550,7 @@ export class WKPage implements PageDelegate {
         stack = '';
       }
 
+      this._lastConsoleMessage = null;
       const error = new Error(message);
       error.stack = stack;
       error.name = name;
@@ -607,7 +609,7 @@ export class WKPage implements PageDelegate {
   }
 
   _onDialog(event: Protocol.Dialog.javascriptDialogOpeningPayload) {
-    this._page.emit(Page.Events.Dialog, new dialog.Dialog(
+    this._page.emitOnContext(BrowserContext.Events.Dialog, new dialog.Dialog(
         this._page,
         event.type as dialog.DialogType,
         event.message,
@@ -679,6 +681,7 @@ export class WKPage implements PageDelegate {
   }
 
   async updateEmulatedViewportSize(): Promise<void> {
+    this._browserContext._validateEmulatedViewport(this._page.viewportSize());
     await this._updateViewport();
   }
 
@@ -787,6 +790,7 @@ export class WKPage implements PageDelegate {
       scripts.push('delete window.ondeviceorientation');
     }
     scripts.push('if (!window.safari) window.safari = {};');
+    scripts.push('if (!window.GestureEvent) window.GestureEvent = function GestureEvent() {};');
 
     for (const binding of this._page.allBindings())
       scripts.push(binding.source);
@@ -989,6 +993,9 @@ export class WKPage implements PageDelegate {
   }
 
   async inputActionEpilogue(): Promise<void> {
+  }
+
+  async resetForReuse(): Promise<void> {
   }
 
   async getFrameElement(frame: frames.Frame): Promise<dom.ElementHandle> {

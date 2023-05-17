@@ -33,6 +33,11 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { createGuid, urlMatches } from '../../utils';
 import { WritableStreamDispatcher } from './writableStreamDispatcher';
+import { ConsoleMessageDispatcher } from './consoleMessageDispatcher';
+import { DialogDispatcher } from './dialogDispatcher';
+import type { Page } from '../page';
+import type { Dialog } from '../dialog';
+import type { ConsoleMessage } from '../console';
 
 export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channels.BrowserContextChannel, DispatcherScope> implements channels.BrowserContextChannel {
   _type_EventTarget = true;
@@ -78,6 +83,16 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     this.addObjectListener(BrowserContext.Events.Close, () => {
       this._dispatchEvent('close');
       this._dispose();
+    });
+    this.addObjectListener(BrowserContext.Events.Console, (message: ConsoleMessage) => {
+      if (this._shouldDispatchEvent(message.page(), 'console'))
+        this._dispatchEvent('console', { message: new ConsoleMessageDispatcher(PageDispatcher.from(this, message.page()), message) });
+    });
+    this.addObjectListener(BrowserContext.Events.Dialog, (dialog: Dialog) => {
+      if (this._shouldDispatchEvent(dialog.page(), 'dialog'))
+        this._dispatchEvent('dialog', { dialog: new DialogDispatcher(this, dialog) });
+      else
+        dialog.close().catch(() => {});
     });
 
     if (context._browser.options.name === 'chromium') {
@@ -137,9 +152,12 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   private _shouldDispatchNetworkEvent(request: Request, event: channels.BrowserContextUpdateSubscriptionParams['event'] & channels.PageUpdateSubscriptionParams['event']): boolean {
+    return this._shouldDispatchEvent(request.frame()?._page?.initializedOrUndefined(), event);
+  }
+
+  private _shouldDispatchEvent(page: Page | undefined, event: channels.BrowserContextUpdateSubscriptionParams['event'] & channels.PageUpdateSubscriptionParams['event']): boolean {
     if (this._subscriptions.has(event))
       return true;
-    const page = request.frame()?._page?.initializedOrUndefined();
     const pageDispatcher = page ? existingDispatcher<PageDispatcher>(page) : undefined;
     if (pageDispatcher?._subscriptions.has(event))
       return true;
@@ -165,6 +183,10 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
 
   async exposeBinding(params: channels.BrowserContextExposeBindingParams): Promise<void> {
     await this._context.exposeBinding(params.name, !!params.needsHandle, (source, ...args) => {
+      // When reusing the context, we might have some bindings called late enough,
+      // after context and page dispatchers have been disposed.
+      if (this._disposed)
+        return;
       const pageDispatcher = PageDispatcher.from(this, source.page);
       const binding = new BindingCallDispatcher(pageDispatcher, params.name, !!params.needsHandle, source, args);
       this._dispatchEvent('bindingCall', { binding });

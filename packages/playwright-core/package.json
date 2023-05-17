@@ -1,6 +1,6 @@
 {
   "name": "playwright-core",
-  "version": "1.33.0-next",
+  "version": "1.34.0-next",
   "description": "A high-level API to automate web browsers",
   "repository": "github:Microsoft/playwright",
   "homepage": "https://playwright.dev",
@@ -18,13 +18,14 @@
       "require": "./index.js",
       "default": "./index.js"
     },
-    "./cli": "./cli.js",
     "./package.json": "./package.json",
     "./lib/outofprocess": "./lib/outofprocess.js",
     "./lib/image_tools/stats": "./lib/image_tools/stats.js",
     "./lib/image_tools/compare": "./lib/image_tools/compare.js",
     "./lib/image_tools/imageChannel": "./lib/image_tools/imageChannel.js",
     "./lib/image_tools/colorUtils": "./lib/image_tools/colorUtils.js",
+    "./lib/cli/cli": "./lib/cli/cli.js",
+    "./lib/cli/program": "./lib/cli/program.js",
     "./lib/containers/docker": "./lib/containers/docker.js",
     "./lib/remote/playwrightServer": "./lib/remote/playwrightServer.js",
     "./lib/server": "./lib/server/index.js",
@@ -34,8 +35,5 @@
     "./types/protocol": "./types/protocol.d.ts",
     "./types/structs": "./types/structs.d.ts"
   },
-  "types": "types/types.d.ts",
-  "bin": {
-    "playwright": "./cli.js"
-  }
+  "types": "types/types.d.ts"
 }

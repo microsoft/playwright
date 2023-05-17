@@ -16,8 +16,7 @@
 
 import {
   captureRawStack,
-  createAfterActionTraceEventForExpect,
-  createBeforeActionTraceEventForExpect,
+  isString,
   pollAgainstTimeout } from 'playwright-core/lib/utils';
 import type { ExpectZone } from 'playwright-core/lib/utils';
 import {
@@ -46,9 +45,9 @@ import {
   toHaveValues,
   toPass
 } from './matchers';
-import { toMatchSnapshot, toHaveScreenshot } from './toMatchSnapshot';
+import { toMatchSnapshot, toHaveScreenshot, toHaveScreenshotStepTitle } from './toMatchSnapshot';
 import type { Expect } from '../../types/test';
-import { currentTestInfo, currentExpectTimeout } from '../common/globals';
+import { currentTestInfo, currentExpectTimeout, setCurrentExpectConfigureTimeout } from '../common/globals';
 import { filteredStackTrace, serializeError, stringifyStackFrames, trimLongString } from '../util';
 import {
   expect as expectLibrary,
@@ -77,8 +76,6 @@ export type SyncExpectationResult = {
 // The replacement is compatible with pretty-format package.
 const printSubstring = (val: string): string => val.replace(/"|\\/g, '\\$&');
 
-let lastCallId = 0;
-
 export const printReceivedStringContainExpectedSubstring = (
   received: string,
   start: number,
@@ -106,31 +103,72 @@ export const printReceivedStringContainExpectedResult = (
 
 // #endregion
 
-type ExpectMessageOrOptions = undefined | string | { message?: string, timeout?: number, intervals?: number[] };
+type ExpectMessage = string | { message?: string };
 
-function createExpect(actual: unknown, messageOrOptions: ExpectMessageOrOptions, isSoft: boolean, isPoll: boolean, generator?: Generator): any {
-  return new Proxy(expectLibrary(actual), new ExpectMetaInfoProxyHandler(messageOrOptions, isSoft, isPoll, generator));
+function createMatchers(actual: unknown, info: ExpectMetaInfo): any {
+  return new Proxy(expectLibrary(actual), new ExpectMetaInfoProxyHandler(info));
 }
 
-export const expect: Expect = new Proxy(expectLibrary, {
-  apply: function(target: any, thisArg: any, argumentsList: [actual: unknown, messageOrOptions: ExpectMessageOrOptions]) {
-    const [actual, messageOrOptions] = argumentsList;
-    return createExpect(actual, messageOrOptions, false /* isSoft */, false /* isPoll */);
-  }
-});
+function createExpect(info: ExpectMetaInfo) {
+  const expectInstance: Expect = new Proxy(expectLibrary, {
+    apply: function(target: any, thisArg: any, argumentsList: [unknown, ExpectMessage?]) {
+      const [actual, messageOrOptions] = argumentsList;
+      const message = isString(messageOrOptions) ? messageOrOptions : messageOrOptions?.message || info.message;
+      const newInfo = { ...info, message };
+      if (newInfo.isPoll) {
+        if (typeof actual !== 'function')
+          throw new Error('`expect.poll()` accepts only function as a first argument');
+        newInfo.generator = actual as any;
+      }
+      return createMatchers(actual, newInfo);
+    },
 
-expect.soft = (actual: unknown, messageOrOptions: ExpectMessageOrOptions) => {
-  return createExpect(actual, messageOrOptions, true /* isSoft */, false /* isPoll */);
-};
+    get: function(target: any, property: string) {
+      if (property === 'configure')
+        return configure;
 
-expect.poll = (actual: unknown, messageOrOptions: ExpectMessageOrOptions) => {
-  if (typeof actual !== 'function')
-    throw new Error('`expect.poll()` accepts only function as a first argument');
-  return createExpect(actual, messageOrOptions, false /* isSoft */, true /* isPoll */, actual as any);
-};
+      if (property === 'soft') {
+        return (actual: unknown, messageOrOptions?: ExpectMessage) => {
+          return configure({ soft: true })(actual, messageOrOptions) as any;
+        };
+      }
+
+      if (property === 'poll') {
+        return (actual: unknown, messageOrOptions?: ExpectMessage & { timeout?: number, intervals?: number[] }) => {
+          const poll = isString(messageOrOptions) ? {} : messageOrOptions || {};
+          return configure({ _poll: poll })(actual, messageOrOptions) as any;
+        };
+      }
+      return expectLibrary[property];
+    },
+  });
+
+  const configure = (configuration: { message?: string, timeout?: number, soft?: boolean, _poll?: boolean | { timeout?: number, intervals?: number[] } }) => {
+    const newInfo = { ...info };
+    if ('message' in configuration)
+      newInfo.message = configuration.message;
+    if ('timeout' in configuration)
+      newInfo.timeout = configuration.timeout;
+    if ('soft' in configuration)
+      newInfo.isSoft = configuration.soft;
+    if ('_poll' in configuration) {
+      newInfo.isPoll = !!configuration._poll;
+      if (typeof configuration._poll === 'object') {
+        newInfo.pollTimeout = configuration._poll.timeout;
+        newInfo.pollIntervals = configuration._poll.intervals;
+      }
+    }
+    return createExpect(newInfo);
+  };
+
+  return expectInstance;
+}
+
+export const expect: Expect = createExpect({});
 
 expectLibrary.setState({ expand: false });
-const customMatchers = {
+
+const customAsyncMatchers = {
   toBeAttached,
   toBeChecked,
   toBeDisabled,
@@ -154,19 +192,23 @@ const customMatchers = {
   toHaveURL,
   toHaveValue,
   toHaveValues,
-  toMatchSnapshot,
   toHaveScreenshot,
   toPass,
+};
+
+const customMatchers = {
+  ...customAsyncMatchers,
+  toMatchSnapshot,
 };
 
 type Generator = () => any;
 
 type ExpectMetaInfo = {
   message?: string;
-  isNot: boolean;
-  isSoft: boolean;
-  isPoll: boolean;
-  nameTokens: string[];
+  isNot?: boolean;
+  isSoft?: boolean;
+  isPoll?: boolean;
+  timeout?: number;
   pollTimeout?: number;
   pollIntervals?: number[];
   generator?: Generator;
@@ -175,15 +217,8 @@ type ExpectMetaInfo = {
 class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
   private _info: ExpectMetaInfo;
 
-  constructor(messageOrOptions: ExpectMessageOrOptions, isSoft: boolean, isPoll: boolean, generator?: Generator) {
-    this._info = { isSoft, isPoll, generator, isNot: false, nameTokens: [] };
-    if (typeof messageOrOptions === 'string') {
-      this._info.message = messageOrOptions;
-    } else {
-      this._info.message = messageOrOptions?.message;
-      this._info.pollTimeout = messageOrOptions?.timeout;
-      this._info.pollIntervals = messageOrOptions?.intervals;
-    }
+  constructor(info: ExpectMetaInfo) {
+    this._info = { ...info };
   }
 
   get(target: Object, matcherName: string | symbol, receiver: any): any {
@@ -198,9 +233,9 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
       return new Proxy(matcher, this);
     }
     if (this._info.isPoll) {
-      if ((customMatchers as any)[matcherName] || matcherName === 'resolves' || matcherName === 'rejects')
+      if ((customAsyncMatchers as any)[matcherName] || matcherName === 'resolves' || matcherName === 'rejects')
         throw new Error(`\`expect.poll()\` does not support "${matcherName}" matcher.`);
-      matcher = (...args: any[]) => pollMatcher(matcherName, this._info.isNot, this._info.pollIntervals, currentExpectTimeout({ timeout: this._info.pollTimeout }), this._info.generator!, ...args);
+      matcher = (...args: any[]) => pollMatcher(matcherName, !!this._info.isNot, this._info.pollIntervals, currentExpectTimeout({ timeout: this._info.pollTimeout }), this._info.generator!, ...args);
     }
     return (...args: any[]) => {
       const testInfo = currentTestInfo();
@@ -210,20 +245,17 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
       const rawStack = captureRawStack();
       const stackFrames = filteredStackTrace(rawStack);
       const customMessage = this._info.message || '';
-      const defaultTitle = `expect${this._info.isPoll ? '.poll' : ''}${this._info.isSoft ? '.soft' : ''}${this._info.isNot ? '.not' : ''}.${matcherName}`;
+      const argsSuffix = computeArgsSuffix(matcherName, args);
+
+      const defaultTitle = `expect${this._info.isPoll ? '.poll' : ''}${this._info.isSoft ? '.soft' : ''}${this._info.isNot ? '.not' : ''}.${matcherName}${argsSuffix}`;
       const wallTime = Date.now();
       const step = testInfo._addStep({
         location: stackFrames[0],
         category: 'expect',
         title: trimLongString(customMessage || defaultTitle, 1024),
+        params: args[0] ? { expected: args[0] } : undefined,
         wallTime
       });
-      testInfo.currentStep = step;
-
-      const generateTraceEvent = matcherName !== 'poll' && matcherName !== 'toPass';
-      const callId = ++lastCallId;
-      if (generateTraceEvent)
-        testInfo._traceEvents.push(createBeforeActionTraceEventForExpect(`expect@${callId}`, defaultTitle, args[0], stackFrames));
 
       const reportStepError = (jestError: Error) => {
         const message = jestError.message;
@@ -248,35 +280,45 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
           jestError.stack = jestError.name + ': ' + newMessage + '\n' + stringifyStackFrames(stackFrames).join('\n');
         }
 
-        const serializerError = serializeError(jestError);
-        if (generateTraceEvent) {
-          const error = { name: jestError.name, message: jestError.message, stack: jestError.stack };
-          testInfo._traceEvents.push(createAfterActionTraceEventForExpect(`expect@${callId}`, error));
-        }
-        step.complete({ error: serializerError });
+        const serializedError = serializeError(jestError);
+        // Serialized error has filtered stack trace.
+        jestError.stack = serializedError.stack;
+        step.complete({ error: serializedError });
         if (this._info.isSoft)
-          testInfo._failWithError(serializerError, false /* isHardError */);
+          testInfo._failWithError(serializedError, false /* isHardError */);
         else
           throw jestError;
       };
 
       const finalizer = () => {
-        if (generateTraceEvent)
-          testInfo._traceEvents.push(createAfterActionTraceEventForExpect(`expect@${callId}`));
         step.complete({});
       };
 
-      try {
-        const expectZone: ExpectZone = { title: defaultTitle, wallTime };
-        const result = zones.run<ExpectZone, any>('expectZone', expectZone, () => {
-          return matcher.call(target, ...args);
-        });
-        if (result instanceof Promise)
-          return result.then(() => finalizer()).catch(reportStepError);
-        else
+      // Process the async matchers separately to preserve the zones in the stacks.
+      if (this._info.isPoll || matcherName in customAsyncMatchers) {
+        return (async () => {
+          try {
+            const expectZone: ExpectZone = { title: defaultTitle, wallTime };
+            await zones.run<ExpectZone, any>('expectZone', expectZone, async () => {
+              // We assume that the matcher will read the current expect timeout the first thing.
+              setCurrentExpectConfigureTimeout(this._info.timeout);
+              await matcher.call(target, ...args);
+            });
+            finalizer();
+          } catch (e) {
+            reportStepError(e);
+          }
+        })();
+      } else {
+        try {
+          const result = matcher.call(target, ...args);
+          if (result instanceof Promise)
+            return result.then(finalizer).catch(reportStepError);
           finalizer();
-      } catch (e) {
-        reportStepError(e);
+          return result;
+        } catch (e) {
+          reportStepError(e);
+        }
       }
     };
   }
@@ -312,6 +354,13 @@ async function pollMatcher(matcherName: any, isNot: boolean, pollIntervals: numb
 
     throw new Error(message);
   }
+}
+
+function computeArgsSuffix(matcherName: string, args: any[]) {
+  let value = '';
+  if (matcherName === 'toHaveScreenshot')
+    value = toHaveScreenshotStepTitle(...args);
+  return value ? `(${value})` : '';
 }
 
 expectLibrary.extend(customMatchers);

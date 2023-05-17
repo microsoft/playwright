@@ -526,3 +526,19 @@ throw new Error('should not load nomap.spec.js');`,
   expect(result.output).not.toContain('should not load');
   expect(result.output).toContain('gherkin.feature:1');
 });
+
+test('should not hang on worker error in test file', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'example.spec.js': `
+      import { test, expect } from '@playwright/test';
+      if (process.env.TEST_WORKER_INDEX)
+        process.exit(1);
+      test('test 1', async () => {});
+      test('test 2', async () => {});
+    `,
+  }, { 'timeout': 3000 });
+  expect(result.exitCode).toBe(1);
+  expect(result.results[0].status).toBe('failed');
+  expect(result.results[0].error.message).toContain('Internal error: worker process exited unexpectedly');
+  expect(result.results[1].status).toBe('skipped');
+});

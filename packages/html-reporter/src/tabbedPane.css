@@ -33,6 +33,7 @@
   height: 48px;
   min-width: 70px;
   box-shadow: inset 0 -1px 0 var(--color-border-muted) !important;
+  margin-bottom: 16px;
 }
 
 .tabbed-pane-tab-strip:focus {

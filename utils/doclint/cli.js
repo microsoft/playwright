@@ -91,6 +91,9 @@ async function run() {
   // Patch docker version in docs
   {
     for (const filePath of getAllMarkdownFiles(path.join(PROJECT_DIR, 'docs'))) {
+      // Do not patch docker versions in the release notes; these are always handcrafted.
+      if (filePath.includes('release-notes-'))
+        continue;
       let content = fs.readFileSync(filePath).toString();
       content = content.replace(new RegExp('(mcr.microsoft.com/playwright[^:]*):([\\w\\d-.]+)', 'ig'), (match, imageName, imageVersion) => {
         const [version, distroName] = imageVersion.split('-');

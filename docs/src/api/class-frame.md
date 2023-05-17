@@ -1857,7 +1857,7 @@ const { firefox } = require('playwright');  // Or 'chromium' or 'webkit'.
   const browser = await firefox.launch();
   const page = await browser.newPage();
   const watchDog = page.mainFrame().waitForFunction('window.innerWidth < 100');
-  page.setViewportSize({width: 50, height: 50});
+  await page.setViewportSize({width: 50, height: 50});
   await watchDog;
   await browser.close();
 })();
@@ -2243,6 +2243,8 @@ class FrameExamples
 
 ## async method: Frame.waitForTimeout
 * since: v1.8
+* discouraged: Never wait for timeout in production. Tests that wait for time are
+  inherently flaky. Use [Locator] actions and web assertions that wait automatically.
 
 Waits for the given [`param: timeout`] in milliseconds.
 

@@ -22,15 +22,14 @@ import './sourceTab.css';
 import { StackTraceView } from './stackTrace';
 import { CodeMirrorWrapper } from '@web/components/codeMirrorWrapper';
 import type { SourceHighlight } from '@web/components/codeMirrorWrapper';
-import type { SourceModel } from './modelUtil';
-import type { StackFrame } from '@protocol/channels';
+import type { SourceLocation, SourceModel } from './modelUtil';
 
 export const SourceTab: React.FunctionComponent<{
   action: ActionTraceEvent | undefined,
   sources: Map<string, SourceModel>,
   hideStackFrames?: boolean,
   rootDir?: string,
-  fallbackLocation?: StackFrame,
+  fallbackLocation?: SourceLocation,
 }> = ({ action, sources, hideStackFrames, rootDir, fallbackLocation }) => {
   const [lastAction, setLastAction] = React.useState<ActionTraceEvent | undefined>();
   const [selectedFrame, setSelectedFrame] = React.useState<number>(0);
@@ -43,31 +42,34 @@ export const SourceTab: React.FunctionComponent<{
   }, [action, lastAction, setLastAction, setSelectedFrame]);
 
   const { source, highlight, targetLine, fileName } = useAsyncMemo<{ source: SourceModel, targetLine?: number, fileName?: string, highlight: SourceHighlight[] }>(async () => {
-    const location = action?.stack?.[selectedFrame] || fallbackLocation;
-    if (!location?.file)
-      return { source: { errors: [], content: undefined }, targetLine: 0, highlight: [] };
+    const actionLocation = action?.stack?.[selectedFrame];
+    const shouldUseFallback = !actionLocation?.file;
+    if (shouldUseFallback && !fallbackLocation)
+      return { source: { file: '', errors: [], content: undefined }, targetLine: 0, highlight: [] };
 
-    let source = sources.get(location.file);
+    const file = shouldUseFallback ? fallbackLocation!.file : actionLocation.file;
+    let source = sources.get(file);
     // Fallback location can fall outside the sources model.
     if (!source) {
-      source = { errors: [], content: undefined };
-      sources.set(location.file, source);
+      source = { errors: fallbackLocation?.source?.errors || [], content: undefined };
+      sources.set(file, source);
     }
 
-    const targetLine = location.line || 0;
-    const fileName = rootDir && location.file.startsWith(rootDir) ? location.file.substring(rootDir.length + 1) : location.file;
-    const highlight: SourceHighlight[] = source.errors.map(e => ({ type: 'error', line: e.location.line, message: e.error!.message }));
+    const targetLine = shouldUseFallback ? fallbackLocation?.line || source.errors[0]?.line || 0 : actionLocation.line;
+    const fileName = rootDir && file.startsWith(rootDir) ? file.substring(rootDir.length + 1) : file;
+    const highlight: SourceHighlight[] = source.errors.map(e => ({ type: 'error', line: e.line, message: e.message }));
     highlight.push({ line: targetLine, type: 'running' });
 
-    if (source.content === undefined || fallbackLocation) {
-      const sha1 = await calculateSha1(location.file);
+    // After the source update, but before the test run, don't trust the cache.
+    if (source.content === undefined || shouldUseFallback) {
+      const sha1 = await calculateSha1(file);
       try {
         let response = await fetch(`sha1/src@${sha1}.txt`);
         if (response.status === 404)
-          response = await fetch(`file?path=${location.file}`);
+          response = await fetch(`file?path=${file}`);
         source.content = await response.text();
       } catch {
-        source.content = `<Unable to read "${location.file}">`;
+        source.content = `<Unable to read "${file}">`;
       }
     }
     return { source, highlight, targetLine, fileName };

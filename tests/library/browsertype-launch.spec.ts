@@ -67,7 +67,8 @@ it('should reject if launched browser fails immediately', async ({ mode, browser
   expect(waitError.message).toContain('== logs ==');
 });
 
-it('should reject if executable path is invalid', async ({ browserType }) => {
+it('should reject if executable path is invalid', async ({ browserType, mode }) => {
+  it.skip(mode === 'service', 'on service mode we dont allow passing custom executable path');
   let waitError = null;
   await browserType.launch({ executablePath: 'random-invalid-path' }).catch(e => waitError = e);
   expect(waitError.message).toContain('Failed to launch');

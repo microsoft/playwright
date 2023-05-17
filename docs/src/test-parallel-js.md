@@ -30,7 +30,7 @@ npx playwright test --workers 4
 
 In the configuration file:
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -64,7 +64,7 @@ test('runs in parallel 2', async ({ page }) => { /* ... */ });
 
 Alternatively, you can opt-in all tests into this fully-parallel mode in the configuration file:
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -74,7 +74,7 @@ export default defineConfig({
 
 You can also opt in for fully-parallel mode for just a few projects:
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -148,7 +148,7 @@ npx playwright test --max-failures=10
 
 Setting in the configuration file:
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -176,13 +176,12 @@ When you **disable parallel test execution**, Playwright Test runs test files in
 ### Use a "test list" file
 
 :::warning
-Tests lists are discouraged and supported as a best-effort only. Some fetures such as VS Code Extension and tracing may not work properly with test lists.
+Tests lists are discouraged and supported as a best-effort only. Some features such as VS Code Extension and tracing may not work properly with test lists.
 :::
 
 You can put your tests in helper functions in multiple files. Consider the following example where tests are not defined directly in the file, but rather in a wrapper function.
 
-```js
-// feature-a.spec.ts
+```js title="feature-a.spec.ts"
 import { test, expect } from '@playwright/test';
 
 export default function createTests() {
@@ -191,7 +190,9 @@ export default function createTests() {
   });
 }
 
-// feature-b.spec.ts
+```
+
+```js title="feature-b.spec.ts"
 import { test, expect } from '@playwright/test';
 
 export default function createTests() {
@@ -206,8 +207,7 @@ export default function createTests() {
 You can create a test list file that will control the order of tests - first run `feature-b` tests, then `feature-a` tests. Note how each test file is wrapped in a `test.describe()` block that calls the function where tests are defined. This way `test.use()` calls only affect tests from a single file.
 
 
-```js
-// test.list.ts
+```js title="test.list.ts"
 import { test } from '@playwright/test';
 import featureBTests from './feature-b.spec.ts';
 import featureATests from './feature-a.spec.ts';
@@ -218,8 +218,7 @@ test.describe(featureATests);
 
 Now **disable parallel execution** by setting workers to one, and specify your test list file.
 
-```js
-// playwright.config.ts
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({

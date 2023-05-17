@@ -40,7 +40,7 @@ it('should handle nested frames', async ({ page, server }) => {
 
 it('should get frame box', async ({ page, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/10977' });
-  await page.setViewportSize({ width: 200, height: 200 });
+  await page.setViewportSize({ width: 250, height: 250 });
   await page.setContent(`<style>
   body {
       display: flex;

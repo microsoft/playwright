@@ -7,8 +7,7 @@ You can either parameterize tests on a test level or on a project level.
 
 ## Parameterized Tests
 
-```js
-// example.spec.ts
+```js title="example.spec.ts"
 const people = ['Alice', 'Bob'];
 for (const name of people) {
   test(`testing with ${name}`, async () => {
@@ -24,8 +23,7 @@ Playwright Test supports running multiple test projects at the same time. In the
 
 We declare the option `person` and set the value in the config. The first project runs with the value `Alice` and the second with the value `Bob`.
 
-```js tab=js-js
-// my-test.js
+```js tab=js-js title="my-test.js"
 const base = require('@playwright/test');
 
 exports.test = base.test.extend({
@@ -35,8 +33,7 @@ exports.test = base.test.extend({
 });
 ```
 
-```js tab=js-ts
-// my-test.ts
+```js tab=js-ts title="my-test.ts"
 import { test as base } from '@playwright/test';
 
 export type TestOptions = {
@@ -52,8 +49,7 @@ export const test = base.extend<TestOptions>({
 
 We can use this option in the test, similarly to [fixtures](./test-fixtures.md).
 
-```js
-// example.spec.ts
+```js title="example.spec.ts"
 import { test } from './my-test';
 
 test('test 1', async ({ page, person }) => {
@@ -65,8 +61,7 @@ test('test 1', async ({ page, person }) => {
 
 Now, we can run tests in multiple configurations by using projects.
 
-```js tab=js-js
-// playwright.config.js
+```js tab=js-js title="playwright.config.ts"
 // @ts-check
 
 module.exports = defineConfig({
@@ -83,8 +78,7 @@ module.exports = defineConfig({
 });
 ```
 
-```js tab=js-ts
-// playwright.config.ts
+```js tab=js-ts title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 import type { TestOptions } from './my-test';
 
@@ -104,8 +98,7 @@ export default defineConfig<TestOptions>({
 
 We can also use the option in a fixture. Learn more about [fixtures](./test-fixtures.md).
 
-```js tab=js-js
-// my-test.js
+```js tab=js-js title="my-test.js"
 const base = require('@playwright/test');
 
 exports.test = base.test.extend({
@@ -125,8 +118,7 @@ exports.test = base.test.extend({
 });
 ```
 
-```js tab=js-ts
-// my-test.ts
+```js tab=js-ts title="my-test.ts"
 import { test as base } from '@playwright/test';
 
 export type TestOptions = {
@@ -160,8 +152,7 @@ You can use environment variables to configure tests from the command line.
 
 For example, consider the following test file that needs a username and a password. It is usually a good idea not to store your secrets in the source code, so we'll need a way to pass secrets from outside.
 
-```js
-// example.spec.ts
+```js title="example.spec.ts"
 test(`example test`, async ({ page }) => {
   // ...
   await page.getByLabel('User Name').fill(process.env.USERNAME);
@@ -189,8 +180,7 @@ npx playwright test
 
 Similarly, configuration file can also read environment variables passed through the command line.
 
-```js
-// playwright.config.ts
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -220,8 +210,7 @@ npx playwright test
 
 To make environment variables easier to manage, consider something like `.env` files. Here is an example that uses [`dotenv`](https://www.npmjs.com/package/dotenv) package to read environment variables directly in the configuration file.
 
-```js
-// playwright.config.ts
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 import dotenv from 'dotenv';
 import path from 'path';
@@ -270,8 +259,7 @@ See for example this CSV file, in our example `input.csv`:
 
 Based on this we'll generate some tests by using the [csv-parse](https://www.npmjs.com/package/csv-parse) library from NPM:
 
-```js
-// foo.spec.ts
+```js title="test.spec.ts"
 import fs from 'fs';
 import path from 'path';
 import { test } from '@playwright/test';
@@ -283,7 +271,7 @@ const records = parse(fs.readFileSync(path.join(__dirname, 'input.csv')), {
 });
 
 for (const record of records) {
-  test(`fooo: ${record.test_case}`, async ({ page }) => {
+  test(`foo: ${record.test_case}`, async ({ page }) => {
     console.log(record.test_case, record.some_value, record.some_other_value);
   });
 }

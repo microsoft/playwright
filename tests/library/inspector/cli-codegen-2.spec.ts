@@ -439,6 +439,17 @@ test.describe('cli codegen', () => {
     expect(models.hovered).toBe('#checkbox');
   });
 
+  test('should reset hover model on action when element detaches', async ({ page, openRecorder }) => {
+    const recorder = await openRecorder();
+
+    await recorder.setContentAndWait(`<input id="checkbox" onclick="document.getElementById('checkbox').remove()">`);
+    const [models] = await Promise.all([
+      recorder.waitForActionPerformed(),
+      page.click('input')
+    ]);
+    expect(models.hovered).toBe(null);
+  });
+
   test('should update active model on action', async ({ page, openRecorder, browserName, headless }) => {
     test.fixme(browserName === 'webkit');
 
@@ -535,4 +546,18 @@ test.describe('cli codegen', () => {
     expect(message.text()).toBe('Hello\'\"\`\nWorld');
   });
 
+});
+
+test('should --test-id-attribute', async ({ page, openRecorder }) => {
+  const recorder = await openRecorder({ testIdAttributeName: 'my-test-id' });
+
+  await recorder.setContentAndWait(`<div my-test-id="foo">Hello</div>`);
+  await page.click('[my-test-id=foo]');
+  const sources = await recorder.waitForOutput('JavaScript', `page.getByTestId`);
+
+  expect.soft(sources.get('JavaScript').text).toContain(`await page.getByTestId('foo').click()`);
+  expect.soft(sources.get('Java').text).toContain(`page.getByTestId("foo").click()`);
+  expect.soft(sources.get('Python').text).toContain(`page.get_by_test_id("foo").click()`);
+  expect.soft(sources.get('Python Async').text).toContain(`await page.get_by_test_id("foo").click()`);
+  expect.soft(sources.get('C#').text).toContain(`await page.GetByTestId("foo").ClickAsync();`);
 });

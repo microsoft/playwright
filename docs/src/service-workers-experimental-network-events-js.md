@@ -127,8 +127,7 @@ Additionally, any network request made by the **Page** (including its sub-[Frame
 
 Many Service Worker implementations simply execute the request from the page (possibly with some custom caching/offline logic omitted for simplicity):
 
-```js
-// filename: transparent-service-worker.js
+```js title="transparent-service-worker.js"
 self.addEventListener("fetch", (event) => {
   // actually make the request
   const responsePromise = fetch(event.request);
@@ -180,8 +179,7 @@ When a Service Worker handles a page's request, the Service Worker can make 0 to
 Consider the code snippets below to understand Playwright's view into the Request/Responses and how it impacts routing in some of these cases.
 
 
-```js
-// filename: complex-service-worker.js
+```js title="complex-service-worker.js"
 self.addEventListener("install", function (event) {
   event.waitUntil(
     caches.open("v1").then(function (cache) {

@@ -3,73 +3,7 @@ id: test-typescript
 title: "TypeScript"
 ---
 
-Playwright Test supports TypeScript out of the box. You just write tests in TypeScript and Playwright Test will read them, transform to JavaScript and run. This works both with [CommonJS modules](https://nodejs.org/api/modules.html) and [ECMAScript modules](https://nodejs.org/api/esm.html).
-
-## TypeScript with CommonJS
-
-[Node.js](https://nodejs.org/en/) works with CommonJS modules **by default**. Unless you use `'.mjs'` or `'.mts'` extensions, or specify `type: "module"` in your `package.json`, Playwright Test will treat all TypeScript files as CommonJS. You can then import as usual without an extension.
-
-Consider this helper module written in TypeScript:
-
-```js
-// helper.ts
-export const username = 'John';
-export const password = 'secret';
-```
-
-You can import from the helper as usual:
-
-```js
-// example.spec.ts
-import { test, expect } from '@playwright/test';
-import { username, password } from './helper';
-
-test('example', async ({ page }) => {
-  await page.getByLabel('User Name').fill(username);
-  await page.getByLabel('Password').fill(password);
-});
-```
-
-## TypeScript with ESM
-
-You can opt into using [ECMAScript modules](https://nodejs.org/api/esm.html) by setting `type: "module"` in your `package.json` file. Playwright Test will switch to the ESM mode once it reads the `playwright.config.ts` file, so make sure you have one.
-
-Playwright Test follows the [experimental support for ESM in TypeScript](https://www.typescriptlang.org/docs/handbook/esm-node.html) and, according to the specification, **requires a file extension** when importing from a module, either `'.js'` or `'.ts'`.
-
-First, enable modules in your `package.json`:
-
-```json
-{
-  "name": "my-package",
-  "version": "1.0.0",
-  "type": "module",
-}
-```
-
-Then write the helper module in TypeScript as usual:
-
-```js
-// helper.ts
-export const username = 'John';
-export const password = 'secret';
-```
-
-Specify the extension when importing from a module:
-
-```js
-// example.spec.ts
-import { test, expect } from '@playwright/test';
-import { username, password } from './helper.ts';
-
-test('example', async ({ page }) => {
-  await page.getByLabel('User Name').fill(username);
-  await page.getByLabel('Password').fill(password);
-});
-```
-
-:::note
-TypeScript with ESM requires Node.js 16 or higher.
-:::
+Playwright supports TypeScript out of the box. You just write tests in TypeScript, and Playwright will read them, transform to JavaScript and run.
 
 ## tsconfig.json
 
@@ -109,8 +43,7 @@ Here is an example `tsconfig.json` that works with Playwright Test:
 
 You can now import using the mapped paths:
 
-```js
-// example.spec.ts
+```js title="example.spec.ts"
 import { test, expect } from '@playwright/test';
 import { username, password } from '@myhelper/credentials';
 

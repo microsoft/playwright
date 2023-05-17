@@ -34,10 +34,18 @@ export function currentlyLoadingFileSuite() {
   return currentFileSuite;
 }
 
+let currentExpectConfigureTimeout: number | undefined;
+
+export function setCurrentExpectConfigureTimeout(timeout: number | undefined) {
+  currentExpectConfigureTimeout = timeout;
+}
+
 export function currentExpectTimeout(options: { timeout?: number }) {
   const testInfo = currentTestInfo();
   if (options.timeout !== undefined)
     return options.timeout;
+  if (currentExpectConfigureTimeout !== undefined)
+    return currentExpectConfigureTimeout;
   let defaultExpectTimeout = testInfo?._projectInternal?.expect?.timeout;
   if (typeof defaultExpectTimeout === 'undefined')
     defaultExpectTimeout = 5000;
@@ -60,4 +68,17 @@ export function setCurrentConfig(config: FullConfigInternal | null) {
 }
 export function currentConfig(): FullConfigInternal | null {
   return currentConfigValue;
+}
+
+export interface TestInstrumentation {
+  willStartTest(testInfo: TestInfoImpl): Promise<void>;
+  didFinishTestFunction(testInfo: TestInfoImpl): Promise<void>;
+  didFinishTest(testInfo: TestInfoImpl): Promise<void>;
+}
+let testInstrumentation: TestInstrumentation | undefined;
+export function setCurrentTestInstrumentation(instrumentation: TestInstrumentation | undefined) {
+  testInstrumentation = instrumentation;
+}
+export function currentTestInstrumentation() {
+  return testInstrumentation;
 }

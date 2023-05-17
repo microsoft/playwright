@@ -25,13 +25,13 @@ import JSONReporter from '../reporters/json';
 import JUnitReporter from '../reporters/junit';
 import LineReporter from '../reporters/line';
 import ListReporter from '../reporters/list';
-import { Multiplexer } from '../reporters/multiplexer';
 import type { Suite } from '../common/test';
 import type { BuiltInReporter, FullConfigInternal } from '../common/config';
 import { loadReporter } from './loadUtils';
 import { BlobReporter } from '../reporters/blob';
+import type { ReporterDescription } from '../../types/test';
 
-export async function createReporter(config: FullConfigInternal, mode: 'list' | 'watch' | 'run' | 'ui', additionalReporters: Reporter[] = []): Promise<Multiplexer> {
+export async function createReporters(config: FullConfigInternal, mode: 'list' | 'run' | 'ui' | 'merge', descriptions?: ReporterDescription[]): Promise<Reporter[]> {
   const defaultReporters: {[key in BuiltInReporter]: new(arg: any) => Reporter} = {
     dot: mode === 'list' ? ListModeReporter : DotReporter,
     line: mode === 'list' ? ListModeReporter : LineReporter,
@@ -44,31 +44,27 @@ export async function createReporter(config: FullConfigInternal, mode: 'list' | 
     blob: BlobReporter,
   };
   const reporters: Reporter[] = [];
-  if (mode === 'watch') {
-    reporters.push(new ListReporter());
-  } else {
-    for (const r of config.config.reporter) {
-      const [name, arg] = r;
-      const options = { ...arg, configDir: config.configDir };
-      if (name in defaultReporters) {
-        reporters.push(new defaultReporters[name as keyof typeof defaultReporters](options));
-      } else {
-        const reporterConstructor = await loadReporter(config, name);
-        reporters.push(new reporterConstructor(options));
-      }
+  descriptions ??= config.config.reporter;
+  for (const r of descriptions) {
+    const [name, arg] = r;
+    const options = { ...arg, configDir: config.configDir };
+    if (name in defaultReporters) {
+      reporters.push(new defaultReporters[name as keyof typeof defaultReporters](options));
+    } else {
+      const reporterConstructor = await loadReporter(config, name);
+      reporters.push(new reporterConstructor(options));
     }
-    reporters.push(...additionalReporters);
-    if (process.env.PW_TEST_REPORTER) {
-      const reporterConstructor = await loadReporter(config, process.env.PW_TEST_REPORTER);
-      reporters.push(new reporterConstructor());
-    }
+  }
+  if (process.env.PW_TEST_REPORTER) {
+    const reporterConstructor = await loadReporter(config, process.env.PW_TEST_REPORTER);
+    reporters.push(new reporterConstructor());
   }
 
   const someReporterPrintsToStdio = reporters.some(r => {
     const prints = r.printsToStdio ? r.printsToStdio() : true;
     return prints;
   });
-  if (reporters.length && !someReporterPrintsToStdio) {
+  if (reporters.length && !someReporterPrintsToStdio && mode !== 'merge') {
     // Add a line/dot/list-mode reporter for convenience.
     // Important to put it first, jsut in case some other reporter stalls onEnd.
     if (mode === 'list')
@@ -76,7 +72,7 @@ export async function createReporter(config: FullConfigInternal, mode: 'list' | 
     else
       reporters.unshift(!process.env.CI ? new LineReporter({ omitFailures: true }) : new DotReporter());
   }
-  return new Multiplexer(reporters);
+  return reporters;
 }
 
 export class ListModeReporter implements Reporter {

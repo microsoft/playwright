@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { BabelFileResult, NodePath, PluginObj } from '@babel/core';
+import type { BabelFileResult, NodePath, PluginObj, TransformOptions } from '@babel/core';
 import type { TSExportAssignment } from '@babel/types';
 import type { TemplateBuilder } from '@babel/template';
 import * as babel from '@babel/core';
@@ -26,14 +26,7 @@ export { parse } from '@babel/parser';
 import traverseFunction from '@babel/traverse';
 export const traverse = traverseFunction;
 
-
-let additionalPlugins: [string, any?][] = [];
-
-export function setBabelPlugins(plugins: [string, any?][]) {
-  additionalPlugins = plugins;
-}
-
-export function babelTransform(filename: string, isTypeScript: boolean, isModule: boolean, scriptPreprocessor: string | undefined): BabelFileResult {
+function babelTransformOptions(isTypeScript: boolean, isModule: boolean, pluginsPrologue: [string, any?][], pluginsEpilogue: [string, any?][]): TransformOptions {
   const plugins = [];
 
   if (isTypeScript) {
@@ -70,7 +63,10 @@ export function babelTransform(filename: string, isTypeScript: boolean, isModule
   }
 
   // Support JSX/TSX at all times, regardless of the file extension.
-  plugins.push([require('@babel/plugin-transform-react-jsx')]);
+  plugins.push([require('@babel/plugin-transform-react-jsx'), {
+    runtime: 'automatic',
+    importSource: '@playwright/test'
+  }]);
 
   if (!isModule) {
     plugins.push([require('@babel/plugin-transform-modules-commonjs')]);
@@ -79,12 +75,7 @@ export function babelTransform(filename: string, isTypeScript: boolean, isModule
     plugins.push([require('@babel/plugin-syntax-import-assertions')]);
   }
 
-  plugins.unshift(...additionalPlugins.map(([name, options]) => [require(name), options]));
-
-  if (scriptPreprocessor)
-    plugins.push([scriptPreprocessor]);
-
-  return babel.transformFileSync(filename, {
+  return {
     babelrc: false,
     configFile: false,
     assumptions: {
@@ -92,10 +83,31 @@ export function babelTransform(filename: string, isTypeScript: boolean, isModule
       // breaks playwright evaluates.
       setPublicClassFields: true,
     },
-    presets: [
+    presets: isTypeScript ? [
       [require('@babel/preset-typescript'), { onlyRemoveTypeImports: false }],
+    ] : [],
+    plugins: [
+      ...pluginsPrologue.map(([name, options]) => [require(name), options]),
+      ...plugins,
+      ...pluginsEpilogue.map(([name, options]) => [require(name), options]),
     ],
-    plugins,
+    compact: false,
     sourceMaps: 'both',
-  } as babel.TransformOptions)!;
+  };
+}
+
+let isTransforming = false;
+
+export function babelTransform(code: string, filename: string, isTypeScript: boolean, isModule: boolean, pluginsPrologue: [string, any?][], pluginsEpilogue: [string, any?][]): BabelFileResult {
+  if (isTransforming)
+    return {};
+
+  // Prevent reentry while requiring plugins lazily.
+  isTransforming = true;
+  try {
+    const options = babelTransformOptions(isTypeScript, isModule, pluginsPrologue, pluginsEpilogue);
+    return babel.transform(code, { filename, ...options })!;
+  } finally {
+    isTransforming = false;
+  }
 }

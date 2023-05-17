@@ -35,9 +35,7 @@ test('should load nested as esm when package.json has type module', async ({ run
   expect(result.passed).toBe(1);
 });
 
-test('should support import assertions', async ({ runInlineTest, nodeVersion }) => {
-  // We only support experimental esm mode on Node 16+
-  test.skip(nodeVersion.major < 16);
+test('should support import assertions', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       import packageJSON from './package.json' assert { type: 'json' };
@@ -57,9 +55,7 @@ test('should support import assertions', async ({ runInlineTest, nodeVersion }) 
   expect(result.passed).toBe(1);
 });
 
-test('should import esm from ts when package.json has type module in experimental mode', async ({ runInlineTest, nodeVersion }) => {
-  // We only support experimental esm mode on Node 16+
-  test.skip(nodeVersion.major < 16);
+test('should import esm from ts when package.json has type module in experimental mode', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       import * as fs from 'fs';
@@ -91,9 +87,7 @@ test('should import esm from ts when package.json has type module in experimenta
   expect(result.exitCode).toBe(0);
 });
 
-test('should propagate subprocess exit code in experimental mode', async ({ runInlineTest, nodeVersion }) => {
-  // We only support experimental esm mode on Node 16+
-  test.skip(nodeVersion.major < 16);
+test('should propagate subprocess exit code in experimental mode', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'package.json': JSON.stringify({ type: 'module' }),
     'a.test.ts': `
@@ -107,9 +101,7 @@ test('should propagate subprocess exit code in experimental mode', async ({ runI
   expect(result.exitCode).toBe(1);
 });
 
-test('should respect path resolver in experimental mode', async ({ runInlineTest, nodeVersion }) => {
-  // We only support experimental esm mode on Node 16+
-  test.skip(nodeVersion.major < 16);
+test('should respect path resolver in experimental mode', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'package.json': JSON.stringify({ type: 'module' }),
     'playwright.config.ts': `
@@ -143,10 +135,8 @@ test('should respect path resolver in experimental mode', async ({ runInlineTest
   expect(result.exitCode).toBe(0);
 });
 
-test('should use source maps', async ({ runInlineTest, nodeVersion }) => {
+test('should use source maps', async ({ runInlineTest }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/15202' });
-  // We only support experimental esm mode on Node 16+
-  test.skip(nodeVersion.major < 16);
   const result = await runInlineTest({
     'package.json': `{ "type": "module" }`,
     'playwright.config.ts': `
@@ -167,9 +157,7 @@ test('should use source maps', async ({ runInlineTest, nodeVersion }) => {
   expect(output).toContain('[foo] › a.test.ts:4:7 › check project name');
 });
 
-test('should show the codeframe in errors', async ({ runInlineTest, nodeVersion }) => {
-  // We only support experimental esm mode on Node 16+
-  test.skip(nodeVersion.major < 16);
+test('should show the codeframe in errors', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'package.json': `{ "type": "module" }`,
     'playwright.config.ts': `
@@ -209,10 +197,8 @@ test('should show the codeframe in errors', async ({ runInlineTest, nodeVersion 
   expect(result.output).toContain('  11 |         error.name = \'FooBarError\';');
 });
 
-test('should filter by line', async ({ runInlineTest, nodeVersion }) => {
+test('should filter by line', async ({ runInlineTest }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/15200' });
-  // We only support experimental esm mode on Node 16+
-  test.skip(nodeVersion.major < 16);
   const result = await runInlineTest({
     'package.json': `{ "type": "module" }`,
     'playwright.config.ts': `
@@ -234,8 +220,7 @@ test('should filter by line', async ({ runInlineTest, nodeVersion }) => {
   expect(result.output).toMatch(/x\.spec\.ts.*two/);
 });
 
-test('should resolve .js import to .ts file in ESM mode', async ({ runInlineTest, nodeVersion }) => {
-  test.skip(nodeVersion.major < 16);
+test('should resolve .js import to .ts file in ESM mode', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'package.json': `{ "type": "module" }`,
     'playwright.config.ts': `export default { projects: [{name: 'foo'}] };`,
@@ -256,8 +241,7 @@ test('should resolve .js import to .ts file in ESM mode', async ({ runInlineTest
   expect(result.exitCode).toBe(0);
 });
 
-test('should resolve .js import to .tsx file in ESM mode', async ({ runInlineTest, nodeVersion }) => {
-  test.skip(nodeVersion.major < 16);
+test('should resolve .js import to .tsx file in ESM mode', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'package.json': `{ "type": "module" }`,
     'playwright.config.ts': `export default { projects: [{name: 'foo'}] };`,
@@ -278,8 +262,91 @@ test('should resolve .js import to .tsx file in ESM mode', async ({ runInlineTes
   expect(result.exitCode).toBe(0);
 });
 
-test('should resolve .js import to .tsx file in ESM mode for components', async ({ runInlineTest, nodeVersion }) => {
-  test.skip(nodeVersion.major < 16);
+test('should resolve .js import to .jsx file in ESM mode', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'package.json': `{ "type": "module" }`,
+    'playwright.config.ts': `export default { projects: [{name: 'foo'}] };`,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      import { gimmeAOne } from './playwright-utils.js';
+      test('pass', ({}) => {
+        expect(gimmeAOne()).toBe(1);
+      });
+    `,
+    'playwright-utils.jsx': `
+      export function gimmeAOne() {
+        return 1;
+      }
+    `,
+  });
+  expect(result.passed).toBe(1);
+  expect(result.exitCode).toBe(0);
+});
+
+test('should resolve no-extension import to .ts file in ESM mode', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'package.json': `{ "type": "module" }`,
+    'playwright.config.ts': `export default { projects: [{name: 'foo'}] };`,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      import { gimmeAOne } from './playwright-utils';
+      test('pass', ({}) => {
+        expect(gimmeAOne()).toBe(1);
+      });
+    `,
+    'playwright-utils.ts': `
+      export function gimmeAOne() {
+        return 1;
+      }
+    `,
+  });
+  expect(result.passed).toBe(1);
+  expect(result.exitCode).toBe(0);
+});
+
+test('should resolve no-extension import to .tsx file in ESM mode', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'package.json': `{ "type": "module" }`,
+    'playwright.config.ts': `export default { projects: [{name: 'foo'}] };`,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      import { gimmeAOne } from './playwright-utils';
+      test('pass', ({}) => {
+        expect(gimmeAOne()).toBe(1);
+      });
+    `,
+    'playwright-utils.tsx': `
+      export function gimmeAOne() {
+        return 1;
+      }
+    `,
+  });
+  expect(result.passed).toBe(1);
+  expect(result.exitCode).toBe(0);
+});
+
+test('should resolve no-extension import to .jsx file in ESM mode', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'package.json': `{ "type": "module" }`,
+    'playwright.config.ts': `export default { projects: [{name: 'foo'}] };`,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      import { gimmeAOne } from './playwright-utils';
+      test('pass', ({}) => {
+        expect(gimmeAOne()).toBe(1);
+      });
+    `,
+    'playwright-utils.jsx': `
+      export function gimmeAOne() {
+        return 1;
+      }
+    `,
+  });
+  expect(result.passed).toBe(1);
+  expect(result.exitCode).toBe(0);
+});
+
+test('should resolve .js import to .tsx file in ESM mode for components', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'package.json': `{ "type": "module" }`,
     'playwright.config.ts': `
@@ -303,4 +370,48 @@ test('should resolve .js import to .tsx file in ESM mode for components', async 
   }, { workers: 1 });
   expect(result.passed).toBe(1);
   expect(result.exitCode).toBe(0);
+});
+
+test('should load cjs config and test in non-ESM mode', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'package.json': `{ "type": "module" }`,
+    'playwright.config.cjs': `
+      const fs = require('fs');
+      module.exports = { projects: [{name: 'foo'}] };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('check project name', ({}, testInfo) => {
+        expect(testInfo.project.name).toBe('foo');
+      });
+    `,
+    'b.spec.cjs': `
+      const { test, expect } = require('@playwright/test');
+      test('check project name', ({}, testInfo) => {
+        expect(testInfo.project.name).toBe('foo');
+      });
+    `,
+  });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(2);
+});
+
+test('should disallow ESM when config is cjs', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'package.json': `{ "type": "module" }`,
+    'playwright.config.cjs': `
+      const fs = require('fs');
+      module.exports = { projects: [{name: 'foo'}] };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('check project name', ({}, testInfo) => {
+        expect(testInfo.project.name).toBe('foo');
+      });
+    `,
+  });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('Unknown file extension ".ts"');
 });

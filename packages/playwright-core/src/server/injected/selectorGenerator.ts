@@ -74,11 +74,11 @@ export function querySelector(injectedScript: InjectedScript, selector: string, 
   }
 }
 
-export function generateSelector(injectedScript: InjectedScript, targetElement: Element, testIdAttributeName: string): { selector: string, elements: Element[] } {
+export function generateSelector(injectedScript: InjectedScript, targetElement: Element, testIdAttributeName: string, omitInternalEngines?: boolean): { selector: string, elements: Element[] } {
   injectedScript._evaluator.begin();
   try {
     targetElement = targetElement.closest('button,select,input,[role=button],[role=checkbox],[role=radio],a,[role=link]') || targetElement;
-    const targetTokens = generateSelectorFor(injectedScript, targetElement, testIdAttributeName);
+    const targetTokens = generateSelectorFor(injectedScript, targetElement, testIdAttributeName, omitInternalEngines);
     const bestTokens = targetTokens || cssFallback(injectedScript, targetElement);
     const selector = joinTokens(bestTokens);
     const parsedSelector = injectedScript.parseSelector(selector);
@@ -98,7 +98,7 @@ function filterRegexTokens(textCandidates: SelectorToken[][]): SelectorToken[][]
   return textCandidates.filter(c => c[0].selector[0] !== '/');
 }
 
-function generateSelectorFor(injectedScript: InjectedScript, targetElement: Element, testIdAttributeName: string): SelectorToken[] | null {
+function generateSelectorFor(injectedScript: InjectedScript, targetElement: Element, testIdAttributeName: string, omitInternalEngines?: boolean): SelectorToken[] | null {
   if (targetElement.ownerDocument.documentElement === targetElement)
     return [{ engine: 'css', selector: 'html', score: 1 }];
 
@@ -111,7 +111,9 @@ function generateSelectorFor(injectedScript: InjectedScript, targetElement: Elem
       // Do not use regex for parent elements (for performance).
       textCandidates = filterRegexTokens(textCandidates);
     }
-    const noTextCandidates = buildCandidates(injectedScript, element, testIdAttributeName, accessibleNameCache).map(token => [token]);
+    const noTextCandidates = buildCandidates(injectedScript, element, testIdAttributeName, accessibleNameCache)
+        .filter(token => !omitInternalEngines || !token.engine.startsWith('internal:'))
+        .map(token => [token]);
 
     // First check all text and non-text candidates for the element.
     let result = chooseFirstSelector(injectedScript, targetElement.ownerDocument, element, [...textCandidates, ...noTextCandidates], allowNthMatch);

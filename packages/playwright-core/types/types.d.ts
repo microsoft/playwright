@@ -276,6 +276,12 @@ export interface Page {
    * await page.addInitScript({ path: './preload.js' });
    * ```
    *
+   * ```js
+   * await page.addInitScript(mock => {
+   *   window.mock = mock;
+   * }, mock);
+   * ```
+   *
    * **NOTE** The order of evaluation of multiple scripts installed via
    * [browserContext.addInitScript(script[, arg])](https://playwright.dev/docs/api/class-browsercontext#browser-context-add-init-script)
    * and [page.addInitScript(script[, arg])](https://playwright.dev/docs/api/class-page#page-add-init-script) is not
@@ -894,9 +900,9 @@ export interface Page {
    * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also
    * emitted if the page throws an error or a warning.
    *
-   * The arguments passed into `console.log` appear as arguments on the event handler.
+   * The arguments passed into `console.log` are available on the [ConsoleMessage] event handler argument.
    *
-   * An example of handling `console` event:
+   * **Usage**
    *
    * ```js
    * page.on('console', async msg => {
@@ -905,7 +911,7 @@ export interface Page {
    *     values.push(await arg.jsonValue());
    *   console.log(...values);
    * });
-   * await page.evaluate(() => console.log('hello', 5, {foo: 'bar'}));
+   * await page.evaluate(() => console.log('hello', 5, { foo: 'bar' }));
    * ```
    *
    */
@@ -938,14 +944,17 @@ export interface Page {
    * will [freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop#never_blocking) waiting for the
    * dialog, and actions like click will never finish.
    *
+   * **Usage**
+   *
    * ```js
    * page.on('dialog', dialog => {
    *   dialog.accept();
    * });
    * ```
    *
-   * **NOTE** When no [page.on('dialog')](https://playwright.dev/docs/api/class-page#page-event-dialog) listeners are
-   * present, all dialogs are automatically dismissed.
+   * **NOTE** When no [page.on('dialog')](https://playwright.dev/docs/api/class-page#page-event-dialog) or
+   * [browserContext.on('dialog')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-dialog)
+   * listeners are present, all dialogs are automatically dismissed.
    */
   on(event: 'dialog', listener: (dialog: Dialog) => void): this;
 
@@ -1187,9 +1196,9 @@ export interface Page {
    * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also
    * emitted if the page throws an error or a warning.
    *
-   * The arguments passed into `console.log` appear as arguments on the event handler.
+   * The arguments passed into `console.log` are available on the [ConsoleMessage] event handler argument.
    *
-   * An example of handling `console` event:
+   * **Usage**
    *
    * ```js
    * page.on('console', async msg => {
@@ -1198,7 +1207,7 @@ export interface Page {
    *     values.push(await arg.jsonValue());
    *   console.log(...values);
    * });
-   * await page.evaluate(() => console.log('hello', 5, {foo: 'bar'}));
+   * await page.evaluate(() => console.log('hello', 5, { foo: 'bar' }));
    * ```
    *
    */
@@ -1231,14 +1240,17 @@ export interface Page {
    * will [freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop#never_blocking) waiting for the
    * dialog, and actions like click will never finish.
    *
+   * **Usage**
+   *
    * ```js
    * page.on('dialog', dialog => {
    *   dialog.accept();
    * });
    * ```
    *
-   * **NOTE** When no [page.on('dialog')](https://playwright.dev/docs/api/class-page#page-event-dialog) listeners are
-   * present, all dialogs are automatically dismissed.
+   * **NOTE** When no [page.on('dialog')](https://playwright.dev/docs/api/class-page#page-event-dialog) or
+   * [browserContext.on('dialog')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-dialog)
+   * listeners are present, all dialogs are automatically dismissed.
    */
   addListener(event: 'dialog', listener: (dialog: Dialog) => void): this;
 
@@ -1575,9 +1587,9 @@ export interface Page {
    * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also
    * emitted if the page throws an error or a warning.
    *
-   * The arguments passed into `console.log` appear as arguments on the event handler.
+   * The arguments passed into `console.log` are available on the [ConsoleMessage] event handler argument.
    *
-   * An example of handling `console` event:
+   * **Usage**
    *
    * ```js
    * page.on('console', async msg => {
@@ -1586,7 +1598,7 @@ export interface Page {
    *     values.push(await arg.jsonValue());
    *   console.log(...values);
    * });
-   * await page.evaluate(() => console.log('hello', 5, {foo: 'bar'}));
+   * await page.evaluate(() => console.log('hello', 5, { foo: 'bar' }));
    * ```
    *
    */
@@ -1619,14 +1631,17 @@ export interface Page {
    * will [freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop#never_blocking) waiting for the
    * dialog, and actions like click will never finish.
    *
+   * **Usage**
+   *
    * ```js
    * page.on('dialog', dialog => {
    *   dialog.accept();
    * });
    * ```
    *
-   * **NOTE** When no [page.on('dialog')](https://playwright.dev/docs/api/class-page#page-event-dialog) listeners are
-   * present, all dialogs are automatically dismissed.
+   * **NOTE** When no [page.on('dialog')](https://playwright.dev/docs/api/class-page#page-event-dialog) or
+   * [browserContext.on('dialog')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-dialog)
+   * listeners are present, all dialogs are automatically dismissed.
    */
   prependListener(event: 'dialog', listener: (dialog: Dialog) => void): this;
 
@@ -4227,9 +4242,9 @@ export interface Page {
    * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also
    * emitted if the page throws an error or a warning.
    *
-   * The arguments passed into `console.log` appear as arguments on the event handler.
+   * The arguments passed into `console.log` are available on the [ConsoleMessage] event handler argument.
    *
-   * An example of handling `console` event:
+   * **Usage**
    *
    * ```js
    * page.on('console', async msg => {
@@ -4238,7 +4253,7 @@ export interface Page {
    *     values.push(await arg.jsonValue());
    *   console.log(...values);
    * });
-   * await page.evaluate(() => console.log('hello', 5, {foo: 'bar'}));
+   * await page.evaluate(() => console.log('hello', 5, { foo: 'bar' }));
    * ```
    *
    */
@@ -4271,14 +4286,17 @@ export interface Page {
    * will [freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop#never_blocking) waiting for the
    * dialog, and actions like click will never finish.
    *
+   * **Usage**
+   *
    * ```js
    * page.on('dialog', dialog => {
    *   dialog.accept();
    * });
    * ```
    *
-   * **NOTE** When no [page.on('dialog')](https://playwright.dev/docs/api/class-page#page-event-dialog) listeners are
-   * present, all dialogs are automatically dismissed.
+   * **NOTE** When no [page.on('dialog')](https://playwright.dev/docs/api/class-page#page-event-dialog) or
+   * [browserContext.on('dialog')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-dialog)
+   * listeners are present, all dialogs are automatically dismissed.
    */
   waitForEvent(event: 'dialog', optionsOrPredicate?: { predicate?: (dialog: Dialog) => boolean | Promise<boolean>, timeout?: number } | ((dialog: Dialog) => boolean | Promise<boolean>)): Promise<Dialog>;
 
@@ -5170,7 +5188,7 @@ export interface Frame {
    *   const browser = await firefox.launch();
    *   const page = await browser.newPage();
    *   const watchDog = page.mainFrame().waitForFunction('window.innerWidth < 100');
-   *   page.setViewportSize({width: 50, height: 50});
+   *   await page.setViewportSize({width: 50, height: 50});
    *   await watchDog;
    *   await browser.close();
    * })();
@@ -5204,7 +5222,7 @@ export interface Frame {
    *   const browser = await firefox.launch();
    *   const page = await browser.newPage();
    *   const watchDog = page.mainFrame().waitForFunction('window.innerWidth < 100');
-   *   page.setViewportSize({width: 50, height: 50});
+   *   await page.setViewportSize({width: 50, height: 50});
    *   await watchDog;
    *   await browser.close();
    * })();
@@ -7277,6 +7295,9 @@ export interface Frame {
   }): Promise<null|Response>;
 
   /**
+   * **NOTE** Never wait for timeout in production. Tests that wait for time are inherently flaky. Use [Locator] actions and web
+   * assertions that wait automatically.
+   *
    * Waits for the given `timeout` in milliseconds.
    *
    * Note that `frame.waitForTimeout()` should only be used for debugging. Tests using the timer in production are going
@@ -7515,6 +7536,48 @@ export interface BrowserContext {
   on(event: 'close', listener: (browserContext: BrowserContext) => void): this;
 
   /**
+   * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also
+   * emitted if the page throws an error or a warning.
+   *
+   * The arguments passed into `console.log` and the page are available on the [ConsoleMessage] event handler argument.
+   *
+   * **Usage**
+   *
+   * ```js
+   * context.on('console', async msg => {
+   *   const values = [];
+   *   for (const arg of msg.args())
+   *     values.push(await arg.jsonValue());
+   *   console.log(...values);
+   * });
+   * await page.evaluate(() => console.log('hello', 5, { foo: 'bar' }));
+   * ```
+   *
+   */
+  on(event: 'console', listener: (consoleMessage: ConsoleMessage) => void): this;
+
+  /**
+   * Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Listener **must**
+   * either [dialog.accept([promptText])](https://playwright.dev/docs/api/class-dialog#dialog-accept) or
+   * [dialog.dismiss()](https://playwright.dev/docs/api/class-dialog#dialog-dismiss) the dialog - otherwise the page
+   * will [freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop#never_blocking) waiting for the
+   * dialog, and actions like click will never finish.
+   *
+   * **Usage**
+   *
+   * ```js
+   * context.on('dialog', dialog => {
+   *   dialog.accept();
+   * });
+   * ```
+   *
+   * **NOTE** When no [page.on('dialog')](https://playwright.dev/docs/api/class-page#page-event-dialog) or
+   * [browserContext.on('dialog')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-dialog)
+   * listeners are present, all dialogs are automatically dismissed.
+   */
+  on(event: 'dialog', listener: (dialog: Dialog) => void): this;
+
+  /**
    * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event
    * will also fire for popup pages. See also
    * [page.on('popup')](https://playwright.dev/docs/api/class-page#page-event-popup) to receive events about popups
@@ -7595,6 +7658,16 @@ export interface BrowserContext {
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
+  once(event: 'console', listener: (consoleMessage: ConsoleMessage) => void): this;
+
+  /**
+   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
+   */
+  once(event: 'dialog', listener: (dialog: Dialog) => void): this;
+
+  /**
+   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
+   */
   once(event: 'page', listener: (page: Page) => void): this;
 
   /**
@@ -7641,6 +7714,48 @@ export interface BrowserContext {
    * - The [browser.close()](https://playwright.dev/docs/api/class-browser#browser-close) method was called.
    */
   addListener(event: 'close', listener: (browserContext: BrowserContext) => void): this;
+
+  /**
+   * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also
+   * emitted if the page throws an error or a warning.
+   *
+   * The arguments passed into `console.log` and the page are available on the [ConsoleMessage] event handler argument.
+   *
+   * **Usage**
+   *
+   * ```js
+   * context.on('console', async msg => {
+   *   const values = [];
+   *   for (const arg of msg.args())
+   *     values.push(await arg.jsonValue());
+   *   console.log(...values);
+   * });
+   * await page.evaluate(() => console.log('hello', 5, { foo: 'bar' }));
+   * ```
+   *
+   */
+  addListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => void): this;
+
+  /**
+   * Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Listener **must**
+   * either [dialog.accept([promptText])](https://playwright.dev/docs/api/class-dialog#dialog-accept) or
+   * [dialog.dismiss()](https://playwright.dev/docs/api/class-dialog#dialog-dismiss) the dialog - otherwise the page
+   * will [freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop#never_blocking) waiting for the
+   * dialog, and actions like click will never finish.
+   *
+   * **Usage**
+   *
+   * ```js
+   * context.on('dialog', dialog => {
+   *   dialog.accept();
+   * });
+   * ```
+   *
+   * **NOTE** When no [page.on('dialog')](https://playwright.dev/docs/api/class-page#page-event-dialog) or
+   * [browserContext.on('dialog')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-dialog)
+   * listeners are present, all dialogs are automatically dismissed.
+   */
+  addListener(event: 'dialog', listener: (dialog: Dialog) => void): this;
 
   /**
    * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event
@@ -7723,6 +7838,16 @@ export interface BrowserContext {
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
+  removeListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => void): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  removeListener(event: 'dialog', listener: (dialog: Dialog) => void): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
   removeListener(event: 'page', listener: (page: Page) => void): this;
 
   /**
@@ -7759,6 +7884,16 @@ export interface BrowserContext {
    * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'close', listener: (browserContext: BrowserContext) => void): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  off(event: 'console', listener: (consoleMessage: ConsoleMessage) => void): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  off(event: 'dialog', listener: (dialog: Dialog) => void): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
@@ -7809,6 +7944,48 @@ export interface BrowserContext {
    * - The [browser.close()](https://playwright.dev/docs/api/class-browser#browser-close) method was called.
    */
   prependListener(event: 'close', listener: (browserContext: BrowserContext) => void): this;
+
+  /**
+   * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also
+   * emitted if the page throws an error or a warning.
+   *
+   * The arguments passed into `console.log` and the page are available on the [ConsoleMessage] event handler argument.
+   *
+   * **Usage**
+   *
+   * ```js
+   * context.on('console', async msg => {
+   *   const values = [];
+   *   for (const arg of msg.args())
+   *     values.push(await arg.jsonValue());
+   *   console.log(...values);
+   * });
+   * await page.evaluate(() => console.log('hello', 5, { foo: 'bar' }));
+   * ```
+   *
+   */
+  prependListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => void): this;
+
+  /**
+   * Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Listener **must**
+   * either [dialog.accept([promptText])](https://playwright.dev/docs/api/class-dialog#dialog-accept) or
+   * [dialog.dismiss()](https://playwright.dev/docs/api/class-dialog#dialog-dismiss) the dialog - otherwise the page
+   * will [freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop#never_blocking) waiting for the
+   * dialog, and actions like click will never finish.
+   *
+   * **Usage**
+   *
+   * ```js
+   * context.on('dialog', dialog => {
+   *   dialog.accept();
+   * });
+   * ```
+   *
+   * **NOTE** When no [page.on('dialog')](https://playwright.dev/docs/api/class-page#page-event-dialog) or
+   * [browserContext.on('dialog')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-dialog)
+   * listeners are present, all dialogs are automatically dismissed.
+   */
+  prependListener(event: 'dialog', listener: (dialog: Dialog) => void): this;
 
   /**
    * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event
@@ -7889,7 +8066,9 @@ export interface BrowserContext {
    * await browserContext.addCookies([cookieObject1, cookieObject2]);
    * ```
    *
-   * @param cookies
+   * @param cookies Adds cookies to the browser context.
+   *
+   * For the cookie to apply to all subdomains as well, prefix domain with a dot, like this: ".example.com".
    */
   addCookies(cookies: Array<{
     name: string;
@@ -8348,6 +8527,48 @@ export interface BrowserContext {
    * - The [browser.close()](https://playwright.dev/docs/api/class-browser#browser-close) method was called.
    */
   waitForEvent(event: 'close', optionsOrPredicate?: { predicate?: (browserContext: BrowserContext) => boolean | Promise<boolean>, timeout?: number } | ((browserContext: BrowserContext) => boolean | Promise<boolean>)): Promise<BrowserContext>;
+
+  /**
+   * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also
+   * emitted if the page throws an error or a warning.
+   *
+   * The arguments passed into `console.log` and the page are available on the [ConsoleMessage] event handler argument.
+   *
+   * **Usage**
+   *
+   * ```js
+   * context.on('console', async msg => {
+   *   const values = [];
+   *   for (const arg of msg.args())
+   *     values.push(await arg.jsonValue());
+   *   console.log(...values);
+   * });
+   * await page.evaluate(() => console.log('hello', 5, { foo: 'bar' }));
+   * ```
+   *
+   */
+  waitForEvent(event: 'console', optionsOrPredicate?: { predicate?: (consoleMessage: ConsoleMessage) => boolean | Promise<boolean>, timeout?: number } | ((consoleMessage: ConsoleMessage) => boolean | Promise<boolean>)): Promise<ConsoleMessage>;
+
+  /**
+   * Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Listener **must**
+   * either [dialog.accept([promptText])](https://playwright.dev/docs/api/class-dialog#dialog-accept) or
+   * [dialog.dismiss()](https://playwright.dev/docs/api/class-dialog#dialog-dismiss) the dialog - otherwise the page
+   * will [freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop#never_blocking) waiting for the
+   * dialog, and actions like click will never finish.
+   *
+   * **Usage**
+   *
+   * ```js
+   * context.on('dialog', dialog => {
+   *   dialog.accept();
+   * });
+   * ```
+   *
+   * **NOTE** When no [page.on('dialog')](https://playwright.dev/docs/api/class-page#page-event-dialog) or
+   * [browserContext.on('dialog')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-dialog)
+   * listeners are present, all dialogs are automatically dismissed.
+   */
+  waitForEvent(event: 'dialog', optionsOrPredicate?: { predicate?: (dialog: Dialog) => boolean | Promise<boolean>, timeout?: number } | ((dialog: Dialog) => boolean | Promise<boolean>)): Promise<Dialog>;
 
   /**
    * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event
@@ -10203,10 +10424,11 @@ export interface Locator {
   /**
    * When locator points to a list of elements, returns array of locators, pointing to respective elements.
    *
-   * Note that [locator.all()](https://playwright.dev/docs/api/class-locator#locator-all) does not wait for elements to
-   * match the locator, and instead immediately returns whatever is present in the page. To avoid flakiness when
-   * elements are loaded dynamically, wait for the loading to finish before calling
-   * [locator.all()](https://playwright.dev/docs/api/class-locator#locator-all).
+   * **NOTE** [locator.all()](https://playwright.dev/docs/api/class-locator#locator-all) does not wait for elements to
+   * match the locator, and instead immediately returns whatever is present in the page.  When the list of elements
+   * changes dynamically, [locator.all()](https://playwright.dev/docs/api/class-locator#locator-all) will produce
+   * unpredictable and flaky results.  When the list of elements is stable, but loaded dynamically, wait for the full
+   * list to finish loading before calling [locator.all()](https://playwright.dev/docs/api/class-locator#locator-all).
    *
    * **Usage**
    *
@@ -10241,6 +10463,21 @@ export interface Locator {
    *
    */
   allTextContents(): Promise<Array<string>>;
+
+  /**
+   * Creates a locator that matches both this locator and the argument locator.
+   *
+   * **Usage**
+   *
+   * The following example finds a button with a specific title.
+   *
+   * ```js
+   * const button = page.getByRole('button').and(page.getByTitle('Subscribe'));
+   * ```
+   *
+   * @param locator Additional locator to match.
+   */
+  and(locator: Locator): Locator;
 
   /**
    * Calls [blur](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/blur) on the element.
@@ -15922,11 +16159,10 @@ export interface Browser extends EventEmitter {
      * Populates context with given storage state. This option can be used to initialize context with logged-in
      * information obtained via
      * [browserContext.storageState([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-storage-state).
-     * Either a path to the file with saved storage, or an object with the following fields:
      */
     storageState?: string|{
       /**
-       * cookies to set for context
+       * Cookies to set for context
        */
       cookies: Array<{
         name: string;
@@ -15934,12 +16170,13 @@ export interface Browser extends EventEmitter {
         value: string;
 
         /**
-         * domain and path are required
+         * Domain and path are required. For the cookie to apply to all subdomains as well, prefix domain with a dot, like
+         * this: ".example.com"
          */
         domain: string;
 
         /**
-         * domain and path are required
+         * Domain and path are required
          */
         path: string;
 
@@ -16196,6 +16433,11 @@ export interface ConsoleMessage {
   };
 
   /**
+   * The page that produced this console message, if any.
+   */
+  page(): Page|null;
+
+  /**
    * The text of the console message.
    */
   text(): string;
@@ -16391,6 +16633,11 @@ export interface Dialog {
    * A message displayed in the dialog.
    */
   message(): string;
+
+  /**
+   * The page that initiated this dialog, if available.
+   */
+  page(): Page|null;
 
   /**
    * Returns dialog's type, can be one of `alert`, `beforeunload`, `confirm` or `prompt`.
@@ -18207,6 +18454,11 @@ export interface Route {
     postData?: string|Buffer|Serializable;
 
     /**
+     * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
+     */
+    timeout?: number;
+
+    /**
      * If set changes the request URL. New URL must have same protocol as original one.
      */
     url?: string;
@@ -18295,7 +18547,7 @@ export interface Selectors {
    * An example of registering selector engine that queries elements based on a tag name:
    *
    * ```js
-   * const { selectors, firefox } = require('playwright');  // Or 'chromium' or 'webkit'.
+   * const { selectors, firefox } = require('@playwright/test');  // Or 'chromium' or 'webkit'.
    *
    * (async () => {
    *   // Must be a function that evaluates to a selector engine instance.
@@ -19032,11 +19284,10 @@ export interface BrowserContextOptions {
    * Populates context with given storage state. This option can be used to initialize context with logged-in
    * information obtained via
    * [browserContext.storageState([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-storage-state).
-   * Either a path to the file with saved storage, or an object with the following fields:
    */
   storageState?: string|{
     /**
-     * cookies to set for context
+     * Cookies to set for context
      */
     cookies: Array<{
       name: string;
@@ -19044,12 +19295,13 @@ export interface BrowserContextOptions {
       value: string;
 
       /**
-       * domain and path are required
+       * Domain and path are required. For the cookie to apply to all subdomains as well, prefix domain with a dot, like
+       * this: ".example.com"
        */
       domain: string;
 
       /**
-       * domain and path are required
+       * Domain and path are required
        */
       path: string;
 
@@ -19538,7 +19790,7 @@ export interface PageScreenshotOptions {
   caret?: "hide"|"initial";
 
   /**
-   * An object which specifies clipping of the resulting image. Should have the following fields:
+   * An object which specifies clipping of the resulting image.
    */
   clip?: {
     /**

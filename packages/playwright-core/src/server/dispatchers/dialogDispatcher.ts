@@ -17,13 +17,17 @@
 import type { Dialog } from '../dialog';
 import type * as channels from '@protocol/channels';
 import { Dispatcher } from './dispatcher';
-import type { PageDispatcher } from './pageDispatcher';
+import { PageDispatcher } from './pageDispatcher';
+import type { BrowserContextDispatcher } from './browserContextDispatcher';
 
-export class DialogDispatcher extends Dispatcher<Dialog, channels.DialogChannel, PageDispatcher> implements channels.DialogChannel {
+export class DialogDispatcher extends Dispatcher<Dialog, channels.DialogChannel, BrowserContextDispatcher | PageDispatcher> implements channels.DialogChannel {
   _type_Dialog = true;
 
-  constructor(scope: PageDispatcher, dialog: Dialog) {
-    super(scope, dialog, 'Dialog', {
+  constructor(scope: BrowserContextDispatcher, dialog: Dialog) {
+    const page = PageDispatcher.fromNullable(scope, dialog.page().initializedOrUndefined());
+    // Prefer scoping to the page, unless we don't have one.
+    super(page || scope, dialog, 'Dialog', {
+      page,
       type: dialog.type(),
       message: dialog.message(),
       defaultValue: dialog.defaultValue(),

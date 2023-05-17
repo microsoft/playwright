@@ -202,7 +202,7 @@ export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.
       };
       const wsEndpoint = await urlToWSEndpoint(progress, params.wsEndpoint);
 
-      const transport = await WebSocketTransport.connect(progress, wsEndpoint, wsHeaders, true);
+      const transport = await WebSocketTransport.connect(progress, wsEndpoint, wsHeaders, true, 'x-playwright-debug-log');
       const socksInterceptor = new SocksInterceptor(transport, params.exposeNetwork, params.socksProxyRedirectPortForTest);
       const pipe = new JsonPipeDispatcher(this);
       transport.onmessage = json => {

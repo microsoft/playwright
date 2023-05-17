@@ -65,9 +65,8 @@ it('should not crash when creating second context', async ({ browser }) => {
   }
 });
 
-it('should click when viewport size is larger than screen', async ({ page, browserName }) => {
+it('should click when viewport size is larger than screen', async ({ page }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22082' });
-  it.fixme(browserName === 'firefox');
   await page.setViewportSize({
     width: 3000,
     height: 3000,
@@ -79,6 +78,30 @@ it('should click when viewport size is larger than screen', async ({ page, brows
     <button style="position: absolute; right: 0; bottom: 0;">Button in the bottom-right corner</button>
   `);
   await page.locator('button').click();
+});
+
+it('should dispatch click events to oversized viewports', async ({ page }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22082' });
+  // Some prime numbers for width/height.
+  const width = 2971;
+  const height = 3067;
+  await page.setViewportSize({ width, height });
+  await page.evaluate(() => {
+    window['events'] = [];
+    window.addEventListener('click', event => window['events'].push({ x: event.clientX, y: event.clientY }), false);
+  });
+  const expectedEvents = [];
+  // Allow a little padding from the edges of viewport.
+  for (let i = 3; i < 23; ++i) {
+    const x = width - i;
+    const y = height - i;
+    expectedEvents.push({ x, y });
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    await page.mouse.up();
+  }
+  const actualEvents = await page.evaluate(() => window['events']);
+  expect(expectedEvents).toEqual(actualEvents);
 });
 
 it('should click background tab', async ({ page, server }) => {

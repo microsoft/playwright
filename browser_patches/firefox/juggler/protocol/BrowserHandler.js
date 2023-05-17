@@ -152,6 +152,12 @@ class BrowserHandler {
     this._targetRegistry.browserContextForId(browserContextId).extraHTTPHeaders = headers;
   }
 
+  ['Browser.clearCache']() {
+    // Clearing only the context cache does not work: https://bugzilla.mozilla.org/show_bug.cgi?id=1819147
+    Services.cache2.clear();
+    ChromeUtils.clearStyleSheetCache();
+  }
+
   ['Browser.setHTTPCredentials']({browserContextId, credentials}) {
     this._targetRegistry.browserContextForId(browserContextId).httpCredentials = nullToUndefined(credentials);
   }

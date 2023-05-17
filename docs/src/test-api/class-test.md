@@ -85,8 +85,7 @@ You can access all the same [Fixtures] as the test function itself, and also the
 
 **Usage**
 
-```js
-// example.spec.ts
+```js title="example.spec.ts"
 import { test, expect } from '@playwright/test';
 
 test.afterEach(async ({ page }, testInfo) => {
@@ -123,8 +122,7 @@ You can use [`method: Test.afterAll`] to teardown any resources set up in `befor
 
 **Usage**
 
-```js
-// example.spec.ts
+```js title="example.spec.ts"
 import { test, expect } from '@playwright/test';
 
 test.beforeAll(async () => {
@@ -163,8 +161,7 @@ You can use [`method: Test.afterEach`] to teardown any resources set up in `befo
 
 **Usage**
 
-```js
-// example.spec.ts
+```js title="example.spec.ts"
 import { test, expect } from '@playwright/test';
 
 test.beforeEach(async ({ page }, testInfo) => {
@@ -551,8 +548,7 @@ Extends the `test` object by defining fixtures and/or options that can be used i
 
 First define a fixture and/or an option.
 
-```js tab=js-js
-// my-test.js
+```js tab=js-js title="my-test.js"
 const base = require('@playwright/test');
 const { TodoPage } = require('./todo-page');
 
@@ -600,8 +596,7 @@ export const test = base.extend<Options & { todoPage: TodoPage }>({
 
 Then use the fixture in the test.
 
-```js
-// example.spec.ts
+```js title="example.spec.ts"
 import { test } from './my-test';
 
 test('test 1', async ({ todoPage }) => {
@@ -612,8 +607,7 @@ test('test 1', async ({ todoPage }) => {
 
 Configure the option in config file.
 
-```js tab=js-js
-// playwright.config.js
+```js tab=js-js title="playwright.config.ts"
 // @ts-check
 
 module.exports = defineConfig({
@@ -630,8 +624,7 @@ module.exports = defineConfig({
 });
 ```
 
-```js tab=js-ts
-// playwright.config.ts
+```js tab=js-ts title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 import { Options } from './my-test';
 

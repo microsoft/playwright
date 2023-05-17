@@ -28,7 +28,6 @@ import type * as api from '../../types/types';
 import { kBrowserClosedError } from '../common/errors';
 import { raceAgainstTimeout } from '../utils/timeoutRunner';
 import type { Playwright } from './playwright';
-import { debugLogger } from '../common/debugLogger';
 
 export interface BrowserServerLauncher {
   launchServer(options?: LaunchServerOptions): Promise<api.BrowserServer>;
@@ -49,10 +48,10 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
 
   // Instrumentation.
   _defaultContextOptions?: BrowserContextOptions;
+  _defaultContextTimeout?: number;
+  _defaultContextNavigationTimeout?: number;
   private _defaultLaunchOptions?: LaunchOptions;
   private _defaultConnectOptions?: ConnectOptions;
-  private _onDidCreateContext?: (context: BrowserContext) => Promise<void>;
-  private _onWillCloseContext?: (context: BrowserContext) => Promise<void>;
 
   static from(browserType: channels.BrowserTypeChannel): BrowserType {
     return (browserType as any)._object;
@@ -200,10 +199,6 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
         this._didLaunchBrowser(browser, {}, logger);
         browser._shouldCloseConnectionOnClose = true;
         browser._connectHeaders = connectHeaders;
-        for (const header of connectHeaders) {
-          if (header.name === 'x-playwright-debug-log')
-            debugLogger.log('browser', header.value);
-        }
         browser.on(Events.Browser.Disconnected, closePipe);
         return browser;
       }, deadline ? deadline - monotonicTime() : 0);
@@ -254,11 +249,15 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     context._browserType = this;
     this._contexts.add(context);
     context._setOptions(contextOptions, browserOptions);
-    await this._onDidCreateContext?.(context);
+    if (this._defaultContextTimeout !== undefined)
+      context.setDefaultTimeout(this._defaultContextTimeout);
+    if (this._defaultContextNavigationTimeout !== undefined)
+      context.setDefaultNavigationTimeout(this._defaultContextNavigationTimeout);
+    await this._instrumentation.onDidCreateBrowserContext(context);
   }
 
   async _willCloseContext(context: BrowserContext) {
     this._contexts.delete(context);
-    await this._onWillCloseContext?.(context);
+    await this._instrumentation.onWillCloseBrowserContext(context);
   }
 }

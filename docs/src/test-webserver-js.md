@@ -9,7 +9,7 @@ Playwright comes with a `webserver` option in the config file which gives you th
 
 Use the `webserver` property in your Playwright config to launch a development web server during the tests.
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -28,12 +28,14 @@ export default defineConfig({
 | `command`| Shell command to start the local dev server of your app. |
 | `url`| URL of your http server that is expected to return a 2xx, 3xx, 400, 401, 402, or 403 status code when the server is ready to accept connections. |
 | `reuseExistingServer`| If `true`, it will re-use an existing server on the url when available. If no server is running on that url, it will run the command to start a new server. If `false`, it will throw if an existing process is listening on the url. To see the stdout, you can set the `DEBUG=pw:webserver` environment variable. |
+| `stdout` | If `"pipe"`, it will pipe the stdout of the command to the process stdout. If `"ignore"`, it will ignore the stdout of the command. Default to `"ignore"`. |
+| `stderr` | Whether to pipe the stderr of the command to the process stderr or ignore it. Defaults to `"pipe"`. |
 
 ## Adding a server timeout
 
 Webservers can sometimes take longer to boot up. In this case, you can increase the timeout to wait for the server to start.
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -55,7 +57,7 @@ It is also recommended to specify the `baseURL` in the `use: {}` section of your
 
 When using [`method: Page.goto`], [`method: Page.route`], [`method: Page.waitForURL`], [`method: Page.waitForRequest`], or [`method: Page.waitForResponse`] it takes the base URL in consideration by using the [`URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor for building the corresponding URL. For Example, by setting the baseURL to `http://127.0.0.1:3000` and navigating to `/login` in your tests, Playwright will run the test using `http://127.0.0.1:3000/login`.
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -75,8 +77,7 @@ export default defineConfig({
 
 Now you can use a relative path when navigating the page:
 
-```js
-// test.spec.js
+```js title="test.spec.ts"
 import { test } from '@playwright/test';
 
 test('test', async ({ page }) => {
@@ -90,7 +91,7 @@ test('test', async ({ page }) => {
 Multiple web servers (or background processes) can be launched simultaneously by providing an array of `webServer` configurations. See [`property: TestConfig.webServer`] for more info.
 
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({

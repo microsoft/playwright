@@ -325,51 +325,6 @@ it('should return raw headers', async ({ context, page, server }) => {
   expect(response.headers()['name-b']).toBe('v4');
 });
 
-it('should work with context level proxy', async ({ browserType, contextOptions, server, proxyServer }) => {
-  server.setRoute('/target.html', async (req, res) => {
-    res.end('<title>Served by the proxy</title>');
-  });
-
-  const browser = await browserType.launch({
-    proxy: { server: 'http://per-context' }
-  });
-
-  try {
-    proxyServer.forwardTo(server.PORT);
-    const context = await browser.newContext({
-      ...contextOptions,
-      proxy: { server: `localhost:${proxyServer.PORT}` }
-    });
-
-    const [request, response] = await Promise.all([
-      server.waitForRequest('/target.html'),
-      context.request.get(`http://non-existent.com/target.html`)
-    ]);
-    expect(response.status()).toBe(200);
-    expect(request.url).toBe('/target.html');
-  } finally {
-    await browser.close();
-  }
-});
-
-it('should pass proxy credentials', async ({ browserType, server, proxyServer }) => {
-  proxyServer.forwardTo(server.PORT);
-  let auth;
-  proxyServer.setAuthHandler(req => {
-    auth = req.headers['proxy-authorization'];
-    return !!auth;
-  });
-  const browser = await browserType.launch({
-    proxy: { server: `localhost:${proxyServer.PORT}`, username: 'user', password: 'secret' }
-  });
-  const context = await browser.newContext();
-  const response = await context.request.get('http://non-existent.com/simple.json');
-  expect(proxyServer.connectHosts).toContain('non-existent.com:80');
-  expect(auth).toBe('Basic ' + Buffer.from('user:secret').toString('base64'));
-  expect(await response.json()).toEqual({ foo: 'bar' });
-  await browser.close();
-});
-
 it('should work with http credentials', async ({ context, server }) => {
   server.setAuth('/empty.html', 'user', 'pass');
 

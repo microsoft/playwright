@@ -1,19 +1,47 @@
 import { test, expect } from '@playwright/experimental-ct-vue';
 import Counter from '@/components/Counter.vue';
 
-test('renderer and keep the component instance intact', async ({ mount }) => {
-  const component = await mount<{ count: number }>(Counter, {
-    props: {
-      count: 9001,
+test('update props without remounting', async ({ mount }) => {
+  const component = await mount(Counter, {
+    props: { count: 9001 },
+  });
+  await expect(component.getByTestId('props')).toContainText('9001');
+
+  await component.update({
+    props: { count: 1337 },
+  });
+  await expect(component).not.toContainText('9001');
+  await expect(component.getByTestId('props')).toContainText('1337');
+
+  await expect(component.getByTestId('remount-count')).toContainText('1');
+});
+
+test('update event listeners without remounting', async ({ mount }) => {
+  const component = await mount(Counter);
+
+  const messages: string[] = [];
+  await component.update({
+    on: {
+      submit: (count: string) => messages.push(count),
     },
   });
-  await expect(component.getByTestId('rerender-count')).toContainText('9001');
+  await component.click();
+  expect(messages).toEqual(['hello']);
 
-  await component.update({ props: { count: 1337 } });
-  await expect(component.getByTestId('rerender-count')).toContainText('1337');
+  await expect(component.getByTestId('remount-count')).toContainText('1');
+});
 
-  await component.update({ props: { count: 42 } });
-  await expect(component.getByTestId('rerender-count')).toContainText('42');
+test('update slots without remounting', async ({ mount }) => {
+  const component = await mount(Counter, {
+    slots: { default: 'Default Slot' },
+  });
+  await expect(component).toContainText('Default Slot');
+
+  await component.update({
+    slots: { main: 'Test Slot' },
+  });
+  await expect(component).not.toContainText('Default Slot');
+  await expect(component).toContainText('Test Slot');
 
   await expect(component.getByTestId('remount-count')).toContainText('1');
 });

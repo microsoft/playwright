@@ -264,7 +264,7 @@ page.route("**/*", route -> {
 
 ```python async
 # Handle GET requests.
-def handle_post(route):
+def handle_get(route):
     if route.request.method != "GET":
         route.fallback()
         return
@@ -285,7 +285,7 @@ await page.route("**/*", handle_post)
 
 ```python sync
 # Handle GET requests.
-def handle_post(route):
+def handle_get(route):
     if route.request.method != "GET":
         route.fallback()
         return
@@ -502,6 +502,12 @@ If set changes the request URL. New URL must have same protocol as original one.
 
 Maximum number of request redirects that will be followed automatically. An error will be thrown if the number is exceeded.
 Defaults to `20`. Pass `0` to not follow redirects.
+
+### option: Route.fetch.timeout
+* since: v1.33
+- `timeout` <[float]>
+
+Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
 
 ### option: Route.fetch.method
 * since: v1.29

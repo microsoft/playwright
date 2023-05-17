@@ -224,7 +224,7 @@ test('should load esm when package.json has type module', async ({ runInlineTest
   expect(result.passed).toBe(1);
 });
 
-test('should load esm config files', async ({ runInlineTest }) => {
+test('should load mjs config file', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.mjs': `
       import * as fs from 'fs';
@@ -242,9 +242,25 @@ test('should load esm config files', async ({ runInlineTest }) => {
   expect(result.passed).toBe(1);
 });
 
-test('should load ts from esm when package.json has type module', async ({ runInlineTest, nodeVersion }) => {
-  // We only support experimental esm mode on Node 16+
-  test.skip(nodeVersion.major < 16);
+test('should load mts config file', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.mts': `
+      import * as fs from 'fs';
+      export default { projects: [{name: 'foo'}] };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('check project name', ({}, testInfo) => {
+        expect(testInfo.project.name).toBe('foo');
+      });
+    `
+  });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
+test('should load ts from esm when package.json has type module', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.js': `
       import * as fs from 'fs';
@@ -424,9 +440,7 @@ test('should work with cross-imports - 2', async ({ runInlineTest }) => {
   expect(result.output).toContain('TEST-2');
 });
 
-test('should load web server w/o esm loader in esm module', async ({ runInlineTest, nodeVersion }) => {
-  // We only support experimental esm mode on Node 16+
-  test.skip(nodeVersion.major < 16);
+test('should load web server w/o esm loader in esm module', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       export default {
@@ -471,6 +485,33 @@ test('should load a jsx/tsx files', async ({ runInlineTest }) => {
     `
   });
   expect(passed).toBe(2);
+  expect(exitCode).toBe(0);
+});
+
+test('should load jsx with top-level component', async ({ runInlineTest }) => {
+  const { exitCode, passed } = await runInlineTest({
+    'a.spec.tsx': `
+      import { test, expect } from '@playwright/test';
+      const component = <div>Hello <span>world</span></div>;
+      test('succeeds', () => {
+        expect(component).toEqual({
+          type: 'div',
+          props: {
+            children: [
+              'Hello ',
+              {
+                type: 'span',
+                props: {
+                  children: 'world'
+                },
+              }
+            ]
+          },
+        });
+      });
+    `,
+  });
+  expect(passed).toBe(1);
   expect(exitCode).toBe(0);
 });
 
@@ -605,9 +646,126 @@ test('should import export assignment from ts', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
 });
 
-test('should support node imports', async ({ runInlineTest, nodeVersion }) => {
-  // We only support experimental esm mode on Node 16+
-  test.skip(nodeVersion.major < 16);
+test('should resolve no-extension import to .ts file in non-ESM mode', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      import { gimmeAOne } from './playwright-utils';
+      test('pass', ({}) => {
+        expect(gimmeAOne()).toBe(1);
+      });
+    `,
+    'playwright-utils.ts': `
+      export function gimmeAOne() {
+        return 1;
+      }
+    `,
+  });
+  expect(result.passed).toBe(1);
+  expect(result.exitCode).toBe(0);
+});
+
+test('should resolve no-extension import to .tsx file in non-ESM mode', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      import { gimmeAOne } from './playwright-utils';
+      test('pass', ({}) => {
+        expect(gimmeAOne()).toBe(1);
+      });
+    `,
+    'playwright-utils.tsx': `
+      export function gimmeAOne() {
+        return 1;
+      }
+    `,
+  });
+  expect(result.passed).toBe(1);
+  expect(result.exitCode).toBe(0);
+});
+
+test('should resolve no-extension import to .jsx file in non-ESM mode', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      import { gimmeAOne } from './playwright-utils';
+      test('pass', ({}) => {
+        expect(gimmeAOne()).toBe(1);
+      });
+    `,
+    'playwright-utils.jsx': `
+      export function gimmeAOne() {
+        return 1;
+      }
+    `,
+  });
+  expect(result.passed).toBe(1);
+  expect(result.exitCode).toBe(0);
+});
+
+test('should not resolve .mjs import to .ts file in non-ESM mode', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      import { gimmeAOne } from './playwright-utils.mjs';
+      test('pass', ({}) => {
+        expect(gimmeAOne()).toBe(1);
+      });
+    `,
+    'playwright-utils.ts': `
+      export function gimmeAOne() {
+        return 1;
+      }
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain(`Cannot find module './playwright-utils.mjs'`);
+});
+
+test('should resolve absolute .js import to .ts file', async ({ runInlineTest }) => {
+  const filePath = test.info().outputPath('playwright-utils.js');
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      import { gimmeAOne } from ${JSON.stringify(filePath)};
+      test('pass', ({}) => {
+        expect(gimmeAOne()).toBe(1);
+      });
+    `,
+    'playwright-utils.ts': `
+      export function gimmeAOne() {
+        return 1;
+      }
+    `,
+  });
+  expect(result.passed).toBe(1);
+  expect(result.exitCode).toBe(0);
+});
+
+test('should resolve no-extension import of module into .ts file', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'node_modules/playwright-utils/index.js': `
+      exports.foo = 42;
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      import { gimmeAOne } from './playwright-utils';
+      test('pass', ({}) => {
+        expect(gimmeAOne()).toBe(1);
+      });
+    `,
+    'playwright-utils.ts': `
+      import { foo } from 'playwright-utils';
+      export function gimmeAOne() {
+        return foo - 41;
+      }
+    `,
+  });
+  expect(result.passed).toBe(1);
+  expect(result.exitCode).toBe(0);
+});
+
+test('should support node imports', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': 'export default {}',
     'package.json': JSON.stringify({
@@ -656,7 +814,7 @@ test('should complain when one test file imports another', async ({ runInlineTes
   expect(result.output).toContain(`test file "a.test.ts" should not import test file "b.test.ts"`);
 });
 
-test('should support dynamic import', async ({ runInlineTest, nodeVersion }) => {
+test('should support dynamic import', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'helper.ts': `
       module.exports.foo = 'foo';

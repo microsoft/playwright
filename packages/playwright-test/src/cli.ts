@@ -21,22 +21,18 @@ import fs from 'fs';
 import path from 'path';
 import { Runner } from './runner/runner';
 import { stopProfiling, startProfiling } from 'playwright-core/lib/utils';
-import { experimentalLoaderOption, fileIsModule } from './util';
+import { experimentalLoaderOption, fileIsModule, serializeError } from './util';
 import { showHTMLReport } from './reporters/html';
-import { createMergedReport } from './reporters/blob';
-import { ConfigLoader, kDefaultConfigFiles, resolveConfigFile } from './common/configLoader';
+import { createMergedReport } from './reporters/merge';
+import { ConfigLoader, resolveConfigFile } from './common/configLoader';
 import type { ConfigCLIOverrides } from './common/ipc';
-import type { FullResult } from '../reporter';
+import type { FullResult, TestError } from '../reporter';
 import type { TraceMode } from '../types/test';
 import { builtInReporters, defaultReporter, defaultTimeout } from './common/config';
 import type { FullConfigInternal } from './common/config';
-
-export function addTestCommands(program: Command) {
-  addTestCommand(program);
-  addShowReportCommand(program);
-  addListFilesCommand(program);
-  addMergeReportsCommand(program);
-}
+import program from 'playwright-core/lib/cli/program';
+import type { ReporterDescription } from '..';
+import { prepareErrorStack } from './reporters/base';
 
 function addTestCommand(program: Command) {
   const command = program.command('test [test-filter...]');
@@ -65,7 +61,7 @@ Examples:
 function addListFilesCommand(program: Command) {
   const command = program.command('list-files [file-filter...]', { hidden: true });
   command.description('List files with Playwright Test tests');
-  command.option('-c, --config <file>', `Configuration file, or a test directory with optional ${kDefaultConfigFiles.map(file => `"${file}"`).join('/')}`);
+  command.option('-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`);
   command.option('--project <project-name...>', `Only run tests from the specified list of projects (default: list all projects)`);
   command.action(async (args, opts) => {
     try {
@@ -92,6 +88,8 @@ Examples:
   $ npx playwright show-report playwright-report`);
 }
 
+const kAttachmentModes: string[] = ['local', 'missing'];
+
 function addMergeReportsCommand(program: Command) {
   const command = program.command('merge-reports [dir]', { hidden: true });
   command.description('merge multiple blob reports (for sharded tests) into a single report');
@@ -104,7 +102,8 @@ function addMergeReportsCommand(program: Command) {
     }
   });
   command.option('-c, --config <file>', `Configuration file. Can be used to specify additional configuration for the output report.`);
-  command.option('--reporter <reporter>', 'Output report type', 'list');
+  command.option('--reporter <reporter>', `Reporter to use, comma-separated, can be ${builtInReporters.map(name => `"${name}"`).join(', ')} (default: "${defaultReporter}")`);
+  command.option('--attachments <mode>', `Whether the attachments are available locally. Supported values are  ${kAttachmentModes.map(name => `"${name}"`).join(', ')} (default: "local")`);
   command.addHelpText('afterAll', `
 Arguments [dir]:
   Directory containing blob reports.
@@ -154,20 +153,29 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
 
 async function listTestFiles(opts: { [key: string]: any }) {
   // Redefine process.stdout.write in case config decides to pollute stdio.
-  const write = process.stdout.write.bind(process.stdout);
+  const stdoutWrite = process.stdout.write.bind(process.stdout);
   process.stdout.write = (() => {}) as any;
+  process.stderr.write = (() => {}) as any;
   const configFileOrDirectory = opts.config ? path.resolve(process.cwd(), opts.config) : process.cwd();
   const resolvedConfigFile = resolveConfigFile(configFileOrDirectory)!;
   if (restartWithExperimentalTsEsm(resolvedConfigFile))
     return;
 
-  const configLoader = new ConfigLoader();
-  const config = await configLoader.loadConfigFile(resolvedConfigFile);
-  const runner = new Runner(config);
-  const report = await runner.listTestFiles(opts.project);
-  write(JSON.stringify(report), () => {
-    process.exit(0);
-  });
+  try {
+    const configLoader = new ConfigLoader();
+    const config = await configLoader.loadConfigFile(resolvedConfigFile);
+    const runner = new Runner(config);
+    const report = await runner.listTestFiles(opts.project);
+    stdoutWrite(JSON.stringify(report), () => {
+      process.exit(0);
+    });
+  } catch (e) {
+    const error: TestError = serializeError(e);
+    error.location = prepareErrorStack(e.stack).location;
+    stdoutWrite(JSON.stringify({ error }), () => {
+      process.exit(0);
+    });
+  }
 }
 
 async function mergeReports(reportDir: string | undefined, opts: { [key: string]: any }) {
@@ -184,8 +192,20 @@ async function mergeReports(reportDir: string | undefined, opts: { [key: string]
 
   const configLoader = new ConfigLoader();
   const config = await (configFile ? configLoader.loadConfigFile(configFile) : configLoader.loadEmptyConfig(process.cwd()));
-  const dir = path.resolve(process.cwd(), reportDir || 'playwright-report');
-  await createMergedReport(config, dir, opts.reporter || 'list');
+  const dir = path.resolve(process.cwd(), reportDir || '');
+  if (!(await fs.promises.stat(dir)).isDirectory())
+    throw new Error('Directory does not exist: ' + dir);
+  let reporterDescriptions: ReporterDescription[] | undefined = resolveReporterOption(opts.reporter);
+  if (!reporterDescriptions && configFile)
+    reporterDescriptions = config.config.reporter;
+  if (!reporterDescriptions)
+    reporterDescriptions = [[defaultReporter]];
+  if (opts.attachments) {
+    if (!kAttachmentModes.includes(opts.attachments))
+      throw new Error(`Invalid --attachments value "${opts.attachments}", must be one of ${kAttachmentModes.map(name => `"${name}"`).join(', ')}.`);
+  }
+  const resolveAttachmentPaths = opts.attachments !== 'missing';
+  await createMergedReport(config, dir, reporterDescriptions!, resolveAttachmentPaths);
 }
 
 function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrides {
@@ -199,7 +219,7 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
     quiet: options.quiet ? options.quiet : undefined,
     repeatEach: options.repeatEach ? parseInt(options.repeatEach, 10) : undefined,
     retries: options.retries ? parseInt(options.retries, 10) : undefined,
-    reporter: (options.reporter && options.reporter.length) ? options.reporter.split(',').map((r: string) => [resolveReporter(r)]) : undefined,
+    reporter: resolveReporterOption(options.reporter),
     shard: shardPair ? { current: shardPair[0], total: shardPair[1] } : undefined,
     timeout: options.timeout ? parseInt(options.timeout, 10) : undefined,
     ignoreSnapshots: options.ignoreSnapshots ? !!options.ignoreSnapshots : undefined,
@@ -237,6 +257,12 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
   return overrides;
 }
 
+function resolveReporterOption(reporter?: string): ReporterDescription[] | undefined {
+  if (!reporter || !reporter.length)
+    return undefined;
+  return reporter.split(',').map((r: string) => [resolveReporter(r)]);
+}
+
 function resolveReporter(id: string) {
   if (builtInReporters.includes(id as any))
     return id;
@@ -260,7 +286,7 @@ function restartWithExperimentalTsEsm(configFile: string | null): boolean {
   if (!fileIsModule(configFile))
     return false;
   const NODE_OPTIONS = (process.env.NODE_OPTIONS || '') + experimentalLoaderOption();
-  const innerProcess = require('child_process').fork(require.resolve('playwright-core/cli'), process.argv.slice(2), {
+  const innerProcess = require('child_process').fork(require.resolve('./cli'), process.argv.slice(2), {
     env: {
       ...process.env,
       NODE_OPTIONS,
@@ -279,7 +305,7 @@ const kTraceModes: TraceMode[] = ['on', 'off', 'on-first-retry', 'on-all-retries
 
 const testOptions: [string, string][] = [
   ['--browser <browser>', `Browser to use for tests, one of "all", "chromium", "firefox" or "webkit" (default: "chromium")`],
-  ['-c, --config <file>', `Configuration file, or a test directory with optional ${kDefaultConfigFiles.map(file => `"${file}"`).join('/')}`],
+  ['-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`],
   ['--debug', `Run tests with Playwright Inspector. Shortcut for "PWDEBUG=1" environment variable and "--timeout=0 --max-failures=1 --headed --workers=1" options`],
   ['--forbid-only', `Fail if test.only is called (default: false)`],
   ['--fully-parallel', `Run all tests in parallel (default: false)`],
@@ -306,3 +332,10 @@ const testOptions: [string, string][] = [
   ['-j, --workers <workers>', `Number of concurrent workers or percentage of logical CPU cores, use 1 to run in a single worker (default: 50%)`],
   ['-x', `Stop after the first failure`],
 ];
+
+addTestCommand(program);
+addShowReportCommand(program);
+addListFilesCommand(program);
+addMergeReportsCommand(program);
+
+program.parse(process.argv);

@@ -18,7 +18,7 @@ import { colors, rimraf } from 'playwright-core/lib/utilsBundle';
 import util from 'util';
 import { debugTest, formatLocation, relativeFilePath, serializeError } from '../util';
 import type { TestBeginPayload, TestEndPayload, RunPayload, DonePayload, WorkerInitParams, TeardownErrorsPayload, TestOutputPayload } from '../common/ipc';
-import { setCurrentTestInfo, setIsWorkerProcess } from '../common/globals';
+import { setCurrentTestInfo, setIsWorkerProcess, currentTestInstrumentation } from '../common/globals';
 import { ConfigLoader } from '../common/configLoader';
 import type { Suite, TestCase } from '../common/test';
 import type { Annotation, FullConfigInternal, FullProjectInternal } from '../common/config';
@@ -322,9 +322,12 @@ export class WorkerMain extends ProcessRunner {
 
       let testFunctionParams: object | null = null;
       await testInfo._runAsStep({ category: 'hook', title: 'Before Hooks' }, async step => {
+        testInfo._beforeHooksStep = step;
         // Note: wrap all preparation steps together, because failure/skip in any of them
         // prevents further setup and/or test from running.
         const beforeHooksError = await testInfo._runAndFailOnError(async () => {
+          await currentTestInstrumentation()?.willStartTest(testInfo);
+
           // Run "beforeAll" modifiers on parent suites, unless already run during previous tests.
           for (const suite of suites) {
             if (this._extraSuiteAnnotations.has(suite))
@@ -390,23 +393,17 @@ export class WorkerMain extends ProcessRunner {
       testInfo._timeoutManager.setCurrentRunnable({ type: 'afterEach', slot: afterHooksSlot });
     }
     await testInfo._runAsStep({ category: 'hook', title: 'After Hooks' }, async step => {
+      testInfo._afterHooksStep = step;
       let firstAfterHooksError: TestInfoError | undefined;
       await testInfo._runWithTimeout(async () => {
         // Note: do not wrap all teardown steps together, because failure in any of them
         // does not prevent further teardown steps from running.
 
-        // Run "immediately upon test failure" callbacks.
-        if (testInfo._isFailure()) {
-          const onFailureError = await testInfo._runAndFailOnError(async () => {
-            testInfo._timeoutManager.setCurrentRunnable({ type: 'test', slot: afterHooksSlot });
-            for (const [fn, title] of testInfo._onTestFailureImmediateCallbacks) {
-              debugTest(`on-failure callback started`);
-              await testInfo._runAsStep({ category: 'hook', title }, fn);
-              debugTest(`on-failure callback finished`);
-            }
-          });
-          firstAfterHooksError = firstAfterHooksError || onFailureError;
-        }
+        // Run "immediately upon test function finish" callback.
+        debugTest(`on-test-function-finish callback started`);
+        const didFinishTestFunctionError = await testInfo._runAndFailOnError(async () => await currentTestInstrumentation()?.didFinishTestFunction(testInfo));
+        firstAfterHooksError = firstAfterHooksError || didFinishTestFunctionError;
+        debugTest(`on-test-function-finish callback finished`);
 
         // Run "afterEach" hooks, unless we failed at beforeAll stage.
         if (shouldRunAfterEachHooks) {
@@ -414,23 +411,23 @@ export class WorkerMain extends ProcessRunner {
           firstAfterHooksError = firstAfterHooksError || afterEachError;
         }
 
+        // Teardown test-scoped fixtures. Attribute to 'test' so that users understand
+        // they should probably increase the test timeout to fix this issue.
+        testInfo._timeoutManager.setCurrentRunnable({ type: 'test', slot: afterHooksSlot });
+        debugTest(`tearing down test scope started`);
+        const testScopeError = await testInfo._runAndFailOnError(() => this._fixtureRunner.teardownScope('test', testInfo._timeoutManager));
+        debugTest(`tearing down test scope finished`);
+        firstAfterHooksError = firstAfterHooksError || testScopeError;
+
         // Run "afterAll" hooks for suites that are not shared with the next test.
         // In case of failure the worker will be stopped and we have to make sure that afterAll
-        // hooks run before test fixtures teardown.
+        // hooks run before worker fixtures teardown.
         for (const suite of reversedSuites) {
           if (!nextSuites.has(suite) || testInfo._isFailure()) {
             const afterAllError = await this._runAfterAllHooksForSuite(suite, testInfo);
             firstAfterHooksError = firstAfterHooksError || afterAllError;
           }
         }
-
-        // Teardown test-scoped fixtures. Attribute to 'test' so that users understand
-        // they should probably increate the test timeout to fix this issue.
-        testInfo._timeoutManager.setCurrentRunnable({ type: 'test', slot: afterHooksSlot });
-        debugTest(`tearing down test scope started`);
-        const testScopeError = await testInfo._runAndFailOnError(() => this._fixtureRunner.teardownScope('test', testInfo._timeoutManager));
-        debugTest(`tearing down test scope finished`);
-        firstAfterHooksError = firstAfterHooksError || testScopeError;
       });
 
       if (testInfo._isFailure())
@@ -444,10 +441,7 @@ export class WorkerMain extends ProcessRunner {
         // Give it more time for the full cleanup.
         await testInfo._runWithTimeout(async () => {
           debugTest(`running full cleanup after the failure`);
-          for (const suite of reversedSuites) {
-            const afterAllError = await this._runAfterAllHooksForSuite(suite, testInfo);
-            firstAfterHooksError = firstAfterHooksError || afterAllError;
-          }
+
           const teardownSlot = { timeout: this._project.project.timeout, elapsed: 0 };
           // Attribute to 'test' so that users understand they should probably increate the test timeout to fix this issue.
           testInfo._timeoutManager.setCurrentRunnable({ type: 'test', slot: teardownSlot });
@@ -455,6 +449,12 @@ export class WorkerMain extends ProcessRunner {
           const testScopeError = await testInfo._runAndFailOnError(() => this._fixtureRunner.teardownScope('test', testInfo._timeoutManager));
           debugTest(`tearing down test scope finished`);
           firstAfterHooksError = firstAfterHooksError || testScopeError;
+
+          for (const suite of reversedSuites) {
+            const afterAllError = await this._runAfterAllHooksForSuite(suite, testInfo);
+            firstAfterHooksError = firstAfterHooksError || afterAllError;
+          }
+
           // Attribute to 'teardown' because worker fixtures are not perceived as a part of a test.
           testInfo._timeoutManager.setCurrentRunnable({ type: 'teardown', slot: teardownSlot });
           debugTest(`tearing down worker scope started`);
@@ -463,9 +463,12 @@ export class WorkerMain extends ProcessRunner {
           firstAfterHooksError = firstAfterHooksError || workerScopeError;
         });
       }
+
       if (firstAfterHooksError)
         step.complete({ error: firstAfterHooksError });
     });
+
+    await testInfo._runAndFailOnError(async () => await currentTestInstrumentation()?.didFinishTest(testInfo));
 
     this._currentTest = null;
     setCurrentTestInfo(null);
@@ -513,7 +516,15 @@ export class WorkerMain extends ProcessRunner {
           category: 'hook',
           title: `${hook.type} hook`,
           location: hook.location,
-        }, () => this._fixtureRunner.resolveParametersAndRunFunction(hook.fn, testInfo, 'all-hooks-only'));
+        }, async () => {
+          try {
+            await this._fixtureRunner.resolveParametersAndRunFunction(hook.fn, testInfo, 'all-hooks-only');
+          } finally {
+            // Each beforeAll hook has its own scope for test fixtures. Attribute to the same runnable and timeSlot.
+            // Note: we must teardown even after beforeAll fails, because we'll run more beforeAlls.
+            await this._fixtureRunner.teardownScope('test', testInfo._timeoutManager);
+          }
+        });
       } catch (e) {
         // Always run all the hooks, and capture the first error.
         beforeAllError = beforeAllError || e;
@@ -541,7 +552,15 @@ export class WorkerMain extends ProcessRunner {
           category: 'hook',
           title: `${hook.type} hook`,
           location: hook.location,
-        }, () => this._fixtureRunner.resolveParametersAndRunFunction(hook.fn, testInfo, 'all-hooks-only'));
+        }, async () => {
+          try {
+            await this._fixtureRunner.resolveParametersAndRunFunction(hook.fn, testInfo, 'all-hooks-only');
+          } finally {
+            // Each afterAll hook has its own scope for test fixtures. Attribute to the same runnable and timeSlot.
+            // Note: we must teardown even after afterAll fails, because we'll run more afterAlls.
+            await this._fixtureRunner.teardownScope('test', testInfo._timeoutManager);
+          }
+        });
       });
       firstError = firstError || afterAllError;
       debugTest(`${hook.type} hook at "${formatLocation(hook.location)}" finished`);

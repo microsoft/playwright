@@ -24,12 +24,11 @@ export type JsonLocation = Location;
 export type JsonError = string;
 export type JsonStackFrame = { file: string, line: number, column: number };
 
-export type JsonConfig = {
-  rootDir: string;
-  configFile: string | undefined;
+export type JsonConfig = Pick<FullConfig, 'configFile' | 'globalTimeout' | 'maxFailures' | 'metadata' | 'rootDir' | 'version' | 'workers'> & {
   listOnly: boolean;
-  workers: number;
 };
+
+export type MergeReporterConfig = Pick<FullConfig, 'configFile' | 'reportSlowTests' | 'quiet' >;
 
 export type JsonPattern = {
   s?: string;
@@ -48,6 +47,7 @@ export type JsonProject = {
   repeatEach: number;
   retries: number;
   suites: JsonSuite[];
+  teardown?: string;
   testDir: string;
   testIgnore: JsonPattern[];
   testMatch: JsonPattern[];
@@ -121,11 +121,13 @@ export class TeleReporterReceiver {
   private _tests = new Map<string, TeleTestCase>();
   private _rootDir!: string;
   private _clearPreviousResultsWhenTestBegins: boolean = false;
+  private _reportConfig: MergeReporterConfig | undefined;
 
-  constructor(pathSeparator: string, reporter: Reporter) {
+  constructor(pathSeparator: string, reporter: Reporter, reportConfig?: MergeReporterConfig) {
     this._rootSuite = new TeleSuite('', 'root');
     this._pathSeparator = pathSeparator;
     this._reporter = reporter;
+    this._reportConfig = reportConfig;
   }
 
   dispatch(message: JsonEvent): Promise<void> | undefined {
@@ -281,11 +283,13 @@ export class TeleReporterReceiver {
   }
 
   private _parseConfig(config: JsonConfig): FullConfig {
-    const fullConfig = baseFullConfig;
-    fullConfig.rootDir = config.rootDir;
-    fullConfig.configFile = config.configFile;
-    fullConfig.workers = config.workers;
-    return fullConfig;
+    const result = { ...baseFullConfig, ...config };
+    if (this._reportConfig) {
+      result.configFile = this._reportConfig.configFile;
+      result.reportSlowTests = this._reportConfig.reportSlowTests;
+      result.quiet = this._reportConfig.quiet;
+    }
+    return result;
   }
 
   private _parseProject(project: JsonProject): TeleFullProject {
@@ -303,6 +307,7 @@ export class TeleReporterReceiver {
       grep: parseRegexPatterns(project.grep) as RegExp[],
       grepInvert: parseRegexPatterns(project.grepInvert) as RegExp[],
       dependencies: project.dependencies,
+      teardown: project.teardown,
       snapshotDir: this._absolutePath(project.snapshotDir),
       use: {},
     };

@@ -84,7 +84,7 @@ export class FullConfigInternal {
       maxFailures: takeFirst(configCLIOverrides.maxFailures, config.maxFailures, 0),
       metadata: takeFirst(config.metadata, {}),
       preserveOutput: takeFirst(config.preserveOutput, 'always'),
-      reporter: takeFirst(configCLIOverrides.reporter ? toReporters(configCLIOverrides.reporter as any) : undefined, resolveReporters(config.reporter, configDir), [[defaultReporter]]),
+      reporter: takeFirst(configCLIOverrides.reporter, resolveReporters(config.reporter, configDir), [[defaultReporter]]),
       reportSlowTests: takeFirst(config.reportSlowTests, { max: 5, threshold: 15000 }),
       quiet: takeFirst(configCLIOverrides.quiet, config.quiet, false),
       projects: [],
@@ -152,6 +152,7 @@ export class FullProjectInternal {
   readonly snapshotPathTemplate: string;
   id = '';
   deps: FullProjectInternal[] = [];
+  teardown: FullProjectInternal | undefined;
 
   constructor(configDir: string, config: Config, fullConfig: FullConfigInternal, projectConfig: Project, configCLIOverrides: ConfigCLIOverrides, throwawayArtifactsPath: string) {
     this.fullConfig = fullConfig;
@@ -163,17 +164,20 @@ export class FullProjectInternal {
       grep: takeFirst(projectConfig.grep, config.grep, defaultGrep),
       grepInvert: takeFirst(projectConfig.grepInvert, config.grepInvert, null),
       outputDir: takeFirst(configCLIOverrides.outputDir, pathResolve(configDir, projectConfig.outputDir), pathResolve(configDir, config.outputDir), path.join(throwawayArtifactsPath, 'test-results')),
-      repeatEach: takeFirst(configCLIOverrides.repeatEach, projectConfig.repeatEach, config.repeatEach, 1),
+      // Note: we either apply the cli override for repeatEach or not, depending on whether the
+      // project is top-level vs dependency. See collectProjectsAndTestFiles in loadUtils.
+      repeatEach: takeFirst(projectConfig.repeatEach, config.repeatEach, 1),
       retries: takeFirst(configCLIOverrides.retries, projectConfig.retries, config.retries, 0),
       metadata: takeFirst(projectConfig.metadata, config.metadata, undefined),
       name: takeFirst(projectConfig.name, config.name, ''),
       testDir,
       snapshotDir: takeFirst(pathResolve(configDir, projectConfig.snapshotDir), pathResolve(configDir, config.snapshotDir), testDir),
       testIgnore: takeFirst(projectConfig.testIgnore, config.testIgnore, []),
-      testMatch: takeFirst(projectConfig.testMatch, config.testMatch, '**/*.@(spec|test).?(m)[jt]s?(x)'),
+      testMatch: takeFirst(projectConfig.testMatch, config.testMatch, '**/*.@(spec|test).?(c|m)[jt]s?(x)'),
       timeout: takeFirst(configCLIOverrides.timeout, projectConfig.timeout, config.timeout, defaultTimeout),
       use: mergeObjects(config.use, projectConfig.use, configCLIOverrides.use),
       dependencies: projectConfig.dependencies || [],
+      teardown: projectConfig.teardown,
     };
     (this.project as any)[projectInternalSymbol] = this;
     this.fullyParallel = takeFirst(configCLIOverrides.fullyParallel, projectConfig.fullyParallel, config.fullyParallel, undefined);
@@ -205,6 +209,7 @@ function resolveReporters(reporters: Config['reporter'], rootDir: string): Repor
 }
 
 function resolveProjectDependencies(projects: FullProjectInternal[]) {
+  const teardownSet = new Set<FullProjectInternal>();
   for (const project of projects) {
     for (const dependencyName of project.project.dependencies) {
       const dependencies = projects.filter(p => p.project.name === dependencyName);
@@ -213,6 +218,26 @@ function resolveProjectDependencies(projects: FullProjectInternal[]) {
       if (dependencies.length > 1)
         throw new Error(`Project dependencies should have unique names, reading ${dependencyName}`);
       project.deps.push(...dependencies);
+    }
+    if (project.project.teardown) {
+      const teardowns = projects.filter(p => p.project.name === project.project.teardown);
+      if (!teardowns.length)
+        throw new Error(`Project '${project.project.name}' has unknown teardown project '${project.project.teardown}'`);
+      if (teardowns.length > 1)
+        throw new Error(`Project teardowns should have unique names, reading ${project.project.teardown}`);
+      const teardown = teardowns[0];
+      project.teardown = teardown;
+      teardownSet.add(teardown);
+    }
+  }
+  for (const teardown of teardownSet) {
+    if (teardown.deps.length)
+      throw new Error(`Teardown project ${teardown.project.name} must not have dependencies`);
+  }
+  for (const project of projects) {
+    for (const dep of project.deps) {
+      if (teardownSet.has(dep))
+        throw new Error(`Project ${project.project.name} must not depend on a teardown project ${dep.project.name}`);
     }
   }
 }

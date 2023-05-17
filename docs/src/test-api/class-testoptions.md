@@ -6,7 +6,7 @@ Playwright Test provides many options to configure test environment, [Browser], 
 
 These options are usually provided in the [configuration file](../test-configuration.md) through [`property: TestConfig.use`] and [`property: TestProject.use`].
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 export default defineConfig({
   use: {
@@ -20,8 +20,7 @@ export default defineConfig({
 
 Alternatively, with [`method: Test.use`] you can override some options for a file.
 
-```js
-// example.spec.ts
+```js title="example.spec.ts"
 import { test, expect } from '@playwright/test';
 
 // Run tests in this file with portrait-like viewport.
@@ -37,7 +36,7 @@ test('my portrait test', async ({ page }) => {
 
 **Usage**
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -71,8 +70,7 @@ Name of the browser that runs tests. Defaults to `'chromium'`. Most of the time 
 
 **Usage**
 
-```js
-// playwright.config.ts
+```js title="playwright.config.ts"
 import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
@@ -110,7 +108,7 @@ Learn more about [various timeouts](../test-timeouts.md).
 
 **Usage**
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -125,7 +123,7 @@ export default defineConfig({
 
 **Usage**
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -145,7 +143,7 @@ export default defineConfig({
 
 **Usage**
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -165,7 +163,7 @@ export default defineConfig({
 
 **Usage**
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -187,7 +185,7 @@ Options used to create the context, as passed to [`method: Browser.newContext`].
 
 **Usage**
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -204,7 +202,7 @@ export default defineConfig({
 
 **Usage**
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -220,7 +218,7 @@ export default defineConfig({
 
 **Usage**
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -237,7 +235,7 @@ export default defineConfig({
 
 **Usage**
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -253,7 +251,7 @@ Learn more about [geolocation](../emulation.md#color-scheme-and-media).
 
 **Usage**
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -268,7 +266,7 @@ export default defineConfig({
 
 **Usage**
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -283,7 +281,7 @@ export default defineConfig({
 
 **Usage**
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -301,7 +299,7 @@ export default defineConfig({
 
 **Usage**
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -316,7 +314,7 @@ export default defineConfig({
 
 **Usage**
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -331,7 +329,7 @@ export default defineConfig({
 
 **Usage**
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -350,7 +348,7 @@ Options used to launch the browser, as passed to [`method: BrowserType.launch`].
 
 **Usage**
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -371,7 +369,7 @@ export default defineConfig({
 
 **Usage**
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -391,7 +389,7 @@ This is a default navigation timeout, same as configured via [`method: Page.setD
 
 **Usage**
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -408,7 +406,7 @@ Learn more about [various timeouts](../test-timeouts.md).
 
 **Usage**
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -423,7 +421,7 @@ export default defineConfig({
 
 **Usage**
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -438,7 +436,7 @@ export default defineConfig({
 
 **Usage**
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -465,7 +463,7 @@ Whether to automatically capture a screenshot after each test. Defaults to `'off
 
 **Usage**
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -482,7 +480,7 @@ Learn more about [automatic screenshots](../test-configuration.md#automatic-scre
 
 **Usage**
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -499,7 +497,7 @@ Custom attribute to be used in [`method: Page.getByTestId`]. `data-testid` is us
 
 **Usage**
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -514,7 +512,7 @@ export default defineConfig({
 
 **Usage**
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -543,7 +541,7 @@ For more control, pass an object that specifies `mode` and trace features to ena
 
 **Usage**
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -560,7 +558,7 @@ Learn more about [recording trace](../test-configuration.md#record-test-trace).
 
 **Usage**
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -588,7 +586,7 @@ To control video size, pass an object with `mode` and `size` properties. If vide
 
 **Usage**
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -605,7 +603,7 @@ Learn more about [recording video](../test-configuration.md#record-video).
 
 **Usage**
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -620,7 +618,7 @@ export default defineConfig({
 
 **Usage**
 
-```js
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({

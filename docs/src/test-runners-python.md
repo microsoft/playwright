@@ -27,7 +27,7 @@ addopts = --headed --browser firefox
 - `--headed`: Run tests in headed mode (default: headless).
 - `--browser`: Run tests in a different browser `chromium`, `firefox`, or `webkit`. It can be specified multiple times (default: `chromium`).
 - `--browser-channel` [Browser channel](./browsers.md) to be used.
-- `--slowmo` Run tests with slow mo.
+- `--slowmo` Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on (default: 0).
 - `--device` [Device](./emulation.md) to be emulated.
 - `--output` Directory for artifacts produced by tests (default: `test-results`).
 - `--tracing` Whether to record a [trace](./trace-viewer.md) for each test. `on`, `off`, or `retain-on-failure` (default: `off`).
@@ -82,8 +82,7 @@ See [Running Tests](./running-tests.md) for general information on `pytest` opti
 
 ### Configure Mypy typings for auto-completion
 
-```py
-# test_my_application.py
+```py title="test_my_application.py"
 from playwright.sync_api import Page
 
 def test_visit_admin_dashboard(page: Page):
@@ -99,10 +98,11 @@ Run tests with slow mo with the `--slowmo` argument.
 pytest --slowmo 100
 ```
 
+Slows down Playwright operations by 100 milliseconds. 
+
 ### Skip test by browser
 
-```py
-# test_my_application.py
+```py title="test_my_application.py"
 import pytest
 
 @pytest.mark.skip_browser("firefox")
@@ -113,8 +113,7 @@ def test_visit_example(page):
 
 ### Run on a specific browser
 
-```py
-# conftest.py
+```py title="conftest.py"
 import pytest
 
 @pytest.mark.only_browser("chromium")
@@ -129,8 +128,7 @@ def test_visit_example(page):
 pytest --browser-channel chrome
 ```
 
-```python
-# test_my_application.py
+```python title="test_my_application.py"
 def test_example(page):
     page.goto("https://example.com")
 ```
@@ -144,8 +142,7 @@ for that which allows you to set the base url from the config, CLI arg or as a f
 pytest --base-url http://localhost:8080
 ```
 
-```py
-# test_my_application.py
+```py title="test_my_application.py"
 def test_visit_example(page):
     page.goto("/admin")
     # -> Will result in http://localhost:8080/admin
@@ -153,8 +150,7 @@ def test_visit_example(page):
 
 ### Ignore HTTPS errors
 
-```py
-# conftest.py
+```py title="conftest.py"
 import pytest
 
 @pytest.fixture(scope="session")
@@ -167,8 +163,7 @@ def browser_context_args(browser_context_args):
 
 ### Use custom viewport size
 
-```py
-# conftest.py
+```py title="conftest.py"
 import pytest
 
 @pytest.fixture(scope="session")
@@ -184,8 +179,7 @@ def browser_context_args(browser_context_args):
 
 ### Device emulation
 
-```py
-# conftest.py
+```py title="conftest.py"
 import pytest
 
 @pytest.fixture(scope="session")
@@ -201,8 +195,7 @@ Or via the CLI `--device="iPhone 11 Pro"`
 
 ### Persistent context
 
-```py
-# conftest.py
+```py title="conftest.py"
 import pytest
 from playwright.sync_api import BrowserType
 from typing import Dict

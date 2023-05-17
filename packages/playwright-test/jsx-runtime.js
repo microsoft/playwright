@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * Copyright (c) Microsoft Corporation.
  *
@@ -14,4 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-module.exports = require('./lib/cli/cli');
+
+function jsx(type, props) {
+  return {
+    type,
+    props,
+  };
+}
+
+function jsxs(type, props) {
+  return {
+    type,
+    props,
+  };
+}
+
+module.exports = {
+  jsx,
+  jsxs,
+};

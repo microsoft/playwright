@@ -72,5 +72,5 @@ test('should print buffers', async ({ runUITest }) => {
   });
   await page.getByTitle('Toggle output').click();
   await page.getByTitle('Run all').click();
-  await expect(page.getByTestId('output')).toContainText('HELLO', { timeout: 15000 });
+  await expect(page.getByTestId('output')).toContainText('HELLO');
 });

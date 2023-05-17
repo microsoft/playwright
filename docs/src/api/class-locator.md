@@ -13,7 +13,13 @@ a way to find element(s) on the page at any moment. Locator can be created with 
 When locator points to a list of elements, returns array of locators, pointing
 to respective elements.
 
-Note that [`method: Locator.all`] does not wait for elements to match the locator, and instead immediately returns whatever is present in the page. To avoid flakiness when elements are loaded dynamically, wait for the loading to finish before calling [`method: Locator.all`].
+:::note
+[`method: Locator.all`] does not wait for elements to match the locator, and instead immediately returns whatever is present in the page.
+
+When the list of elements changes dynamically, [`method: Locator.all`] will produce unpredictable and flaky results.
+
+When the list of elements is stable, but loaded dynamically, wait for the full list to finish loading before calling [`method: Locator.all`].
+:::
 
 **Usage**
 
@@ -97,6 +103,45 @@ String[] texts = page.getByRole(AriaRole.LINK).allTextContents();
 ```csharp
 var texts = await page.GetByRole(AriaRole.Link).AllTextContentsAsync();
 ```
+
+
+## method: Locator.and
+* since: v1.33
+* langs:
+  - alias-python: and_
+- returns: <[Locator]>
+
+Creates a locator that matches both this locator and the argument locator.
+
+**Usage**
+
+The following example finds a button with a specific title.
+
+```js
+const button = page.getByRole('button').and(page.getByTitle('Subscribe'));
+```
+
+```java
+Locator button = page.getByRole(AriaRole.BUTTON).and(page.getByTitle("Subscribe"));
+```
+
+```python async
+button = page.get_by_role("button").and_(page.getByTitle("Subscribe"))
+```
+
+```python sync
+button = page.get_by_role("button").and_(page.getByTitle("Subscribe"))
+```
+
+```csharp
+var button = page.GetByRole(AriaRole.Button).And(page.GetByTitle("Subscribe"));
+```
+
+### param: Locator.and.locator
+* since: v1.33
+- `locator` <[Locator]>
+
+Additional locator to match.
 
 
 ## async method: Locator.blur

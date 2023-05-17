@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { formatLocation, debugTest } from '../util';
-import { ManualPromise } from 'playwright-core/lib/utils';
-import type { TestInfoImpl } from './testInfo';
+import { formatLocation, debugTest, filterStackFile, serializeError } from '../util';
+import { ManualPromise, zones } from 'playwright-core/lib/utils';
+import type { TestInfoImpl, TestStepInternal } from './testInfo';
 import type { FixtureDescription, TimeoutManager } from './timeoutManager';
 import { fixtureParameterNames, type FixturePool, type FixtureRegistration, type FixtureScope } from '../common/fixtures';
 import type { WorkerInfo } from '../../types/test';
@@ -74,6 +74,13 @@ class Fixture {
       }
     }
 
+    // Break the regustration function into before/after steps. Create these before/after stacks
+    // w/o scopes, and create single mutable step that will be converted into the after step.
+    const shouldGenerateStep = !this.registration.hideStep && !this.registration.name.startsWith('_') && !this.registration.option;
+    const isInternalFixture = this.registration.location && filterStackFile(this.registration.location.file);
+    let mutableStepOnStack: TestStepInternal | undefined;
+    let afterStep: TestStepInternal | undefined;
+
     let called = false;
     const useFuncStarted = new ManualPromise<void>();
     debugTest(`setup ${this.registration.name}`);
@@ -85,7 +92,18 @@ class Fixture {
       this._useFuncFinished = new ManualPromise<void>();
       useFuncStarted.resolve();
       await this._useFuncFinished;
+
+      if (shouldGenerateStep)  {
+        afterStep = testInfo._addStep({
+          wallTime: Date.now(),
+          title: `fixture: ${this.registration.name}`,
+          category: 'fixture',
+          location: isInternalFixture ? this.registration.location : undefined,
+        }, testInfo._afterHooksStep);
+        mutableStepOnStack!.stepId = afterStep.stepId;
+      }
     };
+
     const workerInfo: WorkerInfo = { config: testInfo.config, parallelIndex: testInfo.parallelIndex, workerIndex: testInfo.workerIndex, project: testInfo.project };
     const info = this.registration.scope === 'worker' ? workerInfo : testInfo;
     testInfo._timeoutManager.setCurrentFixture(this._runnableDescription);
@@ -98,7 +116,20 @@ class Fixture {
         throw e;
     };
     try {
-      const result = this.registration.fn(params, useFunc, info);
+      const result = zones.preserve(async () => {
+        if (!shouldGenerateStep)
+          return await this.registration.fn(params, useFunc, info);
+
+        await testInfo._runAsStep({
+          title: `fixture: ${this.registration.name}`,
+          category: 'fixture',
+          location: isInternalFixture ? this.registration.location : undefined,
+        }, async step => {
+          mutableStepOnStack = step;
+          return await this.registration.fn(params, useFunc, info);
+        });
+      });
+
       if (result instanceof Promise)
         this._selfTeardownComplete = result.catch(handleError);
       else
@@ -107,6 +138,14 @@ class Fixture {
       handleError(e);
     }
     await useFuncStarted;
+    if (shouldGenerateStep) {
+      mutableStepOnStack?.complete({});
+      this._selfTeardownComplete?.then(() => {
+        afterStep?.complete({});
+      }).catch(e => {
+        afterStep?.complete({ error: serializeError(e) });
+      });
+    }
     testInfo._timeoutManager.setCurrentFixture(undefined);
   }
 

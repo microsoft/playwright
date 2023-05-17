@@ -1401,7 +1401,9 @@ export type BrowserContextInitializer = {
 };
 export interface BrowserContextEventTarget {
   on(event: 'bindingCall', callback: (params: BrowserContextBindingCallEvent) => void): this;
+  on(event: 'console', callback: (params: BrowserContextConsoleEvent) => void): this;
   on(event: 'close', callback: (params: BrowserContextCloseEvent) => void): this;
+  on(event: 'dialog', callback: (params: BrowserContextDialogEvent) => void): this;
   on(event: 'page', callback: (params: BrowserContextPageEvent) => void): this;
   on(event: 'route', callback: (params: BrowserContextRouteEvent) => void): this;
   on(event: 'video', callback: (params: BrowserContextVideoEvent) => void): this;
@@ -1442,7 +1444,13 @@ export interface BrowserContextChannel extends BrowserContextEventTarget, EventT
 export type BrowserContextBindingCallEvent = {
   binding: BindingCallChannel,
 };
+export type BrowserContextConsoleEvent = {
+  message: ConsoleMessageChannel,
+};
 export type BrowserContextCloseEvent = {};
+export type BrowserContextDialogEvent = {
+  dialog: DialogChannel,
+};
 export type BrowserContextPageEvent = {
   page: PageChannel,
 };
@@ -1613,6 +1621,7 @@ export type BrowserContextRecorderSupplementEnableParams = {
   language?: string,
   mode?: 'inspecting' | 'recording',
   pauseOnNextStatement?: boolean,
+  testIdAttributeName?: string,
   launchOptions?: any,
   contextOptions?: any,
   device?: string,
@@ -1625,6 +1634,7 @@ export type BrowserContextRecorderSupplementEnableOptions = {
   language?: string,
   mode?: 'inspecting' | 'recording',
   pauseOnNextStatement?: boolean,
+  testIdAttributeName?: string,
   launchOptions?: any,
   contextOptions?: any,
   device?: string,
@@ -1674,7 +1684,7 @@ export type BrowserContextCreateTempFileResult = {
   writableStream: WritableStreamChannel,
 };
 export type BrowserContextUpdateSubscriptionParams = {
-  event: 'request' | 'response' | 'requestFinished' | 'requestFailed',
+  event: 'console' | 'dialog' | 'request' | 'response' | 'requestFinished' | 'requestFailed',
   enabled: boolean,
 };
 export type BrowserContextUpdateSubscriptionOptions = {
@@ -1684,7 +1694,9 @@ export type BrowserContextUpdateSubscriptionResult = void;
 
 export interface BrowserContextEvents {
   'bindingCall': BrowserContextBindingCallEvent;
+  'console': BrowserContextConsoleEvent;
   'close': BrowserContextCloseEvent;
+  'dialog': BrowserContextDialogEvent;
   'page': BrowserContextPageEvent;
   'route': BrowserContextRouteEvent;
   'video': BrowserContextVideoEvent;
@@ -1709,9 +1721,7 @@ export type PageInitializer = {
 export interface PageEventTarget {
   on(event: 'bindingCall', callback: (params: PageBindingCallEvent) => void): this;
   on(event: 'close', callback: (params: PageCloseEvent) => void): this;
-  on(event: 'console', callback: (params: PageConsoleEvent) => void): this;
   on(event: 'crash', callback: (params: PageCrashEvent) => void): this;
-  on(event: 'dialog', callback: (params: PageDialogEvent) => void): this;
   on(event: 'download', callback: (params: PageDownloadEvent) => void): this;
   on(event: 'fileChooser', callback: (params: PageFileChooserEvent) => void): this;
   on(event: 'frameAttached', callback: (params: PageFrameAttachedEvent) => void): this;
@@ -1762,13 +1772,7 @@ export type PageBindingCallEvent = {
   binding: BindingCallChannel,
 };
 export type PageCloseEvent = {};
-export type PageConsoleEvent = {
-  message: ConsoleMessageChannel,
-};
 export type PageCrashEvent = {};
-export type PageDialogEvent = {
-  dialog: DialogChannel,
-};
 export type PageDownloadEvent = {
   url: string,
   suggestedFilename: string,
@@ -2197,7 +2201,7 @@ export type PageBringToFrontParams = {};
 export type PageBringToFrontOptions = {};
 export type PageBringToFrontResult = void;
 export type PageUpdateSubscriptionParams = {
-  event: 'fileChooser' | 'request' | 'response' | 'requestFinished' | 'requestFailed',
+  event: 'console' | 'dialog' | 'fileChooser' | 'request' | 'response' | 'requestFinished' | 'requestFailed',
   enabled: boolean,
 };
 export type PageUpdateSubscriptionOptions = {
@@ -2208,9 +2212,7 @@ export type PageUpdateSubscriptionResult = void;
 export interface PageEvents {
   'bindingCall': PageBindingCallEvent;
   'close': PageCloseEvent;
-  'console': PageConsoleEvent;
   'crash': PageCrashEvent;
-  'dialog': PageDialogEvent;
   'download': PageDownloadEvent;
   'fileChooser': PageFileChooserEvent;
   'frameAttached': PageFrameAttachedEvent;
@@ -3700,6 +3702,7 @@ export interface WebSocketEvents {
 
 // ----------- ConsoleMessage -----------
 export type ConsoleMessageInitializer = {
+  page: PageChannel,
   type: string,
   text: string,
   args: JSHandleChannel[],
@@ -3752,6 +3755,7 @@ export interface BindingCallEvents {
 
 // ----------- Dialog -----------
 export type DialogInitializer = {
+  page?: PageChannel,
   type: string,
   message: string,
   defaultValue: string,

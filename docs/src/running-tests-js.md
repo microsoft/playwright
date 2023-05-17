@@ -11,9 +11,14 @@ You can run a single test, a set of tests or all tests. Tests can be run on one 
 - [How to debug tests](/running-tests.md#debugging-tests)
 - [How to open the HTML test reporter](/running-tests.md#test-reports)
 
-:::note
-For a better debugging experience check out the [VS Code Extension](./getting-started-vscode.md) for Playwright where you can run tests, add breakpoints and debug your tests right from the VS Code editor.
-:::
+
+## Run tests in UI Mode
+
+Run your tests with [UI Mode](./test-ui-mode.md) for a better developer experience with time travel debugging, watch mode and more.
+
+  ```bash
+  npx playwright test --ui
+  ```
 
 ## Command Line
 

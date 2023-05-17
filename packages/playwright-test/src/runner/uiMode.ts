@@ -20,9 +20,9 @@ import { isUnderTest, ManualPromise } from 'playwright-core/lib/utils';
 import type { FullResult } from '../../reporter';
 import { clearCompilationCache, collectAffectedTestFiles, dependenciesForTestFile } from '../common/compilationCache';
 import type { FullConfigInternal } from '../common/config';
-import { Multiplexer } from '../reporters/multiplexer';
+import { InternalReporter } from '../reporters/internalReporter';
 import { TeleReporterEmitter } from '../reporters/teleEmitter';
-import { createReporter } from './reporters';
+import { createReporters } from './reporters';
 import { TestRun, createTaskRunnerForList, createTaskRunnerForWatch, createTaskRunnerForWatchSetup } from './tasks';
 import { chokidar } from '../utilsBundle';
 import type { FSWatcher } from 'chokidar';
@@ -44,8 +44,10 @@ class UIMode {
     process.env.PW_LIVE_TRACE_STACKS = '1';
     config.cliListOnly = false;
     config.cliPassWithNoTests = true;
-    for (const project of config.projects)
+    for (const project of config.projects) {
       project.deps = [];
+      project.teardown = undefined;
+    }
 
     for (const p of config.projects) {
       p.project.retries = 0;
@@ -65,7 +67,7 @@ class UIMode {
   }
 
   async runGlobalSetup(): Promise<FullResult['status']> {
-    const reporter = new Multiplexer([new ListReporter()]);
+    const reporter = new InternalReporter([new ListReporter()]);
     const taskRunner = createTaskRunnerForWatchSetup(this._config, reporter);
     reporter.onConfigure(this._config);
     const testRun = new TestRun(this._config, reporter);
@@ -144,10 +146,10 @@ class UIMode {
 
   private async _listTests() {
     const listReporter = new TeleReporterEmitter(e => this._dispatchEvent(e));
-    const reporter = new Multiplexer([listReporter]);
+    const reporter = new InternalReporter([listReporter]);
     this._config.cliListOnly = true;
     this._config.testIdMatcher = undefined;
-    const taskRunner = createTaskRunnerForList(this._config, reporter, 'out-of-process');
+    const taskRunner = createTaskRunnerForList(this._config, reporter, 'out-of-process', { failOnLoadErrors: false });
     const testRun = new TestRun(this._config, reporter);
     clearCompilationCache();
     reporter.onConfigure(this._config);
@@ -167,8 +169,9 @@ class UIMode {
     this._config.cliListOnly = false;
     this._config.testIdMatcher = id => !testIdSet || testIdSet.has(id);
 
-    const runReporter = new TeleReporterEmitter(e => this._dispatchEvent(e));
-    const reporter = await createReporter(this._config, 'ui', [runReporter]);
+    const reporters = await createReporters(this._config, 'ui');
+    reporters.push(new TeleReporterEmitter(e => this._dispatchEvent(e)));
+    const reporter = new InternalReporter(reporters);
     const taskRunner = createTaskRunnerForWatch(this._config, reporter);
     const testRun = new TestRun(this._config, reporter);
     clearCompilationCache();

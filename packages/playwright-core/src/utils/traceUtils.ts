@@ -97,9 +97,7 @@ export async function mergeTraceFiles(fileName: string, temporaryTraceFiles: str
 }
 
 export async function saveTraceFile(fileName: string, traceEvents: TraceEvent[], saveSources: boolean) {
-  const lines: string[] = traceEvents.map(e => JSON.stringify(e));
   const zipFile = new yazl.ZipFile();
-  zipFile.addBuffer(Buffer.from(lines.join('\n')), 'trace.trace');
 
   if (saveSources) {
     const sourceFiles = new Set<string>();
@@ -115,6 +113,33 @@ export async function saveTraceFile(fileName: string, traceEvents: TraceEvent[],
       }).catch(() => {});
     }
   }
+
+  const sha1s = new Set<string>();
+  for (const event of traceEvents.filter(e => e.type === 'after') as AfterActionTraceEvent[]) {
+    for (const attachment of (event.attachments || [])) {
+      let contentPromise: Promise<Buffer> | undefined;
+      if (attachment.path)
+        contentPromise = fs.promises.readFile(attachment.path);
+      else if (attachment.base64)
+        contentPromise = Promise.resolve(Buffer.from(attachment.base64, 'base64'));
+      if (!contentPromise)
+        continue;
+
+      const content = await contentPromise;
+      const sha1 = calculateSha1(content);
+      attachment.sha1 = sha1;
+      delete attachment.path;
+      delete attachment.base64;
+      if (sha1s.has(sha1))
+        continue;
+      sha1s.add(sha1);
+      zipFile.addBuffer(content, 'resources/' + sha1);
+    }
+  }
+
+  const traceContent = Buffer.from(traceEvents.map(e => JSON.stringify(e)).join('\n'));
+  zipFile.addBuffer(traceContent, 'trace.trace');
+
   await new Promise(f => {
     zipFile.end(undefined, () => {
       zipFile.outputStream.pipe(fs.createWriteStream(fileName)).on('close', f);
@@ -122,26 +147,28 @@ export async function saveTraceFile(fileName: string, traceEvents: TraceEvent[],
   });
 }
 
-export function createBeforeActionTraceEventForExpect(callId: string, apiName: string, expected: any, stack: StackFrame[]): BeforeActionTraceEvent {
+export function createBeforeActionTraceEventForStep(callId: string, parentId: string | undefined, apiName: string, params: Record<string, any> | undefined, wallTime: number, stack: StackFrame[]): BeforeActionTraceEvent {
   return {
     type: 'before',
     callId,
-    wallTime: Date.now(),
+    parentId,
+    wallTime,
     startTime: monotonicTime(),
     class: 'Test',
     method: 'step',
     apiName,
-    params: { expected: generatePreview(expected) },
+    params: Object.fromEntries(Object.entries(params || {}).map(([name, value]) => [name, generatePreview(value)])),
     stack,
   };
 }
 
-export function createAfterActionTraceEventForExpect(callId: string, error?: SerializedError['error']): AfterActionTraceEvent {
+export function createAfterActionTraceEventForStep(callId: string, attachments: AfterActionTraceEvent['attachments'], error?: SerializedError['error']): AfterActionTraceEvent {
   return {
     type: 'after',
     callId,
     endTime: monotonicTime(),
     log: [],
+    attachments,
     error,
   };
 }

@@ -20,8 +20,7 @@ Get started by installing Playwright and running the example file to see it in a
 }>
 <TabItem value="java">
 
-```java
-// src/main/java/org/example/App.java
+```java title="src/main/java/org/example/App.java"
 package org.example;
 
 import com.microsoft.playwright.*;
@@ -58,7 +57,7 @@ public class App {
     <dependency>
       <groupId>com.microsoft.playwright</groupId>
       <artifactId>playwright</artifactId>
-      <version>1.33.0</version>
+      <version>1.34.0</version>
     </dependency>
   </dependencies>
   <build>

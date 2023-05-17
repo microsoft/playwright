@@ -1,7 +1,7 @@
 {
   "name": "playwright-internal",
   "private": true,
-  "version": "1.33.0-next",
+  "version": "1.34.0-next",
   "description": "A high-level API to automate web browsers",
   "repository": "github:Microsoft/playwright",
   "homepage": "https://playwright.dev",
@@ -95,9 +95,9 @@
     "socksv5": "0.0.6",
     "ssim.js": "^3.5.0",
     "typescript": "^5.0.2",
-    "vite": "^4.2.1",
+    "vite": "^4.3.3",
     "ws": "^8.5.0",
     "xml2js": "^0.5.0",
-    "yaml": "^1.10.2"
+    "yaml": "^2.2.2"
   }
 }

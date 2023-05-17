@@ -172,3 +172,27 @@ test('should ignore .only', async ({ runInlineTest }) => {
     `Total: 2 tests in 1 file`
   ].join('\n'));
 });
+
+test('should report errors with location', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `module.exports = { reporter: './reporter' };`,
+    'reporter.ts': `
+      class Reporter {
+        onError(error) {
+          console.log('%% ' + JSON.stringify(error.location));
+        }
+      }
+      module.exports = Reporter;
+    `,
+    'a.test.js': `
+      const oh = '';
+      oh = 2;
+    `
+  }, { 'list': true });
+  expect(result.exitCode).toBe(1);
+  expect(JSON.parse(result.outputLines[0])).toEqual({
+    file: expect.stringContaining('a.test.js'),
+    line: 3,
+    column: 9,
+  });
+});

@@ -22,7 +22,7 @@ import { loadTestFile } from '../common/testLoader';
 import type { FullConfigInternal } from '../common/config';
 import { PoolBuilder } from '../common/poolBuilder';
 import { addToCompilationCache } from '../common/compilationCache';
-import { setBabelPlugins } from '../common/babelBundle';
+import { setBabelPlugins } from '../common/transform';
 
 export class InProcessLoaderHost {
   private _config: FullConfigInternal;

@@ -320,7 +320,7 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
     this._reportHandled(true);
   }
 
-  async fetch(options: FallbackOverrides & { maxRedirects?: number } = {}): Promise<APIResponse> {
+  async fetch(options: FallbackOverrides & { maxRedirects?: number, timeout?: number } = {}): Promise<APIResponse> {
     return await this._wrapApiCall(async () => {
       const context = this.request()._context();
       return context.request._innerFetch({ request: this.request(), data: options.postData, ...options });

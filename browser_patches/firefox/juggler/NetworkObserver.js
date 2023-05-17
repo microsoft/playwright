@@ -300,6 +300,9 @@ class NetworkRequest {
     }
     if (!credentials)
       return false;
+    const origin = aChannel.URI.scheme + '://' + aChannel.URI.hostPort;
+    if (credentials.origin && origin.toLowerCase() !== credentials.origin.toLowerCase())
+      return false;
     authInfo.username = credentials.username;
     authInfo.password = credentials.password;
     // This will produce a new request with respective auth header set.
@@ -464,9 +467,11 @@ class NetworkRequest {
   }
 
   _fallThroughInterceptController() {
-    if (!this._previousCallbacks || !(this._previousCallbacks instanceof Ci.nsINetworkInterceptController))
+    try {
+      return this._previousCallbacks?.getInterface(Ci.nsINetworkInterceptController);
+    } catch (e) {
       return undefined;
-    return this._previousCallbacks.getInterface(Ci.nsINetworkInterceptController);
+    }
   }
 
   _sendOnRequest(isIntercepted) {
