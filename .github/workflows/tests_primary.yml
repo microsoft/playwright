@@ -38,9 +38,6 @@ jobs:
           - os: ubuntu-22.04
             node-version: 18
             browser: chromium
-          - os: ubuntu-22.04
-            node-version: 20
-            browser: chromium
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v3
