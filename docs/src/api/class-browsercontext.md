@@ -180,10 +180,7 @@ context.on("dialog", lambda dialog: dialog.accept())
 ```
 
 ```csharp
-context.RequestFailed += (_, request) =>
-{
-    Console.WriteLine(request.Url + " " + request.Failure);
-};
+context.Dialog += (_, dialog) => dialog.AcceptAsync();
 ```
 
 :::note
