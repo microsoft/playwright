@@ -710,6 +710,9 @@ class PageTarget {
     const contextMenu = doc.getElementById("contentAreaContextMenu");
     if (contextMenu)
       contextMenu.hidePopup();
+    const autocompletePopup = doc.getElementById("PopupAutoComplete");
+    if (autocompletePopup)
+      autocompletePopup.hidePopup();
   }
 
   dispose() {
