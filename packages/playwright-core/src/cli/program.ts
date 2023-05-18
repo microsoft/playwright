@@ -173,6 +173,18 @@ Examples:
   - $ install chrome firefox
     Install custom browsers, supports ${suggestedBrowsersToInstall()}.`);
 
+program
+    .command('uninstall')
+    .description('Removes all default Playwright browsers from the system (chromium, firefox, webkit, ffmpeg). This does not include branded channels.')
+    .option('--all', 'Removes all Playwright browsers from the system. Not just the browsers for the current Playwright version.')
+    .action(async (options: { all?: boolean }) => {
+      await registry.uninstall(!!options.all).then(({ browsersRemainingOnFileSystem }) => {
+        if (!options.all && browsersRemainingOnFileSystem) {
+          console.log('Successfully uninstalled Playwright browsers for the current Playwright installation.');
+          console.log('To uninstall Playwright browsers for all versions, run it with --all.');
+        }
+      }).catch(logErrorAndExit);
+    });
 
 program
     .command('install-deps [browser...]')
