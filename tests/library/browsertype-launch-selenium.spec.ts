@@ -180,7 +180,6 @@ test('selenium grid 3.141.59 standalone non-chromium', async ({ browserName, bro
 
 test('selenium grid 3.141.59 standalone chromium through run-driver', async ({ browserName, childProcess, waitForPort }, testInfo) => {
   test.skip(browserName !== 'chromium');
-  test.fixme(true, 'https://github.com/microsoft/playwright/issues/23110');
 
   const port = testInfo.workerIndex + 15123;
   const grid = childProcess({
