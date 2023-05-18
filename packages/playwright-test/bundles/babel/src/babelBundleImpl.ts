@@ -76,6 +76,7 @@ function babelTransformOptions(isTypeScript: boolean, isModule: boolean, plugins
   }
 
   return {
+    browserslistConfigFile: false,
     babelrc: false,
     configFile: false,
     assumptions: {
