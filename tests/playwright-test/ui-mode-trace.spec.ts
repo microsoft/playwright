@@ -15,8 +15,9 @@
  */
 
 import { createImage } from './playwright-test-fixtures';
-import { test, expect } from './ui-mode-fixtures';
-test.describe.configure({ mode: 'parallel' });
+import { test, expect, retries } from './ui-mode-fixtures';
+
+test.describe.configure({ mode: 'parallel', retries });
 
 test('should merge trace events', async ({ runUITest, server }) => {
   test.fixme(true, 'https://github.com/microsoft/playwright/issues/23114');

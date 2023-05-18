@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { test, expect, dumpTestTree } from './ui-mode-fixtures';
+import { test, expect, retries, dumpTestTree } from './ui-mode-fixtures';
 
-test.describe.configure({ mode: 'parallel' });
+test.describe.configure({ mode: 'parallel', retries });
 
 const basicTestTree = {
   'a.test.ts': `

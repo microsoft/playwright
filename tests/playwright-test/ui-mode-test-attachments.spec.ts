@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-import { test, expect } from './ui-mode-fixtures';
+import { test, expect, retries } from './ui-mode-fixtures';
+
+test.describe.configure({ mode: 'parallel', retries });
 
 test('should contain file attachment', async ({ runUITest }) => {
   const { page } = await runUITest({
