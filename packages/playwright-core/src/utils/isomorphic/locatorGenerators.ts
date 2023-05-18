@@ -18,7 +18,7 @@ import { escapeWithQuotes, toSnakeCase, toTitleCase } from './stringUtils';
 import { type NestedSelectorBody, parseAttributeSelector, parseSelector, stringifySelector } from './selectorParser';
 import type { ParsedSelector } from './selectorParser';
 
-export type Language = 'javascript' | 'python' | 'java' | 'csharp';
+export type Language = 'javascript' | 'python' | 'java' | 'csharp' | 'jsonl';
 export type LocatorType = 'default' | 'role' | 'text' | 'label' | 'placeholder' | 'alt' | 'title' | 'test-id' | 'nth' | 'first' | 'last' | 'has-text' | 'has-not-text' | 'has' | 'hasNot' | 'frame' | 'and' | 'or';
 export type LocatorBase = 'page' | 'locator' | 'frame-locator';
 
@@ -31,6 +31,7 @@ type LocatorOptions = {
 };
 export interface LocatorFactory {
   generateLocator(base: LocatorBase, kind: LocatorType, body: string | RegExp, options?: LocatorOptions): string;
+  chainLocators(locators: string[]): string;
 }
 
 export function asLocator(lang: Language, selector: string, isFrameLocator: boolean = false, playSafe: boolean = false): string {
@@ -191,7 +192,7 @@ function innerAsLocators(factory: LocatorFactory, parsed: ParsedSelector, isFram
         // Two options:
         // - locator('div').filter({ hasText: 'foo' })
         // - locator('div', { hasText: 'foo' })
-        tokens.push([locatorPart + '.' + nextLocatorPart, combinedPart]);
+        tokens.push([factory.chainLocators([locatorPart, nextLocatorPart]), combinedPart]);
         index++;
         continue;
       }
@@ -200,16 +201,16 @@ function innerAsLocators(factory: LocatorFactory, parsed: ParsedSelector, isFram
     tokens.push([locatorPart]);
   }
 
-  return combineTokens(tokens, maxOutputSize);
+  return combineTokens(factory, tokens, maxOutputSize);
 }
 
-function combineTokens(tokens: string[][], maxOutputSize: number): string[] {
+function combineTokens(factory: LocatorFactory, tokens: string[][], maxOutputSize: number): string[] {
   const currentTokens = tokens.map(() => '');
   const result: string[] = [];
 
   const visit = (index: number) => {
     if (index === tokens.length) {
-      result.push(currentTokens.join('.'));
+      result.push(factory.chainLocators(currentTokens));
       return currentTokens.length < maxOutputSize;
     }
     for (const taken of tokens[index]) {
@@ -301,6 +302,10 @@ export class JavaScriptLocatorFactory implements LocatorFactory {
     }
   }
 
+  chainLocators(locators: string[]): string {
+    return locators.join('.');
+  }
+
   private toCallWithExact(method: string, body: string | RegExp, exact?: boolean) {
     if (isRegExp(body))
       return `${method}(${body})`;
@@ -379,6 +384,10 @@ export class PythonLocatorFactory implements LocatorFactory {
       default:
         throw new Error('Unknown selector kind ' + kind);
     }
+  }
+
+  chainLocators(locators: string[]): string {
+    return locators.join('.');
   }
 
   private regexToString(body: RegExp) {
@@ -470,6 +479,10 @@ export class JavaLocatorFactory implements LocatorFactory {
     }
   }
 
+  chainLocators(locators: string[]): string {
+    return locators.join('.');
+  }
+
   private regexToString(body: RegExp) {
     const suffix = body.flags.includes('i') ? ', Pattern.CASE_INSENSITIVE' : '';
     return `Pattern.compile(${this.quote(body.source)}${suffix})`;
@@ -553,6 +566,10 @@ export class CSharpLocatorFactory implements LocatorFactory {
     }
   }
 
+  chainLocators(locators: string[]): string {
+    return locators.join('.');
+  }
+
   private regexToString(body: RegExp): string {
     const suffix = body.flags.includes('i') ? ', RegexOptions.IgnoreCase' : '';
     return `new Regex(${this.quote(body.source)}${suffix})`;
@@ -583,11 +600,29 @@ export class CSharpLocatorFactory implements LocatorFactory {
   }
 }
 
+export class JsonlLocatorFactory implements LocatorFactory {
+  generateLocator(base: LocatorBase, kind: LocatorType, body: string | RegExp, options: LocatorOptions = {}): string {
+    return JSON.stringify({
+      kind,
+      body,
+      options,
+    });
+  }
+
+  chainLocators(locators: string[]): string {
+    const objects = locators.map(l => JSON.parse(l));
+    for (let i = 0; i < objects.length - 1; ++i)
+      objects[i].next = objects[i + 1];
+    return JSON.stringify(objects[0]);
+  }
+}
+
 const generators: Record<Language, LocatorFactory> = {
   javascript: new JavaScriptLocatorFactory(),
   python: new PythonLocatorFactory(),
   java: new JavaLocatorFactory(),
   csharp: new CSharpLocatorFactory(),
+  jsonl: new JsonlLocatorFactory(),
 };
 
 function isRegExp(obj: any): obj is RegExp {

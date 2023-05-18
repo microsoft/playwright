@@ -26,7 +26,7 @@ export type SourceHighlight = {
   message?: string;
 };
 
-export type Language = 'javascript' | 'python' | 'java' | 'csharp';
+export type Language = 'javascript' | 'python' | 'java' | 'csharp' | 'jsonl';
 
 export interface SourceProps {
   text: string;

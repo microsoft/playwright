@@ -165,7 +165,7 @@ function renderSourceOptions(sources: Source[]): React.ReactNode {
   const hasGroup = sources.some(s => s.group);
   if (hasGroup) {
     const groups = new Set(sources.map(s => s.group));
-    return Array.from(groups).map(group => (
+    return [...groups].filter(Boolean).map(group => (
       <optgroup label={group} key={group}>
         {sources.filter(s => s.group === group).map(source => renderOption(source))}
       </optgroup>

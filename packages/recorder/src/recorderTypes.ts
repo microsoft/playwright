@@ -29,7 +29,7 @@ export type UIState = {
   mode: Mode;
   actionPoint?: Point;
   actionSelector?: string;
-  language: 'javascript' | 'python' | 'java' | 'csharp';
+  language: 'javascript' | 'python' | 'java' | 'csharp' | 'jsonl';
   testIdAttributeName: string;
 };
 
