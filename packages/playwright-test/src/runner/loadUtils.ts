@@ -225,7 +225,7 @@ function createForbidOnlyErrors(onlyTestsAndSuites: (TestCase | Suite)[]): TestE
     // Skip root and file.
     const title = testOrSuite.titlePath().slice(2).join(' ');
     const error: TestError = {
-      message: `Error: focused item found in the --forbid-only mode: "${title}"`,
+      message: `Error: focused item (e.g.: 'only') found in the --forbid-only mode ('forbidOnly' in 'playwright.config.[jt]s'): "${title}"`,
       location: testOrSuite.location!,
     };
     errors.push(error);
