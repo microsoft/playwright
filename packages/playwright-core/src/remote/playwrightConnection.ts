@@ -25,6 +25,8 @@ import type { LaunchOptions } from '../server/types';
 import { AndroidDevice } from '../server/android/android';
 import { DebugControllerDispatcher } from '../server/dispatchers/debugControllerDispatcher';
 import { startProfiling, stopProfiling } from '../utils';
+import { monotonicTime } from '../utils';
+import { debugLogger } from '../common/debugLogger';
 
 export type ClientType = 'controller' | 'playwright' | 'launch-browser' | 'reuse-browser' | 'pre-launched-browser-or-android';
 
@@ -46,14 +48,14 @@ export class PlaywrightConnection {
   private _onClose: () => void;
   private _dispatcherConnection: DispatcherConnection;
   private _cleanups: (() => Promise<void>)[] = [];
-  private _debugLog: (m: string) => void;
+  private _id: string;
   private _disconnected = false;
   private _preLaunched: PreLaunched;
   private _options: Options;
   private _root: DispatcherScope;
   private _profileName: string;
 
-  constructor(lock: Promise<void>, clientType: ClientType, ws: WebSocket, options: Options, preLaunched: PreLaunched, log: (m: string) => void, onClose: () => void) {
+  constructor(lock: Promise<void>, clientType: ClientType, ws: WebSocket, options: Options, preLaunched: PreLaunched, id: string, onClose: () => void) {
     this._ws = ws;
     this._preLaunched = preLaunched;
     this._options = options;
@@ -63,18 +65,25 @@ export class PlaywrightConnection {
     if (clientType === 'pre-launched-browser-or-android')
       assert(preLaunched.browser || preLaunched.androidDevice);
     this._onClose = onClose;
-    this._debugLog = log;
+    this._id = id;
     this._profileName = `${new Date().toISOString()}-${clientType}`;
 
     this._dispatcherConnection = new DispatcherConnection();
     this._dispatcherConnection.onmessage = async message => {
       await lock;
-      if (ws.readyState !== ws.CLOSING)
-        ws.send(JSON.stringify(message));
+      if (ws.readyState !== ws.CLOSING) {
+        const messageString = JSON.stringify(message);
+        if (debugLogger.isEnabled('server:channel'))
+          debugLogger.log('server:channel', `[${this._id}] ${monotonicTime() * 1000} SEND ► ${messageString}`);
+        ws.send(messageString);
+      }
     };
     ws.on('message', async (message: string) => {
       await lock;
-      this._dispatcherConnection.dispatch(JSON.parse(Buffer.from(message).toString()));
+      const messageString = Buffer.from(message).toString();
+      if (debugLogger.isEnabled('server:channel'))
+        debugLogger.log('server:channel', `[${this._id}] ${monotonicTime() * 1000} ◀ RECV ${messageString}`);
+      this._dispatcherConnection.dispatch(JSON.parse(messageString));
     });
 
     ws.on('close', () => this._onDisconnect());
@@ -100,7 +109,7 @@ export class PlaywrightConnection {
   }
 
   private async _initPlaywrightConnectMode(scope: RootDispatcher) {
-    this._debugLog(`engaged playwright.connect mode`);
+    debugLogger.log('server', `[${this._id}] engaged playwright.connect mode`);
     const playwright = createPlaywright('javascript');
     // Close all launched browsers on disconnect.
     this._cleanups.push(async () => {
@@ -112,7 +121,7 @@ export class PlaywrightConnection {
   }
 
   private async _initLaunchBrowserMode(scope: RootDispatcher) {
-    this._debugLog(`engaged launch mode for "${this._options.browserName}"`);
+    debugLogger.log('server', `[${this._id}] engaged launch mode for "${this._options.browserName}"`);
     const playwright = createPlaywright('javascript');
 
     const ownedSocksProxy = await this._createOwnedSocksProxy(playwright);
@@ -131,7 +140,7 @@ export class PlaywrightConnection {
   }
 
   private async _initPreLaunchedBrowserMode(scope: RootDispatcher) {
-    this._debugLog(`engaged pre-launched (browser) mode`);
+    debugLogger.log('server', `[${this._id}] engaged pre-launched (browser) mode`);
     const playwright = this._preLaunched.playwright!;
 
     // Note: connected client owns the socks proxy and configures the pattern.
@@ -154,7 +163,7 @@ export class PlaywrightConnection {
   }
 
   private async _initPreLaunchedAndroidMode(scope: RootDispatcher) {
-    this._debugLog(`engaged pre-launched (Android) mode`);
+    debugLogger.log('server', `[${this._id}] engaged pre-launched (Android) mode`);
     const playwright = this._preLaunched.playwright!;
     const androidDevice = this._preLaunched.androidDevice!;
     androidDevice.on(AndroidDevice.Events.Close, () => {
@@ -167,7 +176,7 @@ export class PlaywrightConnection {
   }
 
   private _initDebugControllerMode(): DebugControllerDispatcher {
-    this._debugLog(`engaged reuse controller mode`);
+    debugLogger.log('server', `[${this._id}] engaged reuse controller mode`);
     const playwright = this._preLaunched.playwright!;
     // Always create new instance based on the reused Playwright instance.
     return new DebugControllerDispatcher(this._dispatcherConnection, playwright.debugController);
@@ -177,7 +186,7 @@ export class PlaywrightConnection {
     // Note: reuse browser mode does not support socks proxy, because
     // clients come and go, while the browser stays the same.
 
-    this._debugLog(`engaged reuse browsers mode for ${this._options.browserName}`);
+    debugLogger.log('server', `[${this._id}] engaged reuse browsers mode for ${this._options.browserName}`);
     const playwright = this._preLaunched.playwright!;
 
     const requestedOptions = launchOptionsHash(this._options.launchOptions);
@@ -232,27 +241,27 @@ export class PlaywrightConnection {
     const socksProxy = new SocksProxy();
     socksProxy.setPattern(this._options.socksProxyPattern);
     playwright.options.socksProxyPort = await socksProxy.listen(0);
-    this._debugLog(`started socks proxy on port ${playwright.options.socksProxyPort}`);
+    debugLogger.log('server', `[${this._id}] started socks proxy on port ${playwright.options.socksProxyPort}`);
     this._cleanups.push(() => socksProxy.close());
     return socksProxy;
   }
 
   private async _onDisconnect(error?: Error) {
     this._disconnected = true;
-    this._debugLog(`disconnected. error: ${error}`);
+    debugLogger.log('server', `[${this._id}] disconnected. error: ${error}`);
     this._root._dispose();
-    this._debugLog(`starting cleanup`);
+    debugLogger.log('server', `[${this._id}] starting cleanup`);
     for (const cleanup of this._cleanups)
       await cleanup().catch(() => {});
     await stopProfiling(this._profileName);
     this._onClose();
-    this._debugLog(`finished cleanup`);
+    debugLogger.log('server', `[${this._id}] finished cleanup`);
   }
 
   async close(reason?: { code: number, reason: string }) {
     if (this._disconnected)
       return;
-    this._debugLog(`force closing connection: ${reason?.reason || ''} (${reason?.code || 0})`);
+    debugLogger.log('server', `[${this._id}] force closing connection: ${reason?.reason || ''} (${reason?.code || 0})`);
     try {
       this._ws.close(reason?.code, reason?.reason);
     } catch (e) {
