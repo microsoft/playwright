@@ -25,6 +25,7 @@ import type {
 } from '@playwright/test';
 import type { JsonObject } from '@playwright/experimental-ct-core/types/component';
 import type { InlineConfig } from 'vite';
+import type { ComponentProps } from 'vue-component-type-helpers';
 
 export type PlaywrightTestConfig<T = {}, W = {}> = Omit<BasePlaywrightTestConfig<T, W>, 'use'> & {
   use?: BasePlaywrightTestConfig<T, W>['use'] & {
@@ -35,21 +36,24 @@ export type PlaywrightTestConfig<T = {}, W = {}> = Omit<BasePlaywrightTestConfig
   };
 };
 
-type Slot = string | string[];
+type ComponentSlot = string | string[];
+type ComponentSlots = Record<string, ComponentSlot> & { default?: ComponentSlot };
+type ComponentEvents = Record<string, Function>;
 
-export interface MountOptions<
- HooksConfig extends JsonObject,
- Props extends Record<string, unknown>
-> {
-  props?: Props;
-  slots?: Record<string, Slot> & { default?: Slot };
-  on?: Record<string, Function>;
+export interface MountOptions< HooksConfig extends JsonObject, Component> {
+  props?: ComponentProps<Component>;
+  slots?: ComponentSlots;
+  on?: ComponentEvents;
   hooksConfig?: HooksConfig;
 }
 
-interface MountResult<Props extends Record<string, unknown>> extends Locator {
+interface MountResult<Component> extends Locator {
   unmount(): Promise<void>;
-  update(options: Omit<MountOptions<never, Props>, 'hooksConfig'>): Promise<void>;
+  update(options: {
+    props?: Partial<ComponentProps<Component>>;
+    slots?: Partial<ComponentSlots>;
+    on?: Partial<ComponentEvents>;
+  }): Promise<void>;
 }
 
 interface MountResultJsx extends Locator {
@@ -59,17 +63,10 @@ interface MountResultJsx extends Locator {
 
 export interface ComponentFixtures {
   mount(component: JSX.Element): Promise<MountResultJsx>;
-  mount<HooksConfig extends JsonObject>(
-    component: any,
-    options?: MountOptions<HooksConfig, Record<string, unknown>>
-  ): Promise<MountResult<Record<string, unknown>>>;
-  mount<
-    HooksConfig extends JsonObject,
-    Props extends Record<string, unknown> = Record<string, unknown>
-  >(
-    component: any,
-    options: MountOptions<HooksConfig, never> & { props: Props }
-  ): Promise<MountResult<Props>>;
+  mount<HooksConfig extends JsonObject, Component = unknown>(
+    component: Component,
+    options?: MountOptions<HooksConfig, Component>
+  ): Promise<MountResult<Component>>;
 }
 
 export const test: TestType<
@@ -77,9 +74,6 @@ export const test: TestType<
   PlaywrightWorkerArgs & PlaywrightWorkerOptions
 >;
 
-/**
- * Defines Playwright config
- */
 export function defineConfig(config: PlaywrightTestConfig): PlaywrightTestConfig;
 export function defineConfig<T>(config: PlaywrightTestConfig<T>): PlaywrightTestConfig<T>;
 export function defineConfig<T, W>(config: PlaywrightTestConfig<T, W>): PlaywrightTestConfig<T, W>;

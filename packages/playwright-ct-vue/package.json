@@ -27,7 +27,8 @@
   },
   "dependencies": {
     "@playwright/experimental-ct-core": "1.37.0-next",
-    "@vitejs/plugin-vue": "^4.2.1"
+    "@vitejs/plugin-vue": "^4.2.1",
+    "vue-component-type-helpers": "^1.6.5"
   },
   "bin": {
     "playwright": "./cli.js"

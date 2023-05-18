@@ -1,6 +1,6 @@
 {
   "extends": "@vue/tsconfig/tsconfig.web.json",
-  "include": ["env.d.ts", "src/**/*", "src/**/*.vue", "playwright"],
+  "include": ["env.d.ts", "src/**/*", "src/**/*.vue", "tests/**/*", "playwright"],
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
