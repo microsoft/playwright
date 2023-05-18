@@ -410,14 +410,12 @@ test('preserve attachments', async ({ runInlineTest, mergeReports, showReport, p
 
   await showReport();
 
-  // Check file attachment.
   await page.getByText('first').click();
-  await expect(page.getByText('file-attachment')).toBeVisible();
-
-  // Check file attachment content.
   const popupPromise = page.waitForEvent('popup');
-  await page.getByText('file-attachment').click();
+  // Check file attachment.
+  await page.getByRole('link', { name: 'file-attachment' }).click();
   const popup = await popupPromise;
+  // Check file attachment content.
   await expect(popup.locator('body')).toHaveText('hello!');
   await popup.close();
   await page.goBack();
@@ -485,15 +483,14 @@ test('generate html with attachment urls', async ({ runInlineTest, mergeReports,
     return oldSeveFile.call(server, req, res, filePath);
   };
 
-  // Check file attachment.
   await page.goto(`${server.PREFIX}/index.html`);
   await page.getByText('first').click();
-  await expect(page.getByText('file-attachment')).toBeVisible();
 
-  // Check file attachment content.
   const popupPromise = page.waitForEvent('popup');
-  await page.getByText('file-attachment').click();
+  // Check file attachment.
+  await page.getByRole('link', { name: 'file-attachment' }).click();
   const popup = await popupPromise;
+  // Check file attachment content.
   await expect(popup.locator('body')).toHaveText('hello!');
   await popup.close();
   await page.goBack();
