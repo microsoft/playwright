@@ -526,3 +526,59 @@ test(`trace:retain-on-failure should create trace if request context is disposed
   expect(trace.apiNames).toContain('apiRequestContext.get');
   expect(result.failed).toBe(1);
 });
+
+test('should include attachments by default', async ({ runInlineTest, server }, testInfo) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { use: { trace: 'on' } };
+    `,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+
+      test('pass', async ({}, testInfo) => {
+        testInfo.attach('foo', { body: 'bar' });
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  const trace = await parseTrace(testInfo.outputPath('test-results', 'a-pass', 'trace.zip'));
+  expect(trace.apiNames).toEqual([
+    'Before Hooks',
+    `attach "foo"`,
+    'After Hooks',
+  ]);
+  expect(trace.actions[1].attachments).toEqual([{
+    name: 'foo',
+    contentType: 'text/plain',
+    sha1: expect.any(String),
+  }]);
+  expect([...trace.resources.keys()].filter(f => f.startsWith('resources/'))).toHaveLength(1);
+});
+
+test('should opt out of attachments', async ({ runInlineTest, server }, testInfo) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { use: { trace: { mode: 'on', attachments: false } } };
+    `,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+
+      test('pass', async ({}, testInfo) => {
+        testInfo.attach('foo', { body: 'bar' });
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  const trace = await parseTrace(testInfo.outputPath('test-results', 'a-pass', 'trace.zip'));
+  expect(trace.apiNames).toEqual([
+    'Before Hooks',
+    `attach "foo"`,
+    'After Hooks',
+  ]);
+  expect(trace.actions[1].attachments).toEqual(undefined);
+  expect([...trace.resources.keys()].filter(f => f.startsWith('resources/'))).toHaveLength(0);
+});

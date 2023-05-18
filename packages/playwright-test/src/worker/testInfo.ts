@@ -332,7 +332,7 @@ export class TestInfoImpl implements TestInfo {
 
   async attach(name: string, options: { path?: string, body?: string | Buffer, contentType?: string } = {}) {
     const step = this._addStep({
-      title: `attach  "${name}"`,
+      title: `attach "${name}"`,
       category: 'attach',
       wallTime: Date.now(),
     });
