@@ -42,7 +42,6 @@ class PlaywrightClient {
         ...env
       },
     });
-    this._driverProcess.unref();
 
     const connection = new Connection();
     connection.markAsRemote();
