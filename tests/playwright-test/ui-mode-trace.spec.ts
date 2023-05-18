@@ -98,9 +98,12 @@ test('should merge screenshot assertions', async ({  runUITest }, testInfo) => {
       'action list'
   ).toHaveText([
     /Before Hooks[\d.]+m?s/,
-    /page\.setContent[\d.]+m?s/,
-    /expect\.toHaveScreenshot[\d.]+m?s/,
-    /After Hooks/,
+    /page.setContent[\d.]+m?s/,
+    /expect.toHaveScreenshot[\d.]+m?s/,
+    /After Hooks-/,
+    /fixture: page[\d.]+m?s/,
+    /fixture: context[\d.]+m?s/,
+    /fixture: browser[\d.]+m?s/,
   ]);
 });
 

@@ -76,13 +76,6 @@ export class TraceModel {
       unzipProgress(++done, total);
 
       contextEntry.actions = [...actionMap.values()].sort((a1, a2) => a1.startTime - a2.startTime);
-      if (!backend.isLive()) {
-        for (const action of contextEntry.actions) {
-          if (!action.endTime && !action.error)
-            action.error = { name: 'Error', message: 'Timed out' };
-        }
-      }
-
       const stacks = await this._backend.readText(ordinal + '.stacks');
       if (stacks) {
         const callMetadata = parseClientSideCallMetadata(JSON.parse(stacks));
