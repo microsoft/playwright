@@ -674,10 +674,11 @@ it.describe('screencast', () => {
     expect(files.length).toBe(1);
   });
 
-  it('should capture full viewport', async ({ browserType, browserName, headless, isWindows }, testInfo) => {
+  it('should capture full viewport', async ({ browserType, browserName, headless, isWindows, isLinux }, testInfo) => {
     it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22411' });
     it.fixme(browserName === 'chromium' && !headless, 'The square is not on the video');
     it.fixme(browserName === 'firefox' && isWindows, 'https://github.com/microsoft/playwright/issues/14405');
+    it.fixme(browserName === 'firefox' && !headless && isLinux, 'https://github.com/microsoft/playwright/issues/23118');
     const size = { width: 600, height: 400 };
     const browser = await browserType.launch();
 
