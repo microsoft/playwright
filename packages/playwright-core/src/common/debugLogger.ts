@@ -23,11 +23,13 @@ const debugLoggerColorMap = {
   'install': 34, // green
   'download': 34, // green
   'browser': 0, // reset
-  'proxy': 92, // purple
+  'socks': 92, // purple
   'error': 160, // red,
   'channel:command': 33, // blue
   'channel:response': 202, // orange
   'channel:event': 207, // magenta
+  'server': 45, // cyan
+  'server:channel': 34, // green
 };
 export type LogName = keyof typeof debugLoggerColorMap;
 
