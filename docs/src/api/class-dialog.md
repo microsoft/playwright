@@ -139,7 +139,7 @@ A message displayed in the dialog.
 
 ## method: Dialog.page
 * since: v1.33
-- returns: <[null]|[Page]>
+- returns: <[Page]|[null]>
 
 The page that initiated this dialog, if available.
 

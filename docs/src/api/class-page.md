@@ -3953,36 +3953,6 @@ Receives the [ConsoleMessage] object and resolves to truthy value when the waiti
 ### param: Page.waitForConsoleMessage.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9
 
-## async method: Page.waitForDialog
-* since: v1.34
-* langs: java, python, csharp
-  - alias-python: expect_dialog_message
-  - alias-csharp: RunAndWaitForDialog
-- returns: <[Dialog]>
-
-Performs action and waits for a [Dialog] to be created by in the context. If predicate is provided, it passes
-[Dialog] value into the `predicate` function and waits for `predicate(message)` to return a truthy value.
-
-## async method: Page.waitForDialog
-* since: v1.34
-* langs: python
-- returns: <[EventContextManager]<[Dialog]>>
-
-### param: Page.waitForDialog.action = %%-csharp-wait-for-event-action-%%
-* since: v1.34
-
-### option: Page.waitForDialog.predicate
-* since: v1.34
-- `predicate` <[function]\([Dialog]\):[boolean]>
-
-Receives the [Dialog] object and resolves to truthy value when the waiting should resolve.
-
-### option: Page.waitForDialog.timeout = %%-wait-for-event-timeout-%%
-* since: v1.34
-
-### param: Page.waitForDialog.callback = %%-java-wait-for-event-callback-%%
-* since: v1.34
-
 ## async method: Page.waitForDownload
 * since: v1.9
 * langs: java, python, csharp
