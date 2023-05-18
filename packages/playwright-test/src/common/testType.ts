@@ -124,6 +124,8 @@ export class TestTypeImpl {
     for (let parent: Suite | undefined = suite; parent; parent = parent.parent) {
       if (parent._parallelMode === 'serial' && child._parallelMode === 'parallel')
         throw new Error('describe.parallel cannot be nested inside describe.serial');
+      if (parent._parallelMode === 'default' && child._parallelMode === 'parallel')
+        throw new Error('describe.parallel cannot be nested inside describe with default mode');
     }
 
     setCurrentlyLoadingFileSuite(child);
@@ -138,7 +140,7 @@ export class TestTypeImpl {
     suite._hooks.push({ type: name, fn, location });
   }
 
-  private _configure(location: Location, options: { mode?: 'parallel' | 'serial', retries?: number, timeout?: number }) {
+  private _configure(location: Location, options: { mode?: 'default' | 'parallel' | 'serial', retries?: number, timeout?: number }) {
     throwIfRunningInsideJest();
     const suite = this._currentSuite(location, `test.describe.configure()`);
     if (!suite)
@@ -151,12 +153,14 @@ export class TestTypeImpl {
       suite._retries = options.retries;
 
     if (options.mode !== undefined) {
-      if (suite._parallelMode !== 'default')
-        throw new Error('Parallel mode is already assigned for the enclosing scope.');
+      if (suite._parallelMode !== 'none')
+        throw new Error(`"${suite._parallelMode}" mode is already assigned for the enclosing scope.`);
       suite._parallelMode = options.mode;
       for (let parent: Suite | undefined = suite.parent; parent; parent = parent.parent) {
         if (parent._parallelMode === 'serial' && suite._parallelMode === 'parallel')
-          throw new Error('describe.parallel cannot be nested inside describe.serial');
+          throw new Error('describe with parallel mode cannot be nested inside describe with serial mode');
+        if (parent._parallelMode === 'default' && suite._parallelMode === 'parallel')
+          throw new Error('describe with parallel mode cannot be nested inside describe with default mode');
       }
     }
   }

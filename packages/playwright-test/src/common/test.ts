@@ -50,7 +50,7 @@ export class Suite extends Base implements SuitePrivate {
   _retries: number | undefined;
   _staticAnnotations: Annotation[] = [];
   _modifiers: Modifier[] = [];
-  _parallelMode: 'default' | 'serial' | 'parallel' = 'default';
+  _parallelMode: 'none' | 'default' | 'serial' | 'parallel' = 'none';
   _fullProject: FullProjectInternal | undefined;
   _fileId: string | undefined;
   readonly _type: 'root' | 'project' | 'file' | 'describe';

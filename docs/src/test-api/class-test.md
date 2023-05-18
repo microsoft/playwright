@@ -284,9 +284,27 @@ Learn more about the execution modes [here](../test-parallel.md).
   test('runs second', async ({ page }) => {});
   ```
 
+* Run multiple describes in parallel, but tests inside each describe in order.
+
+  ```js
+  test.describe.configure({ mode: 'parallel' });
+
+  test.describe('A, runs in parallel with B', () => {
+    test.describe.configure({ mode: 'default' });
+    test('in order A1', async ({ page }) => {});
+    test('in order A2', async ({ page }) => {});
+  });
+
+  test.describe('B, runs in parallel with A', () => {
+    test.describe.configure({ mode: 'default' });
+    test('in order B1', async ({ page }) => {});
+    test('in order B2', async ({ page }) => {});
+  });
+  ```
+
 ### option: Test.describe.configure.mode
 * since: v1.10
-- `mode` <[TestMode]<"parallel"|"serial">>
+- `mode` <[TestMode]<"default"|"parallel"|"serial">>
 
 Execution mode. Learn more about the execution modes [here](../test-parallel.md).
 

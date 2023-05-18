@@ -61,7 +61,7 @@ export type JsonSuite = {
   suites: JsonSuite[];
   tests: JsonTestCase[];
   fileId: string | undefined;
-  parallelMode: 'default' | 'serial' | 'parallel';
+  parallelMode: 'none' | 'default' | 'serial' | 'parallel';
 };
 
 export type JsonTestCase = {
@@ -383,7 +383,7 @@ export class TeleSuite implements SuitePrivate {
   _timeout: number | undefined;
   _retries: number | undefined;
   _fileId: string | undefined;
-  _parallelMode: 'default' | 'serial' | 'parallel' = 'default';
+  _parallelMode: 'none' | 'default' | 'serial' | 'parallel' = 'none';
   readonly _type: 'root' | 'project' | 'file' | 'describe';
 
   constructor(title: string, type: 'root' | 'project' | 'file' | 'describe') {
