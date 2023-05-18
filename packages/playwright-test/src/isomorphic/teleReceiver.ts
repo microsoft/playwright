@@ -28,7 +28,7 @@ export type JsonConfig = Pick<FullConfig, 'configFile' | 'globalTimeout' | 'maxF
   listOnly: boolean;
 };
 
-export type MergeReporterConfig = Pick<FullConfig, 'configFile' | 'reportSlowTests' | 'quiet' >;
+export type MergeReporterConfig = Pick<FullConfig, 'configFile' | 'quiet' | 'reportSlowTests' | 'rootDir' >;
 
 export type JsonPattern = {
   s?: string;
@@ -171,7 +171,7 @@ export class TeleReporterReceiver {
   }
 
   private _onBegin(config: JsonConfig, projects: JsonProject[]) {
-    this._rootDir = config.rootDir;
+    this._rootDir = this._reportConfig?.rootDir || config.rootDir;
     for (const project of projects) {
       let projectSuite = this._rootSuite.suites.find(suite => suite.project()!.id === project.id);
       if (!projectSuite) {
@@ -247,6 +247,8 @@ export class TeleReporterReceiver {
     };
     if (parentStep)
       parentStep.steps.push(step);
+    else
+      result.steps.push(step);
     result.stepMap.set(payload.id, step);
     this._reporter.onStepBegin?.(test, result, step);
   }
@@ -286,6 +288,7 @@ export class TeleReporterReceiver {
     const result = { ...baseFullConfig, ...config };
     if (this._reportConfig) {
       result.configFile = this._reportConfig.configFile;
+      result.rootDir = this._reportConfig.rootDir;
       result.reportSlowTests = this._reportConfig.reportSlowTests;
       result.quiet = this._reportConfig.quiet;
     }

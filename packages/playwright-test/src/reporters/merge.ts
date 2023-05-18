@@ -16,7 +16,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import type { FullConfig, ReporterDescription } from '../../types/test';
+import type { ReporterDescription } from '../../types/test';
 import type { FullResult } from '../../types/testReporter';
 import type { FullConfigInternal } from '../common/config';
 import { TeleReporterReceiver, type JsonEvent, type JsonProject, type JsonSuite, type JsonTestResultEnd, type JsonConfig } from '../isomorphic/teleReceiver';
@@ -25,7 +25,7 @@ import { Multiplexer } from './multiplexer';
 
 export async function createMergedReport(config: FullConfigInternal, dir: string, reporterDescriptions: ReporterDescription[], resolvePaths: boolean) {
   const shardFiles = await sortedShardFiles(dir);
-  const events = await mergeEvents(dir, shardFiles, config.config);
+  const events = await mergeEvents(dir, shardFiles);
   if (resolvePaths)
     patchAttachmentPaths(events, dir);
 
@@ -53,7 +53,7 @@ function parseEvents(reportJsonl: string): JsonEvent[] {
   return reportJsonl.toString().split('\n').filter(line => line.length).map(line => JSON.parse(line)) as JsonEvent[];
 }
 
-async function mergeEvents(dir: string, shardReportFiles: string[], reportConfig: FullConfig) {
+async function mergeEvents(dir: string, shardReportFiles: string[]) {
   const events: JsonEvent[] = [];
   const beginEvents: JsonEvent[] = [];
   const endEvents: JsonEvent[] = [];
@@ -69,10 +69,10 @@ async function mergeEvents(dir: string, shardReportFiles: string[], reportConfig
         events.push(event);
     }
   }
-  return [mergeBeginEvents(beginEvents, reportConfig), ...events, mergeEndEvents(endEvents), { method: 'onExit', params: undefined }];
+  return [mergeBeginEvents(beginEvents), ...events, mergeEndEvents(endEvents), { method: 'onExit', params: undefined }];
 }
 
-function mergeBeginEvents(beginEvents: JsonEvent[], reportConfig: FullConfig): JsonEvent {
+function mergeBeginEvents(beginEvents: JsonEvent[]): JsonEvent {
   if (!beginEvents.length)
     throw new Error('No begin events found');
   const projects: JsonProject[] = [];
