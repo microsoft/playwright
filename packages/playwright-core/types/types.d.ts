@@ -16435,7 +16435,7 @@ export interface ConsoleMessage {
   /**
    * The page that produced this console message, if any.
    */
-  page(): Page|null;
+  page(): null|Page;
 
   /**
    * The text of the console message.
@@ -16637,7 +16637,7 @@ export interface Dialog {
   /**
    * The page that initiated this dialog, if available.
    */
-  page(): Page|null;
+  page(): null|Page;
 
   /**
    * Returns dialog's type, can be one of `alert`, `beforeunload`, `confirm` or `prompt`.
