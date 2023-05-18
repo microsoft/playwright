@@ -1453,36 +1453,6 @@ Condition to wait for.
 ### option: BrowserContext.waitForCondition.timeout = %%-wait-for-function-timeout-%%
 * since: v1.32
 
-## async method: BrowserContext.waitForDialog
-* since: v1.34
-* langs: java, python, csharp
-  - alias-python: expect_dialog_message
-  - alias-csharp: RunAndWaitForDialog
-- returns: <[Dialog]>
-
-Performs action and waits for a [Dialog] to be created by in the context. If predicate is provided, it passes
-[Dialog] value into the `predicate` function and waits for `predicate(message)` to return a truthy value.
-
-## async method: BrowserContext.waitForDialog
-* since: v1.34
-* langs: python
-- returns: <[EventContextManager]<[Dialog]>>
-
-### param: BrowserContext.waitForDialog.action = %%-csharp-wait-for-event-action-%%
-* since: v1.34
-
-### option: BrowserContext.waitForDialog.predicate
-* since: v1.34
-- `predicate` <[function]\([Dialog]\):[boolean]>
-
-Receives the [Dialog] object and resolves to truthy value when the waiting should resolve.
-
-### option: BrowserContext.waitForDialog.timeout = %%-wait-for-event-timeout-%%
-* since: v1.34
-
-### param: BrowserContext.waitForDialog.callback = %%-java-wait-for-event-callback-%%
-* since: v1.34
-
 ## async method: BrowserContext.waitForConsoleMessage
 * since: v1.34
 * langs: java, python, csharp
