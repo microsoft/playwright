@@ -41,7 +41,8 @@ export const Workbench: React.FunctionComponent<{
   fallbackLocation?: modelUtil.SourceLocation,
   initialSelection?: ActionTraceEvent,
   onSelectionChanged?: (action: ActionTraceEvent) => void,
-}> = ({ model, hideTimelineBars, hideStackFrames, showSourcesFirst, rootDir, fallbackLocation, initialSelection, onSelectionChanged }) => {
+  isLive?: boolean,
+}> = ({ model, hideTimelineBars, hideStackFrames, showSourcesFirst, rootDir, fallbackLocation, initialSelection, onSelectionChanged, isLive }) => {
   const [selectedAction, setSelectedAction] = React.useState<ActionTraceEvent | undefined>(undefined);
   const [highlightedAction, setHighlightedAction] = React.useState<ActionTraceEvent | undefined>();
   const [selectedNavigatorTab, setSelectedNavigatorTab] = React.useState<string>('actions');
@@ -142,6 +143,7 @@ export const Workbench: React.FunctionComponent<{
                 onSelected={onActionSelected}
                 onHighlighted={setHighlightedAction}
                 revealConsole={() => setSelectedPropertiesTab('console')}
+                isLive={isLive}
               />
             },
             {

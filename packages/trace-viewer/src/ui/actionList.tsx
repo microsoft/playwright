@@ -31,6 +31,7 @@ export interface ActionListProps {
   onSelected: (action: ActionTraceEvent) => void,
   onHighlighted: (action: ActionTraceEvent | undefined) => void,
   revealConsole: () => void,
+  isLive?: boolean,
 }
 
 type ActionTreeItem = {
@@ -49,6 +50,7 @@ export const ActionList: React.FC<ActionListProps> = ({
   onSelected,
   onHighlighted,
   revealConsole,
+  isLive,
 }) => {
   const [treeState, setTreeState] = React.useState<TreeState>({ expandedItems: new Map() });
   const { rootItem, itemMap } = React.useMemo(() => {
@@ -86,14 +88,15 @@ export const ActionList: React.FC<ActionListProps> = ({
     onSelected={item => onSelected(item.action!)}
     onHighlighted={item => onHighlighted(item?.action)}
     isError={item => !!item.action?.error?.message}
-    render={item => renderAction(item.action!, sdkLanguage, revealConsole)}
+    render={item => renderAction(item.action!, sdkLanguage, revealConsole, isLive || false)}
   />;
 };
 
 const renderAction = (
   action: ActionTraceEvent,
   sdkLanguage: Language | undefined,
-  revealConsole: () => void
+  revealConsole: () => void,
+  isLive: boolean,
 ) => {
   const { errors, warnings } = modelUtil.stats(action);
   const locator = action.params.selector ? asLocator(sdkLanguage || 'javascript', action.params.selector, false /* isFrameLocator */, true /* playSafe */) : undefined;
@@ -103,6 +106,8 @@ const renderAction = (
     time = msToString(action.endTime - action.startTime);
   else if (action.error)
     time = 'Timed out';
+  else if (!isLive)
+    time = '-';
   return <>
     <div className='action-title'>
       <span>{action.apiName}</span>

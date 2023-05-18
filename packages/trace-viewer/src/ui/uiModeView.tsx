@@ -492,7 +492,7 @@ const TraceView: React.FC<{
   item: { testFile?: SourceLocation, testCase?: TestCase },
   rootDir?: string,
 }> = ({ item, rootDir }) => {
-  const [model, setModel] = React.useState<MultiTraceModel | undefined>();
+  const [model, setModel] = React.useState<{ model: MultiTraceModel, isLive: boolean } | undefined>();
   const [counter, setCounter] = React.useState(0);
   const pollTimer = React.useRef<NodeJS.Timeout | null>(null);
 
@@ -505,7 +505,7 @@ const TraceView: React.FC<{
   // This avoids auto-selection of the last action every time we reload the model.
   const [selectedActionId, setSelectedActionId] = React.useState<string | undefined>();
   const onSelectionChanged = React.useCallback((action: ActionTraceEvent) => setSelectedActionId(idForAction(action)), [setSelectedActionId]);
-  const initialSelection = selectedActionId ? model?.actions.find(a => idForAction(a) === selectedActionId) : undefined;
+  const initialSelection = selectedActionId ? model?.model.actions.find(a => idForAction(a) === selectedActionId) : undefined;
 
   React.useEffect(() => {
     if (pollTimer.current)
@@ -520,7 +520,7 @@ const TraceView: React.FC<{
     // Test finished.
     const attachment = result && result.duration >= 0 && result.attachments.find(a => a.name === 'trace');
     if (attachment && attachment.path) {
-      loadSingleTraceFile(attachment.path).then(model => setModel(model));
+      loadSingleTraceFile(attachment.path).then(model => setModel({ model, isLive: false }));
       return;
     }
 
@@ -534,7 +534,7 @@ const TraceView: React.FC<{
     pollTimer.current = setTimeout(async () => {
       try {
         const model = await loadSingleTraceFile(traceLocation);
-        setModel(model);
+        setModel({ model, isLive: true });
       } catch {
         setModel(undefined);
       } finally {
@@ -549,14 +549,15 @@ const TraceView: React.FC<{
 
   return <Workbench
     key='workbench'
-    model={model}
+    model={model?.model}
     hideTimelineBars={true}
     hideStackFrames={true}
     showSourcesFirst={true}
     rootDir={rootDir}
     initialSelection={initialSelection}
     onSelectionChanged={onSelectionChanged}
-    fallbackLocation={item.testFile} />;
+    fallbackLocation={item.testFile}
+    isLive={model?.isLive} />;
 };
 
 declare global {
