@@ -558,7 +558,7 @@ class ArtifactsRecorder {
   private _traceMode: TraceMode;
   private _captureTrace = false;
   private _screenshotOptions: { mode: ScreenshotMode } & Pick<playwrightLibrary.PageScreenshotOptions, 'fullPage' | 'omitBackground'> | undefined;
-  private _traceOptions: { screenshots: boolean, snapshots: boolean, sources: boolean, mode?: TraceMode };
+  private _traceOptions: { screenshots: boolean, snapshots: boolean, sources: boolean, attachments: boolean, mode?: TraceMode };
   private _temporaryTraceFiles: string[] = [];
   private _temporaryScreenshots: string[] = [];
   private _reusedContexts = new Set<BrowserContext>();
@@ -572,7 +572,7 @@ class ArtifactsRecorder {
     this._screenshotMode = normalizeScreenshotMode(screenshot);
     this._screenshotOptions = typeof screenshot === 'string' ? undefined : screenshot;
     this._traceMode = normalizeTraceMode(trace);
-    const defaultTraceOptions = { screenshots: true, snapshots: true, sources: true };
+    const defaultTraceOptions = { screenshots: true, snapshots: true, sources: true, attachments: true };
     this._traceOptions = typeof trace === 'string' ? defaultTraceOptions : { ...defaultTraceOptions, ...trace, mode: undefined };
     this._screenshottedSymbol = Symbol('screenshotted');
     this._startedCollectingArtifacts = Symbol('startedCollectingArtifacts');
@@ -661,6 +661,12 @@ class ArtifactsRecorder {
     if (this._preserveTrace()) {
       const events = this._testInfo._traceEvents;
       if (events.length) {
+        if (!this._traceOptions.attachments) {
+          for (const event of events) {
+            if (event.type === 'after')
+              delete event.attachments;
+          }
+        }
         const tracePath = path.join(this._artifactsDir, createGuid() + '.zip');
         this._temporaryTraceFiles.push(tracePath);
         await saveTraceFile(tracePath, events, this._traceOptions.sources);
