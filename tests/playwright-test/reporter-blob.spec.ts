@@ -855,7 +855,7 @@ test('preserve steps in html report', async ({ runInlineTest, mergeReports, show
   const files = {
     'playwright.config.ts': `
       module.exports = {
-        reporter: [['blob', { outputDir: '${reportDir.replace(/\\/g, '/')}' }]]
+        reporter: [['blob']]
       };
     `,
     'tests/a.test.js': `
@@ -874,6 +874,8 @@ test('preserve steps in html report', async ({ runInlineTest, mergeReports, show
   const reportFiles = await fs.promises.readdir(reportDir);
   reportFiles.sort();
   expect(reportFiles).toEqual([expect.stringMatching(/report-.*.jsonl/), 'resources']);
+  // Run merger in a different directory to make sure relative paths will not be resolved
+  // relative to the current directory.
   const mergeCwd = test.info().outputPath('foo');
   await fs.promises.mkdir(mergeCwd, { recursive: true });
   const { exitCode, output } = await mergeReports(reportDir, { 'PW_TEST_HTML_REPORT_OPEN': 'never' }, { additionalArgs: ['--reporter', 'html'], cwd: mergeCwd });
@@ -893,6 +895,7 @@ test('preserve steps in html report', async ({ runInlineTest, mergeReports, show
   await expect(page.getByText('expect.toBe')).toBeVisible();
   // Collapse hooks.
   await page.getByText('Before Hooks').click();
+  await expect(page.getByText('expect.toBe')).not.toBeVisible();
 
   // Check that 'my step' location is relative.
   await expect(page.getByText('— tests/a.test.js:7')).toBeVisible();
