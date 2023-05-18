@@ -127,7 +127,7 @@ URL of the resource followed by 0-based line and column numbers in the resource 
 
 ## method: ConsoleMessage.page
 * since: v1.33
-- returns: <[Page]|[null]>
+- returns: <[null]|[Page]>
 
 The page that produced this console message, if any.
 
