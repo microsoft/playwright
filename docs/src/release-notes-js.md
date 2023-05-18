@@ -6,6 +6,94 @@ toc_max_heading_level: 2
 
 import LiteYouTube from '@site/src/components/LiteYouTube';
 
+## Version 1.34
+
+### New APIs
+
+* New property [`property: TestProject.teardown`] to specify a project that needs to run after this
+  and all dependent projects have finished. Teardown is useful to cleanup any resources acquired by this project.
+
+  A commong pattern would be a `setup` dependency with a corresponding `teardown`:
+  ```js title="playwright.config.ts"
+  import { defineConfig } from '@playwright/test';
+
+  export default defineConfig({
+    projects: [
+      {
+        name: 'setup',
+        testMatch: /global.setup\.ts/,
+        teardown: 'teardown',
+      },
+      {
+        name: 'teardown',
+        testMatch: /global.teardown\.ts/,
+      },
+      {
+        name: 'chromium',
+        use: devices['Desktop Chrome'],
+        dependencies: ['setup'],
+      },
+      {
+        name: 'firefox',
+        use: devices['Desktop Firefox'],
+        dependencies: ['setup'],
+      },
+      {
+        name: 'webkit',
+        use: devices['Desktop Safari'],
+        dependencies: ['setup'],
+      },
+    ],
+  });
+  ```
+* New options `stderr` and `stdout`  in [`property: TestConfig.webServer`] to configure output handling:
+
+  ```js title="playwright.config.ts"
+  import { defineConfig } from '@playwright/test';
+
+  export default defineConfig({
+    // Run your local dev server before starting the tests
+    webServer: {
+      command: 'npm run start',
+      url: 'http://127.0.0.1:3000',
+      reuseExistingServer: !process.env.CI,
+      stdout: 'pipe',
+      stderr: 'pipe',
+    },
+  });
+  ```
+* New [`method: Locator.and`] to create a locator that matches both locators.
+
+    ```js
+    const button = page.getByRole('button').and(page.getByTitle('Subscribe'));
+    ```
+
+* New events [`event: BrowserContext.console`] and [`event: BrowserContext.dialog`] to subscribe to any dialogs
+  and console messages from any page from the given browser context. Use the new methods [`method: ConsoleMessage.page`]
+  and [`method: Dialog.page`] to pin-point event source.
+
+### ⚠️ Breaking changes
+
+* `npx playwright test` no longer works if you install both `playwright` and `@playwright/test`. There's no need
+  to install both, since you can always import browser automation APIs from `@playwright/test` directly:
+
+  ```js title="automation.ts"
+  import { chromium, firefox, webkit } from '@playwright/test';
+  /* ... */
+  ```
+* Node.js 14 is no longer supported since it [reached its end-of-life](https://nodejs.dev/en/about/releases/) on April 30, 2023.
+
+### Browser Versions
+
+* Chromium 114.0.5735.26
+* Mozilla Firefox 113.0
+* WebKit 16.4
+
+This version was also tested against the following stable channels:
+
+* Google Chrome 113
+* Microsoft Edge 113
+
 ## Version 1.33
 
 ### Locators Update
