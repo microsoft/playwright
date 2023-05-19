@@ -578,7 +578,6 @@ test('should record global request trace', async ({ request, context, server }, 
 });
 
 test('should store global request traces separately', async ({ request, server, playwright, browserName, mode }, testInfo) => {
-  test.fixme(browserName === 'chromium' && mode === 'driver', 'https://github.com/microsoft/playwright/issues/23108');
   const request2 = await playwright.request.newContext();
   await Promise.all([
     (request as any)._tracing.start({ snapshots: true }),
