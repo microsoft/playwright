@@ -37,6 +37,10 @@ export type SourceModel = {
   content: string | undefined;
 };
 
+export type ActionTraceEventInContext = ActionTraceEvent & {
+  context: ContextEntry;
+};
+
 export class MultiTraceModel {
   readonly startTime: number;
   readonly endTime: number;
@@ -46,7 +50,7 @@ export class MultiTraceModel {
   readonly title?: string;
   readonly options: trace.BrowserContextEventOptions;
   readonly pages: PageEntry[];
-  readonly actions: trace.ActionTraceEvent[];
+  readonly actions: ActionTraceEventInContext[];
   readonly events: trace.EventTraceEvent[];
   readonly hasSource: boolean;
   readonly sdkLanguage: Language | undefined;
@@ -89,7 +93,7 @@ function indexModel(context: ContextEntry) {
 }
 
 function mergeActions(contexts: ContextEntry[]) {
-  const map = new Map<string, ActionTraceEvent>();
+  const map = new Map<string, ActionTraceEventInContext>();
 
   // Protocol call aka isPrimary contexts have startTime/endTime as server-side times.
   // Step aka non-isPrimary contexts have startTime/endTime are client-side times.
@@ -100,7 +104,7 @@ function mergeActions(contexts: ContextEntry[]) {
 
   for (const context of primaryContexts) {
     for (const action of context.actions)
-      map.set(`${action.apiName}@${action.wallTime}`, action);
+      map.set(`${action.apiName}@${action.wallTime}`, { ...action, context });
     if (!offset && context.actions.length)
       offset = context.actions[0].startTime - context.actions[0].wallTime;
   }
@@ -126,7 +130,7 @@ function mergeActions(contexts: ContextEntry[]) {
           existing.parentId = action.parentId;
         continue;
       }
-      map.set(key, action);
+      map.set(key, { ...action, context });
     }
   }
 

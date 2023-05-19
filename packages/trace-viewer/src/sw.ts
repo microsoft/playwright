@@ -116,8 +116,12 @@ async function doFetch(event: FetchEvent): Promise<Response> {
     }
 
     if (relativePath.startsWith('/sha1/')) {
-      // Sha1 is unique, load it from either of the models for simplicity.
-      for (const { traceModel } of loadedTraces.values()) {
+      // Sha1 for sources is based on the file path, can't load it of a random model.
+      const traceUrls = clientIdToTraceUrls.get(event.clientId);
+      for (const [trace, { traceModel }] of loadedTraces) {
+        // We will accept explicit ?trace= value as well as the clientId associated with the trace.
+        if (traceUrl !== trace && !traceUrls.includes(trace))
+          continue;
         const blob = await traceModel!.resourceForSha1(relativePath.slice('/sha1/'.length));
         if (blob)
           return new Response(blob, { status: 200 });

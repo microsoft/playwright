@@ -23,13 +23,14 @@ import { asLocator } from '@isomorphic/locatorGenerators';
 import type { Language } from '@isomorphic/locatorGenerators';
 import type { TreeState } from '@web/components/treeView';
 import { TreeView } from '@web/components/treeView';
+import type { ActionTraceEventInContext } from './modelUtil';
 
 export interface ActionListProps {
-  actions: ActionTraceEvent[],
-  selectedAction: ActionTraceEvent | undefined,
+  actions: ActionTraceEventInContext[],
+  selectedAction: ActionTraceEventInContext | undefined,
   sdkLanguage: Language | undefined;
-  onSelected: (action: ActionTraceEvent) => void,
-  onHighlighted: (action: ActionTraceEvent | undefined) => void,
+  onSelected: (action: ActionTraceEventInContext) => void,
+  onHighlighted: (action: ActionTraceEventInContext | undefined) => void,
   revealConsole: () => void,
   isLive?: boolean,
 }
@@ -38,7 +39,7 @@ type ActionTreeItem = {
   id: string;
   children: ActionTreeItem[];
   parent: ActionTreeItem | undefined;
-  action?: ActionTraceEvent;
+  action?: ActionTraceEventInContext;
 };
 
 const ActionTreeView = TreeView<ActionTreeItem>;
