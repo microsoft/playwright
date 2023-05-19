@@ -203,9 +203,39 @@ jobs:
       env:
         PWTEST_TRACE: 1
         PWTEST_CHANNEL: ${{ matrix.channel }}
+        PWTEST_BLOB_REPORT: 1
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
+    - name: Upload artifacts to Azure Blob Storage
+      if: always() && github.event_name != 'pull_request'
+      run: az storage blob upload-batch -s test-results/blob-report -d '$web/run-${{ github.run_id }}-${{ github.sha }}-tracing_linux' --connection-string "${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}"
+
+  merge_tracing_linux:
+    if: ${{ always() && github.event_name != 'pull_request' }}
+    needs: [tracing_linux]
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
+      with:
+        node-version: 16
+    - run: npm ci
+      env:
+        DEBUG: pw:install
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+    - run: npm run build
+    - name: Download Blob Reports from Azure Blob Storage
+      run: |
+        az storage blob download-batch -d . -s '$web'  --pattern 'run-${{ github.run_id }}-${{ github.sha }}-tracing_linux/*.jsonl' --connection-string "${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}"
+    - name: Merge into HTML Report
+      run: |
+        npx playwright merge-reports --reporter html --attachments missing 'run-${{ github.run_id }}-${{ github.sha }}-tracing_linux'
+    - name: Upload HTML Report to Azure Blob Storage
+      run: |
+        az storage blob upload-batch -s playwright-report -d '$web/run-${{ github.run_id }}-${{ github.sha }}-tracing_linux' --connection-string "${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}"
+        echo "Report url: https://mspwblobreport.z1.web.core.windows.net/run-${{ github.run_id }}-${{ github.sha }}-tracing_linux/index.html"
 
   chrome_stable_linux:
     name: "Chrome Stable (Linux)"
