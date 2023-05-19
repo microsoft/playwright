@@ -11,7 +11,7 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 ### Highlights
 
 * UI Mode now shows steps, fixtures and attachments
-  ![UI Mode attachments](https://github-production-user-asset-6210df.s3.amazonaws.com/746130/239591475-4878d47e-5e59-4a76-bbcd-18e5341571b0.png)
+  ![UI Mode attachments](https://github.com/microsoft/playwright/assets/746130/1d280419-d79a-4a56-b2dc-54d631281d56)
 * New property [`property: TestProject.teardown`] to specify a project that needs to run after this
   and all dependent projects have finished. Teardown is useful to cleanup any resources acquired by this project.
 
