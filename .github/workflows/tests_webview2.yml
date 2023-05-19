@@ -43,8 +43,3 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v1
-      if: always()
-      with:
-        name: webview2-test-results
-        path: test-results

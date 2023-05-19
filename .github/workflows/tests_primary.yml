@@ -60,11 +60,6 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v3
-      if: always()
-      with:
-        name: ${{ matrix.browser }}-${{ matrix.os }}-test-results
-        path: test-results
 
   merge_test_linux:
     if: ${{ always() && github.event_name != 'pull_request' }}
@@ -116,11 +111,6 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v3
-      if: always()
-      with:
-        name: ${{ matrix.browser }}-chromium-tip-of-tree-test-results
-        path: test-results
 
   test_test_runner:
     name: Test Runner

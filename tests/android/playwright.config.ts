@@ -32,7 +32,6 @@ const config: Config<ServerWorkerOptions & PlaywrightWorkerOptions & PlaywrightT
   globalTimeout: 7200000,
   workers: 1,
   forbidOnly: !!process.env.CI,
-  preserveOutput: process.env.CI ? 'failures-only' : 'always',
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [
     ['dot'],
