@@ -46,7 +46,7 @@
 .test-case-duration {
   flex: none;
   align-items: center;
-  padding: 0 8px 24px;
+  padding: 0 8px 8px;
 }
 
 .test-case-path {
