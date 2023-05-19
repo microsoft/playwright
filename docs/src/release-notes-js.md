@@ -10,7 +10,7 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 ### Highlights
 
-* UI Mode now shows steps, fixtures and attachments
+* UI Mode now shows steps, fixtures and attachments:
   ![UI Mode attachments](https://github.com/microsoft/playwright/assets/746130/1d280419-d79a-4a56-b2dc-54d631281d56)
 * New property [`property: TestProject.teardown`] to specify a project that needs to run after this
   and all dependent projects have finished. Teardown is useful to cleanup any resources acquired by this project.
@@ -49,7 +49,7 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
   });
   ```
 * New method [`expect.configure`](./test-assertions.md#expectconfigure) to
-  create pre-configured expect instance wth its own defaults such as `timeout`
+  create pre-configured expect instance with its own defaults such as `timeout`
   and `soft`.
 
   ```js
