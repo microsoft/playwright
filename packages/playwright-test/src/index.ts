@@ -26,7 +26,7 @@ import { type ContextReuseMode } from './common/config';
 import { artifactsFolderName } from './isomorphic/folders';
 import type { ClientInstrumentation, ClientInstrumentationListener } from '../../playwright-core/src/client/clientInstrumentation';
 import type { ParsedStackTrace } from '../../playwright-core/src/utils/stackTrace';
-import { currentTestInfo, setCurrentTestInstrumentation } from './common/globals';
+import { currentTestInfo } from './common/globals';
 export { expect } from './matchers/expect';
 export { store as _store } from './store';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
@@ -50,12 +50,12 @@ type TestFixtures = PlaywrightTestArgs & PlaywrightTestOptions & {
   _contextReuseMode: ContextReuseMode,
   _reuseContext: boolean,
   _setupContextOptions: void;
+  _setupArtifacts: void;
   _contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>;
 };
 type WorkerFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions & {
   _browserOptions: LaunchOptions;
   _artifactsDir: () => string;
-  _setupArtifacts: void;
   _snapshotSuffix: string;
 };
 
@@ -269,9 +269,9 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     }
   }, { auto: 'all-hooks-included',  _title: 'context configuration' } as any],
 
-  _setupArtifacts: [async ({ playwright, _artifactsDir, trace, screenshot }, use) => {
-    let artifactsRecorder: ArtifactsRecorder | undefined;
-
+  _setupArtifacts: [async ({ playwright, _artifactsDir, trace, screenshot }, use, testInfo) => {
+    const artifactsRecorder = new ArtifactsRecorder(playwright, _artifactsDir(), trace, screenshot);
+    await artifactsRecorder.willStartTest(testInfo as TestInfoImpl);
     const csiListener: ClientInstrumentationListener = {
       onApiCallBegin: (apiName: string, params: Record<string, any>, stackTrace: ParsedStackTrace | null, wallTime: number, userData: any) => {
         const testInfo = currentTestInfo();
@@ -312,46 +312,15 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       },
     };
 
-    const willStartTest = async (testInfo: TestInfoImpl) => {
-      artifactsRecorder = new ArtifactsRecorder(playwright, _artifactsDir(), trace, screenshot);
-      await artifactsRecorder.willStartTest(testInfo);
-    };
-
-    const didFinishTestFunction = async (testInfo: TestInfoImpl) => {
-      await artifactsRecorder?.didFinishTestFunction();
-    };
-
-    const didFinishTest = async (testInfo: TestInfoImpl) => {
-      await artifactsRecorder?.didFinishTest();
-      artifactsRecorder = undefined;
-    };
-
-    // 1. Setup instrumentation.
     const clientInstrumentation = (playwright as any)._instrumentation as ClientInstrumentation;
     clientInstrumentation.addListener(csiListener);
-    setCurrentTestInstrumentation({ willStartTest, didFinishTestFunction, didFinishTest });
 
-    // 2. Setup for the first test in the worker.
-    {
-      const firstTestInfo = currentTestInfo();
-      if (firstTestInfo)
-        await willStartTest(firstTestInfo);
-    }
-
-    // 2. Run the test.
     await use();
 
-    // 3. Teardown for the last test in the worker.
-    {
-      const lastTestInfo = currentTestInfo();
-      if (lastTestInfo)
-        await didFinishTest(lastTestInfo);
-    }
-
-    // 4. Cleanup instrumentation.
-    setCurrentTestInstrumentation(undefined);
     clientInstrumentation.removeListener(csiListener);
-  }, { scope: 'worker', auto: 'all-hooks-included',  _title: 'trace recording' } as any],
+    await artifactsRecorder?.didFinishTest();
+
+  }, { auto: 'all-hooks-included',  _title: 'trace recording' } as any],
 
   _contextFactory: [async ({ browser, video, _artifactsDir, _reuseContext }, use, testInfo) => {
     const testInfoImpl = testInfo as TestInfoImpl;
@@ -580,6 +549,7 @@ class ArtifactsRecorder {
 
   async willStartTest(testInfo: TestInfoImpl) {
     this._testInfo = testInfo;
+    testInfo._onDidFinishTestFunction = () => this.didFinishTestFunction();
     this._captureTrace = shouldCaptureTrace(this._traceMode, testInfo) && !process.env.PW_TEST_DISABLE_TRACING;
 
     // Process existing contexts.
@@ -677,8 +647,16 @@ class ArtifactsRecorder {
     // before the test has finished.
     if (this._preserveTrace() && this._temporaryTraceFiles.length) {
       const tracePath = this._testInfo.outputPath(`trace.zip`);
+      // This could be: beforeHooks, or beforeHooks + test, etc.
+      const beforeHooksHadTrace = fs.existsSync(tracePath);
+      if (beforeHooksHadTrace) {
+        await fs.promises.rename(tracePath, tracePath + '.tmp');
+        this._temporaryTraceFiles.unshift(tracePath + '.tmp');
+      }
       await mergeTraceFiles(tracePath, this._temporaryTraceFiles);
-      this._testInfo.attachments.push({ name: 'trace', path: tracePath, contentType: 'application/zip' });
+      // Do not add attachment twice.
+      if (!beforeHooksHadTrace)
+        this._testInfo.attachments.push({ name: 'trace', path: tracePath, contentType: 'application/zip' });
     }
     await Promise.all(this._temporaryScreenshots.map(async file => {
       if (captureScreenshots)

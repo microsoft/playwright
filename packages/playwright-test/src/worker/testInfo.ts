@@ -58,6 +58,7 @@ export class TestInfoImpl implements TestInfo {
   readonly _steps: TestStepInternal[] = [];
   _beforeHooksStep: TestStepInternal | undefined;
   _afterHooksStep: TestStepInternal | undefined;
+  _onDidFinishTestFunction: (() => Promise<void>) | undefined;
 
   // ------------ TestInfo fields ------------
   readonly testId: string;

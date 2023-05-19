@@ -115,12 +115,10 @@ test('should record api trace', async ({ runInlineTest, server }, testInfo) => {
     'tracing.start',
     'apiRequestContext.get',
     'After Hooks',
-    'tracing.stopChunk',
   ]);
   const trace3 = await parseTrace(testInfo.outputPath('test-results', 'a-fail', 'trace.zip'));
   expect(trace3.apiNames).toEqual([
     'Before Hooks',
-    'tracing.startChunk',
     'fixture: request',
     'apiRequest.newContext',
     'tracing.start',
@@ -138,7 +136,6 @@ test('should record api trace', async ({ runInlineTest, server }, testInfo) => {
     'fixture: request',
     'tracing.stopChunk',
     'apiRequestContext.dispose',
-    'tracing.stopChunk',
   ]);
 });
 
@@ -345,7 +342,6 @@ test('should not override trace file in afterAll', async ({ runInlineTest, serve
     'fixture: request',
     'tracing.stopChunk',
     'apiRequestContext.dispose',
-    'fixture: browser',
   ]);
 
   const error = await parseTrace(testInfo.outputPath('test-results', 'a-test-2', 'trace.zip')).catch(e => e);
