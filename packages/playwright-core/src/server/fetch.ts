@@ -382,7 +382,7 @@ export abstract class APIRequestContext extends SdkObject {
           const emptyStreamTransform = new SafeEmptyStreamTransform(notifyBodyFinished);
           body = pipeline(response, emptyStreamTransform, transform, e => {
             if (e)
-              reject(new Error(`failed to decompress '${encoding}' encoding: ${e}`));
+              reject(new Error(`failed to decompress '${encoding}' encoding: ${e.message}`));
           });
           body.on('error', e => reject(new Error(`failed to decompress '${encoding}' encoding: ${e}`)));
         } else {
