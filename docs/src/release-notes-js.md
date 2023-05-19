@@ -8,8 +8,10 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 ## Version 1.34
 
-### New APIs
+### Highlights
 
+* UI Mode now shows steps, fixtures and attachments
+  ![UI Mode attachments](https://github-production-user-asset-6210df.s3.amazonaws.com/746130/239591475-4878d47e-5e59-4a76-bbcd-18e5341571b0.png)
 * New property [`property: TestProject.teardown`] to specify a project that needs to run after this
   and all dependent projects have finished. Teardown is useful to cleanup any resources acquired by this project.
 
@@ -46,6 +48,18 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
     ],
   });
   ```
+* New method [`expect.configure`](./test-assertions.md#expectconfigure) to
+  create pre-configured expect instance wth its own defaults such as `timeout`
+  and `soft`.
+
+  ```js
+  const slowExpect = expect.configure({ timeout: 10000 });
+  await slowExpect(locator).toHaveText('Submit);
+
+  // Always do soft assertions.
+  const softExpect = expect.configure({ soft: true });
+  ```
+
 * New options `stderr` and `stdout`  in [`property: TestConfig.webServer`] to configure output handling:
 
   ```js title="playwright.config.ts"

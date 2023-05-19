@@ -129,6 +129,9 @@ defaults such as `timeout` and `soft`.
 ```js
 const slowExpect = expect.configure({ timeout: 10000 });
 await slowExpect(locator).toHaveText('Submit);
+
+// Always do soft assertions.
+const softExpect = expect.configure({ soft: true });
 ```
 
 ## expect.poll
