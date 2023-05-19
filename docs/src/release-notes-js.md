@@ -54,7 +54,7 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
   ```js
   const slowExpect = expect.configure({ timeout: 10000 });
-  await slowExpect(locator).toHaveText('Submit);
+  await slowExpect(locator).toHaveText('Submit');
 
   // Always do soft assertions.
   const softExpect = expect.configure({ soft: true });
