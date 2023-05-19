@@ -121,7 +121,6 @@ it('should upload multiple large files', async ({ page, server, browserName, isM
   await fileChooser.setFiles(uploadFiles);
   const filesLen = await page.evaluate('document.getElementsByTagName("input")[0].files.length');
   expect(fileChooser.isMultiple()).toBe(true);
-  await page.waitForTimeout(10000);
   expect(filesLen).toEqual(filesCount);
   await Promise.all(uploadFiles.map(path => fs.promises.unlink(path)));
 });
