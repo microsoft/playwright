@@ -85,6 +85,46 @@ it('should upload large file', async ({ page, server, browserName, isMac, isAndr
   await Promise.all([uploadFile, file1.filepath].map(fs.promises.unlink));
 });
 
+it.only('should upload multiple large files', async ({ page, server, browserName, isMac, isAndroid }, testInfo) => {
+  it.skip(browserName === 'webkit' && isMac && parseInt(os.release(), 10) < 20, 'WebKit for macOS 10.15 is frozen and does not have corresponding protocol features.');
+  it.skip(isAndroid);
+  it.slow();
+  const filesCount = 10;
+  await page.goto(server.PREFIX + '/input/fileupload-multi.html');
+  await page.locator('input[type="file"]');
+  const uploadFile = testInfo.outputPath('50MB_1.zip');
+  const str = 'A'.repeat(1024);
+  const stream = fs.createWriteStream(uploadFile);
+  for (let i = 0; i < 50 * 1024; i++) {
+    await new Promise<void>((fulfill, reject) => {
+      stream.write(str, err => {
+        if (err)
+          reject(err);
+        else
+          fulfill();
+      });
+    });
+  }
+  await new Promise(f => stream.end(f));
+  const input = page.locator('input[type="file"]');
+  const uploadFiles = [uploadFile];
+  for (let i = 2; i <= filesCount; i++) {
+    const dstFile = testInfo.outputPath(`50MB_${i}.zip`);
+    fs.copyFile(uploadFile, dstFile, err => {
+      expect(err).toBe(null);
+    });
+    uploadFiles.push(dstFile);
+  }
+  const fileChooserPromise = page.waitForEvent('filechooser');
+  await input.click();
+  const fileChooser = await fileChooserPromise;
+  await fileChooser.setFiles(uploadFiles);
+  const filesLen = await page.evaluate('document.getElementsByTagName("input")[0].files.length');
+  expect(fileChooser.isMultiple()).toBe(true);
+  await page.waitForTimeout(10000);
+  expect(filesLen).toEqual(filesCount);
+});
+
 it('should upload large file with relative path', async ({ page, server, browserName, isMac, isAndroid }, testInfo) => {
   it.skip(browserName === 'webkit' && isMac && parseInt(os.release(), 10) < 20, 'WebKit for macOS 10.15 is frozen and does not have corresponding protocol features.');
   it.skip(isAndroid);
