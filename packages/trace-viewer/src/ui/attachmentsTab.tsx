@@ -14,39 +14,40 @@
  * limitations under the License.
  */
 
-import type { ActionTraceEvent } from '@trace/trace';
 import * as React from 'react';
 import './attachmentsTab.css';
 import { ImageDiffView } from '@web/components/imageDiffView';
 import type { TestAttachment } from '@web/components/imageDiffView';
+import type { ActionTraceEventInContext } from './modelUtil';
 
 export const AttachmentsTab: React.FunctionComponent<{
-  action: ActionTraceEvent | undefined,
+  action: ActionTraceEventInContext | undefined,
 }> = ({ action }) => {
   if (!action)
     return null;
   const expected = action.attachments?.find(a => a.name.endsWith('-expected.png') && (a.path || a.sha1)) as TestAttachment | undefined;
   const actual = action.attachments?.find(a => a.name.endsWith('-actual.png') && (a.path || a.sha1)) as TestAttachment | undefined;
   const diff = action.attachments?.find(a => a.name.endsWith('-diff.png') && (a.path || a.sha1)) as TestAttachment | undefined;
+  const traceUrl = action.context.traceUrl;
 
   return <div className='attachments-tab'>
     {expected && actual && <div className='attachments-section'>Image diff</div>}
     {expected && actual && <ImageDiffView imageDiff={{
       name: 'Image diff',
-      expected: { attachment: { ...expected, path: attachmentURL(expected) }, title: 'Expected' },
-      actual: { attachment: { ...actual, path: attachmentURL(actual) } },
-      diff: diff ? { attachment: { ...diff, path: attachmentURL(diff) } } : undefined,
+      expected: { attachment: { ...expected, path: attachmentURL(traceUrl, expected) }, title: 'Expected' },
+      actual: { attachment: { ...actual, path: attachmentURL(traceUrl, actual) } },
+      diff: diff ? { attachment: { ...diff, path: attachmentURL(traceUrl, diff) } } : undefined,
     }} />}
     {<div className='attachments-section'>Attachments</div>}
     {action.attachments?.map(a => {
       return <div className='attachment-item'>
-        <a target='_blank' href={`sha1/${a.sha1}`}>{a.name}</a>
+        <a target='_blank' href={attachmentURL(traceUrl, a)}>{a.name}</a>
       </div>;
     })}
   </div>;
 };
 
-function attachmentURL(attachment: {
+function attachmentURL(traceUrl: string, attachment: {
   name: string;
   contentType: string;
   path?: string;
@@ -54,6 +55,6 @@ function attachmentURL(attachment: {
   body?: string;
 }) {
   if (attachment.sha1)
-    return 'sha1/' + attachment.sha1;
+    return 'sha1/' + attachment.sha1 + '?trace=' + traceUrl;
   return 'file?path=' + attachment.path;
 }

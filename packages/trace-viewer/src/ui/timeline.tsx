@@ -15,16 +15,16 @@
   limitations under the License.
 */
 
-import type { ActionTraceEvent, EventTraceEvent } from '@trace/trace';
+import type { EventTraceEvent } from '@trace/trace';
 import { msToString, useMeasure } from '@web/uiUtils';
 import * as React from 'react';
 import type { Boundaries } from '../geometry';
 import { FilmStrip } from './filmStrip';
-import type { MultiTraceModel } from './modelUtil';
+import type { ActionTraceEventInContext, MultiTraceModel } from './modelUtil';
 import './timeline.css';
 
 type TimelineBar = {
-  action?: ActionTraceEvent;
+  action?: ActionTraceEventInContext;
   event?: EventTraceEvent;
   leftPosition: number;
   rightPosition: number;
@@ -38,8 +38,8 @@ type TimelineBar = {
 
 export const Timeline: React.FunctionComponent<{
   model: MultiTraceModel | undefined,
-  selectedAction: ActionTraceEvent | undefined,
-  onSelected: (action: ActionTraceEvent) => void,
+  selectedAction: ActionTraceEventInContext | undefined,
+  onSelected: (action: ActionTraceEventInContext) => void,
   hideTimelineBars?: boolean,
 }> = ({ model, selectedAction, onSelected, hideTimelineBars }) => {
   const [measure, ref] = useMeasure<HTMLDivElement>();
