@@ -85,7 +85,7 @@ it('should upload large file', async ({ page, server, browserName, isMac, isAndr
   await Promise.all([uploadFile, file1.filepath].map(fs.promises.unlink));
 });
 
-it('should upload multiple large files', async ({ page, server, browserName, isMac, isAndroid }, testInfo) => {
+it.only('should upload multiple large files', async ({ page, server, browserName, isMac, isAndroid }, testInfo) => {
   it.skip(browserName === 'webkit' && isMac && parseInt(os.release(), 10) < 20, 'WebKit for macOS 10.15 is frozen and does not have corresponding protocol features.');
   it.skip(isAndroid);
   it.slow();
@@ -123,6 +123,7 @@ it('should upload multiple large files', async ({ page, server, browserName, isM
   expect(fileChooser.isMultiple()).toBe(true);
   await page.waitForTimeout(10000);
   expect(filesLen).toEqual(filesCount);
+  await Promise.all(uploadFiles.map(path => fs.promises.unlink(path)));
 });
 
 it('should upload large file with relative path', async ({ page, server, browserName, isMac, isAndroid }, testInfo) => {
