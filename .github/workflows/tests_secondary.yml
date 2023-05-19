@@ -45,11 +45,6 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v3
-      if: always()
-      with:
-        name: ${{ matrix.browser }}-${{ matrix.os }}-test-results
-        path: test-results
 
   test_mac:
     name: ${{ matrix.os }} (${{ matrix.browser }})
@@ -74,11 +69,6 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v3
-      if: ${{ always() }}
-      with:
-        name: ${{ matrix.browser }}-${{ matrix.os }}-test-results
-        path: test-results
 
   test_win:
     name: "Windows"
@@ -103,11 +93,6 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v3
-      if: ${{ always() }}
-      with:
-        name: ${{ matrix.browser }}-win-test-results
-        path: test-results
 
   test-package-installations-other-node-versions:
     name: "Installation Test ${{ matrix.os }} (${{ matrix.node_version }})"
@@ -165,11 +150,6 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v3
-      if: always() && startsWith(matrix.os, 'ubuntu-')
-      with:
-        name: headful-${{ matrix.browser }}-linux-test-results
-        path: test-results
 
   transport_linux:
     name: "Transport"
@@ -195,11 +175,6 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v3
-      if: ${{ always() }}
-      with:
-        name: mode-${{ matrix.mode }}-linux-test-results
-        path: test-results
 
   tracing_linux:
     name: Tracing ${{ matrix.browser }} ${{ matrix.channel }}
@@ -251,11 +226,6 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v3
-      if: ${{ always() }}
-      with:
-        name: chrome-stable-linux-test-results
-        path: test-results
 
   chrome_stable_win:
     name: "Chrome Stable (Win)"
@@ -277,11 +247,6 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v3
-      if: ${{ always() }}
-      with:
-        name: chrome-stable-win-test-results
-        path: test-results
 
   chrome_stable_mac:
     name: "Chrome Stable (Mac)"
@@ -302,11 +267,6 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v3
-      if: ${{ always() }}
-      with:
-        name: chrome-stable-mac-test-results
-        path: test-results
 
   chromium_tot:
     name: Chromium TOT ${{ matrix.os }}
@@ -336,11 +296,6 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v3
-      if: always()
-      with:
-        name: chromium-tot-${{ matrix.os }}-test-results
-        path: test-results
 
   chromium_tot_headed:
     name: Chromium TOT headed ${{ matrix.os }}
@@ -370,11 +325,6 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v3
-      if: always()
-      with:
-        name: chromium-tot-headed-${{ matrix.os }}-test-results
-        path: test-results
 
   firefox_beta_linux:
     name: "Firefox Beta (Linux)"
@@ -395,11 +345,6 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v3
-      if: ${{ always() }}
-      with:
-        name: firefox-beta-linux-test-results
-        path: test-results
 
   firefox_beta_win:
     name: "Firefox Beta (Win)"
@@ -421,11 +366,6 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v3
-      if: ${{ always() }}
-      with:
-        name: firefox-beta-win-test-results
-        path: test-results
 
   firefox_beta_mac:
     name: "Firefox Beta (Mac)"
@@ -446,11 +386,6 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v3
-      if: ${{ always() }}
-      with:
-        name: firefox-beta-mac-test-results
-        path: test-results
 
   edge_stable_mac:
     name: "Edge Stable (Mac)"
@@ -471,12 +406,6 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v3
-      if: ${{ always() }}
-      with:
-        name: msedge-stable-mac-test-results
-        path: test-results
-
 
   edge_stable_win:
     name: "Edge Stable (Win)"
@@ -498,11 +427,6 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v3
-      if: ${{ always() }}
-      with:
-        name: edge-stable-win-test-results
-        path: test-results
 
   edge_stable_linux:
     name: "Edge Stable (Linux)"
@@ -523,11 +447,6 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v3
-      if: ${{ always() }}
-      with:
-        name: edge-stable-linux-test-results
-        path: test-results
 
   edge_beta_mac:
     name: "Edge Beta (Mac)"
@@ -548,11 +467,6 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v3
-      if: ${{ always() }}
-      with:
-        name: msedge-beta-mac-test-results
-        path: test-results
 
   edge_beta_win:
     name: "Edge Beta (Win)"
@@ -574,11 +488,6 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v3
-      if: ${{ always() }}
-      with:
-        name: edge-beta-win-test-results
-        path: test-results
 
   edge_beta_linux:
     name: "Edge Beta (Linux)"
@@ -599,11 +508,6 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v3
-      if: ${{ always() }}
-      with:
-        name: edge-beta-linux-test-results
-        path: test-results
 
   edge_dev_mac:
     name: "Edge Dev (Mac)"
@@ -624,11 +528,6 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v3
-      if: ${{ always() }}
-      with:
-        name: msedge-dev-mac-test-results
-        path: test-results
 
   edge_dev_win:
     name: "Edge Dev (Win)"
@@ -650,11 +549,6 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v3
-      if: ${{ always() }}
-      with:
-        name: edge-dev-win-test-results
-        path: test-results
 
   edge_dev_linux:
     name: "Edge Dev (Linux)"
@@ -675,11 +569,6 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v3
-      if: ${{ always() }}
-      with:
-        name: edge-dev-linux-test-results
-        path: test-results
 
   chrome_beta_linux:
     name: "Chrome Beta (Linux)"
@@ -700,11 +589,6 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v3
-      if: ${{ always() }}
-      with:
-        name: chrome-beta-linux-test-results
-        path: test-results
 
   chrome_beta_win:
     name: "Chrome Beta (Win)"
@@ -726,11 +610,6 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v3
-      if: ${{ always() }}
-      with:
-        name: chrome-beta-win-test-results
-        path: test-results
 
   chrome_beta_mac:
     name: "Chrome Beta (Mac)"
@@ -751,11 +630,6 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v3
-      if: ${{ always() }}
-      with:
-        name: chrome-beta-mac-test-results
-        path: test-results
 
   build-playwright-driver:
     name: "build-playwright-driver"
