@@ -1348,7 +1348,7 @@ test.describe('labels', () => {
     const result = await runInlineTest({
       'a.test.js': `
         const { expect, test } = require('@playwright/test');
-        const tags = ['@smoke:p1', '@issue[123]', '@issue#123', '@$$$', '@tl/dr'];
+        const tags = ['@smoke-p1', '@issue[123]', '@issue#123', '@$$$', '@tl/dr'];
 
         test.describe('Error Pages', () => {
           tags.forEach(tag => {
@@ -1364,7 +1364,7 @@ test.describe('labels', () => {
     expect(result.passed).toBe(5);
 
     await showReport();
-    const tags = ['smoke:p1', 'issue[123]', 'issue#123', '$$$', 'tl/dr'];
+    const tags = ['smoke-p1', 'issue[123]', 'issue#123', '$$$', 'tl/dr'];
     const searchInput = page.locator('.subnav-search-input');
 
     for (const tag of tags) {
