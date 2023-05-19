@@ -10,7 +10,7 @@ module.exports = {
    * Severity: 2 == error, 1 == warning, 0 == off.
    */
   "rules": {
-      "no-console": 2,
-      "no-debugger": 2
+    "no-console": 2,
+    "no-debugger": 2
   }
 };
