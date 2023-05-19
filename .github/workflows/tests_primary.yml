@@ -53,13 +53,13 @@ jobs:
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --project=${{ matrix.browser }}
       env:
         PWTEST_BLOB_REPORT: 1
-    - name: Upload artifacts to Azure Blob Storage
-      if: always() && github.event_name != 'pull_request'
-      run: az storage blob upload-batch -s test-results/blob-report -d '$web/run-${{ github.run_id }}-${{ github.sha }}-test_linux' --connection-string "${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}"
     - run: node tests/config/checkCoverage.js ${{ matrix.browser }}
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
+    - name: Upload artifacts to Azure Blob Storage
+      if: always() && github.event_name != 'pull_request'
+      run: az storage blob upload-batch -s test-results/blob-report -d '$web/run-${{ github.run_id }}-${{ github.sha }}-test_linux' --connection-string "${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}"
 
   merge_test_linux:
     if: ${{ always() && github.event_name != 'pull_request' }}
