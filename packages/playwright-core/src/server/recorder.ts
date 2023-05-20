@@ -25,6 +25,7 @@ import { Frame } from './frames';
 import { BrowserContext } from './browserContext';
 import { JavaLanguageGenerator } from './recorder/java';
 import { JavaScriptLanguageGenerator } from './recorder/javascript';
+import { JsonlLanguageGenerator } from './recorder/jsonl';
 import { CSharpLanguageGenerator } from './recorder/csharp';
 import { PythonLanguageGenerator } from './recorder/python';
 import * as recorderSource from '../generated/recorderSource';
@@ -406,6 +407,7 @@ class ContextRecorder extends EventEmitter {
       new CSharpLanguageGenerator('mstest'),
       new CSharpLanguageGenerator('nunit'),
       new CSharpLanguageGenerator('library'),
+      new JsonlLanguageGenerator(),
     ]);
     const primaryLanguage = [...languages].find(l => l.id === codegenId);
     if (!primaryLanguage)
