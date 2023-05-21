@@ -15,7 +15,7 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 * New property [`property: TestProject.teardown`] to specify a project that needs to run after this
   and all dependent projects have finished. Teardown is useful to cleanup any resources acquired by this project.
 
-  A commong pattern would be a `setup` dependency with a corresponding `teardown`:
+  A common pattern would be a `setup` dependency with a corresponding `teardown`:
   ```js title="playwright.config.ts"
   import { defineConfig } from '@playwright/test';
 
