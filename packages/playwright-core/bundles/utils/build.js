@@ -15,20 +15,28 @@
  */
 
 // @ts-check
-const path = require('path');
-const esbuild = require('esbuild');
+const path = require("path");
+const esbuild = require("esbuild");
 
-esbuild.build({
-  entryPoints: [path.join(__dirname, 'src/utilsBundleImpl.ts')],
-  bundle: true,
-  outdir: path.join(__dirname, '../../lib'),
-  format: 'cjs',
-  platform: 'node',
-  target: 'ES2019',
-  watch: process.argv.includes('--watch'),
-  sourcemap: process.argv.includes('--sourcemap'),
-  minify: process.argv.includes('--minify'),
-}).catch((error) => {
-  console.error(error);
-  process.exit(1);
-});
+const main = async () => {
+  try {
+    const ctx = await esbuild.context({
+      entryPoints: [path.join(__dirname, "src/utilsBundleImpl.ts")],
+      bundle: true,
+      outdir: path.join(__dirname, "../../lib"),
+      format: "cjs",
+      platform: "node",
+      target: "ES2019",
+      sourcemap: process.argv.includes("--sourcemap"),
+      minify: process.argv.includes("--minify"),
+    });
+    await ctx.rebuild();
+    if (process.argv.includes("--watch")) await ctx.watch();
+    await ctx.dispose();
+  } catch (error) {
+    console.error(error);
+    process.exit(1);
+  }
+};
+
+main();
