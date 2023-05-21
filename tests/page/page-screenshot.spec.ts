@@ -540,7 +540,7 @@ it.describe('page screenshot', () => {
       await page.goto(server.PREFIX + '/grid.html');
       expect(await page.screenshot({
         mask: [page.locator('div').nth(5)],
-        maskColor: "#00FF00",
+        maskColor: '#00FF00',
       })).not.toMatchSnapshot('mask-should-work.png');
     });
   });
