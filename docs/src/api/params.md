@@ -307,7 +307,7 @@ When using [`method: Page.goto`], [`method: Page.route`], [`method: Page.waitFor
   - `width` <[int]> page width in pixels.
   - `height` <[int]> page height in pixels.
 
-Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. 
+Emulates consistent viewport for each page. Defaults to an 1280x720 viewport.
 Use `null` to disable the consistent viewport emulation. Learn more about [viewport emulation](../emulation#viewport).
 
 :::note
@@ -1092,6 +1092,11 @@ Specify screenshot type, defaults to `png`.
 Specify locators that should be masked when the screenshot is taken. Masked elements will be overlaid with
 a pink box `#FF00FF` that completely covers its bounding box.
 
+## screenshot-option-mask-color
+- `maskColor` <[string]>
+
+Specify the color of the overlay box for masked elements. Default color is pink `#FF00FF`
+
 ## screenshot-option-full-page
 - `fullPage` <[boolean]>
 
@@ -1135,6 +1140,7 @@ When set to `"hide"`, screenshot will hide text caret. When set to `"initial"`, 
 - %%-screenshot-option-caret-%%
 - %%-screenshot-option-type-%%
 - %%-screenshot-option-mask-%%
+- %%-screenshot-option-mask-color-%%
 
 ## locator-get-by-test-id-test-id
 * since: v1.27
