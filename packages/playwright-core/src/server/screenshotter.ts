@@ -38,6 +38,7 @@ export type ScreenshotOptions = {
   omitBackground?: boolean,
   animations?: 'disabled' | 'allow',
   mask?: { frame: Frame, selector: string}[],
+  maskColor?: string,
   fullPage?: boolean,
   clip?: Rect,
   scale?: 'css' | 'device',
@@ -268,7 +269,7 @@ export class Screenshotter {
     progress.throwIfAborted(); // Avoid extra work.
 
     await Promise.all([...framesToParsedSelectors.keys()].map(async frame => {
-      await frame.maskSelectors(framesToParsedSelectors.get(frame));
+      await frame.maskSelectors(framesToParsedSelectors.get(frame), options.maskColor);
     }));
     progress.cleanupWhenAborted(cleanup);
     return cleanup;

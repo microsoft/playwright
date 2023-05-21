@@ -1093,7 +1093,7 @@ export class InjectedScript {
     return error;
   }
 
-  maskSelectors(selectors: ParsedSelector[]) {
+  maskSelectors(selectors: ParsedSelector[], color?: string) {
     if (this._highlight)
       this.hideHighlight();
     this._highlight = new Highlight(this);
@@ -1101,7 +1101,7 @@ export class InjectedScript {
     const elements = [];
     for (const selector of selectors)
       elements.push(this.querySelectorAll(selector, this.document.documentElement));
-    this._highlight.maskElements(elements.flat());
+    this._highlight.maskElements(elements.flat(), color);
   }
 
   highlight(selector: ParsedSelector) {
