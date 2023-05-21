@@ -36,30 +36,27 @@ export type PlaywrightTestConfig<T = {}, W = {}> = Omit<BasePlaywrightTestConfig
   };
 };
 
-type Slot = string | string[];
+type ComponentSlot = string | string[];
+type ComponentSlots = Record<string, ComponentSlot> & { default?: ComponentSlot };
+type ComponentEvents = Record<string, Function>;
 
-export interface MountOptions<
-  HooksConfig extends JsonObject,
-  Component extends SvelteComponent
-> {
+export interface MountOptions<HooksConfig extends JsonObject, Component extends SvelteComponent> {
   props?: ComponentProps<Component>;
-  slots?: Record<string, Slot> & { default?: Slot };
-  on?: Record<string, Function>;
+  slots?: ComponentSlots;
+  on?: ComponentEvents;
   hooksConfig?: HooksConfig;
 }
 
 interface MountResult<Component extends SvelteComponent> extends Locator {
   unmount(): Promise<void>;
-  update(
-    options: Omit<MountOptions<never, Component>, 'hooksConfig' | 'slots'>
-  ): Promise<void>;
+  update(options: {
+    props?: Partial<ComponentProps<Component>>;
+    on?: Partial<ComponentEvents>;
+  }): Promise<void>;
 }
 
 interface ComponentFixtures {
-  mount<
-    HooksConfig extends JsonObject,
-    Component extends SvelteComponent = SvelteComponent
-  >(
+  mount<HooksConfig extends JsonObject, Component extends SvelteComponent = SvelteComponent>(
     component: new (...args: any[]) => Component,
     options?: MountOptions<HooksConfig, Component>
   ): Promise<MountResult<Component>>;
@@ -70,9 +67,6 @@ export const test: TestType<
   PlaywrightWorkerArgs & PlaywrightWorkerOptions
 >;
 
-/**
- * Defines Playwright config
- */
 export function defineConfig(config: PlaywrightTestConfig): PlaywrightTestConfig;
 export function defineConfig<T>(config: PlaywrightTestConfig<T>): PlaywrightTestConfig<T>;
 export function defineConfig<T, W>(config: PlaywrightTestConfig<T, W>): PlaywrightTestConfig<T, W>;
