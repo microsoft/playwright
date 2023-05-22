@@ -35,5 +35,8 @@
     "./types/protocol": "./types/protocol.d.ts",
     "./types/structs": "./types/structs.d.ts"
   },
+  "bin": {
+    "playwright": "./cli.js"
+  },
   "types": "types/types.d.ts"
 }
