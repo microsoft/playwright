@@ -65,7 +65,7 @@ test('it should not allow a focused test when forbid-only is used', async ({ run
     `
   }, { 'forbid-only': true });
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain('Error: focused item found in the --forbid-only mode');
+  expect(result.output).toContain(`Error: item focused with '.only' is not allowed due to the 'forbidOnly' option in the Playwright configuration file: \"tests/focused-test.spec.js i-am-focused\"`);
   expect(result.output).toContain(`test.only('i-am-focused'`);
   expect(result.output).toContain(`tests${path.sep}focused-test.spec.js:3`);
 });
