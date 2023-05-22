@@ -106,7 +106,7 @@ var texts = await page.GetByRole(AriaRole.Link).AllTextContentsAsync();
 
 
 ## method: Locator.and
-* since: v1.33
+* since: v1.34
 * langs:
   - alias-python: and_
 - returns: <[Locator]>
@@ -138,7 +138,7 @@ var button = page.GetByRole(AriaRole.Button).And(page.GetByTitle("Subscribe"));
 ```
 
 ### param: Locator.and.locator
-* since: v1.33
+* since: v1.34
 - `locator` <[Locator]>
 
 Additional locator to match.
