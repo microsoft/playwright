@@ -1916,3 +1916,26 @@ test('tests should filter by file', async ({ runInlineTest, showReport, page }) 
   await expect(page.getByText('a test 1')).toBeVisible();
   await expect(page.getByText('a test 2')).not.toBeVisible();
 });
+
+test('tests should filter by status', async ({ runInlineTest, showReport, page }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test, expect } = require('@playwright/test');
+      test('failed title', async ({}) => { expect(1).toBe(1); });
+      test('passes title', async ({}) => { expect(1).toBe(2); });
+    `,
+  }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(1);
+  expect(result.failed).toBe(1);
+
+  await showReport();
+
+  const searchInput = page.locator('.subnav-search-input');
+
+  await searchInput.fill('s:failed');
+  await expect(page.getByText('a.test.js', { exact: true })).toBeVisible();
+  await expect(page.getByText('failed title')).not.toBeVisible();
+  await expect(page.getByText('passes title')).toBeVisible();
+});

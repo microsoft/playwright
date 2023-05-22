@@ -84,7 +84,7 @@ export class Filter {
         token.push(c);
         continue;
       }
-      if (c === ' ' || c === ':') {
+      if (c === ' ') {
         if (token.length) {
           result.push(token.join('').toLowerCase());
           token = [];
@@ -108,9 +108,11 @@ export class Filter {
       if (test.outcome === 'skipped')
         status = 'skipped';
       const searchValues: SearchValues = {
-        text: (status + ' ' + test.projectName + ' ' + test.location.file + ' ' + test.location.line + ' ' + test.path.join(' ') + ' ' + test.title).toLowerCase(),
+        text: (status + ' ' + test.projectName + ' ' + test.location.file + ' ' + test.path.join(' ') + ' ' + test.title).toLowerCase(),
         project: test.projectName.toLowerCase(),
         status: status as any,
+        file: test.location.file,
+        line: String(test.location.line),
       };
       (test as any).searchValues = searchValues;
     }
@@ -127,9 +129,14 @@ export class Filter {
         return false;
     }
     if (this.text.length) {
-      const matches = this.text.filter(t => searchValues.text.includes(t)).length === this.text.length;
-      if (!matches)
+      for (const text of this.text) {
+        if (searchValues.text.includes(text))
+          continue;
+        const location = text.split(':');
+        if (location.length === 2 && searchValues.file.includes(location[0]) && searchValues.line.includes(location[1]))
+          continue;
         return false;
+      }
     }
     if (this.labels.length) {
       const matches = this.labels.every(l => searchValues.text?.match(new RegExp(`(\\s|^)${escapeRegExp(l)}(\\s|$)`, 'g')));
@@ -145,5 +152,7 @@ type SearchValues = {
   text: string;
   project: string;
   status: 'passed' | 'failed' | 'flaky' | 'skipped';
+  file: string;
+  line: string;
 };
 
