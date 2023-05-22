@@ -144,7 +144,7 @@ export class TeleReporterEmitter implements Reporter {
     const report: JsonProject = {
       id: projectIds.get(project)!,
       metadata: project.metadata,
-      name: project.name,
+      name: this._serializeProjectName(project.name),
       outputDir: this._relativePath(project.outputDir),
       repeatEach: project.repeatEach,
       retries: project.retries,
@@ -162,6 +162,10 @@ export class TeleReporterEmitter implements Reporter {
       teardown: project.teardown,
     };
     return report;
+  }
+
+  _serializeProjectName(name: string): string {
+    return name;
   }
 
   private _serializeSuite(suite: Suite): JsonSuite {

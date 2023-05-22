@@ -899,3 +899,43 @@ test('preserve steps in html report', async ({ runInlineTest, mergeReports, show
   await page.getByText('my step').click();
   await expect(page.getByText('expect.toBe')).toBeVisible();
 });
+
+test('custom project suffix', async ({ runInlineTest, mergeReports }) => {
+  test.slow();
+  const reportDir = test.info().outputPath('blob-report');
+  const files = {
+    'echo-reporter.js': `
+      import fs from 'fs';
+
+      class EchoReporter {
+        onBegin(config, suite) {
+          const projects = suite.suites.map(s => s.project().name);
+          console.log('projects:', projects);
+        }
+      }
+      module.exports = EchoReporter;
+    `,
+    'playwright.config.ts': `
+      module.exports = {
+        retries: 1,
+        reporter: 'blob',
+        projects: [
+          { name: 'foo' },
+          { name: 'bar' },
+        ]
+      };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('math 1', async ({}) => {
+        expect(1 + 1).toBe(2);
+      });
+    `,
+  };
+
+  await runInlineTest(files, undefined, { PWTEST_BLOB_SUFFIX: '-suffix' });
+
+  const { exitCode, output } = await mergeReports(reportDir, {}, { additionalArgs: ['--reporter', test.info().outputPath('echo-reporter.js')] });
+  expect(exitCode).toBe(0);
+  expect(output).toContain(`projects: [ 'foo-suffix', 'bar-suffix' ]`);
+});

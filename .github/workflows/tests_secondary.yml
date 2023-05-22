@@ -204,6 +204,7 @@ jobs:
         PWTEST_TRACE: 1
         PWTEST_CHANNEL: ${{ matrix.channel }}
         PWTEST_BLOB_REPORT: 1
+        PWTEST_BLOB_SUFFIX: "-${{ matrix.channel }}"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash

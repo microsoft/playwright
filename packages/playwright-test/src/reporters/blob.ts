@@ -66,6 +66,11 @@ export class BlobReporter extends TeleReporterEmitter {
     ]);
   }
 
+  override _serializeProjectName(name: string): string {
+    const suffix = process.env.PWTEST_BLOB_SUFFIX;
+    return name + (suffix ? suffix : '');
+  }
+
   override _serializeAttachments(attachments: TestResult['attachments']): TestResult['attachments'] {
     return attachments.map(attachment => {
       if (!attachment.path || !fs.statSync(attachment.path).isFile())
