@@ -15,7 +15,6 @@
       "require": "./index.js",
       "default": "./index.js"
     },
-    "./cli": "./cli.js",
     "./package.json": "./package.json",
     "./lib/cli": "./lib/cli.js",
     "./lib/common/babelBundle": "./lib/common/babelBundle.js",
