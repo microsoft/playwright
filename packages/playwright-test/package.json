@@ -22,7 +22,11 @@
     "./lib/internalsForTest": "./lib/internalsForTest.js",
     "./lib/experimentalLoader": "./lib/experimentalLoader.js",
     "./lib/plugins": "./lib/plugins/index.js",
-    "./jsx-runtime": "./jsx-runtime.js",
+    "./jsx-runtime": {
+      "import": "./jsx-runtime.mjs",
+      "require": "./jsx-runtime.js",
+      "default": "./jsx-runtime.js"
+    },
     "./lib/util": "./lib/util.js",
     "./lib/utilsBundle": "./lib/utilsBundle.js",
     "./reporter": "./reporter.js"

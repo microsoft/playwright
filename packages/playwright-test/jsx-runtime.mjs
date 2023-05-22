@@ -14,24 +14,8 @@
  * limitations under the License.
  */
 
-function jsx(type, props) {
-  return {
-    type,
-    props,
-  };
-}
+import jsxRuntime from './jsx-runtime.js';
 
-function jsxs(type, props) {
-  return {
-    type,
-    props,
-  };
-}
-
-const Fragment = {};
-
-module.exports = {
-  Fragment,
-  jsx,
-  jsxs,
-};
+export const jsx = jsxRuntime.jsx;
+export const jsxs = jsxRuntime.jsxs;
+export const Fragment = jsxRuntime.Fragment;

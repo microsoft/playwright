@@ -488,6 +488,34 @@ test('should load a jsx/tsx files', async ({ runInlineTest }) => {
   expect(exitCode).toBe(0);
 });
 
+test('should load a jsx/tsx files in ESM mode', async ({ runInlineTest }) => {
+  const { exitCode, passed } = await runInlineTest({
+    'package.json': JSON.stringify({
+      type: 'module'
+    }),
+    'playwright.config.ts': `
+      import { defineConfig } from '@playwright/test';
+      export default defineConfig({ projects: [{name: 'foo'}] });
+    `,
+    'a.spec.tsx': `
+      import { test, expect } from '@playwright/test';
+      const component = () => <div></div>;
+      test('succeeds', () => {
+        expect(1 + 1).toBe(2);
+      });
+    `,
+    'b.spec.jsx': `
+      import { test, expect } from '@playwright/test';
+      const component = () => <div></div>;
+      test('succeeds', () => {
+        expect(1 + 1).toBe(2);
+      });
+    `
+  });
+  expect(passed).toBe(2);
+  expect(exitCode).toBe(0);
+});
+
 test('should load jsx with top-level component', async ({ runInlineTest }) => {
   const { exitCode, passed } = await runInlineTest({
     'a.spec.tsx': `
