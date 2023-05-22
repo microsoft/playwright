@@ -147,8 +147,10 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
   // Complain about only.
   if (config.config.forbidOnly) {
     const onlyTestsAndSuites = rootSuite._getOnlyItems();
-    if (onlyTestsAndSuites.length > 0)
-      errors.push(...createForbidOnlyErrors(onlyTestsAndSuites));
+    if (onlyTestsAndSuites.length > 0) {
+      const forbidOnlyConfigOption = !!config?.configCLIOverrides?.forbidOnly;
+      errors.push(...createForbidOnlyErrors(onlyTestsAndSuites, forbidOnlyConfigOption));
+    }
   }
 
   // Filter only for top-level projects.
@@ -219,13 +221,14 @@ async function createProjectSuite(fileSuites: Suite[], project: FullProjectInter
   return projectSuite;
 }
 
-function createForbidOnlyErrors(onlyTestsAndSuites: (TestCase | Suite)[]): TestError[] {
+function createForbidOnlyErrors(onlyTestsAndSuites: (TestCase | Suite)[], forbidOnlyConfigOption?: boolean): TestError[] {
   const errors: TestError[] = [];
   for (const testOrSuite of onlyTestsAndSuites) {
     // Skip root and file.
     const title = testOrSuite.titlePath().slice(2).join(' ');
+    const forbidOnlySource = forbidOnlyConfigOption ? `'forbidOnly' option in 'playwright.config.[jt]s'` : `'--forbid-only' CLI flag`;
     const error: TestError = {
-      message: `Error: focused item (e.g.: 'only') found in the --forbid-only mode ('forbidOnly' in 'playwright.config.[jt]s'): "${title}"`,
+      message: `Error: item focused with '.only' is not allowed due to the ${forbidOnlySource}: "${title}"`,
       location: testOrSuite.location!,
     };
     errors.push(error);
