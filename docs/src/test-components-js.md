@@ -38,7 +38,7 @@ test('event should work', async ({ mount }) => {
 
 ## How to get started
 
-Adding Playwright Test to an existing React, Vue, Svelte or Solid project is easy. Below are the steps to enable Playwright Test for a sample create-react-app with TypeScript template.
+Adding Playwright Test to an existing project is easy. Below are the steps to enable Playwright Test for a React, Vue, Svelte or Solid project.
 
 ### Step 1: Install Playwright Test for components for your respective framework
 
