@@ -409,7 +409,7 @@ ${colors.dim('Waiting for file changes. Press')} ${colors.bold('enter')} ${color
 async function toggleShowBrowser(config: FullConfigInternal, originalWorkers: number) {
   if (!showBrowserServer) {
     config.config.workers = 1;
-    showBrowserServer = new PlaywrightServer({ path: '/' + createGuid(), maxConnections: 1 });
+    showBrowserServer = new PlaywrightServer({ mode: 'extension', path: '/' + createGuid(), maxConnections: 1 });
     const wsEndpoint = await showBrowserServer.listen();
     process.env.PW_TEST_REUSE_CONTEXT = '1';
     process.env.PW_TEST_CONNECT_WS_ENDPOINT = wsEndpoint;

@@ -23,7 +23,7 @@ const test = baseTest.extend<{ runServer: () => Promise<PlaywrightServer> }>({
     let server: PlaywrightServer | undefined;
     await use(async () => {
       const runServer = new RunServer();
-      await runServer._start(childProcess);
+      await runServer.start(childProcess, 'extension');
       server = runServer;
       return server;
     });
