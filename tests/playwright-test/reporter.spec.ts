@@ -547,7 +547,7 @@ test('should report forbid-only error to reporter', async ({ runInlineTest }) =>
   }, { 'reporter': '', 'forbid-only': true });
 
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain(`%%got error: Error: item focused with '.only' is not allowed due to the 'forbidOnly' option in 'playwright.config.ts': \"a.test.ts pass\"`);
+  expect(result.output).toContain(`%%got error: Error: item focused with '.only' is not allowed due to the '--forbid-only' CLI flag: \"a.test.ts pass\"`);
 });
 
 test('should report no-tests error to reporter', async ({ runInlineTest }) => {

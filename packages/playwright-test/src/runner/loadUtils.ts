@@ -148,9 +148,20 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
   if (config.config.forbidOnly) {
     const onlyTestsAndSuites = rootSuite._getOnlyItems();
     if (onlyTestsAndSuites.length > 0) {
-      const forbidOnlyConfigOption = !!config.configCLIOverrides.forbidOnly;
-      const configFilePath = config.config.configFile ? path.relative(config.config.rootDir, config.config.configFile) : undefined;
-      errors.push(...createForbidOnlyErrors(onlyTestsAndSuites, forbidOnlyConfigOption, configFilePath));
+      const forbidOnlyCLIFlag = !!config.configCLIOverrides.forbidOnly;
+      let configFilePath: string | undefined;
+      switch (path.sep) {
+        case '\\': {
+          config.config.configFile ? path.posix.relative(config.config.rootDir, config.config.configFile) : undefined;
+          break;
+        }
+        case '/': {
+          configFilePath = config.config.configFile ? path.win32.relative(config.config.rootDir, config.config.configFile) : undefined;
+          break;
+        }
+      }
+
+      errors.push(...createForbidOnlyErrors(onlyTestsAndSuites, forbidOnlyCLIFlag, configFilePath));
     }
   }
 
@@ -222,13 +233,13 @@ async function createProjectSuite(fileSuites: Suite[], project: FullProjectInter
   return projectSuite;
 }
 
-function createForbidOnlyErrors(onlyTestsAndSuites: (TestCase | Suite)[], forbidOnlyConfigOption: boolean, configFilePath: string | undefined): TestError[] {
+function createForbidOnlyErrors(onlyTestsAndSuites: (TestCase | Suite)[], forbidOnlyCLIFlag: boolean, configFilePath: string | undefined): TestError[] {
   const errors: TestError[] = [];
   for (const testOrSuite of onlyTestsAndSuites) {
     // Skip root and file.
     const title = testOrSuite.titlePath().slice(2).join(' ');
     const configFilePathName = configFilePath ? `'${configFilePath}'` : 'the Playwright configuration file';
-    const forbidOnlySource = forbidOnlyConfigOption ? `'forbidOnly' option in ${configFilePathName}` : `'--forbid-only' CLI flag`;
+    const forbidOnlySource = forbidOnlyCLIFlag ? `'--forbid-only' CLI flag` : `'forbidOnly' option in ${configFilePathName}`;
     const error: TestError = {
       message: `Error: item focused with '.only' is not allowed due to the ${forbidOnlySource}: "${title}"`,
       location: testOrSuite.location!,
