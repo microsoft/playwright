@@ -67,7 +67,7 @@ export async function mergeTraceFiles(fileName: string, temporaryTraceFiles: str
       let pendingEntries = inZipFile.entryCount;
       inZipFile.on('entry', entry => {
         let entryName = entry.fileName;
-        if (entry.fileName.startsWith('trace.'))
+        if (entry.fileName.match(/[\d-]*trace./))
           entryName = i + '-' + entry.fileName;
         inZipFile.openReadStream(entry, (err, readStream) => {
           if (err) {

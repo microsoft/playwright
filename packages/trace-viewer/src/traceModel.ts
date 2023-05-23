@@ -76,6 +76,20 @@ export class TraceModel {
       unzipProgress(++done, total);
 
       contextEntry.actions = [...actionMap.values()].sort((a1, a2) => a1.startTime - a2.startTime);
+      if (!backend.isLive()) {
+        // Terminate actions w/o after event gracefully.
+        // This would close after hooks event that has not been closed because
+        // the trace is usually saved before after hooks complete.
+        for (const action of contextEntry.actions.slice().reverse()) {
+          if (!action.endTime && !action.error) {
+            for (const a of contextEntry.actions) {
+              if (a.parentId === action.callId && action.endTime < a.endTime)
+                action.endTime = a.endTime;
+            }
+          }
+        }
+      }
+
       const stacks = await this._backend.readText(ordinal + '.stacks');
       if (stacks) {
         const callMetadata = parseClientSideCallMetadata(JSON.parse(stacks));
