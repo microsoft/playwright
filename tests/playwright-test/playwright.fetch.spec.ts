@@ -52,7 +52,6 @@ test('should use baseURL in request fixture', async ({ runInlineTest, server }) 
 });
 
 test('should stop tracing on requestContext.dispose()', async ({ runInlineTest, server }) => {
-  test.fixme(process.platform === 'darwin', 'https://github.com/microsoft/playwright/issues/23116');
   server.setRoute('/slow', (req, resp) => {
     resp.writeHead(200, {
       'Content-Type': 'text/plain; charset=utf-8',

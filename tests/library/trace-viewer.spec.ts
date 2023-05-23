@@ -577,8 +577,7 @@ test('should show action source', async ({ showTraceViewer }) => {
   await expect(page.getByTestId('stack-trace').locator('.list-view-entry.selected')).toHaveText(/doClick.*trace-viewer\.spec\.ts:[\d]+/);
 });
 
-test('should follow redirects', async ({ page, runAndTrace, server, asset, browserName }) => {
-  test.fixme(browserName === 'chromium', 'https://github.com/microsoft/playwright/issues/23115');
+test('should follow redirects', async ({ page, runAndTrace, server, asset }) => {
   server.setRoute('/empty.html', (req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/html' });
     res.end(`<div><img id=img src="image.png"></img></div>`);

@@ -20,7 +20,6 @@ import { test, expect, retries } from './ui-mode-fixtures';
 test.describe.configure({ mode: 'parallel', retries });
 
 test('should merge trace events', async ({ runUITest, server }) => {
-  test.fixme(true, 'https://github.com/microsoft/playwright/issues/23114');
   const { page } = await runUITest({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -52,7 +51,6 @@ test('should merge trace events', async ({ runUITest, server }) => {
 });
 
 test('should merge web assertion events', async ({  runUITest }, testInfo) => {
-  test.fixme(process.platform === 'darwin' || process.platform === 'win32', 'https://github.com/microsoft/playwright/issues/23114');
   const { page } = await runUITest({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -127,7 +125,6 @@ test('should locate sync assertions in source', async ({ runUITest, server }) =>
 });
 
 test('should show snapshots for sync assertions', async ({ runUITest, server }) => {
-  test.fixme(true, 'https://github.com/microsoft/playwright/issues/23114');
   const { page } = await runUITest({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';

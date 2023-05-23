@@ -368,7 +368,6 @@ test.describe('cli codegen', () => {
   });
 
   test('should not clash pages', async ({ page, openRecorder, browserName }) => {
-    test.fixme(browserName === 'firefox', 'https://github.com/microsoft/playwright/issues/23117');
     const recorder = await openRecorder();
     const [popup1] = await Promise.all([
       page.context().waitForEvent('page'),
