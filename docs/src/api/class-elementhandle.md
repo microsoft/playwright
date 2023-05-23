@@ -741,6 +741,9 @@ Returns the buffer with the captured screenshot.
 ### option: ElementHandle.screenshot.timeout = %%-input-timeout-js-%%
 * since: v1.8
 
+### option: ElementHandle.screenshot.maskColor = %%-screenshot-option-mask-color-%%
+* since: v1.34
+
 ## async method: ElementHandle.scrollIntoViewIfNeeded
 * since: v1.8
 

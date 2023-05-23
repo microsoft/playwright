@@ -9829,7 +9829,8 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     mask?: Array<Locator>;
 
     /**
-     * Specify the color of the overlay box for masked elements. Default color is pink `#FF00FF`
+     * Specify the color of the overlay box for masked elements, in
+     * [CSS color format](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value). Default color is pink `#FF00FF`.
      */
     maskColor?: string;
 
@@ -19645,7 +19646,8 @@ export interface LocatorScreenshotOptions {
   mask?: Array<Locator>;
 
   /**
-   * Specify the color of the overlay box for masked elements. Default color is pink `#FF00FF`
+   * Specify the color of the overlay box for masked elements, in
+   * [CSS color format](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value). Default color is pink `#FF00FF`.
    */
   maskColor?: string;
 
@@ -19837,7 +19839,8 @@ export interface PageScreenshotOptions {
   mask?: Array<Locator>;
 
   /**
-   * Specify the color of the overlay box for masked elements. Default color is pink `#FF00FF`
+   * Specify the color of the overlay box for masked elements, in
+   * [CSS color format](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value). Default color is pink `#FF00FF`.
    */
   maskColor?: string;
 

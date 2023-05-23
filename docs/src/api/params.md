@@ -1093,9 +1093,10 @@ Specify locators that should be masked when the screenshot is taken. Masked elem
 a pink box `#FF00FF` that completely covers its bounding box.
 
 ## screenshot-option-mask-color
+* since: v1.34
 - `maskColor` <[string]>
 
-Specify the color of the overlay box for masked elements. Default color is pink `#FF00FF`
+Specify the color of the overlay box for masked elements, in [CSS color format](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value). Default color is pink `#FF00FF`.
 
 ## screenshot-option-full-page
 - `fullPage` <[boolean]>
@@ -1140,7 +1141,6 @@ When set to `"hide"`, screenshot will hide text caret. When set to `"initial"`, 
 - %%-screenshot-option-caret-%%
 - %%-screenshot-option-type-%%
 - %%-screenshot-option-mask-%%
-- %%-screenshot-option-mask-color-%%
 
 ## locator-get-by-test-id-test-id
 * since: v1.27
