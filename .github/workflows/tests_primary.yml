@@ -53,6 +53,7 @@ jobs:
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --project=${{ matrix.browser }}
       env:
         PWTEST_BLOB_REPORT: 1
+        PWTEST_BLOB_SUFFIX: "-${{ matrix.os }}-node${{ matrix.node-version }}"
     - run: node tests/config/checkCoverage.js ${{ matrix.browser }}
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
@@ -141,10 +142,12 @@ jobs:
     - run: npm run ttest -- --shard ${{ matrix.shard }}
       env:
         PWTEST_BLOB_REPORT: 1
+        PWTEST_BLOB_SUFFIX: "-${{ matrix.os }}-node${{ matrix.node-version }}"
       if: matrix.os != 'ubuntu-latest'
     - run: xvfb-run npm run ttest --  --shard ${{ matrix.shard }}
       env:
         PWTEST_BLOB_REPORT: 1
+        PWTEST_BLOB_SUFFIX: "-${{ matrix.os }}-node${{ matrix.node-version }}"
       if: matrix.os == 'ubuntu-latest'
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
