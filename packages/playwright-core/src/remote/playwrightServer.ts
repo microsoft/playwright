@@ -34,6 +34,7 @@ const kConnectionSymbol = Symbol('kConnection');
 type ServerOptions = {
   path: string;
   maxConnections: number;
+  mode: 'default' | 'launchServer' | 'extension';
   preLaunchedBrowser?: Browser;
   preLaunchedAndroidDevice?: AndroidDevice;
   preLaunchedSocksProxy?: SocksProxy;
@@ -97,37 +98,34 @@ export class PlaywrightServer {
       const proxyValue = url.searchParams.get('proxy') || (Array.isArray(proxyHeader) ? proxyHeader[0] : proxyHeader);
 
       const launchOptionsHeader = request.headers['x-playwright-launch-options'] || '';
+      const launchOptionsHeaderValue = Array.isArray(launchOptionsHeader) ? launchOptionsHeader[0] : launchOptionsHeader;
+      const launchOptionsParam = url.searchParams.get('launch-options');
       let launchOptions: LaunchOptions = {};
       try {
-        launchOptions = JSON.parse(Array.isArray(launchOptionsHeader) ? launchOptionsHeader[0] : launchOptionsHeader);
+        launchOptions = JSON.parse(launchOptionsParam || launchOptionsHeaderValue);
       } catch (e) {
       }
 
       const id = String(++lastConnectionId);
       debugLogger.log('server', `[${id}] serving connection: ${request.url}`);
-      const isDebugControllerClient = !!request.headers['x-playwright-debug-controller'];
-      const shouldReuseBrowser = !!request.headers['x-playwright-reuse-context'];
 
-      // If we started in the legacy reuse-browser mode, create this._preLaunchedPlaywright.
-      // If we get a debug-controller request, create this._preLaunchedPlaywright.
-      if (isDebugControllerClient || shouldReuseBrowser) {
+      // Instantiate playwright for the extension modes.
+      const isExtension = this._options.mode === 'extension';
+      if (isExtension) {
         if (!this._preLaunchedPlaywright)
           this._preLaunchedPlaywright = createPlaywright('javascript');
       }
 
-      let clientType: ClientType = 'playwright';
+      let clientType: ClientType = 'launch-browser';
       let semaphore: Semaphore = browserSemaphore;
-      if (isDebugControllerClient) {
+      if (isExtension && url.searchParams.has('debug-controller')) {
         clientType = 'controller';
         semaphore = controllerSemaphore;
-      } else if (shouldReuseBrowser) {
+      } else if (isExtension) {
         clientType = 'reuse-browser';
         semaphore = reuseBrowserSemaphore;
-      } else if (this._options.preLaunchedBrowser || this._options.preLaunchedAndroidDevice) {
+      } else if (this._options.mode === 'launchServer') {
         clientType = 'pre-launched-browser-or-android';
-        semaphore = browserSemaphore;
-      } else if (browserName) {
-        clientType = 'launch-browser';
         semaphore = browserSemaphore;
       }
 

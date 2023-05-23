@@ -115,9 +115,7 @@ export class Backend extends EventEmitter {
   }
 
   async connect(wsEndpoint: string) {
-    this._transport = await WebSocketTransport.connect(wsEndpoint, {
-      'x-playwright-debug-controller': 'true'
-    });
+    this._transport = await WebSocketTransport.connect(wsEndpoint + '?debug-controller');
     this._transport.onmessage = (message: any) => {
       if (!message.id) {
         this.emit(message.method, message.params);

@@ -28,7 +28,7 @@ import { startProfiling, stopProfiling } from '../utils';
 import { monotonicTime } from '../utils';
 import { debugLogger } from '../common/debugLogger';
 
-export type ClientType = 'controller' | 'playwright' | 'launch-browser' | 'reuse-browser' | 'pre-launched-browser-or-android';
+export type ClientType = 'controller' | 'launch-browser' | 'reuse-browser' | 'pre-launched-browser-or-android';
 
 type Options = {
   socksProxyPattern: string | undefined,
@@ -102,22 +102,8 @@ export class PlaywrightConnection {
         return this._preLaunched.browser ? await this._initPreLaunchedBrowserMode(scope) : await this._initPreLaunchedAndroidMode(scope);
       if (clientType === 'launch-browser')
         return await this._initLaunchBrowserMode(scope);
-      if (clientType === 'playwright')
-        return await this._initPlaywrightConnectMode(scope);
       throw new Error('Unsupported client type: ' + clientType);
     });
-  }
-
-  private async _initPlaywrightConnectMode(scope: RootDispatcher) {
-    debugLogger.log('server', `[${this._id}] engaged playwright.connect mode`);
-    const playwright = createPlaywright('javascript');
-    // Close all launched browsers on disconnect.
-    this._cleanups.push(async () => {
-      await Promise.all(playwright.allBrowsers().map(browser => browser.close()));
-    });
-
-    const ownedSocksProxy = await this._createOwnedSocksProxy(playwright);
-    return new PlaywrightDispatcher(scope, playwright, ownedSocksProxy);
   }
 
   private async _initLaunchBrowserMode(scope: RootDispatcher) {

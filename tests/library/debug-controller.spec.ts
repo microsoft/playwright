@@ -31,7 +31,7 @@ type Fixtures = {
 const test = baseTest.extend<Fixtures>({
   wsEndpoint: async ({ }, use) => {
     process.env.PW_DEBUG_CONTROLLER_HEADLESS = '1';
-    const server = new PlaywrightServer({ path: '/' + createGuid(), maxConnections: Number.MAX_VALUE, enableSocksProxy: false });
+    const server = new PlaywrightServer({ mode: 'extension', path: '/' + createGuid(), maxConnections: Number.MAX_VALUE, enableSocksProxy: false });
     const wsEndpoint = await server.listen();
     await use(wsEndpoint);
     await server.close();
