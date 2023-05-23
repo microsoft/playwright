@@ -17,6 +17,7 @@
 
 import { browserTest as it, expect } from '../config/browserTest';
 import { attachFrame } from '../config/utils';
+import { chromiumVersionLessThan } from '../config/utils';
 
 it('should work', async ({ browser, server }) => {
   {
@@ -86,9 +87,16 @@ it('should make a copy of default options', async ({ browser, server }) => {
   await context.close();
 });
 
-it('custom user agent for download', async ({ server, contextFactory, browserName }) => {
+it('custom user agent for download', async ({ server, contextFactory, browserVersion, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22843' });
-  it.skip(browserName === 'chromium');
+  it.skip(browserName === 'chromium' && chromiumVersionLessThan(browserVersion, '116.0.0.0'), 'https://chromium-review.googlesource.com/c/chromium/src/+/4554578');
+
+  server.setRoute('/download', (req, res) => {
+    res.setHeader('Content-Type', 'application/octet-stream');
+    res.setHeader('Content-Disposition', 'attachment');
+    res.end(`Hello world`);
+  });
+
   const context = await contextFactory({ userAgent: 'MyCustomUA' });
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
