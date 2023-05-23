@@ -148,7 +148,7 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
   if (config.config.forbidOnly) {
     const onlyTestsAndSuites = rootSuite._getOnlyItems();
     if (onlyTestsAndSuites.length > 0) {
-      const configFilePath = config.config.configFile ? path.posix.relative(config.config.rootDir, config.config.configFile) : undefined;
+      const configFilePath = config.config.configFile ? path.relative(config.config.rootDir, config.config.configFile) : undefined;
       errors.push(...createForbidOnlyErrors(onlyTestsAndSuites, config.configCLIOverrides.forbidOnly, configFilePath));
     }
   }
@@ -225,7 +225,7 @@ function createForbidOnlyErrors(onlyTestsAndSuites: (TestCase | Suite)[], forbid
   const errors: TestError[] = [];
   for (const testOrSuite of onlyTestsAndSuites) {
     // Skip root and file.
-    const title = testOrSuite.titlePath().slice(2).join(' ');
+    const title = testOrSuite.titlePath().slice(2).join(' ').replaceAll(path.sep, '/');
     const configFilePathName = configFilePath ? `'${configFilePath}'` : 'the Playwright configuration file';
     const forbidOnlySource = forbidOnlyCLIFlag ? `'--forbid-only' CLI flag` : `'forbidOnly' option in ${configFilePathName}`;
     const error: TestError = {
