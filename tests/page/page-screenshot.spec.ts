@@ -541,7 +541,7 @@ it.describe('page screenshot', () => {
       expect(await page.screenshot({
         mask: [page.locator('div').nth(5)],
         maskColor: '#00FF00',
-      })).not.toMatchSnapshot('mask-should-work.png');
+      })).toMatchSnapshot('mask-color-should-work.png');
     });
   });
 });
