@@ -296,6 +296,8 @@ export const test = base
       },
 
       runTSC: async ({ childProcess }, use, testInfo) => {
+        testInfo.slow();
+
         await use(async files => {
           const baseDir = await writeFiles(testInfo, { 'tsconfig.json': JSON.stringify(TSCONFIG), ...files }, true);
           const tsc = childProcess({
