@@ -24,6 +24,7 @@ import { ToolbarButton } from '@web/components/toolbarButton';
 import { copy, useMeasure } from '@web/uiUtils';
 import { InjectedScript } from '@injected/injectedScript';
 import { Recorder  } from '@injected/recorder';
+import ConsoleAPI from '@injected/consoleApi';
 import { asLocator } from '@isomorphic/locatorGenerators';
 import type { Language } from '@isomorphic/locatorGenerators';
 import { locatorOrSelectorAsSelector } from '@isomorphic/locatorParser';
@@ -183,7 +184,11 @@ export const SnapshotTab: React.FunctionComponent<{
       })}
       <div style={{ flex: 'auto' }}></div>
       <ToolbarButton icon='link-external' title='Open snapshot in a new tab' disabled={!popoutUrl} onClick={() => {
-        window.open(popoutUrl || '', '_blank');
+        const win = window.open(popoutUrl || '', '_blank');
+        win?.addEventListener('DOMContentLoaded', () => {
+          const injectedScript = new InjectedScript(win as any, false, sdkLanguage, testIdAttributeName, 1, 'chromium', []);
+          new ConsoleAPI(injectedScript);
+        });
       }}></ToolbarButton>
     </Toolbar>
     {pickerVisible && <Toolbar noMinHeight={true}>
