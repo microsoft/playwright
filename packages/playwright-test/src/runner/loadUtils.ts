@@ -148,18 +148,7 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
   if (config.config.forbidOnly) {
     const onlyTestsAndSuites = rootSuite._getOnlyItems();
     if (onlyTestsAndSuites.length > 0) {
-      let configFilePath: string | undefined;
-      switch (path.sep) {
-        case '\\': {
-          configFilePath = config.config.configFile ? path.posix.relative(config.config.rootDir, config.config.configFile) : undefined;
-          break;
-        }
-        case '/': {
-          configFilePath = config.config.configFile ? path.win32.relative(config.config.rootDir, config.config.configFile) : undefined;
-          break;
-        }
-      }
-
+      const configFilePath = config.config.configFile ? path.posix.relative(config.config.rootDir, config.config.configFile) : undefined;
       errors.push(...createForbidOnlyErrors(onlyTestsAndSuites, config.configCLIOverrides.forbidOnly, configFilePath));
     }
   }
