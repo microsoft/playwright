@@ -154,8 +154,8 @@ export class Highlight {
     this._innerUpdateHighlight(elements, { color, tooltipText: selector ? asLocator(this._language, selector) : '' });
   }
 
-  maskElements(elements: Element[]) {
-    this._innerUpdateHighlight(elements, { color: '#F0F' });
+  maskElements(elements: Element[], color?: string) {
+    this._innerUpdateHighlight(elements, { color: color ? color : '#F0F' });
   }
 
   private _innerUpdateHighlight(elements: Element[], options: { color: string, tooltipText?: string }) {

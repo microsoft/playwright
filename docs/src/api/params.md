@@ -1092,6 +1092,12 @@ Specify screenshot type, defaults to `png`.
 Specify locators that should be masked when the screenshot is taken. Masked elements will be overlaid with
 a pink box `#FF00FF` that completely covers its bounding box.
 
+## screenshot-option-mask-color
+* since: v1.34
+- `maskColor` <[string]>
+
+Specify the color of the overlay box for masked elements, in [CSS color format](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value). Default color is pink `#FF00FF`.
+
 ## screenshot-option-full-page
 - `fullPage` <[boolean]>
 

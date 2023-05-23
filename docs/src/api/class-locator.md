@@ -1768,6 +1768,9 @@ Returns the buffer with the captured screenshot.
 ### option: Locator.screenshot.timeout = %%-input-timeout-js-%%
 * since: v1.14
 
+### option: Locator.screenshot.maskColor = %%-screenshot-option-mask-color-%%
+* since: v1.34
+
 ## async method: Locator.scrollIntoViewIfNeeded
 * since: v1.14
 

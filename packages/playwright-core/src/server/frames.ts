@@ -857,12 +857,12 @@ export class Frame extends SdkObject {
     return result;
   }
 
-  async maskSelectors(selectors: ParsedSelector[]): Promise<void> {
+  async maskSelectors(selectors: ParsedSelector[], color?: string): Promise<void> {
     const context = await this._utilityContext();
     const injectedScript = await context.injectedScript();
-    await injectedScript.evaluate((injected, { parsed }) => {
-      injected.maskSelectors(parsed);
-    }, { parsed: selectors });
+    await injectedScript.evaluate((injected, { parsed, color }) => {
+      injected.maskSelectors(parsed, color);
+    }, { parsed: selectors, color: color });
   }
 
   async querySelectorAll(selector: string): Promise<dom.ElementHandle<Element>[]> {
