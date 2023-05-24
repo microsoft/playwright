@@ -36,7 +36,7 @@ export class TeleReporterEmitter implements Reporter {
   onBegin(config: FullConfig, suite: Suite) {
     this._rootDir = config.rootDir;
     const projects: any[] = [];
-    const projectIds = uniqueProjectIds(config.projects);
+    const projectIds = uniqueProjectIds(config.projects, name => this._serializeProjectName(name));
     for (const projectSuite of suite.suites) {
       const report = this._serializeProject(projectSuite, projectIds);
       projects.push(report);
