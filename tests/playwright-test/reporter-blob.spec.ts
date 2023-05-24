@@ -20,7 +20,7 @@ import url from 'url';
 import type { HttpServer } from '../../packages/playwright-core/src/utils';
 import { startHtmlReportServer } from '../../packages/playwright-test/lib/reporters/html';
 import { type CliRunResult, type RunOptions, stripAnsi } from './playwright-test-fixtures';
-import { cleanEnv, cliEntrypoint, expect, test as baseTest } from './playwright-test-fixtures';
+import { cleanEnv, cliEntrypoint, expect as baseExpect, test as baseTest } from './playwright-test-fixtures';
 import type { PlaywrightTestConfig } from 'packages/playwright-test';
 
 const DOES_NOT_SUPPORT_UTF8_IN_TERMINAL = process.platform === 'win32' && process.env.TERM_PROGRAM !== 'vscode' && !process.env.WT_SESSION;
@@ -60,6 +60,9 @@ const test = baseTest.extend<{
       });
 
 test.use({ channel: 'chrome' });
+test.slow(!!process.env.CI);
+// Slow tests are 90s.
+const expect = baseExpect.configure({ timeout: process.env.CI ? 75000 : 25000 });
 
 const echoReporterJs = `
 class EchoReporter {
@@ -96,7 +99,6 @@ module.exports = EchoReporter;
 `;
 
 test('should call methods in right order', async ({ runInlineTest, mergeReports }) => {
-  test.slow();
   const reportDir = test.info().outputPath('blob-report');
   const files = {
     'echo-reporter.js': echoReporterJs,
@@ -161,7 +163,6 @@ test('should call methods in right order', async ({ runInlineTest, mergeReports 
 });
 
 test('should merge into html', async ({ runInlineTest, mergeReports, showReport, page }) => {
-  test.slow();
   const reportDir = test.info().outputPath('blob-report');
   const files = {
     'playwright.config.ts': `
@@ -228,7 +229,6 @@ test('should merge into html', async ({ runInlineTest, mergeReports, showReport,
 });
 
 test('be able to merge incomplete shards', async ({ runInlineTest, mergeReports, showReport, page }) => {
-  test.slow();
   const reportDir = test.info().outputPath('blob-report');
   const files = {
     'playwright.config.ts': `
@@ -364,7 +364,6 @@ test('merge into list report by default', async ({ runInlineTest, mergeReports }
 });
 
 test('preserve attachments', async ({ runInlineTest, mergeReports, showReport, page }) => {
-  test.slow();
   const reportDir = test.info().outputPath('blob-report');
   const files = {
     'playwright.config.ts': `
@@ -425,7 +424,6 @@ test('preserve attachments', async ({ runInlineTest, mergeReports, showReport, p
 });
 
 test('generate html with attachment urls', async ({ runInlineTest, mergeReports, page, server }) => {
-  test.slow();
   const reportDir = test.info().outputPath('blob-report');
   const files = {
     'playwright.config.ts': `
@@ -507,7 +505,6 @@ test('generate html with attachment urls', async ({ runInlineTest, mergeReports,
 });
 
 test('resource names should not clash between runs', async ({ runInlineTest, showReport, mergeReports, page }) => {
-  test.slow();
   const reportDir = test.info().outputPath('blob-report');
   const files = {
     'playwright.config.ts': `
@@ -578,7 +575,6 @@ test('resource names should not clash between runs', async ({ runInlineTest, sho
 });
 
 test('multiple output reports', async ({ runInlineTest, mergeReports, showReport, page }) => {
-  test.slow();
   const reportDir = test.info().outputPath('blob-report');
   const files = {
     'playwright.config.ts': `
@@ -634,7 +630,6 @@ test('multiple output reports', async ({ runInlineTest, mergeReports, showReport
 });
 
 test('multiple output reports based on config', async ({ runInlineTest, mergeReports }) => {
-  test.slow();
   const reportDir = test.info().outputPath('blob-report');
   const files = {
     'merged/playwright.config.ts': `
@@ -699,7 +694,6 @@ test('multiple output reports based on config', async ({ runInlineTest, mergeRep
 });
 
 test('onError in the report', async ({ runInlineTest, mergeReports, showReport, page }) => {
-  test.slow();
   const reportDir = test.info().outputPath('blob-report');
   const files = {
     'playwright.config.ts': `
@@ -760,7 +754,6 @@ test('onError in the report', async ({ runInlineTest, mergeReports, showReport, 
 });
 
 test('preserve config fields', async ({ runInlineTest, mergeReports }) => {
-  test.slow();
   const reportDir = test.info().outputPath('blob-report');
   const config: PlaywrightTestConfig = {
     // Runner options:
@@ -847,7 +840,6 @@ test('preserve config fields', async ({ runInlineTest, mergeReports }) => {
 });
 
 test('preserve steps in html report', async ({ runInlineTest, mergeReports, showReport, page }) => {
-  test.slow();
   const reportDir = test.info().outputPath('blob-report');
   const files = {
     'playwright.config.ts': `
@@ -901,7 +893,6 @@ test('preserve steps in html report', async ({ runInlineTest, mergeReports, show
 });
 
 test('custom project suffix', async ({ runInlineTest, mergeReports }) => {
-  test.slow();
   const reportDir = test.info().outputPath('blob-report');
   const files = {
     'echo-reporter.js': `
