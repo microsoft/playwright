@@ -60,7 +60,7 @@ const puppeteer = require('puppeteer');
   const browser = await puppeteer.launch();
   const page = await browser.newPage();
   await page.setViewport({ width: 1280, height: 800 });
-  await page.goto('http://whatsmyuseragent.org/', {
+  await page.goto('https://playwright.dev/', {
     waitUntil: 'networkidle2',
   });
   await page.screenshot({ path: 'example.png' });
@@ -77,7 +77,7 @@ const { chromium } = require('playwright'); // 1
   const browser = await chromium.launch();
   const page = await browser.newPage(); // 2
   await page.setViewportSize({ width: 1280, height: 800 }); // 3
-  await page.goto('http://whatsmyuseragent.org/', {
+  await page.goto('https://playwright.dev/', {
     waitUntil: 'networkidle', // 4
   });
   await page.screenshot({ path: 'example.png' });

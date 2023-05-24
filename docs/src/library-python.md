@@ -62,7 +62,7 @@ asyncio.run(main())
 
 ## First script
 
-In our first script, we will navigate to `whatsmyuseragent.org` and take a screenshot in WebKit.
+In our first script, we will navigate to `https://playwright.dev/` and take a screenshot in WebKit.
 
 ```py
 from playwright.sync_api import sync_playwright
@@ -70,7 +70,7 @@ from playwright.sync_api import sync_playwright
 with sync_playwright() as p:
     browser = p.webkit.launch()
     page = browser.new_page()
-    page.goto("http://whatsmyuseragent.org/")
+    page.goto("https://playwright.dev/")
     page.screenshot(path="example.png")
     browser.close()
 ```
@@ -98,7 +98,7 @@ and then launch Playwright within it for quick experimentation:
 # Pass headless=False to launch() to see the browser UI
 >>> browser = playwright.chromium.launch()
 >>> page = browser.new_page()
->>> page.goto("http://whatsmyuseragent.org/")
+>>> page.goto("https://playwright.dev/")
 >>> page.screenshot(path="example.png")
 >>> browser.close()
 >>> playwright.stop()
@@ -115,7 +115,7 @@ python -m asyncio
 >>> playwright = await async_playwright().start()
 >>> browser = await playwright.chromium.launch()
 >>> page = await browser.new_page()
->>> await page.goto("http://whatsmyuseragent.org/")
+>>> await page.goto("https://playwright.dev/")
 >>> await page.screenshot(path="example.png")
 >>> await browser.close()
 >>> await playwright.stop()
@@ -131,7 +131,7 @@ from playwright.sync_api import sync_playwright
 with sync_playwright() as p:
     browser = p.chromium.launch()
     page = browser.new_page()
-    page.goto("http://whatsmyuseragent.org/")
+    page.goto("https://playwright.dev/")
     page.screenshot(path="example.png")
     browser.close()
 ```

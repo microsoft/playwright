@@ -37,7 +37,7 @@ public class PlaywrightThread extends Thread {
       BrowserType browserType = getBrowserType(playwright, browserName);
       Browser browser = browserType.launch();
       Page page = browser.newPage();
-      page.navigate("http://whatsmyuseragent.org/");
+      page.navigate("https://playwright.dev/");
       page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get("user-agent-" + browserName + ".png")));
     }
   }
