@@ -577,7 +577,7 @@ test('should record global request trace', async ({ request, context, server }, 
   }));
 });
 
-test('should store global request traces separately', async ({ request, server, playwright }, testInfo) => {
+test('should store global request traces separately', async ({ request, server, playwright, browserName, mode }, testInfo) => {
   const request2 = await playwright.request.newContext();
   await Promise.all([
     (request as any)._tracing.start({ snapshots: true }),
@@ -636,6 +636,7 @@ test('should store postData for global request', async ({ request, server }, tes
 });
 
 test('should not flush console events', async ({ context, page }, testInfo) => {
+  test.fixme(true, 'https://github.com/microsoft/playwright/issues/23107');
   await context.tracing.start();
   const promise = new Promise<void>(f => {
     let counter = 0;

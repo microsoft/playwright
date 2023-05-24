@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { test, expect, dumpTestTree } from './ui-mode-fixtures';
+import { test, expect, retries, dumpTestTree } from './ui-mode-fixtures';
 
-test.describe.configure({ mode: 'parallel' });
+test.describe.configure({ mode: 'parallel', retries });
 
 test('should watch files', async ({ runUITest, writeFiles }) => {
   const { page } = await runUITest({

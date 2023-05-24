@@ -534,6 +534,15 @@ it.describe('page screenshot', () => {
       });
       await page.screenshot({ mask: [page.locator('non-existent')] });
     });
+
+    it('should work when mask color is not pink #F0F', async ({ page, server }) => {
+      await page.setViewportSize({ width: 500, height: 500 });
+      await page.goto(server.PREFIX + '/grid.html');
+      expect(await page.screenshot({
+        mask: [page.locator('div').nth(5)],
+        maskColor: '#00FF00',
+      })).toMatchSnapshot('mask-color-should-work.png');
+    });
   });
 });
 

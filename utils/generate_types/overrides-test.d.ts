@@ -131,7 +131,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
     parallel: SuiteFunction & {
       only: SuiteFunction;
     };
-    configure: (options: { mode?: 'parallel' | 'serial', retries?: number, timeout?: number }) => void;
+    configure: (options: { mode?: 'default' | 'parallel' | 'serial', retries?: number, timeout?: number }) => void;
   };
   skip(title: string, testFunction: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<void> | void): void;
   skip(): void;
@@ -206,7 +206,7 @@ export interface PlaywrightWorkerOptions {
   launchOptions: LaunchOptions;
   connectOptions: ConnectOptions | undefined;
   screenshot: ScreenshotMode | { mode: ScreenshotMode } & Pick<PageScreenshotOptions, 'fullPage' | 'omitBackground'>;
-  trace: TraceMode | /** deprecated */ 'retry-with-trace' | { mode: TraceMode, snapshots?: boolean, screenshots?: boolean, sources?: boolean };
+  trace: TraceMode | /** deprecated */ 'retry-with-trace' | { mode: TraceMode, snapshots?: boolean, screenshots?: boolean, sources?: boolean, attachments?: boolean };
   video: VideoMode | /** deprecated */ 'retry-with-video' | { mode: VideoMode, size?: ViewportSize };
 }
 

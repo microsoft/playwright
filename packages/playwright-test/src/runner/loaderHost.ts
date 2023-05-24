@@ -21,8 +21,8 @@ import { Suite } from '../common/test';
 import { loadTestFile } from '../common/testLoader';
 import type { FullConfigInternal } from '../common/config';
 import { PoolBuilder } from '../common/poolBuilder';
-import { addToCompilationCache } from '../common/compilationCache';
-import { setBabelPlugins } from '../common/transform';
+import { addToCompilationCache } from '../transform/compilationCache';
+import { setBabelPlugins } from '../transform/transform';
 
 export class InProcessLoaderHost {
   private _config: FullConfigInternal;

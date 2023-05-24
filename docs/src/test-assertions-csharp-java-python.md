@@ -52,3 +52,25 @@ E       waiting for get_by_text("Name")
 
 tests/test_foobar.py:22: AssertionError
 ```
+
+## Setting a custom timeout
+* langs: python
+
+You can specify a custom timeout for assertions either globally or per assertion. The default timeout is 5 seconds.
+
+### Global timeout
+
+```python title="conftest.py"
+from playwright.sync_api import expect
+
+expect.set_options(timeout=10_000)
+```
+
+### Per assertion timeout
+
+```python title="test_foobar.py"
+from playwright.sync_api import expect
+
+def test_foobar(page: Page) -> None:
+    expect(page.get_by_text("Name")).to_be_visible(timeout=10_000)
+```

@@ -132,7 +132,7 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
         server = remoteServer;
       } else {
         const runServer = new RunServer();
-        await runServer._start(childProcess);
+        await runServer.start(childProcess);
         server = runServer;
       }
       return server;

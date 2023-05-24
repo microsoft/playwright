@@ -16,7 +16,6 @@
 
 import path from 'path';
 import fs from 'fs';
-import * as consoleApiSource from '../../../generated/consoleApiSource';
 import { HttpServer } from '../../../utils/httpServer';
 import { findChromiumChannel } from '../../registry';
 import { isUnderTest } from '../../../utils';
@@ -96,7 +95,6 @@ export async function showTraceViewer(traceUrls: string[], browserName: string, 
   await controller.run(async progress => {
     await context._browser._defaultContext!._loadDefaultContextAsIs(progress);
   });
-  await context.extendInjectedScript(consoleApiSource.source);
   const [page] = context.pages();
 
   if (process.env.PWTEST_PRINT_WS_ENDPOINT)

@@ -227,6 +227,7 @@ export function cleanEnv(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
     PW_TEST_REPORTER_WS_ENDPOINT: undefined,
     PW_TEST_SOURCE_TRANSFORM: undefined,
     PW_TEST_SOURCE_TRANSFORM_SCOPE: undefined,
+    PWTEST_BLOB_SUFFIX: undefined,
     TEST_WORKER_INDEX: undefined,
     TEST_PARLLEL_INDEX: undefined,
     NODE_OPTIONS: undefined,
@@ -295,6 +296,8 @@ export const test = base
       },
 
       runTSC: async ({ childProcess }, use, testInfo) => {
+        testInfo.slow();
+
         await use(async files => {
           const baseDir = await writeFiles(testInfo, { 'tsconfig.json': JSON.stringify(TSCONFIG), ...files }, true);
           const tsc = childProcess({

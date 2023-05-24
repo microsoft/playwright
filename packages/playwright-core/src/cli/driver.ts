@@ -54,6 +54,7 @@ export function runDriver() {
 export type RunServerOptions = {
   port?: number,
   path?: string,
+  extension?: boolean,
   maxConnections?: number,
   browserProxyMode?: 'client' | 'tether',
   ownedByTetherClient?: boolean,
@@ -64,8 +65,9 @@ export async function runServer(options: RunServerOptions) {
     port,
     path = '/',
     maxConnections = Infinity,
+    extension,
   } = options;
-  const server = new PlaywrightServer({ path, maxConnections });
+  const server = new PlaywrightServer({ mode: extension ? 'extension' : 'default', path, maxConnections });
   const wsEndpoint = await server.listen(port);
   process.on('exit', () => server.close().catch(console.error));
   console.log('Listening on ' + wsEndpoint);  // eslint-disable-line no-console

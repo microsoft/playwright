@@ -79,20 +79,20 @@ export function createTestGroups(projectSuite: Suite, workers: number): TestGrou
 
     // Note that a parallel suite cannot be inside a serial suite. This is enforced in TestType.
     let insideParallel = false;
-    let outerMostSerialSuite: Suite | undefined;
+    let outerMostSequentialSuite: Suite | undefined;
     let hasAllHooks = false;
     for (let parent: Suite | undefined = test.parent; parent; parent = parent.parent) {
-      if (parent._parallelMode === 'serial')
-        outerMostSerialSuite = parent;
+      if (parent._parallelMode === 'serial' || parent._parallelMode === 'default')
+        outerMostSequentialSuite = parent;
       insideParallel = insideParallel || parent._parallelMode === 'parallel';
       hasAllHooks = hasAllHooks || parent._hooks.some(hook => hook.type === 'beforeAll' || hook.type === 'afterAll');
     }
 
     if (insideParallel) {
-      if (hasAllHooks && !outerMostSerialSuite) {
+      if (hasAllHooks && !outerMostSequentialSuite) {
         withRequireFile.parallelWithHooks.tests.push(test);
       } else {
-        const key = outerMostSerialSuite || test;
+        const key = outerMostSequentialSuite || test;
         let group = withRequireFile.parallel.get(key);
         if (!group) {
           group = createGroup(test);

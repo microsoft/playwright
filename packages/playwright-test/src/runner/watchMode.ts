@@ -22,7 +22,7 @@ import { createFileMatcher, createFileMatcherFromArguments } from '../util';
 import type { Matcher } from '../util';
 import { TestRun, createTaskRunnerForWatch, createTaskRunnerForWatchSetup } from './tasks';
 import { buildProjectsClosure, filterProjects } from './projectUtils';
-import { clearCompilationCache, collectAffectedTestFiles } from '../common/compilationCache';
+import { clearCompilationCache, collectAffectedTestFiles } from '../transform/compilationCache';
 import type { FullResult } from 'packages/playwright-test/reporter';
 import { chokidar } from '../utilsBundle';
 import type { FSWatcher as CFSWatcher } from 'chokidar';
@@ -409,7 +409,7 @@ ${colors.dim('Waiting for file changes. Press')} ${colors.bold('enter')} ${color
 async function toggleShowBrowser(config: FullConfigInternal, originalWorkers: number) {
   if (!showBrowserServer) {
     config.config.workers = 1;
-    showBrowserServer = new PlaywrightServer({ path: '/' + createGuid(), maxConnections: 1 });
+    showBrowserServer = new PlaywrightServer({ mode: 'extension', path: '/' + createGuid(), maxConnections: 1 });
     const wsEndpoint = await showBrowserServer.listen();
     process.env.PW_TEST_REUSE_CONTEXT = '1';
     process.env.PW_TEST_CONNECT_WS_ENDPOINT = wsEndpoint;

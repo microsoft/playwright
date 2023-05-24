@@ -16,8 +16,6 @@
 
 import { test, expect } from './playwright-test-fixtures';
 
-test.slow();
-
 test('should check types of fixtures', async ({ runTSC }) => {
   const result = await runTSC({
     'helper.ts': `

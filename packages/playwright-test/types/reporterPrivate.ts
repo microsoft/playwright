@@ -18,5 +18,5 @@ import type { Suite } from './testReporter';
 
 export interface SuitePrivate extends Suite {
   _fileId: string | undefined;
-  _parallelMode: 'default' | 'serial' | 'parallel';
+  _parallelMode: 'none' | 'default' | 'serial' | 'parallel';
 }

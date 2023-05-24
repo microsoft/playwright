@@ -61,12 +61,12 @@ it('should unroute', async ({ browser, server }) => {
     intercepted.push(4);
     route.fallback();
   };
-  await context.route('**/empty.html', handler4);
+  await context.route(/empty.html/, handler4);
   await page.goto(server.EMPTY_PAGE);
   expect(intercepted).toEqual([4, 3, 2, 1]);
 
   intercepted = [];
-  await context.unroute('**/empty.html', handler4);
+  await context.unroute(/empty.html/, handler4);
   await page.goto(server.EMPTY_PAGE);
   expect(intercepted).toEqual([3, 2, 1]);
 

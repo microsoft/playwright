@@ -436,7 +436,6 @@ export class SocksProxy extends EventEmitter implements SocksConnectionClient {
       this._server.listen(port, () => {
         const port = (this._server.address() as AddressInfo).port;
         this._port = port;
-        debugLogger.log('proxy', `Starting socks proxy server on port ${port}`);
         f(port);
       });
     });
@@ -525,8 +524,10 @@ export class SocksProxyHandler extends EventEmitter {
   }
 
   async socketRequested({ uid, host, port }: SocksSocketRequestedPayload): Promise<void> {
+    debugLogger.log('socks', `[${uid}] => request ${host}:${port}`);
     if (!this._patternMatcher(host, port)) {
       const payload: SocksSocketFailedPayload = { uid, errorCode: 'ERULESET' };
+      debugLogger.log('socks', `[${uid}] <= pattern error ${payload.errorCode}`);
       this.emit(SocksProxyHandler.Events.SocksFailed, payload);
       return;
     }
@@ -543,11 +544,13 @@ export class SocksProxyHandler extends EventEmitter {
       });
       socket.on('error', error => {
         const payload: SocksSocketErrorPayload = { uid, error: error.message };
+        debugLogger.log('socks', `[${uid}] <= network socket error ${payload.error}`);
         this.emit(SocksProxyHandler.Events.SocksError, payload);
         this._sockets.delete(uid);
       });
       socket.on('end', () => {
         const payload: SocksSocketEndPayload = { uid };
+        debugLogger.log('socks', `[${uid}] <= network socket closed`);
         this.emit(SocksProxyHandler.Events.SocksEnd, payload);
         this._sockets.delete(uid);
       });
@@ -555,9 +558,11 @@ export class SocksProxyHandler extends EventEmitter {
       const localPort = socket.localPort;
       this._sockets.set(uid, socket);
       const payload: SocksSocketConnectedPayload = { uid, host: localAddress, port: localPort };
+      debugLogger.log('socks', `[${uid}] <= connected to network ${payload.host}:${payload.port}`);
       this.emit(SocksProxyHandler.Events.SocksConnected, payload);
     } catch (error) {
       const payload: SocksSocketFailedPayload = { uid, errorCode: error.code };
+      debugLogger.log('socks', `[${uid}] <= connect error ${payload.errorCode}`);
       this.emit(SocksProxyHandler.Events.SocksFailed, payload);
     }
   }
@@ -567,6 +572,7 @@ export class SocksProxyHandler extends EventEmitter {
   }
 
   socketClosed({ uid }: SocksSocketClosedPayload): void {
+    debugLogger.log('socks', `[${uid}] <= browser socket closed`);
     this._sockets.get(uid)?.destroy();
     this._sockets.delete(uid);
   }

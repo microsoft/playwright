@@ -346,7 +346,7 @@ import { defineConfig } from '@playwright/test';
 export default defineConfig({
   use: {
     // Grants specified permissions to the browser context.
-    permissions: 'notifications',
+    permissions: ['notifications'],
   },
 });
 ```

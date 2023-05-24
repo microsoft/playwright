@@ -15,7 +15,7 @@
  */
 
 export default function(
-  components: { [key: string]: any },
+  components: Record<string, any>,
   options?: {
     window?: Window
   }

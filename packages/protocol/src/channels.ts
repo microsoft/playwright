@@ -1910,6 +1910,7 @@ export type PageExpectScreenshotParams = {
       frame: FrameChannel,
       selector: string,
     }[],
+    maskColor?: string,
   },
 };
 export type PageExpectScreenshotOptions = {
@@ -1936,6 +1937,7 @@ export type PageExpectScreenshotOptions = {
       frame: FrameChannel,
       selector: string,
     }[],
+    maskColor?: string,
   },
 };
 export type PageExpectScreenshotResult = {
@@ -1959,6 +1961,7 @@ export type PageScreenshotParams = {
     frame: FrameChannel,
     selector: string,
   }[],
+  maskColor?: string,
 };
 export type PageScreenshotOptions = {
   timeout?: number,
@@ -1974,6 +1977,7 @@ export type PageScreenshotOptions = {
     frame: FrameChannel,
     selector: string,
   }[],
+  maskColor?: string,
 };
 export type PageScreenshotResult = {
   binary: Binary,
@@ -3327,6 +3331,7 @@ export type ElementHandleScreenshotParams = {
     frame: FrameChannel,
     selector: string,
   }[],
+  maskColor?: string,
 };
 export type ElementHandleScreenshotOptions = {
   timeout?: number,
@@ -3340,6 +3345,7 @@ export type ElementHandleScreenshotOptions = {
     frame: FrameChannel,
     selector: string,
   }[],
+  maskColor?: string,
 };
 export type ElementHandleScreenshotResult = {
   binary: Binary,

@@ -18,7 +18,7 @@ import { colors, rimraf } from 'playwright-core/lib/utilsBundle';
 import util from 'util';
 import { debugTest, formatLocation, relativeFilePath, serializeError } from '../util';
 import type { TestBeginPayload, TestEndPayload, RunPayload, DonePayload, WorkerInitParams, TeardownErrorsPayload, TestOutputPayload } from '../common/ipc';
-import { setCurrentTestInfo, setIsWorkerProcess, currentTestInstrumentation } from '../common/globals';
+import { setCurrentTestInfo, setIsWorkerProcess } from '../common/globals';
 import { ConfigLoader } from '../common/configLoader';
 import type { Suite, TestCase } from '../common/test';
 import type { Annotation, FullConfigInternal, FullProjectInternal } from '../common/config';
@@ -30,7 +30,7 @@ import { ProcessRunner } from '../common/process';
 import { loadTestFile } from '../common/testLoader';
 import { buildFileSuiteForProject, filterTestsRemoveEmptySuites } from '../common/suiteUtils';
 import { PoolBuilder } from '../common/poolBuilder';
-import { addToCompilationCache } from '../common/compilationCache';
+import { addToCompilationCache } from '../transform/compilationCache';
 import type { TestInfoError } from '../../types/test';
 
 const removeFolderAsync = util.promisify(rimraf);
@@ -326,8 +326,6 @@ export class WorkerMain extends ProcessRunner {
         // Note: wrap all preparation steps together, because failure/skip in any of them
         // prevents further setup and/or test from running.
         const beforeHooksError = await testInfo._runAndFailOnError(async () => {
-          await currentTestInstrumentation()?.willStartTest(testInfo);
-
           // Run "beforeAll" modifiers on parent suites, unless already run during previous tests.
           for (const suite of suites) {
             if (this._extraSuiteAnnotations.has(suite))
@@ -401,7 +399,7 @@ export class WorkerMain extends ProcessRunner {
 
         // Run "immediately upon test function finish" callback.
         debugTest(`on-test-function-finish callback started`);
-        const didFinishTestFunctionError = await testInfo._runAndFailOnError(async () => await currentTestInstrumentation()?.didFinishTestFunction(testInfo));
+        const didFinishTestFunctionError = await testInfo._runAndFailOnError(async () => testInfo._onDidFinishTestFunction?.());
         firstAfterHooksError = firstAfterHooksError || didFinishTestFunctionError;
         debugTest(`on-test-function-finish callback finished`);
 
@@ -467,8 +465,6 @@ export class WorkerMain extends ProcessRunner {
       if (firstAfterHooksError)
         step.complete({ error: firstAfterHooksError });
     });
-
-    await testInfo._runAndFailOnError(async () => await currentTestInstrumentation()?.didFinishTest(testInfo));
 
     this._currentTest = null;
     setCurrentTestInfo(null);

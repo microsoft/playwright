@@ -673,7 +673,7 @@ test('unhandled rejection during beforeAll should be reported and prevent more t
         Promise.resolve().then(() => {
           throw new Error('Oh my');
         });
-        await new Promise(f => setTimeout(f, 100));
+        await new Promise(f => setTimeout(f, 1000));
       });
       test.afterAll(() => {
         console.log('\\n%%afterAll');

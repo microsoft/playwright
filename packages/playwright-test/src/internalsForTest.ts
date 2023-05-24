@@ -15,7 +15,7 @@
  */
 
 import path from 'path';
-import { fileDependenciesForTest } from './common/compilationCache';
+import { fileDependenciesForTest } from './transform/compilationCache';
 
 export function fileDependencies() {
   return Object.fromEntries([...fileDependenciesForTest().entries()].map(entry => (

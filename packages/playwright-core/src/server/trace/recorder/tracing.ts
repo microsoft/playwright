@@ -324,7 +324,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     for (const entry of entries)
       zipFile.addFile(entry.value, entry.name);
     zipFile.end();
-    const zipFileName = state.traceFile + '.zip';
+    const zipFileName = state.traceFile.file + '.zip';
     zipFile.outputStream.pipe(fs.createWriteStream(zipFileName)).on('close', () => {
       const artifact = new Artifact(this._context, zipFileName);
       artifact.reportFinished();

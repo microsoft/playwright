@@ -20,7 +20,7 @@ import { ProcessRunner } from '../common/process';
 import type { FullConfigInternal } from '../common/config';
 import { loadTestFile } from '../common/testLoader';
 import type { TestError } from '../../reporter';
-import { addToCompilationCache, serializeCompilationCache } from '../common/compilationCache';
+import { addToCompilationCache, serializeCompilationCache } from '../transform/compilationCache';
 import { PoolBuilder } from '../common/poolBuilder';
 
 export class LoaderMain extends ProcessRunner {

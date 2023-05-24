@@ -17,7 +17,7 @@
 import { config as loadEnv } from 'dotenv';
 loadEnv({ path: path.join(__dirname, '..', '..', '.env') });
 
-import type { Config, PlaywrightTestOptions, PlaywrightWorkerOptions } from '@playwright/test';
+import type { Config, PlaywrightTestOptions, PlaywrightWorkerOptions, ReporterDescription } from '@playwright/test';
 import * as path from 'path';
 import type { TestModeWorkerOptions } from '../config/testModeFixtures';
 import type { TestModeName } from '../config/testMode';
@@ -42,6 +42,17 @@ const trace = !!process.env.PWTEST_TRACE;
 
 const outputDir = path.join(__dirname, '..', '..', 'test-results');
 const testDir = path.join(__dirname, '..');
+const reporters = () => {
+  const result: ReporterDescription[] = process.env.CI ? [
+    ['dot'],
+    ['json', { outputFile: path.join(outputDir, 'report.json') }],
+  ] : [
+    ['html', { open: 'on-failure' }]
+  ];
+  if (process.env.PWTEST_BLOB_REPORT === '1')
+    result.push(['blob', { outputDir: path.join(outputDir, 'blob-report') }]);
+  return result;
+};
 const config: Config<CoverageWorkerOptions & PlaywrightWorkerOptions & PlaywrightTestOptions & TestModeWorkerOptions> = {
   testDir,
   outputDir,
@@ -56,14 +67,8 @@ const config: Config<CoverageWorkerOptions & PlaywrightWorkerOptions & Playwrigh
   workers: process.env.CI ? 2 : undefined,
   fullyParallel: !process.env.CI,
   forbidOnly: !!process.env.CI,
-  preserveOutput: process.env.CI ? 'failures-only' : 'always',
   retries: process.env.CI ? 3 : 0,
-  reporter: process.env.CI ? [
-    ['dot'],
-    ['json', { outputFile: path.join(outputDir, 'report.json') }],
-  ] : [
-    ['html', { open: 'on-failure' }]
-  ],
+  reporter: reporters(),
   projects: [],
   use: {
     connectOptions: mode === 'service' ? {

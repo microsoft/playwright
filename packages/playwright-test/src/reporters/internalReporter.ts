@@ -16,7 +16,7 @@
 
 import fs from 'fs';
 import { colors } from 'playwright-core/lib/utilsBundle';
-import { codeFrameColumns } from '../common/babelBundle';
+import { codeFrameColumns } from '../transform/babelBundle';
 import type { FullConfig, TestCase, TestError, TestResult, FullResult, TestStep, Reporter } from '../../types/testReporter';
 import { Suite } from '../common/test';
 import type { FullConfigInternal } from '../common/config';

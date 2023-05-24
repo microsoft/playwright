@@ -16,8 +16,6 @@
 
 import { test, expect } from './playwright-test-fixtures';
 
-test.slow();
-
 test('basics should work', async ({ runTSC }) => {
   const result = await runTSC({
     'a.spec.ts': `

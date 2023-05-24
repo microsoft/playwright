@@ -24,7 +24,7 @@ import { urlMatches } from '../utils/network';
 import { TimeoutSettings } from '../common/timeoutSettings';
 import type * as channels from '@protocol/channels';
 import { parseError, serializeError } from '../protocol/serializers';
-import { assert, headersObjectToArray, isObject, isRegExp, isString, ScopedRace } from '../utils';
+import { assert, headersObjectToArray, isObject, isRegExp, isString, ScopedRace, urlMatchesEqual } from '../utils';
 import { mkdirIfNeeded } from '../utils/fileUtils';
 import { Accessibility } from './accessibility';
 import { Artifact } from './artifact';
@@ -458,7 +458,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   }
 
   async unroute(url: URLMatch, handler?: RouteHandlerCallback): Promise<void> {
-    this._routes = this._routes.filter(route => route.url !== url || (handler && route.handler !== handler));
+    this._routes = this._routes.filter(route => !urlMatchesEqual(route.url, url) || (handler && route.handler !== handler));
     await this._updateInterceptionPatterns();
   }
 

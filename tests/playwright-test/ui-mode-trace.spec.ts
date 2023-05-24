@@ -15,8 +15,9 @@
  */
 
 import { createImage } from './playwright-test-fixtures';
-import { test, expect } from './ui-mode-fixtures';
-test.describe.configure({ mode: 'parallel' });
+import { test, expect, retries } from './ui-mode-fixtures';
+
+test.describe.configure({ mode: 'parallel', retries });
 
 test('should merge trace events', async ({ runUITest, server }) => {
   const { page } = await runUITest({
@@ -96,9 +97,11 @@ test('should merge screenshot assertions', async ({  runUITest }, testInfo) => {
       'action list'
   ).toHaveText([
     /Before Hooks[\d.]+m?s/,
-    /page\.setContent[\d.]+m?s/,
-    /expect\.toHaveScreenshot[\d.]+m?s/,
-    /After Hooks/,
+    /page.setContent[\d.]+m?s/,
+    /expect.toHaveScreenshot[\d.]+m?s/,
+    /After Hooks[\d.]+m?s/,
+    /fixture: page[\d.]+m?s/,
+    /fixture: context[\d.]+m?s/,
   ]);
 });
 

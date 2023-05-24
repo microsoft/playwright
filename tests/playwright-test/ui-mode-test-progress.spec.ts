@@ -15,7 +15,9 @@
  */
 
 import { ManualPromise } from '../../packages/playwright-core/lib/utils/manualPromise';
-import { test, expect, dumpTestTree } from './ui-mode-fixtures';
+import { test, expect, retries, dumpTestTree } from './ui-mode-fixtures';
+
+test.describe.configure({ mode: 'parallel', retries });
 
 test('should update trace live', async ({ runUITest, server }) => {
   const onePromise = new ManualPromise();
@@ -104,8 +106,8 @@ test('should update trace live', async ({ runUITest, server }) => {
 
   await expect(listItem).toHaveText([
     /Before Hooks[\d.]+m?s/,
-    /page.gotohttp:\/\/localhost:\d+\/one.html/,
-    /page.gotohttp:\/\/localhost:\d+\/two.html/,
+    /page.gotohttp:\/\/localhost:\d+\/one.html[\d.]+m?s/,
+    /page.gotohttp:\/\/localhost:\d+\/two.html[\d.]+m?s/,
     /After Hooks[\d.]+m?s/,
     /fixture: page[\d.]+m?s/,
     /fixture: context[\d.]+m?s/,

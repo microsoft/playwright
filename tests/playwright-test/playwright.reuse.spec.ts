@@ -156,7 +156,6 @@ test('should reuse context with trace if mode=when-possible', async ({ runInline
     'After Hooks',
     'fixture: page',
     'fixture: context',
-    'tracing.stopChunk',
   ]);
   expect(trace1.traceModel.storage().snapshotsForTest().length).toBeGreaterThan(0);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'reuse-one', 'trace-1.zip'))).toBe(false);
@@ -173,7 +172,6 @@ test('should reuse context with trace if mode=when-possible', async ({ runInline
     'After Hooks',
     'fixture: page',
     'fixture: context',
-    'tracing.stopChunk',
   ]);
   expect(trace2.traceModel.storage().snapshotsForTest().length).toBeGreaterThan(0);
 });

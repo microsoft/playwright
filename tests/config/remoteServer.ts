@@ -27,9 +27,12 @@ export class RunServer implements PlaywrightServer {
   private _process: TestChildProcess;
   _wsEndpoint: string;
 
-  async _start(childProcess: CommonFixtures['childProcess']) {
+  async start(childProcess: CommonFixtures['childProcess'], mode?: 'extension' | 'default') {
+    const command = ['node', path.join(__dirname, '..', '..', 'packages', 'playwright-core', 'lib', 'cli', 'cli.js'), 'run-server'];
+    if (mode === 'extension')
+      command.push('--mode=extension');
     this._process = childProcess({
-      command: ['node', path.join(__dirname, '..', '..', 'packages', 'playwright-core', 'lib', 'cli', 'cli.js'), 'run-server'],
+      command,
       env: {
         ...process.env,
         PWTEST_UNDER_TEST: '1',

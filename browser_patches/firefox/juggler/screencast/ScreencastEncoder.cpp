@@ -145,11 +145,33 @@ public:
         uint8_t* u_data = image->planes[VPX_PLANE_U];
         uint8_t* v_data = image->planes[VPX_PLANE_V];
 
-        double src_width = src->width() - m_margin.LeftRight();
-        double src_height = src->height() - m_margin.top;
-        // YUV offsets must be even.
+        /**
+         * Let's say we have the following image of 6x3 pixels (same number = same pixel value):
+         *  112233
+         *  112233
+         *  445566
+         * In I420 format (see https://en.wikipedia.org/wiki/YUV), the image will have the following data planes:
+         *   Y [stride_Y = 6]:
+         *    112233
+         *    112233
+         *    445566
+         *   U [stride_U = 3] - this plane has aggregate for each 2x2 pixels:
+         *    123
+         *    456
+         *   V [stride_V = 3] - this plane has aggregate for each 2x2 pixels:
+         *    123
+         *    456
+         *
+         * To crop this image efficiently, we can move src_Y/U/V pointer and
+         * adjust the src_width and src_height. However, we must cut off only **even**
+         * amount of lines and columns to retain semantic of U and V planes which
+         * contain only 1/4 of pixel information.
+         */
         int yuvTopOffset = m_margin.top & 1 ? m_margin.top + 1 : m_margin.top;
         int yuvLeftOffset = m_margin.left & 1 ? m_margin.left + 1 : m_margin.left;
+
+        double src_width = src->width() - yuvLeftOffset;
+        double src_height = src->height() - yuvTopOffset;
 
         if (src_width > image->w || src_height > image->h) {
           double scale = std::min(image->w / src_width, image->h / src_height);

@@ -133,13 +133,13 @@ class Juggler {
         };
         pipe.init(connection);
         const dispatcher = new Dispatcher(connection);
-        browserHandler = new BrowserHandler(dispatcher.rootSession(), dispatcher, targetRegistry, () => {
+        browserHandler = new BrowserHandler(dispatcher.rootSession(), dispatcher, targetRegistry, browserStartupFinishedPromise, () => {
           if (this._silent)
             Services.startup.exitLastWindowClosingSurvivalArea();
           connection.onclose();
           pipe.stop();
           pipeStopped = true;
-        }, () => browserStartupFinishedPromise);
+        });
         dispatcher.rootSession().setHandler(browserHandler);
         loadStyleSheet();
         dump(`\nJuggler listening to the pipe\n`);

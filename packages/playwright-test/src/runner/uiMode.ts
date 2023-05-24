@@ -18,7 +18,7 @@ import { showTraceViewer } from 'playwright-core/lib/server';
 import type { Page } from 'playwright-core/lib/server/page';
 import { isUnderTest, ManualPromise } from 'playwright-core/lib/utils';
 import type { FullResult } from '../../reporter';
-import { clearCompilationCache, collectAffectedTestFiles, dependenciesForTestFile } from '../common/compilationCache';
+import { clearCompilationCache, collectAffectedTestFiles, dependenciesForTestFile } from '../transform/compilationCache';
 import type { FullConfigInternal } from '../common/config';
 import { InternalReporter } from '../reporters/internalReporter';
 import { TeleReporterEmitter } from '../reporters/teleEmitter';

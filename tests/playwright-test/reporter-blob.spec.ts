@@ -47,10 +47,11 @@ const test = baseTest.extend<{
             if (options.additionalArgs)
               command.push(...options.additionalArgs);
 
+            const cwd = options.cwd ? path.resolve(test.info().outputDir, options.cwd) : test.info().outputDir;
             const testProcess = childProcess({
               command,
               env: cleanEnv(env),
-              cwd: test.info().outputDir,
+              cwd,
             });
             const { exitCode } = await testProcess.exited;
             return { exitCode, output: testProcess.output.toString() };
@@ -409,14 +410,12 @@ test('preserve attachments', async ({ runInlineTest, mergeReports, showReport, p
 
   await showReport();
 
-  // Check file attachment.
   await page.getByText('first').click();
-  await expect(page.getByText('file-attachment')).toBeVisible();
-
-  // Check file attachment content.
   const popupPromise = page.waitForEvent('popup');
-  await page.getByText('file-attachment').click();
+  // Check file attachment.
+  await page.getByRole('link', { name: 'file-attachment' }).click();
   const popup = await popupPromise;
+  // Check file attachment content.
   await expect(popup.locator('body')).toHaveText('hello!');
   await popup.close();
   await page.goBack();
@@ -484,15 +483,14 @@ test('generate html with attachment urls', async ({ runInlineTest, mergeReports,
     return oldSeveFile.call(server, req, res, filePath);
   };
 
-  // Check file attachment.
   await page.goto(`${server.PREFIX}/index.html`);
   await page.getByText('first').click();
-  await expect(page.getByText('file-attachment')).toBeVisible();
 
-  // Check file attachment content.
   const popupPromise = page.waitForEvent('popup');
-  await page.getByText('file-attachment').click();
+  // Check file attachment.
+  await page.getByRole('link', { name: 'file-attachment' }).click();
   const popup = await popupPromise;
+  // Check file attachment content.
   await expect(popup.locator('body')).toHaveText('hello!');
   await popup.close();
   await page.goBack();
@@ -846,4 +844,98 @@ test('preserve config fields', async ({ runInlineTest, mergeReports }) => {
   expect(json.reportSlowTests).toEqual(mergeConfig.reportSlowTests);
   expect(json.configFile).toEqual(test.info().outputPath('merge.config.ts'));
   expect(json.quiet).toEqual(mergeConfig.quiet);
+});
+
+test('preserve steps in html report', async ({ runInlineTest, mergeReports, showReport, page }) => {
+  test.slow();
+  const reportDir = test.info().outputPath('blob-report');
+  const files = {
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: [['blob']]
+      };
+    `,
+    'tests/a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test.beforeAll(() => {
+        expect(1).toBe(1);
+      })
+      test('test 1', async ({}) => {
+        await test.step('my step', async () => {
+          expect(2).toBe(2);
+        });
+      });
+    `,
+  };
+  await runInlineTest(files);
+  const reportFiles = await fs.promises.readdir(reportDir);
+  reportFiles.sort();
+  expect(reportFiles).toEqual([expect.stringMatching(/report-.*.jsonl/), 'resources']);
+  // Run merger in a different directory to make sure relative paths will not be resolved
+  // relative to the current directory.
+  const mergeCwd = test.info().outputPath('foo');
+  await fs.promises.mkdir(mergeCwd, { recursive: true });
+  const { exitCode, output } = await mergeReports(reportDir, { 'PW_TEST_HTML_REPORT_OPEN': 'never' }, { additionalArgs: ['--reporter', 'html'], cwd: mergeCwd });
+  expect(exitCode).toBe(0);
+
+  expect(output).toContain('To open last HTML report run:');
+
+  await showReport();
+
+  await expect(page.locator('.subnav-item:has-text("All") .counter')).toHaveText('1');
+  await expect(page.locator('.subnav-item:has-text("Passed") .counter')).toHaveText('1');
+
+  await page.getByRole('link', { name: 'test 1' }).click();
+
+  await page.getByText('Before Hooks').click();
+  await page.getByText('beforeAll hook').click();
+  await expect(page.getByText('expect.toBe')).toBeVisible();
+  // Collapse hooks.
+  await page.getByText('Before Hooks').click();
+  await expect(page.getByText('expect.toBe')).not.toBeVisible();
+
+  // Check that 'my step' location is relative.
+  await expect(page.getByText('— tests/a.test.js:7')).toBeVisible();
+  await page.getByText('my step').click();
+  await expect(page.getByText('expect.toBe')).toBeVisible();
+});
+
+test('custom project suffix', async ({ runInlineTest, mergeReports }) => {
+  test.slow();
+  const reportDir = test.info().outputPath('blob-report');
+  const files = {
+    'echo-reporter.js': `
+      import fs from 'fs';
+
+      class EchoReporter {
+        onBegin(config, suite) {
+          const projects = suite.suites.map(s => s.project().name);
+          console.log('projects:', projects);
+        }
+      }
+      module.exports = EchoReporter;
+    `,
+    'playwright.config.ts': `
+      module.exports = {
+        retries: 1,
+        reporter: 'blob',
+        projects: [
+          { name: 'foo' },
+          { name: 'bar' },
+        ]
+      };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('math 1', async ({}) => {
+        expect(1 + 1).toBe(2);
+      });
+    `,
+  };
+
+  await runInlineTest(files, undefined, { PWTEST_BLOB_SUFFIX: '-suffix' });
+
+  const { exitCode, output } = await mergeReports(reportDir, {}, { additionalArgs: ['--reporter', test.info().outputPath('echo-reporter.js')] });
+  expect(exitCode).toBe(0);
+  expect(output).toContain(`projects: [ 'foo-suffix', 'bar-suffix' ]`);
 });

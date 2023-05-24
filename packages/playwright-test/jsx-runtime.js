@@ -28,7 +28,10 @@ function jsxs(type, props) {
   };
 }
 
+const Fragment = {};
+
 module.exports = {
+  Fragment,
   jsx,
   jsxs,
 };

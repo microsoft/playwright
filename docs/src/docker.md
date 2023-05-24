@@ -18,19 +18,19 @@ This Docker image is intended to be used for testing and development purposes on
 ### Pull the image
 
 ```bash js
-docker pull mcr.microsoft.com/playwright:v1.34.0-jammy
+docker pull mcr.microsoft.com/playwright:v1.35.0-jammy
 ```
 
 ```bash python
-docker pull mcr.microsoft.com/playwright/python:v1.34.0-jammy
+docker pull mcr.microsoft.com/playwright/python:v1.35.0-jammy
 ```
 
 ```bash csharp
-docker pull mcr.microsoft.com/playwright/dotnet:v1.34.0-jammy
+docker pull mcr.microsoft.com/playwright/dotnet:v1.35.0-jammy
 ```
 
 ```bash java
-docker pull mcr.microsoft.com/playwright/java:v1.34.0-jammy
+docker pull mcr.microsoft.com/playwright/java:v1.35.0-jammy
 ```
 
 ### Run the image
@@ -42,19 +42,19 @@ By default, the Docker image will use the `root` user to run the browsers. This 
 On trusted websites, you can avoid creating a separate user and use root for it since you trust the code which will run on the browsers.
 
 ```bash js
-docker run -it --rm --ipc=host mcr.microsoft.com/playwright:v1.34.0-jammy /bin/bash
+docker run -it --rm --ipc=host mcr.microsoft.com/playwright:v1.35.0-jammy /bin/bash
 ```
 
 ```bash python
-docker run -it --rm --ipc=host mcr.microsoft.com/playwright/python:v1.34.0-jammy /bin/bash
+docker run -it --rm --ipc=host mcr.microsoft.com/playwright/python:v1.35.0-jammy /bin/bash
 ```
 
 ```bash csharp
-docker run -it --rm --ipc=host mcr.microsoft.com/playwright/dotnet:v1.34.0-jammy /bin/bash
+docker run -it --rm --ipc=host mcr.microsoft.com/playwright/dotnet:v1.35.0-jammy /bin/bash
 ```
 
 ```bash java
-docker run -it --rm --ipc=host mcr.microsoft.com/playwright/java:v1.34.0-jammy /bin/bash
+docker run -it --rm --ipc=host mcr.microsoft.com/playwright/java:v1.35.0-jammy /bin/bash
 ```
 
 #### Crawling and scraping
@@ -62,19 +62,19 @@ docker run -it --rm --ipc=host mcr.microsoft.com/playwright/java:v1.34.0-jammy /
 On untrusted websites, it's recommended to use a separate user for launching the browsers in combination with the seccomp profile. Inside the container or if you are using the Docker image as a base image you have to use `adduser` for it.
 
 ```bash js
-docker run -it --rm --ipc=host --user pwuser --security-opt seccomp=seccomp_profile.json mcr.microsoft.com/playwright:v1.34.0-jammy /bin/bash
+docker run -it --rm --ipc=host --user pwuser --security-opt seccomp=seccomp_profile.json mcr.microsoft.com/playwright:v1.35.0-jammy /bin/bash
 ```
 
 ```bash python
-docker run -it --rm --ipc=host --user pwuser --security-opt seccomp=seccomp_profile.json mcr.microsoft.com/playwright/python:v1.34.0-jammy /bin/bash
+docker run -it --rm --ipc=host --user pwuser --security-opt seccomp=seccomp_profile.json mcr.microsoft.com/playwright/python:v1.35.0-jammy /bin/bash
 ```
 
 ```bash csharp
-docker run -it --rm --ipc=host --user pwuser --security-opt seccomp=seccomp_profile.json mcr.microsoft.com/playwright/dotnet:v1.34.0-jammy /bin/bash
+docker run -it --rm --ipc=host --user pwuser --security-opt seccomp=seccomp_profile.json mcr.microsoft.com/playwright/dotnet:v1.35.0-jammy /bin/bash
 ```
 
 ```bash java
-docker run -it --rm --ipc=host --user pwuser --security-opt seccomp=seccomp_profile.json mcr.microsoft.com/playwright/java:v1.34.0-jammy /bin/bash
+docker run -it --rm --ipc=host --user pwuser --security-opt seccomp=seccomp_profile.json mcr.microsoft.com/playwright/java:v1.35.0-jammy /bin/bash
 ```
 
 [`seccomp_profile.json`](https://github.com/microsoft/playwright/blob/main/utils/docker/seccomp_profile.json) is needed to run Chromium with sandbox. This is a [default Docker seccomp profile](https://github.com/docker/engine/blob/d0d99b04cf6e00ed3fc27e81fc3d94e7eda70af3/profiles/seccomp/default.json) with extra user namespace cloning permissions:

@@ -185,7 +185,13 @@ class Runtime {
         if (context._isIsolatedWorldContext())
           return false;
         const domWindow = context._domWindow;
-        return domWindow && domWindow.windowGlobalChild.innerWindowId === wrappedJSObject.innerID;
+        try {
+          // `windowGlobalChild` might be dead already; accessing it will throw an error, message in a console,
+          // and infinite recursion.
+          return domWindow && domWindow.windowGlobalChild.innerWindowId === wrappedJSObject.innerID;
+        } catch (e) {
+          return false;
+        }
       });
       if (!executionContext)
         return;

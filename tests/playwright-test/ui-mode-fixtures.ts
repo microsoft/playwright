@@ -128,6 +128,7 @@ import { expect as baseExpect } from './stable-test-runner';
 
 // Slow tests are 90s.
 export const expect = baseExpect.configure({ timeout: process.env.CI ? 75000 : 25000 });
+export const retries = process.env.CI ? 3 : 0;
 
 async function waitForLatch(latchFile: string) {
   const fs = require('fs');

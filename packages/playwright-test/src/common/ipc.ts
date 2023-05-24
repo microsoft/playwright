@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { serializeCompilationCache } from './compilationCache';
+import { serializeCompilationCache } from '../transform/compilationCache';
 import type { FullConfigInternal } from './config';
 import type { ReporterDescription, TestInfoError, TestStatus } from '../../types/test';
 

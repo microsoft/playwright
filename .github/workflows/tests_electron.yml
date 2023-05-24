@@ -47,8 +47,3 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v3
-      if: always() && matrix.os == 'ubuntu-latest'
-      with:
-        name: electron-linux-test-results
-        path: test-results

@@ -14,14 +14,13 @@
   limitations under the License.
 */
 
-import type { ActionTraceEvent } from '@trace/trace';
 import { SplitView } from '@web/components/splitView';
 import * as React from 'react';
 import { ActionList } from './actionList';
 import { CallTab } from './callTab';
 import { ConsoleTab } from './consoleTab';
 import * as modelUtil from './modelUtil';
-import type { MultiTraceModel } from './modelUtil';
+import type { ActionTraceEventInContext, MultiTraceModel } from './modelUtil';
 import { NetworkTab } from './networkTab';
 import { SnapshotTab } from './snapshotTab';
 import { SourceTab } from './sourceTab';
@@ -39,11 +38,12 @@ export const Workbench: React.FunctionComponent<{
   showSourcesFirst?: boolean,
   rootDir?: string,
   fallbackLocation?: modelUtil.SourceLocation,
-  initialSelection?: ActionTraceEvent,
-  onSelectionChanged?: (action: ActionTraceEvent) => void,
-}> = ({ model, hideTimelineBars, hideStackFrames, showSourcesFirst, rootDir, fallbackLocation, initialSelection, onSelectionChanged }) => {
-  const [selectedAction, setSelectedAction] = React.useState<ActionTraceEvent | undefined>(undefined);
-  const [highlightedAction, setHighlightedAction] = React.useState<ActionTraceEvent | undefined>();
+  initialSelection?: ActionTraceEventInContext,
+  onSelectionChanged?: (action: ActionTraceEventInContext) => void,
+  isLive?: boolean,
+}> = ({ model, hideTimelineBars, hideStackFrames, showSourcesFirst, rootDir, fallbackLocation, initialSelection, onSelectionChanged, isLive }) => {
+  const [selectedAction, setSelectedAction] = React.useState<ActionTraceEventInContext | undefined>(undefined);
+  const [highlightedAction, setHighlightedAction] = React.useState<ActionTraceEventInContext | undefined>();
   const [selectedNavigatorTab, setSelectedNavigatorTab] = React.useState<string>('actions');
   const [selectedPropertiesTab, setSelectedPropertiesTab] = React.useState<string>(showSourcesFirst ? 'source' : 'call');
   const activeAction = model ? highlightedAction || selectedAction : undefined;
@@ -62,7 +62,7 @@ export const Workbench: React.FunctionComponent<{
       setSelectedAction(model.actions[model.actions.length - 1]);
   }, [model, selectedAction, setSelectedAction, setSelectedPropertiesTab, initialSelection]);
 
-  const onActionSelected = React.useCallback((action: ActionTraceEvent) => {
+  const onActionSelected = React.useCallback((action: ActionTraceEventInContext) => {
     setSelectedAction(action);
     onSelectionChanged?.(action);
   }, [setSelectedAction, onSelectionChanged]);
@@ -142,6 +142,7 @@ export const Workbench: React.FunctionComponent<{
                 onSelected={onActionSelected}
                 onHighlighted={setHighlightedAction}
                 revealConsole={() => setSelectedPropertiesTab('console')}
+                isLive={isLive}
               />
             },
             {

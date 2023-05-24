@@ -2626,9 +2626,27 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *   test('runs second', async ({ page }) => {});
    *   ```
    *
+   * - Run multiple describes in parallel, but tests inside each describe in order.
+   *
+   *   ```js
+   *   test.describe.configure({ mode: 'parallel' });
+   *
+   *   test.describe('A, runs in parallel with B', () => {
+   *     test.describe.configure({ mode: 'default' });
+   *     test('in order A1', async ({ page }) => {});
+   *     test('in order A2', async ({ page }) => {});
+   *   });
+   *
+   *   test.describe('B, runs in parallel with A', () => {
+   *     test.describe.configure({ mode: 'default' });
+   *     test('in order B1', async ({ page }) => {});
+   *     test('in order B2', async ({ page }) => {});
+   *   });
+   *   ```
+   *
    * @param options
    */
-  configure: (options: { mode?: 'parallel' | 'serial', retries?: number, timeout?: number }) => void;
+  configure: (options: { mode?: 'default' | 'parallel' | 'serial', retries?: number, timeout?: number }) => void;
   };
   /**
    * Declares a skipped test, similarly to
@@ -3554,7 +3572,7 @@ export interface PlaywrightWorkerOptions {
    *
    * Learn more about [recording trace](https://playwright.dev/docs/test-configuration#record-test-trace).
    */
-  trace: TraceMode | /** deprecated */ 'retry-with-trace' | { mode: TraceMode, snapshots?: boolean, screenshots?: boolean, sources?: boolean };
+  trace: TraceMode | /** deprecated */ 'retry-with-trace' | { mode: TraceMode, snapshots?: boolean, screenshots?: boolean, sources?: boolean, attachments?: boolean };
   /**
    * Whether to record video for each test. Defaults to `'off'`.
    * - `'off'`: Do not record video.

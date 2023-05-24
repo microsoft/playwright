@@ -457,7 +457,9 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       expect(error.message).toContain('Path is not available when connecting remotely. Use saveAs() to save a local copy.');
     });
 
-    test('should be able to connect 20 times to a single server without warnings', async ({ connect, startRemoteServer }) => {
+    test('should be able to connect 20 times to a single server without warnings', async ({ connect, startRemoteServer, platform }) => {
+      test.skip(platform !== 'linux', 'Testing non-platform specific code');
+
       const remoteServer = await startRemoteServer(kind);
 
       let warning = null;
