@@ -283,7 +283,7 @@ Terminates this instance of Playwright in case it was created bypassing the Pyth
 
 >>> browser = playwright.chromium.launch()
 >>> page = browser.new_page()
->>> page.goto("http://whatsmyuseragent.org/")
+>>> page.goto("https://playwright.dev/")
 >>> page.screenshot(path="example.png")
 >>> browser.close()
 

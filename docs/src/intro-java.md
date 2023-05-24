@@ -90,7 +90,7 @@ Running it downloads the Playwright package and installs browser binaries for Ch
 
 ## First script
 
-In our first script, we will navigate to `whatsmyuseragent.org` and take a screenshot in WebKit.
+In our first script, we will navigate to `playwright.dev` and take a screenshot in WebKit.
 
 ```java
 package org.example;
@@ -103,7 +103,7 @@ public class App {
     try (Playwright playwright = Playwright.create()) {
       Browser browser = playwright.webkit().launch();
       Page page = browser.newPage();
-      page.navigate("http://whatsmyuseragent.org/");
+      page.navigate("https://playwright.dev/");
       page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get("example.png")));
     }
   }

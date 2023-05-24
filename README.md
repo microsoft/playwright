@@ -91,13 +91,13 @@ To learn how to run these Playwright Test examples, check out our [getting start
 
 #### Page screenshot
 
-This code snippet navigates to whatsmyuseragent.org and saves a screenshot.
+This code snippet navigates to Playwright homepage and saves a screenshot.
 
 ```TypeScript
 import { test } from '@playwright/test';
 
 test('Page Screenshot', async ({ page }) => {
-  await page.goto('http://whatsmyuseragent.org/');
+  await page.goto('https://playwright.dev/');
   await page.screenshot({ path: `example.png` });
 });
 ```
