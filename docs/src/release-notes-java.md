@@ -4,6 +4,39 @@ title: "Release notes"
 toc_max_heading_level: 2
 ---
 
+---
+id: release-notes
+title: "Release notes"
+toc_max_heading_level: 2
+---
+
+import LiteYouTube from '@site/src/components/LiteYouTube';
+
+## Version 1.34
+
+### Highlights
+
+* New [`method: Locator.and`] to create a locator that matches both locators.
+
+    ```java
+    Locator button = page.getByRole(AriaRole.BUTTON).and(page.getByTitle("Subscribe"));
+    ```
+
+* New events [`event: BrowserContext.console`] and [`event: BrowserContext.dialog`] to subscribe to any dialogs
+  and console messages from any page from the given browser context. Use the new methods [`method: ConsoleMessage.page`]
+  and [`method: Dialog.page`] to pin-point event source.
+
+### Browser Versions
+
+* Chromium 114.0.5735.26
+* Mozilla Firefox 113.0
+* WebKit 16.4
+
+This version was also tested against the following stable channels:
+
+* Google Chrome 113
+* Microsoft Edge 113
+
 ## Version 1.33
 
 ### Locators Update
