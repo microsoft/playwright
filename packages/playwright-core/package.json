@@ -36,7 +36,7 @@
     "./types/structs": "./types/structs.d.ts"
   },
   "bin": {
-    "playwright": "./cli.js"
+    "playwright-core": "./cli.js"
   },
   "types": "types/types.d.ts"
 }
