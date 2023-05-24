@@ -12,7 +12,7 @@ apt-get update && apt-get install -y curl && \
 apt-get update && apt-get install -y apt-file && apt-file update
 
 # Install tip-of-tree playwright-core and browsers
-mkdir /root/tmp && cd /root/tmp && npm init -y && npm i /root/hostfolder/playwright-core.tar.gz && npx playwright install
+mkdir /root/tmp && cd /root/tmp && npm init -y && npm i /root/hostfolder/playwright-core.tar.gz && npx playwright-core install
 
 cp /root/hostfolder/inside_docker/list_dependencies.js /root/tmp/list_dependencies.js
 
