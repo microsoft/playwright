@@ -8,3 +8,9 @@ common/
 
 [index.ts]
 @testIsomorphic/**
+
+[experimentalLoader.ts]
+./transform/
+
+[internalsForTest.ts]
+**

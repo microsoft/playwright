@@ -25,10 +25,10 @@ import { createFileMatcherFromArguments, createFileFiltersFromArguments, createT
 import type { Matcher, TestFileFilter } from '../util';
 import { buildProjectsClosure, collectFilesForProject, filterProjects } from './projectUtils';
 import type { TestRun } from './tasks';
-import { requireOrImport } from '../common/transform';
+import { requireOrImport } from '../transform/transform';
 import { buildFileSuiteForProject, filterByFocusedLine, filterByTestIds, filterOnly, filterTestsRemoveEmptySuites } from '../common/suiteUtils';
 import { createTestGroups, filterForShard, type TestGroup } from './testGroups';
-import { dependenciesForTestFile } from '../common/compilationCache';
+import { dependenciesForTestFile } from '../transform/compilationCache';
 import { sourceMapSupport } from '../utilsBundle';
 import type { RawSourceMap } from 'source-map';
 

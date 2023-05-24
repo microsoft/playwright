@@ -22,7 +22,7 @@ import { createFileMatcher, createFileMatcherFromArguments } from '../util';
 import type { Matcher } from '../util';
 import { TestRun, createTaskRunnerForWatch, createTaskRunnerForWatchSetup } from './tasks';
 import { buildProjectsClosure, filterProjects } from './projectUtils';
-import { clearCompilationCache, collectAffectedTestFiles } from '../common/compilationCache';
+import { clearCompilationCache, collectAffectedTestFiles } from '../transform/compilationCache';
 import type { FullResult } from 'packages/playwright-test/reporter';
 import { chokidar } from '../utilsBundle';
 import type { FSWatcher as CFSWatcher } from 'chokidar';

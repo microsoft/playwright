@@ -30,7 +30,7 @@ import { ProcessRunner } from '../common/process';
 import { loadTestFile } from '../common/testLoader';
 import { buildFileSuiteForProject, filterTestsRemoveEmptySuites } from '../common/suiteUtils';
 import { PoolBuilder } from '../common/poolBuilder';
-import { addToCompilationCache } from '../common/compilationCache';
+import { addToCompilationCache } from '../transform/compilationCache';
 import type { TestInfoError } from '../../types/test';
 
 const removeFolderAsync = util.promisify(rimraf);

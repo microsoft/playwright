@@ -16,8 +16,8 @@
 
 import fs from 'fs';
 import url from 'url';
-import { belongsToNodeModules, currentFileDepsCollector } from './common/compilationCache';
-import { transformHook, resolveHook } from './common/transform';
+import { belongsToNodeModules, currentFileDepsCollector } from './transform/compilationCache';
+import { transformHook, resolveHook } from './transform/transform';
 
 // Node < 18.6: defaultResolve takes 3 arguments.
 // Node >= 18.6: nextResolve from the chain takes 2 arguments.
