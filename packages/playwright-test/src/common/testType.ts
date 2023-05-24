@@ -17,7 +17,7 @@
 import { expect } from '../matchers/expect';
 import { currentlyLoadingFileSuite, currentTestInfo, setCurrentlyLoadingFileSuite } from './globals';
 import { TestCase, Suite } from './test';
-import { wrapFunctionWithLocation } from './transform';
+import { wrapFunctionWithLocation } from '../transform/transform';
 import type { FixturesWithLocation } from './config';
 import type { Fixtures, TestType } from '../../types/test';
 import type { Location } from '../../types/testReporter';

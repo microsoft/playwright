@@ -19,9 +19,9 @@ import util from 'util';
 import type { TestError } from '../../reporter';
 import { isWorkerProcess, setCurrentlyLoadingFileSuite } from './globals';
 import { Suite } from './test';
-import { requireOrImport } from './transform';
+import { requireOrImport } from '../transform/transform';
 import { filterStackTrace } from '../util';
-import { startCollectingFileDeps, stopCollectingFileDeps } from './compilationCache';
+import { startCollectingFileDeps, stopCollectingFileDeps } from '../transform/compilationCache';
 
 export const defaultTimeout = 30000;
 

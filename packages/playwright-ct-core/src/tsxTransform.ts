@@ -15,8 +15,8 @@
  */
 
 import path from 'path';
-import type { T, BabelAPI } from '../../playwright-test/src/common/babelBundle';
-import { types, declare, traverse } from '@playwright/test/lib/common/babelBundle';
+import type { T, BabelAPI } from '@playwright/test/src/transform/babelBundle';
+import { types, declare, traverse } from '@playwright/test/lib/transform/babelBundle';
 import { resolveImportSpecifierExtension } from '@playwright/test/lib/util';
 const t: typeof T = types;
 

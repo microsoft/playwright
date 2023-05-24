@@ -25,11 +25,11 @@ import type { PluginContext } from 'rollup';
 
 import fs from 'fs';
 import path from 'path';
-import { parse, traverse, types as t } from '@playwright/test/lib/common/babelBundle';
+import { parse, traverse, types as t } from '@playwright/test/lib/transform/babelBundle';
 import { stoppable } from '@playwright/test/lib/utilsBundle';
 import { assert, calculateSha1 } from 'playwright-core/lib/utils';
 import { getPlaywrightVersion } from 'playwright-core/lib/utils';
-import { setExternalDependencies } from '@playwright/test/lib/common/compilationCache';
+import { setExternalDependencies } from '@playwright/test/lib/transform/compilationCache';
 import { collectComponentUsages, componentInfo } from './tsxTransform';
 
 let stoppableServer: any;

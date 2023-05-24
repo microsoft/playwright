@@ -1,0 +1,4 @@
+[*]
+../util.ts
+../utilsBundle.ts
+../third_party/tsconfig-loader.ts
