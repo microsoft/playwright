@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 import url from 'url';
-import { test as baseTest, expect, createImage } from './playwright-test-fixtures';
+import { test as baseTest, expect as baseExpect, createImage } from './playwright-test-fixtures';
 import type { HttpServer } from '../../packages/playwright-core/src/utils';
 import { startHtmlReportServer } from '../../packages/playwright-test/lib/reporters/html';
 const { spawnAsync } = require('../../packages/playwright-core/lib/utils');
@@ -36,6 +36,9 @@ const test = baseTest.extend<{ showReport: (reportFolder?: string) => Promise<vo
 });
 
 test.use({ channel: 'chrome' });
+test.slow(!!process.env.CI);
+// Slow tests are 90s.
+const expect = baseExpect.configure({ timeout: process.env.CI ? 75000 : 25000 });
 
 test.describe.configure({ mode: 'parallel' });
 

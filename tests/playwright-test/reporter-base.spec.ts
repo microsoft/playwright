@@ -149,19 +149,19 @@ test('should print slow tests', async ({ runInlineTest }) => {
           { name: 'baz' },
           { name: 'qux' },
         ],
-        reportSlowTests: { max: 0, threshold: 500 },
+        reportSlowTests: { max: 0, threshold: 2400 },
       };
     `,
     'dir/a.test.js': `
       import { test, expect } from '@playwright/test';
       test('slow test', async ({}) => {
-        await new Promise(f => setTimeout(f, 1000));
+        await new Promise(f => setTimeout(f, 2500));
       });
     `,
     'dir/b.test.js': `
       import { test, expect } from '@playwright/test';
       test('fast test', async ({}) => {
-        await new Promise(f => setTimeout(f, 100));
+        await new Promise(f => setTimeout(f, 1));
       });
     `,
   });
