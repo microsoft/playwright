@@ -214,6 +214,8 @@ jobs:
 
   merge_tracing_linux:
     if: ${{ always() && github.event_name != 'pull_request' }}
+    permissions:
+      pull-requests: write
     needs: [tracing_linux]
     timeout-minutes: 10
     runs-on: ubuntu-latest
@@ -237,6 +239,27 @@ jobs:
       run: |
         az storage blob upload-batch -s playwright-report -d '$web/run-${{ github.run_id }}-${{ github.sha }}-tracing_linux' --connection-string "${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}"
         echo "Report url: https://mspwblobreport.z1.web.core.windows.net/run-${{ github.run_id }}-${{ github.sha }}-tracing_linux/index.html"
+    - name: Comment on PR
+      uses: actions/github-script@v6
+      with:
+        github-token: ${{secrets.GITHUB_TOKEN}}
+        script: |
+          const { data: prs } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+            ...context.repo,
+            commit_sha: context.sha,
+          });
+          if (prs.length === 0) {
+            core.error('No pull request found for commit ' + context.sha);
+            return;
+          }
+          const reportUrl = `https://mspwblobreport.z1.web.core.windows.net/run-${context.runId}-${context.sha}-tracing_linux/index.html`;
+          core.notice('Report url: ' + reportUrl);
+          const { data: response } = await github.rest.issues.createComment({
+            ...context.repo,
+            issue_number: prs[0].number,
+            body: 'Tracing test results: ' + reportUrl,
+          });
+          core.info('Posted comment: ' + response.html_url);
 
   chrome_stable_linux:
     name: "Chrome Stable (Linux)"
