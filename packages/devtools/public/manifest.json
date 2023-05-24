@@ -1,0 +1,16 @@
+{
+  "name": "Playwright CRX",
+  "version": "0.0.0.1",
+  "manifest_version": 3,
+  "icons": {
+    "16": "recorder/icon-16x16.png",
+    "32": "recorder/icon-32x32.png",
+    "48": "recorder/icon-192x192.png",
+    "128": "recorder/icon-192x192.png"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "devtools_page": "devtools.html",
+  "permissions": ["debugger", "tabs"]
+}
