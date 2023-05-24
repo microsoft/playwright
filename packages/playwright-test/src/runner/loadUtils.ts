@@ -95,6 +95,7 @@ export async function loadFileSuites(testRun: TestRun, mode: 'out-of-process' | 
   // Load test files.
   const fileSuiteByFile = new Map<string, Suite>();
   const loaderHost = mode === 'out-of-process' ? new OutOfProcessLoaderHost(config) : new InProcessLoaderHost(config);
+  await loaderHost.start();
   for (const file of allTestFiles) {
     const fileSuite = await loaderHost.loadTestFile(file, errors);
     fileSuiteByFile.set(file, fileSuite);

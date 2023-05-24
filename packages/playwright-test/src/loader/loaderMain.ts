@@ -20,8 +20,9 @@ import { ProcessRunner } from '../common/process';
 import type { FullConfigInternal } from '../common/config';
 import { loadTestFile } from '../common/testLoader';
 import type { TestError } from '../../reporter';
-import { addToCompilationCache, serializeCompilationCache } from '../transform/compilationCache';
+import { serializeCompilationCache } from '../transform/compilationCache';
 import { PoolBuilder } from '../common/poolBuilder';
+import { incorporateCompilationCache } from '../common/esmLoaderHost';
 
 export class LoaderMain extends ProcessRunner {
   private _serializedConfig: SerializedConfig;
@@ -30,7 +31,6 @@ export class LoaderMain extends ProcessRunner {
 
   constructor(serializedConfig: SerializedConfig) {
     super();
-    addToCompilationCache(serializedConfig.compilationCache);
     this._serializedConfig = serializedConfig;
   }
 
@@ -48,7 +48,8 @@ export class LoaderMain extends ProcessRunner {
     return { fileSuite: fileSuite._deepSerialize(), testErrors };
   }
 
-  async serializeCompilationCache() {
+  async getCompilationCacheFromLoader() {
+    await incorporateCompilationCache();
     return serializeCompilationCache();
   }
 }

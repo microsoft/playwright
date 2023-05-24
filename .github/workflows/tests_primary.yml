@@ -128,6 +128,12 @@ jobs:
           - os: ubuntu-latest
             node-version: 18
             shard: 2/2
+          - os: ubuntu-latest
+            node-version: 20
+            shard: 1/2
+          - os: ubuntu-latest
+            node-version: 20
+            shard: 2/2
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v3

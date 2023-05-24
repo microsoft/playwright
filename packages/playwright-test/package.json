@@ -20,8 +20,8 @@
     "./lib/cli": "./lib/cli.js",
     "./lib/transform/babelBundle": "./lib/transform/babelBundle.js",
     "./lib/transform/compilationCache": "./lib/transform/compilationCache.js",
+    "./lib/transform/esmLoader": "./lib/transform/esmLoader.js",
     "./lib/internalsForTest": "./lib/internalsForTest.js",
-    "./lib/experimentalLoader": "./lib/experimentalLoader.js",
     "./lib/plugins": "./lib/plugins/index.js",
     "./jsx-runtime": {
       "import": "./jsx-runtime.mjs",
