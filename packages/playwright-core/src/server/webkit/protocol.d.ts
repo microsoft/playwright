@@ -7731,7 +7731,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
       /**
        * Object subtype hint. Specified for <code>object</code> <code>function</code> (for class) type values only.
        */
-      subtype?: "array"|"null"|"node"|"regexp"|"date"|"error"|"map"|"set"|"weakmap"|"weakset"|"iterator"|"class"|"proxy";
+      subtype?: "array"|"null"|"node"|"regexp"|"date"|"error"|"map"|"set"|"weakmap"|"weakset"|"iterator"|"class"|"proxy"|"weakref";
       /**
        * Object class (constructor) name. Specified for <code>object</code> type values only.
        */
@@ -7772,7 +7772,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
       /**
        * Object subtype hint. Specified for <code>object</code> type values only.
        */
-      subtype?: "array"|"null"|"node"|"regexp"|"date"|"error"|"map"|"set"|"weakmap"|"weakset"|"iterator"|"class"|"proxy";
+      subtype?: "array"|"null"|"node"|"regexp"|"date"|"error"|"map"|"set"|"weakmap"|"weakset"|"iterator"|"class"|"proxy"|"weakref";
       /**
        * String representation of the object.
        */
@@ -7810,7 +7810,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
       /**
        * Object subtype hint. Specified for <code>object</code> type values only.
        */
-      subtype?: "array"|"null"|"node"|"regexp"|"date"|"error"|"map"|"set"|"weakmap"|"weakset"|"iterator"|"class"|"proxy";
+      subtype?: "array"|"null"|"node"|"regexp"|"date"|"error"|"map"|"set"|"weakmap"|"weakset"|"iterator"|"class"|"proxy"|"weakref";
       /**
        * User-friendly property value string.
        */
