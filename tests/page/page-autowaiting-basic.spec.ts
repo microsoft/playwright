@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import type { TestServer } from '../../utils/testserver';
+import type { TestServer } from '../config/testserver';
 import { test as it, expect } from './pageTest';
 
 function initServer(server: TestServer): string[] {

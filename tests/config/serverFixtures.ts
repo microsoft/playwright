@@ -17,7 +17,7 @@
 import type { Fixtures } from '@playwright/test';
 import path from 'path';
 import socks from 'socksv5';
-import { TestServer } from '../../utils/testserver';
+import { TestServer } from './testserver';
 import { TestProxy } from './proxy';
 
 export type ServerWorkerOptions = {
