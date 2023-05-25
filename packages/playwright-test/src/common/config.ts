@@ -154,6 +154,10 @@ export class FullProjectInternal {
   deps: FullProjectInternal[] = [];
   teardown: FullProjectInternal | undefined;
 
+  static from(config: FullProject): FullProjectInternal {
+    return (config as any)[projectInternalSymbol];
+  }
+
   constructor(configDir: string, config: Config, fullConfig: FullConfigInternal, projectConfig: Project, configCLIOverrides: ConfigCLIOverrides, throwawayArtifactsPath: string) {
     this.fullConfig = fullConfig;
     const testDir = takeFirst(pathResolve(configDir, projectConfig.testDir), pathResolve(configDir, config.testDir), fullConfig.configDir);

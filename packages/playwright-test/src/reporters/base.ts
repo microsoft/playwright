@@ -498,25 +498,6 @@ function fitToWidth(line: string, width: number, prefix?: string): string {
   return taken.reverse().join('');
 }
 
-export function uniqueProjectIds(projects: FullProject[], nameTransform?: (name: string) => string): Map<FullProject, string> {
-  const usedNames = new Set<string>();
-  const result = new Map<FullProject, string>();
-  for (const p of projects) {
-    let name = p.name || '';
-    if (nameTransform)
-      name = nameTransform(name);
-    for (let i = 0; i < projects.length; ++i) {
-      const candidate = name + (i ? i : '');
-      if (usedNames.has(candidate))
-        continue;
-      result.set(p, candidate);
-      usedNames.add(candidate);
-      break;
-    }
-  }
-  return result;
-}
-
 function belongsToNodeModules(file: string) {
   return file.includes(`${path.sep}node_modules${path.sep}`);
 }
