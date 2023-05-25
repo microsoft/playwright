@@ -20,7 +20,6 @@ import type { FullConfig, TestCase, Suite, TestResult, TestError, TestStep, Full
 import { formatError, prepareErrorStack } from './base';
 import { MultiMap } from 'playwright-core/lib/utils';
 import { assert } from 'playwright-core/lib/utils';
-import type { FullProject } from '../../types/test';
 import { FullProjectInternal } from '../common/config';
 
 export function toPosixPath(aPath: string): string {

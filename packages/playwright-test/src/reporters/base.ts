@@ -19,7 +19,6 @@ import path from 'path';
 import type { FullConfig, TestCase, Suite, TestResult, TestError, FullResult, TestStep, Location, Reporter } from '../../types/testReporter';
 import type { SuitePrivate } from '../../types/reporterPrivate';
 import { monotonicTime } from 'playwright-core/lib/utils';
-import type { FullProject } from '../../types/test';
 export type TestResultOutput = { chunk: string | Buffer, type: 'stdout' | 'stderr' };
 export const kOutputSymbol = Symbol('output');
 

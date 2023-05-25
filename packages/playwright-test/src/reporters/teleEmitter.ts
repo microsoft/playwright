@@ -142,7 +142,7 @@ export class TeleReporterEmitter implements Reporter {
     const usedNames = new Set<string>();
     const result = new Map<FullProject, string>();
     for (const p of projects) {
-      let name = this._serializeProjectName(p.name || '');
+      const name = this._serializeProjectName(p.name);
       for (let i = 0; i < projects.length; ++i) {
         const candidate = name + (i ? i : '');
         if (usedNames.has(candidate))
