@@ -336,7 +336,7 @@ export function resolveImportSpecifierExtension(resolved: string): string | unde
   }
   // try directory imports last
   if (dirExists(resolved)) {
-    const dirImport = `${resolved}/index`;
+    const dirImport = path.join(resolved, 'index');
     return resolveImportSpecifierExtension(dirImport);
   }
 }
@@ -346,5 +346,5 @@ function fileExists(resolved: string) {
 }
 
 function dirExists(resolved: string) {
-  return fs.existsSync(resolved) && fs.lstatSync(resolved).isDirectory();
+  return fs.statSync(resolved)?.isDirectory();
 }

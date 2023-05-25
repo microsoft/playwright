@@ -336,12 +336,12 @@ test('should resolve file import before directory import in ESM mode', async ({ 
         expect(gimmeAOne()).toBe(1);
       });
     `,
-    'playwright-utils.jsx': `
+    'playwright-utils.js': `
       export function gimmeAOne() {
         return 1;
       }
     `,
-    'playwright-utils/index.jsx': `
+    'playwright-utils/index.js': `
       export function gimmeAOne() {
         // intentionally return the wrong thing because this file shouldn't be resolved.
         return 2;
