@@ -672,8 +672,8 @@ it('should contain http2 for http2 requests', async ({ contextFactory, browserNa
   it.fixme(browserName === 'webkit' && platform === 'win32');
 
   const server = http2.createSecureServer({
-    key: await fs.promises.readFile(path.join(__dirname, '..', '..', 'utils', 'testserver', 'key.pem')),
-    cert: await fs.promises.readFile(path.join(__dirname, '..', '..', 'utils', 'testserver', 'cert.pem')),
+    key: await fs.promises.readFile(path.join(__dirname, '..', 'config', 'testserver', 'key.pem')),
+    cert: await fs.promises.readFile(path.join(__dirname, '..', 'config', 'testserver', 'cert.pem')),
   });
   server.on('stream', stream => {
     stream.respond({
