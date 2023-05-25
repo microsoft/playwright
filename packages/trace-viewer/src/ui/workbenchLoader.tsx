@@ -78,6 +78,9 @@ export const WorkbenchLoader: React.FunctionComponent<{
       }
     }
 
+    (window as any).setTraceURL = (url: string) => {
+      setTraceURLs([url]);
+    };
     // Don't re-use blob file URLs on page load (results in Fetch error)
     if (!newTraceURLs.some(url => url.startsWith('blob:')))
       setTraceURLs(newTraceURLs);
