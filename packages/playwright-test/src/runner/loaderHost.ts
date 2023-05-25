@@ -23,6 +23,7 @@ import type { FullConfigInternal } from '../common/config';
 import { PoolBuilder } from '../common/poolBuilder';
 import { addToCompilationCache } from '../transform/compilationCache';
 import { setBabelPlugins } from '../transform/transform';
+import { incorporateCompilationCache, initializeEsmLoader } from '../common/esmLoaderHost';
 
 export class InProcessLoaderHost {
   private _config: FullConfigInternal;
@@ -31,10 +32,14 @@ export class InProcessLoaderHost {
   constructor(config: FullConfigInternal) {
     this._config = config;
     this._poolBuilder = PoolBuilder.createForLoader();
+  }
+
+  async start() {
     const babelTransformPlugins: [string, any?][] = [];
-    for (const plugin of config.plugins)
+    for (const plugin of this._config.plugins)
       babelTransformPlugins.push(...plugin.babelPlugins || []);
     setBabelPlugins(babelTransformPlugins);
+    await initializeEsmLoader();
   }
 
   async loadTestFile(file: string, testErrors: TestError[]): Promise<Suite> {
@@ -43,28 +48,32 @@ export class InProcessLoaderHost {
     return result;
   }
 
-  async stop() {}
+  async stop() {
+    await incorporateCompilationCache();
+  }
 }
 
 export class OutOfProcessLoaderHost {
-  private _startPromise: Promise<void>;
+  private _config: FullConfigInternal;
   private _processHost: ProcessHost;
 
   constructor(config: FullConfigInternal) {
+    this._config = config;
     this._processHost = new ProcessHost(require.resolve('../loader/loaderMain.js'), 'loader', {});
-    this._startPromise = this._processHost.startRunner(serializeConfig(config), true);
+  }
+
+  async start() {
+    await this._processHost.startRunner(serializeConfig(this._config), true);
   }
 
   async loadTestFile(file: string, testErrors: TestError[]): Promise<Suite> {
-    await this._startPromise;
     const result = await this._processHost.sendMessage({ method: 'loadTestFile', params: { file } }) as any;
     testErrors.push(...result.testErrors);
     return Suite._deepParse(result.fileSuite);
   }
 
   async stop() {
-    await this._startPromise;
-    const result = await this._processHost.sendMessage({ method: 'serializeCompilationCache' }) as any;
+    const result = await this._processHost.sendMessage({ method: 'getCompilationCacheFromLoader' }) as any;
     addToCompilationCache(result);
     await this._processHost.stop();
   }

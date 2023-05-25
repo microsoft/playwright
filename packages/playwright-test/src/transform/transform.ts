@@ -41,6 +41,10 @@ export function setBabelPlugins(plugins: BabelPlugin[]) {
   babelPlugins = plugins;
 }
 
+export function getBabelPlugins(): BabelPlugin[] {
+  return babelPlugins;
+}
+
 function validateTsConfig(tsconfig: TsConfigLoaderResult): ParsedTsConfigData | undefined {
   if (!tsconfig.tsConfigPath || !tsconfig.baseUrl)
     return;

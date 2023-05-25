@@ -30,7 +30,6 @@ import { ProcessRunner } from '../common/process';
 import { loadTestFile } from '../common/testLoader';
 import { buildFileSuiteForProject, filterTestsRemoveEmptySuites } from '../common/suiteUtils';
 import { PoolBuilder } from '../common/poolBuilder';
-import { addToCompilationCache } from '../transform/compilationCache';
 import type { TestInfoError } from '../../types/test';
 
 const removeFolderAsync = util.promisify(rimraf);
@@ -67,7 +66,6 @@ export class WorkerMain extends ProcessRunner {
     process.env.TEST_WORKER_INDEX = String(params.workerIndex);
     process.env.TEST_PARALLEL_INDEX = String(params.parallelIndex);
     setIsWorkerProcess();
-    addToCompilationCache(params.config.compilationCache);
 
     this._params = params;
     this._fixtureRunner = new FixtureRunner();

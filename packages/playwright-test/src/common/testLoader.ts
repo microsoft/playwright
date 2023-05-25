@@ -22,6 +22,7 @@ import { Suite } from './test';
 import { requireOrImport } from '../transform/transform';
 import { filterStackTrace } from '../util';
 import { startCollectingFileDeps, stopCollectingFileDeps } from '../transform/compilationCache';
+import * as esmLoaderHost from './esmLoaderHost';
 
 export const defaultTimeout = 30000;
 
@@ -37,8 +38,10 @@ export async function loadTestFile(file: string, rootDir: string, testErrors?: T
   suite.location = { file, line: 0, column: 0 };
 
   setCurrentlyLoadingFileSuite(suite);
-  if (!isWorkerProcess())
+  if (!isWorkerProcess()) {
     startCollectingFileDeps();
+    await esmLoaderHost.startCollectingFileDeps();
+  }
   try {
     await requireOrImport(file);
     cachedFileSuites.set(file, suite);
@@ -47,8 +50,11 @@ export async function loadTestFile(file: string, rootDir: string, testErrors?: T
       throw e;
     testErrors.push(serializeLoadError(file, e));
   } finally {
-    stopCollectingFileDeps(file);
     setCurrentlyLoadingFileSuite(undefined);
+    if (!isWorkerProcess()) {
+      stopCollectingFileDeps(file);
+      await esmLoaderHost.stopCollectingFileDeps(file);
+    }
   }
 
   {

@@ -16,8 +16,9 @@
 
 import fs from 'fs';
 import url from 'url';
-import { belongsToNodeModules, currentFileDepsCollector } from './transform/compilationCache';
-import { transformHook, resolveHook } from './transform/transform';
+import { addToCompilationCache, belongsToNodeModules, currentFileDepsCollector, serializeCompilationCache, startCollectingFileDeps, stopCollectingFileDeps } from './compilationCache';
+import { transformHook, resolveHook, setBabelPlugins } from './transform';
+import { PortTransport } from './portTransport';
 
 // Node < 18.6: defaultResolve takes 3 arguments.
 // Node >= 18.6: nextResolve from the chain takes 2 arguments.
@@ -54,9 +55,46 @@ async function load(moduleUrl: string, context: { format?: string }, defaultLoad
 
   const code = fs.readFileSync(filename, 'utf-8');
   const source = transformHook(code, filename, moduleUrl);
+
+  // Flush the source maps to the main thread.
+  await transport?.send('pushToCompilationCache', { cache: serializeCompilationCache() });
+
   // Output format is always the same as input format, if it was unknown, we always report modules.
-  // shortCurcuit is required by Node >= 18.6 to designate no more loaders should be called.
+  // shortCircuit is required by Node >= 18.6 to designate no more loaders should be called.
   return { format: context.format || 'module', source, shortCircuit: true };
 }
 
-module.exports = { resolve, load };
+let transport: PortTransport | undefined;
+
+function globalPreload(context: { port: MessagePort }) {
+  transport = new PortTransport(context.port, async (method, params) => {
+    if (method === 'setBabelPlugins') {
+      setBabelPlugins(params.plugins);
+      return;
+    }
+
+    if (method === 'addToCompilationCache') {
+      addToCompilationCache(params.cache);
+      return;
+    }
+
+    if (method === 'getCompilationCache')
+      return { cache: serializeCompilationCache() };
+
+    if (method === 'startCollectingFileDeps') {
+      startCollectingFileDeps();
+      return;
+    }
+
+    if (method === 'stopCollectingFileDeps') {
+      stopCollectingFileDeps(params.file);
+      return;
+    }
+  });
+
+  return `
+    globalThis.__esmLoaderPort = port;
+  `;
+}
+
+module.exports = { resolve, load, globalPreload };
