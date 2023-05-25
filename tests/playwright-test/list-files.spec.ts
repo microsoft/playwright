@@ -31,6 +31,7 @@ test('should list files', async ({ runListFiles }) => {
       {
         name: 'foo',
         testDir: expect.stringContaining('list-files-should-list-files-playwright-test'),
+        outputDir: expect.stringContaining('list-files-should-list-files-playwright-test/test-results'),
         use: {},
         files: [
           expect.stringContaining('a.test.js')
@@ -39,6 +40,7 @@ test('should list files', async ({ runListFiles }) => {
       {
         name: 'bar',
         testDir: expect.stringContaining('list-files-should-list-files-playwright-test'),
+        outputDir: expect.stringContaining('list-files-should-list-files-playwright-test/test-results'),
         use: {},
         files: [
           expect.stringContaining('a.test.js')
@@ -65,6 +67,7 @@ test('should include testIdAttribute', async ({ runListFiles }) => {
       {
         name: '',
         testDir: expect.stringContaining('list-files-should-include-testIdAttribute-playwright-test'),
+        outputDir: expect.stringContaining('list-files-should-include-testIdAttribute-playwright-test/test-results'),
         use: {
           testIdAttribute: 'myid'
         },

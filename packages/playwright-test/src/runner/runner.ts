@@ -27,6 +27,18 @@ import { runWatchModeLoop } from './watchMode';
 import { runUIMode } from './uiMode';
 import { InternalReporter } from '../reporters/internalReporter';
 
+type ProjectConfigWithFiles = {
+  name: string;
+  testDir: string;
+  outputDir: string;
+  use: { testIdAttribute?: string };
+  files: string[];
+};
+
+type ConfigListFilesReport = {
+  projects: ProjectConfigWithFiles[];
+};
+
 export class Runner {
   private _config: FullConfigInternal;
 
@@ -35,17 +47,6 @@ export class Runner {
   }
 
   async listTestFiles(projectNames: string[] | undefined): Promise<any> {
-    type ProjectConfigWithFiles = {
-      name: string;
-      testDir: string;
-      use: { testIdAttribute?: string };
-      files: string[];
-    };
-
-    type ConfigListFilesReport = {
-      projects: ProjectConfigWithFiles[];
-    };
-
     const projects = filterProjects(this._config.projects, projectNames);
     const report: ConfigListFilesReport = {
       projects: []
@@ -54,6 +55,7 @@ export class Runner {
       report.projects.push({
         name: project.project.name,
         testDir: project.project.testDir,
+        outputDir: project.project.outputDir,
         use: { testIdAttribute: project.project.use.testIdAttribute },
         files: await collectFilesForProject(project)
       });
