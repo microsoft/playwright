@@ -148,8 +148,10 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
   // Complain about only.
   if (config.config.forbidOnly) {
     const onlyTestsAndSuites = rootSuite._getOnlyItems();
-    if (onlyTestsAndSuites.length > 0)
-      errors.push(...createForbidOnlyErrors(onlyTestsAndSuites));
+    if (onlyTestsAndSuites.length > 0) {
+      const configFilePath = config.config.configFile ? path.relative(config.config.rootDir, config.config.configFile) : undefined;
+      errors.push(...createForbidOnlyErrors(onlyTestsAndSuites, config.configCLIOverrides.forbidOnly, configFilePath));
+    }
   }
 
   // Filter only for top-level projects.
@@ -220,13 +222,15 @@ async function createProjectSuite(fileSuites: Suite[], project: FullProjectInter
   return projectSuite;
 }
 
-function createForbidOnlyErrors(onlyTestsAndSuites: (TestCase | Suite)[]): TestError[] {
+function createForbidOnlyErrors(onlyTestsAndSuites: (TestCase | Suite)[], forbidOnlyCLIFlag: boolean | undefined, configFilePath: string | undefined): TestError[] {
   const errors: TestError[] = [];
   for (const testOrSuite of onlyTestsAndSuites) {
     // Skip root and file.
     const title = testOrSuite.titlePath().slice(2).join(' ');
+    const configFilePathName = configFilePath ? `'${configFilePath}'` : 'the Playwright configuration file';
+    const forbidOnlySource = forbidOnlyCLIFlag ? `'--forbid-only' CLI flag` : `'forbidOnly' option in ${configFilePathName}`;
     const error: TestError = {
-      message: `Error: focused item found in the --forbid-only mode: "${title}"`,
+      message: `Error: item focused with '.only' is not allowed due to the ${forbidOnlySource}: "${title}"`,
       location: testOrSuite.location!,
     };
     errors.push(error);

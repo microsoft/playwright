@@ -59,13 +59,18 @@ test('it should not allow multiple tests with the same name in multiple files', 
 
 test('it should not allow a focused test when forbid-only is used', async ({ runInlineTest }) => {
   const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        forbidOnly: true,
+      };
+    `,
     'tests/focused-test.spec.js': `
       import { test, expect } from '@playwright/test';
       test.only('i-am-focused', async () => {});
     `
-  }, { 'forbid-only': true });
+  });
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain('Error: focused item found in the --forbid-only mode');
+  expect(result.output).toContain(`Error: item focused with '.only' is not allowed due to the 'forbidOnly' option in 'playwright.config.ts': \"tests${path.sep}focused-test.spec.js i-am-focused\"`);
   expect(result.output).toContain(`test.only('i-am-focused'`);
   expect(result.output).toContain(`tests${path.sep}focused-test.spec.js:3`);
 });
