@@ -252,6 +252,34 @@ jobs:
     - run: npm run test-web
       if: always()
 
+  test_vscode_extension:
+    name: VSCode Extension
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
+      with:
+        node-version: 16
+    - run: npm ci
+      env:
+        DEBUG: pw:install
+    - run: npm run build
+    - run: npx playwright install chromium
+    - name: Checkout extension
+      run: git clone https://github.com/microsoft/playwright-vscode.git
+    - name: Print extension revision
+      run: git rev-parse HEAD
+      working-directory: ./playwright-vscode
+    - name: Remove @playwright/test from extension dependencies
+      run: node -e "const p = require('./package.json'); delete p.devDependencies['@playwright/test']; fs.writeFileSync('./package.json', JSON.stringify(p, null, 2));"
+      working-directory: ./playwright-vscode
+    - name: Build extension
+      run: npm install && npm run build
+      working-directory: ./playwright-vscode
+    - name: Run extension tests
+      run: npm run test -- --workers=1
+      working-directory: ./playwright-vscode
+
   test-package-installations:
     name: "Installation Test ${{ matrix.os }}"
     runs-on: ${{ matrix.os  }}
