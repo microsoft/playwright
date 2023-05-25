@@ -119,9 +119,8 @@ it('should fire requestfailed when intercepting race', async ({ page, server, br
   await promsie;
 });
 
-it('main resource xhr should have type xhr', async ({ page, server, browserName }) => {
+it('main resource xhr should have type xhr', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22812' });
-  it.fixme(browserName === 'webkit');
   await page.goto(server.EMPTY_PAGE);
   const [request] = await Promise.all([
     page.waitForEvent('request'),
