@@ -225,7 +225,7 @@ function createForbidOnlyErrors(onlyTestsAndSuites: (TestCase | Suite)[], forbid
   const errors: TestError[] = [];
   for (const testOrSuite of onlyTestsAndSuites) {
     // Skip root and file.
-    const title = testOrSuite.titlePath().slice(2).join(' ').replaceAll(path.sep, '/');
+    const title = testOrSuite.titlePath().slice(2).join(' ');
     const configFilePathName = configFilePath ? `'${configFilePath}'` : 'the Playwright configuration file';
     const forbidOnlySource = forbidOnlyCLIFlag ? `'--forbid-only' CLI flag` : `'forbidOnly' option in ${configFilePathName}`;
     const error: TestError = {
