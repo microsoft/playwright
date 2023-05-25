@@ -342,7 +342,7 @@ export function resolveImportSpecifierExtension(resolved: string): string | unde
 }
 
 function fileExists(resolved: string) {
-  return fs.existsSync(resolved) && !fs.lstatSync(resolved).isDirectory();
+  return fs.lstatSync(resolved)?.isFile();
 }
 
 function dirExists(resolved: string) {
