@@ -23,7 +23,6 @@ import { createGuid } from 'playwright-core/lib/utils';
 import { serializeRegexPatterns } from '../isomorphic/teleReceiver';
 import path from 'path';
 import type { FullProject } from '../../types/test';
-import { uniqueProjectIds } from './base';
 
 export class TeleReporterEmitter implements Reporter {
   private _messageSink: (message: any) => void;
@@ -36,7 +35,7 @@ export class TeleReporterEmitter implements Reporter {
   onBegin(config: FullConfig, suite: Suite) {
     this._rootDir = config.rootDir;
     const projects: any[] = [];
-    const projectIds = uniqueProjectIds(config.projects);
+    const projectIds = this._uniqueProjectIds(config.projects);
     for (const projectSuite of suite.suites) {
       const report = this._serializeProject(projectSuite, projectIds);
       projects.push(report);
@@ -137,6 +136,23 @@ export class TeleReporterEmitter implements Reporter {
 
       listOnly: FullConfigInternal.from(config)?.cliListOnly,
     };
+  }
+
+  private _uniqueProjectIds(projects: FullProject[]): Map<FullProject, string> {
+    const usedNames = new Set<string>();
+    const result = new Map<FullProject, string>();
+    for (const p of projects) {
+      const name = this._serializeProjectName(p.name);
+      for (let i = 0; i < projects.length; ++i) {
+        const candidate = name + (i ? i : '');
+        if (usedNames.has(candidate))
+          continue;
+        result.set(p, candidate);
+        usedNames.add(candidate);
+        break;
+      }
+    }
+    return result;
   }
 
   private _serializeProject(suite: Suite, projectIds: Map<FullProject, string>): JsonProject {

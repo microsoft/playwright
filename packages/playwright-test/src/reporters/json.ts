@@ -17,10 +17,10 @@
 import fs from 'fs';
 import path from 'path';
 import type { FullConfig, TestCase, Suite, TestResult, TestError, TestStep, FullResult, Location, Reporter, JSONReport, JSONReportSuite, JSONReportSpec, JSONReportTest, JSONReportTestResult, JSONReportTestStep, JSONReportError } from '../../types/testReporter';
-import { formatError, prepareErrorStack, uniqueProjectIds } from './base';
+import { formatError, prepareErrorStack } from './base';
 import { MultiMap } from 'playwright-core/lib/utils';
 import { assert } from 'playwright-core/lib/utils';
-import type { FullProject } from '../../types/test';
+import { FullProjectInternal } from '../common/config';
 
 export function toPosixPath(aPath: string): string {
   return aPath.split(path.sep).join(path.posix.sep);
@@ -54,7 +54,6 @@ class JSONReporter implements Reporter {
   }
 
   private _serializeReport(): JSONReport {
-    const projectIds = uniqueProjectIds(this.config.projects);
     return {
       config: {
         ...removePrivateFields(this.config),
@@ -65,7 +64,7 @@ class JSONReporter implements Reporter {
             repeatEach: project.repeatEach,
             retries: project.retries,
             metadata: project.metadata,
-            id: projectIds.get(project)!,
+            id: FullProjectInternal.from(project).id,
             name: project.name,
             testDir: toPosixPath(project.testDir),
             testIgnore: serializePatterns(project.testIgnore),
@@ -74,15 +73,15 @@ class JSONReporter implements Reporter {
           };
         })
       },
-      suites: this._mergeSuites(this.suite.suites, projectIds),
+      suites: this._mergeSuites(this.suite.suites),
       errors: this._errors
     };
   }
 
-  private _mergeSuites(suites: Suite[], projectIds: Map<FullProject, string>): JSONReportSuite[] {
+  private _mergeSuites(suites: Suite[]): JSONReportSuite[] {
     const fileSuites = new MultiMap<string, JSONReportSuite>();
     for (const projectSuite of suites) {
-      const projectId = projectIds.get(projectSuite.project()!)!;
+      const projectId = FullProjectInternal.from(projectSuite.project()!).id;
       const projectName = projectSuite.project()!.name;
       for (const fileSuite of projectSuite.suites) {
         const file = fileSuite.location!.file;

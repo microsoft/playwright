@@ -908,7 +908,6 @@ test('custom project suffix', async ({ runInlineTest, mergeReports }) => {
     `,
     'playwright.config.ts': `
       module.exports = {
-        retries: 1,
         reporter: 'blob',
         projects: [
           { name: 'foo' },
@@ -918,9 +917,7 @@ test('custom project suffix', async ({ runInlineTest, mergeReports }) => {
     `,
     'a.test.js': `
       import { test, expect } from '@playwright/test';
-      test('math 1', async ({}) => {
-        expect(1 + 1).toBe(2);
-      });
+      test('math 1', async ({}) => {});
     `,
   };
 
@@ -929,4 +926,41 @@ test('custom project suffix', async ({ runInlineTest, mergeReports }) => {
   const { exitCode, output } = await mergeReports(reportDir, {}, { additionalArgs: ['--reporter', test.info().outputPath('echo-reporter.js')] });
   expect(exitCode).toBe(0);
   expect(output).toContain(`projects: [ 'foo-suffix', 'bar-suffix' ]`);
+});
+
+test('same project different suffixes', async ({ runInlineTest, mergeReports }) => {
+  const files = {
+    'echo-reporter.js': `
+      import fs from 'fs';
+
+      class EchoReporter {
+        onBegin(config, suite) {
+          const projects = suite.suites.map(s => s.project().name);
+          projects.sort();
+          console.log('projects:', projects);
+        }
+      }
+      module.exports = EchoReporter;
+    `,
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: 'blob',
+        projects: [
+          { name: 'foo' },
+        ]
+      };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('math 1', async ({}) => {});
+    `,
+  };
+
+  await runInlineTest(files, undefined, { PWTEST_BLOB_SUFFIX: '-first' });
+  await runInlineTest(files, undefined, { PWTEST_BLOB_SUFFIX: '-second' });
+
+  const reportDir = test.info().outputPath('blob-report');
+  const { exitCode, output } = await mergeReports(reportDir, {}, { additionalArgs: ['--reporter', test.info().outputPath('echo-reporter.js')] });
+  expect(exitCode).toBe(0);
+  expect(output).toContain(`projects: [ 'foo-first', 'foo-second' ]`);
 });
