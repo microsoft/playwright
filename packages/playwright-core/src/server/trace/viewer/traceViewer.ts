@@ -18,7 +18,7 @@ import path from 'path';
 import fs from 'fs';
 import { HttpServer } from '../../../utils/httpServer';
 import { findChromiumChannel } from '../../registry';
-import { isUnderTest } from '../../../utils';
+import { gracefullyCloseAll, isUnderTest } from '../../../utils';
 import { installAppIcon, syncLocalStorageWithSettings } from '../../chromium/crApp';
 import { serverSideCallMetadata } from '../../instrumentation';
 import { createPlaywright } from '../../playwright';
@@ -142,6 +142,16 @@ function runServer(page: Page) {
       pollLoadTrace(url);
     else
       loadTrace(url);
+  });
+  process.stdin.on('close', () => selfDestruct());
+}
+
+function selfDestruct() {
+  // Force exit after 30 seconds.
+  setTimeout(() => process.exit(0), 30000);
+  // Meanwhile, try to gracefully close all browsers.
+  gracefullyCloseAll().then(() => {
+    process.exit(0);
   });
 }
 
