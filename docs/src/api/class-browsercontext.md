@@ -95,7 +95,7 @@ Emitted when Browser context gets closed. This might happen because of one of th
 * The [`method: Browser.close`] method was called.
 
 ## event: BrowserContext.console
-* since: v1.33
+* since: v1.34
 * langs:
   - alias-java: consoleMessage
 - argument: <[ConsoleMessage]>
@@ -156,7 +156,7 @@ await page.EvaluateAsync("console.log('hello', 5, { foo: 'bar' })");
 
 
 ## event: BrowserContext.dialog
-* since: v1.33
+* since: v1.34
 - argument: <[Dialog]>
 
 Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Listener **must** either [`method: Dialog.accept`] or [`method: Dialog.dismiss`] the dialog - otherwise the page will [freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop#never_blocking) waiting for the dialog, and actions like click will never finish.
