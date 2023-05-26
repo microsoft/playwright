@@ -70,6 +70,14 @@ export type TestBeginPayload = {
   startWallTime: number;  // milliseconds since unix epoch
 };
 
+export type AttachmentPayload = {
+  testId: string;
+  name: string;
+  path?: string;
+  body?: string;
+  contentType: string;
+};
+
 export type TestEndPayload = {
   testId: string;
   duration: number;
@@ -78,7 +86,6 @@ export type TestEndPayload = {
   expectedStatus: TestStatus;
   annotations: { type: string, description?: string }[];
   timeout: number;
-  attachments: { name: string, path?: string, body?: string, contentType: string }[];
 };
 
 export type StepBeginPayload = {

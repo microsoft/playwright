@@ -112,6 +112,10 @@ export class InternalReporter {
     this._multiplexer.onStepEnd(test, result, step);
   }
 
+  onAttachment(test: TestCase, result: TestResult, attachment: TestResult['attachments'][0]) {
+    this._multiplexer.onAttachment(test, result, attachment);
+  }
+
   private _addSnippetToTestErrors(test: TestCase, result: TestResult) {
     for (const error of result.errors)
       addLocationAndSnippetToError(this._config.config, error, test.location.file);

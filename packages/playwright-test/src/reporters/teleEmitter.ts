@@ -87,6 +87,17 @@ export class TeleReporterEmitter implements Reporter {
     });
   }
 
+  onAttachment(test: TestCase, result: TestResult, attachment: TestResult['attachments'][0]): void {
+    this._messageSink({
+      method: 'onAttachment',
+      params: {
+        testId: test.id,
+        resultId: (result as any)[idSymbol],
+        attachment: this.doSerializeAttachment(attachment)
+      }
+    });
+  }
+
   onError(error: TestError): void {
     this._messageSink({
       method: 'onError',
@@ -195,12 +206,11 @@ export class TeleReporterEmitter implements Reporter {
       duration: result.duration,
       status: result.status,
       errors: result.errors,
-      attachments: this._serializeAttachments(result.attachments),
     };
   }
 
-  _serializeAttachments(attachments: TestResult['attachments']): TestResult['attachments'] {
-    return attachments;
+  doSerializeAttachment(attachment: TestResult['attachments'][0]): TestResult['attachments'][0] {
+    return attachment;
   }
 
   private _serializeStepStart(step: TestStep): JsonTestStepStart {

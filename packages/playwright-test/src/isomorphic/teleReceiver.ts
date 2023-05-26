@@ -91,7 +91,6 @@ export type JsonTestResultEnd = {
   duration: number;
   status: TestStatus;
   errors: TestError[];
-  attachments: TestResult['attachments'];
 };
 
 export type JsonTestStepStart = {
@@ -150,6 +149,10 @@ export class TeleReporterReceiver {
     }
     if (method === 'onStepEnd') {
       this._onStepEnd(params.testId, params.resultId, params.step);
+      return;
+    }
+    if (method === 'onAttachment') {
+      this._onAttachment(params.testId, params.resultId, params.attachment);
       return;
     }
     if (method === 'onError') {
@@ -226,7 +229,6 @@ export class TeleReporterReceiver {
     result.status = payload.status;
     result.statusEx = payload.status;
     result.errors = payload.errors;
-    result.attachments = payload.attachments;
     this._reporter.onTestEnd?.(test, result);
   }
 
@@ -260,6 +262,14 @@ export class TeleReporterReceiver {
     step.duration = payload.duration;
     step.error = payload.error;
     this._reporter.onStepEnd?.(test, result, step);
+  }
+
+  private _onAttachment(testId: string, resultId: string, payload: TestResult['attachments'][0]) {
+    const test = this._tests.get(testId)!;
+    const result = test.resultsMap.get(resultId)!;
+    const attachment = payload;
+    result.attachments.push(attachment);
+    this._reporter.onAttachment?.(test, result, attachment);
   }
 
   private _onError(error: TestError) {

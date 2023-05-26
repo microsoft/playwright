@@ -369,7 +369,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
             const savedPath = testInfo.outputPath(`video${counter ? '-' + counter : ''}.webm`);
             ++counter;
             await v.saveAs(savedPath);
-            testInfo.attachments.push({ name: 'video', path: savedPath, contentType: 'video/webm' });
+            testInfoImpl._attachWithoutStep({ name: 'video', path: savedPath, contentType: 'video/webm' });
           } catch (e) {
             // Silent catch empty videos.
           }
@@ -389,7 +389,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
   }, { scope: 'test',  _title: 'context' } as any],
 
   context: async ({ playwright, browser, _reuseContext, _contextFactory }, use, testInfo) => {
-    attachConnectedHeaderIfNeeded(testInfo, browser);
+    attachConnectedHeaderIfNeeded(testInfo as TestInfoImpl, browser);
     if (!_reuseContext) {
       await use(await _contextFactory());
       return;
@@ -487,7 +487,7 @@ function normalizeScreenshotMode(screenshot: ScreenshotOption): ScreenshotMode {
   return typeof screenshot === 'string' ? screenshot : screenshot.mode;
 }
 
-function attachConnectedHeaderIfNeeded(testInfo: TestInfo, browser: Browser | null) {
+function attachConnectedHeaderIfNeeded(testInfo: TestInfoImpl, browser: Browser | null) {
   const connectHeaders: { name: string, value: string }[] | undefined = (browser as any)?._connectHeaders;
   if (!connectHeaders)
     return;
@@ -499,7 +499,7 @@ function attachConnectedHeaderIfNeeded(testInfo: TestInfo, browser: Browser | nu
       continue;
     if (testInfo.attachments.some(attachment => attachment.name === name))
       continue;
-    testInfo.attachments.push({ name, contentType: 'text/plain', body: Buffer.from(value) });
+    testInfo._attachWithoutStep({ name, contentType: 'text/plain', body: Buffer.from(value) });
   }
 }
 
@@ -656,7 +656,7 @@ class ArtifactsRecorder {
       await mergeTraceFiles(tracePath, this._temporaryTraceFiles);
       // Do not add attachment twice.
       if (!beforeHooksHadTrace)
-        this._testInfo.attachments.push({ name: 'trace', path: tracePath, contentType: 'application/zip' });
+        this._testInfo._attachWithoutStep({ name: 'trace', path: tracePath, contentType: 'application/zip' });
     }
     await Promise.all(this._temporaryScreenshots.map(async file => {
       if (captureScreenshots)
@@ -670,7 +670,7 @@ class ArtifactsRecorder {
     const testFailed = this._testInfo.status !== this._testInfo.expectedStatus;
     const index = this._testInfo.attachments.filter(a => a.name === 'screenshot').length + 1;
     const screenshotPath = this._testInfo.outputPath(`test-${testFailed ? 'failed' : 'finished'}-${index}.png`);
-    this._testInfo.attachments.push({ name: 'screenshot', path: screenshotPath, contentType: 'image/png' });
+    this._testInfo._attachWithoutStep({ name: 'screenshot', path: screenshotPath, contentType: 'image/png' });
     return screenshotPath;
   }
 

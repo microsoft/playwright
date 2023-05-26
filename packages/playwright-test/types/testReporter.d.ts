@@ -407,6 +407,35 @@ export interface Reporter {
    */
   onEnd?(result: FullResult): void | Promise<void>;
   /**
+   * Called when test attachment is added.
+   * @param test
+   * @param result
+   * @param attachment
+   */
+  onAttachment?(test: TestCase, result: TestResult, attachment: {
+    /**
+     * Attachment name.
+     */
+    name: string;
+
+    /**
+     * Content type of this attachment to properly present in the report, for example `'application/json'` or
+     * `'image/png'`.
+     */
+    contentType: string;
+
+    /**
+     * Optional path on the filesystem to the attached file.
+     */
+    path?: string;
+
+    /**
+     * Optional attachment body used instead of a file.
+     */
+    body?: Buffer;
+  }): void;
+
+  /**
    * Called on some global error, for example unhandled exception in the worker process.
    * @param error The error.
    */

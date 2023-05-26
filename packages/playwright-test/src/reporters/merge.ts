@@ -17,9 +17,9 @@
 import fs from 'fs';
 import path from 'path';
 import type { ReporterDescription } from '../../types/test';
-import type { FullResult } from '../../types/testReporter';
+import type { FullResult, TestResult } from '../../types/testReporter';
 import type { FullConfigInternal } from '../common/config';
-import type { JsonConfig, JsonEvent, JsonProject, JsonSuite, JsonTestResultEnd } from '../isomorphic/teleReceiver';
+import type { JsonConfig, JsonEvent, JsonProject, JsonSuite } from '../isomorphic/teleReceiver';
 import { TeleReporterReceiver } from '../isomorphic/teleReceiver';
 import { createReporters } from '../runner/reporters';
 import { Multiplexer } from './multiplexer';
@@ -39,14 +39,11 @@ export async function createMergedReport(config: FullConfigInternal, dir: string
 
 function patchAttachmentPaths(events: JsonEvent[], resourceDir: string) {
   for (const event of events) {
-    if (event.method !== 'onTestEnd')
+    if (event.method !== 'onAttachment')
       continue;
-    for (const attachment of (event.params.result as JsonTestResultEnd).attachments) {
-      if (!attachment.path)
-        continue;
-
+    const attachment = event.params.attachment as TestResult['attachments'][0];
+    if (attachment.path)
       attachment.path = path.join(resourceDir, attachment.path);
-    }
   }
 }
 

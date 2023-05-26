@@ -22,23 +22,28 @@ test.describe('New Todo', () => {
     // Create 1st todo.
     await newTodo.fill(TODO_ITEMS[0]);
     await newTodo.press('Enter');
+    await page.waitForTimeout(3000);
 
     // Make sure the list only has one todo item.
     await expect(page.getByTestId('todo-title')).toHaveText([
       TODO_ITEMS[0]
     ]);
+    await page.waitForTimeout(3000);
 
     // Create 2nd todo.
     await newTodo.fill(TODO_ITEMS[1]);
     await newTodo.press('Enter');
+    await page.waitForTimeout(3000);
 
     // Make sure the list now has two todo items.
     await expect(page.getByTestId('todo-title')).toHaveText([
       TODO_ITEMS[0],
       TODO_ITEMS[1]
     ]);
+    await page.waitForTimeout(3000);
 
     await checkNumberOfTodosInLocalStorage(page, 2);
+    await page.waitForTimeout(3000);
   });
 
   test('should clear text input field when an item is added', async ({ page }) => {

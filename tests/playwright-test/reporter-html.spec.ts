@@ -673,10 +673,10 @@ test('should render text attachments as text', async ({ runInlineTest, page, sho
   expect(result.exitCode).toBe(0);
 
   await showReport();
-  await page.locator('text=passing').click();
-  await page.locator('text=example.txt').click();
-  await page.locator('text=example.json').click();
-  await page.locator('text=example-utf16.txt').click();
+  await page.getByText('passing', { exact: true }).click();
+  await page.getByText('example.txt', { exact: true }).click();
+  await page.getByText('example.json', { exact: true }).click();
+  await page.getByText('example-utf16.txt', { exact: true }).click();
   await expect(page.locator('.attachment-body')).toHaveText(['foo', '{"foo":1}', 'utf16 encoded']);
 });
 

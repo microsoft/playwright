@@ -547,13 +547,14 @@ test('resource names should not clash between runs', async ({ runInlineTest, sho
 
   await showReport();
 
+  const fileAttachment = page.getByRole('link', { name: 'file-attachment' });
   // Check first attachment content.
   {
     await page.getByText('first').click();
-    await expect(page.getByText('file-attachment')).toBeVisible();
+    await expect(fileAttachment).toBeVisible();
 
     const popupPromise = page.waitForEvent('popup');
-    await page.getByText('file-attachment').click();
+    await fileAttachment.click();
     const popup = await popupPromise;
     await expect(popup.locator('body')).toHaveText('hello!');
     await popup.close();
@@ -563,10 +564,10 @@ test('resource names should not clash between runs', async ({ runInlineTest, sho
   // Check second attachment content.
   {
     await page.getByText('failing 2').click();
-    await expect(page.getByText('file-attachment')).toBeVisible();
+    await expect(fileAttachment).toBeVisible();
 
     const popupPromise = page.waitForEvent('popup');
-    await page.getByText('file-attachment').click();
+    await fileAttachment.click();
     const popup = await popupPromise;
     await expect(popup.locator('body')).toHaveText('bye!');
     await popup.close();

@@ -85,6 +85,27 @@ and [`method: Reporter.onError`] is called when something went wrong outside of 
 
 If your custom reporter does not print anything to the terminal, implement [`method: Reporter.printsToStdio`] and return `false`. This way, Playwright will use one of the standard terminal reporters in addition to your custom reporter to enhance user experience.
 
+## optional method: Reporter.onAttachment
+* since: v1.35
+
+Called when test attachment is added.
+
+### param: Reporter.onAttachment.test
+* since: v1.35
+- `test` <[TestCase]>
+
+### param: Reporter.onAttachment.result
+* since: v1.35
+- `result` <[TestResult]>
+
+### param: Reporter.onAttachment.attachment
+* since: v1.35
+- `attachment` <[Object]>
+  - `name` <[string]> Attachment name.
+  - `contentType` <[string]> Content type of this attachment to properly present in the report, for example `'application/json'` or `'image/png'`.
+  - `path` ?<[string]> Optional path on the filesystem to the attached file.
+  - `body` ?<[Buffer]> Optional attachment body used instead of a file.
+
 ## optional method: Reporter.onBegin
 * since: v1.10
 

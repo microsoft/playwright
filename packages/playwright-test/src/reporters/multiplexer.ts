@@ -73,6 +73,11 @@ export class Multiplexer implements Reporter {
     for (const reporter of this._reporters)
       wrap(() => reporter.onStepEnd?.(test, result, step));
   }
+
+  onAttachment(test: TestCase, result: TestResult, attachment: TestResult['attachments'][0]) {
+    for (const reporter of this._reporters)
+      wrap(() => reporter.onAttachment?.(test, result, attachment));
+  }
 }
 
 async function wrapAsync(callback: () => void | Promise<void>) {

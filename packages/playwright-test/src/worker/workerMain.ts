@@ -248,7 +248,8 @@ export class WorkerMain extends ProcessRunner {
   private async _runTest(test: TestCase, retry: number, nextTest: TestCase | undefined) {
     const testInfo = new TestInfoImpl(this._config, this._project, this._params, test, retry,
         stepBeginPayload => this.dispatchEvent('stepBegin', stepBeginPayload),
-        stepEndPayload => this.dispatchEvent('stepEnd', stepEndPayload));
+        stepEndPayload => this.dispatchEvent('stepEnd', stepEndPayload),
+        attachment => this.dispatchEvent('attach', attachment));
 
     const processAnnotation = (annotation: Annotation) => {
       testInfo.annotations.push(annotation);
@@ -599,12 +600,6 @@ function buildTestEndPayload(testInfo: TestInfoImpl): TestEndPayload {
     expectedStatus: testInfo.expectedStatus,
     annotations: testInfo.annotations,
     timeout: testInfo.timeout,
-    attachments: testInfo.attachments.map(a => ({
-      name: a.name,
-      contentType: a.contentType,
-      path: a.path,
-      body: a.body?.toString('base64')
-    }))
   };
 }
 

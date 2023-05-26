@@ -78,21 +78,19 @@ export class BlobReporter extends TeleReporterEmitter {
     ]);
   }
 
-  override _serializeAttachments(attachments: TestResult['attachments']): TestResult['attachments'] {
-    return attachments.map(attachment => {
-      if (!attachment.path || !fs.statSync(attachment.path).isFile())
-        return attachment;
-      // Add run guid to avoid clashes between shards.
-      const sha1 = calculateSha1(attachment.path + this._salt);
-      const extension = mime.getExtension(attachment.contentType) || 'dat';
-      const newPath = `resources/${sha1}.${extension}`;
-      this._startCopyingFile(attachment.path, path.join(this._outputDir, newPath));
-      return {
-        ...attachment,
-        path: newPath,
-      };
-    });
-  }
+  override doSerializeAttachment(attachment: TestResult['attachments'][0]): TestResult['attachments'][0] {
+    if (!attachment.path || !fs.statSync(attachment.path).isFile())
+      return attachment;
+    // Add run guid to avoid clashes between shards.
+    const sha1 = calculateSha1(attachment.path + this._salt);
+    const extension = mime.getExtension(attachment.contentType) || 'dat';
+    const newPath = `resources/${sha1}.${extension}`;
+    this._startCopyingFile(attachment.path, path.join(this._outputDir, newPath));
+    return {
+      ...attachment,
+      path: newPath,
+    };
+}
 
   private _computeOutputFileName(config: FullConfig) {
     let shardSuffix = '';
