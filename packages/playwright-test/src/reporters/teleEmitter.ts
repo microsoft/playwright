@@ -14,32 +14,26 @@
  * limitations under the License.
  */
 
-import type { FullConfig, FullResult, Reporter, TestError, TestResult, TestStep, Location } from '../../types/testReporter';
-import type { Suite, TestCase } from '../common/test';
-import type { JsonConfig, JsonProject, JsonSuite, JsonTestCase, JsonTestEnd, JsonTestResultEnd, JsonTestResultStart, JsonTestStepEnd, JsonTestStepStart } from '../isomorphic/teleReceiver';
-import type { SuitePrivate } from '../../types/reporterPrivate';
-import { FullConfigInternal } from '../common/config';
-import { createGuid } from 'playwright-core/lib/utils';
-import { serializeRegexPatterns } from '../isomorphic/teleReceiver';
 import path from 'path';
-import type { FullProject } from '../../types/test';
+import { createGuid } from 'playwright-core/lib/utils';
+import type { SuitePrivate } from '../../types/reporterPrivate';
+import type { FullConfig, FullResult, Location, Reporter, TestError, TestResult, TestStep } from '../../types/testReporter';
+import { FullConfigInternal, FullProjectInternal } from '../common/config';
+import type { Suite, TestCase } from '../common/test';
+import type { JsonConfig, JsonEvent, JsonProject, JsonSuite, JsonTestCase, JsonTestEnd, JsonTestResultEnd, JsonTestResultStart, JsonTestStepEnd, JsonTestStepStart } from '../isomorphic/teleReceiver';
+import { serializeRegexPatterns } from '../isomorphic/teleReceiver';
 
 export class TeleReporterEmitter implements Reporter {
-  private _messageSink: (message: any) => void;
+  private _messageSink: (message: JsonEvent) => void;
   private _rootDir!: string;
 
-  constructor(messageSink: (message: any) => void) {
+  constructor(messageSink: (message: JsonEvent) => void) {
     this._messageSink = messageSink;
   }
 
   onBegin(config: FullConfig, suite: Suite) {
     this._rootDir = config.rootDir;
-    const projects: any[] = [];
-    const projectIds = this._uniqueProjectIds(config.projects);
-    for (const projectSuite of suite.suites) {
-      const report = this._serializeProject(projectSuite, projectIds);
-      projects.push(report);
-    }
+    const projects = suite.suites.map(projectSuite => this._serializeProject(projectSuite));
     this._messageSink({ method: 'onBegin', params: { config: this._serializeConfig(config), projects } });
   }
 
@@ -138,29 +132,12 @@ export class TeleReporterEmitter implements Reporter {
     };
   }
 
-  private _uniqueProjectIds(projects: FullProject[]): Map<FullProject, string> {
-    const usedNames = new Set<string>();
-    const result = new Map<FullProject, string>();
-    for (const p of projects) {
-      const name = this._serializeProjectName(p.name);
-      for (let i = 0; i < projects.length; ++i) {
-        const candidate = name + (i ? i : '');
-        if (usedNames.has(candidate))
-          continue;
-        result.set(p, candidate);
-        usedNames.add(candidate);
-        break;
-      }
-    }
-    return result;
-  }
-
-  private _serializeProject(suite: Suite, projectIds: Map<FullProject, string>): JsonProject {
+  private _serializeProject(suite: Suite): JsonProject {
     const project = suite.project()!;
     const report: JsonProject = {
-      id: projectIds.get(project)!,
+      id: FullProjectInternal.from(project).id,
       metadata: project.metadata,
-      name: this._serializeProjectName(project.name),
+      name: project.name,
       outputDir: this._relativePath(project.outputDir),
       repeatEach: project.repeatEach,
       retries: project.retries,
@@ -178,10 +155,6 @@ export class TeleReporterEmitter implements Reporter {
       teardown: project.teardown,
     };
     return report;
-  }
-
-  _serializeProjectName(name: string): string {
-    return name;
   }
 
   private _serializeSuite(suite: Suite): JsonSuite {

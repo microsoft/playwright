@@ -19,7 +19,8 @@ import path from 'path';
 import type { ReporterDescription } from '../../types/test';
 import type { FullResult } from '../../types/testReporter';
 import type { FullConfigInternal } from '../common/config';
-import { TeleReporterReceiver, type JsonEvent, type JsonProject, type JsonSuite, type JsonTestResultEnd, type JsonConfig } from '../isomorphic/teleReceiver';
+import type { JsonConfig, JsonEvent, JsonProject, JsonSuite, JsonTestResultEnd } from '../isomorphic/teleReceiver';
+import { TeleReporterReceiver } from '../isomorphic/teleReceiver';
 import { createReporters } from '../runner/reporters';
 import { Multiplexer } from './multiplexer';
 
@@ -65,6 +66,8 @@ async function mergeEvents(dir: string, shardReportFiles: string[]) {
         beginEvents.push(event);
       else if (event.method === 'onEnd')
         endEvents.push(event);
+      else if (event.method === 'onBlobReportMetadata')
+        new ProjectNamePatcher(event.params.projectSuffix).patchEvents(parsedEvents);
       else
         events.push(event);
     }
@@ -152,4 +155,62 @@ function mergeEndEvents(endEvents: JsonEvent[]): JsonEvent {
 async function sortedShardFiles(dir: string) {
   const files = await fs.promises.readdir(dir);
   return files.filter(file => file.endsWith('.jsonl')).sort();
+}
+
+class ProjectNamePatcher {
+  constructor(private _projectNameSuffix: string) {
+  }
+
+  patchEvents(events: JsonEvent[]) {
+    if (!this._projectNameSuffix)
+      return;
+    for (const event of events) {
+      const { method, params } = event;
+      switch (method) {
+        case 'onBegin':
+          this._onBegin(params.config, params.projects);
+          continue;
+        case 'onTestBegin':
+        case 'onStepBegin':
+        case 'onStepEnd':
+        case 'onStdIO':
+          params.testId = this._mapTestId(params.testId);
+          continue;
+        case 'onTestEnd':
+          params.test.testId = this._mapTestId(params.test.testId);
+          continue;
+      }
+    }
+  }
+
+  private _onBegin(config: JsonConfig, projects: JsonProject[]) {
+    for (const project of projects)
+      project.name += this._projectNameSuffix;
+    this._updateProjectIds(projects);
+    for (const project of projects)
+      project.suites.forEach(suite => this._updateTestIds(suite));
+  }
+
+  private _updateProjectIds(projects: JsonProject[]) {
+    const usedNames = new Set<string>();
+    for (const p of projects) {
+      for (let i = 0; i < projects.length; ++i) {
+        const candidate = p.name + (i ? i : '');
+        if (usedNames.has(candidate))
+          continue;
+        p.id = candidate;
+        usedNames.add(candidate);
+        break;
+      }
+    }
+  }
+
+  private _updateTestIds(suite: JsonSuite) {
+    suite.tests.forEach(test => test.testId = this._mapTestId(test.testId));
+    suite.suites.forEach(suite => this._updateTestIds(suite));
+  }
+
+  private _mapTestId(testId: string): string {
+    return testId + '-' + this._projectNameSuffix;
+  }
 }

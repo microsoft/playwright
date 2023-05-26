@@ -21,6 +21,7 @@ import { mime } from 'playwright-core/lib/utilsBundle';
 import { Readable } from 'stream';
 import type { FullConfig, FullResult, TestResult } from '../../types/testReporter';
 import type { Suite } from '../common/test';
+import type { JsonEvent } from '../isomorphic/teleReceiver';
 import { TeleReporterEmitter } from './teleEmitter';
 
 
@@ -29,8 +30,12 @@ type BlobReporterOptions = {
   outputDir?: string;
 };
 
+export type BlobReportMetadata = {
+  projectSuffix?: string;
+};
+
 export class BlobReporter extends TeleReporterEmitter {
-  private _messages: any[] = [];
+  private _messages: JsonEvent[] = [];
   private _options: BlobReporterOptions;
   private _salt: string;
   private _copyFilePromises = new Set<Promise<void>>();
@@ -42,6 +47,13 @@ export class BlobReporter extends TeleReporterEmitter {
     super(message => this._messages.push(message));
     this._options = options;
     this._salt = createGuid();
+
+    this._messages.push({
+      method: 'onBlobReportMetadata',
+      params: {
+        projectSuffix: process.env.PWTEST_BLOB_SUFFIX,
+      }
+    });
   }
 
   printsToStdio() {
@@ -64,11 +76,6 @@ export class BlobReporter extends TeleReporterEmitter {
       // Requires Node v14.18.0+
       fs.promises.writeFile(this._reportFile, content as any).catch(e => console.error(`Failed to write report ${this._reportFile}: ${e}`))
     ]);
-  }
-
-  override _serializeProjectName(name: string): string {
-    const suffix = process.env.PWTEST_BLOB_SUFFIX;
-    return name + (suffix ? suffix : '');
   }
 
   override _serializeAttachments(attachments: TestResult['attachments']): TestResult['attachments'] {
