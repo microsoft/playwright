@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-import http from 'http';
+import type http from 'http';
 import path from 'path';
 import { test, expect } from './playwright-test-fixtures';
+import { createHttpServer } from '../../packages/playwright-core/lib/utils/network';
 
 const SIMPLE_SERVER_PATH = path.join(__dirname, 'assets', 'simple-server.js');
 
@@ -251,7 +252,7 @@ test('should time out waiting for a server with url', async ({ runInlineTest }, 
 
 test('should be able to specify the baseURL without the server', async ({ runInlineTest }, { workerIndex }) => {
   const port = workerIndex * 2 + 10500;
-  const server = http.createServer((req: http.IncomingMessage, res: http.ServerResponse) => {
+  const server = createHttpServer((req: http.IncomingMessage, res: http.ServerResponse) => {
     res.end('<html><body>hello</body></html>');
   });
   await new Promise<void>(resolve => server.listen(port, resolve));
@@ -281,7 +282,7 @@ test('should be able to specify the baseURL without the server', async ({ runInl
 test('should be able to specify a custom baseURL with the server', async ({ runInlineTest }, { workerIndex }) => {
   const customWebServerPort = workerIndex * 2 + 10500;
   const webServerPort = customWebServerPort + 1;
-  const server = http.createServer((req: http.IncomingMessage, res: http.ServerResponse) => {
+  const server = createHttpServer((req: http.IncomingMessage, res: http.ServerResponse) => {
     res.end('<html><body>hello</body></html>');
   });
   await new Promise<void>(resolve => server.listen(customWebServerPort, resolve));
@@ -314,7 +315,7 @@ test('should be able to specify a custom baseURL with the server', async ({ runI
 
 test('should be able to use an existing server when reuseExistingServer:true', async ({ runInlineTest }, { workerIndex }) => {
   const port = workerIndex * 2 + 10500;
-  const server = http.createServer((req: http.IncomingMessage, res: http.ServerResponse) => {
+  const server = createHttpServer((req: http.IncomingMessage, res: http.ServerResponse) => {
     res.end('<html><body>hello</body></html>');
   });
   await new Promise<void>(resolve => server.listen(port, resolve));
@@ -347,7 +348,7 @@ test('should be able to use an existing server when reuseExistingServer:true', a
 
 test('should throw when a server is already running on the given port and strict is true', async ({ runInlineTest }, { workerIndex }) => {
   const port = workerIndex * 2 + 10500;
-  const server = http.createServer((req: http.IncomingMessage, res: http.ServerResponse) => {
+  const server = createHttpServer((req: http.IncomingMessage, res: http.ServerResponse) => {
     res.end('<html><body>hello</body></html>');
   });
   await new Promise<void>(resolve => server.listen(port, resolve));
@@ -379,7 +380,7 @@ test('should throw when a server is already running on the given port and strict
 for (const host of ['localhost', '127.0.0.1', '0.0.0.0']) {
   test(`should detect the server if a web-server is already running on ${host}`, async ({ runInlineTest }, { workerIndex }) => {
     const port = workerIndex * 2 + 10500;
-    const server = http.createServer((req: http.IncomingMessage, res: http.ServerResponse) => {
+    const server = createHttpServer((req: http.IncomingMessage, res: http.ServerResponse) => {
       res.end('<html><body>hello</body></html>');
     });
     await new Promise<void>(resolve => server.listen(port, host, resolve));

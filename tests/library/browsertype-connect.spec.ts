@@ -17,7 +17,7 @@
 
 import fs from 'fs';
 import os from 'os';
-import http from 'http';
+import type http from 'http';
 import type net from 'net';
 import * as path from 'path';
 import { getUserAgent } from '../../packages/playwright-core/lib/utils/userAgent';
@@ -26,6 +26,7 @@ import { expect, playwrightTest } from '../config/browserTest';
 import { parseTrace, suppressCertificateWarning } from '../config/utils';
 import formidable from 'formidable';
 import type { Browser, ConnectOptions } from 'playwright-core';
+import { createHttpServer } from '../../packages/playwright-core/lib/utils/network';
 
 type ExtraFixtures = {
   connect: (wsEndpoint: string, options?: ConnectOptions, redirectPortForTest?: number) => Promise<Browser>,
@@ -48,7 +49,7 @@ const test = playwrightTest.extend<ExtraFixtures>({
   },
 
   dummyServerPort: async ({}, use) => {
-    const server = http.createServer((req: http.IncomingMessage, res: http.ServerResponse) => {
+    const server = createHttpServer((req: http.IncomingMessage, res: http.ServerResponse) => {
       res.end('<html><body>from-dummy-server</body></html>');
     });
     await new Promise<void>(resolve => server.listen(0, resolve));
@@ -58,7 +59,7 @@ const test = playwrightTest.extend<ExtraFixtures>({
 
   ipV6ServerPort: async ({}, use) => {
     test.skip(!!process.env.INSIDE_DOCKER, 'docker does not support IPv6 by default');
-    const server = http.createServer((req: http.IncomingMessage, res: http.ServerResponse) => {
+    const server = createHttpServer((req: http.IncomingMessage, res: http.ServerResponse) => {
       res.end('<html><body>from-ipv6-server</body></html>');
     });
     await new Promise<void>(resolve => server.listen(0, '::1', resolve));

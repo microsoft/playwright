@@ -16,7 +16,7 @@
 
 import { wsServer } from '../utilsBundle';
 import type { WebSocketServer } from '../utilsBundle';
-import http from 'http';
+import type http from 'http';
 import type { Browser } from '../server/browser';
 import type { Playwright } from '../server/playwright';
 import { createPlaywright } from '../server/playwright';
@@ -27,6 +27,7 @@ import { ManualPromise } from '../utils/manualPromise';
 import type { AndroidDevice } from '../server/android/android';
 import { type SocksProxy } from '../common/socksProxy';
 import { debugLogger } from '../common/debugLogger';
+import { createHttpServer } from '../utils';
 
 let lastConnectionId = 0;
 const kConnectionSymbol = Symbol('kConnection');
@@ -56,7 +57,7 @@ export class PlaywrightServer {
   async listen(port: number = 0): Promise<string> {
     debugLogger.log('server', `Server started at ${new Date()}`);
 
-    const server = http.createServer((request: http.IncomingMessage, response: http.ServerResponse) => {
+    const server = createHttpServer((request: http.IncomingMessage, response: http.ServerResponse) => {
       if (request.method === 'GET' && request.url === '/json') {
         response.setHeader('Content-Type', 'application/json');
         response.end(JSON.stringify({
