@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-import * as http from 'http';
+import type http from 'http';
 import fs from 'fs';
 import path from 'path';
 import { mime, wsServer } from '../utilsBundle';
 import type { WebSocketServer } from '../utilsBundle';
-import { assert } from './';
+import { assert } from './debug';
+import { createHttpServer } from './network';
 import { ManualPromise } from './manualPromise';
 
 export type ServerRouteHandler = (request: http.IncomingMessage, response: http.ServerResponse) => boolean;
@@ -30,10 +31,10 @@ export class HttpServer {
   private _port: number = 0;
   private _started = false;
   private _routes: { prefix?: string, exact?: string, handler: ServerRouteHandler }[] = [];
-  private _activeSockets = new Set<import('net').Socket>();
+
   constructor(address: string = '') {
     this._urlPrefix = address;
-    this._server = http.createServer(this._onRequest.bind(this));
+    this._server = createHttpServer(this._onRequest.bind(this));
   }
 
   createWebSocketServer(): WebSocketServer {
@@ -71,10 +72,6 @@ export class HttpServer {
   async start(options: { port?: number, preferredPort?: number, host?: string } = {}): Promise<string> {
     assert(!this._started, 'server already started');
     this._started = true;
-    this._server.on('connection', socket => {
-      this._activeSockets.add(socket);
-      socket.once('close', () => this._activeSockets.delete(socket));
-    });
 
     const host = options.host || 'localhost';
     if (options.preferredPort) {
@@ -103,8 +100,6 @@ export class HttpServer {
   }
 
   async stop() {
-    for (const socket of this._activeSockets)
-      socket.destroy();
     await new Promise(cb => this._server!.close(cb));
   }
 

@@ -17,6 +17,7 @@
 
 import http from 'http';
 import https from 'https';
+import type net from 'net';
 import { getProxyForUrl } from '../utilsBundle';
 import { HttpsProxyAgent } from '../utilsBundle';
 import * as URL from 'url';
@@ -150,4 +151,36 @@ export function constructURLBasedOnBaseURL(baseURL: string | undefined, givenURL
   } catch (e) {
     return givenURL;
   }
+}
+
+export function createHttpServer(requestListener?: (req: http.IncomingMessage, res: http.ServerResponse) => void): http.Server;
+export function createHttpServer(options: http.ServerOptions, requestListener?: (req: http.IncomingMessage, res: http.ServerResponse) => void): http.Server;
+export function createHttpServer(...args: any[]): http.Server {
+  const server = http.createServer(...args);
+  decorateServer(server);
+  return server;
+}
+
+export function createHttpsServer(requestListener?: (req: http.IncomingMessage, res: http.ServerResponse) => void): https.Server;
+export function createHttpsServer(options: https.ServerOptions, requestListener?: (req: http.IncomingMessage, res: http.ServerResponse) => void): https.Server;
+export function createHttpsServer(...args: any[]): https.Server {
+  const server = https.createServer(...args);
+  decorateServer(server);
+  return server;
+}
+
+function decorateServer(server: http.Server | http.Server) {
+  const sockets = new Set<net.Socket>();
+  server.on('connection', socket => {
+    sockets.add(socket);
+    socket.once('close', () => sockets.delete(socket));
+  });
+
+  const close = server.close;
+  server.close = (callback?: (err?: Error) => void) => {
+    for (const socket of sockets)
+      socket.destroy();
+    sockets.clear();
+    return close.call(server, callback);
+  };
 }
