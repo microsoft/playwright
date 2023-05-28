@@ -14,6 +14,4 @@
  * limitations under the License.
  */
 
-export default function pwRegister(
-  components: { [key: string]: any },
-): void
+export default function pwRegister(components: Record<string, any>): void
