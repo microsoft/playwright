@@ -23,7 +23,10 @@ const plugin = () => {
   const { createPlugin } = require('@playwright/experimental-ct-core/lib/vitePlugin');
   return createPlugin(
     path.join(__dirname, 'registerSource.mjs'),
-    () => import('@sveltejs/vite-plugin-svelte').then(plugin => plugin.svelte()));
+    {
+      plugins: [import('@sveltejs/vite-plugin-svelte').then(plugin => plugin.svelte())]
+    }
+  );
 };
 const defineConfig = config => originalDefineConfig({ ...config, _plugins: [plugin] });
 const test = baseTest.extend(fixtures);

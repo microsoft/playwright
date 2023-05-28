@@ -31,6 +31,7 @@ import { assert, calculateSha1 } from 'playwright-core/lib/utils';
 import { getPlaywrightVersion } from 'playwright-core/lib/utils';
 import { setExternalDependencies } from '@playwright/test/lib/transform/compilationCache';
 import { collectComponentUsages, componentInfo } from './tsxTransform';
+import { mergeConfig } from 'vite';
 
 let stoppableServer: any;
 const playwrightVersion = getPlaywrightVersion();
@@ -45,9 +46,7 @@ type CtConfig = BasePlaywrightTestConfig['use'] & {
 const importReactRE = /(^|\n|;)import\s+(\*\s+as\s+)?React(,|\s+)/;
 const compiledReactRE = /(const|var)\s+React\s*=/;
 
-export function createPlugin(
-  registerSourceFile: string,
-  frameworkPluginFactory?: () => Promise<Plugin>): TestRunnerPlugin {
+export function createPlugin(registerSourceFile: string, frameworkViteConfig: InlineConfig): TestRunnerPlugin {
   let configDir: string;
   let config: FullConfig;
   return {
@@ -65,7 +64,7 @@ export function createPlugin(
     begin: async (suite: Suite) => {
       const use = config.projects[0].use as CtConfig;
       const port = use.ctPort || 3100;
-      const viteConfig = typeof use.ctViteConfig === 'function' ? await use.ctViteConfig() : (use.ctViteConfig || {});
+      let viteConfig = typeof use.ctViteConfig === 'function' ? await use.ctViteConfig() : (use.ctViteConfig || {});
       const relativeTemplateDir = use.ctTemplateDir || 'playwright';
 
       const rootDir = viteConfig.root || configDir;
@@ -128,15 +127,13 @@ export function createPlugin(
       const { build, preview } = require('vite');
       // Build config unconditionally, either build or build & preview will use it.
       viteConfig.plugins ??= [];
-      if (frameworkPluginFactory && !viteConfig.plugins.length)
-        viteConfig.plugins = [await frameworkPluginFactory()];
+      if (viteConfig.plugins.length)
+        delete frameworkViteConfig.plugins;
 
       // But only add out own plugin when we actually build / transform.
       if (sourcesDirty)
         viteConfig.plugins.push(vitePlugin(registerSource, relativeTemplateDir, buildInfo, componentRegistry));
       viteConfig.configFile = viteConfig.configFile || false;
-      viteConfig.define = viteConfig.define || {};
-      viteConfig.define.__VUE_PROD_DEVTOOLS__ = true;
       viteConfig.css = viteConfig.css || {};
       viteConfig.css.devSourcemap = true;
       viteConfig.build = {
@@ -152,6 +149,9 @@ export function createPlugin(
         },
         sourcemap: true,
       };
+
+      if (frameworkViteConfig)
+        viteConfig = mergeConfig(viteConfig, frameworkViteConfig);
 
       if (sourcesDirty) {
         await build(viteConfig);
@@ -169,7 +169,7 @@ export function createPlugin(
       const isAddressInfo = (x: any): x is AddressInfo => x?.address;
       const address = previewServer.httpServer.address();
       if (isAddressInfo(address)) {
-        const protocol = viteConfig.preview.https ? 'https:' : 'http:';
+        const protocol = viteConfig?.preview?.https ? 'https:' : 'http:';
         process.env.PLAYWRIGHT_TEST_BASE_URL = `${protocol}//localhost:${address.port}`;
       }
     },

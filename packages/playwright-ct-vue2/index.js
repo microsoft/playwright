@@ -23,7 +23,10 @@ const plugin = () => {
   const { createPlugin } = require('@playwright/experimental-ct-core/lib/vitePlugin');
   return createPlugin(
     path.join(__dirname, 'registerSource.mjs'),
-    () => import('@vitejs/plugin-vue2').then(plugin => plugin.default()));
+    { 
+      plugins: [import('@vitejs/plugin-vue2').then(plugin => plugin.default())] 
+    }
+  );
 };
 const defineConfig = config => originalDefineConfig({ ...config, _plugins: [plugin] });
 const test = baseTest.extend(fixtures);
