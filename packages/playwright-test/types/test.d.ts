@@ -4869,7 +4869,7 @@ interface LocatorAssertions {
     attached?: boolean;
 
     /**
-     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
     timeout?: number;
   }): Promise<void>;
@@ -4890,7 +4890,7 @@ interface LocatorAssertions {
     checked?: boolean;
 
     /**
-     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
     timeout?: number;
   }): Promise<void>;
@@ -4913,7 +4913,7 @@ interface LocatorAssertions {
    */
   toBeDisabled(options?: {
     /**
-     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
     timeout?: number;
   }): Promise<void>;
@@ -4934,7 +4934,7 @@ interface LocatorAssertions {
     editable?: boolean;
 
     /**
-     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
     timeout?: number;
   }): Promise<void>;
@@ -4953,7 +4953,7 @@ interface LocatorAssertions {
    */
   toBeEmpty(options?: {
     /**
-     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
     timeout?: number;
   }): Promise<void>;
@@ -4974,7 +4974,7 @@ interface LocatorAssertions {
     enabled?: boolean;
 
     /**
-     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
     timeout?: number;
   }): Promise<void>;
@@ -4993,7 +4993,7 @@ interface LocatorAssertions {
    */
   toBeFocused(options?: {
     /**
-     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
     timeout?: number;
   }): Promise<void>;
@@ -5013,7 +5013,7 @@ interface LocatorAssertions {
    */
   toBeHidden(options?: {
     /**
-     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
     timeout?: number;
   }): Promise<void>;
@@ -5044,7 +5044,7 @@ interface LocatorAssertions {
     ratio?: number;
 
     /**
-     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
     timeout?: number;
   }): Promise<void>;
@@ -5063,7 +5063,7 @@ interface LocatorAssertions {
    */
   toBeVisible(options?: {
     /**
-     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
     timeout?: number;
 
@@ -5125,7 +5125,7 @@ interface LocatorAssertions {
     ignoreCase?: boolean;
 
     /**
-     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
     timeout?: number;
 
@@ -5151,7 +5151,7 @@ interface LocatorAssertions {
    */
   toHaveAttribute(name: string, value: string|RegExp, options?: {
     /**
-     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
     timeout?: number;
   }): Promise<void>;
@@ -5184,7 +5184,7 @@ interface LocatorAssertions {
    */
   toHaveClass(expected: string|RegExp|Array<string|RegExp>, options?: {
     /**
-     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
     timeout?: number;
   }): Promise<void>;
@@ -5204,7 +5204,7 @@ interface LocatorAssertions {
    */
   toHaveCount(count: number, options?: {
     /**
-     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
     timeout?: number;
   }): Promise<void>;
@@ -5225,7 +5225,7 @@ interface LocatorAssertions {
    */
   toHaveCSS(name: string, value: string|RegExp, options?: {
     /**
-     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
     timeout?: number;
   }): Promise<void>;
@@ -5245,7 +5245,7 @@ interface LocatorAssertions {
    */
   toHaveId(id: string|RegExp, options?: {
     /**
-     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
     timeout?: number;
   }): Promise<void>;
@@ -5267,7 +5267,7 @@ interface LocatorAssertions {
    */
   toHaveJSProperty(name: string, value: any, options?: {
     /**
-     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
     timeout?: number;
   }): Promise<void>;
@@ -5345,7 +5345,7 @@ interface LocatorAssertions {
     threshold?: number;
 
     /**
-     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
     timeout?: number;
   }): Promise<void>;
@@ -5422,7 +5422,7 @@ interface LocatorAssertions {
     threshold?: number;
 
     /**
-     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
     timeout?: number;
   }): Promise<void>;
@@ -5481,7 +5481,7 @@ interface LocatorAssertions {
     ignoreCase?: boolean;
 
     /**
-     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
     timeout?: number;
 
@@ -5507,7 +5507,7 @@ interface LocatorAssertions {
    */
   toHaveValue(value: string|RegExp, options?: {
     /**
-     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
     timeout?: number;
   }): Promise<void>;
@@ -5539,7 +5539,7 @@ interface LocatorAssertions {
    */
   toHaveValues(values: Array<string|RegExp>, options?: {
     /**
-     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
     timeout?: number;
   }): Promise<void>;
@@ -5675,7 +5675,7 @@ interface PageAssertions {
     threshold?: number;
 
     /**
-     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
     timeout?: number;
   }): Promise<void>;
@@ -5782,7 +5782,7 @@ interface PageAssertions {
     threshold?: number;
 
     /**
-     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
     timeout?: number;
   }): Promise<void>;
@@ -5801,7 +5801,7 @@ interface PageAssertions {
    */
   toHaveTitle(titleOrRegExp: string|RegExp, options?: {
     /**
-     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
     timeout?: number;
   }): Promise<void>;
@@ -5820,7 +5820,7 @@ interface PageAssertions {
    */
   toHaveURL(urlOrRegExp: string|RegExp, options?: {
     /**
-     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
     timeout?: number;
   }): Promise<void>;
