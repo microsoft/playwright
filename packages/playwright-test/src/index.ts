@@ -22,7 +22,7 @@ import { createGuid, debugMode, addInternalStackPrefix, mergeTraceFiles, saveTra
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, TraceMode, VideoMode } from '../types/test';
 import type { TestInfoImpl } from './worker/testInfo';
 import { rootTestType } from './common/testType';
-import { type ContextReuseMode } from './common/config';
+import type { ContextReuseMode } from './common/config';
 import { artifactsFolderName } from './isomorphic/folders';
 import type { ClientInstrumentation, ClientInstrumentationListener } from '../../playwright-core/src/client/clientInstrumentation';
 import type { ParsedStackTrace } from '../../playwright-core/src/utils/stackTrace';

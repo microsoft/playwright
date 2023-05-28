@@ -19,7 +19,7 @@ import { getByAltTextSelector, getByLabelSelector, getByPlaceholderSelector, get
 import { escapeForTextSelector } from '../../utils/isomorphic/stringUtils';
 import { asLocator } from '../../utils/isomorphic/locatorGenerators';
 import type { Language } from '../../utils/isomorphic/locatorGenerators';
-import { type InjectedScript } from './injectedScript';
+import type { InjectedScript } from './injectedScript';
 import { generateSelector } from './selectorGenerator';
 
 const selectorSymbol = Symbol('selector');

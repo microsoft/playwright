@@ -17,7 +17,7 @@
 import type * as dom from './dom';
 import * as utilityScriptSource from '../generated/utilityScriptSource';
 import { serializeAsCallArgument } from './isomorphic/utilityScriptSerializers';
-import { type UtilityScript } from './injected/utilityScript';
+import type { UtilityScript } from './injected/utilityScript';
 import { SdkObject } from './instrumentation';
 import { ScopedRace } from '../utils/manualPromise';
 
