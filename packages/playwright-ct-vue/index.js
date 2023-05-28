@@ -22,7 +22,13 @@ const plugin = () => {
   const { createPlugin } = require('@playwright/experimental-ct-core/lib/vitePlugin');
   return createPlugin(
     path.join(__dirname, 'registerSource.mjs'),
-    () => import('@vitejs/plugin-vue').then(plugin => plugin.default()));
+    () => ({
+      plugins: [import('@vitejs/plugin-vue').then(plugin => plugin.default())],
+      define: {
+        __VUE_PROD_DEVTOOLS__: true
+      }
+    })
+  );
 }
 const defineConfig = config => originalDefineConfig({ ...config, _plugins: [plugin] });
 

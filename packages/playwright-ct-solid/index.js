@@ -22,7 +22,10 @@ const plugin = () => {
   const { createPlugin } = require('@playwright/experimental-ct-core/lib/vitePlugin');
   return createPlugin(
     path.join(__dirname, 'registerSource.mjs'),
-    () => import('vite-plugin-solid').then(plugin => plugin.default()));
+    () => ({
+      plugins: [import('vite-plugin-solid').then(plugin => plugin.default())]
+    })
+  );
 };
 const defineConfig = config => originalDefineConfig({ ...config, _plugins: [plugin] });
 
