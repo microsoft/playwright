@@ -36,7 +36,7 @@ import type { HTTPRequestParams } from '../../utils/network';
 import { fetchData } from '../../utils/network';
 import { getUserAgent } from '../../utils/userAgent';
 import { wrapInASCIIBox } from '../../utils/ascii';
-import { debugMode, headersArrayToObject, } from '../../utils';
+import { debugMode, headersArrayToObject, headersObjectToArray, } from '../../utils';
 import { removeFolders } from '../../utils/fileUtils';
 import { RecentLogsCollector } from '../../common/debugLogger';
 import type { Progress } from '../progress';
@@ -179,14 +179,18 @@ export class Chromium extends BrowserType {
       'browserName': isEdge ? 'MicrosoftEdge' : 'chrome',
       [isEdge ? 'ms:edgeOptions' : 'goog:chromeOptions']: { args }
     };
-    try {
-      if (process.env.SELENIUM_REMOTE_CAPABILITIES) {
-        const parsed = JSON.parse(process.env.SELENIUM_REMOTE_CAPABILITIES);
-        desiredCapabilities = { ...desiredCapabilities, ...parsed };
-        progress.log(`<selenium> using additional capabilities "${process.env.SELENIUM_REMOTE_CAPABILITIES}"`);
-      }
-    } catch (e) {
-      progress.log(`<selenium> ignoring additional capabilities "${process.env.SELENIUM_REMOTE_CAPABILITIES}": ${e}`);
+
+    if (process.env.SELENIUM_REMOTE_CAPABILITIES) {
+      const remoteCapabilities = parseSeleniumRemoteParams({ name: 'capabilities', value: process.env.SELENIUM_REMOTE_CAPABILITIES }, progress);
+      if (remoteCapabilities)
+        desiredCapabilities = { ...desiredCapabilities, ...remoteCapabilities };
+    }
+
+    let headers: { [key: string]: string } = {};
+    if (process.env.SELENIUM_REMOTE_HEADERS) {
+      const remoteHeaders = parseSeleniumRemoteParams({ name: 'headers', value: process.env.SELENIUM_REMOTE_HEADERS }, progress);
+      if (remoteHeaders)
+        headers = remoteHeaders;
     }
 
     progress.log(`<selenium> connecting to ${hubUrl}`);
@@ -194,7 +198,8 @@ export class Chromium extends BrowserType {
       url: hubUrl + 'session',
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json; charset=utf-8'
+        'Content-Type': 'application/json; charset=utf-8',
+        ...headers,
       },
       data: JSON.stringify({
         desiredCapabilities,
@@ -257,7 +262,10 @@ export class Chromium extends BrowserType {
         }
       }
 
-      return await this._connectOverCDPInternal(progress, endpointURL.toString(), options, disconnectFromSelenium);
+      return await this._connectOverCDPInternal(progress, endpointURL.toString(), {
+        ...options,
+        headers: headersObjectToArray(headers),
+      }, disconnectFromSelenium);
     } catch (e) {
       await disconnectFromSelenium();
       throw e;
@@ -375,4 +383,14 @@ function streamToString(stream: stream.Readable): Promise<string> {
     stream.on('error', reject);
     stream.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
   });
+}
+
+function parseSeleniumRemoteParams(env: {name: string, value: string}, progress: Progress) {
+  try {
+    const parsed = JSON.parse(env.value);
+    progress.log(`<selenium> using additional ${env.name} "${env.value}"`);
+    return parsed;
+  } catch (e) {
+    progress.log(`<selenium> ignoring additional ${env.name} "${env.value}": ${e}`);
+  }
 }

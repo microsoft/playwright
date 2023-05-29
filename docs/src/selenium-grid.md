@@ -64,6 +64,26 @@ SELENIUM_REMOTE_URL=http://<selenium-hub-ip>:4444 SELENIUM_REMOTE_CAPABILITIES="
 SELENIUM_REMOTE_URL=http://<selenium-hub-ip>:4444 SELENIUM_REMOTE_CAPABILITIES="{'mygrid:options':{os:'windows',username:'John',password:'secure'}}" dotnet test
 ```
 
+### Passing additional headers
+
+If your grid requires additional headers to be set (for example, you should provide authorization token to use browsers in your cloud), you can set `SELENIUM_REMOTE_HEADERS` environment variable to provide JSON-serialized headers.
+
+```bash js
+SELENIUM_REMOTE_URL=http://<selenium-hub-ip>:4444 SELENIUM_REMOTE_HEADERS="{'Authorization':'OAuth 12345'}" npx playwright test
+```
+
+```bash python
+SELENIUM_REMOTE_URL=http://<selenium-hub-ip>:4444 SELENIUM_REMOTE_HEADERS="{'Authorization':'OAuth 12345'}" pytest --browser chromium
+```
+
+```bash java
+SELENIUM_REMOTE_URL=http://<selenium-hub-ip>:4444 SELENIUM_REMOTE_HEADERS="{'Authorization':'OAuth 12345'}" mvn test
+```
+
+```bash csharp
+SELENIUM_REMOTE_URL=http://<selenium-hub-ip>:4444 SELENIUM_REMOTE_HEADERS="{'Authorization':'OAuth 12345'}" dotnet test
+```
+
 ### Detailed logs
 
 Run with `DEBUG=pw:browser*` environment variable to see how Playwright is connecting to Selenium Grid.
