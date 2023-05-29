@@ -51,6 +51,7 @@ import { validateBrowserContextOptions } from '../browserContext';
 import { chromiumSwitches } from './chromiumSwitches';
 
 const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');
+const SESSION_ID_PLACEHOLDER = /{{SESSION_ID}}/;
 
 export class Chromium extends BrowserType {
   private _devtools: CRDevTools | undefined;
@@ -217,7 +218,19 @@ export class Chromium extends BrowserType {
       const capabilities = value.capabilities;
       let endpointURL: URL;
 
-      if (capabilities['se:cdp']) {
+      if (process.env.SELENIUM_WS_ENDPOINT) {
+        // support selenium successors (like selenoid)
+        progress.log(`<selenium> using some selen-project`);
+        let wsEndpoint = process.env.SELENIUM_WS_ENDPOINT;
+
+        if (SESSION_ID_PLACEHOLDER.test(wsEndpoint))
+          wsEndpoint = wsEndpoint.replace(SESSION_ID_PLACEHOLDER, sessionId);
+        else
+          wsEndpoint = `${wsEndpoint}${wsEndpoint.endsWith('/') ? '' : '/'}${sessionId}`;
+
+        endpointURL = new URL(wsEndpoint);
+        progress.log(`<selenium> retrieved endpoint ${endpointURL.toString()} for sessionId=${sessionId}`);
+      } else if (capabilities['se:cdp']) {
         // Selenium 4 - use built-in CDP websocket proxy.
         progress.log(`<selenium> using selenium v4`);
         const endpointURLString = addProtocol(capabilities['se:cdp']);

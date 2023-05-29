@@ -174,3 +174,26 @@ SELENIUM_REMOTE_URL=http://<selenium-hub-ip>:4444 dotnet test
 Internally, Playwright connects to the browser using [Chrome DevTools Protocol](https://chromedevtools.github.io/devtools-protocol/) websocket. Selenium 4 exposes this capability, while Selenium 3 does not.
 
 This means that Selenium 3 is supported in a best-effort manner, where Playwright tries to connect to the grid node directly. Grid nodes must be directly accessible from the machine that runs Playwright.
+
+
+## Selenoid
+
+To connect Playwright to **Selenoid**, set:
+- `SELENIUM_REMOTE_URL` environment variable pointing to your Selenoid Hub (just like for Selenium 4)
+- `SELENIUM_WS_ENDPOINT` environment variable pointing to your Selenoid ws endpoint (without specifying the session ID)
+
+```bash js
+SELENIUM_REMOTE_URL=http://<selenoid-hub-ip>:4444 SELENIUM_WS_ENDPOINT=ws://<selenoid-hub-ip>:4444/devtools npx playwright test
+```
+
+```bash python
+SELENIUM_REMOTE_URL=http://<selenoid-hub-ip>:4444 SELENIUM_WS_ENDPOINT=ws://<selenoid-hub-ip>:4444/devtools pytest --browser chromium
+```
+
+```bash java
+SELENIUM_REMOTE_URL=http://<selenoid-hub-ip>:4444 SELENIUM_WS_ENDPOINT=ws://<selenoid-hub-ip>:4444/devtools mvn test
+```
+
+```bash csharp
+SELENIUM_REMOTE_URL=http://<selenoid-hub-ip>:4444 SELENIUM_WS_ENDPOINT=ws://<selenoid-hub-ip>:4444/devtools dotnet test
+```
