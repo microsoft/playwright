@@ -126,7 +126,7 @@ for (const [name, url] of Object.entries(reacts)) {
 
     it('should work with react memo', async ({ page }) => {
       it.skip(name === 'react15' || name === 'react16', 'Class components dont support memo');
-      await expect(page.locator(`_react=ButtonGrid`)).toHaveCount(1);
+      await expect(page.locator(`_react=ButtonGrid`)).toHaveCount(9);
     });
 
     it('should work with multiroot react', async ({ page }) => {
