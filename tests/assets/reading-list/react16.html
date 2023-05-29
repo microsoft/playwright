@@ -89,7 +89,7 @@ class App extends React.Component {
       e(AppHeader, {bookCount: this.state.books.length}, null),
       e(NewBook, {onNewBook: bookName => this.onNewBook(bookName)}, null),
       e(BookList, {books: this.state.books}, null),
-      e(React.memo(ButtonGrid), null, null),
+      e(ButtonGrid, null, null),
       e('div', {ref: this.mountPoint}, null),
     );
   }
