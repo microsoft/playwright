@@ -149,12 +149,9 @@ export abstract class BrowserType extends SdkObject {
 
     const env = options.env ? envArrayToObject(options.env) : process.env;
 
-    const tempDirectories = [];
-    if (options.downloadsPath)
-      await fs.promises.mkdir(options.downloadsPath, { recursive: true });
-    if (options.tracesDir)
-      await fs.promises.mkdir(options.tracesDir, { recursive: true });
+    await this._createArtifactDirs(options);
 
+    const tempDirectories = [];
     const artifactsDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-artifacts-'));
     tempDirectories.push(artifactsDir);
 
@@ -258,6 +255,13 @@ export abstract class BrowserType extends SdkObject {
       transport = new PipeTransport(stdio[3], stdio[4]);
     }
     return { browserProcess, artifactsDir, userDataDir, transport };
+  }
+
+  async _createArtifactDirs(options: types.LaunchOptions): Promise<void> {
+    if (options.downloadsPath)
+      await fs.promises.mkdir(options.downloadsPath, { recursive: true });
+    if (options.tracesDir)
+      await fs.promises.mkdir(options.tracesDir, { recursive: true });
   }
 
   async connectOverCDP(metadata: CallMetadata, endpointURL: string, options: { slowMo?: number }, timeout?: number): Promise<Browser> {
