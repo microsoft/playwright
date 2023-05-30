@@ -193,7 +193,7 @@ export class Chromium extends BrowserType {
       url: hubUrl + 'session',
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json; charset=utf-8'
       },
       data: JSON.stringify({
         desiredCapabilities,
