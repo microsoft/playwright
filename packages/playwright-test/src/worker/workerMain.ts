@@ -318,6 +318,8 @@ export class WorkerMain extends ProcessRunner {
         return;
       }
 
+      await removeFolderAsync(testInfo.outputDir).catch(() => {});
+
       let testFunctionParams: object | null = null;
       await testInfo._runAsStep({ category: 'hook', title: 'Before Hooks' }, async step => {
         testInfo._beforeHooksStep = step;
@@ -471,7 +473,7 @@ export class WorkerMain extends ProcessRunner {
     const preserveOutput = this._config.config.preserveOutput === 'always' ||
       (this._config.config.preserveOutput === 'failures-only' && testInfo._isFailure());
     if (!preserveOutput)
-      await removeFolderAsync(testInfo.outputDir).catch(e => {});
+      await removeFolderAsync(testInfo.outputDir).catch(() => {});
   }
 
   private async _runModifiersForSuite(suite: Suite, testInfo: TestInfoImpl, scope: 'worker' | 'test', timeSlot: TimeSlot | undefined, extraAnnotations?: Annotation[]) {
