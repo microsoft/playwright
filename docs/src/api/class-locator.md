@@ -1488,11 +1488,11 @@ const banana = await page.getByRole('listitem').last();
 ```
 
 ```python async
-banana = await page.get_by_role("listitem").last()
+banana = await page.get_by_role("listitem").last
 ```
 
 ```python sync
-banana = page.get_by_role("listitem").last()
+banana = page.get_by_role("listitem").last
 ```
 
 ```java
