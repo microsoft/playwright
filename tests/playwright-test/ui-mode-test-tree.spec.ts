@@ -200,7 +200,7 @@ test('should update parametrized tests', async ({ runUITest, writeFiles }) => {
             ◯ test LT
   `);
 
-  writeFiles({
+  await writeFiles({
     'a.test.ts': `
       import { test } from '@playwright/test';
       test.describe('cookies', () => {

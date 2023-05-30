@@ -22,7 +22,7 @@ it('should fire', async ({ page, server }) => {
     expect(dialog.type()).toBe('alert');
     expect(dialog.defaultValue()).toBe('');
     expect(dialog.message()).toBe('yo');
-    dialog.accept();
+    void dialog.accept();
   });
   await page.evaluate(() => alert('yo'));
 });
@@ -34,7 +34,7 @@ it('should allow accepting prompts @smoke', async ({ page, isElectron }) => {
     expect(dialog.type()).toBe('prompt');
     expect(dialog.defaultValue()).toBe('yes.');
     expect(dialog.message()).toBe('question?');
-    dialog.accept('answer!');
+    void dialog.accept('answer!');
   });
   const result = await page.evaluate(() => prompt('question?', 'yes.'));
   expect(result).toBe('answer!');
@@ -44,7 +44,7 @@ it('should dismiss the prompt', async ({ page, isElectron }) => {
   it.skip(isElectron, 'prompt() is not a thing in electron');
 
   page.on('dialog', dialog => {
-    dialog.dismiss();
+    void dialog.dismiss();
   });
   const result = await page.evaluate(() => prompt('question?'));
   expect(result).toBe(null);
@@ -52,7 +52,7 @@ it('should dismiss the prompt', async ({ page, isElectron }) => {
 
 it('should accept the confirm prompt', async ({ page }) => {
   page.on('dialog', dialog => {
-    dialog.accept();
+    void dialog.accept();
   });
   const result = await page.evaluate(() => confirm('boolean?'));
   expect(result).toBe(true);
@@ -60,7 +60,7 @@ it('should accept the confirm prompt', async ({ page }) => {
 
 it('should dismiss the confirm prompt', async ({ page }) => {
   page.on('dialog', dialog => {
-    dialog.dismiss();
+    void dialog.dismiss();
   });
   const result = await page.evaluate(() => confirm('boolean?'));
   expect(result).toBe(false);
@@ -76,7 +76,7 @@ it('should be able to close context with open alert', async ({ page }) => {
 
 it('should handle multiple alerts', async ({ page }) => {
   page.on('dialog', dialog => {
-    dialog.accept().catch(e => {});
+    void dialog.accept().catch(e => {});
   });
   await page.setContent(`
     <p>Hello World</p>
@@ -91,7 +91,7 @@ it('should handle multiple alerts', async ({ page }) => {
 
 it('should handle multiple confirms', async ({ page }) => {
   page.on('dialog', dialog => {
-    dialog.accept().catch(e => {});
+    void dialog.accept().catch(e => {});
   });
   await page.setContent(`
     <p>Hello World</p>

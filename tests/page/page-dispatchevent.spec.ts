@@ -108,13 +108,13 @@ it('should be atomic', async ({ playwright, page }) => {
     query(root, selector) {
       const result = root.querySelector(selector);
       if (result)
-        Promise.resolve().then(() => result.onclick = '');
+        void Promise.resolve().then(() => result.onclick = '');
       return result;
     },
     queryAll(root: HTMLElement, selector: string) {
       const result = Array.from(root.querySelectorAll(selector));
       for (const e of result)
-        Promise.resolve().then(() => (e as HTMLElement).onclick = null);
+        void Promise.resolve().then(() => (e as HTMLElement).onclick = null);
       return result;
     }
   });

@@ -177,7 +177,7 @@ it('should work for frame', async ({ page, server }) => {
   // give the promise a chance to resolve, even though it shouldn't
   await page.evaluate('1');
   expect(resolved).toBe(false);
-  request.continue();
+  await request.continue();
   await loadPromise;
 });
 

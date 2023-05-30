@@ -244,13 +244,13 @@ test('should popup snapshot', async ({ page, runAndTrace, server }) => {
 
 test('should capture iframe with sandbox attribute', async ({ page, server, runAndTrace }) => {
   await page.route('**/empty.html', route => {
-    route.fulfill({
+    void route.fulfill({
       body: '<iframe src="iframe.html" sandBOX="allow-scripts"></iframe>',
       contentType: 'text/html'
     }).catch(() => {});
   });
   await page.route('**/iframe.html', route => {
-    route.fulfill({
+    void route.fulfill({
       body: '<html><button>Hello iframe</button></html>',
       contentType: 'text/html'
     }).catch(() => {});
@@ -273,7 +273,7 @@ test('should capture iframe with sandbox attribute', async ({ page, server, runA
 
 test('should capture data-url svg iframe', async ({ page, server, runAndTrace }) => {
   await page.route('**/empty.html', route => {
-    route.fulfill({
+    void route.fulfill({
       body: `<iframe src="data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' height='24px' viewBox='0 0 24 24' width='24px' fill='%23000000'%3e%3cpath d='M0 0h24v24H0z' fill='none'/%3e%3cpath d='M16.5 3c-1.74 0-3.41.81-4.5 2.09C10.91 3.81 9.24 3 7.5 3 4.42 3 2 5.42 2 8.5c0 3.78 3.4 6.86 8.55 11.54L12 21.35l1.45-1.32C18.6 15.36 22 12.28 22 8.5 22 5.42 19.58 3 16.5 3zm-4.4 15.55l-.1.1-.1-.1C7.14 14.24 4 11.39 4 8.5 4 6.5 5.5 5 7.5 5c1.54 0 3.04.99 3.57 2.36h1.87C13.46 5.99 14.96 5 16.5 5c2 0 3.5 1.5 3.5 3.5 0 2.89-3.14 5.74-7.9 10.05z'/%3e%3c/svg%3e"></iframe>`,
       contentType: 'text/html'
     }).catch(() => {});
@@ -638,7 +638,7 @@ test('should open two trace files', async ({ context, page, request, server, sho
   await page.locator('button').click();
   {
     const response = await request.post(server.PREFIX + '/one-style.css');
-    expect(response).toBeOK();
+    await expect(response).toBeOK();
   }
   const apiTrace = testInfo.outputPath('api.zip');
   const contextTrace = testInfo.outputPath('context.zip');
@@ -676,7 +676,7 @@ test('should open two trace files', async ({ context, page, request, server, sho
 
 test('should include requestUrl in route.fulfill', async ({ page, runAndTrace, browserName }) => {
   await page.route('**/*', route => {
-    route.fulfill({
+    void route.fulfill({
       status: 200,
       headers: {
         'content-type': 'text/html'
@@ -711,7 +711,7 @@ test('should not crash with broken locator', async ({ page, runAndTrace, server 
 
 test('should include requestUrl in route.continue', async ({ page, runAndTrace, server }) => {
   await page.route('**/*', route => {
-    route.continue({ url: server.EMPTY_PAGE });
+    void route.continue({ url: server.EMPTY_PAGE });
   });
   const traceViewer = await runAndTrace(async () => {
     await page.goto('http://test.com');
@@ -727,7 +727,7 @@ test('should include requestUrl in route.continue', async ({ page, runAndTrace, 
 
 test('should include requestUrl in route.abort', async ({ page, runAndTrace, server }) => {
   await page.route('**/*', route => {
-    route.abort();
+    void route.abort();
   });
   const traceViewer = await runAndTrace(async () => {
     await page.goto('http://test.com').catch(() => {});
@@ -748,7 +748,7 @@ test('should serve overridden request', async ({ page, runAndTrace, server }) =>
     res.end(`body { background: red }`);
   });
   await page.route('**/one-style.css', route => {
-    route.continue({
+    void route.continue({
       url: server.PREFIX + '/custom.css'
     });
   });

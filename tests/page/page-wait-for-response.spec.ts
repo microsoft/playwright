@@ -22,9 +22,9 @@ it('should work', async ({ page, server }) => {
   const [response] = await Promise.all([
     page.waitForResponse(server.PREFIX + '/digits/2.png'),
     page.evaluate(() => {
-      fetch('/digits/1.png');
-      fetch('/digits/2.png');
-      fetch('/digits/3.png');
+      void fetch('/digits/1.png');
+      void fetch('/digits/2.png');
+      void fetch('/digits/3.png');
     })
   ]);
   expect(response.url()).toBe(server.PREFIX + '/digits/2.png');
@@ -58,9 +58,9 @@ it('should work with predicate', async ({ page, server }) => {
   const [response] = await Promise.all([
     page.waitForEvent('response', response => response.url() === server.PREFIX + '/digits/2.png'),
     page.evaluate(() => {
-      fetch('/digits/1.png');
-      fetch('/digits/2.png');
-      fetch('/digits/3.png');
+      void fetch('/digits/1.png');
+      void fetch('/digits/2.png');
+      void fetch('/digits/3.png');
     })
   ]);
   expect(response.url()).toBe(server.PREFIX + '/digits/2.png');
@@ -78,8 +78,8 @@ it('should work with async predicate', async ({ page, server }) => {
       return text.includes('bar');
     }),
     page.evaluate(() => {
-      fetch('/simple.json').then(r => r.json());
-      fetch('/file-to-upload.txt').then(r => r.text());
+      void fetch('/simple.json').then(r => r.json());
+      void fetch('/file-to-upload.txt').then(r => r.text());
     })
   ]);
   expect(response1.url()).toBe(server.PREFIX + '/file-to-upload.txt');
@@ -109,9 +109,9 @@ it('should work with no timeout', async ({ page, server }) => {
   const [response] = await Promise.all([
     page.waitForResponse(server.PREFIX + '/digits/2.png', { timeout: 0 }),
     page.evaluate(() => setTimeout(() => {
-      fetch('/digits/1.png');
-      fetch('/digits/2.png');
-      fetch('/digits/3.png');
+      void fetch('/digits/1.png');
+      void fetch('/digits/2.png');
+      void fetch('/digits/3.png');
     }, 50))
   ]);
   expect(response.url()).toBe(server.PREFIX + '/digits/2.png');

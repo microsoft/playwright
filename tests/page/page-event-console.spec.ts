@@ -210,8 +210,8 @@ it('do not update console count on unhandled rejections', async ({ page }) => {
   await page.evaluate(() => {
     const fail = async () => Promise.reject(new Error('error'));
     console.log('begin');
-    fail();
-    fail();
+    void fail();
+    void fail();
     fail().catch(() => {
       console.log('end');
     });

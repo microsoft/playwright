@@ -231,7 +231,7 @@ test.describe('should emit page-level network events with service worker fetch h
       await page.route('**', route => {
         if (route.request().url().endsWith('foo'))
           markFailureIfPageRoutesARequestAlreadyHandledByServiceWorker = true;
-        route.continue();
+        void route.continue();
       });
       await page.goto(server.PREFIX + '/serviceworkers/fetchdummy/sw.html');
       await page.evaluate(() => window['activationPromise']);
@@ -735,7 +735,7 @@ test.describe('PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS=1', () => {
         await page.route('**', route => {
           if (route.request().url().endsWith('foo'))
             markFailureIfPageRoutesARequestAlreadyHandledByServiceWorker = true;
-          route.continue();
+          void route.continue();
         });
         await page.goto(server.PREFIX + '/serviceworkers/fetchdummy/sw.html');
         await page.evaluate(() => window['activationPromise']);
@@ -761,7 +761,7 @@ test.describe('PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS=1', () => {
         await page.route('**', route => {
           if (route.request().url().endsWith('foo'))
             markFailureIfPageRoutesARequestAlreadyHandledByServiceWorker = true;
-          route.continue();
+          void route.continue();
         });
         await page.goto(server.PREFIX + '/serviceworkers/fetchdummy/sw.html');
         await page.evaluate(() => window['activationPromise']);

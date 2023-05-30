@@ -168,11 +168,11 @@ export class Backend extends EventEmitter {
   }
 
   async resume() {
-    this._send('resume');
+    await this._send('resume');
   }
 
   async kill() {
-    this._send('kill');
+    await this._send('kill');
   }
 
   private _send(method: string, params: any = {}): Promise<any> {

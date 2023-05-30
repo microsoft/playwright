@@ -140,7 +140,7 @@ it('should respect route', async ({ page, browser, server }) => {
   let intercepted = false;
   await page.route('**/digits/0.png', route => {
     intercepted = true;
-    route.continue();
+    void route.continue();
   });
   await page.goto(server.PREFIX + '/dynamic-oopif.html');
   expect(page.frames().length).toBe(2);
@@ -238,7 +238,7 @@ it('should report google.com frame with headed', async ({ browserType, server })
   const page = await browser.newPage();
   await page.goto(server.EMPTY_PAGE);
   await page.route('**/*', route => {
-    route.fulfill({ body: 'YO, GOOGLE.COM' });
+    void route.fulfill({ body: 'YO, GOOGLE.COM' });
   });
   await page.evaluate(() => {
     const frame = document.createElement('iframe');

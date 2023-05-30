@@ -239,7 +239,7 @@ it('should work with the domain module', async ({ browserType, server, browserNa
   let callback;
   const result = new Promise(f => callback = f);
   page.on('websocket', ws => ws.on('socketerror', callback));
-  page.evaluate(port => {
+  void page.evaluate(port => {
     new WebSocket('ws://localhost:' + port + '/bogus-ws');
   }, server.PORT);
   const message = await result;

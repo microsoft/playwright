@@ -1041,7 +1041,7 @@ it('ensure events are dispatched in the individual tasks', async ({ page, browse
         console.log(`timeout ${name}`);
       }, 0);
 
-      Promise.resolve().then(function() {
+      void Promise.resolve().then(function() {
         console.log(`promise ${name}`);
       });
     }

@@ -507,7 +507,7 @@ test.describe('cli codegen', () => {
     const harFileName = testInfo.outputPath('har.har');
     const cli = runCLI([`--save-trace=${traceFileName}`, `--save-storage=${storageFileName}`, `--save-har=${harFileName}`]);
     await cli.waitFor(`import { test, expect } from '@playwright/test'`);
-    cli.process.kill('SIGINT');
+    await cli.process.kill('SIGINT');
     const { exitCode } = await cli.process.exited;
     expect(exitCode).toBe(130);
     expect(fs.existsSync(traceFileName)).toBeTruthy();

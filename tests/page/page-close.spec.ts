@@ -21,7 +21,7 @@ it.skip(({ isWebView2 }) => isWebView2, 'Page.close() is not supported in WebVie
 
 it('should close page with active dialog', async ({ page }) => {
   await page.setContent(`<button onclick="setTimeout(() => alert(1))">alert</button>`);
-  page.click('button');
+  void page.click('button');
   await page.waitForEvent('dialog');
   await page.close();
 });

@@ -44,7 +44,7 @@ it('should respect routes from browser context', async function({ browser, serve
   await page.setContent('<a target=_blank rel=noopener href="empty.html">link</a>');
   let intercepted = false;
   await context.route('**/empty.html', route => {
-    route.continue();
+    void route.continue();
     intercepted = true;
   });
   await Promise.all([
@@ -161,7 +161,7 @@ it('should respect routes from browser context when using window.open', async fu
   await page.goto(server.EMPTY_PAGE);
   let intercepted = false;
   await context.route('**/empty.html', route => {
-    route.continue();
+    void route.continue();
     intercepted = true;
   });
   await Promise.all([

@@ -257,13 +257,13 @@ it('requestFullscreen', async ({ page, server, browserName, headless, isLinux })
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(() => {
     const result = new Promise(resolve => document.addEventListener('fullscreenchange', resolve));
-    document.documentElement.requestFullscreen();
+    void document.documentElement.requestFullscreen();
     return result;
   });
   expect(await page.evaluate(() => document.fullscreenElement === document.documentElement)).toBeTruthy();
   await page.evaluate(() => {
     const result = new Promise(resolve => document.addEventListener('fullscreenchange', resolve));
-    document.exitFullscreen();
+    void document.exitFullscreen();
     return result;
   });
   expect(await page.evaluate(() => !!document.fullscreenElement)).toBeFalsy();
