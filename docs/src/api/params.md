@@ -290,12 +290,12 @@ Whether to ignore HTTPS errors when sending network requests. Defaults to `false
 ## context-option-bypasscsp
 - `bypassCSP` <[boolean]>
 
-Toggles bypassing page's Content-Security-Policy.
+Toggles bypassing page's Content-Security-Policy. Defaults to `false`.
 
 ## context-option-baseURL
 - `baseURL` <[string]>
 
-When using [`method: Page.goto`], [`method: Page.route`], [`method: Page.waitForURL`], [`method: Page.waitForRequest`], or [`method: Page.waitForResponse`] it takes the base URL in consideration by using the [`URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor for building the corresponding URL. Examples:
+When using [`method: Page.goto`], [`method: Page.route`], [`method: Page.waitForURL`], [`method: Page.waitForRequest`], or [`method: Page.waitForResponse`] it takes the base URL in consideration by using the [`URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor for building the corresponding URL. Unset by default. Examples:
 * baseURL: `http://localhost:3000` and navigating to `/bar.html` results in `http://localhost:3000/bar.html`
 * baseURL: `http://localhost:3000/foo/` and navigating to `./bar.html` results in `http://localhost:3000/foo/bar.html`
 * baseURL: `http://localhost:3000/foo` (without trailing slash) and navigating to `./bar.html` results in `http://localhost:3000/bar.html`
@@ -526,7 +526,7 @@ Whether or not to enable JavaScript in the context. Defaults to `true`. Learn mo
 - `timezoneId` <[string]>
 
 Changes the timezone of the context. See [ICU's metaZones.txt](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1)
-for a list of supported timezone IDs.
+for a list of supported timezone IDs. Defaults to the system timezone.
 
 ## context-option-geolocation
 - `geolocation` <[Object]>
@@ -537,18 +537,18 @@ for a list of supported timezone IDs.
 ## context-option-locale
 - `locale` <[string]>
 
-Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value, `Accept-Language` request header value as well as number and date formatting rules. Learn more about emulation in our [emulation guide](../emulation.md#locale--timezone).
+Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value, `Accept-Language` request header value as well as number and date formatting rules. Defaults to the system default locale. Learn more about emulation in our [emulation guide](../emulation.md#locale--timezone).
 
 ## context-option-permissions
 - `permissions` <[Array]<[string]>>
 
 A list of permissions to grant to all pages in this context. See
-[`method: BrowserContext.grantPermissions`] for more details.
+[`method: BrowserContext.grantPermissions`] for more details. Defaults to none.
 
 ## context-option-extrahttpheaders
 - `extraHTTPHeaders` <[Object]<[string], [string]>>
 
-An object containing additional HTTP headers to be sent with every request.
+An object containing additional HTTP headers to be sent with every request. Defaults to none.
 
 ## context-option-offline
 - `offline` <[boolean]>
@@ -628,7 +628,7 @@ Logger sink for Playwright logging.
   - `content` ?<[HarContentPolicy]<"omit"|"embed"|"attach">> Optional setting to control resource content management. If `omit` is specified, content is not persisted. If `attach` is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is specified, content is stored inline the HAR file as per HAR specification. Defaults to `attach` for `.zip` output files and to `embed` for all other file extensions.
   - `path` <[path]> Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, `content: 'attach'` is used by default.
   - `mode` ?<[HarMode]<"full"|"minimal">> When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page, cookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to `full`.
-  - `urlFilter` ?<[string]|[RegExp]> A glob or regex pattern to filter requests that are stored in the HAR. When a [`option: baseURL`] via the context options was provided and the passed URL is a path, it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
+  - `urlFilter` ?<[string]|[RegExp]> A glob or regex pattern to filter requests that are stored in the HAR. When a [`option: baseURL`] via the context options was provided and the passed URL is a path, it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor. Defaults to none.
 
 Enables [HAR](http://www.softwareishard.com/blog/har-12-spec) recording for all pages into `recordHar.path` file. If not
 specified, the HAR is not recorded. Make sure to await [`method: BrowserContext.close`] for the HAR to be
@@ -711,7 +711,7 @@ Actual picture of each page will be scaled down if necessary to fit the specifie
   - `username` ?<[string]> Optional username to use if HTTP proxy requires authentication.
   - `password` ?<[string]> Optional password to use if HTTP proxy requires authentication.
 
-Network proxy settings to use with this context.
+Network proxy settings to use with this context. Defaults to none.
 
 :::note
 For Chromium on Windows the browser needs to be launched with the global proxy for this option to work. If all
@@ -724,7 +724,7 @@ contexts override the proxy, global proxy will be never used and can be any stri
 
 If set to true, enables strict selectors mode for this context. In the strict selectors mode all operations
 on selectors that imply single target DOM element will throw when more than one element matches the selector.
-This option does not affect any Locator APIs (Locators are always strict).
+This option does not affect any Locator APIs (Locators are always strict). Defaults to `false`.
 See [Locator] to learn more about the strict mode.
 
 ## context-option-service-worker-policy

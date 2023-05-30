@@ -12559,7 +12559,7 @@ export interface BrowserType<Unused = {}> {
      * [page.waitForResponse(urlOrPredicate[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-response)
      * it takes the base URL in consideration by using the
      * [`URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor for building the corresponding URL.
-     * Examples:
+     * Unset by default. Examples:
      * - baseURL: `http://localhost:3000` and navigating to `/bar.html` results in `http://localhost:3000/bar.html`
      * - baseURL: `http://localhost:3000/foo/` and navigating to `./bar.html` results in
      *   `http://localhost:3000/foo/bar.html`
@@ -12569,7 +12569,7 @@ export interface BrowserType<Unused = {}> {
     baseURL?: string;
 
     /**
-     * Toggles bypassing page's Content-Security-Policy.
+     * Toggles bypassing page's Content-Security-Policy. Defaults to `false`.
      */
     bypassCSP?: boolean;
 
@@ -12624,7 +12624,7 @@ export interface BrowserType<Unused = {}> {
     executablePath?: string;
 
     /**
-     * An object containing additional HTTP headers to be sent with every request.
+     * An object containing additional HTTP headers to be sent with every request. Defaults to none.
      */
     extraHTTPHeaders?: { [key: string]: string; };
 
@@ -12722,8 +12722,8 @@ export interface BrowserType<Unused = {}> {
 
     /**
      * Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value,
-     * `Accept-Language` request header value as well as number and date formatting rules. Learn more about emulation in
-     * our [emulation guide](https://playwright.dev/docs/emulation#locale--timezone).
+     * `Accept-Language` request header value as well as number and date formatting rules. Defaults to the system default
+     * locale. Learn more about emulation in our [emulation guide](https://playwright.dev/docs/emulation#locale--timezone).
      */
     locale?: string;
 
@@ -12741,7 +12741,7 @@ export interface BrowserType<Unused = {}> {
     /**
      * A list of permissions to grant to all pages in this context. See
      * [browserContext.grantPermissions(permissions[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-grant-permissions)
-     * for more details.
+     * for more details. Defaults to none.
      */
     permissions?: Array<string>;
 
@@ -12807,7 +12807,7 @@ export interface BrowserType<Unused = {}> {
       /**
        * A glob or regex pattern to filter requests that are stored in the HAR. When a `baseURL` via the context options was
        * provided and the passed URL is a path, it gets merged via the
-       * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
+       * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor. Defaults to none.
        */
       urlFilter?: string|RegExp;
     };
@@ -12882,8 +12882,8 @@ export interface BrowserType<Unused = {}> {
     /**
      * If set to true, enables strict selectors mode for this context. In the strict selectors mode all operations on
      * selectors that imply single target DOM element will throw when more than one element matches the selector. This
-     * option does not affect any Locator APIs (Locators are always strict). See [Locator] to learn more about the strict
-     * mode.
+     * option does not affect any Locator APIs (Locators are always strict). Defaults to `false`. See [Locator] to learn
+     * more about the strict mode.
      */
     strictSelectors?: boolean;
 
@@ -12896,7 +12896,7 @@ export interface BrowserType<Unused = {}> {
     /**
      * Changes the timezone of the context. See
      * [ICU's metaZones.txt](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1)
-     * for a list of supported timezone IDs.
+     * for a list of supported timezone IDs. Defaults to the system timezone.
      */
     timezoneId?: string;
 
@@ -14027,7 +14027,7 @@ export interface AndroidDevice {
      * [page.waitForResponse(urlOrPredicate[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-response)
      * it takes the base URL in consideration by using the
      * [`URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor for building the corresponding URL.
-     * Examples:
+     * Unset by default. Examples:
      * - baseURL: `http://localhost:3000` and navigating to `/bar.html` results in `http://localhost:3000/bar.html`
      * - baseURL: `http://localhost:3000/foo/` and navigating to `./bar.html` results in
      *   `http://localhost:3000/foo/bar.html`
@@ -14037,7 +14037,7 @@ export interface AndroidDevice {
     baseURL?: string;
 
     /**
-     * Toggles bypassing page's Content-Security-Policy.
+     * Toggles bypassing page's Content-Security-Policy. Defaults to `false`.
      */
     bypassCSP?: boolean;
 
@@ -14060,7 +14060,7 @@ export interface AndroidDevice {
     deviceScaleFactor?: number;
 
     /**
-     * An object containing additional HTTP headers to be sent with every request.
+     * An object containing additional HTTP headers to be sent with every request. Defaults to none.
      */
     extraHTTPHeaders?: { [key: string]: string; };
 
@@ -14129,8 +14129,8 @@ export interface AndroidDevice {
 
     /**
      * Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value,
-     * `Accept-Language` request header value as well as number and date formatting rules. Learn more about emulation in
-     * our [emulation guide](https://playwright.dev/docs/emulation#locale--timezone).
+     * `Accept-Language` request header value as well as number and date formatting rules. Defaults to the system default
+     * locale. Learn more about emulation in our [emulation guide](https://playwright.dev/docs/emulation#locale--timezone).
      */
     locale?: string;
 
@@ -14148,7 +14148,7 @@ export interface AndroidDevice {
     /**
      * A list of permissions to grant to all pages in this context. See
      * [browserContext.grantPermissions(permissions[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-grant-permissions)
-     * for more details.
+     * for more details. Defaults to none.
      */
     permissions?: Array<string>;
 
@@ -14214,7 +14214,7 @@ export interface AndroidDevice {
       /**
        * A glob or regex pattern to filter requests that are stored in the HAR. When a `baseURL` via the context options was
        * provided and the passed URL is a path, it gets merged via the
-       * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
+       * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor. Defaults to none.
        */
       urlFilter?: string|RegExp;
     };
@@ -14283,15 +14283,15 @@ export interface AndroidDevice {
     /**
      * If set to true, enables strict selectors mode for this context. In the strict selectors mode all operations on
      * selectors that imply single target DOM element will throw when more than one element matches the selector. This
-     * option does not affect any Locator APIs (Locators are always strict). See [Locator] to learn more about the strict
-     * mode.
+     * option does not affect any Locator APIs (Locators are always strict). Defaults to `false`. See [Locator] to learn
+     * more about the strict mode.
      */
     strictSelectors?: boolean;
 
     /**
      * Changes the timezone of the context. See
      * [ICU's metaZones.txt](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1)
-     * for a list of supported timezone IDs.
+     * for a list of supported timezone IDs. Defaults to the system timezone.
      */
     timezoneId?: string;
 
@@ -14810,7 +14810,7 @@ export interface APIRequest {
     baseURL?: string;
 
     /**
-     * An object containing additional HTTP headers to be sent with every request.
+     * An object containing additional HTTP headers to be sent with every request. Defaults to none.
      */
     extraHTTPHeaders?: { [key: string]: string; };
 
@@ -15907,7 +15907,7 @@ export interface Browser extends EventEmitter {
      * [page.waitForResponse(urlOrPredicate[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-response)
      * it takes the base URL in consideration by using the
      * [`URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor for building the corresponding URL.
-     * Examples:
+     * Unset by default. Examples:
      * - baseURL: `http://localhost:3000` and navigating to `/bar.html` results in `http://localhost:3000/bar.html`
      * - baseURL: `http://localhost:3000/foo/` and navigating to `./bar.html` results in
      *   `http://localhost:3000/foo/bar.html`
@@ -15917,7 +15917,7 @@ export interface Browser extends EventEmitter {
     baseURL?: string;
 
     /**
-     * Toggles bypassing page's Content-Security-Policy.
+     * Toggles bypassing page's Content-Security-Policy. Defaults to `false`.
      */
     bypassCSP?: boolean;
 
@@ -15935,7 +15935,7 @@ export interface Browser extends EventEmitter {
     deviceScaleFactor?: number;
 
     /**
-     * An object containing additional HTTP headers to be sent with every request.
+     * An object containing additional HTTP headers to be sent with every request. Defaults to none.
      */
     extraHTTPHeaders?: { [key: string]: string; };
 
@@ -16004,8 +16004,8 @@ export interface Browser extends EventEmitter {
 
     /**
      * Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value,
-     * `Accept-Language` request header value as well as number and date formatting rules. Learn more about emulation in
-     * our [emulation guide](https://playwright.dev/docs/emulation#locale--timezone).
+     * `Accept-Language` request header value as well as number and date formatting rules. Defaults to the system default
+     * locale. Learn more about emulation in our [emulation guide](https://playwright.dev/docs/emulation#locale--timezone).
      */
     locale?: string;
 
@@ -16023,12 +16023,12 @@ export interface Browser extends EventEmitter {
     /**
      * A list of permissions to grant to all pages in this context. See
      * [browserContext.grantPermissions(permissions[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-grant-permissions)
-     * for more details.
+     * for more details. Defaults to none.
      */
     permissions?: Array<string>;
 
     /**
-     * Network proxy settings to use with this context.
+     * Network proxy settings to use with this context. Defaults to none.
      *
      * **NOTE** For Chromium on Windows the browser needs to be launched with the global proxy for this option to work. If
      * all contexts override the proxy, global proxy will be never used and can be any string, for example `launch({
@@ -16093,7 +16093,7 @@ export interface Browser extends EventEmitter {
       /**
        * A glob or regex pattern to filter requests that are stored in the HAR. When a `baseURL` via the context options was
        * provided and the passed URL is a path, it gets merged via the
-       * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
+       * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor. Defaults to none.
        */
       urlFilter?: string|RegExp;
     };
@@ -16218,15 +16218,15 @@ export interface Browser extends EventEmitter {
     /**
      * If set to true, enables strict selectors mode for this context. In the strict selectors mode all operations on
      * selectors that imply single target DOM element will throw when more than one element matches the selector. This
-     * option does not affect any Locator APIs (Locators are always strict). See [Locator] to learn more about the strict
-     * mode.
+     * option does not affect any Locator APIs (Locators are always strict). Defaults to `false`. See [Locator] to learn
+     * more about the strict mode.
      */
     strictSelectors?: boolean;
 
     /**
      * Changes the timezone of the context. See
      * [ICU's metaZones.txt](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1)
-     * for a list of supported timezone IDs.
+     * for a list of supported timezone IDs. Defaults to the system timezone.
      */
     timezoneId?: string;
 
@@ -16803,7 +16803,7 @@ export interface Electron {
     args?: Array<string>;
 
     /**
-     * Toggles bypassing page's Content-Security-Policy.
+     * Toggles bypassing page's Content-Security-Policy. Defaults to `false`.
      */
     bypassCSP?: boolean;
 
@@ -16831,7 +16831,7 @@ export interface Electron {
     executablePath?: string;
 
     /**
-     * An object containing additional HTTP headers to be sent with every request.
+     * An object containing additional HTTP headers to be sent with every request. Defaults to none.
      */
     extraHTTPHeaders?: { [key: string]: string; };
 
@@ -16874,8 +16874,8 @@ export interface Electron {
 
     /**
      * Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value,
-     * `Accept-Language` request header value as well as number and date formatting rules. Learn more about emulation in
-     * our [emulation guide](https://playwright.dev/docs/emulation#locale--timezone).
+     * `Accept-Language` request header value as well as number and date formatting rules. Defaults to the system default
+     * locale. Learn more about emulation in our [emulation guide](https://playwright.dev/docs/emulation#locale--timezone).
      */
     locale?: string;
 
@@ -16921,7 +16921,7 @@ export interface Electron {
       /**
        * A glob or regex pattern to filter requests that are stored in the HAR. When a `baseURL` via the context options was
        * provided and the passed URL is a path, it gets merged via the
-       * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
+       * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor. Defaults to none.
        */
       urlFilter?: string|RegExp;
     };
@@ -16965,7 +16965,7 @@ export interface Electron {
     /**
      * Changes the timezone of the context. See
      * [ICU's metaZones.txt](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1)
-     * for a list of supported timezone IDs.
+     * for a list of supported timezone IDs. Defaults to the system timezone.
      */
     timezoneId?: string;
   }): Promise<ElectronApplication>;
@@ -19056,7 +19056,7 @@ export interface BrowserContextOptions {
    * [page.waitForResponse(urlOrPredicate[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-response)
    * it takes the base URL in consideration by using the
    * [`URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor for building the corresponding URL.
-   * Examples:
+   * Unset by default. Examples:
    * - baseURL: `http://localhost:3000` and navigating to `/bar.html` results in `http://localhost:3000/bar.html`
    * - baseURL: `http://localhost:3000/foo/` and navigating to `./bar.html` results in
    *   `http://localhost:3000/foo/bar.html`
@@ -19066,7 +19066,7 @@ export interface BrowserContextOptions {
   baseURL?: string;
 
   /**
-   * Toggles bypassing page's Content-Security-Policy.
+   * Toggles bypassing page's Content-Security-Policy. Defaults to `false`.
    */
   bypassCSP?: boolean;
 
@@ -19084,7 +19084,7 @@ export interface BrowserContextOptions {
   deviceScaleFactor?: number;
 
   /**
-   * An object containing additional HTTP headers to be sent with every request.
+   * An object containing additional HTTP headers to be sent with every request. Defaults to none.
    */
   extraHTTPHeaders?: { [key: string]: string; };
 
@@ -19129,8 +19129,8 @@ export interface BrowserContextOptions {
 
   /**
    * Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value,
-   * `Accept-Language` request header value as well as number and date formatting rules. Learn more about emulation in
-   * our [emulation guide](https://playwright.dev/docs/emulation#locale--timezone).
+   * `Accept-Language` request header value as well as number and date formatting rules. Defaults to the system default
+   * locale. Learn more about emulation in our [emulation guide](https://playwright.dev/docs/emulation#locale--timezone).
    */
   locale?: string;
 
@@ -19148,12 +19148,12 @@ export interface BrowserContextOptions {
   /**
    * A list of permissions to grant to all pages in this context. See
    * [browserContext.grantPermissions(permissions[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-grant-permissions)
-   * for more details.
+   * for more details. Defaults to none.
    */
   permissions?: Array<string>;
 
   /**
-   * Network proxy settings to use with this context.
+   * Network proxy settings to use with this context. Defaults to none.
    *
    * **NOTE** For Chromium on Windows the browser needs to be launched with the global proxy for this option to work. If
    * all contexts override the proxy, global proxy will be never used and can be any string, for example `launch({
@@ -19218,7 +19218,7 @@ export interface BrowserContextOptions {
     /**
      * A glob or regex pattern to filter requests that are stored in the HAR. When a `baseURL` via the context options was
      * provided and the passed URL is a path, it gets merged via the
-     * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
+     * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor. Defaults to none.
      */
     urlFilter?: string|RegExp;
   };
@@ -19343,15 +19343,15 @@ export interface BrowserContextOptions {
   /**
    * If set to true, enables strict selectors mode for this context. In the strict selectors mode all operations on
    * selectors that imply single target DOM element will throw when more than one element matches the selector. This
-   * option does not affect any Locator APIs (Locators are always strict). See [Locator] to learn more about the strict
-   * mode.
+   * option does not affect any Locator APIs (Locators are always strict). Defaults to `false`. See [Locator] to learn
+   * more about the strict mode.
    */
   strictSelectors?: boolean;
 
   /**
    * Changes the timezone of the context. See
    * [ICU's metaZones.txt](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1)
-   * for a list of supported timezone IDs.
+   * for a list of supported timezone IDs. Defaults to the system timezone.
    */
   timezoneId?: string;
 

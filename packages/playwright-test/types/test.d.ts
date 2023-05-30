@@ -3675,7 +3675,7 @@ export interface PlaywrightTestOptions {
    * });
    * ```
    *
-   * Toggles bypassing page's Content-Security-Policy.
+   * Toggles bypassing page's Content-Security-Policy. Defaults to `false`.
    */
   bypassCSP: boolean;
   /**
@@ -3732,7 +3732,7 @@ export interface PlaywrightTestOptions {
    * });
    * ```
    *
-   * An object containing additional HTTP headers to be sent with every request.
+   * An object containing additional HTTP headers to be sent with every request. Defaults to none.
    */
   extraHTTPHeaders: ExtraHTTPHeaders | undefined;
   /**
@@ -3860,8 +3860,8 @@ export interface PlaywrightTestOptions {
    * ```
    *
    * Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value,
-   * `Accept-Language` request header value as well as number and date formatting rules. Learn more about emulation in
-   * our [emulation guide](https://playwright.dev/docs/emulation#locale--timezone).
+   * `Accept-Language` request header value as well as number and date formatting rules. Defaults to the system default
+   * locale. Learn more about emulation in our [emulation guide](https://playwright.dev/docs/emulation#locale--timezone).
    */
   locale: string | undefined;
   /**
@@ -3898,7 +3898,7 @@ export interface PlaywrightTestOptions {
    *
    * A list of permissions to grant to all pages in this context. See
    * [browserContext.grantPermissions(permissions[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-grant-permissions)
-   * for more details.
+   * for more details. Defaults to none.
    */
   permissions: string[] | undefined;
   /**
@@ -3958,7 +3958,7 @@ export interface PlaywrightTestOptions {
    *
    * Changes the timezone of the context. See
    * [ICU's metaZones.txt](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1)
-   * for a list of supported timezone IDs.
+   * for a list of supported timezone IDs. Defaults to the system timezone.
    */
   timezoneId: string | undefined;
   /**
@@ -4021,7 +4021,7 @@ export interface PlaywrightTestOptions {
    * [page.waitForResponse(urlOrPredicate[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-response)
    * it takes the base URL in consideration by using the
    * [`URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor for building the corresponding URL.
-   * Examples:
+   * Unset by default. Examples:
    * - baseURL: `http://localhost:3000` and navigating to `/bar.html` results in `http://localhost:3000/bar.html`
    * - baseURL: `http://localhost:3000/foo/` and navigating to `./bar.html` results in
    *   `http://localhost:3000/foo/bar.html`
