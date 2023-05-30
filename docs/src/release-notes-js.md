@@ -8,6 +8,11 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 ## Version 1.34
 
+<LiteYouTube
+  id="JeFD6rqDbBo"
+  title="Playwright 1.34"
+/>
+
 ### Highlights
 
 * UI Mode now shows steps, fixtures and attachments:
@@ -110,6 +115,11 @@ This version was also tested against the following stable channels:
 
 ## Version 1.33
 
+<LiteYouTube
+  id="JeFD6rqDbBo"
+  title="Playwright 1.33"
+/>
+
 ### Locators Update
 
 * Use [`method: Locator.or`] to create a locator that matches either of the two locators.
@@ -164,6 +174,11 @@ This version was also tested against the following stable channels:
 * Microsoft Edge 112
 
 ## Version 1.32
+
+<LiteYouTube
+  id="jF0yA-JLQW0"
+  title="Playwright 1.32"
+/>
 
 ### Introducing UI Mode (preview)
 
