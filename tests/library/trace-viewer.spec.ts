@@ -34,6 +34,8 @@ test.beforeAll(async function recordTrace({ browser, browserName, browserType, s
   await page.goto('data:text/html,<html>Hello world</html>');
   await page.setContent('<button>Click</button>');
   await expect(page.locator('button')).toHaveText('Click');
+  await expect(page.getByTestId('amazing-btn')).toBeHidden();
+  await expect(page.getByTestId(/amazing-btn-regex/)).toBeHidden();
   await page.evaluate(({ a }) => {
     console.log('Info');
     console.warn('Warning');
@@ -102,6 +104,8 @@ test('should open simple trace viewer', async ({ showTraceViewer }) => {
     /page.gotodata:text\/html,<html>Hello world<\/html>/,
     /page.setContent/,
     /expect.toHaveTextlocator\('button'\)/,
+    /expect.toBeHiddengetByTestId\('amazing-btn'\)/,
+    /expect.toBeHiddengetByTestId\(\/amazing-btn-regex\/\)/,
     /page.evaluate/,
     /page.evaluate/,
     /locator.clickgetByText\('Click'\)/,

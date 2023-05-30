@@ -160,7 +160,7 @@ function transform(template: string, params: TemplateParams, testIdAttributeName
       .replace(/getbyrole\(([^)]+)\)/g, 'internal:role=$1')
       .replace(/getbytext\(([^)]+)\)/g, 'internal:text=$1')
       .replace(/getbylabel\(([^)]+)\)/g, 'internal:label=$1')
-      .replace(/getbytestid\(([^)]+)\)/g, `internal:testid=[${testIdAttributeName}=$1s]`)
+      .replace(/getbytestid\(([^)]+)\)/g, `internal:testid=[${testIdAttributeName}=$1]`)
       .replace(/getby(placeholder|alt|title)(?:text)?\(([^)]+)\)/g, 'internal:attr=[$1=$2]')
       .replace(/first(\(\))?/g, 'nth=0')
       .replace(/last(\(\))?/g, 'nth=-1')
@@ -200,7 +200,9 @@ function transform(template: string, params: TemplateParams, testIdAttributeName
           const param = params[+ordinal - 1];
           if (t.startsWith('internal:has=') || t.startsWith('internal:has-not='))
             return param.text;
-          if (t.startsWith('internal:attr') || t.startsWith('internal:testid') || t.startsWith('internal:role'))
+          if (t.startsWith('internal:testid'))
+            return escapeForAttributeSelector(param.text, true);
+          if (t.startsWith('internal:attr') || t.startsWith('internal:role'))
             return escapeForAttributeSelector(param.text, suffix === 's');
           return escapeForTextSelector(param.text, suffix === 's');
         });

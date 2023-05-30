@@ -286,7 +286,7 @@ export class JavaScriptLocatorFactory implements LocatorFactory {
       case 'or':
         return `or(${body})`;
       case 'test-id':
-        return `getByTestId(${this.quote(body as string)})`;
+        return `getByTestId(${this.toTestIdValue(body)})`;
       case 'text':
         return this.toCallWithExact('getByText', body, !!options.exact);
       case 'alt':
@@ -316,6 +316,12 @@ export class JavaScriptLocatorFactory implements LocatorFactory {
     if (isRegExp(body))
       return String(body);
     return this.quote(body);
+  }
+
+  private toTestIdValue(value: string | RegExp): string {
+    if (isRegExp(value))
+      return String(value);
+    return this.quote(value);
   }
 
   private quote(text: string) {
@@ -370,7 +376,7 @@ export class PythonLocatorFactory implements LocatorFactory {
       case 'or':
         return `or_(${body})`;
       case 'test-id':
-        return `get_by_test_id(${this.quote(body as string)})`;
+        return `get_by_test_id(${this.toTestIdValue(body)})`;
       case 'text':
         return this.toCallWithExact('get_by_text', body, !!options.exact);
       case 'alt':
@@ -407,6 +413,12 @@ export class PythonLocatorFactory implements LocatorFactory {
     if (isRegExp(body))
       return this.regexToString(body);
     return `${this.quote(body)}`;
+  }
+
+  private toTestIdValue(value: string | RegExp) {
+    if (isRegExp(value))
+      return this.regexToString(value);
+    return this.quote(value);
   }
 
   private quote(text: string) {
@@ -463,7 +475,7 @@ export class JavaLocatorFactory implements LocatorFactory {
       case 'or':
         return `or(${body})`;
       case 'test-id':
-        return `getByTestId(${this.quote(body as string)})`;
+        return `getByTestId(${this.toTestIdValue(body)})`;
       case 'text':
         return this.toCallWithExact(clazz, 'getByText', body, !!options.exact);
       case 'alt':
@@ -500,6 +512,12 @@ export class JavaLocatorFactory implements LocatorFactory {
     if (isRegExp(body))
       return this.regexToString(body);
     return this.quote(body);
+  }
+
+  private toTestIdValue(value: string | RegExp) {
+    if (isRegExp(value))
+      return this.regexToString(value);
+    return this.quote(value);
   }
 
   private quote(text: string) {
@@ -550,7 +568,7 @@ export class CSharpLocatorFactory implements LocatorFactory {
       case 'or':
         return `Or(${body})`;
       case 'test-id':
-        return `GetByTestId(${this.quote(body as string)})`;
+        return `GetByTestId(${this.toTestIdValue(body)})`;
       case 'text':
         return this.toCallWithExact('GetByText', body, !!options.exact);
       case 'alt':
@@ -587,6 +605,12 @@ export class CSharpLocatorFactory implements LocatorFactory {
     if (isRegExp(body))
       return `HasTextRegex = ${this.regexToString(body)}`;
     return `HasText = ${this.quote(body)}`;
+  }
+
+  private toTestIdValue(value: string | RegExp) {
+    if (isRegExp(value))
+      return this.regexToString(value);
+    return this.quote(value);
   }
 
   private toHasNotText(body: string | RegExp) {
