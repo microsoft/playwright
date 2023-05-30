@@ -15,7 +15,7 @@
  */
 
 import { cssEscape, escapeForAttributeSelector, escapeForTextSelector, normalizeWhiteSpace } from '../../utils/isomorphic/stringUtils';
-import { type InjectedScript } from './injectedScript';
+import type { InjectedScript } from './injectedScript';
 import { getAriaRole, getElementAccessibleName } from './roleUtils';
 import { elementText } from './selectorUtils';
 

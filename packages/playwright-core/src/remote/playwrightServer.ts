@@ -25,7 +25,7 @@ import type { ClientType } from './playwrightConnection';
 import type  { LaunchOptions } from '../server/types';
 import { ManualPromise } from '../utils/manualPromise';
 import type { AndroidDevice } from '../server/android/android';
-import { type SocksProxy } from '../common/socksProxy';
+import type { SocksProxy } from '../common/socksProxy';
 import { debugLogger } from '../common/debugLogger';
 import { createHttpServer } from '../utils';
 
