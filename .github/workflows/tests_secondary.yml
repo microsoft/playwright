@@ -231,7 +231,13 @@ jobs:
     - run: npm run build
     - name: Download Blob Reports from Azure Blob Storage
       run: |
-        az storage blob download-batch -d . -s '$web'  --pattern 'run-${{ github.run_id }}-${{ github.sha }}-tracing_linux/*.jsonl' --connection-string "${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}"
+        run_dir='run-${{ github.run_id }}-${{ github.sha }}-tracing_linux'
+        mkdir -p $run_dir
+        LIST=$(az storage blob list -c '$web' --prefix $run_dir --connection-string  "${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}")
+        for name in $(echo $LIST | jq --raw-output '.[].name | select(test(".jsonl$"))');
+        do
+          az storage blob download -c '$web' --name $name -f $name  --connection-string  "${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}"
+        done
     - name: Merge into HTML Report
       run: |
         npx playwright merge-reports --reporter html --attachments missing 'run-${{ github.run_id }}-${{ github.sha }}-tracing_linux'
