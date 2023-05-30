@@ -28,6 +28,8 @@ import type { Page } from '../../page';
 type Options = { app?: string, headless?: boolean, host?: string, port?: number, isServer?: boolean };
 
 export async function showTraceViewer(traceUrls: string[], browserName: string, options?: Options): Promise<Page> {
+  const stdinServer = options?.isServer ? new StdinServer() : undefined;
+
   const { headless = false, host, port, app } = options || {};
   for (const traceUrl of traceUrls) {
     let traceFile = traceUrl;
@@ -113,46 +115,59 @@ export async function showTraceViewer(traceUrls: string[], browserName: string, 
     page.on('close', () => process.exit());
   }
 
+  if (options?.isServer)
+    params.push('isServer');
   const searchQuery = params.length ? '?' + params.join('&') : '';
   await page.mainFrame().goto(serverSideCallMetadata(), urlPrefix + `/trace/${app || 'index.html'}${searchQuery}`);
-
-  if (options?.isServer)
-    runServer(page);
-
+  stdinServer?.setPage(page);
   return page;
 }
 
-function runServer(page: Page) {
-  let liveTraceTimer: NodeJS.Timeout | undefined;
-  const loadTrace = (url: string) => {
-    clearTimeout(liveTraceTimer);
-    page.mainFrame().evaluateExpression(`window.setTraceURL(${JSON.stringify(url)})`, false, undefined).catch(() => {});
-  };
+class StdinServer {
+  private _pollTimer: NodeJS.Timeout | undefined;
+  private _traceUrl: string | undefined;
+  private _page: Page | undefined;
 
-  const pollLoadTrace = (url: string) => {
-    loadTrace(url);
-    liveTraceTimer = setTimeout(() => {
-      pollLoadTrace(url);
+  constructor() {
+    process.stdin.on('data', data => {
+      const url = data.toString().trim();
+      if (url === this._traceUrl)
+        return;
+      this._traceUrl = url;
+      if (url.endsWith('.json'))
+        this._pollLoadTrace(url);
+      else
+        this._loadTrace(url);
+    });
+    process.stdin.on('close', () => this._selfDestruct());
+  }
+
+  setPage(page: Page) {
+    this._page = page;
+    if (this._traceUrl)
+      this._loadTrace(this._traceUrl);
+  }
+
+  private _loadTrace(url: string) {
+    clearTimeout(this._pollTimer);
+    this._page?.mainFrame().evaluateExpression(`window.setTraceURL(${JSON.stringify(url)})`, false, undefined).catch(() => {});
+  }
+
+  private _pollLoadTrace(url: string) {
+    this._loadTrace(url);
+    this._pollTimer = setTimeout(() => {
+      this._pollLoadTrace(url);
     }, 500);
-  };
+  }
 
-  process.stdin.on('data', data => {
-    const url = data.toString().trim();
-    if (url.endsWith('.json'))
-      pollLoadTrace(url);
-    else
-      loadTrace(url);
-  });
-  process.stdin.on('close', () => selfDestruct());
-}
-
-function selfDestruct() {
-  // Force exit after 30 seconds.
-  setTimeout(() => process.exit(0), 30000);
-  // Meanwhile, try to gracefully close all browsers.
-  gracefullyCloseAll().then(() => {
-    process.exit(0);
-  });
+  private _selfDestruct() {
+    // Force exit after 30 seconds.
+    setTimeout(() => process.exit(0), 30000);
+    // Meanwhile, try to gracefully close all browsers.
+    gracefullyCloseAll().then(() => {
+      process.exit(0);
+    });
+  }
 }
 
 function traceDescriptor(traceName: string) {
