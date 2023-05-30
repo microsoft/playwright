@@ -103,6 +103,7 @@ export class RemoteServer implements PlaywrightServer {
     };
     this._process = childProcess({
       command: ['node', path.join(__dirname, 'remote-server-impl.js'), JSON.stringify(options)],
+      env: { ...process.env, PWTEST_UNDER_TEST: '1' },
     });
 
     let index = 0;

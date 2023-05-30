@@ -119,7 +119,8 @@ test.describe('signals', () => {
     expect(await remoteServer.childExitCode()).toBe(0);
   });
 
-  test('should kill the browser on SIGTERM + SIGINT', async ({ startRemoteServer, server }) => {
+  test('should kill the browser on SIGTERM + SIGINT', async ({ startRemoteServer, server, isMac, browserName }) => {
+    test.fixme(isMac && browserName === 'webkit' && parseInt(os.release(), 10) >= 22, 'https://github.com/microsoft/playwright/issues/22226');
     const remoteServer = await startRemoteServer('launchServer', { stallOnClose: true, url: server.EMPTY_PAGE });
     process.kill(remoteServer.child().pid, 'SIGTERM');
     await remoteServer.out('stalled');
