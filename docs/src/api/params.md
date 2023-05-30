@@ -829,13 +829,13 @@ using the [`method: AndroidDevice.setDefaultTimeout`] method.
 * langs: js
 - `timeout` <[float]>
 
-Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
 
 ## csharp-java-python-assertions-timeout
 * langs: java, python, csharp
 - `timeout` <[float]>
 
-Time to retry the assertion for.
+Time to retry the assertion for in milliseconds. Defaults to `5000`.
 
 ## assertions-max-diff-pixels
 * langs: js
