@@ -30,7 +30,6 @@ import { InternalReporter } from '../reporters/internalReporter';
 type ProjectConfigWithFiles = {
   name: string;
   testDir: string;
-  outputDir: string;
   use: { testIdAttribute?: string };
   files: string[];
 };
@@ -55,7 +54,6 @@ export class Runner {
       report.projects.push({
         name: project.project.name,
         testDir: project.project.testDir,
-        outputDir: project.project.outputDir,
         use: { testIdAttribute: project.project.use.testIdAttribute },
         files: await collectFilesForProject(project)
       });
