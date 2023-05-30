@@ -318,7 +318,7 @@ export class JavaScriptLocatorFactory implements LocatorFactory {
     return this.quote(body);
   }
 
-  private toTestIdValue(value: string | RegExp) {
+  private toTestIdValue(value: string | RegExp): string {
     if (isRegExp(value))
       return String(value);
     return this.quote(value);
