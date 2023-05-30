@@ -209,5 +209,8 @@ it('should handle malformed file', async ({ contextFactory }, testInfo) => {
   const error = await contextFactory({
     storageState: file,
   }).catch(e => e);
-  expect(error.message).toContain(`Error reading storage state from ${file}:\nUnexpected token o in JSON at position 1`);
+  if (+process.versions.node.split('.')[0] > 18)
+    expect(error.message).toContain(`Error reading storage state from ${file}:\nUnexpected token 'o', \"not-json\" is not valid JSON`);
+  else
+    expect(error.message).toContain(`Error reading storage state from ${file}:\nUnexpected token o in JSON at position 1`);
 });

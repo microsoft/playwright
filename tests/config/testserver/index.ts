@@ -256,7 +256,7 @@ export class TestServer {
     if (err) {
       response.statusCode = 404;
       response.setHeader('Content-Type', 'text/plain');
-      response.end(`File not found: ${filePath}`);
+      response.end(request.method !== 'HEAD' ? `File not found: ${filePath}` : null);
       return;
     }
     const extension = filePath.substring(filePath.lastIndexOf('.') + 1);
@@ -269,9 +269,9 @@ export class TestServer {
       const result = await gzipAsync(data);
       // The HTTP transaction might be already terminated after async hop here.
       if (!response.writableEnded)
-        response.end(result);
+        response.end(request.method !== 'HEAD' ? result : null);
     } else {
-      response.end(data);
+      response.end(request.method !== 'HEAD' ? data : null);
     }
   }
 
