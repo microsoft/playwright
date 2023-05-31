@@ -150,7 +150,7 @@ export class HarTracer {
         title: document.title,
         domContentLoaded: performance.timing.domContentLoadedEventStart,
       };
-    }), true, undefined, 'utility').then(result => {
+    }), { isFunction: true, world: 'utility' }).then(result => {
       pageEntry.title = result.title;
       if (!this._options.omitTiming)
         pageEntry.pageTimings.onContentLoad = result.domContentLoaded;
@@ -164,7 +164,7 @@ export class HarTracer {
         title: document.title,
         loaded: performance.timing.loadEventStart,
       };
-    }), true, undefined, 'utility').then(result => {
+    }), { isFunction: true, world: 'utility' }).then(result => {
       pageEntry.title = result.title;
       if (!this._options.omitTiming)
         pageEntry.pageTimings.onLoad = result.loaded;

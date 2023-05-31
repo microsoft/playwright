@@ -43,65 +43,12 @@ it('should not stall on JS navigation link', async ({ page, browserName }) => {
   await page.click('a');
 });
 
-it('should await navigation when clicking anchor programmatically', async ({ page, server }) => {
-  const messages = initServer(server);
-  await page.setContent(`<a id="anchor" href="${server.EMPTY_PAGE}">empty.html</a>`);
-  await Promise.all([
-    page.evaluate(() => (window as any).anchor.click()).then(() => messages.push('click')),
-    page.waitForEvent('framenavigated').then(() => messages.push('navigated')),
-  ]);
-  expect(messages.join('|')).toBe('route|navigated|click');
-});
-
-it('should await navigation when clicking anchor via $eval', async ({ page, server }) => {
-  const messages = initServer(server);
-  await page.setContent(`<a id="anchor" href="${server.EMPTY_PAGE}">empty.html</a>`);
-  await Promise.all([
-    page.$eval('#anchor', anchor => (anchor as any).click()).then(() => messages.push('click')),
-    page.waitForEvent('framenavigated').then(() => messages.push('navigated')),
-  ]);
-  expect(messages.join('|')).toBe('route|navigated|click');
-});
-
-it('should await navigation when clicking anchor via handle.eval', async ({ page, server }) => {
-  const messages = initServer(server);
-  await page.setContent(`<a id="anchor" href="${server.EMPTY_PAGE}">empty.html</a>`);
-  const handle = await page.evaluateHandle('document');
-  await Promise.all([
-    handle.evaluate(doc => (doc as any).getElementById('anchor').click()).then(() => messages.push('click')),
-    page.waitForEvent('framenavigated').then(() => messages.push('navigated')),
-  ]);
-  expect(messages.join('|')).toBe('route|navigated|click');
-});
-
-it('should await navigation when clicking anchor via handle.$eval', async ({ page, server }) => {
-  const messages = initServer(server);
-  await page.setContent(`<a id="anchor" href="${server.EMPTY_PAGE}">empty.html</a>`);
-  const handle = await page.$('body');
-  await Promise.all([
-    handle.$eval('#anchor', anchor => (anchor as any).click()).then(() => messages.push('click')),
-    page.waitForEvent('framenavigated').then(() => messages.push('navigated')),
-  ]);
-  expect(messages.join('|')).toBe('route|navigated|click');
-});
-
 it('should await cross-process navigation when clicking anchor', async ({ page, server }) => {
   const messages = initServer(server);
   await page.setContent(`<a href="${server.CROSS_PROCESS_PREFIX + '/empty.html'}">empty.html</a>`);
 
   await Promise.all([
     page.click('a').then(() => messages.push('click')),
-    page.waitForEvent('framenavigated').then(() => messages.push('navigated')),
-  ]);
-  expect(messages.join('|')).toBe('route|navigated|click');
-});
-
-it('should await cross-process navigation when clicking anchor programatically', async ({ page, server }) => {
-  const messages = initServer(server);
-  await page.setContent(`<a id="anchor" href="${server.CROSS_PROCESS_PREFIX + '/empty.html'}">empty.html</a>`);
-
-  await Promise.all([
-    page.evaluate(() => (window as any).anchor.click()).then(() => messages.push('click')),
     page.waitForEvent('framenavigated').then(() => messages.push('navigated')),
   ]);
   expect(messages.join('|')).toBe('route|navigated|click');
@@ -141,39 +88,6 @@ it('should await form-post on click', async ({ page, server }) => {
     page.waitForEvent('framenavigated').then(() => messages.push('navigated')),
   ]);
   expect(messages.join('|')).toBe('route|navigated|click');
-});
-
-it('should await navigation when assigning location', async ({ page, server }) => {
-  const messages = initServer(server);
-  await Promise.all([
-    page.evaluate(`window.location.href = "${server.EMPTY_PAGE}"`).then(() => messages.push('evaluate')),
-    page.waitForEvent('framenavigated').then(() => messages.push('navigated')),
-  ]);
-  expect(messages.join('|')).toBe('route|navigated|evaluate');
-});
-
-it('should await navigation when assigning location twice', async ({ page, server }) => {
-  const messages = [];
-  server.setRoute('/empty.html?cancel', async (req, res) => { res.end('done'); });
-  server.setRoute('/empty.html?override', async (req, res) => { messages.push('routeoverride'); res.end('done'); });
-  await page.evaluate(`
-      window.location.href = "${server.EMPTY_PAGE}?cancel";
-      window.location.href = "${server.EMPTY_PAGE}?override";
-    `);
-  messages.push('evaluate');
-  expect(messages.join('|')).toBe('routeoverride|evaluate');
-});
-
-it('should await navigation when evaluating reload', async ({ page, server, browserName }) => {
-  it.skip(browserName === 'firefox', 'With fission enabled, navigations in Firefox start asynchronously');
-
-  await page.goto(server.EMPTY_PAGE);
-  const messages = initServer(server);
-  await Promise.all([
-    page.evaluate(`window.location.reload()`).then(() => messages.push('evaluate')),
-    page.waitForEvent('framenavigated').then(() => messages.push('navigated')),
-  ]);
-  expect(messages.join('|')).toBe('route|navigated|evaluate');
 });
 
 it('should work with noWaitAfter: true', async ({ page, server }) => {

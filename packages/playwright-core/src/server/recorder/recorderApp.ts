@@ -149,25 +149,25 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
   async setMode(mode: 'none' | 'recording' | 'inspecting'): Promise<void> {
     await this._page.mainFrame().evaluateExpression(((mode: Mode) => {
       window.playwrightSetMode(mode);
-    }).toString(), true, mode, 'main').catch(() => {});
+    }).toString(), { isFunction: true }, mode).catch(() => {});
   }
 
   async setFileIfNeeded(file: string): Promise<void> {
     await this._page.mainFrame().evaluateExpression(((file: string) => {
       window.playwrightSetFileIfNeeded(file);
-    }).toString(), true, file, 'main').catch(() => {});
+    }).toString(), { isFunction: true }, file).catch(() => {});
   }
 
   async setPaused(paused: boolean): Promise<void> {
     await this._page.mainFrame().evaluateExpression(((paused: boolean) => {
       window.playwrightSetPaused(paused);
-    }).toString(), true, paused, 'main').catch(() => {});
+    }).toString(), { isFunction: true }, paused).catch(() => {});
   }
 
   async setSources(sources: Source[]): Promise<void> {
     await this._page.mainFrame().evaluateExpression(((sources: Source[]) => {
       window.playwrightSetSources(sources);
-    }).toString(), true, sources, 'main').catch(() => {});
+    }).toString(), { isFunction: true }, sources).catch(() => {});
 
     // Testing harness for runCLI mode.
     if (process.env.PWTEST_CLI_IS_UNDER_TEST && sources.length)
@@ -181,12 +181,12 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
     }
     await this._page.mainFrame().evaluateExpression(((arg: any) => {
       window.playwrightSetSelector(arg.selector, arg.focus);
-    }).toString(), true, { selector, focus }, 'main').catch(() => {});
+    }).toString(), { isFunction: true }, { selector, focus }).catch(() => {});
   }
 
   async updateCallLogs(callLogs: CallLog[]): Promise<void> {
     await this._page.mainFrame().evaluateExpression(((callLogs: CallLog[]) => {
       window.playwrightUpdateLogs(callLogs);
-    }).toString(), true, callLogs, 'main').catch(() => {});
+    }).toString(), { isFunction: true }, callLogs).catch(() => {});
   }
 }

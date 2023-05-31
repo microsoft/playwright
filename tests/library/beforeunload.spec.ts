@@ -89,3 +89,18 @@ it('should access page after beforeunload', async ({ page, server }) => {
   await page.evaluate(() => document.title);
 });
 
+it('should not stall on evaluate when dismissing beforeunload', async ({ page, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/23141' });
+
+  await page.goto(server.PREFIX + '/beforeunload.html');
+  // We have to interact with a page so that 'beforeunload' handlers fire.
+  await page.click('body');
+
+  await Promise.all([
+    page.evaluate(() => {
+      window.location.reload();
+    }),
+    page.waitForEvent('dialog').then(dialog => dialog.dismiss()),
+  ]);
+});
+

@@ -202,7 +202,7 @@ export class WKPage implements PageDelegate {
     const bootstrapScript = this._calculateBootstrapScript();
     if (bootstrapScript.length)
       promises.push(session.send('Page.setBootstrapScript', { source: bootstrapScript }));
-    this._page.frames().map(frame => frame.evaluateExpression(bootstrapScript, false, undefined).catch(e => {}));
+    this._page.frames().map(frame => frame.evaluateExpression(bootstrapScript).catch(e => {}));
     if (contextOptions.bypassCSP)
       promises.push(session.send('Page.setBypassCSP', { enabled: true }));
     const emulatedSize = this._page.emulatedSize();
@@ -767,7 +767,7 @@ export class WKPage implements PageDelegate {
   async exposeBinding(binding: PageBinding): Promise<void> {
     this._session.send('Runtime.addBinding', { name: binding.name });
     await this._updateBootstrapScript();
-    await Promise.all(this._page.frames().map(frame => frame.evaluateExpression(binding.source, false, {}).catch(e => {})));
+    await Promise.all(this._page.frames().map(frame => frame.evaluateExpression(binding.source).catch(e => {})));
   }
 
   async removeExposedBindings(): Promise<void> {

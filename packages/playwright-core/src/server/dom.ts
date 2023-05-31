@@ -52,10 +52,6 @@ export class FrameExecutionContext extends js.ExecutionContext {
     this.world = world;
   }
 
-  override async waitForSignalsCreatedBy<T>(action: () => Promise<T>): Promise<T> {
-    return this.frame._page._frameManager.waitForSignalsCreatedBy(null, false, action);
-  }
-
   override adoptIfNeeded(handle: js.JSHandle): Promise<js.JSHandle> | null {
     if (handle instanceof ElementHandle && handle._context !== this)
       return this.frame._page._delegate.adoptElementHandle(handle, this);
@@ -74,16 +70,8 @@ export class FrameExecutionContext extends js.ExecutionContext {
     return js.evaluateExpression(this, expression, { ...options, returnByValue: true }, arg);
   }
 
-  async evaluateExpressionAndWaitForSignals(expression: string, options: { isFunction?: boolean, exposeUtilityScript?: boolean }, arg?: any): Promise<any> {
-    return await this.frame._page._frameManager.waitForSignalsCreatedBy(null, false /* noWaitFor */, async () => {
-      return this.evaluateExpression(expression, options, arg);
-    });
-  }
-
-  async evaluateExpressionHandleAndWaitForSignals(expression: string, options: { isFunction?: boolean, exposeUtilityScript?: boolean }, arg: any): Promise<any> {
-    return await this.frame._page._frameManager.waitForSignalsCreatedBy(null, false /* noWaitFor */, async () => {
-      return js.evaluateExpression(this, expression, { ...options, returnByValue: false }, arg);
-    });
+  async evaluateExpressionHandle(expression: string, options: { isFunction?: boolean, exposeUtilityScript?: boolean }, arg?: any): Promise<js.JSHandle<any>> {
+    return js.evaluateExpression(this, expression, { ...options, returnByValue: false }, arg);
   }
 
   override createHandle(remoteObject: js.RemoteObject): js.JSHandle {
@@ -765,18 +753,18 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this._frame.selectors.queryAll(selector, this);
   }
 
-  async evalOnSelectorAndWaitForSignals(selector: string, strict: boolean, expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
+  async evalOnSelector(selector: string, strict: boolean, expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
     const handle = await this._frame.selectors.query(selector, { strict }, this);
     if (!handle)
       throw new Error(`Error: failed to find element matching selector "${selector}"`);
-    const result = await handle.evaluateExpressionAndWaitForSignals(expression, isFunction, true, arg);
+    const result = await handle.evaluateExpression(expression, { isFunction }, arg);
     handle.dispose();
     return result;
   }
 
-  async evalOnSelectorAllAndWaitForSignals(selector: string, expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
+  async evalOnSelectorAll(selector: string, expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
     const arrayHandle = await this._frame.selectors.queryArrayInMainWorld(selector, this);
-    const result = await arrayHandle.evaluateExpressionAndWaitForSignals(expression, isFunction, true, arg);
+    const result = await arrayHandle.evaluateExpression(expression, { isFunction }, arg);
     arrayHandle.dispose();
     return result;
   }
