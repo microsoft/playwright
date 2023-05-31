@@ -83,14 +83,10 @@ jobs:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
     - name: Download Blob Reports from Azure Blob Storage
-      run: |
-        run_dir='run-${{ github.run_id }}-${{ github.sha }}-test_linux'
-        mkdir -p $run_dir
-        LIST=$(az storage blob list -c '$web' --prefix $run_dir --connection-string  "${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}")
-        for name in $(echo $LIST | jq --raw-output '.[].name | select(test(".jsonl$"))');
-        do
-          az storage blob download -c '$web' --name $name -f $name  --connection-string  "${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}"
-        done
+      uses: ./.github/actions/download-blob-report-from-azure
+      with:
+        run_dir: 'run-${{ github.run_id }}-${{ github.sha }}-test_linux'
+        connection_string: '${{ secrets.AZURE_CONNECTION_STRING }}'
     - name: Merge into HTML Report
       run: |
         npx playwright merge-reports --reporter html --attachments missing 'run-${{ github.run_id }}-${{ github.sha }}-test_linux'
@@ -228,14 +224,10 @@ jobs:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
     - name: Download Blob Reports from Azure Blob Storage
-      run: |
-        run_dir='run-${{ github.run_id }}-${{ github.sha }}-test_test_runner'
-        mkdir -p $run_dir
-        LIST=$(az storage blob list -c '$web' --prefix $run_dir --connection-string  "${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}")
-        for name in $(echo $LIST | jq --raw-output '.[].name | select(test(".jsonl$"))');
-        do
-          az storage blob download -c '$web' --name $name -f $name  --connection-string  "${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}"
-        done
+      uses: ./.github/actions/download-blob-report-from-azure
+      with:
+        run_dir: 'run-${{ github.run_id }}-${{ github.sha }}-test_test_runner'
+        connection_string: '${{ secrets.AZURE_CONNECTION_STRING }}'
     - name: Merge into HTML Report
       run: |
         npx playwright merge-reports --reporter html --attachments missing 'run-${{ github.run_id }}-${{ github.sha }}-test_test_runner'
