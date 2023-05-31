@@ -182,7 +182,9 @@ test('should collect two traces', async ({ context, page, server }, testInfo) =>
   }
 });
 
-test('should respect tracesDir and name', async ({ browserType, server }, testInfo) => {
+test('should respect tracesDir and name', async ({ browserType, server, mode }, testInfo) => {
+  test.skip(mode === 'service', 'Service ignores tracesDir');
+
   const tracesDir = testInfo.outputPath('traces');
   const browser = await browserType.launch({ tracesDir });
   const context = await browser.newContext();

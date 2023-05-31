@@ -88,15 +88,13 @@ it('isVisible inside a role=button', async ({ page }) => {
 
 it('isVisible during navigation should not throw', async ({ page, server }) => {
   for (let i = 0; i < 20; i++) {
-    // Make sure previous navigation finishes, to avoid page.setContent throwing.
-    await page.waitForTimeout(100);
     await page.setContent(`
       <script>
         setTimeout(() => {
           window.location.href = ${JSON.stringify(server.EMPTY_PAGE)};
         }, Math.random(50));
       </script>
-    `);
+    `).catch(() => {});  // Avoid page.setContent throwing becuase of scheduled navigation.
     expect(await page.locator('div').isVisible()).toBe(false);
   }
 });
