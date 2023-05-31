@@ -88,31 +88,6 @@ async function run() {
     writeAssumeNoop(browsersJSONPath, JSON.stringify(browsersJSON, null, 2) + '\n', dirtyFiles);
   }
 
-  // Patch docker version in docs
-  {
-    for (const filePath of getAllMarkdownFiles(path.join(PROJECT_DIR, 'docs'))) {
-      // Do not patch docker versions in the release notes; these are always handcrafted.
-      if (filePath.includes('release-notes-'))
-        continue;
-      let content = fs.readFileSync(filePath).toString();
-      content = content.replace(new RegExp('(mcr.microsoft.com/playwright[^:]*):([\\w\\d-.]+)', 'ig'), (match, imageName, imageVersion) => {
-        const [version, distroName] = imageVersion.split('-');
-        return `${imageName}:v${playwrightVersion}-${distroName ?? 'focal'}`;
-      });
-      writeAssumeNoop(filePath, content, dirtyFiles);
-    }
-
-    // Patch pom.xml
-    {
-      const introPath = path.join(PROJECT_DIR, 'docs', 'src', 'intro-java.md');
-      const pomVersionRe = new RegExp('^(\\s*<artifactId>playwright<\\/artifactId>\\n\\s*<version>)(.*)(<\\/version>)$', 'gm');
-      let content = fs.readFileSync(introPath).toString();
-      const majorVersion = playwrightVersion.replace(new RegExp('((\\d+\\.){2})(\\d+)'), '$10')
-      content = content.replace(pomVersionRe, '$1' + majorVersion + '$3');
-      writeAssumeNoop(introPath, content, dirtyFiles);
-    }
-  }
-
   // Update device descriptors
   {
     const devicesDescriptorsSourceFile = path.join(PROJECT_DIR, 'packages', 'playwright-core', 'src', 'server', 'deviceDescriptorsSource.json')
