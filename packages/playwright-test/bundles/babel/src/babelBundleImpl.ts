@@ -70,6 +70,7 @@ function babelTransformOptions(isTypeScript: boolean, isModule: boolean, plugins
 
   if (!isModule) {
     plugins.push([require('@babel/plugin-transform-modules-commonjs')]);
+    // This converts async imports to require() calls so that we can intercept them with pirates.
     plugins.push([require('@babel/plugin-proposal-dynamic-import')]);
   } else {
     plugins.push([require('@babel/plugin-syntax-import-assertions')]);
