@@ -605,6 +605,12 @@ steps:
     failTaskOnFailedTests: true
     testRunTitle: 'My End-To-End Tests'
   condition: succeededOrFailed()
+- task: PublishPipelineArtifact@1
+  inputs:
+    targetPath: playwright-report
+    artifact: playwright-report
+    publishLocation: 'pipeline'
+  condition: succeededOrFailed()
 
 ```
 Note: The JUnit reporter needs to be configured accordingly via
