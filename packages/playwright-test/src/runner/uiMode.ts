@@ -141,7 +141,7 @@ class UIMode {
 
   private _dispatchEvent(message: any) {
     // eslint-disable-next-line no-console
-    this._page.mainFrame().evaluateExpression(dispatchFuncSource, true, message).catch(e => this._originalStderrWrite.call(process.stderr, String(e)));
+    this._page.mainFrame().evaluateExpression(dispatchFuncSource, { isFunction: true }, message).catch(e => this._originalStderrWrite.call(process.stderr, String(e)));
   }
 
   private async _listTests() {

@@ -150,7 +150,7 @@ class StdinServer {
 
   private _loadTrace(url: string) {
     clearTimeout(this._pollTimer);
-    this._page?.mainFrame().evaluateExpression(`window.setTraceURL(${JSON.stringify(url)})`, false, undefined).catch(() => {});
+    this._page?.mainFrame().evaluateExpression(`window.setTraceURL(${JSON.stringify(url)})`).catch(() => {});
   }
 
   private _pollLoadTrace(url: string) {

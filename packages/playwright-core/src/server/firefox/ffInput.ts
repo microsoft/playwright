@@ -145,7 +145,7 @@ export class RawMouseImpl implements input.RawMouse {
 
   async wheel(x: number, y: number, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, deltaX: number, deltaY: number): Promise<void> {
     // Wheel events hit the compositor first, so wait one frame for it to be synced.
-    await this._page!.mainFrame().evaluateExpression(`new Promise(requestAnimationFrame)`, false, false, 'utility');
+    await this._page!.mainFrame().evaluateExpression(`new Promise(requestAnimationFrame)`, { world: 'utility' });
     await this._client.send('Page.dispatchWheelEvent', {
       deltaX,
       deltaY,
