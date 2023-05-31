@@ -342,9 +342,17 @@ export function resolveImportSpecifierExtension(resolved: string): string | unde
 }
 
 function fileExists(resolved: string) {
-  return fs.statSync(resolved)?.isFile();
+  try {
+    return fs.statSync(resolved)?.isFile();
+  } catch (e) {
+    return false;
+  }
 }
 
 function dirExists(resolved: string) {
-  return fs.statSync(resolved)?.isDirectory();
+  try {
+    return fs.statSync(resolved)?.isDirectory();
+  } catch (e) {
+    return false;
+  }
 }
