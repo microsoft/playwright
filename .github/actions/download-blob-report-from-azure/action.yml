@@ -1,0 +1,23 @@
+name: 'Download blob report from Azure'
+description: 'Download blob report from Azure blob storage'
+inputs:
+  run_dir:
+    description: 'Name of the Azure blob storage directory containing blob report'
+    required: true
+    type: string
+  connection_string:
+    description: 'Azure connection string'
+    required: true
+    type: string
+runs:
+  using: "composite"
+  steps:
+    - name: Download blob report from Azure
+      shell: bash
+      run: |
+        mkdir -p ${{ inputs.run_dir }}
+        LIST=$(az storage blob list -c '$web' --prefix ${{ inputs.run_dir }} --connection-string  "${{ inputs.connection_string }}")
+        for name in $(echo $LIST | jq --raw-output '.[].name | select(test(".jsonl$"))');
+        do
+          az storage blob download -c '$web' --name $name -f $name  --connection-string  "${{ inputs.connection_string }}"
+        done

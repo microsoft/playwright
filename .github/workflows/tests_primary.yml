@@ -82,19 +82,15 @@ jobs:
         DEBUG: pw:install
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    - name: Download Blob Reports from Azure Blob Storage
-      run: |
-        run_dir='run-${{ github.run_id }}-${{ github.sha }}-test_linux'
-        mkdir -p $run_dir
-        LIST=$(az storage blob list -c '$web' --prefix $run_dir --connection-string  "${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}")
-        for name in $(echo $LIST | jq --raw-output '.[].name | select(test(".jsonl$"))');
-        do
-          az storage blob download -c '$web' --name $name -f $name  --connection-string  "${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}"
-        done
+    - name: Download blob report from Azure
+      uses: ./.github/actions/download-blob-report-from-azure
+      with:
+        run_dir: 'run-${{ github.run_id }}-${{ github.sha }}-test_linux'
+        connection_string: '${{ secrets.AZURE_CONNECTION_STRING }}'
     - name: Merge into HTML Report
       run: |
         npx playwright merge-reports --reporter html --attachments missing 'run-${{ github.run_id }}-${{ github.sha }}-test_linux'
-    - name: Upload HTML Report to Azure Blob Storage
+    - name: Upload HTML Report to Azure
       run: |
         az storage blob upload-batch -s playwright-report -d '$web/run-${{ github.run_id }}-${{ github.sha }}-test_linux' --connection-string "${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}"
         echo "Report url: https://mspwblobreport.z1.web.core.windows.net/run-${{ github.run_id }}-${{ github.sha }}-test_linux/index.html"
@@ -227,19 +223,15 @@ jobs:
         DEBUG: pw:install
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    - name: Download Blob Reports from Azure Blob Storage
-      run: |
-        run_dir='run-${{ github.run_id }}-${{ github.sha }}-test_test_runner'
-        mkdir -p $run_dir
-        LIST=$(az storage blob list -c '$web' --prefix $run_dir --connection-string  "${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}")
-        for name in $(echo $LIST | jq --raw-output '.[].name | select(test(".jsonl$"))');
-        do
-          az storage blob download -c '$web' --name $name -f $name  --connection-string  "${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}"
-        done
+    - name: Download blob report from Azure
+      uses: ./.github/actions/download-blob-report-from-azure
+      with:
+        run_dir: 'run-${{ github.run_id }}-${{ github.sha }}-test_test_runner'
+        connection_string: '${{ secrets.AZURE_CONNECTION_STRING }}'
     - name: Merge into HTML Report
       run: |
         npx playwright merge-reports --reporter html --attachments missing 'run-${{ github.run_id }}-${{ github.sha }}-test_test_runner'
-    - name: Upload HTML Report to Azure Blob Storage
+    - name: Upload HTML report to Azure
       run: |
         az storage blob upload-batch -s playwright-report -d '$web/run-${{ github.run_id }}-${{ github.sha }}-test_test_runner' --connection-string "${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}"
         echo "Report url: https://mspwblobreport.z1.web.core.windows.net/run-${{ github.run_id }}-${{ github.sha }}-test_test_runner/index.html"
