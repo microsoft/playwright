@@ -216,6 +216,7 @@ jobs:
     if: ${{ always() && github.event_name != 'pull_request' }}
     permissions:
       pull-requests: write
+      checks: write
     needs: [tracing_linux]
     timeout-minutes: 10
     runs-on: ubuntu-latest
