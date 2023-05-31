@@ -173,7 +173,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     state.recording = true;
 
     if (options.name && options.name !== this._state.traceName)
-      this._changeTraceName(this._state, options.name);
+      await this._changeTraceName(this._state, options.name);
 
     this._appendTraceOperation(async () => {
       await mkdirIfNeeded(state.traceFile.file);
