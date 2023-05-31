@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-const escapeGlobChars = new Set(['/', '$', '^', '+', '.', '(', ')', '=', '!', '|', '?']);
+const escapeGlobChars = new Set(['/', '$', '^', '+', '.', '(', ')', '=', '!', '|']);
 
 export function globToRegex(glob: string): RegExp {
   const tokens = ['^'];
