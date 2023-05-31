@@ -170,7 +170,7 @@ jobs:
         dotnet-version: 6.0.x
     - run: dotnet build
     - name: Ensure browsers are installed
-      run: pwsh bin/Debug/netX/playwright.ps1 install --with-deps
+      run: pwsh bin/Debug/net6.0/playwright.ps1 install --with-deps
     - name: Run your tests
       run: dotnet test
 ```
@@ -426,7 +426,7 @@ jobs:
     - name: Build & Install
       run: mvn -B install -D skipTests --no-transfer-progress
     - name: Install Playwright
-      run: mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.
+      run: mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install --with-deps"
     - name: Run tests
       run: mvn test
       env:
@@ -451,7 +451,7 @@ jobs:
         dotnet-version: 6.0.x
     - run: dotnet build
     - name: Ensure browsers are installed
-      run: pwsh bin/Debug/netX/playwright.ps1 install --with-deps
+      run: pwsh bin/Debug/net6.0/playwright.ps1 install --with-deps
     - name: Run tests
       run: dotnet test
       env:
@@ -494,7 +494,6 @@ steps:
   inputs:
     versionSpec: '18'
   displayName: 'Install Node.js'
-
 - script: npm ci
   displayName: 'npm ci'
 - script: npx playwright install --with-deps
@@ -515,7 +514,6 @@ steps:
   inputs:
     versionSpec: '3.11'
   displayName: 'Use Python'
-
 - script: |
     python -m pip install --upgrade pip
     pip install -r requirements.txt
@@ -539,7 +537,6 @@ steps:
     versionSpec: '17'
     jdkArchitectureOption: 'x64'
     jdkSourceOption: AzureStorage
-
 - script: mvn -B install -D skipTests --no-transfer-progress
   displayName: 'Build and install'
 - script: mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install --with-deps"
@@ -561,7 +558,6 @@ steps:
     packageType: sdk
     version: '6.0.x'
   displayName: 'Use .NET SDK'
-
 - script: dotnet build --configuration Release
   displayName: 'Build'
 - script: pwsh bin/Debug/net6.0/playwright.ps1 install --with-deps
@@ -690,7 +686,7 @@ trigger:
 
 pool:
   vmImage: ubuntu-latest
-container: mcr.microsoft.com/playwright:v1.34.3-jammy
+container: mcr.microsoft.com/playwright:v1.35.0-jammy
 
 steps:
 - task: NodeTool@0
@@ -710,7 +706,7 @@ trigger:
 
 pool:
   vmImage: ubuntu-latest
-container: mcr.microsoft.com/playwright/python:v1.34.3-jammy
+container: mcr.microsoft.com/playwright/python:v1.35.0-jammy
 
 steps:
 - task: UsePythonVersion@0
@@ -722,8 +718,8 @@ steps:
     python -m pip install --upgrade pip
     pip install -r requirements.txt
   displayName: 'Install dependencies'
-- script: npx playwright test
-  displayName: 'Run Playwright tests'
+- script: pytest
+  displayName: 'Run tests'
 ```
 
 ```yml java
@@ -732,7 +728,7 @@ trigger:
 
 pool:
   vmImage: ubuntu-latest
-container: mcr.microsoft.com/playwright/java:v1.34.3-jammy
+container: mcr.microsoft.com/playwright/java:v1.35.0-jammy
 
 steps:
 - task: JavaToolInstaller@0
@@ -753,7 +749,7 @@ trigger:
 
 pool:
   vmImage: ubuntu-latest
-container: mcr.microsoft.com/playwright/dotnet:v1.34.3-jammy
+container: mcr.microsoft.com/playwright/dotnet:v1.35.0-jammy
 
 steps:
 - task: UseDotNet@2
@@ -867,6 +863,7 @@ pipeline {
    stages {
       stage('e2e-tests') {
          steps {
+            sh 'dotnet build'
             sh 'dotnet test'
          }
       }
