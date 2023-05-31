@@ -267,6 +267,22 @@ jobs:
           });
           core.info('Posted comment: ' + response.html_url);
 
+          const { owner, repo } = context.repo;
+
+          const check = await github.rest.checks.create({
+            owner,
+            repo,
+            name: 'Tracing Tests',
+            head_sha: context.sha,
+            status: 'completed',
+            conclusion: 'success',
+            details_url: reportUrl,
+            output: {
+              title: 'Merged Tracing test results',
+              summary: 'Tracing test results: ' + reportUrl,
+            }
+          });
+
   chrome_stable_linux:
     name: "Chrome Stable (Linux)"
     runs-on: ubuntu-20.04
