@@ -113,8 +113,14 @@ async function innerCheckDeps(root) {
 
   function visit(node, fileName) {
     if (ts.isImportDeclaration(node) && ts.isStringLiteral(node.moduleSpecifier)) {
-      if (node.importClause && node.importClause.isTypeOnly)
-        return;
+      if (node.importClause) {
+        if (node.importClause.isTypeOnly)
+          return;
+        if (node.importClause.namedBindings && ts.isNamedImports(node.importClause.namedBindings)) {
+          if (node.importClause.namedBindings.elements.every(e => e.isTypeOnly))
+            return;
+        }
+      }
       const importName = node.moduleSpecifier.text;
       let importPath;
       if (importName.startsWith('.')) {
