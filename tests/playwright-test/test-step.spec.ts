@@ -951,7 +951,7 @@ test('should not mark page.close as failed when page.click fails', async ({ runI
   ]);
 });
 
-test('should nest page.continue insize page.goto steps', async ({ runInlineTest }) => {
+test('should nest page.continue inside page.goto steps', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': stepHierarchyReporter,
     'playwright.config.ts': `module.exports = { reporter: './reporter', };`,
@@ -1030,6 +1030,101 @@ test('should nest page.continue insize page.goto steps', async ({ runInlineTest 
           title: 'fixture: context',
         },
       ],
+    },
+  ]);
+});
+
+test('should not propagate errors from within toPass', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': stepHierarchyReporter,
+    'playwright.config.ts': `module.exports = { reporter: './reporter', };`,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async () => {
+        let i = 0;
+        await expect(() => {
+          expect(i++).toBe(2);
+        }).toPass();
+      });
+    `
+  }, { reporter: '' });
+
+  expect(result.exitCode).toBe(0);
+  const objects = result.outputLines.map(line => JSON.parse(line));
+  expect(objects).toEqual([
+    {
+      title: 'Before Hooks',
+      category: 'hook',
+    },
+    {
+      title: 'expect.toPass',
+      category: 'expect',
+      location: { file: 'a.test.ts', line: 'number', column: 'number' },
+      steps: [
+        {
+          category: 'expect',
+          error: '<error>',
+          location: { file: 'a.test.ts', line: 'number', column: 'number' },
+          title: 'expect.toBe',
+        },
+        {
+          category: 'expect',
+          error: '<error>',
+          location: { file: 'a.test.ts', line: 'number', column: 'number' },
+          title: 'expect.toBe',
+        },
+        {
+          category: 'expect',
+          location: { file: 'a.test.ts', line: 'number', column: 'number' },
+          title: 'expect.toBe',
+        },
+      ],
+    },
+    {
+      title: 'After Hooks',
+      category: 'hook',
+    },
+  ]);
+});
+
+test('should show final toPass error', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': stepHierarchyReporter,
+    'playwright.config.ts': `module.exports = { reporter: './reporter', };`,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('fail', async () => {
+        await expect(() => {
+          expect(true).toBe(false);
+        }).toPass({ timeout: 1 });
+      });
+    `
+  }, { reporter: '' });
+
+  expect(result.exitCode).toBe(1);
+  const objects = result.outputLines.map(line => JSON.parse(line));
+  expect(objects).toEqual([
+    {
+      title: 'Before Hooks',
+      category: 'hook',
+    },
+    {
+      title: 'expect.toPass',
+      category: 'expect',
+      error: '<error>',
+      location: { file: 'a.test.ts', line: 'number', column: 'number' },
+      steps: [
+        {
+          category: 'expect',
+          error: '<error>',
+          location: { file: 'a.test.ts', line: 'number', column: 'number' },
+          title: 'expect.toBe',
+        },
+      ],
+    },
+    {
+      title: 'After Hooks',
+      category: 'hook',
     },
   ]);
 });

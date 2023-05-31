@@ -39,6 +39,7 @@ export interface TestStepInternal {
   apiName?: string;
   params?: Record<string, any>;
   error?: TestInfoError;
+  insulateChildErrors?: boolean;
 }
 
 export class TestInfoImpl implements TestInfo {
@@ -252,7 +253,7 @@ export class TestInfoImpl implements TestInfo {
         } else if (result.error) {
           // Internal API step reported an error.
           error = result.error;
-        } else {
+        } else if (!data.insulateChildErrors) {
           // One of the child steps failed (probably soft expect).
           // Report this step as failed to make it easier to spot.
           error = step.steps.map(s => s.error).find(e => !!e);
