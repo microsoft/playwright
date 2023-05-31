@@ -59,3 +59,16 @@ testWithServer(
     await expect.soft(component).toHaveText('intercepted');
   }
 );
+
+test('should return 404 if server does not handle the request', async ({ page }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/23364' });
+  const helloPromise = page.waitForResponse('/hello');
+  const statusCode = await page.evaluate(async () => {
+    const response = await fetch('/hello');
+    return response.status;
+  });
+  expect(statusCode).toBe(404);
+  const response = await helloPromise;
+  expect(response.status()).toBe(404);
+  expect(response.statusText()).toBe('Not Found');
+});
