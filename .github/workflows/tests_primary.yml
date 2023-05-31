@@ -87,7 +87,7 @@ jobs:
       uses: ./.github/actions/download-blob-report-from-azure
       with:
         run_dir: 'run-${{ github.run_id }}-${{ github.sha }}-test_linux'
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING }}'
+        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
     - name: Merge into HTML Report
       run: |
         npx playwright merge-reports --reporter html --attachments missing 'run-${{ github.run_id }}-${{ github.sha }}-test_linux'
@@ -229,7 +229,7 @@ jobs:
       uses: ./.github/actions/download-blob-report-from-azure
       with:
         run_dir: 'run-${{ github.run_id }}-${{ github.sha }}-test_test_runner'
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING }}'
+        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
     - name: Merge into HTML Report
       run: |
         npx playwright merge-reports --reporter html --attachments missing 'run-${{ github.run_id }}-${{ github.sha }}-test_test_runner'
