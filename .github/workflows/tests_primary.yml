@@ -120,6 +120,22 @@ jobs:
           });
           core.info('Posted comment: ' + response.html_url);
 
+          const { owner, repo } = context.repo;
+
+          const check = await github.rest.checks.create({
+            owner,
+            repo,
+            name: 'Primary Tests',
+            head_sha: context.sha,
+            status: 'completed',
+            conclusion: 'success',
+            details_url: reportUrl,
+            output: {
+              title: 'Merged Primary test results',
+              summary: 'Primary test results: ' + reportUrl,
+            }
+          });
+
   test_linux_chromium_tot:
     name: ${{ matrix.os }} (chromium tip-of-tree)
     strategy:
@@ -248,6 +264,22 @@ jobs:
             body: 'Test Runner test results: ' + reportUrl,
           });
           core.info('Posted comment: ' + response.html_url);
+
+          const { owner, repo } = context.repo;
+
+          const check = await github.rest.checks.create({
+            owner,
+            repo,
+            name: 'Test Runner Tests',
+            head_sha: context.sha,
+            status: 'completed',
+            conclusion: 'success',
+            details_url: reportUrl,
+            output: {
+              title: 'Merged Test Runner Results',
+              summary: 'Test Runner test results: ' + reportUrl,
+            }
+          });
 
   test_web_components:
     name: Web Components
