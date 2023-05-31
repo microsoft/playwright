@@ -38,7 +38,7 @@ function ColorButton (props) {
   return e('button', {className: props.color, disabled: !props.enabled}, 'button ' + props.nested.index);
 }
 
-function ButtonGrid() {
+const ButtonGrid = React.memo(function() {
   const buttons = [];
   for (let i = 0; i < 9; ++i) {
     buttons.push(e(ColorButton, {
@@ -51,7 +51,9 @@ function ButtonGrid() {
     }, null));
   };
   return e(React.Fragment, null, ...buttons);
-}
+});
+
+ButtonGrid.displayName = "ButtonGrid";
 
 class BookItem extends React.Component {
   render() {
