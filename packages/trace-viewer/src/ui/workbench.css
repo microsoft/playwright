@@ -30,9 +30,16 @@
   line-height: 24px;
 }
 
+body .drop-target {
+  background: rgba(255, 255, 255, 0.8);
+}
+
+body.dark-mode .drop-target {
+  background: rgba(0, 0, 0, 0.8);
+}
+
 .drop-target .title {
   font-size: 24px;
-  color: #666;
   font-weight: bold;
   margin-bottom: 30px;
 }
@@ -81,7 +88,7 @@
   flex-basis: 48px;
   line-height: 48px;
   font-size: 16px;
-  color: white;
+  color: #cccccc;
 }
 
 .workbench .header .toolbar-button {

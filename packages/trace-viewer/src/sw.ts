@@ -49,8 +49,6 @@ async function loadTrace(traceUrl: string, traceFileName: string | null, clientI
   } catch (error: any) {
     if (error?.message?.includes('Cannot find .trace file') && await traceModel.hasEntry('index.html'))
       throw new Error('Could not load trace. Did you upload a Playwright HTML report instead? Make sure to extract the archive first and then double-click the index.html file or put it on a web server.');
-    // eslint-disable-next-line no-console
-    console.error(error);
     if (traceFileName)
       throw new Error(`Could not load trace from ${traceFileName}. Make sure to upload a valid Playwright trace.`);
     throw new Error(`Could not load trace from ${traceUrl}. Make sure a valid Playwright Trace is accessible over this url.`);
