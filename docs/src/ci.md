@@ -228,7 +228,7 @@ jobs:
     name: 'Playwright Tests'
     runs-on: ubuntu-latest
     container:
-      image: mcr.microsoft.com/playwright:v1.35.0-jammy
+      image: mcr.microsoft.com/playwright:v%%VERSION%%-jammy
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -252,7 +252,7 @@ jobs:
     name: 'Playwright Tests'
     runs-on: ubuntu-latest
     container:
-      image: mcr.microsoft.com/playwright/python:v1.35.0-jammy
+      image: mcr.microsoft.com/playwright/python:v%%VERSION%%-jammy
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python
@@ -280,7 +280,7 @@ jobs:
     name: 'Playwright Tests'
     runs-on: ubuntu-latest
     container:
-      image: mcr.microsoft.com/playwright/java:v1.35.0-jammy
+      image: mcr.microsoft.com/playwright/java:v%%VERSION%%-jammy
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-java@v3
@@ -305,7 +305,7 @@ jobs:
     name: 'Playwright Tests'
     runs-on: ubuntu-latest
     container:
-      image: mcr.microsoft.com/playwright/dotnet:v1.35.0-jammy
+      image: mcr.microsoft.com/playwright/dotnet:v%%VERSION%%-jammy
     steps:
       - uses: actions/checkout@v3
       - name: Setup dotnet
@@ -334,7 +334,7 @@ jobs:
     name: 'Playwright Tests - ${{ matrix.project }} - Shard ${{ matrix.shardIndex }} of ${{ matrix.shardTotal }}'
     runs-on: ubuntu-latest
     container:
-      image: mcr.microsoft.com/playwright:v1.35.0-jammy
+      image: mcr.microsoft.com/playwright:v%%VERSION%%-jammy
     strategy:
       fail-fast: false
       matrix:
@@ -686,7 +686,7 @@ trigger:
 
 pool:
   vmImage: ubuntu-latest
-container: mcr.microsoft.com/playwright:v1.35.0-jammy
+container: mcr.microsoft.com/playwright:v%%VERSION%%-jammy
 
 steps:
 - task: NodeTool@0
@@ -706,7 +706,7 @@ trigger:
 
 pool:
   vmImage: ubuntu-latest
-container: mcr.microsoft.com/playwright/python:v1.35.0-jammy
+container: mcr.microsoft.com/playwright/python:v%%VERSION%%-jammy
 
 steps:
 - task: UsePythonVersion@0
@@ -728,7 +728,7 @@ trigger:
 
 pool:
   vmImage: ubuntu-latest
-container: mcr.microsoft.com/playwright/java:v1.35.0-jammy
+container: mcr.microsoft.com/playwright/java:v%%VERSION%%-jammy
 
 steps:
 - task: JavaToolInstaller@0
@@ -749,7 +749,7 @@ trigger:
 
 pool:
   vmImage: ubuntu-latest
-container: mcr.microsoft.com/playwright/dotnet:v1.35.0-jammy
+container: mcr.microsoft.com/playwright/dotnet:v%%VERSION%%-jammy
 
 steps:
 - task: UseDotNet@2
@@ -772,28 +772,28 @@ Running Playwright on CircleCI is very similar to running on GitHub Actions. In 
 executors:
   pw-jammy-development:
     docker:
-      - image: mcr.microsoft.com/playwright:v1.35.0-jammy
+      - image: mcr.microsoft.com/playwright:v%%VERSION%%-jammy
 ```
 
 ```yml python
 executors:
   pw-jammy-development:
     docker:
-      - image: mcr.microsoft.com/playwright/python:v1.35.0-jammy
+      - image: mcr.microsoft.com/playwright/python:v%%VERSION%%-jammy
 ```
 
 ```yml java
 executors:
   pw-jammy-development:
     docker:
-      - image: mcr.microsoft.com/playwright/java:v1.35.0-jammy
+      - image: mcr.microsoft.com/playwright/java:v%%VERSION%%-jammy
 ```
 
 ```yml csharp
 executors:
   pw-jammy-development:
     docker:
-      - image: mcr.microsoft.com/playwright/dotnet:v1.35.0-jammy
+      - image: mcr.microsoft.com/playwright/dotnet:v%%VERSION%%-jammy
 ```
 
 Note: When using the docker agent definition, you are specifying the resource class of where playwright runs to the 'medium' tier [here](https://circleci.com/docs/configuration-reference?#docker-execution-environment). The default behavior of Playwright is to set the number of workers to the detected core count (2 in the case of the medium tier). Overriding the number of workers to greater than this number will cause unnecessary timeouts and failures.
@@ -817,7 +817,7 @@ to run tests on Jenkins.
 
 ```groovy js
 pipeline {
-   agent { docker { image 'mcr.microsoft.com/playwright:v1.35.0-jammy' } }
+   agent { docker { image 'mcr.microsoft.com/playwright:v%%VERSION%%-jammy' } }
    stages {
       stage('e2e-tests') {
          steps {
@@ -831,7 +831,7 @@ pipeline {
 
 ```groovy python
 pipeline {
-   agent { docker { image 'mcr.microsoft.com/playwright/python:v1.35.0-jammy' } }
+   agent { docker { image 'mcr.microsoft.com/playwright/python:v%%VERSION%%-jammy' } }
    stages {
       stage('e2e-tests') {
          steps {
@@ -845,7 +845,7 @@ pipeline {
 
 ```groovy java
 pipeline {
-   agent { docker { image 'mcr.microsoft.com/playwright/java:v1.35.0-jammy' } }
+   agent { docker { image 'mcr.microsoft.com/playwright/java:v%%VERSION%%-jammy' } }
    stages {
       stage('e2e-tests') {
          steps {
@@ -859,7 +859,7 @@ pipeline {
 
 ```groovy csharp
 pipeline {
-   agent { docker { image 'mcr.microsoft.com/playwright/dotnet:v1.35.0-jammy' } }
+   agent { docker { image 'mcr.microsoft.com/playwright/dotnet:v%%VERSION%%-jammy' } }
    stages {
       stage('e2e-tests') {
          steps {
@@ -876,19 +876,19 @@ pipeline {
 Bitbucket Pipelines can use public [Docker images as build environments](https://confluence.atlassian.com/bitbucket/use-docker-images-as-build-environments-792298897.html). To run Playwright tests on Bitbucket, use our public Docker image ([see Dockerfile](./docker.md)).
 
 ```yml js
-image: mcr.microsoft.com/playwright:v1.35.0-jammy
+image: mcr.microsoft.com/playwright:v%%VERSION%%-jammy
 ```
 
 ```yml python
-image: mcr.microsoft.com/playwright/python:v1.35.0-jammy
+image: mcr.microsoft.com/playwright/python:v%%VERSION%%-jammy
 ```
 
 ```yml java
-image: mcr.microsoft.com/playwright/java:v1.35.0-jammy
+image: mcr.microsoft.com/playwright/java:v%%VERSION%%-jammy
 ```
 
 ```yml csharp
-image: mcr.microsoft.com/playwright/dotnet:v1.35.0-jammy
+image: mcr.microsoft.com/playwright/dotnet:v%%VERSION%%-jammy
 ```
 
 ### GitLab CI
@@ -901,7 +901,7 @@ stages:
 
 tests:
   stage: test
-  image: mcr.microsoft.com/playwright:v1.35.0-jammy
+  image: mcr.microsoft.com/playwright:v%%VERSION%%-jammy
   script:
   ...
 ```
@@ -912,7 +912,7 @@ stages:
 
 tests:
   stage: test
-  image: mcr.microsoft.com/playwright/python:v1.35.0-jammy
+  image: mcr.microsoft.com/playwright/python:v%%VERSION%%-jammy
   script:
   ...
 ```
@@ -923,7 +923,7 @@ stages:
 
 tests:
   stage: test
-  image: mcr.microsoft.com/playwright/java:v1.35.0-jammy
+  image: mcr.microsoft.com/playwright/java:v%%VERSION%%-jammy
   script:
   ...
 ```
@@ -934,7 +934,7 @@ stages:
 
 tests:
   stage: test
-  image: mcr.microsoft.com/playwright/dotnet:v1.35.0-jammy
+  image: mcr.microsoft.com/playwright/dotnet:v%%VERSION%%-jammy
   script:
   ...
 ```
@@ -950,7 +950,7 @@ stages:
 
 tests:
   stage: test
-  image: mcr.microsoft.com/playwright:v1.35.0-jammy
+  image: mcr.microsoft.com/playwright:v%%VERSION%%-jammy
   parallel: 7
   script:
     - npm ci
@@ -965,7 +965,7 @@ stages:
 
 tests:
   stage: test
-  image: mcr.microsoft.com/playwright:v1.35.0-jammy
+  image: mcr.microsoft.com/playwright:v%%VERSION%%-jammy
   parallel:
     matrix:
       - PROJECT: ['chromium', 'webkit']
