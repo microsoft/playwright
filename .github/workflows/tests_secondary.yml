@@ -208,77 +208,16 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - name: Upload artifacts to Azure Blob Storage
-      if: always() && github.event_name != 'pull_request'
-      run: az storage blob upload-batch -s test-results/blob-report -d '$web/run-${{ github.run_id }}-${{ github.sha }}-tracing_linux' --connection-string "${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}"
-
-  merge_tracing_linux:
-    if: ${{ always() && github.event_name != 'pull_request' }}
-    permissions:
-      pull-requests: write
-      checks: write
-    needs: [tracing_linux]
-    timeout-minutes: 10
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - name: Upload blob report to Azure
+      if: always() && github.event_name == 'push'
+      run: az storage blob upload-batch -s test-results/blob-report -d '$web/run-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.sha }}' --connection-string "${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}"
+    - name: Upload blob report to GitHub
+      uses: actions/upload-artifact@v3
+      if: always() && github.event_name == 'pull_request'
       with:
-        node-version: 16
-    - run: npm ci
-      env:
-        DEBUG: pw:install
-        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
-    - run: npm run build
-    - name: Download blob report from Azure
-      uses: ./.github/actions/download-blob-report-from-azure
-      with:
-        run_dir: 'run-${{ github.run_id }}-${{ github.sha }}-tracing_linux'
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
-    - name: Merge into HTML Report
-      run: |
-        npx playwright merge-reports --reporter html --attachments missing 'run-${{ github.run_id }}-${{ github.sha }}-tracing_linux'
-    - name: Upload HTML report to Azure
-      run: |
-        az storage blob upload-batch -s playwright-report -d '$web/run-${{ github.run_id }}-${{ github.sha }}-tracing_linux' --connection-string "${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}"
-        echo "Report url: https://mspwblobreport.z1.web.core.windows.net/run-${{ github.run_id }}-${{ github.sha }}-tracing_linux/index.html"
-    - name: Comment on PR
-      uses: actions/github-script@v6
-      with:
-        github-token: ${{secrets.GITHUB_TOKEN}}
-        script: |
-          const { data: prs } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
-            ...context.repo,
-            commit_sha: context.sha,
-          });
-          if (prs.length === 0) {
-            core.error('No pull request found for commit ' + context.sha);
-            return;
-          }
-          const reportUrl = `https://mspwblobreport.z1.web.core.windows.net/run-${context.runId}-${context.sha}-tracing_linux/index.html`;
-          core.notice('Report url: ' + reportUrl);
-          const { data: response } = await github.rest.issues.createComment({
-            ...context.repo,
-            issue_number: prs[0].number,
-            body: 'Tracing test results: ' + reportUrl,
-          });
-          core.info('Posted comment: ' + response.html_url);
-
-          const { owner, repo } = context.repo;
-
-          const check = await github.rest.checks.create({
-            owner,
-            repo,
-            name: 'Tracing Tests',
-            head_sha: context.sha,
-            status: 'completed',
-            conclusion: 'success',
-            details_url: reportUrl,
-            output: {
-              title: 'Merged Tracing test results',
-              summary: 'Tracing test results: ' + reportUrl,
-            }
-          });
+        name: blob-report-${{ github.run_attempt }}
+        path: blob-report
+        retention-days: 30
 
   chrome_stable_linux:
     name: "Chrome Stable (Linux)"
