@@ -7,7 +7,7 @@ on:
 jobs:
   merge-reports:
     permissions:
-      pull-requests: write
+      pull-requests: read|write
       checks: write
     timeout-minutes: 10
     runs-on: ubuntu-latest
@@ -46,7 +46,7 @@ jobs:
       run: |
         REPORT_DIR='run-${{ github.event.workflow_run.id }}-${{ github.event.workflow_run.run_attempt }}-${{ github.sha }}'
         az storage blob upload-batch -s playwright-report -d "\$web/$REPORT_DIR" --connection-string "${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}"
-        echo "Report url: https://pwblobreport01.z1.web.core.windows.net/$REPORT_DIR/index.html"
+        echo "Report url: https://mspwblobreport.z1.web.core.windows.net/$REPORT_DIR/index.html"
 
     - name: Upload blob report to Azure
       if: ${{ github.event.workflow_run.event == 'pull_request' }}
@@ -77,7 +77,7 @@ jobs:
             return;
           }
           const reportDir = 'run-${{ github.event.workflow_run.id }}-${{ github.event.workflow_run.run_attempt }}-${{ github.sha }}';
-          const reportUrl = `https://pwblobreport01.z1.web.core.windows.net/${reportDir}/index.html`;
+          const reportUrl = `https://mspwblobreport.z1.web.core.windows.net/${reportDir}/index.html`;
           core.notice('Report url: ' + reportUrl);
           const { data: response } = await github.rest.issues.createComment({
             ...context.repo,
