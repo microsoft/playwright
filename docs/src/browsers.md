@@ -132,6 +132,8 @@ playwright install --with-deps chromium
 pwsh bin/Debug/netX/playwright.ps1 install --with-deps chromium
 ```
 
+See [system requirements](./intro.md#system-requirements) for officially supported operating systems.
+
 ## Update Playwright regulary
 * langs: js
 
@@ -153,12 +155,12 @@ npx playwright --version
 
 ## Configure Browsers
 
-Playwright can run tests on Chromium, WebKit and Firefox browsers as well as branded browsers such as Google Chrome and Microsoft Edge. It can also run on emulated tablet and mobile devices. See the [registry of device parameters](https://github.com/microsoft/playwright/blob/main/packages/playwright-core/src/server/deviceDescriptorsSource.json) for a complete list of selected desktop, tablet and mobile devices. 
+Playwright can run tests on Chromium, WebKit and Firefox browsers as well as branded browsers such as Google Chrome and Microsoft Edge. It can also run on emulated tablet and mobile devices. See the [registry of device parameters](https://github.com/microsoft/playwright/blob/main/packages/playwright-core/src/server/deviceDescriptorsSource.json) for a complete list of selected desktop, tablet and mobile devices.
 
 ### Run tests on different browsers
 * langs: js
 
-Playwright can run your tests in multiple browsers and configurations by setting up **projects** in the config. You can also add [different options](./test-configuration) for each project. 
+Playwright can run your tests in multiple browsers and configurations by setting up **projects** in the config. You can also add [different options](./test-configuration) for each project.
 
 ```js
 import { defineConfig, devices } from '@playwright/test';
@@ -341,7 +343,7 @@ While Playwright can download and use the recent Chromium build, it can operate 
 Available channels are `chrome`, `msedge`, `chrome-beta`, `msedge-beta` or `msedge-dev`.
 
 :::warning
-Certain Enterprise Browser Policies may impact Playwright's ability to launch and control Google Chrome and Microsoft Edge. Running in an environment with browser policies is outside of the Playwright project's scope. See [this page](./troubleshooting.md##incompatible-microsoft-edge--google-chrome-policy-settings) for some known issues.
+Certain Enterprise Browser Policies may impact Playwright's ability to launch and control Google Chrome and Microsoft Edge. Running in an environment with browser policies is outside of the Playwright project's scope.
 :::
 
 ```js
@@ -959,12 +961,12 @@ This can be done by setting `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD` variable before i
 ```bash tab=bash-bash lang=js
 PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npx playwright install
 ```
-  
+
 ```batch tab=bash-batch lang=js
 set PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 npx playwright install
 ```
-  
+
 ```powershell tab=bash-powershell lang=js
 $Env:PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 npx playwright install

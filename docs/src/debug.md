@@ -36,7 +36,7 @@ Playwright will look at your page and figure out the best locator, prioritizing 
 
 ### Run in Debug Mode
 
-To set a breakpoint click next to the line number where you want the breakpoint to be until a red dot appears. Run the tests in debug mode by right clicking on the line next to the test you want to run. 
+To set a breakpoint click next to the line number where you want the breakpoint to be until a red dot appears. Run the tests in debug mode by right clicking on the line next to the test you want to run.
 
 <img width="1269" alt="setting debug test mode" src="https://user-images.githubusercontent.com/13063165/212739847-ecb7dcfe-8929-45f3-b24e-f9c4b592f430.png" />
 
@@ -457,7 +457,8 @@ dotnet run
 
 :::note
 **For WebKit**: launching WebKit Inspector during the execution will
-prevent the Playwright script from executing any further.
+prevent the Playwright script from executing any further and
+will reset pre-configured user agent and device emulation.
 :::
 
 ## Headed mode
@@ -470,12 +471,12 @@ to slow down execution (by N milliseconds per operation) and follow along while 
 
 ```js
 // Chromium, Firefox, or WebKit
-await chromium.launch({ headless: false, slowMo: 100 }); 
+await chromium.launch({ headless: false, slowMo: 100 });
 ```
 
 ```java
 // Chromium, Firefox, or WebKit
-chromium.launch(new BrowserType.LaunchOptions() 
+chromium.launch(new BrowserType.LaunchOptions()
   .setHeadless(false)
   .setSlowMo(100));
 ```
