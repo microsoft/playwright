@@ -18,7 +18,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { isRegExp } from 'playwright-core/lib/utils';
 import type { ConfigCLIOverrides, SerializedConfig } from './ipc';
-import { requireOrImport, setBabelPlugins } from '../transform/transform';
+import { requireOrImport } from '../transform/transform';
 import type { Config, Project } from '../../types/test';
 import { errorWithFile } from '../util';
 import { setCurrentConfig } from './globals';
@@ -41,15 +41,12 @@ export class ConfigLoader {
   }
 
   static async deserialize(data: SerializedConfig): Promise<FullConfigInternal> {
-    setBabelPlugins(data.babelTransformPlugins);
     addToCompilationCache(data.compilationCache);
-    await initializeEsmLoader();
 
     const loader = new ConfigLoader(data.configCLIOverrides);
-
-    if (data.configFile)
-      return await loader.loadConfigFile(data.configFile);
-    return await loader.loadEmptyConfig(data.configDir);
+    const config = data.configFile ? await loader.loadConfigFile(data.configFile) : await loader.loadEmptyConfig(data.configDir);
+    await initializeEsmLoader();
+    return config;
   }
 
   async loadConfigFile(file: string, ignoreProjectDependencies = false): Promise<FullConfigInternal> {

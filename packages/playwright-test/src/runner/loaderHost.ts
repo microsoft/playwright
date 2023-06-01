@@ -22,7 +22,6 @@ import { loadTestFile } from '../common/testLoader';
 import type { FullConfigInternal } from '../common/config';
 import { PoolBuilder } from '../common/poolBuilder';
 import { addToCompilationCache } from '../transform/compilationCache';
-import { setBabelPlugins } from '../transform/transform';
 import { incorporateCompilationCache, initializeEsmLoader } from '../common/esmLoaderHost';
 
 export class InProcessLoaderHost {
@@ -35,10 +34,6 @@ export class InProcessLoaderHost {
   }
 
   async start() {
-    const babelTransformPlugins: [string, any?][] = [];
-    for (const plugin of this._config.plugins)
-      babelTransformPlugins.push(...plugin.babelPlugins || []);
-    setBabelPlugins(babelTransformPlugins);
     await initializeEsmLoader();
   }
 

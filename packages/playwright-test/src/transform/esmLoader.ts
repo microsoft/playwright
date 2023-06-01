@@ -16,8 +16,8 @@
 
 import fs from 'fs';
 import url from 'url';
-import { addToCompilationCache, belongsToNodeModules, currentFileDepsCollector, serializeCompilationCache, startCollectingFileDeps, stopCollectingFileDeps } from './compilationCache';
-import { transformHook, resolveHook, setBabelPlugins } from './transform';
+import { addToCompilationCache, currentFileDepsCollector, serializeCompilationCache, startCollectingFileDeps, stopCollectingFileDeps } from './compilationCache';
+import { transformHook, resolveHook, setTransformConfig, shouldTransform } from './transform';
 import { PortTransport } from './portTransport';
 
 // Node < 18.6: defaultResolve takes 3 arguments.
@@ -50,7 +50,7 @@ async function load(moduleUrl: string, context: { format?: string }, defaultLoad
 
   const filename = url.fileURLToPath(moduleUrl);
   // Bail for node_modules.
-  if (belongsToNodeModules(filename))
+  if (!shouldTransform(filename))
     return defaultLoad(moduleUrl, context, defaultLoad);
 
   const code = fs.readFileSync(filename, 'utf-8');
@@ -68,8 +68,8 @@ let transport: PortTransport | undefined;
 
 function globalPreload(context: { port: MessagePort }) {
   transport = new PortTransport(context.port, async (method, params) => {
-    if (method === 'setBabelPlugins') {
-      setBabelPlugins(params.plugins);
+    if (method === 'setTransformConfig') {
+      setTransformConfig(params.config);
       return;
     }
 

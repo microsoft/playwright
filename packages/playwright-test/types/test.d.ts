@@ -570,6 +570,31 @@ interface TestConfig {
    */
   webServer?: TestConfigWebServer | TestConfigWebServer[];
   /**
+   * Transpiler configuration.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   build: {
+   *     external: '**\/*bundle.js',
+   *   },
+   * });
+   * ```
+   *
+   */
+  build?: {
+    /**
+     * Paths to exclude from the transpilation expressed as glob patterns. Typically heavy JS bundles your tests
+     * reference.
+     */
+    external?: Array<string>;
+  };
+
+  /**
    * Configuration for the `expect` assertion library. Learn more about [various timeouts](https://playwright.dev/docs/test-timeouts).
    *
    * **Usage**
