@@ -75,7 +75,7 @@ export const SourceTab: React.FunctionComponent<{
     return { source, highlight, targetLine, fileName };
   }, [action, selectedFrame, rootDir, fallbackLocation], { source: { errors: [], content: 'Loading\u2026' }, highlight: [] });
 
-  return <SplitView sidebarSize={200} orientation='horizontal' sidebarHidden={hideStackFrames}>
+  return <SplitView sidebarSize={200} orientation='vertical' sidebarHidden={hideStackFrames}>
     <div className='vbox' data-testid='source-code'>
       {fileName && <div className='source-tab-file-name'>{fileName}</div>}
       <CodeMirrorWrapper text={source.content || ''} language='javascript' highlight={highlight} revealLine={targetLine} readOnly={true} lineNumbers={true} />

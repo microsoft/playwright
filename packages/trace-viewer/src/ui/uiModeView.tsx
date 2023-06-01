@@ -557,7 +557,8 @@ const TraceView: React.FC<{
     initialSelection={initialSelection}
     onSelectionChanged={onSelectionChanged}
     fallbackLocation={item.testFile}
-    isLive={model?.isLive} />;
+    isLive={model?.isLive}
+    drawer='bottom' />;
 };
 
 declare global {

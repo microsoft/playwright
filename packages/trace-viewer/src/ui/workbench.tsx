@@ -41,7 +41,8 @@ export const Workbench: React.FunctionComponent<{
   initialSelection?: ActionTraceEventInContext,
   onSelectionChanged?: (action: ActionTraceEventInContext) => void,
   isLive?: boolean,
-}> = ({ model, hideTimelineBars, hideStackFrames, showSourcesFirst, rootDir, fallbackLocation, initialSelection, onSelectionChanged, isLive }) => {
+  drawer?: 'bottom' | 'right',
+}> = ({ model, hideTimelineBars, hideStackFrames, showSourcesFirst, rootDir, fallbackLocation, initialSelection, onSelectionChanged, isLive, drawer }) => {
   const [selectedAction, setSelectedAction] = React.useState<ActionTraceEventInContext | undefined>(undefined);
   const [highlightedAction, setHighlightedAction] = React.useState<ActionTraceEventInContext | undefined>();
   const [selectedNavigatorTab, setSelectedNavigatorTab] = React.useState<string>('actions');
@@ -126,7 +127,7 @@ export const Workbench: React.FunctionComponent<{
       onSelected={onActionSelected}
       hideTimelineBars={hideTimelineBars}
     />
-    <SplitView sidebarSize={250} orientation='vertical'>
+    <SplitView sidebarSize={250} orientation={drawer === 'bottom' ? 'vertical' : 'horizontal'}>
       <SplitView sidebarSize={250} orientation='horizontal' sidebarIsFirst={true}>
         <SnapshotTab action={activeAction} sdkLanguage={sdkLanguage} testIdAttributeName={model?.testIdAttributeName || 'data-testid'} />
         <TabbedPane tabs={
