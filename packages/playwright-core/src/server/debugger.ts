@@ -120,6 +120,8 @@ export class Debugger extends EventEmitter implements InstrumentationListener {
 }
 
 function shouldPauseOnCall(sdkObject: SdkObject, metadata: CallMetadata): boolean {
+  if (sdkObject.attribution.playwright.options.isServer)
+    return false;
   if (!sdkObject.attribution.browser?.options.headful && !isUnderTest())
     return false;
   return metadata.method === 'pause';

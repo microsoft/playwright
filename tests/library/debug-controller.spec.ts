@@ -230,19 +230,6 @@ test('test', async ({ page }) => {
   });
 });
 
-
-test('should pause and resume', async ({ backend, connectedBrowser }) => {
-  const events = [];
-  backend.on('paused', event => events.push(event));
-  const context = await connectedBrowser._newContextForReuse();
-  const page = await context.newPage();
-  await page.setContent('<button>Submit</button>');
-  const pausePromise = page.pause();
-  await expect.poll(() => events[events.length - 1]).toEqual({ paused: true });
-  await backend.resume();
-  await pausePromise;
-});
-
 test('should reset routes before reuse', async ({ server, connectedBrowserFactory }) => {
   const browser1 = await connectedBrowserFactory();
   const context1 = await browser1._newContextForReuse();
