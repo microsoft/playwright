@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { TestBeginPayload, TestEndPayload, DonePayload, TestOutputPayload, StepBeginPayload, StepEndPayload, TeardownErrorsPayload, RunPayload, SerializedConfig } from '../common/ipc';
+import type { TestBeginPayload, TestEndPayload, DonePayload, TestOutputPayload, StepBeginPayload, StepEndPayload, TeardownErrorsPayload, RunPayload, SerializedConfig, AttachmentPayload } from '../common/ipc';
 import { serializeConfig } from '../common/ipc';
 import type { TestResult, TestStep, TestError } from '../../types/testReporter';
 import type { Suite } from '../common/test';
@@ -207,6 +207,7 @@ export class Dispatcher {
       worker.removeListener('testEnd', onTestEnd);
       worker.removeListener('stepBegin', onStepBegin);
       worker.removeListener('stepEnd', onStepEnd);
+      worker.removeListener('attach', onAttach);
       worker.removeListener('done', onDone);
       worker.removeListener('exit', onExit);
       doneCallback();
@@ -245,12 +246,6 @@ export class Dispatcher {
       result.duration = params.duration;
       result.errors = params.errors;
       result.error = result.errors[0];
-      result.attachments = params.attachments.map(a => ({
-        name: a.name,
-        path: a.path,
-        contentType: a.contentType,
-        body: a.body !== undefined ? Buffer.from(a.body, 'base64') : undefined
-      }));
       result.status = params.status;
       test.expectedStatus = params.expectedStatus;
       test.annotations = params.annotations;
@@ -311,6 +306,19 @@ export class Dispatcher {
       this._reporter.onStepEnd(data.test, result, step);
     };
     worker.on('stepEnd', onStepEnd);
+
+    const onAttach = (params: AttachmentPayload) => {
+      const data = this._testById.get(params.testId)!;
+      const { result } = data.resultByWorkerIndex.get(worker.workerIndex)!;
+      const attachment = {
+        name: params.name,
+        path: params.path,
+        contentType: params.contentType,
+        body: params.body !== undefined ? Buffer.from(params.body, 'base64') : undefined
+      };
+      result.attachments.push(attachment);
+    };
+    worker.on('attach', onAttach);
 
     const onDone = (params: DonePayload & { unexpectedExitError?: TestError }) => {
       this._queuedOrRunningHashCount.set(worker.hash(), this._queuedOrRunningHashCount.get(worker.hash())! - 1);

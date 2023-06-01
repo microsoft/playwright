@@ -28,6 +28,10 @@ export const AttachmentsTab: React.FunctionComponent<{
   const expected = action.attachments?.find(a => a.name.endsWith('-expected.png') && (a.path || a.sha1)) as TestAttachment | undefined;
   const actual = action.attachments?.find(a => a.name.endsWith('-actual.png') && (a.path || a.sha1)) as TestAttachment | undefined;
   const diff = action.attachments?.find(a => a.name.endsWith('-diff.png') && (a.path || a.sha1)) as TestAttachment | undefined;
+  const screenshots = new Set(action.attachments?.filter(a => a.contentType.startsWith('image/')));
+  const otherAttachments = new Set(action.attachments || []);
+  screenshots.forEach(a => otherAttachments.delete(a));
+
   const traceUrl = action.context.traceUrl;
 
   return <div className='attachments-tab'>
@@ -38,9 +42,16 @@ export const AttachmentsTab: React.FunctionComponent<{
       actual: { attachment: { ...actual, path: attachmentURL(traceUrl, actual) } },
       diff: diff ? { attachment: { ...diff, path: attachmentURL(traceUrl, diff) } } : undefined,
     }} />}
-    {<div className='attachments-section'>Attachments</div>}
-    {action.attachments?.map(a => {
-      return <div className='attachment-item'>
+    {screenshots.size ? <div className='attachments-section'>Screenshots</div> : undefined}
+    {[...screenshots].map((a, i) => {
+      return <div className='attachment-item' key={`screenshot-${i}`}>
+        <div><img src={attachmentURL(traceUrl, a)} /></div>
+        <div><a target='_blank' href={attachmentURL(traceUrl, a)}>{a.name}</a></div>
+      </div>;
+    })}
+    {otherAttachments.size ? <div className='attachments-section'>Attachments</div> : undefined}
+    {[...otherAttachments].map((a, i) => {
+      return <div className='attachment-item' key={`attachment-${i}`}>
         <a target='_blank' href={attachmentURL(traceUrl, a)}>{a.name}</a>
       </div>;
     })}

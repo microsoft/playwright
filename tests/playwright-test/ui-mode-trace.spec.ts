@@ -182,3 +182,26 @@ test('should show image diff', async ({ runUITest, server }) => {
   await expect(page.getByText('Expected', { exact: true })).toBeVisible();
   await expect(page.locator('.image-diff-view .image-wrapper img')).toBeVisible();
 });
+
+test('should show screenshot', async ({ runUITest, server }) => {
+  const { page } = await runUITest({
+    'playwright.config.js': `
+      module.exports = {
+        use: {
+          screenshot: 'on',
+          viewport: { width: 100, height: 100 }
+        }
+      };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('vrt test', async ({ page }) => {
+      });
+    `,
+  });
+
+  await page.getByText('vrt test').dblclick();
+  await page.getByText(/Attachments/).click();
+  await expect(page.getByText('Screenshots', { exact: true })).toBeVisible();
+  await expect(page.locator('.attachment-item img')).toHaveCount(1);
+});
