@@ -74,7 +74,7 @@ export async function showTraceViewer(traceUrls: string[], browserName: string, 
 
   const urlPrefix = await server.start({ preferredPort: port, host });
 
-  const traceViewerPlaywright = createPlaywright('javascript', true);
+  const traceViewerPlaywright = createPlaywright({ sdkLanguage: 'javascript', isInternalPlaywright: true });
   const traceViewerBrowser = isUnderTest() ? 'chromium' : browserName;
   const args = traceViewerBrowser === 'chromium' ? [
     '--app=data:text/html,',

@@ -99,7 +99,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       options: {},
       platform: process.platform,
       wallTime: 0,
-      sdkLanguage: (context as BrowserContext)?._browser?.options?.sdkLanguage,
+      sdkLanguage: context.attribution.playwright.options.sdkLanguage,
       testIdAttributeName
     };
     if (context instanceof BrowserContext) {
@@ -119,7 +119,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       throw new Error('Cannot start tracing while stopping');
 
     // Re-write for testing.
-    this._contextCreatedEvent.sdkLanguage = (this._context as BrowserContext)?._browser?.options?.sdkLanguage;
+    this._contextCreatedEvent.sdkLanguage = this._context.attribution.playwright.options.sdkLanguage;
 
     if (this._state) {
       const o = this._state.options;

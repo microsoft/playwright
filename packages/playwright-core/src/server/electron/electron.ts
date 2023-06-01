@@ -35,7 +35,8 @@ import type { Progress } from '../progress';
 import { ProgressController } from '../progress';
 import { helper } from '../helper';
 import { eventsHelper } from '../../utils/eventsHelper';
-import type { BrowserOptions, BrowserProcess, PlaywrightOptions } from '../browser';
+import type { BrowserOptions, BrowserProcess } from '../browser';
+import type { Playwright } from '../playwright';
 import type * as childProcess from 'child_process';
 import * as readline from 'readline';
 import { RecentLogsCollector } from '../../common/debugLogger';
@@ -116,11 +117,8 @@ export class ElectronApplication extends SdkObject {
 }
 
 export class Electron extends SdkObject {
-  private _playwrightOptions: PlaywrightOptions;
-
-  constructor(playwrightOptions: PlaywrightOptions) {
-    super(playwrightOptions.rootSdkObject, 'electron');
-    this._playwrightOptions = playwrightOptions;
+  constructor(playwright: Playwright) {
+    super(playwright, 'electron');
   }
 
   async launch(options: channels.ElectronLaunchParams): Promise<ElectronApplication> {
@@ -224,7 +222,6 @@ export class Electron extends SdkObject {
         noDefaultViewport: true,
       };
       const browserOptions: BrowserOptions = {
-        ...this._playwrightOptions,
         name: 'electron',
         isChromium: true,
         headful: true,
@@ -238,7 +235,7 @@ export class Electron extends SdkObject {
         originalLaunchOptions: {},
       };
       validateBrowserContextOptions(contextOptions, browserOptions);
-      const browser = await CRBrowser.connect(chromeTransport, browserOptions);
+      const browser = await CRBrowser.connect(this.attribution.playwright, chromeTransport, browserOptions);
       app = new ElectronApplication(this, browser, nodeConnection, launchedProcess);
       await app.initialize();
       return app;

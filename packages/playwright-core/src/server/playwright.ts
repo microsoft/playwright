@@ -16,7 +16,7 @@
 
 import { Android } from './android/android';
 import { AdbBackend } from './android/backendAdb';
-import type { Browser, PlaywrightOptions } from './browser';
+import type { Browser } from './browser';
 import { Chromium } from './chromium/chromium';
 import { Electron } from './electron/electron';
 import { Firefox } from './firefox/firefox';
@@ -28,6 +28,13 @@ import { debugLogger } from '../common/debugLogger';
 import type { Page } from './page';
 import { DebugController } from './debugController';
 import type { Language } from '../utils/isomorphic/locatorGenerators';
+
+type PlaywrightOptions = {
+  socksProxyPort?: number;
+  sdkLanguage: Language;
+  isInternalPlaywright?: boolean;
+  isServer?: boolean;
+};
 
 export class Playwright extends SdkObject {
   readonly selectors: Selectors;
@@ -41,8 +48,10 @@ export class Playwright extends SdkObject {
   private _allPages = new Set<Page>();
   private _allBrowsers = new Set<Browser>();
 
-  constructor(sdkLanguage: Language, isInternalPlaywright: boolean) {
-    super({ attribution: { isInternalPlaywright }, instrumentation: createInstrumentation() } as any, undefined, 'Playwright');
+  constructor(options: PlaywrightOptions) {
+    super({ attribution: {}, instrumentation: createInstrumentation() } as any, undefined, 'Playwright');
+    this.options = options;
+    this.attribution.playwright = this;
     this.instrumentation.addListener({
       onBrowserOpen: browser => this._allBrowsers.add(browser),
       onBrowserClose: browser => this._allBrowsers.delete(browser),
@@ -52,17 +61,12 @@ export class Playwright extends SdkObject {
         debugLogger.log(logName as any, message);
       }
     }, null);
-    this.options = {
-      rootSdkObject: this,
-      selectors: new Selectors(),
-      sdkLanguage: sdkLanguage,
-    };
-    this.chromium = new Chromium(this.options);
-    this.firefox = new Firefox(this.options);
-    this.webkit = new WebKit(this.options);
-    this.electron = new Electron(this.options);
-    this.android = new Android(new AdbBackend(), this.options);
-    this.selectors = this.options.selectors;
+    this.chromium = new Chromium(this);
+    this.firefox = new Firefox(this);
+    this.webkit = new WebKit(this);
+    this.electron = new Electron(this);
+    this.android = new Android(this, new AdbBackend());
+    this.selectors = new Selectors();
     this.debugController = new DebugController(this);
   }
 
@@ -79,6 +83,6 @@ export class Playwright extends SdkObject {
   }
 }
 
-export function createPlaywright(sdkLanguage: Language, isInternalPlaywright: boolean = false) {
-  return new Playwright(sdkLanguage, isInternalPlaywright);
+export function createPlaywright(options: PlaywrightOptions) {
+  return new Playwright(options);
 }

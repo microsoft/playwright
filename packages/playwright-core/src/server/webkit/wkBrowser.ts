@@ -31,6 +31,7 @@ import type { PageProxyMessageReceivedPayload } from './wkConnection';
 import { kPageProxyMessageReceived, WKConnection, WKSession } from './wkConnection';
 import { WKPage } from './wkPage';
 import { kBrowserClosedError } from '../../common/errors';
+import type { SdkObject } from '../instrumentation';
 
 const DEFAULT_USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Safari/605.1.15';
 const BROWSER_VERSION = '16.4';
@@ -42,8 +43,8 @@ export class WKBrowser extends Browser {
   readonly _wkPages = new Map<string, WKPage>();
   private readonly _eventListeners: RegisteredListener[];
 
-  static async connect(transport: ConnectionTransport, options: BrowserOptions): Promise<WKBrowser> {
-    const browser = new WKBrowser(transport, options);
+  static async connect(parent: SdkObject, transport: ConnectionTransport, options: BrowserOptions): Promise<WKBrowser> {
+    const browser = new WKBrowser(parent, transport, options);
     if ((options as any).__testHookOnConnectToBrowser)
       await (options as any).__testHookOnConnectToBrowser();
     const promises: Promise<any>[] = [
@@ -58,8 +59,8 @@ export class WKBrowser extends Browser {
     return browser;
   }
 
-  constructor(transport: ConnectionTransport, options: BrowserOptions) {
-    super(options);
+  constructor(parent: SdkObject, transport: ConnectionTransport, options: BrowserOptions) {
+    super(parent, options);
     this._connection = new WKConnection(transport, this._onDisconnect.bind(this), options.protocolLogger, options.browserLogsCollector);
     this._browserSession = this._connection.browserSession;
     this._eventListeners = [

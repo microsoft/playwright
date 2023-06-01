@@ -36,7 +36,7 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
   }
 
   async launchServer(options: LaunchServerOptions = {}): Promise<BrowserServer> {
-    const playwright = createPlaywright('javascript');
+    const playwright = createPlaywright({ sdkLanguage: 'javascript', isServer: true });
     // TODO: enable socks proxy once ipv6 is supported.
     const socksProxy = false ? new SocksProxy() : undefined;
     playwright.options.socksProxyPort = await socksProxy?.listen(0);

@@ -21,18 +21,19 @@ import path from 'path';
 import { kBrowserCloseMessageId } from './wkConnection';
 import { BrowserType, kNoXServerRunningError } from '../browserType';
 import type { ConnectionTransport } from '../transport';
-import type { BrowserOptions, PlaywrightOptions } from '../browser';
+import type { BrowserOptions } from '../browser';
 import type * as types from '../types';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
 import { wrapInASCIIBox } from '../../utils';
+import type { SdkObject } from '../instrumentation';
 
 export class WebKit extends BrowserType {
-  constructor(playwrightOptions: PlaywrightOptions) {
-    super('webkit', playwrightOptions);
+  constructor(parent: SdkObject) {
+    super(parent, 'webkit');
   }
 
   _connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<WKBrowser> {
-    return WKBrowser.connect(transport, options);
+    return WKBrowser.connect(this.attribution.playwright, transport, options);
   }
 
   _amendEnvironment(env: Env, userDataDir: string, executable: string, browserArguments: string[]): Env {

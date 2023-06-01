@@ -86,7 +86,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
       const selectorsRegistry = this.frame._page.context().selectors();
       for (const [name, { source }] of selectorsRegistry._engines)
         custom.push(`{ name: '${name}', engine: (${source}) }`);
-      const sdkLanguage = this.frame._page.context()._browser.options.sdkLanguage;
+      const sdkLanguage = this.frame.attribution.playwright.options.sdkLanguage;
       const source = `
         (() => {
         const module = {};

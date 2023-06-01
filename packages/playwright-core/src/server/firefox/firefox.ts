@@ -22,18 +22,19 @@ import { kBrowserCloseMessageId } from './ffConnection';
 import { BrowserType, kNoXServerRunningError } from '../browserType';
 import type { Env } from '../../utils/processLauncher';
 import type { ConnectionTransport } from '../transport';
-import type { BrowserOptions, PlaywrightOptions } from '../browser';
+import type { BrowserOptions } from '../browser';
 import type * as types from '../types';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
 import { wrapInASCIIBox } from '../../utils';
+import type { SdkObject } from '../instrumentation';
 
 export class Firefox extends BrowserType {
-  constructor(playwrightOptions: PlaywrightOptions) {
-    super('firefox', playwrightOptions);
+  constructor(parent: SdkObject) {
+    super(parent, 'firefox');
   }
 
   _connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<FFBrowser> {
-    return FFBrowser.connect(transport, options);
+    return FFBrowser.connect(this.attribution.playwright, transport, options);
   }
 
   _rewriteStartupError(error: Error): Error {

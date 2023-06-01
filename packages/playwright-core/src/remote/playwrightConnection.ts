@@ -108,7 +108,7 @@ export class PlaywrightConnection {
 
   private async _initLaunchBrowserMode(scope: RootDispatcher) {
     debugLogger.log('server', `[${this._id}] engaged launch mode for "${this._options.browserName}"`);
-    const playwright = createPlaywright('javascript');
+    const playwright = createPlaywright({ sdkLanguage: 'javascript', isServer: true });
 
     const ownedSocksProxy = await this._createOwnedSocksProxy(playwright);
     const browser = await playwright[this._options.browserName as 'chromium'].launch(serverSideCallMetadata(), this._options.launchOptions);
