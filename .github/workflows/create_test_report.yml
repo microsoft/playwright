@@ -8,6 +8,7 @@ jobs:
   merge-reports:
     permissions:
       pull-requests: write
+      checks: write
     timeout-minutes: 10
     runs-on: ubuntu-latest
     steps:
