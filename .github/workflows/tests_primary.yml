@@ -69,7 +69,7 @@ jobs:
       if: always() && github.event_name == 'pull_request'
       with:
         name: blob-report-${{ github.run_attempt }}
-        path: blob-report
+        path: test-results/blob-report
         retention-days: 30
 
   test_linux_chromium_tot:
@@ -150,7 +150,7 @@ jobs:
       if: always() && github.event_name == 'pull_request'
       with:
         name: blob-report-${{ github.run_attempt }}
-        path: blob-report
+        path: test-results/blob-report
         retention-days: 30
 
   test_web_components:
