@@ -216,7 +216,7 @@ jobs:
       if: always() && github.event_name == 'pull_request'
       with:
         name: blob-report-${{ github.run_attempt }}
-        path: blob-report
+        path: test-results/blob-report
         retention-days: 30
 
   chrome_stable_linux:
