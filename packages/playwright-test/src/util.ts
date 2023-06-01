@@ -342,11 +342,9 @@ export function resolveImportSpecifierExtension(resolved: string): string | unde
 }
 
 function fileExists(resolved: string) {
-  // @ts-ignore: thowIfNoEntry is valid, but missing from 14.x @types/node
   return fs.statSync(resolved, { throwIfNoEntry: false })?.isFile();
 }
 
 function dirExists(resolved: string) {
-  // @ts-ignore: thowIfNoEntry is valid, but missing from 14.x @types/node
   return fs.statSync(resolved, { throwIfNoEntry: false })?.isDirectory();
 }
