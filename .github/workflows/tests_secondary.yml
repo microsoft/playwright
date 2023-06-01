@@ -656,3 +656,24 @@ jobs:
     - run: npx playwright install-deps
     - run: utils/build/build-playwright-driver.sh
 
+  test_linux_chromium_headless_new:
+    name: Linux Chromium Headless New
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
+      with:
+        node-version: 16
+    - run: npm ci
+      env:
+        DEBUG: pw:install
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+    - run: npm run build
+    - run: npx playwright install --with-deps chromium
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --project=${{ matrix.browser }}
+      env:
+        PLAYWRIGHT_CHROMIUM_USE_HEADLESS_NEW: 1
+    - run: node tests/config/checkCoverage.js chromium
+    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
+      if: always()
+      shell: bash

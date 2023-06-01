@@ -296,8 +296,12 @@ export class Chromium extends BrowserType {
     if (options.devtools)
       chromeArguments.push('--auto-open-devtools-for-tabs');
     if (options.headless) {
+      if (process.env.PLAYWRIGHT_CHROMIUM_USE_HEADLESS_NEW)
+        chromeArguments.push('--headless=new');
+      else
+        chromeArguments.push('--headless');
+
       chromeArguments.push(
-          '--headless',
           '--hide-scrollbars',
           '--mute-audio',
           '--blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4',
