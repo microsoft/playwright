@@ -15,7 +15,7 @@
  */
 
 import { test, expect } from './playwright-test-fixtures';
-import { parseTrace } from '../config/utils';
+import { parseTrace, parseTraceRaw } from '../config/utils';
 import fs from 'fs';
 
 test.describe.configure({ mode: 'parallel' });
@@ -577,4 +577,33 @@ test('should opt out of attachments', async ({ runInlineTest, server }, testInfo
   ]);
   expect(trace.actions[1].attachments).toEqual(undefined);
   expect([...trace.resources.keys()].filter(f => f.startsWith('resources/'))).toHaveLength(0);
+});
+
+test('should record with custom page fixture', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test as base, expect } from '@playwright/test';
+
+      const test = base.extend({
+        myPage: async ({ browser }, use) => {
+          await use(await browser.newPage());
+        },
+      });
+
+      test.use({ trace: 'on' });
+
+      test('fails', async ({ myPage }, testInfo) => {
+        await myPage.setContent('hello');
+        throw new Error('failure!');
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output).toContain('failure!');
+  const trace = await parseTraceRaw(testInfo.outputPath('test-results', 'a-fails', 'trace.zip'));
+  expect(trace.events).toContainEqual(expect.objectContaining({
+    type: 'frame-snapshot',
+  }));
 });
