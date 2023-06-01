@@ -5,7 +5,7 @@
   "repository": "github:Microsoft/playwright",
   "homepage": "https://playwright.dev",
   "engines": {
-    "node": ">=14"
+    "node": ">=16"
   },
   "author": {
     "name": "Microsoft Corporation"
