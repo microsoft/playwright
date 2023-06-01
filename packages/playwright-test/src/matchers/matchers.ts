@@ -18,12 +18,13 @@ import type { Locator, Page, APIResponse } from 'playwright-core';
 import type { FrameExpectOptions } from 'playwright-core/lib/client/types';
 import { colors } from 'playwright-core/lib/utilsBundle';
 import type { Expect } from '../../types/test';
-import { expectTypes, callLogText } from '../util';
+import { expectTypes, callLogText, filteredStackTrace } from '../util';
 import { toBeTruthy } from './toBeTruthy';
 import { toEqual } from './toEqual';
 import { toExpectedTextValues, toMatchText } from './toMatchText';
-import { constructURLBasedOnBaseURL, isTextualMimeType, pollAgainstTimeout } from 'playwright-core/lib/utils';
+import { captureRawStack, constructURLBasedOnBaseURL, isTextualMimeType, pollAgainstTimeout } from 'playwright-core/lib/utils';
 import { currentTestInfo } from '../common/globals';
+import type { TestStepInternal } from '../worker/testInfo';
 
 interface LocatorEx extends Locator {
   _expect(expression: string, options: Omit<FrameExpectOptions, 'expectedValue'> & { expectedValue?: any }): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }>;
@@ -341,27 +342,43 @@ export async function toPass(
   const testInfo = currentTestInfo();
   const timeout = options.timeout !== undefined ? options.timeout : 0;
 
-  const result = await pollAgainstTimeout<Error|undefined>(async () => {
-    if (testInfo && currentTestInfo() !== testInfo)
-      return { continuePolling: false, result: undefined };
-    try {
-      await callback();
-      return { continuePolling: this.isNot, result: undefined };
-    } catch (e) {
-      return { continuePolling: !this.isNot, result: e };
+  const rawStack = captureRawStack();
+  const stackFrames = filteredStackTrace(rawStack);
+
+  const runWithOrWithoutStep = async (callback: (step: TestStepInternal | undefined) => Promise<{ pass: boolean; message: () => string; }>) => {
+    if (!testInfo)
+      return await callback(undefined);
+    return await testInfo._runAsStep({
+      title: 'expect.toPass',
+      category: 'expect',
+      location: stackFrames[0],
+      insulateChildErrors: true,
+    }, callback);
+  };
+
+  return await runWithOrWithoutStep(async (step: TestStepInternal | undefined) => {
+    const result = await pollAgainstTimeout<Error|undefined>(async () => {
+      if (testInfo && currentTestInfo() !== testInfo)
+        return { continuePolling: false, result: undefined };
+      try {
+        await callback();
+        return { continuePolling: this.isNot, result: undefined };
+      } catch (e) {
+        return { continuePolling: !this.isNot, result: e };
+      }
+    }, timeout, options.intervals || [100, 250, 500, 1000]);
+
+    if (result.timedOut) {
+      const timeoutMessage = `Timeout ${timeout}ms exceeded while waiting on the predicate`;
+      const message = result.result ? [
+        result.result.message,
+        '',
+        `Call Log:`,
+        `- ${timeoutMessage}`,
+      ].join('\n') : timeoutMessage;
+      step?.complete({ error: { message } });
+      return { message: () => message, pass: this.isNot };
     }
-  }, timeout, options.intervals || [100, 250, 500, 1000]);
-
-  if (result.timedOut) {
-    const timeoutMessage = `Timeout ${timeout}ms exceeded while waiting on the predicate`;
-    const message = () => result.result ? [
-      result.result.message,
-      '',
-      `Call Log:`,
-      `- ${timeoutMessage}`,
-    ].join('\n') : timeoutMessage;
-
-    return { message, pass: this.isNot };
-  }
-  return { pass: !this.isNot, message: () => '' };
+    return { pass: !this.isNot, message: () => '' };
+  });
 }

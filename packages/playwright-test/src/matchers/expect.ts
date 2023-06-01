@@ -249,13 +249,13 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
 
       const defaultTitle = `expect${this._info.isPoll ? '.poll' : ''}${this._info.isSoft ? '.soft' : ''}${this._info.isNot ? '.not' : ''}.${matcherName}${argsSuffix}`;
       const wallTime = Date.now();
-      const step = testInfo._addStep({
+      const step = matcherName !== 'toPass' ? testInfo._addStep({
         location: stackFrames[0],
         category: 'expect',
         title: trimLongString(customMessage || defaultTitle, 1024),
         params: args[0] ? { expected: args[0] } : undefined,
         wallTime
-      });
+      }) : undefined;
 
       const reportStepError = (jestError: Error) => {
         const message = jestError.message;
@@ -283,7 +283,7 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
         const serializedError = serializeError(jestError);
         // Serialized error has filtered stack trace.
         jestError.stack = serializedError.stack;
-        step.complete({ error: serializedError });
+        step?.complete({ error: serializedError });
         if (this._info.isSoft)
           testInfo._failWithError(serializedError, false /* isHardError */);
         else
@@ -291,7 +291,7 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
       };
 
       const finalizer = () => {
-        step.complete({});
+        step?.complete({});
       };
 
       // Process the async matchers separately to preserve the zones in the stacks.
