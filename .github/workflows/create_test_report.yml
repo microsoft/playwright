@@ -20,6 +20,7 @@ jobs:
       env:
         DEBUG: pw:install
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+    - run: npm run build
 
     - name: Download blob report artifact
       if: ${{ always() && github.event.workflow_run.event == 'pull_request' }}
