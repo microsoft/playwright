@@ -1,0 +1,100 @@
+name: Publish Test Results
+on:
+  workflow_run:
+    workflows: ["tests 1", "tests 2"]
+    types:
+      - completed
+jobs:
+  merge-reports:
+    permissions:
+      pull-requests: write
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
+      with:
+        node-version: 16
+
+    - run: npm ci
+      env:
+        DEBUG: pw:install
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+
+    - name: Download blob report artifact
+      if: ${{ always() && github.event.workflow_run.event == 'pull_request' }}
+      uses: ./.github/actions/download-artifact
+      with:
+        name: 'blob-report-${{ github.event.workflow_run.run_attempt }}'
+        path: 'blob-report'
+
+    - name: Download blob report from Azure
+      if: ${{ always() && github.event.workflow_run.event == 'push' }}
+      uses: ./.github/actions/download-blob-report-from-azure
+      with:
+        blob_prefix: 'run-${{ github.event.workflow_run.id }}-${{ github.event.workflow_run.run_attempt }}-${{ github.sha }}'
+        output_dir: 'blob-report'
+        connection_string: '${{ secrets.AZURE_CONNECTION_STRING }}'
+
+    - name: Merge into HTML Report
+      run: |
+        npx playwright merge-reports --reporter html --attachments missing blob-report
+
+    - name: Upload HTML report to Azure
+      run: |
+        REPORT_DIR='run-${{ github.event.workflow_run.id }}-${{ github.event.workflow_run.run_attempt }}-${{ github.sha }}'
+        az storage blob upload-batch -s playwright-report -d "\$web/$REPORT_DIR" --connection-string "${{ secrets.AZURE_CONNECTION_STRING }}"
+        echo "Report url: https://pwblobreport01.z1.web.core.windows.net/$REPORT_DIR/index.html"
+
+    - name: Upload blob report to Azure
+      if: ${{ github.event.workflow_run.event == 'pull_request' }}
+      run: |
+        REPORT_DIR='run-${{ github.event.workflow_run.id }}-${{ github.event.workflow_run.run_attempt }}-${{ github.sha }}'
+        az storage blob upload-batch -s blob-report -d "\$web/$REPORT_DIR" --connection-string "${{ secrets.AZURE_CONNECTION_STRING }}"
+
+    - name: Comment on PR
+      uses: actions/github-script@v6
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          let prs = [];
+          if (context.payload.workflow_run.event === 'pull_request') {
+            prs = context.payload.workflow_run.pull_requests;
+          } else if (context.payload.workflow_run.event === 'push') {
+            const { data } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+              ...context.repo,
+              commit_sha: context.sha,
+            });
+            prs = data;
+          } else {
+            core.error('Unsupported workflow trigger event: ' + context.payload.workflow_run.event);
+            return;
+          }
+          if (prs.length === 0) {
+            core.error('No pull request found for commit ' + context.sha + ' and workflow triggered by: ' + context.payload.workflow_run.event);
+            return;
+          }
+          const reportDir = 'run-${{ github.event.workflow_run.id }}-${{ github.event.workflow_run.run_attempt }}-${{ github.sha }}';
+          const reportUrl = `https://pwblobreport01.z1.web.core.windows.net/${reportDir}/index.html`;
+          core.notice('Report url: ' + reportUrl);
+          const { data: response } = await github.rest.issues.createComment({
+            ...context.repo,
+            issue_number: prs[0].number,
+            body: `"${{ github.event.workflow_run.name }}" [report](${reportUrl}).`,
+          });
+          core.info('Posted comment: ' + response.html_url);
+
+          if (context.payload.workflow_run.event === 'push') {
+            const check = await github.rest.checks.create({
+              ...context.repo,
+              name: '${{ github.event.workflow_run.name }}',
+              head_sha: context.sha,
+              status: 'completed',
+              conclusion: 'success',
+              details_url: reportUrl,
+              output: {
+                title: '"${{ github.event.workflow_run.name }}" test results',
+                summary: '"${{ github.event.workflow_run.name }}" test results: ' + reportUrl,
+              }
+            });
+          }
