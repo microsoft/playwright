@@ -497,7 +497,7 @@ You can introduce fixtures that will provide a page authenticated as each role.
 Below is an example that [creates fixtures](./test-fixtures.md#creating-a-fixture) for two [Page Object Models](./pom.md) - admin POM and user POM. It assumes `adminStorageState.json` and `userStorageState.json` files were created in the global setup.
 
 ```js title="playwright/fixtures.ts"
-import { test as base, Page, Browser, Locator } from '@playwright/test';
+import { test as base, Page, Locator } from '@playwright/test';
 
 // Page Object Model for the "admin" page.
 // Here you can add locators and helper methods specific to the admin page.
@@ -555,7 +555,7 @@ export const test = base.extend<MyFixtures>({
 
 ```js title="tests/example.spec.ts"
 // Import test with our new fixtures.
-import { test, expect } from './fixtures';
+import { test, expect } from '../playwright/fixtures';
 
 // Use adminPage and userPage fixtures in the test.
 test('admin and user', async ({ adminPage, userPage }) => {
