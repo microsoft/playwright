@@ -1,23 +1,23 @@
 # Contributing
 
 - [How to Contribute](#how-to-contribute)
-  * [Getting Code](#getting-code)
-  * [Code reviews](#code-reviews)
-  * [Code Style](#code-style)
-  * [API guidelines](#api-guidelines)
-  * [Commit Messages](#commit-messages)
-  * [Writing Documentation](#writing-documentation)
-  * [Adding New Dependencies](#adding-new-dependencies)
-  * [Running & Writing Tests](#running--writing-tests)
-  * [Public API Coverage](#public-api-coverage)
+  - [Getting Code](#getting-code)
+  - [Code reviews](#code-reviews)
+  - [Code Style](#code-style)
+  - [API guidelines](#api-guidelines)
+  - [Commit Messages](#commit-messages)
+  - [Writing Documentation](#writing-documentation)
+  - [Adding New Dependencies](#adding-new-dependencies)
+  - [Running & Writing Tests](#running--writing-tests)
+  - [Public API Coverage](#public-api-coverage)
 - [Contributor License Agreement](#contributor-license-agreement)
-  * [Code of Conduct](#code-of-conduct)
+  - [Code of Conduct](#code-of-conduct)
 
 ## How to Contribute
 
 ### Getting Code
 
-Make sure you're running Node.js 14+ and NPM 8+, to verify and upgrade NPM do:
+Make sure you're running Node.js 16+ and NPM 8+, to verify and upgrade NPM do:
 
 ```bash
 node --version
@@ -90,17 +90,17 @@ description
 footer
 ```
 
-1. *label* is one of the following:
-    - `fix` - playwright bug fixes.
-    - `feat` - playwright features.
-    - `docs` - changes to docs, e.g. `docs(api.md): ..` to change documentation.
-    - `test` - changes to playwright tests infrastructure.
-    - `devops` - build-related work, e.g. CI related patches and general changes to the browser build infrastructure
-    - `chore` - everything that doesn't fall under previous categories
-2. *namespace* is put in parenthesis after label and is optional. Must be lowercase.
-3. *title* is a brief summary of changes.
-4. *description* is **optional**, new-line separated from title and is in present tense.
-5. *footer* is **optional**, new-line separated from *description* and contains "fixes" / "references" attribution to github issues.
+1. _label_ is one of the following:
+   - `fix` - playwright bug fixes.
+   - `feat` - playwright features.
+   - `docs` - changes to docs, e.g. `docs(api.md): ..` to change documentation.
+   - `test` - changes to playwright tests infrastructure.
+   - `devops` - build-related work, e.g. CI related patches and general changes to the browser build infrastructure
+   - `chore` - everything that doesn't fall under previous categories
+2. _namespace_ is put in parenthesis after label and is optional. Must be lowercase.
+3. _title_ is a brief summary of changes.
+4. _description_ is **optional**, new-line separated from title and is in present tense.
+5. _footer_ is **optional**, new-line separated from _description_ and contains "fixes" / "references" attribution to github issues.
 
 Example:
 
@@ -131,17 +131,19 @@ To build the documentation site locally and test how your changes will look in p
 ### Adding New Dependencies
 
 For all dependencies (both installation and development):
+
 - **Do not add** a dependency if the desired functionality is easily implementable.
 - If adding a dependency, it should be well-maintained and trustworthy.
 
 A barrier for introducing new installation dependencies is especially high:
+
 - **Do not add** installation dependency unless it's critical to project success.
 
 ### Running & Writing Tests
 
 - Every feature should be accompanied by a test.
 - Every public api event/method should be accompanied by a test.
-- Tests should be *hermetic*. Tests should not depend on external services.
+- Tests should be _hermetic_. Tests should not depend on external services.
 - Tests should work on all three platforms: Mac, Linux and Win. This is especially important for screenshot tests.
 
 Playwright tests are located in [`tests`](https://github.com/microsoft/playwright/blob/main/tests) and use `@playwright/test` test runner.
@@ -154,6 +156,7 @@ npm run test
 ```
 
 - To run all tests in Chromium
+
 ```bash
 npm run ctest # also `ftest` for firefox and `wtest` for WebKit
 ```
@@ -202,7 +205,7 @@ SLOW_MO=500 npm run wtest -- --headed
 
 - When should a test be marked with `skip` or `fail`?
 
-  - **`skip(condition)`**: This test *should ***never*** work* for `condition`
+  - **`skip(condition)`**: This test \*should **_never_** work\* for `condition`
     where `condition` is usually a certain browser like `FFOX` (for Firefox),
     `WEBKIT` (for WebKit), and `CHROMIUM` (for Chromium).
 
@@ -210,8 +213,7 @@ SLOW_MO=500 npm run wtest -- --headed
     with `skip(FFOX)` since an alt-click in Firefox will not produce a download
     even if a person was driving the browser.
 
-
-  - **`fail(condition)`**: This test *should ***eventually*** work* for `condition`
+  - **`fail(condition)`**: This test \*should **_eventually_** work\* for `condition`
     where `condition` is usually a certain browser like `FFOX` (for Firefox),
     `WEBKIT` (for WebKit), and `CHROMIUM` (for Chromium).
 
@@ -222,7 +224,7 @@ SLOW_MO=500 npm run wtest -- --headed
 
 ## Contributor License Agreement
 
-This project welcomes contributions and suggestions.  Most contributions require you to agree to a
+This project welcomes contributions and suggestions. Most contributions require you to agree to a
 Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us
 the rights to use your contribution. For details, visit https://cla.opensource.microsoft.com.
 
