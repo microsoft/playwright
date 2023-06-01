@@ -7,7 +7,7 @@ on:
 jobs:
   merge-reports:
     permissions:
-      pull-requests: read|write
+      pull-requests: write
       checks: write
     timeout-minutes: 10
     runs-on: ubuntu-latest
