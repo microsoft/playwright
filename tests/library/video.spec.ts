@@ -676,7 +676,7 @@ it.describe('screencast', () => {
 
   it('should capture full viewport', async ({ browserType, browserName, headless, isWindows }, testInfo) => {
     it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22411' });
-    it.fixme(browserName === 'chromium' && !headless, 'The square is not on the video');
+    it.fixme(browserName === 'chromium' && (!headless || !!process.env.PLAYWRIGHT_CHROMIUM_USE_HEADLESS_NEW), 'The square is not on the video');
     it.fixme(browserName === 'firefox' && isWindows, 'https://github.com/microsoft/playwright/issues/14405');
     const size = { width: 600, height: 400 };
     const browser = await browserType.launch();
@@ -711,7 +711,7 @@ it.describe('screencast', () => {
 
   it('should capture full viewport on hidpi', async ({ browserType, browserName, headless, isWindows, isLinux }, testInfo) => {
     it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22411' });
-    it.fixme(browserName === 'chromium' && !headless, 'The square is not on the video');
+    it.fixme(browserName === 'chromium' && (!headless || !!process.env.PLAYWRIGHT_CHROMIUM_USE_HEADLESS_NEW), 'The square is not on the video');
     it.fixme(browserName === 'firefox' && isWindows, 'https://github.com/microsoft/playwright/issues/14405');
     it.fixme(browserName === 'webkit' && isLinux, 'https://github.com/microsoft/playwright/issues/22617');
     const size = { width: 600, height: 400 };
@@ -748,7 +748,7 @@ it.describe('screencast', () => {
 
   it('should work with video+trace', async ({ browser, trace, headless }, testInfo) => {
     it.skip(trace === 'on');
-    it.fixme(!headless, 'different trace screencast image size on all browsers');
+    it.fixme(!headless || !!process.env.PLAYWRIGHT_CHROMIUM_USE_HEADLESS_NEW, 'different trace screencast image size on all browsers');
 
     const size = { width: 500, height: 400 };
     const traceFile = testInfo.outputPath('trace.zip');
