@@ -107,11 +107,11 @@ export abstract class BrowserContext extends SdkObject {
   }
 
   selectors(): Selectors {
-    return this._selectors || this._browser.options.selectors;
+    return this._selectors || this.attribution.playwright.selectors;
   }
 
   async _initialize() {
-    if (this.attribution.isInternalPlaywright)
+    if (this.attribution.playwright.options.isInternalPlaywright)
       return;
     // Debugger will pause execution upon page.pause in headed mode.
     this._debugger = new Debugger(this);

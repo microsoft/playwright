@@ -23,9 +23,10 @@ import type { BrowserType } from './browserType';
 import type { ElementHandle } from './dom';
 import type { Frame } from './frames';
 import type { Page } from './page';
+import type { Playwright } from './playwright';
 
 export type Attribution = {
-  isInternalPlaywright: boolean,
+  playwright: Playwright;
   browserType?: BrowserType;
   browser?: Browser;
   context?: BrowserContext | APIRequestContext;

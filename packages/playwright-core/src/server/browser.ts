@@ -25,8 +25,6 @@ import type { RecentLogsCollector } from '../common/debugLogger';
 import type { CallMetadata } from './instrumentation';
 import { SdkObject } from './instrumentation';
 import { Artifact } from './artifact';
-import type { Selectors } from './selectors';
-import type { Language } from '../utils/isomorphic/locatorGenerators';
 
 export interface BrowserProcess {
   onclose?: ((exitCode: number | null, signal: string | null) => void);
@@ -35,14 +33,7 @@ export interface BrowserProcess {
   close(): Promise<void>;
 }
 
-export type PlaywrightOptions = {
-  rootSdkObject: SdkObject;
-  selectors: Selectors;
-  socksProxyPort?: number;
-  sdkLanguage: Language,
-};
-
-export type BrowserOptions = PlaywrightOptions & {
+export type BrowserOptions = {
   name: string,
   isChromium: boolean,
   channel?: string,
@@ -74,8 +65,8 @@ export abstract class Browser extends SdkObject {
   readonly _idToVideo = new Map<string, { context: BrowserContext, artifact: Artifact }>();
   private _contextForReuse: { context: BrowserContext, hash: string } | undefined;
 
-  constructor(options: BrowserOptions) {
-    super(options.rootSdkObject, 'browser');
+  constructor(parent: SdkObject, options: BrowserOptions) {
+    super(parent, 'browser');
     this.attribution.browser = this;
     this.options = options;
     this.instrumentation.onBrowserOpen(this);

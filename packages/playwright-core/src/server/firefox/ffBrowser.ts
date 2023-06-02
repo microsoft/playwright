@@ -28,6 +28,7 @@ import type * as channels from '@protocol/channels';
 import { ConnectionEvents, FFConnection } from './ffConnection';
 import { FFPage } from './ffPage';
 import type { Protocol } from './protocol';
+import type { SdkObject } from '../instrumentation';
 
 export class FFBrowser extends Browser {
   _connection: FFConnection;
@@ -36,9 +37,9 @@ export class FFBrowser extends Browser {
   private _version = '';
   private _userAgent: string = '';
 
-  static async connect(transport: ConnectionTransport, options: BrowserOptions): Promise<FFBrowser> {
+  static async connect(parent: SdkObject, transport: ConnectionTransport, options: BrowserOptions): Promise<FFBrowser> {
     const connection = new FFConnection(transport, options.protocolLogger, options.browserLogsCollector);
-    const browser = new FFBrowser(connection, options);
+    const browser = new FFBrowser(parent, connection, options);
     if ((options as any).__testHookOnConnectToBrowser)
       await (options as any).__testHookOnConnectToBrowser();
     let firefoxUserPrefs = options.persistent ? {} : options.originalLaunchOptions.firefoxUserPrefs ?? {};
@@ -61,8 +62,8 @@ export class FFBrowser extends Browser {
     return browser;
   }
 
-  constructor(connection: FFConnection, options: BrowserOptions) {
-    super(options);
+  constructor(parent: SdkObject, connection: FFConnection, options: BrowserOptions) {
+    super(parent, options);
     this._connection = connection;
     this._ffPages = new Map();
     this._contexts = new Map();

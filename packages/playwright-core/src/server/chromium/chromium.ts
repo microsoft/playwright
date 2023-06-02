@@ -28,7 +28,7 @@ import { BrowserType, kNoXServerRunningError } from '../browserType';
 import type { ConnectionTransport, ProtocolRequest } from '../transport';
 import { WebSocketTransport } from '../transport';
 import { CRDevTools } from './crDevTools';
-import type { BrowserOptions, BrowserProcess, PlaywrightOptions } from '../browser';
+import type { BrowserOptions, BrowserProcess } from '../browser';
 import { Browser } from '../browser';
 import type * as types from '../types';
 import type * as channels from '@protocol/channels';
@@ -43,7 +43,7 @@ import type { Progress } from '../progress';
 import { ProgressController } from '../progress';
 import { TimeoutSettings } from '../../common/timeoutSettings';
 import { helper } from '../helper';
-import type { CallMetadata } from '../instrumentation';
+import type { CallMetadata, SdkObject } from '../instrumentation';
 import type http from 'http';
 import { registry } from '../registry';
 import { ManualPromise } from '../../utils/manualPromise';
@@ -55,8 +55,8 @@ const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');
 export class Chromium extends BrowserType {
   private _devtools: CRDevTools | undefined;
 
-  constructor(playwrightOptions: PlaywrightOptions) {
-    super('chromium', playwrightOptions);
+  constructor(parent: SdkObject) {
+    super(parent, 'chromium');
 
     if (debugMode())
       this._devtools = this._createDevTools();
@@ -99,7 +99,6 @@ export class Chromium extends BrowserType {
     const browserProcess: BrowserProcess = { close: doClose, kill: doClose };
     const persistent: channels.BrowserNewContextParams = { noDefaultViewport: true };
     const browserOptions: BrowserOptions = {
-      ...this._playwrightOptions,
       slowMo: options.slowMo,
       name: 'chromium',
       isChromium: true,
@@ -120,7 +119,7 @@ export class Chromium extends BrowserType {
     };
     validateBrowserContextOptions(persistent, browserOptions);
     progress.throwIfAborted();
-    const browser = await CRBrowser.connect(chromeTransport, browserOptions);
+    const browser = await CRBrowser.connect(this.attribution.playwright, chromeTransport, browserOptions);
     browser.on(Browser.Events.Disconnected, doCleanup);
     return browser;
   }
@@ -137,7 +136,7 @@ export class Chromium extends BrowserType {
       devtools = this._createDevTools();
       await (options as any).__testHookForDevTools(devtools);
     }
-    return CRBrowser.connect(transport, options, devtools);
+    return CRBrowser.connect(this.attribution.playwright, transport, options, devtools);
   }
 
   _rewriteStartupError(error: Error): Error {
@@ -309,14 +308,14 @@ export class Chromium extends BrowserType {
       const proxyURL = new URL(proxy.server);
       const isSocks = proxyURL.protocol === 'socks5:';
       // https://www.chromium.org/developers/design-documents/network-settings
-      if (isSocks && !this._playwrightOptions.socksProxyPort) {
+      if (isSocks && !this.attribution.playwright.options.socksProxyPort) {
         // https://www.chromium.org/developers/design-documents/network-stack/socks-proxy
         chromeArguments.push(`--host-resolver-rules="MAP * ~NOTFOUND , EXCLUDE ${proxyURL.hostname}"`);
       }
       chromeArguments.push(`--proxy-server=${proxy.server}`);
       const proxyBypassRules = [];
       // https://source.chromium.org/chromium/chromium/src/+/master:net/docs/proxy.md;l=548;drc=71698e610121078e0d1a811054dcf9fd89b49578
-      if (this._playwrightOptions.socksProxyPort)
+      if (this.attribution.playwright.options.socksProxyPort)
         proxyBypassRules.push('<-loopback>');
       if (proxy.bypass)
         proxyBypassRules.push(...proxy.bypass.split(',').map(t => t.trim()).map(t => t.startsWith('.') ? '*' + t : t));

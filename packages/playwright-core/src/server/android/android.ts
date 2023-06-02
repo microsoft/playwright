@@ -23,7 +23,7 @@ import type * as stream from 'stream';
 import { wsReceiver, wsSender } from '../../utilsBundle';
 import { createGuid, makeWaitForNextTask, isUnderTest } from '../../utils';
 import { removeFolders } from '../../utils/fileUtils';
-import type { BrowserOptions, BrowserProcess, PlaywrightOptions } from '../browser';
+import type { BrowserOptions, BrowserProcess } from '../browser';
 import type { BrowserContext } from '../browserContext';
 import { validateBrowserContextOptions } from '../browserContext';
 import { ProgressController } from '../progress';
@@ -63,12 +63,10 @@ export class Android extends SdkObject {
   private _backend: Backend;
   private _devices = new Map<string, AndroidDevice>();
   readonly _timeoutSettings: TimeoutSettings;
-  readonly _playwrightOptions: PlaywrightOptions;
 
-  constructor(backend: Backend, playwrightOptions: PlaywrightOptions) {
-    super(playwrightOptions.rootSdkObject, 'android');
+  constructor(parent: SdkObject, backend: Backend) {
+    super(parent, 'android');
     this._backend = backend;
-    this._playwrightOptions = playwrightOptions;
     this._timeoutSettings = new TimeoutSettings();
   }
 
@@ -326,7 +324,6 @@ export class AndroidDevice extends SdkObject {
       cleanupArtifactsDir().catch(e => debug('pw:android')(`could not cleanup artifacts dir: ${e}`));
     });
     const browserOptions: BrowserOptions = {
-      ...this._android._playwrightOptions,
       name: 'clank',
       isChromium: true,
       slowMo: 0,
@@ -342,7 +339,7 @@ export class AndroidDevice extends SdkObject {
     };
     validateBrowserContextOptions(options, browserOptions);
 
-    const browser = await CRBrowser.connect(androidBrowser, browserOptions);
+    const browser = await CRBrowser.connect(this.attribution.playwright, androidBrowser, browserOptions);
     const controller = new ProgressController(serverSideCallMetadata(), this);
     const defaultContext = browser._defaultContext!;
     await controller.run(async progress => {

@@ -49,9 +49,9 @@ export class PlaywrightServer {
   constructor(options: ServerOptions) {
     this._options = options;
     if (options.preLaunchedBrowser)
-      this._preLaunchedPlaywright = options.preLaunchedBrowser.options.rootSdkObject as Playwright;
+      this._preLaunchedPlaywright = options.preLaunchedBrowser.attribution.playwright;
     if (options.preLaunchedAndroidDevice)
-      this._preLaunchedPlaywright = options.preLaunchedAndroidDevice._android._playwrightOptions.rootSdkObject as Playwright;
+      this._preLaunchedPlaywright = options.preLaunchedAndroidDevice._android.attribution.playwright;
   }
 
   async listen(port: number = 0): Promise<string> {
@@ -114,7 +114,7 @@ export class PlaywrightServer {
       const isExtension = this._options.mode === 'extension';
       if (isExtension) {
         if (!this._preLaunchedPlaywright)
-          this._preLaunchedPlaywright = createPlaywright('javascript');
+          this._preLaunchedPlaywright = createPlaywright({ sdkLanguage: 'javascript', isServer: true });
       }
 
       let clientType: ClientType = 'launch-browser';

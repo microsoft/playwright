@@ -33,7 +33,7 @@ export function printApiJson() {
 export function runDriver() {
   const dispatcherConnection = new DispatcherConnection();
   new RootDispatcher(dispatcherConnection, async (rootScope, { sdkLanguage }) => {
-    const playwright = createPlaywright(sdkLanguage);
+    const playwright = createPlaywright({ sdkLanguage });
     return new PlaywrightDispatcher(rootScope, playwright);
   });
   const transport = new PipeTransport(process.stdout, process.stdin);

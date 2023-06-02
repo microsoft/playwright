@@ -22,7 +22,7 @@ import { AndroidServerLauncherImpl } from './androidServerImpl';
 import type { Language } from './utils/isomorphic/locatorGenerators';
 
 export function createInProcessPlaywright(): PlaywrightAPI {
-  const playwright = createPlaywright((process.env.PW_LANG_NAME as Language | undefined) || 'javascript');
+  const playwright = createPlaywright({ sdkLanguage: (process.env.PW_LANG_NAME as Language | undefined) || 'javascript' });
 
   const clientConnection = new Connection();
   const dispatcherConnection = new DispatcherConnection(true /* local */);

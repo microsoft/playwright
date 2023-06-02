@@ -23,7 +23,7 @@ import type { BrowserName } from './registry';
 import { registry } from './registry';
 import type { ConnectionTransport } from './transport';
 import { WebSocketTransport } from './transport';
-import type { BrowserOptions, Browser, BrowserProcess, PlaywrightOptions } from './browser';
+import type { BrowserOptions, Browser, BrowserProcess } from './browser';
 import type { Env } from '../utils/processLauncher';
 import { launchProcess, envArrayToObject } from '../utils/processLauncher';
 import { PipeTransport } from './pipeTransport';
@@ -45,17 +45,15 @@ export const kNoXServerRunningError = 'Looks like you launched a headed browser 
 
 export abstract class BrowserType extends SdkObject {
   private _name: BrowserName;
-  readonly _playwrightOptions: PlaywrightOptions;
 
-  constructor(browserName: BrowserName, playwrightOptions: PlaywrightOptions) {
-    super(playwrightOptions.rootSdkObject, 'browser-type');
+  constructor(parent: SdkObject, browserName: BrowserName) {
+    super(parent, 'browser-type');
     this.attribution.browserType = this;
-    this._playwrightOptions = playwrightOptions;
     this._name = browserName;
   }
 
   executablePath(): string {
-    return registry.findExecutable(this._name).executablePath(this._playwrightOptions.sdkLanguage) || '';
+    return registry.findExecutable(this._name).executablePath(this.attribution.playwright.options.sdkLanguage) || '';
   }
 
   name(): string {
@@ -107,7 +105,6 @@ export abstract class BrowserType extends SdkObject {
     if ((options as any).__testHookBeforeCreateBrowser)
       await (options as any).__testHookBeforeCreateBrowser();
     const browserOptions: BrowserOptions = {
-      ...this._playwrightOptions,
       name: this._name,
       isChromium: this._name === 'chromium',
       channel: options.channel,
@@ -184,8 +181,8 @@ export abstract class BrowserType extends SdkObject {
       const registryExecutable = registry.findExecutable(options.channel || this._name);
       if (!registryExecutable || registryExecutable.browserName !== this._name)
         throw new Error(`Unsupported ${this._name} channel "${options.channel}"`);
-      executable = registryExecutable.executablePathOrDie(this._playwrightOptions.sdkLanguage);
-      await registryExecutable.validateHostRequirements(this._playwrightOptions.sdkLanguage);
+      executable = registryExecutable.executablePathOrDie(this.attribution.playwright.options.sdkLanguage);
+      await registryExecutable.validateHostRequirements(this.attribution.playwright.options.sdkLanguage);
     }
 
     const waitForWSEndpoint = (options.useWebSocket || options.args?.some(a => a.startsWith('--remote-debugging-port'))) ? new ManualPromise<string>() : undefined;
@@ -275,8 +272,8 @@ export abstract class BrowserType extends SdkObject {
       headless = false;
     if (downloadsPath && !path.isAbsolute(downloadsPath))
       downloadsPath = path.join(process.cwd(), downloadsPath);
-    if (this._playwrightOptions.socksProxyPort)
-      proxy = { server: `socks5://127.0.0.1:${this._playwrightOptions.socksProxyPort}` };
+    if (this.attribution.playwright.options.socksProxyPort)
+      proxy = { server: `socks5://127.0.0.1:${this.attribution.playwright.options.socksProxyPort}` };
     return { ...options, devtools, headless, downloadsPath, proxy };
   }
 

@@ -358,7 +358,7 @@ class ContextRecorder extends EventEmitter {
     this._context = context;
     this._params = params;
     this._recorderSources = [];
-    const language = params.language || context._browser.options.sdkLanguage;
+    const language = params.language || context.attribution.playwright.options.sdkLanguage;
     this.setOutput(language, params.outputFile);
     const generator = new CodeGenerator(context._browser.options.name, params.mode === 'recording', params.launchOptions || {}, params.contextOptions || {}, params.device, params.saveStorage);
     generator.on('change', () => {
