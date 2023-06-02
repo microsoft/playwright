@@ -183,7 +183,6 @@ export default defineConfig({
   ],
 });
 ```
-
 ### Running Sequence
 
 When working with tests that have a dependency, the dependency will always run first and once all tests from this project have passed, then the other projects will run in parallel.
@@ -205,6 +204,61 @@ Running order:
 1. “e2e tests” is not run!
 
 <img width="70%" style={{display: 'flex', margin: 'auto'}} alt="Browser login project is blue, database is red and e2e tests relies on both" loading="lazy" src="https://user-images.githubusercontent.com/13063165/225938262-33c1b78f-f092-4762-a478-7f8cbc1e3b21.jpg" />
+
+### Teardown
+
+You can also teardown your setup by adding a teardown property to your setup project. This will run after all dependencies have run.
+
+First we add a new project called teardown and give it a name such as `cleanup db`. We then give it a `testMatch` property in order to match the file called `global.teardown.ts`:
+
+```js
+{
+  name: 'cleanup db',
+  testMatch: /global.teardown\.ts/,
+},
+```
+Then we add the [`property: TestProject.teardown`] property to our setup project with the name `cleanup db` which is the name we gave to our teardown project in the previous step:
+
+```js
+{
+  name: 'setup',
+  testMatch: /global.setup\.ts/,
+  teardown: 'cleanup db',
+},
+```
+The complete project setup will look something like this:
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  projects: [
+    {
+      name: 'setup db',
+      testMatch: /global.setup\.ts/,
+      teardown: 'cleanup db',
+    },
+    {
+      name: 'cleanup db',
+      testMatch: /global.teardown\.ts/,
+    },
+    {
+      name: 'chromium',
+      use: devices['Desktop Chrome'],
+      dependencies: ['setup'],
+    },
+    {
+      name: 'webkit',
+      use: devices['Desktop Safari'],
+      dependencies: ['setup'],
+    },
+  ],
+});
+```
+First the setup project will run, then the chromium and webkit projects will run in parallel and finally the teardown project will run.
+
+<img style={{display: 'flex', margin: 'auto'}} alt="global setup and teardown" loading="lazy" src="https://github.com/microsoft/playwright/assets/13063165/dfcf10a9-f601-4d0c-bd8d-9490e6efbf7a" />
+
 
 ## Custom project parameters
 
