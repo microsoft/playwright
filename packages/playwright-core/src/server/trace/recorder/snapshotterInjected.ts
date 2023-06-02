@@ -311,28 +311,6 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
       // Ensure we are up to date.
       this._handleMutations(this._observer.takeRecords());
 
-      // Restore scroll positions for all ancestors of action target elements
-      // that will show the highlight/red dot in the trace viewer.
-      // Workaround for chromium regression:
-      // https://bugs.chromium.org/p/chromium/issues/detail?id=1324419
-      // https://github.com/microsoft/playwright/issues/14037
-      // TODO: remove after chromium is fixed?
-      const elementsToRestoreScrollPosition = new Set<Node>();
-      const findElementsToRestoreScrollPositionRecursively = (element: Element) => {
-        let shouldAdd = '__playwright_target__' in element;
-        for (let child = element.firstElementChild; child; child = child.nextElementSibling)
-          shouldAdd = shouldAdd || findElementsToRestoreScrollPositionRecursively(child);
-        if (element.shadowRoot) {
-          for (let child = element.shadowRoot.firstElementChild; child; child = child.nextElementSibling)
-            shouldAdd = shouldAdd || findElementsToRestoreScrollPositionRecursively(child);
-        }
-        if (shouldAdd)
-          elementsToRestoreScrollPosition.add(element);
-        return shouldAdd;
-      };
-      if (document.documentElement)
-        findElementsToRestoreScrollPositionRecursively(document.documentElement);
-
       const definedCustomElements = new Set<string>();
 
       const visitNode = (node: Node | ShadowRoot): { equals: boolean, n: NodeSnapshot } | undefined => {
@@ -444,12 +422,12 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
             expectValue(value);
             attrs[kSelectedAttribute] = value;
           }
-          if (elementsToRestoreScrollPosition.has(element) && element.scrollTop) {
+          if (element.scrollTop) {
             expectValue(kScrollTopAttribute);
             expectValue(element.scrollTop);
             attrs[kScrollTopAttribute] = '' + element.scrollTop;
           }
-          if (elementsToRestoreScrollPosition.has(element) && element.scrollLeft) {
+          if (element.scrollLeft) {
             expectValue(kScrollLeftAttribute);
             expectValue(element.scrollLeft);
             attrs[kScrollLeftAttribute] = '' + element.scrollLeft;
