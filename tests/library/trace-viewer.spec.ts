@@ -31,7 +31,8 @@ test.beforeAll(async function recordTrace({ browser, browserName, browserType, s
   const context = await browser.newContext();
   await context.tracing.start({ name: 'test', screenshots: true, snapshots: true, sources: true });
   const page = await context.newPage();
-  await page.goto('data:text/html,<html>Hello world</html>');
+  await page.route('**/style.css', route => route.abort());
+  await page.goto(`data:text/html,<html>Hello world</html>`);
   await page.setContent('<button>Click</button>');
   await expect(page.locator('button')).toHaveText('Click');
   await expect(page.getByTestId('amazing-btn')).toBeHidden();
@@ -101,6 +102,7 @@ test('should open simple trace viewer', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer([traceFile]);
   await expect(traceViewer.actionTitles).toHaveText([
     /browserContext.newPage/,
+    /page.route/,
     /page.gotodata:text\/html,<html>Hello world<\/html>/,
     /page.setContent/,
     /expect.toHaveTextlocator\('button'\)/,
@@ -113,6 +115,7 @@ test('should open simple trace viewer', async ({ showTraceViewer }) => {
     /page.waitForResponse/,
     /page.waitForTimeout/,
     /page.gotohttp:\/\/localhost:\d+\/frames\/frame.html/,
+    /route.abort/,
     /page.setViewportSize/,
   ]);
 });
@@ -216,9 +219,9 @@ test('should have network requests', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer([traceFile]);
   await traceViewer.selectAction('http://localhost');
   await traceViewer.showNetworkTab();
-  await expect(traceViewer.networkRequests).toContainText(['200GETframe.htmltext/html']);
-  await expect(traceViewer.networkRequests).toContainText(['200GETstyle.csstext/css']);
-  await expect(traceViewer.networkRequests).toContainText(['200GETscript.jsapplication/javascript']);
+  await expect(traceViewer.networkRequests).toContainText([/200GETframe.htmltext\/html/]);
+  await expect(traceViewer.networkRequests).toContainText([/aborted.*style.cssx-unknown/]);
+  await expect(traceViewer.networkRequests).toContainText([/200GETscript.jsapplication\/javascript/]);
 });
 
 test('should show snapshot URL', async ({ page, runAndTrace, server }) => {

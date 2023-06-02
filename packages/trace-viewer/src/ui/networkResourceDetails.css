@@ -34,24 +34,31 @@
   flex: 1;
 }
 
-.network-request-title-status,
-.network-request-title-method {
-  padding-right: 5px;
+.network-request-title-status {
+  padding: 0 2px;
+  border-radius: 4px;
+  margin: 2px;
+  line-height: 20px;
 }
 
 .network-request-title-status.status-failure {
-  background-color: var(--red);
-  color: var(--white);
+  color: var(--vscode-statusBar-foreground);
+  background-color: var(--vscode-statusBarItem-errorBackground);
 }
 
-.network-request-title-status.status-neutral {
-  background-color: var(--white);
+.network-request-title-status.status-route {
+  color: var(--vscode-statusBar-foreground);
+  background-color: var(--vscode-statusBar-background);
 }
 
 .network-request-title-url {
   overflow: hidden;
   text-overflow: ellipsis;
   flex: 1;
+}
+
+.network-request-title-content-type {
+  margin-left: 6px;
 }
 
 .network-request-details {

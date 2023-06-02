@@ -52,6 +52,9 @@ export abstract class BrowserContext extends SdkObject {
     Response: 'response',
     RequestFailed: 'requestfailed',
     RequestFinished: 'requestfinished',
+    RequestAborted: 'requestaborted',
+    RequestFulfilled: 'requestfulfilled',
+    RequestContinued: 'requestcontinued',
     BeforeClose: 'beforeclose',
     VideoStarted: 'videostarted',
   };

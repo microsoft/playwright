@@ -101,7 +101,11 @@ export class HarTracer {
           eventsHelper.addEventListener(this._context, BrowserContext.Events.Request, (request: network.Request) => this._onRequest(request)),
           eventsHelper.addEventListener(this._context, BrowserContext.Events.RequestFinished, ({ request, response }) => this._onRequestFinished(request, response).catch(() => {})),
           eventsHelper.addEventListener(this._context, BrowserContext.Events.RequestFailed, request => this._onRequestFailed(request)),
-          eventsHelper.addEventListener(this._context, BrowserContext.Events.Response, (response: network.Response) => this._onResponse(response)));
+          eventsHelper.addEventListener(this._context, BrowserContext.Events.Response, (response: network.Response) => this._onResponse(response)),
+          eventsHelper.addEventListener(this._context, BrowserContext.Events.RequestAborted, request => this._onRequestAborted(request)),
+          eventsHelper.addEventListener(this._context, BrowserContext.Events.RequestFulfilled, request => this._onRequestFulfilled(request)),
+          eventsHelper.addEventListener(this._context, BrowserContext.Events.RequestContinued, request => this._onRequestContinued(request)),
+      );
     }
   }
 
@@ -375,6 +379,24 @@ export class HarTracer {
     this._recordRequestOverrides(harEntry, request);
     if (this._started)
       this._delegate.onEntryFinished(harEntry);
+  }
+
+  private _onRequestAborted(request: network.Request) {
+    const harEntry = this._entryForRequest(request);
+    if (harEntry)
+      harEntry._wasAborted = true;
+  }
+
+  private _onRequestFulfilled(request: network.Request) {
+    const harEntry = this._entryForRequest(request);
+    if (harEntry)
+      harEntry._wasFulfilled = true;
+  }
+
+  private _onRequestContinued(request: network.Request) {
+    const harEntry = this._entryForRequest(request);
+    if (harEntry)
+      harEntry._wasContinued = true;
   }
 
   private _storeResponseContent(buffer: Buffer | undefined, content: har.Content, resourceType: string) {
