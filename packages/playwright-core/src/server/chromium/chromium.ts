@@ -193,6 +193,9 @@ export class Chromium extends BrowserType {
     const response = await fetchData({
       url: hubUrl + 'session',
       method: 'POST',
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8'
+      },
       data: JSON.stringify({
         desiredCapabilities,
         capabilities: { alwaysMatch: desiredCapabilities }
