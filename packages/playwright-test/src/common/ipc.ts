@@ -42,7 +42,6 @@ export type SerializedConfig = {
   configDir: string;
   configCLIOverrides: ConfigCLIOverrides;
   compilationCache: any;
-  babelTransformPlugins: [string, any?][];
 };
 
 export type TtyParams = {
@@ -126,15 +125,11 @@ export type TeardownErrorsPayload = {
 export type EnvProducedPayload = [string, string | null][];
 
 export function serializeConfig(config: FullConfigInternal): SerializedConfig {
-  const babelTransformPlugins: [string, any?][] = [];
-  for (const plugin of config.plugins)
-    babelTransformPlugins.push(...plugin.babelPlugins || []);
   const result: SerializedConfig = {
     configFile: config.config.configFile,
     configDir: config.configDir,
     configCLIOverrides: config.configCLIOverrides,
     compilationCache: serializeCompilationCache(),
-    babelTransformPlugins,
   };
   return result;
 }

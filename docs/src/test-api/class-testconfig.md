@@ -17,6 +17,25 @@ export default defineConfig({
 });
 ```
 
+## property: TestConfig.build
+* since: v1.35
+- type: ?<[Object]>
+  - `external` ?<[Array]<[string]>> Paths to exclude from the transpilation expressed as glob patterns. Typically heavy JS bundles your tests reference.
+
+Transpiler configuration.
+
+**Usage**
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  build: {
+    external: '**/*bundle.js',
+  },
+});
+```
+
 ## property: TestConfig.expect
 * since: v1.10
 - type: ?<[Object]>

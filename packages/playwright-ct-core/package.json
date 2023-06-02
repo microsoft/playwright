@@ -12,6 +12,10 @@
   },
   "license": "Apache-2.0",
   "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./index.js"
+    },
     "./cli": "./cli.js",
     "./lib/mount": "./lib/mount.js",
     "./lib/vitePlugin": "./lib/vitePlugin.js"

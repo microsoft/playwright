@@ -23,7 +23,8 @@ import type { TsConfigLoaderResult } from '../third_party/tsconfig-loader';
 import { tsConfigLoader } from '../third_party/tsconfig-loader';
 import Module from 'module';
 import type { BabelPlugin, BabelTransformFunction } from './babelBundle';
-import { fileIsModule, resolveImportSpecifierExtension } from '../util';
+import { createFileMatcher, fileIsModule, resolveImportSpecifierExtension } from '../util';
+import type { Matcher } from '../util';
 import { getFromCompilationCache, currentFileDepsCollector, belongsToNodeModules } from './compilationCache';
 
 const version = require('../../package.json').version;
@@ -35,14 +36,25 @@ type ParsedTsConfigData = {
 };
 const cachedTSConfigs = new Map<string, ParsedTsConfigData | undefined>();
 
-let babelPlugins: BabelPlugin[] = [];
+export type TransformConfig = {
+  babelPlugins: [string, any?][];
+  external: string[];
+};
 
-export function setBabelPlugins(plugins: BabelPlugin[]) {
-  babelPlugins = plugins;
+let _transformConfig: TransformConfig = {
+  babelPlugins: [],
+  external: [],
+};
+
+let _externalMatcher: Matcher = () => false;
+
+export function setTransformConfig(config: TransformConfig) {
+  _transformConfig = config;
+  _externalMatcher = createFileMatcher(_transformConfig.external);
 }
 
-export function getBabelPlugins(): BabelPlugin[] {
-  return babelPlugins;
+export function transformConfig(): TransformConfig {
+  return _transformConfig;
 }
 
 function validateTsConfig(tsconfig: TsConfigLoaderResult): ParsedTsConfigData | undefined {
@@ -75,7 +87,7 @@ const builtins = new Set(Module.builtinModules);
 export function resolveHook(filename: string, specifier: string): string | undefined {
   if (specifier.startsWith('node:') || builtins.has(specifier))
     return;
-  if (belongsToNodeModules(filename))
+  if (!shouldTransform(filename))
     return;
 
   if (isRelativeSpecifier(specifier))
@@ -138,13 +150,19 @@ export function resolveHook(filename: string, specifier: string): string | undef
   }
 }
 
+export function shouldTransform(filename: string): boolean {
+  if (_externalMatcher(filename))
+    return false;
+  return !belongsToNodeModules(filename);
+}
+
 export function transformHook(originalCode: string, filename: string, moduleUrl?: string): string {
   const isTypeScript = filename.endsWith('.ts') || filename.endsWith('.tsx') || filename.endsWith('.mts') || filename.endsWith('.cts');
   const hasPreprocessor =
       process.env.PW_TEST_SOURCE_TRANSFORM &&
       process.env.PW_TEST_SOURCE_TRANSFORM_SCOPE &&
       process.env.PW_TEST_SOURCE_TRANSFORM_SCOPE.split(pathSeparator).some(f => filename.startsWith(f));
-  const pluginsPrologue = babelPlugins;
+  const pluginsPrologue = _transformConfig.babelPlugins;
   const pluginsEpilogue = hasPreprocessor ? [[process.env.PW_TEST_SOURCE_TRANSFORM!]] as BabelPlugin[] : [];
   const hash = calculateHash(originalCode, filename, !!moduleUrl, pluginsPrologue, pluginsEpilogue);
   const { cachedCode, addToCache } = getFromCompilationCache(filename, hash, moduleUrl);
@@ -209,7 +227,7 @@ function installTransform(): () => void {
   (Module as any)._resolveFilename = resolveFilename;
 
   const revertPirates = pirates.addHook((code: string, filename: string) => {
-    if (belongsToNodeModules(filename))
+    if (!shouldTransform(filename))
       return code;
     return transformHook(code, filename);
   }, { exts: ['.ts', '.tsx', '.js', '.jsx', '.mjs'] });

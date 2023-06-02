@@ -15,7 +15,7 @@
  */
 
 import { addToCompilationCache, serializeCompilationCache } from '../transform/compilationCache';
-import { getBabelPlugins } from '../transform/transform';
+import { transformConfig } from '../transform/transform';
 import { PortTransport } from '../transform/portTransport';
 
 const port = (globalThis as any).__esmLoaderPort;
@@ -47,6 +47,6 @@ export async function incorporateCompilationCache() {
 export async function initializeEsmLoader() {
   if (!loaderChannel)
     return;
-  await loaderChannel.send('setBabelPlugins', { plugins: getBabelPlugins() });
+  await loaderChannel.send('setTransformConfig', { config: transformConfig() });
   await loaderChannel.send('addToCompilationCache', { cache: serializeCompilationCache() });
 }

@@ -58,10 +58,6 @@ export function createPlugin(
       configDir = configDirectory;
     },
 
-    babelPlugins: async () => [
-      [require.resolve('./tsxTransform')]
-    ],
-
     begin: async (suite: Suite) => {
       const use = config.projects[0].use as CtConfig;
       const port = use.ctPort || 3100;
