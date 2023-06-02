@@ -70,7 +70,7 @@ export class Chromium extends BrowserType {
     }, TimeoutSettings.timeout({ timeout }));
   }
 
-  async _connectOverCDPInternal(progress: Progress, endpointURL: string, options: { slowMo?: number, headers?: types.HeadersArray }, onClose?: () => Promise<void>) {
+  async _connectOverCDPInternal(progress: Progress, endpointURL: string, options: types.LaunchOptions & { headers?: types.HeadersArray }, onClose?: () => Promise<void>) {
     let headersMap: { [key: string]: string; } | undefined;
     if (options.headers)
       headersMap = headersArrayToObject(options.headers, false);
@@ -107,8 +107,8 @@ export class Chromium extends BrowserType {
       protocolLogger: helper.debugProtocolLogger(),
       browserLogsCollector: new RecentLogsCollector(),
       artifactsDir,
-      downloadsPath: artifactsDir,
-      tracesDir: artifactsDir,
+      downloadsPath: options.downloadsPath || artifactsDir,
+      tracesDir: options.tracesDir || artifactsDir,
       // On Windows context level proxies only work, if there isn't a global proxy
       // set. This is currently a bug in the CR/Windows networking stack. By
       // passing an arbitrary value we disable the check in PW land which warns
@@ -167,6 +167,8 @@ export class Chromium extends BrowserType {
   }
 
   override async _launchWithSeleniumHub(progress: Progress, hubUrl: string, options: types.LaunchOptions): Promise<CRBrowser> {
+    await this._createArtifactDirs(options);
+
     if (!hubUrl.endsWith('/'))
       hubUrl = hubUrl + '/';
 
@@ -252,7 +254,7 @@ export class Chromium extends BrowserType {
         }
       }
 
-      return await this._connectOverCDPInternal(progress, endpointURL.toString(), { slowMo: options.slowMo }, disconnectFromSelenium);
+      return await this._connectOverCDPInternal(progress, endpointURL.toString(), options, disconnectFromSelenium);
     } catch (e) {
       await disconnectFromSelenium();
       throw e;
