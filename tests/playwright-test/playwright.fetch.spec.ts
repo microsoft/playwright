@@ -57,16 +57,12 @@ test('should stop tracing on requestContext.dispose()', async ({ runInlineTest, 
       'Content-Type': 'text/plain; charset=utf-8',
       'Content-Length': '3',
     });
-    setTimeout(() => {
-      resp.end('Hi!');
-    }, 5000);
   });
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = {
         reporter: [['html', { open: 'never' }]],
         use: {
-          browserName: 'firefox',
           trace:'retain-on-failure'
         }
       };
@@ -79,7 +75,7 @@ test('should stop tracing on requestContext.dispose()', async ({ runInlineTest, 
         await request.get('${server.PREFIX}/slow');
       });
     `,
-  }, { workers: 1, timeout: 3000 });
+  }, { workers: 1, timeout: 2000 });
   expect(result.output).not.toContain('ENOENT');
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
