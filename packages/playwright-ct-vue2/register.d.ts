@@ -15,7 +15,7 @@
  */
 
 export default function pwRegister(
-  components: { [key: string]: any },
+  components: Record<string, any>,
   options?: {
     createApp: any,
     setDevtoolsHook: any,
