@@ -94,7 +94,7 @@ it('should get post data for file/blob', async ({ page, server, browserName }) =
     page.evaluate(() => {
       const file = new File(['file-contents'], 'filename.txt');
 
-      fetch('/data', {
+      void fetch('/data', {
         method: 'POST',
         headers: {
           'content-type': 'application/octet-stream'

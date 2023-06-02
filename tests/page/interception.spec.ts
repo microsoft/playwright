@@ -23,7 +23,7 @@ it('should work with navigation @smoke', async ({ page, server }) => {
   const requests = new Map();
   await page.route('**/*', route => {
     requests.set(route.request().url().split('/').pop(), route.request());
-    route.continue();
+    void route.continue();
   });
   server.setRedirect('/rrredirect', '/frames/one-frame.html');
   await page.goto(server.PREFIX + '/rrredirect');
@@ -47,7 +47,7 @@ it('should intercept after a service worker', async ({ page, server, browserName
   await page.route('**/foo', route => {
     const slash = route.request().url().lastIndexOf('/');
     const name = route.request().url().substring(slash + 1);
-    route.fulfill({
+    void route.fulfill({
       status: 200,
       contentType: 'text/css',
       body: 'responseFromInterception:' + name
@@ -147,7 +147,7 @@ it('should work with regular expression passed from a different context', async 
     expect(request.resourceType()).toBe('document');
     expect(request.frame() === page.mainFrame()).toBe(true);
     expect(request.frame().url()).toBe('about:blank');
-    route.continue();
+    void route.continue();
     intercepted = true;
   });
 

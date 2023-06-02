@@ -221,7 +221,13 @@ export class TestServer {
       this.serveFile(request, response);
   }
 
-  async serveFile(request: http.IncomingMessage, response: http.ServerResponse, filePath?: string) {
+  serveFile(request: http.IncomingMessage, response: http.ServerResponse, filePath?: string): void {
+    this._serveFile(request, response, filePath).catch(e => {
+      this.debugServer(`error: ${e}`);
+    });
+  }
+
+  private async _serveFile(request: http.IncomingMessage, response: http.ServerResponse, filePath?: string): Promise<void> {
     let pathName = url.parse(request.url!).path;
     if (!filePath) {
       if (pathName === '/')

@@ -39,11 +39,11 @@ function declareFixtureTest(fixtureRoot: string, fixtureName: string, shouldMatc
       fs.promises.readFile(fixtureName + '-actual.png'),
       fs.promises.readFile(fixtureName + '-expected.png'),
     ]);
-    testInfo.attach(fixtureName + '-actual.png', {
+    await testInfo.attach(fixtureName + '-actual.png', {
       body: actual,
       contentType: 'image/png',
     });
-    testInfo.attach(fixtureName + '-expected.png', {
+    await testInfo.attach(fixtureName + '-expected.png', {
       body: expected,
       contentType: 'image/png',
     });
@@ -57,7 +57,7 @@ function declareFixtureTest(fixtureRoot: string, fixtureName: string, shouldMatc
       maxColorDeltaE94: 1.0,
     });
 
-    testInfo.attach(fixtureName + '-diff.png', {
+    await testInfo.attach(fixtureName + '-diff.png', {
       body: PNG.sync.write(diffPNG),
       contentType: 'image/png',
     });

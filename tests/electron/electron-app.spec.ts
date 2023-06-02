@@ -66,8 +66,8 @@ test('should evaluate handle', async ({ electronApp }) => {
 });
 
 test('should route network', async ({ electronApp, newWindow }) => {
-  await electronApp.context().route('**/empty.html', (route, request) => {
-    route.fulfill({
+  await electronApp.context().route('**/empty.html', async (route, request) => {
+    await route.fulfill({
       status: 200,
       contentType: 'text/html',
       body: '<title>Hello World</title>',
@@ -95,7 +95,7 @@ test('should expose function', async ({ electronApp, newWindow }) => {
 test('should wait for first window', async ({ electronApp }) => {
   await electronApp.evaluate(({ BrowserWindow }) => {
     const window = new BrowserWindow({ width: 800, height: 600 });
-    window.loadURL('data:text/html,<title>Hello World!</title>');
+    void window.loadURL('data:text/html,<title>Hello World!</title>');
   });
   const window = await electronApp.firstWindow();
   expect(await window.title()).toBe('Hello World!');
@@ -126,7 +126,7 @@ test('should bypass csp', async ({ launchElectronApp, server }) => {
       width: 800,
       height: 600,
     });
-    window.loadURL('about:blank');
+    void window.loadURL('about:blank');
   });
   const page = await app.firstWindow();
   await page.goto(server.PREFIX + '/csp.html');

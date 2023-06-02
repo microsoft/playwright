@@ -146,7 +146,7 @@ it('should not emit events about internal page', async ({ contextFactory }) => {
   const context = await contextFactory();
   const page = await context.newPage();
   await page.route('**/*', route => {
-    route.fulfill({ body: '<html></html>' });
+    void route.fulfill({ body: '<html></html>' });
   });
   await page.goto('https://www.example.com');
   await page.evaluate(() => localStorage['name1'] = 'value1');

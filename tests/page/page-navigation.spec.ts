@@ -40,7 +40,7 @@ it('should work with _blank target in form', async ({ page, server }) => {
   });
   await page.goto(server.EMPTY_PAGE);
 
-  page.setContent(`<form target="_blank" action="done.html" >
+  void page.setContent(`<form target="_blank" action="done.html" >
       <input type="submit" value="Click me">
     </form>`);
   await Promise.all([
@@ -48,7 +48,7 @@ it('should work with _blank target in form', async ({ page, server }) => {
     page.click('"Click me"')
   ]);
 
-  page.setContent(`<form target="_blank" action="done.html" method="post">
+  void page.setContent(`<form target="_blank" action="done.html" method="post">
       <input type="submit" value="Click me">
     </form>`);
   await Promise.all([

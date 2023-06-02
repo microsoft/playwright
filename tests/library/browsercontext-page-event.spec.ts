@@ -94,7 +94,7 @@ it('should report when a new page is created and closed', async ({ browser, serv
 it('should report initialized pages', async ({ browser, server }) => {
   const context = await browser.newContext();
   const pagePromise = context.waitForEvent('page');
-  context.newPage();
+  void context.newPage();
   const newPage = await pagePromise;
   expect(newPage.url()).toBe('about:blank');
 

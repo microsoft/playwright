@@ -19,7 +19,7 @@ import { contextTest as testBase, expect } from '../config/browserTest';
 
 const test = testBase.extend<{ crash: () => void }, { dummy: string }>({
   crash: async ({ page, toImpl, browserName }, run) => {
-    run(() => {
+    await run(() => {
       if (browserName === 'chromium')
         page.goto('chrome://crash').catch(e => {});
       else if (browserName === 'webkit')

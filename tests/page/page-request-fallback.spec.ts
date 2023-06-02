@@ -26,15 +26,15 @@ it('should fall back', async ({ page, server }) => {
   const intercepted = [];
   await page.route('**/empty.html', route => {
     intercepted.push(1);
-    route.fallback();
+    void route.fallback();
   });
   await page.route('**/empty.html', route => {
     intercepted.push(2);
-    route.fallback();
+    void route.fallback();
   });
   await page.route('**/empty.html', route => {
     intercepted.push(3);
-    route.fallback();
+    void route.fallback();
   });
   await page.goto(server.EMPTY_PAGE);
   expect(intercepted).toEqual([3, 2, 1]);
@@ -45,17 +45,17 @@ it('should fall back async', async ({ page, server }) => {
   await page.route('**/empty.html', async route => {
     intercepted.push(1);
     await new Promise(r => setTimeout(r, 100));
-    route.fallback();
+    void route.fallback();
   });
   await page.route('**/empty.html', async route => {
     intercepted.push(2);
     await new Promise(r => setTimeout(r, 100));
-    route.fallback();
+    void route.fallback();
   });
   await page.route('**/empty.html', async route => {
     intercepted.push(3);
     await new Promise(r => setTimeout(r, 100));
-    route.fallback();
+    void route.fallback();
   });
   await page.goto(server.EMPTY_PAGE);
   expect(intercepted).toEqual([3, 2, 1]);
@@ -67,10 +67,10 @@ it('should not chain fulfill', async ({ page, server }) => {
     failed = true;
   });
   await page.route('**/empty.html', route => {
-    route.fulfill({ status: 200, body: 'fulfilled' });
+    void route.fulfill({ status: 200, body: 'fulfilled' });
   });
   await page.route('**/empty.html', route => {
-    route.fallback();
+    void route.fallback();
   });
   const response = await page.goto(server.EMPTY_PAGE);
   const body = await response.body();
@@ -84,10 +84,10 @@ it('should not chain abort', async ({ page, server }) => {
     failed = true;
   });
   await page.route('**/empty.html', route => {
-    route.abort();
+    void route.abort();
   });
   await page.route('**/empty.html', route => {
-    route.fallback();
+    void route.fallback();
   });
   const e = await page.goto(server.EMPTY_PAGE).catch(e => e);
   expect(e).toBeTruthy();
@@ -96,13 +96,13 @@ it('should not chain abort', async ({ page, server }) => {
 
 it('should fall back after exception', async ({ page, server }) => {
   await page.route('**/empty.html', route => {
-    route.continue();
+    void route.continue();
   });
   await page.route('**/empty.html', async route => {
     try {
       await route.fulfill({ response: {} as any });
     } catch (e) {
-      route.fallback();
+      void route.fallback();
     }
   });
   await page.goto(server.EMPTY_PAGE);
@@ -110,10 +110,10 @@ it('should fall back after exception', async ({ page, server }) => {
 
 it('should chain once', async ({ page, server }) => {
   await page.route('**/empty.html', route => {
-    route.fulfill({ status: 200, body: 'fulfilled one' });
+    void route.fulfill({ status: 200, body: 'fulfilled one' });
   }, { times: 1 });
   await page.route('**/empty.html', route => {
-    route.fallback();
+    void route.fallback();
   }, { times: 1 });
   const response = await page.goto(server.EMPTY_PAGE);
   const body = await response.body();
@@ -125,10 +125,10 @@ it('should amend HTTP headers', async ({ page, server }) => {
   await page.route('**/sleep.zzz', async route => {
     values.push(route.request().headers().foo);
     values.push(await route.request().headerValue('FOO'));
-    route.continue();
+    void route.continue();
   });
   await page.route('**/*', route => {
-    route.fallback({ headers: { ...route.request().headers(), FOO: 'bar' } });
+    void route.fallback({ headers: { ...route.request().headers(), FOO: 'bar' } });
   });
   await page.goto(server.EMPTY_PAGE);
   const [request] = await Promise.all([
@@ -148,11 +148,11 @@ it('should delete header with undefined value', async ({ page, server, browserNa
   let interceptedRequest;
   await page.route('**/*', (route, request) => {
     interceptedRequest = request;
-    route.continue();
+    void route.continue();
   });
   await page.route(server.PREFIX + '/something', async (route, request) => {
     const headers = await request.allHeaders();
-    route.fallback({
+    void route.fallback({
       headers: {
         ...headers,
         foo: undefined
@@ -185,7 +185,7 @@ it('should amend method', async ({ page, server }) => {
   let method: string;
   await page.route('**/*', route => {
     method = route.request().method();
-    route.continue();
+    void route.continue();
   });
   await page.route('**/*', route => route.fallback({ method: 'POST' }));
 
@@ -204,7 +204,7 @@ it('should override request url', async ({ page, server }) => {
   let url: string;
   await page.route('**/global-var.html', route => {
     url = route.request().url();
-    route.continue();
+    void route.continue();
   });
 
   await page.route('**/foo', route => route.fallback({ url: server.PREFIX + '/global-var.html' }));
@@ -223,10 +223,10 @@ it.describe('post data', () => {
     let postData: string;
     await page.route('**/*', route => {
       postData = route.request().postData();
-      route.continue();
+      void route.continue();
     });
     await page.route('**/*', route => {
-      route.fallback({ postData: 'doggo' });
+      void route.fallback({ postData: 'doggo' });
     });
     const [serverRequest] = await Promise.all([
       server.waitForRequest('/sleep.zzz'),
@@ -242,10 +242,10 @@ it.describe('post data', () => {
     let postDataBuffer: Buffer;
     await page.route('**/*', route => {
       postDataBuffer = route.request().postDataBuffer();
-      route.continue();
+      void route.continue();
     });
     await page.route('**/*', route => {
-      route.fallback({ postData: Buffer.from(arr) });
+      void route.fallback({ postData: Buffer.from(arr) });
     });
     const [serverRequest] = await Promise.all([
       server.waitForRequest('/sleep.zzz'),
@@ -265,10 +265,10 @@ it.describe('post data', () => {
     let postData: string;
     await page.route('**/*', route => {
       postData = route.request().postDataJSON();
-      route.continue();
+      void route.continue();
     });
     await page.route('**/*', route => {
-      route.fallback({ postData: { foo: 'bar' } });
+      void route.fallback({ postData: { foo: 'bar' } });
     });
     const [serverRequest] = await Promise.all([
       server.waitForRequest('/sleep.zzz'),

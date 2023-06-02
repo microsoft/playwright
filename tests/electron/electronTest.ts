@@ -73,7 +73,7 @@ export const electronTest = baseTest.extend<TraceViewerFixtures>(traceViewerFixt
             // and can script them. We use that heavily in our tests.
             webPreferences: { sandbox: true }
           });
-          window.loadURL('about:blank');
+          await window.loadURL('about:blank');
         })
       ]);
       windows.push(window);

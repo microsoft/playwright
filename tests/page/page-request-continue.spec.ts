@@ -26,7 +26,7 @@ it('should amend HTTP headers', async ({ page, server }) => {
   await page.route('**/*', route => {
     const headers = Object.assign({}, route.request().headers());
     headers['FOO'] = 'bar';
-    route.continue({ headers });
+    void route.continue({ headers });
   });
   await page.goto(server.EMPTY_PAGE);
   const [request] = await Promise.all([
@@ -48,7 +48,7 @@ it('should delete header with undefined value', async ({ page, server, browserNa
   await page.route(server.PREFIX + '/something', async (route, request) => {
     interceptedRequest = request;
     const headers = await request.allHeaders();
-    route.continue({
+    void route.continue({
       headers: {
         ...headers,
         foo: undefined
@@ -89,7 +89,7 @@ it('should amend method', async ({ page, server }) => {
 it('should override request url', async ({ page, server }) => {
   const serverRequest = server.waitForRequest('/global-var.html');
   await page.route('**/foo', route => {
-    route.continue({ url: server.PREFIX + '/global-var.html' });
+    void route.continue({ url: server.PREFIX + '/global-var.html' });
   });
   const response = await page.goto(server.PREFIX + '/foo');
   expect(response.request().url()).toBe(server.PREFIX + '/global-var.html');
@@ -121,7 +121,7 @@ it('should not throw when continuing while page is closing', async ({ page, serv
   let done;
   await page.route('**/*', async route => {
     done = Promise.all([
-      route.continue(),
+      void route.continue(),
       page.close(),
     ]);
   });
@@ -146,7 +146,7 @@ it('should not throw when continuing after page is closed', async ({ page, serve
 it('should override method along with url', async ({ page, server }) => {
   const request = server.waitForRequest('/empty.html');
   await page.route('**/foo', route => {
-    route.continue({
+    void route.continue({
       url: server.EMPTY_PAGE,
       method: 'POST'
     });
@@ -166,7 +166,7 @@ it.describe('post data', () => {
   it('should amend post data', async ({ page, server }) => {
     await page.goto(server.EMPTY_PAGE);
     await page.route('**/*', route => {
-      route.continue({ postData: 'doggo' });
+      void route.continue({ postData: 'doggo' });
     });
     const [serverRequest] = await Promise.all([
       server.waitForRequest('/sleep.zzz'),
@@ -182,7 +182,7 @@ it.describe('post data', () => {
     await page.route('**/*', route => {
       const headers = route.request().headers();
       headers['content-type'] =  'application/json';
-      route.continue({ postData: data, headers });
+      void route.continue({ postData: data, headers });
     });
     const [serverRequest] = await Promise.all([
       server.waitForRequest('/sleep.zzz'),
@@ -196,7 +196,7 @@ it.describe('post data', () => {
   it('should amend method and post data', async ({ page, server }) => {
     await page.goto(server.EMPTY_PAGE);
     await page.route('**/*', route => {
-      route.continue({ method: 'POST', postData: 'doggo' });
+      void route.continue({ method: 'POST', postData: 'doggo' });
     });
     const [serverRequest] = await Promise.all([
       server.waitForRequest('/sleep.zzz'),
@@ -209,7 +209,7 @@ it.describe('post data', () => {
   it('should amend utf8 post data', async ({ page, server }) => {
     await page.goto(server.EMPTY_PAGE);
     await page.route('**/*', route => {
-      route.continue({ postData: 'пушкин' });
+      void route.continue({ postData: 'пушкин' });
     });
     const [serverRequest] = await Promise.all([
       server.waitForRequest('/sleep.zzz'),
@@ -222,7 +222,7 @@ it.describe('post data', () => {
   it('should amend longer post data', async ({ page, server }) => {
     await page.goto(server.EMPTY_PAGE);
     await page.route('**/*', route => {
-      route.continue({ postData: 'doggo-is-longer-than-birdy' });
+      void route.continue({ postData: 'doggo-is-longer-than-birdy' });
     });
     const [serverRequest] = await Promise.all([
       server.waitForRequest('/sleep.zzz'),
@@ -236,7 +236,7 @@ it.describe('post data', () => {
     await page.goto(server.EMPTY_PAGE);
     const arr = Array.from(Array(256).keys());
     await page.route('**/*', route => {
-      route.continue({ postData: Buffer.from(arr) });
+      void route.continue({ postData: Buffer.from(arr) });
     });
     const [serverRequest] = await Promise.all([
       server.waitForRequest('/sleep.zzz'),
@@ -283,7 +283,7 @@ it('should work with Cross-Origin-Opener-Policy', async ({ page, server, browser
   const intercepted = [];
   await page.route('**/*', (route, req) => {
     intercepted.push(req.url());
-    route.continue({
+    void route.continue({
       headers: {
         foo: 'bar'
       }
@@ -337,7 +337,7 @@ it('should delete the origin header', async ({ page, server, isAndroid, browserN
     interceptedRequest = request;
     const headers = await request.allHeaders();
     delete headers['origin'];
-    route.continue({ headers });
+    void route.continue({ headers });
   });
 
   const [text, serverRequest] = await Promise.all([
@@ -357,7 +357,7 @@ it('should continue preload link requests', async ({ page, server, browserName }
   let intercepted = false;
   await page.route('**/one-style.css', route => {
     intercepted = true;
-    route.continue({
+    void route.continue({
       headers: {
         ...route.request().headers(),
         'custom': 'value'
@@ -400,7 +400,7 @@ it('should intercept css variable with background url', async ({ page, server })
   await page.route(server.PREFIX + '/pptr.png', async (route, request) => {
     ++interceptedRequests;
     interceptCallback();
-    route.continue();
+    void route.continue();
   });
   await page.goto(server.PREFIX + '/test.html');
   expect(await page.locator('div').textContent()).toBe('Yo!');

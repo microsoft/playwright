@@ -61,7 +61,7 @@ it('should not work for a redirect and interception', async ({ page, server }) =
   const requests = [];
   await page.route('**', route => {
     requests.push(route.request());
-    route.continue();
+    void route.continue();
   });
   await page.goto(server.PREFIX + '/foo.html');
 
@@ -180,7 +180,7 @@ it('should not get preflight CORS requests when intercepting', async ({ page, se
     const routed = [];
     await page.route('**/something', route => {
       routed.push(route.request().method());
-      route.continue();
+      void route.continue();
     });
 
     const text = await page.evaluate(async url => {
@@ -251,7 +251,7 @@ it('should override post data content type', async ({ page, server }) => {
   await page.route('**/post', (route, request) => {
     const headers = request.headers();
     headers['content-type'] = 'application/x-www-form-urlencoded; charset=UTF-8';
-    route.continue({
+    void route.continue({
       headers,
       postData: request.postData()
     });

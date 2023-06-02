@@ -42,14 +42,14 @@ it.beforeEach(() => {
 it('get should work', async ({ context, server }) => {
   const response = await context.request.get(server.PREFIX + '/simple.json', { __testHookLookup } as any);
   expect(response.url()).toBe(server.PREFIX + '/simple.json');
-  expect(response).toBeOK();
+  await expect(response).toBeOK();
   expect(interceptedHostnameLookup).toBe('localhost');
 });
 
 it('get should work on request fixture', async ({ request, server }) => {
   const response = await request.get(server.PREFIX + '/simple.json', { __testHookLookup } as any);
   expect(response.url()).toBe(server.PREFIX + '/simple.json');
-  expect(response).toBeOK();
+  await expect(response).toBeOK();
   expect(interceptedHostnameLookup).toBe('localhost');
 });
 
@@ -65,5 +65,5 @@ it('should work with ip6 and port as the host', async ({ request, server }) => {
   it.skip(!!process.env.INSIDE_DOCKER, 'docker does not support IPv6 by default');
   const response = await request.get(`http://[::1]:${server.PORT}/simple.json`);
   expect(response.url()).toBe(`http://[::1]:${server.PORT}/simple.json`);
-  expect(response).toBeOK();
+  await expect(response).toBeOK();
 });

@@ -67,7 +67,7 @@ test('select webview from socketName', async function({ androidDevice }) {
   test.slow();
   const context = await androidDevice.launchBrowser();
   const newPage = await context.newPage();
-  newPage.goto('about:blank');
+  await newPage.goto('about:blank');
 
   const webview = await androidDevice.webView({ socketName: 'webview_devtools_remote_playwright_test' });
   expect(webview.pkg()).toBe('');

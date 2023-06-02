@@ -28,7 +28,7 @@ test('should throw while pending navigation', async ({ page, server, toImpl }) =
   let error;
   await page.route('**/empty.html', async (route, request) => {
     error = await toImpl(page.mainFrame()).nonStallingRawEvaluateInExistingMainContext('2+2').catch(e => e);
-    route.abort();
+    await route.abort();
   });
   await page.goto(server.EMPTY_PAGE).catch(() => {});
   expect(error.message).toContain('Frame is currently attempting a navigation');

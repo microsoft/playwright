@@ -258,8 +258,8 @@ it('should include secure set-cookies', async ({ contextFactory, httpsServer }, 
 
 it('should record request overrides', async ({ contextFactory, server }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
-  page.route('**/foo', route => {
-    route.fallback({
+  await page.route('**/foo', route => {
+    void route.fallback({
       url: server.EMPTY_PAGE,
       method: 'POST',
       headers: {
@@ -472,7 +472,7 @@ it('should record failed request overrides', async ({ contextFactory, server }, 
     res.socket.destroy();
   });
   await page.route('**/foo', route => {
-    route.fallback({
+    void route.fallback({
       url: server.EMPTY_PAGE,
       method: 'POST',
       headers: {
@@ -502,7 +502,7 @@ it('should report the correct request body size', async ({ contextFactory, serve
   await Promise.all([
     page.waitForResponse(server.PREFIX + '/api1'),
     page.evaluate(() => {
-      fetch('/api1', {
+      void fetch('/api1', {
         method: 'POST',
         body: 'abc123'
       });
@@ -519,7 +519,7 @@ it('should report the correct request body size when the bodySize is 0', async (
   await Promise.all([
     page.waitForResponse(server.PREFIX + '/api2'),
     page.evaluate(() => {
-      fetch('/api2', {
+      void fetch('/api2', {
         method: 'POST',
         body: ''
       });

@@ -35,8 +35,8 @@ test('should record trace', async ({ newWindow, server, runAndTrace }) => {
 
 test('should support custom protocol', async ({ electronApp, newWindow, server, runAndTrace }) => {
   const window = await newWindow();
-  await electronApp.evaluate(async ({ BrowserWindow }) => {
-    BrowserWindow.getAllWindows()[0].loadURL('vscode-file://index.html');
+  await electronApp.evaluate(({ BrowserWindow }) => {
+    void BrowserWindow.getAllWindows()[0].loadURL('vscode-file://index.html');
   });
   const traceViewer = await runAndTrace(async () => {
     await window.click('button');

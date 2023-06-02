@@ -73,7 +73,7 @@ test('should use the correct apiName for event driven callbacks', async ({ conte
   await page.reload();
   // now we do it again with a dialog event listener attached which should produce an action.
   page.on('dialog', dialog => {
-    dialog.accept('answer!');
+    void dialog.accept('answer!');
   });
   await page.evaluate(() => alert('yo'));
 
@@ -517,7 +517,7 @@ test('should hide internal stack frames', async ({ context, page }, testInfo) =>
   let evalPromise;
   page.on('dialog', dialog => {
     evalPromise = page.evaluate('2+2');
-    dialog.dismiss();
+    void dialog.dismiss();
   });
   await page.setContent(`<div onclick='window.alert(123)'>Click me</div>`);
   await page.click('div');
@@ -537,7 +537,7 @@ test('should hide internal stack frames in expect', async ({ context, page }, te
   let expectPromise;
   page.on('dialog', dialog => {
     expectPromise = expect(page).toHaveTitle('Hello');
-    dialog.dismiss();
+    void dialog.dismiss();
   });
   await page.setContent(`<title>Hello</title><div onclick='window.alert(123)'>Click me</div>`);
   await page.click('div');

@@ -637,7 +637,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       await page.route('**/*', async route => {
         const request = await playwright.request.newContext();
         const response = await request.get(server.PREFIX + '/simple.json');
-        route.fulfill({ response });
+        await route.fulfill({ response });
       });
       const response = await page.goto(server.EMPTY_PAGE);
       expect(response.status()).toBe(200);

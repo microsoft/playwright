@@ -219,13 +219,13 @@ it('should click in lazy iframe', async ({ page, server }) => {
 
   // add blank iframe
   setTimeout(() => {
-    page.evaluate(() => {
+    void page.evaluate(() => {
       const iframe = document.createElement('iframe');
       document.body.appendChild(iframe);
     });
     // navigate iframe
     setTimeout(() => {
-      page.evaluate(() => document.querySelector('iframe').src = 'iframe.html');
+      void page.evaluate(() => document.querySelector('iframe').src = 'iframe.html');
     }, 500);
   }, 500);
 
@@ -272,7 +272,7 @@ it('waitForSelector should survive iframe navigation (handle)', async ({ page, s
   await page.goto(server.EMPTY_PAGE);
   const body = await page.$('body');
   const promise = body.waitForSelector('iframe >> internal:control=enter-frame >> button:has-text("Hello nested iframe")');
-  page.locator('iframe').evaluate(e => (e as HTMLIFrameElement).src = 'iframe-2.html');
+  void page.locator('iframe').evaluate(e => (e as HTMLIFrameElement).src = 'iframe-2.html');
   await promise;
 });
 
@@ -295,7 +295,7 @@ it('click should survive iframe navigation', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const button = page.locator('iframe >> internal:control=enter-frame >> button:has-text("Hello nested iframe")');
   const promise = button.click();
-  page.locator('iframe').evaluate(e => (e as HTMLIFrameElement).src = 'iframe-2.html');
+  void page.locator('iframe').evaluate(e => (e as HTMLIFrameElement).src = 'iframe-2.html');
   await promise;
 });
 
