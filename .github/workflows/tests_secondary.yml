@@ -218,6 +218,15 @@ jobs:
         name: blob-report-${{ github.run_attempt }}
         path: test-results/blob-report
         retention-days: 30
+    - name: Write the pull request number in an file
+      if: always() && github.event_name == 'pull_request'
+      run: echo '${{ github.event.number }}' > pull_request_number.txt;
+    - name: Upload artifact with pull request number
+      uses: actions/upload-artifact@v3
+      if: always() && github.event_name == 'pull_request'
+      with:
+        name: pull-request
+        path: pull_request_number.txt
 
   chrome_stable_linux:
     name: "Chrome Stable (Linux)"

@@ -30,6 +30,13 @@ jobs:
         name: 'blob-report-${{ github.event.workflow_run.run_attempt }}'
         path: 'blob-report'
 
+    - name: Read pull request number
+      if: ${{ always() && github.event.workflow_run.event == 'pull_request' }}
+      uses: ./.github/actions/download-artifact
+      with:
+        name: 'pull-request'
+        path: './'
+
     - name: Download blob report from Azure
       if: ${{ always() && github.event.workflow_run.event == 'push' }}
       uses: ./.github/actions/download-blob-report-from-azure
@@ -59,20 +66,27 @@ jobs:
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
-          let prs = [];
+          let prNumber;
           if (context.payload.workflow_run.event === 'pull_request') {
-            prs = context.payload.workflow_run.pull_requests;
+            const prs = context.payload.workflow_run.pull_requests;
+            if (prs.length) {
+              prNumber = prs[0].number;
+            } else {
+              const fs = require('fs');
+              prNumber = parseInt(fs.readFileSync('pull_request_number.txt').toString());
+              console.log('Read pull request number from file: ' + prNumber);
+            }
           } else if (context.payload.workflow_run.event === 'push') {
             const { data } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
               ...context.repo,
               commit_sha: context.sha,
             });
-            prs = data;
+            prNumber = data[0].number;
           } else {
             core.error('Unsupported workflow trigger event: ' + context.payload.workflow_run.event);
             return;
           }
-          if (prs.length === 0) {
+          if (!prNumber) {
             core.error('No pull request found for commit ' + context.sha + ' and workflow triggered by: ' + context.payload.workflow_run.event);
             return;
           }
@@ -81,7 +95,7 @@ jobs:
           core.notice('Report url: ' + reportUrl);
           const { data: response } = await github.rest.issues.createComment({
             ...context.repo,
-            issue_number: prs[0].number,
+            issue_number: prNumber,
             body: `"${{ github.event.workflow_run.name }}" [report](${reportUrl}).`,
           });
           core.info('Posted comment: ' + response.html_url);
