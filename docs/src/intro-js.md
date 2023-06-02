@@ -40,7 +40,7 @@ yarn create playwright
 ```
 
 </TabItem>
-  
+
 <TabItem value="pnpm">
 
 ```bash
@@ -73,7 +73,7 @@ tests-examples/
 ```
 
 The [playwright.config](./test-configuration.md) is where you can add configuration for Playwright including modifying which browsers you would like to run Playwright on. If you are running tests inside an already existing project then dependencies will be added directly to your `package.json`.
- 
+
 The `tests` folder contains a basic example test to help you get started with testing. For a more detailed example check out the `tests-examples` folder which contains tests written to test a todo app.
 
 ## Running the Example Test
@@ -101,6 +101,13 @@ npx playwright show-report
 ```
 
 <img width="1392" alt="HTML Reporter" src="https://user-images.githubusercontent.com/13063165/212743312-edf1e8ed-3fc2-48aa-9c93-24ae3e36504d.png" />
+
+## System requirements
+
+- Node.js 16+
+- Windows 10+, Windows Server 2016+ or Windows Subsystem for Linux (WSL).
+- MacOS 12 Monterey or MacOS 13 Ventura.
+- Debian 11, Ubuntu 20.04 or Ubuntu 22.04.
 
 ## What's next
 

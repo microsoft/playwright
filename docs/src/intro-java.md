@@ -3,7 +3,7 @@ id: intro
 title: "Installation"
 ---
 
-Playwright was created specifically to accommodate the needs of end-to-end testing. Playwright supports all modern rendering engines including Chromium, WebKit, and Firefox. Test on Windows, Linux, and macOS, locally or on CI, headless or headed with native mobile emulation. 
+Playwright was created specifically to accommodate the needs of end-to-end testing. Playwright supports all modern rendering engines including Chromium, WebKit, and Firefox. Test on Windows, Linux, and macOS, locally or on CI, headless or headed with native mobile emulation.
 
 Playwright is distributed as a set of [Maven](https://maven.apache.org/what-is-maven.html) modules. The easiest way to use it is to add one dependency to your project's `pom.xml` as described below. If you're not familiar with Maven please refer to its [documentation](https://maven.apache.org/guides/getting-started/maven-in-five-minutes.html).
 
@@ -123,6 +123,13 @@ mvn compile exec:java -D exec.mainClass="org.example.App"
 ```
 
 By default browsers launched with Playwright run headless, meaning no browser UI will open up when running the script. To change that you can pass `new BrowserType.LaunchOptions().setHeadless(false)` when launching the browser.
+
+## System requirements
+
+- Java 8 or higher.
+- Windows 10+, Windows Server 2016+ or Windows Subsystem for Linux (WSL).
+- MacOS 12 Monterey or MacOS 13 Ventura.
+- Debian 11, Ubuntu 20.04 or Ubuntu 22.04.
 
 ## What's next
 

@@ -196,6 +196,13 @@ dotnet test -- MSTest.Parallelize.Workers=5
 
 See our doc on [Test Runners](./test-runners.md) to learn more about running tests in headed mode, running multiple tests, running specific configurations etc.
 
+## System requirements
+
+- Playwright is distributed as a .NET Standard 2.0 library. We recommend .NET 6.
+- Windows 10+, Windows Server 2016+ or Windows Subsystem for Linux (WSL).
+- MacOS 12 Monterey or MacOS 13 Ventura.
+- Debian 11, Ubuntu 20.04 or Ubuntu 22.04.
+
 ## What's next
 
 - [Write tests using web first assertions, page fixtures and locators](./writing-tests.md)

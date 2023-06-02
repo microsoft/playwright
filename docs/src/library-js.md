@@ -118,7 +118,7 @@ In addition to the above, Playwright Test, as a full-featured Test Runner, inclu
 
 ## Usage
 
-Use npm or Yarn to install Playwright library in your Node.js project. See [system requirements](./troubleshooting.md#system-requirements).
+Use npm or Yarn to install Playwright library in your Node.js project. See [system requirements](./intro.md#system-requirements).
 
 ```bash
 npm i -D playwright
