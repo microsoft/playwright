@@ -104,7 +104,7 @@ npx playwright show-report
 
 ## System requirements
 
-- Node.js 16 or Node.js 18.
+- Node.js 16+
 - Windows 10+, Windows Server 2016+ or Windows Subsystem for Linux (WSL).
 - MacOS 12 Monterey or MacOS 13 Ventura.
 - Debian 11, Ubuntu 20.04 or Ubuntu 22.04.
