@@ -478,16 +478,24 @@ export class HarTracer {
     this._addBarrier(page || request.serviceWorker(), request.rawRequestHeaders().then(headers => {
       this._recordRequestHeadersAndCookies(harEntry, headers);
     }));
+    // Record available headers including redirect location in case the tracing is stopped before
+    // reponse extra info is received (in Chromium).
+    this._recordResponseHeaders(harEntry, response.headers());
     this._addBarrier(page || request.serviceWorker(), response.rawResponseHeaders().then(headers => {
-      if (!this._options.omitCookies) {
-        for (const header of headers.filter(header => header.name.toLowerCase() === 'set-cookie'))
-          harEntry.response.cookies.push(parseCookie(header.value));
-      }
-      harEntry.response.headers = headers;
-      const contentType = headers.find(header => header.name.toLowerCase() === 'content-type');
-      if (contentType)
-        harEntry.response.content.mimeType = contentType.value;
+      this._recordResponseHeaders(harEntry, headers);
     }));
+  }
+
+  private _recordResponseHeaders(harEntry: har.Entry, headers: HeadersArray) {
+    if (!this._options.omitCookies) {
+      harEntry.response.cookies = headers
+          .filter(header => header.name.toLowerCase() === 'set-cookie')
+          .map(header => parseCookie(header.value));
+    }
+    harEntry.response.headers = headers;
+    const contentType = headers.find(header => header.name.toLowerCase() === 'content-type');
+    if (contentType)
+      harEntry.response.content.mimeType = contentType.value;
   }
 
   private _computeHarEntryTotalTime(harEntry: har.Entry) {
