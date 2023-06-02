@@ -64,7 +64,7 @@ export class GitHubReporter extends BaseReporter {
   }
 
   override async onEnd(result: FullResult) {
-    super.onEnd(result);
+    await super.onEnd(result);
     this._printAnnotations();
   }
 

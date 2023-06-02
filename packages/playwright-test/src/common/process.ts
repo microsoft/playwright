@@ -60,7 +60,7 @@ process.on('message', async (message: any) => {
     const { processParams, runnerParams, runnerScript } = message.params as { processParams: ProcessInitParams, runnerParams: any, runnerScript: string };
     setTtyParams(process.stdout, processParams.stdoutParams);
     setTtyParams(process.stderr, processParams.stderrParams);
-    startProfiling();
+    void startProfiling();
     const { create } = require(runnerScript);
     processRunner = create(runnerParams) as ProcessRunner;
     processName = processParams.processName;
