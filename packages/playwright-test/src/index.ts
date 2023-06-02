@@ -260,6 +260,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     }
     (playwright.request as any)._defaultContextOptions = { ..._combinedContextOptions };
     (playwright.request as any)._defaultContextOptions.tracesDir = path.join(_artifactsDir(), 'traces');
+    (playwright.request as any)._defaultContextOptions.timeout = actionTimeout || 0;
     await use();
     (playwright.request as any)._defaultContextOptions = undefined;
     for (const browserType of [playwright.chromium, playwright.firefox, playwright.webkit]) {

@@ -767,3 +767,58 @@ test('fulfill with return path of the entry', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 });
+
+test('should use actionTimeout for APIRequestContext', async ({ runInlineTest, server }) => {
+  server.setRoute('/stall', (req, res) => {});
+  const result = await runInlineTest({
+    'playwright.config.js': `
+      module.exports = {
+        use: {
+          actionTimeout: 1111,
+          baseURL: '${server.PREFIX}',
+        }
+      };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('default APIRequestContext fixture', async ({ request }) => {
+        await expect(request.get('/stall')).rejects.toThrow('apiRequestContext.get: Request timed out after 1111ms');
+      });
+      test('newly created APIRequestContext without options', async ({ playwright }) => {
+        const apiRequestContext = await playwright.request.newContext();
+        await expect(apiRequestContext.get('/stall')).rejects.toThrow('apiRequestContext.get: Request timed out after 1111ms');
+      });
+      test('newly created APIRequestContext with options', async ({ playwright }) => {
+        const apiRequestContextWithOptions = await playwright.request.newContext({ httpCredentials: { username: 'user', password: 'pass' } });
+        await expect(apiRequestContextWithOptions.get('/stall')).rejects.toThrow('apiRequestContext.get: Request timed out after 1111ms');
+      });
+    `,
+  }, { workers: 1 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(3);
+});
+
+test('should cancel apiRequests if test will timeout', async ({ runInlineTest, server }) => {
+  server.setRoute('/stall', (req, res) => {});
+  const result = await runInlineTest({
+    'playwright.config.js': `
+      module.exports = {
+        timeout: 1000,
+        use: {
+          baseURL: '${server.PREFIX}',
+        }
+      };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({ request }) => {
+        await request.get('/stall')
+      });
+    `,
+  }, { workers: 1 });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(0);
+  expect(result.failed).toBe(1);
+  expect(result.output).toContain('apiRequestContext.get: Request context disposed.');
+  expect(result.output).toContain('Test timeout of 1000ms exceeded.');
+});
