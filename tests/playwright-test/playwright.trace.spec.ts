@@ -334,6 +334,7 @@ test('should not override trace file in afterAll', async ({ runInlineTest, serve
     'After Hooks',
     'fixture: page',
     'fixture: context',
+    'attach \"trace\"',
     'afterAll hook',
     'fixture: request',
     'apiRequest.newContext',
