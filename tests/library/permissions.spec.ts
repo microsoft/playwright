@@ -152,7 +152,7 @@ it.describe('permissions', () => {
   it('should support clipboard read', async ({ page, context, server, browserName, headless }) => {
     it.fail(browserName === 'webkit');
     it.fail(browserName === 'firefox', 'No such permissions (requires flag) in Firefox');
-    it.fixme(browserName === 'chromium' && !headless);
+    it.fixme(browserName === 'chromium' && (!headless || !!process.env.PLAYWRIGHT_CHROMIUM_USE_HEADLESS_NEW));
 
     await page.goto(server.EMPTY_PAGE);
     expect(await getPermission(page, 'clipboard-read')).toBe('prompt');

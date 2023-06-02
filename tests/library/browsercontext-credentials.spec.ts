@@ -15,10 +15,17 @@
  * limitations under the License.
  */
 
-import { browserTest as it, expect } from '../config/browserTest';
+import { browserTest as base, expect } from '../config/browserTest';
 
-it('should fail without credentials', async ({ browser, server, browserName, headless }) => {
-  it.fail(browserName === 'chromium' && !headless);
+const it = base.extend<{ isChromiumHeadedLike: boolean }>({
+  isChromiumHeadedLike: async ({ browserName, headless }, use) => {
+    const isChromiumHeadedLike = browserName === 'chromium' && (!headless || !!process.env.PLAYWRIGHT_CHROMIUM_USE_HEADLESS_NEW);
+    await use(isChromiumHeadedLike);
+  },
+});
+
+it('should fail without credentials', async ({ browser, server, isChromiumHeadedLike }) => {
+  it.fail(isChromiumHeadedLike);
 
   server.setAuth('/empty.html', 'user', 'pass');
   const context = await browser.newContext();
@@ -28,8 +35,8 @@ it('should fail without credentials', async ({ browser, server, browserName, hea
   await context.close();
 });
 
-it('should work with setHTTPCredentials', async ({ browser, server, browserName, headless }) => {
-  it.fail(browserName === 'chromium' && !headless);
+it('should work with setHTTPCredentials', async ({ browser, server, isChromiumHeadedLike }) => {
+  it.fail(isChromiumHeadedLike);
 
   server.setAuth('/empty.html', 'user', 'pass');
   const context = await browser.newContext();
@@ -99,8 +106,8 @@ it('should work with correct credentials and matching origin case insensitive', 
   await context.close();
 });
 
-it('should fail with correct credentials and mismatching scheme', async ({ browser, server, browserName, headless }) => {
-  it.fail(browserName === 'chromium' && !headless);
+it('should fail with correct credentials and mismatching scheme', async ({ browser, server, isChromiumHeadedLike }) => {
+  it.fail(isChromiumHeadedLike);
   server.setAuth('/empty.html', 'user', 'pass');
   const context = await browser.newContext({
     httpCredentials: { username: 'user', password: 'pass', origin: server.PREFIX.replace('http://', 'https://') }
@@ -111,8 +118,8 @@ it('should fail with correct credentials and mismatching scheme', async ({ brows
   await context.close();
 });
 
-it('should fail with correct credentials and mismatching hostname', async ({ browser, server, browserName, headless }) => {
-  it.fail(browserName === 'chromium' && !headless);
+it('should fail with correct credentials and mismatching hostname', async ({ browser, server, isChromiumHeadedLike }) => {
+  it.fail(isChromiumHeadedLike);
   server.setAuth('/empty.html', 'user', 'pass');
   const hostname = new URL(server.PREFIX).hostname;
   const origin = server.PREFIX.replace(hostname, 'mismatching-hostname');
@@ -125,8 +132,8 @@ it('should fail with correct credentials and mismatching hostname', async ({ bro
   await context.close();
 });
 
-it('should fail with correct credentials and mismatching port', async ({ browser, server, browserName, headless }) => {
-  it.fail(browserName === 'chromium' && !headless);
+it('should fail with correct credentials and mismatching port', async ({ browser, server, isChromiumHeadedLike }) => {
+  it.fail(isChromiumHeadedLike);
   server.setAuth('/empty.html', 'user', 'pass');
   const origin = server.PREFIX.replace(server.PORT.toString(), (server.PORT + 1).toString());
   const context = await browser.newContext({
