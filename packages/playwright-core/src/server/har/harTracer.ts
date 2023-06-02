@@ -467,8 +467,8 @@ export class HarTracer {
   private _recordResponseHeaders(harEntry: har.Entry, headers: HeadersArray) {
     if (!this._options.omitCookies) {
       harEntry.response.cookies = headers
-        .filter(header => header.name.toLowerCase() === 'set-cookie')
-        .map(header => parseCookie(header.value));
+          .filter(header => header.name.toLowerCase() === 'set-cookie')
+          .map(header => parseCookie(header.value));
     }
     harEntry.response.headers = headers;
     const contentType = headers.find(header => header.name.toLowerCase() === 'content-type');
