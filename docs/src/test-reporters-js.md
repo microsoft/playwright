@@ -328,3 +328,4 @@ export default defineConfig({
 * [Tesults](https://www.tesults.com/docs/playwright)
 * [ReportPortal](https://github.com/reportportal/agent-js-playwright)
 * [Currents](https://www.npmjs.com/package/@currents/playwright)
+* [Serenity/JS](https://serenity-js.org/handbook/test-runners/playwright-test)
