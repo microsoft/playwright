@@ -28,11 +28,11 @@ await page.evaluate(`(async() => {
 ## Node.js requirements
 * langs: js
 
-Playwright requires Node.js version 14 or above
+Playwright requires Node.js version 16 or above
 
 ### ReferenceError: URL is not defined
 
-Playwright requires Node.js 14 or higher.
+Playwright requires Node.js 16 or higher.
 
 ### Unknown file extension ".ts"
 
