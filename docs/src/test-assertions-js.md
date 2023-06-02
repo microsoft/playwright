@@ -132,6 +132,7 @@ await slowExpect(locator).toHaveText('Submit');
 
 // Always do soft assertions.
 const softExpect = expect.configure({ soft: true });
+await softExpect(locator).toHaveText('Submit');
 ```
 
 ## expect.poll
