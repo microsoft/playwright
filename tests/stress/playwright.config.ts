@@ -30,7 +30,8 @@ export default defineConfig({
     {
       name: 'firefox',
       use: {
-        browserName: 'firefox'
+        browserName: 'firefox',
+        channel: process.platform !== 'win32' ? 'firefox-asan' : undefined,
       },
     },
 
