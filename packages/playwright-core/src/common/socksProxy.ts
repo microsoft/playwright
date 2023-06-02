@@ -421,7 +421,7 @@ export class SocksProxy extends EventEmitter implements SocksConnectionClient {
       const localAddress = socket.localAddress;
       const localPort = socket.localPort;
       this._directSockets.set(request.uid, socket);
-      this._connections.get(request.uid)?.socketConnected(localAddress, localPort);
+      this._connections.get(request.uid)?.socketConnected(localAddress!, localPort!);
     } catch (error) {
       this._connections.get(request.uid)?.socketFailed(error.code);
     }
@@ -557,7 +557,7 @@ export class SocksProxyHandler extends EventEmitter {
       const localAddress = socket.localAddress;
       const localPort = socket.localPort;
       this._sockets.set(uid, socket);
-      const payload: SocksSocketConnectedPayload = { uid, host: localAddress, port: localPort };
+      const payload: SocksSocketConnectedPayload = { uid, host: localAddress!, port: localPort! };
       debugLogger.log('socks', `[${uid}] <= connected to network ${payload.host}:${payload.port}`);
       this.emit(SocksProxyHandler.Events.SocksConnected, payload);
     } catch (error) {
