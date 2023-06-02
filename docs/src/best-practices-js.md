@@ -136,7 +136,7 @@ Assertions are a way to verify that the expected result and the actual result ma
 
 #### Don't use manual assertions
 
-Don't use manual assertions that are not awaiting the expect. In the code below the await is inside the expect rather than before it. When using assertions such as `isVisible()` the test wont wait a single second, it will just check the locator is there and return immediately.
+Don't use manual assertions that are not awaiting the expect. In the code below the await is inside the expect rather than before it. When using assertions such as `isVisible()` the test won't wait a single second, it will just check the locator is there and return immediately.
 
 ```js
 👎 expect(await page.getByText('welcome').isVisible()).toBe(true);
