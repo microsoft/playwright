@@ -552,10 +552,10 @@ it('should not fulfill with redirect status', async ({ page, server, browserName
   });
 
   for (status = 300; status < 310; status++) {
-    const exception = await Promise.race([
+    const [, exception] = await Promise.all([
       page.evaluate(url => location.href = url, server.PREFIX + '/redirect_this'),
-      new Promise((f, r) => {fulfill = f; reject = r;})
-    ]) as any;
+      new Promise<Error>((f, r) => {fulfill = f; reject = r;})
+    ]);
     expect(exception).toBeTruthy();
     expect(exception.message.includes('Cannot fulfill with redirect status')).toBe(true);
   }
