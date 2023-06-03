@@ -93,6 +93,8 @@ const DOWNLOAD_PATHS = {
     'mac11-arm64': 'builds/chromium/%s/chromium-mac-arm64.zip',
     'mac12': 'builds/chromium/%s/chromium-mac.zip',
     'mac12-arm64': 'builds/chromium/%s/chromium-mac-arm64.zip',
+    'mac13': 'builds/chromium/%s/chromium-mac.zip',
+    'mac13-arm64': 'builds/chromium/%s/chromium-mac-arm64.zip',
     'win64': 'builds/chromium/%s/chromium-win64.zip',
   },
   'chromium-tip-of-tree': {
@@ -114,6 +116,8 @@ const DOWNLOAD_PATHS = {
     'mac11-arm64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-mac-arm64.zip',
     'mac12': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-mac.zip',
     'mac12-arm64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-mac-arm64.zip',
+    'mac13': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-mac.zip',
+    'mac13-arm64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-mac-arm64.zip',
     'win64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-win64.zip',
   },
   'chromium-with-symbols': {
@@ -135,6 +139,8 @@ const DOWNLOAD_PATHS = {
     'mac11-arm64': 'builds/chromium/%s/chromium-with-symbols-mac-arm64.zip',
     'mac12': 'builds/chromium/%s/chromium-with-symbols-mac.zip',
     'mac12-arm64': 'builds/chromium/%s/chromium-with-symbols-mac-arm64.zip',
+    'mac13': 'builds/chromium/%s/chromium-with-symbols-mac.zip',
+    'mac13-arm64': 'builds/chromium/%s/chromium-with-symbols-mac-arm64.zip',
     'win64': 'builds/chromium/%s/chromium-with-symbols-win64.zip',
   },
   'firefox': {
@@ -156,6 +162,8 @@ const DOWNLOAD_PATHS = {
     'mac11-arm64': 'builds/firefox/%s/firefox-mac-11-arm64.zip',
     'mac12': 'builds/firefox/%s/firefox-mac-11.zip',
     'mac12-arm64': 'builds/firefox/%s/firefox-mac-11-arm64.zip',
+    'mac13': 'builds/firefox/%s/firefox-mac-11.zip',
+    'mac13-arm64': 'builds/firefox/%s/firefox-mac-11-arm64.zip',
     'win64': 'builds/firefox/%s/firefox-win64.zip',
   },
   'firefox-beta': {
@@ -177,6 +185,8 @@ const DOWNLOAD_PATHS = {
     'mac11-arm64': 'builds/firefox-beta/%s/firefox-beta-mac-11-arm64.zip',
     'mac12': 'builds/firefox-beta/%s/firefox-beta-mac-11.zip',
     'mac12-arm64': 'builds/firefox-beta/%s/firefox-beta-mac-11-arm64.zip',
+    'mac13': 'builds/firefox-beta/%s/firefox-beta-mac-11.zip',
+    'mac13-arm64': 'builds/firefox-beta/%s/firefox-beta-mac-11-arm64.zip',
     'win64': 'builds/firefox-beta/%s/firefox-beta-win64.zip',
   },
   'webkit': {
@@ -198,6 +208,8 @@ const DOWNLOAD_PATHS = {
     'mac11-arm64': 'builds/webkit/%s/webkit-mac-11-arm64.zip',
     'mac12': 'builds/webkit/%s/webkit-mac-12.zip',
     'mac12-arm64': 'builds/webkit/%s/webkit-mac-12-arm64.zip',
+    'mac13': 'builds/webkit/%s/webkit-mac-13.zip',
+    'mac13-arm64': 'builds/webkit/%s/webkit-mac-13-arm64.zip',
     'win64': 'builds/webkit/%s/webkit-win64.zip',
   },
   'ffmpeg': {
@@ -219,6 +231,8 @@ const DOWNLOAD_PATHS = {
     'mac11-arm64': 'builds/ffmpeg/%s/ffmpeg-mac-arm64.zip',
     'mac12': 'builds/ffmpeg/%s/ffmpeg-mac.zip',
     'mac12-arm64': 'builds/ffmpeg/%s/ffmpeg-mac-arm64.zip',
+    'mac13': 'builds/ffmpeg/%s/ffmpeg-mac.zip',
+    'mac13-arm64': 'builds/ffmpeg/%s/ffmpeg-mac-arm64.zip',
     'win64': 'builds/ffmpeg/%s/ffmpeg-win64.zip',
   },
   'android': {
