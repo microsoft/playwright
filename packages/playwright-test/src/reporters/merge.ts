@@ -26,6 +26,8 @@ import { Multiplexer } from './multiplexer';
 
 export async function createMergedReport(config: FullConfigInternal, dir: string, reporterDescriptions: ReporterDescription[], resolvePaths: boolean) {
   const shardFiles = await sortedShardFiles(dir);
+  if (shardFiles.length === 0)
+    throw new Error(`No report files found in ${dir}`);
   const events = await mergeEvents(dir, shardFiles);
   if (resolvePaths)
     patchAttachmentPaths(events, dir);

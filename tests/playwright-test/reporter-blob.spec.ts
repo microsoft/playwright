@@ -965,3 +965,11 @@ test('same project different suffixes', async ({ runInlineTest, mergeReports }) 
   expect(exitCode).toBe(0);
   expect(output).toContain(`projects: [ 'foo-first', 'foo-second' ]`);
 });
+
+test('no reports error', async ({ runInlineTest, mergeReports }) => {
+  const reportDir = test.info().outputPath('blob-report');
+  fs.mkdirSync(reportDir, { recursive: true });
+  const { exitCode, output } = await mergeReports(reportDir);
+  expect(exitCode).toBe(1);
+  expect(output).toContain(`No report files found in`);
+});
