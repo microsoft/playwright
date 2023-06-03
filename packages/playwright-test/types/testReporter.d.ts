@@ -252,6 +252,19 @@ export interface TestResult {
   errors: Array<TestError>;
 
   /**
+   * Expected status of this test run. See also
+   * [testResult.status](https://playwright.dev/docs/api/class-testresult#test-result-status) and
+   * [testCase.expectedStatus](https://playwright.dev/docs/api/class-testcase#test-case-expected-status).
+   * - Tests marked as [test.skip(title, testFunction)](https://playwright.dev/docs/api/class-test#test-skip-1) or
+   *   [test.fixme(title, testFunction)](https://playwright.dev/docs/api/class-test#test-fixme-1) are expected to be
+   *   `'skipped'`.
+   * - Tests marked as [test.fail()](https://playwright.dev/docs/api/class-test#test-fail-1) are expected to be
+   *   `'failed'`.
+   * - Other tests are expected to be `'passed'`.
+   */
+  expectedStatus: "passed"|"failed"|"timedOut"|"skipped"|"interrupted";
+
+  /**
    * The index of the worker between `0` and `workers - 1`. It is guaranteed that workers running at the same time have
    * a different `parallelIndex`.
    */

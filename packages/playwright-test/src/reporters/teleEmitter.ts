@@ -194,6 +194,7 @@ export class TeleReporterEmitter implements Reporter {
       id: (result as any)[idSymbol],
       duration: result.duration,
       status: result.status,
+      expectedStatus: result.expectedStatus,
       errors: result.errors,
       attachments: this._serializeAttachments(result.attachments),
     };

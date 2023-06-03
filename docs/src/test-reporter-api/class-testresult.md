@@ -53,6 +53,16 @@ Start time of this particular test run.
 
 The status of this test result. See also [`property: TestCase.expectedStatus`].
 
+## property: TestResult.expectedStatus
+* since: v1.35
+- type: <[TestStatus]<"passed"|"failed"|"timedOut"|"skipped"|"interrupted">>
+
+Expected status of this test run. See also [`property: TestResult.status`] and [`property: TestCase.expectedStatus`].
+* Tests marked as [`method: Test.skip#1`] or [`method: Test.fixme#1`] are expected to be `'skipped'`.
+* Tests marked as [`method: Test.fail#1`] are expected to be `'failed'`.
+* Other tests are expected to be `'passed'`.
+
+
 ## property: TestResult.stderr
 * since: v1.10
 - type: <[Array]<[string]|[Buffer]>>

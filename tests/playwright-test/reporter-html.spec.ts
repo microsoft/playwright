@@ -1942,3 +1942,26 @@ test('tests should filter by status', async ({ runInlineTest, showReport, page }
   await expect(page.getByText('failed title')).not.toBeVisible();
   await expect(page.getByText('passes title')).toBeVisible();
 });
+
+test('test that is skipped on retry should be marked as passing', async ({ runInlineTest, showReport, page }) => {
+  await runInlineTest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test.describe.serial("Tests", () => {
+        test('skipped on retry', async ({}) => {
+          test.skip(test.info().retry > 0, 'skipped on retry');
+          expect(1).toBe(1);
+        });
+        test('flaky', async ({}, testInfo) => {
+          expect(test.info().retry).toBe(1);
+        });
+      });
+    `,
+  }, { reporter: 'dot,html', retries: 1 }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+
+  await showReport();
+
+  await expect(page.locator('.subnav-item:has-text("All") .counter')).toHaveText('2');
+  await expect(page.locator('.subnav-item:has-text("Passed") .counter')).toHaveText('1');
+  await expect(page.locator('.subnav-item:has-text("Flaky") .counter')).toHaveText('1');
+});

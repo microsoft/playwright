@@ -90,6 +90,7 @@ export type JsonTestResultEnd = {
   id: string;
   duration: number;
   status: TestStatus;
+  expectedStatus: TestStatus;
   errors: TestError[];
   attachments: TestResult['attachments'];
 };
@@ -224,6 +225,7 @@ export class TeleReporterReceiver {
     const result = test.resultsMap.get(payload.id)!;
     result.duration = payload.duration;
     result.status = payload.status;
+    result.expectedStatus = payload.expectedStatus;
     result.statusEx = payload.status;
     result.errors = payload.errors;
     result.attachments = payload.attachments;
@@ -450,9 +452,9 @@ export class TeleTestCase implements reporterTypes.TestCase {
     const nonSkipped = this.results.filter(result => result.status !== 'skipped' && result.status !== 'interrupted');
     if (!nonSkipped.length)
       return 'skipped';
-    if (nonSkipped.every(result => result.status === this.expectedStatus))
+    if (nonSkipped.every(result => result.status === result.expectedStatus))
       return 'expected';
-    if (nonSkipped.some(result => result.status === this.expectedStatus))
+    if (nonSkipped.some(result => result.status === result.expectedStatus))
       return 'flaky';
     return 'unexpected';
   }
@@ -478,6 +480,7 @@ export class TeleTestCase implements reporterTypes.TestCase {
       stderr: [],
       attachments: [],
       status: 'skipped',
+      expectedStatus: 'passed',
       statusEx: 'scheduled',
       steps: [],
       errors: [],

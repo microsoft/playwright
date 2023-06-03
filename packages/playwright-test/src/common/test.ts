@@ -241,9 +241,9 @@ export class TestCase extends Base implements reporterTypes.TestCase {
     const nonSkipped = this.results.filter(result => result.status !== 'skipped' && result.status !== 'interrupted');
     if (!nonSkipped.length)
       return 'skipped';
-    if (nonSkipped.every(result => result.status === this.expectedStatus))
+    if (nonSkipped.every(result => result.status === result.expectedStatus))
       return 'expected';
-    if (nonSkipped.some(result => result.status === this.expectedStatus))
+    if (nonSkipped.some(result => result.status === result.expectedStatus))
       return 'flaky';
     return 'unexpected';
   }
@@ -295,6 +295,7 @@ export class TestCase extends Base implements reporterTypes.TestCase {
       stderr: [],
       attachments: [],
       status: 'skipped',
+      expectedStatus: 'passed',
       steps: [],
       errors: [],
     };
