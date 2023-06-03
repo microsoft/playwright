@@ -232,9 +232,12 @@ export abstract class BrowserContext extends SdkObject {
       // at the same time.
       return;
     }
+    const gotClosedGracefully = this._closedStatus === 'closing';
     this._closedStatus = 'closed';
-    this._deleteAllDownloads();
-    this._downloads.clear();
+    if (!gotClosedGracefully) {
+      this._deleteAllDownloads();
+      this._downloads.clear();
+    }
     this.tracing.dispose().catch(() => {});
     if (this._isPersistentContext)
       this.onClosePersistent();
