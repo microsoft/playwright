@@ -25,54 +25,53 @@ let setSelector: (selector: string, focus?: boolean) => void;
 let setFileIfNeeded: (file: string) => void;
 
 const tabId = chrome.devtools.inspectedWindow.tabId;
+let _port: chrome.runtime.Port | undefined;
 
-let _attachPromise: Promise<void>;
+let attachedCallback!: () => void;
+const attachedPromise = new Promise<void>((resolve) => {
+  attachedCallback = resolve;
+});
 
 async function _onDispatch(data: EventData) {
-  if (!_attachPromise) {
+  if (!_port) {
     // ensures that background is notified when this devtools is closed
     // https://developer.chrome.com/docs/extensions/mv3/devtools/#detecting-open-close
-    chrome.runtime.connect({ name: `playwright-devtools-page-${tabId}` });
+    _port = chrome.runtime.connect({ name: `playwright-devtools-page-${tabId}` });
+    _port.onMessage.addListener(async (msg: { event: 'attached' } | RecorderMessage) => {
+      if ('event' in msg && msg.event === 'attached') {
+        attachedCallback();
+        return;
+      }
 
-    // will attach chrome.debugger on background
-    _attachPromise = chrome.runtime.sendMessage({ type: 'attach', tabId });
+      if (!('type' in msg) || msg.type !== 'recorder') return;
+
+      await attachedPromise;
+
+      switch (msg.method) {
+        case 'setPaused': setPaused(msg.paused); break;
+        case 'setMode': setMode(msg.mode); break;
+        case 'setSources': setSources(msg.sources); break;
+        case 'updateCallLogs': updateCallLogs(msg.callLogs); break;
+        case 'setSelector': setSelector(msg.selector, msg.focus); break;
+        case 'setFileIfNeeded': setFileIfNeeded(msg.file); break;
+      }
+    });
   }
 
-  await _attachPromise;
-  chrome.runtime.sendMessage({ type: 'recorderEvent', tabId, ...data });
+  await attachedPromise;
+  _port.postMessage({ type: 'recorderEvent', ...data });
 }
 
 chrome.devtools.panels.create('Playwright Recorder', 'recorder/icon-16x16.png', 'recorder/index.html', panel => {
   panel.onShown.addListener(async window => {
 
-    setPaused = (paused: boolean) => window.playwrightSetPaused(paused);
-    setMode = (mode: 'none' | 'recording' | 'inspecting') => window.playwrightSetMode(mode);
-    setSources = (sources: Source[]) => window.playwrightSetSources(sources);
-    updateCallLogs = (callLogs: CallLog[]) => window.playwrightUpdateLogs(callLogs);
-    setSelector = (selector: string) => window.playwrightSetSelector(selector);
-    setFileIfNeeded = (file: string) => window.playwrightSetFileIfNeeded(file);
+    setPaused = (paused) => window.playwrightSetPaused(paused);
+    setMode = (mode) => window.playwrightSetMode(mode);
+    setSources = (sources) => window.playwrightSetSources(sources);
+    updateCallLogs = (callLogs) => window.playwrightUpdateLogs(callLogs);
+    setSelector = (selector) => window.playwrightSetSelector(selector);
+    setFileIfNeeded = (file) => window.playwrightSetFileIfNeeded(file);
 
     window.dispatch = _onDispatch;
   });
-});
-
-chrome.runtime.onMessage.addListener((msg: RecorderMessage & { tabId: number }, _, sendMessage) => {
-
-  // https://stackoverflow.com/a/46628145
-  (async () => {
-    if (!_attachPromise || msg.type !== 'recorder' || msg.tabId !== tabId) return;
-
-    await _attachPromise;
-
-    switch (msg.method) {
-      case 'setPaused': setPaused(msg.paused); break;
-      case 'setMode': setMode(msg.mode); break;
-      case 'setSources': setSources(msg.sources); break;
-      case 'updateCallLogs': updateCallLogs(msg.callLogs); break;
-      case 'setSelector': setSelector(msg.selector, msg.focus); break;
-      case 'setFileIfNeeded': setFileIfNeeded(msg.file); break;
-    }
-  })().then(sendMessage);
-
-  return true;
 });

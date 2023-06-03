@@ -18,6 +18,8 @@ import type { Source, CallLog } from '@recorder/recorderTypes';
 import { EventEmitter } from 'events';
 import type { EventData } from '@recorder/recorderTypes';
 import { ManualPromise, raceAgainstTimeout } from '../polyfills/utils';
+import { Recorder } from '@playwright-core/server/recorder';
+import { Port } from './crxPlaywright';
 
 export type RecorderMessage = { type: 'recorder' } & (
   | { method: 'updateCallLogs', callLogs: CallLog[] }
@@ -29,21 +31,24 @@ export type RecorderMessage = { type: 'recorder' } & (
 );
 
 export class CrxRecorderApp extends EventEmitter implements IRecorderApp {
-  private _tabId: number;
+  private _port: Port;
   private _setModePromise?: ManualPromise<void>;
+  private _recorder: Recorder;
 
-  constructor(tabId: number) {
+  constructor(port: Port, recorder: Recorder) {
     super();
-    this._tabId = tabId;
-    chrome.runtime.onMessage.addListener(this._onMessage);
+    this._port = port;
+    this._recorder = recorder;
+
+    this._port.onMessage.addListener(this._onMessage);
   }
 
   async close() {
-    chrome.runtime.onMessage.removeListener(this._onMessage);
+    this._port.onMessage.removeListener(this._onMessage);
 
     this._setModePromise = new ManualPromise();
     await raceAgainstTimeout(async () => {
-      this.emitSendMode('none');
+      this._recorder.setMode('none');
 
       // wait until recorder processes it completely, which means it will call setMode
       await this._setModePromise;
@@ -67,7 +72,7 @@ export class CrxRecorderApp extends EventEmitter implements IRecorderApp {
 
   async setSelector(selector: string, focus?: boolean) {
     if (focus)
-      this.emitSendMode('none');
+      this._recorder.setMode('none');
     await this._sendMessage({ type: 'recorder', method: 'setSelector', selector, focus });
   }
 
@@ -79,17 +84,16 @@ export class CrxRecorderApp extends EventEmitter implements IRecorderApp {
     await this._sendMessage({ type: 'recorder', method: 'setSources', sources });
   }
 
-  private _onMessage = ({ tabId, type, ...eventData }: EventData & { tabId: number, type: string }) => {
-    if (tabId === this._tabId && type === 'recorderEvent')
+  private _onMessage = ({ type, ...eventData }: EventData & { tabId: number, type: string }) => {
+    if (type === 'recorderEvent')
       this.emit('event', eventData);
   };
 
   async _sendMessage(msg: RecorderMessage) {
-    const tabId = this._tabId;
-    return await chrome.runtime.sendMessage({ ...msg, tabId }).catch(() => undefined);
-  }
-
-  emitSendMode(mode: 'none' | 'recording' | 'inspecting') {
-    this.emit('event', { event: 'setMode', params: { mode } });
+    try {
+      return this._port.postMessage({ ...msg });
+    } catch(e) {
+      // just ignore
+    }
   }
 }

@@ -14,37 +14,49 @@
  * limitations under the License.
  */
 import { createInProcessPlaywright } from '@playwright-core/inProcessFactory';
-import type { Playwright } from '@playwright-core/server';
 import { CrxTransport } from './crxTransport';
 import type { Progress } from '@playwright-core/server/progress';
 import type { LaunchOptions } from '@playwright-core/client/types';
 import { Recorder } from '@playwright-core/server/recorder';
 import { CrxRecorderApp } from './crxRecorder';
 import type { Page } from '@playwright-core/client/page';
+import { Chromium } from '@playwright-core/server/chromium/chromium';
 export type { Page } from '@playwright-core/client/page';
 
+export type Port = chrome.runtime.Port;
+
 const playwright = createInProcessPlaywright();
-const serverPlaywright = (playwright as any)._toImpl()._dispatchers.get('Playwright')._object as Playwright;
 
-const _pages: Map<number, Page> = new Map();
+const _pages: Map<number, Promise<Page>> = new Map();
 
-export function getPage(tabId: number) {
-  return _pages.get(tabId);
+export async function getPage(tabId: number) {
+  const pagePromise = _pages.get(tabId);
+  return pagePromise ? await pagePromise : undefined;
 }
 
-export async function getOrCreatePage(tabId: number, options?: { enableRecorder?: boolean }) {
+export async function getOrCreatePage(tabId: number, port: Port, options?: { enableRecorder?: boolean }) {
   if (_pages.has(tabId)) return _pages.get(tabId)!;
 
+  const pagePromise = createPage(tabId, port, options);
+  _pages.set(tabId, pagePromise);
+
+  return await pagePromise;
+}
+
+async function createPage(tabId: number, port: Port, options?: { enableRecorder?: boolean }) {
   let transport: CrxTransport | undefined;
   let recorderApp: CrxRecorderApp | undefined;
 
   if (options?.enableRecorder)
-    recorderApp = new CrxRecorderApp(tabId);
+    Recorder.setAppFactory(async (recorder) => {
+      recorderApp = new CrxRecorderApp(port, recorder);
+      return recorderApp;
+    });
 
   // chrome.debugger requires a debuggee, identified by its tabId.
   // We have to do override _launchProcess to pass it the tabId
   // @ts-ignore
-  serverPlaywright.chromium._launchProcess = async function(progress: Progress, options: LaunchOptions) {
+  Chromium.prototype._launchProcess = async function(progress: Progress, options: LaunchOptions) {
     transport = await CrxTransport.connect(progress, tabId);
     const doClose = async () => {
       try {
@@ -60,13 +72,10 @@ export async function getOrCreatePage(tabId: number, options?: { enableRecorder?
     return { browserProcess: { close: doClose, kill: doClose }, artifactsDir: '', userDataDir: '', transport };
   };
 
-  if (options?.enableRecorder)
-    Recorder.setAppFactory(async () => recorderApp!);
-
   const browser = await playwright.chromium.launch({ tracesDir: 'traces' });
   const context = await browser._newContextForReuse();
   if (options?.enableRecorder)
-    context._enableRecorder({ language: 'javascript' });
+    await context._enableRecorder({ language: 'javascript' });
 
   const page = await context.newPage();
 
@@ -76,14 +85,12 @@ export async function getOrCreatePage(tabId: number, options?: { enableRecorder?
     if (!_pages.has(tabId)) return;
     _pages.delete(tabId);
 
-    await page.close();
     await browser.close();
     await transport?.closeAndWait();
   };
 
   chrome.tabs.onRemoved.addListener(() => page.close());
 
-  _pages.set(tabId, page);
   return page;
 }
 

@@ -14,32 +14,21 @@
  * limitations under the License.
  */
 import './polyfills/dependencies';
-import { getOrCreatePage, getPage } from './crx/crxPlaywright';
+import { Port, getOrCreatePage, getPage } from './crx/crxPlaywright';
 
-async function _onAttach(tabId: number) {
-  const page = await getOrCreatePage(tabId, { enableRecorder: true });
+async function _onAttach(tabId: number, port: Port) {
+  const page = await getOrCreatePage(tabId, port, { enableRecorder: true });
   // console.log runs in the page, not here
   // eslint-disable-next-line no-console
   await page.evaluate(() => console.log('Recording...'));
+
+  port.postMessage({ event: 'attached' });
 }
 
 async function _onDetach(tabId: number) {
-  const page = getPage(tabId);
+  const page = await getPage(tabId);
   await page?.close();
 }
-
-// https://stackoverflow.com/a/46628145
-chrome.runtime.onMessage.addListener(({ type, tabId }, _, sendResponse) => {
-  (async () => {
-    switch (type) {
-      case 'attach': await _onAttach(tabId); break;
-      case 'detach': await _onDetach(tabId); break;
-    }
-  // eslint-disable-next-line no-console
-  })().then(sendResponse).catch(console.error);
-
-  return true;
-});
 
 const portRegex = /playwright-devtools-page-(\d+)/;
 
@@ -51,7 +40,16 @@ chrome.runtime.onConnect.addListener(port => {
   // eslint-disable-next-line radix
   const tabId = parseInt(tabIdString);
 
+  // https://stackoverflow.com/a/46628145
+  port.onMessage.addListener(({ type }) => {
+    switch (type) {
+      case 'detach': _onDetach(tabId); break;
+    }
+  });
+
   port.onDisconnect.addListener(async () => {
     await _onDetach(tabId);
   });
+
+  _onAttach(tabId, port);
 });
