@@ -9,7 +9,6 @@ jobs:
     permissions:
       pull-requests: write
       checks: write
-    timeout-minutes: 10
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
