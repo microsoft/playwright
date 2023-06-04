@@ -260,7 +260,7 @@ for (const bundle of bundles) {
 }
 
 // Build/watch web packages.
-for (const webPackage of ['html-reporter', 'recorder', 'trace-viewer']) {
+for (const webPackage of ['html-reporter', 'recorder', 'trace-viewer', 'crx']) {
   steps.push({
     command: 'npx',
     args: ['vite', 'build', ...(watchMode ? ['--watch', '--sourcemap', '--minify=false'] : [])],
@@ -278,6 +278,14 @@ steps.push({
   concurrent: true,
 });
 
+// Build/watch recorder for crx.
+steps.push({
+  command: 'npx',
+  args: ['vite', '--config', 'vite.recorder.config.ts', 'build', ...(watchMode ? ['--watch', '--sourcemap', '--minify=false'] : [])],
+  shell: true,
+  cwd: path.join(__dirname, '..', '..', 'packages', 'crx'),
+  concurrent: true,
+});
 
 // Generate injected.
 onChanges.push({
