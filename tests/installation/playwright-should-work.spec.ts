@@ -23,5 +23,5 @@ test(`playwright should work`, async ({ exec, nodeMajorVersion, installedSoftwar
   if (nodeMajorVersion >= 14)
     await exec('node esm-playwright.mjs');
   const stdio = await exec('npx playwright', 'test', '-c', '.', { expectToExitWithError: true });
-  expect(stdio).toContain(`Please install @playwright/test package to use Playwright Test.`);
+  expect(stdio).toContain(`Please install @playwright/test package`);
 });

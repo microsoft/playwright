@@ -617,7 +617,6 @@ export class Registry {
         return undefined;
 
       const location = prefixes.length ? ` at ${path.join(prefixes[0], suffix)}` : ``;
-      // TODO: language-specific error message
       const installation = install ? `\nRun "${buildPlaywrightCLICommand(sdkLanguage, 'install ' + name)}"` : '';
       throw new Error(`Chromium distribution '${name}' is not found${location}${installation}`);
     };
