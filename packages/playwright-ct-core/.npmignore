@@ -5,3 +5,5 @@
 !cli.js
 !lib/**
 !types/**
+!index.d.ts
+!index.js
