@@ -20,15 +20,15 @@ export type { FullConfig, TestStatus } from './test';
 
 /**
  * `Suite` is a group of tests. All tests in Playwright Test form the following hierarchy:
- * - Root suite has a child suite for each [TestProject].
+ * - Root suite has a child suite for each [TestProject](https://playwright.dev/docs/api/class-testproject).
  *   - Project suite #1. Has a child suite for each test file in the project.
  *     - File suite #1
- *       - [TestCase] #1
- *       - [TestCase] #2
+ *       - [TestCase](https://playwright.dev/docs/api/class-testcase) #1
+ *       - [TestCase](https://playwright.dev/docs/api/class-testcase) #2
  *       - Suite corresponding to a
  *         [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1) group
- *         - [TestCase] #1 in a group
- *         - [TestCase] #2 in a group
+ *         - [TestCase](https://playwright.dev/docs/api/class-testcase) #1 in a group
+ *         - [TestCase](https://playwright.dev/docs/api/class-testcase) #2 in a group
  *       - < more test cases ... >
  *     - File suite #2
  *     - < more file suites ... >
@@ -65,7 +65,7 @@ export interface Suite {
   parent?: Suite;
 
   /**
-   * Child suites. See [Suite] for the hierarchy of suites.
+   * Child suites. See [Suite](https://playwright.dev/docs/api/class-suite) for the hierarchy of suites.
    */
   suites: Array<Suite>;
 
@@ -200,7 +200,7 @@ export interface TestCase {
 }
 
 /**
- * A result of a single [TestCase] run.
+ * A result of a single [TestCase](https://playwright.dev/docs/api/class-testcase) run.
  */
 export interface TestResult {
   /**
@@ -357,17 +357,20 @@ export interface FullResult {
  *
  * Here is a typical order of reporter calls:
  * - [reporter.onBegin(config, suite)](https://playwright.dev/docs/api/class-reporter#reporter-on-begin) is called
- *   once with a root suite that contains all other suites and tests. Learn more about [suites hierarchy][Suite].
+ *   once with a root suite that contains all other suites and tests. Learn more about
+ *   [suites hierarchy][Suite](https://playwright.dev/docs/api/class-suite).
  * - [reporter.onTestBegin(test, result)](https://playwright.dev/docs/api/class-reporter#reporter-on-test-begin) is
- *   called for each test run. It is given a [TestCase] that is executed, and a [TestResult] that is almost empty.
- *   Test result will be populated while the test runs (for example, with steps and stdio) and will get final
- *   `status` once the test finishes.
+ *   called for each test run. It is given a [TestCase](https://playwright.dev/docs/api/class-testcase) that is
+ *   executed, and a [TestResult](https://playwright.dev/docs/api/class-testresult) that is almost empty. Test
+ *   result will be populated while the test runs (for example, with steps and stdio) and will get final `status`
+ *   once the test finishes.
  * - [reporter.onStepBegin(test, result, step)](https://playwright.dev/docs/api/class-reporter#reporter-on-step-begin)
  *   and
  *   [reporter.onStepEnd(test, result, step)](https://playwright.dev/docs/api/class-reporter#reporter-on-step-end)
  *   are called for each executed step inside the test. When steps are executed, test run has not finished yet.
  * - [reporter.onTestEnd(test, result)](https://playwright.dev/docs/api/class-reporter#reporter-on-test-end) is
- *   called when test run has finished. By this time, [TestResult] is complete and you can use
+ *   called when test run has finished. By this time, [TestResult](https://playwright.dev/docs/api/class-testresult)
+ *   is complete and you can use
  *   [testResult.status](https://playwright.dev/docs/api/class-testresult#test-result-status),
  *   [testResult.error](https://playwright.dev/docs/api/class-testresult#test-result-error) and more.
  * - [reporter.onEnd(result)](https://playwright.dev/docs/api/class-reporter#reporter-on-end) is called once after
@@ -389,7 +392,8 @@ export interface FullResult {
  */
 export interface Reporter {
   /**
-   * Called once before running tests. All tests have been already discovered and put into a hierarchy of [Suite]s.
+   * Called once before running tests. All tests have been already discovered and put into a hierarchy of
+   * [Suite](https://playwright.dev/docs/api/class-suite)s.
    * @param config Resolved configuration.
    * @param suite The root suite that contains all projects, files and test cases.
    */
@@ -560,7 +564,8 @@ export {};
 
 
 /**
- * Represents a location in the source code where [TestCase] or [Suite] is defined.
+ * Represents a location in the source code where [TestCase](https://playwright.dev/docs/api/class-testcase) or
+ * [Suite](https://playwright.dev/docs/api/class-suite) is defined.
  */
 export interface Location {
   /**

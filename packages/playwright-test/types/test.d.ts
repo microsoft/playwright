@@ -37,8 +37,9 @@ type UseOptions<TestArgs, WorkerArgs> = { [K in keyof WorkerArgs]?: WorkerArgs[K
  *
  * `TestProject` encapsulates configuration specific to a single project. Projects are configured in
  * [testConfig.projects](https://playwright.dev/docs/api/class-testconfig#test-config-projects) specified in the
- * [configuration file](https://playwright.dev/docs/test-configuration). Note that all properties of [TestProject] are available in the
- * top-level [TestConfig], in which case they are shared between all projects.
+ * [configuration file](https://playwright.dev/docs/test-configuration). Note that all properties of
+ * [TestProject](https://playwright.dev/docs/api/class-testproject) are available in the top-level
+ * [TestConfig](https://playwright.dev/docs/api/class-testconfig), in which case they are shared between all projects.
  *
  * Here is an example configuration that runs every test in Chromium, Firefox and WebKit, both Desktop and Mobile
  * versions.
@@ -85,7 +86,8 @@ export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject {
   /**
    * Options for all tests in this project, for example
    * [testOptions.browserName](https://playwright.dev/docs/api/class-testoptions#test-options-browser-name). Learn more
-   * about [configuration](https://playwright.dev/docs/test-configuration) and see [available options][TestOptions].
+   * about [configuration](https://playwright.dev/docs/test-configuration) and see
+   * [available options][TestOptions](https://playwright.dev/docs/api/class-testoptions).
    *
    * ```js
    * // playwright.config.ts
@@ -115,8 +117,9 @@ export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject {
  *
  * `TestProject` encapsulates configuration specific to a single project. Projects are configured in
  * [testConfig.projects](https://playwright.dev/docs/api/class-testconfig#test-config-projects) specified in the
- * [configuration file](https://playwright.dev/docs/test-configuration). Note that all properties of [TestProject] are available in the
- * top-level [TestConfig], in which case they are shared between all projects.
+ * [configuration file](https://playwright.dev/docs/test-configuration). Note that all properties of
+ * [TestProject](https://playwright.dev/docs/api/class-testproject) are available in the top-level
+ * [TestConfig](https://playwright.dev/docs/api/class-testconfig), in which case they are shared between all projects.
  *
  * Here is an example configuration that runs every test in Chromium, Firefox and WebKit, both Desktop and Mobile
  * versions.
@@ -418,7 +421,8 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
   /**
    * Options for all tests in this project, for example
    * [testOptions.browserName](https://playwright.dev/docs/api/class-testoptions#test-options-browser-name). Learn more
-   * about [configuration](https://playwright.dev/docs/test-configuration) and see [available options][TestOptions].
+   * about [configuration](https://playwright.dev/docs/test-configuration) and see
+   * [available options][TestOptions](https://playwright.dev/docs/api/class-testoptions).
    *
    * ```js
    * // playwright.config.ts
@@ -446,12 +450,13 @@ type LiteralUnion<T extends U, U = string> = T | (U & { zz_IGNORE_ME?: never });
 
 /**
  * Playwright Test provides many options to configure how your tests are collected and executed, for example `timeout`
- * or `testDir`. These options are described in the [TestConfig] object in the
- * [configuration file](https://playwright.dev/docs/test-configuration).
+ * or `testDir`. These options are described in the [TestConfig](https://playwright.dev/docs/api/class-testconfig)
+ * object in the [configuration file](https://playwright.dev/docs/test-configuration).
  *
  * Playwright Test supports running multiple test projects at the same time. Project-specific options should be put to
  * [testConfig.projects](https://playwright.dev/docs/api/class-testconfig#test-config-projects), but top-level
- * [TestConfig] can also define base options shared between all projects.
+ * [TestConfig](https://playwright.dev/docs/api/class-testconfig) can also define base options shared between all
+ * projects.
  *
  * ```js
  * // playwright.config.ts
@@ -965,7 +970,8 @@ interface TestConfig {
   preserveOutput?: "always"|"never"|"failures-only";
 
   /**
-   * Playwright Test supports running multiple test projects at the same time. See [TestProject] for more information.
+   * Playwright Test supports running multiple test projects at the same time. See
+   * [TestProject](https://playwright.dev/docs/api/class-testproject) for more information.
    *
    * **Usage**
    *
@@ -1355,12 +1361,13 @@ interface TestConfig {
 
 /**
  * Playwright Test provides many options to configure how your tests are collected and executed, for example `timeout`
- * or `testDir`. These options are described in the [TestConfig] object in the
- * [configuration file](https://playwright.dev/docs/test-configuration).
+ * or `testDir`. These options are described in the [TestConfig](https://playwright.dev/docs/api/class-testconfig)
+ * object in the [configuration file](https://playwright.dev/docs/test-configuration).
  *
  * Playwright Test supports running multiple test projects at the same time. Project-specific options should be put to
  * [testConfig.projects](https://playwright.dev/docs/api/class-testconfig#test-config-projects), but top-level
- * [TestConfig] can also define base options shared between all projects.
+ * [TestConfig](https://playwright.dev/docs/api/class-testconfig) can also define base options shared between all
+ * projects.
  *
  * ```js
  * // playwright.config.ts
@@ -1377,7 +1384,8 @@ interface TestConfig {
  */
 export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig {
   /**
-   * Playwright Test supports running multiple test projects at the same time. See [TestProject] for more information.
+   * Playwright Test supports running multiple test projects at the same time. See
+   * [TestProject](https://playwright.dev/docs/api/class-testproject) for more information.
    *
    * **Usage**
    *
@@ -1397,7 +1405,8 @@ export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig {
   /**
    * Global options for all tests, for example
    * [testOptions.browserName](https://playwright.dev/docs/api/class-testoptions#test-options-browser-name). Learn more
-   * about [configuration](https://playwright.dev/docs/test-configuration) and see [available options][TestOptions].
+   * about [configuration](https://playwright.dev/docs/test-configuration) and see
+   * [available options][TestOptions](https://playwright.dev/docs/api/class-testoptions).
    *
    * **Usage**
    *
@@ -1420,12 +1429,13 @@ export type Metadata = { [key: string]: any };
 
 /**
  * Playwright Test provides many options to configure how your tests are collected and executed, for example `timeout`
- * or `testDir`. These options are described in the [TestConfig] object in the
- * [configuration file](https://playwright.dev/docs/test-configuration).
+ * or `testDir`. These options are described in the [TestConfig](https://playwright.dev/docs/api/class-testconfig)
+ * object in the [configuration file](https://playwright.dev/docs/test-configuration).
  *
  * Playwright Test supports running multiple test projects at the same time. Project-specific options should be put to
  * [testConfig.projects](https://playwright.dev/docs/api/class-testconfig#test-config-projects), but top-level
- * [TestConfig] can also define base options shared between all projects.
+ * [TestConfig](https://playwright.dev/docs/api/class-testconfig) can also define base options shared between all
+ * projects.
  *
  * ```js
  * // playwright.config.ts
@@ -1633,7 +1643,8 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    */
   preserveOutput: 'always' | 'never' | 'failures-only';
   /**
-   * Playwright Test supports running multiple test projects at the same time. See [TestProject] for more information.
+   * Playwright Test supports running multiple test projects at the same time. See
+   * [TestProject](https://playwright.dev/docs/api/class-testproject) for more information.
    *
    * **Usage**
    *
@@ -1860,7 +1871,8 @@ export type TestStatus = 'passed' | 'failed' | 'timedOut' | 'skipped' | 'interru
 
 /**
  * `WorkerInfo` contains information about the worker that is running tests and is available to worker-scoped
- * fixtures. `WorkerInfo` is a subset of [TestInfo] that is available in many other places.
+ * fixtures. `WorkerInfo` is a subset of [TestInfo](https://playwright.dev/docs/api/class-testinfo) that is available
+ * in many other places.
  */
 export interface WorkerInfo {
   /**
@@ -2419,7 +2431,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * ```
    *
    * @param title Test title.
-   * @param testFunction Test function that takes one or two arguments: an object with fixtures and optional [TestInfo].
+   * @param testFunction Test function that takes one or two arguments: an object with fixtures and optional
+   * [TestInfo](https://playwright.dev/docs/api/class-testinfo).
    */
   only: TestFunction<TestArgs & WorkerArgs>;
   /**
@@ -2689,7 +2702,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * ```
    *
    * @param title Test title.
-   * @param testFunction Test function that takes one or two arguments: an object with fixtures and optional [TestInfo].
+   * @param testFunction Test function that takes one or two arguments: an object with fixtures and optional
+   * [TestInfo](https://playwright.dev/docs/api/class-testinfo).
    */
   skip(title: string, testFunction: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<void> | void): void;
   /**
@@ -2794,7 +2808,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * ```
    *
    * @param title Test title.
-   * @param testFunction Test function that takes one or two arguments: an object with fixtures and optional [TestInfo].
+   * @param testFunction Test function that takes one or two arguments: an object with fixtures and optional
+   * [TestInfo](https://playwright.dev/docs/api/class-testinfo).
    */
   fixme(title: string, testFunction: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<void> | void): void;
   /**
@@ -3061,8 +3076,9 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * each test in the group.  If multiple `beforeEach` hooks are added, they will run in the order of their
    * registration.
    *
-   * You can access all the same [Fixtures] as the test function itself, and also the [TestInfo] object that gives a lot
-   * of useful information. For example, you can navigate the page before starting the test.
+   * You can access all the same [Fixtures](https://playwright.dev/docs/api/class-fixtures) as the test function itself,
+   * and also the [TestInfo](https://playwright.dev/docs/api/class-testinfo) object that gives a lot of useful
+   * information. For example, you can navigate the page before starting the test.
    *
    * You can use [test.afterEach(hookFunction)](https://playwright.dev/docs/api/class-test#test-after-each) to teardown
    * any resources set up in `beforeEach`.
@@ -3083,7 +3099,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * });
    * ```
    *
-   * @param hookFunction Hook function that takes one or two arguments: an object with fixtures and optional [TestInfo].
+   * @param hookFunction Hook function that takes one or two arguments: an object with fixtures and optional
+   * [TestInfo](https://playwright.dev/docs/api/class-testinfo).
    */
   beforeEach(inner: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<any> | any): void;
   /**
@@ -3095,8 +3112,9 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1) group, runs after each
    * test in the group. If multiple `afterEach` hooks are added, they will run in the order of their registration.
    *
-   * You can access all the same [Fixtures] as the test function itself, and also the [TestInfo] object that gives a lot
-   * of useful information. For example, you can check whether the test succeeded or failed.
+   * You can access all the same [Fixtures](https://playwright.dev/docs/api/class-fixtures) as the test function itself,
+   * and also the [TestInfo](https://playwright.dev/docs/api/class-testinfo) object that gives a lot of useful
+   * information. For example, you can check whether the test succeeded or failed.
    *
    * **Usage**
    *
@@ -3116,7 +3134,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * });
    * ```
    *
-   * @param hookFunction Hook function that takes one or two arguments: an object with fixtures and optional [TestInfo].
+   * @param hookFunction Hook function that takes one or two arguments: an object with fixtures and optional
+   * [TestInfo](https://playwright.dev/docs/api/class-testinfo).
    */
   afterEach(inner: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<any> | any): void;
   /**
@@ -3153,7 +3172,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * });
    * ```
    *
-   * @param hookFunction Hook function that takes one or two arguments: an object with worker fixtures and optional [TestInfo].
+   * @param hookFunction Hook function that takes one or two arguments: an object with worker fixtures and optional
+   * [TestInfo](https://playwright.dev/docs/api/class-testinfo).
    */
   beforeAll(inner: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<any> | any): void;
   /**
@@ -3177,7 +3197,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * });
    * ```
    *
-   * @param hookFunction Hook function that takes one or two arguments: an object with worker fixtures and optional [TestInfo].
+   * @param hookFunction Hook function that takes one or two arguments: an object with worker fixtures and optional
+   * [TestInfo](https://playwright.dev/docs/api/class-testinfo).
    */
   afterAll(inner: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<any> | any): void;
   /**
@@ -3396,7 +3417,9 @@ type ConnectOptions = {
 };
 
 /**
- * Playwright Test provides many options to configure test environment, [Browser], [BrowserContext] and more.
+ * Playwright Test provides many options to configure test environment,
+ * [Browser](https://playwright.dev/docs/api/class-browser),
+ * [BrowserContext](https://playwright.dev/docs/api/class-browsercontext) and more.
  *
  * These options are usually provided in the [configuration file](https://playwright.dev/docs/test-configuration) through
  * [testConfig.use](https://playwright.dev/docs/api/class-testconfig#test-config-use) and
@@ -3434,7 +3457,7 @@ type ConnectOptions = {
 export interface PlaywrightWorkerOptions {
   /**
    * Name of the browser that runs tests. Defaults to `'chromium'`. Most of the time you should set `browserName` in
-   * your [TestConfig]:
+   * your [TestConfig](https://playwright.dev/docs/api/class-testconfig):
    *
    * **Usage**
    *
@@ -3633,7 +3656,9 @@ export type TraceMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry' | 
 export type VideoMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry';
 
 /**
- * Playwright Test provides many options to configure test environment, [Browser], [BrowserContext] and more.
+ * Playwright Test provides many options to configure test environment,
+ * [Browser](https://playwright.dev/docs/api/class-browser),
+ * [BrowserContext](https://playwright.dev/docs/api/class-browsercontext) and more.
  *
  * These options are usually provided in the [configuration file](https://playwright.dev/docs/test-configuration) through
  * [testConfig.use](https://playwright.dev/docs/api/class-testconfig#test-config-use) and
@@ -4181,10 +4206,11 @@ export interface PlaywrightTestOptions {
  * ```
  *
  * Given the test above, Playwright Test will set up the `page` fixture before running the test, and tear it down
- * after the test has finished. `page` fixture provides a [Page] object that is available to the test.
+ * after the test has finished. `page` fixture provides a [Page](https://playwright.dev/docs/api/class-page) object
+ * that is available to the test.
  *
  * Playwright Test comes with builtin fixtures listed below, and you can add your own fixtures as well. Playwright
- * Test also [provides options][TestOptions] to  configure
+ * Test also [provides options][TestOptions](https://playwright.dev/docs/api/class-testoptions) to  configure
  * [fixtures.browser](https://playwright.dev/docs/api/class-fixtures#fixtures-browser),
  * [fixtures.context](https://playwright.dev/docs/api/class-fixtures#fixtures-context) and
  * [fixtures.page](https://playwright.dev/docs/api/class-fixtures#fixtures-page).
@@ -4192,10 +4218,12 @@ export interface PlaywrightTestOptions {
 export interface PlaywrightWorkerArgs {
   playwright: typeof import('playwright-core');
   /**
-   * [Browser] instance is shared between all tests in the [same worker](https://playwright.dev/docs/test-parallel) - this makes testing
-   * efficient. However, each test runs in an isolated [BrowserContext]  and gets a fresh environment.
+   * [Browser](https://playwright.dev/docs/api/class-browser) instance is shared between all tests in the
+   * [same worker](https://playwright.dev/docs/test-parallel) - this makes testing efficient. However, each test runs in an isolated
+   * [BrowserContext](https://playwright.dev/docs/api/class-browsercontext)  and gets a fresh environment.
    *
-   * Learn how to [configure browser](https://playwright.dev/docs/test-configuration) and see [available options][TestOptions].
+   * Learn how to [configure browser](https://playwright.dev/docs/test-configuration) and see
+   * [available options][TestOptions](https://playwright.dev/docs/api/class-testoptions).
    *
    * **Usage**
    *
@@ -4227,20 +4255,23 @@ export interface PlaywrightWorkerArgs {
  * ```
  *
  * Given the test above, Playwright Test will set up the `page` fixture before running the test, and tear it down
- * after the test has finished. `page` fixture provides a [Page] object that is available to the test.
+ * after the test has finished. `page` fixture provides a [Page](https://playwright.dev/docs/api/class-page) object
+ * that is available to the test.
  *
  * Playwright Test comes with builtin fixtures listed below, and you can add your own fixtures as well. Playwright
- * Test also [provides options][TestOptions] to  configure
+ * Test also [provides options][TestOptions](https://playwright.dev/docs/api/class-testoptions) to  configure
  * [fixtures.browser](https://playwright.dev/docs/api/class-fixtures#fixtures-browser),
  * [fixtures.context](https://playwright.dev/docs/api/class-fixtures#fixtures-context) and
  * [fixtures.page](https://playwright.dev/docs/api/class-fixtures#fixtures-page).
  */
 export interface PlaywrightTestArgs {
   /**
-   * Isolated [BrowserContext] instance, created for each test. Since contexts are isolated between each other, every
-   * test gets a fresh environment, even when multiple tests run in a single [Browser] for maximum efficiency.
+   * Isolated [BrowserContext](https://playwright.dev/docs/api/class-browsercontext) instance, created for each test.
+   * Since contexts are isolated between each other, every test gets a fresh environment, even when multiple tests run
+   * in a single [Browser](https://playwright.dev/docs/api/class-browser) for maximum efficiency.
    *
-   * Learn how to [configure context](https://playwright.dev/docs/test-configuration) and see [available options][TestOptions].
+   * Learn how to [configure context](https://playwright.dev/docs/test-configuration) and see
+   * [available options][TestOptions](https://playwright.dev/docs/api/class-testoptions).
    *
    * Default [fixtures.page](https://playwright.dev/docs/api/class-fixtures#fixtures-page) belongs to this context.
    *
@@ -4256,8 +4287,8 @@ export interface PlaywrightTestArgs {
    */
   context: BrowserContext;
   /**
-   * Isolated [Page] instance, created for each test. Pages are isolated between tests due to
-   * [fixtures.context](https://playwright.dev/docs/api/class-fixtures#fixtures-context) isolation.
+   * Isolated [Page](https://playwright.dev/docs/api/class-page) instance, created for each test. Pages are isolated
+   * between tests due to [fixtures.context](https://playwright.dev/docs/api/class-fixtures#fixtures-context) isolation.
    *
    * This is the most common fixture used in a test.
    *
@@ -4278,7 +4309,7 @@ export interface PlaywrightTestArgs {
    */
   page: Page;
   /**
-   * Isolated [APIRequestContext] instance for each test.
+   * Isolated [APIRequestContext](https://playwright.dev/docs/api/class-apirequestcontext) instance for each test.
    *
    * **Usage**
    *
@@ -4324,8 +4355,9 @@ type IfAny<T, Y, N> = 0 extends (1 & T) ? Y : N;
 type ExtraMatchers<T, Type, Matchers> = T extends Type ? Matchers : IfAny<T, Matchers, {}>;
 
 /**
- * The [GenericAssertions] class provides assertion methods that can be used to make assertions about any values in
- * the tests. A new instance of [GenericAssertions] is created by calling
+ * The [GenericAssertions](https://playwright.dev/docs/api/class-genericassertions) class provides assertion methods
+ * that can be used to make assertions about any values in the tests. A new instance of
+ * [GenericAssertions](https://playwright.dev/docs/api/class-genericassertions) is created by calling
  * [expect(value)](https://playwright.dev/docs/api/class-playwrightassertions#playwright-assertions-expect-generic):
  *
  * ```js
@@ -4824,8 +4856,9 @@ export {};
 
 
 /**
- * The [APIResponseAssertions] class provides assertion methods that can be used to make assertions about the
- * [APIResponse] in the tests.
+ * The [APIResponseAssertions](https://playwright.dev/docs/api/class-apiresponseassertions) class provides assertion
+ * methods that can be used to make assertions about the
+ * [APIResponse](https://playwright.dev/docs/api/class-apiresponse) in the tests.
  *
  * ```js
  * import { test, expect } from '@playwright/test';
@@ -4864,8 +4897,9 @@ interface APIResponseAssertions {
 }
 
 /**
- * The [LocatorAssertions] class provides assertion methods that can be used to make assertions about the [Locator]
- * state in the tests.
+ * The [LocatorAssertions](https://playwright.dev/docs/api/class-locatorassertions) class provides assertion methods
+ * that can be used to make assertions about the [Locator](https://playwright.dev/docs/api/class-locator) state in the
+ * tests.
  *
  * ```js
  * import { test, expect } from '@playwright/test';
@@ -4880,7 +4914,8 @@ interface APIResponseAssertions {
  */
 interface LocatorAssertions {
   /**
-   * Ensures that [Locator] points to an [attached](https://playwright.dev/docs/actionability#attached) DOM node.
+   * Ensures that [Locator](https://playwright.dev/docs/api/class-locator) points to an
+   * [attached](https://playwright.dev/docs/actionability#attached) DOM node.
    *
    * **Usage**
    *
@@ -4900,7 +4935,7 @@ interface LocatorAssertions {
   }): Promise<void>;
 
   /**
-   * Ensures the [Locator] points to a checked input.
+   * Ensures the [Locator](https://playwright.dev/docs/api/class-locator) points to a checked input.
    *
    * **Usage**
    *
@@ -4921,8 +4956,8 @@ interface LocatorAssertions {
   }): Promise<void>;
 
   /**
-   * Ensures the [Locator] points to a disabled element. Element is disabled if it has "disabled" attribute or is
-   * disabled via
+   * Ensures the [Locator](https://playwright.dev/docs/api/class-locator) points to a disabled element. Element is
+   * disabled if it has "disabled" attribute or is disabled via
    * ['aria-disabled'](https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Attributes/aria-disabled). Note
    * that only native control elements such as HTML `button`, `input`, `select`, `textarea`, `option`, `optgroup` can be
    * disabled by setting "disabled" attribute. "disabled" attribute on other elements is ignored by the browser.
@@ -4944,7 +4979,7 @@ interface LocatorAssertions {
   }): Promise<void>;
 
   /**
-   * Ensures the [Locator] points to an editable element.
+   * Ensures the [Locator](https://playwright.dev/docs/api/class-locator) points to an editable element.
    *
    * **Usage**
    *
@@ -4965,7 +5000,8 @@ interface LocatorAssertions {
   }): Promise<void>;
 
   /**
-   * Ensures the [Locator] points to an empty editable element or to a DOM node that has no text.
+   * Ensures the [Locator](https://playwright.dev/docs/api/class-locator) points to an empty editable element or to a
+   * DOM node that has no text.
    *
    * **Usage**
    *
@@ -4984,7 +5020,7 @@ interface LocatorAssertions {
   }): Promise<void>;
 
   /**
-   * Ensures the [Locator] points to an enabled element.
+   * Ensures the [Locator](https://playwright.dev/docs/api/class-locator) points to an enabled element.
    *
    * **Usage**
    *
@@ -5005,7 +5041,7 @@ interface LocatorAssertions {
   }): Promise<void>;
 
   /**
-   * Ensures the [Locator] points to a focused DOM node.
+   * Ensures the [Locator](https://playwright.dev/docs/api/class-locator) points to a focused DOM node.
    *
    * **Usage**
    *
@@ -5024,8 +5060,8 @@ interface LocatorAssertions {
   }): Promise<void>;
 
   /**
-   * Ensures that [Locator] either does not resolve to any DOM node, or resolves to a
-   * [non-visible](https://playwright.dev/docs/actionability#visible) one.
+   * Ensures that [Locator](https://playwright.dev/docs/api/class-locator) either does not resolve to any DOM node, or
+   * resolves to a [non-visible](https://playwright.dev/docs/actionability#visible) one.
    *
    * **Usage**
    *
@@ -5044,7 +5080,8 @@ interface LocatorAssertions {
   }): Promise<void>;
 
   /**
-   * Ensures the [Locator] points to an element that intersects viewport, according to the
+   * Ensures the [Locator](https://playwright.dev/docs/api/class-locator) points to an element that intersects viewport,
+   * according to the
    * [intersection observer API](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API).
    *
    * **Usage**
@@ -5075,8 +5112,8 @@ interface LocatorAssertions {
   }): Promise<void>;
 
   /**
-   * Ensures that [Locator] points to an [attached](https://playwright.dev/docs/actionability#attached) and
-   * [visible](https://playwright.dev/docs/actionability#visible) DOM node.
+   * Ensures that [Locator](https://playwright.dev/docs/api/class-locator) points to an
+   * [attached](https://playwright.dev/docs/actionability#attached) and [visible](https://playwright.dev/docs/actionability#visible) DOM node.
    *
    * **Usage**
    *
@@ -5096,8 +5133,8 @@ interface LocatorAssertions {
   }): Promise<void>;
 
   /**
-   * Ensures the [Locator] points to an element that contains the given text. You can use regular expressions for the
-   * value as well.
+   * Ensures the [Locator](https://playwright.dev/docs/api/class-locator) points to an element that contains the given
+   * text. You can use regular expressions for the value as well.
    *
    * **Usage**
    *
@@ -5161,7 +5198,7 @@ interface LocatorAssertions {
   }): Promise<void>;
 
   /**
-   * Ensures the [Locator] points to an element with given attribute.
+   * Ensures the [Locator](https://playwright.dev/docs/api/class-locator) points to an element with given attribute.
    *
    * **Usage**
    *
@@ -5182,8 +5219,8 @@ interface LocatorAssertions {
   }): Promise<void>;
 
   /**
-   * Ensures the [Locator] points to an element with given CSS classes. This needs to be a full match or using a relaxed
-   * regular expression.
+   * Ensures the [Locator](https://playwright.dev/docs/api/class-locator) points to an element with given CSS classes.
+   * This needs to be a full match or using a relaxed regular expression.
    *
    * **Usage**
    *
@@ -5215,7 +5252,7 @@ interface LocatorAssertions {
   }): Promise<void>;
 
   /**
-   * Ensures the [Locator] resolves to an exact number of DOM nodes.
+   * Ensures the [Locator](https://playwright.dev/docs/api/class-locator) resolves to an exact number of DOM nodes.
    *
    * **Usage**
    *
@@ -5235,7 +5272,8 @@ interface LocatorAssertions {
   }): Promise<void>;
 
   /**
-   * Ensures the [Locator] resolves to an element with the given computed CSS style.
+   * Ensures the [Locator](https://playwright.dev/docs/api/class-locator) resolves to an element with the given computed
+   * CSS style.
    *
    * **Usage**
    *
@@ -5256,7 +5294,8 @@ interface LocatorAssertions {
   }): Promise<void>;
 
   /**
-   * Ensures the [Locator] points to an element with the given DOM Node ID.
+   * Ensures the [Locator](https://playwright.dev/docs/api/class-locator) points to an element with the given DOM Node
+   * ID.
    *
    * **Usage**
    *
@@ -5276,8 +5315,8 @@ interface LocatorAssertions {
   }): Promise<void>;
 
   /**
-   * Ensures the [Locator] points to an element with given JavaScript property. Note that this property can be of a
-   * primitive type as well as a plain serializable JavaScript object.
+   * Ensures the [Locator](https://playwright.dev/docs/api/class-locator) points to an element with given JavaScript
+   * property. Note that this property can be of a primitive type as well as a plain serializable JavaScript object.
    *
    * **Usage**
    *
@@ -5453,8 +5492,8 @@ interface LocatorAssertions {
   }): Promise<void>;
 
   /**
-   * Ensures the [Locator] points to an element with the given text. You can use regular expressions for the value as
-   * well.
+   * Ensures the [Locator](https://playwright.dev/docs/api/class-locator) points to an element with the given text. You
+   * can use regular expressions for the value as well.
    *
    * **Usage**
    *
@@ -5517,8 +5556,8 @@ interface LocatorAssertions {
   }): Promise<void>;
 
   /**
-   * Ensures the [Locator] points to an element with the given input value. You can use regular expressions for the
-   * value as well.
+   * Ensures the [Locator](https://playwright.dev/docs/api/class-locator) points to an element with the given input
+   * value. You can use regular expressions for the value as well.
    *
    * **Usage**
    *
@@ -5538,8 +5577,8 @@ interface LocatorAssertions {
   }): Promise<void>;
 
   /**
-   * Ensures the [Locator] points to multi-select/combobox (i.e. a `select` with the `multiple` attribute) and the
-   * specified values are selected.
+   * Ensures the [Locator](https://playwright.dev/docs/api/class-locator) points to multi-select/combobox (i.e. a
+   * `select` with the `multiple` attribute) and the specified values are selected.
    *
    * **Usage**
    *
@@ -5582,8 +5621,8 @@ interface LocatorAssertions {
 }
 
 /**
- * The [PageAssertions] class provides assertion methods that can be used to make assertions about the [Page] state in
- * the tests.
+ * The [PageAssertions](https://playwright.dev/docs/api/class-pageassertions) class provides assertion methods that
+ * can be used to make assertions about the [Page](https://playwright.dev/docs/api/class-page) state in the tests.
  *
  * ```js
  * import { test, expect } from '@playwright/test';
@@ -6001,8 +6040,9 @@ export interface TestInfoError {
  *
  * `TestProject` encapsulates configuration specific to a single project. Projects are configured in
  * [testConfig.projects](https://playwright.dev/docs/api/class-testconfig#test-config-projects) specified in the
- * [configuration file](https://playwright.dev/docs/test-configuration). Note that all properties of [TestProject] are available in the
- * top-level [TestConfig], in which case they are shared between all projects.
+ * [configuration file](https://playwright.dev/docs/test-configuration). Note that all properties of
+ * [TestProject](https://playwright.dev/docs/api/class-testproject) are available in the top-level
+ * [TestConfig](https://playwright.dev/docs/api/class-testconfig), in which case they are shared between all projects.
  *
  * Here is an example configuration that runs every test in Chromium, Firefox and WebKit, both Desktop and Mobile
  * versions.

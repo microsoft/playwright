@@ -77,7 +77,7 @@ class TypesGenerator {
       if (option)
         return `\`${option}\``;
       if (clazz)
-        return `[${clazz.name}]`;
+        return `[${clazz.name}](https://playwright.dev/docs/api/class-${clazz.name.toLowerCase()})`;
       if (!member || !member.clazz)
         throw new Error('Internal error');
       const className = member.clazz.varName === 'playwrightAssertions' ? '' : member.clazz.varName + '.';
