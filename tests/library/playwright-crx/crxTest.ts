@@ -66,7 +66,7 @@ const codegenLangId2lang = new Map([...codegenLang2Id.entries()].map(([lang, lan
 export const test = contextTest.extend<CrxTestArgs>({
 
   context: async ({ launchPersistent, headless }, run) => {
-    const pathToExtension = path.join(__dirname, '../../../packages/playwright-core/lib/webpack/devtools');
+    const pathToExtension = path.join(__dirname, '../../../packages/playwright-core/lib/webpack/crx');
     let persistentContext: BrowserContext | undefined;
     const { context } = await launchPersistent({
       headless,

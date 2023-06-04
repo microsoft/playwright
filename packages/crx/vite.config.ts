@@ -51,9 +51,11 @@ export default defineConfig({
     'require("../playwright")': '{}',
   },
   build: {
-    outDir: path.resolve(__dirname, '../playwright-core/lib/webpack/devtools'),
+    outDir: path.resolve(__dirname, '../playwright-core/lib/webpack/crx'),
     // recorder assets are copied to devtools output dir, so this will prevent those assets from being deleted.
     emptyOutDir: false,
+    // skip code obfuscation
+    minify: false,
     // chunk limit is not an issue, this is a browser extension
     chunkSizeWarningLimit: 10240,
     rollupOptions: {

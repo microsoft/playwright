@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite build --minify false --watch",
+    "dev": "vite build --watch",
     "build": "tsc && vite build",
     "preview": "vite preview"
   },
