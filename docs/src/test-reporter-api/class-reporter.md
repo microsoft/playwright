@@ -133,7 +133,7 @@ The error.
 * since: v1.33
 
 Called immediately before test runner exists. At this point all the reporters
-have recived the [`method: Reporter.onEnd`] signal, so all the reports should
+have received the [`method: Reporter.onEnd`] signal, so all the reports should
 be build. You can run the code that uploads the reports in this hook.
 
 ## optional method: Reporter.onStdErr
