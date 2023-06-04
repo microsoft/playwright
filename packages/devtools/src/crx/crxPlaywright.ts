@@ -34,20 +34,20 @@ export async function getPage(tabId: number) {
   return pagePromise ? await pagePromise : undefined;
 }
 
-export async function getOrCreatePage(tabId: number, port: Port, options?: { enableRecorder?: boolean }) {
+export async function getOrCreatePage(tabId: number, port: Port) {
   if (_pages.has(tabId)) return _pages.get(tabId)!;
 
-  const pagePromise = createPage(tabId, port, options);
+  const pagePromise = createPage(tabId, port);
   _pages.set(tabId, pagePromise);
 
   return await pagePromise;
 }
 
-async function createPage(tabId: number, port: Port, options?: { enableRecorder?: boolean }) {
+async function createPage(tabId: number, port: Port) {
   let transport: CrxTransport | undefined;
   let recorderApp: CrxRecorderApp | undefined;
 
-  if (options?.enableRecorder)
+  if (port)
     Recorder.setAppFactory(async (recorder) => {
       recorderApp = new CrxRecorderApp(port, recorder);
       return recorderApp;
@@ -74,8 +74,6 @@ async function createPage(tabId: number, port: Port, options?: { enableRecorder?
 
   const browser = await playwright.chromium.launch({ tracesDir: 'traces' });
   const context = await browser._newContextForReuse();
-  if (options?.enableRecorder)
-    await context._enableRecorder({ language: 'javascript' });
 
   const page = await context.newPage();
 

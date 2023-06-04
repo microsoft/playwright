@@ -15,9 +15,16 @@
  */
 import './polyfills/dependencies';
 import { Port, getOrCreatePage, getPage } from './crx/crxPlaywright';
+import { setUnderTest } from './polyfills/utils';
 
-async function _onAttach(tabId: number, port: Port) {
-  const page = await getOrCreatePage(tabId, port, { enableRecorder: true });
+async function _onAttach(tabId: number, port: Port, underTest?: boolean) {
+  if (underTest) setUnderTest();
+
+  const page = await getOrCreatePage(tabId, port);
+  // underTest is set on unit tests, so they will eventually enable recorder
+  if (!underTest)
+    await page.context()._enableRecorder({ language: 'javascript' });
+
   // console.log runs in the page, not here
   // eslint-disable-next-line no-console
   await page.evaluate(() => console.log('Recording...'));
