@@ -16,10 +16,9 @@
 
 import { test, expect } from './crxTest';
 import * as url from 'url';
-import fs from 'fs';
 
 test.describe('cli codegen', () => {
-  test.skip(({ mode, browserName }) => mode !== 'default' || browserName !== 'chromium' );
+  test.skip(({ mode, browserName }) => mode !== 'default' || browserName !== 'chromium');
 
   test.skip('should contain open page', async ({ openRecorder }) => {
     const recorder = await openRecorder();

@@ -17,7 +17,7 @@
 import { test, expect } from './crxTest';
 
 test.describe('crx codegen', () => {
-  test.skip(({ mode, browserName }) => mode !== 'default' || browserName !== 'chromium' );
+  test.skip(({ mode, browserName }) => mode !== 'default' || browserName !== 'chromium');
 
   test('should click', async ({ page, openRecorder }) => {
     const recorder = await openRecorder();

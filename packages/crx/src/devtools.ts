@@ -28,7 +28,7 @@ const tabId = chrome.devtools.inspectedWindow.tabId;
 let _port: chrome.runtime.Port | undefined;
 
 let attachedCallback!: () => void;
-const attachedPromise = new Promise<void>((resolve) => {
+const attachedPromise = new Promise<void>(resolve => {
   attachedCallback = resolve;
 });
 
@@ -65,12 +65,12 @@ async function _onDispatch(data: EventData) {
 chrome.devtools.panels.create('Playwright Recorder', 'recorder/icon-16x16.png', 'recorder/index.html', panel => {
   panel.onShown.addListener(async window => {
 
-    setPaused = (paused) => window.playwrightSetPaused(paused);
-    setMode = (mode) => window.playwrightSetMode(mode);
-    setSources = (sources) => window.playwrightSetSources(sources);
-    updateCallLogs = (callLogs) => window.playwrightUpdateLogs(callLogs);
-    setSelector = (selector) => window.playwrightSetSelector(selector);
-    setFileIfNeeded = (file) => window.playwrightSetFileIfNeeded(file);
+    setPaused = paused => window.playwrightSetPaused(paused);
+    setMode = mode => window.playwrightSetMode(mode);
+    setSources = sources => window.playwrightSetSources(sources);
+    updateCallLogs = callLogs => window.playwrightUpdateLogs(callLogs);
+    setSelector = selector => window.playwrightSetSelector(selector);
+    setFileIfNeeded = file => window.playwrightSetFileIfNeeded(file);
 
     window.dispatch = _onDispatch;
   });

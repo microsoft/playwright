@@ -47,11 +47,12 @@ async function createPage(tabId: number, port: Port) {
   let transport: CrxTransport | undefined;
   let recorderApp: CrxRecorderApp | undefined;
 
-  if (port)
-    Recorder.setAppFactory(async (recorder) => {
+  if (port) {
+    Recorder.setAppFactory(async recorder => {
       recorderApp = new CrxRecorderApp(port, recorder);
       return recorderApp;
     });
+  }
 
   // chrome.debugger requires a debuggee, identified by its tabId.
   // We have to do override _launchProcess to pass it the tabId

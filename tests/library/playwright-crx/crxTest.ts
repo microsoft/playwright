@@ -1,9 +1,25 @@
+/**
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import { contextTest } from '../../config/browserTest';
-import type { BrowserContext, Page, Worker } from 'playwright-core';
+import type { Page, Worker } from 'playwright-core';
 import * as path from 'path';
 import type { CallLog, EventData, Source } from '../../../packages/recorder/src/recorderTypes';
 import { expect } from '@playwright/test';
-import { Unboxed } from 'packages/playwright-core/types/structs';
+import { TimeoutError } from '../../../packages/playwright-core/src/common/errors';
 export { expect } from '@playwright/test';
 
 type Port = chrome.runtime.Port;
@@ -40,14 +56,18 @@ async function waitFor<T>(f: () => Promise<T>, options?: { interval?: number, ti
   const { interval, timeout } = { interval: 100, timeout: 5000, ...options };
   let result: T;
   let isTimeout = false;
-  new Promise<void>((resolve) => setTimeout(() => {
+  new Promise<void>(resolve => setTimeout(() => {
     isTimeout = true;
     resolve();
-  }, timeout));
-  while(!isTimeout && !(result = await f()))
+  }, timeout)).catch(() => {});
+  while (!isTimeout && !(result = await f()))
     await new Promise(resolve => setTimeout(resolve, interval));
+
+  if (isTimeout)
+    throw new TimeoutError(`Timeout${timeout} ms.`);
+
   return result;
-};
+}
 
 const codegenLang2Id: Map<string, string> = new Map([
   ['JSON', 'jsonl'],
@@ -67,7 +87,6 @@ export const test = contextTest.extend<CrxTestArgs>({
 
   context: async ({ launchPersistent, headless }, run) => {
     const pathToExtension = path.join(__dirname, '../../../packages/playwright-core/lib/webpack/crx');
-    let persistentContext: BrowserContext | undefined;
     const { context } = await launchPersistent({
       headless,
       args: [
@@ -77,22 +96,20 @@ export const test = contextTest.extend<CrxTestArgs>({
       ]
     });
 
-    persistentContext = context;
-
     await run(context);
 
-    if (persistentContext)
-      await persistentContext.close();
+    if (context)
+      await context.close();
   },
 
   page: async ({ context }, use) => {
     // First time we are reusing the context, we should create the page.
-    let [page] = context.pages();
+    const [page] = context.pages();
     await use(page);
   },
 
   extensionServiceWorker: async ({ context }, use) => {
-    let worker = context.serviceWorkers()[0] ?? await context.waitForEvent('serviceworker');
+    const worker = context.serviceWorkers()[0] ?? await context.waitForEvent('serviceworker');
 
     // wait for initialization
     await waitFor(() => worker.evaluate(() => !!chrome?.tabs?.query));
@@ -157,7 +174,7 @@ export const test = contextTest.extend<CrxTestArgs>({
     expect(typeof tabId).toBe('number');
 
     await run(async (options?: { testIdAttributeName: string }) => {
-      await extensionServiceWorker.evaluate(async ({ tabId, ...options}) => {
+      await extensionServiceWorker.evaluate(async ({ tabId, ...options }) => {
         const page = await getPage(tabId);
         await (page.context() as any)._enableRecorder({ language: 'javascript', mode: 'recording', ...options });
       }, { tabId, ...options });

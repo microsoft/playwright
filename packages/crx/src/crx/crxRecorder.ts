@@ -18,8 +18,8 @@ import type { Source, CallLog } from '@recorder/recorderTypes';
 import { EventEmitter } from 'events';
 import type { EventData } from '@recorder/recorderTypes';
 import { ManualPromise, raceAgainstTimeout } from '../polyfills/utils';
-import { Recorder } from '@playwright-core/server/recorder';
-import { Port } from './crxPlaywright';
+import type { Recorder } from '@playwright-core/server/recorder';
+import type { Port } from './crxPlaywright';
 
 export type RecorderMessage = { type: 'recorder' } & (
   | { method: 'updateCallLogs', callLogs: CallLog[] }
@@ -92,7 +92,7 @@ export class CrxRecorderApp extends EventEmitter implements IRecorderApp {
   async _sendMessage(msg: RecorderMessage) {
     try {
       return this._port.postMessage({ ...msg });
-    } catch(e) {
+    } catch (e) {
       // just ignore
     }
   }

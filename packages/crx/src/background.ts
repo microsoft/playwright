@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 import './polyfills/dependencies';
-import { Port, getOrCreatePage, getPage } from './crx/crxPlaywright';
+import type { Port } from './crx/crxPlaywright';
+import { getOrCreatePage, getPage } from './crx/crxPlaywright';
 import { setUnderTest } from './polyfills/utils';
 
 async function _onAttach(tabId: number, port: Port, underTest?: boolean) {

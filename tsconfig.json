@@ -42,5 +42,8 @@
     "packages/playwright-ct-vue",
     "packages/playwright-ct-vue2",
     "packages/web",
+    // if we run tsc under packages/crx, it works fine.
+    // It only complains if running tsc at the root
+    "packages/crx",
   ],
 }
