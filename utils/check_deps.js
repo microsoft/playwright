@@ -20,7 +20,7 @@
 
 const fs = require('fs');
 const ts = require('typescript');
-const path = require('path');
+const path = require('path').posix;
 
 const packagesDir = path.normalize(path.join(__dirname, '..', 'packages'));
 
