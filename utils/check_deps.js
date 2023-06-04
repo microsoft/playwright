@@ -20,7 +20,7 @@
 
 const fs = require('fs');
 const ts = require('typescript');
-const path = require('path');
+const path = require('path').posix;
 
 const packagesDir = path.normalize(path.join(__dirname, '..', 'packages'));
 
@@ -42,6 +42,7 @@ async function checkDeps() {
   await innerCheckDeps(path.join(packagesDir, 'html-reporter'));
   await innerCheckDeps(path.join(packagesDir, 'recorder'));
   await innerCheckDeps(path.join(packagesDir, 'trace-viewer'));
+  await innerCheckDeps(path.join(packagesDir, 'crx'));
 
   const corePackageJson = await innerCheckDeps(path.join(packagesDir, 'playwright-core'));
   const testPackageJson = await innerCheckDeps(path.join(packagesDir, 'playwright-test'));
