@@ -767,6 +767,23 @@ export class Registry {
     }
   }
 
+  async uninstall(all: boolean): Promise<{ numberOfBrowsersLeft: number }> {
+    const linksDir = path.join(registryDirectory, '.links');
+    if (all) {
+      const links = await fs.promises.readdir(linksDir).catch(() => []);
+      for (const link of links)
+        await fs.promises.unlink(path.join(linksDir, link));
+    } else {
+      await fs.promises.unlink(path.join(linksDir, calculateSha1(PACKAGE_PATH))).catch(() => {});
+    }
+
+    // Remove stale browsers.
+    await this._validateInstallationCache(linksDir);
+    return {
+      numberOfBrowsersLeft: (await fs.promises.readdir(registryDirectory).catch(() => [])).filter(browserDirectory => isBrowserDirectory(browserDirectory)).length
+    };
+  }
+
   private _downloadURLs(descriptor: BrowsersJSONDescriptor): string[] {
     const paths = (DOWNLOAD_PATHS as any)[descriptor.name];
     const downloadPathTemplate: string|undefined = paths[hostPlatform] || paths['<unknown>'];

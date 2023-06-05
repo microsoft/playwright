@@ -33,3 +33,11 @@ test('codegen should work', async ({ exec, installedSoftwareOnDisk }) => {
   await exec('node sanity.js playwright none', { env: {  PLAYWRIGHT_BROWSERS_PATH: undefined } });
   await exec('node sanity.js playwright');
 });
+
+test('should be able to remove browsers', async ({ exec, installedSoftwareOnDisk }) => {
+  await exec('npm i --foreground-scripts playwright', { env: { PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1' } });
+  await exec('npx playwright install chromium');
+  expect(await installedSoftwareOnDisk()).toEqual(['chromium', 'ffmpeg']);
+  await exec('npx playwright uninstall');
+  expect(await installedSoftwareOnDisk()).toEqual([]);
+});
