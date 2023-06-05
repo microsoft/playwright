@@ -15,6 +15,7 @@ This project incorporates components from the projects listed below. The origina
 -	commander@8.3.0 (https://github.com/tj/commander.js)
 -	concat-map@0.0.1 (https://github.com/substack/node-concat-map)
 -	debug@4.3.4 (https://github.com/debug-js/debug)
+-	define-lazy-prop@2.0.0 (https://github.com/sindresorhus/define-lazy-prop)
 -	end-of-stream@1.4.4 (https://github.com/mafintosh/end-of-stream)
 -	escape-string-regexp@2.0.0 (https://github.com/sindresorhus/escape-string-regexp)
 -	extract-zip@2.0.1 (https://github.com/maxogden/extract-zip)
@@ -27,11 +28,14 @@ This project incorporates components from the projects listed below. The origina
 -	inflight@1.0.6 (https://github.com/npm/inflight)
 -	inherits@2.0.4 (https://github.com/isaacs/inherits)
 -	ip@2.0.0 (https://github.com/indutny/node-ip)
+-	is-docker@2.2.1 (https://github.com/sindresorhus/is-docker)
+-	is-wsl@2.2.0 (https://github.com/sindresorhus/is-wsl)
 -	jpeg-js@0.4.4 (https://github.com/eugeneware/jpeg-js)
 -	mime@3.0.0 (https://github.com/broofa/mime)
 -	minimatch@3.1.2 (https://github.com/isaacs/minimatch)
 -	ms@2.1.2 (https://github.com/zeit/ms)
 -	once@1.4.0 (https://github.com/isaacs/once)
+-	open@8.4.0 (https://github.com/sindresorhus/open)
 -	path-is-absolute@1.0.1 (https://github.com/sindresorhus/path-is-absolute)
 -	pend@1.2.0 (https://github.com/andrewrk/node-pend)
 -	pngjs@6.0.0 (https://github.com/lukeapage/pngjs)
@@ -457,6 +461,20 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
 END OF debug@4.3.4 AND INFORMATION
+
+%% define-lazy-prop@2.0.0 NOTICES AND INFORMATION BEGIN HERE
+=========================================
+MIT License
+
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+=========================================
+END OF define-lazy-prop@2.0.0 AND INFORMATION
 
 %% end-of-stream@1.4.4 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -937,6 +955,34 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
 END OF ip@2.0.0 AND INFORMATION
 
+%% is-docker@2.2.1 NOTICES AND INFORMATION BEGIN HERE
+=========================================
+MIT License
+
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+=========================================
+END OF is-docker@2.2.1 AND INFORMATION
+
+%% is-wsl@2.2.0 NOTICES AND INFORMATION BEGIN HERE
+=========================================
+MIT License
+
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+=========================================
+END OF is-wsl@2.2.0 AND INFORMATION
+
 %% jpeg-js@0.4.4 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 Copyright (c) 2014, Eugene Ware
@@ -1058,6 +1104,20 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
 IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 =========================================
 END OF once@1.4.0 AND INFORMATION
+
+%% open@8.4.0 NOTICES AND INFORMATION BEGIN HERE
+=========================================
+MIT License
+
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+=========================================
+END OF open@8.4.0 AND INFORMATION
 
 %% path-is-absolute@1.0.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -1614,6 +1674,6 @@ END OF yazl@2.5.1 AND INFORMATION
 
 SUMMARY BEGIN HERE
 =========================================
-Total Packages: 45
+Total Packages: 49
 =========================================
 END OF SUMMARY

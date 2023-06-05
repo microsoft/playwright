@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-import { colors } from 'playwright-core/lib/utilsBundle';
+import { colors, open } from 'playwright-core/lib/utilsBundle';
 import fs from 'fs';
-import { open } from '../utilsBundle';
 import path from 'path';
 import type { TransformCallback } from 'stream';
 import { Transform } from 'stream';

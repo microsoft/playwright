@@ -18,6 +18,7 @@
     "jpeg-js": "0.4.4",
     "mime": "^3.0.0",
     "minimatch": "^3.1.2",
+    "open": "8.4.0",
     "pngjs": "6.0.0",
     "progress": "2.0.3",
     "proxy-from-env": "1.1.0",

@@ -23,14 +23,20 @@ import { installAppIcon, syncLocalStorageWithSettings } from '../../chromium/crA
 import { serverSideCallMetadata } from '../../instrumentation';
 import { createPlaywright } from '../../playwright';
 import { ProgressController } from '../../progress';
+import { open } from 'playwright-core/lib/utilsBundle';
 import type { Page } from '../../page';
 
-type Options = { app?: string, headless?: boolean, host?: string, port?: number, isServer?: boolean };
+type Options = { app?: string, headless?: boolean, host?: string, port?: number, isServer?: boolean, openInBrowser?: boolean };
 
-export async function showTraceViewer(traceUrls: string[], browserName: string, options?: Options): Promise<Page> {
-  const stdinServer = options?.isServer ? new StdinServer() : undefined;
+export async function showTraceViewer(traceUrls: string[], browserName: string, options?: Options): Promise<void> {
+  if (options?.openInBrowser) {
+    await openTraceInBrowser(traceUrls, options);
+    return;
+  }
+  await openTraceViewerApp(traceUrls, browserName, options);
+}
 
-  const { headless = false, host, port, app } = options || {};
+async function startTraceViewerServer(traceUrls: string[], options?: Options): Promise<{ server: HttpServer, url: string }> {
   for (const traceUrl of traceUrls) {
     let traceFile = traceUrl;
     // If .json is requested, we'll synthesize it.
@@ -72,8 +78,23 @@ export async function showTraceViewer(traceUrls: string[], browserName: string, 
     return server.serveFile(request, response, absolutePath);
   });
 
-  const urlPrefix = await server.start({ preferredPort: port, host });
+  const params = traceUrls.map(t => `trace=${t}`);
+  if (options?.isServer)
+    params.push('isServer');
+  if (isUnderTest())
+    params.push('isUnderTest=true');
 
+  const { host, port } = options || {};
+  const urlPrefix = await server.start({ preferredPort: port, host });
+  const { app } = options || {};
+  const searchQuery = params.length ? '?' + params.join('&') : '';
+  const url = urlPrefix + `/trace/${app || 'index.html'}${searchQuery}`;
+  return { server, url };
+}
+
+export async function openTraceViewerApp(traceUrls: string[], browserName: string, options?: Options): Promise<Page> {
+  const stdinServer = options?.isServer ? new StdinServer() : undefined;
+  const { url } = await startTraceViewerServer(traceUrls, options);
   const traceViewerPlaywright = createPlaywright({ sdkLanguage: 'javascript', isInternalPlaywright: true });
   const traceViewerBrowser = isUnderTest() ? 'chromium' : browserName;
   const args = traceViewerBrowser === 'chromium' ? [
@@ -87,7 +108,7 @@ export async function showTraceViewer(traceUrls: string[], browserName: string, 
     channel: findChromiumChannel(traceViewerPlaywright.options.sdkLanguage),
     args,
     noDefaultViewport: true,
-    headless,
+    headless: options?.headless,
     ignoreDefaultArgs: ['--enable-automation'],
     colorScheme: 'no-override',
     useWebSocket: isUnderTest(),
@@ -107,20 +128,20 @@ export async function showTraceViewer(traceUrls: string[], browserName: string, 
   if (!isUnderTest())
     await syncLocalStorageWithSettings(page, 'traceviewer');
 
-  const params = traceUrls.map(t => `trace=${t}`);
-  if (isUnderTest()) {
-    params.push('isUnderTest=true');
+  if (isUnderTest())
     page.on('close', () => context.close(serverSideCallMetadata()).catch(() => {}));
-  } else {
+  else
     page.on('close', () => process.exit());
-  }
 
-  if (options?.isServer)
-    params.push('isServer');
-  const searchQuery = params.length ? '?' + params.join('&') : '';
-  await page.mainFrame().goto(serverSideCallMetadata(), urlPrefix + `/trace/${app || 'index.html'}${searchQuery}`);
+  await page.mainFrame().goto(serverSideCallMetadata(), url);
   stdinServer?.setPage(page);
   return page;
+}
+
+async function openTraceInBrowser(traceUrls: string[], options?: Options) {
+  const { url } = await startTraceViewerServer(traceUrls, options);
+  // eslint-disable-next-line no-console
+  await open(url, { wait: true }).catch(() => console.log(`Failed to open browser on ${url}`));
 }
 
 class StdinServer {
