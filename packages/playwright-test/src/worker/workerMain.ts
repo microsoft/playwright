@@ -181,7 +181,7 @@ export class WorkerMain extends ProcessRunner {
       if (!this._fatalErrors.length)
         this._fatalErrors.push(serializeError(error));
     }
-    this._stop();
+    void this._stop();
   }
 
   private async _loadIfNeeded() {
@@ -220,14 +220,14 @@ export class WorkerMain extends ProcessRunner {
         }
       } else {
         fatalUnknownTestIds = runPayload.entries.map(e => e.testId);
-        this._stop();
+        void this._stop();
       }
     } catch (e) {
       // In theory, we should run above code without any errors.
       // However, in the case we screwed up, or loadTestFile failed in the worker
       // but not in the runner, let's do a fatal error.
       this._fatalErrors.push(serializeError(e));
-      this._stop();
+      void this._stop();
     } finally {
       const donePayload: DonePayload = {
         fatalErrors: this._fatalErrors,

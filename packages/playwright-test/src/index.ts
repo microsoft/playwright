@@ -68,12 +68,12 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
   headless: [({ launchOptions }, use) => use(launchOptions.headless ?? true), { scope: 'worker', option: true }],
   channel: [({ launchOptions }, use) => use(launchOptions.channel), { scope: 'worker', option: true }],
   launchOptions: [{}, { scope: 'worker', option: true }],
-  connectOptions: [({}, use) => {
+  connectOptions: [async ({}, use) => {
     // Usually, when connect options are specified (e.g, in the config or in the environment),
     // all launch() calls are turned into connect() calls.
     // However, when running in "reuse browser" mode and connecting to the reusable server,
     // only the default "browser" fixture should turn into reused browser.
-    use(process.env.PW_TEST_REUSE_CONTEXT ? undefined : connectOptionsFromEnv());
+    await use(process.env.PW_TEST_REUSE_CONTEXT ? undefined : connectOptionsFromEnv());
   }, { scope: 'worker', option: true }],
   screenshot: ['off', { scope: 'worker', option: true }],
   video: ['off', { scope: 'worker', option: true }],

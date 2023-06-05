@@ -112,7 +112,7 @@ export class Dispatcher {
     this._checkFinished();
 
     // 5. We got a free worker - perhaps we can immediately start another job?
-    this._scheduleJob();
+    void this._scheduleJob();
   }
 
   private async _startJobInWorker(index: number, job: TestGroup) {
@@ -184,7 +184,7 @@ export class Dispatcher {
       this._workerSlots.push({ busy: false });
     // 2. Schedule enough jobs.
     for (let i = 0; i < this._workerSlots.length; i++)
-      this._scheduleJob();
+      void this._scheduleJob();
     this._checkFinished();
     // 3. More jobs are scheduled when the worker becomes free, or a new job is added.
     // 4. Wait for all jobs to finish.
@@ -330,13 +330,13 @@ export class Dispatcher {
       // - no unrecoverable worker error
       if (!remaining.length && !failedTestIds.size && !params.fatalErrors.length && !params.skipTestsDueToSetupFailure.length && !params.fatalUnknownTestIds && !params.unexpectedExitError) {
         if (this._isWorkerRedundant(worker))
-          worker.stop();
+          void worker.stop();
         doneWithJob();
         return;
       }
 
       // When worker encounters error, we will stop it and create a new one.
-      worker.stop(true /* didFail */);
+      void worker.stop(true /* didFail */);
 
       const massSkipTestsFromRemaining = (testIds: Set<string>, errors: TestError[], onlyStartedTests?: boolean) => {
         remaining = remaining.filter(test => {
@@ -444,7 +444,7 @@ export class Dispatcher {
         this._queue.unshift({ ...testGroup, tests: remaining });
         this._queuedOrRunningHashCount.set(testGroup.workerHash, this._queuedOrRunningHashCount.get(testGroup.workerHash)! + 1);
         // Perhaps we can immediately start the new job if there is a worker available?
-        this._scheduleJob();
+        void this._scheduleJob();
       }
 
       // This job is over, we just scheduled another one.

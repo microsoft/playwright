@@ -96,7 +96,7 @@ class UIMode {
     const exitPromise = new ManualPromise();
     this._page.on('close', () => exitPromise.resolve());
     let queue = Promise.resolve();
-    this._page.exposeBinding('sendMessage', false, async (source, data) => {
+    await this._page.exposeBinding('sendMessage', false, async (source, data) => {
       const { method, params }: { method: string, params: any } = data;
       if (method === 'exit') {
         exitPromise.resolve();
@@ -118,7 +118,7 @@ class UIMode {
         return;
       }
       if (method === 'stop') {
-        this._stopTests();
+        void this._stopTests();
         return;
       }
       queue = queue.then(() => this._queueListOrRun(method, params));
@@ -187,7 +187,7 @@ class UIMode {
     await run;
   }
 
-  private async _watchFiles(fileNames: string[]) {
+  private _watchFiles(fileNames: string[]) {
     const files = new Set<string>();
     for (const fileName of fileNames) {
       files.add(fileName);
@@ -250,7 +250,7 @@ class Watcher {
       this._reportEventsIfAny();
 
     this._watchedFiles = watchedFiles;
-    this._fsWatcher?.close().then(() => {});
+    void this._fsWatcher?.close();
     this._fsWatcher = undefined;
     this._collector.length = 0;
     clearTimeout(this._throttleTimer);
