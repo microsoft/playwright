@@ -793,6 +793,9 @@ export class InjectedScript {
       // contenteditable to the new element. However, blurring the previous one helps.
       (activeElement as HTMLElement | SVGElement).blur();
     }
+    // On firefox, we have to call focus() twice to actually focus an element in certain
+    // scenarios.
+    (node as HTMLElement | SVGElement).focus();
     (node as HTMLElement | SVGElement).focus();
 
     if (resetSelectionIfNotFocused && !wasFocused && node.nodeName.toLowerCase() === 'input') {
