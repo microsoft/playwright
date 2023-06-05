@@ -49,7 +49,6 @@ type HtmlReporterOptions = {
 class HtmlReporter implements Reporter {
   private config!: FullConfig;
   private suite!: Suite;
-  private _montonicStartTime: number = 0;
   private _options: HtmlReporterOptions;
   private _outputFolder!: string;
   private _attachmentsBaseURL!: string;
@@ -65,7 +64,6 @@ class HtmlReporter implements Reporter {
   }
 
   onBegin(config: FullConfig, suite: Suite) {
-    this._montonicStartTime = monotonicTime();
     this.config = config;
     const { outputFolder, open, attachmentsBaseURL } = this._resolveOptions();
     this._outputFolder = outputFolder;
@@ -102,7 +100,6 @@ class HtmlReporter implements Reporter {
   }
 
   async onEnd() {
-    const duration = monotonicTime() - this._montonicStartTime;
     const projectSuites = this.suite.suites;
     const reports = projectSuites.map(suite => {
       const rawReporter = new RawReporter();
@@ -111,7 +108,7 @@ class HtmlReporter implements Reporter {
     });
     await removeFolders([this._outputFolder]);
     const builder = new HtmlBuilder(this._outputFolder, this._attachmentsBaseURL);
-    this._buildResult = await builder.build({ ...this.config.metadata, duration }, reports);
+    this._buildResult = await builder.build(this.config.metadata, reports);
   }
 
   async onExit() {
@@ -208,7 +205,7 @@ class HtmlBuilder {
     this._attachmentsBaseURL = attachmentsBaseURL;
   }
 
-  async build(metadata: Metadata & { duration: number }, rawReports: JsonReport[]): Promise<{ ok: boolean, singleTestId: string | undefined }> {
+  async build(metadata: Metadata, rawReports: JsonReport[]): Promise<{ ok: boolean, singleTestId: string | undefined }> {
 
     const data = new Map<string, { testFile: TestFile, testFileSummary: TestFileSummary }>();
     for (const projectJson of rawReports) {
@@ -265,7 +262,7 @@ class HtmlBuilder {
       metadata,
       files: [...data.values()].map(e => e.testFileSummary),
       projectNames: rawReports.map(r => r.project.name),
-      stats: { ...[...data.values()].reduce((a, e) => addStats(a, e.testFileSummary.stats), emptyStats()), duration: metadata.duration }
+      stats: { ...[...data.values()].reduce((a, e) => addStats(a, e.testFileSummary.stats), emptyStats()), duration: metadata.totalTime }
     };
     htmlReport.files.sort((f1, f2) => {
       const w1 = f1.stats.unexpected * 1000 + f1.stats.flaky;

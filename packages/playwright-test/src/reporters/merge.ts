@@ -83,7 +83,9 @@ function mergeBeginEvents(beginEvents: JsonEvent[]): JsonEvent {
     configFile: undefined,
     globalTimeout: 0,
     maxFailures: 0,
-    metadata: {},
+    metadata: {
+      totalTime: 0,
+    },
     rootDir: '',
     version: '',
     workers: 0,
@@ -116,6 +118,7 @@ function mergeConfigs(to: JsonConfig, from: JsonConfig): JsonConfig {
     metadata: {
       ...to.metadata,
       ...from.metadata,
+      totalTime: to.metadata.totalTime + from.metadata.totalTime,
     },
     workers: to.workers + from.workers,
   };

@@ -283,6 +283,51 @@ test('be able to merge incomplete shards', async ({ runInlineTest, mergeReports,
   await expect(page.locator('.subnav-item:has-text("Skipped") .counter')).toHaveText('2');
 });
 
+test('total time is from test run not from merge', async ({ runInlineTest, mergeReports, showReport, page }) => {
+  const reportDir = test.info().outputPath('blob-report');
+  const files = {
+    'playwright.config.ts': `
+      module.exports = {
+        retries: 1,
+        reporter: [['blob', { outputDir: '${reportDir.replace(/\\/g, '/')}' }]]
+      };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('slow 1', async ({}) => {
+        await new Promise(f => setTimeout(f, 2000));
+        expect(1 + 1).toBe(2);
+      });
+    `,
+    'b.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('slow 1', async ({}) => {
+        await new Promise(f => setTimeout(f, 1000));
+        expect(1 + 1).toBe(2);
+      });
+    `,
+  };
+  await runInlineTest(files, { shard: `1/2` });
+  await runInlineTest(files, { shard: `2/2` });
+
+  const { exitCode, output } = await mergeReports(reportDir, { 'PW_TEST_HTML_REPORT_OPEN': 'never' }, { additionalArgs: ['--reporter', 'html'] });
+  expect(exitCode).toBe(0);
+
+  expect(output).toContain('To open last HTML report run:');
+  // console.log(output);
+
+  await showReport();
+
+  await expect(page.locator('.subnav-item:has-text("All") .counter')).toHaveText('2');
+  await expect(page.locator('.subnav-item:has-text("Passed") .counter')).toHaveText('2');
+
+  const durationText = await page.getByTestId('overall-duration').textContent();
+  // "Total time: 2.1s"
+  const time = /Total time: (\d+)(\.\d+)?s/.exec(durationText);
+  expect(time).toBeTruthy();
+  expect(parseInt(time[1])).toBeGreaterThan(2);
+});
+
 test('merge into list report by default', async ({ runInlineTest, mergeReports }) => {
   const reportDir = test.info().outputPath('blob-report');
   const files = {
