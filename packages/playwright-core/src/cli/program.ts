@@ -175,13 +175,13 @@ Examples:
 
 program
     .command('uninstall')
-    .description('Removes all default Playwright browsers from the system (chromium, firefox, webkit, ffmpeg). This does not include branded channels.')
-    .option('--all', 'Removes all Playwright browsers from the system. Not just the browsers for the current Playwright version.')
+    .description('Removes browsers used by this version of Playwright from the system (chromium, firefox, webkit, ffmpeg). This does not include branded channels.')
+    .option('--all', 'Removes all browsers used by any Playwright version from the system.')
     .action(async (options: { all?: boolean }) => {
       await registry.uninstall(!!options.all).then(({ browsersRemainingOnFileSystem }) => {
         if (!options.all && browsersRemainingOnFileSystem) {
           console.log('Successfully uninstalled Playwright browsers for the current Playwright installation.');
-          console.log('To uninstall Playwright browsers for all versions, run it with --all.');
+          console.log(`There are still ${numberOfBrowsersLeft} browsers left, used by other Playwright installations.\nTo uninstall Playwright browsers for all versions, re-run with --all flag.`);
         }
       }).catch(logErrorAndExit);
     });
