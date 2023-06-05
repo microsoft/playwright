@@ -103,7 +103,7 @@ class UIMode {
         return;
       }
       if (method === 'watch') {
-        await this._watchFiles(params.fileNames);
+        this._watchFiles(params.fileNames);
         return;
       }
       if (method === 'open' && params.location) {
@@ -118,7 +118,7 @@ class UIMode {
         return;
       }
       if (method === 'stop') {
-        await this._stopTests();
+        void this._stopTests();
         return;
       }
       queue = queue.then(() => this._queueListOrRun(method, params));
@@ -187,7 +187,7 @@ class UIMode {
     await run;
   }
 
-  private async _watchFiles(fileNames: string[]) {
+  private _watchFiles(fileNames: string[]) {
     const files = new Set<string>();
     for (const fileName of fileNames) {
       files.add(fileName);
