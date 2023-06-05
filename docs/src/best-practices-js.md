@@ -256,7 +256,7 @@ Use Linux when running your tests on CI as it is cheaper. Developers can use wha
 
 ### Lint your tests
 
-Linting your tests will help you catch errors and keep your code consistent. We especially recommend the [`@typescript-eslint/no-floating-promises`](https://typescript-eslint.io/rules/no-floating-promises/) [ESLint](https://eslint.org) rule, which will catch unhandled promise rejections. Having a missing `await` can cause your test to fail with a `has been closed` error.
+Linting the tests helps catching errors early. Use [`@typescript-eslint/no-floating-promises`](https://typescript-eslint.io/rules/no-floating-promises/) [ESLint](https://eslint.org) rule to make sure there are no missing awaits before the asynchronous calls to the Playwright API.
 
 #### Use parallelism and sharding
 
