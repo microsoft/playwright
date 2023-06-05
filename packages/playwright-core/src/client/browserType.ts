@@ -156,7 +156,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
         connectParams.socksProxyRedirectPortForTest = (params as any).__testHookRedirectPortForwarding;
       const { pipe, headers: connectHeaders } = await localUtils._channel.connect(connectParams);
       const closePipe = () => pipe.close().catch(() => {});
-      const connection = new Connection(localUtils);
+      const connection = new Connection(localUtils, this._instrumentation);
       connection.markAsRemote();
       connection.on('close', closePipe);
 

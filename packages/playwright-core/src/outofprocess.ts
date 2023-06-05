@@ -45,7 +45,7 @@ class PlaywrightClient {
     this._driverProcess.unref();
     this._driverProcess.stderr!.on('data', data => process.stderr.write(data));
 
-    const connection = new Connection();
+    const connection = new Connection(undefined, undefined);
     connection.markAsRemote();
     const transport = new PipeTransport(this._driverProcess.stdin!, this._driverProcess.stdout!);
     connection.onmessage = message => transport.send(JSON.stringify(message));

@@ -45,6 +45,7 @@ import { LocalUtils } from './localUtils';
 import { Tracing } from './tracing';
 import { findValidator, ValidationError, type ValidatorContext } from '../protocol/validator';
 import { createInstrumentation } from './clientInstrumentation';
+import type { ClientInstrumentation } from './clientInstrumentation';
 
 class Root extends ChannelOwner<channels.RootChannel> {
   constructor(connection: Connection) {
@@ -73,12 +74,13 @@ export class Connection extends EventEmitter {
   // Some connections allow resolving in-process dispatchers.
   toImpl: ((client: ChannelOwner) => any) | undefined;
   private _tracingCount = 0;
-  readonly _instrumentation = createInstrumentation();
+  readonly _instrumentation: ClientInstrumentation;
 
-  constructor(localUtils?: LocalUtils) {
+  constructor(localUtils: LocalUtils | undefined, instrumentation: ClientInstrumentation | undefined) {
     super();
     this._rootObject = new Root(this);
     this._localUtils = localUtils;
+    this._instrumentation = instrumentation || createInstrumentation();
   }
 
   markAsRemote() {
