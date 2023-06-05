@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { showTraceViewer } from 'playwright-core/lib/server';
+import { openTraceViewerApp } from 'playwright-core/lib/server';
 import type { Page } from 'playwright-core/lib/server/page';
 import { isUnderTest, ManualPromise } from 'playwright-core/lib/utils';
 import type { FullResult } from '../../reporter';
@@ -26,7 +26,7 @@ import { createReporters } from './reporters';
 import { TestRun, createTaskRunnerForList, createTaskRunnerForWatch, createTaskRunnerForWatchSetup } from './tasks';
 import { chokidar } from '../utilsBundle';
 import type { FSWatcher } from 'chokidar';
-import { open } from '../utilsBundle';
+import { open } from 'playwright-core/lib/utilsBundle';
 import ListReporter from '../reporters/list';
 
 class UIMode {
@@ -82,7 +82,7 @@ class UIMode {
   }
 
   async showUI() {
-    this._page = await showTraceViewer([], 'chromium', { app: 'uiMode.html', headless: isUnderTest() && process.env.PWTEST_HEADED_FOR_TEST !== '1' });
+    this._page = await openTraceViewerApp([], 'chromium', { app: 'uiMode.html', headless: isUnderTest() && process.env.PWTEST_HEADED_FOR_TEST !== '1' });
     if (!process.env.PWTEST_DEBUG) {
       process.stdout.write = (chunk: string | Buffer) => {
         this._dispatchEvent({ method: 'stdio', params: chunkToPayload('stdout', chunk) });

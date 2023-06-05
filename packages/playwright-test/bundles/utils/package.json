@@ -12,7 +12,6 @@
     "chokidar": "3.5.3",
     "enquirer": "2.3.6",
     "json5": "2.2.3",
-    "open": "8.4.0",
     "pirates": "4.0.4",
     "source-map-support": "0.5.21",
     "stoppable": "1.1.0"

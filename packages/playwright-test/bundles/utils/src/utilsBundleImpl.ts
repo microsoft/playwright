@@ -17,9 +17,6 @@
 import json5Library from 'json5';
 export const json5 = json5Library;
 
-import openLibrary from 'open';
-export const open = openLibrary;
-
 import * as piratesLibrary from 'pirates';
 export const pirates = piratesLibrary;
 

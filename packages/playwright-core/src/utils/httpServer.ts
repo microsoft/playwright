@@ -17,8 +17,7 @@
 import type http from 'http';
 import fs from 'fs';
 import path from 'path';
-import { mime, wsServer } from '../utilsBundle';
-import type { WebSocketServer } from '../utilsBundle';
+import { mime } from '../utilsBundle';
 import { assert } from './debug';
 import { createHttpServer } from './network';
 import { ManualPromise } from './manualPromise';
@@ -37,8 +36,8 @@ export class HttpServer {
     this._server = createHttpServer(this._onRequest.bind(this));
   }
 
-  createWebSocketServer(): WebSocketServer {
-    return new wsServer({ server: this._server });
+  server() {
+    return this._server;
   }
 
   routePrefix(prefix: string, handler: ServerRouteHandler) {
