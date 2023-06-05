@@ -44,7 +44,7 @@ export const hostPlatform = ((): HostPlatform => {
       macVersion = 'mac10.15';
     } else {
       // ver[0] >= 20
-      const LAST_STABLE_MAC_MAJOR_VERSION = 12;
+      const LAST_STABLE_MAC_MAJOR_VERSION = 13;
       // Best-effort support for MacOS beta versions.
       macVersion = 'mac' + Math.min(ver[0] - 9, LAST_STABLE_MAC_MAJOR_VERSION);
       // BigSur is the first version that might run on Apple Silicon.
