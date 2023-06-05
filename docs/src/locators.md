@@ -882,6 +882,8 @@ await page
     .ClickAsync();
 ```
 
+### Filter by not having text
+
 Alternatively, filter by **not having** text:
 
 ```js
@@ -1012,7 +1014,9 @@ await Expect(page
     .toHaveCountAsync(1);
 ```
 
-We can also filter by **not having** a matching element inside
+### Filter by not having child/descendant
+
+We can also filter by **not having** a matching element inside.
 
 ```js
 await expect(page
@@ -1055,26 +1059,9 @@ await Expect(page
 
 Note that the inner locator is matched starting from the outer one, not from the document root.
 
-### Filter by matching an additional locator
+## Locator operators
 
-Method [`method: Locator.and`] narrows down an existing locator by matching an additional locator. For example, you can combine [`method: Page.getByRole`] and [`method: Page.getByTitle`] to match by both role and title.
-```js
-const button = page.getByRole('button').and(page.getByTitle('Subscribe'));
-```
-```java
-Locator button = page.getByRole(AriaRole.BUTTON).and(page.getByTitle("Subscribe"));
-```
-```python async
-button = page.get_by_role("button").and_(page.getByTitle("Subscribe"))
-```
-```python sync
-button = page.get_by_role("button").and_(page.getByTitle("Subscribe"))
-```
-```csharp
-var button = page.GetByRole(AriaRole.Button).And(page.GetByTitle("Subscribe"));
-```
-
-## Chaining Locators
+### Matching inside a locator
 
 You can chain methods that create a locator, like [`method: Page.getByText`] or [`method: Locator.getByRole`], to narrow down the search to a particular part of the page.
 
@@ -1158,6 +1145,129 @@ var saveButton = page.GetByRole(AriaRole.Button, new() { Name = "Save" });
 var dialog = page.GetByTestId("settings-dialog");
 await dialog.Locator(saveButton).ClickAsync();
 ```
+
+### Matching two locators simultaneously
+
+Method [`method: Locator.and`] narrows down an existing locator by matching an additional locator. For example, you can combine [`method: Page.getByRole`] and [`method: Page.getByTitle`] to match by both role and title.
+```js
+const button = page.getByRole('button').and(page.getByTitle('Subscribe'));
+```
+```java
+Locator button = page.getByRole(AriaRole.BUTTON).and(page.getByTitle("Subscribe"));
+```
+```python async
+button = page.get_by_role("button").and_(page.getByTitle("Subscribe"))
+```
+```python sync
+button = page.get_by_role("button").and_(page.getByTitle("Subscribe"))
+```
+```csharp
+var button = page.GetByRole(AriaRole.Button).And(page.GetByTitle("Subscribe"));
+```
+
+### Matching one of the two alternative locators
+
+If you'd like to target one of the two or more elements, and you don't know which one it will be, use [`method: Locator.or`] to create a locator that matches any of the alternatives.
+
+For example, consider a scenario where you'd like to click on a "New email" button, but sometimes a security settings dialog shows up instead. In this case, you can wait for either a "New email" button, or a dialog and act accordingly.
+
+```js
+const newEmail = page.getByRole('button', { name: 'New' });
+const dialog = page.getByText('Confirm security settings');
+await expect(newEmail.or(dialog)).toBeVisible();
+if (await dialog.isVisible())
+  await page.getByRole('button', { name: 'Dismiss' }).click();
+await newEmail.click();
+```
+
+```java
+Locator newEmail = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("New"));
+Locator dialog = page.getByText("Confirm security settings");
+assertThat(newEmail.or(dialog)).isVisible();
+if (dialog.isVisible())
+  page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Dismiss")).click();
+newEmail.click();
+```
+
+```python async
+new_email = page.get_by_role("button", name="New")
+dialog = page.get_by_text("Confirm security settings")
+await expect(new_email.or_(dialog)).to_be_visible()
+if (await dialog.is_visible())
+  await page.get_by_role("button", name="Dismiss").click()
+await new_email.click()
+```
+
+```python sync
+new_email = page.get_by_role("button", name="New")
+dialog = page.get_by_text("Confirm security settings")
+expect(new_email.or_(dialog)).to_be_visible()
+if (dialog.is_visible())
+  page.get_by_role("button", name="Dismiss").click()
+new_email.click()
+```
+
+```csharp
+var newEmail = page.GetByRole(AriaRole.Button, new() { Name = "New" });
+var dialog = page.GetByText("Confirm security settings");
+await Expect(newEmail.Or(dialog)).ToBeVisibleAsync();
+if (await dialog.IsVisibleAsync())
+  await page.GetByRole(AriaRole.Button, new() { Name = "Dismiss" }).ClickAsync();
+await newEmail.ClickAsync();
+```
+
+### Matching only visible elements
+
+:::note
+It's usually better to find a [more reliable way](./locators.md#quick-guide) to uniquely identify the element instead of checking the visibility.
+:::
+
+Consider a page with two buttons, first invisible and second [visible](./actionability.md#visible).
+
+```html
+<button style='display: none'>Invisible</button>
+<button>Visible</button>
+```
+
+* This will find both buttons and throw a [strictness](./locators.md#strictness) violation error:
+
+  ```js
+  await page.locator('button').click();
+  ```
+
+  ```java
+  page.locator("button").click();
+  ```
+
+  ```python async
+  await page.locator("button").click()
+  ```
+
+  ```python sync
+  page.locator("button").click()
+  ```
+
+  ```csharp
+  await page.Locator("button").ClickAsync();
+  ```
+
+* This will only find a second button, because it is visible, and then click it.
+
+  ```js
+  await page.locator('button').locator('visible=true').click();
+  ```
+  ```java
+  page.locator("button").locator("visible=true").click();
+  ```
+  ```python async
+  await page.locator("button").locator("visible=true").click()
+  ```
+  ```python sync
+  page.locator("button").locator("visible=true").click()
+  ```
+  ```csharp
+  await page.Locator("button").Locator("visible=true").ClickAsync();
+  ```
 
 ## Lists
 
