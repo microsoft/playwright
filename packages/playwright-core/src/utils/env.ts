@@ -25,3 +25,12 @@ export function getAsBooleanFromENV(name: string): boolean {
   const value = getFromENV(name);
   return !!value && value !== 'false' && value !== '0';
 }
+
+export function getPackageManager() {
+  const env = process.env.npm_config_user_agent || '';
+  if (env.includes('yarn'))
+    return 'yarn';
+  if (env.includes('pnpm'))
+    return 'pnpm';
+  return 'npm';
+}
