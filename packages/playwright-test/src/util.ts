@@ -321,16 +321,30 @@ const kExtLookups = new Map([
   ['', ['.js', '.ts', '.jsx', '.tsx', '.cjs', '.mjs', '.cts', '.mts']],
 ]);
 export function resolveImportSpecifierExtension(resolved: string): string | undefined {
-  if (fs.existsSync(resolved))
+  if (fileExists(resolved))
     return resolved;
+
   for (const [ext, others] of kExtLookups) {
     if (!resolved.endsWith(ext))
       continue;
     for (const other of others) {
       const modified = resolved.substring(0, resolved.length - ext.length) + other;
-      if (fs.existsSync(modified))
+      if (fileExists(modified))
         return modified;
     }
     break;  // Do not try '' when a more specific extesion like '.jsx' matched.
   }
+  // try directory imports last
+  if (dirExists(resolved)) {
+    const dirImport = path.join(resolved, 'index');
+    return resolveImportSpecifierExtension(dirImport);
+  }
+}
+
+function fileExists(resolved: string) {
+  return fs.statSync(resolved, { throwIfNoEntry: false })?.isFile();
+}
+
+function dirExists(resolved: string) {
+  return fs.statSync(resolved, { throwIfNoEntry: false })?.isDirectory();
 }
