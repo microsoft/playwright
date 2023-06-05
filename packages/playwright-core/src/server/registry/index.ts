@@ -767,7 +767,7 @@ export class Registry {
     }
   }
 
-  async uninstall(all: boolean): Promise<{ browsersRemainingOnFileSystem: boolean }> {
+  async uninstall(all: boolean): Promise<{ numberOfBrowsersLeft: number }> {
     const linksDir = path.join(registryDirectory, '.links');
     if (all) {
       const links = await fs.promises.readdir(linksDir).catch(() => []);
@@ -780,7 +780,7 @@ export class Registry {
     // Remove stale browsers.
     await this._validateInstallationCache(linksDir);
     return {
-      browsersRemainingOnFileSystem: (await fs.promises.readdir(linksDir).catch(() => [])).length > 0
+      numberOfBrowsersLeft: (await fs.promises.readdir(registryDirectory).catch(() => [])).filter(browserDirectory => isBrowserDirectory(browserDirectory)).length
     };
   }
 
