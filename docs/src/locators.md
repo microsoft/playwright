@@ -1061,6 +1061,8 @@ Note that the inner locator is matched starting from the outer one, not from the
 
 ## Locator operators
 
+### Matching inside a locator
+
 You can chain methods that create a locator, like [`method: Page.getByText`] or [`method: Locator.getByRole`], to narrow down the search to a particular part of the page.
 
 In this example we first create a locator called product by locating its role of `listitem`. We then filter by text. We can use the product locator again to get by role of button and click it and then use an assertion to make sure there is only one product with the text "Product 2".
@@ -1144,7 +1146,7 @@ var dialog = page.GetByTestId("settings-dialog");
 await dialog.Locator(saveButton).ClickAsync();
 ```
 
-### Matching an additional locator
+### Matching two locators simultaneously
 
 Method [`method: Locator.and`] narrows down an existing locator by matching an additional locator. For example, you can combine [`method: Page.getByRole`] and [`method: Page.getByTitle`] to match by both role and title.
 ```js
@@ -1163,7 +1165,7 @@ button = page.get_by_role("button").and_(page.getByTitle("Subscribe"))
 var button = page.GetByRole(AriaRole.Button).And(page.GetByTitle("Subscribe"));
 ```
 
-### Combining two alternative locators
+### Matching one of the two alternative locators
 
 If you'd like to target one of the two or more elements, and you don't know which one it will be, use [`method: Locator.or`] to create a locator that matches any of the alternatives.
 
@@ -1214,7 +1216,7 @@ if (await dialog.IsVisibleAsync())
 await newEmail.ClickAsync();
 ```
 
-### Locating only visible elements
+### Matching only visible elements
 
 :::note
 It's usually better to find a [more reliable way](./locators.md#quick-guide) to uniquely identify the element instead of checking the visibility.
