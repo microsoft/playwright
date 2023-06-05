@@ -80,6 +80,7 @@ export const UIModeView: React.FC<{}> = ({
   const runTestPromiseChain = React.useRef(Promise.resolve());
   const runTestBacklog = React.useRef<Set<string>>(new Set());
   const [collapseAllCount, setCollapseAllCount] = React.useState(0);
+  const [isDisconnected, setIsDisconnected] = React.useState(false);
 
   const inputRef = React.useRef<HTMLInputElement>(null);
 
@@ -94,7 +95,7 @@ export const UIModeView: React.FC<{}> = ({
 
   React.useEffect(() => {
     inputRef.current?.focus();
-    reloadTests();
+    initWebSocket(() => setIsDisconnected(true)).then(() => reloadTests());
   }, [reloadTests]);
 
   updateRootSuite = React.useCallback((config: FullConfig, rootSuite: Suite, loadErrors: TestError[], newProgress: Progress | undefined) => {
@@ -159,6 +160,9 @@ export const UIModeView: React.FC<{}> = ({
   const isRunningTest = !!runningState;
 
   return <div className='vbox ui-mode'>
+    {isDisconnected && <div className='drop-target'>
+      <div className='title'>Process disconnected</div>
+    </div>}
     <SplitView sidebarSize={250} orientation='horizontal' sidebarIsFirst={true}>
       <div className='vbox'>
         <div className={'vbox' + (isShowingOutput ? '' : ' hidden')}>
@@ -399,6 +403,8 @@ const TestList: React.FC<{
 
   // Update watch all.
   React.useEffect(() => {
+    if (!testModel.rootSuite)
+      return;
     if (watchAll) {
       sendMessageNoReply('watch', { fileNames: [...fileNames] });
     } else {
@@ -411,7 +417,7 @@ const TestList: React.FC<{
       }
       sendMessageNoReply('watch', { fileNames: [...fileNames] });
     }
-  }, [rootItem, fileNames, watchAll, watchedTreeIds, treeItemMap]);
+  }, [testModel, rootItem, fileNames, watchAll, watchedTreeIds, treeItemMap]);
 
   const runTreeItem = (treeItem: TreeItem) => {
     setSelectedTreeItemId(treeItem.id);
@@ -561,12 +567,6 @@ const TraceView: React.FC<{
     drawer='bottom' />;
 };
 
-declare global {
-  interface Window {
-    binding(data: any): Promise<void>;
-  }
-}
-
 let receiver: TeleReporterReceiver | undefined;
 
 let throttleTimer: NodeJS.Timeout | undefined;
@@ -638,32 +638,41 @@ const refreshRootSuite = (eraseResults: boolean): Promise<void> => {
   return sendMessage('list', {});
 };
 
-(window as any).dispatch = (message: any) => {
-  if (message.method === 'listChanged') {
-    refreshRootSuite(false).catch(() => {});
-    return;
-  }
+let lastId = 0;
+let _ws: WebSocket;
+const callbacks = new Map<number, { resolve: (arg: any) => void, reject: (arg: Error) => void }>();
 
-  if (message.method === 'testFilesChanged') {
-    runWatchedTests(message.params.testFileNames);
-    return;
-  }
-
-  if (message.method === 'stdio') {
-    if (message.params.buffer) {
-      const data = atob(message.params.buffer);
-      xtermDataSource.write(data);
+const initWebSocket = async (onClose: () => void) => {
+  const guid = new URLSearchParams(window.location.search).get('ws');
+  const ws = new WebSocket(`ws://${window.location.hostname}:${window.location.port}/${guid}`);
+  await new Promise(f => ws.addEventListener('open', f));
+  ws.addEventListener('close', onClose);
+  ws.addEventListener('message', event => {
+    const message = JSON.parse(event.data);
+    const { id, result, error, method, params } = message;
+    if (id) {
+      const callback = callbacks.get(id);
+      if (!callback)
+        return;
+      callbacks.delete(id);
+      if (error)
+        callback.reject(new Error(error));
+      else
+        callback.resolve(result);
     } else {
-      xtermDataSource.write(message.params.text);
+      dispatchMessage(method, params);
     }
-    return;
-  }
-
-  receiver?.dispatch(message)?.catch(() => {});
+  });
+  _ws = ws;
 };
 
-const sendMessage = async (method: string, params: any) => {
-  await (window as any).sendMessage({ method, params });
+const sendMessage = async (method: string, params: any): Promise<any> => {
+  const id = ++lastId;
+  const message = { id, method, params };
+  _ws.send(JSON.stringify(message));
+  return new Promise((resolve, reject) => {
+    callbacks.set(id, { resolve, reject });
+  });
 };
 
 const sendMessageNoReply = (method: string, params?: any) => {
@@ -675,6 +684,30 @@ const sendMessageNoReply = (method: string, params?: any) => {
     // eslint-disable-next-line no-console
     console.error(e);
   });
+};
+
+const dispatchMessage = (method: string, params?: any) => {
+  if (method === 'listChanged') {
+    refreshRootSuite(false).catch(() => {});
+    return;
+  }
+
+  if (method === 'testFilesChanged') {
+    runWatchedTests(params.testFileNames);
+    return;
+  }
+
+  if (method === 'stdio') {
+    if (params.buffer) {
+      const data = atob(params.buffer);
+      xtermDataSource.write(data);
+    } else {
+      xtermDataSource.write(params.text);
+    }
+    return;
+  }
+
+  receiver?.dispatch({ method, params })?.catch(() => {});
 };
 
 const outputDirForTestCase = (testCase: TestCase): string | undefined => {
