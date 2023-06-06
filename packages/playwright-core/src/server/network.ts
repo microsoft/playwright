@@ -323,7 +323,7 @@ export class Route extends SdkObject {
     }
     this._request._setOverrides(overrides);
     await this._delegate.continue(this._request, overrides);
-    if (Object.values(overrides).some(value => value !== undefined))
+    if (!overrides.isFallback)
       this._request._context.emit(BrowserContext.Events.RequestContinued, this._request);
     this._endHandling();
   }

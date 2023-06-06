@@ -2818,6 +2818,7 @@ Route:
           items: NameValue
         postData: binary?
         requestUrl: string
+        isFallback: boolean
 
     fulfill:
       parameters:
