@@ -132,6 +132,7 @@ export class RouteDispatcher extends Dispatcher<Route, channels.RouteChannel, Re
       method: params.method,
       headers: params.headers,
       postData: params.postData,
+      isFallback: params.isFallback,
     });
   }
 

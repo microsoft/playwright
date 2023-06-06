@@ -637,7 +637,8 @@ test('should store postData for global request', async ({ request, server }, tes
   }));
 });
 
-test('should not flush console events', async ({ context, page }, testInfo) => {
+test('should not flush console events', async ({ context, page, mode }, testInfo) => {
+  test.skip(mode === 'service', 'Uses artifactsFolderName');
   const testId = test.info().testId;
   await context.tracing.start({ name: testId });
   const promise = new Promise<void>(f => {

@@ -420,6 +420,7 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
         method: options.method,
         headers: options.headers ? headersObjectToArray(options.headers) : undefined,
         postData: options.postDataBuffer,
+        isFallback: internal,
       }));
     }, !!internal);
   }

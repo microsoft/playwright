@@ -3562,6 +3562,7 @@ export type RouteContinueParams = {
   headers?: NameValue[],
   postData?: Binary,
   requestUrl: string,
+  isFallback: boolean,
 };
 export type RouteContinueOptions = {
   url?: string,

@@ -228,7 +228,7 @@ export class TestInfoImpl implements TestInfo {
   }
 
   _addStep(data: Omit<TestStepInternal, 'complete' | 'stepId' | 'steps'>, parentStep?: TestStepInternal): TestStepInternal {
-    const stepId = `${data.category}@${data.title}@${++this._lastStepId}`;
+    const stepId = `${data.category}@${++this._lastStepId}`;
     if (!parentStep)
       parentStep = zones.zoneData<TestStepInternal>('stepZone', captureRawStack()) || undefined;
 
