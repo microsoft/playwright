@@ -184,8 +184,7 @@ async function openTraceInBrowser(traceUrls: string[], options?: Options) {
   const { url } = await startTraceViewerServer(traceUrls, options);
   // eslint-disable-next-line no-console
   console.log('\nListening on ' + url);
-  // eslint-disable-next-line no-console
-  await open(url, { wait: true }).catch(() => console.log(`Failed to open browser on ${url}`));
+  await open(url, { wait: true }).catch(() => {});
 }
 
 class StdinServer {
