@@ -192,55 +192,28 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this._page._delegate.getContentFrame(this);
   }
 
-  async getAttribute(name: string): Promise<string | null> {
-    return throwRetargetableDOMError(await this.evaluateInUtility(([injected, node, name]) => {
-      if (node.nodeType !== Node.ELEMENT_NODE)
-        throw injected.createStacklessError('Node is not an element');
-      const element = node as unknown as Element;
-      return { value: element.getAttribute(name) };
-    }, name)).value;
+  async getAttribute(metadata: CallMetadata, name: string): Promise<string | null> {
+    return this._frame.getAttribute(metadata, ':scope', name, {}, this);
   }
 
-  async inputValue(): Promise<string> {
-    return throwRetargetableDOMError(await this.evaluateInUtility(([injected, node]) => {
-      const element = injected.retarget(node, 'follow-label');
-      if (!element || (element.nodeName !== 'INPUT' && element.nodeName !== 'TEXTAREA' && element.nodeName !== 'SELECT'))
-        throw injected.createStacklessError('Node is not an <input>, <textarea> or <select> element');
-      return { value: (element as HTMLInputElement | HTMLTextAreaElement).value };
-    }, undefined)).value;
+  async inputValue(metadata: CallMetadata): Promise<string> {
+    return this._frame.inputValue(metadata, ':scope', {}, this);
   }
 
-  async textContent(): Promise<string | null> {
-    return throwRetargetableDOMError(await this.evaluateInUtility(([injected, node]) => {
-      return { value: node.textContent };
-    }, undefined)).value;
+  async textContent(metadata: CallMetadata): Promise<string | null> {
+    return this._frame.textContent(metadata, ':scope', {}, this);
   }
 
-  async innerText(): Promise<string> {
-    return throwRetargetableDOMError(await this.evaluateInUtility(([injected, node]) => {
-      if (node.nodeType !== Node.ELEMENT_NODE)
-        throw injected.createStacklessError('Node is not an element');
-      if ((node as unknown as Element).namespaceURI !== 'http://www.w3.org/1999/xhtml')
-        throw injected.createStacklessError('Node is not an HTMLElement');
-      const element = node as unknown as HTMLElement;
-      return { value: element.innerText };
-    }, undefined)).value;
+  async innerText(metadata: CallMetadata): Promise<string> {
+    return this._frame.innerText(metadata, ':scope', {}, this);
   }
 
-  async innerHTML(): Promise<string> {
-    return throwRetargetableDOMError(await this.evaluateInUtility(([injected, node]) => {
-      if (node.nodeType !== Node.ELEMENT_NODE)
-        throw injected.createStacklessError('Node is not an element');
-      const element = node as unknown as Element;
-      return { value: element.innerHTML };
-    }, undefined)).value;
+  async innerHTML(metadata: CallMetadata): Promise<string> {
+    return this._frame.innerHTML(metadata, ':scope', {}, this);
   }
 
-  async dispatchEvent(type: string, eventInit: Object = {}) {
-    const main = await this._frame._mainContext();
-    await this._page._frameManager.waitForSignalsCreatedBy(null, false /* noWaitFor */, async () => {
-      return main.evaluate(([injected, node, { type, eventInit }]) => injected.dispatchEvent(node, type, eventInit), [await main.injectedScript(), this, { type, eventInit }] as const);
-    });
+  async dispatchEvent(metadata: CallMetadata, type: string, eventInit: Object = {}) {
+    return this._frame.dispatchEvent(metadata, ':scope', type, eventInit, {}, this);
   }
 
   async _scrollRectIntoViewIfNeeded(rect?: types.Rect): Promise<'error:notvisible' | 'error:notconnected' | 'done'> {
@@ -634,7 +607,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     await this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
       progress.throwIfAborted();  // Avoid action that has side-effects.
       if (localPaths)
-        await this._page._delegate.setInputFilePaths(retargeted, localPaths);
+        await this._page._delegate.setInputFilePaths(progress, retargeted, localPaths);
       else
         await this._page._delegate.setInputFiles(retargeted, filePayloads!);
     });
@@ -754,51 +727,35 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async evalOnSelector(selector: string, strict: boolean, expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
-    const handle = await this._frame.selectors.query(selector, { strict }, this);
-    if (!handle)
-      throw new Error(`Error: failed to find element matching selector "${selector}"`);
-    const result = await handle.evaluateExpression(expression, { isFunction }, arg);
-    handle.dispose();
-    return result;
+    return this._frame.evalOnSelector(selector, strict, expression, isFunction, arg, this);
   }
 
   async evalOnSelectorAll(selector: string, expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
-    const arrayHandle = await this._frame.selectors.queryArrayInMainWorld(selector, this);
-    const result = await arrayHandle.evaluateExpression(expression, { isFunction }, arg);
-    arrayHandle.dispose();
-    return result;
+    return this._frame.evalOnSelectorAll(selector, expression, isFunction, arg, this);
   }
 
-  async isVisible(): Promise<boolean> {
-    const result = await this.evaluateInUtility(([injected, node]) => injected.elementState(node, 'visible'), {});
-    if (result === 'error:notconnected')
-      return false;
-    return result;
+  async isVisible(metadata: CallMetadata): Promise<boolean> {
+    return this._frame.isVisible(metadata, ':scope', {}, this);
   }
 
-  async isHidden(): Promise<boolean> {
-    const result = await this.evaluateInUtility(([injected, node]) => injected.elementState(node, 'hidden'), {});
-    return throwRetargetableDOMError(result);
+  async isHidden(metadata: CallMetadata): Promise<boolean> {
+    return this._frame.isHidden(metadata, ':scope', {}, this);
   }
 
-  async isEnabled(): Promise<boolean> {
-    const result = await this.evaluateInUtility(([injected, node]) => injected.elementState(node, 'enabled'), {});
-    return throwRetargetableDOMError(result);
+  async isEnabled(metadata: CallMetadata): Promise<boolean> {
+    return this._frame.isEnabled(metadata, ':scope', {}, this);
   }
 
-  async isDisabled(): Promise<boolean> {
-    const result = await this.evaluateInUtility(([injected, node]) => injected.elementState(node, 'disabled'), {});
-    return throwRetargetableDOMError(result);
+  async isDisabled(metadata: CallMetadata): Promise<boolean> {
+    return this._frame.isDisabled(metadata, ':scope', {}, this);
   }
 
-  async isEditable(): Promise<boolean> {
-    const result = await this.evaluateInUtility(([injected, node]) => injected.elementState(node, 'editable'), {});
-    return throwRetargetableDOMError(result);
+  async isEditable(metadata: CallMetadata): Promise<boolean> {
+    return this._frame.isEditable(metadata, ':scope', {}, this);
   }
 
-  async isChecked(): Promise<boolean> {
-    const result = await this.evaluateInUtility(([injected, node]) => injected.elementState(node, 'checked'), {});
-    return throwRetargetableDOMError(result);
+  async isChecked(metadata: CallMetadata): Promise<boolean> {
+    return this._frame.isChecked(metadata, ':scope', {}, this);
   }
 
   async waitForElementState(metadata: CallMetadata, state: 'visible' | 'hidden' | 'stable' | 'enabled' | 'disabled' | 'editable', options: types.TimeoutOptions = {}): Promise<void> {
