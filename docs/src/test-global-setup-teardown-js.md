@@ -65,7 +65,7 @@ export const STORAGE_STATE = path.join(__dirname, 'playwright/.auth/user.json');
 
 export default defineConfig({
   use: {
-    baseURL: 'https://en.wikipedia.org',
+    baseURL: 'http://localhost:3000/',
   },
   projects: [
     {
@@ -98,12 +98,9 @@ import { STORAGE_STATE } from '../playwright.config';
 
 setup('do login', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('link', { name: 'Log in' }).click();
-  await page.getByPlaceholder('Enter your username').fill('your_username');
-  await page.getByPlaceholder('Enter your password').fill('your_password');
-  await page.getByRole('button', { name: 'Log in' }).click();
-
-  await expect(page.getByRole('button', { name: 'Personal tools' })).toBeVisible();
+  await page.getByLabel('User Name').fill('user');
+  await page.getByLabel('Password').fill('password');
+  await page.getByText('Sign in').click();
 
   await page.context().storageState({ path: STORAGE_STATE });
 });
@@ -117,15 +114,11 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('menu', async ({ page }) => {
-  await page.getByRole('link', { name: 'TestingLogin' }).click();
-  await expect(page.getByRole('heading', { name: /TestingLogin/i })).toBeVisible();
-  await page.getByRole('link', { name: /alerts/i  }).click();
-  await page.getByText('Alerts', { exact: true }).click();
-  await page.getByRole('button', { name: /notice/i  }).click();
-  await page.getByText('Notices').click();
-  await page.getByRole('link', { name: /watchlist/i  }).click();
+  // You are signed in!
 })
 ```
+
+For a more detailed example check out our blog post: [A better global setup in Playwright reusing login with project dependencies](https://dev.to/playwright/a-better-global-setup-in-playwright-reusing-login-with-project-dependencies-14) or check the [v1.31 release video](https://youtu.be/PI50YAPTAs4) to see the demo.
 
 ### Teardown
 
