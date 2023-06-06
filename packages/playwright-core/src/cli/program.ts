@@ -285,9 +285,8 @@ program
 program
     .command('show-trace [trace...]')
     .option('-b, --browser <browserType>', 'browser to use, one of cr, chromium, ff, firefox, wk, webkit', 'chromium')
-    .option('-h, --host <host>', 'Host to serve trace on', 'localhost')
-    .option('-p, --port <port>', 'Port to serve trace on', '9322')
-    .option('--web', 'Open trace viewer as a PWA in a browser tab')
+    .option('-h, --host <host>', 'Host to serve trace on; specifying this option opens trace in a browser tab')
+    .option('-p, --port <port>', 'Port to serve trace on, 0 for any free port; specifying this option opens trace in a browser tab')
     .option('--stdin', 'Accept trace URLs over stdin to update the viewer')
     .description('show trace viewer')
     .action(function(traces, options) {
@@ -298,7 +297,13 @@ program
       if (options.browser === 'wk')
         options.browser = 'webkit';
 
-      const openOptions = { headless: false, host: options.host, port: +options.port, isServer: !!options.stdin, openInBrowser: !!options.web };
+      const openOptions = {
+        headless: false,
+        host: options.host,
+        port: +options.port,
+        isServer: !!options.stdin,
+        openInBrowser: options.port !== undefined || options.host !== undefined
+      };
       showTraceViewer(traces, options.browser, openOptions).catch(logErrorAndExit);
     }).addHelpText('afterAll', `
 Examples:

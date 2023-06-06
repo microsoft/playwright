@@ -81,7 +81,7 @@ class UIMode {
     return status;
   }
 
-  async showUI(openInBrowser: boolean) {
+  async showUI(options: { host?: string, port?: number }) {
     const exitPromise = new ManualPromise();
     let queue = Promise.resolve();
 
@@ -120,7 +120,9 @@ class UIMode {
       app: 'uiMode.html',
       headless: isUnderTest() && process.env.PWTEST_HEADED_FOR_TEST !== '1',
       transport: this._transport,
-      openInBrowser,
+      host: options.host,
+      port: options.port,
+      openInBrowser: options.host !== undefined || options.port !== undefined,
     });
 
     if (!process.env.PWTEST_DEBUG) {
@@ -210,12 +212,12 @@ class UIMode {
   }
 }
 
-export async function runUIMode(config: FullConfigInternal, openInBrowser: boolean): Promise<FullResult['status']> {
+export async function runUIMode(config: FullConfigInternal, options: { host?: string, port?: number }): Promise<FullResult['status']> {
   const uiMode = new UIMode(config);
   const status = await uiMode.runGlobalSetup();
   if (status !== 'passed')
     return status;
-  await uiMode.showUI(openInBrowser);
+  await uiMode.showUI(options);
   return await uiMode.globalCleanup?.() || 'passed';
 }
 
