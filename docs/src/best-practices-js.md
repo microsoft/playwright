@@ -254,6 +254,10 @@ Setup CI/CD and run your tests frequently. The more often you run your tests the
 
 Use Linux when running your tests on CI as it is cheaper. Developers can use whatever environment when running locally but use linux on CI.
 
+### Lint your tests
+
+Linting the tests helps catching errors early. Use [`@typescript-eslint/no-floating-promises`](https://typescript-eslint.io/rules/no-floating-promises/) [ESLint](https://eslint.org) rule to make sure there are no missing awaits before the asynchronous calls to the Playwright API.
+
 #### Use parallelism and sharding
 
 Playwright runs tests in [parallel](./test-parallel.md) by default. Tests in a single file are run in order, in the same worker process. If you have many independent tests in a single file, you might want to run them in parallel
