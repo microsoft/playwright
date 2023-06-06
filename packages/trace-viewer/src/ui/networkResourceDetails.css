@@ -39,6 +39,8 @@
   border-radius: 4px;
   margin: 2px;
   line-height: 20px;
+  min-width: 30px;
+  text-align: center;
 }
 
 .network-request-title-status.status-failure {
@@ -49,6 +51,11 @@
 .network-request-title-status.status-route {
   color: var(--vscode-statusBar-foreground);
   background-color: var(--vscode-statusBar-background);
+}
+
+.network-request-title-status.status-route.api {
+  color: var(--vscode-statusBar-foreground);
+  background-color: var(--vscode-statusBarItem-remoteBackground);
 }
 
 .network-request-title-url {

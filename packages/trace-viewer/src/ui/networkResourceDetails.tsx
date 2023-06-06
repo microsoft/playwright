@@ -69,7 +69,7 @@ export const NetworkResourceDetails: React.FunctionComponent<{
     const routeStatus = formatRouteStatus(resource);
     const requestContentTypeHeader = resource.request.headers.find(q => q.name === 'Content-Type');
     const requestContentType = requestContentTypeHeader ? requestContentTypeHeader.value : '';
-    const resourceName = resource.request.url.substring(resource.request.url.lastIndexOf('/') + 1);
+    const resourceName = resource.request.url.substring(resource.request.url.lastIndexOf('/'));
     let contentType = resource.response.content.mimeType;
     const charset = contentType.match(/^(.*);\s*charset=.*$/);
     if (charset)
@@ -79,7 +79,7 @@ export const NetworkResourceDetails: React.FunctionComponent<{
 
   const renderTitle = React.useCallback(() => {
     return <div className='network-request-title'>
-      {routeStatus && <div className={'network-request-title-status status-route'}>{routeStatus}</div> }
+      {routeStatus && <div className={`network-request-title-status status-route ${routeStatus}`}>{routeStatus}</div> }
       {resource.response._failureText && <div className={'network-request-title-status status-failure'}>{resource.response._failureText}</div>}
       {!resource.response._failureText && <div className={'network-request-title-status ' + formatStatus(resource.response.status)}>{resource.response.status}</div>}
       <div className='network-request-title-status'>{resource.request.method}</div>
@@ -147,5 +147,7 @@ function formatRouteStatus(request: Entry): string {
     return 'continued';
   if (request._wasFulfilled)
     return 'fulfilled';
+  if (request._apiRequest)
+    return 'api';
   return '';
 }

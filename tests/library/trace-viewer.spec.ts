@@ -216,9 +216,9 @@ test('should have network requests', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer([traceFile]);
   await traceViewer.selectAction('http://localhost');
   await traceViewer.showNetworkTab();
-  await expect(traceViewer.networkRequests).toContainText([/200GETframe.htmltext\/html/]);
-  await expect(traceViewer.networkRequests).toContainText([/200GETstyle.csstext\/css/]);
-  await expect(traceViewer.networkRequests).toContainText([/200GETscript.jsapplication\/javascript/]);
+  await expect(traceViewer.networkRequests).toContainText([/200GET\/frame.htmltext\/html/]);
+  await expect(traceViewer.networkRequests).toContainText([/200GET\/style.csstext\/css/]);
+  await expect(traceViewer.networkRequests).toContainText([/200GET\/script.jsapplication\/javascript/]);
 });
 
 test('should have network request overrides', async ({ page, server, runAndTrace }) => {
@@ -228,7 +228,7 @@ test('should have network request overrides', async ({ page, server, runAndTrace
   });
   await traceViewer.selectAction('http://localhost');
   await traceViewer.showNetworkTab();
-  await expect(traceViewer.networkRequests).toContainText([/200GETframe.htmltext\/html/]);
+  await expect(traceViewer.networkRequests).toContainText([/200GET\/frame.htmltext\/html/]);
   await expect(traceViewer.networkRequests).toContainText([/abort.*style.cssx-unknown/]);
 });
 
@@ -239,7 +239,7 @@ test('should have network request overrides 2', async ({ page, server, runAndTra
   });
   await traceViewer.selectAction('http://localhost');
   await traceViewer.showNetworkTab();
-  await expect(traceViewer.networkRequests).toContainText([/200GETframe.htmltext\/html/]);
+  await expect(traceViewer.networkRequests).toContainText([/200GET\/frame.htmltext\/html/]);
   await expect(traceViewer.networkRequests).toContainText([/continue.*script.jsapplication\/javascript/]);
 });
 

@@ -86,7 +86,13 @@ function indexModel(context: ContextEntry) {
   for (let i = 0; i < context.actions.length; ++i) {
     const action = context.actions[i] as any;
     action[contextSymbol] = context;
-    action[nextInContextSymbol] = context.actions[i + 1];
+  }
+  let lastNonRouteAction = undefined;
+  for (let i = context.actions.length - 1; i >= 0; i--) {
+    const action = context.actions[i] as any;
+    action[nextInContextSymbol] = lastNonRouteAction;
+    if (!action.apiName.includes('route.'))
+      lastNonRouteAction = action;
   }
   for (const event of context.events)
     (event as any)[contextSymbol] = context;
@@ -109,6 +115,7 @@ function mergeActions(contexts: ContextEntry[]) {
       offset = context.actions[0].startTime - context.actions[0].wallTime;
   }
 
+  const nonPrimaryIdToPrimaryId = new Map<string, string>();
   for (const context of nonPrimaryContexts) {
     for (const action of context.actions) {
       if (offset) {
@@ -122,12 +129,13 @@ function mergeActions(contexts: ContextEntry[]) {
       const key = `${action.apiName}@${action.wallTime}`;
       const existing = map.get(key);
       if (existing && existing.apiName === action.apiName) {
+        nonPrimaryIdToPrimaryId.set(action.callId, existing.callId);
         if (action.error)
           existing.error = action.error;
         if (action.attachments)
           existing.attachments = action.attachments;
         if (action.parentId)
-          existing.parentId = action.parentId;
+          existing.parentId = nonPrimaryIdToPrimaryId.get(action.parentId) ?? action.parentId;
         continue;
       }
       map.set(key, { ...action, context });
