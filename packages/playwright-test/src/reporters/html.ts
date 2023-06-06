@@ -164,7 +164,7 @@ export async function showHTMLReport(reportFolder: string | undefined, host: str
   console.log(colors.cyan(`  Serving HTML report at ${url}. Press Ctrl+C to quit.`));
   if (testId)
     url += `#?testId=${testId}`;
-  await open(url, { wait: true }).catch(() => console.log(`Failed to open browser on ${url}`));
+  await open(url, { wait: true }).catch(() => {});
   await new Promise(() => {});
 }
 
