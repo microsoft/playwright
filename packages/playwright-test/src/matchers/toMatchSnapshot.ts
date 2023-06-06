@@ -335,6 +335,7 @@ export async function toHaveScreenshot(
     caret: config?.caret ?? 'hide',
     ...helper.allOptions,
     mask: (helper.allOptions.mask || []) as LocatorEx[],
+    maskColor: helper.allOptions.maskColor,
     name: undefined,
     threshold: undefined,
     maxDiffPixels: undefined,

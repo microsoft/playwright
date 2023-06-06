@@ -1093,7 +1093,7 @@ Specify locators that should be masked when the screenshot is taken. Masked elem
 a pink box `#FF00FF` that completely covers its bounding box.
 
 ## screenshot-option-mask-color
-* since: v1.34
+* since: v1.35
 - `maskColor` <[string]>
 
 Specify the color of the overlay box for masked elements, in [CSS color format](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value). Default color is pink `#FF00FF`.

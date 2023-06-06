@@ -1195,6 +1195,26 @@ test('should throw pretty error if expected PNG file is not a PNG', async ({ run
   expect(result.output).toContain('could not decode image as JPEG.');
 });
 
+test('should support maskColor option', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    ...playwrightConfig({
+      snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
+    }),
+    '__screenshots__/a.spec.js/snapshot.png': createImage(IMG_WIDTH, IMG_HEIGHT, 0, 255, 0),
+    'a.spec.js': `
+      const { test, expect } = require('@playwright/test');
+      test('png', async ({ page }) => {
+        await page.setContent('<style> html,body { padding: 0; margin: 0; }</style>');
+        await expect(page).toHaveScreenshot('snapshot.png', {
+          mask: [page.locator('body')],
+          maskColor: '#00FF00',
+        });
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+});
+
 function playwrightConfig(obj: any) {
   return {
     'playwright.config.js': `
