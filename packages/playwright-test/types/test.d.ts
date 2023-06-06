@@ -5337,7 +5337,7 @@ interface LocatorAssertions {
 
     /**
      * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlaid with a pink
-     * box `#FF00FF` that completely covers its bounding box.
+     * box `#FF00FF` (customized by `maskColor`) that completely covers its bounding box.
      */
     mask?: Array<Locator>;
 
@@ -5420,7 +5420,7 @@ interface LocatorAssertions {
 
     /**
      * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlaid with a pink
-     * box `#FF00FF` that completely covers its bounding box.
+     * box `#FF00FF` (customized by `maskColor`) that completely covers its bounding box.
      */
     mask?: Array<Locator>;
 
@@ -5679,7 +5679,7 @@ interface PageAssertions {
 
     /**
      * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlaid with a pink
-     * box `#FF00FF` that completely covers its bounding box.
+     * box `#FF00FF` (customized by `maskColor`) that completely covers its bounding box.
      */
     mask?: Array<Locator>;
 
@@ -5792,7 +5792,7 @@ interface PageAssertions {
 
     /**
      * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlaid with a pink
-     * box `#FF00FF` that completely covers its bounding box.
+     * box `#FF00FF` (customized by `maskColor`) that completely covers its bounding box.
      */
     mask?: Array<Locator>;
 

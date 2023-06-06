@@ -1090,7 +1090,7 @@ Specify screenshot type, defaults to `png`.
 - `mask` <[Array]<[Locator]>>
 
 Specify locators that should be masked when the screenshot is taken. Masked elements will be overlaid with
-a pink box `#FF00FF` that completely covers its bounding box.
+a pink box `#FF00FF` (customized by [`option: maskColor`]) that completely covers its bounding box.
 
 ## screenshot-option-mask-color
 * since: v1.35
