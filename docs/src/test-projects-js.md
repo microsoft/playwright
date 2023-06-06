@@ -207,7 +207,7 @@ Running order:
 
 ### Teardown
 
-You can also teardown your setup by adding a teardown property to your setup project. This will run after all dependent projects have run.
+You can also [`property: TestProject.teardown`] your setup by adding a teardown property to your setup project. This will run after all dependent projects have run.
 
 First we add a new project called teardown and give it a name such as `cleanup db`. We then give it a `testMatch` property in order to match the file called `global.teardown.ts`:
 
