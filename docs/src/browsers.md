@@ -992,7 +992,7 @@ Playwright keeps track of the clients that use its browsers. When there are no m
 
 To opt-out from the unused browser removal, you can set the `PLAYWRIGHT_SKIP_BROWSER_GC=1` environment variable.
 
-### Remove browsers
+### Uninstall browsers
 
 This will remove the browsers (chromium, firefox, webkit) of the current Playwright installation:
 
