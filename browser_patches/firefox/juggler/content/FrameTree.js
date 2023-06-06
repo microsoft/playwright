@@ -76,10 +76,14 @@ class FrameTree {
       helper.addObserver((browsingContext, topic, why) => {
         this._onBrowsingContextDetached(browsingContext);
       }, 'browsing-context-discarded'),
+      helper.addObserver((subject, topic, eventInfo) => {
+        const [type, jugglerEventId] = eventInfo.split(' ');
+        this.emit(FrameTree.Events.InputEvent, { type, jugglerEventId: +(jugglerEventId ?? '0') });
+      }, 'juggler-mouse-event-hit-renderer'),
       helper.addProgressListener(webProgress, this, flags),
     ];
 
-    this._mouseEventListeners = [];
+    this._dragEventListeners = [];
   }
 
   workers() {
@@ -248,14 +252,7 @@ class FrameTree {
     this._wdm.removeListener(this._wdmListener);
     this._runtime.dispose();
     helper.removeListeners(this._eventListeners);
-    helper.removeListeners(this._mouseEventListeners);
-  }
-
-  _onMouseEvent(eventType, eventObject) {
-    this.emit(FrameTree.Events.MouseEvent, {
-      type: eventType,
-      eventObject,
-    });
+    helper.removeListeners(this._dragEventListeners);
   }
 
   onWindowEvent(event) {
@@ -274,20 +271,18 @@ class FrameTree {
     }
 
     if (frame === this._mainFrame) {
-      helper.removeListeners(this._mouseEventListeners);
+      helper.removeListeners(this._dragEventListeners);
       const chromeEventHandler = docShell.chromeEventHandler;
       const options = {
         mozSystemGroup: true,
         capture: true,
       };
-      this._mouseEventListeners = [
-        helper.addEventListener(chromeEventHandler, 'dragover', this._onMouseEvent.bind(this, 'dragover'), options),
-        helper.addEventListener(chromeEventHandler, 'dragend', this._onMouseEvent.bind(this, 'dragend'), options),
-        helper.addEventListener(chromeEventHandler, 'contextmenu', this._onMouseEvent.bind(this, 'contextmenu'), options),
-        helper.addEventListener(chromeEventHandler, 'mousedown', this._onMouseEvent.bind(this, 'mousedown'), options),
-        helper.addEventListener(chromeEventHandler, 'mouseup', this._onMouseEvent.bind(this, 'mouseup'), options),
-        helper.addEventListener(chromeEventHandler, 'mousemove', this._onMouseEvent.bind(this, 'mousemove'), options),
-        helper.addEventListener(chromeEventHandler, 'dragstart', this._onMouseEvent.bind(this, 'dragstart'), options),
+      const emitInputEvent = (event) => this.emit(FrameTree.Events.InputEvent, { type: event.type, jugglerEventId: 0 });
+      // Drag events are dispatched from content process, so these we don't see in the
+      // `juggler-mouse-event-hit-renderer` instrumentation.
+      this._dragEventListeners = [
+        helper.addEventListener(chromeEventHandler, 'dragstart', emitInputEvent, options),
+        helper.addEventListener(chromeEventHandler, 'dragover', emitInputEvent, options),
       ];
     }
   }
@@ -406,7 +401,7 @@ FrameTree.Events = {
   NavigationAborted: 'navigationaborted',
   SameDocumentNavigation: 'samedocumentnavigation',
   PageReady: 'pageready',
-  MouseEvent: 'mouseevent',
+  InputEvent: 'inputevent',
 };
 
 class IsolatedWorld {

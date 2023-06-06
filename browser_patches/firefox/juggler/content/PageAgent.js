@@ -116,9 +116,9 @@ class PageAgent {
       helper.on(this._frameTree, 'websocketframesent', event => this._browserPage.emit('webSocketFrameSent', event)),
       helper.on(this._frameTree, 'websocketframereceived', event => this._browserPage.emit('webSocketFrameReceived', event)),
       helper.on(this._frameTree, 'websocketclosed', event => this._browserPage.emit('webSocketClosed', event)),
-      helper.on(this._frameTree, 'mouseevent', event => {
-        this._browserPage.emit('pageInputEvent', { type: event.type });
-        if (event.type === 'dragstart') {
+      helper.on(this._frameTree, 'inputevent', inputEvent => {
+        this._browserPage.emit('pageInputEvent', inputEvent);
+        if (inputEvent.type === 'dragstart') {
           // After the dragStart event is dispatched and handled by Web,
           // it might or might not create a new drag session, depending on its preventing default.
           setTimeout(() => {
@@ -533,7 +533,8 @@ class PageAgent {
       return;
 
     const frame = this._frameTree.mainFrame();
-    frame.domWindow().windowUtils.sendMouseEvent(
+    const winUtils = frame.domWindow().windowUtils;
+    winUtils.jugglerSendMouseEvent(
       'mousemove',
       x,
       y,
@@ -541,15 +542,16 @@ class PageAgent {
       0 /*clickCount*/,
       modifiers,
       false /*aIgnoreRootScrollFrame*/,
-      undefined /*pressure*/,
+      0.0 /*pressure*/,
       5 /*inputSource*/,
-      undefined /*isDOMEventSynthesized*/,
+      true /*isDOMEventSynthesized*/,
       false /*isWidgetEventSynthesized*/,
       0 /*buttons*/,
-      undefined /*pointerIdentifier*/,
-      true /*disablePointerEvent*/);
+      winUtils.DEFAULT_MOUSE_POINTER_ID /* pointerIdentifier */,
+      true /*disablePointerEvent*/
+    );
 
-    frame.domWindow().windowUtils.sendMouseEvent(
+    winUtils.jugglerSendMouseEvent(
       'mousedown',
       x,
       y,
@@ -557,15 +559,16 @@ class PageAgent {
       1 /*clickCount*/,
       modifiers,
       false /*aIgnoreRootScrollFrame*/,
-      undefined /*pressure*/,
+      0.0 /*pressure*/,
       5 /*inputSource*/,
-      undefined /*isDOMEventSynthesized*/,
+      true /*isDOMEventSynthesized*/,
       false /*isWidgetEventSynthesized*/,
       1 /*buttons*/,
-      undefined /*pointerIdentifier*/,
-      true /*disablePointerEvent*/);
+      winUtils.DEFAULT_MOUSE_POINTER_ID /*pointerIdentifier*/,
+      true /*disablePointerEvent*/,
+    );
 
-    frame.domWindow().windowUtils.sendMouseEvent(
+    winUtils.jugglerSendMouseEvent(
       'mouseup',
       x,
       y,
@@ -573,13 +576,14 @@ class PageAgent {
       1 /*clickCount*/,
       modifiers,
       false /*aIgnoreRootScrollFrame*/,
-      undefined /*pressure*/,
+      0.0 /*pressure*/,
       5 /*inputSource*/,
-      undefined /*isDOMEventSynthesized*/,
+      true /*isDOMEventSynthesized*/,
       false /*isWidgetEventSynthesized*/,
       0 /*buttons*/,
-      undefined /*pointerIdentifier*/,
-      true /*disablePointerEvent*/);
+      winUtils.DEFAULT_MOUSE_POINTER_ID /*pointerIdentifier*/,
+      true /*disablePointerEvent*/,
+    );
   }
 
   async _dispatchDragEvent({type, x, y, modifiers}) {
@@ -588,7 +592,7 @@ class PageAgent {
 
     if ((type === 'drop' && dropEffect !== 'none') || type ===  'dragover') {
       const win = this._frameTree.mainFrame().domWindow();
-      win.windowUtils.sendMouseEvent(
+      win.windowUtils.jugglerSendMouseEvent(
         type,
         x,
         y,
@@ -596,11 +600,13 @@ class PageAgent {
         0, /*clickCount*/
         modifiers,
         false /*aIgnoreRootScrollFrame*/,
-        undefined /*pressure*/,
-        undefined /*inputSource*/,
-        undefined /*isDOMEventSynthesized*/,
-        undefined /*isWidgetEventSynthesized*/,
-        0, /*buttons*/
+        0.0 /*pressure*/,
+        0 /*inputSource*/,
+        true /*isDOMEventSynthesized*/,
+        false /*isWidgetEventSynthesized*/,
+        0 /*buttons*/,
+        win.windowUtils.DEFAULT_MOUSE_POINTER_ID /* pointerIdentifier */,
+        false /*disablePointerEvent*/,
       );
       return;
     }
