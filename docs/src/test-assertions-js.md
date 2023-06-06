@@ -24,6 +24,7 @@ By default, the timeout for assertions is set to 5 seconds. Learn more about [va
 
 | Assertion | Description |
 | :- | :- |
+| [`method: LocatorAssertions.toBeAttached`] | Element is attached to DOM |
 | [`method: LocatorAssertions.toBeChecked`] | Checkbox is checked |
 | [`method: LocatorAssertions.toBeDisabled`] | Element is disabled |
 | [`method: LocatorAssertions.toBeEditable`] | Element is editable |
