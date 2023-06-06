@@ -50,6 +50,12 @@ As you hover over each action of your test the source code for the test is highl
 
 ![showing log of tests in ui mode](https://user-images.githubusercontent.com/13063165/234323603-3d9a152d-f9fc-48d8-82d2-26c8c1866abb.png)
 
+### Attachments
+
+The "Attachments" tab allows you to explore attachments. If you're doing [visual regression testing](./test-snapshots.md), you'll be able to compare screenshots by examining the image diff, the actual image and the expected image. When you click on the expected image you can use the slider to slide one image over the other so you can easily see the differences in your screenshots.
+
+![ui mode with attachments](https://github.com/microsoft/playwright/assets/13063165/bed993d7-7720-4624-b32f-4d7a543a732d)
+
 ### Pop out and inspect the DOM
 
 Pop out the DOM snapshot into it's own window for a better debugging experience by clicking on the pop out icon above the DOM snapshot. From there you can open the browser DevTools and inspect the HTML, CSS, Console etc. Go back to UI Mode and click on another action and pop that one out to easily compare the two side by side or debug each individually.
