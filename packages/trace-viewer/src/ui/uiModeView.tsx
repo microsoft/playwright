@@ -644,7 +644,7 @@ const callbacks = new Map<number, { resolve: (arg: any) => void, reject: (arg: E
 
 const initWebSocket = async (onClose: () => void) => {
   const guid = new URLSearchParams(window.location.search).get('ws');
-  const ws = new WebSocket(`ws://${window.location.hostname}:${window.location.port}/${guid}`);
+  const ws = new WebSocket(`${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.hostname}:${window.location.port}/${guid}`);
   await new Promise(f => ws.addEventListener('open', f));
   ws.addEventListener('close', onClose);
   ws.addEventListener('message', event => {
