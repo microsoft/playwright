@@ -164,7 +164,10 @@ class Helper {
 const helper = new Helper();
 
 class EventWatcher {
-  constructor(receiver, eventNames) {
+  constructor(receiver, eventNames, pendingEventWatchers = new Set()) {
+    this._pendingEventWatchers = pendingEventWatchers;
+    this._pendingEventWatchers.add(this);
+
     this._events = [];
     this._pendingPromises = [];
     this._eventListeners = eventNames.map(eventName =>
@@ -213,6 +216,7 @@ class EventWatcher {
   }
 
   dispose() {
+    this._pendingEventWatchers.delete(this);
     for (const promise of this._pendingPromises)
       promise.reject(new Error('EventWatcher is being disposed'));
     this._pendingPromises = [];

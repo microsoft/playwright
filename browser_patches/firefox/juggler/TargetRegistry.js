@@ -492,6 +492,9 @@ class PageTarget {
   }
 
   async updateViewportSize() {
+    await waitForWindowReady(this._window);
+    this.updateDPPXOverride();
+
     // Viewport size is defined by three arguments:
     // 1. default size. Could be explicit if set as part of `window.open` call, e.g.
     //   `window.open(url, title, 'width=400,height=400')`
@@ -502,13 +505,35 @@ class PageTarget {
     // Otherwise, explicitly set page viewport prevales over browser context
     // default viewport.
     const viewportSize = this._viewportSize || this._browserContext.defaultViewportSize;
-    const actualSize = await setViewportSizeForBrowser(viewportSize, this._linkedBrowser, this._window);
-    this.updateDPPXOverride();
-    await this._channel.connect('').send('awaitViewportDimensions', {
-      width: actualSize.width,
-      height: actualSize.height,
-      deviceSizeIsPageSize: !!this._browserContext.deviceScaleFactor,
-    });
+    if (viewportSize) {
+      const {width, height} = viewportSize;
+      this._linkedBrowser.style.setProperty('width', width + 'px');
+      this._linkedBrowser.style.setProperty('height', height + 'px');
+      this._linkedBrowser.style.setProperty('box-sizing', 'content-box');
+      this._linkedBrowser.closest('.browserStack').style.setProperty('overflow', 'auto');
+      this._linkedBrowser.closest('.browserStack').style.setProperty('contain', 'size');
+      this._linkedBrowser.closest('.browserStack').style.setProperty('scrollbar-width', 'none');
+      this._linkedBrowser.browsingContext.inRDMPane = true;
+
+      const rect = this._linkedBrowser.getBoundingClientRect();
+      this._window.resizeTo(rect.x + rect.width, rect.y + rect.height);
+
+      await this._channel.connect('').send('awaitViewportDimensions', { width, height });
+    } else {
+      this._linkedBrowser.style.removeProperty('width');
+      this._linkedBrowser.style.removeProperty('height');
+      this._linkedBrowser.style.removeProperty('box-sizing');
+      this._linkedBrowser.closest('.browserStack').style.removeProperty('overflow');
+      this._linkedBrowser.closest('.browserStack').style.removeProperty('contain');
+      this._linkedBrowser.closest('.browserStack').style.removeProperty('scrollbar-width');
+      this._linkedBrowser.browsingContext.inRDMPane = false;
+
+      const actualSize = this._linkedBrowser.getBoundingClientRect();
+      await this._channel.connect('').send('awaitViewportDimensions', {
+        width: actualSize.width,
+        height: actualSize.height,
+      });
+    }
   }
 
   setEmulatedMedia(mediumOverride) {
@@ -1116,26 +1141,6 @@ async function waitForWindowReady(window) {
   }
   if (window.document.readyState !== 'complete')
     await helper.awaitEvent(window, 'load');
-}
-
-async function setViewportSizeForBrowser(viewportSize, browser, window) {
-  await waitForWindowReady(window);
-  if (viewportSize) {
-    const {width, height} = viewportSize;
-    const rect = browser.getBoundingClientRect();
-    window.resizeBy(width - rect.width, height - rect.height);
-    browser.style.setProperty('min-width', width + 'px');
-    browser.style.setProperty('min-height', height + 'px');
-    browser.style.setProperty('max-width', width + 'px');
-    browser.style.setProperty('max-height', height + 'px');
-  } else {
-    browser.style.removeProperty('min-width');
-    browser.style.removeProperty('min-height');
-    browser.style.removeProperty('max-width');
-    browser.style.removeProperty('max-height');
-  }
-  const rect = browser.getBoundingClientRect();
-  return { width: rect.width, height: rect.height };
 }
 
 TargetRegistry.Events = {

@@ -122,8 +122,7 @@ function initialize(browsingContext, docShell, actor) {
       return data.failedToOverrideTimezone;
     },
 
-    async awaitViewportDimensions({width, height, deviceSizeIsPageSize}) {
-      docShell.deviceSizeIsPageSize = deviceSizeIsPageSize;
+    async awaitViewportDimensions({width, height}) {
       const win = docShell.domWindow;
       if (win.innerWidth === width && win.innerHeight === height)
         return;
