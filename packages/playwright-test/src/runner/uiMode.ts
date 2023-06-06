@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import { openTraceViewerApp } from 'playwright-core/lib/server';
-import type { Page } from 'playwright-core/lib/server/page';
+import { showTraceViewer } from 'playwright-core/lib/server';
 import { isUnderTest, ManualPromise } from 'playwright-core/lib/utils';
 import type { FullResult } from '../../reporter';
 import { clearCompilationCache, collectAffectedTestFiles, dependenciesForTestFile } from '../transform/compilationCache';
@@ -28,10 +27,11 @@ import { chokidar } from '../utilsBundle';
 import type { FSWatcher } from 'chokidar';
 import { open } from 'playwright-core/lib/utilsBundle';
 import ListReporter from '../reporters/list';
+import type { Transport } from 'playwright-core/lib/server/trace/viewer/traceViewer';
 
 class UIMode {
   private _config: FullConfigInternal;
-  private _page!: Page;
+  private _transport!: Transport;
   private _testRun: { run: Promise<FullResult['status']>, stop: ManualPromise<void> } | undefined;
   globalCleanup: (() => Promise<FullResult['status']>) | undefined;
   private _globalWatcher: Watcher;
@@ -58,11 +58,11 @@ class UIMode {
 
     this._originalStdoutWrite = process.stdout.write;
     this._originalStderrWrite = process.stderr.write;
-    this._globalWatcher = new Watcher('deep', () => this._dispatchEvent({ method: 'listChanged' }));
+    this._globalWatcher = new Watcher('deep', () => this._dispatchEvent('listChanged', {}));
     this._testWatcher = new Watcher('flat', events => {
       const collector = new Set<string>();
       events.forEach(f => collectAffectedTestFiles(f.file, collector));
-      this._dispatchEvent({ method: 'testFilesChanged', params: { testFileNames: [...collector] } });
+      this._dispatchEvent('testFilesChanged', { testFileNames: [...collector] });
     });
   }
 
@@ -81,49 +81,58 @@ class UIMode {
     return status;
   }
 
-  async showUI() {
-    this._page = await openTraceViewerApp([], 'chromium', { app: 'uiMode.html', headless: isUnderTest() && process.env.PWTEST_HEADED_FOR_TEST !== '1' });
+  async showUI(openInBrowser: boolean) {
+    const exitPromise = new ManualPromise();
+    let queue = Promise.resolve();
+
+    this._transport = {
+      dispatch: async (method, params) => {
+        if (method === 'exit') {
+          exitPromise.resolve();
+          return;
+        }
+        if (method === 'watch') {
+          this._watchFiles(params.fileNames);
+          return;
+        }
+        if (method === 'open' && params.location) {
+          open('vscode://file/' + params.location).catch(e => this._originalStderrWrite.call(process.stderr, String(e)));
+          return;
+        }
+        if (method === 'resizeTerminal') {
+          process.stdout.columns = params.cols;
+          process.stdout.rows = params.rows;
+          process.stderr.columns = params.cols;
+          process.stderr.columns = params.rows;
+          return;
+        }
+        if (method === 'stop') {
+          void this._stopTests();
+          return;
+        }
+        queue = queue.then(() => this._queueListOrRun(method, params));
+        await queue;
+      },
+
+      onclose: () => exitPromise.resolve(),
+    };
+    await showTraceViewer([], 'chromium', {
+      app: 'uiMode.html',
+      headless: isUnderTest() && process.env.PWTEST_HEADED_FOR_TEST !== '1',
+      transport: this._transport,
+      openInBrowser,
+    });
+
     if (!process.env.PWTEST_DEBUG) {
       process.stdout.write = (chunk: string | Buffer) => {
-        this._dispatchEvent({ method: 'stdio', params: chunkToPayload('stdout', chunk) });
+        this._dispatchEvent('stdio', chunkToPayload('stdout', chunk));
         return true;
       };
       process.stderr.write = (chunk: string | Buffer) => {
-        this._dispatchEvent({ method: 'stdio', params: chunkToPayload('stderr', chunk) });
+        this._dispatchEvent('stdio', chunkToPayload('stderr', chunk));
         return true;
       };
     }
-    const exitPromise = new ManualPromise();
-    this._page.on('close', () => exitPromise.resolve());
-    let queue = Promise.resolve();
-    await this._page.exposeBinding('sendMessage', false, async (source, data) => {
-      const { method, params }: { method: string, params: any } = data;
-      if (method === 'exit') {
-        exitPromise.resolve();
-        return;
-      }
-      if (method === 'watch') {
-        this._watchFiles(params.fileNames);
-        return;
-      }
-      if (method === 'open' && params.location) {
-        open('vscode://file/' + params.location).catch(e => this._originalStderrWrite.call(process.stderr, String(e)));
-        return;
-      }
-      if (method === 'resizeTerminal') {
-        process.stdout.columns = params.cols;
-        process.stdout.rows = params.rows;
-        process.stderr.columns = params.cols;
-        process.stderr.columns = params.rows;
-        return;
-      }
-      if (method === 'stop') {
-        void this._stopTests();
-        return;
-      }
-      queue = queue.then(() => this._queueListOrRun(method, params));
-      await queue;
-    });
     await exitPromise;
 
     if (!process.env.PWTEST_DEBUG) {
@@ -139,13 +148,12 @@ class UIMode {
       await this._runTests(params.testIds);
   }
 
-  private _dispatchEvent(message: any) {
-    // eslint-disable-next-line no-console
-    this._page.mainFrame().evaluateExpression(dispatchFuncSource, { isFunction: true }, message).catch(e => this._originalStderrWrite.call(process.stderr, String(e)));
+  private _dispatchEvent(method: string, params?: any) {
+    this._transport.sendEvent?.(method, params);
   }
 
   private async _listTests() {
-    const listReporter = new TeleReporterEmitter(e => this._dispatchEvent(e));
+    const listReporter = new TeleReporterEmitter(e => this._dispatchEvent(e.method, e.params));
     const reporter = new InternalReporter([listReporter]);
     this._config.cliListOnly = true;
     this._config.testIdMatcher = undefined;
@@ -170,7 +178,7 @@ class UIMode {
     this._config.testIdMatcher = id => !testIdSet || testIdSet.has(id);
 
     const reporters = await createReporters(this._config, 'ui');
-    reporters.push(new TeleReporterEmitter(e => this._dispatchEvent(e)));
+    reporters.push(new TeleReporterEmitter(e => this._dispatchEvent(e.method, e.params)));
     const reporter = new InternalReporter(reporters);
     const taskRunner = createTaskRunnerForWatch(this._config, reporter);
     const testRun = new TestRun(this._config, reporter);
@@ -202,16 +210,12 @@ class UIMode {
   }
 }
 
-const dispatchFuncSource = String((message: any) => {
-  (window as any).dispatch(message);
-});
-
-export async function runUIMode(config: FullConfigInternal): Promise<FullResult['status']> {
+export async function runUIMode(config: FullConfigInternal, openInBrowser: boolean): Promise<FullResult['status']> {
   const uiMode = new UIMode(config);
   const status = await uiMode.runGlobalSetup();
   if (status !== 'passed')
     return status;
-  await uiMode.showUI();
+  await uiMode.showUI(openInBrowser);
   return await uiMode.globalCleanup?.() || 'passed';
 }
 

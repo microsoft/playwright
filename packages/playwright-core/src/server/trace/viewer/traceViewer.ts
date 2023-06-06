@@ -18,15 +18,30 @@ import path from 'path';
 import fs from 'fs';
 import { HttpServer } from '../../../utils/httpServer';
 import { findChromiumChannel } from '../../registry';
-import { gracefullyCloseAll, isUnderTest } from '../../../utils';
+import { createGuid, gracefullyCloseAll, isUnderTest } from '../../../utils';
 import { installAppIcon, syncLocalStorageWithSettings } from '../../chromium/crApp';
 import { serverSideCallMetadata } from '../../instrumentation';
 import { createPlaywright } from '../../playwright';
 import { ProgressController } from '../../progress';
-import { open } from 'playwright-core/lib/utilsBundle';
+import { open, wsServer } from 'playwright-core/lib/utilsBundle';
 import type { Page } from '../../page';
 
-type Options = { app?: string, headless?: boolean, host?: string, port?: number, isServer?: boolean, openInBrowser?: boolean };
+export type Transport = {
+  sendEvent?: (method: string, params: any) => void;
+  dispatch: (method: string, params: any) => Promise<void>;
+  close?: () => void;
+  onclose: () => void;
+};
+
+type Options = {
+  app?: string;
+  headless?: boolean;
+  host?: string;
+  port?: number;
+  isServer?: boolean;
+  openInBrowser?: boolean;
+  transport?: Transport;
+};
 
 export async function showTraceViewer(traceUrls: string[], browserName: string, options?: Options): Promise<void> {
   if (options?.openInBrowser) {
@@ -79,6 +94,25 @@ async function startTraceViewerServer(traceUrls: string[], options?: Options): P
   });
 
   const params = traceUrls.map(t => `trace=${t}`);
+
+  if (options?.transport) {
+    const transport = options?.transport;
+    const guid = createGuid();
+    params.push('ws=' + guid);
+    const wss = new wsServer({ server: server.server(), path: '/' + guid });
+    wss.on('connection', ws => {
+      transport.sendEvent = (method, params)  => ws.send(JSON.stringify({ method, params }));
+      transport.close = () => ws.close();
+      ws.on('message', async (message: string) => {
+        const { id, method, params } = JSON.parse(message);
+        const result = await transport.dispatch(method, params);
+        ws.send(JSON.stringify({ id, result }));
+      });
+      ws.on('close', () => transport.onclose());
+      ws.on('error', () => transport.onclose());
+    });
+  }
+
   if (options?.isServer)
     params.push('isServer');
   if (isUnderTest())
