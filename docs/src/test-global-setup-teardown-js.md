@@ -56,7 +56,7 @@ This example will show you how to use project dependencies to create a global se
 
 The setup project will write the storage state into an 'auth.json' file in a '.auth' folder inside the playwright folder. By exporting a const of `STORAGE_STATE` we can then easily share the location of the storage file between projects with the [`method: BrowserContext.storageState`] method. This returns the storage state for the browser context and contains the current cookies and a local storage snapshot.
 
-In this example the 'logged in chromium' project depends on the setup project whereas the 'logged out chromium' project ignores anything with 'loggedin' or 'setup' in it's file name.
+In this example the 'logged in chromium' project depends on the setup project whereas the 'logged out chromium' project does not depend on the setup project, and does not use the `storageState` option.
 
 ```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
@@ -90,7 +90,7 @@ export default defineConfig({
 });
 ```
 
-We then create a setup test, stored at route level of your project, that logs in to an application and populates the context with the storage state after the login actions have been performed. By doing this you only have to log in once and the credentials will be stored in the `STORAGE_STATE` file, meaning you don't need to log in again for every test. Start by importing the `STORAGE_STATE` from the Playwright config file and then use this as the path to save your storage state to the page's context.
+We then create a setup test, stored at root level of your project, that logs in to an application and populates the context with the storage state after the login actions have been performed. By doing this you only have to log in once and the credentials will be stored in the `STORAGE_STATE` file, meaning you don't need to log in again for every test. Start by importing the `STORAGE_STATE` from the Playwright config file and then use this as the path to save your storage state to the page's context.
 
 ```js title="global.setup.ts"
 import { test as setup, expect } from '@playwright/test';
