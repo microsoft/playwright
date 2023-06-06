@@ -24,6 +24,7 @@ By default, the timeout for assertions is set to 5 seconds. Learn more about [va
 
 | Assertion | Description |
 | :- | :- |
+| [`method: LocatorAssertions.toBeAttached`] | Element is attached |
 | [`method: LocatorAssertions.toBeChecked`] | Checkbox is checked |
 | [`method: LocatorAssertions.toBeDisabled`] | Element is disabled |
 | [`method: LocatorAssertions.toBeEditable`] | Element is editable |
@@ -132,6 +133,7 @@ await slowExpect(locator).toHaveText('Submit');
 
 // Always do soft assertions.
 const softExpect = expect.configure({ soft: true });
+await softExpect(locator).toHaveText('Submit');
 ```
 
 ## expect.poll
