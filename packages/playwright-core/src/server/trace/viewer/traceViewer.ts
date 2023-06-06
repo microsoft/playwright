@@ -119,10 +119,18 @@ async function startTraceViewerServer(traceUrls: string[], options?: Options): P
     params.push('isUnderTest=true');
 
   const { host, port } = options || {};
-  const urlPrefix = await server.start({ preferredPort: port, host });
+  const url = await server.start({ preferredPort: port, host });
   const { app } = options || {};
   const searchQuery = params.length ? '?' + params.join('&') : '';
-  const url = urlPrefix + `/trace/${app || 'index.html'}${searchQuery}`;
+  const urlPath  = `/trace/${app || 'index.html'}${searchQuery}`;
+
+  server.routePath('/', (_, response) => {
+    response.statusCode = 301;
+    response.setHeader('Location', urlPath);
+    response.end();
+    return true;
+  });
+
   return { server, url };
 }
 
@@ -174,6 +182,8 @@ export async function openTraceViewerApp(traceUrls: string[], browserName: strin
 
 async function openTraceInBrowser(traceUrls: string[], options?: Options) {
   const { url } = await startTraceViewerServer(traceUrls, options);
+  // eslint-disable-next-line no-console
+  console.log('\nListening on ' + url);
   // eslint-disable-next-line no-console
   await open(url, { wait: true }).catch(() => console.log(`Failed to open browser on ${url}`));
 }
