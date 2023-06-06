@@ -570,7 +570,7 @@ interface TestConfig {
    */
   webServer?: TestConfigWebServer | TestConfigWebServer[];
   /**
-   * Transpiler configuration.
+   * Playwright transpiler configuration.
    *
    * **Usage**
    *
@@ -580,7 +580,7 @@ interface TestConfig {
    *
    * export default defineConfig({
    *   build: {
-   *     external: '**\/*bundle.js',
+   *     external: ['**\/*bundle.js'],
    *   },
    * });
    * ```
@@ -588,8 +588,8 @@ interface TestConfig {
    */
   build?: {
     /**
-     * Paths to exclude from the transpilation expressed as glob patterns. Typically heavy JS bundles your tests
-     * reference.
+     * Paths to exclude from the transpilation expressed as a list of glob patterns. Typically heavy JS bundles that your
+     * test uses are listed here.
      */
     external?: Array<string>;
   };
