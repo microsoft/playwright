@@ -12,7 +12,7 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 * UI mode is now available in VSCode Playwright extension via a new "show trace viewer" button
 
-  ![Playwright UI Mode](https://github.com/microsoft/playwright-internal/assets/746130/da137bf6-3fe4-488b-9d6b-920375b27bd8)
+  ![Playwright UI Mode](https://github.com/microsoft/playwright-internal/assets/746130/ecc5ad49-5f1c-4ab4-8c07-4275c7075f25)
 
 * UI mode and trace viewer mark network requests handled with [`method: Page.route`] and [`method: BrowserContext.route`] handlers, as well as those issued via the [API testing](./api-testing).
 
