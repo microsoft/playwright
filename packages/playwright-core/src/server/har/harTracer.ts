@@ -196,6 +196,7 @@ export class HarTracer {
     if (!this._shouldIncludeEntryWithUrl(event.url.toString()))
       return;
     const harEntry = createHarEntry(event.method, event.url, undefined, this._options);
+    harEntry._apiRequest = true;
     if (!this._options.omitCookies)
       harEntry.request.cookies = event.cookies;
     harEntry.request.headers = Object.entries(event.headers).map(([name, value]) => ({ name, value }));

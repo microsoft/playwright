@@ -71,6 +71,7 @@ export type Entry = {
   _wasAborted?: boolean;
   _wasFulfilled?: boolean;
   _wasContinued?: boolean;
+  _apiRequest?: boolean;
 };
 
 export type Request = {
