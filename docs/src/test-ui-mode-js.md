@@ -82,7 +82,7 @@ Next to the name of each test in the sidebar you will find an eye icon. Clicking
 
 ![watch mode in ui mode](https://user-images.githubusercontent.com/13063165/234304918-dd0fb6d5-bfb1-4182-8c55-33cd3da5f83e.png)
 
-### Open in browser
+### Docker & GitHub Codespaces
 
 For environments where you don't have a GUI running, like GitHub Codespaces or VS Code Remote Development SSH/Containers you can open UI mode in the browser:
 
@@ -98,4 +98,4 @@ To have a static port, you can pass the `--ui-port` flag:
 npx playwright test --ui-port=8080 --ui-host=0.0.0.0
 ```
 
-Without the `--ui-host` flag, UI Mode will only listen on `localhost` and not be accessible from other machines.
+Without the `--ui-host=0.0.0.0` flag, UI Mode will only listen on `localhost` and is not be accessible from other machines. Be aware that this might be a security risk, as anyone on your network can access your UI Mode instance, in the case of GitHub Codespaces, the ports are only accessible from your account by default.
