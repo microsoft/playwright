@@ -9834,7 +9834,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
 
     /**
      * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlaid with a pink
-     * box `#FF00FF` that completely covers its bounding box.
+     * box `#FF00FF` (customized by `maskColor`) that completely covers its bounding box.
      */
     mask?: Array<Locator>;
 
@@ -19660,7 +19660,7 @@ export interface LocatorScreenshotOptions {
 
   /**
    * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlaid with a pink
-   * box `#FF00FF` that completely covers its bounding box.
+   * box `#FF00FF` (customized by `maskColor`) that completely covers its bounding box.
    */
   mask?: Array<Locator>;
 
@@ -19853,7 +19853,7 @@ export interface PageScreenshotOptions {
 
   /**
    * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlaid with a pink
-   * box `#FF00FF` that completely covers its bounding box.
+   * box `#FF00FF` (customized by `maskColor`) that completely covers its bounding box.
    */
   mask?: Array<Locator>;
 
