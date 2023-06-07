@@ -82,12 +82,12 @@ Next to the name of each test in the sidebar you will find an eye icon. Clicking
 
 ![watch mode in ui mode](https://user-images.githubusercontent.com/13063165/234304918-dd0fb6d5-bfb1-4182-8c55-33cd3da5f83e.png)
 
-### Github CodeSpaces support
+### Open in browser
 
-To run UI mode inside Github CodeSpaces, run the following:
+For environments where you don't have a GUI running, like GitHub Codespaces or VS Code Remote Development SSH/Containers you can open UI mode in the browser:
 
-  ```bash
-  npx playwright test --ui-port=0
-  ```
+```bash
+npx playwright test --ui-port=0 --ui-host=0.0.0.0
+```
 
-After that, the UI mode will be automatically available to you in a separate browser tab, thanks to the [CodeSpaces automatic port forwarding](https://docs.github.com/en/codespaces/developing-in-codespaces/forwarding-ports-in-your-codespace#about-forwarded-ports).
+In the case of GitHub Codespaces, the port gets [forwarded automatically](https://docs.github.com/en/codespaces/developing-in-codespaces/forwarding-ports-in-your-codespace#about-forwarded-ports), so you can open UI mode in the browser by clicking on the link in the terminal.
