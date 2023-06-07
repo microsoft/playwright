@@ -95,6 +95,7 @@ export const UIModeView: React.FC<{}> = ({
 
   React.useEffect(() => {
     inputRef.current?.focus();
+    setIsLoading(true);
     initWebSocket(() => setIsDisconnected(true)).then(() => reloadTests());
   }, [reloadTests]);
 
@@ -403,7 +404,7 @@ const TestList: React.FC<{
 
   // Update watch all.
   React.useEffect(() => {
-    if (!testModel.rootSuite)
+    if (isLoading)
       return;
     if (watchAll) {
       sendMessageNoReply('watch', { fileNames: [...fileNames] });
@@ -417,7 +418,7 @@ const TestList: React.FC<{
       }
       sendMessageNoReply('watch', { fileNames: [...fileNames] });
     }
-  }, [testModel, rootItem, fileNames, watchAll, watchedTreeIds, treeItemMap]);
+  }, [isLoading, rootItem, fileNames, watchAll, watchedTreeIds, treeItemMap]);
 
   const runTreeItem = (treeItem: TreeItem) => {
     setSelectedTreeItemId(treeItem.id);
