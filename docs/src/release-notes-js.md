@@ -6,6 +6,57 @@ toc_max_heading_level: 2
 
 import LiteYouTube from '@site/src/components/LiteYouTube';
 
+## Version 1.35
+
+### Highlights
+
+* UI mode is now available in VSCode Playwright extension via a new "show trace viewer" button
+
+  ![Playwright UI Mode](https://github.com/microsoft/playwright-browsers/assets/746130/7930feca-5f50-46d3-909f-e713e9cf5d0b)
+
+* UI mode and trace viewer mark network requests handled with [`method: Page.route`] and [`method: BrowserContext.route`] handlers, as well as those issued via the [API testing](./api-testing).
+
+* New option `maskColor` for methods [`method: Page.screenshot`], [`method: Locator.screenshot`], [`method: PageAssertions.toHaveScreenshot#1`] and [`method: LocatorAssertions.toHaveScreenshot#1`] to change default masking color:
+  ```js
+  await page.goto('https://playwright.dev');
+  await expect(page).toHaveScreenshot({
+    mask: [page.locator('img')],
+    maskColor: '#00FF00', // green
+  });
+  ```
+
+* New `uninstall` CLI command to uninstall browser binaries:
+  ```bash
+  $ npx playwright uninstall # remove browsers installed by this installation
+  $ npx playwright uninstall --all # remove all ever-install Playwright browsers
+  ```
+
+* Both UI mode and trace viewer now could be opened in a browser tab:
+  ```bash
+  $ npx playwright test --ui-port 0 # open UI mode in a tab on a random port
+  $ npx playwright show-trace --port 0 # open trace viewer in tab on a random port
+  ```
+
+### ⚠️ Breaking changes
+
+* `playwright-core` binary got renamed from `playwright` to `playwright-core`. So if you use `playwright-core` CLI, make sure to update the name:
+  ```bash
+  $ npx playwright-core install # the new way to install browsers when using playwright-core
+  ```
+
+  This change **does not** affect `@playwright/test` and `playwright` package users.
+
+### Browser Versions
+
+* Chromium 115.0.5790.13
+* Mozilla Firefox 113.0
+* WebKit 16.4
+
+This version was also tested against the following stable channels:
+
+* Google Chrome 114
+* Microsoft Edge 114
+
 ## Version 1.34
 
 <LiteYouTube
