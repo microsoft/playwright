@@ -99,17 +99,16 @@ jobs:
           });
           core.info('Posted comment: ' + response.html_url);
 
-          if (context.payload.workflow_run.event === 'push') {
-            const check = await github.rest.checks.create({
-              ...context.repo,
-              name: '${{ github.event.workflow_run.name }}',
-              head_sha: context.sha,
-              status: 'completed',
-              conclusion: 'success',
-              details_url: reportUrl,
-              output: {
-                title: '"${{ github.event.workflow_run.name }}" test results',
-                summary: '"${{ github.event.workflow_run.name }}" test results: ' + reportUrl,
-              }
-            });
-          }
+          const mergeWorkflowUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+          const check = await github.rest.checks.create({
+            ...context.repo,
+            name: 'Merge report (${{ github.event.workflow_run.name }})',
+            head_sha: '${{ github.event.workflow_run.head_sha }}',
+            status: 'completed',
+            conclusion: 'success',
+            details_url: reportUrl,
+            output: {
+              title: 'Merged test results (${{ github.event.workflow_run.name }})',
+              summary: `Created [report](${reportUrl}). Merge [workflow run](${mergeWorkflowUrl}).`,
+            }
+          });
