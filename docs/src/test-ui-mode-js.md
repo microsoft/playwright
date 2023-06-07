@@ -87,7 +87,7 @@ Next to the name of each test in the sidebar you will find an eye icon. Clicking
 For environments where you don't have a GUI running, like GitHub Codespaces or VS Code Remote Development SSH/Containers you can open UI mode in the browser:
 
 ```bash
-npx playwright test --ui-port=0 --ui-host=0.0.0.0
+npx playwright test --ui-host=0.0.0.0
 ```
 
 In the case of GitHub Codespaces, the port gets [forwarded automatically](https://docs.github.com/en/codespaces/developing-in-codespaces/forwarding-ports-in-your-codespace#about-forwarded-ports), so you can open UI mode in the browser by clicking on the link in the terminal.
