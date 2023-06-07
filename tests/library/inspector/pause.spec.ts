@@ -30,6 +30,20 @@ it('should resume when closing inspector', async ({ page, recorderPageGetter, cl
   await scriptPromise;
 });
 
+it('should not reset timeouts', async ({ page, recorderPageGetter, closeRecorder, server }) => {
+  page.context().setDefaultNavigationTimeout(1000);
+  page.context().setDefaultTimeout(1000);
+
+  const pausePromise = page.pause();
+  await recorderPageGetter();
+  await closeRecorder();
+  await pausePromise;
+
+  server.setRoute('/empty.html', () => {});
+  const error = await page.goto(server.EMPTY_PAGE).catch(e => e);
+  expect(error.message).toContain('page.goto: Timeout 1000ms exceeded.');
+});
+
 it.describe('pause', () => {
   it.skip(({ mode }) => mode !== 'default');
 

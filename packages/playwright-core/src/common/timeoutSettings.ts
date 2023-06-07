@@ -37,6 +37,14 @@ export class TimeoutSettings {
     this._defaultNavigationTimeout = timeout;
   }
 
+  defaultNavigationTimeout() {
+    return this._defaultNavigationTimeout;
+  }
+
+  defaultTimeout() {
+    return this._defaultTimeout;
+  }
+
   navigationTimeout(options: { timeout?: number }): number {
     if (typeof options.timeout === 'number')
       return options.timeout;
