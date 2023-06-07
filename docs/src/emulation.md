@@ -210,6 +210,7 @@ await page.set_viewport_size({"width": 1600, "height": 1200})
 context = browser.new_context(
   viewport={ 'width': 2560, 'height': 1440 },
   device_scale_factor=2,
+)
 ```
 
 ```csharp
