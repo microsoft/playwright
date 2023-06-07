@@ -87,7 +87,7 @@ export const WorkbenchLoader: React.FunctionComponent<{
       connect({
         onEvent(method: string, params?: any) {
           if (method === 'loadTrace') {
-            setTraceURLs([params!.url]);
+            setTraceURLs(params!.url ? [params!.url] : []);
             setDragOver(false);
             setProcessingErrorMessage(null);
           }
@@ -171,7 +171,7 @@ export const WorkbenchLoader: React.FunctionComponent<{
       <div style={{ maxWidth: 400 }}>Playwright Trace Viewer is a Progressive Web App, it does not send your trace anywhere,
         it opens it locally.</div>
     </div>}
-    {isServer && (!traceURLs.length || processingErrorMessage) && <div className='drop-target'>
+    {isServer && !traceURLs.length && <div className='drop-target'>
       <div className='title'>Select test to see the trace</div>
     </div>}
     {dragOver && <div className='drop-target'
