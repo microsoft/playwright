@@ -22,7 +22,7 @@ const fs = require('fs');
 const ts = require('typescript');
 const path = require('path').posix;
 
-const packagesDir = path.normalize(path.join(__dirname, '..', 'packages'));
+const packagesDir = path.resolve(path.join(__dirname, '..', 'packages'));
 
 const packages = new Map();
 for (const package of fs.readdirSync(packagesDir))
@@ -64,7 +64,7 @@ async function innerCheckDeps(root) {
 
   let packageJSON;
   try {
-    packageJSON = require(path.join(root, 'package.json'));
+    packageJSON = require(path.resolve(path.join(root, 'package.json')));
   } catch {
   }
 
