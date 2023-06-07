@@ -37,10 +37,13 @@ import { toggleTheme } from '@web/theme';
 import { artifactsFolderName } from '@testIsomorphic/folders';
 import { msToString, settings, useSetting } from '@web/uiUtils';
 import type { ActionTraceEvent } from '@trace/trace';
+import { connect } from './wsPort';
 
 let updateRootSuite: (config: FullConfig, rootSuite: Suite, loadErrors: TestError[], progress: Progress | undefined) => void = () => {};
 let runWatchedTests = (fileNames: string[]) => {};
 let xtermSize = { cols: 80, rows: 24 };
+
+let sendMessage: (method: string, params?: any) => Promise<any> = async () => {};
 
 const xtermDataSource: XtermDataSource = {
   pending: [],
@@ -96,7 +99,10 @@ export const UIModeView: React.FC<{}> = ({
   React.useEffect(() => {
     inputRef.current?.focus();
     setIsLoading(true);
-    initWebSocket(() => setIsDisconnected(true)).then(() => reloadTests());
+    connect({ onEvent: dispatchEvent, onClose: () => setIsDisconnected(true) }).then(send => {
+      sendMessage = send;
+      reloadTests();
+    });
   }, [reloadTests]);
 
   updateRootSuite = React.useCallback((config: FullConfig, rootSuite: Suite, loadErrors: TestError[], newProgress: Progress | undefined) => {
@@ -639,43 +645,6 @@ const refreshRootSuite = (eraseResults: boolean): Promise<void> => {
   return sendMessage('list', {});
 };
 
-let lastId = 0;
-let _ws: WebSocket;
-const callbacks = new Map<number, { resolve: (arg: any) => void, reject: (arg: Error) => void }>();
-
-const initWebSocket = async (onClose: () => void) => {
-  const guid = new URLSearchParams(window.location.search).get('ws');
-  const ws = new WebSocket(`${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.hostname}:${window.location.port}/${guid}`);
-  await new Promise(f => ws.addEventListener('open', f));
-  ws.addEventListener('close', onClose);
-  ws.addEventListener('message', event => {
-    const message = JSON.parse(event.data);
-    const { id, result, error, method, params } = message;
-    if (id) {
-      const callback = callbacks.get(id);
-      if (!callback)
-        return;
-      callbacks.delete(id);
-      if (error)
-        callback.reject(new Error(error));
-      else
-        callback.resolve(result);
-    } else {
-      dispatchMessage(method, params);
-    }
-  });
-  _ws = ws;
-};
-
-const sendMessage = async (method: string, params: any): Promise<any> => {
-  const id = ++lastId;
-  const message = { id, method, params };
-  _ws.send(JSON.stringify(message));
-  return new Promise((resolve, reject) => {
-    callbacks.set(id, { resolve, reject });
-  });
-};
-
 const sendMessageNoReply = (method: string, params?: any) => {
   if ((window as any)._overrideProtocolForTest) {
     (window as any)._overrideProtocolForTest({ method, params }).catch(() => {});
@@ -687,7 +656,7 @@ const sendMessageNoReply = (method: string, params?: any) => {
   });
 };
 
-const dispatchMessage = (method: string, params?: any) => {
+const dispatchEvent = (method: string, params?: any) => {
   if (method === 'listChanged') {
     refreshRootSuite(false).catch(() => {});
     return;

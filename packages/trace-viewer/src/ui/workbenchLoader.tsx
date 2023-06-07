@@ -21,6 +21,7 @@ import { MultiTraceModel } from './modelUtil';
 import './workbench.css';
 import { toggleTheme } from '@web/theme';
 import { Workbench } from './workbench';
+import { connect } from './wsPort';
 
 export const WorkbenchLoader: React.FunctionComponent<{
 }> = () => {
@@ -82,13 +83,19 @@ export const WorkbenchLoader: React.FunctionComponent<{
       }
     }
 
-    (window as any).setTraceURL = (url: string) => {
-      setTraceURLs([url]);
-      setDragOver(false);
-      setProcessingErrorMessage(null);
-    };
-    if (earlyTraceURL) {
-      (window as any).setTraceURL(earlyTraceURL);
+    if (params.has('isServer')) {
+      connect({
+        onEvent(method: string, params?: any) {
+          if (method === 'loadTrace') {
+            setTraceURLs([params!.url]);
+            setDragOver(false);
+            setProcessingErrorMessage(null);
+          }
+        },
+        onClose() {}
+      }).then(sendMessage => {
+        sendMessage('ready');
+      });
     } else if (!newTraceURLs.some(url => url.startsWith('blob:'))) {
       // Don't re-use blob file URLs on page load (results in Fetch error)
       setTraceURLs(newTraceURLs);
@@ -176,9 +183,3 @@ export const WorkbenchLoader: React.FunctionComponent<{
 };
 
 export const emptyModel = new MultiTraceModel([]);
-
-let earlyTraceURL: string | undefined = undefined;
-
-(window as any).setTraceURL = (url: string) => {
-  earlyTraceURL = url;
-};

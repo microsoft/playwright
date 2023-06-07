@@ -87,6 +87,9 @@ class UIMode {
 
     this._transport = {
       dispatch: async (method, params) => {
+        if (method === 'ping')
+          return;
+
         if (method === 'exit') {
           exitPromise.resolve();
           return;
