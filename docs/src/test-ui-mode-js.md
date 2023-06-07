@@ -91,3 +91,11 @@ npx playwright test --ui-host=0.0.0.0
 ```
 
 In the case of GitHub Codespaces, the port gets [forwarded automatically](https://docs.github.com/en/codespaces/developing-in-codespaces/forwarding-ports-in-your-codespace#about-forwarded-ports), so you can open UI mode in the browser by clicking on the link in the terminal.
+
+To have a static port, you can pass the `--ui-port` flag:
+
+```bash
+npx playwright test --ui-port=8080 --ui-host=0.0.0.0
+```
+
+Without the `--ui-host` flag, UI Mode will only listen on `localhost` and not be accessible from other machines.
