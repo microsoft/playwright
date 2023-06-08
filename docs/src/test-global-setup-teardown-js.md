@@ -3,7 +3,7 @@ id: test-global-setup-teardown
 title: "Global setup and teardown"
 ---
 
-There are two ways to configure global setup and teardown: using a global setup file and setting it in the config under [`globalSetup`](#configure-globalsetup-and-globalteardown) or using [project dependencies](#project-dependencies). With project dependencies, you define a project that runs before all other projects and a teardown project that runs after the dependencies. This is the recommended way to configure global setup as with Project dependencies your HTML report will show the global setup, trace viewer will record a trace of the setup and fixtures can be used.
+There are two ways to configure global setup and teardown: using a global setup file and setting it in the config under [`globalSetup`](#configure-globalsetup-and-globalteardown) or using [project dependencies](#project-dependencies). With project dependencies, you define a project that runs before all other projects. This is the recommended way to configure global setup as with Project dependencies your HTML report will show the global setup, trace viewer will record a trace of the setup and fixtures can be used.
 
 ## Project Dependencies
 
@@ -102,6 +102,9 @@ setup('do login', async ({ page }) => {
   await page.getByLabel('Password').fill('password');
   await page.getByText('Sign in').click();
 
+  // Wait until the page actually signs in.
+  await expect(page.getByText('Hello, user!')).toBeVisible();
+
   await page.context().storageState({ path: STORAGE_STATE });
 });
 ```
@@ -122,7 +125,7 @@ For a more detailed example check out our blog post: [A better global setup in P
 
 ### Teardown
 
-You can teardown your setup by adding a [`property: TestProject.teardown`] property to your setup project. This will run after all dependencies have run.
+You can teardown your setup by adding a [`property: TestProject.teardown`] property to your setup project. This will run after all dependent projects have run.
 
 First we add a new project into the projects array and give it a name such as 'cleanup db'. We then give it a [`property: TestProject.testMatch`] property in order to match the file called `global.teardown.ts`:
 
@@ -217,7 +220,7 @@ You can use the `globalSetup` option in the [configuration file](#configuration-
 Similarly, use `globalTeardown` to run something once after all the tests. Alternatively, let `globalSetup` return a function that will be used as a global teardown. You can pass data such as port number, authentication tokens, etc. from your global setup to your tests using environment variables.
 
 :::note
-Using globalSetup and globalTeardown will not produce traces or artifacts. If you want to produce traces and artifacts, use [project dependencies](#project-dependencies).
+Using `globalSetup` and `globalTeardown` will not produce traces or artifacts. If you want to produce traces and artifacts, use [project dependencies](#project-dependencies).
 :::
 
 ```js title="playwright.config.ts"
