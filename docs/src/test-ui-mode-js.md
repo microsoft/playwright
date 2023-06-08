@@ -82,12 +82,22 @@ Next to the name of each test in the sidebar you will find an eye icon. Clicking
 
 ![watch mode in ui mode](https://user-images.githubusercontent.com/13063165/234304918-dd0fb6d5-bfb1-4182-8c55-33cd3da5f83e.png)
 
-### Github CodeSpaces support
+### Docker & GitHub Codespaces
 
-To run UI mode inside Github CodeSpaces, run the following:
+For Docker and GitHub Codespaces environments, you can run UI mode in the browser. In order for an endpoint to be accessible outside of the container, it needs to be bound to the `0.0.0.0` interface:
 
-  ```bash
-  npx playwright test --ui-port=0
-  ```
+```bash
+npx playwright test --ui-host=0.0.0.0
+```
 
-After that, the UI mode will be automatically available to you in a separate browser tab, thanks to the [CodeSpaces automatic port forwarding](https://docs.github.com/en/codespaces/developing-in-codespaces/forwarding-ports-in-your-codespace#about-forwarded-ports).
+In the case of GitHub Codespaces, the port gets [forwarded automatically](https://docs.github.com/en/codespaces/developing-in-codespaces/forwarding-ports-in-your-codespace#about-forwarded-ports), so you can open UI mode in the browser by clicking on the link in the terminal.
+
+To have a static port, you can pass the `--ui-port` flag:
+
+```bash
+npx playwright test --ui-port=8080 --ui-host=0.0.0.0
+```
+
+:::note
+Be aware that when specifying the `--ui-host=0.0.0.0` flag, UI Mode with your traces, the passwords and secrets is accessible from other machines inside your network. In the case of GitHub Codespaces, the ports are only accessible from your account by default.
+:::
