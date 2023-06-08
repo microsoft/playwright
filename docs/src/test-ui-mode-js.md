@@ -84,7 +84,9 @@ Next to the name of each test in the sidebar you will find an eye icon. Clicking
 
 ### Docker & GitHub Codespaces
 
-For environments where you don't have a GUI running, like GitHub Codespaces or VS Code Remote Development SSH/Containers you can open UI mode in the browser:
+For environments where you don't have a GUI running, like GitHub Codespaces or VS Code Remote Development SSH/Containers, you can run UI mode in the browser.
+
+For Docker and GitHub Codespaces, in order for an endpoint to be accessible outside of the container, it needs to be bound to the `0.0.0.0` interface:
 
 ```bash
 npx playwright test --ui-host=0.0.0.0
@@ -98,4 +100,6 @@ To have a static port, you can pass the `--ui-port` flag:
 npx playwright test --ui-port=8080 --ui-host=0.0.0.0
 ```
 
-Be aware that when specifying the `--ui-host=0.0.0.0` flag, UI Mode will listen on any network interface and is accessible from other machines inside your network. In the case of GitHub Codespaces, the ports are only accessible from your account by default.
+:::note
+Be aware that when specifying the `--ui-host=0.0.0.0` flag, UI Mode with your traces, the passwords and secrets is accessible from other machines inside your network. In the case of GitHub Codespaces, the ports are only accessible from your account by default.
+:::
