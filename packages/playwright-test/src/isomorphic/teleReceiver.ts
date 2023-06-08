@@ -328,7 +328,7 @@ export class TeleReporterReceiver {
       return {
         ...a,
         body: a.body ? Buffer.from(a.body, 'base64') : undefined,
-      }
+      };
     });
   }
 
