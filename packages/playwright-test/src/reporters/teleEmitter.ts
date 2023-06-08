@@ -26,9 +26,11 @@ import { serializeRegexPatterns } from '../isomorphic/teleReceiver';
 export class TeleReporterEmitter implements Reporter {
   private _messageSink: (message: JsonEvent) => void;
   private _rootDir!: string;
+  private _receiverIsInBrowser: boolean;
 
-  constructor(messageSink: (message: JsonEvent) => void) {
+  constructor(messageSink: (message: JsonEvent) => void, receiverIsInBrowser: boolean) {
     this._messageSink = messageSink;
+    this._receiverIsInBrowser = receiverIsInBrowser;
   }
 
   onBegin(config: FullConfig, suite: Suite) {
@@ -203,7 +205,8 @@ export class TeleReporterEmitter implements Reporter {
     return attachments.map(a => {
       return {
         ...a,
-        base64: a.body ? a.body.toString('base64') : undefined,
+        // There is no Buffer in the browser, so there is no point in sending the data there.
+        base64: (a.body && !this._receiverIsInBrowser) ? a.body.toString('base64') : undefined,
       };
     });
   }

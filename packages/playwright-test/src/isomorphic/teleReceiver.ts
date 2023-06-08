@@ -327,7 +327,7 @@ export class TeleReporterReceiver {
     return attachments.map(a => {
       return {
         ...a,
-        body: a.base64 ? Buffer.from(a.base64, 'base64') : undefined,
+        body: a.base64 && (globalThis as any).Buffer ? Buffer.from(a.base64, 'base64') : undefined,
       };
     });
   }

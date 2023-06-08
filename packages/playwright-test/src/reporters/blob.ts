@@ -44,7 +44,7 @@ export class BlobReporter extends TeleReporterEmitter {
   private _reportFile!: string;
 
   constructor(options: BlobReporterOptions) {
-    super(message => this._messages.push(message));
+    super(message => this._messages.push(message), false);
     this._options = options;
     this._salt = createGuid();
 

@@ -158,7 +158,7 @@ class UIMode {
   }
 
   private async _listTests() {
-    const listReporter = new TeleReporterEmitter(e => this._dispatchEvent(e.method, e.params));
+    const listReporter = new TeleReporterEmitter(e => this._dispatchEvent(e.method, e.params), true);
     const reporter = new InternalReporter([listReporter]);
     this._config.cliListOnly = true;
     this._config.testIdMatcher = undefined;
