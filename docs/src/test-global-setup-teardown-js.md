@@ -52,9 +52,9 @@ export default defineConfig({
 ```
 ### Setup Example
 
-This example will show you how to use project dependencies to create a global setup that logs into an application and saves the state in storage state. This is useful if you want to run multiple tests that require a sign in state and you want to avoid logging in for each test.
+This example will show you how to use project dependencies to create a global setup that logins into an application and saves the state in storage state. This is useful if you want to run multiple tests that require a sign sign-in state and you want to avoid login for each test.
 
-The setup project will write the storage state into an 'auth.json' file in a '.auth' folder inside the playwright folder. By exporting a const of `STORAGE_STATE` we can then easily share the location of the storage file between projects with the [`StorageState`](https://playwright.dev/docs/test-use-options#basic-options) method. This returns the storage state for the browser context and contains the current cookies and a local storage snapshot.
+The setup project will write the storage state into an 'auth.json' file in a '.auth' folder inside the playwright folder. By exporting a const of `STORAGE_STATE` we can then easily share the location of the storage file between projects with the [`StorageState`](./test-use-options#basic-options) method. This applies the storage state on the browser context with its cookies and a local storage snapshot.
 
 In this example the 'logged in chromium' project depends on the setup project whereas the 'logged out chromium' project does not depend on the setup project, and does not use the `storageState` option.
 
