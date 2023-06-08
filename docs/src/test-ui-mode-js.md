@@ -98,4 +98,4 @@ To have a static port, you can pass the `--ui-port` flag:
 npx playwright test --ui-port=8080 --ui-host=0.0.0.0
 ```
 
-Without the `--ui-host=0.0.0.0` flag, UI Mode will only listen on `localhost` and is not be accessible from other machines. Be aware that this might be a security risk, as anyone on your network can access your UI Mode instance, in the case of GitHub Codespaces, the ports are only accessible from your account by default.
+Be aware that when specifying the `--ui-host=0.0.0.0` flag, UI Mode will listen on any network interface and is accessible from other machines inside your network. In the case of GitHub Codespaces, the ports are only accessible from your account by default.
