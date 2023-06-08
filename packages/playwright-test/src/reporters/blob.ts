@@ -21,7 +21,7 @@ import { mime } from 'playwright-core/lib/utilsBundle';
 import { Readable } from 'stream';
 import type { FullConfig, FullResult, TestResult } from '../../types/testReporter';
 import type { Suite } from '../common/test';
-import type { JsonEvent } from '../isomorphic/teleReceiver';
+import type { JsonAttachment, JsonEvent } from '../isomorphic/teleReceiver';
 import { TeleReporterEmitter } from './teleEmitter';
 
 
@@ -78,8 +78,8 @@ export class BlobReporter extends TeleReporterEmitter {
     ]);
   }
 
-  override _serializeAttachments(attachments: TestResult['attachments']): TestResult['attachments'] {
-    return attachments.map(attachment => {
+  override _serializeAttachments(attachments: TestResult['attachments']): JsonAttachment[] {
+    return super._serializeAttachments(attachments).map(attachment => {
       if (!attachment.path || !fs.statSync(attachment.path).isFile())
         return attachment;
       // Add run guid to avoid clashes between shards.

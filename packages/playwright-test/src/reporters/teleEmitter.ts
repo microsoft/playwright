@@ -20,7 +20,7 @@ import type { SuitePrivate } from '../../types/reporterPrivate';
 import type { FullConfig, FullResult, Location, Reporter, TestError, TestResult, TestStep } from '../../types/testReporter';
 import { FullConfigInternal, FullProjectInternal } from '../common/config';
 import type { Suite, TestCase } from '../common/test';
-import type { JsonConfig, JsonEvent, JsonProject, JsonStdIOType, JsonSuite, JsonTestCase, JsonTestEnd, JsonTestResultEnd, JsonTestResultStart, JsonTestStepEnd, JsonTestStepStart } from '../isomorphic/teleReceiver';
+import type { JsonAttachment, JsonConfig, JsonEvent, JsonProject, JsonStdIOType, JsonSuite, JsonTestCase, JsonTestEnd, JsonTestResultEnd, JsonTestResultStart, JsonTestStepEnd, JsonTestStepStart } from '../isomorphic/teleReceiver';
 import { serializeRegexPatterns } from '../isomorphic/teleReceiver';
 
 export class TeleReporterEmitter implements Reporter {
@@ -199,8 +199,13 @@ export class TeleReporterEmitter implements Reporter {
     };
   }
 
-  _serializeAttachments(attachments: TestResult['attachments']): TestResult['attachments'] {
-    return attachments;
+  _serializeAttachments(attachments: TestResult['attachments']): JsonAttachment[] {
+    return attachments.map(a => {
+      return {
+        ...a,
+        body: a.body ? a.body.toString('base64') : undefined,
+      };
+    });
   }
 
   private _serializeStepStart(step: TestStep): JsonTestStepStart {

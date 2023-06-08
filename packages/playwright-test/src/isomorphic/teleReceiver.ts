@@ -88,12 +88,14 @@ export type JsonTestResultStart = {
   startTime: string;
 };
 
+export type JsonAttachment = Omit<TestResult['attachments'][0], 'body'> & { body?: string };
+
 export type JsonTestResultEnd = {
   id: string;
   duration: number;
   status: TestStatus;
   errors: TestError[];
-  attachments: TestResult['attachments'];
+  attachments: JsonAttachment[];
 };
 
 export type JsonTestStepStart = {
@@ -228,7 +230,7 @@ export class TeleReporterReceiver {
     result.status = payload.status;
     result.statusEx = payload.status;
     result.errors = payload.errors;
-    result.attachments = payload.attachments;
+    result.attachments = this._parseAttachments(payload.attachments);
     this._reporter.onTestEnd?.(test, result);
   }
 
@@ -319,6 +321,15 @@ export class TeleReporterReceiver {
       snapshotDir: this._absolutePath(project.snapshotDir),
       use: {},
     };
+  }
+
+  private _parseAttachments(attachments: JsonAttachment[]): TestResult['attachments'] {
+    return attachments.map(a => {
+      return {
+        ...a,
+        body: a.body ? Buffer.from(a.body, 'base64') : undefined,
+      }
+    });
   }
 
   private _mergeSuitesInto(jsonSuites: JsonSuite[], parent: TeleSuite) {
