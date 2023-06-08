@@ -22,9 +22,9 @@ export default defineConfig({
       name: 'setup',
       testMatch: /global.setup\.ts/,
     },
-    {
-      // other project
-    }
+    // {
+    //   other project
+    // }
   ]
 });
 ```
@@ -44,9 +44,6 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
       dependencies: ['setup'],
     },
-    {
-      // other project
-    }
   ]
 });
 ```
