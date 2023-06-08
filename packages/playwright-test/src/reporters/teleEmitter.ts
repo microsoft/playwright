@@ -203,7 +203,7 @@ export class TeleReporterEmitter implements Reporter {
     return attachments.map(a => {
       return {
         ...a,
-        body: a.body ? a.body.toString('base64') : undefined,
+        base64: a.body ? a.body.toString('base64') : undefined,
       };
     });
   }

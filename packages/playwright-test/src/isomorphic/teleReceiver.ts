@@ -88,7 +88,7 @@ export type JsonTestResultStart = {
   startTime: string;
 };
 
-export type JsonAttachment = Omit<TestResult['attachments'][0], 'body'> & { body?: string };
+export type JsonAttachment = Omit<TestResult['attachments'][0], 'body'> & { base64?: string };
 
 export type JsonTestResultEnd = {
   id: string;
@@ -327,7 +327,7 @@ export class TeleReporterReceiver {
     return attachments.map(a => {
       return {
         ...a,
-        body: a.body ? Buffer.from(a.body, 'base64') : undefined,
+        body: a.base64 ? Buffer.from(a.base64, 'base64') : undefined,
       };
     });
   }
