@@ -183,7 +183,7 @@ class UIMode {
     this._config.testIdMatcher = id => !testIdSet || testIdSet.has(id);
 
     const reporters = await createReporters(this._config, 'ui');
-    reporters.push(new TeleReporterEmitter(e => this._dispatchEvent(e.method, e.params)));
+    reporters.push(new TeleReporterEmitter(e => this._dispatchEvent(e.method, e.params), true));
     const reporter = new InternalReporter(reporters);
     const taskRunner = createTaskRunnerForWatch(this._config, reporter);
     const testRun = new TestRun(this._config, reporter);
