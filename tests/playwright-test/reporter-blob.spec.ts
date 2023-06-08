@@ -932,19 +932,18 @@ test('preserve stdout and stderr', async ({ runInlineTest, mergeReports }) => {
   const { exitCode } = await mergeReports(reportDir, {}, { additionalArgs: ['--reporter', test.info().outputPath('echo-reporter.js')] });
   expect(exitCode).toBe(0);
   const log = fs.readFileSync(test.info().outputPath('log.txt')).toString();
-  expect(log).toBe(`onStdErr: stdout text
+  expect(log).toBe(`onStdOut: stdout text
 
-result.stderr: stdout text
+result.stdout: stdout text
 
 onStdErr: stderr text
 
-result.stderr: stdout text
-,stderr text
+result.stderr: stderr text
 
 onTestEnd
-result.stdout: 
-result.stderr: stdout text
-,stderr text
+result.stdout: stdout text
+
+result.stderr: stderr text
 `);
 });
 
