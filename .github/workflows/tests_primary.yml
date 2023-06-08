@@ -171,6 +171,28 @@ jobs:
         name: pull-request
         path: pull_request_number.txt
 
+  reporter_tests_with_blob_report:
+    name: "Reporter tests with merged report"
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
+      with:
+        node-version: 16
+    - run: npm ci
+      env:
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+    - run: npm run build
+    - run: npx playwright install --with-deps
+    - run: npm run ttest -- reporter-html.spec.ts
+      env:
+        PWTEST_BLOB_REPORT: 1
+        PWTEST_INTERMEDIATE_BLOB_REPORT: 1
+        PWTEST_BLOB_SUFFIX: "-reporter-tests-with-merged-report"
+    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
+      if: always()
+      shell: bash
+
   test_web_components:
     name: Web Components
     runs-on: ubuntu-latest
