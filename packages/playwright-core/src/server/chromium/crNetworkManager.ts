@@ -384,16 +384,12 @@ export class CRNetworkManager {
     // For frame-level Requests that are handled by a Service Worker's fetch handler, we'll never get a requestPaused event, so we need to
     // manually create the request. In an ideal world, crNetworkManager would be able to know this on Network.requestWillBeSent, but there
     // is not enough metadata there.
-    //
-    // PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS we guard with, since this would fix an old bug where, when using routing,
-    // request would not be emitted to the user for requests made by a page with a SW (and fetch handler) registered
-    if (!!process.env.PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS && !request && event.response.fromServiceWorker) {
+    if (!request && event.response.fromServiceWorker) {
       const requestWillBeSentEvent = this._requestIdToRequestWillBeSentEvent.get(event.requestId);
-      const frame = requestWillBeSentEvent?.frameId ? this._page?._frameManager.frame(requestWillBeSentEvent.frameId) : null;
-      if (requestWillBeSentEvent && frame) {
-        this._onRequest(frame, requestWillBeSentEvent, null /* requestPausedPayload */);
-        request = this._requestIdToRequest.get(event.requestId);
+      if (requestWillBeSentEvent) {
         this._requestIdToRequestWillBeSentEvent.delete(event.requestId);
+        this._onRequest(undefined, requestWillBeSentEvent, null /* requestPausedPayload */);
+        request = this._requestIdToRequest.get(event.requestId);
       }
     }
     // FileUpload sends a response without a matching request.

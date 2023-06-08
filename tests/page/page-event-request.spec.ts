@@ -53,9 +53,107 @@ it('should report requests and responses handled by service worker', async ({ pa
   ]);
   expect(swResponse).toBe('responseFromServiceWorker:foo');
   expect(request.url()).toBe(server.PREFIX + '/serviceworkers/fetchdummy/foo');
+  expect(request.serviceWorker()).toBe(null);
   const response = await request.response();
   expect(response.url()).toBe(server.PREFIX + '/serviceworkers/fetchdummy/foo');
   expect(await response.text()).toBe('responseFromServiceWorker:foo');
+  expect(response.fromServiceWorker()).toBe(true);
+
+  const [failedRequest] = await Promise.all([
+    page.waitForEvent('requestfailed'),
+    page.evaluate(() => window['fetchDummy']('error')).catch(e => e),
+  ]);
+  expect(failedRequest.url()).toBe(server.PREFIX + '/serviceworkers/fetchdummy/error');
+  expect(failedRequest.failure()).not.toBe(null);
+  expect(failedRequest.serviceWorker()).toBe(null);
+  expect(await failedRequest.response()).toBe(null);
+});
+
+it('should report requests and responses handled by service worker with routing', async ({ page, server, isAndroid, isElectron }) => {
+  it.fixme(isAndroid);
+  it.fixme(isElectron);
+
+  await page.route('**/*', route => route.continue());
+  await page.goto(server.PREFIX + '/serviceworkers/fetchdummy/sw.html');
+  await page.evaluate(() => window['activationPromise']);
+  const [swResponse, request] = await Promise.all([
+    page.evaluate(() => window['fetchDummy']('foo')),
+    page.waitForEvent('request'),
+  ]);
+  expect(swResponse).toBe('responseFromServiceWorker:foo');
+  expect(request.url()).toBe(server.PREFIX + '/serviceworkers/fetchdummy/foo');
+  expect(request.serviceWorker()).toBe(null);
+  const response = await request.response();
+  expect(response.url()).toBe(server.PREFIX + '/serviceworkers/fetchdummy/foo');
+  expect(await response.text()).toBe('responseFromServiceWorker:foo');
+
+  const [failedRequest] = await Promise.all([
+    page.waitForEvent('requestfailed'),
+    page.evaluate(() => window['fetchDummy']('error')).catch(e => e),
+  ]);
+  expect(failedRequest.url()).toBe(server.PREFIX + '/serviceworkers/fetchdummy/error');
+  expect(failedRequest.failure()).not.toBe(null);
+  expect(failedRequest.serviceWorker()).toBe(null);
+  expect(await failedRequest.response()).toBe(null);
+});
+
+it('should report navigation requests and responses handled by service worker', async ({ page, server, isAndroid, isElectron, browserName }) => {
+  it.fixme(isAndroid);
+  it.fixme(isElectron);
+
+  await page.goto(server.PREFIX + '/serviceworkers/stub/sw.html');
+  await page.evaluate(() => window['activationPromise']);
+
+  const reloadResponse = await page.reload();
+  expect(await page.evaluate('window.fromSW')).toBe(true);
+  expect(reloadResponse.url()).toBe(server.PREFIX + '/serviceworkers/stub/sw.html');
+  await page.evaluate(() => window['activationPromise']);
+
+  if (browserName !== 'firefox') {
+    // When SW fetch throws, Firefox does not fail the navigation,
+    // but rather falls back to the real network.
+
+    const [, failedRequest] = await Promise.all([
+      page.evaluate(() => {
+        window.location.href = '/serviceworkers/stub/error.html';
+      }),
+      page.waitForEvent('requestfailed'),
+    ]);
+    expect(failedRequest.url()).toBe(server.PREFIX + '/serviceworkers/stub/error.html');
+    expect(failedRequest.failure().errorText).toContain(browserName === 'chromium' ? 'net::ERR_FAILED' : 'uh oh');
+    expect(failedRequest.serviceWorker()).toBe(null);
+    expect(await failedRequest.response()).toBe(null);
+  }
+});
+
+it('should report navigation requests and responses handled by service worker with routing', async ({ page, server, isAndroid, isElectron, browserName }) => {
+  it.fixme(isAndroid);
+  it.fixme(isElectron);
+
+  await page.route('**/*', route => route.continue());
+  await page.goto(server.PREFIX + '/serviceworkers/stub/sw.html');
+  await page.evaluate(() => window['activationPromise']);
+
+  const reloadResponse = await page.reload();
+  expect(await page.evaluate('window.fromSW')).toBe(true);
+  expect(reloadResponse.url()).toBe(server.PREFIX + '/serviceworkers/stub/sw.html');
+  await page.evaluate(() => window['activationPromise']);
+
+  if (browserName !== 'firefox') {
+    // When SW fetch throws, Firefox does not fail the navigation,
+    // but rather falls back to the real network.
+
+    const [, failedRequest] = await Promise.all([
+      page.evaluate(() => {
+        window.location.href = '/serviceworkers/stub/error.html';
+      }),
+      page.waitForEvent('requestfailed'),
+    ]);
+    expect(failedRequest.url()).toBe(server.PREFIX + '/serviceworkers/stub/error.html');
+    expect(failedRequest.failure().errorText).toContain(browserName === 'chromium' ? 'net::ERR_FAILED' : 'uh oh');
+    expect(failedRequest.serviceWorker()).toBe(null);
+    expect(await failedRequest.response()).toBe(null);
+  }
 });
 
 it('should return response body when Cross-Origin-Opener-Policy is set', async ({ page, server, browserName }) => {
