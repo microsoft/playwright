@@ -12,6 +12,22 @@ test('render props', async ({ mount }) => {
   await expect(component).toContainText('Submit');
 });
 
+test('falltrough attributes', async ({ page, mount }) => {
+  // Docs about fallthrough attributes: https://vuejs.org/guide/components/attrs.html#attribute-inheritance
+  const messages: string[] = [];
+  page.on('console', (message) => messages.push(message.text()));
+  await mount(Button, {
+    props: {
+      title: 'Submit',
+      fallthroughProp: true,
+    },
+    on: {
+      fallthroughEvent: () => true
+    },
+  });
+  await expect.poll(() => messages).toContain('{fallthroughProp: true, fallthroughEvent: }');
+});
+
 test('get textContent of the empty template', async ({ mount }) => {
   const component = await mount(EmptyTemplate);
   expect(await component.allTextContents()).toEqual(['']);
