@@ -314,7 +314,6 @@ test('total time is from test run not from merge', async ({ runInlineTest, merge
   expect(exitCode).toBe(0);
 
   expect(output).toContain('To open last HTML report run:');
-  // console.log(output);
 
   await showReport();
 
@@ -884,6 +883,69 @@ test('preserve config fields', async ({ runInlineTest, mergeReports }) => {
   expect(json.reportSlowTests).toEqual(mergeConfig.reportSlowTests);
   expect(json.configFile).toEqual(test.info().outputPath('merge.config.ts'));
   expect(json.quiet).toEqual(mergeConfig.quiet);
+});
+
+test('preserve stdout and stderr', async ({ runInlineTest, mergeReports }) => {
+  const reportDir = test.info().outputPath('blob-report');
+  const files = {
+    'echo-reporter.js': `
+      import fs from 'fs';
+
+      class EchoReporter {
+        log = [];
+        onStdOut(chunk, test, result) {
+          this.log.push('onStdOut: ' + chunk);
+          this.log.push('result.stdout: ' + result.stdout);
+        }
+        onStdErr(chunk, test, result) {
+          this.log.push('onStdErr: ' + chunk);
+          this.log.push('result.stderr: ' + result.stderr);
+        }
+        onTestEnd(test, result) {
+          this.log.push('onTestEnd');
+          this.log.push('result.stdout: ' + result.stdout);
+          this.log.push('result.stderr: ' + result.stderr);
+        }
+        onEnd() {
+          fs.writeFileSync('log.txt', this.log.join('\\n'));
+        }
+      }
+      module.exports = EchoReporter;
+    `,
+    'playwright.config.js': `
+      module.exports = {
+        reporter: [['blob']]
+      };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('a test', async ({}) => {
+        expect(1 + 1).toBe(2);
+        console.log('stdout text');
+        console.error('stderr text');
+      });
+    `,
+  };
+
+  await runInlineTest(files);
+
+  const { exitCode } = await mergeReports(reportDir, {}, { additionalArgs: ['--reporter', test.info().outputPath('echo-reporter.js')] });
+  expect(exitCode).toBe(0);
+  const log = fs.readFileSync(test.info().outputPath('log.txt')).toString();
+  expect(log).toBe(`onStdErr: stdout text
+
+result.stderr: stdout text
+
+onStdErr: stderr text
+
+result.stderr: stdout text
+,stderr text
+
+onTestEnd
+result.stdout: 
+result.stderr: stdout text
+,stderr text
+`);
 });
 
 test('preserve steps in html report', async ({ runInlineTest, mergeReports, showReport, page }) => {

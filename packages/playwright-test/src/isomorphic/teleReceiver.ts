@@ -270,10 +270,13 @@ export class TeleReporterReceiver {
     const chunk = isBase64 ? ((globalThis as any).Buffer ? Buffer.from(data, 'base64') : atob(data)) : data;
     const test = testId ? this._tests.get(testId) : undefined;
     const result = test && resultId ? test.resultsMap.get(resultId) : undefined;
-    if (type === 'stdout')
+    if (type === 'stdout') {
+      result?.stdout.push(chunk);
       this._reporter.onStdOut?.(chunk, test, result);
-    else
+    } else {
+      result?.stderr.push(chunk);
       this._reporter.onStdErr?.(chunk, test, result);
+    }
   }
 
   private _onEnd(result: FullResult): Promise<void> | undefined {
