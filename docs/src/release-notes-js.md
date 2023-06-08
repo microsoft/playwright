@@ -12,11 +12,11 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 * UI mode is now available in VSCode Playwright extension via a new "Show trace viewer" button:
 
-  ![Playwright UI Mode](https://github.com/microsoft/playwright-internal/assets/746130/ecc5ad49-5f1c-4ab4-8c07-4275c7075f25)
+  ![Playwright UI Mode](https://github.com/microsoft/playwright/assets/746130/13094128-259b-477a-8bbb-c1181178e8a2)
 
 * UI mode and trace viewer mark network requests handled with [`method: Page.route`] and [`method: BrowserContext.route`] handlers, as well as those issued via the [API testing](./api-testing):
 
-  ![Trace Viewer](https://github.com/microsoft/playwright-internal/assets/746130/0a2d3122-3b7d-434d-9bcb-637dc28ce926)
+  ![Trace Viewer](https://github.com/microsoft/playwright/assets/746130/0df2d4b6-faa3-465c-aff3-c435b430bfe1)
 
 * New option `maskColor` for methods [`method: Page.screenshot`], [`method: Locator.screenshot`], [`method: PageAssertions.toHaveScreenshot#1`] and [`method: LocatorAssertions.toHaveScreenshot#1`] to change default masking color:
   ```js
