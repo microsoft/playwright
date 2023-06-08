@@ -906,7 +906,7 @@ document
   .querySelector('span[attr=value]')
 ```
 
-If a selector needs to include `>>` in the body, it should be escaped inside a string to not be confused with chaining separator, e.g. `text="some >> text"`.
+If a selector needs to include `>>` in the body, it should be escaped inside a string or a regex to not be confused with chaining separator, e.g. `text="some >> text"` or `text=/some >> text/`.
 
 ### Intermediate matches
 

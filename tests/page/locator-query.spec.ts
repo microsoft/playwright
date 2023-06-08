@@ -90,6 +90,14 @@ it('should filter by regex and regexp flags', async ({ page }) => {
   await expect(page.locator('div', { hasText: /hElLo "world"/i })).toHaveText('Hello "world"');
 });
 
+it('should filter by regex and regexp flags with >>', async ({ page }) => {
+  await page.setContent(`<div>Hello >> world</div><div>Hello world</div>`);
+  await expect(page.locator('div', { hasText: /Hello >> world/ })).toHaveText('Hello >> world');
+  await expect(page.locator('div >> text=/Hello >> world/')).toHaveText('Hello >> world');
+  await expect(page.locator('div', { hasText: /hElLo >> world/i })).toHaveText('Hello >> world');
+  await expect(page.locator('div >> text=/hElLo >> world/i')).toHaveText('Hello >> world');
+});
+
 it('should filter by case-insensitive regex in a child', async ({ page }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/15348' });
   await page.setContent(`<div class="test"><h5>Title Text</h5></div>`);

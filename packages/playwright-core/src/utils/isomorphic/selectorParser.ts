@@ -137,7 +137,7 @@ export function allEngineNames(selector: ParsedSelector): Set<string> {
 
 function parseSelectorString(selector: string): ParsedSelectorStrings {
   let index = 0;
-  let quote: string | undefined;
+  let quoteOrForwardSlash: string | undefined;
   let start = 0;
   const result: ParsedSelectorStrings = { parts: [] };
   const append = () => {
@@ -183,7 +183,7 @@ function parseSelectorString(selector: string): ParsedSelectorStrings {
     return result;
   }
 
-  const shouldIgnoreTextSelectorQuote = () => {
+  const shouldIgnoreTextSelectorQuoteOrForwardSlash = () => {
     const prefix = selector.substring(start, index);
     const match = prefix.match(/^\s*text\s*=(.*)$/);
     // Must be a text selector with some text before the quote.
@@ -194,13 +194,13 @@ function parseSelectorString(selector: string): ParsedSelectorStrings {
     const c = selector[index];
     if (c === '\\' && index + 1 < selector.length) {
       index += 2;
-    } else if (c === quote) {
-      quote = undefined;
+    } else if (c === quoteOrForwardSlash) {
+      quoteOrForwardSlash = undefined;
       index++;
-    } else if (!quote && (c === '"' || c === '\'' || c === '`') && !shouldIgnoreTextSelectorQuote()) {
-      quote = c;
+    } else if (!quoteOrForwardSlash && (c === '"' || c === '\'' || c === '`' || c === '\/') && !shouldIgnoreTextSelectorQuoteOrForwardSlash()) {
+      quoteOrForwardSlash = c;
       index++;
-    } else if (!quote && c === '>' && selector[index + 1] === '>') {
+    } else if (!quoteOrForwardSlash && c === '>' && selector[index + 1] === '>') {
       append();
       index += 2;
       start = index;
