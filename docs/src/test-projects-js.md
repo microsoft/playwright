@@ -207,7 +207,7 @@ Running order:
 
 ### Teardown
 
-You can also [`property: TestProject.teardown`] your setup by adding a teardown property to your setup project. This will run after all dependent projects have run. See the [teardown guide](./test-teardown.md) for more information.
+You can also [`property: TestProject.teardown`] your setup by adding a teardown property to your setup project. This will run after all dependent projects have run. See the [teardown guide](./test-global-setup-teardown.md#teardown) for more information.
 
 
 <img style={{display: 'flex', margin: 'auto'}} alt="global setup and teardown" loading="lazy" src="https://github.com/microsoft/playwright/assets/13063165/dfcf10a9-f601-4d0c-bd8d-9490e6efbf7a" />
