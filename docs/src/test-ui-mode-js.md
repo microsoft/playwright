@@ -84,9 +84,7 @@ Next to the name of each test in the sidebar you will find an eye icon. Clicking
 
 ### Docker & GitHub Codespaces
 
-For environments where you don't have a GUI running, like GitHub Codespaces or VS Code Remote Development SSH/Containers, you can run UI mode in the browser.
-
-For Docker and GitHub Codespaces, in order for an endpoint to be accessible outside of the container, it needs to be bound to the `0.0.0.0` interface:
+For Docker and GitHub Codespaces environments, you can run UI mode in the browser. In order for an endpoint to be accessible outside of the container, it needs to be bound to the `0.0.0.0` interface:
 
 ```bash
 npx playwright test --ui-host=0.0.0.0
