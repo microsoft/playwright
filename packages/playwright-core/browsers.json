@@ -15,9 +15,9 @@
     },
     {
       "name": "chromium-tip-of-tree",
-      "revision": "1120",
+      "revision": "1121",
       "installByDefault": false,
-      "browserVersion": "116.0.5805.0"
+      "browserVersion": "116.0.5815.0"
     },
     {
       "name": "firefox",
