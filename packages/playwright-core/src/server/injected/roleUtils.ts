@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { closestCrossShadow, enclosingShadowRootOrDocument, getElementComputedStyle, isElementStyleVisibilityVisible, parentElementOrShadowHost } from './domUtils';
+import { closestCrossShadow, enclosingShadowRootOrDocument, getElementComputedStyle, isElementStyleVisibilityVisible, isVisibleTextNode, parentElementOrShadowHost } from './domUtils';
 
 function hasExplicitAccessibleName(e: Element) {
   return e.hasAttribute('aria-label') || e.hasAttribute('aria-labelledby');
@@ -238,11 +238,22 @@ function getAriaBoolean(attr: string | null) {
 export function isElementHiddenForAria(element: Element, cache: Map<Element, boolean>): boolean {
   if (['STYLE', 'SCRIPT', 'NOSCRIPT', 'TEMPLATE'].includes(element.tagName))
     return true;
+  const style = getElementComputedStyle(element);
+  const isSlot = element.nodeName === 'SLOT';
+  if (style?.display === 'contents' && !isSlot) {
+    // display:contents is not rendered itself, but its child nodes are.
+    for (let child = element.firstChild; child; child = child.nextSibling) {
+      if (child.nodeType === 1 /* Node.ELEMENT_NODE */ && !isElementHiddenForAria(child as Element, cache))
+        return false;
+      if (child.nodeType === 3 /* Node.TEXT_NODE */ && isVisibleTextNode(child as Text))
+        return false;
+    }
+    return true;
+  }
   // Note: <option> inside <select> are not affected by visibility or content-visibility.
   // Same goes for <slot>.
   const isOptionInsideSelect = element.nodeName === 'OPTION' && !!element.closest('select');
-  const isSlot = element.nodeName === 'SLOT';
-  if (!isOptionInsideSelect && !isSlot && !isElementStyleVisibilityVisible(element))
+  if (!isOptionInsideSelect && !isSlot && !isElementStyleVisibilityVisible(element, style))
     return true;
   return belongsToDisplayNoneOrAriaHiddenOrNonSlotted(element, cache);
 }

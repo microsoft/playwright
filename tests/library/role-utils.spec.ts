@@ -299,6 +299,13 @@ test('native controls labelled-by', async ({ page }) => {
   expect.soft(await getNameAndRole(page, '#textarea1')).toEqual({ role: 'textbox', name: 'TEXTAREA1 MORE2' });
 });
 
+test('display:contents should be visible when contents are visible', async ({ page }) => {
+  await page.setContent(`
+    <button style='display: contents;'>yo</button>
+  `);
+  await expect(page.getByRole('button')).toHaveCount(1);
+});
+
 function toArray(x: any): any[] {
   return Array.isArray(x) ? x : [x];
 }
