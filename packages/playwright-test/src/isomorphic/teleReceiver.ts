@@ -24,6 +24,8 @@ export type JsonLocation = Location;
 export type JsonError = string;
 export type JsonStackFrame = { file: string, line: number, column: number };
 
+export type JsonStdIOType = 'stdout' | 'stderr';
+
 export type JsonConfig = Pick<FullConfig, 'configFile' | 'globalTimeout' | 'maxFailures' | 'metadata' | 'rootDir' | 'version' | 'workers'> & {
   listOnly: boolean;
 };
@@ -266,14 +268,17 @@ export class TeleReporterReceiver {
     this._reporter.onError?.(error);
   }
 
-  private _onStdIO(type: 'stdout' | 'stderr', testId: string | undefined, resultId: string | undefined, data: string, isBase64: boolean) {
+  private _onStdIO(type: JsonStdIOType, testId: string | undefined, resultId: string | undefined, data: string, isBase64: boolean) {
     const chunk = isBase64 ? ((globalThis as any).Buffer ? Buffer.from(data, 'base64') : atob(data)) : data;
     const test = testId ? this._tests.get(testId) : undefined;
     const result = test && resultId ? test.resultsMap.get(resultId) : undefined;
-    if (type === 'stdout')
+    if (type === 'stdout') {
+      result?.stdout.push(chunk);
       this._reporter.onStdOut?.(chunk, test, result);
-    else
+    } else {
+      result?.stderr.push(chunk);
       this._reporter.onStdErr?.(chunk, test, result);
+    }
   }
 
   private _onEnd(result: FullResult): Promise<void> | undefined {

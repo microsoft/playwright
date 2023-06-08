@@ -20,7 +20,7 @@ import type { SuitePrivate } from '../../types/reporterPrivate';
 import type { FullConfig, FullResult, Location, Reporter, TestError, TestResult, TestStep } from '../../types/testReporter';
 import { FullConfigInternal, FullProjectInternal } from '../common/config';
 import type { Suite, TestCase } from '../common/test';
-import type { JsonConfig, JsonEvent, JsonProject, JsonSuite, JsonTestCase, JsonTestEnd, JsonTestResultEnd, JsonTestResultStart, JsonTestStepEnd, JsonTestStepStart } from '../isomorphic/teleReceiver';
+import type { JsonConfig, JsonEvent, JsonProject, JsonStdIOType, JsonSuite, JsonTestCase, JsonTestEnd, JsonTestResultEnd, JsonTestResultStart, JsonTestStepEnd, JsonTestStepStart } from '../isomorphic/teleReceiver';
 import { serializeRegexPatterns } from '../isomorphic/teleReceiver';
 
 export class TeleReporterEmitter implements Reporter {
@@ -95,14 +95,14 @@ export class TeleReporterEmitter implements Reporter {
   }
 
   onStdOut(chunk: string | Buffer, test: void | TestCase, result: void | TestResult): void {
-    this._onStdIO('stdio', chunk, test, result);
+    this._onStdIO('stdout', chunk, test, result);
   }
 
   onStdErr(chunk: string | Buffer, test: void | TestCase, result: void | TestResult): void {
     this._onStdIO('stderr', chunk, test, result);
   }
 
-  private _onStdIO(type: 'stdio' | 'stderr', chunk: string | Buffer, test: void | TestCase, result: void | TestResult): void {
+  private _onStdIO(type: JsonStdIOType, chunk: string | Buffer, test: void | TestCase, result: void | TestResult): void {
     const isBase64 = typeof chunk !== 'string';
     const data = isBase64 ? chunk.toString('base64') : chunk;
     this._messageSink({
