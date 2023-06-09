@@ -41,9 +41,9 @@ This is the **recommended** approach for tests **without server-side state**. Au
 
 **Details**
 
-Create `auth.setup.ts` that will prepare authenticated browser state for all other tests.
+Create `tests/auth.setup.ts` that will prepare authenticated browser state for all other tests.
 
-```js title="auth.setup.ts"
+```js title="tests/auth.setup.ts"
 import { test as setup } from '@playwright/test';
 
 const authFile = 'playwright/.auth/user.json';
@@ -314,7 +314,7 @@ We will send the API request with [APIRequestContext] and then save authenticate
 
 In the [setup project](#basic-shared-account-in-all-tests):
 
-```js title="auth.setup.ts"
+```js title="tests/auth.setup.ts"
 import { test as setup } from '@playwright/test';
 
 const authFile = 'playwright/.auth/user.json';
@@ -389,7 +389,7 @@ export const test = baseTest.extend<{}, { workerStorageState: string }>({
 
 We will authenticate multiple times in the setup project.
 
-```js title="auth.setup.ts"
+```js title="tests/auth.setup.ts"
 import { test as setup } from '@playwright/test';
 
 const adminFile = 'playwright/.auth/admin.json';
