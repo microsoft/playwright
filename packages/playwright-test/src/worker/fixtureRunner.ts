@@ -74,7 +74,7 @@ class Fixture {
       }
     }
 
-    // Break the regustration function into before/after steps. Create these before/after stacks
+    // Break the registration function into before/after steps. Create these before/after stacks
     // w/o scopes, and create single mutable step that will be converted into the after step.
     const shouldGenerateStep = !this.registration.hideStep && !this.registration.name.startsWith('_') && !this.registration.option;
     const isInternalFixture = this.registration.location && filterStackFile(this.registration.location.file);
