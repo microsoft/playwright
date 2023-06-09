@@ -85,8 +85,8 @@ export async function writeFiles(testInfo: TestInfo, files: Files, initial: bool
 
 export const cliEntrypoint = path.join(__dirname, '../../packages/playwright-test/cli.js');
 
-const mergeReports = async (childProcess: CommonFixtures['childProcess'], cwd: string, env: NodeJS.ProcessEnv = {}, reporter: string | undefined, configFile: string | undefined ) => {
-  const command = ['node', cliEntrypoint, 'merge-reports']
+const mergeReports = async (childProcess: CommonFixtures['childProcess'], cwd: string, env: NodeJS.ProcessEnv = {}, reporter: string | undefined, configFile: string | undefined) => {
+  const command = ['node', cliEntrypoint, 'merge-reports'];
   if (reporter)
     command.push('--reporter', reporter);
   if (configFile)
@@ -114,7 +114,7 @@ const configFile = (baseDir: string, files: Files): string | undefined => {
     }
   }
   return undefined;
-}
+};
 
 async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], baseDir: string, params: any, env: NodeJS.ProcessEnv, options: RunOptions, files: Files, useIntermediateMergeReport: boolean): Promise<RunResult> {
   let reporter;
