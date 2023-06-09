@@ -20,15 +20,17 @@ import type { SuitePrivate } from '../../types/reporterPrivate';
 import type { FullConfig, FullResult, Location, Reporter, TestError, TestResult, TestStep } from '../../types/testReporter';
 import { FullConfigInternal, FullProjectInternal } from '../common/config';
 import type { Suite, TestCase } from '../common/test';
-import type { JsonConfig, JsonEvent, JsonProject, JsonStdIOType, JsonSuite, JsonTestCase, JsonTestEnd, JsonTestResultEnd, JsonTestResultStart, JsonTestStepEnd, JsonTestStepStart } from '../isomorphic/teleReceiver';
+import type { JsonAttachment, JsonConfig, JsonEvent, JsonProject, JsonStdIOType, JsonSuite, JsonTestCase, JsonTestEnd, JsonTestResultEnd, JsonTestResultStart, JsonTestStepEnd, JsonTestStepStart } from '../isomorphic/teleReceiver';
 import { serializeRegexPatterns } from '../isomorphic/teleReceiver';
 
 export class TeleReporterEmitter implements Reporter {
   private _messageSink: (message: JsonEvent) => void;
   private _rootDir!: string;
+  private _receiverIsInBrowser: boolean;
 
-  constructor(messageSink: (message: JsonEvent) => void) {
+  constructor(messageSink: (message: JsonEvent) => void, receiverIsInBrowser: boolean) {
     this._messageSink = messageSink;
+    this._receiverIsInBrowser = receiverIsInBrowser;
   }
 
   onBegin(config: FullConfig, suite: Suite) {
@@ -199,8 +201,14 @@ export class TeleReporterEmitter implements Reporter {
     };
   }
 
-  _serializeAttachments(attachments: TestResult['attachments']): TestResult['attachments'] {
-    return attachments;
+  _serializeAttachments(attachments: TestResult['attachments']): JsonAttachment[] {
+    return attachments.map(a => {
+      return {
+        ...a,
+        // There is no Buffer in the browser, so there is no point in sending the data there.
+        base64: (a.body && !this._receiverIsInBrowser) ? a.body.toString('base64') : undefined,
+      };
+    });
   }
 
   private _serializeStepStart(step: TestStep): JsonTestStepStart {

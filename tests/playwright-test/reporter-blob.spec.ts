@@ -947,6 +947,59 @@ result.stderr: stderr text
 `);
 });
 
+test('encode inline attachments', async ({ runInlineTest, mergeReports }) => {
+  const reportDir = test.info().outputPath('blob-report');
+  const files = {
+    'echo-reporter.js': `
+      import fs from 'fs';
+
+      class EchoReporter {
+        onTestEnd(test, result) {
+          const attachmentBodies = result.attachments.map(a => a.body?.toString('base64'));
+          result.attachments.forEach(a => console.log(a.body, 'isBuffer', Buffer.isBuffer(a.body)));
+          fs.writeFileSync('log.txt', attachmentBodies.join(','));
+        }
+      }
+      module.exports = EchoReporter;
+    `,
+    'playwright.config.js': `
+      module.exports = {
+        reporter: [['blob']]
+      };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('a test', async ({}) => {
+        expect(1 + 1).toBe(2);
+        test.info().attachments.push({
+          name: 'example.txt',
+          contentType: 'text/plain',
+          body: Buffer.from('foo'),
+        });
+
+        test.info().attachments.push({
+          name: 'example.json',
+          contentType: 'application/json',
+          body: Buffer.from(JSON.stringify({ foo: 1 })),
+        });
+
+        test.info().attachments.push({
+          name: 'example-utf16.txt',
+          contentType: 'text/plain, charset=utf16le',
+          body: Buffer.from('utf16 encoded', 'utf16le'),
+        });
+      });
+    `,
+  };
+
+  await runInlineTest(files);
+
+  const { exitCode } = await mergeReports(reportDir, {}, { additionalArgs: ['--reporter', test.info().outputPath('echo-reporter.js')] });
+  expect(exitCode).toBe(0);
+  const log = fs.readFileSync(test.info().outputPath('log.txt')).toString();
+  expect(log).toBe(`Zm9v,eyJmb28iOjF9,dQB0AGYAMQA2ACAAZQBuAGMAbwBkAGUAZAA=`);
+});
+
 test('preserve steps in html report', async ({ runInlineTest, mergeReports, showReport, page }) => {
   const reportDir = test.info().outputPath('blob-report');
   const files = {
