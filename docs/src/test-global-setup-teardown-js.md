@@ -160,9 +160,9 @@ export default defineConfig({
       name: 'cleanup db',
       testMatch: /global\.teardown\.ts/,
     },
-    {
-      // other project
-    }
+    // {
+    //   other project
+    // }
   ]
 });
 ```
