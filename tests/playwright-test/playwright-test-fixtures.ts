@@ -85,7 +85,44 @@ export async function writeFiles(testInfo: TestInfo, files: Files, initial: bool
 
 export const cliEntrypoint = path.join(__dirname, '../../packages/playwright-test/cli.js');
 
-async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], baseDir: string, params: any, env: NodeJS.ProcessEnv, options: RunOptions): Promise<RunResult> {
+const mergeReports = async (childProcess: CommonFixtures['childProcess'], cwd: string, env: NodeJS.ProcessEnv = {}, reporter: string | undefined, configFile: string | undefined) => {
+  const command = ['node', cliEntrypoint, 'merge-reports'];
+  if (reporter)
+    command.push('--reporter', reporter);
+  if (configFile)
+    command.push('--config', configFile);
+  command.push('blob-report');
+  const testProcess = childProcess({
+    command,
+    env: cleanEnv({
+      PW_TEST_DEBUG_REPORTERS: '1',
+      PW_TEST_DEBUG_REPORTERS_PRINT_STEPS: '1',
+      PWTEST_TTY_WIDTH: '80',
+      ...env
+    }),
+    cwd,
+  });
+  const { exitCode } = await testProcess.exited;
+  return { exitCode, output: testProcess.output.toString() };
+};
+
+const configFile = (baseDir: string, files: Files): string | undefined => {
+  for (const [name, content] of  Object.entries(files)) {
+    if (name.includes('playwright.config')) {
+      if (content.includes('reporter:'))
+        return path.resolve(baseDir, name);
+    }
+  }
+  return undefined;
+};
+
+async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], baseDir: string, params: any, env: NodeJS.ProcessEnv, options: RunOptions, files: Files, useIntermediateMergeReport: boolean): Promise<RunResult> {
+  let reporter;
+  if (useIntermediateMergeReport) {
+    reporter = params.reporter;
+    params.reporter = 'blob';
+  }
+
   const paramList: string[] = [];
   for (const key of Object.keys(params)) {
     for (const value of Array.isArray(params[key]) ? params[key] : [params[key]]) {
@@ -109,6 +146,12 @@ async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], b
     PLAYWRIGHT_JSON_OUTPUT_NAME: reportFile,
     ...env,
   }, options.sendSIGINTAfter);
+
+  if (useIntermediateMergeReport) {
+    const mergeResult = await mergeReports(childProcess, cwd, env, reporter, configFile(baseDir, files));
+    expect(mergeResult.exitCode).toBe(0);
+    output = mergeResult.output;
+  }
 
   const summary = (re: RegExp) => {
     let result = 0;
@@ -247,6 +290,7 @@ type Fixtures = {
   runListFiles: (files: Files) => Promise<{ output: string, exitCode: number }>;
   runWatchTest: (files: Files, env?: NodeJS.ProcessEnv, options?: RunOptions) => Promise<TestChildProcess>;
   runTSC: (files: Files) => Promise<TSCResult>;
+  useIntermediateMergeReport: boolean;
   nodeVersion: { major: number, minor: number, patch: number };
 };
 
@@ -265,11 +309,11 @@ export const test = base
         });
       },
 
-      runInlineTest: async ({ childProcess }, use, testInfo: TestInfo) => {
+      runInlineTest: async ({ childProcess, useIntermediateMergeReport }, use, testInfo: TestInfo) => {
         const cacheDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-test-cache-'));
         await use(async (files: Files, params: Params = {}, env: NodeJS.ProcessEnv = {}, options: RunOptions = {}) => {
           const baseDir = await writeFiles(testInfo, files, true);
-          return await runPlaywrightTest(childProcess, baseDir, params, { ...env, PWTEST_CACHE_DIR: cacheDir }, options);
+          return await runPlaywrightTest(childProcess, baseDir, params, { ...env, PWTEST_CACHE_DIR: cacheDir }, options, files, useIntermediateMergeReport);
         });
         await removeFolderAsync(cacheDir);
       },
@@ -313,6 +357,10 @@ export const test = base
       nodeVersion: async ({}, use) => {
         const [major, minor, patch] = process.versions.node.split('.');
         await use({ major: +major, minor: +minor, patch: +patch });
+      },
+
+      useIntermediateMergeReport: async ({}, use) => {
+        await use(process.env.PWTEST_INTERMEDIATE_BLOB_REPORT === '1');
       },
     });
 

@@ -33,7 +33,7 @@ export async function createMergedReport(config: FullConfigInternal, dir: string
     patchAttachmentPaths(events, dir);
 
   const reporters = await createReporters(config, 'merge', reporterDescriptions);
-  const receiver = new TeleReporterReceiver(path.sep, new Multiplexer(reporters), config.config);
+  const receiver = new TeleReporterReceiver(path.sep, new Multiplexer(reporters), false, config.config);
 
   for (const event of events)
     await receiver.dispatch(event);

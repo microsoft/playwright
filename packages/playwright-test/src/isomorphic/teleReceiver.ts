@@ -125,12 +125,14 @@ export class TeleReporterReceiver {
   private _tests = new Map<string, TeleTestCase>();
   private _rootDir!: string;
   private _clearPreviousResultsWhenTestBegins: boolean = false;
+  private _reuseTestCases: boolean;
   private _reportConfig: MergeReporterConfig | undefined;
 
-  constructor(pathSeparator: string, reporter: Reporter, reportConfig?: MergeReporterConfig) {
+  constructor(pathSeparator: string, reporter: Reporter, reuseTestCases: boolean, reportConfig?: MergeReporterConfig) {
     this._rootSuite = new TeleSuite('', 'root');
     this._pathSeparator = pathSeparator;
     this._reporter = reporter;
+    this._reuseTestCases = reuseTestCases;
     this._reportConfig = reportConfig;
   }
 
@@ -246,7 +248,7 @@ export class TeleReporterReceiver {
       location: this._absoluteLocation(payload.location),
       parent: parentStep,
       startTime: new Date(payload.startTime),
-      duration: 0,
+      duration: -1,
       steps: [],
     };
     if (parentStep)
@@ -350,7 +352,7 @@ export class TeleReporterReceiver {
 
   private _mergeTestsInto(jsonTests: JsonTestCase[], parent: TeleSuite) {
     for (const jsonTest of jsonTests) {
-      let targetTest = parent.tests.find(s => s.title === jsonTest.title);
+      let targetTest = this._reuseTestCases ? parent.tests.find(s => s.title === jsonTest.title) : undefined;
       if (!targetTest) {
         targetTest = new TeleTestCase(jsonTest.testId, jsonTest.title, this._absoluteLocation(jsonTest.location));
         targetTest.parent = parent;
