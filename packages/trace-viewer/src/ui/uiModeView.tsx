@@ -640,7 +640,7 @@ const refreshRootSuite = (eraseResults: boolean): Promise<void> => {
       loadErrors.push(error);
       throttleUpdateRootSuite(config, rootSuite, loadErrors, progress);
     },
-  });
+  }, true);
   receiver._setClearPreviousResultsWhenTestBegins();
   return sendMessage('list', {});
 };
