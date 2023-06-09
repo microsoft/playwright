@@ -23,6 +23,8 @@
   cursor: text;
   user-select: none;
   margin-left: 10px;
+  max-height: 200px;
+  overflow-y: scroll;
 }
 
 .timeline-divider {
