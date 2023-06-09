@@ -351,6 +351,7 @@ test('should use different path if attachments base url option is provided', asy
     `
   }, {}, { PW_TEST_HTML_REPORT_OPEN: 'never' });
   expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
 
   await showReport();
   await page.click('text=passes');
@@ -1014,7 +1015,7 @@ test.describe('report location', () => {
         test('pass', ({}, testInfo) => {
         });
       `
-    }, { 'reporter': 'html,list' }, { PW_TEST_HTML_REPORT_OPEN: 'never' }, {
+    }, { 'reporter': 'html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' }, {
       cwd: 'foo/bar/baz/tests',
     });
     expect(result.exitCode).toBe(0);
@@ -1038,7 +1039,7 @@ test.describe('report location', () => {
         test('pass', ({}, testInfo) => {
         });
       `
-    }, { 'reporter': 'html,list' }, { 'PW_TEST_HTML_REPORT_OPEN': 'never', 'PLAYWRIGHT_HTML_REPORT': '../my-report' }, {
+    }, { 'reporter': 'html' }, { 'PW_TEST_HTML_REPORT_OPEN': 'never', 'PLAYWRIGHT_HTML_REPORT': '../my-report' }, {
       cwd: 'foo/bar/baz/tests',
     });
     expect(result.exitCode).toBe(0);

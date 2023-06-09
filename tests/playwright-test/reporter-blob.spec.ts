@@ -64,6 +64,8 @@ test.slow(!!process.env.CI);
 // Slow tests are 90s.
 const expect = baseExpect.configure({ timeout: process.env.CI ? 75000 : 25000 });
 
+test.describe.configure({ mode: 'parallel' });
+
 const echoReporterJs = `
 class EchoReporter {
   onBegin(config, suite) {
