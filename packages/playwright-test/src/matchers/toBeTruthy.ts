@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-import type { Expect } from '../../types/test';
 import { expectTypes, callLogText } from '../util';
 import { matcherHint } from './matcherHint';
 import { currentExpectTimeout } from '../common/globals';
+import type { ExpectMatcherContext } from './expect';
 
 export async function toBeTruthy(
-  this: ReturnType<Expect['getState']>,
+  this: ExpectMatcherContext,
   matcherName: string,
   receiver: any,
   receiverType: string,
@@ -36,7 +36,7 @@ export async function toBeTruthy(
 
   const timeout = currentExpectTimeout(options);
 
-  const { matches, log, timedOut } = await query(this.isNot, timeout);
+  const { matches, log, timedOut } = await query(!!this.isNot, timeout);
 
   const message = () => {
     return matcherHint(this, matcherName, undefined, '', matcherOptions, timedOut ? timeout : undefined) + callLogText(log);

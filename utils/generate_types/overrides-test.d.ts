@@ -351,8 +351,8 @@ export type Expect = {
   }) => Expect;
   getState(): {
     expand?: boolean;
-    isNot: boolean;
-    promise: string;
+    isNot?: boolean;
+    promise?: string;
     utils: any;
   };
   not: Omit<AsymmetricMatchers, 'any' | 'anything'>;
