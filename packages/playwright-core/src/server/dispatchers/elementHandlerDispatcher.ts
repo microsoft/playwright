@@ -66,54 +66,54 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements chann
   }
 
   async getAttribute(params: channels.ElementHandleGetAttributeParams, metadata: CallMetadata): Promise<channels.ElementHandleGetAttributeResult> {
-    const value = await this._elementHandle.getAttribute(params.name);
+    const value = await this._elementHandle.getAttribute(metadata, params.name);
     return { value: value === null ? undefined : value };
   }
 
   async inputValue(params: channels.ElementHandleInputValueParams, metadata: CallMetadata): Promise<channels.ElementHandleInputValueResult> {
-    const value = await this._elementHandle.inputValue();
+    const value = await this._elementHandle.inputValue(metadata);
     return { value };
   }
 
   async textContent(params: channels.ElementHandleTextContentParams, metadata: CallMetadata): Promise<channels.ElementHandleTextContentResult> {
-    const value = await this._elementHandle.textContent();
+    const value = await this._elementHandle.textContent(metadata);
     return { value: value === null ? undefined : value };
   }
 
   async innerText(params: channels.ElementHandleInnerTextParams, metadata: CallMetadata): Promise<channels.ElementHandleInnerTextResult> {
-    return { value: await this._elementHandle.innerText() };
+    return { value: await this._elementHandle.innerText(metadata) };
   }
 
   async innerHTML(params: channels.ElementHandleInnerHTMLParams, metadata: CallMetadata): Promise<channels.ElementHandleInnerHTMLResult> {
-    return { value: await this._elementHandle.innerHTML() };
+    return { value: await this._elementHandle.innerHTML(metadata) };
   }
 
   async isChecked(params: channels.ElementHandleIsCheckedParams, metadata: CallMetadata): Promise<channels.ElementHandleIsCheckedResult> {
-    return { value: await this._elementHandle.isChecked() };
+    return { value: await this._elementHandle.isChecked(metadata) };
   }
 
   async isDisabled(params: channels.ElementHandleIsDisabledParams, metadata: CallMetadata): Promise<channels.ElementHandleIsDisabledResult> {
-    return { value: await this._elementHandle.isDisabled() };
+    return { value: await this._elementHandle.isDisabled(metadata) };
   }
 
   async isEditable(params: channels.ElementHandleIsEditableParams, metadata: CallMetadata): Promise<channels.ElementHandleIsEditableResult> {
-    return { value: await this._elementHandle.isEditable() };
+    return { value: await this._elementHandle.isEditable(metadata) };
   }
 
   async isEnabled(params: channels.ElementHandleIsEnabledParams, metadata: CallMetadata): Promise<channels.ElementHandleIsEnabledResult> {
-    return { value: await this._elementHandle.isEnabled() };
+    return { value: await this._elementHandle.isEnabled(metadata) };
   }
 
   async isHidden(params: channels.ElementHandleIsHiddenParams, metadata: CallMetadata): Promise<channels.ElementHandleIsHiddenResult> {
-    return { value: await this._elementHandle.isHidden() };
+    return { value: await this._elementHandle.isHidden(metadata) };
   }
 
   async isVisible(params: channels.ElementHandleIsVisibleParams, metadata: CallMetadata): Promise<channels.ElementHandleIsVisibleResult> {
-    return { value: await this._elementHandle.isVisible() };
+    return { value: await this._elementHandle.isVisible(metadata) };
   }
 
   async dispatchEvent(params: channels.ElementHandleDispatchEventParams, metadata: CallMetadata): Promise<void> {
-    await this._elementHandle.dispatchEvent(params.type, parseArgument(params.eventInit));
+    await this._elementHandle.dispatchEvent(metadata, params.type, parseArgument(params.eventInit));
   }
 
   async scrollIntoViewIfNeeded(params: channels.ElementHandleScrollIntoViewIfNeededParams, metadata: CallMetadata): Promise<void> {
