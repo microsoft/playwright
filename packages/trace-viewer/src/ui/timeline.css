@@ -23,7 +23,7 @@
   cursor: text;
   user-select: none;
   margin-left: 10px;
-  max-height: 20vh;
+  max-height: 200px;
   overflow-y: scroll;
 }
 
