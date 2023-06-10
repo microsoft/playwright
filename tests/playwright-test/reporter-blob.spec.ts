@@ -1064,7 +1064,7 @@ test('custom project suffix', async ({ runInlineTest, mergeReports }) => {
       class EchoReporter {
         onBegin(config, suite) {
           const projects = suite.suites.map(s => s.project().name);
-          console.log('projects:', projects);
+          console.log('projects:' + projects);
         }
       }
       module.exports = EchoReporter;
@@ -1088,7 +1088,7 @@ test('custom project suffix', async ({ runInlineTest, mergeReports }) => {
 
   const { exitCode, output } = await mergeReports(reportDir, {}, { additionalArgs: ['--reporter', test.info().outputPath('echo-reporter.js')] });
   expect(exitCode).toBe(0);
-  expect(output).toContain(`projects: [ 'foo-suffix', 'bar-suffix' ]`);
+  expect(output).toContain(`projects:foo-suffix,bar-suffix`);
 });
 
 test('same project different suffixes', async ({ runInlineTest, mergeReports }) => {
@@ -1100,7 +1100,7 @@ test('same project different suffixes', async ({ runInlineTest, mergeReports }) 
         onBegin(config, suite) {
           const projects = suite.suites.map(s => s.project().name);
           projects.sort();
-          console.log('projects:', projects);
+          console.log('projects:' + projects);
         }
       }
       module.exports = EchoReporter;
@@ -1125,7 +1125,7 @@ test('same project different suffixes', async ({ runInlineTest, mergeReports }) 
   const reportDir = test.info().outputPath('blob-report');
   const { exitCode, output } = await mergeReports(reportDir, {}, { additionalArgs: ['--reporter', test.info().outputPath('echo-reporter.js')] });
   expect(exitCode).toBe(0);
-  expect(output).toContain(`projects: [ 'foo-first', 'foo-second' ]`);
+  expect(output).toContain(`projects:foo-first,foo-second`);
 });
 
 test('no reports error', async ({ runInlineTest, mergeReports }) => {
