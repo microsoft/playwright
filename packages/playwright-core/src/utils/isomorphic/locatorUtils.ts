@@ -29,14 +29,10 @@ export type ByRoleOptions = {
 };
 
 function getByAttributeTextSelector(attrName: string, text: string | RegExp, options?: { exact?: boolean }): string {
-  if (!isString(text))
-    return `internal:attr=[${attrName}=${text}]`;
   return `internal:attr=[${attrName}=${escapeForAttributeSelector(text, options?.exact || false)}]`;
 }
 
 export function getByTestIdSelector(testIdAttributeName: string, testId: string | RegExp): string {
-  if (!isString(testId))
-    return `internal:testid=[${testIdAttributeName}=${testId}]`;
   return `internal:testid=[${testIdAttributeName}=${escapeForAttributeSelector(testId, true)}]`;
 }
 

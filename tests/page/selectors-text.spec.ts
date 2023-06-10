@@ -76,6 +76,7 @@ it('should work @smoke', async ({ page }) => {
 
   await page.setContent(`<div>Hi&gt;&gt;<span></span></div>`);
   expect(await page.$eval(`text="Hi>>">>span`, e => e.outerHTML)).toBe(`<span></span>`);
+  expect(await page.$eval(`text=/Hi\\>\\>/ >> span`, e => e.outerHTML)).toBe(`<span></span>`);
 
   await page.setContent(`<div>a<br>b</div><div>a</div>`);
   expect(await page.$eval(`text=a`, e => e.outerHTML)).toBe('<div>a<br>b</div>');

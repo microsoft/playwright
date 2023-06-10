@@ -69,11 +69,13 @@ export function normalizeWhiteSpace(text: string): string {
 
 export function escapeForTextSelector(text: string | RegExp, exact: boolean): string {
   if (typeof text !== 'string')
-    return String(text);
+    return String(text).replace(/>>/g, '\\>\\>');
   return `${JSON.stringify(text)}${exact ? 's' : 'i'}`;
 }
 
-export function escapeForAttributeSelector(value: string, exact: boolean): string {
+export function escapeForAttributeSelector(value: string | RegExp, exact: boolean): string {
+  if (typeof value !== 'string')
+    return String(value).replace(/>>/g, '\\>\\>');
   // TODO: this should actually be
   //   cssEscape(value).replace(/\\ /g, ' ')
   // However, our attribute selectors do not conform to CSS parsing spec,
