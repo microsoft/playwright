@@ -52,7 +52,7 @@ function isComponent(component) {
  */
 async function __pwResolveComponent(component) {
   if (!isComponent(component))
-    return
+    return;
 
   let componentFactory = __pwLoaderRegistry.get(component.type);
   if (!componentFactory) {
@@ -68,11 +68,11 @@ async function __pwResolveComponent(component) {
   if (!componentFactory && component.type[0].toUpperCase() === component.type[0])
     throw new Error(`Unregistered component: ${component.type}. Following components are registered: ${[...__pwRegistry.keys()]}`);
 
-  if(componentFactory)
-    __pwRegistry.set(component.type, await componentFactory())
+  if (componentFactory)
+    __pwRegistry.set(component.type, await componentFactory());
 
   if ('children' in component)
-    await Promise.all(component.children.map(child => __pwResolveComponent(child)))
+    await Promise.all(component.children.map(child => __pwResolveComponent(child)));
 }
 
 const __pwAllListeners = new Map();
@@ -217,7 +217,7 @@ function __pwWrapFunctions(slots) {
 function __pwCreateWrapper(component) {
   const { Component, props, slots, listeners } = __pwCreateComponent(component);
   // @ts-ignore
-  const wrapper = __pwH(Component, props, slots);
+  const wrapper = __pwH(Component, { ...props, ...listeners }, slots);
   __pwAllListeners.set(wrapper, listeners);
   return wrapper;
 }
@@ -281,7 +281,7 @@ window.playwrightUpdate = async (rootElement, component) => {
 
   if (!wrapper.component)
     throw new Error('Updating a native HTML element is not supported');
-  
+
   const { slots, listeners, props } = __pwCreateComponent(component);
 
   wrapper.component.slots = __pwWrapFunctions(slots);

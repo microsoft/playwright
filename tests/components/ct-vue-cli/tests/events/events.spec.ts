@@ -14,3 +14,17 @@ test('emit an submit event when the button is clicked', async ({ mount }) => {
   await component.click();
   expect(messages).toEqual(['hello']);
 });
+
+test('emit a falltrough event when the button is double clicked', async ({ mount }) => {
+  const messages: string[] = [];
+  const component = await mount(Button, {
+    props: {
+      title: 'Submit',
+    },
+    on: {
+      dbclick: (message: string) => messages.push(message),
+    },
+  });
+  await component.dblclick();
+  expect(messages).toEqual(['fallthroughEvent']);
+});
