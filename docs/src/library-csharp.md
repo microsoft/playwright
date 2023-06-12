@@ -58,7 +58,7 @@ await using var browser = await playwright.Firefox.LaunchAsync(new()
 
 ## Using Assertions
 
-You can do the following to leverage Playwright's assertions when you are using your own test framework:
+You can do the following to leverage Playwright's web-first assertions when you are using your own test framework. These will automatically retry until the condition is met, e.g. an element has a certain text or the timeout is reached:
 
 ```csharp
 using Microsoft.Playwright;
