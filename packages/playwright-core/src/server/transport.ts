@@ -125,10 +125,20 @@ export class WebSocketTransport implements ConnectionTransport {
 
     this._ws.addEventListener('message', event => {
       messageWrap(() => {
+        const eventData = event.data as string;
+        let parsedJson;
+        try {
+          parsedJson = JSON.parse(eventData);
+        } catch (e) {
+          this._progress?.log(`<closing ws> Closing websocket due to malformed JSON. eventData=${eventData} e=${e?.message}`);
+          this._ws.close();
+          return;
+        }
         try {
           if (this.onmessage)
-            this.onmessage.call(null, JSON.parse(event.data as string));
+            this.onmessage.call(null, parsedJson);
         } catch (e) {
+          this._progress?.log(`<closing ws> Closing websocket due to failed onmessage callback. eventData=${eventData} e=${e?.message}`);
           this._ws.close();
         }
       });
