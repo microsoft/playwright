@@ -4786,7 +4786,6 @@ export type Expect = {
     message?: string,
     timeout?: number,
     soft?: boolean,
-    poll?: boolean | { timeout?: number, intervals?: number[] },
   }) => Expect;
   getState(): {
     expand?: boolean;
