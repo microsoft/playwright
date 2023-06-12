@@ -1,5 +1,5 @@
-name: 'Download blob report'
-description: 'Download blob report from GitHub artifacts'
+name: 'Download artifact'
+description: 'Download artifact from GitHub'
 inputs:
   name:
     description: 'Name of the artifact to download'
@@ -10,11 +10,11 @@ inputs:
     description: 'Directory with downloaded artifacts'
     required: true
     type: string
-    default: 'blob-report'
+    default: '.'
 runs:
   using: "composite"
   steps:
-    - name: Download blob report
+    - name: Download artifact
       uses: actions/github-script@v6
       with:
         script: |
@@ -35,6 +35,6 @@ runs:
           console.log('download result', result);
           const fs = require('fs');
           fs.writeFileSync(`${name}.zip`, Buffer.from(result.data));
-    - name: Unzip blob report
+    - name: Unzip artifact
       shell: bash
       run: unzip ${{ inputs.name }}.zip -d ${{ inputs.path }}
