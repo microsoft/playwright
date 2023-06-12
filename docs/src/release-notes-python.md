@@ -4,6 +4,29 @@ title: "Release notes"
 toc_max_heading_level: 2
 ---
 
+## Version 1.35
+
+### Highlights
+
+* New option `maskColor` for methods [`method: Page.screenshot`] and [`method: Locator.screenshot`] to change default masking color.
+
+* New `uninstall` CLI command to uninstall browser binaries:
+  ```bash
+  $ playwright uninstall # remove browsers installed by this installation
+  $ playwright uninstall --all # remove all ever-install Playwright browsers
+  ```
+
+### Browser Versions
+
+* Chromium 115.0.5790.13
+* Mozilla Firefox 113.0
+* WebKit 16.4
+
+This version was also tested against the following stable channels:
+
+* Google Chrome 114
+* Microsoft Edge 114
+
 ## Version 1.34
 
 ### Highlights
