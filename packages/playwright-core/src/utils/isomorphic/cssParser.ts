@@ -143,7 +143,7 @@ export function parseCSS(selector: string, customNames: Set<string>): { selector
     const result: CSSComplexSelector = { simples: [] };
     skipWhitespace();
     if (isClauseCombinator()) {
-      // Put implicit ":scope" at the start. https://drafts.csswg.org/selectors-4/#absolutize
+      // Put implicit ":scope" at the start. https://drafts.csswg.org/selectors-4/#relative
       result.simples.push({ selector: { functions: [{ name: 'scope', args: [] }] }, combinator: '' });
     } else {
       result.simples.push({ selector: consumeSimpleSelector(), combinator: '' });

@@ -289,6 +289,12 @@ it('should work with ~', async ({ page }) => {
     <div id=div5></div>
     <div id=div6></div>
   `);
+  expect(await page.$$eval(`#div3 >> :scope ~ div`, els => els.map(e => e.id))).toEqual(['div4', 'div5', 'div6']);
+  expect(await page.$$eval(`#div3 >> :scope ~ *`, els => els.map(e => e.id))).toEqual(['div4', 'div5', 'div6']);
+  expect(await page.$$eval(`#div3 >> ~ div`, els => els.map(e => e.id))).toEqual(['div4', 'div5', 'div6']);
+  expect(await page.$$eval(`#div3 >> ~ *`, els => els.map(e => e.id))).toEqual(['div4', 'div5', 'div6']);
+  expect(await page.$$eval(`#div3 >> #div1 ~ :scope`, els => els.map(e => e.id))).toEqual(['div3']);
+  expect(await page.$$eval(`#div3 >> #div4 ~ :scope`, els => els.map(e => e.id))).toEqual([]);
   expect(await page.$$eval(`css=#div1 ~ div ~ #div6`, els => els.length)).toBe(1);
   expect(await page.$$eval(`css=#div1 ~ div ~ div`, els => els.length)).toBe(4);
   expect(await page.$$eval(`css=#div3 ~ div ~ div`, els => els.length)).toBe(2);
@@ -309,6 +315,12 @@ it('should work with +', async ({ page }) => {
       <div id=div6></div>
     </section>
   `);
+  expect(await page.$$eval(`#div1 >> :scope+div`, els => els.map(e => e.id))).toEqual(['div2']);
+  expect(await page.$$eval(`#div1 >> :scope+*`, els => els.map(e => e.id))).toEqual(['div2']);
+  expect(await page.$$eval(`#div1 >> + div`, els => els.map(e => e.id))).toEqual(['div2']);
+  expect(await page.$$eval(`#div1 >> + *`, els => els.map(e => e.id))).toEqual(['div2']);
+  expect(await page.$$eval(`#div3 >> div + :scope`, els => els.map(e => e.id))).toEqual(['div3']);
+  expect(await page.$$eval(`#div3 >> #div1 + :scope`, els => els.map(e => e.id))).toEqual([]);
   expect(await page.$$eval(`css=#div1 ~ div + #div6`, els => els.length)).toBe(1);
   expect(await page.$$eval(`css=#div1 ~ div + div`, els => els.length)).toBe(4);
   expect(await page.$$eval(`css=#div3 + div + div`, els => els.length)).toBe(1);
@@ -321,8 +333,7 @@ it('should work with +', async ({ page }) => {
   expect(await page.$$eval(`css=section > div + #div4 ~ div`, els => els.length)).toBe(2);
   expect(await page.$$eval(`css=section:has(:scope > div + #div2)`, els => els.length)).toBe(1);
   expect(await page.$$eval(`css=section:has(:scope > div + #div1)`, els => els.length)).toBe(0);
-  // TODO: the following does not work. Should it?
-  // expect(await page.$eval(`css=div:has(:scope + #div5)`, e => e.id)).toBe('div4');
+  expect(await page.$eval(`css=div:has(:scope + #div5)`, e => e.id)).toBe('div4');
 });
 
 it('should work with spaces in :nth-child and :not', async ({ page, server }) => {
@@ -390,6 +401,16 @@ it('should work with :scope', async ({ page, server }) => {
   expect(await page.$eval(`div >> :scope:nth-child(1)`, e => e.textContent)).toBe('hello');
   expect(await page.$eval(`div >> :scope.target:has(span)`, e => e.textContent)).toBe('hello');
   expect(await page.$eval(`html:scope`, e => e.nodeName)).toBe('HTML');
+
+  await page.setContent(`<section><span id=span1><span id=inner></span></span><span id=span2></span></section>`);
+  expect(await page.$$eval(`#span1 >> span:not(:has(:scope > div))`, els => els.map(e => e.id))).toEqual(['inner']);
+  expect(await page.$$eval(`#span1 >> #inner,:scope`, els => els.map(e => e.id))).toEqual(['span1', 'inner']);
+  expect(await page.$$eval(`#span1 >> span,:scope`, els => els.map(e => e.id))).toEqual(['span1', 'inner']);
+  expect(await page.$$eval(`#span1 >> span:not(:scope)`, els => els.map(e => e.id))).toEqual(['inner']);
+  // TODO: the following two do not work. We do not expand the context for the inner :scope,
+  // because we should only expand for one clause of :is() that contains :scope, but not the other.
+  // expect(await page.$$eval(`#span1 >> span:is(:scope)`, els => els.map(e => e.id))).toEqual(['span1']);
+  // expect(await page.$$eval(`#span1 >> span:is(:scope,#inner)`, els => els.map(e => e.id))).toEqual(['span1', 'inner']);
 });
 
 it('should work with :scope and class', async ({ page }) => {
