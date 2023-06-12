@@ -64,12 +64,18 @@ jobs:
     - name: Upload blob report to Azure
       if: always() && github.event_name == 'push'
       run: az storage blob upload-batch -s test-results/blob-report -d '$web/run-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.sha }}' --connection-string "${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}"
+    - name: Zip blob report
+      if: always() && github.event_name == 'pull_request'
+      shell: bash
+      run: |
+        cd test-results
+        zip -r ${{ github.workspace }}/blob-report.zip blob-report
     - name: Upload blob report to GitHub
       uses: actions/upload-artifact@v3
       if: always() && github.event_name == 'pull_request'
       with:
         name: blob-report-${{ github.run_attempt }}
-        path: test-results/blob-report
+        path: blob-report.zip
         retention-days: 30
     - name: Write the pull request number in an file
       if: always() && github.event_name == 'pull_request'
@@ -154,12 +160,18 @@ jobs:
     - name: Upload blob report to Azure
       if: always() && github.event_name == 'push'
       run: az storage blob upload-batch -s test-results/blob-report -d '$web/run-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.sha }}' --connection-string "${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}"
+    - name: Zip blob report
+      if: always() && github.event_name == 'pull_request'
+      shell: bash
+      run: |
+        cd test-results
+        zip -r ${{ github.workspace }}/blob-report.zip blob-report
     - name: Upload blob report to GitHub
       uses: actions/upload-artifact@v3
       if: always() && github.event_name == 'pull_request'
       with:
         name: blob-report-${{ github.run_attempt }}
-        path: test-results/blob-report
+        path: blob-report.zip
         retention-days: 30
     - name: Write the pull request number in an file
       if: always() && github.event_name == 'pull_request'
