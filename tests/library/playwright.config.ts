@@ -105,7 +105,7 @@ for (const browserName of browserNames) {
           executablePath,
           devtools
         },
-        trace: trace ? { mode: 'on', sources: false } : undefined,
+        trace: trace ? { mode: 'on', sources: false, screenshots: false } : undefined,
         coverageName: browserName,
       },
       metadata: {
