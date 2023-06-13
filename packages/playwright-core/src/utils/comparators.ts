@@ -111,11 +111,10 @@ function compareText(actual: Buffer | string, expectedBuffer: Buffer): Comparato
   const expected = expectedBuffer.toString('utf-8');
   const expectedNormalized = expected.replace('\r\n', '\n');
   const actualNormalized = actual.replace('\r\n', '\n');
-  if (expectedNormalized === actualNormalized) {
+  if (expectedNormalized === actualNormalized)
     return null;
-  }
   const dmp = new diff_match_patch();
-  const d = dmp.diff_main(expected, actual);
+  const d = dmp.diff_main(expectedNormalized, actualNormalized);
   dmp.diff_cleanupSemantic(d);
   return {
     errorMessage: diff_prettyTerminal(d)
