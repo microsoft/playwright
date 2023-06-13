@@ -91,7 +91,6 @@ test('should merge screenshot assertions', async ({  runUITest }, testInfo) => {
   await page.getByText('trace test').dblclick();
 
   const listItem = page.getByTestId('action-list').getByRole('listitem');
-  // TODO: fixme.
   await expect(
       listItem,
       'action list'
@@ -99,7 +98,6 @@ test('should merge screenshot assertions', async ({  runUITest }, testInfo) => {
     /Before Hooks[\d.]+m?s/,
     /page.setContent[\d.]+m?s/,
     /expect.toHaveScreenshot[\d.]+m?s/,
-    /attach "trace-test-1-actual\.png"[\d.]+m?s/,
     /After Hooks[\d.]+m?s/,
     /fixture: page[\d.]+m?s/,
     /fixture: context[\d.]+m?s/,

@@ -138,6 +138,8 @@ function mergeActions(contexts: ContextEntry[]) {
           existing.parentId = nonPrimaryIdToPrimaryId.get(action.parentId) ?? action.parentId;
         continue;
       }
+      if (action.parentId)
+        action.parentId = nonPrimaryIdToPrimaryId.get(action.parentId) ?? action.parentId;
       map.set(key, { ...action, context });
     }
   }
