@@ -463,4 +463,28 @@ it.describe('selector generator', () => {
     `);
     expect(await generate(page, 'input')).toBe('internal:label=\"Text\"s');
   });
+
+  it('should generate relative selector', async ({ page }) => {
+    await page.setContent(`
+      <div>
+        <span>Hello</span>
+        <span>World</span>
+      </div>
+      <section>
+        <span>Hello</span>
+        <span>World</span>
+      </section>
+    `);
+    const selectors = await page.evaluate(() => {
+      const target = document.querySelector('section > span');
+      const root = document.querySelector('section');
+      const relative = (window as any).__injectedScript.generateSelector(target, { root });
+      const absolute = (window as any).__injectedScript.generateSelector(target);
+      return { relative, absolute };
+    });
+    expect(selectors).toEqual({
+      relative: `internal:text="Hello"i`,
+      absolute: `section >> internal:text="Hello"i`,
+    });
+  });
 });

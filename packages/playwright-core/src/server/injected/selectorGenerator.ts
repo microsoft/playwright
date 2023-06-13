@@ -15,6 +15,7 @@
  */
 
 import { cssEscape, escapeForAttributeSelector, escapeForTextSelector, normalizeWhiteSpace } from '../../utils/isomorphic/stringUtils';
+import { closestCrossShadow, isInsideScope, parentElementOrShadowHost } from './domUtils';
 import type { InjectedScript } from './injectedScript';
 import { getAriaRole, getElementAccessibleName } from './roleUtils';
 import { elementText } from './selectorUtils';
@@ -59,32 +60,22 @@ const kCSSTagNameScore = 530;
 const kNthScore = 10000;
 const kCSSFallbackScore = 10000000;
 
-export function querySelector(injectedScript: InjectedScript, selector: string, ownerDocument: Document): { selector: string, elements: Element[] } {
-  try {
-    const parsedSelector = injectedScript.parseSelector(selector);
-    return {
-      selector,
-      elements: injectedScript.querySelectorAll(parsedSelector, ownerDocument)
-    };
-  } catch (e) {
-    return {
-      selector,
-      elements: [],
-    };
-  }
-}
+export type GenerateSelectorOptions = {
+  testIdAttributeName: string;
+  omitInternalEngines?: boolean;
+  root?: Element | Document;
+};
 
-export function generateSelector(injectedScript: InjectedScript, targetElement: Element, testIdAttributeName: string, omitInternalEngines?: boolean): { selector: string, elements: Element[] } {
+export function generateSelector(injectedScript: InjectedScript, targetElement: Element, options: GenerateSelectorOptions): { selector: string, elements: Element[] } {
   injectedScript._evaluator.begin();
   try {
-    targetElement = targetElement.closest('button,select,input,[role=button],[role=checkbox],[role=radio],a,[role=link]') || targetElement;
-    const targetTokens = generateSelectorFor(injectedScript, targetElement, testIdAttributeName, omitInternalEngines);
-    const bestTokens = targetTokens || cssFallback(injectedScript, targetElement);
-    const selector = joinTokens(bestTokens);
+    targetElement = closestCrossShadow(targetElement, 'button,select,input,[role=button],[role=checkbox],[role=radio],a,[role=link]', options.root) || targetElement;
+    const targetTokens = generateSelectorFor(injectedScript, targetElement, options);
+    const selector = joinTokens(targetTokens);
     const parsedSelector = injectedScript.parseSelector(selector);
     return {
       selector,
-      elements: injectedScript.querySelectorAll(parsedSelector, targetElement.ownerDocument)
+      elements: injectedScript.querySelectorAll(parsedSelector, options.root ?? targetElement.ownerDocument)
     };
   } finally {
     cacheAllowText.clear();
@@ -98,7 +89,12 @@ function filterRegexTokens(textCandidates: SelectorToken[][]): SelectorToken[][]
   return textCandidates.filter(c => c[0].selector[0] !== '/');
 }
 
-function generateSelectorFor(injectedScript: InjectedScript, targetElement: Element, testIdAttributeName: string, omitInternalEngines?: boolean): SelectorToken[] | null {
+function generateSelectorFor(injectedScript: InjectedScript, targetElement: Element, options: GenerateSelectorOptions): SelectorToken[] {
+  if (options.root && !isInsideScope(options.root, targetElement))
+    throw new Error(`Target element must belong to the root's subtree`);
+
+  if (targetElement === options.root)
+    return [{ engine: 'css', selector: ':scope', score: 1 }];
   if (targetElement.ownerDocument.documentElement === targetElement)
     return [{ engine: 'css', selector: 'html', score: 1 }];
 
@@ -111,12 +107,12 @@ function generateSelectorFor(injectedScript: InjectedScript, targetElement: Elem
       // Do not use regex for parent elements (for performance).
       textCandidates = filterRegexTokens(textCandidates);
     }
-    const noTextCandidates = buildCandidates(injectedScript, element, testIdAttributeName, accessibleNameCache)
-        .filter(token => !omitInternalEngines || !token.engine.startsWith('internal:'))
+    const noTextCandidates = buildCandidates(injectedScript, element, options, accessibleNameCache)
+        .filter(token => !options.omitInternalEngines || !token.engine.startsWith('internal:'))
         .map(token => [token]);
 
     // First check all text and non-text candidates for the element.
-    let result = chooseFirstSelector(injectedScript, targetElement.ownerDocument, element, [...textCandidates, ...noTextCandidates], allowNthMatch);
+    let result = chooseFirstSelector(injectedScript, options.root ?? targetElement.ownerDocument, element, [...textCandidates, ...noTextCandidates], allowNthMatch);
 
     // Do not use regex for chained selectors (for performance).
     textCandidates = filterRegexTokens(textCandidates);
@@ -138,7 +134,7 @@ function generateSelectorFor(injectedScript: InjectedScript, targetElement: Elem
       if (!bestPossibleInParent)
         return;
 
-      for (let parent = parentElementOrShadowHost(element); parent; parent = parentElementOrShadowHost(parent)) {
+      for (let parent = parentElementOrShadowHost(element); parent && parent !== options.root; parent = parentElementOrShadowHost(parent)) {
         const parentTokens = calculateCached(parent, allowParentText);
         if (!parentTokens)
           continue;
@@ -173,16 +169,16 @@ function generateSelectorFor(injectedScript: InjectedScript, targetElement: Elem
     return value;
   };
 
-  return calculateCached(targetElement, true);
+  return calculateCached(targetElement, true) || cssFallback(injectedScript, targetElement, options);
 }
 
-function buildCandidates(injectedScript: InjectedScript, element: Element, testIdAttributeName: string, accessibleNameCache: Map<Element, boolean>): SelectorToken[] {
+function buildCandidates(injectedScript: InjectedScript, element: Element, options: GenerateSelectorOptions, accessibleNameCache: Map<Element, boolean>): SelectorToken[] {
   const candidates: SelectorToken[] = [];
 
   // Start of generic candidates which are compatible for Locators and FrameLocators:
 
   for (const attr of ['data-testid', 'data-test-id', 'data-test']) {
-    if (attr !== testIdAttributeName && element.getAttribute(attr))
+    if (attr !== options.testIdAttributeName && element.getAttribute(attr))
       candidates.push({ engine: 'css', selector: `[${attr}=${quoteAttributeValue(element.getAttribute(attr)!)}]`, score: kOtherTestIdScore });
   }
 
@@ -198,19 +194,17 @@ function buildCandidates(injectedScript: InjectedScript, element: Element, testI
         candidates.push({ engine: 'css', selector: `${cssEscape(element.nodeName.toLowerCase())}[${attribute}=${quoteAttributeValue(element.getAttribute(attribute)!)}]`, score: kIframeByAttributeScore });
     }
 
-    // Get via testIdAttributeName via CSS selector.
-    if (element.getAttribute(testIdAttributeName))
-      candidates.push({ engine: 'css', selector: `[${testIdAttributeName}=${escapeForAttributeSelector(element.getAttribute(testIdAttributeName)!, true!)}]`, score: kTestIdScore });
+    // Locate by testId via CSS selector.
+    if (element.getAttribute(options.testIdAttributeName))
+      candidates.push({ engine: 'css', selector: `[${options.testIdAttributeName}=${quoteAttributeValue(element.getAttribute(options.testIdAttributeName)!)}]`, score: kTestIdScore });
 
     penalizeScoreForLength([candidates]);
     return candidates;
   }
 
-  // Everything after that are candidates that are not applicable to iframes and designed for Locators only(getBy* methods):
-
-  // Get via testIdAttributeName via GetByTestId().
-  if (element.getAttribute(testIdAttributeName))
-    candidates.push({ engine: 'internal:testid', selector: `[${testIdAttributeName}=${escapeForAttributeSelector(element.getAttribute(testIdAttributeName)!, true)}]`, score: kTestIdScore });
+  // Everything below is not applicable to iframes (getBy* methods):
+  if (element.getAttribute(options.testIdAttributeName))
+    candidates.push({ engine: 'internal:testid', selector: `[${options.testIdAttributeName}=${escapeForAttributeSelector(element.getAttribute(options.testIdAttributeName)!, true)}]`, score: kTestIdScore });
 
   if (element.nodeName === 'INPUT' || element.nodeName === 'TEXTAREA') {
     const input = element as HTMLInputElement | HTMLTextAreaElement;
@@ -297,22 +291,12 @@ function buildTextCandidates(injectedScript: InjectedScript, element: Element, i
   return candidates;
 }
 
-function parentElementOrShadowHost(element: Element): Element | null {
-  if (element.parentElement)
-    return element.parentElement;
-  if (!element.parentNode)
-    return null;
-  if (element.parentNode.nodeType === Node.DOCUMENT_FRAGMENT_NODE && (element.parentNode as ShadowRoot).host)
-    return (element.parentNode as ShadowRoot).host;
-  return null;
-}
-
 function makeSelectorForId(id: string) {
   return /^[a-zA-Z][a-zA-Z0-9\-\_]+$/.test(id) ? '#' + id : `[id="${cssEscape(id)}"]`;
 }
 
-function cssFallback(injectedScript: InjectedScript, targetElement: Element): SelectorToken[] {
-  const root: Node = targetElement.ownerDocument;
+function cssFallback(injectedScript: InjectedScript, targetElement: Element, options: GenerateSelectorOptions): SelectorToken[] {
+  const root: Node = options.root ?? targetElement.ownerDocument;
   const tokens: string[] = [];
 
   function uniqueCSSSelector(prefix?: string): string | undefined {
@@ -321,21 +305,21 @@ function cssFallback(injectedScript: InjectedScript, targetElement: Element): Se
       path.unshift(prefix);
     const selector = path.join(' > ');
     const parsedSelector = injectedScript.parseSelector(selector);
-    const node = injectedScript.querySelector(parsedSelector, targetElement.ownerDocument, false);
+    const node = injectedScript.querySelector(parsedSelector, root, false);
     return node === targetElement ? selector : undefined;
   }
 
   function makeStrict(selector: string): SelectorToken[] {
     const token = { engine: 'css', selector, score: kCSSFallbackScore };
     const parsedSelector = injectedScript.parseSelector(selector);
-    const elements = injectedScript.querySelectorAll(parsedSelector, targetElement.ownerDocument);
+    const elements = injectedScript.querySelectorAll(parsedSelector, root);
     if (elements.length === 1)
       return [token];
     const nth = { engine: 'nth', selector: String(elements.indexOf(targetElement)), score: kNthScore };
     return [token, nth];
   }
 
-  for (let element: Element | null = targetElement; element && element !== root; element = parentElementOrShadowHost(element)) {
+  for (let element: Element | undefined = targetElement; element && element !== root; element = parentElementOrShadowHost(element)) {
     const nodeName = element.nodeName.toLowerCase();
 
     // Element ID is the strongest signal, use it.

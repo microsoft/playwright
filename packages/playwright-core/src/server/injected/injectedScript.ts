@@ -26,7 +26,7 @@ import { type TextMatcher, elementMatchesText, elementText, type ElementText } f
 import { SelectorEvaluatorImpl, sortInDOMOrder } from './selectorEvaluator';
 import { enclosingShadowRootOrDocument, isElementVisible, parentElementOrShadowHost } from './domUtils';
 import type { CSSComplexSelectorList } from '../../utils/isomorphic/cssParser';
-import { generateSelector } from './selectorGenerator';
+import { generateSelector, type GenerateSelectorOptions } from './selectorGenerator';
 import type * as channels from '@protocol/channels';
 import { Highlight } from './highlight';
 import { getChecked, getAriaDisabled, getAriaLabelledByElements, getAriaRole, getElementAccessibleName } from './roleUtils';
@@ -153,8 +153,8 @@ export class InjectedScript {
     return result;
   }
 
-  generateSelector(targetElement: Element, testIdAttributeName: string, omitInternalEngines?: boolean): string {
-    return generateSelector(this, targetElement, testIdAttributeName).selector;
+  generateSelector(targetElement: Element, options?: GenerateSelectorOptions): string {
+    return generateSelector(this, targetElement, { ...options, testIdAttributeName: this._testIdAttributeNameForStrictErrorAndConsoleCodegen }).selector;
   }
 
   querySelector(selector: ParsedSelector, root: Node, strict: boolean): Element | undefined {
@@ -1075,7 +1075,7 @@ export class InjectedScript {
   strictModeViolationError(selector: ParsedSelector, matches: Element[]): Error {
     const infos = matches.slice(0, 10).map(m => ({
       preview: this.previewNode(m),
-      selector: this.generateSelector(m, this._testIdAttributeNameForStrictErrorAndConsoleCodegen),
+      selector: this.generateSelector(m),
     }));
     const lines = infos.map((info, i) => `\n    ${i + 1}) ${info.preview} aka ${asLocator(this._sdkLanguage, info.selector)}`);
     if (infos.length < matches.length)
