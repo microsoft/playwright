@@ -64,7 +64,13 @@ function downloadFile(url: string, destinationPath: string, options: DownloadFil
       return;
     }
     const file = fs.createWriteStream(destinationPath);
-    file.on('finish', () => promise.resolve());
+    file.on('finish', () => {
+      if (downloadedBytes === totalBytes)
+        log(`-- download complete, size: ${downloadedBytes}`);
+      else
+        log(`-- download incomplete, size: ${downloadedBytes} expected size: ${totalBytes}`);
+      promise.resolve();
+    });
     file.on('error', error => promise.reject(error));
     response.pipe(file);
     totalBytes = parseInt(response.headers['content-length'] || '0', 10);
