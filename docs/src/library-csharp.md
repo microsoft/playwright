@@ -56,6 +56,21 @@ await using var browser = await playwright.Firefox.LaunchAsync(new()
 });
 ```
 
+## Using Assertions
+
+You can do the following to leverage Playwright's web-first assertions when you are using your own test framework. These will automatically retry until the condition is met, e.g. an element has a certain text or the timeout is reached:
+
+```csharp
+using Microsoft.Playwright;
+using static Microsoft.Playwright.Assertions;
+
+using var playwright = await Playwright.CreateAsync();
+await using var browser = await playwright.Chromium.LaunchAsync();
+var page = await browser.NewPageAsync();
+await page.GotoAsync("https://playwright.dev/dotnet");
+await Expect(page.GetByRole(AriaRole.Link, new() { Name = "Get started" })).ToBeVisibleAsync();
+```
+
 ## Bundle drivers for different platforms
 
 Playwright by default does bundle only the driver for the .NET publish target runtime. If you want to bundle for additional platforms, you can
