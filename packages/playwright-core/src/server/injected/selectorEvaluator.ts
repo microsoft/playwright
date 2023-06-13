@@ -24,6 +24,8 @@ import { normalizeWhiteSpace } from '../../utils/isomorphic/stringUtils';
 type QueryContext = {
   scope: Element | Document;
   pierceShadow: boolean;
+  // When context expands to accomodate :scope matching, original scope is saved here.
+  originalScope?: Element | Document;
   // Place for more options, e.g. normalizing whitespace.
 };
 export type Selector = any; // Opaque selector type.
@@ -123,9 +125,11 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
     const selector = this._checkSelector(s);
     this.begin();
     try {
-      return this._cached<boolean>(this._cacheMatches, element, [selector, context.scope, context.pierceShadow], () => {
+      return this._cached<boolean>(this._cacheMatches, element, [selector, context.scope, context.pierceShadow, context.originalScope], () => {
         if (Array.isArray(selector))
           return this._matchesEngine(isEngine, element, selector, context);
+        if (this._hasScopeClause(selector))
+          context = this._expandContextForScopeMatching(context);
         if (!this._matchesSimple(element, selector.simples[selector.simples.length - 1].selector, context))
           return false;
         return this._matchesParents(element, selector, selector.simples.length - 2, context);
@@ -139,9 +143,11 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
     const selector = this._checkSelector(s);
     this.begin();
     try {
-      return this._cached<Element[]>(this._cacheQuery, selector, [context.scope, context.pierceShadow], () => {
+      return this._cached<Element[]>(this._cacheQuery, selector, [context.scope, context.pierceShadow, context.originalScope], () => {
         if (Array.isArray(selector))
           return this._queryEngine(isEngine, context, selector);
+        if (this._hasScopeClause(selector))
+          context = this._expandContextForScopeMatching(context);
 
         // query() recursively calls itself, so we set up a new map for this particular query() call.
         const previousScoreMap = this._scoreMap;
@@ -177,10 +183,22 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
       this._scoreMap.set(element, score);
   }
 
+  private _hasScopeClause(selector: CSSComplexSelector): boolean {
+    return selector.simples.some(simple => simple.selector.functions.some(f => f.name === 'scope'));
+  }
+
+  private _expandContextForScopeMatching(context: QueryContext): QueryContext {
+    if (context.scope.nodeType !== 1 /* Node.ELEMENT_NODE */)
+      return context;
+    const scope = parentElementOrShadowHost(context.scope as Element);
+    if (!scope)
+      return context;
+    return { ...context, scope, originalScope: context.originalScope || context.scope };
+  }
+
   private _matchesSimple(element: Element, simple: CSSSimpleSelector, context: QueryContext): boolean {
-    return this._cached<boolean>(this._cacheMatchesSimple, element, [simple, context.scope, context.pierceShadow], () => {
-      const isPossiblyScopeClause = simple.functions.some(f => f.name === 'scope' || f.name === 'is');
-      if (!isPossiblyScopeClause && element === context.scope)
+    return this._cached<boolean>(this._cacheMatchesSimple, element, [simple, context.scope, context.pierceShadow, context.originalScope], () => {
+      if (element === context.scope)
         return false;
       if (simple.css && !this._matchesCSS(element, simple.css))
         return false;
@@ -196,7 +214,7 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
     if (!simple.functions.length)
       return this._queryCSS(context, simple.css || '*');
 
-    return this._cached<Element[]>(this._cacheQuerySimple, simple, [context.scope, context.pierceShadow], () => {
+    return this._cached<Element[]>(this._cacheQuerySimple, simple, [context.scope, context.pierceShadow, context.originalScope], () => {
       let css = simple.css;
       const funcs = simple.functions;
       if (css === '*' && funcs.length)
@@ -206,9 +224,6 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
       let firstIndex = -1;
       if (css !== undefined) {
         elements = this._queryCSS(context, css);
-        const hasScopeClause = funcs.some(f => f.name === 'scope');
-        if (hasScopeClause && context.scope.nodeType === 1 /* Node.ELEMENT_NODE */ && this._matchesCSS(context.scope as Element, css))
-          elements.unshift(context.scope as Element);
       } else {
         firstIndex = funcs.findIndex(func => this._getEngine(func.name).query !== undefined);
         if (firstIndex === -1)
@@ -236,7 +251,7 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
   private _matchesParents(element: Element, complex: CSSComplexSelector, index: number, context: QueryContext): boolean {
     if (index < 0)
       return true;
-    return this._cached<boolean>(this._cacheMatchesParents, element, [complex, index, context.scope, context.pierceShadow], () => {
+    return this._cached<boolean>(this._cacheMatchesParents, element, [complex, index, context.scope, context.pierceShadow, context.originalScope], () => {
       const { selector: simple, combinator } = complex.simples[index];
       if (combinator === '>') {
         const parent = parentElementOrShadowHostInContext(element, context);
@@ -310,13 +325,13 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
   }
 
   private _callMatches(engine: SelectorEngine, element: Element, args: CSSFunctionArgument[], context: QueryContext): boolean {
-    return this._cached<boolean>(this._cacheCallMatches, element, [engine, context.scope, context.pierceShadow, ...args], () => {
+    return this._cached<boolean>(this._cacheCallMatches, element, [engine, context.scope, context.pierceShadow, context.originalScope, ...args], () => {
       return engine.matches!(element, args, context, this);
     });
   }
 
   private _callQuery(engine: SelectorEngine, args: CSSFunctionArgument[], context: QueryContext): Element[] {
-    return this._cached<Element[]>(this._cacheCallQuery, engine, [context.scope, context.pierceShadow, ...args], () => {
+    return this._cached<Element[]>(this._cacheCallQuery, engine, [context.scope, context.pierceShadow, context.originalScope, ...args], () => {
       return engine.query!(context, args, this);
     });
   }
@@ -326,7 +341,7 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
   }
 
   _queryCSS(context: QueryContext, css: string): Element[] {
-    return this._cached<Element[]>(this._cacheQueryCSS, css, [context.scope, context.pierceShadow], () => {
+    return this._cached<Element[]>(this._cacheQueryCSS, css, [context.scope, context.pierceShadow, context.originalScope], () => {
       let result: Element[] = [];
       function query(root: Element | ShadowRoot | Document) {
         result = result.concat([...root.querySelectorAll(css)]);
@@ -384,20 +399,22 @@ const scopeEngine: SelectorEngine = {
   matches(element: Element, args: (string | number | Selector)[], context: QueryContext, evaluator: SelectorEvaluator): boolean {
     if (args.length !== 0)
       throw new Error(`"scope" engine expects no arguments`);
-    if (context.scope.nodeType === 9 /* Node.DOCUMENT_NODE */)
-      return element === (context.scope as Document).documentElement;
-    return element === context.scope;
+    const actualScope = context.originalScope || context.scope;
+    if (actualScope.nodeType === 9 /* Node.DOCUMENT_NODE */)
+      return element === (actualScope as Document).documentElement;
+    return element === actualScope;
   },
 
   query(context: QueryContext, args: (string | number | Selector)[], evaluator: SelectorEvaluator): Element[] {
     if (args.length !== 0)
       throw new Error(`"scope" engine expects no arguments`);
-    if (context.scope.nodeType === 9 /* Node.DOCUMENT_NODE */) {
-      const root = (context.scope as Document).documentElement;
+    const actualScope = context.originalScope || context.scope;
+    if (actualScope.nodeType === 9 /* Node.DOCUMENT_NODE */) {
+      const root = (actualScope as Document).documentElement;
       return root ? [root] : [];
     }
-    if (context.scope.nodeType === 1 /* Node.ELEMENT_NODE */)
-      return [context.scope as Element];
+    if (actualScope.nodeType === 1 /* Node.ELEMENT_NODE */)
+      return [actualScope as Element];
     return [];
   },
 };
