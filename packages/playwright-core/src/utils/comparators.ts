@@ -109,8 +109,11 @@ function compareText(actual: Buffer | string, expectedBuffer: Buffer): Comparato
   if (typeof actual !== 'string')
     return { errorMessage: 'Actual result should be a string' };
   const expected = expectedBuffer.toString('utf-8');
-  if (expected === actual)
+  const expectedNormalized = expected.replace('\r\n', '\n');
+  const actualNormalized = actual.replace('\r\n', '\n');
+  if (expectedNormalized === actualNormalized) {
     return null;
+  }
   const dmp = new diff_match_patch();
   const d = dmp.diff_main(expected, actual);
   dmp.diff_cleanupSemantic(d);
