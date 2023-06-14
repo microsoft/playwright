@@ -8,7 +8,7 @@ toc_max_heading_level: 2
 
 ### Highlights
 
-* New option `maskColor` for methods [`method: Page.screenshot`] and [`method: Locator.screenshot`] to change default masking color.
+* New option `mask_color` for methods [`method: Page.screenshot`] and [`method: Locator.screenshot`] to change default masking color.
 
 * New `uninstall` CLI command to uninstall browser binaries:
   ```bash
