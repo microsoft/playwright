@@ -161,7 +161,7 @@ const ImageWithSize: React.FunctionComponent<{
       <span style={{ flex: 'none', margin: '0 5px' }}>x</span>
       <span style={{ flex: '1 1 0', textAlign: 'start' }}>{ size ? size.height : ''}</span>
     </div>
-    <img src={src} onLoad={() => {
+    <img draggable='false' src={src} onLoad={() => {
       onLoad?.();
       if (ref.current)
         setSize({ width: ref.current.naturalWidth, height: ref.current.naturalHeight });

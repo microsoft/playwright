@@ -103,7 +103,7 @@ export const NetworkResourceDetails: React.FunctionComponent<{
         {resource.request.postData ? <div className='network-request-body'>{formatBody(requestBody, requestContentType)}</div> : ''}
         <div className='network-request-details-header'>Response Body</div>
         {!resource.response.content._sha1 ? <div className='network-request-response-body'>Response body is not available for this request.</div> : ''}
-        {responseBody !== null && responseBody.dataUrl ? <img src={responseBody.dataUrl} /> : ''}
+        {responseBody !== null && responseBody.dataUrl ? <img draggable='false' src={responseBody.dataUrl} /> : ''}
         {responseBody !== null && responseBody.text ? <div className='network-request-response-body'>{formatBody(responseBody.text, resource.response.content.mimeType)}</div> : ''}
       </div>
     </Expandable>

@@ -114,7 +114,7 @@ export class CRServiceWorker extends Worker {
       const r = new network.Route(request, route);
       if (this._browserContext._requestInterceptor?.(r, request))
         return;
-      r.continue();
+      r.continue({ isFallback: true });
     }
   }
 

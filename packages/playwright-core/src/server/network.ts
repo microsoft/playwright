@@ -313,7 +313,7 @@ export class Route extends SdkObject {
     headers.push({ name: 'vary', value: 'Origin' });
   }
 
-  async continue(overrides: types.NormalizedContinueOverrides = {}) {
+  async continue(overrides: types.NormalizedContinueOverrides) {
     this._startHandling();
     if (overrides.url) {
       const newUrl = new URL(overrides.url);

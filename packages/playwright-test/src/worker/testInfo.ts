@@ -238,7 +238,8 @@ export class TestInfoImpl implements TestInfo {
       const visit = (step: TestStepInternal) => {
         // Never nest into under another lax element, it could be a series
         // of no-reply actions, ala page.continue().
-        if (!step.endWallTime && step.category === data.category && !step.laxParent)
+        const canNest = step.category === data.category || step.category === 'expect' && data.category === 'attach';
+        if (!step.endWallTime && canNest && !step.laxParent)
           parentStep = step;
         step.steps.forEach(visit);
       };
@@ -352,6 +353,7 @@ export class TestInfoImpl implements TestInfo {
       title: `attach "${name}"`,
       category: 'attach',
       wallTime: Date.now(),
+      laxParent: true,
     });
     this._attachWithoutStep(attachment);
     step.complete({});
