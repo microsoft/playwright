@@ -17,6 +17,12 @@
 // @ts-check
 const path = require('path');
 const esbuild = require('esbuild');
+const fs = require('fs');
+
+{
+  // 'open' package requires 'xdg-open' script to be present, which does not get bundled by esbuild.
+  fs.copyFileSync(path.join(__dirname, 'node_modules/open/xdg-open'), path.join(__dirname, '../../lib/xdg-open'));
+}
 
 esbuild.build({
   entryPoints: [path.join(__dirname, 'src/utilsBundleImpl.ts')],
