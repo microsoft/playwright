@@ -68,6 +68,7 @@ function downloadFile(url: string, destinationPath: string, options: DownloadFil
     const file = fs.createWriteStream(destinationPath);
     file.on('finish', () => {
       if (downloadedBytes !== totalBytes) {
+        log(`-- download failed, size mismatch: ${downloadedBytes} != ${totalBytes}`);
         promise.reject(new Error(`Download failed: size mismatch, file size: ${downloadedBytes}, expected size: ${totalBytes} URL: ${url}`));
       } else {
         log(`-- download complete, size: ${downloadedBytes}`);

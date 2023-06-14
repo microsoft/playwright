@@ -21,12 +21,12 @@ const CDNS = [
   'https://playwright-verizon.azureedge.net',
 ];
 
-const DL_STAT_BLOCK = /^.*from url: (.*)$\n^.*to location: (.*)$\n^.*response status code: (.*)$\n^.*total bytes: (.*)$\n^.*SUCCESS downloading (\w+) .*$/gm;
+const DL_STAT_BLOCK = /^.*from url: (.*)$\n^.*to location: (.*)$\n^.*response status code: (.*)$\n^.*total bytes: (\d+)$\n^.*download complete, size: (\d+)$\n^.*SUCCESS downloading (\w+) .*$/gm;
 
 const parsedDownloads = (rawLogs: string) => {
   const out: { url: string, status: number, name: string }[] = [];
   for (const match of rawLogs.matchAll(DL_STAT_BLOCK)) {
-    const [, url, /* filepath */, status, /* size */, name] = match;
+    const [, url, /* filepath */, status, /* size */, /* receivedBytes */, name] = match;
     out.push({ url, status: Number.parseInt(status, 10), name: name.toLocaleLowerCase() });
   }
   return out;
