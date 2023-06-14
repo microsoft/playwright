@@ -82,7 +82,7 @@ export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.Inco
   request.on('error', onError);
   if (timeout !== undefined) {
     const rejectOnTimeout = () =>  {
-      onError(new Error(`Request to ${params.url} timed out after ${timeout}ms`));
+      onError(new Error(`Request to ${params.url} timed out after ${timeout}ms. Consider setting PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT if you haven't already.`));
       request.abort();
     };
     if (timeout <= 0) {
