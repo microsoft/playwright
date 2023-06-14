@@ -37,9 +37,13 @@ export async function downloadBrowserWithProgressBar(title: string, browserDirec
   try {
     const retryCount = 3;
     for (let attempt = 1; attempt <= retryCount; ++attempt) {
+      if (await existsAsync(zipPath)) {
+        logPolitely(`Skipping download because zip found at ${zipPath}.`);
+        break;
+      }
       debugLogger.log('install', `downloading ${title} - attempt #${attempt}`);
       const url = downloadURLs[(attempt - 1) % downloadURLs.length];
-      logPolitely(`Downloading ${title}` + colors.dim(` from ${url}`));
+      logPolitely(`Downloading ${title}` + colors.dim(` from ${url} to ${zipPath}`));
       const { error } = await downloadFileOutOfProcess(url, zipPath, getUserAgent(), downloadConnectionTimeout);
       if (!error) {
         debugLogger.log('install', `SUCCESS downloading ${title}`);
@@ -66,7 +70,7 @@ export async function downloadBrowserWithProgressBar(title: string, browserDirec
     if (await existsAsync(zipPath))
       await fs.promises.unlink(zipPath);
   }
-  logPolitely(`${title} downloaded to ${browserDirectory}`);
+  logPolitely(`${title} installed to ${browserDirectory}`);
   return true;
 }
 
@@ -84,6 +88,7 @@ function downloadFileOutOfProcess(url: string, destinationPath: string, userAgen
   });
   cp.on('exit', code => {
     if (code !== 0) {
+      fs.unlinkSync(destinationPath);  // prevent failed download from triggering unzip
       promise.resolve({ error: new Error(`Download failure, code=${code}`) });
       return;
     }
