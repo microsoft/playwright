@@ -16,14 +16,15 @@
 
 import fs from 'fs';
 import path from 'path';
-import { calculateSha1, createGuid } from 'playwright-core/lib/utils';
+import { ManualPromise, calculateSha1, createGuid } from 'playwright-core/lib/utils';
 import { mime } from 'playwright-core/lib/utilsBundle';
 import { Readable } from 'stream';
+import type { EventEmitter } from 'events';
 import type { FullConfig, FullResult, TestResult } from '../../types/testReporter';
 import type { Suite } from '../common/test';
 import type { JsonAttachment, JsonEvent } from '../isomorphic/teleReceiver';
 import { TeleReporterEmitter } from './teleEmitter';
-
+import { yazl } from 'playwright-core/lib/zipBundle';
 
 type BlobReporterOptions = {
   configDir: string;
@@ -41,7 +42,7 @@ export class BlobReporter extends TeleReporterEmitter {
   private _copyFilePromises = new Set<Promise<void>>();
 
   private _outputDir!: string;
-  private _reportFile!: string;
+  private _reportName!: string;
 
   constructor(options: BlobReporterOptions) {
     super(message => this._messages.push(message), false);
@@ -63,7 +64,7 @@ export class BlobReporter extends TeleReporterEmitter {
   override onBegin(config: FullConfig<{}, {}>, suite: Suite): void {
     this._outputDir = path.resolve(this._options.configDir, this._options.outputDir || 'blob-report');
     fs.mkdirSync(path.join(this._outputDir, 'resources'), { recursive: true });
-    this._reportFile = this._computeOutputFileName(config);
+    this._reportName = this._computeReportName(config);
     super.onBegin(config, suite);
   }
 
@@ -71,10 +72,21 @@ export class BlobReporter extends TeleReporterEmitter {
     await super.onEnd(result);
     const lines = this._messages.map(m => JSON.stringify(m) + '\n');
     const content = Readable.from(lines);
+
+    const zipFile = new yazl.ZipFile();
+    const zipFinishPromise = new ManualPromise<undefined>();
+    (zipFile as any as EventEmitter).on('error', error => zipFinishPromise.reject(error));
+    const zipFileName = path.join(this._outputDir, this._reportName + '.zip');
+    zipFile.outputStream.pipe(fs.createWriteStream(zipFileName)).on('close', () => {
+      zipFinishPromise.resolve(undefined);
+    });
+    zipFile.addReadStream(content, this._reportName + '.jsonl');
+    zipFile.end();
+
     await Promise.all([
       ...this._copyFilePromises,
       // Requires Node v14.18.0+
-      fs.promises.writeFile(this._reportFile, content as any).catch(e => console.error(`Failed to write report ${this._reportFile}: ${e}`))
+      zipFinishPromise.catch(e => console.error(`Failed to write report ${zipFileName}: ${e}`))
     ]);
   }
 
@@ -94,13 +106,13 @@ export class BlobReporter extends TeleReporterEmitter {
     });
   }
 
-  private _computeOutputFileName(config: FullConfig) {
+  private _computeReportName(config: FullConfig) {
     let shardSuffix = '';
     if (config.shard) {
       const paddedNumber = `${config.shard.current}`.padStart(`${config.shard.total}`.length, '0');
       shardSuffix = `${paddedNumber}-of-${config.shard.total}-`;
     }
-    return path.join(this._outputDir, `report-${shardSuffix}${createGuid()}.jsonl`);
+    return `report-${shardSuffix}${createGuid()}`;
   }
 
   private _startCopyingFile(from: string, to: string) {
