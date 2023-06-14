@@ -253,6 +253,7 @@ export class Chromium extends BrowserType {
               url: sessionInfoUrl,
               method: 'GET',
               timeout: progress.timeUntilDeadline(),
+              headers,
             }, seleniumErrorHandler);
             const proxyId = JSON.parse(sessionResponse).proxyId;
             endpointURL.hostname = new URL(proxyId).hostname;
