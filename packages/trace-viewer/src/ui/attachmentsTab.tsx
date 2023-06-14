@@ -45,7 +45,7 @@ export const AttachmentsTab: React.FunctionComponent<{
     {screenshots.size ? <div className='attachments-section'>Screenshots</div> : undefined}
     {[...screenshots].map((a, i) => {
       return <div className='attachment-item' key={`screenshot-${i}`}>
-        <div><img src={attachmentURL(traceUrl, a)} /></div>
+        <div><img draggable='false' src={attachmentURL(traceUrl, a)} /></div>
         <div><a target='_blank' href={attachmentURL(traceUrl, a)}>{a.name}</a></div>
       </div>;
     })}
