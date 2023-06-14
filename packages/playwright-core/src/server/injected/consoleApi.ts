@@ -20,7 +20,6 @@ import { escapeForTextSelector } from '../../utils/isomorphic/stringUtils';
 import { asLocator } from '../../utils/isomorphic/locatorGenerators';
 import type { Language } from '../../utils/isomorphic/locatorGenerators';
 import type { InjectedScript } from './injectedScript';
-import { generateSelector } from './selectorGenerator';
 
 const selectorSymbol = Symbol('selector');
 const injectedScriptSymbol = Symbol('injectedScript');
@@ -121,13 +120,13 @@ class ConsoleAPI {
   private _selector(element: Element) {
     if (!(element instanceof Element))
       throw new Error(`Usage: playwright.selector(element).`);
-    return generateSelector(this._injectedScript, element, this._injectedScript.testIdAttributeNameForStrictErrorAndConsoleCodegen()).selector;
+    return this._injectedScript.generateSelector(element);
   }
 
   private _generateLocator(element: Element, language?: Language) {
     if (!(element instanceof Element))
       throw new Error(`Usage: playwright.locator(element).`);
-    const selector = generateSelector(this._injectedScript, element, this._injectedScript.testIdAttributeNameForStrictErrorAndConsoleCodegen()).selector;
+    const selector = this._injectedScript.generateSelector(element);
     return asLocator(language || 'javascript', selector);
   }
 

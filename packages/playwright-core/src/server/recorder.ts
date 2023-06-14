@@ -556,7 +556,7 @@ class ContextRecorder extends EventEmitter {
       const utility = await parent._utilityContext();
       const injected = await utility.injectedScript();
       const selector = await injected.evaluate((injected, element) => {
-        return injected.generateSelector(element as Element, '', true);
+        return injected.generateSelector(element as Element, { testIdAttributeName: '', omitInternalEngines: true });
       }, frameElement);
       return selector;
     } catch (e) {
