@@ -63,12 +63,20 @@ function downloadFile(url: string, destinationPath: string, options: DownloadFil
           .on('error', handleError);
       return;
     }
-    const file = fs.createWriteStream(destinationPath);
-    file.on('finish', () => promise.resolve());
-    file.on('error', error => promise.reject(error));
-    response.pipe(file);
     totalBytes = parseInt(response.headers['content-length'] || '0', 10);
     log(`-- total bytes: ${totalBytes}`);
+    const file = fs.createWriteStream(destinationPath);
+    file.on('finish', () => {
+      if (downloadedBytes !== totalBytes) {
+        log(`-- download failed, size mismatch: ${downloadedBytes} != ${totalBytes}`);
+        promise.reject(new Error(`Download failed: size mismatch, file size: ${downloadedBytes}, expected size: ${totalBytes} URL: ${url}`));
+      } else {
+        log(`-- download complete, size: ${downloadedBytes}`);
+        promise.resolve();
+      }
+    });
+    file.on('error', error => promise.reject(error));
+    response.pipe(file);
     response.on('data', onData);
   }, (error: any) => promise.reject(error));
   return promise;
