@@ -46,6 +46,7 @@ function enclosingShadowHost(element: Element): Element | undefined {
   return parentElementOrShadowHost(element);
 }
 
+// Assumption: if scope is provided, element must be inside scope's subtree.
 export function closestCrossShadow(element: Element | undefined, css: string, scope?: Document | Element): Element | undefined {
   while (element) {
     const closest = element.closest(css);
