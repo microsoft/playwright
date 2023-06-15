@@ -23,6 +23,7 @@ import type { JsonConfig, JsonEvent, JsonProject, JsonSuite, JsonTestResultEnd }
 import { TeleReporterReceiver } from '../isomorphic/teleReceiver';
 import { createReporters } from '../runner/reporters';
 import { Multiplexer } from './multiplexer';
+import { ZipFile } from 'playwright-core/lib/utils';
 
 export async function createMergedReport(config: FullConfigInternal, dir: string, reporterDescriptions: ReporterDescription[], resolvePaths: boolean) {
   const shardFiles = await sortedShardFiles(dir);
@@ -52,8 +53,22 @@ function patchAttachmentPaths(events: JsonEvent[], resourceDir: string) {
   }
 }
 
-function parseEvents(reportJsonl: string): JsonEvent[] {
+function parseEvents(reportJsonl: Buffer): JsonEvent[] {
   return reportJsonl.toString().split('\n').filter(line => line.length).map(line => JSON.parse(line)) as JsonEvent[];
+}
+
+async function extractReportFromZip(file: string): Promise<Buffer> {
+  const zipFile = new ZipFile(file);
+  const entryNames = await zipFile.entries();
+  try {
+    for (const entryName of entryNames) {
+      if (entryName.endsWith('.jsonl'))
+        return await zipFile.read(entryName);
+    }
+  } finally {
+    zipFile.close();
+  }
+  throw new Error(`Cannot find *.jsonl file in ${file}`);
 }
 
 async function mergeEvents(dir: string, shardReportFiles: string[]) {
@@ -61,7 +76,7 @@ async function mergeEvents(dir: string, shardReportFiles: string[]) {
   const beginEvents: JsonEvent[] = [];
   const endEvents: JsonEvent[] = [];
   for (const reportFile of shardReportFiles) {
-    const reportJsonl = await fs.promises.readFile(path.join(dir, reportFile), 'utf8');
+    const reportJsonl = await extractReportFromZip(path.join(dir, reportFile));
     const parsedEvents = parseEvents(reportJsonl);
     for (const event of parsedEvents) {
       if (event.method === 'onBegin')
@@ -159,7 +174,7 @@ function mergeEndEvents(endEvents: JsonEvent[]): JsonEvent {
 
 async function sortedShardFiles(dir: string) {
   const files = await fs.promises.readdir(dir);
-  return files.filter(file => file.endsWith('.jsonl')).sort();
+  return files.filter(file => file.startsWith('report-') && file.endsWith('.zip')).sort();
 }
 
 class ProjectNamePatcher {
