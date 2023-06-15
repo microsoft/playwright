@@ -19,15 +19,20 @@ const path = require('path');
 const esbuild = require('esbuild');
 const fs = require('fs');
 
+const outdir = path.join(__dirname, '../../lib/utilsBundleImpl');
+
+if (!fs.existsSync(outdir))
+  fs.mkdirSync(outdir);
+
 {
-  // 'open' package requires 'xdg-open' script to be present, which does not get bundled by esbuild.
-  fs.copyFileSync(path.join(__dirname, 'node_modules/open/xdg-open'), path.join(__dirname, '../../lib/xdg-open'));
+  // 'open' package requires 'xdg-open' binary to be present, which does not get bundled by esbuild.
+  fs.copyFileSync(path.join(__dirname, 'node_modules/open/xdg-open'), path.join(outdir, 'xdg-open'));
 }
 
 esbuild.build({
   entryPoints: [path.join(__dirname, 'src/utilsBundleImpl.ts')],
   bundle: true,
-  outdir: path.join(__dirname, '../../lib'),
+  outfile: path.join(outdir, 'index.js'),
   format: 'cjs',
   platform: 'node',
   target: 'ES2019',
