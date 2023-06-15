@@ -28,6 +28,8 @@ type SelectorToken = {
 
 const cacheAllowText = new Map<Element, SelectorToken[] | null>();
 const cacheDisallowText = new Map<Element, SelectorToken[] | null>();
+const cacheAccesibleName = new Map<Element, string>();
+const cacheAccesibleNameHidden = new Map<Element, boolean>();
 
 const kTextScoreRange = 10;
 const kExactPenalty = kTextScoreRange / 2;
@@ -80,6 +82,8 @@ export function generateSelector(injectedScript: InjectedScript, targetElement: 
   } finally {
     cacheAllowText.clear();
     cacheDisallowText.clear();
+    cacheAccesibleName.clear();
+    cacheAccesibleNameHidden.clear();
     injectedScript._evaluator.end();
   }
 }
@@ -98,16 +102,15 @@ function generateSelectorFor(injectedScript: InjectedScript, targetElement: Elem
   if (targetElement.ownerDocument.documentElement === targetElement)
     return [{ engine: 'css', selector: 'html', score: 1 }];
 
-  const accessibleNameCache = new Map();
   const calculate = (element: Element, allowText: boolean): SelectorToken[] | null => {
     const allowNthMatch = element === targetElement;
 
-    let textCandidates = allowText ? buildTextCandidates(injectedScript, element, element === targetElement, accessibleNameCache) : [];
+    let textCandidates = allowText ? buildTextCandidates(injectedScript, element, element === targetElement) : [];
     if (element !== targetElement) {
       // Do not use regex for parent elements (for performance).
       textCandidates = filterRegexTokens(textCandidates);
     }
-    const noTextCandidates = buildCandidates(injectedScript, element, options, accessibleNameCache)
+    const noTextCandidates = buildNoTextCandidates(injectedScript, element, options)
         .filter(token => !options.omitInternalEngines || !token.engine.startsWith('internal:'))
         .map(token => [token]);
 
@@ -172,21 +175,22 @@ function generateSelectorFor(injectedScript: InjectedScript, targetElement: Elem
   return calculateCached(targetElement, true) || cssFallback(injectedScript, targetElement, options);
 }
 
-function buildCandidates(injectedScript: InjectedScript, element: Element, options: GenerateSelectorOptions, accessibleNameCache: Map<Element, boolean>): SelectorToken[] {
+function buildNoTextCandidates(injectedScript: InjectedScript, element: Element, options: GenerateSelectorOptions): SelectorToken[] {
   const candidates: SelectorToken[] = [];
 
-  // Start of generic candidates which are compatible for Locators and FrameLocators:
+  // CSS selectors are applicale to elements via locator() and iframes via frameLocator().
+  {
+    for (const attr of ['data-testid', 'data-test-id', 'data-test']) {
+      if (attr !== options.testIdAttributeName && element.getAttribute(attr))
+        candidates.push({ engine: 'css', selector: `[${attr}=${quoteAttributeValue(element.getAttribute(attr)!)}]`, score: kOtherTestIdScore });
+    }
 
-  for (const attr of ['data-testid', 'data-test-id', 'data-test']) {
-    if (attr !== options.testIdAttributeName && element.getAttribute(attr))
-      candidates.push({ engine: 'css', selector: `[${attr}=${quoteAttributeValue(element.getAttribute(attr)!)}]`, score: kOtherTestIdScore });
+    const idAttr = element.getAttribute('id');
+    if (idAttr && !isGuidLike(idAttr))
+      candidates.push({ engine: 'css', selector: makeSelectorForId(idAttr), score: kCSSIdScore });
+
+    candidates.push({ engine: 'css', selector: cssEscape(element.nodeName.toLowerCase()), score: kCSSTagNameScore });
   }
-
-  const idAttr = element.getAttribute('id');
-  if (idAttr && !isGuidLike(idAttr))
-    candidates.push({ engine: 'css', selector: makeSelectorForId(idAttr), score: kCSSIdScore });
-
-  candidates.push({ engine: 'css', selector: cssEscape(element.nodeName.toLowerCase()), score: kCSSTagNameScore });
 
   if (element.nodeName === 'IFRAME') {
     for (const attribute of ['name', 'title']) {
@@ -202,7 +206,7 @@ function buildCandidates(injectedScript: InjectedScript, element: Element, optio
     return candidates;
   }
 
-  // Everything below is not applicable to iframes (getBy* methods):
+  // Everything below is not applicable to iframes (getBy* methods).
   if (element.getAttribute(options.testIdAttributeName))
     candidates.push({ engine: 'internal:testid', selector: `[${options.testIdAttributeName}=${escapeForAttributeSelector(element.getAttribute(options.testIdAttributeName)!, true)}]`, score: kTestIdScore });
 
@@ -221,15 +225,8 @@ function buildCandidates(injectedScript: InjectedScript, element: Element, optio
   }
 
   const ariaRole = getAriaRole(element);
-  if (ariaRole && !['none', 'presentation'].includes(ariaRole)) {
-    const ariaName = getElementAccessibleName(element, false, accessibleNameCache);
-    if (ariaName) {
-      candidates.push({ engine: 'internal:role', selector: `${ariaRole}[name=${escapeForAttributeSelector(ariaName, false)}]`, score: kRoleWithNameScore });
-      candidates.push({ engine: 'internal:role', selector: `${ariaRole}[name=${escapeForAttributeSelector(ariaName, true)}]`, score: kRoleWithNameScoreExact });
-    } else {
-      candidates.push({ engine: 'internal:role', selector: ariaRole, score: kRoleWithoutNameScore });
-    }
-  }
+  if (ariaRole && !['none', 'presentation'].includes(ariaRole))
+    candidates.push({ engine: 'internal:role', selector: ariaRole, score: kRoleWithoutNameScore });
 
   if (element.getAttribute('alt') && ['APPLET', 'AREA', 'IMG', 'INPUT'].includes(element.nodeName)) {
     candidates.push({ engine: 'internal:attr', selector: `[alt=${escapeForAttributeSelector(element.getAttribute('alt')!, false)}]`, score: kAltTextScore });
@@ -256,43 +253,46 @@ function buildCandidates(injectedScript: InjectedScript, element: Element, optio
   return candidates;
 }
 
-function buildTextCandidates(injectedScript: InjectedScript, element: Element, isTargetNode: boolean, accessibleNameCache: Map<Element, boolean>): SelectorToken[][] {
+function buildTextCandidates(injectedScript: InjectedScript, element: Element, isTargetNode: boolean): SelectorToken[][] {
   if (element.nodeName === 'SELECT')
-    return [];
-  const text = normalizeWhiteSpace(elementText(injectedScript._evaluator._cacheText, element).full).substring(0, 80);
-  if (!text)
     return [];
   const candidates: SelectorToken[][] = [];
 
-  const escaped = escapeForTextSelector(text, false);
-
-  if (isTargetNode) {
-    candidates.push([{ engine: 'internal:text', selector: escaped, score: kTextScore }]);
-    candidates.push([{ engine: 'internal:text', selector: escapeForTextSelector(text, true), score: kTextScoreExact }]);
+  const fullText = normalizeWhiteSpace(elementText(injectedScript._evaluator._cacheText, element).full);
+  const text = fullText.substring(0, 80);
+  if (text) {
+    const escaped = escapeForTextSelector(text, false);
+    if (isTargetNode) {
+      candidates.push([{ engine: 'internal:text', selector: escaped, score: kTextScore }]);
+      candidates.push([{ engine: 'internal:text', selector: escapeForTextSelector(text, true), score: kTextScoreExact }]);
+    }
+    const cssToken: SelectorToken = { engine: 'css', selector: element.nodeName.toLowerCase(), score: kCSSTagNameScore };
+    candidates.push([cssToken, { engine: 'internal:has-text', selector: escaped, score: kTextScore }]);
+    if (fullText.length <= 80)
+      candidates.push([cssToken, { engine: 'internal:has-text', selector: '/^' + escapeRegExp(fullText) + '$/', score: kTextScoreRegex }]);
   }
 
   const ariaRole = getAriaRole(element);
-  const candidate: SelectorToken[] = [];
   if (ariaRole && !['none', 'presentation'].includes(ariaRole)) {
-    const ariaName = getElementAccessibleName(element, false, accessibleNameCache);
+    const ariaName = getAccessibleName(element);
     if (ariaName) {
-      candidate.push({ engine: 'internal:role', selector: `${ariaRole}[name=${escapeForAttributeSelector(ariaName, false)}]`, score: kRoleWithNameScore });
-      candidate.push({ engine: 'internal:role', selector: `${ariaRole}[name=${escapeForAttributeSelector(ariaName, true)}]`, score: kRoleWithNameScoreExact });
-    } else {
-      candidate.push({ engine: 'internal:role', selector: ariaRole, score: kRoleWithoutNameScore });
+      candidates.push([{ engine: 'internal:role', selector: `${ariaRole}[name=${escapeForAttributeSelector(ariaName, false)}]`, score: kRoleWithNameScore }]);
+      candidates.push([{ engine: 'internal:role', selector: `${ariaRole}[name=${escapeForAttributeSelector(ariaName, true)}]`, score: kRoleWithNameScoreExact }]);
     }
-  } else {
-    candidate.push({ engine: 'css', selector: element.nodeName.toLowerCase(), score: kCSSTagNameScore });
   }
-  candidates.push([...candidate, { engine: 'internal:has-text', selector: escaped, score: kTextScore }]);
-  if (text.length <= 80)
-    candidates.push([...candidate, { engine: 'internal:has-text', selector: '/^' + escapeRegExp(text) + '$/', score: kTextScoreRegex }]);
+
   penalizeScoreForLength(candidates);
   return candidates;
 }
 
 function makeSelectorForId(id: string) {
   return /^[a-zA-Z][a-zA-Z0-9\-\_]+$/.test(id) ? '#' + id : `[id="${cssEscape(id)}"]`;
+}
+
+function getAccessibleName(element: Element) {
+  if (!cacheAccesibleName.has(element))
+    cacheAccesibleName.set(element, getElementAccessibleName(element, false, cacheAccesibleNameHidden));
+  return cacheAccesibleName.get(element)!;
 }
 
 function cssFallback(injectedScript: InjectedScript, targetElement: Element, options: GenerateSelectorOptions): SelectorToken[] {
