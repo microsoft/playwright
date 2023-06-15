@@ -379,7 +379,8 @@ it('should fulfill preload link requests', async ({ page, server, browserName })
 });
 
 it('should fulfill json', async ({ page, server }) => {
-  await page.route('**/*', route => {
+  await page.goto(server.EMPTY_PAGE);
+  await page.route('**/data.json', route => {
     void route.fulfill({
       status: 201,
       headers: {
@@ -388,8 +389,11 @@ it('should fulfill json', async ({ page, server }) => {
       json: { bar: 'baz' },
     });
   });
-  const response = await page.goto(server.EMPTY_PAGE);
+  const [response, body] = await Promise.all([
+    page.waitForResponse('**/*'),
+    page.evaluate(() => fetch('./data.json').then(r => r.text()))
+  ]);
   expect(response.status()).toBe(201);
   expect(response.headers()['content-type']).toBe('application/json');
-  expect(await page.evaluate(() => document.body.textContent)).toBe(JSON.stringify({ bar: 'baz' }));
+  expect(body).toBe(JSON.stringify({ bar: 'baz' }));
 });
