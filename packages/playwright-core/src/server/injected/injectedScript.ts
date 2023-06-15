@@ -21,7 +21,7 @@ import { VueEngine } from './vueSelectorEngine';
 import { createRoleEngine } from './roleSelectorEngine';
 import { parseAttributeSelector } from '../../utils/isomorphic/selectorParser';
 import type { NestedSelectorBody, ParsedSelector, ParsedSelectorPart } from '../../utils/isomorphic/selectorParser';
-import { allEngineNames, parseSelector, stringifySelector } from '../../utils/isomorphic/selectorParser';
+import { visitAllSelectorParts, parseSelector, stringifySelector } from '../../utils/isomorphic/selectorParser';
 import { type TextMatcher, elementMatchesText, elementText, type ElementText } from './selectorUtils';
 import { SelectorEvaluatorImpl, sortInDOMOrder } from './selectorEvaluator';
 import { enclosingShadowRootOrDocument, isElementVisible, parentElementOrShadowHost } from './domUtils';
@@ -146,10 +146,10 @@ export class InjectedScript {
 
   parseSelector(selector: string): ParsedSelector {
     const result = parseSelector(selector);
-    for (const name of allEngineNames(result)) {
-      if (!this._engines.has(name))
-        throw this.createStacklessError(`Unknown engine "${name}" while parsing selector ${selector}`);
-    }
+    visitAllSelectorParts(result, part => {
+      if (!this._engines.has(part.name))
+        throw this.createStacklessError(`Unknown engine "${part.name}" while parsing selector ${selector}`);
+    });
     return result;
   }
 
