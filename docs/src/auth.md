@@ -44,7 +44,7 @@ This is the **recommended** approach for tests **without server-side state**. Au
 Create `tests/auth.setup.ts` that will prepare authenticated browser state for all other tests.
 
 ```js title="tests/auth.setup.ts"
-import { test as setup } from '@playwright/test';
+import { test as setup, expect } from '@playwright/test';
 
 const authFile = 'playwright/.auth/user.json';
 
@@ -130,7 +130,7 @@ We will authenticate once per [worker process](./test-parallel.md#worker-process
 Create `playwright/fixtures.ts` file that will [override `storageState` fixture](./test-fixtures.md#overriding-fixtures) to authenticate once per worker. Use [`property: TestInfo.parallelIndex`] to differentiate between workers.
 
 ```js title="playwright/fixtures.ts"
-import { test as baseTest } from '@playwright/test';
+import { test as baseTest, expect } from '@playwright/test';
 import fs from 'fs';
 import path from 'path';
 
@@ -390,7 +390,7 @@ export const test = baseTest.extend<{}, { workerStorageState: string }>({
 We will authenticate multiple times in the setup project.
 
 ```js title="tests/auth.setup.ts"
-import { test as setup } from '@playwright/test';
+import { test as setup, expect } from '@playwright/test';
 
 const adminFile = 'playwright/.auth/admin.json';
 
