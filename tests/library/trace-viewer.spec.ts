@@ -850,3 +850,38 @@ test('should open trace-1.31', async ({ showTraceViewer }) => {
   const snapshot = await traceViewer.snapshotFrame('locator.click');
   await expect(snapshot.locator('[__playwright_target__]')).toHaveText(['Submit']);
 });
+
+test('should prefer later resource request', async ({ page, server, runAndTrace }) => {
+  const html = `
+    <body>
+      <script>
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'style.css';
+        document.head.appendChild(link);
+
+        if (!window.location.href.includes('reloaded'))
+          window.location.href = window.location.href + '?reloaded';
+      </script>
+    </body>
+  `;
+
+  let reloadStartedCallback = () => {};
+  const reloadStartedPromise = new Promise<void>(f => reloadStartedCallback = f);
+  server.setRoute('/style.css', async (req, res) => {
+    // Make sure reload happens before style arrives.
+    await reloadStartedPromise;
+    res.end('body { background-color: rgb(123, 123, 123) }');
+  });
+  server.setRoute('/index.html', (req, res) => res.end(html));
+  server.setRoute('/index.html?reloaded', (req, res) => {
+    reloadStartedCallback();
+    res.end(html);
+  });
+
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.PREFIX + '/index.html');
+  });
+  const frame = await traceViewer.snapshotFrame('page.goto');
+  await expect(frame.locator('body')).toHaveCSS('background-color', 'rgb(123, 123, 123)');
+});
