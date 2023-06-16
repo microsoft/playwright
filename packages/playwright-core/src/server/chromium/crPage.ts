@@ -758,7 +758,7 @@ class FrameSession {
     });
     session.on('Runtime.exceptionThrown', exception => this._page.emit(Page.Events.PageError, exceptionToError(exception.exceptionDetails)));
     // TODO: attribute workers to the right frame.
-    this._networkManager.instrumentNetworkEvents(session, this._page._frameManager.frame(this._targetId)!);
+    this._networkManager.instrumentNetworkEvents({ session, workerFrame: this._page._frameManager.frame(this._targetId) ?? undefined });
   }
 
   _onDetachedFromTarget(event: Protocol.Target.detachedFromTargetPayload) {

@@ -18,6 +18,7 @@
 import { test as it, expect } from './pageTest';
 import { attachFrame } from '../config/utils';
 import type { ConsoleMessage } from 'playwright-core';
+import fs from 'fs';
 
 it('Page.workers @smoke', async function({ page, server }) {
   await Promise.all([
@@ -143,7 +144,7 @@ it('should attribute network activity for worker inside iframe to the iframe', a
   expect(request.frame()).toBe(frame);
 });
 
-it('should report network activity', async function({ page, server, browserName, browserMajorVersion }) {
+it('should report network activity', async function({ page, server, browserName, browserMajorVersion, asset }) {
   it.skip(browserName === 'firefox' && browserMajorVersion < 114, 'https://github.com/microsoft/playwright/issues/21760');
   const [worker] = await Promise.all([
     page.waitForEvent('worker'),
@@ -158,6 +159,7 @@ it('should report network activity', async function({ page, server, browserName,
   expect(request.url()).toBe(url);
   expect(response.request()).toBe(request);
   expect(response.ok()).toBe(true);
+  expect(await response.text()).toBe(fs.readFileSync(asset('one-style.css'), 'utf8'));
 });
 
 it('should report network activity on worker creation', async function({ page, server, browserName, browserMajorVersion }) {
