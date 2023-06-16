@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import type { Stats, TestCase, TestFile, TestFileSummary } from './types';
+import type { FilteredStats, TestCase, TestFile, TestFileSummary } from './types';
 import * as React from 'react';
 import './colors.css';
 import './common.css';
@@ -47,11 +47,11 @@ export const ReportView: React.FC<{
   const [filterText, setFilterText] = React.useState(searchParams.get('q') || '');
 
   const filter = React.useMemo(() => Filter.parse(filterText), [filterText]);
-  const stats = React.useMemo(() => computeStats(report?.json().files || [], filter), [report, filter]);
+  const filteredStats = React.useMemo(() => computeStats(report?.json().files || [], filter), [report, filter]);
 
   return <div className='htmlreport vbox px-4 pb-4'>
     <main>
-      {report?.json() && <HeaderView stats={stats} filterText={filterText} setFilterText={setFilterText}></HeaderView>}
+      {report?.json() && <HeaderView stats={report.json().stats} filterText={filterText} setFilterText={setFilterText}></HeaderView>}
       {report?.json().metadata && <MetadataView {...report?.json().metadata as Metainfo} />}
       <Route predicate={testFilesRoutePredicate}>
         <TestFilesView
@@ -60,7 +60,7 @@ export const ReportView: React.FC<{
           expandedFiles={expandedFiles}
           setExpandedFiles={setExpandedFiles}
           projectNames={report?.json().projectNames || []}
-          stats={stats}
+          filteredStats={filteredStats}
         />
       </Route>
       <Route predicate={testCaseRoutePredicate}>
@@ -97,30 +97,16 @@ const TestCaseViewLoader: React.FC<{
   return <TestCaseView projectNames={report.json().projectNames} test={test} anchor={anchor} run={run}></TestCaseView>;
 };
 
-function computeStats(files: TestFileSummary[], filter: Filter): Stats {
-  const stats: Stats = {
+function computeStats(files: TestFileSummary[], filter: Filter): FilteredStats {
+  const stats: FilteredStats = {
     total: 0,
-    expected: 0,
-    unexpected: 0,
-    flaky: 0,
-    skipped: 0,
-    ok: true,
     duration: 0,
   };
   for (const file of files) {
     const tests = file.tests.filter(t => filter.matches(t));
-    for (const test of tests) {
-      if (test.outcome === 'expected')
-        ++stats.expected;
-      if (test.outcome === 'skipped')
-        ++stats.skipped;
-      if (test.outcome === 'unexpected')
-        ++stats.unexpected;
-      if (test.outcome === 'flaky')
-        ++stats.flaky;
-      ++stats.total;
+    stats.total += tests.length;
+    for (const test of tests)
       stats.duration += test.duration;
-    }
   }
   return stats;
 }
