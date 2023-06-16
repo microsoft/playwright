@@ -16,149 +16,155 @@
 
 import { test, expect } from './playwright-test-fixtures';
 
-test('render unexpected after retry', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'a.test.js': `
-      const { test, expect } = require('@playwright/test');
-      test('one', async ({}) => {
-        expect(1).toBe(0);
-      });
-    `,
-  }, { retries: 3, reporter: 'line' });
-  const text = result.output;
-  expect(text).toContain('[1/1] a.test.js:3:7 › one');
-  expect(text).toContain('[2/1] (retries) a.test.js:3:7 › one (retry #1)');
-  expect(text).toContain('[3/1] (retries) a.test.js:3:7 › one (retry #2)');
-  expect(text).toContain('[4/1] (retries) a.test.js:3:7 › one (retry #3)');
-  expect(text).toContain('1 failed');
-  expect(text).toContain('1) a.test');
-  expect(text).not.toContain('2) a.test');
-  expect(text).toContain('Retry #1 ────');
-  expect(text).toContain('Retry #2 ────');
-  expect(text).toContain('Retry #3 ────');
-  expect(result.exitCode).toBe(1);
-});
+for (const useIntermediateMergeReport of [false, true] as const) {
+  test.describe(`${useIntermediateMergeReport ? 'merged' : 'created'}`, () => {
+    test.use({ useIntermediateMergeReport });
 
-test('render flaky', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'a.test.js': `
-      import { test, expect } from '@playwright/test';
-      test('one', async ({}, testInfo) => {
-        expect(testInfo.retry).toBe(3);
-      });
-    `,
-  }, { retries: 3, reporter: 'line' });
-  const text = result.output;
-  expect(text).toContain('1 flaky');
-  expect(result.exitCode).toBe(0);
-});
-
-test('should print flaky failures', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'a.spec.ts': `
-      import { test, expect } from '@playwright/test';
-      test('foobar', async ({}, testInfo) => {
-        expect(testInfo.retry).toBe(1);
-      });
-    `
-  }, { retries: '1', reporter: 'line' });
-  expect(result.exitCode).toBe(0);
-  expect(result.flaky).toBe(1);
-  expect(result.output).toContain('expect(testInfo.retry).toBe(1)');
-});
-
-test('should work on CI', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'a.test.js': `
-      const { test, expect } = require('@playwright/test');
-      test('one', async ({}) => {
-        expect(1).toBe(0);
-      });
-    `,
-  }, { reporter: 'line' }, { CI: '1' });
-  const text = result.output;
-  expect(text).toContain('[1/1] a.test.js:3:7 › one');
-  expect(text).toContain('1 failed');
-  expect(text).toContain('1) a.test');
-  expect(result.exitCode).toBe(1);
-});
-
-test('should print output', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'a.spec.ts': `
-      import { test, expect } from '@playwright/test';
-      test('foobar', async ({}, testInfo) => {
-        process.stdout.write('one');
-        process.stdout.write('two');
-        console.log('full-line');
-      });
-    `
-  }, { reporter: 'line' });
-  expect(result.exitCode).toBe(0);
-  expect(result.output).toContain([
-    'a.spec.ts:3:11 › foobar',
-    'one',
-    '',
-    'two',
-    '',
-    'full-line',
-  ].join('\n'));
-});
-
-test('should render failed test steps', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'a.test.ts': `
-      import { test, expect } from '@playwright/test';
-      test('passes', async ({}) => {
-        await test.step('outer 1.0', async () => {
-          await test.step('inner 1.1', async () => {
-            expect(1).toBe(2);
+    test('render unexpected after retry', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'a.test.js': `
+          const { test, expect } = require('@playwright/test');
+          test('one', async ({}) => {
+            expect(1).toBe(0);
           });
-        });
-      });
-    `,
-  }, { reporter: 'line' });
-  const text = result.output;
-  expect(text).toContain('1) a.test.ts:3:11 › passes › outer 1.0 › inner 1.1 ──');
-  expect(result.exitCode).toBe(1);
-});
+        `,
+      }, { retries: 3, reporter: 'line' });
+      const text = result.output;
+      expect(text).toContain('[1/1] a.test.js:3:11 › one');
+      expect(text).toContain('[2/1] (retries) a.test.js:3:11 › one (retry #1)');
+      expect(text).toContain('[3/1] (retries) a.test.js:3:11 › one (retry #2)');
+      expect(text).toContain('[4/1] (retries) a.test.js:3:11 › one (retry #3)');
+      expect(text).toContain('1 failed');
+      expect(text).toContain('1) a.test');
+      expect(text).not.toContain('2) a.test');
+      expect(text).toContain('Retry #1 ────');
+      expect(text).toContain('Retry #2 ────');
+      expect(text).toContain('Retry #3 ────');
+      expect(result.exitCode).toBe(1);
+    });
 
-test('should not render more than one failed test steps in header', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'a.test.ts': `
-      import { test, expect } from '@playwright/test';
-      test('passes', async ({}) => {
-        await test.step('outer 1.0', async () => {
-          await test.step('inner 1.1', async () => {
+    test('render flaky', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('one', async ({}, testInfo) => {
+            expect(testInfo.retry).toBe(3);
+          });
+        `,
+      }, { retries: 3, reporter: 'line' });
+      const text = result.output;
+      expect(text).toContain('1 flaky');
+      expect(result.exitCode).toBe(0);
+    });
+
+    test('should print flaky failures', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'a.spec.ts': `
+          import { test, expect } from '@playwright/test';
+          test('foobar', async ({}, testInfo) => {
+            expect(testInfo.retry).toBe(1);
+          });
+        `
+      }, { retries: '1', reporter: 'line' });
+      expect(result.exitCode).toBe(0);
+      expect(result.flaky).toBe(1);
+      expect(result.output).toContain('expect(testInfo.retry).toBe(1)');
+    });
+
+    test('should work on CI', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'a.test.js': `
+          const { test, expect } = require('@playwright/test');
+          test('one', async ({}) => {
+            expect(1).toBe(0);
+          });
+        `,
+      }, { reporter: 'line' }, { CI: '1' });
+      const text = result.output;
+      expect(text).toContain('[1/1] a.test.js:3:11 › one');
+      expect(text).toContain('1 failed');
+      expect(text).toContain('1) a.test');
+      expect(result.exitCode).toBe(1);
+    });
+
+    test('should print output', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'a.spec.ts': `
+          import { test, expect } from '@playwright/test';
+          test('foobar', async ({}, testInfo) => {
+            process.stdout.write('one');
+            process.stdout.write('two');
+            console.log('full-line');
+          });
+        `
+      }, { reporter: 'line' });
+      expect(result.exitCode).toBe(0);
+      expect(result.output).toContain([
+        'a.spec.ts:3:15 › foobar',
+        'one',
+        '',
+        'two',
+        '',
+        'full-line',
+      ].join('\n'));
+    });
+
+    test('should render failed test steps', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'a.test.ts': `
+          import { test, expect } from '@playwright/test';
+          test('passes', async ({}) => {
+            await test.step('outer 1.0', async () => {
+              await test.step('inner 1.1', async () => {
+                expect(1).toBe(2);
+              });
+            });
+          });
+        `,
+      }, { reporter: 'line' });
+      const text = result.output;
+      expect(text).toContain('1) a.test.ts:3:15 › passes › outer 1.0 › inner 1.1 ──');
+      expect(result.exitCode).toBe(1);
+    });
+
+    test('should not render more than one failed test steps in header', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'a.test.ts': `
+          import { test, expect } from '@playwright/test';
+          test('passes', async ({}) => {
+            await test.step('outer 1.0', async () => {
+              await test.step('inner 1.1', async () => {
+                expect.soft(1).toBe(2);
+              });
+              await test.step('inner 1.2', async () => {
+                expect.soft(1).toBe(2);
+              });
+            });
+          });
+        `,
+      }, { reporter: 'line' });
+      const text = result.output;
+      expect(text).toContain('1) a.test.ts:3:15 › passes › outer 1.0 ──');
+      expect(result.exitCode).toBe(1);
+    });
+
+    test('should not render more than one failed test steps in header (2)', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'a.test.ts': `
+          import { test, expect } from '@playwright/test';
+          test('passes', async ({}) => {
+            await test.step('outer 1.0', async () => {
+              await test.step('inner 1.1', async () => {
+                expect.soft(1).toBe(2);
+              });
+            });
             expect.soft(1).toBe(2);
           });
-          await test.step('inner 1.2', async () => {
-            expect.soft(1).toBe(2);
-          });
-        });
-      });
-    `,
-  }, { reporter: 'line' });
-  const text = result.output;
-  expect(text).toContain('1) a.test.ts:3:11 › passes › outer 1.0 ──');
-  expect(result.exitCode).toBe(1);
-});
-
-test('should not render more than one failed test steps in header (2)', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'a.test.ts': `
-      import { test, expect } from '@playwright/test';
-      test('passes', async ({}) => {
-        await test.step('outer 1.0', async () => {
-          await test.step('inner 1.1', async () => {
-            expect.soft(1).toBe(2);
-          });
-        });
-        expect.soft(1).toBe(2);
-      });
-    `,
-  }, { reporter: 'line' });
-  const text = result.output;
-  expect(text).toContain('1) a.test.ts:3:11 › passes ──');
-  expect(result.exitCode).toBe(1);
-});
+        `,
+      }, { reporter: 'line' });
+      const text = result.output;
+      expect(text).toContain('1) a.test.ts:3:15 › passes ──');
+      expect(result.exitCode).toBe(1);
+    });
+  });
+}
