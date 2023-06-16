@@ -15,21 +15,19 @@
  */
 
 import * as fs from 'fs';
+import type { PlaywrightTestConfig } from 'packages/playwright-test';
 import path from 'path';
 import url from 'url';
 import type { HttpServer } from '../../packages/playwright-core/src/utils';
 import { startHtmlReportServer } from '../../packages/playwright-test/lib/reporters/html';
-import { type CliRunResult, type RunOptions, stripAnsi } from './playwright-test-fixtures';
-import { cleanEnv, cliEntrypoint, expect as baseExpect, test as baseTest } from './playwright-test-fixtures';
-import type { PlaywrightTestConfig } from 'packages/playwright-test';
+import { expect as baseExpect, test as baseTest, stripAnsi } from './playwright-test-fixtures';
 
 const DOES_NOT_SUPPORT_UTF8_IN_TERMINAL = process.platform === 'win32' && process.env.TERM_PROGRAM !== 'vscode' && !process.env.WT_SESSION;
 const POSITIVE_STATUS_MARK = DOES_NOT_SUPPORT_UTF8_IN_TERMINAL ? 'ok' : '✓ ';
 const NEGATIVE_STATUS_MARK = DOES_NOT_SUPPORT_UTF8_IN_TERMINAL ? 'x ' : '✘ ';
 
 const test = baseTest.extend<{
-  showReport: (reportFolder?: string) => Promise<void>,
-  mergeReports: (reportFolder: string, env?: NodeJS.ProcessEnv, options?: RunOptions) => Promise<CliRunResult>
+  showReport: (reportFolder?: string) => Promise<void>
       }>({
         showReport: async ({ page }, use) => {
           let server: HttpServer | undefined;
@@ -40,22 +38,6 @@ const test = baseTest.extend<{
             await page.goto(location);
           });
           await server?.stop();
-        },
-        mergeReports: async ({ childProcess }, use) => {
-          await use(async (reportFolder: string, env: NodeJS.ProcessEnv = {}, options: RunOptions = {}) => {
-            const command = ['node', cliEntrypoint, 'merge-reports', reportFolder];
-            if (options.additionalArgs)
-              command.push(...options.additionalArgs);
-
-            const cwd = options.cwd ? path.resolve(test.info().outputDir, options.cwd) : test.info().outputDir;
-            const testProcess = childProcess({
-              command,
-              env: cleanEnv(env),
-              cwd,
-            });
-            const { exitCode } = await testProcess.exited;
-            return { exitCode, output: testProcess.output.toString() };
-          });
         }
       });
 
@@ -379,7 +361,7 @@ test('merge into list report by default', async ({ runInlineTest, mergeReports }
   const reportFiles = await fs.promises.readdir(reportDir);
   reportFiles.sort();
   expect(reportFiles).toEqual([expect.stringMatching(/report-1-of-3.*.zip/), expect.stringMatching(/report-2-of-3.*.zip/), expect.stringMatching(/report-3-of-3.*.zip/), 'resources']);
-  const { exitCode, output } = await mergeReports(reportDir, { PW_TEST_DEBUG_REPORTERS: '1', PW_TEST_DEBUG_REPORTERS_PRINT_STEPS: '1', PWTEST_TTY_WIDTH: '80' }, { additionalArgs: ['--reporter', 'list'] });
+  const { exitCode, output } = await mergeReports(reportDir, undefined, { additionalArgs: ['--reporter', 'list'] });
   expect(exitCode).toBe(0);
 
   const text = stripAnsi(output);
@@ -662,7 +644,7 @@ test('multiple output reports', async ({ runInlineTest, mergeReports, showReport
   const reportFiles = await fs.promises.readdir(reportDir);
   reportFiles.sort();
   expect(reportFiles).toEqual([expect.stringMatching(/report-1-of-2.*.zip/), 'resources']);
-  const { exitCode, output } = await mergeReports(reportDir, { 'PW_TEST_HTML_REPORT_OPEN': 'never', 'PW_TEST_DEBUG_REPORTERS': '1' }, { additionalArgs: ['--reporter', 'html,line'] });
+  const { exitCode, output } = await mergeReports(reportDir, { 'PW_TEST_HTML_REPORT_OPEN': 'never' }, { additionalArgs: ['--reporter', 'html,line'] });
   expect(exitCode).toBe(0);
 
   // Check that line reporter was called.
@@ -723,7 +705,7 @@ test('multiple output reports based on config', async ({ runInlineTest, mergeRep
   const reportFiles = await fs.promises.readdir(reportDir);
   reportFiles.sort();
   expect(reportFiles).toEqual([expect.stringMatching(/report-1-of-2.*.zip/), expect.stringMatching(/report-2-of-2.*.zip/), 'resources']);
-  const { exitCode, output } = await mergeReports(reportDir, { 'PW_TEST_DEBUG_REPORTERS': '1' }, { additionalArgs: ['--config', test.info().outputPath('merged/playwright.config.ts')] });
+  const { exitCode, output } = await mergeReports(reportDir, undefined, { additionalArgs: ['--config', test.info().outputPath('merged/playwright.config.ts')] });
   expect(exitCode).toBe(0);
 
   // Check that line reporter was called.
