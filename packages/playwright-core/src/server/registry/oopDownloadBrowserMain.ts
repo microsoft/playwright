@@ -18,6 +18,9 @@ import fs from 'fs';
 import { progress as ProgressBar } from '../../utilsBundle';
 import { httpRequest } from '../../utils/network';
 import { ManualPromise } from '../../utils/manualPromise';
+import { extract } from '../../zipBundle';
+import { getUserAgent } from '../../utils/userAgent';
+import { browserDirectoryToMarkerFilePath } from '.';
 
 type OnProgressCallback = (downloadedBytes: number, totalBytes: number) => void;
 type DownloadFileLogger = (message: string) => void;
@@ -140,13 +143,24 @@ function toMegabytes(bytes: number) {
 }
 
 async function main() {
-  const [url, destination, userAgent, downloadConnectionTimeout] = process.argv.slice(2);
-  await downloadFile(url, destination, {
+  const log = (message: string) => process.send?.({ method: 'log', params: { message } });
+  const [title, browserDirectory, url, zipPath, executablePath, downloadConnectionTimeout] = process.argv.slice(2);
+  await downloadFile(url, zipPath, {
     progressCallback: getDownloadProgress(),
-    userAgent,
-    log: message => process.send?.({ method: 'log', params: { message } }),
+    userAgent: getUserAgent(),
+    log,
     connectionTimeout: +downloadConnectionTimeout,
   });
+  log(`SUCCESS downloading ${title}`);
+  log(`extracting archive`);
+  log(`-- zip: ${zipPath}`);
+  log(`-- location: ${browserDirectory}`);
+  await extract(zipPath, { dir: browserDirectory });
+  if (executablePath) {
+    log(`fixing permissions at ${executablePath}`);
+    await fs.promises.chmod(executablePath, 0o755);
+  }
+  await fs.promises.writeFile(browserDirectoryToMarkerFilePath(browserDirectory), '');
 }
 
 main().catch(error => {

@@ -839,7 +839,6 @@ export class Registry {
     await downloadBrowserWithProgressBar(title, descriptor.dir, executablePath, downloadURLs, downloadFileName, downloadConnectionTimeout).catch(e => {
       throw new Error(`Failed to download ${title}, caused by\n${e.stack}`);
     });
-    await fs.promises.writeFile(markerFilePath(descriptor.dir), '');
   }
 
   private async _installMSEdgeChannel(channel: 'msedge'|'msedge-beta'|'msedge-dev', scripts: Record<'linux' | 'darwin' | 'win32', string>) {
@@ -920,7 +919,7 @@ export class Registry {
               (browserName === 'webkit' && browserRevision >= 1307) ||
               // All new applications have a marker file right away.
               (browserName !== 'firefox' && browserName !== 'chromium' && browserName !== 'webkit');
-          if (!shouldHaveMarkerFile || (await existsAsync(markerFilePath(usedBrowserPath))))
+          if (!shouldHaveMarkerFile || (await existsAsync(browserDirectoryToMarkerFilePath(usedBrowserPath))))
             usedBrowserPaths.add(usedBrowserPath);
         }
       } catch (e) {
@@ -942,7 +941,7 @@ export class Registry {
   }
 }
 
-function markerFilePath(browserDirectory: string): string {
+export function browserDirectoryToMarkerFilePath(browserDirectory: string): string {
   return path.join(browserDirectory, 'INSTALLATION_COMPLETE');
 }
 
