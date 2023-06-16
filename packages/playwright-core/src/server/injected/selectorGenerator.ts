@@ -17,7 +17,7 @@
 import { cssEscape, escapeForAttributeSelector, escapeForTextSelector, normalizeWhiteSpace } from '../../utils/isomorphic/stringUtils';
 import { closestCrossShadow, isInsideScope, parentElementOrShadowHost } from './domUtils';
 import type { InjectedScript } from './injectedScript';
-import { getAriaRole, getElementAccessibleName } from './roleUtils';
+import { getAriaRole, getElementAccessibleName, beginAriaCaches, endAriaCaches } from './roleUtils';
 import { elementText } from './selectorUtils';
 
 type SelectorToken = {
@@ -28,8 +28,6 @@ type SelectorToken = {
 
 const cacheAllowText = new Map<Element, SelectorToken[] | null>();
 const cacheDisallowText = new Map<Element, SelectorToken[] | null>();
-const cacheAccesibleName = new Map<Element, string>();
-const cacheAccesibleNameHidden = new Map<Element, boolean>();
 
 const kTextScoreRange = 10;
 const kExactPenalty = kTextScoreRange / 2;
@@ -70,6 +68,7 @@ export type GenerateSelectorOptions = {
 
 export function generateSelector(injectedScript: InjectedScript, targetElement: Element, options: GenerateSelectorOptions): { selector: string, elements: Element[] } {
   injectedScript._evaluator.begin();
+  beginAriaCaches();
   try {
     targetElement = closestCrossShadow(targetElement, 'button,select,input,[role=button],[role=checkbox],[role=radio],a,[role=link]', options.root) || targetElement;
     const targetTokens = generateSelectorFor(injectedScript, targetElement, options);
@@ -82,8 +81,7 @@ export function generateSelector(injectedScript: InjectedScript, targetElement: 
   } finally {
     cacheAllowText.clear();
     cacheDisallowText.clear();
-    cacheAccesibleName.clear();
-    cacheAccesibleNameHidden.clear();
+    endAriaCaches();
     injectedScript._evaluator.end();
   }
 }
@@ -274,7 +272,7 @@ function buildTextCandidates(injectedScript: InjectedScript, element: Element, i
 
   const ariaRole = getAriaRole(element);
   if (ariaRole && !['none', 'presentation'].includes(ariaRole)) {
-    const ariaName = getAccessibleName(element);
+    const ariaName = getElementAccessibleName(element, false);
     if (ariaName) {
       candidates.push([{ engine: 'internal:role', selector: `${ariaRole}[name=${escapeForAttributeSelector(ariaName, false)}]`, score: kRoleWithNameScore }]);
       candidates.push([{ engine: 'internal:role', selector: `${ariaRole}[name=${escapeForAttributeSelector(ariaName, true)}]`, score: kRoleWithNameScoreExact }]);
@@ -287,12 +285,6 @@ function buildTextCandidates(injectedScript: InjectedScript, element: Element, i
 
 function makeSelectorForId(id: string) {
   return /^[a-zA-Z][a-zA-Z0-9\-\_]+$/.test(id) ? '#' + id : `[id="${cssEscape(id)}"]`;
-}
-
-function getAccessibleName(element: Element) {
-  if (!cacheAccesibleName.has(element))
-    cacheAccesibleName.set(element, getElementAccessibleName(element, false, cacheAccesibleNameHidden));
-  return cacheAccesibleName.get(element)!;
 }
 
 function cssFallback(injectedScript: InjectedScript, targetElement: Element, options: GenerateSelectorOptions): SelectorToken[] {

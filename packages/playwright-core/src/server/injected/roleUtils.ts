@@ -235,7 +235,7 @@ function getAriaBoolean(attr: string | null) {
 // Not implemented:
 //   `Any descendants of elements that have the characteristic "Children Presentational: True"`
 // https://www.w3.org/TR/wai-aria-1.2/#aria-hidden
-export function isElementHiddenForAria(element: Element, cache: Map<Element, boolean>): boolean {
+export function isElementHiddenForAria(element: Element): boolean {
   if (['STYLE', 'SCRIPT', 'NOSCRIPT', 'TEMPLATE'].includes(element.tagName))
     return true;
   const style = getElementComputedStyle(element);
@@ -243,7 +243,7 @@ export function isElementHiddenForAria(element: Element, cache: Map<Element, boo
   if (style?.display === 'contents' && !isSlot) {
     // display:contents is not rendered itself, but its child nodes are.
     for (let child = element.firstChild; child; child = child.nextSibling) {
-      if (child.nodeType === 1 /* Node.ELEMENT_NODE */ && !isElementHiddenForAria(child as Element, cache))
+      if (child.nodeType === 1 /* Node.ELEMENT_NODE */ && !isElementHiddenForAria(child as Element))
         return false;
       if (child.nodeType === 3 /* Node.TEXT_NODE */ && isVisibleTextNode(child as Text))
         return false;
@@ -255,12 +255,13 @@ export function isElementHiddenForAria(element: Element, cache: Map<Element, boo
   const isOptionInsideSelect = element.nodeName === 'OPTION' && !!element.closest('select');
   if (!isOptionInsideSelect && !isSlot && !isElementStyleVisibilityVisible(element, style))
     return true;
-  return belongsToDisplayNoneOrAriaHiddenOrNonSlotted(element, cache);
+  return belongsToDisplayNoneOrAriaHiddenOrNonSlotted(element);
 }
 
-function belongsToDisplayNoneOrAriaHiddenOrNonSlotted(element: Element, cache: Map<Element, boolean>): boolean {
-  if (!cache.has(element)) {
-    let hidden = false;
+function belongsToDisplayNoneOrAriaHiddenOrNonSlotted(element: Element): boolean {
+  let hidden = cacheIsHidden?.get(element);
+  if (hidden === undefined) {
+    hidden = false;
 
     // When parent has a shadow root, all light dom children must be assigned to a slot,
     // otherwise they are not rendered and considered hidden for aria.
@@ -278,11 +279,11 @@ function belongsToDisplayNoneOrAriaHiddenOrNonSlotted(element: Element, cache: M
     if (!hidden) {
       const parent = parentElementOrShadowHost(element);
       if (parent)
-        hidden = belongsToDisplayNoneOrAriaHiddenOrNonSlotted(parent, cache);
+        hidden = belongsToDisplayNoneOrAriaHiddenOrNonSlotted(parent);
     }
-    cache.set(element, hidden);
+    cacheIsHidden?.set(element, hidden);
   }
-  return cache.get(element)!;
+  return hidden;
 }
 
 function getIdRefs(element: Element, ref: string | null): Element[] {
@@ -325,14 +326,14 @@ function queryInAriaOwned(element: Element, selector: string): Element[] {
 function getPseudoContent(pseudoStyle: CSSStyleDeclaration | undefined) {
   if (!pseudoStyle)
     return '';
-  const content = pseudoStyle.getPropertyValue('content');
+  const content = pseudoStyle.content;
   if ((content[0] === '\'' && content[content.length - 1] === '\'') ||
     (content[0] === '"' && content[content.length - 1] === '"')) {
     const unquoted = content.substring(1, content.length - 1);
     // SPEC DIFFERENCE.
     // Spec says "CSS textual content, without a space", but we account for display
     // to pass "name_file-label-inline-block-styles-manual.html"
-    const display = pseudoStyle.getPropertyValue('display') || 'inline';
+    const display = pseudoStyle.display || 'inline';
     if (display !== 'inline')
       return ' ' + unquoted + ' ';
     return unquoted;
@@ -360,31 +361,37 @@ function allowsNameFromContent(role: string, targetDescendant: boolean) {
   return alwaysAllowsNameFromContent || descendantAllowsNameFromContent;
 }
 
-export function getElementAccessibleName(element: Element, includeHidden: boolean, hiddenCache: Map<Element, boolean>): string {
-  // https://w3c.github.io/accname/#computation-steps
+export function getElementAccessibleName(element: Element, includeHidden: boolean): string {
+  const cache = (includeHidden ? cacheAccessibleNameHidden : cacheAccessibleName);
+  let accessibleName = cache?.get(element);
 
-  // step 1.
-  // https://w3c.github.io/aria/#namefromprohibited
-  const elementProhibitsNaming = ['caption', 'code', 'definition', 'deletion', 'emphasis', 'generic', 'insertion', 'mark', 'paragraph', 'presentation', 'strong', 'subscript', 'suggestion', 'superscript', 'term', 'time'].includes(getAriaRole(element) || '');
-  if (elementProhibitsNaming)
-    return '';
+  if (accessibleName === undefined) {
+    // https://w3c.github.io/accname/#computation-steps
+    accessibleName = '';
 
-  // step 2.
-  const accessibleName = normalizeAccessbileName(getElementAccessibleNameInternal(element, {
-    includeHidden,
-    hiddenCache,
-    visitedElements: new Set(),
-    embeddedInLabelledBy: 'none',
-    embeddedInLabel: 'none',
-    embeddedInTextAlternativeElement: false,
-    embeddedInTargetElement: 'self',
-  }));
+    // step 1.
+    // https://w3c.github.io/aria/#namefromprohibited
+    const elementProhibitsNaming = ['caption', 'code', 'definition', 'deletion', 'emphasis', 'generic', 'insertion', 'mark', 'paragraph', 'presentation', 'strong', 'subscript', 'suggestion', 'superscript', 'term', 'time'].includes(getAriaRole(element) || '');
+
+    if (!elementProhibitsNaming) {
+      // step 2.
+      accessibleName = normalizeAccessbileName(getElementAccessibleNameInternal(element, {
+        includeHidden,
+        visitedElements: new Set(),
+        embeddedInLabelledBy: 'none',
+        embeddedInLabel: 'none',
+        embeddedInTextAlternativeElement: false,
+        embeddedInTargetElement: 'self',
+      }));
+    }
+
+    cache?.set(element, accessibleName);
+  }
   return accessibleName;
 }
 
 type AccessibleNameOptions = {
   includeHidden: boolean,
-  hiddenCache: Map<Element, boolean>,
   visitedElements: Set<Element>,
   embeddedInLabelledBy: 'none' | 'self' | 'descendant',
   embeddedInLabel: 'none' | 'self' | 'descendant',
@@ -404,7 +411,7 @@ function getElementAccessibleNameInternal(element: Element, options: AccessibleN
   };
 
   // step 2a.
-  if (!options.includeHidden && options.embeddedInLabelledBy !== 'self' && isElementHiddenForAria(element, options.hiddenCache)) {
+  if (!options.includeHidden && options.embeddedInLabelledBy !== 'self' && isElementHiddenForAria(element)) {
     options.visitedElements.add(element);
     return '';
   }
@@ -668,7 +675,7 @@ function getElementAccessibleNameInternal(element: Element, options: AccessibleN
       if (skipSlotted && (node as Element | Text).assignedSlot)
         return;
       if (node.nodeType === 1 /* Node.ELEMENT_NODE */) {
-        const display = getElementComputedStyle(node as Element)?.getPropertyValue('display') || 'inline';
+        const display = getElementComputedStyle(node as Element)?.display || 'inline';
         let token = getElementAccessibleNameInternal(node as Element, childOptions);
         // SPEC DIFFERENCE.
         // Spec says "append the result to the accumulated text", assuming "with space".
@@ -827,4 +834,24 @@ function hasExplicitAriaDisabled(element: Element | undefined): boolean {
   }
   // aria-disabled works across shadow boundaries.
   return hasExplicitAriaDisabled(parentElementOrShadowHost(element));
+}
+
+let cacheAccessibleName: Map<Element, string> | undefined;
+let cacheAccessibleNameHidden: Map<Element, string> | undefined;
+let cacheIsHidden: Map<Element, boolean> | undefined;
+let cachesCounter = 0;
+
+export function beginAriaCaches() {
+  ++cachesCounter;
+  cacheAccessibleName ??= new Map();
+  cacheAccessibleNameHidden ??= new Map();
+  cacheIsHidden ??= new Map();
+}
+
+export function endAriaCaches() {
+  if (!--cachesCounter) {
+    cacheAccessibleName = undefined;
+    cacheAccessibleNameHidden = undefined;
+    cacheIsHidden = undefined;
+  }
 }

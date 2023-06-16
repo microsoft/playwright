@@ -1341,8 +1341,7 @@ export class InjectedScript {
   }
 
   getElementAccessibleName(element: Element, includeHidden?: boolean): string {
-    const hiddenCache = new Map<Element, boolean>();
-    return getElementAccessibleName(element, !!includeHidden, hiddenCache);
+    return getElementAccessibleName(element, !!includeHidden);
   }
 
   getAriaRole(element: Element) {
