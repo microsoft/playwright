@@ -44,12 +44,14 @@ export async function downloadBrowserWithProgressBar(title: string, browserDirec
         debugLogger.log('install', `SUCCESS installing ${title}`);
         break;
       }
+      if (await existsAsync(zipPath))
+        await fs.promises.unlink(zipPath);
+      if (await existsAsync(browserDirectory))
+        await fs.promises.rmdir(browserDirectory, { recursive: true });
       const errorMessage = error?.message || '';
       debugLogger.log('install', `attempt #${attempt} - ERROR: ${errorMessage}`);
       if (attempt >= retryCount)
         throw error;
-      if (await existsAsync(zipPath))
-        await fs.promises.unlink(zipPath);
     }
   } catch (e) {
     debugLogger.log('install', `FAILED installation ${title} with error: ${e}`);
