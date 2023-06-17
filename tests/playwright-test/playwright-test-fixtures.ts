@@ -88,7 +88,7 @@ export const cliEntrypoint = path.join(__dirname, '../../packages/playwright-tes
 const configFile = (baseDir: string, files: Files): string | undefined => {
   for (const [name, content] of  Object.entries(files)) {
     if (name.includes('playwright.config')) {
-      if (content.includes('reporter:'))
+      if (content.includes('reporter:') || content.includes('reportSlowTests:'))
         return path.resolve(baseDir, name);
     }
   }
@@ -349,12 +349,7 @@ export const test = base
           const cwd = options.cwd ? path.resolve(test.info().outputDir, options.cwd) : test.info().outputDir;
           const testProcess = childProcess({
             command,
-            env: cleanEnv({
-              PW_TEST_DEBUG_REPORTERS: '1',
-              PW_TEST_DEBUG_REPORTERS_PRINT_STEPS: '1',
-              PWTEST_TTY_WIDTH: '80',
-              ...env
-            }),
+            env: cleanEnv(env),
             cwd,
           });
           const { exitCode } = await testProcess.exited;

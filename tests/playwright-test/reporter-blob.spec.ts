@@ -361,7 +361,7 @@ test('merge into list report by default', async ({ runInlineTest, mergeReports }
   const reportFiles = await fs.promises.readdir(reportDir);
   reportFiles.sort();
   expect(reportFiles).toEqual([expect.stringMatching(/report-1-of-3.*.zip/), expect.stringMatching(/report-2-of-3.*.zip/), expect.stringMatching(/report-3-of-3.*.zip/), 'resources']);
-  const { exitCode, output } = await mergeReports(reportDir, undefined, { additionalArgs: ['--reporter', 'list'] });
+  const { exitCode, output } = await mergeReports(reportDir, { PW_TEST_DEBUG_REPORTERS: '1', PW_TEST_DEBUG_REPORTERS_PRINT_STEPS: '1', PWTEST_TTY_WIDTH: '80' }, { additionalArgs: ['--reporter', 'list'] });
   expect(exitCode).toBe(0);
 
   const text = stripAnsi(output);

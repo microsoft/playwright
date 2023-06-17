@@ -232,6 +232,7 @@ export class TeleReporterReceiver {
     result.status = payload.status;
     result.statusEx = payload.status;
     result.errors = payload.errors;
+    result.error = result.errors?.[0];
     result.attachments = this._parseAttachments(payload.attachments);
     this._reporter.onTestEnd?.(test, result);
   }
@@ -242,7 +243,10 @@ export class TeleReporterReceiver {
     const parentStep = payload.parentStepId ? result.stepMap.get(payload.parentStepId) : undefined;
 
     const step: TestStep = {
-      titlePath: () => [],
+      titlePath: () => {
+        const parentPath = parentStep?.titlePath() || [];
+        return [...parentPath, payload.title];
+      },
       title: payload.title,
       category: payload.category,
       location: this._absoluteLocation(payload.location),

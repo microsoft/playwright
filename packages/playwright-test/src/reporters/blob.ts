@@ -92,7 +92,7 @@ export class BlobReporter extends TeleReporterEmitter {
 
   override _serializeAttachments(attachments: TestResult['attachments']): JsonAttachment[] {
     return super._serializeAttachments(attachments).map(attachment => {
-      if (!attachment.path || !fs.statSync(attachment.path).isFile())
+      if (!attachment.path || !fs.statSync(attachment.path, { throwIfNoEntry: false })?.isFile())
         return attachment;
       // Add run guid to avoid clashes between shards.
       const sha1 = calculateSha1(attachment.path + this._salt);
