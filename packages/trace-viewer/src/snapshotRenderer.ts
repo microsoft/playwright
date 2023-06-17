@@ -123,8 +123,9 @@ export class SnapshotRenderer {
       if (resource._frameref !== snapshot.frameId)
         continue;
       if (resource.request.url === url) {
+        // Pick the last resource with matching url - most likely it was used
+        // at the time of snapshot, not the earlier aborted resource with the same url.
         result = resource;
-        break;
       }
     }
 
@@ -133,8 +134,11 @@ export class SnapshotRenderer {
       for (const resource of this._resources) {
         if (typeof resource._monotonicTime === 'number' && resource._monotonicTime >= snapshot.timestamp)
           break;
-        if (resource.request.url === url)
-          return resource;
+        if (resource.request.url === url) {
+          // Pick the last resource with matching url - most likely it was used
+          // at the time of snapshot, not the earlier aborted resource with the same url.
+          result = resource;
+        }
       }
     }
 
