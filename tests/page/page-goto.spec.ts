@@ -799,3 +799,10 @@ it('should wait for load when iframe attaches and detaches', async ({ page, serv
   await done;
   expect(await page.$('iframe')).toBe(null);
 });
+
+it('should return url with basic auth info', async ({ page, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/23138' });
+  const url = `http://admin:admin@localhost:${server.PORT}/empty.html`;
+  await page.goto(url);
+  expect(await page.url()).toBe(url);
+});
