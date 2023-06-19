@@ -331,7 +331,7 @@ test('should not hang if test suites in worker are inconsistent with runner', as
   expect(result.passed).toBe(1);
   expect(result.failed).toBe(1);
   expect(result.skipped).toBe(1);
-  expect(result.report.suites[0].specs[1].tests[0].results[0].error!.message).toBe('Internal error: unknown test(s) in worker:\nproject-name > a.spec.js > Test 1 - bar\nproject-name > a.spec.js > Test 2 - baz');
+  expect(result.report.suites[0].specs[1].tests[0].results[0].error!.message).toBe('Test(s) not found in the worker process. Make sure test titles do not change:\nproject-name > a.spec.js > Test 1 - bar\nproject-name > a.spec.js > Test 2 - baz');
 });
 
 test('sigint should stop global setup', async ({ runInlineTest }) => {
