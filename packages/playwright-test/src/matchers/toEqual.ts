@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import type { Expect } from '../../types/test';
 import { expectTypes } from '../util';
 import { callLogText } from '../util';
 import { matcherHint } from './matcherHint';
 import { currentExpectTimeout } from '../common/globals';
+import type { ExpectMatcherContext } from './expect';
 
 // Omit colon and one or more spaces, so can call getLabelPrinter.
 const EXPECTED_LABEL = 'Expected';
@@ -28,7 +28,7 @@ const RECEIVED_LABEL = 'Received';
 const isExpand = (expand?: boolean): boolean => expand !== false;
 
 export async function toEqual<T>(
-  this: ReturnType<Expect['getState']>,
+  this: ExpectMatcherContext,
   matcherName: string,
   receiver: any,
   receiverType: string,
@@ -46,7 +46,7 @@ export async function toEqual<T>(
 
   const timeout = currentExpectTimeout(options);
 
-  const { matches: pass, received, log, timedOut } = await query(this.isNot, timeout);
+  const { matches: pass, received, log, timedOut } = await query(!!this.isNot, timeout);
 
   const message = pass
     ? () =>

@@ -15,9 +15,9 @@
  */
 
 import { colors } from 'playwright-core/lib/utilsBundle';
-import type { Expect } from '../../types/test';
+import type { ExpectMatcherContext } from './expect';
 
-export function matcherHint(state: ReturnType<Expect['getState']>, matcherName: string, a: any, b: any, matcherOptions: any, timeout?: number) {
+export function matcherHint(state: ExpectMatcherContext, matcherName: string, a: any, b: any, matcherOptions: any, timeout?: number) {
   const message = state.utils.matcherHint(matcherName, a, b, matcherOptions);
   if (timeout)
     return colors.red(`Timed out ${timeout}ms waiting for `) + message;
