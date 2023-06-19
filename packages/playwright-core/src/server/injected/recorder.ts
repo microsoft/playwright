@@ -316,7 +316,7 @@ export class Recorder {
 
   private _shouldGenerateKeyPressFor(event: KeyboardEvent): boolean {
     // Enter aka. new line is handled in input event.
-    if (event.key === 'Enter' && event.target && ((event.target as HTMLElement).nodeName === 'TEXTAREA') || (event.target as HTMLElement).isContentEditable)
+    if (event.key === 'Enter' && (this._deepEventTarget(event).nodeName === 'TEXTAREA' || this._deepEventTarget(event).isContentEditable))
       return false;
     // Backspace, Delete, AltGraph are changing input, will handle it there.
     if (['Backspace', 'Delete', 'AltGraph'].includes(event.key))
