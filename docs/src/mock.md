@@ -14,7 +14,7 @@ The following code will intercept all the calls to `https://dog.ceo/api/breeds/l
 the test data instead. No requests to the `https://dog.ceo/api/breeds/list/all` endpoint will be made.
 
 ```js
-await page.route("https://dog.ceo/api/breeds/list/all", async (route) => {
+await page.route('https://dog.ceo/api/breeds/list/all', async (route) => {
   const json = {
     message: { playwright_dog: [] },
   };
@@ -24,7 +24,7 @@ await page.route("https://dog.ceo/api/breeds/list/all", async (route) => {
 
 ```python async
 async def handle(route):
-    json = { message: { "playwright_dog": [] } }
+    json = { "message": { "playwright_dog": [] } }
     await route.fulfill(json=json)
 
 await page.route("https://dog.ceo/api/breeds/list/all", handle)
@@ -32,7 +32,7 @@ await page.route("https://dog.ceo/api/breeds/list/all", handle)
 
 ```python sync
 async def handle(route):
-    json = { message: { "playwright_dog": [] } }
+    json = { "message": { "playwright_dog": [] } }
     route.fulfill(json=json)
 
 page.route("https://dog.ceo/api/breeds/list/all", handle)
@@ -57,22 +57,22 @@ In the example below we intercept the route to the dog API and return a custom r
 
 ```js
 test("mocks the dog api", async ({ page }) => {
-  await page.route("https://dog.ceo/api/breeds/list/all", async (route) => {
+  await page.route('https://dog.ceo/api/breeds/list/all', async (route) => {
     const json = {
       message: { playwright_dog: [] },
     };
     await route.fulfill({ json });
   });
-  await page.goto("https://dog.ceo/api/breeds/list/all");
+  await page.goto('https://dog.ceo/api/breeds/list/all');
 
-  await expect(page.getByText("playwright_dog")).toBeVisible();
+  await expect(page.getByText('playwright_dog')).toBeVisible();
 });
 ```
 
 ```python async
 async def test_mock_the_dog_api(page):
     await page.route('https://dog.ceo/api/breeds/list/all', async (route) => {
-        json = { message: { "playwright_dog": [] } }
+        json = { "message": { "playwright_dog": [] } }
         await route.fulfill(json=json)
     })
     await page.goto('https://dog.ceo/api/breeds/list/all')
@@ -83,12 +83,12 @@ async def test_mock_the_dog_api(page):
 ```python sync
 def test_mock_the_dog_api(page):
     page.route('https://dog.ceo/api/breeds/list/all', lambda route: {
-        json = { message: { "playwright_dog": [] } }
+        json = { "message": { "playwright_dog": [] } }
         route.fulfill(json=json)
     })
-    page.goto('https://dog.ceo/api/breeds/list/all')
+    page.goto("https://dog.ceo/api/breeds/list/all")
 
-    page.expect_to_be_visible('playwright_dog')
+    page.expect_to_be_visible("playwright_dog")
 ```
 
 ```csharp
@@ -130,10 +130,10 @@ allow for reproducible testing. In that case, instead of mocking the request, on
 can perform the request and fulfill it with the modified response.
 
 ```js
-await page.route("https://dog.ceo/api/breeds/list/all", async (route) => {
+await page.route('https://dog.ceo/api/breeds/list/all', async (route) => {
   const response = await route.fetch();
   const json = await response.json();
-  json.message["playwright_dog"] = [];
+  json.message['playwright_dog'] = [];
   // Fulfill using the original response, while patching the response body
   // with the given JSON object.
   await route.fulfill({ response, json });
@@ -218,7 +218,7 @@ async def test_intercept_the_dog_api_and_add_some_data_to_it(page):
     })
     await page.goto('https://dog.ceo/api/breeds/list/all')
 
-    await page.expect_to_be_visible('playwright_dog')
+    await expect(page.get_by_text("playwright_dog")).to_be_visible()
 ```
 
 ```python sync
@@ -232,7 +232,7 @@ def test_intercept_the_dog_api_and_add_some_data_to_it(page):
     })
     page.goto('https://dog.ceo/api/breeds/list/all')
 
-    page.expect_to_be_visible('playwright_dog')
+    expect(page.get_by_text("playwright_dog")).to_be_visible()
 ```
 
 ```csharp
