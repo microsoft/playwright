@@ -706,10 +706,10 @@ await Page.RouteAsync("**/title.html", async route =>
 
 ## Record and replay requests
 
-You can record network activity as an HTTP Archive file (HAR). Later on, this archive can be used to mock responses to the network requests. You'll need to:
+A HAR file is an HTTP Archive file that contains a record of all the network requests that are made when a page is loaded. It contains information about the request and response headers, cookies, content, timings, and more. You can use HAR files to mock network requests in your tests. You'll need to:
 1. Record a HAR file.
-1. Commit the HAR file alongside the tests.
-1. Route requests using the saved HAR files in the tests.
+2. Commit the HAR file alongside the tests.
+3. Route requests using the saved HAR files in the tests.
 
 ### Recording HAR with CLI
 
@@ -727,7 +727,7 @@ mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="op
 
 ```bash python
 # Save API requests from example.com as "example.har" archive.
-playwright open --save-har=example.har --save-har-glob="**/api/**" https://example.coms
+playwright open --save-har=example.har --save-har-glob="**/api/**" https://example.com
 ```
 
 ```bash csharp
@@ -791,6 +791,28 @@ var context = await browser.NewContextAsync(new() {
 await context.CloseAsync();
 ```
 
+### Recording HAR from a test
+
+To record a HAR file we use the `routeFromHAR` method. This method takes in the path to the HAR file and an optional object of options.
+
+The options object can contain the URL so that only requests with the URL matching the specified glob pattern will be served from the HAR File. If not specified, all requests will be served from the HAR file.
+
+The `update` option updates the given HAR file with the actual network information instead of serving from the file. In order to record the HAR file, you need to set `update` to true.
+
+```js
+test('Record a HAR', async ({
+  page,
+}) => {
+  await page.routeFromHAR('./hars/example.har', {
+    url: '**/api/**',
+    update: true, // records or updates the HAR.
+  });
+  
+  await page.goto('https://example.com');
+});
+```
+
+
 ### Replaying from HAR
 
 Use [`method: Page.routeFromHAR`] or [`method: BrowserContext.routeFromHAR`] to serve matching responses from the [HAR](http://www.softwareishard.com/blog/har-12-spec/) file.
@@ -824,6 +846,25 @@ page.route_from_har("example.har")
 // Either use a matching response from the HAR,
 // or abort the request if nothing matches.
 await context.RouteFromHARAsync("example.har");
+```
+
+### Mocking with HAR
+
+You can modify the response from the HAR file and then run your tests against the modified response.
+
+```js
+test('gets the json from HAR', async ({
+  page,
+}) => {
+  // Get the response and add to it
+  await page.routeFromHAR('./hars/example.har', {
+    url: '**/api/**',,
+    update: false,
+  });
+  // Go to the page
+  await page.goto('https://example.com');
+  // Make assertions
+});
 ```
 
 HAR replay matches URL and HTTP method strictly. For POST requests, it also matches POST payloads strictly. If multiple recordings match a request, the one with the most matching headers is picked. An entry resulting in a redirect will be followed automatically.
