@@ -16,6 +16,20 @@ test('emit an submit event when the button is clicked', async ({ mount }) => {
   expect(messages).toEqual(['hello']);
 });
 
+test('emit a falltrough event when the button is double clicked', async ({ mount }) => {
+  const messages: string[] = [];
+  const component = await mount(
+    <Button
+      title="Submit"
+      v-on:dbclick={(message: string) => {
+        messages.push(message)
+      }}
+    />
+  );
+  await component.dblclick();
+  expect(messages).toEqual(['fallthroughEvent']);
+});
+
 test('emit a event when a slot is clicked', async ({ mount }) => {
   let clickFired = false;
   const component = await mount(

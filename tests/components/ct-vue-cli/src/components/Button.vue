@@ -1,12 +1,14 @@
 <script lang="ts" setup>
-defineProps({
-  title: {
-    type: String,
-    required: true
-  }
-})
+  import { useAttrs } from 'vue';
+  defineProps<{ title: string }>();
+  const attrs = useAttrs();
 </script>
 
 <template>
-  <button @click="$emit('submit', 'hello')">{{ title }}</button>
+  <button
+    @click="$emit('submit', 'hello')"
+    @dblclick="() => attrs.dbclick('fallthroughEvent')"
+  >
+    {{ title }}
+  </button>
 </template>
