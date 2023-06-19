@@ -379,7 +379,7 @@ export class Dispatcher {
           return test.titlePath().slice(1).join(' > ');
         });
         massSkipTestsFromRemaining(new Set(params.fatalUnknownTestIds), [{
-          message: `Internal error: unknown test(s) in worker:\n${titles.join('\n')}`
+          message: `Test(s) not found in the worker process. Make sure test titles do not change:\n${titles.join('\n')}`
         }]);
       }
       if (params.fatalErrors.length) {
