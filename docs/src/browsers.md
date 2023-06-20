@@ -76,7 +76,7 @@ if (exitCode != 0)
 }
 ```
 
-### Install system dependencies
+## Install system dependencies
 
 System dependencies can get installed automatically. This is useful for CI environments.
 
