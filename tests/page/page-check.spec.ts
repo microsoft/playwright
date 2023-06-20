@@ -21,7 +21,6 @@ it('should check the box @smoke', async ({ page }) => {
   await page.setContent(`<input id='checkbox' type='checkbox'></input>`);
   await page.check('input');
   expect(await page.evaluate(() => window['checkbox'].checked)).toBe(true);
-  expect(1).toBe(2);
 });
 
 it('should not check the checked box', async ({ page }) => {
@@ -34,7 +33,6 @@ it('should uncheck the box', async ({ page }) => {
   await page.setContent(`<input id='checkbox' type='checkbox' checked></input>`);
   await page.uncheck('input');
   expect(await page.evaluate(() => window['checkbox'].checked)).toBe(false);
-  expect(1).toBe(2);
 });
 
 it('should not uncheck the unchecked box', async ({ page }) => {
@@ -44,7 +42,6 @@ it('should not uncheck the unchecked box', async ({ page }) => {
 });
 
 it('should check radio', async ({ page }) => {
-  it.skip();
   await page.setContent(`
     <input type='radio'>one</input>
     <input id='two' type='radio'>two</input>
@@ -54,7 +51,6 @@ it('should check radio', async ({ page }) => {
 });
 
 it('should check radio by aria role', async ({ page }) => {
-  expect(it.info().retry).toBe(1);
   await page.setContent(`<div role='radio' id='checkbox'>CHECKBOX</div>
     <script>
       checkbox.addEventListener('click', () => checkbox.setAttribute('aria-checked', 'true'));
