@@ -168,7 +168,7 @@ export const SnapshotTab: React.FunctionComponent<{
       testIdAttributeName={testIdAttributeName}
       highlightedLocator={highlightedLocator}
       setHighlightedLocator={setHighlightedLocator}
-      iframe={iframeRef1.current} 
+      iframe={iframeRef1.current}
       iteration={loadingRef.current.iteration} />
     <Toolbar>
       <ToolbarButton title='Pick locator' disabled={!popoutUrl} toggled={pickerVisible} onClick={() => {
