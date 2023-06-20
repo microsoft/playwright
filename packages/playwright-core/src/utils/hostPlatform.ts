@@ -59,7 +59,8 @@ export const hostPlatform = ((): HostPlatform => {
 
     // Pop!_OS is ubuntu-based and has the same versions.
     // KDE Neon is ubuntu-based and has the same versions.
-    if (distroInfo?.id === 'ubuntu' || distroInfo?.id === 'pop' || distroInfo?.id === 'neon') {
+    // TUXEDO OS is ubuntu-based and has the same versions.
+    if (distroInfo?.id === 'ubuntu' || distroInfo?.id === 'pop' || distroInfo?.id === 'neon' || distroInfo?.id === 'tuxedo') {
       if (parseInt(distroInfo.version, 10) <= 19)
         return ('ubuntu18.04' + archSuffix) as HostPlatform;
       if (parseInt(distroInfo.version, 10) <= 21)
