@@ -460,7 +460,7 @@ it('js redirect overrides url bar navigation ', async ({ page, server, browserNa
     expect(error).toBeFalsy();
     await expect(page).toHaveURL(server.PREFIX + '/b');
   } else if (browserName === 'webkit') {
-    expect(error.message).toContain('Navigation interrupted by another one');
+    expect(error.message).toContain(`Navigation to "${server.PREFIX + '/a'}" is interrupted by another navigation to "${server.PREFIX + '/b'}"`);
     await expect(page).toHaveURL(server.PREFIX + '/c');
   } else if (browserName === 'firefox') {
     expect(error.message).toContain('NS_BINDING_ABORTED');
