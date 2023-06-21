@@ -799,6 +799,7 @@ executors:
 Note: When using the docker agent definition, you are specifying the resource class of where playwright runs to the 'medium' tier [here](https://circleci.com/docs/configuration-reference?#docker-execution-environment). The default behavior of Playwright is to set the number of workers to the detected core count (2 in the case of the medium tier). Overriding the number of workers to greater than this number will cause unnecessary timeouts and failures.
 
 #### Sharding in CircleCI
+* langs: js
 
 Sharding in CircleCI is indexed with 0 which means that you will need to override the default parallelism ENV VARS. The following example demonstrates how to run Playwright with a CircleCI Parallelism of 4 by adding 1 to the `CIRCLE_NODE_INDEX` to pass into the `--shard` cli arg.
 
@@ -978,15 +979,9 @@ tests:
 
 ## Caching browsers
 
-With the default behavior, Playwright downloads the browser binaries in the following
-directories:
+Caching browser binaries is not recommended, since the amount of time it takes to restore the cache is comparable to the time it takes to download the binaries. Especially under Linux, [operating system dependencies](./browsers.md#install-system-dependencies) need to be installed, which are not cacheable.
 
-- `%USERPROFILE%\AppData\Local\ms-playwright` on Windows
-- `~/Library/Caches/ms-playwright` on MacOS
-- `~/.cache/ms-playwright` on Linux
-
-To cache the browser downloads between CI runs, cache this location in your CI
-configuration, against a hash of the Playwright version.
+If you still want to cache the browser binaries between CI runs, cache [these directories](./browsers.md#managing-browser-binaries) in your CI configuration, against a hash of the Playwright version.
 
 ## Debugging browser launches
 
