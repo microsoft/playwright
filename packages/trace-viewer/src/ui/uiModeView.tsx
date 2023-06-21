@@ -37,7 +37,7 @@ import { toggleTheme } from '@web/theme';
 import { artifactsFolderName } from '@testIsomorphic/folders';
 import { msToString, settings, useSetting } from '@web/uiUtils';
 import type { ActionTraceEvent } from '@trace/trace';
-import { connect } from './wsPort';
+import { useWebSocket } from './wsPort';
 
 let updateRootSuite: (config: FullConfig, rootSuite: Suite, loadErrors: TestError[], progress: Progress | undefined) => void = () => {};
 let runWatchedTests = (fileNames: string[]) => {};
@@ -84,6 +84,7 @@ export const UIModeView: React.FC<{}> = ({
   const runTestBacklog = React.useRef<Set<string>>(new Set());
   const [collapseAllCount, setCollapseAllCount] = React.useState(0);
   const [isDisconnected, setIsDisconnected] = React.useState(false);
+  const [connectToWebSocketIfNeeded] = useWebSocket();
 
   const inputRef = React.useRef<HTMLInputElement>(null);
 
@@ -99,11 +100,14 @@ export const UIModeView: React.FC<{}> = ({
   React.useEffect(() => {
     inputRef.current?.focus();
     setIsLoading(true);
-    connect({ onEvent: dispatchEvent, onClose: () => setIsDisconnected(true) }).then(send => {
+    connectToWebSocketIfNeeded({
+      onEvent: dispatchEvent,
+      onClose: () => setIsDisconnected(true),
+    }).then(send => {
       sendMessage = send;
       reloadTests();
     });
-  }, [reloadTests]);
+  }, [reloadTests, connectToWebSocketIfNeeded]);
 
   updateRootSuite = React.useCallback((config: FullConfig, rootSuite: Suite, loadErrors: TestError[], newProgress: Progress | undefined) => {
     const selectedProjects = config.configFile ? settings.getObject<string[] | undefined>(config.configFile + ':projects', undefined) : undefined;

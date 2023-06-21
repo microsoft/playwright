@@ -21,7 +21,7 @@ import { MultiTraceModel } from './modelUtil';
 import './workbench.css';
 import { toggleTheme } from '@web/theme';
 import { Workbench } from './workbench';
-import { connect } from './wsPort';
+import { useWebSocket } from './wsPort';
 
 export const WorkbenchLoader: React.FunctionComponent<{
 }> = () => {
@@ -33,6 +33,7 @@ export const WorkbenchLoader: React.FunctionComponent<{
   const [dragOver, setDragOver] = React.useState<boolean>(false);
   const [processingErrorMessage, setProcessingErrorMessage] = React.useState<string | null>(null);
   const [fileForLocalModeError, setFileForLocalModeError] = React.useState<string | null>(null);
+  const [connectToWebSocketIfNeeded] = useWebSocket();
 
   const processTraceFiles = React.useCallback((files: FileList) => {
     const blobUrls = [];
@@ -84,7 +85,7 @@ export const WorkbenchLoader: React.FunctionComponent<{
     }
 
     if (params.has('isServer')) {
-      connect({
+      connectToWebSocketIfNeeded({
         onEvent(method: string, params?: any) {
           if (method === 'loadTrace') {
             setTraceURLs(params!.url ? [params!.url] : []);
@@ -100,7 +101,7 @@ export const WorkbenchLoader: React.FunctionComponent<{
       // Don't re-use blob file URLs on page load (results in Fetch error)
       setTraceURLs(newTraceURLs);
     }
-  }, []);
+  }, [connectToWebSocketIfNeeded]);
 
   React.useEffect(() => {
     (async () => {

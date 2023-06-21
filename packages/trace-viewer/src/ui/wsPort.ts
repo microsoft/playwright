@@ -14,41 +14,60 @@
  * limitations under the License.
  */
 
-let lastId = 0;
-let _ws: WebSocket;
-const callbacks = new Map<number, { resolve: (arg: any) => void, reject: (arg: Error) => void }>();
+import React from 'react';
 
-export async function connect(options: { onEvent: (method: string, params?: any) => void, onClose: () => void }): Promise<(method: string, params?: any) => Promise<any>> {
-  const guid = new URLSearchParams(window.location.search).get('ws');
-  const ws = new WebSocket(`${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.hostname}:${window.location.port}/${guid}`);
-  await new Promise(f => ws.addEventListener('open', f));
-  ws.addEventListener('close', options.onClose);
-  ws.addEventListener('message', event => {
-    const message = JSON.parse(event.data);
-    const { id, result, error, method, params } = message;
-    if (id) {
-      const callback = callbacks.get(id);
-      if (!callback)
-        return;
-      callbacks.delete(id);
-      if (error)
-        callback.reject(new Error(error));
-      else
-        callback.resolve(result);
-    } else {
-      options.onEvent(method, params);
-    }
-  });
-  _ws = ws;
-  setInterval(() => sendMessage('ping').catch(() => {}), 30000);
-  return sendMessage;
-}
-
-const sendMessage = async (method: string, params?: any): Promise<any> => {
-  const id = ++lastId;
-  const message = { id, method, params };
-  _ws.send(JSON.stringify(message));
-  return new Promise((resolve, reject) => {
-    callbacks.set(id, { resolve, reject });
-  });
+type ConnectOptions = {
+  onEvent: (method: string, params?: any) => void;
+  onClose: () => void;
 };
+
+type WebSocketMessageSender = (method: string, params?: any) => Promise<any>;
+
+export function useWebSocket(): [(options: ConnectOptions) => Promise<WebSocketMessageSender>] {
+  const lastIdRef = React.useRef(0);
+  const wsRef = React.useRef<WebSocket>();
+  const callbacksRef = React.useRef(new Map<number, { resolve: (arg: any) => void, reject: (arg: Error) => void }>());
+
+  const sendMessage = React.useCallback(async (method: string, params?: any): Promise<any> => {
+    if (!wsRef.current)
+      return;
+    const id = ++lastIdRef.current;
+    const message = { id, method, params };
+    wsRef.current.send(JSON.stringify(message));
+    return new Promise((resolve, reject) => {
+      callbacksRef.current.set(id, { resolve, reject });
+    });
+  }, []);
+
+  const connectIfNeeded = React.useCallback(async (options: ConnectOptions): Promise<WebSocketMessageSender> => {
+    if (wsRef.current)
+      return sendMessage;
+    const guid = new URLSearchParams(window.location.search).get('ws');
+    const ws = new WebSocket(`${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.hostname}:${window.location.port}/${guid}`);
+    await new Promise(f => ws.addEventListener('open', f));
+    ws.addEventListener('close', options.onClose);
+    ws.addEventListener('message', event => {
+      const message = JSON.parse(event.data);
+      const { id, result, error, method, params } = message;
+      if (id) {
+        const callback = callbacksRef.current.get(id);
+        if (!callback)
+          return;
+        callbacksRef.current.delete(id);
+        if (error)
+          callback.reject(new Error(error));
+        else
+          callback.resolve(result);
+      } else {
+        options.onEvent(method, params);
+      }
+    });
+    wsRef.current = ws;
+    setInterval(() => sendMessage('ping').catch(() => { }), 30000);
+    return sendMessage;
+  }, [sendMessage]);
+
+  return [
+    connectIfNeeded,
+  ];
+}
