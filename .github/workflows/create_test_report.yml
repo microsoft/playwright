@@ -44,13 +44,9 @@ jobs:
         output_dir: 'blob-report'
         connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
-    - name: Merge into HTML Report
+    - name: Merge reports
       run: |
-        npx playwright merge-reports --reporter html --attachments missing blob-report
-
-    - name: Merge into Markdown Report
-      run: |
-        npx playwright merge-reports --reporter markdown --attachments missing blob-report
+        npx playwright merge-reports --reporter markdown,html --attachments missing blob-report
 
     - name: Upload HTML report to Azure
       run: |
