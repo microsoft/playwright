@@ -48,6 +48,10 @@ jobs:
       run: |
         npx playwright merge-reports --reporter html --attachments missing blob-report
 
+    - name: Merge into Markdown Report
+      run: |
+        npx playwright merge-reports --reporter markdown --attachments missing blob-report
+
     - name: Upload HTML report to Azure
       run: |
         REPORT_DIR='run-${{ github.event.workflow_run.id }}-${{ github.event.workflow_run.run_attempt }}-${{ github.sha }}'
@@ -92,10 +96,16 @@ jobs:
           const reportDir = 'run-${{ github.event.workflow_run.id }}-${{ github.event.workflow_run.run_attempt }}-${{ github.sha }}';
           const reportUrl = `https://mspwblobreport.z1.web.core.windows.net/${reportDir}/index.html`;
           core.notice('Report url: ' + reportUrl);
+          const reportMd = await fs.promises.readFile('report.md', 'utf8');
           const { data: response } = await github.rest.issues.createComment({
             ...context.repo,
             issue_number: prNumber,
-            body: `"${{ github.event.workflow_run.name }}" [report](${reportUrl}).`,
+            body: [
+              `### Test results for "${{ github.event.workflow_run.name }}"`,
+              reportMd,
+              '---',
+              `Full [html report](${reportUrl}).`
+            ].join('\n'),
           });
           core.info('Posted comment: ' + response.html_url);
 
@@ -108,7 +118,11 @@ jobs:
             conclusion: 'success',
             details_url: reportUrl,
             output: {
-              title: 'Merged test results (${{ github.event.workflow_run.name }})',
-              summary: `Created [report](${reportUrl}). Merge [workflow run](${mergeWorkflowUrl}).`,
+              title: 'Test results for "${{ github.event.workflow_run.name }}"',
+              summary: [
+                reportMd,
+                '---',
+                `Full [html report](${reportUrl}). Merge [workflow run](${mergeWorkflowUrl}).`
+              ].join('\n'),
             }
           });
