@@ -682,7 +682,7 @@ export class Frame extends SdkObject {
       if (event.newDocument!.documentId !== navigateResult.newDocumentId) {
         // This is just a sanity check. In practice, new navigation should
         // cancel the previous one and report "request cancelled"-like error.
-        throw new NavigationAbortedError(navigateResult.newDocumentId, 'Navigation interrupted by another one');
+        throw new NavigationAbortedError(navigateResult.newDocumentId, `Navigation to "${url}" is interrupted by another navigation to "${event.url}"`);
       }
       if (event.error)
         throw event.error;
