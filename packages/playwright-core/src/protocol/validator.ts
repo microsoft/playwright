@@ -972,6 +972,13 @@ scheme.PageWebSocketEvent = tObject({
 scheme.PageWorkerEvent = tObject({
   worker: tChannel(['Worker']),
 });
+scheme.PagePickBestLocatorParams = tObject({
+  selector: tString,
+});
+scheme.PagePickBestLocatorResult = tObject({
+  selector: tString,
+  locator: tString,
+});
 scheme.PageSetDefaultNavigationTimeoutNoReplyParams = tObject({
   timeout: tOptional(tNumber),
 });

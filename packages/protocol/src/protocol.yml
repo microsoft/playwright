@@ -1238,6 +1238,12 @@ Page:
     opener: Page?
 
   commands:
+    pickBestLocator:
+      parameters:
+        selector: string
+      returns:
+        selector: string
+        locator: string
 
     setDefaultNavigationTimeoutNoReply:
       parameters:

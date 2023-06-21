@@ -31,7 +31,7 @@ import * as accessibility from './accessibility';
 import { FileChooser } from './fileChooser';
 import type { Progress } from './progress';
 import { ProgressController } from './progress';
-import { assert, isError } from '../utils';
+import { asLocator, assert, isError } from '../utils';
 import { ManualPromise } from '../utils/manualPromise';
 import { debugLogger } from '../common/debugLogger';
 import type { ImageComparatorOptions } from '../utils/comparators';
@@ -706,6 +706,29 @@ export class Page extends SdkObject {
 
   markAsServerSideOnly() {
     this._isServerSideOnly = true;
+  }
+
+  async pickBestLocator(selector: string): Promise<{
+    locator: string;
+    selector: string
+  }> {
+
+    const mainFrame = this._frameManager.mainFrame();
+    const element = await mainFrame.querySelector(selector, {
+      strict: false
+    });
+
+    if (!element)
+      throw new Error(`no element found for selector ${selector}`);
+
+    const script = await (await mainFrame._utilityContext()).injectedScript();
+
+    const pickedSelector = await script.evaluate<string, dom.ElementHandle<Element>>((script, innerElement): string => {
+      return script.generateSelector(innerElement);
+    }, element);
+
+    return { selector: pickedSelector, locator: asLocator('javascript', pickedSelector) };
+
   }
 }
 

@@ -3430,6 +3430,21 @@ export interface Page {
   }): Promise<Buffer>;
 
   /**
+   * Get the best locator and selector for the specified selector.
+   *
+   * **Usage**
+   *
+   * ```js
+   * await page.pickBestLocator('#id');
+   * ```
+   *
+   * Will pick the most stable locator available for the element defined by the selector parameter and return it.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
+   * used.
+   */
+  pickBestLocator(selector: string): Promise<{ locator: string; selector: string}>;
+
+  /**
    * **NOTE** Use locator-based [locator.press(key[, options])](https://playwright.dev/docs/api/class-locator#locator-press)
    * instead. Read more about [locators](https://playwright.dev/docs/locators).
    *

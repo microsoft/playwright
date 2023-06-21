@@ -17,6 +17,37 @@
 
 import { test as it, expect } from './pageTest';
 
+it.describe('picking the best available locator for an existing element', () => {
+
+  const html = '<div><input id="inputId" placeholder="somePlaceholder"/><button id="buttonId">Some Text</button></div>';
+
+  const testCases = [
+    {
+      originalSelector: '#buttonId',
+      expectedSelector: 'internal:role=button[name="Some Text"i]',
+      expectedLocator: "getByRole('button', { name: 'Some Text' })"
+    },
+    {
+      originalSelector: '#inputId',
+      expectedSelector: 'internal:attr=[placeholder="somePlaceholder"i]',
+      expectedLocator: "getByPlaceholder('somePlaceholder')"
+    }];
+
+  for (const testCase of testCases) {
+    it(`should allow selecting the best locator from an existing selector ${testCase.originalSelector}`, async ({ page }) => {
+      await page.setContent(html);
+
+      const locatorReference = await page.pickBestLocator(testCase.originalSelector);
+
+      expect(locatorReference.locator).toEqual(testCase.expectedLocator);
+      expect(locatorReference.selector).toEqual(testCase.expectedSelector);
+      await page.close();
+    });
+  }
+
+});
+
+
 it('should have a nice preview', async ({ page, server }) => {
   await page.goto(`${server.PREFIX}/dom.html`);
   const outer = page.locator('#outer');

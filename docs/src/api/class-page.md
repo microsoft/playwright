@@ -845,6 +845,39 @@ Gets the full HTML contents of the page, including the doctype.
 
 Get the browser context that the page belongs to.
 
+## method: Page.pickBestLocator
+* since: v1.36
+- returns: <[Promise<{ locator: string; selector: string}>]>
+
+Get the best locator and selector for the specified selector.
+
+**Usage**
+
+```js
+await page.pickBestLocator('#id');
+```
+
+```java
+page.pickBestLocator("#id");
+```
+
+```python async
+await page.pickBestLocator("#id")
+```
+
+```python sync
+page.pickBestLocator("#id")
+```
+
+```csharp
+await page.PickBestLocatorAsync("#id");
+```
+
+Will pick the most stable locator available for the element defined by the selector parameter and return it.
+
+### param: Page.pickBestLocator.selector = %%-input-selector-%%
+* since: v1.36
+
 ## property: Page.coverage
 * since: v1.8
 * langs: js

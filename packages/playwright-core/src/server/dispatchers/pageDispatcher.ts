@@ -35,6 +35,7 @@ import { ArtifactDispatcher } from './artifactDispatcher';
 import type { Download } from '../download';
 import { createGuid, urlMatches } from '../../utils';
 import type { BrowserContextDispatcher } from './browserContextDispatcher';
+import type { PagePickBestLocatorResult } from '@protocol/channels';
 
 export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, BrowserContextDispatcher> implements channels.PageChannel {
   _type_EventTarget = true;
@@ -99,6 +100,10 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
 
   page(): Page {
     return this._page;
+  }
+
+  async pickBestLocator(params: channels.PagePickBestLocatorParams, metadata: CallMetadata): Promise<PagePickBestLocatorResult> {
+    return this._page.pickBestLocator(params.selector);
   }
 
   async setDefaultNavigationTimeoutNoReply(params: channels.PageSetDefaultNavigationTimeoutNoReplyParams, metadata: CallMetadata): Promise<void> {

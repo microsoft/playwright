@@ -711,6 +711,10 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     }
     return result.pdf;
   }
+
+  pickBestLocator(selector: string): Promise<{ locator: string; selector: string }> {
+    return this._channel.pickBestLocator({ selector });
+  }
 }
 
 export class BindingCall extends ChannelOwner<channels.BindingCallChannel> {
