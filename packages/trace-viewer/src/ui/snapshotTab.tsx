@@ -73,7 +73,7 @@ export const SnapshotTab: React.FunctionComponent<{
     const popoutParams = new URLSearchParams();
     popoutParams.set('r', snapshotUrl);
     popoutParams.set('trace', context(snapshot.action).traceUrl);
-    const popoutUrl = new URL(`popout.html?${popoutParams.toString()}`, window.location.href).toString();
+    const popoutUrl = new URL(`snapshot.html?${popoutParams.toString()}`, window.location.href).toString();
     return { snapshots, snapshotInfoUrl, snapshotUrl, pointX, pointY, popoutUrl };
   }, [snapshots, snapshotTab]);
 

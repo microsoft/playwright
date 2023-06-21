@@ -45,7 +45,7 @@ export default defineConfig({
       input: {
         index: path.resolve(__dirname, 'index.html'),
         uiMode: path.resolve(__dirname, 'uiMode.html'),
-        popout: path.resolve(__dirname, 'popout.html'),
+        snapshot: path.resolve(__dirname, 'snapshot.html'),
       },
       output: {
         entryFileNames: () => '[name].[hash].js',

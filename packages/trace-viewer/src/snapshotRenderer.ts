@@ -353,10 +353,10 @@ function rewriteURLsInStyleSheetForCustomProtocol(text: string): string {
   });
 }
 
-// <base>/popout.html?r=<snapshotUrl> is used for "pop out snapshot" feature.
+// <base>/snapshot.html?r=<snapshotUrl> is used for "pop out snapshot" feature.
 export function unwrapPopoutUrl(url: string) {
   const u = new URL(url);
-  if (u.pathname.endsWith('/popout.html'))
+  if (u.pathname.endsWith('/snapshot.html'))
     return u.searchParams.get('r')!;
   return url;
 }
