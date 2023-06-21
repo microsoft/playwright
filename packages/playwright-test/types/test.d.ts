@@ -3518,10 +3518,12 @@ export interface PlaywrightWorkerOptions {
    *   projects: [
    *     {
    *       name: 'chromium',
-   *       use: { ...devices['Desktop Chrome'] },
-   *       launchOptions: {
-   *         args: ['--start-maximized'],
-   *     },
+   *       use: {
+   *         ...devices['Desktop Chrome'],
+   *         launchOptions: {
+   *           args: ['--start-maximized']
+   *         }
+   *       }
    *     }
    *   ]
    * });
