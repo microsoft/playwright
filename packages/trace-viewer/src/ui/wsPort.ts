@@ -15,14 +15,36 @@
  */
 
 let lastId = 0;
-let _ws: WebSocket;
+let _ws: WebSocket | undefined;
 const callbacks = new Map<number, { resolve: (arg: any) => void, reject: (arg: Error) => void }>();
+let retryCount = 0;
+let pingInterval: NodeJS.Timeout | undefined;
 
-export async function connect(options: { onEvent: (method: string, params?: any) => void, onClose: () => void }): Promise<(method: string, params?: any) => Promise<any>> {
+export async function connect({
+  onEvent,
+  onClose = () => {},
+  maxRetries = 3,
+}: {
+  onEvent: (method: string, params?: any) => void;
+  onClose?: () => void;
+  maxRetries?: number;
+}): Promise<(method: string, params?: any) => Promise<any>> {
   const guid = new URLSearchParams(window.location.search).get('ws');
   const ws = new WebSocket(`${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.hostname}:${window.location.port}/${guid}`);
+  window.ws = ws;
+  ws.addEventListener('close', () => {
+    _ws = undefined;
+    if (retryCount < maxRetries) {
+      retryCount++;
+      clearInterval(pingInterval);
+      setTimeout(() => connect({ onClose, onEvent, maxRetries }), 100 * retryCount);
+    } else {
+      retryCount = 0;
+      onClose();
+    }
+  });
   await new Promise(f => ws.addEventListener('open', f));
-  ws.addEventListener('close', options.onClose);
+  retryCount = 0;
   ws.addEventListener('message', event => {
     const message = JSON.parse(event.data);
     const { id, result, error, method, params } = message;
@@ -36,15 +58,17 @@ export async function connect(options: { onEvent: (method: string, params?: any)
       else
         callback.resolve(result);
     } else {
-      options.onEvent(method, params);
+      onEvent(method, params);
     }
   });
   _ws = ws;
-  setInterval(() => sendMessage('ping').catch(() => {}), 30000);
+  pingInterval = setInterval(() => sendMessage('ping').catch(() => {}), 30000);
   return sendMessage;
 }
 
 const sendMessage = async (method: string, params?: any): Promise<any> => {
+  if (!_ws)
+    return;
   const id = ++lastId;
   const message = { id, method, params };
   _ws.send(JSON.stringify(message));

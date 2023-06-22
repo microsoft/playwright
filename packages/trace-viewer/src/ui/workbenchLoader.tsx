@@ -92,7 +92,6 @@ export const WorkbenchLoader: React.FunctionComponent<{
             setProcessingErrorMessage(null);
           }
         },
-        onClose() {}
       }).then(sendMessage => {
         sendMessage('ready');
       });
