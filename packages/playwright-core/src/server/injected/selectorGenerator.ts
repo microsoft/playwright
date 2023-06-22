@@ -18,7 +18,7 @@ import { cssEscape, escapeForAttributeSelector, escapeForTextSelector, normalize
 import { closestCrossShadow, isInsideScope, parentElementOrShadowHost } from './domUtils';
 import type { InjectedScript } from './injectedScript';
 import { getAriaRole, getElementAccessibleName, beginAriaCaches, endAriaCaches } from './roleUtils';
-import { elementText } from './selectorUtils';
+import { elementText, getElementLabels } from './selectorUtils';
 
 type SelectorToken = {
   engine: string;
@@ -214,12 +214,13 @@ function buildNoTextCandidates(injectedScript: InjectedScript, element: Element,
       candidates.push({ engine: 'internal:attr', selector: `[placeholder=${escapeForAttributeSelector(input.placeholder, false)}]`, score: kPlaceholderScore });
       candidates.push({ engine: 'internal:attr', selector: `[placeholder=${escapeForAttributeSelector(input.placeholder, true)}]`, score: kPlaceholderScoreExact });
     }
-    const label = input.labels?.[0];
-    if (label) {
-      const labelText = elementText(injectedScript._evaluator._cacheText, label).full.trim();
-      candidates.push({ engine: 'internal:label', selector: escapeForTextSelector(labelText, false), score: kLabelScore });
-      candidates.push({ engine: 'internal:label', selector: escapeForTextSelector(labelText, true), score: kLabelScoreExact });
-    }
+  }
+
+  const labels = getElementLabels(injectedScript._evaluator._cacheText, element);
+  for (const label of labels) {
+    const labelText = label.full.trim();
+    candidates.push({ engine: 'internal:label', selector: escapeForTextSelector(labelText, false), score: kLabelScore });
+    candidates.push({ engine: 'internal:label', selector: escapeForTextSelector(labelText, true), score: kLabelScoreExact });
   }
 
   const ariaRole = getAriaRole(element);

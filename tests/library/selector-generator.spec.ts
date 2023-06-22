@@ -355,7 +355,7 @@ it.describe('selector generator', () => {
     expect(await generate(page, 'ng\\:switch')).toBe('ng\\:switch');
 
     await page.setContent(`<button><span></span></button><button></button>`);
-    await page.$eval('button', button => button.setAttribute('aria-label', `!#'!?:`));
+    await page.$eval('span', span => span.textContent = `!#'!?:`);
     expect(await generate(page, 'button')).toBe(`internal:role=button[name="!#'!?:"i]`);
     expect(await page.$(`role=button[name="!#'!?:"]`)).toBeTruthy();
 
@@ -380,7 +380,7 @@ it.describe('selector generator', () => {
 
   it('should accept valid aria-label for candidate consideration', async ({ page }) => {
     await page.setContent(`<button aria-label="ariaLabel" id="buttonId"></button>`);
-    expect(await generate(page, 'button')).toBe('internal:role=button[name=\"ariaLabel\"i]');
+    expect(await generate(page, 'button')).toBe('internal:label="ariaLabel"i');
   });
 
   it('should ignore empty role for candidate consideration', async ({ page }) => {
@@ -404,8 +404,20 @@ it.describe('selector generator', () => {
   });
 
   it('should generate label selector', async ({ page }) => {
-    await page.setContent(`<label for=target>Country</label><input id=target>`);
-    expect(await generate(page, 'input')).toBe('internal:label="Country"i');
+    await page.setContent(`
+      <label for=target1>Target1</label><input id=target1>
+      <label for=target2>Target2</label><button id=target2>??</button>
+      <label for=target3>Target3</label><select id=target3><option>hey</option></select>
+      <label for=target4>Target4</label><progress id=target4 value=70 max=100>70%</progress>
+      <label for=target5>Target5</label><input id=target5 type=hidden>
+      <label for=target6>Target6</label><div id=target6>text</div>
+    `);
+    expect(await generate(page, '#target1')).toBe('internal:label="Target1"i');
+    expect(await generate(page, '#target2')).toBe('internal:label="Target2"i');
+    expect(await generate(page, '#target3')).toBe('internal:label="Target3"i');
+    expect(await generate(page, '#target4')).toBe('internal:label="Target4"i');
+    expect(await generate(page, '#target5')).toBe('#target5');
+    expect(await generate(page, '#target6')).toBe('internal:text="text"i');
 
     await page.setContent(`<label for=target>Coun"try</label><input id=target>`);
     expect(await generate(page, 'input')).toBe('internal:label="Coun\\\"try"i');
