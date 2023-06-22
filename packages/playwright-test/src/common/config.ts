@@ -53,7 +53,8 @@ export class FullConfigInternal {
   testIdMatcher?: Matcher;
   defineConfigWasUsed = false;
 
-  static from(config: FullConfig): FullConfigInternal {
+  // TODO: when merging reports, there could be no internal config. This is very unfortunate.
+  static from(config: FullConfig): FullConfigInternal | undefined {
     return (config as any)[configInternalSymbol];
   }
 
