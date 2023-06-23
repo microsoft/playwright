@@ -19,6 +19,7 @@ let _ws: WebSocket | undefined;
 const callbacks = new Map<number, { resolve: (arg: any) => void, reject: (arg: Error) => void }>();
 let retryCount = 0;
 let pingInterval: NodeJS.Timeout | undefined;
+const bufferedMessages: { method: string, params?: any }[] = [];
 
 export async function connect({
   onEvent,
@@ -31,7 +32,6 @@ export async function connect({
 }): Promise<(method: string, params?: any) => Promise<any>> {
   const guid = new URLSearchParams(window.location.search).get('ws');
   const ws = new WebSocket(`${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.hostname}:${window.location.port}/${guid}`);
-  window.ws = ws;
   ws.addEventListener('close', () => {
     _ws = undefined;
     if (retryCount < maxRetries) {
@@ -63,15 +63,20 @@ export async function connect({
   });
   _ws = ws;
   pingInterval = setInterval(() => sendMessage('ping').catch(() => {}), 30000);
+
+  while (bufferedMessages.length)
+    ws.send(JSON.stringify(bufferedMessages.shift()));
+
   return sendMessage;
 }
 
 const sendMessage = async (method: string, params?: any): Promise<any> => {
-  if (!_ws)
-    return;
   const id = ++lastId;
   const message = { id, method, params };
-  _ws.send(JSON.stringify(message));
+  if (!_ws)
+    bufferedMessages.push(message);
+  else
+    _ws.send(JSON.stringify(message));
   return new Promise((resolve, reject) => {
     callbacks.set(id, { resolve, reject });
   });
