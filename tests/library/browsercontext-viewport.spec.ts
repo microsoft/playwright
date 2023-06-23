@@ -163,3 +163,15 @@ it('WebKit Windows headed should have a minimal viewport', async ({ contextFacto
   await expect(page.setViewportSize({ width: 100, height: 100 })).rejects.toThrow('WebKit on Windows has a minimal viewport of 250x240.');
   await context.close();
 });
+
+browserTest('should be able to get correct orientation angle on non-mobile devices', async ({ browser, browserName, server }) => {
+  browserTest.skip(browserName === 'webkit', 'Desktop webkit dont support orientation API');
+
+  const context = await browser.newContext({ viewport: { width: 300, height: 400 }, isMobile: false });
+  const page = await context.newPage();
+  await page.goto(server.PREFIX + '/index.html');
+  expect(await page.evaluate(() => window.screen.orientation.angle)).toBe(0);
+  await page.setViewportSize({ width: 400, height: 300 });
+  expect(await page.evaluate(() => window.screen.orientation.angle)).toBe(0);
+  await context.close();
+});
