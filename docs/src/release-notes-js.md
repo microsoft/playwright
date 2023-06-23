@@ -8,6 +8,11 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 ## Version 1.35
 
+<LiteYouTube
+  id="pJiirfyJwcA"
+  title="Playwright 1.35"
+/>
+
 ### Highlights
 
 * UI mode is now available in VSCode Playwright extension via a new "Show trace viewer" button:
