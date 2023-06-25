@@ -168,7 +168,8 @@ export const UIModeView: React.FC<{}> = ({
 
   return <div className='vbox ui-mode'>
     {isDisconnected && <div className='drop-target'>
-      <div className='title'>Process disconnected</div>
+      <div className='title'>UI Mode disconnected</div>
+      <div><a href='#' onClick={() => window.location.reload()}>Reload the page</a> to reconnect</div>
     </div>}
     <SplitView sidebarSize={250} orientation='horizontal' sidebarIsFirst={true}>
       <div className='vbox'>

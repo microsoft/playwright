@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { showTraceViewer } from 'playwright-core/lib/server';
+import { openTraceViewerApp, openTraceInBrowser } from 'playwright-core/lib/server';
 import { isUnderTest, ManualPromise } from 'playwright-core/lib/utils';
 import type { FullResult } from '../../reporter';
 import { clearCompilationCache, collectAffectedTestFiles, dependenciesForTestFile } from '../transform/compilationCache';
@@ -27,7 +27,7 @@ import { chokidar } from '../utilsBundle';
 import type { FSWatcher } from 'chokidar';
 import { open } from 'playwright-core/lib/utilsBundle';
 import ListReporter from '../reporters/list';
-import type { Transport } from 'playwright-core/lib/server/trace/viewer/traceViewer';
+import type { OpenTraceViewerOptions, Transport } from 'playwright-core/lib/server/trace/viewer/traceViewer';
 
 class UIMode {
   private _config: FullConfigInternal;
@@ -82,7 +82,6 @@ class UIMode {
   }
 
   async showUI(options: { host?: string, port?: number }) {
-    const exitPromise = new ManualPromise();
     let queue = Promise.resolve();
 
     this._transport = {
@@ -90,10 +89,6 @@ class UIMode {
         if (method === 'ping')
           return;
 
-        if (method === 'exit') {
-          exitPromise.resolve();
-          return;
-        }
         if (method === 'watch') {
           this._watchFiles(params.fileNames);
           return;
@@ -117,16 +112,23 @@ class UIMode {
         await queue;
       },
 
-      onclose: () => exitPromise.resolve(),
+      onclose: () => { },
     };
-    await showTraceViewer([], 'chromium', {
+    const openOptions: OpenTraceViewerOptions = {
       app: 'uiMode.html',
       headless: isUnderTest() && process.env.PWTEST_HEADED_FOR_TEST !== '1',
       transport: this._transport,
       host: options.host,
       port: options.port,
-      openInBrowser: options.host !== undefined || options.port !== undefined,
-    });
+    };
+    const exitPromise = new ManualPromise<void>();
+    if (options.host !== undefined || options.port !== undefined) {
+      await openTraceInBrowser([], openOptions);
+      process.on('SIGINT', () => exitPromise.resolve());
+    } else {
+      const page = await openTraceViewerApp([], 'chromium', openOptions);
+      page.on('close', () => exitPromise.resolve());
+    }
 
     if (!process.env.PWTEST_DEBUG) {
       process.stdout.write = (chunk: string | Buffer) => {
