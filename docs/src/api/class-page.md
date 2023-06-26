@@ -1782,7 +1782,7 @@ class PageExamples
         using var playwright = await Playwright.CreateAsync();
         await using var browser = await playwright.Webkit.LaunchAsync(new()
         {
-            Headless: false
+            Headless = false,
         });
         var page = await browser.NewPageAsync();
 
@@ -2046,7 +2046,7 @@ class PageExamples
         using var playwright = await Playwright.CreateAsync();
         await using var browser = await playwright.Webkit.LaunchAsync(new()
         {
-            Headless: false
+            Headless = false
         });
         var page = await browser.NewPageAsync();
 

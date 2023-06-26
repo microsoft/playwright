@@ -395,7 +395,7 @@ pytest test_login.py --browser-channel msedge
 </RunSettings>
 ```
 
-```csharp
+```bash csharp
 dotnet test -- Playwright.BrowserName=chromium Playwright.LaunchOptions.Channel=msedge
 ```
 
