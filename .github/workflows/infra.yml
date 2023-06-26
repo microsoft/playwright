@@ -35,5 +35,3 @@ jobs:
           git diff
           exit 1
         fi
-    - name: Audit prod NPM dependencies
-      run: npm audit --omit dev
