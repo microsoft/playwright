@@ -47,6 +47,8 @@ async function loadTrace(traceUrl: string, traceFileName: string | null, clientI
     const backend = traceUrl.endsWith('json') ? new FetchTraceModelBackend(traceUrl) : new ZipTraceModelBackend(traceUrl, fetchProgress);
     await traceModel.load(backend, unzipProgress);
   } catch (error: any) {
+    // eslint-disable-next-line no-console
+    console.error(error);
     if (error?.message?.includes('Cannot find .trace file') && await traceModel.hasEntry('index.html'))
       throw new Error('Could not load trace. Did you upload a Playwright HTML report instead? Make sure to extract the archive first and then double-click the index.html file or put it on a web server.');
     if (traceFileName)

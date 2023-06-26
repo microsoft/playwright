@@ -66,6 +66,6 @@ function attachmentURL(traceUrl: string, attachment: {
   body?: string;
 }) {
   if (attachment.sha1)
-    return 'sha1/' + attachment.sha1 + '?trace=' + traceUrl;
-  return 'file?path=' + attachment.path;
+    return 'sha1/' + attachment.sha1 + '?trace=' + encodeURIComponent(traceUrl);
+  return 'file?path=' + encodeURIComponent(attachment.path!);
 }
