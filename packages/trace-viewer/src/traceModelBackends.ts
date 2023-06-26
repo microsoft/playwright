@@ -86,7 +86,7 @@ export class FetchTraceModelBackend implements TraceModelBackend {
 
   constructor(traceURL: string) {
     this._traceURL = traceURL;
-    this._entriesPromise = fetch('/trace/file?path=' + encodeURI(traceURL)).then(async response => {
+    this._entriesPromise = fetch('/trace/file?path=' + encodeURIComponent(traceURL)).then(async response => {
       const json = JSON.parse(await response.text());
       const entries = new Map<string, string>();
       for (const entry of json.entries)
@@ -128,12 +128,12 @@ export class FetchTraceModelBackend implements TraceModelBackend {
     const fileName = entries.get(entryName);
     if (!fileName)
       return;
-    return fetch('/trace/file?path=' + encodeURI(fileName));
+    return fetch('/trace/file?path=' + encodeURIComponent(fileName));
   }
 }
 
 function formatUrl(trace: string) {
-  let url = trace.startsWith('http') || trace.startsWith('blob') ? trace : `file?path=${trace}`;
+  let url = trace.startsWith('http') || trace.startsWith('blob') ? trace : `file?path=${encodeURIComponent(trace)}`;
   // Dropbox does not support cors.
   if (url.startsWith('https://www.dropbox.com/'))
     url = 'https://dl.dropboxusercontent.com/' + url.substring('https://www.dropbox.com/'.length);

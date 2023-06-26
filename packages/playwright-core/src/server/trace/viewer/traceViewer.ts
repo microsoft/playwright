@@ -93,7 +93,7 @@ async function startTraceViewerServer(traceUrls: string[], options?: Options): P
     return server.serveFile(request, response, absolutePath);
   });
 
-  const params = traceUrls.map(t => `trace=${t}`);
+  const params = traceUrls.map(t => `trace=${encodeURIComponent(t)}`);
   const transport = options?.transport || (options?.isServer ? new StdinServer() : undefined);
 
   if (transport) {
