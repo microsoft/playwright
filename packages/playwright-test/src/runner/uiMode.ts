@@ -124,7 +124,6 @@ class UIMode {
     const exitPromise = new ManualPromise<void>();
     if (options.host !== undefined || options.port !== undefined) {
       await openTraceInBrowser([], openOptions);
-      process.on('SIGINT', () => exitPromise.resolve());
     } else {
       const page = await openTraceViewerApp([], 'chromium', openOptions);
       page.on('close', () => exitPromise.resolve());
