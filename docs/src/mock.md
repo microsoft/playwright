@@ -6,15 +6,15 @@ title: "Mock APIs"
 ## Introduction
 
 Web APIs are usually implemented as HTTP endpoints. Playwright provides APIs to **mock** and **modify** network traffic, both HTTP and HTTPS. Any requests that a page does, including [XHRs](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest) and
-[fetch](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) requests, can be tracked, modified and mocked. With Playwright you can also mock using HAR files, an HTTP Archive file that contains a record of all the network requests that are made when a page is loaded..
+[fetch](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) requests, can be tracked, modified and mocked. With Playwright you can also mock using HAR files that contain multiple network requests made by the page.
 
 ## Mock API requests
 
-The following code will intercept all the calls to `*/**/api/v1/fruits` and will return a custom response instead. No requests to the API will be made. Once route is fulfilled the test goes to the URL and asserts that the response is our mock data.
+The following code will intercept all the calls to `*/**/api/v1/fruits` and will return a custom response instead. No requests to the API will be made. The test goes to the URL that uses the mocked route and asserts that mock data is present on the page.
 
 ```js
 test("mocks a fruit and doesn't call api", async ({ page }) => {
-  // Mock the api call
+  // Mock the api call before navigating
   await page.route(
     '*/**/api/v1/fruits',
     async (route) => {
@@ -137,7 +137,7 @@ In the example below we intercept the call to the fruit API and add a new fruit 
 
 
 ```js
-test('gets the json from api and adds a new fruit', async ({
+test('gets the json from api and adds a new fruit', async ({ page }) => {
   page,
 }) => {
   // Get the response and add to it
@@ -146,7 +146,7 @@ test('gets the json from api and adds a new fruit', async ({
     async (route) => {
       const response = await route.fetch();
       const json = await response.json();
-      json.push( {name: "Playwright", id: 100});
+      json.push({ name: "Playwright", id: 100 });
       // Fulfill using the original response, while patching the response body
       // with the given JSON object.
       await route.fulfill({ response, json });
@@ -166,7 +166,7 @@ async def test_gets_the_json_from_api_and_adds_a_new_fruit(page):
   async def handle(route):
     response = await route.fulfill()
     json = await response.json()
-    json.append( {name: "Playwright", id: 100})
+    json.append({ name: "Playwright", id: 100 })
     # Fulfill using the original response, while patching the response body
     # with the given JSON object.
     await route.fulfill(response=response, json=json)
@@ -185,7 +185,7 @@ def test_gets_the_json_from_api_and_adds_a_new_fruit(page):
  def handle(route):
     response = route.fulfill()
     json = response.json()
-    json.append( {name: "Playwright", id: 100})
+    json.append({ name: "Playwright", id: 100 })
     # Fulfill using the original response, while patching the response body
     # with the given JSON object.
     route.fulfill(response=response, json=json)
@@ -239,7 +239,7 @@ page.goto("https://demo.playwright.dev/api-mocking");
 // Assert that the Strawberry fruit is visible
 assertThat(page.getByText("Playwright", new Page.GetByTextOptions().setExact(true))).isVisible();
 ```
-From the trace of our test we can see that the API was called and the response was modified.
+In the trace of our test we can see that the API was called and the response was modified.
 ![trace of test showing api being called and fulfilled](https://github.com/microsoft/playwright/assets/13063165/8b8dd82d-1b3e-428e-871b-840581fed439)
 
 By inspecting the response we can see that our new fruit was added to the list.
@@ -249,7 +249,7 @@ Read more about [advanced networking](./network.md).
 
 ## Mocking with HAR files
 
-A HAR file is an HTTP Archive file that contains a record of all the network requests that are made when a page is loaded. It contains information about the request and response headers, cookies, content, timings, and more. You can use HAR files to mock network requests in your tests. You'll need to:
+A HAR file is an [HTTP Archive](http://www.softwareishard.com/blog/har-12-spec/) file that contains a record of all the network requests that are made when a page is loaded. It contains information about the request and response headers, cookies, content, timings, and more. You can use HAR files to mock network requests in your tests. You'll need to:
 
 1. Record a HAR file.
 1. Commit the HAR file alongside the tests.
@@ -257,13 +257,13 @@ A HAR file is an HTTP Archive file that contains a record of all the network req
 
 ### Recording a HAR file
 
-To record a HAR file we use the `routeFromHAR` method. This method takes in the path to the HAR file and an optional object of options.
+To record a HAR file we use [`method: Page.routeFromHAR`] or [`method: BrowserContext.routeFromHAR`] method. This method takes in the path to the HAR file and an optional object of options.
 The options object can contain the URL so that only requests with the URL matching the specified glob pattern will be served from the HAR File. If not specified, all requests will be served from the HAR file.
 
-The `update` option updates the given HAR file with the actual network information or creates a new HAR file, in the hars folder, if one doesn't already exist. In order to record the HAR file, set `update` to true.
+Setting `update` option to true will create or update the HAR file with the actual network information instead of serving the requests from the HAR file. Use it when creating a test to populate the HAR with real data.
 
 ```js
-test('records or updates the HAR file', async ({
+test('records or updates the HAR file', async ({ page }) => {
   page,
 }) => {
   // Get the response and add to it
@@ -348,10 +348,10 @@ Once you have recorded a HAR file you can modify it by opening the hashed .txt f
 
 ### Replaying from HAR
 
-Use [`method: Page.routeFromHAR`] or [`method: BrowserContext.routeFromHAR`] to serve matching responses from the [HAR](http://www.softwareishard.com/blog/har-12-spec/) file. Set `update: false` as an option in the `routeFromHAR` method or simply remove this option as the default is false. This will run the test against the HAR file instead of hitting the API.
+Now that you have the HAR file recorded and modified the mock data, it can be used to serve matching responses in the test. For this, just turn off or simply remove the `update` option. This will run the test against the HAR file instead of hitting the API.
 
 ```js
-test('gets the json from HAR and checks the new fruit has been added', async ({
+test('gets the json from HAR and checks the new fruit has been added', async ({ page }) => {
   page,
 }) => {
   // Replay API requests from HAR.
@@ -433,17 +433,19 @@ page.goto("https://demo.playwright.dev/api-mocking");
 // Assert that the Playwright fruit is visible
 assertThat(page.getByText("Playwright", new Page.GetByTextOptions().setExact(true))).isVisible();
 ```
-From the trace of our test we can see that the route was fulfilled from the HAR file and the API was not called.
+In the trace of our test we can see that the route was fulfilled from the HAR file and the API was not called.
 ![trace showing the HAR file being used](https://github.com/microsoft/playwright/assets/13063165/1bd7ab66-ea4f-43c2-a4e5-ca17d4837ff1)
 
-If we inspect the response we can see our new fruit was added to the JSON, which was done by manually updating the hashed .txt file inside the 'hars' folder.
+If we inspect the response we can see our new fruit was added to the JSON, which was done by manually updating the hashed `.txt` file inside the `hars` folder.
 ![trace showing response from HAR file](https://github.com/microsoft/playwright/assets/13063165/db3117fc-7b02-4973-9a51-29e213261a6a)
 
 HAR replay matches URL and HTTP method strictly. For POST requests, it also matches POST payloads strictly. If multiple recordings match a request, the one with the most matching headers is picked. An entry resulting in a redirect will be followed automatically.
 
 Similar to when recording, if given HAR file name ends with `.zip`, it is considered an archive containing the HAR file along with network payloads stored as separate entries. You can also extract this archive, edit payloads or HAR log manually and point to the extracted har file. All the payloads will be resolved relative to the extracted har file on the file system.
 
-### Recording HAR with CLI
+#### Recording HAR with CLI
+
+We recommend the `update` option to record HAR file for your test. However, you can also record the HAR with Playwright CLI.
 
 Open the browser with Playwright CLI and pass `--save-har` option to produce a HAR file. Optionally, use `--save-har-glob` to only save requests you are interested in, for example API endpoints. If the har file name ends with `.zip`, artifacts are written as separate files and are all compressed into a single `zip`.
 

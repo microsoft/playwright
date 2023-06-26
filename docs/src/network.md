@@ -7,9 +7,12 @@ title: "Network"
 Playwright provides APIs to **monitor** and **modify** browser network traffic, both HTTP and HTTPS. Any requests that a page does, including [XHRs](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest) and
 [fetch](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) requests, can be tracked, modified and handled.
 
+
+## Mock APIs
+
 Check out our [API mocking guide](./mock.md) to learn more on how to 
 - mock API requests and never hit the API
-- perform the API request and fulfill it with a modified response
+- perform the API request and modify the response
 - use HAR files to mock network requests.
 
 ## Network mocking
