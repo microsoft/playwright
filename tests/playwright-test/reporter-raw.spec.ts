@@ -48,7 +48,7 @@ test('should use project name', async ({ runInlineTest }, testInfo) => {
       test('passes', async ({ page }, testInfo) => {});
     `,
   }, { reporter: 'dot,' + kRawReporterPath });
-  const json = JSON.parse(fs.readFileSync(testInfo.outputPath('output', 'report', 'project-name.report'), 'utf-8'));
+  const json = JSON.parse(fs.readFileSync(testInfo.outputPath('output', 'report', 'project-name-656a9b.report'), 'utf-8'));
   expect(json.project.name).toBe('project-name');
   expect(result.exitCode).toBe(0);
 });
@@ -173,7 +173,7 @@ test(`testInfo.attach should save attachments via path`, async ({ runInlineTest 
     expect(result.attachments[0].name).toBe('example.png');
     expect(result.attachments[0].contentType).toBe('x-playwright/custom');
     const p = result.attachments[0].path;
-    expect(p).toMatch(/[/\\]attachments[/\\]example-png-[0-9a-f]+\.json$/);
+    expect(p).toMatch(/[/\\]attachments[/\\]example-png-[0-9a-f]{6}-[0-9a-f]+\.json$/);
     const contents = fs.readFileSync(p);
     expect(contents.toString()).toBe('We <3 Playwright!');
   }
@@ -255,5 +255,5 @@ test('dupe project names', async ({ runInlineTest }, testInfo) => {
     `,
   }, { reporter: 'dot,' + kRawReporterPath });
   const files = fs.readdirSync(testInfo.outputPath('test-results', 'report'));
-  expect(new Set(files)).toEqual(new Set(['project-name.report', 'project-name-1.report', 'project-name-2.report']));
+  expect(new Set(files)).toEqual(new Set(['project-name-656a9b.report', 'project-name-656a9b-1.report', 'project-name-656a9b-2.report']));
 });
