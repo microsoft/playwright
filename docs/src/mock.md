@@ -115,8 +115,6 @@ In the example below we intercept the call to the fruit API and add a new fruit 
 
 ```js
 test('gets the json from api and adds a new fruit', async ({ page }) => {
-  page,
-}) => {
   // Get the response and add to it
   await page.route(
     '*/**/api/v1/fruits',
@@ -135,7 +133,7 @@ test('gets the json from api and adds a new fruit', async ({ page }) => {
 
   // Assert that the new fruit is visible
   await expect(page.getByText('Playwright', { exact: true })).toBeVisible();
-};
+});
 ```
 
 ```python async
@@ -241,8 +239,6 @@ Setting `update` option to true will create or update the HAR file with the actu
 
 ```js
 test('records or updates the HAR file', async ({ page }) => {
-  page,
-}) => {
   // Get the response from the HAR file
   await page.routeFromHAR('./hars/fruit.har', {
     url: '*/**/api/v1/fruits',
@@ -250,7 +246,7 @@ test('records or updates the HAR file', async ({ page }) => {
   });
   // Go to the page
   await page.goto('https://demo.playwright.dev/api-mocking');
-};
+});
 ```
 
 ```python async
@@ -317,8 +313,6 @@ Now that you have the HAR file recorded and modified the mock data, it can be us
 
 ```js
 test('gets the json from HAR and checks the new fruit has been added', async ({ page }) => {
-  page,
-}) => {
   // Replay API requests from HAR.
   // Either use a matching response from the HAR,
   // or abort the request if nothing matches.
@@ -332,7 +326,7 @@ test('gets the json from HAR and checks the new fruit has been added', async ({ 
 
   // Assert that the Playwright fruit is visible
   await expect(page.getByText('Playwright', { exact: true })).toBeVisible();
-};
+});
 ```
 
 ```python async
