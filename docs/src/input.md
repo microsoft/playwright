@@ -192,7 +192,7 @@ page.get_by_label('Choose multiple colors').select_option(['red', 'green', 'blue
 await page.GetByLabel("Choose a color").SelectOptionAsync("blue");
 
 // Single selection matching the label
-await page.GetByLabel("Choose a color").SelectOptionAsync(new SelectOptionValue { Label = "blue" }));
+await page.GetByLabel("Choose a color").SelectOptionAsync(new SelectOptionValue { Label = "blue" });
 
 // Multiple selected items
 await page.GetByLabel("Choose multiple colors").SelectOptionAsync(new[] { "blue", "green", "red" });

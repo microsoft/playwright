@@ -55,6 +55,7 @@ import {
   RECEIVED_COLOR,
   printReceived,
 } from '../common/expectBundle';
+export type { ExpectMatcherContext } from '../common/expectBundle';
 import { zones } from 'playwright-core/lib/utils';
 
 // from expect/build/types
@@ -139,7 +140,7 @@ function createExpect(info: ExpectMetaInfo) {
           return configure({ _poll: poll })(actual, messageOrOptions) as any;
         };
       }
-      return expectLibrary[property];
+      return (expectLibrary as any)[property];
     },
   });
 

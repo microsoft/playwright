@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import type { TestCase, TestFile } from './types';
+import type { FilteredStats, TestCase, TestFile, TestFileSummary } from './types';
 import * as React from 'react';
 import './colors.css';
 import './common.css';
@@ -47,6 +47,7 @@ export const ReportView: React.FC<{
   const [filterText, setFilterText] = React.useState(searchParams.get('q') || '');
 
   const filter = React.useMemo(() => Filter.parse(filterText), [filterText]);
+  const filteredStats = React.useMemo(() => computeStats(report?.json().files || [], filter), [report, filter]);
 
   return <div className='htmlreport vbox px-4 pb-4'>
     <main>
@@ -59,7 +60,7 @@ export const ReportView: React.FC<{
           expandedFiles={expandedFiles}
           setExpandedFiles={setExpandedFiles}
           projectNames={report?.json().projectNames || []}
-          stats={report?.json().stats || { duration: 0 }}
+          filteredStats={filteredStats}
         />
       </Route>
       <Route predicate={testCaseRoutePredicate}>
@@ -95,3 +96,17 @@ const TestCaseViewLoader: React.FC<{
   }, [test, report, testId]);
   return <TestCaseView projectNames={report.json().projectNames} test={test} anchor={anchor} run={run}></TestCaseView>;
 };
+
+function computeStats(files: TestFileSummary[], filter: Filter): FilteredStats {
+  const stats: FilteredStats = {
+    total: 0,
+    duration: 0,
+  };
+  for (const file of files) {
+    const tests = file.tests.filter(t => filter.matches(t));
+    stats.total += tests.length;
+    for (const test of tests)
+      stats.duration += test.duration;
+  }
+  return stats;
+}

@@ -16,7 +16,7 @@
 
 import type { SelectorEngine, SelectorRoot } from './selectorEngine';
 import { matchesAttributePart } from './selectorUtils';
-import { getAriaChecked, getAriaDisabled, getAriaExpanded, getAriaLevel, getAriaPressed, getAriaRole, getAriaSelected, getElementAccessibleName, isElementHiddenForAria, kAriaCheckedRoles, kAriaExpandedRoles, kAriaLevelRoles, kAriaPressedRoles, kAriaSelectedRoles } from './roleUtils';
+import { beginAriaCaches, endAriaCaches, getAriaChecked, getAriaDisabled, getAriaExpanded, getAriaLevel, getAriaPressed, getAriaRole, getAriaSelected, getElementAccessibleName, isElementHiddenForAria, kAriaCheckedRoles, kAriaExpandedRoles, kAriaLevelRoles, kAriaPressedRoles, kAriaSelectedRoles } from './roleUtils';
 import { parseAttributeSelector, type AttributeSelectorPart, type AttributeSelectorOperator } from '../../utils/isomorphic/selectorParser';
 import { normalizeWhiteSpace } from '../../utils/isomorphic/stringUtils';
 
@@ -125,7 +125,6 @@ function validateAttributes(attrs: AttributeSelectorPart[], role: string): RoleE
 }
 
 function queryRole(scope: SelectorRoot, options: RoleEngineOptions, internal: boolean): Element[] {
-  const hiddenCache = new Map<Element, boolean>();
   const result: Element[] = [];
   const match = (element: Element) => {
     if (getAriaRole(element) !== options.role)
@@ -143,13 +142,13 @@ function queryRole(scope: SelectorRoot, options: RoleEngineOptions, internal: bo
     if (options.disabled !== undefined && getAriaDisabled(element) !== options.disabled)
       return;
     if (!options.includeHidden) {
-      const isHidden = isElementHiddenForAria(element, hiddenCache);
+      const isHidden = isElementHiddenForAria(element);
       if (isHidden)
         return;
     }
     if (options.name !== undefined) {
       // Always normalize whitespace in the accessible name.
-      const accessibleName = normalizeWhiteSpace(getElementAccessibleName(element, !!options.includeHidden, hiddenCache));
+      const accessibleName = normalizeWhiteSpace(getElementAccessibleName(element, !!options.includeHidden));
       if (typeof options.name === 'string')
         options.name = normalizeWhiteSpace(options.name);
       // internal:role assumes that [name="foo"i] also means substring.
@@ -185,7 +184,12 @@ export function createRoleEngine(internal: boolean): SelectorEngine {
       if (!role)
         throw new Error(`Role must not be empty`);
       const options = validateAttributes(parsed.attributes, role);
-      return queryRole(scope, options, internal);
+      beginAriaCaches();
+      try {
+        return queryRole(scope, options, internal);
+      } finally {
+        endAriaCaches();
+      }
     }
   };
 }

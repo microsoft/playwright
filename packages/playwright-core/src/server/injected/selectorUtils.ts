@@ -15,6 +15,7 @@
  */
 
 import type { AttributeSelectorPart } from '../../utils/isomorphic/selectorParser';
+import { getAriaLabelledByElements } from './roleUtils';
 
 export function matchesComponentAttribute(obj: any, attr: AttributeSelectorPart) {
   for (const token of attr.jsonPath) {
@@ -102,4 +103,22 @@ export function elementMatchesText(cache: Map<Element | ShadowRoot, ElementText>
   if (element.shadowRoot && matcher(elementText(cache, element.shadowRoot)))
     return 'selfAndChildren';
   return 'self';
+}
+
+export function getElementLabels(textCache: Map<Element | ShadowRoot, ElementText>, element: Element): ElementText[] {
+  const labels = getAriaLabelledByElements(element);
+  if (labels)
+    return labels.map(label => elementText(textCache, label));
+  const ariaLabel = element.getAttribute('aria-label');
+  if (ariaLabel !== null && !!ariaLabel.trim())
+    return [{ full: ariaLabel, immediate: [ariaLabel] }];
+
+  // https://html.spec.whatwg.org/multipage/forms.html#category-label
+  const isNonHiddenInput = element.nodeName === 'INPUT' && (element as HTMLInputElement).type !== 'hidden';
+  if (['BUTTON', 'METER', 'OUTPUT', 'PROGRESS', 'SELECT', 'TEXTAREA'].includes(element.nodeName) || isNonHiddenInput) {
+    const labels = (element as HTMLInputElement).labels;
+    if (labels)
+      return [...labels].map(label => elementText(textCache, label));
+  }
+  return [];
 }

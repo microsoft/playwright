@@ -141,7 +141,7 @@ locator.click()
 ```
 
 ```csharp
-var locator = page.GetByRole(AriaRole.Button, new() { Name = "Sign in" })
+var locator = page.GetByRole(AriaRole.Button, new() { Name = "Sign in" });
 
 await locator.HoverAsync();
 await locator.ClickAsync();
@@ -180,7 +180,7 @@ locator.click()
 ```csharp
 var locator = page
     .FrameLocator("#my-frame")
-    .GetByRole(AriaRole.Button), new() { Name = "Sign in" });
+    .GetByRole(AriaRole.Button, new() { Name = "Sign in" });
 
 await locator.ClickAsync();
 ```
@@ -644,11 +644,11 @@ page.locator("//button").click()
 ```
 
 ```csharp
-await page.Locator('css=button').ClickAsync();
-await page.Locator('xpath=//button').ClickAsync();
+await page.Locator("css=button").ClickAsync();
+await page.Locator("xpath=//button").ClickAsync();
 
-await page.Locator('button').ClickAsync();
-await page.Locator('//button').ClickAsync();
+await page.Locator("button").ClickAsync();
+await page.Locator("//button").ClickAsync();
 ```
 
 XPath and CSS selectors can be tied to the DOM structure or implementation. These selectors can break when the DOM structure changes. Long CSS or XPath chains below are an example of a **bad practice** that leads to unstable tests:
@@ -1010,8 +1010,8 @@ await Expect(page
     .GetByRole(AriaRole.Listitem)
     .Filter(new() {
         Has = page.GetByRole(AriaRole.Heading, new() { Name = "Product 2" })
-    })
-    .toHaveCountAsync(1);
+    }))
+    .ToHaveCountAsync(1);
 ```
 
 ### Filter by not having child/descendant
@@ -1053,8 +1053,8 @@ await Expect(page
     .GetByRole(AriaRole.Listitem)
     .Filter(new() {
         HasNot = page.GetByRole(AriaRole.Heading, new() { Name = "Product 2" })
-    })
-    .toHaveCountAsync(1);
+    }))
+    .ToHaveCountAsync(1);
 ```
 
 Note that the inner locator is matched starting from the outer one, not from the document root.
@@ -1104,7 +1104,7 @@ var product = page
     .Filter(new() { HasText = "Product 2" });
 
 await product
-    .GetByRole(AriaRole.Button), new() { Name = "Add to cart" })
+    .GetByRole(AriaRole.Button, new() { Name = "Add to cart" })
     .ClickAsync();
 ```
 
@@ -1574,7 +1574,7 @@ var rowLocator = page.GetByRole(AriaRole.Listitem);
 await rowLocator
     .Filter(new() { HasText = "Mary" })
     .Filter(new() {
-        Has = page.GetByRole(AriaRole.Button), new() { Name = "Say goodbye" })
+        Has = page.GetByRole(AriaRole.Button, new() { Name = "Say goodbye" })
     })
     .ScreenshotAsync(new() { Path = "screenshot.png" });
 ```

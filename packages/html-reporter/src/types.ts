@@ -26,6 +26,11 @@ export type Stats = {
   duration: number;
 };
 
+export type FilteredStats = {
+  total: number
+  duration: number,
+};
+
 export type Location = {
   file: string;
   line: number;

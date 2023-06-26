@@ -305,6 +305,21 @@ test.describe('cli codegen', () => {
     expect(message.text()).toBe('John');
   });
 
+  test('should fill textarea with new lines at the end', async ({ page, openRecorder }) => {
+    test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/23774' });
+    const recorder = await openRecorder();
+    await recorder.setContentAndWait(`<textarea id="textarea"></textarea>`);
+    const textarea = page.locator('textarea');
+    await textarea.evaluate<void, HTMLTextAreaElement>(e => e.addEventListener('input', () => (window as any).lastInputValue = e.value));
+    const waitForOutputPromise = recorder.waitForOutput('JavaScript', 'Hello\\n');
+    await textarea.type('Hello\n');
+    // Issue was that the input event was not fired for the last newline, so we check for that.
+    await page.waitForFunction(() => (window as any).lastInputValue === 'Hello\n');
+    const sources = await waitForOutputPromise;
+    expect(sources.get('JavaScript').text).toContain(`await page.locator('#textarea').fill('Hello\\n');`);
+    expect(sources.get('JavaScript').text).not.toContain(`Enter`);
+  });
+
   test('should fill [contentEditable]', async ({ page, openRecorder }) => {
     const recorder = await openRecorder();
 

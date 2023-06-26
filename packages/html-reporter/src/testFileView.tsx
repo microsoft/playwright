@@ -57,7 +57,7 @@ export const TestFileView: React.FC<React.PropsWithChildren<{
               <LabelsClickView labels={labels(test)} />
             </span>
           </div>
-          <span style={{ minWidth: '50px', textAlign: 'right' }}>{msToString(test.duration)}</span>
+          <span data-testid='test-duration' style={{ minWidth: '50px', textAlign: 'right' }}>{msToString(test.duration)}</span>
         </div>
         <div className='test-file-details-row'>
           <Link href={`#?testId=${test.testId}`} title={[...test.path, test.title].join(' › ')} className='test-file-path-link'>

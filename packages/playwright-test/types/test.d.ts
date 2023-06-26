@@ -3518,10 +3518,12 @@ export interface PlaywrightWorkerOptions {
    *   projects: [
    *     {
    *       name: 'chromium',
-   *       use: { ...devices['Desktop Chrome'] },
-   *       launchOptions: {
-   *         args: ['--start-maximized'],
-   *     },
+   *       use: {
+   *         ...devices['Desktop Chrome'],
+   *         launchOptions: {
+   *           args: ['--start-maximized']
+   *         }
+   *       }
    *     }
    *   ]
    * });
@@ -4789,8 +4791,8 @@ export type Expect = {
   }) => Expect;
   getState(): {
     expand?: boolean;
-    isNot: boolean;
-    promise: string;
+    isNot?: boolean;
+    promise?: string;
     utils: any;
   };
   not: Omit<AsymmetricMatchers, 'any' | 'anything'>;

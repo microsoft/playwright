@@ -758,7 +758,7 @@ class FrameSession {
     });
     session.on('Runtime.exceptionThrown', exception => this._page.emit(Page.Events.PageError, exceptionToError(exception.exceptionDetails)));
     // TODO: attribute workers to the right frame.
-    this._networkManager.instrumentNetworkEvents(session, this._page._frameManager.frame(this._targetId)!);
+    this._networkManager.instrumentNetworkEvents({ session, workerFrame: this._page._frameManager.frame(this._targetId) ?? undefined });
   }
 
   _onDetachedFromTarget(event: Protocol.Target.detachedFromTargetPayload) {
@@ -1008,7 +1008,7 @@ class FrameSession {
       return;
     const viewportSize = emulatedSize.viewport;
     const screenSize = emulatedSize.screen;
-    const isLandscape = viewportSize.width > viewportSize.height;
+    const isLandscape = screenSize.width > screenSize.height;
     const metricsOverride: Protocol.Emulation.setDeviceMetricsOverrideParameters = {
       mobile: !!options.isMobile,
       width: viewportSize.width,
@@ -1016,7 +1016,9 @@ class FrameSession {
       screenWidth: screenSize.width,
       screenHeight: screenSize.height,
       deviceScaleFactor: options.deviceScaleFactor || 1,
-      screenOrientation: isLandscape ? { angle: 90, type: 'landscapePrimary' } : { angle: 0, type: 'portraitPrimary' },
+      screenOrientation: !!options.isMobile ? (
+        isLandscape ? { angle: 90, type: 'landscapePrimary' } : { angle: 0, type: 'portraitPrimary' }
+      ) : { angle: 0, type: 'landscapePrimary' },
       dontSetVisibleSize: preserveWindowBoundaries
     };
     if (JSON.stringify(this._metricsOverride) === JSON.stringify(metricsOverride))

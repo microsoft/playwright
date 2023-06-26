@@ -233,9 +233,9 @@ await using var browser = await BrowserType.LaunchAsync(new()
     // Browser proxy option is required for Chromium on Windows.
     Proxy = proxy
 });
-using var context = await Browser.NewContextAsync(new()
+await using var context = await browser.NewContextAsync(new()
 {
-    Proxy = new Proxy { Server = "http://myproxy.com:3128" })
+    Proxy = new Proxy { Server = "http://myproxy.com:3128" },
 });
 ```
 

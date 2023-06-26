@@ -123,8 +123,9 @@ export class SnapshotRenderer {
       if (resource._frameref !== snapshot.frameId)
         continue;
       if (resource.request.url === url) {
+        // Pick the last resource with matching url - most likely it was used
+        // at the time of snapshot, not the earlier aborted resource with the same url.
         result = resource;
-        break;
       }
     }
 
@@ -133,8 +134,11 @@ export class SnapshotRenderer {
       for (const resource of this._resources) {
         if (typeof resource._monotonicTime === 'number' && resource._monotonicTime >= snapshot.timestamp)
           break;
-        if (resource.request.url === url)
-          return resource;
+        if (resource.request.url === url) {
+          // Pick the last resource with matching url - most likely it was used
+          // at the time of snapshot, not the earlier aborted resource with the same url.
+          result = resource;
+        }
       }
     }
 
@@ -349,10 +353,10 @@ function rewriteURLsInStyleSheetForCustomProtocol(text: string): string {
   });
 }
 
-// <base>/popout.html?r=<snapshotUrl> is used for "pop out snapshot" feature.
+// <base>/snapshot.html?r=<snapshotUrl> is used for "pop out snapshot" feature.
 export function unwrapPopoutUrl(url: string) {
   const u = new URL(url);
-  if (u.pathname.endsWith('/popout.html'))
+  if (u.pathname.endsWith('/snapshot.html'))
     return u.searchParams.get('r')!;
   return url;
 }

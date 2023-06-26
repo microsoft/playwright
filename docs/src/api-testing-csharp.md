@@ -165,6 +165,8 @@ public class TestGitHubAPI : PlaywrightTest
 These tests assume that repository exists. You probably want to create a new one before running tests and delete it afterwards. Use `[SetUp]` and `[TearDown]` hooks for that.
 
 ```csharp
+public class TestGitHubAPI : PlaywrightTest
+{
   // ...
 
   [SetUp]
@@ -198,6 +200,7 @@ These tests assume that repository exists. You probably want to create a new one
       var resp = await Request.DeleteAsync("/repos/" + USER + "/" + REPO);
       Assert.True(resp.Ok);
   }
+}
 ```
 
 ### Complete test example
@@ -337,6 +340,8 @@ The following test creates a new issue via API and then navigates to the list of
 project to check that it appears at the top of the list. The check is performed using [LocatorAssertions].
 
 ```csharp
+class TestGitHubAPI : PageTest
+{
   [Test]
   public async Task LastCreatedIssueShouldBeFirstInTheList()
   {
@@ -352,6 +357,7 @@ project to check that it appears at the top of the list. The check is performed 
       var firstIssue = Page.Locator("a[data-hovercard-type='issue']").First;
       await Expect(firstIssue).ToHaveTextAsync("[Feature] request 1");
   }
+}
 ```
 
 ## Check the server state after running user actions
@@ -360,6 +366,8 @@ The following test creates a new issue via user interface in the browser and the
 it was created:
 
 ```csharp
+class GitHubTests : PageTest
+{
   [Test]
   public async Task LastCreatedIssueShouldBeOnTheServer()
   {
@@ -374,6 +382,7 @@ it was created:
       Assert.True(newIssue.Ok);
       StringAssert.Contains(await newIssue.TextAsync(), "Bug report 1");
   }
+}
 ```
 
 ## Reuse authentication state

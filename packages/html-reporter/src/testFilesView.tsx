@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import type { HTMLReport, TestFileSummary } from './types';
+import type { FilteredStats, HTMLReport, TestFileSummary } from './types';
 import * as React from 'react';
 import type { Filter } from './filter';
 import { TestFileView } from './testFileView';
@@ -26,9 +26,9 @@ export const TestFilesView: React.FC<{
   expandedFiles: Map<string, boolean>,
   setExpandedFiles: (value: Map<string, boolean>) => void,
   filter: Filter,
-  stats: { duration: number },
+  filteredStats: FilteredStats,
   projectNames: string[],
-}> = ({ report, filter, expandedFiles, setExpandedFiles, projectNames, stats }) => {
+}> = ({ report, filter, expandedFiles, setExpandedFiles, projectNames, filteredStats }) => {
   const filteredFiles = React.useMemo(() => {
     const result: { file: TestFileSummary, defaultExpanded: boolean }[] = [];
     let visibleTests = 0;
@@ -43,8 +43,9 @@ export const TestFilesView: React.FC<{
   return <>
     <div className='p-2' style={{ display: 'flex' }}>
       {projectNames.length === 1 && !!projectNames[0] && <div data-testid="project-name" style={{ color: 'var(--color-fg-subtle)' }}>Project: {projectNames[0]}</div>}
+      {!filter.empty() && <div data-testid="filtered-tests-count" style={{ color: 'var(--color-fg-subtle)' }}>Filtered: {filteredStats.total}</div>}
       <div style={{ flex: 'auto' }}></div>
-      <div data-testid="overall-duration" style={{ color: 'var(--color-fg-subtle)' }}>Total time: {msToString(stats.duration)}</div>
+      <div data-testid="overall-duration" style={{ color: 'var(--color-fg-subtle)' }}>Total time: {msToString(filteredStats.duration)}</div>
     </div>
     {report && filteredFiles.map(({ file, defaultExpanded }) => {
       return <TestFileView

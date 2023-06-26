@@ -59,7 +59,7 @@ pytest
 
 ## System requirements
 
-- Python 3.7 or higher.
+- Python 3.8 or higher.
 - Windows 10+, Windows Server 2016+ or Windows Subsystem for Linux (WSL).
 - MacOS 12 Monterey or MacOS 13 Ventura.
 - Debian 11, Ubuntu 20.04 or Ubuntu 22.04.

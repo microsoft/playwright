@@ -682,7 +682,7 @@ export class Frame extends SdkObject {
       if (event.newDocument!.documentId !== navigateResult.newDocumentId) {
         // This is just a sanity check. In practice, new navigation should
         // cancel the previous one and report "request cancelled"-like error.
-        throw new NavigationAbortedError(navigateResult.newDocumentId, 'Navigation interrupted by another one');
+        throw new NavigationAbortedError(navigateResult.newDocumentId, `Navigation to "${url}" is interrupted by another navigation to "${event.url}"`);
       }
       if (event.error)
         throw event.error;
@@ -1031,7 +1031,9 @@ export class Frame extends SdkObject {
     const actionPromise = func().then(r => result = r).catch(e => error = e);
     const errorPromise = new Promise<void>(resolve => {
       listeners.push(eventsHelper.addEventListener(this._page._browserContext, BrowserContext.Events.Console, (message: ConsoleMessage) => {
-        if (message.page() === this._page && message.type() === 'error' && message.text().includes('Content Security Policy')) {
+        if (message.page() !== this._page || message.type() !== 'error')
+          return;
+        if (message.text().includes('Content-Security-Policy') || message.text().includes('Content Security Policy')) {
           cspMessage = message;
           resolve();
         }

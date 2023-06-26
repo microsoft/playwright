@@ -49,14 +49,14 @@ await using var browser = playwright.Chromium.LaunchAsync();
 await using var context = await browser.NewContextAsync();
 await context.Tracing.StartAsync(new()
 {
-  Screenshots: true,
-  Snapshots: true
+  Screenshots = true,
+  Snapshots = true
 });
 var page = context.NewPageAsync();
 await page.GotoAsync("https://playwright.dev");
 await context.Tracing.StopAsync(new()
 {
-  Path: "trace.zip"
+  Path = "trace.zip"
 });
 ```
 
@@ -103,14 +103,14 @@ await using var browser = playwright.Chromium.LaunchAsync();
 await using var context = await browser.NewContextAsync();
 await context.Tracing.StartAsync(new()
 {
-  Screenshots: true,
-  Snapshots: true
+  Screenshots = true,
+  Snapshots = true
 });
 var page = context.NewPageAsync();
 await page.GotoAsync("https://playwright.dev");
 await context.Tracing.StopAsync(new()
 {
-  Path: "trace.zip"
+  Path = "trace.zip"
 });
 ```
 
@@ -238,8 +238,8 @@ await using var browser = playwright.Chromium.LaunchAsync();
 await using var context = await browser.NewContextAsync();
 await context.Tracing.StartAsync(new()
 {
-  Screenshots: true,
-  Snapshots: true
+  Screenshots = true,
+  Snapshots = true
 });
 var page = context.NewPageAsync();
 await page.GotoAsync("https://playwright.dev");
@@ -249,7 +249,7 @@ await page.GetByText("Get Started").ClickAsync();
 // Everything between StartChunkAsync and StopChunkAsync will be recorded in the trace.
 await context.Tracing.StopChunkAsync(new()
 {
-  Path: "trace1.zip"
+  Path = "trace1.zip"
 });
 
 await context.Tracing.StartChunkAsync();
@@ -257,7 +257,7 @@ await page.GotoAsync("http://example.com");
 // Save a second trace file with different actions.
 await context.Tracing.StopChunkAsync(new()
 {
-  Path: "trace2.zip"
+  Path = "trace2.zip"
 });
 ```
 

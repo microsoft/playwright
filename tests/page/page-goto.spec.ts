@@ -410,10 +410,10 @@ it('should fail when replaced by another navigation', async ({ page, server, bro
   if (browserName === 'chromium') {
     expect(error.message).toContain('net::ERR_ABORTED');
   } else if (browserName === 'webkit') {
-    expect(error.message).toContain('Navigation interrupted by another one');
+    expect(error.message).toContain(`page.goto: Navigation to "${server.PREFIX + '/empty.html'}" is interrupted by another navigation to "${server.PREFIX + '/one-style.html'}"`);
   } else if (browserName === 'firefox') {
     // Firefox might yield either NS_BINDING_ABORTED or 'navigation interrupted by another one'
-    expect(error.message.includes('Navigation interrupted by another one') || error.message.includes('NS_BINDING_ABORTED')).toBe(true);
+    expect(error.message.includes(`page.goto: Navigation to "${server.PREFIX + '/empty.html'}" is interrupted by another navigation to "${server.PREFIX + '/one-style.html'}"`) || error.message.includes('NS_BINDING_ABORTED')).toBe(true);
   }
 });
 
@@ -460,7 +460,7 @@ it('js redirect overrides url bar navigation ', async ({ page, server, browserNa
     expect(error).toBeFalsy();
     await expect(page).toHaveURL(server.PREFIX + '/b');
   } else if (browserName === 'webkit') {
-    expect(error.message).toContain('Navigation interrupted by another one');
+    expect(error.message).toContain(`page.goto: Navigation to "${server.PREFIX + '/b'}" is interrupted by another navigation to "${server.PREFIX + '/c'}"`);
     await expect(page).toHaveURL(server.PREFIX + '/c');
   } else if (browserName === 'firefox') {
     expect(error.message).toContain('NS_BINDING_ABORTED');
@@ -798,4 +798,11 @@ it('should wait for load when iframe attaches and detaches', async ({ page, serv
   await frameDetached; // Make sure that iframe is gone.
   await done;
   expect(await page.$('iframe')).toBe(null);
+});
+
+it('should return url with basic auth info', async ({ page, server, loopback }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/23138' });
+  const url = `http://admin:admin@${loopback || 'localhost'}:${server.PORT}/empty.html`;
+  await page.goto(url);
+  expect(page.url()).toBe(url);
 });

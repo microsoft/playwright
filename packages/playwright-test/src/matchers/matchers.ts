@@ -17,7 +17,6 @@
 import type { Locator, Page, APIResponse } from 'playwright-core';
 import type { FrameExpectOptions } from 'playwright-core/lib/client/types';
 import { colors } from 'playwright-core/lib/utilsBundle';
-import type { Expect } from '../../types/test';
 import { expectTypes, callLogText, filteredStackTrace } from '../util';
 import { toBeTruthy } from './toBeTruthy';
 import { toEqual } from './toEqual';
@@ -25,6 +24,7 @@ import { toExpectedTextValues, toMatchText } from './toMatchText';
 import { captureRawStack, constructURLBasedOnBaseURL, isTextualMimeType, pollAgainstTimeout } from 'playwright-core/lib/utils';
 import { currentTestInfo } from '../common/globals';
 import type { TestStepInternal } from '../worker/testInfo';
+import type { ExpectMatcherContext } from './expect';
 
 interface LocatorEx extends Locator {
   _expect(expression: string, options: Omit<FrameExpectOptions, 'expectedValue'> & { expectedValue?: any }): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }>;
@@ -35,7 +35,7 @@ interface APIResponseEx extends APIResponse {
 }
 
 export function toBeAttached(
-  this: ReturnType<Expect['getState']>,
+  this: ExpectMatcherContext,
   locator: LocatorEx,
   options?: { attached?: boolean, timeout?: number },
 ) {
@@ -46,7 +46,7 @@ export function toBeAttached(
 }
 
 export function toBeChecked(
-  this: ReturnType<Expect['getState']>,
+  this: ExpectMatcherContext,
   locator: LocatorEx,
   options?: { checked?: boolean, timeout?: number },
 ) {
@@ -57,7 +57,7 @@ export function toBeChecked(
 }
 
 export function toBeDisabled(
-  this: ReturnType<Expect['getState']>,
+  this: ExpectMatcherContext,
   locator: LocatorEx,
   options?: { timeout?: number },
 ) {
@@ -67,7 +67,7 @@ export function toBeDisabled(
 }
 
 export function toBeEditable(
-  this: ReturnType<Expect['getState']>,
+  this: ExpectMatcherContext,
   locator: LocatorEx,
   options?: { editable?: boolean, timeout?: number },
 ) {
@@ -78,7 +78,7 @@ export function toBeEditable(
 }
 
 export function toBeEmpty(
-  this: ReturnType<Expect['getState']>,
+  this: ExpectMatcherContext,
   locator: LocatorEx,
   options?: { timeout?: number },
 ) {
@@ -88,7 +88,7 @@ export function toBeEmpty(
 }
 
 export function toBeEnabled(
-  this: ReturnType<Expect['getState']>,
+  this: ExpectMatcherContext,
   locator: LocatorEx,
   options?: { enabled?: boolean, timeout?: number },
 ) {
@@ -99,7 +99,7 @@ export function toBeEnabled(
 }
 
 export function toBeFocused(
-  this: ReturnType<Expect['getState']>,
+  this: ExpectMatcherContext,
   locator: LocatorEx,
   options?: { timeout?: number },
 ) {
@@ -109,7 +109,7 @@ export function toBeFocused(
 }
 
 export function toBeHidden(
-  this: ReturnType<Expect['getState']>,
+  this: ExpectMatcherContext,
   locator: LocatorEx,
   options?: { timeout?: number },
 ) {
@@ -119,7 +119,7 @@ export function toBeHidden(
 }
 
 export function toBeVisible(
-  this: ReturnType<Expect['getState']>,
+  this: ExpectMatcherContext,
   locator: LocatorEx,
   options?: { visible?: boolean, timeout?: number },
 ) {
@@ -130,7 +130,7 @@ export function toBeVisible(
 }
 
 export function toBeInViewport(
-  this: ReturnType<Expect['getState']>,
+  this: ExpectMatcherContext,
   locator: LocatorEx,
   options?: { timeout?: number, ratio?: number },
 ) {
@@ -140,7 +140,7 @@ export function toBeInViewport(
 }
 
 export function toContainText(
-  this: ReturnType<Expect['getState']>,
+  this: ExpectMatcherContext,
   locator: LocatorEx,
   expected: string | RegExp | (string | RegExp)[],
   options: { timeout?: number, useInnerText?: boolean, ignoreCase?: boolean } = {},
@@ -159,7 +159,7 @@ export function toContainText(
 }
 
 export function toHaveAttribute(
-  this: ReturnType<Expect['getState']>,
+  this: ExpectMatcherContext,
   locator: LocatorEx,
   name: string,
   expected: string | RegExp,
@@ -172,7 +172,7 @@ export function toHaveAttribute(
 }
 
 export function toHaveClass(
-  this: ReturnType<Expect['getState']>,
+  this: ExpectMatcherContext,
   locator: LocatorEx,
   expected: string | RegExp | (string | RegExp)[],
   options?: { timeout?: number },
@@ -191,7 +191,7 @@ export function toHaveClass(
 }
 
 export function toHaveCount(
-  this: ReturnType<Expect['getState']>,
+  this: ExpectMatcherContext,
   locator: LocatorEx,
   expected: number,
   options?: { timeout?: number },
@@ -202,7 +202,7 @@ export function toHaveCount(
 }
 
 export function toHaveCSS(
-  this: ReturnType<Expect['getState']>,
+  this: ExpectMatcherContext,
   locator: LocatorEx,
   name: string,
   expected: string | RegExp,
@@ -215,7 +215,7 @@ export function toHaveCSS(
 }
 
 export function toHaveId(
-  this: ReturnType<Expect['getState']>,
+  this: ExpectMatcherContext,
   locator: LocatorEx,
   expected: string | RegExp,
   options?: { timeout?: number },
@@ -227,7 +227,7 @@ export function toHaveId(
 }
 
 export function toHaveJSProperty(
-  this: ReturnType<Expect['getState']>,
+  this: ExpectMatcherContext,
   locator: LocatorEx,
   name: string,
   expected: any,
@@ -239,7 +239,7 @@ export function toHaveJSProperty(
 }
 
 export function toHaveText(
-  this: ReturnType<Expect['getState']>,
+  this: ExpectMatcherContext,
   locator: LocatorEx,
   expected: string | RegExp | (string | RegExp)[],
   options: { timeout?: number, useInnerText?: boolean, ignoreCase?: boolean } = {},
@@ -258,7 +258,7 @@ export function toHaveText(
 }
 
 export function toHaveValue(
-  this: ReturnType<Expect['getState']>,
+  this: ExpectMatcherContext,
   locator: LocatorEx,
   expected: string | RegExp,
   options?: { timeout?: number },
@@ -270,7 +270,7 @@ export function toHaveValue(
 }
 
 export function toHaveValues(
-  this: ReturnType<Expect['getState']>,
+  this: ExpectMatcherContext,
   locator: LocatorEx,
   expected: (string | RegExp)[],
   options?: { timeout?: number },
@@ -282,7 +282,7 @@ export function toHaveValues(
 }
 
 export function toHaveTitle(
-  this: ReturnType<Expect['getState']>,
+  this: ExpectMatcherContext,
   page: Page,
   expected: string | RegExp,
   options: { timeout?: number } = {},
@@ -295,7 +295,7 @@ export function toHaveTitle(
 }
 
 export function toHaveURL(
-  this: ReturnType<Expect['getState']>,
+  this: ExpectMatcherContext,
   page: Page,
   expected: string | RegExp,
   options?: { timeout?: number },
@@ -310,7 +310,7 @@ export function toHaveURL(
 }
 
 export async function toBeOK(
-  this: ReturnType<Expect['getState']>,
+  this: ExpectMatcherContext,
   response: APIResponseEx
 ) {
   const matcherName = 'toBeOK';
@@ -332,7 +332,7 @@ export async function toBeOK(
 }
 
 export async function toPass(
-  this: ReturnType<Expect['getState']>,
+  this: ExpectMatcherContext,
   callback: () => any,
   options: {
     intervals?: number[];
@@ -362,7 +362,7 @@ export async function toPass(
         return { continuePolling: false, result: undefined };
       try {
         await callback();
-        return { continuePolling: this.isNot, result: undefined };
+        return { continuePolling: !!this.isNot, result: undefined };
       } catch (e) {
         return { continuePolling: !this.isNot, result: e };
       }
@@ -377,7 +377,7 @@ export async function toPass(
         `- ${timeoutMessage}`,
       ].join('\n') : timeoutMessage;
       step?.complete({ error: { message } });
-      return { message: () => message, pass: this.isNot };
+      return { message: () => message, pass: !!this.isNot };
     }
     return { pass: !this.isNot, message: () => '' };
   });

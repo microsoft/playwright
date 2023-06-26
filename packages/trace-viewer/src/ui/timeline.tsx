@@ -22,6 +22,8 @@ import type { Boundaries } from '../geometry';
 import { FilmStrip } from './filmStrip';
 import type { ActionTraceEventInContext, MultiTraceModel } from './modelUtil';
 import './timeline.css';
+import { asLocator } from '@isomorphic/locatorGenerators';
+import type { Language } from '@isomorphic/locatorGenerators';
 
 type TimelineBar = {
   action?: ActionTraceEventInContext;
@@ -41,7 +43,8 @@ export const Timeline: React.FunctionComponent<{
   selectedAction: ActionTraceEventInContext | undefined,
   onSelected: (action: ActionTraceEventInContext) => void,
   hideTimelineBars?: boolean,
-}> = ({ model, selectedAction, onSelected, hideTimelineBars }) => {
+  sdkLanguage: Language,
+}> = ({ model, selectedAction, onSelected, hideTimelineBars, sdkLanguage }) => {
   const [measure, ref] = useMeasure<HTMLDivElement>();
   const barsRef = React.useRef<HTMLDivElement | null>(null);
 
@@ -62,7 +65,8 @@ export const Timeline: React.FunctionComponent<{
   const bars = React.useMemo(() => {
     const bars: TimelineBar[] = [];
     for (const entry of model?.actions || []) {
-      let detail = trimRight(entry.params.selector || '', 50);
+      const locator = asLocator(sdkLanguage || 'javascript', entry.params.selector, false /* isFrameLocator */, true /* playSafe */);
+      let detail = trimRight(locator || '', 50);
       if (entry.method === 'goto')
         detail = trimRight(entry.params.url || '', 50);
       bars.push({
@@ -93,7 +97,7 @@ export const Timeline: React.FunctionComponent<{
       });
     }
     return bars;
-  }, [model, boundaries, measure.width]);
+  }, [model, boundaries, measure.width, sdkLanguage]);
 
   const hoveredBar = hoveredBarIndex !== undefined ? bars[hoveredBarIndex] : undefined;
   let targetBar: TimelineBar | undefined = bars.find(bar => bar.action === selectedAction);

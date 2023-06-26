@@ -1316,6 +1316,12 @@ for (const useIntermediateMergeReport of [false, true] as const) {
 
         await expect(regressionLabelButton).not.toBeVisible();
 
+        {
+          const testDuration = await page.getByTestId('test-duration').textContent();
+          const totalDuration = await page.getByTestId('overall-duration').textContent();
+          expect(totalDuration).toBe('Total time: ' + testDuration);
+        }
+
         await searchInput.clear();
 
         await expect(regressionLabelButton).toBeVisible();
@@ -1329,6 +1335,12 @@ for (const useIntermediateMergeReport of [false, true] as const) {
         await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(1);
         await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(0);
         await expect(page.locator('.test-file-test .test-file-title')).toHaveText('Error Pages › @regression passes');
+
+        {
+          const testDuration = await page.getByTestId('test-duration').textContent();
+          const totalDuration = await page.getByTestId('overall-duration').textContent();
+          expect(totalDuration).toBe('Total time: ' + testDuration);
+        }
 
         await searchInput.clear();
 
@@ -1435,6 +1447,70 @@ for (const useIntermediateMergeReport of [false, true] as const) {
         await page.keyboard.press('Enter');
         await expect(searchInput).toHaveValue('');
         await expect(page).not.toHaveURL(/@regression/);
+      });
+
+      test('filter should update stats', async ({ runInlineTest, showReport, page }) => {
+        const result = await runInlineTest({
+          'a.test.js': `
+            const { expect, test } = require('@playwright/test');
+            const names = ['one foo', 'two foo', 'three bar', 'four bar', 'five baz'];
+            names.forEach(name => {
+              test(name, async ({}) => {
+                expect(name).not.toContain('foo');
+              });
+            });
+          `,
+          'b.test.js': `
+            const { expect, test } = require('@playwright/test');
+            const names = ['one foo', 'two foo', 'three bar', 'four bar', 'five baz'];
+            names.forEach(name => {
+              test(name, async ({}) => {
+                expect(name).not.toContain('one');
+              });
+            });
+          `,
+        }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+
+        expect(result.exitCode).toBe(1);
+        expect(result.passed).toBe(7);
+        expect(result.failed).toBe(3);
+
+        await showReport();
+
+        async function checkTotalDuration() {
+          let total = 0;
+          for (const text of await page.getByTestId('test-duration').allTextContents()) {
+            expect(text).toMatch(/\d+ms$/);
+            total += parseInt(text.substring(0, text.length - 2), 10);
+          }
+          const totalDuration = await page.getByTestId('overall-duration').textContent();
+          expect(totalDuration).toBe(`Total time: ${total}ms`);
+        }
+
+        const searchInput = page.locator('.subnav-search-input');
+        await expect(page.getByTestId('filtered-tests-count')).not.toBeVisible();
+
+        await searchInput.fill('s:failed');
+
+        await expect(page.getByTestId('filtered-tests-count')).toHaveText('Filtered: 3');
+        await checkTotalDuration();
+        await expect(page.locator('.subnav-item:has-text("All") .counter')).toHaveText('10');
+        await expect(page.locator('.subnav-item:has-text("Passed") .counter')).toHaveText('7');
+        await expect(page.locator('.subnav-item:has-text("Failed") .counter')).toHaveText('3');
+        await expect(page.locator('.subnav-item:has-text("Flaky") .counter')).toHaveText('0');
+        await expect(page.locator('.subnav-item:has-text("Skipped") .counter')).toHaveText('0');
+
+        await searchInput.clear();
+        await expect(page.getByTestId('filtered-tests-count')).not.toBeVisible();
+
+        await searchInput.fill('foo');
+        await expect(page.getByTestId('filtered-tests-count')).toHaveText('Filtered: 4');
+        await checkTotalDuration();
+        await expect(page.locator('.subnav-item:has-text("All") .counter')).toHaveText('10');
+        await expect(page.locator('.subnav-item:has-text("Passed") .counter')).toHaveText('7');
+        await expect(page.locator('.subnav-item:has-text("Failed") .counter')).toHaveText('3');
+        await expect(page.locator('.subnav-item:has-text("Flaky") .counter')).toHaveText('0');
+        await expect(page.locator('.subnav-item:has-text("Skipped") .counter')).toHaveText('0');
       });
 
       test('labels whould be applied together with status filter', async ({ runInlineTest, showReport, page }) => {

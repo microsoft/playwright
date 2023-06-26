@@ -73,7 +73,7 @@ export const SnapshotTab: React.FunctionComponent<{
     const popoutParams = new URLSearchParams();
     popoutParams.set('r', snapshotUrl);
     popoutParams.set('trace', context(snapshot.action).traceUrl);
-    const popoutUrl = new URL(`popout.html?${popoutParams.toString()}`, window.location.href).toString();
+    const popoutUrl = new URL(`snapshot.html?${popoutParams.toString()}`, window.location.href).toString();
     return { snapshots, snapshotInfoUrl, snapshotUrl, pointX, pointY, popoutUrl };
   }, [snapshots, snapshotTab]);
 
@@ -160,14 +160,16 @@ export const SnapshotTab: React.FunctionComponent<{
       testIdAttributeName={testIdAttributeName}
       highlightedLocator={highlightedLocator}
       setHighlightedLocator={setHighlightedLocator}
-      iframe={iframeRef0.current} />
+      iframe={iframeRef0.current}
+      iteration={loadingRef.current.iteration} />
     <InspectModeController
       isInspecting={isInspecting}
       sdkLanguage={sdkLanguage}
       testIdAttributeName={testIdAttributeName}
       highlightedLocator={highlightedLocator}
       setHighlightedLocator={setHighlightedLocator}
-      iframe={iframeRef1.current} />
+      iframe={iframeRef1.current}
+      iteration={loadingRef.current.iteration} />
     <Toolbar>
       <ToolbarButton title='Pick locator' disabled={!popoutUrl} toggled={pickerVisible} onClick={() => {
         setPickerVisible(!pickerVisible);
@@ -251,7 +253,8 @@ export const InspectModeController: React.FunctionComponent<{
   testIdAttributeName: string,
   highlightedLocator: string,
   setHighlightedLocator: (locator: string) => void,
-}> = ({ iframe, isInspecting, sdkLanguage, testIdAttributeName, highlightedLocator, setHighlightedLocator }) => {
+  iteration: number,
+}> = ({ iframe, isInspecting, sdkLanguage, testIdAttributeName, highlightedLocator, setHighlightedLocator, iteration }) => {
   React.useEffect(() => {
     const win = iframe?.contentWindow as any;
     let recorder: Recorder | undefined;
@@ -269,7 +272,6 @@ export const InspectModeController: React.FunctionComponent<{
       const injectedScript = new InjectedScript(win, false, sdkLanguage, testIdAttributeName, 1, 'chromium', []);
       recorder = new Recorder(injectedScript, {
         async setSelector(selector: string) {
-          recorder!.setUIState({ mode: 'none', language: sdkLanguage, testIdAttributeName });
           setHighlightedLocator(asLocator('javascript', selector, false /* isFrameLocator */, true /* playSafe */));
         }
       });
@@ -282,7 +284,7 @@ export const InspectModeController: React.FunctionComponent<{
       language: sdkLanguage,
       testIdAttributeName,
     });
-  }, [iframe, isInspecting, highlightedLocator, setHighlightedLocator, sdkLanguage, testIdAttributeName]);
+  }, [iframe, isInspecting, highlightedLocator, setHighlightedLocator, sdkLanguage, testIdAttributeName, iteration]);
   return <></>;
 };
 

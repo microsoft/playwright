@@ -30,6 +30,7 @@ import type { ZipFile } from 'playwright-core/lib/zipBundle';
 import { yazl } from 'playwright-core/lib/zipBundle';
 import { mime } from 'playwright-core/lib/utilsBundle';
 import type { HTMLReport, Stats, TestAttachment, TestCase, TestCaseSummary, TestFile, TestFileSummary, TestResult, TestStep } from '@html-reporter/types';
+import { FullConfigInternal } from '../common/config';
 
 type TestEntry = {
   testCase: TestCase;
@@ -119,7 +120,7 @@ class HtmlReporter implements Reporter {
     const shouldOpen = this._open === 'always' || (!ok && this._open === 'on-failure');
     if (shouldOpen) {
       await showHTMLReport(this._outputFolder, this._options.host, this._options.port, singleTestId);
-    } else {
+    } else if (!FullConfigInternal.from(this.config)?.cliListOnly) {
       const relativeReportPath = this._outputFolder === standaloneDefaultFolder() ? '' : ' ' + path.relative(process.cwd(), this._outputFolder);
       console.log('');
       console.log('To open last HTML report run:');

@@ -17,7 +17,6 @@
 import type { Locator, Page } from 'playwright-core';
 import type { Page as PageEx } from 'playwright-core/lib/client/page';
 import type { Locator as LocatorEx } from 'playwright-core/lib/client/locator';
-import type { Expect } from '../../types/test';
 import { currentTestInfo, currentExpectTimeout } from '../common/globals';
 import type { ImageComparatorOptions, Comparator } from 'playwright-core/lib/utils';
 import { getComparator } from 'playwright-core/lib/utils';
@@ -31,7 +30,7 @@ import fs from 'fs';
 import path from 'path';
 import { mime } from 'playwright-core/lib/utilsBundle';
 import type { TestInfoImpl } from '../worker/testInfo';
-import type { SyncExpectationResult } from './expect';
+import type { ExpectMatcherContext, SyncExpectationResult } from './expect';
 
 type NameOrSegments = string | string[];
 const snapshotNamesSymbol = Symbol('snapshotNames');
@@ -242,7 +241,7 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
 }
 
 export function toMatchSnapshot(
-  this: ReturnType<Expect['getState']>,
+  this: ExpectMatcherContext,
   received: Buffer | string,
   nameOrOptions: NameOrSegments | { name?: NameOrSegments } & ImageComparatorOptions = {},
   optOptions: ImageComparatorOptions = {}
@@ -301,7 +300,7 @@ export function toHaveScreenshotStepTitle(
 }
 
 export async function toHaveScreenshot(
-  this: ReturnType<Expect['getState']>,
+  this: ExpectMatcherContext,
   pageOrLocator: Page | Locator,
   nameOrOptions: NameOrSegments | { name?: NameOrSegments } & HaveScreenshotOptions = {},
   optOptions: HaveScreenshotOptions = {}

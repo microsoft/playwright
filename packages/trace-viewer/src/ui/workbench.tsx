@@ -126,6 +126,7 @@ export const Workbench: React.FunctionComponent<{
       selectedAction={activeAction}
       onSelected={onActionSelected}
       hideTimelineBars={hideTimelineBars}
+      sdkLanguage={sdkLanguage}
     />
     <SplitView sidebarSize={250} orientation={drawer === 'bottom' ? 'vertical' : 'horizontal'}>
       <SplitView sidebarSize={250} orientation='horizontal' sidebarIsFirst={true}>

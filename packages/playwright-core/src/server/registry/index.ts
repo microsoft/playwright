@@ -155,15 +155,15 @@ const DOWNLOAD_PATHS = {
     'ubuntu22.04-arm64': 'builds/firefox/%s/firefox-ubuntu-22.04-arm64.zip',
     'debian11': 'builds/firefox/%s/firefox-debian-11.zip',
     'debian11-arm64': 'builds/firefox/%s/firefox-debian-11-arm64.zip',
-    'mac10.13': 'builds/firefox/%s/firefox-mac-11.zip',
-    'mac10.14': 'builds/firefox/%s/firefox-mac-11.zip',
-    'mac10.15': 'builds/firefox/%s/firefox-mac-11.zip',
-    'mac11': 'builds/firefox/%s/firefox-mac-11.zip',
-    'mac11-arm64': 'builds/firefox/%s/firefox-mac-11-arm64.zip',
-    'mac12': 'builds/firefox/%s/firefox-mac-11.zip',
-    'mac12-arm64': 'builds/firefox/%s/firefox-mac-11-arm64.zip',
-    'mac13': 'builds/firefox/%s/firefox-mac-11.zip',
-    'mac13-arm64': 'builds/firefox/%s/firefox-mac-11-arm64.zip',
+    'mac10.13': 'builds/firefox/%s/firefox-mac-13.zip',
+    'mac10.14': 'builds/firefox/%s/firefox-mac-13.zip',
+    'mac10.15': 'builds/firefox/%s/firefox-mac-13.zip',
+    'mac11': 'builds/firefox/%s/firefox-mac-13.zip',
+    'mac11-arm64': 'builds/firefox/%s/firefox-mac-13-arm64.zip',
+    'mac12': 'builds/firefox/%s/firefox-mac-13.zip',
+    'mac12-arm64': 'builds/firefox/%s/firefox-mac-13-arm64.zip',
+    'mac13': 'builds/firefox/%s/firefox-mac-13.zip',
+    'mac13-arm64': 'builds/firefox/%s/firefox-mac-13-arm64.zip',
     'win64': 'builds/firefox/%s/firefox-win64.zip',
   },
   'firefox-beta': {
@@ -178,15 +178,15 @@ const DOWNLOAD_PATHS = {
     'ubuntu22.04-arm64': 'builds/firefox-beta/%s/firefox-beta-ubuntu-22.04-arm64.zip',
     'debian11': 'builds/firefox-beta/%s/firefox-beta-debian-11.zip',
     'debian11-arm64': 'builds/firefox-beta/%s/firefox-beta-debian-11-arm64.zip',
-    'mac10.13': 'builds/firefox-beta/%s/firefox-beta-mac-11.zip',
-    'mac10.14': 'builds/firefox-beta/%s/firefox-beta-mac-11.zip',
-    'mac10.15': 'builds/firefox-beta/%s/firefox-beta-mac-11.zip',
-    'mac11': 'builds/firefox-beta/%s/firefox-beta-mac-11.zip',
-    'mac11-arm64': 'builds/firefox-beta/%s/firefox-beta-mac-11-arm64.zip',
-    'mac12': 'builds/firefox-beta/%s/firefox-beta-mac-11.zip',
-    'mac12-arm64': 'builds/firefox-beta/%s/firefox-beta-mac-11-arm64.zip',
-    'mac13': 'builds/firefox-beta/%s/firefox-beta-mac-11.zip',
-    'mac13-arm64': 'builds/firefox-beta/%s/firefox-beta-mac-11-arm64.zip',
+    'mac10.13': 'builds/firefox-beta/%s/firefox-beta-mac-13.zip',
+    'mac10.14': 'builds/firefox-beta/%s/firefox-beta-mac-13.zip',
+    'mac10.15': 'builds/firefox-beta/%s/firefox-beta-mac-13.zip',
+    'mac11': 'builds/firefox-beta/%s/firefox-beta-mac-13.zip',
+    'mac11-arm64': 'builds/firefox-beta/%s/firefox-beta-mac-13-arm64.zip',
+    'mac12': 'builds/firefox-beta/%s/firefox-beta-mac-13.zip',
+    'mac12-arm64': 'builds/firefox-beta/%s/firefox-beta-mac-13-arm64.zip',
+    'mac13': 'builds/firefox-beta/%s/firefox-beta-mac-13.zip',
+    'mac13-arm64': 'builds/firefox-beta/%s/firefox-beta-mac-13-arm64.zip',
     'win64': 'builds/firefox-beta/%s/firefox-beta-win64.zip',
   },
   'webkit': {
@@ -839,7 +839,6 @@ export class Registry {
     await downloadBrowserWithProgressBar(title, descriptor.dir, executablePath, downloadURLs, downloadFileName, downloadConnectionTimeout).catch(e => {
       throw new Error(`Failed to download ${title}, caused by\n${e.stack}`);
     });
-    await fs.promises.writeFile(markerFilePath(descriptor.dir), '');
   }
 
   private async _installMSEdgeChannel(channel: 'msedge'|'msedge-beta'|'msedge-dev', scripts: Record<'linux' | 'darwin' | 'win32', string>) {
@@ -920,7 +919,7 @@ export class Registry {
               (browserName === 'webkit' && browserRevision >= 1307) ||
               // All new applications have a marker file right away.
               (browserName !== 'firefox' && browserName !== 'chromium' && browserName !== 'webkit');
-          if (!shouldHaveMarkerFile || (await existsAsync(markerFilePath(usedBrowserPath))))
+          if (!shouldHaveMarkerFile || (await existsAsync(browserDirectoryToMarkerFilePath(usedBrowserPath))))
             usedBrowserPaths.add(usedBrowserPath);
         }
       } catch (e) {
@@ -942,7 +941,7 @@ export class Registry {
   }
 }
 
-function markerFilePath(browserDirectory: string): string {
+export function browserDirectoryToMarkerFilePath(browserDirectory: string): string {
   return path.join(browserDirectory, 'INSTALLATION_COMPLETE');
 }
 
