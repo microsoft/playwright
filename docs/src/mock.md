@@ -15,13 +15,10 @@ The following code will intercept all the calls to `*/**/api/v1/fruits` and will
 ```js
 test("mocks a fruit and doesn't call api", async ({ page }) => {
   // Mock the api call before navigating
-  await page.route(
-    '*/**/api/v1/fruits',
-    async (route) => {
-      const json = [{ name: 'Strawberry', id: 21 }];
-      await route.fulfill({ json });
-    }
-  );
+  await page.route('*/**/api/v1/fruits', async (route) => {
+    const json = [{ name: 'Strawberry', id: 21 }];
+    await route.fulfill({ json });
+  });
   // Go to the page
   await page.goto('https://demo.playwright.dev/api-mocking');
   
@@ -66,8 +63,7 @@ def test_mock_the_fruit_api(page):
 
 ```csharp
 // Intercept the route to the fruit API
-await page.RouteAsync("*/**/api/v1/fruits", async route =>
-{
+await page.RouteAsync("*/**/api/v1/fruits", async route => {
   var json = new Array [{ name: 'Strawberry', id: 21 }];
   // fulfill the route with the mock data
   await route.FulfillAsync(new RouteFulfillResponse
@@ -116,9 +112,7 @@ In the example below we intercept the call to the fruit API and add a new fruit 
 ```js
 test('gets the json from api and adds a new fruit', async ({ page }) => {
   // Get the response and add to it
-  await page.route(
-    '*/**/api/v1/fruits',
-    async (route) => {
+  await page.route('*/**/api/v1/fruits', async (route) => {
       const response = await route.fetch();
       const json = await response.json();
       json.push({ name: "Playwright", id: 100 });
@@ -175,10 +169,7 @@ def test_gets_the_json_from_api_and_adds_a_new_fruit(page):
 ```
 
 ```csharp
-await page.RouteAsync(
-  "*/**/api/v1/fruits",
-  async (route) =>
-  {
+await page.RouteAsync("*/**/api/v1/fruits", async (route) => {
     var response = await route.FetchAsync();
     var json = await response.JsonAsync();
     json.Add(new Dictionary<string, object> { { "name", "Playwright" }, { "id", 100 } });
@@ -214,6 +205,7 @@ page.goto("https://demo.playwright.dev/api-mocking");
 // Assert that the Strawberry fruit is visible
 assertThat(page.getByText("Playwright", new Page.GetByTextOptions().setExact(true))).isVisible();
 ```
+
 In the trace of our test we can see that the API was called and the response was modified.
 ![trace of test showing api being called and fulfilled](https://github.com/microsoft/playwright/assets/13063165/8b8dd82d-1b3e-428e-871b-840581fed439)
 
@@ -244,6 +236,7 @@ test('records or updates the HAR file', async ({ page }) => {
     url: '*/**/api/v1/fruits',
     update: true,
   });
+
   // Go to the page
   await page.goto('https://demo.playwright.dev/api-mocking');
 });
@@ -269,8 +262,7 @@ def records_or_updates_the_har_file(page):
 
 ```csharp
 // Get the response from the HAR file
-await page.RouteFromHARAsync(
-  "./hars/fruit.har",
+await page.RouteFromHARAsync("./hars/fruit.har",
   new RouteFromHAROptions
   {
     Url = "*/**/api/v1/fruits",
@@ -334,9 +326,7 @@ async def test_gets_the_json_from_har_and_checks_the_new_fruit_has_been_added(pa
     # Replay API requests from HAR.
     # Either use a matching response from the HAR,
     # or abort the request if nothing matches.
-    await page.route_from_har(
-        "./hars/fruit.har", url="*/**/api/v1/fruits", update=False
-    )
+    await page.route_from_har("./hars/fruit.har", url="*/**/api/v1/fruits", update=False)
 
     # Go to the page
     await page.goto("https://demo.playwright.dev/api-mocking")
