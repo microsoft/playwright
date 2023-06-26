@@ -591,8 +591,8 @@ await page.RouteAsync("**/*", route => route.FulfillAsync(new ()
 {
     Status = 404,
     ContentType = "text/plain",
-    Body = "Not Found!")
-});
+    Body = "Not Found!"
+}));
 ```
 
 An example of serving static file:

@@ -44,7 +44,7 @@ for (Locator li : page.getByRole('listitem').all())
 ```
 
 ```csharp
-foreach (var li in await page.GetByRole('listitem').AllAsync())
+foreach (var li in await page.GetByRole("listitem").AllAsync())
   await li.ClickAsync();
 ```
 
@@ -1298,7 +1298,7 @@ checked = page.get_by_role("checkbox").is_checked()
 ```
 
 ```csharp
-Boolean checked = await page.GetByRole(AriaRole.Checkbox).IsCheckedAsync();
+var isChecked = await page.GetByRole(AriaRole.Checkbox).IsCheckedAsync();
 ```
 
 ### option: Locator.isChecked.timeout = %%-input-timeout-%%

@@ -76,19 +76,13 @@ with sync_playwright() as playwright:
 using Microsoft.Playwright;
 using System.Threading.Tasks;
 
-class Program
+using var playwright = await Playwright.CreateAsync();
+await using var browser = await playwright.Chromium.LaunchAsync(new()
 {
-    public static async Task Main()
-    {
-        using var playwright = await Playwright.CreateAsync();
-        await using var browser = await playwright.Chromium.LaunchAsync(new()
-        {
-            Headless: False
-        });
-        var iphone13 = playwright.Devices["iPhone 13"];
-        await using var context = await browser.NewContextAsync(iphone13);
-    }
-}
+    Headless = false
+});
+var iphone13 = playwright.Devices["iPhone 13"];
+await using var context = await browser.NewContextAsync(iphone13);
 ```
 
 

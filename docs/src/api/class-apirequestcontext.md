@@ -379,12 +379,12 @@ api_request_context.get("https://example.com/api/getText", params=query_params)
 ```
 
 ```csharp
-var params = new Dictionary<string, object>()
+var queryParams = new Dictionary<string, object>()
 {
   { "isbn", "1234" },
   { "page", 23 },
-}
-await request.GetAsync("https://example.com/api/getText", new() { Params = params });
+};
+await request.GetAsync("https://example.com/api/getText", new() { Params = queryParams });
 ```
 
 ### param: APIRequestContext.get.url = %%-fetch-param-url-%%
