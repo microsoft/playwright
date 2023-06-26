@@ -18,12 +18,7 @@ test("mocks a fruit and doesn't call api", async ({ page }) => {
   await page.route(
     '*/**/api/v1/fruits',
     async (route) => {
-      const json = [
-        {
-          name: 'Strawberry',
-          id: 21,
-        },
-      ];
+      const json = [{ name: 'Strawberry', id: 21 }];
       await route.fulfill({ json });
     }
   );
@@ -37,56 +32,43 @@ test("mocks a fruit and doesn't call api", async ({ page }) => {
 
 ```python async
 async def test_mock_the_fruit_api(page):
-  async def handle(route):
-    json = [
-        {
-          name: 'Strawberry',
-          id: 21,
-        },
-      ]
-    # fulfill the route with the mock data
-    await route.fulfill(json=json)
-  # Intercept the route to the fruit API
-  await page.route('*/**/api/v1/fruits', handle)
-  
-  # Go to the page
-  await page.goto('https://demo.playwright.dev/api-mocking')
+    async def handle(route):
+        json = [{name: "Strawberry", id: 21}]
+        # fulfill the route with the mock data
+        await route.fulfill(json=json)
 
-  # Assert that the Strawberry fruit is visible
-  await page.get_by_text("Strawberry").to_be_visible()
+    # Intercept the route to the fruit API
+    await page.route("*/**/api/v1/fruits", handle)
+
+    # Go to the page
+    await page.goto("https://demo.playwright.dev/api-mocking")
+
+    # Assert that the Strawberry fruit is visible
+    await page.get_by_text("Strawberry").to_be_visible()
 ```
 
 ```python sync
 def test_mock_the_fruit_api(page):
-  def handle(route):
-    json = [
-        {
-          name: 'Strawberry',
-          id: 21,
-        },
-      ]
-    # fulfill the route with the mock data
-    route.fulfill(json=json)
-  # Intercept the route to the fruit API
-  page.route('*/**/api/v1/fruits', handle)
- 
-  # Go to the page
-  page.goto('https://demo.playwright.dev/api-mocking')
+    def handle(route):
+        json = [{name: "Strawberry", id: 21}]
+        # fulfill the route with the mock data
+        route.fulfill(json=json)
 
-  # Assert that the Strawberry fruit is visible
-  page.get_by_text("Strawberry").to_be_visible()
+    # Intercept the route to the fruit API
+    page.route("*/**/api/v1/fruits", handle)
+
+    # Go to the page
+    page.goto("https://demo.playwright.dev/api-mocking")
+
+    # Assert that the Strawberry fruit is visible
+    page.get_by_text("Strawberry").to_be_visible()
 ```
 
 ```csharp
 // Intercept the route to the fruit API
 await page.RouteAsync("*/**/api/v1/fruits", async route =>
 {
-  var json = new Array [
-        {
-          name: 'Strawberry',
-          id: 21,
-        },
-      ];
+  var json = new Array [{ name: 'Strawberry', id: 21 }];
   // fulfill the route with the mock data
   await route.FulfillAsync(new RouteFulfillResponse
   {
@@ -105,12 +87,7 @@ await Expect(page.GetByTextAsync("Strawberry")).ToBeVisibleAsync();
 // Intercept the route to the fruit API
 page.route("https://fruit.ceo/api/breeds/image/random", route -> {
   Map<String, Object> json = new HashMap<>();
-  json = [
-        {
-          name: 'Strawberry',
-          id: 21,
-        },
-      ];
+  json = [{ name: 'Strawberry', id: 21 }];
   // fulfill the route with the mock data
   route.fulfill(new Route.FulfillOptions().setJsonBody(json));
 });
@@ -158,45 +135,45 @@ test('gets the json from api and adds a new fruit', async ({ page }) => {
 
   // Assert that the new fruit is visible
   await expect(page.getByText('Playwright', { exact: true })).toBeVisible();
-});
+};
 ```
 
 ```python async
 async def test_gets_the_json_from_api_and_adds_a_new_fruit(page):
-  async def handle(route):
-    response = await route.fulfill()
-    json = await response.json()
-    json.append({ name: "Playwright", id: 100 })
-    # Fulfill using the original response, while patching the response body
-    # with the given JSON object.
-    await route.fulfill(response=response, json=json)
+    async def handle(route):
+        response = await route.fulfill()
+        json = await response.json()
+        json.append({name: "Playwright", id: 100})
+        # Fulfill using the original response, while patching the response body
+        # with the given JSON object.
+        await route.fulfill(response=response, json=json)
 
-  await page.route("https://dog.ceo/api/breeds/list/all", handle)
+    await page.route("https://dog.ceo/api/breeds/list/all", handle)
 
-  # Go to the page
-  await page.goto('https://demo.playwright.dev/api-mocking')
+    # Go to the page
+    await page.goto("https://demo.playwright.dev/api-mocking")
 
-  # Assert that the new fruit is visible
-  await page.get_by_text("Playwright", exact=True).to_be_visible()
+    # Assert that the new fruit is visible
+    await page.get_by_text("Playwright", exact=True).to_be_visible()
 ```
 
 ```python sync
 def test_gets_the_json_from_api_and_adds_a_new_fruit(page):
- def handle(route):
-    response = route.fulfill()
-    json = response.json()
-    json.append({ name: "Playwright", id: 100 })
-    # Fulfill using the original response, while patching the response body
-    # with the given JSON object.
-    route.fulfill(response=response, json=json)
+    def handle(route):
+        response = route.fulfill()
+        json = response.json()
+        json.append({name: "Playwright", id: 100})
+        # Fulfill using the original response, while patching the response body
+        # with the given JSON object.
+        route.fulfill(response=response, json=json)
 
-  page.route("https://dog.ceo/api/breeds/list/all", handle)
+    page.route("https://dog.ceo/api/breeds/list/all", handle)
 
-  # Go to the page
-  page.goto('https://demo.playwright.dev/api-mocking')
+    # Go to the page
+    page.goto("https://demo.playwright.dev/api-mocking")
 
-  # Assert that the new fruit is visible
-  page.get_by_text("Playwright", exact=True).to_be_visible()
+    # Assert that the new fruit is visible
+    page.get_by_text("Playwright", exact=True).to_be_visible()
 ```
 
 ```csharp
@@ -266,43 +243,36 @@ Setting `update` option to true will create or update the HAR file with the actu
 test('records or updates the HAR file', async ({ page }) => {
   page,
 }) => {
-  // Get the response and add to it
+  // Get the response from the HAR file
   await page.routeFromHAR('./hars/fruit.har', {
     url: '*/**/api/v1/fruits',
     update: true,
   });
   // Go to the page
   await page.goto('https://demo.playwright.dev/api-mocking');
-  // Assert that the fruit is visible
-  await expect(page.getByText('Strawberry')).toBeVisible();
-});
+};
 ```
 
 ```python async
 async def records_or_updates_the_har_file(page):
-  # Get the response from the HAR file
-  await page.route_from_har("./hars/fruit.har", url="*/**/api/v1/fruits", update=True)
+    # Get the response from the HAR file
+    await page.route_from_har("./hars/fruit.har", url="*/**/api/v1/fruits", update=True)
 
-  # Go to the page
-  await page.goto("https://demo.playwright.dev/api-mocking")
-
-  # Assert that the Playwright fruit is visible
-  await page.get_by_text("Strawberry").to_be_visible()
+    # Go to the page
+    await page.goto("https://demo.playwright.dev/api-mocking")
 ```
 
 ```python sync
 def records_or_updates_the_har_file(page):
-  # Get the response from the HAR file
-  page.route_from_har("./hars/fruit.har", url="*/**/api/v1/fruits", update=True)
+    # Get the response from the HAR file
+    page.route_from_har("./hars/fruit.har", url="*/**/api/v1/fruits", update=True)
 
-  # Go to the page
-  page.goto("https://demo.playwright.dev/api-mocking")
-
-  # Assert that the Playwright fruit is visible
-  page.get_by_text("Strawberry").to_be_visible()
+    # Go to the page
+    page.goto("https://demo.playwright.dev/api-mocking")
 ```
 
 ```csharp
+// Get the response from the HAR file
 await page.RouteFromHARAsync(
   "./hars/fruit.har",
   new RouteFromHAROptions
@@ -314,12 +284,10 @@ await page.RouteFromHARAsync(
 
 // Go to the page
 await page.GotoAsync("https://demo.playwright.dev/api-mocking");
-
-// Assert that the Playwright fruit is visible
-await page.ExpectByTextAsync("Strawberry").ToBeVisibleAsync();
 ```
 
 ```java
+// Get the response from the HAR file
 page.routeFromHAR("./hars/fruit.har", new RouteFromHAROptions()
   .setUrl("*/**/api/v1/fruits")
   .setUpdate(true)
@@ -327,9 +295,6 @@ page.routeFromHAR("./hars/fruit.har", new RouteFromHAROptions()
 
 // Go to the page
 page.goto("https://demo.playwright.dev/api-mocking");
-
-// Assert that the Playwright fruit is visible
-assertThat(page.getByText("Strawberry")).isVisible();
 ```
 
 ### Modifying a HAR file
@@ -367,35 +332,37 @@ test('gets the json from HAR and checks the new fruit has been added', async ({ 
 
   // Assert that the Playwright fruit is visible
   await expect(page.getByText('Playwright', { exact: true })).toBeVisible();
-});
+};
 ```
 
 ```python async
 async def test_gets_the_json_from_har_and_checks_the_new_fruit_has_been_added(page):
-  # Replay API requests from HAR.
-  # Either use a matching response from the HAR,
-  # or abort the request if nothing matches.
-  await page.route_from_har("./hars/fruit.har", url="*/**/api/v1/fruits", update=False)
+    # Replay API requests from HAR.
+    # Either use a matching response from the HAR,
+    # or abort the request if nothing matches.
+    await page.route_from_har(
+        "./hars/fruit.har", url="*/**/api/v1/fruits", update=False
+    )
 
-  # Go to the page
-  await page.goto("https://demo.playwright.dev/api-mocking")
+    # Go to the page
+    await page.goto("https://demo.playwright.dev/api-mocking")
 
-  # Assert that the Playwright fruit is visible
-  await page.get_by_text("Playwright", exact=True).to_be_visible()
+    # Assert that the Playwright fruit is visible
+    await page.get_by_text("Playwright", exact=True).to_be_visible()
 ```
 
 ```python sync
 def test_gets_the_json_from_har_and_checks_the_new_fruit_has_been_added(page):
-  # Replay API requests from HAR.
-  # Either use a matching response from the HAR,
-  # or abort the request if nothing matches.
-  page.route_from_har("./hars/fruit.har", url="*/**/api/v1/fruits", update=False)
+    # Replay API requests from HAR.
+    # Either use a matching response from the HAR,
+    # or abort the request if nothing matches.
+    page.route_from_har("./hars/fruit.har", url="*/**/api/v1/fruits", update=False)
 
-  # Go to the page
-  page.goto("https://demo.playwright.dev/api-mocking")
+    # Go to the page
+    page.goto("https://demo.playwright.dev/api-mocking")
 
-  # Assert that the Playwright fruit is visible
-  page.get_by_text("Playwright", exact=True).to_be_visible()
+    # Assert that the Playwright fruit is visible
+    page.get_by_text("Playwright", exact=True).to_be_visible()
 ```
 
 ```csharp
@@ -467,62 +434,6 @@ playwright open --save-har=example.har --save-har-glob="**/api/**" https://examp
 ```bash csharp
 # Save API requests from example.com as "example.har" archive.
 pwsh bin/Debug/netX/playwright.ps1 open --save-har=example.har --save-har-glob="**/api/**" https://example.com
-```
-
-### Recording HAR with a script
-
-Alternatively, instead of using the CLI, you can record HAR programmatically. Pass [`option: har`] option when creating a [BrowserContext] with [`method: Browser.newContext`] to create an archive. If the har file name ends with `.zip`, artifacts are written as separate files and are all compressed into a single `zip`.
-
-```js
-const context = await browser.newContext({
-  recordHar: { path: 'example.har', urlFilter: '**/api/**' }
-});
-
-// ... Perform actions ...
-
-// Close context to ensure HAR is saved to disk.
-await context.close();
-```
-
-```java
-BrowserContext context = browser.newContext(new Browser.NewContextOptions()
-    .setRecordHarPath(Paths.get("example.har"))
-    .setRecordHarUrlFilter("**/api/**"));
-
-// ... Perform actions ...
-
-// Close context to ensure HAR is saved to disk.
-context.close();
-```
-
-```python async
-context = await browser.new_context(record_har_path="example.har", record_har_url_filter="**/api/**")
-
-# ... Perform actions ...
-
-# Close context to ensure HAR is saved to disk.
-await context.close()
-```
-
-```python sync
-context = browser.new_context(record_har_path="example.har", record_har_url_filter="**/api/**")
-
-# ... Perform actions ...
-
-# Close context to ensure HAR is saved to disk.
-context.close()
-```
-
-```csharp
-var context = await browser.NewContextAsync(new() {
-    RecordHarPath = "example.har",
-    RecordHarUrlFilter = "**/api/**",
-});
-
-// ... Perform actions ...
-
-// Close context to ensure HAR is saved to disk.
-await context.CloseAsync();
 ```
 
 Read more about [advanced networking](./network.md).
