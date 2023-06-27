@@ -194,10 +194,10 @@ test('should include the project name', async ({ runInlineTest }) => {
   expect(result.output).toContain('my-test.spec.js-snapshots/bar-foo.txt');
 
   // test1, run with bar
-  expect(result.output).toContain('test-results/my-test-test-1-Bar-space-/bar.txt');
-  expect(result.output).toContain('my-test.spec.js-snapshots/bar-Bar-space-.txt');
-  expect(result.output).toContain('test-results/my-test-test-1-Bar-space--retry1/bar.txt');
-  expect(result.output).toContain('my-test.spec.js-snapshots/bar-Bar-space-.txt');
+  expect(result.output).toContain('test-results/my-test-test-1-Bar-space-dc1461/bar.txt');
+  expect(result.output).toContain('my-test.spec.js-snapshots/bar-Bar-space-dc1461.txt');
+  expect(result.output).toContain('test-results/my-test-test-1-Bar-space-dc1461-retry1/bar.txt');
+  expect(result.output).toContain('my-test.spec.js-snapshots/bar-Bar-space-dc1461.txt');
 
   // test2, run with empty
   expect(result.output).toContain('test-results/my-test-test-2/bar.txt');
@@ -212,8 +212,8 @@ test('should include the project name', async ({ runInlineTest }) => {
   expect(result.output).toContain('my-test.spec.js-snapshots/bar-foo-suffix.txt');
 
   // test2, run with bar
-  expect(result.output).toContain('test-results/my-test-test-2-Bar-space-/bar.txt');
-  expect(result.output).toContain('my-test.spec.js-snapshots/bar-Bar-space--suffix.txt');
+  expect(result.output).toContain('test-results/my-test-test-2-Bar-space-dc1461/bar.txt');
+  expect(result.output).toContain('my-test.spec.js-snapshots/bar-Bar-space-dc1461-suffix.txt');
 });
 
 test('should include path option in snapshot', async ({ runInlineTest }) => {
@@ -401,6 +401,58 @@ test('should allow nonAscii characters in the output dir', async ({ runInlineTes
   expect(outputDir).toBe(path.join(testInfo.outputDir, 'test-results', 'my-test-こんにちは世界'));
 });
 
+test('should not collide with other tests when nonAscii characters are replaced', async ({ runInlineTest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/23386' });
+  const result = await runInlineTest({
+    'my-test.spec.js': `
+      import { test, expect } from '@playwright/test';
+      const specialChars = ['>', '=', '<', '+', '#', '-', '.', '!', '$', '%', '&', '\\'', '*', '/', '?', '^', '_', '\`', '{', '|', '}', '~', '(', ')', '[', ']', '@'];
+      for (const char of specialChars) {
+        test('test' + char, async ({}, testInfo) => {
+          console.log('\\n%%' + testInfo.outputDir);
+        });
+      }
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  const outputDirs = result.outputLines;
+  expect(outputDirs.length).toBe(27);
+  expect(new Set(outputDirs).size).toBe(outputDirs.length);
+  const forbiddenCharacters = ['\\', '/', ':', '*', '?', '"', '<', '>', '|', '%'];
+  for (const outputDir of outputDirs) {
+    const relativePath = path.relative(path.join(test.info().outputDir, 'test-results'), outputDir);
+    for (const forbiddenCharacter of forbiddenCharacters)
+      expect(relativePath).not.toContain(forbiddenCharacter);
+  }
+});
+
+test('should generate expected output dir names', async ({ runInlineTest }, testInfo) => {
+  const runTests = async (fileName: string, testNames: string[]) => {
+    const result = await runInlineTest({
+      [fileName]: `
+        import { test, expect } from '@playwright/test';
+        ${testNames.map(name => `test('${name}', async ({}, testInfo) => console.log('\\n%%' + testInfo.outputDir));`).join('\n')}
+      `,
+    });
+    expect(result.exitCode).toBe(0);
+    const outputDirs = result.outputLines.map(line => path.relative(path.join(testInfo.outputDir, 'test-results'), line));
+    return outputDirs;
+  };
+  expect(await runTests('filename.spec.js', [
+    'testing > foo',
+    'testing multiple spaces',
+    'testing    multiple   spaces',
+    '!!!hello!!!',
+    'dashes-are-used',
+  ])).toEqual([
+    'filename-testing-foo-574286',
+    'filename-testing-multiple-spaces',
+    'filename-testing-multiple-spaces-f5d359',
+    'filename-hello-8eb257',
+    'filename-dashes-are-used-c67e31',
+  ]);
+});
+
 test('should allow shorten long output dirs characters in the output dir', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'very/deep/and/long/file/name/that/i/want/to/be/trimmed/my-test.spec.js': `
@@ -426,7 +478,7 @@ test('should not mangle double dashes', async ({ runInlineTest }, testInfo) => {
     `,
   });
   const outputDir = result.outputLines[0];
-  expect(outputDir).toBe(path.join(testInfo.outputDir, 'test-results', 'my--file-my--test'));
+  expect(outputDir).toBe(path.join(testInfo.outputDir, 'test-results', 'my--file-my-test-68b7dd'));
 });
 
 test('should allow include the describe name the output dir', async ({ runInlineTest }, testInfo) => {
