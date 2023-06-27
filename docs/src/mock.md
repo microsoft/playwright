@@ -28,9 +28,9 @@ test("mocks a fruit and doesn't call api", async ({ page }) => {
 ```
 
 ```python async
-async def test_mock_the_fruit_api(page):
-    async def handle(route):
-        json = [{name: "Strawberry", id: 21}]
+async def test_mock_the_fruit_api(page: Page):
+    async def handle(route: Route):
+        json = [{"name": "Strawberry", "id": 21}]
         # fulfill the route with the mock data
         await route.fulfill(json=json)
 
@@ -45,9 +45,9 @@ async def test_mock_the_fruit_api(page):
 ```
 
 ```python sync
-def test_mock_the_fruit_api(page):
-    def handle(route):
-        json = [{name: "Strawberry", id: 21}]
+def test_mock_the_fruit_api(page: Page):
+    def handle(route: Route):
+        json = [{"name": "Strawberry", "id": 21}]
         # fulfill the route with the mock data
         route.fulfill(json=json)
 
@@ -64,9 +64,9 @@ def test_mock_the_fruit_api(page):
 ```csharp
 // Intercept the route to the fruit API
 await page.RouteAsync("*/**/api/v1/fruits", async route => {
-  var json = new Array [{ name: 'Strawberry', id: 21 }];
+  var json = new[] { new { name = "Strawberry", id = 21 } };
   // fulfill the route with the mock data
-  await route.FulfillAsync(new RouteFulfillResponse
+  await route.FulfillAsync(new()
   {
     Json = json
   });
@@ -82,17 +82,20 @@ await Expect(page.GetByTextAsync("Strawberry")).ToBeVisibleAsync();
 ```java
 // Intercept the route to the fruit API
 page.route("https://fruit.ceo/api/breeds/image/random", route -> {
-  Map<String, Object> json = new HashMap<>();
-  json = [{ name: 'Strawberry', id: 21 }];
+    List<Dictionary<String, Object>> data = new ArrayList<Dictionary<String, Object>>();
+    Hashtable<String, Object> dict = new Hashtable<String, Object>();
+    dict.put("name", "Strawberry");
+    dict.put("id", 21);
+    data.add(dict);
   // fulfill the route with the mock data
-  route.fulfill(new Route.FulfillOptions().setJsonBody(json));
+  route.fulfill(RequestOptions.create().setData(data));
 });
 
 // Go to the page
-page.goto("https://demo.playwright.dev/api-mocking");
+page.navigate("https://demo.playwright.dev/api-mocking");
 
 // Assert that the Strawberry fruit is visible
-assertThat(page.getByText("Strawberry")).toBeVisible();
+assertThat(page.getByText("Strawberry")).isVisible();
 ```
 
 You can see from the trace of the example test that the API was never called, it was however fulfilled with the mock data.
@@ -115,7 +118,7 @@ test('gets the json from api and adds a new fruit', async ({ page }) => {
   await page.route('*/**/api/v1/fruits', async (route) => {
     const response = await route.fetch();
     const json = await response.json();
-    json.push({ name: "Playwright", id: 100 });
+    json.push({ name: 'Playwright', id: 100 });
     // Fulfill using the original response, while patching the response body
     // with the given JSON object.
     await route.fulfill({ response, json });
@@ -130,11 +133,11 @@ test('gets the json from api and adds a new fruit', async ({ page }) => {
 ```
 
 ```python async
-async def test_gets_the_json_from_api_and_adds_a_new_fruit(page):
-    async def handle(route):
+async def test_gets_the_json_from_api_and_adds_a_new_fruit(page: Page):
+    async def handle(route: Route):
         response = await route.fulfill()
         json = await response.json()
-        json.append({name: "Playwright", id: 100})
+        json.append({ "name": "Playwright", "id": 100})
         # Fulfill using the original response, while patching the response body
         # with the given JSON object.
         await route.fulfill(response=response, json=json)
@@ -149,11 +152,11 @@ async def test_gets_the_json_from_api_and_adds_a_new_fruit(page):
 ```
 
 ```python sync
-def test_gets_the_json_from_api_and_adds_a_new_fruit(page):
-    def handle(route):
+def test_gets_the_json_from_api_and_adds_a_new_fruit(page: Page):
+    def handle(route: Route):
         response = route.fulfill()
         json = response.json()
-        json.append({name: "Playwright", id: 100})
+        json.append({ "name": "Playwright", "id": 100})
         # Fulfill using the original response, while patching the response body
         # with the given JSON object.
         route.fulfill(response=response, json=json)
@@ -170,11 +173,11 @@ def test_gets_the_json_from_api_and_adds_a_new_fruit(page):
 ```csharp
 await page.RouteAsync("*/**/api/v1/fruits", async (route) => {
     var response = await route.FetchAsync();
-    var json = await response.JsonAsync();
-    json.Add(new Dictionary<string, object> { { "name", "Playwright" }, { "id", 100 } });
+    var fruits = await response.JsonAsync<Fruit[]>();
+    fruits.Add(new Fruit() { Name = "Playwright", Id = 100 });
     // Fulfill using the original response, while patching the response body
     // with the given JSON object.
-    await route.FulfillAsync(new RouteFulfillResponse
+    await route.FulfillAsync(new ()
     {
       Response = response,
       Json = json
@@ -191,11 +194,12 @@ await Expect(page.GetByTextAsync("Playwright", new() { Exact: true })).ToBeVisib
 ```java
 page.route("*/**/api/v1/fruits", route -> {
   Response response = route.fetch();
-  Map<String, Object> json = response.json();
-  json.add(new HashMap<String, Object> { { "name", "Playwright" }, { "id", 100 } });
+  byte[] json = response.body();
+  parsed = new Gson().fromJson(json, JsonObject.class)
+  parsed.add(new JsonObject().add("name", "Playwright").add("id", 100));
   // Fulfill using the original response, while patching the response body
   // with the given JSON object.
-  route.fulfill(new Route.FulfillOptions().setResponse(response).setJsonBody(json));
+  route.fulfill(new Route.FulfillOptions().setResponse(response).setBody(json.toString()));
 });
 
 // Go to the page
@@ -242,7 +246,7 @@ test('records or updates the HAR file', async ({ page }) => {
 ```
 
 ```python async
-async def records_or_updates_the_har_file(page):
+async def records_or_updates_the_har_file(page: Page):
     # Get the response from the HAR file
     await page.route_from_har("./hars/fruit.har", url="*/**/api/v1/fruits", update=True)
 
@@ -251,7 +255,7 @@ async def records_or_updates_the_har_file(page):
 ```
 
 ```python sync
-def records_or_updates_the_har_file(page):
+def records_or_updates_the_har_file(page: Page):
     # Get the response from the HAR file
     page.route_from_har("./hars/fruit.har", url="*/**/api/v1/fruits", update=True)
 
@@ -261,8 +265,8 @@ def records_or_updates_the_har_file(page):
 
 ```csharp
 // Get the response from the HAR file
-await page.RouteFromHARAsync("./hars/fruit.har",
-  new RouteFromHAROptions
+await page.RouteFromHARAsync("./hars/fruit.har", new ()
+{
   {
     Url = "*/**/api/v1/fruits",
     Update = true,
@@ -321,7 +325,7 @@ test('gets the json from HAR and checks the new fruit has been added', async ({ 
 ```
 
 ```python async
-async def test_gets_the_json_from_har_and_checks_the_new_fruit_has_been_added(page):
+async def test_gets_the_json_from_har_and_checks_the_new_fruit_has_been_added(page: Page):
     # Replay API requests from HAR.
     # Either use a matching response from the HAR,
     # or abort the request if nothing matches.
@@ -335,7 +339,7 @@ async def test_gets_the_json_from_har_and_checks_the_new_fruit_has_been_added(pa
 ```
 
 ```python sync
-def test_gets_the_json_from_har_and_checks_the_new_fruit_has_been_added(page):
+def test_gets_the_json_from_har_and_checks_the_new_fruit_has_been_added(page: Page):
     # Replay API requests from HAR.
     # Either use a matching response from the HAR,
     # or abort the request if nothing matches.
@@ -352,9 +356,7 @@ def test_gets_the_json_from_har_and_checks_the_new_fruit_has_been_added(page):
 // Replay API requests from HAR.
 // Either use a matching response from the HAR,
 // or abort the request if nothing matches.
-await page.RouteFromHARAsync(
-  "./hars/fruit.har",
-  new RouteFromHAROptions
+await page.RouteFromHARAsync("./hars/fruit.har", new ()
   {
     Url = "*/**/api/v1/fruits",
     Update = false,
