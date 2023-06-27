@@ -59,7 +59,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   readonly _serviceWorkers = new Set<Worker>();
   readonly _isChromium: boolean;
   private _harRecorders = new Map<string, { path: string, content: 'embed' | 'attach' | 'omit' | undefined }>();
-  private _closeWasCalled = false;
+  _closeWasCalled = false;
 
   static from(context: channels.BrowserContextChannel): BrowserContext {
     return (context as any)._object;

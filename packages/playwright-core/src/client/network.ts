@@ -273,6 +273,10 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
   _targetClosedRace(): ScopedRace {
     return this.serviceWorker()?._closedRace || this.frame()._page?._closedOrCrashedRace || new ScopedRace();
   }
+
+  _page(): Page | null {
+    return this._initializer.frame ? Frame.from(this._initializer.frame).page() : null;
+  }
 }
 
 export class Route extends ChannelOwner<channels.RouteChannel> implements api.Route {
@@ -658,13 +662,19 @@ export class RouteHandler {
   public async handle(route: Route): Promise<boolean> {
     ++this.handledCount;
     const handledPromise = route._startHandling();
-    // Extract handler into a variable to avoid [RouteHandler.handler] in the stack.
-    const handler = this.handler;
-    const [handled] = await Promise.all([
-      handledPromise,
-      handler(route, route.request()),
-    ]);
-    return handled;
+    try {
+      // Extract handler into a variable to avoid [RouteHandler.handler] in the stack.
+      const handler = this.handler;
+      const [handled] = await Promise.all([
+        handledPromise,
+        handler(route, route.request()),
+      ]);
+      return handled;
+    } catch (e) {
+      if (route.request()._page()?._shouldCatchAllRouteHandlers())
+        return true;
+      throw e;
+    }
   }
 
   public willExpire(): boolean {

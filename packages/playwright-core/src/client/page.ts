@@ -78,6 +78,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   private _frames = new Set<Frame>();
   _workers = new Set<Worker>();
   private _closed = false;
+  private _closeWasCalled = false;
   readonly _closedOrCrashedRace = new ScopedRace();
   private _viewportSize: Size | null;
   private _routes: RouteHandler[] = [];
@@ -513,7 +514,12 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     await this._channel.bringToFront();
   }
 
+  _shouldCatchAllRouteHandlers() {
+    return this._closeWasCalled || this._browserContext._closeWasCalled;
+  }
+
   async close(options: { runBeforeUnload?: boolean } = { runBeforeUnload: undefined }) {
+    this._closeWasCalled = true;
     try {
       if (this._ownedContext)
         await this._ownedContext.close();

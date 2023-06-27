@@ -940,3 +940,59 @@ for (const method of ['fulfill', 'continue', 'fallback', 'abort'] as const) {
     expect(e.message).toContain('Route is already handled!');
   });
 }
+
+it('should catch route handler custom exception upon page closure', async ({ page, server }) => {
+  await page.route('**/empty.html', async (route, request) => {
+    await page.close();
+    throw new Error('my error');
+  });
+  await page.goto(server.EMPTY_PAGE).catch(e => {});
+  await new Promise(f => setTimeout(f, 2000));
+});
+
+it('should catch async-first route handler custom exception upon page closure', async ({ page, server }) => {
+  await page.route('**/empty.html', async (route, request) => {
+    await new Promise(f => setTimeout(f, 0));
+    await page.close();
+    throw new Error('my error');
+  });
+  await page.goto(server.EMPTY_PAGE).catch(e => {});
+  await new Promise(f => setTimeout(f, 2000));
+});
+
+it('should catch route handler fetch exception upon page closure', async ({ page, server }) => {
+  await page.route('**/empty.html', async (route, request) => {
+    const responsePromise = route.fetch();
+    await page.close();
+    await route.fulfill({ response: await responsePromise });
+  });
+  await page.goto(server.EMPTY_PAGE).catch(e => {});
+  await new Promise(f => setTimeout(f, 2000));
+});
+
+it('should catch route handler sync exception upon page closure', async ({ page, server }) => {
+  await page.route('**/empty.html', (route, request) => {
+    page.close().catch(() => {});
+    throw new Error('my error');
+  });
+  await page.goto(server.EMPTY_PAGE).catch(e => {});
+  await new Promise(f => setTimeout(f, 2000));
+});
+
+it('should catch context-route handler exception upon page closure', async ({ page, server }) => {
+  await page.context().route('**/empty.html', async (route, request) => {
+    await page.close();
+    throw new Error('my error');
+  });
+  await page.goto(server.EMPTY_PAGE).catch(e => {});
+  await new Promise(f => setTimeout(f, 2000));
+});
+
+it('should catch route handler exception upon context closure', async ({ page, server }) => {
+  await page.route('**/empty.html', async (route, request) => {
+    await page.context().close();
+    throw new Error('my error');
+  });
+  await page.goto(server.EMPTY_PAGE).catch(e => {});
+  await new Promise(f => setTimeout(f, 2000));
+});
