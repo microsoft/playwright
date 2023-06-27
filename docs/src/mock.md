@@ -265,13 +265,12 @@ def records_or_updates_the_har_file(page: Page):
 
 ```csharp
 // Get the response from the HAR file
-await page.RouteFromHARAsync("./hars/fruit.har", new ()
-{
+await page.RouteFromHARAsync("./hars/fruit.har", new (){
   {
     Url = "*/**/api/v1/fruits",
     Update = true,
   }
-);
+});
 
 // Go to the page
 await page.GotoAsync("https://demo.playwright.dev/api-mocking");
