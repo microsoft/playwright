@@ -68,6 +68,11 @@ Actions that initiate navigations are waiting for these navigations to happen an
 opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating
 to inaccessible pages. Defaults to `false`.
 
+## input-no-wait-after-ignored
+- `noWaitAfter` <[boolean]>
+
+This option is ignored. Playwright will not auto-wait at the end of this action, but instead [auto-wait](../actionability.md) before the next action or assertion.
+
 ## input-force
 - `force` <[boolean]>
 
@@ -307,7 +312,7 @@ When using [`method: Page.goto`], [`method: Page.route`], [`method: Page.waitFor
   - `width` <[int]> page width in pixels.
   - `height` <[int]> page height in pixels.
 
-Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. 
+Emulates consistent viewport for each page. Defaults to an 1280x720 viewport.
 Use `null` to disable the consistent viewport emulation. Learn more about [viewport emulation](../emulation#viewport).
 
 :::note

@@ -1865,9 +1865,8 @@ export interface Page {
     force?: boolean;
 
     /**
-     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
-     * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
-     * navigating to inaccessible pages. Defaults to `false`.
+     * This option is ignored. Playwright will not auto-wait at the end of this action, but instead
+     * [auto-wait](https://playwright.dev/docs/actionability) before the next action or assertion.
      */
     noWaitAfter?: boolean;
 
@@ -2181,9 +2180,8 @@ export interface Page {
     force?: boolean;
 
     /**
-     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
-     * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
-     * navigating to inaccessible pages. Defaults to `false`.
+     * This option is ignored. Playwright will not auto-wait at the end of this action, but instead
+     * [auto-wait](https://playwright.dev/docs/actionability) before the next action or assertion.
      */
     noWaitAfter?: boolean;
 
@@ -2362,9 +2360,8 @@ export interface Page {
     force?: boolean;
 
     /**
-     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
-     * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
-     * navigating to inaccessible pages. Defaults to `false`.
+     * This option is ignored. Playwright will not auto-wait at the end of this action, but instead
+     * [auto-wait](https://playwright.dev/docs/actionability) before the next action or assertion.
      */
     noWaitAfter?: boolean;
 
@@ -3482,9 +3479,8 @@ export interface Page {
     delay?: number;
 
     /**
-     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
-     * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
-     * navigating to inaccessible pages. Defaults to `false`.
+     * This option is ignored. Playwright will not auto-wait at the end of this action, but instead
+     * [auto-wait](https://playwright.dev/docs/actionability) before the next action or assertion.
      */
     noWaitAfter?: boolean;
 
@@ -3725,9 +3721,8 @@ export interface Page {
     force?: boolean;
 
     /**
-     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
-     * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
-     * navigating to inaccessible pages. Defaults to `false`.
+     * This option is ignored. Playwright will not auto-wait at the end of this action, but instead
+     * [auto-wait](https://playwright.dev/docs/actionability) before the next action or assertion.
      */
     noWaitAfter?: boolean;
 
@@ -3777,9 +3772,8 @@ export interface Page {
     force?: boolean;
 
     /**
-     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
-     * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
-     * navigating to inaccessible pages. Defaults to `false`.
+     * This option is ignored. Playwright will not auto-wait at the end of this action, but instead
+     * [auto-wait](https://playwright.dev/docs/actionability) before the next action or assertion.
      */
     noWaitAfter?: boolean;
 
@@ -3932,9 +3926,8 @@ export interface Page {
     buffer: Buffer;
   }>, options?: {
     /**
-     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
-     * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
-     * navigating to inaccessible pages. Defaults to `false`.
+     * This option is ignored. Playwright will not auto-wait at the end of this action, but instead
+     * [auto-wait](https://playwright.dev/docs/actionability) before the next action or assertion.
      */
     noWaitAfter?: boolean;
 
@@ -4124,9 +4117,8 @@ export interface Page {
     delay?: number;
 
     /**
-     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
-     * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
-     * navigating to inaccessible pages. Defaults to `false`.
+     * This option is ignored. Playwright will not auto-wait at the end of this action, but instead
+     * [auto-wait](https://playwright.dev/docs/actionability) before the next action or assertion.
      */
     noWaitAfter?: boolean;
 
@@ -4174,9 +4166,8 @@ export interface Page {
     force?: boolean;
 
     /**
-     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
-     * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
-     * navigating to inaccessible pages. Defaults to `false`.
+     * This option is ignored. Playwright will not auto-wait at the end of this action, but instead
+     * [auto-wait](https://playwright.dev/docs/actionability) before the next action or assertion.
      */
     noWaitAfter?: boolean;
 
@@ -5484,9 +5475,8 @@ export interface Frame {
     force?: boolean;
 
     /**
-     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
-     * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
-     * navigating to inaccessible pages. Defaults to `false`.
+     * This option is ignored. Playwright will not auto-wait at the end of this action, but instead
+     * [auto-wait](https://playwright.dev/docs/actionability) before the next action or assertion.
      */
     noWaitAfter?: boolean;
 
@@ -5765,9 +5755,8 @@ export interface Frame {
     force?: boolean;
 
     /**
-     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
-     * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
-     * navigating to inaccessible pages. Defaults to `false`.
+     * This option is ignored. Playwright will not auto-wait at the end of this action, but instead
+     * [auto-wait](https://playwright.dev/docs/actionability) before the next action or assertion.
      */
     noWaitAfter?: boolean;
 
@@ -5839,9 +5828,8 @@ export interface Frame {
     force?: boolean;
 
     /**
-     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
-     * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
-     * navigating to inaccessible pages. Defaults to `false`.
+     * This option is ignored. Playwright will not auto-wait at the end of this action, but instead
+     * [auto-wait](https://playwright.dev/docs/actionability) before the next action or assertion.
      */
     noWaitAfter?: boolean;
 
@@ -6716,9 +6704,8 @@ export interface Frame {
     delay?: number;
 
     /**
-     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
-     * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
-     * navigating to inaccessible pages. Defaults to `false`.
+     * This option is ignored. Playwright will not auto-wait at the end of this action, but instead
+     * [auto-wait](https://playwright.dev/docs/actionability) before the next action or assertion.
      */
     noWaitAfter?: boolean;
 
@@ -6810,9 +6797,8 @@ export interface Frame {
     force?: boolean;
 
     /**
-     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
-     * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
-     * navigating to inaccessible pages. Defaults to `false`.
+     * This option is ignored. Playwright will not auto-wait at the end of this action, but instead
+     * [auto-wait](https://playwright.dev/docs/actionability) before the next action or assertion.
      */
     noWaitAfter?: boolean;
 
@@ -6862,9 +6848,8 @@ export interface Frame {
     force?: boolean;
 
     /**
-     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
-     * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
-     * navigating to inaccessible pages. Defaults to `false`.
+     * This option is ignored. Playwright will not auto-wait at the end of this action, but instead
+     * [auto-wait](https://playwright.dev/docs/actionability) before the next action or assertion.
      */
     noWaitAfter?: boolean;
 
@@ -6975,9 +6960,8 @@ export interface Frame {
     buffer: Buffer;
   }>, options?: {
     /**
-     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
-     * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
-     * navigating to inaccessible pages. Defaults to `false`.
+     * This option is ignored. Playwright will not auto-wait at the end of this action, but instead
+     * [auto-wait](https://playwright.dev/docs/actionability) before the next action or assertion.
      */
     noWaitAfter?: boolean;
 
@@ -7128,9 +7112,8 @@ export interface Frame {
     delay?: number;
 
     /**
-     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
-     * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
-     * navigating to inaccessible pages. Defaults to `false`.
+     * This option is ignored. Playwright will not auto-wait at the end of this action, but instead
+     * [auto-wait](https://playwright.dev/docs/actionability) before the next action or assertion.
      */
     noWaitAfter?: boolean;
 
@@ -7178,9 +7161,8 @@ export interface Frame {
     force?: boolean;
 
     /**
-     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
-     * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
-     * navigating to inaccessible pages. Defaults to `false`.
+     * This option is ignored. Playwright will not auto-wait at the end of this action, but instead
+     * [auto-wait](https://playwright.dev/docs/actionability) before the next action or assertion.
      */
     noWaitAfter?: boolean;
 
@@ -9379,9 +9361,8 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     force?: boolean;
 
     /**
-     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
-     * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
-     * navigating to inaccessible pages. Defaults to `false`.
+     * This option is ignored. Playwright will not auto-wait at the end of this action, but instead
+     * [auto-wait](https://playwright.dev/docs/actionability) before the next action or assertion.
      */
     noWaitAfter?: boolean;
 
@@ -9616,9 +9597,8 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     force?: boolean;
 
     /**
-     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
-     * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
-     * navigating to inaccessible pages. Defaults to `false`.
+     * This option is ignored. Playwright will not auto-wait at the end of this action, but instead
+     * [auto-wait](https://playwright.dev/docs/actionability) before the next action or assertion.
      */
     noWaitAfter?: boolean;
 
@@ -9796,9 +9776,8 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     delay?: number;
 
     /**
-     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
-     * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
-     * navigating to inaccessible pages. Defaults to `false`.
+     * This option is ignored. Playwright will not auto-wait at the end of this action, but instead
+     * [auto-wait](https://playwright.dev/docs/actionability) before the next action or assertion.
      */
     noWaitAfter?: boolean;
 
@@ -9979,9 +9958,8 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     force?: boolean;
 
     /**
-     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
-     * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
-     * navigating to inaccessible pages. Defaults to `false`.
+     * This option is ignored. Playwright will not auto-wait at the end of this action, but instead
+     * [auto-wait](https://playwright.dev/docs/actionability) before the next action or assertion.
      */
     noWaitAfter?: boolean;
 
@@ -10042,9 +10020,8 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     force?: boolean;
 
     /**
-     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
-     * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
-     * navigating to inaccessible pages. Defaults to `false`.
+     * This option is ignored. Playwright will not auto-wait at the end of this action, but instead
+     * [auto-wait](https://playwright.dev/docs/actionability) before the next action or assertion.
      */
     noWaitAfter?: boolean;
 
@@ -10116,9 +10093,8 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     buffer: Buffer;
   }>, options?: {
     /**
-     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
-     * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
-     * navigating to inaccessible pages. Defaults to `false`.
+     * This option is ignored. Playwright will not auto-wait at the end of this action, but instead
+     * [auto-wait](https://playwright.dev/docs/actionability) before the next action or assertion.
      */
     noWaitAfter?: boolean;
 
@@ -10228,9 +10204,8 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     delay?: number;
 
     /**
-     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
-     * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
-     * navigating to inaccessible pages. Defaults to `false`.
+     * This option is ignored. Playwright will not auto-wait at the end of this action, but instead
+     * [auto-wait](https://playwright.dev/docs/actionability) before the next action or assertion.
      */
     noWaitAfter?: boolean;
 
@@ -10267,9 +10242,8 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     force?: boolean;
 
     /**
-     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
-     * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
-     * navigating to inaccessible pages. Defaults to `false`.
+     * This option is ignored. Playwright will not auto-wait at the end of this action, but instead
+     * [auto-wait](https://playwright.dev/docs/actionability) before the next action or assertion.
      */
     noWaitAfter?: boolean;
 
@@ -10608,9 +10582,8 @@ export interface Locator {
     force?: boolean;
 
     /**
-     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
-     * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
-     * navigating to inaccessible pages. Defaults to `false`.
+     * This option is ignored. Playwright will not auto-wait at the end of this action, but instead
+     * [auto-wait](https://playwright.dev/docs/actionability) before the next action or assertion.
      */
     noWaitAfter?: boolean;
 
@@ -10667,9 +10640,8 @@ export interface Locator {
     force?: boolean;
 
     /**
-     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
-     * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
-     * navigating to inaccessible pages. Defaults to `false`.
+     * This option is ignored. Playwright will not auto-wait at the end of this action, but instead
+     * [auto-wait](https://playwright.dev/docs/actionability) before the next action or assertion.
      */
     noWaitAfter?: boolean;
 
@@ -10946,9 +10918,8 @@ export interface Locator {
     force?: boolean;
 
     /**
-     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
-     * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
-     * navigating to inaccessible pages. Defaults to `false`.
+     * This option is ignored. Playwright will not auto-wait at the end of this action, but instead
+     * [auto-wait](https://playwright.dev/docs/actionability) before the next action or assertion.
      */
     noWaitAfter?: boolean;
 
@@ -11063,9 +11034,8 @@ export interface Locator {
     force?: boolean;
 
     /**
-     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
-     * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
-     * navigating to inaccessible pages. Defaults to `false`.
+     * This option is ignored. Playwright will not auto-wait at the end of this action, but instead
+     * [auto-wait](https://playwright.dev/docs/actionability) before the next action or assertion.
      */
     noWaitAfter?: boolean;
 
@@ -11878,9 +11848,8 @@ export interface Locator {
     delay?: number;
 
     /**
-     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
-     * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
-     * navigating to inaccessible pages. Defaults to `false`.
+     * This option is ignored. Playwright will not auto-wait at the end of this action, but instead
+     * [auto-wait](https://playwright.dev/docs/actionability) before the next action or assertion.
      */
     noWaitAfter?: boolean;
 
@@ -12018,9 +11987,8 @@ export interface Locator {
     force?: boolean;
 
     /**
-     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
-     * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
-     * navigating to inaccessible pages. Defaults to `false`.
+     * This option is ignored. Playwright will not auto-wait at the end of this action, but instead
+     * [auto-wait](https://playwright.dev/docs/actionability) before the next action or assertion.
      */
     noWaitAfter?: boolean;
 
@@ -12091,9 +12059,8 @@ export interface Locator {
     force?: boolean;
 
     /**
-     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
-     * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
-     * navigating to inaccessible pages. Defaults to `false`.
+     * This option is ignored. Playwright will not auto-wait at the end of this action, but instead
+     * [auto-wait](https://playwright.dev/docs/actionability) before the next action or assertion.
      */
     noWaitAfter?: boolean;
 
@@ -12189,9 +12156,8 @@ export interface Locator {
     buffer: Buffer;
   }>, options?: {
     /**
-     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
-     * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
-     * navigating to inaccessible pages. Defaults to `false`.
+     * This option is ignored. Playwright will not auto-wait at the end of this action, but instead
+     * [auto-wait](https://playwright.dev/docs/actionability) before the next action or assertion.
      */
     noWaitAfter?: boolean;
 
@@ -12314,9 +12280,8 @@ export interface Locator {
     delay?: number;
 
     /**
-     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
-     * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
-     * navigating to inaccessible pages. Defaults to `false`.
+     * This option is ignored. Playwright will not auto-wait at the end of this action, but instead
+     * [auto-wait](https://playwright.dev/docs/actionability) before the next action or assertion.
      */
     noWaitAfter?: boolean;
 
@@ -12363,9 +12328,8 @@ export interface Locator {
     force?: boolean;
 
     /**
-     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
-     * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
-     * navigating to inaccessible pages. Defaults to `false`.
+     * This option is ignored. Playwright will not auto-wait at the end of this action, but instead
+     * [auto-wait](https://playwright.dev/docs/actionability) before the next action or assertion.
      */
     noWaitAfter?: boolean;
 
@@ -12958,7 +12922,7 @@ export interface BrowserType<Unused = {}> {
     videosPath?: string;
 
     /**
-     * Emulates consistent viewport for each page. Defaults to an 1280x720 viewport.  Use `null` to disable the consistent
+     * Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Use `null` to disable the consistent
      * viewport emulation. Learn more about [viewport emulation](https://playwright.dev/docs/emulation#viewport).
      *
      * **NOTE** The `null` value opts out from the default presets, makes viewport depend on the host window size defined
@@ -14348,7 +14312,7 @@ export interface AndroidDevice {
     videosPath?: string;
 
     /**
-     * Emulates consistent viewport for each page. Defaults to an 1280x720 viewport.  Use `null` to disable the consistent
+     * Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Use `null` to disable the consistent
      * viewport emulation. Learn more about [viewport emulation](https://playwright.dev/docs/emulation#viewport).
      *
      * **NOTE** The `null` value opts out from the default presets, makes viewport depend on the host window size defined
@@ -16283,7 +16247,7 @@ export interface Browser extends EventEmitter {
     videosPath?: string;
 
     /**
-     * Emulates consistent viewport for each page. Defaults to an 1280x720 viewport.  Use `null` to disable the consistent
+     * Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Use `null` to disable the consistent
      * viewport emulation. Learn more about [viewport emulation](https://playwright.dev/docs/emulation#viewport).
      *
      * **NOTE** The `null` value opts out from the default presets, makes viewport depend on the host window size defined
@@ -17065,9 +17029,8 @@ export interface FileChooser {
     buffer: Buffer;
   }>, options?: {
     /**
-     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
-     * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
-     * navigating to inaccessible pages. Defaults to `false`.
+     * This option is ignored. Playwright will not auto-wait at the end of this action, but instead
+     * [auto-wait](https://playwright.dev/docs/actionability) before the next action or assertion.
      */
     noWaitAfter?: boolean;
 
@@ -19415,7 +19378,7 @@ export interface BrowserContextOptions {
   videosPath?: string;
 
   /**
-   * Emulates consistent viewport for each page. Defaults to an 1280x720 viewport.  Use `null` to disable the consistent
+   * Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Use `null` to disable the consistent
    * viewport emulation. Learn more about [viewport emulation](https://playwright.dev/docs/emulation#viewport).
    *
    * **NOTE** The `null` value opts out from the default presets, makes viewport depend on the host window size defined

@@ -1172,6 +1172,7 @@ export class Frame extends SdkObject {
           ...options,
           position: options.sourcePosition,
           timeout: progress.timeUntilDeadline(),
+          noWaitAfter: true,
         });
       }));
       dom.assertDone(await this._retryWithProgressIfNotConnected(progress, target, options.strict, async handle => {
@@ -1182,6 +1183,7 @@ export class Frame extends SdkObject {
           ...options,
           position: options.targetPosition,
           timeout: progress.timeUntilDeadline(),
+          noWaitAfter: true,
         });
       }));
     }, this._page._timeoutSettings.timeout(options));

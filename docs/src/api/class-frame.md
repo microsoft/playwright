@@ -210,7 +210,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Frame.check.force = %%-input-force-%%
 * since: v1.8
 
-### option: Frame.check.noWaitAfter = %%-input-no-wait-after-%%
+### option: Frame.check.noWaitAfter = %%-input-no-wait-after-ignored-%%
 * since: v1.8
 
 ### option: Frame.check.position = %%-input-position-%%
@@ -460,7 +460,7 @@ Optional event-specific initialization properties.
 ### option: Frame.dragAndDrop.force = %%-input-force-%%
 * since: v1.13
 
-### option: Frame.dragAndDrop.noWaitAfter = %%-input-no-wait-after-%%
+### option: Frame.dragAndDrop.noWaitAfter = %%-input-no-wait-after-ignored-%%
 * since: v1.13
 
 ### option: Frame.dragAndDrop.strict = %%-input-strict-%%
@@ -849,7 +849,7 @@ Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
 ### option: Frame.fill.force = %%-input-force-%%
 * since: v1.13
 
-### option: Frame.fill.noWaitAfter = %%-input-no-wait-after-%%
+### option: Frame.fill.noWaitAfter = %%-input-no-wait-after-ignored-%%
 * since: v1.8
 
 ### option: Frame.fill.strict = %%-input-strict-%%
@@ -1411,7 +1411,7 @@ Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
 
 Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
 
-### option: Frame.press.noWaitAfter = %%-input-no-wait-after-%%
+### option: Frame.press.noWaitAfter = %%-input-no-wait-after-ignored-%%
 * since: v1.8
 
 ### option: Frame.press.strict = %%-input-strict-%%
@@ -1537,7 +1537,7 @@ await frame.SelectOptionAsync("select#colors", new[] { "red", "green", "blue" })
 ### option: Frame.selectOption.force = %%-input-force-%%
 * since: v1.13
 
-### option: Frame.selectOption.noWaitAfter = %%-input-no-wait-after-%%
+### option: Frame.selectOption.noWaitAfter = %%-input-no-wait-after-ignored-%%
 * since: v1.8
 
 ### option: Frame.selectOption.strict = %%-input-strict-%%
@@ -1589,7 +1589,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Frame.setChecked.force = %%-input-force-%%
 * since: v1.15
 
-### option: Frame.setChecked.noWaitAfter = %%-input-no-wait-after-%%
+### option: Frame.setChecked.noWaitAfter = %%-input-no-wait-after-ignored-%%
 * since: v1.15
 
 ### option: Frame.setChecked.position = %%-input-position-%%
@@ -1641,7 +1641,7 @@ This method expects [`param: selector`] to point to an
 ### param: Frame.setInputFiles.files = %%-input-files-%%
 * since: v1.8
 
-### option: Frame.setInputFiles.noWaitAfter = %%-input-no-wait-after-%%
+### option: Frame.setInputFiles.noWaitAfter = %%-input-no-wait-after-ignored-%%
 * since: v1.8
 
 ### option: Frame.setInputFiles.strict = %%-input-strict-%%
@@ -1778,7 +1778,7 @@ A text to type into a focused element.
 
 Time to wait between key presses in milliseconds. Defaults to 0.
 
-### option: Frame.type.noWaitAfter = %%-input-no-wait-after-%%
+### option: Frame.type.noWaitAfter = %%-input-no-wait-after-ignored-%%
 * since: v1.8
 
 ### option: Frame.type.strict = %%-input-strict-%%
@@ -1815,7 +1815,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Frame.uncheck.force = %%-input-force-%%
 * since: v1.8
 
-### option: Frame.uncheck.noWaitAfter = %%-input-no-wait-after-%%
+### option: Frame.uncheck.noWaitAfter = %%-input-no-wait-after-ignored-%%
 * since: v1.8
 
 ### option: Frame.uncheck.position = %%-input-position-%%

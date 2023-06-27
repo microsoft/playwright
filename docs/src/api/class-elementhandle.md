@@ -177,7 +177,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: ElementHandle.check.force = %%-input-force-%%
 * since: v1.8
 
-### option: ElementHandle.check.noWaitAfter = %%-input-no-wait-after-%%
+### option: ElementHandle.check.noWaitAfter = %%-input-no-wait-after-ignored-%%
 * since: v1.8
 
 ### option: ElementHandle.check.timeout = %%-input-timeout-%%
@@ -522,7 +522,7 @@ Value to set for the `<input>`, `<textarea>` or `[contenteditable]` element.
 ### option: ElementHandle.fill.force = %%-input-force-%%
 * since: v1.13
 
-### option: ElementHandle.fill.noWaitAfter = %%-input-no-wait-after-%%
+### option: ElementHandle.fill.noWaitAfter = %%-input-no-wait-after-ignored-%%
 * since: v1.8
 
 ### option: ElementHandle.fill.timeout = %%-input-timeout-%%
@@ -686,7 +686,7 @@ Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
 
 Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
 
-### option: ElementHandle.press.noWaitAfter = %%-input-no-wait-after-%%
+### option: ElementHandle.press.noWaitAfter = %%-input-no-wait-after-ignored-%%
 * since: v1.8
 
 ### option: ElementHandle.press.timeout = %%-input-timeout-%%
@@ -832,7 +832,7 @@ await handle.SelectOptionAsync(new[] {
 ### option: ElementHandle.selectOption.force = %%-input-force-%%
 * since: v1.13
 
-### option: ElementHandle.selectOption.noWaitAfter = %%-input-no-wait-after-%%
+### option: ElementHandle.selectOption.noWaitAfter = %%-input-no-wait-after-ignored-%%
 * since: v1.8
 
 ### option: ElementHandle.selectOption.timeout = %%-input-timeout-%%
@@ -892,7 +892,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: ElementHandle.setChecked.force = %%-input-force-%%
 * since: v1.15
 
-### option: ElementHandle.setChecked.noWaitAfter = %%-input-no-wait-after-%%
+### option: ElementHandle.setChecked.noWaitAfter = %%-input-no-wait-after-ignored-%%
 * since: v1.15
 
 ### option: ElementHandle.setChecked.position = %%-input-position-%%
@@ -919,7 +919,7 @@ This method expects [ElementHandle] to point to an
 ### param: ElementHandle.setInputFiles.files = %%-input-files-%%
 * since: v1.8
 
-### option: ElementHandle.setInputFiles.noWaitAfter = %%-input-no-wait-after-%%
+### option: ElementHandle.setInputFiles.noWaitAfter = %%-input-no-wait-after-ignored-%%
 * since: v1.8
 
 ### option: ElementHandle.setInputFiles.timeout = %%-input-timeout-%%
@@ -1051,7 +1051,7 @@ A text to type into a focused element.
 
 Time to wait between key presses in milliseconds. Defaults to 0.
 
-### option: ElementHandle.type.noWaitAfter = %%-input-no-wait-after-%%
+### option: ElementHandle.type.noWaitAfter = %%-input-no-wait-after-ignored-%%
 * since: v1.8
 
 ### option: ElementHandle.type.timeout = %%-input-timeout-%%
@@ -1083,7 +1083,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: ElementHandle.uncheck.force = %%-input-force-%%
 * since: v1.8
 
-### option: ElementHandle.uncheck.noWaitAfter = %%-input-no-wait-after-%%
+### option: ElementHandle.uncheck.noWaitAfter = %%-input-no-wait-after-ignored-%%
 * since: v1.8
 
 ### option: ElementHandle.uncheck.timeout = %%-input-timeout-%%
