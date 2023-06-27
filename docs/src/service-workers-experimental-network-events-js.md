@@ -135,7 +135,7 @@ self.addEventListener('fetch', event => {
   event.respondWith(responsePromise);
 });
 
-self.addEventListener('activate', (event) => {
+self.addEventListener('activate', event => {
   event.waitUntil(clients.claim());
 });
 ```
@@ -180,40 +180,41 @@ Consider the code snippets below to understand Playwright's view into the Reques
 
 
 ```js title="complex-service-worker.js"
-self.addEventListener('install', function (event) {
+self.addEventListener('install', function(event) {
   event.waitUntil(
-    caches.open('v1').then(function (cache) {
+      caches.open('v1').then(function(cache) {
       // 1. Pre-fetches and caches /addressbook.json
-      return cache.add('/addressbook.json');
-    })
+        return cache.add('/addressbook.json');
+      })
   );
 });
 
 // Opt to handle FetchEvent's from the page
-self.addEventListener('fetch', (event) => {
+self.addEventListener('fetch', event => {
   event.respondWith(
-    (async () => {
+      (async () => {
       // 1. Try to first serve directly from caches
-      let response = await caches.match(event.request);
-      if (response) return response;
+        const response = await caches.match(event.request);
+        if (response) return response;
 
-      // 2. Re-write request for /foo to /bar
-      if (event.request.url.endsWith('foo')) return fetch('./bar');
+        // 2. Re-write request for /foo to /bar
+        if (event.request.url.endsWith('foo')) return fetch('./bar');
 
-      // 3. Prevent tracker.js from being retrieved, and returns a placeholder response
-      if (event.request.url.endsWith('tracker.js'))
-        return new Response('console.log('no trackers!')', {
-          status: 200,
-          headers: { 'Content-Type': 'text/javascript' },
-        });
+        // 3. Prevent tracker.js from being retrieved, and returns a placeholder response
+        if (event.request.url.endsWith('tracker.js')) {
+          return new Response('console.log("no trackers!")', {
+            status: 200,
+            headers: { 'Content-Type': 'text/javascript' },
+          });
+        }
 
-      // 4. Otherwise, fallthrough, perform the fetch and respond
-      return fetch(event.request);
-    })()
+        // 4. Otherwise, fallthrough, perform the fetch and respond
+        return fetch(event.request);
+      })()
   );
 });
 
-self.addEventListener('activate', (event) => {
+self.addEventListener('activate', event => {
   event.waitUntil(clients.claim());
 });
 ```

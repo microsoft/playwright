@@ -98,26 +98,26 @@ Here's how to polyfill `waitForAngular` function in Playwright Test:
 
     ```js
     async function waitForAngular(page) {
-      ​const clientSideScripts = require('protractor/built/clientsidescripts.js');
+      const clientSideScripts = require('protractor/built/clientsidescripts.js');
 
-      ​async function executeScriptAsync(page, script, ...scriptArgs) {
-        ​await page.evaluate(`
-          ​new Promise((resolve, reject) => {
-            ​const callback = (errMessage) => {
-              ​if (errMessage)
-                ​reject(new Error(errMessage));
-              ​else
-                ​resolve();
-            ​};
-            ​(function() {${script}}).apply(null, [...${JSON.stringify(scriptArgs)}, callback]);
-          ​})
-        ​`);
-      ​}
+      async function executeScriptAsync(page, script, ...scriptArgs) {
+        await page.evaluate(`
+          new Promise((resolve, reject) => {
+            const callback = (errMessage) => {
+              if (errMessage)
+                reject(new Error(errMessage));
+              else
+                resolve();
+            };
+            (function() {${script}}).apply(null, [...${JSON.stringify(scriptArgs)}, callback]);
+          })
+        `);
+      }
 
-      ​await executeScriptAsync(page, clientSideScripts.waitForAngular, '');
+      await executeScriptAsync(page, clientSideScripts.waitForAngular, '');
     }
     ```
-    If you don't want to keep a version protractor around, you can also use this simpler approach using this function (only works for Angular 2+):
+    If you don't want to keep a version protractor around, you can also use this simpler approach using this function (only works for Angular 2+):/
     ```js
     async function waitForAngular(page) {
       await page.evaluate(async () => {
@@ -130,9 +130,9 @@ Here's how to polyfill `waitForAngular` function in Playwright Test:
             return new Promise(res => testability.whenStable(res));
           }
         }
-       });
-     }
-     ```
+      });
+    }
+    ```
 1. Polyfill usage
 
     ```js

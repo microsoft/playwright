@@ -137,7 +137,7 @@ export default defineConfig({
       maxDiffPixelRatio: 0.1,
     },
   },
-  
+
 });
 ```
 

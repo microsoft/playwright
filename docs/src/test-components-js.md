@@ -389,7 +389,7 @@ export default defineConfig({
 
 ```js
 test('…', async ({ mount, page, context }) => {
-    // …
+  // …
 });
 ```
 
