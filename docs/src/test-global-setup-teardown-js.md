@@ -327,7 +327,7 @@ async function globalSetup(config: FullConfig) {
     await context.storageState({ path: storageState as string });
     await context.tracing.stop({
       path: './test-results/setup-trace.zip',
-    })
+    });
     await browser.close();
   } catch (error) {
     await context.tracing.stop({

@@ -51,7 +51,7 @@ export default defineConfig({
     },
     {
       name: 'Google Chrome',
-      use: { 
+      use: {
         ...devices['Desktop Chrome'],
         channel: 'chrome'
       },
@@ -189,7 +189,7 @@ When working with tests that have a dependency, the dependency will always run f
 
 Running order:
 1. Tests in 'setup' project run
-   
+
 2. Tests in 'chromium', 'webkit' and 'firefox' projects run in parallel
 
 <img width="70%" style={{display: 'flex', margin: 'auto'}} alt="chromium, webkit and firefox projects depend on setup project" loading="lazy" src="https://user-images.githubusercontent.com/13063165/225937080-327b1e63-431f-40e0-90d7-35f21d7a92cb.jpg" />
@@ -199,8 +199,8 @@ If there are more than one dependency then these project dependencies will be ru
 Running order:
 1. Tests in 'Browser Login' and 'DataBase' projects run in parallel
   - 'Browser Login' passes
-  - ❌ 'DataBase' fails! 
-  
+  - ❌ 'DataBase' fails!
+
 1. “e2e tests” is not run!
 
 <img width="70%" style={{display: 'flex', margin: 'auto'}} alt="Browser login project is blue, database is red and e2e tests relies on both" loading="lazy" src="https://user-images.githubusercontent.com/13063165/225938262-33c1b78f-f092-4762-a478-7f8cbc1e3b21.jpg" />
