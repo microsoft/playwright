@@ -117,7 +117,7 @@ Here's how to polyfill `waitForAngular` function in Playwright Test:
       await executeScriptAsync(page, clientSideScripts.waitForAngular, '');
     }
     ```
-    If you don't want to keep a version protractor around, you can also use this simpler approach using this function (only works for Angular 2+):/
+    If you don't want to keep a version protractor around, you can also use this simpler approach using this function (only works for Angular 2+):
     ```js
     async function waitForAngular(page) {
       await page.evaluate(async () => {

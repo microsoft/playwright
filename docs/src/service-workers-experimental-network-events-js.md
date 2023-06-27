@@ -193,7 +193,7 @@ self.addEventListener('install', function(event) {
 self.addEventListener('fetch', event => {
   event.respondWith(
       (async () => {
-      // 1. Try to first serve directly from caches
+        // 1. Try to first serve directly from caches
         const response = await caches.match(event.request);
         if (response) return response;
 
