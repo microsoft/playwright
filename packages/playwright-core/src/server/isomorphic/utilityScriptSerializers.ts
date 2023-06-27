@@ -19,6 +19,7 @@ export type SerializedValue =
     { v: 'null' | 'undefined' | 'NaN' | 'Infinity' | '-Infinity' | '-0' } |
     { d: string } |
     { u: string } |
+    { bi: string } |
     { r: { p: string, f: string} } |
     { a: SerializedValue[], id: number } |
     { o: { k: string, v: SerializedValue }[], id: number } |
@@ -91,6 +92,8 @@ export function source() {
         return new Date(value.d);
       if ('u' in value)
         return new URL(value.u);
+      if ('bi' in value)
+        return BigInt(value.bi);
       if ('r' in value)
         return new RegExp(value.r.p, value.r.f);
       if ('a' in value) {
@@ -157,6 +160,8 @@ export function source() {
       return value;
     if (typeof value === 'string')
       return value;
+    if (typeof value === 'bigint')
+      return { bi: value.toString() };
 
     if (isError(value)) {
       const error = value;

@@ -57,6 +57,7 @@ scheme.SerializedValue = tObject({
   v: tOptional(tEnum(['null', 'undefined', 'NaN', 'Infinity', '-Infinity', '-0'])),
   d: tOptional(tString),
   u: tOptional(tString),
+  bi: tOptional(tString),
   r: tOptional(tObject({
     p: tString,
     f: tString,
