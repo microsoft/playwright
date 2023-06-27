@@ -117,11 +117,11 @@ String snapshot = page.accessibility().snapshot();
 
 ```python async
 def find_focused_node(node):
-    if (node.get("focused"))
+    if node.get("focused"):
         return node
     for child in (node.get("children") or []):
         found_node = find_focused_node(child)
-        if (found_node)
+        if found_node:
             return found_node
     return None
 
@@ -133,11 +133,11 @@ if node:
 
 ```python sync
 def find_focused_node(node):
-    if (node.get("focused"))
+    if node.get("focused"):
         return node
     for child in (node.get("children") or []):
         found_node = find_focused_node(child)
-        if (found_node)
+        if found_node:
             return found_node
     return None
 

@@ -60,24 +60,23 @@ This version was also tested against the following stable channels:
   Consider a scenario where you'd like to click on a "New email" button, but sometimes a security settings dialog shows up instead.
   In this case, you can wait for either a "New email" button, or a dialog and act accordingly:
 
-    ```python
-    new_email = page.get_by_role("button", name="New email")
-    dialog = page.get_by_text("Confirm security settings")
-    expect(new_email.or_(dialog)).is_visible()
-    if (dialog.is_visible())
-      page.get_by_role("button", name="Dismiss").click()
-    new_email.click()
-    ```
+  ```python
+  new_email = page.get_by_role("button", name="New email")
+  dialog = page.get_by_text("Confirm security settings")
+  expect(new_email.or_(dialog)).is_visible()
+  if (dialog.is_visible()):
+    page.get_by_role("button", name="Dismiss").click()
+  new_email.click()
+  ```
 * Use new options [`option: hasNot`] and [`option: hasNotText`] in [`method: Locator.filter`]
   to find elements that **do not match** certain conditions.
 
-    ```python
-    row_locator = page.locator("tr")
-    row_locator
-        .filter(has_not_text="text in column 1")
-        .filter(has_not=page.get_by_role("button", name="column 2 button"))
-        .screenshot()
-    ```
+  ```python
+  row_locator = page.locator("tr")
+  row_locator.filter(has_not_text="text in column 1").filter(
+      has_not=page.get_by_role("button", name="column 2 button")
+  ).screenshot()
+  ```
 * Use new web-first assertion [`method: LocatorAssertions.toBeAttached`] to ensure that the element
   is present in the page's DOM. Do not confuse with the [`method: LocatorAssertions.toBeVisible`] that ensures that
   element is both attached & visible.
