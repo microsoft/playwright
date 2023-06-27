@@ -7,7 +7,7 @@ context.
 
 ```js
 // Listen for all console logs
-page.on('console', msg => console.log(msg.text()))
+page.on('console', msg => console.log(msg.text()));
 
 // Listen for all console events and handle errors
 page.on('console', msg => {
@@ -23,8 +23,8 @@ await page.evaluate(() => {
 const msg = await msgPromise;
 
 // Deconstruct console log arguments
-await msg.args()[0].jsonValue() // hello
-await msg.args()[1].jsonValue() // 42
+await msg.args()[0].jsonValue(); // hello
+await msg.args()[1].jsonValue(); // 42
 ```
 
 ```java

@@ -25,9 +25,8 @@ const { firefox } = require('playwright');  // Or 'chromium' or 'webkit'.
 
   function dumpFrameTree(frame, indent) {
     console.log(indent + frame.url());
-    for (const child of frame.childFrames()) {
+    for (const child of frame.childFrames())
       dumpFrameTree(child, indent + '  ');
-    }
   }
 })();
 ```
@@ -733,8 +732,8 @@ If the function, passed to the [`method: Frame.evaluateHandle`], returns a [Prom
 **Usage**
 
 ```js
+// Handle for the window object
 const aWindowHandle = await frame.evaluateHandle(() => Promise.resolve(window));
-aWindowHandle; // Handle for the window object.
 ```
 
 ```java
@@ -1739,7 +1738,7 @@ To press a special key, like `Control` or `ArrowDown`, use [`method: Keyboard.pr
 
 ```js
 await frame.type('#mytextarea', 'Hello'); // Types instantly
-await frame.type('#mytextarea', 'World', {delay: 100}); // Types slower, like a user
+await frame.type('#mytextarea', 'World', { delay: 100 }); // Types slower, like a user
 ```
 
 ```java
@@ -1857,7 +1856,7 @@ const { firefox } = require('playwright');  // Or 'chromium' or 'webkit'.
   const browser = await firefox.launch();
   const page = await browser.newPage();
   const watchDog = page.mainFrame().waitForFunction('window.innerWidth < 100');
-  await page.setViewportSize({width: 50, height: 50});
+  await page.setViewportSize({ width: 50, height: 50 });
   await watchDog;
   await browser.close();
 })();
@@ -2137,7 +2136,7 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
 (async () => {
   const browser = await chromium.launch();
   const page = await browser.newPage();
-  for (let currentURL of ['https://google.com', 'https://bbc.com']) {
+  for (const currentURL of ['https://google.com', 'https://bbc.com']) {
     await page.goto(currentURL);
     const element = await page.mainFrame().waitForSelector('img');
     console.log('Loaded image: ' + await element.getAttribute('src'));

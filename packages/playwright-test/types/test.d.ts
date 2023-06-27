@@ -3322,7 +3322,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * ```js
    * // playwright.config.ts
    * import { defineConfig } from '@playwright/test';
-   * import { Options } from './my-test';
+   * import type { Options } from './my-test';
    *
    * export default defineConfig<Options>({
    *   projects: [
@@ -5573,8 +5573,8 @@ interface LocatorAssertions {
    * ```
    *
    * ```js
-   * const locator = page.locator("id=favorite-colors");
-   * await locator.selectOption(["R", "G"]);
+   * const locator = page.locator('id=favorite-colors');
+   * await locator.selectOption(['R', 'G']);
    * await expect(locator).toHaveValues([/R/, /G/]);
    * ```
    *

@@ -1302,9 +1302,13 @@ By default, the `data-testid` attribute is used as a test id. Use [`method: Sele
 
 ```js
 // Set custom test id attribute from @playwright/test config:
-use: {
-  testIdAttribute: 'data-pw'
-}
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  use: {
+    testIdAttribute: 'data-pw'
+  },
+});
 ```
 
 ## template-locator-get-by-text
@@ -1327,19 +1331,19 @@ You can locate by text substring, exact string, or a regular expression:
 
 ```js
 // Matches <span>
-page.getByText('world')
+page.getByText('world');
 
 // Matches first <div>
-page.getByText('Hello world')
+page.getByText('Hello world');
 
 // Matches second <div>
-page.getByText('Hello', { exact: true })
+page.getByText('Hello', { exact: true });
 
 // Matches both <div>s
-page.getByText(/Hello/)
+page.getByText(/Hello/);
 
 // Matches second <div>
-page.getByText(/^hello$/i)
+page.getByText(/^hello$/i);
 ```
 
 ```python async
@@ -1503,8 +1507,8 @@ You can fill the input after locating it by the placeholder text:
 
 ```js
 await page
-    .getByPlaceholder("name@example.com")
-    .fill("playwright@microsoft.com");
+    .getByPlaceholder('name@example.com')
+    .fill('playwright@microsoft.com');
 ```
 
 ```java

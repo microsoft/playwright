@@ -82,8 +82,8 @@ test('navigation menu flyout should not have automatically detectable accessibil
   await page.locator('#navigation-menu-flyout').waitFor();
 
   const accessibilityScanResults = await new AxeBuilder({ page })
-    .include('#navigation-menu-flyout')
-    .analyze();
+      .include('#navigation-menu-flyout')
+      .analyze();
 
   expect(accessibilityScanResults.violations).toEqual([]);
 });
@@ -102,8 +102,8 @@ test('should not have any automatically detectable WCAG A or AA violations', asy
   await page.goto('https://your-site.com/');
 
   const accessibilityScanResults = await new AxeBuilder({ page })
-    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
-    .analyze();
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+      .analyze();
 
   expect(accessibilityScanResults.violations).toEqual([]);
 });
@@ -130,8 +130,8 @@ test('should not have any accessibility violations outside of elements with know
   await page.goto('https://your-site.com/page-with-known-issues');
 
   const accessibilityScanResults = await new AxeBuilder({ page })
-    .exclude('#element-with-known-issue')
-    .analyze();
+      .exclude('#element-with-known-issue')
+      .analyze();
 
   expect(accessibilityScanResults.violations).toEqual([]);
 });
@@ -150,8 +150,8 @@ test('should not have any accessibility violations outside of rules with known i
   await page.goto('https://your-site.com/page-with-known-issues');
 
   const accessibilityScanResults = await new AxeBuilder({ page })
-    .disableRules(['duplicate-id'])
-    .analyze();
+      .disableRules(['duplicate-id'])
+      .analyze();
 
   expect(accessibilityScanResults.violations).toEqual([]);
 });
@@ -176,14 +176,14 @@ expect(violationFingerprints(accessibilityScanResults)).toMatchSnapshot();
 
 // my-test-utils.js
 function violationFingerprints(accessibilityScanResults) {
-    const violationFingerprints = accessibilityScanResults.violations.map(violation => ({
-        rule: violation.id,
-        // These are CSS selectors which uniquely identify each element with
-        // a violation of the rule in question.
-        targets: violation.nodes.map(node => node.target),
-    }));
+  const violationFingerprints = accessibilityScanResults.violations.map(violation => ({
+    rule: violation.id,
+    // These are CSS selectors which uniquely identify each element with
+    // a violation of the rule in question.
+    targets: violation.nodes.map(node => node.target),
+  }));
 
-    return JSON.stringify(violationFingerprints, null, 2);
+  return JSON.stringify(violationFingerprints, null, 2);
 }
 ```
 
@@ -238,8 +238,8 @@ type AxeFixture = {
 export const test = base.extend<AxeFixture>({
   makeAxeBuilder: async ({ page }, use, testInfo) => {
     const makeAxeBuilder = () => new AxeBuilder({ page })
-      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
-      .exclude('#commonly-reused-element-with-known-issue');
+        .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+        .exclude('#commonly-reused-element-with-known-issue');
 
     await use(makeAxeBuilder);
   }
@@ -259,8 +259,8 @@ const AxeBuilder = require('@axe-core/playwright').default;
 exports.test = base.test.extend({
   makeAxeBuilder: async ({ page }, use, testInfo) => {
     const makeAxeBuilder = () => new AxeBuilder({ page })
-      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
-      .exclude('#commonly-reused-element-with-known-issue');
+        .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+        .exclude('#commonly-reused-element-with-known-issue');
 
     await use(makeAxeBuilder);
   }
@@ -279,10 +279,10 @@ test('example using custom fixture', async ({ page, makeAxeBuilder }) => {
   await page.goto('https://your-site.com/');
 
   const accessibilityScanResults = await makeAxeBuilder()
-     // Automatically uses the shared AxeBuilder configuration,
-     // but supports additional test-specific configuration too
-    .include('#specific-element-under-test')
-    .analyze();
+      // Automatically uses the shared AxeBuilder configuration,
+      // but supports additional test-specific configuration too
+      .include('#specific-element-under-test')
+      .analyze();
 
   expect(accessibilityScanResults.violations).toEqual([]);
 });

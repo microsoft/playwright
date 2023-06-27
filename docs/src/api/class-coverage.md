@@ -14,7 +14,7 @@ Coverage APIs are only supported on Chromium-based browsers.
 const { chromium } = require('playwright');
 const v8toIstanbul = require('v8-to-istanbul');
 
-(async() => {
+(async () => {
   const browser = await chromium.launch();
   const page = await browser.newPage();
   await page.coverage.startJSCoverage();

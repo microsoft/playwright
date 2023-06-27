@@ -191,7 +191,7 @@ test('runs second', async () => {
 ```
 
 ```js tab=js-ts title="example.spec.ts"
-import { test, Page } from '@playwright/test';
+import { test, type Page } from '@playwright/test';
 
 test.describe.configure({ mode: 'serial' });
 

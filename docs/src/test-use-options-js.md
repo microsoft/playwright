@@ -15,7 +15,7 @@ import { defineConfig } from '@playwright/test';
 export default defineConfig({
   use: {
     // Base URL to use in actions like `await page.goto('/')`.
-    baseURL: 'http://127.0.0.1:3000'
+    baseURL: 'http://127.0.0.1:3000',
 
     // Populates context with given storage state.
     storageState: 'state.json',
@@ -132,8 +132,8 @@ import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
   use: {
-    // Capture screenshot after each test failure. 
-    screenshot: 'only-on-failure'
+    // Capture screenshot after each test failure.
+    screenshot: 'only-on-failure',
 
     // Record trace only when retrying a test for the first time.
     trace: 'on-first-retry',
@@ -224,11 +224,9 @@ export default defineConfig({
 An example test illustrating the initial context options are set:
 
 ```js
-import { test, expect } from "@playwright/test";
+import { test, expect } from '@playwright/test';
 
-test('should inherit use options on context when using built-in browser fixture', async ({
-  browser,
-}) => {
+test('should inherit use options on context when using built-in browser fixture', async ({ browser }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   expect(await page.evaluate(() => navigator.userAgent)).toBe('some custom ua');
@@ -261,9 +259,9 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { 
-        ...devices['Desktop Chrome'], 
-        locale: 'de-DE' 
+      use: {
+        ...devices['Desktop Chrome'],
+        locale: 'de-DE',
       },
     },
   ],
@@ -289,7 +287,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('french language block', () => {
 
-  test.use({ { locale: 'fr-FR' }});
+  test.use({ locale: 'fr-FR' });
 
   test('example', async ({ page }) => {
     // ...

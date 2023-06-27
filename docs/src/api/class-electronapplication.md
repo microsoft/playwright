@@ -128,11 +128,11 @@ Convenience method that waits for the first application window to be opened.
 **Usage**
 
 ```js
-  const electronApp = await electron.launch({
-    args: ['main.js']
-  });
-  const window = await electronApp.firstWindow();
-  // ...
+const electronApp = await electron.launch({
+  args: ['main.js']
+});
+const window = await electronApp.firstWindow();
+// ...
 ```
 
 ### option: ElectronApplication.firstWindow.timeout

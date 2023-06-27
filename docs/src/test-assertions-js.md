@@ -57,7 +57,7 @@ of the matchers:
 
 ```js
 expect(value).not.toEqual(0);
-await expect(locator).not.toContainText("some text");
+await expect(locator).not.toContainText('some text');
 ```
 
 ## Soft Assertions

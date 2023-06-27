@@ -12,12 +12,12 @@ const playwright = require('playwright');
   const context = await browser.newContext();
   const page = await context.newPage();
   try {
-    await page.locator("text=Foo").click({
+    await page.locator('text=Foo').click({
       timeout: 100,
-    })
+    });
   } catch (error) {
     if (error instanceof playwright.errors.TimeoutError)
-      console.log("Timeout!")
+      console.log('Timeout!');
   }
   await browser.close();
 })();

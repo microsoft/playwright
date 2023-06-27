@@ -33,7 +33,7 @@ import assert from 'node:assert';
   // Teardown
   await context.close();
   await browser.close();
-})()
+})();
 ```
 
 ```js tab=js-js
@@ -55,7 +55,7 @@ const { chromium, devices } = require('playwright');
   // Teardown
   await context.close();
   await browser.close();
-})()
+})();
 ```
 
 Run it with `node my-script.js`.
@@ -185,7 +185,7 @@ Playwright includes built-in support for TypeScript. Type definitions will be im
 Add the following to the top of your JavaScript file to get type-checking in VS Code or WebStorm.
 
 ```js
-//@ts-check
+// @ts-check
 // ...
 ```
 

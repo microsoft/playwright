@@ -36,7 +36,7 @@ module.exports = MyReporter;
 ```
 
 ```js tab=js-ts title="my-awesome-reporter.ts"
-import { Reporter, FullConfig, Suite, TestCase, TestResult, FullResult } from '@playwright/test/reporter';
+import type { Reporter, FullConfig, Suite, TestCase, TestResult, FullResult } from '@playwright/test/reporter';
 
 class MyReporter implements Reporter {
   constructor(options: { customOption?: string } = {}) {

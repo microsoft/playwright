@@ -299,7 +299,7 @@ be opened in Chrome DevTools performance panel.
 **Usage**
 
 ```js
-await browser.startTracing(page, {path: 'trace.json'});
+await browser.startTracing(page, { path: 'trace.json' });
 await page.goto('https://www.google.com');
 await browser.stopTracing();
 ```

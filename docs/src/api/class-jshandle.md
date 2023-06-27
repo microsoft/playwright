@@ -132,7 +132,7 @@ The method returns a map with **own property names** as keys and JSHandle instan
 **Usage**
 
 ```js
-const handle = await page.evaluateHandle(() => ({window, document}));
+const handle = await page.evaluateHandle(() => ({ window, document }));
 const properties = await handle.getProperties();
 const windowHandle = properties.get('window');
 const documentHandle = properties.get('document');
@@ -140,7 +140,7 @@ await handle.dispose();
 ```
 
 ```java
-JSHandle handle = page.evaluateHandle("() => ({window, document})");
+JSHandle handle = page.evaluateHandle("() => ({ window, document })");
 Map<String, JSHandle> properties = handle.getProperties();
 JSHandle windowHandle = properties.get("window");
 JSHandle documentHandle = properties.get("document");
@@ -148,7 +148,7 @@ handle.dispose();
 ```
 
 ```python async
-handle = await page.evaluate_handle("({window, document})")
+handle = await page.evaluate_handle("({ window, document })")
 properties = await handle.get_properties()
 window_handle = properties.get("window")
 document_handle = properties.get("document")
@@ -156,7 +156,7 @@ await handle.dispose()
 ```
 
 ```python sync
-handle = page.evaluate_handle("({window, document})")
+handle = page.evaluate_handle("({ window, document })")
 properties = handle.get_properties()
 window_handle = properties.get("window")
 document_handle = properties.get("document")
@@ -164,7 +164,7 @@ handle.dispose()
 ```
 
 ```csharp
-var handle = await page.EvaluateHandleAsync("() => ({window, document}");
+var handle = await page.EvaluateHandleAsync("() => ({ window, document }");
 var properties = await handle.GetPropertiesAsync();
 var windowHandle = properties["window"];
 var documentHandle = properties["document"];

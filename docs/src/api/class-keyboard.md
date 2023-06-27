@@ -319,7 +319,7 @@ To press a special key, like `Control` or `ArrowDown`, use [`method: Keyboard.pr
 
 ```js
 await page.keyboard.type('Hello'); // Types instantly
-await page.keyboard.type('World', {delay: 100}); // Types slower, like a user
+await page.keyboard.type('World', { delay: 100 }); // Types slower, like a user
 ```
 
 ```java

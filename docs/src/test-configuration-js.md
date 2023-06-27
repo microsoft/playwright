@@ -74,10 +74,10 @@ Filter tests by glob patterns or regular expressions.
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
-  // Glob patterns or regular expressions to ignore test files. 
+  // Glob patterns or regular expressions to ignore test files.
   testIgnore: '*test-assets',
 
-  // Glob patterns or regular expressions that match test files. 
+  // Glob patterns or regular expressions that match test files.
   testMatch: '*todo-tests/*.spec.ts',
 });
 ```
@@ -132,7 +132,7 @@ export default defineConfig({
       maxDiffPixels: 10,
     },
 
-    toMatchSnapshot:  {
+    toMatchSnapshot: {
       // An acceptable ratio of pixels that are different to the total amount of pixels, between 0 and 1.
       maxDiffPixelRatio: 0.1,
     },

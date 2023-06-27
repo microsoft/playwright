@@ -45,7 +45,7 @@ type ElementHandleWaitForSelectorOptionsNotHidden = ElementHandleWaitForSelector
  *   const context = await browser.newContext();
  *   const page = await context.newPage();
  *   await page.goto('https://example.com');
- *   await page.screenshot({path: 'screenshot.png'});
+ *   await page.screenshot({ path: 'screenshot.png' });
  *   await browser.close();
  * })();
  * ```
@@ -112,7 +112,7 @@ export interface Page {
    *
    * ```js
    * const bodyHandle = await page.evaluate('document.body');
-   * const html = await page.evaluate(([body, suffix]) => body.innerHTML + suffix, [bodyHandle, 'hello']);
+   * const html = await page.evaluate<string, HTMLElement>(([body, suffix]) => body.innerHTML + suffix, [bodyHandle, 'hello']);
    * await bodyHandle.dispose();
    * ```
    *
@@ -159,7 +159,7 @@ export interface Page {
    *
    * ```js
    * const bodyHandle = await page.evaluate('document.body');
-   * const html = await page.evaluate(([body, suffix]) => body.innerHTML + suffix, [bodyHandle, 'hello']);
+   * const html = await page.evaluate<string, HTMLElement>(([body, suffix]) => body.innerHTML + suffix, [bodyHandle, 'hello']);
    * await bodyHandle.dispose();
    * ```
    *
@@ -186,8 +186,8 @@ export interface Page {
    * **Usage**
    *
    * ```js
+   * // Handle for the window object.
    * const aWindowHandle = await page.evaluateHandle(() => Promise.resolve(window));
-   * aWindowHandle; // Handle for the window object.
    * ```
    *
    * A string can also be passed in instead of a function:
@@ -228,8 +228,8 @@ export interface Page {
    * **Usage**
    *
    * ```js
+   * // Handle for the window object.
    * const aWindowHandle = await page.evaluateHandle(() => Promise.resolve(window));
-   * aWindowHandle; // Handle for the window object.
    * ```
    *
    * A string can also be passed in instead of a function:
@@ -559,7 +559,7 @@ export interface Page {
    *   const browser = await webkit.launch();
    *   const page = await browser.newPage();
    *   const watchDog = page.waitForFunction(() => window.innerWidth < 100);
-   *   await page.setViewportSize({width: 50, height: 50});
+   *   await page.setViewportSize({ width: 50, height: 50 });
    *   await watchDog;
    *   await browser.close();
    * })();
@@ -595,7 +595,7 @@ export interface Page {
    *   const browser = await webkit.launch();
    *   const page = await browser.newPage();
    *   const watchDog = page.waitForFunction(() => window.innerWidth < 100);
-   *   await page.setViewportSize({width: 50, height: 50});
+   *   await page.setViewportSize({ width: 50, height: 50 });
    *   await watchDog;
    *   await browser.close();
    * })();
@@ -641,7 +641,7 @@ export interface Page {
    * (async () => {
    *   const browser = await chromium.launch();
    *   const page = await browser.newPage();
-   *   for (let currentURL of ['https://google.com', 'https://bbc.com']) {
+   *   for (const currentURL of ['https://google.com', 'https://bbc.com']) {
    *     await page.goto(currentURL);
    *     const element = await page.waitForSelector('img');
    *     console.log('Loaded image: ' + await element.getAttribute('src'));
@@ -679,7 +679,7 @@ export interface Page {
    * (async () => {
    *   const browser = await chromium.launch();
    *   const page = await browser.newPage();
-   *   for (let currentURL of ['https://google.com', 'https://bbc.com']) {
+   *   for (const currentURL of ['https://google.com', 'https://bbc.com']) {
    *     await page.goto(currentURL);
    *     const element = await page.waitForSelector('img');
    *     console.log('Loaded image: ' + await element.getAttribute('src'));
@@ -717,7 +717,7 @@ export interface Page {
    * (async () => {
    *   const browser = await chromium.launch();
    *   const page = await browser.newPage();
-   *   for (let currentURL of ['https://google.com', 'https://bbc.com']) {
+   *   for (const currentURL of ['https://google.com', 'https://bbc.com']) {
    *     await page.goto(currentURL);
    *     const element = await page.waitForSelector('img');
    *     console.log('Loaded image: ' + await element.getAttribute('src'));
@@ -755,7 +755,7 @@ export interface Page {
    * (async () => {
    *   const browser = await chromium.launch();
    *   const page = await browser.newPage();
-   *   for (let currentURL of ['https://google.com', 'https://bbc.com']) {
+   *   for (const currentURL of ['https://google.com', 'https://bbc.com']) {
    *     await page.goto(currentURL);
    *     const element = await page.waitForSelector('img');
    *     console.log('Loaded image: ' + await element.getAttribute('src'));
@@ -977,7 +977,7 @@ export interface Page {
    * that can be uploaded after that.
    *
    * ```js
-   * page.on('filechooser', async (fileChooser) => {
+   * page.on('filechooser', async fileChooser => {
    *   await fileChooser.setFiles('/tmp/myfile.pdf');
    * });
    * ```
@@ -1273,7 +1273,7 @@ export interface Page {
    * that can be uploaded after that.
    *
    * ```js
-   * page.on('filechooser', async (fileChooser) => {
+   * page.on('filechooser', async fileChooser => {
    *   await fileChooser.setFiles('/tmp/myfile.pdf');
    * });
    * ```
@@ -1664,7 +1664,7 @@ export interface Page {
    * that can be uploaded after that.
    *
    * ```js
-   * page.on('filechooser', async (fileChooser) => {
+   * page.on('filechooser', async fileChooser => {
    *   await fileChooser.setFiles('/tmp/myfile.pdf');
    * });
    * ```
@@ -2557,8 +2557,8 @@ export interface Page {
    *
    * ```js
    * await page
-   *     .getByPlaceholder("name@example.com")
-   *     .fill("playwright@microsoft.com");
+   *     .getByPlaceholder('name@example.com')
+   *     .fill('playwright@microsoft.com');
    * ```
    *
    * @param text Text to locate the element for.
@@ -2705,9 +2705,13 @@ export interface Page {
    *
    * ```js
    * // Set custom test id attribute from @playwright/test config:
-   * use: {
-   *   testIdAttribute: 'data-pw'
-   * }
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   use: {
+   *     testIdAttribute: 'data-pw'
+   *   },
+   * });
    * ```
    *
    * @param testId Id to locate the element by.
@@ -2733,19 +2737,19 @@ export interface Page {
    *
    * ```js
    * // Matches <span>
-   * page.getByText('world')
+   * page.getByText('world');
    *
    * // Matches first <div>
-   * page.getByText('Hello world')
+   * page.getByText('Hello world');
    *
    * // Matches second <div>
-   * page.getByText('Hello', { exact: true })
+   * page.getByText('Hello', { exact: true });
    *
    * // Matches both <div>s
-   * page.getByText(/Hello/)
+   * page.getByText(/Hello/);
    *
    * // Matches second <div>
-   * page.getByText(/^hello$/i)
+   * page.getByText(/^hello$/i);
    * ```
    *
    * **Details**
@@ -3295,8 +3299,8 @@ export interface Page {
    *
    * ```js
    * // Generates a PDF with 'screen' media type.
-   * await page.emulateMedia({media: 'screen'});
-   * await page.pdf({path: 'page.pdf'});
+   * await page.emulateMedia({ media: 'screen' });
+   * await page.pdf({ path: 'page.pdf' });
    * ```
    *
    * The `width`, `height`, and `margin` options accept values labeled with units. Unlabeled values are treated as
@@ -4105,7 +4109,7 @@ export interface Page {
    *
    * ```js
    * await page.type('#mytextarea', 'Hello'); // Types instantly
-   * await page.type('#mytextarea', 'World', {delay: 100}); // Types slower, like a user
+   * await page.type('#mytextarea', 'World', { delay: 100 }); // Types slower, like a user
    * ```
    *
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
@@ -4321,7 +4325,7 @@ export interface Page {
    * that can be uploaded after that.
    *
    * ```js
-   * page.on('filechooser', async (fileChooser) => {
+   * page.on('filechooser', async fileChooser => {
    *   await fileChooser.setFiles('/tmp/myfile.pdf');
    * });
    * ```
@@ -4719,9 +4723,8 @@ export interface Page {
  *
  *   function dumpFrameTree(frame, indent) {
  *     console.log(indent + frame.url());
- *     for (const child of frame.childFrames()) {
+ *     for (const child of frame.childFrames())
  *       dumpFrameTree(child, indent + '  ');
- *     }
  *   }
  * })();
  * ```
@@ -4833,8 +4836,8 @@ export interface Frame {
    * **Usage**
    *
    * ```js
+   * // Handle for the window object
    * const aWindowHandle = await frame.evaluateHandle(() => Promise.resolve(window));
-   * aWindowHandle; // Handle for the window object.
    * ```
    *
    * A string can also be passed in instead of a function.
@@ -4875,8 +4878,8 @@ export interface Frame {
    * **Usage**
    *
    * ```js
+   * // Handle for the window object
    * const aWindowHandle = await frame.evaluateHandle(() => Promise.resolve(window));
-   * aWindowHandle; // Handle for the window object.
    * ```
    *
    * A string can also be passed in instead of a function.
@@ -5192,7 +5195,7 @@ export interface Frame {
    *   const browser = await firefox.launch();
    *   const page = await browser.newPage();
    *   const watchDog = page.mainFrame().waitForFunction('window.innerWidth < 100');
-   *   await page.setViewportSize({width: 50, height: 50});
+   *   await page.setViewportSize({ width: 50, height: 50 });
    *   await watchDog;
    *   await browser.close();
    * })();
@@ -5226,7 +5229,7 @@ export interface Frame {
    *   const browser = await firefox.launch();
    *   const page = await browser.newPage();
    *   const watchDog = page.mainFrame().waitForFunction('window.innerWidth < 100');
-   *   await page.setViewportSize({width: 50, height: 50});
+   *   await page.setViewportSize({ width: 50, height: 50 });
    *   await watchDog;
    *   await browser.close();
    * })();
@@ -5270,7 +5273,7 @@ export interface Frame {
    * (async () => {
    *   const browser = await chromium.launch();
    *   const page = await browser.newPage();
-   *   for (let currentURL of ['https://google.com', 'https://bbc.com']) {
+   *   for (const currentURL of ['https://google.com', 'https://bbc.com']) {
    *     await page.goto(currentURL);
    *     const element = await page.mainFrame().waitForSelector('img');
    *     console.log('Loaded image: ' + await element.getAttribute('src'));
@@ -5308,7 +5311,7 @@ export interface Frame {
    * (async () => {
    *   const browser = await chromium.launch();
    *   const page = await browser.newPage();
-   *   for (let currentURL of ['https://google.com', 'https://bbc.com']) {
+   *   for (const currentURL of ['https://google.com', 'https://bbc.com']) {
    *     await page.goto(currentURL);
    *     const element = await page.mainFrame().waitForSelector('img');
    *     console.log('Loaded image: ' + await element.getAttribute('src'));
@@ -5346,7 +5349,7 @@ export interface Frame {
    * (async () => {
    *   const browser = await chromium.launch();
    *   const page = await browser.newPage();
-   *   for (let currentURL of ['https://google.com', 'https://bbc.com']) {
+   *   for (const currentURL of ['https://google.com', 'https://bbc.com']) {
    *     await page.goto(currentURL);
    *     const element = await page.mainFrame().waitForSelector('img');
    *     console.log('Loaded image: ' + await element.getAttribute('src'));
@@ -5384,7 +5387,7 @@ export interface Frame {
    * (async () => {
    *   const browser = await chromium.launch();
    *   const page = await browser.newPage();
-   *   for (let currentURL of ['https://google.com', 'https://bbc.com']) {
+   *   for (const currentURL of ['https://google.com', 'https://bbc.com']) {
    *     await page.goto(currentURL);
    *     const element = await page.mainFrame().waitForSelector('img');
    *     console.log('Loaded image: ' + await element.getAttribute('src'));
@@ -6019,8 +6022,8 @@ export interface Frame {
    *
    * ```js
    * await page
-   *     .getByPlaceholder("name@example.com")
-   *     .fill("playwright@microsoft.com");
+   *     .getByPlaceholder('name@example.com')
+   *     .fill('playwright@microsoft.com');
    * ```
    *
    * @param text Text to locate the element for.
@@ -6167,9 +6170,13 @@ export interface Frame {
    *
    * ```js
    * // Set custom test id attribute from @playwright/test config:
-   * use: {
-   *   testIdAttribute: 'data-pw'
-   * }
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   use: {
+   *     testIdAttribute: 'data-pw'
+   *   },
+   * });
    * ```
    *
    * @param testId Id to locate the element by.
@@ -6195,19 +6202,19 @@ export interface Frame {
    *
    * ```js
    * // Matches <span>
-   * page.getByText('world')
+   * page.getByText('world');
    *
    * // Matches first <div>
-   * page.getByText('Hello world')
+   * page.getByText('Hello world');
    *
    * // Matches second <div>
-   * page.getByText('Hello', { exact: true })
+   * page.getByText('Hello', { exact: true });
    *
    * // Matches both <div>s
-   * page.getByText(/Hello/)
+   * page.getByText(/Hello/);
    *
    * // Matches second <div>
-   * page.getByText(/^hello$/i)
+   * page.getByText(/^hello$/i);
    * ```
    *
    * **Details**
@@ -7106,7 +7113,7 @@ export interface Frame {
    *
    * ```js
    * await frame.type('#mytextarea', 'Hello'); // Types instantly
-   * await frame.type('#mytextarea', 'World', {delay: 100}); // Types slower, like a user
+   * await frame.type('#mytextarea', 'World', { delay: 100 }); // Types slower, like a user
    * ```
    *
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
@@ -8423,7 +8430,7 @@ export interface BrowserContext {
    * **Usage**
    *
    * ```js
-   * await browserContext.setGeolocation({latitude: 59.95, longitude: 30.31667});
+   * await browserContext.setGeolocation({ latitude: 59.95, longitude: 30.31667 });
    * ```
    *
    * **NOTE** Consider using
@@ -8904,7 +8911,7 @@ export interface JSHandle<T = any> {
    * **Usage**
    *
    * ```js
-   * const handle = await page.evaluateHandle(() => ({window, document}));
+   * const handle = await page.evaluateHandle(() => ({ window, document }));
    * const properties = await handle.getProperties();
    * const windowHandle = properties.get('window');
    * const documentHandle = properties.get('document');
@@ -10200,7 +10207,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    *
    * ```js
    * await elementHandle.type('Hello'); // Types instantly
-   * await elementHandle.type('World', {delay: 100}); // Types slower, like a user
+   * await elementHandle.type('World', { delay: 100 }); // Types slower, like a user
    * ```
    *
    * An example of typing into a text field and then submitting the form:
@@ -11241,8 +11248,8 @@ export interface Locator {
    *
    * ```js
    * await page
-   *     .getByPlaceholder("name@example.com")
-   *     .fill("playwright@microsoft.com");
+   *     .getByPlaceholder('name@example.com')
+   *     .fill('playwright@microsoft.com');
    * ```
    *
    * @param text Text to locate the element for.
@@ -11389,9 +11396,13 @@ export interface Locator {
    *
    * ```js
    * // Set custom test id attribute from @playwright/test config:
-   * use: {
-   *   testIdAttribute: 'data-pw'
-   * }
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   use: {
+   *     testIdAttribute: 'data-pw'
+   *   },
+   * });
    * ```
    *
    * @param testId Id to locate the element by.
@@ -11417,19 +11428,19 @@ export interface Locator {
    *
    * ```js
    * // Matches <span>
-   * page.getByText('world')
+   * page.getByText('world');
    *
    * // Matches first <div>
-   * page.getByText('Hello world')
+   * page.getByText('Hello world');
    *
    * // Matches second <div>
-   * page.getByText('Hello', { exact: true })
+   * page.getByText('Hello', { exact: true });
    *
    * // Matches both <div>s
-   * page.getByText(/Hello/)
+   * page.getByText(/Hello/);
    *
    * // Matches second <div>
-   * page.getByText(/^hello$/i)
+   * page.getByText(/^hello$/i);
    * ```
    *
    * **Details**
@@ -12282,7 +12293,7 @@ export interface Locator {
    *
    * ```js
    * await element.type('Hello'); // Types instantly
-   * await element.type('World', {delay: 100}); // Types slower, like a user
+   * await element.type('World', { delay: 100 }); // Types slower, like a user
    * ```
    *
    * An example of typing into a text field and then submitting the form:
@@ -13204,12 +13215,12 @@ export namespace errors {
  *   const context = await browser.newContext();
  *   const page = await context.newPage();
  *   try {
- *     await page.locator("text=Foo").click({
+ *     await page.locator('text=Foo').click({
  *       timeout: 100,
- *     })
+ *     });
  *   } catch (error) {
  *     if (error instanceof playwright.errors.TimeoutError)
- *       console.log("Timeout!")
+ *       console.log('Timeout!');
  *   }
  *   await browser.close();
  * })();
@@ -13517,11 +13528,11 @@ export interface ElectronApplication {
    * **Usage**
    *
    * ```js
-   *   const electronApp = await electron.launch({
-   *     args: ['main.js']
-   *   });
-   *   const window = await electronApp.firstWindow();
-   *   // ...
+   * const electronApp = await electron.launch({
+   *   args: ['main.js']
+   * });
+   * const window = await electronApp.firstWindow();
+   * // ...
    * ```
    *
    * @param options
@@ -16305,7 +16316,7 @@ export interface Browser extends EventEmitter {
    * **Usage**
    *
    * ```js
-   * await browser.startTracing(page, {path: 'trace.json'});
+   * await browser.startTracing(page, { path: 'trace.json' });
    * await page.goto('https://www.google.com');
    * await browser.stopTracing();
    * ```
@@ -16409,7 +16420,7 @@ export interface BrowserServer {
  *
  * ```js
  * // Listen for all console logs
- * page.on('console', msg => console.log(msg.text()))
+ * page.on('console', msg => console.log(msg.text()));
  *
  * // Listen for all console events and handle errors
  * page.on('console', msg => {
@@ -16425,8 +16436,8 @@ export interface BrowserServer {
  * const msg = await msgPromise;
  *
  * // Deconstruct console log arguments
- * await msg.args()[0].jsonValue() // hello
- * await msg.args()[1].jsonValue() // 42
+ * await msg.args()[0].jsonValue(); // hello
+ * await msg.args()[1].jsonValue(); // 42
  * ```
  *
  */
@@ -16483,7 +16494,7 @@ export interface ConsoleMessage {
  * const { chromium } = require('playwright');
  * const v8toIstanbul = require('v8-to-istanbul');
  *
- * (async() => {
+ * (async () => {
  *   const browser = await chromium.launch();
  *   const page = await browser.newPage();
  *   await page.coverage.startJSCoverage();
@@ -17188,8 +17199,8 @@ export interface FrameLocator {
    *
    * ```js
    * await page
-   *     .getByPlaceholder("name@example.com")
-   *     .fill("playwright@microsoft.com");
+   *     .getByPlaceholder('name@example.com')
+   *     .fill('playwright@microsoft.com');
    * ```
    *
    * @param text Text to locate the element for.
@@ -17336,9 +17347,13 @@ export interface FrameLocator {
    *
    * ```js
    * // Set custom test id attribute from @playwright/test config:
-   * use: {
-   *   testIdAttribute: 'data-pw'
-   * }
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   use: {
+   *     testIdAttribute: 'data-pw'
+   *   },
+   * });
    * ```
    *
    * @param testId Id to locate the element by.
@@ -17364,19 +17379,19 @@ export interface FrameLocator {
    *
    * ```js
    * // Matches <span>
-   * page.getByText('world')
+   * page.getByText('world');
    *
    * // Matches first <div>
-   * page.getByText('Hello world')
+   * page.getByText('Hello world');
    *
    * // Matches second <div>
-   * page.getByText('Hello', { exact: true })
+   * page.getByText('Hello', { exact: true });
    *
    * // Matches both <div>s
-   * page.getByText(/Hello/)
+   * page.getByText(/Hello/);
    *
    * // Matches second <div>
-   * page.getByText(/^hello$/i)
+   * page.getByText(/^hello$/i);
    * ```
    *
    * **Details**
@@ -17627,7 +17642,7 @@ export interface Keyboard {
    *
    * ```js
    * await page.keyboard.type('Hello'); // Types instantly
-   * await page.keyboard.type('World', {delay: 100}); // Types slower, like a user
+   * await page.keyboard.type('World', { delay: 100 }); // Types slower, like a user
    * ```
    *
    * **NOTE** Modifier keys DO NOT effect `keyboard.type`. Holding down `Shift` will not type the text in upper case.
@@ -17663,7 +17678,7 @@ export interface Keyboard {
  *       log: (name, severity, message, args) => console.log(`${name} ${message}`)
  *     }
  *   });
- *   ...
+ *   // ...
  * })();
  * ```
  *
@@ -18309,7 +18324,7 @@ export interface Route {
    *     foo: 'foo-value', // set "foo" header
    *     bar: undefined, // remove "bar" header
    *   };
-   *   route.continue({headers});
+   *   route.continue({ headers });
    * });
    * ```
    *
@@ -18403,7 +18418,7 @@ export interface Route {
    *     foo: 'foo-value', // set "foo" header
    *     bar: undefined, // remove "bar" header
    *   };
-   *   route.fallback({headers});
+   *   route.fallback({ headers });
    * });
    * ```
    *

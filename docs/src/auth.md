@@ -497,7 +497,7 @@ You can introduce fixtures that will provide a page authenticated as each role.
 Below is an example that [creates fixtures](./test-fixtures.md#creating-a-fixture) for two [Page Object Models](./pom.md) - admin POM and user POM. It assumes `adminStorageState.json` and `userStorageState.json` files were created in the global setup.
 
 ```js title="playwright/fixtures.ts"
-import { test as base, Page, Locator } from '@playwright/test';
+import { test as base, type Page, type Locator } from '@playwright/test';
 
 // Page Object Model for the "admin" page.
 // Here you can add locators and helper methods specific to the admin page.
@@ -579,9 +579,8 @@ fs.writeFileSync('playwright/.auth/session.json', JSON.stringify(sessionStorage)
 const sessionStorage = JSON.parse(fs.readFileSync('playwright/.auth/session.json', 'utf-8'));
 await context.addInitScript(storage => {
   if (window.location.hostname === 'example.com') {
-    for (const [key, value] of Object.entries(storage)) {
+    for (const [key, value] of Object.entries(storage))
       window.sessionStorage.setItem(key, value);
-    }
   }
 }, sessionStorage);
 ```

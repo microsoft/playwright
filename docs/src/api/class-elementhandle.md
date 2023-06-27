@@ -984,7 +984,7 @@ To press a special key, like `Control` or `ArrowDown`, use [`method: ElementHand
 
 ```js
 await elementHandle.type('Hello'); // Types instantly
-await elementHandle.type('World', {delay: 100}); // Types slower, like a user
+await elementHandle.type('World', { delay: 100 }); // Types slower, like a user
 ```
 
 ```java

@@ -1750,8 +1750,8 @@ For example, given the following element:
 ```
 
 ```js
-const locator = page.locator("id=favorite-colors");
-await locator.selectOption(["R", "G"]);
+const locator = page.locator('id=favorite-colors');
+await locator.selectOption(['R', 'G']);
 await expect(locator).toHaveValues([/R/, /G/]);
 ```
 

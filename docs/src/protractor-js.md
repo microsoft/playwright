@@ -39,13 +39,13 @@ describe('angularjs homepage todo list', function() {
     element(by.model('todoList.todoText')).sendKeys('first test');
     element(by.css('[value="add"]')).click();
 
-    var todoList = element.all(by.repeater('todo in todoList.todos'));
+    const todoList = element.all(by.repeater('todo in todoList.todos'));
     expect(todoList.count()).toEqual(3);
     expect(todoList.get(2).getText()).toEqual('first test');
 
     // You wrote your first test, cross it off the list
     todoList.get(2).element(by.css('input')).click();
-    var completedAmount = element.all(by.css('.done-true'));
+    const completedAmount = element.all(by.css('.done-true'));
     expect(completedAmount.count()).toEqual(2);
   });
 });
@@ -57,14 +57,14 @@ Line-by-line migration to Playwright Test:
 ```js
 const { test, expect } = require('@playwright/test'); // 1
 
-test.describe('angularjs homepage todo list', function() {
-  test('should add a todo', async function({page}) { // 2, 3
+test.describe('angularjs homepage todo list', () => {
+  test('should add a todo', async ({ page }) => { // 2, 3
     await page.goto('https://angularjs.org'); // 4
 
     await page.locator('[ng-model="todoList.todoText"]').fill('first test');
     await page.locator('[value="add"]').click();
 
-    var todoList = page.locator('[ng-repeat="todo in todoList.todos"]'); // 5
+    const todoList = page.locator('[ng-repeat="todo in todoList.todos"]'); // 5
     await expect(todoList).toHaveCount(3);
     await expect(todoList.nth(2)).toHaveText('first test', {
       useInnerText: true,
@@ -72,10 +72,10 @@ test.describe('angularjs homepage todo list', function() {
 
     // You wrote your first test, cross it off the list
     await todoList.nth(2).getByRole('textbox').click();
-    var completedAmount = page.locator('.done-true');
+    const completedAmount = page.locator('.done-true');
     await expect(completedAmount).toHaveCount(2);
   });
-}
+});
 ```
 
 Migration highlights (see inline comments in the Playwright Test code snippet):
@@ -98,23 +98,23 @@ Here's how to polyfill `waitForAngular` function in Playwright Test:
 
     ```js
     async function waitForAngular(page) {
-    ​const clientSideScripts = require('protractor/built/clientsidescripts.js');
+      ​const clientSideScripts = require('protractor/built/clientsidescripts.js');
 
-    ​async function executeScriptAsync(page, script, ...scriptArgs) {
-      ​await page.evaluate(`
-        ​new Promise((resolve, reject) => {
-          ​const callback = (errMessage) => {
-            ​if (errMessage)
-              ​reject(new Error(errMessage));
-            ​else
-              ​resolve();
-          ​};
-          ​(function() {${script}}).apply(null, [...${JSON.stringify(scriptArgs)}, callback]);
-        ​})
-      ​`);
-    ​}
+      ​async function executeScriptAsync(page, script, ...scriptArgs) {
+        ​await page.evaluate(`
+          ​new Promise((resolve, reject) => {
+            ​const callback = (errMessage) => {
+              ​if (errMessage)
+                ​reject(new Error(errMessage));
+              ​else
+                ​resolve();
+            ​};
+            ​(function() {${script}}).apply(null, [...${JSON.stringify(scriptArgs)}, callback]);
+          ​})
+        ​`);
+      ​}
 
-    ​await executeScriptAsync(page, clientSideScripts.waitForAngular, '');
+      ​await executeScriptAsync(page, clientSideScripts.waitForAngular, '');
     }
     ```
     If you don't want to keep a version protractor around, you can also use this simpler approach using this function (only works for Angular 2+):
@@ -127,7 +127,7 @@ Here's how to polyfill `waitForAngular` function in Playwright Test:
           await Promise.all(window.getAllAngularTestabilities().map(whenStable));
           // @ts-expect-error
           async function whenStable(testability) {
-            return new Promise((res) => testability.whenStable(res) );
+            return new Promise(res => testability.whenStable(res));
           }
         }
        });

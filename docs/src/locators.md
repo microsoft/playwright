@@ -112,7 +112,7 @@ DOM changes in between the calls due to re-render, the new element corresponding
 locator will be used.
 
 ```js
-const locator = page.getByRole('button', { name: 'Sign in' })
+const locator = page.getByRole('button', { name: 'Sign in' });
 
 await locator.hover();
 await locator.click();
@@ -316,8 +316,8 @@ You can fill the input after locating it by the placeholder text:
 
 ```js
 await page
-    .getByPlaceholder("name@example.com")
-    .fill("playwright@microsoft.com");
+    .getByPlaceholder('name@example.com')
+    .fill('playwright@microsoft.com');
 ```
 
 ```java
@@ -932,9 +932,9 @@ Locators support an option to only select elements that have or have not a desce
 ```js
 await page
     .getByRole('listitem')
-    .filter({ has: page.getByRole('heading', { name: 'Product 2' })})
+    .filter({ has: page.getByRole('heading', { name: 'Product 2' }) })
     .getByRole('button', { name: 'Add to cart' })
-    .click()
+    .click();
 ```
 
 ```java
@@ -1531,9 +1531,9 @@ To take a screenshot of the row with "Mary" and "Say goodbye":
 const rowLocator = page.getByRole('listitem');
 
 await rowLocator
-  .filter({ hasText: 'Mary' })
-  .filter({ has: page.getByRole('button', { name: 'Say goodbye' }) })
-  .screenshot({ path: 'screenshot.png' });
+    .filter({ hasText: 'Mary' })
+    .filter({ has: page.getByRole('button', { name: 'Say goodbye' }) })
+    .screenshot({ path: 'screenshot.png' });
 ```
 
 ```python async

@@ -378,7 +378,9 @@ import { defineConfig } from '@playwright/experimental-ct-react';
 
 export default defineConfig({
   use: {
-    ctViteConfig: { ... },
+    ctViteConfig: { 
+      // ...
+    },
   },
 });
 ```
@@ -386,7 +388,7 @@ export default defineConfig({
 ### Q) What's the difference between `@playwright/test` and `@playwright/experimental-ct-{react,svelte,vue,solid}`?
 
 ```js
-test('…', async { mount, page, context } => {
+test('…', async ({ mount, page, context }) => {
     // …
 });
 ```
@@ -560,44 +562,44 @@ export default defineConfig({
 Pinia needs to be initialized in `playwright/index.{js,ts,jsx,tsx}`. If you do this inside a `beforeMount` hook, the `initialState` can be overwritten on a per-test basis:
 
 ```js title="playwright/index.ts"
-  import { beforeMount, afterMount } from '@playwright/experimental-ct-vue/hooks';
-  import { createTestingPinia } from '@pinia/testing';
-  import type { StoreState } from 'pinia';
-  import type { useStore } from '../src/store';
+import { beforeMount, afterMount } from '@playwright/experimental-ct-vue/hooks';
+import { createTestingPinia } from '@pinia/testing';
+import type { StoreState } from 'pinia';
+import type { useStore } from '../src/store';
 
-  export type HooksConfig = {
-    store?: StoreState<ReturnType<typeof useStore>>;
-  }
+export type HooksConfig = {
+  store?: StoreState<ReturnType<typeof useStore>>;
+}
 
-  beforeMount<HooksConfig>(async ({ hooksConfig }) => {
-    createTestingPinia({
-      initialState: hooksConfig?.store,
-      /**
-       * Use http intercepting to mock api calls instead:
-       * https://playwright.dev/docs/mock#mock-api-requests
-       */
-      stubActions: false,
-      createSpy(args) {
-        console.log('spy', args)
-        return () => console.log('spy-returns')
-      },
-    });
+beforeMount<HooksConfig>(async ({ hooksConfig }) => {
+  createTestingPinia({
+    initialState: hooksConfig?.store,
+    /**
+     * Use http intercepting to mock api calls instead:
+     * https://playwright.dev/docs/mock#mock-api-requests
+     */
+    stubActions: false,
+    createSpy(args) {
+      console.log('spy', args)
+      return () => console.log('spy-returns')
+    },
   });
+});
 ```
 
   #### In your test file:
 
 ```js title="src/pinia.spec.ts"
-  import { test, expect } from '@playwright/experimental-ct-vue';
-  import type { HooksConfig } from '@playwright/test';
-  import Store from './Store.vue';
+import { test, expect } from '@playwright/experimental-ct-vue';
+import type { HooksConfig } from '@playwright/test';
+import Store from './Store.vue';
 
-  test('override initialState ', async ({ mount }) => {
-    const component = await mount<HooksConfig>(Store, {
-      hooksConfig: {
-        store: { name: 'override initialState' } 
-      }
-    });
-    await expect(component).toContainText('override initialState');
+test('override initialState ', async ({ mount }) => {
+  const component = await mount<HooksConfig>(Store, {
+    hooksConfig: {
+      store: { name: 'override initialState' } 
+    }
   });
+  await expect(component).toContainText('override initialState');
+});
 ```

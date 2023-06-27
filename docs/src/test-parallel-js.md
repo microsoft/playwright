@@ -99,7 +99,7 @@ Using serial is not recommended. It is usually better to make your tests isolate
 :::
 
 ```js
-import { test, Page } from '@playwright/test';
+import { test, type Page } from '@playwright/test';
 
 // Annotate entire file as serial.
 test.describe.configure({ mode: 'serial' });

@@ -57,7 +57,7 @@ export class TodoPage {
   }
 
   /**
-   * @param {string} text 
+   * @param {string} text
    */
   async addToDo(text) {
     await this.inputBox.fill(text);
@@ -65,7 +65,7 @@ export class TodoPage {
   }
 
   /**
-   * @param {string} text 
+   * @param {string} text
    */
   async remove(text) {
     const todo = this.todoItems.filter({ hasText: text });
@@ -83,7 +83,7 @@ export class TodoPage {
 ```
 
 ```js tab=js-ts title="todo-page.ts"
-import { Page, Locator } from '@playwright/test';
+import type { Page, Locator } from '@playwright/test';
 
 export class TodoPage {
   private readonly inputBox: Locator;
@@ -181,7 +181,7 @@ export class TodoPage {
   }
 
   /**
-   * @param {string} text 
+   * @param {string} text
    */
   async addToDo(text) {
     await this.inputBox.fill(text);
@@ -189,7 +189,7 @@ export class TodoPage {
   }
 
   /**
-   * @param {string} text 
+   * @param {string} text
    */
   async remove(text) {
     const todo = this.todoItems.filter({ hasText: text });
@@ -207,7 +207,7 @@ export class TodoPage {
 ```
 
 ```js tab=js-ts title="todo-page.ts"
-import { Page, Locator } from '@playwright/test';
+import type { Page, Locator } from '@playwright/test';
 
 export class TodoPage {
   private readonly inputBox: Locator;
@@ -323,7 +323,7 @@ export class TodoPage {
   }
 
   /**
-   * @param {string} text 
+   * @param {string} text
    */
   async addToDo(text) {
     await this.inputBox.fill(text);
@@ -331,7 +331,7 @@ export class TodoPage {
   }
 
   /**
-   * @param {string} text 
+   * @param {string} text
    */
   async remove(text) {
     const todo = this.todoItems.filter({ hasText: text });
@@ -349,7 +349,7 @@ export class TodoPage {
 ```
 
 ```js tab=js-ts title="todo-page.ts"
-import { Page, Locator } from '@playwright/test';
+import type { Page, Locator } from '@playwright/test';
 
 export class TodoPage {
   private readonly inputBox: Locator;
@@ -402,7 +402,7 @@ export class SettingsPage {
 ```
 
 ```js tab=js-ts title="settings-page.ts"
-import { Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
 
 export class SettingsPage {
   constructor(public readonly page: Page) {
@@ -766,7 +766,7 @@ export class TodoPage {
   }
 
   /**
-   * @param {string} text 
+   * @param {string} text
    */
   async addToDo(text) {
     await this.inputBox.fill(text);
@@ -774,7 +774,7 @@ export class TodoPage {
   }
 
   /**
-   * @param {string} text 
+   * @param {string} text
    */
   async remove(text) {
     const todo = this.todoItems.filter({ hasText: text });
@@ -792,7 +792,7 @@ export class TodoPage {
 ```
 
 ```js tab=js-ts title="todo-page.ts"
-import { Page, Locator } from '@playwright/test';
+import type { Page, Locator } from '@playwright/test';
 
 export class TodoPage {
   private readonly inputBox: Locator;
@@ -903,7 +903,7 @@ module.exports = defineConfig({
 
 ```js tab=js-ts title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
-import { MyOptions } from './my-test';
+import type { MyOptions } from './my-test';
 
 export default defineConfig<MyOptions>({
   projects: [

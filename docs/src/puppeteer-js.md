@@ -111,7 +111,7 @@ describe('Playwright homepage', () => {
   it('contains hero title', async () => {
     await page.goto('https://playwright.dev/');
     await page.waitForSelector('.hero__title');
-    const text = await page.$eval('.hero__title', (e) => e.textContent);
+    const text = await page.$eval('.hero__title', e => e.textContent);
     expect(text).toContain('Playwright enables reliable end-to-end testing'); // 5
   });
 
@@ -128,7 +128,7 @@ test.describe('Playwright homepage', () => {
     await page.goto('https://playwright.dev/');
     const titleLocator = page.locator('.hero__title'); // 4
     await expect(titleLocator).toContainText( // 5
-      'Playwright enables reliable end-to-end testing'
+        'Playwright enables reliable end-to-end testing'
     );
   });
 });
