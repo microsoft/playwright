@@ -194,7 +194,7 @@ const browser = await chromium.launch({
 });
 const context = await browser.newContext({
   proxy: { server: 'http://myproxy.com:3128' }
-})
+});
 ```
 
 ```java
@@ -555,8 +555,7 @@ await page.route('**/*.{png,jpg,jpeg}', route => route.abort());
 
 // Abort based on the request type
 await page.route('**/*', route => {
-  return route.request().resourceType() === 'image' ?
-      route.abort() : route.continue();
+  return route.request().resourceType() === 'image' ? route.abort() : route.continue();
 });
 ```
 

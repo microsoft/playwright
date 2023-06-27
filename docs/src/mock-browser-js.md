@@ -130,7 +130,7 @@ test('update battery status (no golden)', async ({ page }) => {
         this.charging = value;
         this._chargingListeners.forEach(cb => cb());
       }
-    };
+    }
     const mockBattery = new BatteryMock();
     // Override the method to always return mock battery info.
     window.navigator.getBattery = async () => mockBattery;

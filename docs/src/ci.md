@@ -611,7 +611,11 @@ steps:
 ```
 Note: The JUnit reporter needs to be configured accordingly via
 ```js
-["junit", { outputFile: "test-results/e2e-junit-results.xml" }]
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  reporter: ['junit', { outputFile: 'test-results/e2e-junit-results.xml' }],
+});
 ```
 in `playwright.config.ts`.
 

@@ -92,13 +92,13 @@ Playwright includes [assertions](./test-assertions) that automatically wait for 
 ```js
 // Testing Library
 await waitFor(() => {
-  expect(getByText('the lion king')).toBeInTheDocument()
-})
-await waitForElementToBeRemoved(() => queryByText('the mummy'))
+  expect(getByText('the lion king')).toBeInTheDocument();
+});
+await waitForElementToBeRemoved(() => queryByText('the mummy'));
 
 // Playwright
-await expect(page.getByText('the lion king')).toBeVisible()
-await expect(page.getByText('the mummy')).toBeHidden()
+await expect(page.getByText('the lion king')).toBeVisible();
+await expect(page.getByText('the mummy')).toBeHidden();
 ```
 
 When you cannot find a suitable assertion, use [`expect.poll`](./test-assertions#polling) instead.
@@ -116,12 +116,12 @@ You can create a locator inside another locator with [`method: Locator.locator`]
 
 ```js
 // Testing Library
-const messages = document.getElementById('messages')
-const helloMessage = within(messages).getByText('hello')
+const messages = document.getElementById('messages');
+const helloMessage = within(messages).getByText('hello');
 
 // Playwright
-const messages = component.locator('id=messages')
-const helloMessage = messages.getByText('hello')
+const messages = component.locator('id=messages');
+const helloMessage = messages.getByText('hello');
 ```
 
 ## Playwright Test Super Powers

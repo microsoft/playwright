@@ -96,7 +96,7 @@ export const test = base.extend({
     }));
     const browser = await playwright.chromium.connectOverCDP(`http://127.0.0.1:${cdpPort}`);
     await use(browser);
-    await browser.close()
+    await browser.close();
     childProcess.execSync(`taskkill /pid ${webView2Process.pid} /T /F`);
     fs.rmdirSync(userDataDir, { recursive: true });
   },

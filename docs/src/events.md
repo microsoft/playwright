@@ -163,7 +163,7 @@ await page.GotoAsync("https://www.openstreetmap.org/");
 If a certain event needs to be handled once, there is a convenience API for that:
 
 ```js
-page.once('dialog', dialog => dialog.accept("2021"));
+page.once('dialog', dialog => dialog.accept('2021'));
 await page.evaluate("prompt('Enter a number:')");
 ```
 

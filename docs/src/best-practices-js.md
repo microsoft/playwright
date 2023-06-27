@@ -65,7 +65,8 @@ If working with a database then make sure you control the data. Test against a s
 In order to write end to end tests we need to first find elements on the webpage. We can do this by using Playwright's built in [locators](./locators.md). Locators come with auto waiting and retry-ability. Auto waiting means that Playwright performs a range of actionability checks on the elements, such as ensuring the element is visible and enabled before it performs the click. To make tests resilient, we recommend prioritizing user-facing attributes and explicit contracts.
 
 ```js
-👍 page.getByRole('button', { name: 'submit' })
+// 👍
+page.getByRole('button', { name: 'submit' });
 ```
 
 #### Use chaining and filtering
@@ -92,13 +93,15 @@ Your DOM can easily change so having your tests depend on your DOM structure can
 
 
 ```js
-👎 page.locator('button.buttonIcon.episode-actions-later')
+// 👎
+page.locator('button.buttonIcon.episode-actions-later');
 ```
 
 Use locators that are resilient to changes in the DOM.
 
 ```js
-👍 page.getByRole('button', { name: 'submit' })
+// 👍
+page.getByRole('button', { name: 'submit' });
 ```
 ### Generate locators
 
@@ -129,9 +132,11 @@ You can also use the [VS Code Extension](./getting-started-vscode.md) to generat
 Assertions are a way to verify that the expected result and the actual result matched or not. By using [web first assertions](./test-assertions.md) Playwright will wait until the expected condition is met. For example, when testing an alert message, a test would click a button that makes a message appear and check that the alert message is there. If the alert message takes half a second to appear, assertions such as `toBeVisible()` will wait and retry if needed.
 
 ```js
-👍 await expect(page.getByText('welcome')).toBeVisible();
+// 👍
+await expect(page.getByText('welcome')).toBeVisible();
 
-👎 expect(await page.getByText('welcome').isVisible()).toBe(true);
+// 👎
+expect(await page.getByText('welcome').isVisible()).toBe(true);
 ```
 
 #### Don't use manual assertions
@@ -139,13 +144,15 @@ Assertions are a way to verify that the expected result and the actual result ma
 Don't use manual assertions that are not awaiting the expect. In the code below the await is inside the expect rather than before it. When using assertions such as `isVisible()` the test won't wait a single second, it will just check the locator is there and return immediately.
 
 ```js
-👎 expect(await page.getByText('welcome').isVisible()).toBe(true);
+// 👎
+expect(await page.getByText('welcome').isVisible()).toBe(true);
 ```
 
 Use web first assertions such as `toBeVisible()` instead.
 
 ```js
-👍 await expect(page.getByText('welcome')).toBeVisible();
+// 👍
+await expect(page.getByText('welcome')).toBeVisible();
 ```
 
 ### Configure debugging
@@ -162,7 +169,7 @@ You can live debug your test by clicking or editing the locators in your test in
 
 You can also debug your tests with the Playwright inspector by running your tests with the `--debug` flag.
 
-```js
+```bash
 npx playwright test --debug
 ```
 
@@ -174,7 +181,7 @@ You can then step through your test, view actionability logs and edit the locato
 
 To debug a specific test add the name of the test file and the line number of the test followed by the `--debug` flag.
 
-```js
+```bash
 npx playwright test example.spec.ts:9 --debug
 ```
 #### Debugging on CI
@@ -185,12 +192,12 @@ For CI failures, use the Playwright [trace viewer](./trace-viewer.md) instead of
 
 Traces are configured in the Playwright config file and are set to run on CI on the first retry of a failed test. We don't recommend setting this to `on` so that traces are run on every test as it's very performance heavy. However you can run a trace locally when developing with the `--trace` flag.
 
-```js
+```bash
 npx playwright test --trace on
 ```
 Once you run this command your traces will be recorded for each test and can be viewed directly from the HTML report.
 
-```js
+```bash
 npx playwright show-report
 ````
 
@@ -237,14 +244,14 @@ export default defineConfig({
 
 By keeping your Playwright version up to date you will be able to test your app on the latest browser versions and catch failures before the latest browser version is released to the public.
 
-```js
+```bash
 npm install -D @playwright/test@latest
 ```
 Check the [release notes](./release-notes.md) to see what the latest version is and what changes have been released.
 
 You can see what version of Playwright you have by running the following command.
 
-```js
+```bash
 npx playwright --version
 ```
 
@@ -273,7 +280,7 @@ test('runs in parallel 2', async ({ page }) => { /* ... */ });
 
 Playwright can [shard](./test-parallel.md#shard-tests-between-multiple-machines) a test suite, so that it can be executed on multiple machines.
 
-```js
+```bash
 npx playwright test --shard=1/3
 ```
 

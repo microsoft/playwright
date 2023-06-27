@@ -25,7 +25,7 @@ By default the [playwright.config](/test-configuration.md#record-test-trace) fil
 import { defineConfig } from '@playwright/test';
 export default defineConfig({
   retries: process.env.CI ? 2 : 0, // set to 2 when running on CI
-  ...
+  // ...
   use: {
     trace: 'on-first-retry', // record traces on first retry of each test
   },

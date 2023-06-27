@@ -644,7 +644,7 @@ module.exports = defineConfig({
 
 ```js tab=js-ts title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
-import { Options } from './my-test';
+import type { Options } from './my-test';
 
 export default defineConfig<Options>({
   projects: [

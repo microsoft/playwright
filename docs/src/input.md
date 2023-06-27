@@ -88,7 +88,7 @@ Using [`method: Locator.setChecked`] is the easiest way to check and uncheck a c
 await page.getByLabel('I agree to the terms above').check();
 
 // Assert the checked state
-expect(await page.getByLabel('Subscribe to newsletter').isChecked()).toBeTruthy()
+expect(await page.getByLabel('Subscribe to newsletter').isChecked()).toBeTruthy();
 
 // Select the radio button
 await page.getByLabel('XL').check();
@@ -219,7 +219,7 @@ await page.getByText('Item').click({ modifiers: ['Shift'] });
 await page.getByText('Item').hover();
 
 // Click the top left corner
-await page.getByText('Item').click({ position: { x: 0, y: 0} });
+await page.getByText('Item').click({ position: { x: 0, y: 0 } });
 ```
 
 ```java

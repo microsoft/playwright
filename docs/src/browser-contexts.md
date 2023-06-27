@@ -80,7 +80,7 @@ test('admin and user', async ({ browser }) => {
   // Create two isolated browser contexts
   const adminContext = await browser.newContext();
   const userContext = await browser.newContext();
-  
+
   // Create pages and interact with contexts independently
   const adminPage = await adminContext.newPage();
   const userPage = await userContext.newPage();

@@ -1307,7 +1307,7 @@ Sets the context's geolocation. Passing `null` or `undefined` emulates position 
 **Usage**
 
 ```js
-await browserContext.setGeolocation({latitude: 59.95, longitude: 30.31667});
+await browserContext.setGeolocation({ latitude: 59.95, longitude: 30.31667 });
 ```
 
 ```java

@@ -16,7 +16,7 @@ const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto('https://example.com');
-  await page.screenshot({path: 'screenshot.png'});
+  await page.screenshot({ path: 'screenshot.png' });
   await browser.close();
 })();
 ```
@@ -338,7 +338,7 @@ Emitted when a file chooser is supposed to appear, such as after clicking the  `
 respond to it via setting the input files using [`method: FileChooser.setFiles`] that can be uploaded after that.
 
 ```js
-page.on('filechooser', async (fileChooser) => {
+page.on('filechooser', async fileChooser => {
   await fileChooser.setFiles('/tmp/myfile.pdf');
 });
 ```
@@ -1508,7 +1508,7 @@ Console.WriteLine(await page.EvaluateAsync<int>("1 + 2")); // prints "3"
 
 ```js
 const bodyHandle = await page.evaluate('document.body');
-const html = await page.evaluate(([body, suffix]) => body.innerHTML + suffix, [bodyHandle, 'hello']);
+const html = await page.evaluate<string, HTMLElement>(([body, suffix]) => body.innerHTML + suffix, [bodyHandle, 'hello']);
 await bodyHandle.dispose();
 ```
 
@@ -1562,8 +1562,8 @@ promise to resolve and return its value.
 **Usage**
 
 ```js
+// Handle for the window object.
 const aWindowHandle = await page.evaluateHandle(() => Promise.resolve(window));
-aWindowHandle; // Handle for the window object.
 ```
 
 ```java
@@ -2796,8 +2796,8 @@ force rendering of exact colors.
 
 ```js
 // Generates a PDF with 'screen' media type.
-await page.emulateMedia({media: 'screen'});
-await page.pdf({path: 'page.pdf'});
+await page.emulateMedia({ media: 'screen' });
+await page.pdf({ path: 'page.pdf' });
 ```
 
 ```java
@@ -3777,7 +3777,7 @@ To press a special key, like `Control` or `ArrowDown`, use [`method: Keyboard.pr
 
 ```js
 await page.type('#mytextarea', 'Hello'); // Types instantly
-await page.type('#mytextarea', 'World', {delay: 100}); // Types slower, like a user
+await page.type('#mytextarea', 'World', { delay: 100 }); // Types slower, like a user
 ```
 
 ```java
@@ -4090,7 +4090,7 @@ const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
   const browser = await webkit.launch();
   const page = await browser.newPage();
   const watchDog = page.waitForFunction(() => window.innerWidth < 100);
-  await page.setViewportSize({width: 50, height: 50});
+  await page.setViewportSize({ width: 50, height: 50 });
   await watchDog;
   await browser.close();
 })();
@@ -4698,7 +4698,7 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
 (async () => {
   const browser = await chromium.launch();
   const page = await browser.newPage();
-  for (let currentURL of ['https://google.com', 'https://bbc.com']) {
+  for (const currentURL of ['https://google.com', 'https://bbc.com']) {
     await page.goto(currentURL);
     const element = await page.waitForSelector('img');
     console.log('Loaded image: ' + await element.getAttribute('src'));

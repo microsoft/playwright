@@ -128,14 +128,14 @@ Additionally, any network request made by the **Page** (including its sub-[Frame
 Many Service Worker implementations simply execute the request from the page (possibly with some custom caching/offline logic omitted for simplicity):
 
 ```js title="transparent-service-worker.js"
-self.addEventListener("fetch", (event) => {
+self.addEventListener('fetch', event => {
   // actually make the request
   const responsePromise = fetch(event.request);
   // send it back to the page
   event.respondWith(responsePromise);
 });
 
-self.addEventListener("activate", (event) => {
+self.addEventListener('activate', (event) => {
   event.waitUntil(clients.claim());
 });
 ```
@@ -180,17 +180,17 @@ Consider the code snippets below to understand Playwright's view into the Reques
 
 
 ```js title="complex-service-worker.js"
-self.addEventListener("install", function (event) {
+self.addEventListener('install', function (event) {
   event.waitUntil(
-    caches.open("v1").then(function (cache) {
+    caches.open('v1').then(function (cache) {
       // 1. Pre-fetches and caches /addressbook.json
-      return cache.add("/addressbook.json");
+      return cache.add('/addressbook.json');
     })
   );
 });
 
 // Opt to handle FetchEvent's from the page
-self.addEventListener("fetch", (event) => {
+self.addEventListener('fetch', (event) => {
   event.respondWith(
     (async () => {
       // 1. Try to first serve directly from caches
@@ -198,13 +198,13 @@ self.addEventListener("fetch", (event) => {
       if (response) return response;
 
       // 2. Re-write request for /foo to /bar
-      if (event.request.url.endsWith("foo")) return fetch("./bar");
+      if (event.request.url.endsWith('foo')) return fetch('./bar');
 
       // 3. Prevent tracker.js from being retrieved, and returns a placeholder response
-      if (event.request.url.endsWith("tracker.js"))
-        return new Response('console.log("no trackers!")', {
+      if (event.request.url.endsWith('tracker.js'))
+        return new Response('console.log('no trackers!')', {
           status: 200,
-          headers: { "Content-Type": "text/javascript" },
+          headers: { 'Content-Type': 'text/javascript' },
         });
 
       // 4. Otherwise, fallthrough, perform the fetch and respond
@@ -213,7 +213,7 @@ self.addEventListener("fetch", (event) => {
   );
 });
 
-self.addEventListener("activate", (event) => {
+self.addEventListener('activate', (event) => {
   event.waitUntil(clients.claim());
 });
 ```

@@ -2145,7 +2145,7 @@ To press a special key, like `Control` or `ArrowDown`, use [`method: Locator.pre
 
 ```js
 await element.type('Hello'); // Types instantly
-await element.type('World', {delay: 100}); // Types slower, like a user
+await element.type('World', { delay: 100 }); // Types slower, like a user
 ```
 
 ```java

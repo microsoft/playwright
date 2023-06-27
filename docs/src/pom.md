@@ -42,11 +42,11 @@ exports.PlaywrightDevPage = class PlaywrightDevPage {
     await this.getStarted();
     await this.pomLink.click();
   }
-}
+};
 ```
 
 ```js tab=js-ts title="playwright-dev-page.ts"
-import { expect, Locator, Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 
 export class PlaywrightDevPage {
   readonly page: Page;
@@ -82,7 +82,7 @@ export class PlaywrightDevPage {
 ```js tab=js-library title="models/PlaywrightDevPage.js"
 class PlaywrightDevPage {
   /**
-   * @param {import('playwright').Page} page 
+   * @param {import('playwright').Page} page
    */
   constructor(page) {
     this.page = page;

@@ -154,7 +154,8 @@ Playwright Test is based on the concept of [test fixtures](./test-fixtures.md) s
 
 ```js title="tests/example.spec.ts"
 test('basic test', async ({ page }) => {
-  ...
+  // ...
+});
 ```
 
 ### Using Test Hooks
@@ -162,17 +163,17 @@ test('basic test', async ({ page }) => {
 You can use various [test hooks](./api/class-test.md) such as `test.describe` to declare a group of tests and `test.beforeEach` and `test.afterEach` which are executed before/after each test. Other hooks include the `test.beforeAll` and `test.afterAll` which are executed once per worker before/after all tests.
 
 ```js title="tests/example.spec.ts"
-import { test, expect } from "@playwright/test";
+import { test, expect } from '@playwright/test';
 
-test.describe("navigation", () => {
+test.describe('navigation', () => {
   test.beforeEach(async ({ page }) => {
     // Go to the starting url before each test.
-    await page.goto("https://playwright.dev/");
+    await page.goto('https://playwright.dev/');
   });
 
-  test("main navigation", async ({ page }) => {
+  test('main navigation', async ({ page }) => {
     // Assertions use the expect API.
-    await expect(page).toHaveURL("https://playwright.dev/");
+    await expect(page).toHaveURL('https://playwright.dev/');
   });
 });
 ```
