@@ -90,6 +90,13 @@ it('should work with glob', async () => {
   expect(globToRegex('foo*').test('foo/bar.js')).toBeFalsy();
   expect(globToRegex('http://localhost:3000/signin-oidc*').test('http://localhost:3000/signin-oidc/foo')).toBeFalsy();
   expect(globToRegex('http://localhost:3000/signin-oidc*').test('http://localhost:3000/signin-oidcnice')).toBeTruthy();
+
+  expect(globToRegex('\\?')).toEqual(/^\?$/);
+  expect(globToRegex('\\')).toEqual(/^\\$/);
+  expect(globToRegex('\\\\')).toEqual(/^\\$/);
+  expect(globToRegex('\\[')).toEqual(/^\[$/);
+  expect(globToRegex('[')).toEqual(/^\[$/);
+  expect(globToRegex('$^+.\\*()|\\?\\{\\}[]')).toEqual(/^\$\^\+\.\*\(\)\|\?\{\}\[\]$/);
 });
 
 it('should intercept network activity from worker', async function({ page, server, isAndroid, browserName, browserMajorVersion }) {

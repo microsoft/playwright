@@ -14,15 +14,17 @@
  * limitations under the License.
  */
 
-const escapeGlobChars = new Set(['/', '$', '^', '+', '.', '(', ')', '=', '!', '|']);
+// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions#escaping
+const escapedChars = new Set(['$', '^', '+', '.', '*', '(', ')', '|', '\\', '?', '{', '}', '[', ']']);
 
 export function globToRegex(glob: string): RegExp {
   const tokens = ['^'];
-  let inGroup;
+  let inGroup = false;
   for (let i = 0; i < glob.length; ++i) {
     const c = glob[i];
-    if (escapeGlobChars.has(c)) {
-      tokens.push('\\' + c);
+    if (c === '\\' && i + 1 < glob.length) {
+      const char = glob[++i];
+      tokens.push(escapedChars.has(char) ? '\\' + char : char);
       continue;
     }
     if (c === '*') {
@@ -65,7 +67,7 @@ export function globToRegex(glob: string): RegExp {
         tokens.push('\\' + c);
         break;
       default:
-        tokens.push(c);
+        tokens.push(escapedChars.has(c) ? '\\' + c : c);
     }
   }
   tokens.push('$');
