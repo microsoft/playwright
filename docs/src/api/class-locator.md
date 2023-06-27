@@ -966,19 +966,18 @@ rowLocator
 ```python async
 row_locator = page.locator("tr")
 # ...
-await row_locator
-    .filter(has_text="text in column 1")
-    .filter(has=page.get_by_role("button", name="column 2 button"))
-    .screenshot()
+await row_locator.filter(has_text="text in column 1").filter(
+    has=page.get_by_role("button", name="column 2 button")
+).screenshot()
+
 ```
 
 ```python sync
 row_locator = page.locator("tr")
 # ...
-row_locator
-    .filter(has_text="text in column 1")
-    .filter(has=page.get_by_role("button", name="column 2 button"))
-    .screenshot()
+row_locator.filter(has_text="text in column 1").filter(
+    has=page.get_by_role("button", name="column 2 button")
+).screenshot()
 ```
 
 ```csharp
@@ -1589,7 +1588,7 @@ newEmail.click();
 new_email = page.get_by_role("button", name="New")
 dialog = page.get_by_text("Confirm security settings")
 await expect(new_email.or_(dialog)).to_be_visible()
-if (await dialog.is_visible())
+if (await dialog.is_visible()):
   await page.get_by_role("button", name="Dismiss").click()
 await new_email.click()
 ```
@@ -1598,7 +1597,7 @@ await new_email.click()
 new_email = page.get_by_role("button", name="New")
 dialog = page.get_by_text("Confirm security settings")
 expect(new_email.or_(dialog)).to_be_visible()
-if (dialog.is_visible())
+if (dialog.is_visible()):
   page.get_by_role("button", name="Dismiss").click()
 new_email.click()
 ```

@@ -70,7 +70,7 @@ async def handle(route, request):
     # override headers
     headers = {
         **request.headers,
-        "foo": "foo-value" # set "foo" header
+        "foo": "foo-value", # set "foo" header
         "bar": None # remove "bar" header
     }
     await route.continue_(headers=headers)
@@ -83,7 +83,7 @@ def handle(route, request):
     # override headers
     headers = {
         **request.headers,
-        "foo": "foo-value" # set "foo" header
+        "foo": "foo-value", # set "foo" header
         "bar": None # remove "bar" header
     }
     route.continue_(headers=headers)
@@ -356,7 +356,7 @@ async def handle(route, request):
     # override headers
     headers = {
         **request.headers,
-        "foo": "foo-value" # set "foo" header
+        "foo": "foo-value", # set "foo" header
         "bar": None # remove "bar" header
     }
     await route.fallback(headers=headers)
@@ -369,7 +369,7 @@ def handle(route, request):
     # override headers
     headers = {
         **request.headers,
-        "foo": "foo-value" # set "foo" header
+        "foo": "foo-value", # set "foo" header
         "bar": None # remove "bar" header
     }
     route.fallback(headers=headers)

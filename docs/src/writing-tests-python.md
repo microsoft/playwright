@@ -65,6 +65,7 @@ The Playwright Pytest plugin is based on the concept of test fixtures such as th
 from playwright.sync_api import Page
 
 def test_basic_test(page: Page):
+  pass
   # ...
 ```
 

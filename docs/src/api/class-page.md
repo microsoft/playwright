@@ -255,6 +255,7 @@ try:
     # or while waiting for an event.
     await page.wait_for_event("popup")
 except Error as e:
+    pass
     # when the page crashes, exception message contains "crash".
 ```
 
@@ -265,6 +266,7 @@ try:
     # or while waiting for an event.
     page.wait_for_event("popup")
 except Error as e:
+    pass
     # when the page crashes, exception message contains "crash".
 ```
 
@@ -3252,18 +3254,18 @@ page.route("/api/**", route -> {
 
 ```python async
 def handle_route(route):
-  if ("my-string" in route.request.post_data)
+  if ("my-string" in route.request.post_data):
     route.fulfill(body="mocked-data")
-  else
+  else:
     route.continue_()
 await page.route("/api/**", handle_route)
 ```
 
 ```python sync
 def handle_route(route):
-  if ("my-string" in route.request.post_data)
+  if ("my-string" in route.request.post_data):
     route.fulfill(body="mocked-data")
-  else
+  else:
     route.continue_()
 page.route("/api/**", handle_route)
 ```

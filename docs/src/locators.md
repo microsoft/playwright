@@ -412,15 +412,13 @@ assertThat(page
 ```
 
 ```python async
-await expect(page
-    .get_by_text(re.compile("welcome, john", re.IGNORECASE)))
-    .to_be_visible()
+await expect(
+    page.get_by_text(re.compile("welcome, john", re.IGNORECASE))
+).to_be_visible()
 ```
 
 ```python sync
-expect(page
-    .get_by_text(re.compile("welcome, john", re.IGNORECASE)))
-    .to_be_visible()
+expect(page.get_by_text(re.compile("welcome, john", re.IGNORECASE))).to_be_visible()
 ```
 
 ```csharp
@@ -1193,7 +1191,7 @@ newEmail.click();
 new_email = page.get_by_role("button", name="New")
 dialog = page.get_by_text("Confirm security settings")
 await expect(new_email.or_(dialog)).to_be_visible()
-if (await dialog.is_visible())
+if (await dialog.is_visible()):
   await page.get_by_role("button", name="Dismiss").click()
 await new_email.click()
 ```
@@ -1202,7 +1200,7 @@ await new_email.click()
 new_email = page.get_by_role("button", name="New")
 dialog = page.get_by_text("Confirm security settings")
 expect(new_email.or_(dialog)).to_be_visible()
-if (dialog.is_visible())
+if (dialog.is_visible()):
   page.get_by_role("button", name="Dismiss").click()
 new_email.click()
 ```
@@ -1541,19 +1539,17 @@ await rowLocator
 ```python async
 row_locator = page.get_by_role("listitem")
 
-await row_locator
-    .filter(has_text="Mary")
-    .filter(has=page.get_by_role("button", name="Say goodbye"))
-    .screenshot(path="screenshot.png")
+await row_locator.filter(has_text="Mary").filter(
+    has=page.get_by_role("button", name="Say goodbye")
+).screenshot(path="screenshot.png")
 ```
 
 ```python sync
 row_locator = page.get_by_role("listitem")
 
-row_locator
-    .filter(has_text="Mary")
-    .filter(has=page.get_by_role("button", name="Say goodbye"))
-    .screenshot(path="screenshot.png")
+row_locator.filter(has_text="Mary").filter(
+    has=page.get_by_role("button", name="Say goodbye")
+).screenshot(path="screenshot.png")
 ```
 
 ```java
