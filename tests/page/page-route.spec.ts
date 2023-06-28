@@ -72,6 +72,32 @@ it('should unroute', async ({ page, server }) => {
   expect(intercepted).toEqual([1]);
 });
 
+it('should support ? in glob pattern', async ({ page, server }) => {
+  server.setRoute('/index', (req, res) => res.end('index-no-hello'));
+  server.setRoute('/index123hello', (req, res) => res.end('index123hello'));
+  server.setRoute('/index?hello', (req, res) => res.end('index?hello'));
+
+  await page.route('**/index?hello', async (route, request) => {
+    await route.fulfill({ body: 'intercepted any character' });
+  });
+
+  await page.route('**/index\\?hello', async (route, request) => {
+    await route.fulfill({ body: 'intercepted question mark' });
+  });
+
+  await page.goto(server.PREFIX + '/index?hello');
+  expect(await page.content()).toContain('intercepted question mark');
+
+  await page.goto(server.PREFIX + '/index');
+  expect(await page.content()).toContain('index-no-hello');
+
+  await page.goto(server.PREFIX + '/index1hello');
+  expect(await page.content()).toContain('intercepted any character');
+
+  await page.goto(server.PREFIX + '/index123hello');
+  expect(await page.content()).toContain('index123hello');
+});
+
 it('should work when POST is redirected with 302', async ({ page, server }) => {
   server.setRedirect('/rredirect', '/empty.html');
   await page.goto(server.EMPTY_PAGE);
