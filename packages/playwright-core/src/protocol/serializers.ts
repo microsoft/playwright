@@ -71,6 +71,8 @@ function innerParseSerializedValue(value: SerializedValue, handles: any[] | unde
     return new Date(value.d);
   if (value.u !== undefined)
     return new URL(value.u);
+  if (value.bi !== undefined)
+    return BigInt(value.bi);
   if (value.r !== undefined)
     return new RegExp(value.r.p, value.r.f);
 
@@ -133,6 +135,8 @@ function innerSerializeValue(value: any, handleSerializer: (value: any) => Handl
     return { n: value };
   if (typeof value === 'string')
     return { s: value };
+  if (typeof value === 'bigint')
+    return { bi: value.toString() };
   if (isError(value)) {
     const error = value;
     if ('captureStackTrace' in globalThis.Error) {
