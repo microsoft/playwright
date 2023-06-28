@@ -231,7 +231,7 @@ export class Electron extends SdkObject {
         browserLogsCollector,
         artifactsDir,
         downloadsPath: artifactsDir,
-        tracesDir: artifactsDir,
+        tracesDir: options.tracesDir || artifactsDir,
         originalLaunchOptions: {},
       };
       validateBrowserContextOptions(contextOptions, browserOptions);

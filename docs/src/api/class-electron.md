@@ -142,3 +142,6 @@ Maximum time in milliseconds to wait for the application to start. Defaults to `
 
 ### option: Electron.launch.timezoneId = %%-context-option-timezoneid-%%
 * since: v1.12
+
+### option: Electron.launch.tracesDir = %%-browser-option-tracesdir-%%
+* since: v1.36
