@@ -136,7 +136,8 @@ export class Request extends SdkObject {
 
   _setOverrides(overrides: types.NormalizedContinueOverrides) {
     this._overrides = overrides;
-    this._updateHeadersMap();
+    if (overrides.headers)
+      this._updateHeadersMap();
   }
 
   private _updateHeadersMap() {
@@ -255,8 +256,10 @@ export class Route extends SdkObject {
     return this._request;
   }
 
-  async abort(errorCode: string = 'failed') {
+  async abort(overrides?: types.NormalizedContinueOverrides, errorCode: string = 'failed') {
     this._startHandling();
+    if (overrides)
+      this._request._setOverrides(overrides);
     await this._delegate.abort(errorCode);
     this._request._context.emit(BrowserContext.Events.RequestAborted, this._request);
     this._endHandling();
@@ -270,6 +273,8 @@ export class Route extends SdkObject {
 
   async fulfill(overrides: channels.RouteFulfillParams) {
     this._startHandling();
+    if (overrides.overrides)
+      this._request._setOverrides(overrides.overrides);
     let body = overrides.body;
     let isBase64 = overrides.isBase64 || false;
     if (body === undefined) {
@@ -313,7 +318,7 @@ export class Route extends SdkObject {
     headers.push({ name: 'vary', value: 'Origin' });
   }
 
-  async continue(overrides: types.NormalizedContinueOverrides) {
+  async continue(overrides: types.NormalizedContinueOverrides & { isFallback: boolean }) {
     this._startHandling();
     if (overrides.url) {
       const newUrl = new URL(overrides.url);

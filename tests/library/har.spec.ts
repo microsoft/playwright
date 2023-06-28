@@ -860,3 +860,32 @@ it('should not hang on slow chunked response', async ({ browserName, browser, co
   expect(log.browser.name.toLowerCase()).toBe(browserName);
   expect(log.browser.version).toBe(browser.version());
 });
+
+it('should record request overrides on fulfill', async ({ contextFactory, server }, testInfo) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/23793' });
+  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+
+  await page.route('**/foo', async route => {
+    await route.fulfill({ status: 200, json: { fulfilled: true } });
+  });
+  await page.route('**/bar', async route => {
+    await route.abort();
+  });
+
+  await page.route('**/*', route => {
+    void route.fallback({
+      headers: {
+        'fallback-request-header': '1'
+      },
+    });
+  });
+
+  await page.goto(server.PREFIX + '/foo');
+  await page.evaluate(() => fetch('/bar').catch(() => {}));
+  const log = await getLog();
+
+  expect(log.entries[0].request.url).toBe(server.PREFIX + '/foo');
+  expect(log.entries[0].request.headers).toContainEqual({ name: 'fallback-request-header', value: '1' });
+  expect(log.entries[1].request.url).toBe(server.PREFIX + '/bar');
+  expect(log.entries[1].request.headers).toContainEqual({ name: 'fallback-request-header', value: '1' });
+});

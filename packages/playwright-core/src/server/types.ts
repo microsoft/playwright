@@ -146,7 +146,6 @@ export type NormalizedContinueOverrides = {
   method?: string,
   headers?: HeadersArray,
   postData?: Buffer,
-  isFallback: boolean,
 };
 
 export type EmulatedSize = { viewport: Size, screen: Size };

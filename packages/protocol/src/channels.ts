@@ -299,6 +299,13 @@ export type FormField = {
   },
 };
 
+export type RequestOverrides = {
+  url?: string,
+  method?: string,
+  headers?: NameValue[],
+  postData?: Binary,
+};
+
 // ----------- APIRequestContext -----------
 export type APIRequestContextInitializer = {
   tracing: TracingChannel,
@@ -3550,29 +3557,26 @@ export type RouteRedirectNavigationRequestOptions = {
 };
 export type RouteRedirectNavigationRequestResult = void;
 export type RouteAbortParams = {
+  overrides?: RequestOverrides,
   errorCode?: string,
   requestUrl: string,
 };
 export type RouteAbortOptions = {
+  overrides?: RequestOverrides,
   errorCode?: string,
 };
 export type RouteAbortResult = void;
 export type RouteContinueParams = {
-  url?: string,
-  method?: string,
-  headers?: NameValue[],
-  postData?: Binary,
+  overrides?: RequestOverrides,
   requestUrl: string,
   isFallback: boolean,
 };
 export type RouteContinueOptions = {
-  url?: string,
-  method?: string,
-  headers?: NameValue[],
-  postData?: Binary,
+  overrides?: RequestOverrides,
 };
 export type RouteContinueResult = void;
 export type RouteFulfillParams = {
+  overrides?: RequestOverrides,
   status?: number,
   headers?: NameValue[],
   body?: string,
@@ -3581,6 +3585,7 @@ export type RouteFulfillParams = {
   requestUrl: string,
 };
 export type RouteFulfillOptions = {
+  overrides?: RequestOverrides,
   status?: number,
   headers?: NameValue[],
   body?: string,

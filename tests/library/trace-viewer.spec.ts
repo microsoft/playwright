@@ -758,7 +758,7 @@ test('should include requestUrl in route.continue', async ({ page, runAndTrace, 
   await traceViewer.page.locator('.tabbed-pane-tab-label', { hasText: 'Call' }).click();
   const callLine = traceViewer.page.locator('.call-line');
   await expect(callLine.getByText('requestUrl')).toContainText('http://test.com');
-  await expect(callLine.getByText(/^url:.*/)).toContainText(server.EMPTY_PAGE);
+  await expect(callLine.getByText(/"url":/)).toContainText(server.EMPTY_PAGE);
 });
 
 test('should include requestUrl in route.abort', async ({ page, runAndTrace, server }) => {

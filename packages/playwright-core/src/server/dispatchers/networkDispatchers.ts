@@ -126,24 +126,15 @@ export class RouteDispatcher extends Dispatcher<Route, channels.RouteChannel, Re
   }
 
   async continue(params: channels.RouteContinueParams, metadata: CallMetadata): Promise<channels.RouteContinueResult> {
-    // Used to discriminate between continue in tracing.
-    await this._object.continue({
-      url: params.url,
-      method: params.method,
-      headers: params.headers,
-      postData: params.postData,
-      isFallback: params.isFallback,
-    });
+    await this._object.continue({ ...params.overrides, isFallback: params.isFallback });
   }
 
   async fulfill(params: channels.RouteFulfillParams, metadata: CallMetadata): Promise<void> {
-    // Used to discriminate between fulfills in tracing.
     await this._object.fulfill(params);
   }
 
   async abort(params: channels.RouteAbortParams, metadata: CallMetadata): Promise<void> {
-    // Used to discriminate between abort in tracing.
-    await this._object.abort(params.errorCode || 'failed');
+    await this._object.abort(params.overrides, params.errorCode || 'failed');
   }
 
   async redirectNavigationRequest(params: channels.RouteRedirectNavigationRequestParams): Promise<void> {

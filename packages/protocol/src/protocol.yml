@@ -269,6 +269,18 @@ FormField:
         mimeType: string?
         buffer: binary
 
+
+RequestOverrides:
+  type: object
+  properties:
+    url: string?
+    method: string?
+    headers:
+      type: array?
+      items: NameValue
+    postData: binary?
+
+
 APIRequestContext:
   type: interface
 
@@ -2808,22 +2820,19 @@ Route:
 
     abort:
       parameters:
+        overrides: RequestOverrides?
         errorCode: string?
         requestUrl: string
 
     continue:
       parameters:
-        url: string?
-        method: string?
-        headers:
-          type: array?
-          items: NameValue
-        postData: binary?
+        overrides: RequestOverrides?
         requestUrl: string
         isFallback: boolean
 
     fulfill:
       parameters:
+        overrides: RequestOverrides?
         # default is 200
         status: number?
         headers:

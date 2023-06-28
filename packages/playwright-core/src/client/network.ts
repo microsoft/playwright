@@ -266,7 +266,7 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
       this._fallbackOverrides.postDataBuffer = Buffer.from(JSON.stringify(overrides.postData), 'utf-8');
   }
 
-  _fallbackOverridesForContinue() {
+  _fallbackOverridesForRouting() {
     return this._fallbackOverrides;
   }
 
@@ -310,7 +310,11 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
 
   async abort(errorCode?: string) {
     this._checkNotHandled();
-    await this._raceWithTargetClose(this._channel.abort({ requestUrl: this.request()._initializer.url, errorCode }));
+    await this._raceWithTargetClose(this._channel.abort({
+      overrides: this._requestOverrides(),
+      requestUrl: this.request()._initializer.url,
+      errorCode
+    }));
     this._reportHandled(true);
   }
 
@@ -384,6 +388,7 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
       headers['content-length'] = String(length);
 
     await this._raceWithTargetClose(this._channel.fulfill({
+      overrides: this._requestOverrides(),
       requestUrl: this.request()._initializer.url,
       status: statusOption || 200,
       headers: headersObjectToArray(headers),
@@ -411,15 +416,21 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
     chain.resolve(done);
   }
 
+  private _requestOverrides(): channels.RequestOverrides {
+    const options = this.request()._fallbackOverridesForRouting();
+    return {
+      url: options.url,
+      method: options.method,
+      headers: options.headers ? headersObjectToArray(options.headers) : undefined,
+      postData: options.postDataBuffer,
+    };
+  }
+
   async _innerContinue(internal = false) {
-    const options = this.request()._fallbackOverridesForContinue();
     return await this._wrapApiCall(async () => {
       await this._raceWithTargetClose(this._channel.continue({
+        overrides: this._requestOverrides(),
         requestUrl: this.request()._initializer.url,
-        url: options.url,
-        method: options.method,
-        headers: options.headers ? headersObjectToArray(options.headers) : undefined,
-        postData: options.postDataBuffer,
         isFallback: internal,
       }));
     }, !!internal);

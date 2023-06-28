@@ -166,6 +166,12 @@ scheme.FormField = tObject({
     buffer: tBinary,
   })),
 });
+scheme.RequestOverrides = tObject({
+  url: tOptional(tString),
+  method: tOptional(tString),
+  headers: tOptional(tArray(tType('NameValue'))),
+  postData: tOptional(tBinary),
+});
 scheme.APIRequestContextInitializer = tObject({
   tracing: tChannel(['Tracing']),
 });
@@ -1994,20 +2000,19 @@ scheme.RouteRedirectNavigationRequestParams = tObject({
 });
 scheme.RouteRedirectNavigationRequestResult = tOptional(tObject({}));
 scheme.RouteAbortParams = tObject({
+  overrides: tOptional(tType('RequestOverrides')),
   errorCode: tOptional(tString),
   requestUrl: tString,
 });
 scheme.RouteAbortResult = tOptional(tObject({}));
 scheme.RouteContinueParams = tObject({
-  url: tOptional(tString),
-  method: tOptional(tString),
-  headers: tOptional(tArray(tType('NameValue'))),
-  postData: tOptional(tBinary),
+  overrides: tOptional(tType('RequestOverrides')),
   requestUrl: tString,
   isFallback: tBoolean,
 });
 scheme.RouteContinueResult = tOptional(tObject({}));
 scheme.RouteFulfillParams = tObject({
+  overrides: tOptional(tType('RequestOverrides')),
   status: tOptional(tNumber),
   headers: tOptional(tArray(tType('NameValue'))),
   body: tOptional(tString),
