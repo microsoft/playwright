@@ -16995,6 +16995,11 @@ export interface Electron {
      * for a list of supported timezone IDs. Defaults to the system timezone.
      */
     timezoneId?: string;
+
+    /**
+     * If specified, traces are saved into this directory.
+     */
+    tracesDir?: string;
   }): Promise<ElectronApplication>;
 }
 

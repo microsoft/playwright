@@ -3176,6 +3176,7 @@ Electron:
                 height: number
         strictSelectors: boolean?
         timezoneId: string?
+        tracesDir: string?
 
       returns:
         electronApplication: ElectronApplication

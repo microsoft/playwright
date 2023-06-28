@@ -2240,6 +2240,7 @@ scheme.ElectronLaunchParams = tObject({
   })),
   strictSelectors: tOptional(tBoolean),
   timezoneId: tOptional(tString),
+  tracesDir: tOptional(tString),
 });
 scheme.ElectronLaunchResult = tObject({
   electronApplication: tChannel(['ElectronApplication']),

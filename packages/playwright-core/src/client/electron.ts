@@ -51,6 +51,7 @@ export class Electron extends ChannelOwner<channels.ElectronChannel> implements 
     const params: channels.ElectronLaunchParams = {
       ...await prepareBrowserContextParams(options),
       env: envObjectToArray(options.env ? options.env : process.env),
+      tracesDir: options.tracesDir,
     };
     const app = ElectronApplication.from((await this._channel.launch(params)).electronApplication);
     app._context._options = params;
