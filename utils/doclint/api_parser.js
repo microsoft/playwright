@@ -193,7 +193,7 @@ class ApiParser {
     const param = childrenWithoutProperties(spec)[0];
     const text = /** @type {string}*/(param.text);
     let typeStart = text.indexOf('<');
-    while ('?e'.includes(text[typeStart - 1]))
+    while ('?e!'.includes(text[typeStart - 1]))
       typeStart--;
     const name = text.substring(0, typeStart).replace(/\`/g, '').trim();
     const comments = extractComments(spec);

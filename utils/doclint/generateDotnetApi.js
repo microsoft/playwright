@@ -552,7 +552,7 @@ function renderMethod(member, parent, name, options, out) {
   function pushArg(innerArgType, innerArgName, argument, isExploded = false) {
     if (innerArgType === 'null')
       return;
-    const requiredPrefix = ((argument.required && argument.nullable) || isExploded) ? '' : '?';
+    const requiredPrefix = (argument.required || isExploded || !argument.nullable) ? '' : '?';
     const requiredSuffix = (argument.required || isExploded) ? '' : ' = default';
     const push = `${innerArgType}${requiredPrefix} ${innerArgName}${requiredSuffix}`;
     if (isExploded)
