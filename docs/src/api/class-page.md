@@ -3958,6 +3958,13 @@ Receives the [ConsoleMessage] object and resolves to truthy value when the waiti
 ### param: Page.waitForConsoleMessage.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9
 
+### param: Page.waitForConsoleMessage.cancellationToken
+* since: v.1.36
+* langs: csharp
+- `cancellationToken = default` <[CancellationToken]>
+
+Cancellation token to provide cancellation of waiting for console message
+
 ## async method: Page.waitForDownload
 * since: v1.9
 * langs: java, python, csharp
@@ -3988,6 +3995,13 @@ Receives the [Download] object and resolves to truthy value when the waiting sho
 
 ### param: Page.waitForDownload.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9
+
+### param: Page.waitForDownload.cancellationToken
+* since: v.1.36
+* langs: csharp
+- `cancellationToken = default` <[CancellationToken]>
+
+Cancellation token to provide cancellation of waiting for download
 
 ## async method: Page.waitForEvent
 * since: v1.8
@@ -4072,6 +4086,13 @@ Receives the [FileChooser] object and resolves to truthy value when the waiting 
 
 ### param: Page.waitForFileChooser.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9
+
+### param: Page.waitForFileChooser.cancellationToken
+* since: v.1.36
+* langs: csharp
+- `cancellationToken = default` <[CancellationToken]>
+
+Cancellation token to provide cancellation of waiting for file chooser
 
 ## async method: Page.waitForFunction
 * since: v1.8
@@ -4420,6 +4441,13 @@ Receives the [Page] object and resolves to truthy value when the waiting should 
 ### param: Page.waitForPopup.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9
 
+### param: Page.waitForPopup.cancellationToken
+* since: v.1.36
+* langs: csharp
+- `cancellationToken = default` <[CancellationToken]>
+
+Cancellation token to provide cancellation of waiting for popup
+
 ## async method: Page.waitForRequest
 * since: v1.8
 * langs:
@@ -4526,6 +4554,13 @@ changed by using the [`method: Page.setDefaultTimeout`] method.
 ### param: Page.waitForRequest.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9
 
+### param: Page.waitForRequest.cancellationToken
+* since: v.1.36
+* langs: csharp
+- `cancellationToken = default` <[CancellationToken]>
+
+Cancellation token to provide cancellation of waiting for request
+
 ## async method: Page.waitForRequestFinished
 * since: v1.12
 * langs: java, python, csharp
@@ -4556,6 +4591,13 @@ Receives the [Request] object and resolves to truthy value when the waiting shou
 
 ### param: Page.waitForRequestFinished.callback = %%-java-wait-for-event-callback-%%
 * since: v1.12
+
+### param: Page.waitForRequestFinished.cancellationToken
+* since: v.1.36
+* langs: csharp
+- `cancellationToken = default` <[CancellationToken]>
+
+Cancellation token to provide cancellation of waiting for request finished
 
 ## async method: Page.waitForResponse
 * since: v1.8
@@ -4665,6 +4707,13 @@ it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/We
 
 Maximum wait time in milliseconds, defaults to 30 seconds, pass `0` to disable the timeout. The default value can be
 changed by using the [`method: BrowserContext.setDefaultTimeout`] or [`method: Page.setDefaultTimeout`] methods.
+
+### param: Page.waitForResponse.cancellationToken
+* since: v.1.36
+* langs: csharp
+- `cancellationToken = default` <[CancellationToken]>
+
+Cancellation token to provide cancellation of waiting for response
 
 ### param: Page.waitForResponse.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9
@@ -4949,6 +4998,13 @@ Receives the [WebSocket] object and resolves to truthy value when the waiting sh
 ### param: Page.waitForWebSocket.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9
 
+### param: Page.waitForWebSocket.cancellationToken
+* since: v.1.36
+* langs: csharp
+- `cancellationToken = default` <[CancellationToken]>
+
+Cancellation token to provide cancellation of waiting for web socket
+
 ## async method: Page.waitForWorker
 * since: v1.9
 * langs: java, python, csharp
@@ -4979,6 +5035,13 @@ Receives the [Worker] object and resolves to truthy value when the waiting shoul
 
 ### param: Page.waitForWorker.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9
+
+### param: Page.waitForWorker.cancellationToken
+* since: v.1.36
+* langs: csharp
+- `cancellationToken = default` <[CancellationToken]>
+
+Cancellation token to provide cancellation of waiting for worker
 
 ## method: Page.workers
 * since: v1.8

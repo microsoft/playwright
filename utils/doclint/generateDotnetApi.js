@@ -640,6 +640,7 @@ function renderMethod(member, parent, name, options, out) {
 
   member.argsArray
       .sort((a, b) => b.alias === 'options' ? -1 : 0) // move options to the back to the arguments list
+      .sort((a, b) => b.alias === 'cancellationToken' ? -1 : 0) // then move cancellationToken to the back to the arguments list
       .forEach(processArg);
 
   if (!explodedArgs.length) {

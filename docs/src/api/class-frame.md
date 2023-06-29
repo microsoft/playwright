@@ -2024,6 +2024,13 @@ await frame.WaitForLoadStateAsync(); // Defaults to LoadState.Load
 ### option: Frame.waitForLoadState.timeout = %%-navigation-timeout-js-%%
 * since: v1.8
 
+### param: Frame.waitForLoadState.cancellationToken
+* since: v.1.36
+* langs: csharp
+- `cancellationToken = default` <[CancellationToken]>
+
+Cancellation token to provide cancellation of waiting for load state
+
 ## async method: Frame.waitForNavigation
 * since: v1.8
 * deprecated: This method is inherently racy, please use [`method: Frame.waitForURL`] instead.
@@ -2106,6 +2113,13 @@ a navigation.
 
 ### param: Frame.waitForNavigation.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9
+
+### param: Frame.waitForNavigation.cancellationToken
+* since: v.1.36
+* langs: csharp
+- `cancellationToken = default` <[CancellationToken]>
+
+Cancellation token to provide cancellation of waiting for navigation
 
 ## async method: Frame.waitForSelector
 * since: v1.8
