@@ -2027,7 +2027,7 @@ await frame.WaitForLoadStateAsync(); // Defaults to LoadState.Load
 ### param: Frame.waitForLoadState.cancellationToken
 * since: v.1.36
 * langs: csharp
-- `cancellationToken = default` <[CancellationToken]>
+- `cancellationToken` ?!<[CancellationToken]>
 
 Cancellation token to provide cancellation of waiting for load state
 
@@ -2117,7 +2117,7 @@ a navigation.
 ### param: Frame.waitForNavigation.cancellationToken
 * since: v.1.36
 * langs: csharp
-- `cancellationToken = default` <[CancellationToken]>
+- `cancellationToken` ?!<[CancellationToken]>
 
 Cancellation token to provide cancellation of waiting for navigation
 

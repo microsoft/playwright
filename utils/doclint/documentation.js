@@ -358,8 +358,9 @@ class Member {
    * @param {!Array<!Member>} argsArray
    * @param {MarkdownNode[]=} spec
    * @param {boolean=} required
+   * @param {boolean=} nullable
    */
-  constructor(kind, metainfo, name, type, argsArray, spec = undefined, required = true) {
+  constructor(kind, metainfo, name, type, argsArray, spec = undefined, required = true, nullable = true) {
     this.kind = kind;
     this.langs = metainfo.langs;
     this.experimental = metainfo.experimental;
@@ -371,6 +372,7 @@ class Member {
     this.spec = spec;
     this.argsArray = argsArray;
     this.required = required;
+    this.nullable = nullable;
     this.comment =  '';
     /** @type {!Map<string, !Member>} */
     this.args = new Map();
@@ -462,7 +464,7 @@ class Member {
   }
 
   clone() {
-    const result = new Member(this.kind, { langs: this.langs, experimental: this.experimental, since: this.since, deprecated: this.deprecated, discouraged: this.discouraged }, this.name, this.type?.clone(), this.argsArray.map(arg => arg.clone()), this.spec, this.required);
+    const result = new Member(this.kind, { langs: this.langs, experimental: this.experimental, since: this.since, deprecated: this.deprecated, discouraged: this.discouraged }, this.name, this.type?.clone(), this.argsArray.map(arg => arg.clone()), this.spec, this.required, this.nullable);
     result.alias = this.alias;
     result.async = this.async;
     result.paramOrOption = this.paramOrOption;
@@ -487,10 +489,11 @@ class Member {
    * @param {!Type} type
    * @param {!MarkdownNode[]=} spec
    * @param {boolean=} required
+   * @param {boolean=} nullable
    * @return {!Member}
    */
-  static createProperty(metainfo, name, type, spec, required) {
-    return new Member('property', metainfo, name, type, [], spec, required);
+  static createProperty(metainfo, name, type, spec, required, nullable) {
+    return new Member('property', metainfo, name, type, [], spec, required, nullable);
   }
 
   /**

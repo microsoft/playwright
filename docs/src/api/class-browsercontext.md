@@ -1486,7 +1486,7 @@ Receives the [ConsoleMessage] object and resolves to truthy value when the waiti
 ### param: BrowserContext.waitForConsoleMessage.cancellationToken
 * since: v.1.36
 * langs: csharp
-- `cancellationToken = default` <[CancellationToken]>
+- `cancellationToken` ?!<[CancellationToken]>
 
 Cancellation token to provide cancellation of waiting for console message
 
@@ -1591,7 +1591,7 @@ Receives the [Page] object and resolves to truthy value when the waiting should 
 ### param: BrowserContext.waitForPage.cancellationToken
 * since: v.1.36
 * langs: csharp
-- `cancellationToken = default` <[CancellationToken]>
+- `cancellationToken` ?!<[CancellationToken]>
 
 Cancellation token to provide cancellation of waiting for page
 

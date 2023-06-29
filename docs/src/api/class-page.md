@@ -3961,7 +3961,7 @@ Receives the [ConsoleMessage] object and resolves to truthy value when the waiti
 ### param: Page.waitForConsoleMessage.cancellationToken
 * since: v.1.36
 * langs: csharp
-- `cancellationToken = default` <[CancellationToken]>
+- `cancellationToken` ?!<[CancellationToken]>
 
 Cancellation token to provide cancellation of waiting for console message
 
@@ -3999,7 +3999,7 @@ Receives the [Download] object and resolves to truthy value when the waiting sho
 ### param: Page.waitForDownload.cancellationToken
 * since: v.1.36
 * langs: csharp
-- `cancellationToken = default` <[CancellationToken]>
+- `cancellationToken` ?!<[CancellationToken]>
 
 Cancellation token to provide cancellation of waiting for download
 
@@ -4090,7 +4090,7 @@ Receives the [FileChooser] object and resolves to truthy value when the waiting 
 ### param: Page.waitForFileChooser.cancellationToken
 * since: v.1.36
 * langs: csharp
-- `cancellationToken = default` <[CancellationToken]>
+- `cancellationToken` ?!<[CancellationToken]>
 
 Cancellation token to provide cancellation of waiting for file chooser
 
@@ -4444,7 +4444,7 @@ Receives the [Page] object and resolves to truthy value when the waiting should 
 ### param: Page.waitForPopup.cancellationToken
 * since: v.1.36
 * langs: csharp
-- `cancellationToken = default` <[CancellationToken]>
+- `cancellationToken` ?!<[CancellationToken]>
 
 Cancellation token to provide cancellation of waiting for popup
 
@@ -4557,7 +4557,7 @@ changed by using the [`method: Page.setDefaultTimeout`] method.
 ### param: Page.waitForRequest.cancellationToken
 * since: v.1.36
 * langs: csharp
-- `cancellationToken = default` <[CancellationToken]>
+- `cancellationToken` ?!<[CancellationToken]>
 
 Cancellation token to provide cancellation of waiting for request
 
@@ -4595,7 +4595,7 @@ Receives the [Request] object and resolves to truthy value when the waiting shou
 ### param: Page.waitForRequestFinished.cancellationToken
 * since: v.1.36
 * langs: csharp
-- `cancellationToken = default` <[CancellationToken]>
+- `cancellationToken` ?!<[CancellationToken]>
 
 Cancellation token to provide cancellation of waiting for request finished
 
@@ -4711,7 +4711,7 @@ changed by using the [`method: BrowserContext.setDefaultTimeout`] or [`method: P
 ### param: Page.waitForResponse.cancellationToken
 * since: v.1.36
 * langs: csharp
-- `cancellationToken = default` <[CancellationToken]>
+- `cancellationToken` ?!<[CancellationToken]>
 
 Cancellation token to provide cancellation of waiting for response
 
@@ -5001,7 +5001,7 @@ Receives the [WebSocket] object and resolves to truthy value when the waiting sh
 ### param: Page.waitForWebSocket.cancellationToken
 * since: v.1.36
 * langs: csharp
-- `cancellationToken = default` <[CancellationToken]>
+- `cancellationToken` ?!<[CancellationToken]>
 
 Cancellation token to provide cancellation of waiting for web socket
 
@@ -5039,7 +5039,7 @@ Receives the [Worker] object and resolves to truthy value when the waiting shoul
 ### param: Page.waitForWorker.cancellationToken
 * since: v.1.36
 * langs: csharp
-- `cancellationToken = default` <[CancellationToken]>
+- `cancellationToken` ?!<[CancellationToken]>
 
 Cancellation token to provide cancellation of waiting for worker
 
