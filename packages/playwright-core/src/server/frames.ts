@@ -163,16 +163,15 @@ export class FrameManager {
     }
   }
 
-  async waitForSignalsCreatedBy<T>(progress: Progress | null, noWaitAfter: boolean | undefined, action: () => Promise<T>, source?: 'input'): Promise<T> {
-    if (noWaitAfter)
+  async waitForSignalsCreatedBy<T>(progress: Progress | null, noWaitAfter: boolean | undefined, action: () => Promise<T>, skippable?: 'skippable'): Promise<T> {
+    if (noWaitAfter || (skippable && !process.env.PLAYWRIGHT_WAIT_FOR_NAVIGATION))
       return action();
     const barrier = new SignalBarrier(progress);
     this._signalBarriers.add(barrier);
     if (progress)
       progress.cleanupWhenAborted(() => this._signalBarriers.delete(barrier));
     const result = await action();
-    if (source === 'input')
-      await this._page._delegate.inputActionEpilogue();
+    await this._page._delegate.inputActionEpilogue();
     await barrier.waitFor();
     this._signalBarriers.delete(barrier);
     // Resolve in the next task, after all waitForNavigations.
@@ -1172,6 +1171,7 @@ export class Frame extends SdkObject {
           ...options,
           position: options.sourcePosition,
           timeout: progress.timeUntilDeadline(),
+          waitAfterSkippable: true,
         });
       }));
       dom.assertDone(await this._retryWithProgressIfNotConnected(progress, target, options.strict, async handle => {
@@ -1182,6 +1182,7 @@ export class Frame extends SdkObject {
           ...options,
           position: options.targetPosition,
           timeout: progress.timeUntilDeadline(),
+          waitAfterSkippable: true,
         });
       }));
     }, this._page._timeoutSettings.timeout(options));

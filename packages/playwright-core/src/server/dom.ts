@@ -306,7 +306,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async _retryPointerAction(progress: Progress, actionName: ActionName, waitForEnabled: boolean, action: (point: types.Point) => Promise<void>,
-    options: types.PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
+    options: types.PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions & { waitAfterSkippable?: boolean }): Promise<'error:notconnected' | 'done'> {
     let retry = 0;
     // We progressively wait longer between retries, up to 500ms.
     const waitTime = [0, 20, 100, 100, 500];
@@ -359,7 +359,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return 'done';
   }
 
-  async _performPointerAction(progress: Progress, actionName: ActionName, waitForEnabled: boolean, action: (point: types.Point) => Promise<void>, forceScrollOptions: ScrollIntoViewOptions | undefined, options: types.PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notvisible' | 'error:notconnected' | 'error:notinviewport' | { hitTargetDescription: string } | 'done'> {
+  async _performPointerAction(progress: Progress, actionName: ActionName, waitForEnabled: boolean, action: (point: types.Point) => Promise<void>, forceScrollOptions: ScrollIntoViewOptions | undefined, options: types.PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions & { waitAfterSkippable?: boolean }): Promise<'error:notvisible' | 'error:notconnected' | 'error:notinviewport' | { hitTargetDescription: string } | 'done'> {
     const { force = false, position } = options;
     if ((options as any).__testHookBeforeStable)
       await (options as any).__testHookBeforeStable();
@@ -448,7 +448,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       if ((options as any).__testHookAfterPointerAction)
         await (options as any).__testHookAfterPointerAction();
       return 'done';
-    }, 'input');
+    }, options.waitAfterSkippable ? 'skippable' : undefined);
     if (actionResult !== 'done')
       return actionResult;
     progress.log('  navigations have finished');
@@ -521,7 +521,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         return injected.waitForElementStatesAndPerformAction(node, ['visible', 'enabled'], force, injected.selectOptions.bind(injected, optionsToSelect));
       }, { optionsToSelect, force: options.force });
       return result;
-    });
+    }, 'skippable');
   }
 
   async fill(metadata: CallMetadata, value: string, options: types.NavigatingActionWaitOptions & types.ForceOptions = {}): Promise<void> {
@@ -554,7 +554,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         assertDone(filled);
       }
       return 'done';
-    }, 'input');
+    }, 'skippable');
   }
 
   async selectText(metadata: CallMetadata, options: types.TimeoutOptions & types.ForceOptions = {}): Promise<void> {
@@ -610,7 +610,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         await this._page._delegate.setInputFilePaths(progress, retargeted, localPaths);
       else
         await this._page._delegate.setInputFiles(retargeted, filePayloads!);
-    });
+    }, 'skippable');
     return 'done';
   }
 
@@ -650,7 +650,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       progress.throwIfAborted();  // Avoid action that has side-effects.
       await this._page.keyboard.type(text, options);
       return 'done';
-    }, 'input');
+    }, 'skippable');
   }
 
   async press(metadata: CallMetadata, key: string, options: { delay?: number } & types.NavigatingActionWaitOptions): Promise<void> {
@@ -671,7 +671,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       progress.throwIfAborted();  // Avoid action that has side-effects.
       await this._page.keyboard.press(key, options);
       return 'done';
-    }, 'input');
+    }, 'skippable');
   }
 
   async check(metadata: CallMetadata, options: { position?: types.Point } & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
