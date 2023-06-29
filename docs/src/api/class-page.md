@@ -4410,6 +4410,13 @@ a navigation.
 ### param: Page.waitForNavigation.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9
 
+### param: Page.waitForNavigation.cancellationToken
+* since: v.1.36
+* langs: csharp
+- `cancellationToken` ?!<[CancellationToken]>
+
+Cancellation token to provide cancellation of waiting for navigation
+
 ## async method: Page.waitForPopup
 * since: v1.9
 * langs: java, python, csharp
