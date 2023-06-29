@@ -74,7 +74,7 @@ function mapType(type) {
 }
 
 function nullableSuffix(inner) {
-  if (['int', 'boolean'].includes(inner.ts))
+  if (['int', 'bool'].includes(inner.ts))
     return inner.optional ? '?' : '';
   return '';
 }
