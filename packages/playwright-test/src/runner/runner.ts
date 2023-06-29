@@ -91,7 +91,8 @@ export class Runner {
       status = 'failed';
     if (status === 'passed' && taskStatus !== 'passed')
       status = taskStatus;
-    await reporter.onExit({ status });
+    await reporter.onEnd({ status });
+    await reporter.onExit();
 
     // Calling process.exit() might truncate large stdout/stderr output.
     // See https://github.com/nodejs/node/issues/6456.

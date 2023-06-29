@@ -22,7 +22,6 @@ import { Suite } from '../common/test';
 import type { FullConfigInternal } from '../common/config';
 import { Multiplexer } from './multiplexer';
 import { prepareErrorStack, relativeFilePath } from './base';
-import { monotonicTime } from 'playwright-core/lib/utils';
 
 type StdIOChunk = {
   chunk: string | Buffer;
@@ -34,7 +33,6 @@ export class InternalReporter {
   private _multiplexer: Multiplexer;
   private _deferred: { error?: TestError, stdout?: StdIOChunk, stderr?: StdIOChunk }[] | null = [];
   private _config!: FullConfigInternal;
-  private _montonicStartTime: number = 0;
 
   constructor(reporters: Reporter[]) {
     this._multiplexer = new Multiplexer(reporters);
@@ -45,7 +43,6 @@ export class InternalReporter {
   }
 
   onBegin(config: FullConfig, suite: Suite) {
-    this._montonicStartTime = monotonicTime();
     this._multiplexer.onBegin(config, suite);
 
     const deferred = this._deferred!;
@@ -86,16 +83,15 @@ export class InternalReporter {
     this._multiplexer.onTestEnd(test, result);
   }
 
-  async onEnd() {
-    this._config.config.metadata.totalTime = monotonicTime() - this._montonicStartTime;
-  }
-
-  async onExit(result: FullResult) {
+  async onEnd(result: FullResult) {
     if (this._deferred) {
       // onBegin was not reported, emit it.
       this.onBegin(this._config.config, new Suite('', 'root'));
     }
     await this._multiplexer.onEnd(result);
+  }
+
+  async onExit() {
     await this._multiplexer.onExit();
   }
 
