@@ -638,29 +638,10 @@ function renderMethod(member, parent, name, options, out) {
   if (options.public)
     modifiers = 'public ';
 
-  const optionsArgI = member.argsArray.findIndex((a, b) => a.alias === 'options');
-  let optionsArg;
-  if (optionsArgI >= 0) {
-    optionsArg = member.argsArray[optionsArgI];
-    member.argsArray.splice(optionsArgI, 1);
-  }
-
-  const cancellationTokenArgI = member.argsArray.findIndex((a, b) => a.name === 'cancellationToken');
-  let cancellationTokenArg;
-  if (cancellationTokenArgI >= 0) {
-    cancellationTokenArg = member.argsArray[optionsArgI];
-    member.argsArray.splice(cancellationTokenArgI, 1);
-  }
-
-  if (optionsArg !== undefined) {
-    member.argsArray.push(optionsArg);
-  }
-
-  if (cancellationTokenArg !== undefined) {
-    member.argsArray.push(cancellationTokenArg);
-  }
-
-  member.argsArray.forEach(processArg);
+  member.argsArray
+    .sort((a, b) => b.alias === 'options' ? -1 : 0) // move options to the back to the arguments list
+    .sort((a, b) => b.alias === 'cancellationToken' ? -1 : 0) // move cancellationToken to the back to the arguments list
+    .forEach(processArg);
 
   if (!explodedArgs.length) {
     if (!options.nodocs) {
