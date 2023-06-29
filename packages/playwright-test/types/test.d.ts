@@ -1151,7 +1151,7 @@ interface TestConfig {
    *
    * Consider the following file structure:
    *
-   * ```
+   * ```txt
    * playwright.config.ts
    * tests/
    * └── page/
@@ -6324,7 +6324,7 @@ interface TestProject {
    *
    * Consider the following file structure:
    *
-   * ```
+   * ```txt
    * playwright.config.ts
    * tests/
    * └── page/

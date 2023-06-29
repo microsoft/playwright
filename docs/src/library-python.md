@@ -92,16 +92,16 @@ python
 and then launch Playwright within it for quick experimentation:
 
 ```py
->>> from playwright.sync_api import sync_playwright
->>> playwright = sync_playwright().start()
+from playwright.sync_api import sync_playwright
+playwright = sync_playwright().start()
 # Use playwright.chromium, playwright.firefox or playwright.webkit
 # Pass headless=False to launch() to see the browser UI
->>> browser = playwright.chromium.launch()
->>> page = browser.new_page()
->>> page.goto("https://playwright.dev/")
->>> page.screenshot(path="example.png")
->>> browser.close()
->>> playwright.stop()
+browser = playwright.chromium.launch()
+page = browser.new_page()
+page.goto("https://playwright.dev/")
+page.screenshot(path="example.png")
+browser.close()
+playwright.stop()
 ```
 
 Async REPL such as `asyncio` REPL:
@@ -111,14 +111,14 @@ python -m asyncio
 ```
 
 ```py
->>> from playwright.async_api import async_playwright
->>> playwright = await async_playwright().start()
->>> browser = await playwright.chromium.launch()
->>> page = await browser.new_page()
->>> await page.goto("https://playwright.dev/")
->>> await page.screenshot(path="example.png")
->>> await browser.close()
->>> await playwright.stop()
+from playwright.async_api import async_playwright
+playwright = await async_playwright().start()
+browser = await playwright.chromium.launch()
+page = await browser.new_page()
+await page.goto("https://playwright.dev/")
+await page.screenshot(path="example.png")
+await browser.close()
+await playwright.stop()
 ```
 
 ## Pyinstaller

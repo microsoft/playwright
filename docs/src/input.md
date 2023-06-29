@@ -453,7 +453,7 @@ await page.GetByRole(AriaRole.Textbox).PressAsync("$");
 
 The [`method: Locator.press`] method focuses the selected element and produces a single keystroke. It accepts the logical key names that are emitted in the [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) property of the keyboard events:
 
-```
+```txt
 Backquote, Minus, Equal, Backslash, Backspace, Tab, Delete, Escape,
 ArrowDown, End, Enter, Home, Insert, PageDown, PageUp, ArrowRight,
 ArrowUp, F1 - F12, Digit0 - Digit9, KeyA - KeyZ, etc.

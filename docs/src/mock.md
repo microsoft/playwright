@@ -15,13 +15,13 @@ The following code will intercept all the calls to `*/**/api/v1/fruits` and will
 ```js
 test("mocks a fruit and doesn't call api", async ({ page }) => {
   // Mock the api call before navigating
-  await page.route('*/**/api/v1/fruits', async (route) => {
+  await page.route('*/**/api/v1/fruits', async route => {
     const json = [{ name: 'Strawberry', id: 21 }];
     await route.fulfill({ json });
   });
   // Go to the page
   await page.goto('https://demo.playwright.dev/api-mocking');
-  
+
   // Assert that the Strawberry fruit is visible
   await expect(page.getByText('Strawberry')).toBeVisible();
 });
@@ -115,7 +115,7 @@ In the example below we intercept the call to the fruit API and add a new fruit 
 ```js
 test('gets the json from api and adds a new fruit', async ({ page }) => {
   // Get the response and add to it
-  await page.route('*/**/api/v1/fruits', async (route) => {
+  await page.route('*/**/api/v1/fruits', async route => {
     const response = await route.fetch();
     const json = await response.json();
     json.push({ name: 'Playwright', id: 100 });
@@ -188,7 +188,7 @@ await page.RouteAsync("*/**/api/v1/fruits", async (route) => {
 await page.GotoAsync("https://demo.playwright.dev/api-mocking");
 
 // Assert that the Strawberry fruit is visible
-await Expect(page.GetByTextAsync("Playwright", new() { Exact: true })).ToBeVisibleAsync();
+await Expect(page.GetByTextAsync("Playwright", new () { Exact = true })).ToBeVisibleAsync();
 ```
 
 ```java
@@ -265,11 +265,9 @@ def records_or_updates_the_har_file(page: Page):
 
 ```csharp
 // Get the response from the HAR file
-await page.RouteFromHARAsync("./hars/fruit.har", new (){
-  {
-    Url = "*/**/api/v1/fruits",
-    Update = true,
-  }
+await page.RouteFromHARAsync("./hars/fruit.har", new () {
+  Url = "*/**/api/v1/fruits",
+  Update = true,
 });
 
 // Go to the page
@@ -289,7 +287,7 @@ page.goto("https://demo.playwright.dev/api-mocking");
 
 ### Modifying a HAR file
 
-Once you have recorded a HAR file you can modify it by opening the hashed .txt file inside your 'hars' folder and editing the JSON. This file should be committed to your source control. Anytime you run this test with `update: true` it will update your HAR file with the request from the API. 
+Once you have recorded a HAR file you can modify it by opening the hashed .txt file inside your 'hars' folder and editing the JSON. This file should be committed to your source control. Anytime you run this test with `update: true` it will update your HAR file with the request from the API.
 
 ```json
 [

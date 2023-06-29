@@ -15,7 +15,7 @@ const { chromium } = require('playwright');
 (async () => {
   const pathToExtension = require('path').join(__dirname, 'my-extension');
   const userDataDir = '/tmp/test-user-data-dir';
-  const browserContext = await chromium.launchPersistentContext(userDataDir,{
+  const browserContext = await chromium.launchPersistentContext(userDataDir, {
     headless: false,
     args: [
       `--disable-extensions-except=${pathToExtension}`,

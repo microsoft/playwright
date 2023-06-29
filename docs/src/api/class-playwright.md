@@ -202,16 +202,18 @@ try {
 
 ```python async
 try:
-    await page.wait_for_selector(".foo")
+  await page.wait_for_selector(".foo")
 except TimeoutError as e:
-    # do something if this is a timeout.
+  pass
+  # do something if this is a timeout.
 ```
 
 ```python sync
 try:
-    page.wait_for_selector(".foo")
+  page.wait_for_selector(".foo")
 except TimeoutError as e:
-    # do something if this is a timeout.
+  pass
+  # do something if this is a timeout.
 ```
 
 ## property: Playwright.firefox
@@ -277,15 +279,15 @@ process inherits environment variables of the Playwright process.
 Terminates this instance of Playwright in case it was created bypassing the Python context manager. This is useful in REPL applications.
 
 ```py
->>> from playwright.sync_api import sync_playwright
+from playwright.sync_api import sync_playwright
 
->>> playwright = sync_playwright().start()
+playwright = sync_playwright().start()
 
->>> browser = playwright.chromium.launch()
->>> page = browser.new_page()
->>> page.goto("https://playwright.dev/")
->>> page.screenshot(path="example.png")
->>> browser.close()
+browser = playwright.chromium.launch()
+page = browser.new_page()
+page.goto("https://playwright.dev/")
+page.screenshot(path="example.png")
+browser.close()
 
->>> playwright.stop()
+playwright.stop()
 ```

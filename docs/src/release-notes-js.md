@@ -691,11 +691,11 @@ This version was also tested against the following stable channels:
 
     ```ts
     test('should work', async ({ page }) => {
-        const pageTitle = await test.step('get title', async () => {
-            await page.goto('https://playwright.dev');
-            return await page.title();
-        });
-        console.log(pageTitle);
+      const pageTitle = await test.step('get title', async () => {
+        await page.goto('https://playwright.dev');
+        return await page.title();
+      });
+      console.log(pageTitle);
     });
     ```
 
@@ -930,7 +930,7 @@ Read more about [component testing with Playwright](./test-components).
     use: {
       serviceWorkers: 'block',
     }
-  }
+  };
   ```
 * Using `.zip` path for `recordHar` context option automatically zips the resulting HAR:
   ```ts

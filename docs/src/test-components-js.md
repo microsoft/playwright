@@ -498,7 +498,7 @@ await mount(app);
 
 results in
 
-```
+```txt
 undefined: TypeError: Cannot read properties of undefined (reading 'map')
 ```
 

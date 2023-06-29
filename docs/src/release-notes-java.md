@@ -305,7 +305,7 @@ All the same methods are also available on [Locator], [FrameLocator] and [Frame]
 
 - [`method: LocatorAssertions.toHaveAttribute`] with an empty value does not match missing attribute anymore. For example, the following snippet will succeed when `button` **does not** have a `disabled` attribute.
 
-   ```js
+   ```java
    assertThat(page.getByRole(AriaRole.BUTTON)).hasAttribute("disabled", "");
    ```
 
@@ -340,7 +340,7 @@ This version was also tested against the following stable channels:
 A bunch of Playwright APIs already support the `setWaitUntil(WaitUntilState.DOMCONTENTLOADED)` option.
 For example:
 
-```js
+```java
 page.navigate("https://playwright.dev", new Page.NavigateOptions().setWaitUntil(WaitUntilState.DOMCONTENTLOADED));
 ```
 
