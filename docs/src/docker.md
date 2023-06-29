@@ -138,13 +138,13 @@ Browser builds for Firefox and WebKit are built for the [glibc](https://en.wikip
 
 Use [`//utils/docker/build.sh`](https://github.com/microsoft/playwright/blob/main/utils/docker/build.sh) to build the image.
 
-```
+```txt
 ./utils/docker/build.sh jammy playwright:localbuild-jammy
 ```
 
 The image will be tagged as `playwright:localbuild-jammy` and could be run as:
 
-```
+```txt
 docker run --rm -it playwright:localbuild /bin/bash
 ```
 

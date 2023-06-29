@@ -40,6 +40,7 @@ This plugin configures Playwright-specific [fixtures for pytest](https://docs.py
 
 ```py
 def test_my_app_is_working(fixture_name):
+    pass
     # Test using fixture_name
     # ...
 ```

@@ -16,7 +16,7 @@ Playwright Test enforces a timeout for each test, 30 seconds by default. Time sp
 
 Timed out test produces the following error:
 
-```
+```txt
 example.spec.ts:3:1 › basic test ===========================
 
 Timeout of 30000ms exceeded.
@@ -86,7 +86,7 @@ API reference: [`method: TestInfo.setTimeout`].
 
 Web-first assertions like `expect(locator).toHaveText()` have a separate timeout, 5 seconds by default. Assertion timeout is unrelated to the test timeout. It produces the following error:
 
-```
+```txt
 example.spec.ts:3:1 › basic test ===========================
 
 Error: expect(received).toHaveText(expected)
@@ -114,7 +114,7 @@ export default defineConfig({
 
 Playwright Test supports a timeout for the whole test run. This prevents excess resource usage when everything went wrong. There is no default global timeout, but you can set a reasonable one in the config, for example one hour. Global timeout produces the following error:
 
-```
+```txt
 Running 1000 tests using 10 workers
 
   514 skipped

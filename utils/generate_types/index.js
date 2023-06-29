@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-//@ts-check
+// @ts-check
 const path = require('path');
 const toKebabCase = require('lodash/kebabCase')
 const devices = require('../../packages/playwright-core/lib/server/deviceDescriptors');
@@ -360,7 +360,7 @@ class TypesGenerator {
           flavor = match[3];
           line = line.replace(/tab=js-\w+/, '').replace(/```\w+/, '```ts');
         }
-        skipExample = !["html", "yml", "bash", "js"].includes(lang) || flavor !== 'ts';
+        skipExample = !["html", "yml", "bash", "js", "txt"].includes(lang) || flavor !== 'ts';
       } else if (skipExample && line.trim().startsWith('```')) {
         skipExample = false;
         continue;

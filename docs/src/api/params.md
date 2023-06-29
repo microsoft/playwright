@@ -1667,7 +1667,7 @@ The value might include some "tokens" that will be replaced with actual values d
 
 Consider the following file structure:
 
-```
+```txt
 playwright.config.ts
 tests/
 └── page/

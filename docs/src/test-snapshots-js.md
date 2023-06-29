@@ -15,7 +15,8 @@ test('example test', async ({ page }) => {
 ```
 
 When you run above for the first time, test runner will say:
-```
+
+```txt
 Error: A snapshot doesn't exist at example.spec.ts-snapshots/example-test-1-chromium-darwin.png, writing actual.
 ```
 

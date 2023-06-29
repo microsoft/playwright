@@ -11,7 +11,7 @@ Playwright will pick up `tsconfig.json` for each source file it loads. Note that
 
 We recommend setting up a separate `tsconfig.json` in the tests directory so that you can change some preferences specifically for the tests. Here is an example directory structure.
 
-```
+```txt
 src/
     source.ts
 
