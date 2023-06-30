@@ -257,8 +257,8 @@ export class Route extends SdkObject {
 
   async abort(errorCode: string = 'failed') {
     this._startHandling();
-    await this._delegate.abort(errorCode);
     this._request._context.emit(BrowserContext.Events.RequestAborted, this._request);
+    await this._delegate.abort(errorCode);
     this._endHandling();
   }
 
@@ -285,13 +285,13 @@ export class Route extends SdkObject {
     }
     const headers = [...(overrides.headers || [])];
     this._maybeAddCorsHeaders(headers);
+    this._request._context.emit(BrowserContext.Events.RequestFulfilled, this._request);
     await this._delegate.fulfill({
       status: overrides.status || 200,
       headers,
       body,
       isBase64,
     });
-    this._request._context.emit(BrowserContext.Events.RequestFulfilled, this._request);
     this._endHandling();
   }
 
@@ -322,9 +322,9 @@ export class Route extends SdkObject {
         throw new Error('New URL must have same protocol as overridden URL');
     }
     this._request._setOverrides(overrides);
-    await this._delegate.continue(this._request, overrides);
     if (!overrides.isFallback)
       this._request._context.emit(BrowserContext.Events.RequestContinued, this._request);
+    await this._delegate.continue(this._request, overrides);
     this._endHandling();
   }
 

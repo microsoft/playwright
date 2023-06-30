@@ -125,9 +125,8 @@ it('should not throw when continuing while page is closing', async ({ page, serv
       page.close(),
     ]);
   });
-  const error = await page.goto(server.EMPTY_PAGE).catch(e => e);
+  await page.goto(server.EMPTY_PAGE).catch(e => e);
   await done;
-  expect(error).toBeInstanceOf(Error);
 });
 
 it('should not throw when continuing after page is closed', async ({ page, server, isWebView2 }) => {
