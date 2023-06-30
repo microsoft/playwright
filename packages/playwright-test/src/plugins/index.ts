@@ -15,11 +15,11 @@
  */
 
 import type { FullConfig, Suite } from '../../types/testReporter';
-import type { InternalReporter } from '../reporters/internalReporter';
+import type { ReporterV2 } from '../reporters/reporterV2';
 
 export interface TestRunnerPlugin {
   name: string;
-  setup?(config: FullConfig, configDir: string, reporter: InternalReporter): Promise<void>;
+  setup?(config: FullConfig, configDir: string, reporter: ReporterV2): Promise<void>;
   begin?(suite: Suite): Promise<void>;
   end?(): Promise<void>;
   teardown?(): Promise<void>;

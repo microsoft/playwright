@@ -28,6 +28,7 @@ import type { FSWatcher } from 'chokidar';
 import { open } from 'playwright-core/lib/utilsBundle';
 import ListReporter from '../reporters/list';
 import type { OpenTraceViewerOptions, Transport } from 'playwright-core/lib/server/trace/viewer/traceViewer';
+import { ReporterV2Wrapper } from '../reporters/reporterV2';
 
 class UIMode {
   private _config: FullConfigInternal;
@@ -67,9 +68,9 @@ class UIMode {
   }
 
   async runGlobalSetup(): Promise<FullResult['status']> {
-    const reporter = new InternalReporter([new ListReporter()]);
+    const reporter = new InternalReporter([new ReporterV2Wrapper(new ListReporter())]);
     const taskRunner = createTaskRunnerForWatchSetup(this._config, reporter);
-    reporter.onConfigure(this._config);
+    reporter.onConfigure(this._config.config);
     const testRun = new TestRun(this._config, reporter);
     const { status, cleanup: globalCleanup } = await taskRunner.runDeferCleanup(testRun, 0);
     await reporter.onEnd({ status });
@@ -167,7 +168,7 @@ class UIMode {
     const taskRunner = createTaskRunnerForList(this._config, reporter, 'out-of-process', { failOnLoadErrors: false });
     const testRun = new TestRun(this._config, reporter);
     clearCompilationCache();
-    reporter.onConfigure(this._config);
+    reporter.onConfigure(this._config.config);
     const status = await taskRunner.run(testRun, 0);
     await reporter.onEnd({ status });
     await reporter.onExit();
@@ -191,7 +192,7 @@ class UIMode {
     const taskRunner = createTaskRunnerForWatch(this._config, reporter);
     const testRun = new TestRun(this._config, reporter);
     clearCompilationCache();
-    reporter.onConfigure(this._config);
+    reporter.onConfigure(this._config.config);
     const stop = new ManualPromise();
     const run = taskRunner.run(testRun, 0, stop).then(async status => {
       await reporter.onEnd({ status });

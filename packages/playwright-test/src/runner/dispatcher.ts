@@ -24,7 +24,7 @@ import { ManualPromise } from 'playwright-core/lib/utils';
 import { WorkerHost } from './workerHost';
 import type { TestGroup } from './testGroups';
 import type { FullConfigInternal } from '../common/config';
-import type { InternalReporter } from '../reporters/internalReporter';
+import type { ReporterV2 } from '../reporters/reporterV2';
 
 type TestResultData = {
   result: TestResult;
@@ -46,14 +46,14 @@ export class Dispatcher {
 
   private _testById = new Map<string, TestData>();
   private _config: FullConfigInternal;
-  private _reporter: InternalReporter;
+  private _reporter: ReporterV2;
   private _hasWorkerErrors = false;
   private _failureCount = 0;
 
   private _extraEnvByProjectId: EnvByProjectId = new Map();
   private _producedEnvByProjectId: EnvByProjectId = new Map();
 
-  constructor(config: FullConfigInternal, reporter: InternalReporter) {
+  constructor(config: FullConfigInternal, reporter: ReporterV2) {
     this._config = config;
     this._reporter = reporter;
   }

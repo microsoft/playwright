@@ -598,7 +598,7 @@ const refreshRootSuite = (eraseResults: boolean): Promise<void> => {
     return sendMessage('list', {});
 
   let rootSuite: Suite;
-  let loadErrors: TestError[];
+  const loadErrors: TestError[] = [];
   const progress: Progress = {
     passed: 0,
     failed: 0,
@@ -606,12 +606,13 @@ const refreshRootSuite = (eraseResults: boolean): Promise<void> => {
   };
   let config: FullConfig;
   receiver = new TeleReporterReceiver(pathSeparator, {
-    onBegin: (c: FullConfig, suite: Suite) => {
-      if (!rootSuite) {
-        rootSuite = suite;
-        loadErrors = [];
-      }
+    onConfigure: (c: FullConfig) => {
       config = c;
+    },
+
+    onBegin: (suite: Suite) => {
+      if (!rootSuite)
+        rootSuite = suite;
       progress.passed = 0;
       progress.failed = 0;
       progress.skipped = 0;
@@ -639,8 +640,18 @@ const refreshRootSuite = (eraseResults: boolean): Promise<void> => {
     onError: (error: TestError) => {
       xtermDataSource.write((error.stack || error.value || '') + '\n');
       loadErrors.push(error);
-      throttleUpdateRootSuite(config, rootSuite, loadErrors, progress);
+      throttleUpdateRootSuite(config, rootSuite ?? new TeleSuite('', 'root'), loadErrors, progress);
     },
+
+    printsToStdio: () => {
+      return false;
+    },
+
+    onStdOut: () => {},
+    onStdErr: () => {},
+    onExit: () => {},
+    onStepBegin: () => {},
+    onStepEnd: () => {},
   }, true);
   receiver._setClearPreviousResultsWhenTestBegins();
   return sendMessage('list', {});

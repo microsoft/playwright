@@ -57,15 +57,16 @@ export class BlobReporter extends TeleReporterEmitter {
     });
   }
 
-  printsToStdio() {
-    return false;
+  override onConfigure(config: FullConfig) {
+    this._outputDir = path.resolve(this._options.configDir, this._options.outputDir || 'blob-report');
+    this._reportName = this._computeReportName(config);
+    super.onConfigure(config);
   }
 
-  override onBegin(config: FullConfig<{}, {}>, suite: Suite): void {
-    this._outputDir = path.resolve(this._options.configDir, this._options.outputDir || 'blob-report');
+  override onBegin(suite: Suite): void {
+    // Note: config.outputDir is cleared betwee onConfigure and onBegin, so we call mkdir here.
     fs.mkdirSync(path.join(this._outputDir, 'resources'), { recursive: true });
-    this._reportName = this._computeReportName(config);
-    super.onBegin(config, suite);
+    super.onBegin(suite);
   }
 
   override async onEnd(result: FullResult): Promise<void> {
@@ -79,14 +80,16 @@ export class BlobReporter extends TeleReporterEmitter {
     const zipFileName = path.join(this._outputDir, this._reportName + '.zip');
     zipFile.outputStream.pipe(fs.createWriteStream(zipFileName)).on('close', () => {
       zipFinishPromise.resolve(undefined);
-    });
+    }).on('error', error => zipFinishPromise.reject(error));
     zipFile.addReadStream(content, this._reportName + '.jsonl');
     zipFile.end();
 
     await Promise.all([
       ...this._copyFilePromises,
       // Requires Node v14.18.0+
-      zipFinishPromise.catch(e => console.error(`Failed to write report ${zipFileName}: ${e}`))
+      zipFinishPromise.catch(e => {
+        throw new Error(`Failed to write report ${zipFileName}: ` + e.message);
+      }),
     ]);
   }
 

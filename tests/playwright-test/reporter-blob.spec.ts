@@ -836,8 +836,8 @@ test('preserve config fields', async ({ runInlineTest, mergeReports }) => {
     `
   };
 
-  await runInlineTest(files, { shard: `1/3` });
-  await runInlineTest(files, { shard: `3/3` });
+  await runInlineTest(files, { shard: `1/3`, workers: 1 });
+  await runInlineTest(files, { shard: `3/3`, workers: 1 });
 
   const mergeConfig = {
     reportSlowTests: {
