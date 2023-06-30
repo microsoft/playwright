@@ -20,7 +20,7 @@ import { promisify } from 'util';
 import { debug, rimraf } from 'playwright-core/lib/utilsBundle';
 import { Dispatcher, type EnvByProjectId } from './dispatcher';
 import type { TestRunnerPluginRegistration } from '../plugins';
-import type { InternalReporter } from '../reporters/internalReporter';
+import type { ReporterV2 } from '../reporters/reporterV2';
 import { createTestGroups, type TestGroup } from '../runner/testGroups';
 import type { Task } from './taskRunner';
 import { TaskRunner } from './taskRunner';
@@ -46,7 +46,7 @@ export type Phase = {
 };
 
 export class TestRun {
-  readonly reporter: InternalReporter;
+  readonly reporter: ReporterV2;
   readonly config: FullConfigInternal;
   rootSuite: Suite | undefined = undefined;
   readonly phases: Phase[] = [];
@@ -55,13 +55,13 @@ export class TestRun {
   projectType: Map<FullProjectInternal, 'top-level' | 'dependency'> = new Map();
   projectSuites: Map<FullProjectInternal, Suite[]> = new Map();
 
-  constructor(config: FullConfigInternal, reporter: InternalReporter) {
+  constructor(config: FullConfigInternal, reporter: ReporterV2) {
     this.config = config;
     this.reporter = reporter;
   }
 }
 
-export function createTaskRunner(config: FullConfigInternal, reporter: InternalReporter): TaskRunner<TestRun> {
+export function createTaskRunner(config: FullConfigInternal, reporter: ReporterV2): TaskRunner<TestRun> {
   const taskRunner = new TaskRunner<TestRun>(reporter, config.config.globalTimeout);
   addGlobalSetupTasks(taskRunner, config);
   taskRunner.addTask('load tests', createLoadTask('in-process', { filterOnly: true, failOnLoadErrors: true }));
@@ -69,13 +69,13 @@ export function createTaskRunner(config: FullConfigInternal, reporter: InternalR
   return taskRunner;
 }
 
-export function createTaskRunnerForWatchSetup(config: FullConfigInternal, reporter: InternalReporter): TaskRunner<TestRun> {
+export function createTaskRunnerForWatchSetup(config: FullConfigInternal, reporter: ReporterV2): TaskRunner<TestRun> {
   const taskRunner = new TaskRunner<TestRun>(reporter, 0);
   addGlobalSetupTasks(taskRunner, config);
   return taskRunner;
 }
 
-export function createTaskRunnerForWatch(config: FullConfigInternal, reporter: InternalReporter, additionalFileMatcher?: Matcher): TaskRunner<TestRun> {
+export function createTaskRunnerForWatch(config: FullConfigInternal, reporter: ReporterV2, additionalFileMatcher?: Matcher): TaskRunner<TestRun> {
   const taskRunner = new TaskRunner<TestRun>(reporter, 0);
   taskRunner.addTask('load tests', createLoadTask('out-of-process', { filterOnly: true, failOnLoadErrors: false, additionalFileMatcher }));
   addRunTasks(taskRunner, config);
@@ -100,7 +100,7 @@ function addRunTasks(taskRunner: TaskRunner<TestRun>, config: FullConfigInternal
   return taskRunner;
 }
 
-export function createTaskRunnerForList(config: FullConfigInternal, reporter: InternalReporter, mode: 'in-process' | 'out-of-process', options: { failOnLoadErrors: boolean }): TaskRunner<TestRun> {
+export function createTaskRunnerForList(config: FullConfigInternal, reporter: ReporterV2, mode: 'in-process' | 'out-of-process', options: { failOnLoadErrors: boolean }): TaskRunner<TestRun> {
   const taskRunner = new TaskRunner<TestRun>(reporter, config.config.globalTimeout);
   taskRunner.addTask('load tests', createLoadTask(mode, { ...options, filterOnly: false }));
   taskRunner.addTask('report begin', createReportBeginTask());
@@ -110,7 +110,7 @@ export function createTaskRunnerForList(config: FullConfigInternal, reporter: In
 function createReportBeginTask(): Task<TestRun> {
   return async ({ config, reporter, rootSuite }) => {
     const montonicStartTime = monotonicTime();
-    reporter.onBegin(config.config, rootSuite!);
+    reporter.onBegin(rootSuite!);
     return async () => {
       config.config.metadata.totalTime = monotonicTime() - montonicStartTime;
     };
@@ -228,7 +228,7 @@ function createPhasesTask(): Task<TestRun> {
       }
     }
 
-    testRun.config.config.workers = Math.min(testRun.config.config.workers, maxConcurrentTestGroups);
+    testRun.config.config.metadata.actualWorkers = Math.min(testRun.config.config.workers, maxConcurrentTestGroups);
   };
 }
 

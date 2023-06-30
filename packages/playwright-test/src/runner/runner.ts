@@ -74,7 +74,7 @@ export class Runner {
       : createTaskRunner(config, reporter);
 
     const testRun = new TestRun(config, reporter);
-    reporter.onConfigure(config);
+    reporter.onConfigure(config.config);
 
     if (!listOnly && config.ignoreSnapshots) {
       reporter.onStdOut(colors.dim([

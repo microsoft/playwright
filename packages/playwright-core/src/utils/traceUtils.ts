@@ -91,7 +91,7 @@ export async function mergeTraceFiles(fileName: string, temporaryTraceFiles: str
       Promise.all(temporaryTraceFiles.map(tempFile => fs.promises.unlink(tempFile))).then(() => {
         mergePromise.resolve();
       });
-    });
+    }).on('error', error => mergePromise.reject(error));
   });
   await mergePromise;
 }

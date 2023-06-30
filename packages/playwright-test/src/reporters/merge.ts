@@ -73,13 +73,16 @@ async function extractReportFromZip(file: string): Promise<Buffer> {
 
 async function mergeEvents(dir: string, shardReportFiles: string[]) {
   const events: JsonEvent[] = [];
+  const configureEvents: JsonEvent[] = [];
   const beginEvents: JsonEvent[] = [];
   const endEvents: JsonEvent[] = [];
   for (const reportFile of shardReportFiles) {
     const reportJsonl = await extractReportFromZip(path.join(dir, reportFile));
     const parsedEvents = parseEvents(reportJsonl);
     for (const event of parsedEvents) {
-      if (event.method === 'onBegin')
+      if (event.method === 'onConfigure')
+        configureEvents.push(event);
+      else if (event.method === 'onBegin')
         beginEvents.push(event);
       else if (event.method === 'onEnd')
         endEvents.push(event);
@@ -89,13 +92,12 @@ async function mergeEvents(dir: string, shardReportFiles: string[]) {
         events.push(event);
     }
   }
-  return [mergeBeginEvents(beginEvents), ...events, mergeEndEvents(endEvents), { method: 'onExit', params: undefined }];
+  return [mergeConfigureEvents(configureEvents), mergeBeginEvents(beginEvents), ...events, mergeEndEvents(endEvents), { method: 'onExit', params: undefined }];
 }
 
-function mergeBeginEvents(beginEvents: JsonEvent[]): JsonEvent {
-  if (!beginEvents.length)
-    throw new Error('No begin events found');
-  const projects: JsonProject[] = [];
+function mergeConfigureEvents(configureEvents: JsonEvent[]): JsonEvent {
+  if (!configureEvents.length)
+    throw new Error('No configure events found');
   let config: JsonConfig = {
     configFile: undefined,
     globalTimeout: 0,
@@ -108,8 +110,21 @@ function mergeBeginEvents(beginEvents: JsonEvent[]): JsonEvent {
     workers: 0,
     listOnly: false
   };
-  for (const event of beginEvents) {
+  for (const event of configureEvents)
     config = mergeConfigs(config, event.params.config);
+  return {
+    method: 'onConfigure',
+    params: {
+      config,
+    }
+  };
+}
+
+function mergeBeginEvents(beginEvents: JsonEvent[]): JsonEvent {
+  if (!beginEvents.length)
+    throw new Error('No begin events found');
+  const projects: JsonProject[] = [];
+  for (const event of beginEvents) {
     const shardProjects: JsonProject[] = event.params.projects;
     for (const shardProject of shardProjects) {
       const mergedProject = projects.find(p => p.id === shardProject.id);
@@ -122,7 +137,6 @@ function mergeBeginEvents(beginEvents: JsonEvent[]): JsonEvent {
   return {
     method: 'onBegin',
     params: {
-      config,
       projects,
     }
   };
@@ -136,6 +150,7 @@ function mergeConfigs(to: JsonConfig, from: JsonConfig): JsonConfig {
       ...to.metadata,
       ...from.metadata,
       totalTime: to.metadata.totalTime + from.metadata.totalTime,
+      actualWorkers: (to.metadata.actualWorkers || 0) + (from.metadata.actualWorkers || 0),
     },
     workers: to.workers + from.workers,
   };

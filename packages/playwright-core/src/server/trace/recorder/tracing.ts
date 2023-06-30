@@ -329,7 +329,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       const artifact = new Artifact(this._context, zipFileName);
       artifact.reportFinished();
       result.resolve(artifact);
-    });
+    }).on('error', error => result.reject(error));
     return result;
   }
 

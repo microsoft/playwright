@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-import type { FullConfig, FullResult, Location, Reporter, TestError, TestResult, TestStatus, TestStep } from '../../types/testReporter';
+import type { FullConfig, FullResult, Location, TestError, TestResult, TestStatus, TestStep } from '../../types/testReporter';
 import type { Annotation } from '../common/config';
 import type { FullProject, Metadata } from '../../types/test';
 import type * as reporterTypes from '../../types/testReporter';
 import type { SuitePrivate } from '../../types/reporterPrivate';
+import type { ReporterV2 } from '../reporters/reporterV2';
 
 export type JsonLocation = Location;
 export type JsonError = string;
@@ -121,14 +122,16 @@ export type JsonEvent = {
 export class TeleReporterReceiver {
   private _rootSuite: TeleSuite;
   private _pathSeparator: string;
-  private _reporter: Reporter;
+  private _reporter: ReporterV2;
   private _tests = new Map<string, TeleTestCase>();
   private _rootDir!: string;
+  private _listOnly = false;
   private _clearPreviousResultsWhenTestBegins: boolean = false;
   private _reuseTestCases: boolean;
   private _reportConfig: MergeReporterConfig | undefined;
+  private _config!: FullConfig;
 
-  constructor(pathSeparator: string, reporter: Reporter, reuseTestCases: boolean, reportConfig?: MergeReporterConfig) {
+  constructor(pathSeparator: string, reporter: ReporterV2, reuseTestCases: boolean, reportConfig?: MergeReporterConfig) {
     this._rootSuite = new TeleSuite('', 'root');
     this._pathSeparator = pathSeparator;
     this._reporter = reporter;
@@ -136,10 +139,14 @@ export class TeleReporterReceiver {
     this._reportConfig = reportConfig;
   }
 
-  dispatch(message: JsonEvent): Promise<void> | undefined {
+  dispatch(message: JsonEvent): Promise<void> | void {
     const { method, params } = message;
+    if (method === 'onConfigure') {
+      this._onConfigure(params.config);
+      return;
+    }
     if (method === 'onBegin') {
-      this._onBegin(params.config, params.projects);
+      this._onBegin(params.projects);
       return;
     }
     if (method === 'onTestBegin') {
@@ -176,8 +183,14 @@ export class TeleReporterReceiver {
     this._clearPreviousResultsWhenTestBegins = true;
   }
 
-  private _onBegin(config: JsonConfig, projects: JsonProject[]) {
+  private _onConfigure(config: JsonConfig) {
     this._rootDir = this._reportConfig?.rootDir || config.rootDir;
+    this._listOnly = config.listOnly;
+    this._config = this._parseConfig(config);
+    this._reporter.onConfigure(this._config);
+  }
+
+  private _onBegin(projects: JsonProject[]) {
     for (const project of projects) {
       let projectSuite = this._rootSuite.suites.find(suite => suite.project()!.id === project.id);
       if (!projectSuite) {
@@ -191,7 +204,7 @@ export class TeleReporterReceiver {
 
       // Remove deleted tests when listing. Empty suites will be auto-filtered
       // in the UI layer.
-      if (config.listOnly) {
+      if (this._listOnly) {
         const testIds = new Set<string>();
         const collectIds = (suite: JsonSuite) => {
           suite.tests.map(t => t.testId).forEach(testId => testIds.add(testId));
@@ -206,7 +219,7 @@ export class TeleReporterReceiver {
         filterTests(projectSuite);
       }
     }
-    this._reporter.onBegin?.(this._parseConfig(config), this._rootSuite);
+    this._reporter.onBegin?.(this._rootSuite);
   }
 
   private _onTestBegin(testId: string, payload: JsonTestResultStart) {
@@ -289,11 +302,11 @@ export class TeleReporterReceiver {
     }
   }
 
-  private _onEnd(result: FullResult): Promise<void> | undefined {
-    return this._reporter.onEnd?.(result) || undefined;
+  private _onEnd(result: FullResult): Promise<void> | void {
+    return this._reporter.onEnd?.(result);
   }
 
-  private _onExit(): Promise<void> | undefined {
+  private _onExit(): Promise<void> | void {
     return this._reporter.onExit?.();
   }
 

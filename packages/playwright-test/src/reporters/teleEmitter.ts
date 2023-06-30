@@ -17,13 +17,14 @@
 import path from 'path';
 import { createGuid } from 'playwright-core/lib/utils';
 import type { SuitePrivate } from '../../types/reporterPrivate';
-import type { FullConfig, FullResult, Location, Reporter, TestError, TestResult, TestStep } from '../../types/testReporter';
+import type { FullConfig, FullResult, Location, TestError, TestResult, TestStep } from '../../types/testReporter';
 import { FullConfigInternal, FullProjectInternal } from '../common/config';
 import type { Suite, TestCase } from '../common/test';
 import type { JsonAttachment, JsonConfig, JsonEvent, JsonProject, JsonStdIOType, JsonSuite, JsonTestCase, JsonTestEnd, JsonTestResultEnd, JsonTestResultStart, JsonTestStepEnd, JsonTestStepStart } from '../isomorphic/teleReceiver';
 import { serializeRegexPatterns } from '../isomorphic/teleReceiver';
+import type { ReporterV2 } from './reporterV2';
 
-export class TeleReporterEmitter implements Reporter {
+export class TeleReporterEmitter implements ReporterV2 {
   private _messageSink: (message: JsonEvent) => void;
   private _rootDir!: string;
   private _skipBuffers: boolean;
@@ -33,10 +34,14 @@ export class TeleReporterEmitter implements Reporter {
     this._skipBuffers = skipBuffers;
   }
 
-  onBegin(config: FullConfig, suite: Suite) {
+  onConfigure(config: FullConfig) {
     this._rootDir = config.rootDir;
+    this._messageSink({ method: 'onConfigure', params: { config: this._serializeConfig(config) } });
+  }
+
+  onBegin(suite: Suite) {
     const projects = suite.suites.map(projectSuite => this._serializeProject(projectSuite));
-    this._messageSink({ method: 'onBegin', params: { config: this._serializeConfig(config), projects } });
+    this._messageSink({ method: 'onBegin', params: { projects } });
   }
 
   onTestBegin(test: TestCase, result: TestResult): void {
@@ -96,11 +101,11 @@ export class TeleReporterEmitter implements Reporter {
     });
   }
 
-  onStdOut(chunk: string | Buffer, test: void | TestCase, result: void | TestResult): void {
+  onStdOut(chunk: string | Buffer, test?: TestCase, result?: TestResult): void {
     this._onStdIO('stdout', chunk, test, result);
   }
 
-  onStdErr(chunk: string | Buffer, test: void | TestCase, result: void | TestResult): void {
+  onStdErr(chunk: string | Buffer, test?: TestCase, result?: TestResult): void {
     this._onStdIO('stderr', chunk, test, result);
   }
 
@@ -118,6 +123,10 @@ export class TeleReporterEmitter implements Reporter {
   }
 
   async onExit() {
+  }
+
+  printsToStdio() {
+    return false;
   }
 
   private _serializeConfig(config: FullConfig): JsonConfig {

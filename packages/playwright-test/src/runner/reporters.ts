@@ -31,9 +31,10 @@ import type { BuiltInReporter, FullConfigInternal } from '../common/config';
 import { loadReporter } from './loadUtils';
 import { BlobReporter } from '../reporters/blob';
 import type { ReporterDescription } from '../../types/test';
+import { type ReporterV2, ReporterV2Wrapper } from '../reporters/reporterV2';
 
-export async function createReporters(config: FullConfigInternal, mode: 'list' | 'run' | 'ui' | 'merge', descriptions?: ReporterDescription[]): Promise<Reporter[]> {
-  const defaultReporters: {[key in BuiltInReporter]: new(arg: any) => Reporter} = {
+export async function createReporters(config: FullConfigInternal, mode: 'list' | 'run' | 'ui' | 'merge', descriptions?: ReporterDescription[]): Promise<ReporterV2[]> {
+  const defaultReporters: { [key in Exclude<BuiltInReporter, 'blob'>]: new(arg: any) => Reporter } = {
     dot: mode === 'list' ? ListModeReporter : DotReporter,
     line: mode === 'list' ? ListModeReporter : LineReporter,
     list: mode === 'list' ? ListModeReporter : ListReporter,
@@ -42,42 +43,40 @@ export async function createReporters(config: FullConfigInternal, mode: 'list' |
     junit: JUnitReporter,
     null: EmptyReporter,
     html: mode === 'ui' ? LineReporter : HtmlReporter,
-    blob: BlobReporter,
     markdown: MarkdownReporter,
   };
-  const reporters: Reporter[] = [];
+  const reporters: ReporterV2[] = [];
   descriptions ??= config.config.reporter;
   for (const r of descriptions) {
     const [name, arg] = r;
     const options = { ...arg, configDir: config.configDir };
-    if (name in defaultReporters) {
-      reporters.push(new defaultReporters[name as keyof typeof defaultReporters](options));
+    if (name === 'blob') {
+      reporters.push(new BlobReporter(options));
+    } else if (name in defaultReporters) {
+      reporters.push(new ReporterV2Wrapper(new defaultReporters[name as keyof typeof defaultReporters](options)));
     } else {
       const reporterConstructor = await loadReporter(config, name);
-      reporters.push(new reporterConstructor(options));
+      reporters.push(new ReporterV2Wrapper(new reporterConstructor(options)));
     }
   }
   if (process.env.PW_TEST_REPORTER) {
     const reporterConstructor = await loadReporter(config, process.env.PW_TEST_REPORTER);
-    reporters.push(new reporterConstructor());
+    reporters.push(new ReporterV2Wrapper(new reporterConstructor()));
   }
 
-  const someReporterPrintsToStdio = reporters.some(r => {
-    const prints = r.printsToStdio ? r.printsToStdio() : true;
-    return prints;
-  });
+  const someReporterPrintsToStdio = reporters.some(r => r.printsToStdio());
   if (reporters.length && !someReporterPrintsToStdio) {
     // Add a line/dot/list-mode reporter for convenience.
     // Important to put it first, jsut in case some other reporter stalls onEnd.
     if (mode === 'list')
-      reporters.unshift(new ListModeReporter());
+      reporters.unshift(new ReporterV2Wrapper(new ListModeReporter()));
     else
-      reporters.unshift(!process.env.CI ? new LineReporter({ omitFailures: true }) : new DotReporter());
+      reporters.unshift(new ReporterV2Wrapper(!process.env.CI ? new LineReporter({ omitFailures: true }) : new DotReporter()));
   }
   return reporters;
 }
 
-export class ListModeReporter implements Reporter {
+class ListModeReporter implements Reporter {
   private config!: FullConfig;
 
   onBegin(config: FullConfig, suite: Suite): void {
