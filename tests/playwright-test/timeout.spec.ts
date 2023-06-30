@@ -251,7 +251,7 @@ test('fixture time in beforeAll hook should not affect test', async ({ runInline
       import { test as base, expect } from '@playwright/test';
       const test = base.extend({
         fixture: async ({}, use) => {
-          await new Promise(f => setTimeout(f, 500));
+          await new Promise(f => setTimeout(f, 2000));
           await use('hey');
         },
       });
@@ -260,7 +260,6 @@ test('fixture time in beforeAll hook should not affect test', async ({ runInline
       });
       test('test ok', async ({}) => {
         test.setTimeout(1000);
-        await new Promise(f => setTimeout(f, 800));
       });
     `
   });

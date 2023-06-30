@@ -318,8 +318,6 @@ it('should isolate proxy credentials between contexts', async ({ contextFactory,
 });
 
 it('should exclude patterns', async ({ contextFactory, server, browserName, headless, proxyServer }) => {
-  it.fixme(browserName === 'chromium' && !headless, 'Chromium headed crashes with CHECK(!in_frame_tree_) in RenderFrameImpl::OnDeleteFrame.');
-
   proxyServer.forwardTo(server.PORT);
   // FYI: using long and weird domain names to avoid ATT DNS hijacking
   // that resolves everything to some weird search results page.
@@ -335,31 +333,49 @@ it('should exclude patterns', async ({ contextFactory, server, browserName, head
   expect(await page.title()).toBe('Served by the proxy');
   proxyServer.requestUrls = [];
 
+  const nonFaviconUrls = () => {
+    return proxyServer.requestUrls.filter(u => !u.includes('favicon'));
+  };
+
   {
     const error = await page.goto('http://1.non.existent.domain.for.the.test/target.html').catch(e => e);
-    expect(proxyServer.requestUrls).toEqual([]);
+    expect(nonFaviconUrls()).toEqual([]);
     expect(error.message).toBeTruthy();
+
+    // Make sure error page commits.
+    if (browserName === 'chromium')
+      await page.waitForURL('chrome-error://chromewebdata/');
+    else if (browserName === 'firefox')
+      await page.waitForURL('http://1.non.existent.domain.for.the.test/target.html', { waitUntil: 'commit' });
   }
 
   {
     const error = await page.goto('http://2.non.existent.domain.for.the.test/target.html').catch(e => e);
-    expect(proxyServer.requestUrls).toEqual([]);
+    expect(nonFaviconUrls()).toEqual([]);
     expect(error.message).toBeTruthy();
+
+    // Make sure error page commits.
+    if (browserName === 'chromium')
+      await page.waitForURL('chrome-error://chromewebdata/');
+    else if (browserName === 'firefox')
+      await page.waitForURL('http://2.non.existent.domain.for.the.test/target.html', { waitUntil: 'commit' });
   }
 
   {
     const error = await page.goto('http://foo.is.the.another.test/target.html').catch(e => e);
-    expect(proxyServer.requestUrls).toEqual([]);
+    expect(nonFaviconUrls()).toEqual([]);
     expect(error.message).toBeTruthy();
-  }
 
-  // Make sure error page commits.
-  if (browserName === 'chromium')
-    await page.waitForURL('chrome-error://chromewebdata/');
+    // Make sure error page commits.
+    if (browserName === 'chromium')
+      await page.waitForURL('chrome-error://chromewebdata/');
+    else if (browserName === 'firefox')
+      await page.waitForURL('http://foo.is.the.another.test/target.html', { waitUntil: 'commit' });
+  }
 
   {
     await page.goto('http://3.non.existent.domain.for.the.test/target.html');
-    expect(proxyServer.requestUrls).toContain('http://3.non.existent.domain.for.the.test/target.html');
+    expect(nonFaviconUrls()).toContain('http://3.non.existent.domain.for.the.test/target.html');
     expect(await page.title()).toBe('Served by the proxy');
   }
 
