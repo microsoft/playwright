@@ -606,6 +606,8 @@ const refreshRootSuite = (eraseResults: boolean): Promise<void> => {
   };
   let config: FullConfig;
   receiver = new TeleReporterReceiver(pathSeparator, {
+    version: () => 'v2',
+
     onConfigure: (c: FullConfig) => {
       config = c;
     },

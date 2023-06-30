@@ -16,12 +16,13 @@
 
 import fs from 'fs';
 import path from 'path';
-import type { FullConfig, FullResult, Reporter, Suite, TestCase } from '../../types/testReporter';
+import type { FullConfig, FullResult, Suite, TestCase } from '../../types/testReporter';
 import { monotonicTime } from 'playwright-core/lib/utils';
 import { formatFailure, stripAnsiEscapes } from './base';
 import { assert } from 'playwright-core/lib/utils';
+import EmptyReporter from './empty';
 
-class JUnitReporter implements Reporter {
+class JUnitReporter extends EmptyReporter {
   private config!: FullConfig;
   private suite!: Suite;
   private timestamp!: Date;
@@ -33,22 +34,26 @@ class JUnitReporter implements Reporter {
   private stripANSIControlSequences = false;
 
   constructor(options: { outputFile?: string, stripANSIControlSequences?: boolean } = {}) {
+    super();
     this.outputFile = options.outputFile || reportOutputNameFromEnv();
     this.stripANSIControlSequences = options.stripANSIControlSequences || false;
   }
 
-  printsToStdio() {
+  override printsToStdio() {
     return !this.outputFile;
   }
 
-  onBegin(config: FullConfig, suite: Suite) {
+  override onConfigure(config: FullConfig) {
     this.config = config;
+  }
+
+  override onBegin(suite: Suite) {
     this.suite = suite;
     this.timestamp = new Date();
     this.startTime = monotonicTime();
   }
 
-  async onEnd(result: FullResult) {
+  override async onEnd(result: FullResult) {
     const duration = monotonicTime() - this.startTime;
     const children: XMLEntry[] = [];
     for (const projectSuite of this.suite.suites) {

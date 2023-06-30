@@ -34,6 +34,10 @@ export class TeleReporterEmitter implements ReporterV2 {
     this._skipBuffers = skipBuffers;
   }
 
+  version(): 'v2' {
+    return 'v2';
+  }
+
   onConfigure(config: FullConfig) {
     this._rootDir = config.rootDir;
     this._messageSink({ method: 'onConfigure', params: { config: this._serializeConfig(config) } });

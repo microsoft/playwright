@@ -28,7 +28,7 @@ import type { FSWatcher } from 'chokidar';
 import { open } from 'playwright-core/lib/utilsBundle';
 import ListReporter from '../reporters/list';
 import type { OpenTraceViewerOptions, Transport } from 'playwright-core/lib/server/trace/viewer/traceViewer';
-import { ReporterV2Wrapper } from '../reporters/reporterV2';
+import { Multiplexer } from '../reporters/multiplexer';
 
 class UIMode {
   private _config: FullConfigInternal;
@@ -68,7 +68,7 @@ class UIMode {
   }
 
   async runGlobalSetup(): Promise<FullResult['status']> {
-    const reporter = new InternalReporter([new ReporterV2Wrapper(new ListReporter())]);
+    const reporter = new InternalReporter(new ListReporter());
     const taskRunner = createTaskRunnerForWatchSetup(this._config, reporter);
     reporter.onConfigure(this._config.config);
     const testRun = new TestRun(this._config, reporter);
@@ -161,8 +161,7 @@ class UIMode {
   }
 
   private async _listTests() {
-    const listReporter = new TeleReporterEmitter(e => this._dispatchEvent(e.method, e.params), true);
-    const reporter = new InternalReporter([listReporter]);
+    const reporter = new InternalReporter(new TeleReporterEmitter(e => this._dispatchEvent(e.method, e.params), true));
     this._config.cliListOnly = true;
     this._config.testIdMatcher = undefined;
     const taskRunner = createTaskRunnerForList(this._config, reporter, 'out-of-process', { failOnLoadErrors: false });
@@ -188,7 +187,7 @@ class UIMode {
 
     const reporters = await createReporters(this._config, 'ui');
     reporters.push(new TeleReporterEmitter(e => this._dispatchEvent(e.method, e.params), true));
-    const reporter = new InternalReporter(reporters);
+    const reporter = new InternalReporter(new Multiplexer(reporters));
     const taskRunner = createTaskRunnerForWatch(this._config, reporter);
     const testRun = new TestRun(this._config, reporter);
     clearCompilationCache();

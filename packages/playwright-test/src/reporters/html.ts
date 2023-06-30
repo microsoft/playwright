@@ -19,7 +19,7 @@ import fs from 'fs';
 import path from 'path';
 import type { TransformCallback } from 'stream';
 import { Transform } from 'stream';
-import type { FullConfig, Reporter, Suite } from '../../types/testReporter';
+import type { FullConfig, Suite } from '../../types/testReporter';
 import { HttpServer, assert, calculateSha1, copyFileAndMakeWritable, removeFolders } from 'playwright-core/lib/utils';
 import type { JsonAttachment, JsonReport, JsonSuite, JsonTestCase, JsonTestResult, JsonTestStep } from './raw';
 import RawReporter from './raw';
@@ -31,6 +31,7 @@ import { yazl } from 'playwright-core/lib/zipBundle';
 import { mime } from 'playwright-core/lib/utilsBundle';
 import type { HTMLReport, Stats, TestAttachment, TestCase, TestCaseSummary, TestFile, TestFileSummary, TestResult, TestStep } from '@html-reporter/types';
 import { FullConfigInternal } from '../common/config';
+import EmptyReporter from './empty';
 
 type TestEntry = {
   testCase: TestCase;
@@ -47,7 +48,7 @@ type HtmlReporterOptions = {
   attachmentsBaseURL?: string,
 };
 
-class HtmlReporter implements Reporter {
+class HtmlReporter extends EmptyReporter {
   private config!: FullConfig;
   private suite!: Suite;
   private _options: HtmlReporterOptions;
@@ -57,21 +58,25 @@ class HtmlReporter implements Reporter {
   private _buildResult: { ok: boolean, singleTestId: string | undefined } | undefined;
 
   constructor(options: HtmlReporterOptions) {
+    super();
     this._options = options;
   }
 
-  printsToStdio() {
+  override printsToStdio() {
     return false;
   }
 
-  onBegin(config: FullConfig, suite: Suite) {
+  override onConfigure(config: FullConfig) {
     this.config = config;
+  }
+
+  override onBegin(suite: Suite) {
     const { outputFolder, open, attachmentsBaseURL } = this._resolveOptions();
     this._outputFolder = outputFolder;
     this._open = open;
     this._attachmentsBaseURL = attachmentsBaseURL;
     const reportedWarnings = new Set<string>();
-    for (const project of config.projects) {
+    for (const project of this.config.projects) {
       if (outputFolder.startsWith(project.outputDir) || project.outputDir.startsWith(outputFolder)) {
         const key = outputFolder + '|' + project.outputDir;
         if (reportedWarnings.has(key))
@@ -100,7 +105,7 @@ class HtmlReporter implements Reporter {
     };
   }
 
-  async onEnd() {
+  override async onEnd() {
     const projectSuites = this.suite.suites;
     const reports = projectSuites.map(suite => {
       const rawReporter = new RawReporter();
@@ -112,7 +117,7 @@ class HtmlReporter implements Reporter {
     this._buildResult = await builder.build(this.config.metadata, reports);
   }
 
-  async onExit() {
+  override async onExit() {
     if (process.env.CI || !this._buildResult)
       return;
 

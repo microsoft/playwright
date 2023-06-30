@@ -15,7 +15,7 @@
  */
 
 import path from 'path';
-import type { FullConfig, Reporter, TestError } from '../../types/testReporter';
+import type { FullConfig, TestError } from '../../types/testReporter';
 import { formatError } from '../reporters/base';
 import DotReporter from '../reporters/dot';
 import EmptyReporter from '../reporters/empty';
@@ -31,10 +31,11 @@ import type { BuiltInReporter, FullConfigInternal } from '../common/config';
 import { loadReporter } from './loadUtils';
 import { BlobReporter } from '../reporters/blob';
 import type { ReporterDescription } from '../../types/test';
-import { type ReporterV2, ReporterV2Wrapper } from '../reporters/reporterV2';
+import { type ReporterV2, wrapReporterAsV2 } from '../reporters/reporterV2';
 
 export async function createReporters(config: FullConfigInternal, mode: 'list' | 'run' | 'ui' | 'merge', descriptions?: ReporterDescription[]): Promise<ReporterV2[]> {
-  const defaultReporters: { [key in Exclude<BuiltInReporter, 'blob'>]: new(arg: any) => Reporter } = {
+  const defaultReporters: { [key in BuiltInReporter]: new(arg: any) => ReporterV2 } = {
+    blob: BlobReporter,
     dot: mode === 'list' ? ListModeReporter : DotReporter,
     line: mode === 'list' ? ListModeReporter : LineReporter,
     list: mode === 'list' ? ListModeReporter : ListReporter,
@@ -50,18 +51,16 @@ export async function createReporters(config: FullConfigInternal, mode: 'list' |
   for (const r of descriptions) {
     const [name, arg] = r;
     const options = { ...arg, configDir: config.configDir };
-    if (name === 'blob') {
-      reporters.push(new BlobReporter(options));
-    } else if (name in defaultReporters) {
-      reporters.push(new ReporterV2Wrapper(new defaultReporters[name as keyof typeof defaultReporters](options)));
+    if (name in defaultReporters) {
+      reporters.push(new defaultReporters[name as keyof typeof defaultReporters](options));
     } else {
       const reporterConstructor = await loadReporter(config, name);
-      reporters.push(new ReporterV2Wrapper(new reporterConstructor(options)));
+      reporters.push(wrapReporterAsV2(new reporterConstructor(options)));
     }
   }
   if (process.env.PW_TEST_REPORTER) {
     const reporterConstructor = await loadReporter(config, process.env.PW_TEST_REPORTER);
-    reporters.push(new ReporterV2Wrapper(new reporterConstructor()));
+    reporters.push(wrapReporterAsV2(new reporterConstructor()));
   }
 
   const someReporterPrintsToStdio = reporters.some(r => r.printsToStdio());
@@ -69,18 +68,21 @@ export async function createReporters(config: FullConfigInternal, mode: 'list' |
     // Add a line/dot/list-mode reporter for convenience.
     // Important to put it first, jsut in case some other reporter stalls onEnd.
     if (mode === 'list')
-      reporters.unshift(new ReporterV2Wrapper(new ListModeReporter()));
+      reporters.unshift(new ListModeReporter());
     else
-      reporters.unshift(new ReporterV2Wrapper(!process.env.CI ? new LineReporter({ omitFailures: true }) : new DotReporter()));
+      reporters.unshift(!process.env.CI ? new LineReporter({ omitFailures: true }) : new DotReporter());
   }
   return reporters;
 }
 
-class ListModeReporter implements Reporter {
+class ListModeReporter extends EmptyReporter {
   private config!: FullConfig;
 
-  onBegin(config: FullConfig, suite: Suite): void {
+  override onConfigure(config: FullConfig) {
     this.config = config;
+  }
+
+  override onBegin(suite: Suite): void {
     // eslint-disable-next-line no-console
     console.log(`Listing tests:`);
     const tests = suite.allTests();
@@ -88,7 +90,7 @@ class ListModeReporter implements Reporter {
     for (const test of tests) {
       // root, project, file, ...describes, test
       const [, projectName, , ...titles] = test.titlePath();
-      const location = `${path.relative(config.rootDir, test.location.file)}:${test.location.line}:${test.location.column}`;
+      const location = `${path.relative(this.config.rootDir, test.location.file)}:${test.location.line}:${test.location.column}`;
       const projectTitle = projectName ? `[${projectName}] › ` : '';
       // eslint-disable-next-line no-console
       console.log(`  ${projectTitle}${location} › ${titles.join(' › ')}`);
@@ -98,7 +100,7 @@ class ListModeReporter implements Reporter {
     console.log(`Total: ${tests.length} ${tests.length === 1 ? 'test' : 'tests'} in ${files.size} ${files.size === 1 ? 'file' : 'files'}`);
   }
 
-  onError(error: TestError) {
+  override onError(error: TestError) {
     // eslint-disable-next-line no-console
     console.error('\n' + formatError(this.config, error, false).message);
   }

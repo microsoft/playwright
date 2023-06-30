@@ -31,7 +31,6 @@ import { enquirer } from '../utilsBundle';
 import { separator } from '../reporters/base';
 import { PlaywrightServer } from 'playwright-core/lib/remote/playwrightServer';
 import ListReporter from '../reporters/list';
-import { ReporterV2Wrapper } from '../reporters/reporterV2';
 
 class FSWatcher {
   private _dirtyTestFiles = new Map<FullProjectInternal, Set<string>>();
@@ -113,7 +112,7 @@ export async function runWatchModeLoop(config: FullConfigInternal): Promise<Full
     p.project.retries = 0;
 
   // Perform global setup.
-  const reporter = new InternalReporter([new ReporterV2Wrapper(new ListReporter())]);
+  const reporter = new InternalReporter(new ListReporter());
   const testRun = new TestRun(config, reporter);
   const taskRunner = createTaskRunnerForWatchSetup(config, reporter);
   reporter.onConfigure(config.config);
@@ -281,7 +280,7 @@ async function runTests(config: FullConfigInternal, failedTestIdCollector: Set<s
     title?: string,
   }) {
   printConfiguration(config, options?.title);
-  const reporter = new InternalReporter([new ReporterV2Wrapper(new ListReporter())]);
+  const reporter = new InternalReporter(new ListReporter());
   const taskRunner = createTaskRunnerForWatch(config, reporter, options?.additionalFileMatcher);
   const testRun = new TestRun(config, reporter);
   clearCompilationCache();

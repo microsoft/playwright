@@ -16,19 +16,19 @@
 
 import { colors } from 'playwright-core/lib/utilsBundle';
 import { BaseReporter, formatError, formatFailure, formatTestTitle } from './base';
-import type { FullConfig, TestCase, Suite, TestResult, FullResult, TestStep, TestError } from '../../types/testReporter';
+import type { TestCase, Suite, TestResult, FullResult, TestStep, TestError } from '../../types/testReporter';
 
 class LineReporter extends BaseReporter {
   private _current = 0;
   private _failures = 0;
   private _lastTest: TestCase | undefined;
 
-  printsToStdio() {
+  override printsToStdio() {
     return true;
   }
 
-  override onBegin(config: FullConfig, suite: Suite) {
-    super.onBegin(config, suite);
+  override onBegin(suite: Suite) {
+    super.onBegin(suite);
     console.log(this.generateStartingMessage());
     console.log();
   }
@@ -62,17 +62,20 @@ class LineReporter extends BaseReporter {
     console.log();
   }
 
-  onTestBegin(test: TestCase, result: TestResult) {
+  override onTestBegin(test: TestCase, result: TestResult) {
+    super.onTestBegin(test, result);
     ++this._current;
     this._updateLine(test, result, undefined);
   }
 
-  onStepBegin(test: TestCase, result: TestResult, step: TestStep) {
+  override onStepBegin(test: TestCase, result: TestResult, step: TestStep) {
+    super.onStepBegin(test, result, step);
     if (step.category === 'test.step')
       this._updateLine(test, result, step);
   }
 
-  onStepEnd(test: TestCase, result: TestResult, step: TestStep) {
+  override onStepEnd(test: TestCase, result: TestResult, step: TestStep) {
+    super.onStepEnd(test, result, step);
     if (step.category === 'test.step')
       this._updateLine(test, result, step.parent);
   }

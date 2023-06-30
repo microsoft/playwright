@@ -19,44 +19,47 @@ import { colors } from 'playwright-core/lib/utilsBundle';
 import { codeFrameColumns } from '../transform/babelBundle';
 import type { FullConfig, TestCase, TestError, TestResult, FullResult, TestStep } from '../../types/testReporter';
 import { Suite } from '../common/test';
-import { Multiplexer } from './multiplexer';
 import { prepareErrorStack, relativeFilePath } from './base';
 import type { ReporterV2 } from './reporterV2';
 
 export class InternalReporter implements ReporterV2 {
-  private _multiplexer: Multiplexer;
+  private _reporter: ReporterV2;
   private _didBegin = false;
   private _config!: FullConfig;
 
-  constructor(reporters: ReporterV2[]) {
-    this._multiplexer = new Multiplexer(reporters);
+  constructor(reporter: ReporterV2) {
+    this._reporter = reporter;
+  }
+
+  version(): 'v2' {
+    return 'v2';
   }
 
   onConfigure(config: FullConfig) {
     this._config = config;
-    this._multiplexer.onConfigure(config);
+    this._reporter.onConfigure(config);
   }
 
   onBegin(suite: Suite) {
     this._didBegin = true;
-    this._multiplexer.onBegin(suite);
+    this._reporter.onBegin(suite);
   }
 
   onTestBegin(test: TestCase, result: TestResult) {
-    this._multiplexer.onTestBegin(test, result);
+    this._reporter.onTestBegin(test, result);
   }
 
   onStdOut(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
-    this._multiplexer.onStdOut(chunk, test, result);
+    this._reporter.onStdOut(chunk, test, result);
   }
 
   onStdErr(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
-    this._multiplexer.onStdErr(chunk, test, result);
+    this._reporter.onStdErr(chunk, test, result);
   }
 
   onTestEnd(test: TestCase, result: TestResult) {
     this._addSnippetToTestErrors(test, result);
-    this._multiplexer.onTestEnd(test, result);
+    this._reporter.onTestEnd(test, result);
   }
 
   async onEnd(result: FullResult) {
@@ -64,29 +67,29 @@ export class InternalReporter implements ReporterV2 {
       // onBegin was not reported, emit it.
       this.onBegin(new Suite('', 'root'));
     }
-    await this._multiplexer.onEnd(result);
+    await this._reporter.onEnd(result);
   }
 
   async onExit() {
-    await this._multiplexer.onExit();
+    await this._reporter.onExit();
   }
 
   onError(error: TestError) {
     addLocationAndSnippetToError(this._config, error);
-    this._multiplexer.onError(error);
+    this._reporter.onError(error);
   }
 
   onStepBegin(test: TestCase, result: TestResult, step: TestStep) {
-    this._multiplexer.onStepBegin(test, result, step);
+    this._reporter.onStepBegin(test, result, step);
   }
 
   onStepEnd(test: TestCase, result: TestResult, step: TestStep) {
     this._addSnippetToStepError(test, step);
-    this._multiplexer.onStepEnd(test, result, step);
+    this._reporter.onStepEnd(test, result, step);
   }
 
   printsToStdio() {
-    return this._multiplexer.printsToStdio();
+    return this._reporter.printsToStdio();
   }
 
   private _addSnippetToTestErrors(test: TestCase, result: TestResult) {

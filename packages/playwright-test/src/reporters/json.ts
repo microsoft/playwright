@@ -16,40 +16,45 @@
 
 import fs from 'fs';
 import path from 'path';
-import type { FullConfig, TestCase, Suite, TestResult, TestError, TestStep, FullResult, Location, Reporter, JSONReport, JSONReportSuite, JSONReportSpec, JSONReportTest, JSONReportTestResult, JSONReportTestStep, JSONReportError } from '../../types/testReporter';
+import type { FullConfig, TestCase, Suite, TestResult, TestError, TestStep, FullResult, Location, JSONReport, JSONReportSuite, JSONReportSpec, JSONReportTest, JSONReportTestResult, JSONReportTestStep, JSONReportError } from '../../types/testReporter';
 import { formatError, prepareErrorStack } from './base';
 import { MultiMap } from 'playwright-core/lib/utils';
 import { assert } from 'playwright-core/lib/utils';
 import { FullProjectInternal } from '../common/config';
+import EmptyReporter from './empty';
 
 export function toPosixPath(aPath: string): string {
   return aPath.split(path.sep).join(path.posix.sep);
 }
 
-class JSONReporter implements Reporter {
+class JSONReporter extends EmptyReporter {
   config!: FullConfig;
   suite!: Suite;
   private _errors: TestError[] = [];
   private _outputFile: string | undefined;
 
   constructor(options: { outputFile?: string } = {}) {
+    super();
     this._outputFile = options.outputFile || reportOutputNameFromEnv();
   }
 
-  printsToStdio() {
+  override printsToStdio() {
     return !this._outputFile;
   }
 
-  onBegin(config: FullConfig, suite: Suite) {
+  override onConfigure(config: FullConfig) {
     this.config = config;
+  }
+
+  override onBegin(suite: Suite) {
     this.suite = suite;
   }
 
-  onError(error: TestError): void {
+  override onError(error: TestError): void {
     this._errors.push(error);
   }
 
-  async onEnd(result: FullResult) {
+  override async onEnd(result: FullResult) {
     outputReport(this._serializeReport(), this.config, this._outputFile);
   }
 
