@@ -29,6 +29,7 @@ import { collectProjectsAndTestFiles, createRootSuite, loadFileSuites, loadGloba
 import type { Matcher } from '../util';
 import type { Suite } from '../common/test';
 import { buildDependentProjects, buildTeardownToSetupsMap } from './projectUtils';
+import { monotonicTime } from 'playwright-core/lib/utils';
 
 const removeFolderAsync = promisify(rimraf);
 const readDirAsync = promisify(fs.readdir);
@@ -91,10 +92,7 @@ function addGlobalSetupTasks(taskRunner: TaskRunner<TestRun>, config: FullConfig
 
 function addRunTasks(taskRunner: TaskRunner<TestRun>, config: FullConfigInternal) {
   taskRunner.addTask('create phases', createPhasesTask());
-  taskRunner.addTask('report begin', async ({ reporter, rootSuite }) => {
-    reporter.onBegin(config.config, rootSuite!);
-    return () => reporter.onEnd();
-  });
+  taskRunner.addTask('report begin', createReportBeginTask());
   for (const plugin of config.plugins)
     taskRunner.addTask('plugin begin', createPluginBeginTask(plugin));
   taskRunner.addTask('start workers', createWorkersTask());
@@ -105,11 +103,18 @@ function addRunTasks(taskRunner: TaskRunner<TestRun>, config: FullConfigInternal
 export function createTaskRunnerForList(config: FullConfigInternal, reporter: InternalReporter, mode: 'in-process' | 'out-of-process', options: { failOnLoadErrors: boolean }): TaskRunner<TestRun> {
   const taskRunner = new TaskRunner<TestRun>(reporter, config.config.globalTimeout);
   taskRunner.addTask('load tests', createLoadTask(mode, { ...options, filterOnly: false }));
-  taskRunner.addTask('report begin', async ({ reporter, rootSuite }) => {
-    reporter.onBegin(config.config, rootSuite!);
-    return () => reporter.onEnd();
-  });
+  taskRunner.addTask('report begin', createReportBeginTask());
   return taskRunner;
+}
+
+function createReportBeginTask(): Task<TestRun> {
+  return async ({ config, reporter, rootSuite }) => {
+    const montonicStartTime = monotonicTime();
+    reporter.onBegin(config.config, rootSuite!);
+    return async () => {
+      config.config.metadata.totalTime = monotonicTime() - montonicStartTime;
+    };
+  };
 }
 
 function createPluginSetupTask(plugin: TestRunnerPluginRegistration): Task<TestRun> {

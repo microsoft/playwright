@@ -72,7 +72,8 @@ class UIMode {
     reporter.onConfigure(this._config);
     const testRun = new TestRun(this._config, reporter);
     const { status, cleanup: globalCleanup } = await taskRunner.runDeferCleanup(testRun, 0);
-    await reporter.onExit({ status });
+    await reporter.onEnd({ status });
+    await reporter.onExit();
     if (status !== 'passed') {
       await globalCleanup();
       return status;
@@ -168,7 +169,8 @@ class UIMode {
     clearCompilationCache();
     reporter.onConfigure(this._config);
     const status = await taskRunner.run(testRun, 0);
-    await reporter.onExit({ status });
+    await reporter.onEnd({ status });
+    await reporter.onExit();
 
     const projectDirs = new Set<string>();
     for (const p of this._config.projects)
@@ -192,7 +194,8 @@ class UIMode {
     reporter.onConfigure(this._config);
     const stop = new ManualPromise();
     const run = taskRunner.run(testRun, 0, stop).then(async status => {
-      await reporter.onExit({ status });
+      await reporter.onEnd({ status });
+      await reporter.onExit();
       this._testRun = undefined;
       this._config.testIdMatcher = undefined;
       return status;
