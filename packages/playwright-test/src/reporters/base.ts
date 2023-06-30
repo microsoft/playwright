@@ -16,9 +16,10 @@
 
 import { colors, ms as milliseconds, parseStackTraceLine } from 'playwright-core/lib/utilsBundle';
 import path from 'path';
-import type { FullConfig, TestCase, Suite, TestResult, TestError, FullResult, TestStep, Location, Reporter } from '../../types/testReporter';
+import type { FullConfig, TestCase, Suite, TestResult, TestError, FullResult, TestStep, Location } from '../../types/testReporter';
 import type { SuitePrivate } from '../../types/reporterPrivate';
 import { monotonicTime } from 'playwright-core/lib/utils';
+import type { ReporterV2 } from './reporterV2';
 export type TestResultOutput = { chunk: string | Buffer, type: 'stdout' | 'stderr' };
 export const kOutputSymbol = Symbol('output');
 
@@ -43,7 +44,7 @@ type TestSummary = {
   fatalErrors: TestError[];
 };
 
-export class BaseReporter implements Reporter {
+export class BaseReporter implements ReporterV2 {
   duration = 0;
   config!: FullConfig;
   suite!: Suite;
@@ -60,9 +61,16 @@ export class BaseReporter implements Reporter {
     this._ttyWidthForTest = parseInt(process.env.PWTEST_TTY_WIDTH || '', 10);
   }
 
-  onBegin(config: FullConfig, suite: Suite) {
-    this.monotonicStartTime = monotonicTime();
+  version(): 'v2' {
+    return 'v2';
+  }
+
+  onConfigure(config: FullConfig) {
     this.config = config;
+  }
+
+  onBegin(suite: Suite) {
+    this.monotonicStartTime = monotonicTime();
     this.suite = suite;
     this.totalTestCount = suite.allTests().length;
   }
@@ -80,6 +88,9 @@ export class BaseReporter implements Reporter {
       return;
     (result as any)[kOutputSymbol] = (result as any)[kOutputSymbol] || [];
     (result as any)[kOutputSymbol].push(output);
+  }
+
+  onTestBegin(test: TestCase, result: TestResult): void {
   }
 
   onTestEnd(test: TestCase, result: TestResult) {
@@ -102,6 +113,19 @@ export class BaseReporter implements Reporter {
   async onEnd(result: FullResult) {
     this.duration = monotonicTime() - this.monotonicStartTime;
     this.result = result;
+  }
+
+  onStepBegin(test: TestCase, result: TestResult, step: TestStep): void {
+  }
+
+  onStepEnd(test: TestCase, result: TestResult, step: TestStep): void {
+  }
+
+  async onExit() {
+  }
+
+  printsToStdio() {
+    return true;
   }
 
   protected ttyWidth() {

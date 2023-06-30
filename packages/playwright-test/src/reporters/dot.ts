@@ -16,17 +16,17 @@
 
 import { colors } from 'playwright-core/lib/utilsBundle';
 import { BaseReporter, formatError } from './base';
-import type { FullResult, TestCase, TestResult, FullConfig, Suite, TestError } from '../../types/testReporter';
+import type { FullResult, TestCase, TestResult, Suite, TestError } from '../../types/testReporter';
 
 class DotReporter extends BaseReporter {
   private _counter = 0;
 
-  printsToStdio() {
+  override printsToStdio() {
     return true;
   }
 
-  override onBegin(config: FullConfig, suite: Suite) {
-    super.onBegin(config, suite);
+  override onBegin(suite: Suite) {
+    super.onBegin(suite);
     console.log(this.generateStartingMessage());
   }
 

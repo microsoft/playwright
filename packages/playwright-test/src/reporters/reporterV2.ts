@@ -29,6 +29,7 @@ export interface ReporterV2 {
   onStepBegin(test: TestCase, result: TestResult, step: TestStep): void;
   onStepEnd(test: TestCase, result: TestResult, step: TestStep): void;
   printsToStdio(): boolean;
+  version(): 'v2';
 }
 
 type StdIOChunk = {
@@ -37,13 +38,26 @@ type StdIOChunk = {
   result?: TestResult;
 };
 
-export class ReporterV2Wrapper implements ReporterV2 {
+export function wrapReporterAsV2(reporter: Reporter | ReporterV2): ReporterV2 {
+  try {
+    if ('version' in reporter && reporter.version() === 'v2')
+      return reporter as ReporterV2;
+  } catch (e) {
+  }
+  return new ReporterV2Wrapper(reporter as Reporter);
+}
+
+class ReporterV2Wrapper implements ReporterV2 {
   private _reporter: Reporter;
   private _deferred: { error?: TestError, stdout?: StdIOChunk, stderr?: StdIOChunk }[] | null = [];
   private _config!: FullConfig;
 
   constructor(reporter: Reporter) {
     this._reporter = reporter;
+  }
+
+  version(): 'v2' {
+    return 'v2';
   }
 
   onConfigure(config: FullConfig) {

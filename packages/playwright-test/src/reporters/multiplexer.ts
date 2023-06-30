@@ -25,6 +25,10 @@ export class Multiplexer implements ReporterV2 {
     this._reporters = reporters;
   }
 
+  version(): 'v2' {
+    return 'v2';
+  }
+
   onConfigure(config: FullConfig) {
     for (const reporter of this._reporters)
       wrap(() => reporter.onConfigure(config));

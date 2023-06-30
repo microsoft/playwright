@@ -17,7 +17,7 @@
 /* eslint-disable no-console */
 import { colors, ms as milliseconds } from 'playwright-core/lib/utilsBundle';
 import { BaseReporter, formatError, formatTestTitle, stepSuffix, stripAnsiEscapes } from './base';
-import type { FullConfig, FullResult, Suite, TestCase, TestError, TestResult, TestStep } from '../../types/testReporter';
+import type { FullResult, Suite, TestCase, TestError, TestResult, TestStep } from '../../types/testReporter';
 
 // Allow it in the Visual Studio Code Terminal and the new Windows Terminal
 const DOES_NOT_SUPPORT_UTF8_IN_TERMINAL = process.platform === 'win32' && process.env.TERM_PROGRAM !== 'vscode' && !process.env.WT_SESSION;
@@ -41,12 +41,12 @@ class ListReporter extends BaseReporter {
     this._liveTerminal = process.stdout.isTTY || !!process.env.PWTEST_TTY_WIDTH;
   }
 
-  printsToStdio() {
+  override printsToStdio() {
     return true;
   }
 
-  override onBegin(config: FullConfig, suite: Suite) {
-    super.onBegin(config, suite);
+  override onBegin(suite: Suite) {
+    super.onBegin(suite);
     const startingMessage = this.generateStartingMessage();
     if (startingMessage) {
       console.log(startingMessage);
@@ -54,7 +54,8 @@ class ListReporter extends BaseReporter {
     }
   }
 
-  onTestBegin(test: TestCase, result: TestResult) {
+  override onTestBegin(test: TestCase, result: TestResult) {
+    super.onTestBegin(test, result);
     if (this._liveTerminal)
       this._maybeWriteNewLine();
     this._resultIndex.set(result, String(this._resultIndex.size + 1));
@@ -77,7 +78,8 @@ class ListReporter extends BaseReporter {
     this._dumpToStdio(test, chunk, process.stderr);
   }
 
-  onStepBegin(test: TestCase, result: TestResult, step: TestStep) {
+  override onStepBegin(test: TestCase, result: TestResult, step: TestStep) {
+    super.onStepBegin(test, result, step);
     if (step.category !== 'test.step')
       return;
     const testIndex = this._resultIndex.get(result)!;
@@ -102,7 +104,8 @@ class ListReporter extends BaseReporter {
     }
   }
 
-  onStepEnd(test: TestCase, result: TestResult, step: TestStep) {
+  override onStepEnd(test: TestCase, result: TestResult, step: TestStep) {
+    super.onStepEnd(test, result, step);
     if (step.category !== 'test.step')
       return;
 

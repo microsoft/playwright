@@ -704,3 +704,32 @@ test('should be able to ignore "stderr"', async ({ runInlineTest }, { workerInde
   expect(result.passed).toBe(1);
   expect(result.output).not.toContain('error from server');
 });
+
+test('should forward stdout when set to "pipe" before server is ready', async ({ runInlineTest }, { workerIndex }) => {
+  test.skip(process.platform === 'win32', 'No sending SIGINT on Windows');
+
+  const result = await runInlineTest({
+    'web-server.js': `
+      console.log('output from server');
+      console.log('\\n%%SEND-SIGINT%%');
+      setTimeout(() => {}, 10000000);
+    `,
+    'test.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({}) => {});
+    `,
+    'playwright.config.ts': `
+      module.exports = {
+        webServer: {
+          command: 'node web-server.js',
+          port: 12345,
+          stdout: 'pipe',
+          timeout: 3000,
+        },
+      };
+    `,
+  }, { workers: 1 }, {}, { sendSIGINTAfter: 1 });
+  expect(result.passed).toBe(0);
+  expect(result.output).toContain('[WebServer] output from server');
+  expect(result.output).not.toContain('Timed out waiting 3000ms');
+});
