@@ -17,7 +17,7 @@
 // @ts-check
 const path = require('path');
 const toKebabCase = require('lodash/kebabCase')
-const devices = require('../../packages/playwright-core/lib/server/deviceDescriptors');
+const devices = require('../../packages/playwright-core/lib/server/deviceDescriptorsSource.json');
 const md = require('../markdown');
 const docs = require('../doclint/documentation');
 const PROJECT_DIR = path.join(__dirname, '..', '..');

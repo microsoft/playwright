@@ -32,6 +32,7 @@ import { transformCommandsForRoot, dockerVersion, readDockerVersionSync } from '
 import { installDependenciesLinux, installDependenciesWindows, validateDependenciesLinux, validateDependenciesWindows } from './dependencies';
 import { downloadBrowserWithProgressBar, logPolitely } from './browserFetcher';
 export { writeDockerVersion } from './dependencies';
+import browsersJSON from '../../../browsers.json';
 
 const PACKAGE_PATH = path.join(__dirname, '..', '..', '..');
 const BIN_PATH = path.join(__dirname, '..', '..', '..', 'bin');
@@ -1035,4 +1036,4 @@ function lowercaseAllKeys(json: any): any {
   return result;
 }
 
-export const registry = new Registry(require('../../../browsers.json'));
+export const registry = new Registry(browsersJSON);

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-/**
- * @type {import('./types').Devices}
- */
-module.exports = require("./deviceDescriptorsSource.json")
+import deviceDescriptors from './deviceDescriptorsSource.json';
+import type { Devices } from './types';
+
+export default deviceDescriptors as Devices;

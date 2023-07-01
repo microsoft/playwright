@@ -20,7 +20,6 @@ import { GlobalAPIRequestContext } from '../fetch';
 import type { Playwright } from '../playwright';
 import type { SocksSocketClosedPayload, SocksSocketDataPayload, SocksSocketRequestedPayload } from '../../common/socksProxy';
 import { SocksProxy } from '../../common/socksProxy';
-import type * as types from '../types';
 import { AndroidDispatcher } from './androidDispatcher';
 import { BrowserTypeDispatcher } from './browserTypeDispatcher';
 import type { RootDispatcher } from './dispatcher';
@@ -34,13 +33,13 @@ import { createGuid } from '../../utils';
 import type { AndroidDevice } from '../android/android';
 import { AndroidDeviceDispatcher } from './androidDispatcher';
 import { eventsHelper, type RegisteredListener } from '../../utils/eventsHelper';
+import descriptors from '../deviceDescriptors';
 
 export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.PlaywrightChannel, RootDispatcher> implements channels.PlaywrightChannel {
   _type_Playwright;
   private _browserDispatcher: ConnectedBrowserDispatcher | undefined;
 
   constructor(scope: RootDispatcher, playwright: Playwright, socksProxy?: SocksProxy, preLaunchedBrowser?: Browser, prelaunchedAndroidDevice?: AndroidDevice) {
-    const descriptors = require('../deviceDescriptors') as types.Devices;
     const deviceDescriptors = Object.entries(descriptors)
         .map(([name, descriptor]) => ({ name, descriptor }));
     const browserDispatcher = preLaunchedBrowser ? new ConnectedBrowserDispatcher(scope, preLaunchedBrowser) : undefined;

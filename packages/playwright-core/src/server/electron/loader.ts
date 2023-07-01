@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-const { app } = require('electron');
-const { chromiumSwitches } = require('../chromium/chromiumSwitches');
+import { app } from 'electron';
+import { chromiumSwitches } from '../chromium/chromiumSwitches';
 
 // [Electron, -r, loader.js, --inspect=0, --remote-debugging-port=0, ...args]
 process.argv.splice(1, 4);

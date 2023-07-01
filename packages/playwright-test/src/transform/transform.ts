@@ -26,8 +26,9 @@ import type { BabelPlugin, BabelTransformFunction } from './babelBundle';
 import { createFileMatcher, fileIsModule, resolveImportSpecifierExtension } from '../util';
 import type { Matcher } from '../util';
 import { getFromCompilationCache, currentFileDepsCollector, belongsToNodeModules } from './compilationCache';
+import packageJSON from '../../package.json';
 
-const version = require('../../package.json').version;
+const version = packageJSON.version;
 
 type ParsedTsConfigData = {
   absoluteBaseUrl: string;
