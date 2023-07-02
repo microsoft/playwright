@@ -609,6 +609,7 @@ Playwright:
     webkit: BrowserType
     android: Android
     electron: Electron
+    crx: Crx
     utils: LocalUtils
     deviceDescriptors:
       type: array
@@ -3219,6 +3220,101 @@ ElectronApplication:
   events:
     close:
 
+Crx:
+  type: interface
+
+  commands:
+
+    start:
+      returns:
+        crxApplication: CrxApplication
+
+CrxApplication:
+  type: interface
+
+  initializer:
+    context: BrowserContext
+
+  commands:
+
+    attach:
+      parameters:
+        tabId: number
+      returns:
+        page: Page
+
+    attachAll:
+      parameters:
+        status:
+          type: enum?
+          literals:
+          - 'loading'
+          - 'complete'
+        lastFocusedWindow: boolean?
+        windowId: number?
+        windowType:
+          type: enum?
+          literals:
+          - 'normal'
+          - 'popup'
+          - 'panel'
+          - 'app'
+          - 'devtools'
+        active: boolean?
+        index: number?
+        title: string?
+        url:
+          type: array?
+          items: string
+        currentWindow: boolean?
+        highlighted: boolean?
+        discarded: boolean?
+        autoDiscardable: boolean?
+        pinned: boolean?
+        audible: boolean?
+        muted: boolean?
+        groupId: number?
+      returns:
+        pages:
+          type: array
+          items: Page
+
+    detach:
+      parameters:
+        tabId: number
+
+    detachAll:
+
+    newPage:
+      parameters:
+        index: number?
+        openerTabId: number?
+        url: string?
+        pinned: boolean?
+        windowId: number?
+        active: boolean?
+        selected: boolean?
+      returns:
+        page: Page
+
+    showRecorder:
+      parameters:
+        mode:
+          type: enum?
+          literals:
+          - 'none'
+          - 'recording'
+          - 'inspecting'
+        language: string?
+        testIdAttributeName: string?
+
+    hideRecorder:
+
+    close:
+
+  events:
+    hide:
+    show:
 
 Android:
   type: interface

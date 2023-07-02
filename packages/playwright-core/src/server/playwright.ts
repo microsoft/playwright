@@ -18,6 +18,7 @@ import { Android } from './android/android';
 import { AdbBackend } from './android/backendAdb';
 import type { Browser } from './browser';
 import { Chromium } from './chromium/chromium';
+import { Crx } from './crx/crx';
 import { Electron } from './electron/electron';
 import { Firefox } from './firefox/firefox';
 import { Selectors } from './selectors';
@@ -41,6 +42,7 @@ export class Playwright extends SdkObject {
   readonly chromium: Chromium;
   readonly android: Android;
   readonly electron: Electron;
+  readonly crx: Crx;
   readonly firefox: Firefox;
   readonly webkit: WebKit;
   readonly options: PlaywrightOptions;
@@ -65,6 +67,7 @@ export class Playwright extends SdkObject {
     this.firefox = new Firefox(this);
     this.webkit = new WebKit(this);
     this.electron = new Electron(this);
+    this.crx = new Crx(this);
     this.android = new Android(this, new AdbBackend());
     this.selectors = new Selectors();
     this.debugController = new DebugController(this);

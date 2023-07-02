@@ -22,6 +22,7 @@ export type { BrowserServer } from './browserType';
 export { BrowserType } from './browserType';
 export { ConsoleMessage } from './consoleMessage';
 export { Coverage } from './coverage';
+export { Crx, CrxApplication, CrxRecorder } from './crx';
 export { Dialog } from './dialog';
 export { Download } from './download';
 export { Electron, ElectronApplication } from './electron';

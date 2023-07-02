@@ -199,6 +199,11 @@ export class FixtureRunner {
   pool: FixturePool | undefined;
   instanceForId = new Map<string, Fixture>();
 
+  earlyExpectedStatus(testInfo: TestInfoImpl) {
+    // can be overriden to allow early test expected status to be set,
+    // for instance to skip
+  }
+
   setPool(pool: FixturePool) {
     if (!this.testScopeClean)
       throw new Error('Did not teardown test scope');
@@ -263,13 +268,17 @@ export class FixtureRunner {
     return params;
   }
 
+  async runFunction(fn: Function, params: object, testInfo: TestInfoImpl) {
+    return fn(params, testInfo);
+  }
+
   async resolveParametersAndRunFunction(fn: Function, testInfo: TestInfoImpl, autoFixtures: 'worker' | 'test' | 'all-hooks-only') {
     const params = await this.resolveParametersForFunction(fn, testInfo, autoFixtures);
     if (params === null) {
       // Do not run the function when fixture setup has already failed.
       return null;
     }
-    return fn(params, testInfo);
+    return this.runFunction(fn, params, testInfo);
   }
 
   async setupFixtureForRegistration(registration: FixtureRegistration, testInfo: TestInfoImpl): Promise<Fixture> {
@@ -297,7 +306,7 @@ export class FixtureRunner {
   }
 }
 
-function getRequiredFixtureNames(fn: Function, location?: Location) {
+export function getRequiredFixtureNames(fn: Function, location?: Location) {
   return fixtureParameterNames(fn, location ?? { file: '<unknown>', line: 1, column: 1 }, e => {
     throw new Error(`${formatLocation(e.location!)}: ${e.message}`);
   });

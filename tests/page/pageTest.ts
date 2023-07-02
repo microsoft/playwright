@@ -21,6 +21,7 @@ import { androidTest } from '../android/androidTest';
 import { browserTest } from '../config/browserTest';
 import { electronTest } from '../electron/electronTest';
 import { webView2Test } from '../webview2/webView2Test';
+import { crxTest } from '../crx/crxTest';
 import type { PageTestFixtures, PageWorkerFixtures } from './pageTestApi';
 import type { ServerFixtures, ServerWorkerOptions } from '../config/serverFixtures';
 export { expect } from '@playwright/test';
@@ -33,5 +34,7 @@ if (process.env.PWPAGE_IMPL === 'electron')
   impl = electronTest;
 if (process.env.PWPAGE_IMPL === 'webview2')
   impl = webView2Test;
+if (process.env.PWPAGE_IMPL === 'crx')
+  impl = crxTest;
 
 export const test = impl;

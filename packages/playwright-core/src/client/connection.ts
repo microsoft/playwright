@@ -46,6 +46,7 @@ import { Tracing } from './tracing';
 import { findValidator, ValidationError, type ValidatorContext } from '../protocol/validator';
 import { createInstrumentation } from './clientInstrumentation';
 import type { ClientInstrumentation } from './clientInstrumentation';
+import { Crx, CrxApplication } from './crx';
 
 class Root extends ChannelOwner<channels.RootChannel> {
   constructor(connection: Connection) {
@@ -242,6 +243,12 @@ export class Connection extends EventEmitter {
         break;
       case 'ConsoleMessage':
         result = new ConsoleMessage(parent, type, guid, initializer);
+        break;
+      case 'Crx':
+        result = new Crx(parent, type, guid, initializer);
+        break;
+      case 'CrxApplication':
+        result = new CrxApplication(parent, type, guid, initializer);
         break;
       case 'Dialog':
         result = new Dialog(parent, type, guid, initializer);

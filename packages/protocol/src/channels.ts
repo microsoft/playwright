@@ -29,6 +29,8 @@ export type InitializerTraits<T> =
     T extends AndroidDeviceChannel ? AndroidDeviceInitializer :
     T extends AndroidSocketChannel ? AndroidSocketInitializer :
     T extends AndroidChannel ? AndroidInitializer :
+    T extends CrxApplicationChannel ? CrxApplicationInitializer :
+    T extends CrxChannel ? CrxInitializer :
     T extends ElectronApplicationChannel ? ElectronApplicationInitializer :
     T extends ElectronChannel ? ElectronInitializer :
     T extends CDPSessionChannel ? CDPSessionInitializer :
@@ -67,6 +69,8 @@ export type EventsTraits<T> =
     T extends AndroidDeviceChannel ? AndroidDeviceEvents :
     T extends AndroidSocketChannel ? AndroidSocketEvents :
     T extends AndroidChannel ? AndroidEvents :
+    T extends CrxApplicationChannel ? CrxApplicationEvents :
+    T extends CrxChannel ? CrxEvents :
     T extends ElectronApplicationChannel ? ElectronApplicationEvents :
     T extends ElectronChannel ? ElectronEvents :
     T extends CDPSessionChannel ? CDPSessionEvents :
@@ -105,6 +109,8 @@ export type EventTargetTraits<T> =
     T extends AndroidDeviceChannel ? AndroidDeviceEventTarget :
     T extends AndroidSocketChannel ? AndroidSocketEventTarget :
     T extends AndroidChannel ? AndroidEventTarget :
+    T extends CrxApplicationChannel ? CrxApplicationEventTarget :
+    T extends CrxChannel ? CrxEventTarget :
     T extends ElectronApplicationChannel ? ElectronApplicationEventTarget :
     T extends ElectronChannel ? ElectronEventTarget :
     T extends CDPSessionChannel ? CDPSessionEventTarget :
@@ -537,6 +543,7 @@ export type PlaywrightInitializer = {
   webkit: BrowserTypeChannel,
   android: AndroidChannel,
   electron: ElectronChannel,
+  crx: CrxChannel,
   utils: LocalUtilsChannel,
   deviceDescriptors: {
     name: string,
@@ -4111,6 +4118,146 @@ export type ElectronApplicationCloseResult = void;
 
 export interface ElectronApplicationEvents {
   'close': ElectronApplicationCloseEvent;
+}
+
+// ----------- Crx -----------
+export type CrxInitializer = {};
+export interface CrxEventTarget {
+}
+export interface CrxChannel extends CrxEventTarget, Channel {
+  _type_Crx: boolean;
+  start(params?: CrxStartParams, metadata?: CallMetadata): Promise<CrxStartResult>;
+}
+export type CrxStartParams = {};
+export type CrxStartOptions = {};
+export type CrxStartResult = {
+  crxApplication: CrxApplicationChannel,
+};
+
+export interface CrxEvents {
+}
+
+// ----------- CrxApplication -----------
+export type CrxApplicationInitializer = {
+  context: BrowserContextChannel,
+};
+export interface CrxApplicationEventTarget {
+  on(event: 'hide', callback: (params: CrxApplicationHideEvent) => void): this;
+  on(event: 'show', callback: (params: CrxApplicationShowEvent) => void): this;
+}
+export interface CrxApplicationChannel extends CrxApplicationEventTarget, Channel {
+  _type_CrxApplication: boolean;
+  attach(params: CrxApplicationAttachParams, metadata?: CallMetadata): Promise<CrxApplicationAttachResult>;
+  attachAll(params: CrxApplicationAttachAllParams, metadata?: CallMetadata): Promise<CrxApplicationAttachAllResult>;
+  detach(params: CrxApplicationDetachParams, metadata?: CallMetadata): Promise<CrxApplicationDetachResult>;
+  detachAll(params?: CrxApplicationDetachAllParams, metadata?: CallMetadata): Promise<CrxApplicationDetachAllResult>;
+  newPage(params: CrxApplicationNewPageParams, metadata?: CallMetadata): Promise<CrxApplicationNewPageResult>;
+  showRecorder(params: CrxApplicationShowRecorderParams, metadata?: CallMetadata): Promise<CrxApplicationShowRecorderResult>;
+  hideRecorder(params?: CrxApplicationHideRecorderParams, metadata?: CallMetadata): Promise<CrxApplicationHideRecorderResult>;
+  close(params?: CrxApplicationCloseParams, metadata?: CallMetadata): Promise<CrxApplicationCloseResult>;
+}
+export type CrxApplicationHideEvent = {};
+export type CrxApplicationShowEvent = {};
+export type CrxApplicationAttachParams = {
+  tabId: number,
+};
+export type CrxApplicationAttachOptions = {
+
+};
+export type CrxApplicationAttachResult = {
+  page: PageChannel,
+};
+export type CrxApplicationAttachAllParams = {
+  status?: 'loading' | 'complete',
+  lastFocusedWindow?: boolean,
+  windowId?: number,
+  windowType?: 'normal' | 'popup' | 'panel' | 'app' | 'devtools',
+  active?: boolean,
+  index?: number,
+  title?: string,
+  url?: string[],
+  currentWindow?: boolean,
+  highlighted?: boolean,
+  discarded?: boolean,
+  autoDiscardable?: boolean,
+  pinned?: boolean,
+  audible?: boolean,
+  muted?: boolean,
+  groupId?: number,
+};
+export type CrxApplicationAttachAllOptions = {
+  status?: 'loading' | 'complete',
+  lastFocusedWindow?: boolean,
+  windowId?: number,
+  windowType?: 'normal' | 'popup' | 'panel' | 'app' | 'devtools',
+  active?: boolean,
+  index?: number,
+  title?: string,
+  url?: string[],
+  currentWindow?: boolean,
+  highlighted?: boolean,
+  discarded?: boolean,
+  autoDiscardable?: boolean,
+  pinned?: boolean,
+  audible?: boolean,
+  muted?: boolean,
+  groupId?: number,
+};
+export type CrxApplicationAttachAllResult = {
+  pages: PageChannel[],
+};
+export type CrxApplicationDetachParams = {
+  tabId: number,
+};
+export type CrxApplicationDetachOptions = {
+
+};
+export type CrxApplicationDetachResult = void;
+export type CrxApplicationDetachAllParams = {};
+export type CrxApplicationDetachAllOptions = {};
+export type CrxApplicationDetachAllResult = void;
+export type CrxApplicationNewPageParams = {
+  index?: number,
+  openerTabId?: number,
+  url?: string,
+  pinned?: boolean,
+  windowId?: number,
+  active?: boolean,
+  selected?: boolean,
+};
+export type CrxApplicationNewPageOptions = {
+  index?: number,
+  openerTabId?: number,
+  url?: string,
+  pinned?: boolean,
+  windowId?: number,
+  active?: boolean,
+  selected?: boolean,
+};
+export type CrxApplicationNewPageResult = {
+  page: PageChannel,
+};
+export type CrxApplicationShowRecorderParams = {
+  mode?: 'none' | 'recording' | 'inspecting',
+  language?: string,
+  testIdAttributeName?: string,
+};
+export type CrxApplicationShowRecorderOptions = {
+  mode?: 'none' | 'recording' | 'inspecting',
+  language?: string,
+  testIdAttributeName?: string,
+};
+export type CrxApplicationShowRecorderResult = void;
+export type CrxApplicationHideRecorderParams = {};
+export type CrxApplicationHideRecorderOptions = {};
+export type CrxApplicationHideRecorderResult = void;
+export type CrxApplicationCloseParams = {};
+export type CrxApplicationCloseOptions = {};
+export type CrxApplicationCloseResult = void;
+
+export interface CrxApplicationEvents {
+  'hide': CrxApplicationHideEvent;
+  'show': CrxApplicationShowEvent;
 }
 
 // ----------- Android -----------

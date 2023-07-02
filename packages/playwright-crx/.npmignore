@@ -1,0 +1,17 @@
+# This ignores everything by default, except for package.json and LICENSE and README.md.
+# See https://docs.npmjs.com/misc/developers
+**/*
+# Include sources from lib, but not map files.
+!lib/**/*.js
+!lib/**/*.mjs
+# Include web assets for recorder, trace viewer, etc.
+!lib/**/*.css
+!lib/**/*.html
+!lib/**/*.png
+!lib/**/*.ttf
+# Include generated types and entrypoint.
+!index.d.ts
+# Include essentials.
+!README.md
+!LICENSE
+!NOTICE

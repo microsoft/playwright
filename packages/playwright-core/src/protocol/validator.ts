@@ -298,6 +298,7 @@ scheme.PlaywrightInitializer = tObject({
   webkit: tChannel(['BrowserType']),
   android: tChannel(['Android']),
   electron: tChannel(['Electron']),
+  crx: tChannel(['Crx']),
   utils: tChannel(['LocalUtils']),
   deviceDescriptors: tArray(tObject({
     name: tString,
@@ -2273,6 +2274,71 @@ scheme.ElectronApplicationEvaluateExpressionHandleResult = tObject({
 });
 scheme.ElectronApplicationCloseParams = tOptional(tObject({}));
 scheme.ElectronApplicationCloseResult = tOptional(tObject({}));
+scheme.CrxInitializer = tOptional(tObject({}));
+scheme.CrxStartParams = tOptional(tObject({}));
+scheme.CrxStartResult = tObject({
+  crxApplication: tChannel(['CrxApplication']),
+});
+scheme.CrxApplicationInitializer = tObject({
+  context: tChannel(['BrowserContext']),
+});
+scheme.CrxApplicationHideEvent = tOptional(tObject({}));
+scheme.CrxApplicationShowEvent = tOptional(tObject({}));
+scheme.CrxApplicationAttachParams = tObject({
+  tabId: tNumber,
+});
+scheme.CrxApplicationAttachResult = tObject({
+  page: tChannel(['Page']),
+});
+scheme.CrxApplicationAttachAllParams = tObject({
+  status: tOptional(tEnum(['loading', 'complete'])),
+  lastFocusedWindow: tOptional(tBoolean),
+  windowId: tOptional(tNumber),
+  windowType: tOptional(tEnum(['normal', 'popup', 'panel', 'app', 'devtools'])),
+  active: tOptional(tBoolean),
+  index: tOptional(tNumber),
+  title: tOptional(tString),
+  url: tOptional(tArray(tString)),
+  currentWindow: tOptional(tBoolean),
+  highlighted: tOptional(tBoolean),
+  discarded: tOptional(tBoolean),
+  autoDiscardable: tOptional(tBoolean),
+  pinned: tOptional(tBoolean),
+  audible: tOptional(tBoolean),
+  muted: tOptional(tBoolean),
+  groupId: tOptional(tNumber),
+});
+scheme.CrxApplicationAttachAllResult = tObject({
+  pages: tArray(tChannel(['Page'])),
+});
+scheme.CrxApplicationDetachParams = tObject({
+  tabId: tNumber,
+});
+scheme.CrxApplicationDetachResult = tOptional(tObject({}));
+scheme.CrxApplicationDetachAllParams = tOptional(tObject({}));
+scheme.CrxApplicationDetachAllResult = tOptional(tObject({}));
+scheme.CrxApplicationNewPageParams = tObject({
+  index: tOptional(tNumber),
+  openerTabId: tOptional(tNumber),
+  url: tOptional(tString),
+  pinned: tOptional(tBoolean),
+  windowId: tOptional(tNumber),
+  active: tOptional(tBoolean),
+  selected: tOptional(tBoolean),
+});
+scheme.CrxApplicationNewPageResult = tObject({
+  page: tChannel(['Page']),
+});
+scheme.CrxApplicationShowRecorderParams = tObject({
+  mode: tOptional(tEnum(['none', 'recording', 'inspecting'])),
+  language: tOptional(tString),
+  testIdAttributeName: tOptional(tString),
+});
+scheme.CrxApplicationShowRecorderResult = tOptional(tObject({}));
+scheme.CrxApplicationHideRecorderParams = tOptional(tObject({}));
+scheme.CrxApplicationHideRecorderResult = tOptional(tObject({}));
+scheme.CrxApplicationCloseParams = tOptional(tObject({}));
+scheme.CrxApplicationCloseResult = tOptional(tObject({}));
 scheme.AndroidInitializer = tOptional(tObject({}));
 scheme.AndroidDevicesParams = tObject({
   host: tOptional(tString),

@@ -1,0 +1,23 @@
+{
+  "name": "@playwright/experimental-crx",
+  "version": "1.36.0-next",
+  "description": "A high-level API to automate Chromium",
+  "repository": "github:Microsoft/playwright",
+  "homepage": "https://playwright.dev",
+  "engines": {
+    "node": ">=16"
+  },
+  "author": {
+    "name": "Microsoft Corporation"
+  },
+  "license": "Apache-2.0",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./lib/playwright-crx.mjs",
+      "require": "./lib/playwright-crx.umd.js",
+      "default": "./lib/playwright-crx.umd.js"
+    },
+    "./package.json": "./package.json"
+  }
+}

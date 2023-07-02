@@ -25,6 +25,7 @@ import type { Matcher } from '../util';
 import type { ConfigCLIOverrides } from './ipc';
 import type { FullConfig, FullProject } from '../../types/test';
 import { setTransformConfig } from '../transform/transform';
+import packageJSON from '../../package.json';
 
 export type FixturesWithLocation = {
   fixtures: Fixtures;
@@ -92,7 +93,7 @@ export class FullConfigInternal {
       projects: [],
       shard: takeFirst(configCLIOverrides.shard, config.shard, null),
       updateSnapshots: takeFirst(configCLIOverrides.updateSnapshots, config.updateSnapshots, 'missing'),
-      version: require('../../package.json').version,
+      version: packageJSON.version,
       workers: 0,
       webServer: null,
     };

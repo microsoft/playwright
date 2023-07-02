@@ -47,6 +47,7 @@ it('should scope context handles', async ({ browserType, server, expectScopeStat
       { _guid: 'browser-type', objects: [
         { _guid: 'browser', objects: [] }
       ] },
+      { _guid: 'crx', objects: [] },
       { _guid: 'electron', objects: [] },
       { _guid: 'localUtils', objects: [] },
       { _guid: 'Playwright', objects: [] },
@@ -79,6 +80,7 @@ it('should scope context handles', async ({ browserType, server, expectScopeStat
           ] },
         ] },
       ] },
+      { _guid: 'crx', objects: [] },
       { _guid: 'electron', objects: [] },
       { _guid: 'localUtils', objects: [] },
       { _guid: 'Playwright', objects: [] },
@@ -104,6 +106,7 @@ it('should scope CDPSession handles', async ({ browserType, browserName, expectS
       { _guid: 'browser-type', objects: [
         { _guid: 'browser', objects: [] }
       ] },
+      { _guid: 'crx', objects: [] },
       { _guid: 'electron', objects: [] },
       { _guid: 'localUtils', objects: [] },
       { _guid: 'Playwright', objects: [] },
@@ -124,6 +127,7 @@ it('should scope CDPSession handles', async ({ browserType, browserName, expectS
           { _guid: 'cdp-session', objects: [] },
         ] },
       ] },
+      { _guid: 'crx', objects: [] },
       { _guid: 'electron', objects: [] },
       { _guid: 'localUtils', objects: [] },
       { _guid: 'Playwright', objects: [] },
@@ -145,6 +149,7 @@ it('should scope browser handles', async ({ browserType, expectScopeState }) => 
       { _guid: 'browser-type', objects: [] },
       { _guid: 'browser-type', objects: [] },
       { _guid: 'browser-type', objects: [] },
+      { _guid: 'crx', objects: [] },
       { _guid: 'electron', objects: [] },
       { _guid: 'localUtils', objects: [] },
       { _guid: 'Playwright', objects: [] },
@@ -172,6 +177,7 @@ it('should scope browser handles', async ({ browserType, expectScopeState }) => 
         },
       ]
       },
+      { _guid: 'crx', objects: [] },
       { _guid: 'electron', objects: [] },
       { _guid: 'localUtils', objects: [] },
       { _guid: 'Playwright', objects: [] },
@@ -215,6 +221,7 @@ it('should not generate dispatchers for subresources w/o listeners', async ({ pa
           ]
         }],
       },
+      { _guid: 'crx', objects: [] },
       { _guid: 'electron', objects: [] },
       { _guid: 'localUtils', objects: [] },
       { _guid: 'Playwright', objects: [] },

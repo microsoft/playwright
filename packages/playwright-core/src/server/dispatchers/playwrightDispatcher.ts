@@ -34,6 +34,7 @@ import type { AndroidDevice } from '../android/android';
 import { AndroidDeviceDispatcher } from './androidDispatcher';
 import { eventsHelper, type RegisteredListener } from '../../utils/eventsHelper';
 import descriptors from '../deviceDescriptors';
+import { CrxDispatcher } from './crxDispatcher';
 
 export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.PlaywrightChannel, RootDispatcher> implements channels.PlaywrightChannel {
   _type_Playwright;
@@ -51,6 +52,7 @@ export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.Playwr
       webkit: new BrowserTypeDispatcher(scope, playwright.webkit),
       android,
       electron: new ElectronDispatcher(scope, playwright.electron),
+      crx: new CrxDispatcher(scope, playwright.crx),
       utils: new LocalUtilsDispatcher(scope, playwright),
       deviceDescriptors,
       selectors: new SelectorsDispatcher(scope, browserDispatcher?.selectors || playwright.selectors),

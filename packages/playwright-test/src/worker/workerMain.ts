@@ -31,6 +31,7 @@ import { loadTestFile } from '../common/testLoader';
 import { buildFileSuiteForProject, filterTestsRemoveEmptySuites } from '../common/suiteUtils';
 import { PoolBuilder } from '../common/poolBuilder';
 import type { TestInfoError } from '../../types/test';
+import CrxFixtureRunner from './crxFixtureRunner';
 
 const removeFolderAsync = util.promisify(rimraf);
 
@@ -68,7 +69,9 @@ export class WorkerMain extends ProcessRunner {
     setIsWorkerProcess();
 
     this._params = params;
-    this._fixtureRunner = new FixtureRunner();
+    this._fixtureRunner = process.env.PWPAGE_IMPL !== 'crx' ?
+      new FixtureRunner() :
+      new CrxFixtureRunner();
 
     // Resolve this promise, so worker does not stall waiting for the non-existent run to finish,
     // when it was sopped before running any test group.
@@ -268,6 +271,8 @@ export class WorkerMain extends ProcessRunner {
       }
     };
 
+    this._fixtureRunner.earlyExpectedStatus(testInfo);
+
     if (!this._isStopped)
       this._fixtureRunner.setPool(test._pool!);
 
@@ -373,7 +378,7 @@ export class WorkerMain extends ProcessRunner {
         // Now run the test itself.
         debugTest(`test function started`);
         const fn = test.fn; // Extract a variable to get a better stack trace ("myTest" vs "TestCase.myTest [as fn]").
-        await fn(testFunctionParams, testInfo);
+        await this._fixtureRunner.runFunction(fn, testFunctionParams!, testInfo);
         debugTest(`test function finished`);
       }, 'allowSkips');
 

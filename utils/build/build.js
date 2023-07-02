@@ -232,7 +232,7 @@ steps.push({
 
 // Run Babel.
 for (const pkg of workspace.packages()) {
-  if (!fs.existsSync(path.join(pkg.path, 'src')))
+  if (!fs.existsSync(path.join(pkg.path, 'src')) || pkg.name === '@playwright/experimental-crx')
     continue;
   steps.push({
     command: 'npx',
@@ -247,6 +247,15 @@ for (const pkg of workspace.packages()) {
     concurrent: true,
   });
 }
+
+// Build/watch playwright-crx.
+steps.push({
+  command: 'npx',
+  args: ['vite', 'build', ...(watchMode ? ['--watch', '--sourcemap', '--minify=false'] : [])],
+  shell: true,
+  cwd: path.join(__dirname, '..', '..', 'packages', 'playwright-crx'),
+  concurrent: true,
+});
 
 // Build/watch bundles.
 for (const bundle of bundles) {
@@ -278,6 +287,14 @@ steps.push({
   concurrent: true,
 });
 
+// Build/watch crx test extension.
+steps.push({
+  command: 'npx',
+  args: ['vite', 'build', ...(watchMode ? ['--watch', '--sourcemap', '--minify=false'] : [])],
+  shell: true,
+  cwd: path.join(__dirname, '..', '..', 'tests', 'crx', 'test-extension'),
+  concurrent: true,
+});
 
 // Generate injected.
 onChanges.push({

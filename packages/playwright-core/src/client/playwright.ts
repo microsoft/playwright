@@ -23,6 +23,7 @@ import { Electron } from './electron';
 import { APIRequest } from './fetch';
 import { Selectors, SelectorsOwner } from './selectors';
 import type { Size } from './types';
+import { Crx } from './crx';
 
 type DeviceDescriptor = {
   userAgent: string,
@@ -37,6 +38,7 @@ type Devices = { [name: string]: DeviceDescriptor };
 export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
   readonly _android: Android;
   readonly _electron: Electron;
+  readonly _crx: Crx;
   readonly chromium: BrowserType;
   readonly firefox: BrowserType;
   readonly webkit: BrowserType;
@@ -56,6 +58,7 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
     this.webkit._playwright = this;
     this._android = Android.from(initializer.android);
     this._electron = Electron.from(initializer.electron);
+    this._crx = Crx.from(initializer.crx);
     this.devices = {};
     for (const { name, descriptor } of initializer.deviceDescriptors)
       this.devices[name] = descriptor;
