@@ -23,8 +23,9 @@ import type { CommonFixtures, TestChildProcess } from '../../config/commonFixtur
 import { stripAnsi } from '../../config/utils';
 import { expect } from '@playwright/test';
 export { expect } from '@playwright/test';
+import { test as crxInspectorTest } from '../../crx/crxInspectorTest';
 
-type CLITestArgs = {
+export type CLITestArgs = {
   recorderPageGetter: () => Promise<Page>;
   closeRecorder: () => Promise<void>;
   openRecorder: (options?: { testIdAttributeName: string }) => Promise<Recorder>;
@@ -47,7 +48,7 @@ const codegenLangId2lang = new Map([...codegenLang2Id.entries()].map(([lang, lan
 
 const playwrightToAutomateInspector = require('../../../packages/playwright-core/lib/inProcessFactory').createInProcessPlaywright();
 
-export const test = contextTest.extend<CLITestArgs>({
+const inspectorTest = contextTest.extend<CLITestArgs>({
   recorderPageGetter: async ({ context, toImpl, mode }, run, testInfo) => {
     process.env.PWTEST_RECORDER_PORT = String(10907 + testInfo.workerIndex);
     testInfo.skip(mode === 'service');
@@ -84,7 +85,7 @@ export const test = contextTest.extend<CLITestArgs>({
   },
 });
 
-class Recorder {
+export class Recorder {
   page: Page;
   _highlightCallback: Function;
   _highlightInstalled: boolean;
@@ -237,3 +238,5 @@ class CLIMock {
     return stripAnsi(this.process.output);
   }
 }
+
+export const test = process.env.PWPAGE_IMPL !== 'crx' ? inspectorTest : crxInspectorTest;
