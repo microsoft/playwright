@@ -83,7 +83,6 @@ export default defineConfig({
   define: {
     // we need this one because of PLAYWRIGHT_CORE_PATH (it checks the actual version of playwright-core)
     'require.resolve': '((s) => s)',
-    'process.geteuid': '(() => "crx")',
     'process.platform': '"browser"',
     'process.versions.node': '"18.16"',
     'process.env.DEBUG': '"*"',

@@ -26,7 +26,7 @@ export type MemoryCache = {
 };
 
 const cacheDir = process.env.PWTEST_CACHE_DIR || (() => {
-  if (process.platform === 'win32')
+  if (process.platform === 'win32' || !process.geteuid)
     return path.join(os.tmpdir(), `playwright-transform-cache`);
   // Use `geteuid()` instead of more natural `os.userInfo().username`
   // since `os.userInfo()` is not always available.
