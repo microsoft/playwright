@@ -4126,10 +4126,14 @@ export interface CrxEventTarget {
 }
 export interface CrxChannel extends CrxEventTarget, Channel {
   _type_Crx: boolean;
-  start(params?: CrxStartParams, metadata?: CallMetadata): Promise<CrxStartResult>;
+  start(params: CrxStartParams, metadata?: CallMetadata): Promise<CrxStartResult>;
 }
-export type CrxStartParams = {};
-export type CrxStartOptions = {};
+export type CrxStartParams = {
+  slowMo?: number,
+};
+export type CrxStartOptions = {
+  slowMo?: number,
+};
 export type CrxStartResult = {
   crxApplication: CrxApplicationChannel,
 };

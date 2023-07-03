@@ -29,9 +29,9 @@ export class Crx extends ChannelOwner<channels.CrxChannel> implements api.Crx {
     return (crx as any)._object;
   }
 
-  async start() {
+  async start(options?: channels.CrxStartOptions) {
     if (!this._crxApplication) {
-      this._crxApplication = CrxApplication.from((await this._channel.start()).crxApplication);
+      this._crxApplication = CrxApplication.from((await this._channel.start(options ?? {})).crxApplication);
       this._crxApplication.on('close', () => {
         this._crxApplication = undefined;
       });

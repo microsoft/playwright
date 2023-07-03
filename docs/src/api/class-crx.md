@@ -6,4 +6,6 @@
 * since: v1.**
 - returns: <[CrxApplication]>
 
-Launches Crx application.
+### option: Crx.start.slowMo = %%-browser-option-slowmo-%%
+* since: v1.**
+

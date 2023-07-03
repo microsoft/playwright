@@ -3226,6 +3226,9 @@ Crx:
   commands:
 
     start:
+      parameters:
+        slowMo: number?
+
       returns:
         crxApplication: CrxApplication
 

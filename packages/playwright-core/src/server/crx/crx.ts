@@ -33,7 +33,7 @@ export class Crx extends SdkObject {
     super(playwright, 'crx');
   }
 
-  async start(): Promise<CrxApplication> {
+  async start(options?: channels.CrxStartOptions): Promise<CrxApplication> {
     const transport = new CrxTransport();
     const browserLogsCollector = new RecentLogsCollector();
     const browserProcess: BrowserProcess = {
@@ -46,7 +46,7 @@ export class Crx extends SdkObject {
       noDefaultViewport: true,
       viewport: undefined,
     };
-    const options: BrowserOptions = {
+    const browserOptions: BrowserOptions = {
       name: 'chromium',
       isChromium: true,
       headful: true,
@@ -58,8 +58,9 @@ export class Crx extends SdkObject {
       artifactsDir: '.',
       downloadsPath: '.',
       tracesDir: '.',
+      ...options
     };
-    const browser = await CRBrowser.connect(this.attribution.playwright, transport, options);
+    const browser = await CRBrowser.connect(this.attribution.playwright, transport, browserOptions);
     return new CrxApplication(browser, transport);
   }
 

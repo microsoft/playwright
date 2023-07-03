@@ -2275,7 +2275,9 @@ scheme.ElectronApplicationEvaluateExpressionHandleResult = tObject({
 scheme.ElectronApplicationCloseParams = tOptional(tObject({}));
 scheme.ElectronApplicationCloseResult = tOptional(tObject({}));
 scheme.CrxInitializer = tOptional(tObject({}));
-scheme.CrxStartParams = tOptional(tObject({}));
+scheme.CrxStartParams = tObject({
+  slowMo: tOptional(tNumber),
+});
 scheme.CrxStartResult = tObject({
   crxApplication: tChannel(['CrxApplication']),
 });

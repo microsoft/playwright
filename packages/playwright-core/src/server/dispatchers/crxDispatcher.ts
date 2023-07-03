@@ -29,8 +29,8 @@ export class CrxDispatcher extends Dispatcher<Crx, channels.CrxChannel, RootDisp
     super(scope, crx, 'Crx', { });
   }
 
-  async start(): Promise<channels.CrxStartResult> {
-    return { crxApplication: new CrxApplicationDispatcher(this, await this._object.start()) };
+  async start(params: channels.CrxStartParams): Promise<channels.CrxStartResult> {
+    return { crxApplication: new CrxApplicationDispatcher(this, await this._object.start(params)) };
   }
 }
 

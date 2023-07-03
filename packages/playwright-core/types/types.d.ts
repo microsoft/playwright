@@ -16618,9 +16618,15 @@ export interface Coverage {
 
 export interface Crx {
   /**
-   * Launches Crx application.
+   * @param options
    */
-  start(): Promise<CrxApplication>;
+  start(options?: {
+    /**
+     * Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going
+     * on.
+     */
+    slowMo?: number;
+  }): Promise<CrxApplication>;
 }
 
 export interface CrxApplication {
