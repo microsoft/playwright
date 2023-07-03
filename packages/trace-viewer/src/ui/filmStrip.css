@@ -19,7 +19,16 @@
   display: flex;
   flex-direction: column;
   position: relative;
+}
+
+.film-strip-lanes {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  position: relative;
   min-height: 50px;
+  max-height: 200px;
+  overflow: auto;
 }
 
 .film-strip-lane {
