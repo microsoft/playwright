@@ -1,0 +1,13 @@
+{
+  "name": "Playwright CRX - TodoMVC",
+  "version": "0.0.0.1",
+  "manifest_version": 3,
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "Playwright CRX - TodoMVC"
+  },
+  "permissions": ["debugger", "tabs"]
+}
