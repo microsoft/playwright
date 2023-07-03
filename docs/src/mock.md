@@ -257,7 +257,7 @@ async def records_or_updates_the_har_file(page: Page):
     await page.goto("https://demo.playwright.dev/api-mocking")
 
     # Assert that the fruit is visible
-    await page.get_by_text("Strawberry").to_be_visible()
+    await expect(page.get_by_text("Strawberry")).to_be_visible()
 ```
 
 ```python sync
@@ -269,7 +269,7 @@ def records_or_updates_the_har_file(page: Page):
     page.goto("https://demo.playwright.dev/api-mocking")
 
     # Assert that the fruit is visible
-    page.get_by_text("Strawberry").to_be_visible()
+    expect(page.get_by_text("Strawberry")).to_be_visible()
 ```
 
 ```csharp
@@ -283,7 +283,7 @@ await page.RouteFromHARAsync("./hars/fruit.har", new () {
 await page.GotoAsync("https://demo.playwright.dev/api-mocking");
 
 // Assert that the fruit is visible
-await page.ExpectByTextAsync("Strawberry").ToBeVisibleAsync();
+await Expect(page.GetByText("Strawberry")).ToBeVisibleAsync();
 ```
 
 ```java
