@@ -23,7 +23,7 @@ import { asLocator } from '@isomorphic/locatorGenerators';
 import type { Language } from '@isomorphic/locatorGenerators';
 import type { TreeState } from '@web/components/treeView';
 import { TreeView } from '@web/components/treeView';
-import type { ActionTraceEventInContext } from './modelUtil';
+import type { ActionTraceEventInContext, ActionTreeItem } from './modelUtil';
 
 export interface ActionListProps {
   actions: ActionTraceEventInContext[],
@@ -34,13 +34,6 @@ export interface ActionListProps {
   revealConsole: () => void,
   isLive?: boolean,
 }
-
-type ActionTreeItem = {
-  id: string;
-  children: ActionTreeItem[];
-  parent: ActionTreeItem | undefined;
-  action?: ActionTraceEventInContext;
-};
 
 const ActionTreeView = TreeView<ActionTreeItem>;
 
@@ -54,26 +47,7 @@ export const ActionList: React.FC<ActionListProps> = ({
   isLive,
 }) => {
   const [treeState, setTreeState] = React.useState<TreeState>({ expandedItems: new Map() });
-  const { rootItem, itemMap } = React.useMemo(() => {
-    const itemMap = new Map<string, ActionTreeItem>();
-
-    for (const action of actions) {
-      itemMap.set(action.callId, {
-        id: action.callId,
-        parent: undefined,
-        children: [],
-        action,
-      });
-    }
-
-    const rootItem: ActionTreeItem = { id: '', parent: undefined, children: [] };
-    for (const item of itemMap.values()) {
-      const parent = item.action!.parentId ? itemMap.get(item.action!.parentId) || rootItem : rootItem;
-      parent.children.push(item);
-      item.parent = parent;
-    }
-    return { rootItem, itemMap };
-  }, [actions]);
+  const { rootItem, itemMap } = React.useMemo(() => modelUtil.buildActionTree(actions), [actions]);
 
   const { selectedItem } = React.useMemo(() => {
     const selectedItem = selectedAction ? itemMap.get(selectedAction.callId) : undefined;

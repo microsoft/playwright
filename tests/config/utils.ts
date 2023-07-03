@@ -20,7 +20,8 @@ import type { TraceModelBackend } from '../../packages/trace-viewer/src/traceMod
 import type { StackFrame } from '../../packages/protocol/src/channels';
 import { parseClientSideCallMetadata } from '../../packages/playwright-core/lib/utils/isomorphic/traceUtils';
 import { TraceModel } from '../../packages/trace-viewer/src/traceModel';
-import { MultiTraceModel } from '../../packages/trace-viewer/src/ui/modelUtil';
+import type { ActionTreeItem } from '../../packages/trace-viewer/src/ui/modelUtil';
+import { buildActionTree, MultiTraceModel } from '../../packages/trace-viewer/src/ui/modelUtil';
 import type { ActionTraceEvent, EventTraceEvent, TraceEvent } from '@trace/trace';
 
 export async function attachFrame(page: Page, frameId: string, url: string): Promise<Frame> {
@@ -165,11 +166,19 @@ function eventsToActions(events: ActionTraceEvent[]): string[] {
       .map(e => e.apiName);
 }
 
-export async function parseTrace(file: string): Promise<{ resources: Map<string, Buffer>, events: EventTraceEvent[], actions: ActionTraceEvent[], apiNames: string[], traceModel: TraceModel, model: MultiTraceModel }> {
+export async function parseTrace(file: string): Promise<{ resources: Map<string, Buffer>, events: EventTraceEvent[], actions: ActionTraceEvent[], apiNames: string[], traceModel: TraceModel, model: MultiTraceModel, actionTree: string[] }> {
   const backend = new TraceBackend(file);
   const traceModel = new TraceModel();
   await traceModel.load(backend, () => {});
   const model = new MultiTraceModel(traceModel.contextEntries);
+  const { rootItem } = buildActionTree(model.actions);
+  const actionTree: string[] = [];
+  const visit = (actionItem: ActionTreeItem, indent: string) => {
+    actionTree.push(`${indent}${actionItem.action?.apiName || actionItem.id}`);
+    for (const child of actionItem.children)
+      visit(child, indent + '  ');
+  };
+  rootItem.children.forEach(a => visit(a, ''));
   return {
     apiNames: model.actions.map(a => a.apiName),
     resources: backend.entries,
@@ -177,6 +186,7 @@ export async function parseTrace(file: string): Promise<{ resources: Map<string,
     events: model.events,
     model,
     traceModel,
+    actionTree,
   };
 }
 

@@ -41,6 +41,13 @@ export type ActionTraceEventInContext = ActionTraceEvent & {
   context: ContextEntry;
 };
 
+export type ActionTreeItem = {
+  id: string;
+  children: ActionTreeItem[];
+  parent: ActionTreeItem | undefined;
+  action?: ActionTraceEventInContext;
+};
+
 export class MultiTraceModel {
   readonly startTime: number;
   readonly endTime: number;
@@ -157,6 +164,27 @@ function mergeActions(contexts: ContextEntry[]) {
     (result[i] as any)[prevInListSymbol] = result[i - 1];
 
   return result;
+}
+
+export function buildActionTree(actions: ActionTraceEventInContext[]): { rootItem: ActionTreeItem, itemMap: Map<string, ActionTreeItem> } {
+  const itemMap = new Map<string, ActionTreeItem>();
+
+  for (const action of actions) {
+    itemMap.set(action.callId, {
+      id: action.callId,
+      parent: undefined,
+      children: [],
+      action,
+    });
+  }
+
+  const rootItem: ActionTreeItem = { id: '', parent: undefined, children: [] };
+  for (const item of itemMap.values()) {
+    const parent = item.action!.parentId ? itemMap.get(item.action!.parentId) || rootItem : rootItem;
+    parent.children.push(item);
+    item.parent = parent;
+  }
+  return { rootItem, itemMap };
 }
 
 export function idForAction(action: ActionTraceEvent) {
