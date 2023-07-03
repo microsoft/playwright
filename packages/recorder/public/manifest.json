@@ -1,11 +1,11 @@
 {
   "name": "Playwright CRX",
-  "version": "0.0.0.1",
+  "version": "0.0.0.2",
   "manifest_version": 3,
   "icons": {
     "16": "icon-16x16.png",
     "32": "icon-32x32.png",
-    "48": "icon-192x192.png",
+    "48": "icon-48x48.png",
     "128": "icon-192x192.png"
   },
   "background": {
