@@ -14,13 +14,11 @@
  * limitations under the License.
  */
 
-import type { EventData } from '@recorder/recorderTypes';
-
 // if not running as a chrome extension, skip this...
-if (typeof chrome !== 'undefined') {
+if (typeof chrome !== 'undefined' && chrome.runtime) {
   let _port: chrome.runtime.Port | undefined;
 
-  window.dispatch = async function _onDispatch(data: EventData) {
+  window.dispatch = async function _onDispatch(data: any) {
     _port?.postMessage({ type: 'recorderEvent', ...data });
   };
 

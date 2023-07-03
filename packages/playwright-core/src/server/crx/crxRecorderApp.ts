@@ -50,7 +50,7 @@ export class CrxRecorderApp extends EventEmitter implements IRecorderApp {
   async open(options?: channels.CrxApplicationShowRecorderParams) {
     if (!this._window) {
       const promise = new ManualPromise<number>();
-      this._window = await chrome.windows.create({ type: 'popup', url: 'recorder/index.html', });
+      this._window = await chrome.windows.create({ type: 'popup', url: 'index.html', });
       const onUpdated = (tabId: number, { status }: TabChangeInfo) => {
         if (this._window?.tabs?.find(t => t.id === tabId) && status === 'complete') {
           chrome.tabs.onUpdated.removeListener(onUpdated);

@@ -33,9 +33,14 @@ export default defineConfig({
   build: {
     outDir: path.resolve(__dirname, '../playwright-core/lib/webpack/recorder'),
     emptyOutDir: true,
+    chunkSizeWarningLimit: 4096,
     rollupOptions: {
+      input: {
+        'index': path.resolve(__dirname, 'index.html'),
+        'background': path.resolve(__dirname, 'src/crx/background.ts'),
+      },
       output: {
-        manualChunks: undefined,
+        entryFileNames: ({ name }) => name === 'background' ? '[name].js' : '[name]-[hash].js',
       },
     },
   }
