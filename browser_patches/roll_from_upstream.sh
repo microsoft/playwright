@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # A script to roll browser patches from internal repository.
 
 set -e

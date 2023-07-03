@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 (cd src/server/android/driver ; ./gradlew assemble)
 if [ "$?" -ne "0" ]; then
