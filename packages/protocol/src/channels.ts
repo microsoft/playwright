@@ -4211,10 +4211,12 @@ export type CrxApplicationAttachAllResult = {
   pages: PageChannel[],
 };
 export type CrxApplicationDetachParams = {
-  tabId: number,
+  tabId?: number,
+  page?: PageChannel,
 };
 export type CrxApplicationDetachOptions = {
-
+  tabId?: number,
+  page?: PageChannel,
 };
 export type CrxApplicationDetachResult = void;
 export type CrxApplicationDetachAllParams = {};

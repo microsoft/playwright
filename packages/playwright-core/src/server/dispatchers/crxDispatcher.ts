@@ -60,7 +60,11 @@ export class CrxApplicationDispatcher extends Dispatcher<CrxApplication, channel
   }
 
   async detach(params: channels.CrxApplicationDetachParams): Promise<void> {
-    await this._object.detach(params.tabId);
+    if ((params.tabId && params.page))
+      throw new Error(`Only either tabId or page must be specified, not both`);
+    if ((!params.tabId && !params.page))
+      throw new Error(`Either tabId or page must be specified, not none`);
+    await this._object.detach(params.tabId ?? (params.page as PageDispatcher)._object);
   }
 
   async detachAll(): Promise<void> {

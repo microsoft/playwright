@@ -2314,7 +2314,8 @@ scheme.CrxApplicationAttachAllResult = tObject({
   pages: tArray(tChannel(['Page'])),
 });
 scheme.CrxApplicationDetachParams = tObject({
-  tabId: tNumber,
+  tabId: tOptional(tNumber),
+  page: tOptional(tChannel(['Page'])),
 });
 scheme.CrxApplicationDetachResult = tOptional(tObject({}));
 scheme.CrxApplicationDetachAllParams = tOptional(tObject({}));

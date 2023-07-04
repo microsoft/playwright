@@ -16734,9 +16734,9 @@ export interface CrxApplication {
   context(): BrowserContext;
 
   /**
-   * @param tabId
+   * @param tabIdOrPage
    */
-  detach(tabId: number): Promise<void>;
+  detach(tabIdOrPage: number|Page): Promise<void>;
 
   /**
    * Detaches all pages.

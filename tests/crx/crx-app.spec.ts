@@ -45,6 +45,13 @@ test('should remove detached page from context', async ({ crx }) => {
   expect(crx.pages()).not.toContain(page);
 });
 
+test('should detach with page', async ({ crx }) => {
+  const page = await crx.newPage();
+  expect(crx.pages()).toContain(page);
+  await crx.detach(page);
+  expect(crx.pages()).not.toContain(page);
+});
+
 test('should create new page', async ({ crx, server }) => {
   const windowTabPromise = new Promise<Tab>(x => chrome.tabs.onCreated.addListener(x));
   const window = await chrome.windows.create();

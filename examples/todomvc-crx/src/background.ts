@@ -23,12 +23,12 @@ chrome.action.onClicked.addListener(async ({ id: tabId }) => {
   await chrome.action.disable();
 
   const crx = await crxPromise;
+  const page = await crx.attach(tabId!).catch(() => crx.newPage());
 
   try {
-    const page = await crx.attach(tabId!).catch(() => crx.newPage());
     await createTodos(page);
   } finally {
-    await crx.detach(tabId!);
+    await crx.detach(page);
     await chrome.action.enable();
   }
 });

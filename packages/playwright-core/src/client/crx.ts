@@ -106,8 +106,12 @@ export class CrxApplication extends ChannelOwner<channels.CrxApplicationChannel>
     return (await this._channel.attachAll(params)).pages.map(p => Page.from(p));
   }
 
-  async detach(tabId: number): Promise<void> {
-    await this._channel.detach({ tabId });
+  async detach(tabIdOrPage: number | Page): Promise<void> {
+    const params = typeof tabIdOrPage === 'number' ?
+      { tabId: tabIdOrPage } :
+      { page: tabIdOrPage._channel };
+
+    await this._channel.detach(params);
   }
 
   async detachAll(): Promise<void> {

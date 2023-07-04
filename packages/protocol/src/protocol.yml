@@ -3284,7 +3284,8 @@ CrxApplication:
 
     detach:
       parameters:
-        tabId: number
+        tabId: number?
+        page: Page?
 
     detachAll:
 

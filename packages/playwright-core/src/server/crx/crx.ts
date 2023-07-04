@@ -26,6 +26,7 @@ import type { Playwright } from '../playwright';
 import { CrxTransport } from './crxTransport';
 import { Recorder } from '../recorder';
 import { CrxRecorderApp } from './crxRecorderApp';
+import type { CRPage } from '../chromium/crPage';
 
 export class Crx extends SdkObject {
 
@@ -136,8 +137,11 @@ export class CrxApplication extends SdkObject {
     return pages.filter(Boolean) as Page[];
   }
 
-  async detach(tabId: number) {
-    const targetId = this._transport.getTargetId(tabId);
+  async detach(tabIdOrPage: number | Page) {
+    const targetId = tabIdOrPage instanceof Page ?
+      (tabIdOrPage._delegate as CRPage)._targetId :
+      this._transport.getTargetId(tabIdOrPage);
+
     await this._doDetach(targetId);
   }
 

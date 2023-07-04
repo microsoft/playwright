@@ -142,9 +142,9 @@ Optional. The ID of the group that the tabs are in, or chrome.tabGroups.TAB_GROU
 ## async method: CrxApplication.detach
 * since: v1.**
 
-### param: CrxApplication.detach.tabId
+### param: CrxApplication.detach.tabIdOrPage
 * since: v1.**
-- `tabId` <[int]>
+- `tabIdOrPage` <[int]|[Page]>
 
 ## async method: CrxApplication.detachAll
 * since: v1.**
