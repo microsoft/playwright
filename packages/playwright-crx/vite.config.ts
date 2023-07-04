@@ -58,6 +58,7 @@ export default defineConfig({
       'assert': path.resolve(__dirname, './bundles/crxdeps/node_modules/assert'),
       'buffer': path.resolve(__dirname, './bundles/crxdeps/node_modules/buffer'),
       'child_process': path.resolve(__dirname, './src/shims/child_process'),
+      'chokidar': path.resolve(__dirname, './src/shims/chokidar'),
       'constants': path.resolve(__dirname, './bundles/crxdeps/node_modules/constants-browserify'),
       'crypto': path.resolve(__dirname, './bundles/crxdeps/node_modules/crypto-browserify'),
       'dns': path.resolve(__dirname, './src/shims/dns'),
@@ -92,7 +93,6 @@ export default defineConfig({
     outDir: path.resolve(__dirname, './lib/'),
     // skip code obfuscation
     minify: false,
-    sourcemap: true,
     lib: {
       entry: path.resolve(__dirname, 'src/index.ts'),
       name: 'playwright-crx',
