@@ -9,6 +9,7 @@
         "strictBindCallApply": true,
         "allowSyntheticDefaultImports": true,
         "useUnknownInCatchVariables": false,
+        "resolveJsonModule": true,
         "baseUrl": "..",
         "paths": {
           "@isomorphic/*": ["packages/playwright-core/src/utils/isomorphic/*"],
