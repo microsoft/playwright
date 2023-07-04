@@ -1,6 +1,6 @@
 {
     "compilerOptions": {
-        "allowJs": true,
+        "allowJs": false,
         "checkJs": false,
         "noEmit": true,
         "moduleResolution": "node",
