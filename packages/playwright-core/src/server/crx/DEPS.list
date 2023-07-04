@@ -1,0 +1,6 @@
+[*]
+../chromium/
+../../common/
+../../server/
+../../server/recorder/
+../../utils/

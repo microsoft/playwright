@@ -1,0 +1,7 @@
+[*]
+../../utils/
+../../common/
+../../utilsBundle.ts
+../../zipBundle.ts
+../../../package.json
+../../../browsers.json

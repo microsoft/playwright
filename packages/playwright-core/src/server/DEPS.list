@@ -15,8 +15,9 @@
 ./trace/recorder/tracing.ts
 
 [playwright.ts]
-./android/
 ./chromium/
+./android/
+./crx/
 ./electron/
 ./firefox/
 ./webkit/

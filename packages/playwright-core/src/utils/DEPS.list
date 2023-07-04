@@ -5,3 +5,4 @@
 ../image_tools/compare.ts
 ../utilsBundle.ts
 ../zipBundle.ts
+../../package.json

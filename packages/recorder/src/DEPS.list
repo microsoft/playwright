@@ -1,3 +1,4 @@
 [*]
 @web/**
 @isomorphic/**
+@playwright/experimental-crx
