@@ -27,6 +27,7 @@ export { HttpsProxyAgent } from 'https-proxy-agent';
 import jpegLibrary from 'jpeg-js';
 export const jpegjs = jpegLibrary;
 
+// @ts-ignore
 import lockfileLibrary from './third_party/lockfile';
 export const lockfile = lockfileLibrary;
 
