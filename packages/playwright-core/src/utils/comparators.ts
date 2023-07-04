@@ -15,11 +15,8 @@
  * limitations under the License.
  */
 
-import { colors, jpegjs } from '../utilsBundle';
-import pixelmatch from '../third_party/pixelmatch';
 import { compare } from '../image_tools/compare';
-import { diff_match_patch, DIFF_INSERT, DIFF_DELETE, DIFF_EQUAL } from '../third_party/diff_match_patch';
-import { PNG } from '../utilsBundle';
+import { DIFF_DELETE, DIFF_EQUAL, DIFF_INSERT, PNG, colors, diff_match_patch, jpegjs, pixelmatch } from '../utilsBundle';
 
 export type ImageComparatorOptions = { threshold?: number, maxDiffPixels?: number, maxDiffPixelRatio?: number, _comparator?: string };
 export type ComparatorResult = { diff?: Buffer; errorMessage: string; } | null;

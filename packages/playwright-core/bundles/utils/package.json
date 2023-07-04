@@ -31,9 +31,11 @@
   },
   "devDependencies": {
     "@types/debug": "^4.1.7",
+    "@types/diff-match-patch": "^1.0.32",
     "@types/glob": "^7.2.0",
     "@types/mime": "^2.0.3",
     "@types/minimatch": "^3.0.5",
+    "@types/pixelmatch": "^5.2.4",
     "@types/pngjs": "^6.0.1",
     "@types/progress": "^2.0.5",
     "@types/proper-lockfile": "^4.1.2",

@@ -19,6 +19,7 @@ import path from 'path';
 
 export const colors: typeof import('../bundles/utils/node_modules/colors/safe') = require('./utilsBundleImpl').colors;
 export const debug: typeof import('../bundles/utils/node_modules/@types/debug') = require('./utilsBundleImpl').debug;
+export const { diff_match_patch, DIFF_INSERT, DIFF_DELETE, DIFF_EQUAL }: typeof import('../bundles/utils/node_modules/@types/diff-match-patch') = require('./utilsBundleImpl');
 export const getProxyForUrl: typeof import('../bundles/utils/node_modules/@types/proxy-from-env').getProxyForUrl = require('./utilsBundleImpl').getProxyForUrl;
 export const HttpsProxyAgent: typeof import('../bundles/utils/node_modules/https-proxy-agent').HttpsProxyAgent = require('./utilsBundleImpl').HttpsProxyAgent;
 export const jpegjs: typeof import('../bundles/utils/node_modules/jpeg-js') = require('./utilsBundleImpl').jpegjs;
@@ -26,6 +27,7 @@ export const lockfile: typeof import('../bundles/utils/node_modules/@types/prope
 export const mime: typeof import('../bundles/utils/node_modules/@types/mime') = require('./utilsBundleImpl').mime;
 export const minimatch: typeof import('../bundles/utils/node_modules/@types/minimatch') = require('./utilsBundleImpl').minimatch;
 export const open: typeof import('../bundles/utils/node_modules/open') = require('./utilsBundleImpl').open;
+export const pixelmatch: typeof import('../bundles/utils/node_modules/@types/pixelmatch') = require('./utilsBundleImpl').pixelmatch;
 export const PNG: typeof import('../bundles/utils/node_modules/@types/pngjs').PNG = require('./utilsBundleImpl').PNG;
 export const program: typeof import('../bundles/utils/node_modules/commander').program = require('./utilsBundleImpl').program;
 export const progress: typeof import('../bundles/utils/node_modules/@types/progress') = require('./utilsBundleImpl').progress;

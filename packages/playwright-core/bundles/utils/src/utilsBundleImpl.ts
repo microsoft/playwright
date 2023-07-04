@@ -20,6 +20,9 @@ export const colors = colorsLibrary;
 import debugLibrary from 'debug';
 export const debug = debugLibrary;
 
+// @ts-ignore
+export * from './third_party/diff_match_patch';
+
 export { getProxyForUrl } from 'proxy-from-env';
 
 export { HttpsProxyAgent } from 'https-proxy-agent';
@@ -39,6 +42,10 @@ export const minimatch = minimatchLibrary;
 
 import openLibrary from 'open';
 export const open = openLibrary;
+
+// @ts-ignore
+import pixelmatchLibrary from './third_party/pixelmatch';
+export const pixelmatch = pixelmatchLibrary;
 
 export { PNG } from 'pngjs';
 
