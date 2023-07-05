@@ -1128,3 +1128,164 @@ test('should show final toPass error', async ({ runInlineTest }) => {
     },
   ]);
 });
+
+test('should propagate nested soft errors', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': stepHierarchyReporter,
+    'playwright.config.ts': `module.exports = { reporter: './reporter', };`,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('fail', async () => {
+        await test.step('first outer', async () => {
+          await test.step('first inner', async () => {
+            expect.soft(1).toBe(2);
+          });
+        });
+      
+        await test.step('second outer', async () => {
+          await test.step('second inner', async () => {
+            expect(1).toBe(2);
+          });
+        });
+      });
+    `
+  }, { reporter: '' });
+
+  expect(result.exitCode).toBe(1);
+  const objects = result.outputLines.map(line => JSON.parse(line));
+  expect(objects).toEqual([
+    {
+      category: 'hook',
+      title: 'Before Hooks',
+    },
+    {
+      category: 'test.step',
+      title: 'first outer',
+      error: '<error>',
+      location: { column: 'number', file: 'a.test.ts', line: 'number' },
+      steps: [
+        {
+          category: 'test.step',
+          title: 'first inner',
+          error: '<error>',
+          location: { column: 'number', file: 'a.test.ts', line: 'number' },
+          steps: [
+            {
+              category: 'expect',
+              title: 'expect.soft.toBe',
+              error: '<error>',
+              location: { column: 'number', file: 'a.test.ts', line: 'number' },
+            },
+          ],
+        },
+      ],
+    },
+    {
+      category: 'test.step',
+      title: 'second outer',
+      error: '<error>',
+      location: { column: 'number', file: 'a.test.ts', line: 'number' },
+      steps: [
+        {
+          category: 'test.step',
+          title: 'second inner',
+          error: '<error>',
+          location: { column: 'number', file: 'a.test.ts', line: 'number' },
+          steps: [
+            {
+              category: 'expect',
+              title: 'expect.toBe',
+              error: '<error>',
+              location: { column: 'number', file: 'a.test.ts', line: 'number' },
+            },
+          ],
+        },
+      ],
+    },
+    {
+      category: 'hook',
+      title: 'After Hooks',
+    },
+  ]);
+});
+
+test('should not propagate nested hard errors', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': stepHierarchyReporter,
+    'playwright.config.ts': `module.exports = { reporter: './reporter', };`,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('fail', async () => {
+        await test.step('first outer', async () => {
+          await test.step('first inner', async () => {
+            try {
+              expect(1).toBe(2);
+            } catch (e) {
+            }
+          });
+        });
+      
+        await test.step('second outer', async () => {
+          await test.step('second inner', async () => {
+            expect(1).toBe(2);
+          });
+        });
+      });
+    `
+  }, { reporter: '' });
+
+  expect(result.exitCode).toBe(1);
+  const objects = result.outputLines.map(line => JSON.parse(line));
+  expect(objects).toEqual([
+    {
+      category: 'hook',
+      title: 'Before Hooks',
+    },
+    {
+      category: 'test.step',
+      title: 'first outer',
+      location: { column: 'number', file: 'a.test.ts', line: 'number' },
+      steps: [
+        {
+          category: 'test.step',
+          title: 'first inner',
+          location: { column: 'number', file: 'a.test.ts', line: 'number' },
+          steps: [
+            {
+              category: 'expect',
+              title: 'expect.toBe',
+              error: '<error>',
+              location: { column: 'number', file: 'a.test.ts', line: 'number' },
+            },
+          ],
+        },
+      ],
+    },
+    {
+      category: 'test.step',
+      title: 'second outer',
+      error: '<error>',
+      location: { column: 'number', file: 'a.test.ts', line: 'number' },
+      steps: [
+        {
+          category: 'test.step',
+          title: 'second inner',
+          error: '<error>',
+          location: { column: 'number', file: 'a.test.ts', line: 'number' },
+          steps: [
+            {
+              category: 'expect',
+              title: 'expect.toBe',
+              error: '<error>',
+              location: { column: 'number', file: 'a.test.ts', line: 'number' },
+            },
+          ],
+        },
+      ],
+    },
+    {
+      category: 'hook',
+      title: 'After Hooks',
+    },
+  ]);
+});
