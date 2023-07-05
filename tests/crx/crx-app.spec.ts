@@ -125,12 +125,14 @@ test('should attach popup pages', async ({ page, server }) => {
   expect(popup.url()).toBe(server.EMPTY_PAGE);
 });
 
-test('should remove page if tab is externally detached', async ({ crx }) => {
-  test.skip(true, 'if detached manually by the user (with canceled_by_user), it works.');
+// if detached manually by the user (with canceled_by_user), it works.
+// aparently, a chrome.debugger.onDetached event is not triggered if
+// chrome.debugger.detached is called
+test.fixme('should remove page if tab is externally detached', async ({ crx }) => {
+  test.skip(true, '');
   const { id: tabId } = await chrome.tabs.create({ url: 'about:blank' });
   const page = await crx.attach(tabId!);
   expect(await page.evaluate(() => 42)).toBe(42);
-  // chrome.debugger.detach doesn't trigger the chrome.debugger.onDetach event
   await new Promise<void>(x => chrome.debugger.detach({ tabId }, x));
   expect(crx.pages()).not.toContain(page);
 });
