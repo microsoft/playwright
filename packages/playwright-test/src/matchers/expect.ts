@@ -255,7 +255,8 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
         category: 'expect',
         title: trimLongString(customMessage || defaultTitle, 1024),
         params: args[0] ? { expected: args[0] } : undefined,
-        wallTime
+        wallTime,
+        infectParentStepsWithError: this._info.isSoft,
       }) : undefined;
 
       const reportStepError = (jestError: Error) => {

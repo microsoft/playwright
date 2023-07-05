@@ -39,7 +39,7 @@ export interface TestStepInternal {
   apiName?: string;
   params?: Record<string, any>;
   error?: TestInfoError;
-  insulateChildErrors?: boolean;
+  infectParentStepsWithError?: boolean;
 }
 
 export class TestInfoImpl implements TestInfo {
@@ -265,12 +265,23 @@ export class TestInfoImpl implements TestInfo {
         } else if (result.error) {
           // Internal API step reported an error.
           error = result.error;
-        } else if (!data.insulateChildErrors) {
-          // One of the child steps failed (probably soft expect).
-          // Report this step as failed to make it easier to spot.
-          error = step.steps.map(s => s.error).find(e => !!e);
         }
         step.error = error;
+
+        if (!error) {
+          // Soft errors inside try/catch will make the test fail.
+          // In order to locate the failing step, we are marking all the parent
+          // steps as failing unconditionally.
+          for (const childStep of step.steps) {
+            if (childStep.error && childStep.infectParentStepsWithError) {
+              step.error = childStep.error;
+              step.infectParentStepsWithError = true;
+              break;
+            }
+          }
+          error = step.error;
+        }
+
         const payload: StepEndPayload = {
           testId: this._test.id,
           stepId,

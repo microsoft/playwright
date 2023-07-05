@@ -352,7 +352,6 @@ export async function toPass(
       title: 'expect.toPass',
       category: 'expect',
       location: stackFrames[0],
-      insulateChildErrors: true,
     }, callback);
   };
 
