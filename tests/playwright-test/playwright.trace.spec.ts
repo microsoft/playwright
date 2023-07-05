@@ -331,6 +331,7 @@ test('should not override trace file in afterAll', async ({ runInlineTest, serve
     '  fixture: page',
     '    browserContext.newPage',
     'page.goto',
+    'error',
     'After Hooks',
     '  fixture: page',
     '  fixture: context',
@@ -645,6 +646,41 @@ test('should expand expect.toPass', async ({ runInlineTest }, testInfo) => {
     '  expect.toBe',
     '  page.goto',
     '  expect.toBe',
+    'After Hooks',
+    '  fixture: page',
+    '  fixture: context',
+  ]);
+});
+
+test('should show non-expect error in trace', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { use: { trace: { mode: 'on' } } };
+    `,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('fail', async ({ page }) => {
+        expect(1).toBe(1);
+        undefinedVariable1 = 'this throws an exception';
+        expect(1).toBe(2);
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  const trace = await parseTrace(testInfo.outputPath('test-results', 'a-fail', 'trace.zip'));
+  expect(trace.actionTree).toEqual([
+    'Before Hooks',
+    '  fixture: browser',
+    '    browserType.launch',
+    '  fixture: context',
+    '    browser.newContext',
+    '    tracing.start',
+    '  fixture: page',
+    '    browserContext.newPage',
+    'expect.toBe',
+    'undefinedVariable1 is not defined',
     'After Hooks',
     '  fixture: page',
     '  fixture: context',

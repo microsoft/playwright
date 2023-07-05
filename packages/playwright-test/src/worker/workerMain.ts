@@ -23,7 +23,7 @@ import { ConfigLoader } from '../common/configLoader';
 import type { Suite, TestCase } from '../common/test';
 import type { Annotation, FullConfigInternal, FullProjectInternal } from '../common/config';
 import { FixtureRunner } from './fixtureRunner';
-import { ManualPromise } from 'playwright-core/lib/utils';
+import { ManualPromise, captureLibraryStackTrace } from 'playwright-core/lib/utils';
 import { TestInfoImpl } from './testInfo';
 import { TimeoutManager, type TimeSlot } from './timeoutManager';
 import { ProcessRunner } from '../common/process';
@@ -369,13 +369,25 @@ export class WorkerMain extends ProcessRunner {
         return;
       }
 
-      await testInfo._runAndFailOnError(async () => {
+      const error = await testInfo._runAndFailOnError(async () => {
         // Now run the test itself.
         debugTest(`test function started`);
         const fn = test.fn; // Extract a variable to get a better stack trace ("myTest" vs "TestCase.myTest [as fn]").
         await fn(testFunctionParams, testInfo);
         debugTest(`test function finished`);
       }, 'allowSkips');
+
+      // If there are no steps with errors in the test, but the test has an error - append artificial trace entry.
+      if (error && !testInfo._steps.some(s => !!s.error)) {
+        const frames = error.stack ? captureLibraryStackTrace(error.stack.split('\n')).frames : [];
+        const step = testInfo._addStep({
+          wallTime: Date.now(),
+          title: error.message || 'error',
+          category: 'hook',
+          location: frames[0],
+        });
+        step.complete({ error });
+      }
     });
 
     if (didFailBeforeAllForSuite) {
