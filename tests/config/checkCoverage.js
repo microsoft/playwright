@@ -23,6 +23,20 @@ let api = new Set(installCoverageHooks(browserName).coverage.keys());
 
 // coverage exceptions
 
+// crx runs inside the browser, not in node, so ignore it for now
+api.delete('crx.start');
+api.delete('crxApplication.context');
+api.delete('crxApplication.pages');
+api.delete('crxApplication.attach');
+api.delete('crxApplication.attachAll');
+api.delete('crxApplication.detach');
+api.delete('crxApplication.detachAll');
+api.delete('crxApplication.newPage');
+api.delete('crxApplication.close');
+api.delete('crxRecorder.isHidden');
+api.delete('crxRecorder.show');
+api.delete('crxRecorder.hide');
+
 if (browserName === 'chromium') {
   // Sometimes we already have a background page while launching, before adding a listener.
   api.delete('browserContext.emit("backgroundpage")');
