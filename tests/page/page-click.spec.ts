@@ -1066,3 +1066,25 @@ it('ensure events are dispatched in the individual tasks', async ({ page, browse
     'timeout outer',
   ]);
 });
+
+it('should click if opened select covers the button', async ({ page }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/23618' });
+  await page.setContent(`
+    <div>
+      <select>
+        <option>very long text #1</option>
+        <option>very long text #2</option>
+        <option>very long text #3</option>
+        <option>very long text #4</option>
+        <option>very long text #5</option>
+        <option>very long text #6</option>
+      </select>
+    </div>
+    <div>
+      <button onclick="javascript:window.__CLICKED=42">clickme</button>
+    </div>
+  `);
+  await page.click('select');
+  await page.click('button');
+  expect(await page.evaluate('window.__CLICKED')).toBe(42);
+});
