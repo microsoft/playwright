@@ -106,6 +106,30 @@ jobs:
       if: always()
       shell: bash
 
+  test_linux_crx:
+    name: ${{ matrix.os }} (crx)
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-20.04]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
+      with:
+        node-version: 16
+    - run: npm ci
+      env:
+        DEBUG: pw:install
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+    - run: npm run build
+    - run: npx playwright install --with-deps chromium
+    # just a small subset of tests for now, because they are too slow due to persistent contexts
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run xtest -- crx/ library/inspector/cli-codegen-1.spec.ts page/locator-frame.spec.ts
+    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
+      if: always()
+      shell: bash
+
   test_test_runner:
     name: Test Runner
     strategy:
