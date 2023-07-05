@@ -18,10 +18,6 @@
     "typescript": "^4.5.4",
     "vite": "^4.2.1"
   },
-  "@standaloneDevDependencies": {
-    "@playwright/experimental-ct-svelte": "^1.22.2",
-    "@playwright/test": "^1.22.2"
-  },
   "dependencies": {
     "svelte": "^3.49.0",
     "svelte-navigator": "^3.2.2"

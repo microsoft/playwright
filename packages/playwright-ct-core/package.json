@@ -21,6 +21,7 @@
     "./lib/vitePlugin": "./lib/vitePlugin.js"
   },
   "dependencies": {
+    "playwright-core": "1.36.0-next",
     "vite": "^4.3.9",
     "@playwright/test": "1.36.0-next"
   },

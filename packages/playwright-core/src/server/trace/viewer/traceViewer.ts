@@ -23,7 +23,7 @@ import { installAppIcon, syncLocalStorageWithSettings } from '../../chromium/crA
 import { serverSideCallMetadata } from '../../instrumentation';
 import { createPlaywright } from '../../playwright';
 import { ProgressController } from '../../progress';
-import { open, wsServer } from 'playwright-core/lib/utilsBundle';
+import { open, wsServer } from '../../../utilsBundle';
 import type { Page } from '../../page';
 
 export type Transport = {

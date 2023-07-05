@@ -16,7 +16,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { isUnderTest } from 'playwright-core/lib/utils';
+import { isUnderTest } from '../../utils';
 import type { Page } from '../page';
 import { registryDirectory } from '../registry';
 import type { CRPage } from './crPage';
