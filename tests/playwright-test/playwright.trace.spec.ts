@@ -87,29 +87,29 @@ test('should record api trace', async ({ runInlineTest, server }, testInfo) => {
   expect(result.failed).toBe(1);
   // One trace file for request context and one for each APIRequestContext
   const trace1 = await parseTrace(testInfo.outputPath('test-results', 'a-pass', 'trace.zip'));
-  expect(trace1.apiNames).toEqual([
+  expect(trace1.actionTree).toEqual([
     'Before Hooks',
-    'fixture: request',
-    'apiRequest.newContext',
-    'tracing.start',
-    'fixture: browser',
-    'browserType.launch',
-    'fixture: context',
-    'browser.newContext',
-    'tracing.start',
-    'fixture: page',
-    'browserContext.newPage',
+    '  fixture: request',
+    '    apiRequest.newContext',
+    '    tracing.start',
+    '  fixture: browser',
+    '    browserType.launch',
+    '  fixture: context',
+    '    browser.newContext',
+    '    tracing.start',
+    '  fixture: page',
+    '    browserContext.newPage',
     'page.goto',
     'apiRequestContext.get',
     'After Hooks',
-    'fixture: page',
-    'fixture: context',
-    'fixture: request',
-    'tracing.stopChunk',
-    'apiRequestContext.dispose',
+    '  fixture: page',
+    '  fixture: context',
+    '  fixture: request',
+    '    tracing.stopChunk',
+    '    apiRequestContext.dispose',
   ]);
   const trace2 = await parseTrace(testInfo.outputPath('test-results', 'a-api-pass', 'trace.zip'));
-  expect(trace2.apiNames).toEqual([
+  expect(trace2.actionTree).toEqual([
     'Before Hooks',
     'apiRequest.newContext',
     'tracing.start',
@@ -117,25 +117,25 @@ test('should record api trace', async ({ runInlineTest, server }, testInfo) => {
     'After Hooks',
   ]);
   const trace3 = await parseTrace(testInfo.outputPath('test-results', 'a-fail', 'trace.zip'));
-  expect(trace3.apiNames).toEqual([
+  expect(trace3.actionTree).toEqual([
     'Before Hooks',
-    'fixture: request',
-    'apiRequest.newContext',
-    'tracing.start',
-    'fixture: context',
-    'browser.newContext',
-    'tracing.start',
-    'fixture: page',
-    'browserContext.newPage',
+    '  fixture: request',
+    '    apiRequest.newContext',
+    '    tracing.start',
+    '  fixture: context',
+    '    browser.newContext',
+    '    tracing.start',
+    '  fixture: page',
+    '    browserContext.newPage',
     'page.goto',
     'apiRequestContext.get',
     'expect.toBe',
     'After Hooks',
-    'fixture: page',
-    'fixture: context',
-    'fixture: request',
-    'tracing.stopChunk',
-    'apiRequestContext.dispose',
+    '  fixture: page',
+    '  fixture: context',
+    '  fixture: request',
+    '    tracing.stopChunk',
+    '    apiRequestContext.dispose',
   ]);
 });
 
@@ -321,28 +321,28 @@ test('should not override trace file in afterAll', async ({ runInlineTest, serve
   expect(result.failed).toBe(1);
   const trace1 = await parseTrace(testInfo.outputPath('test-results', 'a-test-1', 'trace.zip'));
 
-  expect(trace1.apiNames).toEqual([
+  expect(trace1.actionTree).toEqual([
     'Before Hooks',
-    'fixture: browser',
-    'browserType.launch',
-    'fixture: context',
-    'browser.newContext',
-    'tracing.start',
-    'fixture: page',
-    'browserContext.newPage',
+    '  fixture: browser',
+    '    browserType.launch',
+    '  fixture: context',
+    '    browser.newContext',
+    '    tracing.start',
+    '  fixture: page',
+    '    browserContext.newPage',
     'page.goto',
     'After Hooks',
-    'fixture: page',
-    'fixture: context',
-    'attach \"trace\"',
-    'afterAll hook',
-    'fixture: request',
-    'apiRequest.newContext',
-    'tracing.start',
-    'apiRequestContext.get',
-    'fixture: request',
-    'tracing.stopChunk',
-    'apiRequestContext.dispose',
+    '  fixture: page',
+    '  fixture: context',
+    '  attach \"trace\"',
+    '  afterAll hook',
+    '    fixture: request',
+    '      apiRequest.newContext',
+    '      tracing.start',
+    '    apiRequestContext.get',
+    '  fixture: request',
+    '    tracing.stopChunk',
+    '    apiRequestContext.dispose',
   ]);
 
   const error = await parseTrace(testInfo.outputPath('test-results', 'a-test-2', 'trace.zip')).catch(e => e);
@@ -607,4 +607,46 @@ test('should record with custom page fixture', async ({ runInlineTest }, testInf
   expect(trace.events).toContainEqual(expect.objectContaining({
     type: 'frame-snapshot',
   }));
+});
+
+test('should expand expect.toPass', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { use: { trace: { mode: 'on' } } };
+    `,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({ page }) => {
+        let i = 0;
+        await expect(async () => {
+          await page.goto('data:text/html,Hello world');
+          expect(i++).toBe(2);
+        }).toPass();
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  const trace = await parseTrace(testInfo.outputPath('test-results', 'a-pass', 'trace.zip'));
+  expect(trace.actionTree).toEqual([
+    'Before Hooks',
+    '  fixture: browser',
+    '    browserType.launch',
+    '  fixture: context',
+    '    browser.newContext',
+    '    tracing.start',
+    '  fixture: page',
+    '    browserContext.newPage',
+    'expect.toPass',
+    '  page.goto',
+    '  expect.toBe',
+    '  page.goto',
+    '  expect.toBe',
+    '  page.goto',
+    '  expect.toBe',
+    'After Hooks',
+    '  fixture: page',
+    '  fixture: context',
+  ]);
 });
