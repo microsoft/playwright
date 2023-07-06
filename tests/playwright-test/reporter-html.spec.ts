@@ -780,7 +780,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       await showReport();
 
       await page.locator('text=sample').first().click();
-      await expect(page.locator('text=ouch')).toBeVisible();
+      await expect(page.locator('text=ouch')).toHaveCount(2);
       await page.locator('text=All').first().click();
 
       await page.locator('text=sample').nth(1).click();
