@@ -15,6 +15,11 @@ browserTypes.TargetInfo = {
   openerId: t.Optional(t.String),
 };
 
+browserTypes.UserPreference = {
+  name: t.String,
+  value: t.Any,
+};
+
 browserTypes.CookieOptions = {
   name: t.String,
   value: t.String,
@@ -246,6 +251,7 @@ const Browser = {
     'enable': {
       params: {
         attachToDefaultContext: t.Boolean,
+        userPrefs: t.Optional(t.Array(browserTypes.UserPreference)),
       },
     },
     'createBrowserContext': {
@@ -860,6 +866,7 @@ const Page = {
       params: {
         mimeType: t.Enum(['image/png', 'image/jpeg']),
         clip: pageTypes.Clip,
+        quality: t.Optional(t.Number),
         omitDeviceScaleFactor: t.Optional(t.Boolean),
       },
       returns: {

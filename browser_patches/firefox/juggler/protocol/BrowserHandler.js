@@ -27,12 +27,23 @@ class BrowserHandler {
     this._startCompletePromise = startCompletePromise;
   }
 
-  async ['Browser.enable']({attachToDefaultContext}) {
+  async ['Browser.enable']({attachToDefaultContext, userPrefs = []}) {
     if (this._enabled)
       return;
     await this._startCompletePromise;
     this._enabled = true;
     this._attachToDefaultContext = attachToDefaultContext;
+
+    for (const { name, value } of userPrefs) {
+      if (value === true || value === false)
+        Services.prefs.setBoolPref(name, value);
+      else if (typeof value === 'string')
+        Services.prefs.setStringPref(name, value);
+      else if (typeof value === 'number')
+        Services.prefs.setIntPref(name, value);
+      else
+        throw new Error(`Preference "${name}" has unsupported value: ${JSON.stringify(value)}`);
+    }
 
     this._eventListeners = [
       helper.on(this._targetRegistry, TargetRegistry.Events.TargetCreated, this._onTargetCreated.bind(this)),

@@ -515,8 +515,9 @@ class PageTarget {
       this._linkedBrowser.closest('.browserStack').style.setProperty('scrollbar-width', 'none');
       this._linkedBrowser.browsingContext.inRDMPane = true;
 
-      const rect = this._linkedBrowser.getBoundingClientRect();
-      this._window.resizeTo(rect.x + rect.width, rect.y + rect.height);
+      const stackRect = this._linkedBrowser.closest('.browserStack').getBoundingClientRect();
+      const toolbarTop = stackRect.y;
+      this._window.resizeBy(width - this._window.innerWidth, height + toolbarTop - this._window.innerHeight);
 
       await this._channel.connect('').send('awaitViewportDimensions', { width, height });
     } else {

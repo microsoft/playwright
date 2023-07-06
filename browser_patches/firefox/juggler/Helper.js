@@ -46,7 +46,7 @@ class Helper {
       } catch (e) {
         // This could fail when window has navigated cross-process
         // and we remove the listener from WindowProxy.
-        dump(`WARNING: removeEventListener throws ${e} at ${new Error().stack}\n`);
+        // Nothing we can do here - so ignore the error.
       }
     };
   }
