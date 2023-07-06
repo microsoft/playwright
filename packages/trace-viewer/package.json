@@ -1,7 +1,13 @@
 {
-  "name": "trace-viewer",
-  "private": true,
-  "version": "0.0.0",
+  "name": "test-trace-viewer",
+  "private": false,
+  "version": "0.1.0",
+  "main": "./dist/index.cjs.js",
+  "module": "./dist/index.es.js",
+  "types": "./dist/trace-viewer/src/index.d.ts",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "vite build && tsc",
