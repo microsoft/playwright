@@ -39,13 +39,14 @@ export const TabbedPane: React.FunctionComponent<{
         ...leftToolbar || [],
         ...tabs.map(tab => (
           <TabbedPaneTab
+            key={tab.id}
             id={tab.id}
             title={tab.title}
             count={tab.count}
             selected={selectedTab === tab.id}
             onSelect={setSelectedTab}
           ></TabbedPaneTab>)),
-        <div className='spacer'></div>,
+        <div key="spacer-b13f-0d5e382a6f0d" className='spacer'></div>,
         ...rightToolbar || [],
       ]}</Toolbar>
       {

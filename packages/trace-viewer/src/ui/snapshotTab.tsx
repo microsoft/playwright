@@ -178,6 +178,7 @@ export const SnapshotTab: React.FunctionComponent<{
       }}>Pick locator</ToolbarButton>
       {['action', 'before', 'after'].map(tab => {
         return <TabbedPaneTab
+          key={tab}
           id={tab}
           title={renderTitle(tab)}
           selected={snapshotTab === tab}
