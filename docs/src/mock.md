@@ -242,6 +242,9 @@ test('records or updates the HAR file', async ({ page }) => {
 
   // Go to the page
   await page.goto('https://demo.playwright.dev/api-mocking');
+
+  // Assert that the fruit is visible
+  await expect(page.getByText('Strawberry')).toBeVisible();
 });
 ```
 
@@ -252,6 +255,9 @@ async def records_or_updates_the_har_file(page: Page):
 
     # Go to the page
     await page.goto("https://demo.playwright.dev/api-mocking")
+
+    # Assert that the fruit is visible
+    await expect(page.get_by_text("Strawberry")).to_be_visible()
 ```
 
 ```python sync
@@ -261,6 +267,9 @@ def records_or_updates_the_har_file(page: Page):
 
     # Go to the page
     page.goto("https://demo.playwright.dev/api-mocking")
+
+    # Assert that the fruit is visible
+    expect(page.get_by_text("Strawberry")).to_be_visible()
 ```
 
 ```csharp
@@ -272,6 +281,9 @@ await page.RouteFromHARAsync("./hars/fruit.har", new () {
 
 // Go to the page
 await page.GotoAsync("https://demo.playwright.dev/api-mocking");
+
+// Assert that the fruit is visible
+await Expect(page.GetByText("Strawberry")).ToBeVisibleAsync();
 ```
 
 ```java
@@ -283,6 +295,9 @@ page.routeFromHAR("./hars/fruit.har", new RouteFromHAROptions()
 
 // Go to the page
 page.goto("https://demo.playwright.dev/api-mocking");
+
+// Assert that the fruit is visible
+assertThat(page.getByText("Strawberry")).isVisible();
 ```
 
 ### Modifying a HAR file
