@@ -480,3 +480,20 @@ test('should have correct types for the config', async ({ runTSC }) => {
   });
   expect(result.exitCode).toBe(0);
 });
+
+test('should not allow tracesDir in launchOptions', async ({ runTSC }) => {
+  const result = await runTSC({
+    'playwright.config.ts': `
+      import { defineConfig } from '@playwright/test';
+
+      export default defineConfig({
+        use: {
+          launchOptions: {
+            tracesDir: 'foo',
+          },
+        },
+      });
+  `
+  });
+  expect(result.exitCode).not.toBe(0);
+});
