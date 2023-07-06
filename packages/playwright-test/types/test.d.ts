@@ -3530,7 +3530,7 @@ export interface PlaywrightWorkerOptions {
    * ```
    *
    */
-  launchOptions: LaunchOptions;
+  launchOptions: Omit<LaunchOptions, 'tracesDir'>;
   /**
    * **Usage**
    *

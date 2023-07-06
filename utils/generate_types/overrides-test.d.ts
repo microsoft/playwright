@@ -203,7 +203,7 @@ export interface PlaywrightWorkerOptions {
   defaultBrowserType: BrowserName;
   headless: boolean;
   channel: BrowserChannel | undefined;
-  launchOptions: LaunchOptions;
+  launchOptions: Omit<LaunchOptions, 'tracesDir'>;
   connectOptions: ConnectOptions | undefined;
   screenshot: ScreenshotMode | { mode: ScreenshotMode } & Pick<PageScreenshotOptions, 'fullPage' | 'omitBackground'>;
   trace: TraceMode | /** deprecated */ 'retry-with-trace' | { mode: TraceMode, snapshots?: boolean, screenshots?: boolean, sources?: boolean, attachments?: boolean };
