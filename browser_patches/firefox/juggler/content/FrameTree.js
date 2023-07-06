@@ -266,8 +266,8 @@ class FrameTree {
       return;
     }
     if (frame._pendingNavigationId) {
-      const url = docShell.domWindow ? docShell.domWindow.location.href : 'about:blank';
-      this._frameNavigationCommitted(frame, url);
+      docShell.QueryInterface(Ci.nsIWebNavigation);
+      this._frameNavigationCommitted(frame, docShell.currentURI.spec);
     }
 
     if (frame === this._mainFrame) {

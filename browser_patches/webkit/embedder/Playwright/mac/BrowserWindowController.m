@@ -724,7 +724,7 @@ static BOOL areEssentiallyEqual(double a, double b)
     [_webView loadHTMLString:HTMLString baseURL:nil];
 }
 
-static NSSet *dataTypes()
+static NSSet *dataTypes(void)
 {
     return [WKWebsiteDataStore allWebsiteDataTypes];
 }
