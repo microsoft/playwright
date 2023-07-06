@@ -19607,6 +19607,26 @@ export interface LaunchOptions {
    * If specified, traces are saved into this directory.
    */
   tracesDir?: string;
+
+  /**
+   * Selenium settings
+   */
+  selenium?: {
+    /**
+     * Url to connect to selenium server
+     */
+    url?: string;
+
+    /**
+     * Browser desired capabilities. Check out the [WebDriver Protocol](https://w3c.github.io/webdriver/#capabilities) for more details.
+     */
+    capabilities?: any;
+
+    /**
+     * Custom headers to pass into every request
+     */
+    headers?: { [key: string]: string; };
+  },
 }
 
 export interface ConnectOverCDPOptions {

@@ -175,9 +175,11 @@ export class Chromium extends BrowserType {
     const args = this._innerDefaultArgs(options);
     args.push('--remote-debugging-port=0');
     const isEdge = options.channel && options.channel.startsWith('msedge');
+
     let desiredCapabilities = {
       'browserName': isEdge ? 'MicrosoftEdge' : 'chrome',
-      [isEdge ? 'ms:edgeOptions' : 'goog:chromeOptions']: { args }
+      [isEdge ? 'ms:edgeOptions' : 'goog:chromeOptions']: { args },
+      ...options.selenium?.capabilities
     };
 
     if (process.env.SELENIUM_REMOTE_CAPABILITIES) {
@@ -186,7 +188,8 @@ export class Chromium extends BrowserType {
         desiredCapabilities = { ...desiredCapabilities, ...remoteCapabilities };
     }
 
-    let headers: { [key: string]: string } = {};
+    let headers = { ...options.selenium?.headers };
+
     if (process.env.SELENIUM_REMOTE_HEADERS) {
       const remoteHeaders = parseSeleniumRemoteParams({ name: 'headers', value: process.env.SELENIUM_REMOTE_HEADERS }, progress);
       if (remoteHeaders)

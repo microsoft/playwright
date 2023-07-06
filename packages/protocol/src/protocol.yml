@@ -411,6 +411,12 @@ LaunchOptions:
     downloadsPath: string?
     tracesDir: string?
     chromiumSandbox: boolean?
+    selenium:
+      type: object?
+      properties:
+        url: string?
+        capabilities: json?
+        headers: json?
 
 
 ContextOptions:

@@ -44,6 +44,36 @@ You don't have to change your code, just use your testing harness or [`method: B
 
 When using Selenium Grid Hub, you can [skip browser downloads](./browsers.md#skip-browser-downloads).
 
+Besides this, you can specify the url using the launch options (has a lower priority than the environment variable).
+
+```js tab=js-test title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  projects: [
+    {
+      name: 'chromium',
+      use: {
+        launchOptions: {
+          selenium: {
+            url: 'http://localhost:4444/wd/hub',
+          },
+        },
+      },
+    },
+  ],
+});
+```
+
+```js tab=js-library
+const { chromium } = require('playwright');
+const browser = await chromium.launch({
+  selenium: {
+    url: 'http://localhost:4444/wd/hub',
+  },
+});
+```
+
 ### Passing additional capabilities
 
 If your grid requires additional capabilities to be set (for example, you use an external service), you can set `SELENIUM_REMOTE_CAPABILITIES` environment variable to provide JSON-serialized capabilities.
@@ -64,6 +94,50 @@ SELENIUM_REMOTE_URL=http://<selenium-hub-ip>:4444 SELENIUM_REMOTE_CAPABILITIES="
 SELENIUM_REMOTE_URL=http://<selenium-hub-ip>:4444 SELENIUM_REMOTE_CAPABILITIES="{'mygrid:options':{os:'windows',username:'John',password:'secure'}}" dotnet test
 ```
 
+Also can be specified using the launch options (has a lower priority than the environment variable):
+
+```js tab=js-test title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  projects: [
+    {
+      name: 'chromium',
+      use: {
+        launchOptions: {
+          selenium: {
+            url: 'http://localhost:4444/wd/hub',
+            capabilities: {
+              'mygrid:options': {
+                os: 'windows',
+                username: 'John',
+                password: 'secure',
+              }
+            },
+          },
+        },
+      },
+    },
+  ],
+});
+```
+
+```js tab=js-library
+const { chromium } = require('playwright');
+const browser = await chromium.launch({
+  selenium: {
+    url: 'http://localhost:4444/wd/hub',
+    capabilities: {
+      'mygrid:options': {
+        os: 'windows',
+        username: 'John',
+        password: 'secure',
+      },
+    },
+  },
+});
+```
+
 ### Passing additional headers
 
 If your grid requires additional headers to be set (for example, you should provide authorization token to use browsers in your cloud), you can set `SELENIUM_REMOTE_HEADERS` environment variable to provide JSON-serialized headers.
@@ -82,6 +156,42 @@ SELENIUM_REMOTE_URL=http://<selenium-hub-ip>:4444 SELENIUM_REMOTE_HEADERS="{'Aut
 
 ```bash csharp
 SELENIUM_REMOTE_URL=http://<selenium-hub-ip>:4444 SELENIUM_REMOTE_HEADERS="{'Authorization':'OAuth 12345'}" dotnet test
+```
+
+Also can be specified using the launch options (has a lower priority than the environment variable):
+
+```js tab=js-test title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  projects: [
+    {
+      name: 'chromium',
+      use: {
+        launchOptions: {
+          selenium: {
+            url: 'http://localhost:4444/wd/hub',
+            headers: {
+              'Authorization': 'OAuth 12345',
+            },
+          },
+        },
+      },
+    },
+  ],
+});
+```
+
+```js tab=js-library
+const { chromium } = require('playwright');
+const browser = await chromium.launch({
+  selenium: {
+    url: 'http://localhost:4444/wd/hub',
+    headers: {
+      'Authorization': 'OAuth 12345',
+    },
+  },
+});
 ```
 
 ### Detailed logs
@@ -105,8 +215,6 @@ DEBUG=pw:browser* SELENIUM_REMOTE_URL=http://internal.grid:4444 dotnet test
 ```
 
 If you file an issue, please include this log.
-
-
 
 ## Using Selenium Docker
 
@@ -187,7 +295,6 @@ SELENIUM_REMOTE_URL=http://<selenium-hub-ip>:4444 mvn test
 ```bash csharp
 SELENIUM_REMOTE_URL=http://<selenium-hub-ip>:4444 dotnet test
 ```
-
 
 ## Selenium 3
 

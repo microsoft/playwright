@@ -878,6 +878,11 @@ export type BrowserTypeLaunchParams = {
   downloadsPath?: string,
   tracesDir?: string,
   chromiumSandbox?: boolean,
+  selenium?: {
+    url?: string,
+    capabilities?: any,
+    headers?: any,
+  },
   firefoxUserPrefs?: any,
   slowMo?: number,
 };
@@ -903,6 +908,11 @@ export type BrowserTypeLaunchOptions = {
   downloadsPath?: string,
   tracesDir?: string,
   chromiumSandbox?: boolean,
+  selenium?: {
+    url?: string,
+    capabilities?: any,
+    headers?: any,
+  },
   firefoxUserPrefs?: any,
   slowMo?: number,
 };
@@ -931,6 +941,11 @@ export type BrowserTypeLaunchPersistentContextParams = {
   downloadsPath?: string,
   tracesDir?: string,
   chromiumSandbox?: boolean,
+  selenium?: {
+    url?: string,
+    capabilities?: any,
+    headers?: any,
+  },
   noDefaultViewport?: boolean,
   viewport?: {
     width: number,
@@ -1002,6 +1017,11 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   downloadsPath?: string,
   tracesDir?: string,
   chromiumSandbox?: boolean,
+  selenium?: {
+    url?: string,
+    capabilities?: any,
+    headers?: any,
+  },
   noDefaultViewport?: boolean,
   viewport?: {
     width: number,

@@ -52,8 +52,11 @@ test('selenium grid 3.141.59 standalone chromium', async ({ browserName, childPr
   });
   await waitForPort(port);
 
-  const __testHookSeleniumRemoteURL = `http://127.0.0.1:${port}/wd/hub`;
-  const browser = await browserType.launch({ __testHookSeleniumRemoteURL } as any);
+  const browser = await browserType.launch({
+    selenium: {
+      url: `http://127.0.0.1:${port}/wd/hub`,
+    },
+  });
   const page = await browser.newPage();
   await page.setContent('<title>Hello world</title><div>Get Started</div>');
   await page.click('text=Get Started');
@@ -84,8 +87,11 @@ test('selenium grid 3.141.59 hub + node chromium', async ({ browserName, childPr
     hub.waitForOutput('Registered a node'),
   ]);
 
-  const __testHookSeleniumRemoteURL = `http://127.0.0.1:${port}/wd/hub`;
-  const browser = await browserType.launch({ __testHookSeleniumRemoteURL } as any);
+  const browser = await browserType.launch({
+    selenium: {
+      url: `http://127.0.0.1:${port}/wd/hub`,
+    },
+  });
   const page = await browser.newPage();
   await page.setContent('<title>Hello world</title><div>Get Started</div>');
   await page.click('text=Get Started');
@@ -108,8 +114,11 @@ test('selenium grid 4.8.3 standalone chromium', async ({ browserName, childProce
   });
   await waitForPort(port);
 
-  const __testHookSeleniumRemoteURL = `http://127.0.0.1:${port}/`;
-  const browser = await browserType.launch({ __testHookSeleniumRemoteURL } as any);
+  const browser = await browserType.launch({
+    selenium: {
+      url: `http://127.0.0.1:${port}/`,
+    },
+  });
   const page = await browser.newPage();
   await page.setContent('<title>Hello world</title><div>Get Started</div>');
   await page.click('text=Get Started');
@@ -130,7 +139,6 @@ test('selenium grid 4.8.3 hub + node chromium', async ({ browserName, childProce
     cwd: __dirname,
   });
   await waitForPort(port);
-  const __testHookSeleniumRemoteURL = `http://127.0.0.1:${port}/`;
 
   const node = childProcess({
     command: ['java', `-Dwebdriver.chrome.driver=${chromeDriver}`, '-jar', selenium_4_8_3, 'node', '--grid-url', `http://127.0.0.1:${port}`, '--port', String(port + 1)],
@@ -141,7 +149,11 @@ test('selenium grid 4.8.3 hub + node chromium', async ({ browserName, childProce
     hub.waitForOutput('from DOWN to UP'),
   ]);
 
-  const browser = await browserType.launch({ __testHookSeleniumRemoteURL } as any);
+  const browser = await browserType.launch({
+    selenium: {
+      url: `http://127.0.0.1:${port}/`,
+    },
+  });
   const page = await browser.newPage();
   await page.setContent('<title>Hello world</title><div>Get Started</div>');
   await page.click('text=Get Started');
@@ -163,8 +175,11 @@ test('selenium grid 4.8.3 standalone chromium broken driver', async ({ browserNa
   });
   await waitForPort(port);
 
-  const __testHookSeleniumRemoteURL = `http://127.0.0.1:${port}/`;
-  const error = await browserType.launch({ __testHookSeleniumRemoteURL } as any).catch(e => e);
+  const error = await browserType.launch({
+    selenium: {
+      url: `http://127.0.0.1:${port}/`,
+    },
+  }).catch(e => e);
   expect(error.message).toContain(`Error connecting to Selenium at http://127.0.0.1:${port}/session: Could not start a new session`);
 
   expect(grid.output).not.toContain('Starting ChromeDriver');
@@ -173,8 +188,11 @@ test('selenium grid 4.8.3 standalone chromium broken driver', async ({ browserNa
 test('selenium grid 3.141.59 standalone non-chromium', async ({ browserName, browserType }, testInfo) => {
   test.skip(browserName === 'chromium');
 
-  const __testHookSeleniumRemoteURL = `http://127.0.0.1:4444/wd/hub`;
-  const error = await browserType.launch({ __testHookSeleniumRemoteURL } as any).catch(e => e);
+  const error = await browserType.launch({
+    selenium: {
+      url: `http://127.0.0.1:4444/wd/hub`,
+    },
+  }).catch(e => e);
   expect(error.message).toContain('Connecting to SELENIUM_REMOTE_URL is only supported by Chromium');
 });
 

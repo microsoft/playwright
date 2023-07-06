@@ -65,7 +65,8 @@ export abstract class BrowserType extends SdkObject {
     const controller = new ProgressController(metadata, this);
     controller.setLogName('browser');
     const browser = await controller.run(progress => {
-      const seleniumHubUrl = (options as any).__testHookSeleniumRemoteURL || process.env.SELENIUM_REMOTE_URL;
+      const seleniumHubUrl = process.env.SELENIUM_REMOTE_URL || options.selenium?.url;
+
       if (seleniumHubUrl)
         return this._launchWithSeleniumHub(progress, seleniumHubUrl, options);
       return this._innerLaunchWithRetries(progress, options, undefined, helper.debugProtocolLogger(protocolLogger)).catch(e => { throw this._rewriteStartupError(e); });

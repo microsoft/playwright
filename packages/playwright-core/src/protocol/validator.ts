@@ -492,6 +492,11 @@ scheme.BrowserTypeLaunchParams = tObject({
   downloadsPath: tOptional(tString),
   tracesDir: tOptional(tString),
   chromiumSandbox: tOptional(tBoolean),
+  selenium: tOptional(tObject({
+    url: tOptional(tString),
+    capabilities: tOptional(tAny),
+    headers: tOptional(tAny),
+  })),
   firefoxUserPrefs: tOptional(tAny),
   slowMo: tOptional(tNumber),
 });
@@ -520,6 +525,11 @@ scheme.BrowserTypeLaunchPersistentContextParams = tObject({
   downloadsPath: tOptional(tString),
   tracesDir: tOptional(tString),
   chromiumSandbox: tOptional(tBoolean),
+  selenium: tOptional(tObject({
+    url: tOptional(tString),
+    capabilities: tOptional(tAny),
+    headers: tOptional(tAny),
+  })),
   noDefaultViewport: tOptional(tBoolean),
   viewport: tOptional(tObject({
     width: tNumber,
