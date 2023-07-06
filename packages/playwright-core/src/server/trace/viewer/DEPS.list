@@ -3,4 +3,5 @@
 ../../registry/
 ../../../generated/
 ../../../utils/
+../../../utilsBundle.ts
 ../../chromium/crApp.ts

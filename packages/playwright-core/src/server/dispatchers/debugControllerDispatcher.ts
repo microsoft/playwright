@@ -15,8 +15,8 @@
  */
 
 import type * as channels from '@protocol/channels';
-import { eventsHelper } from 'playwright-core/lib/utils';
-import type { RegisteredListener } from 'playwright-core/lib/utils/eventsHelper';
+import { eventsHelper } from '../../utils';
+import type { RegisteredListener } from '../../utils/eventsHelper';
 import { DebugController } from '../debugController';
 import type { DispatcherConnection, RootDispatcher } from './dispatcher';
 import { Dispatcher } from './dispatcher';
