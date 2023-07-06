@@ -861,8 +861,8 @@ export const deps: any = {
       'libxkbcommon0',
       'libxrandr2'
     ],
-    firefox: [ ],
-    webkit: [ ],
+    firefox: [],
+    webkit: [],
     lib2package: {
       'libasound.so.2': 'libasound2',
       'libatk-1.0.so.0': 'libatk1.0-0',
