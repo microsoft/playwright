@@ -62,6 +62,7 @@ type RecordingState = {
   networkSha1s: Set<string>,
   traceSha1s: Set<string>,
   recording: boolean;
+  callIds: Set<string>;
 };
 
 const kScreencastOptions = { width: 800, height: 600, quality: 90 };
@@ -146,7 +147,8 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       chunkOrdinal: 0,
       traceSha1s: new Set(),
       networkSha1s: new Set(),
-      recording: false
+      recording: false,
+      callIds: new Set(),
     };
     const state = this._state;
     this._writeChain = fs.promises.mkdir(state.resourcesDir, { recursive: true }).then(() => fs.promises.writeFile(state.networkFile.file, ''));
@@ -171,6 +173,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       buffer: [],
     };
     state.recording = true;
+    state.callIds.clear();
 
     if (options.name && options.name !== this._state.traceName)
       this._changeTraceName(this._state, options.name);
@@ -352,11 +355,14 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       return Promise.resolve();
     sdkObject.attribution.page?.temporarlyDisableTracingScreencastThrottling();
     event.beforeSnapshot = `before@${metadata.id}`;
+    this._state?.callIds.add(metadata.id);
     this._appendTraceEvent(event);
     return this._captureSnapshot(event.beforeSnapshot, sdkObject, metadata);
   }
 
   onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata, element: ElementHandle) {
+    if (!this._state?.callIds.has(metadata.id))
+      return Promise.resolve();
     // IMPORTANT: no awaits before this._appendTraceEvent in this method.
     const event = createInputActionTraceEvent(metadata);
     if (!event)
@@ -368,9 +374,12 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   }
 
   async onAfterCall(sdkObject: SdkObject, metadata: CallMetadata) {
+    if (!this._state?.callIds.has(metadata.id))
+      return;
+    this._state?.callIds.delete(metadata.id);
     const event = createAfterActionTraceEvent(metadata);
     if (!event)
-      return Promise.resolve();
+      return;
     sdkObject.attribution.page?.temporarlyDisableTracingScreencastThrottling();
     event.afterSnapshot = `after@${metadata.id}`;
     this._appendTraceEvent(event);

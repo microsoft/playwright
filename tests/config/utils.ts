@@ -98,7 +98,7 @@ export function suppressCertificateWarning() {
   };
 }
 
-export async function parseTraceRaw(file: string): Promise<{ events: any[], resources: Map<string, Buffer>, actions: string[], stacks: Map<string, StackFrame[]> }> {
+export async function parseTraceRaw(file: string): Promise<{ events: any[], resources: Map<string, Buffer>, actions: string[], actionObjects: ActionTraceEvent[], stacks: Map<string, StackFrame[]> }> {
   const zipFS = new ZipFile(file);
   const resources = new Map<string, Buffer>();
   for (const entry of await zipFS.entries())
@@ -111,6 +111,8 @@ export async function parseTraceRaw(file: string): Promise<{ events: any[], reso
     for (const line of resources.get(traceFile)!.toString().split('\n')) {
       if (line) {
         const event = JSON.parse(line) as TraceEvent;
+        events.push(event);
+
         if (event.type === 'before') {
           const action: ActionTraceEvent = {
             ...event,
@@ -118,7 +120,6 @@ export async function parseTraceRaw(file: string): Promise<{ events: any[], reso
             endTime: 0,
             log: []
           };
-          events.push(action);
           actionMap.set(event.callId, action);
         } else if (event.type === 'input') {
           const existing = actionMap.get(event.callId);
@@ -131,8 +132,6 @@ export async function parseTraceRaw(file: string): Promise<{ events: any[], reso
           existing.log = event.log;
           existing.error = event.error;
           existing.result = event.result;
-        } else {
-          events.push(event);
         }
       }
     }
@@ -151,19 +150,15 @@ export async function parseTraceRaw(file: string): Promise<{ events: any[], reso
       stacks.set(key, value);
   }
 
+  const actionObjects = [...actionMap.values()];
+  actionObjects.sort((a, b) => a.startTime - b.startTime);
   return {
     events,
     resources,
-    actions: eventsToActions(events),
+    actions: actionObjects.map(a => a.apiName),
+    actionObjects,
     stacks,
   };
-}
-
-function eventsToActions(events: ActionTraceEvent[]): string[] {
-  // Trace viewer only shows non-internal non-tracing actions.
-  return events.filter(e => e.type === 'action')
-      .sort((a, b) => a.startTime - b.startTime)
-      .map(e => e.apiName);
 }
 
 export async function parseTrace(file: string): Promise<{ resources: Map<string, Buffer>, events: EventTraceEvent[], actions: ActionTraceEvent[], apiNames: string[], traceModel: TraceModel, model: MultiTraceModel, actionTree: string[] }> {

@@ -112,8 +112,8 @@ test('should not include buffers in the trace', async ({ context, page, server, 
   await page.goto(server.PREFIX + '/empty.html');
   await page.screenshot();
   await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
-  const { events } = await parseTraceRaw(testInfo.outputPath('trace.zip'));
-  const screenshotEvent = events.find(e => e.type === 'action' && e.apiName === 'page.screenshot');
+  const { actionObjects } = await parseTraceRaw(testInfo.outputPath('trace.zip'));
+  const screenshotEvent = actionObjects.find(a => a.apiName === 'page.screenshot');
   expect(screenshotEvent.beforeSnapshot).toBeTruthy();
   expect(screenshotEvent.afterSnapshot).toBeTruthy();
   expect(screenshotEvent.result).toEqual({});
@@ -526,7 +526,7 @@ test('should hide internal stack frames', async ({ context, page }, testInfo) =>
   await context.tracing.stop({ path: tracePath });
 
   const trace = await parseTraceRaw(tracePath);
-  const actions = trace.events.filter(e => e.type === 'action' && !e.apiName.startsWith('tracing.'));
+  const actions = trace.actionObjects.filter(a => !a.apiName.startsWith('tracing.'));
   expect(actions).toHaveLength(4);
   for (const action of actions)
     expect(relativeStack(action, trace.stacks)).toEqual(['tracing.spec.ts']);
@@ -547,7 +547,7 @@ test('should hide internal stack frames in expect', async ({ context, page }, te
   await context.tracing.stop({ path: tracePath });
 
   const trace = await parseTraceRaw(tracePath);
-  const actions = trace.events.filter(e => e.type === 'action' && !e.apiName.startsWith('tracing.'));
+  const actions = trace.actionObjects.filter(a => !a.apiName.startsWith('tracing.'));
   expect(actions).toHaveLength(5);
   for (const action of actions)
     expect(relativeStack(action, trace.stacks)).toEqual(['tracing.spec.ts']);
@@ -701,6 +701,66 @@ test('should flush console events on tracing stop', async ({ context, page }, te
   const trace = await parseTraceRaw(tracePath);
   const events = trace.events.filter(e => e.method === 'console');
   expect(events).toHaveLength(100);
+});
+
+test('should not emit after w/o before', async ({ browserType, mode }, testInfo) => {
+  test.skip(mode === 'service', 'Service ignores tracesDir');
+
+  const tracesDir = testInfo.outputPath('traces');
+  const browser = await browserType.launch({ tracesDir });
+  const context = await browser.newContext();
+  const page = await context.newPage();
+
+  await context.tracing.start({ name: 'name1', snapshots: true });
+  const evaluatePromise = page.evaluate(() => new Promise(f => (window as any).callback = f)).catch(() => {});
+  await context.tracing.stopChunk({ path: testInfo.outputPath('trace1.zip') });
+  expect(fs.existsSync(path.join(tracesDir, 'name1.trace'))).toBe(true);
+
+  await context.tracing.startChunk({ name: 'name2' });
+  await page.evaluateHandle(() => (window as any).callback());
+  await evaluatePromise;
+  await context.tracing.stop({ path: testInfo.outputPath('trace2.zip') });
+  expect(fs.existsSync(path.join(tracesDir, 'name2.trace'))).toBe(true);
+
+  await browser.close();
+  let minCallId = 100000;
+  const sanitize = (e: any) => {
+    if (e.type === 'after' || e.type === 'before') {
+      minCallId = Math.min(minCallId, +e.callId.split('@')[1]);
+      return {
+        type: e.type,
+        callId: +e.callId.split('@')[1] - minCallId,
+        apiName: e.apiName,
+      };
+    }
+  };
+
+  {
+    const { events } = await parseTraceRaw(testInfo.outputPath('trace1.zip'));
+    expect(events.map(sanitize).filter(Boolean)).toEqual([
+      {
+        type: 'before',
+        callId: 0,
+        apiName: 'page.evaluate'
+      }
+    ]);
+  }
+
+  {
+    const { events } = await parseTraceRaw(testInfo.outputPath('trace2.zip'));
+    expect(events.map(sanitize).filter(Boolean)).toEqual([
+      {
+        type: 'before',
+        callId: 6,
+        apiName: 'page.evaluateHandle'
+      },
+      {
+        type: 'after',
+        callId: 6,
+        apiName: undefined
+      }
+    ]);
+  }
 });
 
 function expectRed(pixels: Buffer, offset: number) {
