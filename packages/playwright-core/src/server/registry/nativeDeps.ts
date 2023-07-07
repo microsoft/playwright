@@ -823,7 +823,74 @@ export const deps: any = {
       'libatomic.so.1': 'libatomic1',
       'libevent-2.1.so.7': 'libevent-2.1-7',
     }
-  }
+  },
+  'debian12': {
+    tools: [
+      'xvfb',
+      'fonts-noto-color-emoji',
+      'fonts-unifont',
+      'libfontconfig1',
+      'libfreetype6',
+      'xfonts-scalable',
+      'fonts-liberation',
+      'fonts-ipafont-gothic',
+      'fonts-wqy-zenhei',
+      'fonts-tlwg-loma-otf',
+      'fonts-freefont-ttf',
+    ],
+    chromium: [
+      'libasound2',
+      'libatk-bridge2.0-0',
+      'libatk1.0-0',
+      'libatspi2.0-0',
+      'libcairo2',
+      'libcups2',
+      'libdbus-1-3',
+      'libdrm2',
+      'libgbm1',
+      'libglib2.0-0',
+      'libnspr4',
+      'libnss3',
+      'libpango-1.0-0',
+      'libx11-6',
+      'libxcb1',
+      'libxcomposite1',
+      'libxdamage1',
+      'libxext6',
+      'libxfixes3',
+      'libxkbcommon0',
+      'libxrandr2'
+    ],
+    firefox: [],
+    webkit: [],
+    lib2package: {
+      'libasound.so.2': 'libasound2',
+      'libatk-1.0.so.0': 'libatk1.0-0',
+      'libatk-bridge-2.0.so.0': 'libatk-bridge2.0-0',
+      'libatspi.so.0': 'libatspi2.0-0',
+      'libcairo.so.2': 'libcairo2',
+      'libcups.so.2': 'libcups2',
+      'libdbus-1.so.3': 'libdbus-1-3',
+      'libdrm.so.2': 'libdrm2',
+      'libgbm.so.1': 'libgbm1',
+      'libgio-2.0.so.0': 'libglib2.0-0',
+      'libglib-2.0.so.0': 'libglib2.0-0',
+      'libgobject-2.0.so.0': 'libglib2.0-0',
+      'libnspr4.so': 'libnspr4',
+      'libnss3.so': 'libnss3',
+      'libnssutil3.so': 'libnss3',
+      'libpango-1.0.so.0': 'libpango-1.0-0',
+      'libsmime3.so': 'libnss3',
+      'libX11.so.6': 'libx11-6',
+      'libxcb.so.1': 'libxcb1',
+      'libXcomposite.so.1': 'libxcomposite1',
+      'libXdamage.so.1': 'libxdamage1',
+      'libXext.so.6': 'libxext6',
+      'libXfixes.so.3': 'libxfixes3',
+      'libxkbcommon.so.0': 'libxkbcommon0',
+      'libXrandr.so.2': 'libxrandr2',
+    }
+  },
 };
 
 deps['ubuntu20.04-arm64'] = {
@@ -865,6 +932,20 @@ deps['debian11-arm64'] = {
   ],
   lib2package: {
     ...deps['debian11'].lib2package,
+  },
+};
+
+deps['debian12-arm64'] = {
+  tools: [...deps['debian12'].tools],
+  chromium: [...deps['debian12'].chromium],
+  firefox: [
+    ...deps['debian12'].firefox,
+  ],
+  webkit: [
+    ...deps['debian12'].webkit,
+  ],
+  lib2package: {
+    ...deps['debian12'].lib2package,
   },
 };
 
