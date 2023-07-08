@@ -198,7 +198,7 @@ context = browser.new_context(
 )
 
 # Resize viewport for individual page
-await page.set_viewport_size({"width": 1600, "height": 1200})
+page.set_viewport_size({"width": 1600, "height": 1200})
 
 # Emulate high-DPI
 context = browser.new_context(
