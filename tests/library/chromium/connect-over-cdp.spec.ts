@@ -418,3 +418,37 @@ test('should be able to connect via localhost', async ({ browserType }, testInfo
     await browserServer.close();
   }
 });
+
+test('emulate media should be isolated between different contexts in different connections', async ({ browserType }, testInfo) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/24109' });
+  test.fail();
+  const port = 9339 + testInfo.workerIndex;
+  const browserServer = await browserType.launch({
+    args: ['--remote-debugging-port=' + port]
+  });
+  try {
+    async function isPrint(page) {
+      return await page.evaluate(() => matchMedia('print').matches);
+    }
+
+    const browser1 = await browserType.connectOverCDP(`http://localhost:${port}`);
+    const context1 = await browser1.newContext();
+    const page1 = await context1.newPage();
+    await page1.emulateMedia({ media: 'print' });
+    expect(await isPrint(page1)).toBe(true);
+
+    const browser2 = await browserType.connectOverCDP(`http://localhost:${port}`);
+    const context2 = await browser2.newContext();
+    const page2 = await context2.newPage();
+    await page2.emulateMedia({ media: 'print' });
+    expect(await isPrint(page2)).toBe(true);
+    // page1 should not be affected.
+    expect(await isPrint(page1)).toBe(true);
+    await Promise.all([
+      browser1.close(),
+      browser2.close()
+    ]);
+  } finally {
+    await browserServer.close();
+  }
+});
