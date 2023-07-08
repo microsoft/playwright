@@ -73,7 +73,7 @@ pnpm dlx create-playwright --ct
 ```
 
  </TabItem>
-  
+
 </Tabs>
 
 This step creates several files in your workspace:
@@ -150,7 +150,7 @@ declare module '*.vue';
 ```
 
 </TabItem>
-  
+
 <TabItem value="svelte">
 
 ```js
@@ -234,7 +234,7 @@ This includes any config that needs to be run before or after mounting the compo
 
   ```js title="src/pages/ProductsPage.spec.tsx"
   import { test, expect } from '@playwright/experimental-ct-react';
-  import type { HooksConfig } from '@playwright/test';
+  import type { HooksConfig } from '../playwright';
   import { ProductsPage } from './pages/ProductsPage';
 
   test('configure routing through hooks config', async ({ page, mount }) => {
@@ -267,7 +267,7 @@ This includes any config that needs to be run before or after mounting the compo
 
   ```js title="src/pages/ProductsPage.spec.tsx"
   import { test, expect } from '@playwright/experimental-ct-solid';
-  import type { HooksConfig } from '@playwright/test';
+  import type { HooksConfig } from '../playwright';
   import { ProductsPage } from './pages/ProductsPage';
 
   test('configure routing through hooks config', async ({ page, mount }) => {
@@ -300,7 +300,7 @@ This includes any config that needs to be run before or after mounting the compo
 
   ```js title="src/pages/ProductsPage.spec.ts"
   import { test, expect } from '@playwright/experimental-ct-vue';
-  import type { HooksConfig } from '@playwright/test';
+  import type { HooksConfig } from '../playwright';
   import ProductsPage from './pages/ProductsPage.vue';
 
   test('configure routing through hooks config', async ({ page, mount }) => {
@@ -314,7 +314,7 @@ This includes any config that needs to be run before or after mounting the compo
   </TabItem>
 
   <TabItem value="vue2">
-  
+
   ```js title="playwright/index.ts"
   import { beforeMount, afterMount } from '@playwright/experimental-ct-vue2/hooks';
   import Router from 'vue-router';
@@ -335,7 +335,7 @@ This includes any config that needs to be run before or after mounting the compo
 
   ```js title="src/pages/ProductsPage.spec.ts"
   import { test, expect } from '@playwright/experimental-ct-vue2';
-  import type { HooksConfig } from '@playwright/test';
+  import type { HooksConfig } from '../playwright';
   import ProductsPage from './pages/ProductsPage.vue';
 
   test('configure routing through hooks config', async ({ page, mount }) => {
@@ -378,7 +378,7 @@ import { defineConfig } from '@playwright/experimental-ct-react';
 
 export default defineConfig({
   use: {
-    ctViteConfig: { 
+    ctViteConfig: {
       // ...
     },
   },
@@ -439,7 +439,7 @@ test('should work', async ({ mount }) => {
 ```
 
 </TabItem>
-  
+
 <TabItem value="svelte">
 
 ```js
@@ -591,13 +591,13 @@ beforeMount<HooksConfig>(async ({ hooksConfig }) => {
 
 ```js title="src/pinia.spec.ts"
 import { test, expect } from '@playwright/experimental-ct-vue';
-import type { HooksConfig } from '@playwright/test';
+import type { HooksConfig } from '../playwright';
 import Store from './Store.vue';
 
 test('override initialState ', async ({ mount }) => {
   const component = await mount<HooksConfig>(Store, {
     hooksConfig: {
-      store: { name: 'override initialState' } 
+      store: { name: 'override initialState' }
     }
   });
   await expect(component).toContainText('override initialState');
