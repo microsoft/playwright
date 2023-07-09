@@ -89,7 +89,11 @@ const jsonType: Record<string, Function> = {
 };
 
 function isJson(value: any): boolean {
-  const valueType = Array.isArray(value) ? 'array' : typeof value;
+  let valueType: string = typeof value;
+  if (Array.isArray(value))
+    valueType = 'array';
+  else if (value === null)
+    valueType = 'null';
   const validate = jsonType[valueType];
   if (validate)
     return validate(value);
