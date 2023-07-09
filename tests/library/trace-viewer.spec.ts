@@ -32,8 +32,8 @@ test.beforeAll(async function recordTrace({ browser, browserName, browserType, s
   const context = await browser.newContext();
   await context.tracing.start({ name: 'test', screenshots: true, snapshots: true, sources: true });
   const page = await context.newPage();
-  await page.goto(`data:text/html,<html>Hello world</html>`);
-  await page.setContent('<button>Click</button>');
+  await page.goto(`data:text/html,<!DOCTYPE html><html>Hello world</html>`);
+  await page.setContent('<!DOCTYPE html><button>Click</button>');
   await expect(page.locator('button')).toHaveText('Click');
   await expect(page.getByTestId('amazing-btn')).toBeHidden();
   await expect(page.getByTestId(/amazing-btn-regex/)).toBeHidden();
@@ -102,7 +102,7 @@ test('should open simple trace viewer', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer([traceFile]);
   await expect(traceViewer.actionTitles).toHaveText([
     /browserContext.newPage/,
-    /page.gotodata:text\/html,<html>Hello world<\/html>/,
+    /page.gotodata:text\/html,<!DOCTYPE html><html>Hello world<\/html>/,
     /page.setContent/,
     /expect.toHaveTextlocator\('button'\)/,
     /expect.toBeHiddengetByTestId\('amazing-btn'\)/,
@@ -135,12 +135,32 @@ test('should render events', async ({ showTraceViewer }) => {
 
 test('should render console', async ({ showTraceViewer, browserName }) => {
   const traceViewer = await showTraceViewer([traceFile]);
-  await traceViewer.selectAction('page.evaluate');
   await traceViewer.showConsoleTab();
 
-  await expect(traceViewer.consoleLineMessages).toHaveText(['Info', 'Warning', 'Error', 'Unhandled exception']);
-  await expect(traceViewer.consoleLines).toHaveClass(['console-line log', 'console-line warning', 'console-line error', 'console-line error']);
+  await expect(traceViewer.consoleLineMessages).toHaveText([
+    'Info',
+    'Warning',
+    'Error',
+    'Unhandled exception',
+    'Cheers!'
+  ]);
+  await expect(traceViewer.consoleLines.locator('.codicon')).toHaveClass([
+    'codicon codicon-blank',
+    'codicon codicon-warning',
+    'codicon codicon-error',
+    'codicon codicon-error',
+    'codicon codicon-blank',
+  ]);
   await expect(traceViewer.consoleStacks.first()).toContainText('Error: Unhandled exception');
+
+  await traceViewer.selectAction('page.evaluate');
+  await expect(traceViewer.page.locator('.console-tab').locator('.list-view-entry')).toHaveClass([
+    'list-view-entry highlighted',
+    'list-view-entry highlighted warning',
+    'list-view-entry highlighted error',
+    'list-view-entry highlighted error',
+    'list-view-entry',
+  ]);
 });
 
 test('should open console errors on click', async ({ showTraceViewer, browserName }) => {

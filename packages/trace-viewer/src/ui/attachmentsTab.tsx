@@ -18,9 +18,19 @@ import * as React from 'react';
 import './attachmentsTab.css';
 import { ImageDiffView } from '@web/components/imageDiffView';
 import type { TestAttachment } from '@web/components/imageDiffView';
-import type { ActionTraceEventInContext } from './modelUtil';
+import type { ActionTraceEventInContext, MultiTraceModel } from './modelUtil';
 
 export const AttachmentsTab: React.FunctionComponent<{
+  model: MultiTraceModel | undefined,
+}> = ({ model }) => {
+  if (!model)
+    return null;
+  return <div className='attachments-tab'>
+    { model.actions.map((action, index) => <AttachmentsSection key={index} action={action} />) }
+  </div>;
+};
+
+export const AttachmentsSection: React.FunctionComponent<{
   action: ActionTraceEventInContext | undefined,
 }> = ({ action }) => {
   if (!action)
@@ -34,7 +44,7 @@ export const AttachmentsTab: React.FunctionComponent<{
 
   const traceUrl = action.context.traceUrl;
 
-  return <div className='attachments-tab'>
+  return <>
     {expected && actual && <div className='attachments-section'>Image diff</div>}
     {expected && actual && <ImageDiffView imageDiff={{
       name: 'Image diff',
@@ -55,7 +65,7 @@ export const AttachmentsTab: React.FunctionComponent<{
         <a target='_blank' href={attachmentURL(traceUrl, a)}>{a.name}</a>
       </div>;
     })}
-  </div>;
+  </>;
 };
 
 function attachmentURL(traceUrl: string, attachment: {

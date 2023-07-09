@@ -16,40 +16,21 @@
 
 
 .console-tab {
+  display: flex;
   flex: auto;
-  line-height: 16px;
   white-space: pre;
-  overflow: auto;
-  padding-top: 3px;
   user-select: text;
 }
 
 .console-line {
-  flex: none;
-  padding: 3px 0 3px 3px;
-  align-items: center;
-  border-top: 1px solid transparent;
-  border-bottom: 1px solid transparent;
-}
-
-.console-line.error {
-  background: var(--vscode-inputValidation-errorBackground);
-  border-top-color: var(--vscode-inputValidation-errorBorder);
-  border-bottom-color: var(--vscode-inputValidation-errorBorder);
-  color: var(--vscode-errorForeground);
-}
-
-.console-line.warning {
-  background: var(--vscode-inputValidation-warningBackground);
-  border-top-color: var(--vscode-inputValidation-warningBorder);
-  border-bottom-color: var(--vscode-inputValidation-warningBorder);
+  width: 100%;
 }
 
 .console-line .codicon {
   padding: 0 2px 0 3px;
   position: relative;
   flex: none;
-  top: 1px;
+  top: 3px;
 }
 
 .console-line.warning .codicon {
@@ -57,11 +38,10 @@
 }
 
 .console-line-message {
-  white-space: initial;
   word-break: break-word;
   white-space: pre-wrap;
   position: relative;
-  top: -2px;
+  user-select: text;
 }
 
 .console-location {

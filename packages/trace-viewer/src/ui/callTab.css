@@ -81,7 +81,7 @@
 .call-value.datetime,
 .call-value.string,
 .call-value.locator {
-  color: var(--orange);
+  color: var(--vscode-charts-orange);
 }
 
 .call-value.number,
@@ -91,7 +91,7 @@
 .call-value.undefined,
 .call-value.function,
 .call-value.object {
-  color: var(--blue);
+  color: var(--vscode-charts-blue);
 }
 
 .call-tab .error-message {

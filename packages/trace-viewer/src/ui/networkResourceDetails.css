@@ -23,15 +23,15 @@
   outline: none;
 }
 
-.network-request.selected:focus {
-  border-color: var(--orange);
-}
-
 .network-request-title {
   height: 28px;
   display: flex;
   align-items: center;
   flex: 1;
+}
+
+.network-request.highlighted {
+  background-color: var(--vscode-list-inactiveSelectionBackground);
 }
 
 .network-request-title-status {

@@ -19,7 +19,7 @@ import * as React from 'react';
 import { ActionList } from './actionList';
 import { CallTab } from './callTab';
 import { ConsoleTab } from './consoleTab';
-import * as modelUtil from './modelUtil';
+import type * as modelUtil from './modelUtil';
 import type { ActionTraceEventInContext, MultiTraceModel } from './modelUtil';
 import { NetworkTab } from './networkTab';
 import { SnapshotTab } from './snapshotTab';
@@ -68,9 +68,6 @@ export const Workbench: React.FunctionComponent<{
     onSelectionChanged?.(action);
   }, [setSelectedAction, onSelectionChanged]);
 
-  const { errors, warnings } = activeAction ? modelUtil.stats(activeAction) : { errors: 0, warnings: 0 };
-  const consoleCount = errors + warnings;
-  const networkCount = activeAction ? modelUtil.resourcesForAction(activeAction).length : 0;
   const sdkLanguage = model?.sdkLanguage || 'javascript';
 
   const callTab: TabbedPaneTabModel = {
@@ -91,19 +88,17 @@ export const Workbench: React.FunctionComponent<{
   const consoleTab: TabbedPaneTabModel = {
     id: 'console',
     title: 'Console',
-    count: consoleCount,
-    render: () => <ConsoleTab action={activeAction} />
+    render: () => <ConsoleTab model={model} action={activeAction} />
   };
   const networkTab: TabbedPaneTabModel = {
     id: 'network',
     title: 'Network',
-    count: networkCount,
-    render: () => <NetworkTab action={activeAction} />
+    render: () => <NetworkTab model={model} action={activeAction} />
   };
   const attachmentsTab: TabbedPaneTabModel = {
     id: 'attachments',
     title: 'Attachments',
-    render: () => <AttachmentsTab action={activeAction} />
+    render: () => <AttachmentsTab model={model} />
   };
 
   const tabs: TabbedPaneTabModel[] = showSourcesFirst ? [
@@ -136,7 +131,6 @@ export const Workbench: React.FunctionComponent<{
             {
               id: 'actions',
               title: 'Actions',
-              count: 0,
               component: <ActionList
                 sdkLanguage={sdkLanguage}
                 actions={model?.actions || []}
@@ -150,7 +144,6 @@ export const Workbench: React.FunctionComponent<{
             {
               id: 'metadata',
               title: 'Metadata',
-              count: 0,
               component: <MetadataView model={model}/>
             },
           ]

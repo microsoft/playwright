@@ -62,12 +62,12 @@
   display: inline;
   flex: none;
   padding-left: 5px;
-  color: var(--orange);
+  color: var(--vscode-charts-orange);
 }
 
 .action-url {
   display: inline;
   flex: none;
   padding-left: 5px;
-  color: var(--blue);
+  color: var(--vscode-charts-blue);
 }

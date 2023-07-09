@@ -22,18 +22,15 @@ import type { Entry } from '@trace/har';
 
 export const NetworkResourceDetails: React.FunctionComponent<{
   resource: ResourceSnapshot,
-  index: number,
-  selected: boolean,
-  setSelected: React.Dispatch<React.SetStateAction<number>>,
-}> = ({ resource, index, selected, setSelected }) => {
+  highlighted: boolean,
+}> = ({ resource, highlighted }) => {
   const [expanded, setExpanded] = React.useState(false);
   const [requestBody, setRequestBody] = React.useState<string | null>(null);
   const [responseBody, setResponseBody] = React.useState<{ dataUrl?: string, text?: string } | null>(null);
 
   React.useEffect(() => {
     setExpanded(false);
-    setSelected(-1);
-  }, [resource, setSelected]);
+  }, [resource]);
 
   React.useEffect(() => {
     const readResources = async  () => {
@@ -89,7 +86,7 @@ export const NetworkResourceDetails: React.FunctionComponent<{
   }, [contentType, resource, resourceName, routeStatus]);
 
   return <div
-    className={'network-request ' + (selected ? 'selected' : '')} onClick={() => setSelected(index)}>
+    className={'network-request' + (highlighted ? ' highlighted' : '')}>
     <Expandable expanded={expanded} setExpanded={setExpanded} title={ renderTitle() }>
       <div className='network-request-details'>
         <div className='network-request-details-time'>{resource.time}ms</div>

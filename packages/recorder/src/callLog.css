@@ -73,11 +73,11 @@
 }
 
 .call-log-url {
-  color: var(--blue);
+  color: var(--vscode-charts-blue);
 }
 
 .call-log-selector {
-  color: var(--orange);
+  color: var(--vscode-charts-orange);
   white-space: nowrap;
 }
 

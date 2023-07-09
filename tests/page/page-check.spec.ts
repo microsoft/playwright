@@ -17,6 +17,28 @@
 
 import { test as it, expect } from './pageTest';
 
+it('console.log', async ({ page }) => {
+  await page.setContent(`<input id='checkbox' type='checkbox'></input>`);
+  await page.check('input');
+  expect(await page.evaluate(() => window['checkbox'].checked)).toBe(true);
+
+  await page.evaluate(() => {
+    console.log('1');
+    console.log('2');
+    console.log(window);
+    console.log({ a: 2 });
+  });
+
+  await page.setContent(`<input id='checkbox' type='checkbox' checked></input>`);
+  await page.check('input');
+  expect(await page.evaluate(() => window['checkbox'].checked)).toBe(true);
+
+  await page.setContent(`<input id='checkbox' type='checkbox'></input>`);
+  await page.uncheck('input');
+  expect(await page.evaluate(() => window['checkbox'].checked)).toBe(false);
+
+});
+
 it('should check the box @smoke', async ({ page }) => {
   await page.setContent(`<input id='checkbox' type='checkbox'></input>`);
   await page.check('input');

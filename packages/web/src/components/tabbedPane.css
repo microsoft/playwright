@@ -51,13 +51,6 @@
   display: inline-block;
 }
 
-.tabbed-pane-tab-count {
-  font-size: 10px;
-  display: flex;
-  align-self: flex-start;
-  width: 0px;
-}
-
 .tabbed-pane-tab.selected {
   background-color: var(--vscode-tab-activeBackground);
 }
