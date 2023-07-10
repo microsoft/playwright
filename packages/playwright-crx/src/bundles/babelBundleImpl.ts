@@ -14,8 +14,7 @@
   * limitations under the License.
   */
 
-export const builtinModules = [];
+import { errorProxy } from '../shims/error';
 
-export default {
-  builtinModules,
-};
+export default /* @__PURE__ */ errorProxy('__PW_CRX_error_babelBundleImpl__');
+

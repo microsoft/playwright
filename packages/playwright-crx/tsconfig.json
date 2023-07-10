@@ -27,7 +27,6 @@
       "playwright-core/lib/*": ["../playwright-core/src/*"],
       "@playwright/test/lib/*": ["../playwright-test/src/*"],
       "tests/*": ["../../tests/*"],
-      "@crxdeps/*": ["./bundles/crxdeps/node_modules/*"],
     }
   },
   "include": ["src"],

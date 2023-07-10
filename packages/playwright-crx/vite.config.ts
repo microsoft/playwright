@@ -15,73 +15,90 @@
  */
 
 import path from 'path';
+import type { PluginOption } from 'vite';
 import { defineConfig } from 'vite';
 
-const bundleFileRegex = /(\w+)Bundle\.ts$/;
+const bundlesMapping = {
+  'playwright-core/src/utilsBundle': path.resolve(__dirname, '../playwright-crx/src/bundles/utilsBundleImpl'),
+  'playwright-core/src/zipBundle': path.resolve(__dirname, '../playwright-crx/src/bundles/zipBundleImpl'),
+  'playwright-test/src/common/expectBundle': path.resolve(__dirname, '../playwright-crx/src/bundles/expectBundleImpl'),
+  'playwright-test/src/transform/babelBundle': path.resolve(__dirname, '../playwright-crx/src/bundles/babelBundleImpl'),
+  'playwright-test/src/utilsBundle': path.resolve(__dirname, '../playwright-crx/src/bundles/utilsBundleImpl'),
+};
 
-function replaceRequireBundle() {
-  return {
-    name: 'replace-require-bundle',
+const replaceRequireBundle: PluginOption = {
+  name: 'replace-require-bundle',
 
-    transform(src: string, id: string) {
-      const [, bundleName] = bundleFileRegex.exec(id) ?? [];
-      if (bundleName) {
-        // we'll use a vite alias to replace them with the proper bundles folder
-        const bundlesAlias = id.includes('packages/playwright-core') ? '@bundles-core' : '@bundles-test';
-        const bundleImplPath = `${bundlesAlias}/${bundleName}/src/${bundleName}BundleImpl`;
-        const body = src.replace(new RegExp(`require\\("\.\/${bundleName}BundleImpl"\\)`, 'g'), `_${bundleName}BundleImpl`);
-        const code = `import * as _${bundleName}BundleImpl from '${bundleImplPath}';
-        ${body};
-        `;
-        return { code };
-      }
-    },
-  };
-}
+  transform(src: string, id: string) {
+    const mapping = Object.entries(bundlesMapping).find(([k]) => id.includes(k))?.[1];
+    if (mapping) {
+      const relative = path.relative(path.dirname(id), mapping).replace(/\\/g, '/');
+      const bundleName = path.basename(id, '.ts');
+      const body = src.replace(new RegExp(`require\\("\.\/${bundleName}Impl"\\)`, 'g'), `/* @__PURE__ */ _${bundleName}`);
+      const code = [
+        `import * as _${bundleName} from '${relative}';`,
+        body,
+      ].join('\n');
+      return { code, map: this.getCombinedSourcemap() };
+    }
+  },
+};
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
-    replaceRequireBundle(),
+    replaceRequireBundle,
   ],
   resolve: {
     alias: {
-      '@bundles-core': path.resolve(__dirname, '../playwright-core/bundles'),
-      '@bundles-test': path.resolve(__dirname, '../playwright-test/bundles'),
       'playwright-core/lib': path.resolve(__dirname, '../playwright-core/src'),
       '@playwright/test/lib': path.resolve(__dirname, '../playwright-test/src'),
       'playwright-core': path.resolve(__dirname, '../playwright-core/src/inprocess'),
 
-      // shims
-      '_util': path.resolve(__dirname, './bundles/crxdeps/node_modules/util'),
-      '@isomorphic-git/lightning-fs': path.resolve(__dirname, './bundles/crxdeps/node_modules/@isomorphic-git/lightning-fs'),
       'assert': path.resolve(__dirname, './bundles/crxdeps/node_modules/assert'),
       'buffer': path.resolve(__dirname, './bundles/crxdeps/node_modules/buffer'),
-      'child_process': path.resolve(__dirname, './src/shims/child_process'),
-      'chokidar': path.resolve(__dirname, './src/shims/chokidar'),
-      'constants': path.resolve(__dirname, './bundles/crxdeps/node_modules/constants-browserify'),
       'crypto': path.resolve(__dirname, './bundles/crxdeps/node_modules/crypto-browserify'),
-      'dns': path.resolve(__dirname, './src/shims/dns'),
       'events': path.resolve(__dirname, './bundles/crxdeps/node_modules/events'),
       'fs': path.resolve(__dirname, './src/shims/fs'),
-      'graceful-fs': path.resolve(__dirname, './src/shims/fs'),
-      'http': path.resolve(__dirname, './bundles/crxdeps/node_modules/stream-http'),
-      'https': path.resolve(__dirname, './bundles/crxdeps/node_modules/https-browserify'),
       'module': path.resolve(__dirname, './src/shims/module'),
-      'net': path.resolve(__dirname, './src/shims/net'),
-      'os': path.resolve(__dirname, './bundles/crxdeps/node_modules/os-browserify/browser'),
+      'os': path.resolve(__dirname, './bundles/crxdeps/node_modules/os-browserify'),
       'path': path.resolve(__dirname, './bundles/crxdeps/node_modules/path'),
-      'process': path.resolve(__dirname, './bundles/crxdeps/node_modules/process'),
-      'readline': path.resolve(__dirname, './src/shims/readline'),
-      'setimmediate': path.resolve(__dirname, './bundles/crxdeps/node_modules/setimmediate'),
+      'process': path.resolve(__dirname, './bundles/crxdeps/node_modules/process/browser'),
+      'process/': path.resolve(__dirname, './bundles/crxdeps/node_modules/process/browser'),
+      'punycode': path.resolve(__dirname, './bundles/crxdeps/node_modules/punycode'),
       'stream': path.resolve(__dirname, './bundles/crxdeps/node_modules/readable-stream'),
-      'tls': path.resolve(__dirname, './src/shims/tls'),
+      'string_decoder': path.resolve(__dirname, './bundles/crxdeps/node_modules/string_decoder'),
       'url': path.resolve(__dirname, './bundles/crxdeps/node_modules/url'),
-      'util': path.resolve(__dirname, './src/shims/util'),
-      'zlib': path.resolve(__dirname, './bundles/crxdeps/node_modules/browserify-zlib'),
+      'util': path.resolve(__dirname, './bundles/crxdeps/node_modules/util'),
+      'setImmediate': path.resolve(__dirname, './bundles/crxdeps/node_modules/setimmediate'),
+      './utilsBundleImpl': path.resolve(__dirname, './src/core/utilsBundleImpl'),
+      './zipBundleImpl': path.resolve(__dirname, './src/core/zipBundleImpl'),
+      './expectBundleImpl': path.resolve(__dirname, './src/test/expectBundleImpl'),
+      './babelBundleImpl': path.resolve(__dirname, './src/test/babelBundleImpl'),
+
+      'graceful-fs': path.resolve(__dirname, './src/shims/graceful-fs'),
+
+      // generated with check_dep_crx
+      'child_process': path.resolve(__dirname, './src/shims/generated/child_process'),
+      'cluster': path.resolve(__dirname, './src/shims/generated/cluster'),
+      'dgram': path.resolve(__dirname, './src/shims/generated/dgram'),
+      'dns': path.resolve(__dirname, './src/shims/generated/dns'),
+      'domain': path.resolve(__dirname, './src/shims/generated/domain'),
+      'http': path.resolve(__dirname, './src/shims/generated/http'),
+      'https': path.resolve(__dirname, './src/shims/generated/https'),
+      'net': path.resolve(__dirname, './src/shims/generated/net'),
+      'readline': path.resolve(__dirname, './src/shims/generated/readline'),
+      'timers': path.resolve(__dirname, './src/shims/generated/timers'),
+      'tls': path.resolve(__dirname, './src/shims/generated/tls'),
+      'tty': path.resolve(__dirname, './src/shims/generated/tty'),
+      'v8': path.resolve(__dirname, './src/shims/generated/v8'),
+      'vm': path.resolve(__dirname, './src/shims/generated/vm'),
+      'zlib': path.resolve(__dirname, './src/shims/generated/zlib'),
     },
   },
   define: {
+    'process.env.PW_CRX': '"true"',
+
     // we need this one because of PLAYWRIGHT_CORE_PATH (it checks the actual version of playwright-core)
     'require.resolve': '((s) => s)',
     'process.platform': '"browser"',
@@ -91,7 +108,7 @@ export default defineConfig({
   },
   build: {
     outDir: path.resolve(__dirname, './lib/'),
-    // skip code obfuscation
+    sourcemap: true,
     minify: false,
     lib: {
       entry: path.resolve(__dirname, 'src/index.ts'),
@@ -106,10 +123,12 @@ export default defineConfig({
     commonjsOptions: {
       include: [
         path.resolve(__dirname, '../playwright-core/src/server/deviceDescriptors.js'),
-        path.resolve(__dirname, '../playwright-core/src/third_party/**/*.js'),
         path.resolve(__dirname, '../playwright-core/bundles/utils/src/third_party/**/*.js'),
         /node_modules/,
       ],
     }
+  },
+  esbuild: {
+    treeShaking: true,
   },
 });

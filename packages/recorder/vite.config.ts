@@ -33,7 +33,7 @@ export default defineConfig({
   build: {
     outDir: path.resolve(__dirname, '../playwright-core/lib/webpack/recorder'),
     emptyOutDir: true,
-    chunkSizeWarningLimit: 4096,
+    minify: false,
     rollupOptions: {
       input: {
         'index': path.resolve(__dirname, 'index.html'),

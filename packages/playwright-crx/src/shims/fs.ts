@@ -14,9 +14,19 @@
  * limitations under the License.
  */
 
-import FS from '@isomorphic-git/lightning-fs';
+import FS from '../../bundles/crxdeps/node_modules/@isomorphic-git/lightning-fs';
+import { errorProxy } from './error';
 
 const fs = new FS('crx');
 
+export const promises = fs.promises;
+
+// we don't want these calls to appear
+export const createWriteStream = /* @__PURE__ */ errorProxy('fs.createWriteStream not allowed in CRX');
+export const existsSync = /* @__PURE__ */ () => false;
+export const readFileSync = /* @__PURE__ */ errorProxy('fs.readFileSync not allowed in CRX');
+export const statSync = /* @__PURE__ */ errorProxy('fs.statSync not allowed in CRX');
+export const mkdirSync = /* @__PURE__ */ errorProxy('fs.mkdirSync not allowed in CRX');
+export const writeFileSync = /* @__PURE__ */ errorProxy('fs.writeFileSync not allowed in CRX');
+
 export default fs;
-export const { promises, readFile, readlink, rename, readdir, stat, lstat } = fs;

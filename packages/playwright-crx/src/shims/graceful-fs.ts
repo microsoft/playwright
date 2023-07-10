@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
-import buffer from 'buffer';
-
-self.Buffer = buffer.Buffer;
+// we don't want these calls to appear
+export function readFileSync() {
+  throw new Error(`graceful fs.readFileSync not allowed in CRX`);
+}

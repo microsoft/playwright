@@ -14,7 +14,12 @@
  * limitations under the License.
  */
 
-import 'setimmediate';
-
+import expectLibrary from '../../../playwright-test/bundles/expect/node_modules/expect';
 // @ts-ignore
-self.setImmediate = setImmediate;
+export const expect = expectLibrary;
+
+export {
+  INVERTED_COLOR,
+  RECEIVED_COLOR,
+  printReceived,
+} from '../../../playwright-test/bundles/expect/node_modules/jest-matcher-utils';

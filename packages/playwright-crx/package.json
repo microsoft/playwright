@@ -11,6 +11,12 @@
     "name": "Microsoft Corporation"
   },
   "license": "Apache-2.0",
+  "scripts": {
+    "generate-node-shims": "node ../../utils/crx/generate_node_shims.js",
+    "check-deps": "node ../../utils/crx/check_deps.js",
+    "build": "npm run generate-node-shims && vite build && npm run check-deps",
+    "watch": "npm run generate-node-shims && vite build --watch --sourcemap --minify=false"
+  },
   "exports": {
     ".": {
       "types": "./index.d.ts",

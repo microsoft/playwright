@@ -250,8 +250,8 @@ for (const pkg of workspace.packages()) {
 
 // Build/watch playwright-crx.
 steps.push({
-  command: 'npx',
-  args: ['vite', 'build', ...(watchMode ? ['--watch', '--sourcemap', '--minify=false'] : [])],
+  command: 'npm',
+  args: ['run', watchMode ? 'watch' : 'build'],
   shell: true,
   cwd: path.join(__dirname, '..', '..', 'packages', 'playwright-crx'),
   concurrent: true,

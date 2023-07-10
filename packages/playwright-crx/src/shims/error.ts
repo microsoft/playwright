@@ -14,12 +14,24 @@
  * limitations under the License.
  */
 
-function noop() {}
+export function errorProxy(msg: string = `Operation not allowed in CRX mode`) {
+  const errorFn = () => {
+    throw new Error(msg);
+  };
 
-export const createConnection = noop;
-export const isIP = noop;
-
-export default {
-  createConnection,
-  isIP,
-};
+  return new Proxy({}, {
+    apply: errorFn,
+    construct: errorFn,
+    defineProperty: errorFn,
+    deleteProperty: errorFn,
+    get: errorFn,
+    getOwnPropertyDescriptor: errorFn,
+    getPrototypeOf: errorFn,
+    has: errorFn,
+    isExtensible: errorFn,
+    ownKeys: errorFn,
+    preventExtensions: errorFn,
+    set: errorFn,
+    setPrototypeOf: errorFn,
+  });
+}

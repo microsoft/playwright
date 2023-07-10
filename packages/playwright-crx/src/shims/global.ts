@@ -14,9 +14,16 @@
  * limitations under the License.
  */
 
-import './process';
-import './setImmediate';
-import './buffer';
+// setImmediate adds itself to self
+import 'setImmediate';
+import process from 'process';
+import buffer from 'buffer';
+
+Object.entries({ process, buffer })
+    // @ts-ignore
+    .forEach(([name, lib]) => {
+      if (!self[name]) self[name] = lib;
+    });
 
 self.global = self;
 self.__dirname = '.';

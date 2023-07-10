@@ -14,8 +14,11 @@
   * limitations under the License.
   */
 
-export const builtinModules = [];
+import { errorProxy } from '../shims/error';
 
-export default {
-  builtinModules,
-};
+export const yazl = /* @__PURE__ */ errorProxy('__PW_CRX_error_zipBundleImpl.yazl__');
+export const yauzl = /* @__PURE__ */ errorProxy('__PW_CRX_error_zipBundleImpl.yauzl__');
+export const extract = /* @__PURE__ */ errorProxy('__PW_CRX_error_zipBundleImpl.extract__');
+
+export default /* @__PURE__ */ errorProxy('__PW_CRX_error_zipBundleImpl__');
+
