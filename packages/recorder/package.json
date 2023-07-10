@@ -6,5 +6,8 @@
     "dev": "vite",
     "build": "vite build && tsc",
     "preview": "vite preview"
+  },
+  "dependencies": {
+    "@playwright/experimental-crx": "file:../playwright-crx"
   }
 }
