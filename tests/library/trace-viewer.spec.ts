@@ -871,7 +871,7 @@ test('should open trace-1.31', async ({ showTraceViewer }) => {
   await expect(snapshot.locator('[__playwright_target__]')).toHaveText(['Submit']);
 });
 
-test('should prefer later resource request', async ({ page, server, runAndTrace }) => {
+test('should prefer first resource request', async ({ page, server, runAndTrace }) => {
   const html = `
     <body>
       <script>
@@ -886,19 +886,9 @@ test('should prefer later resource request', async ({ page, server, runAndTrace 
     </body>
   `;
 
-  let reloadStartedCallback = () => {};
-  const reloadStartedPromise = new Promise<void>(f => reloadStartedCallback = f);
-  server.setRoute('/style.css', async (req, res) => {
-    // Make sure reload happens before style arrives.
-    await reloadStartedPromise;
-    res.end('body { background-color: rgb(123, 123, 123) }');
-  });
   server.setRoute('/index.html', (req, res) => res.end(html));
-  server.setRoute('/index.html?reloaded', (req, res) => {
-    reloadStartedCallback();
-    res.end(html);
-  });
-
+  server.setRoute('/index.html?reloaded', (req, res) => res.end(html));
+  server.setRoute('/style.css', (req, res) => res.end('body { background-color: rgb(123, 123, 123) }'));
   const traceViewer = await runAndTrace(async () => {
     await page.goto(server.PREFIX + '/index.html');
   });
