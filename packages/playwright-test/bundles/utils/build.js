@@ -19,7 +19,7 @@ const path = require('path');
 const fs = require('fs');
 const esbuild = require('esbuild');
 
-// Can be removed once source-map-support was  is fixed.
+// Can be removed once source-map-support was is fixed.
 /** @type{import('esbuild').Plugin} */
 let patchSource = {
   name: 'patch-source-map-support-deprecation',
@@ -36,21 +36,26 @@ let patchSource = {
       return { path: patchedPath }
     });
   },
-}
+};
 
-esbuild.build({
-  entryPoints: [path.join(__dirname, 'src/utilsBundleImpl.ts')],
-  external: ['fsevents'],
-  bundle: true,
-  outdir: path.join(__dirname, '../../lib'),
-  plugins: [patchSource],
-  format: 'cjs',
-  platform: 'node',
-  target: 'ES2019',
-  watch: process.argv.includes('--watch'),
-  sourcemap: process.argv.includes('--sourcemap'),
-  minify: process.argv.includes('--minify'),
-}).catch((error) => {
+(async () => {
+  const ctx = await esbuild.context({
+    entryPoints: [path.join(__dirname, 'src/utilsBundleImpl.ts')],
+    external: ['fsevents'],
+    bundle: true,
+    outdir: path.join(__dirname, '../../lib'),
+    plugins: [patchSource],
+    format: 'cjs',
+    platform: 'node',
+    target: 'ES2019',
+    sourcemap: process.argv.includes('--sourcemap'),
+    minify: process.argv.includes('--minify'),
+  });
+  await ctx.rebuild();
+  if (process.argv.includes('--watch'))
+    await ctx.watch();
+  await ctx.dispose();
+})().catch(error => {
   console.error(error);
   process.exit(1);
 });
