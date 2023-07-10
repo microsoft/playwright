@@ -382,7 +382,12 @@ export class TestInfoImpl implements TestInfo {
   }
 
   outputPath(...pathSegments: string[]){
+    const outputPath = this._getOutputPath(...pathSegments);
     fs.mkdirSync(this.outputDir, { recursive: true });
+    return outputPath;
+  }
+
+  _getOutputPath(...pathSegments: string[]){
     const joinedPath = path.join(...pathSegments);
     const outputPath = getContainedPath(this.outputDir, joinedPath);
     if (outputPath)

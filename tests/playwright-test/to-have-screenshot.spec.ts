@@ -283,6 +283,7 @@ test('should support clip option for page', async ({ runInlineTest }, testInfo) 
       });
     `
   });
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test'))).toBe(false);
   expect(result.exitCode).toBe(0);
 });
 
