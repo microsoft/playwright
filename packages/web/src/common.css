@@ -19,26 +19,11 @@
 }
 
 body {
-  --red: #F44336;
-  --green: #367c39;
-  --purple: #9C27B0;
-  --yellow: #ff9207;
-  --white: #FFFFFF;
-  --blue: #0b7ad5;
   --transparent-blue: #2196F355;
-  --orange: #d24726;
   --light-pink: #ff69b460;
   --gray: #888888;
   --sidebar-width: 250px;
   --box-shadow: rgba(0, 0, 0, 0.133) 0px 1.6px 3.6px 0px, rgba(0, 0, 0, 0.11) 0px 0.3px 0.9px 0px;
-}
-
-body.dark-mode {
-  --green: #28d12f;
-  --yellow: #ff9207;
-  --purple: #dc12ff;
-  --blue: #4dafff;
-  --orange: #ff9800;
 }
 
 html, body {
@@ -103,11 +88,15 @@ svg {
 }
 
 .codicon-check {
-  color: var(--green);
+  color: var(--vscode-charts-green);
 }
 
 .codicon-error {
-  color: var(--red);
+  color: var(--vscode-errorForeground);
+}
+
+.codicon-warning {
+  color: var(--vscode-list-warningForeground);
 }
 
 .codicon-circle-outline {

@@ -19,58 +19,81 @@ import type { ActionTraceEvent } from '@trace/trace';
 import * as React from 'react';
 import './consoleTab.css';
 import * as modelUtil from './modelUtil';
+import { ListView } from '@web/components/listView';
+
+type ConsoleEntry = {
+  message?: channels.ConsoleMessageInitializer;
+  error?: channels.SerializedError;
+  highlight: boolean;
+};
+
+const ConsoleListView = ListView<ConsoleEntry>;
 
 export const ConsoleTab: React.FunctionComponent<{
+  model: modelUtil.MultiTraceModel | undefined,
   action: ActionTraceEvent | undefined,
-}> = ({ action }) => {
-  const entries = React.useMemo(() => {
-    if (!action)
-      return [];
-    const entries: { message?: channels.ConsoleMessageInitializer, error?: channels.SerializedError }[] = [];
-    const context = modelUtil.context(action);
-    for (const event of modelUtil.eventsForAction(action)) {
+}> = ({ model, action }) => {
+  const { entries } = React.useMemo(() => {
+    if (!model)
+      return { entries: [] };
+    const entries: ConsoleEntry[] = [];
+    const actionEvents = action ? modelUtil.eventsForAction(action) : [];
+    for (const event of model.events) {
       if (event.method !== 'console' && event.method !== 'pageError')
         continue;
       if (event.method === 'console') {
         const { guid } = event.params.message;
-        entries.push({ message: context.initializers[guid] });
+        entries.push({
+          message: modelUtil.context(event).initializers[guid],
+          highlight: actionEvents.includes(event),
+        });
       }
-      if (event.method === 'pageError')
-        entries.push({ error: event.params.error });
+      if (event.method === 'pageError') {
+        entries.push({
+          error: event.params.error,
+          highlight: actionEvents.includes(event),
+        });
+      }
     }
-    return entries;
-  }, [action]);
+    return { entries };
+  }, [model, action]);
 
-  return <div className='console-tab'>{
-    entries.map((entry, index) => {
-      const { message, error } = entry;
-      if (message) {
-        const url = message.location.url;
-        const filename = url ? url.substring(url.lastIndexOf('/') + 1) : '<anonymous>';
-        return <div className={'console-line ' + message.type} key={index}>
-          <span className='console-location'>{filename}:{message.location.lineNumber}</span>
-          <span className={'codicon codicon-' + iconClass(message)}></span>
-          <span className='console-line-message'>{message.text}</span>
-        </div>;
-      }
-      if (error) {
-        const { error: errorObject, value } = error;
-        if (errorObject) {
-          return <div className='console-line error' key={index}>
-            <span className={'codicon codicon-error'}></span>
-            <span className='console-line-message'>{errorObject.message}</span>
-            <div className='console-stack'>{errorObject.stack}</div>
-          </div>;
-        } else {
-          return <div className='console-line error' key={index}>
-            <span className={'codicon codicon-error'}></span>
-            <span className='console-line-message'>{String(value)}</span>
+  return <div className='console-tab'>
+    <ConsoleListView
+      items={entries}
+      isError={entry => !!entry.error || entry.message?.type === 'error'}
+      isWarning={entry => entry.message?.type === 'warning'}
+      render={entry => {
+        const { message, error } = entry;
+        if (message) {
+          const url = message.location.url;
+          const filename = url ? url.substring(url.lastIndexOf('/') + 1) : '<anonymous>';
+          return <div className='console-line'>
+            <span className='console-location'>{filename}:{message.location.lineNumber}</span>
+            <span className={'codicon codicon-' + iconClass(message)}></span>
+            <span className='console-line-message'>{message.text}</span>
           </div>;
         }
-      }
-      return null;
-    })
-  }</div>;
+        if (error) {
+          const { error: errorObject, value } = error;
+          if (errorObject) {
+            return <div className='console-line'>
+              <span className={'codicon codicon-error'}></span>
+              <span className='console-line-message'>{errorObject.message}</span>
+              <div className='console-stack'>{errorObject.stack}</div>
+            </div>;
+          } else {
+            return <div className='console-line'>
+              <span className={'codicon codicon-error'}></span>
+              <span className='console-line-message'>{String(value)}</span>
+            </div>;
+          }
+        }
+        return null;
+      }}
+      isHighlighted={entry => !!entry.highlight}
+    />
+  </div>;
 };
 
 function iconClass(message: channels.ConsoleMessageInitializer): string {

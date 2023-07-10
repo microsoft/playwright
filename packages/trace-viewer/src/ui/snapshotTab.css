@@ -61,7 +61,7 @@
 }
 
 .snapshot-tab:focus .snapshot-toggle.toggled {
-  background: var(--blue);
+  background: var(--vscode-charts-blue);
 }
 
 .snapshot-wrapper {

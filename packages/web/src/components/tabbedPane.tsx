@@ -21,7 +21,6 @@ import * as React from 'react';
 export interface TabbedPaneTabModel {
   id: string;
   title: string | JSX.Element;
-  count?: number;
   component?: React.ReactElement;
   render?: () => React.ReactElement;
 }
@@ -41,7 +40,6 @@ export const TabbedPane: React.FunctionComponent<{
           <TabbedPaneTab
             id={tab.id}
             title={tab.title}
-            count={tab.count}
             selected={selectedTab === tab.id}
             onSelect={setSelectedTab}
           ></TabbedPaneTab>)),
@@ -63,14 +61,12 @@ export const TabbedPane: React.FunctionComponent<{
 export const TabbedPaneTab: React.FunctionComponent<{
   id: string,
   title: string | JSX.Element,
-  count?: number,
   selected?: boolean,
   onSelect: (id: string) => void
-}> = ({ id, title, count, selected, onSelect }) => {
+}> = ({ id, title, selected, onSelect }) => {
   return <div className={'tabbed-pane-tab ' + (selected ? 'selected' : '')}
     onClick={() => onSelect(id)}
     key={id}>
     <div className='tabbed-pane-tab-label'>{title}</div>
-    <div className='tabbed-pane-tab-count'>{count || ''}</div>
   </div>;
 };

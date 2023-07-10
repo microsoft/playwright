@@ -88,7 +88,7 @@
 .timeline-bar.frame_check,
 .timeline-bar.frame_uncheck,
 .timeline-bar.frame_tap {
-  --action-color: var(--green);
+  --action-color: var(--vscode-charts-green);
 }
 
 .timeline-bar.page_load,
@@ -110,11 +110,11 @@
 .timeline-bar.frame_goback,
 .timeline-bar.frame_goforward,
 .timeline-bar.reload {
-  --action-color: var(--blue);
+  --action-color: var(--vscode-charts-blue);
 }
 
 .timeline-bar.frame_evaluateexpression {
-  --action-color: var(--yellow);
+  --action-color: var(--vscode-charts-yellow);
 }
 
 .timeline-bar.frame_dialog {
@@ -122,7 +122,7 @@
 }
 
 .timeline-bar.frame_navigated {
-  --action-color: var(--blue);
+  --action-color: var(--vscode-charts-blue);
 }
 
 .timeline-bar.frame_waitforeventinfo,

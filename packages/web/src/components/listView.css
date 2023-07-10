@@ -20,7 +20,7 @@
   flex: auto;
   position: relative;
   user-select: none;
-  overflow: auto;
+  overflow-y: auto;
   outline: 1px solid transparent;
 }
 
@@ -74,4 +74,8 @@
 
 .list-view-entry.error {
   color: var(--vscode-list-errorForeground);
+}
+
+.list-view-entry.warning {
+  color: var(--vscode-list-warningForeground);
 }

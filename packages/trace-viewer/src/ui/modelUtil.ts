@@ -63,6 +63,7 @@ export class MultiTraceModel {
   readonly sdkLanguage: Language | undefined;
   readonly testIdAttributeName: string | undefined;
   readonly sources: Map<string, SourceModel>;
+  resources: ResourceSnapshot[];
 
 
   constructor(contexts: ContextEntry[]) {
@@ -81,6 +82,7 @@ export class MultiTraceModel {
     this.actions = mergeActions(contexts);
     this.events = ([] as EventTraceEvent[]).concat(...contexts.map(c => c.events));
     this.hasSource = contexts.some(c => c.hasSource);
+    this.resources = [...contexts.map(c => c.resources)].flat();
 
     this.events.sort((a1, a2) => a1.time - a2.time);
     this.sources = collectSources(this.actions);
@@ -191,7 +193,7 @@ export function idForAction(action: ActionTraceEvent) {
   return `${action.pageId || 'none'}:${action.callId}`;
 }
 
-export function context(action: ActionTraceEvent): ContextEntry {
+export function context(action: ActionTraceEvent | EventTraceEvent): ContextEntry {
   return (action as any)[contextSymbol];
 }
 
