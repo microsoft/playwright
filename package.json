@@ -79,7 +79,7 @@
     "electron": "19.0.11",
     "electron-to-chromium": "^1.4.212",
     "enquirer": "^2.3.6",
-    "esbuild": "^0.15.6",
+    "esbuild": "^0.18.11",
     "eslint": "^8.37.0",
     "eslint-plugin-notice": "^0.9.10",
     "eslint-plugin-react-hooks": "^4.3.0",

@@ -29,17 +29,22 @@ if (!fs.existsSync(outdir))
   fs.copyFileSync(path.join(__dirname, 'node_modules/open/xdg-open'), path.join(outdir, 'xdg-open'));
 }
 
-esbuild.build({
-  entryPoints: [path.join(__dirname, 'src/utilsBundleImpl.ts')],
-  bundle: true,
-  outfile: path.join(outdir, 'index.js'),
-  format: 'cjs',
-  platform: 'node',
-  target: 'ES2019',
-  watch: process.argv.includes('--watch'),
-  sourcemap: process.argv.includes('--sourcemap'),
-  minify: process.argv.includes('--minify'),
-}).catch((error) => {
+(async () => {
+  const ctx = await esbuild.context({
+    entryPoints: [path.join(__dirname, 'src/utilsBundleImpl.ts')],
+    bundle: true,
+    outfile: path.join(outdir, 'index.js'),
+    format: 'cjs',
+    platform: 'node',
+    target: 'ES2019',
+    sourcemap: process.argv.includes('--sourcemap'),
+    minify: process.argv.includes('--minify'),
+  });
+  await ctx.rebuild();
+  if (process.argv.includes('--watch'))
+    await ctx.watch();
+  await ctx.dispose();
+})().catch(error => {
   console.error(error);
   process.exit(1);
 });
