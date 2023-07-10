@@ -16,7 +16,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import type { APIRequestContext, BrowserContext, Browser, BrowserContextOptions, LaunchOptions, Page, Tracing, Video } from 'playwright-core';
+import type { APIRequestContext, BrowserContext, Browser, BrowserContextOptions, LaunchOptions, Page, Tracing, Video, PageScreenshotOptions } from 'playwright-core';
 import * as playwrightLibrary from 'playwright-core';
 import { createGuid, debugMode, addInternalStackPrefix, mergeTraceFiles, saveTraceFile, removeFolders, isString, asLocator } from 'playwright-core/lib/utils';
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, TraceMode, VideoMode } from '../types/test';
@@ -82,6 +82,8 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
   _artifactsDir: [async ({}, use, workerInfo) => {
     let dir: string | undefined;
     await use(() => {
+      if (process.env.PW_CRX) throw new Error(`Operation not allowed in CRX mode`);
+
       if (!dir) {
         dir = path.join(workerInfo.project.outputDir, artifactsFolderName(workerInfo.workerIndex));
         fs.mkdirSync(dir, { recursive: true });
@@ -527,7 +529,7 @@ class ArtifactsRecorder {
   private _screenshotMode: ScreenshotMode;
   private _traceMode: TraceMode;
   private _captureTrace = false;
-  private _screenshotOptions: { mode: ScreenshotMode } & Pick<playwrightLibrary.PageScreenshotOptions, 'fullPage' | 'omitBackground'> | undefined;
+  private _screenshotOptions: { mode: ScreenshotMode } & Pick<PageScreenshotOptions, 'fullPage' | 'omitBackground'> | undefined;
   private _traceOptions: { screenshots: boolean, snapshots: boolean, sources: boolean, attachments: boolean, mode?: TraceMode };
   private _temporaryTraceFiles: string[] = [];
   private _temporaryScreenshots: string[] = [];
@@ -655,7 +657,7 @@ class ArtifactsRecorder {
 
     // Either remove or attach temporary traces for contexts closed before the
     // test has finished.
-    if (this._preserveTrace() && this._temporaryTraceFiles.length) {
+    if (!process.env.PW_CRX && this._preserveTrace() && this._temporaryTraceFiles.length) {
       const tracePath = this._testInfo.outputPath(`trace.zip`);
       // This could be: beforeHooks, or beforeHooks + test, etc.
       const beforeHooksHadTrace = fs.existsSync(tracePath);

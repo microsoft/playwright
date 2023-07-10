@@ -246,6 +246,8 @@ export function toMatchSnapshot(
   nameOrOptions: NameOrSegments | { name?: NameOrSegments } & ImageComparatorOptions = {},
   optOptions: ImageComparatorOptions = {}
 ): SyncExpectationResult {
+  if (process.env.PW_CRX) throw new Error(`Operation not allowed in CRX mode`);
+
   const testInfo = currentTestInfo();
   if (!testInfo)
     throw new Error(`toMatchSnapshot() must be called during the test`);
@@ -305,6 +307,8 @@ export async function toHaveScreenshot(
   nameOrOptions: NameOrSegments | { name?: NameOrSegments } & HaveScreenshotOptions = {},
   optOptions: HaveScreenshotOptions = {}
 ): Promise<SyncExpectationResult> {
+  if (process.env.PW_CRX) throw new Error(`Operation not allowed in CRX mode`);
+
   const testInfo = currentTestInfo();
   if (!testInfo)
     throw new Error(`toHaveScreenshot() must be called during the test`);

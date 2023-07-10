@@ -152,7 +152,7 @@ export function resolveHook(filename: string, specifier: string): string | undef
 }
 
 export function shouldTransform(filename: string): boolean {
-  if (_externalMatcher(filename))
+  if (process.env.PW_CRX || _externalMatcher(filename))
     return false;
   return !belongsToNodeModules(filename);
 }

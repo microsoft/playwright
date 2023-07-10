@@ -51,7 +51,7 @@ sourceMapSupport.install({
     if (!sourceMaps.has(source))
       return null;
     const sourceMapPath = sourceMaps.get(source)!;
-    if (!fs.existsSync(sourceMapPath))
+    if (process.env.PW_CRX || !fs.existsSync(sourceMapPath))
       return null;
     return {
       map: JSON.parse(fs.readFileSync(sourceMapPath, 'utf-8')),

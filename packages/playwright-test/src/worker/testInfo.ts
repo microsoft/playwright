@@ -382,6 +382,8 @@ export class TestInfoImpl implements TestInfo {
   }
 
   outputPath(...pathSegments: string[]){
+    if (process.env.PW_CRX) throw new Error(`Operation not allowed in CRX mode`);
+
     fs.mkdirSync(this.outputDir, { recursive: true });
     const joinedPath = path.join(...pathSegments);
     const outputPath = getContainedPath(this.outputDir, joinedPath);
