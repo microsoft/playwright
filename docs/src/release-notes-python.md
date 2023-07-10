@@ -4,6 +4,21 @@ title: "Release notes"
 toc_max_heading_level: 2
 ---
 
+## Version 1.36
+
+🏝️ Summer maintenance release.
+
+### Browser Versions
+
+* Chromium 115.0.5790.75
+* Mozilla Firefox 115.0
+* WebKit 17.0
+
+This version was also tested against the following stable channels:
+
+* Google Chrome 114
+* Microsoft Edge 114
+
 ## Version 1.35
 
 ### Highlights
