@@ -30,7 +30,7 @@ import { HttpsProxyAgent, SocksProxyAgent } from '../utilsBundle';
 import { BrowserContext } from './browserContext';
 import { CookieStore, domainMatches } from './cookieStore';
 import { MultipartFormData } from './formData';
-import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent } from '../utils/happy-eyeballs';
+import { getHappyEyeballsAgent } from '../utils/happy-eyeballs';
 import type { CallMetadata } from './instrumentation';
 import { SdkObject } from './instrumentation';
 import type { Playwright } from './playwright';
@@ -160,6 +160,7 @@ export abstract class APIRequestContext extends SdkObject {
     const proxy = defaults.proxy;
     let agent;
     if (proxy && proxy.server !== 'per-context' && !shouldBypassProxy(requestUrl, proxy.bypass)) {
+      if (process.env.PW_CRX) throw new Error(`Operation not allowed in CRX mode`);
       const proxyOpts = url.parse(proxy.server);
       if (proxyOpts.protocol?.startsWith('socks')) {
         agent = new SocksProxyAgent({
@@ -257,10 +258,11 @@ export abstract class APIRequestContext extends SdkObject {
     this.emit(APIRequestContext.Events.Request, requestEvent);
 
     return new Promise((fulfill, reject) => {
+      if (process.env.PW_CRX) throw new Error(`Operation not allowed in CRX mode`);
       const requestConstructor: ((url: URL, options: http.RequestOptions, callback?: (res: http.IncomingMessage) => void) => http.ClientRequest)
         = (url.protocol === 'https:' ? https : http).request;
       // If we have a proxy agent already, do not override it.
-      const agent = options.agent || (url.protocol === 'https:' ? httpsHappyEyeballsAgent : httpHappyEyeballsAgent);
+      const agent = options.agent || getHappyEyeballsAgent(url);
       const requestOptions = { ...options, agent };
       const request = requestConstructor(url, requestOptions as any, async response => {
         const notifyRequestFinished = (body?: Buffer) => {

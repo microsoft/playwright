@@ -327,11 +327,15 @@ export class Recorder implements InstrumentationListener {
   }
 
   private _readSource(fileName: string): string {
-    try {
-      return fs.readFileSync(fileName, 'utf-8');
-    } catch (e) {
-      return '// No source available';
+    if (!process.env.PW_CRX) {
+      try {
+        return fs.readFileSync(fileName, 'utf-8');
+      } catch (e) {
+        // return fallback
+      }
     }
+
+    return '// No source available';
   }
 }
 
@@ -698,8 +702,10 @@ class ThrottledFile {
       clearTimeout(this._timer);
       this._timer = undefined;
     }
-    if (this._text)
+    if (this._text) {
+      if (process.env.PW_CRX) throw new Error(`Operation not allowed in CRX mode`);
       fs.writeFileSync(this._file, this._text);
+    }
     this._text = undefined;
   }
 }

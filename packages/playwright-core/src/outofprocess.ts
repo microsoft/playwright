@@ -22,6 +22,7 @@ import * as path from 'path';
 import { ManualPromise } from './utils/manualPromise';
 
 export async function start(env: any = {}): Promise<{ playwright: Playwright, stop: () => Promise<void> }> {
+  if (process.env.PW_CRX) throw new Error(`Operation not allowed in CRX mode`);
   const client = new PlaywrightClient(env);
   const playwright = await client._playwright;
   (playwright as any).driverProcess = client._driverProcess;

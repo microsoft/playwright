@@ -58,6 +58,7 @@ export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.
   }
 
   async zip(params: channels.LocalUtilsZipParams): Promise<void> {
+    if (process.env.PW_CRX) throw new Error(`Operation not allowed in CRX mode`);
     const promise = new ManualPromise<void>();
     const zipFile = new yazl.ZipFile();
     (zipFile as any as EventEmitter).on('error', error => promise.reject(error));
@@ -99,6 +100,8 @@ export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.
     }
 
     if (params.mode === 'write') {
+      if (process.env.PW_CRX) throw new Error(`Operation not allowed in CRX mode`);
+
       // New file, just compress the entries.
       await fs.promises.mkdir(path.dirname(params.zipFile), { recursive: true });
       zipFile.end(undefined, () => {

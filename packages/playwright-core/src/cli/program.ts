@@ -80,6 +80,7 @@ program
     .description('run command in debug mode: disable timeout, open inspector')
     .allowUnknownOption(true)
     .action(function(app, options) {
+      if (process.env.PW_CRX) throw new Error(`Operation not allowed in CRX mode`);
       spawn(app, options, {
         env: { ...process.env, PWDEBUG: '1' },
         stdio: 'inherit'

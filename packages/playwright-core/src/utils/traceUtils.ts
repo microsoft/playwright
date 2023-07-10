@@ -46,6 +46,8 @@ export function serializeClientSideCallMetadata(metadatas: ClientSideCallMetadat
 }
 
 export async function mergeTraceFiles(fileName: string, temporaryTraceFiles: string[]) {
+  if (process.env.PW_CRX) throw new Error(`Operation not allowed in CRX mode`);
+
   if (temporaryTraceFiles.length === 1) {
     await fs.promises.rename(temporaryTraceFiles[0], fileName);
     return;
@@ -97,6 +99,8 @@ export async function mergeTraceFiles(fileName: string, temporaryTraceFiles: str
 }
 
 export async function saveTraceFile(fileName: string, traceEvents: TraceEvent[], saveSources: boolean) {
+  if (process.env.PW_CRX) throw new Error(`Operation not allowed in CRX mode`);
+
   const zipFile = new yazl.ZipFile();
 
   if (saveSources) {

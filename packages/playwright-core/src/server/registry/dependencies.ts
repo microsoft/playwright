@@ -45,6 +45,8 @@ export function dockerVersion(dockerImageNameTemplate: string): { driverVersion:
 }
 
 export function readDockerVersionSync(): null | { driverVersion: string, dockerImageName: string, dockerImageNameTemplate: string } {
+  if (process.env.PW_CRX) throw new Error(`Operation not allowed in CRX mode`);
+
   try {
     const data = JSON.parse(fs.readFileSync(dockerVersionFilePath, 'utf8'));
     return {
@@ -85,6 +87,7 @@ export async function installDependenciesWindows(targets: Set<DependencyGroup>, 
 }
 
 export async function installDependenciesLinux(targets: Set<DependencyGroup>, dryRun: boolean) {
+  if (process.env.PW_CRX) throw new Error(`Operation not allowed in CRX mode`);
   const libraries: string[] = [];
   let platform = hostPlatform;
   if (platform === 'generic-linux' || platform === 'generic-linux-arm64') {
@@ -283,6 +286,8 @@ function isSharedLib(basename: string) {
 }
 
 async function executablesOrSharedLibraries(directoryPath: string): Promise<string[]> {
+  if (process.env.PW_CRX) throw new Error(`Operation not allowed in CRX mode`);
+
   if (!fs.existsSync(directoryPath))
     return [];
   const allPaths = (await fs.promises.readdir(directoryPath)).map(file => path.resolve(directoryPath, file));

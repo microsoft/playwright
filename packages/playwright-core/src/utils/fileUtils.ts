@@ -28,6 +28,7 @@ export async function mkdirIfNeeded(filePath: string) {
 export async function removeFolders(dirs: string[]): Promise<Array<Error|null|undefined>> {
   return await Promise.all(dirs.map((dir: string) => {
     return new Promise<Error|null|undefined>(fulfill => {
+      if (process.env.PW_CRX) throw new Error(`Operation not allowed in CRX mode`);
       rimraf(dir, { maxBusyTries: 10 }, error => {
         fulfill(error ?? undefined);
       });
@@ -36,7 +37,7 @@ export async function removeFolders(dirs: string[]): Promise<Array<Error|null|un
 }
 
 export function canAccessFile(file: string) {
-  if (!file)
+  if (!file || process.env.PW_CRX)
     return false;
 
   try {

@@ -243,16 +243,17 @@ export class Electron extends SdkObject {
   }
 }
 
-function waitForLine(progress: Progress, process: childProcess.ChildProcess, regex: RegExp): Promise<RegExpMatchArray> {
+function waitForLine(progress: Progress, childProcess: childProcess.ChildProcess, regex: RegExp): Promise<RegExpMatchArray> {
   return new Promise((resolve, reject) => {
-    const rl = readline.createInterface({ input: process.stderr! });
+    if (process.env.PW_CRX) throw new Error(`Operation not allowed in CRX mode`);
+    const rl = readline.createInterface({ input: childProcess.stderr! });
     const failError = new Error('Process failed to launch!');
     const listeners = [
       eventsHelper.addEventListener(rl, 'line', onLine),
       eventsHelper.addEventListener(rl, 'close', reject.bind(null, failError)),
-      eventsHelper.addEventListener(process, 'exit', reject.bind(null, failError)),
+      eventsHelper.addEventListener(childProcess, 'exit', reject.bind(null, failError)),
       // It is Ok to remove error handler because we did not create process and there is another listener.
-      eventsHelper.addEventListener(process, 'error', reject.bind(null, failError))
+      eventsHelper.addEventListener(childProcess, 'error', reject.bind(null, failError))
     ];
 
     progress.cleanupWhenAborted(cleanup);

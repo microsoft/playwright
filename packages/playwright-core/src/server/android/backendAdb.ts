@@ -69,6 +69,7 @@ class AdbDevice implements DeviceBackend {
 }
 
 async function runCommand(command: string, host: string = '127.0.0.1', port: number = 5037, serial?: string): Promise<Buffer> {
+  if (process.env.PW_CRX) throw new Error(`Operation not allowed in CRX mode`);
   debug('pw:adb:runCommand')(command, serial);
   const socket = new BufferedSocketWrapper(command, net.createConnection({ host, port }));
   try {
@@ -94,6 +95,7 @@ async function runCommand(command: string, host: string = '127.0.0.1', port: num
 }
 
 async function open(command: string, host: string = '127.0.0.1', port: number = 5037, serial?: string): Promise<BufferedSocketWrapper> {
+  if (process.env.PW_CRX) throw new Error(`Operation not allowed in CRX mode`);
   const socket = new BufferedSocketWrapper(command, net.createConnection({ host, port }));
   if (serial) {
     await socket.write(encodeMessage(`host:transport:${serial}`));

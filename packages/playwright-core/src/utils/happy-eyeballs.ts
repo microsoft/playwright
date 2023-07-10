@@ -45,10 +45,22 @@ class HttpsHappyEyeballsAgent extends https.Agent {
   }
 }
 
-export const httpsHappyEyeballsAgent = new HttpsHappyEyeballsAgent();
-export const httpHappyEyeballsAgent = new HttpHappyEyeballsAgent();
+let httpsHappyEyeballsAgent: HttpsHappyEyeballsAgent | undefined;
+let httpHappyEyeballsAgent: HttpHappyEyeballsAgent | undefined;
+
+export function getHappyEyeballsAgent(url: { protocol: string | null } | string) {
+  if (process.env.PW_CRX) throw new Error(`Operation not allowed in CRX mode`);
+
+  if (!httpsHappyEyeballsAgent) httpsHappyEyeballsAgent = new HttpsHappyEyeballsAgent();
+  if (!httpHappyEyeballsAgent) httpHappyEyeballsAgent = new HttpHappyEyeballsAgent();
+
+  const isHttps = (typeof url === 'string' ? /^(https|wss):\/\//.test(url) : url.protocol === 'https:');
+  return isHttps ? httpsHappyEyeballsAgent : httpHappyEyeballsAgent;
+}
 
 export async function createSocket(host: string, port: number): Promise<net.Socket> {
+  if (process.env.PW_CRX) throw new Error(`Operation not allowed in CRX mode`);
+
   return new Promise((resolve, reject) => {
     if (net.isIP(host)) {
       const socket = net.createConnection({ host, port });

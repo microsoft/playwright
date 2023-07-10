@@ -37,7 +37,7 @@ class DebugLogger {
   private _debuggers = new Map<string, debug.IDebugger>();
 
   constructor() {
-    if (process.env.DEBUG_FILE) {
+    if (!process.env.PW_CRX && process.env.DEBUG_FILE) {
       const ansiRegex = new RegExp([
         '[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)',
         '(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~]))'

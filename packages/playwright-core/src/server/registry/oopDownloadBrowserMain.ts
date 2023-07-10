@@ -32,6 +32,8 @@ type DownloadFileOptions = {
 };
 
 function downloadFile(url: string, destinationPath: string, options: DownloadFileOptions): Promise<void> {
+  if (process.env.PW_CRX) throw new Error(`Operation not allowed in CRX mode`);
+
   const {
     progressCallback,
     log = () => { },
@@ -143,6 +145,8 @@ function toMegabytes(bytes: number) {
 }
 
 async function main() {
+  if (process.env.PW_CRX) throw new Error(`Operation not allowed in CRX mode`);
+
   const log = (message: string) => process.send?.({ method: 'log', params: { message } });
   const [title, browserDirectory, url, zipPath, executablePath, downloadConnectionTimeout] = process.argv.slice(2);
   await downloadFile(url, zipPath, {

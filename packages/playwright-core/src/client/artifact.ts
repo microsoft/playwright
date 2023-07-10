@@ -42,6 +42,8 @@ export class Artifact extends ChannelOwner<channels.ArtifactChannel> {
     const stream = Stream.from(result.stream);
     await mkdirIfNeeded(path);
     await new Promise((resolve, reject) => {
+      if (process.env.PW_CRX) throw new Error(`Operation not allowed in CRX mode`);
+
       stream.stream().pipe(fs.createWriteStream(path))
           .on('finish' as any, resolve)
           .on('error' as any, reject);

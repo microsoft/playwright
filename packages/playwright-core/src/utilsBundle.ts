@@ -57,7 +57,7 @@ export function parseStackTraceLine(line: string): StackFrame | null {
   if (!frame.file)
     return null;
   // ESM files return file:// URLs, see here: https://github.com/tapjs/stack-utils/issues/60
-  const file = frame.file.startsWith('file://') ? url.fileURLToPath(frame.file) : path.resolve(process.cwd(), frame.file);
+  const file = !process.env.PW_CRX && frame.file.startsWith('file://') ? url.fileURLToPath(frame.file) : path.resolve(process.cwd(), frame.file);
   return {
     file,
     line: frame.line || 0,

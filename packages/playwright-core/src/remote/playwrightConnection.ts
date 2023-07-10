@@ -222,7 +222,7 @@ export class PlaywrightConnection {
   }
 
   private async _createOwnedSocksProxy(playwright: Playwright): Promise<SocksProxy | undefined> {
-    if (!this._options.socksProxyPattern)
+    if (!this._options.socksProxyPattern || process.env.PW_CRX)
       return;
     const socksProxy = new SocksProxy();
     socksProxy.setPattern(this._options.socksProxyPattern);

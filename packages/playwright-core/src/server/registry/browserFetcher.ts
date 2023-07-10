@@ -26,6 +26,8 @@ import { colors } from '../../utilsBundle';
 import { browserDirectoryToMarkerFilePath } from '.';
 
 export async function downloadBrowserWithProgressBar(title: string, browserDirectory: string, executablePath: string | undefined, downloadURLs: string[], downloadFileName: string, downloadConnectionTimeout: number): Promise<boolean> {
+  if (process.env.PW_CRX) throw new Error(`Operation not allowed in CRX mode`);
+
   if (await existsAsync(browserDirectoryToMarkerFilePath(browserDirectory))) {
     // Already downloaded.
     debugLogger.log('install', `${title} is already downloaded.`);
@@ -71,6 +73,7 @@ export async function downloadBrowserWithProgressBar(title: string, browserDirec
  * https://github.com/microsoft/playwright/issues/17394
  */
 function downloadBrowserWithProgressBarOutOfProcess(title: string, browserDirectory: string, url: string, zipPath: string, executablePath: string | undefined, downloadConnectionTimeout: number): Promise<{ error: Error | null }> {
+  if (process.env.PW_CRX) throw new Error(`Operation not allowed in CRX mode`);
   const cp = childProcess.fork(path.join(__dirname, 'oopDownloadBrowserMain.js'), [title, browserDirectory, url, zipPath, executablePath || '', String(downloadConnectionTimeout)]);
   const promise = new ManualPromise<{ error: Error | null }>();
   cp.on('message', (message: any) => {

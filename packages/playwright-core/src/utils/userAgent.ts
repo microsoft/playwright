@@ -40,6 +40,7 @@ function determineUserAgent(): string {
     osIdentifier = 'windows';
     osVersion = `${version[0]}.${version[1]}`;
   } else if (process.platform === 'darwin') {
+    if (process.env.PW_CRX) throw new Error(`Operation not allowed in CRX mode`);
     const version = execSync('sw_vers -productVersion', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim().split('.');
     osIdentifier = 'macOS';
     osVersion = `${version[0]}.${version[1]}`;

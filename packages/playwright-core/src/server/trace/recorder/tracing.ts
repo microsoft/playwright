@@ -321,6 +321,8 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   }
 
   private _exportZip(entries: NameValue[], state: RecordingState): Promise<Artifact | undefined> {
+    if (process.env.PW_CRX) throw new Error(`Operation not allowed in CRX mode`);
+
     const zipFile = new yazl.ZipFile();
     const result = new ManualPromise<Artifact | undefined>();
     (zipFile as any as EventEmitter).on('error', error => result.reject(error));

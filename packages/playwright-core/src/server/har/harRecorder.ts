@@ -50,7 +50,7 @@ export class HarRecorder {
       skipScripts: false,
       urlFilter: urlFilterRe ?? options.urlGlob,
     });
-    this._zipFile = content === 'attach' || expectsZip ? new yazl.ZipFile() : null;
+    this._zipFile = !process.env.PW_CRX && (content === 'attach' || expectsZip) ? new yazl.ZipFile() : null;
     this._tracer.start();
   }
 
@@ -79,7 +79,7 @@ export class HarRecorder {
 
     const harFileContent = jsonStringify({ log });
 
-    if (this._zipFile) {
+    if (!process.env.PW_CRX && this._zipFile) {
       const result = new ManualPromise<void>();
       (this._zipFile as unknown as EventEmitter).on('error', error => result.reject(error));
       this._zipFile.addBuffer(Buffer.from(harFileContent, 'utf-8'), 'har.har');

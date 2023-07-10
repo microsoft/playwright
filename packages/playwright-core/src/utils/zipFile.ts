@@ -30,6 +30,8 @@ export class ZipFile {
 
   private async _open() {
     await new Promise<UnzipFile>((fulfill, reject) => {
+      if (process.env.PW_CRX) throw new Error(`Operation not allowed in CRX mode`);
+
       yauzl.open(this._fileName, { autoClose: false }, (e, z) => {
         if (e) {
           reject(e);

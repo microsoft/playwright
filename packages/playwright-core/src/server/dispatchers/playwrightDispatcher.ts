@@ -58,7 +58,9 @@ export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.Playwr
       selectors: new SelectorsDispatcher(scope, browserDispatcher?.selectors || playwright.selectors),
       preLaunchedBrowser: browserDispatcher,
       preConnectedAndroidDevice: prelaunchedAndroidDeviceDispatcher,
-      socksSupport: socksProxy ? new SocksSupportDispatcher(scope, socksProxy) : undefined,
+      // important: process.env.PW_CRX must be the first condition,
+      // otherwise vite will not remove SocksSupportDispatcher class
+      socksSupport: !process.env.PW_CRX && socksProxy ? new SocksSupportDispatcher(scope, socksProxy) : undefined,
     });
     this._type_Playwright = true;
     this._browserDispatcher = browserDispatcher;
@@ -75,7 +77,7 @@ export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.Playwr
   }
 }
 
-class SocksSupportDispatcher extends Dispatcher<{ guid: string }, channels.SocksSupportChannel, RootDispatcher> implements channels.SocksSupportChannel {
+export class SocksSupportDispatcher extends Dispatcher<{ guid: string }, channels.SocksSupportChannel, RootDispatcher> implements channels.SocksSupportChannel {
   _type_SocksSupport: boolean;
   private _socksProxy: SocksProxy;
   private _socksListeners: RegisteredListener[];

@@ -20,7 +20,7 @@ import type { WebSocket } from '../utilsBundle';
 import type { ClientRequest, IncomingMessage } from 'http';
 import type { Progress } from './progress';
 import { makeWaitForNextTask } from '../utils';
-import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent } from '../utils/happy-eyeballs';
+import { getHappyEyeballsAgent } from '../utils/happy-eyeballs';
 import type { HeadersArray } from './types';
 
 export type ProtocolRequest = {
@@ -98,6 +98,7 @@ export class WebSocketTransport implements ConnectionTransport {
   }
 
   constructor(progress: Progress|undefined, url: string, logUrl: string, headers?: { [key: string]: string; }, followRedirects?: boolean, debugLogHeader?: string) {
+    if (process.env.PW_CRX) throw new Error(`Operation not allowed in CRX mode`);
     this.wsEndpoint = url;
     this._logUrl = logUrl;
     this._ws = new ws(url, [], {
@@ -107,7 +108,7 @@ export class WebSocketTransport implements ConnectionTransport {
       handshakeTimeout: Math.max(progress?.timeUntilDeadline() ?? 30_000, 1),
       headers,
       followRedirects,
-      agent: (/^(https|wss):\/\//.test(url)) ? httpsHappyEyeballsAgent : httpHappyEyeballsAgent
+      agent: getHappyEyeballsAgent(url),
     });
     this._ws.on('upgrade', response => {
       for (let i = 0; i < response.rawHeaders.length; i += 2) {

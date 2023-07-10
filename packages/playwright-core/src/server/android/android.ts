@@ -175,6 +175,8 @@ export class AndroidDevice extends SdkObject {
   }
 
   private async _installDriver(): Promise<PipeTransport> {
+    if (process.env.PW_CRX) throw new Error(`Operation not allowed in CRX mode`);
+
     debug('pw:android')('Stopping the old driver');
     await this.shell(`am force-stop com.microsoft.playwright.androiddriver`);
 

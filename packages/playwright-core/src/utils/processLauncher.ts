@@ -109,6 +109,7 @@ function addProcessHandlerIfNeeded(name: 'exit' | 'SIGINT' | 'SIGTERM' | 'SIGHUP
 }
 
 export async function launchProcess(options: LaunchProcessOptions): Promise<LaunchResult> {
+  if (process.env.PW_CRX) throw new Error(`Operation not allowed in CRX mode`);
   const stdio: ('ignore' | 'pipe')[] = options.stdio === 'pipe' ? ['ignore', 'pipe', 'pipe', 'pipe', 'pipe'] : ['pipe', 'pipe', 'pipe'];
   options.log(`<launching> ${options.command} ${options.args ? options.args.join(' ') : ''}`);
   const spawnOptions: childProcess.SpawnOptions = {
@@ -200,6 +201,7 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
 
   // This method has to be sync to be used in the 'exit' event handler.
   function killProcess() {
+    if (process.env.PW_CRX) throw new Error(`Operation not allowed in CRX mode`);
     gracefullyCloseSet.delete(gracefullyClose);
     killSet.delete(killProcessAndCleanup);
     options.log(`[pid=${spawnedProcess.pid}] <kill>`);
@@ -227,6 +229,7 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
   }
 
   function killProcessAndCleanup() {
+    if (process.env.PW_CRX) throw new Error(`Operation not allowed in CRX mode`);
     killProcess();
     options.log(`[pid=${spawnedProcess.pid || 'N/A'}] starting temporary directories cleanup`);
     if (options.tempDirectories.length) {

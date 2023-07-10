@@ -291,6 +291,8 @@ function hexToNumber(hex: string): number {
 }
 
 function ipToSocksAddress(address: string): number[] {
+  if (process.env.PW_CRX) throw new Error(`Operation not allowed in CRX mode`);
+
   if (net.isIPv4(address)) {
     return [
       0x01, // IPv4
@@ -324,6 +326,8 @@ function starMatchToRegex(pattern: string) {
 // This follows "Proxy bypass rules" syntax without implicit and negative rules.
 // https://source.chromium.org/chromium/chromium/src/+/main:net/docs/proxy.md;l=331
 export function parsePattern(pattern: string | undefined): PatternMatcher {
+  if (process.env.PW_CRX) throw new Error(`Operation not allowed in CRX mode`);
+
   if (!pattern)
     return () => false;
 
@@ -382,6 +386,8 @@ export class SocksProxy extends EventEmitter implements SocksConnectionClient {
   private _directSockets = new Map<string, net.Socket>();
 
   constructor() {
+    if (process.env.PW_CRX) throw new Error(`Operation not allowed in CRX mode`);
+
     super();
     this._server = new net.Server((socket: net.Socket) => {
       const uid = createGuid();

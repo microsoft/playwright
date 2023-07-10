@@ -24,7 +24,7 @@ import * as URL from 'url';
 import type { URLMatch } from '../common/types';
 import { isString, isRegExp } from './rtti';
 import { globToRegex } from './glob';
-import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent } from './happy-eyeballs';
+import { getHappyEyeballsAgent } from './happy-eyeballs';
 
 export type HTTPRequestParams = {
   url: string,
@@ -38,10 +38,12 @@ export type HTTPRequestParams = {
 export const NET_DEFAULT_TIMEOUT = 30_000;
 
 export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.IncomingMessage) => void, onError: (error: Error) => void) {
+  if (process.env.PW_CRX) throw new Error(`Operation not allowed in CRX mode`);
+
   const parsedUrl = URL.parse(params.url);
   let options: https.RequestOptions = {
     ...parsedUrl,
-    agent: parsedUrl.protocol === 'https:' ? httpsHappyEyeballsAgent : httpHappyEyeballsAgent,
+    agent: getHappyEyeballsAgent(parsedUrl),
     method: params.method || 'GET',
     headers: params.headers,
   };
@@ -156,6 +158,7 @@ export function constructURLBasedOnBaseURL(baseURL: string | undefined, givenURL
 export function createHttpServer(requestListener?: (req: http.IncomingMessage, res: http.ServerResponse) => void): http.Server;
 export function createHttpServer(options: http.ServerOptions, requestListener?: (req: http.IncomingMessage, res: http.ServerResponse) => void): http.Server;
 export function createHttpServer(...args: any[]): http.Server {
+  if (process.env.PW_CRX) throw new Error(`Operation not allowed in CRX mode`);
   const server = http.createServer(...args);
   decorateServer(server);
   return server;
@@ -164,6 +167,7 @@ export function createHttpServer(...args: any[]): http.Server {
 export function createHttpsServer(requestListener?: (req: http.IncomingMessage, res: http.ServerResponse) => void): https.Server;
 export function createHttpsServer(options: https.ServerOptions, requestListener?: (req: http.IncomingMessage, res: http.ServerResponse) => void): https.Server;
 export function createHttpsServer(...args: any[]): https.Server {
+  if (process.env.PW_CRX) throw new Error(`Operation not allowed in CRX mode`);
   const server = https.createServer(...args);
   decorateServer(server);
   return server;

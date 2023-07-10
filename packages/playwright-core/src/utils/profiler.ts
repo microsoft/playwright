@@ -39,7 +39,7 @@ export async function stopProfiling(profileName: string) {
     return;
 
   await new Promise<void>(f => session.post('Profiler.stop', (err, { profile }) => {
-    if (!err) {
+    if (!process.env.PW_CRX && !err) {
       fs.mkdirSync(profileDir, { recursive: true });
       fs.writeFileSync(path.join(profileDir, profileName + '.json'), JSON.stringify(profile));
     }

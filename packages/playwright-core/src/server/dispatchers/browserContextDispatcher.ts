@@ -165,6 +165,8 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async createTempFile(params: channels.BrowserContextCreateTempFileParams): Promise<channels.BrowserContextCreateTempFileResult> {
+    if (process.env.PW_CRX) throw new Error(`Operation not allowed in CRX mode`);
+
     const dir = this._context._browser.options.artifactsDir;
     const tmpDir = path.join(dir, 'upload-' + createGuid());
     await fs.promises.mkdir(tmpDir);

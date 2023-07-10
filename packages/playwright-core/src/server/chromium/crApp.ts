@@ -30,7 +30,7 @@ export async function installAppIcon(page: Page) {
 }
 
 export async function syncLocalStorageWithSettings(page: Page, appName: string) {
-  if (isUnderTest())
+  if (process.env.PW_CRX || isUnderTest())
     return;
   const settingsFile = path.join(registryDirectory, '.settings', `${appName}.json`);
   await page.exposeBinding('_saveSerializedSettings', false, (_, settings) => {
