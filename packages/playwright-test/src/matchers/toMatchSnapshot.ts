@@ -124,8 +124,8 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
     const inputPathSegments = Array.isArray(name) ? name : [addSuffixToFilePath(name, '', undefined, true)];
     const outputPathSegments = Array.isArray(name) ? name : [addSuffixToFilePath(name, actualModifier, undefined, true)];
     this.snapshotPath = snapshotPathResolver(...inputPathSegments);
-    const inputFile = testInfo.outputPath(...inputPathSegments);
-    const outputFile = testInfo.outputPath(...outputPathSegments);
+    const inputFile = testInfo._getOutputPath(...inputPathSegments);
+    const outputFile = testInfo._getOutputPath(...outputPathSegments);
     this.expectedPath = addSuffixToFilePath(inputFile, '-expected');
     this.previousPath = addSuffixToFilePath(outputFile, '-previous');
     this.actualPath = addSuffixToFilePath(outputFile, '-actual');
