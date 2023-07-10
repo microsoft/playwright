@@ -177,6 +177,14 @@ export class TraceModel {
         contextEntry!.events.push(event);
         break;
       }
+      case 'stdout': {
+        contextEntry!.stdio.push(event);
+        break;
+      }
+      case 'stderr': {
+        contextEntry!.stdio.push(event);
+        break;
+      }
       case 'object': {
         contextEntry!.initializers[event.guid] = event.initializer;
         break;

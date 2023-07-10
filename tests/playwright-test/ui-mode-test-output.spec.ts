@@ -74,3 +74,40 @@ test('should print buffers', async ({ runUITest }) => {
   await page.getByTitle('Run all').click();
   await expect(page.getByTestId('output')).toContainText('HELLO');
 });
+
+test('should show console messages for test', async ({ runUITest }, testInfo) => {
+  const { page } = await runUITest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('print', async ({ page }) => {
+        await page.evaluate(() => console.log('page message'));
+        console.log('node message');
+        await page.evaluate(() => console.error('page error'));
+        console.error('node error');
+        console.log('Colors: \x1b[31mRED\x1b[0m \x1b[32mGREEN\x1b[0m');
+      });
+    `,
+  });
+  await page.getByTitle('Run all').click();
+  await page.getByText('Console').click();
+  await page.getByText('print').click();
+
+  await expect(page.locator('.console-tab .console-line-message')).toHaveText([
+    'page message',
+    'node message',
+    'page error',
+    'node error',
+    'Colors: RED GREEN',
+  ]);
+
+  await expect(page.locator('.console-tab .list-view-entry .codicon')).toHaveClass([
+    'codicon codicon-blank',
+    'codicon codicon-blank',
+    'codicon codicon-error',
+    'codicon codicon-error',
+    'codicon codicon-blank',
+  ]);
+
+  await expect(page.getByText('RED', { exact: true })).toHaveCSS('color', 'rgb(204, 0, 0)');
+  await expect(page.getByText('GREEN', { exact: true })).toHaveCSS('color', 'rgb(0, 204, 0)');
+});

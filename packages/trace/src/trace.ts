@@ -122,6 +122,13 @@ export type ActionTraceEvent = {
   & Omit<AfterActionTraceEvent, 'type'>
   & Omit<InputActionTraceEvent, 'type'>;
 
+export type StdioTraceEvent = {
+  type: 'stdout' | 'stderr';
+  timestamp: number;
+  text?: string;
+  base64?: string;
+};
+
 export type TraceEvent =
     ContextCreatedTraceEvent |
     ScreencastFrameTraceEvent |
@@ -132,4 +139,5 @@ export type TraceEvent =
     EventTraceEvent |
     ObjectTraceEvent |
     ResourceSnapshotTraceEvent |
-    FrameSnapshotTraceEvent;
+    FrameSnapshotTraceEvent |
+    StdioTraceEvent;

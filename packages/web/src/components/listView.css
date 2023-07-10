@@ -20,7 +20,7 @@
   flex: auto;
   position: relative;
   user-select: none;
-  overflow-y: auto;
+  overflow: hidden auto;
   outline: 1px solid transparent;
 }
 

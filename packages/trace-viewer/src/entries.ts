@@ -34,6 +34,7 @@ export type ContextEntry = {
   resources: ResourceSnapshot[];
   actions: trace.ActionTraceEvent[];
   events: trace.EventTraceEvent[];
+  stdio: trace.StdioTraceEvent[];
   initializers: { [key: string]: any };
   hasSource: boolean;
 };
@@ -62,6 +63,7 @@ export function createEmptyContext(): ContextEntry {
     resources: [],
     actions: [],
     events: [],
+    stdio: [],
     initializers: {},
     hasSource: false
   };
