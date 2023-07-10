@@ -1,6 +1,6 @@
 {
   "Blackberry PlayBook": {
-    "userAgent": "Mozilla/5.0 (PlayBook; U; RIM Tablet OS 2.1.0; en-US) AppleWebKit/536.2+ (KHTML like Gecko) Version/16.4 Safari/536.2+",
+    "userAgent": "Mozilla/5.0 (PlayBook; U; RIM Tablet OS 2.1.0; en-US) AppleWebKit/536.2+ (KHTML like Gecko) Version/17.0 Safari/536.2+",
     "viewport": {
       "width": 600,
       "height": 1024
@@ -11,7 +11,7 @@
     "defaultBrowserType": "webkit"
   },
   "Blackberry PlayBook landscape": {
-    "userAgent": "Mozilla/5.0 (PlayBook; U; RIM Tablet OS 2.1.0; en-US) AppleWebKit/536.2+ (KHTML like Gecko) Version/16.4 Safari/536.2+",
+    "userAgent": "Mozilla/5.0 (PlayBook; U; RIM Tablet OS 2.1.0; en-US) AppleWebKit/536.2+ (KHTML like Gecko) Version/17.0 Safari/536.2+",
     "viewport": {
       "width": 1024,
       "height": 600
@@ -22,7 +22,7 @@
     "defaultBrowserType": "webkit"
   },
   "BlackBerry Z30": {
-    "userAgent": "Mozilla/5.0 (BB10; Touch) AppleWebKit/537.10+ (KHTML, like Gecko) Version/16.4 Mobile Safari/537.10+",
+    "userAgent": "Mozilla/5.0 (BB10; Touch) AppleWebKit/537.10+ (KHTML, like Gecko) Version/17.0 Mobile Safari/537.10+",
     "viewport": {
       "width": 360,
       "height": 640
@@ -33,7 +33,7 @@
     "defaultBrowserType": "webkit"
   },
   "BlackBerry Z30 landscape": {
-    "userAgent": "Mozilla/5.0 (BB10; Touch) AppleWebKit/537.10+ (KHTML, like Gecko) Version/16.4 Mobile Safari/537.10+",
+    "userAgent": "Mozilla/5.0 (BB10; Touch) AppleWebKit/537.10+ (KHTML, like Gecko) Version/17.0 Mobile Safari/537.10+",
     "viewport": {
       "width": 640,
       "height": 360
@@ -44,7 +44,7 @@
     "defaultBrowserType": "webkit"
   },
   "Galaxy Note 3": {
-    "userAgent": "Mozilla/5.0 (Linux; U; Android 4.3; en-us; SM-N900T Build/JSS15J) AppleWebKit/534.30 (KHTML, like Gecko) Version/16.4 Mobile Safari/534.30",
+    "userAgent": "Mozilla/5.0 (Linux; U; Android 4.3; en-us; SM-N900T Build/JSS15J) AppleWebKit/534.30 (KHTML, like Gecko) Version/17.0 Mobile Safari/534.30",
     "viewport": {
       "width": 360,
       "height": 640
@@ -55,7 +55,7 @@
     "defaultBrowserType": "webkit"
   },
   "Galaxy Note 3 landscape": {
-    "userAgent": "Mozilla/5.0 (Linux; U; Android 4.3; en-us; SM-N900T Build/JSS15J) AppleWebKit/534.30 (KHTML, like Gecko) Version/16.4 Mobile Safari/534.30",
+    "userAgent": "Mozilla/5.0 (Linux; U; Android 4.3; en-us; SM-N900T Build/JSS15J) AppleWebKit/534.30 (KHTML, like Gecko) Version/17.0 Mobile Safari/534.30",
     "viewport": {
       "width": 640,
       "height": 360
@@ -66,7 +66,7 @@
     "defaultBrowserType": "webkit"
   },
   "Galaxy Note II": {
-    "userAgent": "Mozilla/5.0 (Linux; U; Android 4.1; en-us; GT-N7100 Build/JRO03C) AppleWebKit/534.30 (KHTML, like Gecko) Version/16.4 Mobile Safari/534.30",
+    "userAgent": "Mozilla/5.0 (Linux; U; Android 4.1; en-us; GT-N7100 Build/JRO03C) AppleWebKit/534.30 (KHTML, like Gecko) Version/17.0 Mobile Safari/534.30",
     "viewport": {
       "width": 360,
       "height": 640
@@ -77,7 +77,7 @@
     "defaultBrowserType": "webkit"
   },
   "Galaxy Note II landscape": {
-    "userAgent": "Mozilla/5.0 (Linux; U; Android 4.1; en-us; GT-N7100 Build/JRO03C) AppleWebKit/534.30 (KHTML, like Gecko) Version/16.4 Mobile Safari/534.30",
+    "userAgent": "Mozilla/5.0 (Linux; U; Android 4.1; en-us; GT-N7100 Build/JRO03C) AppleWebKit/534.30 (KHTML, like Gecko) Version/17.0 Mobile Safari/534.30",
     "viewport": {
       "width": 640,
       "height": 360
@@ -88,7 +88,7 @@
     "defaultBrowserType": "webkit"
   },
   "Galaxy S III": {
-    "userAgent": "Mozilla/5.0 (Linux; U; Android 4.0; en-us; GT-I9300 Build/IMM76D) AppleWebKit/534.30 (KHTML, like Gecko) Version/16.4 Mobile Safari/534.30",
+    "userAgent": "Mozilla/5.0 (Linux; U; Android 4.0; en-us; GT-I9300 Build/IMM76D) AppleWebKit/534.30 (KHTML, like Gecko) Version/17.0 Mobile Safari/534.30",
     "viewport": {
       "width": 360,
       "height": 640
@@ -99,7 +99,7 @@
     "defaultBrowserType": "webkit"
   },
   "Galaxy S III landscape": {
-    "userAgent": "Mozilla/5.0 (Linux; U; Android 4.0; en-us; GT-I9300 Build/IMM76D) AppleWebKit/534.30 (KHTML, like Gecko) Version/16.4 Mobile Safari/534.30",
+    "userAgent": "Mozilla/5.0 (Linux; U; Android 4.0; en-us; GT-I9300 Build/IMM76D) AppleWebKit/534.30 (KHTML, like Gecko) Version/17.0 Mobile Safari/534.30",
     "viewport": {
       "width": 640,
       "height": 360
@@ -198,7 +198,7 @@
     "defaultBrowserType": "chromium"
   },
   "iPad (gen 6)": {
-    "userAgent": "Mozilla/5.0 (iPad; CPU OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Mobile/15E148 Safari/604.1",
+    "userAgent": "Mozilla/5.0 (iPad; CPU OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     "viewport": {
       "width": 768,
       "height": 1024
@@ -209,7 +209,7 @@
     "defaultBrowserType": "webkit"
   },
   "iPad (gen 6) landscape": {
-    "userAgent": "Mozilla/5.0 (iPad; CPU OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Mobile/15E148 Safari/604.1",
+    "userAgent": "Mozilla/5.0 (iPad; CPU OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     "viewport": {
       "width": 1024,
       "height": 768
@@ -220,7 +220,7 @@
     "defaultBrowserType": "webkit"
   },
   "iPad (gen 7)": {
-    "userAgent": "Mozilla/5.0 (iPad; CPU OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Mobile/15E148 Safari/604.1",
+    "userAgent": "Mozilla/5.0 (iPad; CPU OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     "viewport": {
       "width": 810,
       "height": 1080
@@ -231,7 +231,7 @@
     "defaultBrowserType": "webkit"
   },
   "iPad (gen 7) landscape": {
-    "userAgent": "Mozilla/5.0 (iPad; CPU OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Mobile/15E148 Safari/604.1",
+    "userAgent": "Mozilla/5.0 (iPad; CPU OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     "viewport": {
       "width": 1080,
       "height": 810
@@ -242,7 +242,7 @@
     "defaultBrowserType": "webkit"
   },
   "iPad Mini": {
-    "userAgent": "Mozilla/5.0 (iPad; CPU OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Mobile/15E148 Safari/604.1",
+    "userAgent": "Mozilla/5.0 (iPad; CPU OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     "viewport": {
       "width": 768,
       "height": 1024
@@ -253,7 +253,7 @@
     "defaultBrowserType": "webkit"
   },
   "iPad Mini landscape": {
-    "userAgent": "Mozilla/5.0 (iPad; CPU OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Mobile/15E148 Safari/604.1",
+    "userAgent": "Mozilla/5.0 (iPad; CPU OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     "viewport": {
       "width": 1024,
       "height": 768
@@ -264,7 +264,7 @@
     "defaultBrowserType": "webkit"
   },
   "iPad Pro 11": {
-    "userAgent": "Mozilla/5.0 (iPad; CPU OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Mobile/15E148 Safari/604.1",
+    "userAgent": "Mozilla/5.0 (iPad; CPU OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     "viewport": {
       "width": 834,
       "height": 1194
@@ -275,7 +275,7 @@
     "defaultBrowserType": "webkit"
   },
   "iPad Pro 11 landscape": {
-    "userAgent": "Mozilla/5.0 (iPad; CPU OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Mobile/15E148 Safari/604.1",
+    "userAgent": "Mozilla/5.0 (iPad; CPU OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     "viewport": {
       "width": 1194,
       "height": 834
@@ -286,7 +286,7 @@
     "defaultBrowserType": "webkit"
   },
   "iPhone 6": {
-    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/16.4 Mobile/15A372 Safari/604.1",
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/17.0 Mobile/15A372 Safari/604.1",
     "viewport": {
       "width": 375,
       "height": 667
@@ -297,7 +297,7 @@
     "defaultBrowserType": "webkit"
   },
   "iPhone 6 landscape": {
-    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/16.4 Mobile/15A372 Safari/604.1",
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/17.0 Mobile/15A372 Safari/604.1",
     "viewport": {
       "width": 667,
       "height": 375
@@ -308,7 +308,7 @@
     "defaultBrowserType": "webkit"
   },
   "iPhone 6 Plus": {
-    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/16.4 Mobile/15A372 Safari/604.1",
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/17.0 Mobile/15A372 Safari/604.1",
     "viewport": {
       "width": 414,
       "height": 736
@@ -319,7 +319,7 @@
     "defaultBrowserType": "webkit"
   },
   "iPhone 6 Plus landscape": {
-    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/16.4 Mobile/15A372 Safari/604.1",
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/17.0 Mobile/15A372 Safari/604.1",
     "viewport": {
       "width": 736,
       "height": 414
@@ -330,7 +330,7 @@
     "defaultBrowserType": "webkit"
   },
   "iPhone 7": {
-    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/16.4 Mobile/15A372 Safari/604.1",
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/17.0 Mobile/15A372 Safari/604.1",
     "viewport": {
       "width": 375,
       "height": 667
@@ -341,7 +341,7 @@
     "defaultBrowserType": "webkit"
   },
   "iPhone 7 landscape": {
-    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/16.4 Mobile/15A372 Safari/604.1",
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/17.0 Mobile/15A372 Safari/604.1",
     "viewport": {
       "width": 667,
       "height": 375
@@ -352,7 +352,7 @@
     "defaultBrowserType": "webkit"
   },
   "iPhone 7 Plus": {
-    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/16.4 Mobile/15A372 Safari/604.1",
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/17.0 Mobile/15A372 Safari/604.1",
     "viewport": {
       "width": 414,
       "height": 736
@@ -363,7 +363,7 @@
     "defaultBrowserType": "webkit"
   },
   "iPhone 7 Plus landscape": {
-    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/16.4 Mobile/15A372 Safari/604.1",
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/17.0 Mobile/15A372 Safari/604.1",
     "viewport": {
       "width": 736,
       "height": 414
@@ -374,7 +374,7 @@
     "defaultBrowserType": "webkit"
   },
   "iPhone 8": {
-    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/16.4 Mobile/15A372 Safari/604.1",
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/17.0 Mobile/15A372 Safari/604.1",
     "viewport": {
       "width": 375,
       "height": 667
@@ -385,7 +385,7 @@
     "defaultBrowserType": "webkit"
   },
   "iPhone 8 landscape": {
-    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/16.4 Mobile/15A372 Safari/604.1",
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/17.0 Mobile/15A372 Safari/604.1",
     "viewport": {
       "width": 667,
       "height": 375
@@ -396,7 +396,7 @@
     "defaultBrowserType": "webkit"
   },
   "iPhone 8 Plus": {
-    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/16.4 Mobile/15A372 Safari/604.1",
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/17.0 Mobile/15A372 Safari/604.1",
     "viewport": {
       "width": 414,
       "height": 736
@@ -407,7 +407,7 @@
     "defaultBrowserType": "webkit"
   },
   "iPhone 8 Plus landscape": {
-    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/16.4 Mobile/15A372 Safari/604.1",
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/17.0 Mobile/15A372 Safari/604.1",
     "viewport": {
       "width": 736,
       "height": 414
@@ -418,7 +418,7 @@
     "defaultBrowserType": "webkit"
   },
   "iPhone SE": {
-    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_1 like Mac OS X) AppleWebKit/603.1.30 (KHTML, like Gecko) Version/16.4 Mobile/14E304 Safari/602.1",
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_1 like Mac OS X) AppleWebKit/603.1.30 (KHTML, like Gecko) Version/17.0 Mobile/14E304 Safari/602.1",
     "viewport": {
       "width": 320,
       "height": 568
@@ -429,7 +429,7 @@
     "defaultBrowserType": "webkit"
   },
   "iPhone SE landscape": {
-    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_1 like Mac OS X) AppleWebKit/603.1.30 (KHTML, like Gecko) Version/16.4 Mobile/14E304 Safari/602.1",
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_1 like Mac OS X) AppleWebKit/603.1.30 (KHTML, like Gecko) Version/17.0 Mobile/14E304 Safari/602.1",
     "viewport": {
       "width": 568,
       "height": 320
@@ -440,7 +440,7 @@
     "defaultBrowserType": "webkit"
   },
   "iPhone X": {
-    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/16.4 Mobile/15A372 Safari/604.1",
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/17.0 Mobile/15A372 Safari/604.1",
     "viewport": {
       "width": 375,
       "height": 812
@@ -451,7 +451,7 @@
     "defaultBrowserType": "webkit"
   },
   "iPhone X landscape": {
-    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/16.4 Mobile/15A372 Safari/604.1",
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/17.0 Mobile/15A372 Safari/604.1",
     "viewport": {
       "width": 812,
       "height": 375
@@ -462,7 +462,7 @@
     "defaultBrowserType": "webkit"
   },
   "iPhone XR": {
-    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Mobile/15E148 Safari/604.1",
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     "viewport": {
       "width": 414,
       "height": 896
@@ -473,7 +473,7 @@
     "defaultBrowserType": "webkit"
   },
   "iPhone XR landscape": {
-    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Mobile/15E148 Safari/604.1",
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     "viewport": {
       "width": 896,
       "height": 414
@@ -484,7 +484,7 @@
     "defaultBrowserType": "webkit"
   },
   "iPhone 11": {
-    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Mobile/15E148 Safari/604.1",
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     "screen": {
       "width": 414,
       "height": 896
@@ -499,7 +499,7 @@
     "defaultBrowserType": "webkit"
   },
   "iPhone 11 landscape": {
-    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Mobile/15E148 Safari/604.1",
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     "screen": {
       "width": 414,
       "height": 896
@@ -514,7 +514,7 @@
     "defaultBrowserType": "webkit"
   },
   "iPhone 11 Pro": {
-    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Mobile/15E148 Safari/604.1",
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     "screen": {
       "width": 375,
       "height": 812
@@ -529,7 +529,7 @@
     "defaultBrowserType": "webkit"
   },
   "iPhone 11 Pro landscape": {
-    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Mobile/15E148 Safari/604.1",
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     "screen": {
       "width": 375,
       "height": 812
@@ -544,7 +544,7 @@
     "defaultBrowserType": "webkit"
   },
   "iPhone 11 Pro Max": {
-    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Mobile/15E148 Safari/604.1",
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     "screen": {
       "width": 414,
       "height": 896
@@ -559,7 +559,7 @@
     "defaultBrowserType": "webkit"
   },
   "iPhone 11 Pro Max landscape": {
-    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Mobile/15E148 Safari/604.1",
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     "screen": {
       "width": 414,
       "height": 896
@@ -574,7 +574,7 @@
     "defaultBrowserType": "webkit"
   },
   "iPhone 12": {
-    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Mobile/15E148 Safari/604.1",
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     "screen": {
       "width": 390,
       "height": 844
@@ -589,7 +589,7 @@
     "defaultBrowserType": "webkit"
   },
   "iPhone 12 landscape": {
-    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Mobile/15E148 Safari/604.1",
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     "screen": {
       "width": 390,
       "height": 844
@@ -604,7 +604,7 @@
     "defaultBrowserType": "webkit"
   },
   "iPhone 12 Pro": {
-    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Mobile/15E148 Safari/604.1",
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     "screen": {
       "width": 390,
       "height": 844
@@ -619,7 +619,7 @@
     "defaultBrowserType": "webkit"
   },
   "iPhone 12 Pro landscape": {
-    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Mobile/15E148 Safari/604.1",
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     "screen": {
       "width": 390,
       "height": 844
@@ -634,7 +634,7 @@
     "defaultBrowserType": "webkit"
   },
   "iPhone 12 Pro Max": {
-    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Mobile/15E148 Safari/604.1",
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     "screen": {
       "width": 428,
       "height": 926
@@ -649,7 +649,7 @@
     "defaultBrowserType": "webkit"
   },
   "iPhone 12 Pro Max landscape": {
-    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Mobile/15E148 Safari/604.1",
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     "screen": {
       "width": 428,
       "height": 926
@@ -664,7 +664,7 @@
     "defaultBrowserType": "webkit"
   },
   "iPhone 12 Mini": {
-    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Mobile/15E148 Safari/604.1",
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     "screen": {
       "width": 375,
       "height": 812
@@ -679,7 +679,7 @@
     "defaultBrowserType": "webkit"
   },
   "iPhone 12 Mini landscape": {
-    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Mobile/15E148 Safari/604.1",
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     "screen": {
       "width": 375,
       "height": 812
@@ -694,7 +694,7 @@
     "defaultBrowserType": "webkit"
   },
   "iPhone 13": {
-    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Mobile/15E148 Safari/604.1",
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     "screen": {
       "width": 390,
       "height": 844
@@ -709,7 +709,7 @@
     "defaultBrowserType": "webkit"
   },
   "iPhone 13 landscape": {
-    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Mobile/15E148 Safari/604.1",
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     "screen": {
       "width": 390,
       "height": 844
@@ -724,7 +724,7 @@
     "defaultBrowserType": "webkit"
   },
   "iPhone 13 Pro": {
-    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Mobile/15E148 Safari/604.1",
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     "screen": {
       "width": 390,
       "height": 844
@@ -739,7 +739,7 @@
     "defaultBrowserType": "webkit"
   },
   "iPhone 13 Pro landscape": {
-    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Mobile/15E148 Safari/604.1",
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     "screen": {
       "width": 390,
       "height": 844
@@ -754,7 +754,7 @@
     "defaultBrowserType": "webkit"
   },
   "iPhone 13 Pro Max": {
-    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Mobile/15E148 Safari/604.1",
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     "screen": {
       "width": 428,
       "height": 926
@@ -769,7 +769,7 @@
     "defaultBrowserType": "webkit"
   },
   "iPhone 13 Pro Max landscape": {
-    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Mobile/15E148 Safari/604.1",
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     "screen": {
       "width": 428,
       "height": 926
@@ -784,7 +784,7 @@
     "defaultBrowserType": "webkit"
   },
   "iPhone 13 Mini": {
-    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Mobile/15E148 Safari/604.1",
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     "screen": {
       "width": 375,
       "height": 812
@@ -799,7 +799,7 @@
     "defaultBrowserType": "webkit"
   },
   "iPhone 13 Mini landscape": {
-    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Mobile/15E148 Safari/604.1",
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     "screen": {
       "width": 375,
       "height": 812
@@ -1315,7 +1315,7 @@
     "defaultBrowserType": "firefox"
   },
   "Desktop Safari": {
-    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Safari/605.1.15",
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15",
     "screen": {
       "width": 1792,
       "height": 1120
