@@ -58,7 +58,7 @@ The "Attachments" tab allows you to explore attachments. If you're doing [visual
 
 ### Pop out and inspect the DOM
 
-Pop out the DOM snapshot into it's own window for a better debugging experience by clicking on the pop out icon above the DOM snapshot. From there you can open the browser DevTools and inspect the HTML, CSS, Console etc. Go back to UI Mode and click on another action and pop that one out to easily compare the two side by side or debug each individually.
+Pop out the DOM snapshot into its own window for a better debugging experience by clicking on the pop out icon above the DOM snapshot. From there you can open the browser DevTools and inspect the HTML, CSS, Console etc. Go back to UI Mode and click on another action and pop that one out to easily compare the two side by side or debug each individually.
 
 ![pop out dom snapshot](https://user-images.githubusercontent.com/13063165/234293178-4754c4a1-880d-46bc-971c-f85ef2672eff.png)
 
