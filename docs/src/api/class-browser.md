@@ -155,7 +155,6 @@ Indicates that the browser is connected.
 
 ## async method: Browser.newBrowserCDPSession
 * since: v1.11
-* langs: js, python, csharp
 - returns: <[CDPSession]>
 
 :::note
