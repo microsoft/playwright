@@ -31,7 +31,7 @@ import * as accessibility from './accessibility';
 import { FileChooser } from './fileChooser';
 import type { Progress } from './progress';
 import { ProgressController } from './progress';
-import { assert, isError } from '../utils';
+import { ScopedRace, assert, isError } from '../utils';
 import { ManualPromise } from '../utils/manualPromise';
 import { debugLogger } from '../common/debugLogger';
 import type { ImageComparatorOptions } from '../utils/comparators';
@@ -142,8 +142,8 @@ export class Page extends SdkObject {
   private _disconnected = false;
   private _initialized = false;
   private _eventsToEmitAfterInitialized: { event: string | symbol, args: any[] }[] = [];
-  readonly _disconnectedPromise = new ManualPromise<Error>();
-  readonly _crashedPromise = new ManualPromise<Error>();
+  readonly _disconnectedRace = new ScopedRace();
+  readonly _crashedRace = new ScopedRace();
   readonly _browserContext: BrowserContext;
   readonly keyboard: input.Keyboard;
   readonly mouse: input.Mouse;
@@ -285,7 +285,7 @@ export class Page extends SdkObject {
     this._frameManager.dispose();
     this._frameThrottler.dispose();
     this.emit(Page.Events.Crash);
-    this._crashedPromise.resolve(new Error('Page crashed'));
+    this._crashedRace.scopeClosed(new Error('Page crashed'));
     this.instrumentation.onPageClose(this);
   }
 
@@ -294,7 +294,7 @@ export class Page extends SdkObject {
     this._frameThrottler.dispose();
     assert(!this._disconnected, 'Page disconnected twice');
     this._disconnected = true;
-    this._disconnectedPromise.resolve(new Error('Page closed'));
+    this._disconnectedRace.scopeClosed(new Error('Page closed'));
   }
 
   async _onFileChooserOpened(handle: dom.ElementHandle) {
@@ -632,7 +632,7 @@ export class Page extends SdkObject {
   }
 
   isClosedOrClosingOrCrashed() {
-    return this._closedState !== 'open' || this._crashedPromise.isDone();
+    return this._closedState !== 'open' || this._crashedRace.isDone();
   }
 
   _addWorker(workerId: string, worker: Worker) {

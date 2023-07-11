@@ -59,8 +59,10 @@ export class ManualPromise<T = void> extends Promise<T> {
 export class ScopedRace {
   private _terminateError: Error | undefined;
   private _terminatePromises = new Map<ManualPromise<Error>, Error>();
+  private _isDone = false;
 
   scopeClosed(error: Error) {
+    this._isDone = true;
     this._terminateError = error;
     for (const [p, e] of this._terminatePromises) {
       rewriteErrorMessage(e, error.message);
@@ -68,8 +70,16 @@ export class ScopedRace {
     }
   }
 
-  async race<T>(promise: Promise<T>): Promise<T> {
-    return this._race([promise], false) as Promise<T>;
+  isDone() {
+    return this._isDone;
+  }
+
+  static async raceMultiple<T>(scopes: ScopedRace[], promise: Promise<T>): Promise<T> {
+    return Promise.race(scopes.map(s => s.race(promise)));
+  }
+
+  async race<T>(promise: Promise<T> | Promise<T>[]): Promise<T> {
+    return this._race(Array.isArray(promise) ? promise : [promise], false) as Promise<T>;
   }
 
   async safeRace<T>(promise: Promise<T>, defaultValue?: T): Promise<T> {

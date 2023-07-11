@@ -67,7 +67,7 @@ test('should cancel navigation when page crashes', async ({ server, page, crash 
   await page.waitForNavigation({ waitUntil: 'domcontentloaded' });
   crash();
   const error = await promise;
-  expect(error.message).toContain('Navigation failed because page crashed');
+  expect(error.message).toContain('page.goto: Page crashed');
 });
 
 test('should be able to close context when page crashes', async ({ isAndroid, isElectron, isWebView2, page, crash }) => {
