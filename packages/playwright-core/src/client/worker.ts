@@ -29,6 +29,7 @@ export class Worker extends ChannelOwner<channels.WorkerChannel> implements api.
   _page: Page | undefined;  // Set for web workers.
   _context: BrowserContext | undefined;  // Set for service workers.
   readonly _closedRace = new ScopedRace();
+  private _isClosed = false;
 
   static from(worker: channels.WorkerChannel): Worker {
     return (worker as any)._object;
@@ -36,13 +37,7 @@ export class Worker extends ChannelOwner<channels.WorkerChannel> implements api.
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.WorkerInitializer) {
     super(parent, type, guid, initializer);
-    this._channel.on('close', () => {
-      if (this._page)
-        this._page._workers.delete(this);
-      if (this._context)
-        this._context._serviceWorkers.delete(this);
-      this.emit(Events.Worker.Close, this);
-    });
+    this._channel.on('close', () => this._workerClosed());
     this.once(Events.Worker.Close, () => this._closedRace.scopeClosed(new Error(kBrowserOrContextClosedError)));
   }
 
@@ -60,5 +55,22 @@ export class Worker extends ChannelOwner<channels.WorkerChannel> implements api.
     assertMaxArguments(arguments.length, 2);
     const result = await this._channel.evaluateExpressionHandle({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
     return JSHandle.from(result.handle) as any as structs.SmartHandle<R>;
+  }
+
+  private _workerClosed() {
+    if (this._isClosed)
+      return;
+    this._isClosed = true;
+
+    if (this._page)
+      this._page._workers.delete(this);
+    if (this._context)
+      this._context._serviceWorkers.delete(this);
+    this.emit(Events.Worker.Close, this);
+  }
+
+  override _dispose() {
+    this._workerClosed();
+    super._dispose();
   }
 }

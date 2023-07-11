@@ -38,7 +38,7 @@ export function existingDispatcher<DispatcherType>(object: any): DispatcherType 
 export class Dispatcher<Type extends { guid: string }, ChannelType, ParentScopeType extends DispatcherScope> extends EventEmitter implements channels.Channel {
   private _connection: DispatcherConnection;
   // Parent is always "isScope".
-  private _parent: ParentScopeType | undefined;
+  protected _parent: ParentScopeType | undefined;
   // Only "isScope" channel owners have registered dispatchers inside.
   private _dispatchers = new Map<string, DispatcherScope>();
   protected _disposed = false;
@@ -106,6 +106,22 @@ export class Dispatcher<Type extends { guid: string }, ChannelType, ParentScopeT
   protected _onDispose() {
   }
 
+  _disposeChildren(options?: { exclude?: DispatcherScope }) {
+    if (options?.exclude) {
+      for (const dispatcher of [...this._dispatchers.values()]) {
+        if (options?.exclude === dispatcher)
+          continue;
+        dispatcher._dispose();
+        this._dispatchers.delete(dispatcher._guid);
+      }
+      return;
+    }
+
+    for (const dispatcher of [...this._dispatchers.values()])
+      dispatcher._dispose();
+    this._dispatchers.clear();
+  }
+
   private _disposeRecursively() {
     assert(!this._disposed, `${this._guid} is disposed more than once`);
     this._onDispose();
@@ -116,8 +132,6 @@ export class Dispatcher<Type extends { guid: string }, ChannelType, ParentScopeT
     if (this._parent)
       this._parent._dispatchers.delete(this._guid);
     this._connection._dispatchers.delete(this._guid);
-
-    // Dispose all children.
     for (const dispatcher of [...this._dispatchers.values()])
       dispatcher._disposeRecursively();
     this._dispatchers.clear();

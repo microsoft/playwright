@@ -466,6 +466,7 @@ export class Frame extends SdkObject {
     InternalNavigation: 'internalnavigation',
     AddLifecycle: 'addlifecycle',
     RemoveLifecycle: 'removelifecycle',
+    WillProcessGoto: 'willprocessgoto',
   };
 
   _id: string;
@@ -640,6 +641,7 @@ export class Frame extends SdkObject {
   }
 
   async goto(metadata: CallMetadata, url: string, options: types.GotoOptions = {}): Promise<network.Response | null> {
+    this.emit(Frame.Events.WillProcessGoto);
     const constructedNavigationURL = constructURLBasedOnBaseURL(this._page._browserContext._options.baseURL, url);
     const controller = new ProgressController(metadata, this);
     return controller.run(progress => this._goto(progress, constructedNavigationURL, options), this._page._timeoutSettings.navigationTimeout(options));

@@ -2850,7 +2850,6 @@ Response:
   type: interface
 
   initializer:
-    request: Request
     url: string
     status: number
     statusText: string

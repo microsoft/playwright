@@ -51,6 +51,13 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Pa
       loadStates: Array.from(frame._firedLifecycleEvents),
     });
     this._frame = frame;
+    if (!frame.parentFrame()) {
+      this.addObjectListener(Frame.Events.WillProcessGoto, () => {
+        // Remove everything from the page scope except for this frame and clear this frame.
+        this._parent!._disposeChildren({ exclude: this });
+        this._disposeChildren();
+      });
+    }
     this.addObjectListener(Frame.Events.AddLifecycle, lifecycleEvent => {
       this._dispatchEvent('loadstate', { add: lifecycleEvent });
     });

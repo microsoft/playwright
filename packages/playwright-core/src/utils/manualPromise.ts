@@ -78,15 +78,15 @@ export class ScopedRace {
     return Promise.race(scopes.map(s => s.race(promise)));
   }
 
-  async race<T>(promise: Promise<T> | Promise<T>[]): Promise<T> {
-    return this._race(Array.isArray(promise) ? promise : [promise], false) as Promise<T>;
+  async race<T>(promise: Promise<T>): Promise<T> {
+    return this._race(promise, false) as Promise<T>;
   }
 
   async safeRace<T>(promise: Promise<T>, defaultValue?: T): Promise<T> {
-    return this._race([promise], true, defaultValue);
+    return this._race(promise, true, defaultValue);
   }
 
-  private async _race(promises: Promise<any>[], safe: boolean, defaultValue?: any): Promise<any> {
+  private async _race(promise: Promise<any>, safe: boolean, defaultValue?: any): Promise<any> {
     const terminatePromise = new ManualPromise<Error>();
     if (this._terminateError)
       terminatePromise.resolve(this._terminateError);
@@ -95,7 +95,7 @@ export class ScopedRace {
     try {
       return await Promise.race([
         terminatePromise.then(e => safe ? defaultValue : Promise.reject(e)),
-        ...promises
+        promise
       ]);
     } finally {
       this._terminatePromises.delete(terminatePromise);

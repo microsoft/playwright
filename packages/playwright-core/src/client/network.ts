@@ -464,7 +464,7 @@ export class Response extends ChannelOwner<channels.ResponseChannel> implements 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.ResponseInitializer) {
     super(parent, type, guid, initializer);
     this._provisionalHeaders = new RawHeaders(initializer.headers);
-    this._request = Request.from(this._initializer.request);
+    this._request = parent as unknown as Request;
     Object.assign(this._request._timing, this._initializer.timing);
   }
 

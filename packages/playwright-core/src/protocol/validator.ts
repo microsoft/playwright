@@ -2027,7 +2027,6 @@ scheme.ResourceTiming = tObject({
   responseStart: tNumber,
 });
 scheme.ResponseInitializer = tObject({
-  request: tChannel(['Request']),
   url: tString,
   status: tNumber,
   statusText: tString,

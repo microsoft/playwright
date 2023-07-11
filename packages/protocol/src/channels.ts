@@ -3605,7 +3605,6 @@ export type ResourceTiming = {
 
 // ----------- Response -----------
 export type ResponseInitializer = {
-  request: RequestChannel,
   url: string,
   status: number,
   statusText: string,

@@ -41,8 +41,9 @@ export class RequestDispatcher extends Dispatcher<Request, channels.RequestChann
 
   private constructor(scope: BrowserContextDispatcher, request: Request) {
     const postData = request.postDataBuffer();
+    const frameDispatcher = FrameDispatcher.fromNullable(scope as any as PageDispatcher, request.frame());
     super(scope, request, 'Request', {
-      frame: FrameDispatcher.fromNullable(scope as any as PageDispatcher, request.frame()),
+      frame: frameDispatcher,
       serviceWorker: WorkerDispatcher.fromNullable(scope, request.serviceWorker()),
       url: request.url(),
       resourceType: request.resourceType(),
@@ -52,6 +53,14 @@ export class RequestDispatcher extends Dispatcher<Request, channels.RequestChann
       isNavigationRequest: request.isNavigationRequest(),
       redirectedFrom: RequestDispatcher.fromNullable(scope, request.redirectedFrom()),
     });
+    const page = request.frame()?._page;
+    const pageDispatcher = page ? existingDispatcher<PageDispatcher>(page) : null;
+    // The intention here is to put everything to the page, but sometimes we
+    // can't do that for the navigation request in the top level frame.
+    if (pageDispatcher)
+      pageDispatcher.adopt(this);
+    else if (frameDispatcher)
+      frameDispatcher.adopt(this);
     this._type_Request = true;
   }
 
@@ -64,22 +73,22 @@ export class RequestDispatcher extends Dispatcher<Request, channels.RequestChann
   }
 }
 
-export class ResponseDispatcher extends Dispatcher<Response, channels.ResponseChannel, BrowserContextDispatcher> implements channels.ResponseChannel {
+export class ResponseDispatcher extends Dispatcher<Response, channels.ResponseChannel, RequestDispatcher> implements channels.ResponseChannel {
   _type_Response = true;
 
   static from(scope: BrowserContextDispatcher, response: Response): ResponseDispatcher {
     const result = existingDispatcher<ResponseDispatcher>(response);
-    return result || new ResponseDispatcher(scope, response);
+    const requestDispatcher = RequestDispatcher.from(scope, response.request());
+    return result || new ResponseDispatcher(requestDispatcher, response);
   }
 
   static fromNullable(scope: BrowserContextDispatcher, response: Response | null): ResponseDispatcher | undefined {
     return response ? ResponseDispatcher.from(scope, response) : undefined;
   }
 
-  private constructor(scope: BrowserContextDispatcher, response: Response) {
+  private constructor(scope: RequestDispatcher, response: Response) {
     super(scope, response, 'Response', {
       // TODO: responses in popups can point to non-reported requests.
-      request: RequestDispatcher.from(scope, response.request()),
       url: response.url(),
       status: response.status(),
       statusText: response.statusText(),
