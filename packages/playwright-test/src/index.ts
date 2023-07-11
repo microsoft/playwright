@@ -56,7 +56,6 @@ type TestFixtures = PlaywrightTestArgs & PlaywrightTestOptions & {
 type WorkerFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions & {
   _browserOptions: LaunchOptions;
   _artifactsDir: () => string;
-  _snapshotSuffix: string;
 };
 
 const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
@@ -245,12 +244,10 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     });
   },
 
-  _snapshotSuffix: [process.platform, { scope: 'worker' }],
-
-  _setupContextOptions: [async ({ playwright, _snapshotSuffix, _combinedContextOptions, _artifactsDir, actionTimeout, navigationTimeout, testIdAttribute }, use, testInfo) => {
+  _setupContextOptions: [async ({ playwright, _combinedContextOptions, _artifactsDir, actionTimeout, navigationTimeout, testIdAttribute }, use, testInfo) => {
     if (testIdAttribute)
       playwrightLibrary.selectors.setTestIdAttribute(testIdAttribute);
-    testInfo.snapshotSuffix = _snapshotSuffix;
+    testInfo.snapshotSuffix = process.platform;
     if (debugMode())
       testInfo.setTimeout(0);
     for (const browserType of [playwright.chromium, playwright.firefox, playwright.webkit]) {
