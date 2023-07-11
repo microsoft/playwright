@@ -421,7 +421,7 @@ test('should be able to connect via localhost', async ({ browserType }, testInfo
 
 test('emulate media should be isolated between different contexts in different connections', async ({ browserType }, testInfo) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/24109' });
-  test.fail();
+  test.fixme();
   const port = 9339 + testInfo.workerIndex;
   const browserServer = await browserType.launch({
     args: ['--remote-debugging-port=' + port]
