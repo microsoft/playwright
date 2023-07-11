@@ -437,6 +437,12 @@ export class HarTracer {
     const pageEntry = this._createPageEntryIfNeeded(page);
     const request = response.request();
 
+    // Prefer "response received" time over "request sent" time
+    // for the purpose of matching requests that were used in a particular snapshot.
+    // Note that both snapshot time and request time are taken here in the Node process.
+    if (this._options.includeTraceInfo)
+      harEntry._monotonicTime = monotonicTime();
+
     harEntry.response = {
       status: response.status(),
       statusText: response.statusText(),
