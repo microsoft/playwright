@@ -110,12 +110,12 @@ export interface TestInfo {
   project: FullProject;
 }
 
-interface SuiteFunction {
+export interface SuiteFunction {
   (title: string, callback: () => void): void;
   (callback: () => void): void;
 }
 
-interface TestFunction<TestArgs> {
+export interface TestFunction<TestArgs> {
   (title: string, testFunction: (args: TestArgs, testInfo: TestInfo) => Promise<void> | void): void;
 }
 
