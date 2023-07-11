@@ -190,7 +190,7 @@ export abstract class BrowserContext extends SdkObject {
     const [, ...otherPages] = this.pages();
     for (const p of otherPages)
       await p.close(metadata);
-    if (page && page._crashedPromise.isDone()) {
+    if (page && page._crashedRace.isDone()) {
       await page.close(metadata);
       page = undefined;
     }

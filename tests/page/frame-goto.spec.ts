@@ -38,9 +38,9 @@ it('should reject when frame detaches', async ({ page, server, browserName }) =>
   await page.$eval('iframe', frame => frame.remove());
   const error = await navigationPromise;
   if (browserName === 'chromium')
-    expect(error.message.includes('net::ERR_ABORTED') || error.message.includes('frame was detached')).toBe(true);
+    expect(error.message.includes('net::ERR_ABORTED') || error.message.includes('Frame was detached')).toBe(true);
   else
-    expect(error.message).toContain('frame was detached');
+    expect(error.message).toContain('Frame was detached');
 });
 
 it('should continue after client redirect', async ({ page, server, isAndroid }) => {

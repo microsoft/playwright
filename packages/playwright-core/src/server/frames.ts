@@ -29,7 +29,7 @@ import * as types from './types';
 import { BrowserContext } from './browserContext';
 import type { Progress } from './progress';
 import { ProgressController } from './progress';
-import { assert, constructURLBasedOnBaseURL, makeWaitForNextTask, monotonicTime } from '../utils';
+import { ScopedRace, assert, constructURLBasedOnBaseURL, makeWaitForNextTask, monotonicTime } from '../utils';
 import { ManualPromise } from '../utils/manualPromise';
 import { debugLogger } from '../common/debugLogger';
 import type { CallMetadata } from './instrumentation';
@@ -476,15 +476,13 @@ export class Frame extends SdkObject {
   readonly _page: Page;
   private _parentFrame: Frame | null;
   _url = '';
-  private _detached = false;
   private _contextData = new Map<types.World, ContextData>();
   private _childFrames = new Set<Frame>();
   _name = '';
   _inflightRequests = new Set<network.Request>();
   private _networkIdleTimer: NodeJS.Timer | undefined;
   private _setContentCounter = 0;
-  readonly _detachedPromise: Promise<void>;
-  private _detachedCallback = () => {};
+  readonly _detachedRace = new ScopedRace();
   private _raceAgainstEvaluationStallingEventsPromises = new Set<ManualPromise<any>>();
   readonly _redirectedNavigations = new Map<string, { url: string, gotoPromise: Promise<network.Response | null> }>(); // documentId -> data
   readonly selectors: FrameSelectors;
@@ -497,8 +495,6 @@ export class Frame extends SdkObject {
     this._parentFrame = parentFrame;
     this._currentDocument = { documentId: undefined, request: undefined };
     this.selectors = new FrameSelectors(this);
-
-    this._detachedPromise = new Promise<void>(x => this._detachedCallback = x);
 
     this._contextData.set('main', { contextPromise: new ManualPromise(), context: null });
     this._contextData.set('utility', { contextPromise: new ManualPromise(), context: null });
@@ -514,7 +510,7 @@ export class Frame extends SdkObject {
   }
 
   isDetached(): boolean {
-    return this._detached;
+    return this._detachedRace.isDone();
   }
 
   _onLifecycleEvent(event: RegularLifecycleEvent) {
@@ -617,21 +613,20 @@ export class Frame extends SdkObject {
   }
 
   async raceNavigationAction(progress: Progress, options: types.GotoOptions, action: () => Promise<network.Response | null>): Promise<network.Response | null> {
-    return Promise.race([
-      this._page._disconnectedPromise.then(() => { throw new Error('Navigation failed because page was closed!'); }),
-      this._page._crashedPromise.then(() => { throw new Error('Navigation failed because page crashed!'); }),
-      this._detachedPromise.then(() => { throw new Error('Navigating frame was detached!'); }),
-      action().catch(e => {
-        if (e instanceof NavigationAbortedError && e.documentId) {
-          const data = this._redirectedNavigations.get(e.documentId);
-          if (data) {
-            progress.log(`waiting for redirected navigation to "${data.url}"`);
-            return data.gotoPromise;
-          }
+    return ScopedRace.raceMultiple([
+      this._detachedRace,
+      this._page._disconnectedRace,
+      this._page._crashedRace,
+    ], action().catch(e => {
+      if (e instanceof NavigationAbortedError && e.documentId) {
+        const data = this._redirectedNavigations.get(e.documentId);
+        if (data) {
+          progress.log(`waiting for redirected navigation to "${data.url}"`);
+          return data.gotoPromise;
         }
-        throw e;
-      }),
-    ]);
+      }
+      throw e;
+    }));
   }
 
   redirectNavigation(url: string, documentId: string, referer: string | undefined) {
@@ -1057,12 +1052,12 @@ export class Frame extends SdkObject {
       if (timeout) {
         // Make sure we react immediately upon page close or frame detach.
         // We need this to show expected/received values in time.
-        await Promise.race([
-          this._page._disconnectedPromise,
-          this._page._crashedPromise,
-          this._detachedPromise,
-          new Promise(f => setTimeout(f, timeout)),
-        ]);
+        const actionPromise = new Promise(f => setTimeout(f, timeout));
+        await ScopedRace.raceMultiple([
+          this._page._disconnectedRace,
+          this._page._crashedRace,
+          this._detachedRace,
+        ], actionPromise);
       }
       progress.throwIfAborted();
       try {
@@ -1538,9 +1533,8 @@ export class Frame extends SdkObject {
 
   _onDetached() {
     this._stopNetworkIdleTimer();
-    this._detached = true;
-    this._detachedCallback();
     const error = new Error('Frame was detached');
+    this._detachedRace.scopeClosed(error);
     for (const data of this._contextData.values()) {
       if (data.context)
         data.context.contextDestroyed(error);
@@ -1606,7 +1600,7 @@ export class Frame extends SdkObject {
   _contextDestroyed(context: dom.FrameExecutionContext) {
     // Sometimes we get this after detach, in which case we should not reset
     // our already destroyed contexts to something that will never resolve.
-    if (this._detached)
+    if (this._detachedRace.isDone())
       return;
     context.contextDestroyed(new Error('Execution context was destroyed, most likely because of a navigation'));
     for (const [world, data] of this._contextData) {
@@ -1620,7 +1614,7 @@ export class Frame extends SdkObject {
     // We should not start a timer and report networkidle in detached frames.
     // This happens at least in Firefox for child frames, where we may get requestFinished
     // after the frame was detached - probably a race in the Firefox itself.
-    if (this._firedLifecycleEvents.has('networkidle') || this._detached)
+    if (this._firedLifecycleEvents.has('networkidle') || this._detachedRace.isDone())
       return;
     this._networkIdleTimer = setTimeout(() => {
       this._firedNetworkIdleSelf = true;
@@ -1709,12 +1703,11 @@ class SignalBarrier {
         this._progress.log(`  navigated to "${frame._url}"`);
       return true;
     });
-    await Promise.race([
-      frame._page._disconnectedPromise,
-      frame._page._crashedPromise,
-      frame._detachedPromise,
-      waiter.promise,
-    ]).catch(e => {});
+    await ScopedRace.raceMultiple([
+      frame._page._disconnectedRace,
+      frame._page._crashedRace,
+      frame._detachedRace,
+    ], waiter.promise).catch(() => {});
     waiter.dispose();
     this.release();
   }
