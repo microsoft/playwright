@@ -51,7 +51,7 @@ it.describe('snapshots', () => {
     });
     await page.setContent('<link rel="stylesheet" href="style.css"><button>Hello</button>');
     const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'call@1', 'snapshot@call@1');
-    const resource = snapshot.resourceByUrl(`http://localhost:${server.PORT}/style.css`);
+    const resource = snapshot.resourceByUrl(`http://localhost:${server.PORT}/style.css`, 'GET');
     expect(resource).toBeTruthy();
   });
 
@@ -124,7 +124,7 @@ it.describe('snapshots', () => {
 
     await page.evaluate(() => { (document.styleSheets[0].cssRules[0] as any).style.color = 'blue'; });
     const snapshot2 = await snapshotter.captureSnapshot(toImpl(page), 'call@2', 'snapshot@call@2');
-    const resource = snapshot2.resourceByUrl(`http://localhost:${server.PORT}/style.css`);
+    const resource = snapshot2.resourceByUrl(`http://localhost:${server.PORT}/style.css`, 'GET');
     expect((await snapshotter.resourceContentForTest(resource.response.content._sha1)).toString()).toBe('button { color: blue; }');
   });
 

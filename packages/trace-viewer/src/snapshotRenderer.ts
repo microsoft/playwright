@@ -112,17 +112,19 @@ export class SnapshotRenderer {
     return { html, pageId: snapshot.pageId, frameId: snapshot.frameId, index: this._index };
   }
 
-  resourceByUrl(url: string): ResourceSnapshot | undefined {
+  resourceByUrl(url: string, method: string): ResourceSnapshot | undefined {
     const snapshot = this._snapshot;
     let result: ResourceSnapshot | undefined;
 
     // First try locating exact resource belonging to this frame.
     for (const resource of this._resources) {
+      // Only use resources that received response before the snapshot.
+      // Note that both snapshot time and request time are taken in the same Node process.
       if (typeof resource._monotonicTime === 'number' && resource._monotonicTime >= snapshot.timestamp)
         break;
       if (resource._frameref !== snapshot.frameId)
         continue;
-      if (resource.request.url === url) {
+      if (resource.request.url === url && resource.request.method === method) {
         // Pick the last resource with matching url - most likely it was used
         // at the time of snapshot, not the earlier aborted resource with the same url.
         result = resource;
@@ -132,9 +134,11 @@ export class SnapshotRenderer {
     if (!result) {
       // Then fall back to resource with this URL to account for memory cache.
       for (const resource of this._resources) {
+        // Only use resources that received response before the snapshot.
+        // Note that both snapshot time and request time are taken in the same Node process.
         if (typeof resource._monotonicTime === 'number' && resource._monotonicTime >= snapshot.timestamp)
           break;
-        if (resource.request.url === url) {
+        if (resource.request.url === url && resource.request.method === method) {
           // Pick the last resource with matching url - most likely it was used
           // at the time of snapshot, not the earlier aborted resource with the same url.
           result = resource;
@@ -142,7 +146,7 @@ export class SnapshotRenderer {
       }
     }
 
-    if (result) {
+    if (result && method.toUpperCase() === 'GET') {
       // Patch override if necessary.
       for (const o of snapshot.resourceOverrides) {
         if (url === o.url && o.sha1) {

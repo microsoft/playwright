@@ -142,7 +142,7 @@ async function doFetch(event: FetchEvent): Promise<Response> {
   const lookupUrls = [request.url];
   if (isDeployedAsHttps && request.url.startsWith('https://'))
     lookupUrls.push(request.url.replace(/^https/, 'http'));
-  return snapshotServer.serveResource(lookupUrls, snapshotUrl);
+  return snapshotServer.serveResource(lookupUrls, request.method, snapshotUrl);
 }
 
 async function gc() {
