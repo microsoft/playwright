@@ -735,32 +735,40 @@ test('should not emit after w/o before', async ({ browserType, mode }, testInfo)
     }
   };
 
+  let call1: number;
   {
     const { events } = await parseTraceRaw(testInfo.outputPath('trace1.zip'));
     expect(events.map(sanitize).filter(Boolean)).toEqual([
       {
         type: 'before',
-        callId: 0,
+        callId: expect.any(Number),
         apiName: 'page.evaluate'
       }
     ]);
+    call1 = events.map(sanitize).filter(Boolean)[0].callId;
   }
 
+  let call2before: number;
+  let call2after: number;
   {
     const { events } = await parseTraceRaw(testInfo.outputPath('trace2.zip'));
     expect(events.map(sanitize).filter(Boolean)).toEqual([
       {
         type: 'before',
-        callId: 6,
+        callId: expect.any(Number),
         apiName: 'page.evaluateHandle'
       },
       {
         type: 'after',
-        callId: 6,
+        callId: expect.any(Number),
         apiName: undefined
       }
     ]);
+    call2before = events.map(sanitize).filter(Boolean)[0].callId;
+    call2after = events.map(sanitize).filter(Boolean)[1].callId;
   }
+  expect(call2before).toBeGreaterThan(call1);
+  expect(call2after).toBe(call2before);
 });
 
 function expectRed(pixels: Buffer, offset: number) {
