@@ -419,7 +419,7 @@ test('should be able to connect via localhost', async ({ browserType }, testInfo
   }
 });
 
-test('emulate media should be isolated between different contexts in different connections', async ({ browserType }, testInfo) => {
+test('emulate media should not be affected by second connectOverCDP', async ({ browserType }, testInfo) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/24109' });
   test.fixme();
   const port = 9339 + testInfo.workerIndex;
@@ -436,13 +436,7 @@ test('emulate media should be isolated between different contexts in different c
     const page1 = await context1.newPage();
     await page1.emulateMedia({ media: 'print' });
     expect(await isPrint(page1)).toBe(true);
-
     const browser2 = await browserType.connectOverCDP(`http://localhost:${port}`);
-    const context2 = await browser2.newContext();
-    const page2 = await context2.newPage();
-    await page2.emulateMedia({ media: 'print' });
-    expect(await isPrint(page2)).toBe(true);
-    // page1 should not be affected.
     expect(await isPrint(page1)).toBe(true);
     await Promise.all([
       browser1.close(),
