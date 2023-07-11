@@ -81,6 +81,7 @@ export class WorkerMain extends ProcessRunner {
         ...chunkToParams(chunk)
       };
       this.dispatchEvent('stdOut', outPayload);
+      this._currentTest?._appendStdioToTrace('stdout', chunk);
       return true;
     };
 
@@ -90,6 +91,7 @@ export class WorkerMain extends ProcessRunner {
           ...chunkToParams(chunk)
         };
         this.dispatchEvent('stdErr', outPayload);
+        this._currentTest?._appendStdioToTrace('stderr', chunk);
         return true;
       };
     }
@@ -633,9 +635,9 @@ function formatTestTitle(test: TestCase, projectName: string) {
   return `${projectTitle}${location} › ${titles.join(' › ')}`;
 }
 
-function chunkToParams(chunk: Buffer | string):  { text?: string, buffer?: string } {
-  if (chunk instanceof Buffer)
-    return { buffer: chunk.toString('base64') };
+function chunkToParams(chunk: Uint8Array | string, encoding?: BufferEncoding):  { text?: string, buffer?: string } {
+  if (chunk instanceof Uint8Array)
+    return { buffer: Buffer.from(chunk).toString('base64') };
   if (typeof chunk !== 'string')
     return { text: util.inspect(chunk) };
   return { text: chunk };

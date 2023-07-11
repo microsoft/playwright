@@ -59,6 +59,7 @@ export class MultiTraceModel {
   readonly pages: PageEntry[];
   readonly actions: ActionTraceEventInContext[];
   readonly events: trace.EventTraceEvent[];
+  readonly stdio: trace.StdioTraceEvent[];
   readonly hasSource: boolean;
   readonly sdkLanguage: Language | undefined;
   readonly testIdAttributeName: string | undefined;
@@ -81,6 +82,7 @@ export class MultiTraceModel {
     this.pages = ([] as PageEntry[]).concat(...contexts.map(c => c.pages));
     this.actions = mergeActions(contexts);
     this.events = ([] as EventTraceEvent[]).concat(...contexts.map(c => c.events));
+    this.stdio = ([] as trace.StdioTraceEvent[]).concat(...contexts.map(c => c.stdio));
     this.hasSource = contexts.some(c => c.hasSource);
     this.resources = [...contexts.map(c => c.resources)].flat();
 

@@ -312,6 +312,15 @@ export class TestInfoImpl implements TestInfo {
     return step;
   }
 
+  _appendStdioToTrace(type: 'stdout' | 'stderr', chunk: string | Buffer) {
+    this._traceEvents.push({
+      type,
+      timestamp: monotonicTime(),
+      text: typeof chunk === 'string' ? chunk : undefined,
+      base64: typeof chunk === 'string' ? undefined : chunk.toString('base64'),
+    });
+  }
+
   _interrupt() {
     // Mark as interrupted so we can ignore TimeoutError thrown by interrupt() call.
     this._wasInterrupted = true;
