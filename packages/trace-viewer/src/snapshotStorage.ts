@@ -56,4 +56,9 @@ export class SnapshotStorage {
   snapshotsForTest() {
     return [...this._frameSnapshots.keys()];
   }
+
+  finalize() {
+    // Resources are not necessarily sorted in the trace file, so sort them now.
+    this._resources.sort((a, b) => (a._monotonicTime || 0) - (b._monotonicTime || 0));
+  }
 }

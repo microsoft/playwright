@@ -100,6 +100,8 @@ export class TraceModel {
 
       this.contextEntries.push(contextEntry);
     }
+
+    this._snapshotStorage!.finalize();
   }
 
   async hasEntry(filename: string): Promise<boolean> {

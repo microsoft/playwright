@@ -65,11 +65,11 @@ export class SnapshotServer {
     });
   }
 
-  async serveResource(requestUrlAlternatives: string[], snapshotUrl: string): Promise<Response> {
+  async serveResource(requestUrlAlternatives: string[], method: string, snapshotUrl: string): Promise<Response> {
     let resource: ResourceSnapshot | undefined;
     const snapshot = this._snapshotIds.get(snapshotUrl)!;
     for (const requestUrl of requestUrlAlternatives) {
-      resource = snapshot?.resourceByUrl(removeHash(requestUrl));
+      resource = snapshot?.resourceByUrl(removeHash(requestUrl), method);
       if (resource)
         break;
     }
