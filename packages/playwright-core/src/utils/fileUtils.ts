@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import fs from "fs";
-import path from "path";
-import { rimraf } from "../utilsBundle";
+import fs from 'fs';
+import path from 'path';
+import { rimraf } from '../utilsBundle';
 
 export const existsAsync = (path: string): Promise<boolean> =>
   new Promise((resolve) => fs.stat(path, (err) => resolve(!err)));
