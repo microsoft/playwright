@@ -18,7 +18,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import type { APIRequestContext, BrowserContext, Browser, BrowserContextOptions, LaunchOptions, Page, Tracing, Video } from 'playwright-core';
 import * as playwrightLibrary from 'playwright-core';
-import { createGuid, debugMode, addInternalStackPrefix, mergeTraceFiles, saveTraceFile, removeFolders, isString, asLocator } from 'playwright-core/lib/utils';
+import { createGuid, debugMode, addInternalStackPrefix, mergeTraceFiles, saveTraceFile, removeFolders, isString, asLocator, jsonStringifyForceASCII } from 'playwright-core/lib/utils';
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, TraceMode, VideoMode } from '../types/test';
 import type { TestInfoImpl } from './worker/testInfo';
 import { rootTestType } from './common/testType';
@@ -125,7 +125,8 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
         ...connectOptions,
         headers: {
           'x-playwright-reuse-context': '1',
-          'x-playwright-launch-options': JSON.stringify(_browserOptions),
+          // HTTP headers are ASCII only (not UTF-8).
+          'x-playwright-launch-options': jsonStringifyForceASCII(_browserOptions),
           ...connectOptions.headers,
         },
       });

@@ -21,10 +21,19 @@ test('should work with connectOptions', async ({ runInlineTest }) => {
     'playwright.config.js': `
       module.exports = {
         globalSetup: './global-setup',
+        // outputDir is relative to the config file. Customers can have special characters in the path:
+        // See: https://github.com/microsoft/playwright/issues/24157
+        outputDir: 'Привет',
         use: {
           connectOptions: {
             wsEndpoint: process.env.CONNECT_WS_ENDPOINT,
           },
+          launchOptions: {
+            env: {
+              // Customers can have special characters: https://github.com/microsoft/playwright/issues/24157
+              RANDOM_TEST_SPECIAL: 'Привет',
+            }
+          }
         },
       };
     `,

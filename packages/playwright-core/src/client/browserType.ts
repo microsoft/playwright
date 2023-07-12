@@ -23,7 +23,7 @@ import { Connection } from './connection';
 import { Events } from './events';
 import type { ChildProcess } from 'child_process';
 import { envObjectToArray } from './clientHelper';
-import { assert, headersObjectToArray, monotonicTime } from '../utils';
+import { jsonStringifyForceASCII, assert, headersObjectToArray, monotonicTime } from '../utils';
 import type * as api from '../../types/types';
 import { kBrowserClosedError } from '../common/errors';
 import { raceAgainstTimeout } from '../utils/timeoutRunner';
@@ -93,7 +93,8 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     return this._connect({
       wsEndpoint: connectOptions.wsEndpoint,
       headers: {
-        'x-playwright-launch-options': JSON.stringify({ ...this._defaultLaunchOptions, ...launchOptions }),
+        // HTTP headers are ASCII only (not UTF-8).
+        'x-playwright-launch-options': jsonStringifyForceASCII({ ...this._defaultLaunchOptions, ...launchOptions }),
         ...connectOptions.headers,
       },
       _exposeNetwork: connectOptions._exposeNetwork,
