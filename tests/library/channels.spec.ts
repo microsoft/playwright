@@ -69,10 +69,11 @@ it('should scope context handles', async ({ browserType, server, expectScopeStat
       { _guid: 'browser-type', objects: [
         { _guid: 'browser', objects: [
           { _guid: 'browser-context', objects: [
-            { _guid: 'request', objects: [] },
-            { _guid: 'response', objects: [] },
             { _guid: 'page', objects: [
               { _guid: 'frame', objects: [] },
+              { _guid: 'request', objects: [
+                { _guid: 'response', objects: [] },
+              ] },
             ] },
             { _guid: 'request-context', objects: [] },
             { _guid: 'tracing', objects: [] }
@@ -204,12 +205,13 @@ it('should not generate dispatchers for subresources w/o listeners', async ({ pa
             { _guid: 'browser-context', objects: [
               {
                 _guid: 'page', objects: [
-                  { _guid: 'frame', objects: [] }
+                  { _guid: 'frame', objects: [] },
+                  { _guid: 'request', objects: [
+                    { _guid: 'response', objects: [] },
+                  ] },
                 ]
               },
-              { _guid: 'request', objects: [] },
               { _guid: 'request-context', objects: [] },
-              { _guid: 'response', objects: [] },
               { _guid: 'tracing', objects: [] }
             ] },
           ]

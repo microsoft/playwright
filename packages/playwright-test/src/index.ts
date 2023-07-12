@@ -327,7 +327,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     const testInfoImpl = testInfo as TestInfoImpl;
     const videoMode = normalizeVideoMode(video);
     const captureVideo = shouldCaptureVideo(videoMode, testInfo) && !_reuseContext;
-    const contexts = new Map<BrowserContext, { pages: Page[] }>();
+    const contexts = new Map<BrowserContext, { pagesWithVideo: Page[] }>();
 
     await use(async options => {
       const hook = hookType(testInfoImpl);
@@ -345,9 +345,10 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
         }
       } : {};
       const context = await browser.newContext({ ...videoOptions, ...options });
-      const contextData: { pages: Page[] } = { pages: [] };
+      const contextData: { pagesWithVideo: Page[] } = { pagesWithVideo: [] };
       contexts.set(context, contextData);
-      context.on('page', page => contextData.pages.push(page));
+      if (captureVideo)
+        context.on('page', page => contextData.pagesWithVideo.push(page));
       return context;
     });
 
@@ -363,8 +364,8 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       const testFailed = testInfo.status !== testInfo.expectedStatus;
       const preserveVideo = captureVideo && (videoMode === 'on' || (testFailed && videoMode === 'retain-on-failure') || (videoMode === 'on-first-retry' && testInfo.retry === 1));
       if (preserveVideo) {
-        const { pages } = contexts.get(context)!;
-        const videos = pages.map(p => p.video()).filter(Boolean) as Video[];
+        const { pagesWithVideo: pagesForVideo } = contexts.get(context)!;
+        const videos = pagesForVideo.map(p => p.video()).filter(Boolean) as Video[];
         await Promise.all(videos.map(async v => {
           try {
             const savedPath = testInfo.outputPath(`video${counter ? '-' + counter : ''}.webm`);

@@ -58,7 +58,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     // If we split pageCreated and pageReady, there should be no main frame during pageCreated.
 
     // We will reparent it to the page below using adopt.
-    const mainFrame = FrameDispatcher.from(parentScope as any as PageDispatcher, page.mainFrame());
+    const mainFrame = FrameDispatcher.from(parentScope, page.mainFrame());
 
     super(parentScope, page, 'Page', {
       mainFrame,
@@ -80,7 +80,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
       this._dispatchEvent('download', { url: download.url, suggestedFilename: download.suggestedFilename(), artifact: ArtifactDispatcher.from(parentScope, download.artifact) });
     });
     this.addObjectListener(Page.Events.FileChooser, (fileChooser: FileChooser) => this._dispatchEvent('fileChooser', {
-      element: ElementHandleDispatcher.from(this, fileChooser.element()),
+      element: ElementHandleDispatcher.from(mainFrame, fileChooser.element()),
       isMultiple: fileChooser.isMultiple()
     }));
     this.addObjectListener(Page.Events.FrameAttached, frame => this._onFrameAttached(frame));
@@ -297,11 +297,11 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   }
 
   _onFrameAttached(frame: Frame) {
-    this._dispatchEvent('frameAttached', { frame: FrameDispatcher.from(this, frame) });
+    this._dispatchEvent('frameAttached', { frame: FrameDispatcher.from(this.parentScope(), frame) });
   }
 
   _onFrameDetached(frame: Frame) {
-    this._dispatchEvent('frameDetached', { frame: FrameDispatcher.from(this, frame) });
+    this._dispatchEvent('frameDetached', { frame: FrameDispatcher.from(this.parentScope(), frame) });
   }
 
   override _onDispose() {
@@ -346,7 +346,7 @@ export class BindingCallDispatcher extends Dispatcher<{ guid: string }, channels
 
   constructor(scope: PageDispatcher, name: string, needsHandle: boolean, source: { context: BrowserContext, page: Page, frame: Frame }, args: any[]) {
     super(scope, { guid: 'bindingCall@' + createGuid() }, 'BindingCall', {
-      frame: FrameDispatcher.from(scope, source.frame),
+      frame: FrameDispatcher.from(scope.parentScope(), source.frame),
       name,
       args: needsHandle ? undefined : args.map(serializeResult),
       handle: needsHandle ? ElementHandleDispatcher.fromJSHandle(scope, args[0] as JSHandle) : undefined,

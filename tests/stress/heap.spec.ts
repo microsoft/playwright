@@ -47,3 +47,37 @@ test('should not leak server-side objects', async ({ page }) => {
   expect(await queryObjectCount(require('../../packages/playwright-core/lib/server/browserContext').BrowserContext)).toBe(4);
   expect(await queryObjectCount(require('../../packages/playwright-core/lib/server/browser').Browser)).toBe(4);
 });
+
+test('should not leak dispatchers after closing page', async ({ context, server }) => {
+  const pages = [];
+  const COUNT = 5;
+  for (let i = 0; i < COUNT; ++i) {
+    const page = await context.newPage();
+    // ensure listeners are registered
+    page.on('console', () => {});
+    await page.goto(server.PREFIX + '/title.html');
+    await page.evaluate(async i => {
+      console.log('message', i);
+    }, i);
+    pages.push(page);
+  }
+
+  expect(await queryObjectCount(require('../../packages/playwright-core/lib/server/page').Page)).toBe(COUNT);
+  expect(await queryObjectCount(require('../../packages/playwright-core/lib/server/dispatchers/networkDispatchers').RequestDispatcher)).toBe(COUNT);
+  expect(await queryObjectCount(require('../../packages/playwright-core/lib/server/dispatchers/networkDispatchers').ResponseDispatcher)).toBe(COUNT);
+  expect(await queryObjectCount(require('../../packages/playwright-core/lib/server/dispatchers/consoleMessageDispatcher').ConsoleMessageDispatcher)).toBe(COUNT);
+
+  for (const page of pages)
+    await page.close();
+  pages.length = 0;
+
+  expect(await queryObjectCount(require('../../packages/playwright-core/lib/server/page').Page)).toBe(0);
+  expect(await queryObjectCount(require('../../packages/playwright-core/lib/server/dispatchers/networkDispatchers').RequestDispatcher)).toBe(0);
+  expect(await queryObjectCount(require('../../packages/playwright-core/lib/server/dispatchers/networkDispatchers').ResponseDispatcher)).toBe(0);
+  expect(await queryObjectCount(require('../../packages/playwright-core/lib/server/dispatchers/consoleMessageDispatcher').ConsoleMessageDispatcher)).toBe(0);
+
+  expect(await queryObjectCount(require('../../packages/playwright-core/lib/client/page').Page)).toBeLessThan(COUNT);
+  expect(await queryObjectCount(require('../../packages/playwright-core/lib/server/page').Page)).toBe(0);
+  expect(await queryObjectCount(require('../../packages/playwright-core/lib/client/network').Request)).toBe(0);
+  expect(await queryObjectCount(require('../../packages/playwright-core/lib/client/network').Response)).toBe(0);
+});
