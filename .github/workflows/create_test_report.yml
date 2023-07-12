@@ -65,13 +65,13 @@ jobs:
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
+          const fs = require('fs');
           let prNumber;
           if (context.payload.workflow_run.event === 'pull_request') {
             const prs = context.payload.workflow_run.pull_requests;
             if (prs.length) {
               prNumber = prs[0].number;
             } else {
-              const fs = require('fs');
               prNumber = parseInt(fs.readFileSync('pull_request_number.txt').toString());
               console.log('Read pull request number from file: ' + prNumber);
             }
