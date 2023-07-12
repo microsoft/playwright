@@ -171,7 +171,7 @@ export const UIModeView: React.FC<{}> = ({
       <div className='title'>UI Mode disconnected</div>
       <div><a href='#' onClick={() => window.location.reload()}>Reload the page</a> to reconnect</div>
     </div>}
-    <SplitView sidebarSize={250} orientation='horizontal' sidebarIsFirst={true}>
+    <SplitView sidebarSize={250} minSidebarSize={125} orientation='horizontal' sidebarIsFirst={true}>
       <div className='vbox'>
         <div className={'vbox' + (isShowingOutput ? '' : ' hidden')}>
           <Toolbar>
