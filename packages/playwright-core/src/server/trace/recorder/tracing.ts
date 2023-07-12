@@ -166,17 +166,13 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       throw new Error('Cannot start a trace chunk while stopping');
 
     const state = this._state;
-    const suffix = state.chunkOrdinal ? `-${state.chunkOrdinal}` : ``;
-    state.chunkOrdinal++;
-    state.traceFile = {
-      file: path.join(state.tracesDir, `${state.traceName}${suffix}.trace`),
-      buffer: [],
-    };
     state.recording = true;
     state.callIds.clear();
 
-    if (options.name && options.name !== this._state.traceName)
-      this._changeTraceName(this._state, options.name);
+    if (options.name && options.name !== state.traceName)
+      this._changeTraceName(state, options.name);
+    else
+      this._allocateNewTraceFile(state);
 
     this._appendTraceOperation(async () => {
       await mkdirIfNeeded(state.traceFile.file);
@@ -213,6 +209,15 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       page.setScreencastOptions(null);
   }
 
+  private _allocateNewTraceFile(state: RecordingState) {
+    const suffix = state.chunkOrdinal ? `-chunk${state.chunkOrdinal}` : ``;
+    state.chunkOrdinal++;
+    state.traceFile = {
+      file: path.join(state.tracesDir, `${state.traceName}${suffix}.trace`),
+      buffer: [],
+    };
+  }
+
   private async _changeTraceName(state: RecordingState, name: string) {
     await this._appendTraceOperation(async () => {
       await flushTraceFile(state.traceFile);
@@ -220,10 +225,8 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
 
       const oldNetworkFile = state.networkFile;
       state.traceName = name;
-      state.traceFile = {
-        file: path.join(state.tracesDir, name + '.trace'),
-        buffer: [],
-      };
+      state.chunkOrdinal = 0;  // Reset ordinal for the new name.
+      this._allocateNewTraceFile(state);
       state.networkFile = {
         file: path.join(state.tracesDir, name + '.network'),
         buffer: [],
