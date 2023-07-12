@@ -21,8 +21,9 @@ import { ElementHandleDispatcher } from './elementHandlerDispatcher';
 import { parseSerializedValue, serializeValue } from '../../protocol/serializers';
 import type { PageDispatcher, WorkerDispatcher } from './pageDispatcher';
 import type { ElectronApplicationDispatcher } from './electronDispatcher';
+import type { FrameDispatcher } from './frameDispatcher';
 
-export type JSHandleDispatcherParentScope = PageDispatcher | WorkerDispatcher | ElectronApplicationDispatcher;
+export type JSHandleDispatcherParentScope = PageDispatcher | FrameDispatcher | WorkerDispatcher | ElectronApplicationDispatcher;
 
 export class JSHandleDispatcher extends Dispatcher<js.JSHandle, channels.JSHandleChannel, JSHandleDispatcherParentScope> implements channels.JSHandleChannel {
   _type_JSHandle = true;

@@ -80,6 +80,8 @@ export class Dispatcher<Type extends { guid: string }, ChannelType, ParentScopeT
   }
 
   adopt(child: DispatcherScope) {
+    if (child._parent === this)
+      return;
     const oldParent = child._parent!;
     oldParent._dispatchers.delete(child._guid);
     this._dispatchers.set(child._guid, child);
