@@ -93,7 +93,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     return this._connect({
       wsEndpoint: connectOptions.wsEndpoint,
       headers: {
-        // HTTP headers are ASCII only.
+        // HTTP headers are ASCII only (not UTF-8).
         'x-playwright-launch-options': jsonStringifyForceASCII({ ...this._defaultLaunchOptions, ...launchOptions }),
         ...connectOptions.headers,
       },

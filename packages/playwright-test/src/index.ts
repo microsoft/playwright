@@ -125,7 +125,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
         ...connectOptions,
         headers: {
           'x-playwright-reuse-context': '1',
-          // HTTP headers are ASCII only.
+          // HTTP headers are ASCII only (not UTF-8).
           'x-playwright-launch-options': jsonStringifyForceASCII(_browserOptions),
           ...connectOptions.headers,
         },
