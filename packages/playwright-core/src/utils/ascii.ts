@@ -24,7 +24,7 @@ export function wrapInASCIIBox(text: string, padding = 0): string {
   ].join('\n');
 }
 
-export function jsonStringifyEncodeUnicode(object: any): string {
+export function jsonStringifyForceASCII(object: any): string {
   return JSON.stringify(object).replace(
       /[\u007f-\uffff]/g,
       c => '\\u' + ('0000' + c.charCodeAt(0).toString(16)).slice(-4)
