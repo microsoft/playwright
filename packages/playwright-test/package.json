@@ -15,6 +15,12 @@
       "require": "./index.js",
       "default": "./index.js"
     },
+    "./persistent": {
+      "types": "./persistent.d.ts",
+      "import": "./persistent.mjs",
+      "require": "./persistent.js",
+      "default": "./persistent.js"
+    },
     "./cli": "./cli.js",
     "./package.json": "./package.json",
     "./lib/cli": "./lib/cli.js",

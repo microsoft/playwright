@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, defineConfig } from '@playwright/test';
-import type { Reporter, TestCase } from '@playwright/test/reporter';
+import { test, expect, defineConfig } from '@playwright/test/persistent';
 
 test.use({ locale: 'en-US' });
 
@@ -47,14 +46,6 @@ test2('should work 2', async ({ foo, bar }) => {
   bar += parseInt(foo, 10);
   expect(bar).toBe(123 * 2);
 });
-
-export class MyReporter implements Reporter {
-  onTestBegin(test: TestCase) {
-    test.titlePath().slice();
-    if (test.results[0].status === test.expectedStatus)
-      console.log(`Nice test ${test.title} at ${test.location.file}`);
-  }
-}
 
 defineConfig({
   testDir: 'tests',

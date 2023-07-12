@@ -6,7 +6,7 @@ common/
 [cli.ts]
 **
 
-[index.ts]
+[playwrightFixtures.ts]
 @testIsomorphic/**
 
 [internalsForTest.ts]

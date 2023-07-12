@@ -34,6 +34,7 @@ test('typescript types should work', async ({ exec, tsc, writeFiles }) => {
   }
 
   await tsc('playwright-test-types.ts');
+  await tsc('playwright-test-persistent-types.ts');
 });
 
 test('typescript types should work with module: NodeNext', async ({ exec, tsc, writeFiles }) => {
