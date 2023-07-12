@@ -32,8 +32,6 @@ import { buildFileSuiteForProject, filterTestsRemoveEmptySuites } from '../commo
 import { PoolBuilder } from '../common/poolBuilder';
 import type { TestInfoError } from '../../types/test';
 
-const removeFolderAsync = util.promisify(rimraf);
-
 export class WorkerMain extends ProcessRunner {
   private _params: WorkerInitParams;
   private _config!: FullConfigInternal;
@@ -321,7 +319,7 @@ export class WorkerMain extends ProcessRunner {
         return;
       }
 
-      await removeFolderAsync(testInfo.outputDir).catch(() => {});
+      await rimraf(testInfo.outputDir).catch(() => {});
 
       let testFunctionParams: object | null = null;
       await testInfo._runAsStep({ category: 'hook', title: 'Before Hooks' }, async step => {
@@ -488,7 +486,7 @@ export class WorkerMain extends ProcessRunner {
     const preserveOutput = this._config.config.preserveOutput === 'always' ||
       (this._config.config.preserveOutput === 'failures-only' && testInfo._isFailure());
     if (!preserveOutput)
-      await removeFolderAsync(testInfo.outputDir).catch(() => {});
+      await rimraf(testInfo.outputDir).catch(() => {});
   }
 
   private async _runModifiersForSuite(suite: Suite, testInfo: TestInfoImpl, scope: 'worker' | 'test', timeSlot: TimeSlot | undefined, extraAnnotations?: Annotation[]) {

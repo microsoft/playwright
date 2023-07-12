@@ -14,30 +14,32 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
-import path from 'path';
-import { rimraf } from '../utilsBundle';
+import fs from "fs";
+import path from "path";
+import { rimraf } from "../utilsBundle";
 
-export const existsAsync = (path: string): Promise<boolean> => new Promise(resolve => fs.stat(path, err => resolve(!err)));
+export const existsAsync = (path: string): Promise<boolean> =>
+  new Promise((resolve) => fs.stat(path, (err) => resolve(!err)));
 
 export async function mkdirIfNeeded(filePath: string) {
   // This will harmlessly throw on windows if the dirname is the root directory.
-  await fs.promises.mkdir(path.dirname(filePath), { recursive: true }).catch(() => {});
+  await fs.promises
+    .mkdir(path.dirname(filePath), { recursive: true })
+    .catch(() => {});
 }
 
-export async function removeFolders(dirs: string[]): Promise<Array<Error|null|undefined>> {
-  return await Promise.all(dirs.map((dir: string) => {
-    return new Promise<Error|null|undefined>(fulfill => {
-      rimraf(dir, { maxBusyTries: 10 }, error => {
-        fulfill(error ?? undefined);
-      });
-    });
-  }));
+export async function removeFolders(
+  dirs: string[]
+): Promise<Array<Error | null | undefined>> {
+  return await Promise.all(
+    dirs.map((dir: string) => {
+      return rimraf(dir, { maxBusyTries: 10 });
+    })
+  );
 }
 
 export function canAccessFile(file: string) {
-  if (!file)
-    return false;
+  if (!file) return false;
 
   try {
     fs.accessSync(file);

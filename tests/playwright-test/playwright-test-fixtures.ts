@@ -19,7 +19,6 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { rimraf, PNG } from 'playwright-core/lib/utilsBundle';
-import { promisify } from 'util';
 import type { CommonFixtures, CommonWorkerFixtures, TestChildProcess } from '../config/commonFixtures';
 import { commonFixtures } from '../config/commonFixtures';
 import type { ServerFixtures, ServerWorkerOptions } from '../config/serverFixtures';
@@ -27,8 +26,6 @@ import { serverFixtures } from '../config/serverFixtures';
 import type { TestInfo } from './stable-test-runner';
 import { expect } from './stable-test-runner';
 import { test as base } from './stable-test-runner';
-
-export const removeFolderAsync = promisify(rimraf);
 
 export type CliRunResult = {
   exitCode: number,
@@ -301,7 +298,7 @@ export const test = base
           const baseDir = await writeFiles(testInfo, files, true);
           return await runPlaywrightTest(childProcess, baseDir, params, { ...env, PWTEST_CACHE_DIR: cacheDir }, options, files, mergeReports, useIntermediateMergeReport);
         });
-        await removeFolderAsync(cacheDir);
+        await rimraf(cacheDir);
       },
 
       runListFiles: async ({ childProcess }, use, testInfo: TestInfo) => {
@@ -310,7 +307,7 @@ export const test = base
           const baseDir = await writeFiles(testInfo, files, true);
           return await runPlaywrightListFiles(childProcess, baseDir, { PWTEST_CACHE_DIR: cacheDir });
         });
-        await removeFolderAsync(cacheDir);
+        await rimraf(cacheDir);
       },
 
       runWatchTest: async ({ childProcess }, use, testInfo: TestInfo) => {
@@ -322,7 +319,7 @@ export const test = base
           return testProcess;
         });
         await testProcess?.kill();
-        await removeFolderAsync(cacheDir);
+        await rimraf(cacheDir);
       },
 
       runTSC: async ({ childProcess }, use, testInfo) => {
