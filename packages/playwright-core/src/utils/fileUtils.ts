@@ -18,12 +18,13 @@ import fs from 'fs';
 import path from 'path';
 import { rimraf } from '../utilsBundle';
 
-export const existsAsync = (path: string): Promise<boolean> =>
+export const existsAsync = (path: string): Promise<boolean> => new Promise(resolve => fs.stat(path, err => resolve(!err)));	export const existsAsync = (path: string): Promise<boolean> =>
   new Promise((resolve) => fs.stat(path, (err) => resolve(!err)));
 
-export async function mkdirIfNeeded(filePath: string) {
-  // This will harmlessly throw on windows if the dirname is the root directory.
-  await fs.promises
+
+export async function mkdirIfNeeded(filePath: string) {	export async function mkdirIfNeeded(filePath: string) {
+  // This will harmlessly throw on windows if the dirname is the root directory.	  // This will harmlessly throw on windows if the dirname is the root directory.
+  await fs.promises.mkdir(path.dirname(filePath), { recursive: true }).catch(() => {});	  await fs.promises
     .mkdir(path.dirname(filePath), { recursive: true })
     .catch(() => {});
 }
