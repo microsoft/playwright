@@ -18,7 +18,8 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import type { TestChildProcess } from '../config/commonFixtures';
-import { cleanEnv, cliEntrypoint, removeFolderAsync, test as base, writeFiles } from './playwright-test-fixtures';
+import { rimraf } from '../../packages/playwright-core/lib/utilsBundle';
+import { cleanEnv, cliEntrypoint, test as base, writeFiles } from './playwright-test-fixtures';
 import type { Files, RunOptions } from './playwright-test-fixtures';
 import type { Browser, Page, TestInfo } from './stable-test-runner';
 import { createGuid } from '../../packages/playwright-core/src/utils/crypto';
@@ -110,7 +111,7 @@ export const test = base
         });
         await browser?.close();
         await testProcess?.kill('SIGINT');
-        await removeFolderAsync(cacheDir);
+        await rimraf(cacheDir);
       },
       createLatch: async ({}, use, testInfo) => {
         await use(() => {
