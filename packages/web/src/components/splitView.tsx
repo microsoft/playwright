@@ -22,6 +22,7 @@ export interface SplitViewProps {
   sidebarHidden?: boolean,
   sidebarIsFirst?: boolean,
   orientation?: 'vertical' | 'horizontal',
+  minSidebarSize?: number,
   children: JSX.Element | JSX.Element[] | string,
 }
 
@@ -32,9 +33,10 @@ export const SplitView: React.FC<SplitViewProps> = ({
   sidebarHidden = false,
   sidebarIsFirst = false,
   orientation = 'vertical',
+  minSidebarSize = kMinSize,
   children
 }) => {
-  const [size, setSize] = React.useState<number>(Math.max(kMinSize, sidebarSize));
+  const [size, setSize] = React.useState<number>(Math.max(minSidebarSize, sidebarSize));
   const [resizing, setResizing] = React.useState<{ offset: number, size: number } | null>(null);
 
   const childrenArray = React.Children.toArray(children);
@@ -70,7 +72,7 @@ export const SplitView: React.FC<SplitViewProps> = ({
 
           const splitView = (event.target as HTMLElement).parentElement!;
           const rect = splitView.getBoundingClientRect();
-          const size = Math.min(Math.max(kMinSize, newSize), (orientation === 'vertical' ? rect.height : rect.width) - kMinSize);
+          const size = Math.min(Math.max(minSidebarSize, newSize), (orientation === 'vertical' ? rect.height : rect.width) - minSidebarSize);
           setSize(size);
         }
       }}
