@@ -698,9 +698,9 @@ class ArtifactsRecorder {
   private async _startTraceChunkOnContextCreation(tracing: Tracing) {
     if (this._captureTrace) {
       const title = [path.relative(this._testInfo.project.testDir, this._testInfo.file) + ':' + this._testInfo.line, ...this._testInfo.titlePath.slice(1)].join(' › ');
-      const ordinalSuffix = this._traceOrdinal ? `-${this._traceOrdinal}` : '';
+      const ordinalSuffix = this._traceOrdinal ? `-context${this._traceOrdinal}` : '';
       ++this._traceOrdinal;
-      const retrySuffix = this._testInfo.retry ? `-${this._testInfo.retry}` : '';
+      const retrySuffix = this._testInfo.retry ? `-retry${this._testInfo.retry}` : '';
       const name = `${this._testInfo.testId}${retrySuffix}${ordinalSuffix}`;
       if (!(tracing as any)[kTracingStarted]) {
         await tracing.start({ ...this._traceOptions, title, name });
