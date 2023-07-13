@@ -97,10 +97,10 @@ jobs:
             ...context.repo,
             issue_number: prNumber,
             body: [
-              `### Test results for "${{ github.event.workflow_run.name }}"`,
+              `### [Test results](${reportUrl}) for "${{ github.event.workflow_run.name }}"`,
               reportMd,
               '---',
-              `Full [html report](${reportUrl}).`
+              `Merge [workflow run](${mergeWorkflowUrl}).`
             ].join('\n'),
           });
           core.info('Posted comment: ' + response.html_url);
@@ -114,11 +114,11 @@ jobs:
             conclusion: 'success',
             details_url: reportUrl,
             output: {
-              title: 'Test results for "${{ github.event.workflow_run.name }}"',
+              title: '[Test results](${reportUrl}) for "${{ github.event.workflow_run.name }}"',
               summary: [
                 reportMd,
                 '---',
-                `Full [html report](${reportUrl}). Merge [workflow run](${mergeWorkflowUrl}).`
+                `Merge [workflow run](${mergeWorkflowUrl}).`
               ].join('\n'),
             }
           });
