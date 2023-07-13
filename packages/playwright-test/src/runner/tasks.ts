@@ -52,7 +52,6 @@ export class TestRun {
   readonly phases: Phase[] = [];
   projects: FullProjectInternal[] = [];
   projectFiles: Map<FullProjectInternal, string[]> = new Map();
-  projectType: Map<FullProjectInternal, 'top-level' | 'dependency'> = new Map();
   projectSuites: Map<FullProjectInternal, Suite[]> = new Map();
 
   constructor(config: FullConfigInternal, reporter: ReporterV2) {

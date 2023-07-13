@@ -97,6 +97,22 @@ export class Suite extends Base implements SuitePrivate {
     return result;
   }
 
+  _hasTests(): boolean {
+    let result = false;
+    const visit = (suite: Suite) => {
+      for (const entry of suite._entries) {
+        if (result)
+          return;
+        if (entry instanceof Suite)
+          visit(entry);
+        else
+          result = true;
+      }
+    };
+    visit(this);
+    return result;
+  }
+
   titlePath(): string[] {
     const titlePath = this.parent ? this.parent.titlePath() : [];
     // Ignore anonymous describe blocks.
@@ -172,6 +188,7 @@ export class Suite extends Base implements SuitePrivate {
       modifiers: this._modifiers.slice(),
       parallelMode: this._parallelMode,
       hooks: this._hooks.map(h => ({ type: h.type, location: h.location })),
+      fileId: this._fileId,
     };
   }
 
@@ -186,6 +203,7 @@ export class Suite extends Base implements SuitePrivate {
     suite._modifiers = data.modifiers;
     suite._parallelMode = data.parallelMode;
     suite._hooks = data.hooks.map((h: any) => ({ type: h.type, location: h.location, fn: () => { } }));
+    suite._fileId = data.fileId;
     return suite;
   }
 
@@ -256,23 +274,33 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   _serialize(): any {
     return {
       kind: 'test',
+      id: this.id,
       title: this.title,
+      retries: this.retries,
+      timeout: this.timeout,
+      expectedStatus: this.expectedStatus,
       location: this.location,
       only: this._only,
       requireFile: this._requireFile,
       poolDigest: this._poolDigest,
-      expectedStatus: this.expectedStatus,
+      workerHash: this._workerHash,
       staticAnnotations: this._staticAnnotations.slice(),
+      projectId: this._projectId,
     };
   }
 
   static _parse(data: any): TestCase {
     const test = new TestCase(data.title, () => {}, rootTestType, data.location);
+    test.id = data.id;
+    test.retries = data.retries;
+    test.timeout = data.timeout;
+    test.expectedStatus = data.expectedStatus;
     test._only = data.only;
     test._requireFile = data.requireFile;
     test._poolDigest = data.poolDigest;
-    test.expectedStatus = data.expectedStatus;
+    test._workerHash = data.workerHash;
     test._staticAnnotations = data.staticAnnotations;
+    test._projectId = data.projectId;
     return test;
   }
 

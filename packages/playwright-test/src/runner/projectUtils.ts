@@ -61,7 +61,7 @@ export function buildTeardownToSetupsMap(projects: FullProjectInternal[]): Map<F
   return result;
 }
 
-export function buildProjectsClosure(projects: FullProjectInternal[]): Map<FullProjectInternal, 'top-level' | 'dependency'> {
+export function buildProjectsClosure(projects: FullProjectInternal[], hasTests?: (project: FullProjectInternal) => boolean): Map<FullProjectInternal, 'top-level' | 'dependency'> {
   const result = new Map<FullProjectInternal, 'top-level' | 'dependency'>();
   const visit = (depth: number, project: FullProjectInternal) => {
     if (depth > 100) {
@@ -69,13 +69,19 @@ export function buildProjectsClosure(projects: FullProjectInternal[]): Map<FullP
       error.stack = '';
       throw error;
     }
-    result.set(project, depth ? 'dependency' : 'top-level');
-    project.deps.map(visit.bind(undefined, depth + 1));
+
+    const projectHasTests = hasTests ? hasTests(project) : true;
+    if (!projectHasTests && depth === 0)
+      return;
+
+    if (result.get(project) !== 'dependency')
+      result.set(project, depth ? 'dependency' : 'top-level');
+
+    for (const dep of project.deps)
+      visit(depth + 1, dep);
     if (project.teardown)
       visit(depth + 1, project.teardown);
   };
-  for (const p of projects)
-    result.set(p, 'top-level');
   for (const p of projects)
     visit(0, p);
   return result;

@@ -584,3 +584,62 @@ test('should only apply --repeat-each to top-level', async ({ runInlineTest }) =
   expect(result.passed).toBe(5);
   expect(result.outputLines).toEqual(['A', 'B', 'B', 'C', 'C']);
 });
+
+test('should run teardown when all projects are top-level at run point', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          { name: 'setup', teardown: 'teardown' },
+          { name: 'teardown' },
+          { name: 'project', dependencies: ['setup'] },
+        ],
+      };`,
+    'test.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test', async ({}, testInfo) => {
+        console.log('\\n%%' + testInfo.project.name);
+      });
+    `,
+  }, { workers: 1 }, undefined, { additionalArgs: ['test.spec.ts'] });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(3);
+  expect(result.outputLines).toEqual(['setup', 'project', 'teardown']);
+});
+
+test('should not run deps for projects filtered with grep', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          { name: 'setupA', teardown: 'teardownA', testMatch: '**/hook.spec.ts' },
+          { name: 'teardownA', testMatch: '**/hook.spec.ts' },
+          { name: 'projectA', dependencies: ['setupA'], testMatch: '**/a.spec.ts' },
+          { name: 'setupB', teardown: 'teardownB', testMatch: '**/hook.spec.ts' },
+          { name: 'teardownB', testMatch: '**/hook.spec.ts' },
+          { name: 'projectB', dependencies: ['setupB'], testMatch: '**/b.spec.ts' },
+        ],
+      };`,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test', async ({}, testInfo) => {
+        console.log('\\n%%' + testInfo.project.name);
+      });
+    `,
+    'hook.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test', async ({}, testInfo) => {
+        console.log('\\n%%' + testInfo.project.name);
+      });
+    `,
+    'b.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test', async ({}, testInfo) => {
+        console.log('\\n%%' + testInfo.project.name);
+      });
+    `,
+  }, { workers: 1 }, undefined, { additionalArgs: ['--grep=b.spec.ts'] });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(3);
+  expect(result.outputLines).toEqual(['setupB', 'projectB', 'teardownB']);
+});

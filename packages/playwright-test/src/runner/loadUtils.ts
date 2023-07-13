@@ -26,7 +26,7 @@ import type { Matcher, TestFileFilter } from '../util';
 import { buildProjectsClosure, collectFilesForProject, filterProjects } from './projectUtils';
 import type { TestRun } from './tasks';
 import { requireOrImport } from '../transform/transform';
-import { buildFileSuiteForProject, filterByFocusedLine, filterByTestIds, filterOnly, filterTestsRemoveEmptySuites } from '../common/suiteUtils';
+import { applyRepeatEachIndex, bindFileSuiteToProject, filterByFocusedLine, filterByTestIds, filterOnly, filterTestsRemoveEmptySuites } from '../common/suiteUtils';
 import { createTestGroups, filterForShard, type TestGroup } from './testGroups';
 import { dependenciesForTestFile } from '../transform/compilationCache';
 import { sourceMapSupport } from '../utilsBundle';
@@ -73,15 +73,8 @@ export async function collectProjectsAndTestFiles(testRun: TestRun, additionalFi
     }
   }
 
-  // Apply overrides that are only applicable to top-level projects.
-  for (const [project, type] of projectClosure) {
-    if (type === 'top-level')
-      project.project.repeatEach = project.fullConfig.configCLIOverrides.repeatEach ?? project.project.repeatEach;
-  }
-
   testRun.projects = [...filesToRunByProject.keys()];
   testRun.projectFiles = filesToRunByProject;
-  testRun.projectType = projectClosure;
   testRun.projectSuites = new Map();
 }
 
@@ -129,8 +122,10 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
   const config = testRun.config;
   // Create root suite, where each child will be a project suite with cloned file suites inside it.
   const rootSuite = new Suite('', 'root');
+  const projectSuites = new Map<FullProjectInternal, Suite>();
+  const filteredProjectSuites = new Map<FullProjectInternal, Suite>();
 
-  // First add top-level projects, so that we can filterOnly and shard just top-level.
+  // Filter all the projects using grep, testId, file names.
   {
     // Interpret cli parameters.
     const cliFileFilters = createFileFiltersFromArguments(config.cliArgs);
@@ -138,10 +133,21 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
     const grepInvertMatcher = config.cliGrepInvert ? createTitleMatcher(forceRegExp(config.cliGrepInvert)) : () => false;
     const cliTitleMatcher = (title: string) => !grepInvertMatcher(title) && grepMatcher(title);
 
-    // Clone file suites for top-level projects.
+    // Filter file suites for all projects.
     for (const [project, fileSuites] of testRun.projectSuites) {
-      if (testRun.projectType.get(project) === 'top-level')
-        rootSuite._addSuite(await createProjectSuite(fileSuites, project, { cliFileFilters, cliTitleMatcher, testIdMatcher: config.testIdMatcher }));
+      const projectSuite = createProjectSuite(project, fileSuites);
+      projectSuites.set(project, projectSuite);
+      const filteredProjectSuite = filterProjectSuite(projectSuite, { cliFileFilters, cliTitleMatcher, testIdMatcher: config.testIdMatcher });
+      filteredProjectSuites.set(project, filteredProjectSuite);
+    }
+  }
+
+  // Add post-filtered top-level projects to the root suite for sharding and 'only' processing.
+  const projectClosure = buildProjectsClosure([...filteredProjectSuites.keys()], project => filteredProjectSuites.get(project)!._hasTests());
+  for (const [project, type] of projectClosure) {
+    if (type === 'top-level') {
+      project.project.repeatEach = project.fullConfig.configCLIOverrides.repeatEach ?? project.project.repeatEach;
+      rootSuite._addSuite(buildProjectSuite(project, filteredProjectSuites.get(project)!));
     }
   }
 
@@ -177,36 +183,26 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
     filterTestsRemoveEmptySuites(rootSuite, test => testsInThisShard.has(test));
   }
 
-  // Now prepend dependency projects.
+  // Now prepend dependency projects without filtration.
   {
-    // Filtering only and sharding might have reduced the number of top-level projects.
+    // Filtering 'only' and sharding might have reduced the number of top-level projects.
     // Build the project closure to only include dependencies that are still needed.
     const projectClosure = new Map(buildProjectsClosure(rootSuite.suites.map(suite => suite._fullProject!)));
 
     // Clone file suites for dependency projects.
-    for (const [project, fileSuites] of testRun.projectSuites) {
-      if (testRun.projectType.get(project) === 'dependency' && projectClosure.has(project))
-        rootSuite._prependSuite(await createProjectSuite(fileSuites, project, { cliFileFilters: [], cliTitleMatcher: undefined }));
+    for (const project of projectClosure.keys()) {
+      if (projectClosure.get(project) === 'dependency')
+        rootSuite._prependSuite(buildProjectSuite(project, projectSuites.get(project)!));
     }
   }
 
   return rootSuite;
 }
 
-async function createProjectSuite(fileSuites: Suite[], project: FullProjectInternal, options: { cliFileFilters: TestFileFilter[], cliTitleMatcher?: Matcher, testIdMatcher?: Matcher }): Promise<Suite> {
+function createProjectSuite(project: FullProjectInternal, fileSuites: Suite[]): Suite {
   const projectSuite = new Suite(project.project.name, 'project');
-  projectSuite._fullProject = project;
-  if (project.fullyParallel)
-    projectSuite._parallelMode = 'parallel';
-  for (const fileSuite of fileSuites) {
-    for (let repeatEachIndex = 0; repeatEachIndex < project.project.repeatEach; repeatEachIndex++) {
-      const builtSuite = buildFileSuiteForProject(project, fileSuite, repeatEachIndex);
-      projectSuite._addSuite(builtSuite);
-    }
-  }
-
-  filterByFocusedLine(projectSuite, options.cliFileFilters);
-  filterByTestIds(projectSuite, options.testIdMatcher);
+  for (const fileSuite of fileSuites)
+    projectSuite._addSuite(bindFileSuiteToProject(project, fileSuite));
 
   const grepMatcher = createTitleMatcher(project.project.grep);
   const grepInvertMatcher = project.project.grepInvert ? createTitleMatcher(project.project.grepInvert) : null;
@@ -215,11 +211,47 @@ async function createProjectSuite(fileSuites: Suite[], project: FullProjectInter
     const grepTitle = test.titlePath().join(' ');
     if (grepInvertMatcher?.(grepTitle))
       return false;
-    return grepMatcher(grepTitle) && (!options.cliTitleMatcher || options.cliTitleMatcher(grepTitle));
+    return grepMatcher(grepTitle);
   };
 
   filterTestsRemoveEmptySuites(projectSuite, titleMatcher);
   return projectSuite;
+}
+
+function filterProjectSuite(projectSuite: Suite, options: { cliFileFilters: TestFileFilter[], cliTitleMatcher?: Matcher, testIdMatcher?: Matcher }): Suite {
+  // Fast path.
+  if (!options.cliFileFilters.length && !options.cliTitleMatcher && !options.testIdMatcher)
+    return projectSuite;
+
+  const result = projectSuite._deepClone();
+  if (options.cliFileFilters.length)
+    filterByFocusedLine(result, options.cliFileFilters);
+  if (options.testIdMatcher)
+    filterByTestIds(result, options.testIdMatcher);
+  const titleMatcher = (test: TestCase) => {
+    return !options.cliTitleMatcher || options.cliTitleMatcher(test.titlePath().join(' '));
+  };
+  filterTestsRemoveEmptySuites(result, titleMatcher);
+  return result;
+}
+
+function buildProjectSuite(project: FullProjectInternal, projectSuite: Suite): Suite {
+  const result = new Suite(project.project.name, 'project');
+  result._fullProject = project;
+  if (project.fullyParallel)
+    result._parallelMode = 'parallel';
+
+  for (const fileSuite of projectSuite.suites) {
+    // Fast path for the repeatEach = 0.
+    result._addSuite(fileSuite);
+
+    for (let repeatEachIndex = 1; repeatEachIndex < project.project.repeatEach; repeatEachIndex++) {
+      const clone = fileSuite._deepClone();
+      applyRepeatEachIndex(project, clone, repeatEachIndex);
+      result._addSuite(clone);
+    }
+  }
+  return result;
 }
 
 function createForbidOnlyErrors(onlyTestsAndSuites: (TestCase | Suite)[], forbidOnlyCLIFlag: boolean | undefined, configFilePath: string | undefined): TestError[] {

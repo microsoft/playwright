@@ -28,7 +28,7 @@ import { TestInfoImpl } from './testInfo';
 import { TimeoutManager, type TimeSlot } from './timeoutManager';
 import { ProcessRunner } from '../common/process';
 import { loadTestFile } from '../common/testLoader';
-import { buildFileSuiteForProject, filterTestsRemoveEmptySuites } from '../common/suiteUtils';
+import { applyRepeatEachIndex, bindFileSuiteToProject, filterTestsRemoveEmptySuites } from '../common/suiteUtils';
 import { PoolBuilder } from '../common/poolBuilder';
 import type { TestInfoError } from '../../types/test';
 
@@ -202,7 +202,9 @@ export class WorkerMain extends ProcessRunner {
     try {
       await this._loadIfNeeded();
       const fileSuite = await loadTestFile(runPayload.file, this._config.config.rootDir);
-      const suite = buildFileSuiteForProject(this._project, fileSuite, this._params.repeatEachIndex);
+      const suite = bindFileSuiteToProject(this._project, fileSuite);
+      if (this._params.repeatEachIndex)
+        applyRepeatEachIndex(this._project, suite, this._params.repeatEachIndex);
       const hasEntries = filterTestsRemoveEmptySuites(suite, test => entries.has(test.id));
       if (hasEntries) {
         this._poolBuilder.buildPools(suite);

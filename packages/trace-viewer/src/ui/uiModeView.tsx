@@ -883,12 +883,13 @@ function createTree(rootSuite: Suite | undefined, loadErrors: TestError[], proje
       const fileItem = getFileItem(rootItem, fileSuite.location!.file.split(pathSeparator), true, fileMap);
       visitSuite(projectSuite.title, fileSuite, fileItem);
     }
-    for (const loadError of loadErrors) {
-      if (!loadError.location)
-        continue;
-      const fileItem = getFileItem(rootItem, loadError.location.file.split(pathSeparator), true, fileMap);
-      fileItem.hasLoadErrors = true;
-    }
+  }
+
+  for (const loadError of loadErrors) {
+    if (!loadError.location)
+      continue;
+    const fileItem = getFileItem(rootItem, loadError.location.file.split(pathSeparator), true, fileMap);
+    fileItem.hasLoadErrors = true;
   }
   return rootItem;
 }
