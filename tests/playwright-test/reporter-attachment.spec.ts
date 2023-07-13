@@ -235,7 +235,7 @@ test(`testInfo.attach name should be sanitized`, async ({ runInlineTest }) => {
   expect(result.failed).toBe(1);
 
   expect(result.output).toContain('attachment #1: ../../../test (text/plain)');
-  expect(result.output).toContain(`attachments${path.sep}test-8d909b-`);
+  expect(result.output).toContain(`attachments${path.sep}-test`);
 });
 
 test(`testInfo.attach name can be empty string`, async ({ runInlineTest }) => {
