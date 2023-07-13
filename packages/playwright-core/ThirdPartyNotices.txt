@@ -43,7 +43,7 @@ This project incorporates components from the projects listed below. The origina
 -	proxy-from-env@1.1.0 (https://github.com/Rob--W/proxy-from-env)
 -	pump@3.0.0 (https://github.com/mafintosh/pump)
 -	retry@0.12.0 (https://github.com/tim-kos/node-retry)
--	rimraf@3.0.2 (https://github.com/isaacs/rimraf)
+-	rimraf@4.4.1 (https://github.com/isaacs/rimraf)
 -	signal-exit@3.0.7 (https://github.com/tapjs/signal-exit)
 -	smart-buffer@4.2.0 (https://github.com/JoshGlazebrook/smart-buffer)
 -	socks-proxy-agent@6.1.1 (https://github.com/TooTallNate/node-socks-proxy-agent)
@@ -1302,11 +1302,11 @@ Felix Geisendörfer (felix@debuggable.com)
 =========================================
 END OF retry@0.12.0 AND INFORMATION
 
-%% rimraf@3.0.2 NOTICES AND INFORMATION BEGIN HERE
+%% rimraf@4.4.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 The ISC License
 
-Copyright (c) Isaac Z. Schlueter and Contributors
+Copyright (c) 2011-2023 Isaac Z. Schlueter and Contributors
 
 Permission to use, copy, modify, and/or distribute this software for any
 purpose with or without fee is hereby granted, provided that the above
@@ -1320,7 +1320,7 @@ WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
 IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 =========================================
-END OF rimraf@3.0.2 AND INFORMATION
+END OF rimraf@4.4.1 AND INFORMATION
 
 %% signal-exit@3.0.7 NOTICES AND INFORMATION BEGIN HERE
 =========================================
