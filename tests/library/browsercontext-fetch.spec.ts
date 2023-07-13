@@ -218,7 +218,7 @@ it('should add cookies from Set-Cookie header', async ({ context, page, server }
   expect((await page.evaluate(() => document.cookie)).split(';').map(s => s.trim()).sort()).toEqual(['foo=bar', 'session=value']);
 });
 
-it('should preserve cookie order from Set-Cookie header', async ({ context, page, server, browserName, isLinux }) => {
+it('should preserve cookie order from Set-Cookie header', async ({ context, page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/23390' });
   server.setRoute('/setcookie.html', (req, res) => {
     res.setHeader('Set-Cookie', ['cookie.0=foo', 'cookie.1=bar']);
