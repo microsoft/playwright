@@ -131,7 +131,6 @@ By default browsers launched with Playwright run headless, meaning no browser UI
 - MacOS 12 Monterey or MacOS 13 Ventura.
 - Debian 11, Debian 12, Ubuntu 20.04 or Ubuntu 22.04.
 
-
 ## What's next
 
 - [Write tests using web first assertions, page fixtures and locators](./writing-tests.md)
