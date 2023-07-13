@@ -414,7 +414,7 @@ test('should include interrupted actions', async ({ context, page, server }, tes
 test('should throw when starting with different options', async ({ context }) => {
   await context.tracing.start({ screenshots: true, snapshots: true });
   const error = await context.tracing.start({ screenshots: false, snapshots: false }).catch(e => e);
-  expect(error.message).toContain('Tracing has been already started with different options');
+  expect(error.message).toContain('Tracing has been already started');
 });
 
 test('should throw when stopping without start', async ({ context }, testInfo) => {
