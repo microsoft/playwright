@@ -966,3 +966,20 @@ for (const method of ['fulfill', 'continue', 'fallback', 'abort'] as const) {
     expect(e.message).toContain('Route is already handled!');
   });
 }
+
+it('should intercept when postData is more than 1MB', async ({ page, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22753' });
+  await page.goto(server.EMPTY_PAGE);
+  let interceptionCallback;
+  const interceptionPromise = new Promise(x => interceptionCallback = x);
+  const POST_BODY = '0'.repeat(2 * 1024 * 1024); // 2MB
+  await page.route('**/404.html', async route => {
+    await route.abort();
+    interceptionCallback(route.request().postData());
+  });
+  await page.evaluate(POST_BODY => fetch('/404.html', {
+    method: 'POST',
+    body: POST_BODY,
+  }).catch(e => {}), POST_BODY);
+  expect(await interceptionPromise).toBe(POST_BODY);
+});
