@@ -23,7 +23,7 @@ import { ConfigLoader } from '../common/configLoader';
 import type { Suite, TestCase } from '../common/test';
 import type { Annotation, FullConfigInternal, FullProjectInternal } from '../common/config';
 import { FixtureRunner } from './fixtureRunner';
-import { ManualPromise, captureLibraryStackTrace } from 'playwright-core/lib/utils';
+import { ManualPromise, captureLibraryStackTrace, gracefullyCloseAll } from 'playwright-core/lib/utils';
 import { TestInfoImpl } from './testInfo';
 import { TimeoutManager, type TimeSlot } from './timeoutManager';
 import { ProcessRunner } from '../common/process';
@@ -109,6 +109,9 @@ export class WorkerMain extends ProcessRunner {
       // We have to load the project to get the right deadline below.
       await this._loadIfNeeded();
       await this._teardownScopes();
+      // Close any other browsers launched in this process. This includes anything launched
+      // manually in the test/hooks and internal browsers like Playwright Inspector.
+      await gracefullyCloseAll();
     } catch (e) {
       this._fatalErrors.push(serializeError(e));
     }

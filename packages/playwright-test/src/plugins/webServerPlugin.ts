@@ -99,7 +99,9 @@ export class WebServerPlugin implements TestRunnerPlugin {
       cwd: this._options.cwd,
       stdio: 'stdin',
       shell: true,
-      attemptToGracefullyClose: async () => {},
+      // Reject to indicate that we cannot close the web server gracefully
+      // and should fallback to non-graceful shutdown.
+      attemptToGracefullyClose: () => Promise.reject(),
       log: () => {},
       onExit: code => processExitedReject(new Error(code ? `Process from config.webServer was not able to start. Exit code: ${code}` : 'Process from config.webServer exited early.')),
       tempDirectories: [],

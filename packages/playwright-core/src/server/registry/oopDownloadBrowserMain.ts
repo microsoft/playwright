@@ -166,5 +166,6 @@ async function main() {
 main().catch(error => {
   // eslint-disable-next-line no-console
   console.error(error);
+  // eslint-disable-next-line no-restricted-properties
   process.exit(1);
 });

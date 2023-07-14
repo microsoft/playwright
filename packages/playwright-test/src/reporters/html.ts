@@ -20,7 +20,7 @@ import path from 'path';
 import type { TransformCallback } from 'stream';
 import { Transform } from 'stream';
 import type { FullConfig, Suite } from '../../types/testReporter';
-import { HttpServer, assert, calculateSha1, copyFileAndMakeWritable, removeFolders } from 'playwright-core/lib/utils';
+import { HttpServer, assert, calculateSha1, copyFileAndMakeWritable, gracefullyProcessExitDoNotHang, removeFolders } from 'playwright-core/lib/utils';
 import type { JsonAttachment, JsonReport, JsonSuite, JsonTestCase, JsonTestResult, JsonTestStep } from './raw';
 import RawReporter from './raw';
 import { stripAnsiEscapes } from './base';
@@ -161,7 +161,7 @@ export async function showHTMLReport(reportFolder: string | undefined, host: str
     assert(fs.statSync(folder).isDirectory());
   } catch (e) {
     console.log(colors.red(`No report found at "${folder}"`));
-    process.exit(1);
+    gracefullyProcessExitDoNotHang(1);
     return;
   }
   const server = startHtmlReportServer(folder);
