@@ -39,7 +39,15 @@ jobs:
           node-version: 18
       - name: Install dependencies
         run: npm ci
+      - name: Cache Playwright Browsers
+        id: cache-browsers
+        uses: actions/cache@v3
+        with:
+          path: /home/runner/.cache/ms-playwright
+          key: playwright-${{ hashFiles('package-lock.json') }}
+          restore-keys: playwright
       - name: Install Playwright Browsers
+        if: steps.cache-browsers.outputs.cache-hit != 'true'
         run: npx playwright install --with-deps
       - name: Run Playwright tests
         run: npx playwright test
