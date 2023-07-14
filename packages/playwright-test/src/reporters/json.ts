@@ -208,7 +208,7 @@ class JSONReporter extends EmptyReporter {
   }
 
   private _serializeError(error: TestError): JSONReportError {
-    return formatError(this.config, error, true);
+    return formatError(error, true);
   }
 
   private _serializeTestStep(step: TestStep): JSONReportTestStep {

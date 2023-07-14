@@ -275,7 +275,7 @@ export function formatFailure(config: FullConfig, test: TestCase, options: {inde
   lines.push(colors.red(header));
   for (const result of test.results) {
     const resultLines: string[] = [];
-    const errors = formatResultFailure(config, test, result, '    ', colors.enabled);
+    const errors = formatResultFailure(test, result, '    ', colors.enabled);
     if (!errors.length)
       continue;
     const retryLines = [];
@@ -342,7 +342,7 @@ export function formatFailure(config: FullConfig, test: TestCase, options: {inde
   };
 }
 
-export function formatResultFailure(config: FullConfig, test: TestCase, result: TestResult, initialIndent: string, highlightCode: boolean): ErrorDetails[] {
+export function formatResultFailure(test: TestCase, result: TestResult, initialIndent: string, highlightCode: boolean): ErrorDetails[] {
   const errorDetails: ErrorDetails[] = [];
 
   if (result.status === 'passed' && test.expectedStatus === 'failed') {
@@ -357,7 +357,7 @@ export function formatResultFailure(config: FullConfig, test: TestCase, result: 
   }
 
   for (const error of result.errors) {
-    const formattedError = formatError(config, error, highlightCode);
+    const formattedError = formatError(error, highlightCode);
     errorDetails.push({
       message: indent(formattedError.message, initialIndent),
       location: formattedError.location,
@@ -418,7 +418,7 @@ function formatTestHeader(config: FullConfig, test: TestCase, options: { indent?
   return separator(fullHeader);
 }
 
-export function formatError(config: FullConfig, error: TestError, highlightCode: boolean): ErrorDetails {
+export function formatError(error: TestError, highlightCode: boolean): ErrorDetails {
   const message = error.message || error.value || '';
   const stack = error.stack;
   if (!stack && !error.location)

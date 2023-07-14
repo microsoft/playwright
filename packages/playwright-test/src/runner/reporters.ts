@@ -102,6 +102,6 @@ class ListModeReporter extends EmptyReporter {
 
   override onError(error: TestError) {
     // eslint-disable-next-line no-console
-    console.error('\n' + formatError(this.config, error, false).message);
+    console.error('\n' + formatError(error, false).message);
   }
 }

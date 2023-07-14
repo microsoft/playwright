@@ -246,7 +246,7 @@ class RawReporter {
       startTime: result.startTime.toISOString(),
       duration: result.duration,
       status: result.status,
-      errors: formatResultFailure(this.config, test, result, '', true).map(error => error.message),
+      errors: formatResultFailure(test, result, '', true).map(error => error.message),
       attachments: this.generateAttachments(result.attachments, result),
       steps: dedupeSteps(result.steps.map(step => this._serializeStep(test, step)))
     };

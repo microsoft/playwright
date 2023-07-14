@@ -106,7 +106,7 @@ class LineReporter extends BaseReporter {
   override onError(error: TestError): void {
     super.onError(error);
 
-    const message = formatError(this.config, error, colors.enabled).message + '\n\n';
+    const message = formatError(error, colors.enabled).message + '\n\n';
     if (!process.env.PW_TEST_DEBUG_REPORTERS)
       process.stdout.write(`\u001B[1A\u001B[2K`);
     process.stdout.write(message);

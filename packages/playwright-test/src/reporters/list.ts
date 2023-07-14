@@ -243,7 +243,7 @@ class ListReporter extends BaseReporter {
   override onError(error: TestError): void {
     super.onError(error);
     this._maybeWriteNewLine();
-    const message = formatError(this.config, error, colors.enabled).message + '\n';
+    const message = formatError(error, colors.enabled).message + '\n';
     this._updateLineCountAndNewLineFlagForOutput(message);
     process.stdout.write(message);
   }

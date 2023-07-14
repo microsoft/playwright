@@ -66,7 +66,7 @@ class DotReporter extends BaseReporter {
 
   override onError(error: TestError): void {
     super.onError(error);
-    console.log('\n' + formatError(this.config, error, colors.enabled).message);
+    console.log('\n' + formatError(error, colors.enabled).message);
     this._counter = 0;
   }
 
