@@ -49,18 +49,6 @@ export function filterProjects(projects: FullProjectInternal[], projectNames?: s
   return result;
 }
 
-export function buildTeardownToSetupsMap(projects: FullProjectInternal[]): Map<FullProjectInternal, FullProjectInternal[]> {
-  const result = new Map<FullProjectInternal, FullProjectInternal[]>();
-  for (const project of projects) {
-    if (project.teardown) {
-      const setups = result.get(project.teardown) || [];
-      setups.push(project);
-      result.set(project.teardown, setups);
-    }
-  }
-  return result;
-}
-
 export function buildProjectsClosure(projects: FullProjectInternal[], hasTests?: (project: FullProjectInternal) => boolean): Map<FullProjectInternal, 'top-level' | 'dependency'> {
   const result = new Map<FullProjectInternal, 'top-level' | 'dependency'>();
   const visit = (depth: number, project: FullProjectInternal) => {
@@ -84,30 +72,6 @@ export function buildProjectsClosure(projects: FullProjectInternal[], hasTests?:
   };
   for (const p of projects)
     visit(0, p);
-  return result;
-}
-
-export function buildDependentProjects(forProjects: FullProjectInternal[], projects: FullProjectInternal[]): Set<FullProjectInternal> {
-  const reverseDeps = new Map<FullProjectInternal, FullProjectInternal[]>(projects.map(p => ([p, []])));
-  for (const project of projects) {
-    for (const dep of project.deps)
-      reverseDeps.get(dep)!.push(project);
-  }
-  const result = new Set<FullProjectInternal>();
-  const visit = (depth: number, project: FullProjectInternal) => {
-    if (depth > 100) {
-      const error = new Error('Circular dependency detected between projects.');
-      error.stack = '';
-      throw error;
-    }
-    result.add(project);
-    for (const reverseDep of reverseDeps.get(project)!)
-      visit(depth + 1, reverseDep);
-    if (project.teardown)
-      visit(depth + 1, project.teardown);
-  };
-  for (const forProject of forProjects)
-    visit(0, forProject);
   return result;
 }
 

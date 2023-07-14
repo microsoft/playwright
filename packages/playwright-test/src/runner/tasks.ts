@@ -28,7 +28,6 @@ import type { FullConfigInternal, FullProjectInternal } from '../common/config';
 import { collectProjectsAndTestFiles, createRootSuite, loadFileSuites, loadGlobalHook } from './loadUtils';
 import type { Matcher } from '../util';
 import type { Suite } from '../common/test';
-import { buildDependentProjects, buildTeardownToSetupsMap } from './projectUtils';
 import { monotonicTime } from 'playwright-core/lib/utils';
 
 const removeFolderAsync = promisify(rimraf);
@@ -189,10 +188,11 @@ function createPhasesTask(): Task<TestRun> {
     const processed = new Set<FullProjectInternal>();
     const projectToSuite = new Map(testRun.rootSuite!.suites.map(suite => [suite._fullProject!, suite]));
     const allProjects = [...projectToSuite.keys()];
-    const teardownToSetups = buildTeardownToSetupsMap(allProjects);
     const teardownToSetupsDependents = new Map<FullProjectInternal, FullProjectInternal[]>();
-    for (const [teardown, setups] of teardownToSetups) {
-      const closure = buildDependentProjects(setups, allProjects);
+    for (const teardown of allProjects) {
+      if (!teardown.setups.length)
+        continue;
+      const closure = new Set(teardown.setups.map(s => s.dependentsClosure).flat());
       closure.delete(teardown);
       teardownToSetupsDependents.set(teardown, [...closure]);
     }
@@ -245,7 +245,6 @@ function createRunTestsTask(): Task<TestRun> {
     const { phases } = testRun;
     const successfulProjects = new Set<FullProjectInternal>();
     const extraEnvByProjectId: EnvByProjectId = new Map();
-    const teardownToSetups = buildTeardownToSetupsMap(phases.map(phase => phase.projects.map(p => p.project)).flat());
 
     for (const { dispatcher, projects } of phases) {
       // Each phase contains dispatcher and a set of test groups.
@@ -253,11 +252,11 @@ function createRunTestsTask(): Task<TestRun> {
       // that depend on the projects that failed previously.
       const phaseTestGroups: TestGroup[] = [];
       for (const { project, testGroups } of projects) {
-        // Inherit extra enviroment variables from dependencies.
+        // Inherit extra environment variables from dependencies.
         let extraEnv: Record<string, string | undefined> = {};
         for (const dep of project.deps)
           extraEnv = { ...extraEnv, ...extraEnvByProjectId.get(dep.id) };
-        for (const setup of teardownToSetups.get(project) || [])
+        for (const setup of project.setups || [])
           extraEnv = { ...extraEnv, ...extraEnvByProjectId.get(setup.id) };
         extraEnvByProjectId.set(project.id, extraEnv);
 

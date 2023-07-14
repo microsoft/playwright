@@ -159,6 +159,8 @@ export class FullProjectInternal {
   id = '';
   deps: FullProjectInternal[] = [];
   teardown: FullProjectInternal | undefined;
+  setups: FullProjectInternal[] = [];
+  dependentsClosure: FullProjectInternal[] = [];
 
   static from(config: FullProject): FullProjectInternal {
     return (config as any)[projectInternalSymbol];
@@ -220,6 +222,7 @@ function resolveReporters(reporters: Config['reporter'], rootDir: string): Repor
 
 function resolveProjectDependencies(projects: FullProjectInternal[]) {
   const teardownSet = new Set<FullProjectInternal>();
+  const reverseDeps = new Map<FullProjectInternal, FullProjectInternal[]>(projects.map(p => ([p, []])));
   for (const project of projects) {
     for (const dependencyName of project.project.dependencies) {
       const dependencies = projects.filter(p => p.project.name === dependencyName);
@@ -228,6 +231,8 @@ function resolveProjectDependencies(projects: FullProjectInternal[]) {
       if (dependencies.length > 1)
         throw new Error(`Project dependencies should have unique names, reading ${dependencyName}`);
       project.deps.push(...dependencies);
+      for (const dep of dependencies)
+        reverseDeps.get(dep)!.push(project);
     }
     if (project.project.teardown) {
       const teardowns = projects.filter(p => p.project.name === project.project.teardown);
@@ -238,6 +243,7 @@ function resolveProjectDependencies(projects: FullProjectInternal[]) {
       const teardown = teardowns[0];
       project.teardown = teardown;
       teardownSet.add(teardown);
+      project.teardown?.setups.push(project);
     }
   }
   for (const teardown of teardownSet) {
@@ -249,6 +255,24 @@ function resolveProjectDependencies(projects: FullProjectInternal[]) {
       if (teardownSet.has(dep))
         throw new Error(`Project ${project.project.name} must not depend on a teardown project ${dep.project.name}`);
     }
+  }
+
+  const reverseDepsClosure = (depth: number, project: FullProjectInternal, result: Set<FullProjectInternal>) => {
+    if (depth > 100) {
+      const error = new Error('Circular dependency detected between projects.');
+      error.stack = '';
+      throw error;
+    }
+    result.add(project);
+    for (const rd of reverseDeps.get(project)!)
+      reverseDepsClosure(depth + 1, rd, result);
+    if (project.teardown)
+      reverseDepsClosure(depth + 1, project.teardown, result);
+  };
+  for (const project of projects) {
+    const set = new Set<FullProjectInternal>();
+    reverseDepsClosure(0, project, set);
+    project.dependentsClosure = [...set];
   }
 }
 
