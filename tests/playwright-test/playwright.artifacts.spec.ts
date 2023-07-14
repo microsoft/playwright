@@ -54,7 +54,7 @@ const testFiles = {
         await page.click('text=Click me');
       });
 
-      test('shared failing', async ({ }) => {
+      test('shared  failing', async ({ }) => {
         await page.click('text=And me');
         expect(1).toBe(2);
       });
