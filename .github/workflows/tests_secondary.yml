@@ -208,25 +208,12 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - name: Upload blob report to Azure
-      if: always() && github.event_name == 'push'
-      run: az storage blob upload-batch -s test-results/blob-report -d '$web/run-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.sha }}' --connection-string "${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}"
-    - name: Upload blob report to GitHub
-      uses: actions/upload-artifact@v3
-      if: always() && github.event_name == 'pull_request'
+    - name: Upload blob report
+      if: always()
+      uses: ./.github/actions/upload-blob-report
       with:
-        name: blob-report-${{ github.run_attempt }}
-        path: test-results/blob-report
-        retention-days: 30
-    - name: Write the pull request number in an file
-      if: always() && github.event_name == 'pull_request'
-      run: echo '${{ github.event.number }}' > pull_request_number.txt;
-    - name: Upload artifact with pull request number
-      uses: actions/upload-artifact@v3
-      if: always() && github.event_name == 'pull_request'
-      with:
-        name: pull-request
-        path: pull_request_number.txt
+        report_dir: test-results/blob-report
+        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   chrome_stable_linux:
     name: "Chrome Stable (Linux)"
@@ -686,3 +673,17 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
+
+  write-pull-request-number:
+    name: Write PR number
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+    - name: Write triggering pull request number in a file
+      shell: bash
+      run: echo '${{ github.event.number }}' > pull_request_number.txt;
+    - name: Upload artifact with the pull request number
+      uses: actions/upload-artifact@v3
+      with:
+        name: pull-request
+        path: pull_request_number.txt
