@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 import type { FullResult, TestCase } from '../../types/testReporter';
-import { BaseReporter, formatTestTitle } from './base';
+import { BaseReporter, formatError, formatTestTitle, stripAnsiEscapes } from './base';
 
 type MarkdownReporterOptions = {
   configDir: string,
@@ -41,31 +41,66 @@ class MarkdownReporter extends BaseReporter {
     await super.onEnd(result);
     const summary = this.generateSummary();
     const lines: string[] = [];
-    lines.push(`:x: <b>failed: ${summary.unexpected.length}</b>`);
-    this._printTestList(summary.unexpected, lines);
+    if (summary.unexpected.length) {
+      lines.push(`**${summary.unexpected.length} failed**`);
+      this._printTestList(':x:', summary.unexpected, lines);
+    }
     if (summary.flaky.length) {
-      lines.push(`:warning: <b>flaky: ${summary.flaky.length}</b>`);
-      this._printTestList(summary.flaky, lines);
+      lines.push(`**${summary.flaky.length} flaky**`);
+      this._printTestList(':warning:', summary.flaky, lines);
     }
     if (summary.interrupted.length) {
-      lines.push(`:warning: <b>interrupted: ${summary.interrupted.length}</b>`);
-      this._printTestList(summary.interrupted, lines);
+      lines.push(`**${summary.interrupted.length} interrupted**`);
+      this._printTestList(':warning:', summary.interrupted, lines);
     }
-    if (summary.skipped) {
-      lines.push(`:ballot_box_with_check: <b>skipped: ${summary.skipped}</b>`);
-      lines.push(``);
-    }
-    lines.push(`:white_check_mark: <b>passed: ${summary.expected}</b>`);
+    const skipped = summary.skipped ? `, ${summary.skipped} skipped` : '';
+    lines.push(`**${summary.expected} passed${skipped}**`);
+    lines.push(`:heavy_check_mark::heavy_check_mark::heavy_check_mark:`);
     lines.push(``);
+
+    if (summary.unexpected.length || summary.flaky.length) {
+      lines.push(`<details>`);
+      lines.push(``);
+      if (summary.unexpected.length)
+        this._printTestListDetails(':x:', summary.unexpected, lines);
+      if (summary.flaky.length)
+        this._printTestListDetails(':warning:', summary.flaky, lines);
+      lines.push(`</details>`);
+    }
 
     const reportFile = path.resolve(this._options.configDir, this._options.outputFile || 'report.md');
     await fs.promises.mkdir(path.dirname(reportFile), { recursive: true });
     await fs.promises.writeFile(reportFile, lines.join('\n'));
   }
 
-  private _printTestList(tests: TestCase[], lines: string[]) {
+  private _printTestList(prefix: string, tests: TestCase[], lines: string[]) {
     for (const test of tests)
-      lines.push(` - ${formatTestTitle(this.config, test)}`);
+      lines.push(`${prefix} ${formatTestTitle(this.config, test)}`);
+    lines.push(``);
+  }
+
+  private _printTestListDetails(prefix: string, tests: TestCase[], lines: string[]) {
+    for (const test of tests)
+      this._printTestDetails(prefix, test, lines);
+  }
+
+  private _printTestDetails(prefix: string, test: TestCase, lines: string[]) {
+    lines.push(`${prefix} <b> ${formatTestTitle(this.config, test)} </b>`);
+    let retry = 0;
+    for (const result of test.results) {
+      if (result.status === 'passed')
+        break;
+      if (retry)
+        lines.push(`<b>Retry ${retry}:</b>`);
+      retry++;
+      if (result.error?.snippet) {
+        lines.push(``);
+        lines.push('```');
+        lines.push(stripAnsiEscapes(formatError(result.error, false).message));
+        lines.push('```');
+        lines.push(``);
+      }
+    }
     lines.push(``);
   }
 }

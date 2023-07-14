@@ -62,17 +62,34 @@ test('simple report', async ({ runInlineTest }) => {
   const { exitCode } = await runInlineTest(files);
   expect(exitCode).toBe(1);
   const reportFile = await fs.promises.readFile(test.info().outputPath('report.md'));
-  expect(reportFile.toString()).toBe(`:x: <b>failed: 2</b>
- - a.test.js:6:11 › failing 1
- - b.test.js:6:11 › failing 2
+  expect(reportFile.toString()).toContain(`**2 failed**
+:x: a.test.js:6:11 › failing 1
+:x: b.test.js:6:11 › failing 2
 
-:warning: <b>flaky: 2</b>
- - a.test.js:9:11 › flaky 1
- - c.test.js:6:11 › flaky 2
+**2 flaky**
+:warning: a.test.js:9:11 › flaky 1
+:warning: c.test.js:6:11 › flaky 2
 
-:ballot_box_with_check: <b>skipped: 3</b>
+**3 passed, 3 skipped**
+:heavy_check_mark::heavy_check_mark::heavy_check_mark:
 
-:white_check_mark: <b>passed: 3</b>
+<details>
+
+:x: <b> a.test.js:6:11 › failing 1 </b>
+`);
+
+  expect(reportFile.toString()).toContain(`Error: expect(received).toBe(expected) // Object.is equality
+
+Expected: 2
+Received: 1
+
+   5 |       });
+   6 |       test('failing 1', async ({}) => {
+>  7 |         expect(1).toBe(2);
+     |                   ^
+   8 |       });
+   9 |       test('flaky 1', async ({}) => {
+  10 |         expect(test.info().retry).toBe(1);
 `);
 });
 
@@ -94,8 +111,7 @@ test('custom report file', async ({ runInlineTest }) => {
   const { exitCode } = await runInlineTest(files);
   expect(exitCode).toBe(0);
   const reportFile = await fs.promises.readFile(test.info().outputPath('my-report.md'));
-  expect(reportFile.toString()).toBe(`:x: <b>failed: 0</b>
-
-:white_check_mark: <b>passed: 1</b>
+  expect(reportFile.toString()).toBe(`**1 passed**
+:heavy_check_mark::heavy_check_mark::heavy_check_mark:
 `);
 });

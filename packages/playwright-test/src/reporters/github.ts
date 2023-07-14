@@ -69,7 +69,7 @@ export class GitHubReporter extends BaseReporter {
   }
 
   override onError(error: TestError) {
-    const errorMessage = formatError(this.config, error, false).message;
+    const errorMessage = formatError(error, false).message;
     this.githubLogger.error(errorMessage);
   }
 
