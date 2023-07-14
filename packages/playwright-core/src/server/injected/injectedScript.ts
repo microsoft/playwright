@@ -115,6 +115,7 @@ export class InjectedScript {
     this._engines.set('internal:has-not', this._createHasNotEngine());
     this._engines.set('internal:and', { queryAll: () => [] });
     this._engines.set('internal:or', { queryAll: () => [] });
+    this._engines.set('internal:chain', this._createInternalChainEngine());
     this._engines.set('internal:label', this._createInternalLabelEngine());
     this._engines.set('internal:text', this._createTextEngine(true, true));
     this._engines.set('internal:has-text', this._createInternalHasTextEngine());
@@ -395,6 +396,13 @@ export class InjectedScript {
       if (root.nodeType !== 1 /* Node.ELEMENT_NODE */)
         return [];
       return isElementVisible(root as Element) === Boolean(body) ? [root as Element] : [];
+    };
+    return { queryAll };
+  }
+
+  private _createInternalChainEngine(): SelectorEngine {
+    const queryAll = (root: SelectorRoot, body: NestedSelectorBody) => {
+      return this.querySelectorAll(body.parsed, root);
     };
     return { queryAll };
   }

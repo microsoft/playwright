@@ -19,7 +19,7 @@ import { type NestedSelectorBody, parseAttributeSelector, parseSelector, stringi
 import type { ParsedSelector } from './selectorParser';
 
 export type Language = 'javascript' | 'python' | 'java' | 'csharp' | 'jsonl';
-export type LocatorType = 'default' | 'role' | 'text' | 'label' | 'placeholder' | 'alt' | 'title' | 'test-id' | 'nth' | 'first' | 'last' | 'has-text' | 'has-not-text' | 'has' | 'hasNot' | 'frame' | 'and' | 'or';
+export type LocatorType = 'default' | 'role' | 'text' | 'label' | 'placeholder' | 'alt' | 'title' | 'test-id' | 'nth' | 'first' | 'last' | 'has-text' | 'has-not-text' | 'has' | 'hasNot' | 'frame' | 'and' | 'or' | 'chain';
 export type LocatorBase = 'page' | 'locator' | 'frame-locator';
 
 type LocatorOptions = {
@@ -118,6 +118,11 @@ function innerAsLocators(factory: LocatorFactory, parsed: ParsedSelector, isFram
     if (part.name === 'internal:or') {
       const inners = innerAsLocators(factory, (part.body as NestedSelectorBody).parsed, false, maxOutputSize);
       tokens.push(inners.map(inner => factory.generateLocator(base, 'or', inner)));
+      continue;
+    }
+    if (part.name === 'internal:chain') {
+      const inners = innerAsLocators(factory, (part.body as NestedSelectorBody).parsed, false, maxOutputSize);
+      tokens.push(inners.map(inner => factory.generateLocator(base, 'chain', inner)));
       continue;
     }
     if (part.name === 'internal:label') {
@@ -285,6 +290,8 @@ export class JavaScriptLocatorFactory implements LocatorFactory {
         return `and(${body})`;
       case 'or':
         return `or(${body})`;
+      case 'chain':
+        return `locator(${body})`;
       case 'test-id':
         return `getByTestId(${this.toTestIdValue(body)})`;
       case 'text':
@@ -375,6 +382,8 @@ export class PythonLocatorFactory implements LocatorFactory {
         return `and_(${body})`;
       case 'or':
         return `or_(${body})`;
+      case 'chain':
+        return `locator(${body})`;
       case 'test-id':
         return `get_by_test_id(${this.toTestIdValue(body)})`;
       case 'text':
@@ -474,6 +483,8 @@ export class JavaLocatorFactory implements LocatorFactory {
         return `and(${body})`;
       case 'or':
         return `or(${body})`;
+      case 'chain':
+        return `locator(${body})`;
       case 'test-id':
         return `getByTestId(${this.toTestIdValue(body)})`;
       case 'text':
@@ -567,6 +578,8 @@ export class CSharpLocatorFactory implements LocatorFactory {
         return `And(${body})`;
       case 'or':
         return `Or(${body})`;
+      case 'chain':
+        return `Locator(${body})`;
       case 'test-id':
         return `GetByTestId(${this.toTestIdValue(body)})`;
       case 'text':

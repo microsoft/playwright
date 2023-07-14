@@ -145,7 +145,7 @@ export class Locator implements api.Locator {
       return new Locator(this._frame, this._selector + ' >> ' + selectorOrLocator, options);
     if (selectorOrLocator._frame !== this._frame)
       throw new Error(`Locators must belong to the same frame.`);
-    return new Locator(this._frame, this._selector + ' >> ' + selectorOrLocator._selector, options);
+    return new Locator(this._frame, this._selector + ' >> internal:chain=' + JSON.stringify(selectorOrLocator._selector), options);
   }
 
   getByTestId(testId: string | RegExp): Locator {
