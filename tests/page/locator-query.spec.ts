@@ -189,6 +189,21 @@ it('should support locator.or', async ({ page }) => {
   await expect(page.locator('span').or(page.locator('article'))).toHaveText('world');
 });
 
+it('should support locator.locator with and/or', async ({ page }) => {
+  await page.setContent(`
+    <div>one <span>two</span> <button>three</button> </div>
+    <span>four</span>
+    <button>five</button>
+  `);
+
+  await expect(page.locator('div').locator(page.locator('button'))).toHaveText(['three']);
+  await expect(page.locator('div').locator(page.locator('button').or(page.locator('span')))).toHaveText(['two', 'three']);
+  await expect(page.locator('button').or(page.locator('span'))).toHaveText(['two', 'three', 'four', 'five']);
+
+  await expect(page.locator('div').locator(page.locator('button').and(page.getByRole('button')))).toHaveText(['three']);
+  await expect(page.locator('button').and(page.getByRole('button'))).toHaveText(['three', 'five']);
+});
+
 it('should allow some, but not all nested frameLocators', async ({ page }) => {
   await page.setContent(`<iframe srcdoc="<span id=target>world</span>"></iframe><span>hello</span>`);
   await expect(page.frameLocator('iframe').locator('span').or(page.frameLocator('iframe').locator('article'))).toHaveText('world');

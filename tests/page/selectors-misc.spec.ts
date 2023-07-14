@@ -436,6 +436,16 @@ it('should work with internal:or=', async ({ page, server }) => {
   expect(await page.locator(`span >> internal:or="article"`).textContent()).toBe('world');
 });
 
+it('should work with internal:chain=', async ({ page, server }) => {
+  await page.setContent(`
+    <div>one <span>two</span> <button>three</button> </div>
+    <span>four</span>
+    <button>five</button>
+  `);
+  expect(await page.$$eval(`div >> internal:chain="button"`, els => els.map(e => e.textContent))).toEqual(['three']);
+  expect(await page.$$eval(`div >> internal:chain="span >> internal:or=\\"button\\""`, els => els.map(e => e.textContent))).toEqual(['two', 'three']);
+});
+
 it('chaining should work with large DOM @smoke', async ({ page, server }) => {
   await page.evaluate(() => {
     let last = document.body;
