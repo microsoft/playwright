@@ -203,7 +203,6 @@ jobs:
       env:
         PWTEST_TRACE: 1
         PWTEST_CHANNEL: ${{ matrix.channel }}
-        PWTEST_BLOB_REPORT: 1
         PWTEST_BLOB_SUFFIX: ${{ (matrix.channel && format('-{0}', matrix.channel)) || '' }}
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
@@ -673,17 +672,3 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-
-  write-pull-request-number:
-    name: Write PR number
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    steps:
-    - name: Write triggering pull request number in a file
-      shell: bash
-      run: echo '${{ github.event.number }}' > pull_request_number.txt;
-    - name: Upload artifact with the pull request number
-      uses: actions/upload-artifact@v3
-      with:
-        name: pull-request
-        path: pull_request_number.txt

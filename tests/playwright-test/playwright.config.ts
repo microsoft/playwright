@@ -25,11 +25,10 @@ const reporters = () => {
   const result: ReporterDescription[] = process.env.CI ? [
     ['dot'],
     ['json', { outputFile: path.join(outputDir, 'report.json') }],
+    ['blob', { outputDir: path.join(outputDir, 'blob-report') }],
   ] : [
     ['list']
   ];
-  if (process.env.PWTEST_BLOB_REPORT === '1')
-    result.push(['blob', { outputDir: path.join(outputDir, 'blob-report') }]);
   return result;
 };
 export default defineConfig({
