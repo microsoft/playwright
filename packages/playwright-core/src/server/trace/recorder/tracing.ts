@@ -283,13 +283,6 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     if (this._state.options.snapshots)
       await this._snapshotter?.stop();
 
-    // Extract the list of resources collected to this moment.
-    // Network recording will keep adding to it, and we don't want any new
-    // resources in this chunk.
-    const sha1s = new Set([...this._state.traceSha1s, ...this._state.networkSha1s]);
-    // Only reset trace sha1s, network resources are preserved between chunks.
-    this._state.traceSha1s = new Set();
-
     // Network file survives across chunks, make a snapshot before returning the resulting entries.
     // We should pick a name starting with "traceName" and ending with .network.
     // Something like <traceName>someSuffixHere.network.
@@ -298,34 +291,42 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     // and makes it easier to debug future issues.
     const newNetworkFile = path.join(this._state.tracesDir, this._state.traceName + `-pwnetcopy-${this._state.chunkOrdinal}.network`);
     const oldNetworkFile = this._state.networkFile;
-    const { traceFile, resourcesDir } = this._state;
+    const traceFile = this._state.traceFile;
+
+    const entries: NameValue[] = [];
+    entries.push({ name: 'trace.trace', value: traceFile.file });
+    entries.push({ name: 'trace.network', value: newNetworkFile });
+    for (const sha1 of new Set([...this._state.traceSha1s, ...this._state.networkSha1s]))
+      entries.push({ name: path.join('resources', sha1), value: path.join(this._state.resourcesDir, sha1) });
+
+    // Only reset trace sha1s, network resources are preserved between chunks.
+    this._state.traceSha1s = new Set();
 
     // Chain the export operation against write operations,
-    // so that neither trace files nor sha1s change during the export.
-    return await this._appendTraceOperation(async () => {
+    // so that neither trace files nor resources change during the export.
+    let result: { artifact?: Artifact, entries?: NameValue[] } = {};
+    this._appendTraceOperation(async () => {
       if (params.mode === 'discard')
-        return {};
+        return;
 
       await flushTraceFile(traceFile);
       await flushTraceFile(oldNetworkFile);
-
       await fs.promises.copyFile(oldNetworkFile.file, newNetworkFile);
 
-      const entries: NameValue[] = [];
-      entries.push({ name: 'trace.trace', value: traceFile.file });
-      entries.push({ name: 'trace.network', value: newNetworkFile });
-      for (const sha1 of sha1s)
-        entries.push({ name: path.join('resources', sha1), value: path.join(resourcesDir, sha1) });
-
       if (params.mode === 'entries')
-        return { entries };
-      const artifact = await this._exportZip(entries, traceFile.file + '.zip').catch(() => undefined);
-      return { artifact };
-    }).finally(() => {
+        result = { entries };
+      else
+        result = { artifact: await this._exportZip(entries, traceFile.file + '.zip').catch(() => undefined) };
+    });
+
+    try {
+      await this._writeChain;
+      return result;
+    } finally {
       this._isStopping = false;
       if (this._state)
         this._state.recording = false;
-    }) || { };
+    }
   }
 
   private _exportZip(entries: NameValue[], zipFileName: string): Promise<Artifact | undefined> {
@@ -494,25 +495,15 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     });
   }
 
-  private async _appendTraceOperation<T>(cb: () => Promise<T>): Promise<T | undefined> {
+  private _appendTraceOperation(cb: () => Promise<unknown>): void {
     // This method serializes all writes to the trace.
-    let error: Error | undefined;
-    let result: T | undefined;
     this._writeChain = this._writeChain.then(async () => {
       // This check is here because closing the browser removes the tracesDir and tracing
       // dies trying to archive.
       if (this._context instanceof BrowserContext && !this._context._browser.isConnected())
         return;
-      try {
-        result = await cb();
-      } catch (e) {
-        error = e;
-      }
+      await cb();
     });
-    await this._writeChain;
-    if (error)
-      throw error;
-    return result;
   }
 }
 
