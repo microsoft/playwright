@@ -95,6 +95,7 @@ jobs:
           const reportDir = 'run-${{ github.event.workflow_run.id }}-${{ github.event.workflow_run.run_attempt }}-${{ github.sha }}';
           const reportUrl = `https://mspwblobreport.z1.web.core.windows.net/${reportDir}/index.html`;
           core.notice('Report url: ' + reportUrl);
+          const mergeWorkflowUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
           const reportMd = await fs.promises.readFile('report.md', 'utf8');
           const { data: response } = await github.rest.issues.createComment({
             ...context.repo,
@@ -108,7 +109,6 @@ jobs:
           });
           core.info('Posted comment: ' + response.html_url);
 
-          const mergeWorkflowUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
           const check = await github.rest.checks.create({
             ...context.repo,
             name: 'Merge report (${{ github.event.workflow_run.name }})',
