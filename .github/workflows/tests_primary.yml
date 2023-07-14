@@ -55,7 +55,6 @@ jobs:
     - run: npx playwright install --with-deps ${{ matrix.browser }} chromium
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --project=${{ matrix.browser }}
       env:
-        PWTEST_BLOB_REPORT: 1
         PWTEST_BLOB_SUFFIX: "-${{ matrix.os }}-node${{ matrix.node-version }}"
     - run: node tests/config/checkCoverage.js ${{ matrix.browser }}
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
@@ -89,7 +88,6 @@ jobs:
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --project=chromium
       env:
         PWTEST_CHANNEL: chromium-tip-of-tree
-        PWTEST_BLOB_REPORT: 1
         PWTEST_BLOB_SUFFIX: "-${{ matrix.os }}-chromium-tip-of-tree"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
@@ -129,12 +127,10 @@ jobs:
     - run: npx playwright install --with-deps
     - run: npm run ttest -- --shard ${{ matrix.shard }}
       env:
-        PWTEST_BLOB_REPORT: 1
         PWTEST_BLOB_SUFFIX: "-${{ matrix.os }}-node${{ matrix.node-version }}"
       if: matrix.os != 'ubuntu-latest'
     - run: xvfb-run npm run ttest --  --shard ${{ matrix.shard }}
       env:
-        PWTEST_BLOB_REPORT: 1
         PWTEST_BLOB_SUFFIX: "-${{ matrix.os }}-node${{ matrix.node-version }}"
       if: matrix.os == 'ubuntu-latest'
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
@@ -220,17 +216,3 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-
-  write-pull-request-number:
-    name: Write PR number
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    steps:
-    - name: Write triggering pull request number in a file
-      shell: bash
-      run: echo '${{ github.event.number }}' > pull_request_number.txt;
-    - name: Upload artifact with the pull request number
-      uses: actions/upload-artifact@v3
-      with:
-        name: pull-request
-        path: pull_request_number.txt
