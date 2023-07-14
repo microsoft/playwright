@@ -39,8 +39,7 @@ export function filterTestsRemoveEmptySuites(suite: Suite, filter: (test: TestCa
   suite._entries = suite._entries.filter(e => entries.has(e)); // Preserve the order.
   return !!suite._entries.length;
 }
-
-export function buildFileSuiteForProject(project: FullProjectInternal, suite: Suite, repeatEachIndex: number): Suite {
+export function bindFileSuiteToProject(project: FullProjectInternal, suite: Suite): Suite {
   const relativeFile = path.relative(project.project.testDir, suite.location!.file).split(path.sep).join('/');
   const fileId = calculateSha1(relativeFile).slice(0, 20);
 
@@ -51,13 +50,10 @@ export function buildFileSuiteForProject(project: FullProjectInternal, suite: Su
   // Assign test properties with project-specific values.
   result.forEachTest((test, suite) => {
     suite._fileId = fileId;
-    const repeatEachIndexSuffix = repeatEachIndex ? ` (repeat:${repeatEachIndex})` : '';
-
     // At the point of the query, suite is not yet attached to the project, so we only get file, describe and test titles.
-    const testIdExpression = `[project=${project.id}]${test.titlePath().join('\x1e')}${repeatEachIndexSuffix}`;
+    const testIdExpression = `[project=${project.id}]${test.titlePath().join('\x1e')}`;
     const testId = fileId + '-' + calculateSha1(testIdExpression).slice(0, 20);
     test.id = testId;
-    test.repeatEachIndex = repeatEachIndex;
     test._projectId = project.id;
 
     // Inherit properties from parent suites.
@@ -79,10 +75,25 @@ export function buildFileSuiteForProject(project: FullProjectInternal, suite: Su
 
     // We only compute / set digest in the runner.
     if (test._poolDigest)
-      test._workerHash = `${project.id}-${test._poolDigest}-${repeatEachIndex}`;
+      test._workerHash = `${project.id}-${test._poolDigest}-0`;
   });
 
   return result;
+}
+
+export function applyRepeatEachIndex(project: FullProjectInternal, fileSuite: Suite, repeatEachIndex: number) {
+  // Assign test properties with project-specific values.
+  fileSuite.forEachTest((test, suite) => {
+    if (repeatEachIndex) {
+      const testIdExpression = `[project=${project.id}]${test.titlePath().join('\x1e')} (repeat:${repeatEachIndex})`;
+      const testId = suite._fileId + '-' + calculateSha1(testIdExpression).slice(0, 20);
+      test.id = testId;
+      test.repeatEachIndex = repeatEachIndex;
+
+      if (test._poolDigest)
+        test._workerHash = `${project.id}-${test._poolDigest}-${repeatEachIndex}`;
+    }
+  });
 }
 
 export function filterOnly(suite: Suite) {
