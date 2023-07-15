@@ -45,10 +45,6 @@ class UIMode {
     process.env.PW_LIVE_TRACE_STACKS = '1';
     config.cliListOnly = false;
     config.cliPassWithNoTests = true;
-    for (const project of config.projects) {
-      project.deps = [];
-      project.teardown = undefined;
-    }
 
     for (const p of config.projects) {
       p.project.retries = 0;
@@ -153,7 +149,7 @@ class UIMode {
     if (method === 'list')
       await this._listTests();
     if (method === 'run')
-      await this._runTests(params.testIds);
+      await this._runTests(params.testIds, params.projects);
   }
 
   private _dispatchEvent(method: string, params?: any) {
@@ -178,11 +174,12 @@ class UIMode {
     this._globalWatcher.update([...projectDirs], false);
   }
 
-  private async _runTests(testIds: string[]) {
+  private async _runTests(testIds: string[], projects: string[]) {
     await this._stopTests();
 
     const testIdSet = testIds ? new Set<string>(testIds) : null;
     this._config.cliListOnly = false;
+    this._config.cliProjectFilter = projects.length ? projects : undefined;
     this._config.testIdMatcher = id => !testIdSet || testIdSet.has(id);
 
     const reporters = await createReporters(this._config, 'ui');

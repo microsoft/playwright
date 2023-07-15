@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, retries } from './ui-mode-fixtures';
+import { test, expect, retries, dumpTestTree } from './ui-mode-fixtures';
 
 test.describe.configure({ mode: 'parallel', retries });
 
@@ -75,4 +75,101 @@ test('should teardown on sigint', async ({ runUITest }) => {
     'from-global-setup',
     'from-global-teardown',
   ]);
+});
+
+const testsWithSetup = {
+  'playwright.config.ts': `
+    import { defineConfig } from '@playwright/test';
+    export default defineConfig({
+      projects: [
+        { name: 'setup', teardown: 'teardown', testMatch: 'setup.ts' },
+        { name: 'test', testMatch: 'test.ts', dependencies: ['setup'] },
+        { name: 'teardown', testMatch: 'teardown.ts' },
+      ]
+    });
+  `,
+  'setup.ts': `
+    import { test, expect } from '@playwright/test';
+    test('setup', async ({}) => {
+      console.log('from-setup');
+    });
+  `,
+  'test.ts': `
+    import { test, expect } from '@playwright/test';
+    test('test', async ({}) => {
+      console.log('from-test');
+    });
+  `,
+  'teardown.ts': `
+    import { test, expect } from '@playwright/test';
+    test('teardown', async ({}) => {
+      console.log('from-teardown');
+    });
+  `,
+};
+
+test('should run setup and teardown projects (1)', async ({ runUITest }) => {
+  const { page } = await runUITest(testsWithSetup);
+  await page.getByText('Status:').click();
+  await page.getByLabel('setup').setChecked(false);
+  await page.getByLabel('teardown').setChecked(false);
+  await page.getByLabel('test').setChecked(false);
+
+  await page.getByTitle('Run all').click();
+
+  await expect.poll(dumpTestTree(page)).toBe(`
+    ▼ ✅ setup.ts
+        ✅ setup
+    ▼ ✅ teardown.ts
+        ✅ teardown
+    ▼ ✅ test.ts
+        ✅ test
+  `);
+
+  await page.getByTitle('Toggle output').click();
+  await expect(page.getByTestId('output')).toContainText(`from-setup`);
+  await expect(page.getByTestId('output')).toContainText(`from-test`);
+  await expect(page.getByTestId('output')).toContainText(`from-teardown`);
+});
+
+test('should run setup and teardown projects (2)', async ({ runUITest }) => {
+  const { page } = await runUITest(testsWithSetup);
+  await page.getByText('Status:').click();
+  await page.getByLabel('setup').setChecked(false);
+  await page.getByLabel('teardown').setChecked(true);
+  await page.getByLabel('test').setChecked(true);
+
+  await page.getByTitle('Run all').click();
+
+  await expect.poll(dumpTestTree(page)).toBe(`
+    ▼ ✅ teardown.ts
+        ✅ teardown
+    ▼ ✅ test.ts
+        ✅ test
+  `);
+
+  await page.getByTitle('Toggle output').click();
+  await expect(page.getByTestId('output')).toContainText(`from-test`);
+  await expect(page.getByTestId('output')).toContainText(`from-teardown`);
+  await expect(page.getByTestId('output')).not.toContainText(`from-setup`);
+});
+
+test('should run setup and teardown projects (3)', async ({ runUITest }) => {
+  const { page } = await runUITest(testsWithSetup);
+  await page.getByText('Status:').click();
+  await page.getByLabel('setup').setChecked(false);
+  await page.getByLabel('teardown').setChecked(false);
+  await page.getByLabel('test').setChecked(true);
+
+  await page.getByTitle('Run all').click();
+
+  await expect.poll(dumpTestTree(page)).toBe(`
+    ▼ ✅ test.ts
+        ✅ test
+  `);
+
+  await page.getByTitle('Toggle output').click();
+  await expect(page.getByTestId('output')).toContainText(`from-test`);
+  await expect(page.getByTestId('output')).not.toContainText(`from-setup`);
+  await expect(page.getByTestId('output')).not.toContainText(`from-teardown`);
 });
