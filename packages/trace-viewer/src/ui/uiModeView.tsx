@@ -153,7 +153,7 @@ export const UIModeView: React.FC<{}> = ({
       setProgress({ total: testIds.size, passed: 0, failed: 0, skipped: 0 });
       setRunningState({ testIds });
 
-      await sendMessage('run', { testIds: [...testIds] });
+      await sendMessage('run', { testIds: [...testIds], projects: [...projectFilters].filter(([_, v]) => v).map(([p]) => p) });
       // Clear pending tests in case of interrupt.
       for (const test of testModel.rootSuite?.allTests() || []) {
         if (test.results[0]?.duration === -1)
@@ -162,7 +162,7 @@ export const UIModeView: React.FC<{}> = ({
       setTestModel({ ...testModel });
       setRunningState(undefined);
     });
-  }, [runningState, testModel]);
+  }, [projectFilters, runningState, testModel]);
 
   const isRunningTest = !!runningState;
 

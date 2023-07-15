@@ -32,7 +32,7 @@ import { dependenciesForTestFile } from '../transform/compilationCache';
 import { sourceMapSupport } from '../utilsBundle';
 import type { RawSourceMap } from 'source-map';
 
-export async function collectProjectsAndTestFiles(testRun: TestRun, additionalFileMatcher: Matcher | undefined) {
+export async function collectProjectsAndTestFiles(testRun: TestRun, doNotRunTestsOutsideProjectFilter: boolean, additionalFileMatcher: Matcher | undefined) {
   const config = testRun.config;
   const fsCache = new Map();
   const sourceMapCache = new Map();
@@ -40,7 +40,8 @@ export async function collectProjectsAndTestFiles(testRun: TestRun, additionalFi
 
   // First collect all files for the projects in the command line, don't apply any file filters.
   const allFilesForProject = new Map<FullProjectInternal, string[]>();
-  for (const project of filterProjects(config.projects, config.cliProjectFilter)) {
+  const filteredProjects = filterProjects(config.projects, config.cliProjectFilter);
+  for (const project of filteredProjects) {
     const files = await collectFilesForProject(project, fsCache);
     allFilesForProject.set(project, files);
   }
@@ -68,7 +69,8 @@ export async function collectProjectsAndTestFiles(testRun: TestRun, additionalFi
   for (const [project, type] of projectClosure) {
     if (type === 'dependency') {
       filesToRunByProject.delete(project);
-      const files = allFilesForProject.get(project) || await collectFilesForProject(project, fsCache);
+      const treatProjectAsEmpty = doNotRunTestsOutsideProjectFilter && !filteredProjects.includes(project);
+      const files = treatProjectAsEmpty ? [] : allFilesForProject.get(project) || await collectFilesForProject(project, fsCache);
       filesToRunByProject.set(project, files);
     }
   }
