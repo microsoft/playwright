@@ -116,11 +116,6 @@
     "shiftKey": "+",
     "key": "="
   },
-  "Backslash": {
-    "keyCode": 220,
-    "shiftKey": "|",
-    "key": "\\"
-  },
   "Backspace": {
     "keyCode": 8,
     "key": "Backspace"
@@ -189,6 +184,11 @@
     "shiftKey": "}",
     "key": "]"
   },
+  "Enter": {
+    "keyCode": 13,
+    "key": "Enter",
+    "text": "\n"
+  },
   "CapsLock": {
     "keyCode": 20,
     "key": "CapsLock"
@@ -248,16 +248,21 @@
     "shiftKey": "\"",
     "key": "'"
   },
-  "Enter": {
-    "keyCode": 13,
-    "key": "Enter",
-    "text": "\r"
+  "Backslash": {
+    "keyCode": 220,
+    "shiftKey": "|",
+    "key": "\\"
   },
   "ShiftLeft": {
     "keyCode": 160,
     "keyCodeWithoutLocation": 16,
     "key": "Shift",
     "location": 1
+  },
+  "IntlBackslash": {
+    "keyCode": 226,
+    "shiftKey": "|",
+    "key": "\\"
   },
   "KeyZ": {
     "keyCode": 90,

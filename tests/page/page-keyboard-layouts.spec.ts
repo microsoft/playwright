@@ -26,34 +26,34 @@ it.describe(`greek keyboard layout`, () => {
   it(`should fire key events on α`, async ({ page }) => {
     await page.keyboard.press('α');
     expect(await page.evaluate('getResult()')).toBe(
-        ['Keydown: α KeyA 945 []',
+        ['Keydown: α KeyA 65 []',
           'Keypress: α KeyA 945 945 []',
-          'Keyup: α KeyA 945 []'].join('\n'));
+          'Keyup: α KeyA 65 []'].join('\n'));
   });
 
   it(`should type ε on KeyE`, async ({ page }) => {
     await page.keyboard.press('KeyE');
     expect(await page.evaluate('getResult()')).toBe(
-        ['Keydown: ε KeyE 949 []',
+        ['Keydown: ε KeyE 69 []',
           'Keypress: ε KeyE 949 949 []',
-          'Keyup: ε KeyE 949 []'].join('\n'));
+          'Keyup: ε KeyE 69 []'].join('\n'));
   });
 
   it(`should fire key events on Σ`, async ({ page }) => {
     await page.keyboard.press('Σ');
     expect(await page.evaluate('getResult()')).toBe(
-        ['Keydown: Σ KeyS 963 []',
+        ['Keydown: Σ KeyS 83 []',
           'Keypress: Σ KeyS 931 931 []',
-          'Keyup: Σ KeyS 963 []'].join('\n'));
+          'Keyup: Σ KeyS 83 []'].join('\n'));
   });
 
   it(`should type Δ on Shift+KeyD`, async ({ page }) => {
     await page.keyboard.press('Shift+KeyD');
     expect(await page.evaluate('getResult()')).toBe(
         ['Keydown: Shift ShiftLeft 16 [Shift]',
-          'Keydown: Δ KeyD 948 [Shift]',
+          'Keydown: Δ KeyD 68 [Shift]',
           'Keypress: Δ KeyD 916 916 [Shift]',
-          'Keyup: Δ KeyD 948 [Shift]',
+          'Keyup: Δ KeyD 68 [Shift]',
           'Keyup: Shift ShiftLeft 16 []'].join('\n'));
     await expect(page.locator('textarea')).toHaveValue('Δ');
   });
@@ -68,9 +68,9 @@ it.describe(`portuguese keyboard layout`, () => {
   it(`should type backslash on Backquote`, async ({ page }) => {
     await page.keyboard.press('Backquote');
     expect(await page.evaluate('getResult()')).toBe(
-        ['Keydown: \\ Backquote 92 []',
+        ['Keydown: \\ Backquote 220 []',
           'Keypress: \\ Backquote 92 92 []',
-          'Keyup: \\ Backquote 92 []'].join('\n'));
+          'Keyup: \\ Backquote 220 []'].join('\n'));
   });
 
   it(`should type ! on Shift+Digit1`, async ({ page }) => {
@@ -84,13 +84,27 @@ it.describe(`portuguese keyboard layout`, () => {
   });
 });
 
+it.describe(`us keyboard layout`, () => {
+  it.beforeEach(async ({ page, server, toImpl }) => {
+    toImpl(page).keyboard._testKeyboardLayout('us');
+    await page.goto(server.PREFIX + '/input/keyboard.html');
+  });
+
+  it(`should type backslash on Backslash`, async ({ page }) => {
+    await page.keyboard.press('Backslash');
+    expect(await page.evaluate('getResult()')).toBe(
+        ['Keydown: \\ Backslash 220 []',
+          'Keypress: \\ Backslash 92 92 []',
+          'Keyup: \\ Backslash 220 []'].join('\n'));
+  });
+});
+
 it(`should fallback to us on invalid layout format`, async ({ page, toImpl, server }) => {
-  // portuguese layout is po, not pt, should fallback
-  toImpl(page).keyboard._testKeyboardLayout('pt');
+  toImpl(page).keyboard._testKeyboardLayout('invalid');
   await page.goto(server.PREFIX + '/input/keyboard.html');
   await page.keyboard.press('Backquote');
   expect(await page.evaluate('getResult()')).toBe(
-      ['Keydown: ` Backquote 96 []',
+      ['Keydown: ` Backquote 192 []',
         'Keypress: ` Backquote 96 96 []',
-        'Keyup: ` Backquote 96 []'].join('\n'));
+        'Keyup: ` Backquote 192 []'].join('\n'));
 });

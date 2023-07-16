@@ -29,9 +29,9 @@ const path = require('path');
 const { chromium } = require('playwright');
 
 const layoutUrls = {
-  he: { url: 'https://kbdlayout.info/KBDHE/', name: 'Greek Keyboard Layout' },
-  po: { url: 'https://kbdlayout.info/KBDPO/', name: 'Portuguese Keyboard Layout' },
-  us: { url: 'https://kbdlayout.info/KBDUS/', name: 'United States Keyboard Layout' },
+  he: { url: 'https://kbdlayout.info/KBDHE', name: 'Greek Keyboard Layout' },
+  po: { url: 'https://kbdlayout.info/KBDPO', name: 'Portuguese Keyboard Layout' },
+  us: { url: 'https://kbdlayout.info/KBDUS', name: 'United States Keyboard Layout' },
 };
 
 const copyrightHeader = `
@@ -203,39 +203,70 @@ const keyboardLayoutGenerator = {
 };
 
 /**
+ * @param { string } keyname
  * @param { Locator } keyLocator
+ * @param { number } virtualKeyCode
  * @returns { Promise<KeyDefinition> }
  */
-async function process(keyLocator) {
+async function process(keyname, keyLocator, virtualKeyCode) {
   assert(await keyLocator.locator('[title]').count() === 1, `Locator ${keyLocator} doesn't have a unique title`);
   const title = await keyLocator.locator('[title]').getAttribute('title');
   assert(title);
 
   const [, key] = /^(.?) U\+[0-9A-F]{4}/.exec(title) ?? [];
-  const [, hexCode] = /CAPITAL: \w U\+([0-9A-F]{4})/.exec(title) ??
-      /^.? U\+([0-9A-F]{4})/.exec(title) ?? [] ??
-      [];
   const [, shiftKey] = /SHIFT: (.) U\+[0-9A-F]{4}/.exec(title) ?? [];
-
-  assert(hexCode, `Could not find hex code on locator ${keyLocator}, title: ${title}`);
 
   let location;
 
-  const keyCode = parseInt(hexCode, 16);
-  return { keyCode, key, shiftKey, location };
+  return {
+    keyCode: virtualKeyCode,
+    shiftKey: shiftKey === key ? undefined : shiftKey,
+    key: key || keyname,
+    location,
+    // for ENTER key
+    text: virtualKeyCode === 13 ? '\n' : undefined,
+  };
 }
 
 /**
  * @param { Page } page
+ * @param { string } url
+ * @returns { Promise<Object.<string, number>> }
+ */
+async function extractLocatorToVirtualKeys(page, url) {
+  await page.goto(`${url}/virtualkeys`);
+
+  /** @type { Object.<string, number> } */
+  const mappings = {};
+
+  /** @type { string[] } */
+  // @ts-ignore
+  const locators = Object.values(keyboardLayoutGenerator).filter(v => typeof v === 'string');
+  for (const loc of locators) {
+    const scancode = await page.locator(loc).locator('> .kls > .kl10').textContent();
+    const vk = await page.locator(`.scGroup tr:has(td:nth-child(1):text-is("${scancode}")) > td:nth-child(2)`).first().textContent();
+    assert(vk, `No virtual key code found for ${loc} (scancode ${scancode})`);
+    mappings[loc] = parseInt(vk, 16);
+  }
+
+  return mappings;
+}
+
+/**
+ * @param { Page } page
+ * @param { string } url
  * @returns { Promise<Object.<string, KeyDefinition>> }
  */
-async function generate(page) {
+async function generate(page, url) {
+  const locatorToVirtualKeys = await extractLocatorToVirtualKeys(page, url);
+  await page.goto(url);
+
   /** @type { Object.<string, KeyDefinition> } */
   const layout = {};
 
   for (const [keyname, def] of Object.entries(keyboardLayoutGenerator)) {
     if (typeof def === 'string') {
-      layout[keyname] = await process(page.locator(def));
+      layout[keyname] = await process(keyname, page.locator(def), locatorToVirtualKeys[def]);
     } else {
       layout[keyname] = def;
     }
@@ -250,9 +281,10 @@ const keyboardsDir = path.resolve(__dirname, '../packages/playwright-core/src/se
   const page = await browser.newPage();
 
   for (const [layout, { url, name }] of Object.entries(layoutUrls)) {
+    // for now skip US, to ensure it is 100% compatible with previous version
+    //if (layout === 'us') continue;
     console.log(`Generating keyboard layout for ${layout} (${name})`);
-    await page.goto(url);
-    const layoutData = await generate(page);
+    const layoutData = await generate(page, url);
     fs.writeFileSync(path.resolve(keyboardsDir, 'layouts', `${layout}.json`), JSON.stringify(layoutData, undefined, 2), 'utf-8');
   }
 
