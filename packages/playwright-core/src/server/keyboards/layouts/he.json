@@ -1,0 +1,528 @@
+{
+  "Escape": {
+    "keyCode": 27,
+    "key": "Escape"
+  },
+  "F1": {
+    "keyCode": 112,
+    "key": "F1"
+  },
+  "F2": {
+    "keyCode": 113,
+    "key": "F2"
+  },
+  "F3": {
+    "keyCode": 114,
+    "key": "F3"
+  },
+  "F4": {
+    "keyCode": 115,
+    "key": "F4"
+  },
+  "F5": {
+    "keyCode": 116,
+    "key": "F5"
+  },
+  "F6": {
+    "keyCode": 117,
+    "key": "F6"
+  },
+  "F7": {
+    "keyCode": 118,
+    "key": "F7"
+  },
+  "F8": {
+    "keyCode": 119,
+    "key": "F8"
+  },
+  "F9": {
+    "keyCode": 120,
+    "key": "F9"
+  },
+  "F10": {
+    "keyCode": 121,
+    "key": "F10"
+  },
+  "F11": {
+    "keyCode": 122,
+    "key": "F11"
+  },
+  "F12": {
+    "keyCode": 123,
+    "key": "F12"
+  },
+  "Backquote": {
+    "keyCode": 96,
+    "key": "`",
+    "shiftKey": "~"
+  },
+  "Digit1": {
+    "keyCode": 49,
+    "key": "1",
+    "shiftKey": "!"
+  },
+  "Digit2": {
+    "keyCode": 50,
+    "key": "2",
+    "shiftKey": "@"
+  },
+  "Digit3": {
+    "keyCode": 51,
+    "key": "3",
+    "shiftKey": "#"
+  },
+  "Digit4": {
+    "keyCode": 52,
+    "key": "4",
+    "shiftKey": "$"
+  },
+  "Digit5": {
+    "keyCode": 53,
+    "key": "5",
+    "shiftKey": "%"
+  },
+  "Digit6": {
+    "keyCode": 54,
+    "key": "6",
+    "shiftKey": "^"
+  },
+  "Digit7": {
+    "keyCode": 55,
+    "key": "7",
+    "shiftKey": "&"
+  },
+  "Digit8": {
+    "keyCode": 56,
+    "key": "8",
+    "shiftKey": "*"
+  },
+  "Digit9": {
+    "keyCode": 57,
+    "key": "9",
+    "shiftKey": "("
+  },
+  "Digit0": {
+    "keyCode": 48,
+    "key": "0",
+    "shiftKey": ")"
+  },
+  "Minus": {
+    "keyCode": 45,
+    "key": "-",
+    "shiftKey": "_"
+  },
+  "Equal": {
+    "keyCode": 61,
+    "key": "=",
+    "shiftKey": "+"
+  },
+  "Backspace": {
+    "keyCode": 8,
+    "key": ""
+  },
+  "Tab": {
+    "keyCode": 9,
+    "key": ""
+  },
+  "KeyQ": {
+    "keyCode": 59,
+    "key": ";",
+    "shiftKey": ":"
+  },
+  "KeyW": {
+    "keyCode": 962,
+    "key": "ς",
+    "shiftKey": "΅"
+  },
+  "KeyE": {
+    "keyCode": 949,
+    "key": "ε",
+    "shiftKey": "Ε"
+  },
+  "KeyR": {
+    "keyCode": 961,
+    "key": "ρ",
+    "shiftKey": "Ρ"
+  },
+  "KeyT": {
+    "keyCode": 964,
+    "key": "τ",
+    "shiftKey": "Τ"
+  },
+  "KeyY": {
+    "keyCode": 965,
+    "key": "υ",
+    "shiftKey": "Υ"
+  },
+  "KeyU": {
+    "keyCode": 952,
+    "key": "θ",
+    "shiftKey": "Θ"
+  },
+  "KeyI": {
+    "keyCode": 953,
+    "key": "ι",
+    "shiftKey": "Ι"
+  },
+  "KeyO": {
+    "keyCode": 959,
+    "key": "ο",
+    "shiftKey": "Ο"
+  },
+  "KeyP": {
+    "keyCode": 960,
+    "key": "π",
+    "shiftKey": "Π"
+  },
+  "BracketLeft": {
+    "keyCode": 91,
+    "key": "[",
+    "shiftKey": "{"
+  },
+  "BracketRight": {
+    "keyCode": 93,
+    "key": "]",
+    "shiftKey": "}"
+  },
+  "Enter": {
+    "keyCode": 13,
+    "key": ""
+  },
+  "CapsLock": {
+    "keyCode": 20,
+    "key": "CapsLock"
+  },
+  "KeyA": {
+    "keyCode": 945,
+    "key": "α",
+    "shiftKey": "Α"
+  },
+  "KeyS": {
+    "keyCode": 963,
+    "key": "σ",
+    "shiftKey": "Σ"
+  },
+  "KeyD": {
+    "keyCode": 948,
+    "key": "δ",
+    "shiftKey": "Δ"
+  },
+  "KeyF": {
+    "keyCode": 966,
+    "key": "φ",
+    "shiftKey": "Φ"
+  },
+  "KeyG": {
+    "keyCode": 947,
+    "key": "γ",
+    "shiftKey": "Γ"
+  },
+  "KeyH": {
+    "keyCode": 951,
+    "key": "η",
+    "shiftKey": "Η"
+  },
+  "KeyJ": {
+    "keyCode": 958,
+    "key": "ξ",
+    "shiftKey": "Ξ"
+  },
+  "KeyK": {
+    "keyCode": 954,
+    "key": "κ",
+    "shiftKey": "Κ"
+  },
+  "KeyL": {
+    "keyCode": 955,
+    "key": "λ",
+    "shiftKey": "Λ"
+  },
+  "Semicolon": {
+    "keyCode": 900,
+    "key": "΄",
+    "shiftKey": "¨"
+  },
+  "Quote": {
+    "keyCode": 39,
+    "key": "'",
+    "shiftKey": "\""
+  },
+  "Backslash": {
+    "keyCode": 92,
+    "key": "\\",
+    "shiftKey": "|"
+  },
+  "ShiftLeft": {
+    "keyCode": 160,
+    "keyCodeWithoutLocation": 16,
+    "key": "Shift",
+    "location": 1
+  },
+  "IntlBackslash": {
+    "keyCode": 60,
+    "key": "<",
+    "shiftKey": ">"
+  },
+  "KeyZ": {
+    "keyCode": 950,
+    "key": "ζ",
+    "shiftKey": "Ζ"
+  },
+  "KeyX": {
+    "keyCode": 967,
+    "key": "χ",
+    "shiftKey": "Χ"
+  },
+  "KeyC": {
+    "keyCode": 968,
+    "key": "ψ",
+    "shiftKey": "Ψ"
+  },
+  "KeyV": {
+    "keyCode": 969,
+    "key": "ω",
+    "shiftKey": "Ω"
+  },
+  "KeyB": {
+    "keyCode": 946,
+    "key": "β",
+    "shiftKey": "Β"
+  },
+  "KeyN": {
+    "keyCode": 957,
+    "key": "ν",
+    "shiftKey": "Ν"
+  },
+  "KeyM": {
+    "keyCode": 956,
+    "key": "μ",
+    "shiftKey": "Μ"
+  },
+  "Comma": {
+    "keyCode": 44,
+    "key": ",",
+    "shiftKey": "<"
+  },
+  "Period": {
+    "keyCode": 46,
+    "key": ".",
+    "shiftKey": ">"
+  },
+  "Slash": {
+    "keyCode": 47,
+    "key": "/",
+    "shiftKey": "?"
+  },
+  "ShiftRight": {
+    "keyCode": 161,
+    "keyCodeWithoutLocation": 16,
+    "key": "Shift",
+    "location": 2
+  },
+  "ControlLeft": {
+    "keyCode": 162,
+    "keyCodeWithoutLocation": 17,
+    "key": "Control",
+    "location": 1
+  },
+  "MetaLeft": {
+    "keyCode": 91,
+    "key": "Meta",
+    "location": 1
+  },
+  "AltLeft": {
+    "keyCode": 164,
+    "keyCodeWithoutLocation": 18,
+    "key": "Alt",
+    "location": 1
+  },
+  "Space": {
+    "keyCode": 32,
+    "key": " ",
+    "shiftKey": " "
+  },
+  "AltRight": {
+    "keyCode": 165,
+    "keyCodeWithoutLocation": 18,
+    "key": "Alt",
+    "location": 2
+  },
+  "AltGraph": {
+    "keyCode": 225,
+    "key": "AltGraph"
+  },
+  "MetaRight": {
+    "keyCode": 92,
+    "key": "Meta",
+    "location": 2
+  },
+  "ContextMenu": {
+    "keyCode": 93,
+    "key": "ContextMenu"
+  },
+  "ControlRight": {
+    "keyCode": 163,
+    "keyCodeWithoutLocation": 17,
+    "key": "Control",
+    "location": 2
+  },
+  "PrintScreen": {
+    "keyCode": 44,
+    "key": "PrintScreen"
+  },
+  "ScrollLock": {
+    "keyCode": 145,
+    "key": "ScrollLock"
+  },
+  "Pause": {
+    "keyCode": 19,
+    "key": "Pause"
+  },
+  "PageUp": {
+    "keyCode": 33,
+    "key": "PageUp"
+  },
+  "PageDown": {
+    "keyCode": 34,
+    "key": "PageDown"
+  },
+  "Insert": {
+    "keyCode": 45,
+    "key": "Insert"
+  },
+  "Delete": {
+    "keyCode": 46,
+    "key": "Delete"
+  },
+  "Home": {
+    "keyCode": 36,
+    "key": "Home"
+  },
+  "End": {
+    "keyCode": 35,
+    "key": "End"
+  },
+  "ArrowLeft": {
+    "keyCode": 37,
+    "key": "ArrowLeft"
+  },
+  "ArrowUp": {
+    "keyCode": 38,
+    "key": "ArrowUp"
+  },
+  "ArrowRight": {
+    "keyCode": 39,
+    "key": "ArrowRight"
+  },
+  "ArrowDown": {
+    "keyCode": 40,
+    "key": "ArrowDown"
+  },
+  "NumLock": {
+    "keyCode": 144,
+    "key": "NumLock"
+  },
+  "NumpadDivide": {
+    "keyCode": 111,
+    "key": "/",
+    "location": 3
+  },
+  "NumpadMultiply": {
+    "keyCode": 106,
+    "key": "*",
+    "location": 3
+  },
+  "NumpadSubtract": {
+    "keyCode": 109,
+    "key": "-",
+    "location": 3
+  },
+  "Numpad7": {
+    "keyCode": 36,
+    "shiftKeyCode": 103,
+    "key": "Home",
+    "shiftKey": "7",
+    "location": 3
+  },
+  "Numpad8": {
+    "keyCode": 38,
+    "shiftKeyCode": 104,
+    "key": "ArrowUp",
+    "shiftKey": "8",
+    "location": 3
+  },
+  "Numpad9": {
+    "keyCode": 33,
+    "shiftKeyCode": 105,
+    "key": "PageUp",
+    "shiftKey": "9",
+    "location": 3
+  },
+  "Numpad4": {
+    "keyCode": 37,
+    "shiftKeyCode": 100,
+    "key": "ArrowLeft",
+    "shiftKey": "4",
+    "location": 3
+  },
+  "Numpad5": {
+    "keyCode": 12,
+    "shiftKeyCode": 101,
+    "key": "Clear",
+    "shiftKey": "5",
+    "location": 3
+  },
+  "Numpad6": {
+    "keyCode": 39,
+    "shiftKeyCode": 102,
+    "key": "ArrowRight",
+    "shiftKey": "6",
+    "location": 3
+  },
+  "NumpadAdd": {
+    "keyCode": 107,
+    "key": "+",
+    "location": 3
+  },
+  "Numpad1": {
+    "keyCode": 35,
+    "shiftKeyCode": 97,
+    "key": "End",
+    "shiftKey": "1",
+    "location": 3
+  },
+  "Numpad2": {
+    "keyCode": 40,
+    "shiftKeyCode": 98,
+    "key": "ArrowDown",
+    "shiftKey": "2",
+    "location": 3
+  },
+  "Numpad3": {
+    "keyCode": 34,
+    "shiftKeyCode": 99,
+    "key": "PageDown",
+    "shiftKey": "3",
+    "location": 3
+  },
+  "Numpad0": {
+    "keyCode": 45,
+    "shiftKeyCode": 96,
+    "key": "Insert",
+    "shiftKey": "0",
+    "location": 3
+  },
+  "NumpadDecimal": {
+    "keyCode": 46,
+    "shiftKeyCode": 110,
+    "key": "\u0000",
+    "shiftKey": ".",
+    "location": 3
+  },
+  "NumpadEnter": {
+    "keyCode": 13,
+    "key": "Enter",
+    "text": "\r",
+    "location": 3
+  }
+}

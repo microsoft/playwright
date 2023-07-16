@@ -15,11 +15,12 @@
  */
 
 import { assert } from '../utils';
-import * as keyboardLayout from './usKeyboardLayout';
 import type * as types from './types';
 import type { Page } from './page';
+import type { KeyboardLayout } from './keyboards';
+import { keyboardLayouts } from './keyboards';
 
-export const keypadLocation = keyboardLayout.keypadLocation;
+export { keypadLocation } from './keyboards';
 
 type KeyDescription = {
   keyCode: number,
@@ -44,10 +45,17 @@ export class Keyboard {
   private _pressedKeys = new Set<string>();
   private _raw: RawKeyboard;
   private _page: Page;
+  private _keyboardLayout: Map<string, KeyDescription>;
 
   constructor(raw: RawKeyboard, page: Page) {
     this._raw = raw;
     this._page = page;
+    // TODO maybe replace env variable with a browserContext option?
+    this._keyboardLayout = getLayoutClosure(process.env.PW_KEYBOARD_LAYOUT ?? 'us');
+  }
+
+  _testKeyboardLayout(layoutName: string) {
+    this._keyboardLayout = getLayoutClosure(layoutName);
   }
 
   async down(key: string) {
@@ -61,7 +69,7 @@ export class Keyboard {
   }
 
   private _keyDescriptionForString(keyString: string): KeyDescription {
-    let description = usKeyboardLayout.get(keyString);
+    let description = this._keyboardLayout.get(keyString);
     assert(description, `Unknown key: "${keyString}"`);
     const shift = this._pressedModifiers.has('Shift');
     description = shift && description.shifted ? description.shifted : description;
@@ -87,7 +95,7 @@ export class Keyboard {
   async type(text: string, options?: { delay?: number }) {
     const delay = (options && options.delay) || undefined;
     for (const char of text) {
-      if (usKeyboardLayout.has(char)) {
+      if (this._keyboardLayout.has(char)) {
         await this.press(char, { delay });
       } else {
         if (delay)
@@ -241,9 +249,26 @@ const aliases = new Map<string, string[]>([
   ['Enter', ['\n', '\r']],
 ]);
 
-const usKeyboardLayout = buildLayoutClosure(keyboardLayout.USKeyboardLayout);
+const usKeyboardLayout = _buildLayoutClosure(keyboardLayouts.us);
+const cachedLayoutClosures = new Map<string, Map<string, KeyDescription>>(
+    // initialized with us keyboard layout
+    [['us', usKeyboardLayout]]
+);
 
-function buildLayoutClosure(layout: keyboardLayout.KeyboardLayout): Map<string, KeyDescription> {
+function getLayoutClosure(layoutName: string): Map<string, KeyDescription> {
+  const cached = cachedLayoutClosures.get(layoutName);
+  if (cached) return cached;
+
+  const layout = keyboardLayouts[layoutName.toLowerCase()];
+  if (!layout) return usKeyboardLayout;
+
+  const result = _buildLayoutClosure(layout);
+
+  cachedLayoutClosures.set(layoutName, result);
+  return result;
+}
+
+function _buildLayoutClosure(layout: KeyboardLayout): Map<string, KeyDescription> {
   const result = new Map<string, KeyDescription>();
   for (const code in layout) {
     const definition = layout[code];
