@@ -224,7 +224,7 @@ async function process(keyname, keyLocator, virtualKeyCode) {
     key: key || keyname,
     location,
     // for ENTER key
-    text: virtualKeyCode === 13 ? '\n' : undefined,
+    text: virtualKeyCode === 13 ? '\r' : undefined,
   };
 }
 
@@ -266,6 +266,9 @@ async function generate(page, url) {
 
   for (const [keyname, def] of Object.entries(keyboardLayoutGenerator)) {
     if (typeof def === 'string') {
+      // ensure it's a valid key (not empty)
+      if (!(await page.locator(def).textContent())?.trim()) continue;
+
       layout[keyname] = await process(keyname, page.locator(def), locatorToVirtualKeys[def]);
     } else {
       layout[keyname] = def;
