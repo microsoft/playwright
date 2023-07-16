@@ -18,7 +18,7 @@ import { assert } from '../utils';
 import type * as types from './types';
 import type { Page } from './page';
 import type { KeyboardLayout } from './keyboards';
-import { keyboardLayouts } from './keyboards';
+import { defaultKeyboardLayout, defaultKlid, localeMapping } from './keyboards';
 
 export { keypadLocation } from './keyboards';
 
@@ -51,11 +51,11 @@ export class Keyboard {
     this._raw = raw;
     this._page = page;
     // TODO maybe replace env variable with a browserContext option?
-    this._keyboardLayout = getLayoutClosure(process.env.PW_KEYBOARD_LAYOUT ?? 'us');
+    this._keyboardLayout = getByLocale(process.env.PW_KEYBOARD_LAYOUT);
   }
 
   _testKeyboardLayout(layoutName: string) {
-    this._keyboardLayout = getLayoutClosure(layoutName);
+    this._keyboardLayout = getByLocale(layoutName);
   }
 
   async down(key: string) {
@@ -249,23 +249,33 @@ const aliases = new Map<string, string[]>([
   ['Enter', ['\n', '\r']],
 ]);
 
-const usKeyboardLayout = _buildLayoutClosure(keyboardLayouts.us);
-const cachedLayoutClosures = new Map<string, Map<string, KeyDescription>>(
-    // initialized with us keyboard layout
-    [['us', usKeyboardLayout]]
+const defaultKeyboard = _buildLayoutClosure(defaultKeyboardLayout);
+const cache = new Map<string, Map<string, KeyDescription>>(
+    // initialized with the default keyboard layout
+    [[defaultKlid, defaultKeyboard]]
 );
 
-function getLayoutClosure(layoutName: string): Map<string, KeyDescription> {
-  const cached = cachedLayoutClosures.get(layoutName);
+function getByLocale(locale?: string): Map<string, KeyDescription> {
+  if (!locale) return defaultKeyboard;
+
+  const normalizedLocale = normalizeLocale(locale);
+  const klid = localeMapping.get(normalizedLocale);
+  if (!klid) return defaultKeyboard;
+
+  const cached = cache.get(klid);
   if (cached) return cached;
 
-  const layout = keyboardLayouts[layoutName.toLowerCase()];
-  if (!layout) return usKeyboardLayout;
+  const layout: KeyboardLayout = require(`./keyboards/layouts/${klid}.json`);
+  assert(layout, `No layout found for klid ${klid}`);
 
   const result = _buildLayoutClosure(layout);
 
-  cachedLayoutClosures.set(layoutName, result);
+  cache.set(klid, result);
   return result;
+}
+
+function normalizeLocale(locale: string) {
+  return locale.replace(/-/g, '_').toLowerCase();
 }
 
 function _buildLayoutClosure(layout: KeyboardLayout): Map<string, KeyDescription> {
