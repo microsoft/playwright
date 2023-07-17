@@ -210,7 +210,7 @@ test('should not filter dependency by file name', async ({ runInlineTest }) => {
   expect(result.output).toContain('1) [A] › one.spec.ts:3:11 › fails');
 });
 
-test('should not filter dependency by only', async ({ runInlineTest }) => {
+test('should filter dependency by only', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = { projects: [
@@ -235,7 +235,7 @@ test('should not filter dependency by only', async ({ runInlineTest }) => {
     `,
   });
   expect(result.exitCode).toBe(0);
-  expect(result.outputLines).toEqual(['setup in setup', 'setup 2 in setup', 'test in browser']);
+  expect(result.outputLines).toEqual(['setup 2 in setup']);
 });
 
 test('should filter dependency by only when running explicitly', async ({ runInlineTest }) => {
