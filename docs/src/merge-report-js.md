@@ -5,7 +5,7 @@ title: "Merging multiple reports"
 
 ## Introduction
 
-When running tests on multiple shards, each shard will get its own report with the results of the tests from only one shard. In many cases it's more convenient to see all test results from all shards in one report. That can be achieved by producing blob reports on the individual shards and combining them into a single report via playwright cli as the post processing step. At the high level the process consists of the following steps:
+When running tests on multiple shards, each shard will get its own report with the results of the tests from only one shard. In many cases it's more convenient to see all test results from all shards in one report. That can be achieved by producing blob reports on the individual shards and combining them into a single report via playwright CLI as the post processing step. At the high level the process consists of the following steps:
 
 1. Get Playwright to produce `blob` report on every running shard.
 2. Copy all blob reports into a single local directory.
@@ -28,14 +28,14 @@ Blob report contains information about all the tests that were run and their res
 
 ### Copying blob reports
 
- On each machine that is running tests we'll get a blob report under `blob-report` directory. Once all shards finish, contents of all `blob-report` directories should be copied into a single directory. All files inside `blob-report` directory have unique names, so don't worry about possible name collisions when copying the files.
+On each machine that is running tests we'll get a blob report under `blob-report` directory. Once all shards finish, contents of all `blob-report` directories should be copied into a single directory. All files inside `blob-report` directory have unique names, so don't worry about possible name collisions when copying the files.
 
 ### Creating combined report
 
-Once all blob report files have been copied into a directory we can call `npx playwright merge-reports` which will combine the data and create any report you like. Assuming that you copied all blob reports into `all-blob-reports` directory, you can create an html report like this:
+Once all blob report files have been copied into a directory we can call `npx playwright merge-reports` which will combine the data and create any report you like. Assuming that you copied all blob reports into `all-blob-reports` directory, you can create an HTML report like this:
 
 ```sh
 npx playwright merge-reports path/to/all-blob-reports --reporter html
 ```
-This command will put a combined html report inside the `playwright-report` directory. Then you can upload the html report to your artifact storage or publish it somewhere.
+This command will put a combined HTML report inside the `playwright-report` directory. Then you can upload the HTML report to your artifact storage or publish it somewhere.
 
