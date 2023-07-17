@@ -35,7 +35,7 @@ Blob report contains information about all the tests that were run and their res
 Once all blob report files have been copied into a directory we can call `npx playwright merge-reports` which will combine the data and create any report you like. Assuming that you copied all blob reports into `all-blob-reports` directory, you can create an html report like this:
 
 ```sh
-npx playwright merge-reportd --reporter html all-blob-reports
+npx playwright merge-reports path/to/all-blob-reports --reporter html
 ```
 The command will write combined html report into `playwright-report`. You upload the report to your artifact storage 
 
