@@ -28,7 +28,7 @@ Blob report contains information about all the tests that were run and their res
 
 ### Copying blob reports
 
- On each machine running the tests we'll get a blob report under `blob-report` directory. Once the shards finish running the content of all `blob-report` directories needs to be copied into a single directory. All files inside blob-report directory have unique names, so don't worry about possible name collisions when copying the files.
+ On each machine that is running tests we'll get a blob report under `blob-report` directory. Once all shards finish, contents of all `blob-report` directories should be copied into a single directory. All files inside `blob-report` directory have unique names, so don't worry about possible name collisions when copying the files.
 
 ### Creating combined report
 
