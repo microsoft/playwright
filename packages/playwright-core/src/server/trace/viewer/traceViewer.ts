@@ -144,6 +144,7 @@ export async function openTraceViewerApp(traceUrls: string[], browserName: strin
     ignoreDefaultArgs: ['--enable-automation'],
     colorScheme: 'no-override',
     useWebSocket: isUnderTest(),
+    handleSIGINT: false,
   });
 
   const controller = new ProgressController(serverSideCallMetadata(), context._browser);
