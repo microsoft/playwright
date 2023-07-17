@@ -21,3 +21,6 @@
 ./electron/
 ./firefox/
 ./webkit/
+
+[input.ts]
+./keyboards/
