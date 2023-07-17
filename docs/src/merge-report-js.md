@@ -24,7 +24,7 @@ export default defineConfig({
 });
 ```
 
-Blob report contains information about all the tests that were run and their results as well as all test attachments such as traces and screenshot diffs. Blob reports can be merged and can be converted to any other Playwright report.
+Blob report contains information about all the tests that were run and their results as well as all test attachments such as traces and screenshot diffs. Blob reports can be merged and converted to any other Playwright report.
 
 ### Copying blob reports
 
