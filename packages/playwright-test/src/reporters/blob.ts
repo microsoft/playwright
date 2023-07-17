@@ -33,6 +33,7 @@ type BlobReporterOptions = {
 
 export type BlobReportMetadata = {
   projectSuffix?: string;
+  shard?: { total: number, current: number };
 };
 
 export class BlobReporter extends TeleReporterEmitter {
@@ -48,18 +49,19 @@ export class BlobReporter extends TeleReporterEmitter {
     super(message => this._messages.push(message), false);
     this._options = options;
     this._salt = createGuid();
-
-    this._messages.push({
-      method: 'onBlobReportMetadata',
-      params: {
-        projectSuffix: process.env.PWTEST_BLOB_SUFFIX,
-      }
-    });
   }
 
   override onConfigure(config: FullConfig) {
     this._outputDir = path.resolve(this._options.configDir, this._options.outputDir || 'blob-report');
-    this._reportName = this._computeReportName(config);
+    this._reportName = `report-${createGuid()}`;
+    const metadata: BlobReportMetadata = {
+      projectSuffix: process.env.PWTEST_BLOB_SUFFIX,
+      shard: config.shard ? config.shard : undefined,
+    };
+    this._messages.push({
+      method: 'onBlobReportMetadata',
+      params: metadata
+    });
     super.onConfigure(config);
   }
 
@@ -107,15 +109,6 @@ export class BlobReporter extends TeleReporterEmitter {
         path: newPath,
       };
     });
-  }
-
-  private _computeReportName(config: FullConfig) {
-    let shardSuffix = '';
-    if (config.shard) {
-      const paddedNumber = `${config.shard.current}`.padStart(`${config.shard.total}`.length, '0');
-      shardSuffix = `${paddedNumber}-of-${config.shard.total}-`;
-    }
-    return `report-${shardSuffix}${createGuid()}`;
   }
 
   private _startCopyingFile(from: string, to: string) {

@@ -24,6 +24,7 @@ import { TeleReporterReceiver } from '../isomorphic/teleReceiver';
 import { createReporters } from '../runner/reporters';
 import { Multiplexer } from './multiplexer';
 import { ZipFile } from 'playwright-core/lib/utils';
+import type { BlobReportMetadata } from './blob';
 
 export async function createMergedReport(config: FullConfigInternal, dir: string, reporterDescriptions: ReporterDescription[], resolvePaths: boolean) {
   const shardFiles = await sortedShardFiles(dir);
@@ -71,14 +72,32 @@ async function extractReportFromZip(file: string): Promise<Buffer> {
   throw new Error(`Cannot find *.jsonl file in ${file}`);
 }
 
+function findMetadata(events: JsonEvent[], file: string): BlobReportMetadata {
+  if (events[0]?.method !== 'onBlobReportMetadata')
+    throw new Error(`No metadata event found in ${file}`);
+  return events[0].params;
+}
+
 async function mergeEvents(dir: string, shardReportFiles: string[]) {
   const events: JsonEvent[] = [];
   const configureEvents: JsonEvent[] = [];
   const beginEvents: JsonEvent[] = [];
   const endEvents: JsonEvent[] = [];
+  const shardEvents: { metadata: BlobReportMetadata, parsedEvents: JsonEvent[] }[] = [];
   for (const reportFile of shardReportFiles) {
     const reportJsonl = await extractReportFromZip(path.join(dir, reportFile));
     const parsedEvents = parseEvents(reportJsonl);
+    shardEvents.push({
+      metadata: findMetadata(parsedEvents, reportFile),
+      parsedEvents
+    });
+  }
+  shardEvents.sort((a, b) => {
+    const shardA = a.metadata.shard?.current ?? 0;
+    const shardB = b.metadata.shard?.current ?? 0;
+    return shardA - shardB;
+  });
+  for (const { parsedEvents } of shardEvents) {
     for (const event of parsedEvents) {
       if (event.method === 'onConfigure')
         configureEvents.push(event);
