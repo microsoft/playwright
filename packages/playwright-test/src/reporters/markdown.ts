@@ -16,7 +16,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import type { FullResult, TestCase } from '../../types/testReporter';
+import type { FullResult, TestCase, TestError } from '../../types/testReporter';
 import { BaseReporter, formatError, formatTestTitle, stripAnsiEscapes } from './base';
 
 type MarkdownReporterOptions = {
@@ -41,6 +41,8 @@ class MarkdownReporter extends BaseReporter {
     await super.onEnd(result);
     const summary = this.generateSummary();
     const lines: string[] = [];
+    if (summary.fatalErrors.length)
+      lines.push(`**${summary.fatalErrors.length} fatal errors, not part of any test**`);
     if (summary.unexpected.length) {
       lines.push(`**${summary.unexpected.length} failed**`);
       this._printTestList(':x:', summary.unexpected, lines);
@@ -58,9 +60,11 @@ class MarkdownReporter extends BaseReporter {
     lines.push(`:heavy_check_mark::heavy_check_mark::heavy_check_mark:`);
     lines.push(``);
 
-    if (summary.unexpected.length || summary.flaky.length) {
+    if (summary.unexpected.length || summary.fatalErrors.length || summary.flaky.length) {
       lines.push(`<details>`);
       lines.push(``);
+      if (summary.fatalErrors.length)
+        this._printFatalErrorDetails(summary.fatalErrors, lines);
       if (summary.unexpected.length)
         this._printTestListDetails(':x:', summary.unexpected, lines);
       if (summary.flaky.length)
@@ -93,7 +97,7 @@ class MarkdownReporter extends BaseReporter {
       if (retry)
         lines.push(`<b>Retry ${retry}:</b>`);
       retry++;
-      if (result.error?.snippet) {
+      if (result.error) {
         lines.push(``);
         lines.push('```');
         lines.push(stripAnsiEscapes(formatError(result.error, false).message));
@@ -103,8 +107,18 @@ class MarkdownReporter extends BaseReporter {
     }
     lines.push(``);
   }
+
+  private _printFatalErrorDetails(errors: TestError[], lines: string[]) {
+    for (const error of errors) {
+      lines.push(`:x: <b>fatal error, not part of any test</b>`);
+      lines.push(``);
+      lines.push('```');
+      lines.push(stripAnsiEscapes(formatError(error, false).message));
+      lines.push('```');
+      lines.push(``);
+    }
+    lines.push(``);
+  }
 }
 
-
 export default MarkdownReporter;
-

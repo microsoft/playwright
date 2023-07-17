@@ -115,3 +115,78 @@ test('custom report file', async ({ runInlineTest }) => {
 :heavy_check_mark::heavy_check_mark::heavy_check_mark:
 `);
 });
+
+test('report error without snippet', async ({ runInlineTest }) => {
+  const files = {
+    'playwright.config.ts': `
+      module.exports = {
+        retries: 1,
+        reporter: 'markdown',
+      };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('math 1', async ({}) => {
+        const e = new Error('My error');
+        e.stack = null;
+        throw e;
+      });
+    `,
+  };
+
+  await runInlineTest(files);
+  const reportFile = await fs.promises.readFile(test.info().outputPath('report.md'));
+  expect(reportFile.toString()).toContain(`**1 failed**
+:x: a.test.js:3:11 › math 1
+
+**0 passed**
+:heavy_check_mark::heavy_check_mark::heavy_check_mark:
+
+<details>
+
+:x: <b> a.test.js:3:11 › math 1 </b>
+`);
+  expect(reportFile.toString()).toContain(`Error: My error`);
+});
+
+test('report with worker error', async ({ runInlineTest }) => {
+  const files = {
+    'playwright.config.ts': `
+      module.exports = {
+        retries: 1,
+        reporter: 'markdown',
+      };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      throw new Error('My error 1');
+    `,
+    'b.test.js': `
+      import { test, expect } from '@playwright/test';
+      throw new Error('My error 2');
+    `,
+  };
+
+  const { exitCode } = await runInlineTest(files);
+  expect(exitCode).toBe(1);
+  const reportFile = await fs.promises.readFile(test.info().outputPath('report.md'));
+  expect(reportFile.toString()).toContain(`**3 fatal errors, not part of any test**
+**0 passed**
+:heavy_check_mark::heavy_check_mark::heavy_check_mark:
+
+<details>
+
+:x: <b>fatal error, not part of any test</b>
+`);
+  expect(reportFile.toString()).toContain(`Error: My error 1
+
+   at a.test.js:3
+
+  1 |
+  2 |       import { test, expect } from '@playwright/test';
+> 3 |       throw new Error('My error 1');
+    |             ^
+  4 |     
+`);
+  expect(reportFile.toString()).toContain(`Error: No tests found`);
+});
