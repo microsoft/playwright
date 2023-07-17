@@ -979,6 +979,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
   recordHar?: RecordHarOptions,
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
+  keyboardLayout?: string,
   userDataDir: string,
   slowMo?: number,
 };
@@ -1050,6 +1051,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   recordHar?: RecordHarOptions,
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
+  keyboardLayout?: string,
   slowMo?: number,
 };
 export type BrowserTypeLaunchPersistentContextResult = {
@@ -1152,6 +1154,7 @@ export type BrowserNewContextParams = {
   recordHar?: RecordHarOptions,
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
+  keyboardLayout?: string,
   proxy?: {
     server: string,
     bypass?: string,
@@ -1210,6 +1213,7 @@ export type BrowserNewContextOptions = {
   recordHar?: RecordHarOptions,
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
+  keyboardLayout?: string,
   proxy?: {
     server: string,
     bypass?: string,
@@ -1271,6 +1275,7 @@ export type BrowserNewContextForReuseParams = {
   recordHar?: RecordHarOptions,
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
+  keyboardLayout?: string,
   proxy?: {
     server: string,
     bypass?: string,
@@ -1329,6 +1334,7 @@ export type BrowserNewContextForReuseOptions = {
   recordHar?: RecordHarOptions,
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
+  keyboardLayout?: string,
   proxy?: {
     server: string,
     bypass?: string,
@@ -1759,6 +1765,7 @@ export interface PageChannel extends PageEventTarget, EventTargetChannel {
   keyboardInsertText(params: PageKeyboardInsertTextParams, metadata?: CallMetadata): Promise<PageKeyboardInsertTextResult>;
   keyboardType(params: PageKeyboardTypeParams, metadata?: CallMetadata): Promise<PageKeyboardTypeResult>;
   keyboardPress(params: PageKeyboardPressParams, metadata?: CallMetadata): Promise<PageKeyboardPressResult>;
+  keyboardChangeLayout(params: PageKeyboardChangeLayoutParams, metadata?: CallMetadata): Promise<PageKeyboardChangeLayoutResult>;
   mouseMove(params: PageMouseMoveParams, metadata?: CallMetadata): Promise<PageMouseMoveResult>;
   mouseDown(params: PageMouseDownParams, metadata?: CallMetadata): Promise<PageMouseDownResult>;
   mouseUp(params: PageMouseUpParams, metadata?: CallMetadata): Promise<PageMouseUpResult>;
@@ -2050,6 +2057,13 @@ export type PageKeyboardPressOptions = {
   delay?: number,
 };
 export type PageKeyboardPressResult = void;
+export type PageKeyboardChangeLayoutParams = {
+  layoutName: string,
+};
+export type PageKeyboardChangeLayoutOptions = {
+
+};
+export type PageKeyboardChangeLayoutResult = void;
 export type PageMouseMoveParams = {
   x: number,
   y: number,
@@ -4017,6 +4031,7 @@ export type ElectronLaunchParams = {
   strictSelectors?: boolean,
   timezoneId?: string,
   tracesDir?: string,
+  keyboardLayout?: string,
 };
 export type ElectronLaunchOptions = {
   executablePath?: string,
@@ -4052,6 +4067,7 @@ export type ElectronLaunchOptions = {
   strictSelectors?: boolean,
   timezoneId?: string,
   tracesDir?: string,
+  keyboardLayout?: string,
 };
 export type ElectronLaunchResult = {
   electronApplication: ElectronApplicationChannel,
@@ -4427,6 +4443,7 @@ export type AndroidDeviceLaunchBrowserParams = {
   recordHar?: RecordHarOptions,
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
+  keyboardLayout?: string,
   pkg?: string,
   args?: string[],
   proxy?: {
@@ -4483,6 +4500,7 @@ export type AndroidDeviceLaunchBrowserOptions = {
   recordHar?: RecordHarOptions,
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
+  keyboardLayout?: string,
   pkg?: string,
   args?: string[],
   proxy?: {

@@ -50,11 +50,10 @@ export class Keyboard {
   constructor(raw: RawKeyboard, page: Page) {
     this._raw = raw;
     this._page = page;
-    // TODO maybe replace env variable with a browserContext option?
-    this._keyboardLayout = getByLocale(process.env.PW_KEYBOARD_LAYOUT);
+    this._keyboardLayout = getByLocale(page._browserContext._options.keyboardLayout);
   }
 
-  _testKeyboardLayout(layoutName: string) {
+  changeLayout(layoutName: string) {
     this._keyboardLayout = getByLocale(layoutName);
   }
 

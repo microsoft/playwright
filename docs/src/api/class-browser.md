@@ -259,6 +259,9 @@ await browser.CloseAsync();
 ### option: Browser.newContext.storageStatePath = %%-csharp-java-context-option-storage-state-path-%%
 * since: v1.9
 
+### option: Browser.newContext.keyboardLayout = %%-context-option-keyboard-layout-%%
+* since: v1.**
+
 ## async method: Browser.newPage
 * since: v1.8
 - returns: <[Page]>
@@ -283,6 +286,9 @@ testing frameworks should explicitly create [`method: Browser.newContext`] follo
 
 ### option: Browser.newPage.storageStatePath = %%-csharp-java-context-option-storage-state-path-%%
 * since: v1.9
+
+### option: Browser.newPage.keyboardLayout = %%-context-option-keyboard-layout-%%
+* since: v1.**
 
 ## async method: Browser.startTracing
 * since: v1.11

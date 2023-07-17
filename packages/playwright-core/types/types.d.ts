@@ -12864,6 +12864,11 @@ export interface BrowserType<Unused = {}> {
     javaScriptEnabled?: boolean;
 
     /**
+     * Keyboard layout.
+     */
+    keyboardLayout?: string;
+
+    /**
      * Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value,
      * `Accept-Language` request header value as well as number and date formatting rules. Defaults to the system default
      * locale. Learn more about emulation in our [emulation guide](https://playwright.dev/docs/emulation#locale--timezone).
@@ -14273,6 +14278,11 @@ export interface AndroidDevice {
      * [disabling JavaScript](https://playwright.dev/docs/emulation#javascript-enabled).
      */
     javaScriptEnabled?: boolean;
+
+    /**
+     * Keyboard layout.
+     */
+    keyboardLayout?: string;
 
     /**
      * Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value,
@@ -16150,6 +16160,11 @@ export interface Browser extends EventEmitter {
     javaScriptEnabled?: boolean;
 
     /**
+     * Keyboard layout.
+     */
+    keyboardLayout?: string;
+
+    /**
      * Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value,
      * `Accept-Language` request header value as well as number and date formatting rules. Defaults to the system default
      * locale. Learn more about emulation in our [emulation guide](https://playwright.dev/docs/emulation#locale--timezone).
@@ -17027,6 +17042,11 @@ export interface Electron {
     ignoreHTTPSErrors?: boolean;
 
     /**
+     * Keyboard layout.
+     */
+    keyboardLayout?: string;
+
+    /**
      * Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value,
      * `Accept-Language` request header value as well as number and date formatting rules. Defaults to the system default
      * locale. Learn more about emulation in our [emulation guide](https://playwright.dev/docs/emulation#locale--timezone).
@@ -17670,6 +17690,12 @@ export interface FrameLocator {
  *
  */
 export interface Keyboard {
+  /**
+   * Changes keyboard layout.
+   * @param layoutName
+   */
+  changeLayout(layoutName: string): Promise<void>;
+
   /**
    * Dispatches a `keydown` event.
    *
@@ -19355,6 +19381,11 @@ export interface BrowserContextOptions {
    * [disabling JavaScript](https://playwright.dev/docs/emulation#javascript-enabled).
    */
   javaScriptEnabled?: boolean;
+
+  /**
+   * Keyboard layout.
+   */
+  keyboardLayout?: string;
 
   /**
    * Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value,

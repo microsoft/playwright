@@ -19,7 +19,7 @@ import { test as it, expect } from './pageTest';
 
 it.describe(`greek keyboard layout`, () => {
   it.beforeEach(async ({ page, server, toImpl }) => {
-    toImpl(page).keyboard._testKeyboardLayout('el-GR');
+    await page.keyboard.changeLayout('el-GR');
     await page.goto(server.PREFIX + '/input/keyboard.html');
   });
 
@@ -61,7 +61,7 @@ it.describe(`greek keyboard layout`, () => {
 
 it.describe(`portuguese keyboard layout`, () => {
   it.beforeEach(async ({ page, server, toImpl }) => {
-    toImpl(page).keyboard._testKeyboardLayout('pt-PT');
+    await page.keyboard.changeLayout('pt-PT');
     await page.goto(server.PREFIX + '/input/keyboard.html');
   });
 
@@ -86,7 +86,7 @@ it.describe(`portuguese keyboard layout`, () => {
 
 it.describe(`us keyboard layout`, () => {
   it.beforeEach(async ({ page, server, toImpl }) => {
-    toImpl(page).keyboard._testKeyboardLayout('en-US');
+    await page.keyboard.changeLayout('en-US');
     await page.goto(server.PREFIX + '/input/keyboard.html');
   });
 
@@ -100,7 +100,7 @@ it.describe(`us keyboard layout`, () => {
 });
 
 it(`should fallback to us on invalid layout format`, async ({ page, toImpl, server }) => {
-  toImpl(page).keyboard._testKeyboardLayout('invalid');
+  await page.keyboard.changeLayout('invalid');
   await page.goto(server.PREFIX + '/input/keyboard.html');
   await page.keyboard.press('Backquote');
   expect(await page.evaluate('getResult()')).toBe(
@@ -350,7 +350,7 @@ const testData = {
 
 for (const [locale, { key, keyCode }] of Object.entries(testData)) {
   it(`should fire events on KeyA for ${locale} locale`, async ({ page, server, toImpl }) => {
-    toImpl(page).keyboard._testKeyboardLayout(locale);
+    await page.keyboard.changeLayout(locale);
     await page.goto(server.PREFIX + '/input/keyboard.html');
 
     await page.keyboard.press('KeyA');

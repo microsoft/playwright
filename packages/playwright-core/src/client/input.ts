@@ -45,6 +45,10 @@ export class Keyboard implements api.Keyboard {
   async press(key: string, options: channels.PageKeyboardPressOptions = {}) {
     await this._page._channel.keyboardPress({ key, ...options });
   }
+
+  async changeLayout(layoutName: string): Promise<void> {
+    await this._page._channel.keyboardChangeLayout({ layoutName });
+  }
 }
 
 export class Mouse implements api.Mouse {

@@ -149,6 +149,9 @@ Optional package name to launch instead of default Chrome for Android.
 ### option: AndroidDevice.launchBrowser.args = %%-browser-option-args-%%
 * since: v1.29
 
+### option: AndroidDevice.launchBrowser.keyboardLayout = %%-context-option-keyboard-layout-%%
+* since: v1.**
+
 ## async method: AndroidDevice.longTap
 * since: v1.9
 

@@ -374,3 +374,12 @@ Dispatches a `keyup` event.
 - `key` <[string]>
 
 Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
+
+## async method: Keyboard.changeLayout
+* since: v1.**
+
+Changes keyboard layout.
+
+### param: Keyboard.changeLayout.layoutName
+* since: v1.**
+- `layoutName` <[string]>

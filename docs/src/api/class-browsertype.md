@@ -337,6 +337,9 @@ use a temporary directory instead.
 ### option: BrowserType.launchPersistentContext.-inline- = %%-shared-context-params-list-v1.8-%%
 * since: v1.8
 
+### option: BrowserType.launchPersistentContext.keyboardLayout = %%-context-option-keyboard-layout-%%
+* since: v1.**
+
 ## async method: BrowserType.launchServer
 * since: v1.8
 * langs: js

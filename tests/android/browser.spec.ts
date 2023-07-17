@@ -155,3 +155,14 @@ test('should be able to pass context options', async ({ androidDevice, httpsServ
   expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(false);
   await context.close();
 });
+
+test('should set keyboard layout on android', async function({ androidDevice, server }) {
+  const context = await androidDevice.launchBrowser({ keyboardLayout: 'el-GR' });
+  const [page] = context.pages();
+  await page.goto(server.PREFIX + '/input/keyboard.html');
+  await page.keyboard.press('α');
+  expect(await page.evaluate('getResult()')).toBe(
+      ['Keydown: α KeyA 65 []',
+        'Keypress: α KeyA 945 945 []',
+        'Keyup: α KeyA 65 []'].join('\n'));
+});

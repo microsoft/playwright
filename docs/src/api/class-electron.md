@@ -145,3 +145,6 @@ Maximum time in milliseconds to wait for the application to start. Defaults to `
 
 ### option: Electron.launch.tracesDir = %%-browser-option-tracesdir-%%
 * since: v1.36
+
+### option: Electron.launch.keyboardLayout = %%-context-option-keyboard-layout-%%
+* since: v1.**

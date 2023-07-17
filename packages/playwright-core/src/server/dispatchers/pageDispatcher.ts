@@ -232,6 +232,10 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     await this._page.keyboard.press(params.key, params);
   }
 
+  async keyboardChangeLayout(params: channels.PageKeyboardChangeLayoutParams, metadata?: CallMetadata): Promise<void> {
+    this._page.keyboard.changeLayout(params.layoutName);
+  }
+
   async mouseMove(params: channels.PageMouseMoveParams, metadata: CallMetadata): Promise<void> {
     await this._page.mouse.move(params.x, params.y, params);
   }

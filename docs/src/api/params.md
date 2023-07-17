@@ -734,6 +734,10 @@ Whether to allow sites to register Service workers. Defaults to `'allow'`.
 * `'allow'`: [Service Workers](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API) can be registered.
 * `'block'`: Playwright will block all registration of Service Workers.
 
+## context-option-keyboard-layout
+- `keyboardLayout` <[string]>
+
+Keyboard layout.
 
 ## select-options-values
 * langs: java, js, csharp
