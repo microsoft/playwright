@@ -42,7 +42,7 @@ const keyboardLayout: KeyboardLayout = {
   Digit4: { key: 'ձ', keyCode: 52, shiftKey: 'Ձ' },
   Digit5: { key: 'ջ', keyCode: 53, shiftKey: 'Ջ' },
   Digit6: { key: 'ւ', keyCode: 54, shiftKey: 'Ւ' },
-  Digit7: { key: 'և', keyCode: 55 },
+  Digit7: { key: 'և', keyCode: 55, shiftKey: 'և' },
   Digit8: { key: 'ր', keyCode: 56, shiftKey: 'Ր' },
   Digit9: { key: 'չ', keyCode: 57, shiftKey: 'Չ' },
   Digit0: { key: 'ճ', keyCode: 48, shiftKey: 'Ճ' },

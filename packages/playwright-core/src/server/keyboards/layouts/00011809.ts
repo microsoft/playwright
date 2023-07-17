@@ -35,7 +35,7 @@ const keyboardLayout: KeyboardLayout = {
   F10: { key: 'F10', keyCode: 121 },
   F11: { key: 'F11', keyCode: 122 },
   F12: { key: 'F12', keyCode: 123 },
-  Backquote: { key: '`', keyCode: 223 },
+  Backquote: { key: '`', keyCode: 223, shiftKey: '`' },
   Digit1: { key: '1', keyCode: 49, shiftKey: '!' },
   Digit2: { key: '2', keyCode: 50, shiftKey: '"' },
   Digit3: { key: '3', keyCode: 51, shiftKey: '£' },

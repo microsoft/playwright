@@ -15,8 +15,8 @@
  */
 
 export type KeyDefinition = {
-  key: string;
-  keyCode: number;
+  key?: string;
+  keyCode?: number;
   keyCodeWithoutLocation?: number;
   shiftKey?: string;
   shiftKeyCode?: number;

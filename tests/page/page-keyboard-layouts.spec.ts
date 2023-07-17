@@ -353,7 +353,7 @@ for (const [locale, { key, keyCode }] of Object.entries(testData)) {
     toImpl(page).keyboard._testKeyboardLayout(locale);
     await page.goto(server.PREFIX + '/input/keyboard.html');
 
-    await page.keyboard.press(key);
+    await page.keyboard.press('KeyA');
     const charCode = key.charCodeAt(0);
     expect(await page.evaluate('getResult()')).toBe(
         [`Keydown: ${key} KeyA ${keyCode} []`,

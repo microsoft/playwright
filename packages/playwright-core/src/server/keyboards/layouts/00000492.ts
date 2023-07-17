@@ -51,7 +51,7 @@ const keyboardLayout: KeyboardLayout = {
   Backspace: { key: 'Backspace', keyCode: 8 },
   Tab: { key: 'Tab', keyCode: 9 },
   KeyQ: { key: 'ق', keyCode: 81, shiftKey: '`' },
-  KeyW: { key: 'و', keyCode: 87 },
+  KeyW: { key: 'و', keyCode: 87, shiftKey: 'و' },
   KeyE: { key: 'ە', keyCode: 69, shiftKey: 'ي' },
   KeyR: { key: 'ر', keyCode: 82, shiftKey: 'ڕ' },
   KeyT: { key: 'ت', keyCode: 84, shiftKey: 'ط' },

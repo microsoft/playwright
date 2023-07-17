@@ -61,7 +61,7 @@ const keyboardLayout: KeyboardLayout = {
   KeyO: { key: 'ў', keyCode: 79, shiftKey: 'Ў' },
   KeyP: { key: 'з', keyCode: 80, shiftKey: 'З' },
   BracketLeft: { key: 'х', keyCode: 219, shiftKey: 'Х' },
-  BracketRight: { key: '\'', keyCode: 221 },
+  BracketRight: { key: '\'', keyCode: 221, shiftKey: '\'' },
   Enter: { key: 'Enter', keyCode: 13, text: '\r' },
   CapsLock: { key: 'CapsLock', keyCode: 20 },
   KeyA: { key: 'ф', keyCode: 65, shiftKey: 'Ф' },

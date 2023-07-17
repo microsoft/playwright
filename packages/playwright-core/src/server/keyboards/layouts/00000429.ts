@@ -53,7 +53,7 @@ const keyboardLayout: KeyboardLayout = {
   KeyQ: { key: 'ض', keyCode: 81, shiftKey: 'ً' },
   KeyW: { key: 'ص', keyCode: 87, shiftKey: 'ٌ' },
   KeyE: { key: 'ث', keyCode: 69, shiftKey: 'ٍ' },
-  KeyR: { key: 'ق', keyCode: 82 },
+  KeyR: { key: 'ق', keyCode: 82, shiftKey: 'ر' },
   KeyT: { key: 'ف', keyCode: 84, shiftKey: '،' },
   KeyY: { key: 'غ', keyCode: 89, shiftKey: '؛' },
   KeyU: { key: 'ع', keyCode: 85, shiftKey: ',' },

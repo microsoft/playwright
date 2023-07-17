@@ -72,7 +72,7 @@ const keyboardLayout: KeyboardLayout = {
   KeyH: { key: 'ى', keyCode: 72, shiftKey: 'خ' },
   KeyJ: { key: 'ق', keyCode: 74, shiftKey: 'ج' },
   KeyK: { key: 'ك', keyCode: 75, shiftKey: 'ۆ' },
-  KeyL: { key: 'ل', keyCode: 76 },
+  KeyL: { key: 'ل', keyCode: 76, shiftKey: 'ل' },
   Semicolon: { key: '؛', keyCode: 186, shiftKey: ':' },
   Quote: { key: '\'', keyCode: 222, shiftKey: '"' },
   Backslash: { key: '\\', keyCode: 220, shiftKey: '|' },

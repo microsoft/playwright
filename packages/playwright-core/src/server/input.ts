@@ -290,7 +290,7 @@ function _buildLayoutClosure(layout: KeyboardLayout): Map<string, KeyDescription
       text: definition.text || '',
       location: definition.location || 0,
     };
-    if (definition.key.length === 1)
+    if (definition.key?.length === 1)
       description.text = description.key;
 
     // Generate shifted definition.
