@@ -1,5 +1,5 @@
 ---
-id: mock
+id: test-merge-report
 title: "Merging multiple reports"
 ---
 
