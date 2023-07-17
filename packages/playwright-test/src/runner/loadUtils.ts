@@ -144,6 +144,18 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
     }
   }
 
+  if (shouldFilterOnly) {
+    // Create a fake root to execute the exclusive semantics across the projects.
+    const filteredRoot = new Suite('', 'root');
+    for (const filteredProjectSuite of filteredProjectSuites.values())
+      filteredRoot._addSuite(filteredProjectSuite);
+    filterOnly(filteredRoot);
+    for (const [project, filteredProjectSuite] of filteredProjectSuites) {
+      if (!filteredRoot.suites.includes(filteredProjectSuite))
+        filteredProjectSuites.delete(project);
+    }
+  }
+
   // Add post-filtered top-level projects to the root suite for sharding and 'only' processing.
   const projectClosure = buildProjectsClosure([...filteredProjectSuites.keys()], project => filteredProjectSuites.get(project)!._hasTests());
   for (const [project, type] of projectClosure) {
@@ -161,10 +173,6 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
       errors.push(...createForbidOnlyErrors(onlyTestsAndSuites, config.configCLIOverrides.forbidOnly, configFilePath));
     }
   }
-
-  // Filter only for top-level projects.
-  if (shouldFilterOnly)
-    filterOnly(rootSuite);
 
   // Shard only the top-level projects.
   if (config.config.shard) {
