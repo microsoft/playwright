@@ -41,9 +41,8 @@ class MarkdownReporter extends BaseReporter {
     await super.onEnd(result);
     const summary = this.generateSummary();
     const lines: string[] = [];
-    if (summary.fatalErrors.length) {
+    if (summary.fatalErrors.length)
       lines.push(`**${summary.fatalErrors.length} fatal errors, not part of any test**`);
-    }
     if (summary.unexpected.length) {
       lines.push(`**${summary.unexpected.length} failed**`);
       this._printTestList(':x:', summary.unexpected, lines);
