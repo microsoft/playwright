@@ -9,7 +9,7 @@ When running tests on multiple shards, each shard will get its own report with t
 
 1. Get Playwright to produce `blob` report on every running shard.
 2. Copy all blob reports into a single local directory.
-3. Run `npx playwright merge-reports` on the blob reports data to generate combined html (or any other) report.
+3. Run `npx playwright merge-reports` on the blob reports data to generate combined HTML (or any other) report.
 
 In the following sections we consider details of each step.
 
