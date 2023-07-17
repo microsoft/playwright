@@ -60,15 +60,13 @@ class MarkdownReporter extends BaseReporter {
     lines.push(`:heavy_check_mark::heavy_check_mark::heavy_check_mark:`);
     lines.push(``);
 
-    if (summary.unexpected.length || summary.fatalErrors.length || summary.flaky.length) {
+    if (summary.unexpected.length || summary.fatalErrors.length) {
       lines.push(`<details>`);
       lines.push(``);
       if (summary.fatalErrors.length)
         this._printFatalErrorDetails(summary.fatalErrors, lines);
       if (summary.unexpected.length)
         this._printTestListDetails(':x:', summary.unexpected, lines);
-      if (summary.flaky.length)
-        this._printTestListDetails(':warning:', summary.flaky, lines);
       lines.push(`</details>`);
     }
 
