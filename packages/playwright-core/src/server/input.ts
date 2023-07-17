@@ -265,7 +265,7 @@ function getByLocale(locale?: string): Map<string, KeyDescription> {
   const cached = cache.get(klid);
   if (cached) return cached;
 
-  const layout: KeyboardLayout = require(`./keyboards/layouts/${klid}.json`);
+  const layout: KeyboardLayout = require(`./keyboards/layouts/${klid}`).default;
   assert(layout, `No layout found for klid ${klid}`);
 
   const result = _buildLayoutClosure(layout);

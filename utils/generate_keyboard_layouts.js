@@ -395,6 +395,34 @@ async function generate(page, url) {
   return layout;
 }
 
+/** @param {string | undefined} str */
+function fixQuotes(str) {
+  if (str === undefined || str === null) return;
+  const [, strBody] = /^"(.*)"$/.exec(JSON.stringify(str)) ?? [];
+  return strBody?.replace(/'/g, `\\'`).replace(/\\"/g, '"');
+}
+
+/** @param {KeyDefinition} def */
+function stringifyKeyDefinition(def) {
+  const escaped = {
+    ...def,
+    key: fixQuotes(def.key),
+    shiftKey: fixQuotes(def.shiftKey),
+    text: fixQuotes(def.text),
+  };
+  /** @type {string[]} */
+  const propStrs = [];
+  propStrs.push(`key: '${escaped.key}'`);
+  propStrs.push(`keyCode: ${escaped.keyCode}`);
+  if (escaped.keyCodeWithoutLocation !== undefined) propStrs.push(`keyCodeWithoutLocation: ${escaped.keyCodeWithoutLocation}`);
+  if (escaped.shiftKey !== undefined) propStrs.push(`shiftKey: '${escaped.shiftKey}'`);
+  if (escaped.shiftKeyCode !== undefined) propStrs.push(`shiftKeyCode: ${escaped.shiftKeyCode}`);
+  if (escaped.text !== undefined) propStrs.push(`text: '${escaped.text}'`);
+  if (escaped.location !== undefined) propStrs.push(`location: ${escaped.location}`);
+
+  return `{ ${propStrs.join(', ')} }`;
+}
+
 const keyboardsDir = path.resolve(__dirname, '../packages/playwright-core/src/server/keyboards');
 
 (async () => {
@@ -403,8 +431,21 @@ const keyboardsDir = path.resolve(__dirname, '../packages/playwright-core/src/se
 
   for (const [klid, { layoutName }] of Object.entries(layoutUrls)) {
     console.log(`Generating keyboard layout for ${layoutName} (KLID ${klid})`);
-    const layoutData = await generate(page, `https://kbdlayout.info/${klid}`);
-    fs.writeFileSync(path.resolve(keyboardsDir, 'layouts', `${klid}.json`), JSON.stringify(layoutData, undefined, 2), 'utf-8');
+    const layout = await generate(page, `https://kbdlayout.info/${klid}`);
+
+    const layoutData = [
+      copyrightHeader,
+      `import type { KeyboardLayout } from '../types';`,
+      ``,
+      `// KLID ${klid} - ${layoutName}`,
+      `const keyboardLayout: KeyboardLayout = {`,
+      ...Object.entries(layout).map(([keyName, def]) => `  ${keyName}: ${stringifyKeyDefinition(def)},`),
+      `};`,
+      ``,
+      `export default keyboardLayout;`,
+    ].join('\n');
+
+    fs.writeFileSync(path.resolve(keyboardsDir, 'layouts', `${klid}.ts`), layoutData, 'utf-8');
   }
 
   const mapEntries = Object.entries(layoutUrls)
@@ -412,10 +453,11 @@ const keyboardsDir = path.resolve(__dirname, '../packages/playwright-core/src/se
 
   const index = [
     copyrightHeader,
-    `import defaultKeyboardLayoutJson from './layouts/${defaultKlid}.json';`,
+    `import defaultKeyboardLayoutObject from './layouts/${defaultKlid}';`,
     typeDefs,
+    `export type * from './types';`,
     `export const defaultKlid = '${defaultKlid}';`,
-    `export const defaultKeyboardLayout = defaultKeyboardLayoutJson;`,
+    `export const defaultKeyboardLayout: KeyboardLayout = defaultKeyboardLayoutObject;`,
     ``,
     `export const localeMapping = new Map<string, string>([`,
     ...mapEntries,
