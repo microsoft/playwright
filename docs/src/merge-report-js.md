@@ -37,5 +37,5 @@ Once all blob report files have been copied into a directory we can call `npx pl
 ```sh
 npx playwright merge-reports path/to/all-blob-reports --reporter html
 ```
-The command will write combined html report into `playwright-report`. You upload the report to your artifact storage 
+This command will put a combined html report inside the `playwright-report` directory. Then you can upload the html report to your artifact storage or publish it somewhere.
 
