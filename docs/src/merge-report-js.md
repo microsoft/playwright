@@ -5,7 +5,7 @@ title: "Merging multiple reports"
 
 ## Introduction
 
-When running tests on multiple shards, each shard will get its own report with the results of the tests from only one shard. In many cases it's more convenient to see all tests results from all shards in one report. That can be achieved by producing blob reports on the individual shards and combining them into a single report via playwright cli as the post processing step. At the high level the process consists of the following steps:
+When running tests on multiple shards, each shard will get its own report with the results of the tests from only one shard. In many cases it's more convenient to see all test results from all shards in one report. That can be achieved by producing blob reports on the individual shards and combining them into a single report via playwright cli as the post processing step. At the high level the process consists of the following steps:
 
 1. Get Playwright to produce `blob` report on every running shard.
 2. Copy all blob reports into a single local directory.
