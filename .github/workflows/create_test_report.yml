@@ -93,7 +93,7 @@ jobs:
             return;
           }
           const reportDir = 'run-${{ github.event.workflow_run.id }}-${{ github.event.workflow_run.run_attempt }}-${{ github.sha }}';
-          const reportUrl = `https://mspwblobreport.z1.web.core.windows.net/${reportDir}/index.html`;
+          const reportUrl = `https://mspwblobreport.z1.web.core.windows.net/${reportDir}/index.html#?q=s%3Afailed%20s%3Aflaky`;
           core.notice('Report url: ' + reportUrl);
           const mergeWorkflowUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
           const reportMd = await fs.promises.readFile('report.md', 'utf8');
@@ -103,7 +103,7 @@ jobs:
             body: [
               `### [Test results](${reportUrl}) for "${{ github.event.workflow_run.name }}"`,
               reportMd,
-              '---',
+              '',
               `Merge [workflow run](${mergeWorkflowUrl}).`
             ].join('\n'),
           });
@@ -117,11 +117,11 @@ jobs:
             conclusion: 'success',
             details_url: reportUrl,
             output: {
-              title: '[Test results](${reportUrl}) for "${{ github.event.workflow_run.name }}"',
+              title: 'Test results for "${{ github.event.workflow_run.name }}"',
               summary: [
                 reportMd,
                 '---',
-                `Merge [workflow run](${mergeWorkflowUrl}).`
+                `Full [HTML report](${reportUrl}). Merge [workflow run](${mergeWorkflowUrl}).`
               ].join('\n'),
             }
           });
