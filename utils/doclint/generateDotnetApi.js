@@ -341,7 +341,7 @@ function renderMember(member, parent, options, out) {
         out.push(`${member.required ? '[Required]\n' : ''}[JsonPropertyName("${jsonName}")]`);
       if (member.deprecated)
         out.push(`[System.Obsolete]`);
-      if (!type.endsWith('?') && !member.required)
+      if (!type.endsWith('?') && !member.required && member.nullable)
         type = `${type}?`;
       const requiredSuffix = type.endsWith('?') ? '' : ' = default!;';
       if (member.clazz)
@@ -705,7 +705,7 @@ function renderMethod(member, parent, name, options, out) {
  *  @param {boolean=} optional
  *  @returns {string}
  */
-function translateType(type, parent, generateNameCallback = t => t.name, optional = false, isReturnType = false) {
+function translateType(type, parent, generateNameCallback = t => t.name, optional = false, isReturnType = false, nullable = true) {
   // a few special cases we can fix automatically
   if (type.expression === '[null]|[Error]')
     return 'void';
@@ -728,7 +728,7 @@ function translateType(type, parent, generateNameCallback = t => t.name, optiona
     // Regular primitive enums are named in the markdown.
     if (type.name) {
       enumTypes.set(type.name, type.union.map(t => t.name));
-      return optional ? type.name + '?' : type.name;
+      return `${type.name}${optional && nullable ? '?' : ''}`;
     }
     return null;
   }
@@ -765,7 +765,7 @@ function translateType(type, parent, generateNameCallback = t => t.name, optiona
     else if (type.name === 'Object')
       registerModelType(objectName, type);
 
-    return `${objectName}${optional ? '?' : ''}`;
+    return `${objectName}${optional && nullable ? '?' : ''}`;
   }
 
   if (type.name === 'Map') {
@@ -817,7 +817,7 @@ function translateType(type, parent, generateNameCallback = t => t.name, optiona
   // there's a chance this is a name we've already seen before, so check
   // this is also where we map known types, like boolean -> bool, etc.
   const name = classNameMap.get(type.name) || type.name;
-  return `${name}${optional ? '?' : ''}`;
+  return `${name}${optional && nullable ? '?' : ''}`;
 }
 
 /**
