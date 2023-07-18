@@ -204,3 +204,19 @@ test('should not spin forever', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(2);
 });
+
+test('should show intermediate result for toPass that spills over test time', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('should fail', async () => {
+        await expect(() => {
+          expect(3).toBe(2);
+        }).toPass();
+      });
+    `
+  }, { timeout: 1000 });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('Expected: 2');
+  expect(result.output).toContain('Received: 3');
+});

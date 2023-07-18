@@ -17,7 +17,7 @@
 import {
   captureRawStack,
   isString,
-  pollAgainstTimeout } from 'playwright-core/lib/utils';
+  pollAgainstDeadline } from 'playwright-core/lib/utils';
 import type { ExpectZone } from 'playwright-core/lib/utils';
 import {
   toBeAttached,
@@ -57,6 +57,7 @@ import {
 } from '../common/expectBundle';
 export type { ExpectMatcherContext } from '../common/expectBundle';
 import { zones } from 'playwright-core/lib/utils';
+import { TestInfoImpl } from '../worker/testInfo';
 
 // from expect/build/types
 export type SyncExpectationResult = {
@@ -328,8 +329,9 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
 
 async function pollMatcher(matcherName: any, isNot: boolean, pollIntervals: number[] | undefined, timeout: number, generator: () => any, ...args: any[]) {
   const testInfo = currentTestInfo();
+  const { deadline, timeoutMessage } = testInfo ? testInfo._deadlineForMatcher(timeout) : TestInfoImpl._defaultDeadlineForMatcher(timeout);
 
-  const result = await pollAgainstTimeout<Error|undefined>(async () => {
+  const result = await pollAgainstDeadline<Error|undefined>(async () => {
     if (testInfo && currentTestInfo() !== testInfo)
       return { continuePolling: false, result: undefined };
 
@@ -343,10 +345,9 @@ async function pollMatcher(matcherName: any, isNot: boolean, pollIntervals: numb
     } catch (error) {
       return { continuePolling: true, result: error };
     }
-  }, timeout, pollIntervals ?? [100, 250, 500, 1000]);
+  }, deadline, pollIntervals ?? [100, 250, 500, 1000]);
 
   if (result.timedOut) {
-    const timeoutMessage = `Timeout ${timeout}ms exceeded while waiting on the predicate`;
     const message = result.result ? [
       result.result.message,
       '',

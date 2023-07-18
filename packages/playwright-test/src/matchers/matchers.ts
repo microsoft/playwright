@@ -21,9 +21,9 @@ import { expectTypes, callLogText, filteredStackTrace } from '../util';
 import { toBeTruthy } from './toBeTruthy';
 import { toEqual } from './toEqual';
 import { toExpectedTextValues, toMatchText } from './toMatchText';
-import { captureRawStack, constructURLBasedOnBaseURL, isTextualMimeType, pollAgainstTimeout } from 'playwright-core/lib/utils';
+import { captureRawStack, constructURLBasedOnBaseURL, isTextualMimeType, pollAgainstDeadline } from 'playwright-core/lib/utils';
 import { currentTestInfo } from '../common/globals';
-import type { TestStepInternal } from '../worker/testInfo';
+import { TestInfoImpl, type TestStepInternal } from '../worker/testInfo';
 import type { ExpectMatcherContext } from './expect';
 
 interface LocatorEx extends Locator {
@@ -356,7 +356,8 @@ export async function toPass(
   };
 
   return await runWithOrWithoutStep(async (step: TestStepInternal | undefined) => {
-    const result = await pollAgainstTimeout<Error|undefined>(async () => {
+    const { deadline, timeoutMessage } = testInfo ? testInfo._deadlineForMatcher(timeout) : TestInfoImpl._defaultDeadlineForMatcher(timeout);
+    const result = await pollAgainstDeadline<Error|undefined>(async () => {
       if (testInfo && currentTestInfo() !== testInfo)
         return { continuePolling: false, result: undefined };
       try {
@@ -365,10 +366,9 @@ export async function toPass(
       } catch (e) {
         return { continuePolling: !this.isNot, result: e };
       }
-    }, timeout, options.intervals || [100, 250, 500, 1000]);
+    }, deadline, options.intervals || [100, 250, 500, 1000]);
 
     if (result.timedOut) {
-      const timeoutMessage = `Timeout ${timeout}ms exceeded while waiting on the predicate`;
       const message = result.result ? [
         result.result.message,
         '',
