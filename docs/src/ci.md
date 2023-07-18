@@ -500,6 +500,8 @@ steps:
   displayName: 'Install Playwright browsers'
 - script: npx playwright test
   displayName: 'Run Playwright tests'
+  env:
+    CI: 'true'
 ```
 
 ```yml python
@@ -522,6 +524,8 @@ steps:
   displayName: 'Install Playwright browsers'
 - script: npx playwright test
   displayName: 'Run Playwright tests'
+  env:
+    CI: 'true'
 ```
 
 ```yml java
@@ -543,6 +547,8 @@ steps:
   displayName: 'Install Playwright browsers'
 - script: mvn test
   displayName: 'Run tests'
+  env:
+    CI: 'true'
 ```
 
 ```yml csharp
@@ -564,6 +570,8 @@ steps:
   displayName: 'Install Playwright browsers'
 - script: dotnet test --configuration Release
   displayName: 'Run tests'
+  env:
+    CI: 'true'
 ```
 
 #### Uploading playwright-report folder with Azure Pipelines
