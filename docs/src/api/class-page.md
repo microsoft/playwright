@@ -3959,7 +3959,7 @@ Receives the [ConsoleMessage] object and resolves to truthy value when the waiti
 * since: v1.9
 
 ### option: Page.waitForConsoleMessage.cancellationToken
-* since: v.1.36
+* since: v.1.37
 * langs: csharp
 - `cancellationToken` ?!<[CancellationToken]>
 
@@ -3997,7 +3997,7 @@ Receives the [Download] object and resolves to truthy value when the waiting sho
 * since: v1.9
 
 ### option: Page.waitForDownload.cancellationToken
-* since: v.1.36
+* since: v.1.37
 * langs: csharp
 - `cancellationToken` ?!<[CancellationToken]>
 
@@ -4088,7 +4088,7 @@ Receives the [FileChooser] object and resolves to truthy value when the waiting 
 * since: v1.9
 
 ### option: Page.waitForFileChooser.cancellationToken
-* since: v.1.36
+* since: v.1.37
 * langs: csharp
 - `cancellationToken` ?!<[CancellationToken]>
 
@@ -4411,7 +4411,7 @@ a navigation.
 * since: v1.9
 
 ### option: Page.waitForNavigation.cancellationToken
-* since: v.1.36
+* since: v.1.37
 * langs: csharp
 - `cancellationToken` ?!<[CancellationToken]>
 
@@ -4449,7 +4449,7 @@ Receives the [Page] object and resolves to truthy value when the waiting should 
 * since: v1.9
 
 ### option: Page.waitForPopup.cancellationToken
-* since: v.1.36
+* since: v.1.37
 * langs: csharp
 - `cancellationToken` ?!<[CancellationToken]>
 
@@ -4562,7 +4562,7 @@ changed by using the [`method: Page.setDefaultTimeout`] method.
 * since: v1.9
 
 ### option: Page.waitForRequest.cancellationToken
-* since: v.1.36
+* since: v.1.37
 * langs: csharp
 - `cancellationToken` ?!<[CancellationToken]>
 
@@ -4600,7 +4600,7 @@ Receives the [Request] object and resolves to truthy value when the waiting shou
 * since: v1.12
 
 ### option: Page.waitForRequestFinished.cancellationToken
-* since: v.1.36
+* since: v.1.37
 * langs: csharp
 - `cancellationToken` ?!<[CancellationToken]>
 
@@ -4716,7 +4716,7 @@ Maximum wait time in milliseconds, defaults to 30 seconds, pass `0` to disable t
 changed by using the [`method: BrowserContext.setDefaultTimeout`] or [`method: Page.setDefaultTimeout`] methods.
 
 ### option: Page.waitForResponse.cancellationToken
-* since: v.1.36
+* since: v.1.37
 * langs: csharp
 - `cancellationToken` ?!<[CancellationToken]>
 
@@ -5006,7 +5006,7 @@ Receives the [WebSocket] object and resolves to truthy value when the waiting sh
 * since: v1.9
 
 ### option: Page.waitForWebSocket.cancellationToken
-* since: v.1.36
+* since: v.1.37
 * langs: csharp
 - `cancellationToken` ?!<[CancellationToken]>
 
@@ -5044,7 +5044,7 @@ Receives the [Worker] object and resolves to truthy value when the waiting shoul
 * since: v1.9
 
 ### option: Page.waitForWorker.cancellationToken
-* since: v.1.36
+* since: v.1.37
 * langs: csharp
 - `cancellationToken` ?!<[CancellationToken]>
 

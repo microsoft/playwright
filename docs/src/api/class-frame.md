@@ -2025,7 +2025,7 @@ await frame.WaitForLoadStateAsync(); // Defaults to LoadState.Load
 * since: v1.8
 
 ### option: Frame.waitForLoadState.cancellationToken
-* since: v.1.36
+* since: v.1.37
 * langs: csharp
 - `cancellationToken` ?!<[CancellationToken]>
 
@@ -2115,7 +2115,7 @@ a navigation.
 * since: v1.9
 
 ### option: Frame.waitForNavigation.cancellationToken
-* since: v.1.36
+* since: v.1.37
 * langs: csharp
 - `cancellationToken` ?!<[CancellationToken]>
 
