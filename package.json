@@ -91,7 +91,7 @@
     "proxy": "^1.0.2",
     "react": "^18.1.0",
     "react-dom": "^18.1.0",
-    "rimraf": "^3.0.2",
+    "rimraf": "^4.4.1",
     "socksv5": "0.0.6",
     "ssim.js": "^3.5.0",
     "typescript": "^5.1.3",

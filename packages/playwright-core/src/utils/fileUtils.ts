@@ -28,9 +28,7 @@ export async function mkdirIfNeeded(filePath: string) {
 export async function removeFolders(dirs: string[]): Promise<Array<Error|null|undefined>> {
   return await Promise.all(dirs.map((dir: string) => {
     return new Promise<Error|null|undefined>(fulfill => {
-      rimraf(dir, { maxBusyTries: 10 }, error => {
-        fulfill(error ?? undefined);
-      });
+      rimraf(dir, { maxRetries: 10 }).then(() => fulfill(undefined)).catch((e: Error) => fulfill(e));
     });
   }));
 }
