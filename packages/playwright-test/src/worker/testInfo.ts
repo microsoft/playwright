@@ -22,7 +22,7 @@ import type { AttachmentPayload, StepBeginPayload, StepEndPayload, WorkerInitPar
 import type { TestCase } from '../common/test';
 import { TimeoutManager } from './timeoutManager';
 import type { Annotation, FullConfigInternal, FullProjectInternal } from '../common/config';
-import type { Location } from '../../types/testReporter';
+import type { StackFrame } from '../../types/testReporter';
 import { getContainedPath, normalizeAndSaveAttachment, sanitizeForFilePath, serializeError, trimLongString } from '../util';
 import type * as trace from '@trace/trace';
 
@@ -32,7 +32,7 @@ export interface TestStepInternal {
   title: string;
   category: string;
   wallTime: number;
-  location?: Location;
+  stack?: StackFrame[];
   steps: TestStepInternal[];
   laxParent?: boolean;
   endWallTime?: number;
@@ -295,9 +295,6 @@ export class TestInfoImpl implements TestInfo {
     };
     const parentStepList = parentStep ? parentStep.steps : this._steps;
     parentStepList.push(step);
-    const hasLocation = data.location && !data.location.file.includes('@playwright');
-    // Sanitize location that comes from user land, it might have extra properties.
-    const location = data.location && hasLocation ? { file: data.location.file, line: data.location.line, column: data.location.column } : undefined;
     const payload: StepBeginPayload = {
       testId: this._test.id,
       stepId,
@@ -305,10 +302,13 @@ export class TestInfoImpl implements TestInfo {
       title: data.title,
       category: data.category,
       wallTime: data.wallTime,
-      location,
+      stack: data.stack?.map(frame => ({
+        ...frame,
+        file: path.relative(process.cwd(), frame.file)
+      })),
     };
     this._onStepBegin(payload);
-    this._traceEvents.push(createBeforeActionTraceEventForStep(stepId, parentStep?.stepId, data.apiName || data.title, data.params, data.wallTime, data.location ? [data.location] : []));
+    this._traceEvents.push(createBeforeActionTraceEventForStep(stepId, parentStep?.stepId, data.apiName || data.title, data.params, data.wallTime, data.stack?.length ? [data.stack[0]] : []));
     return step;
   }
 

@@ -351,7 +351,7 @@ export async function toPass(
     return await testInfo._runAsStep({
       title: 'expect.toPass',
       category: 'expect',
-      location: stackFrames[0],
+      stack: stackFrames,
     }, callback);
   };
 

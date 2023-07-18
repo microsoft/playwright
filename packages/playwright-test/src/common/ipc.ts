@@ -94,7 +94,7 @@ export type StepBeginPayload = {
   title: string;
   category: string;
   wallTime: number;  // milliseconds since unix epoch
-  location?: { file: string, line: number, column: number };
+  stack?: { file: string, line: number, column: number, function?: string }[];
 };
 
 export type StepEndPayload = {

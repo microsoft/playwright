@@ -267,6 +267,8 @@ export class Dispatcher {
       }
       const { result, steps } = runData;
       const parentStep = params.parentStepId ? steps.get(params.parentStepId) : undefined;
+      // Sanitize location that comes from user land, it might have extra properties.
+      const location = params.stack?.length && !params.stack[0].file.includes('@playwright') ? { file: params.stack[0].file, line: params.stack[0].line, column: params.stack[0].column } : undefined;
       const step: TestStep = {
         title: params.title,
         titlePath: () => {
@@ -278,7 +280,8 @@ export class Dispatcher {
         startTime: new Date(params.wallTime),
         duration: -1,
         steps: [],
-        location: params.location,
+        location,
+        stack: params.stack,
       };
       steps.set(params.stepId, step);
       (parentStep || result).steps.push(step);

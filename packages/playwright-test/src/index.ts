@@ -277,7 +277,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
         if (!testInfo || apiName.startsWith('expect.') || apiName.includes('setTestIdAttribute'))
           return { userObject: null };
         const step = testInfo._addStep({
-          location: stackTrace?.frames[0] as any,
+          stack: stackTrace?.frames,
           category: 'pw:api',
           title: renderApiCall(apiName, params),
           apiName,

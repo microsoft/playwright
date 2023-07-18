@@ -251,7 +251,7 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
       const defaultTitle = `expect${this._info.isPoll ? '.poll' : ''}${this._info.isSoft ? '.soft' : ''}${this._info.isNot ? '.not' : ''}.${matcherName}${argsSuffix}`;
       const wallTime = Date.now();
       const step = matcherName !== 'toPass' ? testInfo._addStep({
-        location: stackFrames[0],
+        stack: stackFrames,
         category: 'expect',
         title: trimLongString(customMessage || defaultTitle, 1024),
         params: args[0] ? { expected: args[0] } : undefined,

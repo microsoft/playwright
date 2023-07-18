@@ -26,6 +26,12 @@ Running time in milliseconds.
 
 Optional location in the source where the step is defined.
 
+## property: TestStep.stack
+* since: v1.37
+- type: ?<[Array]<[StackFrame]>>
+
+Optional stack for the step's creation.
+
 ## property: TestStep.error
 * since: v1.10
 - type: ?<[TestError]>

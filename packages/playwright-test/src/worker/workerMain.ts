@@ -388,7 +388,7 @@ export class WorkerMain extends ProcessRunner {
           wallTime: Date.now(),
           title: error.message || 'error',
           category: 'hook',
-          location: frames[0],
+          stack: frames,
         });
         step.complete({ error });
       }
@@ -503,7 +503,7 @@ export class WorkerMain extends ProcessRunner {
       const result = await testInfo._runAsStep({
         category: 'hook',
         title: `${modifier.type} modifier`,
-        location: modifier.location,
+        stack: [modifier.location],
       }, () => this._fixtureRunner.resolveParametersAndRunFunction(modifier.fn, testInfo, scope));
       debugTest(`modifier at "${formatLocation(modifier.location)}" finished`);
       if (result && extraAnnotations)
@@ -528,7 +528,7 @@ export class WorkerMain extends ProcessRunner {
         await testInfo._runAsStep({
           category: 'hook',
           title: `${hook.type} hook`,
-          location: hook.location,
+          stack: [hook.location],
         }, async () => {
           try {
             await this._fixtureRunner.resolveParametersAndRunFunction(hook.fn, testInfo, 'all-hooks-only');
@@ -564,7 +564,7 @@ export class WorkerMain extends ProcessRunner {
         await testInfo._runAsStep({
           category: 'hook',
           title: `${hook.type} hook`,
-          location: hook.location,
+          stack: [hook.location],
         }, async () => {
           try {
             await this._fixtureRunner.resolveParametersAndRunFunction(hook.fn, testInfo, 'all-hooks-only');
@@ -590,7 +590,7 @@ export class WorkerMain extends ProcessRunner {
         await testInfo._runAsStep({
           category: 'hook',
           title: `${hook.type} hook`,
-          location: hook.location,
+          stack: [hook.location],
         }, () => this._fixtureRunner.resolveParametersAndRunFunction(hook.fn, testInfo, 'test'));
       } catch (e) {
         // Always run all the hooks, and capture the first error.

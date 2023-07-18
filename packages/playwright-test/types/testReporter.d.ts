@@ -582,6 +582,18 @@ export interface Location {
 }
 
 /**
+ * - extends: {@link Location}
+ *
+ * Represents a frame in the stack for a {@link TestStep}'s creation.
+ */
+export interface StackFrame extends Location {
+  /**
+   * The frame's function name.
+   */
+  function?: string;
+}
+
+/**
  * Information about an error thrown during test execution.
  */
 export interface TestError {
@@ -648,6 +660,11 @@ export interface TestStep {
    * Parent step, if any.
    */
   parent?: TestStep;
+
+  /**
+   * Optional stack for the step's creation.
+   */
+  stack?: Array<StackFrame>;
 
   /**
    * Start time of this particular test step.

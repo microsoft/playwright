@@ -98,7 +98,7 @@ class Fixture {
           wallTime: Date.now(),
           title: `fixture: ${this.registration.name}`,
           category: 'fixture',
-          location: isInternalFixture ? this.registration.location : undefined,
+          stack: isInternalFixture ? [this.registration.location] : undefined,
         }, testInfo._afterHooksStep);
         mutableStepOnStack!.stepId = afterStep.stepId;
       }
@@ -123,7 +123,7 @@ class Fixture {
         await testInfo._runAsStep({
           title: `fixture: ${this.registration.name}`,
           category: 'fixture',
-          location: isInternalFixture ? this.registration.location : undefined,
+          stack: isInternalFixture ? [this.registration.location] : undefined,
         }, async step => {
           mutableStepOnStack = step;
           return await this.registration.fn(params, useFunc, info);
