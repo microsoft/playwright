@@ -1483,7 +1483,7 @@ Receives the [ConsoleMessage] object and resolves to truthy value when the waiti
 ### param: BrowserContext.waitForConsoleMessage.callback = %%-java-wait-for-event-callback-%%
 * since: v1.34
 
-### param: BrowserContext.waitForConsoleMessage.cancellationToken
+### option: BrowserContext.waitForConsoleMessage.cancellationToken
 * since: v.1.36
 * langs: csharp
 - `cancellationToken` ?!<[CancellationToken]>
@@ -1588,7 +1588,7 @@ Receives the [Page] object and resolves to truthy value when the waiting should 
 ### param: BrowserContext.waitForPage.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9
 
-### param: BrowserContext.waitForPage.cancellationToken
+### option: BrowserContext.waitForPage.cancellationToken
 * since: v.1.36
 * langs: csharp
 - `cancellationToken` ?!<[CancellationToken]>

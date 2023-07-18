@@ -3958,7 +3958,7 @@ Receives the [ConsoleMessage] object and resolves to truthy value when the waiti
 ### param: Page.waitForConsoleMessage.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9
 
-### param: Page.waitForConsoleMessage.cancellationToken
+### option: Page.waitForConsoleMessage.cancellationToken
 * since: v.1.36
 * langs: csharp
 - `cancellationToken` ?!<[CancellationToken]>
@@ -3996,7 +3996,7 @@ Receives the [Download] object and resolves to truthy value when the waiting sho
 ### param: Page.waitForDownload.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9
 
-### param: Page.waitForDownload.cancellationToken
+### option: Page.waitForDownload.cancellationToken
 * since: v.1.36
 * langs: csharp
 - `cancellationToken` ?!<[CancellationToken]>
@@ -4087,7 +4087,7 @@ Receives the [FileChooser] object and resolves to truthy value when the waiting 
 ### param: Page.waitForFileChooser.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9
 
-### param: Page.waitForFileChooser.cancellationToken
+### option: Page.waitForFileChooser.cancellationToken
 * since: v.1.36
 * langs: csharp
 - `cancellationToken` ?!<[CancellationToken]>
@@ -4410,7 +4410,7 @@ a navigation.
 ### param: Page.waitForNavigation.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9
 
-### param: Page.waitForNavigation.cancellationToken
+### option: Page.waitForNavigation.cancellationToken
 * since: v.1.36
 * langs: csharp
 - `cancellationToken` ?!<[CancellationToken]>
@@ -4448,7 +4448,7 @@ Receives the [Page] object and resolves to truthy value when the waiting should 
 ### param: Page.waitForPopup.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9
 
-### param: Page.waitForPopup.cancellationToken
+### option: Page.waitForPopup.cancellationToken
 * since: v.1.36
 * langs: csharp
 - `cancellationToken` ?!<[CancellationToken]>
@@ -4561,7 +4561,7 @@ changed by using the [`method: Page.setDefaultTimeout`] method.
 ### param: Page.waitForRequest.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9
 
-### param: Page.waitForRequest.cancellationToken
+### option: Page.waitForRequest.cancellationToken
 * since: v.1.36
 * langs: csharp
 - `cancellationToken` ?!<[CancellationToken]>
@@ -4599,7 +4599,7 @@ Receives the [Request] object and resolves to truthy value when the waiting shou
 ### param: Page.waitForRequestFinished.callback = %%-java-wait-for-event-callback-%%
 * since: v1.12
 
-### param: Page.waitForRequestFinished.cancellationToken
+### option: Page.waitForRequestFinished.cancellationToken
 * since: v.1.36
 * langs: csharp
 - `cancellationToken` ?!<[CancellationToken]>
@@ -4715,7 +4715,7 @@ it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/We
 Maximum wait time in milliseconds, defaults to 30 seconds, pass `0` to disable the timeout. The default value can be
 changed by using the [`method: BrowserContext.setDefaultTimeout`] or [`method: Page.setDefaultTimeout`] methods.
 
-### param: Page.waitForResponse.cancellationToken
+### option: Page.waitForResponse.cancellationToken
 * since: v.1.36
 * langs: csharp
 - `cancellationToken` ?!<[CancellationToken]>
@@ -5005,7 +5005,7 @@ Receives the [WebSocket] object and resolves to truthy value when the waiting sh
 ### param: Page.waitForWebSocket.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9
 
-### param: Page.waitForWebSocket.cancellationToken
+### option: Page.waitForWebSocket.cancellationToken
 * since: v.1.36
 * langs: csharp
 - `cancellationToken` ?!<[CancellationToken]>
@@ -5043,7 +5043,7 @@ Receives the [Worker] object and resolves to truthy value when the waiting shoul
 ### param: Page.waitForWorker.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9
 
-### param: Page.waitForWorker.cancellationToken
+### option: Page.waitForWorker.cancellationToken
 * since: v.1.36
 * langs: csharp
 - `cancellationToken` ?!<[CancellationToken]>
