@@ -599,6 +599,8 @@ steps:
   displayName: 'Install Playwright browsers'
 - script: npx playwright test
   displayName: 'Run Playwright tests'
+  env:
+    CI: 'true'
 - task: PublishTestResults@2
   displayName: 'Publish test results'
   inputs:
@@ -687,6 +689,8 @@ steps:
   displayName: 'Install Playwright browsers'
 - script: npx playwright test --project=$(project) --shard=$(shardIndex)/$(shardTotal)
   displayName: 'Run Playwright tests'
+  env:
+    CI: 'true'
 ```
 
 
@@ -710,6 +714,8 @@ steps:
   displayName: 'npm ci'
 - script: npx playwright test
   displayName: 'Run Playwright tests'
+  env:
+    CI: 'true'
 ```
 
 ```yml python
