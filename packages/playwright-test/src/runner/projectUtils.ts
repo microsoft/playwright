@@ -13,16 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { promises as fs } from 'fs';
 
-import fs from 'fs';
 import path from 'path';
 import { minimatch } from 'playwright-core/lib/utilsBundle';
-import { promisify } from 'util';
 import type { FullProjectInternal } from '../common/config';
 import { createFileMatcher } from '../util';
-
-const readFileAsync = promisify(fs.readFile);
-const readDirAsync = promisify(fs.readdir);
 
 export function filterProjects(projects: FullProjectInternal[], projectNames?: string[]): FullProjectInternal[] {
   if (!projectNames)
@@ -175,13 +171,13 @@ async function collectFiles(testDir: string, respectGitIgnore: boolean): Promise
   const files: string[] = [];
 
   const visit = async (dir: string, rules: Rule[], status: IgnoreStatus) => {
-    const entries = await readDirAsync(dir, { withFileTypes: true });
+    const entries = await fs.readdir(dir, { withFileTypes: true });
     entries.sort((a, b) => a.name.localeCompare(b.name));
 
     if (respectGitIgnore) {
       const gitignore = entries.find(e => e.isFile() && e.name === '.gitignore');
       if (gitignore) {
-        const content = await readFileAsync(path.join(dir, gitignore.name), 'utf8');
+        const content = await fs.readFile(path.join(dir, gitignore.name), 'utf8');
         const newRules: Rule[] = content.split(/\r?\n/).map(s => {
           s = s.trim();
           if (!s)

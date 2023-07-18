@@ -1,13 +1,9 @@
 #!/usr/bin/env node
 
-const fs = require('fs');
-const util = require('util');
+const fs = require('fs').promises;
 const path = require('path');
 const {spawn} = require('child_process');
 const {registryDirectory} = require('playwright-core/lib/server');
-
-const readdirAsync = util.promisify(fs.readdir.bind(fs));
-const readFileAsync = util.promisify(fs.readFile.bind(fs));
 
 const readline = require('readline');
 
@@ -27,7 +23,7 @@ const DL_OPEN_LIBRARIES = {
 (async () => {
   console.log('Working on:', await getDistributionName());
   console.log('Started at:', currentTime());
-  const browserDescriptors = (await readdirAsync(registryDirectory)).filter(dir => !dir.startsWith('.')).map(dir => ({
+  const browserDescriptors = (await fs.readdir(registryDirectory)).filter(dir => !dir.startsWith('.')).map(dir => ({
     // Full browser name, e.g. `webkit-1144`
     name: dir,
     // Full patch to browser files
@@ -261,7 +257,7 @@ function runCommand(command, args, options = {}) {
 }
 
 async function getDistributionName() {
-  const osReleaseText = await readFileAsync('/etc/os-release', 'utf8');
+  const osReleaseText = await fs.readFile('/etc/os-release', 'utf8');
   const fields = new Map();
   for (const line of osReleaseText.split('\n')) {
     const tokens = line.split('=');

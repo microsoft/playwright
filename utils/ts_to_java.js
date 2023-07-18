@@ -17,7 +17,7 @@
 // The script does basic transformation of .spec.ts code to .java unit tests.
 
 const path = require('path');
-const fs = require('fs');
+const fs = require('fs').promises;
 const os = require('os');
 const util = require('util');
 const { argv } = require('process');
@@ -27,7 +27,7 @@ const { argv } = require('process');
   const file = argv[2];
   if (!file.endsWith('.spec.ts')) throw new Error("Unexpected input: " + file);
   console.log('Reading: ' + file);
-  let content = await util.promisify(fs.readFile)(file);
+  let content = await fs.readFile(file);
   content = content.toString();
 
   function toCamelCase(match, p1, offset, string) {
@@ -157,7 +157,7 @@ void ${name}() {`;
 
   const output = file.replace(/\.spec\.ts$/, ".java")
   console.log('Writing: ' + output);
-  await util.promisify(fs.writeFile)(output, content)
+  await fs.writeFile(output, content)
 })();
 
 function toTitleCase(s) {

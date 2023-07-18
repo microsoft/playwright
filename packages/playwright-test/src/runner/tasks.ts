@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
+import { promises as fs } from 'fs';
 import path from 'path';
-import { promisify } from 'util';
 import { debug, rimraf } from 'playwright-core/lib/utilsBundle';
 import { Dispatcher, type EnvByProjectId } from './dispatcher';
 import type { TestRunnerPluginRegistration } from '../plugins';
@@ -30,8 +29,6 @@ import type { Matcher } from '../util';
 import type { Suite } from '../common/test';
 import { buildDependentProjects, buildTeardownToSetupsMap } from './projectUtils';
 import { monotonicTime } from 'playwright-core/lib/utils';
-
-const readDirAsync = promisify(fs.readdir);
 
 type ProjectWithTestGroups = {
   project: FullProjectInternal;
@@ -161,7 +158,7 @@ function createRemoveOutputDirsTask(): Task<TestRun> {
         // We failed to remove folder, might be due to the whole folder being mounted inside a container:
         //   https://github.com/microsoft/playwright/issues/12106
         // Do a best-effort to remove all files inside of it instead.
-        const entries = await readDirAsync(outputDir).catch(e => []);
+        const entries = await fs.readdir(outputDir).catch(e => []);
         await Promise.all(entries.map(entry => rimraf(path.join(outputDir, entry))));
       } else {
         throw error;
