@@ -22,25 +22,11 @@ export class SigIntWatcher {
     let sigintCallback: () => void;
     this._sigintPromise = new Promise<void>(f => sigintCallback = f);
     this._sigintHandler = () => {
-      // We remove the handler so that second Ctrl+C immediately kills the runner
-      // via the default sigint handler. This is handy in the case where our shutdown
-      // takes a lot of time or is buggy.
-      //
-      // When running through NPM we might get multiple SIGINT signals
-      // for a single Ctrl+C - this is an NPM bug present since at least NPM v6.
-      // https://github.com/npm/cli/issues/1591
-      // https://github.com/npm/cli/issues/2124
-      //
-      // Therefore, removing the handler too soon will just kill the process
-      // with default handler without printing the results.
-      // We work around this by giving NPM 1000ms to send us duplicate signals.
-      // The side effect is that slow shutdown or bug in our runner will force
-      // the user to hit Ctrl+C again after at least a second.
-      setTimeout(() => process.off('SIGINT', this._sigintHandler), 1000);
+      FixedNodeSIGINTHandler.off(this._sigintHandler);
       this._hadSignal = true;
       sigintCallback();
     };
-    process.on('SIGINT', this._sigintHandler);
+    FixedNodeSIGINTHandler.on(this._sigintHandler);
   }
 
   promise(): Promise<void> {
@@ -52,6 +38,53 @@ export class SigIntWatcher {
   }
 
   disarm() {
-    process.off('SIGINT', this._sigintHandler);
+    FixedNodeSIGINTHandler.off(this._sigintHandler);
+  }
+}
+
+// NPM/NPX will send us duplicate SIGINT signals, so we need to ignore them.
+class FixedNodeSIGINTHandler {
+  private static _handlers: (() => void)[] = [];
+  private static _ignoreNextSIGINTs = false;
+
+  static _dispatch = () => {
+    if (this._ignoreNextSIGINTs)
+      return;
+
+    this._ignoreNextSIGINTs = true;
+    setTimeout(() => {
+      this._ignoreNextSIGINTs = false;
+      // We remove the handler so that second Ctrl+C immediately kills the process
+      // via the default sigint handler. This is handy in the case where our shutdown
+      // takes a lot of time or is buggy.
+      //
+      // When running through NPM we might get multiple SIGINT signals
+      // for a single Ctrl+C - this is an NPM bug present since NPM v6+.
+      // https://github.com/npm/cli/issues/1591
+      // https://github.com/npm/cli/issues/2124
+      // https://github.com/npm/cli/issues/5021
+      //
+      // Therefore, removing the handler too soon will just kill the process
+      // with default handler without printing the results.
+      // We work around this by giving NPM 1000ms to send us duplicate signals.
+      // The side effect is that slow shutdown or bug in our process will force
+      // the user to hit Ctrl+C again after at least a second.
+      if (!this._handlers.length)
+        process.off('SIGINT', this._dispatch);
+    }, 1000);
+    for (const handler of this._handlers)
+      handler();
+  };
+
+  static on(handler: () => void) {
+    this._handlers.push(handler);
+    if (this._handlers.length === 1)
+      process.on('SIGINT', this._dispatch);
+  }
+
+  static off(handler: () => void) {
+    this._handlers = this._handlers.filter(h => h !== handler);
+    if (!this._ignoreNextSIGINTs && !this._handlers.length)
+      process.off('SIGINT', this._dispatch);
   }
 }
