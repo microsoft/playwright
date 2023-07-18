@@ -500,6 +500,8 @@ steps:
   displayName: 'Install Playwright browsers'
 - script: npx playwright test
   displayName: 'Run Playwright tests'
+  env:
+    CI: 'true'
 ```
 
 ```yml python
@@ -518,9 +520,9 @@ steps:
     python -m pip install --upgrade pip
     pip install -r requirements.txt
   displayName: 'Install dependencies'
-- script: npx playwright install --with-deps
+- script: playwright install --with-deps
   displayName: 'Install Playwright browsers'
-- script: npx playwright test
+- script: pytest
   displayName: 'Run Playwright tests'
 ```
 
@@ -591,6 +593,8 @@ steps:
   displayName: 'Install Playwright browsers'
 - script: npx playwright test
   displayName: 'Run Playwright tests'
+  env:
+    CI: 'true'
 - task: PublishTestResults@2
   displayName: 'Publish test results'
   inputs:
@@ -679,6 +683,8 @@ steps:
   displayName: 'Install Playwright browsers'
 - script: npx playwright test --project=$(project) --shard=$(shardIndex)/$(shardTotal)
   displayName: 'Run Playwright tests'
+  env:
+    CI: 'true'
 ```
 
 
@@ -702,6 +708,8 @@ steps:
   displayName: 'npm ci'
 - script: npx playwright test
   displayName: 'Run Playwright tests'
+  env:
+    CI: 'true'
 ```
 
 ```yml python
