@@ -520,12 +520,10 @@ steps:
     python -m pip install --upgrade pip
     pip install -r requirements.txt
   displayName: 'Install dependencies'
-- script: npx playwright install --with-deps
+- script: playwright install --with-deps
   displayName: 'Install Playwright browsers'
-- script: npx playwright test
+- script: pytest
   displayName: 'Run Playwright tests'
-  env:
-    CI: 'true'
 ```
 
 ```yml java
@@ -547,8 +545,6 @@ steps:
   displayName: 'Install Playwright browsers'
 - script: mvn test
   displayName: 'Run tests'
-  env:
-    CI: 'true'
 ```
 
 ```yml csharp
@@ -570,8 +566,6 @@ steps:
   displayName: 'Install Playwright browsers'
 - script: dotnet test --configuration Release
   displayName: 'Run tests'
-  env:
-    CI: 'true'
 ```
 
 #### Uploading playwright-report folder with Azure Pipelines
