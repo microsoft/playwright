@@ -20,6 +20,7 @@ nohup.out
 allure*
 blob-report
 playwright-report
+coverage-report
 test-results
 /demo/
 /packages/*/LICENSE

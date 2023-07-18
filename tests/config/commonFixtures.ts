@@ -20,6 +20,7 @@ import { execSync, spawn } from 'child_process';
 import net from 'net';
 import fs from 'fs';
 import { stripAnsi } from './utils';
+import childProcess from 'child_process';
 
 type TestChildParams = {
   command: string[],
@@ -28,8 +29,6 @@ type TestChildParams = {
   shell?: boolean,
   onOutput?: () => void;
 };
-
-import childProcess from 'child_process';
 
 type ProcessData = {
   pid: number, // process ID
@@ -218,13 +217,15 @@ export class TestChildProcess {
   }
 }
 
+export type ChildProcessFixture = (params: TestChildParams) => TestChildProcess;
+
 export type CommonFixtures = {
-  childProcess: (params: TestChildParams) => TestChildProcess;
+  childProcess: ChildProcessFixture;
   waitForPort: (port: number) => Promise<void>;
 };
 
 export type CommonWorkerFixtures = {
-  daemonProcess: (params: TestChildParams) => TestChildProcess;
+  daemonProcess: ChildProcessFixture;
 };
 
 export const commonFixtures: Fixtures<CommonFixtures, CommonWorkerFixtures> = {

@@ -86,7 +86,7 @@ export function dumpTestTree(page: Page, options: { time?: boolean } = {}): () =
 
 export const test = base
     .extend<Fixtures>({
-      runUITest: async ({ childProcess, headless }, use, testInfo: TestInfo) => {
+      runUITest: async ({ coverageCollectingChildProcess, headless }, use, testInfo: TestInfo) => {
         if (process.env.CI)
           testInfo.slow();
         const cacheDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-test-cache-'));
@@ -94,7 +94,7 @@ export const test = base
         let browser: Browser | undefined;
         await use(async (files: Files, env: NodeJS.ProcessEnv = {}, options: UIModeOptions = {}) => {
           const baseDir = await writeFiles(testInfo, files, true);
-          testProcess = childProcess({
+          testProcess = coverageCollectingChildProcess({
             command: ['node', cliEntrypoint, 'test', (options.useWeb ? '--ui-host=127.0.0.1' : '--ui'), '--workers=1', ...(options.additionalArgs || [])],
             env: {
               ...cleanEnv(env),

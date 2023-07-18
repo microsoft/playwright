@@ -19,13 +19,14 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { rimraf, PNG } from 'playwright-core/lib/utilsBundle';
-import type { CommonFixtures, CommonWorkerFixtures, TestChildProcess } from '../config/commonFixtures';
+import type { ChildProcessFixture, CommonFixtures, CommonWorkerFixtures, TestChildProcess } from '../config/commonFixtures';
 import { commonFixtures } from '../config/commonFixtures';
 import type { ServerFixtures, ServerWorkerOptions } from '../config/serverFixtures';
 import { serverFixtures } from '../config/serverFixtures';
 import type { TestInfo } from './stable-test-runner';
 import { expect } from './stable-test-runner';
 import { test as base } from './stable-test-runner';
+import { CoverageCollector } from '../config/v8Coverage';
 export { countTimes } from '../config/commonFixtures';
 
 type CliRunResult = {
@@ -99,7 +100,7 @@ function findPackageJSONDir(files: Files, dir: string) {
   return dir;
 }
 
-function startPlaywrightTest(childProcess: CommonFixtures['childProcess'], baseDir: string, params: any, env: NodeJS.ProcessEnv, options: RunOptions): TestChildProcess {
+function startPlaywrightTest(childProcess: ChildProcessFixture, baseDir: string, params: any, env: NodeJS.ProcessEnv, options: RunOptions): TestChildProcess {
   const paramList: string[] = [];
   for (const key of Object.keys(params)) {
     for (const value of Array.isArray(params[key]) ? params[key] : [params[key]]) {
@@ -121,7 +122,7 @@ function startPlaywrightTest(childProcess: CommonFixtures['childProcess'], baseD
   });
 }
 
-async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], baseDir: string, params: any, env: NodeJS.ProcessEnv, options: RunOptions, files: Files, mergeReports: (reportFolder: string, env?: NodeJS.ProcessEnv, options?: RunOptions) => Promise<CliRunResult>, useIntermediateMergeReport: boolean): Promise<RunResult> {
+async function runPlaywrightTest(childProcess: ChildProcessFixture, baseDir: string, params: any, env: NodeJS.ProcessEnv, options: RunOptions, files: Files, mergeReports: (reportFolder: string, env?: NodeJS.ProcessEnv, options?: RunOptions) => Promise<CliRunResult>, useIntermediateMergeReport: boolean): Promise<RunResult> {
   let reporter;
   if (useIntermediateMergeReport) {
     reporter = params.reporter;
@@ -184,7 +185,7 @@ async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], b
   };
 }
 
-async function runPlaywrightListFiles(childProcess: CommonFixtures['childProcess'], baseDir: string, env: NodeJS.ProcessEnv): Promise<{ output: string, exitCode: number }> {
+async function runPlaywrightListFiles(childProcess: ChildProcessFixture, baseDir: string, env: NodeJS.ProcessEnv): Promise<{ output: string, exitCode: number }> {
   const testProcess = childProcess({
     command: ['node', cliEntrypoint, 'list-files'],
     env: cleanEnv(env),
@@ -192,6 +193,29 @@ async function runPlaywrightListFiles(childProcess: CommonFixtures['childProcess
   });
   const { exitCode } = await testProcess.exited;
   return { exitCode, output: testProcess.output };
+}
+
+async function processCoverageInfo(from: string, to: string, testTitle: string, ignoreDir: string) {
+  const entries = await fs.promises.readdir(from, { withFileTypes: true }).catch(() => []);
+  const coverageFiles = entries
+      .filter(entry => entry.isFile() && entry.name.match(/^coverage-.*\.json$/))
+      .map(entry => path.join(from, entry.name));
+  if (!coverageFiles.length)
+    return;
+
+  const collector = new CoverageCollector((fileUrl: string) => {
+    return !fileUrl.includes('/node_modules/') && !fileUrl.includes(ignoreDir);
+  });
+  for (const coverageFile of coverageFiles) {
+    const data = JSON.parse(await fs.promises.readFile(coverageFile, 'utf-8'));
+    await collector.appendV8Coverage(data);
+  }
+  await fs.promises.mkdir(to, { recursive: true });
+  const outputFile = path.join(to, path.basename(coverageFiles[0]));
+  const metadata = { testTitle };
+  await collector.writeToFile(outputFile, metadata);
+
+  await Promise.all(coverageFiles.map(file => fs.promises.unlink(file)));
 }
 
 export function cleanEnv(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
@@ -226,6 +250,7 @@ export type RunOptions = {
   cwd?: string,
 };
 type Fixtures = {
+  coverageCollectingChildProcess: ChildProcessFixture;
   writeFiles: (files: Files) => Promise<string>;
   deleteFile: (file: string) => Promise<void>;
   runInlineTest: (files: Files, params?: Params, env?: NodeJS.ProcessEnv, options?: RunOptions) => Promise<RunResult>;
@@ -242,6 +267,18 @@ export const test = base
     .extend<CommonFixtures, CommonWorkerFixtures>(commonFixtures)
     .extend<ServerFixtures, ServerWorkerOptions>(serverFixtures)
     .extend<Fixtures>({
+      coverageCollectingChildProcess: async ({ childProcess }, use, testInfo) => {
+        const coverageDir = process.env.PWTEST_COVERAGE ? path.join(testInfo.outputDir, 'test-runner-coverage') : undefined;
+        await use(params => {
+          return childProcess({
+            ...params,
+            env: { ...params.env, NODE_V8_COVERAGE: coverageDir },
+          });
+        });
+        if (coverageDir)
+          await processCoverageInfo(coverageDir, path.join(testInfo.project.outputDir, 'coverage-data'), testInfo.titlePath.join(' > '), testInfo.outputDir);
+      },
+
       writeFiles: async ({}, use, testInfo) => {
         await use(files => writeFiles(testInfo, files, false));
       },
@@ -253,20 +290,20 @@ export const test = base
         });
       },
 
-      runInlineTest: async ({ childProcess, mergeReports, useIntermediateMergeReport }, use, testInfo: TestInfo) => {
+      runInlineTest: async ({ coverageCollectingChildProcess, mergeReports, useIntermediateMergeReport }, use, testInfo: TestInfo) => {
         const cacheDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-test-cache-'));
         await use(async (files: Files, params: Params = {}, env: NodeJS.ProcessEnv = {}, options: RunOptions = {}) => {
           const baseDir = await writeFiles(testInfo, files, true);
-          return await runPlaywrightTest(childProcess, baseDir, params, { ...env, PWTEST_CACHE_DIR: cacheDir }, options, files, mergeReports, useIntermediateMergeReport);
+          return await runPlaywrightTest(coverageCollectingChildProcess, baseDir, params, { ...env, PWTEST_CACHE_DIR: cacheDir }, options, files, mergeReports, useIntermediateMergeReport);
         });
         await rimraf(cacheDir);
       },
 
-      runListFiles: async ({ childProcess }, use, testInfo: TestInfo) => {
+      runListFiles: async ({ coverageCollectingChildProcess }, use, testInfo: TestInfo) => {
         const cacheDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-test-cache-'));
         await use(async (files: Files) => {
           const baseDir = await writeFiles(testInfo, files, true);
-          return await runPlaywrightListFiles(childProcess, baseDir, { PWTEST_CACHE_DIR: cacheDir });
+          return await runPlaywrightListFiles(coverageCollectingChildProcess, baseDir, { PWTEST_CACHE_DIR: cacheDir });
         });
         await rimraf(cacheDir);
       },
@@ -275,12 +312,12 @@ export const test = base
         await use((files, env, options) => interactWithTestRunner(files, {}, { ...env, PWTEST_WATCH: '1' }, options));
       },
 
-      interactWithTestRunner: async ({ childProcess }, use, testInfo: TestInfo) => {
+      interactWithTestRunner: async ({ coverageCollectingChildProcess }, use, testInfo: TestInfo) => {
         const cacheDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-test-cache-'));
         let testProcess: TestChildProcess | undefined;
         await use(async (files: Files, params: Params = {}, env: NodeJS.ProcessEnv = {}, options: RunOptions = {}) => {
           const baseDir = await writeFiles(testInfo, files, true);
-          testProcess = startPlaywrightTest(childProcess, baseDir, params, { ...env, PWTEST_CACHE_DIR: cacheDir }, options);
+          testProcess = startPlaywrightTest(coverageCollectingChildProcess, baseDir, params, { ...env, PWTEST_CACHE_DIR: cacheDir }, options);
           return testProcess;
         });
         await testProcess?.kill();
@@ -302,14 +339,14 @@ export const test = base
         });
       },
 
-      mergeReports: async ({ childProcess }, use) => {
+      mergeReports: async ({ coverageCollectingChildProcess }, use, testInfo) => {
         await use(async (reportFolder: string, env: NodeJS.ProcessEnv = {}, options: RunOptions = {}) => {
           const command = ['node', cliEntrypoint, 'merge-reports', reportFolder];
           if (options.additionalArgs)
             command.push(...options.additionalArgs);
 
           const cwd = options.cwd ? path.resolve(test.info().outputDir, options.cwd) : test.info().outputDir;
-          const testProcess = childProcess({
+          const testProcess = coverageCollectingChildProcess({
             command,
             env: cleanEnv(env),
             cwd,

@@ -105,19 +105,24 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
         node-version: [16]
         shard: [1/2, 2/2]
+        coverage: [""]
         include:
           - os: ubuntu-latest
             node-version: 18
             shard: 1/2
+            coverage: "1"
           - os: ubuntu-latest
             node-version: 18
             shard: 2/2
+            coverage: "1"
           - os: ubuntu-latest
             node-version: 20
             shard: 1/2
+            coverage: ""
           - os: ubuntu-latest
             node-version: 20
             shard: 2/2
+            coverage: ""
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v3
@@ -127,8 +132,10 @@ jobs:
     - run: npm ci
       env:
         DEBUG: pw:install
-    - run: npm run build
+    - run: npm run build -- --sourcemap
     - run: npx playwright install --with-deps
+    - run: echo "PWTEST_COVERAGE=${{ matrix.coverage }}" >> "$GITHUB_ENV"
+      if: github.event_name == 'push'
     - run: npm run ttest -- --shard ${{ matrix.shard }}
       env:
         PWTEST_BLOB_REPORT_NAME: "${{ matrix.os }}-node${{ matrix.node-version }}"
@@ -145,6 +152,13 @@ jobs:
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
+    - name: Upload coverage data to GitHub
+      if: always() && github.event_name == 'push' && matrix.coverage == '1'
+      uses: actions/upload-artifact@v3
+      with:
+        name: ttest-coverage
+        path: ./test-results/coverage-data
+        retention-days: 1
 
   test_web_components:
     name: Web Components
@@ -251,3 +265,36 @@ jobs:
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
+
+  test_runner_coverage:
+    name: "Test Runner Coverage Report"
+    needs: test_test_runner
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
+      with:
+        node-version: 16
+    - run: npm ci
+    - run: npm run build -- --sourcemap
+    - name: Download coverage data from GitHub
+      if: github.event_name == 'push'
+      uses: actions/download-artifact@v3
+      with:
+        name: ttest-coverage-${{ github.run_attempt }}
+        path: ./coverage-data
+    - name: Generate coverage report
+      run: node utils/generate_coverage_report.js ./coverage-data
+      if: github.event_name == 'push'
+    - name: Upload HTML report to Azure
+      if: github.event_name == 'push'
+      run: |
+        azcopy cp --recursive "./coverage-report/*" "https://mspwblobreport.blob.core.windows.net/\$web/ttest-coverage"
+        echo "Test Runner Coverage Report url: https://mspwblobreport.z1.web.core.windows.net/ttest-coverage/index.html"
+      env:
+        AZCOPY_AUTO_LOGIN_TYPE: SPN
+        AZCOPY_SPA_APPLICATION_ID: '${{ secrets.AZCOPY_SPA_APPLICATION_ID }}'
+        AZCOPY_SPA_CLIENT_SECRET: '${{ secrets.AZCOPY_SPA_CLIENT_SECRET }}'
+        AZCOPY_TENANT_ID: '${{ secrets.AZCOPY_TENANT_ID }}'
