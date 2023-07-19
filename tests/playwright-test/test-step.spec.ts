@@ -34,6 +34,11 @@ class Reporter {
         line: step.location.line ? typeof step.location.line : 0,
         column: step.location.column ? typeof step.location.column : 0
       } : undefined,
+      stack: step.stack ? step.stack.map(frame => ({
+        file: frame.file.substring(frame.file.lastIndexOf(require('path').sep) + 1).replace('.js', '.ts'),
+        line: frame.line ? typeof frame.line : 0,
+        column: frame.column ? typeof frame.column : 0
+      })) : undefined,
       steps: step.steps.length ? step.steps.map(s => this.distillStep(s)) : undefined,
       error: step.error ? '<error>' : undefined,
     };
@@ -135,6 +140,11 @@ test('should report api step hierarchy', async ({ runInlineTest }) => {
         file: 'a.test.ts',
         line: 'number',
       },
+      stack: [{
+        column: 'number',
+        file: 'a.test.ts',
+        line: 'number',
+      }],
       steps: [
         {
           category: 'test.step',
@@ -143,6 +153,11 @@ test('should report api step hierarchy', async ({ runInlineTest }) => {
             file: 'a.test.ts',
             line: 'number',
           },
+          stack: [{
+            column: 'number',
+            file: 'a.test.ts',
+            line: 'number',
+          }],
           title: 'inner step 1.1',
         },
         {
@@ -152,6 +167,11 @@ test('should report api step hierarchy', async ({ runInlineTest }) => {
             file: 'a.test.ts',
             line: 'number',
           },
+          stack: [{
+            column: 'number',
+            file: 'a.test.ts',
+            line: 'number',
+          }],
           title: 'inner step 1.2',
         },
       ],
@@ -164,6 +184,11 @@ test('should report api step hierarchy', async ({ runInlineTest }) => {
         file: 'a.test.ts',
         line: 'number',
       },
+      stack: [{
+        column: 'number',
+        file: 'a.test.ts',
+        line: 'number',
+      }],
       steps: [
         {
           category: 'test.step',
@@ -172,6 +197,11 @@ test('should report api step hierarchy', async ({ runInlineTest }) => {
             file: 'a.test.ts',
             line: 'number',
           },
+          stack: [{
+            column: 'number',
+            file: 'a.test.ts',
+            line: 'number',
+          }],
           title: 'inner step 2.1',
         },
         {
@@ -181,6 +211,11 @@ test('should report api step hierarchy', async ({ runInlineTest }) => {
             file: 'a.test.ts',
             line: 'number',
           },
+          stack: [{
+            column: 'number',
+            file: 'a.test.ts',
+            line: 'number',
+          }],
           title: 'inner step 2.2',
         },
       ],
@@ -237,6 +272,11 @@ test('should report before hooks step error', async ({ runInlineTest }) => {
             file: 'a.test.ts',
             line: 'number',
           },
+          stack: [{
+            column: 'number',
+            file: 'a.test.ts',
+            line: 'number',
+          }],
         }
       ],
     },
@@ -312,6 +352,11 @@ test('should not report nested after hooks', async ({ runInlineTest }) => {
         file: 'a.test.ts',
         line: 'number',
       },
+      stack: [{
+        column: 'number',
+        file: 'a.test.ts',
+        line: 'number',
+      }],
     },
     {
       category: 'hook',
@@ -457,6 +502,11 @@ test('should report expect step locations', async ({ runInlineTest }) => {
         file: 'a.test.ts',
         line: 'number',
       },
+      stack: [{
+        column: 'number',
+        file: 'a.test.ts',
+        line: 'number',
+      }],
     },
     {
       category: 'hook',
@@ -535,6 +585,11 @@ test('should report custom expect steps', async ({ runInlineTest }) => {
         file: 'a.test.ts',
         line: 'number',
       },
+      stack: [{
+        column: 'number',
+        file: 'a.test.ts',
+        line: 'number',
+      }],
       title: 'expect.toBeWithinRange',
     },
     {
@@ -544,6 +599,11 @@ test('should report custom expect steps', async ({ runInlineTest }) => {
         file: 'a.test.ts',
         line: 'number',
       },
+      stack: [{
+        column: 'number',
+        file: 'a.test.ts',
+        line: 'number',
+      }],
       title: 'expect.toBeFailingAsync',
       error: '<error>',
     },
@@ -616,17 +676,25 @@ test('should mark step as failed when soft expect fails', async ({ runInlineTest
             title: 'expect.soft.toBe',
             category: 'expect',
             location: { file: 'a.test.ts', line: 'number', column: 'number' },
+            stack: [
+              { file: 'a.test.ts', line: 'number', column: 'number' },
+              { file: 'a.test.ts', line: 'number', column: 'number' },
+              { file: 'a.test.ts', line: 'number', column: 'number' }
+            ],
             error: '<error>'
           }
         ],
-        location: { file: 'a.test.ts', line: 'number', column: 'number' }
+        location: { file: 'a.test.ts', line: 'number', column: 'number' },
+        stack: [{ file: 'a.test.ts', line: 'number', column: 'number' }]
       }],
-      location: { file: 'a.test.ts', line: 'number', column: 'number' }
+      location: { file: 'a.test.ts', line: 'number', column: 'number' },
+      stack: [{ file: 'a.test.ts', line: 'number', column: 'number' }]
     },
     {
       title: 'passing',
       category: 'test.step',
-      location: { file: 'a.test.ts', line: 'number', column: 'number' }
+      location: { file: 'a.test.ts', line: 'number', column: 'number' },
+      stack: [{ file: 'a.test.ts', line: 'number', column: 'number' }]
     },
     { title: 'After Hooks', category: 'hook' }
   ]);
@@ -691,10 +759,12 @@ test('should nest steps based on zones', async ({ runInlineTest }) => {
             {
               title: 'in beforeAll',
               category: 'test.step',
-              location: { file: 'a.test.ts', line: 'number', column: 'number' }
+              location: { file: 'a.test.ts', line: 'number', column: 'number' },
+              stack: [{ file: 'a.test.ts', line: 'number', column: 'number' }]
             }
           ],
-          location: { file: 'a.test.ts', line: 'number', column: 'number' }
+          location: { file: 'a.test.ts', line: 'number', column: 'number' },
+          stack: [{ file: 'a.test.ts', line: 'number', column: 'number' }]
         },
         {
           title: 'beforeEach hook',
@@ -703,10 +773,12 @@ test('should nest steps based on zones', async ({ runInlineTest }) => {
             {
               title: 'in beforeEach',
               category: 'test.step',
-              location: { file: 'a.test.ts', line: 'number', column: 'number' }
+              location: { file: 'a.test.ts', line: 'number', column: 'number' },
+              stack: [{ file: 'a.test.ts', line: 'number', column: 'number' }]
             }
           ],
-          location: { file: 'a.test.ts', line: 'number', column: 'number' }
+          location: { file: 'a.test.ts', line: 'number', column: 'number' },
+          stack: [{ file: 'a.test.ts', line: 'number', column: 'number' }]
         },
         {
           category: 'fixture',
@@ -752,11 +824,18 @@ test('should nest steps based on zones', async ({ runInlineTest }) => {
               title: 'child1',
               category: 'test.step',
               location: { file: 'a.test.ts', line: 'number', column: 'number' },
+              stack: [{ file: 'a.test.ts', line: 'number', column: 'number' }],
               steps: [
                 {
                   title: 'page.click(body)',
                   category: 'pw:api',
-                  location: { file: 'a.test.ts', line: 'number', column: 'number' }
+                  location: { file: 'a.test.ts', line: 'number', column: 'number' },
+                  stack: [
+                    { file: 'a.test.ts', line: 'number', column: 'number' },
+                    { file: 'a.test.ts', line: 'number', column: 'number' },
+                    { file: 'a.test.ts', line: 'number', column: 'number' },
+                    { file: 'a.test.ts', line: 'number', column: 'number' }
+                  ]
                 }
               ]
             }
@@ -765,7 +844,12 @@ test('should nest steps based on zones', async ({ runInlineTest }) => {
             file: 'a.test.ts',
             line: 'number',
             column: 'number'
-          }
+          },
+          stack: [{
+            file: 'a.test.ts',
+            line: 'number',
+            column: 'number'
+          }]
         },
         {
           title: 'parent2',
@@ -775,23 +859,36 @@ test('should nest steps based on zones', async ({ runInlineTest }) => {
               title: 'child2',
               category: 'test.step',
               location: { file: 'a.test.ts', line: 'number', column: 'number' },
+              stack: [{ file: 'a.test.ts', line: 'number', column: 'number' }],
               steps: [
                 {
                   title: 'expect.toBeVisible',
                   category: 'expect',
-                  location: { file: 'a.test.ts', line: 'number', column: 'number' }
+                  location: { file: 'a.test.ts', line: 'number', column: 'number' },
+                  stack: [
+                    { file: 'a.test.ts', line: 'number', column: 'number' },
+                    { file: 'a.test.ts', line: 'number', column: 'number' },
+                    { file: 'a.test.ts', line: 'number', column: 'number' },
+                    { file: 'a.test.ts', line: 'number', column: 'number' }
+                  ]
                 }
               ]
             }
           ],
-          location: { file: 'a.test.ts', line: 'number', column: 'number' }
+          location: { file: 'a.test.ts', line: 'number', column: 'number' },
+          stack: [{ file: 'a.test.ts', line: 'number', column: 'number' }]
         }
       ],
       location: {
         file: 'a.test.ts',
         line: 'number',
         column: 'number'
-      }
+      },
+      stack: [{
+        file: 'a.test.ts',
+        line: 'number',
+        column: 'number'
+      }]
     },
     {
       title: 'After Hooks',
@@ -804,10 +901,12 @@ test('should nest steps based on zones', async ({ runInlineTest }) => {
             {
               title: 'in afterEach',
               category: 'test.step',
-              location: { file: 'a.test.ts', line: 'number', column: 'number' }
+              location: { file: 'a.test.ts', line: 'number', column: 'number' },
+              stack: [{ file: 'a.test.ts', line: 'number', column: 'number' }]
             }
           ],
-          location: { file: 'a.test.ts', line: 'number', column: 'number' }
+          location: { file: 'a.test.ts', line: 'number', column: 'number' },
+          stack: [{ file: 'a.test.ts', line: 'number', column: 'number' }]
         },
         {
           category: 'fixture',
@@ -824,10 +923,12 @@ test('should nest steps based on zones', async ({ runInlineTest }) => {
             {
               title: 'in afterAll',
               category: 'test.step',
-              location: { file: 'a.test.ts', line: 'number', column: 'number' }
+              location: { file: 'a.test.ts', line: 'number', column: 'number' },
+              stack: [{ file: 'a.test.ts', line: 'number', column: 'number' }]
             }
           ],
-          location: { file: 'a.test.ts', line: 'number', column: 'number' }
+          location: { file: 'a.test.ts', line: 'number', column: 'number' },
+          stack: [{ file: 'a.test.ts', line: 'number', column: 'number' }]
         },
       ]
     }
@@ -877,6 +978,11 @@ test('should not mark page.close as failed when page.click fails', async ({ runI
             file: 'a.test.ts',
             line: 'number',
           },
+          stack: [{
+            column: 'number',
+            file: 'a.test.ts',
+            line: 'number',
+          }],
           steps: [
             {
               category: 'fixture',
@@ -893,6 +999,11 @@ test('should not mark page.close as failed when page.click fails', async ({ runI
                 file: 'a.test.ts',
                 line: 'number',
               },
+              stack: [{
+                column: 'number',
+                file: 'a.test.ts',
+                line: 'number',
+              }],
             },
           ],
         },
@@ -906,6 +1017,11 @@ test('should not mark page.close as failed when page.click fails', async ({ runI
         file: 'a.test.ts',
         line: 'number',
       },
+      stack: [{
+        column: 'number',
+        file: 'a.test.ts',
+        line: 'number',
+      }],
     },
     {
       category: 'pw:api',
@@ -915,6 +1031,11 @@ test('should not mark page.close as failed when page.click fails', async ({ runI
         file: 'a.test.ts',
         line: 'number',
       },
+      stack: [{
+        column: 'number',
+        file: 'a.test.ts',
+        line: 'number',
+      }],
       error: '<error>',
     },
 
@@ -930,6 +1051,11 @@ test('should not mark page.close as failed when page.click fails', async ({ runI
             file: 'a.test.ts',
             line: 'number',
           },
+          stack: [{
+            column: 'number',
+            file: 'a.test.ts',
+            line: 'number',
+          }],
           steps: [
             {
               category: 'pw:api',
@@ -939,6 +1065,11 @@ test('should not mark page.close as failed when page.click fails', async ({ runI
                 file: 'a.test.ts',
                 line: 'number',
               },
+              stack: [{
+                column: 'number',
+                file: 'a.test.ts',
+                line: 'number',
+              }],
             },
           ],
         },
@@ -1004,16 +1135,19 @@ test('should nest page.continue inside page.goto steps', async ({ runInlineTest 
       title: 'page.route',
       category: 'pw:api',
       location: { file: 'a.test.ts', line: 'number', column: 'number' },
+      stack: [{ file: 'a.test.ts', line: 'number', column: 'number' }],
     },
     {
       title: 'page.goto(http://localhost:1234)',
       category: 'pw:api',
       location: { file: 'a.test.ts', line: 'number', column: 'number' },
+      stack: [{ file: 'a.test.ts', line: 'number', column: 'number' }],
       steps: [
         {
           title: 'route.fulfill',
           category: 'pw:api',
           location: { file: 'a.test.ts', line: 'number', column: 'number' },
+          stack: [{ file: 'a.test.ts', line: 'number', column: 'number' }],
         },
       ]
     },
@@ -1060,22 +1194,35 @@ test('should not propagate errors from within toPass', async ({ runInlineTest })
       title: 'expect.toPass',
       category: 'expect',
       location: { file: 'a.test.ts', line: 'number', column: 'number' },
+      stack: [{ file: 'a.test.ts', line: 'number', column: 'number' }],
       steps: [
         {
           category: 'expect',
           error: '<error>',
           location: { file: 'a.test.ts', line: 'number', column: 'number' },
+          stack: [
+            { file: 'a.test.ts', line: 'number', column: 'number' },
+            { file: 'a.test.ts', line: 'number', column: 'number' }
+          ],
           title: 'expect.toBe',
         },
         {
           category: 'expect',
           error: '<error>',
           location: { file: 'a.test.ts', line: 'number', column: 'number' },
+          stack: [
+            { file: 'a.test.ts', line: 'number', column: 'number' },
+            { file: 'a.test.ts', line: 'number', column: 'number' }
+          ],
           title: 'expect.toBe',
         },
         {
           category: 'expect',
           location: { file: 'a.test.ts', line: 'number', column: 'number' },
+          stack: [
+            { file: 'a.test.ts', line: 'number', column: 'number' },
+            { file: 'a.test.ts', line: 'number', column: 'number' }
+          ],
           title: 'expect.toBe',
         },
       ],
@@ -1113,11 +1260,16 @@ test('should show final toPass error', async ({ runInlineTest }) => {
       category: 'expect',
       error: '<error>',
       location: { file: 'a.test.ts', line: 'number', column: 'number' },
+      stack: [{ file: 'a.test.ts', line: 'number', column: 'number' }],
       steps: [
         {
           category: 'expect',
           error: '<error>',
           location: { file: 'a.test.ts', line: 'number', column: 'number' },
+          stack: [
+            { file: 'a.test.ts', line: 'number', column: 'number' },
+            { file: 'a.test.ts', line: 'number', column: 'number' }
+          ],
           title: 'expect.toBe',
         },
       ],
@@ -1163,18 +1315,25 @@ test('should propagate nested soft errors', async ({ runInlineTest }) => {
       title: 'first outer',
       error: '<error>',
       location: { column: 'number', file: 'a.test.ts', line: 'number' },
+      stack: [{ column: 'number', file: 'a.test.ts', line: 'number' }],
       steps: [
         {
           category: 'test.step',
           title: 'first inner',
           error: '<error>',
           location: { column: 'number', file: 'a.test.ts', line: 'number' },
+          stack: [{ column: 'number', file: 'a.test.ts', line: 'number' }],
           steps: [
             {
               category: 'expect',
               title: 'expect.soft.toBe',
               error: '<error>',
               location: { column: 'number', file: 'a.test.ts', line: 'number' },
+              stack: [
+                { column: 'number', file: 'a.test.ts', line: 'number' },
+                { column: 'number', file: 'a.test.ts', line: 'number' },
+                { column: 'number', file: 'a.test.ts', line: 'number' }
+              ],
             },
           ],
         },
@@ -1185,18 +1344,25 @@ test('should propagate nested soft errors', async ({ runInlineTest }) => {
       title: 'second outer',
       error: '<error>',
       location: { column: 'number', file: 'a.test.ts', line: 'number' },
+      stack: [{ column: 'number', file: 'a.test.ts', line: 'number' }],
       steps: [
         {
           category: 'test.step',
           title: 'second inner',
           error: '<error>',
           location: { column: 'number', file: 'a.test.ts', line: 'number' },
+          stack: [{ column: 'number', file: 'a.test.ts', line: 'number' }],
           steps: [
             {
               category: 'expect',
               title: 'expect.toBe',
               error: '<error>',
               location: { column: 'number', file: 'a.test.ts', line: 'number' },
+              stack: [
+                { column: 'number', file: 'a.test.ts', line: 'number' },
+                { column: 'number', file: 'a.test.ts', line: 'number' },
+                { column: 'number', file: 'a.test.ts', line: 'number' }
+              ],
             },
           ],
         },
@@ -1245,17 +1411,24 @@ test('should not propagate nested hard errors', async ({ runInlineTest }) => {
       category: 'test.step',
       title: 'first outer',
       location: { column: 'number', file: 'a.test.ts', line: 'number' },
+      stack: [{ column: 'number', file: 'a.test.ts', line: 'number' }],
       steps: [
         {
           category: 'test.step',
           title: 'first inner',
           location: { column: 'number', file: 'a.test.ts', line: 'number' },
+          stack: [{ column: 'number', file: 'a.test.ts', line: 'number' }],
           steps: [
             {
               category: 'expect',
               title: 'expect.toBe',
               error: '<error>',
               location: { column: 'number', file: 'a.test.ts', line: 'number' },
+              stack: [
+                { column: 'number', file: 'a.test.ts', line: 'number' },
+                { column: 'number', file: 'a.test.ts', line: 'number' },
+                { column: 'number', file: 'a.test.ts', line: 'number' }
+              ],
             },
           ],
         },
@@ -1266,18 +1439,25 @@ test('should not propagate nested hard errors', async ({ runInlineTest }) => {
       title: 'second outer',
       error: '<error>',
       location: { column: 'number', file: 'a.test.ts', line: 'number' },
+      stack: [{ column: 'number', file: 'a.test.ts', line: 'number' }],
       steps: [
         {
           category: 'test.step',
           title: 'second inner',
           error: '<error>',
           location: { column: 'number', file: 'a.test.ts', line: 'number' },
+          stack: [{ column: 'number', file: 'a.test.ts', line: 'number' }],
           steps: [
             {
               category: 'expect',
               title: 'expect.toBe',
               error: '<error>',
               location: { column: 'number', file: 'a.test.ts', line: 'number' },
+              stack: [
+                { column: 'number', file: 'a.test.ts', line: 'number' },
+                { column: 'number', file: 'a.test.ts', line: 'number' },
+                { column: 'number', file: 'a.test.ts', line: 'number' }
+              ],
             },
           ],
         },

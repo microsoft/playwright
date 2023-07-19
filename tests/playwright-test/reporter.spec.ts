@@ -57,9 +57,13 @@ class Reporter {
     };
   }
   onStepBegin(test, result, step) {
+    if (step.stack)
+      delete step.stack;
     console.log('%%%% begin', JSON.stringify(this.distillStep(step)));
   }
   onStepEnd(test, result, step) {
+    if (step.stack)
+      delete step.stack;
     if (step.error?.stack)
       step.error.stack = '<stack>';
     if (step.error?.location)
