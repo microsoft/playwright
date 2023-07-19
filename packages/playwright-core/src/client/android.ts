@@ -28,7 +28,7 @@ import { Waiter } from './waiter';
 import { EventEmitter } from 'events';
 import { Connection } from './connection';
 import { isSafeCloseError, kBrowserClosedError } from '../common/errors';
-import { raceAgainstTimeout } from '../utils/timeoutRunner';
+import { raceAgainstDeadline } from '../utils/timeoutRunner';
 import type { AndroidServerLauncherImpl } from '../androidServerImpl';
 
 type Direction = 'down' | 'up' | 'left' | 'right';
@@ -93,7 +93,7 @@ export class Android extends ChannelOwner<channels.AndroidChannel> implements ap
         }
       });
 
-      const result = await raceAgainstTimeout(async () => {
+      const result = await raceAgainstDeadline(async () => {
         const playwright = await connection!.initializePlaywright();
         if (!playwright._initializer.preConnectedAndroidDevice) {
           closePipe();
@@ -103,7 +103,7 @@ export class Android extends ChannelOwner<channels.AndroidChannel> implements ap
         device._shouldCloseConnectionOnClose = true;
         device.on(Events.AndroidDevice.Close, closePipe);
         return device;
-      }, deadline ? deadline - monotonicTime() : 0);
+      }, deadline);
       if (!result.timedOut) {
         return result.result;
       } else {

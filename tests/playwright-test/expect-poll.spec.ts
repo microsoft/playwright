@@ -218,3 +218,17 @@ test('should respect interval', async ({ runInlineTest }) => {
   });
   expect(result.exitCode).toBe(0);
 });
+
+test('should show intermediate result for poll that spills over test time', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('should fail', async () => {
+        await test.expect.poll(() => 3).toBe(2);
+      });
+    `
+  }, { timeout: 2000 });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('Expected: 2');
+  expect(result.output).toContain('Received: 3');
+});

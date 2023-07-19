@@ -17,7 +17,7 @@ import path from 'path';
 import net from 'net';
 
 import { debug } from 'playwright-core/lib/utilsBundle';
-import { raceAgainstTimeout, launchProcess, httpRequest } from 'playwright-core/lib/utils';
+import { raceAgainstDeadline, launchProcess, httpRequest, monotonicTime } from 'playwright-core/lib/utils';
 
 import type { FullConfig } from '../../types/testReporter';
 import type { TestRunnerPlugin } from '.';
@@ -128,7 +128,7 @@ export class WebServerPlugin implements TestRunnerPlugin {
     const launchTimeout = this._options.timeout || 60 * 1000;
     const cancellationToken = { canceled: false };
     const { timedOut } = (await Promise.race([
-      raceAgainstTimeout(() => waitFor(this._isAvailable!, cancellationToken), launchTimeout),
+      raceAgainstDeadline(() => waitFor(this._isAvailable!, cancellationToken), monotonicTime() + launchTimeout),
       this._processExitedPromise,
     ]));
     cancellationToken.canceled = true;

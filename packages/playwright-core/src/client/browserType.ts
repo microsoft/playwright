@@ -26,7 +26,7 @@ import { envObjectToArray } from './clientHelper';
 import { jsonStringifyForceASCII, assert, headersObjectToArray, monotonicTime } from '../utils';
 import type * as api from '../../types/types';
 import { kBrowserClosedError } from '../common/errors';
-import { raceAgainstTimeout } from '../utils/timeoutRunner';
+import { raceAgainstDeadline } from '../utils/timeoutRunner';
 import type { Playwright } from './playwright';
 
 export interface BrowserServerLauncher {
@@ -185,7 +185,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
         }
       });
 
-      const result = await raceAgainstTimeout(async () => {
+      const result = await raceAgainstDeadline(async () => {
         // For tests.
         if ((params as any).__testHookBeforeCreateBrowser)
           await (params as any).__testHookBeforeCreateBrowser();
@@ -202,7 +202,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
         browser._connectHeaders = connectHeaders;
         browser.on(Events.Browser.Disconnected, closePipe);
         return browser;
-      }, deadline ? deadline - monotonicTime() : 0);
+      }, deadline);
       if (!result.timedOut) {
         return result.result;
       } else {

@@ -16,7 +16,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { captureRawStack, createAfterActionTraceEventForStep, createBeforeActionTraceEventForStep, monotonicTime, zones } from 'playwright-core/lib/utils';
+import { MaxTime, captureRawStack, createAfterActionTraceEventForStep, createBeforeActionTraceEventForStep, monotonicTime, zones } from 'playwright-core/lib/utils';
 import type { TestInfoError, TestInfo, TestStatus, FullProject, FullConfig } from '../../types/test';
 import type { AttachmentPayload, StepBeginPayload, StepEndPayload, WorkerInitParams } from '../common/ipc';
 import type { TestCase } from '../common/test';
@@ -105,6 +105,19 @@ export class TestInfoImpl implements TestInfo {
 
   set timeout(timeout: number) {
     // Ignored.
+  }
+
+  _deadlineForMatcher(timeout: number): { deadline: number, timeoutMessage: string } {
+    const startTime = monotonicTime();
+    const matcherDeadline = timeout ? startTime + timeout : MaxTime;
+    const testDeadline = this._timeoutManager.currentSlotDeadline() - 100;
+    const matcherMessage = `Timeout ${timeout}ms exceeded while waiting on the predicate`;
+    const testMessage = `Test timeout of ${this.timeout}ms exceeded`;
+    return { deadline: Math.min(testDeadline, matcherDeadline), timeoutMessage: testDeadline < matcherDeadline ? testMessage : matcherMessage };
+  }
+
+  static _defaultDeadlineForMatcher(timeout: number): { deadline: any; timeoutMessage: any; } {
+    return { deadline: (timeout ? monotonicTime() + timeout : 0), timeoutMessage: `Timeout ${timeout}ms exceeded while waiting on the predicate` };
   }
 
   constructor(

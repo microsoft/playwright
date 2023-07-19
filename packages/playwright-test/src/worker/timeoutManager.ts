@@ -95,6 +95,10 @@ export class TimeoutManager {
     return this._runnable.type;
   }
 
+  currentSlotDeadline() {
+    return this._timeoutRunner.deadline();
+  }
+
   private _currentSlot() {
     return this._fixture?.slot || this._runnable.slot || this._defaultSlot;
   }
