@@ -21,7 +21,7 @@ import type { TestChildProcess } from '../config/commonFixtures';
 import { rimraf } from '../../packages/playwright-core/lib/utilsBundle';
 import { cleanEnv, cliEntrypoint, test as base, writeFiles } from './playwright-test-fixtures';
 import type { Files, RunOptions } from './playwright-test-fixtures';
-import type { Browser, Page, TestInfo } from './stable-test-runner';
+import type { Browser, BrowserType, Page, TestInfo } from './stable-test-runner';
 import { createGuid } from '../../packages/playwright-core/src/utils/crypto';
 
 type Latch = {
@@ -30,8 +30,12 @@ type Latch = {
   close: () => void;
 };
 
+type UIModeOptions = RunOptions & {
+  useWeb?: boolean
+};
+
 type Fixtures = {
-  runUITest: (files: Files, env?: NodeJS.ProcessEnv, options?: RunOptions) => Promise<{ page: Page, testProcess: TestChildProcess }>;
+  runUITest: (files: Files, env?: NodeJS.ProcessEnv, options?: UIModeOptions) => Promise<{ page: Page, testProcess: TestChildProcess }>;
   createLatch: () => Latch;
 };
 
@@ -82,16 +86,16 @@ export function dumpTestTree(page: Page, options: { time?: boolean } = {}): () =
 
 export const test = base
     .extend<Fixtures>({
-      runUITest: async ({ childProcess, playwright, headless }, use, testInfo: TestInfo) => {
+      runUITest: async ({ childProcess, headless }, use, testInfo: TestInfo) => {
         if (process.env.CI)
           testInfo.slow();
         const cacheDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-test-cache-'));
         let testProcess: TestChildProcess | undefined;
         let browser: Browser | undefined;
-        await use(async (files: Files, env: NodeJS.ProcessEnv = {}, options: RunOptions = {}) => {
+        await use(async (files: Files, env: NodeJS.ProcessEnv = {}, options: UIModeOptions = {}) => {
           const baseDir = await writeFiles(testInfo, files, true);
           testProcess = childProcess({
-            command: ['node', cliEntrypoint, 'test', '--ui', '--workers=1', ...(options.additionalArgs || [])],
+            command: ['node', cliEntrypoint, 'test', (options.useWeb ? '--ui-host=127.0.0.1' : '--ui'), '--workers=1', ...(options.additionalArgs || [])],
             env: {
               ...cleanEnv(env),
               PWTEST_UNDER_TEST: '1',
@@ -101,12 +105,25 @@ export const test = base
             },
             cwd: options.cwd ? path.resolve(baseDir, options.cwd) : baseDir,
           });
-          await testProcess.waitForOutput('DevTools listening on');
-          const line = testProcess.output.split('\n').find(l => l.includes('DevTools listening on'));
-          const wsEndpoint = line!.split(' ')[3];
-          browser = await playwright.chromium.connectOverCDP(wsEndpoint);
-          const [context] = browser.contexts();
-          const [page] = context.pages();
+          let page: Page;
+          // We want to have ToT playwright-core here, since we install it's browsers and otherwise
+          // don't have the right browser revision (ToT revisions != stable-test-runner revisions).
+          const chromium: BrowserType = require('../../packages/playwright-core').chromium;
+          if (options.useWeb) {
+            await testProcess.waitForOutput('Listening on');
+            const line = testProcess.output.split('\n').find(l => l.includes('Listening on'));
+            const uiAddress = line!.split(' ')[2];
+            browser = await chromium.launch();
+            page = await browser.newPage();
+            await page.goto(uiAddress);
+          } else {
+            await testProcess.waitForOutput('DevTools listening on');
+            const line = testProcess.output.split('\n').find(l => l.includes('DevTools listening on'));
+            const wsEndpoint = line!.split(' ')[3];
+            browser = await chromium.connectOverCDP(wsEndpoint);
+            const [context] = browser.contexts();
+            [page] = context.pages();
+          }
           return { page, testProcess };
         });
         await browser?.close();

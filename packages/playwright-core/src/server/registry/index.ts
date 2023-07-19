@@ -199,6 +199,29 @@ const DOWNLOAD_PATHS = {
     'mac13-arm64': 'builds/firefox-beta/%s/firefox-beta-mac-13-arm64.zip',
     'win64': 'builds/firefox-beta/%s/firefox-beta-win64.zip',
   },
+  'firefox-asan': {
+    '<unknown>': undefined,
+    'generic-linux': 'builds/firefox/%s/firefox-asan-ubuntu-20.04.zip',
+    'generic-linux-arm64': undefined,
+    'ubuntu18.04': undefined,
+    'ubuntu20.04': undefined,
+    'ubuntu22.04': 'builds/firefox/%s/firefox-asan-ubuntu-22.04.zip',
+    'ubuntu18.04-arm64': undefined,
+    'ubuntu20.04-arm64': undefined,
+    'ubuntu22.04-arm64': undefined,
+    'debian11': undefined,
+    'debian11-arm64': undefined,
+    'mac10.13': 'builds/firefox/%s/firefox-asan-mac-13.zip',
+    'mac10.14': 'builds/firefox/%s/firefox-asan-mac-13.zip',
+    'mac10.15': 'builds/firefox/%s/firefox-asan-mac-13.zip',
+    'mac11': 'builds/firefox/%s/firefox-asan-mac-13.zip',
+    'mac11-arm64': undefined,
+    'mac12': 'builds/firefox/%s/firefox-asan-mac-13.zip',
+    'mac12-arm64': undefined,
+    'mac13': 'builds/firefox/%s/firefox-asan-mac-13.zip',
+    'mac13-arm64': undefined,
+    'win64': undefined,
+  },
   'webkit': {
     '<unknown>': undefined,
     'generic-linux': 'builds/webkit/%s/webkit-ubuntu-20.04.zip',
@@ -338,7 +361,7 @@ function readDescriptors(browsersJSON: BrowsersJSON) {
 }
 
 export type BrowserName = 'chromium' | 'firefox' | 'webkit';
-type InternalTool = 'ffmpeg' | 'firefox-beta' | 'chromium-with-symbols' | 'chromium-tip-of-tree' | 'android';
+type InternalTool = 'ffmpeg' | 'firefox-beta' | 'firefox-asan' | 'chromium-with-symbols' | 'chromium-tip-of-tree' | 'android';
 type ChromiumChannel = 'chrome' | 'chrome-beta' | 'chrome-dev' | 'chrome-canary' | 'msedge' | 'msedge-beta' | 'msedge-dev' | 'msedge-canary';
 const allDownloadable = ['chromium', 'firefox', 'webkit', 'ffmpeg', 'firefox-beta', 'chromium-with-symbols', 'chromium-tip-of-tree'];
 
@@ -541,6 +564,24 @@ export class Registry {
       downloadURLs: this._downloadURLs(firefox),
       browserVersion: firefox.browserVersion,
       _install: () => this._downloadExecutable(firefox, firefoxExecutable),
+      _dependencyGroup: 'firefox',
+      _isHermeticInstallation: true,
+    });
+
+    const firefoxAsan = descriptors.find(d => d.name === 'firefox-asan')!;
+    const firefoxAsanExecutable = findExecutablePath(firefoxAsan.dir, 'firefox');
+    this._executables.push({
+      type: 'browser',
+      name: 'firefox-asan',
+      browserName: 'firefox',
+      directory: firefoxAsan.dir,
+      executablePath: () => firefoxAsanExecutable,
+      executablePathOrDie: (sdkLanguage: string) => executablePathOrDie('firefox-asan', firefoxAsanExecutable, firefoxAsan.installByDefault, sdkLanguage),
+      installType: firefoxAsan.installByDefault ? 'download-by-default' : 'download-on-demand',
+      validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, 'firefox', firefoxAsan.dir, ['firefox'], [], ['firefox']),
+      downloadURLs: this._downloadURLs(firefoxAsan),
+      browserVersion: firefoxAsan.browserVersion,
+      _install: () => this._downloadExecutable(firefoxAsan, firefoxAsanExecutable),
       _dependencyGroup: 'firefox',
       _isHermeticInstallation: true,
     });
