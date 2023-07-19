@@ -612,7 +612,7 @@ function parseCookie(header: string): channels.NetworkCookie | null {
           if (expiresMs <= 0)
             cookie.expires = 0;
           else
-            cookie.expires = Math.max(expiresMs / 1000, kMaxCookieExpiresDateInSeconds);
+            cookie.expires = Math.min(expiresMs / 1000, kMaxCookieExpiresDateInSeconds);
         }
         break;
       case 'max-age':
@@ -624,7 +624,7 @@ function parseCookie(header: string): channels.NetworkCookie | null {
           if (maxAgeSec <= 0)
             cookie.expires = 0;
           else
-            cookie.expires = Math.max(Date.now() / 1000 + maxAgeSec, kMaxCookieExpiresDateInSeconds);
+            cookie.expires = Math.min(Date.now() / 1000 + maxAgeSec, kMaxCookieExpiresDateInSeconds);
         }
         break;
       case 'domain':
