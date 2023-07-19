@@ -24,6 +24,6 @@ export type KeyDefinition = {
   location?: number;
 };
 
-export type KeyboardLayout = { [s: string]: KeyDefinition; };
+export type KeyboardLayout =  Record<string, KeyDefinition>;
 
 export type KeyboardLayoutMap = Record<string, KeyboardLayout>;

@@ -165,4 +165,5 @@ test('should set keyboard layout on android', async function({ androidDevice, se
       ['Keydown: α KeyA 65 []',
         'Keypress: α KeyA 945 945 []',
         'Keyup: α KeyA 65 []'].join('\n'));
+  await context.close();
 });

@@ -231,4 +231,5 @@ test('should set keyboard layout on electron app', async ({ launchElectronApp, s
       ['Keydown: α KeyA 65 []',
         'Keypress: α KeyA 945 945 []',
         'Keyup: α KeyA 65 []'].join('\n'));
+  await electronApp.close();
 });

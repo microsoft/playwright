@@ -1,12 +1,11 @@
 /**
- * Copyright 2018 Google Inc. All rights reserved.
- * Modifications copyright (c) Microsoft Corporation.
+ * Copyright (c) Microsoft Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -26,6 +25,7 @@ it('should set keyboard layout on Browser.newContext @smoke', async ({ browser, 
       ['Keydown: α KeyA 65 []',
         'Keypress: α KeyA 945 945 []',
         'Keyup: α KeyA 65 []'].join('\n'));
+  await context.close();
 });
 
 it('should set keyboard layout on Browser.newPage @smoke', async ({ browser, server }) => {
@@ -36,6 +36,7 @@ it('should set keyboard layout on Browser.newPage @smoke', async ({ browser, ser
       ['Keydown: α KeyA 65 []',
         'Keypress: α KeyA 945 945 []',
         'Keyup: α KeyA 65 []'].join('\n'));
+  await page.close();
 });
 
 it('should set keyboard layout on BrowserType.launchPersistentContext @smoke', async ({ browserType, server, createUserDataDir }) => {
@@ -48,4 +49,5 @@ it('should set keyboard layout on BrowserType.launchPersistentContext @smoke', a
       ['Keydown: α KeyA 65 []',
         'Keypress: α KeyA 945 945 []',
         'Keyup: α KeyA 65 []'].join('\n'));
+  await context.close();
 });
