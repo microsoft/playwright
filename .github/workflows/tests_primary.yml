@@ -61,7 +61,7 @@ jobs:
       if: always()
       shell: bash
     - name: Upload blob report
-      if: always()
+      if: always() && github.event_name == 'pull_request'
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: test-results/blob-report
@@ -137,7 +137,7 @@ jobs:
       if: always()
       shell: bash
     - name: Upload blob report
-      if: always()
+      if: always() && github.event_name == 'pull_request'
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: test-results/blob-report
