@@ -2,14 +2,14 @@
 /**
  * Copyright (c) Microsoft Corporation.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the Apache License, Version 2.0 (the 'License');
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
+ * distributed under the License is distributed on an 'AS IS' BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
@@ -26,7 +26,7 @@
 const fs = require('fs');
 const assert = require('assert');
 const path = require('path');
-const { chromium } = require('playwright');
+const xml2js = require('xml2js');
 
 // US keyboard
 const defaultKlid = '00000409';
@@ -152,7 +152,8 @@ const layoutUrls = {
   '0000046A': { layoutName: 'Yoruba keyboard', locales: ['yo-NG'] },
 };
 
-const copyrightHeader = `/**
+const copyrightHeader =
+`/**
  * Copyright (c) Microsoft Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -172,9 +173,9 @@ const copyrightHeader = `/**
 `;
 
 /**
- * @type { Object.<string,KeyDefinition | string> }
+ * @type { Object.<string, KeyDefinition | number> }
  *
- * strings correspond to locators on corresponding kbdlayout.info page
+ * numbers correspond to scancodes
  */
 const keyboardLayoutGenerator = {
   // Functions row
@@ -193,72 +194,72 @@ const keyboardLayoutGenerator = {
   'F12': { 'keyCode': 123, 'key': 'F12' },
 
   // Numbers row
-  'Backquote': '.kr2 > div:nth-child(1) > .kc',
-  'Digit1': '.kr2 > div:nth-child(2) > .kc',
-  'Digit2': '.kr2 > div:nth-child(3) > .kc',
-  'Digit3': '.kr2 > div:nth-child(4) > .kc',
-  'Digit4': '.kr2 > div:nth-child(5) > .kc',
-  'Digit5': '.kr2 > div:nth-child(6) > .kc',
-  'Digit6': '.kr2 > div:nth-child(7) > .kc',
-  'Digit7': '.kr2 > div:nth-child(8) > .kc',
-  'Digit8': '.kr2 > div:nth-child(9) > .kc',
-  'Digit9': '.kr2 > div:nth-child(10) > .kc',
-  'Digit0': '.kr2 > div:nth-child(11) > .kc',
-  'Minus': '.kr2 > div:nth-child(12) > .kc',
-  'Equal': '.kr2 > div:nth-child(13) > .kc',
+  'Backquote': 0x29,
+  'Digit1': 0x02,
+  'Digit2': 0x03,
+  'Digit3': 0x04,
+  'Digit4': 0x05,
+  'Digit5': 0x06,
+  'Digit6': 0x07,
+  'Digit7': 0x08,
+  'Digit8': 0x09,
+  'Digit9': 0x0A,
+  'Digit0': 0x0B,
+  'Minus': 0x0C,
+  'Equal': 0x0D,
   'Backspace': { 'keyCode': 8, 'key': 'Backspace' },
 
   // First row
   'Tab': { 'keyCode': 9, 'key': 'Tab' },
-  'KeyQ': '.kr3 > div:nth-child(2) > .kc',
-  'KeyW': '.kr3 > div:nth-child(3) > .kc',
-  'KeyE': '.kr3 > div:nth-child(4) > .kc',
-  'KeyR': '.kr3 > div:nth-child(5) > .kc',
-  'KeyT': '.kr3 > div:nth-child(6) > .kc',
-  'KeyY': '.kr3 > div:nth-child(7) > .kc',
-  'KeyU': '.kr3 > div:nth-child(8) > .kc',
-  'KeyI': '.kr3 > div:nth-child(9) > .kc',
-  'KeyO': '.kr3 > div:nth-child(10) > .kc',
-  'KeyP': '.kr3 > div:nth-child(11) > .kc',
-  'BracketLeft': '.kr3 > div:nth-child(12) > .kc',
-  'BracketRight': '.kr3 > div:nth-child(13) > .kc',
+  'KeyQ': 0x10,
+  'KeyW': 0x11,
+  'KeyE': 0x12,
+  'KeyR': 0x13,
+  'KeyT': 0x14,
+  'KeyY': 0x15,
+  'KeyU': 0x16,
+  'KeyI': 0x17,
+  'KeyO': 0x18,
+  'KeyP': 0x19,
+  'BracketLeft': 0x1A,
+  'BracketRight': 0x1B,
   'Enter': { 'keyCode': 13, 'key': 'Enter', 'text': '\r' },
 
   // Second row
   'CapsLock': { 'keyCode': 20, 'key': 'CapsLock' },
-  'KeyA': '.kr4 > div:nth-child(2) > .kc',
-  'KeyS': '.kr4 > div:nth-child(3) > .kc',
-  'KeyD': '.kr4 > div:nth-child(4) > .kc',
-  'KeyF': '.kr4 > div:nth-child(5) > .kc',
-  'KeyG': '.kr4 > div:nth-child(6) > .kc',
-  'KeyH': '.kr4 > div:nth-child(7) > .kc',
-  'KeyJ': '.kr4 > div:nth-child(8) > .kc',
-  'KeyK': '.kr4 > div:nth-child(9) > .kc',
-  'KeyL': '.kr4 > div:nth-child(10) > .kc',
-  'Semicolon': '.kr4 > div:nth-child(11) > .kc',
-  'Quote': '.kr4 > div:nth-child(12) > .kc',
-  'Backslash': '.kr4 > div:nth-child(13) > .kc',
+  'KeyA': 0x1E,
+  'KeyS': 0x1F,
+  'KeyD': 0x20,
+  'KeyF': 0x21,
+  'KeyG': 0x22,
+  'KeyH': 0x23,
+  'KeyJ': 0x24,
+  'KeyK': 0x25,
+  'KeyL': 0x26,
+  'Semicolon': 0x27,
+  'Quote': 0x28,
+  'Backslash': 0x2B,
 
   // Third row
   'ShiftLeft': { 'keyCode': 160, 'keyCodeWithoutLocation': 16, 'key': 'Shift', 'location': 1 },
-  'IntlBackslash': '.kr5 > div:nth-child(2) > .kc',
-  'KeyZ': '.kr5 > div:nth-child(3) > .kc',
-  'KeyX': '.kr5 > div:nth-child(4) > .kc',
-  'KeyC': '.kr5 > div:nth-child(5) > .kc',
-  'KeyV': '.kr5 > div:nth-child(6) > .kc',
-  'KeyB': '.kr5 > div:nth-child(7) > .kc',
-  'KeyN': '.kr5 > div:nth-child(8) > .kc',
-  'KeyM': '.kr5 > div:nth-child(9) > .kc',
-  'Comma': '.kr5 > div:nth-child(10) > .kc',
-  'Period': '.kr5 > div:nth-child(11) > .kc',
-  'Slash': '.kr5 > div:nth-child(12) > .kc',
+  'IntlBackslash': 0x56,
+  'KeyZ': 0x2C,
+  'KeyX': 0x2D,
+  'KeyC': 0x2E,
+  'KeyV': 0x2F,
+  'KeyB': 0x30,
+  'KeyN': 0x31,
+  'KeyM': 0x32,
+  'Comma': 0x33,
+  'Period': 0x34,
+  'Slash': 0x35,
   'ShiftRight': { 'keyCode': 161, 'keyCodeWithoutLocation': 16, 'key': 'Shift', 'location': 2 },
 
   // Last row
   'ControlLeft': { 'keyCode': 162, 'keyCodeWithoutLocation': 17, 'key': 'Control', 'location': 1 },
   'MetaLeft': { 'keyCode': 91, 'key': 'Meta', 'location': 1 },
   'AltLeft': { 'keyCode': 164, 'keyCodeWithoutLocation': 18, 'key': 'Alt', 'location': 1 },
-  'Space': '.kr6 > div:nth-child(4) > .kc',
+  'Space': 0x39,
   'AltRight': { 'keyCode': 165, 'keyCodeWithoutLocation': 18, 'key': 'Alt', 'location': 2 },
   'AltGraph': { 'keyCode': 225, 'key': 'AltGraph' },
   'MetaRight': { 'keyCode': 92, 'key': 'Meta', 'location': 2 },
@@ -303,33 +304,6 @@ const keyboardLayoutGenerator = {
 };
 
 /**
- * @param { string } keyname
- * @param { Locator } keyLocator
- * @param { number } virtualKeyCode
- * @returns { Promise<KeyDefinition> }
- */
-async function process(keyname, keyLocator, virtualKeyCode) {
-  assert(await keyLocator.locator('[title]').count() === 1, `Locator ${keyLocator} doesn't have a unique title`);
-  const title = await keyLocator.locator('[title]').getAttribute('title');
-  assert(title);
-
-  const [, hexCode] = /^(?:\:|[^\:]*?) U\+([0-9A-F]{4})/.exec(title) ?? [];
-  const [, shiftHexCode] = /SHIFT: .*? U\+([0-9A-F]{4})/.exec(title) ?? [];
-
-  const key = hexCode ? String.fromCharCode(parseInt(hexCode, 16)) : undefined;
-  const shiftKey = shiftHexCode ? String.fromCharCode(parseInt(shiftHexCode, 16)) : undefined;
-
-  let location;
-
-  return {
-    keyCode: virtualKeyCode,
-    key,
-    shiftKey: keyname === 'Space' && shiftKey === key ? undefined : shiftKey,
-    location,
-  };
-}
-
-/**
  * @param { Page } page
  * @param { string } url
  * @returns { Promise<Object.<string, number>> }
@@ -345,7 +319,7 @@ async function extractLocatorToVirtualKeys(page, url) {
   const locators = Object.values(keyboardLayoutGenerator).filter(v => typeof v === 'string');
   for (const loc of locators) {
     const scancode = await page.locator(loc).locator('> .kls > .kl10').textContent();
-    const vk = await page.locator(`.scGroup tr:has(td:nth-child(1):text-is("${scancode}")) > td:nth-child(2)`).first().textContent();
+    const vk = await page.locator(`.scGroup tr:has(td:nth-child(1):text-is('${scancode}')) > td:nth-child(2)`).first().textContent();
     assert(vk, `No virtual key code found for ${loc} (scancode ${scancode})`);
     mappings[loc] = parseInt(vk, 16);
   }
@@ -354,23 +328,80 @@ async function extractLocatorToVirtualKeys(page, url) {
 }
 
 /**
- * @param { Page } page
- * @param { string } url
+ * @param {string} xml
+ * @returns {object}
+ */
+function parseXML(xml) {
+  let result;
+  xml2js.parseString(xml, {trim: true}, (err, r) => result = r);
+  return result;
+}
+
+function hex2char(hex) {
+  return String.fromCharCode(parseInt(hex, 16));
+}
+
+/**
+ * @param { string } klid
  * @returns { Promise<Object.<string, KeyDefinition>> }
  */
-async function generate(page, url) {
-  const locatorToVirtualKeys = await extractLocatorToVirtualKeys(page, url);
-  await page.goto(url);
+async function generate(klid) {
+  const [xml, kdbtables] = await Promise.all([
+    fetch(`https://kbdlayout.info/${klid}/download/xml`).then(r => r.text()),
+    fetch(`https://kbdlayout.info/${klid}/download/kbdtables`).then(r => r.text()),
+  ]);
+
+  const sc2vkJson = parseXML(xml);
+  assert(sc2vkJson);
+
+  /**
+   * scancode to keys
+   *
+   * @type {Object.<string, { key: string, shiftKey: string }>}
+   */
+  const sc2keys = Object.fromEntries(sc2vkJson.KeyboardLayout.PhysicalKeys[0].PK
+      .map(({ Result, $: { SC } }) => {
+        if (!Result) return;
+
+        let key, shiftKey;
+        for (const { $, DeadKeyTable } of Result) {
+          const { Text, With } = $ ?? {};
+          if (With && With !== 'VK_SHIFT') continue;
+
+          const text = Text ?? DeadKeyTable?.[0].$.Accent;
+          const isShift = With === 'VK_SHIFT';
+          if (!isShift) key = text;
+          if (isShift) shiftKey = text;
+        }
+        return [SC.toUpperCase(), { key, shiftKey }];
+      }).filter(Boolean));
+
+  const kdbtablesJson = parseXML(kdbtables);
+  assert(kdbtablesJson);
+
+  const { VSCtoVK: [sc2vkCodeStr] }= kdbtablesJson.KbdDll.KbdLayerDescriptor[0].KbdLayer[0];
+
+  /**
+   * virtual key codes. array index corresponds to scancode, as number
+   *
+   * @type {number[]}
+   */
+  const sc2vkCode = sc2vkCodeStr.split(' ').map(hex => parseInt(hex, 16));
 
   /** @type { Object.<string, KeyDefinition> } */
   const layout = {};
 
   for (const [keyname, def] of Object.entries(keyboardLayoutGenerator)) {
-    if (typeof def === 'string') {
-      // ensure it's a valid key (not empty)
-      if (!(await page.locator(def).textContent())?.trim()) continue;
+    if (typeof def === 'number') {
+      const sc = def.toString(16).toUpperCase().padStart(2, '0');
+      const { key, shiftKey } = sc2keys[sc] ?? {};
 
-      layout[keyname] = await process(keyname, page.locator(def), locatorToVirtualKeys[def]);
+      if (key === shiftKey === undefined) continue;
+
+      // def is the scancode as number
+      const keyCode = sc2vkCode[def];
+
+      layout[keyname] = { key, keyCode, shiftKey: keyname === 'Space' && key === shiftKey ? undefined : shiftKey };
     } else {
       layout[keyname] = def;
     }
@@ -408,13 +439,10 @@ function stringifyKeyDefinition(def) {
 
 const keyboardsDir = path.resolve(__dirname, '../packages/playwright-core/src/server/keyboards');
 
-(async () => {
-  const browser = await chromium.launch({ headless: true });
-  const page = await browser.newPage();
-
+(async () => {;
   for (const [klid, { layoutName }] of Object.entries(layoutUrls)) {
     console.log(`Generating keyboard layout for ${layoutName} (KLID ${klid})`);
-    const layout = await generate(page, `https://kbdlayout.info/${klid}`);
+    const layout = await generate(klid);
 
     const layoutData = [
       copyrightHeader,
@@ -426,6 +454,7 @@ const keyboardsDir = path.resolve(__dirname, '../packages/playwright-core/src/se
       `};`,
       ``,
       `export default keyboardLayout;`,
+      ``,
     ].join('\n');
 
     fs.writeFileSync(path.resolve(keyboardsDir, 'layouts', `${klid}.ts`), layoutData, 'utf-8');
@@ -448,9 +477,8 @@ const keyboardsDir = path.resolve(__dirname, '../packages/playwright-core/src/se
     `]);`,
     ``,
     `export const keypadLocation = 3;`,
+    ``,
   ].join('\n');
 
   fs.writeFileSync(path.resolve(keyboardsDir, 'index.ts'), index, 'utf-8');
-
-  await browser.close();
 })();

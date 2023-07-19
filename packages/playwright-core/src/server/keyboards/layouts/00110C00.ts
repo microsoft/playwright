@@ -1,16 +1,14 @@
-
 /**
- * Copyright 2017 Google Inc. All rights reserved.
- * Modifications copyright (c) Microsoft Corporation.
+ * Copyright (c) Microsoft Corporation.
  *
- * Licensed under the Apache License, Version 2.0 (the 'License');
+ * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an 'AS IS' BASIS,
+ * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
@@ -50,15 +48,15 @@ const keyboardLayout: KeyboardLayout = {
   Equal: { key: '‌', keyCode: 187 },
   Backspace: { key: 'Backspace', keyCode: 8 },
   Tab: { key: 'Tab', keyCode: 9 },
-  KeyQ: { key: 'ꦄ', keyCode: 81, shiftKey: 'ꦼ' },
-  KeyW: { key: 'ꦮ', keyCode: 87, shiftKey: '꧀' },
+  KeyQ: { key: 'ꦄꦼ', keyCode: 81, shiftKey: 'ꦼ' },
+  KeyW: { key: 'ꦮ', keyCode: 87, shiftKey: '꧀ꦮ' },
   KeyE: { key: 'ꦌ', keyCode: 69, shiftKey: 'ꦺ' },
   KeyR: { key: 'ꦫ', keyCode: 82, shiftKey: 'ꦿ' },
   KeyT: { key: 'ꦠ', keyCode: 84, shiftKey: 'ꦡ' },
   KeyY: { key: 'ꦪ', keyCode: 89, shiftKey: 'ꦾ' },
   KeyU: { key: 'ꦈ', keyCode: 85, shiftKey: 'ꦸ' },
   KeyI: { key: 'ꦆ', keyCode: 73, shiftKey: 'ꦶ' },
-  KeyO: { key: 'ꦎ', keyCode: 79, shiftKey: 'ꦺ' },
+  KeyO: { key: 'ꦎ', keyCode: 79, shiftKey: 'ꦺꦴ' },
   KeyP: { key: 'ꦥ', keyCode: 80, shiftKey: 'ꦦ' },
   BracketLeft: { key: '[', keyCode: 219, shiftKey: '꧁' },
   BracketRight: { key: ']', keyCode: 221, shiftKey: '꧂' },
@@ -72,11 +70,12 @@ const keyboardLayout: KeyboardLayout = {
   KeyH: { key: 'ꦲ', keyCode: 72, shiftKey: 'ꦃ' },
   KeyJ: { key: 'ꦗ', keyCode: 74, shiftKey: 'ꦘ' },
   KeyK: { key: 'ꦏ', keyCode: 75, shiftKey: 'ꦑ' },
-  KeyL: { key: 'ꦭ', keyCode: 76, shiftKey: '꧀' },
+  KeyL: { key: 'ꦭ', keyCode: 76, shiftKey: '꧀ꦭ' },
   Semicolon: { key: 'ꦛ', keyCode: 186, shiftKey: 'ꦜ' },
   Quote: { key: 'ꦝ', keyCode: 222, shiftKey: 'ꦞ' },
   Backslash: { key: '\\', keyCode: 220, shiftKey: '|' },
   ShiftLeft: { key: 'Shift', keyCode: 160, keyCodeWithoutLocation: 16, location: 1 },
+  IntlBackslash: { keyCode: 226 },
   KeyZ: { key: 'ꦚ', keyCode: 90, shiftKey: 'ꦂ' },
   KeyX: { key: 'ꦔ', keyCode: 88, shiftKey: 'ꦁ' },
   KeyC: { key: 'ꦕ', keyCode: 67, shiftKey: 'ꦖ' },

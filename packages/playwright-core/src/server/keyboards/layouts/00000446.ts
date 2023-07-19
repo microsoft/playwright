@@ -1,16 +1,14 @@
-
 /**
- * Copyright 2017 Google Inc. All rights reserved.
- * Modifications copyright (c) Microsoft Corporation.
+ * Copyright (c) Microsoft Corporation.
  *
- * Licensed under the Apache License, Version 2.0 (the 'License');
+ * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an 'AS IS' BASIS,
+ * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
@@ -35,10 +33,10 @@ const keyboardLayout: KeyboardLayout = {
   F10: { key: 'F10', keyCode: 121 },
   F11: { key: 'F11', keyCode: 122 },
   F12: { key: 'F12', keyCode: 123 },
-  Backquote: { keyCode: 192, shiftKey: '੍' },
-  Digit1: { key: '1', keyCode: 49, shiftKey: '੍' },
-  Digit2: { key: '2', keyCode: 50, shiftKey: '੍' },
-  Digit3: { key: '3', keyCode: 51, shiftKey: '੍' },
+  Backquote: { keyCode: 192, shiftKey: '੍ਹ' },
+  Digit1: { key: '1', keyCode: 49, shiftKey: '੍ਵ' },
+  Digit2: { key: '2', keyCode: 50, shiftKey: '੍ਯ' },
+  Digit3: { key: '3', keyCode: 51, shiftKey: '੍ਰ' },
   Digit4: { key: '4', keyCode: 52, shiftKey: 'ੱ' },
   Digit5: { key: '5', keyCode: 53 },
   Digit6: { key: '6', keyCode: 54 },
@@ -47,6 +45,7 @@ const keyboardLayout: KeyboardLayout = {
   Digit9: { key: '9', keyCode: 57, shiftKey: '(' },
   Digit0: { key: '0', keyCode: 48, shiftKey: ')' },
   Minus: { key: '-', keyCode: 189 },
+  Equal: { keyCode: 187 },
   Backspace: { key: 'Backspace', keyCode: 8 },
   Tab: { key: 'Tab', keyCode: 9 },
   KeyQ: { key: 'ੌ', keyCode: 81, shiftKey: 'ਔ' },
@@ -74,7 +73,10 @@ const keyboardLayout: KeyboardLayout = {
   KeyL: { key: 'ਤ', keyCode: 76, shiftKey: 'ਥ' },
   Semicolon: { key: 'ਚ', keyCode: 186, shiftKey: 'ਛ' },
   Quote: { key: 'ਟ', keyCode: 222, shiftKey: 'ਠ' },
+  Backslash: { keyCode: 220 },
   ShiftLeft: { key: 'Shift', keyCode: 160, keyCodeWithoutLocation: 16, location: 1 },
+  IntlBackslash: { keyCode: 226 },
+  KeyZ: { keyCode: 90 },
   KeyX: { key: 'ੰ', keyCode: 88, shiftKey: 'ਂ' },
   KeyC: { key: 'ਮ', keyCode: 67, shiftKey: 'ਣ' },
   KeyV: { key: 'ਨ', keyCode: 86 },

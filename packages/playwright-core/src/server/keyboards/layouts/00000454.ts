@@ -1,16 +1,14 @@
-
 /**
- * Copyright 2017 Google Inc. All rights reserved.
- * Modifications copyright (c) Microsoft Corporation.
+ * Copyright (c) Microsoft Corporation.
  *
- * Licensed under the Apache License, Version 2.0 (the 'License');
+ * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an 'AS IS' BASIS,
+ * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
@@ -47,24 +45,24 @@ const keyboardLayout: KeyboardLayout = {
   Digit9: { key: 'ຈ', keyCode: 57, shiftKey: '7' },
   Digit0: { key: 'ຂ', keyCode: 48, shiftKey: '8' },
   Minus: { key: 'ຊ', keyCode: 189, shiftKey: '9' },
-  Equal: { key: 'ໍ', keyCode: 187, shiftKey: 'ໍ' },
+  Equal: { key: 'ໍ', keyCode: 187, shiftKey: 'ໍ່' },
   Backspace: { key: 'Backspace', keyCode: 8 },
   Tab: { key: 'Tab', keyCode: 9 },
-  KeyQ: { key: 'ົ', keyCode: 81, shiftKey: 'ົ' },
+  KeyQ: { key: 'ົ', keyCode: 81, shiftKey: 'ົ້' },
   KeyW: { key: 'ໄ', keyCode: 87, shiftKey: '0' },
   KeyE: { key: 'ຳ', keyCode: 69, shiftKey: '*' },
   KeyR: { key: 'ພ', keyCode: 82, shiftKey: '_' },
   KeyT: { key: 'ະ', keyCode: 84, shiftKey: '+' },
-  KeyY: { key: 'ິ', keyCode: 89, shiftKey: 'ິ' },
-  KeyU: { key: 'ີ', keyCode: 85, shiftKey: 'ີ' },
+  KeyY: { key: 'ິ', keyCode: 89, shiftKey: 'ິ້' },
+  KeyU: { key: 'ີ', keyCode: 85, shiftKey: 'ີ້' },
   KeyI: { key: 'ຮ', keyCode: 73, shiftKey: 'ຣ' },
   KeyO: { key: 'ນ', keyCode: 79, shiftKey: 'ໜ' },
   KeyP: { key: 'ຍ', keyCode: 80, shiftKey: 'ຽ' },
   BracketLeft: { key: 'ບ', keyCode: 219, shiftKey: '-' },
-  BracketRight: { key: 'ລ', keyCode: 221, shiftKey: 'ຫ' },
+  BracketRight: { key: 'ລ', keyCode: 221, shiftKey: 'ຫຼ' },
   Enter: { key: 'Enter', keyCode: 13, text: '\r' },
   CapsLock: { key: 'CapsLock', keyCode: 20 },
-  KeyA: { key: 'ັ', keyCode: 65, shiftKey: 'ັ' },
+  KeyA: { key: 'ັ', keyCode: 65, shiftKey: 'ັ້' },
   KeyS: { key: 'ຫ', keyCode: 83, shiftKey: ';' },
   KeyD: { key: 'ກ', keyCode: 68, shiftKey: '.' },
   KeyF: { key: 'ດ', keyCode: 70, shiftKey: ',' },
@@ -77,12 +75,13 @@ const keyboardLayout: KeyboardLayout = {
   Quote: { key: 'ງ', keyCode: 222, shiftKey: '=' },
   Backslash: { key: '/', keyCode: 220, shiftKey: '\\' },
   ShiftLeft: { key: 'Shift', keyCode: 160, keyCodeWithoutLocation: 16, location: 1 },
+  IntlBackslash: { keyCode: 226 },
   KeyZ: { key: 'ຜ', keyCode: 90, shiftKey: '₭' },
   KeyX: { key: 'ປ', keyCode: 88, shiftKey: '(' },
   KeyC: { key: 'ແ', keyCode: 67, shiftKey: 'ຯ' },
   KeyV: { key: 'ອ', keyCode: 86, shiftKey: 'x' },
-  KeyB: { key: 'ຶ', keyCode: 66, shiftKey: 'ຶ' },
-  KeyN: { key: 'ື', keyCode: 78, shiftKey: 'ື' },
+  KeyB: { key: 'ຶ', keyCode: 66, shiftKey: 'ຶ້' },
+  KeyN: { key: 'ື', keyCode: 78, shiftKey: 'ື້' },
   KeyM: { key: 'ທ', keyCode: 77, shiftKey: 'ໆ' },
   Comma: { key: 'ມ', keyCode: 188, shiftKey: 'ໝ' },
   Period: { key: 'ໃ', keyCode: 190, shiftKey: '$' },

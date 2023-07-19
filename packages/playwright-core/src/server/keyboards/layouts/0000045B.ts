@@ -1,16 +1,14 @@
-
 /**
- * Copyright 2017 Google Inc. All rights reserved.
- * Modifications copyright (c) Microsoft Corporation.
+ * Copyright (c) Microsoft Corporation.
  *
- * Licensed under the Apache License, Version 2.0 (the 'License');
+ * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an 'AS IS' BASIS,
+ * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
@@ -35,7 +33,7 @@ const keyboardLayout: KeyboardLayout = {
   F10: { key: 'F10', keyCode: 121 },
   F11: { key: 'F11', keyCode: 122 },
   F12: { key: 'F12', keyCode: 123 },
-  Backquote: { key: '්', keyCode: 192, shiftKey: 'ර' },
+  Backquote: { key: '්‍ර', keyCode: 192, shiftKey: 'ර්‍' },
   Digit1: { key: '1', keyCode: 49, shiftKey: '!' },
   Digit2: { key: '2', keyCode: 50, shiftKey: '@' },
   Digit3: { key: '3', keyCode: 51, shiftKey: '$' },
@@ -69,8 +67,8 @@ const keyboardLayout: KeyboardLayout = {
   KeyD: { key: 'ා', keyCode: 68, shiftKey: 'ෘ' },
   KeyF: { key: 'ෙ', keyCode: 70, shiftKey: 'ෆ' },
   KeyG: { key: 'ට', keyCode: 71, shiftKey: 'ඨ' },
-  KeyH: { key: 'ය', keyCode: 72, shiftKey: '්' },
-  KeyJ: { key: 'ව', keyCode: 74, shiftKey: 'ළ' },
+  KeyH: { key: 'ය', keyCode: 72, shiftKey: '්‍ය' },
+  KeyJ: { key: 'ව', keyCode: 74, shiftKey: 'ළු' },
   KeyK: { key: 'න', keyCode: 75, shiftKey: 'ණ' },
   KeyL: { key: 'ක', keyCode: 76, shiftKey: 'ඛ' },
   Semicolon: { key: 'ත', keyCode: 186, shiftKey: 'ථ' },

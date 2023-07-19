@@ -1,16 +1,14 @@
-
 /**
- * Copyright 2017 Google Inc. All rights reserved.
- * Modifications copyright (c) Microsoft Corporation.
+ * Copyright (c) Microsoft Corporation.
  *
- * Licensed under the Apache License, Version 2.0 (the 'License');
+ * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an 'AS IS' BASIS,
+ * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
@@ -60,27 +58,28 @@ const keyboardLayout: KeyboardLayout = {
   KeyI: { key: 'ិ', keyCode: 73, shiftKey: 'ី' },
   KeyO: { key: 'ោ', keyCode: 79, shiftKey: 'ៅ' },
   KeyP: { key: 'ផ', keyCode: 80, shiftKey: 'ភ' },
-  BracketLeft: { key: 'ើ', keyCode: 219, shiftKey: 'ោ' },
+  BracketLeft: { key: 'ើ', keyCode: 219, shiftKey: 'ោះ' },
   BracketRight: { key: 'ឿ', keyCode: 221, shiftKey: 'ៀ' },
   Enter: { key: 'Enter', keyCode: 13, text: '\r' },
   CapsLock: { key: 'CapsLock', keyCode: 20 },
   KeyA: { key: 'ា', keyCode: 65, shiftKey: 'ៃ' },
-  KeyS: { key: 'ស', keyCode: 83, shiftKey: 'ា' },
+  KeyS: { key: 'ស', keyCode: 83, shiftKey: 'ាំ' },
   KeyD: { key: 'ដ', keyCode: 68, shiftKey: 'ឌ' },
   KeyF: { key: 'ថ', keyCode: 70, shiftKey: 'ធ' },
-  KeyG: { key: 'ង', keyCode: 71, shiftKey: 'ុ' },
+  KeyG: { key: 'ង', keyCode: 71, shiftKey: 'ុះ' },
   KeyH: { key: 'ហ', keyCode: 72, shiftKey: 'ះ' },
-  KeyJ: { key: 'ញ', keyCode: 74, shiftKey: 'ុ' },
+  KeyJ: { key: 'ញ', keyCode: 74, shiftKey: 'ុំ' },
   KeyK: { key: 'ក', keyCode: 75, shiftKey: 'គ' },
   KeyL: { key: 'ល', keyCode: 76, shiftKey: 'ឡ' },
   Semicolon: { key: 'ៈ', keyCode: 186, shiftKey: '៖' },
   Quote: { key: '់', keyCode: 222, shiftKey: '៉' },
   Backslash: { key: '\\', keyCode: 220, shiftKey: '/' },
   ShiftLeft: { key: 'Shift', keyCode: 160, keyCodeWithoutLocation: 16, location: 1 },
+  IntlBackslash: { keyCode: 226 },
   KeyZ: { key: 'ឋ', keyCode: 90, shiftKey: 'ឍ' },
   KeyX: { key: 'ខ', keyCode: 88, shiftKey: 'ឃ' },
   KeyC: { key: 'ច', keyCode: 67, shiftKey: 'ជ' },
-  KeyV: { key: 'វ', keyCode: 86, shiftKey: 'េ' },
+  KeyV: { key: 'វ', keyCode: 86, shiftKey: 'េះ' },
   KeyB: { key: 'ប', keyCode: 66, shiftKey: 'ព' },
   KeyN: { key: 'ន', keyCode: 78, shiftKey: 'ណ' },
   KeyM: { key: 'ម', keyCode: 77, shiftKey: 'ំ' },

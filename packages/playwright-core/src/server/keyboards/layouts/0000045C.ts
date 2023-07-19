@@ -1,16 +1,14 @@
-
 /**
- * Copyright 2017 Google Inc. All rights reserved.
- * Modifications copyright (c) Microsoft Corporation.
+ * Copyright (c) Microsoft Corporation.
  *
- * Licensed under the Apache License, Version 2.0 (the 'License');
+ * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an 'AS IS' BASIS,
+ * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
@@ -36,9 +34,9 @@ const keyboardLayout: KeyboardLayout = {
   F11: { key: 'F11', keyCode: 122 },
   F12: { key: 'F12', keyCode: 123 },
   Backquote: { key: '`', keyCode: 222, shiftKey: 'Ꮚ' },
-  Digit1: { key: 'Ꮳ', keyCode: 49, shiftKey: 'Ꮁ' },
-  Digit2: { key: 'Ꭳ', keyCode: 50, shiftKey: 'Ꮗ' },
-  Digit3: { key: 'Ꮹ', keyCode: 51, shiftKey: 'Ꮷ' },
+  Digit1: { key: 'ᏣᎳᎩ', keyCode: 49, shiftKey: 'Ꮁ' },
+  Digit2: { key: 'ᎣᏏᏲ', keyCode: 50, shiftKey: 'Ꮗ' },
+  Digit3: { key: 'ᏩᏙ', keyCode: 51, shiftKey: 'Ꮷ' },
   Digit4: { key: 'Ꮩ', keyCode: 52, shiftKey: 'Ꮀ' },
   Digit5: { key: 'Ꮶ', keyCode: 53, shiftKey: 'Ꮉ' },
   Digit6: { key: 'Ꮬ', keyCode: 54, shiftKey: 'Ꮭ' },
@@ -77,6 +75,7 @@ const keyboardLayout: KeyboardLayout = {
   Quote: { key: '\'', keyCode: 192, shiftKey: '"' },
   Backslash: { key: 'Ꮹ', keyCode: 220, shiftKey: 'Ꮾ' },
   ShiftLeft: { key: 'Shift', keyCode: 160, keyCodeWithoutLocation: 16, location: 1 },
+  IntlBackslash: { keyCode: 226 },
   KeyZ: { key: 'Ꭼ', keyCode: 90, shiftKey: 'Ꮓ' },
   KeyX: { key: 'Ᏼ', keyCode: 88, shiftKey: 'Ꮽ' },
   KeyC: { key: 'Ꮣ', keyCode: 67, shiftKey: 'Ꮯ' },

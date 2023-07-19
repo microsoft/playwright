@@ -1,16 +1,14 @@
-
 /**
- * Copyright 2017 Google Inc. All rights reserved.
- * Modifications copyright (c) Microsoft Corporation.
+ * Copyright (c) Microsoft Corporation.
  *
- * Licensed under the Apache License, Version 2.0 (the 'License');
+ * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an 'AS IS' BASIS,
+ * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
@@ -35,8 +33,8 @@ const keyboardLayout: KeyboardLayout = {
   F10: { key: 'F10', keyCode: 121 },
   F11: { key: 'F11', keyCode: 122 },
   F12: { key: 'F12', keyCode: 123 },
-  Backquote: { key: 'ञ', keyCode: 192, shiftKey: 'ञ' },
-  Digit1: { key: 'ज', keyCode: 49, shiftKey: '१' },
+  Backquote: { key: 'ञ', keyCode: 192, shiftKey: 'ञ्' },
+  Digit1: { key: 'ज्ञ', keyCode: 49, shiftKey: '१' },
   Digit2: { key: 'घ', keyCode: 50, shiftKey: '२' },
   Digit3: { key: 'ङ', keyCode: 51, shiftKey: '३' },
   Digit4: { key: 'झ', keyCode: 52, shiftKey: '४' },
@@ -50,43 +48,44 @@ const keyboardLayout: KeyboardLayout = {
   Equal: { key: '.', keyCode: 187, shiftKey: 'ं' },
   Backspace: { key: 'Backspace', keyCode: 8 },
   Tab: { key: 'Tab', keyCode: 9 },
-  KeyQ: { key: 'त', keyCode: 81, shiftKey: 'ो' },
-  KeyW: { key: 'ध', keyCode: 87, shiftKey: 'ध' },
-  KeyE: { key: 'भ', keyCode: 69, shiftKey: 'भ' },
-  KeyR: { key: 'च', keyCode: 82, shiftKey: 'च' },
-  KeyT: { key: 'त', keyCode: 84, shiftKey: 'त' },
-  KeyY: { key: 'थ', keyCode: 89, shiftKey: 'थ' },
-  KeyU: { key: 'ग', keyCode: 85, shiftKey: 'ग' },
-  KeyI: { key: 'ष', keyCode: 73, shiftKey: 'क' },
+  KeyQ: { key: 'त्र', keyCode: 81, shiftKey: 'ो' },
+  KeyW: { key: 'ध', keyCode: 87, shiftKey: 'ध्' },
+  KeyE: { key: 'भ', keyCode: 69, shiftKey: 'भ्' },
+  KeyR: { key: 'च', keyCode: 82, shiftKey: 'च्' },
+  KeyT: { key: 'त', keyCode: 84, shiftKey: 'त्' },
+  KeyY: { key: 'थ', keyCode: 89, shiftKey: 'थ्' },
+  KeyU: { key: 'ग', keyCode: 85, shiftKey: 'ग्' },
+  KeyI: { key: 'ष', keyCode: 73, shiftKey: 'क्ष' },
   KeyO: { key: 'य', keyCode: 79, shiftKey: 'इ' },
   KeyP: { key: 'उ', keyCode: 80, shiftKey: 'ए' },
-  BracketLeft: { key: 'ृ', keyCode: 219, shiftKey: 'र' },
+  BracketLeft: { key: 'ृ', keyCode: 219, shiftKey: 'र्' },
   BracketRight: { key: 'े', keyCode: 221, shiftKey: 'ै' },
   Enter: { key: 'Enter', keyCode: 13, text: '\r' },
   CapsLock: { key: 'CapsLock', keyCode: 20 },
-  KeyA: { key: 'ब', keyCode: 65, shiftKey: 'ब' },
-  KeyS: { key: 'क', keyCode: 83, shiftKey: 'क' },
-  KeyD: { key: 'म', keyCode: 68, shiftKey: 'म' },
+  KeyA: { key: 'ब', keyCode: 65, shiftKey: 'ब्' },
+  KeyS: { key: 'क', keyCode: 83, shiftKey: 'क्' },
+  KeyD: { key: 'म', keyCode: 68, shiftKey: 'म्' },
   KeyF: { key: 'ा', keyCode: 70, shiftKey: 'ँ' },
-  KeyG: { key: 'न', keyCode: 71, shiftKey: 'न' },
-  KeyH: { key: 'ज', keyCode: 72, shiftKey: 'ज' },
-  KeyJ: { key: 'व', keyCode: 74, shiftKey: 'व' },
-  KeyK: { key: 'प', keyCode: 75, shiftKey: 'प' },
+  KeyG: { key: 'न', keyCode: 71, shiftKey: 'न्' },
+  KeyH: { key: 'ज', keyCode: 72, shiftKey: 'ज्' },
+  KeyJ: { key: 'व', keyCode: 74, shiftKey: 'व्' },
+  KeyK: { key: 'प', keyCode: 75, shiftKey: 'प्' },
   KeyL: { key: 'ि', keyCode: 76, shiftKey: 'ी' },
-  Semicolon: { key: 'स', keyCode: 186, shiftKey: 'स' },
+  Semicolon: { key: 'स', keyCode: 186, shiftKey: 'स्' },
   Quote: { key: 'ु', keyCode: 222, shiftKey: 'ू' },
-  Backslash: { key: '्', keyCode: 220, shiftKey: '्' },
+  Backslash: { key: '्र', keyCode: 220, shiftKey: '्' },
   ShiftLeft: { key: 'Shift', keyCode: 160, keyCodeWithoutLocation: 16, location: 1 },
-  KeyZ: { key: 'श', keyCode: 90, shiftKey: 'श' },
-  KeyX: { key: 'ह', keyCode: 88, shiftKey: 'ह' },
+  IntlBackslash: { keyCode: 226 },
+  KeyZ: { key: 'श', keyCode: 90, shiftKey: 'श्' },
+  KeyX: { key: 'ह', keyCode: 88, shiftKey: 'ह्' },
   KeyC: { key: 'अ', keyCode: 67, shiftKey: 'ऋ' },
-  KeyV: { key: 'ख', keyCode: 86, shiftKey: 'ख' },
-  KeyB: { key: 'द', keyCode: 66, shiftKey: 'द' },
-  KeyN: { key: 'ल', keyCode: 78, shiftKey: 'ल' },
+  KeyV: { key: 'ख', keyCode: 86, shiftKey: 'ख्' },
+  KeyB: { key: 'द', keyCode: 66, shiftKey: 'द्' },
+  KeyN: { key: 'ल', keyCode: 78, shiftKey: 'ल्' },
   KeyM: { key: 'फ', keyCode: 77, shiftKey: 'ः' },
   Comma: { key: ',', keyCode: 188, shiftKey: '?' },
-  Period: { key: '।', keyCode: 190, shiftKey: 'श' },
-  Slash: { key: 'र', keyCode: 191, shiftKey: 'र' },
+  Period: { key: '।', keyCode: 190, shiftKey: 'श्र' },
+  Slash: { key: 'र', keyCode: 191, shiftKey: 'रू' },
   ShiftRight: { key: 'Shift', keyCode: 161, keyCodeWithoutLocation: 16, location: 2 },
   ControlLeft: { key: 'Control', keyCode: 162, keyCodeWithoutLocation: 17, location: 1 },
   MetaLeft: { key: 'Meta', keyCode: 91, location: 1 },

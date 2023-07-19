@@ -1,16 +1,14 @@
-
 /**
- * Copyright 2017 Google Inc. All rights reserved.
- * Modifications copyright (c) Microsoft Corporation.
+ * Copyright (c) Microsoft Corporation.
  *
- * Licensed under the Apache License, Version 2.0 (the 'License');
+ * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an 'AS IS' BASIS,
+ * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
@@ -38,12 +36,12 @@ const keyboardLayout: KeyboardLayout = {
   Backquote: { key: '॥', keyCode: 192 },
   Digit1: { key: '১', keyCode: 49, shiftKey: '!' },
   Digit2: { key: '২', keyCode: 50, shiftKey: '@' },
-  Digit3: { key: '৩', keyCode: 51, shiftKey: '্' },
-  Digit4: { key: '৪', keyCode: 52, shiftKey: 'ৰ' },
-  Digit5: { key: '৫', keyCode: 53, shiftKey: 'জ' },
-  Digit6: { key: '৬', keyCode: 54, shiftKey: 'ত' },
-  Digit7: { key: '৭', keyCode: 55, shiftKey: 'ক' },
-  Digit8: { key: '৮', keyCode: 56, shiftKey: 'শ' },
+  Digit3: { key: '৩', keyCode: 51, shiftKey: '্ৰ' },
+  Digit4: { key: '৪', keyCode: 52, shiftKey: 'ৰ্' },
+  Digit5: { key: '৫', keyCode: 53, shiftKey: 'জ্ঞ' },
+  Digit6: { key: '৬', keyCode: 54, shiftKey: 'ত্ৰ' },
+  Digit7: { key: '৭', keyCode: 55, shiftKey: 'ক্ষ' },
+  Digit8: { key: '৮', keyCode: 56, shiftKey: 'শ্ৰ' },
   Digit9: { key: '৯', keyCode: 57, shiftKey: '(' },
   Digit0: { key: '০', keyCode: 48, shiftKey: ')' },
   Minus: { key: '-', keyCode: 189, shiftKey: 'ঃ' },
@@ -75,7 +73,10 @@ const keyboardLayout: KeyboardLayout = {
   KeyL: { key: 'ত', keyCode: 76, shiftKey: 'থ' },
   Semicolon: { key: 'চ', keyCode: 186, shiftKey: 'ছ' },
   Quote: { key: 'ট', keyCode: 222, shiftKey: 'ঠ' },
+  Backslash: { keyCode: 220 },
   ShiftLeft: { key: 'Shift', keyCode: 160, keyCodeWithoutLocation: 16, location: 1 },
+  IntlBackslash: { keyCode: 226 },
+  KeyZ: { keyCode: 90 },
   KeyX: { key: 'ং', keyCode: 88, shiftKey: 'ঁ' },
   KeyC: { key: 'ম', keyCode: 67, shiftKey: 'ণ' },
   KeyV: { key: 'ন', keyCode: 86 },

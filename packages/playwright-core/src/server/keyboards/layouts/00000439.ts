@@ -1,16 +1,14 @@
-
 /**
- * Copyright 2017 Google Inc. All rights reserved.
- * Modifications copyright (c) Microsoft Corporation.
+ * Copyright (c) Microsoft Corporation.
  *
- * Licensed under the Apache License, Version 2.0 (the 'License');
+ * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an 'AS IS' BASIS,
+ * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
@@ -38,12 +36,12 @@ const keyboardLayout: KeyboardLayout = {
   Backquote: { key: 'ॊ', keyCode: 192, shiftKey: 'ऒ' },
   Digit1: { key: '1', keyCode: 49, shiftKey: 'ऍ' },
   Digit2: { key: '2', keyCode: 50, shiftKey: 'ॅ' },
-  Digit3: { key: '3', keyCode: 51, shiftKey: '्' },
-  Digit4: { key: '4', keyCode: 52, shiftKey: 'र' },
-  Digit5: { key: '5', keyCode: 53, shiftKey: 'ज' },
-  Digit6: { key: '6', keyCode: 54, shiftKey: 'त' },
-  Digit7: { key: '7', keyCode: 55, shiftKey: 'क' },
-  Digit8: { key: '8', keyCode: 56, shiftKey: 'श' },
+  Digit3: { key: '3', keyCode: 51, shiftKey: '्र' },
+  Digit4: { key: '4', keyCode: 52, shiftKey: 'र्' },
+  Digit5: { key: '5', keyCode: 53, shiftKey: 'ज्ञ' },
+  Digit6: { key: '6', keyCode: 54, shiftKey: 'त्र' },
+  Digit7: { key: '7', keyCode: 55, shiftKey: 'क्ष' },
+  Digit8: { key: '8', keyCode: 56, shiftKey: 'श्र' },
   Digit9: { key: '9', keyCode: 57, shiftKey: '(' },
   Digit0: { key: '0', keyCode: 48, shiftKey: ')' },
   Minus: { key: '-', keyCode: 189, shiftKey: 'ः' },

@@ -1,16 +1,14 @@
-
 /**
- * Copyright 2017 Google Inc. All rights reserved.
- * Modifications copyright (c) Microsoft Corporation.
+ * Copyright (c) Microsoft Corporation.
  *
- * Licensed under the Apache License, Version 2.0 (the 'License');
+ * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an 'AS IS' BASIS,
+ * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
@@ -37,8 +35,8 @@ const keyboardLayout: KeyboardLayout = {
   F12: { key: 'F12', keyCode: 123 },
   Backquote: { key: '"', keyCode: 192, shiftKey: '№' },
   Digit1: { key: '!', keyCode: 49, shiftKey: '?' },
-  Digit2: { key: 'н', keyCode: 50, shiftKey: 'Н' },
-  Digit3: { key: 'д', keyCode: 51, shiftKey: 'Д' },
+  Digit2: { key: 'нь', keyCode: 50, shiftKey: 'Нь' },
+  Digit3: { key: 'дь', keyCode: 51, shiftKey: 'Дь' },
   Digit4: { key: 'ҥ', keyCode: 52, shiftKey: 'Ҥ' },
   Digit5: { key: 'ҕ', keyCode: 53, shiftKey: 'Ҕ' },
   Digit6: { key: 'ө', keyCode: 54, shiftKey: 'Ө' },
