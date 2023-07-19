@@ -208,8 +208,8 @@ for (const useWeb of [true, false]) {
         'globalTeardown.ts': `
           export default async () => {
             console.log('\\n%%from-global-teardown0000')
-            await new Promise(f => setTimeout(f, 1000));
-            console.log('\\n%%from-global-teardown1000')
+            await new Promise(f => setTimeout(f, 3000));
+            console.log('\\n%%from-global-teardown3000')
           };
         `,
         'a.test.js': `
@@ -222,7 +222,7 @@ for (const useWeb of [true, false]) {
       await testProcess.kill('SIGINT');
       await expect.poll(() => testProcess.outputLines()).toEqual([
         'from-global-teardown0000',
-        'from-global-teardown1000',
+        'from-global-teardown3000',
       ]);
     });
   });
