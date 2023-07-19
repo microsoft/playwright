@@ -12864,7 +12864,16 @@ export interface BrowserType<Unused = {}> {
     javaScriptEnabled?: boolean;
 
     /**
-     * Keyboard layout.
+     * Keyboard layout code. Currently, the following values are supported:
+     *
+     * | Values | Name |
+     * | :- | :- |
+     * | `us`, `en-US` | [US keyboard](https://learn.microsoft.com/en-us/globalization/keyboards/kbdus_7) <!-- 00000409 --> |
+     * | `es`, `es-ES` | [Spanish keyboard](https://learn.microsoft.com/en-us/globalization/keyboards/kbdsp) <!-- 0000040A --> |
+     * | `br`, `pt-BR` | [Portuguese (Brazil ABNT) keyboard](https://learn.microsoft.com/en-us/globalization/keyboards/kbdbr_1) <!-- 00000416 --> |
+     * | `latam`, `es-MX` | [Latin American keyboard](https://learn.microsoft.com/en-us/globalization/keyboards/kbdla) <!-- 0000080A --> |
+     * | `pt`, `pt-PT` | [Portuguese keyboard](https://learn.microsoft.com/en-us/globalization/keyboards/kbdpo) <!-- 00000816 --> |
+     * | `el`, `el-GR` | [Greek keyboard](https://learn.microsoft.com/en-us/globalization/keyboards/kbdhe) <!-- 00000408 --> |
      */
     keyboardLayout?: string;
 
@@ -14280,7 +14289,16 @@ export interface AndroidDevice {
     javaScriptEnabled?: boolean;
 
     /**
-     * Keyboard layout.
+     * Keyboard layout code. Currently, the following values are supported:
+     *
+     * | Values | Name |
+     * | :- | :- |
+     * | `us`, `en-US` | [US keyboard](https://learn.microsoft.com/en-us/globalization/keyboards/kbdus_7) <!-- 00000409 --> |
+     * | `es`, `es-ES` | [Spanish keyboard](https://learn.microsoft.com/en-us/globalization/keyboards/kbdsp) <!-- 0000040A --> |
+     * | `br`, `pt-BR` | [Portuguese (Brazil ABNT) keyboard](https://learn.microsoft.com/en-us/globalization/keyboards/kbdbr_1) <!-- 00000416 --> |
+     * | `latam`, `es-MX` | [Latin American keyboard](https://learn.microsoft.com/en-us/globalization/keyboards/kbdla) <!-- 0000080A --> |
+     * | `pt`, `pt-PT` | [Portuguese keyboard](https://learn.microsoft.com/en-us/globalization/keyboards/kbdpo) <!-- 00000816 --> |
+     * | `el`, `el-GR` | [Greek keyboard](https://learn.microsoft.com/en-us/globalization/keyboards/kbdhe) <!-- 00000408 --> |
      */
     keyboardLayout?: string;
 
@@ -16160,7 +16178,16 @@ export interface Browser extends EventEmitter {
     javaScriptEnabled?: boolean;
 
     /**
-     * Keyboard layout.
+     * Keyboard layout code. Currently, the following values are supported:
+     *
+     * | Values | Name |
+     * | :- | :- |
+     * | `us`, `en-US` | [US keyboard](https://learn.microsoft.com/en-us/globalization/keyboards/kbdus_7) <!-- 00000409 --> |
+     * | `es`, `es-ES` | [Spanish keyboard](https://learn.microsoft.com/en-us/globalization/keyboards/kbdsp) <!-- 0000040A --> |
+     * | `br`, `pt-BR` | [Portuguese (Brazil ABNT) keyboard](https://learn.microsoft.com/en-us/globalization/keyboards/kbdbr_1) <!-- 00000416 --> |
+     * | `latam`, `es-MX` | [Latin American keyboard](https://learn.microsoft.com/en-us/globalization/keyboards/kbdla) <!-- 0000080A --> |
+     * | `pt`, `pt-PT` | [Portuguese keyboard](https://learn.microsoft.com/en-us/globalization/keyboards/kbdpo) <!-- 00000816 --> |
+     * | `el`, `el-GR` | [Greek keyboard](https://learn.microsoft.com/en-us/globalization/keyboards/kbdhe) <!-- 00000408 --> |
      */
     keyboardLayout?: string;
 
@@ -17042,7 +17069,16 @@ export interface Electron {
     ignoreHTTPSErrors?: boolean;
 
     /**
-     * Keyboard layout.
+     * Keyboard layout code. Currently, the following values are supported:
+     *
+     * | Values | Name |
+     * | :- | :- |
+     * | `us`, `en-US` | [US keyboard](https://learn.microsoft.com/en-us/globalization/keyboards/kbdus_7) <!-- 00000409 --> |
+     * | `es`, `es-ES` | [Spanish keyboard](https://learn.microsoft.com/en-us/globalization/keyboards/kbdsp) <!-- 0000040A --> |
+     * | `br`, `pt-BR` | [Portuguese (Brazil ABNT) keyboard](https://learn.microsoft.com/en-us/globalization/keyboards/kbdbr_1) <!-- 00000416 --> |
+     * | `latam`, `es-MX` | [Latin American keyboard](https://learn.microsoft.com/en-us/globalization/keyboards/kbdla) <!-- 0000080A --> |
+     * | `pt`, `pt-PT` | [Portuguese keyboard](https://learn.microsoft.com/en-us/globalization/keyboards/kbdpo) <!-- 00000816 --> |
+     * | `el`, `el-GR` | [Greek keyboard](https://learn.microsoft.com/en-us/globalization/keyboards/kbdhe) <!-- 00000408 --> |
      */
     keyboardLayout?: string;
 
@@ -17692,7 +17728,16 @@ export interface FrameLocator {
 export interface Keyboard {
   /**
    * Changes keyboard layout.
-   * @param layoutName
+   * @param layoutName Keyboard layout code. Currently, the following values are supported:
+   *
+   * | Values | Name |
+   * | :- | :- |
+   * | `us`, `en-US` | [US keyboard](https://learn.microsoft.com/en-us/globalization/keyboards/kbdus_7) <!-- 00000409 --> |
+   * | `es`, `es-ES` | [Spanish keyboard](https://learn.microsoft.com/en-us/globalization/keyboards/kbdsp) <!-- 0000040A --> |
+   * | `br`, `pt-BR` | [Portuguese (Brazil ABNT) keyboard](https://learn.microsoft.com/en-us/globalization/keyboards/kbdbr_1) <!-- 00000416 --> |
+   * | `latam`, `es-MX` | [Latin American keyboard](https://learn.microsoft.com/en-us/globalization/keyboards/kbdla) <!-- 0000080A --> |
+   * | `pt`, `pt-PT` | [Portuguese keyboard](https://learn.microsoft.com/en-us/globalization/keyboards/kbdpo) <!-- 00000816 --> |
+   * | `el`, `el-GR` | [Greek keyboard](https://learn.microsoft.com/en-us/globalization/keyboards/kbdhe) <!-- 00000408 --> |
    */
   changeLayout(layoutName: string): Promise<void>;
 
@@ -19383,7 +19428,16 @@ export interface BrowserContextOptions {
   javaScriptEnabled?: boolean;
 
   /**
-   * Keyboard layout.
+   * Keyboard layout code. Currently, the following values are supported:
+   *
+   * | Values | Name |
+   * | :- | :- |
+   * | `us`, `en-US` | [US keyboard](https://learn.microsoft.com/en-us/globalization/keyboards/kbdus_7) <!-- 00000409 --> |
+   * | `es`, `es-ES` | [Spanish keyboard](https://learn.microsoft.com/en-us/globalization/keyboards/kbdsp) <!-- 0000040A --> |
+   * | `br`, `pt-BR` | [Portuguese (Brazil ABNT) keyboard](https://learn.microsoft.com/en-us/globalization/keyboards/kbdbr_1) <!-- 00000416 --> |
+   * | `latam`, `es-MX` | [Latin American keyboard](https://learn.microsoft.com/en-us/globalization/keyboards/kbdla) <!-- 0000080A --> |
+   * | `pt`, `pt-PT` | [Portuguese keyboard](https://learn.microsoft.com/en-us/globalization/keyboards/kbdpo) <!-- 00000816 --> |
+   * | `el`, `el-GR` | [Greek keyboard](https://learn.microsoft.com/en-us/globalization/keyboards/kbdhe) <!-- 00000408 --> |
    */
   keyboardLayout?: string;
 

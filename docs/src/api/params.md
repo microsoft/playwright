@@ -737,7 +737,7 @@ Whether to allow sites to register Service workers. Defaults to `'allow'`.
 ## context-option-keyboard-layout
 - `keyboardLayout` <[string]>
 
-Keyboard layout.
+%%-template-keyboard-layouts-%%
 
 ## select-options-values
 * langs: java, js, csharp
@@ -1735,3 +1735,15 @@ In this config:
 1. Since `snapshotPathTemplate` resolves to relative path, it will be resolved relative to `configDir`.
 1. Forward slashes `"/"` can be used as path separators on any platform.
 
+## template-keyboard-layouts
+
+Keyboard layout code. Currently, the following values are supported:
+
+| Values | Name |
+| :- | :- |
+| `us`, `en-US` | [US keyboard](https://learn.microsoft.com/en-us/globalization/keyboards/kbdus_7) <!-- 00000409 --> |
+| `es`, `es-ES` | [Spanish keyboard](https://learn.microsoft.com/en-us/globalization/keyboards/kbdsp) <!-- 0000040A --> |
+| `br`, `pt-BR` | [Portuguese (Brazil ABNT) keyboard](https://learn.microsoft.com/en-us/globalization/keyboards/kbdbr_1) <!-- 00000416 --> |
+| `latam`, `es-MX` | [Latin American keyboard](https://learn.microsoft.com/en-us/globalization/keyboards/kbdla) <!-- 0000080A --> |
+| `pt`, `pt-PT` | [Portuguese keyboard](https://learn.microsoft.com/en-us/globalization/keyboards/kbdpo) <!-- 00000816 --> |
+| `el`, `el-GR` | [Greek keyboard](https://learn.microsoft.com/en-us/globalization/keyboards/kbdhe) <!-- 00000408 --> |

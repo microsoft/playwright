@@ -383,3 +383,5 @@ Changes keyboard layout.
 ### param: Keyboard.changeLayout.layoutName
 * since: v1.**
 - `layoutName` <[string]>
+
+%%-template-keyboard-layouts-%%
