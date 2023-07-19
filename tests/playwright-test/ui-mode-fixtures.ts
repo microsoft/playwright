@@ -21,8 +21,11 @@ import type { TestChildProcess } from '../config/commonFixtures';
 import { rimraf } from '../../packages/playwright-core/lib/utilsBundle';
 import { cleanEnv, cliEntrypoint, test as base, writeFiles } from './playwright-test-fixtures';
 import type { Files, RunOptions } from './playwright-test-fixtures';
-import type { Browser, Page, TestInfo } from './stable-test-runner';
+import type { Browser, BrowserType, Page, TestInfo } from './stable-test-runner';
 import { createGuid } from '../../packages/playwright-core/src/utils/crypto';
+
+// We want to have ToT playwright-core here, since we install it's browsers and otherwise don't have the right browser revision.
+const chromium: BrowserType = require('../../packages/playwright-core').chromium;
 
 type Latch = {
   blockingCode: string;
@@ -86,7 +89,7 @@ export function dumpTestTree(page: Page, options: { time?: boolean } = {}): () =
 
 export const test = base
     .extend<Fixtures>({
-      runUITest: async ({ childProcess, playwright, headless }, use, testInfo: TestInfo) => {
+      runUITest: async ({ childProcess, headless }, use, testInfo: TestInfo) => {
         if (process.env.CI)
           testInfo.slow();
         const cacheDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-test-cache-'));
@@ -110,14 +113,14 @@ export const test = base
             await testProcess.waitForOutput('Listening on');
             const line = testProcess.output.split('\n').find(l => l.includes('Listening on'));
             const uiAddress = line!.split(' ')[2];
-            browser = await playwright.chromium.launch();
+            browser = await chromium.launch();
             page = await browser.newPage();
             await page.goto(uiAddress);
           } else {
             await testProcess.waitForOutput('DevTools listening on');
             const line = testProcess.output.split('\n').find(l => l.includes('DevTools listening on'));
             const wsEndpoint = line!.split(' ')[3];
-            browser = await playwright.chromium.connectOverCDP(wsEndpoint);
+            browser = await chromium.connectOverCDP(wsEndpoint);
             const [context] = browser.contexts();
             [page] = context.pages();
           }
