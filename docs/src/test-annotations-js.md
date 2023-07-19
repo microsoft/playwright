@@ -93,10 +93,32 @@ To run tests containing either tag (logical `OR` operator):
 npx playwright test --grep "@fast|@slow"
 ```
 
-Or run tests containing both tags (logical `AND` operator) using regex lookaheads:
+for Windows terminals:
+
+- PowerShell
+  ```powershell
+  npx playwright test --grep --% "@fast^|@slow"
+  ```
+
+- CMD:
+  ```bash
+  npx playwright test --grep "@fast^|@slow"
+  ```
+
+- as NPM script:
+  ```json
+  "npx playwright test --grep /"@fast|@slow/""
+  ```
+
+To run tests containing both tags (logical `AND` operator) using regex lookaheads:
 
 ```bash
 npx playwright test --grep "(?=.*@fast)(?=.*@slow)"
+```
+
+for Windows terminals:
+```bash
+npx playwright test --grep "@fast.+@slow"
 ```
 
 ## Conditionally skip a group of tests
