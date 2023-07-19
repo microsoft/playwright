@@ -197,6 +197,7 @@ test('should run part of the setup only', async ({ runUITest }) => {
 for (const useWeb of [true, false]) {
   test.describe(`web-mode: ${useWeb}`, () => {
     test('should run teardown with SIGINT', async ({ runUITest }) => {
+      test.skip(process.platform === 'win32', 'No sending SIGINT on Windows');
       const { page, testProcess } = await runUITest({
         'playwright.config.ts': `
           import { defineConfig } from '@playwright/test';
