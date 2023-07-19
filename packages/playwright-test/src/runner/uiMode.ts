@@ -119,6 +119,9 @@ class UIMode {
       transport: this._transport,
       host: options.host,
       port: options.port,
+      persistentContextOptions: {
+        handleSIGINT: false,
+      },
     };
     if (options.host !== undefined || options.port !== undefined) {
       await openTraceInBrowser([], openOptions);

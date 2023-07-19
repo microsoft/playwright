@@ -205,7 +205,11 @@ for (const useWeb of [true, false]) {
           });
         `,
         'globalTeardown.ts': `
-          export default () => console.log('\\n%%from-global-teardown');
+          export default async () => {
+            console.log('\\n%%from-global-teardown0000')
+            await new Promise(f => setTimeout(f, 1000));
+            console.log('\\n%%from-global-teardown1000')
+          };
         `,
         'a.test.js': `
           import { test, expect } from '@playwright/test';
@@ -216,7 +220,8 @@ for (const useWeb of [true, false]) {
       await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
       await testProcess.kill('SIGINT');
       await expect.poll(() => testProcess.outputLines()).toEqual([
-        'from-global-teardown',
+        'from-global-teardown0000',
+        'from-global-teardown1000',
       ]);
     });
   });
