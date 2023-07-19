@@ -193,3 +193,31 @@ test('should run part of the setup only', async ({ runUITest }) => {
         ◯ test
   `);
 });
+
+for (const useWeb of [true, false]) {
+  test.describe(`web-mode: ${useWeb}`, () => {
+    test('should run teardown with SIGINT', async ({ runUITest }) => {
+      const { page, testProcess } = await runUITest({
+        'playwright.config.ts': `
+          import { defineConfig } from '@playwright/test';
+          export default defineConfig({
+            globalTeardown: './globalTeardown.ts',
+          });
+        `,
+        'globalTeardown.ts': `
+          export default () => console.log('\\n%%from-global-teardown');
+        `,
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('should work', async ({}) => {});
+        `
+      }, null, { useWeb });
+      await page.getByTitle('Run all').click();
+      await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
+      await testProcess.kill('SIGINT');
+      await expect.poll(() => testProcess.outputLines()).toEqual([
+        'from-global-teardown',
+      ]);
+    });
+  });
+}

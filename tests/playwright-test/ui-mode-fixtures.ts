@@ -30,8 +30,12 @@ type Latch = {
   close: () => void;
 };
 
+type UIModeOptions = RunOptions & {
+  useWeb?: boolean
+};
+
 type Fixtures = {
-  runUITest: (files: Files, env?: NodeJS.ProcessEnv, options?: RunOptions) => Promise<{ page: Page, testProcess: TestChildProcess }>;
+  runUITest: (files: Files, env?: NodeJS.ProcessEnv, options?: UIModeOptions) => Promise<{ page: Page, testProcess: TestChildProcess }>;
   createLatch: () => Latch;
 };
 
@@ -88,10 +92,10 @@ export const test = base
         const cacheDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-test-cache-'));
         let testProcess: TestChildProcess | undefined;
         let browser: Browser | undefined;
-        await use(async (files: Files, env: NodeJS.ProcessEnv = {}, options: RunOptions = {}) => {
+        await use(async (files: Files, env: NodeJS.ProcessEnv = {}, options: UIModeOptions = {}) => {
           const baseDir = await writeFiles(testInfo, files, true);
           testProcess = childProcess({
-            command: ['node', cliEntrypoint, 'test', '--ui', '--workers=1', ...(options.additionalArgs || [])],
+            command: ['node', cliEntrypoint, 'test', (options.useWeb ? '--ui-host=127.0.0.1' : '--ui'), '--workers=1', ...(options.additionalArgs || [])],
             env: {
               ...cleanEnv(env),
               PWTEST_UNDER_TEST: '1',
@@ -101,12 +105,22 @@ export const test = base
             },
             cwd: options.cwd ? path.resolve(baseDir, options.cwd) : baseDir,
           });
-          await testProcess.waitForOutput('DevTools listening on');
-          const line = testProcess.output.split('\n').find(l => l.includes('DevTools listening on'));
-          const wsEndpoint = line!.split(' ')[3];
-          browser = await playwright.chromium.connectOverCDP(wsEndpoint);
-          const [context] = browser.contexts();
-          const [page] = context.pages();
+          let page: Page;
+          if (options.useWeb) {
+            await testProcess.waitForOutput('Listening on');
+            const line = testProcess.output.split('\n').find(l => l.includes('Listening on'));
+            const uiAddress = line!.split(' ')[2];
+            browser = await playwright.chromium.launch();
+            page = await browser.newPage();
+            await page.goto(uiAddress);
+          } else {
+            await testProcess.waitForOutput('DevTools listening on');
+            const line = testProcess.output.split('\n').find(l => l.includes('DevTools listening on'));
+            const wsEndpoint = line!.split(' ')[3];
+            browser = await playwright.chromium.connectOverCDP(wsEndpoint);
+            const [context] = browser.contexts();
+            [page] = context.pages();
+          }
           return { page, testProcess };
         });
         await browser?.close();

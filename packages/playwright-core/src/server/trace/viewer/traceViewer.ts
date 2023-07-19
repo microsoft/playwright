@@ -172,7 +172,8 @@ export async function openTraceInBrowser(traceUrls: string[], options?: OpenTrac
   const { url } = await startTraceViewerServer(traceUrls, options);
   // eslint-disable-next-line no-console
   console.log('\nListening on ' + url);
-  await open(url).catch(() => {});
+  if (!isUnderTest())
+    await open(url).catch(() => {});
 }
 
 class StdinServer implements Transport {
