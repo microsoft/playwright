@@ -19,8 +19,6 @@
 
 /**
  * @typedef { import('../packages/playwright-core/src/server/keyboards/types').KeyDefinition } KeyDefinition
- * @typedef { import('playwright').Locator } Locator
- * @typedef { import('playwright').Page } Page
  */
 
 const fs = require('fs');
@@ -184,30 +182,6 @@ const keyboardLayoutGenerator = {
 };
 
 /**
- * @param { Page } page
- * @param { string } url
- * @returns { Promise<Object.<string, number>> }
- */
-async function extractLocatorToVirtualKeys(page, url) {
-  await page.goto(`${url}/virtualkeys`);
-
-  /** @type { Object.<string, number> } */
-  const mappings = {};
-
-  /** @type { string[] } */
-  // @ts-ignore
-  const locators = Object.values(keyboardLayoutGenerator).filter(v => typeof v === 'string');
-  for (const loc of locators) {
-    const scancode = await page.locator(loc).locator('> .kls > .kl10').textContent();
-    const vk = await page.locator(`.scGroup tr:has(td:nth-child(1):text-is('${scancode}')) > td:nth-child(2)`).first().textContent();
-    assert(vk, `No virtual key code found for ${loc} (scancode ${scancode})`);
-    mappings[loc] = parseInt(vk, 16);
-  }
-
-  return mappings;
-}
-
-/**
  * @param {string} xml
  * @returns {object}
  */
@@ -215,10 +189,6 @@ function parseXML(xml) {
   let result;
   xml2js.parseString(xml, {trim: true}, (err, r) => result = r);
   return result;
-}
-
-function hex2char(hex) {
-  return String.fromCharCode(parseInt(hex, 16));
 }
 
 /**
