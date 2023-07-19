@@ -98,14 +98,8 @@ it.describe(`us keyboard layout`, () => {
   });
 });
 
-it(`should fallback to us on invalid layout format`, async ({ page, toImpl, server }) => {
-  await page.keyboard.changeLayout('invalid');
-  await page.goto(server.PREFIX + '/input/keyboard.html');
-  await page.keyboard.press('Backquote');
-  expect(await page.evaluate('getResult()')).toBe(
-      ['Keydown: ` Backquote 192 []',
-        'Keypress: ` Backquote 96 96 []',
-        'Keyup: ` Backquote 192 []'].join('\n'));
+it(`should throw exception on invalid layout format`, async ({ page }) => {
+  await expect(async () => await page.keyboard.changeLayout('invalid')).rejects.toThrowError();
 });
 
 const testData = {

@@ -259,7 +259,7 @@ function getByLocale(locale?: string): Map<string, KeyDescription> {
 
   const normalizedLocale = normalizeLocale(locale);
   const klid = localeMapping.get(normalizedLocale);
-  if (!klid) return defaultKeyboard;
+  if (!klid) throw new Error(`Keyboard layout name '${klid}' not found`);
 
   const cached = cache.get(klid);
   if (cached) return cached;
