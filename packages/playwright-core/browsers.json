@@ -27,9 +27,9 @@
     },
     {
       "name": "firefox-asan",
-      "revision": "1414",
+      "revision": "1420",
       "installByDefault": false,
-      "browserVersion": "114.0.2"
+      "browserVersion": "115.0"
     },
     {
       "name": "firefox-beta",
