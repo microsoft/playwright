@@ -3,7 +3,8 @@ id: locators
 title: "Locators"
 ---
 
-[Locator]s are the central piece of Playwright's auto-waiting and retry-ability. In a nutshell, locators represent a way to find element(s) on the page at any moment.
+[Locator]s are the central piece of Playwright's auto-waiting and retry-ability. In a nutshell, locators represent
+a way to find element(s) on the page at any moment.
 
 ### Quick Guide
 

@@ -1,7 +1,8 @@
 # class: Locator
 * since: v1.14
 
-Locators are the central piece of Playwright's auto-waiting and retry-ability. In a nutshell, locators represent a way to find element(s) on the page at any moment. A locator can be created with the [`method: Page.locator`] method.
+Locators are the central piece of Playwright's auto-waiting and retry-ability. In a nutshell, locators represent
+a way to find element(s) on the page at any moment. A locator can be created with the [`method: Page.locator`] method.
 
 [Learn more about locators](../locators.md).
 
