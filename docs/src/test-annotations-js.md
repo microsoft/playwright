@@ -87,7 +87,7 @@ Or if you want the opposite, you can skip the tests with a certain tag:
 npx playwright test --grep-invert @slow
 ```
 
-Or run tests containing either tag (logical `OR` operator):
+To run tests containing either tag (logical `OR` operator):
 
 ```bash
 npx playwright test --grep "@fast|@slow"
@@ -105,7 +105,7 @@ for Windows terminals:
   npx playwright test --grep "@fast^|@slow"
   ```
 
-To run tests containing both tags (logical `AND` operator) using regex lookaheads:
+Or run tests containing both tags (logical `AND` operator) using regex lookaheads:
 
 ```bash
 npx playwright test --grep "(?=.*@fast)(?=.*@slow)"
