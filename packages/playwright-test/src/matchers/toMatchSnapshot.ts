@@ -212,19 +212,20 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
     else
       output.push('');
 
+    const targetPath = path.relative(process.cwd(), this.snapshotPath);
     if (expected !== undefined) {
       writeFileSync(this.expectedPath, expected);
-      this.testInfo.attachments.push({ name: addSuffixToFilePath(this.snapshotName, '-expected'), contentType: this.mimeType, path: this.expectedPath });
+      this.testInfo.attachments.push({ name: addSuffixToFilePath(this.snapshotName, '-expected'), contentType: this.mimeType, path: this.expectedPath, targetPath });
       output.push(`Expected: ${colors.yellow(this.expectedPath)}`);
     }
     if (previous !== undefined) {
       writeFileSync(this.previousPath, previous);
-      this.testInfo.attachments.push({ name: addSuffixToFilePath(this.snapshotName, '-previous'), contentType: this.mimeType, path: this.previousPath });
+      this.testInfo.attachments.push({ name: addSuffixToFilePath(this.snapshotName, '-previous'), contentType: this.mimeType, path: this.previousPath, targetPath });
       output.push(`Previous: ${colors.yellow(this.previousPath)}`);
     }
     if (actual !== undefined) {
       writeFileSync(this.actualPath, actual);
-      this.testInfo.attachments.push({ name: addSuffixToFilePath(this.snapshotName, '-actual'), contentType: this.mimeType, path: this.actualPath });
+      this.testInfo.attachments.push({ name: addSuffixToFilePath(this.snapshotName, '-actual'), contentType: this.mimeType, path: this.actualPath, targetPath });
       output.push(`Received: ${colors.yellow(this.actualPath)}`);
     }
     if (diff !== undefined) {

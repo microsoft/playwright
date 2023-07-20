@@ -20,7 +20,7 @@ import { ActionList } from './actionList';
 import { CallTab } from './callTab';
 import { ConsoleTab } from './consoleTab';
 import type * as modelUtil from './modelUtil';
-import type { ActionTraceEventInContext, MultiTraceModel } from './modelUtil';
+import type { ActionTraceEventInContext, MultiTraceModel, ScreenshotUpdateHandler } from './modelUtil';
 import { NetworkTab } from './networkTab';
 import { SnapshotTab } from './snapshotTab';
 import { SourceTab } from './sourceTab';
@@ -39,10 +39,11 @@ export const Workbench: React.FunctionComponent<{
   rootDir?: string,
   fallbackLocation?: modelUtil.SourceLocation,
   initialSelection?: ActionTraceEventInContext,
+  onScreenshotUpdated?: ScreenshotUpdateHandler,
   onSelectionChanged?: (action: ActionTraceEventInContext) => void,
   isLive?: boolean,
   drawer?: 'bottom' | 'right',
-}> = ({ model, hideTimelineBars, hideStackFrames, showSourcesFirst, rootDir, fallbackLocation, initialSelection, onSelectionChanged, isLive, drawer }) => {
+}> = ({ model, hideTimelineBars, hideStackFrames, showSourcesFirst, rootDir, fallbackLocation, initialSelection, onScreenshotUpdated, onSelectionChanged, isLive, drawer }) => {
   const [selectedAction, setSelectedAction] = React.useState<ActionTraceEventInContext | undefined>(undefined);
   const [highlightedAction, setHighlightedAction] = React.useState<ActionTraceEventInContext | undefined>();
   const [selectedNavigatorTab, setSelectedNavigatorTab] = React.useState<string>('actions');
@@ -135,6 +136,7 @@ export const Workbench: React.FunctionComponent<{
                 sdkLanguage={sdkLanguage}
                 actions={model?.actions || []}
                 selectedAction={model ? selectedAction : undefined}
+                onScreenshotUpdated={onScreenshotUpdated}
                 onSelected={onActionSelected}
                 onHighlighted={setHighlightedAction}
                 revealConsole={() => setSelectedPropertiesTab('console')}

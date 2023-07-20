@@ -194,6 +194,7 @@
 .codicon-chrome-minimize:before { content: '\eaba'; }
 .codicon-chrome-restore:before { content: '\eabb'; }
 .codicon-circle-outline:before { content: '\eabc'; }
+.codicon-circle-outline-modified:before { content: '\eabc'; }
 .codicon-debug-breakpoint-unverified:before { content: '\eabc'; }
 .codicon-circle-slash:before { content: '\eabd'; }
 .codicon-circuit-board:before { content: '\eabe'; }

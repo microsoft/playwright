@@ -21,7 +21,7 @@ import React from 'react';
 import { TreeView } from '@web/components/treeView';
 import type { TreeState } from '@web/components/treeView';
 import { baseFullConfig, TeleReporterReceiver, TeleSuite } from '@testIsomorphic/teleReceiver';
-import type { TeleTestCase } from '@testIsomorphic/teleReceiver';
+import type { TeleTestCase, TeleTestResult } from '@testIsomorphic/teleReceiver';
 import type { FullConfig, Suite, TestCase, Location, TestError } from '@playwright/test/types/testReporter';
 import { SplitView } from '@web/components/splitView';
 import { idForAction, MultiTraceModel } from './modelUtil';
@@ -45,6 +45,8 @@ let xtermSize = { cols: 80, rows: 24 };
 
 let sendMessage: (method: string, params?: any) => Promise<any> = async () => {};
 
+let updateProgressValues: (newProgress: Partial<Progress>) => void;
+
 const xtermDataSource: XtermDataSource = {
   pending: [],
   clear: () => {},
@@ -61,6 +63,12 @@ type TestModel = {
   loadErrors: TestError[];
 };
 
+interface AppContext {
+  isUIMode?: boolean;
+}
+
+export const AppContext = React.createContext<AppContext>({});
+
 export const UIModeView: React.FC<{}> = ({
 }) => {
   const [filterText, setFilterText] = React.useState<string>('');
@@ -70,6 +78,7 @@ export const UIModeView: React.FC<{}> = ({
     ['passed', false],
     ['failed', false],
     ['skipped', false],
+    ['modified', false],
   ]));
   const [projectFilters, setProjectFilters] = React.useState<Map<string, boolean>>(new Map());
   const [testModel, setTestModel] = React.useState<TestModel>({ config: undefined, rootSuite: undefined, loadErrors: [] });
@@ -150,7 +159,7 @@ export const UIModeView: React.FC<{}> = ({
 
       const time = '  [' + new Date().toLocaleTimeString() + ']';
       xtermDataSource.write('\x1B[2m—'.repeat(Math.max(0, xtermSize.cols - time.length)) + time + '\x1B[22m');
-      setProgress({ total: testIds.size, passed: 0, failed: 0, skipped: 0 });
+      setProgress({ total: testIds.size, passed: 0, failed: 0, skipped: 0, modified: 0 });
       setRunningState({ testIds });
 
       await sendMessage('run', { testIds: [...testIds], projects: [...projectFilters].filter(([_, v]) => v).map(([p]) => p) });
@@ -166,75 +175,77 @@ export const UIModeView: React.FC<{}> = ({
 
   const isRunningTest = !!runningState;
 
-  return <div className='vbox ui-mode'>
-    {isDisconnected && <div className='drop-target'>
-      <div className='title'>UI Mode disconnected</div>
-      <div><a href='#' onClick={() => window.location.reload()}>Reload the page</a> to reconnect</div>
-    </div>}
-    <SplitView sidebarSize={250} minSidebarSize={125} orientation='horizontal' sidebarIsFirst={true}>
-      <div className='vbox'>
-        <div className={'vbox' + (isShowingOutput ? '' : ' hidden')}>
-          <Toolbar>
-            <div className='section-title' style={{ flex: 'none' }}>Output</div>
-            <ToolbarButton icon='circle-slash' title='Clear output' onClick={() => xtermDataSource.clear()}></ToolbarButton>
-            <div className='spacer'></div>
-            <ToolbarButton icon='close' title='Close' onClick={() => setIsShowingOutput(false)}></ToolbarButton>
+  return <AppContext.Provider value={ { isUIMode: true } }>
+    <div className='vbox ui-mode'>
+      {isDisconnected && <div className='drop-target'>
+        <div className='title'>UI Mode disconnected</div>
+        <div><a href='#' onClick={() => window.location.reload()}>Reload the page</a> to reconnect</div>
+      </div>}
+      <SplitView sidebarSize={250} minSidebarSize={125} orientation='horizontal' sidebarIsFirst={true}>
+        <div className='vbox'>
+          <div className={'vbox' + (isShowingOutput ? '' : ' hidden')}>
+            <Toolbar>
+              <div className='section-title' style={{ flex: 'none' }}>Output</div>
+              <ToolbarButton icon='circle-slash' title='Clear output' onClick={() => xtermDataSource.clear()}></ToolbarButton>
+              <div className='spacer'></div>
+              <ToolbarButton icon='close' title='Close' onClick={() => setIsShowingOutput(false)}></ToolbarButton>
+            </Toolbar>
+            <XtermWrapper source={xtermDataSource}></XtermWrapper>
+          </div>
+          <div className={'vbox' + (isShowingOutput ? ' hidden' : '')}>
+            <TraceView item={selectedItem} rootDir={testModel.config?.rootDir} />
+          </div>
+        </div>
+        <div className='vbox ui-mode-sidebar'>
+          <Toolbar noShadow={true} noMinHeight={true}>
+            <img src='icon-32x32.png' />
+            <div className='section-title'>Playwright</div>
+            <ToolbarButton icon='color-mode' title='Toggle color mode' onClick={() => toggleTheme()} />
+            <ToolbarButton icon='refresh' title='Reload' onClick={() => reloadTests()} disabled={isRunningTest || isLoading}></ToolbarButton>
+            <ToolbarButton icon='terminal' title='Toggle output' toggled={isShowingOutput} onClick={() => { setIsShowingOutput(!isShowingOutput); }} />
           </Toolbar>
-          <XtermWrapper source={xtermDataSource}></XtermWrapper>
+          <FiltersView
+            filterText={filterText}
+            setFilterText={setFilterText}
+            statusFilters={statusFilters}
+            setStatusFilters={setStatusFilters}
+            projectFilters={projectFilters}
+            setProjectFilters={setProjectFilters}
+            testModel={testModel}
+            runTests={() => runTests('bounce-if-busy', visibleTestIds)} />
+          <Toolbar noMinHeight={true}>
+            {!isRunningTest && !progress && <div className='section-title'>Tests</div>}
+            {!isRunningTest && progress && <div data-testid='status-line' className='status-line'>
+              <div>{progress.passed}/{progress.total} passed ({(progress.passed / progress.total) * 100 | 0}%)</div>
+            </div>}
+            {isRunningTest && progress && <div data-testid='status-line' className='status-line'>
+              <div>Running {progress.passed}/{runningState.testIds.size} passed ({(progress.passed / runningState.testIds.size) * 100 | 0}%)</div>
+            </div>}
+            <ToolbarButton icon='play' title='Run all' onClick={() => runTests('bounce-if-busy', visibleTestIds)} disabled={isRunningTest || isLoading}></ToolbarButton>
+            <ToolbarButton icon='debug-stop' title='Stop' onClick={() => sendMessageNoReply('stop')} disabled={!isRunningTest || isLoading}></ToolbarButton>
+            <ToolbarButton icon='eye' title='Watch all' toggled={watchAll} onClick={() => setWatchAll(!watchAll)}></ToolbarButton>
+            <ToolbarButton icon='collapse-all' title='Collapse all' onClick={() => {
+              setCollapseAllCount(collapseAllCount + 1);
+            }} />
+          </Toolbar>
+          <TestList
+            statusFilters={statusFilters}
+            projectFilters={projectFilters}
+            filterText={filterText}
+            testModel={testModel}
+            runningState={runningState}
+            runTests={runTests}
+            onItemSelected={setSelectedItem}
+            setVisibleTestIds={setVisibleTestIds}
+            watchAll={watchAll}
+            watchedTreeIds={watchedTreeIds}
+            setWatchedTreeIds={setWatchedTreeIds}
+            isLoading={isLoading}
+            requestedCollapseAllCount={collapseAllCount} />
         </div>
-        <div className={'vbox' + (isShowingOutput ? ' hidden' : '')}>
-          <TraceView item={selectedItem} rootDir={testModel.config?.rootDir} />
-        </div>
-      </div>
-      <div className='vbox ui-mode-sidebar'>
-        <Toolbar noShadow={true} noMinHeight={true}>
-          <img src='icon-32x32.png' />
-          <div className='section-title'>Playwright</div>
-          <ToolbarButton icon='color-mode' title='Toggle color mode' onClick={() => toggleTheme()} />
-          <ToolbarButton icon='refresh' title='Reload' onClick={() => reloadTests()} disabled={isRunningTest || isLoading}></ToolbarButton>
-          <ToolbarButton icon='terminal' title='Toggle output' toggled={isShowingOutput} onClick={() => { setIsShowingOutput(!isShowingOutput); }} />
-        </Toolbar>
-        <FiltersView
-          filterText={filterText}
-          setFilterText={setFilterText}
-          statusFilters={statusFilters}
-          setStatusFilters={setStatusFilters}
-          projectFilters={projectFilters}
-          setProjectFilters={setProjectFilters}
-          testModel={testModel}
-          runTests={() => runTests('bounce-if-busy', visibleTestIds)} />
-        <Toolbar noMinHeight={true}>
-          {!isRunningTest && !progress && <div className='section-title'>Tests</div>}
-          {!isRunningTest && progress && <div data-testid='status-line' className='status-line'>
-            <div>{progress.passed}/{progress.total} passed ({(progress.passed / progress.total) * 100 | 0}%)</div>
-          </div>}
-          {isRunningTest && progress && <div data-testid='status-line' className='status-line'>
-            <div>Running {progress.passed}/{runningState.testIds.size} passed ({(progress.passed / runningState.testIds.size) * 100 | 0}%)</div>
-          </div>}
-          <ToolbarButton icon='play' title='Run all' onClick={() => runTests('bounce-if-busy', visibleTestIds)} disabled={isRunningTest || isLoading}></ToolbarButton>
-          <ToolbarButton icon='debug-stop' title='Stop' onClick={() => sendMessageNoReply('stop')} disabled={!isRunningTest || isLoading}></ToolbarButton>
-          <ToolbarButton icon='eye' title='Watch all' toggled={watchAll} onClick={() => setWatchAll(!watchAll)}></ToolbarButton>
-          <ToolbarButton icon='collapse-all' title='Collapse all' onClick={() => {
-            setCollapseAllCount(collapseAllCount + 1);
-          }} />
-        </Toolbar>
-        <TestList
-          statusFilters={statusFilters}
-          projectFilters={projectFilters}
-          filterText={filterText}
-          testModel={testModel}
-          runningState={runningState}
-          runTests={runTests}
-          onItemSelected={setSelectedItem}
-          setVisibleTestIds={setVisibleTestIds}
-          watchAll={watchAll}
-          watchedTreeIds={watchedTreeIds}
-          setWatchedTreeIds={setWatchedTreeIds}
-          isLoading={isLoading}
-          requestedCollapseAllCount={collapseAllCount} />
-      </div>
-    </SplitView>
-  </div>;
+      </SplitView>
+    </div>
+  </AppContext.Provider>;
 };
 
 const FiltersView: React.FC<{
@@ -488,6 +499,8 @@ const TestList: React.FC<{
         return 'codicon-check';
       if (treeItem.status === 'skipped')
         return 'codicon-circle-slash';
+      if (treeItem.status === 'modified')
+        return 'codicon-circle-outline-modified';
       return 'codicon-circle-outline';
     }}
     selectedItem={selectedTreeItem}
@@ -520,6 +533,27 @@ const TraceView: React.FC<{
   const [selectedActionId, setSelectedActionId] = React.useState<string | undefined>();
   const onSelectionChanged = React.useCallback((action: ActionTraceEvent) => setSelectedActionId(idForAction(action)), [setSelectedActionId]);
   const initialSelection = selectedActionId ? model?.model.actions.find(a => idForAction(a) === selectedActionId) : undefined;
+
+  const onScreenshotUpdated = React.useCallback(async (targetPath: string, screenshotBase64: string, state: string) => {
+    await sendMessage('accept-screenshot', {
+      screenshotPath: targetPath,
+      content: screenshotBase64
+    });
+
+    const testCase = item.testCase;
+    const lastResult = testCase?.results.at(-1) as TeleTestResult | undefined;
+    if (lastResult) {
+      if (state === 'expected') {
+        lastResult.statusEx = 'failed';
+
+        updateProgressValues({ failed: 1, modified: -1 });
+      } else if (state === 'actual') {
+        lastResult.statusEx = 'modified';
+
+        updateProgressValues({ failed: -1, modified: 1 });
+      }
+    }
+  }, [item.testCase]);
 
   React.useEffect(() => {
     if (pollTimer.current)
@@ -570,6 +604,7 @@ const TraceView: React.FC<{
     rootDir={rootDir}
     initialSelection={initialSelection}
     onSelectionChanged={onSelectionChanged}
+    onScreenshotUpdated={onScreenshotUpdated}
     fallbackLocation={item.testFile}
     isLive={model?.isLive}
     drawer='bottom' />;
@@ -603,8 +638,25 @@ const refreshRootSuite = (eraseResults: boolean): Promise<void> => {
     passed: 0,
     failed: 0,
     skipped: 0,
+    modified: 0
   };
   let config: FullConfig;
+
+  updateProgressValues = (newProgress: Partial<Progress>, diffMode = true) => {
+    for (const propName of Object.keys(newProgress)) {
+      const key = propName as keyof Progress;
+
+      if (newProgress[key]) {
+        if (diffMode)
+          progress[key] += newProgress[key]!;
+        else
+          progress[key] = newProgress[key]!;
+      }
+    }
+
+    throttleUpdateRootSuite(config, rootSuite, loadErrors, progress);
+  };
+
   receiver = new TeleReporterReceiver(pathSeparator, {
     version: () => 'v2',
 
@@ -618,6 +670,7 @@ const refreshRootSuite = (eraseResults: boolean): Promise<void> => {
       progress.passed = 0;
       progress.failed = 0;
       progress.skipped = 0;
+      progress.modified = 0;
       throttleUpdateRootSuite(config, rootSuite, loadErrors, progress, true);
     },
 
@@ -729,6 +782,7 @@ type Progress = {
   passed: number;
   failed: number;
   skipped: number;
+  modified: number;
 };
 
 type TreeItemBase = {
@@ -739,7 +793,7 @@ type TreeItemBase = {
   duration: number;
   parent: TreeItem | undefined;
   children: TreeItem[];
-  status: 'none' | 'running' | 'scheduled' | 'passed' | 'failed' | 'skipped';
+  status: 'none' | 'running' | 'scheduled' | 'passed' | 'failed' | 'skipped' | 'modified';
 };
 
 type GroupItem = TreeItemBase & {
@@ -844,9 +898,11 @@ function createTree(rootSuite: Suite | undefined, loadErrors: TestError[], proje
       }
 
       const result = (test as TeleTestCase).results[0];
-      let status: 'none' | 'running' | 'scheduled' | 'passed' | 'failed' | 'skipped' = 'none';
+      let status: 'none' | 'running' | 'scheduled' | 'passed' | 'failed' | 'skipped' | 'modified' = 'none';
       if (result?.statusEx === 'scheduled')
         status = 'scheduled';
+      else if (result?.statusEx === 'modified')
+        status = 'modified';
       else if (result?.statusEx === 'running')
         status = 'running';
       else if (result?.status === 'skipped')
@@ -942,11 +998,13 @@ function sortAndPropagateStatus(treeItem: TreeItem) {
   let hasFailed = false;
   let hasRunning = false;
   let hasScheduled = false;
+  let hasModified = false;
 
   for (const child of treeItem.children) {
     allSkipped = allSkipped && child.status === 'skipped';
     allPassed = allPassed && (child.status === 'passed' || child.status === 'skipped');
     hasFailed = hasFailed || child.status === 'failed';
+    hasModified = hasModified || child.status === 'modified';
     hasRunning = hasRunning || child.status === 'running';
     hasScheduled = hasScheduled || child.status === 'scheduled';
   }
@@ -957,6 +1015,8 @@ function sortAndPropagateStatus(treeItem: TreeItem) {
     treeItem.status = 'scheduled';
   else if (hasFailed)
     treeItem.status = 'failed';
+  else if (hasModified)
+    treeItem.status = 'modified';
   else if (allSkipped)
     treeItem.status = 'skipped';
   else if (allPassed)

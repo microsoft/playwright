@@ -103,6 +103,10 @@ svg {
   color: var(--vscode-disabledForeground);
 }
 
+.codicon-circle-outline-modified {
+  color: var(--vscode-list-warningForeground);
+}
+
 input[type=text], input[type=search] {
   color: var(--vscode-input-foreground);
   background-color: var(--vscode-input-background);

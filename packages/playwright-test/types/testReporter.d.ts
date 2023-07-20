@@ -233,6 +233,11 @@ export interface TestResult {
      * Optional attachment body used instead of a file.
      */
     body?: Buffer;
+
+    /**
+     * Path on the filesystem to the original file in project to which this attachment relates to.
+     */
+    targetPath?: string;
   }>;
 
   /**

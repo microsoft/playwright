@@ -48,6 +48,8 @@ export type ActionTreeItem = {
   action?: ActionTraceEventInContext;
 };
 
+export type ScreenshotUpdateHandler = (targetPath: string, screenshotBase64: string, state: string) => void | Promise<void>;
+
 export class MultiTraceModel {
   readonly startTime: number;
   readonly endTime: number;

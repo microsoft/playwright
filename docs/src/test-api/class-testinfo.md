@@ -31,6 +31,7 @@ Learn more about [test annotations](../test-annotations.md).
   - `contentType` <[string]> Content type of this attachment to properly present in the report, for example `'application/json'` or `'image/png'`.
   - `path` ?<[string]> Optional path on the filesystem to the attached file.
   - `body` ?<[Buffer]> Optional attachment body used instead of a file.
+  - `targetPath` ?<[string]> Path on the filesystem to the original file in project to which this attachment relates to.
 
 The list of files or buffers attached to the current test. Some reporters show test attachments.
 

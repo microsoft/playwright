@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
+import path from 'path';
 import { openTraceViewerApp, openTraceInBrowser } from 'playwright-core/lib/server';
 import { isUnderTest, ManualPromise } from 'playwright-core/lib/utils';
 import type { FullResult } from '../../reporter';
@@ -153,6 +155,8 @@ class UIMode {
       await this._listTests();
     if (method === 'run')
       await this._runTests(params.testIds, params.projects);
+    if (method === 'accept-screenshot')
+      await this._acceptScreenshot(params.screenshotPath, params.content);
   }
 
   private _dispatchEvent(method: string, params?: any) {
@@ -202,6 +206,15 @@ class UIMode {
     });
     this._testRun = { run, stop };
     await run;
+  }
+
+  private async _acceptScreenshot(screenshotPath: string, content: string) {
+    const absoluteScreenshotPath = path.resolve(screenshotPath);
+
+    const contentRawData = Buffer.from(content, 'base64');
+
+    fs.mkdirSync(path.dirname(absoluteScreenshotPath), { recursive: true });
+    fs.writeFileSync(absoluteScreenshotPath, contentRawData);
   }
 
   private _watchFiles(fileNames: string[]) {

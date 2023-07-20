@@ -473,6 +473,7 @@ function serializeAttachments(attachments: TestInfo['attachments'], initialAttac
       contentType: a.contentType,
       path: a.path,
       base64: a.body?.toString('base64'),
+      targetPath: a.targetPath
     };
   });
 }

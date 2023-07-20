@@ -32,6 +32,7 @@ export type TreeViewProps<T> = {
   render: (item: T) => React.ReactNode,
   icon?: (item: T) => string | undefined,
   isError?: (item: T) => boolean,
+  isWarning?: (item: T) => boolean,
   selectedItem?: T,
   onAccepted?: (item: T) => void,
   onSelected?: (item: T) => void,
@@ -50,6 +51,7 @@ export function TreeView<T extends TreeItem>({
   render,
   icon,
   isError,
+  isWarning,
   selectedItem,
   onAccepted,
   onSelected,
@@ -83,6 +85,7 @@ export function TreeView<T extends TreeItem>({
         return expanded ? 'codicon-chevron-down' : 'codicon-chevron-right';
     }}
     isError={item => isError?.(item as T) || false}
+    isWarning={item => isWarning?.(item as T) || false}
     indent={item => treeItems.get(item as T)!.depth}
     selectedItem={selectedItem}
     onAccepted={item => onAccepted?.(item as T)}

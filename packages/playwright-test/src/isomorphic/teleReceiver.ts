@@ -526,7 +526,7 @@ export class TeleTestCase implements reporterTypes.TestCase {
 
 export type TeleTestResult = reporterTypes.TestResult & {
   stepMap: Map<string, reporterTypes.TestStep>;
-  statusEx: reporterTypes.TestResult['status'] | 'scheduled' | 'running';
+  statusEx: reporterTypes.TestResult['status'] | 'scheduled' | 'running' | 'modified';
 };
 
 export type TeleFullProject = FullProject & { id: string };
