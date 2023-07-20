@@ -44,11 +44,13 @@ window.onload = () => {
 class ZipReport implements LoadedReport {
   private _entries = new Map<string, zip.Entry>();
   private _json!: HTMLReport;
+  private _stringTable: string[] = [];
 
   async load() {
     const zipReader = new zipjs.ZipReader(new zipjs.Data64URIReader((window as any).playwrightReportBase64), { useWebWorkers: false }) as zip.ZipReader;
     for (const entry of await zipReader.getEntries())
       this._entries.set(entry.filename, entry);
+    this._stringTable = await this.entry('strings.json', false) as string[];
     this._json = await this.entry('report.json') as HTMLReport;
   }
 
@@ -56,10 +58,17 @@ class ZipReport implements LoadedReport {
     return this._json;
   }
 
-  async entry(name: string): Promise<Object> {
+  async entry(name: string, useStringCache: boolean = true): Promise<Object> {
     const reportEntry = this._entries.get(name);
     const writer = new zipjs.TextWriter() as zip.TextWriter;
     await reportEntry!.getData!(writer);
-    return JSON.parse(await writer.getData());
+    const reviver = (key: string, value: any) => {
+      if (typeof value === 'string') {
+        console.log(value + ' => ' + this._stringTable[parseInt(value, 10)]);
+        return this._stringTable[parseInt(value, 10)];
+      }
+      return value;
+    };
+    return JSON.parse(await writer.getData(), useStringCache ? reviver : undefined);
   }
 }

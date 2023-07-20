@@ -201,6 +201,7 @@ class HtmlBuilder {
   private _tests = new Map<string, JsonTestCase>();
   private _testPath = new Map<string, string[]>();
   private _dataZipFile: ZipFile;
+  private _stringCache = new Map<string, number>();
   private _hasTraces = false;
   private _attachmentsBaseURL: string;
 
@@ -278,6 +279,8 @@ class HtmlBuilder {
 
     this._addDataFile('report.json', htmlReport);
 
+    this._addDataFile('strings.json', [...this._stringCache.keys()], false);
+
     // Copy app.
     const appFolder = path.join(require.resolve('playwright-core'), '..', 'lib', 'webpack', 'htmlReport');
     await copyFileAndMakeWritable(path.join(appFolder, 'index.html'), path.join(this._reportFolder, 'index.html'));
@@ -321,8 +324,18 @@ class HtmlBuilder {
     return { ok, singleTestId };
   }
 
-  private _addDataFile(fileName: string, data: any) {
-    this._dataZipFile.addBuffer(Buffer.from(JSON.stringify(data)), fileName);
+  private _addDataFile(fileName: string, data: any, useStringCache: boolean = true) {
+    const replacer = (key: string, value: any) => {
+      if (typeof value === "string") {
+        if (!this._stringCache.has(value))
+          this._stringCache.set(value, this._stringCache.size);
+        return "" + this._stringCache.get(value);
+      }
+      return value;
+    };
+    const serialized = JSON.stringify(data, useStringCache ? replacer : undefined);
+    this._dataZipFile.addBuffer(Buffer.from(serialized), fileName);
+
   }
 
   private _processJsonSuite(suite: JsonSuite, fileId: string, projectName: string, path: string[], outTests: TestEntry[]) {
