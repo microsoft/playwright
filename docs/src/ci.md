@@ -562,7 +562,7 @@ steps:
   displayName: 'Use .NET SDK'
 - script: dotnet build --configuration Release
   displayName: 'Build'
-- script: pwsh bin/Debug/net6.0/playwright.ps1 install --with-deps
+- script: pwsh bin/Release/net6.0/playwright.ps1 install --with-deps
   displayName: 'Install Playwright browsers'
 - script: dotnet test --configuration Release
   displayName: 'Run tests'
