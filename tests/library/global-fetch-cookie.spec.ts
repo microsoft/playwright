@@ -187,7 +187,7 @@ it('should remove cookie with negative max-age', async ({ request, server }) => 
   expect(serverRequest.headers.cookie).toBe('c=v');
 });
 
-it('should remove cookie with expires far in the past', async ({ page, server }) => {
+it('should remove cookie with expires far in the past', async ({ request, server }) => {
   server.setRoute('/setcookie.html', (req, res) => {
     res.setHeader('Set-Cookie', ['a=v; max-age=1000000']);
     res.end();
@@ -196,11 +196,11 @@ it('should remove cookie with expires far in the past', async ({ page, server })
     res.setHeader('Set-Cookie', [`a=v; expires=1 Jan 1000 00:00:00 +0000 (UTC)`]);
     res.end();
   });
-  await page.request.get(`${server.PREFIX}/setcookie.html`);
-  await page.request.get(`${server.PREFIX}/removecookie.html`);
+  await request.get(`${server.PREFIX}/setcookie.html`);
+  await request.get(`${server.PREFIX}/removecookie.html`);
   const [serverRequest] = await Promise.all([
     server.waitForRequest('/empty.html'),
-    page.request.get(server.EMPTY_PAGE)
+    request.get(server.EMPTY_PAGE)
   ]);
   expect(serverRequest.headers.cookie).toBeFalsy();
 });
