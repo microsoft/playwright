@@ -168,6 +168,43 @@ it('should remove expired cookies', async ({ request, server }) => {
   expect(serverRequest.headers.cookie).toBe('a=v');
 });
 
+it('should remove cookie with negative max-age', async ({ request, server }) => {
+  server.setRoute('/setcookie.html', (req, res) => {
+    res.setHeader('Set-Cookie', ['a=v; max-age=100000', `b=v; max-age=100000`, 'c=v']);
+    res.end();
+  });
+  server.setRoute('/removecookie.html', (req, res) => {
+    const maxAge = -2 * Date.now();
+    res.setHeader('Set-Cookie', [`a=v; max-age=${maxAge}`, `b=v; max-age=-1`]);
+    res.end();
+  });
+  await request.get(`${server.PREFIX}/setcookie.html`);
+  await request.get(`${server.PREFIX}/removecookie.html`);
+  const [serverRequest] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    request.get(server.EMPTY_PAGE)
+  ]);
+  expect(serverRequest.headers.cookie).toBe('c=v');
+});
+
+it('should remove cookie with expires far in the past', async ({ request, server }) => {
+  server.setRoute('/setcookie.html', (req, res) => {
+    res.setHeader('Set-Cookie', ['a=v; max-age=1000000']);
+    res.end();
+  });
+  server.setRoute('/removecookie.html', (req, res) => {
+    res.setHeader('Set-Cookie', [`a=v; expires=1 Jan 1000 00:00:00 +0000 (UTC)`]);
+    res.end();
+  });
+  await request.get(`${server.PREFIX}/setcookie.html`);
+  await request.get(`${server.PREFIX}/removecookie.html`);
+  const [serverRequest] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    request.get(server.EMPTY_PAGE)
+  ]);
+  expect(serverRequest.headers.cookie).toBeFalsy();
+});
+
 it('should store cookie from Set-Cookie header even if it contains equal signs', async ({ request, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/11612' });
 
