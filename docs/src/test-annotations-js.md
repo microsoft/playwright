@@ -111,7 +111,6 @@ To run tests containing both tags (logical `AND` operator) using regex lookahead
 npx playwright test --grep "(?=.*@fast)(?=.*@slow)"
 ```
 
-
 ## Conditionally skip a group of tests
 
 For example, you can run a group of tests just in Chromium by passing a callback.
