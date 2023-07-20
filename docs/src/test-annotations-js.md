@@ -101,7 +101,7 @@ for Windows terminals:
   ```
 
 - CMD:
-  ```bash
+  ```cmd
   npx playwright test --grep "@fast^|@slow"
   ```
 
