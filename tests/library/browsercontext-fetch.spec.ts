@@ -295,7 +295,7 @@ it('should remove cookie with expires far in the past', async ({ page, server })
     res.end();
   });
   server.setRoute('/removecookie.html', (req, res) => {
-    res.setHeader('Set-Cookie', [`a=v; expires=1 Jan 1000 00:00:00 +0000 (UTC)`]);
+    res.setHeader('Set-Cookie', [`a=v; expires=Wed, 01 Jan 1000 00:00:00 GMT`]);
     res.end();
   });
   await page.request.get(`${server.PREFIX}/setcookie.html`);
