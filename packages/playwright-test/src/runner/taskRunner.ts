@@ -21,8 +21,8 @@ import { SigIntWatcher } from './sigIntWatcher';
 import { serializeError } from '../util';
 import type { ReporterV2 } from '../reporters/reporterV2';
 
-type TaskTeardown = () => Promise<any> | undefined;
-export type Task<Context> = (context: Context, errors: TestError[], softErrors: TestError[]) => Promise<TaskTeardown | void> | undefined;
+type TaskPhase<Context> = (context: Context, errors: TestError[], softErrors: TestError[]) => Promise<void> | void;
+export type Task<Context> = { setup?: TaskPhase<Context>, teardown?: TaskPhase<Context> };
 
 export class TaskRunner<Context> {
   private _tasks: { name: string, task: Task<Context> }[] = [];
@@ -50,7 +50,7 @@ export class TaskRunner<Context> {
   async runDeferCleanup(context: Context, deadline: number, cancelPromise = new ManualPromise<void>()): Promise<{ status: FullResult['status'], cleanup: () => Promise<FullResult['status']> }> {
     const sigintWatcher = new SigIntWatcher();
     const timeoutWatcher = new TimeoutWatcher(deadline);
-    const teardownRunner = new TaskRunner(this._reporter, this._globalTimeoutForError);
+    const teardownRunner = new TaskRunner<Context>(this._reporter, this._globalTimeoutForError);
     teardownRunner._isTearDown = true;
 
     let currentTaskName: string | undefined;
@@ -64,9 +64,8 @@ export class TaskRunner<Context> {
         const errors: TestError[] = [];
         const softErrors: TestError[] = [];
         try {
-          const teardown = await task(context, errors, softErrors);
-          if (teardown)
-            teardownRunner._tasks.unshift({ name: `teardown for ${name}`, task: teardown });
+          teardownRunner._tasks.unshift({ name: `teardown for ${name}`, task: { setup: task.teardown } });
+          await task.setup?.(context, errors, softErrors);
         } catch (e) {
           debug('pw:test:task')(`error in "${name}": `, e);
           errors.push(serializeError(e));
@@ -106,12 +105,14 @@ export class TaskRunner<Context> {
       status = 'failed';
     }
     cancelPromise?.resolve();
+    // Note that upon hitting deadline, we "run cleanup", but it exits immediately
+    // because of the same deadline. Essentially, we're not perfomring any cleanup.
     const cleanup = () => teardownRunner.runDeferCleanup(context, deadline).then(r => r.status);
     return { status, cleanup };
   }
 }
 
-export class TimeoutWatcher {
+class TimeoutWatcher {
   private _timedOut = false;
   readonly promise = new ManualPromise();
   private _timer: NodeJS.Timeout | undefined;
