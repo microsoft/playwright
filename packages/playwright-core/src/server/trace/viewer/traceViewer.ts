@@ -25,6 +25,7 @@ import { createPlaywright } from '../../playwright';
 import { ProgressController } from '../../progress';
 import { open, wsServer } from '../../../utilsBundle';
 import type { Page } from '../../page';
+import type { BrowserType } from '../../browserType';
 
 export type Transport = {
   sendEvent?: (method: string, params: any) => void;
@@ -40,6 +41,7 @@ export type OpenTraceViewerOptions = {
   port?: number;
   isServer?: boolean;
   transport?: Transport;
+  persistentContextOptions?: Parameters<BrowserType['launchPersistentContext']>[2];
 };
 
 async function startTraceViewerServer(traceUrls: string[], options?: OpenTraceViewerOptions): Promise<{ server: HttpServer, url: string }> {
@@ -144,6 +146,7 @@ export async function openTraceViewerApp(traceUrls: string[], browserName: strin
     ignoreDefaultArgs: ['--enable-automation'],
     colorScheme: 'no-override',
     useWebSocket: isUnderTest(),
+    ...options?.persistentContextOptions,
   });
 
   const controller = new ProgressController(serverSideCallMetadata(), context._browser);
@@ -171,7 +174,8 @@ export async function openTraceInBrowser(traceUrls: string[], options?: OpenTrac
   const { url } = await startTraceViewerServer(traceUrls, options);
   // eslint-disable-next-line no-console
   console.log('\nListening on ' + url);
-  await open(url).catch(() => {});
+  if (!isUnderTest())
+    await open(url).catch(() => {});
 }
 
 class StdinServer implements Transport {

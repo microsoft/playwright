@@ -9,6 +9,7 @@ jobs:
     permissions:
       pull-requests: write
       checks: write
+    if: ${{ github.event.workflow_run.event == 'pull_request' }}
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -23,18 +24,10 @@ jobs:
     - run: npm run build
 
     - name: Download blob report artifact
-      if: ${{ always() && github.event.workflow_run.event == 'pull_request' }}
       uses: ./.github/actions/download-artifact
       with:
         name: 'blob-report-${{ github.event.workflow_run.run_attempt }}'
         path: 'blob-report'
-    - name: Download blob report from Azure
-      if: ${{ always() && github.event.workflow_run.event == 'push' }}
-      uses: ./.github/actions/download-blob-report-from-azure
-      with:
-        blob_prefix: 'run-${{ github.event.workflow_run.id }}-${{ github.event.workflow_run.run_attempt }}-${{ github.sha }}'
-        output_dir: 'blob-report'
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
     - name: Merge reports
       run: |
@@ -47,13 +40,11 @@ jobs:
         echo "Report url: https://mspwblobreport.z1.web.core.windows.net/$REPORT_DIR/index.html"
 
     - name: Upload blob report to Azure
-      if: ${{ github.event.workflow_run.event == 'pull_request' }}
       run: |
         REPORT_DIR='run-${{ github.event.workflow_run.id }}-${{ github.event.workflow_run.run_attempt }}-${{ github.sha }}'
         az storage blob upload-batch -s blob-report -d "\$web/$REPORT_DIR" --connection-string "${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}"
 
     - name: Read pull request number
-      if: ${{ always() && github.event.workflow_run.event == 'pull_request' }}
       uses: ./.github/actions/download-artifact
       with:
         name: 'pull-request'
@@ -74,16 +65,6 @@ jobs:
               prNumber = parseInt(fs.readFileSync('pull_request_number.txt').toString());
               console.log('Read pull request number from file: ' + prNumber);
             }
-          } else if (context.payload.workflow_run.event === 'push') {
-            const { data } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
-              ...context.repo,
-              commit_sha: context.sha,
-            });
-            if (!data.length) {
-              core.info(`No pull request found for commit ${context.sha}. Not publishing anything.`);
-              return;
-            }
-            prNumber = data[0].number;
           } else {
             core.error('Unsupported workflow trigger event: ' + context.payload.workflow_run.event);
             return;
