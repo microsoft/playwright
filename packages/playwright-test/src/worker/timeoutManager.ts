@@ -33,14 +33,16 @@ export type RunnableDescription = {
 };
 
 export class TimeoutManager {
-  private _defaultSlot: TimeSlot;
   private _runnables: RunnableDescription[] = [];
   private _timeoutRunner: TimeoutRunner;
 
   constructor(timeout: number) {
-    this._defaultSlot = { timeout, elapsed: 0 };
-    this._runnables = [{ type: 'test', slot: this._defaultSlot }];
+    this._runnables = [{ type: 'test', slot: { timeout, elapsed: 0 } }];
     this._timeoutRunner = new TimeoutRunner(timeout);
+  }
+
+  recharge(timeout: number) {
+    this._runnables = [{ type: 'test', slot: { timeout, elapsed: 0 } }];
   }
 
   interrupt() {
@@ -48,9 +50,10 @@ export class TimeoutManager {
   }
 
   async runRunnable<T>(runnable: RunnableDescription, cb: () => Promise<T>): Promise<T> {
+    const runnables = this._runnables;
     let slot = this._currentSlot();
     slot.elapsed = this._timeoutRunner.elapsed();
-    this._runnables.unshift(runnable);
+    runnables.unshift(runnable);
     slot = this._currentSlot();
     this._timeoutRunner.updateTimeout(slot.timeout, slot.elapsed);
 
@@ -59,7 +62,7 @@ export class TimeoutManager {
     } finally {
       let slot = this._currentSlot();
       slot.elapsed = this._timeoutRunner.elapsed();
-      this._runnables.splice(this._runnables.indexOf(runnable), 1);
+      runnables.splice(runnables.indexOf(runnable), 1);
       slot = this._currentSlot();
       this._timeoutRunner.updateTimeout(slot.timeout, slot.elapsed);
     }
@@ -68,7 +71,7 @@ export class TimeoutManager {
   defaultSlotTimings() {
     const slot = this._currentSlot();
     slot.elapsed = this._timeoutRunner.elapsed();
-    return this._defaultSlot;
+    return slot;
   }
 
   slow() {
@@ -78,6 +81,9 @@ export class TimeoutManager {
   }
 
   async runWithTimeout(cb: () => Promise<any>): Promise<TestInfoError | undefined> {
+    const slot = this._currentSlot();
+    this._timeoutRunner.updateTimeout(slot.timeout, slot.elapsed);
+
     try {
       await this._timeoutRunner.run(cb);
     } catch (error) {
@@ -88,6 +94,8 @@ export class TimeoutManager {
   }
 
   setTimeout(timeout: number) {
+    if (!this._runnables.length)
+      return;
     const slot = this._currentSlot();
     if (!slot.timeout)
       return; // Zero timeout means some debug mode - do not set a timeout.
@@ -112,7 +120,7 @@ export class TimeoutManager {
       if (runnable.slot)
         return runnable.slot;
     }
-    return this._defaultSlot;
+    throw new Error('Internal error');
   }
 
   private _createTimeoutError(): TestInfoError {
