@@ -26,13 +26,12 @@ import { Multiplexer } from './multiplexer';
 import { ZipFile } from 'playwright-core/lib/utils';
 import type { BlobReportMetadata } from './blob';
 
-export async function createMergedReport(config: FullConfigInternal, dir: string, reporterDescriptions: ReporterDescription[], resolvePaths: boolean) {
+export async function createMergedReport(config: FullConfigInternal, dir: string, reporterDescriptions: ReporterDescription[]) {
   const shardFiles = await sortedShardFiles(dir);
   if (shardFiles.length === 0)
     throw new Error(`No report files found in ${dir}`);
   const events = await mergeEvents(dir, shardFiles);
-  if (resolvePaths)
-    patchAttachmentPaths(events, dir);
+  patchAttachmentPaths(events, dir);
 
   const reporters = await createReporters(config, 'merge', reporterDescriptions);
   const receiver = new TeleReporterReceiver(path.sep, new Multiplexer(reporters), false, config.config);

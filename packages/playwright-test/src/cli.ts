@@ -88,8 +88,6 @@ Examples:
   $ npx playwright show-report playwright-report`);
 }
 
-const kAttachmentModes: string[] = ['local', 'missing'];
-
 function addMergeReportsCommand(program: Command) {
   const command = program.command('merge-reports [dir]', { hidden: true });
   command.description('merge multiple blob reports (for sharded tests) into a single report');
@@ -103,7 +101,6 @@ function addMergeReportsCommand(program: Command) {
   });
   command.option('-c, --config <file>', `Configuration file. Can be used to specify additional configuration for the output report.`);
   command.option('--reporter <reporter>', `Reporter to use, comma-separated, can be ${builtInReporters.map(name => `"${name}"`).join(', ')} (default: "${defaultReporter}")`);
-  command.option('--attachments <mode>', `Whether the attachments are available locally. Supported values are  ${kAttachmentModes.map(name => `"${name}"`).join(', ')} (default: "local")`);
   command.addHelpText('afterAll', `
 Arguments [dir]:
   Directory containing blob reports.
@@ -200,12 +197,7 @@ async function mergeReports(reportDir: string | undefined, opts: { [key: string]
     reporterDescriptions = config.config.reporter;
   if (!reporterDescriptions)
     reporterDescriptions = [[defaultReporter]];
-  if (opts.attachments) {
-    if (!kAttachmentModes.includes(opts.attachments))
-      throw new Error(`Invalid --attachments value "${opts.attachments}", must be one of ${kAttachmentModes.map(name => `"${name}"`).join(', ')}.`);
-  }
-  const resolveAttachmentPaths = opts.attachments !== 'missing';
-  await createMergedReport(config, dir, reporterDescriptions!, resolveAttachmentPaths);
+  await createMergedReport(config, dir, reporterDescriptions!);
 }
 
 function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrides {

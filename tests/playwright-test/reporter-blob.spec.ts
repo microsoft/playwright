@@ -495,7 +495,7 @@ test('generate html with attachment urls', async ({ runInlineTest, mergeReports,
   const reportFiles = await fs.promises.readdir(reportDir);
   reportFiles.sort();
   expect(reportFiles).toEqual([expect.stringMatching(/report-.*.zip/), 'resources']);
-  const { exitCode } = await mergeReports(reportDir, { 'PW_TEST_HTML_REPORT_OPEN': 'never' }, { additionalArgs: ['--reporter', 'html', '--attachments', 'missing'] });
+  const { exitCode } = await mergeReports(reportDir, { 'PW_TEST_HTML_REPORT_OPEN': 'never' }, { additionalArgs: ['--reporter', 'html'] });
   expect(exitCode).toBe(0);
 
   const htmlReportDir = test.info().outputPath('playwright-report');
