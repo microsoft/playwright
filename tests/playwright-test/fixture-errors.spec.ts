@@ -477,7 +477,7 @@ test('should not report fixture teardown error twice', async ({ runInlineTest })
   expect(countTimes(result.output, 'Oh my error')).toBe(2);
 });
 
-test('should not report fixture teardown timeout twice', async ({ runInlineTest }) => {
+test('should report fixture teardown extend', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
       import { test as base, expect } from '@playwright/test';
@@ -494,8 +494,7 @@ test('should not report fixture teardown timeout twice', async ({ runInlineTest 
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
   expect(result.output).toContain('Test finished within timeout of 1000ms, but tearing down "fixture" ran out of time.');
-  expect(result.output).not.toContain('base.extend'); // Should not point to the location.
-  // TODO: this should be "not.toContain" actually.
+  expect(result.output).toContain('base.extend');
   expect(result.output).toContain('Worker teardown timeout of 1000ms exceeded while tearing down "fixture".');
 });
 
