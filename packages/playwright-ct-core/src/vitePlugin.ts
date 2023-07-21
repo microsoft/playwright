@@ -173,7 +173,8 @@ export function createPlugin(
     },
 
     end: async () => {
-      await new Promise(f => stoppableServer.stop(f));
+      if (stoppableServer)
+        await new Promise(f => stoppableServer.stop(f));
     },
   };
 }
