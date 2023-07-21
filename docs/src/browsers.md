@@ -780,6 +780,88 @@ $Env:PLAYWRIGHT_DOWNLOAD_HOST="192.0.2.1"
 $Env:PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST="203.0.113.3"
 pwsh bin/Debug/netX/playwright.ps1 install
 ```
+
+## Downloading silently
+
+By default, Playwright downloads browsers with a progress bar animation.
+
+Sometimes this can cause a lot of console output span in a CI/CD environment.
+
+Playwright can be configured to disable this animation using the PLAYWRIGHT_SHOW_DOWNLOAD_PROGRESS env variable.
+
+```bash tab=bash-bash lang=js
+# For Playwright Test
+PLAYWRIGHT_SHOW_DOWNLOAD_PROGRESS=0 npx playwright install
+
+# For Playwright Library
+PLAYWRIGHT_SHOW_DOWNLOAD_PROGRESS=0 npm install playwright
+```
+
+```batch tab=bash-batch lang=js
+# For Playwright Test
+set PLAYWRIGHT_SHOW_DOWNLOAD_PROGRESS=0
+npx playwright install
+
+# For Playwright Library
+set PLAYWRIGHT_SHOW_DOWNLOAD_PROGRESS=0
+npm install playwright
+```
+
+```powershell tab=bash-powershell lang=js
+# For Playwright Test
+$Env:PLAYWRIGHT_SHOW_DOWNLOAD_PROGRESS="0"
+npx playwright install
+
+# For Playwright Library
+$Env:PLAYWRIGHT_SHOW_DOWNLOAD_PROGRESS="0"
+npm install playwright
+```
+
+```bash tab=bash-bash lang=python
+pip install playwright
+PLAYWRIGHT_SHOW_DOWNLOAD_PROGRESS=0 playwright install
+```
+
+```batch tab=bash-batch lang=python
+set PLAYWRIGHT_SHOW_DOWNLOAD_PROGRESS=0
+pip install playwright
+playwright install
+```
+
+```powershell tab=bash-powershell lang=python
+$Env:PLAYWRIGHT_SHOW_DOWNLOAD_PROGRESS="0"
+pip install playwright
+playwright install
+```
+
+```bash tab=bash-bash lang=java
+PLAYWRIGHT_SHOW_DOWNLOAD_PROGRESS=0 mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install"
+```
+
+```batch tab=bash-batch lang=java
+set PLAYWRIGHT_SHOW_DOWNLOAD_PROGRESS=0
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install"
+```
+
+```powershell tab=bash-powershell lang=java
+$Env:PLAYWRIGHT_SHOW_DOWNLOAD_PROGRESS="0"
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install"
+```
+
+```bash tab=bash-bash lang=csharp
+PLAYWRIGHT_SHOW_DOWNLOAD_PROGRESS=0 pwsh bin/Debug/netX/playwright.ps1 install
+```
+
+```batch tab=bash-batch lang=csharp
+set PLAYWRIGHT_SHOW_DOWNLOAD_PROGRESS=0
+pwsh bin/Debug/netX/playwright.ps1 install
+```
+
+```powershell tab=bash-powershell lang=csharp
+$Env:PLAYWRIGHT_SHOW_DOWNLOAD_PROGRESS="0"
+pwsh bin/Debug/netX/playwright.ps1 install
+```
+
 ## Managing browser binaries
 
 Playwright downloads Chromium, WebKit and Firefox browsers into the OS-specific cache folders:
