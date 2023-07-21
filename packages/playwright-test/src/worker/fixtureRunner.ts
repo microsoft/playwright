@@ -156,8 +156,7 @@ class Fixture {
       // When we are waiting for the teardown for the second time,
       // most likely after the first time did timeout, annotate current fixture
       // for better error messages.
-      this._runnableDescription.phase = 'teardown';
-      await timeoutManager.runRunnable(this._runnableDescription, async () => {
+      await timeoutManager.runRunnable({ ...this._runnableDescription, phase: 'teardown' }, async () => {
         await this._teardownWithDepsComplete;
       });
       return;
@@ -179,8 +178,7 @@ class Fixture {
       }
       if (this._useFuncFinished) {
         debugTest(`teardown ${this.registration.name}`);
-        this._runnableDescription.phase = 'teardown';
-        await timeoutManager.runRunnable(this._runnableDescription, async () => {
+        await timeoutManager.runRunnable({ ...this._runnableDescription, phase: 'teardown' }, async () => {
           this._useFuncFinished!.resolve();
           await this._selfTeardownComplete;
         });

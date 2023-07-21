@@ -1484,7 +1484,9 @@ for (const useIntermediateMergeReport of [false, true] as const) {
             total += parseInt(text.substring(0, text.length - 2), 10);
           }
           const totalDuration = await page.getByTestId('overall-duration').textContent();
-          expect(totalDuration).toBe(`Total time: ${total}ms`);
+          const totalDurationValue = +totalDuration.match(/Total time: (\d+)ms/)[1];
+          expect(totalDurationValue).toBeGreaterThanOrEqual(total - 2);
+          expect(totalDurationValue).toBeLessThanOrEqual(total + 2);
         }
 
         const searchInput = page.locator('.subnav-search-input');

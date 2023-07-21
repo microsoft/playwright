@@ -72,12 +72,18 @@ export function stringifyStackFrames(frames: StackFrame[]): string[] {
   return stackLines;
 }
 
+const originalErrorSymbol = Symbol('originalError');
+
 export function serializeError(error: Error | any): TestInfoError {
-  if (error instanceof Error)
-    return filterStackTrace(error);
-  return {
+  const result = error instanceof Error ? filterStackTrace(error) : {
     value: util.inspect(error)
   };
+  (result as any)[originalErrorSymbol] = error;
+  return result;
+}
+
+export function isSameSerializedError(e1: TestInfoError, e2: TestInfoError) {
+  return (e1 as any)[originalErrorSymbol] === (e2 as any)[originalErrorSymbol];
 }
 
 export type Matcher = (value: string) => boolean;

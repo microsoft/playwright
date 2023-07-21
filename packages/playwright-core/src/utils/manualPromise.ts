@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import { rewriteErrorMessage } from './stackTrace';
-
 export class ManualPromise<T = void> extends Promise<T> {
   private _resolve!: (t: T) => void;
   private _reject!: (e: Error) => void;
@@ -58,16 +56,14 @@ export class ManualPromise<T = void> extends Promise<T> {
 
 export class ScopedRace {
   private _terminateError: Error | undefined;
-  private _terminatePromises = new Map<ManualPromise<Error>, Error>();
+  private _terminatePromises = new Set<ManualPromise<Error>>();
   private _isDone = false;
 
   scopeClosed(error: Error) {
     this._isDone = true;
     this._terminateError = error;
-    for (const [p, e] of this._terminatePromises) {
-      rewriteErrorMessage(e, error.message);
-      p.resolve(e);
-    }
+    for (const p of this._terminatePromises)
+      p.resolve(error);
   }
 
   isDone() {
@@ -90,8 +86,7 @@ export class ScopedRace {
     const terminatePromise = new ManualPromise<Error>();
     if (this._terminateError)
       terminatePromise.resolve(this._terminateError);
-    const error = new Error('');
-    this._terminatePromises.set(terminatePromise, error);
+    this._terminatePromises.add(terminatePromise);
     try {
       return await Promise.race([
         terminatePromise.then(e => safe ? defaultValue : Promise.reject(e)),

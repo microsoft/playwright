@@ -822,3 +822,22 @@ test('should cancel apiRequests if test will timeout', async ({ runInlineTest, s
   expect(result.output).toContain('apiRequestContext.get: Request context disposed.');
   expect(result.output).toContain('Test timeout of 1000ms exceeded.');
 });
+
+test('should report timeout error', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      test('timeout', async ({ page }) => {
+        await page.setContent('<div>Click me</div>');
+        await page.getByText('Missing').click();
+      });
+    `,
+  }, { workers: 1, timeout: 2000 });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(0);
+  expect(result.failed).toBe(1);
+  expect(result.output).toContain('Test timeout of 2000ms exceeded.');
+  expect(result.output).toContain('waiting for');
+  expect(result.output).toContain(`5 |         await page.getByText('Missing')`);
+});

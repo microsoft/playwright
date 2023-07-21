@@ -15,9 +15,10 @@
  */
 
 import { colors } from 'playwright-core/lib/utilsBundle';
-import { TimeoutRunner, TimeoutRunnerError } from 'playwright-core/lib/utils';
-import type { TestInfoError } from '../../types/test';
+import { ScopedRace, TimeoutRunnerError, monotonicTime } from 'playwright-core/lib/utils';
+import type { TestInfo, TestInfoError } from '../../types/test';
 import type { Location } from '../../types/testReporter';
+import { serializeError } from '../util';
 
 export type TimeSlot = {
   timeout: number;
@@ -33,92 +34,103 @@ export type RunnableDescription = {
 };
 
 export class TimeoutManager {
-  private _defaultSlot: TimeSlot;
   private _runnables: RunnableDescription[] = [];
-  private _timeoutRunner: TimeoutRunner;
+  private _mutableTimer: MutableTimer | undefined;
+  private _lastTimeStamp = 0;
+  private _testInfo: TestInfo | undefined;
 
-  constructor(timeout: number) {
-    this._defaultSlot = { timeout, elapsed: 0 };
-    this._runnables = [{ type: 'test', slot: this._defaultSlot }];
-    this._timeoutRunner = new TimeoutRunner(timeout);
+  constructor(testInfo?: TestInfo) {
+    this._testInfo = testInfo;
+    this._runnables = [];
   }
 
   interrupt() {
-    this._timeoutRunner.interrupt();
+    this._mutableTimer!.interrupt();
   }
 
-  async runRunnable<T>(runnable: RunnableDescription, cb: () => Promise<T>): Promise<T> {
-    let slot = this._currentSlot();
-    slot.elapsed = this._timeoutRunner.elapsed();
-    this._runnables.unshift(runnable);
-    slot = this._currentSlot();
-    this._timeoutRunner.updateTimeout(slot.timeout, slot.elapsed);
-
+  async runWithTimeout(type: RunnableDescription['type'], slot: { timeout: number, elapsed: number }, cb: () => Promise<any>): Promise<{ timeoutError?: TestInfoError, isReportedError?: boolean, remainingTime: number }> {
+    this._runnables = [];
+    this._mutableTimer = new MutableTimer();
     try {
-      return await cb();
-    } finally {
-      let slot = this._currentSlot();
-      slot.elapsed = this._timeoutRunner.elapsed();
-      this._runnables.splice(this._runnables.indexOf(runnable), 1);
-      slot = this._currentSlot();
-      this._timeoutRunner.updateTimeout(slot.timeout, slot.elapsed);
+      const remainingTime = await this.runRunnable({ type, slot }, cb);
+      return { remainingTime, timeoutError: undefined };
+    } catch (error) {
+      if (!(error instanceof TimeoutRunnerError))
+        throw error;
+      return { timeoutError: this._createTimeoutError(), remainingTime: 2000000 };
     }
   }
 
-  defaultSlotTimings() {
+  async runRunnable(runnable: RunnableDescription, cb: () => Promise<any>): Promise<number> {
+    const runnables = this._runnables;
+    const parentSlot = this._currentSlot();
+    runnables.unshift(runnable);
+    const childSlot = this._currentSlot()!;
+    this._transitionSlot(parentSlot, childSlot);
+    await this._mutableTimer!.race(cb().catch(e => {
+      // Report errors unconditionally, even if timeout won the race.
+      this._testInfo?.errors.push(serializeError(e));
+      throw e;
+    }));
+    runnables.splice(runnables.indexOf(runnable), 1);
+    this._transitionSlot(childSlot, parentSlot);
+    return Math.max(0, childSlot.timeout - childSlot.elapsed);
+  }
+
+  remainingSlotTime(now: number): number {
     const slot = this._currentSlot();
-    slot.elapsed = this._timeoutRunner.elapsed();
-    return this._defaultSlot;
+    if (!slot || !slot.timeout)
+      return 0;
+    return slot.timeout - slot.elapsed - (now - this._lastTimeStamp);
+  }
+
+  private _transitionSlot(from: TimeSlot | null, to: TimeSlot | null) {
+    if (from === to)
+      return;
+    const now = monotonicTime();
+    if (from && from.timeout !== 0)
+      from.elapsed += now - this._lastTimeStamp;
+    this._lastTimeStamp = now;
+    if (!to?.timeout)
+      this._mutableTimer?.resetTimer(0);
+    else if (to.timeout - to.elapsed > 0)
+      this._mutableTimer?.resetTimer(to.timeout - to.elapsed);
+    else
+      this._mutableTimer?.interrupt();
   }
 
   slow() {
     const slot = this._currentSlot();
+    if (!slot || !slot.timeout)
+      return;
     slot.timeout = slot.timeout * 3;
-    this._timeoutRunner.updateTimeout(slot.timeout);
-  }
-
-  async runWithTimeout(cb: () => Promise<any>): Promise<TestInfoError | undefined> {
-    try {
-      await this._timeoutRunner.run(cb);
-    } catch (error) {
-      if (!(error instanceof TimeoutRunnerError))
-        throw error;
-      return this._createTimeoutError();
-    }
+    this._mutableTimer?.resetTimer(this.remainingSlotTime(monotonicTime()));
   }
 
   setTimeout(timeout: number) {
     const slot = this._currentSlot();
-    if (!slot.timeout)
-      return; // Zero timeout means some debug mode - do not set a timeout.
+    if (!slot)
+      return;
     slot.timeout = timeout;
-    this._timeoutRunner.updateTimeout(timeout);
+    this._mutableTimer?.resetTimer(this.remainingSlotTime(monotonicTime()));
   }
 
   hasRunnableType(type: RunnableDescription['type']) {
     return this._runnables.some(r => r.type === type);
   }
 
-  private _runnable(): RunnableDescription {
-    return this._runnables[0]!;
-  }
-
-  currentSlotDeadline() {
-    return this._timeoutRunner.deadline();
-  }
-
-  private _currentSlot() {
+  private _currentSlot(): TimeSlot | null {
     for (const runnable of this._runnables) {
       if (runnable.slot)
         return runnable.slot;
     }
-    return this._defaultSlot;
+    return null;
   }
 
   private _createTimeoutError(): TestInfoError {
     let message = '';
-    const timeout = this._currentSlot().timeout;
-    const runnable = this._runnable();
+    const timeout = this._currentSlot()!.timeout;
+    const runnable = this._runnables[0]!;
     switch (runnable.type) {
       case 'test': {
         message = `Test timeout of ${timeout}ms exceeded.`;
@@ -166,5 +178,30 @@ export class TimeoutManager {
       // Include location for hooks, modifiers and fixtures to distinguish between them.
       stack: location ? message + `\n    at ${location.file}:${location.line}:${location.column}` : undefined
     };
+  }
+}
+
+class MutableTimer {
+  private _timerScope = new ScopedRace();
+  private _timer: NodeJS.Timer | undefined;
+
+  interrupt() {
+    if (this._timer)
+      clearTimeout(this._timer);
+    this._timerScope.scopeClosed(new TimeoutRunnerError());
+  }
+
+  resetTimer(timeout: number) {
+    if (this._timer)
+      clearTimeout(this._timer);
+    if (!timeout)
+      return;
+    this._timer = setTimeout(() => {
+      this._timerScope.scopeClosed(new TimeoutRunnerError());
+    }, timeout);
+  }
+
+  race<T>(promise: Promise<T>): Promise<T> {
+    return this._timerScope.race(promise);
   }
 }

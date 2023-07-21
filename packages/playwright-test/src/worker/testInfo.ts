@@ -21,9 +21,10 @@ import type { TestInfoError, TestInfo, TestStatus, FullProject, FullConfig } fro
 import type { AttachmentPayload, StepBeginPayload, StepEndPayload, WorkerInitParams } from '../common/ipc';
 import type { TestCase } from '../common/test';
 import { TimeoutManager } from './timeoutManager';
+import type { RunnableDescription } from './timeoutManager';
 import type { Annotation, FullConfigInternal, FullProjectInternal } from '../common/config';
 import type { Location } from '../../types/testReporter';
-import { getContainedPath, normalizeAndSaveAttachment, sanitizeForFilePath, serializeError, trimLongString } from '../util';
+import { getContainedPath, isSameSerializedError, normalizeAndSaveAttachment, sanitizeForFilePath, serializeError, trimLongString } from '../util';
 import type * as trace from '@trace/trace';
 
 export interface TestStepInternal {
@@ -61,6 +62,7 @@ export class TestInfoImpl implements TestInfo {
   _beforeHooksStep: TestStepInternal | undefined;
   _afterHooksStep: TestStepInternal | undefined;
   _onDidFinishTestFunction: (() => Promise<void>) | undefined;
+  private _timeout: number;
 
   // ------------ TestInfo fields ------------
   readonly testId: string;
@@ -100,7 +102,7 @@ export class TestInfoImpl implements TestInfo {
   }
 
   get timeout(): number {
-    return this._timeoutManager.defaultSlotTimings().timeout;
+    return this._timeout;
   }
 
   set timeout(timeout: number) {
@@ -108,9 +110,9 @@ export class TestInfoImpl implements TestInfo {
   }
 
   _deadlineForMatcher(timeout: number): { deadline: number, timeoutMessage: string } {
-    const startTime = monotonicTime();
-    const matcherDeadline = timeout ? startTime + timeout : MaxTime;
-    const testDeadline = this._timeoutManager.currentSlotDeadline() - 100;
+    const now = monotonicTime();
+    const matcherDeadline = timeout ? now + timeout : MaxTime;
+    const testDeadline = now + this._timeoutManager.remainingSlotTime(now) - 100;
     const matcherMessage = `Timeout ${timeout}ms exceeded while waiting on the predicate`;
     const testMessage = `Test timeout of ${this.timeout}ms exceeded`;
     return { deadline: Math.min(testDeadline, matcherDeadline), timeoutMessage: testDeadline < matcherDeadline ? testMessage : matcherMessage };
@@ -154,7 +156,8 @@ export class TestInfoImpl implements TestInfo {
     this.fn = test.fn;
     this.expectedStatus = test.expectedStatus;
 
-    this._timeoutManager = new TimeoutManager(this.project.timeout);
+    this._timeoutManager = new TimeoutManager(this);
+    this._timeout = test.timeout;
 
     this.outputDir = (() => {
       const relativeTestFilePath = path.relative(this.project.testDir, test._requireFile.replace(/\.(spec|test)\.(js|ts|mjs)$/, ''));
@@ -201,6 +204,7 @@ export class TestInfoImpl implements TestInfo {
     const description = modifierArgs[1];
     this.annotations.push({ type, description });
     if (type === 'slow') {
+      this._timeout *= 3;
       this._timeoutManager.slow();
     } else if (type === 'skip' || type === 'fixme') {
       this.expectedStatus = 'skipped';
@@ -211,10 +215,8 @@ export class TestInfoImpl implements TestInfo {
     }
   }
 
-  async _runWithTimeout(cb: () => Promise<any>): Promise<void> {
-    const timeoutError = await this._timeoutManager.runWithTimeout(cb);
-    // When interrupting, we arrive here with a timeoutError, but we should not
-    // consider it a timeout.
+  async _runWithTimeout(type: RunnableDescription['type'], slot: { timeout: number, elapsed: number }, cb: () => Promise<any>): Promise<number> {
+    const { timeoutError, remainingTime } = await this._timeoutManager.runWithTimeout(type,  slot, cb);
     if (!this._wasInterrupted && timeoutError && !this._didTimeout) {
       this._didTimeout = true;
       this.errors.push(timeoutError);
@@ -222,7 +224,8 @@ export class TestInfoImpl implements TestInfo {
       if (this.status === 'passed' || this.status === 'skipped')
         this.status = 'timedOut';
     }
-    this.duration = this._timeoutManager.defaultSlotTimings().elapsed | 0;
+    this.duration = slot.timeout - remainingTime;
+    return remainingTime;
   }
 
   async _runAndFailOnError(fn: () => Promise<void>, skips?: 'allowSkips'): Promise<TestInfoError | undefined> {
@@ -354,6 +357,11 @@ export class TestInfoImpl implements TestInfo {
       this._hasHardError = true;
     if (this.status === 'passed' || this.status === 'skipped')
       this.status = 'failed';
+    // The error could have been logged within the timeout race (in timeoutManager).
+    for (const e of this.errors) {
+      if (isSameSerializedError(e, error))
+        return;
+    }
     this.errors.push(error);
   }
 
@@ -462,6 +470,10 @@ export class TestInfoImpl implements TestInfo {
   }
 
   setTimeout(timeout: number) {
+    // Debug mode disables setTimeout method.
+    if (this.project.timeout === 0)
+      return;
+    this._timeout = timeout;
     this._timeoutManager.setTimeout(timeout);
   }
 }
