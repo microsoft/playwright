@@ -3,13 +3,17 @@ id: test-merge-report
 title: "Merging multiple reports"
 ---
 
+## Sharding tests
+
+TODO
+
 ## Introduction
 
 When running tests on multiple shards, each shard will get its own report with the results of the tests from only one shard. In many cases it's more convenient to see all test results from all shards in one report. That can be achieved by producing blob reports on the individual shards and combining them into a single report via playwright CLI as the post processing step. At the high level the process consists of the following steps:
 
 1. Get Playwright to produce `blob` report on every running shard.
-2. Copy all blob reports into a single local directory.
-3. Run `npx playwright merge-reports` on the blob reports data to generate combined HTML (or any other) report.
+1. Copy all blob reports into a single local directory.
+1. Run `npx playwright merge-reports` on the blob reports data to generate combined HTML (or any other) report.
 
 In the following sections we consider details of each step.
 
@@ -69,6 +73,7 @@ jobs:
       with:
         name: blob-report-${{ github.run_attempt }}
         path: blob-report
+        retention-days: 2
 ```
 
 With this configuration all blob reports for a given attempt will be stored in `blob-report-${{ github.run_attempt }}` artifact. Now we can add a [dependent job](https://docs.github.com/en/actions/using-jobs/using-jobs-in-a-workflow#defining-prerequisite-jobs) that will run after the shards to merge all blob reports into a single HTML:
@@ -201,16 +206,11 @@ jobs:
 
     - name: Merge reports
       run: |
-        npx playwright merge-reports --reporter html --attachments missing blob-report
+        npx playwright merge-reports --reporter html ./blob-report
 
     - name: Upload HTML report to Azure
       run: |
         REPORT_DIR='run-${{ github.event.workflow_run.id }}-${{ github.event.workflow_run.run_attempt }}'
         az storage blob upload-batch -s playwright-report -d "\$web/$REPORT_DIR" --connection-string "${{ secrets.AZURE_CONNECTION_STRING }}"
         echo "Report url: https://mspwblobreport.z1.web.core.windows.net/$REPORT_DIR/index.html"
-
-    - name: Upload blob report to Azure
-      run: |
-        REPORT_DIR='run-${{ github.event.workflow_run.id }}-${{ github.event.workflow_run.run_attempt }}'
-        az storage blob upload-batch -s blob-report -d "\$web/$REPORT_DIR" --connection-string "${{ secrets.AZURE_CONNECTION_STRING }}"
 ```
