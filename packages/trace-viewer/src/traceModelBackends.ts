@@ -28,11 +28,13 @@ export class ZipTraceModelBackend implements TraceModelBackend {
   private _entriesPromise: Promise<Map<string, zip.Entry>>;
   private _traceURL: string;
 
-  constructor(traceURL: string, progress: Progress) {
+  constructor(traceURL: string, blobOverride: Blob | undefined, progress: Progress) {
     this._traceURL = traceURL;
-    this._zipReader = new zipjs.ZipReader(
-        new zipjs.HttpReader(formatUrl(traceURL), { mode: 'cors', preventHeadRequest: true } as any),
-        { useWebWorkers: false }) as zip.ZipReader;
+    if (blobOverride)
+      this._zipReader = new zipjs.ZipReader(new zipjs.BlobReader(blobOverride), { useWebWorkers: false }) as zip.ZipReader;
+    else
+      this._zipReader = new zipjs.ZipReader(new zipjs.HttpReader(formatUrl(traceURL), { mode: 'cors', preventHeadRequest: true } as any), { useWebWorkers: false }) as zip.ZipReader;
+
     this._entriesPromise = this._zipReader.getEntries({ onprogress: progress }).then(entries => {
       const map = new Map<string, zip.Entry>();
       for (const entry of entries)
@@ -43,6 +45,13 @@ export class ZipTraceModelBackend implements TraceModelBackend {
 
   isLive() {
     return false;
+  }
+
+  async toPlaywrightReport(): Promise<PlaywrightReportModel | undefined> {
+    const entries = await this._entriesPromise;
+    if (!entries.has('index.html'))
+      return undefined;
+    return await PlaywrightReportModel.create(entries);
   }
 
   traceURL() {
@@ -99,6 +108,10 @@ export class FetchTraceModelBackend implements TraceModelBackend {
     return true;
   }
 
+  async toPlaywrightReport() {
+    return undefined;
+  }
+
   traceURL(): string {
     return this._traceURL;
   }
@@ -138,4 +151,81 @@ function formatUrl(trace: string) {
   if (url.startsWith('https://www.dropbox.com/'))
     url = 'https://dl.dropboxusercontent.com/' + url.substring('https://www.dropbox.com/'.length);
   return url;
+}
+
+export class PlaywrightReportModel {
+  private _assets = new Map<string, { blob: Blob, headers: Record<string, string> }>();
+  private _entries: Map<string, zip.Entry>;
+  private _dataFiles = new Map<string, Blob>();
+
+  private constructor(entries: Map<string, zip.Entry>) {
+    this._entries = entries;
+  }
+
+  static async create(entries: Map<string, zip.Entry>): Promise<PlaywrightReportModel> {
+    const model = new PlaywrightReportModel(entries);
+    await model._load();
+    return model;
+  }
+
+  public shouldServe(url: string) {
+    return this._assets.has(url);
+  }
+
+  public serve(url: string): Response {
+    const response = this._assets.get(url);
+    if (!response)
+      throw new Error('File not found ' + url);
+    return new Response(response.blob, {
+      headers: response.headers,
+    });
+  }
+
+  public dataFile(traceUrl: string | null): Blob | undefined {
+    if (!traceUrl)
+      return;
+    return this._dataFiles.get(traceUrl);
+  }
+
+  private async _load() {
+    this._assets.clear();
+    this._dataFiles.clear();
+    for (const [, entry] of this._entries) {
+      if (entry.directory)
+        continue;
+      // We are already a trace viewer, no need for the bundled one.
+      if (entry.filename.startsWith('trace/'))
+        continue;
+      const blob: Blob = await entry.getData!(new zipjs.BlobWriter());
+      if (entry.filename.startsWith('data/')) {
+        this._dataFiles.set(`${(self as any).registration.scope}report/${entry.filename}`, blob);
+      } else {
+        this._assets.set(`/report/${entry.filename}`, {
+          blob,
+          headers: {
+            'Content-Type': filenameToMimeType(entry.filename),
+          },
+        });
+      }
+    }
+  }
+}
+
+function filenameToMimeType(filename: string): string {
+  const filenameToMimeTypeMapping = new Map<string, string>([
+    ['html', 'text/html'],
+    ['js', 'application/javascript'],
+    ['css', 'text/css'],
+    ['png', 'image/png'],
+    ['svg', 'image/svg+xml'],
+    ['ttf', 'font/ttf'],
+    ['woff', 'font/woff'],
+    ['woff2', 'font/woff2'],
+    ['zip', 'application/zip'],
+  ]);
+
+  const extension = filename.split('.').pop() || '';
+  if (filenameToMimeTypeMapping.has(extension))
+    return filenameToMimeTypeMapping.get(extension)!;
+  return 'application/octet-stream';
 }

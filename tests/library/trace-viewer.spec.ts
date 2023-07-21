@@ -19,7 +19,7 @@ import { traceViewerFixtures } from '../config/traceViewerFixtures';
 import fs from 'fs';
 import path from 'path';
 import { expect, playwrightTest } from '../config/browserTest';
-import type { FrameLocator } from '@playwright/test';
+import type { FrameLocator, Page } from '@playwright/test';
 
 const test = playwrightTest.extend<TraceViewerFixtures>(traceViewerFixtures);
 
@@ -918,4 +918,38 @@ test('should prefer later resource request with the same method', async ({ page,
   await expect(frame1.locator('body')).toHaveCSS('background-color', 'rgb(123, 123, 123)');
   const frame2 = await traceViewer.snapshotFrame('locator.click');
   await expect(frame2.locator('body')).toHaveCSS('background-color', 'rgb(123, 123, 123)');
+});
+
+test.describe('HTML Report inside Trace viewer', () => {
+  async function assertHTMLReport(page: Page) {
+    const testTitles = page.locator('.test-file-title');
+    await expect(testTitles).toHaveText([
+      'New Todo › should allow me to add todo items',
+      'New Todo › should allow me to add todo items',
+      'New Todo › should allow me to add todo items',
+    ]);
+    await testTitles.first().click();
+    await expect(page.locator('.test-case-location')).toHaveText('integration.spec.ts:19');
+    await page.getByRole('img').click();
+    await expect(page.locator('.action-title')).toContainText(['expect.toHaveText']);
+  }
+  test('should work by file path', async ({ showTraceViewer, asset }) => {
+    const playwrightReportFile = asset('playwright-report.zip');
+    const { page } = await showTraceViewer([playwrightReportFile]);
+    await assertHTMLReport(page);
+  });
+  test('should work by dropping the file', async ({ showTraceViewer, asset }) => {
+    const playwrightReportFile = asset('playwright-report.zip');
+    const { page } = await showTraceViewer([]);
+    const waitForFileChooser = page.waitForEvent('filechooser');
+    await page.getByRole('button', { name: 'Select file(s)' }).click();
+    const fileChooser = await waitForFileChooser;
+    await fileChooser.setFiles(playwrightReportFile);
+    await assertHTMLReport(page);
+  });
+  test('should work by URL', async ({ showTraceViewer, server }) => {
+    server.setExtraHeaders('/playwright-report.zip', { 'Access-Control-Allow-Origin': '*' });
+    const { page } = await showTraceViewer([server.PREFIX + '/playwright-report.zip']);
+    await assertHTMLReport(page);
+  });
 });

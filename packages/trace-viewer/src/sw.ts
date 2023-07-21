@@ -19,6 +19,7 @@ import { splitProgress } from './progress';
 import { unwrapPopoutUrl } from './snapshotRenderer';
 import { SnapshotServer } from './snapshotServer';
 import { TraceModel } from './traceModel';
+import type { PlaywrightReportModel } from './traceModelBackends';
 import { FetchTraceModelBackend, ZipTraceModelBackend } from './traceModelBackends';
 
 // @ts-ignore
@@ -38,13 +39,16 @@ const loadedTraces = new Map<string, { traceModel: TraceModel, snapshotServer: S
 
 const clientIdToTraceUrls = new MultiMap<string, string>();
 
-async function loadTrace(traceUrl: string, traceFileName: string | null, clientId: string, progress: (done: number, total: number) => void): Promise<TraceModel> {
+async function loadTrace(traceUrl: string, traceFileName: string | null, clientId: string, progress: (done: number, total: number) => void): Promise<{ traceModel?: TraceModel, playwrightReportModel?: PlaywrightReportModel }> {
   clientIdToTraceUrls.set(clientId, traceUrl);
   const traceModel = new TraceModel();
   try {
     // Allow 10% to hop from sw to page.
     const [fetchProgress, unzipProgress] = splitProgress(progress, [0.5, 0.4, 0.1]);
-    const backend = traceUrl.endsWith('json') ? new FetchTraceModelBackend(traceUrl) : new ZipTraceModelBackend(traceUrl, fetchProgress);
+    const backend = traceUrl.endsWith('json') ? new FetchTraceModelBackend(traceUrl) : new ZipTraceModelBackend(traceUrl, lastPlaywrightReport?.dataFile(traceUrl), fetchProgress);
+    const playwrightReportModel = await backend.toPlaywrightReport();
+    if (playwrightReportModel)
+      return { playwrightReportModel };
     await traceModel.load(backend, unzipProgress);
   } catch (error: any) {
     // eslint-disable-next-line no-console
@@ -57,8 +61,10 @@ async function loadTrace(traceUrl: string, traceFileName: string | null, clientI
   }
   const snapshotServer = new SnapshotServer(traceModel.storage(), sha1 => traceModel.resourceForSha1(sha1));
   loadedTraces.set(traceUrl, { traceModel, snapshotServer });
-  return traceModel;
+  return { traceModel };
 }
+
+let lastPlaywrightReport: PlaywrightReportModel | undefined;
 
 // @ts-ignore
 async function doFetch(event: FetchEvent): Promise<Response> {
@@ -85,13 +91,22 @@ async function doFetch(event: FetchEvent): Promise<Response> {
 
     if (relativePath === '/contexts') {
       try {
-        const traceModel = await loadTrace(traceUrl, url.searchParams.get('traceFileName'), event.clientId, (done: number, total: number) => {
+        const { playwrightReportModel, traceModel } = await loadTrace(traceUrl, url.searchParams.get('traceFileName'), event.clientId, (done: number, total: number) => {
           client.postMessage({ method: 'progress', params: { done, total } });
         });
-        return new Response(JSON.stringify(traceModel!.contextEntries), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' }
-        });
+        if (playwrightReportModel) {
+          lastPlaywrightReport = playwrightReportModel;
+          return new Response(JSON.stringify({ redirectTo: `${new URL((self as any).registration.scope).pathname}report/index.html?from-trace-viewer=1` }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' }
+          });
+        }
+        if (traceModel) {
+          return new Response(JSON.stringify({ entries: traceModel!.contextEntries }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' }
+          });
+        }
       } catch (error: any) {
         return new Response(JSON.stringify({ error: error?.message }), {
           status: 500,
@@ -128,6 +143,9 @@ async function doFetch(event: FetchEvent): Promise<Response> {
       }
       return new Response(null, { status: 404 });
     }
+
+    if (lastPlaywrightReport && lastPlaywrightReport.shouldServe(relativePath))
+      return lastPlaywrightReport.serve(relativePath);
 
     // Fallback to network.
     return fetch(event.request);

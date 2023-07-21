@@ -76,7 +76,15 @@ export const AttachmentLink: React.FunctionComponent<{
 };
 
 export function generateTraceUrl(traces: TestAttachment[]) {
-  return `trace/index.html?${traces.map((a, i) => `trace=${new URL(a.path!, window.location.href)}`).join('&')}`;
+  const queryString = new URLSearchParams();
+  for (const trace of traces)
+    queryString.append('trace', new URL(trace.path!, window.location.href).toString());
+
+  // If served from a Trace Viewer, we re-use the trace viewer and not use the bundled one.
+  if (new URLSearchParams(window.location.search.slice(1)).has('from-trace-viewer'))
+    return `/trace/index.html?${queryString}`;
+
+  return `trace/index.html?${queryString}`;
 }
 
 const kMissingContentType = 'x-playwright/missing';

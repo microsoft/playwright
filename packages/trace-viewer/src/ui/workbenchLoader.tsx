@@ -125,7 +125,12 @@ export const WorkbenchLoader: React.FunctionComponent<{
             setProcessingErrorMessage((await response.json()).error);
             return;
           }
-          contextEntries.push(...(await response.json()));
+          const { redirectTo, entries } = await response.json();
+          if (redirectTo) {
+            window.location.href = redirectTo;
+            return;
+          }
+          contextEntries.push(...entries);
         }
         navigator.serviceWorker.removeEventListener('message', swListener);
         const model = new MultiTraceModel(contextEntries);
