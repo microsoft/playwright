@@ -92,8 +92,6 @@ jobs:
         node-version: 18
     - name: Install dependencies
       run: npm ci
-      env:
-        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
 
     - name: Download Blob Reports from Artifacts
       uses: actions/download-artifact@v3
@@ -192,11 +190,8 @@ jobs:
     - uses: actions/setup-node@v3
       with:
         node-version: 18
-
-    - run: npm ci
-      env:
-        DEBUG: pw:install
-        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+    - name: Install dependencies
+      run: npm ci
 
     - name: Download blob report artifact
       uses: ./.github/actions/download-artifact
