@@ -127,7 +127,7 @@ Afrer you enable [static website hosting](https://learn.microsoft.com/en-us/azur
 
 ### Uploading Pull Request reports
 
-The code in the previous section requires access to the repository secrets. When a workflow is triggered on a pull request from a forked repository, secrets are [not passed](https://docs.github.com/en/actions/security-guides/encrypted-secrets#using-encrypted-secrets-in-a-workflow) to the runner. To overcome that limitation you'll need to extract the upload logic into a separate workflow triggered by [workflow_run](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_run) event. The workflow started by the workflow_run event is able to access secrets, even if the previous workflow was not.
+The code in the previous section requires access to the repository secrets. When a workflow is triggered on a pull request from a forked repository, secrets are [not passed](https://docs.github.com/en/actions/security-guides/encrypted-secrets#using-encrypted-secrets-in-a-workflow) to the runner. To overcome that limitation you'll need to extract the upload logic into a separate workflow triggered by [workflow_run](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_run) event. The workflow started by the `workflow_run` event is able to access secrets, even if the previous workflow was not.
 
 The logic of downloading blob report from GitHub Actions Artifacts has to be updated too as the merge workflow can not access artifacts from the test workflow directly. You can use the following custom action for that:
 
