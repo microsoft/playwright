@@ -30,7 +30,7 @@ import { spawnAsync } from '../../utils/spawnAsync';
 import type { DependencyGroup } from './dependencies';
 import { transformCommandsForRoot, dockerVersion, readDockerVersionSync } from './dependencies';
 import { installDependenciesLinux, installDependenciesWindows, validateDependenciesLinux, validateDependenciesWindows } from './dependencies';
-import { downloadBrowserWithProgressBar, logPolitely } from './browserFetcher';
+import { downloadBrowser, logPolitely } from './browserFetcher';
 export { writeDockerVersion } from './dependencies';
 
 const PACKAGE_PATH = path.join(__dirname, '..', '..', '..');
@@ -848,9 +848,13 @@ export class Registry {
       : `${displayName} playwright build v${descriptor.revision}`;
 
     const downloadFileName = `playwright-download-${descriptor.name}-${hostPlatform}-${descriptor.revision}.zip`;
+
+    const downloadProgressBarEnv = getFromENV('PLAYWRIGHT_SHOW_DOWNLOAD_PROGRESS');
+    const downloadProgressBar = downloadProgressBarEnv ? downloadProgressBarEnv === "1" ? true : false : true;
+
     const downloadConnectionTimeoutEnv = getFromENV('PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT');
     const downloadConnectionTimeout = +(downloadConnectionTimeoutEnv || '0') || 30_000;
-    await downloadBrowserWithProgressBar(title, descriptor.dir, executablePath, downloadURLs, downloadFileName, downloadConnectionTimeout).catch(e => {
+    await downloadBrowser(title, descriptor.dir, executablePath, downloadURLs, downloadFileName, downloadConnectionTimeout, downloadProgressBar).catch(e => {
       throw new Error(`Failed to download ${title}, caused by\n${e.stack}`);
     });
   }
