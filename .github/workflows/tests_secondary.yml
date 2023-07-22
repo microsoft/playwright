@@ -178,12 +178,6 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - name: Upload blob report
-      if: always() && github.event_name == 'pull_request'
-      uses: ./.github/actions/upload-blob-report
-      with:
-        report_dir: test-results/blob-report
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   transport_linux:
     name: "Transport"
@@ -210,12 +204,6 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - name: Upload blob report
-      if: always() && github.event_name == 'pull_request'
-      uses: ./.github/actions/upload-blob-report
-      with:
-        report_dir: test-results/blob-report
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   tracing_linux:
     name: Tracing ${{ matrix.browser }} ${{ matrix.channel }}
@@ -275,12 +263,6 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - name: Upload blob report
-      if: always() && github.event_name == 'pull_request'
-      uses: ./.github/actions/upload-blob-report
-      with:
-        report_dir: test-results/blob-report
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   chrome_stable_win:
     name: "Chrome Stable (Win)"
@@ -303,12 +285,6 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - name: Upload blob report
-      if: always() && github.event_name == 'pull_request'
-      uses: ./.github/actions/upload-blob-report
-      with:
-        report_dir: test-results/blob-report
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   chrome_stable_mac:
     name: "Chrome Stable (Mac)"
@@ -330,12 +306,6 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - name: Upload blob report
-      if: always() && github.event_name == 'pull_request'
-      uses: ./.github/actions/upload-blob-report
-      with:
-        report_dir: test-results/blob-report
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   chromium_tot:
     name: Chromium TOT ${{ matrix.os }}
@@ -367,12 +337,6 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - name: Upload blob report
-      if: always() && github.event_name == 'pull_request'
-      uses: ./.github/actions/upload-blob-report
-      with:
-        report_dir: test-results/blob-report
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   chromium_tot_headed:
     name: Chromium TOT headed ${{ matrix.os }}
@@ -404,12 +368,6 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - name: Upload blob report
-      if: always() && github.event_name == 'pull_request'
-      uses: ./.github/actions/upload-blob-report
-      with:
-        report_dir: test-results/blob-report
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   firefox_beta_linux:
     name: "Firefox Beta (Linux)"
@@ -431,12 +389,6 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - name: Upload blob report
-      if: always() && github.event_name == 'pull_request'
-      uses: ./.github/actions/upload-blob-report
-      with:
-        report_dir: test-results/blob-report
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   firefox_beta_win:
     name: "Firefox Beta (Win)"
@@ -459,12 +411,6 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - name: Upload blob report
-      if: always() && github.event_name == 'pull_request'
-      uses: ./.github/actions/upload-blob-report
-      with:
-        report_dir: test-results/blob-report
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   firefox_beta_mac:
     name: "Firefox Beta (Mac)"
@@ -486,12 +432,6 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - name: Upload blob report
-      if: always() && github.event_name == 'pull_request'
-      uses: ./.github/actions/upload-blob-report
-      with:
-        report_dir: test-results/blob-report
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   edge_stable_mac:
     name: "Edge Stable (Mac)"
@@ -513,12 +453,6 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - name: Upload blob report
-      if: always() && github.event_name == 'pull_request'
-      uses: ./.github/actions/upload-blob-report
-      with:
-        report_dir: test-results/blob-report
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   edge_stable_win:
     name: "Edge Stable (Win)"
@@ -541,12 +475,6 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - name: Upload blob report
-      if: always() && github.event_name == 'pull_request'
-      uses: ./.github/actions/upload-blob-report
-      with:
-        report_dir: test-results/blob-report
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   edge_stable_linux:
     name: "Edge Stable (Linux)"
@@ -568,12 +496,6 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - name: Upload blob report
-      if: always() && github.event_name == 'pull_request'
-      uses: ./.github/actions/upload-blob-report
-      with:
-        report_dir: test-results/blob-report
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   edge_beta_mac:
     name: "Edge Beta (Mac)"
@@ -595,12 +517,6 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - name: Upload blob report
-      if: always() && github.event_name == 'pull_request'
-      uses: ./.github/actions/upload-blob-report
-      with:
-        report_dir: test-results/blob-report
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   edge_beta_win:
     name: "Edge Beta (Win)"
@@ -623,12 +539,6 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - name: Upload blob report
-      if: always() && github.event_name == 'pull_request'
-      uses: ./.github/actions/upload-blob-report
-      with:
-        report_dir: test-results/blob-report
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   edge_beta_linux:
     name: "Edge Beta (Linux)"
@@ -650,12 +560,6 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - name: Upload blob report
-      if: always() && github.event_name == 'pull_request'
-      uses: ./.github/actions/upload-blob-report
-      with:
-        report_dir: test-results/blob-report
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   edge_dev_mac:
     name: "Edge Dev (Mac)"
@@ -677,12 +581,6 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - name: Upload blob report
-      if: always() && github.event_name == 'pull_request'
-      uses: ./.github/actions/upload-blob-report
-      with:
-        report_dir: test-results/blob-report
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   edge_dev_win:
     name: "Edge Dev (Win)"
@@ -705,12 +603,6 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - name: Upload blob report
-      if: always() && github.event_name == 'pull_request'
-      uses: ./.github/actions/upload-blob-report
-      with:
-        report_dir: test-results/blob-report
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   edge_dev_linux:
     name: "Edge Dev (Linux)"
@@ -732,12 +624,6 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - name: Upload blob report
-      if: always() && github.event_name == 'pull_request'
-      uses: ./.github/actions/upload-blob-report
-      with:
-        report_dir: test-results/blob-report
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   chrome_beta_linux:
     name: "Chrome Beta (Linux)"
@@ -759,12 +645,6 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - name: Upload blob report
-      if: always() && github.event_name == 'pull_request'
-      uses: ./.github/actions/upload-blob-report
-      with:
-        report_dir: test-results/blob-report
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   chrome_beta_win:
     name: "Chrome Beta (Win)"
@@ -787,12 +667,6 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - name: Upload blob report
-      if: always() && github.event_name == 'pull_request'
-      uses: ./.github/actions/upload-blob-report
-      with:
-        report_dir: test-results/blob-report
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   chrome_beta_mac:
     name: "Chrome Beta (Mac)"
@@ -814,12 +688,6 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - name: Upload blob report
-      if: always() && github.event_name == 'pull_request'
-      uses: ./.github/actions/upload-blob-report
-      with:
-        report_dir: test-results/blob-report
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   build-playwright-driver:
     name: "build-playwright-driver"
@@ -856,9 +724,3 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - name: Upload blob report
-      if: always() && github.event_name == 'pull_request'
-      uses: ./.github/actions/upload-blob-report
-      with:
-        report_dir: test-results/blob-report
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
