@@ -850,7 +850,7 @@ export class Registry {
     const downloadFileName = `playwright-download-${descriptor.name}-${hostPlatform}-${descriptor.revision}.zip`;
 
     const downloadProgressBarEnv = getFromENV('PLAYWRIGHT_SHOW_DOWNLOAD_PROGRESS');
-    const downloadProgressBar = downloadProgressBarEnv ? downloadProgressBarEnv === "1" ? true : false : true;
+    const downloadProgressBar = downloadProgressBarEnv ? downloadProgressBarEnv === '1' ? true : false : true;
 
     const downloadConnectionTimeoutEnv = getFromENV('PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT');
     const downloadConnectionTimeout = +(downloadConnectionTimeoutEnv || '0') || 30_000;

@@ -146,7 +146,7 @@ async function main() {
   const log = (message: string) => process.send?.({ method: 'log', params: { message } });
   const [title, browserDirectory, url, zipPath, executablePath, downloadConnectionTimeout, downloadShowProgress] = process.argv.slice(2);
   await downloadFile(url, zipPath, {
-    progressCallback:downloadShowProgress === "true" ?  getDownloadProgress() : () => {},
+    progressCallback: downloadShowProgress === 'true' ?  getDownloadProgress() : () => {},
     userAgent: getUserAgent(),
     log,
     connectionTimeout: +downloadConnectionTimeout,
