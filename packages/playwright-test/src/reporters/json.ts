@@ -55,7 +55,7 @@ class JSONReporter extends EmptyReporter {
   }
 
   override async onEnd(result: FullResult) {
-    outputReport(this._serializeReport(), this.config, this._outputFile);
+    await outputReport(this._serializeReport(), this.config, this._outputFile);
   }
 
   private _serializeReport(): JSONReport {
@@ -222,13 +222,13 @@ class JSONReporter extends EmptyReporter {
   }
 }
 
-function outputReport(report: JSONReport, config: FullConfig, outputFile: string | undefined) {
+async function outputReport(report: JSONReport, config: FullConfig, outputFile: string | undefined) {
   const reportString = JSON.stringify(report, undefined, 2);
   if (outputFile) {
     assert(config.configFile || path.isAbsolute(outputFile), 'Expected fully resolved path if not using config file.');
     outputFile = config.configFile ? path.resolve(path.dirname(config.configFile), outputFile) : outputFile;
-    fs.mkdirSync(path.dirname(outputFile), { recursive: true });
-    fs.writeFileSync(outputFile, reportString);
+    await fs.promises.mkdir(path.dirname(outputFile), { recursive: true });
+    await fs.promises.writeFile(outputFile, reportString);
   } else {
     console.log(reportString);
   }
