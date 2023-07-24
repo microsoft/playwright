@@ -42,7 +42,9 @@ test('should close the browser when the node process closes', async ({ startRemo
   expect(await remoteServer.childExitCode()).toBe(isWindows ? 1 : 0);
 });
 
-test('should remove temp dir on process.exit', async ({ startRemoteServer, server }, testInfo) => {
+test('should remove temp dir on process.exit', async ({ startRemoteServer, server, platform }, testInfo) => {
+  test.skip(platform === 'win32', 'Removing user data dir synchronously is blocked on Windows');
+
   const file = testInfo.outputPath('exit.file');
   const remoteServer = await startRemoteServer('launchServer', { url: server.EMPTY_PAGE, exitOnFile: file });
   const tempDir = await remoteServer.out('tempDir');
