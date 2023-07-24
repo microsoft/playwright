@@ -20,7 +20,7 @@ import type { Command } from 'playwright-core/lib/utilsBundle';
 import fs from 'fs';
 import path from 'path';
 import { Runner } from './runner/runner';
-import { stopProfiling, startProfiling } from 'playwright-core/lib/utils';
+import { stopProfiling, startProfiling, gracefullyProcessExitDoNotHang } from 'playwright-core/lib/utils';
 import { experimentalLoaderOption, fileIsModule, serializeError } from './util';
 import { showHTMLReport } from './reporters/html';
 import { createMergedReport } from './reporters/merge';
@@ -44,7 +44,7 @@ function addTestCommand(program: Command) {
       await runTests(args, opts);
     } catch (e) {
       console.error(e);
-      process.exit(1);
+      gracefullyProcessExitDoNotHang(1);
     }
   });
   command.addHelpText('afterAll', `
@@ -68,7 +68,7 @@ function addListFilesCommand(program: Command) {
       await listTestFiles(opts);
     } catch (e) {
       console.error(e);
-      process.exit(1);
+      gracefullyProcessExitDoNotHang(1);
     }
   });
 }
@@ -96,7 +96,7 @@ function addMergeReportsCommand(program: Command) {
       await mergeReports(dir, options);
     } catch (e) {
       console.error(e);
-      process.exit(1);
+      gracefullyProcessExitDoNotHang(1);
     }
   });
   command.option('-c, --config <file>', `Configuration file. Can be used to specify additional configuration for the output report.`);
@@ -143,9 +143,8 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   else
     status = await runner.runAllTests();
   await stopProfiling('runner');
-  if (status === 'interrupted')
-    process.exit(130);
-  process.exit(status === 'passed' ? 0 : 1);
+  const exitCode = status === 'interrupted' ? 130 : (status === 'passed' ? 0 : 1);
+  gracefullyProcessExitDoNotHang(exitCode);
 }
 
 async function listTestFiles(opts: { [key: string]: any }) {
@@ -164,13 +163,13 @@ async function listTestFiles(opts: { [key: string]: any }) {
     const runner = new Runner(config);
     const report = await runner.listTestFiles(opts.project);
     stdoutWrite(JSON.stringify(report), () => {
-      process.exit(0);
+      gracefullyProcessExitDoNotHang(0);
     });
   } catch (e) {
     const error: TestError = serializeError(e);
     error.location = prepareErrorStack(e.stack).location;
     stdoutWrite(JSON.stringify({ error }), () => {
-      process.exit(0);
+      gracefullyProcessExitDoNotHang(0);
     });
   }
 }
@@ -288,7 +287,7 @@ function restartWithExperimentalTsEsm(configFile: string | null): boolean {
 
   innerProcess.on('close', (code: number | null) => {
     if (code !== 0 && code !== null)
-      process.exit(code);
+      gracefullyProcessExitDoNotHang(code);
   });
   return true;
 }

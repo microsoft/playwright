@@ -18,7 +18,7 @@
 
 /* eslint-disable no-console */
 
-import { getPackageManager } from '../utils';
+import { getPackageManager, gracefullyProcessExitDoNotHang } from '../utils';
 import program from './program';
 
 function printPlaywrightTestError(command: string) {
@@ -53,7 +53,7 @@ function printPlaywrightTestError(command: string) {
   command.description('Run tests with Playwright Test. Available in @playwright/test package.');
   command.action(async () => {
     printPlaywrightTestError('test');
-    process.exit(1);
+    gracefullyProcessExitDoNotHang(1);
   });
 }
 
@@ -62,7 +62,7 @@ function printPlaywrightTestError(command: string) {
   command.description('Show Playwright Test HTML report. Available in @playwright/test package.');
   command.action(async () => {
     printPlaywrightTestError('show-report');
-    process.exit(1);
+    gracefullyProcessExitDoNotHang(1);
   });
 }
 

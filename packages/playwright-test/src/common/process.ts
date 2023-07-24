@@ -91,10 +91,12 @@ async function gracefullyCloseAndExit() {
     return;
   closed = true;
   // Force exit after 30 seconds.
+  // eslint-disable-next-line no-restricted-properties
   setTimeout(() => process.exit(0), 30000);
   // Meanwhile, try to gracefully shutdown.
   await processRunner.gracefullyClose().catch(() => {});
   await stopProfiling(processName).catch(() => {});
+  // eslint-disable-next-line no-restricted-properties
   process.exit(0);
 }
 

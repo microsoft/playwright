@@ -56,6 +56,17 @@ export async function gracefullyCloseAll() {
   await Promise.all(Array.from(gracefullyCloseSet).map(gracefullyClose => gracefullyClose().catch(e => {})));
 }
 
+export function gracefullyProcessExitDoNotHang(code: number) {
+  // Force exit after 30 seconds.
+  // eslint-disable-next-line no-restricted-properties
+  setTimeout(() => process.exit(code), 30000);
+  // Meanwhile, try to gracefully close all browsers.
+  gracefullyCloseAll().then(() => {
+    // eslint-disable-next-line no-restricted-properties
+    process.exit(code);
+  });
+}
+
 function exitHandler() {
   for (const kill of killSet)
     kill();
@@ -65,10 +76,13 @@ let sigintHandlerCalled = false;
 function sigintHandler() {
   const exitWithCode130 = () => {
     // Give tests a chance to see that launched process did exit and dispatch any async calls.
-    if (isUnderTest())
+    if (isUnderTest()) {
+      // eslint-disable-next-line no-restricted-properties
       setTimeout(() => process.exit(130), 1000);
-    else
+    } else {
+      // eslint-disable-next-line no-restricted-properties
       process.exit(130);
+    }
   };
 
   if (sigintHandlerCalled) {

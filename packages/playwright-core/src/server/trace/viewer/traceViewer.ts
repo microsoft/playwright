@@ -18,7 +18,7 @@ import path from 'path';
 import fs from 'fs';
 import { HttpServer } from '../../../utils/httpServer';
 import { findChromiumChannel } from '../../registry';
-import { createGuid, gracefullyCloseAll, isUnderTest } from '../../../utils';
+import { createGuid, gracefullyProcessExitDoNotHang, isUnderTest } from '../../../utils';
 import { installAppIcon, syncLocalStorageWithSettings } from '../../chromium/crApp';
 import { serverSideCallMetadata } from '../../instrumentation';
 import { createPlaywright } from '../../playwright';
@@ -54,7 +54,7 @@ async function startTraceViewerServer(traceUrls: string[], options?: OpenTraceVi
     if (!traceUrl.startsWith('http://') && !traceUrl.startsWith('https://') && !fs.existsSync(traceFile) && !fs.existsSync(traceFile + '.trace')) {
       // eslint-disable-next-line no-console
       console.error(`Trace file ${traceUrl} does not exist!`);
-      process.exit(1);
+      gracefullyProcessExitDoNotHang(1);
     }
   }
 
@@ -192,7 +192,7 @@ class StdinServer implements Transport {
       else
         this._loadTrace(url);
     });
-    process.stdin.on('close', () => this._selfDestruct());
+    process.stdin.on('close', () => gracefullyProcessExitDoNotHang(0));
   }
 
   async dispatch(method: string, params: any) {
@@ -203,7 +203,7 @@ class StdinServer implements Transport {
   }
 
   onclose() {
-    this._selfDestruct();
+    gracefullyProcessExitDoNotHang(0);
   }
 
   sendEvent?: (method: string, params: any) => void;
@@ -220,15 +220,6 @@ class StdinServer implements Transport {
     this._pollTimer = setTimeout(() => {
       this._pollLoadTrace(url);
     }, 500);
-  }
-
-  private _selfDestruct() {
-    // Force exit after 30 seconds.
-    setTimeout(() => process.exit(0), 30000);
-    // Meanwhile, try to gracefully close all browsers.
-    gracefullyCloseAll().then(() => {
-      process.exit(0);
-    });
   }
 }
 

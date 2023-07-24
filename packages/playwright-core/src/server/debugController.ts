@@ -15,7 +15,7 @@
  */
 
 import type { Mode, Source } from '@recorder/recorderTypes';
-import { gracefullyCloseAll } from '../utils/processLauncher';
+import { gracefullyProcessExitDoNotHang } from '../utils/processLauncher';
 import type { Browser } from './browser';
 import type { BrowserContext } from './browserContext';
 import { createInstrumentation, SdkObject, serverSideCallMetadata } from './instrumentation';
@@ -138,7 +138,7 @@ export class DebugController extends SdkObject {
       return;
     const heartBeat = () => {
       if (!this._playwright.allPages().length)
-        selfDestruct();
+        gracefullyProcessExitDoNotHang(0);
       else
         this._autoCloseTimer = setTimeout(heartBeat, 5000);
     };
@@ -168,7 +168,7 @@ export class DebugController extends SdkObject {
   }
 
   async kill() {
-    selfDestruct();
+    gracefullyProcessExitDoNotHang(0);
   }
 
   async closeAllBrowsers() {
@@ -216,15 +216,6 @@ export class DebugController extends SdkObject {
         await browser.close();
     }
   }
-}
-
-function selfDestruct() {
-  // Force exit after 30 seconds.
-  setTimeout(() => process.exit(0), 30000);
-  // Meanwhile, try to gracefully close all browsers.
-  gracefullyCloseAll().then(() => {
-    process.exit(0);
-  });
 }
 
 class InspectingRecorderApp extends EmptyRecorderApp {
