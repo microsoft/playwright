@@ -24,7 +24,7 @@ import { urlMatches } from '../utils/network';
 import { TimeoutSettings } from '../common/timeoutSettings';
 import type * as channels from '@protocol/channels';
 import { parseError, serializeError } from '../protocol/serializers';
-import { assert, headersObjectToArray, isObject, isRegExp, isString, ScopedRace, urlMatchesEqual } from '../utils';
+import { assert, headersObjectToArray, isObject, isRegExp, isString, LongStandingScope, urlMatchesEqual } from '../utils';
 import { mkdirIfNeeded } from '../utils/fileUtils';
 import { Accessibility } from './accessibility';
 import { Artifact } from './artifact';
@@ -78,7 +78,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   private _frames = new Set<Frame>();
   _workers = new Set<Worker>();
   private _closed = false;
-  readonly _closedOrCrashedRace = new ScopedRace();
+  readonly _closedOrCrashedScope = new LongStandingScope();
   private _viewportSize: Size | null;
   private _routes: RouteHandler[] = [];
 
@@ -141,8 +141,8 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
 
     this.coverage = new Coverage(this._channel);
 
-    this.once(Events.Page.Close, () => this._closedOrCrashedRace.scopeClosed(new Error(kBrowserOrContextClosedError)));
-    this.once(Events.Page.Crash, () => this._closedOrCrashedRace.scopeClosed(new Error(kBrowserOrContextClosedError)));
+    this.once(Events.Page.Close, () => this._closedOrCrashedScope.close(kBrowserOrContextClosedError));
+    this.once(Events.Page.Crash, () => this._closedOrCrashedScope.close(kBrowserOrContextClosedError));
 
     this._setEventToSubscriptionMapping(new Map<string, channels.PageUpdateSubscriptionParams['event']>([
       [Events.Page.Console, 'console'],
@@ -686,7 +686,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     this._browserContext.setDefaultNavigationTimeout(0);
     this._browserContext.setDefaultTimeout(0);
     this._instrumentation?.onWillPause();
-    await this._closedOrCrashedRace.safeRace(this.context()._channel.pause());
+    await this._closedOrCrashedScope.safeRace(this.context()._channel.pause());
     this._browserContext.setDefaultNavigationTimeout(defaultNavigationTimeout);
     this._browserContext.setDefaultTimeout(defaultTimeout);
   }

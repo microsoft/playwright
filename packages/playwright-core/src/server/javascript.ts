@@ -19,7 +19,7 @@ import * as utilityScriptSource from '../generated/utilityScriptSource';
 import { serializeAsCallArgument } from './isomorphic/utilityScriptSerializers';
 import type { UtilityScript } from './injected/utilityScript';
 import { SdkObject } from './instrumentation';
-import { ScopedRace } from '../utils/manualPromise';
+import { LongStandingScope } from '../utils/manualPromise';
 
 export type ObjectId = string;
 export type RemoteObject = {
@@ -63,7 +63,7 @@ export interface ExecutionContextDelegate {
 export class ExecutionContext extends SdkObject {
   private _delegate: ExecutionContextDelegate;
   private _utilityScriptPromise: Promise<JSHandle> | undefined;
-  private _contextDestroyedRace = new ScopedRace();
+  private _contextDestroyedScope = new LongStandingScope();
   readonly worldNameForTest: string;
 
   constructor(parent: SdkObject, delegate: ExecutionContextDelegate, worldNameForTest: string) {
@@ -72,12 +72,12 @@ export class ExecutionContext extends SdkObject {
     this._delegate = delegate;
   }
 
-  contextDestroyed(error: Error) {
-    this._contextDestroyedRace.scopeClosed(error);
+  contextDestroyed(reason: string) {
+    this._contextDestroyedScope.close(reason);
   }
 
   async _raceAgainstContextDestroyed<T>(promise: Promise<T>): Promise<T> {
-    return this._contextDestroyedRace.race(promise);
+    return this._contextDestroyedScope.race(promise);
   }
 
   rawEvaluateJSON(expression: string): Promise<any> {
