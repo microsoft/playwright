@@ -33,6 +33,7 @@ addopts = --headed --browser firefox
 - `--tracing` Whether to record a [trace](./trace-viewer.md) for each test. `on`, `off`, or `retain-on-failure` (default: `off`).
 - `--video` Whether to record video for each test. `on`, `off`, or `retain-on-failure` (default: `off`).
 - `--screenshot` Whether to automatically capture a screenshot after each test. `on`, `off`, or `only-on-failure` (default: `off`).
+- `--full-page-screenshot` Whether to take a full page screenshot on failure. By default, only the viewport is captured. Requires `--screenshot` to be enabled (default: `off`).
 
 ## Fixtures
 
@@ -63,6 +64,17 @@ def test_my_app_is_working(fixture_name):
 
 - `browser_type_launch_args`: Override launch arguments for [`method: BrowserType.launch`]. It should return a Dict.
 - `browser_context_args`: Override the options for [`method: Browser.newContext`]. It should return a Dict.
+
+Its also possible to override the context options ([`method: Browser.newContext`]) for a single test by using the `browser_context_args` marker:
+
+```python
+import pytest
+
+@pytest.mark.browser_context_args(timezone_id="Europe/Berlin", locale="en-GB")
+def test_browser_context_args(page):
+    assert page.evaluate("window.navigator.userAgent") == "Europe/Berlin"
+    assert page.evaluate("window.navigator.languages") == ["de-DE"]
+```
 
 ## Parallelism: Running Multiple Tests at Once
 
