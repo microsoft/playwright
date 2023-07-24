@@ -125,7 +125,7 @@ async function run() {
     writeAssumeNoop(devicesDescriptorsSourceFile, JSON.stringify(devicesDescriptors, null, 2), dirtyFiles);
   }
 
-  // Validate links
+  // Validate links/code snippet langs
   {
     const langs = ['js', 'java', 'python', 'csharp'];
     const documentationRoot = path.join(PROJECT_DIR, 'docs', 'src');
@@ -174,6 +174,34 @@ async function run() {
           // Validate links.
           {
             md.visitAll(rootNode, node => {
+              {
+                if (node.type === 'code') {
+                  const allowedCodeLangs = new Set([
+                    'csharp',
+                    'java',
+                    'js',
+                    'ts',
+                    'python',
+                    'py',
+                    'java',
+                    'powershell',
+                    'batch',
+                    'ini',
+                    'txt',
+                    'html',
+                    'xml',
+                    'yml',
+                    'yaml',
+                    'json',
+                    'groovy',
+                    'html',
+                    'bash',
+                    'sh',
+                  ]);
+                  if (!allowedCodeLangs.has(node.codeLang.split(' ')[0]))
+                    throw new Error(`${path.relative(PROJECT_DIR, filePath)} contains code block with invalid code block language ${node.codeLang}`);
+                }
+              }
               if (!node.text)
                 return;
               for (const [, mdLinkName, mdLink] of node.text.matchAll(/\[([\w\s\d]+)\]\((.*?)\)/g)) {
