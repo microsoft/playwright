@@ -91,12 +91,14 @@ it('should work with glob', async () => {
   expect(globToRegex('http://localhost:3000/signin-oidc*').test('http://localhost:3000/signin-oidc/foo')).toBeFalsy();
   expect(globToRegex('http://localhost:3000/signin-oidc*').test('http://localhost:3000/signin-oidcnice')).toBeTruthy();
 
+  expect(globToRegex('**/three-columns/settings.html?**id=[a-z]**').test('http://mydomain:8080/blah/blah/three-columns/settings.html?id=settings-e3c58efe-02e9-44b0-97ac-dd138100cf7c&blah')).toBeTruthy();
+
   expect(globToRegex('\\?')).toEqual(/^\?$/);
   expect(globToRegex('\\')).toEqual(/^\\$/);
   expect(globToRegex('\\\\')).toEqual(/^\\$/);
   expect(globToRegex('\\[')).toEqual(/^\[$/);
-  expect(globToRegex('[')).toEqual(/^\[$/);
-  expect(globToRegex('$^+.\\*()|\\?\\{\\}[]')).toEqual(/^\$\^\+\.\*\(\)\|\?\{\}\[\]$/);
+  expect(globToRegex('[a-z]')).toEqual(/^[a-z]$/);
+  expect(globToRegex('$^+.\\*()|\\?\\{\\}\\[\\]')).toEqual(/^\$\^\+\.\*\(\)\|\?\{\}\[\]$/);
 });
 
 it('should intercept network activity from worker', async function({ page, server, isAndroid, browserName, browserMajorVersion }) {
