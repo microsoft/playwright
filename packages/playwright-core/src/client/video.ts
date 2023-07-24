@@ -27,7 +27,7 @@ export class Video implements api.Video {
 
   constructor(page: Page, connection: Connection) {
     this._isRemote = connection.isRemote();
-    this._artifact = page._closedOrCrashedRace.safeRace(this._artifactReadyPromise);
+    this._artifact = page._closedOrCrashedScope.safeRace(this._artifactReadyPromise);
   }
 
   _artifactReady(artifact: Artifact) {

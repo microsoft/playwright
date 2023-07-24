@@ -23,7 +23,7 @@ import type { Headers, RemoteAddr, SecurityDetails, WaitForEventOptions } from '
 import fs from 'fs';
 import { mime } from '../utilsBundle';
 import { assert, isString, headersObjectToArray, isRegExp } from '../utils';
-import { ManualPromise, ScopedRace } from '../utils/manualPromise';
+import { ManualPromise, LongStandingScope } from '../utils/manualPromise';
 import { Events } from './events';
 import type { Page } from './page';
 import { Waiter } from './waiter';
@@ -270,8 +270,8 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
     return this._fallbackOverrides;
   }
 
-  _targetClosedRace(): ScopedRace {
-    return this.serviceWorker()?._closedRace || this.frame()._page?._closedOrCrashedRace || new ScopedRace();
+  _targetClosedScope(): LongStandingScope {
+    return this.serviceWorker()?._closedScope || this.frame()._page?._closedOrCrashedScope || new LongStandingScope();
   }
 }
 
@@ -294,7 +294,7 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
     // When page closes or crashes, we catch any potential rejects from this Route.
     // Note that page could be missing when routing popup's initial request that
     // does not have a Page initialized just yet.
-    return this.request()._targetClosedRace().safeRace(promise);
+    return this.request()._targetClosedScope().safeRace(promise);
   }
 
   _startHandling(): Promise<boolean> {
@@ -522,7 +522,7 @@ export class Response extends ChannelOwner<channels.ResponseChannel> implements 
   }
 
   async finished(): Promise<null> {
-    return this.request()._targetClosedRace().race(this._finishedPromise);
+    return this.request()._targetClosedScope().race(this._finishedPromise);
   }
 
   async body(): Promise<Buffer> {

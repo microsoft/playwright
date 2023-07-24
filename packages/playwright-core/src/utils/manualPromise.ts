@@ -56,25 +56,33 @@ export class ManualPromise<T = void> extends Promise<T> {
   }
 }
 
-export class ScopedRace {
+export class LongStandingScope {
   private _terminateError: Error | undefined;
+  private _terminateErrorMessage: string | undefined;
   private _terminatePromises = new Map<ManualPromise<Error>, Error>();
-  private _isDone = false;
+  private _isClosed = false;
 
-  scopeClosed(error: Error) {
-    this._isDone = true;
+  reject(error: Error) {
+    this._isClosed = true;
     this._terminateError = error;
+    for (const p of this._terminatePromises.keys())
+      p.resolve(error);
+  }
+
+  close(errorMessage: string) {
+    this._isClosed = true;
+    this._terminateErrorMessage = errorMessage;
     for (const [p, e] of this._terminatePromises) {
-      rewriteErrorMessage(e, error.message);
+      rewriteErrorMessage(e, errorMessage);
       p.resolve(e);
     }
   }
 
-  isDone() {
-    return this._isDone;
+  isClosed() {
+    return this._isClosed;
   }
 
-  static async raceMultiple<T>(scopes: ScopedRace[], promise: Promise<T>): Promise<T> {
+  static async raceMultiple<T>(scopes: LongStandingScope[], promise: Promise<T>): Promise<T> {
     return Promise.race(scopes.map(s => s.race(promise)));
   }
 
@@ -90,8 +98,9 @@ export class ScopedRace {
     const terminatePromise = new ManualPromise<Error>();
     if (this._terminateError)
       terminatePromise.resolve(this._terminateError);
-    const error = new Error('');
-    this._terminatePromises.set(terminatePromise, error);
+    if (this._terminateErrorMessage)
+      terminatePromise.resolve(new Error(this._terminateErrorMessage));
+    this._terminatePromises.set(terminatePromise, new Error(''));
     try {
       return await Promise.race([
         terminatePromise.then(e => safe ? defaultValue : Promise.reject(e)),

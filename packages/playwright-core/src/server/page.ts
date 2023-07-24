@@ -31,7 +31,7 @@ import * as accessibility from './accessibility';
 import { FileChooser } from './fileChooser';
 import type { Progress } from './progress';
 import { ProgressController } from './progress';
-import { ScopedRace, assert, isError } from '../utils';
+import { LongStandingScope, assert, isError } from '../utils';
 import { ManualPromise } from '../utils/manualPromise';
 import { debugLogger } from '../common/debugLogger';
 import type { ImageComparatorOptions } from '../utils/comparators';
@@ -142,8 +142,8 @@ export class Page extends SdkObject {
   private _disconnected = false;
   private _initialized = false;
   private _eventsToEmitAfterInitialized: { event: string | symbol, args: any[] }[] = [];
-  readonly _disconnectedRace = new ScopedRace();
-  readonly _crashedRace = new ScopedRace();
+  readonly _disconnectedScope = new LongStandingScope();
+  readonly _crashedScope = new LongStandingScope();
   readonly _browserContext: BrowserContext;
   readonly keyboard: input.Keyboard;
   readonly mouse: input.Mouse;
@@ -285,7 +285,7 @@ export class Page extends SdkObject {
     this._frameManager.dispose();
     this._frameThrottler.dispose();
     this.emit(Page.Events.Crash);
-    this._crashedRace.scopeClosed(new Error('Page crashed'));
+    this._crashedScope.close('Page crashed');
     this.instrumentation.onPageClose(this);
   }
 
@@ -294,7 +294,7 @@ export class Page extends SdkObject {
     this._frameThrottler.dispose();
     assert(!this._disconnected, 'Page disconnected twice');
     this._disconnected = true;
-    this._disconnectedRace.scopeClosed(new Error('Page closed'));
+    this._disconnectedScope.close('Page closed');
   }
 
   async _onFileChooserOpened(handle: dom.ElementHandle) {
@@ -632,7 +632,7 @@ export class Page extends SdkObject {
   }
 
   isClosedOrClosingOrCrashed() {
-    return this._closedState !== 'open' || this._crashedRace.isDone();
+    return this._closedState !== 'open' || this._crashedScope.isClosed();
   }
 
   _addWorker(workerId: string, worker: Worker) {
@@ -737,7 +737,7 @@ export class Worker extends SdkObject {
 
   didClose() {
     if (this._existingExecutionContext)
-      this._existingExecutionContext.contextDestroyed(new Error('Worker was closed'));
+      this._existingExecutionContext.contextDestroyed('Worker was closed');
     this.emit(Worker.Events.Close, this);
   }
 
