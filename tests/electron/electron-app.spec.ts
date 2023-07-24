@@ -223,13 +223,13 @@ test('should return app name / version from manifest', async ({ launchElectronAp
 });
 
 test('should set keyboard layout on electron app', async ({ launchElectronApp, server }) => {
-  const electronApp = await launchElectronApp('electron-window-app.js', [], { keyboardLayout: 'el-GR' });
+  const electronApp = await launchElectronApp('electron-window-app.js', [], { keyboardLayout: 'fr' });
   const page = await electronApp.firstWindow();
   await page.goto(server.PREFIX + '/input/keyboard.html');
-  await page.keyboard.press('α');
+  await page.keyboard.press('q');
   expect(await page.evaluate('getResult()')).toBe(
-      ['Keydown: α KeyA 65 []',
-        'Keypress: α KeyA 945 945 []',
-        'Keyup: α KeyA 65 []'].join('\n'));
+      ['Keydown: q KeyA 81 []',
+        'Keypress: q KeyA 113 113 []',
+        'Keyup: q KeyA 81 []'].join('\n'));
   await electronApp.close();
 });

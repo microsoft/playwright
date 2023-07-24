@@ -18,7 +18,7 @@
 
 import type { KeyboardLayout } from '../types';
 
-// KLID 00000816 - Portuguese keyboard
+// KLID 00000816 - Portuguese (Portugal)
 const keyboardLayout: KeyboardLayout = {
   Escape: { key: 'Escape', keyCode: 27 },
   F1: { key: 'F1', keyCode: 112 },
@@ -59,7 +59,7 @@ const keyboardLayout: KeyboardLayout = {
   KeyO: { key: 'o', keyCode: 79, shiftKey: 'O' },
   KeyP: { key: 'p', keyCode: 80, shiftKey: 'P' },
   BracketLeft: { key: '+', keyCode: 187, shiftKey: '*' },
-  BracketRight: { key: '´', keyCode: 186, shiftKey: '`' },
+  BracketRight: { key: '´', keyCode: 186, shiftKey: '`', deadKeyMappings: { 'a': 'á', 'e': 'é', 'i': 'í', 'o': 'ó', 'u': 'ú', 'y': 'ý', 'A': 'Á', 'E': 'É', 'I': 'Í', 'O': 'Ó', 'U': 'Ú', 'Y': 'Ý', ' ': '´' }, shiftDeadKeyMappings: { 'a': 'à', 'e': 'è', 'i': 'ì', 'o': 'ò', 'u': 'ù', 'A': 'À', 'E': 'È', 'I': 'Ì', 'O': 'Ò', 'U': 'Ù', ' ': '`' } },
   Enter: { key: 'Enter', keyCode: 13, text: '\r' },
   CapsLock: { key: 'CapsLock', keyCode: 20 },
   KeyA: { key: 'a', keyCode: 65, shiftKey: 'A' },
@@ -73,7 +73,7 @@ const keyboardLayout: KeyboardLayout = {
   KeyL: { key: 'l', keyCode: 76, shiftKey: 'L' },
   Semicolon: { key: 'ç', keyCode: 192, shiftKey: 'Ç' },
   Quote: { key: 'º', keyCode: 222, shiftKey: 'ª' },
-  Backslash: { key: '~', keyCode: 191, shiftKey: '^' },
+  Backslash: { key: '~', keyCode: 191, shiftKey: '^', deadKeyMappings: { 'a': 'ã', 'o': 'õ', 'n': 'ñ', 'A': 'Ã', 'O': 'Õ', 'N': 'Ñ', ' ': '~' }, shiftDeadKeyMappings: { 'a': 'â', 'e': 'ê', 'i': 'î', 'o': 'ô', 'u': 'û', 'A': 'Â', 'E': 'Ê', 'I': 'Î', 'O': 'Ô', 'U': 'Û', ' ': '^' } },
   ShiftLeft: { key: 'Shift', keyCode: 160, keyCodeWithoutLocation: 16, location: 1 },
   IntlBackslash: { key: '<', keyCode: 226, shiftKey: '>' },
   KeyZ: { key: 'z', keyCode: 90, shiftKey: 'Z' },

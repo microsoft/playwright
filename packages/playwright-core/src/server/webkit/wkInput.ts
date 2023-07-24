@@ -70,6 +70,8 @@ export class RawKeyboardImpl implements input.RawKeyboard {
     let commands = macEditingCommands[shortcut];
     if (isString(commands))
       commands = [commands];
+    if (key === 'Dead')
+      text = '';
     await this._pageProxySession.send('Input.dispatchKeyEvent', {
       type: 'keyDown',
       modifiers: toModifiersMask(modifiers),

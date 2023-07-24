@@ -22,6 +22,8 @@ export type KeyDefinition = {
   shiftKeyCode?: number;
   text?: string;
   location?: number;
+  deadKeyMappings?: Record<string, string>;
+  shiftDeadKeyMappings?: Record<string, string>;
 };
 
 export type KeyboardLayout =  Record<string, KeyDefinition>;

@@ -17,37 +17,37 @@
 import { browserTest as it, expect } from '../config/browserTest';
 
 it('should set keyboard layout on Browser.newContext @smoke', async ({ browser, server }) => {
-  const context = await browser.newContext({ keyboardLayout: 'el-GR' });
+  const context = await browser.newContext({ keyboardLayout: 'fr' });
   const page = await context.newPage();
   await page.goto(server.PREFIX + '/input/keyboard.html');
-  await page.keyboard.press('α');
+  await page.keyboard.press('q');
   expect(await page.evaluate('getResult()')).toBe(
-      ['Keydown: α KeyA 65 []',
-        'Keypress: α KeyA 945 945 []',
-        'Keyup: α KeyA 65 []'].join('\n'));
+      ['Keydown: q KeyA 81 []',
+        'Keypress: q KeyA 113 113 []',
+        'Keyup: q KeyA 81 []'].join('\n'));
   await context.close();
 });
 
 it('should set keyboard layout on Browser.newPage @smoke', async ({ browser, server }) => {
-  const page = await browser.newPage({ keyboardLayout: 'el-GR' });
+  const page = await browser.newPage({ keyboardLayout: 'fr' });
   await page.goto(server.PREFIX + '/input/keyboard.html');
-  await page.keyboard.press('α');
+  await page.keyboard.press('q');
   expect(await page.evaluate('getResult()')).toBe(
-      ['Keydown: α KeyA 65 []',
-        'Keypress: α KeyA 945 945 []',
-        'Keyup: α KeyA 65 []'].join('\n'));
+      ['Keydown: q KeyA 81 []',
+        'Keypress: q KeyA 113 113 []',
+        'Keyup: q KeyA 81 []'].join('\n'));
   await page.close();
 });
 
 it('should set keyboard layout on BrowserType.launchPersistentContext @smoke', async ({ browserType, server, createUserDataDir }) => {
   const userDataDir = await createUserDataDir();
-  const context = await browserType.launchPersistentContext(userDataDir, { keyboardLayout: 'el-GR' });
+  const context = await browserType.launchPersistentContext(userDataDir, { keyboardLayout: 'fr' });
   const page = await context.newPage();
   await page.goto(server.PREFIX + '/input/keyboard.html');
-  await page.keyboard.press('α');
+  await page.keyboard.press('q');
   expect(await page.evaluate('getResult()')).toBe(
-      ['Keydown: α KeyA 65 []',
-        'Keypress: α KeyA 945 945 []',
-        'Keyup: α KeyA 65 []'].join('\n'));
+      ['Keydown: q KeyA 81 []',
+        'Keypress: q KeyA 113 113 []',
+        'Keyup: q KeyA 81 []'].join('\n'));
   await context.close();
 });

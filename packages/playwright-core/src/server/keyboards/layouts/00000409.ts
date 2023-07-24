@@ -18,7 +18,7 @@
 
 import type { KeyboardLayout } from '../types';
 
-// KLID 00000409 - US keyboard
+// KLID 00000409 - US English
 const keyboardLayout: KeyboardLayout = {
   Escape: { key: 'Escape', keyCode: 27 },
   F1: { key: 'F1', keyCode: 112 },

@@ -24,18 +24,34 @@ export const defaultKlid = '00000409';
 export const defaultKeyboardLayout: KeyboardLayout = defaultKeyboardLayoutObject;
 
 export const localeMapping = new Map<string, string>([
-  ['us', '00000409'], // US keyboard
-  ['en_us', '00000409'], // US keyboard
-  ['es', '0000040A'], // Spanish keyboard
-  ['es_es', '0000040A'], // Spanish keyboard
-  ['br', '00000416'], // Portuguese (Brazil ABNT) keyboard
-  ['pt_br', '00000416'], // Portuguese (Brazil ABNT) keyboard
-  ['latam', '0000080A'], // Latin American keyboard
-  ['es_mx', '0000080A'], // Latin American keyboard
-  ['pt', '00000816'], // Portuguese keyboard
-  ['pt_pt', '00000816'], // Portuguese keyboard
-  ['el', '00000408'], // Greek keyboard
-  ['el_gr', '00000408'], // Greek keyboard
+  ['us', '00000409'], // US English
+  ['en_us', '00000409'], // US English
+  ['gb', '00000809'], // British
+  ['en_gb', '00000809'], // British
+  ['dk', '00000406'], // Danish
+  ['da_dk', '00000406'], // Danish
+  ['fr', '0000040C'], // French
+  ['fr_fr', '0000040C'], // French
+  ['de', '00000407'], // German
+  ['de_de', '00000407'], // German
+  ['it', '00000410'], // Italian
+  ['it_it', '00000410'], // Italian
+  ['pt', '00000816'], // Portuguese (Portugal)
+  ['pt_pt', '00000816'], // Portuguese (Portugal)
+  ['br', '00000416'], // Portuguese (Brazil)
+  ['pt_br', '00000416'], // Portuguese (Brazil)
+  ['ru', '00000419'], // Russian
+  ['ru_ru', '00000419'], // Russian
+  ['ua', '00020422'], // Ukrainian
+  ['uk_ua', '00020422'], // Ukrainian
+  ['es', '0000040A'], // Spanish & Catalan (Spain)
+  ['es_es', '0000040A'], // Spanish & Catalan (Spain)
+  ['ca_es', '0000040A'], // Spanish & Catalan (Spain)
+  ['latam', '0000080A'], // Spanish (Latin America)
+  ['ch', '00000807'], // German (Switzerland)
+  ['de_ch', '00000807'], // German (Switzerland)
+  ['fr_ch', '0000100C'], // French and Italian (Switzerland)
+  ['it_ch', '0000100C'], // French and Italian (Switzerland)
 ]);
 
 export const keypadLocation = 3;

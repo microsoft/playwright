@@ -206,24 +206,35 @@ async function generate(klid) {
 
   /**
    * scancode to keys
-   *
-   * @type {Object.<string, { key: string, shiftKey: string }>}
+   * @typedef {{ accent: string, results: Object.<string, string> }} DeadKey
+   * @type {Object.<string, { key: string, shiftKey: string, deadKeyMappings?: Object.<string, string>, shiftDeadKeyMappings?: Object.<string, string> }>}
    */
   const sc2keys = Object.fromEntries(sc2vkJson.KeyboardLayout.PhysicalKeys[0].PK
       .map(({ Result, $: { SC } }) => {
         if (!Result) return;
 
-        let key, shiftKey;
+        let key, shiftKey, deadKeyMappings, shiftDeadKeyMappings;
         for (const { $, DeadKeyTable } of Result) {
           const { Text, With } = $ ?? {};
           if (With && With !== 'VK_SHIFT') continue;
 
-          const text = Text ?? DeadKeyTable?.[0].$.Accent;
+          let text = Text;
+          let results;
+          if (!text && DeadKeyTable?.[0]) {
+            const { $: { Accent }, Result } = DeadKeyTable[0];
+            text = Accent;
+            results = Object.fromEntries(Result.map(({ $: { Text, With } }) => ([With, Text])));
+          };
           const isShift = With === 'VK_SHIFT';
-          if (!isShift) key = text;
-          if (isShift) shiftKey = text;
+          if (!isShift) {
+            key = text;
+            deadKeyMappings = results;
+          } else {
+            shiftKey = text;
+            shiftDeadKeyMappings = results;
+          }
         }
-        return [SC.toUpperCase(), { key, shiftKey }];
+        return [SC.toUpperCase(), { key, shiftKey, deadKeyMappings, shiftDeadKeyMappings }];
       }).filter(Boolean));
 
   const kdbtablesJson = parseXML(kdbtables);
@@ -244,14 +255,14 @@ async function generate(klid) {
   for (const [keyname, def] of Object.entries(keyboardLayoutGenerator)) {
     if (typeof def === 'number') {
       const sc = def.toString(16).toUpperCase().padStart(2, '0');
-      const { key, shiftKey } = sc2keys[sc] ?? {};
+      const { key, shiftKey, deadKeyMappings, shiftDeadKeyMappings } = sc2keys[sc] ?? {};
 
       if (key === shiftKey === undefined) continue;
 
       // def is the scancode as number
       const keyCode = sc2vkCode[def];
 
-      layout[keyname] = { key, keyCode, shiftKey: keyname === 'Space' && key === shiftKey ? undefined : shiftKey };
+      layout[keyname] = { key, keyCode, shiftKey: keyname === 'Space' && key === shiftKey ? undefined : shiftKey, deadKeyMappings, shiftDeadKeyMappings };
     } else {
       layout[keyname] = def;
     }
@@ -266,23 +277,25 @@ function fixQuotes(str) {
   return strBody?.replace(/'/g, `\\'`).replace(/\\"/g, '"');
 }
 
+/** @param {Object.<string, string>} mappings */
+function stringifyDeadKeyMappings(mappings) {
+  const resultsProps = Object.entries(mappings).map(([k, v]) => `'${fixQuotes(k)}': '${fixQuotes(v)}'`);
+  return `{ ${resultsProps.join(', ')} }`;
+}
+
 /** @param {KeyDefinition} def */
 function stringifyKeyDefinition(def) {
-  const escaped = {
-    ...def,
-    key: fixQuotes(def.key),
-    shiftKey: fixQuotes(def.shiftKey),
-    text: fixQuotes(def.text),
-  };
   /** @type {string[]} */
   const propStrs = [];
-  if (escaped.key !== undefined) propStrs.push(`key: '${escaped.key}'`);
-  if (escaped.keyCode !== undefined) propStrs.push(`keyCode: ${escaped.keyCode}`);
-  if (escaped.keyCodeWithoutLocation !== undefined) propStrs.push(`keyCodeWithoutLocation: ${escaped.keyCodeWithoutLocation}`);
-  if (escaped.shiftKey !== undefined) propStrs.push(`shiftKey: '${escaped.shiftKey}'`);
-  if (escaped.shiftKeyCode !== undefined) propStrs.push(`shiftKeyCode: ${escaped.shiftKeyCode}`);
-  if (escaped.text !== undefined) propStrs.push(`text: '${escaped.text}'`);
-  if (escaped.location !== undefined) propStrs.push(`location: ${escaped.location}`);
+  if (def.key !== undefined) propStrs.push(`key: '${fixQuotes(def.key)}'`);
+  if (def.keyCode !== undefined) propStrs.push(`keyCode: ${def.keyCode}`);
+  if (def.keyCodeWithoutLocation !== undefined) propStrs.push(`keyCodeWithoutLocation: ${def.keyCodeWithoutLocation}`);
+  if (def.shiftKey !== undefined) propStrs.push(`shiftKey: '${fixQuotes(def.shiftKey)}'`);
+  if (def.shiftKeyCode !== undefined) propStrs.push(`shiftKeyCode: ${def.shiftKeyCode}`);
+  if (def.text !== undefined) propStrs.push(`text: '${fixQuotes(def.text)}'`);
+  if (def.location !== undefined) propStrs.push(`location: ${def.location}`);
+  if (def.deadKeyMappings !== undefined) propStrs.push(`deadKeyMappings: ${stringifyDeadKeyMappings(def.deadKeyMappings)}`);
+  if (def.shiftDeadKeyMappings !== undefined) propStrs.push(`shiftDeadKeyMappings: ${stringifyDeadKeyMappings(def.shiftDeadKeyMappings)}`);
 
   return `{ ${propStrs.join(', ')} }`;
 }

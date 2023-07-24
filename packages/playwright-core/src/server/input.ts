@@ -30,7 +30,12 @@ type KeyDescription = {
   code: string,
   location: number,
   shifted?: KeyDescription;
+  deadKeyMappings?: Map<string, string>;
 };
+
+// either the key description or a sequence of keys for accented keys
+// e.g. in portuguese, 'à' will be ['Shift+BracketRight', 'a']
+type KeyboardLayoutClosure = Map<string, KeyDescription | string[]>;
 
 const kModifiers: types.KeyboardModifier[] = ['Alt', 'Control', 'Meta', 'Shift'];
 
@@ -45,7 +50,8 @@ export class Keyboard {
   private _pressedKeys = new Set<string>();
   private _raw: RawKeyboard;
   private _page: Page;
-  private _keyboardLayout: Map<string, KeyDescription>;
+  private _keyboardLayout: KeyboardLayoutClosure;
+  private _deadKeyMappings?: Map<string, string>;
 
   constructor(raw: RawKeyboard, page: Page) {
     this._raw = raw;
@@ -59,24 +65,33 @@ export class Keyboard {
 
   async down(key: string) {
     const description = this._keyDescriptionForString(key);
+    if (description.key !== 'Shift') this._deadKeyMappings = undefined;
     const autoRepeat = this._pressedKeys.has(description.code);
     this._pressedKeys.add(description.code);
     if (kModifiers.includes(description.key as types.KeyboardModifier))
       this._pressedModifiers.add(description.key as types.KeyboardModifier);
-    const text = description.text;
-    await this._raw.keydown(this._pressedModifiers, description.code, description.keyCode, description.keyCodeWithoutLocation, description.key, description.location, autoRepeat, text);
+    const descKey = description.deadKeyMappings ? 'Dead' : description.key;
+    await this._raw.keydown(this._pressedModifiers, description.code, description.keyCode, description.keyCodeWithoutLocation, descKey, description.location, autoRepeat, description.text);
   }
 
   private _keyDescriptionForString(keyString: string): KeyDescription {
     let description = this._keyboardLayout.get(keyString);
     assert(description, `Unknown key: "${keyString}"`);
+    assert(!Array.isArray(description), `Accented key not supported: "${keyString}"`);
+
     const shift = this._pressedModifiers.has('Shift');
     description = shift && description.shifted ? description.shifted : description;
 
     // if any modifiers besides shift are pressed, no text should be sent
     if (this._pressedModifiers.size > 1 || (!this._pressedModifiers.has('Shift') && this._pressedModifiers.size === 1))
       return { ...description, text: '' };
-    return description;
+
+    if (!this._deadKeyMappings || description.key === 'Shift') return description;
+
+    // handle deadkeys / accented keys
+    const deadKeyText = this._deadKeyMappings.get(description.text);
+    assert(deadKeyText, `Unknown accented key: "${description.text}"`);
+    return { ...description, text: deadKeyText, key: deadKeyText };
   }
 
   async up(key: string) {
@@ -84,7 +99,9 @@ export class Keyboard {
     if (kModifiers.includes(description.key as types.KeyboardModifier))
       this._pressedModifiers.delete(description.key as types.KeyboardModifier);
     this._pressedKeys.delete(description.code);
-    await this._raw.keyup(this._pressedModifiers, description.code, description.keyCode, description.keyCodeWithoutLocation, description.key, description.location);
+    const descKey = description.deadKeyMappings ? 'Dead' : description.key;
+    await this._raw.keyup(this._pressedModifiers, description.code, description.keyCode, description.keyCodeWithoutLocation, descKey, description.location);
+    if (description.key !== 'Shift') this._deadKeyMappings = description.deadKeyMappings;
   }
 
   async insertText(text: string) {
@@ -94,8 +111,14 @@ export class Keyboard {
   async type(text: string, options?: { delay?: number }) {
     const delay = (options && options.delay) || undefined;
     for (const char of text) {
-      if (this._keyboardLayout.has(char)) {
-        await this.press(char, { delay });
+      const descOrKeySequence = this._keyboardLayout.get(char);
+      if (descOrKeySequence) {
+        if (Array.isArray(descOrKeySequence)) {
+          for (const key of descOrKeySequence)
+            await this.press(key, { delay });
+        } else {
+          await this.press(char, { delay });
+        }
       } else {
         if (delay)
           await new Promise(f => setTimeout(f, delay));
@@ -249,17 +272,17 @@ const aliases = new Map<string, string[]>([
 ]);
 
 const defaultKeyboard = _buildLayoutClosure(defaultKeyboardLayout);
-const cache = new Map<string, Map<string, KeyDescription>>(
+const cache = new Map<string, KeyboardLayoutClosure>(
     // initialized with the default keyboard layout
     [[defaultKlid, defaultKeyboard]]
 );
 
-function getByLocale(locale?: string): Map<string, KeyDescription> {
+function getByLocale(locale?: string): KeyboardLayoutClosure {
   if (!locale) return defaultKeyboard;
 
   const normalizedLocale = normalizeLocale(locale);
   const klid = localeMapping.get(normalizedLocale);
-  if (!klid) throw new Error(`Keyboard layout name '${klid}' not found`);
+  if (!klid) throw new Error(`Keyboard layout name "${locale}" not found`);
 
   const cached = cache.get(klid);
   if (cached) return cached;
@@ -277,8 +300,8 @@ function normalizeLocale(locale: string) {
   return locale.replace(/-/g, '_').toLowerCase();
 }
 
-function _buildLayoutClosure(layout: KeyboardLayout): Map<string, KeyDescription> {
-  const result = new Map<string, KeyDescription>();
+function _buildLayoutClosure(layout: KeyboardLayout): KeyboardLayoutClosure {
+  const result = new Map<string, KeyDescription | string[]>();
   for (const code in layout) {
     const definition = layout[code];
     const description: KeyDescription = {
@@ -288,6 +311,7 @@ function _buildLayoutClosure(layout: KeyboardLayout): Map<string, KeyDescription
       code,
       text: definition.text || '',
       location: definition.location || 0,
+      deadKeyMappings: definition.key && definition.deadKeyMappings ? new Map(Object.entries(definition.deadKeyMappings)) : undefined,
     };
     if (definition.key?.length === 1)
       description.text = description.key;
@@ -301,6 +325,8 @@ function _buildLayoutClosure(layout: KeyboardLayout): Map<string, KeyDescription
       shiftedDescription.text = definition.shiftKey;
       if (definition.shiftKeyCode)
         shiftedDescription.keyCode = definition.shiftKeyCode;
+      if (definition.shiftDeadKeyMappings)
+        shiftedDescription.deadKeyMappings = new Map(Object.entries(definition.shiftDeadKeyMappings));
     }
 
     // Map from code: Digit3 -> { ... descrption, shifted }
@@ -320,9 +346,24 @@ function _buildLayoutClosure(layout: KeyboardLayout): Map<string, KeyDescription
     if (description.key.length === 1)
       result.set(description.key, description);
 
-    // Map from shiftKey, no shifted
-    if (shiftedDescription)
+    // Map from accented keys
+    if (definition.deadKeyMappings) {
+      for (const [k, v] of Object.entries(definition.deadKeyMappings))
+        // if there's a dedicated accented key, we don't want to replace them
+        if (!result.has(v)) result.set(v, [code, k]);
+    }
+
+    if (shiftedDescription) {
+      // Map from shiftKey, no shifted
       result.set(shiftedDescription.key, { ...shiftedDescription, shifted: undefined });
+
+      // Map from shifted accented keys
+      if (definition.shiftDeadKeyMappings) {
+        for (const [k, v] of Object.entries(definition.shiftDeadKeyMappings))
+          // if there's a dedicated accented key, we don't want to replace them
+          if (!result.has(v)) result.set(v, [`Shift+${code}`, k]);
+      }
+    }
   }
   return result;
 }

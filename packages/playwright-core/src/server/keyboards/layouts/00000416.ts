@@ -18,7 +18,7 @@
 
 import type { KeyboardLayout } from '../types';
 
-// KLID 00000416 - Portuguese (Brazil ABNT) keyboard
+// KLID 00000416 - Portuguese (Brazil)
 const keyboardLayout: KeyboardLayout = {
   Escape: { key: 'Escape', keyCode: 27 },
   F1: { key: 'F1', keyCode: 112 },
@@ -39,7 +39,7 @@ const keyboardLayout: KeyboardLayout = {
   Digit3: { key: '3', keyCode: 51, shiftKey: '#' },
   Digit4: { key: '4', keyCode: 52, shiftKey: '$' },
   Digit5: { key: '5', keyCode: 53, shiftKey: '%' },
-  Digit6: { key: '6', keyCode: 54, shiftKey: '¨' },
+  Digit6: { key: '6', keyCode: 54, shiftKey: '¨', shiftDeadKeyMappings: { 'a': 'ä', 'e': 'ë', 'i': 'ï', 'o': 'ö', 'u': 'ü', 'y': 'ÿ', 'A': 'Ä', 'E': 'Ë', 'I': 'Ï', 'O': 'Ö', 'U': 'Ü', ' ': '¨' } },
   Digit7: { key: '7', keyCode: 55, shiftKey: '&' },
   Digit8: { key: '8', keyCode: 56, shiftKey: '*' },
   Digit9: { key: '9', keyCode: 57, shiftKey: '(' },
@@ -58,7 +58,7 @@ const keyboardLayout: KeyboardLayout = {
   KeyI: { key: 'i', keyCode: 73, shiftKey: 'I' },
   KeyO: { key: 'o', keyCode: 79, shiftKey: 'O' },
   KeyP: { key: 'p', keyCode: 80, shiftKey: 'P' },
-  BracketLeft: { key: '´', keyCode: 219, shiftKey: '`' },
+  BracketLeft: { key: '´', keyCode: 219, shiftKey: '`', deadKeyMappings: { 'a': 'á', 'e': 'é', 'i': 'í', 'o': 'ó', 'u': 'ú', 'y': 'ý', 'A': 'Á', 'E': 'É', 'I': 'Í', 'O': 'Ó', 'U': 'Ú', 'Y': 'Ý', ' ': '´' }, shiftDeadKeyMappings: { 'a': 'à', 'e': 'è', 'i': 'ì', 'o': 'ò', 'u': 'ù', 'A': 'À', 'E': 'È', 'I': 'Ì', 'O': 'Ò', 'U': 'Ù', ' ': '`' } },
   BracketRight: { key: '[', keyCode: 221, shiftKey: '{' },
   Enter: { key: 'Enter', keyCode: 13, text: '\r' },
   CapsLock: { key: 'CapsLock', keyCode: 20 },
@@ -72,7 +72,7 @@ const keyboardLayout: KeyboardLayout = {
   KeyK: { key: 'k', keyCode: 75, shiftKey: 'K' },
   KeyL: { key: 'l', keyCode: 76, shiftKey: 'L' },
   Semicolon: { key: 'ç', keyCode: 186, shiftKey: 'Ç' },
-  Quote: { key: '~', keyCode: 222, shiftKey: '^' },
+  Quote: { key: '~', keyCode: 222, shiftKey: '^', deadKeyMappings: { 'a': 'ã', 'o': 'õ', 'n': 'ñ', 'A': 'Ã', 'O': 'Õ', 'N': 'Ñ', ' ': '~' }, shiftDeadKeyMappings: { 'a': 'â', 'e': 'ê', 'i': 'î', 'o': 'ô', 'u': 'û', 'A': 'Â', 'E': 'Ê', 'I': 'Î', 'O': 'Ô', 'U': 'Û', ' ': '^' } },
   Backslash: { key: ']', keyCode: 220, shiftKey: '}' },
   ShiftLeft: { key: 'Shift', keyCode: 160, keyCodeWithoutLocation: 16, location: 1 },
   IntlBackslash: { key: '\\', keyCode: 226, shiftKey: '|' },

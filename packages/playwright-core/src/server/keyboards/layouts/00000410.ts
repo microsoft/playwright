@@ -18,7 +18,7 @@
 
 import type { KeyboardLayout } from '../types';
 
-// KLID 0000040A - Spanish & Catalan (Spain)
+// KLID 00000410 - Italian
 const keyboardLayout: KeyboardLayout = {
   Escape: { key: 'Escape', keyCode: 27 },
   F1: { key: 'F1', keyCode: 112 },
@@ -33,10 +33,10 @@ const keyboardLayout: KeyboardLayout = {
   F10: { key: 'F10', keyCode: 121 },
   F11: { key: 'F11', keyCode: 122 },
   F12: { key: 'F12', keyCode: 123 },
-  Backquote: { key: 'º', keyCode: 220, shiftKey: 'ª' },
+  Backquote: { key: '\\', keyCode: 220, shiftKey: '|' },
   Digit1: { key: '1', keyCode: 49, shiftKey: '!' },
   Digit2: { key: '2', keyCode: 50, shiftKey: '"' },
-  Digit3: { key: '3', keyCode: 51, shiftKey: '·' },
+  Digit3: { key: '3', keyCode: 51, shiftKey: '£' },
   Digit4: { key: '4', keyCode: 52, shiftKey: '$' },
   Digit5: { key: '5', keyCode: 53, shiftKey: '%' },
   Digit6: { key: '6', keyCode: 54, shiftKey: '&' },
@@ -45,7 +45,7 @@ const keyboardLayout: KeyboardLayout = {
   Digit9: { key: '9', keyCode: 57, shiftKey: ')' },
   Digit0: { key: '0', keyCode: 48, shiftKey: '=' },
   Minus: { key: '\'', keyCode: 219, shiftKey: '?' },
-  Equal: { key: '¡', keyCode: 221, shiftKey: '¿' },
+  Equal: { key: 'ì', keyCode: 221, shiftKey: '^' },
   Backspace: { key: 'Backspace', keyCode: 8 },
   Tab: { key: 'Tab', keyCode: 9 },
   KeyQ: { key: 'q', keyCode: 81, shiftKey: 'Q' },
@@ -58,7 +58,7 @@ const keyboardLayout: KeyboardLayout = {
   KeyI: { key: 'i', keyCode: 73, shiftKey: 'I' },
   KeyO: { key: 'o', keyCode: 79, shiftKey: 'O' },
   KeyP: { key: 'p', keyCode: 80, shiftKey: 'P' },
-  BracketLeft: { key: '`', keyCode: 186, shiftKey: '^', deadKeyMappings: { 'a': 'à', 'e': 'è', 'i': 'ì', 'o': 'ò', 'u': 'ù', 'A': 'À', 'E': 'È', 'I': 'Ì', 'O': 'Ò', 'U': 'Ù', ' ': '`' }, shiftDeadKeyMappings: { 'a': 'â', 'e': 'ê', 'i': 'î', 'o': 'ô', 'u': 'û', 'A': 'Â', 'E': 'Ê', 'I': 'Î', 'O': 'Ô', 'U': 'Û', ' ': '^' } },
+  BracketLeft: { key: 'è', keyCode: 186, shiftKey: 'é' },
   BracketRight: { key: '+', keyCode: 187, shiftKey: '*' },
   Enter: { key: 'Enter', keyCode: 13, text: '\r' },
   CapsLock: { key: 'CapsLock', keyCode: 20 },
@@ -71,9 +71,9 @@ const keyboardLayout: KeyboardLayout = {
   KeyJ: { key: 'j', keyCode: 74, shiftKey: 'J' },
   KeyK: { key: 'k', keyCode: 75, shiftKey: 'K' },
   KeyL: { key: 'l', keyCode: 76, shiftKey: 'L' },
-  Semicolon: { key: 'ñ', keyCode: 192, shiftKey: 'Ñ' },
-  Quote: { key: '´', keyCode: 222, shiftKey: '¨', deadKeyMappings: { 'a': 'á', 'e': 'é', 'i': 'í', 'o': 'ó', 'u': 'ú', 'y': 'ý', 'A': 'Á', 'E': 'É', 'I': 'Í', 'O': 'Ó', 'U': 'Ú', 'Y': 'Ý', ' ': '´' }, shiftDeadKeyMappings: { 'a': 'ä', 'e': 'ë', 'i': 'ï', 'o': 'ö', 'u': 'ü', 'y': 'ÿ', 'A': 'Ä', 'E': 'Ë', 'I': 'Ï', 'O': 'Ö', 'U': 'Ü', ' ': '¨' } },
-  Backslash: { key: 'ç', keyCode: 191, shiftKey: 'Ç' },
+  Semicolon: { key: 'ò', keyCode: 192, shiftKey: 'ç' },
+  Quote: { key: 'à', keyCode: 222, shiftKey: '°' },
+  Backslash: { key: 'ù', keyCode: 191, shiftKey: '§' },
   ShiftLeft: { key: 'Shift', keyCode: 160, keyCodeWithoutLocation: 16, location: 1 },
   IntlBackslash: { key: '<', keyCode: 226, shiftKey: '>' },
   KeyZ: { key: 'z', keyCode: 90, shiftKey: 'Z' },

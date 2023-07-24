@@ -54,6 +54,8 @@ export class RawKeyboardImpl implements input.RawKeyboard {
     if (code === 'Escape' && await this._dragManger.cancelDrag())
       return;
     const commands = this._commandsForCode(code, modifiers);
+    if (key === 'Dead')
+      text = '';
     await this._client.send('Input.dispatchKeyEvent', {
       type: text ? 'keyDown' : 'rawKeyDown',
       modifiers: toModifiersMask(modifiers),
