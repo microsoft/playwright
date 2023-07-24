@@ -17,7 +17,7 @@
 import { formatLocation, debugTest, filterStackFile, serializeError } from '../util';
 import { ManualPromise, zones } from 'playwright-core/lib/utils';
 import type { TestInfoImpl, TestStepInternal } from './testInfo';
-import type { RunnableDescription, TimeoutManager } from './timeoutManager';
+import type { FixtureDescription, TimeoutManager } from './timeoutManager';
 import { fixtureParameterNames, type FixturePool, type FixtureRegistration, type FixtureScope } from '../common/fixtures';
 import type { WorkerInfo } from '../../types/test';
 import type { Location } from '../../types/testReporter';
@@ -31,7 +31,7 @@ class Fixture {
   _useFuncFinished: ManualPromise<void> | undefined;
   _selfTeardownComplete: Promise<void> | undefined;
   _teardownWithDepsComplete: Promise<void> | undefined;
-  _runnableDescription: RunnableDescription;
+  _runnableDescription: FixtureDescription;
   _deps = new Set<Fixture>();
   _usages = new Set<Fixture>();
 
@@ -42,7 +42,6 @@ class Fixture {
     const title = this.registration.customTitle || this.registration.name;
     this._runnableDescription = {
       title,
-      type: 'fixture',
       phase: 'setup',
       location: registration.location,
       slot: this.registration.timeout === undefined ? undefined : {
@@ -107,6 +106,7 @@ class Fixture {
 
     const workerInfo: WorkerInfo = { config: testInfo.config, parallelIndex: testInfo.parallelIndex, workerIndex: testInfo.workerIndex, project: testInfo.project };
     const info = this.registration.scope === 'worker' ? workerInfo : testInfo;
+    testInfo._timeoutManager.setCurrentFixture(this._runnableDescription);
 
     const handleError = (e: any) => {
       this.failed = true;
@@ -115,40 +115,38 @@ class Fixture {
       else
         throw e;
     };
+    try {
+      const result = zones.preserve(async () => {
+        if (!shouldGenerateStep)
+          return await this.registration.fn(params, useFunc, info);
 
-    await testInfo._timeoutManager.runRunnable(this._runnableDescription, async () => {
-      try {
-        const result = zones.preserve(async () => {
-          if (!shouldGenerateStep)
-            return await this.registration.fn(params, useFunc, info);
-
-          await testInfo._runAsStep({
-            title: `fixture: ${this.registration.name}`,
-            category: 'fixture',
-            location: isInternalFixture ? this.registration.location : undefined,
-          }, async step => {
-            mutableStepOnStack = step;
-            return await this.registration.fn(params, useFunc, info);
-          });
+        await testInfo._runAsStep({
+          title: `fixture: ${this.registration.name}`,
+          category: 'fixture',
+          location: isInternalFixture ? this.registration.location : undefined,
+        }, async step => {
+          mutableStepOnStack = step;
+          return await this.registration.fn(params, useFunc, info);
         });
+      });
 
-        if (result instanceof Promise)
-          this._selfTeardownComplete = result.catch(handleError);
-        else
-          this._selfTeardownComplete = Promise.resolve();
-      } catch (e) {
-        handleError(e);
-      }
-      await useFuncStarted;
-      if (shouldGenerateStep) {
-        mutableStepOnStack?.complete({});
-        this._selfTeardownComplete?.then(() => {
-          afterStep?.complete({});
-        }).catch(e => {
-          afterStep?.complete({ error: serializeError(e) });
-        });
-      }
-    });
+      if (result instanceof Promise)
+        this._selfTeardownComplete = result.catch(handleError);
+      else
+        this._selfTeardownComplete = Promise.resolve();
+    } catch (e) {
+      handleError(e);
+    }
+    await useFuncStarted;
+    if (shouldGenerateStep) {
+      mutableStepOnStack?.complete({});
+      this._selfTeardownComplete?.then(() => {
+        afterStep?.complete({});
+      }).catch(e => {
+        afterStep?.complete({ error: serializeError(e) });
+      });
+    }
+    testInfo._timeoutManager.setCurrentFixture(undefined);
   }
 
   async teardown(timeoutManager: TimeoutManager) {
@@ -156,14 +154,18 @@ class Fixture {
       // When we are waiting for the teardown for the second time,
       // most likely after the first time did timeout, annotate current fixture
       // for better error messages.
-      this._runnableDescription.phase = 'teardown';
-      await timeoutManager.runRunnable(this._runnableDescription, async () => {
-        await this._teardownWithDepsComplete;
-      });
+      this._setTeardownDescription(timeoutManager);
+      await this._teardownWithDepsComplete;
+      timeoutManager.setCurrentFixture(undefined);
       return;
     }
     this._teardownWithDepsComplete = this._teardownInternal(timeoutManager);
     await this._teardownWithDepsComplete;
+  }
+
+  private _setTeardownDescription(timeoutManager: TimeoutManager) {
+    this._runnableDescription.phase = 'teardown';
+    timeoutManager.setCurrentFixture(this._runnableDescription);
   }
 
   private async _teardownInternal(timeoutManager: TimeoutManager) {
@@ -179,11 +181,10 @@ class Fixture {
       }
       if (this._useFuncFinished) {
         debugTest(`teardown ${this.registration.name}`);
-        this._runnableDescription.phase = 'teardown';
-        await timeoutManager.runRunnable(this._runnableDescription, async () => {
-          this._useFuncFinished!.resolve();
-          await this._selfTeardownComplete;
-        });
+        this._setTeardownDescription(timeoutManager);
+        this._useFuncFinished.resolve();
+        await this._selfTeardownComplete;
+        timeoutManager.setCurrentFixture(undefined);
       }
     } finally {
       for (const dep of this._deps)
