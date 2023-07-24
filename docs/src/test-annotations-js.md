@@ -96,12 +96,14 @@ npx playwright test --grep "@fast|@slow"
 On Windows shells:
 
 - PowerShell
-  ```powershell
+
+  ```bash
   npx playwright test --grep --% "@fast^|@slow"
   ```
 
 - Command Prompt(cmd.exe) / Git Bash:
-  ```cmd
+
+  ```bash
   npx playwright test --grep "@fast^|@slow"
   ```
 
