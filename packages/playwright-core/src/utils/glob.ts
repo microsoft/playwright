@@ -51,6 +51,12 @@ export function globToRegex(glob: string): RegExp {
       case '?':
         tokens.push('.');
         break;
+      case '[':
+        tokens.push('[');
+        break;
+      case ']':
+        tokens.push(']');
+        break;
       case '{':
         inGroup = true;
         tokens.push('(');
