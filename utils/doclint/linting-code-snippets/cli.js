@@ -75,7 +75,7 @@ const run = async () => {
 
 
 /** @typedef {{ codeLang: string, code: string, filePath: string }} CodeSnippet */
-/** @typedef {{ status: 'ok' | 'updated' | 'error' | 'notfound', error?: string }} LintResult */
+/** @typedef {{ status: 'ok' | 'updated' | 'error' | 'unsupported', error?: string }} LintResult */
 
 class LintingService {
   /**
@@ -127,6 +127,12 @@ class LintingService {
 
 
 class JSLintingService extends LintingService {
+  _knownBadJSSnippets = [
+    'mount(',
+    'render(',
+    'vue-router',
+    'experimental-ct',
+  ];
   constructor() {
     super();
     this.eslint = new ESLint({
@@ -150,7 +156,7 @@ class JSLintingService extends LintingService {
    * @returns {Promise<LintResult>}
    */
   async _lintSnippet(snippet) {
-    if (['mount(', 'render(', 'vue-router', 'experimental-ct'].some(s => snippet.code.includes(s)))
+    if (this._knownBadJSSnippets.some(s => snippet.code.includes(s)))
       return { status: 'ok' };
     const results = await this.eslint.lintText(snippet.code);
     if (!results || !results.length || !results[0].messages.length)
@@ -219,7 +225,7 @@ class LintingServiceFactory {
       const service = this.services.find(service => service.supports(language));
       if (!service) {
         this._collectMetrics(language, {
-          status: 'notfound',
+          status: 'unsupported',
         });
         continue;
       }
@@ -264,7 +270,7 @@ class LintingServiceFactory {
     for (const [language, metrics] of languagesOrderedByOk) {
       if (metrics.error)
         hasErrors = true;
-      console.log(`  ${language}: ${['ok', 'updated', 'error', 'notfound'].map(name => renderMetric(metrics, name)).filter(Boolean).join(', ')}`)
+      console.log(`  ${language}: ${['ok', 'updated', 'error', 'unsupported'].map(name => renderMetric(metrics, name)).filter(Boolean).join(', ')}`)
     }
     return { hasErrors }
   }
@@ -275,7 +281,7 @@ class LintingServiceFactory {
    */
   _collectMetrics(language, result) {
     if (!this._metrics[language])
-      this._metrics[language] = { ok: 0, updated: 0, error: 0, notfound: 0 };
+      this._metrics[language] = { ok: 0, updated: 0, error: 0, unsupported: 0 };
     this._metrics[language][result.status]++;
   }
 }
