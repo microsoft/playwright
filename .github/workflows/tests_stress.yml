@@ -33,6 +33,8 @@ jobs:
     - run: npm ci
     - run: npm run build
     - run: npx playwright install --with-deps
+    - run: npx playwright install firefox-asan
+      if: matrix.os != 'windows-latest'
     - run: npm run stest contexts -- --project=chromium
       if: always()
     - run: npm run stest browsers -- --project=chromium

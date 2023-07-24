@@ -399,16 +399,19 @@ test('sigint should stop plugins', async ({ runInlineTest }) => {
     `,
     'a.spec.js': `
       import { test, expect } from '@playwright/test';
-      test('test', async () => { });
+      test('test', async () => {
+        console.log('testing!');
+      });
     `,
   }, { 'workers': 1 }, {}, { sendSIGINTAfter: 1 });
   expect(result.exitCode).toBe(130);
   expect(result.passed).toBe(0);
   const output = result.output;
   expect(output).toContain('Plugin1 setup');
-  expect(output).not.toContain('Plugin1 teardown');
+  expect(output).toContain('Plugin1 teardown');
   expect(output).not.toContain('Plugin2 setup');
   expect(output).not.toContain('Plugin2 teardown');
+  expect(output).not.toContain('testing!');
 });
 
 test('sigint should stop plugins 2', async ({ runInlineTest }) => {
@@ -440,7 +443,9 @@ test('sigint should stop plugins 2', async ({ runInlineTest }) => {
     `,
     'a.spec.js': `
       import { test, expect } from '@playwright/test';
-      test('test', async () => { });
+      test('test', async () => {
+        console.log('testing!');
+      });
     `,
   }, { 'workers': 1 }, {}, { sendSIGINTAfter: 1 });
   expect(result.exitCode).toBe(130);
@@ -449,7 +454,8 @@ test('sigint should stop plugins 2', async ({ runInlineTest }) => {
   expect(output).toContain('Plugin1 setup');
   expect(output).toContain('Plugin2 setup');
   expect(output).toContain('Plugin1 teardown');
-  expect(output).not.toContain('Plugin2 teardown');
+  expect(output).toContain('Plugin2 teardown');
+  expect(output).not.toContain('testing!');
 });
 
 test('should not crash with duplicate titles and .only', async ({ runInlineTest }) => {

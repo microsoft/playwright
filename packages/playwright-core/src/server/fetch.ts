@@ -39,6 +39,7 @@ import { ProgressController } from './progress';
 import { Tracing } from './trace/recorder/tracing';
 import type * as types from './types';
 import type { HeadersArray, ProxySettings } from './types';
+import { kMaxCookieExpiresDateInSeconds } from './network';
 
 type FetchRequestOptions = {
   userAgent: string;
@@ -606,13 +607,25 @@ function parseCookie(header: string): channels.NetworkCookie | null {
     switch (name.toLowerCase()) {
       case 'expires':
         const expiresMs = (+new Date(value));
-        if (isFinite(expiresMs))
-          cookie.expires = expiresMs / 1000;
+        // https://datatracker.ietf.org/doc/html/rfc6265#section-5.2.1
+        if (isFinite(expiresMs)) {
+          if (expiresMs <= 0)
+            cookie.expires = 0;
+          else
+            cookie.expires = Math.min(expiresMs / 1000, kMaxCookieExpiresDateInSeconds);
+        }
         break;
       case 'max-age':
         const maxAgeSec = parseInt(value, 10);
-        if (isFinite(maxAgeSec))
-          cookie.expires = Date.now() / 1000 + maxAgeSec;
+        if (isFinite(maxAgeSec)) {
+          // From https://datatracker.ietf.org/doc/html/rfc6265#section-5.2.2
+          // If delta-seconds is less than or equal to zero (0), let expiry-time
+          // be the earliest representable date and time.
+          if (maxAgeSec <= 0)
+            cookie.expires = 0;
+          else
+            cookie.expires = Math.min(Date.now() / 1000 + maxAgeSec, kMaxCookieExpiresDateInSeconds);
+        }
         break;
       case 'domain':
         cookie.domain = value.toLocaleLowerCase() || '';

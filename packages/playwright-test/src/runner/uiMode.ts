@@ -29,6 +29,7 @@ import { open } from 'playwright-core/lib/utilsBundle';
 import ListReporter from '../reporters/list';
 import type { OpenTraceViewerOptions, Transport } from 'playwright-core/lib/server/trace/viewer/traceViewer';
 import { Multiplexer } from '../reporters/multiplexer';
+import { SigIntWatcher } from './sigIntWatcher';
 
 class UIMode {
   private _config: FullConfigInternal;
@@ -79,7 +80,7 @@ class UIMode {
     return status;
   }
 
-  async showUI(options: { host?: string, port?: number }) {
+  async showUI(options: { host?: string, port?: number }, cancelPromise: ManualPromise<void>) {
     let queue = Promise.resolve();
 
     this._transport = {
@@ -118,13 +119,15 @@ class UIMode {
       transport: this._transport,
       host: options.host,
       port: options.port,
+      persistentContextOptions: {
+        handleSIGINT: false,
+      },
     };
-    const exitPromise = new ManualPromise<void>();
     if (options.host !== undefined || options.port !== undefined) {
       await openTraceInBrowser([], openOptions);
     } else {
       const page = await openTraceViewerApp([], 'chromium', openOptions);
-      page.on('close', () => exitPromise.resolve());
+      page.on('close', () => cancelPromise.resolve());
     }
 
     if (!process.env.PWTEST_DEBUG) {
@@ -137,7 +140,7 @@ class UIMode {
         return true;
       };
     }
-    await exitPromise;
+    await cancelPromise;
 
     if (!process.env.PWTEST_DEBUG) {
       process.stdout.write = this._originalStdoutWrite;
@@ -218,11 +221,18 @@ class UIMode {
 
 export async function runUIMode(config: FullConfigInternal, options: { host?: string, port?: number }): Promise<FullResult['status']> {
   const uiMode = new UIMode(config);
-  const status = await uiMode.runGlobalSetup();
-  if (status !== 'passed')
-    return status;
-  await uiMode.showUI(options);
-  return await uiMode.globalCleanup?.() || 'passed';
+  const globalSetupStatus = await uiMode.runGlobalSetup();
+  if (globalSetupStatus !== 'passed')
+    return globalSetupStatus;
+  const cancelPromise = new ManualPromise<void>();
+  const sigintWatcher = new SigIntWatcher();
+  void sigintWatcher.promise().then(() => cancelPromise.resolve());
+  try {
+    await uiMode.showUI(options, cancelPromise);
+  } finally {
+    sigintWatcher.disarm();
+  }
+  return await uiMode.globalCleanup?.() || (sigintWatcher.hadSignal() ? 'interrupted' : 'passed');
 }
 
 type StdioPayload = {

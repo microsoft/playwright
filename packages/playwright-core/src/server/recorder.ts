@@ -40,7 +40,7 @@ import { createGuid, monotonicTime } from '../utils';
 import { metadataToCallLog } from './recorder/recorderUtils';
 import { Debugger } from './debugger';
 import { EventEmitter } from 'events';
-import { raceAgainstTimeout } from '../utils/timeoutRunner';
+import { raceAgainstDeadline } from '../utils/timeoutRunner';
 import type { Language, LanguageGenerator } from './recorder/language';
 import { locatorOrSelectorAsSelector } from '../utils/isomorphic/locatorParser';
 import { eventsHelper, type RegisteredListener } from './../utils/eventsHelper';
@@ -534,7 +534,7 @@ class ContextRecorder extends EventEmitter {
     for (let i = 0; i < chain.length - 1; i++)
       selectorPromises.push(this._findFrameSelector(chain[i + 1], chain[i]));
 
-    const result = await raceAgainstTimeout(() => Promise.all(selectorPromises), 2000);
+    const result = await raceAgainstDeadline(() => Promise.all(selectorPromises), monotonicTime() + 2000);
     if (!result.timedOut && result.result.every(selector => !!selector)) {
       return {
         ...fallback,

@@ -25,10 +25,13 @@ type TimeoutRunnerData = {
   timeoutPromise: ManualPromise<any>,
 };
 
+export const MaxTime = 2147483647; // 2^31-1
+
 export class TimeoutRunner {
   private _running: TimeoutRunnerData | undefined;
   private _timeout: number;
   private _elapsed: number;
+  private _deadline = MaxTime;
 
   constructor(timeout: number) {
     this._timeout = timeout;
@@ -65,6 +68,10 @@ export class TimeoutRunner {
     return this._elapsed;
   }
 
+  deadline(): number {
+    return this._deadline;
+  }
+
   updateTimeout(timeout: number, elapsed?: number) {
     this._timeout = timeout;
     if (elapsed !== undefined) {
@@ -89,6 +96,7 @@ export class TimeoutRunner {
       running.timer = undefined;
     }
     this._syncElapsedAndStart();
+    this._deadline = timeout ? monotonicTime() + timeout : MaxTime;
     if (timeout === 0)
       return;
     timeout = timeout - this._elapsed;
@@ -99,8 +107,8 @@ export class TimeoutRunner {
   }
 }
 
-export async function raceAgainstTimeout<T>(cb: () => Promise<T>, timeout: number): Promise<{ result: T, timedOut: false } | { timedOut: true }> {
-  const runner = new TimeoutRunner(timeout);
+export async function raceAgainstDeadline<T>(cb: () => Promise<T>, deadline: number): Promise<{ result: T, timedOut: false } | { timedOut: true }> {
+  const runner = new TimeoutRunner((deadline || MaxTime) - monotonicTime());
   try {
     return { result: await runner.run(cb), timedOut: false };
   } catch (e) {
@@ -110,24 +118,22 @@ export async function raceAgainstTimeout<T>(cb: () => Promise<T>, timeout: numbe
   }
 }
 
-export async function pollAgainstTimeout<T>(callback: () => Promise<{ continuePolling: boolean, result: T }>, timeout: number, pollIntervals: number[] = [100, 250, 500, 1000]): Promise<{ result?: T, timedOut: boolean }> {
-  const startTime = monotonicTime();
+export async function pollAgainstDeadline<T>(callback: () => Promise<{ continuePolling: boolean, result: T }>, deadline: number, pollIntervals: number[] = [100, 250, 500, 1000]): Promise<{ result?: T, timedOut: boolean }> {
   const lastPollInterval = pollIntervals.pop() ?? 1000;
   let lastResult: T|undefined;
   const wrappedCallback = () => Promise.resolve().then(callback);
   while (true) {
-    const elapsed = monotonicTime() - startTime;
-    if (timeout !== 0 && elapsed >= timeout)
+    const time = monotonicTime();
+    if (deadline && time >= deadline)
       break;
-    const received = timeout !== 0 ? await raceAgainstTimeout(wrappedCallback, timeout - elapsed)
-      : await wrappedCallback().then(value => ({ result: value, timedOut: false }));
+    const received = await raceAgainstDeadline(wrappedCallback, deadline);
     if (received.timedOut)
       break;
     lastResult = (received as any).result.result;
     if (!(received as any).result.continuePolling)
       return { result: lastResult, timedOut: false };
     const interval = pollIntervals!.shift() ?? lastPollInterval;
-    if (timeout !== 0 && startTime + timeout <= monotonicTime() + interval)
+    if (deadline && deadline <= monotonicTime() + interval)
       break;
     await new Promise(x => setTimeout(x, interval));
   }

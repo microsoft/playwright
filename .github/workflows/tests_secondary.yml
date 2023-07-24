@@ -41,10 +41,18 @@ jobs:
     - run: npm run build
     - run: npx playwright install --with-deps ${{ matrix.browser }} chromium
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --project=${{ matrix.browser }}
+      env:
+        PWTEST_BLOB_SUFFIX: "-${{ matrix.os }}"
     - run: node tests/config/checkCoverage.js ${{ matrix.browser }}
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
+    - name: Upload blob report
+      if: always() && github.event_name == 'pull_request'
+      uses: ./.github/actions/upload-blob-report
+      with:
+        report_dir: test-results/blob-report
+        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   test_mac:
     name: ${{ matrix.os }} (${{ matrix.browser }})
@@ -66,9 +74,17 @@ jobs:
     - run: npm run build
     - run: npx playwright install --with-deps ${{ matrix.browser }} chromium
     - run: npm run test -- --project=${{ matrix.browser }}
+      env:
+        PWTEST_BLOB_SUFFIX: "-${{ matrix.os }}"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
+    - name: Upload blob report
+      if: always() && github.event_name == 'pull_request'
+      uses: ./.github/actions/upload-blob-report
+      with:
+        report_dir: test-results/blob-report
+        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   test_win:
     name: "Windows"
@@ -90,9 +106,17 @@ jobs:
     - run: npx playwright install --with-deps ${{ matrix.browser }} chromium
     - run: npm run test -- --project=${{ matrix.browser }}
       shell: bash
+      env:
+        PWTEST_BLOB_SUFFIX: "-windows-latest"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
+    - name: Upload blob report
+      if: always() && github.event_name == 'pull_request'
+      uses: ./.github/actions/upload-blob-report
+      with:
+        report_dir: test-results/blob-report
+        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   test-package-installations-other-node-versions:
     name: "Installation Test ${{ matrix.os }} (${{ matrix.node_version }})"
@@ -145,11 +169,21 @@ jobs:
     - run: npx playwright install --with-deps ${{ matrix.browser }} chromium
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --project=${{ matrix.browser }} --headed
       if: always() && startsWith(matrix.os, 'ubuntu-')
+      env:
+        PWTEST_BLOB_SUFFIX: "-headed-${{ matrix.os }}"
     - run: npm run test -- --project=${{ matrix.browser }} --headed
       if: always() && !startsWith(matrix.os, 'ubuntu-')
+      env:
+        PWTEST_BLOB_SUFFIX: "-headed-${{ matrix.os }}"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
+    - name: Upload blob report
+      if: always() && github.event_name == 'pull_request'
+      uses: ./.github/actions/upload-blob-report
+      with:
+        report_dir: test-results/blob-report
+        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   transport_linux:
     name: "Transport"
@@ -172,9 +206,16 @@ jobs:
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest
       env:
         PWTEST_MODE: ${{ matrix.mode }}
+        PWTEST_BLOB_SUFFIX: "-${{ matrix.mode }}"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
+    - name: Upload blob report
+      if: always() && github.event_name == 'pull_request'
+      uses: ./.github/actions/upload-blob-report
+      with:
+        report_dir: test-results/blob-report
+        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   tracing_linux:
     name: Tracing ${{ matrix.browser }} ${{ matrix.channel }}
@@ -203,12 +244,12 @@ jobs:
       env:
         PWTEST_TRACE: 1
         PWTEST_CHANNEL: ${{ matrix.channel }}
-        PWTEST_BLOB_SUFFIX: ${{ (matrix.channel && format('-{0}', matrix.channel)) || '' }}
+        PWTEST_BLOB_SUFFIX: "-tracing-${{ (matrix.channel && format('-{0}', matrix.channel)) || '' }}"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
     - name: Upload blob report
-      if: always()
+      if: always() && github.event_name == 'pull_request'
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: test-results/blob-report
@@ -230,9 +271,16 @@ jobs:
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest
       env:
         PWTEST_CHANNEL: chrome
+        PWTEST_BLOB_SUFFIX: "-chrome-stable-linux"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
+    - name: Upload blob report
+      if: always() && github.event_name == 'pull_request'
+      uses: ./.github/actions/upload-blob-report
+      with:
+        report_dir: test-results/blob-report
+        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   chrome_stable_win:
     name: "Chrome Stable (Win)"
@@ -251,9 +299,16 @@ jobs:
       shell: bash
       env:
         PWTEST_CHANNEL: chrome
+        PWTEST_BLOB_SUFFIX: "-chrome-stable-windows"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
+    - name: Upload blob report
+      if: always() && github.event_name == 'pull_request'
+      uses: ./.github/actions/upload-blob-report
+      with:
+        report_dir: test-results/blob-report
+        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   chrome_stable_mac:
     name: "Chrome Stable (Mac)"
@@ -271,9 +326,16 @@ jobs:
     - run: npm run ctest
       env:
         PWTEST_CHANNEL: chrome
+        PWTEST_BLOB_SUFFIX: "-chrome-stable-mac"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
+    - name: Upload blob report
+      if: always() && github.event_name == 'pull_request'
+      uses: ./.github/actions/upload-blob-report
+      with:
+        report_dir: test-results/blob-report
+        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   chromium_tot:
     name: Chromium TOT ${{ matrix.os }}
@@ -296,13 +358,21 @@ jobs:
       if: matrix.os == 'ubuntu-20.04'
       env:
         PWTEST_CHANNEL: chromium-tip-of-tree
+        PWTEST_BLOB_SUFFIX: "-tip-of-tree-${{ matrix.os }}"
     - run: npm run ctest
       if: matrix.os != 'ubuntu-20.04'
       env:
         PWTEST_CHANNEL: chromium-tip-of-tree
+        PWTEST_BLOB_SUFFIX: "-tip-of-tree-${{ matrix.os }}"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
+    - name: Upload blob report
+      if: always() && github.event_name == 'pull_request'
+      uses: ./.github/actions/upload-blob-report
+      with:
+        report_dir: test-results/blob-report
+        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   chromium_tot_headed:
     name: Chromium TOT headed ${{ matrix.os }}
@@ -325,13 +395,21 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       env:
         PWTEST_CHANNEL: chromium-tip-of-tree
+        PWTEST_BLOB_SUFFIX: "-tip-of-tree-headed-${{ matrix.os }}"
     - run: npm run ctest -- --headed
       if: matrix.os != 'ubuntu-latest'
       env:
         PWTEST_CHANNEL: chromium-tip-of-tree
+        PWTEST_BLOB_SUFFIX: "-tip-of-tree-headed-${{ matrix.os }}"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
+    - name: Upload blob report
+      if: always() && github.event_name == 'pull_request'
+      uses: ./.github/actions/upload-blob-report
+      with:
+        report_dir: test-results/blob-report
+        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   firefox_beta_linux:
     name: "Firefox Beta (Linux)"
@@ -349,9 +427,16 @@ jobs:
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ftest
       env:
         PWTEST_CHANNEL: firefox-beta
+        PWTEST_BLOB_SUFFIX: "-beta-linux"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
+    - name: Upload blob report
+      if: always() && github.event_name == 'pull_request'
+      uses: ./.github/actions/upload-blob-report
+      with:
+        report_dir: test-results/blob-report
+        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   firefox_beta_win:
     name: "Firefox Beta (Win)"
@@ -370,9 +455,16 @@ jobs:
       shell: bash
       env:
         PWTEST_CHANNEL: firefox-beta
+        PWTEST_BLOB_SUFFIX: "-beta-windows"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
+    - name: Upload blob report
+      if: always() && github.event_name == 'pull_request'
+      uses: ./.github/actions/upload-blob-report
+      with:
+        report_dir: test-results/blob-report
+        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   firefox_beta_mac:
     name: "Firefox Beta (Mac)"
@@ -390,9 +482,16 @@ jobs:
     - run: npm run ftest
       env:
         PWTEST_CHANNEL: firefox-beta
+        PWTEST_BLOB_SUFFIX: "-beta-mac"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
+    - name: Upload blob report
+      if: always() && github.event_name == 'pull_request'
+      uses: ./.github/actions/upload-blob-report
+      with:
+        report_dir: test-results/blob-report
+        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   edge_stable_mac:
     name: "Edge Stable (Mac)"
@@ -410,9 +509,16 @@ jobs:
     - run: npm run ctest
       env:
         PWTEST_CHANNEL: msedge
+        PWTEST_BLOB_SUFFIX: "-edge-stable-mac"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
+    - name: Upload blob report
+      if: always() && github.event_name == 'pull_request'
+      uses: ./.github/actions/upload-blob-report
+      with:
+        report_dir: test-results/blob-report
+        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   edge_stable_win:
     name: "Edge Stable (Win)"
@@ -431,9 +537,16 @@ jobs:
       shell: bash
       env:
         PWTEST_CHANNEL: msedge
+        PWTEST_BLOB_SUFFIX: "-edge-stable-windows"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
+    - name: Upload blob report
+      if: always() && github.event_name == 'pull_request'
+      uses: ./.github/actions/upload-blob-report
+      with:
+        report_dir: test-results/blob-report
+        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   edge_stable_linux:
     name: "Edge Stable (Linux)"
@@ -451,9 +564,16 @@ jobs:
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest
       env:
         PWTEST_CHANNEL: msedge
+        PWTEST_BLOB_SUFFIX: "-edge-stable-linux"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
+    - name: Upload blob report
+      if: always() && github.event_name == 'pull_request'
+      uses: ./.github/actions/upload-blob-report
+      with:
+        report_dir: test-results/blob-report
+        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   edge_beta_mac:
     name: "Edge Beta (Mac)"
@@ -471,9 +591,16 @@ jobs:
     - run: npm run ctest
       env:
         PWTEST_CHANNEL: msedge-beta
+        PWTEST_BLOB_SUFFIX: "-edge-beta-mac"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
+    - name: Upload blob report
+      if: always() && github.event_name == 'pull_request'
+      uses: ./.github/actions/upload-blob-report
+      with:
+        report_dir: test-results/blob-report
+        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   edge_beta_win:
     name: "Edge Beta (Win)"
@@ -492,9 +619,16 @@ jobs:
       shell: bash
       env:
         PWTEST_CHANNEL: msedge-beta
+        PWTEST_BLOB_SUFFIX: "-edge-beta-windows"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
+    - name: Upload blob report
+      if: always() && github.event_name == 'pull_request'
+      uses: ./.github/actions/upload-blob-report
+      with:
+        report_dir: test-results/blob-report
+        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   edge_beta_linux:
     name: "Edge Beta (Linux)"
@@ -512,9 +646,16 @@ jobs:
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest
       env:
         PWTEST_CHANNEL: msedge-beta
+        PWTEST_BLOB_SUFFIX: "-edge-beta-linux"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
+    - name: Upload blob report
+      if: always() && github.event_name == 'pull_request'
+      uses: ./.github/actions/upload-blob-report
+      with:
+        report_dir: test-results/blob-report
+        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   edge_dev_mac:
     name: "Edge Dev (Mac)"
@@ -532,9 +673,16 @@ jobs:
     - run: npm run ctest
       env:
         PWTEST_CHANNEL: msedge-dev
+        PWTEST_BLOB_SUFFIX: "-edge-dev-mac"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
+    - name: Upload blob report
+      if: always() && github.event_name == 'pull_request'
+      uses: ./.github/actions/upload-blob-report
+      with:
+        report_dir: test-results/blob-report
+        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   edge_dev_win:
     name: "Edge Dev (Win)"
@@ -553,9 +701,16 @@ jobs:
       shell: bash
       env:
         PWTEST_CHANNEL: msedge-dev
+        PWTEST_BLOB_SUFFIX: "-edge-dev-windows"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
+    - name: Upload blob report
+      if: always() && github.event_name == 'pull_request'
+      uses: ./.github/actions/upload-blob-report
+      with:
+        report_dir: test-results/blob-report
+        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   edge_dev_linux:
     name: "Edge Dev (Linux)"
@@ -573,9 +728,16 @@ jobs:
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest
       env:
         PWTEST_CHANNEL: msedge-dev
+        PWTEST_BLOB_SUFFIX: "-edge-dev-linux"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
+    - name: Upload blob report
+      if: always() && github.event_name == 'pull_request'
+      uses: ./.github/actions/upload-blob-report
+      with:
+        report_dir: test-results/blob-report
+        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   chrome_beta_linux:
     name: "Chrome Beta (Linux)"
@@ -593,9 +755,16 @@ jobs:
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest
       env:
         PWTEST_CHANNEL: chrome-beta
+        PWTEST_BLOB_SUFFIX: "-chrome-beta-linux"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
+    - name: Upload blob report
+      if: always() && github.event_name == 'pull_request'
+      uses: ./.github/actions/upload-blob-report
+      with:
+        report_dir: test-results/blob-report
+        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   chrome_beta_win:
     name: "Chrome Beta (Win)"
@@ -614,9 +783,16 @@ jobs:
       shell: bash
       env:
         PWTEST_CHANNEL: chrome-beta
+        PWTEST_BLOB_SUFFIX: "-chrome-beta-windows"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
+    - name: Upload blob report
+      if: always() && github.event_name == 'pull_request'
+      uses: ./.github/actions/upload-blob-report
+      with:
+        report_dir: test-results/blob-report
+        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   chrome_beta_mac:
     name: "Chrome Beta (Mac)"
@@ -634,9 +810,16 @@ jobs:
     - run: npm run ctest
       env:
         PWTEST_CHANNEL: chrome-beta
+        PWTEST_BLOB_SUFFIX: "-chrome-beta-mac"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
+    - name: Upload blob report
+      if: always() && github.event_name == 'pull_request'
+      uses: ./.github/actions/upload-blob-report
+      with:
+        report_dir: test-results/blob-report
+        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   build-playwright-driver:
     name: "build-playwright-driver"
@@ -668,7 +851,14 @@ jobs:
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --project=chromium
       env:
         PLAYWRIGHT_CHROMIUM_USE_HEADLESS_NEW: 1
+        PWTEST_BLOB_SUFFIX: "-headless-new"
     - run: node tests/config/checkCoverage.js chromium
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
+    - name: Upload blob report
+      if: always() && github.event_name == 'pull_request'
+      uses: ./.github/actions/upload-blob-report
+      with:
+        report_dir: test-results/blob-report
+        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'

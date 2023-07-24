@@ -439,9 +439,10 @@ function formatStackFrame(frame: StackFrame) {
 }
 
 function hookType(testInfo: TestInfoImpl): 'beforeAll' | 'afterAll' | undefined {
-  const type = testInfo._timeoutManager.currentRunnableType();
-  if (type === 'beforeAll' || type === 'afterAll')
-    return type;
+  if (testInfo._timeoutManager.hasRunnableType('beforeAll'))
+    return 'beforeAll';
+  if (testInfo._timeoutManager.hasRunnableType('afterAll'))
+    return 'afterAll';
 }
 
 type StackFrame = {

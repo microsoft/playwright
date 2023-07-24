@@ -270,6 +270,43 @@ it('should not lose body while handling Set-Cookie header', async ({ context, se
   expect(await response.text()).toBe('text content');
 });
 
+it('should remove cookie with negative max-age', async ({ page, server }) => {
+  server.setRoute('/setcookie.html', (req, res) => {
+    res.setHeader('Set-Cookie', ['a=v; max-age=100000', `b=v; max-age=100000`, 'c=v']);
+    res.end();
+  });
+  server.setRoute('/removecookie.html', (req, res) => {
+    const maxAge = -2 * Date.now();
+    res.setHeader('Set-Cookie', [`a=v; max-age=${maxAge}`, `b=v; max-age=-1`]);
+    res.end();
+  });
+  await page.request.get(`${server.PREFIX}/setcookie.html`);
+  await page.request.get(`${server.PREFIX}/removecookie.html`);
+  const [serverRequest] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    page.request.get(server.EMPTY_PAGE)
+  ]);
+  expect(serverRequest.headers.cookie).toBe('c=v');
+});
+
+it('should remove cookie with expires far in the past', async ({ page, server }) => {
+  server.setRoute('/setcookie.html', (req, res) => {
+    res.setHeader('Set-Cookie', ['a=v; max-age=1000000']);
+    res.end();
+  });
+  server.setRoute('/removecookie.html', (req, res) => {
+    res.setHeader('Set-Cookie', [`a=v; expires=Wed, 01 Jan 1000 00:00:00 GMT`]);
+    res.end();
+  });
+  await page.request.get(`${server.PREFIX}/setcookie.html`);
+  await page.request.get(`${server.PREFIX}/removecookie.html`);
+  const [serverRequest] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    page.request.get(server.EMPTY_PAGE)
+  ]);
+  expect(serverRequest.headers.cookie).toBeFalsy();
+});
+
 it('should handle cookies on redirects', async ({ context, server, browserName, isWindows }) => {
   server.setRoute('/redirect1', (req, res) => {
     res.setHeader('Set-Cookie', 'r1=v1;SameSite=Lax');
