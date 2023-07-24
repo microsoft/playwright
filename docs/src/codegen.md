@@ -144,7 +144,7 @@ You can use the test generator to generate tests using emulation so as to genera
 
 ### Emulate viewport size
 
-Playwright opens a browser window with it's viewport set to a specific width and height and is not responsive as tests need to be run under the same conditions. Use the `--viewport` option to generate tests with a different viewport size.
+Playwright opens a browser window with its viewport set to a specific width and height and is not responsive as tests need to be run under the same conditions. Use the `--viewport` option to generate tests with a different viewport size.
 
 ```bash js
 npx playwright codegen --viewport-size=800,600 playwright.dev

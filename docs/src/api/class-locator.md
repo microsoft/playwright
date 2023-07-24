@@ -2,7 +2,7 @@
 * since: v1.14
 
 Locators are the central piece of Playwright's auto-waiting and retry-ability. In a nutshell, locators represent
-a way to find element(s) on the page at any moment. Locator can be created with the [`method: Page.locator`] method.
+a way to find element(s) on the page at any moment. A locator can be created with the [`method: Page.locator`] method.
 
 [Learn more about locators](../locators.md).
 
@@ -10,8 +10,7 @@ a way to find element(s) on the page at any moment. Locator can be created with 
 * since: v1.29
 - returns: <[Array]<[Locator]>>
 
-When locator points to a list of elements, returns array of locators, pointing
-to respective elements.
+When the locator points to a list of elements, this returns an array of locators, pointing to their respective elements.
 
 :::note
 [`method: Locator.all`] does not wait for elements to match the locator, and instead immediately returns whatever is present in the page.

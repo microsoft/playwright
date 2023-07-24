@@ -200,7 +200,7 @@ For example, consider the following DOM structure.
 <button>Submit</button>
 ```
 
-You can locate each element by it's implicit role:
+You can locate each element by its implicit role:
 
 ```js
 await expect(page.getByRole('heading', { name: 'Sign up' })).toBeVisible();
@@ -519,7 +519,7 @@ For example, consider the following DOM structure.
 <button data-testid="directions">Itinéraire</button>
 ```
 
-You can locate the element by it's test id:
+You can locate the element by its test id:
 
 ```js
 await page.getByTestId('directions').click();
@@ -1220,7 +1220,7 @@ await newEmail.ClickAsync();
 It's usually better to find a [more reliable way](./locators.md#quick-guide) to uniquely identify the element instead of checking the visibility.
 :::
 
-Consider a page with two buttons, first invisible and second [visible](./actionability.md#visible).
+Consider a page with two buttons, the first invisible and the second [visible](./actionability.md#visible).
 
 ```html
 <button style='display: none'>Invisible</button>
@@ -1352,7 +1352,7 @@ await Expect(page
 There are many ways to get a specific item in a list.
 #### Get by text
 
-Use the [`method: Page.getByText`] method to locate an element in a list by it's text content and then click on it.
+Use the [`method: Page.getByText`] method to locate an element in a list by its text content and then click on it.
 
 For example, consider the following DOM structure:
 
@@ -1364,7 +1364,7 @@ For example, consider the following DOM structure:
 </ul>
 ```
 
-Locate an item by it's text content and click it.
+Locate an item by its text content and click it.
 
 ```js
 await page.getByText('orange').click();

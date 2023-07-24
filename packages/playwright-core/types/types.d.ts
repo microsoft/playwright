@@ -10330,7 +10330,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
 
 /**
  * Locators are the central piece of Playwright's auto-waiting and retry-ability. In a nutshell, locators represent a
- * way to find element(s) on the page at any moment. Locator can be created with the
+ * way to find element(s) on the page at any moment. A locator can be created with the
  * [page.locator(selector[, options])](https://playwright.dev/docs/api/class-page#page-locator) method.
  *
  * [Learn more about locators](https://playwright.dev/docs/locators).
@@ -10446,7 +10446,8 @@ export interface Locator {
     timeout?: number;
   }): Promise<null|ElementHandle<SVGElement | HTMLElement>>;
   /**
-   * When locator points to a list of elements, returns array of locators, pointing to respective elements.
+   * When the locator points to a list of elements, this returns an array of locators, pointing to their respective
+   * elements.
    *
    * **NOTE** [locator.all()](https://playwright.dev/docs/api/class-locator#locator-all) does not wait for elements to
    * match the locator, and instead immediately returns whatever is present in the page.  When the list of elements
