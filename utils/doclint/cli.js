@@ -196,7 +196,8 @@ async function run() {
                     'groovy',
                     'html',
                     'bash',
-                    'sh']);
+                    'sh',
+                  ]);
                   if (!allowedCodeLangs.has(node.codeLang.split(' ')[0]))
                     throw new Error(`${path.relative(PROJECT_DIR, filePath)} contains code block with invalid code block language ${node.codeLang}`);
                 }
