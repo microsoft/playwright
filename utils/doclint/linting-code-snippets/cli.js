@@ -127,7 +127,7 @@ class LintingService {
 
 
 class JSLintingService extends LintingService {
-  _knownBadJSSnippets = [
+  _knownBadSnippets = [
     'mount(',
     'render(',
     'vue-router',
@@ -156,7 +156,7 @@ class JSLintingService extends LintingService {
    * @returns {Promise<LintResult>}
    */
   async _lintSnippet(snippet) {
-    if (this._knownBadJSSnippets.some(s => snippet.code.includes(s)))
+    if (this._knownBadSnippets.some(s => snippet.code.includes(s)))
       return { status: 'ok' };
     const results = await this.eslint.lintText(snippet.code);
     if (!results || !results.length || !results[0].messages.length)
