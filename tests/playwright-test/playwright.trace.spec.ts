@@ -686,3 +686,22 @@ test('should show non-expect error in trace', async ({ runInlineTest }, testInfo
     '  fixture: context',
   ]);
 });
+
+test('should not throw when attachment is missing', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { use: { trace: 'on' } };
+    `,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('passes', async ({}) => {
+        test.info().attachments.push({ name: 'screenshot', path: 'nothing-to-see-here', contentType: 'image/png' });
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  const trace = await parseTrace(testInfo.outputPath('test-results', 'a-passes', 'trace.zip'));
+  expect(trace.actionTree).toContain('attach "screenshot"');
+});

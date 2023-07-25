@@ -68,13 +68,7 @@ export const AttachmentsSection: React.FunctionComponent<{
   </>;
 };
 
-function attachmentURL(traceUrl: string, attachment: {
-  name: string;
-  contentType: string;
-  path?: string;
-  sha1?: string;
-  body?: string;
-}) {
+function attachmentURL(traceUrl: string, attachment: NonNullable<ActionTraceEventInContext['attachments']>[0]) {
   if (attachment.sha1)
     return 'sha1/' + attachment.sha1 + '?trace=' + encodeURIComponent(traceUrl);
   return 'file?path=' + encodeURIComponent(attachment.path!);
