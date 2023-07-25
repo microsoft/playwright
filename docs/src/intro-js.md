@@ -44,7 +44,7 @@ yarn create playwright
 <TabItem value="pnpm">
 
 ```bash
-pnpm dlx create-playwright
+pnpm create playwright
 ```
 
 </TabItem>
