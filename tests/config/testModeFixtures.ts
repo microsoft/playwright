@@ -38,6 +38,7 @@ export const testModeTest = test.extend<TestModeTestFixtures, TestModeWorkerOpti
     const testMode = {
       default: new DefaultTestMode(),
       service: new DefaultTestMode(),
+      service2: new DefaultTestMode(),
       driver: new DriverTestMode(),
     }[mode];
     require('playwright-core/lib/utils').setUnderTest();

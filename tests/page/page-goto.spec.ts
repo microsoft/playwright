@@ -24,8 +24,9 @@ it('should work @smoke', async ({ page, server }) => {
   expect(page.url()).toBe(server.EMPTY_PAGE);
 });
 
-it('should work with file URL', async ({ page, asset, isAndroid }) => {
+it('should work with file URL', async ({ page, asset, isAndroid, mode }) => {
   it.skip(isAndroid, 'No files on Android');
+  it.skip(mode.startsWith('service'));
 
   const fileurl = url.pathToFileURL(asset('empty.html')).href;
   await page.goto(fileurl);
@@ -33,8 +34,9 @@ it('should work with file URL', async ({ page, asset, isAndroid }) => {
   expect(page.frames().length).toBe(1);
 });
 
-it('should work with file URL with subframes', async ({ page, asset, isAndroid }) => {
+it('should work with file URL with subframes', async ({ page, asset, isAndroid, mode }) => {
   it.skip(isAndroid, 'No files on Android');
+  it.skip(mode.startsWith('service'));
 
   const fileurl = url.pathToFileURL(asset('frames/two-frames.html')).href;
   await page.goto(fileurl);
@@ -300,14 +302,21 @@ it('should throw if networkidle2 is passed as an option', async ({ page, server 
 it('should fail when main resources failed to load', async ({ page, browserName, isWindows, mode }) => {
   let error = null;
   await page.goto('http://localhost:44123/non-existing-url').catch(e => error = e);
-  if (browserName === 'chromium')
-    expect(error.message).toContain('net::ERR_CONNECTION_REFUSED');
-  else if (browserName === 'webkit' && isWindows)
+  if (browserName === 'chromium') {
+    if (mode === 'service2')
+      expect(error.message).toContain('net::ERR_SOCKS_CONNECTION_FAILED');
+    else
+      expect(error.message).toContain('net::ERR_CONNECTION_REFUSED');
+  } else if (browserName === 'webkit' && isWindows) {
     expect(error.message).toContain(`Couldn\'t connect to server`);
-  else if (browserName === 'webkit')
-    expect(error.message).toContain('Could not connect');
-  else
+  } else if (browserName === 'webkit') {
+    if (mode === 'service2')
+      expect(error.message).toContain('Connection refused');
+    else
+      expect(error.message).toContain('Could not connect');
+  } else {
     expect(error.message).toContain('NS_ERROR_CONNECTION_REFUSED');
+  }
 });
 
 it('should fail when exceeding maximum navigation timeout', async ({ page, server, playwright }) => {

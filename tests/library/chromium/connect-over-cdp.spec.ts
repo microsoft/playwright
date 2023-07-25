@@ -21,7 +21,7 @@ import fs from 'fs';
 import { getUserAgent } from '../../../packages/playwright-core/lib/utils/userAgent';
 import { suppressCertificateWarning } from '../../config/utils';
 
-test.skip(({ mode }) => mode === 'service');
+test.skip(({ mode }) => mode.startsWith('service'));
 
 test('should connect to an existing cdp session', async ({ browserType, mode }, testInfo) => {
   const port = 9339 + testInfo.workerIndex;
