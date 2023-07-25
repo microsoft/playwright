@@ -302,13 +302,10 @@ export class TestInfoImpl implements TestInfo {
       title: data.title,
       category: data.category,
       wallTime: data.wallTime,
-      stack: data.stack?.map(frame => ({
-        ...frame,
-        file: path.relative(process.cwd(), frame.file)
-      })),
+      stack: data.stack,
     };
     this._onStepBegin(payload);
-    this._traceEvents.push(createBeforeActionTraceEventForStep(stepId, parentStep?.stepId, data.apiName || data.title, data.params, data.wallTime, data.stack?.length ? [data.stack[0]] : []));
+    this._traceEvents.push(createBeforeActionTraceEventForStep(stepId, parentStep?.stepId, data.apiName || data.title, data.params, data.wallTime, data.stack ?? []));
     return step;
   }
 
