@@ -494,6 +494,14 @@ it('asLocator internal:chain', async () => {
   expect.soft(asLocator('csharp', 'div >> internal:chain="span >> article"', false)).toBe(`Locator("div").Locator(Locator("span").Locator("article"))`);
 });
 
+it('asLocator xpath', async () => {
+  const selector = `//*[contains(normalizer-text(), 'foo']`;
+  expect.soft(asLocator('javascript', selector, false)).toBe(`locator('xpath=//*[contains(normalizer-text(), \\'foo\\']')`);
+  expect.soft(asLocator('python', selector, false)).toBe(`locator(\"xpath=//*[contains(normalizer-text(), 'foo']\")`);
+  expect.soft(asLocator('java', selector, false)).toBe(`locator(\"xpath=//*[contains(normalizer-text(), 'foo']\")`);
+  expect.soft(asLocator('csharp', selector, false)).toBe(`Locator(\"xpath=//*[contains(normalizer-text(), 'foo']\")`);
+});
+
 it('parse locators strictly', () => {
   const selector = 'div >> internal:has-text=\"Goodbye world\"i >> span';
 
