@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect } from './playwright-test-fixtures';
+import { test, expect, parseTestRunnerOutput } from './playwright-test-fixtures';
 import fs from 'fs';
 import path from 'path';
 import { spawnSync } from 'child_process';
@@ -431,10 +431,10 @@ test('should throw when using page in beforeAll', async ({ runInlineTest }) => {
   expect(result.output).toContain(`Error: "context" and "page" fixtures are not supported in "beforeAll"`);
 });
 
-test('should report click error on sigint', async ({ runInlineTest }) => {
+test('should report click error on sigint', async ({ interactWithTestRunner }) => {
   test.skip(process.platform === 'win32', 'No sending SIGINT on Windows');
 
-  const result = await runInlineTest({
+  const testProcess = await interactWithTestRunner({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('timedout', async ({ page }) => {
@@ -445,9 +445,13 @@ test('should report click error on sigint', async ({ runInlineTest }) => {
         await promise;
       });
     `,
-  }, { workers: 1 }, {}, { sendSIGINTAfter: 1 });
+  }, { workers: 1 });
+  await testProcess.waitForOutput('%%SEND-SIGINT%%');
+  process.kill(testProcess.process.pid!, 'SIGINT');
+  const { exitCode } = await testProcess.exited;
+  expect(exitCode).toBe(130);
 
-  expect(result.exitCode).toBe(130);
+  const result = parseTestRunnerOutput(testProcess.output);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(0);
   expect(result.interrupted).toBe(1);

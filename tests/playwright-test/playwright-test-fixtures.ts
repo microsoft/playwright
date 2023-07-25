@@ -26,8 +26,9 @@ import { serverFixtures } from '../config/serverFixtures';
 import type { TestInfo } from './stable-test-runner';
 import { expect } from './stable-test-runner';
 import { test as base } from './stable-test-runner';
+export { countTimes } from '../config/commonFixtures';
 
-export type CliRunResult = {
+type CliRunResult = {
   exitCode: number,
   output: string,
 };
@@ -92,13 +93,7 @@ const configFile = (baseDir: string, files: Files): string | undefined => {
   return undefined;
 };
 
-async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], baseDir: string, params: any, env: NodeJS.ProcessEnv, options: RunOptions, files: Files, mergeReports: (reportFolder: string, env?: NodeJS.ProcessEnv, options?: RunOptions) => Promise<CliRunResult>, useIntermediateMergeReport: boolean): Promise<RunResult> {
-  let reporter;
-  if (useIntermediateMergeReport) {
-    reporter = params.reporter;
-    params.reporter = 'blob';
-  }
-
+function startPlaywrightTest(childProcess: CommonFixtures['childProcess'], baseDir: string, params: any, env: NodeJS.ProcessEnv, options: RunOptions): TestChildProcess {
   const paramList: string[] = [];
   for (const key of Object.keys(params)) {
     for (const value of Array.isArray(params[key]) ? params[key] : [params[key]]) {
@@ -106,7 +101,6 @@ async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], b
       paramList.push(params[key] === true ? `${k}` : `${k}=${value}`);
     }
   }
-  const reportFile = path.join(baseDir, 'report.json');
   const args = ['test'];
   args.push(
       '--workers=2',
@@ -114,14 +108,27 @@ async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], b
   );
   if (options.additionalArgs)
     args.push(...options.additionalArgs);
+  return childProcess({
+    command: ['node', cliEntrypoint, ...args],
+    env: cleanEnv(env),
+    cwd: options.cwd ? path.resolve(baseDir, options.cwd) : baseDir,
+  });
+}
 
-  const cwd = options.cwd ? path.resolve(baseDir, options.cwd) : baseDir;
-  // eslint-disable-next-line prefer-const
-  let { exitCode, output } = await runPlaywrightCommand(childProcess, cwd, args, {
+async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], baseDir: string, params: any, env: NodeJS.ProcessEnv, options: RunOptions, files: Files, mergeReports: (reportFolder: string, env?: NodeJS.ProcessEnv, options?: RunOptions) => Promise<CliRunResult>, useIntermediateMergeReport: boolean): Promise<RunResult> {
+  let reporter;
+  if (useIntermediateMergeReport) {
+    reporter = params.reporter;
+    params.reporter = 'blob';
+  }
+  const reportFile = path.join(baseDir, 'report.json');
+  const testProcess = startPlaywrightTest(childProcess, baseDir, params, {
     PW_TEST_REPORTER: path.join(__dirname, '../../packages/playwright-test/lib/reporters/json.js'),
     PLAYWRIGHT_JSON_OUTPUT_NAME: reportFile,
     ...env,
-  }, options.sendSIGINTAfter);
+  }, options);
+  const { exitCode } = await testProcess.exited;
+  let output = testProcess.output.toString();
 
   if (useIntermediateMergeReport) {
     const additionalArgs = [];
@@ -130,25 +137,14 @@ async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], b
     const config = configFile(baseDir, files);
     if (config)
       additionalArgs.push('--config', config);
+    const cwd = options.cwd ? path.resolve(baseDir, options.cwd) : baseDir;
     const mergeResult = await mergeReports('blob-report', env, { cwd, additionalArgs });
     expect(mergeResult.exitCode).toBe(0);
     output = mergeResult.output;
   }
 
-  const summary = (re: RegExp) => {
-    let result = 0;
-    let match = re.exec(output);
-    while (match) {
-      result += (+match[1]);
-      match = re.exec(output);
-    }
-    return result;
-  };
-  const passed = summary(/(\d+) passed/g);
-  const failed = summary(/(\d+) failed/g);
-  const flaky = summary(/(\d+) flaky/g);
-  const skipped = summary(/(\d+) skipped/g);
-  const interrupted = summary(/(\d+) interrupted/g);
+  const parsed = parseTestRunnerOutput(output);
+
   let report;
   try {
     report = JSON.parse(fs.readFileSync(reportFile).toString());
@@ -171,66 +167,23 @@ async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], b
   if (report)
     visitSuites(report.suites);
 
-  const strippedOutput = stripAnsi(output);
   return {
+    ...parsed,
     exitCode,
-    output: strippedOutput,
-    outputLines: strippedOutput.split('\n').filter(line => line.startsWith('%%')).map(line => line.substring(2).trim()),
     rawOutput: output,
-    passed,
-    failed,
-    flaky,
-    skipped,
-    interrupted,
     report,
     results,
   };
 }
 
 async function runPlaywrightListFiles(childProcess: CommonFixtures['childProcess'], baseDir: string, env: NodeJS.ProcessEnv): Promise<{ output: string, exitCode: number }> {
-  const reportFile = path.join(baseDir, 'report.json');
-  // eslint-disable-next-line prefer-const
-  let { exitCode, output } = await runPlaywrightCommand(childProcess, baseDir, ['list-files'], {
-    PW_TEST_REPORTER: path.join(__dirname, '../../packages/playwright-test/lib/reporters/json.js'),
-    PLAYWRIGHT_JSON_OUTPUT_NAME: reportFile,
-    ...env,
-  });
-  return { exitCode, output };
-}
-
-function watchPlaywrightTest(childProcess: CommonFixtures['childProcess'], baseDir: string, env: NodeJS.ProcessEnv, options: RunOptions): TestChildProcess {
-  const args = ['test', '--workers=2'];
-  if (options.additionalArgs)
-    args.push(...options.additionalArgs);
-  const cwd = options.cwd ? path.resolve(baseDir, options.cwd) : baseDir;
-
-  const command = ['node', cliEntrypoint];
-  command.push(...args);
   const testProcess = childProcess({
-    command,
-    env: cleanEnv({ PWTEST_WATCH: '1', ...env }),
-    cwd,
-  });
-  return testProcess;
-}
-
-async function runPlaywrightCommand(childProcess: CommonFixtures['childProcess'], cwd: string, commandWithArguments: string[], env: NodeJS.ProcessEnv, sendSIGINTAfter?: number): Promise<CliRunResult> {
-  const command = ['node', cliEntrypoint];
-  command.push(...commandWithArguments);
-  const testProcess = childProcess({
-    command,
+    command: ['node', cliEntrypoint, 'list-files'],
     env: cleanEnv(env),
-    cwd,
+    cwd: baseDir,
   });
-  let didSendSigint = false;
-  testProcess.onOutput = () => {
-    if (sendSIGINTAfter && !didSendSigint && countTimes(testProcess.output, '%%SEND-SIGINT%%') >= sendSIGINTAfter) {
-      didSendSigint = true;
-      process.kill(testProcess.process.pid!, 'SIGINT');
-    }
-  };
   const { exitCode } = await testProcess.exited;
-  return { exitCode, output: testProcess.output.toString() };
+  return { exitCode, output: testProcess.output };
 }
 
 export function cleanEnv(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
@@ -261,7 +214,6 @@ export function cleanEnv(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
 }
 
 export type RunOptions = {
-  sendSIGINTAfter?: number;
   additionalArgs?: string[];
   cwd?: string,
 };
@@ -271,6 +223,7 @@ type Fixtures = {
   runInlineTest: (files: Files, params?: Params, env?: NodeJS.ProcessEnv, options?: RunOptions) => Promise<RunResult>;
   runListFiles: (files: Files) => Promise<{ output: string, exitCode: number }>;
   runWatchTest: (files: Files, env?: NodeJS.ProcessEnv, options?: RunOptions) => Promise<TestChildProcess>;
+  interactWithTestRunner: (files: Files, params?: Params, env?: NodeJS.ProcessEnv, options?: RunOptions) => Promise<TestChildProcess>;
   runTSC: (files: Files) => Promise<TSCResult>;
   mergeReports: (reportFolder: string, env?: NodeJS.ProcessEnv, options?: RunOptions) => Promise<CliRunResult>
   useIntermediateMergeReport: boolean;
@@ -310,12 +263,16 @@ export const test = base
         await rimraf(cacheDir);
       },
 
-      runWatchTest: async ({ childProcess }, use, testInfo: TestInfo) => {
+      runWatchTest: async ({ interactWithTestRunner }, use, testInfo: TestInfo) => {
+        await use((files, env, options) => interactWithTestRunner(files, {}, { ...env, PWTEST_WATCH: '1' }, options));
+      },
+
+      interactWithTestRunner: async ({ childProcess }, use, testInfo: TestInfo) => {
         const cacheDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-test-cache-'));
         let testProcess: TestChildProcess | undefined;
-        await use(async (files: Files, env: NodeJS.ProcessEnv = {}, options: RunOptions = {}) => {
+        await use(async (files: Files, params: Params = {}, env: NodeJS.ProcessEnv = {}, options: RunOptions = {}) => {
           const baseDir = await writeFiles(testInfo, files, true);
-          testProcess = watchPlaywrightTest(childProcess, baseDir, { ...env, PWTEST_CACHE_DIR: cacheDir }, options);
+          testProcess = startPlaywrightTest(childProcess, baseDir, params, { ...env, PWTEST_CACHE_DIR: cacheDir }, options);
           return testProcess;
         });
         await testProcess?.kill();
@@ -388,18 +345,6 @@ export function stripAnsi(str: string): string {
   return str.replace(asciiRegex, '');
 }
 
-export function countTimes(s: string, sub: string): number {
-  let result = 0;
-  for (let index = 0; index !== -1;) {
-    index = s.indexOf(sub, index);
-    if (index !== -1) {
-      result++;
-      index += sub.length;
-    }
-  }
-  return result;
-}
-
 export function createImage(width: number, height: number, r: number = 0, g: number = 0, b: number = 0, a: number = 255): Buffer {
   const image = new PNG({ width, height });
   // Make both images red.
@@ -444,5 +389,34 @@ export function expectTestHelper(result: RunResult) {
       expect(test.status, `title: ${title}`).toBe(status);
       expect(test.annotations.map(a => a.type), `title: ${title}`).toEqual(annotations);
     }
+  };
+}
+
+export function parseTestRunnerOutput(output: string) {
+  const summary = (re: RegExp) => {
+    let result = 0;
+    let match = re.exec(output);
+    while (match) {
+      result += (+match[1]);
+      match = re.exec(output);
+    }
+    return result;
+  };
+  const passed = summary(/(\d+) passed/g);
+  const failed = summary(/(\d+) failed/g);
+  const flaky = summary(/(\d+) flaky/g);
+  const skipped = summary(/(\d+) skipped/g);
+  const interrupted = summary(/(\d+) interrupted/g);
+
+  const strippedOutput = stripAnsi(output);
+  return {
+    output: strippedOutput,
+    outputLines: strippedOutput.split('\n').filter(line => line.startsWith('%%')).map(line => line.substring(2).trim()),
+    rawOutput: output,
+    passed,
+    failed,
+    flaky,
+    skipped,
+    interrupted,
   };
 }
