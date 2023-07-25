@@ -581,3 +581,114 @@ test('should not hang on worker error in test file', async ({ runInlineTest }) =
   expect(result.results[0].error.message).toContain('Internal error: worker process exited unexpectedly');
   expect(result.results[1].status).toBe('skipped');
 });
+
+test('fast double SIGINT should be ignored', async ({ interactWithTestRunner }) => {
+  test.skip(process.platform === 'win32', 'No sending SIGINT on Windows');
+
+  const testProcess = await interactWithTestRunner({
+    'playwright.config.ts': `
+      export default { globalTeardown: './globalTeardown.ts' };
+    `,
+    'globalTeardown.ts': `
+      export default async function() {
+        console.log('teardown1');
+        await new Promise(f => setTimeout(f, 2000));
+        console.log('teardown2');
+      }
+    `,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('interrupted', async ({ }) => {
+        console.log('\\n%%SEND-SIGINT%%');
+        await new Promise(() => {});
+      });
+    `,
+  });
+  await testProcess.waitForOutput('%%SEND-SIGINT%%');
+  // Send SIGINT twice in quick succession.
+  process.kill(testProcess.process.pid!, 'SIGINT');
+  process.kill(testProcess.process.pid!, 'SIGINT');
+  const { exitCode } = await testProcess.exited;
+  expect(exitCode).toBe(130);
+
+  const result = parseTestRunnerOutput(testProcess.output);
+  expect(result.interrupted).toBe(1);
+  expect(result.output).toContain('teardown1');
+  expect(result.output).toContain('teardown2');
+});
+
+test('slow double SIGINT should be respected', async ({ interactWithTestRunner }) => {
+  test.skip(process.platform === 'win32', 'No sending SIGINT on Windows');
+
+  const testProcess = await interactWithTestRunner({
+    'playwright.config.ts': `
+      export default { globalTeardown: './globalTeardown.ts' };
+    `,
+    'globalTeardown.ts': `
+      export default async function() {
+        console.log('teardown1');
+        await new Promise(f => setTimeout(f, 1000000));
+      }
+    `,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('interrupted', async ({ }) => {
+        console.log('\\n%%SEND-SIGINT%%');
+        await new Promise(() => {});
+      });
+    `,
+  });
+  await testProcess.waitForOutput('%%SEND-SIGINT%%');
+  process.kill(testProcess.process.pid!, 'SIGINT');
+  await new Promise(f => setTimeout(f, 2000));
+  process.kill(testProcess.process.pid!, 'SIGINT');
+  const { exitCode } = await testProcess.exited;
+  expect(exitCode).toBe(130);
+
+  const result = parseTestRunnerOutput(testProcess.output);
+  expect(result.interrupted).toBe(1);
+  expect(result.output).toContain('teardown1');
+});
+
+test('slow double SIGINT should be respected in reporter.onExit', async ({ interactWithTestRunner }) => {
+  test.skip(process.platform === 'win32', 'No sending SIGINT on Windows');
+
+  const testProcess = await interactWithTestRunner({
+    'playwright.config.ts': `
+      export default { reporter: './reporter' }
+    `,
+    'reporter.ts': `
+      export default class MyReporter {
+        onStdOut(chunk) {
+          process.stdout.write(chunk);
+        }
+
+        async onExit() {
+          // This emulates html reporter, without opening a tab in the default browser.
+          console.log('MyReporter.onExit started');
+          await new Promise(f => setTimeout(f, 100000));
+          console.log('MyReporter.onExit finished');
+        }
+      }
+    `,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('interrupted', async ({ }) => {
+        console.log('\\n%%SEND-SIGINT%%');
+        await new Promise(() => {});
+      });
+    `,
+  }, { reporter: '' });
+  await testProcess.waitForOutput('%%SEND-SIGINT%%');
+  process.kill(testProcess.process.pid!, 'SIGINT');
+  await new Promise(f => setTimeout(f, 2000));
+  await testProcess.waitForOutput('MyReporter.onExit started');
+  process.kill(testProcess.process.pid!, 'SIGINT');
+  const { exitCode, signal } = await testProcess.exited;
+  expect(exitCode).toBe(null);
+  expect(signal).toBe('SIGINT');  // Default handler should report the signal.
+
+  const result = parseTestRunnerOutput(testProcess.output);
+  expect(result.output).toContain('MyReporter.onExit started');
+  expect(result.output).not.toContain('MyReporter.onExit finished');
+});
