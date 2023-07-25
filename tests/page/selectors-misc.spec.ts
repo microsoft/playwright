@@ -318,6 +318,12 @@ it('should work with pipe in xpath', async ({ page, server }) => {
   await page.click(`//code|//span[@id="t2"]`);
 });
 
+it('should print original xpath in error', async ({ page, browserName }) => {
+  const error = await page.locator(`//*[contains(@Class, 'foo']`).isVisible().catch(e => e);
+  expect(error.message).toContain('//*[contains(@Class, \\\'foo\\\']');
+  expect(error.message).not.toContain('.//*[contains(@Class, \'foo\']');
+});
+
 it('data-testid on the handle should be relative', async ({ page }) => {
   await page.setContent(`
     <span data-testid="find-me" id=target1>1</span>

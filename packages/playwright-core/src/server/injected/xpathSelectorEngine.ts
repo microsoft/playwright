@@ -18,7 +18,7 @@ import type { SelectorEngine, SelectorRoot } from './selectorEngine';
 
 export const XPathEngine: SelectorEngine = {
   queryAll(root: SelectorRoot, selector: string): Element[] {
-    if (selector.startsWith('/'))
+    if (selector.startsWith('/') && root.nodeType !== Node.DOCUMENT_NODE)
       selector = '.' + selector;
     const result: Element[] = [];
     const document = root.ownerDocument || root;
