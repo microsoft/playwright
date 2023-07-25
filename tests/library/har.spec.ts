@@ -53,7 +53,7 @@ it('should have version and creator', async ({ contextFactory, server }, testInf
   const log = await getLog();
   expect(log.version).toBe('1.2');
   expect(log.creator.name).toBe('Playwright');
-  expect(log.creator.version).toBe(require('../../package.json')['version']);
+  expect(log.creator.version).toBe(process.env.PW_VERSION_OVERRIDE || require('../../package.json')['version']);
 });
 
 it('should have browser', async ({ browserName, browser, contextFactory, server }, testInfo) => {
@@ -584,7 +584,7 @@ it('should have connection details', async ({ contextFactory, server, browserNam
   const log = await getLog();
   const { serverIPAddress, _serverPort: port, _securityDetails: securityDetails } = log.entries[0];
   expect(serverIPAddress).toMatch(/^127\.0\.0\.1|\[::1\]/);
-  if (mode !== 'service')
+  if (!mode.startsWith('service'))
     expect(port).toBe(server.PORT);
   expect(securityDetails).toEqual({});
 });
@@ -598,7 +598,7 @@ it('should have security details', async ({ contextFactory, httpsServer, browser
   const log = await getLog();
   const { serverIPAddress, _serverPort: port, _securityDetails: securityDetails } = log.entries[0];
   expect(serverIPAddress).toMatch(/^127\.0\.0\.1|\[::1\]/);
-  if (mode !== 'service')
+  if (!mode.startsWith('service'))
     expect(port).toBe(httpsServer.PORT);
   if (browserName === 'webkit' && platform === 'darwin')
     expect(securityDetails).toEqual({ protocol: 'TLS 1.3', subjectName: 'puppeteer-tests', validFrom: 1550084863, validTo: 33086084863 });
@@ -620,13 +620,13 @@ it('should have connection details for redirects', async ({ contextFactory, serv
     expect(detailsFoo._serverPort).toBeUndefined();
   } else {
     expect(detailsFoo.serverIPAddress).toMatch(/^127\.0\.0\.1|\[::1\]/);
-    if (mode !== 'service')
+    if (!mode.startsWith('service'))
       expect(detailsFoo._serverPort).toBe(server.PORT);
   }
 
   const detailsEmpty = log.entries[1];
   expect(detailsEmpty.serverIPAddress).toMatch(/^127\.0\.0\.1|\[::1\]/);
-  if (mode !== 'service')
+  if (!mode.startsWith('service'))
     expect(detailsEmpty._serverPort).toBe(server.PORT);
 });
 
@@ -640,7 +640,7 @@ it('should have connection details for failed requests', async ({ contextFactory
   const log = await getLog();
   const { serverIPAddress, _serverPort: port } = log.entries[0];
   expect(serverIPAddress).toMatch(/^127\.0\.0\.1|\[::1\]/);
-  if (mode !== 'service')
+  if (!mode.startsWith('service'))
     expect(port).toBe(server.PORT);
 });
 
@@ -648,7 +648,7 @@ it('should return server address directly from response', async ({ page, server,
   const response = await page.goto(server.EMPTY_PAGE);
   const { ipAddress, port } = await response.serverAddr();
   expect(ipAddress).toMatch(/^127\.0\.0\.1|\[::1\]/);
-  if (mode !== 'service')
+  if (!mode.startsWith('service'))
     expect(port).toBe(server.PORT);
 });
 

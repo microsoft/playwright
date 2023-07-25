@@ -91,7 +91,8 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
     await run(_contextFactory);
   },
 
-  createUserDataDir: async ({}, run) => {
+  createUserDataDir: async ({ mode }, run) => {
+    test.skip(mode.startsWith('service'));
     const dirs: string[] = [];
     // We do not put user data dir in testOutputPath,
     // because we do not want to upload them as test result artifacts.
@@ -107,7 +108,8 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
     await removeFolders(dirs);
   },
 
-  launchPersistent: async ({ createUserDataDir, browserType }, run) => {
+  launchPersistent: async ({ createUserDataDir, browserType, mode }, run) => {
+    test.skip(mode.startsWith('service'));
     let persistentContext: BrowserContext | undefined;
     await run(async options => {
       if (persistentContext)
@@ -121,7 +123,8 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
       await persistentContext.close();
   },
 
-  startRemoteServer: async ({ childProcess, browserType }, run) => {
+  startRemoteServer: async ({ childProcess, browserType, mode }, run) => {
+    test.skip(mode.startsWith('service'));
     let server: PlaywrightServer | undefined;
     const fn = async (kind: 'launchServer' | 'run-server', options?: RemoteServerOptions) => {
       if (server)

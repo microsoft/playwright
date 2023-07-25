@@ -77,5 +77,7 @@ export function getEmbedderName(): { embedderName: string, embedderVersion: stri
 
 export function getPlaywrightVersion(majorMinorOnly = false): string {
   const packageJson = require('./../../package.json');
+  if (process.env.PW_VERSION_OVERRIDE)
+    return process.env.PW_VERSION_OVERRIDE;
   return majorMinorOnly ? packageJson.version.split('.').slice(0, 2).join('.') : packageJson.version;
 }

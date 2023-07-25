@@ -183,7 +183,7 @@ test('should collect two traces', async ({ context, page, server }, testInfo) =>
 });
 
 test('should respect tracesDir and name', async ({ browserType, server, mode }, testInfo) => {
-  test.skip(mode === 'service', 'Service ignores tracesDir');
+  test.skip(mode.startsWith('service'), 'Service ignores tracesDir');
 
   const tracesDir = testInfo.outputPath('traces');
   const browser = await browserType.launch({ tracesDir });
@@ -236,7 +236,7 @@ test('should respect tracesDir and name', async ({ browserType, server, mode }, 
   }
 });
 
-test('should not include trace resources from the provious chunks', async ({ context, page, server, browserName }, testInfo) => {
+test('should not include trace resources from the previous chunks', async ({ context, page, server, browserName }, testInfo) => {
   test.skip(browserName !== 'chromium', 'The number of screenshots is flaky in non-Chromium');
   await context.tracing.start({ screenshots: true, snapshots: true, sources: true });
 
@@ -638,7 +638,7 @@ test('should store postData for global request', async ({ request, server }, tes
 });
 
 test('should not flush console events', async ({ context, page, mode }, testInfo) => {
-  test.skip(mode === 'service', 'Uses artifactsFolderName');
+  test.skip(mode.startsWith('service'), 'Uses artifactsFolderName');
   const testId = test.info().testId;
   await context.tracing.start({ name: testId });
   const promise = new Promise<void>(f => {
@@ -704,7 +704,7 @@ test('should flush console events on tracing stop', async ({ context, page }, te
 });
 
 test('should not emit after w/o before', async ({ browserType, mode }, testInfo) => {
-  test.skip(mode === 'service', 'Service ignores tracesDir');
+  test.skip(mode.startsWith('service'), 'Service ignores tracesDir');
 
   const tracesDir = testInfo.outputPath('traces');
   const browser = await browserType.launch({ tracesDir });

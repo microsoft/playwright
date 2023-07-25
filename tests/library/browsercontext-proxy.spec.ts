@@ -16,6 +16,8 @@
 
 import { browserTest as it, expect } from '../config/browserTest';
 
+it.skip(({ mode }) => mode.startsWith('service'));
+
 it.use({
   launchOptions: async ({ launchOptions }, use) => {
     await use({

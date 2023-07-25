@@ -70,6 +70,7 @@ const test = playwrightTest.extend<ExtraFixtures>({
 });
 
 test.slow(true, 'All connect tests are slow');
+test.skip(({ mode }) => mode.startsWith('service'));
 
 for (const kind of ['launchServer', 'run-server'] as const) {
   test.describe(kind, () => {
@@ -644,7 +645,8 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       expect(await response.json()).toEqual({ 'foo': 'bar' });
     });
 
-    test('should upload large file', async ({ connect, startRemoteServer, server, browserName, isMac }, testInfo) => {
+    test('should upload large file', async ({ connect, startRemoteServer, server, browserName, isMac, mode }, testInfo) => {
+      test.skip(mode.startsWith('service'), 'Take it easy on service');
       test.skip(browserName === 'webkit' && isMac && parseInt(os.release(), 10) < 20, 'WebKit for macOS 10.15 is frozen and does not have corresponding protocol features.');
       test.slow();
       const remoteServer = await startRemoteServer(kind);

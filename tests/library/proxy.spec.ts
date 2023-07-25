@@ -18,7 +18,7 @@ import { playwrightTest as it, expect } from '../config/browserTest';
 import socks from 'socksv5';
 import net from 'net';
 
-it.skip(({ mode }) => mode === 'service');
+it.skip(({ mode }) => mode.startsWith('service'));
 
 it('should throw for bad server value', async ({ browserType }) => {
   const error = await browserType.launch({

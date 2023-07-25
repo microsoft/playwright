@@ -43,7 +43,7 @@ it('should kill browser process on timeout after close', async ({ browserType, m
 
 it('should throw a friendly error if its headed and there is no xserver on linux running', async ({ mode, browserType, platform }) => {
   it.skip(platform !== 'linux');
-  it.skip(mode === 'service');
+  it.skip(mode.startsWith('service'));
 
   const error: Error = await browserType.launch({
     headless: false,

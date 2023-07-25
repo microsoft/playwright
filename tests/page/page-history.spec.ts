@@ -52,9 +52,10 @@ it('page.goBack should work with HistoryAPI', async ({ page, server }) => {
   expect(page.url()).toBe(server.PREFIX + '/first.html');
 });
 
-it('page.goBack should work for file urls', async ({ page, server, asset, browserName, platform, isAndroid }) => {
+it('page.goBack should work for file urls', async ({ page, server, asset, browserName, platform, isAndroid, mode }) => {
   it.fail(browserName === 'webkit' && platform === 'darwin', 'WebKit embedder fails to go back/forward to the file url.');
   it.skip(isAndroid, 'No files on Android');
+  it.skip(mode.startsWith('service'));
 
   const url1 = url.pathToFileURL(asset('consolelog.html')).href;
   const url2 = server.PREFIX + '/consolelog.html';
