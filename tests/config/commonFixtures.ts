@@ -204,8 +204,8 @@ export class TestChildProcess {
       throw new Error(`Process received signal: ${r.signal}`);
   }
 
-  async waitForOutput(substring: string) {
-    while (!stripAnsi(this.output).includes(substring))
+  async waitForOutput(substring: string, count = 1) {
+    while (countTimes(stripAnsi(this.output), substring) < count)
       await new Promise<void>(f => this._outputCallbacks.add(f));
   }
 
@@ -275,3 +275,15 @@ export const commonFixtures: Fixtures<CommonFixtures, CommonWorkerFixtures> = {
     token.canceled = true;
   },
 };
+
+export function countTimes(s: string, sub: string): number {
+  let result = 0;
+  for (let index = 0; index !== -1;) {
+    index = s.indexOf(sub, index);
+    if (index !== -1) {
+      result++;
+      index += sub.length;
+    }
+  }
+  return result;
+}

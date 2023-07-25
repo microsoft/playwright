@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+import fs from 'fs';
 import path from 'path';
-import { test, expect } from './playwright-test-fixtures';
+import { test, expect, parseTestRunnerOutput } from './playwright-test-fixtures';
 
 test('it should not allow multiple tests with the same name per suite', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -93,10 +95,10 @@ test('should continue with other tests after worker process suddenly exits', asy
   expect(result.output).toContain('Internal error: worker process exited unexpectedly');
 });
 
-test('sigint should stop workers', async ({ runInlineTest }) => {
+test('sigint should stop workers', async ({ interactWithTestRunner }) => {
   test.skip(process.platform === 'win32', 'No sending SIGINT on Windows');
 
-  const result = await runInlineTest({
+  const testProcess = await interactWithTestRunner({
     'a.spec.js': `
       import { test, expect } from '@playwright/test';
       test('interrupted1', async () => {
@@ -117,8 +119,16 @@ test('sigint should stop workers', async ({ runInlineTest }) => {
         console.log('\\n%%skipped2');
       });
     `,
-  }, { 'workers': 2, 'reporter': 'line,json' }, {}, { sendSIGINTAfter: 2 });
-  expect(result.exitCode).toBe(130);
+  }, { 'workers': 2, 'reporter': 'line,json' }, {
+    PW_TEST_REPORTER: path.join(__dirname, '../../packages/playwright-test/lib/reporters/json.js'),
+    PLAYWRIGHT_JSON_OUTPUT_NAME: 'report.json',
+  });
+  await testProcess.waitForOutput('%%SEND-SIGINT%%', 2);
+  process.kill(testProcess.process.pid!, 'SIGINT');
+  const { exitCode } = await testProcess.exited;
+  expect(exitCode).toBe(130);
+
+  const result = parseTestRunnerOutput(testProcess.output);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(0);
   expect(result.skipped).toBe(2);
@@ -130,11 +140,12 @@ test('sigint should stop workers', async ({ runInlineTest }) => {
   expect(result.output).toContain('Test was interrupted.');
   expect(result.output).not.toContain('Test timeout of');
 
-  const interrupted2 = result.report.suites[1].specs[0];
+  const report = JSON.parse(fs.readFileSync(test.info().outputPath('report.json'), 'utf8'));
+  const interrupted2 = report.suites[1].specs[0];
   expect(interrupted2.title).toBe('interrupted2');
   expect(interrupted2.tests[0].results[0].workerIndex === 0 || interrupted2.tests[0].results[0].workerIndex === 1).toBe(true);
 
-  const skipped2 = result.report.suites[1].specs[1];
+  const skipped2 = report.suites[1].specs[1];
   expect(skipped2.title).toBe('skipped2');
   expect(skipped2.tests[0].results[0].workerIndex).toBe(-1);
 });
@@ -169,10 +180,10 @@ test('should use the first occurring error when an unhandled exception was throw
   expect(result.report.suites[0].specs[0].tests[0].results[0].error!.message).toBe('first error');
 });
 
-test('worker interrupt should report errors', async ({ runInlineTest }) => {
+test('worker interrupt should report errors', async ({ interactWithTestRunner }) => {
   test.skip(process.platform === 'win32', 'No sending SIGINT on Windows');
 
-  const result = await runInlineTest({
+  const testProcess = await interactWithTestRunner({
     'a.spec.ts': `
       import { test as base, expect } from '@playwright/test';
       const test = base.extend({
@@ -187,8 +198,13 @@ test('worker interrupt should report errors', async ({ runInlineTest }) => {
         await throwOnTeardown;
       });
     `,
-  }, {}, {}, { sendSIGINTAfter: 1 });
-  expect(result.exitCode).toBe(130);
+  });
+  await testProcess.waitForOutput('%%SEND-SIGINT%%');
+  process.kill(testProcess.process.pid!, 'SIGINT');
+  const { exitCode } = await testProcess.exited;
+  expect(exitCode).toBe(130);
+
+  const result = parseTestRunnerOutput(testProcess.output);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(0);
   expect(result.interrupted).toBe(1);
@@ -334,10 +350,10 @@ test('should not hang if test suites in worker are inconsistent with runner', as
   expect(result.report.suites[0].specs[1].tests[0].results[0].error!.message).toBe('Test(s) not found in the worker process. Make sure test titles do not change:\nproject-name > a.spec.js > Test 1 - bar\nproject-name > a.spec.js > Test 2 - baz');
 });
 
-test('sigint should stop global setup', async ({ runInlineTest }) => {
+test('sigint should stop global setup', async ({ interactWithTestRunner }) => {
   test.skip(process.platform === 'win32', 'No sending SIGINT on Windows');
 
-  const result = await runInlineTest({
+  const testProcess = await interactWithTestRunner({
     'playwright.config.ts': `
       module.exports = {
         globalSetup: './globalSetup',
@@ -360,18 +376,22 @@ test('sigint should stop global setup', async ({ runInlineTest }) => {
       import { test, expect } from '@playwright/test';
       test('test', async () => { });
     `,
-  }, { 'workers': 1 }, {}, { sendSIGINTAfter: 1 });
-  expect(result.exitCode).toBe(130);
+  }, { 'workers': 1 });
+  await testProcess.waitForOutput('%%SEND-SIGINT%%');
+  process.kill(testProcess.process.pid!, 'SIGINT');
+  const { exitCode } = await testProcess.exited;
+  expect(exitCode).toBe(130);
+
+  const result = parseTestRunnerOutput(testProcess.output);
   expect(result.passed).toBe(0);
-  const output = result.output;
-  expect(output).toContain('Global setup');
-  expect(output).not.toContain('Global teardown');
+  expect(result.output).toContain('Global setup');
+  expect(result.output).not.toContain('Global teardown');
 });
 
-test('sigint should stop plugins', async ({ runInlineTest }) => {
+test('sigint should stop plugins', async ({ interactWithTestRunner }) => {
   test.skip(process.platform === 'win32', 'No sending SIGINT on Windows');
 
-  const result = await runInlineTest({
+  const testProcess = await interactWithTestRunner({
     'playwright.config.ts': `
       const _plugins = [];
       _plugins.push(() => ({
@@ -403,21 +423,25 @@ test('sigint should stop plugins', async ({ runInlineTest }) => {
         console.log('testing!');
       });
     `,
-  }, { 'workers': 1 }, {}, { sendSIGINTAfter: 1 });
-  expect(result.exitCode).toBe(130);
+  }, { 'workers': 1 });
+  await testProcess.waitForOutput('%%SEND-SIGINT%%');
+  process.kill(testProcess.process.pid!, 'SIGINT');
+  const { exitCode } = await testProcess.exited;
+  expect(exitCode).toBe(130);
+
+  const result = parseTestRunnerOutput(testProcess.output);
   expect(result.passed).toBe(0);
-  const output = result.output;
-  expect(output).toContain('Plugin1 setup');
-  expect(output).toContain('Plugin1 teardown');
-  expect(output).not.toContain('Plugin2 setup');
-  expect(output).not.toContain('Plugin2 teardown');
-  expect(output).not.toContain('testing!');
+  expect(result.output).toContain('Plugin1 setup');
+  expect(result.output).toContain('Plugin1 teardown');
+  expect(result.output).not.toContain('Plugin2 setup');
+  expect(result.output).not.toContain('Plugin2 teardown');
+  expect(result.output).not.toContain('testing!');
 });
 
-test('sigint should stop plugins 2', async ({ runInlineTest }) => {
+test('sigint should stop plugins 2', async ({ interactWithTestRunner }) => {
   test.skip(process.platform === 'win32', 'No sending SIGINT on Windows');
 
-  const result = await runInlineTest({
+  const testProcess = await interactWithTestRunner({
     'playwright.config.ts': `
       const _plugins = [];
       _plugins.push(() => ({
@@ -447,15 +471,19 @@ test('sigint should stop plugins 2', async ({ runInlineTest }) => {
         console.log('testing!');
       });
     `,
-  }, { 'workers': 1 }, {}, { sendSIGINTAfter: 1 });
-  expect(result.exitCode).toBe(130);
+  }, { 'workers': 1 });
+  await testProcess.waitForOutput('%%SEND-SIGINT%%');
+  process.kill(testProcess.process.pid!, 'SIGINT');
+  const { exitCode } = await testProcess.exited;
+  expect(exitCode).toBe(130);
+
+  const result = parseTestRunnerOutput(testProcess.output);
   expect(result.passed).toBe(0);
-  const output = result.output;
-  expect(output).toContain('Plugin1 setup');
-  expect(output).toContain('Plugin2 setup');
-  expect(output).toContain('Plugin1 teardown');
-  expect(output).toContain('Plugin2 teardown');
-  expect(output).not.toContain('testing!');
+  expect(result.output).toContain('Plugin1 setup');
+  expect(result.output).toContain('Plugin2 setup');
+  expect(result.output).toContain('Plugin1 teardown');
+  expect(result.output).toContain('Plugin2 teardown');
+  expect(result.output).not.toContain('testing!');
 });
 
 test('should not crash with duplicate titles and .only', async ({ runInlineTest }) => {

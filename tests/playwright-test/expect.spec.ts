@@ -15,7 +15,7 @@
  */
 
 import path from 'path';
-import { test, expect } from './playwright-test-fixtures';
+import { test, expect, parseTestRunnerOutput } from './playwright-test-fixtures';
 
 test('should be able to call expect.extend in config', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -588,10 +588,10 @@ test('should print pending operations for toHaveText', async ({ runInlineTest })
   expect(output).toContain('waiting for locator(\'no-such-thing\')');
 });
 
-test('should print expected/received on Ctrl+C', async ({ runInlineTest }) => {
+test('should print expected/received on Ctrl+C', async ({ interactWithTestRunner }) => {
   test.skip(process.platform === 'win32', 'No sending SIGINT on Windows');
 
-  const result = await runInlineTest({
+  const testProcess = await interactWithTestRunner({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
 
@@ -603,8 +603,13 @@ test('should print expected/received on Ctrl+C', async ({ runInlineTest }) => {
         await promise;
       });
       `,
-  }, { workers: 1 }, {}, { sendSIGINTAfter: 1 });
-  expect(result.exitCode).toBe(130);
+  }, { workers: 1 });
+  await testProcess.waitForOutput('%%SEND-SIGINT%%');
+  process.kill(testProcess.process.pid!, 'SIGINT');
+  const { exitCode } = await testProcess.exited;
+  expect(exitCode).toBe(130);
+
+  const result = parseTestRunnerOutput(testProcess.output);
   expect(result.passed).toBe(0);
   expect(result.interrupted).toBe(1);
   expect(result.output).toContain('Expected string: "Text 2"');

@@ -16,7 +16,7 @@
 
 import type http from 'http';
 import path from 'path';
-import { test, expect } from './playwright-test-fixtures';
+import { test, expect, parseTestRunnerOutput } from './playwright-test-fixtures';
 import { createHttpServer } from '../../packages/playwright-core/lib/utils/network';
 
 const SIMPLE_SERVER_PATH = path.join(__dirname, 'assets', 'simple-server.js');
@@ -705,10 +705,10 @@ test('should be able to ignore "stderr"', async ({ runInlineTest }, { workerInde
   expect(result.output).not.toContain('error from server');
 });
 
-test('should forward stdout when set to "pipe" before server is ready', async ({ runInlineTest }, { workerIndex }) => {
+test('should forward stdout when set to "pipe" before server is ready', async ({ interactWithTestRunner }) => {
   test.skip(process.platform === 'win32', 'No sending SIGINT on Windows');
 
-  const result = await runInlineTest({
+  const testProcess = await interactWithTestRunner({
     'web-server.js': `
       console.log('output from server');
       console.log('\\n%%SEND-SIGINT%%');
@@ -728,7 +728,12 @@ test('should forward stdout when set to "pipe" before server is ready', async ({
         },
       };
     `,
-  }, { workers: 1 }, {}, { sendSIGINTAfter: 1 });
+  }, { workers: 1 });
+  await testProcess.waitForOutput('%%SEND-SIGINT%%');
+  process.kill(testProcess.process.pid!, 'SIGINT');
+  await testProcess.exited;
+
+  const result = parseTestRunnerOutput(testProcess.output);
   expect(result.passed).toBe(0);
   expect(result.output).toContain('[WebServer] output from server');
   expect(result.output).not.toContain('Timed out waiting 3000ms');
