@@ -475,7 +475,7 @@ export default defineConfig({
 });
 ```
 
-Learn more about [automatic screenshots](../test-configuration.md#automatic-screenshots).
+Learn more about [automatic screenshots](../test-use-options.md#recording-options).
 
 ## property: TestOptions.storageState = %%-js-python-context-option-storage-state-%%
 * since: v1.10
@@ -554,7 +554,7 @@ export default defineConfig({
 });
 ```
 
-Learn more about [recording trace](../test-configuration.md#record-test-trace).
+Learn more about [recording trace](../test-use-options.md#recording-options).
 
 ## property: TestOptions.userAgent = %%-context-option-useragent-%%
 * since: v1.10
@@ -599,7 +599,7 @@ export default defineConfig({
 });
 ```
 
-Learn more about [recording video](../test-configuration.md#record-video).
+Learn more about [recording video](../test-use-options.md#recording-options).
 
 ## property: TestOptions.viewport = %%-context-option-viewport-%%
 * since: v1.10

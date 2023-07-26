@@ -95,7 +95,7 @@ By default, axe checks against a wide variety of accessibility rules. Some of th
 
 You can constrain an accessibility scan to only run those rules which are "tagged" as corresponding to specific WCAG success criteria by using [`AxeBuilder.withTags()`](https://github.com/dequelabs/axe-core-npm/blob/develop/packages/playwright/README.md#axebuilderwithtagstags-stringarray). For example, [Accessibility Insights for Web's Automated Checks](https://accessibilityinsights.io/docs/web/getstarted/fastpass/?referrer=playwright-accessibility-testing-js) only include axe rules that test for violations of WCAG A and AA success criteria; to match that behavior, you would use the tags `wcag2a`, `wcag2aa`, `wcag21a`, and `wcag21aa`.
 
-Note that [automated testing cannot detect all types of WCAG violations](#disclaimer).
+Note that automated testing cannot detect all types of WCAG violations.
 
 ```js
 test('should not have any automatically detectable WCAG A or AA violations', async ({ page }) => {

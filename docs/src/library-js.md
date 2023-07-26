@@ -113,7 +113,7 @@ In addition to the above, Playwright Test, as a full-featured Test Runner, inclu
 - [Web-First Assertions](./test-assertions.md)
 - [Reporting](./test-reporters.md)
 - [Retries](./test-retries.md)
-- [Easily Enabled Tracing](./test-configuration.md#record-test-trace)
+- [Easily Enabled Tracing](./trace-viewer-intro.md)
 - and more…
 
 ## Usage

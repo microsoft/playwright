@@ -127,7 +127,7 @@ This version was also tested against the following stable channels:
 ### New APIs
 
 - New options [`option: updateMode`] and [`option: updateContent`] in [`method: Page.routeFromHAR`] and [`method: BrowserContext.routeFromHAR`].
-- Chaining existing locator objects, see [locator docs](./locators.md#chaining-locators) for details.
+- Chaining existing locator objects, see [locator docs](./locators.md#matching-inside-a-locator) for details.
 - New option [`option: name`] in method [`method: Tracing.startChunk`].
 
 ### Browser Versions
@@ -497,7 +497,7 @@ Use the new methods [`method: Page.routeFromHAR`] or [`method: BrowserContext.ro
 await context.RouteFromHARAsync("example.har");
 ```
 
-Read more in [our documentation](./network#record-and-replay-requests).
+Read more in [our documentation](./mock.md#mocking-with-har-files).
 
 
 ### Advanced Routing
@@ -676,7 +676,7 @@ This version was also tested against the following stable channels:
   await Page.Locator("article", new() { Has = Page.Locator(".highlight") }).ClickAsync();
   ```
 
-  Read more in [locator documentation](./api/class-locator#locator-locator-option-has)
+  Read more in [locator documentation](./api/class-locator#locator-locator)
 
 - New [`method: Locator.page`]
 - [`method: Page.screenshot`] and [`method: Locator.screenshot`] now automatically hide blinking caret
@@ -704,7 +704,7 @@ This version was also tested against the following stable channels:
     await Page.Locator("li", new() { HasTextString = "My Item" })
               .Locator("button").click();
     ```
-    Read more in [locator documentation](./api/class-locator#locator-locator-option-has-text)
+    Read more in [locator documentation](./api/class-locator#locator-locator)
 
 
 ### New APIs & changes

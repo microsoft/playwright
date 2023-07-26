@@ -174,7 +174,7 @@ Start by creating a `global.setup.ts` file at the root level of your project. Th
 ```js title="global.setup.ts"
 // seed the database with some data
 ```
-Then create a `global.teardown.ts` file at the root level of your project. This will be used to delete the data from the database after all tests have run. 
+Then create a `global.teardown.ts` file at the root level of your project. This will be used to delete the data from the database after all tests have run.
 
 ```js title="global.teardown.ts"
 // delete the data from the database
@@ -212,7 +212,7 @@ export default defineConfig({
 
 ## Configure globalSetup and globalTeardown
 
-You can use the `globalSetup` option in the [configuration file](#configuration-object) to set something up once before running all tests. The global setup file must export a single function that takes a config object. This function will be run once before all the tests.
+You can use the `globalSetup` option in the [configuration file](./test-configuration.md#advanced-configuration) to set something up once before running all tests. The global setup file must export a single function that takes a config object. This function will be run once before all the tests.
 
 Similarly, use `globalTeardown` to run something once after all the tests. Alternatively, let `globalSetup` return a function that will be used as a global teardown. You can pass data such as port number, authentication tokens, etc. from your global setup to your tests using environment variables.
 

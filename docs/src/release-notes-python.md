@@ -127,7 +127,7 @@ This version was also tested against the following stable channels:
 
 - Custom expect message, see [test assertions documentation](./test-assertions.md#custom-expect-message).
 - New options [`option: updateMode`] and [`option: updateContent`] in [`method: Page.routeFromHAR`] and [`method: BrowserContext.routeFromHAR`].
-- Chaining existing locator objects, see [locator docs](./locators.md#chaining-locators) for details.
+- Chaining existing locator objects, see [locator docs](./locators.md#matching-inside-a-locator) for details.
 - New option [`option: name`] in method [`method: Tracing.startChunk`].
 
 ### Browser Versions
@@ -450,7 +450,7 @@ await context.route_from_har("github.har.zip")
 context.route_from_har("github.har.zip")
 ```
 
-Read more in [our documentation](./network#record-and-replay-requests).
+Read more in [our documentation](./mock.md#mocking-with-har-files).
 
 
 ### Advanced Routing
@@ -651,7 +651,7 @@ This version was also tested against the following stable channels:
   page.locator("article", has=page.locator(".highlight")).click()
   ```
 
-  Read more in [locator documentation](./api/class-locator#locator-locator-option-has)
+  Read more in [locator documentation](./api/class-locator#locator-locator)
 
 - New [`method: Locator.page`]
 - [`method: Page.screenshot`] and [`method: Locator.screenshot`] now automatically hide blinking caret
@@ -737,7 +737,7 @@ Read more in [our documentation](./test-assertions).
     page.locator("li", has_text="my item").locator("button").click()
     ```
 
-    Read more in [locator documentation](./api/class-locator#locator-locator-option-has-text)
+    Read more in [locator documentation](./api/class-locator#locator-locator)
 
 
 ### New APIs & changes

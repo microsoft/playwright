@@ -268,7 +268,7 @@ npx playwright test --ui
 ### New APIs
 
 - New options [`option: updateMode`] and [`option: updateContent`] in [`method: Page.routeFromHAR`] and [`method: BrowserContext.routeFromHAR`].
-- Chaining existing locator objects, see [locator docs](./locators.md#chaining-locators) for details.
+- Chaining existing locator objects, see [locator docs](./locators.md#matching-inside-a-locator) for details.
 - New property [`property: TestInfo.testId`].
 - New option [`option: name`] in method [`method: Tracing.startChunk`].
 
@@ -469,7 +469,7 @@ This version was also tested against the following stable channels:
     }).toPass();
     ```
 
-  Read more in [our documentation](./test-assertions.md#retrying).
+  Read more in [our documentation](./test-assertions.md#expecttopass).
 
 - Automatically capture **full page screenshot** on test failure:
     ```js title="playwright.config.ts"
@@ -894,7 +894,7 @@ Use the new methods [`method: Page.routeFromHAR`] or [`method: BrowserContext.ro
 await context.routeFromHAR('github.har.zip');
 ```
 
-Read more in [our documentation](./network#record-and-replay-requests).
+Read more in [our documentation](./mock.md#mocking-with-har-files).
 
 
 ### Advanced Routing
@@ -1081,7 +1081,7 @@ WebServer is now considered "ready" if request to the specified url has any of t
   ```
 
   `expect.poll` supports most synchronous matchers, like `.toBe()`, `.toContain()`, etc.
-  Read more in [our documentation](./test-assertions.md#polling).
+  Read more in [our documentation](./test-assertions.md#expectpoll).
 
 ### Behavior Changes
 
@@ -1220,7 +1220,7 @@ This version was also tested against the following stable channels:
         6 |
   ```
 
-  Read more in [our documentation](./test-assertions#custom-error-message)
+  Read more in [our documentation](./test-assertions#custom-expect-message)
 - By default, tests in a single file are run in order. If you have many independent tests in a single file, you can now
   run them in parallel with [`method: Test.describe.configure`].
 
@@ -1234,7 +1234,7 @@ This version was also tested against the following stable channels:
   }).click();
   ```
 
-  Read more in [locator documentation](./api/class-locator#locator-locator-option-has)
+  Read more in [locator documentation](./api/class-locator#locator-locator)
 
 - New [`method: Locator.page`]
 - [`method: Page.screenshot`] and [`method: Locator.screenshot`] now automatically hide blinking caret
@@ -1276,7 +1276,7 @@ This version was also tested against the following stable channels:
     ```js
     await page.locator('li', { hasText: 'my item' }).locator('button').click();
     ```
-    Read more in [locator documentation](./api/class-locator#locator-locator-option-has-text)
+    Read more in [locator documentation](./api/class-locator#locator-locator)
 
 
 ### Testing API improvements

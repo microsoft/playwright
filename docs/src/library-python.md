@@ -26,7 +26,7 @@ conda install playwright
 playwright install
 ```
 
-These commands download the Playwright package and install browser binaries for Chromium, Firefox and WebKit. To modify this behavior see [installation parameters](./browsers.md#installing-browsers).
+These commands download the Playwright package and install browser binaries for Chromium, Firefox and WebKit. To modify this behavior see [installation parameters](./browsers.md#install-browsers).
 
 ## Usage
 
