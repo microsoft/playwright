@@ -38,13 +38,13 @@ test('second', async ({ page }) => {
 });
 ```
 
-You can also reuse the signed-in state in the tests with [global setup](/auth.md#reuse-signed-in-state). That way you can log in only once and then skip the log in step for all of the tests.
+You can also reuse the signed-in state in the tests with [setup project](./auth.md#basic-shared-account-in-all-tests). That way you can log in only once and then skip the log in step for all of the tests.
 
 ### Avoid testing third-party dependencies
 
 Only test what you control. Don't try to test links to external sites or third party servers that you do not control. Not only is it time consuming and can slow down your tests but also you can not control the content of the page you are linking to, or if there are cookie banners or overlay pages or anything else that might cause your test to fail.
 
-Instead, use the [Playwright Network API](/network.md#handle-requests) and guarantee the response needed. 
+Instead, use the [Playwright Network API](/network.md#handle-requests) and guarantee the response needed.
 
 ```js
 await page.route('**/api/fetch_data_third_party_dependency', route => route.fulfill({
@@ -71,7 +71,7 @@ page.getByRole('button', { name: 'submit' });
 
 #### Use chaining and filtering
 
-Locators can be [chained](./locators.md#chaining-locators) to narrow down the search to a particular part of the page.
+Locators can be [chained](./locators.md#matching-inside-a-locator) to narrow down the search to a particular part of the page.
 
 ```js
 const product = page.getByRole('listitem').filter({ hasText: 'Product 2' });
@@ -217,7 +217,7 @@ Playwright comes with a range of tooling to help you write tests.
 
 ### Test across all browsers
 
-Playwright makes it easy to test your site across all [browsers](./test-configuration#multiple-browsers) no matter what platform you are on. Testing across all browsers ensures your app works for all users. In your config file you can set up projects adding the name and which browser or device to use.
+Playwright makes it easy to test your site across all [browsers](./test-projects.md#configure-projects-for-multiple-browsers) no matter what platform you are on. Testing across all browsers ensures your app works for all users. In your config file you can set up projects adding the name and which browser or device to use.
 
 ```js title="playwright.config.ts"
 import { defineConfig, devices } from '@playwright/test';

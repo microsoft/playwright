@@ -8,7 +8,7 @@ Playwright comes with the ability to generate tests out of the box and is a grea
 **You will learn**
 
 - [How to record a test](/codegen.md#recording-a-test)
-- [How to generate locators](/codegen.md#generate-locators)
+- [How to generate locators](/codegen.md#generating-locators)
 
 <video width="100%" height="100%" controls muted >
   <source src="https://user-images.githubusercontent.com/13063165/197979804-c4fa3347-8fab-4526-a728-c1b2fbd079b4.mp4" type="video/mp4" />
@@ -67,10 +67,10 @@ To learn more about generating tests check out or detailed guide on [Codegen](./
 
 ### Generating locators
 
-You can generate [locators](/locators.md) with the test generator. 
+You can generate [locators](/locators.md) with the test generator.
 
 * Press the `'Record'` button to stop the recording and the `'Pick Locator'` button will appear.
-* Click on the `'Pick Locator'` button and then hover over elements in the browser window to see the locator highlighted underneath each element. 
+* Click on the `'Pick Locator'` button and then hover over elements in the browser window to see the locator highlighted underneath each element.
 * To choose a locator click on the element you would like to locate and the code for that locator will appear in the field next to the Pick Locator button.
 * You can then edit the locator in this field to fine tune it or use the copy button to copy it and paste it into your code.
 

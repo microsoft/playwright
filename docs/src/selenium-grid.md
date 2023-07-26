@@ -52,8 +52,6 @@ SELENIUM_REMOTE_URL=http://<selenium-hub-ip>:4444 dotnet test
 
 You don't have to change your code, just use your testing harness or [`method: BrowserType.launch`] as usual.
 
-When using Selenium Grid Hub, you can [skip browser downloads](./browsers.md#skip-browser-downloads).
-
 ### Passing additional capabilities
 
 If your grid requires additional capabilities to be set (for example, you use an external service), you can set `SELENIUM_REMOTE_CAPABILITIES` environment variable to provide JSON-serialized capabilities.

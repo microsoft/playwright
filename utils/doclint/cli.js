@@ -24,6 +24,7 @@ const { parseApi } = require('./api_parser');
 const missingDocs = require('./missingDocs');
 const md = require('../markdown');
 const docs = require('./documentation');
+const toKebabCase = require('lodash/kebabCase')
 
 /** @typedef {import('./documentation').Type} Type */
 /** @typedef {import('../markdown').MarkdownNode} MarkdownNode */
@@ -147,24 +148,26 @@ async function run() {
         documentation.setCodeGroupsTransformer(lang, tabs => tabs.map(tab => tab.spec));
         documentation.generateSourceCodeComments();
 
-        const relevantMarkdownFiles = new Set([...getAllMarkdownFiles(documentationRoot)
-          // filter out language specific files
-          .filter(filePath => {
-            const matches = filePath.match(/(-(js|python|csharp|java))+?/g);
-            // no language specific document
-            if (!matches)
-              return true;
-            // there is a language, lets filter for it
-            return matches.includes(`-${lang}`);
-          })
-          // Standardise naming and remove the filter in the file name
-          .map(filePath => filePath.replace(/(-(js|python|csharp|java))+/, ''))
-          // Internally (playwright.dev generator) we merge test-api and test-reporter-api into api.
-          .map(filePath => filePath.replace(/(\/|\\)(test-api|test-reporter-api)(\/|\\)/, `${path.sep}api${path.sep}`))]);
+        const mdLinks = [];
+        const mdSections = new Set();
+
+        for (const cls of documentation.classesArray) {
+          const filePath = path.join(documentationRoot, 'api', 'class-' + cls.name.toLowerCase() + '.md');
+          for (const member of cls.membersArray)
+            mdSections.add(filePath + '#' + toKebabCase(cls.name).toLowerCase() + '-' + toKebabCase(member.name).toLowerCase());
+          for (const event of cls.eventsArray)
+            mdSections.add(filePath + '#' + toKebabCase(cls.name).toLowerCase() + '-event-' + toKebabCase(event.name).toLowerCase());
+        }
 
         for (const filePath of getAllMarkdownFiles(documentationRoot)) {
-          if (langs.some(other => other !== lang && filePath.endsWith(`-${other}.md`)))
+          if (!filePath.includes(`-${lang}`) && langs.some(other => other !== lang && filePath.includes(`-${other}`)))
             continue;
+
+          // Standardise naming and remove the filter in the file name
+          // Also, Internally (playwright.dev generator) we merge test-api and test-reporter-api into api.
+          const canonicalName = filePath.replace(/(-(js|python|csharp|java))+/, '').replace(/(\/|\\)(test-api|test-reporter-api)(\/|\\)/, `${path.sep}api${path.sep}`);
+          mdSections.add(canonicalName);
+
           const data = fs.readFileSync(filePath, 'utf-8');
           let rootNode = md.filterNodesForLanguage(md.parse(data), lang);
           // Validates code snippet groups.
@@ -174,33 +177,35 @@ async function run() {
           // Validate links.
           {
             md.visitAll(rootNode, node => {
-              {
-                if (node.type === 'code') {
-                  const allowedCodeLangs = new Set([
-                    'csharp',
-                    'java',
-                    'js',
-                    'ts',
-                    'python',
-                    'py',
-                    'java',
-                    'powershell',
-                    'batch',
-                    'ini',
-                    'txt',
-                    'html',
-                    'xml',
-                    'yml',
-                    'yaml',
-                    'json',
-                    'groovy',
-                    'html',
-                    'bash',
-                    'sh',
-                  ]);
-                  if (!allowedCodeLangs.has(node.codeLang.split(' ')[0]))
-                    throw new Error(`${path.relative(PROJECT_DIR, filePath)} contains code block with invalid code block language ${node.codeLang}`);
-                }
+              if (node.type === 'code') {
+                const allowedCodeLangs = new Set([
+                  'csharp',
+                  'java',
+                  'js',
+                  'ts',
+                  'python',
+                  'py',
+                  'java',
+                  'powershell',
+                  'batch',
+                  'ini',
+                  'txt',
+                  'html',
+                  'xml',
+                  'yml',
+                  'yaml',
+                  'json',
+                  'groovy',
+                  'html',
+                  'bash',
+                  'sh',
+                ]);
+                if (!allowedCodeLangs.has(node.codeLang.split(' ')[0]))
+                  throw new Error(`${path.relative(PROJECT_DIR, filePath)} contains code block with invalid code block language ${node.codeLang}`);
+              }
+              if (node.type.startsWith('h')) {
+                const hash = mdSectionHash(node.text || '');
+                mdSections.add(canonicalName + '#' + hash);
               }
               if (!node.text)
                 return;
@@ -208,21 +213,29 @@ async function run() {
                 const isExternal = mdLink.startsWith('http://') || mdLink.startsWith('https://');
                 if (isExternal)
                   continue;
-                // ignore links with only a hash (same file)
-                if (mdLink.startsWith('#'))
-                  continue;
 
-                let markdownBasePath = path.dirname(filePath);
-                let linkWithoutHash = path.join(markdownBasePath, mdLink.split('#')[0]);
-                if (path.extname(linkWithoutHash) !== '.md')
-                  linkWithoutHash += '.md';
-
-                if (!relevantMarkdownFiles.has(linkWithoutHash))
-                  throw new Error(`${path.relative(PROJECT_DIR, filePath)} references to '${linkWithoutHash}' as '${mdLinkName}' which does not exist.`);
+                const [beforeHash, hash] = mdLink.split('#');
+                let linkWithoutHash = canonicalName;
+                if (beforeHash) {
+                  // Not same-file link.
+                  linkWithoutHash = path.join(path.dirname(filePath), beforeHash);
+                  if (path.extname(linkWithoutHash) !== '.md')
+                    linkWithoutHash += '.md';
+                }
+                mdLinks.push({ filePath, linkTarget: linkWithoutHash + (hash ? '#' + hash : ''), name: mdLinkName });
               }
             });
           }
         }
+
+        const badLinks = [];
+        for (const { filePath, linkTarget, name } of mdLinks) {
+          if (!mdSections.has(linkTarget))
+            badLinks.push(`${path.relative(PROJECT_DIR, filePath)} references to '${linkTarget}' as '${name}' which does not exist.`);
+        }
+        if (badLinks.length)
+          throw new Error('Broken links found:\n' + badLinks.join('\n'));
+
       } catch (e) {
         e.message = `While processing "${lang}"\n` + e.message;
         throw e;
@@ -279,4 +292,8 @@ async function getBrowserVersions() {
   }
   await Promise.all(browsers.map(browser => browser.close()));
   return result;
+}
+
+function mdSectionHash(text) {
+  return text.toLowerCase().replace(/\s/g, '-').replace(/[^-_a-z0-9]/g, '').replace(/^-+/, '');
 }

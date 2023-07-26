@@ -3575,7 +3575,7 @@ export interface PlaywrightWorkerOptions {
    * });
    * ```
    *
-   * Learn more about [automatic screenshots](https://playwright.dev/docs/test-configuration#automatic-screenshots).
+   * Learn more about [automatic screenshots](https://playwright.dev/docs/test-use-options#recording-options).
    */
   screenshot: ScreenshotMode | { mode: ScreenshotMode } & Pick<PageScreenshotOptions, 'fullPage' | 'omitBackground'>;
   /**
@@ -3601,7 +3601,7 @@ export interface PlaywrightWorkerOptions {
    * });
    * ```
    *
-   * Learn more about [recording trace](https://playwright.dev/docs/test-configuration#record-test-trace).
+   * Learn more about [recording trace](https://playwright.dev/docs/test-use-options#recording-options).
    */
   trace: TraceMode | /** deprecated */ 'retry-with-trace' | { mode: TraceMode, snapshots?: boolean, screenshots?: boolean, sources?: boolean, attachments?: boolean };
   /**
@@ -3629,7 +3629,7 @@ export interface PlaywrightWorkerOptions {
    * });
    * ```
    *
-   * Learn more about [recording video](https://playwright.dev/docs/test-configuration#record-video).
+   * Learn more about [recording video](https://playwright.dev/docs/test-use-options#recording-options).
    */
   video: VideoMode | /** deprecated */ 'retry-with-video' | { mode: VideoMode, size?: ViewportSize };
 }
@@ -3856,7 +3856,7 @@ export interface PlaywrightTestOptions {
    *
    * Whether the `meta viewport` tag is taken into account and touch events are enabled. isMobile is a part of device,
    * so you don't actually need to set it manually. Defaults to `false` and is not supported in Firefox. Learn more
-   * about [mobile emulation](https://playwright.dev/docs/emulation#isMobile).
+   * about [mobile emulation](https://playwright.dev/docs/emulation#ismobile).
    */
   isMobile: boolean;
   /**
@@ -4024,7 +4024,7 @@ export interface PlaywrightTestOptions {
    * });
    * ```
    *
-   * Emulates consistent viewport for each page. Defaults to an 1280x720 viewport.  Use `null` to disable the consistent
+   * Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Use `null` to disable the consistent
    * viewport emulation. Learn more about [viewport emulation](https://playwright.dev/docs/emulation#viewport).
    *
    * **NOTE** The `null` value opts out from the default presets, makes viewport depend on the host window size defined

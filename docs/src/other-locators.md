@@ -888,7 +888,7 @@ Attribute selectors pierce shadow DOM. To opt-out from this behavior, use `:ligh
 ## Chaining selectors
 
 :::warning
-We recommend [chaining locators](./locators.md#chaining-locators) instead.
+We recommend [chaining locators](./locators.md#matching-inside-a-locator) instead.
 :::
 
 Selectors defined as `engine=body` or in short-form can be combined with the `>>` token, e.g. `selector1 >> selector2 >> selectors3`. When selectors are chained, the next one is queried relative to the previous one's result.
