@@ -46,6 +46,7 @@ export class SigIntWatcher {
 class FixedNodeSIGINTHandler {
   private static _handlers: (() => void)[] = [];
   private static _ignoreNextSIGINTs = false;
+  private static _handlerInstalled = false;
 
   static _dispatch = () => {
     if (this._ignoreNextSIGINTs)
@@ -70,21 +71,35 @@ class FixedNodeSIGINTHandler {
       // The side effect is that slow shutdown or bug in our process will force
       // the user to hit Ctrl+C again after at least a second.
       if (!this._handlers.length)
-        process.off('SIGINT', this._dispatch);
+        this._uninstall();
     }, 1000);
     for (const handler of this._handlers)
       handler();
   };
 
+  static _install() {
+    if (!this._handlerInstalled) {
+      this._handlerInstalled = true;
+      process.on('SIGINT', this._dispatch);
+    }
+  }
+
+  static _uninstall() {
+    if (this._handlerInstalled) {
+      this._handlerInstalled = false;
+      process.off('SIGINT', this._dispatch);
+    }
+  }
+
   static on(handler: () => void) {
     this._handlers.push(handler);
     if (this._handlers.length === 1)
-      process.on('SIGINT', this._dispatch);
+      this._install();
   }
 
   static off(handler: () => void) {
     this._handlers = this._handlers.filter(h => h !== handler);
     if (!this._ignoreNextSIGINTs && !this._handlers.length)
-      process.off('SIGINT', this._dispatch);
+      this._uninstall();
   }
 }
