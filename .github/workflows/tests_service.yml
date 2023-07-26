@@ -1,0 +1,31 @@
+name: "tests service"
+
+on:
+  workflow_dispatch:
+
+env:
+  FORCE_COLOR: 1
+  ELECTRON_SKIP_BINARY_DOWNLOAD: 1
+
+jobs:
+  transport_linux:
+    name: "Service"
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [linux]
+        browser: [chromium]
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
+    - run: npm ci
+      env:
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+    - run: npm run build
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --project=${{ matrix.browser }} --workers=20
+      env:
+        PWTEST_MODE: service2
+        PLAYWRIGHT_SERVICE_ACCESS_KEY: ${{ secrets.PLAYWRIGHT_SERVICE_ACCESS_KEY }}
+        PLAYWRIGHT_SERVICE_URL: ${{ secrets.PLAYWRIGHT_SERVICE_URL }}
+        PLAYWRIGHT_SERVICE_OS: ${{ matrix.os }}
