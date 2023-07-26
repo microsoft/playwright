@@ -1348,13 +1348,11 @@ export type BrowserNewBrowserCDPSessionResult = {
 };
 export type BrowserStartTracingParams = {
   page?: PageChannel,
-  path?: string,
   screenshots?: boolean,
   categories?: string[],
 };
 export type BrowserStartTracingOptions = {
   page?: PageChannel,
-  path?: string,
   screenshots?: boolean,
   categories?: string[],
 };
@@ -1362,7 +1360,7 @@ export type BrowserStartTracingResult = void;
 export type BrowserStopTracingParams = {};
 export type BrowserStopTracingOptions = {};
 export type BrowserStopTracingResult = {
-  binary: Binary,
+  artifact: ArtifactChannel,
 };
 
 export interface BrowserEvents {

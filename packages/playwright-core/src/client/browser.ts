@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
 import type * as channels from '@protocol/channels';
 import { BrowserContext, prepareBrowserContextParams } from './browserContext';
 import type { Page } from './page';
@@ -24,6 +25,8 @@ import { isSafeCloseError, kBrowserClosedError } from '../common/errors';
 import type * as api from '../../types/types';
 import { CDPSession } from './cdpSession';
 import type { BrowserType } from './browserType';
+import { Artifact } from './artifact';
+import { mkdirIfNeeded } from '../utils';
 
 export class Browser extends ChannelOwner<channels.BrowserChannel> implements api.Browser {
   readonly _contexts = new Set<BrowserContext>();
@@ -33,6 +36,7 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
   _browserType!: BrowserType;
   _options: LaunchOptions = {};
   readonly _name: string;
+  private _path: string | undefined;
 
   // Used from @playwright/test fixtures.
   _connectHeaders?: HeadersArray;
@@ -104,11 +108,20 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
   }
 
   async startTracing(page?: Page, options: { path?: string; screenshots?: boolean; categories?: string[]; } = {}) {
+    this._path = options.path;
     await this._channel.startTracing({ ...options, page: page ? page._channel : undefined });
   }
 
   async stopTracing(): Promise<Buffer> {
-    return (await this._channel.stopTracing()).binary;
+    const artifact = Artifact.from((await this._channel.stopTracing()).artifact);
+    const buffer = await artifact.readIntoBuffer();
+    await artifact.delete();
+    if (this._path) {
+      await mkdirIfNeeded(this._path);
+      await fs.promises.writeFile(this._path, buffer);
+      this._path = undefined;
+    }
+    return buffer;
   }
 
   async close(): Promise<void> {

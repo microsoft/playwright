@@ -723,14 +723,13 @@ scheme.BrowserNewBrowserCDPSessionResult = tObject({
 });
 scheme.BrowserStartTracingParams = tObject({
   page: tOptional(tChannel(['Page'])),
-  path: tOptional(tString),
   screenshots: tOptional(tBoolean),
   categories: tOptional(tArray(tString)),
 });
 scheme.BrowserStartTracingResult = tOptional(tObject({}));
 scheme.BrowserStopTracingParams = tOptional(tObject({}));
 scheme.BrowserStopTracingResult = tObject({
-  binary: tBinary,
+  artifact: tChannel(['Artifact']),
 });
 scheme.EventTargetInitializer = tOptional(tObject({}));
 scheme.EventTargetWaitForEventInfoParams = tObject({
