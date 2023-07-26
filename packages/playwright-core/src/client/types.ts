@@ -87,6 +87,7 @@ export type LaunchPersistentContextOptions = Omit<LaunchOptionsBase & BrowserCon
 export type ConnectOptions = {
   wsEndpoint: string,
   headers?: { [key: string]: string; };
+  exposeNetwork?: string,
   _exposeNetwork?: string,
   slowMo?: number,
   timeout?: number,

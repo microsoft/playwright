@@ -97,7 +97,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
         'x-playwright-launch-options': jsonStringifyForceASCII({ ...this._defaultLaunchOptions, ...launchOptions }),
         ...connectOptions.headers,
       },
-      _exposeNetwork: connectOptions._exposeNetwork,
+      exposeNetwork: connectOptions.exposeNetwork ?? connectOptions._exposeNetwork,
       slowMo: connectOptions.slowMo,
       timeout: connectOptions.timeout ?? 3 * 60 * 1000, // 3 minutes
     });
@@ -149,7 +149,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       const connectParams: channels.LocalUtilsConnectParams = {
         wsEndpoint: params.wsEndpoint,
         headers,
-        exposeNetwork: params._exposeNetwork,
+        exposeNetwork: params.exposeNetwork ?? params._exposeNetwork,
         slowMo: params.slowMo,
         timeout: params.timeout,
       };

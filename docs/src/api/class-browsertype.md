@@ -124,6 +124,22 @@ Logger sink for Playwright logging. Optional.
 Maximum time in milliseconds to wait for the connection to be established. Defaults to
 `0` (no timeout).
 
+### option: BrowserType.connect.exposeNetwork
+* since: v1.37
+- `exposeNetwork` <[string]>
+
+This option exposes network available on the connecting client to the browser being connected to. Consists of a list of rules separated by comma.
+
+Available rules:
+1. Hostname pattern, for example: `example.com`, `*.org:99`, `x.*.y.com`, `*foo.org`.
+1. IP literal, for example: `127.0.0.1`, `0.0.0.0:99`, `[::1]`, `[0:0::1]:99`.
+1. `<loopback>` that matches local loopback interfaces: `localhost`, `*.localhost`, `127.0.0.1`, `[::1]`.
+
+Some common examples:
+1. `"*"` to expose all network.
+1. `"<loopback>"` to expose localhost network.
+1. `"*.test.internal-domain,*.staging.internal-domain,<loopback>"` to expose test/staging deployments and localhost.
+
 ## async method: BrowserType.connectOverCDP
 * since: v1.9
 - returns: <[Browser]>

@@ -193,6 +193,22 @@ type ConnectOptions = {
   headers?: { [key: string]: string; };
 
   /**
+   * This option exposes network available on the connecting client to the browser being connected to.
+   * Consists of a list of rules separated by comma.
+   *
+   * Available rules:
+   * - Hostname pattern, for example: `example.com`, `*.org:99`, `x.*.y.com`, `*foo.org`.
+   * - IP literal, for example: `127.0.0.1`, `0.0.0.0:99`, `[::1]`, `[0:0::1]:99`.
+   * - `<loopback>` that matches local loopback interfaces: `localhost`, `*.localhost`, `127.0.0.1`, `[::1]`.
+
+   * Some common examples:
+   * - `"*"` to expose all network.
+   * - `"<loopback>"` to expose localhost network.
+   * - `"*.test.internal-domain,*.staging.internal-domain,<loopback>"` to expose test/staging deployments and localhost.
+   */
+  exposeNetwork?: string;
+
+  /**
    * Timeout in milliseconds for the connection to be established. Optional, defaults to no timeout.
    */
   timeout?: number;
