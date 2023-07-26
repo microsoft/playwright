@@ -94,7 +94,6 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
   _browserOptions: [async ({ playwright, headless, channel, launchOptions, connectOptions, _artifactsDir }, use) => {
     const options: LaunchOptions = {
       handleSIGINT: false,
-      timeout: 0,
       ...launchOptions,
     };
     if (headless !== undefined)

@@ -239,7 +239,7 @@ export class Electron extends SdkObject {
       app = new ElectronApplication(this, browser, nodeConnection, launchedProcess);
       await app.initialize();
       return app;
-    }, TimeoutSettings.timeout(options));
+    }, TimeoutSettings.launchTimeout(options));
   }
 }
 
