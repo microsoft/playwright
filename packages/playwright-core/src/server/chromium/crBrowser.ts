@@ -16,9 +16,10 @@
  */
 
 import type { BrowserOptions } from '../browser';
+import path from 'path';
 import { Browser } from '../browser';
 import { assertBrowserContextIsNotOwned, BrowserContext, verifyGeolocation } from '../browserContext';
-import { assert } from '../../utils';
+import { assert, createGuid } from '../../utils';
 import * as network from '../network';
 import type { PageBinding, PageDelegate, Worker } from '../page';
 import { Page } from '../page';
@@ -30,11 +31,12 @@ import type * as channels from '@protocol/channels';
 import type { CRSession } from './crConnection';
 import { ConnectionEvents, CRConnection } from './crConnection';
 import { CRPage } from './crPage';
-import { readProtocolStream } from './crProtocolHelper';
+import { saveProtocolStream } from './crProtocolHelper';
 import type { Protocol } from './protocol';
 import type { CRDevTools } from './crDevTools';
 import { CRServiceWorker } from './crServiceWorker';
 import type { SdkObject } from '../instrumentation';
+import { Artifact } from '../artifact';
 
 export class CRBrowser extends Browser {
   readonly _connection: CRConnection;
@@ -48,7 +50,6 @@ export class CRBrowser extends Browser {
   private _version = '';
 
   private _tracingRecording = false;
-  private _tracingPath: string | null = '';
   private _tracingClient: CRSession | undefined;
   private _userAgent: string = '';
 
@@ -276,7 +277,7 @@ export class CRBrowser extends Browser {
     return await this._connection.createBrowserSession();
   }
 
-  async startTracing(page?: Page, options: { path?: string; screenshots?: boolean; categories?: string[]; } = {}) {
+  async startTracing(page?: Page, options: { screenshots?: boolean; categories?: string[]; } = {}) {
     assert(!this._tracingRecording, 'Cannot start recording trace while already recording trace.');
     this._tracingClient = page ? (page._delegate as CRPage)._mainFrameSession._client : this._session;
 
@@ -287,7 +288,6 @@ export class CRBrowser extends Browser {
       'disabled-by-default-v8.cpu_profiler', 'disabled-by-default-v8.cpu_profiler.hires'
     ];
     const {
-      path = null,
       screenshots = false,
       categories = defaultCategories,
     } = options;
@@ -295,7 +295,6 @@ export class CRBrowser extends Browser {
     if (screenshots)
       categories.push('disabled-by-default-devtools.screenshot');
 
-    this._tracingPath = path;
     this._tracingRecording = true;
     await this._tracingClient.send('Tracing.start', {
       transferMode: 'ReturnAsStream',
@@ -303,15 +302,18 @@ export class CRBrowser extends Browser {
     });
   }
 
-  async stopTracing(): Promise<Buffer> {
+  async stopTracing(): Promise<Artifact> {
     assert(this._tracingClient, 'Tracing was not started.');
     const [event] = await Promise.all([
       new Promise(f => this._tracingClient!.once('Tracing.tracingComplete', f)),
       this._tracingClient.send('Tracing.end')
     ]);
-    const result = await readProtocolStream(this._tracingClient, (event as any).stream!, this._tracingPath);
+    const tracingPath = path.join(this.options.artifactsDir, createGuid() + '.crtrace');
+    await saveProtocolStream(this._tracingClient, (event as any).stream!, tracingPath);
     this._tracingRecording = false;
-    return result;
+    const artifact = new Artifact(this, tracingPath);
+    artifact.reportFinished();
+    return artifact;
   }
 
   isConnected(): boolean {

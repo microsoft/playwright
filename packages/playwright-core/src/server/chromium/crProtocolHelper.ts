@@ -40,26 +40,31 @@ export async function releaseObject(client: CRSession, objectId: string) {
   await client.send('Runtime.releaseObject', { objectId }).catch(error => {});
 }
 
-export async function readProtocolStream(client: CRSession, handle: string, path: string | null): Promise<Buffer> {
+export async function saveProtocolStream(client: CRSession, handle: string, path: string) {
   let eof = false;
-  let fd: fs.promises.FileHandle | undefined;
-  if (path) {
-    await mkdirIfNeeded(path);
-    fd = await fs.promises.open(path, 'w');
-  }
-  const bufs = [];
+  await mkdirIfNeeded(path);
+  const fd = await fs.promises.open(path, 'w');
   while (!eof) {
     const response = await client.send('IO.read', { handle });
     eof = response.eof;
     const buf = Buffer.from(response.data, response.base64Encoded ? 'base64' : undefined);
-    bufs.push(buf);
-    if (fd)
-      await fd.write(buf);
+    await fd.write(buf);
   }
-  if (fd)
-    await fd.close();
+  await fd.close();
   await client.send('IO.close', { handle });
-  return Buffer.concat(bufs);
+}
+
+export async function readProtocolStream(client: CRSession, handle: string): Promise<Buffer> {
+  let eof = false;
+  const chunks = [];
+  while (!eof) {
+    const response = await client.send('IO.read', { handle });
+    eof = response.eof;
+    const buf = Buffer.from(response.data, response.base64Encoded ? 'base64' : undefined);
+    chunks.push(buf);
+  }
+  await client.send('IO.close', { handle });
+  return Buffer.concat(chunks);
 }
 
 export function toConsoleMessageLocation(stackTrace: Protocol.Runtime.StackTrace | undefined): types.ConsoleMessageLocation {

@@ -28,6 +28,7 @@ import { serverSideCallMetadata } from '../instrumentation';
 import { BrowserContext } from '../browserContext';
 import { Selectors } from '../selectors';
 import type { BrowserTypeDispatcher } from './browserTypeDispatcher';
+import { ArtifactDispatcher } from './artifactDispatcher';
 
 export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChannel, BrowserTypeDispatcher> implements channels.BrowserChannel {
   _type_Browser = true;
@@ -81,7 +82,7 @@ export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChann
     if (!this._object.options.isChromium)
       throw new Error(`Tracing is only available in Chromium`);
     const crBrowser = this._object as CRBrowser;
-    return { binary: await crBrowser.stopTracing() };
+    return { artifact: ArtifactDispatcher.from(this, await crBrowser.stopTracing()) };
   }
 }
 
@@ -142,7 +143,7 @@ export class ConnectedBrowserDispatcher extends Dispatcher<Browser, channels.Bro
     if (!this._object.options.isChromium)
       throw new Error(`Tracing is only available in Chromium`);
     const crBrowser = this._object as CRBrowser;
-    return { binary: await crBrowser.stopTracing() };
+    return { artifact: ArtifactDispatcher.from(this, await crBrowser.stopTracing()) };
   }
 
   async cleanupContexts() {

@@ -955,7 +955,6 @@ Browser:
     startTracing:
       parameters:
         page: Page?
-        path: string?
         screenshots: boolean?
         categories:
           type: array?
@@ -963,7 +962,7 @@ Browser:
 
     stopTracing:
       returns:
-        binary: binary
+        artifact: Artifact
 
 
   events:
