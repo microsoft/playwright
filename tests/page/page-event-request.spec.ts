@@ -146,6 +146,8 @@ it('should report navigation requests and responses handled by service worker wi
     const [, failedRequest] = await Promise.all([
       page.evaluate(() => {
         window.location.href = '/serviceworkers/stub/error.html';
+        // eslint-disable-next-line
+        undefined
       }),
       page.waitForEvent('requestfailed'),
     ]);
