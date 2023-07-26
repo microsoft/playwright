@@ -113,6 +113,8 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   }
 
   async resetForReuse() {
+    // Discard previous chunk if any and ignore any errors there.
+    await this.stopChunk({ mode: 'discard' }).catch(() => {});
     await this.stop();
     this._snapshotter?.resetForReuse();
   }
