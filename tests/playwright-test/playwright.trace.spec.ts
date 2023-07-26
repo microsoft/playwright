@@ -705,3 +705,29 @@ test('should not throw when attachment is missing', async ({ runInlineTest }, te
   const trace = await parseTrace(testInfo.outputPath('test-results', 'a-passes', 'trace.zip'));
   expect(trace.actionTree).toContain('attach "screenshot"');
 });
+
+test('should not throw when screenshot on failure fails', async ({ runInlineTest, server }, testInfo) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { use: { trace: 'on', screenshot: 'on' } };
+    `,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('has pdf page', async ({ page }) => {
+        await page.goto("${server.EMPTY_PAGE}");
+        await page.setContent('<a href="/empty.pdf" target="blank">open me!</a>');
+        const downloadPromise = page.waitForEvent('download');
+        await page.click('a');
+        const download = await downloadPromise;
+        expect(download.suggestedFilename()).toBe('empty.pdf');
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  const trace = await parseTrace(testInfo.outputPath('test-results', 'a-has-pdf-page', 'trace.zip'));
+  const attachedScreenshots = trace.actionTree.filter(s => s === `  attach "screenshot"`);
+  // One screenshot for the page, no screenshot for pdf page since it should have failed.
+  expect(attachedScreenshots.length).toBe(1);
+});
