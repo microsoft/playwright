@@ -712,7 +712,11 @@ test('should not emit after w/o before', async ({ browserType, mode }, testInfo)
   const page = await context.newPage();
 
   await context.tracing.start({ name: 'name1', snapshots: true });
-  const evaluatePromise = page.evaluate(() => new Promise(f => (window as any).callback = f)).catch(() => {});
+  const evaluatePromise = page.evaluate(() => {
+    console.log('started');
+    return new Promise(f => (window as any).callback = f);
+  }).catch(() => {});
+  await page.waitForEvent('console');
   await context.tracing.stopChunk({ path: testInfo.outputPath('trace1.zip') });
   expect(fs.existsSync(path.join(tracesDir, 'name1.trace'))).toBe(true);
 
@@ -738,21 +742,34 @@ test('should not emit after w/o before', async ({ browserType, mode }, testInfo)
   let call1: number;
   {
     const { events } = await parseTraceRaw(testInfo.outputPath('trace1.zip'));
-    expect(events.map(sanitize).filter(Boolean)).toEqual([
+    const sanitized = events.map(sanitize).filter(Boolean);
+    expect(sanitized).toEqual([
       {
         type: 'before',
         callId: expect.any(Number),
         apiName: 'page.evaluate'
-      }
+      },
+      {
+        type: 'before',
+        callId: expect.any(Number),
+        apiName: 'page.waitForEvent'
+      },
+      {
+        type: 'after',
+        callId: expect.any(Number),
+        apiName: undefined,
+      },
     ]);
-    call1 = events.map(sanitize).filter(Boolean)[0].callId;
+    call1 = sanitized[0].callId;
+    expect(sanitized[1].callId).toBe(sanitized[2].callId);
   }
 
   let call2before: number;
   let call2after: number;
   {
     const { events } = await parseTraceRaw(testInfo.outputPath('trace2.zip'));
-    expect(events.map(sanitize).filter(Boolean)).toEqual([
+    const sanitized = events.map(sanitize).filter(Boolean);
+    expect(sanitized).toEqual([
       {
         type: 'before',
         callId: expect.any(Number),
@@ -764,8 +781,8 @@ test('should not emit after w/o before', async ({ browserType, mode }, testInfo)
         apiName: undefined
       }
     ]);
-    call2before = events.map(sanitize).filter(Boolean)[0].callId;
-    call2after = events.map(sanitize).filter(Boolean)[1].callId;
+    call2before = sanitized[0].callId;
+    call2after = sanitized[1].callId;
   }
   expect(call2before).toBeGreaterThan(call1);
   expect(call2after).toBe(call2before);
