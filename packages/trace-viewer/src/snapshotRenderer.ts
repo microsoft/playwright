@@ -114,38 +114,36 @@ export class SnapshotRenderer {
 
   resourceByUrl(url: string, method: string): ResourceSnapshot | undefined {
     const snapshot = this._snapshot;
-    let result: ResourceSnapshot | undefined;
+    let sameFrameResource: ResourceSnapshot | undefined;
+    let otherFrameResource: ResourceSnapshot | undefined;
 
-    // First try locating exact resource belonging to this frame.
     for (const resource of this._resources) {
       // Only use resources that received response before the snapshot.
       // Note that both snapshot time and request time are taken in the same Node process.
       if (typeof resource._monotonicTime === 'number' && resource._monotonicTime >= snapshot.timestamp)
         break;
-      if (resource._frameref !== snapshot.frameId)
+      if (resource.response.status === 304) {
+        // "Not Modified" responses are issued when browser requests the same resource
+        // multiple times, meanwhile indicating that it has the response cached.
+        //
+        // When rendering the snapshot, browser most likely will not have the resource cached,
+        // so we should respond with the real content instead, picking the last response that
+        // is not 304.
         continue;
+      }
       if (resource.request.url === url && resource.request.method === method) {
         // Pick the last resource with matching url - most likely it was used
         // at the time of snapshot, not the earlier aborted resource with the same url.
-        result = resource;
+        if (resource._frameref === snapshot.frameId)
+          sameFrameResource = resource;
+        else
+          otherFrameResource = resource;
       }
     }
 
-    if (!result) {
-      // Then fall back to resource with this URL to account for memory cache.
-      for (const resource of this._resources) {
-        // Only use resources that received response before the snapshot.
-        // Note that both snapshot time and request time are taken in the same Node process.
-        if (typeof resource._monotonicTime === 'number' && resource._monotonicTime >= snapshot.timestamp)
-          break;
-        if (resource.request.url === url && resource.request.method === method) {
-          // Pick the last resource with matching url - most likely it was used
-          // at the time of snapshot, not the earlier aborted resource with the same url.
-          result = resource;
-        }
-      }
-    }
-
+    // First try locating exact resource belonging to this frame,
+    // then fall back to resource with this URL to account for memory cache.
+    let result = sameFrameResource ?? otherFrameResource;
     if (result && method.toUpperCase() === 'GET') {
       // Patch override if necessary.
       for (const o of snapshot.resourceOverrides) {
