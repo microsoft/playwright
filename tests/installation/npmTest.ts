@@ -94,7 +94,7 @@ export type NPMTestFixtures = {
 export const test = _test
     .extend<CommonFixtures, CommonWorkerFixtures>(commonFixtures)
     .extend<NPMTestFixtures>({
-      _browsersPath: async ({tmpWorkspace}, use) => use(path.join(tmpWorkspace, 'browsers')),
+      _browsersPath: async ({ tmpWorkspace }, use) => use(path.join(tmpWorkspace, 'browsers')),
       _auto: [async ({ tmpWorkspace, exec, _browsersPath }, use) => {
         await exec('npm init -y');
         const sourceDir = path.join(__dirname, 'fixture-scripts');
