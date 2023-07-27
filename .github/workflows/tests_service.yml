@@ -58,6 +58,6 @@ jobs:
     - run: npx playwright merge-reports --reporter markdown,html ./blob-report
     - name: Upload HTML report to Azure
       run: |
-        REPORT_DIR='run-service-${{ github.event.workflow_run.id }}-${{ github.event.workflow_run.run_attempt }}-${{ github.sha }}'
+        REPORT_DIR='run-service-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.sha }}'
         az storage blob upload-batch -s playwright-report -d "\$web/$REPORT_DIR" --connection-string "${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}"
-        echo "Report url: https://mspwblobreport.z1.web.core.windows.net/$REPORT_DIR/index.html"
+        echo "Report url: https://mspwblobreport.z1.web.core.windows.net/$REPORT_DIR/index.html?q=s:failed"
