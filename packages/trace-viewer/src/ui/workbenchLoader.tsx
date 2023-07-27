@@ -118,18 +118,19 @@ export const WorkbenchLoader: React.FunctionComponent<{
           params.set('trace', url);
           if (uploadedTraceNames.length)
             params.set('traceFileName', uploadedTraceNames[i]);
-          const response = await fetch(`contexts?${params.toString()}`);
+          const response = await fetch(`load?${params.toString()}`);
           if (!response.ok) {
             if (!isServer)
               setTraceURLs([]);
             setProcessingErrorMessage((await response.json()).error);
             return;
           }
-          const { redirectTo, entries } = await response.json();
-          if (redirectTo) {
-            window.location.href = redirectTo;
+          const { reportUrl } = await response.json();
+          if (reportUrl) {
+            window.location.href = reportUrl;
             return;
           }
+          const { entries } = await fetch(`entries?${params.toString()}`).then(r => r.json());
           contextEntries.push(...entries);
         }
         navigator.serviceWorker.removeEventListener('message', swListener);

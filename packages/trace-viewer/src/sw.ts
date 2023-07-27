@@ -40,7 +40,7 @@ const loadedTraces = new Map<string, { traceModel: TraceModel, snapshotServer: S
 
 const clientIdToTraceUrls = new MultiMap<string, string>();
 
-async function loadTrace(traceUrl: string, traceFileName: string | null, clientId: string, progress: (done: number, total: number) => void): Promise<{ traceModel?: TraceModel, isPlaywrightReport?: boolean }> {
+async function loadTrace(traceUrl: string, traceFileName: string | null, clientId: string, progress: (done: number, total: number) => void): Promise<{ isPlaywrightReport: boolean }> {
   clientIdToTraceUrls.set(clientId, traceUrl);
   const traceModel = new TraceModel();
   try {
@@ -74,7 +74,7 @@ async function loadTrace(traceUrl: string, traceFileName: string | null, clientI
   }
   const snapshotServer = new SnapshotServer(traceModel.storage(), sha1 => traceModel.resourceForSha1(sha1));
   loadedTraces.set(traceUrl, { traceModel, snapshotServer });
-  return { traceModel };
+  return { isPlaywrightReport: false };
 }
 
 let lastPlaywrightReport: PlaywrightReportModel | undefined;
@@ -102,29 +102,35 @@ async function doFetch(event: FetchEvent): Promise<Response> {
     const traceUrl = url.searchParams.get('trace')!;
     const { snapshotServer } = loadedTraces.get(traceUrl) || {};
 
-    if (relativePath === '/contexts') {
+    if (relativePath === '/load') {
       try {
-        const { isPlaywrightReport, traceModel } = await loadTrace(traceUrl, url.searchParams.get('traceFileName'), event.clientId, (done: number, total: number) => {
+        const { isPlaywrightReport } = await loadTrace(traceUrl, url.searchParams.get('traceFileName'), event.clientId, (done: number, total: number) => {
           client.postMessage({ method: 'progress', params: { done, total } });
         });
-        if (isPlaywrightReport) {
-          return new Response(JSON.stringify({ redirectTo: `${new URL((self as any).registration.scope).pathname}report/index.html?from-trace-viewer=1` }), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' }
-          });
-        }
-        if (traceModel) {
-          return new Response(JSON.stringify({ entries: traceModel!.contextEntries }), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' }
-          });
-        }
+        return new Response(JSON.stringify({
+          reportUrl: isPlaywrightReport ? `${new URL((self as any).registration.scope).pathname}report/index.html?from-trace-viewer=1` : undefined,
+        }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
       } catch (error: any) {
         return new Response(JSON.stringify({ error: error?.message }), {
           status: 500,
           headers: { 'Content-Type': 'application/json' }
         });
       }
+    } else if (relativePath === '/entries') {
+      const entries = loadedTraces.get(traceUrl)?.traceModel.contextEntries;
+      if (!entries) {
+        return new Response(JSON.stringify({ error: 'Trace not loaded' }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      return new Response(JSON.stringify({ entries }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      });
     }
 
     if (relativePath.startsWith('/snapshotInfo/')) {
