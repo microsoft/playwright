@@ -60,12 +60,17 @@ test.describe('signals', () => {
   test.skip(({ platform }) => platform === 'win32');
 
   test('should report browser close signal 2', async ({ startRemoteServer, server, isMac, browserName }) => {
-    test.fixme(isMac && browserName === 'webkit' && parseInt(os.release(), 10) >= 22, 'https://github.com/microsoft/playwright/issues/22226');
     const remoteServer = await startRemoteServer('launchServer', { url: server.EMPTY_PAGE });
     const pid = await remoteServer.out('pid');
     process.kill(-pid, 'SIGKILL');
-    expect(await remoteServer.out('exitCode')).toBe('null');
-    expect(await remoteServer.out('signal')).toBe('SIGKILL');
+    if (isMac && browserName === 'webkit' && parseInt(os.release(), 10) === 22) {
+      // WebKit on mac13 exits differently.
+      expect(await remoteServer.out('exitCode')).toBe('137');
+      expect(await remoteServer.out('signal')).toBe('null');
+    } else {
+      expect(await remoteServer.out('exitCode')).toBe('null');
+      expect(await remoteServer.out('signal')).toBe('SIGKILL');
+    }
     process.kill(remoteServer.child().pid);
     await remoteServer.childExitCode();
   });
@@ -94,8 +99,7 @@ test.describe('signals', () => {
     expect(await remoteServer.childExitCode()).toBe(0);
   });
 
-  test('should kill the browser on double SIGINT and remove temp dir', async ({ startRemoteServer, server, isMac, browserName }) => {
-    test.fixme(isMac && browserName === 'webkit' && parseInt(os.release(), 10) >= 22, 'https://github.com/microsoft/playwright/issues/22226');
+  test('should kill the browser on double SIGINT and remove temp dir', async ({ startRemoteServer, server }) => {
     const remoteServer = await startRemoteServer('launchServer', { stallOnClose: true, url: server.EMPTY_PAGE });
     const tempDir = await remoteServer.out('tempDir');
     const before = fs.existsSync(tempDir);
@@ -110,8 +114,7 @@ test.describe('signals', () => {
     expect(after).toBe(false);
   });
 
-  test('should kill the browser on SIGINT + SIGTERM', async ({ startRemoteServer, server, isMac, browserName }) => {
-    test.fixme(isMac && browserName === 'webkit' && parseInt(os.release(), 10) >= 22, 'https://github.com/microsoft/playwright/issues/22226');
+  test('should kill the browser on SIGINT + SIGTERM', async ({ startRemoteServer, server }) => {
     const remoteServer = await startRemoteServer('launchServer', { stallOnClose: true, url: server.EMPTY_PAGE });
     process.kill(remoteServer.child().pid, 'SIGINT');
     await remoteServer.out('stalled');
@@ -121,8 +124,7 @@ test.describe('signals', () => {
     expect(await remoteServer.childExitCode()).toBe(0);
   });
 
-  test('should kill the browser on SIGTERM + SIGINT', async ({ startRemoteServer, server, isMac, browserName }) => {
-    test.fixme(isMac && browserName === 'webkit' && parseInt(os.release(), 10) >= 22, 'https://github.com/microsoft/playwright/issues/22226');
+  test('should kill the browser on SIGTERM + SIGINT', async ({ startRemoteServer, server }) => {
     const remoteServer = await startRemoteServer('launchServer', { stallOnClose: true, url: server.EMPTY_PAGE });
     process.kill(remoteServer.child().pid, 'SIGTERM');
     await remoteServer.out('stalled');
