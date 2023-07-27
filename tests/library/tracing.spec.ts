@@ -320,6 +320,45 @@ test('should record network failures', async ({ context, page, server }, testInf
   expect(requestEvent).toBeTruthy();
 });
 
+test('should not crash when browser closes mid-trace', async ({ browserType, server }, testInfo) => {
+  const browser = await browserType.launch();
+  const page = await browser.newPage();
+  await page.context().tracing.start({ snapshots: true, screenshots: true });
+  await page.goto(server.EMPTY_PAGE);
+  await browser.close();
+  await new Promise(f => setTimeout(f, 1000));  // Give it some time to throw errors
+});
+
+test('should survive browser.close with auto-created traces dir', async ({ browserType }, testInfo) => {
+  const oldTracesDir = (browserType as any)._defaultLaunchOptions.tracesDir;
+  (browserType as any)._defaultLaunchOptions.tracesDir = undefined;
+  const browser = await browserType.launch();
+  const page = await browser.newPage();
+  await page.context().tracing.start();
+
+  const done = { value: false };
+  async function go() {
+    while (!done.value) {
+      // Produce a lot of operations to make sure tracing operations are enqueued.
+      for (let i = 0; i < 100; i++)
+        page.evaluate('1 + 1').catch(() => {});
+      await page.waitForTimeout(10).catch(() => {});
+    }
+  }
+
+  void go();
+  await new Promise(f => setTimeout(f, 500));
+
+  // Close the browser and give it some time to fail.
+  await Promise.all([
+    browser.close(),
+    new Promise(f => setTimeout(f, 500)),
+  ]);
+
+  done.value = true;
+  (browserType as any)._defaultLaunchOptions.tracesDir = oldTracesDir;
+});
+
 test('should not stall on dialogs', async ({ page, context, server }) => {
   await context.tracing.start({ screenshots: true, snapshots: true });
   await page.goto(server.EMPTY_PAGE);
