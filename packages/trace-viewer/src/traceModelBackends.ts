@@ -21,7 +21,7 @@ import type { TraceModelBackend } from './traceModel';
 
 const zipjs = zipImport as typeof zip;
 
-export async function newZipReader(blobOrUrl: Blob | string, progress: Progress): Promise<{ entries: Map<string, zip.Entry>, reader: zip.ZipReader }> {
+export async function loadZipEntries(blobOrUrl: Blob | string, progress: Progress): Promise<Map<string, zip.Entry>> {
   let reader: zip.ZipReader;
   if (blobOrUrl instanceof Blob)
     reader = new zipjs.ZipReader(new zipjs.BlobReader(blobOrUrl), { useWebWorkers: false }) as zip.ZipReader;
@@ -33,7 +33,7 @@ export async function newZipReader(blobOrUrl: Blob | string, progress: Progress)
       map.set(entry.filename, entry);
     return map;
   });
-  return { entries, reader };
+  return entries;
 }
 
 type Progress = (done: number, total: number) => void;

@@ -21,7 +21,7 @@ import { SnapshotServer } from './snapshotServer';
 import type { TraceModelBackend } from './traceModel';
 import { TraceModel } from './traceModel';
 import { PlaywrightReportModel } from './traceModelBackends';
-import { FetchTraceModelBackend, ZipTraceModelBackend, newZipReader } from './traceModelBackends';
+import { FetchTraceModelBackend, ZipTraceModelBackend, loadZipEntries } from './traceModelBackends';
 
 // @ts-ignore
 declare const self: ServiceWorkerGlobalScope;
@@ -52,9 +52,9 @@ async function loadTrace(traceUrl: string, traceFileName: string | null, clientI
     } else {
       let entries;
       if (lastPlaywrightReport?.dataFile(traceUrl)) {
-        entries = (await newZipReader(lastPlaywrightReport.dataFile(traceUrl)!, fetchProgress)).entries;
+        entries = await loadZipEntries(lastPlaywrightReport.dataFile(traceUrl)!, fetchProgress);
       } else {
-        entries = (await newZipReader(traceUrl, fetchProgress)).entries;
+        entries = await loadZipEntries(traceUrl, fetchProgress);
         if (PlaywrightReportModel.isPlaywrightReport(entries)) {
           lastPlaywrightReport = await PlaywrightReportModel.create(entries);
           return { isPlaywrightReport: true };
