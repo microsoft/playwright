@@ -61,7 +61,7 @@ jobs:
         name: blob-report-${{ github.run_attempt }}
         path: blob-report-zips
     - name: Unzip all blob reports
-      run: unzip -o blob-report-zips/blob-report-*.zip -d blob-report
+      run: unzip -o 'blob-report-zips/blob-report-*.zip' -d blob-report
     - run: npx playwright merge-reports --reporter markdown,html ./blob-report
     - name: Upload HTML report to Azure
       run: |
