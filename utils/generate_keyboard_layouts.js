@@ -27,9 +27,6 @@ const path = require('path');
 const xml2js = require('xml2js');
 const md = require('./markdown');
 
-// US keyboard
-const defaultKlid = '00000409';
-
 const copyrightHeader =
 `/**
  * Copyright (c) Microsoft Corporation.
@@ -316,16 +313,19 @@ function getKeyboardLayoutsFromMarkdown() {
       .map(([codesStr, layoutName, klid]) => ({ klid, layoutName, codes: codesStr.split(/`\s*,\s*`/) })) ?? [];
 }
 
+/** @param {string} code */
+function normalizeCode(code) {
+  return code.replace(/-/g, '_').toLowerCase();
+}
+
 const keyboardsDir = path.resolve(__dirname, '../packages/playwright-core/src/server/keyboards');
 const paramsMarkdownFilename = path.resolve(__dirname, '../docs/src/api/params.md');
 
 (async () => {;
   const layouts = getKeyboardLayoutsFromMarkdown();
 
-  const klid2LayoutName = new Map(layouts.map(({ klid, layoutName }) => ([ klid, layoutName ])));
-
-  for (const [klid, layoutName] of klid2LayoutName.entries()) {
-    console.log(`Generating keyboard layout for ${layoutName} (KLID ${klid})`);
+  for (const { klid, layoutName, codes: [code] } of layouts) {
+    console.log(`Generating keyboard layout for ${layoutName} (code: ${code}, KLID: ${klid})`);
     const layout = await generate(klid);
 
     const layoutData = [
@@ -341,22 +341,22 @@ const paramsMarkdownFilename = path.resolve(__dirname, '../docs/src/api/params.m
       ``,
     ].join('\n');
 
-    fs.writeFileSync(path.resolve(keyboardsDir, 'layouts', `${klid}.ts`), layoutData, 'utf-8');
+    fs.writeFileSync(path.resolve(keyboardsDir, 'layouts', `${normalizeCode(code)}.ts`), layoutData, 'utf-8');
   }
 
   const codesMapping = layouts
-      .flatMap(({ klid, layoutName, codes }) => codes.map(code => `  ['${code.replace(/-/g, '_').toLowerCase()}', '${klid}'], // ${layoutName}`));
+      .flatMap(({ layoutName, codes }) => codes.map(code => `  ['${normalizeCode(code)}', '${normalizeCode(codes[0])}'], // ${layoutName}`));
 
   const index = [
     copyrightHeader,
-    `import defaultKeyboardLayoutObject from './layouts/${defaultKlid}';`,
+    `import usKeyboardLayout from './layouts/us';`,
     `import type { KeyboardLayout } from './types';`,
     ``,
     `export type * from './types';`,
-    `export const defaultKlid = '${defaultKlid}';`,
-    `export const defaultKeyboardLayout: KeyboardLayout = defaultKeyboardLayoutObject;`,
+    `export const defaultKeyboardLayoutName = 'us';`,
+    `export const defaultKeyboardLayout: KeyboardLayout = usKeyboardLayout;`,
     ``,
-    `export const localeMapping = new Map<string, string>([`,
+    `export const keyboardLayoutNamesMapping = new Map<string, string>([`,
     ...codesMapping,
     `]);`,
     ``,

@@ -18,7 +18,7 @@ import { assert } from '../utils';
 import type * as types from './types';
 import type { Page } from './page';
 import type { KeyboardLayout } from './keyboards';
-import { defaultKeyboardLayout, defaultKlid, localeMapping } from './keyboards';
+import { defaultKeyboardLayout, defaultKeyboardLayoutName, keyboardLayoutNamesMapping } from './keyboards';
 
 export { keypadLocation } from './keyboards';
 
@@ -56,11 +56,11 @@ export class Keyboard {
   constructor(raw: RawKeyboard, page: Page) {
     this._raw = raw;
     this._page = page;
-    this._keyboardLayout = getByLocale(page._browserContext._options.keyboardLayout);
+    this._keyboardLayout = getByKeyboardLayoutName(page._browserContext._options.keyboardLayout);
   }
 
   changeLayout(layoutName: string) {
-    this._keyboardLayout = getByLocale(layoutName);
+    this._keyboardLayout = getByKeyboardLayoutName(layoutName);
   }
 
   async down(key: string) {
@@ -274,15 +274,15 @@ const aliases = new Map<string, string[]>([
 const defaultKeyboard = _buildLayoutClosure(defaultKeyboardLayout);
 const cache = new Map<string, KeyboardLayoutClosure>(
     // initialized with the default keyboard layout
-    [[defaultKlid, defaultKeyboard]]
+    [[defaultKeyboardLayoutName, defaultKeyboard]]
 );
 
-function getByLocale(locale?: string): KeyboardLayoutClosure {
-  if (!locale) return defaultKeyboard;
+function getByKeyboardLayoutName(layoutName?: string): KeyboardLayoutClosure {
+  if (!layoutName) return defaultKeyboard;
 
-  const normalizedLocale = normalizeLocale(locale);
-  const klid = localeMapping.get(normalizedLocale);
-  if (!klid) throw new Error(`Keyboard layout name "${locale}" not found`);
+  const normalizedLayoutName = normalizeLayoutName(layoutName);
+  const klid = keyboardLayoutNamesMapping.get(normalizedLayoutName);
+  if (!klid) throw new Error(`Keyboard layout name "${layoutName}" not found`);
 
   const cached = cache.get(klid);
   if (cached) return cached;
@@ -296,8 +296,8 @@ function getByLocale(locale?: string): KeyboardLayoutClosure {
   return result;
 }
 
-function normalizeLocale(locale: string) {
-  return locale.replace(/-/g, '_').toLowerCase();
+function normalizeLayoutName(layoutName: string) {
+  return layoutName.replace(/-/g, '_').toLowerCase();
 }
 
 function _buildLayoutClosure(layout: KeyboardLayout): KeyboardLayoutClosure {
