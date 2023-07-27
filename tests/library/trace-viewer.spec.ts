@@ -919,3 +919,40 @@ test('should prefer later resource request with the same method', async ({ page,
   const frame2 = await traceViewer.snapshotFrame('locator.click');
   await expect(frame2.locator('body')).toHaveCSS('background-color', 'rgb(123, 123, 123)');
 });
+
+test('should ignore 304 responses', async ({ page, server, runAndTrace }) => {
+  const html = `
+    <head>
+      <link rel=stylesheet href="style.css" />
+    </head>
+    <body>
+      <div>Hello</div>
+    </body>
+  `;
+
+  server.setRoute('/style.css', async (req, res) => {
+    if (req.headers['if-modified-since']) {
+      res.statusCode = 304; // not modified
+      res.end();
+      return;
+    }
+    res.setHeader('Cache-Control', 'public, max-age=31536000, no-cache');
+    res.setHeader('Last-Modified', (new Date()).toISOString());
+    res.end('body { background-color: rgb(123, 123, 123) }');
+  });
+  server.setRoute('/index.html', (req, res) => res.end(html));
+
+  const traceViewer = await runAndTrace(async () => {
+    const request1 = page.waitForEvent('requestfinished', req => req.url() === server.PREFIX + '/style.css');
+    await page.goto(server.PREFIX + '/index.html');
+    await request1;
+    await page.waitForTimeout(1000);
+    const request2 = page.waitForEvent('requestfinished', req => req.url() === server.PREFIX + '/style.css');
+    await page.goto(server.PREFIX + '/index.html');
+    await request2;
+    await page.waitForTimeout(1000);
+    await page.locator('div').click();
+  });
+  const frame = await traceViewer.snapshotFrame('locator.click');
+  await expect(frame.locator('body')).toHaveCSS('background-color', 'rgb(123, 123, 123)');
+});
