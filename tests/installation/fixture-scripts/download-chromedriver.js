@@ -5,7 +5,7 @@ const fs = require('fs');
 
 (async () => {
   const dir = process.argv[2];
-  const chrome = await playwright.chromium.launch({ channel: 'chrome' });
+  const chrome = await playwright.chromium.launch({ });
   const version = chrome.version();
   await chrome.close();
   console.log(`Found Chrome version ${version}`);
@@ -27,7 +27,7 @@ const fs = require('fs');
   execSync(`curl ${chromeDriverURL} --output ${zip} --silent`);
   console.log(`Downloaded ${zip}`);
 
-  execSync(`unzip ${zip}`, { cwd: dir });
+  execSync(`unzip -j ${zip}`, { cwd: dir });
   console.log(`Unzipped ${zip}`);
 
   fs.renameSync(`chromedriver-${currentPlatform}`, `chromedriver`);
