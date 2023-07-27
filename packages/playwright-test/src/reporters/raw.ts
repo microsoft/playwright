@@ -18,7 +18,7 @@ import fs from 'fs';
 import path from 'path';
 import type { FullConfig, Location, Suite, TestCase, TestResult, TestStatus, TestStep } from '../../types/testReporter';
 import { assert } from 'playwright-core/lib/utils';
-import { sanitizeForFilePath } from '../util';
+import { sanitizeForFilePathLegacy } from '../util';
 import { formatResultFailure } from './base';
 import { toPosixPath, serializePatterns } from './json';
 import { MultiMap } from 'playwright-core/lib/utils';
@@ -120,7 +120,7 @@ class RawReporter {
       fs.mkdirSync(reportFolder, { recursive: true });
       let reportFile: string | undefined;
       for (let i = 0; i < 10; ++i) {
-        reportFile = path.join(reportFolder, sanitizeForFilePath(project.name || 'project') + (i ? '-' + i : '') + '.report');
+        reportFile = path.join(reportFolder, sanitizeForFilePathLegacy(project.name || 'project') + (i ? '-' + i : '') + '.report');
         try {
           if (fs.existsSync(reportFile))
             continue;

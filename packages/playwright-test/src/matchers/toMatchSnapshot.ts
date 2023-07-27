@@ -22,7 +22,7 @@ import type { ImageComparatorOptions, Comparator } from 'playwright-core/lib/uti
 import { getComparator } from 'playwright-core/lib/utils';
 import type { PageScreenshotOptions } from 'playwright-core/types/types';
 import {
-  addSuffixToFilePath, serializeError, sanitizeForFilePath,
+  sanitizeForFilePathLegacy, serializeError,
   trimLongString, callLogText,
   expectTypes  } from '../util';
 import { colors } from 'playwright-core/lib/utilsBundle';
@@ -95,7 +95,7 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
         ...testInfo.titlePath.slice(1),
         ++snapshotNames.anonymousSnapshotIndex,
       ].join(' ');
-      name = sanitizeForFilePath(trimLongString(fullTitleWithoutSpec)) + '.' + anonymousSnapshotExtension;
+      name = sanitizeForFilePathLegacy(trimLongString(fullTitleWithoutSpec)) + '.' + anonymousSnapshotExtension;
       this.snapshotName = name;
     } else {
       const joinedName = Array.isArray(name) ? name.join(path.sep) : name;
@@ -439,4 +439,12 @@ function determineFileExtension(file: string | Buffer): string {
 
 function compareMagicBytes(file: Buffer, magicBytes: number[]): boolean {
   return Buffer.compare(Buffer.from(magicBytes), file.slice(0, magicBytes.length)) === 0;
+}
+
+function addSuffixToFilePath(filePath: string, suffix: string, customExtension?: string, sanitize = false): string {
+  const dirname = path.dirname(filePath);
+  const ext = path.extname(filePath);
+  const name = path.basename(filePath, ext);
+  const base = path.join(dirname, name);
+  return (sanitize ? sanitizeForFilePathLegacy(base) : base) + suffix + (customExtension || ext);
 }

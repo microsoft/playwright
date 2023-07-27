@@ -195,8 +195,23 @@ export function expectTypes(receiver: any, types: string[], matcherName: string)
   }
 }
 
-export function sanitizeForFilePath(s: string) {
+// Note: This function does not produce unique names for different inputs.
+export function sanitizeForFilePathLegacy(s: string) {
   return s.replace(/[\x00-\x2C\x2E-\x2F\x3A-\x40\x5B-\x60\x7B-\x7F]+/g, '-');
+}
+
+export function sanitizeForFilePathUnique(input: string) {
+  let nonTrivialSubstitute = false;
+  let sanitized = input.replace(/[\x00-\x2C\x2E-\x2F\x3A-\x40\x5B-\x60\x7B-\x7F\x2A\-\*]+/g, substring => {
+    if (substring !== ' ')
+      nonTrivialSubstitute = true;
+    return '-';
+  });
+  if (!nonTrivialSubstitute)
+    return sanitized;
+  // If we sanitized the beginning or end, remove it for cosmetic reasons.
+  sanitized = sanitized.replace(/^-/, '').replace(/-$/, '');
+  return sanitized + '-' + calculateSha1(input).substring(0, 6);
 }
 
 export function trimLongString(s: string, length = 100) {
@@ -207,14 +222,6 @@ export function trimLongString(s: string, length = 100) {
   const start = Math.floor((length - middle.length) / 2);
   const end = length - middle.length - start;
   return s.substring(0, start) + middle + s.slice(-end);
-}
-
-export function addSuffixToFilePath(filePath: string, suffix: string, customExtension?: string, sanitize = false): string {
-  const dirname = path.dirname(filePath);
-  const ext = path.extname(filePath);
-  const name = path.basename(filePath, ext);
-  const base = path.join(dirname, name);
-  return (sanitize ? sanitizeForFilePath(base) : base) + suffix + (customExtension || ext);
 }
 
 /**
@@ -270,7 +277,7 @@ export async function normalizeAndSaveAttachment(outputPath: string, name: strin
     if (!isString(name))
       throw new Error('"name" should be string.');
 
-    const sanitizedNamePrefix = sanitizeForFilePath(name) + '-';
+    const sanitizedNamePrefix = sanitizeForFilePathLegacy(name) + '-';
     const dest = path.join(outputPath, 'attachments', sanitizedNamePrefix + hash + path.extname(options.path));
     await fs.promises.mkdir(path.dirname(dest), { recursive: true });
     await fs.promises.copyFile(options.path, dest);

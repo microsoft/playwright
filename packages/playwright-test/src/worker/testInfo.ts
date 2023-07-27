@@ -23,7 +23,7 @@ import type { TestCase } from '../common/test';
 import { TimeoutManager } from './timeoutManager';
 import type { Annotation, FullConfigInternal, FullProjectInternal } from '../common/config';
 import type { Location } from '../../types/testReporter';
-import { getContainedPath, normalizeAndSaveAttachment, sanitizeForFilePath, serializeError, trimLongString } from '../util';
+import { getContainedPath, normalizeAndSaveAttachment, sanitizeForFilePathUnique, sanitizeForFilePathLegacy, serializeError, trimLongString } from '../util';
 import type * as trace from '@trace/trace';
 
 export interface TestStepInternal {
@@ -161,9 +161,9 @@ export class TestInfoImpl implements TestInfo {
       const sanitizedRelativePath = relativeTestFilePath.replace(process.platform === 'win32' ? new RegExp('\\\\', 'g') : new RegExp('/', 'g'), '-');
       const fullTitleWithoutSpec = test.titlePath().slice(1).join(' ');
 
-      let testOutputDir = trimLongString(sanitizedRelativePath + '-' + sanitizeForFilePath(fullTitleWithoutSpec));
+      let testOutputDir = trimLongString(sanitizedRelativePath + '-' + sanitizeForFilePathUnique(fullTitleWithoutSpec));
       if (projectInternal.id)
-        testOutputDir += '-' + sanitizeForFilePath(projectInternal.id);
+        testOutputDir += '-' + sanitizeForFilePathUnique(projectInternal.id);
       if (this.retry)
         testOutputDir += '-retry' + this.retry;
       if (this.repeatEachIndex)
@@ -417,17 +417,16 @@ export class TestInfoImpl implements TestInfo {
     throw new Error(`The outputPath is not allowed outside of the parent directory. Please fix the defined path.\n\n\toutputPath: ${joinedPath}`);
   }
 
-  _fsSanitizedTestName() {
-    const fullTitleWithoutSpec = this.titlePath.slice(1).join(' ');
-    return sanitizeForFilePath(trimLongString(fullTitleWithoutSpec));
-  }
-
   snapshotPath(...pathSegments: string[]) {
     const subPath = path.join(...pathSegments);
     const parsedSubPath = path.parse(subPath);
     const relativeTestFilePath = path.relative(this.project.testDir, this._test._requireFile);
     const parsedRelativeTestFilePath = path.parse(relativeTestFilePath);
-    const projectNamePathSegment = sanitizeForFilePath(this.project.name);
+    const fsSanitizedTestName = (() => {
+      const fullTitleWithoutSpec = this.titlePath.slice(1).join(' ');
+      return sanitizeForFilePathLegacy(trimLongString(fullTitleWithoutSpec));
+    })();
+    const projectNamePathSegment = sanitizeForFilePathLegacy(this.project.name);
 
     const snapshotPath = (this._projectInternal.snapshotPathTemplate || '')
         .replace(/\{(.)?testDir\}/g, '$1' + this.project.testDir)
@@ -436,7 +435,7 @@ export class TestInfoImpl implements TestInfo {
         .replace(/\{(.)?testFileDir\}/g, '$1' + parsedRelativeTestFilePath.dir)
         .replace(/\{(.)?platform\}/g, '$1' + process.platform)
         .replace(/\{(.)?projectName\}/g, projectNamePathSegment ? '$1' + projectNamePathSegment : '')
-        .replace(/\{(.)?testName\}/g, '$1' + this._fsSanitizedTestName())
+        .replace(/\{(.)?testName\}/g, '$1' + fsSanitizedTestName)
         .replace(/\{(.)?testFileName\}/g, '$1' + parsedRelativeTestFilePath.base)
         .replace(/\{(.)?testFilePath\}/g, '$1' + relativeTestFilePath)
         .replace(/\{(.)?arg\}/g, '$1' + path.join(parsedSubPath.dir, parsedSubPath.name))

@@ -24,7 +24,7 @@ import { HttpServer, assert, calculateSha1, copyFileAndMakeWritable, gracefullyP
 import type { JsonAttachment, JsonReport, JsonSuite, JsonTestCase, JsonTestResult, JsonTestStep } from './raw';
 import RawReporter from './raw';
 import { stripAnsiEscapes } from './base';
-import { getPackageJsonPath, sanitizeForFilePath } from '../util';
+import { getPackageJsonPath, sanitizeForFilePathLegacy } from '../util';
 import type { Metadata } from '../../types/test';
 import type { ZipFile } from 'playwright-core/lib/zipBundle';
 import { yazl } from 'playwright-core/lib/zipBundle';
@@ -423,7 +423,7 @@ class HtmlBuilder {
         }
 
         fs.mkdirSync(path.join(this._reportFolder, 'data'), { recursive: true });
-        const extension = sanitizeForFilePath(path.extname(a.name).replace(/^\./, '')) || mime.getExtension(a.contentType) || 'dat';
+        const extension = sanitizeForFilePathLegacy(path.extname(a.name).replace(/^\./, '')) || mime.getExtension(a.contentType) || 'dat';
         const sha1 = calculateSha1(a.body) + '.' + extension;
         fs.writeFileSync(path.join(this._reportFolder, 'data', sha1), a.body);
         return {

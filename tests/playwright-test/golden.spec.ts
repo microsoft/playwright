@@ -710,6 +710,18 @@ test('should sanitize snapshot name when passed as string', async ({ runInlineTe
   expect(result.exitCode).toBe(0);
 });
 
+test('should have consistent sanitized snapshot name', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    ...files,
+    'a.spec.js-snapshots/DSK-25814-5-1.txt': `Hello world`,
+    'a.spec.js': `
+      const { test, expect } = require('./helper');;
+      test('DSK-25814-5', ({}) => expect('Hello world').toMatchSnapshot());
+    `
+  });
+  expect(result.exitCode).toBe(0);
+});
+
 test('should write missing expectations with sanitized snapshot name', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...files,
