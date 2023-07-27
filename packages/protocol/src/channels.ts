@@ -1404,6 +1404,7 @@ export interface BrowserContextEventTarget {
   on(event: 'close', callback: (params: BrowserContextCloseEvent) => void): this;
   on(event: 'dialog', callback: (params: BrowserContextDialogEvent) => void): this;
   on(event: 'page', callback: (params: BrowserContextPageEvent) => void): this;
+  on(event: 'pageError', callback: (params: BrowserContextPageErrorEvent) => void): this;
   on(event: 'route', callback: (params: BrowserContextRouteEvent) => void): this;
   on(event: 'video', callback: (params: BrowserContextVideoEvent) => void): this;
   on(event: 'backgroundPage', callback: (params: BrowserContextBackgroundPageEvent) => void): this;
@@ -1452,6 +1453,10 @@ export type BrowserContextDialogEvent = {
 };
 export type BrowserContextPageEvent = {
   page: PageChannel,
+};
+export type BrowserContextPageErrorEvent = {
+  error: SerializedError,
+  page?: PageChannel,
 };
 export type BrowserContextRouteEvent = {
   route: RouteChannel,
@@ -1697,6 +1702,7 @@ export interface BrowserContextEvents {
   'close': BrowserContextCloseEvent;
   'dialog': BrowserContextDialogEvent;
   'page': BrowserContextPageEvent;
+  'pageError': BrowserContextPageErrorEvent;
   'route': BrowserContextRouteEvent;
   'video': BrowserContextVideoEvent;
   'backgroundPage': BrowserContextBackgroundPageEvent;
@@ -1725,7 +1731,6 @@ export interface PageEventTarget {
   on(event: 'fileChooser', callback: (params: PageFileChooserEvent) => void): this;
   on(event: 'frameAttached', callback: (params: PageFrameAttachedEvent) => void): this;
   on(event: 'frameDetached', callback: (params: PageFrameDetachedEvent) => void): this;
-  on(event: 'pageError', callback: (params: PagePageErrorEvent) => void): this;
   on(event: 'route', callback: (params: PageRouteEvent) => void): this;
   on(event: 'video', callback: (params: PageVideoEvent) => void): this;
   on(event: 'webSocket', callback: (params: PageWebSocketEvent) => void): this;
@@ -1786,9 +1791,6 @@ export type PageFrameAttachedEvent = {
 };
 export type PageFrameDetachedEvent = {
   frame: FrameChannel,
-};
-export type PagePageErrorEvent = {
-  error: SerializedError,
 };
 export type PageRouteEvent = {
   route: RouteChannel,
@@ -2220,7 +2222,6 @@ export interface PageEvents {
   'fileChooser': PageFileChooserEvent;
   'frameAttached': PageFrameAttachedEvent;
   'frameDetached': PageFrameDetachedEvent;
-  'pageError': PagePageErrorEvent;
   'route': PageRouteEvent;
   'video': PageVideoEvent;
   'webSocket': PageWebSocketEvent;

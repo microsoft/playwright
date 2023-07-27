@@ -38,6 +38,7 @@ import { DialogDispatcher } from './dialogDispatcher';
 import type { Page } from '../page';
 import type { Dialog } from '../dialog';
 import type { ConsoleMessage } from '../console';
+import { serializeError } from '../../protocol/serializers';
 
 export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channels.BrowserContextChannel, DispatcherScope> implements channels.BrowserContextChannel {
   _type_EventTarget = true;
@@ -83,6 +84,9 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     this.addObjectListener(BrowserContext.Events.Close, () => {
       this._dispatchEvent('close');
       this._dispose();
+    });
+    this.addObjectListener(BrowserContext.Events.PageError, (error: Error, page: Page) => {
+      this._dispatchEvent('pageError', { error: serializeError(error), page: PageDispatcher.from(this, page) });
     });
     this.addObjectListener(BrowserContext.Events.Console, (message: ConsoleMessage) => {
       if (this._shouldDispatchEvent(message.page(), 'console'))

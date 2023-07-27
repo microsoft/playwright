@@ -1183,6 +1183,11 @@ BrowserContext:
       parameters:
         page: Page
 
+    pageError:
+      parameters:
+        error: SerializedError
+        page: Page?
+
     route:
       parameters:
         route: Route
@@ -1629,10 +1634,6 @@ Page:
     frameDetached:
       parameters:
         frame: Frame
-
-    pageError:
-      parameters:
-        error: SerializedError
 
     route:
       parameters:

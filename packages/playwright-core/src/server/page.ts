@@ -125,9 +125,6 @@ export class Page extends SdkObject {
     Crash: 'crash',
     Download: 'download',
     FileChooser: 'filechooser',
-    // Can't use just 'error' due to node.js special treatment of error events.
-    // @see https://nodejs.org/api/events.html#events_error_events
-    PageError: 'pageerror',
     FrameAttached: 'frameattached',
     FrameDetached: 'framedetached',
     InternalFrameNavigatedToNewDocument: 'internalframenavigatedtonewdocument',
@@ -694,10 +691,6 @@ export class Page extends SdkObject {
 
   temporarlyDisableTracingScreencastThrottling() {
     this._frameThrottler.recharge();
-  }
-
-  firePageError(error: Error) {
-    this.emit(Page.Events.PageError, error);
   }
 
   async hideHighlight() {

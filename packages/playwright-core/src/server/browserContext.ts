@@ -48,6 +48,9 @@ export abstract class BrowserContext extends SdkObject {
     Close: 'close',
     Dialog: 'dialog',
     Page: 'page',
+    // Can't use just 'error' due to node.js special treatment of error events.
+    // @see https://nodejs.org/api/events.html#events_error_events
+    PageError: 'pageerror',
     Request: 'request',
     Response: 'response',
     RequestFailed: 'requestfailed',
