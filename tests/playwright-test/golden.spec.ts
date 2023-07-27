@@ -711,6 +711,7 @@ test('should sanitize snapshot name when passed as string', async ({ runInlineTe
 });
 
 test('should have consistent sanitized snapshot name', async ({ runInlineTest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/24184' });
   const result = await runInlineTest({
     ...files,
     'a.spec.js-snapshots/DSK-25814-5-1.txt': `Hello world`,
