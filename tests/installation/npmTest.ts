@@ -101,8 +101,10 @@ export const test = _test
         const contents = await fs.promises.readdir(sourceDir);
         await Promise.all(contents.map(f => fs.promises.copyFile(path.join(sourceDir, f), path.join(tmpWorkspace, f))));
         await use();
-        // Browsers are large, we remove them after each test to save disk space.
-        await fs.promises.rm(_browsersPath, { recursive: true, force: true });
+        if (test.info().status === test.info().expectedStatus) {
+          // Browsers are large, we remove them after each test to save disk space.
+          await fs.promises.rm(_browsersPath, { recursive: true, force: true });
+        }
       }, {
         auto: true,
       }],
