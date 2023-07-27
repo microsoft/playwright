@@ -27,8 +27,7 @@ const fs = require('fs');
   execSync(`curl ${chromeDriverURL} --output ${zip} --silent`);
   console.log(`Downloaded ${zip}`);
 
-  execSync(`unzip ${zip}`, { cwd: dir });
+  execSync(`unzip -j ${zip}`, { cwd: dir });
   console.log(`Unzipped ${zip}`);
-
-  fs.renameSync(`chromedriver-${currentPlatform}`, `chromedriver`);
+  fs.rmSync(zip);
 })();
