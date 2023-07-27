@@ -64,7 +64,7 @@ if (mode === 'service2') {
   connectOptions = {
     wsEndpoint: `${process.env.PLAYWRIGHT_SERVICE_URL}?accessKey=${process.env.PLAYWRIGHT_SERVICE_ACCESS_KEY}&cap=${JSON.stringify({ os, runId })}`,
     timeout: 3 * 60 * 1000,
-    _exposeNetwork: '<loopback>',
+    exposeNetwork: '<loopback>',
   };
 }
 

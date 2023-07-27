@@ -514,7 +514,7 @@ function connectOptionsFromEnv() {
   return {
     wsEndpoint,
     headers,
-    _exposeNetwork: process.env.PW_TEST_CONNECT_EXPOSE_NETWORK,
+    exposeNetwork: process.env.PW_TEST_CONNECT_EXPOSE_NETWORK,
   };
 }
 
