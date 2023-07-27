@@ -96,6 +96,7 @@ async function mergeEvents(dir: string, shardReportFiles: string[]) {
     const shardB = b.metadata.shard?.current ?? 0;
     return shardA - shardB;
   });
+  const allTestIds = new Set<string>();
   for (const { parsedEvents } of shardEvents) {
     for (const event of parsedEvents) {
       if (event.method === 'onConfigure')
@@ -105,7 +106,7 @@ async function mergeEvents(dir: string, shardReportFiles: string[]) {
       else if (event.method === 'onEnd')
         endEvents.push(event);
       else if (event.method === 'onBlobReportMetadata')
-        new ProjectNamePatcher(event.params.projectSuffix).patchEvents(parsedEvents);
+        new ProjectNamePatcher(allTestIds, event.params.projectSuffix || '').patchEvents(parsedEvents);
       else
         events.push(event);
     }
@@ -211,12 +212,12 @@ async function sortedShardFiles(dir: string) {
 }
 
 class ProjectNamePatcher {
-  constructor(private _projectNameSuffix: string) {
+  private _testIds = new Set<string>();
+
+  constructor(private _allTestIds: Set<string>, private _projectNameSuffix: string) {
   }
 
   patchEvents(events: JsonEvent[]) {
-    if (!this._projectNameSuffix)
-      return;
     for (const event of events) {
       const { method, params } = event;
       switch (method) {
@@ -234,6 +235,8 @@ class ProjectNamePatcher {
           continue;
       }
     }
+    for (const testId of this._testIds)
+      this._allTestIds.add(testId);
   }
 
   private _onBegin(config: JsonConfig, projects: JsonProject[]) {
@@ -259,11 +262,21 @@ class ProjectNamePatcher {
   }
 
   private _updateTestIds(suite: JsonSuite) {
-    suite.tests.forEach(test => test.testId = this._mapTestId(test.testId));
+    suite.tests.forEach(test => {
+      test.testId = this._mapTestId(test.testId);
+      this._testIds.add(test.testId);
+    });
     suite.suites.forEach(suite => this._updateTestIds(suite));
   }
 
   private _mapTestId(testId: string): string {
-    return testId + '-' + this._projectNameSuffix;
+    testId = testId + this._projectNameSuffix;
+    // Consider a setup project running on each shard. In this case we'll have
+    // the same testId (from setup project) in multiple blob reports.
+    // To avoid reporters being confused by clashing test ids, we automatically
+    // make them unique and produce a separate test from each blob.
+    while (this._allTestIds.has(testId))
+      testId = testId + '1';
+    return testId;
   }
 }
