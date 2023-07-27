@@ -81,6 +81,7 @@ export type ArgsOrOptions = [] | [...string[]] | [...string[], ExecOptions] | [E
 
 export type NPMTestFixtures = {
   _auto: void,
+  _browsersPath: string
   tmpWorkspace: string,
   nodeMajorVersion: number,
   installedSoftwareOnDisk: (registryPath?: string) => Promise<string[]>;
@@ -93,12 +94,17 @@ export type NPMTestFixtures = {
 export const test = _test
     .extend<CommonFixtures, CommonWorkerFixtures>(commonFixtures)
     .extend<NPMTestFixtures>({
-      _auto: [async ({ tmpWorkspace, exec }, use) => {
+      _browsersPath: async ({ tmpWorkspace }, use) => use(path.join(tmpWorkspace, 'browsers')),
+      _auto: [async ({ tmpWorkspace, exec, _browsersPath }, use) => {
         await exec('npm init -y');
         const sourceDir = path.join(__dirname, 'fixture-scripts');
         const contents = await fs.promises.readdir(sourceDir);
         await Promise.all(contents.map(f => fs.promises.copyFile(path.join(sourceDir, f), path.join(tmpWorkspace, f))));
         await use();
+        if (test.info().status === test.info().expectedStatus) {
+          // Browsers are large, we remove them after each test to save disk space.
+          await fs.promises.rm(_browsersPath, { recursive: true, force: true });
+        }
       }, {
         auto: true,
       }],
@@ -126,10 +132,10 @@ export const test = _test
         await use(registry);
         await registry.shutdown();
       },
-      installedSoftwareOnDisk: async ({ tmpWorkspace }, use) => {
-        await use(async (registryPath?: string) => fs.promises.readdir(registryPath || path.join(tmpWorkspace, 'browsers')).catch(() => []).then(files => files.map(f => f.split('-')[0]).filter(f => !f.startsWith('.'))));
+      installedSoftwareOnDisk: async ({ _browsersPath }, use) => {
+        await use(async (registryPath?: string) => fs.promises.readdir(registryPath || _browsersPath).catch(() => []).then(files => files.map(f => f.split('-')[0]).filter(f => !f.startsWith('.'))));
       },
-      exec: async ({ registry, tmpWorkspace }, use, testInfo) => {
+      exec: async ({ registry, tmpWorkspace, _browsersPath }, use, testInfo) => {
         await use(async (cmd: string, ...argsAndOrOptions: [] | [...string[]] | [...string[], ExecOptions] | [ExecOptions]) => {
           let args: string[] = [];
           let options: ExecOptions = {};
@@ -148,7 +154,7 @@ export const test = _test
                 'PATH': process.env.PATH,
                 'DISPLAY': process.env.DISPLAY,
                 'XAUTHORITY': process.env.XAUTHORITY,
-                'PLAYWRIGHT_BROWSERS_PATH': path.join(tmpWorkspace, 'browsers'),
+                'PLAYWRIGHT_BROWSERS_PATH': _browsersPath,
                 'npm_config_cache': testInfo.outputPath('npm_cache'),
                 'npm_config_registry': registry.url(),
                 'npm_config_prefix': testInfo.outputPath('npm_global'),
