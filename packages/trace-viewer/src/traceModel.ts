@@ -20,7 +20,6 @@ import { parseClientSideCallMetadata } from '../../../packages/playwright-core/s
 import type { ContextEntry, PageEntry } from './entries';
 import { createEmptyContext } from './entries';
 import { SnapshotStorage } from './snapshotStorage';
-import type { PlaywrightReportModel } from './traceModelBackends';
 
 export interface TraceModelBackend {
   entryNames(): Promise<string[]>;
@@ -28,7 +27,6 @@ export interface TraceModelBackend {
   readText(entryName: string): Promise<string | undefined>;
   readBlob(entryName: string): Promise<Blob | undefined>;
   isLive(): boolean;
-  toPlaywrightReport(): Promise<PlaywrightReportModel | undefined>;
   traceURL(): string;
 }
 export class TraceModel {

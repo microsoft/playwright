@@ -82,7 +82,7 @@ export function generateTraceUrl(traces: TestAttachment[]) {
 
   // If served from a Trace Viewer, we re-use the trace viewer and not use the bundled one.
   if (new URLSearchParams(window.location.search.slice(1)).has('from-trace-viewer'))
-    return `/trace/index.html?${queryString}`;
+    return `../index.html?${queryString}`;
 
   return `trace/index.html?${queryString}`;
 }

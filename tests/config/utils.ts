@@ -23,7 +23,6 @@ import { TraceModel } from '../../packages/trace-viewer/src/traceModel';
 import type { ActionTreeItem } from '../../packages/trace-viewer/src/ui/modelUtil';
 import { buildActionTree, MultiTraceModel } from '../../packages/trace-viewer/src/ui/modelUtil';
 import type { ActionTraceEvent, EventTraceEvent, TraceEvent } from '@trace/trace';
-import type { PlaywrightReportModel } from '../../packages/trace-viewer/src/traceModelBackends';
 
 export async function attachFrame(page: Page, frameId: string, url: string): Promise<Frame> {
   const handle = await page.evaluateHandle(async ({ frameId, url }) => {
@@ -233,10 +232,6 @@ class TraceBackend implements TraceModelBackend {
 
   isLive() {
     return false;
-  }
-
-  toPlaywrightReport(): Promise<PlaywrightReportModel> {
-    return undefined;
   }
 
   traceURL() {

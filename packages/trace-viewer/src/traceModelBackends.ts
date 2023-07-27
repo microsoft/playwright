@@ -21,37 +21,34 @@ import type { TraceModelBackend } from './traceModel';
 
 const zipjs = zipImport as typeof zip;
 
+export async function newZipReader(blobOrUrl: Blob | string, progress: Progress): Promise<{ entries: Map<string, zip.Entry>, reader: zip.ZipReader }> {
+  let reader: zip.ZipReader;
+  if (blobOrUrl instanceof Blob)
+    reader = new zipjs.ZipReader(new zipjs.BlobReader(blobOrUrl), { useWebWorkers: false }) as zip.ZipReader;
+  else
+    reader = new zipjs.ZipReader(new zipjs.HttpReader(formatUrl(blobOrUrl), { mode: 'cors', preventHeadRequest: true } as any), { useWebWorkers: false }) as zip.ZipReader;
+  const entries = await reader.getEntries({ onprogress: progress }).then(entries => {
+    const map = new Map<string, zip.Entry>();
+    for (const entry of entries)
+      map.set(entry.filename, entry);
+    return map;
+  });
+  return { entries, reader };
+}
+
 type Progress = (done: number, total: number) => void;
 
 export class ZipTraceModelBackend implements TraceModelBackend {
-  private _zipReader: zip.ZipReader;
-  private _entriesPromise: Promise<Map<string, zip.Entry>>;
+  private _entries: Map<string, zip.Entry>;
   private _traceURL: string;
 
-  constructor(traceURL: string, blobOverride: Blob | undefined, progress: Progress) {
+  constructor(traceURL: string, entries: Map<string, zip.Entry>) {
     this._traceURL = traceURL;
-    if (blobOverride)
-      this._zipReader = new zipjs.ZipReader(new zipjs.BlobReader(blobOverride), { useWebWorkers: false }) as zip.ZipReader;
-    else
-      this._zipReader = new zipjs.ZipReader(new zipjs.HttpReader(formatUrl(traceURL), { mode: 'cors', preventHeadRequest: true } as any), { useWebWorkers: false }) as zip.ZipReader;
-
-    this._entriesPromise = this._zipReader.getEntries({ onprogress: progress }).then(entries => {
-      const map = new Map<string, zip.Entry>();
-      for (const entry of entries)
-        map.set(entry.filename, entry);
-      return map;
-    });
+    this._entries = entries;
   }
 
   isLive() {
     return false;
-  }
-
-  async toPlaywrightReport(): Promise<PlaywrightReportModel | undefined> {
-    const entries = await this._entriesPromise;
-    if (!entries.has('index.html'))
-      return undefined;
-    return await PlaywrightReportModel.create(entries);
   }
 
   traceURL() {
@@ -59,17 +56,17 @@ export class ZipTraceModelBackend implements TraceModelBackend {
   }
 
   async entryNames(): Promise<string[]> {
-    const entries = await this._entriesPromise;
+    const entries = this._entries;
     return [...entries.keys()];
   }
 
   async hasEntry(entryName: string): Promise<boolean> {
-    const entries = await this._entriesPromise;
+    const entries = this._entries;
     return entries.has(entryName);
   }
 
   async readText(entryName: string): Promise<string | undefined> {
-    const entries = await this._entriesPromise;
+    const entries = this._entries;
     const entry = entries.get(entryName);
     if (!entry)
       return;
@@ -79,7 +76,7 @@ export class ZipTraceModelBackend implements TraceModelBackend {
   }
 
   async readBlob(entryName: string): Promise<Blob | undefined> {
-    const entries = await this._entriesPromise;
+    const entries = this._entries;
     const entry = entries.get(entryName);
     if (!entry)
       return;
@@ -106,10 +103,6 @@ export class FetchTraceModelBackend implements TraceModelBackend {
 
   isLive() {
     return true;
-  }
-
-  async toPlaywrightReport() {
-    return undefined;
   }
 
   traceURL(): string {
@@ -168,14 +161,10 @@ export class PlaywrightReportModel {
     return model;
   }
 
-  public shouldServe(url: string) {
-    return this._assets.has(url);
-  }
-
-  public serve(url: string): Response {
+  public findResponse(url: string): Response | undefined {
     const response = this._assets.get(url);
     if (!response)
-      throw new Error('File not found ' + url);
+      return;
     return new Response(response.blob, {
       headers: response.headers,
     });
@@ -185,6 +174,10 @@ export class PlaywrightReportModel {
     if (!traceUrl)
       return;
     return this._dataFiles.get(traceUrl);
+  }
+
+  public static isPlaywrightReport(entries: Map<string, zip.Entry>): boolean {
+    return entries.has('index.html');
   }
 
   private async _load() {
