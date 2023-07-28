@@ -146,14 +146,24 @@ test('should call methods in right order', async ({ runInlineTest, mergeReports 
   expect(lines.filter(l => l === 'onExit').length).toBe(1);
 });
 
-test('should merge into html', async ({ runInlineTest, mergeReports, showReport, page }) => {
+test('should merge into html with dependencies', async ({ runInlineTest, mergeReports, showReport, page }) => {
   const reportDir = test.info().outputPath('blob-report');
   const files = {
     'playwright.config.ts': `
       module.exports = {
         retries: 1,
-        reporter: [['blob', { outputDir: '${reportDir.replace(/\\/g, '/')}' }]]
+        reporter: [['blob', { outputDir: '${reportDir.replace(/\\/g, '/')}' }]],
+        projects: [
+          { name: 'test', dependencies: ['setup'] },
+          { name: 'setup', testMatch: /.*setup.js/ },
+        ]
       };
+    `,
+    'setup.js': `
+      import { test as setup } from '@playwright/test';
+      setup('login once', async ({}) => {
+        await setup.step('login step', async () => {});
+      });
     `,
     'a.test.js': `
       import { test, expect } from '@playwright/test';
@@ -202,14 +212,24 @@ test('should merge into html', async ({ runInlineTest, mergeReports, showReport,
 
   await showReport();
 
-  await expect(page.locator('.subnav-item:has-text("All") .counter')).toHaveText('10');
-  await expect(page.locator('.subnav-item:has-text("Passed") .counter')).toHaveText('3');
+  await expect(page.locator('.subnav-item:has-text("All") .counter')).toHaveText('13');
+  await expect(page.locator('.subnav-item:has-text("Passed") .counter')).toHaveText('6');
   await expect(page.locator('.subnav-item:has-text("Failed") .counter')).toHaveText('2');
   await expect(page.locator('.subnav-item:has-text("Flaky") .counter')).toHaveText('2');
   await expect(page.locator('.subnav-item:has-text("Skipped") .counter')).toHaveText('3');
 
-  await expect(page.locator('.test-file-test .test-file-title')).toHaveText(
-      ['failing 1', 'flaky 1', 'math 1', 'skipped 1', 'failing 2', 'math 2', 'skipped 2', 'flaky 2', 'math 3', 'skipped 3']);
+  await expect(page.locator('.test-file-test .test-file-title')).toHaveText([
+    'failing 1', 'flaky 1', 'math 1', 'skipped 1',
+    'failing 2', 'math 2', 'skipped 2',
+    'flaky 2', 'math 3', 'skipped 3',
+    'login once', 'login once', 'login once',
+  ]);
+
+  for (let i = 0; i < 3; i++) {
+    await page.getByText('login once').nth(i).click();
+    await expect(page.getByText('login step')).toBeVisible();
+    await page.goBack();
+  }
 });
 
 test('be able to merge incomplete shards', async ({ runInlineTest, mergeReports, showReport, page }) => {
