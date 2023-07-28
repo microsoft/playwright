@@ -64,7 +64,7 @@ function compressReports(reports) {
       let specObject = specs.get(specId);
       if (!specObject) {
         specObject = {
-          title: spec.title,
+          title: spec.titlePath.join(' › '),
           line: spec.line,
           column: spec.column,
           tests: new Map(),
