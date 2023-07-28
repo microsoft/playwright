@@ -166,4 +166,11 @@ export class TimeoutManager {
       stack: location ? message + `\n    at ${location.file}:${location.line}:${location.column}` : undefined
     };
   }
+
+  static calculateMinimalTimeout(...timeouts: number[]): number {
+    const positiveTimeouts = timeouts.filter(deadline => deadline > 0);
+    if (!positiveTimeouts.length)
+      return 0;
+    return Math.min(...positiveTimeouts);
+  }
 }

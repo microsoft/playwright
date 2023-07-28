@@ -25,13 +25,11 @@ type TimeoutRunnerData = {
   timeoutPromise: ManualPromise<any>,
 };
 
-export const MaxTime = 2147483647; // 2^31-1
-
 export class TimeoutRunner {
   private _running: TimeoutRunnerData | undefined;
   private _timeout: number;
   private _elapsed: number;
-  private _deadline = MaxTime;
+  private _deadline = 0;
 
   constructor(timeout: number) {
     this._timeout = timeout;
@@ -96,7 +94,7 @@ export class TimeoutRunner {
       running.timer = undefined;
     }
     this._syncElapsedAndStart();
-    this._deadline = timeout ? monotonicTime() + timeout : MaxTime;
+    this._deadline = timeout ? monotonicTime() + timeout : 0;
     if (timeout === 0)
       return;
     timeout = timeout - this._elapsed;
@@ -108,7 +106,7 @@ export class TimeoutRunner {
 }
 
 export async function raceAgainstDeadline<T>(cb: () => Promise<T>, deadline: number): Promise<{ result: T, timedOut: false } | { timedOut: true }> {
-  const runner = new TimeoutRunner((deadline || MaxTime) - monotonicTime());
+  const runner = new TimeoutRunner(deadline ? deadline - monotonicTime() : 0);
   try {
     return { result: await runner.run(cb), timedOut: false };
   } catch (e) {

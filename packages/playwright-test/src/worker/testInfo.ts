@@ -16,7 +16,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { MaxTime, captureRawStack, createAfterActionTraceEventForStep, createBeforeActionTraceEventForStep, monotonicTime, zones } from 'playwright-core/lib/utils';
+import { captureRawStack, createAfterActionTraceEventForStep, createBeforeActionTraceEventForStep, monotonicTime, zones } from 'playwright-core/lib/utils';
 import type { TestInfoError, TestInfo, TestStatus, FullProject, FullConfig } from '../../types/test';
 import type { AttachmentPayload, StepBeginPayload, StepEndPayload, WorkerInitParams } from '../common/ipc';
 import type { TestCase } from '../common/test';
@@ -109,11 +109,11 @@ export class TestInfoImpl implements TestInfo {
 
   _deadlineForMatcher(timeout: number): { deadline: number, timeoutMessage: string } {
     const startTime = monotonicTime();
-    const matcherDeadline = timeout ? startTime + timeout : MaxTime;
+    const matcherDeadline = timeout ? startTime + timeout : 0;
     const testDeadline = this._timeoutManager.currentSlotDeadline() - 100;
     const matcherMessage = `Timeout ${timeout}ms exceeded while waiting on the predicate`;
     const testMessage = `Test timeout of ${this.timeout}ms exceeded`;
-    return { deadline: Math.min(testDeadline, matcherDeadline), timeoutMessage: testDeadline < matcherDeadline ? testMessage : matcherMessage };
+    return { deadline: TimeoutManager.calculateMinimalTimeout(matcherDeadline, testDeadline), timeoutMessage: testDeadline < matcherDeadline ? testMessage : matcherMessage };
   }
 
   static _defaultDeadlineForMatcher(timeout: number): { deadline: any; timeoutMessage: any; } {
