@@ -235,7 +235,9 @@ test('should reset mouse position', async ({ reusedContext, browserName, platfor
   await expect(page.locator('#two')).toHaveCSS('background-color', 'rgb(0, 0, 255)');
 });
 
-test('should reset tracing', async ({ reusedContext }, testInfo) => {
+test('should reset tracing', async ({ reusedContext, trace }, testInfo) => {
+  test.skip(trace === 'on');
+
   let context = await reusedContext();
   await context.tracing.start();
 
