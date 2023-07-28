@@ -280,7 +280,7 @@ export type PlaywrightTestConfig<TestArgs = {}, WorkerArgs = {}> = Config<Playwr
 
 type AsymmetricMatcher = Record<string, any>;
 
-type AsymmetricMatchers = {
+interface AsymmetricMatchers {
   any(sample: unknown): AsymmetricMatcher;
   anything(): AsymmetricMatcher;
   arrayContaining(sample: Array<unknown>): AsymmetricMatcher;

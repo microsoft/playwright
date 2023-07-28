@@ -20,7 +20,7 @@ Playwright will be re-testing the element with the test id of `status` until the
 
 By default, the timeout for assertions is set to 5 seconds. Learn more about [various timeouts](./test-timeouts.md).
 
-## List of assertions
+## Popular assertions
 
 | Assertion | Description |
 | :- | :- |
@@ -49,6 +49,41 @@ By default, the timeout for assertions is set to 5 seconds. Learn more about [va
 | [`method: PageAssertions.toHaveTitle`] | Page has a title |
 | [`method: PageAssertions.toHaveURL`] | Page has a URL |
 | [`method: APIResponseAssertions.toBeOK`] | Response has an OK status |
+
+## Generic assertions
+
+| Assertion | Description |
+| :- | :- |
+| [`method: GenericAssertions.toBe`] | Value is the same |
+| [`method: GenericAssertions.toBeCloseTo`] | Number is approximately equal |
+| [`method: GenericAssertions.toBeDefined`] | Value is not `undefined` |
+| [`method: GenericAssertions.toBeFalsy`] | Value is falsy, e.g. `false`, `0`, `null`, etc. |
+| [`method: GenericAssertions.toBeGreaterThan`] | Number is more than |
+| [`method: GenericAssertions.toBeGreaterThanOrEqual`] | Number is more than or equal |
+| [`method: GenericAssertions.toBeInstanceOf`] | Object is an instance of a class |
+| [`method: GenericAssertions.toBeLessThan`] | Number is less than |
+| [`method: GenericAssertions.toBeLessThanOrEqual`] | Number is less than or equal |
+| [`method: GenericAssertions.toBeNaN`] | Value is `NaN` |
+| [`method: GenericAssertions.toBeNull`] | Value is `null` |
+| [`method: GenericAssertions.toBeTruthy`] | Value is truthy, i.e. not `false`, `0`, `null`, etc. |
+| [`method: GenericAssertions.toBeUndefined`] | Value is `undefined` |
+| [`method: GenericAssertions.toContain#1`] | String contains a substring |
+| [`method: GenericAssertions.toContain#2`] | Array or set contains an element |
+| [`method: GenericAssertions.toContainEqual`] | Array or set contains a similar element |
+| [`method: GenericAssertions.toEqual`] | Value is similar - deep equality and pattern matching |
+| [`method: GenericAssertions.toHaveLength`] | Array or string has length |
+| [`method: GenericAssertions.toHaveProperty`] | Object has a property |
+| [`method: GenericAssertions.toMatch`] | String matches a regular expression |
+| [`method: GenericAssertions.toMatchObject`] | Object contains specified properties |
+| [`method: GenericAssertions.toStrictEqual`] | Value is similar, including property types |
+| [`method: GenericAssertions.toThrow`] | Function throws an error |
+| [`method: GenericAssertions.any`] | Matches any instance of a class/primitive |
+| [`method: GenericAssertions.anything`] | Matches antyhing |
+| [`method: GenericAssertions.arrayContaining`] | Array contains specific elements |
+| [`method: GenericAssertions.closeTo`] | Number is approximately equal |
+| [`method: GenericAssertions.objectContaining`] | Object contains specific properties |
+| [`method: GenericAssertions.stringContaining`] | String contains a substring |
+| [`method: GenericAssertions.stringMatching`] | String matches a regular expression |
 
 ## Negating Matchers
 
