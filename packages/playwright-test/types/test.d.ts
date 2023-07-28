@@ -4334,13 +4334,148 @@ export type PlaywrightTestConfig<TestArgs = {}, WorkerArgs = {}> = Config<Playwr
 
 type AsymmetricMatcher = Record<string, any>;
 
-type AsymmetricMatchers = {
+interface AsymmetricMatchers {
+  /**
+   * `expect.any()` matches any object instance created from the `constructor` or a corresponding primitive type. Use it
+   * inside
+   * [genericAssertions.toEqual(expected)](https://playwright.dev/docs/api/class-genericassertions#generic-assertions-to-equal)
+   * to perform pattern matching.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // Match instance of a class.
+   * class Example {}
+   * expect(new Example()).toEqual(expect.any(Example));
+   *
+   * // Match any number.
+   * expect({ prop: 1 }).toEqual({ prop: expect.any(Number) });
+   *
+   * // Match any string.
+   * expect('abc').toEqual(expect.any(String));
+   * ```
+   *
+   * @param constructor Constructor of the expected object like `ExampleClass`, or a primitive boxed type like `Number`.
+   */
   any(sample: unknown): AsymmetricMatcher;
+  /**
+   * `expect.anything()` matches everything except `null` and `undefined`. Use it inside
+   * [genericAssertions.toEqual(expected)](https://playwright.dev/docs/api/class-genericassertions#generic-assertions-to-equal)
+   * to perform pattern matching.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const value = { prop: 1 };
+   * expect(value).toEqual({ prop: expect.anything() });
+   * expect(value).not.toEqual({ otherProp: expect.anything() });
+   * ```
+   *
+   */
   anything(): AsymmetricMatcher;
+  /**
+   * `expect.arrayContaining()` matches an array that contains all of the elements in the expected array, in any order.
+   * Note that received array may be a superset of the expected array and contain some extra elements.
+   *
+   * Use this method inside
+   * [genericAssertions.toEqual(expected)](https://playwright.dev/docs/api/class-genericassertions#generic-assertions-to-equal)
+   * to perform pattern matching.
+   *
+   * **Usage**
+   *
+   * ```js
+   * expect([1, 2, 3]).toEqual(expect.arrayContaining([3, 1]));
+   * expect([1, 2, 3]).not.toEqual(expect.arrayContaining([1, 4]));
+   * ```
+   *
+   * @param expected Expected array that is a subset of the received value.
+   */
   arrayContaining(sample: Array<unknown>): AsymmetricMatcher;
+  /**
+   * Compares floating point numbers for approximate equality. Use this method inside
+   * [genericAssertions.toEqual(expected)](https://playwright.dev/docs/api/class-genericassertions#generic-assertions-to-equal)
+   * to perform pattern matching. When just comparing two numbers, prefer
+   * [genericAssertions.toBeCloseTo(expected[, numDigits])](https://playwright.dev/docs/api/class-genericassertions#generic-assertions-to-be-close-to).
+   *
+   * **Usage**
+   *
+   * ```js
+   * expect({ prop: 0.1 + 0.2 }).not.toEqual({ prop: 0.3 });
+   * expect({ prop: 0.1 + 0.2 }).toEqual({ prop: expect.closeTo(0.3, 5) });
+   * ```
+   *
+   * @param expected Expected value.
+   * @param numDigits The number of decimal digits after the decimal point that must be equal.
+   */
   closeTo(sample: number, precision?: number): AsymmetricMatcher;
+  /**
+   * `expect.objectContaining()` matches an object that contains and matches all of the properties in the expected
+   * object. Note that received object may be a superset of the expected object and contain some extra properties.
+   *
+   * Use this method inside
+   * [genericAssertions.toEqual(expected)](https://playwright.dev/docs/api/class-genericassertions#generic-assertions-to-equal)
+   * to perform pattern matching. Object properties can be matchers to further relax the expectation. See examples.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // Assert some of the properties.
+   * expect({ foo: 1, bar: 2 }).toEqual(expect.objectContaining({ foo: 1 }));
+   *
+   * // Matchers can be used on the properties as well.
+   * expect({ foo: 1, bar: 2 }).toEqual(expect.objectContaining({ bar: expect.any(Number) }));
+   *
+   * // Complex matching of sub-properties.
+   * expect({
+   *   list: [1, 2, 3],
+   *   obj: { prop: 'Hello world!', another: 'some other value' },
+   *   extra: 'extra',
+   * }).toEqual(expect.objectContaining({
+   *   list: expect.arrayContaining([2, 3]),
+   *   obj: expect.objectContaining({ prop: expect.stringContaining('Hello') }),
+   * }));
+   * ```
+   *
+   * @param expected Expected object pattern that contains a subset of the properties.
+   */
   objectContaining(sample: Record<string, unknown>): AsymmetricMatcher;
+  /**
+   * `expect.stringContaining()` matches a string that contains the expected substring. Use this method inside
+   * [genericAssertions.toEqual(expected)](https://playwright.dev/docs/api/class-genericassertions#generic-assertions-to-equal)
+   * to perform pattern matching.
+   *
+   * **Usage**
+   *
+   * ```js
+   * expect('Hello world!').toEqual(expect.stringContaining('Hello'));
+   * ```
+   *
+   * @param expected Expected substring.
+   */
   stringContaining(sample: string): AsymmetricMatcher;
+  /**
+   * `expect.stringMatching()` matches a received string that in turn matches the expected pattern. Use this method
+   * inside
+   * [genericAssertions.toEqual(expected)](https://playwright.dev/docs/api/class-genericassertions#generic-assertions-to-equal)
+   * to perform pattern matching.
+   *
+   * **Usage**
+   *
+   * ```js
+   * expect('123ms').toEqual(expect.stringMatching(/\d+m?s/));
+   *
+   * // Inside another matcher.
+   * expect({
+   *   status: 'passed',
+   *   time: '123ms',
+   * }).toEqual({
+   *   status: expect.stringMatching(/passed|failed/),
+   *   time: expect.stringMatching(/\d+m?s/),
+   * });
+   * ```
+   *
+   * @param expected Pattern that expected string should match.
+   */
   stringMatching(sample: string | RegExp): AsymmetricMatcher;
 }
 
@@ -4614,6 +4749,45 @@ interface GenericAssertions<R> {
    * ```js
    * const value = { prop: 1 };
    * expect(value).toEqual({ prop: 1 });
+   * ```
+   *
+   * **Non-strict equality**
+   *
+   * [genericAssertions.toEqual(expected)](https://playwright.dev/docs/api/class-genericassertions#generic-assertions-to-equal)
+   * performs deep equality check that compares contents of the received and expected values. To ensure two objects
+   * reference the same instance, use
+   * [genericAssertions.toBe(expected)](https://playwright.dev/docs/api/class-genericassertions#generic-assertions-to-be)
+   * instead.
+   *
+   * [genericAssertions.toEqual(expected)](https://playwright.dev/docs/api/class-genericassertions#generic-assertions-to-equal)
+   * ignores `undefined` properties and array items, and does not insist on object types being equal. For stricter
+   * matching, use
+   * [genericAssertions.toStrictEqual(expected)](https://playwright.dev/docs/api/class-genericassertions#generic-assertions-to-strict-equal).
+   *
+   * **Pattern matching**
+   *
+   * [genericAssertions.toEqual(expected)](https://playwright.dev/docs/api/class-genericassertions#generic-assertions-to-equal)
+   * can be also used to perform pattern matching on objects, arrays and primitive types, with the help of the following
+   * matchers:
+   * - [genericAssertions.any(constructor)](https://playwright.dev/docs/api/class-genericassertions#generic-assertions-any)
+   * - [genericAssertions.anything()](https://playwright.dev/docs/api/class-genericassertions#generic-assertions-anything)
+   * - [genericAssertions.arrayContaining(expected)](https://playwright.dev/docs/api/class-genericassertions#generic-assertions-array-containing)
+   * - [genericAssertions.closeTo(expected[, numDigits])](https://playwright.dev/docs/api/class-genericassertions#generic-assertions-close-to)
+   * - [genericAssertions.objectContaining(expected)](https://playwright.dev/docs/api/class-genericassertions#generic-assertions-object-containing)
+   * - [genericAssertions.stringContaining(expected)](https://playwright.dev/docs/api/class-genericassertions#generic-assertions-string-containing)
+   * - [genericAssertions.stringMatching(expected)](https://playwright.dev/docs/api/class-genericassertions#generic-assertions-string-matching)
+   *
+   * Here is an example that asserts some of the values inside a complex object:
+   *
+   * ```js
+   * expect({
+   *   list: [1, 2, 3],
+   *   obj: { prop: 'Hello world!', another: 'some other value' },
+   *   extra: 'extra',
+   * }).toEqual(expect.objectContaining({
+   *   list: expect.arrayContaining([2, 3]),
+   *   obj: expect.objectContaining({ prop: expect.stringContaining('Hello') }),
+   * }));
    * ```
    *
    * @param expected Expected value.

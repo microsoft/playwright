@@ -95,6 +95,8 @@ class TypesGenerator {
     const handledClasses = new Set();
 
     let overrides = await parseOverrides(overridesFile, className => {
+      if (className === 'AsymmetricMatchers')
+        return '';
       const docClass = this.docClassForName(className);
       if (!docClass)
         return '';
@@ -569,6 +571,13 @@ class TypesGenerator {
         'TestOptions',
         'TestConfig.use',
         'TestProject.use',
+        'GenericAssertions.any',
+        'GenericAssertions.anything',
+        'GenericAssertions.arrayContaining',
+        'GenericAssertions.closeTo',
+        'GenericAssertions.objectContaining',
+        'GenericAssertions.stringContaining',
+        'GenericAssertions.stringMatching',
       ]),
       overridesToDocsClassMapping: new Map([
         ['TestType', 'Test'],
@@ -580,6 +589,7 @@ class TypesGenerator {
         ['PlaywrightTestOptions', 'TestOptions'],
         ['PlaywrightWorkerArgs', 'Fixtures'],
         ['PlaywrightTestArgs', 'Fixtures'],
+        ['AsymmetricMatchers', 'GenericAssertions'],
       ]),
       ignoreMissing: new Set([
         'FullConfig.configFile',
