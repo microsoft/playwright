@@ -59,18 +59,22 @@ export class WebSocketTransport implements ConnectionTransport {
   readonly headers: HeadersArray = [];
 
   static async connect(progress: (Progress|undefined), url: string, headers?: { [key: string]: string; }, followRedirects?: boolean, debugLogHeader?: string): Promise<WebSocketTransport> {
+    return await WebSocketTransport._connect(progress, url, headers || {}, { follow: !!followRedirects, hadRedirects: false }, debugLogHeader);
+  }
+
+  static async _connect(progress: (Progress|undefined), url: string, headers: { [key: string]: string; }, redirect: { follow: boolean, hadRedirects: boolean }, debugLogHeader?: string): Promise<WebSocketTransport> {
     const logUrl = stripQueryParams(url);
     progress?.log(`<ws connecting> ${logUrl}`);
-    const transport = new WebSocketTransport(progress, url, logUrl, headers, followRedirects, debugLogHeader);
+    const transport = new WebSocketTransport(progress, url, logUrl, headers, redirect.follow && redirect.hadRedirects, debugLogHeader);
     let success = false;
     progress?.cleanupWhenAborted(async () => {
       if (!success)
         await transport.closeAndWait().catch(e => null);
     });
-    await new Promise<WebSocketTransport>((fulfill, reject) => {
+    const result = await new Promise<{ transport?: WebSocketTransport, redirect?: IncomingMessage }>((fulfill, reject) => {
       transport._ws.on('open', async () => {
         progress?.log(`<ws connected> ${logUrl}`);
-        fulfill(transport);
+        fulfill({ transport });
       });
       transport._ws.on('error', event => {
         progress?.log(`<ws connect error> ${logUrl} ${event.message}`);
@@ -78,6 +82,11 @@ export class WebSocketTransport implements ConnectionTransport {
         transport._ws.close();
       });
       transport._ws.on('unexpected-response', (request: ClientRequest, response: IncomingMessage) => {
+        if (redirect.follow && !redirect.hadRedirects && (response.statusCode === 301 || response.statusCode === 302 || response.statusCode === 307 || response.statusCode === 308)) {
+          fulfill({ redirect: response });
+          transport._ws.close();
+          return;
+        }
         for (let i = 0; i < response.rawHeaders.length; i += 2) {
           if (debugLogHeader && response.rawHeaders[i] === debugLogHeader)
             progress?.log(response.rawHeaders[i + 1]);
@@ -93,6 +102,13 @@ export class WebSocketTransport implements ConnectionTransport {
         });
       });
     });
+
+    if (result.redirect) {
+      // Strip access key headers from the redirected request.
+      const newHeaders = Object.fromEntries(Object.entries(headers || {}).filter(([name]) => !name.includes('access-key')));
+      return WebSocketTransport._connect(progress, result.redirect.headers.location!, newHeaders, { follow: true, hadRedirects: true }, debugLogHeader);
+    }
+
     success = true;
     return transport;
   }
