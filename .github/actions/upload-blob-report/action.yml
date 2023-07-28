@@ -5,7 +5,7 @@ inputs:
     description: 'Directory containing blob report'
     required: true
     type: string
-    default: 'test-results/blob-report'
+    default: 'blob-report'
   connection_string:
     description: 'Azure connection string'
     required: true

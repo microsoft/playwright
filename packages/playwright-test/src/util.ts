@@ -261,6 +261,14 @@ export function getPackageJsonPath(folderPath: string): string {
   return result;
 }
 
+export function resolveReporterOutputPath(defaultValue: string, configDir: string, configValue: string | undefined) {
+  if (configValue)
+    return path.resolve(configDir, configValue);
+  let basePath = getPackageJsonPath(configDir);
+  basePath = basePath ? path.dirname(basePath) : process.cwd();
+  return path.resolve(basePath, defaultValue);
+}
+
 export async function normalizeAndSaveAttachment(outputPath: string, name: string, options: { path?: string, body?: string | Buffer, contentType?: string } = {}): Promise<{ name: string; path?: string | undefined; body?: Buffer | undefined; contentType: string; }> {
   if ((options.path !== undefined ? 1 : 0) + (options.body !== undefined ? 1 : 0) !== 1)
     throw new Error(`Exactly one of "path" and "body" must be specified`);

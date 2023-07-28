@@ -16,15 +16,15 @@
 
 import fs from 'fs';
 import path from 'path';
-import { ManualPromise, calculateSha1, createGuid } from 'playwright-core/lib/utils';
+import { ManualPromise, calculateSha1, createGuid, removeFolders } from 'playwright-core/lib/utils';
 import { mime } from 'playwright-core/lib/utilsBundle';
 import { Readable } from 'stream';
 import type { EventEmitter } from 'events';
 import type { FullConfig, FullResult, TestResult } from '../../types/testReporter';
-import type { Suite } from '../common/test';
 import type { JsonAttachment, JsonEvent } from '../isomorphic/teleReceiver';
 import { TeleReporterEmitter } from './teleEmitter';
 import { yazl } from 'playwright-core/lib/zipBundle';
+import { resolveReporterOutputPath } from '../util';
 
 type BlobReporterOptions = {
   configDir: string;
@@ -42,7 +42,7 @@ export class BlobReporter extends TeleReporterEmitter {
   private _salt: string;
   private _copyFilePromises = new Set<Promise<void>>();
 
-  private _outputDir!: string;
+  private _outputDir!: Promise<string>;
   private _reportName!: string;
 
   constructor(options: BlobReporterOptions) {
@@ -52,7 +52,9 @@ export class BlobReporter extends TeleReporterEmitter {
   }
 
   override onConfigure(config: FullConfig) {
-    this._outputDir = path.resolve(this._options.configDir, this._options.outputDir || 'blob-report');
+    const outputDir = resolveReporterOutputPath('blob-report', this._options.configDir, this._options.outputDir);
+    const removePromise = process.env.PWTEST_BLOB_DO_NOT_REMOVE ? Promise.resolve() : removeFolders([outputDir]);
+    this._outputDir = removePromise.then(() => fs.promises.mkdir(path.join(outputDir, 'resources'), { recursive: true })).then(() => outputDir);
     this._reportName = `report-${createGuid()}`;
     const metadata: BlobReportMetadata = {
       projectSuffix: process.env.PWTEST_BLOB_SUFFIX,
@@ -65,21 +67,16 @@ export class BlobReporter extends TeleReporterEmitter {
     super.onConfigure(config);
   }
 
-  override onBegin(suite: Suite): void {
-    // Note: config.outputDir is cleared betwee onConfigure and onBegin, so we call mkdir here.
-    fs.mkdirSync(path.join(this._outputDir, 'resources'), { recursive: true });
-    super.onBegin(suite);
-  }
-
   override async onEnd(result: FullResult): Promise<void> {
     await super.onEnd(result);
+    const outputDir = await this._outputDir;
     const lines = this._messages.map(m => JSON.stringify(m) + '\n');
     const content = Readable.from(lines);
 
     const zipFile = new yazl.ZipFile();
     const zipFinishPromise = new ManualPromise<undefined>();
     (zipFile as any as EventEmitter).on('error', error => zipFinishPromise.reject(error));
-    const zipFileName = path.join(this._outputDir, this._reportName + '.zip');
+    const zipFileName = path.join(outputDir, this._reportName + '.zip');
     zipFile.outputStream.pipe(fs.createWriteStream(zipFileName)).on('close', () => {
       zipFinishPromise.resolve(undefined);
     }).on('error', error => zipFinishPromise.reject(error));
@@ -103,7 +100,7 @@ export class BlobReporter extends TeleReporterEmitter {
       const sha1 = calculateSha1(attachment.path + this._salt);
       const extension = mime.getExtension(attachment.contentType) || 'dat';
       const newPath = `resources/${sha1}.${extension}`;
-      this._startCopyingFile(attachment.path, path.join(this._outputDir, newPath));
+      this._startCopyingFile(attachment.path, newPath);
       return {
         ...attachment,
         path: newPath,
@@ -112,7 +109,8 @@ export class BlobReporter extends TeleReporterEmitter {
   }
 
   private _startCopyingFile(from: string, to: string) {
-    const copyPromise: Promise<void> = fs.promises.copyFile(from, to)
+    const copyPromise: Promise<void> = this._outputDir
+        .then(dir => fs.promises.copyFile(from, path.join(dir, to)))
         .catch(e => { console.error(`Failed to copy file from "${from}" to "${to}": ${e}`); })
         .then(() => { this._copyFilePromises.delete(copyPromise); });
     this._copyFilePromises.add(copyPromise);

@@ -24,7 +24,7 @@ import { HttpServer, assert, calculateSha1, copyFileAndMakeWritable, gracefullyP
 import type { JsonAttachment, JsonReport, JsonSuite, JsonTestCase, JsonTestResult, JsonTestStep } from './raw';
 import RawReporter from './raw';
 import { stripAnsiEscapes } from './base';
-import { getPackageJsonPath, sanitizeForFilePath } from '../util';
+import { resolveReporterOutputPath, sanitizeForFilePath } from '../util';
 import type { Metadata } from '../../types/test';
 import type { ZipFile } from 'playwright-core/lib/zipBundle';
 import { yazl } from 'playwright-core/lib/zipBundle';
@@ -95,11 +95,9 @@ class HtmlReporter extends EmptyReporter {
   }
 
   _resolveOptions(): { outputFolder: string, open: HtmlReportOpenOption, attachmentsBaseURL: string } {
-    let { outputFolder } = this._options;
-    if (outputFolder)
-      outputFolder = path.resolve(this._options.configDir, outputFolder);
+    const outputFolder = reportFolderFromEnv() ?? resolveReporterOutputPath('playwright-report', this._options.configDir, this._options.outputFolder);
     return {
-      outputFolder: reportFolderFromEnv() ?? outputFolder ?? defaultReportFolder(this._options.configDir),
+      outputFolder,
       open: process.env.PW_TEST_HTML_REPORT_OPEN as any || this._options.open || 'on-failure',
       attachmentsBaseURL: this._options.attachmentsBaseURL || 'data/'
     };
@@ -142,17 +140,8 @@ function reportFolderFromEnv(): string | undefined {
   return undefined;
 }
 
-function defaultReportFolder(searchForPackageJson: string): string {
-  let basePath = getPackageJsonPath(searchForPackageJson);
-  if (basePath)
-    basePath = path.dirname(basePath);
-  else
-    basePath = process.cwd();
-  return path.resolve(basePath, 'playwright-report');
-}
-
 function standaloneDefaultFolder(): string {
-  return reportFolderFromEnv() ?? defaultReportFolder(process.cwd());
+  return reportFolderFromEnv() ?? resolveReporterOutputPath('playwright-report', process.cwd(), undefined);
 }
 
 export async function showHTMLReport(reportFolder: string | undefined, host: string = 'localhost', port?: number, testId?: string) {

@@ -51,7 +51,7 @@ jobs:
       if: always() && github.event_name == 'pull_request'
       uses: ./.github/actions/upload-blob-report
       with:
-        report_dir: test-results/blob-report
+        report_dir: blob-report
         connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   test_mac:
@@ -83,7 +83,7 @@ jobs:
       if: always() && github.event_name == 'pull_request'
       uses: ./.github/actions/upload-blob-report
       with:
-        report_dir: test-results/blob-report
+        report_dir: blob-report
         connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   test_win:
@@ -115,7 +115,7 @@ jobs:
       if: always() && github.event_name == 'pull_request'
       uses: ./.github/actions/upload-blob-report
       with:
-        report_dir: test-results/blob-report
+        report_dir: blob-report
         connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   test-package-installations-other-node-versions:
@@ -240,7 +240,7 @@ jobs:
       if: always() && github.event_name == 'pull_request'
       uses: ./.github/actions/upload-blob-report
       with:
-        report_dir: test-results/blob-report
+        report_dir: blob-report
         connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   chrome_stable_linux:

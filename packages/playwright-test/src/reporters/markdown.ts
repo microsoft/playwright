@@ -18,6 +18,7 @@ import fs from 'fs';
 import path from 'path';
 import type { FullResult, TestCase, TestError } from '../../types/testReporter';
 import { BaseReporter, formatError, formatTestTitle, stripAnsiEscapes } from './base';
+import { resolveReporterOutputPath } from '../util';
 
 type MarkdownReporterOptions = {
   configDir: string,
@@ -70,7 +71,7 @@ class MarkdownReporter extends BaseReporter {
       lines.push(`</details>`);
     }
 
-    const reportFile = path.resolve(this._options.configDir, this._options.outputFile || 'report.md');
+    const reportFile = resolveReporterOutputPath('report.md', this._options.configDir, this._options.outputFile);
     await fs.promises.mkdir(path.dirname(reportFile), { recursive: true });
     await fs.promises.writeFile(reportFile, lines.join('\n'));
   }

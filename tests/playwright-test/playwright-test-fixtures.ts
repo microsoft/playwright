@@ -93,6 +93,12 @@ const configFile = (baseDir: string, files: Files): string | undefined => {
   return undefined;
 };
 
+function findPackageJSONDir(files: Files, dir: string) {
+  while (dir && !files[dir + '/package.json'])
+    dir = path.dirname(dir);
+  return dir;
+}
+
 function startPlaywrightTest(childProcess: CommonFixtures['childProcess'], baseDir: string, params: any, env: NodeJS.ProcessEnv, options: RunOptions): TestChildProcess {
   const paramList: string[] = [];
   for (const key of Object.keys(params)) {
@@ -138,7 +144,9 @@ async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], b
     if (config)
       additionalArgs.push('--config', config);
     const cwd = options.cwd ? path.resolve(baseDir, options.cwd) : baseDir;
-    const mergeResult = await mergeReports('blob-report', env, { cwd, additionalArgs });
+    const packageRoot = path.resolve(baseDir, findPackageJSONDir(files, options.cwd ?? ''));
+    const relativeBlobReportPath = path.relative(cwd, path.join(packageRoot, 'blob-report'));
+    const mergeResult = await mergeReports(relativeBlobReportPath, env, { cwd, additionalArgs });
     expect(mergeResult.exitCode).toBe(0);
     output = mergeResult.output;
   }
