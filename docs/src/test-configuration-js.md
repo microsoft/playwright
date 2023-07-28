@@ -85,7 +85,7 @@ export default defineConfig({
 | Option | Description |
 | :- | :- |
 | [`property: TestConfig.testIgnore`] | Glob patterns or regular expressions that should be ignored when looking for the test files. For example, `'*test-assets'` |
-| [`property: TestConfig.testMatch`] | Glob patterns or regular expressions that match test files. For example, `'*todo-tests/*.spec.ts'`. By default, Playwright runs <code>.*(test&#124;spec)\.(js&#124;ts&#124;mjs)</code> files. |
+| [`property: TestConfig.testMatch`] | Glob patterns or regular expressions that match test files. For example, `'*todo-tests/*.spec.ts'`. By default, Playwright runs <code>**/*.@(spec|test).?(c|m)[jt]s?(x)</code> files. |
 
 ## Advanced Configuration
 
