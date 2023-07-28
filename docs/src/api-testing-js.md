@@ -234,7 +234,7 @@ test.afterAll(async ({ }) => {
   await apiContext.dispose();
 });
 
-test('last created issue should be on the server', async ({ page, request }) => {
+test('last created issue should be on the server', async ({ page }) => {
   await page.goto(`https://github.com/${USER}/${REPO}/issues`);
   await page.getByText('New Issue').click();
   await page.getByRole('textbox', { name: 'Title' }).fill('Bug report 1');
@@ -242,7 +242,7 @@ test('last created issue should be on the server', async ({ page, request }) => 
   await page.getByText('Submit new issue').click();
   const issueId = page.url().substr(page.url().lastIndexOf('/'));
 
-  const newIssue = await request.get(`https://api.github.com/repos/${USER}/${REPO}/issues/${issueId}`);
+  const newIssue = await apiContext.get(`https://api.github.com/repos/${USER}/${REPO}/issues/${issueId}`);
   expect(newIssue.ok()).toBeTruthy();
   expect(newIssue.json()).toEqual(expect.objectContaining({
     title: 'Bug report 1'
