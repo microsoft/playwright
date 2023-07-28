@@ -130,7 +130,9 @@ export class CodeGenerator extends EventEmitter {
       this._currentAction.action.signals.push(signal);
       return;
     }
-    if (this._lastAction && !this._lastAction.committed) {
+
+    // Consider fill action as committed for the purposes of navigation signal processing.
+    if (this._lastAction && !this._lastAction.committed && this._lastAction.action.name !== 'fill') {
       const signals = this._lastAction.action.signals;
       if (signal.name === 'navigation' && signals.length && signals[signals.length - 1].name === 'download')
         return;
