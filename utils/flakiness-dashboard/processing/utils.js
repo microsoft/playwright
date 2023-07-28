@@ -22,13 +22,17 @@ const gunzipAsync = util.promisify(zlib.gunzip);
 
 const blobServiceClient = BlobServiceClient.fromConnectionString(process.env.AzureWebJobsStorage);
 
-function flattenSpecs(suite, result = []) {
+function flattenSpecs(suite, result = [], titlePaths = []) {
   if (suite.suites) {
-    for (const child of suite.suites)
-      flattenSpecs(child, result);
+    for (const child of suite.suites) {
+      const isFileSuite = child.column === 0 && child.line === 0;
+      flattenSpecs(child, result, (!isFileSuite && child.title) ? [...titlePaths, child.title]: titlePaths);
+    }
   }
-  for (const spec of suite.specs || [])
+  for (const spec of suite.specs || []) {
+    spec.titlePath = [...titlePaths, spec.title];
     result.push(spec);
+  }
   return result;
 }
 
