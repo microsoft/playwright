@@ -25,7 +25,7 @@ const reporters = () => {
   const result: ReporterDescription[] = process.env.CI ? [
     ['dot'],
     ['json', { outputFile: path.join(outputDir, 'report.json') }],
-    ['blob', { outputDir: path.join(outputDir, 'blob-report') }],
+    ['blob', { outputDir: path.join(__dirname, '..', '..', 'blob-report') }],
   ] : [
     ['list']
   ];

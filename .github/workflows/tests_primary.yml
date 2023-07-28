@@ -64,7 +64,7 @@ jobs:
       if: always() && github.event_name == 'pull_request'
       uses: ./.github/actions/upload-blob-report
       with:
-        report_dir: test-results/blob-report
+        report_dir: blob-report
         connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   test_linux_chromium_tot:
@@ -96,7 +96,7 @@ jobs:
       if: always() && github.event_name == 'pull_request'
       uses: ./.github/actions/upload-blob-report
       with:
-        report_dir: test-results/blob-report
+        report_dir: blob-report
         connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   test_test_runner:
@@ -146,7 +146,7 @@ jobs:
       if: always() && github.event_name == 'pull_request'
       uses: ./.github/actions/upload-blob-report
       with:
-        report_dir: test-results/blob-report
+        report_dir: blob-report
         connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   test_web_components:

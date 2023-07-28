@@ -31,7 +31,7 @@ jobs:
 
     - name: Merge reports
       run: |
-        npx playwright merge-reports --reporter markdown,html blob-report
+        npx playwright merge-reports --reporter markdown,html ./blob-report
 
     - name: Upload HTML report to Azure
       run: |

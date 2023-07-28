@@ -34,13 +34,13 @@ jobs:
     - name: Zip blob report
       if: always()
       run: zip -r ../blob-report-${{ matrix.browser }}-${{ matrix.service-os }}.zip .
-      working-directory: test-results/blob-report
+      working-directory: blob-report
     - name: Upload blob report to GitHub
       if: always()
       uses: actions/upload-artifact@v3
       with:
         name: blob-report-${{ github.run_attempt }}
-        path: test-results/blob-report-${{ matrix.browser }}-${{ matrix.service-os }}.zip
+        path: blob-report-${{ matrix.browser }}-${{ matrix.service-os }}.zip
         retention-days: 2
 
   merge_reports:
