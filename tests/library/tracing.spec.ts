@@ -342,12 +342,12 @@ test('should survive browser.close with auto-created traces dir', async ({ brows
       // Produce a lot of operations to make sure tracing operations are enqueued.
       for (let i = 0; i < 100; i++)
         page.evaluate('1 + 1').catch(() => {});
-      await page.waitForTimeout(10).catch(() => {});
+      await new Promise(f => setTimeout(f, 250));
     }
   }
 
   void go();
-  await new Promise(f => setTimeout(f, 500));
+  await new Promise(f => setTimeout(f, 1000));
 
   // Close the browser and give it some time to fail.
   await Promise.all([
