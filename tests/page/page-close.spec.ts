@@ -26,7 +26,8 @@ it('should close page with active dialog', async ({ page }) => {
   await page.close();
 });
 
-it('should not accept after close', async ({ page }) => {
+it('should not accept after close', async ({ page, mode }) => {
+  it.fixme(mode.startsWith('service2'), 'Times out');
   page.evaluate(() => alert()).catch(() => {});
   const dialog = await page.waitForEvent('dialog');
   await page.close();

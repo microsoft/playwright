@@ -69,9 +69,10 @@ it('should report requests and responses handled by service worker', async ({ pa
   expect(await failedRequest.response()).toBe(null);
 });
 
-it('should report requests and responses handled by service worker with routing', async ({ page, server, isAndroid, isElectron }) => {
+it('should report requests and responses handled by service worker with routing', async ({ page, server, isAndroid, isElectron, mode, platform }) => {
   it.fixme(isAndroid);
   it.fixme(isElectron);
+  it.fixme(mode.startsWith('service') && platform === 'linux', 'Times out for no clear reason');
 
   await page.route('**/*', route => route.continue());
   await page.goto(server.PREFIX + '/serviceworkers/fetchdummy/sw.html');

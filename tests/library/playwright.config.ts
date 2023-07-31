@@ -60,7 +60,7 @@ let connectOptions: any;
 if (mode === 'service')
   connectOptions = { wsEndpoint: 'ws://localhost:3333/' };
 if (mode === 'service2') {
-  process.env.PW_VERSION_OVERRIDE = '1.36.0';
+  process.env.PW_VERSION_OVERRIDE = '1.37';
   connectOptions = {
     wsEndpoint: `${process.env.PLAYWRIGHT_SERVICE_URL}?accessKey=${process.env.PLAYWRIGHT_SERVICE_ACCESS_KEY}&cap=${JSON.stringify({ os, runId })}`,
     timeout: 3 * 60 * 1000,
