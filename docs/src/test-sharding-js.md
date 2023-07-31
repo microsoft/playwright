@@ -155,7 +155,7 @@ Note that this step will not work for pull requests created from a forked reposi
 
 ### Serving report: other CI and storage systems
 
-At the high level the process creating combied HTML report consists of the following steps:
+At the high level, running multiple shards and generating a single combined report requires:
 
 1. Configure Playwright to produce `blob` report on every running shard.
 1. Copy all blob reports into a single local directory.
