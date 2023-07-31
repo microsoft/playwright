@@ -43,7 +43,7 @@ export const TestFilesView: React.FC<{
   return <>
     <div className='p-2' style={{ display: 'flex' }}>
       {projectNames.length === 1 && !!projectNames[0] && <div data-testid="project-name" style={{ color: 'var(--color-fg-subtle)' }}>Project: {projectNames[0]}</div>}
-      {!filter.empty() && <div data-testid="filtered-tests-count" style={{ color: 'var(--color-fg-subtle)' }}>Filtered: {filteredStats.total}</div>}
+      {!filter.empty() && <div data-testid="filtered-tests-count" style={{ color: 'var(--color-fg-subtle)', padding: '0 10px' }}>Filtered: {filteredStats.total}</div>}
       <div style={{ flex: 'auto' }}></div>
       <div data-testid="overall-duration" style={{ color: 'var(--color-fg-subtle)' }}>Total time: {msToString(filteredStats.duration)}</div>
     </div>
