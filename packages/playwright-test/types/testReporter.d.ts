@@ -495,6 +495,7 @@ export interface JSONReport {
 
 export interface JSONReportSuite {
   title: string;
+  tags: string[],
   file: string;
   column: number;
   line: number;
@@ -503,8 +504,8 @@ export interface JSONReportSuite {
 }
 
 export interface JSONReportSpec {
-  tags: string[],
   title: string;
+  tags: string[],
   ok: boolean;
   tests: JSONReportTest[];
   id: string;

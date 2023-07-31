@@ -175,6 +175,29 @@ test('should display tags separately from title', async ({ runInlineTest }) => {
   expect(result.report.suites[0].specs[0].tags[1]).toBe('USR-MATH-002');
 });
 
+test('should display tags in describe separately from title', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test.describe('math works wrapper description @USR-DESCRIBE-001 @USR-DESCRIBE-002', () => {
+        test('math works!', async ({}) => {
+          expect(1 + 1).toBe(2);
+        })
+      });
+    `
+  });
+
+  expect(result.exitCode).toBe(0);
+  console.log(JSON.stringify(result.report, null, 2));
+  expect(result.report.suites.length).toBe(1);
+  expect(result.report.suites[0].suites.length).toBe(1);
+  // Ensure the length is as expected
+  expect(result.report.suites[0].suites[0].tags.length).toBe(2);
+  // Ensure that the '@' value is stripped
+  expect(result.report.suites[0].suites[0].tags[0]).toBe('USR-DESCRIBE-001');
+  expect(result.report.suites[0].suites[0].tags[1]).toBe('USR-DESCRIBE-002');
+});
+
 test('should have relative always-posix paths', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `

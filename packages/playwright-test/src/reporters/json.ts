@@ -100,6 +100,7 @@ class JSONReporter extends EmptyReporter {
     for (const [, suites] of fileSuites) {
       const result: JSONReportSuite = {
         title: suites[0].title,
+        tags: suites[0].tags,
         file: suites[0].file,
         column: 0,
         line: 0,
@@ -153,6 +154,7 @@ class JSONReporter extends EmptyReporter {
     const suites = suite.suites.map(suite => this._serializeSuite(projectId, projectName, suite)).filter(s => s) as JSONReportSuite[];
     return {
       title: suite.title,
+      tags: (suite.title.match(/@[\S]+/g) || []).map(t => t.substring(1)),
       ...this._relativeLocation(suite.location),
       specs: suite.tests.map(test => this._serializeTestSpec(projectId, projectName, test)),
       suites: suites.length ? suites : undefined,
