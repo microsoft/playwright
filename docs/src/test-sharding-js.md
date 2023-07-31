@@ -42,7 +42,7 @@ jobs:
 
 ## Creating combined report in GitHub Actions
 
-Each test shard will have its own test report. If you want to have a combined report showing all tests results from all shards you need to add a job that will merge individual shard reports.
+In the previous example, each test shard will have its own test report. If you want to have a combined report showing all tests results from all shards, you need to add a separate job that will merge individual shard reports.
 
 ### Configuring shard reporting
 
