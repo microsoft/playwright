@@ -129,7 +129,7 @@ Pros:
 - Easy configuration, builtin mechanism of GitHub Actions
 - Flexible retention policy
 Cons:
-- Downloading the HTML report as a zip file might not be the most user-friendly method.
+- Downloading the HTML report as a zip file is not very convenient.
 
 In the next section, we'll illustrate how to make the report accessible from cloud storage.
 
