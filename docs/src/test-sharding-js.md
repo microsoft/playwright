@@ -13,7 +13,7 @@ npx playwright test --shard=1/3
 npx playwright test --shard=2/3
 npx playwright test --shard=3/3
 
-That way your test suite completes 3 times faster.
+Now, if you run these shards in parallel on different computers, your test suite completes three times faster.
 
 ### GitHub Actions sharding example
 
