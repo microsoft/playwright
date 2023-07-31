@@ -7,7 +7,7 @@ Playwright Test runs tests in [parallel](/test-parallel.md) and strives for opti
 
 ## Sharding tests between multiple machines
 
-Playwright Test can shard a test suite, so that it can be executed on multiple machines. For that, pass --shard=x/y to the command line. For example, to split the suite into three shards, each running one third of the tests:
+Playwright Test can shard a test suite, so that it can be executed on multiple machines. For that, pass `--shard=x/y` to the command line. For example, to split the suite into three shards, each running one third of the tests:
 
 npx playwright test --shard=1/3
 npx playwright test --shard=2/3
