@@ -162,7 +162,7 @@ At the high level, running multiple shards and generating a single combined repo
 1. Run `npx playwright merge-reports path/to/all-blob-reports-dir --reporter html` to generate HTML (or any other) report.
 1. Upload generated report to the storage of your choice.
 
-Similarly to the GitHub Actions steps above, you can configure you can integrate these steps into your CI.
+Similarly to the GitHub Actions steps above, you can integrate these steps into your CI.
 
 ### Uploading Pull Request reports
 
