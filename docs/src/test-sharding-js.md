@@ -9,9 +9,11 @@ Playwright Test runs tests in [parallel](/test-parallel.md) and strives for opti
 
 Playwright Test can shard a test suite, so that it can be executed on multiple machines. For that, pass `--shard=x/y` to the command line. For example, to split the suite into three shards, each running one third of the tests:
 
+```bash
 npx playwright test --shard=1/3
 npx playwright test --shard=2/3
 npx playwright test --shard=3/3
+```
 
 Now, if you run these shards in parallel on different computers, your test suite completes three times faster.
 
@@ -23,6 +25,7 @@ One of the easiest ways to shard Playwright tests across multiple machines is by
 jobs:
   test:
     strategy:
+      fail-fast: false
       matrix:
         shard: [1/4, 2/4, 3/4, 4/4]
     runs-on: ubuntu-latest
@@ -38,6 +41,12 @@ jobs:
 
     - name: Run Playwright tests
       run: npx playwright test --shard ${{ matrix.shard }}
+
+    - name: Upload HTML report
+      uses: actions/upload-artifact@v3
+      with:
+        name: html-report-${{ matrix.shard }}
+        path: playwright-report
 ```
 
 ## Creating combined report in GitHub Actions
@@ -59,7 +68,7 @@ Blob report contains information about all the tests that were run and their res
 
 ### Uploading shard report
 
-To merge individual reports they need to be copied into a shared location. GitHub Actions Artifacts is a convenient mechanism that lets you do that. By adding the following step after the test execution we upload blob report from each shard into GitHub Actions Artifact with name`blob-report-${{ github.run_attempt }}` (this is essentially a shared directory where each shard will copy its report to):
+To merge individual reports they need to be copied into a shared location. GitHub Actions Artifacts is a convenient mechanism that lets you do that:
 
 ```yaml
 jobs:
@@ -74,9 +83,11 @@ jobs:
         retention-days: 2
 ```
 
-### Merge reports job
+By adding this step after the test execution we upload blob report from each shard into GitHub Actions Artifact with name`blob-report-${{ github.run_attempt }}` (this is essentially a shared directory where each shard will copy its report to). Note that instead of uploading individual HTML reports, we upload blob report.
 
-After all shards finished running it's time to run a job that will merge the reports and produce a combined HTML report. To ensure the execution order, we make `merge-report` job [depend](https://docs.github.com/en/actions/using-jobs/using-jobs-in-a-workflow#defining-prerequisite-jobs) on our sharded `test` job. `merge-report` job below reads all blob reports from `blob-report-${{ github.run_attempt }}` artifact and produces a single HTML report.
+### Merging reports
+
+After all shards finished running it's time to run a job that will merge the reports and produce a combined HTML report. To ensure the execution order, we make `merge-report` job [depend](https://docs.github.com/en/actions/using-jobs/using-jobs-in-a-workflow#defining-prerequisite-jobs) on our sharded `test` job:
 
 ```yaml
 jobs:
@@ -109,27 +120,11 @@ jobs:
         path: playwright-report
 ```
 
-`merge-report` job will run even if there were test failures and it wil write the HTML report into `playwright-report` directory by default.
+`merge-report` job above reads all blob reports from `blob-report-${{ github.run_attempt }}` artifact and produces a single HTML report. The job will run even if there were test failures and it wil write the HTML report into `playwright-report` directory by default.
 
 ### Serving report: GitHub Actions Artifacts 
 
-Merged HTML report can be saved as `html-report-${{ github.run_attempt }}` artifact by adding following step:
-
-```yaml
-    - name: Upload HTML report
-      uses: actions/upload-artifact@v3
-      with:
-        name: html-report-${{ github.run_attempt }}
-        path: playwright-report
-```
-
-You can download the artifact via GitHub UI to see the report. This method has its own pros and cons:
-
-Pros:
-- Easy configuration, builtin mechanism of GitHub Actions
-- Flexible retention policy
-Cons:
-- Downloading the HTML report as a zip file is not very convenient.
+In the example above, we upload the HTML report as GitHub Actions Artifact. This is easy to configure, but downloading HTML report as a zip file is not very convenient.
 
 In the next section, we'll illustrate how to make the report accessible from cloud storage.
 
