@@ -263,7 +263,7 @@ it('should fail when navigating to bad url', async ({ mode, page, browserName })
     expect(error.message).toContain('Invalid url');
 });
 
-it('should fail when navigating to bad SSL', async ({ page, browserName, httpsServer }) => {
+it('should fail when navigating to bad SSL', async ({ page, browserName, httpsServer, platform }) => {
   // Make sure that network events do not emit 'undefined'.
   // @see https://crbug.com/750469
   page.on('request', request => expect(request).toBeTruthy());
@@ -271,15 +271,15 @@ it('should fail when navigating to bad SSL', async ({ page, browserName, httpsSe
   page.on('requestfailed', request => expect(request).toBeTruthy());
   let error = null;
   await page.goto(httpsServer.EMPTY_PAGE).catch(e => error = e);
-  expect(error.message).toContain(expectedSSLError(browserName));
+  expect(error.message).toContain(expectedSSLError(browserName, platform));
 });
 
-it('should fail when navigating to bad SSL after redirects', async ({ page, browserName, server, httpsServer }) => {
+it('should fail when navigating to bad SSL after redirects', async ({ page, browserName, server, httpsServer, platform }) => {
   server.setRedirect('/redirect/1.html', '/redirect/2.html');
   server.setRedirect('/redirect/2.html', '/empty.html');
   let error = null;
   await page.goto(httpsServer.PREFIX + '/redirect/1.html').catch(e => error = e);
-  expect(error.message).toContain(expectedSSLError(browserName));
+  expect(error.message).toContain(expectedSSLError(browserName, platform));
 });
 
 it('should not crash when navigating to bad SSL after a cross origin navigation', async ({ page, server, httpsServer }) => {
@@ -307,6 +307,8 @@ it('should fail when main resources failed to load', async ({ page, browserName,
       expect(error.message).toContain('net::ERR_SOCKS_CONNECTION_FAILED');
     else
       expect(error.message).toContain('net::ERR_CONNECTION_REFUSED');
+  } else if (browserName === 'webkit' && isWindows && mode === 'service2') {
+    expect(error.message).toContain(`proxy handshake error`);
   } else if (browserName === 'webkit' && isWindows) {
     expect(error.message).toContain(`Couldn\'t connect to server`);
   } else if (browserName === 'webkit') {
