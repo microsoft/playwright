@@ -3815,6 +3815,8 @@ export interface Page {
   }): Promise<void>;
 
   /**
+   * This method internally calls [document.write()](https://developer.mozilla.org/en-US/docs/Web/API/Document/write),
+   * inheriting all its specific characteristics and behaviors.
    * @param html HTML markup to assign to the page.
    * @param options
    */
@@ -6900,6 +6902,8 @@ export interface Frame {
   }): Promise<void>;
 
   /**
+   * This method internally calls [document.write()](https://developer.mozilla.org/en-US/docs/Web/API/Document/write),
+   * inheriting all its specific characteristics and behaviors.
    * @param html HTML markup to assign to the page.
    * @param options
    */
