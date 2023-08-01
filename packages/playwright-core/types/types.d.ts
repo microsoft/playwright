@@ -7592,24 +7592,6 @@ export interface BrowserContext {
   on(event: 'dialog', listener: (dialog: Dialog) => void): this;
 
   /**
-   * Emitted when an uncaught exception happens on any pages created through
-   * this context. To only listen for the exceptions from a particular page, use
-   * [page.on('pageerror')](https://playwright.dev/docs/api/class-page#page-event-page-error).
-   *
-   * ```js
-   * // Log all uncaught errors to the terminal
-   * context.on('pageerror', exception => {
-   *   console.log(`Uncaught exception: "${exception}"`);
-   * });
-   *
-   * // Navigate to a page with an exception.
-   * await page.goto('data:text/html,<script>throw new Error("Test")</script>');
-   * ```
-   *
-   */
-  on(event: 'pageerror', listener: (error: Error) => void): this;
-
-  /**
    * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event
    * will also fire for popup pages. See also
    * [page.on('popup')](https://playwright.dev/docs/api/class-page#page-event-popup) to receive events about popups
@@ -7631,6 +7613,13 @@ export interface BrowserContext {
    * wait until the page gets to a particular state (you should not need it in most cases).
    */
   on(event: 'page', listener: (page: Page) => void): this;
+
+  /**
+   * Emitted when unhandled exceptions occur on any pages created through this context. To only listen for `pageError`
+   * events from a particular page, use
+   * [page.on('pageerror')](https://playwright.dev/docs/api/class-page#page-event-page-error).
+   */
+  on(event: 'pageerror', listener: (pageError: PageError) => void): this;
 
   /**
    * Emitted when a request is issued from any pages created through this context. The [request] object is read-only. To
@@ -7705,7 +7694,7 @@ export interface BrowserContext {
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
-  once(event: 'pageerror', listener: (error: Error) => void): this;
+  once(event: 'pageerror', listener: (pageError: PageError) => void): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
@@ -7819,22 +7808,11 @@ export interface BrowserContext {
   addListener(event: 'page', listener: (page: Page) => void): this;
 
   /**
-   * Emitted when an uncaught exception happens on any pages created through
-   * this context. To only listen for the exceptions from a particular page, use
+   * Emitted when unhandled exceptions occur on any pages created through this context. To only listen for `pageError`
+   * events from a particular page, use
    * [page.on('pageerror')](https://playwright.dev/docs/api/class-page#page-event-page-error).
-   *
-   * ```js
-   * // Log all uncaught errors to the terminal
-   * context.on('pageerror', exception => {
-   *   console.log(`Uncaught exception: "${exception}"`);
-   * });
-   *
-   * // Navigate to a page with an exception.
-   * await page.goto('data:text/html,<script>throw new Error("Test")</script>');
-   * ```
-   *
    */
-  addListener(event: 'pageerror', listener: (error: Error) => void): this;
+  addListener(event: 'pageerror', listener: (pageError: PageError) => void): this;
 
   /**
    * Emitted when a request is issued from any pages created through this context. The [request] object is read-only. To
@@ -7909,7 +7887,7 @@ export interface BrowserContext {
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'pageerror', listener: (error: Error) => void): this;
+  removeListener(event: 'pageerror', listener: (pageError: PageError) => void): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
@@ -7960,6 +7938,11 @@ export interface BrowserContext {
    * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'page', listener: (page: Page) => void): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  off(event: 'pageerror', listener: (pageError: PageError) => void): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
@@ -8071,6 +8054,13 @@ export interface BrowserContext {
    * wait until the page gets to a particular state (you should not need it in most cases).
    */
   prependListener(event: 'page', listener: (page: Page) => void): this;
+
+  /**
+   * Emitted when unhandled exceptions occur on any pages created through this context. To only listen for `pageError`
+   * events from a particular page, use
+   * [page.on('pageerror')](https://playwright.dev/docs/api/class-page#page-event-page-error).
+   */
+  prependListener(event: 'pageerror', listener: (pageError: PageError) => void): this;
 
   /**
    * Emitted when a request is issued from any pages created through this context. The [request] object is read-only. To
@@ -8657,22 +8647,11 @@ export interface BrowserContext {
   waitForEvent(event: 'page', optionsOrPredicate?: { predicate?: (page: Page) => boolean | Promise<boolean>, timeout?: number } | ((page: Page) => boolean | Promise<boolean>)): Promise<Page>;
 
   /**
-   * Emitted when an uncaught exception happens on any pages created through
-   * this context. To only listen for the exceptions from a particular page, use
+   * Emitted when unhandled exceptions occur on any pages created through this context. To only listen for `pageError`
+   * events from a particular page, use
    * [page.on('pageerror')](https://playwright.dev/docs/api/class-page#page-event-page-error).
-   *
-   * ```js
-   * // Log all uncaught errors to the terminal
-   * context.on('pageerror', exception => {
-   *   console.log(`Uncaught exception: "${exception}"`);
-   * });
-   *
-   * // Navigate to a page with an exception.
-   * await page.goto('data:text/html,<script>throw new Error("Test")</script>');
-   * ```
-   *
    */
-  waitForEvent(event: 'pageerror', optionsOrPredicate?: { predicate?: (error: Error) => boolean | Promise<boolean>, timeout?: number } | ((error: Error) => boolean | Promise<boolean>)): Promise<Error>;
+  waitForEvent(event: 'pageerror', optionsOrPredicate?: { predicate?: (pageError: PageError) => boolean | Promise<boolean>, timeout?: number } | ((pageError: PageError) => boolean | Promise<boolean>)): Promise<PageError>;
 
   /**
    * Emitted when a request is issued from any pages created through this context. The [request] object is read-only. To
@@ -17896,6 +17875,30 @@ export interface Mouse {
    * @param deltaY Pixels to scroll vertically.
    */
   wheel(deltaX: number, deltaY: number): Promise<void>;
+}
+
+/**
+ * {@link PageError} class represents objects created by context when there are unhandled execeptions thrown on the
+ * pages and dispatched via the
+ * [browserContext.on('pageerror')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-page-error)
+ * event
+ *
+ * ```js
+ * // Listen for all unhandled exceptions on all pages
+ * context.on('pageerror', pageerror => console.log(pageerror.error()));
+ * ```
+ *
+ */
+export interface PageError {
+  /**
+   * Unhandled error that was thrown.
+   */
+  error(): Error;
+
+  /**
+   * The page that produced this unhandled exception, if any.
+   */
+  page(): null|Page;
 }
 
 /**

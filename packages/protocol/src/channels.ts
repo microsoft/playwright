@@ -1456,7 +1456,7 @@ export type BrowserContextPageEvent = {
 };
 export type BrowserContextPageErrorEvent = {
   error: SerializedError,
-  page?: PageChannel,
+  page: PageChannel,
 };
 export type BrowserContextRouteEvent = {
   route: RouteChannel,

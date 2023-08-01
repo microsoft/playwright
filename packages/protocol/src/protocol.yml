@@ -1186,7 +1186,7 @@ BrowserContext:
     pageError:
       parameters:
         error: SerializedError
-        page: Page?
+        page: Page
 
     route:
       parameters:

@@ -772,7 +772,7 @@ scheme.BrowserContextPageEvent = tObject({
 });
 scheme.BrowserContextPageErrorEvent = tObject({
   error: tType('SerializedError'),
-  page: tOptional(tChannel(['Page'])),
+  page: tChannel(['Page']),
 });
 scheme.BrowserContextRouteEvent = tObject({
   route: tChannel(['Route']),

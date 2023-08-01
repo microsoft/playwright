@@ -41,6 +41,7 @@ import { rewriteErrorMessage } from '../utils/stackTrace';
 import { HarRouter } from './harRouter';
 import { ConsoleMessage } from './consoleMessage';
 import { Dialog } from './dialog';
+import { PageError } from './pageError';
 import { parseError } from '../protocol/serializers';
 
 export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel> implements api.BrowserContext {
@@ -102,10 +103,11 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
         page.emit(Events.Page.Console, consoleMessage);
     });
     this._channel.on('pageError', ({ error, page }) => {
-      this.emit(Events.BrowserContext.PageError, parseError(error));
       const pageObject = Page.fromNullable(page);
+      const parsedError = parseError(error);
+      this.emit(Events.BrowserContext.PageError, new PageError(pageObject, parsedError));
       if (pageObject)
-        pageObject.emit(Events.Page.PageError, parseError(error));
+        pageObject.emit(Events.Page.PageError, parsedError);
     });
     this._channel.on('dialog', ({ dialog }) => {
       const dialogObject = Dialog.from(dialog);
