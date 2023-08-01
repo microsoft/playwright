@@ -42,6 +42,7 @@ const result: TestResult = {
     }],
   }],
   attachments: [],
+  imageRebaselines: [],
   status: 'passed',
 };
 

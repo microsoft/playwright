@@ -232,6 +232,7 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
       this.testInfo.attachments.push({ name: addSuffixToFilePath(this.snapshotName, '-diff'), contentType: this.mimeType, path: this.diffPath });
       output.push(`    Diff: ${colors.yellow(this.diffPath)}`);
     }
+    this.testInfo._addImageRebaseline(this.snapshotPath, this.actualPath, this.expectedPath);
     return { pass: false, message: () => output.join('\n'), };
   }
 

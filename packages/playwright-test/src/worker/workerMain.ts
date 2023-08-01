@@ -254,7 +254,8 @@ export class WorkerMain extends ProcessRunner {
     const testInfo = new TestInfoImpl(this._config, this._project, this._params, test, retry,
         stepBeginPayload => this.dispatchEvent('stepBegin', stepBeginPayload),
         stepEndPayload => this.dispatchEvent('stepEnd', stepEndPayload),
-        attachment => this.dispatchEvent('attach', attachment));
+        attachment => this.dispatchEvent('attach', attachment),
+        imageRebaseline => this.dispatchEvent('imageRebaseline', imageRebaseline));
 
     const processAnnotation = (annotation: Annotation) => {
       testInfo.annotations.push(annotation);

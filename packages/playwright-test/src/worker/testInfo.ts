@@ -18,7 +18,7 @@ import fs from 'fs';
 import path from 'path';
 import { MaxTime, captureRawStack, createAfterActionTraceEventForStep, createBeforeActionTraceEventForStep, monotonicTime, zones } from 'playwright-core/lib/utils';
 import type { TestInfoError, TestInfo, TestStatus, FullProject, FullConfig } from '../../types/test';
-import type { AttachmentPayload, StepBeginPayload, StepEndPayload, WorkerInitParams } from '../common/ipc';
+import type { AttachmentPayload, ImageRebaselinePayload, StepBeginPayload, StepEndPayload, WorkerInitParams } from '../common/ipc';
 import type { TestCase } from '../common/test';
 import { TimeoutManager } from './timeoutManager';
 import type { Annotation, FullConfigInternal, FullProjectInternal } from '../common/config';
@@ -46,6 +46,7 @@ export class TestInfoImpl implements TestInfo {
   private _onStepBegin: (payload: StepBeginPayload) => void;
   private _onStepEnd: (payload: StepEndPayload) => void;
   private _onAttach: (payload: AttachmentPayload) => void;
+  private _onImageRebaseline: (payload: ImageRebaselinePayload) => void;
   readonly _test: TestCase;
   readonly _timeoutManager: TimeoutManager;
   readonly _startTime: number;
@@ -129,12 +130,14 @@ export class TestInfoImpl implements TestInfo {
     onStepBegin: (payload: StepBeginPayload) => void,
     onStepEnd: (payload: StepEndPayload) => void,
     onAttach: (payload: AttachmentPayload) => void,
+    onImageRebaseline: (payload: ImageRebaselinePayload) => void,
   ) {
     this._test = test;
     this.testId = test.id;
     this._onStepBegin = onStepBegin;
     this._onStepEnd = onStepEnd;
     this._onAttach = onAttach;
+    this._onImageRebaseline = onImageRebaseline;
     this._startTime = monotonicTime();
     this._startWallTime = Date.now();
 
@@ -400,6 +403,15 @@ export class TestInfoImpl implements TestInfo {
       contentType: attachment.contentType,
       path: attachment.path,
       body: attachment.body?.toString('base64')
+    });
+  }
+
+  _addImageRebaseline(snapshotPath: string, actualPath: string, expectedPath: string) {
+    this._onImageRebaseline({
+      testId: this._test.id,
+      snapshotPath,
+      actualPath,
+      expectedPath,
     });
   }
 

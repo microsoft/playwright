@@ -87,6 +87,12 @@ export type TestAttachment = {
   contentType: string;
 };
 
+export type TestImageRebaseline = {
+  snapshotPath: string;
+  actualPath: string;
+  expectedPath: string;
+};
+
 export type TestResult = {
   retry: number;
   startTime: string;
@@ -94,6 +100,7 @@ export type TestResult = {
   steps: TestStep[];
   errors: string[];
   attachments: TestAttachment[];
+  imageRebaselines: TestImageRebaseline[];
   status: 'passed' | 'failed' | 'timedOut' | 'skipped' | 'interrupted';
 };
 

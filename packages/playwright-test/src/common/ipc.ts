@@ -77,6 +77,13 @@ export type AttachmentPayload = {
   contentType: string;
 };
 
+export type ImageRebaselinePayload = {
+  testId: string;
+  snapshotPath: string;
+  actualPath: string;
+  expectedPath: string;
+};
+
 export type TestEndPayload = {
   testId: string;
   duration: number;

@@ -27,6 +27,7 @@ import type { Metainfo } from './metadataView';
 import { MetadataView } from './metadataView';
 import { TestCaseView } from './testCaseView';
 import { TestFilesView } from './testFilesView';
+import type { PatchSupport } from './patchSupport';
 import './theme.css';
 
 declare global {

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { TestBeginPayload, TestEndPayload, DonePayload, TestOutputPayload, StepBeginPayload, StepEndPayload, TeardownErrorsPayload, RunPayload, SerializedConfig, AttachmentPayload } from '../common/ipc';
+import type { TestBeginPayload, TestEndPayload, DonePayload, TestOutputPayload, StepBeginPayload, StepEndPayload, TeardownErrorsPayload, RunPayload, SerializedConfig, AttachmentPayload, ImageRebaselinePayload } from '../common/ipc';
 import { serializeConfig } from '../common/ipc';
 import type { TestResult, TestStep, TestError } from '../../types/testReporter';
 import type { Suite } from '../common/test';
@@ -25,6 +25,8 @@ import { WorkerHost } from './workerHost';
 import type { TestGroup } from './testGroups';
 import type { FullConfigInternal } from '../common/config';
 import type { ReporterV2 } from '../reporters/reporterV2';
+
+export const imageRebaselineSymbol = Symbol('imageRebaselineSymbol');
 
 type TestResultData = {
   result: TestResult;
@@ -208,6 +210,7 @@ export class Dispatcher {
       worker.removeListener('stepBegin', onStepBegin);
       worker.removeListener('stepEnd', onStepEnd);
       worker.removeListener('attach', onAttach);
+      worker.removeListener('imageRebaseline', onImageRebaseline);
       worker.removeListener('done', onDone);
       worker.removeListener('exit', onExit);
       doneCallback();
@@ -319,6 +322,19 @@ export class Dispatcher {
       result.attachments.push(attachment);
     };
     worker.on('attach', onAttach);
+
+    const onImageRebaseline = (params: ImageRebaselinePayload) => {
+      const data = this._testById.get(params.testId)!;
+      const { result } = data.resultByWorkerIndex.get(worker.workerIndex)!;
+      const imageRebaseline = {
+        snapshotPath: params.snapshotPath,
+        actualPath: params.actualPath,
+        expectedPath: params.expectedPath,
+      };
+      (result as any)[imageRebaselineSymbol] ??= [];
+      (result as any)[imageRebaselineSymbol].push(imageRebaseline);
+    };
+    worker.on('imageRebaseline', onImageRebaseline);
 
     const onDone = (params: DonePayload & { unexpectedExitError?: TestError }) => {
       this._queuedOrRunningHashCount.set(worker.hash(), this._queuedOrRunningHashCount.get(worker.hash())! - 1);

@@ -182,6 +182,28 @@ export function startHtmlReportServer(folder: string): HttpServer {
     const absolutePath = path.join(folder, ...relativePath.split('/'));
     return server.serveFile(request, response, absolutePath);
   });
+  server.routePrefix('/api/version', (request, response) => {
+    response.end('1');
+    return true;
+  });
+  server.routePrefix('/api/patch_image', (request, response) => {
+    const body: Buffer[] = [];
+    request.on('data', chunk => body.push(chunk));
+    request.on('end', () => {
+      try {
+        const text = Buffer.concat(body).toString('utf-8');
+        const json = JSON.parse(text);
+        fs.copyFileSync(path.join(folder, json.actualPath), json.snapshotPath);
+        response.statusCode = 200;
+        response.end();
+      } catch (e) {
+        console.error(e);
+        response.statusCode = 500;
+        response.end(e.message);
+      }
+    });
+    return true;
+  });
   return server;
 }
 
@@ -359,7 +381,7 @@ class HtmlBuilder {
     };
   }
 
-  private _serializeAttachments(attachments: JsonAttachment[]) {
+  private _serializeAttachments(attachments: JsonAttachment[], testresults2PlaywrightReport = new Map<string, string>()) {
     let lastAttachment: TestAttachment | undefined;
     return attachments.map(a => {
       if (a.name === 'trace')
@@ -384,7 +406,9 @@ class HtmlBuilder {
           const sha1 = calculateSha1(buffer) + path.extname(a.path);
           fileName = this._attachmentsBaseURL + sha1;
           fs.mkdirSync(path.join(this._reportFolder, 'data'), { recursive: true });
-          fs.writeFileSync(path.join(this._reportFolder, 'data', sha1), buffer);
+          const newFileName = path.join(this._reportFolder, 'data', sha1);
+          fs.writeFileSync(newFileName, buffer);
+          testresults2PlaywrightReport.set(a.path, fileName);
         } catch (e) {
         }
         return {
@@ -432,6 +456,13 @@ class HtmlBuilder {
   }
 
   private _createTestResult(result: JsonTestResult): TestResult {
+    const testResults2playwrightReport = new Map<string, string>();
+    const attachments = this._serializeAttachments(result.attachments, testResults2playwrightReport);
+    const imageRebaselines = result.imageRebaselines.map(imageResult => ({
+      snapshotPath: imageResult.snapshotPath,
+      actualPath: testResults2playwrightReport.get(imageResult.actualPath)!,
+      expectedPath: testResults2playwrightReport.get(imageResult.expectedPath)!,
+    }));
     return {
       duration: result.duration,
       startTime: result.startTime,
@@ -439,7 +470,8 @@ class HtmlBuilder {
       steps: result.steps.map(s => this._createTestStep(s)),
       errors: result.errors,
       status: result.status,
-      attachments: this._serializeAttachments(result.attachments),
+      attachments,
+      imageRebaselines,
     };
   }
 

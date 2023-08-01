@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import type { TestAttachment, TestCase, TestResult, TestStep } from './types';
+import type { TestAttachment, TestCase, TestResult, TestStep, TestImageRebaseline } from './types';
 import ansi2html from 'ansi-to-html';
 import * as React from 'react';
 import { TreeItem } from './treeItem';
@@ -25,9 +25,11 @@ import { AttachmentLink, generateTraceUrl } from './links';
 import { statusIcon } from './statusIcon';
 import type { ImageDiff } from './imageDiffView';
 import { ImageDiffView } from './imageDiffView';
+import { PatchSupport } from './patchSupport';
 import './testResultView.css';
 
-function groupImageDiffs(screenshots: Set<TestAttachment>): ImageDiff[] {
+function groupImageDiffs(screenshots: Set<TestAttachment>, imageRebaselines: TestImageRebaseline[]): ImageDiff[] {
+  console.log('image rebaselines', imageRebaselines);
   const snapshotNameToImageDiff = new Map<string, ImageDiff>();
   for (const attachment of screenshots) {
     const match = attachment.name.match(/^(.*)-(expected|actual|diff|previous)(\.[^.]+)?$/);
@@ -57,6 +59,13 @@ function groupImageDiffs(screenshots: Set<TestAttachment>): ImageDiff[] {
       screenshots.delete(diff.expected.attachment);
       screenshots.delete(diff.diff?.attachment!);
     }
+    for (const imageRebaseline of imageRebaselines) {
+      if (diff.actual?.attachment?.path === imageRebaseline.actualPath &&
+          diff.expected?.attachment?.path === imageRebaseline.expectedPath) {
+        diff.snapshotPath = imageRebaseline.snapshotPath;
+      }
+    }
+    console.log(diff);
   }
   return [...snapshotNameToImageDiff.values()];
 }
@@ -69,12 +78,13 @@ export const TestResultView: React.FC<{
 
   const { screenshots, videos, traces, otherAttachments, diffs } = React.useMemo(() => {
     const attachments = result?.attachments || [];
+    const imageRebaselines = result?.imageRebaselines ?? [];
     const screenshots = new Set(attachments.filter(a => a.contentType.startsWith('image/')));
     const videos = attachments.filter(a => a.name === 'video');
     const traces = attachments.filter(a => a.name === 'trace');
     const otherAttachments = new Set<TestAttachment>(attachments);
     [...screenshots, ...videos, ...traces].forEach(a => otherAttachments.delete(a));
-    const diffs = groupImageDiffs(screenshots);
+    const diffs = groupImageDiffs(screenshots, imageRebaselines);
     return { screenshots: [...screenshots], videos, traces, otherAttachments, diffs };
   }, [result]);
 
@@ -92,6 +102,15 @@ export const TestResultView: React.FC<{
       imageDiffRef.current?.scrollIntoView({ block: 'start', inline: 'start' });
   }, [scrolled, anchor, setScrolled, videoRef]);
 
+  function headerForDiff(diff: ImageDiff) {
+    console.log('rendered something');
+    if (!PatchSupport.instance().isEnabled() || !diff.snapshotPath)
+      return `Image mismatch: ${diff.name}`;
+    return <>
+      Image mismatch: {diff.name} <AcceptImageButton diff={diff}></AcceptImageButton>
+      </>;;
+  }
+
   return <div className='test-result'>
     {!!result.errors.length && <AutoChip header='Errors'>
       {result.errors.map((error, index) => <ErrorMessage key={'test-result-error-message-' + index} error={error}></ErrorMessage>)}
@@ -101,7 +120,7 @@ export const TestResultView: React.FC<{
     </AutoChip>}
 
     {diffs.map((diff, index) =>
-      <AutoChip key={`diff-${index}`} header={`Image mismatch: ${diff.name}`} targetRef={imageDiffRef}>
+      <AutoChip key={`diff-${index}`} header={headerForDiff(diff)} targetRef={imageDiffRef}>
         <ImageDiffView key='image-diff' imageDiff={diff}></ImageDiffView>
       </AutoChip>
     )}
@@ -193,3 +212,28 @@ const ansiColors = {
 function escapeHTML(text: string): string {
   return text.replace(/[&"<>]/g, c => ({ '&': '&amp;', '"': '&quot;', '<': '&lt;', '>': '&gt;' }[c]!));
 }
+
+export const AcceptImageButton: React.FunctionComponent<{
+  diff: ImageDiff,
+}> = ({ diff }) => {
+  const [status, setStatus] = React.useState<'ok'|'failed'|undefined>(undefined);
+  async function doAccept() {
+    const result = await PatchSupport.instance().patchImage(diff.actual!.attachment.path!, diff.snapshotPath!);
+    if (result)
+      setStatus('ok');
+    else
+      setStatus('failed');
+  }
+  if (status === undefined)
+    return <button onClick={
+      event => {
+        event.preventDefault();
+        event.stopPropagation();
+        doAccept();
+      }
+    }>accept image</button>
+  if (status === 'ok')
+    return <button disabled>Image Accepted</button>
+  return <button disabled>Image FAILED</button>
+}
+

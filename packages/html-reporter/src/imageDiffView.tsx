@@ -27,6 +27,7 @@ export type ImageDiff = {
   expected?: { attachment: TestAttachment, title: string },
   actual?: { attachment: TestAttachment },
   diff?: { attachment: TestAttachment },
+  snapshotPath?: string,
 };
 
 export const ImageDiffView: React.FunctionComponent<{

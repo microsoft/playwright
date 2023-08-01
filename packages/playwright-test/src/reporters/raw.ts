@@ -26,6 +26,8 @@ import { codeFrameColumns } from '../transform/babelBundle';
 import type { Metadata } from '../../types/test';
 import type { SuitePrivate } from '../../types/reporterPrivate';
 
+import { imageRebaselineSymbol } from '../runner/dispatcher';
+
 export type JsonLocation = Location;
 export type JsonError = string;
 export type JsonStackFrame = { file: string, line: number, column: number };
@@ -78,6 +80,12 @@ export type JsonAttachment = {
   contentType: string;
 };
 
+export type JsonImageRebaseline = {
+  snapshotPath: string;
+  expectedPath: string;
+  actualPath: string;
+};
+
 export type JsonTestResult = {
   retry: number;
   workerIndex: number;
@@ -86,6 +94,7 @@ export type JsonTestResult = {
   status: TestStatus;
   errors: JsonError[];
   attachments: JsonAttachment[];
+  imageRebaselines: JsonImageRebaseline[];
   steps: JsonTestStep[];
 };
 
@@ -248,6 +257,7 @@ class RawReporter {
       status: result.status,
       errors: formatResultFailure(test, result, '', true).map(error => error.message),
       attachments: this.generateAttachments(result.attachments, result),
+      imageRebaselines: (result as any)[imageRebaselineSymbol] ?? [],
       steps: dedupeSteps(result.steps.map(step => this._serializeStep(test, step)))
     };
   }
