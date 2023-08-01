@@ -21,6 +21,7 @@ import url from 'url';
 import type { HttpServer } from '../../packages/playwright-core/src/utils';
 import { startHtmlReportServer } from '../../packages/playwright-test/lib/reporters/html';
 import { expect as baseExpect, test as baseTest, stripAnsi } from './playwright-test-fixtures';
+import extractZip from '../../packages/playwright-core/bundles/zip/node_modules/extract-zip';
 
 const DOES_NOT_SUPPORT_UTF8_IN_TERMINAL = process.platform === 'win32' && process.env.TERM_PROGRAM !== 'vscode' && !process.env.WT_SESSION;
 const POSITIVE_STATUS_MARK = DOES_NOT_SUPPORT_UTF8_IN_TERMINAL ? 'ok' : '✓ ';
@@ -1158,4 +1159,29 @@ test('blob-report should be next to package.json', async ({ runInlineTest }, tes
   expect(fs.existsSync(testInfo.outputPath('foo', 'blob-report'))).toBe(true);
   expect(fs.existsSync(testInfo.outputPath('foo', 'bar', 'blob-report'))).toBe(false);
   expect(fs.existsSync(testInfo.outputPath('foo', 'bar', 'baz', 'tests', 'blob-report'))).toBe(false);
+});
+
+test('blob-report should include version', async ({ runInlineTest }) => {
+  const reportDir = test.info().outputPath('blob-report');
+  const files = {
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: [['blob']]
+      };
+    `,
+    'tests/a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('test 1', async ({}) => {});
+    `,
+  };
+  await runInlineTest(files);
+  const reportFiles = await fs.promises.readdir(reportDir);
+  expect(reportFiles).toEqual([expect.stringMatching(/report-.*.zip/)]);
+
+  await extractZip(test.info().outputPath('blob-report', reportFiles[0]), { dir: test.info().outputPath('blob-report') });
+  const reportFile = test.info().outputPath('blob-report', reportFiles[0].replace(/\.zip$/, '.jsonl'));
+  const data = await fs.promises.readFile(reportFile, 'utf8');
+  const events = data.split('\n').filter(Boolean).map(line => JSON.parse(line));
+  const metadataEvent = events.find(e => e.method === 'onBlobReportMetadata');
+  expect(metadataEvent.params.version).toBe(1);
 });
