@@ -1610,6 +1610,8 @@ When all steps combined have not finished during the specified [`option: timeout
 ## async method: Frame.setContent
 * since: v1.8
 
+This method internally calls [document.write()](https://developer.mozilla.org/en-US/docs/Web/API/Document/write), inheriting all its specific characteristics and behaviors.
+
 ### param: Frame.setContent.html
 * since: v1.8
 - `html` <[string]>
