@@ -1,6 +1,6 @@
 ---
 id: test-parallel
-title: "Parallelism and sharding"
+title: "Parallelism"
 ---
 
 Playwright Test runs tests in parallel. In order to achieve that, it runs several worker processes that run at the same time. By default, **test files** are run in parallel. Tests in a single file are run in order, in the same worker process.
@@ -125,15 +125,12 @@ test('runs second', async () => {
 
 ## Shard tests between multiple machines
 
-Playwright Test can shard a test suite, so that it can be executed on multiple machines. For that,  pass `--shard=x/y` to the command line. For example, to split the suite into three shards, each running one third of the tests:
+Playwright Test can shard a test suite, so that it can be executed on multiple machines.
+See [sharding guide](./test-sharding.md) for more details.
 
 ```bash
-npx playwright test --shard=1/3
 npx playwright test --shard=2/3
-npx playwright test --shard=3/3
 ```
-
-That way your test suite completes 3 times faster.
 
 ## Limit failures and fail fast
 
