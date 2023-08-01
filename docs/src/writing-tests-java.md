@@ -35,8 +35,9 @@ public class App {
             // Click the get started link.
             getStarted.click();
 
-            // Expects the URL to contain intro.
-            assertThat(page).hasURL(Pattern.compile(".*intro"));
+            // Expects page to have a heading with the name of Installation.
+            assertThat(page.getByRole(AriaRole.HEADING,
+               new Page.GetByRoleOptions().setName("Installation"))).isVisible();
         }
     }
 }
