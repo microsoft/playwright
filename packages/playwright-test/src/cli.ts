@@ -21,7 +21,7 @@ import fs from 'fs';
 import path from 'path';
 import { Runner } from './runner/runner';
 import { stopProfiling, startProfiling, gracefullyProcessExitDoNotHang } from 'playwright-core/lib/utils';
-import { experimentalLoaderOption, fileIsModule, serializeError } from './util';
+import { execArgvWithoutExperimentalLoaderOptions, experimentalLoaderOptions, fileIsModule, serializeError } from './util';
 import { showHTMLReport } from './reporters/html';
 import { createMergedReport } from './reporters/merge';
 import { ConfigLoader, resolveConfigFile } from './common/configLoader';
@@ -272,17 +272,18 @@ function restartWithExperimentalTsEsm(configFile: string | null): boolean {
     return false;
   if (process.env.PW_DISABLE_TS_ESM)
     return false;
-  if (process.env.PW_TS_ESM_ON)
+  if (process.env.PW_TS_ESM_ON) {
+    process.execArgv = execArgvWithoutExperimentalLoaderOptions();
     return false;
+  }
   if (!fileIsModule(configFile))
     return false;
-  const NODE_OPTIONS = (process.env.NODE_OPTIONS || '') + experimentalLoaderOption();
-  const innerProcess = require('child_process').fork(require.resolve('./cli'), process.argv.slice(2), {
+  const innerProcess = (require('child_process') as typeof import('child_process')).fork(require.resolve('./cli'), process.argv.slice(2), {
     env: {
       ...process.env,
-      NODE_OPTIONS,
       PW_TS_ESM_ON: '1',
-    }
+    },
+    execArgv: experimentalLoaderOptions(),
   });
 
   innerProcess.on('close', (code: number | null) => {
