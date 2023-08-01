@@ -57,18 +57,28 @@ function parseEvents(reportJsonl: Buffer): JsonEvent[] {
   return reportJsonl.toString().split('\n').filter(line => line.length).map(line => JSON.parse(line)) as JsonEvent[];
 }
 
-async function extractReportFromZip(file: string): Promise<Buffer> {
-  const zipFile = new ZipFile(file);
-  const entryNames = await zipFile.entries();
-  try {
+async function extractAndParseReports(dir: string, shardFiles: string[]): Promise<{ metadata: BlobReportMetadata, parsedEvents: JsonEvent[] }[]> {
+  const shardEvents = [];
+  await fs.promises.mkdir(path.join(dir, 'resources'), { recursive: true });
+  for (const file of shardFiles) {
+    const zipFile = new ZipFile(path.join(dir, file));
+    const entryNames = await zipFile.entries();
     for (const entryName of entryNames) {
-      if (entryName.endsWith('.jsonl'))
-        return await zipFile.read(entryName);
+      const content = await zipFile.read(entryName);
+      if (entryName.endsWith('.jsonl')) {
+        const parsedEvents = parseEvents(content);
+        shardEvents.push({
+          metadata: findMetadata(parsedEvents, file),
+          parsedEvents
+        });
+      } else {
+        const fileName = path.join(dir, entryName);
+        await fs.promises.writeFile(fileName, content);
+      }
     }
-  } finally {
     zipFile.close();
   }
-  throw new Error(`Cannot find *.jsonl file in ${file}`);
+  return shardEvents;
 }
 
 function findMetadata(events: JsonEvent[], file: string): BlobReportMetadata {
@@ -82,15 +92,7 @@ async function mergeEvents(dir: string, shardReportFiles: string[]) {
   const configureEvents: JsonEvent[] = [];
   const beginEvents: JsonEvent[] = [];
   const endEvents: JsonEvent[] = [];
-  const shardEvents: { metadata: BlobReportMetadata, parsedEvents: JsonEvent[] }[] = [];
-  for (const reportFile of shardReportFiles) {
-    const reportJsonl = await extractReportFromZip(path.join(dir, reportFile));
-    const parsedEvents = parseEvents(reportJsonl);
-    shardEvents.push({
-      metadata: findMetadata(parsedEvents, reportFile),
-      parsedEvents
-    });
-  }
+  const shardEvents = await extractAndParseReports(dir, shardReportFiles);
   shardEvents.sort((a, b) => {
     const shardA = a.metadata.shard?.current ?? 0;
     const shardB = b.metadata.shard?.current ?? 0;

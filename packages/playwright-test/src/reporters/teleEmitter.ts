@@ -17,9 +17,9 @@
 import path from 'path';
 import { createGuid } from 'playwright-core/lib/utils';
 import type { SuitePrivate } from '../../types/reporterPrivate';
-import type { FullConfig, FullResult, Location, TestError, TestResult, TestStep } from '../../types/testReporter';
+import type { FullConfig, FullResult, Location, TestCase, TestError, TestResult, TestStep } from '../../types/testReporter';
 import { FullConfigInternal, FullProjectInternal } from '../common/config';
-import type { Suite, TestCase } from '../common/test';
+import type { Suite } from '../common/test';
 import type { JsonAttachment, JsonConfig, JsonEvent, JsonProject, JsonStdIOType, JsonSuite, JsonTestCase, JsonTestEnd, JsonTestResultEnd, JsonTestResultStart, JsonTestStepEnd, JsonTestStepStart } from '../isomorphic/teleReceiver';
 import { serializeRegexPatterns } from '../isomorphic/teleReceiver';
 import type { ReporterV2 } from './reporterV2';
@@ -70,7 +70,7 @@ export class TeleReporterEmitter implements ReporterV2 {
       method: 'onTestEnd',
       params: {
         test: testEnd,
-        result: this._serializeResultEnd(result),
+        result: this._serializeResultEnd(test, result),
       }
     });
   }
@@ -203,18 +203,18 @@ export class TeleReporterEmitter implements ReporterV2 {
     };
   }
 
-  private _serializeResultEnd(result: TestResult): JsonTestResultEnd {
+  private _serializeResultEnd(test: TestCase, result: TestResult): JsonTestResultEnd {
     return {
       id: (result as any)[idSymbol],
       duration: result.duration,
       status: result.status,
       errors: result.errors,
-      attachments: this._serializeAttachments(result.attachments),
+      attachments: this._serializeAttachments(test, result),
     };
   }
 
-  _serializeAttachments(attachments: TestResult['attachments']): JsonAttachment[] {
-    return attachments.map(a => {
+  _serializeAttachments(test: TestCase, result: TestResult): JsonAttachment[] {
+    return result.attachments.map(a => {
       return {
         ...a,
         // There is no Buffer in the browser, so there is no point in sending the data there.
