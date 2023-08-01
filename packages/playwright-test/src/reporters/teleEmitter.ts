@@ -70,7 +70,7 @@ export class TeleReporterEmitter implements ReporterV2 {
       method: 'onTestEnd',
       params: {
         test: testEnd,
-        result: this._serializeResultEnd(test, result),
+        result: this._serializeResultEnd(result),
       }
     });
   }
@@ -203,18 +203,18 @@ export class TeleReporterEmitter implements ReporterV2 {
     };
   }
 
-  private _serializeResultEnd(test: TestCase, result: TestResult): JsonTestResultEnd {
+  private _serializeResultEnd(result: TestResult): JsonTestResultEnd {
     return {
       id: (result as any)[idSymbol],
       duration: result.duration,
       status: result.status,
       errors: result.errors,
-      attachments: this._serializeAttachments(test, result),
+      attachments: this._serializeAttachments(result.attachments),
     };
   }
 
-  _serializeAttachments(test: TestCase, result: TestResult): JsonAttachment[] {
-    return result.attachments.map(a => {
+  _serializeAttachments(attachments: TestResult['attachments']): JsonAttachment[] {
+    return attachments.map(a => {
       return {
         ...a,
         // There is no Buffer in the browser, so there is no point in sending the data there.
