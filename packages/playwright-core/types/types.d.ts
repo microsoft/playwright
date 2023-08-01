@@ -17881,11 +17881,16 @@ export interface Mouse {
  * {@link PageError} class represents objects created by context when there are unhandled execeptions thrown on the
  * pages and dispatched via the
  * [browserContext.on('pageerror')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-page-error)
- * event
+ * event.
  *
  * ```js
- * // Listen for all unhandled exceptions on all pages
- * context.on('pageerror', pageerror => console.log(pageerror.error()));
+ * // Log all uncaught errors to the terminal
+ * context.on('pageerror', pageerror => {
+ *   console.log(`Uncaught exception: "${pageerror.error()}"`);
+ * });
+ *
+ * // Navigate to a page with an exception.
+ * await page.goto('data:text/html,<script>throw new Error("Test")</script>');
  * ```
  *
  */

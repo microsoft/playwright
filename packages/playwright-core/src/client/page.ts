@@ -23,7 +23,7 @@ import { isSafeCloseError, kBrowserOrContextClosedError } from '../common/errors
 import { urlMatches } from '../utils/network';
 import { TimeoutSettings } from '../common/timeoutSettings';
 import type * as channels from '@protocol/channels';
-import {  serializeError } from '../protocol/serializers';
+import { serializeError } from '../protocol/serializers';
 import { assert, headersObjectToArray, isObject, isRegExp, isString, LongStandingScope, urlMatchesEqual } from '../utils';
 import { mkdirIfNeeded } from '../utils/fileUtils';
 import { Accessibility } from './accessibility';

@@ -82,6 +82,7 @@ type SendRequestOptions = https.RequestOptions & {
 export abstract class APIRequestContext extends SdkObject {
   static Events = {
     Dispose: 'dispose',
+
     Request: 'request',
     RequestFinished: 'requestfinished',
   };
