@@ -344,7 +344,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
               video: 'on',
               trace: 'on',
             },
-            reporter: [['html', { attachmentsBaseURL: 'https://some-url.com/' }]]
+            reporter: [['html', { attachmentsBaseURL: 'https://some-url.com/' }], ['line']]
           };
         `,
         'a.test.js': `
@@ -1019,7 +1019,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
             test('pass', ({}, testInfo) => {
             });
           `
-        }, { 'reporter': 'html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' }, {
+        }, { 'reporter': 'html,line' }, { PW_TEST_HTML_REPORT_OPEN: 'never' }, {
           cwd: 'foo/bar/baz/tests',
         });
         expect(result.exitCode).toBe(0);
@@ -1043,7 +1043,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
             test('pass', ({}, testInfo) => {
             });
           `
-        }, { 'reporter': 'html' }, { 'PW_TEST_HTML_REPORT_OPEN': 'never', 'PLAYWRIGHT_HTML_REPORT': '../my-report' }, {
+        }, { 'reporter': 'html,line' }, { 'PW_TEST_HTML_REPORT_OPEN': 'never', 'PLAYWRIGHT_HTML_REPORT': '../my-report' }, {
           cwd: 'foo/bar/baz/tests',
         });
         expect(result.exitCode).toBe(0);
