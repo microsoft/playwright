@@ -465,7 +465,7 @@ test('should print progress', async ({ runInlineTest, mergeReports }) => {
   expect(exitCode).toBe(0);
 
   const lines = output.split('\n');
-  expect(lines).toContainEqual(expect.stringMatching(/extracting: blob-report\/report-.*zip$/));
+  expect(lines).toContainEqual(expect.stringMatching(/extracting: blob-report[\/\\]report-.*zip$/));
   expect(lines).toContainEqual(expect.stringMatching(/merging events$/));
   expect(lines).toContainEqual(expect.stringMatching(/building final report/));
   expect(lines).toContainEqual(expect.stringMatching(/finished building report/));
