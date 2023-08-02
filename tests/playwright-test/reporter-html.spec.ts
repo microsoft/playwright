@@ -103,7 +103,6 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       expect(result.passed).toBe(1);
     });
 
-
     test('should not throw when attachment is missing', async ({ runInlineTest, page, showReport }, testInfo) => {
       const result = await runInlineTest({
         'playwright.config.ts': `
