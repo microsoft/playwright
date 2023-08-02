@@ -461,14 +461,14 @@ test('should print progress', async ({ runInlineTest, mergeReports }) => {
   const reportFiles = await fs.promises.readdir(reportDir);
   reportFiles.sort();
   expect(reportFiles).toEqual([expect.stringMatching(/report-.*.zip/), expect.stringMatching(/report-.*.zip/)]);
-  const { exitCode, output } = await mergeReports(reportDir, { PW_TEST_DEBUG_REPORTERS: '1', PWTEST_TTY_WIDTH: '80', PW_TEST_HTML_REPORT_OPEN: 'never' }, { additionalArgs: ['--reporter', 'html'] });
+  const { exitCode, output } = await mergeReports(reportDir, { PW_TEST_HTML_REPORT_OPEN: 'never' }, { additionalArgs: ['--reporter', 'html'] });
   expect(exitCode).toBe(0);
 
   const lines = output.split('\n');
-  expect(lines).toContainEqual(expect.stringMatching(/extracting: report-.*zip$/));
-  expect(lines).toContainEqual(expect.stringMatching(/extracting: report-.*jsonl$/));
-  expect(lines).toContainEqual(expect.stringMatching(/merging: report-.*jsonl$/));
-  expect(lines).toContainEqual(expect.stringMatching(/processing test events:/));
+  expect(lines).toContainEqual(expect.stringMatching(/extracting: blob-report\/report-.*zip$/));
+  expect(lines).toContainEqual(expect.stringMatching(/merging events$/));
+  expect(lines).toContainEqual(expect.stringMatching(/building final report/));
+  expect(lines).toContainEqual(expect.stringMatching(/finished building report/));
 });
 
 test('preserve attachments', async ({ runInlineTest, mergeReports, showReport, page }) => {

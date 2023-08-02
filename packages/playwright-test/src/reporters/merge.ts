@@ -25,6 +25,7 @@ import { createReporters } from '../runner/reporters';
 import { Multiplexer } from './multiplexer';
 import { ZipFile } from 'playwright-core/lib/utils';
 import type { BlobReportMetadata } from './blob';
+import { relativeFilePath } from '../util';
 
 type StatusCallback = (message: string) => void;
 
@@ -36,7 +37,7 @@ export async function createMergedReport(config: FullConfigInternal, dir: string
   let printStatus: StatusCallback = () => {};
   if (!multiplexer.printsToStdio()) {
     printStatus = printStatusToStdout;
-    process.stdout.write(`merging reports from ${dir}\n`);
+    printStatus(`merging reports from ${dir}`);
   }
 
   const shardFiles = await sortedShardFiles(dir);
@@ -45,12 +46,13 @@ export async function createMergedReport(config: FullConfigInternal, dir: string
   const events = await mergeEvents(dir, shardFiles, printStatus);
   patchAttachmentPaths(events, dir);
 
-  let i = 0;
+  printStatus(`processing ${events.length} test events`);
   for (const event of events) {
-    ++i;
-    if (i % 1000 === 0 || i === events.length)
-      printStatus(`processing test events: ${i}/${events.length}`);
+    if (event.method === 'onEnd')
+      printStatus(`building final report`);
     await receiver.dispatch(event);
+    if (event.method === 'onEnd')
+      printStatus(`finished building report`);
   }
   printStatus(`done.`);
 }
@@ -72,21 +74,20 @@ function parseEvents(reportJsonl: Buffer): JsonEvent[] {
   return reportJsonl.toString().split('\n').filter(line => line.length).map(line => JSON.parse(line)) as JsonEvent[];
 }
 
-async function extractAndParseReports(dir: string, shardFiles: string[], printStatus: StatusCallback): Promise<{ metadata: BlobReportMetadata, reportFile: string, parsedEvents: JsonEvent[] }[]> {
+async function extractAndParseReports(dir: string, shardFiles: string[], printStatus: StatusCallback): Promise<{ metadata: BlobReportMetadata, parsedEvents: JsonEvent[] }[]> {
   const shardEvents = [];
   await fs.promises.mkdir(path.join(dir, 'resources'), { recursive: true });
   for (const file of shardFiles) {
-    printStatus(`extracting: ${file}`);
-    const zipFile = new ZipFile(path.join(dir, file));
+    const absolutePath = path.join(dir, file);
+    printStatus(`extracting: ${relativeFilePath(absolutePath)}`);
+    const zipFile = new ZipFile(absolutePath);
     const entryNames = await zipFile.entries();
     for (const entryName of entryNames) {
-      printStatus(`extracting: ${file} > ${entryName}`);
       const content = await zipFile.read(entryName);
       if (entryName.endsWith('.jsonl')) {
         const parsedEvents = parseEvents(content);
         shardEvents.push({
           metadata: findMetadata(parsedEvents, file),
-          reportFile: entryName,
           parsedEvents
         });
       } else {
@@ -117,8 +118,8 @@ async function mergeEvents(dir: string, shardReportFiles: string[], printStatus:
     return shardA - shardB;
   });
   const allTestIds = new Set<string>();
-  for (const { parsedEvents, reportFile } of shardEvents) {
-    printStatus(`merging: ${reportFile}`);
+  printStatus(`merging events`);
+  for (const { parsedEvents } of shardEvents) {
     for (const event of parsedEvents) {
       if (event.method === 'onConfigure')
         configureEvents.push(event);
@@ -233,10 +234,7 @@ async function sortedShardFiles(dir: string) {
 }
 
 function printStatusToStdout(message: string) {
-  if (process.env.PW_TEST_DEBUG_REPORTERS)
-    process.stdout.write(`${message}\n`);
-  else
-    process.stdout.write(`\u001B[1A\u001B[2K${message}\n`);
+  process.stdout.write(`${message}\n`);
 }
 
 class ProjectNamePatcher {
