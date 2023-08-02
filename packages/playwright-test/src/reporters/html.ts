@@ -40,11 +40,11 @@ type TestEntry = {
 
 
 const htmlReportOptions = ['always', 'never', 'on-failure'] as const;
-type HtmlReportOpenOption = typeof htmlReportOptions[number];
+type HtmlReportOpenOption = (typeof htmlReportOptions)[number];
 
-const isHtmlReportOption = (type: string ):type is HtmlReportOpenOption => {
-  return (type in htmlReportOptions)
-}
+const isHtmlReportOption = (type: string): type is HtmlReportOpenOption => {
+  return type in htmlReportOptions;
+};
 
 
 
