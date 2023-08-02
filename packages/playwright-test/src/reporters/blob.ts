@@ -31,19 +31,19 @@ type BlobReporterOptions = {
   outputDir?: string;
 };
 
+const currentVersion = 1;
+
 export type BlobReportMetadata = {
+  version: number;
   projectSuffix?: string;
   shard?: { total: number, current: number };
 };
 
 export class BlobReporter extends TeleReporterEmitter {
-  private _messages: JsonEvent[] = [];
-  private _options: BlobReporterOptions;
-  private _salt: string;
-  private _copyFilePromises = new Set<Promise<void>>();
-
-  private _outputDir!: Promise<string>;
-  private _reportName!: string;
+  private readonly _messages: JsonEvent[] = [];
+  private readonly _attachments: { originalPath: string, zipEntryPath: string }[] = [];
+  private readonly _options: BlobReporterOptions;
+  private readonly _salt: string;
 
   constructor(options: BlobReporterOptions) {
     super(message => this._messages.push(message), false);
@@ -52,67 +52,68 @@ export class BlobReporter extends TeleReporterEmitter {
   }
 
   override onConfigure(config: FullConfig) {
-    const outputDir = resolveReporterOutputPath('blob-report', this._options.configDir, this._options.outputDir);
-    const removePromise = process.env.PWTEST_BLOB_DO_NOT_REMOVE ? Promise.resolve() : removeFolders([outputDir]);
-    this._outputDir = removePromise.then(() => fs.promises.mkdir(path.join(outputDir, 'resources'), { recursive: true })).then(() => outputDir);
-    this._reportName = `report-${createGuid()}`;
     const metadata: BlobReportMetadata = {
+      version: currentVersion,
       projectSuffix: process.env.PWTEST_BLOB_SUFFIX,
-      shard: config.shard ? config.shard : undefined,
+      shard: config.shard ?? undefined,
     };
     this._messages.push({
       method: 'onBlobReportMetadata',
       params: metadata
     });
+
     super.onConfigure(config);
   }
 
   override async onEnd(result: FullResult): Promise<void> {
     await super.onEnd(result);
-    const outputDir = await this._outputDir;
-    const lines = this._messages.map(m => JSON.stringify(m) + '\n');
-    const content = Readable.from(lines);
+
+    const outputDir = resolveReporterOutputPath('blob-report', this._options.configDir, this._options.outputDir);
+    if (!process.env.PWTEST_BLOB_DO_NOT_REMOVE)
+      await removeFolders([outputDir]);
+    await fs.promises.mkdir(outputDir, { recursive: true });
+
+    const reportName = `report-${createGuid()}`;
 
     const zipFile = new yazl.ZipFile();
     const zipFinishPromise = new ManualPromise<undefined>();
+    const finishPromise = zipFinishPromise.catch(e => {
+      throw new Error(`Failed to write report ${reportName + '.zip'}: ` + e.message);
+    });
+
     (zipFile as any as EventEmitter).on('error', error => zipFinishPromise.reject(error));
-    const zipFileName = path.join(outputDir, this._reportName + '.zip');
+    const zipFileName = path.join(outputDir, reportName + '.zip');
     zipFile.outputStream.pipe(fs.createWriteStream(zipFileName)).on('close', () => {
       zipFinishPromise.resolve(undefined);
     }).on('error', error => zipFinishPromise.reject(error));
-    zipFile.addReadStream(content, this._reportName + '.jsonl');
+
+    for (const { originalPath, zipEntryPath } of this._attachments) {
+      if (!fs.statSync(originalPath, { throwIfNoEntry: false })?.isFile())
+        continue;
+      zipFile.addFile(originalPath, zipEntryPath);
+    }
+
+    const lines = this._messages.map(m => JSON.stringify(m) + '\n');
+    const content = Readable.from(lines);
+    zipFile.addReadStream(content, reportName + '.jsonl');
     zipFile.end();
 
-    await Promise.all([
-      ...this._copyFilePromises,
-      // Requires Node v14.18.0+
-      zipFinishPromise.catch(e => {
-        throw new Error(`Failed to write report ${zipFileName}: ` + e.message);
-      }),
-    ]);
+    await finishPromise;
   }
 
   override _serializeAttachments(attachments: TestResult['attachments']): JsonAttachment[] {
     return super._serializeAttachments(attachments).map(attachment => {
-      if (!attachment.path || !fs.statSync(attachment.path, { throwIfNoEntry: false })?.isFile())
+      if (!attachment.path)
         return attachment;
       // Add run guid to avoid clashes between shards.
       const sha1 = calculateSha1(attachment.path + this._salt);
       const extension = mime.getExtension(attachment.contentType) || 'dat';
       const newPath = `resources/${sha1}.${extension}`;
-      this._startCopyingFile(attachment.path, newPath);
+      this._attachments.push({ originalPath: attachment.path, zipEntryPath: newPath });
       return {
         ...attachment,
         path: newPath,
       };
     });
-  }
-
-  private _startCopyingFile(from: string, to: string) {
-    const copyPromise: Promise<void> = this._outputDir
-        .then(dir => fs.promises.copyFile(from, path.join(dir, to)))
-        .catch(e => { console.error(`Failed to copy file from "${from}" to "${to}": ${e}`); })
-        .then(() => { this._copyFilePromises.delete(copyPromise); });
-    this._copyFilePromises.add(copyPromise);
   }
 }

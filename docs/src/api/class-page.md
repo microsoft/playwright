@@ -1508,7 +1508,9 @@ Console.WriteLine(await page.EvaluateAsync<int>("1 + 2")); // prints "3"
 
 ```js
 const bodyHandle = await page.evaluate('document.body');
-const html = await page.evaluate<string, HTMLElement>(([body, suffix]) => body.innerHTML + suffix, [bodyHandle, 'hello']);
+const html = await page.evaluate<string, HTMLElement>(([body, suffix]) =>
+  body.innerHTML + suffix, [bodyHandle, 'hello']
+);
 await bodyHandle.dispose();
 ```
 
@@ -1920,7 +1922,9 @@ const crypto = require('crypto');
 (async () => {
   const browser = await webkit.launch({ headless: false });
   const page = await browser.newPage();
-  await page.exposeFunction('sha256', text => crypto.createHash('sha256').update(text).digest('hex'));
+  await page.exposeFunction('sha256', text =>
+    crypto.createHash('sha256').update(text).digest('hex'),
+  );
   await page.setContent(`
     <script>
       async function onClick() {
@@ -3531,6 +3535,8 @@ When all steps combined have not finished during the specified [`option: timeout
 ## async method: Page.setContent
 * since: v1.8
 
+This method internally calls [document.write()](https://developer.mozilla.org/en-US/docs/Web/API/Document/write), inheriting all its specific characteristics and behaviors.
+
 ### param: Page.setContent.html
 * since: v1.8
 - `html` <[string]>
@@ -4438,7 +4444,9 @@ await page.getByText('trigger request').click();
 const request = await requestPromise;
 
 // Alternative way with a predicate. Note no await.
-const requestPromise = page.waitForRequest(request => request.url() === 'https://example.com' && request.method() === 'GET');
+const requestPromise = page.waitForRequest(request =>
+  request.url() === 'https://example.com' && request.method() === 'GET',
+);
 await page.getByText('trigger request').click();
 const request = await requestPromise;
 ```
@@ -4575,7 +4583,9 @@ await page.getByText('trigger response').click();
 const response = await responsePromise;
 
 // Alternative way with a predicate. Note no await.
-const responsePromise = page.waitForResponse(response => response.url() === 'https://example.com' && response.status() === 200);
+const responsePromise = page.waitForResponse(response =>
+  response.url() === 'https://example.com' && response.status() === 200
+);
 await page.getByText('trigger response').click();
 const response = await responsePromise;
 ```

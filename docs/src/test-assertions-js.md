@@ -20,37 +20,44 @@ Playwright will be re-testing the element with the test id of `status` until the
 
 By default, the timeout for assertions is set to 5 seconds. Learn more about [various timeouts](./test-timeouts.md).
 
-## Popular assertions
+## Auto-retrying assertions
+
+The following assertions will retry until the assertion passes, or the assertion timeout is reached.
+Note that retrying assertions are async, so you must `await` them.
 
 | Assertion | Description |
 | :- | :- |
-| [`method: LocatorAssertions.toBeAttached`] | Element is attached |
-| [`method: LocatorAssertions.toBeChecked`] | Checkbox is checked |
-| [`method: LocatorAssertions.toBeDisabled`] | Element is disabled |
-| [`method: LocatorAssertions.toBeEditable`] | Element is editable |
-| [`method: LocatorAssertions.toBeEmpty`] | Container is empty |
-| [`method: LocatorAssertions.toBeEnabled`] | Element is enabled |
-| [`method: LocatorAssertions.toBeFocused`] | Element is focused |
-| [`method: LocatorAssertions.toBeHidden`] | Element is not visible |
-| [`method: LocatorAssertions.toBeInViewport`] | Element intersects viewport |
-| [`method: LocatorAssertions.toBeVisible`] | Element is visible |
-| [`method: LocatorAssertions.toContainText`] | Element contains text |
-| [`method: LocatorAssertions.toHaveAttribute`] | Element has a DOM attribute |
-| [`method: LocatorAssertions.toHaveClass`] | Element has a class property |
-| [`method: LocatorAssertions.toHaveCount`] | List has exact number of children |
-| [`method: LocatorAssertions.toHaveCSS`] | Element has CSS property |
-| [`method: LocatorAssertions.toHaveId`] | Element has an ID |
-| [`method: LocatorAssertions.toHaveJSProperty`] | Element has a JavaScript property |
-| [`method: LocatorAssertions.toHaveScreenshot#1`] | Element has a screenshot |
-| [`method: LocatorAssertions.toHaveText`] | Element matches text |
-| [`method: LocatorAssertions.toHaveValue`] | Input has a value |
-| [`method: LocatorAssertions.toHaveValues`] | Select has options selected |
-| [`method: PageAssertions.toHaveScreenshot#1`] | Page has a screenshot |
-| [`method: PageAssertions.toHaveTitle`] | Page has a title |
-| [`method: PageAssertions.toHaveURL`] | Page has a URL |
-| [`method: APIResponseAssertions.toBeOK`] | Response has an OK status |
+| [await expect(locator).toBeAttached()](./api/class-locatorassertions.md#locator-assertions-to-be-attached) | Element is attached |
+| [await expect(locator).toBeChecked()](./api/class-locatorassertions.md#locator-assertions-to-be-checked) | Checkbox is checked |
+| [await expect(locator).toBeDisabled()](./api/class-locatorassertions.md#locator-assertions-to-be-disabled) | Element is disabled |
+| [await expect(locator).toBeEditable()](./api/class-locatorassertions.md#locator-assertions-to-be-editable) | Element is editable |
+| [await expect(locator).toBeEmpty()](./api/class-locatorassertions.md#locator-assertions-to-be-empty) | Container is empty |
+| [await expect(locator).toBeEnabled()](./api/class-locatorassertions.md#locator-assertions-to-be-enabled) | Element is enabled |
+| [await expect(locator).toBeFocused()](./api/class-locatorassertions.md#locator-assertions-to-be-focused) | Element is focused |
+| [await expect(locator).toBeHidden()](./api/class-locatorassertions.md#locator-assertions-to-be-hidden) | Element is not visible |
+| [await expect(locator).toBeInViewport()](./api/class-locatorassertions.md#locator-assertions-to-be-in-viewport) | Element intersects viewport |
+| [await expect(locator).toBeVisible()](./api/class-locatorassertions.md#locator-assertions-to-be-visible) | Element is visible |
+| [await expect(locator).toContainText()](./api/class-locatorassertions.md#locator-assertions-to-contain-text) | Element contains text |
+| [await expect(locator).toHaveAttribute()](./api/class-locatorassertions.md#locator-assertions-to-have-attribute) | Element has a DOM attribute |
+| [await expect(locator).toHaveClass()](./api/class-locatorassertions.md#locator-assertions-to-have-class) | Element has a class property |
+| [await expect(locator).toHaveCount()](./api/class-locatorassertions.md#locator-assertions-to-have-count) | List has exact number of children |
+| [await expect(locator).toHaveCSS()](./api/class-locatorassertions.md#locator-assertions-to-have-css) | Element has CSS property |
+| [await expect(locator).toHaveId()](./api/class-locatorassertions.md#locator-assertions-to-have-id) | Element has an ID |
+| [await expect(locator).toHaveJSProperty()](./api/class-locatorassertions.md#locator-assertions-to-have-js-property) | Element has a JavaScript property |
+| [await expect(locator).toHaveScreenshot()](./api/class-locatorassertions.md#locator-assertions-to-have-screenshot-1) | Element has a screenshot |
+| [await expect(locator).toHaveText()](./api/class-locatorassertions.md#locator-assertions-to-have-text) | Element matches text |
+| [await expect(locator).toHaveValue()](./api/class-locatorassertions.md#locator-assertions-to-have-value) | Input has a value |
+| [await expect(locator).toHaveValues()](./api/class-locatorassertions.md#locator-assertions-to-have-values) | Select has options selected |
+| [await expect(page).toHaveScreenshot()](./api/class-pageassertions.md#page-assertions-to-have-screenshot-1) | Page has a screenshot |
+| [await expect(page).toHaveTitle()](./api/class-pageassertions.md#page-assertions-to-have-title) | Page has a title |
+| [await expect(page).toHaveURL()](./api/class-pageassertions.md#page-assertions-to-have-url) | Page has a URL |
+| [await expect(response).toBeOK()](./api/class-apiresponseassertions.md#api-response-assertions-to-be-ok) | Response has an OK status |
 
-## Generic assertions
+## Non-retrying assertions
+
+These assertions allow to test any conditions, but do not auto-retry. Most of the time, web pages show information asynchronously, and using non-retrying assertions can lead to a flaky test.
+
+Prefer [auto-retrying](#auto-retrying-assertions) assertions whenever possible. For more complex assertions that need to be retried, use [`expect.poll`](#expectpoll) or [`expect.toPass`](#expecttopass).
 
 | Assertion | Description |
 | :- | :- |
@@ -196,7 +203,8 @@ await expect.poll(async () => {
   const response = await page.request.get('https://api.example.com');
   return response.status();
 }, {
-  // Probe, wait 1s, probe, wait 2s, probe, wait 10s, probe, wait 10s, probe, .... Defaults to [100, 250, 500, 1000].
+  // Probe, wait 1s, probe, wait 2s, probe, wait 10s, probe, wait 10s, probe
+  // ... Defaults to [100, 250, 500, 1000].
   intervals: [1_000, 2_000, 10_000],
   timeout: 60_000
 }).toBe(200);
@@ -220,7 +228,8 @@ await expect(async () => {
   const response = await page.request.get('https://api.example.com');
   expect(response.status()).toBe(200);
 }).toPass({
-  // Probe, wait 1s, probe, wait 2s, probe, wait 10s, probe, wait 10s, probe, .... Defaults to [100, 250, 500, 1000].
+  // Probe, wait 1s, probe, wait 2s, probe, wait 10s, probe, wait 10s, probe
+  // ... Defaults to [100, 250, 500, 1000].
   intervals: [1_000, 2_000, 10_000],
   timeout: 60_000
 });

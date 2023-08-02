@@ -677,7 +677,9 @@ Console.WriteLine(await frame.EvaluateAsync<int>("1 + 2")); // prints "3"
 
 ```js
 const bodyHandle = await frame.evaluate('document.body');
-const html = await frame.evaluate(([body, suffix]) => body.innerHTML + suffix, [bodyHandle, 'hello']);
+const html = await frame.evaluate(([body, suffix]) =>
+  body.innerHTML + suffix, [bodyHandle, 'hello'],
+);
 await bodyHandle.dispose();
 ```
 
@@ -782,7 +784,9 @@ var docHandle = await frame.EvaluateHandleAsync("document"); // Handle for the `
 
 ```js
 const aHandle = await frame.evaluateHandle(() => document.body);
-const resultHandle = await frame.evaluateHandle(([body, suffix]) => body.innerHTML + suffix, [aHandle, 'hello']);
+const resultHandle = await frame.evaluateHandle(([body, suffix]) =>
+  body.innerHTML + suffix, [aHandle, 'hello'],
+);
 console.log(await resultHandle.jsonValue());
 await resultHandle.dispose();
 ```
@@ -1609,6 +1613,8 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ## async method: Frame.setContent
 * since: v1.8
+
+This method internally calls [document.write()](https://developer.mozilla.org/en-US/docs/Web/API/Document/write), inheriting all its specific characteristics and behaviors.
 
 ### param: Frame.setContent.html
 * since: v1.8

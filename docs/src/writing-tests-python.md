@@ -27,8 +27,8 @@ def test_homepage_has_Playwright_in_title_and_get_started_link_linking_to_the_in
     # Click the get started link.
     get_started.click()
 
-    # Expects the URL to contain intro.
-    expect(page).to_have_url(re.compile(".*intro"))
+    # Expects page to have a heading with the name of Installation.
+    expect(page.get_by_role("heading", name="Installation")).to_be_visible()
 ```
 
 

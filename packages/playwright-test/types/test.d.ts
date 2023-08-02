@@ -3351,7 +3351,10 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * ```js
    * test('example test', async ({ page }) => {
    *   // ...
-   *   await test.info().attach('screenshot', { body: await page.screenshot(), contentType: 'image/png' });
+   *   await test.info().attach('screenshot', {
+   *     body: await page.screenshot(),
+   *     contentType: 'image/png',
+   *   });
    * });
    * ```
    *

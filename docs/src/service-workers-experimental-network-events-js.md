@@ -42,7 +42,9 @@ await page.evaluate(async () => {
   const registration = await window.navigator.serviceWorker.getRegistration();
   if (registration.active?.state === 'activated')
     return;
-  await new Promise(res => window.navigator.serviceWorker.addEventListener('controllerchange', res));
+  await new Promise(res =>
+    window.navigator.serviceWorker.addEventListener('controllerchange', res),
+  );
 });
 ```
 
