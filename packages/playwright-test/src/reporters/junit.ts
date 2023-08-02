@@ -96,7 +96,7 @@ class JUnitReporter extends EmptyReporter {
     let duration = 0;
     const children: XMLEntry[] = [];
 
-    for(const test of suite.allTests()){
+    for (const test of suite.allTests()){
       ++tests;
       if (test.outcome() === 'skipped')
         ++skipped;
@@ -190,15 +190,15 @@ class JUnitReporter extends EmptyReporter {
       for (const attachment of result.attachments) {
         if (!attachment.path)
           continue;
-          const attachmentPath = path.relative(this.config.rootDir, attachment.path);
+        const attachmentPath = path.relative(this.config.rootDir, attachment.path);
 
-          try {
-            await fs.promises.access(attachment.path);
-            systemOut.push(`\n[[ATTACHMENT|${attachmentPath}]]\n`);
-          } catch {
-            systemErr.push(`\nWarning: attachment ${attachmentPath} is missing`);
-            continue;
-          }
+        try {
+          await fs.promises.access(attachment.path);
+          systemOut.push(`\n[[ATTACHMENT|${attachmentPath}]]\n`);
+        } catch {
+          systemErr.push(`\nWarning: attachment ${attachmentPath} is missing`);
+          continue;
+        }
       }
     }
     // Note: it is important to only produce a single system-out/system-err entry
