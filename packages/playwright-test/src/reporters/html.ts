@@ -103,7 +103,6 @@ class HtmlReporter extends EmptyReporter {
 
   _resolveOptions(): { outputFolder: string, open: HtmlReportOpenOption, attachmentsBaseURL: string } {
     const outputFolder = reportFolderFromEnv() ?? resolveReporterOutputPath('playwright-report', this._options.configDir, this._options.outputFolder);
-
     return {
       outputFolder,
       open: getHtmlReportOptionProcessEnv() || this._options.open || 'on-failure',
