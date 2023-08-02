@@ -112,7 +112,9 @@ export interface Page {
    *
    * ```js
    * const bodyHandle = await page.evaluate('document.body');
-   * const html = await page.evaluate<string, HTMLElement>(([body, suffix]) => body.innerHTML + suffix, [bodyHandle, 'hello']);
+   * const html = await page.evaluate<string, HTMLElement>(([body, suffix]) =>
+   *   body.innerHTML + suffix, [bodyHandle, 'hello']
+   * );
    * await bodyHandle.dispose();
    * ```
    *
@@ -159,7 +161,9 @@ export interface Page {
    *
    * ```js
    * const bodyHandle = await page.evaluate('document.body');
-   * const html = await page.evaluate<string, HTMLElement>(([body, suffix]) => body.innerHTML + suffix, [bodyHandle, 'hello']);
+   * const html = await page.evaluate<string, HTMLElement>(([body, suffix]) =>
+   *   body.innerHTML + suffix, [bodyHandle, 'hello']
+   * );
    * await bodyHandle.dispose();
    * ```
    *
@@ -2316,7 +2320,9 @@ export interface Page {
    * (async () => {
    *   const browser = await webkit.launch({ headless: false });
    *   const page = await browser.newPage();
-   *   await page.exposeFunction('sha256', text => crypto.createHash('sha256').update(text).digest('hex'));
+   *   await page.exposeFunction('sha256', text =>
+   *     crypto.createHash('sha256').update(text).digest('hex'),
+   *   );
    *   await page.setContent(`
    *     <script>
    *       async function onClick() {
@@ -4552,7 +4558,9 @@ export interface Page {
    * const request = await requestPromise;
    *
    * // Alternative way with a predicate. Note no await.
-   * const requestPromise = page.waitForRequest(request => request.url() === 'https://example.com' && request.method() === 'GET');
+   * const requestPromise = page.waitForRequest(request =>
+   *   request.url() === 'https://example.com' && request.method() === 'GET',
+   * );
    * await page.getByText('trigger request').click();
    * const request = await requestPromise;
    * ```
@@ -4582,7 +4590,9 @@ export interface Page {
    * const response = await responsePromise;
    *
    * // Alternative way with a predicate. Note no await.
-   * const responsePromise = page.waitForResponse(response => response.url() === 'https://example.com' && response.status() === 200);
+   * const responsePromise = page.waitForResponse(response =>
+   *   response.url() === 'https://example.com' && response.status() === 200
+   * );
    * await page.getByText('trigger response').click();
    * const response = await responsePromise;
    * ```
@@ -4768,7 +4778,9 @@ export interface Frame {
    *
    * ```js
    * const bodyHandle = await frame.evaluate('document.body');
-   * const html = await frame.evaluate(([body, suffix]) => body.innerHTML + suffix, [bodyHandle, 'hello']);
+   * const html = await frame.evaluate(([body, suffix]) =>
+   *   body.innerHTML + suffix, [bodyHandle, 'hello'],
+   * );
    * await bodyHandle.dispose();
    * ```
    *
@@ -4811,7 +4823,9 @@ export interface Frame {
    *
    * ```js
    * const bodyHandle = await frame.evaluate('document.body');
-   * const html = await frame.evaluate(([body, suffix]) => body.innerHTML + suffix, [bodyHandle, 'hello']);
+   * const html = await frame.evaluate(([body, suffix]) =>
+   *   body.innerHTML + suffix, [bodyHandle, 'hello'],
+   * );
    * await bodyHandle.dispose();
    * ```
    *
@@ -4853,7 +4867,9 @@ export interface Frame {
    *
    * ```js
    * const aHandle = await frame.evaluateHandle(() => document.body);
-   * const resultHandle = await frame.evaluateHandle(([body, suffix]) => body.innerHTML + suffix, [aHandle, 'hello']);
+   * const resultHandle = await frame.evaluateHandle(([body, suffix]) =>
+   *   body.innerHTML + suffix, [aHandle, 'hello'],
+   * );
    * console.log(await resultHandle.jsonValue());
    * await resultHandle.dispose();
    * ```
@@ -4895,7 +4911,9 @@ export interface Frame {
    *
    * ```js
    * const aHandle = await frame.evaluateHandle(() => document.body);
-   * const resultHandle = await frame.evaluateHandle(([body, suffix]) => body.innerHTML + suffix, [aHandle, 'hello']);
+   * const resultHandle = await frame.evaluateHandle(([body, suffix]) =>
+   *   body.innerHTML + suffix, [aHandle, 'hello'],
+   * );
    * console.log(await resultHandle.jsonValue());
    * await resultHandle.dispose();
    * ```
@@ -8197,7 +8215,9 @@ export interface BrowserContext {
    * (async () => {
    *   const browser = await webkit.launch({ headless: false });
    *   const context = await browser.newContext();
-   *   await context.exposeFunction('sha256', text => crypto.createHash('sha256').update(text).digest('hex'));
+   *   await context.exposeFunction('sha256', text =>
+   *     crypto.createHash('sha256').update(text).digest('hex'),
+   *   );
    *   const page = await context.newPage();
    *   await page.setContent(`
    *     <script>
@@ -9119,7 +9139,9 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    *
    * ```js
    * const feedHandle = await page.$('.feed');
-   * expect(await feedHandle.$$eval('.tweet', nodes => nodes.map(n => n.innerText))).toEqual(['Hello!', 'Hi!']);
+   * expect(await feedHandle.$$eval('.tweet', nodes =>
+   *   nodes.map(n => n.innerText))).toEqual(['Hello!', 'Hi!'],
+   * );
    * ```
    *
    * @param selector A selector to query for.
@@ -9148,7 +9170,9 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    *
    * ```js
    * const feedHandle = await page.$('.feed');
-   * expect(await feedHandle.$$eval('.tweet', nodes => nodes.map(n => n.innerText))).toEqual(['Hello!', 'Hi!']);
+   * expect(await feedHandle.$$eval('.tweet', nodes =>
+   *   nodes.map(n => n.innerText))).toEqual(['Hello!', 'Hi!'],
+   * );
    * ```
    *
    * @param selector A selector to query for.
@@ -9177,7 +9201,9 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    *
    * ```js
    * const feedHandle = await page.$('.feed');
-   * expect(await feedHandle.$$eval('.tweet', nodes => nodes.map(n => n.innerText))).toEqual(['Hello!', 'Hi!']);
+   * expect(await feedHandle.$$eval('.tweet', nodes =>
+   *   nodes.map(n => n.innerText))).toEqual(['Hello!', 'Hi!'],
+   * );
    * ```
    *
    * @param selector A selector to query for.
@@ -9206,7 +9232,9 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    *
    * ```js
    * const feedHandle = await page.$('.feed');
-   * expect(await feedHandle.$$eval('.tweet', nodes => nodes.map(n => n.innerText))).toEqual(['Hello!', 'Hi!']);
+   * expect(await feedHandle.$$eval('.tweet', nodes =>
+   *   nodes.map(n => n.innerText))).toEqual(['Hello!', 'Hi!'],
+   * );
    * ```
    *
    * @param selector A selector to query for.
@@ -13711,8 +13739,12 @@ export {};
  *     const webview = await device.webView({ pkg: 'org.chromium.webview_shell' });
  *
  *     // Fill the input box.
- *     await device.fill({ res: 'org.chromium.webview_shell:id/url_field' }, 'github.com/microsoft/playwright');
- *     await device.press({ res: 'org.chromium.webview_shell:id/url_field' }, 'Enter');
+ *     await device.fill({
+ *       res: 'org.chromium.webview_shell:id/url_field',
+ *     }, 'github.com/microsoft/playwright');
+ *     await device.press({
+ *       res: 'org.chromium.webview_shell:id/url_field',
+ *     }, 'Enter');
  *
  *     // Work with WebView's page as usual.
  *     const page = await webview.page();

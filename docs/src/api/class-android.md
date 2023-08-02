@@ -40,8 +40,12 @@ const { _android: android } = require('playwright');
     const webview = await device.webView({ pkg: 'org.chromium.webview_shell' });
 
     // Fill the input box.
-    await device.fill({ res: 'org.chromium.webview_shell:id/url_field' }, 'github.com/microsoft/playwright');
-    await device.press({ res: 'org.chromium.webview_shell:id/url_field' }, 'Enter');
+    await device.fill({
+      res: 'org.chromium.webview_shell:id/url_field',
+    }, 'github.com/microsoft/playwright');
+    await device.press({
+      res: 'org.chromium.webview_shell:id/url_field',
+    }, 'Enter');
 
     // Work with WebView's page as usual.
     const page = await webview.page();

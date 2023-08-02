@@ -203,7 +203,8 @@ await expect.poll(async () => {
   const response = await page.request.get('https://api.example.com');
   return response.status();
 }, {
-  // Probe, wait 1s, probe, wait 2s, probe, wait 10s, probe, wait 10s, probe, .... Defaults to [100, 250, 500, 1000].
+  // Probe, wait 1s, probe, wait 2s, probe, wait 10s, probe, wait 10s, probe
+  // ... Defaults to [100, 250, 500, 1000].
   intervals: [1_000, 2_000, 10_000],
   timeout: 60_000
 }).toBe(200);
@@ -227,7 +228,8 @@ await expect(async () => {
   const response = await page.request.get('https://api.example.com');
   expect(response.status()).toBe(200);
 }).toPass({
-  // Probe, wait 1s, probe, wait 2s, probe, wait 10s, probe, wait 10s, probe, .... Defaults to [100, 250, 500, 1000].
+  // Probe, wait 1s, probe, wait 2s, probe, wait 10s, probe, wait 10s, probe
+  // ... Defaults to [100, 250, 500, 1000].
   intervals: [1_000, 2_000, 10_000],
   timeout: 60_000
 });

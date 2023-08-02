@@ -162,7 +162,10 @@ It's also possible to add custom metadata in the form of annotations to your tes
 ```js title="example.spec.ts"
 
 test('user profile', async ({ page }) => {
-  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/<some-issue>' });
+  test.info().annotations.push({
+    type: 'issue',
+    description: 'https://github.com/microsoft/playwright/issues/<some-issue>',
+  });
   // ...
 });
 ```

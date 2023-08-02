@@ -768,7 +768,9 @@ const crypto = require('crypto');
 (async () => {
   const browser = await webkit.launch({ headless: false });
   const context = await browser.newContext();
-  await context.exposeFunction('sha256', text => crypto.createHash('sha256').update(text).digest('hex'));
+  await context.exposeFunction('sha256', text =>
+    crypto.createHash('sha256').update(text).digest('hex'),
+  );
   const page = await context.newPage();
   await page.setContent(`
     <script>

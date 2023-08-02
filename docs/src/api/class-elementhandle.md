@@ -466,7 +466,9 @@ value.
 
 ```js
 const feedHandle = await page.$('.feed');
-expect(await feedHandle.$$eval('.tweet', nodes => nodes.map(n => n.innerText))).toEqual(['Hello!', 'Hi!']);
+expect(await feedHandle.$$eval('.tweet', nodes =>
+  nodes.map(n => n.innerText))).toEqual(['Hello!', 'Hi!'],
+);
 ```
 
 ```java

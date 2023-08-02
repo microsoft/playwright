@@ -632,7 +632,9 @@ elements that can be selected by one of the selectors in that list.
 
 ```js
 // Waits for either confirmation dialog or load spinner.
-await page.locator(`//span[contains(@class, 'spinner__loading')]|//div[@id='confirmation']`).waitFor();
+await page.locator(
+    `//span[contains(@class, 'spinner__loading')]|//div[@id='confirmation']`
+).waitFor();
 ```
 
 ```java
