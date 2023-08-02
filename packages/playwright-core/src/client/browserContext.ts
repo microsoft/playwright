@@ -103,7 +103,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
         page.emit(Events.Page.Console, consoleMessage);
     });
     this._channel.on('pageError', ({ error, page }) => {
-      const pageObject = Page.fromNullable(page);
+      const pageObject = Page.from(page);
       const parsedError = parseError(error);
       this.emit(Events.BrowserContext.PageError, new PageError(pageObject, parsedError));
       if (pageObject)
