@@ -877,7 +877,7 @@ test('should attach expected/actual/diff with snapshot path', async ({ runInline
     {
       name: 'test/path/snapshot-expected.png',
       contentType: 'image/png',
-      path: 'a-is-a-test/test/path/snapshot-expected.png'
+      path: 'golden-should-attach-expected-actual-diff-with-snapshot-path-playwright-test/a.spec.js-snapshots/test/path/snapshot.png'
     },
     {
       name: 'test/path/snapshot-actual.png',
@@ -916,7 +916,7 @@ test('should attach expected/actual/diff', async ({ runInlineTest }, testInfo) =
     {
       name: 'snapshot-expected.png',
       contentType: 'image/png',
-      path: 'a-is-a-test/snapshot-expected.png'
+      path: 'golden-should-attach-expected-actual-diff-playwright-test/a.spec.js-snapshots/snapshot.png'
     },
     {
       name: 'snapshot-actual.png',
@@ -957,7 +957,7 @@ test('should attach expected/actual/diff for different sizes', async ({ runInlin
     {
       name: 'snapshot-expected.png',
       contentType: 'image/png',
-      path: 'a-is-a-test/snapshot-expected.png'
+      path: 'golden-should-attach-expected-actual-diff-for-different-sizes-playwright-test/a.spec.js-snapshots/snapshot.png'
     },
     {
       name: 'snapshot-actual.png',

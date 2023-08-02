@@ -214,7 +214,10 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
 
     if (expected !== undefined) {
       writeFileSync(this.expectedPath, expected);
-      this.testInfo.attachments.push({ name: addSuffixToFilePath(this.snapshotName, '-expected'), contentType: this.mimeType, path: this.expectedPath });
+      // Note: use actual snapshot path in the snapshots directory instead of the one
+      // copied over to the `test-results/` folder.
+      // This way we can use this path later on when we need to update snapshot expectation.
+      this.testInfo.attachments.push({ name: addSuffixToFilePath(this.snapshotName, '-expected'), contentType: this.mimeType, path: this.snapshotPath });
       output.push(`Expected: ${colors.yellow(this.expectedPath)}`);
     }
     if (previous !== undefined) {
