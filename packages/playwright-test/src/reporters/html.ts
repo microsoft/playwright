@@ -100,18 +100,7 @@ class HtmlReporter extends EmptyReporter {
     }
     this.suite = suite;
   }
-  _getHtmlReportOptionProcessEnv(): HtmlReportOpenOption | undefined {
-    const htmlOpenEnv = process.env.PW_HTML_REPORT_OPEN;
-    if (htmlOpenEnv){
-      if (isHtmlReportOption(htmlOpenEnv)){
-        return htmlOpenEnv;
-      } else {
-        console.log(colors.red(`Configuration Error: HTML reporter Invalid value for PW_HTML_REPORT_OPEN: ${htmlOpenEnv}. Valid values are: ${htmlReportOptions.join(', ')}`));
-        return undefined;
-      }
-    }
-    return undefined;
-  }
+
 
 
   _resolveOptions(): { outputFolder: string, open: HtmlReportOpenOption, attachmentsBaseURL: string } {
@@ -119,7 +108,7 @@ class HtmlReporter extends EmptyReporter {
 
     return {
       outputFolder,
-      open: this._getHtmlReportOptionProcessEnv() || this._options.open || 'never',
+      open: getHtmlReportOptionProcessEnv() || this._options.open || 'never',
       attachmentsBaseURL: this._options.attachmentsBaseURL || 'data/'
     };
   }
@@ -158,6 +147,20 @@ class HtmlReporter extends EmptyReporter {
 function reportFolderFromEnv(): string | undefined {
   if (process.env[`PLAYWRIGHT_HTML_REPORT`])
     return path.resolve(process.cwd(), process.env[`PLAYWRIGHT_HTML_REPORT`]);
+  return undefined;
+}
+
+function getHtmlReportOptionProcessEnv(): HtmlReportOpenOption | undefined {
+  const processKey = 'PW_TEST_HTML_REPORT_OPEN';
+  const htmlOpenEnv = process.env[processKey];
+  if (htmlOpenEnv){
+    if (isHtmlReportOption(htmlOpenEnv)){
+      return htmlOpenEnv;
+    } else {
+      throw new Error(colors.red(`Configuration Error: HTML reporter Invalid value for ${processKey}: ${htmlOpenEnv}. Valid values are: ${htmlReportOptions.join(', ')}`));
+      return undefined;
+    }
+  }
   return undefined;
 }
 
