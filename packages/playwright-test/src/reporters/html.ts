@@ -106,7 +106,7 @@ class HtmlReporter extends EmptyReporter {
 
     return {
       outputFolder,
-      open: getHtmlReportOptionProcessEnv() || this._options.open || 'never',
+      open: getHtmlReportOptionProcessEnv() || this._options.open || 'on-failure',
       attachmentsBaseURL: this._options.attachmentsBaseURL || 'data/'
     };
   }
