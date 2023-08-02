@@ -123,7 +123,7 @@ export function createPlugin(
           }
         };
       }
-      const { build, preview } = require('vite');
+      const { build, preview } = await import('vite');
       // Build config unconditionally, either build or build & preview will use it.
       viteConfig.plugins ??= [];
       if (frameworkPluginFactory && !viteConfig.plugins.length)
