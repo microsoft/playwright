@@ -289,7 +289,9 @@ export default defineConfig({
 You can create a custom reporter by implementing a class with some of the reporter methods. Learn more about the [Reporter] API.
 
 ```js title="my-awesome-reporter.ts"
-import type { FullConfig, FullResult, Reporter, Suite, TestCase, TestResult } from '@playwright/test/reporter';
+import type {
+  FullConfig, FullResult, Reporter, Suite, TestCase, TestResult
+} from '@playwright/test/reporter';
 
 class MyReporter implements Reporter {
   onBegin(config: FullConfig, suite: Suite) {

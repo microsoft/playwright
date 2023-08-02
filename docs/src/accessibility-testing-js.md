@@ -71,7 +71,9 @@ For example, you can use [`AxeBuilder.include()`](https://github.com/dequelabs/a
 `AxeBuilder.analyze()` will scan the page *in its current state* when you call it. To scan parts of a page that are revealed based on UI interactions, use [Locators](./locators.md) to interact with the page before invoking `analyze()`:
 
 ```js
-test('navigation menu flyout should not have automatically detectable accessibility violations', async ({ page }) => {
+test('navigation menu should not have automatically detectable accessibility violations', async ({
+  page,
+}) => {
   await page.goto('https://your-site.com/');
 
   await page.getByRole('button', { name: 'Navigation Menu' }).click();
@@ -126,7 +128,9 @@ This is usually the simplest option, but it has some important downsides:
 Here is an example of excluding one element from being scanned in one specific test:
 
 ```js
-test('should not have any accessibility violations outside of elements with known issues', async ({ page }) => {
+test('should not have any accessibility violations outside of elements with known issues', async ({
+  page,
+}) => {
   await page.goto('https://your-site.com/page-with-known-issues');
 
   const accessibilityScanResults = await new AxeBuilder({ page })
@@ -146,7 +150,9 @@ If your application contains many different pre-existing violations of a specifi
 You can find the rule IDs to pass to `disableRules()` in the `id` property of the violations you want to suppress. A [complete list of axe's rules](https://github.com/dequelabs/axe-core/blob/master/doc/rule-descriptions.md) can be found in `axe-core`'s documentation.
 
 ```js
-test('should not have any accessibility violations outside of rules with known issues', async ({ page }) => {
+test('should not have any accessibility violations outside of rules with known issues', async ({
+  page,
+}) => {
   await page.goto('https://your-site.com/page-with-known-issues');
 
   const accessibilityScanResults = await new AxeBuilder({ page })

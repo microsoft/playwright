@@ -221,7 +221,9 @@ const pathToExtension = path.join(__dirname, 'my-extension');
 const context = await chromium.launchPersistentContext('', {
   headless: false,
   args: [
-    `--headless=new`, // the new headless arg for chrome v109+. Use '--headless=chrome' as arg for browsers v94-108.
+    // the new headless arg for chrome v109+. Use '--headless=chrome'
+    // as arg for browsers v94-108.
+    `--headless=new`,
     `--disable-extensions-except=${pathToExtension}`,
     `--load-extension=${pathToExtension}`,
   ],
