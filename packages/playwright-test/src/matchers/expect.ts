@@ -17,7 +17,9 @@
 import {
   captureRawStack,
   isString,
-  pollAgainstDeadline } from 'playwright-core/lib/utils';
+  pollAgainstDeadline,
+  zones,
+} from 'playwright-core/lib/utils';
 import type { ExpectZone } from 'playwright-core/lib/utils';
 import {
   toBeAttached,
@@ -56,7 +58,6 @@ import {
   printReceived,
 } from '../common/expectBundle';
 export type { ExpectMatcherContext } from '../common/expectBundle';
-import { zones } from 'playwright-core/lib/utils';
 import { TestInfoImpl } from '../worker/testInfo';
 
 // from expect/build/types

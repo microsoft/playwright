@@ -23,6 +23,7 @@
     "./lib/transform/esmLoader": "./lib/transform/esmLoader.js",
     "./lib/internalsForTest": "./lib/internalsForTest.js",
     "./lib/plugins": "./lib/plugins/index.js",
+    "./lib/matchers/expect": "./lib/matchers/expect.js",
     "./jsx-runtime": {
       "import": "./jsx-runtime.mjs",
       "require": "./jsx-runtime.js",
