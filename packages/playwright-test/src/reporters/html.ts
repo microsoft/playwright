@@ -46,8 +46,6 @@ const isHtmlReportOption = (type: string): type is HtmlReportOpenOption => {
   return type in htmlReportOptions;
 };
 
-
-
 type HtmlReporterOptions = {
   configDir: string,
   outputFolder?: string,
@@ -102,24 +100,22 @@ class HtmlReporter extends EmptyReporter {
     }
     this.suite = suite;
   }
-_getHtmlReportOptionProcessEnv(): HtmlReportOpenOption | undefined {
+  _getHtmlReportOptionProcessEnv(): HtmlReportOpenOption | undefined {
     const htmlOpenEnv = process.env.PW_HTML_REPORT_OPEN;
-    if(htmlOpenEnv){
-      if(isHtmlReportOption(htmlOpenEnv)){
+    if (htmlOpenEnv){
+      if (isHtmlReportOption(htmlOpenEnv)){
         return htmlOpenEnv;
-      }else{
+      } else {
         console.log(colors.red(`Configuration Error: HTML reporter Invalid value for PW_HTML_REPORT_OPEN: ${htmlOpenEnv}. Valid values are: ${htmlReportOptions.join(', ')}`));
-        return undefined
+        return undefined;
       }
     }
     return undefined;
-}
+  }
 
 
   _resolveOptions(): { outputFolder: string, open: HtmlReportOpenOption, attachmentsBaseURL: string } {
     const outputFolder = reportFolderFromEnv() ?? resolveReporterOutputPath('playwright-report', this._options.configDir, this._options.outputFolder);
-
-    const htmlOpenEnv = process.env.PW_HTML_REPORT_OPEN;
 
     return {
       outputFolder,
