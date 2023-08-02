@@ -75,7 +75,7 @@ export function createPlugin(
       const registerSource = await fs.promises.readFile(registerSourceFile, 'utf-8');
       const registerSourceHash = calculateSha1(registerSource);
 
-      const { version: viteVersion } = require('vite/package.json');
+      const { version: viteVersion } = await import('vite');
       try {
         buildInfo = JSON.parse(await fs.promises.readFile(buildInfoFile, 'utf-8')) as BuildInfo;
         assert(buildInfo.version === playwrightVersion);
