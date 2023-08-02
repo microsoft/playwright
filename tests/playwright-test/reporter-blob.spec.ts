@@ -412,6 +412,65 @@ test('merge into list report by default', async ({ runInlineTest, mergeReports }
   ]);
 });
 
+test('should print progress', async ({ runInlineTest, mergeReports }) => {
+  const reportDir = test.info().outputPath('blob-report');
+  const files = {
+    'playwright.config.ts': `
+      module.exports = {
+        retries: 1,
+        reporter: [['blob', { outputDir: '${reportDir.replace(/\\/g, '/')}' }]]
+      };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('math 1', async ({}) => {
+        expect(1 + 1).toBe(2);
+      });
+      test('failing 1', async ({}) => {
+        expect(1).toBe(2);
+      });
+      test('flaky 1', async ({}) => {
+        expect(test.info().retry).toBe(1);
+      });
+      test.skip('skipped 1', async ({}) => {});
+    `,
+    'b.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('math 2', async ({}) => {
+        expect(1 + 1).toBe(2);
+      });
+      test('failing 2', async ({}) => {
+        expect(1).toBe(2);
+      });
+      test.skip('skipped 2', async ({}) => {});
+    `,
+    'c.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('math 3', async ({}) => {
+        expect(1 + 1).toBe(2);
+      });
+      test('flaky 2', async ({}) => {
+        expect(test.info().retry).toBe(1);
+      });
+      test.skip('skipped 3', async ({}) => {});
+    `
+  };
+
+  await runInlineTest(files, { shard: `1/2` }, { PWTEST_BLOB_DO_NOT_REMOVE: '1' });
+  await runInlineTest(files, { shard: `2/2` }, { PWTEST_BLOB_DO_NOT_REMOVE: '1' });
+  const reportFiles = await fs.promises.readdir(reportDir);
+  reportFiles.sort();
+  expect(reportFiles).toEqual([expect.stringMatching(/report-.*.zip/), expect.stringMatching(/report-.*.zip/)]);
+  const { exitCode, output } = await mergeReports(reportDir, { PW_TEST_DEBUG_REPORTERS: '1', PWTEST_TTY_WIDTH: '80', PW_TEST_HTML_REPORT_OPEN: 'never' }, { additionalArgs: ['--reporter', 'html'] });
+  expect(exitCode).toBe(0);
+
+  const lines = output.split('\n');
+  expect(lines).toContainEqual(expect.stringMatching(/extracting: report-.*zip$/));
+  expect(lines).toContainEqual(expect.stringMatching(/extracting: report-.*jsonl$/));
+  expect(lines).toContainEqual(expect.stringMatching(/merging: report-.*jsonl$/));
+  expect(lines).toContainEqual(expect.stringMatching(/processing test events:/));
+});
+
 test('preserve attachments', async ({ runInlineTest, mergeReports, showReport, page }) => {
   const reportDir = test.info().outputPath('blob-report');
   const files = {

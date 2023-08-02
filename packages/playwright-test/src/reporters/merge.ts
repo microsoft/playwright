@@ -26,18 +26,33 @@ import { Multiplexer } from './multiplexer';
 import { ZipFile } from 'playwright-core/lib/utils';
 import type { BlobReportMetadata } from './blob';
 
+type StatusCallback = (message: string) => void;
+
 export async function createMergedReport(config: FullConfigInternal, dir: string, reporterDescriptions: ReporterDescription[]) {
+  const reporters = await createReporters(config, 'merge', reporterDescriptions);
+  const multiplexer = new Multiplexer(reporters);
+  const receiver = new TeleReporterReceiver(path.sep, multiplexer, false, config.config);
+
+  let printStatus: StatusCallback = () => {};
+  if (!multiplexer.printsToStdio()) {
+    printStatus = printStatusToStdout;
+    process.stdout.write(`merging reports from ${dir}\n`);
+  }
+
   const shardFiles = await sortedShardFiles(dir);
   if (shardFiles.length === 0)
     throw new Error(`No report files found in ${dir}`);
-  const events = await mergeEvents(dir, shardFiles);
+  const events = await mergeEvents(dir, shardFiles, printStatus);
   patchAttachmentPaths(events, dir);
 
-  const reporters = await createReporters(config, 'merge', reporterDescriptions);
-  const receiver = new TeleReporterReceiver(path.sep, new Multiplexer(reporters), false, config.config);
-
-  for (const event of events)
+  let i = 0;
+  for (const event of events) {
+    ++i;
+    if (i % 1000 === 0 || i === events.length)
+      printStatus(`processing test events: ${i}/${events.length}`);
     await receiver.dispatch(event);
+  }
+  printStatus(`done.`);
 }
 
 function patchAttachmentPaths(events: JsonEvent[], resourceDir: string) {
@@ -57,18 +72,21 @@ function parseEvents(reportJsonl: Buffer): JsonEvent[] {
   return reportJsonl.toString().split('\n').filter(line => line.length).map(line => JSON.parse(line)) as JsonEvent[];
 }
 
-async function extractAndParseReports(dir: string, shardFiles: string[]): Promise<{ metadata: BlobReportMetadata, parsedEvents: JsonEvent[] }[]> {
+async function extractAndParseReports(dir: string, shardFiles: string[], printStatus: StatusCallback): Promise<{ metadata: BlobReportMetadata, reportFile: string, parsedEvents: JsonEvent[] }[]> {
   const shardEvents = [];
   await fs.promises.mkdir(path.join(dir, 'resources'), { recursive: true });
   for (const file of shardFiles) {
+    printStatus(`extracting: ${file}`);
     const zipFile = new ZipFile(path.join(dir, file));
     const entryNames = await zipFile.entries();
     for (const entryName of entryNames) {
+      printStatus(`extracting: ${file} > ${entryName}`);
       const content = await zipFile.read(entryName);
       if (entryName.endsWith('.jsonl')) {
         const parsedEvents = parseEvents(content);
         shardEvents.push({
           metadata: findMetadata(parsedEvents, file),
+          reportFile: entryName,
           parsedEvents
         });
       } else {
@@ -87,19 +105,20 @@ function findMetadata(events: JsonEvent[], file: string): BlobReportMetadata {
   return events[0].params;
 }
 
-async function mergeEvents(dir: string, shardReportFiles: string[]) {
+async function mergeEvents(dir: string, shardReportFiles: string[], printStatus: StatusCallback) {
   const events: JsonEvent[] = [];
   const configureEvents: JsonEvent[] = [];
   const beginEvents: JsonEvent[] = [];
   const endEvents: JsonEvent[] = [];
-  const shardEvents = await extractAndParseReports(dir, shardReportFiles);
+  const shardEvents = await extractAndParseReports(dir, shardReportFiles, printStatus);
   shardEvents.sort((a, b) => {
     const shardA = a.metadata.shard?.current ?? 0;
     const shardB = b.metadata.shard?.current ?? 0;
     return shardA - shardB;
   });
   const allTestIds = new Set<string>();
-  for (const { parsedEvents } of shardEvents) {
+  for (const { parsedEvents, reportFile } of shardEvents) {
+    printStatus(`merging: ${reportFile}`);
     for (const event of parsedEvents) {
       if (event.method === 'onConfigure')
         configureEvents.push(event);
@@ -211,6 +230,13 @@ function mergeEndEvents(endEvents: JsonEvent[]): JsonEvent {
 async function sortedShardFiles(dir: string) {
   const files = await fs.promises.readdir(dir);
   return files.filter(file => file.startsWith('report-') && file.endsWith('.zip')).sort();
+}
+
+function printStatusToStdout(message: string) {
+  if (process.env.PW_TEST_DEBUG_REPORTERS)
+    process.stdout.write(`${message}\n`);
+  else
+    process.stdout.write(`\u001B[1A\u001B[2K${message}\n`);
 }
 
 class ProjectNamePatcher {
