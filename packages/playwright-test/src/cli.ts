@@ -189,8 +189,11 @@ async function mergeReports(reportDir: string | undefined, opts: { [key: string]
   const configLoader = new ConfigLoader();
   const config = await (configFile ? configLoader.loadConfigFile(configFile) : configLoader.loadEmptyConfig(process.cwd()));
   const dir = path.resolve(process.cwd(), reportDir || '');
-  if (!(await fs.promises.stat(dir)).isDirectory())
+  const dirStat = await fs.promises.stat(dir).catch(e => null);
+  if (!dirStat)
     throw new Error('Directory does not exist: ' + dir);
+  if (!dirStat.isDirectory())
+    throw new Error(`"${dir}" is not a directory`);
   let reporterDescriptions: ReporterDescription[] | undefined = resolveReporterOption(opts.reporter);
   if (!reporterDescriptions && configFile)
     reporterDescriptions = config.config.reporter;

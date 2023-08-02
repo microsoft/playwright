@@ -69,7 +69,7 @@ export async function createReporters(config: FullConfigInternal, mode: 'list' |
     // Important to put it first, jsut in case some other reporter stalls onEnd.
     if (mode === 'list')
       reporters.unshift(new ListModeReporter());
-    else
+    else if (mode !== 'merge')
       reporters.unshift(!process.env.CI ? new LineReporter({ omitFailures: true }) : new DotReporter());
   }
   return reporters;
