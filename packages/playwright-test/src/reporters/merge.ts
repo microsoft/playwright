@@ -54,7 +54,6 @@ export async function createMergedReport(config: FullConfigInternal, dir: string
     if (event.method === 'onEnd')
       printStatus(`finished building report`);
   }
-  printStatus(`done.`);
 }
 
 function patchAttachmentPaths(events: JsonEvent[], resourceDir: string) {
