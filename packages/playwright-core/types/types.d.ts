@@ -8242,31 +8242,6 @@ export interface BrowserContext {
   }): Promise<void>;
 
   /**
-   * async method to inspect a single selector on the screen
-   */
-  intunedDisableRecorder(): Promise<{
-    actions: Array<string>;
-  }>;
-
-  /**
-   * async method to inspect a single selector on the screen
-   * @param params
-   */
-  intunedEnableRecorder(params: {
-    language: string;
-  }): Promise<void>;
-
-  /**
-   * async method to inspect a single selector on the screen
-   * @param params
-   */
-  intunedInspectSingleSelector(params: {
-    language: string;
-  }): Promise<{
-    selector: string;
-  }>;
-
-  /**
    * **NOTE** CDP sessions are only supported on Chromium-based browsers.
    *
    * Returns the newly created session.
