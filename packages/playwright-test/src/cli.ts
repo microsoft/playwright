@@ -273,6 +273,7 @@ function restartWithExperimentalTsEsm(configFile: string | null): boolean {
   if (process.env.PW_DISABLE_TS_ESM)
     return false;
   if (process.env.PW_TS_ESM_ON) {
+    // clear execArgv after restart, so that childProcess.fork in user code does not inherit our loader.
     process.execArgv = execArgvWithoutExperimentalLoaderOptions();
     return false;
   }

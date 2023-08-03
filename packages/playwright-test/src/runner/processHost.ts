@@ -51,7 +51,7 @@ export class ProcessHost extends EventEmitter {
       detached: false,
       env: { ...process.env, ...this._extraEnv },
       stdio: inheritStdio ? ['ignore', 'inherit', 'inherit', 'ipc'] : ['ignore', 'ignore', process.env.PW_RUNNER_DEBUG ? 'inherit' : 'ignore', 'ipc'],
-      execArgv: experimentalLoaderOptions(),
+      ...(process.env.PW_TS_ESM_ON ? { execArgv: experimentalLoaderOptions() } : {}),
     });
     this.process.on('exit', (code, signal) => {
       this.didExit = true;

@@ -51,6 +51,7 @@ process.on('disconnect', gracefullyCloseAndExit);
 process.on('SIGINT', () => {});
 process.on('SIGTERM', () => {});
 
+// Clear execArgv immediately, so that the user-code does not inherit our loader.
 process.execArgv = execArgvWithoutExperimentalLoaderOptions();
 
 let processRunner: ProcessRunner;
