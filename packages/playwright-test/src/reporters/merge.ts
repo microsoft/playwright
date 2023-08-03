@@ -229,7 +229,7 @@ function mergeEndEvents(endEvents: JsonEvent[]): JsonEvent {
 
 async function sortedShardFiles(dir: string) {
   const files = await fs.promises.readdir(dir);
-  return files.filter(file => file.startsWith('report-') && file.endsWith('.zip')).sort();
+  return files.filter(file => file.startsWith('report') && file.endsWith('.zip')).sort();
 }
 
 function printStatusToStdout(message: string) {

@@ -23,7 +23,7 @@ import url from 'url';
 import { colors, debug, minimatch, parseStackTraceLine } from 'playwright-core/lib/utilsBundle';
 import type { TestInfoError } from './../types/test';
 import type { Location } from './../types/testReporter';
-import { calculateSha1, isRegExp, isString } from 'playwright-core/lib/utils';
+import { calculateSha1, isRegExp, isString, sanitizeForFilePath } from 'playwright-core/lib/utils';
 import type { RawStack } from 'playwright-core/lib/utils';
 
 const PLAYWRIGHT_TEST_PATH = path.join(__dirname, '..');
@@ -193,10 +193,6 @@ export function expectTypes(receiver: any, types: string[], matcherName: string)
     const typesString = commaSeparated.length ? commaSeparated.join(', ') + ' or ' + lastType : lastType;
     throw new Error(`${matcherName} can be only used with ${typesString} object${types.length > 1 ? 's' : ''}`);
   }
-}
-
-export function sanitizeForFilePath(s: string) {
-  return s.replace(/[\x00-\x2C\x2E-\x2F\x3A-\x40\x5B-\x60\x7B-\x7F]+/g, '-');
 }
 
 export function trimLongString(s: string, length = 100) {

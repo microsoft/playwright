@@ -16,7 +16,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { ManualPromise, calculateSha1, createGuid, removeFolders } from 'playwright-core/lib/utils';
+import { ManualPromise, calculateSha1, createGuid, removeFolders, sanitizeForFilePath } from 'playwright-core/lib/utils';
 import { mime } from 'playwright-core/lib/utilsBundle';
 import { Readable } from 'stream';
 import type { EventEmitter } from 'events';
@@ -44,6 +44,7 @@ export class BlobReporter extends TeleReporterEmitter {
   private readonly _attachments: { originalPath: string, zipEntryPath: string }[] = [];
   private readonly _options: BlobReporterOptions;
   private readonly _salt: string;
+  private _reportName!: string;
 
   constructor(options: BlobReporterOptions) {
     super(message => this._messages.push(message), false);
@@ -62,6 +63,7 @@ export class BlobReporter extends TeleReporterEmitter {
       params: metadata
     });
 
+    this._reportName = this._computeReportName(config);
     super.onConfigure(config);
   }
 
@@ -73,16 +75,14 @@ export class BlobReporter extends TeleReporterEmitter {
       await removeFolders([outputDir]);
     await fs.promises.mkdir(outputDir, { recursive: true });
 
-    const reportName = `report-${createGuid()}`;
-
     const zipFile = new yazl.ZipFile();
     const zipFinishPromise = new ManualPromise<undefined>();
     const finishPromise = zipFinishPromise.catch(e => {
-      throw new Error(`Failed to write report ${reportName + '.zip'}: ` + e.message);
+      throw new Error(`Failed to write report ${this._reportName + '.zip'}: ` + e.message);
     });
 
     (zipFile as any as EventEmitter).on('error', error => zipFinishPromise.reject(error));
-    const zipFileName = path.join(outputDir, reportName + '.zip');
+    const zipFileName = path.join(outputDir, this._reportName + '.zip');
     zipFile.outputStream.pipe(fs.createWriteStream(zipFileName)).on('close', () => {
       zipFinishPromise.resolve(undefined);
     }).on('error', error => zipFinishPromise.reject(error));
@@ -95,10 +95,21 @@ export class BlobReporter extends TeleReporterEmitter {
 
     const lines = this._messages.map(m => JSON.stringify(m) + '\n');
     const content = Readable.from(lines);
-    zipFile.addReadStream(content, reportName + '.jsonl');
+    zipFile.addReadStream(content, this._reportName + '.jsonl');
     zipFile.end();
 
     await finishPromise;
+  }
+
+  private _computeReportName(config: FullConfig) {
+    let reportName = 'report';
+    if (process.env.PWTEST_BLOB_SUFFIX)
+      reportName += sanitizeForFilePath(process.env.PWTEST_BLOB_SUFFIX);
+    if (config.shard) {
+      const paddedNumber = `${config.shard.current}`.padStart(`${config.shard.total}`.length, '0');
+      reportName += `-${paddedNumber}`;
+    }
+    return reportName;
   }
 
   override _serializeAttachments(attachments: TestResult['attachments']): JsonAttachment[] {
