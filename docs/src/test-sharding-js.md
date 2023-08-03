@@ -77,7 +77,7 @@ jobs:
       if: always()
       uses: actions/upload-artifact@v3
       with:
-        name: all-blob-reports--run-${{ github.run_attempt }}
+        name: all-blob-reports--attempt-${{ github.run_attempt }}
         path: blob-report
         retention-days: 1
 ```
@@ -102,7 +102,7 @@ jobs:
     - name: Download blob reports from GitHub Actions Artifacts
       uses: actions/download-artifact@v3
       with:
-        name: all-blob-reports--run-${{ github.run_attempt }}
+        name: all-blob-reports--attempt-${{ github.run_attempt }}
         path: all-blob-reports
 
     - name: Merge into HTML Report
@@ -111,7 +111,7 @@ jobs:
     - name: Upload HTML report
       uses: actions/upload-artifact@v3
       with:
-        name: html-report--run-${{ github.run_attempt }}
+        name: html-report--attempt-${{ github.run_attempt }}
         path: playwright-report
         retention-days: 14
 ```
