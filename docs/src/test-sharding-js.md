@@ -35,7 +35,7 @@ Blob report contains information about all the tests that were run and their res
 
 To merge reports from multiple shards, put the blob report files into a single directory, for example `all-blob-reports`. Blob reports are generated with unique names, so they will not clash.
 
-Afterwards, run `merge-reports` tool:
+Afterwards, run `npx playwright merge-reports` command:
 
 ```bash
 npx playwright merge-reports --reporter html ./all-blob-reports
@@ -47,7 +47,7 @@ This will produce a standard HTML report into `playwright-report` directory.
 
 One of the easiest ways to shard Playwright tests across multiple machines is by using GitHub Actions matrix strategy. For example, you can configure a job to run your tests on four machines in parallel like this:
 
-```yaml title=".github/workflows/playwright_tests.yml"
+```yaml title=".github/workflows/playwright.yml"
 name: "Playwright Tests"
 
 on:
@@ -71,7 +71,7 @@ jobs:
       run: npx playwright install
 
     - name: Run Playwright tests
-      run: npx playwright test --shard ${{ matrix.shard }}/4 --reporter blob
+      run: npx playwright test --shard ${{ matrix.shard }}/4
 
     - name: Upload blob report to GitHub Actions Artifacts
       if: always()
@@ -84,7 +84,7 @@ jobs:
 
 After all shards have completed, run a separate job that will merge the reports and produce a combined HTML report.
 
-```yaml title=".github/workflows/playwright_tests.yml"
+```yaml title=".github/workflows/playwright.yml"
 jobs:
 ...
   merge-reports:
@@ -153,13 +153,13 @@ Supported options:
 
   Which report to produce. Can be multiple reporters separated by comma.
 
-  Example: `npx playwright merge-reports --reporter=html,github`./blob-reports
+  Example: `npx playwright merge-reports --reporter=html,github ./blob-reports`
 
 - `--config path/to/config/file`
 
   Takes reporters from Playwright configuration file.
 
-  Example: `npx playwright merge-reports --config=merge.config.ts ./blob-reports
+  Example: `npx playwright merge-reports --config=merge.config.ts ./blob-reports`
 
   ```ts title="merge.config.ts"
   export default {
