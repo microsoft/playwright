@@ -127,7 +127,7 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
     const recorderPlaywright = (require('../playwright').createPlaywright as typeof import('../playwright').createPlaywright)({ sdkLanguage: 'javascript', isInternalPlaywright: true });
     const args = [
       '--app=data:text/html,',
-      '--window-size=600,600',
+      '--window-size=0,0',
       '--window-position=1020,10',
       '--test-type=',
     ];
