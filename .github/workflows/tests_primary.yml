@@ -55,7 +55,7 @@ jobs:
     - run: npx playwright install --with-deps ${{ matrix.browser }} chromium
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --project=${{ matrix.browser }}
       env:
-        PWTEST_BLOB_SUFFIX: "-${{ matrix.os }}-node${{ matrix.node-version }}"
+        PWTEST_BLOB_SUFFIX: "-${{ matrix.browser }}-${{ matrix.os }}-node${{ matrix.node-version }}"
     - run: node tests/config/checkCoverage.js ${{ matrix.browser }}
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
