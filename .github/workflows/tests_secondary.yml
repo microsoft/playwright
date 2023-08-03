@@ -232,7 +232,7 @@ jobs:
       env:
         PWTEST_TRACE: 1
         PWTEST_CHANNEL: ${{ matrix.channel }}
-        PWTEST_BLOB_SUFFIX: "-tracing-${{ matrix.browser }}-${{ (matrix.channel && format('-{0}', matrix.channel)) || '' }}"
+        PWTEST_BLOB_SUFFIX: "-tracing-${{ matrix.channel || matrix.browser }}"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
