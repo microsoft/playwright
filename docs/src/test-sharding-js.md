@@ -33,7 +33,7 @@ export default defineConfig({
 
 Blob report contains information about all the tests that were run and their results as well as all test attachments such as traces and screenshot diffs. Blob reports can be merged and converted to any other Playwright report. By default, blob report will be generated into `blob-report` directory.
 
-To merge reports from multiple shards, put the blob report files into a single directory, for example `all-blob-reports`. Blob reports are generated with unique names, so they will not clash.
+To merge reports from multiple shards, put the blob report files into a single directory, for example `all-blob-reports`. Blob report names contain shard number, so they will not clash.
 
 Afterwards, run `npx playwright merge-reports` command:
 
@@ -77,7 +77,7 @@ jobs:
       if: always()
       uses: actions/upload-artifact@v3
       with:
-        name: all-blob-reports--attempt-${{ github.run_attempt }}
+        name: all-blob-reports
         path: blob-report
         retention-days: 1
 ```
@@ -102,7 +102,7 @@ jobs:
     - name: Download blob reports from GitHub Actions Artifacts
       uses: actions/download-artifact@v3
       with:
-        name: all-blob-reports--attempt-${{ github.run_attempt }}
+        name: all-blob-reports
         path: all-blob-reports
 
     - name: Merge into HTML Report
