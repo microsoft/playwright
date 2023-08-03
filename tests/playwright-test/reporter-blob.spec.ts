@@ -1276,7 +1276,7 @@ test('merge-reports should throw if report version is from the future', async ({
   expect(reportFiles).toEqual(['report-1.zip', 'report-2.zip']);
 
   // Extract report and modify version.
-  const reportZipFile = test.info().outputPath('blob-report', reportFiles[1])
+  const reportZipFile = test.info().outputPath('blob-report', reportFiles[1]);
   await extractZip(reportZipFile, { dir: test.info().outputPath('tmp') });
   const reportFile = test.info().outputPath('tmp', reportFiles[1].replace(/\.zip$/, '.jsonl'));
   const data = await fs.promises.readFile(reportFile, 'utf8');

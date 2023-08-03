@@ -103,7 +103,6 @@ function findMetadata(events: JsonEvent[], file: string): BlobReportMetadata {
   if (events[0]?.method !== 'onBlobReportMetadata')
     throw new Error(`No metadata event found in ${file}`);
   const metadata = (events[0].params as BlobReportMetadata);
-  console.log('metadata', metadata.version);
   if (metadata.version > currentBlobReportVersion)
     throw new Error(`Blob report ${file} was created with a newer version of Playwright.`);
   return metadata;
