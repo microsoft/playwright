@@ -26,12 +26,12 @@ jobs:
     - name: Download blob report artifact
       uses: ./.github/actions/download-artifact
       with:
-        name: 'blob-report-${{ github.event.workflow_run.run_attempt }}'
-        path: 'blob-report'
+        name: all-blob-reports
+        path: all-blob-reports
 
     - name: Merge reports
       run: |
-        npx playwright merge-reports --reporter markdown,html ./blob-report
+        npx playwright merge-reports --reporter markdown,html ./all-blob-reports
 
     - name: Upload HTML report to Azure
       run: |
