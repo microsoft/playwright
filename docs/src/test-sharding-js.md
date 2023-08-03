@@ -33,10 +33,12 @@ export default defineConfig({
 
 Blob report contains information about all the tests that were run and their results as well as all test attachments such as traces and screenshot diffs. Blob reports can be merged and converted to any other Playwright report. By default, blob report will be generated into `blob-report` directory.
 
-To merge reports from multiple shards, put the blob report files into a single directory, for example `all-blob-reports`, and run `merge-reports` tool:
+To merge reports from multiple shards, put the blob report files into a single directory, for example `all-blob-reports`. Blob reports are generated with unique names, so they will not clash.
+
+Afterwards, run `merge-reports` tool:
 
 ```bash
-npx playwright merge-reports ./all-blob-reports --reporter html
+npx playwright merge-reports --reporter html ./all-blob-reports
 ```
 
 This will produce a standard HTML report into `playwright-report` directory.
@@ -45,7 +47,14 @@ This will produce a standard HTML report into `playwright-report` directory.
 
 One of the easiest ways to shard Playwright tests across multiple machines is by using GitHub Actions matrix strategy. For example, you can configure a job to run your tests on four machines in parallel like this:
 
-```yaml
+```yaml title=".github/workflows/playwright_tests.yml"
+name: "Playwright Tests"
+
+on:
+  push:
+    branches:
+      - main
+
 jobs:
   playwright-tests:
     strategy:
@@ -62,20 +71,20 @@ jobs:
       run: npx playwright install
 
     - name: Run Playwright tests
-      run: npx playwright test --shard ${{ matrix.shard }}/4
+      run: npx playwright test --shard ${{ matrix.shard }}/4 --reporter blob
 
     - name: Upload blob report to GitHub Actions Artifacts
       if: always()
       uses: actions/upload-artifact@v3
       with:
-        name: blob-report-${{ github.run_attempt }}
+        name: all-blob-reports--run-${{ github.run_attempt }}
         path: blob-report
         retention-days: 1
 ```
 
 After all shards have completed, run a separate job that will merge the reports and produce a combined HTML report.
 
-```yaml
+```yaml title=".github/workflows/playwright_tests.yml"
 jobs:
 ...
   merge-reports:
@@ -93,17 +102,18 @@ jobs:
     - name: Download blob reports from GitHub Actions Artifacts
       uses: actions/download-artifact@v3
       with:
-        name: blob-report-${{ github.run_attempt }}
+        name: all-blob-reports--run-${{ github.run_attempt }}
         path: all-blob-reports
 
     - name: Merge into HTML Report
-      run: npx playwright merge-reports ./all-blob-reports --reporter html
+      run: npx playwright merge-reports --reporter html ./all-blob-reports 
 
     - name: Upload HTML report
       uses: actions/upload-artifact@v3
       with:
-        name: html-report-${{ github.run_attempt }}
+        name: html-report--run-${{ github.run_attempt }}
         path: playwright-report
+        retention-days: 14
 ```
 
 To ensure the execution order, we make `merge-reports` job [depend](https://docs.github.com/en/actions/using-jobs/using-jobs-in-a-workflow#defining-prerequisite-jobs) on our sharded `playwright-tests` job.
@@ -143,13 +153,13 @@ Supported options:
 
   Which report to produce. Can be multiple reporters separated by comma.
 
-  Example: `npx playwright merge-reports ./blob-reports --reporter=html,github`
+  Example: `npx playwright merge-reports --reporter=html,github`./blob-reports
 
 - `--config path/to/config/file`
 
   Takes reporters from Playwright configuration file.
 
-  Example: `npx playwright merge-reports ./blob-reports --config=merge.config.ts`
+  Example: `npx playwright merge-reports --config=merge.config.ts ./blob-reports
 
   ```ts title="merge.config.ts"
   export default {
