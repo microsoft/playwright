@@ -265,6 +265,15 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     await Recorder.show(this._context, params);
   }
 
+  async inspectSingleSelector(params: channels.BrowserContextInspectSingleSelectorParams): Promise<channels.BrowserContextInspectSingleSelectorResult> {
+    return await Recorder.inspectSingleSelector(this._context, params);
+  }
+
+  async recorderSupplementDisable(): Promise<channels.BrowserContextRecorderSupplementDisableResult> {
+    const actions = await Recorder.close(this._context);
+    return { actions };
+  }
+
   async pause(params: channels.BrowserContextPauseParams, metadata: CallMetadata) {
     // Debugger will take care of this.
   }

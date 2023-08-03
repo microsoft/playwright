@@ -409,6 +409,16 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   }) {
     await this._channel.recorderSupplementEnable(params);
   }
+
+  async _disableRecorder() {
+    return this._channel.recorderSupplementDisable();
+  }
+
+  async _inspectSingleSelector(params: {
+    language: string,
+  }) {
+    return this._channel.inspectSingleSelector(params);
+  }
 }
 
 async function prepareStorageState(options: BrowserContextOptions): Promise<channels.BrowserNewContextParams['storageState']> {
