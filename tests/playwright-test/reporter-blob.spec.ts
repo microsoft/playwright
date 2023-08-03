@@ -22,6 +22,8 @@ import type { HttpServer } from '../../packages/playwright-core/src/utils';
 import { startHtmlReportServer } from '../../packages/playwright-test/lib/reporters/html';
 import { expect as baseExpect, test as baseTest, stripAnsi } from './playwright-test-fixtures';
 import extractZip from '../../packages/playwright-core/bundles/zip/node_modules/extract-zip';
+import * as yazl from '../../packages/playwright-core/bundles/zip/node_modules/yazl';
+import { Readable } from 'stream';
 
 const DOES_NOT_SUPPORT_UTF8_IN_TERMINAL = process.platform === 'win32' && process.env.TERM_PROGRAM !== 'vscode' && !process.env.WT_SESSION;
 const POSITIVE_STATUS_MARK = DOES_NOT_SUPPORT_UTF8_IN_TERMINAL ? 'ok' : '✓ ';
@@ -1225,7 +1227,7 @@ test('blob-report should be next to package.json', async ({ runInlineTest }, tes
   expect(fs.existsSync(testInfo.outputPath('foo', 'bar', 'baz', 'tests', 'blob-report'))).toBe(false);
 });
 
-test('blob-report should include version', async ({ runInlineTest }) => {
+test('blob report should include version', async ({ runInlineTest }) => {
   const reportDir = test.info().outputPath('blob-report');
   const files = {
     'playwright.config.ts': `
@@ -1248,4 +1250,58 @@ test('blob-report should include version', async ({ runInlineTest }) => {
   const events = data.split('\n').filter(Boolean).map(line => JSON.parse(line));
   const metadataEvent = events.find(e => e.method === 'onBlobReportMetadata');
   expect(metadataEvent.params.version).toBe(1);
+});
+
+test('merge-reports should throw if report version is from the future', async ({ runInlineTest, mergeReports }) => {
+  const reportDir = test.info().outputPath('blob-report');
+  const files = {
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: [['blob']]
+      };
+    `,
+    'tests/a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('test 1', async ({}) => {});
+    `,
+    'tests/b.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('test 1', async ({}) => {});
+    `,
+  };
+  await runInlineTest(files, { shard: `1/2` });
+  await runInlineTest(files, { shard: `2/2` }, { PWTEST_BLOB_DO_NOT_REMOVE: '1' });
+
+  const reportFiles = await fs.promises.readdir(reportDir);
+  expect(reportFiles).toEqual(['report-1.zip', 'report-2.zip']);
+
+  // Extract report and modify version.
+  const reportZipFile = test.info().outputPath('blob-report', reportFiles[1]);
+  await extractZip(reportZipFile, { dir: test.info().outputPath('tmp') });
+  const reportFile = test.info().outputPath('tmp', reportFiles[1].replace(/\.zip$/, '.jsonl'));
+  const data = await fs.promises.readFile(reportFile, 'utf8');
+  const events = data.split('\n').filter(Boolean).map(line => JSON.parse(line));
+  const metadataEvent = events.find(e => e.method === 'onBlobReportMetadata');
+  expect(metadataEvent.params.version).toBeTruthy();
+  ++metadataEvent.params.version;
+  const modifiedLines = events.map(e => JSON.stringify(e) + '\n');
+
+  // Zip it back.
+  await fs.promises.rm(reportZipFile, { force: true });
+  const zipFile = new yazl.ZipFile();
+  const zipFinishPromise = new Promise((resolve, reject) => {
+    (zipFile as any).on('error', error => reject(error));
+    zipFile.outputStream.pipe(fs.createWriteStream(reportZipFile)).on('close', () => {
+      resolve(undefined);
+    }).on('error', error => reject(error));
+  });
+  const content = Readable.from(modifiedLines);
+  zipFile.addReadStream(content, path.basename(reportFile));
+  zipFile.end();
+  await zipFinishPromise;
+
+  const { exitCode, output } = await mergeReports(reportDir, {}, { additionalArgs: ['--reporter', 'html'] });
+  expect(exitCode).toBe(1);
+  expect(output).toContain(`Error: Blob report report-2.zip was created with a newer version of Playwright.`);
+
 });

@@ -31,7 +31,7 @@ type BlobReporterOptions = {
   outputDir?: string;
 };
 
-const currentVersion = 1;
+export const currentBlobReportVersion = 1;
 
 export type BlobReportMetadata = {
   version: number;
@@ -54,7 +54,7 @@ export class BlobReporter extends TeleReporterEmitter {
 
   override onConfigure(config: FullConfig) {
     const metadata: BlobReportMetadata = {
-      version: currentVersion,
+      version: currentBlobReportVersion,
       projectSuffix: process.env.PWTEST_BLOB_SUFFIX,
       shard: config.shard ?? undefined,
     };

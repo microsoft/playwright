@@ -24,7 +24,7 @@ import { TeleReporterReceiver } from '../isomorphic/teleReceiver';
 import { createReporters } from '../runner/reporters';
 import { Multiplexer } from './multiplexer';
 import { ZipFile } from 'playwright-core/lib/utils';
-import type { BlobReportMetadata } from './blob';
+import { currentBlobReportVersion, type BlobReportMetadata } from './blob';
 import { relativeFilePath } from '../util';
 
 type StatusCallback = (message: string) => void;
@@ -102,7 +102,10 @@ async function extractAndParseReports(dir: string, shardFiles: string[], printSt
 function findMetadata(events: JsonEvent[], file: string): BlobReportMetadata {
   if (events[0]?.method !== 'onBlobReportMetadata')
     throw new Error(`No metadata event found in ${file}`);
-  return events[0].params;
+  const metadata = (events[0].params as BlobReportMetadata);
+  if (metadata.version > currentBlobReportVersion)
+    throw new Error(`Blob report ${file} was created with a newer version of Playwright.`);
+  return metadata;
 }
 
 async function mergeEvents(dir: string, shardReportFiles: string[], printStatus: StatusCallback) {
