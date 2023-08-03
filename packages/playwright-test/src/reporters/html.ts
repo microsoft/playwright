@@ -150,15 +150,13 @@ function reportFolderFromEnv(): string | undefined {
 function getHtmlReportOptionProcessEnv(): HtmlReportOpenOption | undefined {
   const processKey = 'PW_TEST_HTML_REPORT_OPEN';
   const htmlOpenEnv = process.env[processKey];
-  if (htmlOpenEnv){
-    if (isHtmlReportOption(htmlOpenEnv)){
-      return htmlOpenEnv;
-    } else {
-      console.log(colors.red(`Configuration Error: HTML reporter Invalid value for ${processKey}: ${htmlOpenEnv}. Valid values are: ${htmlReportOptions.join(', ')}`));
-      return undefined;
-    }
+  if (!htmlOpenEnv)
+    return undefined;
+  if (!isHtmlReportOption(htmlOpenEnv)) {
+    console.log(colors.red(`Configuration Error: HTML reporter Invalid value for ${processKey}: ${htmlOpenEnv}. Valid values are: ${htmlReportOptions.join(', ')}`));
+    return undefined
   }
-  return undefined;
+  return htmlOpenEnv;
 }
 
 function standaloneDefaultFolder(): string {
