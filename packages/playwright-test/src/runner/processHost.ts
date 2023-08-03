@@ -19,7 +19,7 @@ import { EventEmitter } from 'events';
 import { debug } from 'playwright-core/lib/utilsBundle';
 import type { EnvProducedPayload, ProcessInitParams } from '../common/ipc';
 import type { ProtocolResponse } from '../common/process';
-import { experimentalLoaderOptions } from '../util';
+import { execArgvWithExperimentalLoaderOptions } from '../util';
 
 export type ProcessExitData = {
   unexpectedly: boolean;
@@ -51,7 +51,7 @@ export class ProcessHost extends EventEmitter {
       detached: false,
       env: { ...process.env, ...this._extraEnv },
       stdio: inheritStdio ? ['ignore', 'inherit', 'inherit', 'ipc'] : ['ignore', 'ignore', process.env.PW_RUNNER_DEBUG ? 'inherit' : 'ignore', 'ipc'],
-      ...(process.env.PW_TS_ESM_ON ? { execArgv: experimentalLoaderOptions() } : {}),
+      ...(process.env.PW_TS_ESM_ON ? { execArgv: execArgvWithExperimentalLoaderOptions() } : {}),
     });
     this.process.on('exit', (code, signal) => {
       this.didExit = true;

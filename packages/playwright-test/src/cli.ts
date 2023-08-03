@@ -21,7 +21,7 @@ import fs from 'fs';
 import path from 'path';
 import { Runner } from './runner/runner';
 import { stopProfiling, startProfiling, gracefullyProcessExitDoNotHang } from 'playwright-core/lib/utils';
-import { execArgvWithoutExperimentalLoaderOptions, experimentalLoaderOptions, fileIsModule, serializeError } from './util';
+import { execArgvWithoutExperimentalLoaderOptions, execArgvWithExperimentalLoaderOptions, fileIsModule, serializeError } from './util';
 import { showHTMLReport } from './reporters/html';
 import { createMergedReport } from './reporters/merge';
 import { ConfigLoader, resolveConfigFile } from './common/configLoader';
@@ -284,7 +284,7 @@ function restartWithExperimentalTsEsm(configFile: string | null): boolean {
       ...process.env,
       PW_TS_ESM_ON: '1',
     },
-    execArgv: experimentalLoaderOptions(),
+    execArgv: execArgvWithExperimentalLoaderOptions(),
   });
 
   innerProcess.on('close', (code: number | null) => {

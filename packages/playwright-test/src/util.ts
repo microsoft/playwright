@@ -307,12 +307,16 @@ function folderIsModule(folder: string): boolean {
   return require(packageJsonPath).type === 'module';
 }
 
-export function experimentalLoaderOptions() {
-  return ['--no-warnings', `--experimental-loader=${url.pathToFileURL(require.resolve('@playwright/test/lib/transform/esmLoader')).toString()}`];
+export function execArgvWithExperimentalLoaderOptions() {
+  return [
+    ...process.execArgv,
+    '--no-warnings',
+    `--experimental-loader=${url.pathToFileURL(require.resolve('@playwright/test/lib/transform/esmLoader')).toString()}`,
+  ];
 }
 
 export function execArgvWithoutExperimentalLoaderOptions() {
-  const execArgv = experimentalLoaderOptions();
+  const execArgv = execArgvWithExperimentalLoaderOptions();
   return process.execArgv.filter(arg => !execArgv.includes(arg));
 }
 
