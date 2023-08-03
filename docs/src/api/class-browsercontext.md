@@ -84,6 +84,35 @@ background_page = await context.wait_for_event("backgroundpage")
 ```python sync
 background_page = context.wait_for_event("backgroundpage")
 ```
+## async method: BrowserContext.intunedEnableRecorder
+* since: v1.8
+
+async method to start recording session
+
+### param: BrowserContext.intunedEnableRecorder.params
+* since: v1.8
+- `params` <[Object]>
+  - `language` <[string]>
+
+## async method: BrowserContext.intunedDisableRecorder
+* since: v1.8
+- returns: <[Object]>
+  - `actions` <[Array]<[string]>>
+
+async method to end a recording session and return the results
+
+
+## async method: BrowserContext.intunedInspectSingleSelector
+* since: v1.8
+- returns: <[Object]>
+  - `selector` <[string]>
+
+async method to inspect a single selector on the screen
+
+### param: BrowserContext.intunedInspectSingleSelector.params
+* since: v1.8
+- `params` <[Object]>
+  - `language` <[string]>
 
 ## event: BrowserContext.close
 * since: v1.8

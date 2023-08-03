@@ -410,11 +410,17 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     await this._channel.recorderSupplementEnable(params);
   }
 
-  async _disableRecorder() {
+  async intunedEnableRecorder(params: {
+    language: string,
+  }) {
+    await this._channel.recorderSupplementEnable({ ...params, mode: 'recording' });
+  }
+
+  async intunedDisableRecorder() {
     return this._channel.recorderSupplementDisable();
   }
 
-  async _inspectSingleSelector(params: {
+  async intunedInspectSingleSelector(params: {
     language: string,
   }) {
     return this._channel.inspectSingleSelector(params);
