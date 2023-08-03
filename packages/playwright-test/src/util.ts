@@ -307,17 +307,20 @@ function folderIsModule(folder: string): boolean {
   return require(packageJsonPath).type === 'module';
 }
 
+const kExperimentalLoaderOptions = [
+  '--no-warnings',
+  `--experimental-loader=${url.pathToFileURL(require.resolve('@playwright/test/lib/transform/esmLoader')).toString()}`,
+];
+
 export function execArgvWithExperimentalLoaderOptions() {
   return [
     ...process.execArgv,
-    '--no-warnings',
-    `--experimental-loader=${url.pathToFileURL(require.resolve('@playwright/test/lib/transform/esmLoader')).toString()}`,
+    ...kExperimentalLoaderOptions,
   ];
 }
 
 export function execArgvWithoutExperimentalLoaderOptions() {
-  const execArgv = execArgvWithExperimentalLoaderOptions();
-  return process.execArgv.filter(arg => !execArgv.includes(arg));
+  return process.execArgv.filter(arg => !kExperimentalLoaderOptions.includes(arg));
 }
 
 // This follows the --moduleResolution=bundler strategy from tsc.
