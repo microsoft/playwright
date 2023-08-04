@@ -666,7 +666,7 @@ interface TestConfig {
        * See `fullPage` in [page.screenshot([options])](https://playwright.dev/docs/api/class-page#page-screenshot). Defaults
        * to `false`.
        */
-      fullPage: boolean = false;
+      fullPage?: boolean = false;
     };
 
     /**
