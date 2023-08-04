@@ -106,12 +106,11 @@ learn more about them.
 | [`method: Locator.click`] | Click the element |
 | [`method: Locator.uncheck`] | Uncheck the input checkbox |
 | [`method: Locator.hover`] | Hover mouse over the element |
-| [`method: Locator.fill`] | Fill the form field (fast) |
+| [`method: Locator.fill`] | Fill the form field, input text |
 | [`method: Locator.focus`] | Focus the element |
 | [`method: Locator.press`] | Press single key |
 | [`method: Locator.setInputFiles`] | Pick files to upload |
 | [`method: Locator.selectOption`] | Select option in the drop down |
-| [`method: Locator.type`] | Type text character by character (slow) |
 
 ## Assertions
 

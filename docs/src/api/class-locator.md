@@ -2136,6 +2136,10 @@ Returns the [`node.textContent`](https://developer.mozilla.org/en-US/docs/Web/AP
 ## async method: Locator.type
 * since: v1.14
 
+:::tip
+In most cases, you should use [`method: Locator.fill`] instead. You only need to type characters if there is special keyboard handling on the page.
+:::
+
 Focuses the element, and then sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text.
 
 To press a special key, like `Control` or `ArrowDown`, use [`method: Locator.press`].
