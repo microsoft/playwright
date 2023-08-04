@@ -89,7 +89,7 @@ await page
 
 #### Prefer user-facing attributes to XPath or CSS selectors
 
-Your DOM can easily change so having your tests depend on your DOM structure can lead to failing tests. For example consider selecting this button by its CSS classes. Should the designer change something then the class might change breaking your test.
+Your DOM can easily change so having your tests depend on your DOM structure can lead to failing tests. For example, consider selecting this button by its CSS classes. Should the designer change something then the class might change, breaking your test.
 
 
 ```js
@@ -129,7 +129,7 @@ You can also use the [VS Code Extension](./getting-started-vscode.md) to generat
 
 ### Use web first assertions
 
-Assertions are a way to verify that the expected result and the actual result matched or not. By using [web first assertions](./test-assertions.md) Playwright will wait until the expected condition is met. For example, when testing an alert message, a test would click a button that makes a message appear and check that the alert message is there. If the alert message takes half a second to appear, assertions such as `toBeVisible()` will wait and retry if needed.
+Assertions are a way to verify that the expected result and the actual result match. By using [web first assertions](./test-assertions.md) Playwright will wait until the expected condition is met. For example, when testing an alert message, a test would click a button that makes a message appear and check that the alert message is there. If the alert message takes half a second to appear, assertions such as `toBeVisible()` will wait and retry if needed.
 
 ```js
 // 👍
@@ -288,7 +288,7 @@ npx playwright test --shard=1/3
 
 ### Use Soft assertions
 
-If your test fails, Playwright will give you an error message showing what part of the test failed which you can see either in VS Code, the terminal, the HTML report, or the trace viewer. However, you can also use [soft assertions](/test-assertions.md#soft-assertions) these do not immediately terminate the test execution, but rather compile and display a list of failed assertions once the test ended.
+If your test fails, Playwright will give you an error message showing what part of the test failed which you can see either in VS Code, the terminal, the HTML report, or the trace viewer. However, you can also use [soft assertions](/test-assertions.md#soft-assertions); these do not immediately terminate the test execution, but rather compile and display a list of failed assertions once the test ends.
 
 ```js
 // Make a few checks that will not stop the test when failed...
