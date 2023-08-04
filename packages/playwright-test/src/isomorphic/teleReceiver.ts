@@ -87,7 +87,7 @@ export type JsonTestResultStart = {
   retry: number;
   workerIndex: number;
   parallelIndex: number;
-  startTime: string;
+  startTime: number;
 };
 
 export type JsonAttachment = Omit<TestResult['attachments'][0], 'body'> & { base64?: string };
@@ -105,7 +105,7 @@ export type JsonTestStepStart = {
   parentStepId?: string;
   title: string;
   category: string,
-  startTime: string;
+  startTime: number;
   location?: Location;
 };
 
@@ -232,7 +232,7 @@ export class TeleReporterReceiver {
     testResult.retry = payload.retry;
     testResult.workerIndex = payload.workerIndex;
     testResult.parallelIndex = payload.parallelIndex;
-    testResult.startTime = new Date(payload.startTime);
+    testResult.setStartTimeNumber(payload.startTime);
     testResult.statusEx = 'running';
     this._reporter.onTestBegin?.(test, testResult);
   }
@@ -510,21 +510,30 @@ class TeleTestStep implements TestStep {
   category: string;
   location: Location | undefined;
   parent: TestStep | undefined;
-  startTime: Date;
   duration: number = -1;
   steps: TestStep[] = [];
+
+  private _startTime: number = 0;
 
   constructor(payload: JsonTestStepStart, parentStep: TestStep | undefined, location:  Location | undefined) {
     this.title = payload.title;
     this.category = payload.category;
     this.location = location;
     this.parent = parentStep;
-    this.startTime = new Date(payload.startTime);
+    this._startTime = payload.startTime;
   }
 
   titlePath() {
     const parentPath = this.parent?.titlePath() || [];
     return [...parentPath, this.title];
+  }
+
+  get startTime(): Date {
+    return new Date(this._startTime);
+  }
+
+  set startTime(value: Date) {
+    this._startTime = +value;
   }
 }
 
@@ -533,7 +542,6 @@ class TeleTestResult implements reporterTypes.TestResult {
   parallelIndex: reporterTypes.TestResult['parallelIndex'] = -1;
   workerIndex: reporterTypes.TestResult['workerIndex'] = -1;
   duration: reporterTypes.TestResult['duration'] = -1;
-  startTime: reporterTypes.TestResult['startTime'] = new Date();
   stdout: reporterTypes.TestResult['stdout'] = [];
   stderr: reporterTypes.TestResult['stderr'] = [];
   attachments: reporterTypes.TestResult['attachments'] = [];
@@ -545,8 +553,22 @@ class TeleTestResult implements reporterTypes.TestResult {
   stepMap: Map<string, reporterTypes.TestStep> = new Map();
   statusEx: reporterTypes.TestResult['status'] | 'scheduled' | 'running' = 'scheduled';
 
+  private _startTime: number = 0;
+
   constructor(retry: number) {
     this.retry = retry;
+  }
+
+  setStartTimeNumber(startTime: number) {
+    this._startTime = startTime;
+  }
+
+  get startTime(): Date {
+    return new Date(this._startTime);
+  }
+
+  set startTime(value: Date) {
+    this._startTime = +value;
   }
 }
 

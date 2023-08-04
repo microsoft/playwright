@@ -199,7 +199,7 @@ export class TeleReporterEmitter implements ReporterV2 {
       retry: result.retry,
       workerIndex: result.workerIndex,
       parallelIndex: result.parallelIndex,
-      startTime: result.startTime.toISOString(),
+      startTime: +result.startTime,
     };
   }
 
@@ -229,7 +229,7 @@ export class TeleReporterEmitter implements ReporterV2 {
       parentStepId: (step.parent as any)?.[idSymbol],
       title: step.title,
       category: step.category,
-      startTime: step.startTime.toISOString(),
+      startTime: +step.startTime,
       location: this._relativeLocation(step.location),
     };
   }
