@@ -21,6 +21,7 @@ import type { FullResult } from '../../types/testReporter';
 import type { FullConfigInternal } from '../common/config';
 import type { JsonConfig, JsonEvent, JsonProject, JsonSuite, JsonTestResultEnd } from '../isomorphic/teleReceiver';
 import { TeleReporterReceiver } from '../isomorphic/teleReceiver';
+import { StringInternPool } from '../isomorphic/stringInternPool';
 import { createReporters } from '../runner/reporters';
 import { Multiplexer } from './multiplexer';
 import { ZipFile } from 'playwright-core/lib/utils';
@@ -241,6 +242,7 @@ function printStatusToStdout(message: string) {
 
 class ProjectNamePatcher {
   private _testIds = new Set<string>();
+  private _stringPool = new StringInternPool();
 
   constructor(private _allTestIds: Set<string>, private _projectNameSuffix: string) {
   }
@@ -305,6 +307,6 @@ class ProjectNamePatcher {
     // make them unique and produce a separate test from each blob.
     while (this._allTestIds.has(testId))
       testId = testId + '1';
-    return testId;
+    return this._stringPool.internString(testId);
   }
 }

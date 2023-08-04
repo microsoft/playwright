@@ -20,6 +20,7 @@ import type { FullProject, Metadata } from '../../types/test';
 import type * as reporterTypes from '../../types/testReporter';
 import type { SuitePrivate } from '../../types/reporterPrivate';
 import type { ReporterV2 } from '../reporters/reporterV2';
+import { StringInternPool } from './stringInternPool';
 
 export type JsonLocation = Location;
 export type JsonError = string;
@@ -130,6 +131,7 @@ export class TeleReporterReceiver {
   private _reuseTestCases: boolean;
   private _reportConfig: MergeReporterConfig | undefined;
   private _config!: FullConfig;
+  private _stringPool = new StringInternPool();
 
   constructor(pathSeparator: string, reporter: ReporterV2, reuseTestCases: boolean, reportConfig?: MergeReporterConfig) {
     this._rootSuite = new TeleSuite('', 'root');
@@ -248,6 +250,8 @@ export class TeleReporterReceiver {
     result.error = result.errors?.[0];
     result.attachments = this._parseAttachments(payload.attachments);
     this._reporter.onTestEnd?.(test, result);
+    // Free up the memory as won't see these step ids.
+    result.stepMap = new Map();
   }
 
   private _onStepBegin(testId: string, resultId: string, payload: JsonTestStepStart) {
@@ -255,19 +259,8 @@ export class TeleReporterReceiver {
     const result = test.resultsMap.get(resultId)!;
     const parentStep = payload.parentStepId ? result.stepMap.get(payload.parentStepId) : undefined;
 
-    const step: TestStep = {
-      titlePath: () => {
-        const parentPath = parentStep?.titlePath() || [];
-        return [...parentPath, payload.title];
-      },
-      title: payload.title,
-      category: payload.category,
-      location: this._absoluteLocation(payload.location),
-      parent: parentStep,
-      startTime: new Date(payload.startTime),
-      duration: -1,
-      steps: [],
-    };
+    const location = this._absoluteLocation(payload.location);
+    const step = new TeleTestStep(payload, parentStep, location);
     if (parentStep)
       parentStep.steps.push(step);
     else
@@ -307,6 +300,8 @@ export class TeleReporterReceiver {
   }
 
   private _onExit(): Promise<void> | void {
+    // Free up the memory from the string pool.
+    this._stringPool = new StringInternPool();
     return this._reporter.onExit?.();
   }
 
@@ -403,7 +398,7 @@ export class TeleReporterReceiver {
   private _absolutePath(relativePath?: string): string | undefined {
     if (!relativePath)
       return relativePath;
-    return this._rootDir + this._pathSeparator + relativePath;
+    return this._stringPool.internString(this._rootDir + this._pathSeparator + relativePath);
   }
 
 }
@@ -503,31 +498,57 @@ export class TeleTestCase implements reporterTypes.TestCase {
   }
 
   _createTestResult(id: string): TeleTestResult {
-    const result: TeleTestResult = {
-      retry: this.results.length,
-      parallelIndex: -1,
-      workerIndex: -1,
-      duration: -1,
-      startTime: new Date(),
-      stdout: [],
-      stderr: [],
-      attachments: [],
-      status: 'skipped',
-      statusEx: 'scheduled',
-      steps: [],
-      errors: [],
-      stepMap: new Map(),
-    };
+    const result = new TeleTestResult(this.results.length);
     this.results.push(result);
     this.resultsMap.set(id, result);
     return result;
   }
 }
 
-export type TeleTestResult = reporterTypes.TestResult & {
-  stepMap: Map<string, reporterTypes.TestStep>;
-  statusEx: reporterTypes.TestResult['status'] | 'scheduled' | 'running';
-};
+class TeleTestStep implements TestStep {
+  title: string;
+  category: string;
+  location: Location | undefined;
+  parent: TestStep | undefined;
+  startTime: Date;
+  duration: number = -1;
+  steps: TestStep[] = [];
+
+  constructor(payload: JsonTestStepStart, parentStep: TestStep | undefined, location:  Location | undefined) {
+    this.title = payload.title;
+    this.category = payload.category;
+    this.location = location;
+    this.parent = parentStep;
+    this.startTime = new Date(payload.startTime);
+  }
+
+  titlePath() {
+    const parentPath = this.parent?.titlePath() || [];
+    return [...parentPath, this.title];
+  }
+}
+
+class TeleTestResult implements reporterTypes.TestResult {
+  retry: reporterTypes.TestResult['retry'];
+  parallelIndex: reporterTypes.TestResult['parallelIndex'] = -1;
+  workerIndex: reporterTypes.TestResult['workerIndex'] = -1;
+  duration: reporterTypes.TestResult['duration'] = -1;
+  startTime: reporterTypes.TestResult['startTime'] = new Date();
+  stdout: reporterTypes.TestResult['stdout'] = [];
+  stderr: reporterTypes.TestResult['stderr'] = [];
+  attachments: reporterTypes.TestResult['attachments'] = [];
+  status: TestStatus = 'skipped';
+  steps: TeleTestStep[] = [];
+  errors: reporterTypes.TestResult['errors'] = [];
+  error: reporterTypes.TestResult['error'];
+
+  stepMap: Map<string, reporterTypes.TestStep> = new Map();
+  statusEx: reporterTypes.TestResult['status'] | 'scheduled' | 'running' = 'scheduled';
+
+  constructor(retry: number) {
+    this.retry = retry;
+  }
+}
 
 export type TeleFullProject = FullProject & { id: string };
 
