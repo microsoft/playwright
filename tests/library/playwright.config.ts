@@ -57,8 +57,16 @@ const os: 'linux' | 'windows' = (process.env.PLAYWRIGHT_SERVICE_OS as 'linux' | 
 const runId = process.env.PLAYWRIGHT_SERVICE_RUN_ID || new Date().toISOString(); // name the test run
 
 let connectOptions: any;
-if (mode === 'service')
+let webServer: any;
+
+if (mode === 'service') {
   connectOptions = { wsEndpoint: 'ws://localhost:3333/' };
+  webServer = {
+    command: 'npx playwright run-server --port=3333',
+    url: 'http://localhost:3333',
+    reuseExistingServer: !process.env.CI,
+  };
+}
 if (mode === 'service2') {
   process.env.PW_VERSION_OVERRIDE = '1.37';
   connectOptions = {
@@ -66,6 +74,36 @@ if (mode === 'service2') {
     timeout: 3 * 60 * 1000,
     exposeNetwork: '<loopback>',
   };
+}
+
+if (mode === 'service-grid') {
+  connectOptions = {
+    wsEndpoint: 'ws://localhost:3333/',
+    timeout: 60 * 60 * 1000,
+  };
+  webServer = [
+    {
+      command: 'node ../../packages/playwright-grid/cli.js grid',
+      url: 'http://localhost:3333',
+      reuseExistingServer: !process.env.CI,
+      env: {
+        PLAYWRIGHT_GRID_PORT: '3333',
+      }
+    }, {
+      command: 'node ../../packages/playwright-grid/cli.js node',
+      env: {
+        PLAYWRIGHT_GRID_ENDPOINT: 'ws://localhost:3333',
+        PLAYWRIGHT_GRID_NODE_CAPACITY: '2',
+      }
+    },
+    {
+      command: 'node ../../packages/playwright-grid/cli.js node',
+      env: {
+        PLAYWRIGHT_GRID_ENDPOINT: 'ws://localhost:3333',
+        PLAYWRIGHT_GRID_NODE_CAPACITY: '2',
+      }
+    }
+  ];
 }
 
 const config: Config<CoverageWorkerOptions & PlaywrightWorkerOptions & PlaywrightTestOptions & TestModeWorkerOptions> = {
@@ -88,11 +126,7 @@ const config: Config<CoverageWorkerOptions & PlaywrightWorkerOptions & Playwrigh
   use: {
     connectOptions,
   },
-  webServer: mode === 'service' ? {
-    command: 'npx playwright run-server --port=3333',
-    url: 'http://localhost:3333',
-    reuseExistingServer: !process.env.CI,
-  } : undefined,
+  webServer,
 };
 
 const browserNames = ['chromium', 'webkit', 'firefox'] as BrowserName[];

@@ -18,8 +18,6 @@ import { browserTest as it, expect } from '../../config/browserTest';
 import fs from 'fs';
 import path from 'path';
 
-it.skip(({ mode }) => mode === 'service2', 'Fixed in v1.37');
-
 it('should output a trace', async ({ browser, server }, testInfo) => {
   const page = await browser.newPage();
   const outputTraceFile = testInfo.outputPath(path.join(`trace.json`));
