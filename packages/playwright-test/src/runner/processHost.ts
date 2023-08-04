@@ -83,7 +83,7 @@ export class ProcessHost extends EventEmitter {
     });
 
     await new Promise<void>((resolve, reject) => {
-      this.process.once('exit', (code, signal) => reject(new Error(`process exited with code "${code}" and signal "${signal}" before it became ready`)));
+      this.process.once('exit', (code, signal) => reject(new Error(`unable to start subprocess: code=${code}, signal=${signal}`)));
       this.once('ready', () => resolve());
     });
 

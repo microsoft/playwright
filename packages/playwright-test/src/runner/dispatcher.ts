@@ -25,6 +25,7 @@ import { WorkerHost } from './workerHost';
 import type { TestGroup } from './testGroups';
 import type { FullConfigInternal } from '../common/config';
 import type { ReporterV2 } from '../reporters/reporterV2';
+import { serializeError } from '../util';
 
 type TestResultData = {
   result: TestResult;
@@ -131,7 +132,15 @@ export class Dispatcher {
       worker = this._createWorker(job, index, serializeConfig(this._config));
       this._workerSlots[index].worker = worker;
       worker.on('exit', () => this._workerSlots[index].worker = undefined);
-      await worker.start();
+      try {
+        await worker.start();
+      } catch (error) {
+        // When failed to start after stopping, most likely not-yet-intialized subprocess
+        // got SIGINT'ed. It is safe to ignore.
+        if (!this._isStopped)
+          this._markAllTestsInJobAsFailedOrSkipped(job, error);
+        return;
+      }
       if (this._isStopped) // Check stopped signal after async hop.
         return;
     }
@@ -167,6 +176,26 @@ export class Dispatcher {
         workersWithSameHash++;
     }
     return workersWithSameHash > this._queuedOrRunningHashCount.get(worker.hash())!;
+  }
+
+  private _markAllTestsInJobAsFailedOrSkipped(job: TestGroup, error: Error) {
+    let serializedError: TestError | undefined = serializeError(error);
+    for (const test of job.tests) {
+      if (!this._hasReachedMaxFailures()) {
+        const result = test._appendTestResult();
+        this._reporter.onTestBegin(test, result);
+        result.errors = serializedError ? [serializedError] : [];
+        result.error = serializedError;
+        result.status = serializedError ? 'failed' : 'skipped';
+        this._reportTestEnd(test, result);
+        serializedError = undefined; // Only report the error for the first test.
+      }
+    }
+    if (serializedError) {
+      // Still have an error - report as a worker error.
+      this._hasWorkerErrors = true;
+      this._reporter.onError(serializedError);
+    }
   }
 
   async run(testGroups: TestGroup[], extraEnvByProjectId: EnvByProjectId) {
@@ -454,7 +483,7 @@ export class Dispatcher {
 
     const onExit = (data: ProcessExitData) => {
       const unexpectedExitError: TestError | undefined = data.unexpectedly ? {
-        message: `Internal error: worker process exited unexpectedly (code=${data.code}, signal=${data.signal})`
+        message: `Error: worker process exited unexpectedly (code=${data.code}, signal=${data.signal})`
       } : undefined;
       onDone({ skipTestsDueToSetupFailure: [], fatalErrors: [], unexpectedExitError });
     };
