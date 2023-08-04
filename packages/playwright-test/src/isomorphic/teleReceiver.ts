@@ -250,6 +250,7 @@ export class TeleReporterReceiver {
     result.error = result.errors?.[0];
     result.attachments = this._parseAttachments(payload.attachments);
     this._reporter.onTestEnd?.(test, result);
+    // Free up the memory as won't see these step ids.
     result.stepMap = new Map();
   }
 
@@ -299,6 +300,7 @@ export class TeleReporterReceiver {
   }
 
   private _onExit(): Promise<void> | void {
+    // Free up the memory from the string pool.
     this._stringPool = new StringInternPool();
     return this._reporter.onExit?.();
   }
