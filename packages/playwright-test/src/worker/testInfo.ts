@@ -16,14 +16,14 @@
 
 import fs from 'fs';
 import path from 'path';
-import { MaxTime, captureRawStack, createAfterActionTraceEventForStep, createBeforeActionTraceEventForStep, monotonicTime, zones } from 'playwright-core/lib/utils';
+import { MaxTime, captureRawStack, createAfterActionTraceEventForStep, createBeforeActionTraceEventForStep, monotonicTime, zones, sanitizeForFilePath } from 'playwright-core/lib/utils';
 import type { TestInfoError, TestInfo, TestStatus, FullProject, FullConfig } from '../../types/test';
 import type { AttachmentPayload, StepBeginPayload, StepEndPayload, WorkerInitParams } from '../common/ipc';
 import type { TestCase } from '../common/test';
 import { TimeoutManager } from './timeoutManager';
 import type { Annotation, FullConfigInternal, FullProjectInternal } from '../common/config';
 import type { Location } from '../../types/testReporter';
-import { getContainedPath, normalizeAndSaveAttachment, sanitizeForFilePath, serializeError, trimLongString } from '../util';
+import { getContainedPath, normalizeAndSaveAttachment, serializeError, trimLongString } from '../util';
 import type * as trace from '@trace/trace';
 
 export interface TestStepInternal {

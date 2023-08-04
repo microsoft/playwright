@@ -21,7 +21,7 @@ import fs from 'fs';
 import path from 'path';
 import { Runner } from './runner/runner';
 import { stopProfiling, startProfiling, gracefullyProcessExitDoNotHang } from 'playwright-core/lib/utils';
-import { experimentalLoaderOption, fileIsModule, serializeError } from './util';
+import { execArgvWithoutExperimentalLoaderOptions, execArgvWithExperimentalLoaderOptions, fileIsModule, serializeError } from './util';
 import { showHTMLReport } from './reporters/html';
 import { createMergedReport } from './reporters/merge';
 import { ConfigLoader, resolveConfigFile } from './common/configLoader';
@@ -189,8 +189,11 @@ async function mergeReports(reportDir: string | undefined, opts: { [key: string]
   const configLoader = new ConfigLoader();
   const config = await (configFile ? configLoader.loadConfigFile(configFile) : configLoader.loadEmptyConfig(process.cwd()));
   const dir = path.resolve(process.cwd(), reportDir || '');
-  if (!(await fs.promises.stat(dir)).isDirectory())
+  const dirStat = await fs.promises.stat(dir).catch(e => null);
+  if (!dirStat)
     throw new Error('Directory does not exist: ' + dir);
+  if (!dirStat.isDirectory())
+    throw new Error(`"${dir}" is not a directory`);
   let reporterDescriptions: ReporterDescription[] | undefined = resolveReporterOption(opts.reporter);
   if (!reporterDescriptions && configFile)
     reporterDescriptions = config.config.reporter;
@@ -272,17 +275,19 @@ function restartWithExperimentalTsEsm(configFile: string | null): boolean {
     return false;
   if (process.env.PW_DISABLE_TS_ESM)
     return false;
-  if (process.env.PW_TS_ESM_ON)
+  if (process.env.PW_TS_ESM_ON) {
+    // clear execArgv after restart, so that childProcess.fork in user code does not inherit our loader.
+    process.execArgv = execArgvWithoutExperimentalLoaderOptions();
     return false;
+  }
   if (!fileIsModule(configFile))
     return false;
-  const NODE_OPTIONS = (process.env.NODE_OPTIONS || '') + experimentalLoaderOption();
-  const innerProcess = require('child_process').fork(require.resolve('./cli'), process.argv.slice(2), {
+  const innerProcess = (require('child_process') as typeof import('child_process')).fork(require.resolve('./cli'), process.argv.slice(2), {
     env: {
       ...process.env,
-      NODE_OPTIONS,
       PW_TS_ESM_ON: '1',
-    }
+    },
+    execArgv: execArgvWithExperimentalLoaderOptions(),
   });
 
   innerProcess.on('close', (code: number | null) => {

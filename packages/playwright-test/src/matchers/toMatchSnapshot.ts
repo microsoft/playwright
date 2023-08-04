@@ -19,10 +19,10 @@ import type { Page as PageEx } from 'playwright-core/lib/client/page';
 import type { Locator as LocatorEx } from 'playwright-core/lib/client/locator';
 import { currentTestInfo, currentExpectTimeout } from '../common/globals';
 import type { ImageComparatorOptions, Comparator } from 'playwright-core/lib/utils';
-import { getComparator } from 'playwright-core/lib/utils';
+import { getComparator, sanitizeForFilePath } from 'playwright-core/lib/utils';
 import type { PageScreenshotOptions } from 'playwright-core/types/types';
 import {
-  addSuffixToFilePath, serializeError, sanitizeForFilePath,
+  addSuffixToFilePath, serializeError,
   trimLongString, callLogText,
   expectTypes  } from '../util';
 import { colors } from 'playwright-core/lib/utilsBundle';

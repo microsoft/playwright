@@ -24,20 +24,36 @@ import { TeleReporterReceiver } from '../isomorphic/teleReceiver';
 import { createReporters } from '../runner/reporters';
 import { Multiplexer } from './multiplexer';
 import { ZipFile } from 'playwright-core/lib/utils';
-import type { BlobReportMetadata } from './blob';
+import { currentBlobReportVersion, type BlobReportMetadata } from './blob';
+import { relativeFilePath } from '../util';
+
+type StatusCallback = (message: string) => void;
 
 export async function createMergedReport(config: FullConfigInternal, dir: string, reporterDescriptions: ReporterDescription[]) {
+  const reporters = await createReporters(config, 'merge', reporterDescriptions);
+  const multiplexer = new Multiplexer(reporters);
+  const receiver = new TeleReporterReceiver(path.sep, multiplexer, false, config.config);
+
+  let printStatus: StatusCallback = () => {};
+  if (!multiplexer.printsToStdio()) {
+    printStatus = printStatusToStdout;
+    printStatus(`merging reports from ${dir}`);
+  }
+
   const shardFiles = await sortedShardFiles(dir);
   if (shardFiles.length === 0)
     throw new Error(`No report files found in ${dir}`);
-  const events = await mergeEvents(dir, shardFiles);
+  const events = await mergeEvents(dir, shardFiles, printStatus);
   patchAttachmentPaths(events, dir);
 
-  const reporters = await createReporters(config, 'merge', reporterDescriptions);
-  const receiver = new TeleReporterReceiver(path.sep, new Multiplexer(reporters), false, config.config);
-
-  for (const event of events)
+  printStatus(`processing ${events.length} test events`);
+  for (const event of events) {
+    if (event.method === 'onEnd')
+      printStatus(`building final report`);
     await receiver.dispatch(event);
+    if (event.method === 'onEnd')
+      printStatus(`finished building report`);
+  }
 }
 
 function patchAttachmentPaths(events: JsonEvent[], resourceDir: string) {
@@ -57,11 +73,13 @@ function parseEvents(reportJsonl: Buffer): JsonEvent[] {
   return reportJsonl.toString().split('\n').filter(line => line.length).map(line => JSON.parse(line)) as JsonEvent[];
 }
 
-async function extractAndParseReports(dir: string, shardFiles: string[]): Promise<{ metadata: BlobReportMetadata, parsedEvents: JsonEvent[] }[]> {
+async function extractAndParseReports(dir: string, shardFiles: string[], printStatus: StatusCallback): Promise<{ metadata: BlobReportMetadata, parsedEvents: JsonEvent[] }[]> {
   const shardEvents = [];
   await fs.promises.mkdir(path.join(dir, 'resources'), { recursive: true });
   for (const file of shardFiles) {
-    const zipFile = new ZipFile(path.join(dir, file));
+    const absolutePath = path.join(dir, file);
+    printStatus(`extracting: ${relativeFilePath(absolutePath)}`);
+    const zipFile = new ZipFile(absolutePath);
     const entryNames = await zipFile.entries();
     for (const entryName of entryNames) {
       const content = await zipFile.read(entryName);
@@ -84,21 +102,25 @@ async function extractAndParseReports(dir: string, shardFiles: string[]): Promis
 function findMetadata(events: JsonEvent[], file: string): BlobReportMetadata {
   if (events[0]?.method !== 'onBlobReportMetadata')
     throw new Error(`No metadata event found in ${file}`);
-  return events[0].params;
+  const metadata = (events[0].params as BlobReportMetadata);
+  if (metadata.version > currentBlobReportVersion)
+    throw new Error(`Blob report ${file} was created with a newer version of Playwright.`);
+  return metadata;
 }
 
-async function mergeEvents(dir: string, shardReportFiles: string[]) {
+async function mergeEvents(dir: string, shardReportFiles: string[], printStatus: StatusCallback) {
   const events: JsonEvent[] = [];
   const configureEvents: JsonEvent[] = [];
   const beginEvents: JsonEvent[] = [];
   const endEvents: JsonEvent[] = [];
-  const shardEvents = await extractAndParseReports(dir, shardReportFiles);
+  const shardEvents = await extractAndParseReports(dir, shardReportFiles, printStatus);
   shardEvents.sort((a, b) => {
     const shardA = a.metadata.shard?.current ?? 0;
     const shardB = b.metadata.shard?.current ?? 0;
     return shardA - shardB;
   });
   const allTestIds = new Set<string>();
+  printStatus(`merging events`);
   for (const { parsedEvents } of shardEvents) {
     for (const event of parsedEvents) {
       if (event.method === 'onConfigure')
@@ -210,7 +232,11 @@ function mergeEndEvents(endEvents: JsonEvent[]): JsonEvent {
 
 async function sortedShardFiles(dir: string) {
   const files = await fs.promises.readdir(dir);
-  return files.filter(file => file.startsWith('report-') && file.endsWith('.zip')).sort();
+  return files.filter(file => file.startsWith('report') && file.endsWith('.zip')).sort();
+}
+
+function printStatusToStdout(message: string) {
+  process.stdout.write(`${message}\n`);
 }
 
 class ProjectNamePatcher {

@@ -42,7 +42,7 @@ jobs:
     - run: npx playwright install --with-deps ${{ matrix.browser }} chromium
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --project=${{ matrix.browser }}
       env:
-        PWTEST_BLOB_SUFFIX: "-${{ matrix.os }}"
+        PWTEST_BLOB_SUFFIX: "-${{ matrix.browser }}-${{ matrix.os }}"
     - run: node tests/config/checkCoverage.js ${{ matrix.browser }}
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
@@ -75,7 +75,7 @@ jobs:
     - run: npx playwright install --with-deps ${{ matrix.browser }} chromium
     - run: npm run test -- --project=${{ matrix.browser }}
       env:
-        PWTEST_BLOB_SUFFIX: "-${{ matrix.os }}"
+        PWTEST_BLOB_SUFFIX: "-${{ matrix.browser }}-${{ matrix.os }}"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -107,7 +107,7 @@ jobs:
     - run: npm run test -- --project=${{ matrix.browser }}
       shell: bash
       env:
-        PWTEST_BLOB_SUFFIX: "-windows-latest"
+        PWTEST_BLOB_SUFFIX: "-${{ matrix.browser }}-windows-latest"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -170,11 +170,11 @@ jobs:
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --project=${{ matrix.browser }} --headed
       if: always() && startsWith(matrix.os, 'ubuntu-')
       env:
-        PWTEST_BLOB_SUFFIX: "-headed-${{ matrix.os }}"
+        PWTEST_BLOB_SUFFIX: "-${{ matrix.browser }}-headed-${{ matrix.os }}"
     - run: npm run test -- --project=${{ matrix.browser }} --headed
       if: always() && !startsWith(matrix.os, 'ubuntu-')
       env:
-        PWTEST_BLOB_SUFFIX: "-headed-${{ matrix.os }}"
+        PWTEST_BLOB_SUFFIX: "-${{ matrix.browser }}-headed-${{ matrix.os }}"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -232,7 +232,7 @@ jobs:
       env:
         PWTEST_TRACE: 1
         PWTEST_CHANNEL: ${{ matrix.channel }}
-        PWTEST_BLOB_SUFFIX: "-tracing-${{ (matrix.channel && format('-{0}', matrix.channel)) || '' }}"
+        PWTEST_BLOB_SUFFIX: "-tracing-${{ matrix.channel || matrix.browser }}"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -385,7 +385,7 @@ jobs:
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ftest
       env:
         PWTEST_CHANNEL: firefox-beta
-        PWTEST_BLOB_SUFFIX: "-beta-linux"
+        PWTEST_BLOB_SUFFIX: "-firefox-beta-linux"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -407,7 +407,7 @@ jobs:
       shell: bash
       env:
         PWTEST_CHANNEL: firefox-beta
-        PWTEST_BLOB_SUFFIX: "-beta-windows"
+        PWTEST_BLOB_SUFFIX: "-firefox-beta-windows"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -428,7 +428,7 @@ jobs:
     - run: npm run ftest
       env:
         PWTEST_CHANNEL: firefox-beta
-        PWTEST_BLOB_SUFFIX: "-beta-mac"
+        PWTEST_BLOB_SUFFIX: "-firefox-beta-mac"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash

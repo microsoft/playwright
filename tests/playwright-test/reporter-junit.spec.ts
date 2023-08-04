@@ -438,7 +438,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
             test('pass', ({}, testInfo) => {
             });
           `
-        }, { 'reporter': 'junit' }, { 'PLAYWRIGHT_JUNIT_OUTPUT_NAME': '../my-report.xml' }, {
+        }, { 'reporter': 'junit,line' }, { 'PLAYWRIGHT_JUNIT_OUTPUT_NAME': '../my-report.xml' }, {
           cwd: 'foo/bar/baz/tests',
         });
         expect(result.exitCode).toBe(0);
