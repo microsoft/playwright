@@ -18,7 +18,7 @@ jobs:
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    - run: npx playwright install
+    - run: npx playwright install-deps
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --retries=0
       env:
         PWTEST_MODE: service-grid
