@@ -661,6 +661,12 @@ interface TestConfig {
        * to `"css"`.
        */
       scale?: "css"|"device";
+
+      /**
+       * See `fullPage` in [page.screenshot([options])](https://playwright.dev/docs/api/class-page#page-screenshot). Defaults
+       * to `false`.
+       */
+      fullPage: boolean = false;
     };
 
     /**
