@@ -22,6 +22,9 @@ const emptyHTML = new URL('file://' + path.join(__dirname, '..', '..', 'assets',
 const launchOptions = (channel: string) => {
   return channel ? `.setChannel("${channel}")\n        .setHeadless(false)` : '.setHeadless(false)';
 };
+const launchOptionsJUnit = (channel: string) => {
+  return channel ? `.setChannel("${channel}")\n      .setHeadless(false)` : '.setHeadless(false)';
+};
 
 test('should print the correct imports and context options', async ({ runCLI, channel, browserName }) => {
   const cli = runCLI(['--target=java', emptyHTML]);
@@ -102,4 +105,67 @@ test('should work with --save-har', async ({ runCLI }, testInfo) => {
   await cli.waitForCleanExit();
   const json = JSON.parse(fs.readFileSync(harFileName, 'utf-8'));
   expect(json.log.creator.name).toBe('Playwright');
+});
+
+test('should print the correct imports and context options in junit', async ({ runCLI, channel, browserName }) => {
+  const cli = runCLI(['--target=java-junit', emptyHTML]);
+  const expectedImportResult = `import com.microsoft.playwright.*;
+import com.microsoft.playwright.options.*;
+import org.junit.jupiter.api.*;
+import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;`;
+  await cli.waitFor(expectedImportResult);
+
+  const expectedContextResult = `@BeforeAll
+  static void launchBrowser() {
+    playwright = Playwright.create();
+    browser = playwright.${browserName}().launch(new BrowserType.LaunchOptions()
+      ${launchOptionsJUnit(channel)});
+  }`;
+  await cli.waitFor(expectedContextResult);
+});
+
+test('should print a valid basic program in junit', async ({ runCLI, channel, browserName }) => {
+  const cli = runCLI(['--target=java-junit', emptyHTML]);
+  const expectedResult = `import com.microsoft.playwright.*;
+import com.microsoft.playwright.options.*;
+import org.junit.jupiter.api.*;
+import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
+
+public class TestExample {
+  // Shared between all tests in this class.
+  static Playwright playwright;
+  static Browser browser;
+
+  // New instance for each test method.
+  BrowserContext context;
+
+  @BeforeAll
+  static void launchBrowser() {
+    playwright = Playwright.create();
+    browser = playwright.${browserName}().launch(new BrowserType.LaunchOptions()
+      ${launchOptionsJUnit(channel)});
+  }
+
+  @AfterAll
+  static void closeBrowser() {
+    playwright.close();
+  }
+
+  @BeforeEach
+  void createContextAndPage() {
+    context = browser.newContext();
+  }
+
+  @AfterEach
+  void closeContext() {
+    context.close();
+  }
+
+  @Test
+  void test() {
+    Page page = context.newPage();
+    page.navigate("${emptyHTML}");
+  }
+}`;
+  await cli.waitFor(expectedResult);
 });
