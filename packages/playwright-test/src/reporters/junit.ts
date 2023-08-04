@@ -197,7 +197,6 @@ class JUnitReporter extends EmptyReporter {
           systemOut.push(`\n[[ATTACHMENT|${attachmentPath}]]\n`);
         } catch {
           systemErr.push(`\nWarning: attachment ${attachmentPath} is missing`);
-          continue;
         }
       }
     }
