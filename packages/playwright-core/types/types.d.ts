@@ -12316,6 +12316,10 @@ export interface Locator {
   }): Promise<null|string>;
 
   /**
+   * **NOTE** In most cases, you should use
+   * [locator.fill(value[, options])](https://playwright.dev/docs/api/class-locator#locator-fill) instead. You only need
+   * to type characters if there is special keyboard handling on the page.
+   *
    * Focuses the element, and then sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the
    * text.
    *
