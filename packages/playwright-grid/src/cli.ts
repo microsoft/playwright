@@ -23,14 +23,24 @@ program
 
 program
     .command('grid')
-    .action(function() {
-      require('./grid/grid');
+    .option('--port <port>', 'port to listen to, 3333 by default')
+    .option('--access-key <key>', 'access key to the grid')
+    .action(async opts => {
+      const port = opts.port || +(process.env.PLAYWRIGHT_GRID_PORT || '3333');
+      const accessKey = opts.accessKey || process.env.PLAYWRIGHT_GRID_ACCESS_KEY;
+      const { Grid } = await import('./grid/grid.js');
+      const grid = new Grid(port, accessKey);
+      grid.start();
     });
 
 program
     .command('node')
-    .action(function() {
-      require('./node/node');
+    .option('--grid <url>', 'grid address', 'localhost:3333')
+    .option('--capacity <capacity>', 'node capacity', '1')
+    .option('--access-key <key>', 'access key to the grid', '')
+    .action(async opts => {
+      const { Node } = await import('./node/node.js');
+      new Node(opts.grid, +opts.capacity, opts.accessKey);
     });
 
 program.parse(process.argv);

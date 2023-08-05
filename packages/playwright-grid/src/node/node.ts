@@ -21,18 +21,20 @@ import type { Capabilities } from '../common/capabilities';
 
 const log = debug('pw:grid:node');
 
-const endpoint = process.env.PLAYWRIGHT_GRID_ENDPOINT || 'ws://localhost:3113';
-const capacity = parseInt(process.env.PLAYWRIGHT_GRID_NODE_CAPACITY || '1', 10);
 const caps: Capabilities = {
   platform: process.platform,
 };
 
-class Node {
+export class Node {
   workerSeq = 0;
 
-  constructor() {
+  constructor(grid: string, capacity: number, accessKey: string) {
     log('node created');
-    const ws = new WebSocket(endpoint + `/registerNode?capacity=${capacity}&caps=${JSON.stringify(caps)}`);
+    const ws = new WebSocket(grid + `/registerNode?capacity=${capacity}&caps=${JSON.stringify(caps)}`, {
+      headers: {
+        'x-playwright-access-key': accessKey,
+      }
+    });
     let nodeId = '';
     ws.on('error', error => {
       log(error);
@@ -54,7 +56,8 @@ class Node {
           ...process.env,
           PLAYWRIGHT_GRID_NODE_ID: nodeId,
           PLAYWRIGHT_GRID_WORKER_ID: workerId,
-          PLAYWRIGHT_GRID_ENDPOINT: endpoint,
+          PLAYWRIGHT_GRID_ENDPOINT: grid,
+          PLAYWRIGHT_GRID_ACCESS_KEY: accessKey,
         },
         detached: true
       });
@@ -63,5 +66,3 @@ class Node {
     ws.on('close', () => process.exit(0));
   }
 }
-
-new Node();

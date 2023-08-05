@@ -24,8 +24,6 @@ import type { Capabilities } from '../common/capabilities';
 import type http from 'http';
 import type stream from 'stream';
 
-const PORT = +(process.env.PLAYWRIGHT_GRID_PORT || '3113');
-
 class WebSocketRequest {
   private _socketError: Error | undefined;
 
@@ -218,18 +216,22 @@ class Node {
   }
 }
 
-class ProxyServer {
+export class Grid {
   private _server: HttpServer;
   private _wsServer: WebSocketServer;
   private _nodes = new Map<string, Node>();
   private _log: debug.Debugger;
   private _clientRequests: ClientRequest[] = [];
+  private _port: number;
+  private _accessKey: string;
 
-  constructor() {
+  constructor(port: number, accessKey: string) {
     this._log = debug(`pw:grid:proxy`);
+    this._port = port;
+    this._accessKey = accessKey;
     this._server = new HttpServer();
 
-    this._server.routePath('/', (request, response) => {
+    this._server.routePath('/' + this._accessKey, (request, response) => {
       response.statusCode = 200;
       response.setHeader('Content-Type', 'text/plain');
       response.end(this._state());
@@ -241,9 +243,14 @@ class ProxyServer {
       ws.on('error', e => this._log(e));
     });
     this._server.server.on('upgrade', async (request, socket, head) => {
+      if (this._accessKey && request.headers['x-playwright-access-key'] !== this._accessKey) {
+        socket.destroy();
+        return;
+      }
+
       const url = new URL('http://internal' + request.url);
       const params = url.searchParams;
-      this._log(url.toString());
+      this._log(url.pathname);
 
       if (url.pathname.startsWith('/registerNode')) {
         const nodeRequest = new WebSocketRequest(this._wsServer, request, socket, head);
@@ -352,7 +359,7 @@ class ProxyServer {
   }
 
   async start() {
-    const url = await this._server.start(PORT);
+    const url = await this._server.start(this._port);
     // eslint-disable-next-line no-console
     console.log('Server is listening on: ' + url);
   }
@@ -361,8 +368,3 @@ class ProxyServer {
 function createGuid(): string {
   return crypto.randomBytes(16).toString('hex');
 }
-
-(async () => {
-  const proxy = new ProxyServer();
-  await proxy.start();
-})();

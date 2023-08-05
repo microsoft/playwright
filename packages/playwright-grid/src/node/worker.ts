@@ -29,7 +29,11 @@ class Worker {
     let browserName: 'chromium' | 'webkit' | 'firefox';
     let launchOptions: any;
 
-    const ws = new WebSocket(process.env.PLAYWRIGHT_GRID_ENDPOINT + `/registerWorker?nodeId=${process.env.PLAYWRIGHT_GRID_NODE_ID}&workerId=${workerId}`);
+    const ws = new WebSocket(process.env.PLAYWRIGHT_GRID_ENDPOINT + `/registerWorker?nodeId=${process.env.PLAYWRIGHT_GRID_NODE_ID}&workerId=${workerId}`, {
+      headers: {
+        'x-playwright-access-key': process.env.PLAYWRIGHT_GRID_ACCESS_KEY!,
+      }
+    });
     dispatcherConnection.onmessage = message => ws.send(JSON.stringify(message));
     ws.on('upgrade', response => {
       const headers: Record<string, string> = {};

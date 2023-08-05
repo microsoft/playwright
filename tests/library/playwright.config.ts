@@ -78,30 +78,23 @@ if (mode === 'service2') {
 
 if (mode === 'service-grid') {
   connectOptions = {
-    wsEndpoint: 'ws://localhost:3333/',
+    wsEndpoint: 'ws://localhost:3333',
     timeout: 60 * 60 * 1000,
+    headers: {
+      'x-playwright-access-key': 'secret'
+    }
   };
   webServer = [
     {
-      command: 'node ../../packages/playwright-grid/cli.js grid',
-      url: 'http://localhost:3333',
+      command: 'node ../../packages/playwright-grid/cli.js grid --port=3333 --access-key=secret',
+      stdout: 'pipe',
+      url: 'http://localhost:3333/secret',
       reuseExistingServer: !process.env.CI,
-      env: {
-        PLAYWRIGHT_GRID_PORT: '3333',
-      }
     }, {
-      command: 'node ../../packages/playwright-grid/cli.js node',
-      env: {
-        PLAYWRIGHT_GRID_ENDPOINT: 'ws://localhost:3333',
-        PLAYWRIGHT_GRID_NODE_CAPACITY: '2',
-      }
+      command: 'node ../../packages/playwright-grid/cli.js node --grid=ws://localhost:3333 --access-key=secret --capacity=2',
     },
     {
-      command: 'node ../../packages/playwright-grid/cli.js node',
-      env: {
-        PLAYWRIGHT_GRID_ENDPOINT: 'ws://localhost:3333',
-        PLAYWRIGHT_GRID_NODE_CAPACITY: '2',
-      }
+      command: 'node ../../packages/playwright-grid/cli.js node --grid=ws://localhost:3333 --access-key=secret --capacity=2',
     }
   ];
 }
