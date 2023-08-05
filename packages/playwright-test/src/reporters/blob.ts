@@ -36,6 +36,7 @@ export const currentBlobReportVersion = 1;
 export type BlobReportMetadata = {
   version: number;
   name?: string;
+  shard?: { total: number, current: number };
 };
 
 export class BlobReporter extends TeleReporterEmitter {
@@ -54,7 +55,8 @@ export class BlobReporter extends TeleReporterEmitter {
   override onConfigure(config: FullConfig) {
     const metadata: BlobReportMetadata = {
       version: currentBlobReportVersion,
-      name: process.env.PWTEST_BLOB_SUFFIX,
+      name: process.env.PWTEST_BLOB_REPORT_NAME,
+      shard: config.shard ?? undefined,
     };
     this._messages.push({
       method: 'onBlobReportMetadata',
@@ -101,8 +103,8 @@ export class BlobReporter extends TeleReporterEmitter {
 
   private _computeReportName(config: FullConfig) {
     let reportName = 'report';
-    if (process.env.PWTEST_BLOB_SUFFIX)
-      reportName += sanitizeForFilePath(process.env.PWTEST_BLOB_SUFFIX);
+    if (process.env.PWTEST_BLOB_REPORT_NAME)
+      reportName += sanitizeForFilePath(process.env.PWTEST_BLOB_REPORT_NAME);
     if (config.shard) {
       const paddedNumber = `${config.shard.current}`.padStart(`${config.shard.total}`.length, '0');
       reportName += `-${paddedNumber}`;

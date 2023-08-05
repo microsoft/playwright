@@ -125,23 +125,35 @@ async function mergeEvents(dir: string, shardReportFiles: string[], printStatus:
   const endEvents: JsonEvent[] = [];
 
   const blobs = await extractAndParseReports(dir, shardReportFiles, stringPool, printStatus);
-  blobs.sort((a, b) => a.file.localeCompare(b.file));
+  // Sort by (report name; shard; file name), so that salt generation below is deterministic when:
+  // - report names are unique;
+  // - report names are missing;
+  // - report names are clashing between shards.
+  blobs.sort((a, b) => {
+    const nameA = a.metadata.name ?? '';
+    const nameB = b.metadata.name ?? '';
+    if (nameA !== nameB)
+      return nameA.localeCompare(nameB);
+    const shardA = a.metadata.shard?.current ?? 0;
+    const shardB = b.metadata.shard?.current ?? 0;
+    if (shardA !== shardB)
+      return shardA - shardB;
+    return a.file.localeCompare(b.file);
+  });
+
   const saltSet = new Set<string>();
 
   printStatus(`merging events`);
 
-  for (const { file, parsedEvents } of blobs) {
-    const metadataEvent = parsedEvents.find(e => e.method === 'onBlobReportMetadata')!;
-
+  for (const { file, parsedEvents, metadata } of blobs) {
     // Generate unique salt for each blob.
-    // Prefer metadata.reportName, but fallback to reportFileName because it's unique.
-    const sha1 = calculateSha1(metadataEvent.params.name || path.basename(file)).substring(0, 16);
+    const sha1 = calculateSha1(metadata.name || path.basename(file)).substring(0, 16);
     let salt = sha1;
     for (let i = 0; saltSet.has(salt); i++)
       salt = sha1 + '-' + i;
     saltSet.add(salt);
 
-    new IdsPatcher(stringPool, metadataEvent.params.name || '', salt).patchEvents(parsedEvents);
+    new IdsPatcher(stringPool, metadata.name, salt).patchEvents(parsedEvents);
 
     for (const event of parsedEvents) {
       if (event.method === 'onConfigure')
@@ -259,7 +271,7 @@ function printStatusToStdout(message: string) {
 }
 
 class IdsPatcher {
-  constructor(private _stringPool: StringInternPool, private _reportName: string, private _salt: string) {
+  constructor(private _stringPool: StringInternPool, private _reportName: string | undefined, private _salt: string) {
   }
 
   patchEvents(events: JsonEvent[]) {

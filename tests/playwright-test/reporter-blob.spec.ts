@@ -1147,8 +1147,8 @@ test('same project different suffixes', async ({ runInlineTest, mergeReports }) 
     `,
   };
 
-  await runInlineTest(files, undefined, { PWTEST_BLOB_SUFFIX: 'first' });
-  await runInlineTest(files, undefined, { PWTEST_BLOB_SUFFIX: 'second', PWTEST_BLOB_DO_NOT_REMOVE: '1' });
+  await runInlineTest(files, undefined, { PWTEST_BLOB_REPORT_NAME: 'first' });
+  await runInlineTest(files, undefined, { PWTEST_BLOB_REPORT_NAME: 'second', PWTEST_BLOB_DO_NOT_REMOVE: '1' });
 
   const reportDir = test.info().outputPath('blob-report');
   const { exitCode, output } = await mergeReports(reportDir, {}, { additionalArgs: ['--reporter', test.info().outputPath('echo-reporter.js')] });
