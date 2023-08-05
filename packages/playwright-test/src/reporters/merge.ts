@@ -21,7 +21,7 @@ import type { FullResult } from '../../types/testReporter';
 import type { FullConfigInternal } from '../common/config';
 import type { JsonConfig, JsonEvent, JsonProject, JsonSuite, JsonTestResultEnd } from '../isomorphic/teleReceiver';
 import { TeleReporterReceiver } from '../isomorphic/teleReceiver';
-import { StringInternPool } from '../isomorphic/stringInternPool';
+import { JsonStringInternalizer, StringInternPool } from '../isomorphic/stringInternPool';
 import { createReporters } from '../runner/reporters';
 import { Multiplexer } from './multiplexer';
 import { ZipFile } from 'playwright-core/lib/utils';
@@ -74,9 +74,12 @@ function parseEvents(reportJsonl: Buffer): JsonEvent[] {
   return reportJsonl.toString().split('\n').filter(line => line.length).map(line => JSON.parse(line)) as JsonEvent[];
 }
 
-async function extractAndParseReports(dir: string, shardFiles: string[], printStatus: StatusCallback): Promise<{ metadata: BlobReportMetadata, parsedEvents: JsonEvent[] }[]> {
+async function extractAndParseReports(dir: string, shardFiles: string[], stringPool: StringInternPool, printStatus: StatusCallback): Promise<{ metadata: BlobReportMetadata, parsedEvents: JsonEvent[] }[]> {
   const shardEvents = [];
   await fs.promises.mkdir(path.join(dir, 'resources'), { recursive: true });
+
+  const internalizer = new JsonStringInternalizer(stringPool);
+
   for (const file of shardFiles) {
     const absolutePath = path.join(dir, file);
     printStatus(`extracting: ${relativeFilePath(absolutePath)}`);
@@ -86,6 +89,10 @@ async function extractAndParseReports(dir: string, shardFiles: string[], printSt
       const content = await zipFile.read(entryName);
       if (entryName.endsWith('.jsonl')) {
         const parsedEvents = parseEvents(content);
+        // Passing reviver to JSON.parse doesn't work, as the original strings
+        // keep beeing used. To work around that we traverse the parsed events
+        // as a post-processing step.
+        internalizer.traverse(parsedEvents);
         shardEvents.push({
           metadata: findMetadata(parsedEvents, file),
           parsedEvents
@@ -114,7 +121,8 @@ async function mergeEvents(dir: string, shardReportFiles: string[], printStatus:
   const configureEvents: JsonEvent[] = [];
   const beginEvents: JsonEvent[] = [];
   const endEvents: JsonEvent[] = [];
-  const shardEvents = await extractAndParseReports(dir, shardReportFiles, printStatus);
+  const stringPool = new StringInternPool();
+  const shardEvents = await extractAndParseReports(dir, shardReportFiles, stringPool, printStatus);
   shardEvents.sort((a, b) => {
     const shardA = a.metadata.shard?.current ?? 0;
     const shardB = b.metadata.shard?.current ?? 0;
@@ -131,7 +139,7 @@ async function mergeEvents(dir: string, shardReportFiles: string[], printStatus:
       else if (event.method === 'onEnd')
         endEvents.push(event);
       else if (event.method === 'onBlobReportMetadata')
-        new ProjectNamePatcher(allTestIds, event.params.projectSuffix || '').patchEvents(parsedEvents);
+        new ProjectNamePatcher(allTestIds, stringPool, event.params.projectSuffix || '').patchEvents(parsedEvents);
       else
         events.push(event);
     }
@@ -242,9 +250,11 @@ function printStatusToStdout(message: string) {
 
 class ProjectNamePatcher {
   private _testIds = new Set<string>();
-  private _stringPool = new StringInternPool();
 
-  constructor(private _allTestIds: Set<string>, private _projectNameSuffix: string) {
+  constructor(
+    private _allTestIds: Set<string>,
+    private _stringPool: StringInternPool,
+    private _projectNameSuffix: string) {
   }
 
   patchEvents(events: JsonEvent[]) {
