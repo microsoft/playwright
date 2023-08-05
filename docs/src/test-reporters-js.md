@@ -268,6 +268,46 @@ export default defineConfig({
 });
 ```
 
+### Testmo reporter
+
+Testmo reporter produces a JUnit-style xml report that can be ingested by Testmo.
+
+Most likely you want to write the report to an xml file. When running with `--reporter=testmo`, use `PLAYWRIGHT_TESTMO_OUTPUT_NAME` environment variable:
+
+```bash tab=bash-bash
+PLAYWRIGHT_TESTMO_OUTPUT_NAME=results.xml npx playwright test --reporter=testmo
+```
+
+```batch tab=bash-batch
+set PLAYWRIGHT_TESTMO_OUTPUT_NAME=results.xml
+npx playwright test --reporter=testmo
+```
+
+```powershell tab=bash-powershell
+$env:PLAYWRIGHT_TESTMO_OUTPUT_NAME="results.xml"
+npx playwright test --reporter=testmo
+```
+
+In configuration file, pass options directly:
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  reporter: [['testmo', { outputFile: 'results.xml' }]],
+});
+```
+
+To include steps in the output, pass following options directly in configuration file:
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  reporter: [['testmo', { outputFile: 'results.xml', includeSteps: true }]],
+});
+```
+
 ### GitHub Actions annotations
 
 You can use the built in `github` reporter to get automatic failure annotations when running in GitHub actions.
