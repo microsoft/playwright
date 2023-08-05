@@ -16,7 +16,7 @@
 import path from 'path';
 import net from 'net';
 
-import { debug } from 'playwright-core/lib/utilsBundle';
+import { colors, debug } from 'playwright-core/lib/utilsBundle';
 import { raceAgainstDeadline, launchProcess, httpRequest, monotonicTime } from 'playwright-core/lib/utils';
 
 import type { FullConfig } from '../../types/testReporter';
@@ -40,6 +40,8 @@ export type WebServerPluginOptions = {
 
 const DEFAULT_ENVIRONMENT_VARIABLES = {
   'BROWSER': 'none', // Disable that create-react-app will open the page in the browser
+  'FORCE_COLOR': '1',
+  'DEBUG_COLORS': '1',
 };
 
 const debugWebServer = debug('pw:webserver');
@@ -112,11 +114,12 @@ export class WebServerPlugin implements TestRunnerPlugin {
 
     launchedProcess.stderr!.on('data', line => {
       if (debugWebServer.enabled || (this._options.stderr === 'pipe' || !this._options.stderr))
-        this._reporter!.onStdErr?.('[WebServer] ' + line.toString());
+        this._reporter!.onStdErr?.(colors.dim('[WebServer] ') + line.toString());
     });
     launchedProcess.stdout!.on('data', line => {
+      process.stdout.write(line);
       if (debugWebServer.enabled || this._options.stdout === 'pipe')
-        this._reporter!.onStdOut?.('[WebServer] ' + line.toString());
+        this._reporter!.onStdOut?.(colors.dim('[WebServer] ') + line.toString());
     });
   }
 
