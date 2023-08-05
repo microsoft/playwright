@@ -64,6 +64,7 @@ export type TestCaseSummary = {
   title: string;
   path: string[];
   projectName: string;
+  reportName?: string;
   location: Location;
   annotations: TestCaseAnnotation[];
   outcome: 'skipped' | 'expected' | 'unexpected' | 'flaky';

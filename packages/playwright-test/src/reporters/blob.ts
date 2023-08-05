@@ -35,8 +35,7 @@ export const currentBlobReportVersion = 1;
 
 export type BlobReportMetadata = {
   version: number;
-  projectSuffix?: string;
-  shard?: { total: number, current: number };
+  name?: string;
 };
 
 export class BlobReporter extends TeleReporterEmitter {
@@ -55,8 +54,7 @@ export class BlobReporter extends TeleReporterEmitter {
   override onConfigure(config: FullConfig) {
     const metadata: BlobReportMetadata = {
       version: currentBlobReportVersion,
-      projectSuffix: process.env.PWTEST_BLOB_SUFFIX,
-      shard: config.shard ?? undefined,
+      name: process.env.PWTEST_BLOB_SUFFIX,
     };
     this._messages.push({
       method: 'onBlobReportMetadata',

@@ -217,7 +217,7 @@ class HtmlBuilder {
         }
         const { testFile, testFileSummary } = fileEntry;
         const testEntries: TestEntry[] = [];
-        this._processJsonSuite(file, fileId, projectJson.project.name, [], testEntries);
+        this._processJsonSuite(file, fileId, projectJson.project.name, projectJson.project.metadata?.reportName, [], testEntries);
         for (const test of testEntries) {
           testFile.tests.push(test.testCase);
           testFileSummary.tests.push(test.testCaseSummary);
@@ -314,13 +314,13 @@ class HtmlBuilder {
     this._dataZipFile.addBuffer(Buffer.from(JSON.stringify(data)), fileName);
   }
 
-  private _processJsonSuite(suite: JsonSuite, fileId: string, projectName: string, path: string[], outTests: TestEntry[]) {
+  private _processJsonSuite(suite: JsonSuite, fileId: string, projectName: string, reportName: string | undefined, path: string[], outTests: TestEntry[]) {
     const newPath = [...path, suite.title];
-    suite.suites.map(s => this._processJsonSuite(s, fileId, projectName, newPath, outTests));
-    suite.tests.forEach(t => outTests.push(this._createTestEntry(t, projectName, newPath)));
+    suite.suites.map(s => this._processJsonSuite(s, fileId, projectName, reportName, newPath, outTests));
+    suite.tests.forEach(t => outTests.push(this._createTestEntry(t, projectName, reportName, newPath)));
   }
 
-  private _createTestEntry(test: JsonTestCase, projectName: string, path: string[]): TestEntry {
+  private _createTestEntry(test: JsonTestCase, projectName: string, reportName: string | undefined, path: string[]): TestEntry {
     const duration = test.results.reduce((a, r) => a + r.duration, 0);
     this._tests.set(test.testId, test);
     const location = test.location;
@@ -334,6 +334,7 @@ class HtmlBuilder {
         testId: test.testId,
         title: test.title,
         projectName,
+        reportName,
         location,
         duration,
         annotations: test.annotations,
@@ -346,6 +347,7 @@ class HtmlBuilder {
         testId: test.testId,
         title: test.title,
         projectName,
+        reportName,
         location,
         duration,
         annotations: test.annotations,
