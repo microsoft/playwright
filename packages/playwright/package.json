@@ -1,6 +1,6 @@
 {
-  "name": "playwright",
-  "version": "1.36.2",
+  "name": "@intuned/playwright",
+  "version": "1.36.2-1",
   "description": "A high-level API to automate web browsers",
   "repository": "github:Microsoft/playwright",
   "homepage": "https://playwright.dev",
