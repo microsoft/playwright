@@ -1125,6 +1125,20 @@ BrowserContext:
         handleSIGINT: boolean?
         omitCallTracking: boolean?
 
+    inspectSingleSelector:
+      experimental: True
+      returns:
+        selector: string
+      parameters:
+        language: string
+
+    recorderSupplementDisable:
+      experimental: True
+      returns:
+        actions:
+          type: array
+          items: string
+
     newCDPSession:
       parameters:
         page: Page?

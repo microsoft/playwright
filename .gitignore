@@ -30,3 +30,4 @@ test-results
 /tests/installation/.registry.json
 .cache/
 .eslintcache
+.npmrc
