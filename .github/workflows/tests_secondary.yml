@@ -178,6 +178,12 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
+    - name: Upload blob report
+      if: always() && github.event_name == 'pull_request'
+      uses: ./.github/actions/upload-blob-report
+      with:
+        report_dir: blob-report
+        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   transport_linux:
     name: "Transport"
@@ -204,6 +210,12 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
+    - name: Upload blob report
+      if: always() && github.event_name == 'pull_request'
+      uses: ./.github/actions/upload-blob-report
+      with:
+        report_dir: blob-report
+        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   tracing_linux:
     name: Tracing ${{ matrix.browser }} ${{ matrix.channel }}
