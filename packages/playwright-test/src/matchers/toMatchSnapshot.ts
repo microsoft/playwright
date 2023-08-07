@@ -43,7 +43,7 @@ type SnapshotNames = {
 class SnapshotHelper<T extends ImageComparatorOptions> {
   readonly testInfo: TestInfoImpl;
   readonly snapshotName: string;
-  readonly expectedPath: string;
+  readonly legacyExpectedPath: string;
   readonly previousPath: string;
   readonly snapshotPath: string;
   readonly actualPath: string;
@@ -126,7 +126,7 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
     this.snapshotPath = snapshotPathResolver(...inputPathSegments);
     const inputFile = testInfo._getOutputPath(...inputPathSegments);
     const outputFile = testInfo._getOutputPath(...outputPathSegments);
-    this.expectedPath = addSuffixToFilePath(inputFile, '-expected');
+    this.legacyExpectedPath = addSuffixToFilePath(inputFile, '-expected');
     this.previousPath = addSuffixToFilePath(outputFile, '-previous');
     this.actualPath = addSuffixToFilePath(outputFile, '-actual');
     this.diffPath = addSuffixToFilePath(outputFile, '-diff');
@@ -213,9 +213,11 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
       output.push('');
 
     if (expected !== undefined) {
-      writeFileSync(this.expectedPath, expected);
-      this.testInfo.attachments.push({ name: addSuffixToFilePath(this.snapshotName, '-expected'), contentType: this.mimeType, path: this.expectedPath });
-      output.push(`Expected: ${colors.yellow(this.expectedPath)}`);
+      // Copy the expectation inside the `test-results/` folder for backwards compatibility,
+      // so that one can upload `test-results/` directory and have all the data inside.
+      writeFileSync(this.legacyExpectedPath, expected);
+      this.testInfo.attachments.push({ name: addSuffixToFilePath(this.snapshotName, '-expected'), contentType: this.mimeType, path: this.snapshotPath });
+      output.push(`Expected: ${colors.yellow(this.snapshotPath)}`);
     }
     if (previous !== undefined) {
       writeFileSync(this.previousPath, previous);
