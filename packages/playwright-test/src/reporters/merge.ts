@@ -150,7 +150,6 @@ function findMetadata(events: JsonEvent[], file: string): BlobReportMetadata {
 async function mergeEvents(dir: string, shardReportFiles: string[], stringPool: StringInternPool, printStatus: StatusCallback) {
   const internalizer = new JsonStringInternalizer(stringPool);
 
-  const events: JsonEvent[] = [];
   const configureEvents: JsonEvent[] = [];
   const projectEvents: JsonEvent[] = [];
   const endEvents: JsonEvent[] = [];
@@ -196,8 +195,6 @@ async function mergeEvents(dir: string, shardReportFiles: string[], stringPool: 
         projectEvents.push(event);
       else if (event.method === 'onEnd')
         endEvents.push(event);
-      else if (event.method !== 'onBlobReportMetadata' && event.method !== 'onBegin')
-        events.push(event);
     }
 
     // Save information about the reports to stream their test events later.
@@ -212,7 +209,6 @@ async function mergeEvents(dir: string, shardReportFiles: string[], stringPool: 
       mergeConfigureEvents(configureEvents),
       ...projectEvents,
       { method: 'onBegin', params: undefined },
-      ...events,
     ],
     reports,
     epilogue: [
