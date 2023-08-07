@@ -104,7 +104,7 @@ export class BlobReporter extends TeleReporterEmitter {
   private _computeReportName(config: FullConfig) {
     let reportName = 'report';
     if (process.env.PWTEST_BLOB_REPORT_NAME)
-      reportName += sanitizeForFilePath(process.env.PWTEST_BLOB_REPORT_NAME);
+      reportName += `-${sanitizeForFilePath(process.env.PWTEST_BLOB_REPORT_NAME)}`;
     if (config.shard) {
       const paddedNumber = `${config.shard.current}`.padStart(`${config.shard.total}`.length, '0');
       reportName += `-${paddedNumber}`;
