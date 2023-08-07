@@ -45,7 +45,9 @@ export class TeleReporterEmitter implements ReporterV2 {
 
   onBegin(suite: Suite) {
     const projects = suite.suites.map(projectSuite => this._serializeProject(projectSuite));
-    this._messageSink({ method: 'onBegin', params: { projects } });
+    for (const project of projects)
+      this._messageSink({ method: 'onProject', params: { project } });
+    this._messageSink({ method: 'onBegin', params: undefined });
   }
 
   onTestBegin(test: TestCase, result: TestResult): void {

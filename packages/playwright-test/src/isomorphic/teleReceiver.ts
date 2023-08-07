@@ -147,8 +147,12 @@ export class TeleReporterReceiver {
       this._onConfigure(params.config);
       return;
     }
+    if (method === 'onProject') {
+      this._onProject(params.project);
+      return;
+    }
     if (method === 'onBegin') {
-      this._onBegin(params.projects);
+      this._onBegin();
       return;
     }
     if (method === 'onTestBegin') {
@@ -192,35 +196,36 @@ export class TeleReporterReceiver {
     this._reporter.onConfigure(this._config);
   }
 
-  private _onBegin(projects: JsonProject[]) {
-    for (const project of projects) {
-      let projectSuite = this._rootSuite.suites.find(suite => suite.project()!.id === project.id);
-      if (!projectSuite) {
-        projectSuite = new TeleSuite(project.name, 'project');
-        this._rootSuite.suites.push(projectSuite);
-        projectSuite.parent = this._rootSuite;
-      }
-      const p = this._parseProject(project);
-      projectSuite.project = () => p;
-      this._mergeSuitesInto(project.suites, projectSuite);
-
-      // Remove deleted tests when listing. Empty suites will be auto-filtered
-      // in the UI layer.
-      if (this._listOnly) {
-        const testIds = new Set<string>();
-        const collectIds = (suite: JsonSuite) => {
-          suite.tests.map(t => t.testId).forEach(testId => testIds.add(testId));
-          suite.suites.forEach(collectIds);
-        };
-        project.suites.forEach(collectIds);
-
-        const filterTests = (suite: TeleSuite) => {
-          suite.tests = suite.tests.filter(t => testIds.has(t.id));
-          suite.suites.forEach(filterTests);
-        };
-        filterTests(projectSuite);
-      }
+  private _onProject(project: JsonProject) {
+    let projectSuite = this._rootSuite.suites.find(suite => suite.project()!.id === project.id);
+    if (!projectSuite) {
+      projectSuite = new TeleSuite(project.name, 'project');
+      this._rootSuite.suites.push(projectSuite);
+      projectSuite.parent = this._rootSuite;
     }
+    const p = this._parseProject(project);
+    projectSuite.project = () => p;
+    this._mergeSuitesInto(project.suites, projectSuite);
+
+    // Remove deleted tests when listing. Empty suites will be auto-filtered
+    // in the UI layer.
+    if (this._listOnly) {
+      const testIds = new Set<string>();
+      const collectIds = (suite: JsonSuite) => {
+        suite.tests.map(t => t.testId).forEach(testId => testIds.add(testId));
+        suite.suites.forEach(collectIds);
+      };
+      project.suites.forEach(collectIds);
+
+      const filterTests = (suite: TeleSuite) => {
+        suite.tests = suite.tests.filter(t => testIds.has(t.id));
+        suite.suites.forEach(filterTests);
+      };
+      filterTests(projectSuite);
+    }
+  }
+
+  private _onBegin() {
     this._reporter.onBegin?.(this._rootSuite);
   }
 

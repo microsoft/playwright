@@ -121,7 +121,7 @@ async function mergeEvents(dir: string, shardReportFiles: string[], printStatus:
   const stringPool = new StringInternPool();
   const events: JsonEvent[] = [];
   const configureEvents: JsonEvent[] = [];
-  const beginEvents: JsonEvent[] = [];
+  const projectEvents: JsonEvent[] = [];
   const endEvents: JsonEvent[] = [];
 
   const blobs = await extractAndParseReports(dir, shardReportFiles, stringPool, printStatus);
@@ -158,15 +158,22 @@ async function mergeEvents(dir: string, shardReportFiles: string[], printStatus:
     for (const event of parsedEvents) {
       if (event.method === 'onConfigure')
         configureEvents.push(event);
-      else if (event.method === 'onBegin')
-        beginEvents.push(event);
+      else if (event.method === 'onProject')
+        projectEvents.push(event);
       else if (event.method === 'onEnd')
         endEvents.push(event);
-      else if (event.method !== 'onBlobReportMetadata')
+      else if (event.method !== 'onBlobReportMetadata' && event.method !== 'onBegin')
         events.push(event);
     }
   }
-  return [mergeConfigureEvents(configureEvents), mergeBeginEvents(beginEvents), ...events, mergeEndEvents(endEvents), { method: 'onExit', params: undefined }];
+  return [
+    mergeConfigureEvents(configureEvents),
+    ...projectEvents,
+    { method: 'onBegin', params: undefined },
+    ...events,
+    mergeEndEvents(endEvents),
+    { method: 'onExit', params: undefined },
+  ];
 }
 
 function mergeConfigureEvents(configureEvents: JsonEvent[]): JsonEvent {
@@ -194,28 +201,6 @@ function mergeConfigureEvents(configureEvents: JsonEvent[]): JsonEvent {
   };
 }
 
-function mergeBeginEvents(beginEvents: JsonEvent[]): JsonEvent {
-  if (!beginEvents.length)
-    throw new Error('No begin events found');
-  const projects: JsonProject[] = [];
-  for (const event of beginEvents) {
-    const shardProjects: JsonProject[] = event.params.projects;
-    for (const shardProject of shardProjects) {
-      const mergedProject = projects.find(p => p.id === shardProject.id);
-      if (!mergedProject)
-        projects.push(shardProject);
-      else
-        mergeJsonSuites(shardProject.suites, mergedProject);
-    }
-  }
-  return {
-    method: 'onBegin',
-    params: {
-      projects,
-    }
-  };
-}
-
 function mergeConfigs(to: JsonConfig, from: JsonConfig): JsonConfig {
   return {
     ...to,
@@ -228,18 +213,6 @@ function mergeConfigs(to: JsonConfig, from: JsonConfig): JsonConfig {
     },
     workers: to.workers + from.workers,
   };
-}
-
-function mergeJsonSuites(jsonSuites: JsonSuite[], parent: JsonSuite | JsonProject) {
-  for (const jsonSuite of jsonSuites) {
-    const existingSuite = parent.suites.find(s => s.title === jsonSuite.title);
-    if (!existingSuite) {
-      parent.suites.push(jsonSuite);
-    } else {
-      mergeJsonSuites(jsonSuite.suites, existingSuite);
-      existingSuite.tests.push(...jsonSuite.tests);
-    }
-  }
 }
 
 function mergeEndEvents(endEvents: JsonEvent[]): JsonEvent {
@@ -278,8 +251,8 @@ class IdsPatcher {
     for (const event of events) {
       const { method, params } = event;
       switch (method) {
-        case 'onBegin':
-          this._onBegin(params.config, params.projects);
+        case 'onProject':
+          this._onProject(params.project);
           continue;
         case 'onTestBegin':
         case 'onStepBegin':
@@ -294,22 +267,11 @@ class IdsPatcher {
     }
   }
 
-  private _onBegin(config: JsonConfig, projects: JsonProject[]) {
-    const usedNames = new Set<string>();
-    for (const project of projects) {
-      project.metadata = project.metadata ?? {};
-      project.metadata.reportName = this._reportName;
-      for (let i = 0; i < projects.length; ++i) {
-        const candidate = (project.name + this._salt) + (i ? i : '');
-        if (usedNames.has(candidate))
-          continue;
-        project.id = candidate;
-        usedNames.add(candidate);
-        break;
-      }
-    }
-    for (const project of projects)
-      project.suites.forEach(suite => this._updateTestIds(suite));
+  private _onProject(project: JsonProject) {
+    project.metadata = project.metadata ?? {};
+    project.metadata.reportName = this._reportName;
+    project.id = this._stringPool.internString(project.id + this._salt);
+    project.suites.forEach(suite => this._updateTestIds(suite));
   }
 
   private _updateTestIds(suite: JsonSuite) {
