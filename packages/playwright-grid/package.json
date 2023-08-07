@@ -10,13 +10,13 @@
   "dependencies": {
     "commander": "^11.0.0",
     "debug": "^4.3.2",
+    "playwright-core": "1.37.0-alpha-aug-7-2023",
     "ws": "^8.1.0"
   },
   "devDependencies": {
     "@types/commander": "^2.12.2",
     "@types/debug": "^4.1.8",
-    "@types/ws": "^8.5.5",
-    "playwright-core": "1.37.0-next"
+    "@types/ws": "^8.5.5"
   },
   "repository": "github:Microsoft/playwright",
   "engines": {

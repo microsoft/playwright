@@ -28,19 +28,56 @@ const caps: Capabilities = {
 export class Node {
   workerSeq = 0;
 
-  constructor(grid: string, capacity: number, accessKey: string) {
-    log('node created');
-    const ws = new WebSocket(grid + `/registerNode?capacity=${capacity}&caps=${JSON.stringify(caps)}`, {
-      headers: {
-        'x-playwright-access-key': accessKey,
+  constructor(readonly grid: string, readonly capacity: number, readonly accessKey: string) {
+    log('node created', accessKey);
+  }
+
+  async connect() {
+    const wsGrid = 'ws://' + this.grid;
+    const url = wsGrid + `/registerNode?capacity=${this.capacity}&caps=${JSON.stringify(caps)}`;
+
+    for (let i = 0; i < 5; ++i) {
+      const ws = await this._connect(url);
+      if (ws) {
+        this._wire(ws, wsGrid);
+        return;
       }
+      await new Promise(f => setTimeout(f, 5000));
+    }
+
+    // eslint-disable-next-line no-restricted-properties
+    process.exit(0);
+  }
+
+  private async _connect(url: string): Promise<WebSocket | null> {
+    return await new Promise(resolve => {
+      log('connecting', url);
+      const ws = new WebSocket(url, {
+        headers: {
+          'x-playwright-access-key': this.accessKey,
+        }
+      });
+      ws.on('error', error => {
+        log(error);
+        resolve(null);
+      });
+      ws.on('open', () => {
+        log('connected', this.grid);
+        resolve(ws);
+      });
     });
-    let nodeId = '';
-    ws.on('error', error => {
-      log(error);
+  }
+
+  private _wire(ws: WebSocket, wsGrid: string) {
+    ws.on('close', () => {
       // eslint-disable-next-line no-restricted-properties
       process.exit(0);
     });
+    ws.on('error', () => {
+      // eslint-disable-next-line no-restricted-properties
+      process.exit(0);
+    });
+    let nodeId = '';
     ws.on('message', data => {
       const text = data.toString();
       const message = JSON.parse(text);
@@ -56,13 +93,11 @@ export class Node {
           ...process.env,
           PLAYWRIGHT_GRID_NODE_ID: nodeId,
           PLAYWRIGHT_GRID_WORKER_ID: workerId,
-          PLAYWRIGHT_GRID_ENDPOINT: grid,
-          PLAYWRIGHT_GRID_ACCESS_KEY: accessKey,
+          PLAYWRIGHT_GRID_ENDPOINT: wsGrid,
+          PLAYWRIGHT_GRID_ACCESS_KEY: this.accessKey,
         },
         detached: true
       });
     });
-    // eslint-disable-next-line no-restricted-properties
-    ws.on('close', () => process.exit(0));
   }
 }

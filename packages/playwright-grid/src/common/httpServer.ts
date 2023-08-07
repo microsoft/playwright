@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import debug from 'debug';
 import fs from 'fs';
 import http from 'http';
 import path from 'path';
@@ -23,11 +24,13 @@ import { Server as WebSocketServer } from 'ws';
 export type ServerRouteHandler = (request: http.IncomingMessage, response: http.ServerResponse) => boolean;
 
 export class HttpServer {
+  private _log: debug.Debugger;
   readonly server: http.Server;
   private _urlPrefix: string;
   private _routes: { prefix?: string, exact?: string, handler: ServerRouteHandler }[] = [];
 
   constructor() {
+    this._log = debug(`pw:grid:http`);
     this._urlPrefix = '';
     this.server = http.createServer(this._onRequest.bind(this));
   }
@@ -45,6 +48,7 @@ export class HttpServer {
   }
 
   async start(port?: number): Promise<string> {
+    this._log('starting server', port);
     this.server.listen(port);
     await new Promise(cb => this.server!.once('listening', cb));
     const address = this.server.address();
@@ -77,6 +81,7 @@ export class HttpServer {
   }
 
   private _onRequest(request: http.IncomingMessage, response: http.ServerResponse) {
+    this._log('web request', request.url);
     request.on('error', () => response.end());
     try {
       if (!request.url) {
@@ -84,6 +89,7 @@ export class HttpServer {
         return;
       }
       const url = new URL('http://localhost' + request.url);
+      this._log('url pathname', url.pathname);
       for (const route of this._routes) {
         if (route.exact && url.pathname === route.exact && route.handler(request, response))
           return;
