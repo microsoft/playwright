@@ -24,7 +24,7 @@ import { TeleReporterReceiver } from '../isomorphic/teleReceiver';
 import { JsonStringInternalizer, StringInternPool } from '../isomorphic/stringInternPool';
 import { createReporters } from '../runner/reporters';
 import { Multiplexer } from './multiplexer';
-import { ZipFile } from 'playwright-core/lib/utils';
+import { ZipFile, calculateSha1 } from 'playwright-core/lib/utils';
 import { currentBlobReportVersion, type BlobReportMetadata } from './blob';
 import { relativeFilePath } from '../util';
 
@@ -74,8 +74,8 @@ function parseEvents(reportJsonl: Buffer): JsonEvent[] {
   return reportJsonl.toString().split('\n').filter(line => line.length).map(line => JSON.parse(line)) as JsonEvent[];
 }
 
-async function extractAndParseReports(dir: string, shardFiles: string[], stringPool: StringInternPool, printStatus: StatusCallback): Promise<{ metadata: BlobReportMetadata, parsedEvents: JsonEvent[] }[]> {
-  const shardEvents = [];
+async function extractAndParseReports(dir: string, shardFiles: string[], stringPool: StringInternPool, printStatus: StatusCallback) {
+  const shardEvents: { file: string, metadata: BlobReportMetadata, parsedEvents: JsonEvent[] }[] = [];
   await fs.promises.mkdir(path.join(dir, 'resources'), { recursive: true });
 
   const internalizer = new JsonStringInternalizer(stringPool);
@@ -85,7 +85,7 @@ async function extractAndParseReports(dir: string, shardFiles: string[], stringP
     printStatus(`extracting: ${relativeFilePath(absolutePath)}`);
     const zipFile = new ZipFile(absolutePath);
     const entryNames = await zipFile.entries();
-    for (const entryName of entryNames) {
+    for (const entryName of entryNames.sort()) {
       const content = await zipFile.read(entryName);
       if (entryName.endsWith('.jsonl')) {
         const parsedEvents = parseEvents(content);
@@ -94,6 +94,7 @@ async function extractAndParseReports(dir: string, shardFiles: string[], stringP
         // as a post-processing step.
         internalizer.traverse(parsedEvents);
         shardEvents.push({
+          file,
           metadata: findMetadata(parsedEvents, file),
           parsedEvents
         });
@@ -117,20 +118,43 @@ function findMetadata(events: JsonEvent[], file: string): BlobReportMetadata {
 }
 
 async function mergeEvents(dir: string, shardReportFiles: string[], printStatus: StatusCallback) {
+  const stringPool = new StringInternPool();
   const events: JsonEvent[] = [];
   const configureEvents: JsonEvent[] = [];
   const beginEvents: JsonEvent[] = [];
   const endEvents: JsonEvent[] = [];
-  const stringPool = new StringInternPool();
-  const shardEvents = await extractAndParseReports(dir, shardReportFiles, stringPool, printStatus);
-  shardEvents.sort((a, b) => {
+
+  const blobs = await extractAndParseReports(dir, shardReportFiles, stringPool, printStatus);
+  // Sort by (report name; shard; file name), so that salt generation below is deterministic when:
+  // - report names are unique;
+  // - report names are missing;
+  // - report names are clashing between shards.
+  blobs.sort((a, b) => {
+    const nameA = a.metadata.name ?? '';
+    const nameB = b.metadata.name ?? '';
+    if (nameA !== nameB)
+      return nameA.localeCompare(nameB);
     const shardA = a.metadata.shard?.current ?? 0;
     const shardB = b.metadata.shard?.current ?? 0;
-    return shardA - shardB;
+    if (shardA !== shardB)
+      return shardA - shardB;
+    return a.file.localeCompare(b.file);
   });
-  const allTestIds = new Set<string>();
+
+  const saltSet = new Set<string>();
+
   printStatus(`merging events`);
-  for (const { parsedEvents } of shardEvents) {
+
+  for (const { file, parsedEvents, metadata } of blobs) {
+    // Generate unique salt for each blob.
+    const sha1 = calculateSha1(metadata.name || path.basename(file)).substring(0, 16);
+    let salt = sha1;
+    for (let i = 0; saltSet.has(salt); i++)
+      salt = sha1 + '-' + i;
+    saltSet.add(salt);
+
+    new IdsPatcher(stringPool, metadata.name, salt).patchEvents(parsedEvents);
+
     for (const event of parsedEvents) {
       if (event.method === 'onConfigure')
         configureEvents.push(event);
@@ -138,9 +162,7 @@ async function mergeEvents(dir: string, shardReportFiles: string[], printStatus:
         beginEvents.push(event);
       else if (event.method === 'onEnd')
         endEvents.push(event);
-      else if (event.method === 'onBlobReportMetadata')
-        new ProjectNamePatcher(allTestIds, stringPool, event.params.projectSuffix || '').patchEvents(parsedEvents);
-      else
+      else if (event.method !== 'onBlobReportMetadata')
         events.push(event);
     }
   }
@@ -248,13 +270,8 @@ function printStatusToStdout(message: string) {
   process.stdout.write(`${message}\n`);
 }
 
-class ProjectNamePatcher {
-  private _testIds = new Set<string>();
-
-  constructor(
-    private _allTestIds: Set<string>,
-    private _stringPool: StringInternPool,
-    private _projectNameSuffix: string) {
+class IdsPatcher {
+  constructor(private _stringPool: StringInternPool, private _reportName: string | undefined, private _salt: string) {
   }
 
   patchEvents(events: JsonEvent[]) {
@@ -275,48 +292,32 @@ class ProjectNamePatcher {
           continue;
       }
     }
-    for (const testId of this._testIds)
-      this._allTestIds.add(testId);
   }
 
   private _onBegin(config: JsonConfig, projects: JsonProject[]) {
-    for (const project of projects)
-      project.name += this._projectNameSuffix;
-    this._updateProjectIds(projects);
-    for (const project of projects)
-      project.suites.forEach(suite => this._updateTestIds(suite));
-  }
-
-  private _updateProjectIds(projects: JsonProject[]) {
     const usedNames = new Set<string>();
-    for (const p of projects) {
+    for (const project of projects) {
+      project.metadata = project.metadata ?? {};
+      project.metadata.reportName = this._reportName;
       for (let i = 0; i < projects.length; ++i) {
-        const candidate = p.name + (i ? i : '');
+        const candidate = (project.name + this._salt) + (i ? i : '');
         if (usedNames.has(candidate))
           continue;
-        p.id = candidate;
+        project.id = candidate;
         usedNames.add(candidate);
         break;
       }
     }
+    for (const project of projects)
+      project.suites.forEach(suite => this._updateTestIds(suite));
   }
 
   private _updateTestIds(suite: JsonSuite) {
-    suite.tests.forEach(test => {
-      test.testId = this._mapTestId(test.testId);
-      this._testIds.add(test.testId);
-    });
+    suite.tests.forEach(test => test.testId = this._mapTestId(test.testId));
     suite.suites.forEach(suite => this._updateTestIds(suite));
   }
 
   private _mapTestId(testId: string): string {
-    testId = testId + this._projectNameSuffix;
-    // Consider a setup project running on each shard. In this case we'll have
-    // the same testId (from setup project) in multiple blob reports.
-    // To avoid reporters being confused by clashing test ids, we automatically
-    // make them unique and produce a separate test from each blob.
-    while (this._allTestIds.has(testId))
-      testId = testId + '1';
-    return this._stringPool.internString(testId);
+    return this._stringPool.internString(testId + this._salt);
   }
 }

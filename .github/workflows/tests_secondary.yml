@@ -42,7 +42,7 @@ jobs:
     - run: npx playwright install --with-deps ${{ matrix.browser }} chromium
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --project=${{ matrix.browser }}
       env:
-        PWTEST_BLOB_SUFFIX: "-${{ matrix.browser }}-${{ matrix.os }}"
+        PWTEST_BLOB_REPORT_NAME: "${{ matrix.browser }}-${{ matrix.os }}"
     - run: node tests/config/checkCoverage.js ${{ matrix.browser }}
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
@@ -75,7 +75,7 @@ jobs:
     - run: npx playwright install --with-deps ${{ matrix.browser }} chromium
     - run: npm run test -- --project=${{ matrix.browser }}
       env:
-        PWTEST_BLOB_SUFFIX: "-${{ matrix.browser }}-${{ matrix.os }}"
+        PWTEST_BLOB_REPORT_NAME: "${{ matrix.browser }}-${{ matrix.os }}"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -107,7 +107,7 @@ jobs:
     - run: npm run test -- --project=${{ matrix.browser }}
       shell: bash
       env:
-        PWTEST_BLOB_SUFFIX: "-${{ matrix.browser }}-windows-latest"
+        PWTEST_BLOB_REPORT_NAME: "${{ matrix.browser }}-windows-latest"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -170,11 +170,11 @@ jobs:
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --project=${{ matrix.browser }} --headed
       if: always() && startsWith(matrix.os, 'ubuntu-')
       env:
-        PWTEST_BLOB_SUFFIX: "-${{ matrix.browser }}-headed-${{ matrix.os }}"
+        PWTEST_BLOB_REPORT_NAME: "${{ matrix.browser }}-headed-${{ matrix.os }}"
     - run: npm run test -- --project=${{ matrix.browser }} --headed
       if: always() && !startsWith(matrix.os, 'ubuntu-')
       env:
-        PWTEST_BLOB_SUFFIX: "-${{ matrix.browser }}-headed-${{ matrix.os }}"
+        PWTEST_BLOB_REPORT_NAME: "${{ matrix.browser }}-headed-${{ matrix.os }}"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -206,7 +206,7 @@ jobs:
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest
       env:
         PWTEST_MODE: ${{ matrix.mode }}
-        PWTEST_BLOB_SUFFIX: "-${{ matrix.mode }}"
+        PWTEST_BLOB_REPORT_NAME: "${{ matrix.mode }}"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -244,7 +244,7 @@ jobs:
       env:
         PWTEST_TRACE: 1
         PWTEST_CHANNEL: ${{ matrix.channel }}
-        PWTEST_BLOB_SUFFIX: "-tracing-${{ matrix.channel || matrix.browser }}"
+        PWTEST_BLOB_REPORT_NAME: "tracing-${{ matrix.channel || matrix.browser }}"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -271,7 +271,7 @@ jobs:
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest
       env:
         PWTEST_CHANNEL: chrome
-        PWTEST_BLOB_SUFFIX: "-chrome-stable-linux"
+        PWTEST_BLOB_REPORT_NAME: "chrome-stable-linux"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -293,7 +293,7 @@ jobs:
       shell: bash
       env:
         PWTEST_CHANNEL: chrome
-        PWTEST_BLOB_SUFFIX: "-chrome-stable-windows"
+        PWTEST_BLOB_REPORT_NAME: "chrome-stable-windows"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -314,7 +314,7 @@ jobs:
     - run: npm run ctest
       env:
         PWTEST_CHANNEL: chrome
-        PWTEST_BLOB_SUFFIX: "-chrome-stable-mac"
+        PWTEST_BLOB_REPORT_NAME: "chrome-stable-mac"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -340,12 +340,12 @@ jobs:
       if: matrix.os == 'ubuntu-20.04'
       env:
         PWTEST_CHANNEL: chromium-tip-of-tree
-        PWTEST_BLOB_SUFFIX: "-tip-of-tree-${{ matrix.os }}"
+        PWTEST_BLOB_REPORT_NAME: "tip-of-tree-${{ matrix.os }}"
     - run: npm run ctest
       if: matrix.os != 'ubuntu-20.04'
       env:
         PWTEST_CHANNEL: chromium-tip-of-tree
-        PWTEST_BLOB_SUFFIX: "-tip-of-tree-${{ matrix.os }}"
+        PWTEST_BLOB_REPORT_NAME: "tip-of-tree-${{ matrix.os }}"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -371,12 +371,12 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       env:
         PWTEST_CHANNEL: chromium-tip-of-tree
-        PWTEST_BLOB_SUFFIX: "-tip-of-tree-headed-${{ matrix.os }}"
+        PWTEST_BLOB_REPORT_NAME: "tip-of-tree-headed-${{ matrix.os }}"
     - run: npm run ctest -- --headed
       if: matrix.os != 'ubuntu-latest'
       env:
         PWTEST_CHANNEL: chromium-tip-of-tree
-        PWTEST_BLOB_SUFFIX: "-tip-of-tree-headed-${{ matrix.os }}"
+        PWTEST_BLOB_REPORT_NAME: "tip-of-tree-headed-${{ matrix.os }}"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -397,7 +397,7 @@ jobs:
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ftest
       env:
         PWTEST_CHANNEL: firefox-beta
-        PWTEST_BLOB_SUFFIX: "-firefox-beta-linux"
+        PWTEST_BLOB_REPORT_NAME: "firefox-beta-linux"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -419,7 +419,7 @@ jobs:
       shell: bash
       env:
         PWTEST_CHANNEL: firefox-beta
-        PWTEST_BLOB_SUFFIX: "-firefox-beta-windows"
+        PWTEST_BLOB_REPORT_NAME: "firefox-beta-windows"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -440,7 +440,7 @@ jobs:
     - run: npm run ftest
       env:
         PWTEST_CHANNEL: firefox-beta
-        PWTEST_BLOB_SUFFIX: "-firefox-beta-mac"
+        PWTEST_BLOB_REPORT_NAME: "firefox-beta-mac"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -461,7 +461,7 @@ jobs:
     - run: npm run ctest
       env:
         PWTEST_CHANNEL: msedge
-        PWTEST_BLOB_SUFFIX: "-edge-stable-mac"
+        PWTEST_BLOB_REPORT_NAME: "edge-stable-mac"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -483,7 +483,7 @@ jobs:
       shell: bash
       env:
         PWTEST_CHANNEL: msedge
-        PWTEST_BLOB_SUFFIX: "-edge-stable-windows"
+        PWTEST_BLOB_REPORT_NAME: "edge-stable-windows"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -504,7 +504,7 @@ jobs:
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest
       env:
         PWTEST_CHANNEL: msedge
-        PWTEST_BLOB_SUFFIX: "-edge-stable-linux"
+        PWTEST_BLOB_REPORT_NAME: "edge-stable-linux"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -525,7 +525,7 @@ jobs:
     - run: npm run ctest
       env:
         PWTEST_CHANNEL: msedge-beta
-        PWTEST_BLOB_SUFFIX: "-edge-beta-mac"
+        PWTEST_BLOB_REPORT_NAME: "edge-beta-mac"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -547,7 +547,7 @@ jobs:
       shell: bash
       env:
         PWTEST_CHANNEL: msedge-beta
-        PWTEST_BLOB_SUFFIX: "-edge-beta-windows"
+        PWTEST_BLOB_REPORT_NAME: "edge-beta-windows"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -568,7 +568,7 @@ jobs:
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest
       env:
         PWTEST_CHANNEL: msedge-beta
-        PWTEST_BLOB_SUFFIX: "-edge-beta-linux"
+        PWTEST_BLOB_REPORT_NAME: "edge-beta-linux"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -589,7 +589,7 @@ jobs:
     - run: npm run ctest
       env:
         PWTEST_CHANNEL: msedge-dev
-        PWTEST_BLOB_SUFFIX: "-edge-dev-mac"
+        PWTEST_BLOB_REPORT_NAME: "edge-dev-mac"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -611,7 +611,7 @@ jobs:
       shell: bash
       env:
         PWTEST_CHANNEL: msedge-dev
-        PWTEST_BLOB_SUFFIX: "-edge-dev-windows"
+        PWTEST_BLOB_REPORT_NAME: "edge-dev-windows"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -632,7 +632,7 @@ jobs:
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest
       env:
         PWTEST_CHANNEL: msedge-dev
-        PWTEST_BLOB_SUFFIX: "-edge-dev-linux"
+        PWTEST_BLOB_REPORT_NAME: "edge-dev-linux"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -653,7 +653,7 @@ jobs:
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest
       env:
         PWTEST_CHANNEL: chrome-beta
-        PWTEST_BLOB_SUFFIX: "-chrome-beta-linux"
+        PWTEST_BLOB_REPORT_NAME: "chrome-beta-linux"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -675,7 +675,7 @@ jobs:
       shell: bash
       env:
         PWTEST_CHANNEL: chrome-beta
-        PWTEST_BLOB_SUFFIX: "-chrome-beta-windows"
+        PWTEST_BLOB_REPORT_NAME: "chrome-beta-windows"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -696,7 +696,7 @@ jobs:
     - run: npm run ctest
       env:
         PWTEST_CHANNEL: chrome-beta
-        PWTEST_BLOB_SUFFIX: "-chrome-beta-mac"
+        PWTEST_BLOB_REPORT_NAME: "chrome-beta-mac"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
@@ -731,7 +731,7 @@ jobs:
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --project=chromium
       env:
         PLAYWRIGHT_CHROMIUM_USE_HEADLESS_NEW: 1
-        PWTEST_BLOB_SUFFIX: "-headless-new"
+        PWTEST_BLOB_REPORT_NAME: "headless-new"
     - run: node tests/config/checkCoverage.js chromium
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
