@@ -157,7 +157,9 @@ Supported options:
 
 - `--config path/to/config/file`
 
-  Takes reporters from Playwright configuration file.
+  Specifies the Playwright configuration file with output reporters. Use this option to pass
+  additional configuration to the output reporter. This configuration file can differ from
+  the one used during the creation of blob reports.
 
   Example: `npx playwright merge-reports --config=merge.config.ts ./blob-reports`
 
