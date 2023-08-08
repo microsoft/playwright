@@ -166,7 +166,7 @@ export function transformHook(originalCode: string, filename: string, moduleUrl?
   const pluginsEpilogue = hasPreprocessor ? [[process.env.PW_TEST_SOURCE_TRANSFORM!]] as BabelPlugin[] : [];
   const hash = calculateHash(originalCode, filename, !!moduleUrl, pluginsPrologue, pluginsEpilogue);
   const { cachedCode, addToCache } = getFromCompilationCache(filename, hash, moduleUrl);
-  if (cachedCode)
+  if (cachedCode !== undefined)
     return cachedCode;
 
   // We don't use any browserslist data, but babel checks it anyway.
