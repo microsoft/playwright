@@ -16,7 +16,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { ManualPromise, calculateSha1, createGuid, removeFolders, sanitizeForFilePath } from 'playwright-core/lib/utils';
+import { ManualPromise, calculateSha1, createGuid, getUserAgent, removeFolders, sanitizeForFilePath } from 'playwright-core/lib/utils';
 import { mime } from 'playwright-core/lib/utilsBundle';
 import { Readable } from 'stream';
 import type { EventEmitter } from 'events';
@@ -35,6 +35,7 @@ export const currentBlobReportVersion = 1;
 
 export type BlobReportMetadata = {
   version: number;
+  userAgent: string;
   name?: string;
   shard?: { total: number, current: number };
 };
@@ -55,6 +56,7 @@ export class BlobReporter extends TeleReporterEmitter {
   override onConfigure(config: FullConfig) {
     const metadata: BlobReportMetadata = {
       version: currentBlobReportVersion,
+      userAgent: getUserAgent(),
       name: process.env.PWTEST_BLOB_REPORT_NAME,
       shard: config.shard ?? undefined,
     };

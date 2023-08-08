@@ -23,6 +23,7 @@ import { startHtmlReportServer } from '../../packages/playwright-test/lib/report
 import { expect as baseExpect, test as baseTest, stripAnsi } from './playwright-test-fixtures';
 import extractZip from '../../packages/playwright-core/bundles/zip/node_modules/extract-zip';
 import * as yazl from '../../packages/playwright-core/bundles/zip/node_modules/yazl';
+import { getUserAgent } from '../../packages/playwright-core/lib/utils/userAgent';
 import { Readable } from 'stream';
 
 const DOES_NOT_SUPPORT_UTF8_IN_TERMINAL = process.platform === 'win32' && process.env.TERM_PROGRAM !== 'vscode' && !process.env.WT_SESSION;
@@ -1200,7 +1201,8 @@ test('blob report should include version', async ({ runInlineTest }) => {
       test('test 1', async ({}) => {});
     `,
   };
-  await runInlineTest(files);
+  // CI/1 is a part of user agent string, make sure it matches in the nested test runner.
+  await runInlineTest(files, undefined, { CI: process.env.CI });
   const reportFiles = await fs.promises.readdir(reportDir);
   expect(reportFiles).toEqual(['report.zip']);
 
@@ -1210,6 +1212,7 @@ test('blob report should include version', async ({ runInlineTest }) => {
   const events = data.split('\n').filter(Boolean).map(line => JSON.parse(line));
   const metadataEvent = events.find(e => e.method === 'onBlobReportMetadata');
   expect(metadataEvent.params.version).toBe(1);
+  expect(metadataEvent.params.userAgent).toBe(getUserAgent());
 });
 
 test('merge-reports should throw if report version is from the future', async ({ runInlineTest, mergeReports }) => {
