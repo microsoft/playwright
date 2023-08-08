@@ -142,7 +142,7 @@ export class FullConfigInternal {
         if (usedNames.has(candidate))
           continue;
         p.id = candidate;
-        (p.project as any)[projectIdSymbol] = p.id;
+        (p.project as any).__projectId = p.id;
         usedNames.add(candidate);
         break;
       }
@@ -274,8 +274,7 @@ export const defaultGrep = /.*/;
 export const defaultReporter = process.env.CI ? 'dot' : 'list';
 
 const configInternalSymbol = Symbol('configInternalSymbol');
-export const projectIdSymbol = Symbol('projectIdSymbol');
 
 export function getProjectId(project: FullProject): string {
-  return (project as any)[projectIdSymbol]!;
+  return (project as any).__projectId!;
 }

@@ -20,7 +20,6 @@ import type { FullProject, Metadata } from '../../types/test';
 import type * as reporterTypes from '../../types/testReporter';
 import type { SuitePrivate } from '../../types/reporterPrivate';
 import type { ReporterV2 } from '../reporters/reporterV2';
-import { projectIdSymbol, getProjectId } from '../common/config';
 import { StringInternPool } from './stringInternPool';
 
 export type JsonLocation = Location;
@@ -198,7 +197,7 @@ export class TeleReporterReceiver {
   }
 
   private _onProject(project: JsonProject) {
-    let projectSuite = this._rootSuite.suites.find(suite => getProjectId(suite.project()!) === project.id);
+    let projectSuite = this._rootSuite.suites.find(suite => suite.project()!.__projectId === project.id);
     if (!projectSuite) {
       projectSuite = new TeleSuite(project.name, 'project');
       this._rootSuite.suites.push(projectSuite);
@@ -324,7 +323,7 @@ export class TeleReporterReceiver {
 
   private _parseProject(project: JsonProject): TeleFullProject {
     return {
-      [projectIdSymbol]: project.id,
+      __projectId: project.id,
       metadata: project.metadata,
       name: project.name,
       outputDir: this._absolutePath(project.outputDir),
@@ -578,7 +577,7 @@ class TeleTestResult implements reporterTypes.TestResult {
   }
 }
 
-export type TeleFullProject = FullProject & { [projectIdSymbol]: string };
+export type TeleFullProject = FullProject & { __projectId: string };
 
 export const baseFullConfig: FullConfig = {
   forbidOnly: false,
