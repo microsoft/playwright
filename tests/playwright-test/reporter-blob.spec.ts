@@ -1201,7 +1201,8 @@ test('blob report should include version', async ({ runInlineTest }) => {
       test('test 1', async ({}) => {});
     `,
   };
-  await runInlineTest(files);
+  // CI/1 is a part of user agent string, make sure it matches in the nested test runner.
+  await runInlineTest(files, undefined, { CI: process.env.CI });
   const reportFiles = await fs.promises.readdir(reportDir);
   expect(reportFiles).toEqual(['report.zip']);
 
