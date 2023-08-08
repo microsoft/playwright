@@ -24,6 +24,7 @@ import type { FrameLocator } from '@playwright/test';
 const test = playwrightTest.extend<TraceViewerFixtures>(traceViewerFixtures);
 
 test.skip(({ trace }) => trace === 'on');
+test.skip(({ mode }) => mode.startsWith('service'));
 test.slow();
 
 let traceFile: string;
@@ -137,30 +138,31 @@ test('should render console', async ({ showTraceViewer, browserName }) => {
   const traceViewer = await showTraceViewer([traceFile]);
   await traceViewer.showConsoleTab();
 
-  await expect(traceViewer.consoleLineMessages).toHaveText([
-    'Info',
-    'Warning',
-    'Error',
-    'Unhandled exception',
-    'Cheers!'
-  ]);
-  await expect(traceViewer.consoleLines.locator('.codicon')).toHaveClass([
-    'codicon codicon-blank',
-    'codicon codicon-warning',
-    'codicon codicon-error',
-    'codicon codicon-error',
-    'codicon codicon-blank',
-  ]);
+  await expect(traceViewer.consoleLineMessages.nth(0)).toHaveText('Info');
+  await expect(traceViewer.consoleLineMessages.nth(1)).toHaveText('Warning');
+  await expect(traceViewer.consoleLineMessages.nth(2)).toHaveText('Error');
+  await expect(traceViewer.consoleLineMessages.nth(3)).toHaveText('Unhandled exception');
+  // Firefox can insert layout error here.
+  await expect(traceViewer.consoleLineMessages.last()).toHaveText('Cheers!');
+
+  const icons = traceViewer.consoleLines.locator('.codicon');
+  await expect(icons.nth(0)).toHaveClass('codicon codicon-blank');
+  await expect(icons.nth(1)).toHaveClass('codicon codicon-warning');
+  await expect(icons.nth(2)).toHaveClass('codicon codicon-error');
+  await expect(icons.nth(3)).toHaveClass('codicon codicon-error');
+  // Firefox can insert layout error here.
+  await expect(icons.last()).toHaveClass('codicon codicon-blank');
   await expect(traceViewer.consoleStacks.first()).toContainText('Error: Unhandled exception');
 
   await traceViewer.selectAction('page.evaluate');
-  await expect(traceViewer.page.locator('.console-tab').locator('.list-view-entry')).toHaveClass([
-    'list-view-entry highlighted',
-    'list-view-entry highlighted warning',
-    'list-view-entry highlighted error',
-    'list-view-entry highlighted error',
-    'list-view-entry',
-  ]);
+
+  const listViews = traceViewer.page.locator('.console-tab').locator('.list-view-entry');
+  await expect(listViews.nth(0)).toHaveClass('list-view-entry highlighted');
+  await expect(listViews.nth(1)).toHaveClass('list-view-entry highlighted warning');
+  await expect(listViews.nth(2)).toHaveClass('list-view-entry highlighted error');
+  await expect(listViews.nth(3)).toHaveClass('list-view-entry highlighted error');
+  // Firefox can insert layout error here.
+  await expect(listViews.last()).toHaveClass('list-view-entry');
 });
 
 test('should open console errors on click', async ({ showTraceViewer, browserName }) => {

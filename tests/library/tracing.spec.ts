@@ -236,8 +236,9 @@ test('should respect tracesDir and name', async ({ browserType, server, mode }, 
   }
 });
 
-test('should not include trace resources from the previous chunks', async ({ context, page, server, browserName }, testInfo) => {
+test('should not include trace resources from the previous chunks', async ({ context, page, server, browserName, mode }, testInfo) => {
   test.skip(browserName !== 'chromium', 'The number of screenshots is flaky in non-Chromium');
+  test.skip(mode.startsWith('service'), 'The number of screenshots is flaky');
   await context.tracing.start({ screenshots: true, snapshots: true, sources: true });
 
   await context.tracing.startChunk();

@@ -369,22 +369,6 @@ Locator ()
   - elements: [button]
 ```
 
-#### playwright.highlight(selector)
-
-Highlight the first occurrence of the locator:
-
-```bash
-playwright.highlight('.auth-form');
-```
-
-#### playwright.clear()
-
-```bash
-playwright.clear()
-```
-
-Clear existing highlights.
-
 #### playwright.selector(element)
 
 Generates selector for the given element. For example, select an element in the Elements panel and pass `$0`:

@@ -23,7 +23,7 @@ import url from 'url';
 import { colors, debug, minimatch, parseStackTraceLine } from 'playwright-core/lib/utilsBundle';
 import type { TestInfoError } from './../types/test';
 import type { Location } from './../types/testReporter';
-import { calculateSha1, isRegExp, isString } from 'playwright-core/lib/utils';
+import { calculateSha1, isRegExp, isString, sanitizeForFilePath } from 'playwright-core/lib/utils';
 import type { RawStack } from 'playwright-core/lib/utils';
 
 const PLAYWRIGHT_TEST_PATH = path.join(__dirname, '..');
@@ -195,10 +195,6 @@ export function expectTypes(receiver: any, types: string[], matcherName: string)
   }
 }
 
-export function sanitizeForFilePath(s: string) {
-  return s.replace(/[\x00-\x2C\x2E-\x2F\x3A-\x40\x5B-\x60\x7B-\x7F]+/g, '-');
-}
-
 export function trimLongString(s: string, length = 100) {
   if (s.length <= length)
     return s;
@@ -259,6 +255,14 @@ export function getPackageJsonPath(folderPath: string): string {
   const result = getPackageJsonPath(parentFolder);
   folderToPackageJsonPath.set(folderPath, result);
   return result;
+}
+
+export function resolveReporterOutputPath(defaultValue: string, configDir: string, configValue: string | undefined) {
+  if (configValue)
+    return path.resolve(configDir, configValue);
+  let basePath = getPackageJsonPath(configDir);
+  basePath = basePath ? path.dirname(basePath) : process.cwd();
+  return path.resolve(basePath, defaultValue);
 }
 
 export async function normalizeAndSaveAttachment(outputPath: string, name: string, options: { path?: string, body?: string | Buffer, contentType?: string } = {}): Promise<{ name: string; path?: string | undefined; body?: Buffer | undefined; contentType: string; }> {

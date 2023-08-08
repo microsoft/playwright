@@ -58,7 +58,7 @@ class JUnitReporter extends EmptyReporter {
     const children: XMLEntry[] = [];
     for (const projectSuite of this.suite.suites) {
       for (const fileSuite of projectSuite.suites)
-        children.push(this._buildTestSuite(projectSuite.title, fileSuite));
+        children.push(await this._buildTestSuite(projectSuite.title, fileSuite));
     }
     const tokens: string[] = [];
 
@@ -82,21 +82,21 @@ class JUnitReporter extends EmptyReporter {
     if (this.outputFile) {
       assert(this.config.configFile || path.isAbsolute(this.outputFile), 'Expected fully resolved path if not using config file.');
       const outputFile = this.config.configFile ? path.resolve(path.dirname(this.config.configFile), this.outputFile) : this.outputFile;
-      fs.mkdirSync(path.dirname(outputFile), { recursive: true });
-      fs.writeFileSync(outputFile, reportString);
+      await fs.promises.mkdir(path.dirname(outputFile), { recursive: true });
+      await fs.promises.writeFile(outputFile, reportString);
     } else {
       console.log(reportString);
     }
   }
 
-  private _buildTestSuite(projectName: string, suite: Suite): XMLEntry {
+  private async _buildTestSuite(projectName: string, suite: Suite): Promise<XMLEntry> {
     let tests = 0;
     let skipped = 0;
     let failures = 0;
     let duration = 0;
     const children: XMLEntry[] = [];
 
-    suite.allTests().forEach(test => {
+    for (const test of suite.allTests()){
       ++tests;
       if (test.outcome() === 'skipped')
         ++skipped;
@@ -104,8 +104,9 @@ class JUnitReporter extends EmptyReporter {
         ++failures;
       for (const result of test.results)
         duration += result.duration;
-      this._addTestCase(suite.title, test, children);
-    });
+      await this._addTestCase(suite.title, test, children);
+    }
+
     this.totalTests += tests;
     this.totalSkipped += skipped;
     this.totalFailures += failures;
@@ -128,7 +129,7 @@ class JUnitReporter extends EmptyReporter {
     return entry;
   }
 
-  private _addTestCase(suiteName: string, test: TestCase, entries: XMLEntry[]) {
+  private async _addTestCase(suiteName: string, test: TestCase, entries: XMLEntry[]) {
     const entry = {
       name: 'testcase',
       attributes: {
@@ -189,13 +190,13 @@ class JUnitReporter extends EmptyReporter {
       for (const attachment of result.attachments) {
         if (!attachment.path)
           continue;
+        const attachmentPath = path.relative(this.config.rootDir, attachment.path);
+
         try {
-          const attachmentPath = path.relative(this.config.rootDir, attachment.path);
-          if (fs.existsSync(attachment.path))
-            systemOut.push(`\n[[ATTACHMENT|${attachmentPath}]]\n`);
-          else
-            systemErr.push(`\nWarning: attachment ${attachmentPath} is missing`);
-        } catch (e) {
+          await fs.promises.access(attachment.path);
+          systemOut.push(`\n[[ATTACHMENT|${attachmentPath}]]\n`);
+        } catch {
+          systemErr.push(`\nWarning: attachment ${attachmentPath} is missing`);
         }
       }
     }

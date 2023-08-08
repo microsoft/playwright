@@ -93,6 +93,12 @@ const configFile = (baseDir: string, files: Files): string | undefined => {
   return undefined;
 };
 
+function findPackageJSONDir(files: Files, dir: string) {
+  while (dir && !files[dir + '/package.json'])
+    dir = path.dirname(dir);
+  return dir;
+}
+
 function startPlaywrightTest(childProcess: CommonFixtures['childProcess'], baseDir: string, params: any, env: NodeJS.ProcessEnv, options: RunOptions): TestChildProcess {
   const paramList: string[] = [];
   for (const key of Object.keys(params)) {
@@ -138,7 +144,9 @@ async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], b
     if (config)
       additionalArgs.push('--config', config);
     const cwd = options.cwd ? path.resolve(baseDir, options.cwd) : baseDir;
-    const mergeResult = await mergeReports('blob-report', env, { cwd, additionalArgs });
+    const packageRoot = path.resolve(baseDir, findPackageJSONDir(files, options.cwd ?? ''));
+    const relativeBlobReportPath = path.relative(cwd, path.join(packageRoot, 'blob-report'));
+    const mergeResult = await mergeReports(relativeBlobReportPath, env, { cwd, additionalArgs });
     expect(mergeResult.exitCode).toBe(0);
     output = mergeResult.output;
   }
@@ -205,7 +213,7 @@ export function cleanEnv(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
     PW_TEST_REPORTER_WS_ENDPOINT: undefined,
     PW_TEST_SOURCE_TRANSFORM: undefined,
     PW_TEST_SOURCE_TRANSFORM_SCOPE: undefined,
-    PWTEST_BLOB_SUFFIX: undefined,
+    PWTEST_BLOB_REPORT_NAME: undefined,
     TEST_WORKER_INDEX: undefined,
     TEST_PARLLEL_INDEX: undefined,
     NODE_OPTIONS: undefined,

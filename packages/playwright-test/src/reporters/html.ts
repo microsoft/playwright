@@ -20,11 +20,11 @@ import path from 'path';
 import type { TransformCallback } from 'stream';
 import { Transform } from 'stream';
 import type { FullConfig, Suite } from '../../types/testReporter';
-import { HttpServer, assert, calculateSha1, copyFileAndMakeWritable, gracefullyProcessExitDoNotHang, removeFolders } from 'playwright-core/lib/utils';
+import { HttpServer, assert, calculateSha1, copyFileAndMakeWritable, gracefullyProcessExitDoNotHang, removeFolders, sanitizeForFilePath } from 'playwright-core/lib/utils';
 import type { JsonAttachment, JsonReport, JsonSuite, JsonTestCase, JsonTestResult, JsonTestStep } from './raw';
 import RawReporter from './raw';
 import { stripAnsiEscapes } from './base';
-import { getPackageJsonPath, sanitizeForFilePath } from '../util';
+import { resolveReporterOutputPath } from '../util';
 import type { Metadata } from '../../types/test';
 import type { ZipFile } from 'playwright-core/lib/zipBundle';
 import { yazl } from 'playwright-core/lib/zipBundle';
@@ -95,11 +95,9 @@ class HtmlReporter extends EmptyReporter {
   }
 
   _resolveOptions(): { outputFolder: string, open: HtmlReportOpenOption, attachmentsBaseURL: string } {
-    let { outputFolder } = this._options;
-    if (outputFolder)
-      outputFolder = path.resolve(this._options.configDir, outputFolder);
+    const outputFolder = reportFolderFromEnv() ?? resolveReporterOutputPath('playwright-report', this._options.configDir, this._options.outputFolder);
     return {
-      outputFolder: reportFolderFromEnv() ?? outputFolder ?? defaultReportFolder(this._options.configDir),
+      outputFolder,
       open: process.env.PW_TEST_HTML_REPORT_OPEN as any || this._options.open || 'on-failure',
       attachmentsBaseURL: this._options.attachmentsBaseURL || 'data/'
     };
@@ -142,17 +140,8 @@ function reportFolderFromEnv(): string | undefined {
   return undefined;
 }
 
-function defaultReportFolder(searchForPackageJson: string): string {
-  let basePath = getPackageJsonPath(searchForPackageJson);
-  if (basePath)
-    basePath = path.dirname(basePath);
-  else
-    basePath = process.cwd();
-  return path.resolve(basePath, 'playwright-report');
-}
-
 function standaloneDefaultFolder(): string {
-  return reportFolderFromEnv() ?? defaultReportFolder(process.cwd());
+  return reportFolderFromEnv() ?? resolveReporterOutputPath('playwright-report', process.cwd(), undefined);
 }
 
 export async function showHTMLReport(reportFolder: string | undefined, host: string = 'localhost', port?: number, testId?: string) {
@@ -228,7 +217,7 @@ class HtmlBuilder {
         }
         const { testFile, testFileSummary } = fileEntry;
         const testEntries: TestEntry[] = [];
-        this._processJsonSuite(file, fileId, projectJson.project.name, [], testEntries);
+        this._processJsonSuite(file, fileId, projectJson.project.name, projectJson.project.metadata?.reportName, [], testEntries);
         for (const test of testEntries) {
           testFile.tests.push(test.testCase);
           testFileSummary.tests.push(test.testCaseSummary);
@@ -325,13 +314,13 @@ class HtmlBuilder {
     this._dataZipFile.addBuffer(Buffer.from(JSON.stringify(data)), fileName);
   }
 
-  private _processJsonSuite(suite: JsonSuite, fileId: string, projectName: string, path: string[], outTests: TestEntry[]) {
+  private _processJsonSuite(suite: JsonSuite, fileId: string, projectName: string, reportName: string | undefined, path: string[], outTests: TestEntry[]) {
     const newPath = [...path, suite.title];
-    suite.suites.map(s => this._processJsonSuite(s, fileId, projectName, newPath, outTests));
-    suite.tests.forEach(t => outTests.push(this._createTestEntry(t, projectName, newPath)));
+    suite.suites.map(s => this._processJsonSuite(s, fileId, projectName, reportName, newPath, outTests));
+    suite.tests.forEach(t => outTests.push(this._createTestEntry(t, projectName, reportName, newPath)));
   }
 
-  private _createTestEntry(test: JsonTestCase, projectName: string, path: string[]): TestEntry {
+  private _createTestEntry(test: JsonTestCase, projectName: string, reportName: string | undefined, path: string[]): TestEntry {
     const duration = test.results.reduce((a, r) => a + r.duration, 0);
     this._tests.set(test.testId, test);
     const location = test.location;
@@ -345,6 +334,7 @@ class HtmlBuilder {
         testId: test.testId,
         title: test.title,
         projectName,
+        reportName,
         location,
         duration,
         annotations: test.annotations,
@@ -357,6 +347,7 @@ class HtmlBuilder {
         testId: test.testId,
         title: test.title,
         projectName,
+        reportName,
         location,
         duration,
         annotations: test.annotations,

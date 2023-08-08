@@ -1041,7 +1041,7 @@ test('should attach expected/actual/diff when sizes are different', async ({ run
     {
       name: 'snapshot-expected.png',
       contentType: 'image/png',
-      path: 'a-is-a-test/snapshot-expected.png'
+      path: 'to-have-screenshot-should-attach-expected-actual-diff-when-sizes-are-different-playwright-test/__screenshots__/a.spec.js/snapshot.png',
     },
     {
       name: 'snapshot-actual.png',

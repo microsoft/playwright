@@ -17,9 +17,9 @@
 import path from 'path';
 import { createGuid } from 'playwright-core/lib/utils';
 import type { SuitePrivate } from '../../types/reporterPrivate';
-import type { FullConfig, FullResult, Location, TestError, TestResult, TestStep } from '../../types/testReporter';
+import type { FullConfig, FullResult, Location, TestCase, TestError, TestResult, TestStep } from '../../types/testReporter';
 import { FullConfigInternal, FullProjectInternal } from '../common/config';
-import type { Suite, TestCase } from '../common/test';
+import type { Suite } from '../common/test';
 import type { JsonAttachment, JsonConfig, JsonEvent, JsonProject, JsonStdIOType, JsonSuite, JsonTestCase, JsonTestEnd, JsonTestResultEnd, JsonTestResultStart, JsonTestStepEnd, JsonTestStepStart } from '../isomorphic/teleReceiver';
 import { serializeRegexPatterns } from '../isomorphic/teleReceiver';
 import type { ReporterV2 } from './reporterV2';
@@ -45,7 +45,9 @@ export class TeleReporterEmitter implements ReporterV2 {
 
   onBegin(suite: Suite) {
     const projects = suite.suites.map(projectSuite => this._serializeProject(projectSuite));
-    this._messageSink({ method: 'onBegin', params: { projects } });
+    for (const project of projects)
+      this._messageSink({ method: 'onProject', params: { project } });
+    this._messageSink({ method: 'onBegin', params: undefined });
   }
 
   onTestBegin(test: TestCase, result: TestResult): void {
@@ -199,7 +201,7 @@ export class TeleReporterEmitter implements ReporterV2 {
       retry: result.retry,
       workerIndex: result.workerIndex,
       parallelIndex: result.parallelIndex,
-      startTime: result.startTime.toISOString(),
+      startTime: +result.startTime,
     };
   }
 
@@ -229,7 +231,7 @@ export class TeleReporterEmitter implements ReporterV2 {
       parentStepId: (step.parent as any)?.[idSymbol],
       title: step.title,
       category: step.category,
-      startTime: step.startTime.toISOString(),
+      startTime: +step.startTime,
       location: this._relativeLocation(step.location),
     };
   }

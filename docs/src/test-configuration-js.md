@@ -133,7 +133,8 @@ export default defineConfig({
     },
 
     toMatchSnapshot: {
-      // An acceptable ratio of pixels that are different to the total amount of pixels, between 0 and 1.
+      // An acceptable ratio of pixels that are different to the
+      // total amount of pixels, between 0 and 1.
       maxDiffPixelRatio: 0.1,
     },
   },
@@ -215,7 +216,7 @@ test('numeric ranges', () => {
 Do not confuse Playwright's `expect` with the [`expect` library](https://jestjs.io/docs/expect). The latter is not fully integrated with Playwright test runner, so make sure to use Playwright's own `expect`.
 :::
 
-For TypeScript, also add the following to your [`global.d.ts`](https://www.typescriptlang.org/docs/handbook/declaration-files/templates/global-d-ts.html). If it does not exist, you need to create it inside your repository. Make sure that your `global.d.ts` gets included inside your `tsconfig.json` via the `include` or `compilerOptions.typeRoots` option so that your IDE will pick it up.
+For TypeScript, also add the following to your [`global.d.ts`](https://www.typescriptlang.org/docs/handbook/declaration-files/templates/global-d-ts.html). If it does not exist, you need to create it inside your repository. Make sure that your `global.d.ts` gets included inside your `tsconfig.json` via the `files`, `include` or `compilerOptions.typeRoots` option so that your IDE will pick it up.
 
 You don't need it for JavaScript.
 

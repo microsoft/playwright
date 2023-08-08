@@ -156,7 +156,7 @@ test('should write detailed failure result to an output folder', async ({ runInl
   expect(outputText).toContain('Snapshot comparison failed:');
   const expectedSnapshotArtifactPath = testInfo.outputPath('test-results', 'a-is-a-test', 'snapshot-expected.txt');
   const actualSnapshotArtifactPath = testInfo.outputPath('test-results', 'a-is-a-test', 'snapshot-actual.txt');
-  expect(outputText).toContain(`Expected: ${expectedSnapshotArtifactPath}`);
+  expect(outputText).toMatch(/Expected:.*a\.spec\.js-snapshots.snapshot\.txt/);
   expect(outputText).toContain(`Received: ${actualSnapshotArtifactPath}`);
   expect(fs.existsSync(expectedSnapshotArtifactPath)).toBe(true);
   expect(fs.existsSync(actualSnapshotArtifactPath)).toBe(true);
@@ -569,7 +569,7 @@ test('should compare different PNG images', async ({ runInlineTest }, testInfo) 
   const expectedSnapshotArtifactPath = testInfo.outputPath('test-results', 'a-is-a-test', 'snapshot-expected.png');
   const actualSnapshotArtifactPath = testInfo.outputPath('test-results', 'a-is-a-test', 'snapshot-actual.png');
   const diffSnapshotArtifactPath = testInfo.outputPath('test-results', 'a-is-a-test', 'snapshot-diff.png');
-  expect(outputText).toContain(`Expected: ${expectedSnapshotArtifactPath}`);
+  expect(outputText).toMatch(/Expected:.*a\.spec\.js-snapshots.snapshot\.png/);
   expect(outputText).toContain(`Received: ${actualSnapshotArtifactPath}`);
   expect(outputText).toContain(`Diff: ${diffSnapshotArtifactPath}`);
   expect(fs.existsSync(expectedSnapshotArtifactPath)).toBe(true);
@@ -877,7 +877,7 @@ test('should attach expected/actual/diff with snapshot path', async ({ runInline
     {
       name: 'test/path/snapshot-expected.png',
       contentType: 'image/png',
-      path: 'a-is-a-test/test/path/snapshot-expected.png'
+      path: 'golden-should-attach-expected-actual-diff-with-snapshot-path-playwright-test/a.spec.js-snapshots/test/path/snapshot.png'
     },
     {
       name: 'test/path/snapshot-actual.png',
@@ -916,7 +916,7 @@ test('should attach expected/actual/diff', async ({ runInlineTest }, testInfo) =
     {
       name: 'snapshot-expected.png',
       contentType: 'image/png',
-      path: 'a-is-a-test/snapshot-expected.png'
+      path: 'golden-should-attach-expected-actual-diff-playwright-test/a.spec.js-snapshots/snapshot.png'
     },
     {
       name: 'snapshot-actual.png',
@@ -957,7 +957,7 @@ test('should attach expected/actual/diff for different sizes', async ({ runInlin
     {
       name: 'snapshot-expected.png',
       contentType: 'image/png',
-      path: 'a-is-a-test/snapshot-expected.png'
+      path: 'golden-should-attach-expected-actual-diff-for-different-sizes-playwright-test/a.spec.js-snapshots/snapshot.png'
     },
     {
       name: 'snapshot-actual.png',

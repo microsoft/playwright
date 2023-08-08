@@ -17,8 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 import type { FullConfig, Location, Suite, TestCase, TestResult, TestStatus, TestStep } from '../../types/testReporter';
-import { assert } from 'playwright-core/lib/utils';
-import { sanitizeForFilePath } from '../util';
+import { assert, sanitizeForFilePath } from 'playwright-core/lib/utils';
 import { formatResultFailure } from './base';
 import { toPosixPath, serializePatterns } from './json';
 import { MultiMap } from 'playwright-core/lib/utils';

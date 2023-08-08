@@ -18,6 +18,7 @@ nohup.out
 .trace
 .tmp
 allure*
+blob-report
 playwright-report
 test-results
 /demo/

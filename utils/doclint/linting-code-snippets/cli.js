@@ -142,6 +142,7 @@ class JSLintingService extends LintingService {
         rules: {
           'notice/notice': 'off',
           '@typescript-eslint/no-unused-vars': 'off',
+          'max-len': ['error', { code: 100 }],
         },
       }
     });

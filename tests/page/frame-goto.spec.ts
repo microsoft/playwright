@@ -43,7 +43,7 @@ it('should reject when frame detaches', async ({ page, server, browserName }) =>
     expect(error.message.toLowerCase()).toContain('frame was detached');
 });
 
-it('should continue after client redirect', async ({ page, server, isAndroid }) => {
+it('should continue after client redirect', async ({ page, server, isAndroid, mode }) => {
   it.fixme(isAndroid);
 
   server.setRoute('/frames/script.js', () => {});

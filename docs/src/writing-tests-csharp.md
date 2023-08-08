@@ -47,8 +47,10 @@ public class Tests : PageTest
         // Click the get started link.
         await getStarted.ClickAsync();
 
-        // Expects the URL to contain intro.
-        await Expect(Page).ToHaveURLAsync(new Regex(".*intro"));
+        // Expects page to have a heading with the name of Installation.
+        await Expect(page
+            .GetByRole(AriaRole.Heading, new() { Name = "Installation" }))
+            .ToBeVisibleAsync();
     }
 }
 ```

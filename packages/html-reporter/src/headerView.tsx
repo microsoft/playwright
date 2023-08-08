@@ -64,7 +64,7 @@ export const HeaderView: React.FC<React.PropsWithChildren<{
 const StatsNavView: React.FC<{
   stats: Stats
 }> = ({ stats }) => {
-  return <nav className='d-flex no-wrap'>
+  return <nav>
     <Link className='subnav-item' href='#?'>
       All <span className='d-inline counter'>{stats.total}</span>
     </Link>

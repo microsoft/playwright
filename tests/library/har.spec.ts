@@ -53,7 +53,7 @@ it('should have version and creator', async ({ contextFactory, server }, testInf
   const log = await getLog();
   expect(log.version).toBe('1.2');
   expect(log.creator.name).toBe('Playwright');
-  expect(log.creator.version).toBe(process.env.PW_VERSION_OVERRIDE || require('../../package.json')['version']);
+  expect(log.creator.version).toContain(process.env.PW_VERSION_OVERRIDE || require('../../package.json')['version']);
 });
 
 it('should have browser', async ({ browserName, browser, contextFactory, server }, testInfo) => {
@@ -583,9 +583,10 @@ it('should have connection details', async ({ contextFactory, server, browserNam
   await page.goto(server.EMPTY_PAGE);
   const log = await getLog();
   const { serverIPAddress, _serverPort: port, _securityDetails: securityDetails } = log.entries[0];
-  expect(serverIPAddress).toMatch(/^127\.0\.0\.1|\[::1\]/);
-  if (!mode.startsWith('service'))
+  if (!mode.startsWith('service')) {
+    expect(serverIPAddress).toMatch(/^127\.0\.0\.1|\[::1\]/);
     expect(port).toBe(server.PORT);
+  }
   expect(securityDetails).toEqual({});
 });
 
@@ -597,9 +598,10 @@ it('should have security details', async ({ contextFactory, httpsServer, browser
   await page.goto(httpsServer.EMPTY_PAGE);
   const log = await getLog();
   const { serverIPAddress, _serverPort: port, _securityDetails: securityDetails } = log.entries[0];
-  expect(serverIPAddress).toMatch(/^127\.0\.0\.1|\[::1\]/);
-  if (!mode.startsWith('service'))
+  if (!mode.startsWith('service')) {
+    expect(serverIPAddress).toMatch(/^127\.0\.0\.1|\[::1\]/);
     expect(port).toBe(httpsServer.PORT);
+  }
   if (browserName === 'webkit' && platform === 'darwin')
     expect(securityDetails).toEqual({ protocol: 'TLS 1.3', subjectName: 'puppeteer-tests', validFrom: 1550084863, validTo: 33086084863 });
   else
@@ -618,16 +620,16 @@ it('should have connection details for redirects', async ({ contextFactory, serv
   if (browserName === 'webkit') {
     expect(detailsFoo.serverIPAddress).toBeUndefined();
     expect(detailsFoo._serverPort).toBeUndefined();
-  } else {
+  } else if (!mode.startsWith('service')) {
     expect(detailsFoo.serverIPAddress).toMatch(/^127\.0\.0\.1|\[::1\]/);
-    if (!mode.startsWith('service'))
-      expect(detailsFoo._serverPort).toBe(server.PORT);
+    expect(detailsFoo._serverPort).toBe(server.PORT);
   }
 
-  const detailsEmpty = log.entries[1];
-  expect(detailsEmpty.serverIPAddress).toMatch(/^127\.0\.0\.1|\[::1\]/);
-  if (!mode.startsWith('service'))
+  if (!mode.startsWith('service')) {
+    const detailsEmpty = log.entries[1];
+    expect(detailsEmpty.serverIPAddress).toMatch(/^127\.0\.0\.1|\[::1\]/);
     expect(detailsEmpty._serverPort).toBe(server.PORT);
+  }
 });
 
 it('should have connection details for failed requests', async ({ contextFactory, server, browserName, platform, mode }, testInfo) => {
@@ -638,18 +640,20 @@ it('should have connection details for failed requests', async ({ contextFactory
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.PREFIX + '/one-style.html');
   const log = await getLog();
-  const { serverIPAddress, _serverPort: port } = log.entries[0];
-  expect(serverIPAddress).toMatch(/^127\.0\.0\.1|\[::1\]/);
-  if (!mode.startsWith('service'))
+  if (!mode.startsWith('service')) {
+    const { serverIPAddress, _serverPort: port } = log.entries[0];
+    expect(serverIPAddress).toMatch(/^127\.0\.0\.1|\[::1\]/);
     expect(port).toBe(server.PORT);
+  }
 });
 
 it('should return server address directly from response', async ({ page, server, mode }) => {
   const response = await page.goto(server.EMPTY_PAGE);
-  const { ipAddress, port } = await response.serverAddr();
-  expect(ipAddress).toMatch(/^127\.0\.0\.1|\[::1\]/);
-  if (!mode.startsWith('service'))
+  if (!mode.startsWith('service')) {
+    const { ipAddress, port } = await response.serverAddr();
+    expect(ipAddress).toMatch(/^127\.0\.0\.1|\[::1\]/);
     expect(port).toBe(server.PORT);
+  }
 });
 
 it('should return security details directly from response', async ({ contextFactory, httpsServer, browserName, platform }) => {

@@ -75,13 +75,20 @@ import os from 'os';
 import path from 'path';
 import childProcess from 'child_process';
 
-const EXECUTABLE_PATH = path.join(__dirname, '../../webview2-app/bin/Debug/net6.0-windows/webview2.exe');
+const EXECUTABLE_PATH = path.join(
+    __dirname,
+    '../../webview2-app/bin/Debug/net6.0-windows/webview2.exe',
+);
 
 export const test = base.extend({
   browser: async ({ playwright }, use, testInfo) => {
     const cdpPort = 10000 + testInfo.workerIndex;
-    fs.accessSync(EXECUTABLE_PATH, fs.constants.X_OK); // Make sure that the executable exists and is executable
-    const userDataDir = path.join(fs.realpathSync.native(os.tmpdir()), `playwright-webview2-tests/user-data-dir-${testInfo.workerIndex}`);
+    // Make sure that the executable exists and is executable
+    fs.accessSync(EXECUTABLE_PATH, fs.constants.X_OK);
+    const userDataDir = path.join(
+        fs.realpathSync.native(os.tmpdir()),
+        `playwright-webview2-tests/user-data-dir-${testInfo.workerIndex}`,
+    );
     const webView2Process = childProcess.spawn(EXECUTABLE_PATH, [], {
       shell: true,
       env: {
