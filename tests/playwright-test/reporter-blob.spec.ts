@@ -275,7 +275,7 @@ test('should merge blob into blob', async ({ runInlineTest, mergeReports, showRe
     const reportFiles = await fs.promises.readdir(reportDir);
     reportFiles.sort();
     expect(reportFiles).toEqual(['report-1.zip', 'report-2.zip']);
-    const { exitCode, output } = await mergeReports(reportDir, undefined, { additionalArgs: ['--reporter', 'blob'] });
+    const { exitCode } = await mergeReports(reportDir, undefined, { additionalArgs: ['--reporter', 'blob'] });
     expect(exitCode).toBe(0);
   }
   {
