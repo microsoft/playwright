@@ -15,7 +15,7 @@
  */
 
 import type { FullConfig, FullResult, Location, TestError, TestResult, TestStatus, TestStep } from '../../types/testReporter';
-import type { Annotation } from '../common/config';
+import { setProjectId, type Annotation, projectIdSymbol, getProjectId } from '../common/config';
 import type { FullProject, Metadata } from '../../types/test';
 import type * as reporterTypes from '../../types/testReporter';
 import type { SuitePrivate } from '../../types/reporterPrivate';
@@ -197,7 +197,7 @@ export class TeleReporterReceiver {
   }
 
   private _onProject(project: JsonProject) {
-    let projectSuite = this._rootSuite.suites.find(suite => suite.project()!.id === project.id);
+    let projectSuite = this._rootSuite.suites.find(suite => getProjectId(suite.project()!) === project.id);
     if (!projectSuite) {
       projectSuite = new TeleSuite(project.name, 'project');
       this._rootSuite.suites.push(projectSuite);
@@ -323,7 +323,7 @@ export class TeleReporterReceiver {
 
   private _parseProject(project: JsonProject): TeleFullProject {
     return {
-      id: project.id,
+      [projectIdSymbol]: project.id,
       metadata: project.metadata,
       name: project.name,
       outputDir: this._absolutePath(project.outputDir),
@@ -577,7 +577,7 @@ class TeleTestResult implements reporterTypes.TestResult {
   }
 }
 
-export type TeleFullProject = FullProject & { id: string };
+export type TeleFullProject = FullProject & { [projectIdSymbol]: string };
 
 export const baseFullConfig: FullConfig = {
   forbidOnly: false,
