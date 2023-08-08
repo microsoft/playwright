@@ -16,8 +16,10 @@
  */
 
 import { test as it, expect } from './pageTest';
+import { getUserAgent } from 'packages/playwright-core/lib/utils/userAgent';
 
 it('should check the box @smoke', async ({ page }) => {
+  console.log(getUserAgent());
   await page.setContent(`<input id='checkbox' type='checkbox'></input>`);
   await page.check('input');
   expect(await page.evaluate(() => window['checkbox'].checked)).toBe(true);
