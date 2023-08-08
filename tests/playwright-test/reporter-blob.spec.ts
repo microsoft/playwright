@@ -236,6 +236,62 @@ test('should merge into html with dependencies', async ({ runInlineTest, mergeRe
   }
 });
 
+test('should merge blob into blob', async ({ runInlineTest, mergeReports, showReport, page }) => {
+  const reportDir = test.info().outputPath('blob-report-orig');
+  const files = {
+    'playwright.config.ts': `
+      module.exports = {
+        retries: 1,
+        reporter: [['blob', { outputDir: '${reportDir.replace(/\\/g, '/')}' }]]
+      };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('math 1', async ({}) => {
+        expect(1 + 1).toBe(2);
+      });
+      test('failing 1', async ({}) => {
+        expect(1).toBe(2);
+      });
+      test('flaky 1', async ({}) => {
+        expect(test.info().retry).toBe(1);
+      });
+      test.skip('skipped 1', async ({}) => {});
+    `,
+    'b.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('math 2', async ({}) => {
+        expect(1 + 1).toBe(2);
+      });
+      test('failing 2', async ({}) => {
+        expect(1).toBe(2);
+      });
+      test.skip('skipped 2', async ({}) => {});
+    `
+  };
+  await runInlineTest(files, { shard: `1/2` }, { PWTEST_BLOB_DO_NOT_REMOVE: '1' });
+  await runInlineTest(files, { shard: `2/2` }, { PWTEST_BLOB_DO_NOT_REMOVE: '1' });
+  {
+    const reportFiles = await fs.promises.readdir(reportDir);
+    reportFiles.sort();
+    expect(reportFiles).toEqual(['report-1.zip', 'report-2.zip']);
+    const { exitCode } = await mergeReports(reportDir, undefined, { additionalArgs: ['--reporter', 'blob'] });
+    expect(exitCode).toBe(0);
+  }
+  {
+    const compinedBlobReportDir = test.info().outputPath('blob-report');
+    const { exitCode } = await mergeReports(compinedBlobReportDir, { 'PW_TEST_HTML_REPORT_OPEN': 'never' }, { additionalArgs: ['--reporter', 'html,json'] });
+    expect(exitCode).toBe(0);
+    expect(fs.existsSync(test.info().outputPath('report.json'))).toBe(true);
+    await showReport();
+    await expect(page.locator('.subnav-item:has-text("All") .counter')).toHaveText('7');
+    await expect(page.locator('.subnav-item:has-text("Passed") .counter')).toHaveText('2');
+    await expect(page.locator('.subnav-item:has-text("Failed") .counter')).toHaveText('2');
+    await expect(page.locator('.subnav-item:has-text("Flaky") .counter')).toHaveText('1');
+    await expect(page.locator('.subnav-item:has-text("Skipped") .counter')).toHaveText('2');
+  }
+});
+
 test('be able to merge incomplete shards', async ({ runInlineTest, mergeReports, showReport, page }) => {
   const reportDir = test.info().outputPath('blob-report');
   const files = {
