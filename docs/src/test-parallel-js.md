@@ -123,9 +123,9 @@ test('runs second', async () => {
 });
 ```
 
-## Scaling out to multiple machines
+## Shard tests between multiple machines
 
-Playwright Test can partition a test suite, so that it can be executed on multiple machines.
+Playwright Test can shard a test suite, so that it can be executed on multiple machines.
 See [sharding guide](./test-sharding.md) for more details.
 
 ```bash

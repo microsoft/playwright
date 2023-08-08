@@ -1,6 +1,6 @@
 ---
 id: test-sharding
-title: "Horizontal scaling"
+title: "Sharding"
 ---
 
 By default, Playwright runs tests in [parallel](/test-parallel.md) and strives for optimal utilization of CPU cores on your machine. In order to achieve even greater parallelisation, you can further scale Playwright test execution by running tests on multiple machines simultaneously. We call this mode of operation "sharding".
