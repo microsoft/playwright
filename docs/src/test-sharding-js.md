@@ -1,6 +1,6 @@
 ---
 id: test-sharding
-title: "Sharding"
+title: "Horizontal scaling"
 ---
 
 By default, Playwright runs tests in [parallel](/test-parallel.md) and strives for optimal utilization of CPU cores on your machine. In order to achieve even greater parallelisation, you can further scale Playwright test execution by running tests on multiple machines simultaneously. We call this mode of operation "sharding".
@@ -60,7 +60,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4]
+        shard: [1/4, 2/4, 3/4, 4/4]
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -71,7 +71,7 @@ jobs:
       run: npx playwright install
 
     - name: Run Playwright tests
-      run: npx playwright test --shard ${{ matrix.shard }}/4
+      run: npx playwright test --shard ${{ matrix.shard }}
 
     - name: Upload blob report to GitHub Actions Artifacts
       if: always()
