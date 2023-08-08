@@ -1210,6 +1210,7 @@ test('blob report should include version', async ({ runInlineTest }) => {
   const events = data.split('\n').filter(Boolean).map(line => JSON.parse(line));
   const metadataEvent = events.find(e => e.method === 'onBlobReportMetadata');
   expect(metadataEvent.params.version).toBe(1);
+  expect(metadataEvent.params.playwrightVersion).toBe(require('../../package.json').version);
 });
 
 test('merge-reports should throw if report version is from the future', async ({ runInlineTest, mergeReports }) => {
