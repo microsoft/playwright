@@ -15,11 +15,12 @@
  */
 
 import type { FullConfig, FullResult, Location, TestError, TestResult, TestStatus, TestStep } from '../../types/testReporter';
-import { type Annotation, projectIdSymbol, getProjectId } from '../common/config';
+import type { Annotation } from '../common/config';
 import type { FullProject, Metadata } from '../../types/test';
 import type * as reporterTypes from '../../types/testReporter';
 import type { SuitePrivate } from '../../types/reporterPrivate';
 import type { ReporterV2 } from '../reporters/reporterV2';
+import { projectIdSymbol, getProjectId } from '../common/config';
 import { StringInternPool } from './stringInternPool';
 
 export type JsonLocation = Location;
