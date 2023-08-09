@@ -60,5 +60,8 @@ jobs:
     - name: Upload HTML report to Azure
       run: |
         REPORT_DIR='run-service-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.sha }}'
-        az storage blob upload-batch -s playwright-report -d "\$web/$REPORT_DIR" --connection-string "${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}"
+        azcopy login --service-principal --application-id ${{ secrets.AZURE_CLIENT_ID }} --tenant-id ${{ secrets.AZURE_TENANT_ID }}
+        azcopy cp --recursive "./playwright-report/*" "https://mspwblobreport.blob.core.windows.net/\$web/$REPORT_DIR"
         echo "Report url: https://mspwblobreport.z1.web.core.windows.net/$REPORT_DIR/index.html#?q=s:failed"
+      env:
+        AZCOPY_SPA_CLIENT_SECRET: '${{ secrets.AZURE_CLIENT_SECRET }}'
