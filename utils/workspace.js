@@ -33,6 +33,7 @@ class PWPackage {
     this.name = descriptor.name;
     this.path = descriptor.path;
     this.files = descriptor.files;
+    this.noConsistent = descriptor.noConsistent;
     this.packageJSONPath = path.join(this.path, 'package.json');
     this.packageJSON = JSON.parse(fs.readFileSync(this.packageJSONPath, 'utf8'));
     this.isPrivate = !!this.packageJSON.private;
@@ -120,6 +121,10 @@ class Workspace {
         pkg.packageJSON.author = workspacePackageJSON.author;
         pkg.packageJSON.license = workspacePackageJSON.license;
       }
+
+      if (pkg.noConsistent)
+        continue;
+
       for (const otherPackage of this._packages) {
         if (pkgLockEntry.dependencies && pkgLockEntry.dependencies[otherPackage.name])
           pkgLockEntry.dependencies[otherPackage.name] = version;
@@ -212,6 +217,7 @@ const workspace = new Workspace(ROOT_PATH, [
     name: '@playwright/experimental-grid',
     path: path.join(ROOT_PATH, 'packages', 'playwright-grid'),
     files: ['LICENSE'],
+    noConsistent: true,
   }),
 ]);
 

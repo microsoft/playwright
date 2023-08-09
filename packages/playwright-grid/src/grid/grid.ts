@@ -243,6 +243,8 @@ export class Grid {
       ws.on('error', e => this._log(e));
     });
     this._server.server.on('upgrade', async (request, socket, head) => {
+      this._log('upgrade', request.url, request.headers);
+
       if (this._accessKey && request.headers['x-playwright-access-key'] !== this._accessKey) {
         socket.destroy();
         return;
@@ -250,7 +252,6 @@ export class Grid {
 
       const url = new URL('http://internal' + request.url);
       const params = url.searchParams;
-      this._log(url.pathname);
 
       if (url.pathname.startsWith('/registerNode')) {
         const nodeRequest = new WebSocketRequest(this._wsServer, request, socket, head);

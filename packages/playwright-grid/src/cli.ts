@@ -27,7 +27,7 @@ program
     .option('--access-key <key>', 'access key to the grid')
     .action(async opts => {
       const port = opts.port || +(process.env.PLAYWRIGHT_GRID_PORT || '3333');
-      const accessKey = opts.accessKey || process.env.PLAYWRIGHT_GRID_ACCESS_KEY;
+      const accessKey = opts.accessKey || (process.env.PLAYWRIGHT_GRID_ACCESS_KEY || '');
       const { Grid } = await import('./grid/grid.js');
       const grid = new Grid(port, accessKey);
       grid.start();
@@ -40,7 +40,9 @@ program
     .option('--access-key <key>', 'access key to the grid', '')
     .action(async opts => {
       const { Node } = await import('./node/node.js');
-      new Node(opts.grid, +opts.capacity, opts.accessKey);
+      const accessKey = opts.accessKey || (process.env.PLAYWRIGHT_GRID_ACCESS_KEY || '');
+      const node = new Node(opts.grid, +opts.capacity, accessKey);
+      await node.connect();
     });
 
 program.parse(process.argv);

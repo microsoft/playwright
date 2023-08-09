@@ -15,7 +15,7 @@
  */
 
 import { config as loadEnv } from 'dotenv';
-loadEnv({ path: path.join(__dirname, '..', '..', '.env') });
+loadEnv({ path: path.join(__dirname, '..', '..', '.env'), override: true });
 
 import type { Config, PlaywrightTestOptions, PlaywrightWorkerOptions, ReporterDescription } from '@playwright/test';
 import * as path from 'path';
@@ -78,23 +78,24 @@ if (mode === 'service2') {
 
 if (mode === 'service-grid') {
   connectOptions = {
-    wsEndpoint: 'ws://localhost:3333',
+    wsEndpoint: process.env.PLAYWRIGHT_GRID_URL || 'ws://localhost:3333',
     timeout: 60 * 60 * 1000,
     headers: {
-      'x-playwright-access-key': 'secret'
-    }
+      'x-playwright-access-key': process.env.PLAYWRIGHT_GRID_ACCESS_KEY || 'secret'
+    },
+    exposeNetwork: '<loopback>',
   };
-  webServer = [
+  webServer = process.env.PLAYWRIGHT_GRID_URL ? [] : [
     {
       command: 'node ../../packages/playwright-grid/cli.js grid --port=3333 --access-key=secret',
       stdout: 'pipe',
       url: 'http://localhost:3333/secret',
       reuseExistingServer: !process.env.CI,
     }, {
-      command: 'node ../../packages/playwright-grid/cli.js node --grid=ws://localhost:3333 --access-key=secret --capacity=2',
+      command: 'node ../../packages/playwright-grid/cli.js node --grid=localhost:3333 --access-key=secret --capacity=2',
     },
     {
-      command: 'node ../../packages/playwright-grid/cli.js node --grid=ws://localhost:3333 --access-key=secret --capacity=2',
+      command: 'node ../../packages/playwright-grid/cli.js node --grid=localhost:3333 --access-key=secret --capacity=2',
     }
   ];
 }

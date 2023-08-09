@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker-deployment
+spec:
+  replicas: 10  # or however many nodes you want
+  selector:
+    matchLabels:
+      app: worker
+  template:
+    metadata:
+      labels:
+        app: worker
+    spec:
+      containers:
+      - name: grid
+        image: playwright-grid
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: DEBUG
+          value: "pw:grid*"
+        - name: PLAYWRIGHT_GRID_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: access-key-secret
+              key: access-key
+        command: ["node", "./cli.js"]
+        args: ["node", "--grid=grid-service:3000"]
