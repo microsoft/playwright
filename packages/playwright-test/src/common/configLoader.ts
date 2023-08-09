@@ -27,9 +27,53 @@ import { addToCompilationCache } from '../transform/compilationCache';
 import { initializeEsmLoader } from './esmLoaderHost';
 
 const kDefineConfigWasUsed = Symbol('defineConfigWasUsed');
-export const defineConfig = (config: any) => {
-  config[kDefineConfigWasUsed] = true;
-  return config;
+export const defineConfig = (...configs: any[]) => {
+  let result = configs[0];
+  for (let i = 1; i < configs.length; ++i) {
+    const config = configs[i];
+    result = {
+      ...result,
+      ...config,
+      expect: {
+        ...result.expect,
+        ...config.expect,
+      },
+      use: {
+        ...result.use,
+        ...config.use,
+      },
+      webServer: [
+        ...(Array.isArray(result.webServer) ? result.webServer : (result.webServer ? [result.webServer] : [])),
+        ...(Array.isArray(config.webServer) ? config.webServer : (config.webServer ? [config.webServer] : [])),
+      ]
+    };
+
+    const projectOverrides = new Map<string, any>();
+    for (const project of config.projects || [])
+      projectOverrides.set(project.name, project);
+
+    const projects = [];
+    for (const project of result.projects || []) {
+      const projectOverride = projectOverrides.get(project.name);
+      if (projectOverride) {
+        projects.push({
+          ...project,
+          ...projectOverride,
+          use: {
+            ...project.use,
+            ...projectOverride.use,
+          }
+        });
+        projectOverrides.delete(project.name);
+      } else {
+        projects.push(project);
+      }
+    }
+    projects.push(...projectOverrides.values());
+    result.projects = projects;
+  }
+  result[kDefineConfigWasUsed] = true;
+  return result;
 };
 
 export class ConfigLoader {
