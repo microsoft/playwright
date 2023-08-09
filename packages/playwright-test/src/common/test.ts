@@ -256,14 +256,21 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   }
 
   outcome(): 'skipped' | 'expected' | 'unexpected' | 'flaky' {
-    const nonSkipped = this.results.filter(result => result.status !== 'skipped' && result.status !== 'interrupted');
-    if (!nonSkipped.length)
+    // Ignore initial skips that may be a result of "skipped because previous test in serial mode failed".
+    const results = [...this.results];
+    while (results[0]?.status === 'skipped' || results[0]?.status === 'interrupted')
+      results.shift();
+
+    // All runs were skipped.
+    if (!results.length)
       return 'skipped';
-    if (nonSkipped.every(result => result.status === this.expectedStatus))
+
+    const failures = results.filter(result => result.status !== 'skipped' && result.status !== 'interrupted' && result.status !== this.expectedStatus);
+    if (!failures.length) // all passed
       return 'expected';
-    if (nonSkipped.some(result => result.status === this.expectedStatus))
-      return 'flaky';
-    return 'unexpected';
+    if (failures.length === results.length) // all failed
+      return 'unexpected';
+    return 'flaky'; // mixed bag
   }
 
   ok(): boolean {
