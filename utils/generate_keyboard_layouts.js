@@ -324,6 +324,11 @@ const paramsMarkdownFilename = path.resolve(__dirname, '../docs/src/api/params.m
 (async () => {;
   const layouts = getKeyboardLayoutsFromMarkdown();
 
+  if (process.argv.includes('--clean')) {
+    fs.rmSync(path.resolve(keyboardsDir, 'layouts'), { recursive: true, force: true });
+    fs.mkdirSync(path.resolve(keyboardsDir, 'layouts'));
+  }
+
   for (const { klid, layoutName, codes: [code] } of layouts) {
     console.log(`Generating keyboard layout for ${layoutName} (code: ${code}, KLID: ${klid})`);
     const layout = await generate(klid);
