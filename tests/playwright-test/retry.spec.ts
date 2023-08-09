@@ -243,3 +243,22 @@ test('should retry worker fixture setup failure', async ({ runInlineTest }) => {
   expect(result.output.split('\n')[2]).toBe('××F');
   expect(result.output).toContain('worker setup is bugged!');
 });
+
+test('failed and skipped on retry should be marked as flaky', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test } from '@playwright/test';
+      test('flaky test', async ({}, testInfo) => {
+        if (!testInfo.retry)
+          throw new Error('Failed on first run');
+        test.skip(true, 'Skipped on first retry');
+      });
+    `
+  }, { retries: 1, reporter: 'dot' });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(0);
+  expect(result.failed).toBe(0);
+  expect(result.flaky).toBe(1);
+  expect(result.output).toContain('Failed on first run');
+  expect(result.report.suites[0].specs[0].tests[0].annotations).toEqual([{ type: 'skip', description: 'Skipped on first retry' }]);
+});
