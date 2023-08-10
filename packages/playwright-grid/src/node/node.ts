@@ -28,12 +28,13 @@ const caps: Capabilities = {
 export class Node {
   workerSeq = 0;
 
-  constructor(readonly grid: string, readonly capacity: number, readonly accessKey: string) {
+  constructor(readonly grid: string, readonly capacity: number, readonly accessKey?: string) {
+    this.accessKey = accessKey || '';
     log('node created', accessKey);
   }
 
   async connect() {
-    const wsGrid = 'ws://' + this.grid;
+    const wsGrid = this.grid;
     const url = wsGrid + `/registerNode?capacity=${this.capacity}&caps=${JSON.stringify(caps)}`;
 
     for (let i = 0; i < 5; ++i) {

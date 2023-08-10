@@ -47,9 +47,11 @@ kubectl apply -f deployment-grid.yaml
 kubectl apply -f deployment-worker.yaml
 
 # Debug
+kubectl config
 kubectl get pods -l app=grid
 kubectl logs grid-6cbbfc866c-wh8dw
 kubectl get pods -n ingress-basic
 kubectl get svc grid-service
+kubectl describe node
 az aks show --resource-group group-grid-001 --name aks-grid-001 --query fqdn --output tsv
 ```
