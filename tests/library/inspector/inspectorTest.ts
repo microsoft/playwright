@@ -109,7 +109,6 @@ class Recorder {
   async setPageContentAndWait(page: Page, content: string, url: string = 'about:blank', frameCount: number = 1) {
     let callback;
     const result = new Promise(f => callback = f);
-    await page.goto(url);
     let msgCount = 0;
     const listener = msg => {
       if (msg.text() === 'Recorder script ready for test') {
@@ -121,6 +120,7 @@ class Recorder {
       }
     };
     page.on('console', listener);
+    await page.goto(url);
     await Promise.all([
       result,
       page.setContent(content)
