@@ -20,7 +20,7 @@
   },
   "repository": "github:Microsoft/playwright",
   "engines": {
-    "node": ">=16"
+    "node": ">=16.14.2"
   },
   "homepage": "https://playwright.dev",
   "author": {
