@@ -17,7 +17,7 @@
 import { config as loadEnv } from 'dotenv';
 loadEnv({ path: path.join(__dirname, '..', '..', '.env'), override: true });
 
-import type { Config, PlaywrightTestOptions, PlaywrightWorkerOptions, ReporterDescription } from '@playwright/test';
+import { type Config, type PlaywrightTestOptions, type PlaywrightWorkerOptions, type ReporterDescription } from '@playwright/test';
 import * as path from 'path';
 import type { TestModeWorkerOptions } from '../config/testModeFixtures';
 import type { TestModeName } from '../config/testMode';
