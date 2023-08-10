@@ -1324,3 +1324,51 @@ test('merge-reports should throw if report version is from the future', async ({
   expect(output).toContain(`Error: Blob report report-2.zip was created with a newer version of Playwright.`);
 
 });
+
+test('should merge blob reports with same name', async ({ runInlineTest, mergeReports, showReport, page }) => {
+  const files = {
+    'playwright.config.ts': `
+      module.exports = {
+        retries: 1,
+        reporter: 'blob'
+      };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('math 1', async ({}) => {
+        expect(1 + 1).toBe(2);
+      });
+      test('failing 1', async ({}) => {
+        expect(1).toBe(2);
+      });
+      test('flaky 1', async ({}) => {
+        expect(test.info().retry).toBe(1);
+      });
+      test.skip('skipped 1', async ({}) => {});
+    `,
+    'b.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('math 2', async ({}) => {
+        expect(1 + 1).toBe(2);
+      });
+      test('failing 2', async ({}) => {
+        expect(1).toBe(2);
+      });
+      test.skip('skipped 2', async ({}) => {});
+    `
+  };
+  await runInlineTest(files);
+  const reportZip = test.info().outputPath('blob-report', 'report.zip');
+  const allReportsDir = test.info().outputPath('all-blob-reports');
+  await fs.promises.cp(reportZip, path.join(allReportsDir, 'report-1.zip'));
+  await fs.promises.cp(reportZip, path.join(allReportsDir, 'report-2.zip'));
+
+  const { exitCode } = await mergeReports(allReportsDir, { 'PW_TEST_HTML_REPORT_OPEN': 'never' }, { additionalArgs: ['--reporter', 'html'] });
+  expect(exitCode).toBe(0);
+  await showReport();
+  await expect(page.locator('.subnav-item:has-text("All") .counter')).toHaveText('14');
+  await expect(page.locator('.subnav-item:has-text("Passed") .counter')).toHaveText('4');
+  await expect(page.locator('.subnav-item:has-text("Failed") .counter')).toHaveText('4');
+  await expect(page.locator('.subnav-item:has-text("Flaky") .counter')).toHaveText('2');
+  await expect(page.locator('.subnav-item:has-text("Skipped") .counter')).toHaveText('4');
+});
