@@ -19,8 +19,8 @@ Using `merge-reports` tool requires the following steps:
 
   ```js title="playwright.config.ts"
   export default defineConfig({
-   testDir: './tests',
-   reporter: process.env.CI ? 'blob' : 'html',
+    testDir: './tests',
+    reporter: process.env.CI ? 'blob' : 'html',
   });
   ```
 
@@ -33,7 +33,7 @@ Using `merge-reports` tool requires the following steps:
   npx playwright merge-reports --reporter html ./all-blob-reports
   ```
 
-  Read more in [our documentation](./test-sharding-js.md).
+  Read more in [our documentation](./test-sharding.md).
 
 ### 📚 Debian 12 Bookworm Support
 
@@ -50,8 +50,8 @@ Linux support looks like this:
 
 ### UI Mode Updates
 
-- Respects project dependencies
-- Displays console logs from test
+- UI Mode now respects project dependencies. You can control which dependencies to respect by checking/unchecking them in a projects list.
+- Console logs from the test are now displayed in the Console tab.
 
 ### Browser Versions
 
