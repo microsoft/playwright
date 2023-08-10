@@ -293,7 +293,12 @@ function applyTemplates(body, params) {
       const template = paramsMap.get(key);
       if (!template)
         throw new Error('Bad template: ' + key);
-      node.children.push(...template.children.map(c => md.clone(c)));
+      // Insert right after all metadata options like "* since",
+      // keeping any additional text like **Usage** below the template.
+      let index = node.children.findIndex(child => child.type !== 'li');
+      if (index === -1)
+        index = 0;
+      node.children.splice(index, 0, ...template.children.map(c => md.clone(c)));
     } else if (node.text && node.text.includes('%%-template-')) {
       node.text.replace(/%%-template-[^%]+-%%/, templateName => {
         const template = paramsMap.get(templateName);
