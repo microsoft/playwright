@@ -24,6 +24,7 @@ import type { FrameLocator } from '@playwright/test';
 const test = playwrightTest.extend<TraceViewerFixtures>(traceViewerFixtures);
 
 test.skip(({ trace }) => trace === 'on');
+test.skip(({ mode }) => mode.startsWith('service'));
 test.slow();
 
 let traceFile: string;

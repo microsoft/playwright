@@ -107,7 +107,7 @@ class TraceViewerPage {
 }
 
 export const traceViewerFixtures: Fixtures<TraceViewerFixtures, {}, BaseTestFixtures, BaseWorkerFixtures> = {
-  showTraceViewer: async ({ playwright, browserName, headless }, use) => {
+  showTraceViewer: async ({ playwright, browserName, headless }, use, testInfo) => {
     const browsers: Browser[] = [];
     const contextImpls: any[] = [];
     await use(async (traces: string[], { host, port } = {}) => {

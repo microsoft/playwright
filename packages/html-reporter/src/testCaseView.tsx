@@ -23,7 +23,7 @@ import { ProjectLink } from './links';
 import { statusIcon } from './statusIcon';
 import './testCaseView.css';
 import { TestResultView } from './testResultView';
-import { hashStringToInt, matchTags } from './labelUtils';
+import { hashStringToInt, testCaseLabels } from './labelUtils';
 import { msToString } from './uiUtils';
 
 export const TestCaseView: React.FC<{
@@ -37,7 +37,7 @@ export const TestCaseView: React.FC<{
   const labels = React.useMemo(() => {
     if (!test)
       return undefined;
-    return matchTags(test.path.join(' ') + ' ' + test.title).sort((a, b) => a.localeCompare(b));
+    return testCaseLabels(test);
   }, [test]);
 
   return <div className='test-case-column vbox'>
@@ -92,10 +92,10 @@ const LabelsLinkView: React.FC<React.PropsWithChildren<{
 }>> = ({ labels }) => {
   return labels.length > 0 ? (
     <>
-      {labels.map(tag => (
-        <a key={tag} style={{ textDecoration: 'none', color: 'var(--color-fg-default)' }} href={`#?q=@${tag}`} >
-          <span style={{ margin: '6px 0 0 6px', cursor: 'pointer' }} className={'label label-color-' + (hashStringToInt(tag))}>
-            {tag}
+      {labels.map(label => (
+        <a key={label} style={{ textDecoration: 'none', color: 'var(--color-fg-default)' }} href={`#?q=${label}`} >
+          <span style={{ margin: '6px 0 0 6px', cursor: 'pointer' }} className={'label label-color-' + (hashStringToInt(label))}>
+            {label.startsWith('@') ? label.slice(1) : label}
           </span>
         </a>
       ))}

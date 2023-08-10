@@ -16,7 +16,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { ManualPromise, calculateSha1, createGuid, removeFolders, sanitizeForFilePath } from 'playwright-core/lib/utils';
+import { ManualPromise, calculateSha1, createGuid, getUserAgent, removeFolders, sanitizeForFilePath } from 'playwright-core/lib/utils';
 import { mime } from 'playwright-core/lib/utilsBundle';
 import { Readable } from 'stream';
 import type { EventEmitter } from 'events';
@@ -35,7 +35,8 @@ export const currentBlobReportVersion = 1;
 
 export type BlobReportMetadata = {
   version: number;
-  projectSuffix?: string;
+  userAgent: string;
+  name?: string;
   shard?: { total: number, current: number };
 };
 
@@ -55,7 +56,8 @@ export class BlobReporter extends TeleReporterEmitter {
   override onConfigure(config: FullConfig) {
     const metadata: BlobReportMetadata = {
       version: currentBlobReportVersion,
-      projectSuffix: process.env.PWTEST_BLOB_SUFFIX,
+      userAgent: getUserAgent(),
+      name: process.env.PWTEST_BLOB_REPORT_NAME,
       shard: config.shard ?? undefined,
     };
     this._messages.push({
@@ -103,8 +105,8 @@ export class BlobReporter extends TeleReporterEmitter {
 
   private _computeReportName(config: FullConfig) {
     let reportName = 'report';
-    if (process.env.PWTEST_BLOB_SUFFIX)
-      reportName += sanitizeForFilePath(process.env.PWTEST_BLOB_SUFFIX);
+    if (process.env.PWTEST_BLOB_REPORT_NAME)
+      reportName += `-${sanitizeForFilePath(process.env.PWTEST_BLOB_REPORT_NAME)}`;
     if (config.shard) {
       const paddedNumber = `${config.shard.current}`.padStart(`${config.shard.total}`.length, '0');
       reportName += `-${paddedNumber}`;

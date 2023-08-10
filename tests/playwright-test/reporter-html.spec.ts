@@ -195,7 +195,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       await page.click('text=fails');
       await expect(page.locator('text=Image mismatch')).toHaveCount(2);
       await expect(page.locator('text=Snapshot mismatch')).toHaveCount(0);
-      await expect(page.locator('text=Screenshots')).toHaveCount(0);
+      await expect(page.locator('text="Screenshots"')).toHaveCount(0);
       for (let i = 0; i < 2; ++i) {
         const imageDiff = page.locator('data-testid=test-result-image-mismatch').nth(i);
         const image = imageDiff.locator('img').first();

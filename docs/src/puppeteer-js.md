@@ -34,7 +34,7 @@ This guide describes migration to [Playwright Library](./library) and [Playwrigh
 | `await page.hover(selector)`                       | `await page.locator(selector).hover()`      |
 | `await page.select(selector, values)`              | `await page.locator(selector).selectOption(values)` |
 | `await page.tap(selector)`                         | `await page.locator(selector).tap()`        |
-| `await page.type(selector, ...)`                   | `await page.locator(selector).type(...)`<br/> Please also consider [`method: Locator.fill`] |
+| `await page.type(selector, ...)`                   | `await page.locator(selector).fill(...)` |
 | `await page.waitForFileChooser(...)`<br/>`await elementHandle.uploadFile(...)` | `await page.locator(selector).setInputFiles(...)` |
 | `await page.cookies([...urls])`                    | `await browserContext.cookies([urls])`      |
 | `await page.deleteCookie(...cookies)`              | `await browserContext.clearCookies()`       |

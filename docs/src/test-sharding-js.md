@@ -60,7 +60,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4]
+        shard: [1/4, 2/4, 3/4, 4/4]
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -71,7 +71,7 @@ jobs:
       run: npx playwright install
 
     - name: Run Playwright tests
-      run: npx playwright test --shard ${{ matrix.shard }}/4
+      run: npx playwright test --shard ${{ matrix.shard }}
 
     - name: Upload blob report to GitHub Actions Artifacts
       if: always()
@@ -126,7 +126,18 @@ We can utilize Azure Storage's static websites hosting capabilities to easily an
 
 1. Create an [Azure Storage account](https://learn.microsoft.com/en-us/azure/storage/common/storage-account-create).
 1. Enable [Static website hosting](https://learn.microsoft.com/en-us/azure/storage/blobs/storage-blob-static-website-how-to#enable-static-website-hosting) for the storage account.
-1. Add the Azure connection string as a [GitHub Actions secret](https://docs.github.com/en/actions/security-guides/encrypted-secrets#creating-encrypted-secrets-for-a-repository) called `AZURE_CONNECTION_STRING`.
+1. Create a Service Principal in Azure and grant it access to Azure Blob storage. Upon successful execution, the command will display the credentials which will be used in the next step.
+
+    ```bash
+    az ad sp create-for-rbac --name "github-actions" --role "Storage Blob Data Contributor" --scopes /subscriptions/<SUBSCRIPTION_ID>/resourceGroups/<RESOURCE_GROUP_NAME>/providers/Microsoft.Storage/storageAccounts/<STORAGE_ACCOUNT_NAME>
+    ```
+1. Use the credentials from the previous step to set up encrypted secrets in your GitHub repository. Go to your repository's settings, under [GitHub Actions secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets#creating-encrypted-secrets-for-a-repository), and add the following secrets:
+
+    - `AZCOPY_SPA_APPLICATION_ID`
+    - `AZCOPY_SPA_CLIENT_SECRET`
+    - `AZCOPY_TENANT_ID`
+
+   For a detailed guide on how to authorize a service principal using a client secret, refer to [this Microsoft documentation](https://learn.microsoft.com/en-us/azure/storage/common/storage-use-azcopy-authorize-azure-active-directory#authorize-a-service-principal-by-using-a-client-secret-1).
 1. Add a step that uploads HTML report to Azure Storage.
 
     ```yaml
@@ -135,7 +146,12 @@ We can utilize Azure Storage's static websites hosting capabilities to easily an
           shell: bash
           run: |
             REPORT_DIR='run-${{ github.run_id }}-${{ github.run_attempt }}'
-            az storage blob upload-batch -s playwright-report -d "\$web/$REPORT_DIR" --connection-string "${{ secrets.AZURE_CONNECTION_STRING }}"
+            azcopy cp --recursive "./playwright-report/*" "https://<STORAGE_ACCOUNT_NAME>.blob.core.windows.net/\$web/$REPORT_DIR"
+          env:
+            AZCOPY_AUTO_LOGIN_TYPE: SPN
+            AZCOPY_SPA_APPLICATION_ID: '${{ secrets.AZCOPY_SPA_APPLICATION_ID }}'
+            AZCOPY_SPA_CLIENT_SECRET: '${{ secrets.AZCOPY_SPA_CLIENT_SECRET }}'
+            AZCOPY_TENANT_ID: '${{ secrets.AZCOPY_TENANT_ID }}'
     ```
 
 The contents of `$web` storage container can be accessed from a browser by using the [public URL](https://learn.microsoft.com/en-us/azure/storage/blobs/storage-blob-static-website-how-to?tabs=azure-portal#portal-find-url) of the website.
@@ -157,7 +173,9 @@ Supported options:
 
 - `--config path/to/config/file`
 
-  Takes reporters from Playwright configuration file.
+  Specifies the Playwright configuration file with output reporters. Use this option to pass
+  additional configuration to the output reporter. This configuration file can differ from
+  the one used during the creation of blob reports.
 
   Example: `npx playwright merge-reports --config=merge.config.ts ./blob-reports`
 

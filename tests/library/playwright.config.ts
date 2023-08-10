@@ -15,9 +15,9 @@
  */
 
 import { config as loadEnv } from 'dotenv';
-loadEnv({ path: path.join(__dirname, '..', '..', '.env') });
+loadEnv({ path: path.join(__dirname, '..', '..', '.env'), override: true });
 
-import type { Config, PlaywrightTestOptions, PlaywrightWorkerOptions, ReporterDescription } from '@playwright/test';
+import { type Config, type PlaywrightTestOptions, type PlaywrightWorkerOptions, type ReporterDescription } from '@playwright/test';
 import * as path from 'path';
 import type { TestModeWorkerOptions } from '../config/testModeFixtures';
 import type { TestModeName } from '../config/testMode';
@@ -57,8 +57,16 @@ const os: 'linux' | 'windows' = (process.env.PLAYWRIGHT_SERVICE_OS as 'linux' | 
 const runId = process.env.PLAYWRIGHT_SERVICE_RUN_ID || new Date().toISOString(); // name the test run
 
 let connectOptions: any;
-if (mode === 'service')
+let webServer: any;
+
+if (mode === 'service') {
   connectOptions = { wsEndpoint: 'ws://localhost:3333/' };
+  webServer = {
+    command: 'npx playwright run-server --port=3333',
+    url: 'http://localhost:3333',
+    reuseExistingServer: !process.env.CI,
+  };
+}
 if (mode === 'service2') {
   process.env.PW_VERSION_OVERRIDE = '1.37';
   connectOptions = {
@@ -66,6 +74,30 @@ if (mode === 'service2') {
     timeout: 3 * 60 * 1000,
     exposeNetwork: '<loopback>',
   };
+}
+
+if (mode === 'service-grid') {
+  connectOptions = {
+    wsEndpoint: process.env.PLAYWRIGHT_GRID_URL || 'ws://localhost:3333',
+    timeout: 60 * 60 * 1000,
+    headers: {
+      'x-playwright-access-key': process.env.PLAYWRIGHT_GRID_ACCESS_KEY || 'secret'
+    },
+    exposeNetwork: '<loopback>',
+  };
+  webServer = process.env.PLAYWRIGHT_GRID_URL ? [] : [
+    {
+      command: 'node ../../packages/playwright-grid/cli.js grid --port=3333 --access-key=secret',
+      stdout: 'pipe',
+      url: 'http://localhost:3333/secret',
+      reuseExistingServer: !process.env.CI,
+    }, {
+      command: 'node ../../packages/playwright-grid/cli.js node --grid=localhost:3333 --access-key=secret --capacity=2',
+    },
+    {
+      command: 'node ../../packages/playwright-grid/cli.js node --grid=localhost:3333 --access-key=secret --capacity=2',
+    }
+  ];
 }
 
 const config: Config<CoverageWorkerOptions & PlaywrightWorkerOptions & PlaywrightTestOptions & TestModeWorkerOptions> = {
@@ -88,11 +120,7 @@ const config: Config<CoverageWorkerOptions & PlaywrightWorkerOptions & Playwrigh
   use: {
     connectOptions,
   },
-  webServer: mode === 'service' ? {
-    command: 'npx playwright run-server --port=3333',
-    url: 'http://localhost:3333',
-    reuseExistingServer: !process.env.CI,
-  } : undefined,
+  webServer,
 };
 
 const browserNames = ['chromium', 'webkit', 'firefox'] as BrowserName[];

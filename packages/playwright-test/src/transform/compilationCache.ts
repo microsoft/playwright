@@ -18,6 +18,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { sourceMapSupport } from '../utilsBundle';
+import { writeFileSyncAtomic } from 'playwright-core/lib/utils';
 
 export type MemoryCache = {
   codePath: string;
@@ -85,8 +86,8 @@ export function getFromCompilationCache(filename: string, hash: string, moduleUr
     addToCache: (code: string, map: any) => {
       fs.mkdirSync(path.dirname(cachePath), { recursive: true });
       if (map)
-        fs.writeFileSync(sourceMapPath, JSON.stringify(map), 'utf8');
-      fs.writeFileSync(codePath, code, 'utf8');
+        writeFileSyncAtomic(sourceMapPath, JSON.stringify(map), 'utf8');
+      writeFileSyncAtomic(codePath, code, 'utf8');
       _innerAddToCompilationCache(filename, { codePath, sourceMapPath, moduleUrl });
     }
   };

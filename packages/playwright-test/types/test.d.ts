@@ -164,7 +164,7 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
    * Filter to only run tests with a title matching one of the patterns. For example, passing `grep: /cart/` should only
    * run tests with "cart" in the title. Also available globally and in the [command line](https://playwright.dev/docs/test-cli) with the `-g`
    * option. The regular expression will be tested against the string that consists of the test file name,
-   * `test.describe` name (if any) and the test name divided by spaces, e.g. `my-test.spec.ts my suite my test`.
+   * `test.describe` name (if any) and the test name divided by spaces, e.g. `my-test.spec.ts my-suite my-test`.
    *
    * `grep` option is also useful for [tagging tests](https://playwright.dev/docs/test-annotations#tag-tests).
    */
@@ -791,7 +791,9 @@ interface TestConfig {
 
   /**
    * Filter to only run tests with a title matching one of the patterns. For example, passing `grep: /cart/` should only
-   * run tests with "cart" in the title. Also available in the [command line](https://playwright.dev/docs/test-cli) with the `-g` option.
+   * run tests with "cart" in the title. Also available in the [command line](https://playwright.dev/docs/test-cli) with the `-g` option. The
+   * regular expression will be tested against the string that consists of the test file name, `test.describe` name (if
+   * any) and the test name divided by spaces, e.g. `my-test.spec.ts my-suite my-test`.
    *
    * `grep` option is also useful for [tagging tests](https://playwright.dev/docs/test-annotations#tag-tests).
    *
@@ -1540,7 +1542,9 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   globalTimeout: number;
   /**
    * Filter to only run tests with a title matching one of the patterns. For example, passing `grep: /cart/` should only
-   * run tests with "cart" in the title. Also available in the [command line](https://playwright.dev/docs/test-cli) with the `-g` option.
+   * run tests with "cart" in the title. Also available in the [command line](https://playwright.dev/docs/test-cli) with the `-g` option. The
+   * regular expression will be tested against the string that consists of the test file name, `test.describe` name (if
+   * any) and the test name divided by spaces, e.g. `my-test.spec.ts my-suite my-test`.
    *
    * `grep` option is also useful for [tagging tests](https://playwright.dev/docs/test-annotations#tag-tests).
    *
@@ -5018,6 +5022,9 @@ export const expect: Expect;
 export function defineConfig(config: PlaywrightTestConfig): PlaywrightTestConfig;
 export function defineConfig<T>(config: PlaywrightTestConfig<T>): PlaywrightTestConfig<T>;
 export function defineConfig<T, W>(config: PlaywrightTestConfig<T, W>): PlaywrightTestConfig<T, W>;
+export function defineConfig(config: PlaywrightTestConfig, ...configs: PlaywrightTestConfig[]): PlaywrightTestConfig;
+export function defineConfig<T>(config: PlaywrightTestConfig<T>, ...configs: PlaywrightTestConfig[]): PlaywrightTestConfig<T>;
+export function defineConfig<T, W>(config: PlaywrightTestConfig<T, W>, ...configs: PlaywrightTestConfig[]): PlaywrightTestConfig<T, W>;
 
 // This is required to not export everything by default. See https://github.com/Microsoft/TypeScript/issues/19545#issuecomment-340490459
 export {};
@@ -6406,7 +6413,7 @@ interface TestProject {
    * Filter to only run tests with a title matching one of the patterns. For example, passing `grep: /cart/` should only
    * run tests with "cart" in the title. Also available globally and in the [command line](https://playwright.dev/docs/test-cli) with the `-g`
    * option. The regular expression will be tested against the string that consists of the test file name,
-   * `test.describe` name (if any) and the test name divided by spaces, e.g. `my-test.spec.ts my suite my test`.
+   * `test.describe` name (if any) and the test name divided by spaces, e.g. `my-test.spec.ts my-suite my-test`.
    *
    * `grep` option is also useful for [tagging tests](https://playwright.dev/docs/test-annotations#tag-tests).
    */
@@ -6735,15 +6742,15 @@ interface TestConfigWebServer {
   command: string;
 
   /**
-   * The port that your http server is expected to appear on. It does wait until it accepts connections. Exactly one of
-   * `port` or `url` is required.
+   * The port that your http server is expected to appear on. It does wait until it accepts connections. Either `port`
+   * or `url` should be specified.
    */
   port?: number;
 
   /**
    * The url on your http server that is expected to return a 2xx, 3xx, 400, 401, 402, or 403 status code when the
    * server is ready to accept connections. Redirects (3xx status codes) are being followed and the new location is
-   * checked. Exactly one of `port` or `url` is required.
+   * checked. Either `port` or `url` should be specified.
    */
   url?: string;
 

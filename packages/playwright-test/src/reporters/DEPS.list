@@ -10,5 +10,5 @@
 [internalReporter.ts]
 ../transform/babelBundle.ts
 
-[raw.ts]
+[html.ts]
 ../transform/babelBundle.ts
