@@ -70,9 +70,12 @@ if (mode === 'service') {
 if (mode === 'service2') {
   process.env.PW_VERSION_OVERRIDE = '1.37';
   connectOptions = {
-    wsEndpoint: `${process.env.PLAYWRIGHT_SERVICE_URL}?accessKey=${process.env.PLAYWRIGHT_SERVICE_ACCESS_KEY}&cap=${JSON.stringify({ os, runId })}`,
+    wsEndpoint: `${process.env.PLAYWRIGHT_SERVICE_URL}?cap=${JSON.stringify({ os, runId })}`,
     timeout: 3 * 60 * 1000,
     exposeNetwork: '<loopback>',
+    headers: {
+      'x-mpt-access-key': process.env.PLAYWRIGHT_SERVICE_ACCESS_KEY!
+    }
   };
 }
 
