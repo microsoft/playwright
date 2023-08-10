@@ -188,26 +188,26 @@ export default defineConfig({
 When working with tests that have a dependency, the dependency will always run first and once all tests from this project have passed, then the other projects will run in parallel.
 
 Running order:
-1. Tests in 'setup' project run
+1. Tests in the 'setup' project run. Once all tests from this project have passed, then the tests from the dependent projects will start running.
 
-2. Tests in 'chromium', 'webkit' and 'firefox' projects run in parallel
+2. Tests in the 'chromium', 'webkit' and 'firefox' projects run together. By default, these projects will [run in parallel](./test-parallel.md), subject to the maximum workers limit.
 
 <img width="70%" style={{display: 'flex', margin: 'auto'}} alt="chromium, webkit and firefox projects depend on setup project" loading="lazy" src="https://user-images.githubusercontent.com/13063165/225937080-327b1e63-431f-40e0-90d7-35f21d7a92cb.jpg" />
 
 If there are more than one dependency then these project dependencies will be run first and in parallel. If the tests from a dependency fails then the tests that rely on this project will not be run.
 
 Running order:
-1. Tests in 'Browser Login' and 'DataBase' projects run in parallel
+1. Tests in the 'Browser Login' and 'DataBase' projects run in parallel:
   - 'Browser Login' passes
   - ❌ 'DataBase' fails!
 
-1. “e2e tests” is not run!
+1. The 'e2e tests' project is not run!
 
 <img width="70%" style={{display: 'flex', margin: 'auto'}} alt="Browser login project is blue, database is red and e2e tests relies on both" loading="lazy" src="https://user-images.githubusercontent.com/13063165/225938262-33c1b78f-f092-4762-a478-7f8cbc1e3b21.jpg" />
 
 ### Teardown
 
-You can also [`property: TestProject.teardown`] your setup by adding a teardown property to your setup project. This will run after all dependent projects have run. See the [teardown guide](./test-global-setup-teardown.md#teardown) for more information.
+You can also teardown your setup by adding a [`property: TestProject.teardown`] property to your setup project. Teardown will run after all dependent projects have run. See the [teardown guide](./test-global-setup-teardown.md#teardown) for more information.
 
 
 <img style={{display: 'flex', margin: 'auto'}} alt="global setup and teardown" loading="lazy" src="https://github.com/microsoft/playwright/assets/13063165/dfcf10a9-f601-4d0c-bd8d-9490e6efbf7a" />
