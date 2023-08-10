@@ -110,15 +110,17 @@ async function extractAndParseReports(dir: string, shardFiles: string[], interna
   const shardEvents: { file: string, localPath: string, metadata: BlobReportMetadata, parsedEvents: JsonEvent[] }[] = [];
   await fs.promises.mkdir(path.join(dir, 'resources'), { recursive: true });
 
+  const reportNames = new UniqueFileNameGenerator();
   for (const file of shardFiles) {
     const absolutePath = path.join(dir, file);
     printStatus(`extracting: ${relativeFilePath(absolutePath)}`);
     const zipFile = new ZipFile(absolutePath);
     const entryNames = await zipFile.entries();
     for (const entryName of entryNames.sort()) {
-      const fileName = path.join(dir, entryName);
+      let fileName = path.join(dir, entryName);
       const content = await zipFile.read(entryName);
       if (entryName.endsWith('.jsonl')) {
+        fileName = reportNames.makeUnique(fileName);
         const parsedEvents = parseCommonEvents(content);
         // Passing reviver to JSON.parse doesn't work, as the original strings
         // keep beeing used. To work around that we traverse the parsed events
@@ -283,6 +285,27 @@ async function sortedShardFiles(dir: string) {
 
 function printStatusToStdout(message: string) {
   process.stdout.write(`${message}\n`);
+}
+
+class UniqueFileNameGenerator {
+  private _usedNames = new Set<string>();
+
+  makeUnique(name: string): string {
+    if (!this._usedNames.has(name)) {
+      this._usedNames.add(name);
+      return name;
+    }
+    const extension = path.extname(name);
+    name = name.substring(0, name.length - extension.length);
+    let index = 0;
+    while (true) {
+      const candidate = `${name}-${++index}${extension}`;
+      if (!this._usedNames.has(candidate)) {
+        this._usedNames.add(candidate);
+        return candidate;
+      }
+    }
+  }
 }
 
 class IdsPatcher {
