@@ -15,15 +15,17 @@
  */
 
 import { colors, open } from 'playwright-core/lib/utilsBundle';
+import { MultiMap } from 'playwright-core/lib/utils';
 import fs from 'fs';
 import path from 'path';
 import type { TransformCallback } from 'stream';
 import { Transform } from 'stream';
-import type { FullConfig, Suite } from '../../types/testReporter';
+import { toPosixPath } from './json';
+import { codeFrameColumns } from '../transform/babelBundle';
+import type { FullConfig, Location, Suite, TestCase as TestCasePublic, TestResult as TestResultPublic, TestStep as TestStepPublic } from '../../types/testReporter';
+import type { SuitePrivate } from '../../types/reporterPrivate';
 import { HttpServer, assert, calculateSha1, copyFileAndMakeWritable, gracefullyProcessExitDoNotHang, removeFolders, sanitizeForFilePath } from 'playwright-core/lib/utils';
-import type { JsonAttachment, JsonReport, JsonSuite, JsonTestCase, JsonTestResult, JsonTestStep } from './raw';
-import RawReporter from './raw';
-import { stripAnsiEscapes } from './base';
+import { formatResultFailure, stripAnsiEscapes } from './base';
 import { resolveReporterOutputPath } from '../util';
 import type { Metadata } from '../../types/test';
 import type { ZipFile } from 'playwright-core/lib/zipBundle';
@@ -105,14 +107,9 @@ class HtmlReporter extends EmptyReporter {
 
   override async onEnd() {
     const projectSuites = this.suite.suites;
-    const reports = projectSuites.map(suite => {
-      const rawReporter = new RawReporter();
-      const report = rawReporter.generateProjectReport(this.config, suite);
-      return report;
-    });
     await removeFolders([this._outputFolder]);
-    const builder = new HtmlBuilder(this._outputFolder, this._attachmentsBaseURL);
-    this._buildResult = await builder.build(this.config.metadata, reports);
+    const builder = new HtmlBuilder(this.config, this._outputFolder, this._attachmentsBaseURL);
+    this._buildResult = await builder.build(this.config.metadata, projectSuites);
   }
 
   override async onExit() {
@@ -186,27 +183,29 @@ export function startHtmlReportServer(folder: string): HttpServer {
 }
 
 class HtmlBuilder {
+  private _config: FullConfig;
   private _reportFolder: string;
-  private _tests = new Map<string, JsonTestCase>();
   private _testPath = new Map<string, string[]>();
+  private _stepsInFile = new MultiMap<string, TestStep>();
   private _dataZipFile: ZipFile;
   private _hasTraces = false;
   private _attachmentsBaseURL: string;
 
-  constructor(outputDir: string, attachmentsBaseURL: string) {
+  constructor(config: FullConfig, outputDir: string, attachmentsBaseURL: string) {
+    this._config = config;
     this._reportFolder = outputDir;
     fs.mkdirSync(this._reportFolder, { recursive: true });
     this._dataZipFile = new yazl.ZipFile();
     this._attachmentsBaseURL = attachmentsBaseURL;
   }
 
-  async build(metadata: Metadata, rawReports: JsonReport[]): Promise<{ ok: boolean, singleTestId: string | undefined }> {
+  async build(metadata: Metadata, projectSuites: Suite[]): Promise<{ ok: boolean, singleTestId: string | undefined }> {
 
     const data = new Map<string, { testFile: TestFile, testFileSummary: TestFileSummary }>();
-    for (const projectJson of rawReports) {
-      for (const file of projectJson.suites) {
-        const fileName = file.location!.file;
-        const fileId = file.fileId!;
+    for (const projectSuite of projectSuites) {
+      for (const fileSuite of projectSuite.suites) {
+        const fileName = this._relativeLocation(fileSuite.location)!.file;
+        const fileId = (fileSuite as SuitePrivate)._fileId!;
         let fileEntry = data.get(fileId);
         if (!fileEntry) {
           fileEntry = {
@@ -217,13 +216,14 @@ class HtmlBuilder {
         }
         const { testFile, testFileSummary } = fileEntry;
         const testEntries: TestEntry[] = [];
-        this._processJsonSuite(file, fileId, projectJson.project.name, projectJson.project.metadata?.reportName, [], testEntries);
+        this._processJsonSuite(fileSuite, fileId, projectSuite.project()!.name, projectSuite.project()!.metadata?.reportName, [], testEntries);
         for (const test of testEntries) {
           testFile.tests.push(test.testCase);
           testFileSummary.tests.push(test.testCaseSummary);
         }
       }
     }
+    createSnippets(this._stepsInFile);
 
     let ok = true;
     for (const [fileId, { testFile, testFileSummary }] of data) {
@@ -256,7 +256,7 @@ class HtmlBuilder {
     const htmlReport: HTMLReport = {
       metadata,
       files: [...data.values()].map(e => e.testFileSummary),
-      projectNames: rawReports.map(r => r.project.name),
+      projectNames: projectSuites.map(r => r.project()!.name),
       stats: { ...[...data.values()].reduce((a, e) => addStats(a, e.testFileSummary.stats), emptyStats()), duration: metadata.totalTime }
     };
     htmlReport.files.sort((f1, f2) => {
@@ -314,46 +314,45 @@ class HtmlBuilder {
     this._dataZipFile.addBuffer(Buffer.from(JSON.stringify(data)), fileName);
   }
 
-  private _processJsonSuite(suite: JsonSuite, fileId: string, projectName: string, reportName: string | undefined, path: string[], outTests: TestEntry[]) {
+  private _processJsonSuite(suite: Suite, fileId: string, projectName: string, reportName: string | undefined, path: string[], outTests: TestEntry[]) {
     const newPath = [...path, suite.title];
-    suite.suites.map(s => this._processJsonSuite(s, fileId, projectName, reportName, newPath, outTests));
+    suite.suites.forEach(s => this._processJsonSuite(s, fileId, projectName, reportName, newPath, outTests));
     suite.tests.forEach(t => outTests.push(this._createTestEntry(t, projectName, reportName, newPath)));
   }
 
-  private _createTestEntry(test: JsonTestCase, projectName: string, reportName: string | undefined, path: string[]): TestEntry {
+  private _createTestEntry(test: TestCasePublic, projectName: string, reportName: string | undefined, path: string[]): TestEntry {
     const duration = test.results.reduce((a, r) => a + r.duration, 0);
-    this._tests.set(test.testId, test);
-    const location = test.location;
+    const location = this._relativeLocation(test.location)!;
     path = [...path.slice(1)];
-    this._testPath.set(test.testId, path);
+    this._testPath.set(test.id, path);
 
-    const results = test.results.map(r => this._createTestResult(r));
+    const results = test.results.map(r => this._createTestResult(test, r));
 
     return {
       testCase: {
-        testId: test.testId,
+        testId: test.id,
         title: test.title,
         projectName,
         reportName,
         location,
         duration,
         annotations: test.annotations,
-        outcome: test.outcome,
+        outcome: test.outcome(),
         path,
         results,
-        ok: test.outcome === 'expected' || test.outcome === 'flaky',
+        ok: test.outcome() === 'expected' || test.outcome() === 'flaky',
       },
       testCaseSummary: {
-        testId: test.testId,
+        testId: test.id,
         title: test.title,
         projectName,
         reportName,
         location,
         duration,
         annotations: test.annotations,
-        outcome: test.outcome,
+        outcome: test.outcome(),
         path,
-        ok: test.outcome === 'expected' || test.outcome === 'flaky',
+        ok: test.outcome() === 'expected' || test.outcome() === 'flaky',
         results: results.map(result => {
           return { attachments: result.attachments.map(a => ({ name: a.name, contentType: a.contentType, path: a.path })) };
         }),
@@ -433,28 +432,45 @@ class HtmlBuilder {
     }).filter(Boolean) as TestAttachment[];
   }
 
-  private _createTestResult(result: JsonTestResult): TestResult {
+  private _createTestResult(test: TestCasePublic, result: TestResultPublic): TestResult {
     return {
       duration: result.duration,
-      startTime: result.startTime,
+      startTime: result.startTime.toISOString(),
       retry: result.retry,
-      steps: result.steps.map(s => this._createTestStep(s)),
-      errors: result.errors,
+      steps: dedupeSteps(result.steps).map(s => this._createTestStep(s)),
+      errors: formatResultFailure(test, result, '', true).map(error => error.message),
       status: result.status,
-      attachments: this._serializeAttachments(result.attachments),
+      attachments: this._serializeAttachments([
+        ...result.attachments,
+        ...result.stdout.map(m => stdioAttachment(m, 'stdout')),
+        ...result.stderr.map(m => stdioAttachment(m, 'stderr'))]),
     };
   }
 
-  private _createTestStep(step: JsonTestStep): TestStep {
-    return {
+  private _createTestStep(dedupedStep: DedupedStep): TestStep {
+    const { step, duration, count } = dedupedStep;
+    const result: TestStep = {
       title: step.title,
-      startTime: step.startTime,
-      duration: step.duration,
-      snippet: step.snippet,
-      steps: step.steps.map(s => this._createTestStep(s)),
-      location: step.location,
-      error: step.error,
-      count: step.count
+      startTime: step.startTime.toISOString(),
+      duration,
+      steps: dedupeSteps(step.steps).map(s => this._createTestStep(s)),
+      location: this._relativeLocation(step.location),
+      error: step.error?.message,
+      count
+    };
+    if (result.location)
+      this._stepsInFile.set(result.location.file, result);
+    return result;
+  }
+
+  private _relativeLocation(location: Location | undefined): Location | undefined {
+    if (!location)
+      return undefined;
+    const file = toPosixPath(path.relative(this._config.rootDir, location.file));
+    return {
+      file,
+      line: location.line,
+      column: location.column,
     };
   }
 }
@@ -510,6 +526,77 @@ class Base64Encoder extends Transform {
 
 function isTextContentType(contentType: string) {
   return contentType.startsWith('text/') || contentType.startsWith('application/json');
+}
+
+type JsonAttachment = {
+  name: string;
+  body?: string | Buffer;
+  path?: string;
+  contentType: string;
+};
+
+function stdioAttachment(chunk: Buffer | string, type: 'stdout' | 'stderr'): JsonAttachment {
+  if (typeof chunk === 'string') {
+    return {
+      name: type,
+      contentType: 'text/plain',
+      body: chunk
+    };
+  }
+  return {
+    name: type,
+    contentType: 'application/octet-stream',
+    body: chunk
+  };
+}
+
+type DedupedStep = { step: TestStepPublic, count: number, duration: number };
+
+function dedupeSteps(steps: TestStepPublic[]) {
+  const result: DedupedStep[] = [];
+  let lastResult = undefined;
+  for (const step of steps) {
+    const canDedupe = !step.error && step.duration >= 0 && step.location?.file && !step.steps.length;
+    const lastStep = lastResult?.step;
+    if (canDedupe && lastResult && lastStep && step.category === lastStep.category && step.title === lastStep.title && step.location?.file === lastStep.location?.file && step.location?.line === lastStep.location?.line && step.location?.column === lastStep.location?.column) {
+      ++lastResult.count;
+      lastResult.duration += step.duration;
+      continue;
+    }
+    lastResult = { step, count: 1, duration: step.duration };
+    result.push(lastResult);
+    if (!canDedupe)
+      lastResult = undefined;
+  }
+  return result;
+}
+
+function createSnippets(stepsInFile: MultiMap<string, TestStep>) {
+  for (const file of stepsInFile.keys()) {
+    let source: string;
+    try {
+      source = fs.readFileSync(file, 'utf-8') + '\n//';
+    } catch (e) {
+      continue;
+    }
+    const lines = source.split('\n').length;
+    const highlighted = codeFrameColumns(source, { start: { line: lines, column: 1 } }, { highlightCode: true, linesAbove: lines, linesBelow: 0 });
+    const highlightedLines = highlighted.split('\n');
+    const lineWithArrow = highlightedLines[highlightedLines.length - 1];
+    for (const step of stepsInFile.get(file)) {
+      // Don't bother with snippets that have less than 3 lines.
+      if (step.location!.line < 2 || step.location!.line >= lines)
+        continue;
+      // Cut out snippet.
+      const snippetLines = highlightedLines.slice(step.location!.line - 2, step.location!.line + 1);
+      // Relocate arrow.
+      const index = lineWithArrow.indexOf('^');
+      const shiftedArrow = lineWithArrow.slice(0, index) + ' '.repeat(step.location!.column - 1) + lineWithArrow.slice(index);
+      // Insert arrow line.
+      snippetLines.splice(2, 0, shiftedArrow);
+      step.snippet = snippetLines.join('\n');
+    }
+  }
 }
 
 export default HtmlReporter;
