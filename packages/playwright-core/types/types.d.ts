@@ -16725,7 +16725,7 @@ export interface Dialog {
  *
  * All the downloaded files belonging to the browser context are deleted when the browser context is closed.
  *
- * Download event is emitted once the download starts. Download path becomes available once download completes:
+ * Download event is emitted once the download starts. Download path becomes available once download completes.
  *
  * ```js
  * // Start waiting for download before clicking. Note no await.
@@ -16733,8 +16733,8 @@ export interface Dialog {
  * await page.getByText('Download file').click();
  * const download = await downloadPromise;
  *
- * // Wait for the download process to complete.
- * console.log(await download.path());
+ * // Wait for the download process to complete and save the downloaded file somewhere.
+ * await download.saveAs('/path/to/save/at/' + download.suggestedFilename());
  * ```
  *
  */
@@ -16778,6 +16778,13 @@ export interface Download {
   /**
    * Copy the download to a user-specified path. It is safe to call this method while the download is still in progress.
    * Will wait for the download to finish if necessary.
+   *
+   * **Usage**
+   *
+   * ```js
+   * await download.saveAs('/path/to/save/at/' + download.suggestedFilename());
+   * ```
+   *
    * @param path Path where the download should be copied.
    */
   saveAs(path: string): Promise<void>;

@@ -5,7 +5,7 @@ title: "Downloads"
 
 
 
-For every attachment downloaded by the page, [`event: Page.download`] event is emitted. All these attachments are downloaded into a temporary folder. You can obtain the download url, file system path and payload stream using the [Download] object from the event.
+For every attachment downloaded by the page, [`event: Page.download`] event is emitted. All these attachments are downloaded into a temporary folder. You can obtain the download url, file name and payload stream using the [Download] object from the event.
 
 You can specify where to persist downloaded files using the [`option: downloadsPath`] option in [`method: BrowserType.launch`].
 
@@ -20,10 +20,9 @@ Here is the simplest way to handle the file download:
 const downloadPromise = page.waitForEvent('download');
 await page.getByText('Download file').click();
 const download = await downloadPromise;
-// Wait for the download process to complete
-console.log(await download.path());
-// Save downloaded file somewhere
-await download.saveAs('/path/to/save/download/at.txt');
+
+// Wait for the download process to complete and save the downloaded file somewhere.
+await download.saveAs('/path/to/save/at/' + download.suggestedFilename());
 ```
 
 ```java
@@ -32,11 +31,9 @@ Download download = page.waitForDownload(() -> {
     // Perform the action that initiates download
     page.getByText("Download file").click();
 });
-// Wait for the download process to complete
-Path path = download.path();
-System.out.println(download.path());
-// Save downloaded file somewhere
-download.saveAs(Paths.get("/path/to/save/download/at.txt"));
+
+// Wait for the download process to complete and save the downloaded file somewhere
+download.saveAs(Paths.get("/path/to/save/at/", download.suggestedFilename()));
 ```
 
 ```python async
@@ -45,10 +42,9 @@ async with page.expect_download() as download_info:
     # Perform the action that initiates download
     await page.get_by_text("Download file").click()
 download = await download_info.value
-# Wait for the download process to complete
-print(await download.path())
-# Save downloaded file somewhere
-await download.save_as("/path/to/save/download/at.txt")
+
+# Wait for the download process to complete and save the downloaded file somewhere
+await download.save_as("/path/to/save/at/" + download.suggested_filename)
 ```
 
 ```python sync
@@ -56,12 +52,10 @@ await download.save_as("/path/to/save/download/at.txt")
 with page.expect_download() as download_info:
     # Perform the action that initiates download
     page.get_by_text("Download file").click()
-# Wait for the download to start
 download = download_info.value
-# Wait for the download process to complete
-print(download.path())
-# Save downloaded file somewhere
-download.save_as("/path/to/save/download/at.txt")
+
+# Wait for the download process to complete and save the downloaded file somewhere
+download.save_as("/path/to/save/at/" + download.suggested_filename)
 ```
 
 ```csharp
@@ -69,10 +63,9 @@ download.save_as("/path/to/save/download/at.txt")
 var waitForDownloadTask = page.WaitForDownloadAsync();
 await page.GetByText("Download file").ClickAsync();
 var download = await waitForDownloadTask;
-// Wait for the download process to complete
-Console.WriteLine(await download.PathAsync());
-// Save downloaded file somewhere
-await download.SaveAsAsync("/path/to/save/download/at.txt");
+
+// Wait for the download process to complete and save the downloaded file somewhere
+await download.SaveAsAsync("/path/to/save/at/" + download.SuggestedFilename);
 ```
 
 #### Variations
