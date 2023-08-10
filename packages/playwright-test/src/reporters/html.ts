@@ -185,7 +185,6 @@ export function startHtmlReportServer(folder: string): HttpServer {
 class HtmlBuilder {
   private _config: FullConfig;
   private _reportFolder: string;
-  private _testPath = new Map<string, string[]>();
   private _stepsInFile = new MultiMap<string, TestStep>();
   private _dataZipFile: ZipFile;
   private _hasTraces = false;
@@ -323,8 +322,7 @@ class HtmlBuilder {
   private _createTestEntry(test: TestCasePublic, projectName: string, reportName: string | undefined, path: string[]): TestEntry {
     const duration = test.results.reduce((a, r) => a + r.duration, 0);
     const location = this._relativeLocation(test.location)!;
-    path = [...path.slice(1)];
-    this._testPath.set(test.id, path);
+    path = path.slice(1);
 
     const results = test.results.map(r => this._createTestResult(test, r));
 
