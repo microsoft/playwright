@@ -10,7 +10,7 @@
   "dependencies": {
     "commander": "^11.0.0",
     "debug": "^4.3.2",
-    "playwright-core": "1.37.0-alpha-aug-7-2023",
+    "playwright-core": "1.38.0-alpha-aug-10-2023",
     "ws": "^8.1.0"
   },
   "devDependencies": {
