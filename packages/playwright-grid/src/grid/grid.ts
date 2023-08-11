@@ -225,11 +225,16 @@ export class Grid {
   private _port: number;
   private _accessKey: string;
 
-  constructor(port: number, accessKey: string) {
+  static async create(options: { port: number, accessKey?: string, httpsCert?: string, httpsKey?: string }): Promise<Grid> {
+    const server = await HttpServer.create(options);
+    return new Grid(server, options);
+  }
+
+  private constructor(server: HttpServer, options: { port: number, accessKey?: string }) {
     this._log = debug(`pw:grid:proxy`);
-    this._port = port;
-    this._accessKey = accessKey;
-    this._server = new HttpServer();
+    this._server = server;
+    this._port = options.port;
+    this._accessKey = options.accessKey || '';
 
     this._server.routePath('/' + this._accessKey, (request, response) => {
       response.statusCode = 200;
