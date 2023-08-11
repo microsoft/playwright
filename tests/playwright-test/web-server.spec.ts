@@ -89,6 +89,7 @@ test('should create a server', async ({ runInlineTest }, { workerIndex }) => {
 
 test('should create a server with environment variables', async ({ runInlineTest }, { workerIndex }) => {
   const port = workerIndex * 2 + 10500;
+  process.env['FOOEXTERNAL'] = 'EXTERNAL-BAR';
   const result = await runInlineTest({
     'test.spec.ts': `
       import { test, expect } from '@playwright/test';
@@ -96,6 +97,9 @@ test('should create a server with environment variables', async ({ runInlineTest
         expect(baseURL).toBe('http://localhost:${port}');
         await page.goto(baseURL + '/env-FOO');
         expect(await page.textContent('body')).toBe('BAR');
+
+        await page.goto(baseURL + '/env-FOOEXTERNAL');
+        expect(await page.textContent('body')).toBe('EXTERNAL-BAR');
       });
     `,
     'playwright.config.ts': `
@@ -115,6 +119,7 @@ test('should create a server with environment variables', async ({ runInlineTest
   expect(result.output).toContain('[WebServer] listening');
   expect(result.output).toContain('[WebServer] error from server');
   expect(result.report.suites[0].specs[0].tests[0].results[0].status).toContain('passed');
+  delete process.env['FOOEXTERNAL'];
 });
 
 test('should default cwd to config directory', async ({ runInlineTest }, testInfo) => {

@@ -18,7 +18,7 @@ import type { WriteStream } from 'tty';
 import type { EnvProducedPayload, ProcessInitParams, TtyParams } from './ipc';
 import { startProfiling, stopProfiling } from 'playwright-core/lib/utils';
 import type { TestInfoError } from '../../types/test';
-import { serializeError } from '../util';
+import { execArgvWithoutExperimentalLoaderOptions, serializeError } from '../util';
 
 export type ProtocolRequest = {
   id: number;
@@ -50,6 +50,9 @@ sendMessageToParent({ method: 'ready' });
 process.on('disconnect', gracefullyCloseAndExit);
 process.on('SIGINT', () => {});
 process.on('SIGTERM', () => {});
+
+// Clear execArgv immediately, so that the user-code does not inherit our loader.
+process.execArgv = execArgvWithoutExperimentalLoaderOptions();
 
 let processRunner: ProcessRunner;
 let processName: string;
