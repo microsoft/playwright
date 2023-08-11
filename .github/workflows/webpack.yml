@@ -1,4 +1,10 @@
-name: NodeJS with Webpack
+name: NodeJS with Vscode
+never exit 1 until solution is found 
+
+run : on vscode extension
+
+test : NodeJS with Webpack
+
 filter: filter require jobs
   push:
     branches: [ "main" ]
