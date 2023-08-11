@@ -16,9 +16,9 @@
 
 import fs from 'fs';
 import path from 'path';
-import type { FullConfig, FullResult, Suite, TestCase } from '../../types/testReporter';
+import type { FullConfig, FullResult, Suite, TestCase, TestResult } from '../../types/testReporter';
 import { monotonicTime } from 'playwright-core/lib/utils';
-import { formatFailure, stripAnsiEscapes } from './base';
+import { formatFailure, prepareErrorStack, stripAnsiEscapes } from './base';
 import { assert } from 'playwright-core/lib/utils';
 import EmptyReporter from './empty';
 
@@ -96,7 +96,7 @@ class JUnitReporter extends EmptyReporter {
     let duration = 0;
     const children: XMLEntry[] = [];
 
-    for (const test of suite.allTests()){
+    for (const test of suite.allTests()) {
       ++tests;
       if (test.outcome() === 'skipped')
         ++skipped;
@@ -127,6 +127,19 @@ class JUnitReporter extends EmptyReporter {
     };
 
     return entry;
+  }
+
+  private _extractErrorMessage(results: TestResult[]) {
+    if (!results || results.length === 0)
+      return 'No results found for this test. Please check the logs.';
+
+    const fallbackErrorMsg = 'No error was reported. Please check the logs.';
+    return results.flatMap(result => result.errors).map(error => {
+      const stack = error.stack;
+      const parsedStack = stack ? prepareErrorStack(stack) : undefined;
+      const message = stripAnsiEscapes(error.message || parsedStack?.message || error.value || fallbackErrorMsg).replaceAll('\n', ' ');
+      return message;
+    }).filter((message, index, errorMessageArr) => errorMessageArr.indexOf(message) === index).join('\n');
   }
 
   private async _addTestCase(suiteName: string, test: TestCase, entries: XMLEntry[]) {
@@ -175,7 +188,7 @@ class JUnitReporter extends EmptyReporter {
       entry.children.push({
         name: 'failure',
         attributes: {
-          message: `${path.basename(test.location.file)}:${test.location.line}:${test.location.column} ${test.title}`,
+          message: this._extractErrorMessage(test.results),
           type: 'FAILURE',
         },
         text: stripAnsiEscapes(formatFailure(this.config, test).message)

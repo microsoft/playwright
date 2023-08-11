@@ -62,11 +62,45 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       const xml = parseXML(result.output);
       expect(xml['testsuites']['$']['tests']).toBe('1');
       expect(xml['testsuites']['$']['failures']).toBe('1');
+
       const failure = xml['testsuites']['testsuite'][0]['testcase'][0]['failure'][0];
-      expect(failure['$']['message']).toContain('a.test.js');
-      expect(failure['$']['message']).toContain('one');
       expect(failure['$']['type']).toBe('FAILURE');
       expect(failure['_']).toContain('expect(1).toBe(0)');
+
+      const failureMessage = failure['$']['message'];
+      expect(failureMessage).not.toContain('a.test.js');
+      expect(failureMessage).not.toContain('one');
+      expect(failureMessage).toEqual('expect(received).toBe(expected) // Object.is equality  Expected: 0 Received: 1');
+
+      expect(result.exitCode).toBe(1);
+    });
+
+    test('should render all unique errors after retry', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('one', async ({}, testInfo) => {
+            if(testInfo.retry == 2 ) {
+              throw new Error('New failure on retry 2');
+            }
+            expect(1).toBe(0);
+          });
+        `,
+      }, { retries: 3, reporter: 'junit' });
+      expect(result.output).toContain(`tests="1"`);
+      expect(result.output).toContain(`failures="1"`);
+      expect(result.output).toContain(`<failure`);
+      expect(result.output).toContain('Retry #1');
+      expect(result.output).toContain('Retry #2');
+      expect(result.output).toContain('Retry #3');
+
+      const xml = parseXML(result.output);
+      const failureMessage = xml['testsuites']['testsuite'][0]['testcase'][0]['failure'][0]['$']['message'];
+      expect(failureMessage).not.toContain('a.test.js');
+      expect(failureMessage).not.toContain('one');
+      // When all retries fail with the same Error Message we should only see it once.
+      expect(failureMessage).toEqual('expect(received).toBe(expected) // Object.is equality  Expected: 0 Received: 1\nNew failure on retry 2');
+
       expect(result.exitCode).toBe(1);
     });
 
@@ -85,6 +119,14 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       expect(result.output).toContain('Retry #1');
       expect(result.output).toContain('Retry #2');
       expect(result.output).toContain('Retry #3');
+
+      const xml = parseXML(result.output);
+      const failureMessage = xml['testsuites']['testsuite'][0]['testcase'][0]['failure'][0]['$']['message'];
+      expect(failureMessage).not.toContain('a.test.js');
+      expect(failureMessage).not.toContain('one');
+      // When all retries fail with the same Error Message we should only see it once.
+      expect(failureMessage).toEqual('expect(received).toBe(expected) // Object.is equality  Expected: 0 Received: 1');
+
       expect(result.exitCode).toBe(1);
     });
 
@@ -124,6 +166,11 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       expect(testcase['system-err'][0]).not.toContain('\u0000'); // null control character
       expect(testcase['failure'][0]['_']).toContain(`>  9 |             test.expect("abc").toBe('abcd');`);
       expect(result.exitCode).toBe(1);
+
+      const failureMessage = testcase['failure'][0]['$']['message'];
+      expect(failureMessage).not.toContain('a.test.js');
+      expect(failureMessage).not.toContain('one');
+      expect(failureMessage).toEqual('expect(received).toBe(expected) // Object.is equality  Expected: "abcd" Received: "abc"');
     });
 
     test('should render stdout without ansi escapes', async ({ runInlineTest }) => {
