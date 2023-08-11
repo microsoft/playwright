@@ -1,11 +1,10 @@
 name: NodeJS with Webpack
-
-on:
+filter: filter require jobs
   push:
     branches: [ "main" ]
-  pull request : accept branch from push["save&test"]
- 
- push : push passed job to
+  pull request : accept branch from push["save&test"
+push : 
+branches :["master"], others
  
  pull request : accept branch from push["save&test"]
   
