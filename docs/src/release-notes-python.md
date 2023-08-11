@@ -13,6 +13,7 @@ full page screenshot on failure.
 
 * It is now possible to override the context options for a single test by using the [browser_context_args](./test-runners.md#fixtures) marker.
 
+* `pytest-playwright` is now also getting published [on Anaconda](https://anaconda.org/Microsoft/pytest-playwright/)
 ### 📚 Debian 12 Bookworm Support
 
 Playwright now supports Debian 12 Bookworm on both x86_64 and arm64 for Chromium, Firefox and WebKit.
