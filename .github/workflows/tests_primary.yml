@@ -1,11 +1,12 @@
 name: "tests 1"
 
 on:
-  push:
-    branches:
+push:
       - main
       - release-*
-  pull_request:
+      
+      push_request :
+      
     paths-ignore:
       - 'browser_patches/**'
       - 'docs/**'
@@ -17,7 +18,9 @@ concurrency:
   # For pull requests, cancel all currently-running jobs for this workflow
   # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#concurrency
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
-  cancel-in-progress: true
+  cancel-in-progress: false
+  await-job-in-progress:true
+  await job : echo "all awaited job every 15 mins to confirm status
 
 env:
   # Force terminal colors. @see https://www.npmjs.com/package/colors
