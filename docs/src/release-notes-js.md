@@ -8,6 +8,11 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 ## Version 1.37
 
+<LiteYouTube
+  id="cEd4SH_Xf5U"
+  title="Playwright 1.36 & 1.37"
+/>
+
 ### New `npx playwright merge-reports` tool
 
 If you run tests on multiple shards, you can now merge all reports in a single HTML report (or any other report) 
