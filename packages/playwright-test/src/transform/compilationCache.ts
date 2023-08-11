@@ -43,23 +43,31 @@ const fileDependencies = new Map<string, Set<string>>();
 // Dependencies resolved by the external bundler.
 const externalDependencies = new Map<string, Set<string>>();
 
-Error.stackTraceLimit = 200;
+let sourceMapSupportInstalled = false;
 
-sourceMapSupport.install({
-  environment: 'node',
-  handleUncaughtExceptions: false,
-  retrieveSourceMap(source) {
-    if (!sourceMaps.has(source))
-      return null;
-    const sourceMapPath = sourceMaps.get(source)!;
-    if (!fs.existsSync(sourceMapPath))
-      return null;
-    return {
-      map: JSON.parse(fs.readFileSync(sourceMapPath, 'utf-8')),
-      url: source
-    };
-  }
-});
+export function installSourceMapSupportIfNeeded() {
+  if (sourceMapSupportInstalled)
+    return;
+  sourceMapSupportInstalled = true;
+
+  Error.stackTraceLimit = 200;
+
+  sourceMapSupport.install({
+    environment: 'node',
+    handleUncaughtExceptions: false,
+    retrieveSourceMap(source) {
+      if (!sourceMaps.has(source))
+        return null;
+      const sourceMapPath = sourceMaps.get(source)!;
+      if (!fs.existsSync(sourceMapPath))
+        return null;
+      return {
+        map: JSON.parse(fs.readFileSync(sourceMapPath, 'utf-8')),
+        url: source
+      };
+    }
+  });
+}
 
 function _innerAddToCompilationCache(filename: string, options: { codePath: string, sourceMapPath: string, moduleUrl?: string }) {
   sourceMaps.set(options.moduleUrl || filename, options.sourceMapPath);

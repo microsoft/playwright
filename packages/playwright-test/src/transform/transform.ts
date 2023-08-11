@@ -25,7 +25,7 @@ import Module from 'module';
 import type { BabelPlugin, BabelTransformFunction } from './babelBundle';
 import { createFileMatcher, fileIsModule, resolveImportSpecifierExtension } from '../util';
 import type { Matcher } from '../util';
-import { getFromCompilationCache, currentFileDepsCollector, belongsToNodeModules } from './compilationCache';
+import { getFromCompilationCache, currentFileDepsCollector, belongsToNodeModules, installSourceMapSupportIfNeeded } from './compilationCache';
 
 const version = require('../../package.json').version;
 
@@ -213,6 +213,8 @@ export async function requireOrImport(file: string) {
 }
 
 function installTransform(): () => void {
+  installSourceMapSupportIfNeeded();
+
   let reverted = false;
 
   const originalResolveFilename = (Module as any)._resolveFilename;
