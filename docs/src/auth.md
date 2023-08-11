@@ -654,3 +654,19 @@ await context.AddInitScriptAsync(@"(storage => {
     }
   })('" + loadedSessionStorage + "')");
 ```
+
+### Avoid authentication in some tests
+* langs: js
+
+You can reset storage state in a test file to avoid authentication that was set up for the whole project.
+
+```js title="not-signed-in.spec.ts"
+import { test } from '@playwright/test';
+
+// Reset storage state for this file to avoid being authenticated
+test.use({ storageState: { cookies: [], origins: [] } });
+
+test('not signed in test', async ({ page }) => {
+  // ...
+});
+```

@@ -603,9 +603,9 @@ it('should have security details', async ({ contextFactory, httpsServer, browser
     expect(port).toBe(httpsServer.PORT);
   }
   if (browserName === 'webkit' && platform === 'darwin')
-    expect(securityDetails).toEqual({ protocol: 'TLS 1.3', subjectName: 'puppeteer-tests', validFrom: 1550084863, validTo: 33086084863 });
+    expect(securityDetails).toEqual({ protocol: 'TLS 1.3', subjectName: 'playwright-test', validFrom: 1691708270, validTo: 2007068270 });
   else
-    expect(securityDetails).toEqual({ issuer: 'puppeteer-tests', protocol: 'TLS 1.3', subjectName: 'puppeteer-tests', validFrom: 1550084863, validTo: 33086084863 });
+    expect(securityDetails).toEqual({ issuer: 'playwright-test', protocol: 'TLS 1.3', subjectName: 'playwright-test', validFrom: 1691708270, validTo: 2007068270 });
 });
 
 it('should have connection details for redirects', async ({ contextFactory, server, browserName, mode }, testInfo) => {
@@ -664,11 +664,11 @@ it('should return security details directly from response', async ({ contextFact
   const response = await page.goto(httpsServer.EMPTY_PAGE);
   const securityDetails = await response.securityDetails();
   if (browserName === 'webkit' && platform === 'win32')
-    expect({ ...securityDetails, protocol: undefined }).toEqual({ subjectName: 'puppeteer-tests', validFrom: 1550084863, validTo: -1 });
+    expect({ ...securityDetails, protocol: undefined }).toEqual({ subjectName: 'playwright-test', validFrom: 1691708270, validTo: -1 });
   else if (browserName === 'webkit')
-    expect(securityDetails).toEqual({ protocol: 'TLS 1.3', subjectName: 'puppeteer-tests', validFrom: 1550084863, validTo: 33086084863 });
+    expect(securityDetails).toEqual({ protocol: 'TLS 1.3', subjectName: 'playwright-test', validFrom: 1691708270, validTo: 2007068270 });
   else
-    expect(securityDetails).toEqual({ issuer: 'puppeteer-tests', protocol: 'TLS 1.3', subjectName: 'puppeteer-tests', validFrom: 1550084863, validTo: 33086084863 });
+    expect(securityDetails).toEqual({ issuer: 'playwright-test', protocol: 'TLS 1.3', subjectName: 'playwright-test', validFrom: 1691708270, validTo: 2007068270 });
 });
 
 it('should contain http2 for http2 requests', async ({ contextFactory, browserName, platform }, testInfo) => {
