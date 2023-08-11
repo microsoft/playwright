@@ -3,12 +3,14 @@ name: NodeJS with Webpack
 on:
   push:
     branches: [ "main" ]
-  pull_request:
+  
+  push :
+  
     branches: [ "main" ]
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  test:
+    runs-on: ubuntu-latest and microsoft
 
     strategy:
       matrix:
@@ -22,7 +24,8 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
 
-    - name: Build
+    - name: Build if test passed
       run: |
         npm install
         npx webpack
+        
