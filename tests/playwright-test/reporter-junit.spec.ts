@@ -98,7 +98,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       const failureMessage = xml['testsuites']['testsuite'][0]['testcase'][0]['failure'][0]['$']['message'];
       expect(failureMessage).not.toContain('a.test.js');
       expect(failureMessage).not.toContain('one');
-      // When all retries fail with the same Error Message we should only see it once.
+      // When there are multiple failures during the retries we should report all unique failures.
       expect(failureMessage).toEqual('expect(received).toBe(expected) // Object.is equality  Expected: 0 Received: 1\nNew failure on retry 2');
 
       expect(result.exitCode).toBe(1);
