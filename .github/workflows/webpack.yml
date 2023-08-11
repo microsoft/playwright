@@ -3,14 +3,18 @@ name: NodeJS with Webpack
 on:
   push:
     branches: [ "main" ]
-  
-  push :
+  pull request : accept branch from push["save&test"]
+ 
+ push : push passed job to
+ 
+ pull request : accept branch from push["save&test"]
   
     branches: [ "main" ]
 
 jobs:
   test:
     runs-on: ubuntu-latest and microsoft
+    firefox, chromium , chrome ,safari e.t.c
 
     strategy:
       matrix:
