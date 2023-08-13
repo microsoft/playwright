@@ -34,3 +34,12 @@ export function getPackageManager() {
     return 'pnpm';
   return 'npm';
 }
+
+export function getPackageManagerExecCommand() {
+  const packageManager = getPackageManager();
+  if (packageManager === 'yarn')
+    return 'yarn';
+  if (packageManager === 'pnpm')
+    return 'pnpm exec';
+  return 'npx';
+}

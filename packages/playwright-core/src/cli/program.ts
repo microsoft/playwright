@@ -31,7 +31,7 @@ import type { Page } from '../client/page';
 import type { BrowserType } from '../client/browserType';
 import type { BrowserContextOptions, LaunchOptions } from '../client/types';
 import { spawn } from 'child_process';
-import { wrapInASCIIBox, isLikelyNpxGlobal, assert, gracefullyProcessExitDoNotHang } from '../utils';
+import { wrapInASCIIBox, isLikelyNpxGlobal, assert, gracefullyProcessExitDoNotHang, getPackageManagerExecCommand } from '../utils';
 import type { Executable } from '../server';
 import { registry, writeDockerVersion } from '../server';
 
@@ -680,8 +680,10 @@ function buildBasePlaywrightCLICommand(cliTargetLang: string | undefined): strin
       return `mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="...options.."`;
     case 'csharp':
       return `pwsh bin/Debug/netX/playwright.ps1`;
-    default:
-      return `npx playwright`;
+    default: {
+      const packageManagerCommand = getPackageManagerExecCommand();
+      return `${packageManagerCommand} playwright`;
+    }
   }
 }
 

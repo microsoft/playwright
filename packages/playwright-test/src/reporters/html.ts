@@ -15,7 +15,7 @@
  */
 
 import { colors, open } from 'playwright-core/lib/utilsBundle';
-import { MultiMap } from 'playwright-core/lib/utils';
+import { MultiMap, getPackageManagerExecCommand } from 'playwright-core/lib/utils';
 import fs from 'fs';
 import path from 'path';
 import type { TransformCallback } from 'stream';
@@ -121,11 +121,12 @@ class HtmlReporter extends EmptyReporter {
     if (shouldOpen) {
       await showHTMLReport(this._outputFolder, this._options.host, this._options.port, singleTestId);
     } else if (!FullConfigInternal.from(this.config)?.cliListOnly) {
+      const packageManagerCommand = getPackageManagerExecCommand();
       const relativeReportPath = this._outputFolder === standaloneDefaultFolder() ? '' : ' ' + path.relative(process.cwd(), this._outputFolder);
       console.log('');
       console.log('To open last HTML report run:');
       console.log(colors.cyan(`
-  npx playwright show-report${relativeReportPath}
+  ${packageManagerCommand} playwright show-report${relativeReportPath}
 `));
     }
   }
