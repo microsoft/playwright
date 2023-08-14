@@ -55,7 +55,7 @@ on:
   pull_request:
     branches: [ main, master ]
 jobs:
-  test:
+  playwright-tests:
     timeout-minutes: 60
     runs-on: ubuntu-latest
     strategy:
@@ -123,6 +123,8 @@ jobs:
 
 To ensure the execution order, we make `merge-reports` job [depend](https://docs.github.com/en/actions/using-jobs/using-jobs-in-a-workflow#defining-prerequisite-jobs) on our sharded `playwright-tests` job.
 
+<img width="875" alt="image" src="https://github.com/microsoft/playwright/assets/9798949/b69dac59-fc19-4b98-8f49-814b1c29ca02">
+
 ## Publishing report on the web
 
 In the previous example, the HTML report is uploaded to GitHub Actions Artifacts. This is easy to configure, but downloading HTML report as a zip file is not very convenient.
@@ -152,6 +154,7 @@ We can utilize Azure Storage's static websites hosting capabilities to easily an
           run: |
             REPORT_DIR='run-${{ github.run_id }}-${{ github.run_attempt }}'
             azcopy cp --recursive "./playwright-report/*" "https://<STORAGE_ACCOUNT_NAME>.blob.core.windows.net/\$web/$REPORT_DIR"
+            echo "::notice title=HTML report url::https://<STORAGE_ACCOUNT_NAME>.z1.web.core.windows.net/$REPORT_DIR/index.html"
           env:
             AZCOPY_AUTO_LOGIN_TYPE: SPN
             AZCOPY_SPA_APPLICATION_ID: '${{ secrets.AZCOPY_SPA_APPLICATION_ID }}'
