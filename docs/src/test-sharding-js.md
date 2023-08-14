@@ -48,15 +48,16 @@ This will produce a standard HTML report into `playwright-report` directory.
 One of the easiest ways to shard Playwright tests across multiple machines is by using GitHub Actions matrix strategy. For example, you can configure a job to run your tests on four machines in parallel like this:
 
 ```yaml title=".github/workflows/playwright.yml"
-name: "Playwright Tests"
-
+name: Playwright Tests
 on:
   push:
-    branches:
-      - main
-
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
 jobs:
-  playwright-tests:
+  test:
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
@@ -65,10 +66,12 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
+      with:
+        node-version: 18
     - name: Install dependencies
       run: npm ci
     - name: Install Playwright browsers
-      run: npx playwright install
+      run: npx playwright install --with-deps
 
     - name: Run Playwright tests
       run: npx playwright test --shard ${{ matrix.shard }}
@@ -96,6 +99,8 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
+      with:
+        node-version: 18
     - name: Install dependencies
       run: npm ci
 
