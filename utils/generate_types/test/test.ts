@@ -499,6 +499,60 @@ playwright.chromium.launch().then(async browser => {
   }
 
   {
+    const handle = await page.locator('body').evaluateHandle(() => ([{a: '123'}]));
+    const value = await handle.evaluate(h => h[1].a);
+    const assertion: AssertType<string, typeof value> = true;
+  }
+  {
+    const handle = await page.locator('body').evaluateHandle(() => ([{a: '123'}]));
+    const value = await handle.evaluate((h, p) => ({ a: h[1].a, p}), 123);
+    const assertion: AssertType<{a: string, p: number}, typeof value> = true;
+  }
+  {
+    const handle = await page.locator('body').evaluateHandle(() => ([{a: '123'}]));
+    const value = await handle.evaluate((h: ({a: string, b: number})[]) => h[1].b);
+    const assertion: AssertType<number, typeof value> = true;
+  }
+  {
+    const handle = await page.locator('body').evaluateHandle(() => ([{a: '123'}]));
+    const value = await handle.evaluate((h: ({a: string, b: number})[], prop) => h[1][prop], 'b' as const);
+    const assertion: AssertType<number, typeof value> = true;
+  }
+  {
+    const handle = await page.locator('body').evaluateHandle(() => ([{a: '123'}]));
+    const value = await handle.evaluateHandle(h => h[1].a);
+    const assertion: AssertType<playwright.JSHandle<string>, typeof value> = true;
+  }
+  {
+    const handle = await page.locator('body').evaluateHandle(() => ([{a: '123'}]));
+    const value = await handle.evaluateHandle((h, p) => ({ a: h[1].a, p}), 123);
+    const assertion: AssertType<playwright.JSHandle<{a: string, p: number}>, typeof value> = true;
+  }
+  {
+    const handle = await page.locator('body').evaluateHandle(() => ([{a: '123'}]));
+    const value = await handle.evaluateHandle((h: ({a: string, b: number})[]) => h[1].b);
+    const assertion: AssertType<playwright.JSHandle<number>, typeof value> = true;
+  }
+  {
+    const handle = await page.locator('body').evaluateHandle(e => {
+      const assertion1: AssertType<HTMLElement, typeof e> = true;
+      const assertion2: AssertType<SVGElement, typeof e> = true;
+      return e.nodeName;
+    });
+    const value = await handle.evaluate(e => e);
+    const assertion: AssertType<string, typeof value> = true;
+  }{
+    const handle = await page.locator('body').evaluateHandle(() => 3);
+    const value = await page.evaluate(([a, b, c, d]) => ({a, b, c, d}), wrap(handle));
+    const assertion: AssertType<{a: number, b: string, c: boolean, d: number}, typeof value> = true;
+  }
+  {
+    const handle = await page.locator('body').evaluateHandle(() => 3);
+    const h = await page.locator('body').evaluateHandle((_, [a, b, c, d]) => ({a, b, c, d}), wrap(handle));
+    const value = await h.evaluate(h => h);
+    const assertion: AssertType<{a: number, b: string, c: boolean, d: number}, typeof value> = true;
+  }
+  {
     const handle = await page.evaluateHandle(() => ([{a: '123'}]));
     const value = await handle.evaluate(h => h[1].a);
     const assertion: AssertType<string, typeof value> = true;
