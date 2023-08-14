@@ -13,8 +13,8 @@ Let us know if you encounter any issues!
 
 Linux support looks like this:
 
-|          | Ubuntu 20.04 | Ubuntu 22.04 | Debian 11 | Debian 12
-| :--- | :---: | :---: | :---: | :---: | :---: | 
+|          | Ubuntu 20.04 | Ubuntu 22.04 | Debian 11 | Debian 12 |
+| :--- | :---: | :---: | :---: | :---: | 
 | Chromium | ✅ | ✅ | ✅ | ✅ |
 | WebKit | ✅ | ✅ | ✅ | ✅ |
 | Firefox | ✅ | ✅ | ✅ | ✅ |
