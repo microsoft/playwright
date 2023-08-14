@@ -22,7 +22,8 @@ Get started by installing Playwright using npm or yarn. Alternatively you can al
   values={[
     {label: 'npm', value: 'npm'},
     {label: 'yarn', value: 'yarn'},
-    {label: 'pnpm', value: 'pnpm'}
+    {label: 'pnpm', value: 'pnpm'},
+    {label: 'bun', value: 'bun'}
   ]
 }>
 <TabItem value="npm">
@@ -45,6 +46,14 @@ yarn create playwright
 
 ```bash
 pnpm create playwright
+```
+
+</TabItem>
+
+<TabItem value="bun">
+
+```bash
+bunx create-playwright
 ```
 
 </TabItem>
