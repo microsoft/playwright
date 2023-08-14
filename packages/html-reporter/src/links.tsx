@@ -76,13 +76,12 @@ export const AttachmentLink: React.FunctionComponent<{
 };
 
 function downloadFileNameForAttachment(attachment: TestAttachment): string {
-  if (attachment.name.includes('.'))
+  if (attachment.name.includes('.') || !attachment.path)
     return attachment.name;
-  const path = attachment.path!;
-  const firstDotIndex = path.indexOf('.');
+  const firstDotIndex = attachment.path.indexOf('.');
   if (firstDotIndex === -1)
     return attachment.name;
-  return attachment.name + path.slice(firstDotIndex, path.length);
+  return attachment.name + attachment.path.slice(firstDotIndex, attachment.path.length);
 }
 
 export function generateTraceUrl(traces: TestAttachment[]) {

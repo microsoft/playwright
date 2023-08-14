@@ -20,7 +20,6 @@ import url from 'url';
 import { test as baseTest, expect as baseExpect, createImage } from './playwright-test-fixtures';
 import type { HttpServer } from '../../packages/playwright-core/src/utils';
 import { startHtmlReportServer } from '../../packages/playwright-test/lib/reporters/html';
-import type { Download, Page } from '../playwright-test/stable-test-runner';
 const { spawnAsync } = require('../../packages/playwright-core/lib/utils');
 
 const test = baseTest.extend<{ showReport: (reportFolder?: string) => Promise<void> }>({
@@ -713,12 +712,12 @@ for (const useIntermediateMergeReport of [false, true] as const) {
         ['example.ext with spaces', 'example.ext with spaces', 'e9d71f5ee7c92d6dc9e92ffdad17b8bd49418f98.ext-with-spaces'],
       ];
 
-      for (const [name, filename, sha1] of expectedAttachments) {
-        await test.step(`should download ${name}`, async () => {
+      for (const [visibleAttachmentName, downloadFileName, sha1] of expectedAttachments) {
+        await test.step(`should download ${visibleAttachmentName}`, async () => {
           const downloadPromise = page.waitForEvent('download');
-          await page.getByRole('link', { name: name, exact: true }).click();
+          await page.getByRole('link', { name: visibleAttachmentName, exact: true }).click();
           const download = await downloadPromise;
-          expect(download.suggestedFilename()).toBe(filename);
+          expect(download.suggestedFilename()).toBe(downloadFileName);
           expect(await readAllFromStream(await download.createReadStream())).toEqual(await fs.promises.readFile(path.join(testInfo.outputPath('playwright-report'), 'data', sha1)));
         });
       }
