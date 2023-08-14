@@ -32,6 +32,6 @@ export function getPackageManager() {
     return 'yarn';
   if (env.includes('pnpm'))
     return 'pnpm';
-if (env.includes("bun")) return "bun";
-    return 'npm';
+  if (env.includes('bun')) return 'bun';
+  return 'npm';
 }

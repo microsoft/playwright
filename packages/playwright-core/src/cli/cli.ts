@@ -18,69 +18,69 @@
 
 /* eslint-disable no-console */
 
-import { getPackageManager, gracefullyProcessExitDoNotHang } from "../utils";
-import program from "./program";
+import { getPackageManager, gracefullyProcessExitDoNotHang } from '../utils';
+import program from './program';
 
 function printPlaywrightTestError(command: string) {
   const packages: string[] = [];
   for (const pkg of [
-    "playwright",
-    "playwright-chromium",
-    "playwright-firefox",
-    "playwright-webkit",
+    'playwright',
+    'playwright-chromium',
+    'playwright-firefox',
+    'playwright-webkit',
   ]) {
     try {
       require.resolve(pkg);
       packages.push(pkg);
     } catch (e) {}
   }
-  if (!packages.length) packages.push("playwright");
+  if (!packages.length) packages.push('playwright');
   const packageManager = getPackageManager();
-  if (packageManager === "yarn") {
+  if (packageManager === 'yarn') {
     console.error(
-      `Please install @playwright/test package before running "yarn playwright ${command}"`
+        `Please install @playwright/test package before running "yarn playwright ${command}"`
     );
-    console.error(`  yarn remove ${packages.join(" ")}`);
-    console.error("  yarn add -D @playwright/test");
-  } else if (packageManager === "pnpm") {
+    console.error(`  yarn remove ${packages.join(' ')}`);
+    console.error('  yarn add -D @playwright/test');
+  } else if (packageManager === 'pnpm') {
     console.error(
-      `Please install @playwright/test package before running "pnpm exec playwright ${command}"`
+        `Please install @playwright/test package before running "pnpm exec playwright ${command}"`
     );
-    console.error(`  pnpm remove ${packages.join(" ")}`);
-    console.error("  pnpm add -D @playwright/test");
-  } else if (packageManager === "bun") {
+    console.error(`  pnpm remove ${packages.join(' ')}`);
+    console.error('  pnpm add -D @playwright/test');
+  } else if (packageManager === 'bun') {
     console.error(
-      `Please install @playwright/test package before running "bunx playwright ${command}"`
+        `Please install @playwright/test package before running "bunx playwright ${command}"`
     );
-    console.error(`  bun remove ${packages.join(" ")}`);
-    console.error("  bun add -D @playwright/test");
+    console.error(`  bun remove ${packages.join(' ')}`);
+    console.error('  bun add -D @playwright/test');
   } else {
     console.error(
-      `Please install @playwright/test package before running "npx playwright ${command}"`
+        `Please install @playwright/test package before running "npx playwright ${command}"`
     );
-    console.error(`  npm uninstall ${packages.join(" ")}`);
-    console.error("  npm install -D @playwright/test");
+    console.error(`  npm uninstall ${packages.join(' ')}`);
+    console.error('  npm install -D @playwright/test');
   }
 }
 
 {
-  const command = program.command("test").allowUnknownOption(true);
+  const command = program.command('test').allowUnknownOption(true);
   command.description(
-    "Run tests with Playwright Test. Available in @playwright/test package."
+      'Run tests with Playwright Test. Available in @playwright/test package.'
   );
   command.action(async () => {
-    printPlaywrightTestError("test");
+    printPlaywrightTestError('test');
     gracefullyProcessExitDoNotHang(1);
   });
 }
 
 {
-  const command = program.command("show-report").allowUnknownOption(true);
+  const command = program.command('show-report').allowUnknownOption(true);
   command.description(
-    "Show Playwright Test HTML report. Available in @playwright/test package."
+      'Show Playwright Test HTML report. Available in @playwright/test package.'
   );
   command.action(async () => {
-    printPlaywrightTestError("show-report");
+    printPlaywrightTestError('show-report');
     gracefullyProcessExitDoNotHang(1);
   });
 }
