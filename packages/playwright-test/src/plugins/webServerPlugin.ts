@@ -22,7 +22,6 @@ import { raceAgainstDeadline, launchProcess, httpRequest, monotonicTime } from '
 import type { FullConfig } from '../../types/testReporter';
 import type { TestRunnerPlugin } from '.';
 import type { FullConfigInternal } from '../common/config';
-import { envWithoutExperimentalLoaderOptions } from '../util';
 import type { ReporterV2 } from '../reporters/reporterV2';
 
 
@@ -95,7 +94,7 @@ export class WebServerPlugin implements TestRunnerPlugin {
       command: this._options.command,
       env: {
         ...DEFAULT_ENVIRONMENT_VARIABLES,
-        ...envWithoutExperimentalLoaderOptions(),
+        ...process.env,
         ...this._options.env,
       },
       cwd: this._options.cwd,

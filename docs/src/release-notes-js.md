@@ -6,6 +6,69 @@ toc_max_heading_level: 2
 
 import LiteYouTube from '@site/src/components/LiteYouTube';
 
+## Version 1.37
+
+<LiteYouTube
+  id="cEd4SH_Xf5U"
+  title="Playwright 1.36 & 1.37"
+/>
+
+### New `npx playwright merge-reports` tool
+
+If you run tests on multiple shards, you can now merge all reports in a single HTML report (or any other report) 
+using the new `merge-reports` CLI tool.
+
+Using `merge-reports` tool requires the following steps:
+
+1. Adding a new "blob" reporter to the config when running on CI:
+
+  ```js title="playwright.config.ts"
+  export default defineConfig({
+    testDir: './tests',
+    reporter: process.env.CI ? 'blob' : 'html',
+  });
+  ```
+
+  The "blob" reporter will produce ".zip" files that contain all the information
+  about the test run.
+
+2. Copying all "blob" reports in a single shared location and running `npx playwright merge-reports`:
+
+  ```bash
+  npx playwright merge-reports --reporter html ./all-blob-reports
+  ```
+
+  Read more in [our documentation](./test-sharding.md).
+
+### 📚 Debian 12 Bookworm Support
+
+Playwright now supports Debian 12 Bookworm on both x86_64 and arm64 for Chromium, Firefox and WebKit.
+Let us know if you encounter any issues!
+
+Linux support looks like this:
+
+|          | Ubuntu 20.04 | Ubuntu 22.04 | Debian 11 | Debian 12
+| :--- | :---: | :---: | :---: | :---: | :---: | 
+| Chromium | ✅ | ✅ | ✅ | ✅ |
+| WebKit | ✅ | ✅ | ✅ | ✅ |
+| Firefox | ✅ | ✅ | ✅ | ✅ |
+
+### UI Mode Updates
+
+- UI Mode now respects project dependencies. You can control which dependencies to respect by checking/unchecking them in a projects list.
+- Console logs from the test are now displayed in the Console tab.
+
+### Browser Versions
+
+* Chromium 116.0.5845.82
+* Mozilla Firefox 115.0
+* WebKit 17.0
+
+This version was also tested against the following stable channels:
+
+* Google Chrome 115
+* Microsoft Edge 115
+
 ## Version 1.36
 
 🏝️ Summer maintenance release.

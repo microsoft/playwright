@@ -15,6 +15,10 @@ spec:
       containers:
       - name: grid
         image: playwright-grid
+        resources:
+          requests:
+            cpu: "2"
+            memory: "4Gi"
         imagePullPolicy: IfNotPresent
         env:
         - name: DEBUG

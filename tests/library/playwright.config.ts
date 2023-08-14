@@ -70,15 +70,19 @@ if (mode === 'service') {
 if (mode === 'service2') {
   process.env.PW_VERSION_OVERRIDE = '1.37';
   connectOptions = {
-    wsEndpoint: `${process.env.PLAYWRIGHT_SERVICE_URL}?accessKey=${process.env.PLAYWRIGHT_SERVICE_ACCESS_KEY}&cap=${JSON.stringify({ os, runId })}`,
+    wsEndpoint: `${process.env.PLAYWRIGHT_SERVICE_URL}?cap=${JSON.stringify({ os, runId })}`,
     timeout: 3 * 60 * 1000,
     exposeNetwork: '<loopback>',
+    headers: {
+      'x-mpt-access-key': process.env.PLAYWRIGHT_SERVICE_ACCESS_KEY!
+    }
   };
 }
 
 if (mode === 'service-grid') {
+  process.env.NODE_EXTRA_CA_CERTS = require.resolve('../../packages/playwright-grid/https/cert.pem');
   connectOptions = {
-    wsEndpoint: process.env.PLAYWRIGHT_GRID_URL || 'ws://localhost:3333',
+    wsEndpoint: process.env.PLAYWRIGHT_GRID_URL || 'wss://localhost:3333',
     timeout: 60 * 60 * 1000,
     headers: {
       'x-playwright-access-key': process.env.PLAYWRIGHT_GRID_ACCESS_KEY || 'secret'
@@ -87,15 +91,19 @@ if (mode === 'service-grid') {
   };
   webServer = process.env.PLAYWRIGHT_GRID_URL ? [] : [
     {
-      command: 'node ../../packages/playwright-grid/cli.js grid --port=3333 --access-key=secret',
+      command: 'node ./cli.js grid --port=3333 --access-key=secret --https-cert=./https/cert.pem --https-key=./https/key.pem',
       stdout: 'pipe',
-      url: 'http://localhost:3333/secret',
+      url: 'https://localhost:3333/secret',
       reuseExistingServer: !process.env.CI,
+      cwd: '../../packages/playwright-grid',
+      ignoreHTTPSErrors: true,
     }, {
-      command: 'node ../../packages/playwright-grid/cli.js node --grid=localhost:3333 --access-key=secret --capacity=2',
+      command: 'node ./cli.js node --grid=wss://localhost:3333 --access-key=secret --capacity=2',
+      cwd: '../../packages/playwright-grid',
     },
     {
-      command: 'node ../../packages/playwright-grid/cli.js node --grid=localhost:3333 --access-key=secret --capacity=2',
+      command: 'node ./cli.js node --grid=wss://localhost:3333 --access-key=secret --capacity=2',
+      cwd: '../../packages/playwright-grid',
     }
   ];
 }

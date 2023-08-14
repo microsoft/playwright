@@ -9,8 +9,8 @@ const requestListener = function (req, res) {
     res.end('hello');
     return;
   }
-  if (req.url === '/env-FOO') {
-    res.end(process.env.FOO);
+  if (req.url.startsWith('/env-')) {
+    res.end(process.env[req.url.substring(5)]);
     return;
   }
   if (req.url === '/port') {
