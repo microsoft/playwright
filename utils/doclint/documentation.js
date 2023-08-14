@@ -55,6 +55,7 @@ const md = require('../markdown');
  * @typedef {{
  *   langs: Langs,
  *   since: string,
+ *   sinceLang?: Object<string, string>,
  *   deprecated: string | undefined,
  *   discouraged: string | undefined,
  *   experimental: boolean
@@ -233,6 +234,7 @@ class Documentation {
     this.langs = metainfo.langs;
     this.experimental = metainfo.experimental;
     this.since = metainfo.since;
+    this.sinceLang = metainfo.sinceLang;
     this.deprecated = metainfo.deprecated;
     this.discouraged = metainfo.discouraged;
     this.name = name;
@@ -286,7 +288,7 @@ class Documentation {
   }
 
   clone() {
-    const cls = new Class({ langs: this.langs, experimental: this.experimental, since: this.since, deprecated: this.deprecated, discouraged: this.discouraged }, this.name, this.membersArray.map(m => m.clone()), this.extends, this.spec);
+    const cls = new Class({ langs: this.langs, experimental: this.experimental, since: this.since, sinceLang: this.sinceLang, deprecated: this.deprecated, discouraged: this.discouraged }, this.name, this.membersArray.map(m => m.clone()), this.extends, this.spec);
     cls.comment = this.comment;
     return cls;
   }
@@ -304,6 +306,7 @@ class Documentation {
       membersArray.push(member);
     }
     this.membersArray = membersArray;
+    this.since = this.sinceLang?.[lang] || this.since;
   }
 
   filterOutExperimental()  {
@@ -364,6 +367,7 @@ class Member {
     this.langs = metainfo.langs;
     this.experimental = metainfo.experimental;
     this.since = metainfo.since;
+    this.sinceLang = metainfo.sinceLang;
     this.deprecated = metainfo.deprecated;
     this.discouraged = metainfo.discouraged;
     this.name = name;
@@ -422,6 +426,7 @@ class Member {
     if (this.langs.types && this.langs.types[lang])
       this.type = this.langs.types[lang];
     this.type.filterForLanguage(lang, options);
+    this.since = this.sinceLang?.[lang] || this.since;
     const argsArray = [];
     for (const arg of this.argsArray) {
       if (arg.langs.only && !arg.langs.only.includes(lang))
@@ -462,7 +467,7 @@ class Member {
   }
 
   clone() {
-    const result = new Member(this.kind, { langs: this.langs, experimental: this.experimental, since: this.since, deprecated: this.deprecated, discouraged: this.discouraged }, this.name, this.type?.clone(), this.argsArray.map(arg => arg.clone()), this.spec, this.required);
+    const result = new Member(this.kind, { langs: this.langs, experimental: this.experimental, since: this.since, sinceLang: this.sinceLang, deprecated: this.deprecated, discouraged: this.discouraged }, this.name, this.type?.clone(), this.argsArray.map(arg => arg.clone()), this.spec, this.required);
     result.alias = this.alias;
     result.async = this.async;
     result.paramOrOption = this.paramOrOption;
@@ -836,7 +841,7 @@ function patchLinksInText(classOrMember, text, classesMap, membersMap, linkRende
  * @param {MarkdownNode[] | undefined} spec
  */
 function generateSourceCodeComment(spec) {
-  const comments = (spec || []).filter(n => !n.type.startsWith('h') && (n.type !== 'li' ||  n.liType !== 'default')).map(c => md.clone(c));
+  const comments = (spec || []).filter(n => !n.type.startsWith('h') && (n.type !== 'li' ||  n.liType !== 'default') && !(n.type === 'li' && n.liType === 'bullet' && n.text.startsWith('since-'))).map(c => md.clone(c));
   md.visitAll(comments, node => {
     if (node.type === 'li' && node.liType === 'bullet')
       node.liType = 'default';

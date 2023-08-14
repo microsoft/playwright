@@ -35,7 +35,7 @@ const PROJECT_DIR = path.join(__dirname, '..', '..');
   });
   documentation.generateSourceCodeComments();
   const result = serialize(documentation);
-  console.log(JSON.stringify(result));
+  console.log(JSON.stringify(result, null, 2));
 }
 
 /**
@@ -61,6 +61,8 @@ function serializeClass(clazz) {
     result.comment = clazz.comment;
   if (clazz.since)
     result.since = clazz.since;
+  if (clazz.sinceLang)
+    result.sinceLang = clazz.sinceLang;
   result.members = clazz.membersArray.map(serializeMember);
   return result;
 }

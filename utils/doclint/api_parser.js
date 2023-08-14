@@ -350,6 +350,7 @@ function extractMetainfo(spec) {
   return {
     langs: extractLangs(spec),
     since: extractSince(spec),
+    sinceLang: extractSinceLang(spec),
     experimental: extractExperimental(spec),
     deprecated: extractAttribute(spec, 'deprecated'),
     discouraged: extractAttribute(spec, 'discouraged'),
@@ -400,6 +401,24 @@ function extractSince(spec) {
 
 /**
  * @param {MarkdownHeaderNode} spec
+ * @returns {Object<string, string>|undefined}
+ */
+function extractSinceLang(spec) {
+  let langs;
+  for (const child of spec.children) {
+    if (child.type !== 'li' || child.liType !== 'bullet' || !child.text.startsWith('since-'))
+      continue;
+    const version = child.text.substring(child.text.indexOf(':') + 1).trim();
+    const lang = child.text.substring('since-'.length, child.text.indexOf(':'));
+    if (!langs)
+      langs = {};
+    langs[lang] = version;
+  }
+  return langs;
+}
+
+/**
+ * @param {MarkdownHeaderNode} spec
  * @returns {boolean}
  */
  function extractExperimental(spec) {
@@ -429,7 +448,7 @@ function extractSince(spec) {
  */
 function childrenWithoutProperties(spec) {
   return (spec.children || []).filter(c => {
-    const isProperty = c.type === 'li' && c.liType === 'bullet' && (c.text.startsWith('langs:') || c.text.startsWith('since:') || c.text.startsWith('deprecated:') || c.text.startsWith('discouraged:') || c.text === 'experimental');
+    const isProperty = c.type === 'li' && c.liType === 'bullet' && (c.text.startsWith('langs:') || c.text.startsWith('since:') || c.text.startsWith('since-') || c.text.startsWith('deprecated:') || c.text.startsWith('discouraged:') || c.text === 'experimental');
     return !isProperty;
   });
 }

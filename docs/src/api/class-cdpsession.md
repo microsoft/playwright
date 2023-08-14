@@ -1,5 +1,6 @@
 # class: CDPSession
 * since: v1.8
+* since-java: v1.37
 * extends: [EventEmitter]
 
 The `CDPSession` instances are used to talk raw Chrome Devtools Protocol:
@@ -70,6 +71,7 @@ client.send("Animation.setPlaybackRate", params);
 
 ## async method: CDPSession.detach
 * since: v1.8
+* since-java: v1.37
 
 Detaches the CDPSession from the target. Once detached, the CDPSession object won't emit any events and can't be used to
 send messages.
@@ -90,6 +92,7 @@ send messages.
 
 ### param: CDPSession.send.method
 * since: v1.8
+* since-java: v1.37
 - `method` <[string]>
 
 Protocol method name.
