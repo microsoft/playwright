@@ -22,8 +22,7 @@ import type { Entry } from '@trace/har';
 
 export const NetworkResourceDetails: React.FunctionComponent<{
   resource: ResourceSnapshot,
-  highlighted: boolean,
-}> = ({ resource, highlighted }) => {
+}> = ({ resource }) => {
   const [expanded, setExpanded] = React.useState(false);
   const [requestBody, setRequestBody] = React.useState<string | null>(null);
   const [responseBody, setResponseBody] = React.useState<{ dataUrl?: string, text?: string } | null>(null);
@@ -86,7 +85,7 @@ export const NetworkResourceDetails: React.FunctionComponent<{
   }, [contentType, resource, resourceName, routeStatus]);
 
   return <div
-    className={'network-request' + (highlighted ? ' highlighted' : '')}>
+    className='network-request'>
     <Expandable expanded={expanded} setExpanded={setExpanded} title={ renderTitle() }>
       <div className='network-request-details'>
         <div className='network-request-details-time'>{resource.time}ms</div>

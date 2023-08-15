@@ -25,6 +25,10 @@
   margin-left: 10px;
 }
 
+.timeline-view.dragging {
+  cursor: ew-resize;
+}
+
 .timeline-divider {
   position: absolute;
   width: 1px;
@@ -42,16 +46,16 @@
   pointer-events: none;
 }
 
+.timeline-time-input {
+  cursor: pointer;
+}
+
 .timeline-lane {
   pointer-events: none;
   overflow: hidden;
   flex: none;
-  height: 30px;
-  position: relative;
-}
-
-.timeline-lane.timeline-labels {
   height: 20px;
+  position: relative;
 }
 
 .timeline-grid {
@@ -64,70 +68,24 @@
 
 .timeline-lane.timeline-bars {
   pointer-events: auto;
-  margin-bottom: 10px;
+  margin-bottom: 5px;
+  height: 5px;
   overflow: visible;
 }
 
 .timeline-bar {
   position: absolute;
-  height: 9px;
-  border-radius: 2px;
-  min-width: 3px;
+  height: 2px;
   --action-color: gray;
   background-color: var(--action-color);
 }
 
-.timeline-bar.selected {
-  filter: brightness(70%);
-  box-shadow: 0 0 0 1px var(--action-color);
+.timeline-bar.action {
+  --action-color: var(--vscode-charts-red);
 }
 
-.timeline-bar.frame_click,
-.timeline-bar.frame_dblclick,
-.timeline-bar.frame_hover,
-.timeline-bar.frame_check,
-.timeline-bar.frame_uncheck,
-.timeline-bar.frame_tap {
-  --action-color: var(--vscode-charts-green);
-}
-
-.timeline-bar.page_load,
-.timeline-bar.page_domcontentloaded,
-.timeline-bar.frame_fill,
-.timeline-bar.frame_press,
-.timeline-bar.frame_type,
-.timeline-bar.frame_selectoption,
-.timeline-bar.frame_setinputfiles {
-  --action-color: var(--orange);
-}
-
-.timeline-bar.frame_loadstate {
-  display: none;
-}
-
-.timeline-bar.frame_goto,
-.timeline-bar.frame_setcontent,
-.timeline-bar.frame_goback,
-.timeline-bar.frame_goforward,
-.timeline-bar.reload {
+.timeline-bar.network {
   --action-color: var(--vscode-charts-blue);
-}
-
-.timeline-bar.frame_evaluateexpression {
-  --action-color: var(--vscode-charts-yellow);
-}
-
-.timeline-bar.frame_dialog {
-  --action-color: var(--transparent-blue);
-}
-
-.timeline-bar.frame_navigated {
-  --action-color: var(--vscode-charts-blue);
-}
-
-.timeline-bar.frame_waitforeventinfo,
-.timeline-bar.page_waitforeventinfo {
-  --action-color: var(--vscode-editorCodeLens-foreground);
 }
 
 .timeline-label {
@@ -150,11 +108,46 @@
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 3px;
-  background-color: black;
+  pointer-events: none;
+  border-left: 3px solid var(--light-pink);
+}
+
+.timeline-window {
+  display: flex;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
   pointer-events: none;
 }
 
-.timeline-marker.timeline-marker-hover {
-  background-color: var(--light-pink);
+.timeline-window-center {
+  flex: auto;
+}
+
+.timeline-window-drag {
+  height: 20px;
+  cursor: grab;
+  pointer-events: all;
+}
+
+.timeline-window-curtain {
+  flex: none;
+  background-color: #3879d91a;
+}
+
+.timeline-window-curtain.left {
+  border-right: 1px solid var(--vscode-panel-border);
+}
+
+.timeline-window-curtain.right {
+  border-left: 1px solid var(--vscode-panel-border);
+}
+
+.timeline-window-resizer {
+  flex: none;
+  width: 6px;
+  cursor: ew-resize;
+  pointer-events: all;
 }

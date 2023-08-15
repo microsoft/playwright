@@ -32,6 +32,7 @@ export type TreeViewProps<T> = {
   render: (item: T) => React.ReactNode,
   icon?: (item: T) => string | undefined,
   isError?: (item: T) => boolean,
+  isVisible?: (item: T) => boolean,
   selectedItem?: T,
   onAccepted?: (item: T) => void,
   onSelected?: (item: T) => void,
@@ -50,6 +51,7 @@ export function TreeView<T extends TreeItem>({
   render,
   icon,
   isError,
+  isVisible,
   selectedItem,
   onAccepted,
   onSelected,
@@ -61,13 +63,43 @@ export function TreeView<T extends TreeItem>({
   autoExpandDepth,
 }: TreeViewProps<T>) {
   const treeItems = React.useMemo(() => {
+    // Expand all ancestors of the selected item.
     for (let item: TreeItem | undefined = selectedItem?.parent; item; item = item.parent)
       treeState.expandedItems.set(item.id, true);
     return flattenTree<T>(rootItem, treeState.expandedItems, autoExpandDepth || 0);
   }, [rootItem, selectedItem, treeState, autoExpandDepth]);
 
+  // Filter visible items.
+  const visibleItems = React.useMemo(() => {
+    if (!isVisible)
+      return [...treeItems.keys()];
+    const cachedVisible = new Map<TreeItem, boolean>();
+    const visit = (item: TreeItem): boolean => {
+      const cachedResult = cachedVisible.get(item);
+      if (cachedResult !== undefined)
+        return cachedResult;
+
+      let hasVisibleChildren = item.children.some(child => visit(child));
+      for (const child of item.children) {
+        const result = visit(child);
+        hasVisibleChildren = hasVisibleChildren || result;
+      }
+      const result = isVisible(item as T) || hasVisibleChildren;
+      cachedVisible.set(item, result);
+      return result;
+    };
+    for (const item of treeItems.keys())
+      visit(item);
+    const result: T[] = [];
+    for (const item of treeItems.keys()) {
+      if (isVisible(item))
+        result.push(item);
+    }
+    return result;
+  }, [treeItems, isVisible]);
+
   return <TreeListView
-    items={[...treeItems.keys()]}
+    items={visibleItems}
     id={item => item.id}
     dataTestId={dataTestId}
     render={item => {

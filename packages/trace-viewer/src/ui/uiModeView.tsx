@@ -564,7 +564,6 @@ const TraceView: React.FC<{
   return <Workbench
     key='workbench'
     model={model?.model}
-    hideTimelineBars={true}
     hideStackFrames={true}
     showSourcesFirst={true}
     rootDir={rootDir}

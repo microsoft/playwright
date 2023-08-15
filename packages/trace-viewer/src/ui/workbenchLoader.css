@@ -78,10 +78,6 @@ body.dark-mode .drop-target {
   height: 100%;
 }
 
-.workbench {
-  contain: size;
-}
-
 .header {
   display: flex;
   background-color: #000;
@@ -92,21 +88,25 @@ body.dark-mode .drop-target {
   color: #cccccc;
 }
 
-.workbench .header .toolbar-button {
+.workbench-loader {
+  contain: size;
+}
+
+.workbench-loader .header .toolbar-button {
   margin: 12px;
   padding: 8px 4px;
 }
 
-.workbench .logo {
+.workbench-loader .logo {
   font-size: 20px;
   margin-left: 16px;
 }
 
-.workbench .product {
+.workbench-loader .product {
   font-weight: 600;
   margin-left: 16px;
 }
 
-.workbench .header .title {
+.workbench-loader .header .title {
   margin-left: 16px;
 }

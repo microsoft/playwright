@@ -45,11 +45,15 @@
 .film-strip-hover {
   position: absolute;
   top: 0;
-  right: 0;
-  bottom: 0;
   left: 0;
   background-color: white;
   box-shadow: rgba(0, 0, 0, 0.133) 0px 1.6px 10px 0px, rgba(0, 0, 0, 0.11) 0px 0.3px 10px 0px;
   z-index: 200;
   pointer-events: none;
+}
+
+.film-strip-hover-title {
+  padding: 2px 4px;
+  display: flex;
+  align-items: center;
 }
