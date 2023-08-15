@@ -213,12 +213,6 @@ const workspace = new Workspace(ROOT_PATH, [
     path: path.join(ROOT_PATH, 'packages', 'playwright-ct-vue2'),
     files: ['LICENSE'],
   }),
-  new PWPackage({
-    name: '@playwright/experimental-grid',
-    path: path.join(ROOT_PATH, 'packages', 'playwright-grid'),
-    files: ['LICENSE'],
-    noConsistent: true,
-  }),
 ]);
 
 if (require.main === module) {
