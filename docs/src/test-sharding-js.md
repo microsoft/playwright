@@ -48,15 +48,16 @@ This will produce a standard HTML report into `playwright-report` directory.
 One of the easiest ways to shard Playwright tests across multiple machines is by using GitHub Actions matrix strategy. For example, you can configure a job to run your tests on four machines in parallel like this:
 
 ```yaml title=".github/workflows/playwright.yml"
-name: "Playwright Tests"
-
+name: Playwright Tests
 on:
   push:
-    branches:
-      - main
-
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
 jobs:
   playwright-tests:
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
@@ -65,10 +66,12 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
+      with:
+        node-version: 18
     - name: Install dependencies
       run: npm ci
     - name: Install Playwright browsers
-      run: npx playwright install
+      run: npx playwright install --with-deps
 
     - name: Run Playwright tests
       run: npx playwright test --shard ${{ matrix.shard }}
@@ -96,6 +99,8 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
+      with:
+        node-version: 18
     - name: Install dependencies
       run: npm ci
 
@@ -117,6 +122,8 @@ jobs:
 ```
 
 To ensure the execution order, we make `merge-reports` job [depend](https://docs.github.com/en/actions/using-jobs/using-jobs-in-a-workflow#defining-prerequisite-jobs) on our sharded `playwright-tests` job.
+
+<img width="875" alt="image" src="https://github.com/microsoft/playwright/assets/9798949/b69dac59-fc19-4b98-8f49-814b1c29ca02" />
 
 ## Publishing report on the web
 
@@ -147,6 +154,7 @@ We can utilize Azure Storage's static websites hosting capabilities to easily an
           run: |
             REPORT_DIR='run-${{ github.run_id }}-${{ github.run_attempt }}'
             azcopy cp --recursive "./playwright-report/*" "https://<STORAGE_ACCOUNT_NAME>.blob.core.windows.net/\$web/$REPORT_DIR"
+            echo "::notice title=HTML report url::https://<STORAGE_ACCOUNT_NAME>.z1.web.core.windows.net/$REPORT_DIR/index.html"
           env:
             AZCOPY_AUTO_LOGIN_TYPE: SPN
             AZCOPY_SPA_APPLICATION_ID: '${{ secrets.AZCOPY_SPA_APPLICATION_ID }}'
