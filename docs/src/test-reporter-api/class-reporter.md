@@ -107,7 +107,7 @@ The root suite that contains all projects, files and test cases.
 ## optional async method: Reporter.onEnd
 * since: v1.10
 
-Called after all tests has been run, or testing has been interrupted. Note that this method may return a [Promise] and Playwright Test will await it.
+Called after all tests have been run, or testing has been interrupted. Note that this method may return a [Promise] and Playwright Test will await it.
 
 ### param: Reporter.onEnd.result
 * since: v1.10
