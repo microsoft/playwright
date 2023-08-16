@@ -1437,6 +1437,7 @@ export interface BrowserContextChannel extends BrowserContextEventTarget, EventT
   pause(params?: BrowserContextPauseParams, metadata?: CallMetadata): Promise<BrowserContextPauseResult>;
   recorderSupplementEnable(params: BrowserContextRecorderSupplementEnableParams, metadata?: CallMetadata): Promise<BrowserContextRecorderSupplementEnableResult>;
   inspectSingleSelector(params: BrowserContextInspectSingleSelectorParams, metadata?: CallMetadata): Promise<BrowserContextInspectSingleSelectorResult>;
+  setStorageState(params: BrowserContextSetStorageStateParams, metadata?: CallMetadata): Promise<BrowserContextSetStorageStateResult>;
   recorderSupplementDisable(params?: BrowserContextRecorderSupplementDisableParams, metadata?: CallMetadata): Promise<BrowserContextRecorderSupplementDisableResult>;
   newCDPSession(params: BrowserContextNewCDPSessionParams, metadata?: CallMetadata): Promise<BrowserContextNewCDPSessionResult>;
   harStart(params: BrowserContextHarStartParams, metadata?: CallMetadata): Promise<BrowserContextHarStartResult>;
@@ -1656,6 +1657,14 @@ export type BrowserContextInspectSingleSelectorOptions = {
 export type BrowserContextInspectSingleSelectorResult = {
   selector: string,
 };
+export type BrowserContextSetStorageStateParams = {
+  cookies: NetworkCookie[],
+  origins: OriginStorage[],
+};
+export type BrowserContextSetStorageStateOptions = {
+
+};
+export type BrowserContextSetStorageStateResult = void;
 export type BrowserContextRecorderSupplementDisableParams = {};
 export type BrowserContextRecorderSupplementDisableOptions = {};
 export type BrowserContextRecorderSupplementDisableResult = {
