@@ -57,7 +57,7 @@ test('should contain string attachment', async ({ runUITest }) => {
   const downloadPromise = page.waitForEvent('download');
   await page.getByRole('link', { name: 'note' }).click();
   const download = await downloadPromise;
-  expect(download.suggestedFilename()).toBe('note.txt');
+  expect(download.suggestedFilename()).toBe('note');
   expect((await readAllFromStream(await download.createReadStream())).toString()).toEqual('text42');
 });
 

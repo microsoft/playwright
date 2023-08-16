@@ -155,42 +155,10 @@ function headersForResource(traceModel: TraceModel, sha1: string): Headers | und
   if (!attachment)
     return;
   const headers = new Headers();
-  let name = attachment.name;
-  const nameHasExt = name.includes('.');
-  if (!nameHasExt)
-    name += extensionForContentType(attachment.contentType);
-  headers.set('Content-Disposition', `attachment; filename="${name}"`);
+  headers.set('Content-Disposition', `attachment; filename="${attachment.name}"`);
   if (attachment.contentType)
     headers.set('Content-Type', attachment.contentType);
   return headers;
-}
-
-function extensionForContentType(contentType: string): string {
-  if (contentType === 'application/javascript')
-    return '.js';
-  if (contentType === 'text/css')
-    return '.css';
-  if (contentType === 'text/html')
-    return '.html';
-  if (contentType === 'text/plain')
-    return '.txt';
-  if (contentType === 'application/json')
-    return '.json';
-  if (contentType === 'application/pdf')
-    return '.pdf';
-  if (contentType === 'application/x-sh')
-    return '.sh';
-  if (contentType === 'application/zip')
-    return '.zip';
-  if (contentType === 'image/jpeg')
-    return '.jpg';
-  if (contentType === 'image/png')
-    return '.png';
-  if (contentType === 'image/gif')
-    return '.gif';
-  if (contentType === 'image/svg+xml')
-    return '.svg';
-  return '';
 }
 
 async function gc() {
