@@ -205,8 +205,23 @@ Or if there is a custom folder name:
 npx playwright show-report my-report
 ```
 
-> The `html` reporter currently does not support merging reports generated across multiple [`--shards`](./test-parallel.md#shard-tests-between-multiple-machines) into a single report. See [this](https://github.com/microsoft/playwright/issues/10437) issue for available third party solutions.
+### Blob reporter
 
+Blob reports contain all the details about the test run and can be used later to produce any other report. Their primary function is to facilitate the merging of reports from [sharded tests](./test-sharding.md).
+
+```bash
+npx playwright test --reporter=blob
+```
+
+By default, the report is written into the `blob-report` directory in the package.json parent directory or current working directory (if no package.json is found). The output directory can be overridden in the configuration file:
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  reporter: [['blob', { outputDir: 'my-report' }]],
+});
+```
 
 ### JSON reporter
 
