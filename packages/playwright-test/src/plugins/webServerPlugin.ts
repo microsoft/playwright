@@ -116,7 +116,6 @@ export class WebServerPlugin implements TestRunnerPlugin {
         this._reporter!.onStdErr?.(colors.dim('[WebServer] ') + line.toString());
     });
     launchedProcess.stdout!.on('data', line => {
-      process.stdout.write(line);
       if (debugWebServer.enabled || this._options.stdout === 'pipe')
         this._reporter!.onStdOut?.(colors.dim('[WebServer] ') + line.toString());
     });
