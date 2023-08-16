@@ -207,7 +207,6 @@ function getIsAvailableFunction(url: string, checkPortOnly: boolean, ignoreHTTPS
 }
 
 export const webServer = (options: WebServerPluginOptions): TestRunnerPlugin => {
-  // eslint-disable-next-line no-console
   return new WebServerPlugin(options, false);
 };
 

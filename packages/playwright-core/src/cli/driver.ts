@@ -70,7 +70,7 @@ export async function runServer(options: RunServerOptions) {
   const server = new PlaywrightServer({ mode: extension ? 'extension' : 'default', path, maxConnections });
   const wsEndpoint = await server.listen(port);
   process.on('exit', () => server.close().catch(console.error));
-  console.log('Listening on ' + wsEndpoint);  // eslint-disable-line no-console
+  console.log('Listening on ' + wsEndpoint);
   process.stdin.on('close', () => gracefullyProcessExitDoNotHang(0));
 }
 

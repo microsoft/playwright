@@ -18,7 +18,6 @@ import * as React from 'react';
 import './stackTrace.css';
 import type { ActionTraceEvent } from '@trace/trace';
 import { ListView } from '@web/components/listView';
-// eslint-disable-next-line @typescript-eslint/consistent-type-imports
 import type { StackFrame } from '@protocol/channels';
 
 const StackFrameListView = ListView<StackFrame>;

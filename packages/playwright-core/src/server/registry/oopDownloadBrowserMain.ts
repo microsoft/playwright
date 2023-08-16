@@ -121,7 +121,6 @@ function getAnimatedDownloadProgress(): OnProgressCallback {
 }
 
 function getBasicDownloadProgress(): OnProgressCallback {
-  // eslint-disable-next-line no-console
   const totalRows = 10;
   const stepWidth = 8;
   let lastRow = -1;
