@@ -1131,6 +1131,15 @@ BrowserContext:
         selector: string
       parameters:
         language: string
+        
+    setStorageState:
+      parameters:
+        cookies:
+          type: array
+          items: NetworkCookie
+        origins:
+          type: array
+          items: OriginStorage
 
     recorderSupplementDisable:
       experimental: True

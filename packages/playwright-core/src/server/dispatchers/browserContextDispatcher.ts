@@ -274,6 +274,10 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     return { actions };
   }
 
+  async setStorageState(params: channels.BrowserContextSetStorageStateParams, metadata: CallMetadata): Promise<channels.BrowserContextSetStorageStateResult> {
+    await this._context.setStorageState(metadata, params);
+  }
+
   async pause(params: channels.BrowserContextPauseParams, metadata: CallMetadata) {
     // Debugger will take care of this.
   }

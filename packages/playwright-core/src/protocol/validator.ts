@@ -904,6 +904,11 @@ scheme.BrowserContextInspectSingleSelectorParams = tObject({
 scheme.BrowserContextInspectSingleSelectorResult = tObject({
   selector: tString,
 });
+scheme.BrowserContextSetStorageStateParams = tObject({
+  cookies: tArray(tType('NetworkCookie')),
+  origins: tArray(tType('OriginStorage')),
+});
+scheme.BrowserContextSetStorageStateResult = tOptional(tObject({}));
 scheme.BrowserContextRecorderSupplementDisableParams = tOptional(tObject({}));
 scheme.BrowserContextRecorderSupplementDisableResult = tObject({
   actions: tArray(tString),

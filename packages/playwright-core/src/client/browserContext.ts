@@ -410,6 +410,10 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     await this._channel.recorderSupplementEnable(params);
   }
 
+  async intunedSetStorageState(params: StorageState) {
+    await this._channel.setStorageState(params);
+  }
+
   async intunedEnableRecorder(params: {
     language: string,
   }) {
