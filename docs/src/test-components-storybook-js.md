@@ -1,9 +1,9 @@
 ---
 id: test-components-storybook
-title: "Experimental: Storybook component stories"
+title: "Experimental: Storybook"
 ---
 
-Playwright Test can now test [Storybook](https://storybook.js.org) component stories. This allows you to test everything that Storybook supports, including: (1) renderers like React, Vue, Angular, Lit, Svelte, Solid, Qwik, and Ember, (2) metaframeworks like Next, Nuxt, and SvelteKit, and (3) builders like Webpack, Vite, and Rspack.
+Playwright Test can now test components from [Storybook](https://storybook.js.org) stories. This allows you to test everything that Storybook supports, including: (1) renderers like React, Vue, Angular, Lit, Svelte, Solid, Qwik, and Ember, (2) metaframeworks like Next, Nuxt, and SvelteKit, and (3) builders like Webpack, Vite, and Rspack.
 
 ## Example
 
@@ -11,7 +11,7 @@ Here is a typical story:
 
 ```js
 export default { component: Button };
-export const Submit = { args: { title: 'Submit' } }
+export const Primary = { args: { label: 'Button', primary: true } }
 ```
 
 And here is that story reused in a test:
@@ -23,12 +23,12 @@ test('event should work', async ({ mount }) => {
   let clicked = false;
 
   // Mount a component. Returns locator pointing to the component.
-  const component = await mount(ButtonStories.Default, {
+  const component = await mount(ButtonStories.Primary, {
     onClick: () => { clicked = true },
   })
 
   // As with any Playwright test, assert locator text.
-  await expect(component).toContainText('Submit');
+  await expect(component).toContainText('Button');
 
   // Perform locator click. This will trigger the event.
   await component.click();
@@ -44,7 +44,7 @@ Adding Playwright Test with Storybook to your project is easy.
 
 ### Step 0: Install Storybook
 
-IF your project already uses Storybook, you can skip this step.
+If your project already uses Storybook, you can skip this step.
 
 <Tabs
   defaultValue="npm"
@@ -81,7 +81,7 @@ pnpm dlx storybook@latest init
 </Tabs>
 
 
-If you already use Storybook 
+Full installation and configuration instructions are available in the [Storybook documentation](https://storybook.js.org/docs/react/get-started/install/).
 
 ### Step 1: Install Playwright Test for Storybook
 
@@ -121,7 +121,7 @@ pnpm dlx create-playwright --storybook
 
 ### Step 2. Create a test file `src/Button.spec.ts`
 
-Assuming you already have a story file `Button.stories.ts` with a `Default` story, you can import it and reference the import in the `mount` function:
+Assuming you already have a story file `Button.stories.ts` with a `Primary` story, you can import it and reference the import in the `mount` function:
 
 ```js
 import { test, expect } from '@storybook/playwright-ct';
@@ -130,7 +130,7 @@ import * as ButtonStories from './Button.stories';
 test.use({ viewport: { width: 500, height: 500 } });
 
 test('should work', async ({ mount }) => {
-  const component = await mount(ButtonStories.Default);
+  const component = await mount(ButtonStories.Primary);
   await expect(component).toContainText('Button');
 });
 ```
@@ -157,11 +157,16 @@ Here is how this is achieved:
 - Upon the `mount` call within the test, Playwright navigates to corresponing story.
 - Events are marshalled back to the Node.js environment to allow verification.
 
+Additionally, it adds some config options you can use in your `playwright-sb.config.{ts,js}`.
+
+Finally, under the hood, each test re-uses the `context` and `page` fixture as a speed optimization for Component Testing.
+It resets them in between each test so it should be functionally equivalent to `@playwright/test`'s guarantee that you get a new, isolated `context` and `page` fixture per-test.
+
 ## Known issues and limitations
 
 ### Q) What's the difference between `@storybook/playwright-ct` and `@playwright/experimental-ct-{react,svelte,vue,solid}`?
 
-Playwright CT is Playwright's recommended way to test components in isolation. Here is the same example from above, written for React:
+Playwright Experimental CT is Playwright's experimental way to test components in isolation. Here is the same example from above, written for React:
 
 ```ts
 // Button.spec.ts
@@ -186,7 +191,7 @@ test('interacts', async ({ mount }) => {
 
 There are a few key differences here:
 
-| Playwright CT React                       | Playwright CT Storybook                                      |
+| Playwright Experimental CT                | Playwright CT for Storybook                                  |
 | ----------------------------------------- | ------------------------------------------------------------ |
 | Renders component(s)                      | Renders story                                                |
 | Specifies props in test                   | Specifies props in story, can override in test               |
@@ -195,9 +200,9 @@ There are a few key differences here:
 | Compatible with React, Solid, Svelte, Vue | Compatible with CT renderers + Angular, Web components, Qwik |
 | Limitations on props, imports             | No known limitations                                         |
 
-Playwright CT lacks the concept of stories, so the tests render the components directly. This has the benefit of being able to see the component setup and test all in one place, but leads to some limitations due to the fact that the test file is mixing Node and Browser code in a single file.
+Playwright Experimental CT lacks the concept of stories, so the tests render the components directly. This has the benefit of being able to see the component setup and test all in one place, but leads to some limitations due to the fact that the test file is mixing Node and Browser code in a single file.
 
-You should consider using Playwright CT Storybook over Playwright CT if:
+You should consider using Playwright CT for Storybook over Playwright Experimental CT if:
 
 - You already use Storybook for component development and documentation
 - You're using a renderer that is not supported by Playwright CT (e.g. Angular)
@@ -227,7 +232,7 @@ export const Interaction {
 }
 ```
 
-| Storybook CT                             | Playwright CT Storybook                         |
+| Storybook test runner                    | Playwright CT for Storybook                     |
 | ---------------------------------------- | ----------------------------------------------- |
 | Tests run in the browser                 | Tests run in node                               |
 | Runs play function                       | Runs play function if present AND test function |
@@ -236,7 +241,7 @@ export const Interaction {
 | Interact using Testing Library           | Interact using all of Playwright facilities     |
 | Compatible with Chromatic & SB ecosystem | Incompatible                                    |
 
-The main difference between Storybook CT and Playwright CT is that Storybook's play functions are entirely browser-based. This means that you can publish and inspect your tests in a static build of Storybook in the cloud, which is great for collaboration debugging CI failures. The drawback of this approach is that some of Playwright's features, such as the ability to wait for network idle, are not unavailble in "user-land" browser code.
+The main difference between Storybook Test Runner and Playwright CT is that Storybook's play functions are entirely browser-based. This means that you can publish and inspect your tests in a static build of Storybook in the cloud, which is great for collaboration debugging CI failures. The drawback of this approach is that some of Playwright's features, such as the ability to wait for network idle, are not unavailble in "user-land" browser code.
 
 You should use Playwright CT Storybook over Storybook CT if:
 
@@ -247,83 +252,6 @@ You should use Playwright CT Storybook over Storybook CT if:
   - truly force element pseudostates
   - evaluate arbitrary test code in the browser
 
-```js
-import { test, expect } from '@playwright/experimental-ct-react';
-import HelloWorld from './HelloWorld';
-
-test.use({ viewport: { width: 500, height: 500 } });
-
-test('should work', async ({ mount }) => {
-  const component = await mount(<HelloWorld msg="greetings" />);
-  await expect(component).toContainText('Greetings');
-});
-```
-
-</TabItem>
-
-<TabItem value="vue">
-
-```js
-import { test, expect } from '@playwright/experimental-ct-vue';
-import HelloWorld from './HelloWorld.vue';
-
-test.use({ viewport: { width: 500, height: 500 } });
-
-test('should work', async ({ mount }) => {
-  const component = await mount(HelloWorld, {
-    props: {
-      msg: 'Greetings',
-    },
-  });
-  await expect(component).toContainText('Greetings');
-});
-```
-
-</TabItem>
-  
-<TabItem value="svelte">
-
-```js
-import { test, expect } from '@playwright/experimental-ct-svelte';
-import HelloWorld from './HelloWorld.svelte';
-
-test.use({ viewport: { width: 500, height: 500 } });
-
-test('should work', async ({ mount }) => {
-  const component = await mount(HelloWorld, {
-    props: {
-      msg: 'Greetings',
-    },
-  });
-  await expect(component).toContainText('Greetings');
-});
-```
-
-</TabItem>
-
-<TabItem value="solid">
-
-```js
-import { test, expect } from '@playwright/experimental-ct-solid';
-import HelloWorld from './HelloWorld';
-
-test.use({ viewport: { width: 500, height: 500 } });
-
-test('should work', async ({ mount }) => {
-  const component = await mount(<HelloWorld msg="greetings" />);
-  await expect(component).toContainText('Greetings');
-});
-```
-
-</TabItem>
-
-</Tabs>
-
-Additionally, it adds some config options you can use in your `playwright-sb.config.{ts,js}`.
-
-Finally, under the hood, each test re-uses the `context` and `page` fixture as a speed optimization for Component Testing.
-It resets them in between each test so it should be functionally equivalent to `@playwright/test`'s guarantee that you get a new, isolated `context` and `page` fixture per-test.
-
 ### Q) Can I use `@playwright/test` and `@storybook/playwright-ct` together?
 
-Yes. Use a Playwright Config for each and follow their respective guides ([E2E Playwright Test](https://playwright.dev/docs/intro), [Storybook Tests](https://playwright.dev/docs/test-components-storybook))
+Yes. Use a Playwright Config for each and follow their respective guides ([E2E Playwright Test](https://playwright.dev/docs/intro), [CT for Storybook](https://playwright.dev/docs/test-components-storybook))

@@ -38,7 +38,11 @@ test('event should work', async ({ mount }) => {
 
 ## How to get started
 
-Adding Playwright Test to an existing project is easy. Below are the steps to enable Playwright Test for a React, Vue, Svelte or Solid project. If you're developing your components in [Storybook](https://storybook.js.org), want to test your components in Angular, or are hitting up aginst some [known limitations](#known-issues-and-limitations), please see how to [test with Storybook](./test-components-storybook-js.md).
+Adding Playwright Test to an existing project is easy. Below are the steps to enable Playwright Test for a React, Vue, Svelte or Solid project.
+
+:::note
+If you're developing your components in [Storybook](https://storybook.js.org), want to test your components in Angular, or are hitting up aginst some [known limitations](#known-issues-and-limitations), please see how to [test with Storybook](./test-components-storybook-js.md).
+:::
 
 ### Step 1: Install Playwright Test for components for your respective framework
 
