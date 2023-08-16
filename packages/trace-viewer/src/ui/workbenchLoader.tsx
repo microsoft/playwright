@@ -18,7 +18,7 @@ import { ToolbarButton } from '@web/components/toolbarButton';
 import * as React from 'react';
 import type { ContextEntry } from '../entries';
 import { MultiTraceModel } from './modelUtil';
-import './workbench.css';
+import './workbenchLoader.css';
 import { toggleTheme } from '@web/theme';
 import { Workbench } from './workbench';
 import { connect } from './wsPort';
@@ -137,7 +137,7 @@ export const WorkbenchLoader: React.FunctionComponent<{
     })();
   }, [isServer, traceURLs, uploadedTraceNames]);
 
-  return <div className='vbox workbench' onDragOver={event => { event.preventDefault(); setDragOver(true); }}>
+  return <div className='vbox workbench-loader' onDragOver={event => { event.preventDefault(); setDragOver(true); }}>
     <div className='hbox header'>
       <div className='logo'>🎭</div>
       <div className='product'>Playwright</div>

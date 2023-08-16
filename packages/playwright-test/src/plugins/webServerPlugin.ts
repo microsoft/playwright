@@ -16,19 +16,18 @@
 import path from 'path';
 import net from 'net';
 
-import { debug } from 'playwright-core/lib/utilsBundle';
+import { colors, debug } from 'playwright-core/lib/utilsBundle';
 import { raceAgainstDeadline, launchProcess, httpRequest, monotonicTime } from 'playwright-core/lib/utils';
 
 import type { FullConfig } from '../../types/testReporter';
 import type { TestRunnerPlugin } from '.';
 import type { FullConfigInternal } from '../common/config';
-import { envWithoutExperimentalLoaderOptions } from '../util';
 import type { ReporterV2 } from '../reporters/reporterV2';
 
 
 export type WebServerPluginOptions = {
   command: string;
-  url: string;
+  url?: string;
   ignoreHTTPSErrors?: boolean;
   timeout?: number;
   reuseExistingServer?: boolean;
@@ -40,12 +39,14 @@ export type WebServerPluginOptions = {
 
 const DEFAULT_ENVIRONMENT_VARIABLES = {
   'BROWSER': 'none', // Disable that create-react-app will open the page in the browser
+  'FORCE_COLOR': '1',
+  'DEBUG_COLORS': '1',
 };
 
 const debugWebServer = debug('pw:webserver');
 
 export class WebServerPlugin implements TestRunnerPlugin {
-  private _isAvailable?: () => Promise<boolean>;
+  private _isAvailableCallback?: () => Promise<boolean>;
   private _killProcess?: () => Promise<void>;
   private _processExitedPromise!: Promise<any>;
   private _options: WebServerPluginOptions;
@@ -60,7 +61,7 @@ export class WebServerPlugin implements TestRunnerPlugin {
 
   public async setup(config: FullConfig, configDir: string, reporter: ReporterV2) {
     this._reporter = reporter;
-    this._isAvailable = getIsAvailableFunction(this._options.url, this._checkPortOnly, !!this._options.ignoreHTTPSErrors, this._reporter.onStdErr?.bind(this._reporter));
+    this._isAvailableCallback = this._options.url ? getIsAvailableFunction(this._options.url, this._checkPortOnly, !!this._options.ignoreHTTPSErrors, this._reporter.onStdErr?.bind(this._reporter)) : undefined;
     this._options.cwd = this._options.cwd ? path.resolve(configDir, this._options.cwd) : configDir;
     try {
       await this._startProcess();
@@ -79,12 +80,12 @@ export class WebServerPlugin implements TestRunnerPlugin {
     let processExitedReject = (error: Error) => { };
     this._processExitedPromise = new Promise((_, reject) => processExitedReject = reject);
 
-    const isAlreadyAvailable = await this._isAvailable!();
+    const isAlreadyAvailable = await this._isAvailableCallback?.();
     if (isAlreadyAvailable) {
       debugWebServer(`WebServer is already available`);
       if (this._options.reuseExistingServer)
         return;
-      const port = new URL(this._options.url);
+      const port = new URL(this._options.url!).port;
       throw new Error(`${this._options.url ?? `http://localhost${port ? ':' + port : ''}`} is already used, make sure that nothing is running on the port/url or set reuseExistingServer:true in config.webServer.`);
     }
 
@@ -93,7 +94,7 @@ export class WebServerPlugin implements TestRunnerPlugin {
       command: this._options.command,
       env: {
         ...DEFAULT_ENVIRONMENT_VARIABLES,
-        ...envWithoutExperimentalLoaderOptions(),
+        ...process.env,
         ...this._options.env,
       },
       cwd: this._options.cwd,
@@ -112,30 +113,30 @@ export class WebServerPlugin implements TestRunnerPlugin {
 
     launchedProcess.stderr!.on('data', line => {
       if (debugWebServer.enabled || (this._options.stderr === 'pipe' || !this._options.stderr))
-        this._reporter!.onStdErr?.('[WebServer] ' + line.toString());
+        this._reporter!.onStdErr?.(colors.dim('[WebServer] ') + line.toString());
     });
     launchedProcess.stdout!.on('data', line => {
       if (debugWebServer.enabled || this._options.stdout === 'pipe')
-        this._reporter!.onStdOut?.('[WebServer] ' + line.toString());
+        this._reporter!.onStdOut?.(colors.dim('[WebServer] ') + line.toString());
     });
   }
 
   private async _waitForProcess() {
+    if (!this._isAvailableCallback) {
+      this._processExitedPromise.catch(() => {});
+      return;
+    }
     debugWebServer(`Waiting for availability...`);
-    await this._waitForAvailability();
-    debugWebServer(`WebServer available`);
-  }
-
-  private async _waitForAvailability() {
     const launchTimeout = this._options.timeout || 60 * 1000;
     const cancellationToken = { canceled: false };
     const { timedOut } = (await Promise.race([
-      raceAgainstDeadline(() => waitFor(this._isAvailable!, cancellationToken), monotonicTime() + launchTimeout),
+      raceAgainstDeadline(() => waitFor(this._isAvailableCallback!, cancellationToken), monotonicTime() + launchTimeout),
       this._processExitedPromise,
     ]));
     cancellationToken.canceled = true;
     if (timedOut)
       throw new Error(`Timed out waiting ${launchTimeout}ms from config.webServer.`);
+    debugWebServer(`WebServer available`);
   }
 }
 
@@ -214,15 +215,17 @@ export const webServerPluginsForConfig = (config: FullConfigInternal): TestRunne
   const shouldSetBaseUrl = !!config.config.webServer;
   const webServerPlugins = [];
   for (const webServerConfig of config.webServers) {
-    if ((!webServerConfig.port && !webServerConfig.url) || (webServerConfig.port && webServerConfig.url))
-      throw new Error(`Exactly one of 'port' or 'url' is required in config.webServer.`);
+    if (webServerConfig.port && webServerConfig.url)
+      throw new Error(`Either 'port' or 'url' should be specified in config.webServer.`);
 
-    const url = webServerConfig.url || `http://localhost:${webServerConfig.port}`;
+    let url: string | undefined;
+    if (webServerConfig.port || webServerConfig.url) {
+      url = webServerConfig.url || `http://localhost:${webServerConfig.port}`;
 
-    // We only set base url when only the port is given. That's a legacy mode we have regrets about.
-    if (shouldSetBaseUrl && !webServerConfig.url)
-      process.env.PLAYWRIGHT_TEST_BASE_URL = url;
-
+      // We only set base url when only the port is given. That's a legacy mode we have regrets about.
+      if (shouldSetBaseUrl && !webServerConfig.url)
+        process.env.PLAYWRIGHT_TEST_BASE_URL = url;
+    }
     webServerPlugins.push(new WebServerPlugin({ ...webServerConfig,  url }, webServerConfig.port !== undefined));
   }
 

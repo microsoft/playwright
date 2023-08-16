@@ -21,23 +21,58 @@ import type { FullResult } from '../../types/testReporter';
 import type { FullConfigInternal } from '../common/config';
 import type { JsonConfig, JsonEvent, JsonProject, JsonSuite, JsonTestResultEnd } from '../isomorphic/teleReceiver';
 import { TeleReporterReceiver } from '../isomorphic/teleReceiver';
+import { JsonStringInternalizer, StringInternPool } from '../isomorphic/stringInternPool';
 import { createReporters } from '../runner/reporters';
 import { Multiplexer } from './multiplexer';
-import { ZipFile } from 'playwright-core/lib/utils';
-import type { BlobReportMetadata } from './blob';
+import { ZipFile, calculateSha1 } from 'playwright-core/lib/utils';
+import { currentBlobReportVersion, type BlobReportMetadata } from './blob';
+import { relativeFilePath } from '../util';
+
+type StatusCallback = (message: string) => void;
+
+type ReportData = {
+  idsPatcher: IdsPatcher;
+  reportFile: string;
+};
 
 export async function createMergedReport(config: FullConfigInternal, dir: string, reporterDescriptions: ReporterDescription[]) {
+  const reporters = await createReporters(config, 'merge', reporterDescriptions);
+  const multiplexer = new Multiplexer(reporters);
+  const receiver = new TeleReporterReceiver(path.sep, multiplexer, false, config.config);
+  const stringPool = new StringInternPool();
+
+  let printStatus: StatusCallback = () => {};
+  if (!multiplexer.printsToStdio()) {
+    printStatus = printStatusToStdout;
+    printStatus(`merging reports from ${dir}`);
+  }
+
   const shardFiles = await sortedShardFiles(dir);
   if (shardFiles.length === 0)
     throw new Error(`No report files found in ${dir}`);
-  const events = await mergeEvents(dir, shardFiles);
-  patchAttachmentPaths(events, dir);
+  const eventData = await mergeEvents(dir, shardFiles, stringPool, printStatus);
+  printStatus(`processing test events`);
 
-  const reporters = await createReporters(config, 'merge', reporterDescriptions);
-  const receiver = new TeleReporterReceiver(path.sep, new Multiplexer(reporters), false, config.config);
+  const dispatchEvents = async (events: JsonEvent[]) => {
+    for (const event of events) {
+      if (event.method === 'onEnd')
+        printStatus(`building final report`);
+      await receiver.dispatch(event);
+      if (event.method === 'onEnd')
+        printStatus(`finished building report`);
+    }
+  };
 
-  for (const event of events)
-    await receiver.dispatch(event);
+  await dispatchEvents(eventData.prologue);
+  for (const { reportFile, idsPatcher } of eventData.reports) {
+    const reportJsonl = await fs.promises.readFile(reportFile);
+    const events = parseTestEvents(reportJsonl);
+    new JsonStringInternalizer(stringPool).traverse(events);
+    idsPatcher.patchEvents(events);
+    patchAttachmentPaths(events, dir);
+    await dispatchEvents(events);
+  }
+  await dispatchEvents(eventData.epilogue);
 }
 
 function patchAttachmentPaths(events: JsonEvent[], resourceDir: string) {
@@ -53,28 +88,52 @@ function patchAttachmentPaths(events: JsonEvent[], resourceDir: string) {
   }
 }
 
-function parseEvents(reportJsonl: Buffer): JsonEvent[] {
-  return reportJsonl.toString().split('\n').filter(line => line.length).map(line => JSON.parse(line)) as JsonEvent[];
+const commonEventNames = ['onBlobReportMetadata', 'onConfigure', 'onProject', 'onBegin', 'onEnd'];
+const commonEvents = new Set(commonEventNames);
+const commonEventRegex = new RegExp(`${commonEventNames.join('|')}`);
+
+function parseCommonEvents(reportJsonl: Buffer): JsonEvent[] {
+  return reportJsonl.toString().split('\n')
+      .filter(line => commonEventRegex.test(line)) // quick filter
+      .map(line => JSON.parse(line) as JsonEvent)
+      .filter(event => commonEvents.has(event.method));
 }
 
-async function extractAndParseReports(dir: string, shardFiles: string[]): Promise<{ metadata: BlobReportMetadata, parsedEvents: JsonEvent[] }[]> {
-  const shardEvents = [];
+function parseTestEvents(reportJsonl: Buffer): JsonEvent[] {
+  return reportJsonl.toString().split('\n')
+      .filter(line => line.length)
+      .map(line => JSON.parse(line) as JsonEvent)
+      .filter(event => !commonEvents.has(event.method));
+}
+
+async function extractAndParseReports(dir: string, shardFiles: string[], internalizer: JsonStringInternalizer, printStatus: StatusCallback) {
+  const shardEvents: { file: string, localPath: string, metadata: BlobReportMetadata, parsedEvents: JsonEvent[] }[] = [];
   await fs.promises.mkdir(path.join(dir, 'resources'), { recursive: true });
+
+  const reportNames = new UniqueFileNameGenerator();
   for (const file of shardFiles) {
-    const zipFile = new ZipFile(path.join(dir, file));
+    const absolutePath = path.join(dir, file);
+    printStatus(`extracting: ${relativeFilePath(absolutePath)}`);
+    const zipFile = new ZipFile(absolutePath);
     const entryNames = await zipFile.entries();
-    for (const entryName of entryNames) {
+    for (const entryName of entryNames.sort()) {
+      let fileName = path.join(dir, entryName);
       const content = await zipFile.read(entryName);
       if (entryName.endsWith('.jsonl')) {
-        const parsedEvents = parseEvents(content);
+        fileName = reportNames.makeUnique(fileName);
+        const parsedEvents = parseCommonEvents(content);
+        // Passing reviver to JSON.parse doesn't work, as the original strings
+        // keep beeing used. To work around that we traverse the parsed events
+        // as a post-processing step.
+        internalizer.traverse(parsedEvents);
         shardEvents.push({
+          file,
+          localPath: fileName,
           metadata: findMetadata(parsedEvents, file),
           parsedEvents
         });
-      } else {
-        const fileName = path.join(dir, entryName);
-        await fs.promises.writeFile(fileName, content);
       }
+      await fs.promises.writeFile(fileName, content);
     }
     zipFile.close();
   }
@@ -84,36 +143,81 @@ async function extractAndParseReports(dir: string, shardFiles: string[]): Promis
 function findMetadata(events: JsonEvent[], file: string): BlobReportMetadata {
   if (events[0]?.method !== 'onBlobReportMetadata')
     throw new Error(`No metadata event found in ${file}`);
-  return events[0].params;
+  const metadata = (events[0].params as BlobReportMetadata);
+  if (metadata.version > currentBlobReportVersion)
+    throw new Error(`Blob report ${file} was created with a newer version of Playwright.`);
+  return metadata;
 }
 
-async function mergeEvents(dir: string, shardReportFiles: string[]) {
-  const events: JsonEvent[] = [];
+async function mergeEvents(dir: string, shardReportFiles: string[], stringPool: StringInternPool, printStatus: StatusCallback) {
+  const internalizer = new JsonStringInternalizer(stringPool);
+
   const configureEvents: JsonEvent[] = [];
-  const beginEvents: JsonEvent[] = [];
+  const projectEvents: JsonEvent[] = [];
   const endEvents: JsonEvent[] = [];
-  const shardEvents = await extractAndParseReports(dir, shardReportFiles);
-  shardEvents.sort((a, b) => {
+
+  const blobs = await extractAndParseReports(dir, shardReportFiles, internalizer, printStatus);
+  // Sort by (report name; shard; file name), so that salt generation below is deterministic when:
+  // - report names are unique;
+  // - report names are missing;
+  // - report names are clashing between shards.
+  blobs.sort((a, b) => {
+    const nameA = a.metadata.name ?? '';
+    const nameB = b.metadata.name ?? '';
+    if (nameA !== nameB)
+      return nameA.localeCompare(nameB);
     const shardA = a.metadata.shard?.current ?? 0;
     const shardB = b.metadata.shard?.current ?? 0;
-    return shardA - shardB;
+    if (shardA !== shardB)
+      return shardA - shardB;
+    return a.file.localeCompare(b.file);
   });
-  const allTestIds = new Set<string>();
-  for (const { parsedEvents } of shardEvents) {
+
+  const saltSet = new Set<string>();
+
+  printStatus(`merging events`);
+
+  const reports: ReportData[] = [];
+
+  for (const { file, parsedEvents, metadata, localPath } of blobs) {
+    // Generate unique salt for each blob.
+    const sha1 = calculateSha1(metadata.name || path.basename(file)).substring(0, 16);
+    let salt = sha1;
+    for (let i = 0; saltSet.has(salt); i++)
+      salt = sha1 + '-' + i;
+    saltSet.add(salt);
+
+    const idsPatcher = new IdsPatcher(stringPool, metadata.name, salt);
+    idsPatcher.patchEvents(parsedEvents);
+
     for (const event of parsedEvents) {
       if (event.method === 'onConfigure')
         configureEvents.push(event);
-      else if (event.method === 'onBegin')
-        beginEvents.push(event);
+      else if (event.method === 'onProject')
+        projectEvents.push(event);
       else if (event.method === 'onEnd')
         endEvents.push(event);
-      else if (event.method === 'onBlobReportMetadata')
-        new ProjectNamePatcher(allTestIds, event.params.projectSuffix || '').patchEvents(parsedEvents);
-      else
-        events.push(event);
     }
+
+    // Save information about the reports to stream their test events later.
+    reports.push({
+      idsPatcher,
+      reportFile: localPath,
+    });
   }
-  return [mergeConfigureEvents(configureEvents), mergeBeginEvents(beginEvents), ...events, mergeEndEvents(endEvents), { method: 'onExit', params: undefined }];
+
+  return {
+    prologue: [
+      mergeConfigureEvents(configureEvents),
+      ...projectEvents,
+      { method: 'onBegin', params: undefined },
+    ],
+    reports,
+    epilogue: [
+      mergeEndEvents(endEvents),
+      { method: 'onExit', params: undefined },
+    ]
+  };
 }
 
 function mergeConfigureEvents(configureEvents: JsonEvent[]): JsonEvent {
@@ -141,28 +245,6 @@ function mergeConfigureEvents(configureEvents: JsonEvent[]): JsonEvent {
   };
 }
 
-function mergeBeginEvents(beginEvents: JsonEvent[]): JsonEvent {
-  if (!beginEvents.length)
-    throw new Error('No begin events found');
-  const projects: JsonProject[] = [];
-  for (const event of beginEvents) {
-    const shardProjects: JsonProject[] = event.params.projects;
-    for (const shardProject of shardProjects) {
-      const mergedProject = projects.find(p => p.id === shardProject.id);
-      if (!mergedProject)
-        projects.push(shardProject);
-      else
-        mergeJsonSuites(shardProject.suites, mergedProject);
-    }
-  }
-  return {
-    method: 'onBegin',
-    params: {
-      projects,
-    }
-  };
-}
-
 function mergeConfigs(to: JsonConfig, from: JsonConfig): JsonConfig {
   return {
     ...to,
@@ -175,18 +257,6 @@ function mergeConfigs(to: JsonConfig, from: JsonConfig): JsonConfig {
     },
     workers: to.workers + from.workers,
   };
-}
-
-function mergeJsonSuites(jsonSuites: JsonSuite[], parent: JsonSuite | JsonProject) {
-  for (const jsonSuite of jsonSuites) {
-    const existingSuite = parent.suites.find(s => s.title === jsonSuite.title);
-    if (!existingSuite) {
-      parent.suites.push(jsonSuite);
-    } else {
-      mergeJsonSuites(jsonSuite.suites, existingSuite);
-      existingSuite.tests.push(...jsonSuite.tests);
-    }
-  }
 }
 
 function mergeEndEvents(endEvents: JsonEvent[]): JsonEvent {
@@ -210,21 +280,44 @@ function mergeEndEvents(endEvents: JsonEvent[]): JsonEvent {
 
 async function sortedShardFiles(dir: string) {
   const files = await fs.promises.readdir(dir);
-  return files.filter(file => file.startsWith('report-') && file.endsWith('.zip')).sort();
+  return files.filter(file => file.startsWith('report') && file.endsWith('.zip')).sort();
 }
 
-class ProjectNamePatcher {
-  private _testIds = new Set<string>();
+function printStatusToStdout(message: string) {
+  process.stdout.write(`${message}\n`);
+}
 
-  constructor(private _allTestIds: Set<string>, private _projectNameSuffix: string) {
+class UniqueFileNameGenerator {
+  private _usedNames = new Set<string>();
+
+  makeUnique(name: string): string {
+    if (!this._usedNames.has(name)) {
+      this._usedNames.add(name);
+      return name;
+    }
+    const extension = path.extname(name);
+    name = name.substring(0, name.length - extension.length);
+    let index = 0;
+    while (true) {
+      const candidate = `${name}-${++index}${extension}`;
+      if (!this._usedNames.has(candidate)) {
+        this._usedNames.add(candidate);
+        return candidate;
+      }
+    }
+  }
+}
+
+class IdsPatcher {
+  constructor(private _stringPool: StringInternPool, private _reportName: string | undefined, private _salt: string) {
   }
 
   patchEvents(events: JsonEvent[]) {
     for (const event of events) {
       const { method, params } = event;
       switch (method) {
-        case 'onBegin':
-          this._onBegin(params.config, params.projects);
+        case 'onProject':
+          this._onProject(params.project);
           continue;
         case 'onTestBegin':
         case 'onStepBegin':
@@ -237,48 +330,21 @@ class ProjectNamePatcher {
           continue;
       }
     }
-    for (const testId of this._testIds)
-      this._allTestIds.add(testId);
   }
 
-  private _onBegin(config: JsonConfig, projects: JsonProject[]) {
-    for (const project of projects)
-      project.name += this._projectNameSuffix;
-    this._updateProjectIds(projects);
-    for (const project of projects)
-      project.suites.forEach(suite => this._updateTestIds(suite));
-  }
-
-  private _updateProjectIds(projects: JsonProject[]) {
-    const usedNames = new Set<string>();
-    for (const p of projects) {
-      for (let i = 0; i < projects.length; ++i) {
-        const candidate = p.name + (i ? i : '');
-        if (usedNames.has(candidate))
-          continue;
-        p.id = candidate;
-        usedNames.add(candidate);
-        break;
-      }
-    }
+  private _onProject(project: JsonProject) {
+    project.metadata = project.metadata ?? {};
+    project.metadata.reportName = this._reportName;
+    project.id = this._stringPool.internString(project.id + this._salt);
+    project.suites.forEach(suite => this._updateTestIds(suite));
   }
 
   private _updateTestIds(suite: JsonSuite) {
-    suite.tests.forEach(test => {
-      test.testId = this._mapTestId(test.testId);
-      this._testIds.add(test.testId);
-    });
+    suite.tests.forEach(test => test.testId = this._mapTestId(test.testId));
     suite.suites.forEach(suite => this._updateTestIds(suite));
   }
 
   private _mapTestId(testId: string): string {
-    testId = testId + this._projectNameSuffix;
-    // Consider a setup project running on each shard. In this case we'll have
-    // the same testId (from setup project) in multiple blob reports.
-    // To avoid reporters being confused by clashing test ids, we automatically
-    // make them unique and produce a separate test from each blob.
-    while (this._allTestIds.has(testId))
-      testId = testId + '1';
-    return testId;
+    return this._stringPool.internString(testId + this._salt);
   }
 }

@@ -27,13 +27,12 @@ import { SourceTab } from './sourceTab';
 import { TabbedPane } from '@web/components/tabbedPane';
 import type { TabbedPaneTabModel } from '@web/components/tabbedPane';
 import { Timeline } from './timeline';
-import './workbench.css';
 import { MetadataView } from './metadataView';
 import { AttachmentsTab } from './attachmentsTab';
+import type { Boundaries } from '../geometry';
 
 export const Workbench: React.FunctionComponent<{
   model?: MultiTraceModel,
-  hideTimelineBars?: boolean,
   hideStackFrames?: boolean,
   showSourcesFirst?: boolean,
   rootDir?: string,
@@ -42,12 +41,13 @@ export const Workbench: React.FunctionComponent<{
   onSelectionChanged?: (action: ActionTraceEventInContext) => void,
   isLive?: boolean,
   drawer?: 'bottom' | 'right',
-}> = ({ model, hideTimelineBars, hideStackFrames, showSourcesFirst, rootDir, fallbackLocation, initialSelection, onSelectionChanged, isLive, drawer }) => {
+}> = ({ model, hideStackFrames, showSourcesFirst, rootDir, fallbackLocation, initialSelection, onSelectionChanged, isLive, drawer }) => {
   const [selectedAction, setSelectedAction] = React.useState<ActionTraceEventInContext | undefined>(undefined);
   const [highlightedAction, setHighlightedAction] = React.useState<ActionTraceEventInContext | undefined>();
   const [selectedNavigatorTab, setSelectedNavigatorTab] = React.useState<string>('actions');
   const [selectedPropertiesTab, setSelectedPropertiesTab] = React.useState<string>(showSourcesFirst ? 'source' : 'call');
   const activeAction = model ? highlightedAction || selectedAction : undefined;
+  const [selectedTime, setSelectedTime] = React.useState<Boundaries | undefined>();
 
   const sources = React.useMemo(() => model?.sources || new Map(), [model]);
 
@@ -88,12 +88,12 @@ export const Workbench: React.FunctionComponent<{
   const consoleTab: TabbedPaneTabModel = {
     id: 'console',
     title: 'Console',
-    render: () => <ConsoleTab model={model} action={activeAction} />
+    render: () => <ConsoleTab model={model} selectedTime={selectedTime} />
   };
   const networkTab: TabbedPaneTabModel = {
     id: 'network',
     title: 'Network',
-    render: () => <NetworkTab model={model} action={activeAction} />
+    render: () => <NetworkTab model={model} selectedTime={selectedTime} />
   };
   const attachmentsTab: TabbedPaneTabModel = {
     id: 'attachments',
@@ -115,15 +115,27 @@ export const Workbench: React.FunctionComponent<{
     attachmentsTab,
   ];
 
-  return <div className='vbox'>
+  const { boundaries } = React.useMemo(() => {
+    const boundaries = { minimum: model?.startTime || 0, maximum: model?.endTime || 30000 };
+    if (boundaries.minimum > boundaries.maximum) {
+      boundaries.minimum = 0;
+      boundaries.maximum = 30000;
+    }
+    // Leave some nice free space on the right hand side.
+    boundaries.maximum += (boundaries.maximum - boundaries.minimum) / 20;
+    return { boundaries };
+  }, [model]);
+
+  return <div className='vbox workbench'>
     <Timeline
       model={model}
-      selectedAction={activeAction}
+      boundaries={boundaries}
       onSelected={onActionSelected}
-      hideTimelineBars={hideTimelineBars}
       sdkLanguage={sdkLanguage}
+      selectedTime={selectedTime}
+      setSelectedTime={setSelectedTime}
     />
-    <SplitView sidebarSize={250} orientation={drawer === 'bottom' ? 'vertical' : 'horizontal'}>
+    <SplitView sidebarSize={drawer === 'bottom' ? 250 : 400} orientation={drawer === 'bottom' ? 'vertical' : 'horizontal'}>
       <SplitView sidebarSize={250} orientation='horizontal' sidebarIsFirst={true}>
         <SnapshotTab action={activeAction} sdkLanguage={sdkLanguage} testIdAttributeName={model?.testIdAttributeName || 'data-testid'} />
         <TabbedPane tabs={
@@ -135,6 +147,7 @@ export const Workbench: React.FunctionComponent<{
                 sdkLanguage={sdkLanguage}
                 actions={model?.actions || []}
                 selectedAction={model ? selectedAction : undefined}
+                selectedTime={selectedTime}
                 onSelected={onActionSelected}
                 onHighlighted={setHighlightedAction}
                 revealConsole={() => setSelectedPropertiesTab('console')}

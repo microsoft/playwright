@@ -26,21 +26,18 @@ jobs:
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --project=${{ matrix.browser }} --workers=10 --retries=0
       env:
         PWTEST_MODE: service2
-        PWTEST_BLOB_SUFFIX: "-${{ matrix.service-os }}-service"
+        PWTEST_TRACE: 1
+        PWTEST_BLOB_REPORT_NAME: "${{ matrix.browser }}-${{ matrix.service-os }}-service"
         PLAYWRIGHT_SERVICE_ACCESS_KEY: ${{ secrets.PLAYWRIGHT_SERVICE_ACCESS_KEY }}
         PLAYWRIGHT_SERVICE_URL: ${{ secrets.PLAYWRIGHT_SERVICE_URL }}
         PLAYWRIGHT_SERVICE_OS: ${{ matrix.service-os }}
         PLAYWRIGHT_SERVICE_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}-${{ github.sha }}
-    - name: Zip blob report
-      if: always()
-      run: zip -r ../blob-report-${{ matrix.browser }}-${{ matrix.service-os }}.zip .
-      working-directory: blob-report
     - name: Upload blob report to GitHub
       if: always()
       uses: actions/upload-artifact@v3
       with:
-        name: blob-report-${{ github.run_attempt }}
-        path: blob-report-${{ matrix.browser }}-${{ matrix.service-os }}.zip
+        name: all-blob-reports
+        path: blob-report
         retention-days: 2
 
   merge_reports:
@@ -58,13 +55,16 @@ jobs:
     - name: Download blob report artifact
       uses: actions/download-artifact@v3
       with:
-        name: blob-report-${{ github.run_attempt }}
-        path: blob-report-zips
-    - name: Unzip all blob reports
-      run: unzip -o 'blob-report-zips/blob-report-*.zip' -d blob-report
-    - run: npx playwright merge-reports --reporter markdown,html ./blob-report
+        name: all-blob-reports
+        path: all-blob-reports
+    - run: npx playwright merge-reports --reporter markdown,html ./all-blob-reports
     - name: Upload HTML report to Azure
       run: |
         REPORT_DIR='run-service-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.sha }}'
-        az storage blob upload-batch -s playwright-report -d "\$web/$REPORT_DIR" --connection-string "${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}"
+        azcopy cp --recursive "./playwright-report/*" "https://mspwblobreport.blob.core.windows.net/\$web/$REPORT_DIR"
         echo "Report url: https://mspwblobreport.z1.web.core.windows.net/$REPORT_DIR/index.html#?q=s:failed"
+      env:
+        AZCOPY_AUTO_LOGIN_TYPE: SPN
+        AZCOPY_SPA_APPLICATION_ID: '${{ secrets.AZCOPY_SPA_APPLICATION_ID }}'
+        AZCOPY_SPA_CLIENT_SECRET: '${{ secrets.AZCOPY_SPA_CLIENT_SECRET }}'
+        AZCOPY_TENANT_ID: '${{ secrets.AZCOPY_TENANT_ID }}'

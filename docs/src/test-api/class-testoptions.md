@@ -492,6 +492,21 @@ export default defineConfig({
 });
 ```
 
+**Details**
+
+When storage state is set up in the config, it is possible to reset storage state for a file:
+
+```js title="not-signed-in.spec.ts"
+import { test } from '@playwright/test';
+
+// Reset storage state for this file to avoid being authenticated
+test.use({ storageState: { cookies: [], origins: [] } });
+
+test('not signed in test', async ({ page }) => {
+  // ...
+});
+```
+
 ## property: TestOptions.testIdAttribute
 * since: v1.27
 

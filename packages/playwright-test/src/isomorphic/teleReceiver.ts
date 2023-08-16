@@ -20,6 +20,7 @@ import type { FullProject, Metadata } from '../../types/test';
 import type * as reporterTypes from '../../types/testReporter';
 import type { SuitePrivate } from '../../types/reporterPrivate';
 import type { ReporterV2 } from '../reporters/reporterV2';
+import { StringInternPool } from './stringInternPool';
 
 export type JsonLocation = Location;
 export type JsonError = string;
@@ -86,7 +87,7 @@ export type JsonTestResultStart = {
   retry: number;
   workerIndex: number;
   parallelIndex: number;
-  startTime: string;
+  startTime: number;
 };
 
 export type JsonAttachment = Omit<TestResult['attachments'][0], 'body'> & { base64?: string };
@@ -104,7 +105,7 @@ export type JsonTestStepStart = {
   parentStepId?: string;
   title: string;
   category: string,
-  startTime: string;
+  startTime: number;
   location?: Location;
 };
 
@@ -130,6 +131,7 @@ export class TeleReporterReceiver {
   private _reuseTestCases: boolean;
   private _reportConfig: MergeReporterConfig | undefined;
   private _config!: FullConfig;
+  private _stringPool = new StringInternPool();
 
   constructor(pathSeparator: string, reporter: ReporterV2, reuseTestCases: boolean, reportConfig?: MergeReporterConfig) {
     this._rootSuite = new TeleSuite('', 'root');
@@ -145,8 +147,12 @@ export class TeleReporterReceiver {
       this._onConfigure(params.config);
       return;
     }
+    if (method === 'onProject') {
+      this._onProject(params.project);
+      return;
+    }
     if (method === 'onBegin') {
-      this._onBegin(params.projects);
+      this._onBegin();
       return;
     }
     if (method === 'onTestBegin') {
@@ -190,35 +196,36 @@ export class TeleReporterReceiver {
     this._reporter.onConfigure(this._config);
   }
 
-  private _onBegin(projects: JsonProject[]) {
-    for (const project of projects) {
-      let projectSuite = this._rootSuite.suites.find(suite => suite.project()!.id === project.id);
-      if (!projectSuite) {
-        projectSuite = new TeleSuite(project.name, 'project');
-        this._rootSuite.suites.push(projectSuite);
-        projectSuite.parent = this._rootSuite;
-      }
-      const p = this._parseProject(project);
-      projectSuite.project = () => p;
-      this._mergeSuitesInto(project.suites, projectSuite);
-
-      // Remove deleted tests when listing. Empty suites will be auto-filtered
-      // in the UI layer.
-      if (this._listOnly) {
-        const testIds = new Set<string>();
-        const collectIds = (suite: JsonSuite) => {
-          suite.tests.map(t => t.testId).forEach(testId => testIds.add(testId));
-          suite.suites.forEach(collectIds);
-        };
-        project.suites.forEach(collectIds);
-
-        const filterTests = (suite: TeleSuite) => {
-          suite.tests = suite.tests.filter(t => testIds.has(t.id));
-          suite.suites.forEach(filterTests);
-        };
-        filterTests(projectSuite);
-      }
+  private _onProject(project: JsonProject) {
+    let projectSuite = this._rootSuite.suites.find(suite => suite.project()!.__projectId === project.id);
+    if (!projectSuite) {
+      projectSuite = new TeleSuite(project.name, 'project');
+      this._rootSuite.suites.push(projectSuite);
+      projectSuite.parent = this._rootSuite;
     }
+    const p = this._parseProject(project);
+    projectSuite.project = () => p;
+    this._mergeSuitesInto(project.suites, projectSuite);
+
+    // Remove deleted tests when listing. Empty suites will be auto-filtered
+    // in the UI layer.
+    if (this._listOnly) {
+      const testIds = new Set<string>();
+      const collectIds = (suite: JsonSuite) => {
+        suite.tests.map(t => t.testId).forEach(testId => testIds.add(testId));
+        suite.suites.forEach(collectIds);
+      };
+      project.suites.forEach(collectIds);
+
+      const filterTests = (suite: TeleSuite) => {
+        suite.tests = suite.tests.filter(t => testIds.has(t.id));
+        suite.suites.forEach(filterTests);
+      };
+      filterTests(projectSuite);
+    }
+  }
+
+  private _onBegin() {
     this._reporter.onBegin?.(this._rootSuite);
   }
 
@@ -230,7 +237,7 @@ export class TeleReporterReceiver {
     testResult.retry = payload.retry;
     testResult.workerIndex = payload.workerIndex;
     testResult.parallelIndex = payload.parallelIndex;
-    testResult.startTime = new Date(payload.startTime);
+    testResult.setStartTimeNumber(payload.startTime);
     testResult.statusEx = 'running';
     this._reporter.onTestBegin?.(test, testResult);
   }
@@ -248,6 +255,8 @@ export class TeleReporterReceiver {
     result.error = result.errors?.[0];
     result.attachments = this._parseAttachments(payload.attachments);
     this._reporter.onTestEnd?.(test, result);
+    // Free up the memory as won't see these step ids.
+    result.stepMap = new Map();
   }
 
   private _onStepBegin(testId: string, resultId: string, payload: JsonTestStepStart) {
@@ -255,19 +264,8 @@ export class TeleReporterReceiver {
     const result = test.resultsMap.get(resultId)!;
     const parentStep = payload.parentStepId ? result.stepMap.get(payload.parentStepId) : undefined;
 
-    const step: TestStep = {
-      titlePath: () => {
-        const parentPath = parentStep?.titlePath() || [];
-        return [...parentPath, payload.title];
-      },
-      title: payload.title,
-      category: payload.category,
-      location: this._absoluteLocation(payload.location),
-      parent: parentStep,
-      startTime: new Date(payload.startTime),
-      duration: -1,
-      steps: [],
-    };
+    const location = this._absoluteLocation(payload.location);
+    const step = new TeleTestStep(payload, parentStep, location);
     if (parentStep)
       parentStep.steps.push(step);
     else
@@ -307,6 +305,8 @@ export class TeleReporterReceiver {
   }
 
   private _onExit(): Promise<void> | void {
+    // Free up the memory from the string pool.
+    this._stringPool = new StringInternPool();
     return this._reporter.onExit?.();
   }
 
@@ -323,7 +323,7 @@ export class TeleReporterReceiver {
 
   private _parseProject(project: JsonProject): TeleFullProject {
     return {
-      id: project.id,
+      __projectId: project.id,
       metadata: project.metadata,
       name: project.name,
       outputDir: this._absolutePath(project.outputDir),
@@ -403,7 +403,7 @@ export class TeleReporterReceiver {
   private _absolutePath(relativePath?: string): string | undefined {
     if (!relativePath)
       return relativePath;
-    return this._rootDir + this._pathSeparator + relativePath;
+    return this._stringPool.internString(this._rootDir + this._pathSeparator + relativePath);
   }
 
 }
@@ -482,14 +482,21 @@ export class TeleTestCase implements reporterTypes.TestCase {
   }
 
   outcome(): 'skipped' | 'expected' | 'unexpected' | 'flaky' {
-    const nonSkipped = this.results.filter(result => result.status !== 'skipped' && result.status !== 'interrupted');
-    if (!nonSkipped.length)
+    // Ignore initial skips that may be a result of "skipped because previous test in serial mode failed".
+    const results = [...this.results];
+    while (results[0]?.status === 'skipped' || results[0]?.status === 'interrupted')
+      results.shift();
+
+    // All runs were skipped.
+    if (!results.length)
       return 'skipped';
-    if (nonSkipped.every(result => result.status === this.expectedStatus))
+
+    const failures = results.filter(result => result.status !== 'skipped' && result.status !== 'interrupted' && result.status !== this.expectedStatus);
+    if (!failures.length) // all passed
       return 'expected';
-    if (nonSkipped.some(result => result.status === this.expectedStatus))
-      return 'flaky';
-    return 'unexpected';
+    if (failures.length === results.length) // all failed
+      return 'unexpected';
+    return 'flaky'; // mixed bag
   }
 
   ok(): boolean {
@@ -503,33 +510,81 @@ export class TeleTestCase implements reporterTypes.TestCase {
   }
 
   _createTestResult(id: string): TeleTestResult {
-    const result: TeleTestResult = {
-      retry: this.results.length,
-      parallelIndex: -1,
-      workerIndex: -1,
-      duration: -1,
-      startTime: new Date(),
-      stdout: [],
-      stderr: [],
-      attachments: [],
-      status: 'skipped',
-      statusEx: 'scheduled',
-      steps: [],
-      errors: [],
-      stepMap: new Map(),
-    };
+    const result = new TeleTestResult(this.results.length);
     this.results.push(result);
     this.resultsMap.set(id, result);
     return result;
   }
 }
 
-export type TeleTestResult = reporterTypes.TestResult & {
-  stepMap: Map<string, reporterTypes.TestStep>;
-  statusEx: reporterTypes.TestResult['status'] | 'scheduled' | 'running';
-};
+class TeleTestStep implements TestStep {
+  title: string;
+  category: string;
+  location: Location | undefined;
+  parent: TestStep | undefined;
+  duration: number = -1;
+  steps: TestStep[] = [];
 
-export type TeleFullProject = FullProject & { id: string };
+  private _startTime: number = 0;
+
+  constructor(payload: JsonTestStepStart, parentStep: TestStep | undefined, location:  Location | undefined) {
+    this.title = payload.title;
+    this.category = payload.category;
+    this.location = location;
+    this.parent = parentStep;
+    this._startTime = payload.startTime;
+  }
+
+  titlePath() {
+    const parentPath = this.parent?.titlePath() || [];
+    return [...parentPath, this.title];
+  }
+
+  get startTime(): Date {
+    return new Date(this._startTime);
+  }
+
+  set startTime(value: Date) {
+    this._startTime = +value;
+  }
+}
+
+class TeleTestResult implements reporterTypes.TestResult {
+  retry: reporterTypes.TestResult['retry'];
+  parallelIndex: reporterTypes.TestResult['parallelIndex'] = -1;
+  workerIndex: reporterTypes.TestResult['workerIndex'] = -1;
+  duration: reporterTypes.TestResult['duration'] = -1;
+  stdout: reporterTypes.TestResult['stdout'] = [];
+  stderr: reporterTypes.TestResult['stderr'] = [];
+  attachments: reporterTypes.TestResult['attachments'] = [];
+  status: TestStatus = 'skipped';
+  steps: TeleTestStep[] = [];
+  errors: reporterTypes.TestResult['errors'] = [];
+  error: reporterTypes.TestResult['error'];
+
+  stepMap: Map<string, reporterTypes.TestStep> = new Map();
+  statusEx: reporterTypes.TestResult['status'] | 'scheduled' | 'running' = 'scheduled';
+
+  private _startTime: number = 0;
+
+  constructor(retry: number) {
+    this.retry = retry;
+  }
+
+  setStartTimeNumber(startTime: number) {
+    this._startTime = startTime;
+  }
+
+  get startTime(): Date {
+    return new Date(this._startTime);
+  }
+
+  set startTime(value: Date) {
+    this._startTime = +value;
+  }
+}
+
+export type TeleFullProject = FullProject & { __projectId: string };
 
 export const baseFullConfig: FullConfig = {
   forbidOnly: false,

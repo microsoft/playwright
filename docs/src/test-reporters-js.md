@@ -326,8 +326,9 @@ export default defineConfig({
 ## Third party reporter showcase
 
 * [Allure](https://www.npmjs.com/package/allure-playwright)
-* [Monocart](https://github.com/cenfun/monocart-reporter)
-* [Tesults](https://www.tesults.com/docs/playwright)
-* [ReportPortal](https://github.com/reportportal/agent-js-playwright)
 * [Currents](https://www.npmjs.com/package/@currents/playwright)
+* [Monocart](https://github.com/cenfun/monocart-reporter)
+* [ReportPortal](https://github.com/reportportal/agent-js-playwright)
 * [Serenity/JS](https://serenity-js.org/handbook/test-runners/playwright-test)
+* [Testmo](https://github.com/jonasclaes/playwright-testmo-reporter)
+* [Tesults](https://www.tesults.com/docs/playwright)

@@ -24,10 +24,12 @@ import type { Language } from '@isomorphic/locatorGenerators';
 import type { TreeState } from '@web/components/treeView';
 import { TreeView } from '@web/components/treeView';
 import type { ActionTraceEventInContext, ActionTreeItem } from './modelUtil';
+import type { Boundaries } from '../geometry';
 
 export interface ActionListProps {
   actions: ActionTraceEventInContext[],
   selectedAction: ActionTraceEventInContext | undefined,
+  selectedTime: Boundaries | undefined,
   sdkLanguage: Language | undefined;
   onSelected: (action: ActionTraceEventInContext) => void,
   onHighlighted: (action: ActionTraceEventInContext | undefined) => void,
@@ -40,6 +42,7 @@ const ActionTreeView = TreeView<ActionTreeItem>;
 export const ActionList: React.FC<ActionListProps> = ({
   actions,
   selectedAction,
+  selectedTime,
   sdkLanguage,
   onSelected,
   onHighlighted,
@@ -63,15 +66,16 @@ export const ActionList: React.FC<ActionListProps> = ({
     onSelected={item => onSelected(item.action!)}
     onHighlighted={item => onHighlighted(item?.action)}
     isError={item => !!item.action?.error?.message}
+    isVisible={item => !selectedTime || (item.action!.startTime <= selectedTime.maximum && item.action!.endTime >= selectedTime.minimum)}
     render={item => renderAction(item.action!, sdkLanguage, revealConsole, isLive || false)}
   />;
 };
 
-const renderAction = (
+export const renderAction = (
   action: ActionTraceEvent,
-  sdkLanguage: Language | undefined,
-  revealConsole: () => void,
-  isLive: boolean,
+  sdkLanguage?: Language,
+  revealConsole?: () => void,
+  isLive?: boolean,
 ) => {
   const { errors, warnings } = modelUtil.stats(action);
   const locator = action.params.selector ? asLocator(sdkLanguage || 'javascript', action.params.selector, false /* isFrameLocator */, true /* playSafe */) : undefined;
@@ -90,7 +94,7 @@ const renderAction = (
       {action.method === 'goto' && action.params.url && <div className='action-url' title={action.params.url}>{action.params.url}</div>}
     </div>
     <div className='action-duration' style={{ flex: 'none' }}>{time || <span className='codicon codicon-loading'></span>}</div>
-    <div className='action-icons' onClick={() => revealConsole()}>
+    <div className='action-icons' onClick={() => revealConsole?.()}>
       {!!errors && <div className='action-icon'><span className='codicon codicon-error'></span><span className="action-icon-value">{errors}</span></div>}
       {!!warnings && <div className='action-icon'><span className='codicon codicon-warning'></span><span className="action-icon-value">{warnings}</span></div>}
     </div>

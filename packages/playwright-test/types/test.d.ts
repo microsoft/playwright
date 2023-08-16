@@ -164,7 +164,7 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
    * Filter to only run tests with a title matching one of the patterns. For example, passing `grep: /cart/` should only
    * run tests with "cart" in the title. Also available globally and in the [command line](https://playwright.dev/docs/test-cli) with the `-g`
    * option. The regular expression will be tested against the string that consists of the test file name,
-   * `test.describe` name (if any) and the test name divided by spaces, e.g. `my-test.spec.ts my suite my test`.
+   * `test.describe` name (if any) and the test name divided by spaces, e.g. `my-test.spec.ts my-suite my-test`.
    *
    * `grep` option is also useful for [tagging tests](https://playwright.dev/docs/test-annotations#tag-tests).
    */
@@ -791,7 +791,9 @@ interface TestConfig {
 
   /**
    * Filter to only run tests with a title matching one of the patterns. For example, passing `grep: /cart/` should only
-   * run tests with "cart" in the title. Also available in the [command line](https://playwright.dev/docs/test-cli) with the `-g` option.
+   * run tests with "cart" in the title. Also available in the [command line](https://playwright.dev/docs/test-cli) with the `-g` option. The
+   * regular expression will be tested against the string that consists of the test file name, `test.describe` name (if
+   * any) and the test name divided by spaces, e.g. `my-test.spec.ts my-suite my-test`.
    *
    * `grep` option is also useful for [tagging tests](https://playwright.dev/docs/test-annotations#tag-tests).
    *
@@ -1540,7 +1542,9 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   globalTimeout: number;
   /**
    * Filter to only run tests with a title matching one of the patterns. For example, passing `grep: /cart/` should only
-   * run tests with "cart" in the title. Also available in the [command line](https://playwright.dev/docs/test-cli) with the `-g` option.
+   * run tests with "cart" in the title. Also available in the [command line](https://playwright.dev/docs/test-cli) with the `-g` option. The
+   * regular expression will be tested against the string that consists of the test file name, `test.describe` name (if
+   * any) and the test name divided by spaces, e.g. `my-test.spec.ts my-suite my-test`.
    *
    * `grep` option is also useful for [tagging tests](https://playwright.dev/docs/test-annotations#tag-tests).
    *
@@ -3476,6 +3480,11 @@ export interface PlaywrightWorkerOptions {
   browserName: BrowserName;
   defaultBrowserType: BrowserName;
   /**
+   * Whether to run browser in headless mode. More details for
+   * [Chromium](https://developers.google.com/web/updates/2017/04/headless-chrome) and
+   * [Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode). Defaults to `true` unless the
+   * `devtools` option is `true`.
+   *
    * **Usage**
    *
    * ```js
@@ -3489,13 +3498,13 @@ export interface PlaywrightWorkerOptions {
    * });
    * ```
    *
-   * Whether to run browser in headless mode. More details for
-   * [Chromium](https://developers.google.com/web/updates/2017/04/headless-chrome) and
-   * [Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode). Defaults to `true` unless the
-   * `devtools` option is `true`.
    */
   headless: boolean;
   /**
+   * Browser distribution channel.  Supported values are "chrome", "chrome-beta", "chrome-dev", "chrome-canary",
+   * "msedge", "msedge-beta", "msedge-dev", "msedge-canary". Read more about using
+   * [Google Chrome and Microsoft Edge](https://playwright.dev/docs/browsers#google-chrome--microsoft-edge).
+   *
    * **Usage**
    *
    * ```js
@@ -3515,9 +3524,6 @@ export interface PlaywrightWorkerOptions {
    * });
    * ```
    *
-   * Browser distribution channel.  Supported values are "chrome", "chrome-beta", "chrome-dev", "chrome-canary",
-   * "msedge", "msedge-beta", "msedge-dev", "msedge-canary". Read more about using
-   * [Google Chrome and Microsoft Edge](https://playwright.dev/docs/browsers#google-chrome--microsoft-edge).
    */
   channel: BrowserChannel | undefined;
   /**
@@ -3696,6 +3702,8 @@ export type VideoMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry';
  */
 export interface PlaywrightTestOptions {
   /**
+   * Whether to automatically download all the attachments. Defaults to `true` where all the downloads are accepted.
+   *
    * **Usage**
    *
    * ```js
@@ -3709,10 +3717,11 @@ export interface PlaywrightTestOptions {
    * });
    * ```
    *
-   * Whether to automatically download all the attachments. Defaults to `true` where all the downloads are accepted.
    */
   acceptDownloads: boolean;
   /**
+   * Toggles bypassing page's Content-Security-Policy. Defaults to `false`.
+   *
    * **Usage**
    *
    * ```js
@@ -3726,10 +3735,13 @@ export interface PlaywrightTestOptions {
    * });
    * ```
    *
-   * Toggles bypassing page's Content-Security-Policy. Defaults to `false`.
    */
   bypassCSP: boolean;
   /**
+   * Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See
+   * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
+   * Passing `null` resets emulation to system defaults. Defaults to `'light'`.
+   *
    * **Usage**
    *
    * ```js
@@ -3743,12 +3755,12 @@ export interface PlaywrightTestOptions {
    * });
    * ```
    *
-   * Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See
-   * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
-   * Passing `null` resets emulation to system defaults. Defaults to `'light'`.
    */
   colorScheme: ColorScheme;
   /**
+   * Specify device scale factor (can be thought of as dpr). Defaults to `1`. Learn more about
+   * [emulating devices with device scale factor](https://playwright.dev/docs/emulation#devices).
+   *
    * **Usage**
    *
    * ```js
@@ -3763,11 +3775,11 @@ export interface PlaywrightTestOptions {
    * });
    * ```
    *
-   * Specify device scale factor (can be thought of as dpr). Defaults to `1`. Learn more about
-   * [emulating devices with device scale factor](https://playwright.dev/docs/emulation#devices).
    */
   deviceScaleFactor: number | undefined;
   /**
+   * An object containing additional HTTP headers to be sent with every request. Defaults to none.
+   *
    * **Usage**
    *
    * ```js
@@ -3783,7 +3795,6 @@ export interface PlaywrightTestOptions {
    * });
    * ```
    *
-   * An object containing additional HTTP headers to be sent with every request. Defaults to none.
    */
   extraHTTPHeaders: ExtraHTTPHeaders | undefined;
   /**
@@ -3804,6 +3815,9 @@ export interface PlaywrightTestOptions {
    */
   geolocation: Geolocation | undefined;
   /**
+   * Specifies if viewport supports touch events. Defaults to false. Learn more about
+   * [mobile emulation](https://playwright.dev/docs/emulation#devices).
+   *
    * **Usage**
    *
    * ```js
@@ -3817,11 +3831,12 @@ export interface PlaywrightTestOptions {
    * });
    * ```
    *
-   * Specifies if viewport supports touch events. Defaults to false. Learn more about
-   * [mobile emulation](https://playwright.dev/docs/emulation#devices).
    */
   hasTouch: boolean;
   /**
+   * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication). If no
+   * origin is specified, the username and password are sent to any servers upon unauthorized responses.
+   *
    * **Usage**
    *
    * ```js
@@ -3838,11 +3853,11 @@ export interface PlaywrightTestOptions {
    * });
    * ```
    *
-   * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication). If no
-   * origin is specified, the username and password are sent to any servers upon unauthorized responses.
    */
   httpCredentials: HTTPCredentials | undefined;
   /**
+   * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
+   *
    * **Usage**
    *
    * ```js
@@ -3856,10 +3871,13 @@ export interface PlaywrightTestOptions {
    * });
    * ```
    *
-   * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
    */
   ignoreHTTPSErrors: boolean;
   /**
+   * Whether the `meta viewport` tag is taken into account and touch events are enabled. isMobile is a part of device,
+   * so you don't actually need to set it manually. Defaults to `false` and is not supported in Firefox. Learn more
+   * about [mobile emulation](https://playwright.dev/docs/emulation#ismobile).
+   *
    * **Usage**
    *
    * ```js
@@ -3873,12 +3891,12 @@ export interface PlaywrightTestOptions {
    * });
    * ```
    *
-   * Whether the `meta viewport` tag is taken into account and touch events are enabled. isMobile is a part of device,
-   * so you don't actually need to set it manually. Defaults to `false` and is not supported in Firefox. Learn more
-   * about [mobile emulation](https://playwright.dev/docs/emulation#ismobile).
    */
   isMobile: boolean;
   /**
+   * Whether or not to enable JavaScript in the context. Defaults to `true`. Learn more about
+   * [disabling JavaScript](https://playwright.dev/docs/emulation#javascript-enabled).
+   *
    * **Usage**
    *
    * ```js
@@ -3892,11 +3910,13 @@ export interface PlaywrightTestOptions {
    * });
    * ```
    *
-   * Whether or not to enable JavaScript in the context. Defaults to `true`. Learn more about
-   * [disabling JavaScript](https://playwright.dev/docs/emulation#javascript-enabled).
    */
   javaScriptEnabled: boolean;
   /**
+   * Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value,
+   * `Accept-Language` request header value as well as number and date formatting rules. Defaults to the system default
+   * locale. Learn more about emulation in our [emulation guide](https://playwright.dev/docs/emulation#locale--timezone).
+   *
    * **Usage**
    *
    * ```js
@@ -3910,12 +3930,12 @@ export interface PlaywrightTestOptions {
    * });
    * ```
    *
-   * Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value,
-   * `Accept-Language` request header value as well as number and date formatting rules. Defaults to the system default
-   * locale. Learn more about emulation in our [emulation guide](https://playwright.dev/docs/emulation#locale--timezone).
    */
   locale: string | undefined;
   /**
+   * Whether to emulate network being offline. Defaults to `false`. Learn more about
+   * [network emulation](https://playwright.dev/docs/emulation#offline).
+   *
    * **Usage**
    *
    * ```js
@@ -3929,11 +3949,13 @@ export interface PlaywrightTestOptions {
    * });
    * ```
    *
-   * Whether to emulate network being offline. Defaults to `false`. Learn more about
-   * [network emulation](https://playwright.dev/docs/emulation#offline).
    */
   offline: boolean;
   /**
+   * A list of permissions to grant to all pages in this context. See
+   * [browserContext.grantPermissions(permissions[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-grant-permissions)
+   * for more details. Defaults to none.
+   *
    * **Usage**
    *
    * ```js
@@ -3947,12 +3969,11 @@ export interface PlaywrightTestOptions {
    * });
    * ```
    *
-   * A list of permissions to grant to all pages in this context. See
-   * [browserContext.grantPermissions(permissions[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-grant-permissions)
-   * for more details. Defaults to none.
    */
   permissions: string[] | undefined;
   /**
+   * Network proxy settings.
+   *
    * **Usage**
    *
    * ```js
@@ -3969,10 +3990,15 @@ export interface PlaywrightTestOptions {
    * });
    * ```
    *
-   * Network proxy settings.
    */
   proxy: Proxy | undefined;
   /**
+   * Learn more about [storage state and auth](https://playwright.dev/docs/auth).
+   *
+   * Populates context with given storage state. This option can be used to initialize context with logged-in
+   * information obtained via
+   * [browserContext.storageState([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-storage-state).
+   *
    * **Usage**
    *
    * ```js
@@ -3986,14 +4012,29 @@ export interface PlaywrightTestOptions {
    * });
    * ```
    *
-   * Learn more about [storage state and auth](https://playwright.dev/docs/auth).
+   * **Details**
    *
-   * Populates context with given storage state. This option can be used to initialize context with logged-in
-   * information obtained via
-   * [browserContext.storageState([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-storage-state).
+   * When storage state is set up in the config, it is possible to reset storage state for a file:
+   *
+   * ```js
+   * // not-signed-in.spec.ts
+   * import { test } from '@playwright/test';
+   *
+   * // Reset storage state for this file to avoid being authenticated
+   * test.use({ storageState: { cookies: [], origins: [] } });
+   *
+   * test('not signed in test', async ({ page }) => {
+   *   // ...
+   * });
+   * ```
+   *
    */
   storageState: StorageState | undefined;
   /**
+   * Changes the timezone of the context. See
+   * [ICU's metaZones.txt](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1)
+   * for a list of supported timezone IDs. Defaults to the system timezone.
+   *
    * **Usage**
    *
    * ```js
@@ -4007,12 +4048,11 @@ export interface PlaywrightTestOptions {
    * });
    * ```
    *
-   * Changes the timezone of the context. See
-   * [ICU's metaZones.txt](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1)
-   * for a list of supported timezone IDs. Defaults to the system timezone.
    */
   timezoneId: string | undefined;
   /**
+   * Specific user agent to use in this context.
+   *
    * **Usage**
    *
    * ```js
@@ -4026,10 +4066,15 @@ export interface PlaywrightTestOptions {
    * });
    * ```
    *
-   * Specific user agent to use in this context.
    */
   userAgent: string | undefined;
   /**
+   * Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Use `null` to disable the consistent
+   * viewport emulation. Learn more about [viewport emulation](https://playwright.dev/docs/emulation#viewport).
+   *
+   * **NOTE** The `null` value opts out from the default presets, makes viewport depend on the host window size defined
+   * by the operating system. It makes the execution of the tests non-deterministic.
+   *
    * **Usage**
    *
    * ```js
@@ -4043,27 +4088,9 @@ export interface PlaywrightTestOptions {
    * });
    * ```
    *
-   * Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Use `null` to disable the consistent
-   * viewport emulation. Learn more about [viewport emulation](https://playwright.dev/docs/emulation#viewport).
-   *
-   * **NOTE** The `null` value opts out from the default presets, makes viewport depend on the host window size defined
-   * by the operating system. It makes the execution of the tests non-deterministic.
    */
   viewport: ViewportSize | null;
   /**
-   * **Usage**
-   *
-   * ```js
-   * import { defineConfig, devices } from '@playwright/test';
-   *
-   * export default defineConfig({
-   *   use: {
-   *     /* Base URL to use in actions like `await page.goto('/')`. *\/
-   *     baseURL: 'http://localhost:3000',
-   *   },
-   * });
-   * ```
-   *
    * When using [page.goto(url[, options])](https://playwright.dev/docs/api/class-page#page-goto),
    * [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route),
    * [page.waitForURL(url[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-url),
@@ -4078,6 +4105,20 @@ export interface PlaywrightTestOptions {
    *   `http://localhost:3000/foo/bar.html`
    * - baseURL: `http://localhost:3000/foo` (without trailing slash) and navigating to `./bar.html` results in
    *   `http://localhost:3000/bar.html`
+   *
+   * **Usage**
+   *
+   * ```js
+   * import { defineConfig, devices } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   use: {
+   *     /* Base URL to use in actions like `await page.goto('/')`. *\/
+   *     baseURL: 'http://localhost:3000',
+   *   },
+   * });
+   * ```
+   *
    */
   baseURL: string | undefined;
   /**
@@ -4148,6 +4189,11 @@ export interface PlaywrightTestOptions {
    */
   navigationTimeout: number;
   /**
+   * Whether to allow sites to register Service workers. Defaults to `'allow'`.
+   * - `'allow'`: [Service Workers](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API) can be
+   *   registered.
+   * - `'block'`: Playwright will block all registration of Service Workers.
+   *
    * **Usage**
    *
    * ```js
@@ -4161,10 +4207,6 @@ export interface PlaywrightTestOptions {
    * });
    * ```
    *
-   * Whether to allow sites to register Service workers. Defaults to `'allow'`.
-   * - `'allow'`: [Service Workers](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API) can be
-   *   registered.
-   * - `'block'`: Playwright will block all registration of Service Workers.
    */
   serviceWorkers: ServiceWorkerPolicy;
   /**
@@ -5018,6 +5060,9 @@ export const expect: Expect;
 export function defineConfig(config: PlaywrightTestConfig): PlaywrightTestConfig;
 export function defineConfig<T>(config: PlaywrightTestConfig<T>): PlaywrightTestConfig<T>;
 export function defineConfig<T, W>(config: PlaywrightTestConfig<T, W>): PlaywrightTestConfig<T, W>;
+export function defineConfig(config: PlaywrightTestConfig, ...configs: PlaywrightTestConfig[]): PlaywrightTestConfig;
+export function defineConfig<T>(config: PlaywrightTestConfig<T>, ...configs: PlaywrightTestConfig[]): PlaywrightTestConfig<T>;
+export function defineConfig<T, W>(config: PlaywrightTestConfig<T, W>, ...configs: PlaywrightTestConfig[]): PlaywrightTestConfig<T, W>;
 
 // This is required to not export everything by default. See https://github.com/Microsoft/TypeScript/issues/19545#issuecomment-340490459
 export {};
@@ -6406,7 +6451,7 @@ interface TestProject {
    * Filter to only run tests with a title matching one of the patterns. For example, passing `grep: /cart/` should only
    * run tests with "cart" in the title. Also available globally and in the [command line](https://playwright.dev/docs/test-cli) with the `-g`
    * option. The regular expression will be tested against the string that consists of the test file name,
-   * `test.describe` name (if any) and the test name divided by spaces, e.g. `my-test.spec.ts my suite my test`.
+   * `test.describe` name (if any) and the test name divided by spaces, e.g. `my-test.spec.ts my-suite my-test`.
    *
    * `grep` option is also useful for [tagging tests](https://playwright.dev/docs/test-annotations#tag-tests).
    */
@@ -6735,15 +6780,15 @@ interface TestConfigWebServer {
   command: string;
 
   /**
-   * The port that your http server is expected to appear on. It does wait until it accepts connections. Exactly one of
-   * `port` or `url` is required.
+   * The port that your http server is expected to appear on. It does wait until it accepts connections. Either `port`
+   * or `url` should be specified.
    */
   port?: number;
 
   /**
    * The url on your http server that is expected to return a 2xx, 3xx, 400, 401, 402, or 403 status code when the
    * server is ready to accept connections. Redirects (3xx status codes) are being followed and the new location is
-   * checked. Exactly one of `port` or `url` is required.
+   * checked. Either `port` or `url` should be specified.
    */
   url?: string;
 

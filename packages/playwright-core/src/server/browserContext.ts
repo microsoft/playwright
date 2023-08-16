@@ -495,7 +495,12 @@ export abstract class BrowserContext extends SdkObject {
     let page = this.pages()[0];
 
     const internalMetadata = serverSideCallMetadata();
-    page = page || await this.newPage(internalMetadata);
+    page = page || await this.newPage({
+      ...internalMetadata,
+      // Do not mark this page as internal, because we will leave it for later reuse
+      // as a user-visible page.
+      isServerSide: false,
+    });
     await page._setServerRequestInterceptor(handler => {
       handler.fulfill({ body: '<html></html>', requestUrl: handler.request().url() }).catch(() => {});
       return true;

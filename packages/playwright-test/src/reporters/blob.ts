@@ -16,7 +16,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { ManualPromise, calculateSha1, createGuid, removeFolders } from 'playwright-core/lib/utils';
+import { ManualPromise, calculateSha1, createGuid, getUserAgent, removeFolders, sanitizeForFilePath } from 'playwright-core/lib/utils';
 import { mime } from 'playwright-core/lib/utilsBundle';
 import { Readable } from 'stream';
 import type { EventEmitter } from 'events';
@@ -31,11 +31,12 @@ type BlobReporterOptions = {
   outputDir?: string;
 };
 
-const currentVersion = 1;
+export const currentBlobReportVersion = 1;
 
 export type BlobReportMetadata = {
   version: number;
-  projectSuffix?: string;
+  userAgent: string;
+  name?: string;
   shard?: { total: number, current: number };
 };
 
@@ -44,6 +45,7 @@ export class BlobReporter extends TeleReporterEmitter {
   private readonly _attachments: { originalPath: string, zipEntryPath: string }[] = [];
   private readonly _options: BlobReporterOptions;
   private readonly _salt: string;
+  private _reportName!: string;
 
   constructor(options: BlobReporterOptions) {
     super(message => this._messages.push(message), false);
@@ -53,8 +55,9 @@ export class BlobReporter extends TeleReporterEmitter {
 
   override onConfigure(config: FullConfig) {
     const metadata: BlobReportMetadata = {
-      version: currentVersion,
-      projectSuffix: process.env.PWTEST_BLOB_SUFFIX,
+      version: currentBlobReportVersion,
+      userAgent: getUserAgent(),
+      name: process.env.PWTEST_BLOB_REPORT_NAME,
       shard: config.shard ?? undefined,
     };
     this._messages.push({
@@ -62,6 +65,7 @@ export class BlobReporter extends TeleReporterEmitter {
       params: metadata
     });
 
+    this._reportName = this._computeReportName(config);
     super.onConfigure(config);
   }
 
@@ -73,16 +77,14 @@ export class BlobReporter extends TeleReporterEmitter {
       await removeFolders([outputDir]);
     await fs.promises.mkdir(outputDir, { recursive: true });
 
-    const reportName = `report-${createGuid()}`;
-
     const zipFile = new yazl.ZipFile();
     const zipFinishPromise = new ManualPromise<undefined>();
     const finishPromise = zipFinishPromise.catch(e => {
-      throw new Error(`Failed to write report ${reportName + '.zip'}: ` + e.message);
+      throw new Error(`Failed to write report ${this._reportName + '.zip'}: ` + e.message);
     });
 
     (zipFile as any as EventEmitter).on('error', error => zipFinishPromise.reject(error));
-    const zipFileName = path.join(outputDir, reportName + '.zip');
+    const zipFileName = path.join(outputDir, this._reportName + '.zip');
     zipFile.outputStream.pipe(fs.createWriteStream(zipFileName)).on('close', () => {
       zipFinishPromise.resolve(undefined);
     }).on('error', error => zipFinishPromise.reject(error));
@@ -95,10 +97,21 @@ export class BlobReporter extends TeleReporterEmitter {
 
     const lines = this._messages.map(m => JSON.stringify(m) + '\n');
     const content = Readable.from(lines);
-    zipFile.addReadStream(content, reportName + '.jsonl');
+    zipFile.addReadStream(content, this._reportName + '.jsonl');
     zipFile.end();
 
     await finishPromise;
+  }
+
+  private _computeReportName(config: FullConfig) {
+    let reportName = 'report';
+    if (process.env.PWTEST_BLOB_REPORT_NAME)
+      reportName += `-${sanitizeForFilePath(process.env.PWTEST_BLOB_REPORT_NAME)}`;
+    if (config.shard) {
+      const paddedNumber = `${config.shard.current}`.padStart(`${config.shard.total}`.length, '0');
+      reportName += `-${paddedNumber}`;
+    }
+    return reportName;
   }
 
   override _serializeAttachments(attachments: TestResult['attachments']): JsonAttachment[] {

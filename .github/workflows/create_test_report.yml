@@ -26,18 +26,23 @@ jobs:
     - name: Download blob report artifact
       uses: ./.github/actions/download-artifact
       with:
-        name: 'blob-report-${{ github.event.workflow_run.run_attempt }}'
-        path: 'blob-report'
+        name: all-blob-reports
+        path: all-blob-reports
 
     - name: Merge reports
       run: |
-        npx playwright merge-reports --reporter markdown,html ./blob-report
+        npx playwright merge-reports --reporter markdown,html ./all-blob-reports
 
     - name: Upload HTML report to Azure
       run: |
         REPORT_DIR='run-${{ github.event.workflow_run.id }}-${{ github.event.workflow_run.run_attempt }}-${{ github.sha }}'
-        az storage blob upload-batch -s playwright-report -d "\$web/$REPORT_DIR" --connection-string "${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}"
+        azcopy cp --recursive "./playwright-report/*" "https://mspwblobreport.blob.core.windows.net/\$web/$REPORT_DIR"
         echo "Report url: https://mspwblobreport.z1.web.core.windows.net/$REPORT_DIR/index.html"
+      env:
+        AZCOPY_AUTO_LOGIN_TYPE: SPN
+        AZCOPY_SPA_APPLICATION_ID: '${{ secrets.AZCOPY_SPA_APPLICATION_ID }}'
+        AZCOPY_SPA_CLIENT_SECRET: '${{ secrets.AZCOPY_SPA_CLIENT_SECRET }}'
+        AZCOPY_TENANT_ID: '${{ secrets.AZCOPY_TENANT_ID }}'
 
     - name: Read pull request number
       uses: ./.github/actions/download-artifact

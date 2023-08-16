@@ -33,10 +33,12 @@ export default defineConfig({
 
 Blob report contains information about all the tests that were run and their results as well as all test attachments such as traces and screenshot diffs. Blob reports can be merged and converted to any other Playwright report. By default, blob report will be generated into `blob-report` directory.
 
-To merge reports from multiple shards, put the blob report files into a single directory, for example `all-blob-reports`, and run `merge-reports` tool:
+To merge reports from multiple shards, put the blob report files into a single directory, for example `all-blob-reports`. Blob report names contain shard number, so they will not clash.
+
+Afterwards, run `npx playwright merge-reports` command:
 
 ```bash
-npx playwright merge-reports ./all-blob-reports --reporter html
+npx playwright merge-reports --reporter html ./all-blob-reports
 ```
 
 This will produce a standard HTML report into `playwright-report` directory.
@@ -45,37 +47,47 @@ This will produce a standard HTML report into `playwright-report` directory.
 
 One of the easiest ways to shard Playwright tests across multiple machines is by using GitHub Actions matrix strategy. For example, you can configure a job to run your tests on four machines in parallel like this:
 
-```yaml
+```yaml title=".github/workflows/playwright.yml"
+name: Playwright Tests
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
 jobs:
   playwright-tests:
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4]
+        shard: [1/4, 2/4, 3/4, 4/4]
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
+      with:
+        node-version: 18
     - name: Install dependencies
       run: npm ci
     - name: Install Playwright browsers
-      run: npx playwright install
+      run: npx playwright install --with-deps
 
     - name: Run Playwright tests
-      run: npx playwright test --shard ${{ matrix.shard }}/4
+      run: npx playwright test --shard ${{ matrix.shard }}
 
     - name: Upload blob report to GitHub Actions Artifacts
       if: always()
       uses: actions/upload-artifact@v3
       with:
-        name: blob-report-${{ github.run_attempt }}
+        name: all-blob-reports
         path: blob-report
         retention-days: 1
 ```
 
 After all shards have completed, run a separate job that will merge the reports and produce a combined HTML report.
 
-```yaml
+```yaml title=".github/workflows/playwright.yml"
 jobs:
 ...
   merge-reports:
@@ -87,26 +99,31 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
+      with:
+        node-version: 18
     - name: Install dependencies
       run: npm ci
 
     - name: Download blob reports from GitHub Actions Artifacts
       uses: actions/download-artifact@v3
       with:
-        name: blob-report-${{ github.run_attempt }}
+        name: all-blob-reports
         path: all-blob-reports
 
     - name: Merge into HTML Report
-      run: npx playwright merge-reports ./all-blob-reports --reporter html
+      run: npx playwright merge-reports --reporter html ./all-blob-reports 
 
     - name: Upload HTML report
       uses: actions/upload-artifact@v3
       with:
-        name: html-report-${{ github.run_attempt }}
+        name: html-report--attempt-${{ github.run_attempt }}
         path: playwright-report
+        retention-days: 14
 ```
 
 To ensure the execution order, we make `merge-reports` job [depend](https://docs.github.com/en/actions/using-jobs/using-jobs-in-a-workflow#defining-prerequisite-jobs) on our sharded `playwright-tests` job.
+
+<img width="875" alt="image" src="https://github.com/microsoft/playwright/assets/9798949/b69dac59-fc19-4b98-8f49-814b1c29ca02" />
 
 ## Publishing report on the web
 
@@ -116,7 +133,18 @@ We can utilize Azure Storage's static websites hosting capabilities to easily an
 
 1. Create an [Azure Storage account](https://learn.microsoft.com/en-us/azure/storage/common/storage-account-create).
 1. Enable [Static website hosting](https://learn.microsoft.com/en-us/azure/storage/blobs/storage-blob-static-website-how-to#enable-static-website-hosting) for the storage account.
-1. Add the Azure connection string as a [GitHub Actions secret](https://docs.github.com/en/actions/security-guides/encrypted-secrets#creating-encrypted-secrets-for-a-repository) called `AZURE_CONNECTION_STRING`.
+1. Create a Service Principal in Azure and grant it access to Azure Blob storage. Upon successful execution, the command will display the credentials which will be used in the next step.
+
+    ```bash
+    az ad sp create-for-rbac --name "github-actions" --role "Storage Blob Data Contributor" --scopes /subscriptions/<SUBSCRIPTION_ID>/resourceGroups/<RESOURCE_GROUP_NAME>/providers/Microsoft.Storage/storageAccounts/<STORAGE_ACCOUNT_NAME>
+    ```
+1. Use the credentials from the previous step to set up encrypted secrets in your GitHub repository. Go to your repository's settings, under [GitHub Actions secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets#creating-encrypted-secrets-for-a-repository), and add the following secrets:
+
+    - `AZCOPY_SPA_APPLICATION_ID`
+    - `AZCOPY_SPA_CLIENT_SECRET`
+    - `AZCOPY_TENANT_ID`
+
+   For a detailed guide on how to authorize a service principal using a client secret, refer to [this Microsoft documentation](https://learn.microsoft.com/en-us/azure/storage/common/storage-use-azcopy-authorize-azure-active-directory#authorize-a-service-principal-by-using-a-client-secret-1).
 1. Add a step that uploads HTML report to Azure Storage.
 
     ```yaml
@@ -125,7 +153,13 @@ We can utilize Azure Storage's static websites hosting capabilities to easily an
           shell: bash
           run: |
             REPORT_DIR='run-${{ github.run_id }}-${{ github.run_attempt }}'
-            az storage blob upload-batch -s playwright-report -d "\$web/$REPORT_DIR" --connection-string "${{ secrets.AZURE_CONNECTION_STRING }}"
+            azcopy cp --recursive "./playwright-report/*" "https://<STORAGE_ACCOUNT_NAME>.blob.core.windows.net/\$web/$REPORT_DIR"
+            echo "::notice title=HTML report url::https://<STORAGE_ACCOUNT_NAME>.z1.web.core.windows.net/$REPORT_DIR/index.html"
+          env:
+            AZCOPY_AUTO_LOGIN_TYPE: SPN
+            AZCOPY_SPA_APPLICATION_ID: '${{ secrets.AZCOPY_SPA_APPLICATION_ID }}'
+            AZCOPY_SPA_CLIENT_SECRET: '${{ secrets.AZCOPY_SPA_CLIENT_SECRET }}'
+            AZCOPY_TENANT_ID: '${{ secrets.AZCOPY_TENANT_ID }}'
     ```
 
 The contents of `$web` storage container can be accessed from a browser by using the [public URL](https://learn.microsoft.com/en-us/azure/storage/blobs/storage-blob-static-website-how-to?tabs=azure-portal#portal-find-url) of the website.
@@ -143,13 +177,15 @@ Supported options:
 
   Which report to produce. Can be multiple reporters separated by comma.
 
-  Example: `npx playwright merge-reports ./blob-reports --reporter=html,github`
+  Example: `npx playwright merge-reports --reporter=html,github ./blob-reports`
 
 - `--config path/to/config/file`
 
-  Takes reporters from Playwright configuration file.
+  Specifies the Playwright configuration file with output reporters. Use this option to pass
+  additional configuration to the output reporter. This configuration file can differ from
+  the one used during the creation of blob reports.
 
-  Example: `npx playwright merge-reports ./blob-reports --config=merge.config.ts`
+  Example: `npx playwright merge-reports --config=merge.config.ts ./blob-reports`
 
   ```ts title="merge.config.ts"
   export default {

@@ -361,6 +361,10 @@ await page.GetByRole(AriaRole.Button).DispatchEventAsync("click");
 
 ## Type characters
 
+:::tip
+Most of the time, you should input text with [`method: Locator.fill`]. See the [Text input](#text-input) section above. You only need to type characters if there is special keyboard handling on the page.
+:::
+
 Type into the field character by character, as if it was a user with a real keyboard with [`method: Locator.type`].
 
 ```js
@@ -389,10 +393,6 @@ await page.Locator("#area").TypeAsync("Hello World!");
 ```
 
 This method will emit all the necessary keyboard events, with all the `keydown`, `keyup`, `keypress` events in place. You can even specify the optional `delay` between the key presses to simulate real user behavior.
-
-:::note
-Most of the time, [`method: Page.fill`] will just work. You only need to type characters if there is special keyboard handling on the page.
-:::
 
 ## Keys and shortcuts
 

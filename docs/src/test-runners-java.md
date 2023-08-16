@@ -186,3 +186,95 @@ junit.jupiter.execution.parallel.mode.classes.default = concurrent
 junit.jupiter.execution.parallel.config.strategy=dynamic
 junit.jupiter.execution.parallel.config.dynamic.factor=0.5
 ```
+
+### Using Gradle
+
+You can use a Gradle build configuration script, written in Groovy or Kotlin.
+
+<Tabs
+  defaultValue="gradle"
+  values={[
+    {label: 'build.gradle', value: 'gradle'},
+    {label: 'build.gradle.kts', value: 'gradle-kotlin'}
+  ]
+}>
+<TabItem value="gradle">
+
+```java
+plugins {
+  application
+  id 'java'
+}
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  implementation 'com.microsoft.playwright:playwright:%%VERSION%%'
+}
+
+application {
+  mainClass = 'org.example.App'
+}
+
+// Usage: ./gradlew playwright --args="help"
+task playwright(type: JavaExec) {
+  classpath sourceSets.test.runtimeClasspath
+  mainClass = 'com.microsoft.playwright.CLI'
+}
+
+test {
+  useJUnitPlatform()
+}
+```
+
+</TabItem>
+<TabItem value="gradle-kotlin">
+
+```java
+plugins {
+  application
+  id("java")
+}
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  implementation("com.microsoft.playwright:playwright:%%VERSION%%")
+}
+
+application {
+  mainClass.set("org.example.App")
+}
+
+// Usage: ./gradlew playwright --args="help"
+tasks.register<JavaExec>("playwright") {
+  classpath(sourceSets["test"].runtimeClasspath)
+  mainClass.set("com.microsoft.playwright.CLI")
+}
+
+tasks.test {
+  useJUnitPlatform()
+  testLogging {
+    events("passed", "skipped", "failed")
+  }
+}
+```
+
+</TabItem>
+</Tabs>
+
+Tests can then be launched as follows:
+
+```bash
+./gradlew run
+```
+
+Also, Playwright command line tools can be run with :
+
+```bash
+./gradlew playwright --args="help"
+```

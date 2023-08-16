@@ -15,23 +15,28 @@
  */
 
 import * as React from 'react';
-import type { ActionTraceEvent } from '@trace/trace';
-import * as modelUtil from './modelUtil';
+import type * as modelUtil from './modelUtil';
 import { NetworkResourceDetails } from './networkResourceDetails';
 import './networkTab.css';
+import type { Boundaries } from '../geometry';
 
 export const NetworkTab: React.FunctionComponent<{
   model: modelUtil.MultiTraceModel | undefined,
-  action: ActionTraceEvent | undefined,
-}> = ({ model, action }) => {
-  const actionResources = action ? modelUtil.resourcesForAction(action) : [];
-  const resources = model?.resources || [];
-  return <div className='network-tab'>{
+  selectedTime: Boundaries | undefined,
+}> = ({ model, selectedTime }) => {
+  const resources = React.useMemo(() => {
+    const resources = model?.resources || [];
+    if (!selectedTime)
+      return resources;
+    return resources.filter(resource => {
+      return !!resource._monotonicTime && (resource._monotonicTime >= selectedTime.minimum && resource._monotonicTime <= selectedTime.maximum);
+    });
+  }, [model, selectedTime]);
+  return <div className='network-tab'> {
     resources.map((resource, index) => {
       return <NetworkResourceDetails
         resource={resource}
         key={index}
-        highlighted={actionResources.includes(resource)}
       />;
     })
   }</div>;

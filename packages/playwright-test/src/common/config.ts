@@ -142,6 +142,7 @@ export class FullConfigInternal {
         if (usedNames.has(candidate))
           continue;
         p.id = candidate;
+        (p.project as any).__projectId = p.id;
         usedNames.add(candidate);
         break;
       }
@@ -159,10 +160,6 @@ export class FullProjectInternal {
   id = '';
   deps: FullProjectInternal[] = [];
   teardown: FullProjectInternal | undefined;
-
-  static from(config: FullProject): FullProjectInternal {
-    return (config as any)[projectInternalSymbol];
-  }
 
   constructor(configDir: string, config: Config, fullConfig: FullConfigInternal, projectConfig: Project, configCLIOverrides: ConfigCLIOverrides, throwawayArtifactsPath: string) {
     this.fullConfig = fullConfig;
@@ -189,7 +186,6 @@ export class FullProjectInternal {
       dependencies: projectConfig.dependencies || [],
       teardown: projectConfig.teardown,
     };
-    (this.project as any)[projectInternalSymbol] = this;
     this.fullyParallel = takeFirst(configCLIOverrides.fullyParallel, projectConfig.fullyParallel, config.fullyParallel, undefined);
     this.expect = takeFirst(projectConfig.expect, config.expect, {});
     this.respectGitIgnore = !projectConfig.testDir && !config.testDir;
@@ -278,4 +274,7 @@ export const defaultGrep = /.*/;
 export const defaultReporter = process.env.CI ? 'dot' : 'list';
 
 const configInternalSymbol = Symbol('configInternalSymbol');
-const projectInternalSymbol = Symbol('projectInternalSymbol');
+
+export function getProjectId(project: FullProject): string {
+  return (project as any).__projectId!;
+}

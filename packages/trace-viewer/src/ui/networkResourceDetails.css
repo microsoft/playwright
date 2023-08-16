@@ -30,10 +30,6 @@
   flex: 1;
 }
 
-.network-request.highlighted {
-  background-color: var(--vscode-list-inactiveSelectionBackground);
-}
-
 .network-request-title-status {
   padding: 0 2px;
   border-radius: 4px;

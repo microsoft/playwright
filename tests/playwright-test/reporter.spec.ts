@@ -48,6 +48,7 @@ class Reporter {
   distillStep(step) {
     return {
       ...step,
+      _startTime: undefined,
       startTime: undefined,
       duration: undefined,
       parent: undefined,

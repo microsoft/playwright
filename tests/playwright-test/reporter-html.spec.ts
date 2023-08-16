@@ -212,7 +212,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       await page.click('text=fails');
       await expect(page.locator('text=Image mismatch')).toHaveCount(2);
       await expect(page.locator('text=Snapshot mismatch')).toHaveCount(0);
-      await expect(page.locator('text=Screenshots')).toHaveCount(0);
+      await expect(page.locator('text="Screenshots"')).toHaveCount(0);
       for (let i = 0; i < 2; ++i) {
         const imageDiff = page.locator('data-testid=test-result-image-mismatch').nth(i);
         const image = imageDiff.locator('img').first();
@@ -361,7 +361,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
               video: 'on',
               trace: 'on',
             },
-            reporter: [['html', { attachmentsBaseURL: 'https://some-url.com/' }]]
+            reporter: [['html', { attachmentsBaseURL: 'https://some-url.com/' }], ['line']]
           };
         `,
         'a.test.js': `
@@ -478,7 +478,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       await showReport();
       await page.click('text=passes');
       await page.click('img');
-      await expect(page.locator('.workbench .title')).toHaveText('a.test.js:3 › passes');
+      await expect(page.locator('.workbench-loader .title')).toHaveText('a.test.js:3 › passes');
     });
 
     test('should show multi trace source', async ({ runInlineTest, page, server, showReport }) => {
@@ -701,7 +701,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       await expect(page.locator('.attachment-body')).toHaveText(['foo', '{"foo":1}', 'utf16 encoded']);
     });
 
-    test('should use file-browser friendly extensions for buffer attachments based on contentType', async ({ runInlineTest }, testInfo) => {
+    test('should use file-browser friendly extensions for buffer attachments based on contentType', async ({ runInlineTest, showReport, page }, testInfo) => {
       const result = await runInlineTest({
         'a.test.js': `
           import { test, expect } from '@playwright/test';
@@ -717,6 +717,28 @@ for (const useIntermediateMergeReport of [false, true] as const) {
         `,
       }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
       expect(result.exitCode).toBe(0);
+      await showReport();
+      await page.getByRole('link', { name: 'passing' }).click();
+
+      const expectedAttachments = [
+        ['screenshot', 'screenshot.png', 'f6aa9785bc9c7b8fd40c3f6ede6f59112a939527.png'],
+        ['some-pdf', 'some-pdf.pdf', '0beec7b5ea3f0fdbc95d0dd47f3c5bc275da8a33.pdf'],
+        ['madeup-contentType', 'madeup-contentType.dat', '62cdb7020ff920e5aa642c3d4066950dd1f01f4d.dat'],
+        ['screenshot-that-already-has-an-extension-with-madeup.png', 'screenshot-that-already-has-an-extension-with-madeup.png', '86f7e437faa5a7fce15d1ddcb9eaeaea377667b8.png'],
+        ['screenshot-that-already-has-an-extension-with-correct-contentType.png', 'screenshot-that-already-has-an-extension-with-correct-contentType.png', '84a516841ba77a5b4648de2cd0dfcb30ea46dbb4.png'],
+        ['example.ext with spaces', 'example.ext with spaces', 'e9d71f5ee7c92d6dc9e92ffdad17b8bd49418f98.ext-with-spaces'],
+      ];
+
+      for (const [visibleAttachmentName, downloadFileName, sha1] of expectedAttachments) {
+        await test.step(`should download ${visibleAttachmentName}`, async () => {
+          const downloadPromise = page.waitForEvent('download');
+          await page.getByRole('link', { name: visibleAttachmentName, exact: true }).click();
+          const download = await downloadPromise;
+          expect(download.suggestedFilename()).toBe(downloadFileName);
+          expect(await readAllFromStream(await download.createReadStream())).toEqual(await fs.promises.readFile(path.join(testInfo.outputPath('playwright-report'), 'data', sha1)));
+        });
+      }
+
       const files = await fs.promises.readdir(path.join(testInfo.outputPath('playwright-report'), 'data'));
       expect(new Set(files)).toEqual(new Set([
         'f6aa9785bc9c7b8fd40c3f6ede6f59112a939527.png', // screenshot
@@ -1036,7 +1058,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
             test('pass', ({}, testInfo) => {
             });
           `
-        }, { 'reporter': 'html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' }, {
+        }, { 'reporter': 'html,line' }, { PW_TEST_HTML_REPORT_OPEN: 'never' }, {
           cwd: 'foo/bar/baz/tests',
         });
         expect(result.exitCode).toBe(0);
@@ -1060,7 +1082,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
             test('pass', ({}, testInfo) => {
             });
           `
-        }, { 'reporter': 'html' }, { 'PW_TEST_HTML_REPORT_OPEN': 'never', 'PLAYWRIGHT_HTML_REPORT': '../my-report' }, {
+        }, { 'reporter': 'html,line' }, { 'PW_TEST_HTML_REPORT_OPEN': 'never', 'PLAYWRIGHT_HTML_REPORT': '../my-report' }, {
           cwd: 'foo/bar/baz/tests',
         });
         expect(result.exitCode).toBe(0);
@@ -2041,5 +2063,13 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       await expect(page.getByText('failed title')).not.toBeVisible();
       await expect(page.getByText('passes title')).toBeVisible();
     });
+  });
+}
+
+function readAllFromStream(stream: NodeJS.ReadableStream): Promise<Buffer> {
+  return new Promise(resolve => {
+    const chunks: Buffer[] = [];
+    stream.on('data', chunk => chunks.push(chunk));
+    stream.on('end', () => resolve(Buffer.concat(chunks)));
   });
 }

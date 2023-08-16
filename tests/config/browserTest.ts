@@ -53,7 +53,8 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
     await run(browser.version());
   }, { scope: 'worker' }],
 
-  browserType: [async ({ playwright, browserName }, run) => {
+  browserType: [async ({ playwright, browserName, mode }, run) => {
+    test.skip(mode.startsWith('service'));
     await run(playwright[browserName]);
   }, { scope: 'worker' }],
 
@@ -108,8 +109,7 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
     await removeFolders(dirs);
   },
 
-  launchPersistent: async ({ createUserDataDir, browserType, mode }, run) => {
-    test.skip(mode.startsWith('service'));
+  launchPersistent: async ({ createUserDataDir, browserType }, run) => {
     let persistentContext: BrowserContext | undefined;
     await run(async options => {
       if (persistentContext)
@@ -123,8 +123,7 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
       await persistentContext.close();
   },
 
-  startRemoteServer: async ({ childProcess, browserType, mode }, run) => {
-    test.skip(mode.startsWith('service'));
+  startRemoteServer: async ({ childProcess, browserType }, run) => {
     let server: PlaywrightServer | undefined;
     const fn = async (kind: 'launchServer' | 'run-server', options?: RemoteServerOptions) => {
       if (server)

@@ -189,14 +189,13 @@ on:
     branches: [ main, master ]
 jobs:
   playwright:
-    name: 'Playwright Tests - ${{ matrix.project }} - Shard ${{ matrix.shardIndex }} of ${{ matrix.shardTotal }}'
+    name: 'Playwright Tests - ${{ matrix.project }} - Shard ${{ matrix.shard }}'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         project: [chromium, webkit]
-        shardIndex: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-        shardTotal: [10]
+        shard: [1/10, 2/10, 3/10, 4/10, 5/10, 6/10, 7/10, 8/10, 9/10, 10/10]
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -207,7 +206,7 @@ jobs:
       - name: Install browsers
         run: npx playwright install --with-deps
       - name: Run your tests
-        run: npx playwright test --project=${{ matrix.project }} --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
+        run: npx playwright test --project=${{ matrix.project }} --shard=${{ matrix.shard }}
 ```
 
 > Note: The `${{ <expression> }}` is the [expression](https://docs.github.com/en/actions/learn-github-actions/expressions) syntax that allows accessing the current [context](https://docs.github.com/en/actions/learn-github-actions/contexts). In this example, we are using the [`matrix`](https://docs.github.com/en/actions/learn-github-actions/contexts#matrix-context) context to set the job variants.
@@ -331,7 +330,7 @@ on:
     branches: [ main, master ]
 jobs:
   playwright:
-    name: 'Playwright Tests - ${{ matrix.project }} - Shard ${{ matrix.shardIndex }} of ${{ matrix.shardTotal }}'
+    name: 'Playwright Tests - ${{ matrix.project }} - Shard ${{ matrix.shard }}'
     runs-on: ubuntu-latest
     container:
       image: mcr.microsoft.com/playwright:v%%VERSION%%-jammy
@@ -339,8 +338,7 @@ jobs:
       fail-fast: false
       matrix:
         project: [chromium, webkit]
-        shardIndex: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-        shardTotal: [10]
+        shard: [1/10, 2/10, 3/10, 4/10, 5/10, 6/10, 7/10, 8/10, 9/10, 10/10]
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -349,7 +347,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - name: Run your tests
-        run: npx playwright test --project=${{ matrix.project }} --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
+        run: npx playwright test --project=${{ matrix.project }} --shard=${{ matrix.shard }}
 ```
 
 #### On deployment
@@ -637,40 +635,31 @@ strategy:
   matrix:
     chromium-1:
       project: chromium
-      shardIndex: 1
-      shardTotal: 3
+      shard: 1/3
     chromium-2:
       project: chromium
-      shardIndex: 2
-      shardTotal: 3
+      shard: 2/3
     chromium-3:
       project: chromium
-      shardIndex: 3
-      shardTotal: 3
+      shard: 3/3
     firefox-1:
       project: firefox
-      shardIndex: 1
-      shardTotal: 3
+      shard: 1/3
     firefox-2:
       project: firefox
-      shardIndex: 2
-      shardTotal: 3
+      shard: 2/3
     firefox-3:
       project: firefox
-      shardIndex: 3
-      shardTotal: 3
+      shard: 3/3
     webkit-1:
       project: webkit
-      shardIndex: 1
-      shardTotal: 3
+      shard: 1/3
     webkit-2:
       project: webkit
-      shardIndex: 2
-      shardTotal: 3
+      shard: 2/3
     webkit-3:
       project: webkit
-      shardIndex: 3
-      shardTotal: 3
+      shard: 3/3
 steps:
 - task: NodeTool@0
   inputs:
@@ -681,7 +670,7 @@ steps:
   displayName: 'npm ci'
 - script: npx playwright install --with-deps
   displayName: 'Install Playwright browsers'
-- script: npx playwright test --project=$(project) --shard=$(shardIndex)/$(shardTotal)
+- script: npx playwright test --project=$(project) --shard=$(shard)
   displayName: 'Run Playwright tests'
   env:
     CI: 'true'
@@ -970,7 +959,7 @@ tests:
     - npx playwright test --shard=$CI_NODE_INDEX/$CI_NODE_TOTAL
 ```
 
-GitLab CI also supports sharding tests between multiple jobs using the [parallel:matrix](https://docs.gitlab.com/ee/ci/yaml/index.html#parallelmatrix) option. The test job will run multiple times in parallel in a single pipeline, but with different variable values for each instance of the job. In the example below, we have 2 `PROJECT` values, 10 `SHARD_INDEX` values and 1 `SHARD_TOTAL` value, resulting in a total of 20 jobs to be run.
+GitLab CI also supports sharding tests between multiple jobs using the [parallel:matrix](https://docs.gitlab.com/ee/ci/yaml/index.html#parallelmatrix) option. The test job will run multiple times in parallel in a single pipeline, but with different variable values for each instance of the job. In the example below, we have 2 `PROJECT` values and 10 `SHARD` values, resulting in a total of 20 jobs to be run.
 
 ```yml
 stages:
@@ -982,11 +971,10 @@ tests:
   parallel:
     matrix:
       - PROJECT: ['chromium', 'webkit']
-        SHARD_INDEX: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-        SHARD_TOTAL: 10
+        SHARD: ['1/10', '2/10', '3/10', '4/10', '5/10', '6/10', '7/10', '8/10', '9/10', '10/10']
   script:
     - npm ci
-    - npx playwright test --project=$PROJECT --shard=$SHARD_INDEX/$SHARD_TOTAL
+    - npx playwright test --project=$PROJECT --shard=$SHARD
 ```
 
 ## Caching browsers

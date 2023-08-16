@@ -170,7 +170,7 @@ it('rich text editable fields should have children', async function({ page, brow
       role: 'text',
       name: chromiumVersionLessThan(browserVersion, '108.0.5325.0') ? 'Edit this image:' : 'Edit this image: '
     }, {
-      role: 'img',
+      role: chromiumVersionLessThan(browserVersion, '117.0.5927.0') ? 'img' : 'image',
       name: 'my fake image'
     }]
   };

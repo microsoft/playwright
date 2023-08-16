@@ -24,7 +24,6 @@ const contextSymbol = Symbol('context');
 const nextInContextSymbol = Symbol('next');
 const prevInListSymbol = Symbol('prev');
 const eventsSymbol = Symbol('events');
-const resourcesSymbol = Symbol('resources');
 
 export type SourceLocation = {
   file: string;
@@ -87,6 +86,7 @@ export class MultiTraceModel {
     this.resources = [...contexts.map(c => c.resources)].flat();
 
     this.events.sort((a1, a2) => a1.time - a2.time);
+    this.resources.sort((a1, a2) => a1._monotonicTime! - a2._monotonicTime!);
     this.sources = collectSources(this.actions);
   }
 }
@@ -236,19 +236,6 @@ export function eventsForAction(action: ActionTraceEvent): EventTraceEvent[] {
     return event.time >= action.startTime && (!nextAction || event.time < nextAction.startTime);
   });
   (action as any)[eventsSymbol] = result;
-  return result;
-}
-
-export function resourcesForAction(action: ActionTraceEvent): ResourceSnapshot[] {
-  let result: ResourceSnapshot[] = (action as any)[resourcesSymbol];
-  if (result)
-    return result;
-
-  const nextAction = nextInContext(action);
-  result = context(action).resources.filter(resource => {
-    return typeof resource._monotonicTime === 'number' && resource._monotonicTime > action.startTime && (!nextAction || resource._monotonicTime < nextAction.startTime);
-  });
-  (action as any)[resourcesSymbol] = result;
   return result;
 }
 

@@ -23,7 +23,7 @@ runs:
       if: always() && github.event_name == 'pull_request'
       uses: actions/upload-artifact@v3
       with:
-        name: blob-report-${{ github.run_attempt }}
+        name: all-blob-reports
         path: ${{ inputs.report_dir }}
         retention-days: 30
     - name: Write triggering pull request number in a file
