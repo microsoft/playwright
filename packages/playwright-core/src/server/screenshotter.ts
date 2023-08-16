@@ -187,14 +187,14 @@ export class Screenshotter {
         const fitsViewport = fullPageSize.width <= viewportSize.width && fullPageSize.height <= viewportSize.height;
         if (options.clip)
           documentRect = trimClipToSize(options.clip, documentRect);
-        const buffer = await this._screenshot(progress, format, documentRect, undefined, fitsViewport, options);
+        const buffer = await this._screenshot(progress, format, documentRect, undefined, fitsViewport, options, true);
         progress.throwIfAborted(); // Avoid restoring after failure - should be done by cleanup.
         await this._restorePageAfterScreenshot();
         return buffer;
       }
 
       const viewportRect = options.clip ? trimClipToSize(options.clip, viewportSize) : { x: 0, y: 0, ...viewportSize };
-      const buffer = await this._screenshot(progress, format, undefined, viewportRect, true, options);
+      const buffer = await this._screenshot(progress, format, undefined, viewportRect, true, options, true);
       progress.throwIfAborted(); // Avoid restoring after failure - should be done by cleanup.
       await this._restorePageAfterScreenshot();
       return buffer;
@@ -224,7 +224,7 @@ export class Screenshotter {
       const documentRect = { ...boundingBox };
       documentRect.x += scrollOffset.x;
       documentRect.y += scrollOffset.y;
-      const buffer = await this._screenshot(progress, format, helper.enclosingIntRect(documentRect), undefined, fitsViewport, options);
+      const buffer = await this._screenshot(progress, format, helper.enclosingIntRect(documentRect), undefined, fitsViewport, options, false);
       progress.throwIfAborted(); // Avoid restoring after failure - should be done by cleanup.
       await this._restorePageAfterScreenshot();
       return buffer;
@@ -275,7 +275,7 @@ export class Screenshotter {
     return cleanup;
   }
 
-  private async _screenshot(progress: Progress, format: 'png' | 'jpeg', documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, fitsViewport: boolean, options: ScreenshotOptions): Promise<Buffer> {
+  private async _screenshot(progress: Progress, format: 'png' | 'jpeg', documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, fitsViewport: boolean, options: ScreenshotOptions, pageScreenshot: boolean): Promise<Buffer> {
     if ((options as any).__testHookBeforeScreenshot)
       await (options as any).__testHookBeforeScreenshot();
     progress.throwIfAborted(); // Screenshotting is expensive - avoid extra work.
@@ -290,7 +290,7 @@ export class Screenshotter {
     progress.throwIfAborted(); // Avoid extra work.
 
     const quality = format === 'jpeg' ? options.quality ?? 80 : undefined;
-    const buffer = await this._page._delegate.takeScreenshot(progress, format, documentRect, viewportRect, quality, fitsViewport, options.scale || 'device');
+    const buffer = await this._page._delegate.takeScreenshot(progress, format, documentRect, viewportRect, quality, fitsViewport, options.scale || 'device', pageScreenshot);
     progress.throwIfAborted(); // Avoid restoring after failure - should be done by cleanup.
 
     await cleanupHighlight();

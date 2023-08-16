@@ -23,6 +23,7 @@ import { hostPlatform } from '../../utils/hostPlatform';
 import type * as accessibility from '../accessibility';
 import * as dialog from '../dialog';
 import * as dom from '../dom';
+import os from 'os';
 import type * as frames from '../frames';
 import type { RegisteredListener } from '../../utils/eventsHelper';
 import { eventsHelper } from '../../utils/eventsHelper';
@@ -851,12 +852,25 @@ export class WKPage implements PageDelegate {
       throw new Error('Cannot take screenshot larger than 32767 pixels on any dimension');
   }
 
-  async takeScreenshot(progress: Progress, format: string, documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined, fitsViewport: boolean, scale: 'css' | 'device'): Promise<Buffer> {
+  async takeScreenshot(progress: Progress, format: string, documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined, fitsViewport: boolean, scale: 'css' | 'device', pageScreenshot: boolean): Promise<Buffer> {
     const rect = (documentRect || viewportRect)!;
     const omitDeviceScaleFactor = scale === 'css';
     this.validateScreenshotDimension(rect.width, omitDeviceScaleFactor);
     this.validateScreenshotDimension(rect.height, omitDeviceScaleFactor);
-    const result = await this._session.send('Page.snapshotRect', { ...rect, coordinateSystem: documentRect ? 'Page' : 'Viewport', omitDeviceScaleFactor });
+
+    let result: any;
+    // Take screenshot in the UI process where possible. This way we capture CSS transformations.
+    const takeSnapshotInUIProcess = os.platform() === 'linux' ||
+        (os.platform() === 'darwin' && (omitDeviceScaleFactor || (!this._page._browserContext._options.deviceScaleFactor && !this._page._browserContext._options.noDefaultViewport) || this._page._browserContext._options.deviceScaleFactor === 1));
+    if (pageScreenshot && fitsViewport && takeSnapshotInUIProcess) {
+      // On Linux, wait for two rafs to ensure that all layout changes have painted.
+      if (os.platform() === 'linux')
+        await this._page.mainFrame().evaluateExpression('new Promise(f => requestAnimationFrame(() => requestAnimationFrame(f)))').catch(() => {});
+      const pageProxyId = this._pageProxySession.sessionId;
+      result = await this._pageProxySession.connection.browserSession.send('Playwright.takePageScreenshot', { pageProxyId, ...rect, omitDeviceScaleFactor });
+    } else {
+      result = await this._session.send('Page.snapshotRect', { ...rect, coordinateSystem: documentRect ? 'Page' : 'Viewport', omitDeviceScaleFactor });
+    }
     const prefix = 'data:image/png;base64,';
     let buffer = Buffer.from(result.dataURL.substr(prefix.length), 'base64');
     if (format === 'jpeg')
