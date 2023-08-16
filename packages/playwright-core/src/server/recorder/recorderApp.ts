@@ -23,8 +23,7 @@ import { serverSideCallMetadata } from '../instrumentation';
 import type { CallLog, EventData, Mode, Source } from '@recorder/recorderTypes';
 import { isUnderTest } from '../../utils';
 import { mime } from '../../utilsBundle';
-import { installAppIcon, syncLocalStorageWithSettings } from '../chromium/crApp';
-import { findChromiumChannel } from '../registry';
+import { syncLocalStorageWithSettings } from '../chromium/crApp';
 import type { Recorder } from '../recorder';
 import type { BrowserContext } from '../browserContext';
 
@@ -79,7 +78,6 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
   }
 
   private async _init() {
-    await installAppIcon(this._page);
     await syncLocalStorageWithSettings(this._page, 'recorder');
 
     await this._page._setServerRequestInterceptor(route => {
@@ -117,30 +115,23 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
     const sdkLanguage = inspectedContext.attribution.playwright.options.sdkLanguage;
     const headed = !!inspectedContext._browser.options.headful;
     const recorderPlaywright = (require('../playwright').createPlaywright as typeof import('../playwright').createPlaywright)({ sdkLanguage: 'javascript', isInternalPlaywright: true });
-    const args = [
-      '--app=data:text/html,',
-      '--window-size=600,600',
-      '--window-position=1020,10',
-      '--test-type=',
-    ];
-    if (process.env.PWTEST_RECORDER_PORT)
-      args.push(`--remote-debugging-port=${process.env.PWTEST_RECORDER_PORT}`);
-    const context = await recorderPlaywright.chromium.launchPersistentContext(serverSideCallMetadata(), '', {
-      channel: findChromiumChannel(sdkLanguage),
-      args,
-      noDefaultViewport: true,
-      ignoreDefaultArgs: ['--enable-automation'],
-      colorScheme: 'no-override',
-      headless: !!process.env.PWTEST_CLI_HEADLESS || (isUnderTest() && !headed),
-      useWebSocket: !!process.env.PWTEST_RECORDER_PORT,
-      handleSIGINT,
+    const { context, page } = await recorderPlaywright.chromium.launchApp({
+      sdkLanguage,
+      windowSize: { width: 600, height: 600 },
+      windowPosition: { x: 1020, y: 10 },
+      persistentContextOptions: {
+        noDefaultViewport: true,
+        headless: !!process.env.PWTEST_CLI_HEADLESS || (isUnderTest() && !headed),
+        useWebSocket: !!process.env.PWTEST_RECORDER_PORT,
+        handleSIGINT,
+        args: process.env.PWTEST_RECORDER_PORT ? [`--remote-debugging-port=${process.env.PWTEST_RECORDER_PORT}`] : [],
+      }
     });
     const controller = new ProgressController(serverSideCallMetadata(), context._browser);
     await controller.run(async progress => {
       await context._browser._defaultContext!._loadDefaultContextAsIs(progress);
     });
 
-    const [page] = context.pages();
     const result = new RecorderApp(recorder, page, context._browser.options.wsEndpoint);
     await result._init();
     return result;
