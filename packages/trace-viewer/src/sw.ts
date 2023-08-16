@@ -122,10 +122,7 @@ async function doFetch(event: FetchEvent): Promise<Response> {
         // We will accept explicit ?trace= value as well as the clientId associated with the trace.
         if (traceUrl !== trace && !traceUrls.includes(trace))
           continue;
-        const sha1 = relativePath.slice('/sha1/'.length);
-        const blob = await traceModel!.resourceForSha1(sha1);
-        if (blob)
-          return new Response(blob, { status: 200, headers: headersForResource(traceModel, sha1) });
+        return await serveResource(traceModel, relativePath.slice('/sha1/'.length));
       }
       return new Response(null, { status: 404 });
     }
@@ -144,6 +141,13 @@ async function doFetch(event: FetchEvent): Promise<Response> {
   if (isDeployedAsHttps && request.url.startsWith('https://'))
     lookupUrls.push(request.url.replace(/^https/, 'http'));
   return snapshotServer.serveResource(lookupUrls, request.method, snapshotUrl);
+}
+
+async function serveResource(traceModel: TraceModel, sha1: string): Promise<Response> {
+  const blob = await traceModel!.resourceForSha1(sha1);
+  if (blob)
+    return new Response(blob, { status: 200, headers: headersForResource(traceModel, sha1) });
+  return new Response(null, { status: 404 });
 }
 
 function headersForResource(traceModel: TraceModel, sha1: string): Headers | undefined {

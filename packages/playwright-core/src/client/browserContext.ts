@@ -451,6 +451,7 @@ export async function prepareBrowserContextParams(options: BrowserContextOptions
     colorScheme: options.colorScheme === null ? 'no-override' : options.colorScheme,
     reducedMotion: options.reducedMotion === null ? 'no-override' : options.reducedMotion,
     forcedColors: options.forcedColors === null ? 'no-override' : options.forcedColors,
+    acceptDownloads: toAcceptDownloadsProtocol(options.acceptDownloads),
   };
   if (!contextParams.recordVideo && options.videosPath) {
     contextParams.recordVideo = {
@@ -459,4 +460,12 @@ export async function prepareBrowserContextParams(options: BrowserContextOptions
     };
   }
   return contextParams;
+}
+
+function toAcceptDownloadsProtocol(acceptDownloads?: boolean) {
+  if (acceptDownloads === undefined)
+    return undefined;
+  if (acceptDownloads === true)
+    return 'accept';
+  return 'deny';
 }

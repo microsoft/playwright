@@ -62,7 +62,7 @@ export abstract class BrowserContext extends SdkObject {
   readonly _timeoutSettings = new TimeoutSettings();
   readonly _pageBindings = new Map<string, PageBinding>();
   readonly _activeProgressControllers = new Set<ProgressController>();
-  readonly _options: channels.BrowserNewContextParams & { keepDefaultDownloadBehavior?: boolean };
+  readonly _options: channels.BrowserNewContextParams;
   _requestInterceptor?: network.RouteHandler;
   private _isPersistentContext: boolean;
   private _closedStatus: 'open' | 'closing' | 'closed' = 'open';
@@ -604,7 +604,7 @@ export function validateBrowserContextOptions(options: channels.BrowserNewContex
   if (options.noDefaultViewport && !!options.isMobile)
     throw new Error(`"isMobile" option is not supported with null "viewport"`);
   if (options.acceptDownloads === undefined)
-    options.acceptDownloads = true;
+    options.acceptDownloads = 'accept';
   if (!options.viewport && !options.noDefaultViewport)
     options.viewport = { width: 1280, height: 720 };
   if (options.recordVideo) {
@@ -685,7 +685,7 @@ const defaultNewContextParamValues: channels.BrowserNewContextForReuseParams = {
   offline: false,
   isMobile: false,
   hasTouch: false,
-  acceptDownloads: true,
+  acceptDownloads: 'accept',
   strictSelectors: false,
   serviceWorkers: 'allow',
   locale: 'en-US',

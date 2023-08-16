@@ -174,7 +174,7 @@ export class FFBrowserContext extends BrowserContext {
     assert(!this._ffPages().length);
     const browserContextId = this._browserContextId;
     const promises: Promise<any>[] = [super._initialize()];
-    if (!this._options.keepDefaultDownloadBehavior) {
+    if (this._options.acceptDownloads !== 'internal-browser-default') {
       promises.push(this._browser._connection.send('Browser.setDownloadOptions', {
         browserContextId,
         downloadOptions: {

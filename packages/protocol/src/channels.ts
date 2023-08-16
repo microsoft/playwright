@@ -965,7 +965,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
   colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
   reducedMotion?: 'reduce' | 'no-preference' | 'no-override',
   forcedColors?: 'active' | 'none' | 'no-override',
-  acceptDownloads?: boolean,
+  acceptDownloads?: 'accept' | 'deny' | 'internal-browser-default',
   baseURL?: string,
   recordVideo?: {
     dir: string,
@@ -1036,7 +1036,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
   reducedMotion?: 'reduce' | 'no-preference' | 'no-override',
   forcedColors?: 'active' | 'none' | 'no-override',
-  acceptDownloads?: boolean,
+  acceptDownloads?: 'accept' | 'deny' | 'internal-browser-default',
   baseURL?: string,
   recordVideo?: {
     dir: string,
@@ -1138,7 +1138,7 @@ export type BrowserNewContextParams = {
   colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
   reducedMotion?: 'reduce' | 'no-preference' | 'no-override',
   forcedColors?: 'active' | 'none' | 'no-override',
-  acceptDownloads?: boolean,
+  acceptDownloads?: 'accept' | 'deny' | 'internal-browser-default',
   baseURL?: string,
   recordVideo?: {
     dir: string,
@@ -1196,7 +1196,7 @@ export type BrowserNewContextOptions = {
   colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
   reducedMotion?: 'reduce' | 'no-preference' | 'no-override',
   forcedColors?: 'active' | 'none' | 'no-override',
-  acceptDownloads?: boolean,
+  acceptDownloads?: 'accept' | 'deny' | 'internal-browser-default',
   baseURL?: string,
   recordVideo?: {
     dir: string,
@@ -1257,7 +1257,7 @@ export type BrowserNewContextForReuseParams = {
   colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
   reducedMotion?: 'reduce' | 'no-preference' | 'no-override',
   forcedColors?: 'active' | 'none' | 'no-override',
-  acceptDownloads?: boolean,
+  acceptDownloads?: 'accept' | 'deny' | 'internal-browser-default',
   baseURL?: string,
   recordVideo?: {
     dir: string,
@@ -1315,7 +1315,7 @@ export type BrowserNewContextForReuseOptions = {
   colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
   reducedMotion?: 'reduce' | 'no-preference' | 'no-override',
   forcedColors?: 'active' | 'none' | 'no-override',
-  acceptDownloads?: boolean,
+  acceptDownloads?: 'accept' | 'deny' | 'internal-browser-default',
   baseURL?: string,
   recordVideo?: {
     dir: string,
@@ -3986,7 +3986,7 @@ export type ElectronLaunchParams = {
   cwd?: string,
   env?: NameValue[],
   timeout?: number,
-  acceptDownloads?: boolean,
+  acceptDownloads?: 'accept' | 'deny' | 'internal-browser-default',
   bypassCSP?: boolean,
   colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
   extraHTTPHeaders?: NameValue[],
@@ -4021,7 +4021,7 @@ export type ElectronLaunchOptions = {
   cwd?: string,
   env?: NameValue[],
   timeout?: number,
-  acceptDownloads?: boolean,
+  acceptDownloads?: 'accept' | 'deny' | 'internal-browser-default',
   bypassCSP?: boolean,
   colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
   extraHTTPHeaders?: NameValue[],
@@ -4412,7 +4412,7 @@ export type AndroidDeviceLaunchBrowserParams = {
   colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
   reducedMotion?: 'reduce' | 'no-preference' | 'no-override',
   forcedColors?: 'active' | 'none' | 'no-override',
-  acceptDownloads?: boolean,
+  acceptDownloads?: 'accept' | 'deny' | 'internal-browser-default',
   baseURL?: string,
   recordVideo?: {
     dir: string,
@@ -4468,7 +4468,7 @@ export type AndroidDeviceLaunchBrowserOptions = {
   colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
   reducedMotion?: 'reduce' | 'no-preference' | 'no-override',
   forcedColors?: 'active' | 'none' | 'no-override',
-  acceptDownloads?: boolean,
+  acceptDownloads?: 'accept' | 'deny' | 'internal-browser-default',
   baseURL?: string,
   recordVideo?: {
     dir: string,
