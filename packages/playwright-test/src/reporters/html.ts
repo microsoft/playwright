@@ -154,7 +154,7 @@ function getHtmlReportOptionProcessEnv(): HtmlReportOpenOption | undefined {
     return undefined;
   if (!isHtmlReportOption(htmlOpenEnv)) {
     console.log(colors.red(`Configuration Error: HTML reporter Invalid value for ${processKey}: ${htmlOpenEnv}. Valid values are: ${htmlReportOptions.join(', ')}`));
-    return undefined
+    return undefined;
   }
   return htmlOpenEnv;
 }
