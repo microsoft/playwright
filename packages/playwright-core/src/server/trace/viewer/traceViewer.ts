@@ -17,9 +17,8 @@
 import path from 'path';
 import fs from 'fs';
 import { HttpServer } from '../../../utils/httpServer';
-import { findChromiumChannel } from '../../registry';
 import { createGuid, gracefullyProcessExitDoNotHang, isUnderTest } from '../../../utils';
-import { installAppIcon, syncLocalStorageWithSettings } from '../../chromium/crApp';
+import { syncLocalStorageWithSettings } from '../../chromium/crApp';
 import { serverSideCallMetadata } from '../../instrumentation';
 import { createPlaywright } from '../../playwright';
 import { ProgressController } from '../../progress';
@@ -131,35 +130,26 @@ export async function openTraceViewerApp(traceUrls: string[], browserName: strin
   const { url } = await startTraceViewerServer(traceUrls, options);
   const traceViewerPlaywright = createPlaywright({ sdkLanguage: 'javascript', isInternalPlaywright: true });
   const traceViewerBrowser = isUnderTest() ? 'chromium' : browserName;
-  const args = traceViewerBrowser === 'chromium' ? [
-    '--app=data:text/html,',
-    '--window-size=1280,800',
-    '--test-type=',
-  ] : [];
 
-  const context = await traceViewerPlaywright[traceViewerBrowser as 'chromium'].launchPersistentContext(serverSideCallMetadata(), '', {
+  const { context, page } = await traceViewerPlaywright[traceViewerBrowser as 'chromium'].launchApp({
     // TODO: store language in the trace.
-    channel: findChromiumChannel(traceViewerPlaywright.options.sdkLanguage),
-    args,
-    noDefaultViewport: true,
-    headless: options?.headless,
-    ignoreDefaultArgs: ['--enable-automation'],
-    colorScheme: 'no-override',
-    useWebSocket: isUnderTest(),
-    ...options?.persistentContextOptions,
+    sdkLanguage: traceViewerPlaywright.options.sdkLanguage,
+    windowSize: { width: 1280, height: 800 },
+    persistentContextOptions: {
+      ...options?.persistentContextOptions,
+      useWebSocket: isUnderTest(),
+      headless: options?.headless,
+    },
   });
 
   const controller = new ProgressController(serverSideCallMetadata(), context._browser);
   await controller.run(async progress => {
     await context._browser._defaultContext!._loadDefaultContextAsIs(progress);
   });
-  const [page] = context.pages();
 
   if (process.env.PWTEST_PRINT_WS_ENDPOINT)
     process.stderr.write('DevTools listening on: ' + context._browser.options.wsEndpoint + '\n');
 
-  if (traceViewerBrowser === 'chromium')
-    await installAppIcon(page);
   if (!isUnderTest())
     await syncLocalStorageWithSettings(page, 'traceviewer');
 
