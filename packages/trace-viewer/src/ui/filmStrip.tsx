@@ -19,7 +19,16 @@ import type { Boundaries, Size } from '../geometry';
 import * as React from 'react';
 import { useMeasure, upperBound } from '@web/uiUtils';
 import type { PageEntry } from '../entries';
-import type { MultiTraceModel } from './modelUtil';
+import type { ActionTraceEventInContext, MultiTraceModel } from './modelUtil';
+import { renderAction } from './actionList';
+import type { Language } from '@isomorphic/locatorGenerators';
+
+export type FilmStripPreviewPoint = {
+  x: number;
+  clientY: number;
+  action?: ActionTraceEventInContext;
+  sdkLanguage: Language;
+};
 
 const tileSize = { width: 200, height: 45 };
 const frameMargin = 2.5;
@@ -28,7 +37,7 @@ const rowHeight = tileSize.height + frameMargin * 2;
 export const FilmStrip: React.FunctionComponent<{
   model?: MultiTraceModel,
   boundaries: Boundaries,
-  previewPoint?: { x: number, clientY: number },
+  previewPoint?: FilmStripPreviewPoint,
 }> = ({ model, boundaries, previewPoint }) => {
   const [measure, ref] = useMeasure<HTMLDivElement>();
   const lanesRef = React.useRef<HTMLDivElement>(null);
@@ -45,7 +54,11 @@ export const FilmStrip: React.FunctionComponent<{
   if (previewPoint !== undefined && screencastFrames) {
     const previewTime = boundaries.minimum + (boundaries.maximum - boundaries.minimum) * previewPoint.x / measure.width;
     previewImage = screencastFrames[upperBound(screencastFrames, previewTime, timeComparator) - 1];
-    previewSize = previewImage ? inscribe({ width: previewImage.width, height: previewImage.height }, { width: (window.innerWidth * 3 / 4) | 0, height: (window.innerHeight * 3 / 4) | 0 }) : undefined;
+    const fitInto = {
+      width: Math.min(500, (window.innerWidth / 2) | 0),
+      height: Math.min(500, (window.innerHeight / 2) | 0),
+    };
+    previewSize = previewImage ? inscribe({ width: previewImage.width, height: previewImage.height }, fitInto) : undefined;
   }
 
   return <div className='film-strip' ref={ref}>
@@ -59,12 +72,13 @@ export const FilmStrip: React.FunctionComponent<{
     }</div>
     {previewImage && previewSize && previewPoint?.x !== undefined &&
       <div className='film-strip-hover' style={{
-        width: previewSize.width,
-        height: previewSize.height,
         top: measure.bottom + 5,
         left: Math.min(previewPoint!.x, measure.width - previewSize.width - 10),
       }}>
-        <img src={`sha1/${previewImage.sha1}`} width={previewSize.width} height={previewSize.height} />
+        <div style={{ width: previewSize.width, height: previewSize.height }}>
+          <img src={`sha1/${previewImage.sha1}`} width={previewSize.width} height={previewSize.height} />
+        </div>
+        {previewPoint.action && <div className='film-strip-hover-title'>{renderAction(previewPoint.action, previewPoint.sdkLanguage)}</div>}
       </div>
     }
   </div>;

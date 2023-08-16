@@ -25,7 +25,6 @@ export type ListViewProps<T> = {
   indent?: (item: T, index: number) => number | undefined,
   isError?: (item: T, index: number) => boolean,
   isWarning?: (item: T, index: number) => boolean,
-  isHighlighted?: (item: T, index: number) => boolean,
   selectedItem?: T,
   onAccepted?: (item: T, index: number) => void,
   onSelected?: (item: T, index: number) => void,
@@ -44,7 +43,6 @@ export function ListView<T>({
   icon,
   isError,
   isWarning,
-  isHighlighted,
   indent,
   selectedItem,
   onAccepted,
@@ -113,7 +111,7 @@ export function ListView<T>({
       {noItemsMessage && items.length === 0 && <div className='list-view-empty'>{noItemsMessage}</div>}
       {items.map((item, index) => {
         const selectedSuffix = selectedItem === item ? ' selected' : '';
-        const highlightedSuffix = isHighlighted?.(item, index) || highlightedItem === item ? ' highlighted' : '';
+        const highlightedSuffix = highlightedItem === item ? ' highlighted' : '';
         const errorSuffix = isError?.(item, index) ? ' error' : '';
         const warningSuffix = isWarning?.(item, index) ? ' warning' : '';
         const indentation = indent?.(item, index) || 0;

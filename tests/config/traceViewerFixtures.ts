@@ -85,18 +85,6 @@ class TraceViewerPage {
     await this.page.click('text="Network"');
   }
 
-  async eventBars() {
-    await this.page.waitForSelector('.timeline-bar.event:visible');
-    const list = await this.page.$$eval('.timeline-bar.event:visible', ee => ee.map(e => e.className));
-    const set = new Set<string>();
-    for (const item of list) {
-      for (const className of item.split(' '))
-        set.add(className);
-    }
-    const result = [...set];
-    return result.sort();
-  }
-
   @step
   async snapshotFrame(actionName: string, ordinal: number = 0, hasSubframe: boolean = false): Promise<FrameLocator> {
     await this.selectAction(actionName, ordinal);

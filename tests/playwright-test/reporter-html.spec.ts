@@ -461,7 +461,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       await showReport();
       await page.click('text=passes');
       await page.click('img');
-      await expect(page.locator('.workbench .title')).toHaveText('a.test.js:3 › passes');
+      await expect(page.locator('.workbench-loader .title')).toHaveText('a.test.js:3 › passes');
     });
 
     test('should show multi trace source', async ({ runInlineTest, page, server, showReport }) => {

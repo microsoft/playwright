@@ -15,12 +15,12 @@
  */
 
 import type * as channels from '@protocol/channels';
-import type { ActionTraceEvent } from '@trace/trace';
 import * as React from 'react';
 import './consoleTab.css';
 import * as modelUtil from './modelUtil';
 import { ListView } from '@web/components/listView';
 import { ansi2htmlMarkup } from '@web/components/errorMessage';
+import type { Boundaries } from '../geometry';
 
 type ConsoleEntry = {
   message?: channels.ConsoleMessageInitializer;
@@ -31,20 +31,18 @@ type ConsoleEntry = {
     isError: boolean;
   },
   timestamp: number;
-  highlight: boolean;
 };
 
 const ConsoleListView = ListView<ConsoleEntry>;
 
 export const ConsoleTab: React.FunctionComponent<{
   model: modelUtil.MultiTraceModel | undefined,
-  action: ActionTraceEvent | undefined,
-}> = ({ model, action }) => {
+  selectedTime: Boundaries | undefined,
+}> = ({ model, selectedTime }) => {
   const { entries } = React.useMemo(() => {
     if (!model)
       return { entries: [] };
     const entries: ConsoleEntry[] = [];
-    const actionEvents = action ? modelUtil.eventsForAction(action) : [];
     for (const event of model.events) {
       if (event.method !== 'console' && event.method !== 'pageError')
         continue;
@@ -52,14 +50,12 @@ export const ConsoleTab: React.FunctionComponent<{
         const { guid } = event.params.message;
         entries.push({
           message: modelUtil.context(event).initializers[guid],
-          highlight: actionEvents.includes(event),
           timestamp: event.time,
         });
       }
       if (event.method === 'pageError') {
         entries.push({
           error: event.params.error,
-          highlight: actionEvents.includes(event),
           timestamp: event.time,
         });
       }
@@ -72,16 +68,21 @@ export const ConsoleTab: React.FunctionComponent<{
           isError: event.type === 'stderr',
         },
         timestamp: event.timestamp,
-        highlight: false,
       });
     }
     entries.sort((a, b) => a.timestamp - b.timestamp);
     return { entries };
-  }, [model, action]);
+  }, [model]);
+
+  const filteredEntries = React.useMemo(() => {
+    if (!selectedTime)
+      return entries;
+    return entries.filter(entry => entry.timestamp >= selectedTime.minimum && entry.timestamp <= selectedTime.maximum);
+  }, [entries, selectedTime]);
 
   return <div className='console-tab'>
     <ConsoleListView
-      items={entries}
+      items={filteredEntries}
       isError={entry => !!entry.error || entry.message?.type === 'error' || entry.nodeMessage?.isError || false}
       isWarning={entry => entry.message?.type === 'warning'}
       render={entry => {
@@ -122,9 +123,7 @@ export const ConsoleTab: React.FunctionComponent<{
           </div>;
         }
         return null;
-      }
-      }
-      isHighlighted={entry => !!entry.highlight}
+      }}
     />
   </div>;
 };
