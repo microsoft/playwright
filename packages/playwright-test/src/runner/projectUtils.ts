@@ -70,8 +70,7 @@ export function buildProjectsClosure(projects: FullProjectInternal[], hasTests?:
       throw error;
     }
 
-    const projectHasTests = hasTests ? hasTests(project) : true;
-    if (!projectHasTests && depth === 0)
+    if (depth === 0 && hasTests && !hasTests(project))
       return;
 
     if (result.get(project) !== 'dependency')
