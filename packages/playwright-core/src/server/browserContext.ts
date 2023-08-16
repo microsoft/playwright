@@ -62,7 +62,7 @@ export abstract class BrowserContext extends SdkObject {
   readonly _timeoutSettings = new TimeoutSettings();
   readonly _pageBindings = new Map<string, PageBinding>();
   readonly _activeProgressControllers = new Set<ProgressController>();
-  readonly _options: channels.BrowserNewContextParams;
+  readonly _options: channels.BrowserNewContextParams & { keepDefaultDownloadBehavior?: boolean };
   _requestInterceptor?: network.RouteHandler;
   private _isPersistentContext: boolean;
   private _closedStatus: 'open' | 'closing' | 'closed' = 'open';

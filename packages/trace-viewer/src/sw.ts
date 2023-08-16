@@ -122,9 +122,10 @@ async function doFetch(event: FetchEvent): Promise<Response> {
         // We will accept explicit ?trace= value as well as the clientId associated with the trace.
         if (traceUrl !== trace && !traceUrls.includes(trace))
           continue;
-        const blob = await traceModel!.resourceForSha1(relativePath.slice('/sha1/'.length));
+        const sha1 = relativePath.slice('/sha1/'.length);
+        const blob = await traceModel!.resourceForSha1(sha1);
         if (blob)
-          return new Response(blob, { status: 200 });
+          return new Response(blob, { status: 200, headers: headersForResource(traceModel, sha1) });
       }
       return new Response(null, { status: 404 });
     }
@@ -143,6 +144,49 @@ async function doFetch(event: FetchEvent): Promise<Response> {
   if (isDeployedAsHttps && request.url.startsWith('https://'))
     lookupUrls.push(request.url.replace(/^https/, 'http'));
   return snapshotServer.serveResource(lookupUrls, request.method, snapshotUrl);
+}
+
+function headersForResource(traceModel: TraceModel, sha1: string): Headers | undefined {
+  const attachment = traceModel.attachmentForSha1(sha1);
+  if (!attachment)
+    return;
+  const headers = new Headers();
+  let name = attachment.name;
+  const nameHasExt = name.includes('.');
+  if (!nameHasExt)
+    name += extensionForContentType(attachment.contentType);
+  headers.set('Content-Disposition', `attachment; filename="${name}"`);
+  if (attachment.contentType)
+    headers.set('Content-Type', attachment.contentType);
+  return headers;
+}
+
+function extensionForContentType(contentType: string): string {
+  if (contentType === 'application/javascript')
+    return '.js';
+  if (contentType === 'text/css')
+    return '.css';
+  if (contentType === 'text/html')
+    return '.html';
+  if (contentType === 'text/plain')
+    return '.txt';
+  if (contentType === 'application/json')
+    return '.json';
+  if (contentType === 'application/pdf')
+    return '.pdf';
+  if (contentType === 'application/x-sh')
+    return '.sh';
+  if (contentType === 'application/zip')
+    return '.zip';
+  if (contentType === 'image/jpeg')
+    return '.jpg';
+  if (contentType === 'image/png')
+    return '.png';
+  if (contentType === 'image/gif')
+    return '.gif';
+  if (contentType === 'image/svg+xml')
+    return '.svg';
+  return '';
 }
 
 async function gc() {

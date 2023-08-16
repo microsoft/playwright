@@ -73,6 +73,14 @@ export type InputActionTraceEvent = {
   point?: Point;
 };
 
+export type AfterActionTraceEventAttachment = {
+  name: string;
+  contentType: string;
+  path?: string;
+  sha1?: string;
+  base64?: string;
+};
+
 export type AfterActionTraceEvent = {
   type: 'after',
   callId: string;
@@ -80,13 +88,7 @@ export type AfterActionTraceEvent = {
   afterSnapshot?: string;
   log: string[];
   error?: SerializedError['error'];
-  attachments?: {
-    name: string;
-    contentType: string;
-    path?: string;
-    sha1?: string;
-    base64?: string;
-  }[];
+  attachments?: AfterActionTraceEventAttachment[];
   result?: any;
 };
 

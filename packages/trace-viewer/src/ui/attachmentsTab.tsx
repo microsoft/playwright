@@ -56,13 +56,13 @@ export const AttachmentsSection: React.FunctionComponent<{
     {[...screenshots].map((a, i) => {
       return <div className='attachment-item' key={`screenshot-${i}`}>
         <div><img draggable='false' src={attachmentURL(traceUrl, a)} /></div>
-        <div><a target='_blank' href={attachmentURL(traceUrl, a)}>{a.name}</a></div>
+        <div><a href={attachmentURL(traceUrl, a)}>{a.name}</a></div>
       </div>;
     })}
     {otherAttachments.size ? <div className='attachments-section'>Attachments</div> : undefined}
     {[...otherAttachments].map((a, i) => {
       return <div className='attachment-item' key={`attachment-${i}`}>
-        <a target='_blank' href={attachmentURL(traceUrl, a)}>{a.name}</a>
+        <a href={attachmentURL(traceUrl, a)}>{a.name}</a>
       </div>;
     })}
   </>;

@@ -74,7 +74,7 @@ export abstract class BrowserType extends SdkObject {
     return browser;
   }
 
-  async launchPersistentContext(metadata: CallMetadata, userDataDir: string, options: channels.BrowserTypeLaunchPersistentContextOptions & { useWebSocket?: boolean }): Promise<BrowserContext> {
+  async launchPersistentContext(metadata: CallMetadata, userDataDir: string, options: channels.BrowserTypeLaunchPersistentContextOptions & { useWebSocket?: boolean, keepDefaultDownloadBehavior?: boolean }): Promise<BrowserContext> {
     options = this._validateLaunchOptions(options);
     const controller = new ProgressController(metadata, this);
     const persistent: channels.BrowserNewContextParams = options;
@@ -107,6 +107,7 @@ export abstract class BrowserType extends SdkObject {
       noDefaultViewport: true,
       ignoreDefaultArgs: ['--enable-automation'],
       colorScheme: 'no-override',
+      keepDefaultDownloadBehavior: true,
       ...options?.persistentContextOptions,
       args,
     });
