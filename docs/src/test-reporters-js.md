@@ -213,7 +213,7 @@ Blob reports contain all the details about the test run and can be used later to
 npx playwright test --reporter=blob
 ```
 
-By default, the report is written into the `blob-report` directory in the package.json parent directory or current working directory (if no package.json is found). The output directory can be overridden in the configuration file:
+By default, the report is written into the `blob-report` directory in the package.json directory or current working directory (if no package.json is found). The output directory can be overridden in the configuration file:
 
 ```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
