@@ -40,7 +40,14 @@ type TestEntry = {
   testCaseSummary: TestCaseSummary
 };
 
-type HtmlReportOpenOption = 'always' | 'never' | 'on-failure';
+
+const htmlReportOptions = ['always', 'never', 'on-failure'];
+type HtmlReportOpenOption = (typeof htmlReportOptions)[number];
+
+const isHtmlReportOption = (type: string): type is HtmlReportOpenOption => {
+  return htmlReportOptions.includes(type);
+};
+
 type HtmlReporterOptions = {
   configDir: string,
   outputFolder?: string,
@@ -100,7 +107,7 @@ class HtmlReporter extends EmptyReporter {
     const outputFolder = reportFolderFromEnv() ?? resolveReporterOutputPath('playwright-report', this._options.configDir, this._options.outputFolder);
     return {
       outputFolder,
-      open: process.env.PW_TEST_HTML_REPORT_OPEN as any || this._options.open || 'on-failure',
+      open: getHtmlReportOptionProcessEnv() || this._options.open || 'on-failure',
       attachmentsBaseURL: this._options.attachmentsBaseURL || 'data/'
     };
   }
@@ -135,6 +142,18 @@ function reportFolderFromEnv(): string | undefined {
   if (process.env[`PLAYWRIGHT_HTML_REPORT`])
     return path.resolve(process.cwd(), process.env[`PLAYWRIGHT_HTML_REPORT`]);
   return undefined;
+}
+
+function getHtmlReportOptionProcessEnv(): HtmlReportOpenOption | undefined {
+  const processKey = 'PW_TEST_HTML_REPORT_OPEN';
+  const htmlOpenEnv = process.env[processKey];
+  if (!htmlOpenEnv)
+    return undefined;
+  if (!isHtmlReportOption(htmlOpenEnv)) {
+    console.log(colors.red(`Configuration Error: HTML reporter Invalid value for ${processKey}: ${htmlOpenEnv}. Valid values are: ${htmlReportOptions.join(', ')}`));
+    return undefined;
+  }
+  return htmlOpenEnv;
 }
 
 function standaloneDefaultFolder(): string {

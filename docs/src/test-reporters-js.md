@@ -157,7 +157,7 @@ npx playwright test --reporter=html
 ```
 
 By default, HTML report is opened automatically if some of the tests failed. You can control this behavior via the
-`open` property in the Playwright config. The possible values for that property are `always`, `never` and `on-failure`
+`open` property in the Playwright config or the `PW_TEST_HTML_REPORT_OPEN` environmental variable. The possible values for that property are `always`, `never` and `on-failure`
 (default).
 
 You can also configure `host` and `port` that are used to serve the HTML report.

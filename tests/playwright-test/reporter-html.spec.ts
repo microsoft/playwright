@@ -86,6 +86,23 @@ for (const useIntermediateMergeReport of [false, true] as const) {
     });
 
 
+    test('should not throw when PW_TEST_HTML_REPORT_OPEN value is invalid', async ({ runInlineTest, page, showReport }, testInfo) => {
+      const invalidOption = 'invalid-option';
+      const result = await runInlineTest({
+        'playwright.config.ts': `
+          module.exports = { preserveOutput: 'failures-only' };
+        `,
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('passes', async ({ page }, testInfo) => {
+            expect(2).toEqual(2);
+          });
+        `,
+      }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: invalidOption });
+      expect(result.exitCode).toBe(0);
+      expect(result.passed).toBe(1);
+    });
+
     test('should not throw when attachment is missing', async ({ runInlineTest, page, showReport }, testInfo) => {
       const result = await runInlineTest({
         'playwright.config.ts': `
