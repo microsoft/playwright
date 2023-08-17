@@ -105,7 +105,7 @@ export const Workbench: React.FunctionComponent<{
   const consoleTab: TabbedPaneTabModel = {
     id: 'console',
     title: 'Console',
-    render: () => <ConsoleTab model={model} selectedTime={selectedTime} />
+    render: () => <ConsoleTab model={model} boundaries={boundaries} selectedTime={selectedTime} />
   };
   const networkTab: TabbedPaneTabModel = {
     id: 'network',
@@ -154,7 +154,7 @@ export const Workbench: React.FunctionComponent<{
       selectedTime={selectedTime}
       setSelectedTime={setSelectedTime}
     />
-    <SplitView sidebarSize={400} orientation='horizontal' sidebarIsFirst={true}>
+    <SplitView sidebarSize={250} orientation='horizontal' sidebarIsFirst={true}>
       <SplitView sidebarSize={250} orientation='vertical'>
         <SnapshotTab
           action={activeAction}

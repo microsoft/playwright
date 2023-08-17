@@ -35,7 +35,7 @@ export type ContextEntry = {
   actions: trace.ActionTraceEvent[];
   events: trace.EventTraceEvent[];
   stdio: trace.StdioTraceEvent[];
-  initializers: { [key: string]: any };
+  initializers: { [key: string]: trace.ConsoleMessageTraceEvent['initializer'] };
   hasSource: boolean;
 };
 

@@ -19,6 +19,7 @@ import { Expandable } from '@web/components/expandable';
 import * as React from 'react';
 import './networkResourceDetails.css';
 import type { Entry } from '@trace/har';
+import { msToString } from '@web/uiUtils';
 
 export const NetworkResourceDetails: React.FunctionComponent<{
   resource: ResourceSnapshot,
@@ -88,7 +89,7 @@ export const NetworkResourceDetails: React.FunctionComponent<{
     className='network-request'>
     <Expandable expanded={expanded} setExpanded={setExpanded} title={ renderTitle() }>
       <div className='network-request-details'>
-        <div className='network-request-details-time'>{resource.time}ms</div>
+        <div className='network-request-details-time'>{msToString(resource.time)}</div>
         <div className='network-request-details-header'>URL</div>
         <div className='network-request-details-url'>{resource.request.url}</div>
         <div className='network-request-details-header'>Request Headers</div>

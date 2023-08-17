@@ -407,13 +407,14 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   }
 
   private _onConsoleMessage(message: ConsoleMessage) {
-    const object: trace.ObjectTraceEvent = {
+    const object: trace.ConsoleMessageTraceEvent = {
       type: 'object',
       class: 'ConsoleMessage',
       guid: message.guid,
       initializer: {
         type: message.type(),
         text: message.text(),
+        args: message.args().map(a => ({ preview: a.toString(), value: a.rawValue() })),
         location: message.location(),
       },
     };

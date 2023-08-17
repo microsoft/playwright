@@ -101,10 +101,19 @@ export type EventTraceEvent = {
   pageId?: string;
 };
 
-export type ObjectTraceEvent = {
+export type ConsoleMessageTraceEvent = {
   type: 'object';
   class: string;
-  initializer: any;
+  initializer: {
+    type: string,
+    text: string,
+    args?: { preview: string, value: any }[],
+    location: {
+      url: string,
+      lineNumber: number,
+      columnNumber: number,
+    },
+  };
   guid: string;
 };
 
@@ -139,7 +148,7 @@ export type TraceEvent =
     InputActionTraceEvent |
     AfterActionTraceEvent |
     EventTraceEvent |
-    ObjectTraceEvent |
+    ConsoleMessageTraceEvent |
     ResourceSnapshotTraceEvent |
     FrameSnapshotTraceEvent |
     StdioTraceEvent;
