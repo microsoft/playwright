@@ -178,7 +178,7 @@ export class FFBrowserContext extends BrowserContext {
       promises.push(this._browser._connection.send('Browser.setDownloadOptions', {
         browserContextId,
         downloadOptions: {
-          behavior: this._options.acceptDownloads ? 'saveToDisk' : 'cancel',
+          behavior: this._options.acceptDownloads === 'accept' ? 'saveToDisk' : 'cancel',
           downloadsDir: this._browser.options.downloadsPath,
         },
       }));
