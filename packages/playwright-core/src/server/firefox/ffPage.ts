@@ -246,7 +246,7 @@ export class FFPage implements PageDelegate {
     const error = new Error(message);
     error.stack = params.message + '\n' + params.stack.split('\n').filter(Boolean).map(a => a.replace(/([^@]*)@(.*)/, '    at $1 ($2)')).join('\n');
     error.name = name;
-    this._page.firePageError(error);
+    this._page.emitOnContextOnceInitialized(BrowserContext.Events.PageError, error, this._page);
   }
 
   _onConsole(payload: Protocol.Runtime.consolePayload) {

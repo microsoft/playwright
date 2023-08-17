@@ -23,7 +23,7 @@ import { isSafeCloseError, kBrowserOrContextClosedError } from '../common/errors
 import { urlMatches } from '../utils/network';
 import { TimeoutSettings } from '../common/timeoutSettings';
 import type * as channels from '@protocol/channels';
-import { parseError, serializeError } from '../protocol/serializers';
+import { serializeError } from '../protocol/serializers';
 import { assert, headersObjectToArray, isObject, isRegExp, isString, LongStandingScope, urlMatchesEqual } from '../utils';
 import { mkdirIfNeeded } from '../utils/fileUtils';
 import { Accessibility } from './accessibility';
@@ -130,7 +130,6 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     this._channel.on('fileChooser', ({ element, isMultiple }) => this.emit(Events.Page.FileChooser, new FileChooser(this, ElementHandle.from(element), isMultiple)));
     this._channel.on('frameAttached', ({ frame }) => this._onFrameAttached(Frame.from(frame)));
     this._channel.on('frameDetached', ({ frame }) => this._onFrameDetached(Frame.from(frame)));
-    this._channel.on('pageError', ({ error }) => this.emit(Events.Page.PageError, parseError(error)));
     this._channel.on('route', ({ route }) => this._onRoute(Route.from(route)));
     this._channel.on('video', ({ artifact }) => {
       const artifactObject = Artifact.from(artifact);

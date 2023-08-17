@@ -770,6 +770,10 @@ scheme.BrowserContextDialogEvent = tObject({
 scheme.BrowserContextPageEvent = tObject({
   page: tChannel(['Page']),
 });
+scheme.BrowserContextPageErrorEvent = tObject({
+  error: tType('SerializedError'),
+  page: tChannel(['Page']),
+});
 scheme.BrowserContextRouteEvent = tObject({
   route: tChannel(['Route']),
 });
@@ -956,9 +960,6 @@ scheme.PageFrameAttachedEvent = tObject({
 });
 scheme.PageFrameDetachedEvent = tObject({
   frame: tChannel(['Frame']),
-});
-scheme.PagePageErrorEvent = tObject({
-  error: tType('SerializedError'),
 });
 scheme.PageRouteEvent = tObject({
   route: tChannel(['Route']),

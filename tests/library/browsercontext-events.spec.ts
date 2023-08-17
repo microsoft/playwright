@@ -160,3 +160,12 @@ test('dialog event should work with inline script tag', async ({ page, server })
   await promise;
   await expect.poll(() => popup.evaluate('window.result')).toBe('hello');
 });
+
+test('pageError event should work', async ({ page }) => {
+  const [pageerror] = await Promise.all([
+    page.context().waitForEvent('pageerror'),
+    page.setContent('<script>throw new Error("boom")</script>'),
+  ]);
+  expect(pageerror.page()).toBe(page);
+  expect(pageerror.error().stack).toContain('boom');
+});

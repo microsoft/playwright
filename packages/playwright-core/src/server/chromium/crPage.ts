@@ -756,7 +756,7 @@ class FrameSession {
       const args = event.args.map(o => worker._existingExecutionContext!.createHandle(o));
       this._page._addConsoleMessage(event.type, args, toConsoleMessageLocation(event.stackTrace));
     });
-    session.on('Runtime.exceptionThrown', exception => this._page.emit(Page.Events.PageError, exceptionToError(exception.exceptionDetails)));
+    session.on('Runtime.exceptionThrown', exception => this._page.emitOnContextOnceInitialized(BrowserContext.Events.PageError, exceptionToError(exception.exceptionDetails), this._page));
     // TODO: attribute workers to the right frame.
     this._networkManager.instrumentNetworkEvents({ session, workerFrame: this._page._frameManager.frame(this._targetId) ?? undefined });
   }
@@ -859,7 +859,7 @@ class FrameSession {
   }
 
   _handleException(exceptionDetails: Protocol.Runtime.ExceptionDetails) {
-    this._page.firePageError(exceptionToError(exceptionDetails));
+    this._page.emitOnContextOnceInitialized(BrowserContext.Events.PageError, exceptionToError(exceptionDetails), this._page);
   }
 
   async _onTargetCrashed() {

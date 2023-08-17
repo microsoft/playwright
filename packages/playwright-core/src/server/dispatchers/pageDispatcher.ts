@@ -19,7 +19,7 @@ import type { Frame } from '../frames';
 import { Page, Worker } from '../page';
 import type * as channels from '@protocol/channels';
 import { Dispatcher, existingDispatcher } from './dispatcher';
-import { parseError, serializeError } from '../../protocol/serializers';
+import { parseError } from '../../protocol/serializers';
 import { FrameDispatcher } from './frameDispatcher';
 import { RequestDispatcher } from './networkDispatchers';
 import { ResponseDispatcher } from './networkDispatchers';
@@ -85,7 +85,6 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     }));
     this.addObjectListener(Page.Events.FrameAttached, frame => this._onFrameAttached(frame));
     this.addObjectListener(Page.Events.FrameDetached, frame => this._onFrameDetached(frame));
-    this.addObjectListener(Page.Events.PageError, error => this._dispatchEvent('pageError', { error: serializeError(error) }));
     this.addObjectListener(Page.Events.WebSocket, webSocket => this._dispatchEvent('webSocket', { webSocket: new WebSocketDispatcher(this, webSocket) }));
     this.addObjectListener(Page.Events.Worker, worker => this._dispatchEvent('worker', { worker: new WorkerDispatcher(this, worker) }));
     this.addObjectListener(Page.Events.Video, (artifact: Artifact) => this._dispatchEvent('video', { artifact: ArtifactDispatcher.from(parentScope, artifact) }));
