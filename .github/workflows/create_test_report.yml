@@ -73,6 +73,24 @@ jobs:
             core.error('No pull request found for commit ' + context.sha + ' and workflow triggered by: ' + context.payload.workflow_run.event);
             return;
           }
+          {
+            // Mark previous comments as outdated by minimizing them.
+            const { data: comments } = await github.rest.issues.listComments({
+              ...context.repo,
+              issue_number: prNumber,
+            });
+            for (const comment of comments) {
+              if (comment.user.login === 'github-actions[bot]' && comment.body.includes('Test results')) {
+                await github.graphql(`
+                  mutation {
+                    minimizeComment(input: {subjectId: "${comment.node_id}", classifier: OUTDATED}) {
+                      clientMutationId
+                    }
+                  }
+                `);
+              }
+            }
+          }
           const reportDir = 'run-${{ github.event.workflow_run.id }}-${{ github.event.workflow_run.run_attempt }}-${{ github.sha }}';
           const reportUrl = `https://mspwblobreport.z1.web.core.windows.net/${reportDir}/index.html#?q=s%3Afailed%20s%3Aflaky`;
           core.notice('Report url: ' + reportUrl);
