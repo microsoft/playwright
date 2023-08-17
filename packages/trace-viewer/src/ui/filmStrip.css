@@ -46,7 +46,7 @@
   position: absolute;
   top: 0;
   left: 0;
-  background-color: white;
+  background-color: var(--vscode-panel-background);
   box-shadow: rgba(0, 0, 0, 0.133) 0px 1.6px 10px 0px, rgba(0, 0, 0, 0.11) 0px 0.3px 10px 0px;
   z-index: 200;
   pointer-events: none;
@@ -56,4 +56,5 @@
   padding: 2px 4px;
   display: flex;
   align-items: center;
+  overflow: hidden;
 }

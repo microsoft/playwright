@@ -274,7 +274,7 @@ test('should show snapshot URL', async ({ page, runAndTrace, server }) => {
     await page.evaluate('2+2');
   });
   await traceViewer.snapshotFrame('page.evaluate');
-  await expect(traceViewer.page.locator('.window-address-bar')).toHaveText(server.EMPTY_PAGE);
+  await expect(traceViewer.page.locator('.browser-frame-address-bar')).toHaveText(server.EMPTY_PAGE);
 });
 
 test('should popup snapshot', async ({ page, runAndTrace, server }) => {
@@ -862,7 +862,7 @@ test('should update highlight when typing', async ({ page, runAndTrace, server }
     await page.setContent('<button>Submit</button>');
   });
   const snapshot = await traceViewer.snapshotFrame('page.setContent');
-  await traceViewer.page.getByTitle('Pick locator').click();
+  await traceViewer.page.getByText('Locator').click();
   await traceViewer.page.locator('.CodeMirror').click();
   await traceViewer.page.keyboard.type('button');
   await expect(snapshot.locator('x-pw-glass')).toBeVisible();

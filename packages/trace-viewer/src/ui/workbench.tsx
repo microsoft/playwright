@@ -30,6 +30,8 @@ import { Timeline } from './timeline';
 import { MetadataView } from './metadataView';
 import { AttachmentsTab } from './attachmentsTab';
 import type { Boundaries } from '../geometry';
+import { InspectorTab } from './inspectorTab';
+import { ToolbarButton } from '@web/components/toolbarButton';
 
 export const Workbench: React.FunctionComponent<{
   model?: MultiTraceModel,
@@ -40,12 +42,13 @@ export const Workbench: React.FunctionComponent<{
   initialSelection?: ActionTraceEventInContext,
   onSelectionChanged?: (action: ActionTraceEventInContext) => void,
   isLive?: boolean,
-  drawer?: 'bottom' | 'right',
-}> = ({ model, hideStackFrames, showSourcesFirst, rootDir, fallbackLocation, initialSelection, onSelectionChanged, isLive, drawer }) => {
+}> = ({ model, hideStackFrames, showSourcesFirst, rootDir, fallbackLocation, initialSelection, onSelectionChanged, isLive }) => {
   const [selectedAction, setSelectedAction] = React.useState<ActionTraceEventInContext | undefined>(undefined);
   const [highlightedAction, setHighlightedAction] = React.useState<ActionTraceEventInContext | undefined>();
   const [selectedNavigatorTab, setSelectedNavigatorTab] = React.useState<string>('actions');
   const [selectedPropertiesTab, setSelectedPropertiesTab] = React.useState<string>(showSourcesFirst ? 'source' : 'call');
+  const [isInspecting, setIsInspecting] = React.useState(false);
+  const [highlightedLocator, setHighlightedLocator] = React.useState<string>('');
   const activeAction = model ? highlightedAction || selectedAction : undefined;
   const [selectedTime, setSelectedTime] = React.useState<Boundaries | undefined>();
 
@@ -68,8 +71,22 @@ export const Workbench: React.FunctionComponent<{
     onSelectionChanged?.(action);
   }, [setSelectedAction, onSelectionChanged]);
 
+  const locatorPicked = React.useCallback((locator: string) => {
+    setHighlightedLocator(locator);
+    setSelectedPropertiesTab('inspector');
+  }, []);
+
   const sdkLanguage = model?.sdkLanguage || 'javascript';
 
+  const inspectorTab: TabbedPaneTabModel = {
+    id: 'inspector',
+    title: 'Locator',
+    render: () => <InspectorTab
+      sdkLanguage={sdkLanguage}
+      setIsInspecting={setIsInspecting}
+      highlightedLocator={highlightedLocator}
+      setHighlightedLocator={setHighlightedLocator} />,
+  };
   const callTab: TabbedPaneTabModel = {
     id: 'call',
     title: 'Call',
@@ -102,12 +119,14 @@ export const Workbench: React.FunctionComponent<{
   };
 
   const tabs: TabbedPaneTabModel[] = showSourcesFirst ? [
+    inspectorTab,
     sourceTab,
     consoleTab,
     networkTab,
     callTab,
     attachmentsTab,
   ] : [
+    inspectorTab,
     callTab,
     consoleTab,
     networkTab,
@@ -135,34 +154,50 @@ export const Workbench: React.FunctionComponent<{
       selectedTime={selectedTime}
       setSelectedTime={setSelectedTime}
     />
-    <SplitView sidebarSize={drawer === 'bottom' ? 250 : 400} orientation={drawer === 'bottom' ? 'vertical' : 'horizontal'}>
-      <SplitView sidebarSize={250} orientation='horizontal' sidebarIsFirst={true}>
-        <SnapshotTab action={activeAction} sdkLanguage={sdkLanguage} testIdAttributeName={model?.testIdAttributeName || 'data-testid'} />
-        <TabbedPane tabs={
-          [
-            {
-              id: 'actions',
-              title: 'Actions',
-              component: <ActionList
-                sdkLanguage={sdkLanguage}
-                actions={model?.actions || []}
-                selectedAction={model ? selectedAction : undefined}
-                selectedTime={selectedTime}
-                onSelected={onActionSelected}
-                onHighlighted={setHighlightedAction}
-                revealConsole={() => setSelectedPropertiesTab('console')}
-                isLive={isLive}
-              />
-            },
-            {
-              id: 'metadata',
-              title: 'Metadata',
-              component: <MetadataView model={model}/>
-            },
-          ]
-        } selectedTab={selectedNavigatorTab} setSelectedTab={setSelectedNavigatorTab}/>
+    <SplitView sidebarSize={400} orientation='horizontal' sidebarIsFirst={true}>
+      <SplitView sidebarSize={250} orientation='vertical'>
+        <SnapshotTab
+          action={activeAction}
+          sdkLanguage={sdkLanguage}
+          testIdAttributeName={model?.testIdAttributeName || 'data-testid'}
+          isInspecting={isInspecting}
+          setIsInspecting={setIsInspecting}
+          highlightedLocator={highlightedLocator}
+          setHighlightedLocator={locatorPicked} />
+        <TabbedPane
+          tabs={tabs}
+          selectedTab={selectedPropertiesTab}
+          setSelectedTab={setSelectedPropertiesTab}
+          leftToolbar={[
+            <ToolbarButton icon='microscope' title='Pick locator' toggled={isInspecting} onClick={() => {
+              setIsInspecting(!isInspecting);
+            }}></ToolbarButton>
+          ]}
+        />
       </SplitView>
-      <TabbedPane tabs={tabs} selectedTab={selectedPropertiesTab} setSelectedTab={setSelectedPropertiesTab} />
+      <TabbedPane
+        tabs={[
+          {
+            id: 'actions',
+            title: 'Actions',
+            component: <ActionList
+              sdkLanguage={sdkLanguage}
+              actions={model?.actions || []}
+              selectedAction={model ? selectedAction : undefined}
+              selectedTime={selectedTime}
+              onSelected={onActionSelected}
+              onHighlighted={setHighlightedAction}
+              revealConsole={() => setSelectedPropertiesTab('console')}
+              isLive={isLive}
+            />
+          },
+          {
+            id: 'metadata',
+            title: 'Metadata',
+            component: <MetadataView model={model}/>
+          },
+        ]}
+        selectedTab={selectedNavigatorTab} setSelectedTab={setSelectedNavigatorTab}/>
     </SplitView>
   </div>;
 };
