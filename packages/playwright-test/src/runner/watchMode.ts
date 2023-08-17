@@ -371,6 +371,7 @@ Change settings
   };
 
   process.stdin.on('keypress', handler);
+  // eslint-disable-next-line @typescript-eslint/no-floating-promises
   result.finally(() => {
     process.stdin.off('keypress', handler);
     rl.close();
