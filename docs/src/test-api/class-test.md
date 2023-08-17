@@ -146,7 +146,7 @@ Hook function that takes one or two arguments: an object with worker fixtures an
 
 
 
-## method: Test.beforeEach
+## method: Test.beforeEach#1
 * since: v1.10
 
 Declares a `beforeEach` hook that is executed before each test.
@@ -174,12 +174,44 @@ test('my test', async ({ page }) => {
 });
 ```
 
-### param: Test.beforeEach.hookFunction
+### param: Test.beforeEach#1.hookFunction
 * since: v1.10
 - `hookFunction` <[function]\([Fixtures], [TestInfo]\)>
 
 Hook function that takes one or two arguments: an object with fixtures and optional [TestInfo].
 
+
+## method: Test.beforeEach#2
+* since: v1.38
+
+Declares a `beforeEach` hook with a title that is executed before each test.
+
+**Usage**
+
+```js title="example.spec.ts"
+import { test, expect } from '@playwright/test';
+
+test.beforeEach('Open start URL', async ({ page }, testInfo) => {
+  console.log(`Running ${testInfo.title}`);
+  await page.goto('https://my.start.url/');
+});
+
+test('my test', async ({ page }) => {
+  expect(page.url()).toBe('https://my.start.url/');
+});
+```
+
+### param: Test.beforeEach#2.title
+* since: v1.38
+- `title` <[string]>
+
+Hook title.
+
+### param: Test.beforeEach#2.hookFunction
+* since: v1.38
+- `hookFunction` <[function]\([Fixtures], [TestInfo]\)>
+
+Hook function that takes one or two arguments: an object with fixtures and optional [TestInfo].
 
 
 
@@ -1057,7 +1089,7 @@ test('skip in WebKit', async ({ page, browserName }) => {
 });
 ```
 
-Skip from [`method: Test.beforeEach`] hook:
+Skip from [`method: Test.beforeEach#1`] hook:
 
 ```js
 import { test, expect } from '@playwright/test';

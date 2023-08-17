@@ -564,7 +564,7 @@ export class WorkerMain extends ProcessRunner {
         testInfo._timeoutManager.setCurrentRunnable({ type: 'afterAll', location: hook.location, slot: timeSlot });
         await testInfo._runAsStep({
           category: 'hook',
-          title: `${hook.type} hook`,
+          title: `${hook.title}`,
           location: hook.location,
         }, async () => {
           try {
@@ -590,7 +590,7 @@ export class WorkerMain extends ProcessRunner {
         testInfo._timeoutManager.setCurrentRunnable({ type, location: hook.location, slot: timeSlot });
         await testInfo._runAsStep({
           category: 'hook',
-          title: `${hook.type} hook`,
+          title: `${hook.title}`,
           location: hook.location,
         }, () => this._fixtureRunner.resolveParametersAndRunFunction(hook.fn, testInfo, 'test'));
       } catch (e) {

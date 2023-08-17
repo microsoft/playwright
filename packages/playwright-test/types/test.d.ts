@@ -1900,7 +1900,7 @@ export interface WorkerInfo {
 
 /**
  * `TestInfo` contains information about currently running test. It is available to test functions,
- * [test.beforeEach(hookFunction)](https://playwright.dev/docs/api/class-test#test-before-each),
+ * [test.beforeEach(hookFunction)](https://playwright.dev/docs/api/class-test#test-before-each-1),
  * [test.afterEach(hookFunction)](https://playwright.dev/docs/api/class-test#test-after-each),
  * [test.beforeAll(hookFunction)](https://playwright.dev/docs/api/class-test#test-before-all) and
  * [test.afterAll(hookFunction)](https://playwright.dev/docs/api/class-test#test-after-all) hooks, and test-scoped
@@ -2746,7 +2746,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * });
    * ```
    *
-   * Skip from [test.beforeEach(hookFunction)](https://playwright.dev/docs/api/class-test#test-before-each) hook:
+   * Skip from [test.beforeEach(hookFunction)](https://playwright.dev/docs/api/class-test#test-before-each-1) hook:
    *
    * ```js
    * import { test, expect } from '@playwright/test';
@@ -3093,6 +3093,29 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * @param hookFunction Hook function that takes one or two arguments: an object with fixtures and optional {@link TestInfo}.
    */
   beforeEach(inner: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<any> | any): void;
+  /**
+   * Declares a `beforeEach` hook with a title that is executed before each test.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // example.spec.ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.beforeEach('Open start URL', async ({ page }, testInfo) => {
+   *   console.log(`Running ${testInfo.title}`);
+   *   await page.goto('https://my.start.url/');
+   * });
+   *
+   * test('my test', async ({ page }) => {
+   *   expect(page.url()).toBe('https://my.start.url/');
+   * });
+   * ```
+   *
+   * @param title Hook title.
+   * @param hookFunction Hook function that takes one or two arguments: an object with fixtures and optional {@link TestInfo}.
+   */
+  beforeEach(title: string, inner: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<any> | any): void;
   /**
    * Declares an `afterEach` hook that is executed after each test.
    *
