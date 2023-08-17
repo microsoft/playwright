@@ -1748,7 +1748,7 @@ Keyboard layout code. Currently, the following values are supported:
 | `de`, `de-DE` | [German](https://learn.microsoft.com/en-us/globalization/keyboards/kbdgr) <!-- 00000407  --> |
 | `it`, `it-IT` | [Italian](https://learn.microsoft.com/en-us/globalization/keyboards/kbdit) <!-- 00000410 --> |
 | `pt`, `pt-PT` | [Portuguese (Portugal)](https://learn.microsoft.com/en-us/globalization/keyboards/kbdpo) <!-- 00000816 --> |
-| `br`, `pt-BR` | [Portuguese (Brazil)](https://learn.microsoft.com/en-us/globalization/keyboards/kbdpo) <!-- 00000416 --> |
+| `br`, `pt-BR` | [Portuguese (Brazil)](https://learn.microsoft.com/en-us/globalization/keyboards/kbdbr_1) <!-- 00000416 --> |
 | `ru`, `ru-RU` | [Russian](https://learn.microsoft.com/en-us/globalization/keyboards/kbdru) <!-- 00000419 --> |
 | `ua`, `uk-UA` | [Ukrainian](https://learn.microsoft.com/en-us/globalization/keyboards/kbdur1) <!-- 00020422 --> |
 | `es`, `es-ES`, `ca-ES` | [Spanish & Catalan (Spain)](https://learn.microsoft.com/en-us/globalization/keyboards/kbdsp) <!-- 0000040A --> |
