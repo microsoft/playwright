@@ -371,7 +371,7 @@ Change settings
   };
 
   process.stdin.on('keypress', handler);
-  result.finally(() => {
+  void result.finally(() => {
     process.stdin.off('keypress', handler);
     rl.close();
     if (process.stdin.isTTY)
