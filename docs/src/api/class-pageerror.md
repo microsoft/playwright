@@ -26,7 +26,7 @@ page.navigate("data:text/html,<script>throw new Error('Test')</script>");
 
 ```python async
 # Log all uncaught errors to the terminal
-context.on("pageerror", lambda pageerror: print(f"uncaught exception: {pageerror.error()}"))
+context.on("pageerror", lambda pageerror: print(f"uncaught exception: {pageerror.error}"))
 
 # Navigate to a page with an exception.
 await page.goto("data:text/html,<script>throw new Error('test')</script>")
@@ -34,7 +34,7 @@ await page.goto("data:text/html,<script>throw new Error('test')</script>")
 
 ```python sync
 # Log all uncaught errors to the terminal
-context.on("pageerror", lambda pageerror: print(f"uncaught exception: {pageerror.error()}"))
+context.on("pageerror", lambda pageerror: print(f"uncaught exception: {pageerror.error}"))
 
 # Navigate to a page with an exception.
 page.goto("data:text/html,<script>throw new Error('test')</script>")
@@ -44,7 +44,7 @@ page.goto("data:text/html,<script>throw new Error('test')</script>")
 // Log all uncaught errors to the terminal
 context.PageError += (_, pageerror) =>
 {
-  Console.WriteLine("Uncaught exception: " + pageerror.error());
+  Console.WriteLine("Uncaught exception: " + pageerror.Error);
 };
 ```
 
