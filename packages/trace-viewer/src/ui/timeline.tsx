@@ -1,21 +1,21 @@
-/*
- * Copyright 2017 Google Inc. All rights reserved.
- * Modifications copyright (c) Microsoft Corporation.
-
-  Licensed under the Apache License, Version 2.0 (the "License");
-  you may not use this file except in compliance with the License.
-  You may obtain a copy of the License at
-
-      http://www.apache.org/licenses/LICENSE-2.0
-
-  Unless required by applicable law or agreed to in writing, software
-  distributed under the License is distributed on an "AS IS" BASIS,
-  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  See the License for the specific language governing permissions and
-  limitations under the License.
-*/
+/**
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 import { msToString, useMeasure } from '@web/uiUtils';
+import { GlassPane } from '@web/components/glassPane';
 import * as React from 'react';
 import type { Boundaries } from '../geometry';
 import { FilmStrip } from './filmStrip';
@@ -111,16 +111,13 @@ export const Timeline: React.FunctionComponent<{
     }
   }, [boundaries, measure, ref, selectedTime]);
 
-  const onMouseMove = React.useCallback((event: React.MouseEvent) => {
+  const onGlassPaneMouseMove = React.useCallback((event: MouseEvent) => {
     if (!ref.current)
       return;
     const x = event.clientX - ref.current.getBoundingClientRect().left;
     const time = positionToTime(measure.width, boundaries, x);
     const action = model?.actions.findLast(action => action.startTime <= time);
-    if (!dragWindow) {
-      setPreviewPoint({ x, clientY: event.clientY, action, sdkLanguage });
-      return;
-    }
+
     if (!event.buttons) {
       setDragWindow(undefined);
       return;
@@ -129,6 +126,10 @@ export const Timeline: React.FunctionComponent<{
     // When moving window reveal action under cursor.
     if (action)
       onSelected(action);
+
+    // Should not happen, but for type safety.
+    if (!dragWindow)
+      return;
 
     let newDragWindow = dragWindow;
     if (dragWindow.type === 'resize') {
@@ -153,9 +154,9 @@ export const Timeline: React.FunctionComponent<{
     const time2 = positionToTime(measure.width, boundaries, newDragWindow.endX);
     if (time1 !== time2)
       setSelectedTime({ minimum: Math.min(time1, time2), maximum: Math.max(time1, time2) });
-  }, [boundaries, dragWindow, measure, model, onSelected, ref, sdkLanguage, setSelectedTime]);
+  }, [boundaries, dragWindow, measure, model, onSelected, ref, setSelectedTime]);
 
-  const onMouseUp = React.useCallback(() => {
+  const onGlassPaneMouseUp = React.useCallback(() => {
     setPreviewPoint(undefined);
     if (!dragWindow)
       return;
@@ -178,23 +179,35 @@ export const Timeline: React.FunctionComponent<{
     setDragWindow(undefined);
   }, [boundaries, dragWindow, measure, model, selectedTime, setSelectedTime, onSelected]);
 
+  const onMouseMove = React.useCallback((event: React.MouseEvent) => {
+    if (!ref.current)
+      return;
+    const x = event.clientX - ref.current.getBoundingClientRect().left;
+    const time = positionToTime(measure.width, boundaries, x);
+    const action = model?.actions.findLast(action => action.startTime <= time);
+    setPreviewPoint({ x, clientY: event.clientY, action, sdkLanguage });
+  }, [boundaries, measure, model, ref, sdkLanguage]);
+
   const onMouseLeave = React.useCallback(() => {
     setPreviewPoint(undefined);
   }, []);
 
-  const onDoubleClick = React.useCallback(() => {
+  const onPaneDoubleClick = React.useCallback(() => {
     setSelectedTime(undefined);
   }, [setSelectedTime]);
 
   return <div style={{ flex: 'none', borderBottom: '1px solid var(--vscode-panel-border)' }}>
-    <div
-      ref={ref}
-      className={'timeline-view' + (dragWindow ? ' dragging' : '')}
+    <GlassPane
+      enabled={!!dragWindow}
+      cursor={dragWindow?.type === 'resize' ? 'ew-resize' : 'grab'}
+      onPaneMouseUp={onGlassPaneMouseUp}
+      onPaneMouseMove={onGlassPaneMouseMove}
+      onPaneDoubleClick={onPaneDoubleClick} />
+    <div ref={ref}
+      className='timeline-view'
       onMouseDown={onMouseDown}
-      onMouseUp={onMouseUp}
       onMouseMove={onMouseMove}
-      onMouseLeave={onMouseLeave}
-      onDoubleClick={onDoubleClick}>
+      onMouseLeave={onMouseLeave}>
       <div className='timeline-grid'>{
         offsets.map((offset, index) => {
           return <div key={index} className='timeline-divider' style={{ left: offset.position + 'px' }}>
@@ -219,7 +232,7 @@ export const Timeline: React.FunctionComponent<{
         display: (previewPoint !== undefined) ? 'block' : 'none',
         left: (previewPoint?.x || 0) + 'px',
       }} />
-      <div className='timeline-window'>
+      {selectedTime && <div className='timeline-window'>
         <div className='timeline-window-curtain left' style={{ width: curtainLeft }}></div>
         <div className='timeline-window-resizer'></div>
         <div className='timeline-window-center'>
@@ -227,7 +240,7 @@ export const Timeline: React.FunctionComponent<{
         </div>
         <div className='timeline-window-resizer'></div>
         <div className='timeline-window-curtain right' style={{ width: curtainRight }}></div>
-      </div>
+      </div>}
     </div>
   </div>;
 };
