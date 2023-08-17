@@ -15,7 +15,7 @@
  */
 
 import readline from 'readline';
-import { createGuid, ManualPromise } from 'playwright-core/lib/utils';
+import { createGuid, getPackageManagerExecCommand, ManualPromise } from 'playwright-core/lib/utils';
 import type { FullConfigInternal, FullProjectInternal } from '../common/config';
 import { InternalReporter } from '../reporters/internalReporter';
 import { createFileMatcher, createFileMatcherFromArguments } from '../util';
@@ -384,8 +384,9 @@ let showBrowserServer: PlaywrightServer | undefined;
 let seq = 0;
 
 function printConfiguration(config: FullConfigInternal, title?: string) {
+  const packageManagerCommand = getPackageManagerExecCommand();
   const tokens: string[] = [];
-  tokens.push('npx playwright test');
+  tokens.push(`${packageManagerCommand} playwright test`);
   tokens.push(...(config.cliProjectFilter || [])?.map(p => colors.blue(`--project ${p}`)));
   if (config.cliGrep)
     tokens.push(colors.red(`--grep ${config.cliGrep}`));

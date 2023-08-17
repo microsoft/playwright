@@ -18,7 +18,7 @@ import { colors, ms as milliseconds, parseStackTraceLine } from 'playwright-core
 import path from 'path';
 import type { FullConfig, TestCase, Suite, TestResult, TestError, FullResult, TestStep, Location } from '../../types/testReporter';
 import type { SuitePrivate } from '../../types/reporterPrivate';
-import { monotonicTime } from 'playwright-core/lib/utils';
+import { getPackageManagerExecCommand, monotonicTime } from 'playwright-core/lib/utils';
 import type { ReporterV2 } from './reporterV2';
 export type TestResultOutput = { chunk: string | Buffer, type: 'stdout' | 'stderr' };
 export const kOutputSymbol = Symbol('output');
@@ -298,9 +298,10 @@ export function formatFailure(config: FullConfig, test: TestCase, options: {inde
           resultLines.push(colors.cyan(`    ${relativePath}`));
           // Make this extensible
           if (attachment.name === 'trace') {
+            const packageManagerCommand = getPackageManagerExecCommand();
             resultLines.push(colors.cyan(`    Usage:`));
             resultLines.push('');
-            resultLines.push(colors.cyan(`        npx playwright show-trace ${relativePath}`));
+            resultLines.push(colors.cyan(`        ${packageManagerCommand} playwright show-trace ${relativePath}`));
             resultLines.push('');
           }
         } else {

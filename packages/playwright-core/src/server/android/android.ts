@@ -21,7 +21,7 @@ import os from 'os';
 import path from 'path';
 import type * as stream from 'stream';
 import { wsReceiver, wsSender } from '../../utilsBundle';
-import { createGuid, makeWaitForNextTask, isUnderTest } from '../../utils';
+import { createGuid, makeWaitForNextTask, isUnderTest, getPackageManagerExecCommand } from '../../utils';
 import { removeFolders } from '../../utils/fileUtils';
 import type { BrowserOptions, BrowserProcess } from '../browser';
 import type { BrowserContext } from '../browserContext';
@@ -186,10 +186,11 @@ export class AndroidDevice extends SdkObject {
 
       debug('pw:android')('Installing the new driver');
       const executable = registry.findExecutable('android')!;
+      const packageManagerCommand = getPackageManagerExecCommand();
       for (const file of ['android-driver.apk', 'android-driver-target.apk']) {
         const fullName = path.join(executable.directory!, file);
         if (!fs.existsSync(fullName))
-          throw new Error('Please install Android driver apk using `npx playwright install android`');
+          throw new Error(`Please install Android driver apk using '${packageManagerCommand} playwright install android'`);
         await this.installApk(await fs.promises.readFile(fullName));
       }
     } else {

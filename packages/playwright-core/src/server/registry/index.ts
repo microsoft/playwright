@@ -23,7 +23,7 @@ import { lockfile } from '../../utilsBundle';
 import { getLinuxDistributionInfo } from '../../utils/linuxUtils';
 import { fetchData } from '../../utils/network';
 import { getEmbedderName } from '../../utils/userAgent';
-import { getFromENV, getAsBooleanFromENV, calculateSha1, wrapInASCIIBox } from '../../utils';
+import { getFromENV, getAsBooleanFromENV, calculateSha1, wrapInASCIIBox, getPackageManagerExecCommand } from '../../utils';
 import { removeFolders, existsAsync, canAccessFile } from '../../utils/fileUtils';
 import { hostPlatform } from '../../utils/hostPlatform';
 import { spawnAsync } from '../../utils/spawnAsync';
@@ -1008,8 +1008,10 @@ export function buildPlaywrightCLICommand(sdkLanguage: string, parameters: strin
       return `mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="${parameters}"`;
     case 'csharp':
       return `pwsh bin/Debug/netX/playwright.ps1 ${parameters}`;
-    default:
-      return `npx playwright ${parameters}`;
+    default: {
+      const packageManagerCommand = getPackageManagerExecCommand();
+      return `${packageManagerCommand} playwright ${parameters}`;
+    }
   }
 }
 

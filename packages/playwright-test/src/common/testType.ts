@@ -21,6 +21,7 @@ import { wrapFunctionWithLocation } from '../transform/transform';
 import type { FixturesWithLocation } from './config';
 import type { Fixtures, TestType } from '../../types/test';
 import type { Location } from '../../types/testReporter';
+import { getPackageManagerExecCommand } from 'playwright-core/lib/utils';
 
 const testTypeSymbol = Symbol('testType');
 
@@ -242,8 +243,9 @@ export class TestTypeImpl {
 
 function throwIfRunningInsideJest() {
   if (process.env.JEST_WORKER_ID) {
+    const packageManagerCommand = getPackageManagerExecCommand();
     throw new Error(
-        `Playwright Test needs to be invoked via 'npx playwright test' and excluded from Jest test runs.\n` +
+        `Playwright Test needs to be invoked via '${packageManagerCommand} playwright test' and excluded from Jest test runs.\n` +
         `Creating one directory for Playwright tests and one for Jest is the recommended way of doing it.\n` +
         `See https://playwright.dev/docs/intro for more information about Playwright Test.`,
     );
