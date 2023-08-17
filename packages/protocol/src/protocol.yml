@@ -474,7 +474,12 @@ ContextOptions:
       - active
       - none
       - no-override
-    acceptDownloads: boolean?
+    acceptDownloads:
+      type: enum?
+      literals:
+      - accept
+      - deny
+      - internal-browser-default
     baseURL: string?
     recordVideo:
       type: object?
@@ -3136,7 +3141,12 @@ Electron:
           type: array?
           items: NameValue
         timeout: number?
-        acceptDownloads: boolean?
+        acceptDownloads:
+          type: enum?
+          literals:
+          - accept
+          - deny
+          - internal-browser-default
         bypassCSP: boolean?
         colorScheme:
           type: enum?

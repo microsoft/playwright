@@ -174,13 +174,15 @@ export class FFBrowserContext extends BrowserContext {
     assert(!this._ffPages().length);
     const browserContextId = this._browserContextId;
     const promises: Promise<any>[] = [super._initialize()];
-    promises.push(this._browser._connection.send('Browser.setDownloadOptions', {
-      browserContextId,
-      downloadOptions: {
-        behavior: this._options.acceptDownloads ? 'saveToDisk' : 'cancel',
-        downloadsDir: this._browser.options.downloadsPath,
-      },
-    }));
+    if (this._options.acceptDownloads !== 'internal-browser-default') {
+      promises.push(this._browser._connection.send('Browser.setDownloadOptions', {
+        browserContextId,
+        downloadOptions: {
+          behavior: this._options.acceptDownloads === 'accept' ? 'saveToDisk' : 'cancel',
+          downloadsDir: this._browser.options.downloadsPath,
+        },
+      }));
+    }
     if (this._options.viewport) {
       const viewport = {
         viewportSize: { width: this._options.viewport.width, height: this._options.viewport.height },

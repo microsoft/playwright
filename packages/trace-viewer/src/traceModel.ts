@@ -35,6 +35,7 @@ export class TraceModel {
   private _snapshotStorage: SnapshotStorage | undefined;
   private _version: number | undefined;
   private _backend!: TraceModelBackend;
+  private _attachments = new Map<string, trace.AfterActionTraceEventAttachment>();
 
   constructor() {
   }
@@ -112,6 +113,10 @@ export class TraceModel {
     return this._backend.readBlob('resources/' + sha1);
   }
 
+  attachmentForSha1(sha1: string): trace.AfterActionTraceEventAttachment | undefined {
+    return this._attachments.get(sha1);
+  }
+
   storage(): SnapshotStorage {
     return this._snapshotStorage!;
   }
@@ -169,6 +174,8 @@ export class TraceModel {
         existing!.result = event.result;
         existing!.error = event.error;
         existing!.attachments = event.attachments;
+        for (const attachment of event.attachments?.filter(a => a.sha1) || [])
+          this._attachments.set(attachment.sha1!, attachment);
         break;
       }
       case 'action': {

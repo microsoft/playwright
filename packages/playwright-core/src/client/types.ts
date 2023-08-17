@@ -47,7 +47,7 @@ export type SetStorageState = {
 export type LifecycleEvent = channels.LifecycleEvent;
 export const kLifecycleEvents: Set<LifecycleEvent> = new Set(['load', 'domcontentloaded', 'networkidle', 'commit']);
 
-export type BrowserContextOptions = Omit<channels.BrowserNewContextOptions, 'viewport' | 'noDefaultViewport' | 'extraHTTPHeaders' | 'storageState' | 'recordHar' | 'colorScheme' | 'reducedMotion' | 'forcedColors'> & {
+export type BrowserContextOptions = Omit<channels.BrowserNewContextOptions, 'viewport' | 'noDefaultViewport' | 'extraHTTPHeaders' | 'storageState' | 'recordHar' | 'colorScheme' | 'reducedMotion' | 'forcedColors' | 'acceptDownloads'> & {
   viewport?: Size | null;
   extraHTTPHeaders?: Headers;
   logger?: Logger;
@@ -69,6 +69,7 @@ export type BrowserContextOptions = Omit<channels.BrowserNewContextOptions, 'vie
   colorScheme?: 'dark' | 'light' | 'no-preference' | null;
   reducedMotion?: 'reduce' | 'no-preference' | null;
   forcedColors?: 'active' | 'none' | null;
+  acceptDownloads?: boolean;
 };
 
 type LaunchOverrides = {

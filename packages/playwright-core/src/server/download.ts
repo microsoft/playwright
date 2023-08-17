@@ -26,7 +26,7 @@ export class Download {
   private _suggestedFilename: string | undefined;
 
   constructor(page: Page, downloadsPath: string, uuid: string, url: string, suggestedFilename?: string) {
-    const unaccessibleErrorMessage = !page._browserContext._options.acceptDownloads ? 'Pass { acceptDownloads: true } when you are creating your browser context.' : undefined;
+    const unaccessibleErrorMessage = page._browserContext._options.acceptDownloads === 'deny' ? 'Pass { acceptDownloads: true } when you are creating your browser context.' : undefined;
     this.artifact = new Artifact(page, path.join(downloadsPath, uuid), unaccessibleErrorMessage, () => {
       return this._page._browserContext.cancelDownload(uuid);
     });

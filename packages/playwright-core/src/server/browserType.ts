@@ -32,7 +32,7 @@ import { ProgressController } from './progress';
 import type * as types from './types';
 import type * as channels from '@protocol/channels';
 import { DEFAULT_TIMEOUT, TimeoutSettings } from '../common/timeoutSettings';
-import { debugMode } from '../utils';
+import { debugMode, isUnderTest } from '../utils';
 import { existsAsync } from '../utils/fileUtils';
 import { helper } from './helper';
 import { RecentLogsCollector } from '../common/debugLogger';
@@ -107,6 +107,7 @@ export abstract class BrowserType extends SdkObject {
       noDefaultViewport: true,
       ignoreDefaultArgs: ['--enable-automation'],
       colorScheme: 'no-override',
+      acceptDownloads: isUnderTest() ? 'accept' : 'internal-browser-default',
       ...options?.persistentContextOptions,
       args,
     });
