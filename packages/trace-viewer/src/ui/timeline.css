@@ -25,10 +25,6 @@
   margin-left: 10px;
 }
 
-.timeline-view.dragging {
-  cursor: ew-resize;
-}
-
 .timeline-divider {
   position: absolute;
   width: 1px;
@@ -135,6 +131,10 @@
 .timeline-window-curtain {
   flex: none;
   background-color: #3879d91a;
+}
+
+body.dark-mode .timeline-window-curtain {
+  background-color: #161718bf;
 }
 
 .timeline-window-curtain.left {
