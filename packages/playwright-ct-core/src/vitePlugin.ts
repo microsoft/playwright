@@ -62,10 +62,9 @@ export function createPlugin(
       const use = config.projects[0].use as CtConfig;
       const port = use.ctPort || 3100;
       const viteConfig = typeof use.ctViteConfig === 'function' ? await use.ctViteConfig() : (use.ctViteConfig || {});
-      const relativeTemplateDir = use.ctTemplateDir || 'playwright';
 
       const rootDir = viteConfig.root || configDir;
-      const templateDir = path.join(rootDir, relativeTemplateDir);
+      const templateDir = path.resolve(rootDir, use.ctTemplateDir || 'playwright');
       const outDir = viteConfig?.build?.outDir || (use.ctCacheDir ? path.resolve(rootDir, use.ctCacheDir) : path.resolve(templateDir, '.cache'));
 
       const buildInfoFile = path.join(outDir, 'metainfo.json');
