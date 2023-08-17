@@ -1,6 +1,6 @@
 {
   "name": "playwright",
-  "version": "1.37.0",
+  "version": "1.37.1",
   "description": "A high-level API to automate web browsers",
   "repository": "github:Microsoft/playwright",
   "homepage": "https://playwright.dev",
@@ -28,6 +28,6 @@
     "install": "node install.js"
   },
   "dependencies": {
-    "playwright-core": "1.37.0"
+    "playwright-core": "1.37.1"
   }
 }
