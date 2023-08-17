@@ -26,8 +26,11 @@ Selectors must be registered before creating the page.
 
 An example of registering selector engine that queries elements based on a tag name:
 
-```js
-import { test, expect } from '@playwright/test';
+
+```js title="baseTest.ts"
+import { test as base } from '@playwright/test';
+
+export { expect } from '@playwright/test';
 
 // Must be a function that evaluates to a selector engine instance.
 const createTagNameEngine = () => ({
@@ -42,11 +45,18 @@ const createTagNameEngine = () => ({
   }
 });
 
-// Register selectors before any page is created.
-test.beforeAll(async ({ playwright }) => {
-  // Register the engine. Selectors will be prefixed with "tag=".
-  await playwright.selectors.register('tag', createTagNameEngine);
+export const test = base.extend<{}, { selectorRegistration: void }>({
+  // Register selectors once per worker.
+  selectorRegistration: [async ({ playwright }, use) => {
+    // Register the engine. Selectors will be prefixed with "tag=".
+    await playwright.selectors.register('tag', createTagNameEngine);
+    await use();
+  }, { scope: 'worker', auto: true }],
 });
+```
+
+```js title="example.spec.ts"
+import { test, expect } from './baseTest';
 
 test('selector engine test', async ({ page }) => {
   // Now we can use 'tag=' selectors.
