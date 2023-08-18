@@ -36,7 +36,7 @@ SoftAssertions softly = SoftAssertions.create();
 ## method: SoftAssertions.expectLocator
 * since: v1.38
 * langs:
-  - alias-java: assertThat(locator)
+  - alias-java: assertThat
 - returns: <[LocatorAssertions]>
 
 Creates a [LocatorAssertions] object for the given [Locator].
@@ -58,7 +58,7 @@ softly.assertThat(locator).isVisible();
 ## method: SoftAssertions.expectPage
 * since: v1.38
 * langs:
-  - alias-java: assertThat(page)
+  - alias-java: assertThat
 - returns: <[PageAssertions]>
 
 Creates a [PageAssertions] object for the given [Page].
@@ -80,7 +80,7 @@ softly.assertThat(page).hasTitle("News");
 ## method: SoftAssertions.expectAPIResponse
 * since: v1.38
 * langs:
-  - alias-java: assertThat(response)
+  - alias-java: assertThat
 
 - returns: <[APIResponseAssertions]>
 
