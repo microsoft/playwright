@@ -18,7 +18,10 @@
     },
     "./cli": "./cli.js",
     "./lib/mount": "./lib/mount.js",
-    "./lib/vitePlugin": "./lib/vitePlugin.js"
+    "./lib/vitePlugin": "./lib/vitePlugin.js",
+    "./types/component": {
+      "types": "./types/component.d.ts"
+    }
   },
   "dependencies": {
     "playwright-core": "1.38.0-next",
