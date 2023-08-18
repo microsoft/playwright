@@ -85,7 +85,7 @@ Full installation and configuration instructions are available in the [Storybook
 
 ### Step 1: Install Playwright Test for Storybook
 
-Run the CT installation and select **Storybook** when prompted:
+Run the Playwright CT installation and select **Storybook** when prompted:
 
 <Tabs
   defaultValue="npm"
@@ -206,8 +206,9 @@ Playwright Experimental CT lacks the concept of stories, so the tests render the
 
 You should consider using Playwright CT for Storybook over Playwright Experimental CT if:
 
-- You already use Storybook for component development and documentation
+- You develop your components in Storybook
 - You're using a renderer that is not supported by Playwright CT (e.g. Angular)
+- Your component build system is based on Webpack (or Rspack)
 - You're hitting up against any of the limitations of CT (e.g. test imports)
 
 ### Q) What's the difference between `@storybook/playwright-ct` and `@storybook/test-runner`?
