@@ -85,6 +85,8 @@ Full installation and configuration instructions are available in the [Storybook
 
 ### Step 1: Install Playwright Test for Storybook
 
+Run the CT installation and select **Storybook** when prompted:
+
 <Tabs
   defaultValue="npm"
   values={[
@@ -96,7 +98,7 @@ Full installation and configuration instructions are available in the [Storybook
 <TabItem value="npm">
 
 ```bash
-npm init playwright@latest -- --storybook
+npm init playwright@latest -- --ct
 ```
 
 </TabItem>
@@ -104,7 +106,7 @@ npm init playwright@latest -- --storybook
 <TabItem value="yarn">
 
 ```bash
-yarn create playwright --storybook
+yarn create playwright --ct
 ```
 
 </TabItem>
@@ -112,7 +114,7 @@ yarn create playwright --storybook
 <TabItem value="pnpm">
 
 ```bash
-pnpm dlx create-playwright --storybook
+pnpm dlx create-playwright --ct
 ```
 
  </TabItem>
