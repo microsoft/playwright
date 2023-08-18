@@ -80,7 +80,7 @@ jobs:
               issue_number: prNumber,
             });
             for (const comment of comments) {
-              if (comment.user.login === 'github-actions[bot]' && comment.body.includes('Test results')) {
+              if (comment.user.login === 'github-actions[bot]' && /\[Test results\]\(https:\/\/.+?\) for "${{ github.event.workflow_run.name }}"/.test(comment.body)) {
                 await github.graphql(`
                   mutation {
                     minimizeComment(input: {subjectId: "${comment.node_id}", classifier: OUTDATED}) {
