@@ -16,7 +16,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { minimatch } from 'playwright-core/lib/utilsBundle';
+import { micromatch } from 'playwright-core/lib/utilsBundle';
 import { promisify } from 'util';
 import type { FullProjectInternal } from '../common/config';
 import { createFileMatcher } from '../util';
@@ -181,17 +181,24 @@ async function collectFiles(testDir: string, respectGitIgnore: boolean): Promise
       const gitignore = entries.find(e => e.isFile() && e.name === '.gitignore');
       if (gitignore) {
         const content = await readFileAsync(path.join(dir, gitignore.name), 'utf8');
-        const newRules: Rule[] = content.split(/\r?\n/).map(s => {
-          s = s.trim();
-          if (!s)
+        const newRules: Rule[] = content.split(/\r?\n/).map(line => {
+          line = line.trim();
+          if (!line || line[0] === '#')
             return;
-          // Use flipNegate, because we handle negation ourselves.
-          const rule = new minimatch.Minimatch(s, { matchBase: true, dot: true, flipNegate: true }) as any;
-          if (rule.comment)
-            return;
-          rule.dir = dir;
-          return rule;
-        }).filter(rule => !!rule);
+          const negate = line[0] === '!' || line[0] === '^';
+          // Remove the negation from the rule, because we handle negation ourselves.
+          if (negate)
+            line = line.substring(1);
+          return {
+            dir,
+            negate,
+            match: (s: string, partial?: boolean) => {
+              if (partial)
+                return micromatch.isMatch(s, line, { matchBase: true, dot: true, contains: true }) || micromatch.isMatch(line, s, {  dot: true, contains: true });
+              return micromatch.isMatch(s, line, { matchBase: true, dot: true });
+            }
+          } satisfies Rule;
+        }).filter(rule => !!rule) as Rule[];
         rules = [...rules, ...newRules];
       }
     }

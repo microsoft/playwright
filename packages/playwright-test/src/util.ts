@@ -20,7 +20,7 @@ import type { StackFrame } from '@protocol/channels';
 import util from 'util';
 import path from 'path';
 import url from 'url';
-import { colors, debug, minimatch, parseStackTraceLine } from 'playwright-core/lib/utilsBundle';
+import { colors, debug, micromatch, parseStackTraceLine } from 'playwright-core/lib/utilsBundle';
 import type { TestInfoError } from './../types/test';
 import type { Location } from './../types/testReporter';
 import { calculateSha1, isRegExp, isString, sanitizeForFilePath } from 'playwright-core/lib/utils';
@@ -135,7 +135,7 @@ export function createFileMatcher(patterns: string | RegExp | (string | RegExp)[
       }
     }
     for (const pattern of filePatterns) {
-      if (minimatch(filePath, pattern, { nocase: true, dot: true }))
+      if (micromatch.isMatch(filePath, pattern, { nocase: true, dot: true }))
         return true;
     }
     return false;

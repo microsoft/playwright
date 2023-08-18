@@ -33,8 +33,8 @@ export const lockfile = lockfileLibrary;
 import mimeLibrary from 'mime';
 export const mime = mimeLibrary;
 
-import minimatchLibrary from 'minimatch';
-export const minimatch = minimatchLibrary;
+import micromatchLibrary from 'micromatch';
+export const micromatch = micromatchLibrary;
 
 import openLibrary from 'open';
 export const open = openLibrary;

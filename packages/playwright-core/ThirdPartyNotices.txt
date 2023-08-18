@@ -8,19 +8,19 @@ This project incorporates components from the projects listed below. The origina
 -	@types/yauzl@2.10.0 (https://github.com/DefinitelyTyped/DefinitelyTyped)
 -	agent-base@6.0.2 (https://github.com/TooTallNate/node-agent-base)
 -	balanced-match@1.0.2 (https://github.com/juliangruber/balanced-match)
--	brace-expansion@1.1.11 (https://github.com/juliangruber/brace-expansion)
 -	brace-expansion@2.0.1 (https://github.com/juliangruber/brace-expansion)
+-	braces@3.0.2 (https://github.com/micromatch/braces)
 -	buffer-crc32@0.2.13 (https://github.com/brianloveswords/buffer-crc32)
 -	codemirror@5.65.9 (https://github.com/codemirror/CodeMirror)
 -	colors@1.4.0 (https://github.com/Marak/colors.js)
 -	commander@8.3.0 (https://github.com/tj/commander.js)
--	concat-map@0.0.1 (https://github.com/substack/node-concat-map)
 -	debug@4.3.4 (https://github.com/debug-js/debug)
 -	define-lazy-prop@2.0.0 (https://github.com/sindresorhus/define-lazy-prop)
 -	end-of-stream@1.4.4 (https://github.com/mafintosh/end-of-stream)
 -	escape-string-regexp@2.0.0 (https://github.com/sindresorhus/escape-string-regexp)
 -	extract-zip@2.0.1 (https://github.com/maxogden/extract-zip)
 -	fd-slicer@1.1.0 (https://github.com/andrewrk/node-fd-slicer)
+-	fill-range@7.0.1 (https://github.com/jonschlinkert/fill-range)
 -	fs.realpath@1.0.0 (https://github.com/isaacs/fs.realpath)
 -	get-stream@5.2.0 (https://github.com/sindresorhus/get-stream)
 -	glob@9.3.5 (https://github.com/isaacs/node-glob)
@@ -28,11 +28,12 @@ This project incorporates components from the projects listed below. The origina
 -	https-proxy-agent@5.0.0 (https://github.com/TooTallNate/node-https-proxy-agent)
 -	ip@2.0.0 (https://github.com/indutny/node-ip)
 -	is-docker@2.2.1 (https://github.com/sindresorhus/is-docker)
+-	is-number@7.0.0 (https://github.com/jonschlinkert/is-number)
 -	is-wsl@2.2.0 (https://github.com/sindresorhus/is-wsl)
 -	jpeg-js@0.4.4 (https://github.com/eugeneware/jpeg-js)
 -	lru-cache@10.0.0 (https://github.com/isaacs/node-lru-cache)
+-	micromatch@4.0.5 (https://github.com/micromatch/micromatch)
 -	mime@3.0.0 (https://github.com/broofa/mime)
--	minimatch@3.1.2 (https://github.com/isaacs/minimatch)
 -	minimatch@8.0.4 (https://github.com/isaacs/minimatch)
 -	minipass@4.2.8 (https://github.com/isaacs/minipass)
 -	minipass@7.0.2 (https://github.com/isaacs/minipass)
@@ -41,6 +42,7 @@ This project incorporates components from the projects listed below. The origina
 -	open@8.4.0 (https://github.com/sindresorhus/open)
 -	path-scurry@1.10.1 (https://github.com/isaacs/path-scurry)
 -	pend@1.2.0 (https://github.com/andrewrk/node-pend)
+-	picomatch@2.3.1 (https://github.com/micromatch/picomatch)
 -	pngjs@6.0.0 (https://github.com/lukeapage/pngjs)
 -	progress@2.0.3 (https://github.com/visionmedia/node-progress)
 -	proxy-from-env@1.1.0 (https://github.com/Rob--W/proxy-from-env)
@@ -52,6 +54,7 @@ This project incorporates components from the projects listed below. The origina
 -	socks-proxy-agent@6.1.1 (https://github.com/TooTallNate/node-socks-proxy-agent)
 -	socks@2.7.0 (https://github.com/JoshGlazebrook/socks)
 -	stack-utils@2.0.5 (https://github.com/tapjs/stack-utils)
+-	to-regex-range@5.0.1 (https://github.com/micromatch/to-regex-range)
 -	wrappy@1.0.2 (https://github.com/npm/wrappy)
 -	ws@8.4.2 (https://github.com/websockets/ws)
 -	yauzl@2.10.0 (https://github.com/thejoshwolfe/yauzl)
@@ -285,32 +288,6 @@ SOFTWARE.
 =========================================
 END OF balanced-match@1.0.2 AND INFORMATION
 
-%% brace-expansion@1.1.11 NOTICES AND INFORMATION BEGIN HERE
-=========================================
-MIT License
-
-Copyright (c) 2013 Julian Gruber <julian@juliangruber.com>
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-=========================================
-END OF brace-expansion@1.1.11 AND INFORMATION
-
 %% brace-expansion@2.0.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
@@ -336,6 +313,32 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 =========================================
 END OF brace-expansion@2.0.1 AND INFORMATION
+
+%% braces@3.0.2 NOTICES AND INFORMATION BEGIN HERE
+=========================================
+The MIT License (MIT)
+
+Copyright (c) 2014-2018, Jon Schlinkert.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+=========================================
+END OF braces@3.0.2 AND INFORMATION
 
 %% buffer-crc32@0.2.13 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -443,29 +446,6 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
 END OF commander@8.3.0 AND INFORMATION
-
-%% concat-map@0.0.1 NOTICES AND INFORMATION BEGIN HERE
-=========================================
-This software is released under the MIT license:
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of
-this software and associated documentation files (the "Software"), to deal in
-the Software without restriction, including without limitation the rights to
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
-the Software, and to permit persons to whom the Software is furnished to do so,
-subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
-FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
-COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
-IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
-CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-=========================================
-END OF concat-map@0.0.1 AND INFORMATION
 
 %% debug@4.3.4 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -598,6 +578,32 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 =========================================
 END OF fd-slicer@1.1.0 AND INFORMATION
+
+%% fill-range@7.0.1 NOTICES AND INFORMATION BEGIN HERE
+=========================================
+The MIT License (MIT)
+
+Copyright (c) 2014-present, Jon Schlinkert.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+=========================================
+END OF fill-range@7.0.1 AND INFORMATION
 
 %% fs.realpath@1.0.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -952,6 +958,32 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 =========================================
 END OF is-docker@2.2.1 AND INFORMATION
 
+%% is-number@7.0.0 NOTICES AND INFORMATION BEGIN HERE
+=========================================
+The MIT License (MIT)
+
+Copyright (c) 2014-present, Jon Schlinkert.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+=========================================
+END OF is-number@7.0.0 AND INFORMATION
+
 %% is-wsl@2.2.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
@@ -1016,6 +1048,32 @@ IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 =========================================
 END OF lru-cache@10.0.0 AND INFORMATION
 
+%% micromatch@4.0.5 NOTICES AND INFORMATION BEGIN HERE
+=========================================
+The MIT License (MIT)
+
+Copyright (c) 2014-present, Jon Schlinkert.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+=========================================
+END OF micromatch@4.0.5 AND INFORMATION
+
 %% mime@3.0.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 The MIT License (MIT)
@@ -1041,26 +1099,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 =========================================
 END OF mime@3.0.0 AND INFORMATION
-
-%% minimatch@3.1.2 NOTICES AND INFORMATION BEGIN HERE
-=========================================
-The ISC License
-
-Copyright (c) Isaac Z. Schlueter and Contributors
-
-Permission to use, copy, modify, and/or distribute this software for any
-purpose with or without fee is hereby granted, provided that the above
-copyright notice and this permission notice appear in all copies.
-
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
-IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-=========================================
-END OF minimatch@3.1.2 AND INFORMATION
 
 %% minimatch@8.0.4 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -1269,6 +1307,32 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 =========================================
 END OF pend@1.2.0 AND INFORMATION
+
+%% picomatch@2.3.1 NOTICES AND INFORMATION BEGIN HERE
+=========================================
+The MIT License (MIT)
+
+Copyright (c) 2017-present, Jon Schlinkert.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+=========================================
+END OF picomatch@2.3.1 AND INFORMATION
 
 %% pngjs@6.0.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -1673,6 +1737,32 @@ THE SOFTWARE.
 =========================================
 END OF stack-utils@2.0.5 AND INFORMATION
 
+%% to-regex-range@5.0.1 NOTICES AND INFORMATION BEGIN HERE
+=========================================
+The MIT License (MIT)
+
+Copyright (c) 2015-present, Jon Schlinkert.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+=========================================
+END OF to-regex-range@5.0.1 AND INFORMATION
+
 %% wrappy@1.0.2 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 The ISC License
@@ -1771,6 +1861,6 @@ END OF yazl@2.5.1 AND INFORMATION
 
 SUMMARY BEGIN HERE
 =========================================
-Total Packages: 52
+Total Packages: 55
 =========================================
 END OF SUMMARY
