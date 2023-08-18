@@ -1,31 +1,21 @@
 name: 'Upload blob report'
-description: 'Upload blob to Azure blob storage or to GitHub artifacts (for pull requests)'
+description: 'Upload blob report to GitHub artifacts (for pull requests)'
 inputs:
   report_dir:
     description: 'Directory containing blob report'
     required: true
     type: string
     default: 'blob-report'
-  connection_string:
-    description: 'Azure connection string'
-    required: true
-    type: string
 runs:
   using: "composite"
   steps:
-    - name: Upload blob report to Azure
-      if: always() && github.event_name == 'push'
-      shell: bash
-      run: |
-        REPORT_DIR='run-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.sha }}'
-        az storage blob upload-batch -s "${{ inputs.report_dir }}" -d "\$web/$REPORT_DIR" --connection-string "${{ inputs.connection_string }}"
     - name: Upload blob report to GitHub
       if: always() && github.event_name == 'pull_request'
       uses: actions/upload-artifact@v3
       with:
         name: all-blob-reports
         path: ${{ inputs.report_dir }}
-        retention-days: 30
+        retention-days: 7
     - name: Write triggering pull request number in a file
       if: always() && github.event_name == 'pull_request'
       shell: bash

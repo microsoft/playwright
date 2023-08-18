@@ -61,11 +61,10 @@ jobs:
       if: always()
       shell: bash
     - name: Upload blob report
-      if: always() && github.event_name == 'pull_request'
+      if: always()
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   test_linux_chromium_tot:
     name: ${{ matrix.os }} (chromium tip-of-tree)
@@ -93,11 +92,10 @@ jobs:
       if: always()
       shell: bash
     - name: Upload blob report
-      if: always() && github.event_name == 'pull_request'
+      if: always()
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   test_test_runner:
     name: Test Runner
@@ -143,11 +141,10 @@ jobs:
       if: always()
       shell: bash
     - name: Upload blob report
-      if: always() && github.event_name == 'pull_request'
+      if: always()
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   test_web_components:
     name: Web Components
