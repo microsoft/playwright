@@ -32,6 +32,8 @@ jobs:
     - name: Merge reports
       run: |
         npx playwright merge-reports --reporter markdown,html ./all-blob-reports
+      env:
+        NODE_OPTIONS: --max-old-space-size=4096
 
     - name: Upload HTML report to Azure
       run: |
