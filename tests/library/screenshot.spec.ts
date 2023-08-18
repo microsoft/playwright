@@ -444,4 +444,53 @@ browserTest.describe('element screenshot', () => {
     expect(screenshot).toMatchSnapshot('element-larger-than-viewport-dsf-css-size.png');
     await context.close();
   });
+
+  browserTest('page screenshot should capture css transform with device pixels', async function({ browser, browserName }) {
+    browserTest.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/26447' });
+    browserTest.fixme(browserName === 'webkit');
+    const context = await browser.newContext({
+      viewport: { width: 500, height: 500 },
+      deviceScaleFactor: 3,
+    });
+    const page = await context.newPage();
+    await page.setContent(`
+      <style>
+      .container {
+        width: 150px;
+        height: 150px;
+        margin: 75px 0 0 75px;
+        border: none;
+      }
+
+      .cube {
+        width: 100%;
+        height: 100%;
+        perspective: 550px;
+        perspective-origin: 150% 150%;
+      }
+
+      .face {
+        display: block;
+        position: absolute;
+        width: 100px;
+        height: 100px;
+        border: none;
+      }
+
+      .right {
+        background: rgba(196, 0, 0, 0.7);
+        transform: rotateY(70deg);
+      }
+
+      </style>
+      <div class="container">
+        <div class="cube showbf">
+          <div class="face right"></div>
+        </div>
+      </div>
+    `);
+
+    await expect(page).toHaveScreenshot({ scale: 'device' });
+    await context.close();
+  });
 });
