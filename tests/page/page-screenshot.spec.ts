@@ -840,3 +840,51 @@ it('should throw if screenshot size is too large', async ({ page, browserName, i
       expect(exception.message).toContain('Cannot take screenshot larger than 32767');
   }
 });
+
+it('page screenshot should capture css transform', async function({ page, browserName }) {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/26447' });
+  it.fixme(browserName === 'webkit');
+  await page.setContent(`
+    <style>
+    .container {
+      width: 150px;
+      height: 150px;
+      margin: 75px 0 0 75px;
+      border: none;
+    }
+
+    .cube {
+      width: 100%;
+      height: 100%;
+      perspective: 550px;
+      perspective-origin: 150% 150%;
+    }
+
+    .face {
+      display: block;
+      position: absolute;
+      width: 100px;
+      height: 100px;
+      border: none;
+      line-height: 100px;
+      font-family: sans-serif;
+      font-size: 60px;
+      color: white;
+      text-align: center;
+    }
+
+    .right {
+      background: rgba(196, 0, 0, 0.7);
+      transform: rotateY(70deg);
+    }
+
+    </style>
+    <div class="container">
+      <div class="cube showbf">
+        <div class="face right">3</div>
+      </div>
+    </div>
+  `);
+
+  await expect(page).toHaveScreenshot();
+});
