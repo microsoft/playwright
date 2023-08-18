@@ -48,11 +48,10 @@ jobs:
       if: always()
       shell: bash
     - name: Upload blob report
-      if: always() && github.event_name == 'pull_request'
+      if: always()
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   test_mac:
     name: ${{ matrix.os }} (${{ matrix.browser }})
@@ -80,11 +79,10 @@ jobs:
       if: always()
       shell: bash
     - name: Upload blob report
-      if: always() && github.event_name == 'pull_request'
+      if: always()
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   test_win:
     name: "Windows"
@@ -112,11 +110,10 @@ jobs:
       if: always()
       shell: bash
     - name: Upload blob report
-      if: always() && github.event_name == 'pull_request'
+      if: always()
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   test-package-installations-other-node-versions:
     name: "Installation Test ${{ matrix.os }} (${{ matrix.node_version }})"
@@ -179,11 +176,10 @@ jobs:
       if: always()
       shell: bash
     - name: Upload blob report
-      if: always() && github.event_name == 'pull_request'
+      if: always()
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   transport_linux:
     name: "Transport"
@@ -211,11 +207,10 @@ jobs:
       if: always()
       shell: bash
     - name: Upload blob report
-      if: always() && github.event_name == 'pull_request'
+      if: always()
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   tracing_linux:
     name: Tracing ${{ matrix.browser }} ${{ matrix.channel }}
@@ -249,11 +244,10 @@ jobs:
       if: always()
       shell: bash
     - name: Upload blob report
-      if: always() && github.event_name == 'pull_request'
+      if: always()
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   chrome_stable_linux:
     name: "Chrome Stable (Linux)"
@@ -276,11 +270,10 @@ jobs:
       if: always()
       shell: bash
     - name: Upload blob report
-      if: always() && github.event_name == 'pull_request'
+      if: always()
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   chrome_stable_win:
     name: "Chrome Stable (Win)"
@@ -304,11 +297,10 @@ jobs:
       if: always()
       shell: bash
     - name: Upload blob report
-      if: always() && github.event_name == 'pull_request'
+      if: always()
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   chrome_stable_mac:
     name: "Chrome Stable (Mac)"
@@ -331,11 +323,10 @@ jobs:
       if: always()
       shell: bash
     - name: Upload blob report
-      if: always() && github.event_name == 'pull_request'
+      if: always()
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   chromium_tot:
     name: Chromium TOT ${{ matrix.os }}
@@ -368,11 +359,10 @@ jobs:
       if: always()
       shell: bash
     - name: Upload blob report
-      if: always() && github.event_name == 'pull_request'
+      if: always()
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   chromium_tot_headed:
     name: Chromium TOT headed ${{ matrix.os }}
@@ -405,11 +395,10 @@ jobs:
       if: always()
       shell: bash
     - name: Upload blob report
-      if: always() && github.event_name == 'pull_request'
+      if: always()
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   firefox_beta_linux:
     name: "Firefox Beta (Linux)"
@@ -432,11 +421,10 @@ jobs:
       if: always()
       shell: bash
     - name: Upload blob report
-      if: always() && github.event_name == 'pull_request'
+      if: always()
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   firefox_beta_win:
     name: "Firefox Beta (Win)"
@@ -460,11 +448,10 @@ jobs:
       if: always()
       shell: bash
     - name: Upload blob report
-      if: always() && github.event_name == 'pull_request'
+      if: always()
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   firefox_beta_mac:
     name: "Firefox Beta (Mac)"
@@ -487,11 +474,10 @@ jobs:
       if: always()
       shell: bash
     - name: Upload blob report
-      if: always() && github.event_name == 'pull_request'
+      if: always()
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   edge_stable_mac:
     name: "Edge Stable (Mac)"
@@ -514,11 +500,10 @@ jobs:
       if: always()
       shell: bash
     - name: Upload blob report
-      if: always() && github.event_name == 'pull_request'
+      if: always()
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   edge_stable_win:
     name: "Edge Stable (Win)"
@@ -542,11 +527,10 @@ jobs:
       if: always()
       shell: bash
     - name: Upload blob report
-      if: always() && github.event_name == 'pull_request'
+      if: always()
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   edge_stable_linux:
     name: "Edge Stable (Linux)"
@@ -569,11 +553,10 @@ jobs:
       if: always()
       shell: bash
     - name: Upload blob report
-      if: always() && github.event_name == 'pull_request'
+      if: always()
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   edge_beta_mac:
     name: "Edge Beta (Mac)"
@@ -596,11 +579,10 @@ jobs:
       if: always()
       shell: bash
     - name: Upload blob report
-      if: always() && github.event_name == 'pull_request'
+      if: always()
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   edge_beta_win:
     name: "Edge Beta (Win)"
@@ -624,11 +606,10 @@ jobs:
       if: always()
       shell: bash
     - name: Upload blob report
-      if: always() && github.event_name == 'pull_request'
+      if: always()
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   edge_beta_linux:
     name: "Edge Beta (Linux)"
@@ -651,11 +632,10 @@ jobs:
       if: always()
       shell: bash
     - name: Upload blob report
-      if: always() && github.event_name == 'pull_request'
+      if: always()
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   edge_dev_mac:
     name: "Edge Dev (Mac)"
@@ -678,11 +658,10 @@ jobs:
       if: always()
       shell: bash
     - name: Upload blob report
-      if: always() && github.event_name == 'pull_request'
+      if: always()
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   edge_dev_win:
     name: "Edge Dev (Win)"
@@ -706,11 +685,10 @@ jobs:
       if: always()
       shell: bash
     - name: Upload blob report
-      if: always() && github.event_name == 'pull_request'
+      if: always()
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   edge_dev_linux:
     name: "Edge Dev (Linux)"
@@ -733,11 +711,10 @@ jobs:
       if: always()
       shell: bash
     - name: Upload blob report
-      if: always() && github.event_name == 'pull_request'
+      if: always()
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   chrome_beta_linux:
     name: "Chrome Beta (Linux)"
@@ -760,11 +737,10 @@ jobs:
       if: always()
       shell: bash
     - name: Upload blob report
-      if: always() && github.event_name == 'pull_request'
+      if: always()
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   chrome_beta_win:
     name: "Chrome Beta (Win)"
@@ -788,11 +764,10 @@ jobs:
       if: always()
       shell: bash
     - name: Upload blob report
-      if: always() && github.event_name == 'pull_request'
+      if: always()
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   chrome_beta_mac:
     name: "Chrome Beta (Mac)"
@@ -815,11 +790,10 @@ jobs:
       if: always()
       shell: bash
     - name: Upload blob report
-      if: always() && github.event_name == 'pull_request'
+      if: always()
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
 
   build-playwright-driver:
     name: "build-playwright-driver"
@@ -857,8 +831,7 @@ jobs:
       if: always()
       shell: bash
     - name: Upload blob report
-      if: always() && github.event_name == 'pull_request'
+      if: always()
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
-        connection_string: '${{ secrets.AZURE_CONNECTION_STRING_FOR_BLOB_REPORT }}'
