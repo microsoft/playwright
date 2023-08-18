@@ -841,9 +841,10 @@ it('should throw if screenshot size is too large', async ({ page, browserName, i
   }
 });
 
-it('page screenshot should capture css transform', async function({ page, browserName }) {
+it('page screenshot should capture css transform', async function({ page, browserName, isElectron }) {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/26447' });
   it.fixme(browserName === 'webkit');
+  it.fixme(isElectron, 'Returns screenshot of a different size.');
   await page.setContent(`
     <style>
     .container {
