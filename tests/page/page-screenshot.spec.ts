@@ -866,11 +866,6 @@ it('page screenshot should capture css transform', async function({ page, browse
       width: 100px;
       height: 100px;
       border: none;
-      line-height: 100px;
-      font-family: sans-serif;
-      font-size: 60px;
-      color: white;
-      text-align: center;
     }
 
     .right {
@@ -881,7 +876,7 @@ it('page screenshot should capture css transform', async function({ page, browse
     </style>
     <div class="container">
       <div class="cube showbf">
-        <div class="face right">3</div>
+        <div class="face right"></div>
       </div>
     </div>
   `);

@@ -475,11 +475,6 @@ browserTest.describe('element screenshot', () => {
         width: 100px;
         height: 100px;
         border: none;
-        line-height: 100px;
-        font-family: sans-serif;
-        font-size: 60px;
-        color: white;
-        text-align: center;
       }
 
       .right {
@@ -490,7 +485,7 @@ browserTest.describe('element screenshot', () => {
       </style>
       <div class="container">
         <div class="cube showbf">
-          <div class="face right">3</div>
+          <div class="face right"></div>
         </div>
       </div>
     `);
