@@ -2063,6 +2063,37 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       await expect(page.getByText('failed title')).not.toBeVisible();
       await expect(page.getByText('passes title')).toBeVisible();
     });
+
+    test('should properly display beforeEach with and without title', async ({ runInlineTest, showReport, page }) => {
+      const result = await runInlineTest({
+        'a.test.js': `
+        const { test, expect } = require('@playwright/test');
+        test.beforeEach('titled hook', () => {
+          console.log('titled hook');
+        });
+        test.beforeEach(() => {
+          console.log('anonymous hook');
+        });
+        test('titles', async ({}) => {
+          expect(1).toBe(1);
+        });
+      `,
+      }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+
+      console.log(result);
+
+      expect(result.exitCode).toBe(0);
+      expect(result.passed).toBe(1);
+
+      await showReport();
+      await page.click('text=titles');
+
+      await page.click('text=Before Hooks');
+      await expect(page.locator('.tree-item:has-text("Before Hooks") .tree-item')).toContainText([
+        /titled hook/,
+        /beforeEach hook/,
+      ]);
+    });
   });
 }
 
