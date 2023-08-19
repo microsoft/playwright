@@ -4,14 +4,6 @@ title: "Release notes"
 toc_max_heading_level: 2
 ---
 
----
-id: release-notes
-title: "Release notes"
-toc_max_heading_level: 2
----
-
-import LiteYouTube from '@site/src/components/LiteYouTube';
-
 ## Version 1.37
 
 ### New APIs
