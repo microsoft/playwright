@@ -31,7 +31,7 @@ export default defineConfig({
     },
   },
   build: {
-    outDir: path.resolve(__dirname, '../playwright-core/lib/webpack/recorder'),
+    outDir: path.resolve(__dirname, '../playwright-core/lib/vite/recorder'),
     emptyOutDir: true,
     rollupOptions: {
       output: {

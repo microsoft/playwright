@@ -287,12 +287,12 @@ class HtmlBuilder {
     this._addDataFile('report.json', htmlReport);
 
     // Copy app.
-    const appFolder = path.join(require.resolve('playwright-core'), '..', 'lib', 'webpack', 'htmlReport');
+    const appFolder = path.join(require.resolve('playwright-core'), '..', 'lib', 'vite', 'htmlReport');
     await copyFileAndMakeWritable(path.join(appFolder, 'index.html'), path.join(this._reportFolder, 'index.html'));
 
     // Copy trace viewer.
     if (this._hasTraces) {
-      const traceViewerFolder = path.join(require.resolve('playwright-core'), '..', 'lib', 'webpack', 'traceViewer');
+      const traceViewerFolder = path.join(require.resolve('playwright-core'), '..', 'lib', 'vite', 'traceViewer');
       const traceViewerTargetFolder = path.join(this._reportFolder, 'trace');
       const traceViewerAssetsTargetFolder = path.join(traceViewerTargetFolder, 'assets');
       fs.mkdirSync(traceViewerAssetsTargetFolder, { recursive: true });
