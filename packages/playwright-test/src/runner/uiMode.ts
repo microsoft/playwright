@@ -52,7 +52,7 @@ class UIMode {
       p.project.repeatEach = 1;
     }
     config.configCLIOverrides.use = config.configCLIOverrides.use || {};
-    config.configCLIOverrides.use.trace = { mode: 'on', sources: false };
+    config.configCLIOverrides.use.trace = { mode: 'on', sources: false, _live: true };
 
     this._originalStdoutWrite = process.stdout.write;
     this._originalStderrWrite = process.stderr.write;

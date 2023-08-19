@@ -3014,7 +3014,7 @@ Tracing:
         name: string?
         snapshots: boolean?
         screenshots: boolean?
-        sources: boolean?
+        live: boolean?
 
     tracingStartChunk:
       parameters:

@@ -151,3 +151,28 @@ test('should format console messages in page', async ({ runUITest }, testInfo) =
   await expect(link).toHaveCSS('color', 'rgb(0, 0, 255)');
   await expect(link).toHaveCSS('text-decoration', 'none solid rgb(0, 0, 255)');
 });
+
+test('should stream console messages live', async ({ runUITest }, testInfo) => {
+  const { page } = await runUITest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('print', async ({ page }) => {
+        await page.setContent('<button>Click me</button>');
+        const button = page.getByRole('button', { name: 'Click me' });
+        await button.evaluate(node => node.addEventListener('click', () => {
+          setTimeout(() => { console.log('I was clicked'); }, 1000);
+        }));
+        await button.click();
+        await page.locator('#not-there').waitFor();
+      });
+    `,
+  });
+  await page.getByTitle('Run all').click();
+  await page.getByText('Console').click();
+  await page.getByText('print').click();
+
+  await expect(page.locator('.console-tab .console-line-message')).toHaveText([
+    'I was clicked',
+  ]);
+  await page.getByTitle('Stop').click();
+});

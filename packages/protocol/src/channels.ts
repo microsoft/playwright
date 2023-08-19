@@ -3803,13 +3803,13 @@ export type TracingTracingStartParams = {
   name?: string,
   snapshots?: boolean,
   screenshots?: boolean,
-  sources?: boolean,
+  live?: boolean,
 };
 export type TracingTracingStartOptions = {
   name?: string,
   snapshots?: boolean,
   screenshots?: boolean,
-  sources?: boolean,
+  live?: boolean,
 };
 export type TracingTracingStartResult = void;
 export type TracingTracingStartChunkParams = {
