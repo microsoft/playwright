@@ -19,11 +19,11 @@
   display: flex;
   flex: auto;
   white-space: pre;
-  user-select: text;
 }
 
 .console-line {
   width: 100%;
+  user-select: text;
 }
 
 .console-line .codicon {
@@ -41,12 +41,20 @@
   word-break: break-word;
   white-space: pre-wrap;
   position: relative;
-  user-select: text;
 }
 
 .console-location {
   padding-right: 3px;
   float: right;
+  color: var(--vscode-editorCodeLens-foreground);
+  user-select: none;
+}
+
+.console-time {
+  float: left;
+  min-width: 30px;
+  color: var(--vscode-editorCodeLens-foreground);
+  user-select: none;
 }
 
 .console-stack {

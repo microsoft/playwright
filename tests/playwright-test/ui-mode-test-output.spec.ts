@@ -111,3 +111,43 @@ test('should show console messages for test', async ({ runUITest }, testInfo) =>
   await expect(page.getByText('RED', { exact: true })).toHaveCSS('color', 'rgb(204, 0, 0)');
   await expect(page.getByText('GREEN', { exact: true })).toHaveCSS('color', 'rgb(0, 204, 0)');
 });
+
+test('should format console messages in page', async ({ runUITest }, testInfo) => {
+  const { page } = await runUITest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('print', async ({ page }) => {
+        await page.evaluate(() => {
+          console.log('Object %O', { a: 1 });
+          console.log('Date %o', new Date());
+          console.log('Regex %o', /a/);
+          console.log('Number %f', -0, 'one', 2);
+          console.log('Download the %cReact DevTools%c for a better development experience: %chttps://fb.me/react-devtools', 'font-weight:bold;color:red;outline:blue', '', 'color: blue; text-decoration: underline');
+          console.log('Array', 'of', 'values');
+        });
+      });
+    `,
+  });
+  await page.getByTitle('Run all').click();
+  await page.getByText('Console').click();
+  await page.getByText('print').click();
+
+  await expect(page.locator('.console-tab .console-line-message')).toHaveText([
+    'Object {a: 1}',
+    /Date.*/,
+    'Regex /a/',
+    'Number 0 one 2',
+    'Download the React DevTools for a better development experience: https://fb.me/react-devtools',
+    'Array of values',
+  ]);
+
+  const label = page.getByText('React DevTools');
+  await expect(label).toHaveCSS('color', 'rgb(255, 0, 0)');
+  await expect(label).toHaveCSS('font-weight', '700');
+  // blue should not be used, should inherit color red.
+  await expect(label).toHaveCSS('outline', 'rgb(255, 0, 0) none 0px');
+
+  const link = page.getByText('https://fb.me/react-devtools');
+  await expect(link).toHaveCSS('color', 'rgb(0, 0, 255)');
+  await expect(link).toHaveCSS('text-decoration', 'none solid rgb(0, 0, 255)');
+});
