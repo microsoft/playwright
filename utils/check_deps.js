@@ -218,7 +218,7 @@ async function innerCheckDeps(root) {
   }
 
   function allowExternalImport(importName, packageJSON) {
-    // Only external imports are relevant. Files in src/web are bundled via webpack.
+    // Only external imports are relevant. Files in src/web are bundled via vite.
     if (importName.startsWith('.') || (importName.startsWith('@') && !importName.startsWith('@playwright/')))
       return true;
     if (peerDependencies.includes(importName))
