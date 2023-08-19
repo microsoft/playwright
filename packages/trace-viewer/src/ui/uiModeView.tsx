@@ -570,8 +570,7 @@ const TraceView: React.FC<{
     initialSelection={initialSelection}
     onSelectionChanged={onSelectionChanged}
     fallbackLocation={item.testFile}
-    isLive={model?.isLive}
-    drawer='bottom' />;
+    isLive={model?.isLive} />;
 };
 
 let receiver: TeleReporterReceiver | undefined;

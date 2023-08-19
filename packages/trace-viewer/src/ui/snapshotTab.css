@@ -125,50 +125,6 @@ iframe.snapshot-visible[name=snapshot] {
   opacity: var(--vscode-disabledForeground);
 }
 
-.window-dot {
-  border-radius: 50%;
-  display: inline-block;
-  height: 12px;
-  margin-right: 6px;
-  margin-top: 4px;
-  width: 12px;
-}
-
-.window-address-bar {
-  background-color: var(--vscode-input-background);
-  border-radius: 12.5px;
-  color: var(--vscode-input-foreground);
-  flex: 1 0;
-  font: 400 16px Arial,sans-serif;
-  margin: 0 16px 0 8px;
-  padding: 5px 15px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.window-menu-bar {
-  background-color: #aaa;
-  display: block;
-  height: 3px;
-  margin: 3px 0;
-  width: 17px;
-}
-
-.window-header {
-  align-items: center;
-  background: #ebedf0;
-  display: flex;
-  padding: 8px 16px;
-  border-top-left-radius: 6px;
-  border-top-right-radius: 6px;
-  height: var(--window-header-height);
-}
-
-body.dark-mode .window-header {
-  background: #444950;
-}
-
 .snapshot-tab .cm-wrapper {
   line-height: 23px;
   margin-right: 4px;

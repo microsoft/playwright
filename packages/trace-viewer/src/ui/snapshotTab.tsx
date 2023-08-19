@@ -18,10 +18,9 @@ import './snapshotTab.css';
 import * as React from 'react';
 import type { ActionTraceEvent } from '@trace/trace';
 import { context, prevInList } from './modelUtil';
-import { CodeMirrorWrapper } from '@web/components/codeMirrorWrapper';
 import { Toolbar } from '@web/components/toolbar';
 import { ToolbarButton } from '@web/components/toolbarButton';
-import { copy, useMeasure } from '@web/uiUtils';
+import { useMeasure } from '@web/uiUtils';
 import { InjectedScript } from '@injected/injectedScript';
 import { Recorder  } from '@injected/recorder';
 import ConsoleAPI from '@injected/consoleApi';
@@ -29,17 +28,19 @@ import { asLocator } from '@isomorphic/locatorGenerators';
 import type { Language } from '@isomorphic/locatorGenerators';
 import { locatorOrSelectorAsSelector } from '@isomorphic/locatorParser';
 import { TabbedPaneTab } from '@web/components/tabbedPane';
+import { BrowserFrame } from './browserFrame';
 
 export const SnapshotTab: React.FunctionComponent<{
   action: ActionTraceEvent | undefined,
   sdkLanguage: Language,
   testIdAttributeName: string,
-}> = ({ action, sdkLanguage, testIdAttributeName }) => {
+  isInspecting: boolean,
+  setIsInspecting: (isInspecting: boolean) => void,
+  highlightedLocator: string,
+  setHighlightedLocator: (locator: string) => void,
+}> = ({ action, sdkLanguage, testIdAttributeName, isInspecting, setIsInspecting, highlightedLocator, setHighlightedLocator }) => {
   const [measure, ref] = useMeasure<HTMLDivElement>();
   const [snapshotTab, setSnapshotTab] = React.useState<'action'|'before'|'after'>('action');
-  const [isInspecting, setIsInspecting] = React.useState(false);
-  const [highlightedLocator, setHighlightedLocator] = React.useState<string>('');
-  const [pickerVisible, setPickerVisible] = React.useState(false);
 
   const { snapshots } = React.useMemo(() => {
     if (!action)
@@ -171,11 +172,6 @@ export const SnapshotTab: React.FunctionComponent<{
       iframe={iframeRef1.current}
       iteration={loadingRef.current.iteration} />
     <Toolbar>
-      <ToolbarButton title='Pick locator' disabled={!popoutUrl} toggled={pickerVisible} onClick={() => {
-        setPickerVisible(!pickerVisible);
-        setHighlightedLocator('');
-        setIsInspecting(!pickerVisible);
-      }}>Pick locator</ToolbarButton>
       {['action', 'before', 'after'].map(tab => {
         return <TabbedPaneTab
           id={tab}
@@ -193,40 +189,13 @@ export const SnapshotTab: React.FunctionComponent<{
         });
       }}></ToolbarButton>
     </Toolbar>
-    {pickerVisible && <Toolbar noMinHeight={true}>
-      <ToolbarButton icon='microscope' title='Pick locator' disabled={!popoutUrl} toggled={isInspecting} onClick={() => {
-        setIsInspecting(!isInspecting);
-      }}></ToolbarButton>
-      <CodeMirrorWrapper text={highlightedLocator} language={sdkLanguage} readOnly={!popoutUrl} focusOnChange={true} wrapLines={true} onChange={text => {
-        // Updating text needs to go first - react can squeeze a render between the state updates.
-        setHighlightedLocator(text);
-        setIsInspecting(false);
-      }}></CodeMirrorWrapper>
-      <ToolbarButton icon='files' title='Copy locator' disabled={!popoutUrl} onClick={() => {
-        copy(highlightedLocator);
-      }}></ToolbarButton>
-    </Toolbar>}
     <div ref={ref} className='snapshot-wrapper'>
       <div className='snapshot-container' style={{
         width: snapshotContainerSize.width + 'px',
         height: snapshotContainerSize.height + 'px',
         transform: `translate(${translate.x}px, ${translate.y}px) scale(${scale})`,
       }}>
-        <div className='window-header'>
-          <div style={{ whiteSpace: 'nowrap' }}>
-            <span className='window-dot' style={{ backgroundColor: 'rgb(242, 95, 88)' }}></span>
-            <span className='window-dot' style={{ backgroundColor: 'rgb(251, 190, 60)' }}></span>
-            <span className='window-dot' style={{ backgroundColor: 'rgb(88, 203, 66)' }}></span>
-          </div>
-          <div className='window-address-bar' title={snapshotInfo.url || 'about:blank'}>{snapshotInfo.url || 'about:blank'}</div>
-          <div style={{ marginLeft: 'auto' }}>
-            <div>
-              <span className='window-menu-bar'></span>
-              <span className='window-menu-bar'></span>
-              <span className='window-menu-bar'></span>
-            </div>
-          </div>
-        </div>
+        <BrowserFrame url={snapshotInfo.url} />
         <div className='snapshot-switcher'>
           <iframe ref={iframeRef0} name='snapshot' className={loadingRef.current.visibleIframe === 0 ? 'snapshot-visible' : ''}></iframe>
           <iframe ref={iframeRef1} name='snapshot' className={loadingRef.current.visibleIframe === 1 ? 'snapshot-visible' : ''}></iframe>

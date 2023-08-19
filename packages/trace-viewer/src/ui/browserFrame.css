@@ -1,0 +1,59 @@
+/*
+  Copyright (c) Microsoft Corporation.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
+
+.browser-frame-dot {
+  border-radius: 50%;
+  display: inline-block;
+  height: 12px;
+  margin-right: 6px;
+  margin-top: 4px;
+  width: 12px;
+}
+
+.browser-frame-address-bar {
+  background-color: var(--vscode-input-background);
+  border-radius: 12.5px;
+  color: var(--vscode-input-foreground);
+  flex: 1 0;
+  font: 400 16px Arial,sans-serif;
+  margin: 0 16px 0 8px;
+  padding: 5px 15px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.browser-frame-menu-bar {
+  background-color: #aaa;
+  display: block;
+  height: 3px;
+  margin: 3px 0;
+  width: 17px;
+}
+
+.browser-frame-header {
+  align-items: center;
+  background: #ebedf0;
+  display: flex;
+  padding: 8px 16px;
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+  height: var(--browser-frame-header-height);
+}
+
+body.dark-mode .browser-frame-header {
+  background: #444950;
+}
