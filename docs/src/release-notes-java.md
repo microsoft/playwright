@@ -4,7 +4,6 @@ title: "Release notes"
 toc_max_heading_level: 2
 ---
 
-
 ## Version 1.37
 
 ### New APIs
