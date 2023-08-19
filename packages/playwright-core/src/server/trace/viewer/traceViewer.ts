@@ -81,7 +81,7 @@ async function startTraceViewerServer(traceUrls: string[], options?: OpenTraceVi
         return false;
       }
     }
-    const absolutePath = path.join(__dirname, '..', '..', '..', 'webpack', 'traceViewer', ...relativePath.split('/'));
+    const absolutePath = path.join(__dirname, '..', '..', '..', 'vite', 'traceViewer', ...relativePath.split('/'));
     return server.serveFile(request, response, absolutePath);
   });
 
