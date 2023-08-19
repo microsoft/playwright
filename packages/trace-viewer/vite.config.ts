@@ -38,7 +38,7 @@ export default defineConfig({
     },
   },
   build: {
-    outDir: path.resolve(__dirname, '../playwright-core/lib/webpack/traceViewer'),
+    outDir: path.resolve(__dirname, '../playwright-core/lib/vite/traceViewer'),
     // Output dir is shared with vite.sw.config.ts, clearing it here is racy.
     emptyOutDir: false,
     rollupOptions: {

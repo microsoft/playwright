@@ -348,7 +348,7 @@ copyFiles.push({
   files: 'packages/playwright-core/src/**/*.js',
   from: 'packages/playwright-core/src',
   to: 'packages/playwright-core/lib',
-  ignored: ['**/.eslintrc.js', '**/webpack*.config.js', '**/injected/**/*']
+  ignored: ['**/.eslintrc.js', '**/injected/**/*']
 });
 
 // Sometimes we require JSON files that babel ignores.

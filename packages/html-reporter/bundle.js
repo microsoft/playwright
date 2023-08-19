@@ -45,7 +45,7 @@ export function bundle() {
     },
     closeBundle: () => {
       if (existsSync(path.join(config.build.outDir, 'index.html'))) {
-        const targetDir = path.join(__dirname, '..', 'playwright-core', 'lib', 'webpack', 'htmlReport');
+        const targetDir = path.join(__dirname, '..', 'playwright-core', 'lib', 'vite', 'htmlReport');
         fs.mkdirSync(targetDir, { recursive: true });
         fs.copyFileSync(
           path.join(config.build.outDir, 'index.html'),
