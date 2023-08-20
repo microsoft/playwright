@@ -2080,8 +2080,6 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       `,
       }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
 
-      console.log(result);
-
       expect(result.exitCode).toBe(0);
       expect(result.passed).toBe(1);
 
@@ -2092,6 +2090,93 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       await expect(page.locator('.tree-item:has-text("Before Hooks") .tree-item')).toContainText([
         /titled hook/,
         /beforeEach hook/,
+      ]);
+    });
+
+    test('should properly display beforeAll with and without title', async ({ runInlineTest, showReport, page }) => {
+      const result = await runInlineTest({
+        'a.test.js': `
+        const { test, expect } = require('@playwright/test');
+        test.beforeAll('titled hook', () => {
+          console.log('titled hook');
+        });
+        test.beforeAll(() => {
+          console.log('anonymous hook');
+        });
+        test('titles', async ({}) => {
+          expect(1).toBe(1);
+        });
+      `,
+      }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+
+      expect(result.exitCode).toBe(0);
+      expect(result.passed).toBe(1);
+
+      await showReport();
+      await page.click('text=titles');
+
+      await page.click('text=Before Hooks');
+      await expect(page.locator('.tree-item:has-text("Before Hooks") .tree-item')).toContainText([
+        /titled hook/,
+        /beforeAll hook/,
+      ]);
+    });
+
+    test('should properly display afterEach with and without title', async ({ runInlineTest, showReport, page }) => {
+      const result = await runInlineTest({
+        'a.test.js': `
+        const { test, expect } = require('@playwright/test');
+        test.afterEach('titled hook', () => {
+          console.log('titled hook');
+        });
+        test.afterEach(() => {
+          console.log('anonymous hook');
+        });
+        test('titles', async ({}) => {
+          expect(1).toBe(1);
+        });
+      `,
+      }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+
+      expect(result.exitCode).toBe(0);
+      expect(result.passed).toBe(1);
+
+      await showReport();
+      await page.click('text=titles');
+
+      await page.click('text=After Hooks');
+      await expect(page.locator('.tree-item:has-text("After Hooks") .tree-item')).toContainText([
+        /titled hook/,
+        /afterEach hook/,
+      ]);
+    });
+
+    test('should properly display afterAll with and without title', async ({ runInlineTest, showReport, page }) => {
+      const result = await runInlineTest({
+        'a.test.js': `
+        const { test, expect } = require('@playwright/test');
+        test.afterAll('titled hook', () => {
+          console.log('titled hook');
+        });
+        test.afterAll(() => {
+          console.log('anonymous hook');
+        });
+        test('titles', async ({}) => {
+          expect(1).toBe(1);
+        });
+      `,
+      }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+
+      expect(result.exitCode).toBe(0);
+      expect(result.passed).toBe(1);
+
+      await showReport();
+      await page.click('text=titles');
+
+      await page.click('text=After Hooks');
+      await expect(page.locator('.tree-item:has-text("After Hooks") .tree-item')).toContainText([
+        /titled hook/,
+        /afterAll hook/,
       ]);
     });
   });
