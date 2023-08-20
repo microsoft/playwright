@@ -100,6 +100,13 @@ body.dark-mode .drop-target {
 .workbench-loader .logo {
   font-size: 20px;
   margin-left: 16px;
+  display: flex;
+}
+
+.workbench-loader .logo img {
+  height: 32px;
+  align-self: center;
+  pointer-events: none;
 }
 
 .workbench-loader .product {
