@@ -1901,9 +1901,9 @@ export interface WorkerInfo {
 /**
  * `TestInfo` contains information about currently running test. It is available to test functions,
  * [test.beforeEach(hookFunction)](https://playwright.dev/docs/api/class-test#test-before-each-1),
- * [test.afterEach(hookFunction)](https://playwright.dev/docs/api/class-test#test-after-each),
- * [test.beforeAll(hookFunction)](https://playwright.dev/docs/api/class-test#test-before-all) and
- * [test.afterAll(hookFunction)](https://playwright.dev/docs/api/class-test#test-after-all) hooks, and test-scoped
+ * [test.afterEach(hookFunction)](https://playwright.dev/docs/api/class-test#test-after-each-1),
+ * [test.beforeAll(hookFunction)](https://playwright.dev/docs/api/class-test#test-before-all-1) and
+ * [test.afterAll(hookFunction)](https://playwright.dev/docs/api/class-test#test-after-all-1) hooks, and test-scoped
  * fixtures. `TestInfo` provides utilities to control test execution: attach files, update test timeout, determine
  * which test is currently running and whether it was retried, etc.
  *
@@ -2150,7 +2150,7 @@ export interface TestInfo {
 
   /**
    * The number of milliseconds the test took to finish. Always zero before the test finishes, either successfully or
-   * not. Can be used in [test.afterEach(hookFunction)](https://playwright.dev/docs/api/class-test#test-after-each)
+   * not. Can be used in [test.afterEach(hookFunction)](https://playwright.dev/docs/api/class-test#test-after-each-1)
    * hook.
    */
   duration: number;
@@ -2274,7 +2274,7 @@ export interface TestInfo {
 
   /**
    * Actual status for the currently running test. Available after the test has finished in
-   * [test.afterEach(hookFunction)](https://playwright.dev/docs/api/class-test#test-after-each) hook and fixtures.
+   * [test.afterEach(hookFunction)](https://playwright.dev/docs/api/class-test#test-after-each-1) hook and fixtures.
    *
    * Status is usually compared with the
    * [testInfo.expectedStatus](https://playwright.dev/docs/api/class-testinfo#test-info-expected-status):
@@ -3071,8 +3071,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * You can access all the same {@link Fixtures} as the test function itself, and also the {@link TestInfo} object that
    * gives a lot of useful information. For example, you can navigate the page before starting the test.
    *
-   * You can use [test.afterEach(hookFunction)](https://playwright.dev/docs/api/class-test#test-after-each) to teardown
-   * any resources set up in `beforeEach`.
+   * You can use [test.afterEach(hookFunction)](https://playwright.dev/docs/api/class-test#test-after-each-1) to
+   * teardown any resources set up in `beforeEach`.
    *
    * **Usage**
    *
@@ -3150,6 +3150,31 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    */
   afterEach(inner: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<any> | any): void;
   /**
+   * Declares an `afterEach` hook with a title that is executed after each test.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // example.spec.ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.afterEach('Status check', async ({ page }, testInfo) => {
+   *   console.log(`Finished ${testInfo.title} with status ${testInfo.status}`);
+   *
+   *   if (testInfo.status !== testInfo.expectedStatus)
+   *     console.log(`Did not run as expected, ended up at ${page.url()}`);
+   * });
+   *
+   * test('my test', async ({ page }) => {
+   *   // ...
+   * });
+   * ```
+   *
+   * @param title Hook title.
+   * @param hookFunction Hook function that takes one or two arguments: an object with fixtures and optional {@link TestInfo}.
+   */
+  afterEach(title: string, inner: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<any> | any): void;
+  /**
    * Declares a `beforeAll` hook that is executed once per worker process before all tests.
    *
    * **Details**
@@ -3161,7 +3186,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * Note that worker process is restarted on test failures, and `beforeAll` hook runs again in the new worker. Learn
    * more about [workers and failures](https://playwright.dev/docs/test-retries).
    *
-   * You can use [test.afterAll(hookFunction)](https://playwright.dev/docs/api/class-test#test-after-all) to teardown
+   * You can use [test.afterAll(hookFunction)](https://playwright.dev/docs/api/class-test#test-after-all-1) to teardown
    * any resources set up in `beforeAll`.
    *
    * **Usage**
@@ -3187,6 +3212,28 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    */
   beforeAll(inner: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<any> | any): void;
   /**
+   * Declares a `beforeAll` hook with a title that is executed once per worker process before all tests.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // example.spec.ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.beforeAll('Setup', async () => {
+   *   console.log('Before tests');
+   * });
+   *
+   * test('my test', async ({ page }) => {
+   *   // ...
+   * });
+   * ```
+   *
+   * @param title Hook title.
+   * @param hookFunction Hook function that takes one or two arguments: an object with worker fixtures and optional {@link TestInfo}.
+   */
+  beforeAll(title: string, inner: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<any> | any): void;
+  /**
    * Declares an `afterAll` hook that is executed once per worker after all tests.
    *
    * **Details**
@@ -3210,6 +3257,22 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * @param hookFunction Hook function that takes one or two arguments: an object with worker fixtures and optional {@link TestInfo}.
    */
   afterAll(inner: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<any> | any): void;
+  /**
+   * Declares an `afterAll` hook with a title that is executed once per worker after all tests.
+   *
+   * **Usage**
+   *
+   * ```js
+   * test.afterAll('Teardown', async () => {
+   *   console.log('Done with tests');
+   *   // ...
+   * });
+   * ```
+   *
+   * @param title Hook title.
+   * @param hookFunction Hook function that takes one or two arguments: an object with worker fixtures and optional {@link TestInfo}.
+   */
+  afterAll(title: string, inner: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<any> | any): void;
   /**
    * Specifies options or fixtures to use in a single test file or a
    * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1) group. Most useful to

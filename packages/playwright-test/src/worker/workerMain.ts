@@ -528,7 +528,7 @@ export class WorkerMain extends ProcessRunner {
         testInfo._timeoutManager.setCurrentRunnable({ type: 'beforeAll', location: hook.location, slot: timeSlot });
         await testInfo._runAsStep({
           category: 'hook',
-          title: `${hook.type} hook`,
+          title: `${hook.title}`,
           location: hook.location,
         }, async () => {
           try {
