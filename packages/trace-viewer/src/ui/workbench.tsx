@@ -55,6 +55,10 @@ export const Workbench: React.FunctionComponent<{
   const sources = React.useMemo(() => model?.sources || new Map(), [model]);
 
   React.useEffect(() => {
+    setSelectedTime(undefined);
+  }, [model]);
+
+  React.useEffect(() => {
     if (selectedAction && model?.actions.includes(selectedAction))
       return;
     const failedAction = model?.actions.find(a => a.error);

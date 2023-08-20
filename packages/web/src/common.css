@@ -51,6 +51,10 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+a {
+  color: var(--vscode-textLink-foreground);
+}
+
 * {
   box-sizing: border-box;
   min-width: 0;
