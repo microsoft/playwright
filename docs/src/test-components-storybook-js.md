@@ -7,16 +7,18 @@ Playwright Test can now test components from [Storybook](https://storybook.js.or
 
 ## Example
 
-Here is a typical story:
+Here is a typical story. When you run Storybook, it will appear in Storybook's UI:
 
 ```js
+// Button.stories.js
 export default { component: Button };
 export const Primary = { args: { label: 'Button', primary: true } }
 ```
 
-And here is that story reused in a test:
+And here is the same story reused in a Playwright CT test:
 
 ```js
+// Button.spec.js
 import * as ButtonStories from './Button.stories';
 
 test('event should work', async ({ mount }) => {
@@ -142,12 +144,20 @@ test('should work', async ({ mount }) => {
 You can run tests using the [VS Code extension](./getting-started-vscode.md) or the command line.
 
 ```sh
-npm run test-storybook
+npm run test-ct
 ```
 
 ### Further reading: configure reporting, browsers, tracing
 
 Refer to [Playwright config](./test-configuration.md) for configuring your project.
+
+## Working with complex components
+
+The examples so far have all dealt with simple components that don't require any context (e.g. routers, themes, etc.) to render. Storybook has a number of constructs to set up your complex components.
+
+For more information please see the Storybook docs for your framework:
+- [How to write stories](https://storybook.js.org/docs/react/writing-stories/introduction)
+- [Decorators for wrapping stories](https://storybook.js.org/docs/react/writing-stories/decorators)
 
 ## Under the hood
 
@@ -156,7 +166,7 @@ Playwright Test executes Storybook's dev server in the background and runs tests
 Here is how this is achieved:
 
 - Each story reference is converted into a story ID
-- Upon the `mount` call within the test, Playwright navigates to corresponing story.
+- Upon the `mount` call within the test, Playwright navigates to the corresponding story.
 - Events are marshalled back to the Node.js environment to allow verification.
 
 Additionally, it adds some config options you can use in your `playwright-sb.config.{ts,js}`.
@@ -258,3 +268,7 @@ You should use Playwright CT Storybook over Storybook CT if:
 ### Q) Can I use `@playwright/test` and `@storybook/playwright-ct` together?
 
 Yes. Use a Playwright Config for each and follow their respective guides ([E2E Playwright Test](https://playwright.dev/docs/intro), [CT for Storybook](https://playwright.dev/docs/test-components-storybook))
+
+### Q) Can I use `@playwright/experimental-ct-{react,svelte,vue,solid}` and `@storybook/playwright-ct` together?
+
+No. Both CT approaches use the same config filename and perform conflicting babel file transformations on your `.spec` files. So, for now choose one approach or the other.
