@@ -36,6 +36,7 @@ export interface SourceProps {
   highlight?: SourceHighlight[];
   revealLine?: number;
   lineNumbers?: boolean;
+  isFocused?: boolean;
   focusOnChange?: boolean;
   wrapLines?: boolean;
   onChange?: (text: string) => void;
@@ -48,6 +49,7 @@ export const CodeMirrorWrapper: React.FC<SourceProps> = ({
   highlight,
   revealLine,
   lineNumbers,
+  isFocused,
   focusOnChange,
   wrapLines,
   onChange,
@@ -94,10 +96,12 @@ export const CodeMirrorWrapper: React.FC<SourceProps> = ({
         lineWrapping: wrapLines,
       });
       codemirrorRef.current = { cm };
+      if (isFocused)
+        cm.focus();
       setCodemirror(cm);
       return cm;
     })();
-  }, [modulePromise, codemirror, codemirrorElement, language, lineNumbers, wrapLines, readOnly]);
+  }, [modulePromise, codemirror, codemirrorElement, language, lineNumbers, wrapLines, readOnly, isFocused]);
 
   React.useEffect(() => {
     if (codemirrorRef.current)

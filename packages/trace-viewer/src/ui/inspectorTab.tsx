@@ -27,13 +27,16 @@ export const InspectorTab: React.FunctionComponent<{
   highlightedLocator: string,
   setHighlightedLocator: (locator: string) => void,
 }> = ({ sdkLanguage, setIsInspecting, highlightedLocator, setHighlightedLocator }) => {
-  return <div className='vbox'>
-    <CodeMirrorWrapper text={highlightedLocator} language={sdkLanguage} focusOnChange={true} wrapLines={true} onChange={text => {
-      // Updating text needs to go first - react can squeeze a render between the state updates.
-      setHighlightedLocator(text);
-      setIsInspecting(false);
-    }}></CodeMirrorWrapper>
-    <div style={{ position: 'absolute', right: '0', top: '0' }}>
+  return <div className='vbox' style={{ backgroundColor: 'var(--vscode-sideBar-background)' }}>
+    <div style={{ margin: '10px 0px 10px 10px', color: 'var(--vscode-editorCodeLens-foreground)', flex: 'none' }}>Locator</div>
+    <div style={{ margin: '0 10px 10px', flex: 'auto' }}>
+      <CodeMirrorWrapper text={highlightedLocator} language={sdkLanguage} focusOnChange={true} isFocused={true} wrapLines={true} onChange={text => {
+        // Updating text needs to go first - react can squeeze a render between the state updates.
+        setHighlightedLocator(text);
+        setIsInspecting(false);
+      }}></CodeMirrorWrapper>
+    </div>
+    <div style={{ position: 'absolute', right: 5, top: 5 }}>
       <ToolbarButton icon='files' title='Copy locator' onClick={() => {
         copy(highlightedLocator);
       }}></ToolbarButton>
