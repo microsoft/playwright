@@ -34,18 +34,24 @@ export const TabbedPane: React.FunctionComponent<{
 }> = ({ tabs, selectedTab, setSelectedTab, leftToolbar, rightToolbar }) => {
   return <div className='tabbed-pane'>
     <div className='vbox'>
-      <Toolbar>{[
-        ...leftToolbar || [],
-        ...tabs.map(tab => (
-          <TabbedPaneTab
-            id={tab.id}
-            title={tab.title}
-            selected={selectedTab === tab.id}
-            onSelect={setSelectedTab}
-          ></TabbedPaneTab>)),
-        <div className='spacer'></div>,
-        ...rightToolbar || [],
-      ]}</Toolbar>
+      <Toolbar>
+        <div style={{ flex: 'none', display: 'flex', height: '100%' }}>
+          {...leftToolbar || []}
+        </div>
+        <div style={{ flex: 'auto', display: 'flex', height: '100%', overflow: 'hidden' }}>
+          {[...tabs.map(tab => (
+            <TabbedPaneTab
+              id={tab.id}
+              title={tab.title}
+              selected={selectedTab === tab.id}
+              onSelect={setSelectedTab}
+            ></TabbedPaneTab>)),
+          ]}
+        </div>
+        <div style={{ flex: 'none', display: 'flex', height: '100%' }}>
+          {...rightToolbar || []}
+        </div>
+      </Toolbar>
       {
         tabs.map(tab => {
           if (tab.component)

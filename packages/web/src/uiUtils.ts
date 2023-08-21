@@ -117,11 +117,12 @@ export function copy(text: string) {
   textArea.remove();
 }
 
-export function useSetting<S>(name: string, defaultValue: S): [S, React.Dispatch<React.SetStateAction<S>>] {
-  const value = settings.getObject(name, defaultValue);
+export function useSetting<S>(name: string | undefined, defaultValue: S): [S, React.Dispatch<React.SetStateAction<S>>] {
+  const value = name ? settings.getObject(name, defaultValue) : defaultValue;
   const [state, setState] = React.useState<S>(value);
   const setStateWrapper = (value: React.SetStateAction<S>) => {
-    settings.setObject(name, value);
+    if (name)
+      settings.setObject(name, value);
     setState(value);
   };
   return [state, setStateWrapper];
