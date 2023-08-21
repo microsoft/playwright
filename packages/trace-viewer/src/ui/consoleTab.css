@@ -52,12 +52,34 @@
 
 .console-time {
   float: left;
-  min-width: 30px;
+  min-width: 50px;
   color: var(--vscode-editorCodeLens-foreground);
   user-select: none;
 }
 
 .console-stack {
   white-space: pre-wrap;
-  margin: 3px;
+  margin-left: 50px;
+}
+
+.console-line .codicon.status-none::after,
+.console-line .codicon.status-error::after,
+.console-line .codicon.status-warning::after {
+  display: inline-block;
+  content: 'a';
+  color: transparent;
+  border-radius: 4px;
+  width: 8px;
+  height: 8px;
+  position: relative;
+  top: 8px;
+  left: -7px;
+}
+
+.console-line .codicon.status-error::after {
+  background-color: var(--vscode-errorForeground);
+}
+
+.console-line .codicon.status-warning::after {
+  background-color: var(--vscode-list-warningForeground);
 }
