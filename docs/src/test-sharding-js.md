@@ -62,7 +62,6 @@ jobs:
       fail-fast: false
       matrix:
         shard: [1/4, 2/4, 3/4, 4/4]
-    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
