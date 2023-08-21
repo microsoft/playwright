@@ -147,12 +147,12 @@ test('should render console', async ({ showTraceViewer, browserName }) => {
   await expect(traceViewer.consoleLineMessages.last()).toHaveText('Cheers!');
 
   const icons = traceViewer.consoleLines.locator('.codicon');
-  await expect(icons.nth(0)).toHaveClass('codicon codicon-blank');
-  await expect(icons.nth(1)).toHaveClass('codicon codicon-warning');
-  await expect(icons.nth(2)).toHaveClass('codicon codicon-error');
-  await expect(icons.nth(3)).toHaveClass('codicon codicon-error');
+  await expect.soft(icons.nth(0)).toHaveClass('codicon codicon-browser status-none');
+  await expect.soft(icons.nth(1)).toHaveClass('codicon codicon-browser status-warning');
+  await expect.soft(icons.nth(2)).toHaveClass('codicon codicon-browser status-error');
+  await expect.soft(icons.nth(3)).toHaveClass('codicon codicon-browser status-error');
   // Firefox can insert layout error here.
-  await expect(icons.last()).toHaveClass('codicon codicon-blank');
+  await expect.soft(icons.last()).toHaveClass('codicon codicon-browser status-none');
   await expect(traceViewer.consoleStacks.first()).toContainText('Error: Unhandled exception');
 
   await traceViewer.selectAction('page.evaluate');

@@ -25,13 +25,14 @@ import { msToString } from '@web/uiUtils';
 import type * as trace from '@trace/trace';
 
 type ConsoleEntry = {
-  message?: trace.ConsoleMessageTraceEvent['initializer'];
-  error?: channels.SerializedError;
+  browserMessage?: trace.ConsoleMessageTraceEvent['initializer'],
+  browserError?: channels.SerializedError;
   nodeMessage?: {
     text?: string;
     base64?: string;
-    isError: boolean;
   },
+  isError: boolean;
+  isWarning: boolean;
   timestamp: number;
 };
 
@@ -52,13 +53,17 @@ export const ConsoleTab: React.FunctionComponent<{
       if (event.method === 'console') {
         const { guid } = event.params.message;
         entries.push({
-          message: modelUtil.context(event).initializers[guid],
+          browserMessage: modelUtil.context(event).initializers[guid],
+          isError: modelUtil.context(event).initializers[guid]?.type === 'error',
+          isWarning: modelUtil.context(event).initializers[guid]?.type === 'warning',
           timestamp: event.time,
         });
       }
       if (event.method === 'pageError') {
         entries.push({
-          error: event.params.error,
+          browserError: event.params.error,
+          isError: true,
+          isWarning: false,
           timestamp: event.time,
         });
       }
@@ -68,8 +73,9 @@ export const ConsoleTab: React.FunctionComponent<{
         nodeMessage: {
           text: event.text,
           base64: event.base64,
-          isError: event.type === 'stderr',
         },
+        isError: event.type === 'stderr',
+        isWarning: false,
         timestamp: event.timestamp,
       });
     }
@@ -86,68 +92,55 @@ export const ConsoleTab: React.FunctionComponent<{
   return <div className='console-tab'>
     <ConsoleListView
       items={filteredEntries}
-      isError={entry => !!entry.error || entry.message?.type === 'error' || entry.nodeMessage?.isError || false}
-      isWarning={entry => entry.message?.type === 'warning'}
+      isError={entry => entry.isError}
+      isWarning={entry => entry.isWarning}
       render={entry => {
-        const { message, error, nodeMessage } = entry;
         const timestamp = msToString(entry.timestamp - boundaries.minimum);
-        if (message) {
-          const text = message.args ? format(message.args) : message.text;
-          const url = message.location.url;
+        const timestampElement = <span className='console-time'>{timestamp}</span>;
+        const errorSuffix = entry.isError ? ' status-error' : entry.isWarning ? ' status-warning' : ' status-none';
+        const statusElement = entry.browserMessage || entry.browserError ? <span className={'codicon codicon-browser' + errorSuffix}></span> : <span className={'codicon codicon-file' + errorSuffix}></span>;
+        let locationText: string | undefined;
+        let messageBody: JSX.Element[] | string | undefined;
+        let messageInnerHTML: string | undefined;
+        let messageStack: JSX.Element[] | string | undefined;
+
+        const { browserMessage, browserError, nodeMessage } = entry;
+        if (browserMessage) {
+          const text = browserMessage.args ? format(browserMessage.args) : browserMessage.text;
+          const url = browserMessage.location.url;
           const filename = url ? url.substring(url.lastIndexOf('/') + 1) : '<anonymous>';
-          return <div className='console-line'>
-            <span className='console-time'>{timestamp}</span>
-            <span className='console-location'>{filename}:{message.location.lineNumber}</span>
-            <span className={'codicon codicon-' + iconClass(message)}></span>
-            <span className='console-line-message'>{text}</span>
-          </div>;
+          locationText = `${filename}:${browserMessage.location.lineNumber}`;
+          messageBody = text;
         }
-        if (error) {
-          const { error: errorObject, value } = error;
+
+        if (browserError) {
+          const { error: errorObject, value } = browserError;
           if (errorObject) {
-            return <div className='console-line'>
-              <span className='console-time'>{timestamp}</span>
-              <span className={'codicon codicon-error'}></span>
-              <span className='console-line-message'>{errorObject.message}</span>
-              <div className='console-stack'>{errorObject.stack}</div>
-            </div>;
+            messageBody = errorObject.message;
+            messageStack = errorObject.stack;
+          } else {
+            messageBody = String(value);
           }
-          return <div className='console-line'>
-            <span className='console-time'>{timestamp}</span>
-            <span className={'codicon codicon-error'}></span>
-            <span className='console-line-message'>{String(value)}</span>
-          </div>;
         }
-        if (nodeMessage?.text) {
-          return <div className='console-line'>
-            <span className='console-time'>{timestamp}</span>
-            <span className={'codicon codicon-' + stdioClass(nodeMessage.isError)}></span>
-            <span className='console-line-message' dangerouslySetInnerHTML={{ __html: ansi2htmlMarkup(nodeMessage.text.trim()) || '' }}></span>
-          </div>;
-        }
-        if (nodeMessage?.base64) {
-          return <div className='console-line'>
-            <span className={'codicon codicon-' + stdioClass(nodeMessage.isError)}></span>
-            <span className='console-line-message' dangerouslySetInnerHTML={{ __html: ansi2htmlMarkup(atob(nodeMessage.base64).trim()) || '' }}></span>
-          </div>;
-        }
-        return null;
+
+        if (nodeMessage?.text)
+          messageInnerHTML = ansi2htmlMarkup(nodeMessage.text.trim()) || '';
+
+        if (nodeMessage?.base64)
+          messageInnerHTML = ansi2htmlMarkup(atob(nodeMessage.base64).trim()) || '';
+
+        return <div className='console-line'>
+          {timestampElement}
+          {statusElement}
+          {locationText && <span className='console-location'>{locationText}</span>}
+          {messageBody && <span className='console-line-message'>{messageBody}</span>}
+          {messageInnerHTML && <span className='console-line-message' dangerouslySetInnerHTML={{ __html: messageInnerHTML }}></span>}
+          {messageStack && <div className='console-stack'>{messageStack}</div>}
+        </div>;
       }}
     />
   </div>;
 };
-
-function iconClass(message: trace.ConsoleMessageTraceEvent['initializer']): string {
-  switch (message.type) {
-    case 'error': return 'error';
-    case 'warning': return 'warning';
-  }
-  return 'blank';
-}
-
-function stdioClass(isError: boolean): string {
-  return isError ? 'error' : 'blank';
-}
 
 function format(args: { preview: string, value: any }[]): JSX.Element[] {
   if (args.length === 1)
