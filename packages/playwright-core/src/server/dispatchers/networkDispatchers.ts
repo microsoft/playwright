@@ -128,13 +128,12 @@ export class RouteDispatcher extends Dispatcher<Route, channels.RouteChannel, Re
 
   private constructor(scope: RequestDispatcher, route: Route) {
     super(scope, route, 'Route', {
-      // Context route can point to a non-reported request.
+      // Context route can point to a non-reported request, so we send the request in the initializer.
       request: scope
     });
   }
 
   async continue(params: channels.RouteContinueParams, metadata: CallMetadata): Promise<channels.RouteContinueResult> {
-    // Used to discriminate between continue in tracing.
     await this._object.continue({
       url: params.url,
       method: params.method,
@@ -145,12 +144,10 @@ export class RouteDispatcher extends Dispatcher<Route, channels.RouteChannel, Re
   }
 
   async fulfill(params: channels.RouteFulfillParams, metadata: CallMetadata): Promise<void> {
-    // Used to discriminate between fulfills in tracing.
     await this._object.fulfill(params);
   }
 
   async abort(params: channels.RouteAbortParams, metadata: CallMetadata): Promise<void> {
-    // Used to discriminate between abort in tracing.
     await this._object.abort(params.errorCode || 'failed');
   }
 

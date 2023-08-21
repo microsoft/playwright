@@ -33,6 +33,7 @@ import { urlMatches } from '../utils/network';
 import { MultiMap } from '../utils/multimap';
 import { APIResponse } from './fetch';
 import type { Serializable } from '../../types/structs';
+import type { BrowserContext } from './browserContext';
 
 export type NetworkCookie = {
   name: string,
@@ -158,11 +159,6 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
     return this._provisionalHeaders.headers();
   }
 
-  _context() {
-    // TODO: make sure this works for service worker requests.
-    return this.frame().page().context();
-  }
-
   _actualHeaders(): Promise<RawHeaders> {
     if (this._fallbackOverrides.headers)
       return Promise.resolve(RawHeaders._fromHeadersObjectLossy(this._fallbackOverrides.headers));
@@ -277,6 +273,7 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
 
 export class Route extends ChannelOwner<channels.RouteChannel> implements api.Route {
   private _handlingPromise: ManualPromise<boolean> | null = null;
+  _context!: BrowserContext;
 
   static from(route: channels.RouteChannel): Route {
     return (route as any)._object;
@@ -322,8 +319,7 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
 
   async fetch(options: FallbackOverrides & { maxRedirects?: number, timeout?: number } = {}): Promise<APIResponse> {
     return await this._wrapApiCall(async () => {
-      const context = this.request()._context();
-      return context.request._innerFetch({ request: this.request(), data: options.postData, ...options });
+      return this._context.request._innerFetch({ request: this.request(), data: options.postData, ...options });
     });
   }
 

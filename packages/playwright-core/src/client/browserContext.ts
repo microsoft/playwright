@@ -190,6 +190,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   }
 
   async _onRoute(route: network.Route) {
+    route._context = this;
     const routeHandlers = this._routes.slice();
     for (const routeHandler of routeHandlers) {
       if (!routeHandler.matches(route.request().url()))

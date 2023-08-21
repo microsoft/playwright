@@ -265,3 +265,19 @@ it('should intercept with post data override', async ({ page, server, isElectron
   const request = await requestPromise;
   expect((await request.postBody).toString()).toBe(JSON.stringify({ 'foo': 'bar' }));
 });
+
+it('should fulfill popup main request using alias', async ({ page, server, isElectron, isAndroid }) => {
+  it.fixme(isElectron, 'error: Browser context management is not supported.');
+  it.skip(isAndroid, 'The internal Android localhost (10.0.0.2) != the localhost on the host');
+
+  await page.context().route('**/*', async route => {
+    const response = await route.fetch();
+    await route.fulfill({ response, body: 'hello' });
+  });
+  await page.setContent(`<a target=_blank href="${server.EMPTY_PAGE}">click me</a>`);
+  const [popup] = await Promise.all([
+    page.waitForEvent('popup'),
+    page.getByText('click me').click(),
+  ]);
+  await expect(popup.locator('body')).toHaveText('hello');
+});

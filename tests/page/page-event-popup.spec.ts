@@ -121,6 +121,7 @@ it('should work with clicking target=_blank', async ({ page, server }) => {
   ]);
   expect(await page.evaluate(() => !!window.opener)).toBe(false);
   expect(await popup.evaluate(() => !!window.opener)).toBe(true);
+  expect(popup.mainFrame().page()).toBe(popup);
 });
 
 it('should work with fake-clicking target=_blank and rel=noopener', async ({ page, server }) => {
