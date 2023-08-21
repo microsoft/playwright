@@ -98,8 +98,15 @@ body.dark-mode .drop-target {
 }
 
 .workbench-loader .logo {
-  font-size: 20px;
   margin-left: 16px;
+  display: flex;
+  align-items: center;
+}
+
+.workbench-loader .logo img {
+  height: 32px;
+  width: 32px;
+  pointer-events: none;
 }
 
 .workbench-loader .product {

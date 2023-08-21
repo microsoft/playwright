@@ -139,7 +139,9 @@ export const WorkbenchLoader: React.FunctionComponent<{
 
   return <div className='vbox workbench-loader' onDragOver={event => { event.preventDefault(); setDragOver(true); }}>
     <div className='hbox header'>
-      <div className='logo'>🎭</div>
+      <div className='logo'>
+        <img src='playwright-logo.svg' />
+      </div>
       <div className='product'>Playwright</div>
       {model.title && <div className='title'>{model.title}</div>}
       <div className='spacer'></div>
