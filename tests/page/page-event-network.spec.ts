@@ -58,7 +58,7 @@ it('Page.Events.RequestFailed @smoke', async ({ page, server, browserName, platf
     expect(failedRequests[0].failure().errorText).toBe('net::ERR_EMPTY_RESPONSE');
   } else if (browserName === 'webkit') {
     if (platform === 'linux')
-      expect(failedRequests[0].failure().errorText).toBe('Message Corrupt');
+      expect(failedRequests[0].failure().errorText).toMatch(/(Message Corrupt)|(Connection terminated unexpectedly)/i);
     else if (platform === 'darwin')
       expect(failedRequests[0].failure().errorText).toBe('The network connection was lost.');
     else if (platform === 'win32')

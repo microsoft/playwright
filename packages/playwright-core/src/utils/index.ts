@@ -23,6 +23,7 @@ export * from './eventsHelper';
 export * from './fileUtils';
 export * from './glob';
 export * from './headers';
+export * from './hostPlatform';
 export * from './httpServer';
 export * from './manualPromise';
 export * from './mimeType';
