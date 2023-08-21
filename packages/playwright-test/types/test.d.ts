@@ -4537,7 +4537,7 @@ type ExtraMatchers<T, Type, Matchers> = T extends Type ? Matchers : IfAny<T, Mat
  *
  * test('assert a value', async ({ page }) => {
  *   const value = 1;
- *   await expect(value).toBe(2);
+ *   expect(value).toBe(2);
  * });
  * ```
  *
@@ -4548,7 +4548,7 @@ interface GenericAssertions<R> {
    *
    * ```js
    * const value = 1;
-   * await expect(value).not.toBe(2);
+   * expect(value).not.toBe(2);
    * ```
    *
    */
