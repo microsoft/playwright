@@ -53,6 +53,10 @@ export interface MountOptions<HooksConfig extends JsonObject, Component> {
   hooksConfig?: HooksConfig;
 }
 
+export interface MountOptionsJsx<HooksConfig extends JsonObject> {
+  hooksConfig?: HooksConfig;
+}
+
 interface MountResult<Component> extends Locator {
   unmount(): Promise<void>;
   update(options: {
@@ -68,7 +72,10 @@ interface MountResultJsx extends Locator {
 }
 
 export interface ComponentFixtures {
-  mount(component: JSX.Element): Promise<MountResultJsx>;
+  mount<HooksConfig extends JsonObject>(
+    component: JSX.Element,
+    options?: MountOptionsJsx<HooksConfig>
+  ): Promise<MountResultJsx>;
   mount<HooksConfig extends JsonObject, Component = unknown>(
     component: Component,
     options?: MountOptions<HooksConfig, Component>
