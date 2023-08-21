@@ -9,7 +9,7 @@ import { test, expect } from '@playwright/test';
 
 test('assert a value', async ({ page }) => {
   const value = 1;
-  await expect(value).toBe(2);
+  expect(value).toBe(2);
 });
 ```
 
@@ -21,7 +21,7 @@ Makes the assertion check for the opposite condition. For example, the following
 
 ```js
 const value = 1;
-await expect(value).not.toBe(2);
+expect(value).not.toBe(2);
 ```
 
 
