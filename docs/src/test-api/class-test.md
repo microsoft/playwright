@@ -44,7 +44,7 @@ Test function that takes one or two arguments: an object with fixtures and optio
 
 
 
-## method: Test.afterAll
+## method: Test.afterAll#1
 * since: v1.10
 
 Declares an `afterAll` hook that is executed once per worker after all tests.
@@ -64,15 +64,42 @@ test.afterAll(async () => {
 });
 ```
 
-### param: Test.afterAll.hookFunction
+### param: Test.afterAll#1.hookFunction
 * since: v1.10
 - `hookFunction` <[function]\([Fixtures], [TestInfo]\)>
 
 Hook function that takes one or two arguments: an object with worker fixtures and optional [TestInfo].
 
 
+## method: Test.afterAll#2
+* since: v1.38
 
-## method: Test.afterEach
+Declares an `afterAll` hook with a title that is executed once per worker after all tests.
+
+**Usage**
+
+```js
+test.afterAll('Teardown', async () => {
+  console.log('Done with tests');
+  // ...
+});
+```
+
+### param: Test.afterAll#2.title
+* since: v1.38
+- `title` <[string]>
+
+Hook title.
+
+### param: Test.afterAll#2.hookFunction
+* since: v1.38
+- `hookFunction` <[function]\([Fixtures], [TestInfo]\)>
+
+Hook function that takes one or two arguments: an object with worker fixtures and optional [TestInfo].
+
+
+
+## method: Test.afterEach#1
 * since: v1.10
 
 Declares an `afterEach` hook that is executed after each test.
@@ -100,14 +127,50 @@ test('my test', async ({ page }) => {
 });
 ```
 
-### param: Test.afterEach.hookFunction
+### param: Test.afterEach#1.hookFunction
 * since: v1.10
 - `hookFunction` <[function]\([Fixtures], [TestInfo]\)>
 
 Hook function that takes one or two arguments: an object with fixtures and optional [TestInfo].
 
 
-## method: Test.beforeAll
+## method: Test.afterEach#2
+* since: v1.38
+
+Declares an `afterEach` hook with a title that is executed after each test.
+
+**Usage**
+
+```js title="example.spec.ts"
+import { test, expect } from '@playwright/test';
+
+test.afterEach('Status check', async ({ page }, testInfo) => {
+  console.log(`Finished ${testInfo.title} with status ${testInfo.status}`);
+
+  if (testInfo.status !== testInfo.expectedStatus)
+    console.log(`Did not run as expected, ended up at ${page.url()}`);
+});
+
+test('my test', async ({ page }) => {
+  // ...
+});
+```
+
+### param: Test.afterEach#2.title
+* since: v1.38
+- `title` <[string]>
+
+Hook title.
+
+### param: Test.afterEach#2.hookFunction
+* since: v1.38
+- `hookFunction` <[function]\([Fixtures], [TestInfo]\)>
+
+Hook function that takes one or two arguments: an object with fixtures and optional [TestInfo].
+
+
+
+## method: Test.beforeAll#1
 * since: v1.10
 
 Declares a `beforeAll` hook that is executed once per worker process before all tests.
@@ -118,7 +181,7 @@ When called in the scope of a test file, runs before all tests in the file. When
 
 Note that worker process is restarted on test failures, and `beforeAll` hook runs again in the new worker. Learn more about [workers and failures](../test-retries.md).
 
-You can use [`method: Test.afterAll`] to teardown any resources set up in `beforeAll`.
+You can use [`method: Test.afterAll#1`] to teardown any resources set up in `beforeAll`.
 
 **Usage**
 
@@ -138,15 +201,47 @@ test('my test', async ({ page }) => {
 });
 ```
 
-### param: Test.beforeAll.hookFunction
+### param: Test.beforeAll#1.hookFunction
 * since: v1.10
 - `hookFunction` <[function]\([Fixtures], [TestInfo]\)>
 
 Hook function that takes one or two arguments: an object with worker fixtures and optional [TestInfo].
 
 
+## method: Test.beforeAll#2
+* since: v1.38
 
-## method: Test.beforeEach
+Declares a `beforeAll` hook with a title that is executed once per worker process before all tests.
+
+**Usage**
+
+```js title="example.spec.ts"
+import { test, expect } from '@playwright/test';
+
+test.beforeAll('Setup', async () => {
+  console.log('Before tests');
+});
+
+test('my test', async ({ page }) => {
+  // ...
+});
+```
+
+### param: Test.beforeAll#2.title
+* since: v1.38
+- `title` <[string]>
+
+Hook title.
+
+### param: Test.beforeAll#2.hookFunction
+* since: v1.38
+- `hookFunction` <[function]\([Fixtures], [TestInfo]\)>
+
+Hook function that takes one or two arguments: an object with worker fixtures and optional [TestInfo].
+
+
+
+## method: Test.beforeEach#1
 * since: v1.10
 
 Declares a `beforeEach` hook that is executed before each test.
@@ -157,7 +252,7 @@ When called in the scope of a test file, runs before each test in the file. When
 
 You can access all the same [Fixtures] as the test function itself, and also the [TestInfo] object that gives a lot of useful information. For example, you can navigate the page before starting the test.
 
-You can use [`method: Test.afterEach`] to teardown any resources set up in `beforeEach`.
+You can use [`method: Test.afterEach#1`] to teardown any resources set up in `beforeEach`.
 
 **Usage**
 
@@ -174,12 +269,44 @@ test('my test', async ({ page }) => {
 });
 ```
 
-### param: Test.beforeEach.hookFunction
+### param: Test.beforeEach#1.hookFunction
 * since: v1.10
 - `hookFunction` <[function]\([Fixtures], [TestInfo]\)>
 
 Hook function that takes one or two arguments: an object with fixtures and optional [TestInfo].
 
+
+## method: Test.beforeEach#2
+* since: v1.38
+
+Declares a `beforeEach` hook with a title that is executed before each test.
+
+**Usage**
+
+```js title="example.spec.ts"
+import { test, expect } from '@playwright/test';
+
+test.beforeEach('Open start URL', async ({ page }, testInfo) => {
+  console.log(`Running ${testInfo.title}`);
+  await page.goto('https://my.start.url/');
+});
+
+test('my test', async ({ page }) => {
+  expect(page.url()).toBe('https://my.start.url/');
+});
+```
+
+### param: Test.beforeEach#2.title
+* since: v1.38
+- `title` <[string]>
+
+Hook title.
+
+### param: Test.beforeEach#2.hookFunction
+* since: v1.38
+- `hookFunction` <[function]\([Fixtures], [TestInfo]\)>
+
+Hook function that takes one or two arguments: an object with fixtures and optional [TestInfo].
 
 
 
@@ -1057,7 +1184,7 @@ test('skip in WebKit', async ({ page, browserName }) => {
 });
 ```
 
-Skip from [`method: Test.beforeEach`] hook:
+Skip from [`method: Test.beforeEach#1`] hook:
 
 ```js
 import { test, expect } from '@playwright/test';

@@ -134,11 +134,16 @@ export class TestTypeImpl {
     setCurrentlyLoadingFileSuite(suite);
   }
 
-  private _hook(name: 'beforeEach' | 'afterEach' | 'beforeAll' | 'afterAll', location: Location, fn: Function) {
+  private _hook(name: 'beforeEach' | 'afterEach' | 'beforeAll' | 'afterAll', location: Location, title: string | Function, fn?: Function) {
     const suite = this._currentSuite(location, `test.${name}()`);
     if (!suite)
       return;
-    suite._hooks.push({ type: name, fn, location });
+    if (typeof title === 'function') {
+      fn = title;
+      title = `${name} hook`;
+    }
+
+    suite._hooks.push({ type: name, fn: fn!, title, location });
   }
 
   private _configure(location: Location, options: { mode?: 'default' | 'parallel' | 'serial', retries?: number, timeout?: number }) {

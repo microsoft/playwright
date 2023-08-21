@@ -2,7 +2,7 @@
 * since: v1.10
 * langs: js
 
-`TestInfo` contains information about currently running test. It is available to test functions, [`method: Test.beforeEach`], [`method: Test.afterEach`], [`method: Test.beforeAll`] and [`method: Test.afterAll`] hooks, and test-scoped fixtures. `TestInfo` provides utilities to control test execution: attach files, update test timeout, determine which test is currently running and whether it was retried, etc.
+`TestInfo` contains information about currently running test. It is available to test functions, [`method: Test.beforeEach#1`], [`method: Test.afterEach#1`], [`method: Test.beforeAll#1`] and [`method: Test.afterAll#1`] hooks, and test-scoped fixtures. `TestInfo` provides utilities to control test execution: attach files, update test timeout, determine which test is currently running and whether it was retried, etc.
 
 ```js
 import { test, expect } from '@playwright/test';
@@ -115,7 +115,7 @@ Processed configuration from the [configuration file](../test-configuration.md).
 * since: v1.10
 - type: <[int]>
 
-The number of milliseconds the test took to finish. Always zero before the test finishes, either successfully or not. Can be used in [`method: Test.afterEach`] hook.
+The number of milliseconds the test took to finish. Always zero before the test finishes, either successfully or not. Can be used in [`method: Test.afterEach#1`] hook.
 
 
 ## property: TestInfo.error
@@ -403,7 +403,7 @@ Suffix used to differentiate snapshots between multiple test configurations. For
 * since: v1.10
 - type: ?<[TestStatus]<"passed"|"failed"|"timedOut"|"skipped"|"interrupted">>
 
-Actual status for the currently running test. Available after the test has finished in [`method: Test.afterEach`] hook and fixtures.
+Actual status for the currently running test. Available after the test has finished in [`method: Test.afterEach#1`] hook and fixtures.
 
 Status is usually compared with the [`property: TestInfo.expectedStatus`]:
 

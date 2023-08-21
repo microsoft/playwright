@@ -45,7 +45,7 @@ export class Suite extends Base implements SuitePrivate {
   parent?: Suite;
   _use: FixturesWithLocation[] = [];
   _entries: (Suite | TestCase)[] = [];
-  _hooks: { type: 'beforeEach' | 'afterEach' | 'beforeAll' | 'afterAll', fn: Function, location: Location }[] = [];
+  _hooks: { type: 'beforeEach' | 'afterEach' | 'beforeAll' | 'afterAll', fn: Function, title: string, location: Location }[] = [];
   _timeout: number | undefined;
   _retries: number | undefined;
   _staticAnnotations: Annotation[] = [];
@@ -187,7 +187,7 @@ export class Suite extends Base implements SuitePrivate {
       staticAnnotations: this._staticAnnotations.slice(),
       modifiers: this._modifiers.slice(),
       parallelMode: this._parallelMode,
-      hooks: this._hooks.map(h => ({ type: h.type, location: h.location })),
+      hooks: this._hooks.map(h => ({ type: h.type, location: h.location, title: h.title })),
       fileId: this._fileId,
     };
   }
@@ -202,7 +202,7 @@ export class Suite extends Base implements SuitePrivate {
     suite._staticAnnotations = data.staticAnnotations;
     suite._modifiers = data.modifiers;
     suite._parallelMode = data.parallelMode;
-    suite._hooks = data.hooks.map((h: any) => ({ type: h.type, location: h.location, fn: () => { } }));
+    suite._hooks = data.hooks.map((h: any) => ({ type: h.type, location: h.location, title: h.title, fn: () => { } }));
     suite._fileId = data.fileId;
     return suite;
   }
