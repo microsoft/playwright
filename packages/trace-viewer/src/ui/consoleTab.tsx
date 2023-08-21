@@ -200,10 +200,14 @@ function format(args: { preview: string, value: any }[]): JSX.Element[] {
 function parseCSSStyle(cssFormat: string): Record<string, string | number> {
   try {
     const styleObject: Record<string, string | number> = {};
-    const cssText = cssFormat.replace(/;$/, '').replace(/: /g, ':').replace(/; /g, ';');
-    const cssProperties = cssText.split(';');
-    for (const property of cssProperties) {
-      const [key, value] = property.split(':');
+    const cssProperties = cssFormat.split(';');
+    for (const token of cssProperties) {
+      const property = token.trim();
+      if (!property)
+        continue;
+      let [key, value] = property.split(':');
+      key = key.trim();
+      value = value.trim();
       if (!supportProperty(key))
         continue;
       // cssProperties are background-color, JSDom ones are backgroundColor

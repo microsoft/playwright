@@ -2130,7 +2130,7 @@ scheme.TracingTracingStartParams = tObject({
   name: tOptional(tString),
   snapshots: tOptional(tBoolean),
   screenshots: tOptional(tBoolean),
-  sources: tOptional(tBoolean),
+  live: tOptional(tBoolean),
 });
 scheme.TracingTracingStartResult = tOptional(tObject({}));
 scheme.TracingTracingStartChunkParams = tObject({
