@@ -425,3 +425,26 @@ it('should report all cookies in one header', async ({ page, server, isElectron,
   const cookie = (await response.request().allHeaders())['cookie'];
   expect(cookie).toBe('myCookie=myValue; myOtherCookie=myOtherValue');
 });
+
+it('should not allow to access frame on popup main request', async ({ page, server }) => {
+  await page.setContent(`<a target=_blank href="${server.EMPTY_PAGE}">click me</a>`);
+  const requestPromise = page.context().waitForEvent('request');
+  const popupPromise = page.context().waitForEvent('page');
+  const clicked = page.getByText('click me').click();
+  const request = await requestPromise;
+
+  expect(request.isNavigationRequest()).toBe(true);
+
+  let error;
+  try {
+    request.frame();
+  } catch (e) {
+    error = e;
+  }
+  expect(error.message).toContain('Frame for this navigation request is not available');
+
+  const response = await request.response();
+  await response.finished();
+  await popupPromise;
+  await clicked;
+});
