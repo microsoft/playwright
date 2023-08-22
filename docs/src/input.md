@@ -365,30 +365,30 @@ await page.GetByRole(AriaRole.Button).DispatchEventAsync("click");
 Most of the time, you should input text with [`method: Locator.fill`]. See the [Text input](#text-input) section above. You only need to type characters if there is special keyboard handling on the page.
 :::
 
-Type into the field character by character, as if it was a user with a real keyboard with [`method: Locator.type`].
+Type into the field character by character, as if it was a user with a real keyboard with [`method: Locator.pressSequentially`].
 
 ```js
-// Type character by character
-await page.locator('#area').type('Hello World!');
+// Press keys one by one
+await page.locator('#area').pressSequentially('Hello World!');
 ```
 
 ```java
-// Type character by character
-page.locator("#area").type("Hello World!");
+// Press keys one by one
+page.locator("#area").pressSequentially("Hello World!");
 ```
 
 ```python async
-# Type character by character
-await page.locator('#area').type('Hello World!')
+# Press keys one by one
+await page.locator('#area').pressSequentially('Hello World!')
 ```
 
 ```python sync
-# Type character by character
-page.locator('#area').type('Hello World!')
+# Press keys one by one
+page.locator('#area').pressSequentially('Hello World!')
 ```
 
 ```csharp
-// Type character by character
+// Press keys one by one
 await page.Locator("#area").TypeAsync("Hello World!");
 ```
 

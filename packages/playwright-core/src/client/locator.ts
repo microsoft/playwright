@@ -315,6 +315,10 @@ export class Locator implements api.Locator {
     return this._frame.type(this._selector, text, { strict: true, ...options });
   }
 
+  async pressSequentially(text: string, options: channels.ElementHandleTypeOptions = {}): Promise<void> {
+    return this.type(text, options);
+  }
+
   async uncheck(options: channels.ElementHandleUncheckOptions = {}) {
     return this._frame.uncheck(this._selector, { strict: true, ...options });
   }

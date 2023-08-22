@@ -1733,7 +1733,7 @@ Returns the page title.
 
 ## async method: Frame.type
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.type`] instead. Read more about [locators](../locators.md).
+* deprecated: Use locator-based [`method: Locator.pressSequentially`] instead. Read more about [locators](../locators.md).
 
 Sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text. `frame.type` can be used to
 send fine-grained keyboard events. To fill values in form fields, use [`method: Frame.fill`].
@@ -1741,33 +1741,6 @@ send fine-grained keyboard events. To fill values in form fields, use [`method: 
 To press a special key, like `Control` or `ArrowDown`, use [`method: Keyboard.press`].
 
 **Usage**
-
-```js
-await frame.type('#mytextarea', 'Hello'); // Types instantly
-await frame.type('#mytextarea', 'World', { delay: 100 }); // Types slower, like a user
-```
-
-```java
-// Types instantly
-frame.type("#mytextarea", "Hello");
-// Types slower, like a user
-frame.type("#mytextarea", "World", new Frame.TypeOptions().setDelay(100));
-```
-
-```python async
-await frame.type("#mytextarea", "hello") # types instantly
-await frame.type("#mytextarea", "world", delay=100) # types slower, like a user
-```
-
-```python sync
-frame.type("#mytextarea", "hello") # types instantly
-frame.type("#mytextarea", "world", delay=100) # types slower, like a user
-```
-
-```csharp
-await frame.TypeAsync("#mytextarea", "hello"); // types instantly
-await frame.TypeAsync("#mytextarea", "world", new() { Delay = 100 }); // types slower, like a user
-```
 
 ### param: Frame.type.selector = %%-input-selector-%%
 * since: v1.8

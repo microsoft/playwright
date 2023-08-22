@@ -94,6 +94,12 @@ it('should type', async ({ page }) => {
   expect(await page.$eval('input', input => input.value)).toBe('hello');
 });
 
+it('should pressSequentially', async ({ page }) => {
+  await page.setContent(`<input type='text' />`);
+  await page.locator('input').pressSequentially('hello');
+  expect(await page.$eval('input', input => input.value)).toBe('hello');
+});
+
 it('should take screenshot', async ({ page, server, browserName, headless, isAndroid, mode }) => {
   it.skip(browserName === 'firefox' && !headless);
   it.skip(isAndroid, 'Different dpr. Remove after using 1x scale for screenshots.');

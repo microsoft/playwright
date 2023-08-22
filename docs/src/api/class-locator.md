@@ -913,7 +913,7 @@ This method waits for [actionability](../actionability.md) checks, focuses the e
 
 If the target element is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error. However, if the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be filled instead.
 
-To send fine-grained keyboard events, use [`method: Locator.type`].
+To send fine-grained keyboard events, use [`method: Locator.pressSequentially`].
 
 ### param: Locator.fill.value
 * since: v1.14
@@ -1693,6 +1693,99 @@ Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
 ### option: Locator.press.timeout = %%-input-timeout-js-%%
 * since: v1.14
 
+
+## async method: Locator.pressSequentially
+* since: v1.38
+
+:::tip
+In most cases, you should use [`method: Locator.fill`] instead. You only need to press keys one by one if there is special keyboard handling on the page.
+:::
+
+Focuses the element, and then sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text.
+
+To press a special key, like `Control` or `ArrowDown`, use [`method: Locator.press`].
+
+**Usage**
+
+```js
+await locator.pressSequentially('Hello'); // Types instantly
+await locator.pressSequentially('World', { delay: 100 }); // Types slower, like a user
+```
+
+```java
+locator.pressSequentially("Hello"); // Types instantly
+locator.pressSequentially("World", new Locator.pressSequentiallyOptions().setDelay(100)); // Types slower, like a user
+```
+
+```python async
+await locator.press_sequentially("hello") # types instantly
+await locator.press_sequentially("world", delay=100) # types slower, like a user
+```
+
+```python sync
+locator.press_sequentially("hello") # types instantly
+locator.press_sequentially("world", delay=100) # types slower, like a user
+```
+
+```csharp
+await locator.PressSequentiallyAsync("Hello"); // Types instantly
+await locator.PressSequentiallyAsync("World", new() { Delay = 100 }); // Types slower, like a user
+```
+
+An example of typing into a text field and then submitting the form:
+
+```js
+const locator = page.getByLabel('Password');
+await locator.pressSequentially('my password');
+await locator.press('Enter');
+```
+
+```java
+Locator locator = page.getByLabel("Password");
+locator.pressSequentially("my password");
+locator.press("Enter");
+```
+
+```python async
+locator = page.get_by_label("Password")
+await locator.press_sequentially("my password")
+await locator.press("Enter")
+```
+
+```python sync
+locator = page.get_by_label("Password")
+locator.press_sequentially("my password")
+locator.press("Enter")
+```
+
+```csharp
+var locator = page.GetByLabel("Password");
+await locator.PressSequentiallyAsync("my password");
+await locator.PressAsync("Enter");
+```
+
+### param: Locator.pressSequentially.text
+* since: v1.38
+- `text` <[string]>
+
+String of characters to sequentially press into a focused element.
+
+### option: Locator.pressSequentially.delay
+* since: v1.38
+- `delay` <[float]>
+
+Time to wait between key presses in milliseconds. Defaults to 0.
+
+### option: Locator.pressSequentially.noWaitAfter = %%-input-no-wait-after-%%
+* since: v1.38
+
+### option: Locator.pressSequentially.timeout = %%-input-timeout-%%
+* since: v1.38
+
+### option: Locator.pressSequentially.timeout = %%-input-timeout-js-%%
+* since: v1.38
+
+
 ## async method: Locator.screenshot
 * since: v1.14
 - returns: <[Buffer]>
@@ -2135,73 +2228,13 @@ Returns the [`node.textContent`](https://developer.mozilla.org/en-US/docs/Web/AP
 
 ## async method: Locator.type
 * since: v1.14
-
-:::tip
-In most cases, you should use [`method: Locator.fill`] instead. You only need to type characters if there is special keyboard handling on the page.
-:::
+* deprecated: In most cases, you should use [`method: Locator.fill`] instead. You only need to press keys one by one if there is special keyboard handling on the page - in this case use [`method: Locator.pressSequentially`].
 
 Focuses the element, and then sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text.
 
 To press a special key, like `Control` or `ArrowDown`, use [`method: Locator.press`].
 
 **Usage**
-
-```js
-await element.type('Hello'); // Types instantly
-await element.type('World', { delay: 100 }); // Types slower, like a user
-```
-
-```java
-element.type("Hello"); // Types instantly
-element.type("World", new Locator.TypeOptions().setDelay(100)); // Types slower, like a user
-```
-
-```python async
-await element.type("hello") # types instantly
-await element.type("world", delay=100) # types slower, like a user
-```
-
-```python sync
-element.type("hello") # types instantly
-element.type("world", delay=100) # types slower, like a user
-```
-
-```csharp
-await element.TypeAsync("Hello"); // Types instantly
-await element.TypeAsync("World", new() { Delay = 100 }); // Types slower, like a user
-```
-
-An example of typing into a text field and then submitting the form:
-
-```js
-const element = page.getByLabel('Password');
-await element.type('my password');
-await element.press('Enter');
-```
-
-```java
-Locator element = page.getByLabel("Password");
-element.type("my password");
-element.press("Enter");
-```
-
-```python async
-element = page.get_by_label("Password")
-await element.type("my password")
-await element.press("Enter")
-```
-
-```python sync
-element = page.get_by_label("Password")
-element.type("my password")
-element.press("Enter")
-```
-
-```csharp
-var element = page.GetByLabel("Password");
-await element.TypeAsync("my password");
-await element.PressAsync("Enter");
-```
 
 ### param: Locator.type.text
 * since: v1.14
