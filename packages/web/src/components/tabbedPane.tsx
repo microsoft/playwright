@@ -35,9 +35,9 @@ export const TabbedPane: React.FunctionComponent<{
   return <div className='tabbed-pane'>
     <div className='vbox'>
       <Toolbar>
-        <div style={{ flex: 'none', display: 'flex', height: '100%' }}>
-          {...leftToolbar || []}
-        </div>
+        { leftToolbar && <div style={{ flex: 'none', display: 'flex', margin: '0 4px' }}>
+          {...leftToolbar}
+        </div>}
         <div style={{ flex: 'auto', display: 'flex', height: '100%', overflow: 'hidden' }}>
           {[...tabs.map(tab => (
             <TabbedPaneTab
@@ -48,9 +48,9 @@ export const TabbedPane: React.FunctionComponent<{
             ></TabbedPaneTab>)),
           ]}
         </div>
-        <div style={{ flex: 'none', display: 'flex', height: '100%' }}>
-          {...rightToolbar || []}
-        </div>
+        {rightToolbar && <div style={{ flex: 'none', display: 'flex' }}>
+          {...rightToolbar}
+        </div>}
       </Toolbar>
       {
         tabs.map(tab => {

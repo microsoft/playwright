@@ -181,24 +181,20 @@ export const Workbench: React.FunctionComponent<{
           selectedTab={selectedPropertiesTab}
           setSelectedTab={selectPropertiesTab}
           leftToolbar={[
-            <ToolbarButton title='Pick locator' toggled={isInspecting} onClick={() => {
+            <ToolbarButton title='Pick locator' icon='target' toggled={isInspecting} onClick={() => {
               if (!isInspecting)
                 selectPropertiesTab('inspector');
               setIsInspecting(!isInspecting);
-            }}>
-              <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20"><path d="M444-48v-98q-121-14-202.5-96T146-444H48v-72h98q14-120 95.5-202T444-814v-98h72v98q121 14 202.5 96T814-516h98v72h-98q-14 120-95.5 202T516-146v98h-72Zm36-168q110 0 187-77t77-187q0-110-77-187t-187-77q-110 0-187 77t-77 187q0 110 77 187t187 77Zm0-120q-60 0-102-42t-42-102q0-60 42-102t102-42q60 0 102 42t42 102q0 60-42 102t-102 42Z"/></svg>
-            </ToolbarButton>
+            }} />
           ]}
           rightToolbar={[
-            sidebarLocation === 'bottom' ? <ToolbarButton title='Dock to right' onClick={() => {
-              setSidebarLocation('right');
-            }}>
-              <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20"><path d="M211-144q-27.637 0-47.319-19.681Q144-183.363 144-211v-538q0-27.638 19.681-47.319Q183.363-816 211-816h538q27.638 0 47.319 19.681T816-749v538q0 27.637-19.681 47.319Q776.638-144 749-144H211Zm413-72h120v-528H624v528Zm-72 0v-528H216v528h336Zm72 0h120-120Z"/></svg>
-            </ToolbarButton> : <ToolbarButton title='Dock to bottom' onClick={() => {
-              setSidebarLocation('bottom');
-            }}>
-              <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20"><path d="M211-144q-27.637 0-47.319-19.681Q144-183.363 144-211v-538q0-27.638 19.681-47.319Q183.363-816 211-816h538q27.638 0 47.319 19.681T816-749v538q0 27.637-19.681 47.319Q776.638-144 749-144H211Zm5-192v120h528v-120H216Zm0-72h528v-336H216v336Zm0 72v120-120Z"/></svg>
-            </ToolbarButton>
+            sidebarLocation === 'bottom' ?
+              <ToolbarButton title='Dock to right' icon='layout-sidebar-right-off' onClick={() => {
+                setSidebarLocation('right');
+              }} /> :
+              <ToolbarButton title='Dock to bottom' icon='layout-panel-off' onClick={() => {
+                setSidebarLocation('bottom');
+              }} />
           ]}
         />
       </SplitView>
