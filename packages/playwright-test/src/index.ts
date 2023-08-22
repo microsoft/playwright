@@ -18,7 +18,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import type { APIRequestContext, BrowserContext, Browser, BrowserContextOptions, LaunchOptions, Page, Tracing, Video } from 'playwright-core';
 import * as playwrightLibrary from 'playwright-core';
-import { createGuid, debugMode, addInternalStackPrefix, mergeTraceFiles, saveTraceFile, isString, asLocator, jsonStringifyForceASCII } from 'playwright-core/lib/utils';
+import { createGuid, debugMode, addInternalStackPrefix, mergeTraceFiles, isString, asLocator, jsonStringifyForceASCII } from 'playwright-core/lib/utils';
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, TraceMode, VideoMode } from '../types/test';
 import type { TestInfoImpl } from './worker/testInfo';
 import { rootTestType } from './common/testType';
@@ -541,6 +541,8 @@ class ArtifactsRecorder {
     this._testInfo = testInfo;
     testInfo._onDidFinishTestFunction = () => this.didFinishTestFunction();
     this._captureTrace = shouldCaptureTrace(this._traceMode, testInfo) && !process.env.PW_TEST_DISABLE_TRACING;
+    if (this._captureTrace)
+      this._testInfo._tracing.start(path.join(this._artifactsDir, 'traces', `${this._testInfo.testId}-test.trace`), this._traceOptions);
 
     // Since beforeAll(s), test and afterAll(s) reuse the same TestInfo, make sure we do not
     // overwrite previous screenshots.
@@ -644,18 +646,9 @@ class ArtifactsRecorder {
 
     // Collect test trace.
     if (this._preserveTrace()) {
-      const events = this._testInfo._traceEvents;
-      if (events.length) {
-        if (!this._traceOptions.attachments) {
-          for (const event of events) {
-            if (event.type === 'after')
-              delete event.attachments;
-          }
-        }
-        const tracePath = path.join(this._artifactsDir, createGuid() + '.zip');
-        this._temporaryTraceFiles.push(tracePath);
-        await saveTraceFile(tracePath, events, this._traceOptions.sources);
-      }
+      const tracePath = path.join(this._artifactsDir, createGuid() + '.zip');
+      this._temporaryTraceFiles.push(tracePath);
+      await this._testInfo._tracing.stop(tracePath);
     }
 
     // Either remove or attach temporary traces for contexts closed before the

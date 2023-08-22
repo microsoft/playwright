@@ -52,7 +52,7 @@ test('should update trace live', async ({ runUITest, server }) => {
       listItem,
       'action list'
   ).toHaveText([
-    /browserContext.newPage[\d.]+m?s/,
+    /Before Hooks[\d.]+m?s/,
     /page.gotohttp:\/\/localhost:\d+\/one.html/
   ]);
 
@@ -78,7 +78,7 @@ test('should update trace live', async ({ runUITest, server }) => {
       'verify snapshot'
   ).toHaveText('One');
   await expect(listItem).toHaveText([
-    /browserContext.newPage[\d.]+m?s/,
+    /Before Hooks[\d.]+m?s/,
     /page.gotohttp:\/\/localhost:\d+\/one.html[\d.]+m?s/,
     /page.gotohttp:\/\/localhost:\d+\/two.html/
   ]);
@@ -139,7 +139,7 @@ test('should preserve action list selection upon live trace update', async ({ ru
       listItem,
       'action list'
   ).toHaveText([
-    /browserContext.newPage[\d.]+m?s/,
+    /Before Hooks[\d.]+m?s/,
     /page.gotoabout:blank[\d.]+m?s/,
     /page.setContent[\d.]+m?s/,
   ]);
@@ -153,7 +153,7 @@ test('should preserve action list selection upon live trace update', async ({ ru
       listItem,
       'action list'
   ).toHaveText([
-    /browserContext.newPage[\d.]+m?s/,
+    /Before Hooks[\d.]+m?s/,
     /page.gotoabout:blank[\d.]+m?s/,
     /page.setContent[\d.]+m?s/,
     /page.setContent[\d.]+m?s/,
@@ -200,7 +200,7 @@ test('should update tracing network live', async ({ runUITest, server }) => {
       listItem,
       'action list'
   ).toHaveText([
-    /browserContext.newPage[\d.]+m?s/,
+    /Before Hooks[\d.]+m?s/,
     /page.gotohttp:\/\/localhost:\d+\/one.html[\d.]+m?s/,
     /page.setContent[\d.]+m?s/,
   ]);
@@ -240,14 +240,12 @@ test('should show trace w/ multiple contexts', async ({ runUITest, server, creat
       listItem,
       'action list'
   ).toHaveText([
-    /apiRequestContext.get[\d.]+m?s/,
-    /browserContext.newPage[\d.]+m?s/,
+    /Before Hooks[\d.]+m?s/,
     /page.gotoabout:blank[\d.]+m?s/,
   ]);
 
   latch.open();
 });
-
 
 test('should show live trace for serial', async ({ runUITest, server, createLatch }) => {
   const latch = createLatch();
@@ -287,6 +285,7 @@ test('should show live trace for serial', async ({ runUITest, server, createLatc
       listItem,
       'action list'
   ).toHaveText([
+    /Before Hooks[\d.]+m?s/,
     /locator.unchecklocator\('input'\)[\d.]+m?s/,
     /expect.not.toBeCheckedlocator\('input'\)[\d.]/,
   ]);

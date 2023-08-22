@@ -80,7 +80,7 @@ export class WorkerMain extends ProcessRunner {
         ...chunkToParams(chunk)
       };
       this.dispatchEvent('stdOut', outPayload);
-      this._currentTest?._appendStdioToTrace('stdout', chunk);
+      this._currentTest?._tracing.appendStdioToTrace('stdout', chunk);
       return true;
     };
 
@@ -90,7 +90,7 @@ export class WorkerMain extends ProcessRunner {
           ...chunkToParams(chunk)
         };
         this.dispatchEvent('stdErr', outPayload);
-        this._currentTest?._appendStdioToTrace('stderr', chunk);
+        this._currentTest?._tracing.appendStdioToTrace('stderr', chunk);
         return true;
       };
     }

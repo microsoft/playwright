@@ -28,7 +28,8 @@
   position: relative;
   min-height: 50px;
   max-height: 200px;
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .film-strip-lane {

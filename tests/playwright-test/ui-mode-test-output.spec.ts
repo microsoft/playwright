@@ -162,6 +162,7 @@ test('should stream console messages live', async ({ runUITest }, testInfo) => {
         await button.evaluate(node => node.addEventListener('click', () => {
           setTimeout(() => { console.log('I was clicked'); }, 1000);
         }));
+        console.log('I was logged');
         await button.click();
         await page.locator('#not-there').waitFor();
       });
@@ -172,6 +173,7 @@ test('should stream console messages live', async ({ runUITest }, testInfo) => {
   await page.getByText('print').click();
 
   await expect(page.locator('.console-tab .console-line-message')).toHaveText([
+    'I was logged',
     'I was clicked',
   ]);
   await page.getByTitle('Stop').click();

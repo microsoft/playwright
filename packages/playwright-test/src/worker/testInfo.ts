@@ -16,7 +16,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { MaxTime, captureRawStack, createAfterActionTraceEventForStep, createBeforeActionTraceEventForStep, monotonicTime, zones, sanitizeForFilePath } from 'playwright-core/lib/utils';
+import { MaxTime, captureRawStack, monotonicTime, zones, sanitizeForFilePath } from 'playwright-core/lib/utils';
 import type { TestInfoError, TestInfo, TestStatus, FullProject, FullConfig } from '../../types/test';
 import type { AttachmentPayload, StepBeginPayload, StepEndPayload, WorkerInitParams } from '../common/ipc';
 import type { TestCase } from '../common/test';
@@ -24,7 +24,7 @@ import { TimeoutManager } from './timeoutManager';
 import type { Annotation, FullConfigInternal, FullProjectInternal } from '../common/config';
 import type { Location } from '../../types/testReporter';
 import { getContainedPath, normalizeAndSaveAttachment, serializeError, trimLongString } from '../util';
-import type * as trace from '@trace/trace';
+import { TestTracing } from './testTracing';
 
 export interface TestStepInternal {
   complete(result: { error?: Error | TestInfoError }): void;
@@ -51,7 +51,8 @@ export class TestInfoImpl implements TestInfo {
   readonly _startTime: number;
   readonly _startWallTime: number;
   private _hasHardError: boolean = false;
-  readonly _traceEvents: trace.TraceEvent[] = [];
+  readonly _tracing = new TestTracing();
+
   _didTimeout = false;
   _wasInterrupted = false;
   _lastStepId = 0;
@@ -87,7 +88,7 @@ export class TestInfoImpl implements TestInfo {
   readonly outputDir: string;
   readonly snapshotDir: string;
   errors: TestInfoError[] = [];
-  private _attachmentsPush: (...items: TestInfo['attachments']) => number;
+  readonly _attachmentsPush: (...items: TestInfo['attachments']) => number;
 
   get error(): TestInfoError | undefined {
     return this.errors[0];
@@ -303,7 +304,7 @@ export class TestInfoImpl implements TestInfo {
         };
         this._onStepEnd(payload);
         const errorForTrace = error ? { name: '', message: error.message || '', stack: error.stack } : undefined;
-        this._traceEvents.push(createAfterActionTraceEventForStep(stepId, serializeAttachments(this.attachments, initialAttachments), errorForTrace));
+        this._tracing.appendAfterActionForStep(stepId, this.attachments, initialAttachments, errorForTrace);
       }
     };
     const parentStepList = parentStep ? parentStep.steps : this._steps;
@@ -321,17 +322,8 @@ export class TestInfoImpl implements TestInfo {
       location,
     };
     this._onStepBegin(payload);
-    this._traceEvents.push(createBeforeActionTraceEventForStep(stepId, parentStep?.stepId, data.apiName || data.title, data.params, data.wallTime, data.location ? [data.location] : []));
+    this._tracing.appendBeforeActionForStep(stepId, parentStep?.stepId, data.apiName || data.title, data.params, data.wallTime, data.location ? [data.location] : []);
     return step;
-  }
-
-  _appendStdioToTrace(type: 'stdout' | 'stderr', chunk: string | Buffer) {
-    this._traceEvents.push({
-      type,
-      timestamp: monotonicTime(),
-      text: typeof chunk === 'string' ? chunk : undefined,
-      base64: typeof chunk === 'string' ? undefined : chunk.toString('base64'),
-    });
   }
 
   _interrupt() {
@@ -464,17 +456,6 @@ export class TestInfoImpl implements TestInfo {
   setTimeout(timeout: number) {
     this._timeoutManager.setTimeout(timeout);
   }
-}
-
-function serializeAttachments(attachments: TestInfo['attachments'], initialAttachments: Set<TestInfo['attachments'][0]>): trace.AfterActionTraceEvent['attachments'] {
-  return attachments.filter(a => a.name !== 'trace' && !initialAttachments.has(a)).map(a => {
-    return {
-      name: a.name,
-      contentType: a.contentType,
-      path: a.path,
-      base64: a.body?.toString('base64'),
-    };
-  });
 }
 
 class SkipError extends Error {
