@@ -982,7 +982,7 @@ export interface Page {
    *
    * ```js
    * page.on('filechooser', async fileChooser => {
-   *   await fileChooser.setFiles('/tmp/myfile.pdf');
+   *   await fileChooser.setFiles(path.join(__dirname, '/tmp/myfile.pdf'));
    * });
    * ```
    *
@@ -1278,7 +1278,7 @@ export interface Page {
    *
    * ```js
    * page.on('filechooser', async fileChooser => {
-   *   await fileChooser.setFiles('/tmp/myfile.pdf');
+   *   await fileChooser.setFiles(path.join(__dirname, '/tmp/myfile.pdf'));
    * });
    * ```
    *
@@ -1669,7 +1669,7 @@ export interface Page {
    *
    * ```js
    * page.on('filechooser', async fileChooser => {
-   *   await fileChooser.setFiles('/tmp/myfile.pdf');
+   *   await fileChooser.setFiles(path.join(__dirname, '/tmp/myfile.pdf'));
    * });
    * ```
    *
@@ -4334,7 +4334,7 @@ export interface Page {
    *
    * ```js
    * page.on('filechooser', async fileChooser => {
-   *   await fileChooser.setFiles('/tmp/myfile.pdf');
+   *   await fileChooser.setFiles(path.join(__dirname, '/tmp/myfile.pdf'));
    * });
    * ```
    *
@@ -12224,10 +12224,10 @@ export interface Locator {
    *
    * ```js
    * // Select one file
-   * await page.getByLabel('Upload file').setInputFiles('myfile.pdf');
+   * await page.getByLabel('Upload file').setInputFiles(path.join(__dirname, 'myfile.pdf'));
    *
    * // Select multiple files
-   * await page.getByLabel('Upload files').setInputFiles(['file1.txt', 'file2.txt']);
+   * await page.getByLabel('Upload files').setInputFiles([path.join(__dirname, 'file1.txt'), path.join(__dirname, 'file2.txt')]);
    *
    * // Remove all the selected files
    * await page.getByLabel('Upload file').setInputFiles([]);
@@ -17122,7 +17122,7 @@ export interface Electron {
  * const fileChooserPromise = page.waitForEvent('filechooser');
  * await page.getByText('Upload file').click();
  * const fileChooser = await fileChooserPromise;
- * await fileChooser.setFiles('myfile.pdf');
+ * await fileChooser.setFiles(path.join(__dirname, 'myfile.pdf'));
  * ```
  *
  */
