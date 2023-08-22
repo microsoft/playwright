@@ -18050,6 +18050,32 @@ export interface Request {
 
   /**
    * Returns the {@link Frame} that initiated this request.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const frameUrl = request.frame().url();
+   * ```
+   *
+   * **Details**
+   *
+   * Note that in some cases the frame is not available, and this method will throw.
+   * - When request originates in the Service Worker. You can use `request.serviceWorker()` to check that.
+   * - When navigation request is issued before the corresponding frame is created. You can use
+   *   [request.isNavigationRequest()](https://playwright.dev/docs/api/class-request#request-is-navigation-request) to
+   *   check that.
+   *
+   * Here is an example that handles all the cases:
+   *
+   * ```js
+   * if (request.serviceWorker())
+   *   console.log(`request ${request.url()} from a service worker`);
+   * else if (request.isNavigationRequest())
+   *   console.log(`request ${request.url()} is a navigation request`);
+   * else
+   *   console.log(`request ${request.url()} from a frame ${request.frame().url()}`);
+   * ```
+   *
    */
   frame(): Frame;
 
@@ -18086,6 +18112,9 @@ export interface Request {
 
   /**
    * Whether this request is driving frame's navigation.
+   *
+   * Some navigation requests are issued before the corresponding frame is created, and therefore do not have
+   * [request.frame()](https://playwright.dev/docs/api/class-request#request-frame) available.
    */
   isNavigationRequest(): boolean;
 
@@ -18166,9 +18195,14 @@ export interface Request {
   response(): Promise<null|Response>;
 
   /**
-   * **NOTE** This field is Chromium only. It's safe to call when using other browsers, but it will always be `null`.
-   *
    * The Service {@link Worker} that is performing the request.
+   *
+   * **Details**
+   *
+   * This method is Chromium only. It's safe to call when using other browsers, but it will always be `null`.
+   *
+   * Requests originated in a Service Worker do not have a
+   * [request.frame()](https://playwright.dev/docs/api/class-request#request-frame) available.
    */
   serviceWorker(): null|Worker;
 

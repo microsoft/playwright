@@ -198,7 +198,15 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
       assert(this.serviceWorker());
       throw new Error('Service Worker requests do not have an associated frame.');
     }
-    return Frame.from(this._initializer.frame);
+    const frame = Frame.from(this._initializer.frame);
+    if (!frame._page) {
+      throw new Error([
+        'Frame for this navigation request is not available, because the request',
+        'was issued before the frame is created. You can check whether the request',
+        'is a navigation request by calling isNavigationRequest() method.',
+      ].join('\n'));
+    }
+    return frame;
   }
 
   serviceWorker(): Worker | null {
@@ -267,7 +275,8 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
   }
 
   _targetClosedScope(): LongStandingScope {
-    return this.serviceWorker()?._closedScope || this.frame()._page?._closedOrCrashedScope || new LongStandingScope();
+    const frame = Frame.fromNullable(this._initializer.frame);
+    return this.serviceWorker()?._closedScope || frame?._page?._closedOrCrashedScope || new LongStandingScope();
   }
 }
 
