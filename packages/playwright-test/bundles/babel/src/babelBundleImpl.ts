@@ -15,7 +15,7 @@
  */
 
 import type { BabelFileResult, NodePath, PluginObj, TransformOptions } from '@babel/core';
-import type { TSExportAssignment } from '@babel/types';
+import type { TSExportAssignment, ImportDeclaration } from '@babel/types';
 import type { TemplateBuilder } from '@babel/template';
 import * as babel from '@babel/core';
 
@@ -72,6 +72,17 @@ function babelTransformOptions(isTypeScript: boolean, isModule: boolean, plugins
     plugins.push([require('@babel/plugin-transform-modules-commonjs')]);
     // This converts async imports to require() calls so that we can intercept them with pirates.
     plugins.push([require('@babel/plugin-proposal-dynamic-import')]);
+    plugins.push([
+      (): PluginObj => ({
+        name: 'css-to-identity-obj-proxy',
+        visitor: {
+          ImportDeclaration(path: NodePath<ImportDeclaration>) {
+            if (path.node.source.value.match(/\.(css|less|scss)$/))
+              path.remove();
+          }
+        }
+      })
+    ]);
   } else {
     plugins.push([require('@babel/plugin-syntax-import-assertions')]);
   }

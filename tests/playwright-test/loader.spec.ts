@@ -1007,3 +1007,18 @@ test('should allow test.extend.ts and test.ts files', async ({ runInlineTest }) 
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 });
+
+test('should remove import css', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import './index.css';
+      import foo from './index.css';
+      import { bar } from './index.css';
+
+      import { test, expect } from '@playwright/test';
+      test('pass', async () => {});
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
