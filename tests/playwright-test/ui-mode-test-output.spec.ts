@@ -117,13 +117,14 @@ test('should format console messages in page', async ({ runUITest }, testInfo) =
     'a.spec.ts': `
       import { test, expect } from '@playwright/test';
       test('print', async ({ page }) => {
-        await page.evaluate(() => {
+        await page.evaluate(async () => {
           console.log('Object %O', { a: 1 });
           console.log('Date %o', new Date());
           console.log('Regex %o', /a/);
           console.log('Number %f', -0, 'one', 2);
           console.log('Download the %cReact DevTools%c for a better development experience: %chttps://fb.me/react-devtools', 'font-weight:bold;color:red;outline:blue', '', 'color: blue; text-decoration: underline');
           console.log('Array', 'of', 'values');
+          await fetch('http://localhost:9889');
         });
       });
     `,
@@ -139,6 +140,7 @@ test('should format console messages in page', async ({ runUITest }, testInfo) =
     'Number 0 one 2',
     'Download the React DevTools for a better development experience: https://fb.me/react-devtools',
     'Array of values',
+    'Failed to load resource: net::ERR_CONNECTION_REFUSED',
   ]);
 
   const label = page.getByText('React DevTools');

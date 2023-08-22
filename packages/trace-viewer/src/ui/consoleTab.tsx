@@ -106,7 +106,7 @@ export const ConsoleTab: React.FunctionComponent<{
 
         const { browserMessage, browserError, nodeMessage } = entry;
         if (browserMessage) {
-          const text = browserMessage.args ? format(browserMessage.args) : browserMessage.text;
+          const text = browserMessage.args && browserMessage.args.length ? format(browserMessage.args) : browserMessage.text;
           const url = browserMessage.location.url;
           const filename = url ? url.substring(url.lastIndexOf('/') + 1) : '<anonymous>';
           locationText = `${filename}:${browserMessage.location.lineNumber}`;
