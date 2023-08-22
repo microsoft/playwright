@@ -424,7 +424,7 @@ for (const mode of ['off', 'retain-on-failure', 'on-first-retry', 'on-all-retrie
           // Override locale fixture to check in teardown that no temporary trace zip was created.
           locale: [async ({ locale, _artifactsDir }, use) => {
             await use(locale);
-            const entries =  fs.readdirSync(_artifactsDir());
+            const entries =  fs.readdirSync(_artifactsDir);
             expect(entries.filter(e => e.endsWith('.zip'))).toEqual([]);
           }, { option: true }],
         });
@@ -449,7 +449,7 @@ for (const mode of ['off', 'retain-on-failure', 'on-first-retry', 'on-all-retrie
           // Override locale fixture to check in teardown that no temporary trace zip was created.
           locale: [async ({ locale, _artifactsDir }, use) => {
             await use(locale);
-            const entries =  fs.readdirSync(_artifactsDir());
+            const entries =  fs.readdirSync(_artifactsDir);
             expect(entries.filter(e => e.endsWith('.zip'))).toEqual([]);
           }, { option: true }],
         });

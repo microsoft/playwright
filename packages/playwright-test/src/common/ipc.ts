@@ -62,6 +62,7 @@ export type WorkerInitParams = {
   repeatEachIndex: number;
   projectId: string;
   config: SerializedConfig;
+  artifactsDir: string;
 };
 
 export type TestBeginPayload = {
