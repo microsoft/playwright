@@ -339,7 +339,7 @@ respond to it via setting the input files using [`method: FileChooser.setFiles`]
 
 ```js
 page.on('filechooser', async fileChooser => {
-  await fileChooser.setFiles('/tmp/myfile.pdf');
+  await fileChooser.setFiles(path.join(__dirname, '/tmp/myfile.pdf'));
 });
 ```
 
