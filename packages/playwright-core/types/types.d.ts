@@ -4103,9 +4103,6 @@ export interface Page {
   title(): Promise<string>;
 
   /**
-   * **NOTE** Use locator-based [locator.type(text[, options])](https://playwright.dev/docs/api/class-locator#locator-type)
-   * instead. Read more about [locators](https://playwright.dev/docs/locators).
-   *
    * Sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text. `page.type` can be used to
    * send fine-grained keyboard events. To fill values in form fields, use
    * [page.fill(selector, value[, options])](https://playwright.dev/docs/api/class-page#page-fill).
@@ -4114,12 +4111,9 @@ export interface Page {
    * [keyboard.press(key[, options])](https://playwright.dev/docs/api/class-keyboard#keyboard-press).
    *
    * **Usage**
-   *
-   * ```js
-   * await page.type('#mytextarea', 'Hello'); // Types instantly
-   * await page.type('#mytextarea', 'World', { delay: 100 }); // Types slower, like a user
-   * ```
-   *
+   * @deprecated Use locator-based
+   * [locator.pressSequentially(text[, options])](https://playwright.dev/docs/api/class-locator#locator-press-sequentially)
+   * instead. Read more about [locators](https://playwright.dev/docs/locators).
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
    * used.
    * @param text A text to type into a focused element.
@@ -7121,9 +7115,6 @@ export interface Frame {
   title(): Promise<string>;
 
   /**
-   * **NOTE** Use locator-based [locator.type(text[, options])](https://playwright.dev/docs/api/class-locator#locator-type)
-   * instead. Read more about [locators](https://playwright.dev/docs/locators).
-   *
    * Sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text. `frame.type` can be used
    * to send fine-grained keyboard events. To fill values in form fields, use
    * [frame.fill(selector, value[, options])](https://playwright.dev/docs/api/class-frame#frame-fill).
@@ -7132,12 +7123,9 @@ export interface Frame {
    * [keyboard.press(key[, options])](https://playwright.dev/docs/api/class-keyboard#keyboard-press).
    *
    * **Usage**
-   *
-   * ```js
-   * await frame.type('#mytextarea', 'Hello'); // Types instantly
-   * await frame.type('#mytextarea', 'World', { delay: 100 }); // Types slower, like a user
-   * ```
-   *
+   * @deprecated Use locator-based
+   * [locator.pressSequentially(text[, options])](https://playwright.dev/docs/api/class-locator#locator-press-sequentially)
+   * instead. Read more about [locators](https://playwright.dev/docs/locators).
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
    * used.
    * @param text A text to type into a focused element.
@@ -9680,7 +9668,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * instead.
    *
    * To send fine-grained keyboard events, use
-   * [elementHandle.type(text[, options])](https://playwright.dev/docs/api/class-elementhandle#element-handle-type).
+   * [keyboard.type(text[, options])](https://playwright.dev/docs/api/class-keyboard#keyboard-type).
    * @param value Value to set for the `<input>`, `<textarea>` or `[contenteditable]` element.
    * @param options
    */
@@ -10279,20 +10267,9 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * [elementHandle.press(key[, options])](https://playwright.dev/docs/api/class-elementhandle#element-handle-press).
    *
    * **Usage**
-   *
-   * ```js
-   * await elementHandle.type('Hello'); // Types instantly
-   * await elementHandle.type('World', { delay: 100 }); // Types slower, like a user
-   * ```
-   *
-   * An example of typing into a text field and then submitting the form:
-   *
-   * ```js
-   * const elementHandle = await page.$('input');
-   * await elementHandle.type('some text');
-   * await elementHandle.press('Enter');
-   * ```
-   *
+   * @deprecated Use locator-based
+   * [locator.pressSequentially(text[, options])](https://playwright.dev/docs/api/class-locator#locator-press-sequentially)
+   * instead. Read more about [locators](https://playwright.dev/docs/locators).
    * @param text A text to type into a focused element.
    * @param options
    */
@@ -11147,7 +11124,7 @@ export interface Locator {
    * instead.
    *
    * To send fine-grained keyboard events, use
-   * [locator.type(text[, options])](https://playwright.dev/docs/api/class-locator#locator-type).
+   * [locator.pressSequentially(text[, options])](https://playwright.dev/docs/api/class-locator#locator-press-sequentially).
    * @param value Value to set for the `<input>`, `<textarea>` or `[contenteditable]` element.
    * @param options
    */
@@ -11989,6 +11966,57 @@ export interface Locator {
   }): Promise<void>;
 
   /**
+   * **NOTE** In most cases, you should use
+   * [locator.fill(value[, options])](https://playwright.dev/docs/api/class-locator#locator-fill) instead. You only need
+   * to press keys one by one if there is special keyboard handling on the page.
+   *
+   * Focuses the element, and then sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the
+   * text.
+   *
+   * To press a special key, like `Control` or `ArrowDown`, use
+   * [locator.press(key[, options])](https://playwright.dev/docs/api/class-locator#locator-press).
+   *
+   * **Usage**
+   *
+   * ```js
+   * await locator.pressSequentially('Hello'); // Types instantly
+   * await locator.pressSequentially('World', { delay: 100 }); // Types slower, like a user
+   * ```
+   *
+   * An example of typing into a text field and then submitting the form:
+   *
+   * ```js
+   * const locator = page.getByLabel('Password');
+   * await locator.pressSequentially('my password');
+   * await locator.press('Enter');
+   * ```
+   *
+   * @param text String of characters to sequentially press into a focused element.
+   * @param options
+   */
+  pressSequentially(text: string, options?: {
+    /**
+     * Time to wait between key presses in milliseconds. Defaults to 0.
+     */
+    delay?: number;
+
+    /**
+     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
+     * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
+     * navigating to inaccessible pages. Defaults to `false`.
+     */
+    noWaitAfter?: boolean;
+
+    /**
+     * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+     * option in the config, or by using the
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
    * Take a screenshot of the element matching the locator.
    *
    * **Usage**
@@ -12381,10 +12409,6 @@ export interface Locator {
   }): Promise<null|string>;
 
   /**
-   * **NOTE** In most cases, you should use
-   * [locator.fill(value[, options])](https://playwright.dev/docs/api/class-locator#locator-fill) instead. You only need
-   * to type characters if there is special keyboard handling on the page.
-   *
    * Focuses the element, and then sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the
    * text.
    *
@@ -12392,20 +12416,10 @@ export interface Locator {
    * [locator.press(key[, options])](https://playwright.dev/docs/api/class-locator#locator-press).
    *
    * **Usage**
-   *
-   * ```js
-   * await element.type('Hello'); // Types instantly
-   * await element.type('World', { delay: 100 }); // Types slower, like a user
-   * ```
-   *
-   * An example of typing into a text field and then submitting the form:
-   *
-   * ```js
-   * const element = page.getByLabel('Password');
-   * await element.type('my password');
-   * await element.press('Enter');
-   * ```
-   *
+   * @deprecated In most cases, you should use
+   * [locator.fill(value[, options])](https://playwright.dev/docs/api/class-locator#locator-fill) instead. You only need
+   * to press keys one by one if there is special keyboard handling on the page - in this case use
+   * [locator.pressSequentially(text[, options])](https://playwright.dev/docs/api/class-locator#locator-press-sequentially).
    * @param text A text to type into a focused element.
    * @param options
    */

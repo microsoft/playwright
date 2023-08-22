@@ -513,7 +513,7 @@ This method waits for [actionability](../actionability.md) checks, focuses the e
 
 If the target element is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error. However, if the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be filled instead.
 
-To send fine-grained keyboard events, use [`method: ElementHandle.type`].
+To send fine-grained keyboard events, use [`method: Keyboard.type`].
 
 ### param: ElementHandle.fill.value
 * since: v1.8
@@ -977,69 +977,13 @@ Returns the `node.textContent`.
 
 ## async method: ElementHandle.type
 * since: v1.8
+* deprecated: Use locator-based [`method: Locator.pressSequentially`] instead. Read more about [locators](../locators.md).
 
 Focuses the element, and then sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text.
 
 To press a special key, like `Control` or `ArrowDown`, use [`method: ElementHandle.press`].
 
 **Usage**
-
-```js
-await elementHandle.type('Hello'); // Types instantly
-await elementHandle.type('World', { delay: 100 }); // Types slower, like a user
-```
-
-```java
-elementHandle.type("Hello"); // Types instantly
-elementHandle.type("World", new ElementHandle.TypeOptions().setDelay(100)); // Types slower, like a user
-```
-
-```python async
-await element_handle.type("hello") # types instantly
-await element_handle.type("world", delay=100) # types slower, like a user
-```
-
-```python sync
-element_handle.type("hello") # types instantly
-element_handle.type("world", delay=100) # types slower, like a user
-```
-
-```csharp
-await elementHandle.TypeAsync("Hello"); // Types instantly
-await elementHandle.TypeAsync("World", new() { Delay = 100 }); // Types slower, like a user
-```
-
-An example of typing into a text field and then submitting the form:
-
-```js
-const elementHandle = await page.$('input');
-await elementHandle.type('some text');
-await elementHandle.press('Enter');
-```
-
-```java
-ElementHandle elementHandle = page.querySelector("input");
-elementHandle.type("some text");
-elementHandle.press("Enter");
-```
-
-```python async
-element_handle = await page.query_selector("input")
-await element_handle.type("some text")
-await element_handle.press("Enter")
-```
-
-```python sync
-element_handle = page.query_selector("input")
-element_handle.type("some text")
-element_handle.press("Enter")
-```
-
-```csharp
-var elementHandle = await page.QuerySelectorAsync("input");
-await elementHandle.TypeAsync("some text");
-await elementHandle.PressAsync("Enter");
-```
 
 ### param: ElementHandle.type.text
 * since: v1.8

@@ -3772,7 +3772,7 @@ Returns the page's title.
 
 ## async method: Page.type
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.type`] instead. Read more about [locators](../locators.md).
+* deprecated: Use locator-based [`method: Locator.pressSequentially`] instead. Read more about [locators](../locators.md).
 
 Sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text. `page.type` can be used to send
 fine-grained keyboard events. To fill values in form fields, use [`method: Page.fill`].
@@ -3780,33 +3780,6 @@ fine-grained keyboard events. To fill values in form fields, use [`method: Page.
 To press a special key, like `Control` or `ArrowDown`, use [`method: Keyboard.press`].
 
 **Usage**
-
-```js
-await page.type('#mytextarea', 'Hello'); // Types instantly
-await page.type('#mytextarea', 'World', { delay: 100 }); // Types slower, like a user
-```
-
-```java
-// Types instantly
-page.type("#mytextarea", "Hello");
-// Types slower, like a user
-page.type("#mytextarea", "World", new Page.TypeOptions().setDelay(100));
-```
-
-```python async
-await page.type("#mytextarea", "hello") # types instantly
-await page.type("#mytextarea", "world", delay=100) # types slower, like a user
-```
-
-```python sync
-page.type("#mytextarea", "hello") # types instantly
-page.type("#mytextarea", "world", delay=100) # types slower, like a user
-```
-
-```csharp
-await page.TypeAsync("#mytextarea", "hello"); // types instantly
-await page.TypeAsync("#mytextarea", "world", new() { Delay = 100 }); // types slower, like a user
-```
 
 ### param: Page.type.selector = %%-input-selector-%%
 * since: v1.8
