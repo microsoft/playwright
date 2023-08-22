@@ -288,7 +288,7 @@ npx playwright test --shard=1/3
 
 ### Use Soft assertions
 
-If your test fails, Playwright will give you an error message showing what part of the test failed which you can see either in VS Code, the terminal, the HTML report, or the trace viewer. However, you can also use [soft assertions](/test-assertions.md#soft-assertions) these do not immediately terminate the test execution, but rather compile and display a list of failed assertions once the test ended.
+If your test fails, Playwright will give you an error message showing what part of the test failed which you can see either in VS Code, the terminal, the HTML report, or the trace viewer. However, you can also use [soft assertions](/test-assertions.md#soft-assertions). These do not immediately terminate the test execution, but rather compile and display a list of failed assertions once the test ended.
 
 ```js
 // Make a few checks that will not stop the test when failed...
