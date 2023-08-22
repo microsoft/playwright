@@ -12,7 +12,7 @@ Here is a typical story. When you run Storybook, it will appear in Storybook's U
 ```js
 // Button.stories.js
 export default { component: Button };
-export const Primary = { args: { label: 'Button', primary: true } }
+export const Primary = { args: { label: 'Button', primary: true } };
 ```
 
 And here is the same story reused in a Playwright CT test:
@@ -234,13 +234,13 @@ import { Button } from './Button';
 export default { component: Button }
 
 let count = 0;
-export const Interaction {
+export const Interaction = {
   args: { label: 'Button', primary: true, onClick: () => { count += 1 } },
   play: async ({ canvasElement }) => {
     await userEvent.click(within(canvasElement).getByRole('button'));
     await expect(count).toBe(1);
-  }
-}
+  },
+};
 ```
 
 | Storybook test runner                    | Playwright CT for Storybook                     |
