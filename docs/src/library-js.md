@@ -177,6 +177,27 @@ firefox.launch({ headless: false, slowMo: 50 });
 npx playwright codegen wikipedia.org
 ```
 
+## Browser downloads
+
+By default, `playwright` automatically downloads Chromium, Firefox and WebKit during package installation.
+
+In certain cases, it is desired to avoid browser downloads altogether because browser binaries are managed separately. This can be done by setting `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD` variable before installing packages.
+
+```bash tab=bash-bash lang=js
+PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install
+```
+
+```batch tab=bash-batch lang=js
+set PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+npm install
+```
+
+```powershell tab=bash-powershell lang=js
+$Env:PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+npm install
+```
+
+
 ## TypeScript support
 
 Playwright includes built-in support for TypeScript. Type definitions will be imported automatically. It is recommended to use type-checking to improve the IDE experience.
