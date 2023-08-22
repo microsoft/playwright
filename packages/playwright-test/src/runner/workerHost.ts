@@ -14,9 +14,13 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
+import path from 'path';
 import type { TestGroup } from './testGroups';
 import type { RunPayload, SerializedConfig, WorkerInitParams } from '../common/ipc';
 import { ProcessHost } from './processHost';
+import { artifactsFolderName } from '../isomorphic/folders';
+import { removeFolders } from 'playwright-core/lib/utils';
 
 let lastWorkerIndex = 0;
 
@@ -27,7 +31,7 @@ export class WorkerHost extends ProcessHost {
   currentTestId: string | null = null;
   private _params: WorkerInitParams;
 
-  constructor(testGroup: TestGroup, parallelIndex: number, config: SerializedConfig, extraEnv: Record<string, string | undefined>) {
+  constructor(testGroup: TestGroup, parallelIndex: number, config: SerializedConfig, extraEnv: Record<string, string | undefined>, outputDir: string) {
     const workerIndex = lastWorkerIndex++;
     super(require.resolve('../worker/workerMain.js'), `worker-${workerIndex}`, {
       ...extraEnv,
@@ -44,11 +48,18 @@ export class WorkerHost extends ProcessHost {
       repeatEachIndex: testGroup.repeatEachIndex,
       projectId: testGroup.projectId,
       config,
+      artifactsDir: path.join(outputDir, artifactsFolderName(workerIndex))
     };
   }
 
   async start() {
+    await fs.promises.mkdir(this._params.artifactsDir, { recursive: true });
     await this.startRunner(this._params, false);
+  }
+
+  override async stop(didFail?: boolean) {
+    await super.stop(didFail);
+    await removeFolders([this._params.artifactsDir]);
   }
 
   runTestGroup(runPayload: RunPayload) {

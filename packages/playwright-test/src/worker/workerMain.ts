@@ -63,6 +63,7 @@ export class WorkerMain extends ProcessRunner {
     super();
     process.env.TEST_WORKER_INDEX = String(params.workerIndex);
     process.env.TEST_PARALLEL_INDEX = String(params.parallelIndex);
+    process.env.TEST_ARTIFACTS_DIR = params.artifactsDir;
     setIsWorkerProcess();
 
     this._params = params;

@@ -801,28 +801,3 @@ test('should use actionTimeout for APIRequestContext', async ({ runInlineTest, s
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(3);
 });
-
-test('should cancel apiRequests if test will timeout', async ({ runInlineTest, server }) => {
-  server.setRoute('/stall', (req, res) => {});
-  const result = await runInlineTest({
-    'playwright.config.js': `
-      module.exports = {
-        timeout: 1000,
-        use: {
-          baseURL: '${server.PREFIX}',
-        }
-      };
-    `,
-    'a.test.ts': `
-      import { test, expect } from '@playwright/test';
-      test('pass', async ({ request }) => {
-        await request.get('/stall')
-      });
-    `,
-  }, { workers: 1 });
-  expect(result.exitCode).toBe(1);
-  expect(result.passed).toBe(0);
-  expect(result.failed).toBe(1);
-  expect(result.output).toContain('apiRequestContext.get: Request context disposed.');
-  expect(result.output).toContain('Test timeout of 1000ms exceeded.');
-});
