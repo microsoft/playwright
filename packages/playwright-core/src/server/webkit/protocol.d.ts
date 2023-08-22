@@ -7532,6 +7532,25 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     export type grantFileReadAccessReturnValue = {
     }
     /**
+     * Capture a snapshot of the page.
+     */
+    export type takePageScreenshotParameters = {
+      /**
+       * Unique identifier of the page proxy.
+       */
+      pageProxyId: PageProxyID;
+      /**
+       * By default, screenshot is inflated by device scale factor to avoid blurry image. This flag disables it.
+       */
+      omitDeviceScaleFactor?: boolean;
+    }
+    export type takePageScreenshotReturnValue = {
+      /**
+       * Base64-encoded image data (PNG).
+       */
+      dataURL: string;
+    }
+    /**
      * Change whether all certificate errors should be ignored.
      */
     export type setIgnoreCertificateErrorsParameters = {
@@ -9419,6 +9438,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Playwright.createPage": Playwright.createPageParameters;
     "Playwright.navigate": Playwright.navigateParameters;
     "Playwright.grantFileReadAccess": Playwright.grantFileReadAccessParameters;
+    "Playwright.takePageScreenshot": Playwright.takePageScreenshotParameters;
     "Playwright.setIgnoreCertificateErrors": Playwright.setIgnoreCertificateErrorsParameters;
     "Playwright.getAllCookies": Playwright.getAllCookiesParameters;
     "Playwright.setCookies": Playwright.setCookiesParameters;
@@ -9728,6 +9748,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Playwright.createPage": Playwright.createPageReturnValue;
     "Playwright.navigate": Playwright.navigateReturnValue;
     "Playwright.grantFileReadAccess": Playwright.grantFileReadAccessReturnValue;
+    "Playwright.takePageScreenshot": Playwright.takePageScreenshotReturnValue;
     "Playwright.setIgnoreCertificateErrors": Playwright.setIgnoreCertificateErrorsReturnValue;
     "Playwright.getAllCookies": Playwright.getAllCookiesReturnValue;
     "Playwright.setCookies": Playwright.setCookiesReturnValue;

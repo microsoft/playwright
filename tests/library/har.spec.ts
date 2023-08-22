@@ -23,6 +23,7 @@ import type { BrowserContext, BrowserContextOptions } from 'playwright-core';
 import type { AddressInfo } from 'net';
 import type { Log } from '../../packages/trace/src/har';
 import { parseHar } from '../config/utils';
+const { hostPlatform } = require('playwright-core/lib/utils');
 
 async function pageWithHar(contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>, testInfo: any, options: { outputPath?: string, content?: 'embed' | 'attach' | 'omit', omitContent?: boolean } = {}) {
   const harPath = testInfo.outputPath(options.outputPath || 'test.har');
@@ -672,7 +673,7 @@ it('should return security details directly from response', async ({ contextFact
 });
 
 it('should contain http2 for http2 requests', async ({ contextFactory, browserName, platform }, testInfo) => {
-  it.fixme(browserName === 'webkit' && platform === 'linux');
+  it.skip(browserName === 'webkit' && platform === 'linux' && (hostPlatform.startsWith('ubuntu20.04') || hostPlatform.startsWith('debian11')), 'libsoup2.4 does not support http2');
   it.fixme(browserName === 'webkit' && platform === 'win32');
 
   const server = http2.createSecureServer({
