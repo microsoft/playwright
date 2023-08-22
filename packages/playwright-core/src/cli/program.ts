@@ -33,7 +33,7 @@ import type { BrowserContextOptions, LaunchOptions } from '../client/types';
 import { spawn } from 'child_process';
 import { wrapInASCIIBox, isLikelyNpxGlobal, assert, gracefullyProcessExitDoNotHang, getPackageManagerExecCommand } from '../utils';
 import type { Executable } from '../server';
-import { registry, writeDockerVersion } from '../server';
+import { registry, writeDockerVersion, checkAndLogSkipBrowserDownload } from '../server';
 
 const packageJSON = require('../../package.json');
 
@@ -117,6 +117,8 @@ program
     .option('--dry-run', 'do not execute installation, only print information')
     .option('--force', 'force reinstall of stable browser channels')
     .action(async function(args: string[], options: { withDeps?: boolean, force?: boolean, dryRun?: boolean }) {
+      if (checkAndLogSkipBrowserDownload())
+        return;
       if (isLikelyNpxGlobal()) {
         console.error(wrapInASCIIBox([
           `WARNING: It looks like you are running 'npx playwright install' without first`,

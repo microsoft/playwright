@@ -1015,17 +1015,23 @@ export function buildPlaywrightCLICommand(sdkLanguage: string, parameters: strin
   }
 }
 
-export async function installDefaultBrowsersForNpmInstall() {
-  const defaultBrowserNames = registry.defaultExecutables().map(e => e.name);
-  return installBrowsersForNpmInstall(defaultBrowserNames);
-}
-
-export async function installBrowsersForNpmInstall(browsers: string[]) {
+export function checkAndLogSkipBrowserDownload() {
   // PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD should have a value of 0 or 1
   if (getAsBooleanFromENV('PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD')) {
     logPolitely('Skipping browsers download because `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD` env variable is set');
-    return false;
+    return true;
   }
+  return false;
+}
+
+export async function installDefaultBrowsersForNpmInstall() {
+  const defaultBrowserNames = registry.defaultExecutables().map(e => e.name);
+  await installBrowsersForNpmInstall(defaultBrowserNames);
+}
+
+export async function installBrowsersForNpmInstall(browsers: string[]) {
+  if (checkAndLogSkipBrowserDownload())
+    return;
   const executables: Executable[] = [];
   for (const browserName of browsers) {
     const executable = registry.findExecutable(browserName);
