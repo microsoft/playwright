@@ -16,13 +16,10 @@
 
 import fs from 'fs';
 import type EventEmitter from 'events';
-import type { ClientSideCallMetadata, SerializedError, StackFrame } from '@protocol/channels';
+import type { ClientSideCallMetadata } from '@protocol/channels';
 import type { SerializedClientSideCallMetadata, SerializedStack, SerializedStackFrame } from './isomorphic/traceUtils';
 import { yazl, yauzl } from '../zipBundle';
 import { ManualPromise } from './manualPromise';
-import type { AfterActionTraceEvent, BeforeActionTraceEvent, TraceEvent } from '@trace/trace';
-import { calculateSha1 } from './crypto';
-import { monotonicTime } from './time';
 
 export function serializeClientSideCallMetadata(metadatas: ClientSideCallMetadata[]): SerializedClientSideCallMetadata {
   const fileNames = new Map<string, number>();
@@ -94,103 +91,4 @@ export async function mergeTraceFiles(fileName: string, temporaryTraceFiles: str
     }).on('error', error => mergePromise.reject(error));
   });
   await mergePromise;
-}
-
-export async function saveTraceFile(fileName: string, traceEvents: TraceEvent[], saveSources: boolean) {
-  const zipFile = new yazl.ZipFile();
-
-  if (saveSources) {
-    const sourceFiles = new Set<string>();
-    for (const event of traceEvents) {
-      if (event.type === 'before') {
-        for (const frame of event.stack || [])
-          sourceFiles.add(frame.file);
-      }
-    }
-    for (const sourceFile of sourceFiles) {
-      await fs.promises.readFile(sourceFile, 'utf8').then(source => {
-        zipFile.addBuffer(Buffer.from(source), 'resources/src@' + calculateSha1(sourceFile) + '.txt');
-      }).catch(() => {});
-    }
-  }
-
-  const sha1s = new Set<string>();
-  for (const event of traceEvents.filter(e => e.type === 'after') as AfterActionTraceEvent[]) {
-    for (const attachment of (event.attachments || [])) {
-      let contentPromise: Promise<Buffer | undefined> | undefined;
-      if (attachment.path)
-        contentPromise = fs.promises.readFile(attachment.path).catch(() => undefined);
-      else if (attachment.base64)
-        contentPromise = Promise.resolve(Buffer.from(attachment.base64, 'base64'));
-
-      const content = await contentPromise;
-      if (content === undefined)
-        continue;
-
-      const sha1 = calculateSha1(content);
-      attachment.sha1 = sha1;
-      delete attachment.path;
-      delete attachment.base64;
-      if (sha1s.has(sha1))
-        continue;
-      sha1s.add(sha1);
-      zipFile.addBuffer(content, 'resources/' + sha1);
-    }
-  }
-
-  const traceContent = Buffer.from(traceEvents.map(e => JSON.stringify(e)).join('\n'));
-  zipFile.addBuffer(traceContent, 'trace.trace');
-
-  await new Promise(f => {
-    zipFile.end(undefined, () => {
-      zipFile.outputStream.pipe(fs.createWriteStream(fileName)).on('close', f);
-    });
-  });
-}
-
-export function createBeforeActionTraceEventForStep(callId: string, parentId: string | undefined, apiName: string, params: Record<string, any> | undefined, wallTime: number, stack: StackFrame[]): BeforeActionTraceEvent {
-  return {
-    type: 'before',
-    callId,
-    parentId,
-    wallTime,
-    startTime: monotonicTime(),
-    class: 'Test',
-    method: 'step',
-    apiName,
-    params: Object.fromEntries(Object.entries(params || {}).map(([name, value]) => [name, generatePreview(value)])),
-    stack,
-  };
-}
-
-export function createAfterActionTraceEventForStep(callId: string, attachments: AfterActionTraceEvent['attachments'], error?: SerializedError['error']): AfterActionTraceEvent {
-  return {
-    type: 'after',
-    callId,
-    endTime: monotonicTime(),
-    log: [],
-    attachments,
-    error,
-  };
-}
-
-function generatePreview(value: any, visited = new Set<any>()): string {
-  if (visited.has(value))
-    return '';
-  visited.add(value);
-  if (typeof value === 'string')
-    return value;
-  if (typeof value === 'number')
-    return value.toString();
-  if (typeof value === 'boolean')
-    return value.toString();
-  if (value === null)
-    return 'null';
-  if (value === undefined)
-    return 'undefined';
-  if (Array.isArray(value))
-    return '[' + value.map(v => generatePreview(v, visited)).join(', ') + ']';
-  if (typeof value === 'object')
-    return 'Object';
-  return String(value);
 }

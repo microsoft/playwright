@@ -20,7 +20,7 @@
   flex-direction: column;
   align-items: stretch;
   outline: none;
-  --window-header-height: 40px;
+  --browser-frame-header-height: 40px;
   overflow: hidden;
 }
 
@@ -78,7 +78,7 @@
 
 .snapshot-switcher {
   width: 100%;
-  height: calc(100% - var(--window-header-height));
+  height: calc(100% - var(--browser-frame-header-height));
   position: relative;
 }
 
