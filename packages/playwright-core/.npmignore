@@ -8,6 +8,7 @@
 !lib/**/*.css
 !lib/**/*.html
 !lib/**/*.png
+!lib/**/*.svg
 !lib/**/*.ttf
 !lib/utilsBundleImpl/xdg-open
 # Exclude injected files. A preprocessed version of these is included via lib/generated.
