@@ -83,7 +83,7 @@ pnpm dlx storybook@latest init
 </Tabs>
 
 
-Full installation and configuration instructions are available in the [Storybook documentation](https://storybook.js.org/docs/react/get-started/install/).
+Full installation and configuration instructions are available in the [Storybook documentation](https://storybook.js.org/docs/).
 
 ### Step 1: Install Playwright Test for Storybook
 
@@ -166,10 +166,8 @@ Playwright Test executes Storybook's dev server in the background and runs tests
 Here is how this is achieved:
 
 - Each story reference is converted into a story ID
-- Upon the `mount` call within the test, Playwright navigates to the corresponding story.
-- Events are marshalled back to the Node.js environment to allow verification.
-
-Additionally, it adds some config options you can use in your `playwright-sb.config.{ts,js}`.
+- Upon the `mount` call within the test, Playwright navigates to the corresponding story
+- Events are marshalled back to the Node.js environment to allow verification
 
 Finally, under the hood, each test re-uses the `context` and `page` fixture as a speed optimization for Component Testing.
 It resets them in between each test so it should be functionally equivalent to `@playwright/test`'s guarantee that you get a new, isolated `context` and `page` fixture per-test.
@@ -225,7 +223,7 @@ You should consider using Playwright CT for Storybook over Playwright Experiment
 
 Storybook also provides component testing with its [Test Runner](https://storybook.js.org/docs/react/writing-tests/test-runner) (that also uses Playwright under the hood).
 
-Here's the same example using Storybook's play function:
+Here's the same example using Storybook's play function, which is automatically executed after story render:
 
 ```ts
 // Button.stories.ts
@@ -256,7 +254,7 @@ export const Interaction {
 
 The main difference between Storybook Test Runner and Playwright CT is that Storybook's play functions are entirely browser-based. This means that you can publish and inspect your tests in a static build of Storybook in the cloud, which is great for collaboration debugging CI failures. The drawback of this approach is that some of Playwright's features, such as the ability to wait for network idle, are not unavailble in "user-land" browser code.
 
-You should use Playwright CT Storybook over Storybook CT if:
+You should use Playwright CT Storybook over Storybook Test Runner if:
 
 - You prefer Playwright's test syntax
 - You prefer Playwright's workflow (UI, debugger, etc)
