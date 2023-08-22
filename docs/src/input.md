@@ -520,8 +520,8 @@ await page.getByLabel('Upload file').setInputFiles(path.join(__dirname, 'myfile.
 
 // Select multiple files
 await page.getByLabel('Upload files').setInputFiles([
-    path.join(__dirname, 'file1.txt'),
-    path.join(__dirname, 'file2.txt'),
+  path.join(__dirname, 'file1.txt'),
+  path.join(__dirname, 'file2.txt'),
 ]);
 
 // Remove all the selected files
