@@ -110,7 +110,7 @@ export class TestInfoImpl implements TestInfo {
   _deadlineForMatcher(timeout: number): { deadline: number, timeoutMessage: string } {
     const startTime = monotonicTime();
     const matcherDeadline = timeout ? startTime + timeout : MaxTime;
-    const testDeadline = this._timeoutManager.currentSlotDeadline() - 100;
+    const testDeadline = this._timeoutManager.currentSlotDeadline() - 250;
     const matcherMessage = `Timeout ${timeout}ms exceeded while waiting on the predicate`;
     const testMessage = `Test timeout of ${this.timeout}ms exceeded`;
     return { deadline: Math.min(testDeadline, matcherDeadline), timeoutMessage: testDeadline < matcherDeadline ? testMessage : matcherMessage };
