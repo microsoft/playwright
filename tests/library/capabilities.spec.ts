@@ -274,8 +274,7 @@ it('requestFullscreen', async ({ page, server, browserName, headless, isLinux })
 
 it('should send no Content-Length header for GET requests with a Content-Type', async ({ page, server, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22569' });
-  it.skip(browserName === 'webkit' && hostPlatform === 'ubuntu20.04', 'libsoup2.4 bug');
-  it.fixme(browserName === 'webkit' && hostPlatform === 'ubuntu22.04', 'waiting for libsoup3 upgrade');
+  it.skip(browserName === 'webkit' && hostPlatform?.startsWith('ubuntu20.04'), 'libsoup2.4 bug');
   await page.goto(server.EMPTY_PAGE);
   const [request] = await Promise.all([
     server.waitForRequest('/empty.html'),
