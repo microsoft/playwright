@@ -32,6 +32,7 @@ import { AttachmentsTab } from './attachmentsTab';
 import type { Boundaries } from '../geometry';
 import { InspectorTab } from './inspectorTab';
 import { ToolbarButton } from '@web/components/toolbarButton';
+import { useSetting } from '@web/uiUtils';
 
 export const Workbench: React.FunctionComponent<{
   model?: MultiTraceModel,
@@ -51,6 +52,7 @@ export const Workbench: React.FunctionComponent<{
   const [highlightedLocator, setHighlightedLocator] = React.useState<string>('');
   const activeAction = model ? highlightedAction || selectedAction : undefined;
   const [selectedTime, setSelectedTime] = React.useState<Boundaries | undefined>();
+  const [sidebarLocation, setSidebarLocation] = useSetting<'bottom' | 'right'>('propertiesSidebarLocation', 'bottom');
 
   const sources = React.useMemo(() => model?.sources || new Map(), [model]);
 
@@ -165,7 +167,7 @@ export const Workbench: React.FunctionComponent<{
       setSelectedTime={setSelectedTime}
     />
     <SplitView sidebarSize={250} orientation='horizontal' sidebarIsFirst={true}>
-      <SplitView sidebarSize={250} orientation='vertical'>
+      <SplitView sidebarSize={250} orientation={sidebarLocation === 'bottom' ? 'vertical' : 'horizontal'} settingName='propertiesSidebar'>
         <SnapshotTab
           action={activeAction}
           sdkLanguage={sdkLanguage}
@@ -183,9 +185,19 @@ export const Workbench: React.FunctionComponent<{
               if (!isInspecting)
                 selectPropertiesTab('inspector');
               setIsInspecting(!isInspecting);
-            }}><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24">
-                <path d="M450-42v-75q-137-14-228-105T117-450H42v-60h75q14-137 105-228t228-105v-75h60v75q137 14 228 105t105 228h75v60h-75q-14 137-105 228T510-117v75h-60Zm30-134q125 0 214.5-89.5T784-480q0-125-89.5-214.5T480-784q-125 0-214.5 89.5T176-480q0 125 89.5 214.5T480-176Zm0-154q-63 0-106.5-43.5T330-480q0-63 43.5-106.5T480-630q63 0 106.5 43.5T630-480q0 63-43.5 106.5T480-330Zm0-60q38 0 64-26t26-64q0-38-26-64t-64-26q-38 0-64 26t-26 64q0 38 26 64t64 26Zm0-90Z"/>
-              </svg>
+            }}>
+              <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20"><path d="M444-48v-98q-121-14-202.5-96T146-444H48v-72h98q14-120 95.5-202T444-814v-98h72v98q121 14 202.5 96T814-516h98v72h-98q-14 120-95.5 202T516-146v98h-72Zm36-168q110 0 187-77t77-187q0-110-77-187t-187-77q-110 0-187 77t-77 187q0 110 77 187t187 77Zm0-120q-60 0-102-42t-42-102q0-60 42-102t102-42q60 0 102 42t42 102q0 60-42 102t-102 42Z"/></svg>
+            </ToolbarButton>
+          ]}
+          rightToolbar={[
+            sidebarLocation === 'bottom' ? <ToolbarButton title='Dock to right' onClick={() => {
+              setSidebarLocation('right');
+            }}>
+              <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20"><path d="M211-144q-27.637 0-47.319-19.681Q144-183.363 144-211v-538q0-27.638 19.681-47.319Q183.363-816 211-816h538q27.638 0 47.319 19.681T816-749v538q0 27.637-19.681 47.319Q776.638-144 749-144H211Zm413-72h120v-528H624v528Zm-72 0v-528H216v528h336Zm72 0h120-120Z"/></svg>
+            </ToolbarButton> : <ToolbarButton title='Dock to bottom' onClick={() => {
+              setSidebarLocation('bottom');
+            }}>
+              <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20"><path d="M211-144q-27.637 0-47.319-19.681Q144-183.363 144-211v-538q0-27.638 19.681-47.319Q183.363-816 211-816h538q27.638 0 47.319 19.681T816-749v538q0 27.637-19.681 47.319Q776.638-144 749-144H211Zm5-192v120h528v-120H216Zm0-72h528v-336H216v336Zm0 72v120-120Z"/></svg>
             </ToolbarButton>
           ]}
         />
