@@ -177,6 +177,7 @@ program
     .description('Removes browsers used by this installation of Playwright from the system (chromium, firefox, webkit, ffmpeg). This does not include branded channels.')
     .option('--all', 'Removes all browsers used by any Playwright installation from the system.')
     .action(async (options: { all?: boolean }) => {
+      delete process.env.PLAYWRIGHT_SKIP_BROWSER_GC;
       await registry.uninstall(!!options.all).then(({ numberOfBrowsersLeft }) => {
         if (!options.all && numberOfBrowsersLeft > 0) {
           console.log('Successfully uninstalled Playwright browsers for the current Playwright installation.');

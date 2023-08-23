@@ -22,8 +22,10 @@ import childProcess from 'child_process';
 import { existsAsync } from '../../utils/fileUtils';
 import { debugLogger } from '../../common/debugLogger';
 import { ManualPromise } from '../../utils/manualPromise';
-import { colors } from '../../utilsBundle';
+import { colors, progress as ProgressBar } from '../../utilsBundle';
 import { browserDirectoryToMarkerFilePath } from '.';
+import { getUserAgent } from '../../utils/userAgent';
+import type { DownloadParams } from './oopDownloadBrowserMain';
 
 export async function downloadBrowserWithProgressBar(title: string, browserDirectory: string, executablePath: string | undefined, downloadURLs: string[], downloadFileName: string, downloadConnectionTimeout: number): Promise<boolean> {
   if (await existsAsync(browserDirectoryToMarkerFilePath(browserDirectory))) {
@@ -70,12 +72,15 @@ export async function downloadBrowserWithProgressBar(title: string, browserDirec
  * Thats why we execute it in a separate process and check manually if the destination file exists.
  * https://github.com/microsoft/playwright/issues/17394
  */
-function downloadBrowserWithProgressBarOutOfProcess(title: string, browserDirectory: string, url: string, zipPath: string, executablePath: string | undefined, downloadConnectionTimeout: number): Promise<{ error: Error | null }> {
-  const cp = childProcess.fork(path.join(__dirname, 'oopDownloadBrowserMain.js'), [title, browserDirectory, url, zipPath, executablePath || '', String(downloadConnectionTimeout)]);
+function downloadBrowserWithProgressBarOutOfProcess(title: string, browserDirectory: string, url: string, zipPath: string, executablePath: string | undefined, connectionTimeout: number): Promise<{ error: Error | null }> {
+  const cp = childProcess.fork(path.join(__dirname, 'oopDownloadBrowserMain.js'));
   const promise = new ManualPromise<{ error: Error | null }>();
+  const progress = getDownloadProgress();
   cp.on('message', (message: any) => {
     if (message?.method === 'log')
       debugLogger.log('install', message.params.message);
+    if (message?.method === 'progress')
+      progress(message.params.done, message.params.total);
   });
   cp.on('exit', code => {
     if (code !== 0) {
@@ -90,6 +95,20 @@ function downloadBrowserWithProgressBarOutOfProcess(title: string, browserDirect
   cp.on('error', error => {
     promise.resolve({ error });
   });
+
+  debugLogger.log('install', `running download:`);
+  debugLogger.log('install', `-- from url: ${url}`);
+  debugLogger.log('install', `-- to location: ${zipPath}`);
+  const downloadParams: DownloadParams = {
+    title,
+    browserDirectory,
+    url,
+    zipPath,
+    executablePath,
+    connectionTimeout,
+    userAgent: getUserAgent(),
+  };
+  cp.send({ method: 'download', params: downloadParams });
   return promise;
 }
 
@@ -99,4 +118,57 @@ export function logPolitely(toBeLogged: string) {
 
   if (!logLevelDisplay)
     console.log(toBeLogged);  // eslint-disable-line no-console
+}
+
+type OnProgressCallback = (downloadedBytes: number, totalBytes: number) => void;
+
+function getDownloadProgress(): OnProgressCallback {
+  if (process.stdout.isTTY)
+    return getAnimatedDownloadProgress();
+  return getBasicDownloadProgress();
+}
+
+function getAnimatedDownloadProgress(): OnProgressCallback {
+  let progressBar: ProgressBar;
+  let lastDownloadedBytes = 0;
+
+  return (downloadedBytes: number, totalBytes: number) => {
+    if (!progressBar) {
+      progressBar = new ProgressBar(
+          `${toMegabytes(
+              totalBytes
+          )} [:bar] :percent :etas`,
+          {
+            complete: '=',
+            incomplete: ' ',
+            width: 20,
+            total: totalBytes,
+          }
+      );
+    }
+    const delta = downloadedBytes - lastDownloadedBytes;
+    lastDownloadedBytes = downloadedBytes;
+    progressBar.tick(delta);
+  };
+}
+
+function getBasicDownloadProgress(): OnProgressCallback {
+  const totalRows = 10;
+  const stepWidth = 8;
+  let lastRow = -1;
+  return (downloadedBytes: number, totalBytes: number) => {
+    const percentage = downloadedBytes / totalBytes;
+    const row = Math.floor(totalRows * percentage);
+    if (row > lastRow) {
+      lastRow = row;
+      const percentageString = String(percentage * 100 | 0).padStart(3);
+      // eslint-disable-next-line no-console
+      console.log(`|${'■'.repeat(row * stepWidth)}${' '.repeat((totalRows - row) * stepWidth)}| ${percentageString}% of ${toMegabytes(totalBytes)}`);
+    }
+  };
+}
+
+function toMegabytes(bytes: number) {
+  const mb = bytes / 1024 / 1024;
+  return `${Math.round(mb * 10) / 10} Mb`;
 }
