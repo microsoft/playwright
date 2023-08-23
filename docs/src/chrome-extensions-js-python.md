@@ -102,7 +102,7 @@ To have the extension loaded when running tests you can use a test fixture to se
 First, add fixtures that will load the extension:
 
 ```js title="fixtures.ts"
-import { test as base, expect, chromium, type BrowserContext } from '@playwright/test';
+import { test as base, chromium, type BrowserContext } from '@playwright/test';
 import path from 'path';
 
 export const test = base.extend<{
