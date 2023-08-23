@@ -28,7 +28,7 @@ import type { BrowserType } from '../../browserType';
 
 export type Transport = {
   sendEvent?: (method: string, params: any) => void;
-  dispatch: (method: string, params: any) => Promise<void>;
+  dispatch: (method: string, params: any) => Promise<any>;
   close?: () => void;
   onclose: () => void;
 };

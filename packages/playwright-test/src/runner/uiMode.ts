@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { openTraceViewerApp, openTraceInBrowser } from 'playwright-core/lib/server';
+import { openTraceViewerApp, openTraceInBrowser, registry } from 'playwright-core/lib/server';
 import { isUnderTest, ManualPromise } from 'playwright-core/lib/utils';
 import type { FullResult } from '../../reporter';
 import { clearCompilationCache, collectAffectedTestFiles, dependenciesForTestFile } from '../transform/compilationCache';
@@ -107,6 +107,13 @@ class UIMode {
           void this._stopTests();
           return;
         }
+        if (method === 'checkBrowsers')
+          return { hasBrowsers: hasSomeBrowsers() };
+        if (method === 'installBrowsers') {
+          await installBrowsers();
+          return;
+        }
+
         queue = queue.then(() => this._queueListOrRun(method, params));
         await queue;
       },
@@ -296,4 +303,20 @@ class Watcher {
       this._onChange(this._collector.slice());
     this._collector.length = 0;
   }
+}
+
+function hasSomeBrowsers(): boolean {
+  for (const browserName of ['chromium', 'webkit', 'firefox']) {
+    try {
+      registry.findExecutable(browserName)!.executablePathOrDie('javascript');
+      return true;
+    } catch {
+    }
+  }
+  return false;
+}
+
+async function installBrowsers() {
+  const executables = registry.defaultExecutables();
+  await registry.install(executables, false);
 }
