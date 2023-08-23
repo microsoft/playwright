@@ -56,13 +56,13 @@ The page that produced this unhandled exception, if any.
 
 ## method: PageError.error
 * since: v1.38
-- returns: <[string]>
+- returns: <[Error]>
 
 Unhandled error that was thrown.
 
 ## method: PageError.error
 * since: v1.38
-* langs: js, python
-- returns: <[Error]>
+* langs: java, csharp
+- returns: <[string]>
 
 Unhandled error that was thrown.
