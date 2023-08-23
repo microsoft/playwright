@@ -68,6 +68,7 @@ export function bindFileSuiteToProject(project: FullProjectInternal, suite: Suit
     }
     test.retries = inheritedRetries ?? project.project.retries;
     test.timeout = inheritedTimeout ?? project.project.timeout;
+    test.annotations = [...test._staticAnnotations];
 
     // Skip annotations imply skipped expectedStatus.
     if (test._staticAnnotations.some(a => a.type === 'skip' || a.type === 'fixme'))

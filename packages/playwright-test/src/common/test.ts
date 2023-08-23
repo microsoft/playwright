@@ -292,6 +292,7 @@ export class TestCase extends Base implements reporterTypes.TestCase {
       poolDigest: this._poolDigest,
       workerHash: this._workerHash,
       staticAnnotations: this._staticAnnotations.slice(),
+      annotations: this.annotations.slice(),
       projectId: this._projectId,
     };
   }
@@ -307,6 +308,7 @@ export class TestCase extends Base implements reporterTypes.TestCase {
     test._poolDigest = data.poolDigest;
     test._workerHash = data.workerHash;
     test._staticAnnotations = data.staticAnnotations;
+    test.annotations = data.annotations;
     test._projectId = data.projectId;
     return test;
   }
