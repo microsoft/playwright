@@ -294,44 +294,79 @@ test('should propose only the relevant matchers when custom expect matcher class
     'a.spec.ts': `
     import { test, expect } from '@playwright/test';
     test('custom matchers', async ({ page }) => {
+      // Page-specific assertions apply to Page.
       await test.expect(page).toHaveURL('https://example.com');
       await test.expect(page).not.toHaveURL('https://example.com');
-      await test.expect(page).toBe(true);
+      // Some generic assertions also apply to Page.
+      test.expect(page).toBe(true);
+      test.expect(page).toBeDefined();
+      test.expect(page).toBeFalsy();
+      test.expect(page).toBeNull();
+      test.expect(page).toBeTruthy();
+      test.expect(page).toBeUndefined();
+
+      // Locator-specific and most generic assertions do not apply to Page.
       // @ts-expect-error
       await test.expect(page).toBeEnabled();
       // @ts-expect-error
       await test.expect(page).not.toBeEnabled();
+      // @ts-expect-error
+      test.expect(page).toEqual();
 
+      // Locator-specific assertions apply to Locator.
       await test.expect(page.locator('foo')).toBeEnabled();
       await test.expect(page.locator('foo')).toBeEnabled({ enabled: false });
       await test.expect(page.locator('foo')).not.toBeEnabled({ enabled: true });
+      await test.expect(page.locator('foo')).toBeChecked();
+      await test.expect(page.locator('foo')).not.toBeChecked({ checked: true });
+      await test.expect(page.locator('foo')).not.toBeEditable();
+      await test.expect(page.locator('foo')).toBeEditable({ editable: false });
+      await test.expect(page.locator('foo')).toBeVisible();
+      await test.expect(page.locator('foo')).not.toBeVisible({ visible: false });
+      // Some generic assertions also apply to Locator.
+      test.expect(page.locator('foo')).toBe(true);
+
+      // Page-specific and most generic assertions do not apply to Locator.
+      // @ts-expect-error
+      await test.expect(page.locator('foo')).toHaveURL('https://example.com');
+      // @ts-expect-error
+      await test.expect(page.locator('foo')).toHaveLength(1);
+
+      // Wrong arguments for assertions do not compile.
       // @ts-expect-error
       await test.expect(page.locator('foo')).toBeEnabled({ unknown: false });
       // @ts-expect-error
       await test.expect(page.locator('foo')).toBeEnabled({ enabled: 'foo' });
 
-      await test.expect(page.locator('foo')).toBe(true);
-      // @ts-expect-error
-      await test.expect(page.locator('foo')).toHaveURL('https://example.com');
+      // Generic assertions work.
+      test.expect([123]).toHaveLength(1);
+      test.expect('123').toMatchSnapshot('name');
+      test.expect(await page.screenshot()).toMatchSnapshot('screenshot.png');
 
+      // All possible assertions apply to "any" type.
+      const x: any = 123;
+      test.expect(x).toHaveLength(1);
+      await test.expect(x).toHaveURL('url');
+      await test.expect(x).toBeEnabled();
+      test.expect(x).toMatchSnapshot('snapshot name');
+
+      // APIResponse-specific assertions apply to APIResponse.
       const res = await page.request.get('http://i-do-definitely-not-exist.com');
       await test.expect(res).toBeOK();
-      await test.expect(res).toBe(true);
+      // Some generic assertions also apply to APIResponse.
+      test.expect(res).toBe(true);
+      // Page-specific and most generic assertions do not apply to APIResponse.
       // @ts-expect-error
       await test.expect(res).toHaveURL('https://example.com');
+      // @ts-expect-error
+      test.expect(res).toEqual(123);
 
+      // Explicitly casting to "any" supports all assertions.
       await test.expect(res as any).toHaveURL('https://example.com');
+
+      // Playwright-specific assertions do not apply to generic values.
       // @ts-expect-error
       await test.expect(123).toHaveURL('https://example.com');
-
-      await test.expect(page.locator('foo')).toBeChecked();
-      await test.expect(page.locator('foo')).not.toBeChecked({ checked: true });
-
-      await test.expect(page.locator('foo')).not.toBeEditable();
-      await test.expect(page.locator('foo')).toBeEditable({ editable: false });
-
-      await test.expect(page.locator('foo')).toBeVisible();
-      await test.expect(page.locator('foo')).not.toBeVisible({ visible: false });
     });
     `
   });
