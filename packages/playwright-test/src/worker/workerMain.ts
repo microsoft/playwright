@@ -193,7 +193,7 @@ export class WorkerMain extends ProcessRunner {
     // The only exception is the expect() error that we still consider ok.
     const isExpectError = (error instanceof Error) && !!(error as any).matcherResult;
     if (isExpectError) {
-      // Note: do not stop the worker, because test.fail() that fails an assertion
+      // Note: do not stop the worker, because test marked with test.fail() that fails an assertion
       // is perfectly fine.
       this._currentTest._failWithError(serializeError(error), true /* isHardError */);
     } else {
