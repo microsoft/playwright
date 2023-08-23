@@ -76,7 +76,6 @@ export class Dispatcher {
         const result = test._appendTestResult();
         result.status = 'skipped';
         this._reporter.onTestBegin(test, result);
-        test.annotations = [...test._staticAnnotations];
         this._reportTestEnd(test, result);
       }
       this._queue.shift();

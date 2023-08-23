@@ -619,3 +619,30 @@ test('should skip tests if beforeEach has skip', async ({ runInlineTest }) => {
   expectTest('no marker', 'skipped', 'skipped', ['skip']);
   expect(result.output).not.toContain('skip-me');
 });
+
+test('static modifiers should be added in serial mode', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+
+      test.describe.configure({ mode: 'serial' });
+      test('failed', async ({}) => {
+        test.slow();
+        throw new Error('blocking error');
+      });
+      test.fixme('fixmed', async ({}) => {
+      });
+      test.skip('skipped', async ({}) => {
+      });
+      test('ignored', async ({}) => {
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(0);
+  expect(result.skipped).toBe(3);
+  expect(result.report.suites[0].specs[0].tests[0].annotations).toEqual([{ type: 'slow' }]);
+  expect(result.report.suites[0].specs[1].tests[0].annotations).toEqual([{ type: 'fixme' }]);
+  expect(result.report.suites[0].specs[2].tests[0].annotations).toEqual([{ type: 'skip' }]);
+  expect(result.report.suites[0].specs[3].tests[0].annotations).toEqual([]);
+});
