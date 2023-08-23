@@ -62,7 +62,7 @@ Unhandled error that was thrown.
 
 ## method: PageError.error
 * since: v1.38
-* langs: js
+* langs: js, python
 - returns: <[Error]>
 
 Unhandled error that was thrown.
