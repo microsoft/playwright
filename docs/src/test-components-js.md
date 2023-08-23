@@ -41,7 +41,7 @@ test('event should work', async ({ mount }) => {
 Adding Playwright Test to an existing project is easy. Below are the steps to enable Playwright Test for a React, Vue, Svelte or Solid project.
 
 :::note
-If you're developing your components in [Storybook](https://storybook.js.org), want to test your components in Angular, or are hitting up aginst some [known limitations](#known-issues-and-limitations), please see how to [test with Storybook](./test-components-storybook-js.md).
+If you're developing with [Storybook](https://storybook.js.org), want to test your components in Angular, build them with Webpack/Rspack, utilize  NextJS/SvelteKit framework features (links, image/fonts, etc.), or are hitting [known CT limitations](#known-issues-and-limitations), please see [Storybook's Playwright CT integration](https://github.com/storybookjs/playwright-ct).
 :::
 
 ### Step 1: Install Playwright Test for components for your respective framework
