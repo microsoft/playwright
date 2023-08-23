@@ -56,7 +56,7 @@ The page that produced this unhandled exception, if any.
 
 ## method: PageError.error
 * since: v1.38
-- returns: <[Error]>
+- returns: <[string]>
 
 Unhandled error that was thrown.
 
