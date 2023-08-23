@@ -26,6 +26,7 @@ import { Registry }  from './registry';
 import { spawnAsync } from './spawnAsync';
 import type { CommonFixtures, CommonWorkerFixtures } from '../config/commonFixtures';
 import { commonFixtures } from '../config/commonFixtures';
+import { removeFolders } from '../../packages/playwright-core/lib/utils/fileUtils';
 
 
 export const TMP_WORKSPACES = path.join(os.platform() === 'darwin' ? '/tmp' : os.tmpdir(), 'pwt', 'workspaces');
@@ -103,7 +104,7 @@ export const test = _test
         await use();
         if (test.info().status === test.info().expectedStatus) {
           // Browsers are large, we remove them after each test to save disk space.
-          await fs.promises.rm(_browsersPath, { recursive: true, force: true });
+          await removeFolders([_browsersPath]);
         }
       }, {
         auto: true,
