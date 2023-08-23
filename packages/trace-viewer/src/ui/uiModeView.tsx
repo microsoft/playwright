@@ -84,6 +84,7 @@ export const UIModeView: React.FC<{}> = ({
   const runTestBacklog = React.useRef<Set<string>>(new Set());
   const [collapseAllCount, setCollapseAllCount] = React.useState(0);
   const [isDisconnected, setIsDisconnected] = React.useState(false);
+  const [hasBrowsers, setHasBrowsers] = React.useState(true);
 
   const inputRef = React.useRef<HTMLInputElement>(null);
 
@@ -91,8 +92,10 @@ export const UIModeView: React.FC<{}> = ({
     setIsLoading(true);
     setWatchedTreeIds({ value: new Set() });
     updateRootSuite(baseFullConfig, new TeleSuite('', 'root'), [], undefined);
-    refreshRootSuite(true).then(() => {
+    refreshRootSuite(true).then(async () => {
       setIsLoading(false);
+      const { hasBrowsers } = await sendMessage('checkBrowsers');
+      setHasBrowsers(hasBrowsers);
     });
   }, []);
 
@@ -193,6 +196,14 @@ export const UIModeView: React.FC<{}> = ({
           <ToolbarButton icon='color-mode' title='Toggle color mode' onClick={() => toggleTheme()} />
           <ToolbarButton icon='refresh' title='Reload' onClick={() => reloadTests()} disabled={isRunningTest || isLoading}></ToolbarButton>
           <ToolbarButton icon='terminal' title='Toggle output' toggled={isShowingOutput} onClick={() => { setIsShowingOutput(!isShowingOutput); }} />
+          {!hasBrowsers && <ToolbarButton icon='lightbulb-autofix' style={{ color: 'var(--vscode-errorForeground)' }}title='Install browsers' toggled={isShowingOutput} onClick={() => {
+            setIsShowingOutput(true);
+            sendMessage('installBrowsers').then(async () => {
+              setIsShowingOutput(false);
+              const { hasBrowsers } = await sendMessage('checkBrowsers');
+              setHasBrowsers(hasBrowsers);
+            });
+          }} />}
         </Toolbar>
         <FiltersView
           filterText={filterText}
