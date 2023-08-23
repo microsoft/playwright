@@ -4610,9 +4610,6 @@ interface AsymmetricMatchers {
   stringMatching(sample: string | RegExp): AsymmetricMatcher;
 }
 
-type IfAny<T, Y, N> = 0 extends (1 & T) ? Y : N;
-type ExtraMatchers<T, Type, Matchers> = T extends Type ? Matchers : IfAny<T, Matchers, {}>;
-
 /**
  * The {@link GenericAssertions} class provides assertion methods that can be used to make assertions about any values
  * in the tests. A new instance of {@link GenericAssertions} is created by calling
@@ -5067,33 +5064,41 @@ interface GenericAssertions<R> {
 
 }
 
-type BaseMatchers<R, T> = GenericAssertions<R> & PlaywrightTest.Matchers<R, T>;
+type FunctionAssertions = {
+  /**
+   * Retries the callback until it passes.
+   */
+  toPass(options?: { timeout?: number, intervals?: number[] }): Promise<void>;
+};
 
-type MakeMatchers<R, T> = BaseMatchers<R, T> & {
-    /**
-     * If you know how to test something, `.not` lets you test its opposite.
-     */
-    not: MakeMatchers<R, T>;
-    /**
-     * Use resolves to unwrap the value of a fulfilled promise so any other
-     * matcher can be chained. If the promise is rejected the assertion fails.
-     */
-    resolves: MakeMatchers<Promise<R>, Awaited<T>>;
-    /**
-     * Unwraps the reason of a rejected promise so any other matcher can be chained.
-     * If the promise is fulfilled the assertion fails.
-     */
-    rejects: MakeMatchers<Promise<R>, Awaited<T>>;
-  } & SnapshotAssertions &
-  ExtraMatchers<T, Page, PageAssertions> &
-  ExtraMatchers<T, Locator, LocatorAssertions> &
-  ExtraMatchers<T, APIResponse, APIResponseAssertions> &
-  ExtraMatchers<T, Function, {
-    /**
-     * Retries the callback until it passes.
-     */
-    toPass(options?: { timeout?: number, intervals?: number[] }): Promise<void>;
-  }>;
+type BaseMatchers<R, T> = GenericAssertions<R> & PlaywrightTest.Matchers<R, T> & SnapshotAssertions;
+type AllowedGenericMatchers<R> = Pick<GenericAssertions<R>, 'toBe' | 'toBeDefined' | 'toBeFalsy' | 'toBeNull' | 'toBeTruthy' | 'toBeUndefined'>;
+
+type SpecificMatchers<R, T> =
+  T extends Page ? PageAssertions & AllowedGenericMatchers<R> :
+  T extends Locator ? LocatorAssertions & AllowedGenericMatchers<R> :
+  T extends APIResponse ? APIResponseAssertions & AllowedGenericMatchers<R> :
+  BaseMatchers<R, T> & (T extends Function ? FunctionAssertions : {});
+type AllMatchers<R, T> = PageAssertions & LocatorAssertions & APIResponseAssertions & FunctionAssertions & BaseMatchers<R, T>;
+
+type IfAny<T, Y, N> = 0 extends (1 & T) ? Y : N;
+type Awaited<T> = T extends PromiseLike<infer U> ? U : T;
+type MakeMatchers<R, T> = {
+  /**
+   * If you know how to test something, `.not` lets you test its opposite.
+   */
+  not: MakeMatchers<R, T>;
+  /**
+   * Use resolves to unwrap the value of a fulfilled promise so any other
+   * matcher can be chained. If the promise is rejected the assertion fails.
+   */
+  resolves: MakeMatchers<Promise<R>, Awaited<T>>;
+  /**
+   * Unwraps the reason of a rejected promise so any other matcher can be chained.
+   * If the promise is fulfilled the assertion fails.
+   */
+  rejects: MakeMatchers<Promise<R>, any>;
+} & IfAny<T, AllMatchers<R, T>, SpecificMatchers<R, T>>;
 
 export type Expect = {
   <T = unknown>(actual: T, messageOrOptions?: string | { message?: string }): MakeMatchers<void, T>;
@@ -5118,8 +5123,6 @@ export type Expect = {
   };
   not: Omit<AsymmetricMatchers, 'any' | 'anything'>;
 } & AsymmetricMatchers;
-
-type Awaited<T> = T extends PromiseLike<infer U> ? U : T;
 
 // --- BEGINGLOBAL ---
 declare global {
