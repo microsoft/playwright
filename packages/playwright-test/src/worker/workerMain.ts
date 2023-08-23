@@ -164,28 +164,41 @@ export class WorkerMain extends ProcessRunner {
   }
 
   unhandledError(error: Error | any) {
+    const failWithFatalErrorAndStop = () => {
+      if (!this._fatalErrors.length)
+        this._fatalErrors.push(serializeError(error));
+      void this._stop();
+    };
+
+    // No current test - fatal error.
+    if (!this._currentTest)
+      return failWithFatalErrorAndStop();
+
     // Usually, we do not differentiate between errors in the control flow
     // and unhandled errors - both lead to the test failing. This is good for regular tests,
     // so that you can, e.g. expect() from inside an event handler. The test fails,
     // and we restart the worker.
-    //
+    if (this._currentTest.expectedStatus !== 'failed') {
+      this._currentTest._failWithError(serializeError(error), true /* isHardError */);
+      void this._stop();
+      return;
+    }
+
     // However, for tests marked with test.fail(), this is a problem. Unhandled error
     // could come either from the user test code (legit failure), or from a fixture or
     // a test runner. In the latter case, the worker state could be messed up,
     // and continuing to run tests in the same worker is problematic. Therefore,
     // we turn this into a fatal error and restart the worker anyway.
+    //
     // The only exception is the expect() error that we still consider ok.
     const isExpectError = (error instanceof Error) && !!(error as any).matcherResult;
-    const isCurrentTestExpectedToFail = this._currentTest?.expectedStatus === 'failed';
-    const shouldConsiderAsTestError = isExpectError || !isCurrentTestExpectedToFail;
-    if (this._currentTest && shouldConsiderAsTestError) {
+    if (isExpectError) {
+      // Note: do not stop the worker, because test.fail() that fails an assertion
+      // is perfectly fine.
       this._currentTest._failWithError(serializeError(error), true /* isHardError */);
     } else {
-      // No current test - fatal error.
-      if (!this._fatalErrors.length)
-        this._fatalErrors.push(serializeError(error));
+      failWithFatalErrorAndStop();
     }
-    void this._stop();
   }
 
   private async _loadIfNeeded() {
