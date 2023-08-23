@@ -89,7 +89,7 @@ it('should work with clicking on links which do not commit navigation', async ({
     page.waitForNavigation().catch(e => e),
     page.click('a'),
   ]);
-  expect(error.message).toContain(expectedSSLError(browserName, platform));
+  expect(error.message).toMatch(expectedSSLError(browserName, platform));
 });
 
 it('should work with history.pushState()', async ({ page, server }) => {
