@@ -70,15 +70,15 @@ export const FilmStrip: React.FunctionComponent<{
         key={index}
       />)
     }</div>
-    {previewImage && previewSize && previewPoint?.x !== undefined &&
+    {previewPoint?.x !== undefined &&
       <div className='film-strip-hover' style={{
         top: measure.bottom + 5,
-        left: Math.min(previewPoint!.x, measure.width - previewSize.width - 10),
+        left: Math.min(previewPoint!.x, measure.width - (previewSize ? previewSize.width : 0) - 10),
       }}>
         {previewPoint.action && <div className='film-strip-hover-title'>{renderAction(previewPoint.action, previewPoint.sdkLanguage)}</div>}
-        <div style={{ width: previewSize.width, height: previewSize.height }}>
+        {previewImage && previewSize && <div style={{ width: previewSize.width, height: previewSize.height }}>
           <img src={`sha1/${previewImage.sha1}`} width={previewSize.width} height={previewSize.height} />
-        </div>
+        </div>}
       </div>
     }
   </div>;
