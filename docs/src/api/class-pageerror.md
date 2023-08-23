@@ -60,3 +60,9 @@ The page that produced this unhandled exception, if any.
 
 Unhandled error that was thrown.
 
+## method: PageError.error
+* since: v1.38
+* langs: js
+- returns: <[Error]>
+
+Unhandled error that was thrown.
