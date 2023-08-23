@@ -265,7 +265,7 @@ function buildTextCandidates(injectedScript: InjectedScript, element: Element, i
       candidates.push([{ engine: 'internal:text', selector: escaped, score: kTextScore }]);
       candidates.push([{ engine: 'internal:text', selector: escapeForTextSelector(text, true), score: kTextScoreExact }]);
     }
-    const cssToken: SelectorToken = { engine: 'css', selector: element.nodeName.toLowerCase(), score: kCSSTagNameScore };
+    const cssToken: SelectorToken = { engine: 'css', selector: cssEscape(element.nodeName.toLowerCase()), score: kCSSTagNameScore };
     candidates.push([cssToken, { engine: 'internal:has-text', selector: escaped, score: kTextScore }]);
     if (fullText.length <= 80)
       candidates.push([cssToken, { engine: 'internal:has-text', selector: '/^' + escapeRegExp(fullText) + '$/', score: kTextScoreRegex }]);
@@ -353,7 +353,7 @@ function cssFallback(injectedScript: InjectedScript, targetElement: Element, opt
       if (!bestTokenForLevel)
         bestTokenForLevel = token;
     } else if (!bestTokenForLevel) {
-      bestTokenForLevel = nodeName;
+      bestTokenForLevel = cssEscape(nodeName);
     }
     tokens.unshift(bestTokenForLevel);
   }

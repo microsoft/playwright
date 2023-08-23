@@ -105,3 +105,17 @@ it('should escape class names', async ({ page }) => {
   expect(error.message).toContain('<div class=\"foo bar:0');
   expect(error.message).toContain('<div class=\"foo bar:1');
 });
+
+it('should escape tag names', async ({ page }) => {
+  await page.setContent(`
+    <q:template> </q:template>
+    <span>special test description</span>
+    <q:template hidden="" aria-hidden="true">
+      <span>special test description</span>
+    </q:template>
+  `);
+  const error = await expect(page.getByText('special test description')).toBeVisible().catch(e => e);
+  expect(error.message).toContain('strict mode violation');
+  expect(error.message).toContain(`getByText('special test description').first()`);
+  expect(error.message).toContain(`locator('q\\\\:template').filter({ hasText: 'special test description' })`);
+});
