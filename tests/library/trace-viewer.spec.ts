@@ -131,6 +131,7 @@ test('should contain action info', async ({ showTraceViewer }) => {
 test('should render network bars', async ({ page, runAndTrace, server }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.goto(server.EMPTY_PAGE);
+    await page.evaluate(() => new Promise(requestAnimationFrame));
   });
   await expect(traceViewer.page.locator('.timeline-bar.network')).toHaveCount(1);
 });
