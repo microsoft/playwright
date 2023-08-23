@@ -785,7 +785,7 @@ export class Registry {
       await this._validateInstallationCache(linksDir);
 
       // Install browsers for this package.
-      for (const executable of executables) {
+      await Promise.all(executables.map(async executable => {
         if (!executable._install)
           throw new Error(`ERROR: Playwright does not support installing ${executable.name}`);
 
@@ -809,7 +809,7 @@ export class Registry {
           ].join('\n'), 1));
         }
         await executable._install();
-      }
+      }));
     } catch (e) {
       if (e.code === 'ELOCKED') {
         const rmCommand = process.platform === 'win32' ? 'rm -R' : 'rm -rf';
