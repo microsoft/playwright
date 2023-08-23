@@ -28,7 +28,7 @@ export type ProcessExitData = {
 };
 
 export class ProcessHost extends EventEmitter {
-  private process!: child_process.ChildProcess;
+  private process: child_process.ChildProcess | undefined;
   private _didSendStop = false;
   private _didFail = false;
   private didExit = false;
@@ -85,7 +85,7 @@ export class ProcessHost extends EventEmitter {
     });
 
     await new Promise<void>((resolve, reject) => {
-      this.process.once('exit', (code, signal) => reject(new Error(`process exited with code "${code}" and signal "${signal}" before it became ready`)));
+      this.process!.once('exit', (code, signal) => reject(new Error(`process exited with code "${code}" and signal "${signal}" before it became ready`)));
       this.once('ready', () => resolve());
     });
 
@@ -154,6 +154,6 @@ export class ProcessHost extends EventEmitter {
   private send(message: { method: string, params?: any }) {
     if (debug.enabled('pw:test:protocol'))
       debug('pw:test:protocol')('SEND ► ' + JSON.stringify(message));
-    this.process.send(message);
+    this.process?.send(message);
   }
 }
