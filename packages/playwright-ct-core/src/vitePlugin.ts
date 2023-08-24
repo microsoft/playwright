@@ -17,11 +17,12 @@
 import type { Suite } from '@playwright/test/reporter';
 import type { PlaywrightTestConfig as BasePlaywrightTestConfig, FullConfig } from '@playwright/test';
 
-import type { InlineConfig, Plugin, ResolveFn, ResolvedConfig } from 'vite';
+import type { InlineConfig, Plugin, ResolveFn, ResolvedConfig, UserConfig } from 'vite';
 import type { TestRunnerPlugin } from '../../playwright-test/src/plugins';
 import type { ComponentInfo } from './tsxTransform';
 import type { AddressInfo } from 'net';
 import type { PluginContext } from 'rollup';
+import { debug } from 'playwright-core/lib/utilsBundle';
 
 import fs from 'fs';
 import path from 'path';
@@ -31,6 +32,9 @@ import { assert, calculateSha1 } from 'playwright-core/lib/utils';
 import { getPlaywrightVersion } from 'playwright-core/lib/utils';
 import { setExternalDependencies } from '@playwright/test/lib/transform/compilationCache';
 import { collectComponentUsages, componentInfo } from './tsxTransform';
+import { version as viteVersion, build, preview, mergeConfig } from 'vite';
+
+const log = debug('pw:vite');
 
 let stoppableServer: any;
 const playwrightVersion = getPlaywrightVersion();
@@ -59,23 +63,51 @@ export function createPlugin(
     },
 
     begin: async (suite: Suite) => {
+      // We are going to have 3 config files:
+      // - the defaults that user config overrides (baseConfig)
+      // - the user config (userConfig)
+      // - frameworks overrides (frameworkOverrides);
+
       const use = config.projects[0].use as CtConfig;
       const port = use.ctPort || 3100;
-      const viteConfig = typeof use.ctViteConfig === 'function' ? await use.ctViteConfig() : (use.ctViteConfig || {});
-      const templateDirConfig = use.ctTemplateDir || 'playwright';
+      const relativeTemplateDir = use.ctTemplateDir || 'playwright';
 
-      const rootDir = viteConfig.root || configDir;
-      const templateDir = path.resolve(rootDir, templateDirConfig);
-      const outDir = viteConfig?.build?.outDir || (use.ctCacheDir ? path.resolve(rootDir, use.ctCacheDir) : path.resolve(templateDir, '.cache'));
+      // FIXME: use build plugin to determine html location to resolve this.
+      // TemplateDir must be relative, otherwise we can't move the final index.html into its target location post-build.
+      // This regressed in https://github.com/microsoft/playwright/pull/26526
+      const templateDir = path.join(configDir, relativeTemplateDir);
 
-      const buildInfoFile = path.join(outDir, 'metainfo.json');
+      // Compose base config from the playwright config only.
+      const baseConfig = {
+        root: configDir,
+        configFile: false,
+        define: {
+          __VUE_PROD_DEVTOOLS__: true,
+        },
+        css: {
+          devSourcemap: true,
+        },
+        build: {
+          outDir: use.ctCacheDir ? path.resolve(configDir, use.ctCacheDir) : path.resolve(templateDir, '.cache')
+        },
+        preview: {
+          port
+        },
+        // Vite preview server will otherwise always return the index.html with 200.
+        appType: 'custom',
+      };
+
+      // Apply user config on top of the base config. This could have changed root and build.outDir.
+      const userConfig = typeof use.ctViteConfig === 'function' ? await use.ctViteConfig() : (use.ctViteConfig || {});
+      const baseAndUserConfig = mergeConfig(baseConfig, userConfig);
+      const buildInfoFile = path.join(baseAndUserConfig.build.outDir, 'metainfo.json');
+
       let buildExists = false;
       let buildInfo: BuildInfo;
 
       const registerSource = await fs.promises.readFile(registerSourceFile, 'utf-8');
       const registerSourceHash = calculateSha1(registerSource);
 
-      const { version: viteVersion } = await import('vite');
       try {
         buildInfo = JSON.parse(await fs.promises.readFile(buildInfoFile, 'utf-8')) as BuildInfo;
         assert(buildInfo.version === playwrightVersion);
@@ -92,54 +124,52 @@ export function createPlugin(
           sources: {},
         };
       }
+      log('build exists:', buildExists);
 
       const componentRegistry: ComponentRegistry = new Map();
       // 1. Re-parse changed tests and collect required components.
       const hasNewTests = await checkNewTests(suite, buildInfo, componentRegistry);
+      log('has new tests:', hasNewTests);
+
       // 2. Check if the set of required components has changed.
       const hasNewComponents = await checkNewComponents(buildInfo, componentRegistry);
+      log('has new components:', hasNewComponents);
+
       // 3. Check component sources.
       const sourcesDirty = !buildExists || hasNewComponents || await checkSources(buildInfo);
+      log('sourcesDirty:', sourcesDirty);
+
       // 4. Update component info.
       buildInfo.components = [...componentRegistry.values()];
 
-      viteConfig.root = rootDir;
-      viteConfig.preview = { port, ...viteConfig.preview };
-      // Vite preview server will otherwise always return the index.html with 200.
-      viteConfig.appType = viteConfig.appType || 'custom';
+      const frameworkOverrides: UserConfig = { plugins: [] };
 
       // React heuristic. If we see a component in a file with .js extension,
       // consider it a potential JSX-in-JS scenario and enable JSX loader for all
       // .js files.
       if (hasJSComponents(buildInfo.components)) {
-        viteConfig.esbuild = {
+        log('jsx-in-js detected');
+        frameworkOverrides.esbuild = {
           loader: 'jsx',
           include: /.*\.jsx?$/,
           exclude: [],
         };
-        viteConfig.optimizeDeps = {
+        frameworkOverrides.optimizeDeps = {
           esbuildOptions: {
             loader: { '.js': 'jsx' },
           }
         };
       }
-      const { build, preview } = await import('vite');
-      // Build config unconditionally, either build or build & preview will use it.
-      viteConfig.plugins ??= [];
-      if (frameworkPluginFactory && !viteConfig.plugins.length)
-        viteConfig.plugins = [await frameworkPluginFactory()];
+
+      // We assume that any non-empty plugin list includes `vite-react` or similar.
+      if (frameworkPluginFactory && !baseAndUserConfig.plugins?.length)
+        frameworkOverrides.plugins = [await frameworkPluginFactory()];
 
       // But only add out own plugin when we actually build / transform.
       if (sourcesDirty)
-        viteConfig.plugins.push(vitePlugin(registerSource, templateDir, buildInfo, componentRegistry));
-      viteConfig.configFile = viteConfig.configFile || false;
-      viteConfig.define = viteConfig.define || {};
-      viteConfig.define.__VUE_PROD_DEVTOOLS__ = true;
-      viteConfig.css = viteConfig.css || {};
-      viteConfig.css.devSourcemap = true;
-      viteConfig.build = {
-        ...viteConfig.build,
-        outDir,
+        frameworkOverrides.plugins!.push(vitePlugin(registerSource, templateDir, buildInfo, componentRegistry));
+
+      frameworkOverrides.build = {
         target: 'esnext',
         minify: false,
         rollupOptions: {
@@ -151,24 +181,34 @@ export function createPlugin(
         sourcemap: true,
       };
 
+      const finalConfig = mergeConfig(baseAndUserConfig, frameworkOverrides);
+
       if (sourcesDirty) {
-        await build(viteConfig);
-        const relativeTemplateDir = path.relative(rootDir, templateDir);
-        await fs.promises.rename(path.resolve(outDir, relativeTemplateDir, 'index.html'), `${outDir}/index.html`);
+        log('build');
+        await build(finalConfig);
+        await fs.promises.rename(`${finalConfig.build.outDir}/${relativeTemplateDir}/index.html`, `${finalConfig.build.outDir}/index.html`);
       }
 
-      if (hasNewTests || hasNewComponents || sourcesDirty)
+      if (hasNewTests || hasNewComponents || sourcesDirty) {
+        log('write manifest');
         await fs.promises.writeFile(buildInfoFile, JSON.stringify(buildInfo, undefined, 2));
+      }
 
-      for (const [filename, testInfo] of Object.entries(buildInfo.tests))
-        setExternalDependencies(filename, testInfo.deps);
+      for (const [filename, testInfo] of Object.entries(buildInfo.tests)) {
+        const deps = new Set<string>();
+        for (const componentName of testInfo.components) {
+          const component = componentRegistry.get(componentName);
+          component?.deps.forEach(d => deps.add(d));
+        }
+        setExternalDependencies(filename, [...deps]);
+      }
 
-      const previewServer = await preview(viteConfig);
+      const previewServer = await preview(finalConfig);
       stoppableServer = stoppable(previewServer.httpServer, 0);
       const isAddressInfo = (x: any): x is AddressInfo => x?.address;
       const address = previewServer.httpServer.address();
       if (isAddressInfo(address)) {
-        const protocol = viteConfig.preview.https ? 'https:' : 'http:';
+        const protocol = finalConfig.preview.https ? 'https:' : 'http:';
         process.env.PLAYWRIGHT_TEST_BASE_URL = `${protocol}//localhost:${address.port}`;
       }
     },
@@ -194,7 +234,6 @@ type BuildInfo = {
     [key: string]: {
       timestamp: number;
       components: string[];
-      deps: string[];
     }
   };
 };
@@ -205,9 +244,12 @@ async function checkSources(buildInfo: BuildInfo): Promise<boolean> {
   for (const [source, sourceInfo] of Object.entries(buildInfo.sources)) {
     try {
       const timestamp = (await fs.promises.stat(source)).mtimeMs;
-      if (sourceInfo.timestamp !== timestamp)
+      if (sourceInfo.timestamp !== timestamp) {
+        log('source has changed:', source);
         return true;
+      }
     } catch (e) {
+      log('check source failed:', e);
       return true;
     }
   }
@@ -226,9 +268,10 @@ async function checkNewTests(suite: Suite, buildInfo: BuildInfo, componentRegist
     const timestamp = (await fs.promises.stat(testFile)).mtimeMs;
     if (buildInfo.tests[testFile]?.timestamp !== timestamp) {
       const components = await parseTestFile(testFile);
+      log('changed test:', testFile);
       for (const component of components)
         componentRegistry.set(component.fullName, component);
-      buildInfo.tests[testFile] = { timestamp, components: components.map(c => c.fullName), deps: [] };
+      buildInfo.tests[testFile] = { timestamp, components: components.map(c => c.fullName) };
       hasNewTests = true;
     }
   }
@@ -336,23 +379,13 @@ function vitePlugin(registerSource: string, templateDir: string, buildInfo: Buil
     },
 
     async writeBundle(this: PluginContext) {
-      const componentDeps = new Map<string, Set<string>>();
       for (const component of componentRegistry.values()) {
         const id = (await moduleResolver(component.importPath));
         if (!id)
           continue;
         const deps = new Set<string>();
         collectViteModuleDependencies(this, id, deps);
-        componentDeps.set(component.fullName, deps);
-      }
-
-      for (const testInfo of Object.values(buildInfo.tests)) {
-        const deps = new Set<string>();
-        for (const fullName of testInfo.components) {
-          for (const dep of componentDeps.get(fullName) || [])
-            deps.add(dep);
-        }
-        testInfo.deps = [...deps];
+        component.deps = [...deps];
       }
     },
   };

@@ -166,10 +166,11 @@ export function collectComponentUsages(node: T.Node) {
 }
 
 export type ComponentInfo = {
-  fullName: string,
-  importPath: string,
-  isModuleOrAlias: boolean,
-  importedName?: string
+  fullName: string;
+  importPath: string;
+  isModuleOrAlias: boolean;
+  importedName?: string;
+  deps: string[];
 };
 
 export function componentInfo(specifier: T.ImportSpecifier | T.ImportDefaultSpecifier, importSource: string, filename: string): ComponentInfo {
@@ -183,9 +184,9 @@ export function componentInfo(specifier: T.ImportSpecifier | T.ImportDefaultSpec
   const pathInfo = { importPath, isModuleOrAlias };
 
   if (t.isImportDefaultSpecifier(specifier))
-    return { fullName: prefix, ...pathInfo };
+    return { fullName: prefix, deps: [], ...pathInfo };
 
   if (t.isIdentifier(specifier.imported))
-    return { fullName: prefix + '_' + specifier.imported.name, importedName: specifier.imported.name, ...pathInfo };
-  return { fullName: prefix + '_' + specifier.imported.value, importedName: specifier.imported.value, ...pathInfo };
+    return { fullName: prefix + '_' + specifier.imported.name, importedName: specifier.imported.name, deps: [], ...pathInfo };
+  return { fullName: prefix + '_' + specifier.imported.value, importedName: specifier.imported.value, deps: [], ...pathInfo };
 }
