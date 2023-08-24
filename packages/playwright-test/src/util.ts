@@ -342,8 +342,13 @@ export function resolveImportSpecifierExtension(resolved: string): string | unde
     }
     break;  // Do not try '' when a more specific extesion like '.jsx' matched.
   }
-  // try directory imports last
+
   if (dirExists(resolved)) {
+    // If we import a package, let Node.js figure out the correct import based on package.json.
+    if (fileExists(path.join(resolved, 'package.json')))
+      return resolved;
+
+    // Otherwise, try to find a corresponding index file.
     const dirImport = path.join(resolved, 'index');
     return resolveImportSpecifierExtension(dirImport);
   }
