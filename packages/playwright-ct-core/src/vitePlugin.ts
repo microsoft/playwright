@@ -62,10 +62,10 @@ export function createPlugin(
       const use = config.projects[0].use as CtConfig;
       const port = use.ctPort || 3100;
       const viteConfig = typeof use.ctViteConfig === 'function' ? await use.ctViteConfig() : (use.ctViteConfig || {});
-      const templateDirConfig = use.ctTemplateDir || 'playwright';
+      const relativeTemplateDir = use.ctTemplateDir || 'playwright';
 
       const rootDir = viteConfig.root || configDir;
-      const templateDir = path.resolve(rootDir, templateDirConfig);
+      const templateDir = path.join(rootDir, relativeTemplateDir);
       const outDir = viteConfig?.build?.outDir || (use.ctCacheDir ? path.resolve(rootDir, use.ctCacheDir) : path.resolve(templateDir, '.cache'));
 
       const buildInfoFile = path.join(outDir, 'metainfo.json');
@@ -131,7 +131,7 @@ export function createPlugin(
 
       // But only add out own plugin when we actually build / transform.
       if (sourcesDirty)
-        viteConfig.plugins.push(vitePlugin(registerSource, templateDir, buildInfo, componentRegistry));
+        viteConfig.plugins.push(vitePlugin(registerSource, relativeTemplateDir, buildInfo, componentRegistry));
       viteConfig.configFile = viteConfig.configFile || false;
       viteConfig.define = viteConfig.define || {};
       viteConfig.define.__VUE_PROD_DEVTOOLS__ = true;
@@ -153,8 +153,7 @@ export function createPlugin(
 
       if (sourcesDirty) {
         await build(viteConfig);
-        const relativeTemplateDir = path.relative(rootDir, templateDir);
-        await fs.promises.rename(path.resolve(outDir, relativeTemplateDir, 'index.html'), `${outDir}/index.html`);
+        await fs.promises.rename(`${outDir}/${relativeTemplateDir}/index.html`, `${outDir}/index.html`);
       }
 
       if (hasNewTests || hasNewComponents || sourcesDirty)
@@ -280,7 +279,7 @@ async function parseTestFile(testFile: string): Promise<ComponentInfo[]> {
   return result;
 }
 
-function vitePlugin(registerSource: string, templateDir: string, buildInfo: BuildInfo, componentRegistry: ComponentRegistry): Plugin {
+function vitePlugin(registerSource: string, relativeTemplateDir: string, buildInfo: BuildInfo, componentRegistry: ComponentRegistry): Plugin {
   buildInfo.sources = {};
   let moduleResolver: ResolveFn;
   return {
@@ -308,10 +307,10 @@ function vitePlugin(registerSource: string, templateDir: string, buildInfo: Buil
         return { code, map: { mappings: '' } };
       }
 
-      const indexTs = path.join(templateDir, 'index.ts');
-      const indexTsx = path.join(templateDir, 'index.tsx');
-      const indexJs = path.join(templateDir, 'index.js');
-      const indexJsx = path.join(templateDir, 'index.jsx');
+      const indexTs = path.join(relativeTemplateDir, 'index.ts');
+      const indexTsx = path.join(relativeTemplateDir, 'index.tsx');
+      const indexJs = path.join(relativeTemplateDir, 'index.js');
+      const indexJsx = path.join(relativeTemplateDir, 'index.jsx');
       const idResolved = path.resolve(id);
       if (!idResolved.endsWith(indexTs) && !idResolved.endsWith(indexTsx) && !idResolved.endsWith(indexJs) && !idResolved.endsWith(indexJsx))
         return;
