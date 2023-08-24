@@ -177,7 +177,12 @@ export function collectAffectedTestFiles(dependency: string, testFileCollector: 
 }
 
 export function dependenciesForTestFile(filename: string): Set<string> {
-  return fileDependencies.get(filename) || new Set();
+  const result = new Set<string>();
+  for (const dep of fileDependencies.get(filename) || [])
+    result.add(dep);
+  for (const dep of externalDependencies.get(filename) || [])
+    result.add(dep);
+  return result;
 }
 
 // These two are only used in the dev mode, they are specifically excluding

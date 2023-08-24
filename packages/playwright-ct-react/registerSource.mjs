@@ -53,7 +53,7 @@ function isComponent(component) {
  */
 async function __pwResolveComponent(component) {
   if (!isComponent(component))
-    return
+    return;
 
   let componentFactory = __pwLoaderRegistry.get(component.type);
   if (!componentFactory) {
@@ -69,11 +69,11 @@ async function __pwResolveComponent(component) {
   if (!componentFactory && component.type[0].toUpperCase() === component.type[0])
     throw new Error(`Unregistered component: ${component.type}. Following components are registered: ${[...__pwRegistry.keys()]}`);
 
-  if(componentFactory)
-    __pwRegistry.set(component.type, await componentFactory())
+  if (componentFactory)
+    __pwRegistry.set(component.type, await componentFactory());
 
   if ('children' in component)
-    await Promise.all(component.children.map(child => __pwResolveComponent(child)))
+    await Promise.all(component.children.map(child => __pwResolveComponent(child)));
 }
 
 /**
