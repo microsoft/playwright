@@ -96,6 +96,7 @@ function downloadFile(options: DownloadParams): Promise<void> {
 
 async function main(options: DownloadParams) {
   await downloadFile(options);
+  log(`SUCCESS downloading ${options.title}`);
   log(`extracting archive`);
   await extract(options.zipPath, { dir: options.browserDirectory });
   if (options.executablePath) {
