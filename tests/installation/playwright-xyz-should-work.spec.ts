@@ -31,3 +31,20 @@ for (const pkg of ['playwright-chromium', 'playwright-firefox', 'playwright-webk
       await exec('node', `esm-${pkg}.mjs`);
   });
 }
+
+for (const browser of ['chromium', 'firefox', 'webkit']) {
+  test(`@playwright/browser-${browser} should work`, async ({ exec, installedSoftwareOnDisk }) => {
+    const pkg = `@playwright/browser-${browser}`;
+    const result = await exec('npm i --foreground-scripts', pkg);
+    const expectedSoftware = [browser];
+    if (browser === 'chromium')
+      expectedSoftware.push('ffmpeg');
+    expect(result).toHaveLoggedSoftwareDownload(expectedSoftware as any);
+    expect(await installedSoftwareOnDisk()).toEqual(expectedSoftware);
+    expect(result).not.toContain(`To avoid unexpected behavior, please install your dependencies first`);
+
+    await exec('npm i --foreground-scripts playwright', { env: { PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1' } });
+    await exec('node sanity.js playwright', browser);
+    await exec('node browser-only.js', pkg);
+  });
+}

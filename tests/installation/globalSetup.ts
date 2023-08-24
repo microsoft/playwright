@@ -50,6 +50,9 @@ async function globalSetup() {
       build('playwright-chromium'),
       build('playwright-firefox'),
       build('playwright-webkit'),
+      build('playwright-browser-chromium', '@playwright/browser-chromium'),
+      build('playwright-browser-firefox', '@playwright/browser-firefox'),
+      build('playwright-browser-webkit', '@playwright/browser-webkit'),
     ]);
 
     await fs.promises.writeFile(path.join(__dirname, '.registry.json'), JSON.stringify(Object.fromEntries(builds)));

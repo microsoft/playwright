@@ -1,0 +1,29 @@
+{
+  "name": "@playwright/browser-webkit",
+  "version": "1.38.0-next",
+  "description": "Playwright package that automatically installs WebKit",
+  "repository": "github:Microsoft/playwright",
+  "homepage": "https://playwright.dev",
+  "engines": {
+    "node": ">=16"
+  },
+  "author": {
+    "name": "Microsoft Corporation"
+  },
+  "license": "Apache-2.0",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./index.mjs",
+      "require": "./index.js",
+      "default": "./index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "install": "node install.js"
+  },
+  "dependencies": {
+    "playwright-core": "1.38.0-next"
+  }
+}

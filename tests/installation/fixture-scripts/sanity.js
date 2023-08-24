@@ -20,7 +20,7 @@ let success = {
   'playwright-chromium': ['chromium'],
   'playwright-firefox': ['firefox'],
   'playwright-webkit': ['webkit'],
-  '@playwright/test': ['chromium', 'firefox', 'webkit'],
+  '@playwright/test': [],
 }[requireName];
 if (process.argv[3] === 'none')
   success = [];
