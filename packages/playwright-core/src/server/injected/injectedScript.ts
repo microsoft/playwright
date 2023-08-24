@@ -208,6 +208,12 @@ export class InjectedScript {
       throw this.createStacklessError('Internal error: there should not be a capture in the selector.');
     }
 
+    // Workaround so that ":scope" matches the ShadowRoot.
+    // This is, unfortunately, because an ElementHandle can point to any Node (including ShadowRoot/Document/etc),
+    // and not just to an Element, and we support various APIs on ElementHandle like "textContent()".
+    if (root.nodeType === 11 /* Node.DOCUMENT_FRAGMENT_NODE */ && selector.parts.length === 1 && selector.parts[0].name === 'css' && selector.parts[0].source === ':scope')
+      return [root as Element];
+
     this._evaluator.begin();
     try {
       let roots = new Set<Element>([root as Element]);
