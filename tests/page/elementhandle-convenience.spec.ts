@@ -88,6 +88,20 @@ it('textContent should work', async ({ page, server }) => {
   expect(await page.textContent('#inner')).toBe('Text,\nmore text');
 });
 
+it('textContent should work on ShadowRoot', async ({ page, server }) => {
+  await page.setContent(`
+    <div></div>
+    <script>
+      document.querySelector('div').attachShadow({ mode: 'open' }).innerHTML = '<div>hello</div>';
+    </script>
+  `);
+  const div = await page.$('div');
+  const root = await div.evaluateHandle(div => div.shadowRoot);
+  expect(await root.textContent()).toBe('hello');
+  // We do not match ShadowRoot as ":scope".
+  expect(await root.$$(':scope div')).toEqual([]);
+});
+
 it('isVisible and isHidden should work', async ({ page }) => {
   await page.setContent(`<div>Hi</div><span></span>`);
 
