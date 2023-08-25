@@ -55,6 +55,7 @@ export class BaseReporter implements ReporterV2 {
   private _omitFailures: boolean;
   private readonly _ttyWidthForTest: number;
   private _fatalErrors: TestError[] = [];
+  private _failureCount: number = 0;
 
   constructor(options: { omitFailures?: boolean } = {}) {
     this._omitFailures = options.omitFailures || false;
@@ -94,6 +95,8 @@ export class BaseReporter implements ReporterV2 {
   }
 
   onTestEnd(test: TestCase, result: TestResult) {
+    if (result.status !== 'skipped' && result.status !== test.expectedStatus)
+      ++this._failureCount;
     // Ignore any tests that are run in parallel.
     for (let suite: Suite | undefined = test.parent; suite; suite = suite.parent) {
       if ((suite as SuitePrivate)._parallelMode === 'parallel')
@@ -232,6 +235,7 @@ export class BaseReporter implements ReporterV2 {
     if (full && summary.failuresToPrint.length && !this._omitFailures)
       this._printFailures(summary.failuresToPrint);
     this._printSlowTests();
+    this._printMaxFailuresReached();
     this._printSummary(summaryMessage);
   }
 
@@ -251,6 +255,12 @@ export class BaseReporter implements ReporterV2 {
     });
     if (slowTests.length)
       console.log(colors.yellow('  Consider splitting slow test files to speed up parallel execution'));
+  }
+
+  private _printMaxFailuresReached() {
+    if (this.config.maxFailures && this._failureCount < this.config.maxFailures)
+      return;
+    console.log(colors.yellow(`Testing stopped early after ${this.config.maxFailures} maximum allowed failures.`));
   }
 
   private _printSummary(summary: string) {

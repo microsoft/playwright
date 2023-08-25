@@ -182,6 +182,33 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       expect(result.output).not.toContain(`Slow test file: [qux] › dir${path.sep}b.test.js (`);
     });
 
+    test('should print if maxFailures is reached', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'playwright.config.ts': `
+          module.exports = {
+            maxFailures: 1,
+          };
+        `,
+        'dir/a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('failing1', async ({}) => {
+            expect(1).toBe(2);
+          });
+          test('failing2', async ({}) => {
+            expect(1).toBe(2);
+          });
+          test('failing3', async ({}) => {
+            expect(1).toBe(2);
+          });
+        `,
+      });
+      expect(result.exitCode).toBe(1);
+      expect(result.failed).toBe(1);
+      expect(result.passed).toBe(0);
+      expect(result.skipped).toBe(2);
+      expect(result.output).toContain('Testing stopped early after 1 maximum allowed failures.');
+    });
+
     test('should not print slow parallel tests', async ({ runInlineTest }) => {
       const result = await runInlineTest({
         'playwright.config.ts': `
