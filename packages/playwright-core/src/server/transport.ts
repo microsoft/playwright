@@ -23,6 +23,16 @@ import { makeWaitForNextTask } from '../utils';
 import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent } from '../utils/happy-eyeballs';
 import type { HeadersArray } from './types';
 
+export const perMessageDeflate = {
+  zlibDeflateOptions: {
+    level: 3,
+  },
+  zlibInflateOptions: {
+    chunkSize: 10 * 1024
+  },
+  threshold: 10 * 1024,
+};
+
 export type ProtocolRequest = {
   id: number;
   method: string;
@@ -117,13 +127,13 @@ export class WebSocketTransport implements ConnectionTransport {
     this.wsEndpoint = url;
     this._logUrl = logUrl;
     this._ws = new ws(url, [], {
-      perMessageDeflate: false,
       maxPayload: 256 * 1024 * 1024, // 256Mb,
       // Prevent internal http client error when passing negative timeout.
       handshakeTimeout: Math.max(progress?.timeUntilDeadline() ?? 30_000, 1),
       headers,
       followRedirects,
-      agent: (/^(https|wss):\/\//.test(url)) ? httpsHappyEyeballsAgent : httpHappyEyeballsAgent
+      agent: (/^(https|wss):\/\//.test(url)) ? httpsHappyEyeballsAgent : httpHappyEyeballsAgent,
+      perMessageDeflate,
     });
     this._ws.on('upgrade', response => {
       for (let i = 0; i < response.rawHeaders.length; i += 2) {
