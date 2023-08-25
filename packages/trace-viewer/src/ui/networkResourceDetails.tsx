@@ -51,7 +51,7 @@ export const NetworkResource: React.FunctionComponent<{
   }, [contentType, resource, resourceName, routeStatus]);
 
   return <div className='network-request'>
-    <Expandable expanded={expanded} setExpanded={setExpanded} title={renderTitle()}>
+    <Expandable expanded={expanded} setExpanded={setExpanded} title={renderTitle()} expandOnTitleClick={true}>
       {expanded && <NetworkResourceDetails resource={resource} />}
     </Expandable>
   </div>;
@@ -77,7 +77,6 @@ const NetworkResourceDetails: React.FunctionComponent<{
           setRequestBody({ text: formatBody(resource.request.postData.text, requestContentType), language });
         }
       }
-
 
       if (resource.response.content._sha1) {
         const useBase64 = resource.response.content.mimeType.includes('image');
