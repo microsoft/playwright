@@ -96,8 +96,20 @@ test('should compile with different option combinations', async ({ runTSC }) => 
       import { test, expect } from '@playwright/test';
       test('is a test', async ({ page }) => {
         expect('foo').toMatchSnapshot();
+        expect('foo').toMatchSnapshot('foo.txt');
+        expect('foo').toMatchSnapshot(['dir', 'foo.txt']);
+        expect('foo').toMatchSnapshot({ name: 'foo.txt' });
+
+        const buf: Buffer = 1 as any;
+        expect(buf).toMatchSnapshot({ threshold: 0.2 });
+        expect(buf).toMatchSnapshot({ maxDiffPixelRatio: 0.2 });
+        expect(buf).toMatchSnapshot({ maxDiffPixels: 0.2 });
+
+        // @ts-expect-error
         expect('foo').toMatchSnapshot({ threshold: 0.2 });
+        // @ts-expect-error
         expect('foo').toMatchSnapshot({ maxDiffPixelRatio: 0.2 });
+        // @ts-expect-error
         expect('foo').toMatchSnapshot({ maxDiffPixels: 0.2 });
       });
     `
