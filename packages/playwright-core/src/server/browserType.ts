@@ -198,7 +198,14 @@ export abstract class BrowserType extends SdkObject {
     if (ignoreAllDefaultArgs)
       browserArguments.push(...args);
     else if (ignoreDefaultArgs)
-      browserArguments.push(...this._defaultArgs(options, isPersistent, userDataDir).filter(arg => ignoreDefaultArgs.indexOf(arg) === -1));
+      browserArguments.push(
+        ...this._defaultArgs(options, isPersistent, userDataDir).filter(
+          (arg) =>
+            !ignoreDefaultArgs.some(
+              (ida) => ida === arg || arg.startsWith(`${arg}=`)
+            )
+        )
+      );
     else
       browserArguments.push(...this._defaultArgs(options, isPersistent, userDataDir));
 
