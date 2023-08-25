@@ -26,11 +26,11 @@ export type SourceHighlight = {
   message?: string;
 };
 
-export type Language = 'javascript' | 'python' | 'java' | 'csharp' | 'jsonl';
+export type Language = 'javascript' | 'python' | 'java' | 'csharp' | 'jsonl' | 'html' | 'css';
 
 export interface SourceProps {
   text: string;
-  language: Language;
+  language?: Language;
   readOnly?: boolean;
   // 1-based
   highlight?: SourceHighlight[];
@@ -68,13 +68,19 @@ export const CodeMirrorWrapper: React.FC<SourceProps> = ({
       if (!element)
         return;
 
-      let mode = 'javascript';
+      let mode = '';
+      if (language === 'javascript')
+        mode = 'javascript';
       if (language === 'python')
         mode = 'python';
       if (language === 'java')
         mode = 'text/x-java';
       if (language === 'csharp')
         mode = 'text/x-csharp';
+      if (language === 'html')
+        mode = 'htmlmixed';
+      if (language === 'css')
+        mode = 'css';
 
       if (codemirrorRef.current
         && mode === codemirrorRef.current.cm.getOption('mode')

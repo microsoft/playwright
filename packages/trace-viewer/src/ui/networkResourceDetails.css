@@ -61,40 +61,26 @@
 }
 
 .network-request-title-content-type {
-  margin-left: 6px;
+  margin: 0 6px;
 }
 
 .network-request-details {
   width: 100%;
   user-select: text;
   line-height: 24px;
+  margin-left: 10px;
 }
 
 .network-request-details-url {
   white-space: normal;
   word-wrap: break-word;
+  margin-left: 10px;
 }
 
 .network-request-headers {
   white-space: pre;
   overflow: hidden;
-}
-
-.network-request-body {
-  white-space: pre;
-  overflow: scroll;
-  background-color: var(--vscode-sideBar-background);
-  border: black 1px solid;
-  max-height: 500px;
-}
-
-.network-request-response-body {
-  white-space: pre;
-  overflow: scroll;
-  background-color: var(--vscode-sideBar-background);
-  border: black 1px solid;
-  max-height: 500px;
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+  margin-left: 10px;
 }
 
 .network-request-details-header {
@@ -104,4 +90,8 @@
 
 .network-request-details-time {
   float: right;
+}
+
+.network-request .cm-wrapper {
+  max-height: 300px;
 }
