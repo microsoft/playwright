@@ -28,6 +28,7 @@ import type { AndroidDevice } from '../server/android/android';
 import type { SocksProxy } from '../common/socksProxy';
 import { debugLogger } from '../common/debugLogger';
 import { createHttpServer } from '../utils';
+import { perMessageDeflate } from '../server/transport';
 
 let lastConnectionId = 0;
 const kConnectionSymbol = Symbol('kConnection');
@@ -82,7 +83,11 @@ export class PlaywrightServer {
     });
 
     debugLogger.log('server', 'Listening at ' + wsEndpoint);
-    this._wsServer = new wsServer({ server, path: this._options.path });
+    this._wsServer = new wsServer({
+      server,
+      path: this._options.path,
+      perMessageDeflate,
+    });
     const browserSemaphore = new Semaphore(this._options.maxConnections);
     const controllerSemaphore = new Semaphore(1);
     const reuseBrowserSemaphore = new Semaphore(1);
@@ -92,6 +97,7 @@ export class PlaywrightServer {
       });
     }
     this._wsServer.on('connection', (ws, request) => {
+      debugLogger.log('server', 'Connected client ws.extension=' + ws.extensions);
       const url = new URL('http://localhost' + (request.url || ''));
       const browserHeader = request.headers['x-playwright-browser'];
       const browserName = url.searchParams.get('browser') || (Array.isArray(browserHeader) ? browserHeader[0] : browserHeader) || null;
