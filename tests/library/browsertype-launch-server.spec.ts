@@ -80,7 +80,9 @@ it.describe('launch server', () => {
     await browserServer.close();
   });
 
-  it('should fire close event', async ({ browserType }) => {
+  it('should fire close event', async ({ browserType, channel }) => {
+    it.fixme(channel?.startsWith('msedge'), 'https://github.com/microsoft/playwright/issues/26711');
+
     const browserServer = await browserType.launchServer();
     const [result] = await Promise.all([
       // @ts-expect-error The signal parameter is not documented.
