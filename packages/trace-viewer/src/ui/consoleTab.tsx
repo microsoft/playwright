@@ -39,17 +39,16 @@ type ConsoleEntry = {
 const ConsoleListView = ListView<ConsoleEntry>;
 
 export const ConsoleTab: React.FunctionComponent<{
-  model: modelUtil.MultiTraceModel | undefined,
+  consoleEvents: trace.EventTraceEvent[] | undefined,
+  stdio: trace.StdioTraceEvent[],
   boundaries: Boundaries,
   selectedTime: Boundaries | undefined,
-}> = ({ model, boundaries, selectedTime }) => {
+}> = ({ consoleEvents, stdio, boundaries, selectedTime }) => {
   const { entries } = React.useMemo(() => {
-    if (!model)
+    if (!consoleEvents)
       return { entries: [] };
     const entries: ConsoleEntry[] = [];
-    for (const event of model.events) {
-      if (event.method !== 'console' && event.method !== 'pageError')
-        continue;
+    for (const event of consoleEvents) {
       if (event.method === 'console') {
         const { guid } = event.params.message;
         entries.push({
@@ -68,7 +67,7 @@ export const ConsoleTab: React.FunctionComponent<{
         });
       }
     }
-    for (const event of model.stdio) {
+    for (const event of stdio) {
       entries.push({
         nodeMessage: {
           text: event.text,
@@ -81,7 +80,7 @@ export const ConsoleTab: React.FunctionComponent<{
     }
     entries.sort((a, b) => a.timestamp - b.timestamp);
     return { entries };
-  }, [model]);
+  }, [stdio, consoleEvents]);
 
   const filteredEntries = React.useMemo(() => {
     if (!selectedTime)

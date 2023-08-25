@@ -114,15 +114,53 @@ export const Workbench: React.FunctionComponent<{
       rootDir={rootDir}
       fallbackLocation={fallbackLocation} />
   };
+
+
+  const consoleEvents = model?.events.filter(event => event.method === 'console' || event.method === 'pageError');
+  const ConsoleTabTitle = (totalCount: number) => (
+    <>Console{totalCount > 0 && (
+      <>
+        ({totalCount})
+      </>
+    )}</>
+  );
+
   const consoleTab: TabbedPaneTabModel = {
     id: 'console',
-    title: 'Console',
-    render: () => <ConsoleTab model={model} boundaries={boundaries} selectedTime={selectedTime} />
+    title: ConsoleTabTitle(consoleEvents?.length || 0),
+    render: () => <ConsoleTab consoleEvents={consoleEvents} stdio={model?.stdio || []} boundaries={boundaries} selectedTime={selectedTime} />
   };
+
+  const resources = React.useMemo(() => {
+    const resources = model?.resources || [];
+    if (!selectedTime)
+      return resources;
+    return resources.filter(resource => {
+      return !!resource._monotonicTime && (resource._monotonicTime >= selectedTime.minimum && resource._monotonicTime <= selectedTime.maximum);
+    });
+  }, [model, selectedTime]);
+  const failedResources = React.useMemo(() => {
+    return resources.filter(resource => resource.response?.status >= 400);
+  }, [resources]);
+
+  const NetworkTabTitle = ({ failedCount, totalCount }: {
+    failedCount: number;
+    totalCount: number;
+  }) => (
+    <>
+    Network
+      {totalCount > 0 && (
+        <>
+          (<span style={{ color: 'red' }}>{failedCount} failed</span>, {totalCount} total)
+        </>
+      )}
+    </>
+  );
+
   const networkTab: TabbedPaneTabModel = {
     id: 'network',
-    title: 'Network',
-    render: () => <NetworkTab model={model} selectedTime={selectedTime} />
+    title: NetworkTabTitle({ failedCount: failedResources.length, totalCount: resources.length }),
+    render: () => <NetworkTab resources={resources} />
   };
   const attachmentsTab: TabbedPaneTabModel = {
     id: 'attachments',

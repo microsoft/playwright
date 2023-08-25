@@ -15,23 +15,13 @@
  */
 
 import * as React from 'react';
-import type * as modelUtil from './modelUtil';
 import { NetworkResourceDetails } from './networkResourceDetails';
+import type { ResourceSnapshot } from '@trace/snapshot';
 import './networkTab.css';
-import type { Boundaries } from '../geometry';
 
 export const NetworkTab: React.FunctionComponent<{
-  model: modelUtil.MultiTraceModel | undefined,
-  selectedTime: Boundaries | undefined,
-}> = ({ model, selectedTime }) => {
-  const resources = React.useMemo(() => {
-    const resources = model?.resources || [];
-    if (!selectedTime)
-      return resources;
-    return resources.filter(resource => {
-      return !!resource._monotonicTime && (resource._monotonicTime >= selectedTime.minimum && resource._monotonicTime <= selectedTime.maximum);
-    });
-  }, [model, selectedTime]);
+  resources: ResourceSnapshot[],
+}> = ({ resources }) => {
   return <div className='network-tab'> {
     resources.map((resource, index) => {
       return <NetworkResourceDetails
