@@ -21,7 +21,8 @@ test(`playwright cdn should race with a timeout`, async ({ exec }) => {
   const server = http.createServer(() => {});
   await new Promise<void>(resolve => server.listen(0, resolve));
   try {
-    const result = await exec('npm i --foreground-scripts playwright', {
+    await exec('npm i --foreground-scripts playwright');
+    const result = await exec('npx playwright install', {
       env: {
         PLAYWRIGHT_DOWNLOAD_HOST: `http://127.0.0.1:${(server.address() as AddressInfo).port}`,
         DEBUG: 'pw:install',

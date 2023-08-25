@@ -17,6 +17,7 @@ import { test, expect } from './npmTest';
 
 test('codegen should work', async ({ exec }) => {
   await exec('npm i --foreground-scripts playwright');
+  await exec('npx playwright install chromium');
 
   await test.step('codegen without arguments', async () => {
     const result = await exec('npx playwright codegen', {

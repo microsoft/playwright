@@ -19,10 +19,10 @@ test('global installation cross package', async ({ exec, installedSoftwareOnDisk
   const packages = ['playwright-chromium', 'playwright-firefox', 'playwright-webkit'];
   for (const pkg of packages)
     await exec('npm i --foreground-scripts', pkg, { env: { PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1' } });
-  const result = await exec('npm i --foreground-scripts playwright');
+  const result = await exec('npx playwright install');
   expect(result).toHaveLoggedSoftwareDownload(['chromium', 'ffmpeg', 'firefox', 'webkit']);
   expect(await installedSoftwareOnDisk()).toEqual(['chromium', 'ffmpeg', 'firefox', 'webkit']);
 
   for (const pkg of packages)
-    await test.step(pkg, () => exec('node sanity.js', pkg, 'all'));
+    await test.step(pkg, () => exec('node sanity.js', pkg, 'chromium firefox webkit'));
 });

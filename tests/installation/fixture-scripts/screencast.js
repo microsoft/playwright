@@ -15,17 +15,7 @@
  */
 
 const requireName = process.argv[2];
-let success = {
-  'playwright': ['chromium', 'firefox', 'webkit'],
-  'playwright-chromium': ['chromium'],
-  'playwright-firefox': ['firefox'],
-  'playwright-webkit': ['webkit'],
-  '@playwright/test': [],
-}[requireName];
-if (process.argv[3] === 'none')
-  success = [];
-if (process.argv[3] === 'all')
-  success = ['chromium', 'firefox', 'webkit'];
+const success = process.argv.slice(3);
 
 const playwright = require(requireName);
 const fs = require('fs');
