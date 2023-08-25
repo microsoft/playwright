@@ -121,6 +121,7 @@ jobs:
               title: 'Test results for "${{ github.event.workflow_run.name }}"',
               summary: [
                 reportMd,
+                '',
                 '---',
                 `Full [HTML report](${reportUrl}). Merge [workflow run](${mergeWorkflowUrl}).`
               ].join('\n'),
