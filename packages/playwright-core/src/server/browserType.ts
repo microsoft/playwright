@@ -14,32 +14,32 @@
  * limitations under the License.
  */
 
+import type * as channels from '@protocol/channels';
 import fs from 'fs';
 import * as os from 'os';
 import path from 'path';
+import { RecentLogsCollector } from '../common/debugLogger';
+import { DEFAULT_TIMEOUT, TimeoutSettings } from '../common/timeoutSettings';
+import { debugMode, isUnderTest } from '../utils';
+import { existsAsync } from '../utils/fileUtils';
+import { ManualPromise } from '../utils/manualPromise';
+import type { Env } from '../utils/processLauncher';
+import { envArrayToObject, launchProcess } from '../utils/processLauncher';
+import type { Browser, BrowserOptions, BrowserProcess } from './browser';
 import type { BrowserContext } from './browserContext';
 import { normalizeProxySettings, validateBrowserContextOptions } from './browserContext';
+import { installAppIcon } from './chromium/crApp';
+import { helper } from './helper';
+import type { CallMetadata } from './instrumentation';
+import { SdkObject, serverSideCallMetadata } from './instrumentation';
+import { PipeTransport } from './pipeTransport';
+import type { Progress } from './progress';
+import { ProgressController } from './progress';
 import type { BrowserName } from './registry';
 import { findChromiumChannel, registry } from './registry';
 import type { ConnectionTransport } from './transport';
 import { WebSocketTransport } from './transport';
-import type { BrowserOptions, Browser, BrowserProcess } from './browser';
-import type { Env } from '../utils/processLauncher';
-import { launchProcess, envArrayToObject } from '../utils/processLauncher';
-import { PipeTransport } from './pipeTransport';
-import type { Progress } from './progress';
-import { ProgressController } from './progress';
 import type * as types from './types';
-import type * as channels from '@protocol/channels';
-import { DEFAULT_TIMEOUT, TimeoutSettings } from '../common/timeoutSettings';
-import { debugMode, isUnderTest } from '../utils';
-import { existsAsync } from '../utils/fileUtils';
-import { helper } from './helper';
-import { RecentLogsCollector } from '../common/debugLogger';
-import type { CallMetadata } from './instrumentation';
-import { SdkObject, serverSideCallMetadata } from './instrumentation';
-import { ManualPromise } from '../utils/manualPromise';
-import { installAppIcon } from './chromium/crApp';
 
 export const kNoXServerRunningError = 'Looks like you launched a headed browser without having a XServer running.\n' +
   'Set either \'headless: true\' or use \'xvfb-run <your-playwright-app>\' before running Playwright.\n\n<3 Playwright Team';
@@ -195,19 +195,15 @@ export abstract class BrowserType extends SdkObject {
     }
 
     const browserArguments = [];
-    if (ignoreAllDefaultArgs)
+    if (ignoreAllDefaultArgs) {
       browserArguments.push(...args);
-    else if (ignoreDefaultArgs)
-      browserArguments.push(
-        ...this._defaultArgs(options, isPersistent, userDataDir).filter(
-          (arg) =>
-            !ignoreDefaultArgs.some(
-              (ida) => ida === arg || arg.startsWith(`${arg}=`)
-            )
-        )
+    } else if (ignoreDefaultArgs) {
+      browserArguments.push(...this._defaultArgs(options, isPersistent, userDataDir).filter(
+          arg => !ignoreDefaultArgs.some(ida => ida === arg || arg.startsWith(`${arg}=`)))
       );
-    else
+    } else {
       browserArguments.push(...this._defaultArgs(options, isPersistent, userDataDir));
+    }
 
     let executable: string;
     if (executablePath) {
