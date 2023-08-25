@@ -39,11 +39,11 @@ test('should show screenshots', async ({ runUITest }) => {
   await expect(
       page.locator('.CodeMirror .source-line-running'),
   ).toContainText(`test('test 1', async ({ page }) => {`);
-  await expect(page.locator('.film-strip-frame')).toBeVisible();
+  await expect(page.locator('.film-strip-frame').first()).toBeVisible();
 
   await page.getByText('test 2', { exact: true }).click();
   await expect(
       page.locator('.CodeMirror .source-line-running'),
   ).toContainText(`test('test 2', async ({ page }) => {`);
-  await expect(page.locator('.film-strip-frame')).toBeVisible();
+  await expect(page.locator('.film-strip-frame').first()).toBeVisible();
 });
