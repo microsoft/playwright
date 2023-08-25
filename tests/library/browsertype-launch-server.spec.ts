@@ -81,7 +81,7 @@ it.describe('launch server', () => {
   });
 
   it('should fire close event', async ({ browserType, channel }) => {
-    it.fixme(channel === 'msedge', 'https://github.com/microsoft/playwright/issues/26711');
+    it.fixme(channel.startsWith('msedge'), 'https://github.com/microsoft/playwright/issues/26711');
 
     const browserServer = await browserType.launchServer();
     const [result] = await Promise.all([
