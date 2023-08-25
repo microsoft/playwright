@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import { MultiMap } from './multimap';
 import { splitProgress } from './progress';
 import { unwrapPopoutUrl } from './snapshotRenderer';
 import { SnapshotServer } from './snapshotServer';
@@ -36,10 +35,17 @@ const scopePath = new URL(self.registration.scope).pathname;
 
 const loadedTraces = new Map<string, { traceModel: TraceModel, snapshotServer: SnapshotServer }>();
 
-const clientIdToTraceUrls = new MultiMap<string, string>();
+const clientIdToTraceUrls = new Map<string, Set<string>>();
 
 async function loadTrace(traceUrl: string, traceFileName: string | null, clientId: string, progress: (done: number, total: number) => void): Promise<TraceModel> {
-  clientIdToTraceUrls.set(clientId, traceUrl);
+  await gc();
+  let set = clientIdToTraceUrls.get(clientId);
+  if (!set) {
+    set = new Set();
+    clientIdToTraceUrls.set(clientId, set);
+  }
+  set.add(traceUrl);
+
   const traceModel = new TraceModel();
   try {
     // Allow 10% to hop from sw to page.
@@ -162,7 +168,7 @@ async function gc() {
   for (const [clientId, traceUrls] of clientIdToTraceUrls) {
     // @ts-ignore
     if (!clients.find(c => c.id === clientId))
-      clientIdToTraceUrls.deleteAll(clientId);
+      clientIdToTraceUrls.delete(clientId);
     else
       traceUrls.forEach(url => usedTraces.add(url));
   }

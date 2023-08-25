@@ -120,7 +120,7 @@ export class FetchTraceModelBackend implements TraceModelBackend {
 
   async readBlob(entryName: string): Promise<Blob | undefined> {
     const response = await this._readEntry(entryName);
-    return response?.blob();
+    return response?.status === 200 ? await response?.blob() : undefined;
   }
 
   private async _readEntry(entryName: string): Promise<Response | undefined> {

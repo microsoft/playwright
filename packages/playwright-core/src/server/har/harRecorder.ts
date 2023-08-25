@@ -47,11 +47,10 @@ export class HarRecorder {
       includeTraceInfo: false,
       recordRequestOverrides: true,
       waitForContentOnStop: true,
-      skipScripts: false,
       urlFilter: urlFilterRe ?? options.urlGlob,
     });
     this._zipFile = content === 'attach' || expectsZip ? new yazl.ZipFile() : null;
-    this._tracer.start();
+    this._tracer.start({ omitScripts: false });
   }
 
   onEntryStarted(entry: har.Entry) {

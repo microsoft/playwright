@@ -16,7 +16,7 @@
 
 import * as React from 'react';
 import type * as modelUtil from './modelUtil';
-import { NetworkResourceDetails } from './networkResourceDetails';
+import { NetworkResource } from './networkResourceDetails';
 import './networkTab.css';
 import type { Boundaries } from '../geometry';
 
@@ -33,11 +33,6 @@ export const NetworkTab: React.FunctionComponent<{
     });
   }, [model, selectedTime]);
   return <div className='network-tab'> {
-    resources.map((resource, index) => {
-      return <NetworkResourceDetails
-        resource={resource}
-        key={index}
-      />;
-    })
+    resources.map((resource, index) => <NetworkResource key={index} resource={resource}></NetworkResource>)
   }</div>;
 };

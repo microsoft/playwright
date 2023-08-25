@@ -92,7 +92,6 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       includeTraceInfo: true,
       recordRequestOverrides: false,
       waitForContentOnStop: false,
-      skipScripts: true,
     });
     const testIdAttributeName = ('selectors' in context) ? context.selectors().testIdAttributeName() : undefined;
     this._contextCreatedEvent = {
@@ -151,8 +150,9 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     };
     this._fs.mkdir(this._state.resourcesDir);
     this._fs.writeFile(this._state.networkFile, '');
+    // Tracing is 10x bigger if we include scripts in every trace.
     if (options.snapshots)
-      this._harTracer.start();
+      this._harTracer.start({ omitScripts: !options.live });
   }
 
   async startChunk(options: { name?: string, title?: string } = {}): Promise<{ traceName: string }> {

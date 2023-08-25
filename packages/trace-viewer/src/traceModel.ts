@@ -29,6 +29,7 @@ export interface TraceModelBackend {
   isLive(): boolean;
   traceURL(): string;
 }
+
 export class TraceModel {
   contextEntries: ContextEntry[] = [];
   pageEntries = new Map<string, PageEntry>();

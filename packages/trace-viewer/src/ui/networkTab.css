@@ -24,3 +24,7 @@
 .network-tab:focus {
   outline: none;
 }
+
+.network-request .expandable {
+  width: 100%;
+}

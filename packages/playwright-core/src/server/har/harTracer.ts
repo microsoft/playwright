@@ -43,7 +43,6 @@ export interface HarTracerDelegate {
 
 type HarTracerOptions = {
   content: 'omit' | 'attach' | 'embed';
-  skipScripts: boolean;
   includeTraceInfo: boolean;
   recordRequestOverrides: boolean;
   waitForContentOnStop: boolean;
@@ -55,6 +54,7 @@ type HarTracerOptions = {
   omitServerIP?: boolean;
   omitPages?: boolean;
   omitSizes?: boolean;
+  omitScripts?: boolean;
 };
 
 export class HarTracer {
@@ -86,9 +86,10 @@ export class HarTracer {
     this._baseURL = context instanceof APIRequestContext ? context._defaultOptions().baseURL : context._options.baseURL;
   }
 
-  start() {
+  start(options: { omitScripts: boolean }) {
     if (this._started)
       return;
+    this._options.omitScripts = options.omitScripts;
     this._started = true;
     const apiRequest = this._context instanceof APIRequestContext ? this._context : this._context.fetchRequest;
     this._eventListeners = [
@@ -338,7 +339,7 @@ export class HarTracer {
       this._addBarrier(page || request.serviceWorker(), compressionCalculationBarrier.barrier);
 
     const promise = response.body().then(buffer => {
-      if (this._options.skipScripts && request.resourceType() === 'script') {
+      if (this._options.omitScripts && request.resourceType() === 'script') {
         compressionCalculationBarrier?.setDecodedBodySize(0);
         return;
       }

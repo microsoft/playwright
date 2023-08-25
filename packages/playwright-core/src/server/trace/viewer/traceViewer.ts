@@ -78,8 +78,10 @@ async function startTraceViewerServer(traceUrls: string[], options?: OpenTraceVi
           return true;
         }
       } catch (e) {
-        return false;
       }
+      response.statusCode = 404;
+      response.end();
+      return true;
     }
     const absolutePath = path.join(__dirname, '..', '..', '..', 'vite', 'traceViewer', ...relativePath.split('/'));
     return server.serveFile(request, response, absolutePath);
