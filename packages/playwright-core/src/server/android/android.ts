@@ -262,13 +262,15 @@ export class AndroidDevice extends SdkObject {
   async launchBrowser(pkg: string = 'com.android.chrome', options: channels.AndroidDeviceLaunchBrowserParams): Promise<BrowserContext> {
     debug('pw:android')('Force-stopping', pkg);
     await this._backend.runCommand(`shell:am force-stop ${pkg}`);
-    const socketName = isUnderTest() ? 'webview_devtools_remote_playwright_test' : ('playwright-' + createGuid());
+    const socketName = isUnderTest() ? 'webview_devtools_remote_playwright_test' : ('playwright_' + createGuid() + '_devtools_remote');
     const commandLine = this._defaultArgs(options, socketName).join(' ');
     debug('pw:android')('Starting', pkg, commandLine);
     // encode commandLine to base64 to avoid issues (bash encoding) with special characters
     await this._backend.runCommand(`shell:echo "${Buffer.from(commandLine).toString('base64')}" | base64 -d > /data/local/tmp/chrome-command-line`);
     await this._backend.runCommand(`shell:am start -a android.intent.action.VIEW -d about:blank ${pkg}`);
-    return await this._connectToBrowser(socketName, options);
+    const browserContext = await this._connectToBrowser(socketName, options);
+    await this._backend.runCommand(`shell:rm /data/local/tmp/chrome-command-line`);
+    return browserContext;
   }
 
   private _defaultArgs(options: channels.AndroidDeviceLaunchBrowserParams, socketName: string): string[] {
