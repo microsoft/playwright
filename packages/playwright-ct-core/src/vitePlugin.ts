@@ -51,7 +51,8 @@ const compiledReactRE = /(const|var)\s+React\s*=/;
 
 export function createPlugin(
   registerSourceFile: string,
-  frameworkPluginFactory?: () => Promise<Plugin>): TestRunnerPlugin {
+  frameworkPluginFactory?: () => InlineConfig
+): TestRunnerPlugin {
   let configDir: string;
   let config: FullConfig;
   return {
@@ -63,10 +64,11 @@ export function createPlugin(
     },
 
     begin: async (suite: Suite) => {
-      // We are going to have 3 config files:
-      // - the defaults that user config overrides (baseConfig)
-      // - the user config (userConfig)
-      // - frameworks overrides (frameworkOverrides);
+      // We are going to have 4 config files:
+      // 1. `baseConfig` is the initial config
+      // 2. `frameworkPluginConfig` overrides `baseConfig`
+      // 3. `userConfig` overrides both `baseConfig` and `frameworkPluginConfig`
+      // 4. `frameworkOverrides` overrides all the above
 
       const use = config.projects[0].use as CtConfig;
       const port = use.ctPort || 3100;
@@ -77,13 +79,12 @@ export function createPlugin(
       // This regressed in https://github.com/microsoft/playwright/pull/26526
       const templateDir = path.join(configDir, relativeTemplateDir);
 
+      const frameworkPluginConfig = frameworkPluginFactory && frameworkPluginFactory();
+
       // Compose base config from the playwright config only.
-      const baseConfig = {
+      const baseConfig = mergeConfig({
         root: configDir,
         configFile: false,
-        define: {
-          __VUE_PROD_DEVTOOLS__: true,
-        },
         css: {
           devSourcemap: true,
         },
@@ -95,11 +96,16 @@ export function createPlugin(
         },
         // Vite preview server will otherwise always return the index.html with 200.
         appType: 'custom',
-      };
+      }, frameworkPluginConfig || {});
 
       // Apply user config on top of the base config. This could have changed root and build.outDir.
       const userConfig = typeof use.ctViteConfig === 'function' ? await use.ctViteConfig() : (use.ctViteConfig || {});
       const baseAndUserConfig = mergeConfig(baseConfig, userConfig);
+
+      // We assume that any non-empty plugin list includes `vite-react` or similar.
+      if (userConfig.plugins?.length)
+        baseAndUserConfig.plugins = userConfig.plugins;
+
       const buildInfoFile = path.join(baseAndUserConfig.build.outDir, 'metainfo.json');
 
       let buildExists = false;
@@ -142,7 +148,20 @@ export function createPlugin(
       // 4. Update component info.
       buildInfo.components = [...componentRegistry.values()];
 
-      const frameworkOverrides: UserConfig = { plugins: [] };
+      const frameworkOverrides: UserConfig = {
+        plugins: [],
+        build: {
+          target: 'esnext',
+          minify: false,
+          rollupOptions: {
+            treeshake: false,
+            input: {
+              index: path.join(templateDir, 'index.html')
+            },
+          },
+          sourcemap: true,
+        },
+      };
 
       // React heuristic. If we see a component in a file with .js extension,
       // consider it a potential JSX-in-JS scenario and enable JSX loader for all
@@ -161,25 +180,9 @@ export function createPlugin(
         };
       }
 
-      // We assume that any non-empty plugin list includes `vite-react` or similar.
-      if (frameworkPluginFactory && !baseAndUserConfig.plugins?.length)
-        frameworkOverrides.plugins = [await frameworkPluginFactory()];
-
       // But only add out own plugin when we actually build / transform.
       if (sourcesDirty)
         frameworkOverrides.plugins!.push(vitePlugin(registerSource, templateDir, buildInfo, componentRegistry));
-
-      frameworkOverrides.build = {
-        target: 'esnext',
-        minify: false,
-        rollupOptions: {
-          treeshake: false,
-          input: {
-            index: path.join(templateDir, 'index.html')
-          },
-        },
-        sourcemap: true,
-      };
 
       const finalConfig = mergeConfig(baseAndUserConfig, frameworkOverrides);
 
