@@ -11,6 +11,7 @@ fi
 bash $PWD/utils/avd_stop.sh
 
 echo "Starting emulator"
+# nohup ${ANDROID_HOME}/emulator/emulator -avd android33 -gpu swiftshader &
 nohup ${ANDROID_HOME}/emulator/emulator -avd android33 -no-audio -no-window -no-boot-anim -no-snapshot &
 ${ANDROID_HOME}/platform-tools/adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed | tr -d '\r') ]]; do sleep 1; done; input keyevent 82'
 ${ANDROID_HOME}/platform-tools/adb devices
