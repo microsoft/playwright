@@ -15,6 +15,8 @@
 
 ## How to Contribute
 
+We strongly recommend that you open an issue before beginning any code modifications. This is particularly important if the changes involve complex logic or if the existing code isn't immediately clear. By doing so, we can discuss and agree upon the best approach to address a bug or implement a feature, ensuring that our efforts are aligned.
+
 ### Getting Code
 
 Make sure you're running Node.js 16+ and NPM 8+, to verify and upgrade NPM do:
