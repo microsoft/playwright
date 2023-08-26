@@ -578,6 +578,8 @@ class TypesGenerator {
         'GenericAssertions.objectContaining',
         'GenericAssertions.stringContaining',
         'GenericAssertions.stringMatching',
+        'SnapshotAssertions.toMatchSnapshot#3',
+        'SnapshotAssertions.toMatchSnapshot#4',
       ]),
       overridesToDocsClassMapping: new Map([
         ['TestType', 'Test'],

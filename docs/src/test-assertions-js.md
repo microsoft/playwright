@@ -82,6 +82,7 @@ Prefer [auto-retrying](#auto-retrying-assertions) assertions whenever possible. 
 | [`method: GenericAssertions.toHaveProperty`] | Object has a property |
 | [`method: GenericAssertions.toMatch`] | String matches a regular expression |
 | [`method: GenericAssertions.toMatchObject`] | Object contains specified properties |
+| [`method: SnapshotAssertions.toMatchSnapshot#1`] | String equals a reference value, stored in a snapshot file |
 | [`method: GenericAssertions.toStrictEqual`] | Value is similar, including property types |
 | [`method: GenericAssertions.toThrow`] | Function throws an error |
 | [`method: GenericAssertions.any`] | Matches any instance of a class/primitive |
