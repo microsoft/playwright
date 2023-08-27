@@ -15,7 +15,7 @@
  */
 import { test, expect } from './npmTest';
 
-test('codegen should work', async ({ exec, installedSoftwareOnDisk }) => {
+test('install command should work', async ({ exec, installedSoftwareOnDisk }) => {
   await exec('npm i --foreground-scripts playwright', { env: { PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1' } });
 
   await test.step('playwright install chromium', async () => {
@@ -30,12 +30,12 @@ test('codegen should work', async ({ exec, installedSoftwareOnDisk }) => {
     expect(await installedSoftwareOnDisk()).toEqual(['chromium', 'ffmpeg', 'firefox', 'webkit']);
   });
 
-  await exec('node sanity.js playwright none', { env: {  PLAYWRIGHT_BROWSERS_PATH: undefined } });
-  await exec('node sanity.js playwright');
+  await exec('node sanity.js playwright', { env: { PLAYWRIGHT_BROWSERS_PATH: undefined } });
+  await exec('node sanity.js playwright chromium firefox webkit');
 });
 
 test('should be able to remove browsers', async ({ exec, installedSoftwareOnDisk }) => {
-  await exec('npm i --foreground-scripts playwright', { env: { PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1' } });
+  await exec('npm i --foreground-scripts playwright');
   await exec('npx playwright install chromium');
   expect(await installedSoftwareOnDisk()).toEqual(['chromium', 'ffmpeg']);
   await exec('npx playwright uninstall');

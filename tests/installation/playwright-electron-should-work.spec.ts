@@ -16,6 +16,6 @@
 import { test } from './npmTest';
 
 test('electron should work', async ({ exec }) => {
-  await exec('npm i --foreground-scripts playwright electron@9.0', { env: { PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1' } });
+  await exec('npm i --foreground-scripts playwright electron@19.0.11');
   await exec('node sanity-electron.js');
 });

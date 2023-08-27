@@ -19,6 +19,7 @@ import path from 'path';
 
 test('playwright cli screenshot should work', async ({ exec, tmpWorkspace }) => {
   await exec('npm i --foreground-scripts playwright');
+  await exec('npx playwright install chromium');
   await exec(path.join('node_modules', '.bin', 'playwright'), 'screenshot about:blank one.png');
   await fs.promises.stat(path.join(tmpWorkspace, 'one.png'));
 

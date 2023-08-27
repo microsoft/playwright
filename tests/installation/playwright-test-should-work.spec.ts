@@ -23,7 +23,7 @@ test('@playwright/test should work', async ({ exec, nodeMajorVersion, tmpWorkspa
   await exec('npx playwright install');
   await exec('npx playwright test -c . --browser=all --reporter=list,json sample.spec.js', { env: {  PLAYWRIGHT_JSON_OUTPUT_NAME: 'report.json' } });
   await exec('node read-json-report.js', path.join(tmpWorkspace, 'report.json'));
-  await exec('node sanity.js @playwright/test');
+  await exec('node sanity.js @playwright/test chromium firefox webkit');
   if (nodeMajorVersion >= 14)
     await exec('node', 'esm-playwright-test.mjs');
 });

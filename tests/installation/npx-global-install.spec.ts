@@ -17,6 +17,7 @@ import { test, expect } from './npmTest';
 
 test('npx playwright install global', async ({ exec, installedSoftwareOnDisk }) => {
   test.skip(process.platform === 'win32', 'isLikelyNpxGlobal() does not work in this setup on our bots');
+
   const result = await exec('npx playwright install', { env: { npm_config_prefix: '' } }); // global npx and npm_config_prefix do not work together nicely (https://github.com/npm/cli/issues/5268)
   expect(result).toHaveLoggedSoftwareDownload(['chromium', 'ffmpeg', 'firefox', 'webkit']);
   expect(await installedSoftwareOnDisk()).toEqual(['chromium', 'ffmpeg', 'firefox', 'webkit']);

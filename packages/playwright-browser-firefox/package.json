@@ -1,7 +1,7 @@
 {
-  "name": "playwright",
+  "name": "@playwright/browser-firefox",
   "version": "1.38.0-next",
-  "description": "A high-level API to automate web browsers",
+  "description": "Playwright package that automatically installs Firefox",
   "repository": "github:Microsoft/playwright",
   "homepage": "https://playwright.dev",
   "engines": {
@@ -18,13 +18,10 @@
       "require": "./index.js",
       "default": "./index.js"
     },
-    "./cli": "./cli.js",
     "./package.json": "./package.json"
   },
-  "bin": {
-    "playwright": "./cli.js"
-  },
   "scripts": {
+    "install": "node install.js"
   },
   "dependencies": {
     "playwright-core": "1.38.0-next"

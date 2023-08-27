@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { test, expect } from './npmTest';
 
-test('should skip download', async ({ exec }) => {
-  const installOutput = await exec('npm i --foreground-scripts playwright @playwright/browser-chromium', { env: { PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1' } });
-  expect(installOutput).toContain('Skipping browsers download because');
-  if (process.platform === 'linux') {
-    const output = await exec('node inspector-custom-executable.js', { env: { PWDEBUG: '1' } });
-    expect(output).toContain('SUCCESS');
+const requireName = process.argv[2];
+const pkg = require(requireName);
+
+for (const key of ['chromium', 'firefox', 'webkit', 'test', 'devices']) {
+  if (pkg[key] !== undefined) {
+    console.error(`Package ${requireName} should not export ${key}`);
+    process.exit(1);
   }
-});
+}
+
+console.log(`${requireName} SUCCESS`);

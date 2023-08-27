@@ -16,8 +16,9 @@
  */
 import { test, expect } from './npmTest';
 
-for (const pkg of ['playwright-chromium', 'playwright-firefox', 'playwright-webkit']) {
-  test(`${pkg} should work`, async ({ exec, nodeMajorVersion, installedSoftwareOnDisk }) => {
+for (const browser of ['chromium', 'firefox', 'webkit']) {
+  test(`playwright-${browser} should work`, async ({ exec, nodeMajorVersion, installedSoftwareOnDisk }) => {
+    const pkg = `playwright-${browser}`;
     const result = await exec('npm i --foreground-scripts', pkg);
     const browserName = pkg.split('-')[1];
     const expectedSoftware = [browserName];
@@ -26,8 +27,29 @@ for (const pkg of ['playwright-chromium', 'playwright-firefox', 'playwright-webk
     expect(result).toHaveLoggedSoftwareDownload(expectedSoftware as any);
     expect(await installedSoftwareOnDisk()).toEqual(expectedSoftware);
     expect(result).not.toContain(`To avoid unexpected behavior, please install your dependencies first`);
-    await exec('node sanity.js', pkg);
+    await exec('node sanity.js', pkg, browser);
     if (nodeMajorVersion >= 14)
       await exec('node', `esm-${pkg}.mjs`);
+  });
+}
+
+for (const browser of ['chromium', 'firefox', 'webkit']) {
+  test(`@playwright/browser-${browser} should work`, async ({ exec, installedSoftwareOnDisk }) => {
+    const pkg = `@playwright/browser-${browser}`;
+    const expectedSoftware = [browser];
+    if (browser === 'chromium')
+      expectedSoftware.push('ffmpeg');
+
+    const result1 = await exec('npm i --foreground-scripts', pkg);
+    expect(result1).toHaveLoggedSoftwareDownload(expectedSoftware as any);
+    expect(await installedSoftwareOnDisk()).toEqual(expectedSoftware);
+    expect(result1).not.toContain(`To avoid unexpected behavior, please install your dependencies first`);
+
+    const result2 = await exec('npm i --foreground-scripts playwright');
+    expect(result2).toHaveLoggedSoftwareDownload([]);
+    expect(await installedSoftwareOnDisk()).toEqual(expectedSoftware);
+
+    await exec('node sanity.js playwright', browser);
+    await exec('node browser-only.js', pkg);
   });
 }

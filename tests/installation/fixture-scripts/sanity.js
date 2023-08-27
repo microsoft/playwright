@@ -15,20 +15,7 @@
  */
 
 const requireName = process.argv[2];
-let success = {
-  'playwright': ['chromium', 'firefox', 'webkit'],
-  'playwright-chromium': ['chromium'],
-  'playwright-firefox': ['firefox'],
-  'playwright-webkit': ['webkit'],
-  '@playwright/test': ['chromium', 'firefox', 'webkit'],
-}[requireName];
-if (process.argv[3] === 'none')
-  success = [];
-else if (process.argv[3] === 'all')
-  success = ['chromium', 'firefox', 'webkit'];
-else if (process.argv[3])
-  success = process.argv.slice(3)
-
+const success = process.argv.slice(3);
 const playwright = require(requireName);
 
 const packageJSON = require(requireName + '/package.json');
