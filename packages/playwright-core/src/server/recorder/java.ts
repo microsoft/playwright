@@ -55,7 +55,8 @@ export class JavaLanguageGenerator implements LanguageGenerator {
     const formatter = new JavaScriptFormatter(offset);
 
     if (action.name === 'openPage') {
-      formatter.add(`Page ${pageAlias} = context.newPage();`);
+      if (this._mode !== 'junit' && pageAlias !== 'page')
+        formatter.add(`Page ${pageAlias} = context.newPage();`);
       if (action.url && action.url !== 'about:blank' && action.url !== 'chrome://newtab/')
         formatter.add(`${pageAlias}.navigate(${quote(action.url)});`);
       return formatter.format();
@@ -155,40 +156,13 @@ export class JavaLanguageGenerator implements LanguageGenerator {
     const formatter = new JavaScriptFormatter();
     if (this._mode === 'junit') {
       formatter.add(`
-      import com.microsoft.playwright.*;
+      import com.microsoft.playwright.junit.PageTest;
       import com.microsoft.playwright.options.*;
+
       import org.junit.jupiter.api.*;
-      import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
+      import static com.microsoft.playwright.assertions.PlaywrightAssertions.*;
 
-      public class TestExample {
-        // Shared between all tests in this class.
-        static Playwright playwright;
-        static Browser browser;
-
-        // New instance for each test method.
-        BrowserContext context;
-
-        @BeforeAll
-        static void launchBrowser() {
-          playwright = Playwright.create();
-          browser = playwright.${options.browserName}().launch(${formatLaunchOptions(options.launchOptions)});
-        }
-
-        @AfterAll
-        static void closeBrowser() {
-          playwright.close();
-        }
-
-        @BeforeEach
-        void createContextAndPage() {
-          context = browser.newContext(${formatContextOptions(options.contextOptions, options.deviceName)});
-        }
-
-        @AfterEach
-        void closeContext() {
-          context.close();
-        }
-
+      public class TestExample extends PageTest {
         @Test
         void test() {`);
       return formatter.format();
