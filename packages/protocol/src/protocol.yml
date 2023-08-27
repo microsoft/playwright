@@ -82,6 +82,10 @@ SerializedValue:
     u: string?
     # String representation of BigInt.
     bi: string?
+    # String representation of Map.
+    m: SerializedValue?
+    # String representation of Set.
+    se: SerializedValue?
     # Regular expression pattern and flags.
     r:
       type: object?
