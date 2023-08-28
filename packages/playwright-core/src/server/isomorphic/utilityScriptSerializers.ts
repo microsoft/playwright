@@ -105,7 +105,7 @@ export function source() {
       if ('bi' in value)
         return BigInt(value.bi);
       if ('m' in value)
-        return new Map(Object.entries(parseEvaluationResultValue(value.m)));
+        return new Map(parseEvaluationResultValue(value.m));
       if ('se' in value)
         return new Set(parseEvaluationResultValue(value.se));
       if ('r' in value)
@@ -178,7 +178,7 @@ export function source() {
       return { bi: value.toString() };
 
     if (isMap(value))
-      return { m: serialize(Object.fromEntries(value), handleSerializer, visitorInfo) };
+      return { m: serialize(Array.from(value), handleSerializer, visitorInfo) };
     if (isSet(value))
       return { se: serialize(Array.from(value), handleSerializer, visitorInfo) };
 

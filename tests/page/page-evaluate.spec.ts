@@ -100,8 +100,8 @@ it('should transfer bigint', async ({ page }) => {
 });
 
 it('should transfer maps', async ({ page }) => {
-  expect(await page.evaluate(() => new Map([['key', { test: 42n }]]))).toEqual(new Map([['key', { test: 42n }]]));
-  expect(await page.evaluate(a => a, new Map([['key', { test: 17n }]]))).toEqual(new Map([['key', { test: 17n }]]));
+  expect(await page.evaluate(() => new Map([[1, { test: 42n }]]))).toEqual(new Map([[1, { test: 42n }]]));
+  expect(await page.evaluate(a => a, new Map([[1, { test: 17n }]]))).toEqual(new Map([[1, { test: 17n }]]));
 });
 
 it('should transfer sets', async ({ page }) => {

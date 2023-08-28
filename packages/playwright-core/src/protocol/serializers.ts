@@ -76,7 +76,7 @@ function innerParseSerializedValue(value: SerializedValue, handles: any[] | unde
   if (value.r !== undefined)
     return new RegExp(value.r.p, value.r.f);
   if (value.m !== undefined)
-    return new Map(Object.entries(innerParseSerializedValue(value.m, handles, refs)));
+    return new Map(innerParseSerializedValue(value.m, handles, refs));
   if (value.se !== undefined)
     return new Set(innerParseSerializedValue(value.se, handles, refs));
 
@@ -150,7 +150,7 @@ function innerSerializeValue(value: any, handleSerializer: (value: any) => Handl
     return { s: `${error.name}: ${error.message}\n${error.stack}` };
   }
   if (isMap(value))
-    return { m: innerSerializeValue(Object.fromEntries(value), handleSerializer, visitorInfo) };
+    return { m: innerSerializeValue(Array.from(value), handleSerializer, visitorInfo) };
   if (isSet(value))
     return { se: innerSerializeValue(Array.from(value), handleSerializer, visitorInfo) };
   if (isDate(value))
