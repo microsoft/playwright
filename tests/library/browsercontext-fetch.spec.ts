@@ -1124,3 +1124,32 @@ it('should support set-cookie with SameSite and without Secure attribute over HT
     });
   }
 });
+
+it('should update host header on redirect', async ({ context, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/26743' });
+  let redirectCount = 0;
+  server.setRoute('/redirect', (req, res) => {
+    redirectCount++;
+    const path = (req.headers.host === new URL(server.PREFIX).host) ? '/redirect' : '/test';
+    res.writeHead(302, {
+      host: new URL(server.CROSS_PROCESS_PREFIX).host,
+      location: server.CROSS_PROCESS_PREFIX + path,
+    });
+    res.end();
+  });
+  server.setRoute('/test', (req, res) => {
+    res.writeHead(200, {
+      'content-type': 'text/plain',
+    });
+    res.end('Hello!');
+  });
+  const reqPromise = server.waitForRequest('/test');
+  const response = await context.request.get(server.PREFIX + '/redirect', {
+    headers: { host: new URL(server.PREFIX).host }
+  });
+  expect(redirectCount).toBe(2);
+  await expect(response).toBeOK();
+  expect(await response.text()).toBe('Hello!');
+
+  expect((await reqPromise).headers.host).toBe(new URL(server.CROSS_PROCESS_PREFIX).host);
+});
