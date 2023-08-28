@@ -75,6 +75,10 @@ function innerParseSerializedValue(value: SerializedValue, handles: any[] | unde
     return BigInt(value.bi);
   if (value.r !== undefined)
     return new RegExp(value.r.p, value.r.f);
+  if (value.m !== undefined)
+    return new Map(innerParseSerializedValue(value.m, handles, refs));
+  if (value.se !== undefined)
+    return new Set(innerParseSerializedValue(value.se, handles, refs));
 
   if (value.a !== undefined) {
     const result: any[] = [];
@@ -145,6 +149,10 @@ function innerSerializeValue(value: any, handleSerializer: (value: any) => Handl
     }
     return { s: `${error.name}: ${error.message}\n${error.stack}` };
   }
+  if (isMap(value))
+    return { m: innerSerializeValue(Array.from(value), handleSerializer, visitorInfo) };
+  if (isSet(value))
+    return { se: innerSerializeValue(Array.from(value), handleSerializer, visitorInfo) };
   if (isDate(value))
     return { d: value.toJSON() };
   if (isURL(value))
@@ -173,6 +181,14 @@ function innerSerializeValue(value: any, handleSerializer: (value: any) => Handl
     return { o, id };
   }
   throw new Error('Unexpected value');
+}
+
+function isMap(obj: any): obj is Map<any, any> {
+  return obj instanceof Map || Object.prototype.toString.call(obj) === '[object Map]';
+}
+
+function isSet(obj: any): obj is Set<any> {
+  return obj instanceof Set || Object.prototype.toString.call(obj) === '[object Set]';
 }
 
 function isRegExp(obj: any): obj is RegExp {

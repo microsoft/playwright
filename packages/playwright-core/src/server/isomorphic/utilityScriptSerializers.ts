@@ -20,6 +20,8 @@ export type SerializedValue =
     { d: string } |
     { u: string } |
     { bi: string } |
+    { m: SerializedValue } |
+    { se: SerializedValue } |
     { r: { p: string, f: string} } |
     { a: SerializedValue[], id: number } |
     { o: { k: string, v: SerializedValue }[], id: number } |
@@ -34,6 +36,14 @@ type VisitorInfo = {
 };
 
 export function source() {
+
+  function isMap(obj: any): obj is Map<any, any> {
+    return obj instanceof Map || Object.prototype.toString.call(obj) === '[object Map]';
+  }
+
+  function isSet(obj: any): obj is Set<any> {
+    return obj instanceof Set || Object.prototype.toString.call(obj) === '[object Set]';
+  }
 
   function isRegExp(obj: any): obj is RegExp {
     try {
@@ -94,6 +104,10 @@ export function source() {
         return new URL(value.u);
       if ('bi' in value)
         return BigInt(value.bi);
+      if ('m' in value)
+        return new Map(parseEvaluationResultValue(value.m));
+      if ('se' in value)
+        return new Set(parseEvaluationResultValue(value.se));
       if ('r' in value)
         return new RegExp(value.r.p, value.r.f);
       if ('a' in value) {
@@ -162,6 +176,11 @@ export function source() {
       return value;
     if (typeof value === 'bigint')
       return { bi: value.toString() };
+
+    if (isMap(value))
+      return { m: serialize(Array.from(value), handleSerializer, visitorInfo) };
+    if (isSet(value))
+      return { se: serialize(Array.from(value), handleSerializer, visitorInfo) };
 
     if (isError(value)) {
       const error = value;

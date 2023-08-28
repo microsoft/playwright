@@ -180,6 +180,8 @@ export type SerializedValue = {
   d?: string,
   u?: string,
   bi?: string,
+  m?: SerializedValue,
+  se?: SerializedValue,
   r?: {
     p: string,
     f: string,
