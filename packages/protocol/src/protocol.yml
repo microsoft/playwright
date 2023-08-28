@@ -82,9 +82,9 @@ SerializedValue:
     u: string?
     # String representation of BigInt.
     bi: string?
-    # String representation of Map.
+    # JS representation of Map: [[key1, value1], [key2, value2], ...].
     m: SerializedValue?
-    # String representation of Set.
+    # JS representation of Set: [item1, item2, ...].
     se: SerializedValue?
     # Regular expression pattern and flags.
     r:
