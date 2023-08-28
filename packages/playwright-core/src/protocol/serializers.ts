@@ -141,7 +141,7 @@ function innerSerializeValue(value: any, handleSerializer: (value: any) => Handl
     const error = value;
     if ('captureStackTrace' in globalThis.Error) {
       // v8
-      return { s: error.stack };
+      return { s: error.stack || '' };
     }
     return { s: `${error.name}: ${error.message}\n${error.stack}` };
   }
