@@ -87,9 +87,7 @@ export class Runner {
     }
 
     const taskStatus = await taskRunner.run(testRun, deadline);
-    let status: FullResult['status'] = 'passed';
-    if (testRun.phases.find(p => p.dispatcher.hasWorkerErrors()) || testRun.rootSuite?.allTests().some(test => !test.ok()))
-      status = 'failed';
+    let status: FullResult['status'] = testRun.failureTracker.result();
     if (status === 'passed' && taskStatus !== 'passed')
       status = taskStatus;
     await reporter.onEnd({ status });

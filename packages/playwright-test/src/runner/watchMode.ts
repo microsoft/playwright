@@ -298,7 +298,7 @@ async function runTests(config: FullConfigInternal, failedTestIdCollector: Set<s
     }
   }
 
-  if (testRun.phases.find(p => p.dispatcher.hasWorkerErrors()) || hasFailedTests)
+  if (testRun.failureTracker.hasWorkerErrors() || hasFailedTests)
     status = 'failed';
   if (status === 'passed' && taskStatus !== 'passed')
     status = taskStatus;
