@@ -241,7 +241,7 @@ export const InspectModeController: React.FunctionComponent<{
       const injectedScript = new InjectedScript(win, false, sdkLanguage, testIdAttributeName, 1, 'chromium', []);
       recorder = new Recorder(injectedScript, {
         async setSelector(selector: string) {
-          setHighlightedLocator(asLocator('javascript', selector, false /* isFrameLocator */, true /* playSafe */));
+          setHighlightedLocator(asLocator(sdkLanguage, selector, false /* isFrameLocator */, true /* playSafe */));
         }
       });
       win._recorder = recorder;
