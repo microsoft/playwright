@@ -141,6 +141,7 @@ export class Page extends SdkObject {
   private _eventsToEmitAfterInitialized: { event: string | symbol, args: any[] }[] = [];
   readonly _disconnectedScope = new LongStandingScope();
   readonly _crashedScope = new LongStandingScope();
+  readonly openScope = new LongStandingScope();
   readonly _browserContext: BrowserContext;
   readonly keyboard: input.Keyboard;
   readonly mouse: input.Mouse;
@@ -276,6 +277,7 @@ export class Page extends SdkObject {
     this.emit(Page.Events.Close);
     this._closedPromise.resolve();
     this.instrumentation.onPageClose(this);
+    this.openScope.close('Page closed');
   }
 
   _didCrash() {
@@ -284,6 +286,7 @@ export class Page extends SdkObject {
     this.emit(Page.Events.Crash);
     this._crashedScope.close('Page crashed');
     this.instrumentation.onPageClose(this);
+    this.openScope.close('Page closed');
   }
 
   _didDisconnect() {
@@ -292,6 +295,7 @@ export class Page extends SdkObject {
     assert(!this._disconnected, 'Page disconnected twice');
     this._disconnected = true;
     this._disconnectedScope.close('Page closed');
+    this.openScope.close('Page closed');
   }
 
   async _onFileChooserOpened(handle: dom.ElementHandle) {
@@ -711,6 +715,7 @@ export class Worker extends SdkObject {
   private _executionContextPromise: Promise<js.ExecutionContext>;
   private _executionContextCallback: (value: js.ExecutionContext) => void;
   _existingExecutionContext: js.ExecutionContext | null = null;
+  readonly openScope = new LongStandingScope();
 
   constructor(parent: SdkObject, url: string) {
     super(parent, 'worker');
@@ -732,6 +737,7 @@ export class Worker extends SdkObject {
     if (this._existingExecutionContext)
       this._existingExecutionContext.contextDestroyed('Worker was closed');
     this.emit(Worker.Events.Close, this);
+    this.openScope.close('Worker closed');
   }
 
   async evaluateExpression(expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
