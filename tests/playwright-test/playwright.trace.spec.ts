@@ -731,3 +731,38 @@ test('should not throw when screenshot on failure fails', async ({ runInlineTest
   // One screenshot for the page, no screenshot for pdf page since it should have failed.
   expect(attachedScreenshots.length).toBe(1);
 });
+
+test('should use custom expect message in trace', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { use: { trace: { mode: 'on' } } };
+    `,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('fail', async ({ page }) => {
+        await expect(
+            page.getByRole('button', { name: 'Find a hotel' }),
+            'expect to have text: find a hotel'
+        ).toHaveCount(0);
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  const trace = await parseTrace(testInfo.outputPath('test-results', 'a-fail', 'trace.zip'));
+  expect(trace.actionTree).toEqual([
+    'Before Hooks',
+    '  fixture: browser',
+    '    browserType.launch',
+    '  fixture: context',
+    '    browser.newContext',
+    '    tracing.start',
+    '  fixture: page',
+    '    browserContext.newPage',
+    'expect to have text: find a hotel',
+    'After Hooks',
+    '  fixture: page',
+    '  fixture: context',
+  ]);
+});
