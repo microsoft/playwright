@@ -165,9 +165,9 @@ export function source() {
 
     if (isError(value)) {
       const error = value;
-      if ('captureStackTrace' in globalThis.Error) {
+      if (error.stack?.startsWith(error.name + ': ' + error.message)) {
         // v8
-        return error.stack || '';
+        return error.stack;
       }
       return `${error.name}: ${error.message}\n${error.stack}`;
     }
