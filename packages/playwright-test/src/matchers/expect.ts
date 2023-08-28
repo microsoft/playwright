@@ -250,11 +250,12 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
       const argsSuffix = computeArgsSuffix(matcherName, args);
 
       const defaultTitle = `expect${this._info.isPoll ? '.poll' : ''}${this._info.isSoft ? '.soft' : ''}${this._info.isNot ? '.not' : ''}.${matcherName}${argsSuffix}`;
+      const title = customMessage || defaultTitle;
       const wallTime = Date.now();
       const step = matcherName !== 'toPass' ? testInfo._addStep({
         location: stackFrames[0],
         category: 'expect',
-        title: trimLongString(customMessage || defaultTitle, 1024),
+        title: trimLongString(title, 1024),
         params: args[0] ? { expected: args[0] } : undefined,
         wallTime,
         infectParentStepsWithError: this._info.isSoft,
@@ -301,7 +302,7 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
       if (this._info.isPoll || (matcherName in customAsyncMatchers && matcherName !== 'toPass')) {
         return (async () => {
           try {
-            const expectZone: ExpectZone = { title: defaultTitle, wallTime };
+            const expectZone: ExpectZone = { title, wallTime };
             await zones.run<ExpectZone, any>('expectZone', expectZone, async () => {
               // We assume that the matcher will read the current expect timeout the first thing.
               setCurrentExpectConfigureTimeout(this._info.timeout);
