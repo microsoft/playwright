@@ -13,53 +13,18 @@ isolated between the tests.
 
 ## JUnit
 
-In [JUnit](https://junit.org/junit5/) you can initialize [Playwright] and [Browser] in [@BeforeAll](https://junit.org/junit5/docs/current/api/org.junit.jupiter.api/org/junit/jupiter/api/BeforeAll.html) method and
-destroy them in [@AfterAll](https://junit.org/junit5/docs/current/api/org.junit.jupiter.api/org/junit/jupiter/api/AfterAll.html). In the example below all three test methods use the same
-[Browser]. Each test uses its own [BrowserContext] and [Page].
+Playwright provides base classes to write tests with JUnit via the `com.microsoft.playwright.junit` package.
 
 ```java
 package org.example;
 
-import com.microsoft.playwright.Browser;
-import com.microsoft.playwright.BrowserContext;
-import com.microsoft.playwright.Page;
-import com.microsoft.playwright.Playwright;
+import com.microsoft.playwright.junit.PageTest;
 import org.junit.jupiter.api.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class TestExample {
-  // Shared between all tests in this class.
-  static Playwright playwright;
-  static Browser browser;
-
-  // New instance for each test method.
-  BrowserContext context;
-  Page page;
-
-  @BeforeAll
-  static void launchBrowser() {
-    playwright = Playwright.create();
-    browser = playwright.chromium().launch();
-  }
-
-  @AfterAll
-  static void closeBrowser() {
-    playwright.close();
-  }
-
-  @BeforeEach
-  void createContextAndPage() {
-    context = browser.newContext();
-    page = context.newPage();
-  }
-
-  @AfterEach
-  void closeContext() {
-    context.close();
-  }
-
+public class TestExample extends PageTest {
   @Test
   void shouldClickButton() {
     page.navigate("data:text/html,<script>var result;</script><button onclick='result=\"Clicked\"'>Go</button>");
@@ -83,6 +48,50 @@ public class TestExample {
     assertEquals("https://en.wikipedia.org/wiki/Playwright", page.url());
   }
 }
+```
+
+Run your tests against Chromium
+
+```bash
+mvn test
+```
+
+Run your tests against WebKit
+
+```bash tab=bash-bash
+BROWSER=webkit mvn test
+```
+
+```batch tab=bash-batch
+set BROWSER=webkit
+mvn test
+```
+
+```powershell tab=bash-powershell
+$env:BROWSER="webkit"
+mvn test
+```
+
+Run your tests with GUI
+
+```bash tab=bash-bash
+HEADED=1 mvn test
+```
+
+```batch tab=bash-batch
+set HEADED=1
+mvn test
+```
+
+```powershell tab=bash-powershell
+$env:HEADED="1"
+mvn test
+```
+
+You can also choose specifically which tests to run:
+
+```bash
+mvn test -Dtest="Name#Slogan"
 ```
 
 ### Running Tests in Parallel
@@ -95,86 +104,7 @@ instance per thread and use it on that thread exclusively. Here is an example ho
 Use [`@TestInstance(TestInstance.Lifecycle.PER_CLASS)`](https://junit.org/junit5/docs/current/api/org.junit.jupiter.api/org/junit/jupiter/api/TestInstance.html)
 annotation to make JUnit create one instance of a class for all test methods within that class (by default each JUnit will create a new instance of the class
 for each test method). Store [Playwright] and [Browser] objects in instance fields. They will be shared between tests. Each instance of the class will use its
-own copy of Playwright.
-
-
-```java
-// Subclasses will inherit PER_CLASS behavior.
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class TestFixtures {
-  // Shared between all tests in the class.
-  Playwright playwright;
-  Browser browser;
-
-  @BeforeAll
-  void launchBrowser() {
-    playwright = Playwright.create();
-    browser = playwright.chromium().launch();
-  }
-
-  @AfterAll
-  void closeBrowser() {
-    playwright.close();
-  }
-
-  // New instance for each test method.
-  BrowserContext context;
-  Page page;
-
-  @BeforeEach
-  void createContextAndPage() {
-    context = browser.newContext();
-    page = context.newPage();
-  }
-
-  @AfterEach
-  void closeContext() {
-    context.close();
-  }
-}
-
-class Test1 extends TestFixtures {
-  @Test
-  void shouldClickButton() {
-    page.navigate("data:text/html,<script>var result;</script><button onclick='result=\"Clicked\"'>Go</button>");
-    page.locator("button").click();
-    assertEquals("Clicked", page.evaluate("result"));
-  }
-
-  @Test
-  void shouldCheckTheBox() {
-    page.setContent("<input id='checkbox' type='checkbox'></input>");
-    page.locator("input").check();
-    assertTrue((Boolean) page.evaluate("() => window['checkbox'].checked"));
-  }
-
-  @Test
-  void shouldSearchWiki() {
-    page.navigate("https://www.wikipedia.org/");
-    page.locator("input[name=\"search\"]").click();
-    page.locator("input[name=\"search\"]").fill("playwright");
-    page.locator("input[name=\"search\"]").press("Enter");
-    assertEquals("https://en.wikipedia.org/wiki/Playwright", page.url());
-  }
-}
-
-class Test2 extends TestFixtures {
-  @Test
-  void shouldReturnInnerHTML() {
-    page.setContent("<div>hello</div>");
-    assertEquals("hello", page.innerHTML("css=div"));
-  }
-
-  @Test
-  void shouldClickButton() {
-    Page popup = page.waitForPopup(() -> {
-      page.evaluate("window.open('about:blank');");
-    });
-    assertEquals("about:blank", popup.url());
-  }
-}
-```
-
+own copy of Playwright. This is done automatically if you use the base classes from the `com.microsoft.playwright.junit` package.
 
 Configure JUnit to run tests in each class sequentially and run multiple classes on parallel threads (with max
 number of thread equal to 1/2 of the number of CPU cores):
@@ -186,6 +116,46 @@ junit.jupiter.execution.parallel.mode.classes.default = concurrent
 junit.jupiter.execution.parallel.config.strategy=dynamic
 junit.jupiter.execution.parallel.config.dynamic.factor=0.5
 ```
+
+### Customizing [BrowserContext] options
+
+To customize context options, you can override the `contextOptions` method of your test class derived from `com.microsoft.playwright.junit.PageTest` or `com.microsoft.playwright.junit.ContextTest`. See the following example:
+
+```java
+import com.microsoft.playwright.junit.PageTest;
+import com.microsoft.playwright.Browser.NewContextOptions;
+import com.microsoft.playwright.options.ColorScheme;
+
+import org.junit.jupiter.api.*;
+
+public class MyTest extends PageTest {
+  @Test
+  void TestWithCustomContextOptions() {
+    // The following Page (and BrowserContext) instance has the custom colorScheme,
+    // viewport and baseURL set:
+    page.navigate("/login");
+  }
+
+  @Override
+  public NewContextOptions contextOptions() {
+    return new Browser.NewContextOptions()
+        .setColorScheme(ColorScheme.LIGHT)
+        .setViewportSize(1920, 1080)
+        .setBaseURL("https://github.com");
+  }
+}
+```
+
+### Base JUnit classes for Playwright
+
+There are a few base classes available to you in `com.microsoft.playwright.junit` package:
+
+|Test          |Description|
+|--------------|-----------|
+|PageTest      |Each test gets a fresh copy of a web [Page] created in its own unique [BrowserContext]. Extending this class is the simplest way of writing a fully-functional Playwright test.<br></br><br></br>Note: You can override the `ContextOptions` method in each test file to control context options, the ones typically passed into the [`method: Browser.newContext`] method. That way you can specify all kinds of emulation options for your test file individually.|
+|ContextTest   |Each test will get a fresh copy of a [BrowserContext]. You can create as many pages in this context as you'd like. Using this test is the easiest way to test multi-page scenarios where you need more than one tab.<br></br><br></br>Note: You can override the `ContextOptions` method in each test file to control context options, the ones typically passed into the [`method: Browser.newContext`] method. That way you can specify all kinds of emulation options for your test file individually.|
+|BrowserTest   |Each test will get a browser and can create as many contexts as it likes. Each test is responsible for cleaning up all the contexts it created.|
+|PlaywrightTest|This gives each test a Playwright object so that the test could start and stop as many browsers as it likes.|
 
 ### Using Gradle
 
