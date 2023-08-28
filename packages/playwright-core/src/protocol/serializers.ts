@@ -139,7 +139,7 @@ function innerSerializeValue(value: any, handleSerializer: (value: any) => Handl
     return { bi: value.toString() };
   if (isError(value)) {
     const error = value;
-    if (error.stack?.startsWith(error.name + ': ' + error.message)) {
+    if ('captureStackTrace' in globalThis.Error) {
       // v8
       return { s: error.stack };
     }
