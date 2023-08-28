@@ -291,7 +291,7 @@ export abstract class APIRequestContext extends SdkObject {
             request.destroy();
             return;
           }
-          const headers: HeadersObject = { ...options.headers };
+          const headers = { ...options.headers };
           removeHeader(headers, `cookie`);
 
           // HTTP-redirect fetch step 13 (https://fetch.spec.whatwg.org/#http-redirect-fetch)
@@ -307,6 +307,7 @@ export abstract class APIRequestContext extends SdkObject {
             removeHeader(headers, `content-location`);
             removeHeader(headers, `content-type`);
           }
+
 
           const redirectOptions: SendRequestOptions = {
             method,
@@ -331,6 +332,10 @@ export abstract class APIRequestContext extends SdkObject {
               request.destroy();
               return;
             }
+
+            if (headers['host'])
+              headers['host'] = locationURL.host;
+
             notifyRequestFinished();
             fulfill(this._sendRequest(progress, locationURL, redirectOptions, postData));
             request.destroy();
