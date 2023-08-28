@@ -108,7 +108,7 @@ const NetworkResourceDetails: React.FunctionComponent<{
         <div className='network-request-details-header'>Request Headers</div>
         <div className='network-request-headers'>{resource.request.headers.map(pair => `${pair.name}: ${pair.value}`).join('\n')}</div>
         {requestBody && <div className='network-request-details-header'>Request Body</div>}
-        {requestBody && <CodeMirrorWrapper text={requestBody.text} language={requestBody.language} />}
+        {requestBody && <CodeMirrorWrapper text={requestBody.text} language={requestBody.language} readOnly/>}
       </div>,
     },
     {
@@ -126,7 +126,7 @@ const NetworkResourceDetails: React.FunctionComponent<{
       render: () => <div className='network-request-details'>
         {!resource.response.content._sha1 && <div>Response body is not available for this request.</div>}
         {responseBody && responseBody.dataUrl && <img draggable='false' src={responseBody.dataUrl} />}
-        {responseBody && responseBody.text && <CodeMirrorWrapper text={responseBody.text} language={responseBody.language} />}
+        {responseBody && responseBody.text && <CodeMirrorWrapper text={responseBody.text} language={responseBody.language} readOnly/>}
       </div>,
     },
   ]} selectedTab={selectedTab} setSelectedTab={setSelectedTab}/>;
