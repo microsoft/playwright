@@ -90,7 +90,11 @@ export class Keyboard {
 
     // handle deadkeys / accented keys
     const deadKeyText = this._deadKeyMappings.get(description.text);
-    assert(deadKeyText, `Unknown accented key: "${description.text}"`);
+
+    // this will be handled properly in the future with IME support.
+    // For now, if there's no dead key mapping for current key, we'll skip it.
+    if (!deadKeyText) return description;
+
     return { ...description, text: deadKeyText, key: deadKeyText };
   }
 
