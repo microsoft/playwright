@@ -22,6 +22,7 @@ import { compile as __pwCompile } from '@vue/compiler-dom';
 import * as __pwVue from 'vue';
 
 /** @typedef {import('../playwright-ct-core/types/component').Component} Component */
+/** @typedef {import('../playwright-ct-core/types/component').JsxComponentChild} JsxComponentChild */
 /** @typedef {import('../playwright-ct-core/types/component').JsxComponent} JsxComponent */
 /** @typedef {import('../playwright-ct-core/types/component').ObjectComponent} ObjectComponent */
 /** @typedef {import('vue').Component} FrameworkComponent */
@@ -40,15 +41,15 @@ export function pwRegister(components) {
 }
 
 /**
- * @param {Component} component
- * @returns {component is JsxComponent | ObjectComponent}
+ * @param {any} component
+ * @returns {component is Component}
  */
 function isComponent(component) {
   return !(typeof component !== 'object' || Array.isArray(component));
 }
 
 /**
- * @param {Component} component
+ * @param {Component | JsxComponentChild} component
  */
 async function __pwResolveComponent(component) {
   if (!isComponent(component))
@@ -78,7 +79,7 @@ async function __pwResolveComponent(component) {
 const __pwAllListeners = new Map();
 
 /**
- * @param {Component | string} child
+ * @param {JsxComponentChild} child
  * @returns {import('vue').VNode | string}
  */
 function __pwCreateChild(child) {
