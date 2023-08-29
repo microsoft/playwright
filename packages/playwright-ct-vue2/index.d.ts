@@ -17,23 +17,12 @@
 import type {
   TestType,
   PlaywrightTestArgs,
-  PlaywrightTestConfig as BasePlaywrightTestConfig,
   PlaywrightTestOptions,
   PlaywrightWorkerArgs,
   PlaywrightWorkerOptions,
   Locator,
 } from '@playwright/test';
 import type { JsonObject } from '@playwright/experimental-ct-core/types/component';
-import type { InlineConfig } from 'vite';
-
-export type PlaywrightTestConfig<T = {}, W = {}> = Omit<BasePlaywrightTestConfig<T, W>, 'use'> & {
-  use?: BasePlaywrightTestConfig<T, W>['use'] & {
-    ctPort?: number;
-    ctTemplateDir?: string;
-    ctCacheDir?: string;
-    ctViteConfig?: InlineConfig | (() => Promise<InlineConfig>);
-  };
-};
 
 type Slot = string | string[];
 type ComponentSlots = Record<string, Slot> & { default?: Slot };
@@ -87,8 +76,5 @@ export const test: TestType<
   PlaywrightWorkerArgs & PlaywrightWorkerOptions
 >;
 
-export function defineConfig(config: PlaywrightTestConfig): PlaywrightTestConfig;
-export function defineConfig<T>(config: PlaywrightTestConfig<T>): PlaywrightTestConfig<T>;
-export function defineConfig<T, W>(config: PlaywrightTestConfig<T, W>): PlaywrightTestConfig<T, W>;
-
+export type { defineConfig, PlaywrightTestConfig } from '@playwright/experimental-ct-core/types/config';
 export { expect, devices } from '@playwright/test';

@@ -21,6 +21,9 @@
     "./lib/vitePlugin": "./lib/vitePlugin.js",
     "./types/component": {
       "types": "./types/component.d.ts"
+    },
+    "./types/config": {
+      "types": "./types/config.d.ts"
     }
   },
   "dependencies": {
