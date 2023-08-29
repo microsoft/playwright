@@ -30,7 +30,6 @@ export type ProcessExitData = {
 export class ProcessHost extends EventEmitter {
   private process: child_process.ChildProcess | undefined;
   private _didSendStop = false;
-  private _didFail = false;
   private didExit = false;
   private _runnerScript: string;
   private _lastMessageId = 0;
@@ -137,9 +136,7 @@ export class ProcessHost extends EventEmitter {
     this.sendMessage(message).catch(() => {});
   }
 
-  async stop(didFail?: boolean) {
-    if (didFail)
-      this._didFail = true;
+  async stop() {
     if (this.didExit)
       return;
     if (!this._didSendStop) {
@@ -147,10 +144,6 @@ export class ProcessHost extends EventEmitter {
       this._didSendStop = true;
     }
     await new Promise(f => this.once('exit', f));
-  }
-
-  didFail() {
-    return this._didFail;
   }
 
   didSendStop() {
