@@ -17,9 +17,8 @@
 import fs from 'fs';
 import path from 'path';
 import type { ReporterDescription } from '../../types/test';
-import type { FullResult } from '../../types/testReporter';
 import type { FullConfigInternal } from '../common/config';
-import type { JsonConfig, JsonEvent, JsonProject, JsonSuite, JsonTestResultEnd } from '../isomorphic/teleReceiver';
+import type { JsonConfig, JsonEvent, JsonFullResult, JsonProject, JsonSuite, JsonTestResultEnd } from '../isomorphic/teleReceiver';
 import { TeleReporterReceiver } from '../isomorphic/teleReceiver';
 import { JsonStringInternalizer, StringInternPool } from '../isomorphic/stringInternPool';
 import { createReporters } from '../runner/reporters';
@@ -228,7 +227,6 @@ function mergeConfigureEvents(configureEvents: JsonEvent[]): JsonEvent {
     globalTimeout: 0,
     maxFailures: 0,
     metadata: {
-      totalTime: 0,
     },
     rootDir: '',
     version: '',
@@ -252,7 +250,6 @@ function mergeConfigs(to: JsonConfig, from: JsonConfig): JsonConfig {
     metadata: {
       ...to.metadata,
       ...from.metadata,
-      totalTime: to.metadata.totalTime + from.metadata.totalTime,
       actualWorkers: (to.metadata.actualWorkers || 0) + (from.metadata.actualWorkers || 0),
     },
     workers: to.workers + from.workers,
@@ -260,16 +257,26 @@ function mergeConfigs(to: JsonConfig, from: JsonConfig): JsonConfig {
 }
 
 function mergeEndEvents(endEvents: JsonEvent[]): JsonEvent {
-  const result: FullResult = { status: 'passed' };
+  let startTime = endEvents.length ? 10000000000000 : Date.now();
+  let status: JsonFullResult['status'] = 'passed';
+  let duration: number = 0;
+
   for (const event of endEvents) {
-    const shardResult: FullResult = event.params.result;
+    const shardResult: JsonFullResult = event.params.result;
     if (shardResult.status === 'failed')
-      result.status = 'failed';
-    else if (shardResult.status === 'timedout' && result.status !== 'failed')
-      result.status = 'timedout';
-    else if (shardResult.status === 'interrupted' && result.status !== 'failed' && result.status !== 'timedout')
-      result.status = 'interrupted';
+      status = 'failed';
+    else if (shardResult.status === 'timedout' && status !== 'failed')
+      status = 'timedout';
+    else if (shardResult.status === 'interrupted' && status !== 'failed' && status !== 'timedout')
+      status = 'interrupted';
+    startTime = Math.min(startTime, shardResult.startTime);
+    duration = Math.max(duration, shardResult.duration);
   }
+  const result: JsonFullResult = {
+    status,
+    startTime,
+    duration,
+  };
   return {
     method: 'onEnd',
     params: {

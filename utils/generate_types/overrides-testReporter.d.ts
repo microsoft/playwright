@@ -41,6 +41,16 @@ export interface FullResult {
    *   - 'interrupted' - interrupted by the user.
    */
   status: 'passed' | 'failed' | 'timedout' | 'interrupted';
+
+  /**
+   * Test start wall time.
+   */
+  startTime: Date;
+
+  /**
+   * Test duration in milliseconds.
+   */
+  duration: number;
 }
 
 export interface Reporter {

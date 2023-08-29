@@ -22,7 +22,7 @@ import type { TransformCallback } from 'stream';
 import { Transform } from 'stream';
 import { toPosixPath } from './json';
 import { codeFrameColumns } from '../transform/babelBundle';
-import type { FullConfig, Location, Suite, TestCase as TestCasePublic, TestResult as TestResultPublic, TestStep as TestStepPublic } from '../../types/testReporter';
+import type { FullResult, FullConfig, Location, Suite, TestCase as TestCasePublic, TestResult as TestResultPublic, TestStep as TestStepPublic } from '../../types/testReporter';
 import type { SuitePrivate } from '../../types/reporterPrivate';
 import { HttpServer, assert, calculateSha1, copyFileAndMakeWritable, gracefullyProcessExitDoNotHang, removeFolders, sanitizeForFilePath } from 'playwright-core/lib/utils';
 import { formatResultFailure, stripAnsiEscapes } from './base';
@@ -39,7 +39,6 @@ type TestEntry = {
   testCase: TestCase;
   testCaseSummary: TestCaseSummary
 };
-
 
 const htmlReportOptions = ['always', 'never', 'on-failure'];
 type HtmlReportOpenOption = (typeof htmlReportOptions)[number];
@@ -112,11 +111,11 @@ class HtmlReporter extends EmptyReporter {
     };
   }
 
-  override async onEnd() {
+  override async onEnd(result: FullResult) {
     const projectSuites = this.suite.suites;
     await removeFolders([this._outputFolder]);
     const builder = new HtmlBuilder(this.config, this._outputFolder, this._attachmentsBaseURL);
-    this._buildResult = await builder.build(this.config.metadata, projectSuites);
+    this._buildResult = await builder.build(this.config.metadata, projectSuites, result);
   }
 
   override async onExit() {
@@ -218,7 +217,7 @@ class HtmlBuilder {
     this._attachmentsBaseURL = attachmentsBaseURL;
   }
 
-  async build(metadata: Metadata, projectSuites: Suite[]): Promise<{ ok: boolean, singleTestId: string | undefined }> {
+  async build(metadata: Metadata, projectSuites: Suite[], result: FullResult): Promise<{ ok: boolean, singleTestId: string | undefined }> {
 
     const data = new Map<string, { testFile: TestFile, testFileSummary: TestFileSummary }>();
     for (const projectSuite of projectSuites) {
@@ -257,7 +256,6 @@ class HtmlBuilder {
         if (test.outcome === 'flaky')
           ++stats.flaky;
         ++stats.total;
-        stats.duration += test.duration;
       }
       stats.ok = stats.unexpected + stats.flaky === 0;
       if (!stats.ok)
@@ -274,9 +272,11 @@ class HtmlBuilder {
     }
     const htmlReport: HTMLReport = {
       metadata,
+      startTime: result.startTime.getTime(),
+      duration: result.duration,
       files: [...data.values()].map(e => e.testFileSummary),
       projectNames: projectSuites.map(r => r.project()!.name),
-      stats: { ...[...data.values()].reduce((a, e) => addStats(a, e.testFileSummary.stats), emptyStats()), duration: metadata.totalTime }
+      stats: { ...[...data.values()].reduce((a, e) => addStats(a, e.testFileSummary.stats), emptyStats()) }
     };
     htmlReport.files.sort((f1, f2) => {
       const w1 = f1.stats.unexpected * 1000 + f1.stats.flaky;
@@ -501,7 +501,6 @@ const emptyStats = (): Stats => {
     flaky: 0,
     skipped: 0,
     ok: true,
-    duration: 0,
   };
 };
 
@@ -512,7 +511,6 @@ const addStats = (stats: Stats, delta: Stats): Stats => {
   stats.unexpected += delta.unexpected;
   stats.flaky += delta.flaky;
   stats.ok = stats.ok && delta.ok;
-  stats.duration += delta.duration;
   return stats;
 };
 

@@ -21,11 +21,14 @@ import type { FullConfig, TestCase, TestError, TestResult, FullResult, TestStep 
 import { Suite } from '../common/test';
 import { prepareErrorStack, relativeFilePath } from './base';
 import type { ReporterV2 } from './reporterV2';
+import { monotonicTime } from 'playwright-core/lib/utils';
 
-export class InternalReporter implements ReporterV2 {
+export class InternalReporter {
   private _reporter: ReporterV2;
   private _didBegin = false;
   private _config!: FullConfig;
+  private _startTime: Date | undefined;
+  private _monotonicStartTime: number | undefined;
 
   constructor(reporter: ReporterV2) {
     this._reporter = reporter;
@@ -37,6 +40,8 @@ export class InternalReporter implements ReporterV2 {
 
   onConfigure(config: FullConfig) {
     this._config = config;
+    this._startTime = new Date();
+    this._monotonicStartTime = monotonicTime();
     this._reporter.onConfigure(config);
   }
 
@@ -62,12 +67,16 @@ export class InternalReporter implements ReporterV2 {
     this._reporter.onTestEnd(test, result);
   }
 
-  async onEnd(result: FullResult) {
+  async onEnd(result: { status: FullResult['status'] }) {
     if (!this._didBegin) {
       // onBegin was not reported, emit it.
       this.onBegin(new Suite('', 'root'));
     }
-    await this._reporter.onEnd(result);
+    await this._reporter.onEnd({
+      ...result,
+      startTime: this._startTime!,
+      duration: monotonicTime() - this._monotonicStartTime!,
+    });
   }
 
   async onExit() {

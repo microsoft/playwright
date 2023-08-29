@@ -18,7 +18,7 @@ import { colors, ms as milliseconds, parseStackTraceLine } from 'playwright-core
 import path from 'path';
 import type { FullConfig, TestCase, Suite, TestResult, TestError, FullResult, TestStep, Location } from '../../types/testReporter';
 import type { SuitePrivate } from '../../types/reporterPrivate';
-import { getPackageManagerExecCommand, monotonicTime } from 'playwright-core/lib/utils';
+import { getPackageManagerExecCommand } from 'playwright-core/lib/utils';
 import type { ReporterV2 } from './reporterV2';
 export type TestResultOutput = { chunk: string | Buffer, type: 'stdout' | 'stderr' };
 export const kOutputSymbol = Symbol('output');
@@ -45,13 +45,11 @@ type TestSummary = {
 };
 
 export class BaseReporter implements ReporterV2 {
-  duration = 0;
   config!: FullConfig;
   suite!: Suite;
   totalTestCount = 0;
   result!: FullResult;
   private fileDurations = new Map<string, number>();
-  private monotonicStartTime: number = 0;
   private _omitFailures: boolean;
   private readonly _ttyWidthForTest: number;
   private _fatalErrors: TestError[] = [];
@@ -71,7 +69,6 @@ export class BaseReporter implements ReporterV2 {
   }
 
   onBegin(suite: Suite) {
-    this.monotonicStartTime = monotonicTime();
     this.suite = suite;
     this.totalTestCount = suite.allTests().length;
   }
@@ -114,7 +111,6 @@ export class BaseReporter implements ReporterV2 {
   }
 
   async onEnd(result: FullResult) {
-    this.duration = monotonicTime() - this.monotonicStartTime;
     this.result = result;
   }
 
@@ -182,7 +178,7 @@ export class BaseReporter implements ReporterV2 {
     if (skipped)
       tokens.push(colors.yellow(`  ${skipped} skipped`));
     if (expected)
-      tokens.push(colors.green(`  ${expected} passed`) + colors.dim(` (${milliseconds(this.duration)})`));
+      tokens.push(colors.green(`  ${expected} passed`) + colors.dim(` (${milliseconds(this.result.duration)})`));
     if (this.result.status === 'timedout')
       tokens.push(colors.red(`  Timed out waiting ${this.config.globalTimeout / 1000}s for the entire test run`));
     if (fatalErrors.length && expected + unexpected.length + interrupted.length + flaky.length > 0)

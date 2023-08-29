@@ -23,11 +23,10 @@ export type Stats = {
   flaky: number;
   skipped: number;
   ok: boolean;
-  duration: number;
 };
 
 export type FilteredStats = {
-  total: number
+  total: number,
   duration: number,
 };
 
@@ -42,6 +41,8 @@ export type HTMLReport = {
   files: TestFileSummary[];
   stats: Stats;
   projectNames: string[];
+  startTime: number;
+  duration: number;
 };
 
 export type TestFile = {
