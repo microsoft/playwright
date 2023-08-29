@@ -58,7 +58,7 @@ const keyboardLayout: KeyboardLayout = {
   KeyI: { key: 'i', keyCode: 73, shiftKey: 'I' },
   KeyO: { key: 'o', keyCode: 79, shiftKey: 'O' },
   KeyP: { key: 'p', keyCode: 80, shiftKey: 'P' },
-  BracketLeft: { key: '´', keyCode: 186, shiftKey: '¨', deadKeyMappings: { 'a': 'á', 'e': 'é', 'i': 'í', 'o': 'ó', 'u': 'ú', 'y': 'ý', 'A': 'Á', 'E': 'É', 'I': 'Í', 'O': 'Ó', 'U': 'Ú', 'Y': 'Ý', 'C': 'Ç', 'c': 'ç', ' ': '´' }, shiftDeadKeyMappings: { 'a': 'ä', 'e': 'ë', 'i': 'ï', 'o': 'ö', 'u': 'ü', 'y': 'ÿ', 'A': 'Ä', 'E': 'Ë', 'I': 'Ï', 'O': 'Ö', 'U': 'Ü', ' ': '¨' } },
+  BracketLeft: { key: 'Dead', keyCode: 186, shiftKey: 'Dead', deadKeyMappings: { 'a': 'á', 'e': 'é', 'i': 'í', 'o': 'ó', 'u': 'ú', 'y': 'ý', 'A': 'Á', 'E': 'É', 'I': 'Í', 'O': 'Ó', 'U': 'Ú', 'Y': 'Ý', 'C': 'Ç', 'c': 'ç', ' ': '´' }, shiftDeadKeyMappings: { 'a': 'ä', 'e': 'ë', 'i': 'ï', 'o': 'ö', 'u': 'ü', 'y': 'ÿ', 'A': 'Ä', 'E': 'Ë', 'I': 'Ï', 'O': 'Ö', 'U': 'Ü', ' ': '¨' } },
   BracketRight: { key: '+', keyCode: 187, shiftKey: '*' },
   Enter: { key: 'Enter', keyCode: 13, text: '\r' },
   CapsLock: { key: 'CapsLock', keyCode: 20 },

@@ -224,11 +224,11 @@ async function generate(klid) {
           };
           const isShift = With === 'VK_SHIFT';
           if (!isShift) {
-            key = text;
             deadKeyMappings = results;
+            key = deadKeyMappings ? 'Dead' : text;
           } else {
-            shiftKey = text;
             shiftDeadKeyMappings = results;
+            shiftKey = shiftDeadKeyMappings ? 'Dead' : text;
           }
         }
         return [SC.toUpperCase(), { key, shiftKey, deadKeyMappings, shiftDeadKeyMappings }];

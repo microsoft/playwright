@@ -27,12 +27,12 @@ it.beforeEach(async ({ page, server }) => {
 for (const fn of ['press', 'down', 'up']) {
   it(`should throw exception on ${fn} with accented key`, async ({ page }) => {
     await page.keyboard.changeLayout('pt');
-    await expect(async () => await page.keyboard[fn]('á')).rejects.toThrowError(`Accented key not supported: "á"`);
+    await expect(async () => await page.keyboard[fn]('á')).rejects.toThrowError();
   });
 
   it(`should throw exception on ${fn} with shifted accented key`, async ({ page }) => {
     await page.keyboard.changeLayout('pt');
-    await expect(async () => await page.keyboard[fn]('à')).rejects.toThrowError(`Accented key not supported: "à"`);
+    await expect(async () => await page.keyboard[fn]('à')).rejects.toThrowError();
   });
 }
 
@@ -54,6 +54,34 @@ it(`should handle shifted dead key`, async ({ page }) => {
         'Keydown: Dead BracketRight 186 [Shift]',
         'Keyup: Dead BracketRight 186 [Shift]',
         'Keyup: Shift ShiftLeft 16 []',].join('\n'));
+});
+
+it(`should handle dead key followed by space`, async ({ page }) => {
+  await page.keyboard.changeLayout('pt');
+  await page.keyboard.press('BracketRight');
+  await page.keyboard.press('Space');
+  await expect(page.locator('textarea')).toHaveValue('´');
+  expect(await page.evaluate('getResult()')).toBe(
+      ['Keydown: Dead BracketRight 186 []',
+        'Keyup: Dead BracketRight 186 []',
+        'Keydown: ´ Space 32 []',
+        'Keypress: ´ Space 180 180 []',
+        'Keyup:   Space 32 []',].join('\n'));
+});
+
+it(`should handle shifted dead key followed by space`, async ({ page }) => {
+  await page.keyboard.changeLayout('pt');
+  await page.keyboard.press('Shift+BracketRight');
+  await page.keyboard.press('Space');
+  await expect(page.locator('textarea')).toHaveValue('`');
+  expect(await page.evaluate('getResult()')).toBe(
+      ['Keydown: Shift ShiftLeft 16 [Shift]',
+        'Keydown: Dead BracketRight 186 [Shift]',
+        'Keyup: Dead BracketRight 186 [Shift]',
+        'Keyup: Shift ShiftLeft 16 []',
+        'Keydown: ` Space 32 []',
+        'Keypress: ` Space 96 96 []',
+        'Keyup:   Space 32 []',].join('\n'));
 });
 
 it(`should throw exception on invalid layout format`, async ({ page }) => {
@@ -83,11 +111,8 @@ const testData: Record<string, (SimpleKeyTest | AccentedKeyTest)[]> = {
 };
 
 for (const [locale, test] of Object.entries(testData)) {
-  it.describe(`${locale} keyboard layout`, () => {
-
-    it.beforeEach(async ({ page }) => {
-      await page.keyboard.changeLayout(locale);
-    });
+  it(`should handle ${locale} keyboard layout`, async ({ page }) => {
+    await page.keyboard.changeLayout(locale);
 
     for (const [key, code, keyCode, letterCode, letterKeyCode] of test) {
       const [modifiersDown, modifiersUp, modifiers, codeWithoutModifiers] = code.startsWith('Shift+') ?
@@ -96,7 +121,7 @@ for (const [locale, test] of Object.entries(testData)) {
 
       if (!letterCode) {
 
-        it(`should fire events on ${code}`, async ({ page }) => {
+        await it.step(`fire events on ${code}`, async () => {
           await page.keyboard.press(code);
           const charCode = key.charCodeAt(0);
           expect(await page.evaluate('getResult()')).toBe(
@@ -107,7 +132,7 @@ for (const [locale, test] of Object.entries(testData)) {
                 ...modifiersUp].join('\n'));
         });
 
-        it(`should fire events on "${key}"`, async ({ page }) => {
+        await it.step(`fire events on "${key}"`, async () => {
           await page.keyboard.press(key);
           const charCode = key.charCodeAt(0);
           const result = await page.evaluate('getResult()');
@@ -122,7 +147,7 @@ for (const [locale, test] of Object.entries(testData)) {
           [[`Keydown: Shift ShiftLeft 16 [Shift]`], [`Keyup: Shift ShiftLeft 16 []`], 'Shift', letterCode.substring('Shift+'.length)] :
           [[], [], '', letterCode];
 
-        it(`should fire events in accented key for ${code} ${letterCode}`, async ({ page }) => {
+        await it.step(`fire events in accented key for ${code} ${letterCode}`, async () => {
           await page.keyboard.press(code);
           await page.keyboard.press(letterCode);
           const charCode = key.charCodeAt(0);
@@ -138,7 +163,7 @@ for (const [locale, test] of Object.entries(testData)) {
                 ...modifiersLetterUp].join('\n'));
         });
 
-        it(`should fire events when typing accented key "${key}"`, async ({ page }) => {
+        await it.step(`should fire events when typing accented key "${key}"`, async () => {
           await page.keyboard.type(key);
           const charCode = key.charCodeAt(0);
           expect(await page.evaluate('getResult()')).toBe(

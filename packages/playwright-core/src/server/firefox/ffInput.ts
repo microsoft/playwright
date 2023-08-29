@@ -69,8 +69,6 @@ export class RawKeyboardImpl implements input.RawKeyboard {
     // Firefox will figure out Enter by itself
     if (text === '\r')
       text = '';
-    if (key === 'Dead')
-      text = '';
     await this._client.send('Page.dispatchKeyEvent', {
       type: 'keydown',
       keyCode: keyCodeWithoutLocation,

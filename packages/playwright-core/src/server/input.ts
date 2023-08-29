@@ -50,17 +50,22 @@ export class Keyboard {
   private _pressedKeys = new Set<string>();
   private _raw: RawKeyboard;
   private _page: Page;
+  private _layoutName: string;
   private _keyboardLayout: KeyboardLayoutClosure;
   private _deadKeyMappings?: Map<string, string>;
 
   constructor(raw: RawKeyboard, page: Page) {
     this._raw = raw;
     this._page = page;
-    this._keyboardLayout = getByKeyboardLayoutName(page._browserContext._options.keyboardLayout);
+    const layoutName = page._browserContext._options.keyboardLayout;
+    this._keyboardLayout = getByKeyboardLayoutName(layoutName);
+    this._layoutName = layoutName ?? 'us';
   }
 
   changeLayout(layoutName: string) {
     this._keyboardLayout = getByKeyboardLayoutName(layoutName);
+    this._layoutName = layoutName;
+    this._deadKeyMappings = undefined;
   }
 
   async down(key: string) {
@@ -70,14 +75,13 @@ export class Keyboard {
     this._pressedKeys.add(description.code);
     if (kModifiers.includes(description.key as types.KeyboardModifier))
       this._pressedModifiers.add(description.key as types.KeyboardModifier);
-    const descKey = description.deadKeyMappings ? 'Dead' : description.key;
-    await this._raw.keydown(this._pressedModifiers, description.code, description.keyCode, description.keyCodeWithoutLocation, descKey, description.location, autoRepeat, description.text);
+    await this._raw.keydown(this._pressedModifiers, description.code, description.keyCode, description.keyCodeWithoutLocation, description.key, description.location, autoRepeat, description.text);
   }
 
   private _keyDescriptionForString(keyString: string): KeyDescription {
     let description = this._keyboardLayout.get(keyString);
     assert(description, `Unknown key: "${keyString}"`);
-    assert(!Array.isArray(description), `Accented key not supported: "${keyString}"`);
+    assert(!Array.isArray(description), `Accented key "${keyString}" cannot be typed with a single keypress on "${normalizeLayoutName(this._layoutName)}" keyboard layout.\nUse type() method that will generate multiple key presses.`);
 
     const shift = this._pressedModifiers.has('Shift');
     description = shift && description.shifted ? description.shifted : description;
@@ -306,6 +310,7 @@ function normalizeLayoutName(layoutName: string) {
 
 function _buildLayoutClosure(layout: KeyboardLayout): KeyboardLayoutClosure {
   const result = new Map<string, KeyDescription | string[]>();
+  const accents = new Map<string, string[]>();
   for (const code in layout) {
     const definition = layout[code];
     const description: KeyDescription = {
@@ -323,10 +328,10 @@ function _buildLayoutClosure(layout: KeyboardLayout): KeyboardLayoutClosure {
     // Generate shifted definition.
     let shiftedDescription: KeyDescription | undefined;
     if (definition.shiftKey) {
-      assert(definition.shiftKey.length === 1);
+      assert(definition.shiftKey === 'Dead' || definition.shiftKey.length === 1);
       shiftedDescription = { ...description };
       shiftedDescription.key = definition.shiftKey;
-      shiftedDescription.text = definition.shiftKey;
+      shiftedDescription.text = definition.shiftKey === 'Dead' ? '' : definition.shiftKey;
       if (definition.shiftKeyCode)
         shiftedDescription.keyCode = definition.shiftKeyCode;
       if (definition.shiftDeadKeyMappings)
@@ -353,22 +358,26 @@ function _buildLayoutClosure(layout: KeyboardLayout): KeyboardLayoutClosure {
     // Map from accented keys
     if (definition.deadKeyMappings) {
       for (const [k, v] of Object.entries(definition.deadKeyMappings))
-        // if there's a dedicated accented key, we don't want to replace them
-        if (!result.has(v)) result.set(v, [code, k]);
+        accents.set(v, [code, k]);
     }
 
     if (shiftedDescription) {
-      // Map from shiftKey, no shifted
-      result.set(shiftedDescription.key, { ...shiftedDescription, shifted: undefined });
+      if (shiftedDescription.key !== 'Dead')
+        // Map from shiftKey, no shifted
+        result.set(shiftedDescription.key, { ...shiftedDescription, shifted: undefined });
 
       // Map from shifted accented keys
       if (definition.shiftDeadKeyMappings) {
         for (const [k, v] of Object.entries(definition.shiftDeadKeyMappings))
-          // if there's a dedicated accented key, we don't want to replace them
-          if (!result.has(v)) result.set(v, [`Shift+${code}`, k]);
+          accents.set(v, [`Shift+${code}`, k]);
       }
     }
   }
+
+  for (const [k, v] of accents.entries())
+    // if result already has a dedicated accented key, we don't add deadkey generated accents
+    if (!result.has(k)) result.set(k, v);
+
   return result;
 }
 
