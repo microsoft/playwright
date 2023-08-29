@@ -115,6 +115,12 @@ export type JsonTestStepEnd = {
   error?: TestError;
 };
 
+export type JsonFullResult = {
+  status: FullResult['status'];
+  startTime: number;
+  duration: number;
+};
+
 export type JsonEvent = {
   method: string;
   params: any
@@ -300,8 +306,12 @@ export class TeleReporterReceiver {
     }
   }
 
-  private _onEnd(result: FullResult): Promise<void> | void {
-    return this._reporter.onEnd?.(result);
+  private _onEnd(result: JsonFullResult): Promise<void> | void {
+    return this._reporter.onEnd?.({
+      status: result.status,
+      startTime: new Date(result.startTime),
+      duration: result.duration,
+    });
   }
 
   private _onExit(): Promise<void> | void {

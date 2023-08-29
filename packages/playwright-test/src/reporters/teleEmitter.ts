@@ -20,7 +20,7 @@ import type { SuitePrivate } from '../../types/reporterPrivate';
 import type { FullConfig, FullResult, Location, TestCase, TestError, TestResult, TestStep } from '../../types/testReporter';
 import { FullConfigInternal, getProjectId } from '../common/config';
 import type { Suite } from '../common/test';
-import type { JsonAttachment, JsonConfig, JsonEvent, JsonProject, JsonStdIOType, JsonSuite, JsonTestCase, JsonTestEnd, JsonTestResultEnd, JsonTestResultStart, JsonTestStepEnd, JsonTestStepStart } from '../isomorphic/teleReceiver';
+import type { JsonAttachment, JsonConfig, JsonEvent, JsonFullResult, JsonProject, JsonStdIOType, JsonSuite, JsonTestCase, JsonTestEnd, JsonTestResultEnd, JsonTestResultStart, JsonTestStepEnd, JsonTestStepStart } from '../isomorphic/teleReceiver';
 import { serializeRegexPatterns } from '../isomorphic/teleReceiver';
 import type { ReporterV2 } from './reporterV2';
 
@@ -125,7 +125,17 @@ export class TeleReporterEmitter implements ReporterV2 {
   }
 
   async onEnd(result: FullResult) {
-    this._messageSink({ method: 'onEnd', params: { result } });
+    const resultPayload: JsonFullResult = {
+      status: result.status,
+      startTime: result.startTime.getTime(),
+      duration: result.duration,
+    };
+    this._messageSink({
+      method: 'onEnd',
+      params: {
+        result: resultPayload
+      }
+    });
   }
 
   async onExit() {

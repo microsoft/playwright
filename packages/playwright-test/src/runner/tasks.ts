@@ -29,7 +29,6 @@ import { collectProjectsAndTestFiles, createRootSuite, loadFileSuites, loadGloba
 import type { Matcher } from '../util';
 import type { Suite } from '../common/test';
 import { buildDependentProjects, buildTeardownToSetupsMap } from './projectUtils';
-import { monotonicTime } from 'playwright-core/lib/utils';
 
 const readDirAsync = promisify(fs.readdir);
 
@@ -105,15 +104,11 @@ export function createTaskRunnerForList(config: FullConfigInternal, reporter: Re
 }
 
 function createReportBeginTask(): Task<TestRun> {
-  let montonicStartTime = 0;
   return {
-    setup: async ({ config, reporter, rootSuite }) => {
-      montonicStartTime = monotonicTime();
+    setup: async ({ reporter, rootSuite }) => {
       reporter.onBegin(rootSuite!);
     },
-    teardown: async ({ config }) => {
-      config.config.metadata.totalTime = monotonicTime() - montonicStartTime;
-    },
+    teardown: async ({}) => {},
   };
 }
 
