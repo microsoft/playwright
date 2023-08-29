@@ -96,7 +96,7 @@ export class Keyboard {
     if (this._pressedModifiers.size > 1 || (!this._pressedModifiers.has('Shift') && this._pressedModifiers.size === 1))
       return { ...description, text: '' };
 
-    if (!this._deadKeyMappings || description.key === 'Shift') return description;
+    if (!this._deadKeyMappings || deadkeyResetExclusions.has(description.key)) return description;
 
     // handle deadkeys / accented keys
     const deadKeyText = this._deadKeyMappings.get(description.text);
@@ -113,8 +113,7 @@ export class Keyboard {
     if (kModifiers.includes(description.key as types.KeyboardModifier))
       this._pressedModifiers.delete(description.key as types.KeyboardModifier);
     this._pressedKeys.delete(description.code);
-    const descKey = description.deadKeyMappings ? 'Dead' : description.key;
-    await this._raw.keyup(this._pressedModifiers, description.code, description.keyCode, description.keyCodeWithoutLocation, descKey, description.location);
+    await this._raw.keyup(this._pressedModifiers, description.code, description.keyCode, description.keyCodeWithoutLocation, description.key, description.location);
   }
 
   async insertText(text: string) {
@@ -301,10 +300,7 @@ function getByKeyboardLayoutName(layoutName?: string): KeyboardLayoutClosure {
   if (cached) return cached;
 
   const layout: KeyboardLayout = require(`./keyboards/layouts/${klid}`).default;
-  assert(layout, `No layout found for klid ${klid}`);
-
   const result = _buildLayoutClosure(layout);
-
   cache.set(klid, result);
   return result;
 }
