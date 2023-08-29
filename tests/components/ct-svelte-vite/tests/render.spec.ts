@@ -23,7 +23,9 @@ test('get textContent of the empty component', async ({ mount }) => {
 test('render context', async ({ mount }) => {
   const component = await mount<HooksConfig>(Context, {
     hooksConfig: {
-      context: 'context-value',
+      context: new Map([
+        ['context-key', 'context-value']
+      ]),
     }
   });
   await expect(component).toContainText('context-value');

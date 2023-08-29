@@ -15,12 +15,12 @@
  */
 
 import type { App, ComponentPublicInstance } from 'vue';
-import type { JsonObject } from '@playwright/experimental-ct-core/types/component';
+import type { SerializableObject } from '@playwright/experimental-ct-core/types/component';
 
-export declare function beforeMount<HooksConfig extends JsonObject>(
+export declare function beforeMount<HooksConfig extends SerializableObject>(
   callback: (params: { app: App; hooksConfig?: HooksConfig }) => Promise<void>
 ): void;
-export declare function afterMount<HooksConfig extends JsonObject>(
+export declare function afterMount<HooksConfig extends SerializableObject>(
   callback: (params: {
     app: App;
     hooksConfig?: HooksConfig;

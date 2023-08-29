@@ -23,7 +23,7 @@ import type {
   PlaywrightWorkerOptions,
   Locator,
 } from '@playwright/test';
-import type { JsonObject } from '@playwright/experimental-ct-core/types/component';
+import type { SerializableObject } from '@playwright/experimental-ct-core/types/component';
 import type { InlineConfig } from 'vite';
 
 export type PlaywrightTestConfig<T = {}, W = {}> = Omit<BasePlaywrightTestConfig<T, W>, 'use'> & {
@@ -35,7 +35,7 @@ export type PlaywrightTestConfig<T = {}, W = {}> = Omit<BasePlaywrightTestConfig
   };
 };
 
-export interface MountOptions<HooksConfig extends JsonObject> {
+export interface MountOptions<HooksConfig extends SerializableObject> {
   hooksConfig?: HooksConfig;
 }
 
@@ -45,7 +45,7 @@ interface MountResult extends Locator {
 }
 
 export interface ComponentFixtures {
-  mount<HooksConfig extends JsonObject>(
+  mount<HooksConfig extends SerializableObject>(
     component: JSX.Element,
     options?: MountOptions<HooksConfig>
   ): Promise<MountResult>;

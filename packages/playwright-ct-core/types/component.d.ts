@@ -14,10 +14,22 @@
  * limitations under the License.
  */
 
-type JsonPrimitive = string | number | boolean | null;
-type JsonValue = JsonPrimitive | JsonObject | JsonArray;
-type JsonArray = JsonValue[];
-export type JsonObject = { [Key in string]?: JsonValue };
+
+type SerializablePrimitive =
+  | string
+  | number
+  | boolean
+  | null
+  | BigInt
+  | RegExp
+  | Date
+  | Error
+  | URL
+  | Map<SerializableValue, SerializableValue>
+  | Set<SerializableValue>;
+type SerializableArray = SerializableValue[];
+type SerializableValue = SerializablePrimitive | SerializableObject | SerializableArray;
+export type SerializableObject = { [Key in string]?: SerializableValue };
 
 export type JsxComponent = {
   kind: 'jsx',
@@ -46,10 +58,10 @@ declare global {
     playwrightMount(component: Component, rootElement: Element, hooksConfig?: any): Promise<void>;
     playwrightUnmount(rootElement: Element): Promise<void>;
     playwrightUpdate(rootElement: Element, component: Component): Promise<void>;
-    __pw_hooks_before_mount?: (<HooksConfig extends JsonObject = JsonObject>(
+    __pw_hooks_before_mount?: (<HooksConfig extends SerializableObject = SerializableObject>(
       params: { hooksConfig?: HooksConfig; [key: string]: any }
     ) => Promise<any>)[];
-    __pw_hooks_after_mount?: (<HooksConfig extends JsonObject = JsonObject>(
+    __pw_hooks_after_mount?: (<HooksConfig extends SerializableObject = SerializableObject>(
       params: { hooksConfig?: HooksConfig; [key: string]: any }
     ) => Promise<void>)[];
   }

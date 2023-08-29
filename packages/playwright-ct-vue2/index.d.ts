@@ -23,7 +23,7 @@ import type {
   PlaywrightWorkerOptions,
   Locator,
 } from '@playwright/test';
-import type { JsonObject } from '@playwright/experimental-ct-core/types/component';
+import type { SerializableObject } from '@playwright/experimental-ct-core/types/component';
 import type { InlineConfig } from 'vite';
 
 export type PlaywrightTestConfig<T = {}, W = {}> = Omit<BasePlaywrightTestConfig<T, W>, 'use'> & {
@@ -46,14 +46,14 @@ type ComponentProps<T> =
 	T extends (props: infer P, ...args: any) => any ? P :
 	{};
 
-export interface MountOptions<HooksConfig extends JsonObject, Component> {
+export interface MountOptions<HooksConfig extends SerializableObject, Component> {
   props?: ComponentProps<Component>;
   slots?: ComponentSlots;
   on?: ComponentEvents;
   hooksConfig?: HooksConfig;
 }
 
-export interface MountOptionsJsx<HooksConfig extends JsonObject> {
+export interface MountOptionsJsx<HooksConfig extends SerializableObject> {
   hooksConfig?: HooksConfig;
 }
 
@@ -72,11 +72,11 @@ interface MountResultJsx extends Locator {
 }
 
 export interface ComponentFixtures {
-  mount<HooksConfig extends JsonObject>(
+  mount<HooksConfig extends SerializableObject>(
     component: JSX.Element,
     options?: MountOptionsJsx<HooksConfig>
   ): Promise<MountResultJsx>;
-  mount<HooksConfig extends JsonObject, Component = unknown>(
+  mount<HooksConfig extends SerializableObject, Component = unknown>(
     component: Component,
     options?: MountOptions<HooksConfig, Component>
   ): Promise<MountResult<Component>>;

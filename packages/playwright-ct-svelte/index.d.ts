@@ -23,7 +23,7 @@ import type {
   PlaywrightWorkerOptions,
   Locator,
 } from '@playwright/test';
-import type { JsonObject } from '@playwright/experimental-ct-core/types/component';
+import type { SerializableObject } from '@playwright/experimental-ct-core/types/component';
 import type { InlineConfig } from 'vite';
 import type { SvelteComponent, ComponentProps } from 'svelte/types/runtime';
 
@@ -40,7 +40,7 @@ type ComponentSlot = string | string[];
 type ComponentSlots = Record<string, ComponentSlot> & { default?: ComponentSlot };
 type ComponentEvents = Record<string, Function>;
 
-export interface MountOptions<HooksConfig extends JsonObject, Component extends SvelteComponent> {
+export interface MountOptions<HooksConfig extends SerializableObject, Component extends SvelteComponent> {
   props?: ComponentProps<Component>;
   slots?: ComponentSlots;
   on?: ComponentEvents;
@@ -56,7 +56,7 @@ interface MountResult<Component extends SvelteComponent> extends Locator {
 }
 
 interface ComponentFixtures {
-  mount<HooksConfig extends JsonObject, Component extends SvelteComponent = SvelteComponent>(
+  mount<HooksConfig extends SerializableObject, Component extends SvelteComponent = SvelteComponent>(
     component: new (...args: any[]) => Component,
     options?: MountOptions<HooksConfig, Component>
   ): Promise<MountResult<Component>>;

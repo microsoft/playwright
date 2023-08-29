@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import { JSXElement } from "solid-js";
-import type { JsonObject } from '@playwright/experimental-ct-core/types/component';
+import type { JSXElement } from 'solid-js';
+import type { SerializableObject } from '@playwright/experimental-ct-core/types/component';
 
-export declare function beforeMount<HooksConfig extends JsonObject>(
+export declare function beforeMount<HooksConfig extends SerializableObject>(
   callback: (params: { hooksConfig?: HooksConfig, App: () => JSXElement }) => Promise<void | JSXElement>
 ): void;
-export declare function afterMount<HooksConfig extends JsonObject>(
+export declare function afterMount<HooksConfig extends SerializableObject>(
   callback: (params: { hooksConfig?: HooksConfig }) => Promise<void>
 ): void;
