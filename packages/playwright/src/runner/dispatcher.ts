@@ -137,7 +137,9 @@ export class Dispatcher {
     }
 
     // 3. Run the job.
-    const result = await this._runJob(worker, job);
+    const stopCallback = () => this.stop().catch(() => {});
+    const jobDispatcher = new JobDispatcher(this._reporter, this._failureTracker, this._testById, stopCallback);
+    const result = await jobDispatcher.runJob(worker, job);
     this._updateCounterForWorkerHash(job.workerHash, -1);
 
     // 4. When worker encounters error, we stop it and create a new one.
@@ -212,7 +214,70 @@ export class Dispatcher {
     await this._finished;
   }
 
-  async _runJob(worker: WorkerHost, testGroup: TestGroup): Promise<{ newJob?: TestGroup, didFail: boolean }> {
+  _createWorker(testGroup: TestGroup, parallelIndex: number, loaderData: SerializedConfig) {
+    const projectConfig = this._config.projects.find(p => p.id === testGroup.projectId)!;
+    const outputDir = projectConfig.project.outputDir;
+    const worker = new WorkerHost(testGroup, parallelIndex, loaderData, this._extraEnvByProjectId.get(testGroup.projectId) || {}, outputDir);
+    const handleOutput = (params: TestOutputPayload) => {
+      const chunk = chunkFromParams(params);
+      if (worker.didFail()) {
+        // Note: we keep reading stdio from workers that are currently stopping after failure,
+        // to debug teardown issues. However, we avoid spoiling the test result from
+        // the next retry.
+        return { chunk };
+      }
+      if (!worker.currentTestId)
+        return { chunk };
+      const data = this._testById.get(worker.currentTestId)!;
+      return { chunk, test: data.test, result: data.resultByWorkerIndex.get(worker.workerIndex)?.result };
+    };
+    worker.on('stdOut', (params: TestOutputPayload) => {
+      const { chunk, test, result } = handleOutput(params);
+      result?.stdout.push(chunk);
+      this._reporter.onStdOut(chunk, test, result);
+    });
+    worker.on('stdErr', (params: TestOutputPayload) => {
+      const { chunk, test, result } = handleOutput(params);
+      result?.stderr.push(chunk);
+      this._reporter.onStdErr(chunk, test, result);
+    });
+    worker.on('teardownErrors', (params: TeardownErrorsPayload) => {
+      this._failureTracker.onWorkerError();
+      for (const error of params.fatalErrors)
+        this._reporter.onError(error);
+    });
+    worker.on('exit', () => {
+      const producedEnv = this._producedEnvByProjectId.get(testGroup.projectId) || {};
+      this._producedEnvByProjectId.set(testGroup.projectId, { ...producedEnv, ...worker.producedEnv() });
+    });
+    return worker;
+  }
+
+  producedEnvByProjectId() {
+    return this._producedEnvByProjectId;
+  }
+
+  async stop() {
+    if (this._isStopped)
+      return;
+    this._isStopped = true;
+    await Promise.all(this._workerSlots.map(({ worker }) => worker?.stop()));
+    this._checkFinished();
+  }
+
+  private _reportTestEnd(test: TestCase, result: TestResult) {
+    this._reporter.onTestEnd(test, result);
+    this._failureTracker.onTestEnd(test, result);
+    if (this._failureTracker.hasReachedMaxFailures())
+      this.stop().catch(e => {});
+  }
+}
+
+class JobDispatcher {
+  constructor(private _reporter: ReporterV2, private _failureTracker: FailureTracker, private _testById: Map<string, TestData>, private _stopCallback: () => void) {
+  }
+
+  async runJob(worker: WorkerHost, testGroup: TestGroup): Promise<{ newJob?: TestGroup, didFail: boolean }> {
     const runPayload: RunPayload = {
       file: testGroup.requireFile,
       entries: testGroup.tests.map(test => {
@@ -472,62 +537,11 @@ export class Dispatcher {
     return result;
   }
 
-  _createWorker(testGroup: TestGroup, parallelIndex: number, loaderData: SerializedConfig) {
-    const projectConfig = this._config.projects.find(p => p.id === testGroup.projectId)!;
-    const outputDir = projectConfig.project.outputDir;
-    const worker = new WorkerHost(testGroup, parallelIndex, loaderData, this._extraEnvByProjectId.get(testGroup.projectId) || {}, outputDir);
-    const handleOutput = (params: TestOutputPayload) => {
-      const chunk = chunkFromParams(params);
-      if (worker.didFail()) {
-        // Note: we keep reading stdio from workers that are currently stopping after failure,
-        // to debug teardown issues. However, we avoid spoiling the test result from
-        // the next retry.
-        return { chunk };
-      }
-      if (!worker.currentTestId)
-        return { chunk };
-      const data = this._testById.get(worker.currentTestId)!;
-      return { chunk, test: data.test, result: data.resultByWorkerIndex.get(worker.workerIndex)?.result };
-    };
-    worker.on('stdOut', (params: TestOutputPayload) => {
-      const { chunk, test, result } = handleOutput(params);
-      result?.stdout.push(chunk);
-      this._reporter.onStdOut(chunk, test, result);
-    });
-    worker.on('stdErr', (params: TestOutputPayload) => {
-      const { chunk, test, result } = handleOutput(params);
-      result?.stderr.push(chunk);
-      this._reporter.onStdErr(chunk, test, result);
-    });
-    worker.on('teardownErrors', (params: TeardownErrorsPayload) => {
-      this._failureTracker.onWorkerError();
-      for (const error of params.fatalErrors)
-        this._reporter.onError(error);
-    });
-    worker.on('exit', () => {
-      const producedEnv = this._producedEnvByProjectId.get(testGroup.projectId) || {};
-      this._producedEnvByProjectId.set(testGroup.projectId, { ...producedEnv, ...worker.producedEnv() });
-    });
-    return worker;
-  }
-
-  producedEnvByProjectId() {
-    return this._producedEnvByProjectId;
-  }
-
-  async stop() {
-    if (this._isStopped)
-      return;
-    this._isStopped = true;
-    await Promise.all(this._workerSlots.map(({ worker }) => worker?.stop()));
-    this._checkFinished();
-  }
-
   private _reportTestEnd(test: TestCase, result: TestResult) {
     this._reporter.onTestEnd(test, result);
     this._failureTracker.onTestEnd(test, result);
     if (this._failureTracker.hasReachedMaxFailures())
-      this.stop().catch(e => {});
+      this._stopCallback();
   }
 }
 
