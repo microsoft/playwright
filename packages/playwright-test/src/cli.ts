@@ -310,7 +310,7 @@ const testOptions: [string, string][] = [
   ['-gv, --grep-invert <grep>', `Only run tests that do not match this regular expression`],
   ['--headed', `Run tests in headed browsers (default: headless)`],
   ['--ignore-snapshots', `Ignore screenshot and snapshot expectations`],
-  ['--list', `Collect all the tests and report them, but do not run`],
+  ['--list', `Collect all the tests and report them, but do not run. Will print test paths only with "PLAYWRIGHT_LIST_FILES_ONLY=true" environment variable`],
   ['--max-failures <N>', `Stop after the first N failures`],
   ['--no-deps', 'Do not run project dependencies'],
   ['--output <dir>', `Folder for output artifacts (default: "test-results")`],

@@ -44,6 +44,31 @@ test('should list tests', async ({ runInlineTest }) => {
   ].join('\n'));
 });
 
+test('should list files only', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { projects: [{ name: 'foo' }, {}] };
+    `,
+    'a.test.js': `
+      const { test, expect } = require('@playwright/test');
+      test('example1', async ({}) => {
+        expect(1 + 1).toBe(2);
+      });
+      test('example2', async ({}) => {
+        expect(1 + 1).toBe(2);
+      });
+    `
+  }, { 'list': true }, { 'PLAYWRIGHT_LIST_FILES_ONLY': 'true' });
+  expect(result.exitCode).toBe(0);
+  expect(result.output).not.toContain('Listing tests');
+  expect(result.output).not.toContain('Total');
+  expect(result.output).not.toContain('>');
+  expect(result.output).toContain([
+    `a.test.js:3:7`,
+    `a.test.js:6:7`,
+  ].join('\n'));
+});
+
 test('should list tests to stdout when JSON reporter outputs to a file', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `

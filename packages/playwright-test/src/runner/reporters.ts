@@ -83,8 +83,9 @@ class ListModeReporter extends EmptyReporter {
   }
 
   override onBegin(suite: Suite): void {
+    const filesOnly = process.env[`PLAYWRIGHT_LIST_FILES_ONLY`] === 'true';
     // eslint-disable-next-line no-console
-    console.log(`Listing tests:`);
+    if (!filesOnly) console.log(`Listing tests:`);
     const tests = suite.allTests();
     const files = new Set<string>();
     for (const test of tests) {
@@ -92,12 +93,17 @@ class ListModeReporter extends EmptyReporter {
       const [, projectName, , ...titles] = test.titlePath();
       const location = `${path.relative(this.config.rootDir, test.location.file)}:${test.location.line}:${test.location.column}`;
       const projectTitle = projectName ? `[${projectName}] › ` : '';
+      if (filesOnly){
+        // eslint-disable-next-line no-console
+        console.log(`${location}`);
+      } else {
       // eslint-disable-next-line no-console
-      console.log(`  ${projectTitle}${location} › ${titles.join(' › ')}`);
+        console.log(`  ${projectTitle}${location} › ${titles.join(' › ')}`);
+      }
       files.add(test.location.file);
     }
     // eslint-disable-next-line no-console
-    console.log(`Total: ${tests.length} ${tests.length === 1 ? 'test' : 'tests'} in ${files.size} ${files.size === 1 ? 'file' : 'files'}`);
+    if (!filesOnly) console.log(`Total: ${tests.length} ${tests.length === 1 ? 'test' : 'tests'} in ${files.size} ${files.size === 1 ? 'file' : 'files'}`);
   }
 
   override onError(error: TestError) {
