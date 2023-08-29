@@ -84,6 +84,28 @@ it(`should handle shifted dead key followed by space`, async ({ page }) => {
         'Keyup:   Space 32 []',].join('\n'));
 });
 
+it(`should type accented key if deadkey is kept down while pressing key`, async ({ page }) => {
+  await page.keyboard.changeLayout('pt');
+  await page.keyboard.press('BracketRight+KeyA');
+  await expect(page.locator('textarea')).toHaveValue('á');
+  expect(await page.evaluate('getResult()')).toBe(
+      ['Keydown: Dead BracketRight 186 []',
+        'Keydown: á KeyA 65 []',
+        'Keypress: á KeyA 225 225 []',
+        'Keyup: a KeyA 65 []',
+        'Keyup: Dead BracketRight 186 []',].join('\n'));
+});
+
+for (const key of ['Alt', 'Meta', 'Shift', 'CapsLock']) {
+  it(`should not reset deadkey when ${key} is pressed`, async ({ page }) => {
+    await page.keyboard.changeLayout('pt');
+    await page.keyboard.press('BracketRight');
+    await page.keyboard.press(key);
+    await page.keyboard.press('KeyA');
+    await expect(page.locator('textarea')).toHaveValue('á');
+  });
+}
+
 it(`should throw exception on invalid layout format`, async ({ page }) => {
   await expect(async () => await page.keyboard.changeLayout('invalid')).rejects.toThrowError(`Keyboard layout name "invalid" not found`);
 });

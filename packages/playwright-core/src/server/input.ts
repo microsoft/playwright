@@ -39,6 +39,9 @@ type KeyboardLayoutClosure = Map<string, KeyDescription | string[]>;
 
 const kModifiers: types.KeyboardModifier[] = ['Alt', 'Control', 'Meta', 'Shift'];
 
+// set of keys that won't reset pressed deadkeys
+const deadkeyResetExclusions = new Set(['Alt', 'Meta', 'Shift', 'CapsLock']);
+
 export interface RawKeyboard {
   keydown(modifiers: Set<types.KeyboardModifier>, code: string, keyCode: number, keyCodeWithoutLocation: number, key: string, location: number, autoRepeat: boolean, text: string | undefined): Promise<void>;
   keyup(modifiers: Set<types.KeyboardModifier>, code: string, keyCode: number, keyCodeWithoutLocation: number, key: string, location: number): Promise<void>;
@@ -70,11 +73,14 @@ export class Keyboard {
 
   async down(key: string) {
     const description = this._keyDescriptionForString(key);
-    if (description.key !== 'Shift') this._deadKeyMappings = undefined;
     const autoRepeat = this._pressedKeys.has(description.code);
     this._pressedKeys.add(description.code);
     if (kModifiers.includes(description.key as types.KeyboardModifier))
       this._pressedModifiers.add(description.key as types.KeyboardModifier);
+    if (description.key === 'Dead')
+      this._deadKeyMappings = description.deadKeyMappings;
+    else if (this._deadKeyMappings && !deadkeyResetExclusions.has(description.key))
+      this._deadKeyMappings = undefined;
     await this._raw.keydown(this._pressedModifiers, description.code, description.keyCode, description.keyCodeWithoutLocation, description.key, description.location, autoRepeat, description.text);
   }
 
@@ -109,7 +115,6 @@ export class Keyboard {
     this._pressedKeys.delete(description.code);
     const descKey = description.deadKeyMappings ? 'Dead' : description.key;
     await this._raw.keyup(this._pressedModifiers, description.code, description.keyCode, description.keyCodeWithoutLocation, descKey, description.location);
-    if (description.key !== 'Shift') this._deadKeyMappings = description.deadKeyMappings;
   }
 
   async insertText(text: string) {
