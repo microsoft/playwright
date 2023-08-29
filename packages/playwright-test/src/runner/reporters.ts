@@ -94,7 +94,7 @@ class ListModeReporter extends EmptyReporter {
       const location = `${path.relative(this.config.rootDir, test.location.file)}:${test.location.line}:${test.location.column}`;
       const projectTitle = projectName ? `[${projectName}] › ` : '';
       // eslint-disable-next-line no-console
-      console.log(filesOnly ? location : ` ${projectTitle}${location} › ${titles.join(' › ')}`);
+      console.log(filesOnly ? ` ${location}` : `  ${projectTitle}${location} › ${titles.join(' › ')}`);
       files.add(test.location.file);
     }
     // eslint-disable-next-line no-console

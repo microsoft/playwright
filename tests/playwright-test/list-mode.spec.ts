@@ -64,8 +64,8 @@ test('should list files only', async ({ runInlineTest }) => {
   expect(result.output).not.toContain('Total');
   expect(result.output).not.toContain('>');
   expect(result.output).toContain([
-    `a.test.js:3:7`,
-    `a.test.js:6:7`,
+    ` a.test.js:3:7`,
+    ` a.test.js:6:7`,
   ].join('\n'));
 });
 
