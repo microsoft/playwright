@@ -182,13 +182,7 @@ export class HarTracer {
       return null;
     if (!this._options.waitForContentOnStop)
       return;
-    const race = Promise.race([
-      new Promise<void>(f => target.on('close', () => {
-        this._barrierPromises.delete(race);
-        f();
-      })),
-      promise
-    ]) as Promise<void>;
+    const race = target.openScope.safeRace(promise);
     this._barrierPromises.add(race);
     race.then(() => this._barrierPromises.delete(race));
   }

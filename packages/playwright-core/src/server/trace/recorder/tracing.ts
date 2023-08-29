@@ -82,6 +82,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   private _tracesTmpDir: string | undefined;
   private _allResources = new Set<string>();
   private _contextCreatedEvent: trace.ContextCreatedTraceEvent;
+  private _pendingHarEntries = new Set<har.Entry>();
 
   constructor(context: BrowserContext | APIRequestContext, tracesDir: string | undefined) {
     super(context, 'tracing');
@@ -230,6 +231,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     if (this._state.recording)
       throw new Error(`Must stop trace file before stopping tracing`);
     this._harTracer.stop();
+    this.flushHarEntries();
     await this._fs.syncAndGetError();
     this._state = undefined;
   }
@@ -271,6 +273,8 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
 
     if (this._state.options.snapshots)
       await this._snapshotter?.stop();
+
+    this.flushHarEntries();
 
     // Network file survives across chunks, make a snapshot before returning the resulting entries.
     // We should pick a name starting with "traceName" and ending with .network.
@@ -387,12 +391,26 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   }
 
   onEntryStarted(entry: har.Entry) {
+    this._pendingHarEntries.add(entry);
   }
 
   onEntryFinished(entry: har.Entry) {
+    this._pendingHarEntries.delete(entry);
     const event: trace.ResourceSnapshotTraceEvent = { type: 'resource-snapshot', snapshot: entry };
     const visited = visitTraceEvent(event, this._state!.networkSha1s);
     this._fs.appendFile(this._state!.networkFile, JSON.stringify(visited) + '\n', true /* flush */);
+  }
+
+  flushHarEntries() {
+    const harLines: string[] = [];
+    for (const entry of this._pendingHarEntries) {
+      const event: trace.ResourceSnapshotTraceEvent = { type: 'resource-snapshot', snapshot: entry };
+      const visited = visitTraceEvent(event, this._state!.networkSha1s);
+      harLines.push(JSON.stringify(visited));
+    }
+    this._pendingHarEntries.clear();
+    if (harLines.length)
+      this._fs.appendFile(this._state!.networkFile, harLines.join('\n') + '\n', true /* flush */);
   }
 
   onContentBlob(sha1: string, buffer: Buffer) {

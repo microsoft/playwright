@@ -20,6 +20,7 @@ import { Artifact } from '../artifact';
 import type { BrowserContext } from '../browserContext';
 import type * as har from '@trace/har';
 import { HarTracer } from './harTracer';
+import type { HarTracerDelegate } from './harTracer';
 import type * as channels from '@protocol/channels';
 import { yazl } from '../../zipBundle';
 import type { ZipFile } from '../../zipBundle';
@@ -28,7 +29,7 @@ import type EventEmitter from 'events';
 import { createGuid } from '../../utils';
 import type { Page } from '../page';
 
-export class HarRecorder {
+export class HarRecorder implements HarTracerDelegate {
   private _artifact: Artifact;
   private _isFlushed: boolean = false;
   private _tracer: HarTracer;
