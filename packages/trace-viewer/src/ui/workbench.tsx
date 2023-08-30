@@ -33,6 +33,7 @@ import type { Boundaries } from '../geometry';
 import { InspectorTab } from './inspectorTab';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { useSetting } from '@web/uiUtils';
+import type { Entry } from '@trace/har';
 
 export const Workbench: React.FunctionComponent<{
   model?: MultiTraceModel,
@@ -46,6 +47,7 @@ export const Workbench: React.FunctionComponent<{
 }> = ({ model, hideStackFrames, showSourcesFirst, rootDir, fallbackLocation, initialSelection, onSelectionChanged, isLive }) => {
   const [selectedAction, setSelectedAction] = React.useState<ActionTraceEventInContext | undefined>(undefined);
   const [highlightedAction, setHighlightedAction] = React.useState<ActionTraceEventInContext | undefined>();
+  const [highlightedEntry, setHighlightedEntry] = React.useState<Entry | undefined>();
   const [selectedNavigatorTab, setSelectedNavigatorTab] = React.useState<string>('actions');
   const [selectedPropertiesTab, setSelectedPropertiesTab] = React.useState<string>(showSourcesFirst ? 'source' : 'call');
   const [isInspecting, setIsInspecting] = React.useState(false);
@@ -122,7 +124,7 @@ export const Workbench: React.FunctionComponent<{
   const networkTab: TabbedPaneTabModel = {
     id: 'network',
     title: 'Network',
-    render: () => <NetworkTab model={model} selectedTime={selectedTime} />
+    render: () => <NetworkTab model={model} selectedTime={selectedTime} onEntryHovered={setHighlightedEntry}/>
   };
   const attachmentsTab: TabbedPaneTabModel = {
     id: 'attachments',
@@ -161,6 +163,8 @@ export const Workbench: React.FunctionComponent<{
     <Timeline
       model={model}
       boundaries={boundaries}
+      highlightedAction={highlightedAction}
+      highlightedEntry={highlightedEntry}
       onSelected={onActionSelected}
       sdkLanguage={sdkLanguage}
       selectedTime={selectedTime}

@@ -30,7 +30,8 @@ type Filter = 'status' | 'method' | 'file' | 'time' | 'size' | 'content-type';
 export const NetworkTab: React.FunctionComponent<{
   model: modelUtil.MultiTraceModel | undefined,
   selectedTime: Boundaries | undefined,
-}> = ({ model, selectedTime }) => {
+  onEntryHovered: (entry: Entry | undefined) => void,
+}> = ({ model, selectedTime, onEntryHovered }) => {
   const [resource, setResource] = React.useState<Entry | undefined>();
   const [filter, setFilter] = React.useState<Filter | undefined>(undefined);
   const [negateFilter, setNegateFilter] = React.useState<boolean>(false);
@@ -64,6 +65,7 @@ export const NetworkTab: React.FunctionComponent<{
         items={resources}
         render={entry => <NetworkResource resource={entry}></NetworkResource>}
         onSelected={setResource}
+        onHighlighted={onEntryHovered}
       />
     </div>}
     {resource && <NetworkResourceDetails resource={resource} onClose={() => setResource(undefined)} />}
