@@ -82,6 +82,11 @@
 }
 
 .timeline-bar.action {
+  --action-color: var(--vscode-charts-orange);
+  --action-background-color: #d1861633;
+}
+
+.timeline-bar.action.error {
   --action-color: var(--vscode-charts-red);
   --action-background-color: #e5140033;
 }
@@ -89,6 +94,11 @@
 .timeline-bar.network {
   --action-color: var(--vscode-charts-blue);
   --action-background-color: #1a85ff33;
+}
+
+body.dark-mode .timeline-bar.action.error {
+  --action-color: var(--vscode-errorForeground);
+  --action-background-color: #f4877133;
 }
 
 .timeline-label {
@@ -144,17 +154,13 @@ body.dark-mode .timeline-window-curtain {
   background-color: #161718bf;
 }
 
-.timeline-window-curtain.left {
-  border-right: 1px solid var(--vscode-panel-border);
-}
-
-.timeline-window-curtain.right {
-  border-left: 1px solid var(--vscode-panel-border);
-}
-
 .timeline-window-resizer {
   flex: none;
-  width: 6px;
+  width: 10px;
   cursor: ew-resize;
   pointer-events: all;
+  position: relative;
+  background-color: var(--vscode-panel-border);
+  border-left: 1px solid var(--vscode-panel-border);
+  border-right: 1px solid var(--vscode-panel-border);
 }

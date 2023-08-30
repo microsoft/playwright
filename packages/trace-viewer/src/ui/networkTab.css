@@ -88,6 +88,7 @@
   align-items: center;
   white-space: nowrap;
   height: 100%;
+  overflow: hidden;
 }
 
 .network-request-header.filter-start.positive .network-request-start .codicon-triangle-down {
