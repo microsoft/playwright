@@ -33,6 +33,7 @@ type TimelineBar = {
   leftTime: number;
   rightTime: number;
   active: boolean;
+  error: boolean;
 };
 
 export const Timeline: React.FunctionComponent<{
@@ -74,6 +75,7 @@ export const Timeline: React.FunctionComponent<{
         leftPosition: timeToPosition(measure.width, boundaries, entry.startTime),
         rightPosition: timeToPosition(measure.width, boundaries, entry.endTime || boundaries.maximum),
         active: false,
+        error: !!entry.error,
       });
     }
 
@@ -87,6 +89,7 @@ export const Timeline: React.FunctionComponent<{
         leftPosition: timeToPosition(measure.width, boundaries, startTime),
         rightPosition: timeToPosition(measure.width, boundaries, endTime),
         active: false,
+        error: false,
       });
     }
     return bars;
@@ -230,7 +233,10 @@ export const Timeline: React.FunctionComponent<{
       <div className='timeline-bars'>{
         bars.map((bar, index) => {
           return <div key={index}
-            className={'timeline-bar' + (bar.action ? ' action' : '') + (bar.resource ? ' network' : '') + (bar.active ? ' active' : '')}
+            className={'timeline-bar' + (bar.action ? ' action' : '')
+                                      + (bar.resource ? ' network' : '')
+                                      + (bar.active ? ' active' : '')
+                                      + (bar.error ? ' error' : '')}
             style={{
               left: bar.leftPosition,
               width: Math.max(1, bar.rightPosition - bar.leftPosition),
@@ -246,11 +252,11 @@ export const Timeline: React.FunctionComponent<{
       }} />
       {selectedTime && <div className='timeline-window'>
         <div className='timeline-window-curtain left' style={{ width: curtainLeft }}></div>
-        <div className='timeline-window-resizer'></div>
+        <div className='timeline-window-resizer' style={{ left: -5 }}></div>
         <div className='timeline-window-center'>
           <div className='timeline-window-drag'></div>
         </div>
-        <div className='timeline-window-resizer'></div>
+        <div className='timeline-window-resizer' style={{ left: 5 }}></div>
         <div className='timeline-window-curtain right' style={{ width: curtainRight }}></div>
       </div>}
     </div>
