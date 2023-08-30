@@ -446,7 +446,7 @@ test('merge into list report by default', async ({ runInlineTest, mergeReports }
 
   const text = stripAnsi(output);
   expect(text).toContain('Running 10 tests using 3 workers');
-  const lines = text.split('\n').filter(l => l.match(/^\d :/)).map(l => l.replace(/\d+ms/, 'Xms'));
+  const lines = text.split('\n').filter(l => l.match(/^\d :/)).map(l => l.replace(/[.\d]+m?s/, 'Xms'));
   expect(lines).toEqual([
     `0 :      1 a.test.js:3:11 › math 1`,
     `0 :   ${POSITIVE_STATUS_MARK} 1 a.test.js:3:11 › math 1 (Xms)`,

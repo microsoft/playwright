@@ -253,7 +253,7 @@ test('should have network request overrides', async ({ page, server, runAndTrace
   await traceViewer.selectAction('http://localhost');
   await traceViewer.showNetworkTab();
   await expect(traceViewer.networkRequests).toContainText([/200GET\/frame.htmltext\/html/]);
-  await expect(traceViewer.networkRequests).toContainText([/aborted.*style.cssx-unknown/]);
+  await expect(traceViewer.networkRequests).toContainText([/GET\/style.cssx-unknown.*aborted/]);
   await expect(traceViewer.networkRequests).not.toContainText([/continued/]);
 });
 
@@ -264,8 +264,8 @@ test('should have network request overrides 2', async ({ page, server, runAndTra
   });
   await traceViewer.selectAction('http://localhost');
   await traceViewer.showNetworkTab();
-  await expect(traceViewer.networkRequests).toContainText([/200GET\/frame.htmltext\/html/]);
-  await expect(traceViewer.networkRequests).toContainText([/continued.*script.jsapplication\/javascript/]);
+  await expect.soft(traceViewer.networkRequests).toContainText([/200GET\/frame.htmltext\/html.*/]);
+  await expect.soft(traceViewer.networkRequests).toContainText([/200GET\/script.jsapplication\/javascript.*continued/]);
 });
 
 test('should show snapshot URL', async ({ page, runAndTrace, server }) => {

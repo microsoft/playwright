@@ -30,12 +30,13 @@ export const TabbedPane: React.FunctionComponent<{
   leftToolbar?: React.ReactElement[],
   rightToolbar?: React.ReactElement[],
   selectedTab: string,
-  setSelectedTab: (tab: string) => void
-}> = ({ tabs, selectedTab, setSelectedTab, leftToolbar, rightToolbar }) => {
-  return <div className='tabbed-pane'>
+  setSelectedTab: (tab: string) => void,
+  dataTestId?: string,
+}> = ({ tabs, selectedTab, setSelectedTab, leftToolbar, rightToolbar, dataTestId }) => {
+  return <div className='tabbed-pane' data-testid={dataTestId}>
     <div className='vbox'>
       <Toolbar>
-        { leftToolbar && <div style={{ flex: 'none', display: 'flex', margin: '0 4px' }}>
+        { leftToolbar && <div style={{ flex: 'none', display: 'flex', margin: '0 4px', alignItems: 'center' }}>
           {...leftToolbar}
         </div>}
         <div style={{ flex: 'auto', display: 'flex', height: '100%', overflow: 'hidden' }}>
@@ -48,7 +49,7 @@ export const TabbedPane: React.FunctionComponent<{
             ></TabbedPaneTab>)),
           ]}
         </div>
-        {rightToolbar && <div style={{ flex: 'none', display: 'flex' }}>
+        {rightToolbar && <div style={{ flex: 'none', display: 'flex', alignItems: 'center' }}>
           {...rightToolbar}
         </div>}
       </Toolbar>

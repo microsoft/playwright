@@ -14,61 +14,12 @@
   limitations under the License.
 */
 
-.network-request {
-  display: flex;
-  white-space: nowrap;
-  align-items: center;
-  padding: 0 3px;
-  flex: none;
-  outline: none;
-}
-
-.network-request-title {
-  height: 28px;
-  display: flex;
-  align-items: center;
-  flex: 1;
-}
-
-.network-request-title-status {
-  padding: 0 2px;
-  border-radius: 4px;
-  margin: 2px;
-  line-height: 20px;
-  min-width: 30px;
-  text-align: center;
-}
-
-.network-request-title-status.status-failure {
-  color: var(--vscode-statusBar-foreground);
-  background-color: var(--vscode-statusBarItem-errorBackground);
-}
-
-.network-request-title-status.status-route {
-  color: var(--vscode-statusBar-foreground);
-  background-color: var(--vscode-statusBar-background);
-}
-
-.network-request-title-status.status-route.api {
-  color: var(--vscode-statusBar-foreground);
-  background-color: var(--vscode-statusBarItem-remoteBackground);
-}
-
-.network-request-title-url {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  flex: 1;
-}
-
-.network-request-title-content-type {
-  margin: 0 6px;
-}
-
 .network-request-details {
   width: 100%;
   user-select: text;
   line-height: 24px;
   margin-left: 10px;
+  overflow: auto;
 }
 
 .network-request-details-url {
@@ -77,7 +28,7 @@
   margin-left: 10px;
 }
 
-.network-request-headers {
+.network-request-details-headers {
   white-space: pre;
   overflow: hidden;
   margin-left: 10px;
@@ -88,10 +39,6 @@
   font-weight: bold;
 }
 
-.network-request-details-time {
-  float: right;
-}
-
-.network-request .cm-wrapper {
+.network-request-details .cm-wrapper {
   height: 300px;
 }
