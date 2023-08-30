@@ -15,6 +15,7 @@ When installing Playwright you are given the option to add a [GitHub Actions](ht
   - [Downloading the HTML Report](#downloading-the-html-report)
   - [Viewing the HTML Report](#viewing-the-html-report)
   - [Viewing the Trace](#viewing-the-trace)
+- [Publishing report on the web](#publishing-report-on-the-web)
 - [What's Next](#whats-next)
 
 ## GitHub Actions
@@ -103,6 +104,47 @@ To learn more about reports check out our detailed guide on [HTML Reporter](/tes
 Once you have served the report using `npx playwright show-report`, click on the trace icon next to the test's file name as seen in the image above. You can then view the trace of your tests and inspect each action to try to find out why the tests are failing.
 
 <img width="1976" alt="Playwright Trace Viewer" src="https://user-images.githubusercontent.com/13063165/212869694-61368b16-f176-4083-bbc2-fc85b95131f0.png" />
+
+## Publishing report on the web
+
+Downloading the HTML report as a zip file is not very convenient. However, we can utilize Azure Storage's static websites hosting capabilities to easily and efficiently serve HTML reports on the Internet, requiring minimal configuration.
+
+1. Create an [Azure Storage account](https://learn.microsoft.com/en-us/azure/storage/common/storage-account-create).
+1. Enable [Static website hosting](https://learn.microsoft.com/en-us/azure/storage/blobs/storage-blob-static-website-how-to#enable-static-website-hosting) for the storage account.
+1. Create a Service Principal in Azure and grant it access to Azure Blob storage. Upon successful execution, the command will display the credentials which will be used in the next step.
+
+    ```bash
+    az ad sp create-for-rbac --name "github-actions" --role "Storage Blob Data Contributor" --scopes /subscriptions/<SUBSCRIPTION_ID>/resourceGroups/<RESOURCE_GROUP_NAME>/providers/Microsoft.Storage/storageAccounts/<STORAGE_ACCOUNT_NAME>
+    ```
+1. Use the credentials from the previous step to set up encrypted secrets in your GitHub repository. Go to your repository's settings, under [GitHub Actions secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets#creating-encrypted-secrets-for-a-repository), and add the following secrets:
+
+    - `AZCOPY_SPA_APPLICATION_ID`
+    - `AZCOPY_SPA_CLIENT_SECRET`
+    - `AZCOPY_TENANT_ID`
+
+   For a detailed guide on how to authorize a service principal using a client secret, refer to [this Microsoft documentation](https://learn.microsoft.com/en-us/azure/storage/common/storage-use-azcopy-authorize-azure-active-directory#authorize-a-service-principal-by-using-a-client-secret-1).
+1. Add a step that uploads HTML report to Azure Storage.
+
+    ```yaml
+    ...
+        - name: Upload HTML report to Azure
+          shell: bash
+          run: |
+            REPORT_DIR='run-${{ github.run_id }}-${{ github.run_attempt }}'
+            azcopy cp --recursive "./playwright-report/*" "https://<STORAGE_ACCOUNT_NAME>.blob.core.windows.net/\$web/$REPORT_DIR"
+            echo "::notice title=HTML report url::https://<STORAGE_ACCOUNT_NAME>.z1.web.core.windows.net/$REPORT_DIR/index.html"
+          env:
+            AZCOPY_AUTO_LOGIN_TYPE: SPN
+            AZCOPY_SPA_APPLICATION_ID: '${{ secrets.AZCOPY_SPA_APPLICATION_ID }}'
+            AZCOPY_SPA_CLIENT_SECRET: '${{ secrets.AZCOPY_SPA_CLIENT_SECRET }}'
+            AZCOPY_TENANT_ID: '${{ secrets.AZCOPY_TENANT_ID }}'
+    ```
+
+The contents of `$web` storage container can be accessed from a browser by using the [public URL](https://learn.microsoft.com/en-us/azure/storage/blobs/storage-blob-static-website-how-to?tabs=azure-portal#portal-find-url) of the website.
+
+:::note
+This step will not work for pull requests created from a forked repository because such workflow [doesn't have access to the secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets#using-encrypted-secrets-in-a-workflow).
+:::
 
 To learn more about traces check out our detailed guide on [Trace Viewer](/trace-viewer.md).
 
