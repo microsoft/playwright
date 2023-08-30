@@ -127,8 +127,9 @@ export class HarTracer {
       return;
     let pageEntry = this._pageEntries.get(page);
     if (!pageEntry) {
+      const date = new Date();
       pageEntry = {
-        startedDateTime: new Date(),
+        startedDateTime: date.toISOString(),
         id: page.guid,
         title: '',
         pageTimings: this._options.omitTiming ? {} : {
@@ -136,6 +137,7 @@ export class HarTracer {
           onLoad: -1,
         },
       };
+      (pageEntry as any)[startedDateSymbol] = date;
 
       page.mainFrame().on(Frame.Events.AddLifecycle, (event: LifecycleEvent) => {
         if (event === 'load')
@@ -221,7 +223,7 @@ export class HarTracer {
     harEntry.response.cookies = this._options.omitCookies ? [] : event.cookies.map(c => {
       return {
         ...c,
-        expires: c.expires === -1 ? undefined : new Date(c.expires)
+        expires: c.expires === -1 ? undefined : new Date(c.expires).toISOString()
       };
     });
 
@@ -456,9 +458,10 @@ export class HarTracer {
     };
 
     if (!this._options.omitTiming) {
+      const startDateTime = pageEntry ? ((pageEntry as any)[startedDateSymbol] as Date).valueOf() : 0;
       const timing = response.timing();
-      if (pageEntry && pageEntry.startedDateTime.valueOf() > timing.startTime)
-        pageEntry.startedDateTime = new Date(timing.startTime);
+      if (pageEntry && startDateTime > timing.startTime)
+        pageEntry.startedDateTime = new Date(timing.startTime).toISOString();
       const dns = timing.domainLookupEnd !== -1 ? helper.millisToRoundishMillis(timing.domainLookupEnd - timing.domainLookupStart) : -1;
       const connect = timing.connectEnd !== -1 ? helper.millisToRoundishMillis(timing.connectEnd - timing.connectStart) : -1;
       const ssl = timing.connectEnd !== -1 ? helper.millisToRoundishMillis(timing.connectEnd - timing.secureConnectionStart) : -1;
@@ -535,12 +538,13 @@ export class HarTracer {
     };
     if (!this._options.omitTiming) {
       for (const pageEntry of log.pages || []) {
+        const startDateTime = ((pageEntry as any)[startedDateSymbol] as Date).valueOf();
         if (typeof pageEntry.pageTimings.onContentLoad === 'number' && pageEntry.pageTimings.onContentLoad >= 0)
-          pageEntry.pageTimings.onContentLoad -= pageEntry.startedDateTime.valueOf();
+          pageEntry.pageTimings.onContentLoad -= startDateTime;
         else
           pageEntry.pageTimings.onContentLoad = -1;
         if (typeof pageEntry.pageTimings.onLoad === 'number' && pageEntry.pageTimings.onLoad >= 0)
-          pageEntry.pageTimings.onLoad -= pageEntry.startedDateTime.valueOf();
+          pageEntry.pageTimings.onLoad -= startDateTime;
         else
           pageEntry.pageTimings.onLoad = -1;
       }
@@ -597,7 +601,7 @@ function createHarEntry(method: string, url: URL, frameref: string | undefined, 
   const harEntry: har.Entry = {
     _frameref: options.includeTraceInfo ? frameref : undefined,
     _monotonicTime: options.includeTraceInfo ? monotonicTime() : undefined,
-    startedDateTime: new Date(),
+    startedDateTime: new Date().toISOString(),
     time: -1,
     request: {
       method: method,
@@ -654,11 +658,11 @@ function parseCookie(c: string): har.Cookie {
     if (name === 'Domain')
       cookie.domain = value;
     if (name === 'Expires')
-      cookie.expires = new Date(value);
+      cookie.expires = new Date(value).toISOString();
     if (name === 'HttpOnly')
       cookie.httpOnly = true;
     if (name === 'Max-Age')
-      cookie.expires = new Date(Date.now() + (+value) * 1000);
+      cookie.expires = new Date(Date.now() + (+value) * 1000).toISOString();
     if (name === 'Path')
       cookie.path = value;
     if (name === 'SameSite')
@@ -668,3 +672,5 @@ function parseCookie(c: string): har.Cookie {
   }
   return cookie;
 }
+
+const startedDateSymbol = Symbol('startedDate');

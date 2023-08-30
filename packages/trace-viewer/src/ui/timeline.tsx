@@ -73,7 +73,7 @@ export const Timeline: React.FunctionComponent<{
         rightTime: entry.endTime || boundaries.maximum,
         leftPosition: timeToPosition(measure.width, boundaries, entry.startTime),
         rightPosition: timeToPosition(measure.width, boundaries, entry.endTime || boundaries.maximum),
-        active: highlightedAction === entry,
+        active: false,
       });
     }
 
@@ -86,11 +86,16 @@ export const Timeline: React.FunctionComponent<{
         rightTime: endTime,
         leftPosition: timeToPosition(measure.width, boundaries, startTime),
         rightPosition: timeToPosition(measure.width, boundaries, endTime),
-        active: highlightedEntry === resource,
+        active: false,
       });
     }
     return bars;
-  }, [model, boundaries, measure, highlightedAction, highlightedEntry]);
+  }, [model, boundaries, measure]);
+
+  React.useMemo(() => {
+    for (const bar of bars)
+      bar.active = (!!highlightedAction && bar.action === highlightedAction) || (!!highlightedEntry && bar.resource === highlightedEntry);
+  }, [bars, highlightedAction, highlightedEntry]);
 
   const onMouseDown = React.useCallback((event: React.MouseEvent) => {
     setPreviewPoint(undefined);

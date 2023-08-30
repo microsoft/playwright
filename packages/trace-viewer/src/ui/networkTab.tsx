@@ -25,16 +25,17 @@ import { bytesToString, msToString } from '@web/uiUtils';
 
 const NetworkListView = ListView<Entry>;
 
-type Filter = 'status' | 'method' | 'file' | 'time' | 'size' | 'content-type';
+type SortBy = 'start' | 'status' | 'method' | 'file' | 'duration' | 'size' | 'content-type';
+type Sorting = { by: SortBy, negate: boolean};
 
 export const NetworkTab: React.FunctionComponent<{
   model: modelUtil.MultiTraceModel | undefined,
+  boundaries: Boundaries,
   selectedTime: Boundaries | undefined,
   onEntryHovered: (entry: Entry | undefined) => void,
-}> = ({ model, selectedTime, onEntryHovered }) => {
+}> = ({ model, boundaries, selectedTime, onEntryHovered }) => {
   const [resource, setResource] = React.useState<Entry | undefined>();
-  const [filter, setFilter] = React.useState<Filter | undefined>(undefined);
-  const [negateFilter, setNegateFilter] = React.useState<boolean>(false);
+  const [sorting, setSorting] = React.useState<Sorting | undefined>(undefined);
 
   const resources = React.useMemo(() => {
     const resources = model?.resources || [];
@@ -43,27 +44,22 @@ export const NetworkTab: React.FunctionComponent<{
         return true;
       return !!resource._monotonicTime && (resource._monotonicTime >= selectedTime.minimum && resource._monotonicTime <= selectedTime.maximum);
     });
-    if (filter)
-      sort(filtered, filter, negateFilter);
+    if (sorting)
+      sort(filtered, sorting);
     return filtered;
-  }, [filter, model, negateFilter, selectedTime]);
+  }, [sorting, model, selectedTime]);
 
-  const toggleFilter = React.useCallback((f: Filter) => {
-    if (filter === f) {
-      setNegateFilter(!negateFilter);
-    } else {
-      setNegateFilter(false);
-      setFilter(f);
-    }
-  }, [filter, negateFilter]);
+  const toggleSorting = React.useCallback((f: SortBy) => {
+    setSorting({ by: f, negate: sorting?.by === f ? !sorting.negate : false });
+  }, [sorting]);
 
   return <>
     {!resource && <div className='vbox'>
-      <NetworkHeader filter={filter} negateFilter={negateFilter} toggleFilter={toggleFilter} />
+      <NetworkHeader sorting={sorting} toggleSorting={toggleSorting} />
       <NetworkListView
         dataTestId='network-request-list'
         items={resources}
-        render={entry => <NetworkResource resource={entry}></NetworkResource>}
+        render={entry => <NetworkResource boundaries={boundaries} resource={entry}></NetworkResource>}
         onSelected={setResource}
         onHighlighted={onEntryHovered}
       />
@@ -73,37 +69,40 @@ export const NetworkTab: React.FunctionComponent<{
 };
 
 const NetworkHeader: React.FunctionComponent<{
-  filter: Filter | undefined,
-  negateFilter: boolean,
-  toggleFilter: (filter: Filter) => void,
-}> = ({ toggleFilter, filter, negateFilter }) => {
-  return <div className={'hbox network-request-header' + (filter ? ' filter-' + filter : '') + (negateFilter ? ' negative' : ' positive')}>
-    <div className='network-request-status' onClick={() => toggleFilter('status') }>
+  sorting: Sorting | undefined,
+  toggleSorting: (sortBy: SortBy) => void,
+}> = ({ toggleSorting: toggleSortBy, sorting }) => {
+  return <div className={'hbox network-request-header' + (sorting ? ' filter-' + sorting.by + (sorting.negate ? ' negative' : ' positive') : '')}>
+    <div className='network-request-start' onClick={() => toggleSortBy('start') }>
+      <span className='codicon codicon-triangle-up' />
+      <span className='codicon codicon-triangle-down' />
+    </div>
+    <div className='network-request-status' onClick={() => toggleSortBy('status') }>
       &nbsp;Status
       <span className='codicon codicon-triangle-up' />
       <span className='codicon codicon-triangle-down' />
     </div>
-    <div className='network-request-method' onClick={() => toggleFilter('method') }>
+    <div className='network-request-method' onClick={() => toggleSortBy('method') }>
       Method
       <span className='codicon codicon-triangle-up' />
       <span className='codicon codicon-triangle-down' />
     </div>
-    <div className='network-request-file' onClick={() => toggleFilter('file') }>
+    <div className='network-request-file' onClick={() => toggleSortBy('file') }>
       Request
       <span className='codicon codicon-triangle-up' />
       <span className='codicon codicon-triangle-down' />
     </div>
-    <div className='network-request-content-type' onClick={() => toggleFilter('content-type') }>
+    <div className='network-request-content-type' onClick={() => toggleSortBy('content-type') }>
       Content Type
       <span className='codicon codicon-triangle-up' />
       <span className='codicon codicon-triangle-down' />
     </div>
-    <div className='network-request-time' onClick={() => toggleFilter('time') }>
-      Time
+    <div className='network-request-duration' onClick={() => toggleSortBy('duration') }>
+      Duration
       <span className='codicon codicon-triangle-up' />
       <span className='codicon codicon-triangle-down' />
     </div>
-    <div className='network-request-size' onClick={() => toggleFilter('size') }>
+    <div className='network-request-size' onClick={() => toggleSortBy('size') }>
       Size
       <span className='codicon codicon-triangle-up' />
       <span className='codicon codicon-triangle-down' />
@@ -114,7 +113,8 @@ const NetworkHeader: React.FunctionComponent<{
 
 const NetworkResource: React.FunctionComponent<{
   resource: Entry,
-}> = ({ resource }) => {
+  boundaries: Boundaries,
+}> = ({ resource, boundaries }) => {
   const { routeStatus, resourceName, contentType } = React.useMemo(() => {
     const routeStatus = formatRouteStatus(resource);
     const resourceName = resource.request.url.substring(resource.request.url.lastIndexOf('/'));
@@ -126,6 +126,9 @@ const NetworkResource: React.FunctionComponent<{
   }, [resource]);
 
   return <div className='hbox'>
+    <div className='hbox network-request-start'>
+      <div>{msToString(resource._monotonicTime! - boundaries.minimum)}</div>
+    </div>
     <div className='hbox network-request-status'>
       <div className={formatStatus(resource.response.status)} title={resource.response.statusText}>{resource.response.status}</div>
     </div>
@@ -136,7 +139,7 @@ const NetworkResource: React.FunctionComponent<{
       <div className='network-request-file-url' title={resource.request.url}>{resourceName}</div>
     </div>
     <div className='network-request-content-type' title={contentType}>{contentType}</div>
-    <div className='network-request-time'>{msToString(resource.time)}</div>
+    <div className='network-request-duration'>{msToString(resource.time)}</div>
     <div className='network-request-size'>{bytesToString(resource.response._transferSize! > 0 ? resource.response._transferSize! : resource.response.bodySize)}</div>
     <div className='network-request-route'>
       {routeStatus && <div className={`status-route ${routeStatus}`}>{routeStatus}</div>}
@@ -164,22 +167,25 @@ function formatRouteStatus(request: Entry): string {
   return '';
 }
 
-function sort(resources: Entry[], filter: Filter | undefined, negate: boolean) {
-  const c = comparator(filter);
+function sort(resources: Entry[], sorting: Sorting) {
+  const c = comparator(sorting?.by);
   if (c)
     resources.sort(c);
-  if (negate)
+  if (sorting.negate)
     resources.reverse();
 }
 
-function comparator(filter: Filter | undefined) {
-  if (filter === 'time')
+function comparator(sortBy: SortBy) {
+  if (sortBy === 'start')
+    return (a: Entry, b: Entry) => a._monotonicTime! - b._monotonicTime!;
+
+  if (sortBy === 'duration')
     return (a: Entry, b: Entry) => a.time - b.time;
 
-  if (filter === 'status')
+  if (sortBy === 'status')
     return (a: Entry, b: Entry) => a.response.status - b.response.status;
 
-  if (filter === 'method') {
+  if (sortBy === 'method') {
     return (a: Entry, b: Entry) => {
       const valueA = a.request.method;
       const valueB = b.request.method;
@@ -187,7 +193,7 @@ function comparator(filter: Filter | undefined) {
     };
   }
 
-  if (filter === 'size') {
+  if (sortBy === 'size') {
     return (a: Entry, b: Entry) => {
       const sizeA = a.response._transferSize! > 0 ? a.response._transferSize! : a.response.bodySize;
       const sizeB = b.response._transferSize! > 0 ? b.response._transferSize! : b.response.bodySize;
@@ -195,7 +201,7 @@ function comparator(filter: Filter | undefined) {
     };
   }
 
-  if (filter === 'content-type') {
+  if (sortBy === 'content-type') {
     return (a: Entry, b: Entry) => {
       const valueA = a.response.content.mimeType;
       const valueB = b.response.content.mimeType;
@@ -203,7 +209,7 @@ function comparator(filter: Filter | undefined) {
     };
   }
 
-  if (filter === 'file') {
+  if (sortBy === 'file') {
     return (a: Entry, b: Entry) => {
       const nameA = a.request.url.substring(a.request.url.lastIndexOf('/'));
       const nameB = b.request.url.substring(b.request.url.lastIndexOf('/'));
