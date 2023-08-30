@@ -124,7 +124,7 @@ export const Workbench: React.FunctionComponent<{
   const networkTab: TabbedPaneTabModel = {
     id: 'network',
     title: 'Network',
-    render: () => <NetworkTab model={model} selectedTime={selectedTime} onEntryHovered={setHighlightedEntry}/>
+    render: () => <NetworkTab model={model} boundaries={boundaries} selectedTime={selectedTime} onEntryHovered={setHighlightedEntry}/>
   };
   const attachmentsTab: TabbedPaneTabModel = {
     id: 'attachments',

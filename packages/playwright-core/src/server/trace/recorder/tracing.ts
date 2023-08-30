@@ -493,6 +493,8 @@ function visitTraceEvent(object: any, sha1s: Set<string>): any {
     return object.map(o => visitTraceEvent(o, sha1s));
   if (object instanceof Buffer)
     return undefined;
+  if (object instanceof Date)
+    return object;
   if (typeof object === 'object') {
     const result: any = {};
     for (const key in object) {
