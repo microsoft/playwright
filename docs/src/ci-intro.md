@@ -6,7 +6,7 @@ title: "CI GitHub Actions"
 ## Introduction
 * langs: js
 
-When installing Playwright you are given the option to add a [GitHub Actions](https://docs.github.com/en/actions). This creates a `playwright.yml` file inside a `.github/workflows` folder containing everything you need so that your tests run on each push and pull request into the main/master branch.+
+Playwright tests can be executed on CI using GitHub actions. When installing Playwright you are given the option to add a [GitHub Actions](https://docs.github.com/en/actions). This creates a `playwright.yml` file inside a `.github/workflows` folder containing everything you need so that your tests run on each push and pull request into the main/master branch.+
 
 #### You will learn
 * langs: js
@@ -19,19 +19,17 @@ When installing Playwright you are given the option to add a [GitHub Actions](ht
 
 
 ## Introduction
-* langs: python java csharp
+* langs: python, java, csharp
 
-To add a [GitHub Actions](https://docs.github.com/en/actions) file first create `.github/workflows` folder and inside it add a `playwright.yml` file containing the example code below so that your tests will run on each push and pull request for the main/master branch.
+Playwright tests can be executed on CI using GitHub Actions. To add a [GitHub Actions](https://docs.github.com/en/actions) file first create `.github/workflows` folder and inside it add a `playwright.yml` file containing the example code below so that your tests will run on each push and pull request for the main/master branch.
 
-#### You will learn**
-* langs: python java csharp
+#### You will learn
+* langs: python, java, csharp
   
 - [How to run tests on push/pull_request](/ci.md#on-pushpull_request)
 - [How to view test logs](/ci-intro.md#viewing-test-logs)
-- [How to download the HTML report](/ci-intro.md#downloading-the-html-report)
-- [How to view the HTML report](/ci-intro.md#viewing-the-html-report)
 - [How to view the trace](/ci-intro.md#viewing-the-trace)
-- [How to publish report on the web](/ci-intro.md#publishing-report-on-the-web)
+
 
 
 ## Setting up GitHub Actions
@@ -72,7 +70,7 @@ jobs:
 ```
 
 ### On push/pull_request
-* langs: python java csharp
+* langs: python, java, csharp
 
 Tests will run on push or pull request on branches main/master. The [workflow](https://docs.github.com/en/actions/using-workflows/about-workflows) will install all dependencies, install Playwright and then run the tests.
 
@@ -492,7 +490,7 @@ Once you have served the report using `npx playwright show-report`, click on the
 <img width="1976" alt="Playwright Trace Viewer" src="https://user-images.githubusercontent.com/13063165/212869694-61368b16-f176-4083-bbc2-fc85b95131f0.png" />
 
 ### Viewing the Trace
-* langs: python java csharp
+* langs: python, java, csharp
 
 [trace.playwright.dev](https://trace.playwright.dev) is a statically hosted variant of the Trace Viewer. You can upload trace files using drag and drop.
 
@@ -540,6 +538,9 @@ The contents of `$web` storage container can be accessed from a browser by using
 This step will not work for pull requests created from a forked repository because such workflow [doesn't have access to the secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets#using-encrypted-secrets-in-a-workflow).
 :::
 
+######
+* langs: js python, java, csharp
+  
 To learn more about traces check out our detailed guide on [Trace Viewer](/trace-viewer.md).
 
 To learn more about running tests on other CI providers check out our detailed guide on [Continuous Integration](/ci.md).
