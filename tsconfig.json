@@ -24,7 +24,7 @@
     "esModuleInterop": true,
     "strict": true,
     "allowJs": false,
-    "jsx": "react",
+    "jsx": "preserve",
     "resolveJsonModule": true,
     "noEmit": true,
     "noImplicitOverride": true,
@@ -34,13 +34,11 @@
   "include": ["packages"],
   "exclude": [
     "packages/*/lib",
-    "packages/html-reporter",
     "packages/playwright-ct-react",
     "packages/playwright-ct-react17",
     "packages/playwright-ct-solid",
     "packages/playwright-ct-svelte",
     "packages/playwright-ct-vue",
-    "packages/playwright-ct-vue2",
-    "packages/web",
+    "packages/playwright-ct-vue2"
   ],
 }

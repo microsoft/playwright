@@ -16,12 +16,10 @@
 
 import fs, { existsSync } from 'fs';
 import path from 'path';
+import type { Plugin, UserConfig } from 'vite';
 
-/**
- * @returns {import('vite').Plugin}
- */
-export function bundle() {
-  let config;
+export function bundle(): Plugin {
+  let config: UserConfig;
   return {
     name: 'playwright-bundle',
     config(c) {
@@ -32,7 +30,7 @@ export function bundle() {
         if (!ctx || !ctx.bundle)
           return html;
         html = html.replace(/(?=<!--)([\s\S]*?)-->/, '');
-        for (const [name, value] of Object.entries(ctx.bundle)) {
+        for (const [name, value] of Object.entries(ctx.bundle) as any) {
           if (name.endsWith('.map'))
             continue;
           if (value.code)
@@ -44,13 +42,13 @@ export function bundle() {
       },
     },
     closeBundle: () => {
-      if (existsSync(path.join(config.build.outDir, 'index.html'))) {
+      if (existsSync(path.join(config.build!.outDir!, 'index.html'))) {
         const targetDir = path.join(__dirname, '..', 'playwright-core', 'lib', 'vite', 'htmlReport');
         fs.mkdirSync(targetDir, { recursive: true });
         fs.copyFileSync(
-          path.join(config.build.outDir, 'index.html'),
-          path.join(targetDir, 'index.html'));
+            path.join(config.build!.outDir!, 'index.html'),
+            path.join(targetDir, 'index.html'));
       }
     },
-  }
+  };
 }
