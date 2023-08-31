@@ -8,6 +8,7 @@ common/
 
 [index.ts]
 @testIsomorphic/**
+./worker/testTracing.ts
 
 [internalsForTest.ts]
 **
