@@ -19,9 +19,9 @@ import * as React from 'react';
 import './consoleTab.css';
 import * as modelUtil from './modelUtil';
 import { ListView } from '@web/components/listView';
-import { ansi2htmlMarkup } from '@web/components/errorMessage';
 import type { Boundaries } from '../geometry';
 import { msToString } from '@web/uiUtils';
+import { ansi2html } from '@web/ansi2html';
 import type * as trace from '@trace/trace';
 
 type ConsoleEntry = {
@@ -124,10 +124,10 @@ export const ConsoleTab: React.FunctionComponent<{
         }
 
         if (nodeMessage?.text)
-          messageInnerHTML = ansi2htmlMarkup(nodeMessage.text.trim()) || '';
+          messageInnerHTML = ansi2html(nodeMessage.text.trim()) || '';
 
         if (nodeMessage?.base64)
-          messageInnerHTML = ansi2htmlMarkup(atob(nodeMessage.base64).trim()) || '';
+          messageInnerHTML = ansi2html(atob(nodeMessage.base64).trim()) || '';
 
         return <div className='console-line'>
           {timestampElement}
