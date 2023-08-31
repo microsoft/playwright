@@ -630,6 +630,20 @@ test('should highlight target elements', async ({ page, runAndTrace, browserName
   await expect.poll(() => highlightedDivs(frameExpect2)).toEqual(['multi', 'multi']);
 });
 
+test('should highlight target element in shadow dom', async ({ page, server, runAndTrace }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.PREFIX + '/shadow.html');
+    await page.locator('button').click();
+    await expect(page.locator('h1')).toHaveText('Hellow Shadow DOM v1');
+  });
+
+  const framePageClick = await traceViewer.snapshotFrame('locator.click');
+  await expect(framePageClick.locator('button')).toHaveCSS('background-color', 'rgba(111, 168, 220, 0.498)');
+
+  const frameExpect = await traceViewer.snapshotFrame('expect.toHaveText');
+  await expect(frameExpect.locator('h1')).toHaveCSS('background-color', 'rgba(111, 168, 220, 0.498)');
+});
+
 test('should show action source', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer([traceFile]);
   await traceViewer.selectAction('locator.click');

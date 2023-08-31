@@ -114,7 +114,7 @@ export class Snapshotter {
         bubbles: true,
         cancelable: true,
         detail: callId,
-        composed: false,
+        composed: true,
       });
       element.dispatchEvent(customEvent);
     }, callId);
