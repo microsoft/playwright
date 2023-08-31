@@ -39,7 +39,7 @@ test('should be able to use a custom port', async function({ playwright }) {
     ++countOfIncomingConnections;
     ++countOfConnections;
     socket.on('close', () => countOfConnections--);
-    const client = net.connect(5037);
+    const client = net.connect(5037, '127.0.0.1');
     socket.pipe(client).pipe(socket);
   });
   await new Promise<void>(resolve => server.listen(proxyPort, resolve));
