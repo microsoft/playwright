@@ -47,9 +47,9 @@ playwright install
 
 ## Add Example Test
 
-Create a `test_my_application.py` file inside the current working directory or in a sub-directory with the code below:
+Create a file that follows the `test_` prefix convention, such as `test_my_application.py`, inside the current working directory or in a sub-directory with the code below:
 
-```py
+```py title="test_my_application.py"
 import re
 from playwright.sync_api import Page, expect
 
@@ -69,8 +69,8 @@ def test_homepage_has_Playwright_in_title_and_get_started_link_linking_to_the_in
     # Click the get started link.
     get_started.click()
 
-    # Expects the URL to contain intro.
-    expect(page).to_have_url(re.compile(".*intro"))
+    # Expects page to have a heading with the name of Installation.
+    expect(page.get_by_role("heading", name="Installation")).to_be_visible()
 ```
 
 ## Running the Example Test
