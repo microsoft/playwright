@@ -104,9 +104,7 @@ export class SnapshotRenderer {
     const prefix = snapshot.doctype ? `<!DOCTYPE ${snapshot.doctype}>` : '';
     html = prefix + [
       '<style>*,*::before,*::after { visibility: hidden }</style>',
-      `<style>*[__playwright_target__="${this.snapshotName}"] { outline: 2px solid #006ab1 !important; background-color: #6fa8dc7f !important; }</style>`,
-      `<style>*[__playwright_target__="${this._callId}"] { outline: 2px solid #006ab1 !important; background-color: #6fa8dc7f !important; }</style>`,
-      `<script>${snapshotScript()}</script>`
+      `<script>${snapshotScript(this._callId, this.snapshotName)}</script>`
     ].join('') + html;
 
     return { html, pageId: snapshot.pageId, frameId: snapshot.frameId, index: this._index };
@@ -195,8 +193,8 @@ function snapshotNodes(snapshot: FrameSnapshot): NodeSnapshot[] {
   return (snapshot as any)._nodes;
 }
 
-function snapshotScript() {
-  function applyPlaywrightAttributes(unwrapPopoutUrl: (url: string) => string) {
+function snapshotScript(...targetIds: (string | undefined)[]) {
+  function applyPlaywrightAttributes(unwrapPopoutUrl: (url: string) => string, ...targetIds: (string | undefined)[]) {
     const scrollTops: Element[] = [];
     const scrollLefts: Element[] = [];
 
@@ -218,6 +216,14 @@ function snapshotScript() {
       for (const element of root.querySelectorAll(`[__playwright_selected_]`)) {
         (element as HTMLOptionElement).selected = element.getAttribute('__playwright_selected_') === 'true';
         element.removeAttribute('__playwright_selected_');
+      }
+
+      for (const targetId of targetIds) {
+        for (const target of root.querySelectorAll(`[__playwright_target__="${targetId}"]`)) {
+          const style = (target as HTMLElement).style;
+          style.outline = '2px solid #006ab1';
+          style.backgroundColor = '#6fa8dc7f';
+        }
       }
 
       for (const iframe of root.querySelectorAll('iframe, frame')) {
@@ -303,7 +309,7 @@ function snapshotScript() {
     window.addEventListener('DOMContentLoaded', onDOMContentLoaded);
   }
 
-  return `\n(${applyPlaywrightAttributes.toString()})(${unwrapPopoutUrl.toString()})`;
+  return `\n(${applyPlaywrightAttributes.toString()})(${unwrapPopoutUrl.toString()}${targetIds.map(id => `, "${id}"`).join('')})`;
 }
 
 

@@ -136,7 +136,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
         if (!event.detail)
           return;
         const callId = event.detail as string;
-        (event.target as any).__playwright_target__ = callId;
+        (event.composedPath()[0] as any).__playwright_target__ = callId;
       });
     }
 
