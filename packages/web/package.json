@@ -6,7 +6,8 @@
   "dependencies": {
     "ansi-to-html": "^0.7.2",
     "codemirror": "^5.65.9",
-    "xterm": "^5.1.0",
-    "xterm-addon-fit": "^0.7.0"
+    "xterm": "^5.2.1",
+    "xterm-addon-fit": "^0.7.0",
+    "xterm-addon-webgl": "^0.15.0"
   }
 }

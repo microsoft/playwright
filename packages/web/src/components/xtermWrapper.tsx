@@ -48,7 +48,7 @@ export const XtermWrapper: React.FC<{ source: XtermDataSource }> = ({
 
     (async () => {
       // Always load the module first.
-      const { Terminal, FitAddon } = await modulePromise;
+      const { Terminal, FitAddon, WebglAddon } = await modulePromise;
       const element = xtermElement.current;
       if (!element)
         return;
@@ -64,9 +64,14 @@ export const XtermWrapper: React.FC<{ source: XtermDataSource }> = ({
         convertEol: true,
         fontSize: 13,
         scrollback: 10000,
-        fontFamily: 'var(--vscode-editor-font-family)',
+        fontFamily: getComputedStyle(element).getPropertyValue('--vscode-editor-font-family'),
         theme: terminalTheme,
       });
+
+      // Will internally fall to DOM renderer back if webgl is not supported.
+      const webglAddon = new WebglAddon();
+      webglAddon.onContextLoss(() => webglAddon.dispose());
+      newTerminal.loadAddon(webglAddon);
 
       const fitAddon = new FitAddon();
       newTerminal.loadAddon(fitAddon);

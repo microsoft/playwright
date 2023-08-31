@@ -18,10 +18,16 @@ import 'xterm/css/xterm.css';
 
 import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
+import { WebglAddon } from 'xterm-addon-webgl';
 
 export type XtermModule = {
   Terminal: typeof Terminal;
   FitAddon: typeof FitAddon;
+  WebglAddon: typeof WebglAddon;
 };
 
-export default { Terminal, FitAddon };
+export default {
+  Terminal,
+  FitAddon,
+  WebglAddon,
+} satisfies XtermModule;
