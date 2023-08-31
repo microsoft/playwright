@@ -6,7 +6,9 @@ title: "CI GitHub Actions"
 ## Introduction
 * langs: js
 
-Playwright tests can be executed on CI using GitHub actions. When installing Playwright you are given the option to add a [GitHub Actions](https://docs.github.com/en/actions). This creates a `playwright.yml` file inside a `.github/workflows` folder containing everything you need so that your tests run on each push and pull request into the main/master branch.+
+Playwright tests can be ran on any CI provider. In this section we will cover running tests on GitHub using GitHub actions. If you would like to see how to configure other CI providers check out our detailed [doc on Continuous Integration](./ci.md).
+
+When [installing Playwright](./intro.md) using the [VS Code extension](./getting-started-vscode.md) or with `npm init playwright@latest` you are given the option to add a [GitHub Actions](https://docs.github.com/en/actions). This creates a `playwright.yml` file inside a `.github/workflows` folder containing everything you need so that your tests run on each push and pull request into the main/master branch.
 
 #### You will learn
 * langs: js
@@ -21,7 +23,9 @@ Playwright tests can be executed on CI using GitHub actions. When installing Pla
 ## Introduction
 * langs: python, java, csharp
 
-Playwright tests can be executed on CI using GitHub Actions. To add a [GitHub Actions](https://docs.github.com/en/actions) file first create `.github/workflows` folder and inside it add a `playwright.yml` file containing the example code below so that your tests will run on each push and pull request for the main/master branch.
+Playwright tests can be ran on any CI provider. In this section we will cover running tests on GitHub using GitHub actions. If you would like to see how to configure other CI providers check out our detailed doc on Continuous Integration.
+
+To add a [GitHub Actions](https://docs.github.com/en/actions) file first create `.github/workflows` folder and inside it add a `playwright.yml` file containing the example code below so that your tests will run on each push and pull request for the main/master branch.
 
 #### You will learn
 * langs: python, java, csharp
@@ -39,7 +43,7 @@ Playwright tests can be executed on CI using GitHub Actions. To add a [GitHub Ac
 
 Tests will run on push or pull request on branches main/master. The [workflow](https://docs.github.com/en/actions/using-workflows/about-workflows) will install all dependencies, install Playwright and then run the tests. It will also create the HTML report.
 
-```yml js
+```yml js title=".github/workflows/playwright.yml"
 name: Playwright Tests
 on:
   push:
@@ -74,7 +78,7 @@ jobs:
 
 Tests will run on push or pull request on branches main/master. The [workflow](https://docs.github.com/en/actions/using-workflows/about-workflows) will install all dependencies, install Playwright and then run the tests.
 
-```yml python
+```yml python title=".github/workflows/playwright.yml"
 name: Playwright Tests
 on:
   push:
@@ -101,7 +105,7 @@ jobs:
       run: pytest
 ```
 
-```yml java
+```yml java title=".github/workflows/playwright.yml"
 name: Playwright Tests
 on:
   push:
@@ -126,7 +130,7 @@ jobs:
       run: mvn test
 ```
 
-```yml csharp
+```yml csharp title=".github/workflows/playwright.yml"
 name: Playwright Tests
 on:
   push:
@@ -153,44 +157,13 @@ jobs:
 ### On push/pull_request (sharded)
 * langs: js
 
-GitHub Actions supports [sharding tests between multiple jobs](https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs) using the [`jobs.<job_id>.strategy.matrix`](https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstrategymatrix) option. The `matrix` option will run a separate job for every possible combination of the provided options. In the example below, we have 2 `project` values, 10 `shardIndex` values and 1 `shardTotal` value, resulting in a total of 20 jobs to be run. So it will split up the tests between 20 jobs, each running a different browser and a different subset of tests, see [here](./test-parallel.md#shard-tests-between-multiple-machines) for more details.
-
-```yml js
-name: Playwright Tests
-on:
-  push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
-jobs:
-  playwright:
-    name: 'Playwright Tests - ${{ matrix.project }} - Shard ${{ matrix.shard }}'
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        project: [chromium, webkit]
-        shard: [1/10, 2/10, 3/10, 4/10, 5/10, 6/10, 7/10, 8/10, 9/10, 10/10]
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
-      - name: Install dependencies
-        run: npm ci
-      - name: Install browsers
-        run: npx playwright install --with-deps
-      - name: Run your tests
-        run: npx playwright test --project=${{ matrix.project }} --shard=${{ matrix.shard }}
-```
-
-> Note: The `${{ <expression> }}` is the [expression](https://docs.github.com/en/actions/learn-github-actions/expressions) syntax that allows accessing the current [context](https://docs.github.com/en/actions/learn-github-actions/contexts). In this example, we are using the [`matrix`](https://docs.github.com/en/actions/learn-github-actions/contexts#matrix-context) context to set the job variants.
+GitHub Actions supports [sharding tests between multiple jobs](https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs). Check out our [sharding doc](./test-sharding) to learn more about sharding and to see a [GitHub actions example](./test-sharding.md#github-actions-example) of how to configure a job to run your tests on multiple machines as well as how to merge the HTML reports.
 
 ### Via Containers
 
 GitHub Actions support [running jobs in a container](https://docs.github.com/en/actions/using-jobs/running-jobs-in-a-container) by using the [`jobs.<job_id>.container`](https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idcontainer) option. This is useful to not pollute the host environment with dependencies and to have a consistent environment for e.g. screenshots/visual regression testing across different operating systems.
 
-```yml js
+```yml js title=".github/workflows/playwright.yml"
 name: Playwright Tests
 on:
   push:
@@ -214,7 +187,7 @@ jobs:
         run: npx playwright test
 ```
 
-```yml python
+```yml python title=".github/workflows/playwright.yml"
 name: Playwright Tests
 on:
   push:
@@ -242,7 +215,7 @@ jobs:
         run: pytest
 ```
 
-```yml java
+```yml java title=".github/workflows/playwright.yml"
 name: Playwright Tests
 on:
   push:
@@ -267,7 +240,7 @@ jobs:
         run: mvn test
 ```
 
-```yml csharp
+```yml csharp title=".github/workflows/playwright.yml"
 name: Playwright Tests
 on:
   push:
@@ -291,46 +264,12 @@ jobs:
         run: dotnet test
 ```
 
-### Via Containers (sharded)
-* langs: js
-
-GitHub Actions supports [sharding tests between multiple jobs](https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs) using the [`jobs.<job_id>.strategy.matrix`](https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstrategymatrix) option. The `matrix` option will run a separate job for every possible combination of the provided options. In the example below, we have 2 `project` values, 10 `shardIndex` values and 1 `shardTotal` value, resulting in a total of 20 jobs to be run. So it will split up the tests between 20 jobs, each running a different browser and a different subset of tests, see [here](./test-parallel.md#shard-tests-between-multiple-machines) for more details.
-
-```yml js
-name: Playwright Tests
-on:
-  push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
-jobs:
-  playwright:
-    name: 'Playwright Tests - ${{ matrix.project }} - Shard ${{ matrix.shard }}'
-    runs-on: ubuntu-latest
-    container:
-      image: mcr.microsoft.com/playwright:v%%VERSION%%-jammy
-    strategy:
-      fail-fast: false
-      matrix:
-        project: [chromium, webkit]
-        shard: [1/10, 2/10, 3/10, 4/10, 5/10, 6/10, 7/10, 8/10, 9/10, 10/10]
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
-      - name: Install dependencies
-        run: npm ci
-      - name: Run your tests
-        run: npx playwright test --project=${{ matrix.project }} --shard=${{ matrix.shard }}
-```
-
 ### On deployment
 
 This will start the tests after a [GitHub Deployment](https://developer.github.com/v3/repos/deployments/) went into the `success` state.
 Services like Vercel use this pattern so you can run your end-to-end tests on their deployed environment.
 
-```yml js
+```yml js title=".github/workflows/playwright.yml"
 name: Playwright Tests
 on:
   deployment_status:
@@ -354,7 +293,7 @@ jobs:
         PLAYWRIGHT_TEST_BASE_URL: ${{ github.event.deployment_status.target_url }}
 ```
 
-```yml python
+```yml python title=".github/workflows/playwright.yml"
 name: Playwright Tests
 on:
   deployment_status:
@@ -381,7 +320,7 @@ jobs:
         PLAYWRIGHT_TEST_BASE_URL: ${{ github.event.deployment_status.target_url }}
 ```
 
-```yml java
+```yml java title=".github/workflows/playwright.yml"
 name: Playwright Tests
 on:
   deployment_status:
@@ -407,7 +346,7 @@ jobs:
         PLAYWRIGHT_TEST_BASE_URL: ${{ github.event.deployment_status.target_url }}
 ```
 
-```yml csharp
+```yml csharp title=".github/workflows/playwright.yml"
 name: Playwright Tests
 on:
   deployment_status:
@@ -435,7 +374,7 @@ jobs:
 
 ## Create a Repo and Push to GitHub
 
-[Create a repo on GitHub](https://docs.github.com/en/get-started/quickstart/create-a-repo) and create a new repository or push an existing repository. Follow the instructions on GitHub and don't forget to [initialize a git repository](https://github.com/git-guides/git-init) using the `git init` command so you can [add](https://github.com/git-guides/git-add), [commit](https://github.com/git-guides/git-commit) and [push](https://github.com/git-guides/git-push) your code.
+Once you have your [GitHub actions workflow](#setting-up-github-actions) setup then all you need to do is [Create a repo on GitHub](https://docs.github.com/en/get-started/quickstart/create-a-repo) or push your code to an existing repository. Follow the instructions on GitHub and don't forget to [initialize a git repository](https://github.com/git-guides/git-init) using the `git init` command so you can [add](https://github.com/git-guides/git-add), [commit](https://github.com/git-guides/git-commit) and [push](https://github.com/git-guides/git-push) your code.
 
 <img width="861" alt="Create a Repo and Push to GitHub" src="https://user-images.githubusercontent.com/13063165/183423254-d2735278-a2ab-4d63-bb99-48d8e5e447bc.png"/>
 
@@ -515,9 +454,9 @@ Downloading the HTML report as a zip file is not very convenient. However, we ca
     - `AZCOPY_TENANT_ID`
 
    For a detailed guide on how to authorize a service principal using a client secret, refer to [this Microsoft documentation](https://learn.microsoft.com/en-us/azure/storage/common/storage-use-azcopy-authorize-azure-active-directory#authorize-a-service-principal-by-using-a-client-secret-1).
-1. Add a step that uploads HTML report to Azure Storage.
+1. Add a step that uploads the HTML report to Azure Storage.
 
-    ```yaml
+    ```yaml title=".github/workflows/playwright.yml"
     ...
         - name: Upload HTML report to Azure
           shell: bash
@@ -532,7 +471,7 @@ Downloading the HTML report as a zip file is not very convenient. However, we ca
             AZCOPY_TENANT_ID: '${{ secrets.AZCOPY_TENANT_ID }}'
     ```
 
-The contents of `$web` storage container can be accessed from a browser by using the [public URL](https://learn.microsoft.com/en-us/azure/storage/blobs/storage-blob-static-website-how-to?tabs=azure-portal#portal-find-url) of the website.
+The contents of the `$web` storage container can be accessed from a browser by using the [public URL](https://learn.microsoft.com/en-us/azure/storage/blobs/storage-blob-static-website-how-to?tabs=azure-portal#portal-find-url) of the website.
 
 :::note
 This step will not work for pull requests created from a forked repository because such workflow [doesn't have access to the secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets#using-encrypted-secrets-in-a-workflow).
