@@ -29,6 +29,7 @@ import { collectProjectsAndTestFiles, createRootSuite, loadFileSuites, loadGloba
 import type { Matcher } from '../util';
 import type { Suite } from '../common/test';
 import { buildDependentProjects, buildTeardownToSetupsMap } from './projectUtils';
+import { FailureTracker } from './failureTracker';
 
 const readDirAsync = promisify(fs.readdir);
 
@@ -46,6 +47,7 @@ export type Phase = {
 export class TestRun {
   readonly reporter: ReporterV2;
   readonly config: FullConfigInternal;
+  readonly failureTracker: FailureTracker;
   rootSuite: Suite | undefined = undefined;
   readonly phases: Phase[] = [];
   projects: FullProjectInternal[] = [];
@@ -55,6 +57,7 @@ export class TestRun {
   constructor(config: FullConfigInternal, reporter: ReporterV2) {
     this.config = config;
     this.reporter = reporter;
+    this.failureTracker = new FailureTracker(config);
   }
 }
 
@@ -190,6 +193,7 @@ function createLoadTask(mode: 'out-of-process' | 'in-process', options: { filter
       await collectProjectsAndTestFiles(testRun, !!options.doNotRunTestsOutsideProjectFilter, options.additionalFileMatcher);
       await loadFileSuites(testRun, mode, options.failOnLoadErrors ? errors : softErrors);
       testRun.rootSuite = await createRootSuite(testRun, options.failOnLoadErrors ? errors : softErrors, !!options.filterOnly);
+      testRun.failureTracker.onRootSuite(testRun.rootSuite);
       // Fail when no tests.
       if (options.failOnLoadErrors && !testRun.rootSuite.allTests().length && !testRun.config.cliPassWithNoTests && !testRun.config.config.shard)
         throw new Error(`No tests found`);
@@ -230,7 +234,7 @@ function createPhasesTask(): Task<TestRun> {
           processed.add(project);
         if (phaseProjects.length) {
           let testGroupsInPhase = 0;
-          const phase: Phase = { dispatcher: new Dispatcher(testRun.config, testRun.reporter), projects: [] };
+          const phase: Phase = { dispatcher: new Dispatcher(testRun.config, testRun.reporter, testRun.failureTracker), projects: [] };
           testRun.phases.push(phase);
           for (const project of phaseProjects) {
             const projectSuite = projectToSuite.get(project)!;
@@ -250,7 +254,7 @@ function createPhasesTask(): Task<TestRun> {
 
 function createRunTestsTask(): Task<TestRun> {
   return {
-    setup: async ({ phases }) => {
+    setup: async ({ phases, failureTracker }) => {
       const successfulProjects = new Set<FullProjectInternal>();
       const extraEnvByProjectId: EnvByProjectId = new Map();
       const teardownToSetups = buildTeardownToSetupsMap(phases.map(phase => phase.projects.map(p => p.project)).flat());
@@ -291,7 +295,7 @@ function createRunTestsTask(): Task<TestRun> {
 
         // If the worker broke, fail everything, we have no way of knowing which
         // projects failed.
-        if (!dispatcher.hasWorkerErrors()) {
+        if (!failureTracker.hasWorkerErrors()) {
           for (const { project, projectSuite } of projects) {
             const hasFailedDeps = project.deps.some(p => !successfulProjects.has(p));
             if (!hasFailedDeps && !projectSuite.allTests().some(test => !test.ok()))
