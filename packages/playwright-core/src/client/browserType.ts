@@ -23,7 +23,7 @@ import { Connection } from './connection';
 import { Events } from './events';
 import type { ChildProcess } from 'child_process';
 import { envObjectToArray } from './clientHelper';
-import { jsonStringifyForceASCII, assert, headersObjectToArray, monotonicTime } from '../utils';
+import { assert, headersObjectToArray, monotonicTime } from '../utils';
 import type * as api from '../../types/types';
 import { kBrowserClosedError } from '../common/errors';
 import { raceAgainstDeadline } from '../utils/timeoutRunner';
@@ -51,7 +51,6 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
   _defaultContextTimeout?: number;
   _defaultContextNavigationTimeout?: number;
   private _defaultLaunchOptions?: LaunchOptions;
-  private _defaultConnectOptions?: ConnectOptions;
 
   static from(browserType: channels.BrowserTypeChannel): BrowserType {
     return (browserType as any)._object;
@@ -71,9 +70,6 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     assert(!(options as any).userDataDir, 'userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistentContext` instead');
     assert(!(options as any).port, 'Cannot specify a port without launching as a server.');
 
-    if (this._defaultConnectOptions)
-      return await this._connectInsteadOfLaunching(this._defaultConnectOptions, options);
-
     const logger = options.logger || this._defaultLaunchOptions?.logger;
     options = { ...this._defaultLaunchOptions, ...options };
     const launchOptions: channels.BrowserTypeLaunchParams = {
@@ -86,20 +82,6 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       const browser = Browser.from((await this._channel.launch(launchOptions)).browser);
       this._didLaunchBrowser(browser, options, logger);
       return browser;
-    });
-  }
-
-  private async _connectInsteadOfLaunching(connectOptions: ConnectOptions, launchOptions: LaunchOptions): Promise<Browser> {
-    return this._connect({
-      wsEndpoint: connectOptions.wsEndpoint,
-      headers: {
-        // HTTP headers are ASCII only (not UTF-8).
-        'x-playwright-launch-options': jsonStringifyForceASCII({ ...this._defaultLaunchOptions, ...launchOptions }),
-        ...connectOptions.headers,
-      },
-      exposeNetwork: connectOptions.exposeNetwork ?? connectOptions._exposeNetwork,
-      slowMo: connectOptions.slowMo,
-      timeout: connectOptions.timeout ?? 3 * 60 * 1000, // 3 minutes
     });
   }
 

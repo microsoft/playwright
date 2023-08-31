@@ -100,7 +100,7 @@ test('should throw with bad connectOptions', async ({ runInlineTest }) => {
   });
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
-  expect(result.output).toContain('browserType.launch:');
+  expect(result.output).toContain('browserType.connect:');
   expect(result.output).toContain('does-not-exist-bad-domain');
 });
 
@@ -124,7 +124,7 @@ test('should respect connectOptions.timeout', async ({ runInlineTest }) => {
   });
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
-  expect(result.output).toContain('browserType.launch: Timeout 1ms exceeded.');
+  expect(result.output).toContain('browserType.connect: Timeout 1ms exceeded.');
 });
 
 test('should print debug log when failed to connect', async ({ runInlineTest }) => {

@@ -698,22 +698,6 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       await Promise.all([uploadFile, file1.filepath].map(fs.promises.unlink));
     });
 
-    test('should connect when launching', async ({ browserType, startRemoteServer }) => {
-      const remoteServer = await startRemoteServer(kind);
-      (browserType as any)._defaultConnectOptions = {
-        wsEndpoint: remoteServer.wsEndpoint()
-      };
-
-      const browser = await browserType.launch();
-
-      await Promise.all([
-        new Promise(f => browser.on('disconnected', f)),
-        remoteServer.close(),
-      ]);
-
-      (browserType as any)._defaultConnectOptions = undefined;
-    });
-
     test('should connect over http', async ({ connect, startRemoteServer, mode }) => {
       test.skip(mode !== 'default');
       const remoteServer = await startRemoteServer(kind);
