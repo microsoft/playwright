@@ -7540,6 +7540,22 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        */
       pageProxyId: PageProxyID;
       /**
+       * X coordinate
+       */
+      x: number;
+      /**
+       * Y coordinate
+       */
+      y: number;
+      /**
+       * Rectangle width
+       */
+      width: number;
+      /**
+       * Rectangle height
+       */
+      height: number;
+      /**
        * By default, screenshot is inflated by device scale factor to avoid blurry image. This flag disables it.
        */
       omitDeviceScaleFactor?: boolean;
