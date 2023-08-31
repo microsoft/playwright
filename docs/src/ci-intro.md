@@ -35,7 +35,6 @@ To add a [GitHub Actions](https://docs.github.com/en/actions) file first create 
 - [How to view the trace](/ci-intro.md#viewing-the-trace)
 
 
-
 ## Setting up GitHub Actions
 
 ### On push/pull_request
@@ -421,14 +420,14 @@ npx playwright show-report name-of-my-extracted-playwright-report
 
 To learn more about reports check out our detailed guide on [HTML Reporter](/test-reporters.md#html-reporter)
 
-### Viewing the Trace
+## Viewing the Trace
 * langs: js
 
 Once you have served the report using `npx playwright show-report`, click on the trace icon next to the test's file name as seen in the image above. You can then view the trace of your tests and inspect each action to try to find out why the tests are failing.
 
 <img width="1976" alt="Playwright Trace Viewer" src="https://user-images.githubusercontent.com/13063165/212869694-61368b16-f176-4083-bbc2-fc85b95131f0.png" />
 
-### Viewing the Trace
+## Viewing the Trace
 * langs: python, java, csharp
 
 [trace.playwright.dev](https://trace.playwright.dev) is a statically hosted variant of the Trace Viewer. You can upload trace files using drag and drop.
@@ -477,15 +476,11 @@ The contents of the `$web` storage container can be accessed from a browser by u
 This step will not work for pull requests created from a forked repository because such workflow [doesn't have access to the secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets#using-encrypted-secrets-in-a-workflow).
 :::
 
-######
-* langs: js python, java, csharp
-  
-To learn more about traces check out our detailed guide on [Trace Viewer](/trace-viewer.md).
-
-To learn more about running tests on other CI providers check out our detailed guide on [Continuous Integration](/ci.md).
 
 ## What's Next
 
 - [Learn how to use Locators](./locators.md)
 - [Learn how to perform Actions](./input.md)
 - [Learn how to write Assertions](./test-assertions.md)
+- [Learn more about the Trace Viewer](/trace-viewer.md)
+- [Learn more about running tests on other CI providers](/ci.md)
