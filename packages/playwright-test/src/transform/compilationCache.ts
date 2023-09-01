@@ -113,6 +113,11 @@ export function getFromCompilationCache(filename: string, hash: string, moduleUr
         if (map)
           fs.writeFileSync(sourceMapPath, JSON.stringify(map), { encoding: 'utf8', flag: 'wx' });
         fs.writeFileSync(codePath, code, { encoding: 'utf8', flag: 'wx' });
+        // NOTE: if the worker crashes RIGHT HERE, before creating a marker file, we will never be able to
+        // create it later on. As a result, the entry will never be added to the disk cache.
+        //
+        // However, this scenario is EXTREMELY unlikely, so we accept this
+        // limitation to reduce algorithm complexity.
         fs.closeSync(fs.openSync(markerFile, 'w'));
       } catch (error) {
         // Ignore error that is triggered by the `wx` flag.
