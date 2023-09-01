@@ -114,7 +114,9 @@ export function getFromCompilationCache(filename: string, hash: string, moduleUr
           fs.writeFileSync(sourceMapPath, JSON.stringify(map), { encoding: 'utf8', flag: 'wx' });
         fs.writeFileSync(codePath, code, { encoding: 'utf8', flag: 'wx' });
         fs.closeSync(fs.openSync(markerFile, 'w'));
-      } catch (e) {}
+      } catch (error) {
+        // Ignore error that is triggered by the `wx` flag.
+      }
       _innerAddToCompilationCache(filename, { codePath, sourceMapPath, moduleUrl });
     }
   };
