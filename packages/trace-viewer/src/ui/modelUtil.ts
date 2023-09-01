@@ -90,6 +90,11 @@ export class MultiTraceModel {
     this.resources.sort((a1, a2) => a1._monotonicTime! - a2._monotonicTime!);
     this.sources = collectSources(this.actions);
   }
+
+  failedAction() {
+    // This find innermost action for nested ones.
+    return this.actions.findLast(a => a.error);
+  }
 }
 
 function indexModel(context: ContextEntry) {
