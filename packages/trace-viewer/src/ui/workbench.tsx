@@ -18,10 +18,12 @@ import { SplitView } from '@web/components/splitView';
 import * as React from 'react';
 import { ActionList } from './actionList';
 import { CallTab } from './callTab';
-import { ConsoleTab } from './consoleTab';
+import { LogTab } from './logTab';
+import { ErrorsTab, useErrorsTabModel } from './errorsTab';
+import { ConsoleTab, useConsoleTabModel } from './consoleTab';
 import type * as modelUtil from './modelUtil';
 import type { ActionTraceEventInContext, MultiTraceModel } from './modelUtil';
-import { NetworkTab } from './networkTab';
+import { NetworkTab, useNetworkTabModel } from './networkTab';
 import { SnapshotTab } from './snapshotTab';
 import { SourceTab } from './sourceTab';
 import { TabbedPane } from '@web/components/tabbedPane';
@@ -49,7 +51,7 @@ export const Workbench: React.FunctionComponent<{
   const [highlightedAction, setHighlightedAction] = React.useState<ActionTraceEventInContext | undefined>();
   const [highlightedEntry, setHighlightedEntry] = React.useState<Entry | undefined>();
   const [selectedNavigatorTab, setSelectedNavigatorTab] = React.useState<string>('actions');
-  const [selectedPropertiesTab, setSelectedPropertiesTab] = React.useState<string>(showSourcesFirst ? 'source' : 'call');
+  const [selectedPropertiesTab, setSelectedPropertiesTab] = useSetting<string>('propertiesTab', showSourcesFirst ? 'source' : 'call');
   const [isInspecting, setIsInspecting] = React.useState(false);
   const [highlightedLocator, setHighlightedLocator] = React.useState<string>('');
   const activeAction = model ? highlightedAction || selectedAction : undefined;
@@ -83,12 +85,19 @@ export const Workbench: React.FunctionComponent<{
     setSelectedPropertiesTab(tab);
     if (tab !== 'inspector')
       setIsInspecting(false);
-  }, []);
+  }, [setSelectedPropertiesTab]);
 
   const locatorPicked = React.useCallback((locator: string) => {
     setHighlightedLocator(locator);
     selectPropertiesTab('inspector');
   }, [selectPropertiesTab]);
+
+  const consoleModel = useConsoleTabModel(model, selectedTime);
+  const networkModel = useNetworkTabModel(model, selectedTime);
+  const errorsModel = useErrorsTabModel(model);
+  const attachments = React.useMemo(() => {
+    return model?.actions.map(a => a.attachments || []).flat() || [];
+  }, [model]);
 
   const sdkLanguage = model?.sdkLanguage || 'javascript';
 
@@ -106,6 +115,17 @@ export const Workbench: React.FunctionComponent<{
     title: 'Call',
     render: () => <CallTab action={activeAction} sdkLanguage={sdkLanguage} />
   };
+  const logTab: TabbedPaneTabModel = {
+    id: 'log',
+    title: 'Log',
+    render: () => <LogTab action={activeAction} />
+  };
+  const errorsTab: TabbedPaneTabModel = {
+    id: 'errors',
+    title: 'Errors',
+    errorCount: errorsModel.errors.size,
+    render: () => <ErrorsTab errorsModel={errorsModel} sdkLanguage={sdkLanguage} boundaries={boundaries} />
+  };
   const sourceTab: TabbedPaneTabModel = {
     id: 'source',
     title: 'Source',
@@ -119,34 +139,37 @@ export const Workbench: React.FunctionComponent<{
   const consoleTab: TabbedPaneTabModel = {
     id: 'console',
     title: 'Console',
-    render: () => <ConsoleTab model={model} boundaries={boundaries} selectedTime={selectedTime} />
+    count: consoleModel.entries.length,
+    render: () => <ConsoleTab consoleModel={consoleModel} boundaries={boundaries} selectedTime={selectedTime} />
   };
   const networkTab: TabbedPaneTabModel = {
     id: 'network',
     title: 'Network',
-    render: () => <NetworkTab model={model} boundaries={boundaries} selectedTime={selectedTime} onEntryHovered={setHighlightedEntry}/>
+    count: networkModel.resources.length,
+    render: () => <NetworkTab boundaries={boundaries} networkModel={networkModel} onEntryHovered={setHighlightedEntry}/>
   };
   const attachmentsTab: TabbedPaneTabModel = {
     id: 'attachments',
     title: 'Attachments',
+    count: attachments.length,
     render: () => <AttachmentsTab model={model} />
   };
 
-  const tabs: TabbedPaneTabModel[] = showSourcesFirst ? [
-    inspectorTab,
-    sourceTab,
-    consoleTab,
-    networkTab,
-    callTab,
-    attachmentsTab,
-  ] : [
+  const tabs: TabbedPaneTabModel[] = [
     inspectorTab,
     callTab,
+    logTab,
+    errorsTab,
     consoleTab,
     networkTab,
     sourceTab,
     attachmentsTab,
   ];
+  if (showSourcesFirst) {
+    const sourceTabIndex = tabs.indexOf(sourceTab);
+    tabs.splice(sourceTabIndex, 1);
+    tabs.splice(1, 0, sourceTab);
+  }
 
   const { boundaries } = React.useMemo(() => {
     const boundaries = { minimum: model?.startTime || 0, maximum: model?.endTime || 30000 };

@@ -18,25 +18,21 @@ import type { Entry } from '@trace/har';
 import { ListView } from '@web/components/listView';
 import * as React from 'react';
 import type { Boundaries } from '../geometry';
-import type * as modelUtil from './modelUtil';
 import './networkTab.css';
 import { NetworkResourceDetails } from './networkResourceDetails';
 import { bytesToString, msToString } from '@web/uiUtils';
+import { PlaceholderPanel } from './placeholderPanel';
+import type { MultiTraceModel } from './modelUtil';
 
 const NetworkListView = ListView<Entry>;
 
 type SortBy = 'start' | 'status' | 'method' | 'file' | 'duration' | 'size' | 'content-type';
 type Sorting = { by: SortBy, negate: boolean};
+type NetworkTabModel = {
+  resources: Entry[],
+};
 
-export const NetworkTab: React.FunctionComponent<{
-  model: modelUtil.MultiTraceModel | undefined,
-  boundaries: Boundaries,
-  selectedTime: Boundaries | undefined,
-  onEntryHovered: (entry: Entry | undefined) => void,
-}> = ({ model, boundaries, selectedTime, onEntryHovered }) => {
-  const [resource, setResource] = React.useState<Entry | undefined>();
-  const [sorting, setSorting] = React.useState<Sorting | undefined>(undefined);
-
+export function useNetworkTabModel(model: MultiTraceModel | undefined, selectedTime: Boundaries | undefined): NetworkTabModel {
   const resources = React.useMemo(() => {
     const resources = model?.resources || [];
     const filtered = resources.filter(resource => {
@@ -44,21 +40,37 @@ export const NetworkTab: React.FunctionComponent<{
         return true;
       return !!resource._monotonicTime && (resource._monotonicTime >= selectedTime.minimum && resource._monotonicTime <= selectedTime.maximum);
     });
-    if (sorting)
-      sort(filtered, sorting);
     return filtered;
-  }, [sorting, model, selectedTime]);
+  }, [model, selectedTime]);
+  return { resources };
+}
+
+export const NetworkTab: React.FunctionComponent<{
+  boundaries: Boundaries,
+  networkModel: NetworkTabModel,
+  onEntryHovered: (entry: Entry | undefined) => void,
+}> = ({ boundaries, networkModel, onEntryHovered }) => {
+  const [resource, setResource] = React.useState<Entry | undefined>();
+  const [sorting, setSorting] = React.useState<Sorting | undefined>(undefined);
+
+  React.useMemo(() => {
+    if (sorting)
+      sort(networkModel.resources, sorting);
+  }, [networkModel.resources, sorting]);
 
   const toggleSorting = React.useCallback((f: SortBy) => {
     setSorting({ by: f, negate: sorting?.by === f ? !sorting.negate : false });
   }, [sorting]);
+
+  if (!networkModel.resources.length)
+    return <PlaceholderPanel text='No network calls' />;
 
   return <>
     {!resource && <div className='vbox'>
       <NetworkHeader sorting={sorting} toggleSorting={toggleSorting} />
       <NetworkListView
         dataTestId='network-request-list'
-        items={resources}
+        items={networkModel.resources}
         render={entry => <NetworkResource boundaries={boundaries} resource={entry}></NetworkResource>}
         onSelected={setResource}
         onHighlighted={onEntryHovered}

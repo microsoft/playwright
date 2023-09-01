@@ -20,5 +20,5 @@
   font-size: var(--vscode-editor-font-size);
   background-color: var(--vscode-inputValidation-errorBackground);
   white-space: pre;
-  overflow: auto;
+  padding: 10px;
 }

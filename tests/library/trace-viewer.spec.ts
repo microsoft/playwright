@@ -122,7 +122,8 @@ test('should open simple trace viewer', async ({ showTraceViewer }) => {
 test('should contain action info', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer([traceFile]);
   await traceViewer.selectAction('locator.click');
-  const logLines = await traceViewer.callLines.allTextContents();
+  await traceViewer.page.getByText('Log', { exact: true }).click();
+  const logLines = await traceViewer.logLines.allTextContents();
   expect(logLines.length).toBeGreaterThan(10);
   expect(logLines).toContain('attempting click action');
   expect(logLines).toContain('  click action done');

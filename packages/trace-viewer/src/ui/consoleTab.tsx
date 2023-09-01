@@ -23,8 +23,9 @@ import type { Boundaries } from '../geometry';
 import { msToString } from '@web/uiUtils';
 import { ansi2html } from '@web/ansi2html';
 import type * as trace from '@trace/trace';
+import { PlaceholderPanel } from './placeholderPanel';
 
-type ConsoleEntry = {
+export type ConsoleEntry = {
   browserMessage?: trace.ConsoleMessageTraceEvent['initializer'],
   browserError?: channels.SerializedError;
   nodeMessage?: {
@@ -36,13 +37,14 @@ type ConsoleEntry = {
   timestamp: number;
 };
 
+type ConsoleTabModel = {
+  entries: ConsoleEntry[],
+};
+
 const ConsoleListView = ListView<ConsoleEntry>;
 
-export const ConsoleTab: React.FunctionComponent<{
-  model: modelUtil.MultiTraceModel | undefined,
-  boundaries: Boundaries,
-  selectedTime: Boundaries | undefined,
-}> = ({ model, boundaries, selectedTime }) => {
+
+export function useConsoleTabModel(model: modelUtil.MultiTraceModel | undefined, selectedTime: Boundaries | undefined): ConsoleTabModel {
   const { entries } = React.useMemo(() => {
     if (!model)
       return { entries: [] };
@@ -89,9 +91,20 @@ export const ConsoleTab: React.FunctionComponent<{
     return entries.filter(entry => entry.timestamp >= selectedTime.minimum && entry.timestamp <= selectedTime.maximum);
   }, [entries, selectedTime]);
 
+  return { entries: filteredEntries };
+}
+
+export const ConsoleTab: React.FunctionComponent<{
+  boundaries: Boundaries,
+  consoleModel: ConsoleTabModel,
+  selectedTime: Boundaries | undefined,
+}> = ({ consoleModel, boundaries }) => {
+  if (!consoleModel.entries.length)
+    return <PlaceholderPanel text='No console entries' />;
+
   return <div className='console-tab'>
     <ConsoleListView
-      items={filteredEntries}
+      items={consoleModel.entries}
       isError={entry => entry.isError}
       isWarning={entry => entry.isWarning}
       render={entry => {

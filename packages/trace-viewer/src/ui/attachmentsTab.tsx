@@ -19,12 +19,14 @@ import './attachmentsTab.css';
 import { ImageDiffView } from '@web/components/imageDiffView';
 import type { TestAttachment } from '@web/components/imageDiffView';
 import type { ActionTraceEventInContext, MultiTraceModel } from './modelUtil';
+import { PlaceholderPanel } from './placeholderPanel';
 
 export const AttachmentsTab: React.FunctionComponent<{
   model: MultiTraceModel | undefined,
 }> = ({ model }) => {
-  if (!model)
-    return null;
+  const attachments = model?.actions.map(a => a.attachments || []).flat() || [];
+  if (!model || !attachments.length)
+    return <PlaceholderPanel text='No attachments' />;
   return <div className='attachments-tab'>
     { model.actions.map((action, index) => <AttachmentsSection key={index} action={action} />) }
   </div>;
