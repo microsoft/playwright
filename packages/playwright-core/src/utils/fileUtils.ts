@@ -15,10 +15,8 @@
  */
 
 import fs from 'fs';
-import type { WriteFileOptions } from 'fs';
 import path from 'path';
 import { rimraf } from '../utilsBundle';
-import { createGuid } from './crypto';
 
 export const existsAsync = (path: string): Promise<boolean> => new Promise(resolve => fs.stat(path, err => resolve(!err)));
 
@@ -54,12 +52,4 @@ export async function copyFileAndMakeWritable(from: string, to: string) {
 
 export function sanitizeForFilePath(s: string) {
   return s.replace(/[\x00-\x2C\x2E-\x2F\x3A-\x40\x5B-\x60\x7B-\x7F]+/g, '-');
-}
-
-export function writeFileSyncAtomic(aPath: string, data: Buffer | string, options: WriteFileOptions) {
-  const dirName = path.dirname(aPath);
-  const fileName = path.basename(aPath);
-  const tmpPath = path.join(dirName, fileName + '-' + createGuid());
-  fs.writeFileSync(tmpPath, data, options);
-  fs.renameSync(tmpPath, aPath);
 }

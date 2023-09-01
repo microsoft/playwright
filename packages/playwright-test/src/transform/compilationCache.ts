@@ -18,7 +18,6 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { sourceMapSupport } from '../utilsBundle';
-import { writeFileSyncAtomic } from 'playwright-core/lib/utils';
 
 export type MemoryCache = {
   codePath: string;
@@ -74,6 +73,22 @@ function _innerAddToCompilationCache(filename: string, options: { codePath: stri
   memoryCache.set(filename, options);
 }
 
+// Each worker (and runner) process compiles and caches client code and source maps.
+// There are 2 levels of caching:
+// 1. Memory Cache: per-process, single threaded.
+// 2. SHARED Disk Cache: helps to re-use caching across processes (worker re-starts).
+//
+// Now, SHARED Disk Cache might be accessed at the same time by different workers, trying
+// to write/read concurrently to it. We tried to implement "atomic write" to disk cache, but
+// failed to do so on Windows. See context: https://github.com/microsoft/playwright/issues/26769#issuecomment-1701870842
+//
+// Under further inspection, it turns out that our Disk Cache is append-only, so instead of a general-purpose
+// "atomic write" it will suffice to have "atomic append". For "atomic append", it is sufficient to:
+// - make sure there are no concurrent writes to the same file. This is implemented using the `wx` flag to the Node.js `fs.writeFile` calls.
+// - have a signal that guarantees that file is actually finished writing. We use marker files for this.
+//
+// The following method implements the "atomic append" principles for the disk cache.
+//
 export function getFromCompilationCache(filename: string, hash: string, moduleUrl?: string): { cachedCode?: string, addToCache?: (code: string, map?: any) => void } {
   // First check the memory cache by filename, this cache will always work in the worker,
   // because we just compiled this file in the loader.
@@ -85,7 +100,8 @@ export function getFromCompilationCache(filename: string, hash: string, moduleUr
   const cachePath = calculateCachePath(filename, hash);
   const codePath = cachePath + '.js';
   const sourceMapPath = cachePath + '.map';
-  if (fs.existsSync(codePath)) {
+  const markerFile = codePath + '-marker';
+  if (fs.existsSync(markerFile)) {
     _innerAddToCompilationCache(filename, { codePath, sourceMapPath, moduleUrl });
     return { cachedCode: fs.readFileSync(codePath, 'utf8') };
   }
@@ -93,9 +109,19 @@ export function getFromCompilationCache(filename: string, hash: string, moduleUr
   return {
     addToCache: (code: string, map: any) => {
       fs.mkdirSync(path.dirname(cachePath), { recursive: true });
-      if (map)
-        writeFileSyncAtomic(sourceMapPath, JSON.stringify(map), 'utf8');
-      writeFileSyncAtomic(codePath, code, 'utf8');
+      try {
+        if (map)
+          fs.writeFileSync(sourceMapPath, JSON.stringify(map), { encoding: 'utf8', flag: 'wx' });
+        fs.writeFileSync(codePath, code, { encoding: 'utf8', flag: 'wx' });
+        // NOTE: if the worker crashes RIGHT HERE, before creating a marker file, we will never be able to
+        // create it later on. As a result, the entry will never be added to the disk cache.
+        //
+        // However, this scenario is EXTREMELY unlikely, so we accept this
+        // limitation to reduce algorithm complexity.
+        fs.closeSync(fs.openSync(markerFile, 'w'));
+      } catch (error) {
+        // Ignore error that is triggered by the `wx` flag.
+      }
       _innerAddToCompilationCache(filename, { codePath, sourceMapPath, moduleUrl });
     }
   };
