@@ -551,6 +551,28 @@ test('should handle src=blob', async ({ page, server, runAndTrace, browserName }
   expect(size).toBe(10);
 });
 
+test('should preserve currentSrc', async ({ browser, server, showTraceViewer }) => {
+  const traceFile = test.info().outputPath('trace.zip');
+  const page = await browser.newPage({ deviceScaleFactor: 3 });
+  await page.context().tracing.start({ snapshots: true, screenshots: true, sources: true });
+  await page.setViewportSize({ width: 300, height: 300 });
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`
+    <picture>
+      <source srcset="digits/1.png 1x, digits/2.png 2x, digits/3.png 3x">
+      <img id=target1 src="digits/0.png">
+    </picture>
+    <img id=target2 srcset="digits/4.png 1x, digits/5.png 2x, digits/6.png 3x">
+  `);
+  await page.context().tracing.stop({ path: traceFile });
+  await page.close();
+
+  const traceViewer = await showTraceViewer([traceFile]);
+  const frame = await traceViewer.snapshotFrame('page.setContent');
+  await expect(frame.locator('#target1')).toHaveAttribute('src', server.PREFIX + '/digits/3.png');
+  await expect(frame.locator('#target2')).toHaveAttribute('src', server.PREFIX + '/digits/6.png');
+});
+
 test('should register custom elements', async ({ page, server, runAndTrace }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.goto(server.EMPTY_PAGE);
