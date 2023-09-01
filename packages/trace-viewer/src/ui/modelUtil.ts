@@ -68,13 +68,14 @@ export class MultiTraceModel {
 
   constructor(contexts: ContextEntry[]) {
     contexts.forEach(contextEntry => indexModel(contextEntry));
+    const primaryContext = contexts.find(context => context.isPrimary);
 
-    this.browserName = contexts[0]?.browserName || '';
-    this.sdkLanguage = contexts[0]?.sdkLanguage;
-    this.testIdAttributeName = contexts[0]?.testIdAttributeName;
-    this.platform = contexts[0]?.platform || '';
-    this.title = contexts[0]?.title || '';
-    this.options = contexts[0]?.options || {};
+    this.browserName = primaryContext?.browserName || '';
+    this.sdkLanguage = primaryContext?.sdkLanguage;
+    this.testIdAttributeName = primaryContext?.testIdAttributeName;
+    this.platform = primaryContext?.platform || '';
+    this.title = primaryContext?.title || '';
+    this.options = primaryContext?.options || {};
     this.wallTime = contexts.map(c => c.wallTime).reduce((prev, cur) => Math.min(prev || Number.MAX_VALUE, cur!), Number.MAX_VALUE);
     this.startTime = contexts.map(c => c.startTime).reduce((prev, cur) => Math.min(prev, cur), Number.MAX_VALUE);
     this.endTime = contexts.map(c => c.endTime).reduce((prev, cur) => Math.max(prev, cur), Number.MIN_VALUE);

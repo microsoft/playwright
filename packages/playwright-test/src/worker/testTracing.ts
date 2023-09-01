@@ -14,15 +14,18 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
-import path from 'path';
 import type { SerializedError, StackFrame } from '@protocol/channels';
 import type * as trace from '@trace/trace';
-import { calculateSha1, monotonicTime } from 'playwright-core/lib/utils';
+import type EventEmitter from 'events';
+import fs from 'fs';
+import path from 'path';
+import { ManualPromise, calculateSha1, monotonicTime } from 'playwright-core/lib/utils';
+import { yauzl, yazl } from 'playwright-core/lib/zipBundle';
 import type { TestInfo } from '../../types/test';
-import { yazl } from 'playwright-core/lib/zipBundle';
+
 
 type Attachment = TestInfo['attachments'][0];
+export const testTraceEntryName = 'test.trace';
 
 export class TestTracing {
   private _liveTraceFile: string | undefined;
@@ -31,7 +34,7 @@ export class TestTracing {
 
   start(liveFileName: string, options: { sources: boolean, attachments: boolean, _live: boolean }) {
     this._options = options;
-    if (options._live) {
+    if (!this._liveTraceFile && options._live) {
       this._liveTraceFile = liveFileName;
       fs.mkdirSync(path.dirname(this._liveTraceFile), { recursive: true });
       const data = this._traceEvents.map(e => JSON.stringify(e)).join('\n') + '\n';
@@ -89,7 +92,7 @@ export class TestTracing {
     }
 
     const traceContent = Buffer.from(this._traceEvents.map(e => JSON.stringify(e)).join('\n'));
-    zipFile.addBuffer(traceContent, 'trace.trace');
+    zipFile.addBuffer(traceContent, testTraceEntryName);
 
     await new Promise(f => {
       zipFile.end(undefined, () => {
@@ -170,4 +173,60 @@ function generatePreview(value: any, visited = new Set<any>()): string {
   if (typeof value === 'object')
     return 'Object';
   return String(value);
+}
+
+export async function mergeTraceFiles(fileName: string, temporaryTraceFiles: string[]) {
+  if (temporaryTraceFiles.length === 1) {
+    await fs.promises.rename(temporaryTraceFiles[0], fileName);
+    return;
+  }
+
+  const mergePromise = new ManualPromise();
+  const zipFile = new yazl.ZipFile();
+  const entryNames = new Set<string>();
+  (zipFile as any as EventEmitter).on('error', error => mergePromise.reject(error));
+
+  for (let i = temporaryTraceFiles.length - 1; i >= 0; --i) {
+    const tempFile = temporaryTraceFiles[i];
+    const promise = new ManualPromise<void>();
+    yauzl.open(tempFile, (err, inZipFile) => {
+      if (err) {
+        promise.reject(err);
+        return;
+      }
+      let pendingEntries = inZipFile.entryCount;
+      inZipFile.on('entry', entry => {
+        let entryName = entry.fileName;
+        if (entry.fileName === testTraceEntryName) {
+          // Keep the name for test traces so that the last test trace
+          // that contains most of the information is kept in the trace.
+          // Note the reverse order of the iteration (from new traces to old).
+        } else if (entry.fileName.match(/[\d-]*trace\./)) {
+          entryName = i + '-' + entry.fileName;
+        }
+        inZipFile.openReadStream(entry, (err, readStream) => {
+          if (err) {
+            promise.reject(err);
+            return;
+          }
+          if (!entryNames.has(entryName)) {
+            entryNames.add(entryName);
+            zipFile.addReadStream(readStream!, entryName);
+          }
+          if (--pendingEntries === 0)
+            promise.resolve();
+        });
+      });
+    });
+    await promise;
+  }
+
+  zipFile.end(undefined, () => {
+    zipFile.outputStream.pipe(fs.createWriteStream(fileName)).on('close', () => {
+      void Promise.all(temporaryTraceFiles.map(tempFile => fs.promises.unlink(tempFile))).then(() => {
+        mergePromise.resolve();
+      });
+    }).on('error', error => mergePromise.reject(error));
+  });
+  await mergePromise;
 }
