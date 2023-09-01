@@ -65,7 +65,7 @@ export const Workbench: React.FunctionComponent<{
   React.useEffect(() => {
     if (selectedAction && model?.actions.includes(selectedAction))
       return;
-    const failedAction = model?.actions.find(a => a.error);
+    const failedAction = model?.failedAction();
     if (initialSelection && model?.actions.includes(initialSelection))
       setSelectedAction(initialSelection);
     else if (failedAction)
