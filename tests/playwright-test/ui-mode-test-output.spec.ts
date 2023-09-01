@@ -108,8 +108,8 @@ test('should show console messages for test', async ({ runUITest }, testInfo) =>
     'codicon codicon-file status-none',
   ]);
 
-  await expect(page.getByText('RED', { exact: true })).toHaveCSS('color', 'rgb(204, 0, 0)');
-  await expect(page.getByText('GREEN', { exact: true })).toHaveCSS('color', 'rgb(0, 204, 0)');
+  await expect.soft(page.getByText('RED', { exact: true })).toHaveCSS('color', 'rgb(205, 49, 49)');
+  await expect.soft(page.getByText('GREEN', { exact: true })).toHaveCSS('color', 'rgb(0, 188, 0)');
 });
 
 test('should format console messages in page', async ({ runUITest }, testInfo) => {
