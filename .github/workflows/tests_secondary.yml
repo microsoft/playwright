@@ -40,7 +40,7 @@ jobs:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
     - run: npx playwright install --with-deps ${{ matrix.browser }} chromium
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --project=${{ matrix.browser }}
+    - run: xvfb-run npm run test -- --project=${{ matrix.browser }}
       env:
         PWTEST_BLOB_REPORT_NAME: "${{ matrix.browser }}-${{ matrix.os }}"
     - run: node tests/config/checkCoverage.js ${{ matrix.browser }}
@@ -139,7 +139,7 @@ jobs:
     - run: npx playwright install-deps
     - run: npm run itest
       if: matrix.os != 'ubuntu-latest'
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run itest
+    - run: xvfb-run npm run itest
       if: matrix.os == 'ubuntu-latest'
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
@@ -164,7 +164,7 @@ jobs:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
     - run: npx playwright install --with-deps ${{ matrix.browser }} chromium
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --project=${{ matrix.browser }} --headed
+    - run: xvfb-run npm run test -- --project=${{ matrix.browser }} --headed
       if: always() && startsWith(matrix.os, 'ubuntu-')
       env:
         PWTEST_BLOB_REPORT_NAME: "${{ matrix.browser }}-headed-${{ matrix.os }}"
@@ -199,7 +199,7 @@ jobs:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
     - run: npx playwright install --with-deps chromium
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest
+    - run: xvfb-run npm run ctest
       env:
         PWTEST_MODE: ${{ matrix.mode }}
         PWTEST_BLOB_REPORT_NAME: "${{ matrix.mode }}"
@@ -235,7 +235,7 @@ jobs:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
     - run: npx playwright install --with-deps ${{ matrix.browser }} chromium ${{ matrix.channel }}
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --project=${{ matrix.browser }}
+    - run: xvfb-run npm run test -- --project=${{ matrix.browser }}
       env:
         PWTEST_TRACE: 1
         PWTEST_CHANNEL: ${{ matrix.channel }}
@@ -262,7 +262,7 @@ jobs:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
     - run: npx playwright install --with-deps chrome
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest
+    - run: xvfb-run npm run ctest
       env:
         PWTEST_CHANNEL: chrome
         PWTEST_BLOB_REPORT_NAME: "chrome-stable-linux"
@@ -345,7 +345,7 @@ jobs:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
     - run: npx playwright install --with-deps chromium-tip-of-tree
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest
+    - run: xvfb-run npm run ctest
       if: matrix.os == 'ubuntu-20.04'
       env:
         PWTEST_CHANNEL: chromium-tip-of-tree
@@ -381,7 +381,7 @@ jobs:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
     - run: npx playwright install --with-deps chromium-tip-of-tree
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest -- --headed
+    - run: xvfb-run npm run ctest -- --headed
       if: matrix.os == 'ubuntu-latest'
       env:
         PWTEST_CHANNEL: chromium-tip-of-tree
@@ -413,7 +413,7 @@ jobs:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
     - run: npx playwright install --with-deps firefox-beta chromium
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ftest
+    - run: xvfb-run npm run ftest
       env:
         PWTEST_CHANNEL: firefox-beta
         PWTEST_BLOB_REPORT_NAME: "firefox-beta-linux"
@@ -545,7 +545,7 @@ jobs:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
     - run: npx playwright install --with-deps msedge
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest
+    - run: xvfb-run npm run ctest
       env:
         PWTEST_CHANNEL: msedge
         PWTEST_BLOB_REPORT_NAME: "edge-stable-linux"
@@ -624,7 +624,7 @@ jobs:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
     - run: npx playwright install --with-deps msedge-beta
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest
+    - run: xvfb-run npm run ctest
       env:
         PWTEST_CHANNEL: msedge-beta
         PWTEST_BLOB_REPORT_NAME: "edge-beta-linux"
@@ -703,7 +703,7 @@ jobs:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
     - run: npx playwright install --with-deps msedge-dev
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest
+    - run: xvfb-run npm run ctest
       env:
         PWTEST_CHANNEL: msedge-dev
         PWTEST_BLOB_REPORT_NAME: "edge-dev-linux"
@@ -729,7 +729,7 @@ jobs:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
     - run: npx playwright install --with-deps chrome-beta
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest
+    - run: xvfb-run npm run ctest
       env:
         PWTEST_CHANNEL: chrome-beta
         PWTEST_BLOB_REPORT_NAME: "chrome-beta-linux"
@@ -822,7 +822,7 @@ jobs:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
     - run: npx playwright install --with-deps chromium
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --project=chromium
+    - run: xvfb-run npm run test -- --project=chromium
       env:
         PLAYWRIGHT_CHROMIUM_USE_HEADLESS_NEW: 1
         PWTEST_BLOB_REPORT_NAME: "headless-new"
