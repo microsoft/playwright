@@ -1298,6 +1298,14 @@ export module Protocol {
        */
       contextType: ContextType;
       /**
+       * Width of the canvas in pixels.
+       */
+      width: number;
+      /**
+       * Height of the canvas in pixels.
+       */
+      height: number;
+      /**
        * The corresponding DOM node id.
        */
       nodeId?: DOM.NodeId;
@@ -1338,6 +1346,20 @@ export module Protocol {
        * Removed canvas identifier.
        */
       canvasId: CanvasId;
+    }
+    export type canvasSizeChangedPayload = {
+      /**
+       * Identifier of canvas that changed.
+       */
+      canvasId: CanvasId;
+      /**
+       * Width of the canvas in pixels.
+       */
+      width: number;
+      /**
+       * Height of the canvas in pixels.
+       */
+      height: number;
     }
     export type canvasMemoryChangedPayload = {
       /**
@@ -9088,6 +9110,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "CSS.nodeLayoutFlagsChanged": CSS.nodeLayoutFlagsChangedPayload;
     "Canvas.canvasAdded": Canvas.canvasAddedPayload;
     "Canvas.canvasRemoved": Canvas.canvasRemovedPayload;
+    "Canvas.canvasSizeChanged": Canvas.canvasSizeChangedPayload;
     "Canvas.canvasMemoryChanged": Canvas.canvasMemoryChangedPayload;
     "Canvas.extensionEnabled": Canvas.extensionEnabledPayload;
     "Canvas.clientNodesChanged": Canvas.clientNodesChangedPayload;
