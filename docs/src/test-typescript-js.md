@@ -95,8 +95,8 @@ Using dynamic imports inside a function passed to various `evaluate()` methods i
 To work around this issue, use a string template instead of a function:
 
 ```js
-await page.evaluate(`async () => {
+await page.evaluate(`(async () => {
   const { value } = await import('some-module');
   console.log(value);
-}`);
+})()`);
 ```
