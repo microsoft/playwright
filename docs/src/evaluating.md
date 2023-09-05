@@ -349,7 +349,7 @@ Object result = page.evaluate("() => {\n" +
 ```python async
 data = { 'text': 'some data', 'value': 1 }
 result = await page.evaluate("""() => {
-  # There is no |data| in the web page.
+  // There is no |data| in the web page.
   window.myApp.use(data)
 }""")
 ```
@@ -357,7 +357,7 @@ result = await page.evaluate("""() => {
 ```python sync
 data = { 'text': 'some data', 'value': 1 }
 result = page.evaluate("""() => {
-  # There is no |data| in the web page.
+  // There is no |data| in the web page.
   window.myApp.use(data)
 }""")
 ```
