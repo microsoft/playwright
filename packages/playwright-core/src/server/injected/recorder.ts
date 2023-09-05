@@ -53,7 +53,7 @@ export class Recorder {
       console.error('Recorder script ready for test'); // eslint-disable-line no-console
   }
 
-  refreshListenersIfNeeded() {
+  installListeners() {
     // Ensure we are attached to the current document, and we are on top (last element);
     if (this._highlight.isInstalled())
       return;
@@ -74,19 +74,24 @@ export class Recorder {
           return;
         this._hoveredModel = null;
         this._highlight.hideActionPoint();
-        this._updateHighlight();
+        this._updateHighlight(false);
       }, true),
     ];
     this._highlight.install();
+  }
+
+  uninstallListeners() {
+    removeEventListeners(this._listeners);
+    this._highlight.uninstall();
   }
 
   setUIState(state: UIState, delegate: RecorderDelegate) {
     this._delegate = delegate;
 
     if (state.mode !== 'none' || state.actionSelector)
-      this.refreshListenersIfNeeded();
+      this.installListeners();
     else
-      removeEventListeners(this._listeners);
+      this.uninstallListeners();
 
     const { mode, actionPoint, actionSelector, language, testIdAttributeName } = state;
     this._testIdAttributeName = testIdAttributeName;
@@ -113,7 +118,7 @@ export class Recorder {
 
     if (actionSelector !== this._actionSelector) {
       this._hoveredModel = actionSelector ? querySelector(this._injectedScript, actionSelector, this.document) : null;
-      this._updateHighlight();
+      this._updateHighlight(false);
       this._actionSelector = actionSelector;
     }
   }
@@ -121,7 +126,7 @@ export class Recorder {
   clearHighlight() {
     this._hoveredModel = null;
     this._activeModel = null;
-    this._updateHighlight();
+    this._updateHighlight(false);
   }
 
   private _actionInProgress(event: Event): boolean {
@@ -257,7 +262,7 @@ export class Recorder {
     if (!this._hoveredElement || !this._hoveredElement.isConnected) {
       this._hoveredModel = null;
       this._hoveredElement = null;
-      this._updateHighlight();
+      this._updateHighlight(true);
       return;
     }
     const hoveredElement = this._hoveredElement;
@@ -265,14 +270,14 @@ export class Recorder {
     if ((this._hoveredModel && this._hoveredModel.selector === selector))
       return;
     this._hoveredModel = selector ? { selector, elements } : null;
-    this._updateHighlight();
+    this._updateHighlight(true);
   }
 
-  private _updateHighlight() {
+  private _updateHighlight(userGesture: boolean) {
     const elements = this._hoveredModel ? this._hoveredModel.elements : [];
     const selector = this._hoveredModel ? this._hoveredModel.selector : '';
     this._highlight.updateHighlight(elements, selector, this._mode === 'recording');
-    if (this._hoveredModel)
+    if (userGesture)
       this._delegate.highlightUpdated?.();
   }
 
@@ -522,7 +527,7 @@ export class PollingRecorder implements RecorderDelegate {
     this._recorder = new Recorder(injectedScript);
     this._embedder = injectedScript.window as any;
 
-    injectedScript.onGlobalListenersRemoved.add(() => this._recorder.refreshListenersIfNeeded());
+    injectedScript.onGlobalListenersRemoved.add(() => this._recorder.installListeners());
 
     const refreshOverlay = () => {
       this._pollRecorderMode().catch(e => console.log(e)); // eslint-disable-line no-console
