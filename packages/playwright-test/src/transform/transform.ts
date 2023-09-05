@@ -30,9 +30,13 @@ import { getFromCompilationCache, currentFileDepsCollector, belongsToNodeModules
 const version = require('../../package.json').version;
 
 type ParsedTsConfigData = {
-  absoluteBaseUrl: string;
+  absoluteBaseUrl: string | undefined;
   paths: { key: string, values: string[] }[];
   allowJs: boolean;
+  jsx: string | undefined
+  jsxFactory: string | undefined
+  jsxFragmentFactory: string | undefined
+  jsxImportSource: string | undefined
 };
 const cachedTSConfigs = new Map<string, ParsedTsConfigData | undefined>();
 
@@ -58,15 +62,19 @@ export function transformConfig(): TransformConfig {
 }
 
 function validateTsConfig(tsconfig: TsConfigLoaderResult): ParsedTsConfigData | undefined {
-  if (!tsconfig.tsConfigPath || !tsconfig.baseUrl)
+  if (!tsconfig.tsConfigPath)
     return;
   // Make 'baseUrl' absolute, because it is relative to the tsconfig.json, not to cwd.
-  const absoluteBaseUrl = path.resolve(path.dirname(tsconfig.tsConfigPath), tsconfig.baseUrl);
+  const absoluteBaseUrl = tsconfig.baseUrl ? path.resolve(path.dirname(tsconfig.tsConfigPath), tsconfig.baseUrl) : undefined;
   const pathsFallback = [{ key: '*', values: ['*'] }];
   return {
     allowJs: tsconfig.allowJs,
     absoluteBaseUrl,
-    paths: Object.entries(tsconfig.paths || {}).map(([key, values]) => ({ key, values })).concat(pathsFallback)
+    paths: Object.entries(tsconfig.paths || {}).map(([key, values]) => ({ key, values })).concat(pathsFallback),
+    jsx: tsconfig.jsx,
+    jsxFactory: tsconfig.jsxFactory,
+    jsxFragmentFactory: tsconfig.jsxFragmentFactory,
+    jsxImportSource: tsconfig.jsxImportSource
   };
 }
 
@@ -95,7 +103,7 @@ export function resolveHook(filename: string, specifier: string): string | undef
 
   const isTypeScript = filename.endsWith('.ts') || filename.endsWith('.tsx');
   const tsconfig = loadAndValidateTsconfigForFile(filename);
-  if (tsconfig && (isTypeScript || tsconfig.allowJs)) {
+  if (tsconfig?.absoluteBaseUrl && (isTypeScript || tsconfig.allowJs)) {
     let longestPrefixLength = -1;
     let pathMatchedByLongestPrefix: string | undefined;
 
@@ -158,6 +166,7 @@ export function shouldTransform(filename: string): boolean {
 
 export function transformHook(originalCode: string, filename: string, moduleUrl?: string): string {
   const isTypeScript = filename.endsWith('.ts') || filename.endsWith('.tsx') || filename.endsWith('.mts') || filename.endsWith('.cts');
+  const tsconfig = loadAndValidateTsconfigForFile(filename);
   const hasPreprocessor =
       process.env.PW_TEST_SOURCE_TRANSFORM &&
       process.env.PW_TEST_SOURCE_TRANSFORM_SCOPE &&
@@ -174,7 +183,7 @@ export function transformHook(originalCode: string, filename: string, moduleUrl?
   process.env.BROWSERSLIST_IGNORE_OLD_DATA = 'true';
 
   const { babelTransform }: { babelTransform: BabelTransformFunction } = require('./babelBundle');
-  const { code, map } = babelTransform(originalCode, filename, isTypeScript, !!moduleUrl, pluginsPrologue, pluginsEpilogue);
+  const { code, map } = babelTransform(originalCode, filename, { isTypeScript, isModule: !!moduleUrl, pluginsPrologue, pluginsEpilogue, jsx: tsconfig?.jsx, jsxFactory: tsconfig?.jsxFactory, jsxFragmentFactory: tsconfig?.jsxFragmentFactory, jsxImportSource: tsconfig?.jsxImportSource });
   if (code)
     addToCache!(code, map);
   return code || '';

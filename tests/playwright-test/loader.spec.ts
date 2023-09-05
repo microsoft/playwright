@@ -577,6 +577,129 @@ test('should load a jsx/tsx files with fragments', async ({ runInlineTest }) => 
   expect(exitCode).toBe(0);
 });
 
+test('should load tsx files respecting tsconfig jsx react', async ({ runInlineTest }) => {
+  const { passed, exitCode } = await runInlineTest({
+    'tsconfig.json': JSON.stringify({
+      compilerOptions: {
+        jsx: 'react'
+      }
+    }),
+    'a.spec.tsx': `
+      import React from 'react'
+      import { test, expect } from '@playwright/test';
+
+      test('succeeds', () => {
+        expect(<div>Hello</div>).toMatchObject(React.createElement('div', null, 'Hello'));
+      });
+    `
+  });
+  expect(passed).toBe(1);
+  expect(exitCode).toBe(0);
+});
+
+test('should load tsx files respecting tsconfig jsx react and jsxFactory', async ({ runInlineTest }) => {
+  const { passed, exitCode } = await runInlineTest({
+    'tsconfig.json': JSON.stringify({
+      compilerOptions: {
+        jsx: 'react',
+        jsxFactory: 'myJsxTransform'
+      }
+    }),
+    'my-jsx-transform.ts': `
+      export function myJsxTransform(...args) {
+        return ['myJsxTransform', ...args]
+      }
+    `,
+    'a.spec.tsx': `
+      import { myJsxTransform } from './my-jsx-transform';
+      import { test, expect } from '@playwright/test';
+
+      test('succeeds', () => {
+        expect(<div>Hello</div>).toMatchObject(['myJsxTransform', 'div', null, 'Hello']);
+      });
+    `
+  });
+  expect(passed).toBe(1);
+  expect(exitCode).toBe(0);
+});
+
+test('should load tsx files respecting tsconfig jsx react, jsxFactory, and jsxFragmentFactory', async ({ runInlineTest }) => {
+  const { passed, exitCode } = await runInlineTest({
+    'tsconfig.json': JSON.stringify({
+      compilerOptions: {
+        jsx: 'react',
+        jsxFactory: 'myJsxTransform',
+        jsxFragmentFactory: 'myJsxFragmentTransform'
+      }
+    }),
+    'my-jsx-transform.ts': `
+      export function myJsxTransform(...args) {
+        return ['myJsxTransform', ...args]
+      }
+
+      export function myJsxFragmentTransform(...args) {
+        return 'Fragment'
+      }
+    `,
+    'a.spec.tsx': `
+      import { myJsxTransform, myJsxFragmentTransform } from './my-jsx-transform';
+      import { test, expect } from '@playwright/test';
+
+      test('succeeds', () => {
+        expect(<><div>Hello</div></>).toMatchObject(["myJsxTransform", myJsxFragmentTransform, null, ["myJsxTransform", "div", null, "Hello"]]);
+      });
+    `
+  });
+  expect(passed).toBe(1);
+  expect(exitCode).toBe(0);
+});
+
+
+test('should load tsx files respecting tsconfig jsx react-jsx', async ({ runInlineTest }) => {
+  const { passed, exitCode } = await runInlineTest({
+    'tsconfig.json': JSON.stringify({
+      compilerOptions: {
+        jsx: 'react-jsx'
+      }
+    }),
+    'a.spec.tsx': `
+      import { jsx } from "react/jsx-runtime";
+      import { test, expect } from '@playwright/test';
+
+      test('succeeds', () => {
+        expect(<div>Hello</div>).toMatchObject(jsx('div', { children: 'Hello' }));
+      });
+    `
+  });
+  expect(passed).toBe(1);
+  expect(exitCode).toBe(0);
+});
+
+test('should load tsx files respecting tsconfig jsx react-jsx and jsxImportSource', async ({ runInlineTest }) => {
+  const { passed, exitCode } = await runInlineTest({
+    'tsconfig.json': JSON.stringify({
+      compilerOptions: {
+        jsx: 'react-jsx',
+        jsxImportSource: './my-jsx-transform'
+      }
+    }),
+    'my-jsx-transform/jsx-runtime.js': `
+      export function jsx(...args) {
+        return ['myJsxTransform', ...args]
+      }
+    `,
+    'a.spec.tsx': `
+      import { test, expect } from '@playwright/test';
+
+      test('succeeds', () => {
+        expect(<div>Hello</div>).toMatchObject(["myJsxTransform", "div", { children: 'Hello' }]);
+      });
+    `
+  });
+  expect(passed).toBe(1);
+  expect(exitCode).toBe(0);
+});
+
 test('should remove type imports from ts', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `

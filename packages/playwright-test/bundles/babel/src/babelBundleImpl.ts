@@ -26,7 +26,19 @@ export { parse } from '@babel/parser';
 import traverseFunction from '@babel/traverse';
 export const traverse = traverseFunction;
 
-function babelTransformOptions(isTypeScript: boolean, isModule: boolean, pluginsPrologue: [string, any?][], pluginsEpilogue: [string, any?][]): TransformOptions {
+
+interface BabelTransformOptionsInput {
+  isTypeScript: boolean
+  isModule: boolean
+  pluginsPrologue: [string, any?][]
+  pluginsEpilogue: [string, any?][]
+  jsx: string | undefined
+  jsxFactory: string | undefined
+  jsxFragmentFactory: string | undefined
+  jsxImportSource: string | undefined
+}
+
+function babelTransformOptions({ isTypeScript, isModule, pluginsPrologue, pluginsEpilogue, jsx, jsxFactory, jsxFragmentFactory, jsxImportSource }: BabelTransformOptionsInput): TransformOptions {
   const plugins = [];
 
   if (isTypeScript) {
@@ -63,10 +75,18 @@ function babelTransformOptions(isTypeScript: boolean, isModule: boolean, plugins
   }
 
   // Support JSX/TSX at all times, regardless of the file extension.
-  plugins.push([require('@babel/plugin-transform-react-jsx'), {
-    runtime: 'automatic',
-    importSource: '@playwright/test'
-  }]);
+  if (jsx === 'react') {
+    plugins.push([require('@babel/plugin-transform-react-jsx'), {
+      runtime: 'classic',
+      pragma: jsxFactory,
+      pragmaFrag: jsxFragmentFactory
+    }]);
+  } else {
+    plugins.push([require('@babel/plugin-transform-react-jsx'), {
+      runtime: 'automatic',
+      importSource: jsxImportSource
+    }]);
+  }
 
   if (!isModule) {
     plugins.push([require('@babel/plugin-transform-modules-commonjs')]);
@@ -97,7 +117,7 @@ function babelTransformOptions(isTypeScript: boolean, isModule: boolean, plugins
       setPublicClassFields: true,
     },
     presets: isTypeScript ? [
-      [require('@babel/preset-typescript'), { onlyRemoveTypeImports: false }],
+      [require('@babel/preset-typescript'), { onlyRemoveTypeImports: false, jsxPragma: jsxFactory, jsxPragmaFrag: jsxFragmentFactory }],
     ] : [],
     plugins: [
       ...pluginsPrologue.map(([name, options]) => [require(name), options]),
@@ -111,14 +131,14 @@ function babelTransformOptions(isTypeScript: boolean, isModule: boolean, plugins
 
 let isTransforming = false;
 
-export function babelTransform(code: string, filename: string, isTypeScript: boolean, isModule: boolean, pluginsPrologue: [string, any?][], pluginsEpilogue: [string, any?][]): BabelFileResult {
+export function babelTransform(code: string, filename: string, optionsInput: BabelTransformOptionsInput): BabelFileResult {
   if (isTransforming)
     return {};
 
   // Prevent reentry while requiring plugins lazily.
   isTransforming = true;
   try {
-    const options = babelTransformOptions(isTypeScript, isModule, pluginsPrologue, pluginsEpilogue);
+    const options = babelTransformOptions(optionsInput);
     return babel.transform(code, { filename, ...options })!;
   } finally {
     isTransforming = false;

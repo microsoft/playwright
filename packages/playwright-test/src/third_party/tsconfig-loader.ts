@@ -38,6 +38,10 @@ interface Tsconfig {
     paths?: { [key: string]: Array<string> };
     strict?: boolean;
     allowJs?: boolean;
+    jsx?: string
+    jsxFactory?: string
+    jsxFragmentFactory?: string
+    jsxImportSource?: string
   };
   references?: any[];
 }
@@ -48,6 +52,10 @@ export interface TsConfigLoaderResult {
   paths: { [key: string]: Array<string> } | undefined;
   serialized: string | undefined;
   allowJs: boolean;
+  jsx: string | undefined
+  jsxFactory: string | undefined
+  jsxFragmentFactory: string | undefined
+  jsxImportSource: string | undefined
 }
 
 export interface TsConfigLoaderParams {
@@ -76,10 +84,13 @@ function loadSyncDefault(
       paths: undefined,
       serialized: undefined,
       allowJs: false,
+      jsx: undefined, 
+      jsxFactory: undefined, 
+      jsxFragmentFactory: undefined, 
+      jsxImportSource: undefined
     };
   }
   const config = loadTsconfig(configPath);
-
   return {
     tsConfigPath: configPath,
     baseUrl:
@@ -87,6 +98,10 @@ function loadSyncDefault(
     paths: config && config.compilerOptions && config.compilerOptions.paths,
     serialized: undefined,
     allowJs: !!config?.compilerOptions?.allowJs,
+    jsx: config?.compilerOptions?.jsx, 
+    jsxFactory: config?.compilerOptions?.jsxFactory, 
+    jsxFragmentFactory: config?.compilerOptions?.jsxFragmentFactory, 
+    jsxImportSource: config?.compilerOptions?.jsxImportSource
   };
 }
 
