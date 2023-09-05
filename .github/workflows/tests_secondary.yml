@@ -835,3 +835,32 @@ jobs:
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
+
+  test_linux_webkit_gtk_headless:
+    name: Linux WebKit gtk headless
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
+      with:
+        node-version: 18
+    - run: npm ci
+      env:
+        DEBUG: pw:install
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+    - run: npm run build
+    - run: npx playwright install --with-deps chromium webkit
+    - run: npm run test -- --project=webkit
+      env:
+        PLAYWRIGHT_CHROMIUM_USE_HEADLESS_NEW: 1
+        PWTEST_BLOB_REPORT_NAME: "webkit-gtk-headless"
+        PLAYWRIGHT_HEADLESS_GTK: 1
+    - run: node tests/config/checkCoverage.js webkit
+    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
+      if: always()
+      shell: bash
+    - name: Upload blob report
+      if: always()
+      uses: ./.github/actions/upload-blob-report
+      with:
+        report_dir: blob-report
