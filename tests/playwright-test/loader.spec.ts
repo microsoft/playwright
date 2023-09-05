@@ -518,24 +518,17 @@ test('should load a jsx/tsx files in ESM mode', async ({ runInlineTest }) => {
 
 test('should load jsx with top-level component', async ({ runInlineTest }) => {
   const { exitCode, passed } = await runInlineTest({
+    'tsconfig.json': JSON.stringify({
+      compilerOptions: {
+        jsx: 'react-jsx'
+      }
+    }),
     'a.spec.tsx': `
+      import { jsx } from 'react/jsx-runtime';
       import { test, expect } from '@playwright/test';
       const component = <div>Hello <span>world</span></div>;
       test('succeeds', () => {
-        expect(component).toEqual({
-          type: 'div',
-          props: {
-            children: [
-              'Hello ',
-              {
-                type: 'span',
-                props: {
-                  children: 'world'
-                },
-              }
-            ]
-          },
-        });
+        expect(component).toEqual(jsx('div', { children: ['Hello ', jsx('span', { children: 'world' })] }));
       });
     `,
   });
@@ -589,7 +582,7 @@ test('should load tsx files respecting tsconfig jsx react', async ({ runInlineTe
       import { test, expect } from '@playwright/test';
 
       test('succeeds', () => {
-        expect(<div>Hello</div>).toMatchObject(React.createElement('div', null, 'Hello'));
+        expect(<div>Hello</div>).toEqual(React.createElement('div', null, 'Hello'));
       });
     `
   });
@@ -615,7 +608,7 @@ test('should load tsx files respecting tsconfig jsx react and jsxFactory', async
       import { test, expect } from '@playwright/test';
 
       test('succeeds', () => {
-        expect(<div>Hello</div>).toMatchObject(['myJsxTransform', 'div', null, 'Hello']);
+        expect(<div>Hello</div>).toEqual(['myJsxTransform', 'div', null, 'Hello']);
       });
     `
   });
@@ -646,7 +639,7 @@ test('should load tsx files respecting tsconfig jsx react, jsxFactory, and jsxFr
       import { test, expect } from '@playwright/test';
 
       test('succeeds', () => {
-        expect(<><div>Hello</div></>).toMatchObject(["myJsxTransform", myJsxFragmentTransform, null, ["myJsxTransform", "div", null, "Hello"]]);
+        expect(<><div>Hello</div></>).toEqual(["myJsxTransform", myJsxFragmentTransform, null, ["myJsxTransform", "div", null, "Hello"]]);
       });
     `
   });
@@ -667,7 +660,7 @@ test('should load tsx files respecting tsconfig jsx react-jsx', async ({ runInli
       import { test, expect } from '@playwright/test';
 
       test('succeeds', () => {
-        expect(<div>Hello</div>).toMatchObject(jsx('div', { children: 'Hello' }));
+        expect(<div>Hello</div>).toEqual(jsx('div', { children: 'Hello' }));
       });
     `
   });
@@ -692,7 +685,7 @@ test('should load tsx files respecting tsconfig jsx react-jsx and jsxImportSourc
       import { test, expect } from '@playwright/test';
 
       test('succeeds', () => {
-        expect(<div>Hello</div>).toMatchObject(["myJsxTransform", "div", { children: 'Hello' }]);
+        expect(<div>Hello</div>).toEqual(["myJsxTransform", "div", { children: 'Hello' }]);
       });
     `
   });
