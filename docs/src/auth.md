@@ -571,7 +571,7 @@ test('admin and user', async ({ adminPage, userPage }) => {
 Reusing authenticated state covers [cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies) and [local storage](https://developer.mozilla.org/en-US/docs/Web/API/Storage) based authentication. Rarely, [session storage](https://developer.mozilla.org/en-US/docs/Web/API/Window/sessionStorage) is used for storing information associated with the signed-in state. Session storage is specific to a particular domain and is not persisted across page loads. Playwright does not provide API to persist session storage, but the following snippet can be used to save/load session storage.
 
 ```js
-// For reading/writing session storage (langs: js)
+// For reading/writing session storage
 import fs from 'fs';
 
 /**
@@ -602,45 +602,6 @@ export async function readSessionStorageFromJSON(context, filePath) {
       if (window.location.hostname === 'example.com') {
         for (const [key, value] of Object.entries(storage))
           window.sessionStorage.setItem(key, value);
-      }
-    }, sessionStorage);
-  }
-}
-```
-
-```ts
-// For reading/writing session storage (langs: ts)
-import fs from 'fs';
-import { Page, BrowserContext } from '@playwright/test'
-
-/**
- * Get session storage and store to a JSON file as env variable.
- * This function should be invoked in the auth setup file.
- * If you don't have multiple roles, you can set the file path fixed in the function.
- */
-export async function writeSessionStorageToJSON(page: Page, filePath: string) {
-  const sessionStorage = await page.evaluate(() => JSON.stringify(window.sessionStorage));
-  // we should use `writeFile` here instead of `writeFileSync`,
-  // especially if the file doesn't exist.
-  fs.writeFile(filePath, sessionStorage, { encoding: 'utf-8' }, err => {
-    console.error(err);
-  });
-}
-
-
-/**
- * Set session storage in a new context from the JSON file.
- * This function should be invoked in the test (spec) file.
- * If you don't have multiple roles, you can set the file path fixed in the function.
- */
-export async function readSessionStorageFromJSON(context: Context, filePath: string) {
-  const buffers = fs.readFileSync(filePath, { encoding: 'utf-8' });
-  if (buffers && buffers.length > 0) {
-    const sessionStorage = JSON.parse(buffers);
-    await context.addInitScript(storage => {
-      if (window.location.hostname === 'example.com') {
-        for (const [key, value] of Object.entries(storage))
-          window.sessionStorage.setItem(key, value as string);
       }
     }, sessionStorage);
   }
