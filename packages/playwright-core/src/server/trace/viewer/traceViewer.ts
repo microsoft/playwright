@@ -25,6 +25,7 @@ import { ProgressController } from '../../progress';
 import { open, wsServer } from '../../../utilsBundle';
 import type { Page } from '../../page';
 import type { BrowserType } from '../../browserType';
+import { launchApp } from '../../launchApp';
 
 export type Transport = {
   sendEvent?: (method: string, params: any) => void;
@@ -133,7 +134,7 @@ export async function openTraceViewerApp(traceUrls: string[], browserName: strin
   const traceViewerPlaywright = createPlaywright({ sdkLanguage: 'javascript', isInternalPlaywright: true });
   const traceViewerBrowser = isUnderTest() ? 'chromium' : browserName;
 
-  const { context, page } = await traceViewerPlaywright[traceViewerBrowser as 'chromium'].launchApp({
+  const { context, page } = await launchApp(traceViewerPlaywright[traceViewerBrowser as 'chromium'], {
     // TODO: store language in the trace.
     sdkLanguage: traceViewerPlaywright.options.sdkLanguage,
     windowSize: { width: 1280, height: 800 },

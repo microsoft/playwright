@@ -26,6 +26,7 @@ import { mime } from '../../utilsBundle';
 import { syncLocalStorageWithSettings } from '../chromium/crApp';
 import type { Recorder } from '../recorder';
 import type { BrowserContext } from '../browserContext';
+import { launchApp } from '../launchApp';
 
 declare global {
   interface Window {
@@ -115,7 +116,7 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
     const sdkLanguage = inspectedContext.attribution.playwright.options.sdkLanguage;
     const headed = !!inspectedContext._browser.options.headful;
     const recorderPlaywright = (require('../playwright').createPlaywright as typeof import('../playwright').createPlaywright)({ sdkLanguage: 'javascript', isInternalPlaywright: true });
-    const { context, page } = await recorderPlaywright.chromium.launchApp({
+    const { context, page } = await launchApp(recorderPlaywright.chromium, {
       sdkLanguage,
       windowSize: { width: 600, height: 600 },
       windowPosition: { x: 1020, y: 10 },
