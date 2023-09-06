@@ -896,7 +896,6 @@ export class Frame extends SdkObject {
           });
         });
         const contentPromise = context.evaluate(({ html, tag }) => {
-          window.stop();
           document.open();
           console.debug(tag);  // eslint-disable-line no-console
           document.write(html);
