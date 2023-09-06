@@ -235,6 +235,7 @@ export const Workbench: React.FunctionComponent<{
               actions={model?.actions || []}
               selectedAction={model ? selectedAction : undefined}
               selectedTime={selectedTime}
+              setSelectedTime={setSelectedTime}
               onSelected={onActionSelected}
               onHighlighted={setHighlightedAction}
               revealConsole={() => selectPropertiesTab('console')}
