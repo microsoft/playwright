@@ -292,7 +292,7 @@ export class Chromium extends BrowserType {
     const { args = [], proxy } = options;
     const userDataDirArg = args.find(arg => arg.startsWith('--user-data-dir'));
     if (userDataDirArg)
-      throw this._createUserDataDirArgMisuseError(userDataDirArg);
+      throw this._createUserDataDirArgMisuseError('--user-data-dir');
     if (args.find(arg => arg.startsWith('--remote-debugging-pipe')))
       throw new Error('Playwright manages remote debugging connection itself.');
     if (args.find(arg => !arg.startsWith('-')))
