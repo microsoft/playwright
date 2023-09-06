@@ -996,3 +996,41 @@ test('should ignore 304 responses', async ({ page, server, runAndTrace }) => {
   const frame = await traceViewer.snapshotFrame('locator.click');
   await expect(frame.locator('body')).toHaveCSS('background-color', 'rgb(123, 123, 123)');
 });
+
+test('should pick locator in iframe', async ({ page, runAndTrace, server }) => {
+  /*
+    iframe[id=frame1]
+      div Hello1
+      iframe
+        div Hello2
+        iframe[name=one]
+          div HelloNameOne
+        iframe[name=two]
+          dev HelloNameTwo
+  */
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.EMPTY_PAGE);
+    await page.setContent(`<iframe id=frame1 srcdoc="<div>Hello1</div><iframe srcdoc='<div>Hello2</div><iframe name=one></iframe><iframe name=two></iframe><iframe></iframe>'>">`);
+    const frameOne = page.frame({ name: 'one' });
+    await frameOne.setContent(`<div>HelloNameOne</div>`);
+    const frameTwo = page.frame({ name: 'two' });
+    await frameTwo.setContent(`<div>HelloNameTwo</div>`);
+    await page.evaluate('2+2');
+  });
+  await traceViewer.page.getByTitle('Pick locator').click();
+  const cmWrapper = traceViewer.page.locator('.cm-wrapper');
+
+  const snapshot = await traceViewer.snapshotFrame('page.evaluate');
+
+  await snapshot.frameLocator('#frame1').getByText('Hello1').click();
+  await expect.soft(cmWrapper).toContainText(`frameLocator('#frame1').getByText('Hello1')`);
+
+  await snapshot.frameLocator('#frame1').frameLocator('iframe').getByText('Hello2').click();
+  await expect.soft(cmWrapper).toContainText(`frameLocator('#frame1').frameLocator('iframe').getByText('Hello2')`, { timeout: 0 });
+
+  await snapshot.frameLocator('#frame1').frameLocator('iframe').frameLocator('[name=one]').getByText('HelloNameOne').click();
+  await expect.soft(cmWrapper).toContainText(`frameLocator('#frame1').frameLocator('iframe').frameLocator('iframe[name="one"]').getByText('HelloNameOne')`, { timeout: 0 });
+
+  await snapshot.frameLocator('#frame1').frameLocator('iframe').frameLocator('[name=two]').getByText('HelloNameTwo').click();
+  await expect.soft(cmWrapper).toContainText(`frameLocator('#frame1').frameLocator('iframe').frameLocator('iframe[name="two"]').getByText('HelloNameTwo')`, { timeout: 0 });
+});
