@@ -608,6 +608,45 @@ export async function readSessionStorageFromJSON (context, filePath) {
 }
 ```
 
+```typescript
+// this file is for reading/writing session storage (langs: ts)
+import fs from 'fs';
+import { Page, BrowserContext } from '@playwright/test'
+
+/**
+ * Get session storage and store to a JSON file as env variable.
+ * This function should be invoked in the auth setup file.
+ * If you don't have multiple roles, you can set the file path fixed in the function.
+ */
+export async function writeSessionStorageToJSON (page: Page, filePath: string) {
+  const sessionStorage = await page.evaluate(() => JSON.stringify(window.sessionStorage));
+  // we should use `writeFile` here instead of `writeFileSync`, especially if the file doesn't exist.
+  fs.writeFile(filePath, sessionStorage, { encoding: 'utf-8' }, (err) => {
+    console.error(err);
+  });
+}
+
+
+/**
+ * Set session storage in a new context from the JSON file.
+ * This function should be invoked in the test (spec) file.
+ * If you don't have multiple roles, you can set the file path fixed in the function.
+ */
+export async function readSessionStorageFromJSON (context: Context, filePath: string) {
+  const buffers = fs.readFileSync(filePath, { encoding: 'utf-8' });
+  if(buffers && buffers.length > 0) {
+    const sessionStorage = JSON.parse(buffers);
+    await context.addInitScript(storage => {
+      if (window.location.hostname === 'example.com') {
+        for (const [key, value] of Object.entries(storage)) {
+          window.sessionStorage.setItem(key, value as string);
+        }
+      }
+    }, sessionStorage);
+  }
+}
+```
+
 ```java
 // Get session storage and store as env variable
 String sessionStorage = (String) page.evaluate("JSON.stringify(sessionStorage)");
