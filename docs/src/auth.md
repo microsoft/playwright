@@ -571,7 +571,7 @@ test('admin and user', async ({ adminPage, userPage }) => {
 Reusing authenticated state covers [cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies) and [local storage](https://developer.mozilla.org/en-US/docs/Web/API/Storage) based authentication. Rarely, [session storage](https://developer.mozilla.org/en-US/docs/Web/API/Window/sessionStorage) is used for storing information associated with the signed-in state. Session storage is specific to a particular domain and is not persisted across page loads. Playwright does not provide API to persist session storage, but the following snippet can be used to save/load session storage.
 
 ```js
-// this file is for reading/writing session storage (langs: js)
+// For reading/writing session storage (langs: js)
 import fs from 'fs';
 
 /**
@@ -581,7 +581,8 @@ import fs from 'fs';
  */
 export async function writeSessionStorageToJSON(page, filePath) {
   const sessionStorage = await page.evaluate(() => JSON.stringify(window.sessionStorage));
-  // we should use `writeFile` here instead of `writeFileSync`, especially if the file doesn't exist.
+  // we should use `writeFile` here instead of `writeFileSync`,
+  // especially if the file doesn't exist.
   fs.writeFile(filePath, sessionStorage, { encoding: 'utf-8' }, (err) => {
     console.error(err);
   });
@@ -609,7 +610,7 @@ export async function readSessionStorageFromJSON(context, filePath) {
 ```
 
 ```ts
-// this file is for reading/writing session storage (langs: ts)
+// For reading/writing session storage (langs: ts)
 import fs from 'fs';
 import { Page, BrowserContext } from '@playwright/test'
 
@@ -620,7 +621,8 @@ import { Page, BrowserContext } from '@playwright/test'
  */
 export async function writeSessionStorageToJSON(page: Page, filePath: string) {
   const sessionStorage = await page.evaluate(() => JSON.stringify(window.sessionStorage));
-  // we should use `writeFile` here instead of `writeFileSync`, especially if the file doesn't exist.
+  // we should use `writeFile` here instead of `writeFileSync`,
+  // especially if the file doesn't exist.
   fs.writeFile(filePath, sessionStorage, { encoding: 'utf-8' }, (err) => {
     console.error(err);
   });
