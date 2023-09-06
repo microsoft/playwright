@@ -361,7 +361,7 @@ await page.GetByRole(AriaRole.Button).DispatchEventAsync("click");
 
 ## Type characters
 
-:::tip
+:::caution
 Most of the time, you should input text with [`method: Locator.fill`]. See the [Text input](#text-input) section above. You only need to type characters if there is special keyboard handling on the page.
 :::
 
