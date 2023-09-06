@@ -17,7 +17,7 @@
 import type * as api from '../../types/types';
 import type { Page } from './page';
 
-export class PageError implements api.PageError {
+export class WebError implements api.WebError {
   private _page: Page | null;
   private _error: Error;
 

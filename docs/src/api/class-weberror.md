@@ -1,13 +1,12 @@
-# class: PageError
+# class: WebError
 * since: v1.38
 
-[PageError] class represents objects created by context when there are unhandled
-execeptions thrown on the pages and dispatched via the [`event: BrowserContext.pageError`] event.
+[WebError] class represents an unhandled exeception thrown in the page. It is dispatched via the [`event: BrowserContext.webError`] event.
 
 ```js
 // Log all uncaught errors to the terminal
-context.on('pageerror', pageerror => {
-  console.log(`Uncaught exception: "${pageerror.error()}"`);
+context.on('weberror', webError => {
+  console.log(`Uncaught exception: "${webError.error()}"`);
 });
 
 // Navigate to a page with an exception.
@@ -16,8 +15,8 @@ await page.goto('data:text/html,<script>throw new Error("Test")</script>');
 
 ```java
 // Log all uncaught errors to the terminal
-context.onPageError(pagerror -> {
-  System.out.println("Uncaught exception: " + pagerror.error());
+context.onWebError(webError -> {
+  System.out.println("Uncaught exception: " + webError.error());
 });
 
 // Navigate to a page with an exception.
@@ -26,7 +25,7 @@ page.navigate("data:text/html,<script>throw new Error('Test')</script>");
 
 ```python async
 # Log all uncaught errors to the terminal
-context.on("pageerror", lambda pageerror: print(f"uncaught exception: {pageerror.error}"))
+context.on("weberror", lambda web_error: print(f"uncaught exception: {web_error.error}"))
 
 # Navigate to a page with an exception.
 await page.goto("data:text/html,<script>throw new Error('test')</script>")
@@ -34,7 +33,7 @@ await page.goto("data:text/html,<script>throw new Error('test')</script>")
 
 ```python sync
 # Log all uncaught errors to the terminal
-context.on("pageerror", lambda pageerror: print(f"uncaught exception: {pageerror.error}"))
+context.on("weberror", lambda web_error: print(f"uncaught exception: {web_error.error}"))
 
 # Navigate to a page with an exception.
 page.goto("data:text/html,<script>throw new Error('test')</script>")
@@ -42,25 +41,25 @@ page.goto("data:text/html,<script>throw new Error('test')</script>")
 
 ```csharp
 // Log all uncaught errors to the terminal
-context.PageError += (_, pageerror) =>
+context.WebError += (_, webError) =>
 {
-  Console.WriteLine("Uncaught exception: " + pageerror.Error);
+  Console.WriteLine("Uncaught exception: " + webError.Error);
 };
 ```
 
-## method: PageError.page
+## method: WebError.page
 * since: v1.38
 - returns: <[null]|[Page]>
 
 The page that produced this unhandled exception, if any.
 
-## method: PageError.error
+## method: WebError.error
 * since: v1.38
 - returns: <[Error]>
 
 Unhandled error that was thrown.
 
-## method: PageError.error
+## method: WebError.error
 * since: v1.38
 * langs: java, csharp
 - returns: <[string]>
