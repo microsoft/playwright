@@ -228,8 +228,9 @@ export const InspectModeController: React.FunctionComponent<{
 }> = ({ iframe, isInspecting, sdkLanguage, testIdAttributeName, highlightedLocator, setHighlightedLocator, iteration }) => {
   React.useEffect(() => {
     const recorders: { recorder: Recorder, frameSelector: string }[] = [];
+    const isUnderTest = new URLSearchParams(window.location.search).get('isUnderTest') === 'true';
     try {
-      createRecorders(recorders, sdkLanguage, testIdAttributeName, '', iframe?.contentWindow);
+      createRecorders(recorders, sdkLanguage, testIdAttributeName, isUnderTest, '', iframe?.contentWindow);
     } catch {
       // Potential cross-origin exceptions.
     }
@@ -238,7 +239,7 @@ export const InspectModeController: React.FunctionComponent<{
       const actionSelector = locatorOrSelectorAsSelector(sdkLanguage, highlightedLocator, testIdAttributeName);
       recorder.setUIState({
         mode: isInspecting ? 'inspecting' : 'none',
-        actionSelector,
+        actionSelector: actionSelector.startsWith(frameSelector) ? actionSelector.substring(frameSelector.length).trim() : undefined,
         language: sdkLanguage,
         testIdAttributeName,
       }, {
@@ -257,12 +258,12 @@ export const InspectModeController: React.FunctionComponent<{
   return <></>;
 };
 
-function createRecorders(recorders: { recorder: Recorder, frameSelector: string }[], sdkLanguage: Language, testIdAttributeName: string, parentFrameSelector: string, frameWindow: Window | null | undefined) {
+function createRecorders(recorders: { recorder: Recorder, frameSelector: string }[], sdkLanguage: Language, testIdAttributeName: string, isUnderTest: boolean, parentFrameSelector: string, frameWindow: Window | null | undefined) {
   if (!frameWindow)
     return;
   const win = frameWindow as any;
   if (!win._recorder) {
-    const injectedScript = new InjectedScript(frameWindow as any, false, sdkLanguage, testIdAttributeName, 1, 'chromium', []);
+    const injectedScript = new InjectedScript(frameWindow as any, isUnderTest, sdkLanguage, testIdAttributeName, 1, 'chromium', []);
     const recorder = new Recorder(injectedScript);
     win._injectedScript = injectedScript;
     win._recorder = { recorder, frameSelector: parentFrameSelector };
@@ -272,7 +273,7 @@ function createRecorders(recorders: { recorder: Recorder, frameSelector: string 
   for (let i = 0; i < frameWindow.frames.length; ++i) {
     const childFrame = frameWindow.frames[i];
     const frameSelector = childFrame.frameElement ? win._injectedScript.generateSelector(childFrame.frameElement, { omitInternalEngines: true, testIdAttributeName }) + ' >> internal:control=enter-frame >> ' : '';
-    createRecorders(recorders, sdkLanguage, testIdAttributeName, parentFrameSelector + frameSelector, childFrame);
+    createRecorders(recorders, sdkLanguage, testIdAttributeName, isUnderTest, parentFrameSelector + frameSelector, childFrame);
   }
 }
 
