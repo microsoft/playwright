@@ -23,7 +23,7 @@ import { serverSideCallMetadata } from '../instrumentation';
 import type { CallLog, EventData, Mode, Source } from '@recorder/recorderTypes';
 import { isUnderTest } from '../../utils';
 import { mime } from '../../utilsBundle';
-import { syncLocalStorageWithSettings } from '../chromium/crApp';
+import { syncLocalStorageWithSettings } from '../launchApp';
 import type { Recorder } from '../recorder';
 import type { BrowserContext } from '../browserContext';
 import { launchApp } from '../launchApp';

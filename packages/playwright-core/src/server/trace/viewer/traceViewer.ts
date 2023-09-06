@@ -18,7 +18,7 @@ import path from 'path';
 import fs from 'fs';
 import { HttpServer } from '../../../utils/httpServer';
 import { createGuid, gracefullyProcessExitDoNotHang, isUnderTest } from '../../../utils';
-import { syncLocalStorageWithSettings } from '../../chromium/crApp';
+import { syncLocalStorageWithSettings } from '../../launchApp';
 import { serverSideCallMetadata } from '../../instrumentation';
 import { createPlaywright } from '../../playwright';
 import { ProgressController } from '../../progress';

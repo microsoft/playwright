@@ -15,6 +15,7 @@
  */
 
 import fs from 'fs';
+import path from 'path';
 import type { Page } from './page';
 import { findChromiumChannel } from './registry';
 import { isUnderTest } from '../utils';
@@ -22,13 +23,14 @@ import { serverSideCallMetadata } from './instrumentation';
 import type * as types from './types';
 import type { BrowserType } from './browserType';
 import type { CRPage } from './chromium/crPage';
+import { registryDirectory } from './registry';
 
-export const launchApp = async (browserType: BrowserType, options: {
+export async function launchApp(browserType: BrowserType, options: {
   sdkLanguage: string,
   windowSize: types.Size,
   windowPosition?: types.Point,
   persistentContextOptions?: Parameters<BrowserType['launchPersistentContext']>[2];
-}) => {
+}) {
   const args = [...options.persistentContextOptions?.args ?? []];
 
   if (browserType.name() === 'chromium') {
@@ -63,7 +65,7 @@ export const launchApp = async (browserType: BrowserType, options: {
   if (browserType.name() === 'chromium')
     await installAppIcon(page);
   return { context, page };
-};
+}
 
 async function installAppIcon(page: Page) {
   const icon = await fs.promises.readFile(require.resolve('./chromium/appIcon.png'));
@@ -71,4 +73,27 @@ async function installAppIcon(page: Page) {
   await crPage._mainFrameSession._client.send('Browser.setDockTile', {
     image: icon.toString('base64')
   });
+}
+
+export async function syncLocalStorageWithSettings(page: Page, appName: string) {
+  if (isUnderTest())
+    return;
+  const settingsFile = path.join(registryDirectory, '.settings', `${appName}.json`);
+  await page.exposeBinding('_saveSerializedSettings', false, (_, settings) => {
+    fs.mkdirSync(path.dirname(settingsFile), { recursive: true });
+    fs.writeFileSync(settingsFile, settings);
+  });
+
+  const settings = await fs.promises.readFile(settingsFile, 'utf-8').catch(() => ('{}'));
+  await page.addInitScript(
+      `(${String((settings: any) => {
+        // iframes w/ snapshots, etc.
+        if (location && location.protocol === 'data:')
+          return;
+        Object.entries(settings).map(([k, v]) => localStorage[k] = v);
+        (window as any).saveSettings = () => {
+          (window as any)._saveSerializedSettings(JSON.stringify({ ...localStorage }));
+        };
+      })})(${settings});
+  `);
 }
