@@ -579,7 +579,7 @@ import fs from 'fs';
  * This function should be invoked in the auth setup file.
  * If you don't have multiple roles, you can set the file path fixed in the function.
  */
-export async function writeSessionStorageToJSON (page, filePath) {
+export async function writeSessionStorageToJSON(page, filePath) {
   const sessionStorage = await page.evaluate(() => JSON.stringify(window.sessionStorage));
   // we should use `writeFile` here instead of `writeFileSync`, especially if the file doesn't exist.
   fs.writeFile(filePath, sessionStorage, { encoding: 'utf-8' }, (err) => {
@@ -593,7 +593,7 @@ export async function writeSessionStorageToJSON (page, filePath) {
  * This function should be invoked in the test (spec) file.
  * If you don't have multiple roles, you can set the file path fixed in the function.
  */
-export async function readSessionStorageFromJSON (context, filePath) {
+export async function readSessionStorageFromJSON(context, filePath) {
   const buffers = fs.readFileSync(filePath, { encoding: 'utf-8' });
   if(buffers?.length > 0) {
     const sessionStorage = JSON.parse(buffers);
@@ -618,7 +618,7 @@ import { Page, BrowserContext } from '@playwright/test'
  * This function should be invoked in the auth setup file.
  * If you don't have multiple roles, you can set the file path fixed in the function.
  */
-export async function writeSessionStorageToJSON (page: Page, filePath: string) {
+export async function writeSessionStorageToJSON(page: Page, filePath: string) {
   const sessionStorage = await page.evaluate(() => JSON.stringify(window.sessionStorage));
   // we should use `writeFile` here instead of `writeFileSync`, especially if the file doesn't exist.
   fs.writeFile(filePath, sessionStorage, { encoding: 'utf-8' }, (err) => {
@@ -632,7 +632,7 @@ export async function writeSessionStorageToJSON (page: Page, filePath: string) {
  * This function should be invoked in the test (spec) file.
  * If you don't have multiple roles, you can set the file path fixed in the function.
  */
-export async function readSessionStorageFromJSON (context: Context, filePath: string) {
+export async function readSessionStorageFromJSON(context: Context, filePath: string) {
   const buffers = fs.readFileSync(filePath, { encoding: 'utf-8' });
   if(buffers && buffers.length > 0) {
     const sessionStorage = JSON.parse(buffers);
