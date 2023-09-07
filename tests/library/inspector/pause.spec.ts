@@ -376,7 +376,8 @@ it.describe('pause', () => {
     const recorderPage = await recorderPageGetter();
 
     const box1Promise = waitForTestLog<Box>(page, 'Highlight box for test: ');
-    await recorderPage.click('.toolbar .CodeMirror');
+    await recorderPage.getByText('Locator', { exact: true }).click();
+    await recorderPage.locator('.tabbed-pane .CodeMirror').click();
     await recorderPage.keyboard.type('getByText(\'Submit\')');
     const box1 = await box1Promise;
 

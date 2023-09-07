@@ -28,10 +28,6 @@
   min-width: 100px;
 }
 
-.recorder .toolbar-button.toggled.microscope {
-  color: #12a3ff;
-}
-
 .recorder .toolbar-button.toggled.record {
   color: #a1260d;
 }
@@ -52,14 +48,4 @@ body.dark-mode .recorder .toolbar-button.toggled.record {
 
 .recorder .selector-input {
   flex: auto;
-}
-
-.recorder .toolbar .cm-wrapper {
-  margin-left: 8px;
-  display: flex;
-  padding: 8px;
-}
-
-.recorder .toolbar .CodeMirror {
-  height: auto;
 }
