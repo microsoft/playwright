@@ -29,6 +29,7 @@ timeouts and racy checks in their tests altogether.
 - [How to use test hooks](/writing-tests.md#using-test-hooks)
 
 ## First test
+* langs: js
 
 Take a look at the following example to see how to write a test.
 
@@ -53,6 +54,11 @@ test('get started link', async ({ page }) => {
 });
 ```
 
+## First test
+* langs: python
+  
+Take a look at the following example to see how to write a test. Note how the file name follows the `test_` prefix convention as well as each test name.
+
 ```python title="test_example.py"
 import re
 from playwright.sync_api import Page, expect
@@ -66,14 +72,8 @@ def test_has_title(page: Page):
 def test_get_started_link(page: Page):
     page.goto("https://playwright.dev/")
 
-    # create a locator
-    get_started = page.get_by_role("link", name="Get started")
-
-    # Expect an attribute "to be strictly equal" to the value.
-    expect(get_started).to_have_attribute("href", "/docs/intro")
-
     # Click the get started link.
-    get_started.click()
+    page.get_by_role("link", name="Get started").click()
 
     # Expects page to have a heading with the name of Installation.
     expect(page.get_by_role("heading", name="Installation")).to_be_visible()
@@ -269,13 +269,13 @@ from playwright.sync_api import Page, expect
 @pytest.fixture(scope="function", autouse=True)
 def before_each_after_each(page: Page):
     
-    print("before the test runs, aka. before each")
+    print("before the test runs")
 
     # Go to the starting url before each test.
     page.goto("https://playwright.dev/")
     yield
     
-    print("after the test runs, aka. after each")
+    print("after the test runs")
 
 def test_main_navigation(page: Page):
     # Assertions use the expect API.

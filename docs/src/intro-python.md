@@ -47,7 +47,7 @@ playwright install
 
 ## Add Example Test
 
-Create a file that follows the `test_` prefix convention, such as `test_example.py`, inside the current working directory or in a sub-directory with the code below:
+Create a file that follows the `test_` prefix convention, such as `test_example.py`, inside the current working directory or in a sub-directory with the code below. Make sure your test name also follows the `test_` prefix convention.
 
 ```py title="test_example.py"
 import re
@@ -62,15 +62,9 @@ def test_has_title(page: Page):
 def test_get_started_link(page: Page):
     page.goto("https://playwright.dev/")
 
-    # create a locator
-    get_started = page.get_by_role("link", name="Get started")
-
-    # Expect an attribute "to be strictly equal" to the value.
-    expect(get_started).to_have_attribute("href", "/docs/intro")
-
     # Click the get started link.
-    get_started.click()
-    
+    page.get_by_role("link", name="Get started").click()
+
     # Expects page to have a heading with the name of Installation.
     expect(page.get_by_role("heading", name="Installation")).to_be_visible()
 ```
