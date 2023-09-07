@@ -47,18 +47,20 @@ playwright install
 
 ## Add Example Test
 
-Create a file that follows the `test_` prefix convention, such as `test_my_application.py`, inside the current working directory or in a sub-directory with the code below:
+Create a file that follows the `test_` prefix convention, such as `test_example.py`, inside the current working directory or in a sub-directory with the code below:
 
-```py title="test_my_application.py"
+```py title="test_example.py"
 import re
 from playwright.sync_api import Page, expect
 
-
-def test_homepage_has_Playwright_in_title_and_get_started_link_linking_to_the_intro_page(page: Page):
+def test_has_title(page: Page):
     page.goto("https://playwright.dev/")
 
     # Expect a title "to contain" a substring.
     expect(page).to_have_title(re.compile("Playwright"))
+
+def test_get_started_link(page: Page):
+    page.goto("https://playwright.dev/")
 
     # create a locator
     get_started = page.get_by_role("link", name="Get started")
@@ -68,14 +70,14 @@ def test_homepage_has_Playwright_in_title_and_get_started_link_linking_to_the_in
 
     # Click the get started link.
     get_started.click()
-
+    
     # Expects page to have a heading with the name of Installation.
     expect(page.get_by_role("heading", name="Installation")).to_be_visible()
 ```
 
 ## Running the Example Test
 
-By default tests will be run on chromium. This can be configured via the CLI options. Tests are run in headless mode meaning no browser UI will open up when running the tests. Results of the tests and test logs will be shown in the terminal.
+By default tests will be run on chromium. This can be configured via the [CLI options](./running-tests.md). Tests are run in headless mode meaning no browser UI will open up when running the tests. Results of the tests and test logs will be shown in the terminal.
 
 ```bash
 pytest

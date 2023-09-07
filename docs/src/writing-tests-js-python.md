@@ -2,6 +2,7 @@
 id: writing-tests
 title: "Writing tests"
 ---
+## Introduction
 
 Playwright tests are simple, they
 
@@ -56,12 +57,14 @@ test('get started link', async ({ page }) => {
 import re
 from playwright.sync_api import Page, expect
 
-
-def test_homepage_has_Playwright_in_title_and_get_started_link_linking_to_the_intro_page(page: Page):
+def test_has_title(page: Page):
     page.goto("https://playwright.dev/")
 
     # Expect a title "to contain" a substring.
     expect(page).to_have_title(re.compile("Playwright"))
+
+def test_get_started_link(page: Page):
+    page.goto("https://playwright.dev/")
 
     # create a locator
     get_started = page.get_by_role("link", name="Get started")
@@ -110,6 +113,7 @@ Performing actions starts with locating the elements. Playwright uses [Locators 
 ```js
 // Create a locator.
 const getStarted = page.getByRole('link', { name: 'Get started' });
+
 // Click it.
 await getStarted.click();
 ```
@@ -123,6 +127,7 @@ await page.getByRole('link', { name: 'Get started' }).click();
 ```python
 # Create a locator.
 get_started = page.get_by_role("link", name="Get started")
+
 # Click it.
 get_started.click()
 ```
@@ -200,25 +205,35 @@ Here is the list of the most popular async assertions. Note that there are [many
 ### Test Isolation
 * langs: js
   
-Playwright Test is based on the concept of [test fixtures](./test-fixtures.md) such as the [built in page fixture](./test-fixtures#built-in-fixtures), which is passed into your test. Pages are isolated between tests due to the Browser Context, which is equivalent to a brand new browser profile, where every test gets a fresh environment, even when multiple tests run in a single Browser.
+Playwright Test is based on the concept of [test fixtures](./test-fixtures.md) such as the [built in page fixture](./test-fixtures#built-in-fixtures), which is passed into your test. Pages are [isolated between tests due to the Browser Context](./browser-contexts), which is equivalent to a brand new browser profile, where every test gets a fresh environment, even when multiple tests run in a single Browser.
 
 ```js title="tests/example.spec.ts"
-test('basic test', async ({ page }) => {
-  // ...
+import { test } from '@playwright/test';
+
+test('example test', async ({ page }) => {
+  // "page" belongs to an isolated BrowserContext, created for this specific test.
+});
+
+test('another test', async ({ page }) => {
+  // "page" in this second test is completely isolated from the first test.
 });
 ```
 
 ### Test Isolation
 * langs: python
   
-The Playwright Pytest plugin is based on the concept of test fixtures such as the [built in page fixture](./test-runners.md), which is passed into your test. Pages are isolated between tests due to the Browser Context, which is equivalent to a brand new browser profile, where every test gets a fresh environment, even when multiple tests run in a single Browser.
+The Playwright Pytest plugin is based on the concept of test fixtures such as the [built in page fixture](./test-runners.md), which is passed into your test. Pages are [isolated between tests due to the Browser Context](./browser-contexts), which is equivalent to a brand new browser profile, where every test gets a fresh environment, even when multiple tests run in a single Browser.
 
-```python
+```python title="test_example.py"
 from playwright.sync_api import Page
 
-def test_basic_test(page: Page):
+def test_example_test(page: Page):
   pass
-  # ...
+  # "page" belongs to an isolated BrowserContext, created for this specific test.
+
+def test_another_test(page: Page):
+  pass
+  # "page" in this second test is completely isolated from the first test.
 ```
 
 ### Using Test Hooks
@@ -247,18 +262,20 @@ test.describe('navigation', () => {
 
 You can use various [fixtures](https://docs.pytest.org/en/6.2.x/fixture.html#autouse-fixtures-fixtures-you-don-t-have-to-request) to execute code before or after your tests and to share objects between them. A `function` scoped fixture e.g. with autouse behaves like a beforeEach/afterEach. And a `module` scoped fixture with autouse behaves like a beforeAll/afterAll which runs before all and after all the tests.
 
-```python
+```python title="test_example.py"
 import pytest
-from playwright.sync_api import Page
-
+from playwright.sync_api import Page, expect
 
 @pytest.fixture(scope="function", autouse=True)
 def before_each_after_each(page: Page):
-    print("beforeEach")
+    
+    print("before the test runs, aka. before each")
+
     # Go to the starting url before each test.
     page.goto("https://playwright.dev/")
     yield
-    print("afterEach")
+    
+    print("after the test runs, aka. after each")
 
 def test_main_navigation(page: Page):
     # Assertions use the expect API.
