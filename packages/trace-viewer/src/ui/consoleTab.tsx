@@ -119,6 +119,7 @@ export const ConsoleTab: React.FunctionComponent<{
 
   return <div className='console-tab'>
     <ConsoleListView
+      name='console'
       items={consoleModel.entries}
       isError={entry => entry.isError}
       isWarning={entry => entry.isWarning}

@@ -454,10 +454,10 @@ for (const useIntermediateMergeReport of [false] as const) {
       ]);
       await expect(page.locator('.source-line-running')).toContainText('page.evaluate');
 
-      await expect(page.getByTestId('stack-trace')).toContainText([
+      await expect(page.getByTestId('stack-trace-list')).toContainText([
         /a.test.js:[\d]+/,
       ]);
-      await expect(page.getByTestId('stack-trace').locator('.list-view-entry.selected')).toContainText('a.test.js');
+      await expect(page.getByTestId('stack-trace-list').locator('.list-view-entry.selected')).toContainText('a.test.js');
     });
 
     test('should show trace title', async ({ runInlineTest, page, showReport }) => {

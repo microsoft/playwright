@@ -62,7 +62,7 @@ export const ActionList: React.FC<ActionListProps> = ({
   return <div className='vbox'>
     {selectedTime && <div className='action-list-show-all' onClick={() => setSelectedTime(undefined)}><span className='codicon codicon-triangle-left'></span>Show all</div>}
     <ActionTreeView
-      dataTestId='action-list'
+      name='actions'
       rootItem={rootItem}
       treeState={treeState}
       setTreeState={setTreeState}

@@ -668,7 +668,7 @@ test('generate html with attachment urls', async ({ runInlineTest, mergeReports,
   // Check that trace loads.
   await page.locator('div').filter({ hasText: /^a\.test\.js:13$/ }).getByRole('link', { name: 'View trace' }).click();
   await expect(page).toHaveTitle('Playwright Trace Viewer');
-  await expect(page.getByTestId('action-list').locator('div').filter({ hasText: /^expect\.toBe$/ })).toBeVisible();
+  await expect(page.getByTestId('actions-tree').locator('div').filter({ hasText: /^expect\.toBe$/ })).toBeVisible();
 });
 
 test('resource names should not clash between runs', async ({ runInlineTest, showReport, mergeReports, page }) => {

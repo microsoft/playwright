@@ -34,7 +34,7 @@ test('should merge trace events', async ({ runUITest, server }) => {
 
   await page.getByText('trace test').dblclick();
 
-  const listItem = page.getByTestId('action-list').getByRole('listitem');
+  const listItem = page.getByTestId('actions-tree').getByRole('listitem');
   await expect(
       listItem,
       'action list'
@@ -63,7 +63,7 @@ test('should merge web assertion events', async ({  runUITest }, testInfo) => {
 
   await page.getByText('trace test').dblclick();
 
-  const listItem = page.getByTestId('action-list').getByRole('listitem');
+  const listItem = page.getByTestId('actions-tree').getByRole('listitem');
   await expect(
       listItem,
       'action list'
@@ -90,7 +90,7 @@ test('should merge screenshot assertions', async ({  runUITest }, testInfo) => {
 
   await page.getByText('trace test').dblclick();
 
-  const listItem = page.getByTestId('action-list').getByRole('listitem');
+  const listItem = page.getByTestId('actions-tree').getByRole('listitem');
   await expect(
       listItem,
       'action list'
@@ -137,7 +137,7 @@ test('should show snapshots for sync assertions', async ({ runUITest, server }) 
 
   await page.getByText('trace test').dblclick();
 
-  const listItem = page.getByTestId('action-list').getByRole('listitem');
+  const listItem = page.getByTestId('actions-tree').getByRole('listitem');
   await expect(
       listItem,
       'action list'
