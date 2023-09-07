@@ -3,7 +3,7 @@ id: running-tests
 title: "Running tests"
 ---
 
-You can run a single test, a set of tests or all tests. Tests can be run on one browser or multiple browsers by using the `--browser` flag. By default tests are run in a headless manner meaning no browser window will be opened while running the tests and results will be seen in the terminal. If you prefer you can run your tests in headed mode by using the `--headed` flag.
+You can run a single test, a set of tests or all tests. Tests can be run on one browser or multiple browsers by using the `--browser` flag. By default tests are run in a headless manner meaning no browser window will be opened while running the tests and results will be seen in the terminal. If you prefer you can run your tests in headed mode by using the `--headed` CLI argument.
 
 **You will learn**
 
@@ -12,13 +12,13 @@ You can run a single test, a set of tests or all tests. Tests can be run on one 
 
 ## Command Line
 
-To run your tests use the  `pytest` command. This will run your tests on the Chromium browser by default. Tests run in headless mode by default meaning no browser window will be opened while running the tests and results will be seen in the terminal.
+To run your tests use the `pytest` command. This will run your tests on the Chromium browser by default. Tests run in headless mode by default meaning no browser window will be opened while running the tests and results will be seen in the terminal.
 
 ```bash
 pytest
 ```
 
-### Running tests with a browser window
+### Running tests headed
 
 To run your tests in headed mode use the `--headed` flag. This will open up a browser window while running your tests.
 
@@ -51,18 +51,18 @@ To run a single test file pass in the name of the test file that you want to run
 To run a set of test files pass in the names of the test files that you want to run.
 
   ```bash
-  pytest tests/todo_page/ tests/landing_page/
+  pytest tests/test_todo_page.py tests/test_landing_page.py
   ```
 
 To run a specific test pass in the function name of the test you want to run.
 
   ```bash
-  pytest -k "test_add_a_todo_item"
+  pytest -k test_add_a_todo_item
   ```
 
 ### Run tests in Parallel
 
-To run your tests in parallel use the `--numprocesses` flag followed by the number of processes you would like to run your tests on.
+To run your tests in parallel use the `--numprocesses` flag followed by the number of processes you would like to run your tests on. We recommend half of logical CPU cores.
 
   ```bash
   pytest --numprocesses 2
