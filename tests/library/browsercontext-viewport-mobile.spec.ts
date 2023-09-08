@@ -16,6 +16,7 @@
  */
 
 import { browserTest as it, expect } from '../config/browserTest';
+import os from 'os';
 
 it.describe('mobile viewport', () => {
   it.skip(({ browserName }) => browserName === 'firefox');
@@ -190,7 +191,7 @@ it.describe('mobile viewport', () => {
     await context.close();
   });
 
-  it('view scale should reset after navigation', async ({ browser, browserName, isLinux, isWindows }) => {
+  it('view scale should reset after navigation', async ({ browser, browserName, isLinux, isWindows, isMac, headless }) => {
     it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/26876' });
     const context = await browser.newContext({
       viewport: { width: 390, height: 664 },
@@ -226,12 +227,19 @@ it.describe('mobile viewport', () => {
     await page.getByText('Click me').click({ force: true });
     let expected = [{ x: 41, y: 18 }];
     if (browserName === 'webkit') {
-      if (isLinux)
-        expected = [{ x: 50, y: 20 }];
-      else if (isWindows)
+      if (isLinux) {
+        if (headless)
+          expected = [{ x: 50, y: 20 }];
+        else
+          expected = [{ x: 45, y: 20 }];
+      } else if (isWindows) {
         expected = [{ x: 40, y: 20 }];
-      else
-        expected = [{ x: 37, y: 15 }];
+      } else if (isMac) {
+        if (parseInt(os.release(), 10) === 21)
+          expected = [{ x: 40, y: 17 }];
+        else
+          expected = [{ x: 37, y: 15 }];
+      }
     }
     expect(await page.evaluate(() => (window as any).clicks)).toEqual(expected);
     await context.close();
