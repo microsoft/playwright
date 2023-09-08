@@ -192,7 +192,6 @@ it.describe('mobile viewport', () => {
 
   it('view scale should reset after navigation', async ({ browser, browserName }) => {
     it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/26876' });
-    it.fixme(browserName === 'webkit');
     const context = await browser.newContext({
       viewport: { width: 390, height: 664 },
       isMobile: true,
