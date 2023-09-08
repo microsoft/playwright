@@ -467,6 +467,7 @@ const TestList: React.FC<{
   };
 
   return <TestTreeView
+    name='tests'
     treeState={treeState}
     setTreeState={setTreeState}
     rootItem={rootItem}

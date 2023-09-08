@@ -28,6 +28,7 @@ export type TreeState = {
 };
 
 export type TreeViewProps<T> = {
+  name: string,
   rootItem: T,
   render: (item: T) => React.ReactNode,
   icon?: (item: T) => string | undefined,
@@ -47,6 +48,7 @@ export type TreeViewProps<T> = {
 const TreeListView = ListView<TreeItem>;
 
 export function TreeView<T extends TreeItem>({
+  name,
   rootItem,
   render,
   icon,
@@ -96,9 +98,10 @@ export function TreeView<T extends TreeItem>({
   }, [treeItems, isVisible]);
 
   return <TreeListView
+    name={name}
     items={visibleItems}
     id={item => item.id}
-    dataTestId={dataTestId}
+    dataTestId={dataTestId || (name + '-tree')}
     render={item => {
       const rendered = render(item as T);
       return <>

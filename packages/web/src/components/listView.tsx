@@ -18,6 +18,7 @@ import * as React from 'react';
 import './listView.css';
 
 export type ListViewProps<T> = {
+  name: string,
   items: T[],
   id?: (item: T, index: number) => string,
   render: (item: T, index: number) => React.ReactNode,
@@ -36,7 +37,10 @@ export type ListViewProps<T> = {
   dataTestId?: string,
 };
 
+const scrollPositions = new Map<string, number>();
+
 export function ListView<T>({
+  name,
   items = [],
   id,
   render,
@@ -61,7 +65,23 @@ export function ListView<T>({
     onHighlighted?.(highlightedItem);
   }, [onHighlighted, highlightedItem]);
 
-  return <div className='list-view vbox' role='list' data-testid={dataTestId}>
+  React.useEffect(() => {
+    const listElem = itemListRef.current;
+    if (!listElem)
+      return;
+    const saveScrollPosition = () => {
+      scrollPositions.set(name, listElem.scrollTop);
+    };
+    listElem.addEventListener('scroll', saveScrollPosition, { passive: true });
+    return () => listElem.removeEventListener('scroll', saveScrollPosition);
+  }, [name]);
+
+  React.useEffect(() => {
+    if (itemListRef.current)
+      itemListRef.current.scrollTop = scrollPositions.get(name) || 0;
+  }, [name]);
+
+  return <div className='list-view vbox' role='list' data-testid={dataTestId || (name + '-list')}>
     <div
       className='list-view-content'
       tabIndex={0}

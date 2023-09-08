@@ -27,7 +27,7 @@ export const LogTab: React.FunctionComponent<{
   if (!action?.log.length)
     return <PlaceholderPanel text='No log entries' />;
   return <LogList
-    dataTestId='log-list'
+    name='log'
     items={action?.log || []}
     render={logLine => logLine}
   />;

@@ -52,8 +52,8 @@ class TraceViewerPage {
     this.consoleLines = page.locator('.console-line');
     this.consoleLineMessages = page.locator('.console-line-message');
     this.consoleStacks = page.locator('.console-stack');
-    this.stackFrames = page.getByTestId('stack-trace').locator('.list-view-entry');
-    this.networkRequests = page.getByTestId('network-request-list').locator('.list-view-entry');
+    this.stackFrames = page.getByTestId('stack-trace-list').locator('.list-view-entry');
+    this.networkRequests = page.getByTestId('network-list').locator('.list-view-entry');
     this.snapshotContainer = page.locator('.snapshot-container iframe.snapshot-visible[name=snapshot]');
   }
 

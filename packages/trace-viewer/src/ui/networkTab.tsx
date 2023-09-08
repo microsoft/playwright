@@ -69,7 +69,7 @@ export const NetworkTab: React.FunctionComponent<{
     {!resource && <div className='vbox'>
       <NetworkHeader sorting={sorting} toggleSorting={toggleSorting} />
       <NetworkListView
-        dataTestId='network-request-list'
+        name='network'
         items={networkModel.resources}
         render={entry => <NetworkResource boundaries={boundaries} resource={entry}></NetworkResource>}
         onSelected={setResource}
