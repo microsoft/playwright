@@ -20,7 +20,7 @@ import type { Suite, TestCase } from './test';
 import type { TestTypeImpl } from './testType';
 import type { FullProjectInternal } from './config';
 import { formatLocation } from '../util';
-import type { TestError } from '../../reporter';
+import type { TestError } from '../../types/testReporter';
 
 export class PoolBuilder {
   private _project: FullProjectInternal | undefined;

@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * Copyright (c) Microsoft Corporation.
  *
@@ -14,4 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-module.exports = require('playwright/lib/cli');
+
+import playwright from './test.js';
+
+export const chromium = playwright.chromium;
+export const firefox = playwright.firefox;
+export const webkit = playwright.webkit;
+export const selectors = playwright.selectors;
+export const devices = playwright.devices;
+export const errors = playwright.errors;
+export const request = playwright.request;
+export const _electron = playwright._electron;
+export const _android = playwright._android;
+export const test = playwright.test;
+export const expect = playwright.expect;
+export const defineConfig = playwright.defineConfig;
+export default playwright.test;

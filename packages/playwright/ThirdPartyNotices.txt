@@ -1,4 +1,4 @@
-microsoft/playwright-test
+microsoft/playwright
 
 THIRD-PARTY SOFTWARE NOTICES AND INFORMATION
 

@@ -16,7 +16,7 @@
 
 import path from 'path';
 import util from 'util';
-import type { TestError } from '../../reporter';
+import type { TestError } from '../../types/testReporter';
 import { isWorkerProcess, setCurrentlyLoadingFileSuite } from './globals';
 import { Suite } from './test';
 import { requireOrImport } from '../transform/transform';

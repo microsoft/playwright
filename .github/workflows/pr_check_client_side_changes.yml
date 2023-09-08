@@ -5,7 +5,7 @@ on:
       - main
     paths:
       - 'packages/playwright-core/src/client/**/*'
-      - 'packages/playwright-test/src/matchers/matchers.ts'
+      - 'packages/playwright/src/matchers/matchers.ts'
 jobs:
   check:
     name: Check

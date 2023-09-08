@@ -7,7 +7,10 @@
   "engines": {
     "node": ">=16"
   },
-  "main": "index.js",
+  "author": {
+    "name": "Microsoft Corporation"
+  },
+  "license": "Apache-2.0",
   "exports": {
     ".": {
       "types": "./index.d.ts",
@@ -17,32 +20,14 @@
     },
     "./cli": "./cli.js",
     "./package.json": "./package.json",
-    "./lib/cli": "./lib/cli.js",
-    "./lib/transform/babelBundle": "./lib/transform/babelBundle.js",
-    "./lib/transform/compilationCache": "./lib/transform/compilationCache.js",
-    "./lib/transform/esmLoader": "./lib/transform/esmLoader.js",
-    "./lib/internalsForTest": "./lib/internalsForTest.js",
-    "./lib/plugins": "./lib/plugins/index.js",
-    "./jsx-runtime": {
-      "import": "./jsx-runtime.mjs",
-      "require": "./jsx-runtime.js",
-      "default": "./jsx-runtime.js"
-    },
-    "./lib/util": "./lib/util.js",
-    "./lib/utilsBundle": "./lib/utilsBundle.js",
     "./reporter": "./reporter.js"
   },
   "bin": {
     "playwright": "./cli.js"
   },
-  "author": {
-    "name": "Microsoft Corporation"
+  "scripts": {
   },
-  "license": "Apache-2.0",
   "dependencies": {
-    "playwright-core": "1.38.0-next"
-  },
-  "optionalDependencies": {
-    "fsevents": "2.3.2"
+    "playwright": "1.38.0-next"
   }
 }

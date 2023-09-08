@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * Copyright (c) Microsoft Corporation.
  *
@@ -14,4 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-module.exports = require('playwright/lib/cli');
+import { test, expect } from './npmTest';
+
+test(`playwright-core should work`, async ({ exec, installedSoftwareOnDisk }) => {
+  const result1 = await exec('npm i --foreground-scripts playwright-core');
+  expect(result1).toHaveLoggedSoftwareDownload([]);
+  expect(await installedSoftwareOnDisk()).toEqual([]);
+  const stdio = await exec('npx playwright-core', 'test', '-c', '.', { expectToExitWithError: true });
+  expect(stdio).toContain(`Please install @playwright/test package`);
+});

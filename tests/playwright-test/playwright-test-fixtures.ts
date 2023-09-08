@@ -129,7 +129,7 @@ async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], b
   }
   const reportFile = path.join(baseDir, 'report.json');
   const testProcess = startPlaywrightTest(childProcess, baseDir, params, {
-    PW_TEST_REPORTER: path.join(__dirname, '../../packages/playwright-test/lib/reporters/json.js'),
+    PW_TEST_REPORTER: path.join(__dirname, '../../packages/playwright/lib/reporters/json.js'),
     PLAYWRIGHT_JSON_OUTPUT_NAME: reportFile,
     ...env,
   }, options);

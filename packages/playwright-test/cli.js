@@ -14,4 +14,4 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-module.exports = require('@playwright/test/lib/cli');
+module.exports = require('playwright/cli');

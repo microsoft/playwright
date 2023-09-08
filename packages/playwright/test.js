@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * Copyright (c) Microsoft Corporation.
  *
@@ -14,4 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-module.exports = require('playwright/lib/cli');
+
+const pwt = require('./lib/index');
+const { defineConfig } = require('./lib/common/configLoader');
+const playwright = require('./index');
+const combinedExports = {
+  ...playwright,
+  ...pwt,
+  defineConfig,
+};
+
+Object.defineProperty(combinedExports, '__esModule', { value: true });
+
+module.exports = combinedExports;

@@ -14,4 +14,4 @@
  * limitations under the License.
  */
 
-export * from './types/testReporter';
+export * from 'playwright/types/testReporter';

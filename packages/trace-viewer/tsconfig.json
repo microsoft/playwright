@@ -20,7 +20,7 @@
       "@isomorphic/*": ["../playwright-core/src/utils/isomorphic/*"],
       "@protocol/*": ["../protocol/src/*"],
       "@recorder/*": ["../recorder/src/*"],
-      "@testIsomorphic/*": ["../playwright-test/src/isomorphic/*"],
+      "@testIsomorphic/*": ["../playwright/src/isomorphic/*"],
       "@trace/*": ["../trace/src/*"],
       "@web/*": ["../web/src/*"],
       // Resolving type dependencies will start processing types in @playwright/test

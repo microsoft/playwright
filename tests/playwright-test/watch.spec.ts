@@ -40,7 +40,7 @@ test('should print dependencies in CJS mode', async ({ runInlineTest }) => {
       test('passes', () => {});
     `,
     'globalTeardown.ts': `
-      import { fileDependencies } from '@playwright/test/lib/internalsForTest';
+      import { fileDependencies } from 'playwright/lib/internalsForTest';
       export default () => {
         console.log('###' + JSON.stringify(fileDependencies()) + '###');
       };
@@ -79,7 +79,7 @@ test('should print dependencies in ESM mode', async ({ runInlineTest }) => {
       test('passes', () => {});
     `,
     'globalTeardown.ts': `
-      import { fileDependencies } from '@playwright/test/lib/internalsForTest';
+      import { fileDependencies } from 'playwright/lib/internalsForTest';
       export default () => {
         console.log('###' + JSON.stringify(fileDependencies()) + '###');
       };

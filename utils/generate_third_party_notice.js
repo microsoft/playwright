@@ -37,7 +37,7 @@ async function checkDir(dir) {
 }
 
 (async () => {
-  for (const project of ['playwright-core', 'playwright-test']) {
+  for (const project of ['playwright-core', 'playwright']) {
     const lines = [];
     lines.push(`microsoft/${project}
 

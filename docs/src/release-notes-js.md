@@ -15,7 +15,7 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 ### New `npx playwright merge-reports` tool
 
-If you run tests on multiple shards, you can now merge all reports in a single HTML report (or any other report) 
+If you run tests on multiple shards, you can now merge all reports in a single HTML report (or any other report)
 using the new `merge-reports` CLI tool.
 
 Using `merge-reports` tool requires the following steps:
@@ -48,7 +48,7 @@ Let us know if you encounter any issues!
 Linux support looks like this:
 
 |          | Ubuntu 20.04 | Ubuntu 22.04 | Debian 11 | Debian 12 |
-| :--- | :---: | :---: | :---: | :---: | 
+| :--- | :---: | :---: | :---: | :---: |
 | Chromium | ✅ | ✅ | ✅ | ✅ |
 | WebKit | ✅ | ✅ | ✅ | ✅ |
 | Firefox | ✅ | ✅ | ✅ | ✅ |

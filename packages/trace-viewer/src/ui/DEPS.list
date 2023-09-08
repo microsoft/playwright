@@ -5,4 +5,4 @@
 @web/**
 ../entries.ts
 ../geometry.ts
-../../../playwright-test/src/isomorphic/**
+../../../playwright/src/isomorphic/**
