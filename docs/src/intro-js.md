@@ -113,7 +113,7 @@ npx playwright show-report
 To update Playwright to the latest version run the following command:
 
 ```bash
-npm install -D @playwright@latest
+npm install -D @playwright/test@latest
 ```
 You can always check which version of Playwright you have by running the following command:
 
