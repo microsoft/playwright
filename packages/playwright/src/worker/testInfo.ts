@@ -25,9 +25,10 @@ import type { Annotation, FullConfigInternal, FullProjectInternal } from '../com
 import type { Location } from '../../types/testReporter';
 import { getContainedPath, normalizeAndSaveAttachment, serializeError, trimLongString } from '../util';
 import { TestTracing } from './testTracing';
+import type { Attachment } from './testTracing';
 
 export interface TestStepInternal {
-  complete(result: { error?: Error | TestInfoError }): void;
+  complete(result: { error?: Error | TestInfoError, attachments?: Attachment[] }): void;
   stepId: string;
   title: string;
   category: string;
@@ -261,8 +262,6 @@ export class TestInfoImpl implements TestInfo {
       isLaxParent = !!parentStep;
     }
 
-    const initialAttachments = new Set(this.attachments);
-
     const step: TestStepInternal = {
       stepId,
       ...data,
@@ -304,7 +303,7 @@ export class TestInfoImpl implements TestInfo {
         };
         this._onStepEnd(payload);
         const errorForTrace = error ? { name: '', message: error.message || '', stack: error.stack } : undefined;
-        this._tracing.appendAfterActionForStep(stepId, this.attachments, initialAttachments, errorForTrace);
+        this._tracing.appendAfterActionForStep(stepId, errorForTrace, result.attachments);
       }
     };
     const parentStepList = parentStep ? parentStep.steps : this._steps;
@@ -380,11 +379,6 @@ export class TestInfoImpl implements TestInfo {
       wallTime: Date.now(),
       laxParent: true,
     });
-    this._attachWithoutStep(attachment);
-    step.complete({});
-  }
-
-  _attachWithoutStep(attachment: TestInfo['attachments'][0]) {
     this._attachmentsPush(attachment);
     this._onAttach({
       testId: this._test.id,
@@ -393,6 +387,7 @@ export class TestInfoImpl implements TestInfo {
       path: attachment.path,
       body: attachment.body?.toString('base64')
     });
+    step.complete({ attachments: [attachment] });
   }
 
   outputPath(...pathSegments: string[]){

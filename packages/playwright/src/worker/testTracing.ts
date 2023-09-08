@@ -24,7 +24,7 @@ import { yauzl, yazl } from 'playwright-core/lib/zipBundle';
 import type { TestInfo } from '../../types/test';
 
 
-type Attachment = TestInfo['attachments'][0];
+export type Attachment = TestInfo['attachments'][0];
 export const testTraceEntryName = 'test.trace';
 
 export class TestTracing {
@@ -125,13 +125,13 @@ export class TestTracing {
     });
   }
 
-  appendAfterActionForStep(callId: string, attachments: Attachment[], initialAttachments: Set<Attachment>, error?: SerializedError['error']) {
+  appendAfterActionForStep(callId: string, error?: SerializedError['error'], attachments: Attachment[] = []) {
     this._appendTraceEvent({
       type: 'after',
       callId,
       endTime: monotonicTime(),
       log: [],
-      attachments: serializeAttachments(attachments, initialAttachments),
+      attachments: serializeAttachments(attachments),
       error,
     });
   }
@@ -143,8 +143,8 @@ export class TestTracing {
   }
 }
 
-function serializeAttachments(attachments: Attachment[], initialAttachments: Set<Attachment>): trace.AfterActionTraceEvent['attachments'] {
-  return attachments.filter(a => a.name !== 'trace' && !initialAttachments.has(a)).map(a => {
+function serializeAttachments(attachments: Attachment[]): trace.AfterActionTraceEvent['attachments'] {
+  return attachments.filter(a => a.name !== 'trace').map(a => {
     return {
       name: a.name,
       contentType: a.contentType,
