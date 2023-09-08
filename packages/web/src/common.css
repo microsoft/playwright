@@ -42,7 +42,7 @@ html, body {
   display: flex;
 }
 
-body {
+body, dialog {
   background-color: var(--vscode-panel-background);
   color: var(--vscode-foreground);
   font-family: var(--vscode-font-family);
@@ -53,6 +53,59 @@ body {
 
 a {
   color: var(--vscode-textLink-foreground);
+}
+
+dialog {
+  border: none;
+  padding: 0;
+  box-shadow: var(--box-shadow);
+  line-height: 28px;
+  max-width: 400px;
+}
+
+dialog .title {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  padding: 0 5px;
+  height: 32px;
+  background-color: var(--vscode-sideBar-background);
+  max-width: 400px;
+}
+
+dialog .title .codicon {
+  margin-right: 3px;
+}
+
+dialog .body {
+  padding: 10px;
+}
+
+.button {
+  color: var(--vscode-button-foreground);
+  background: var(--vscode-button-background);
+  margin: 10px;
+  border: none;
+  height: 28px;
+  min-width: 40px;
+  cursor: pointer;
+}
+
+.button:focus {
+  outline: 1px solid var(--vscode-focusBorder);
+}
+
+.button:hover {
+  background: var(--vscode-button-hoverBackground);
+}
+
+.button.secondary {
+  color: var(--vscode-button-secondaryForeground);
+  background: var(--vscode-button-secondaryBackground);
+}
+
+.button.secondary:hover {
+  background: var(--vscode-button-secondaryHoverBackground);
 }
 
 * {
