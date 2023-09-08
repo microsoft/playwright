@@ -16,9 +16,9 @@
 
 import fs from 'fs';
 import path from 'path';
-import type { FullResult, TestCase, TestError } from '../../types/testReporter';
-import { BaseReporter, formatError, formatTestTitle, stripAnsiEscapes } from './base';
+import type { FullResult, TestCase } from '../../types/testReporter';
 import { resolveReporterOutputPath } from '../util';
+import { BaseReporter, formatTestTitle } from './base';
 
 type MarkdownReporterOptions = {
   configDir: string,
