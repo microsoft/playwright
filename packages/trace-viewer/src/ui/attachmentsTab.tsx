@@ -17,62 +17,79 @@
 import * as React from 'react';
 import './attachmentsTab.css';
 import { ImageDiffView } from '@web/components/imageDiffView';
-import type { TestAttachment } from '@web/components/imageDiffView';
-import type { ActionTraceEventInContext, MultiTraceModel } from './modelUtil';
+import type { MultiTraceModel } from './modelUtil';
 import { PlaceholderPanel } from './placeholderPanel';
+import type { AfterActionTraceEventAttachment } from '@trace/trace';
+
+type Attachment = AfterActionTraceEventAttachment & { traceUrl: string };
 
 export const AttachmentsTab: React.FunctionComponent<{
   model: MultiTraceModel | undefined,
 }> = ({ model }) => {
-  const attachments = model?.actions.map(a => a.attachments || []).flat() || [];
-  if (!model || !attachments.length)
+  const { diffMap, screenshots, attachments } = React.useMemo(() => {
+    const attachments = new Set<Attachment>();
+    const screenshots = new Set<Attachment>();
+
+    for (const action of model?.actions || []) {
+      const traceUrl = action.context.traceUrl;
+      for (const attachment of action.attachments || [])
+        attachments.add({ ...attachment, traceUrl });
+    }
+    const diffMap = new Map<string, { expected: Attachment | undefined, actual: Attachment | undefined, diff: Attachment | undefined }>();
+
+    for (const attachment of attachments) {
+      if (!attachment.path && !attachment.sha1)
+        continue;
+      const match = attachment.name.match(/^(.*)-(expected|actual|diff)\.png$/);
+      if (match) {
+        const name = match[1];
+        const type = match[2] as 'expected' | 'actual' | 'diff';
+        const entry = diffMap.get(name) || { expected: undefined, actual: undefined, diff: undefined };
+        entry[type] = attachment;
+        diffMap.set(name, entry);
+      }
+      if (attachment.contentType.startsWith('image/')) {
+        screenshots.add(attachment);
+        attachments.delete(attachment);
+      }
+    }
+    return { diffMap, attachments, screenshots };
+  }, [model]);
+
+  if (!diffMap.size && !screenshots.size && !attachments.size)
     return <PlaceholderPanel text='No attachments' />;
+
   return <div className='attachments-tab'>
-    { model.actions.map((action, index) => <AttachmentsSection key={index} action={action} />) }
-  </div>;
-};
-
-export const AttachmentsSection: React.FunctionComponent<{
-  action: ActionTraceEventInContext | undefined,
-}> = ({ action }) => {
-  if (!action)
-    return null;
-  const expected = action.attachments?.find(a => a.name.endsWith('-expected.png') && (a.path || a.sha1)) as TestAttachment | undefined;
-  const actual = action.attachments?.find(a => a.name.endsWith('-actual.png') && (a.path || a.sha1)) as TestAttachment | undefined;
-  const diff = action.attachments?.find(a => a.name.endsWith('-diff.png') && (a.path || a.sha1)) as TestAttachment | undefined;
-  const screenshots = new Set(action.attachments?.filter(a => a.contentType.startsWith('image/')));
-  const otherAttachments = new Set(action.attachments || []);
-  screenshots.forEach(a => otherAttachments.delete(a));
-
-  const traceUrl = action.context.traceUrl;
-
-  return <>
-    {expected && actual && <div className='attachments-section'>Image diff</div>}
-    {expected && actual && <ImageDiffView imageDiff={{
-      name: 'Image diff',
-      expected: { attachment: { ...expected, path: attachmentURL(traceUrl, expected) }, title: 'Expected' },
-      actual: { attachment: { ...actual, path: attachmentURL(traceUrl, actual) } },
-      diff: diff ? { attachment: { ...diff, path: attachmentURL(traceUrl, diff) } } : undefined,
-    }} />}
+    {[...diffMap.values()].map(({ expected, actual, diff }) => {
+      return <>
+        {expected && actual && <div className='attachments-section'>Image diff</div>}
+        {expected && actual && <ImageDiffView imageDiff={{
+          name: 'Image diff',
+          expected: { attachment: { ...expected, path: attachmentURL(expected) }, title: 'Expected' },
+          actual: { attachment: { ...actual, path: attachmentURL(actual) } },
+          diff: diff ? { attachment: { ...diff, path: attachmentURL(diff) } } : undefined,
+        }} />}
+      </>;
+    })}
     {screenshots.size ? <div className='attachments-section'>Screenshots</div> : undefined}
-    {[...screenshots].map((a, i) => {
-      const url = attachmentURL(traceUrl, a);
+    {[...screenshots.values()].map((a, i) => {
+      const url = attachmentURL(a);
       return <div className='attachment-item' key={`screenshot-${i}`}>
         <div><img draggable='false' src={url} /></div>
         <div><a target='_blank' href={url}>{a.name}</a></div>
       </div>;
     })}
-    {otherAttachments.size ? <div className='attachments-section'>Attachments</div> : undefined}
-    {[...otherAttachments].map((a, i) => {
+    {attachments.size ? <div className='attachments-section'>Attachments</div> : undefined}
+    {[...attachments.values()].map((a, i) => {
       return <div className='attachment-item' key={`attachment-${i}`}>
-        <a href={attachmentURL(traceUrl, a) + '&download'}>{a.name}</a>
+        <a href={attachmentURL(a) + '&download'}>{a.name}</a>
       </div>;
     })}
-  </>;
+  </div>;
 };
 
-function attachmentURL(traceUrl: string, attachment: NonNullable<ActionTraceEventInContext['attachments']>[0]) {
+function attachmentURL(attachment: Attachment) {
   if (attachment.sha1)
-    return 'sha1/' + attachment.sha1 + '?trace=' + encodeURIComponent(traceUrl);
+    return 'sha1/' + attachment.sha1 + '?trace=' + encodeURIComponent(attachment.traceUrl);
   return 'file?path=' + encodeURIComponent(attachment.path!);
 }
