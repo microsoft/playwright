@@ -29,7 +29,6 @@ timeouts and racy checks in their tests altogether.
 - [How to use test hooks](/writing-tests.md#using-test-hooks)
 
 ## First test
-* langs: js
 
 Take a look at the following example to see how to write a test.
 
@@ -53,34 +52,6 @@ test('get started link', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Installation' })).toBeVisible();
 });
 ```
-
-## First test
-* langs: python
-  
-Take a look at the following example to see how to write a test. Note how the file name follows the `test_` prefix convention as well as each test name.
-
-```python title="test_example.py"
-import re
-from playwright.sync_api import Page, expect
-
-def test_has_title(page: Page):
-    page.goto("https://playwright.dev/")
-
-    # Expect a title "to contain" a substring.
-    expect(page).to_have_title(re.compile("Playwright"))
-
-def test_get_started_link(page: Page):
-    page.goto("https://playwright.dev/")
-
-    # Click the get started link.
-    page.get_by_role("link", name="Get started").click()
-
-    # Expects page to have a heading with the name of Installation.
-    expect(page.get_by_role("heading", name="Installation")).to_be_visible()
-```
-
-######
-* langs: js
   
 :::note
 Add `// @ts-check` at the start of each test file when using JavaScript in VS Code to get automatic type checking.
@@ -124,21 +95,6 @@ In most cases, it'll be written in one line:
 await page.getByRole('link', { name: 'Get started' }).click();
 ```
 
-```python
-# Create a locator.
-get_started = page.get_by_role("link", name="Get started")
-
-# Click it.
-get_started.click()
-```
-
-In most cases, it'll be written in one line:
-
-```python
-page.get_by_role("link", name="Get started").click()
-```
-
-
 ### Basic actions
 
 This is the list of the most popular Playwright actions. Note that there are many more, so make sure to check the [Locator API](./api/class-locator.md) section to
@@ -157,7 +113,6 @@ learn more about them.
 | [`method: Locator.selectOption`] | Select option in the drop down |
 
 ## Assertions
-* langs: js
   
 Playwright includes [test assertions](./test-assertions.md) in the form of `expect` function. To make an assertion, call `expect(value)` and choose a matcher that reflects the expectation.
 
@@ -172,20 +127,6 @@ Playwright also includes async matchers that will wait until the expected condit
 ```js
 await expect(page).toHaveTitle(/Playwright/);
 ```
-
-## Assertions
-* langs: python
-
-Playwright includes [assertions](./test-assertions.md) that will wait until the expected condition is met. Using these assertions allows making the tests non-flaky and resilient. For example, this code will wait until the page gets the title containing "Playwright":
-
-```python
-import re
-from playwright.sync_api import expect
-
-expect(page).to_have_title(re.compile("Playwright"))
-```
-######
-* langs: js, python
   
 Here is the list of the most popular async assertions. Note that there are [many more](./test-assertions.md) to get familiar with:
 
@@ -203,7 +144,6 @@ Here is the list of the most popular async assertions. Note that there are [many
 | [`method: PageAssertions.toHaveURL`] | Page has URL |
 
 ### Test Isolation
-* langs: js
   
 Playwright Test is based on the concept of [test fixtures](./test-fixtures.md) such as the [built in page fixture](./test-fixtures#built-in-fixtures), which is passed into your test. Pages are [isolated between tests due to the Browser Context](./browser-contexts), which is equivalent to a brand new browser profile, where every test gets a fresh environment, even when multiple tests run in a single Browser.
 
@@ -219,25 +159,7 @@ test('another test', async ({ page }) => {
 });
 ```
 
-### Test Isolation
-* langs: python
-  
-The Playwright Pytest plugin is based on the concept of test fixtures such as the [built in page fixture](./test-runners.md), which is passed into your test. Pages are [isolated between tests due to the Browser Context](./browser-contexts), which is equivalent to a brand new browser profile, where every test gets a fresh environment, even when multiple tests run in a single Browser.
-
-```python title="test_example.py"
-from playwright.sync_api import Page
-
-def test_example_test(page: Page):
-  pass
-  # "page" belongs to an isolated BrowserContext, created for this specific test.
-
-def test_another_test(page: Page):
-  pass
-  # "page" in this second test is completely isolated from the first test.
-```
-
 ### Using Test Hooks
-* langs: js
 
 You can use various [test hooks](./api/class-test.md) such as `test.describe` to declare a group of tests and `test.beforeEach` and `test.afterEach` which are executed before/after each test. Other hooks include the `test.beforeAll` and `test.afterAll` which are executed once per worker before/after all tests.
 
@@ -257,33 +179,11 @@ test.describe('navigation', () => {
 });
 ```
 
-### Using Test Hooks
-* langs: python
-
-You can use various [fixtures](https://docs.pytest.org/en/6.2.x/fixture.html#autouse-fixtures-fixtures-you-don-t-have-to-request) to execute code before or after your tests and to share objects between them. A `function` scoped fixture e.g. with autouse behaves like a beforeEach/afterEach. And a `module` scoped fixture with autouse behaves like a beforeAll/afterAll which runs before all and after all the tests.
-
-```python title="test_example.py"
-import pytest
-from playwright.sync_api import Page, expect
-
-@pytest.fixture(scope="function", autouse=True)
-def before_each_after_each(page: Page):
-    
-    print("before the test runs")
-
-    # Go to the starting url before each test.
-    page.goto("https://playwright.dev/")
-    yield
-    
-    print("after the test runs")
-
-def test_main_navigation(page: Page):
-    # Assertions use the expect API.
-    expect(page).to_have_url("https://playwright.dev/")
-```
-
 ## What's Next
 
 - [Run single test, multiple tests, headed mode](./running-tests.md)
 - [Generate tests with Codegen](./codegen-intro.md)
 - [See a trace of your tests](./trace-viewer-intro.md)
+- [Explore UI Mode](./test-ui-mode.md)
+- [Run tests on CI with GitHub Actions](./ci-intro.md)
+
