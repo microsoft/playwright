@@ -86,6 +86,7 @@ export type NPMTestFixtures = {
   tmpWorkspace: string,
   nodeMajorVersion: number,
   installedSoftwareOnDisk: (registryPath?: string) => Promise<string[]>;
+  writeConfig: (allowGlobal: boolean) => Promise<void>,
   writeFiles: (nameToContents: Record<string, string>) => Promise<void>,
   exec: (cmd: string, ...argsAndOrOptions: ArgsOrOptions) => Promise<string>
   tsc: (...argsAndOrOptions: ArgsOrOptions) => Promise<string>,
@@ -96,11 +97,20 @@ export const test = _test
     .extend<CommonFixtures, CommonWorkerFixtures>(commonFixtures)
     .extend<NPMTestFixtures>({
       _browsersPath: async ({ tmpWorkspace }, use) => use(path.join(tmpWorkspace, 'browsers')),
-      _auto: [async ({ tmpWorkspace, exec, _browsersPath }, use) => {
+      _auto: [async ({ tmpWorkspace, exec, _browsersPath, writeConfig }, use) => {
         await exec('npm init -y');
         const sourceDir = path.join(__dirname, 'fixture-scripts');
         const contents = await fs.promises.readdir(sourceDir);
         await Promise.all(contents.map(f => fs.promises.copyFile(path.join(sourceDir, f), path.join(tmpWorkspace, f))));
+
+        const packages = JSON.parse((await fs.promises.readFile(path.join(__dirname, '.registry.json'), 'utf8')));
+        const prefixed = Object.fromEntries(Object.entries(packages).map(entry => ([entry[0], 'file:' + entry[1]])));
+        const packageJSON = JSON.parse(await fs.promises.readFile(path.join(tmpWorkspace, 'package.json'), 'utf-8'));
+        packageJSON.pnpm = { overrides: prefixed };
+        await fs.promises.writeFile(path.join(tmpWorkspace, 'package.json'), JSON.stringify(packageJSON, null, 2));
+
+        await writeConfig(false);
+
         await use();
         if (test.info().status === test.info().expectedStatus) {
           // Browsers are large, we remove them after each test to save disk space.
@@ -133,6 +143,24 @@ export const test = _test
         await use(registry);
         await registry.shutdown();
       },
+      writeConfig: async ({ tmpWorkspace, registry }, use, testInfo) => {
+        await use(async (allowGlobal: boolean) => {
+          const yarnLines = [
+            `registry "${registry.url()}/"`,
+            `cache "${testInfo.outputPath('npm_cache')}"`,
+          ];
+          const npmLines = [
+            `registry = ${registry.url()}/`,
+            `cache = ${testInfo.outputPath('npm_cache')}`,
+          ];
+          if (!allowGlobal) {
+            yarnLines.push(`prefix "${testInfo.outputPath('npm_global')}"`);
+            npmLines.push(`prefix = ${testInfo.outputPath('npm_global')}`);
+          }
+          await fs.promises.writeFile(path.join(tmpWorkspace, '.yarnrc'), yarnLines.join('\n'), 'utf-8');
+          await fs.promises.writeFile(path.join(tmpWorkspace, '.npmrc'), npmLines.join('\n'), 'utf-8');
+        });
+      },
       installedSoftwareOnDisk: async ({ _browsersPath }, use) => {
         await use(async (registryPath?: string) => fs.promises.readdir(registryPath || _browsersPath).catch(() => []).then(files => files.map(f => f.split('-')[0]).filter(f => !f.startsWith('.'))));
       },
@@ -156,9 +184,6 @@ export const test = _test
                 'DISPLAY': process.env.DISPLAY,
                 'XAUTHORITY': process.env.XAUTHORITY,
                 'PLAYWRIGHT_BROWSERS_PATH': _browsersPath,
-                'npm_config_cache': testInfo.outputPath('npm_cache'),
-                'npm_config_registry': registry.url(),
-                'npm_config_prefix': testInfo.outputPath('npm_global'),
                 ...options.env,
               }
             });

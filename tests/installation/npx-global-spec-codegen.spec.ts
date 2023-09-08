@@ -15,8 +15,9 @@
  */
 import { test, expect } from './npmTest';
 
-test('npx playwright codegen', async ({ exec, installedSoftwareOnDisk }) => {
-  const stdio = await exec('npx playwright codegen', { expectToExitWithError: true, env: { npm_config_prefix: '' } }); // global npx and npm_config_prefix do not work together nicely (https://github.com/npm/cli/issues/5268)
+test('npx playwright codegen', async ({ writeConfig, exec, installedSoftwareOnDisk }) => {
+  await writeConfig(true);
+  const stdio = await exec('npx playwright codegen', { expectToExitWithError: true });
   expect(stdio).toHaveLoggedSoftwareDownload([]);
   expect(await installedSoftwareOnDisk()).toEqual([]);
   expect(stdio).toContain(`Please run the following command to download new browsers`);
