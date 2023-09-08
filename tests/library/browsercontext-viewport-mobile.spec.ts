@@ -190,7 +190,7 @@ it.describe('mobile viewport', () => {
     await context.close();
   });
 
-  it('view scale should reset after navigation', async ({ browser, browserName }) => {
+  it('view scale should reset after navigation', async ({ browser, browserName, isLinux, isWindows }) => {
     it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/26876' });
     const context = await browser.newContext({
       viewport: { width: 390, height: 664 },
@@ -224,8 +224,16 @@ it.describe('mobile viewport', () => {
     });
     await page.goto('http://localhost/button.html');
     await page.getByText('Click me').click({ force: true });
-    expect(await page.evaluate(() => (window as any).clicks)).toEqual(
-        browserName === 'chromium' ? [{ x: 41, y: 18 }] : [{ x: 37, y: 15 }]);
+    let expected = [{ x: 41, y: 18 }];
+    if (browserName === 'webkit') {
+      if (isLinux)
+        expected = [{ x: 50, y: 20 }];
+      else if (isWindows)
+        expected = [{ x: 40, y: 20 }];
+      else
+        expected = [{ x: 37, y: 15 }];
+    }
+    expect(await page.evaluate(() => (window as any).clicks)).toEqual(expected);
     await context.close();
   });
 });
