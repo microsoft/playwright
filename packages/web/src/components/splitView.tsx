@@ -46,11 +46,11 @@ export const SplitView: React.FC<SplitViewProps> = ({
 
   let size: number;
   if (orientation === 'vertical') {
-    size = vSize;
+    size = vSize / window.devicePixelRatio;
     if (measure && measure.height < vSize)
       size = measure.height - 10;
   } else {
-    size = hSize;
+    size = hSize / window.devicePixelRatio;
     if (measure && measure.width < hSize)
       size = measure.width - 10;
   }
@@ -90,9 +90,9 @@ export const SplitView: React.FC<SplitViewProps> = ({
           const rect = splitView.getBoundingClientRect();
           const size = Math.min(Math.max(minSidebarSize, newSize), (orientation === 'vertical' ? rect.height : rect.width) - minSidebarSize);
           if (orientation === 'vertical')
-            setVSize(size);
+            setVSize(size * window.devicePixelRatio);
           else
-            setHSize(size);
+            setHSize(size * window.devicePixelRatio);
         }
       }}
     ></div> }
