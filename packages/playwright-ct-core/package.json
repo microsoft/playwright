@@ -26,7 +26,7 @@
   "dependencies": {
     "playwright-core": "1.38.0-next",
     "vite": "^4.3.9",
-    "@playwright/test": "1.38.0-next"
+    "playwright": "1.38.0-next"
   },
   "bin": {
     "playwright": "./cli.js"

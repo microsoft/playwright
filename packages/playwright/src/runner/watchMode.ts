@@ -23,7 +23,7 @@ import type { Matcher } from '../util';
 import { TestRun, createTaskRunnerForWatch, createTaskRunnerForWatchSetup } from './tasks';
 import { buildProjectsClosure, filterProjects } from './projectUtils';
 import { clearCompilationCache, collectAffectedTestFiles } from '../transform/compilationCache';
-import type { FullResult } from 'packages/playwright-test/reporter';
+import type { FullResult } from '../../types/testReporter';
 import { chokidar } from '../utilsBundle';
 import type { FSWatcher as CFSWatcher } from 'chokidar';
 import { colors } from 'playwright-core/lib/utilsBundle';

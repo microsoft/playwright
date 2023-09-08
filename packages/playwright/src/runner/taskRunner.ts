@@ -16,7 +16,7 @@
 
 import { debug } from 'playwright-core/lib/utilsBundle';
 import { ManualPromise, monotonicTime } from 'playwright-core/lib/utils';
-import type { FullResult, TestError } from '../../reporter';
+import type { FullResult, TestError } from '../../types/testReporter';
 import { SigIntWatcher } from './sigIntWatcher';
 import { serializeError } from '../util';
 import type { ReporterV2 } from '../reporters/reporterV2';

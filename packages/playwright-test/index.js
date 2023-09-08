@@ -14,15 +14,4 @@
  * limitations under the License.
  */
 
-const pwt = require('./lib/index');
-const { defineConfig } = require('./lib/common/configLoader');
-const playwright = require('playwright-core');
-const combinedExports = {
-  ...playwright,
-  ...pwt,
-  defineConfig,
-};
-
-Object.defineProperty(combinedExports, '__esModule', { value: true });
-
-module.exports = combinedExports;
+module.exports = require('playwright/test');

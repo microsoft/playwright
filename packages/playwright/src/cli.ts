@@ -26,12 +26,12 @@ import { showHTMLReport } from './reporters/html';
 import { createMergedReport } from './reporters/merge';
 import { ConfigLoader, resolveConfigFile } from './common/configLoader';
 import type { ConfigCLIOverrides } from './common/ipc';
-import type { FullResult, TestError } from '../reporter';
+import type { FullResult, TestError } from '../types/testReporter';
 import type { TraceMode } from '../types/test';
 import { builtInReporters, defaultReporter, defaultTimeout } from './common/config';
 import type { FullConfigInternal } from './common/config';
 import program from 'playwright-core/lib/cli/program';
-import type { ReporterDescription } from '..';
+import type { ReporterDescription } from '../types/test';
 import { prepareErrorStack } from './reporters/base';
 
 function addTestCommand(program: Command) {

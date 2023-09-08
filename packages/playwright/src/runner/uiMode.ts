@@ -16,7 +16,7 @@
 
 import { openTraceViewerApp, openTraceInBrowser, registry } from 'playwright-core/lib/server';
 import { isUnderTest, ManualPromise } from 'playwright-core/lib/utils';
-import type { FullResult } from '../../reporter';
+import type { FullResult } from '../../types/testReporter';
 import { clearCompilationCache, collectAffectedTestFiles, dependenciesForTestFile } from '../transform/compilationCache';
 import type { FullConfigInternal } from '../common/config';
 import { InternalReporter } from '../reporters/internalReporter';

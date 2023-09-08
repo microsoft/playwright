@@ -15,11 +15,11 @@
  */
 
 import * as fs from 'fs';
-import type { PlaywrightTestConfig } from 'packages/playwright-test';
+import type { PlaywrightTestConfig } from '@playwright/test';
 import path from 'path';
 import url from 'url';
 import type { HttpServer } from '../../packages/playwright-core/src/utils';
-import { startHtmlReportServer } from '../../packages/playwright-test/lib/reporters/html';
+import { startHtmlReportServer } from '../../packages/playwright/lib/reporters/html';
 import { expect as baseExpect, test as baseTest, stripAnsi } from './playwright-test-fixtures';
 import extractZip from '../../packages/playwright-core/bundles/zip/node_modules/extract-zip';
 import * as yazl from '../../packages/playwright-core/bundles/zip/node_modules/yazl';

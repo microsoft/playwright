@@ -19,7 +19,7 @@ import { ConfigLoader } from '../common/configLoader';
 import { ProcessRunner } from '../common/process';
 import type { FullConfigInternal } from '../common/config';
 import { loadTestFile } from '../common/testLoader';
-import type { TestError } from '../../reporter';
+import type { TestError } from '../../types/testReporter';
 import { serializeCompilationCache } from '../transform/compilationCache';
 import { PoolBuilder } from '../common/poolBuilder';
 import { incorporateCompilationCache } from '../common/esmLoaderHost';

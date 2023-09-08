@@ -15,9 +15,9 @@
  */
 
 import path from 'path';
-import type { T, BabelAPI } from '@playwright/test/src/transform/babelBundle';
-import { types, declare, traverse } from '@playwright/test/lib/transform/babelBundle';
-import { resolveImportSpecifierExtension } from '@playwright/test/lib/util';
+import type { T, BabelAPI } from 'playwright/src/transform/babelBundle';
+import { types, declare, traverse } from 'playwright/lib/transform/babelBundle';
+import { resolveImportSpecifierExtension } from 'playwright/lib/util';
 const t: typeof T = types;
 
 const fullNames = new Map<string, string | undefined>();

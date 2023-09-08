@@ -7,10 +7,7 @@
   "engines": {
     "node": ">=16"
   },
-  "author": {
-    "name": "Microsoft Corporation"
-  },
-  "license": "Apache-2.0",
+  "main": "index.js",
   "exports": {
     ".": {
       "types": "./index.d.ts",
@@ -19,14 +16,44 @@
       "default": "./index.js"
     },
     "./cli": "./cli.js",
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./lib/cli": "./lib/cli.js",
+    "./lib/transform/babelBundle": "./lib/transform/babelBundle.js",
+    "./lib/transform/compilationCache": "./lib/transform/compilationCache.js",
+    "./lib/transform/esmLoader": "./lib/transform/esmLoader.js",
+    "./lib/internalsForTest": "./lib/internalsForTest.js",
+    "./lib/plugins": "./lib/plugins/index.js",
+    "./jsx-runtime": {
+      "import": "./jsx-runtime.mjs",
+      "require": "./jsx-runtime.js",
+      "default": "./jsx-runtime.js"
+    },
+    "./lib/util": "./lib/util.js",
+    "./lib/utilsBundle": "./lib/utilsBundle.js",
+    "./types/test": {
+      "types": "./types/test.d.ts"
+    },
+    "./types/testReporter": {
+      "types": "./types/testReporter.d.ts"
+    },
+    "./test": {
+      "types": "./test.d.ts",
+      "import": "./test.mjs",
+      "require": "./test.js",
+      "default": "./test.js"
+    }
   },
   "bin": {
     "playwright": "./cli.js"
   },
-  "scripts": {
+  "author": {
+    "name": "Microsoft Corporation"
   },
+  "license": "Apache-2.0",
   "dependencies": {
     "playwright-core": "1.38.0-next"
+  },
+  "optionalDependencies": {
+    "fsevents": "2.3.2"
   }
 }

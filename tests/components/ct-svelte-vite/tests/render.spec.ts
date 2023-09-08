@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/experimental-ct-svelte';
-import type { HooksConfig } from 'playwright';
+import type { HooksConfig } from '../playwright';
 import Button from '@/components/Button.svelte';
 import Empty from '@/components/Empty.svelte';
 import Context from '@/components/Context.svelte';

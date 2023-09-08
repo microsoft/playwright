@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { TestError } from '../../reporter';
+import type { TestError } from '../../types/testReporter';
 import { serializeConfig } from '../common/ipc';
 import { ProcessHost } from './processHost';
 import { Suite } from '../common/test';
