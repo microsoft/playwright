@@ -518,11 +518,6 @@ test('should load a jsx/tsx files in ESM mode', async ({ runInlineTest }) => {
 
 test('should load jsx with top-level component', async ({ runInlineTest }) => {
   const { exitCode, passed } = await runInlineTest({
-    'tsconfig.json': JSON.stringify({
-      compilerOptions: {
-        jsx: 'react-jsx'
-      }
-    }),
     'a.spec.tsx': `
       import { jsx } from 'react/jsx-runtime';
       import { test, expect } from '@playwright/test';
