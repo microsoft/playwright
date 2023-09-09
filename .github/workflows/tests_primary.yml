@@ -39,7 +39,7 @@ jobs:
             node-version: 18
             browser: chromium
           - os: ubuntu-22.04
-            node-version: 20.5.x
+            node-version: 20
             browser: chromium
     runs-on: ${{ matrix.os }}
     steps:
@@ -113,10 +113,10 @@ jobs:
             node-version: 18
             shard: 2/2
           - os: ubuntu-latest
-            node-version: 20.5.x
+            node-version: 20
             shard: 1/2
           - os: ubuntu-latest
-            node-version: 20.5.x
+            node-version: 20
             shard: 2/2
     runs-on: ${{ matrix.os }}
     steps:

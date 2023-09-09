@@ -125,7 +125,7 @@ jobs:
         - os: ubuntu-latest
           node_version: 18
         - os: ubuntu-latest
-          node_version: 20.5.x
+          node_version: 20
     timeout-minutes: 30
     steps:
     - uses: actions/checkout@v3
