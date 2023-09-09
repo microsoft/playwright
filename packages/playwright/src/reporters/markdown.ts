@@ -16,9 +16,9 @@
 
 import fs from 'fs';
 import path from 'path';
-import type { FullResult, TestCase, TestError } from '../../types/testReporter';
-import { BaseReporter, formatError, formatTestTitle, stripAnsiEscapes } from './base';
+import type { FullResult, TestCase } from '../../types/testReporter';
 import { resolveReporterOutputPath } from '../util';
+import { BaseReporter, formatTestTitle } from './base';
 
 type MarkdownReporterOptions = {
   configDir: string,
@@ -49,73 +49,32 @@ class MarkdownReporter extends BaseReporter {
       this._printTestList(':x:', summary.unexpected, lines);
     }
     if (summary.flaky.length) {
-      lines.push(`**${summary.flaky.length} flaky**`);
-      this._printTestList(':warning:', summary.flaky, lines);
+      lines.push(`<details>`);
+      lines.push(`<summary><b>${summary.flaky.length} flaky</b></summary>`);
+      this._printTestList(':warning:', summary.flaky, lines, ' <br/>');
+      lines.push(`</details>`);
+      lines.push(``);
     }
     if (summary.interrupted.length) {
-      lines.push(`**${summary.interrupted.length} interrupted**`);
-      this._printTestList(':warning:', summary.interrupted, lines);
+      lines.push(`<details>`);
+      lines.push(`<summary><b>${summary.flaky.length} interrupted</b></summary>`);
+      this._printTestList(':warning:', summary.interrupted, lines, ' <br/>');
+      lines.push(`</details>`);
+      lines.push(``);
     }
     const skipped = summary.skipped ? `, ${summary.skipped} skipped` : '';
     lines.push(`**${summary.expected} passed${skipped}**`);
     lines.push(`:heavy_check_mark::heavy_check_mark::heavy_check_mark:`);
     lines.push(``);
 
-    if (summary.unexpected.length || summary.fatalErrors.length) {
-      lines.push(`<details>`);
-      lines.push(``);
-      if (summary.fatalErrors.length)
-        this._printFatalErrorDetails(summary.fatalErrors, lines);
-      if (summary.unexpected.length)
-        this._printTestListDetails(':x:', summary.unexpected, lines);
-      lines.push(`</details>`);
-    }
-
     const reportFile = resolveReporterOutputPath('report.md', this._options.configDir, this._options.outputFile);
     await fs.promises.mkdir(path.dirname(reportFile), { recursive: true });
     await fs.promises.writeFile(reportFile, lines.join('\n'));
   }
 
-  private _printTestList(prefix: string, tests: TestCase[], lines: string[]) {
+  private _printTestList(prefix: string, tests: TestCase[], lines: string[], suffix?: string) {
     for (const test of tests)
-      lines.push(`${prefix} ${formatTestTitle(this.config, test)}`);
-    lines.push(``);
-  }
-
-  private _printTestListDetails(prefix: string, tests: TestCase[], lines: string[]) {
-    for (const test of tests)
-      this._printTestDetails(prefix, test, lines);
-  }
-
-  private _printTestDetails(prefix: string, test: TestCase, lines: string[]) {
-    lines.push(`${prefix} <b> ${formatTestTitle(this.config, test)} </b>`);
-    let retry = 0;
-    for (const result of test.results) {
-      if (result.status === 'passed')
-        break;
-      if (retry)
-        lines.push(`<b>Retry ${retry}:</b>`);
-      retry++;
-      if (result.error) {
-        lines.push(``);
-        lines.push('```');
-        lines.push(stripAnsiEscapes(formatError(result.error, false).message));
-        lines.push('```');
-        lines.push(``);
-      }
-    }
-    lines.push(``);
-  }
-
-  private _printFatalErrorDetails(errors: TestError[], lines: string[]) {
-    for (const error of errors) {
-      lines.push(`:x: <b>fatal error, not part of any test</b>`);
-      lines.push(``);
-      lines.push('```');
-      lines.push(stripAnsiEscapes(formatError(error, false).message));
-      lines.push('```');
-      lines.push(``);
-    }
+      lines.push(`${prefix} ${formatTestTitle(this.config, test)}${suffix || ''}`);
     lines.push(``);
   }
 }

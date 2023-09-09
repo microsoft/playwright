@@ -66,30 +66,15 @@ test('simple report', async ({ runInlineTest }) => {
 :x: a.test.js:6:11 › failing 1
 :x: b.test.js:6:11 › failing 2
 
-**2 flaky**
-:warning: a.test.js:9:11 › flaky 1
-:warning: c.test.js:6:11 › flaky 2
+<details>
+<summary><b>2 flaky</b></summary>
+:warning: a.test.js:9:11 › flaky 1 <br/>
+:warning: c.test.js:6:11 › flaky 2 <br/>
+
+</details>
 
 **3 passed, 3 skipped**
 :heavy_check_mark::heavy_check_mark::heavy_check_mark:
-
-<details>
-
-:x: <b> a.test.js:6:11 › failing 1 </b>
-`);
-
-  expect(reportFile.toString()).toContain(`Error: expect(received).toBe(expected) // Object.is equality
-
-Expected: 2
-Received: 1
-
-   5 |       });
-   6 |       test('failing 1', async ({}) => {
->  7 |         expect(1).toBe(2);
-     |                   ^
-   8 |       });
-   9 |       test('flaky 1', async ({}) => {
-  10 |         expect(test.info().retry).toBe(1);
 `);
 });
 
@@ -141,12 +126,7 @@ test('report error without snippet', async ({ runInlineTest }) => {
 
 **0 passed**
 :heavy_check_mark::heavy_check_mark::heavy_check_mark:
-
-<details>
-
-:x: <b> a.test.js:3:11 › math 1 </b>
 `);
-  expect(reportFile.toString()).toContain(`Error: My error`);
 });
 
 test('report with worker error', async ({ runInlineTest }) => {
@@ -173,20 +153,5 @@ test('report with worker error', async ({ runInlineTest }) => {
   expect(reportFile.toString()).toContain(`**3 fatal errors, not part of any test**
 **0 passed**
 :heavy_check_mark::heavy_check_mark::heavy_check_mark:
-
-<details>
-
-:x: <b>fatal error, not part of any test</b>
 `);
-  expect(reportFile.toString()).toContain(`Error: My error 1
-
-   at a.test.js:3
-
-  1 |
-  2 |       import { test, expect } from '@playwright/test';
-> 3 |       throw new Error('My error 1');
-    |             ^
-  4 |     
-`);
-  expect(reportFile.toString()).toContain(`Error: No tests found`);
 });
