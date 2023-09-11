@@ -43,6 +43,8 @@ export type JsonProject = {
   id: string;
   grep: JsonPattern[];
   grepInvert: JsonPattern[];
+  tag: JsonPattern[];
+  tagInvert: JsonPattern[];
   metadata: Metadata;
   name: string;
   dependencies: string[];
@@ -73,6 +75,7 @@ export type JsonTestCase = {
   title: string;
   location: JsonLocation;
   retries: number;
+  tags: string[];
 };
 
 export type JsonTestEnd = {
@@ -345,6 +348,8 @@ export class TeleReporterReceiver {
       timeout: project.timeout,
       grep: parseRegexPatterns(project.grep) as RegExp[],
       grepInvert: parseRegexPatterns(project.grepInvert) as RegExp[],
+      tags: parseRegexPatterns(project.tag) as string[],
+      tagsInvert: parseRegexPatterns(project.tagInvert) as string[],
       dependencies: project.dependencies,
       teardown: project.teardown,
       snapshotDir: this._absolutePath(project.snapshotDir),
@@ -394,6 +399,7 @@ export class TeleReporterReceiver {
     test.id = payload.testId;
     test.location = this._absoluteLocation(payload.location);
     test.retries = payload.retries;
+    test.tags = payload.tags;
     return test;
   }
 
@@ -468,6 +474,7 @@ export class TeleTestCase implements reporterTypes.TestCase {
   fn = () => {};
   results: TeleTestResult[] = [];
   location: Location;
+  tags: string[] = [];
   parent!: TeleSuite;
 
   expectedStatus: reporterTypes.TestStatus = 'passed';

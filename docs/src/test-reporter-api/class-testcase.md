@@ -79,6 +79,12 @@ The maximum number of retries given to this test in the configuration.
 
 Learn more about [test retries](../test-retries.md#retries).
 
+## property: TestCase.tags
+* since: v1.39
+- type: <[Array]<[string]>>
+
+The list of tags for this test. Tags are defined using [`method: Test.tag`] and [`method: Test.describe.configure`].
+
 ## property: TestCase.timeout
 * since: v1.10
 - type: <[float]>

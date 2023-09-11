@@ -196,6 +196,18 @@ Use [`method: Test.describe.configure`] to change the number of retries for a sp
 
 Use [`property: TestConfig.retries`] to change this option for all projects.
 
+## property: TestProject.tags
+* since: v1.39
+- type: ?<[RegExp]|[string]|[Array]<[string]>>
+
+Filter to only run tests with a matching tag. For example, passing `tags: /@smoke/` should only run tests with `@smoke` tag. Also available globally and in the [command line](../test-cli.md) with the `--tag` option.
+
+## property: TestProject.tagsInvert
+* since: v1.39
+- type: ?<[RegExp]|[string]|[Array]<[string]>>
+
+Filter to only run tests with a tag **not** matching one of the patterns. This is the opposite of [`property: TestProject.tags`]. Also available globally and in the [command line](../test-cli.md) with the `--tag-invert` option.
+
 ## property: TestProject.teardown
 * since: v1.34
 - type: ?<[string]>

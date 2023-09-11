@@ -21,7 +21,7 @@ import { Suite } from '../common/test';
 import type { TestCase } from '../common/test';
 import type { FullProjectInternal } from '../common/config';
 import type { FullConfigInternal } from '../common/config';
-import { createFileMatcherFromArguments, createFileFiltersFromArguments, createTitleMatcher, errorWithFile, forceRegExp } from '../util';
+import { createFileMatcherFromArguments, createFileFiltersFromArguments, createTitleMatcher, errorWithFile, forceRegExp, createTagMatcher } from '../util';
 import type { Matcher, TestFileFilter } from '../util';
 import { buildProjectsClosure, collectFilesForProject, filterProjects } from './projectUtils';
 import type { TestRun } from './tasks';
@@ -134,12 +134,15 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
     const grepMatcher = config.cliGrep ? createTitleMatcher(forceRegExp(config.cliGrep)) : () => true;
     const grepInvertMatcher = config.cliGrepInvert ? createTitleMatcher(forceRegExp(config.cliGrepInvert)) : () => false;
     const cliTitleMatcher = (title: string) => !grepInvertMatcher(title) && grepMatcher(title);
+    const tagMatcher = config.cliTag ? createTagMatcher(forceRegExp(config.cliTag)) : () => true;
+    const tagInvertMatcher = config.cliTagInvert ? createTagMatcher(forceRegExp(config.cliTagInvert)) : () => false;
+    const cliTagMatcher = (tags: string[]) => !tagInvertMatcher(tags) && tagMatcher(tags);
 
     // Filter file suites for all projects.
     for (const [project, fileSuites] of testRun.projectSuites) {
       const projectSuite = createProjectSuite(project, fileSuites);
       projectSuites.set(project, projectSuite);
-      const filteredProjectSuite = filterProjectSuite(projectSuite, { cliFileFilters, cliTitleMatcher, testIdMatcher: config.testIdMatcher });
+      const filteredProjectSuite = filterProjectSuite(projectSuite, { cliFileFilters, cliTitleMatcher, cliTagMatcher, testIdMatcher: config.testIdMatcher });
       filteredProjectSuites.set(project, filteredProjectSuite);
     }
   }
@@ -216,7 +219,6 @@ function createProjectSuite(project: FullProjectInternal, fileSuites: Suite[]): 
 
   const grepMatcher = createTitleMatcher(project.project.grep);
   const grepInvertMatcher = project.project.grepInvert ? createTitleMatcher(project.project.grepInvert) : null;
-
   const titleMatcher = (test: TestCase) => {
     const grepTitle = test.titlePath().join(' ');
     if (grepInvertMatcher?.(grepTitle))
@@ -224,11 +226,23 @@ function createProjectSuite(project: FullProjectInternal, fileSuites: Suite[]): 
     return grepMatcher(grepTitle);
   };
 
-  filterTestsRemoveEmptySuites(projectSuite, titleMatcher);
+  const tagsMatcher = project.project.tags ? createTagMatcher(project.project.tags) : null;
+  const tagsInvertMatcher = project.project.tagsInvert ? createTagMatcher(project.project.tagsInvert) : null;
+  const tagMatcher = (test: TestCase) => {
+    if (tagsInvertMatcher?.(test.tags))
+      return false;
+    return !tagsMatcher || tagsMatcher(test.tags);
+  };
+
+  const testMatcher = (test: TestCase) => {
+    return titleMatcher(test) && tagMatcher(test);
+  };
+
+  filterTestsRemoveEmptySuites(projectSuite, testMatcher);
   return projectSuite;
 }
 
-function filterProjectSuite(projectSuite: Suite, options: { cliFileFilters: TestFileFilter[], cliTitleMatcher?: Matcher, testIdMatcher?: Matcher }): Suite {
+function filterProjectSuite(projectSuite: Suite, options: { cliFileFilters: TestFileFilter[], cliTitleMatcher?: Matcher, cliTagMatcher?: Matcher<string[]>, testIdMatcher?: Matcher }): Suite {
   // Fast path.
   if (!options.cliFileFilters.length && !options.cliTitleMatcher && !options.testIdMatcher)
     return projectSuite;
@@ -239,7 +253,13 @@ function filterProjectSuite(projectSuite: Suite, options: { cliFileFilters: Test
   if (options.testIdMatcher)
     filterByTestIds(result, options.testIdMatcher);
   const titleMatcher = (test: TestCase) => {
-    return !options.cliTitleMatcher || options.cliTitleMatcher(test.titlePath().join(' '));
+    if (options.cliTitleMatcher && options.cliTagMatcher)
+      return options.cliTitleMatcher(test.titlePath().join(' ')) && options.cliTagMatcher(test.tags);
+    if (options.cliTitleMatcher)
+      return options.cliTitleMatcher(test.titlePath().join(' '));
+    if (options.cliTagMatcher)
+      return options.cliTagMatcher(test.tags);
+    return true;
   };
   filterTestsRemoveEmptySuites(result, titleMatcher);
   return result;

@@ -441,6 +441,12 @@ Execution mode. Learn more about the execution modes [here](../test-parallel.md)
 
 The number of retries for each test.
 
+### option: Test.describe.configure.tags
+* since: v1.39
+- `tags` <[Array]<[string]>>
+
+Tags to be added to all tests in the scope. Tags can be used to filter tests in the command line.
+
 ### option: Test.describe.configure.timeout
 * since: v1.28
 - `timeout` <[int]>
@@ -1326,6 +1332,23 @@ A function that returns whether to mark as "slow", based on test fixtures. Test 
 
 Optional description that will be reflected in a test report.
 
+## method: Test.tag
+* since: v1.39
+- returns: <[Test]>
+
+Returns a test object with tags added to all tests in the scope. Tags can be used to filter tests in the command line.
+
+**Usage**
+
+```js
+test.tag('smoke', 'production')('example test', async ({ page }) => {
+  // ...
+});
+```
+
+### param: Test.tag.tags
+* since: v1.39
+- `tags` <[Array]<[string]>|[string]>
 
 ## async method: Test.step
 * since: v1.10

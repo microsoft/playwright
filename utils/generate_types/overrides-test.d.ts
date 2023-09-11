@@ -47,6 +47,8 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
   outputDir: string;
   repeatEach: number;
   retries: number;
+  tags: string | string[] | RegExp | null
+  tagsInvert: string | string[] | RegExp | null
   teardown?: string;
   testDir: string;
   testIgnore: string | RegExp | (string | RegExp)[];
@@ -131,7 +133,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
     parallel: SuiteFunction & {
       only: SuiteFunction;
     };
-    configure: (options: { mode?: 'default' | 'parallel' | 'serial', retries?: number, timeout?: number }) => void;
+    configure: (options: { mode?: 'default' | 'parallel' | 'serial', retries?: number, timeout?: number, tags?: string[] }) => void;
   };
   skip(title: string, testFunction: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<void> | void): void;
   skip(): void;
@@ -161,6 +163,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   expect: Expect;
   extend<T extends KeyValue, W extends KeyValue = {}>(fixtures: Fixtures<T, W, TestArgs, WorkerArgs>): TestType<TestArgs & T, WorkerArgs & W>;
   info(): TestInfo;
+  tag(...tags: string[]): TestType<TestArgs, WorkerArgs>;
 }
 
 type KeyValue = { [key: string]: any };

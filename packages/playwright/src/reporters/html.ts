@@ -345,11 +345,12 @@ class HtmlBuilder {
     path = path.slice(1);
 
     const results = test.results.map(r => this._createTestResult(test, r));
-
+    const tags = [...test.tags, ...extractTagsFromTestTitle(path.join(' ') + ' ' + test.title)];
     return {
       testCase: {
         testId: test.id,
         title: test.title,
+        tags,
         projectName,
         reportName,
         location,
@@ -363,6 +364,7 @@ class HtmlBuilder {
       testCaseSummary: {
         testId: test.id,
         title: test.title,
+        tags,
         projectName,
         reportName,
         location,
@@ -613,6 +615,10 @@ function createSnippets(stepsInFile: MultiMap<string, TestStep>) {
       step.snippet = snippetLines.join('\n');
     }
   }
+}
+
+function extractTagsFromTestTitle(title: string): string[] {
+  return (title.match(/@[\S]+/g) || []).map(t => t.substring(1));
 }
 
 export default HtmlReporter;

@@ -183,6 +183,13 @@ export interface TestCase {
   retries: number;
 
   /**
+   * The list of tags for this test. Tags are defined using
+   * [test.tag(tags)](https://playwright.dev/docs/api/class-test#test-tag) and
+   * [test.describe.configure([options])](https://playwright.dev/docs/api/class-test#test-describe-configure).
+   */
+  tags: Array<string>;
+
+  /**
    * The timeout given to the test. Affected by
    * [testConfig.timeout](https://playwright.dev/docs/api/class-testconfig#test-config-timeout),
    * [testProject.timeout](https://playwright.dev/docs/api/class-testproject#test-project-timeout),

@@ -47,6 +47,7 @@ export class Suite extends Base implements SuitePrivate {
   _entries: (Suite | TestCase)[] = [];
   _hooks: { type: 'beforeEach' | 'afterEach' | 'beforeAll' | 'afterAll', fn: Function, title: string, location: Location }[] = [];
   _timeout: number | undefined;
+  _tags: string[] | undefined;
   _retries: number | undefined;
   _staticAnnotations: Annotation[] = [];
   _modifiers: Modifier[] = [];
@@ -189,6 +190,7 @@ export class Suite extends Base implements SuitePrivate {
       parallelMode: this._parallelMode,
       hooks: this._hooks.map(h => ({ type: h.type, location: h.location, title: h.title })),
       fileId: this._fileId,
+      tags: this._tags,
     };
   }
 
@@ -199,6 +201,7 @@ export class Suite extends Base implements SuitePrivate {
     suite._requireFile = data.requireFile;
     suite._timeout = data.timeout;
     suite._retries = data.retries;
+    suite._tags = data.tags;
     suite._staticAnnotations = data.staticAnnotations;
     suite._modifiers = data.modifiers;
     suite._parallelMode = data.parallelMode;
@@ -241,12 +244,14 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   _projectId = '';
   // Annotations known statically before running the test, e.g. `test.skip()` or `test.describe.skip()`.
   _staticAnnotations: Annotation[] = [];
+  tags: string[];
 
-  constructor(title: string, fn: Function, testType: TestTypeImpl, location: Location) {
+  constructor(title: string, fn: Function, testType: TestTypeImpl, location: Location, tags: string[]) {
     super(title);
     this.fn = fn;
     this._testType = testType;
     this.location = location;
+    this.tags = tags;
   }
 
   titlePath(): string[] {
@@ -294,11 +299,12 @@ export class TestCase extends Base implements reporterTypes.TestCase {
       staticAnnotations: this._staticAnnotations.slice(),
       annotations: this.annotations.slice(),
       projectId: this._projectId,
+      tags: this.tags,
     };
   }
 
   static _parse(data: any): TestCase {
-    const test = new TestCase(data.title, () => {}, rootTestType, data.location);
+    const test = new TestCase(data.title, () => {}, rootTestType, data.location, data.tags);
     test.id = data.id;
     test.retries = data.retries;
     test.timeout = data.timeout;

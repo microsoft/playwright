@@ -47,6 +47,8 @@ export class FullConfigInternal {
   cliArgs: string[] = [];
   cliGrep: string | undefined;
   cliGrepInvert: string | undefined;
+  cliTag: string | undefined;
+  cliTagInvert: string | undefined;
   cliProjectFilter?: string[];
   cliListOnly = false;
   cliPassWithNoTests?: boolean;
@@ -170,6 +172,8 @@ export class FullProjectInternal {
     this.project = {
       grep: takeFirst(projectConfig.grep, config.grep, defaultGrep),
       grepInvert: takeFirst(projectConfig.grepInvert, config.grepInvert, null),
+      tags: takeFirst(projectConfig.tags, config.tags, null),
+      tagsInvert: takeFirst(projectConfig.tagsInvert, config.tagsInvert, null),
       outputDir: takeFirst(configCLIOverrides.outputDir, pathResolve(configDir, projectConfig.outputDir), pathResolve(configDir, config.outputDir), path.join(throwawayArtifactsPath, 'test-results')),
       // Note: we either apply the cli override for repeatEach or not, depending on whether the
       // project is top-level vs dependency. See collectProjectsAndTestFiles in loadUtils.

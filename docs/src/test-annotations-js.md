@@ -61,16 +61,28 @@ test.describe('two tests', () => {
 
 ## Tag tests
 
-Sometimes you want to tag your tests as `@fast` or `@slow` and only run the tests that have the certain tag. We recommend that you use the `--grep` and `--grep-invert` command line flags for that:
+Sometimes you want to tag your tests as `fast` or `slow` and only run the tests that have the certain tag. We recommend that you use the `--tag` and `--tag-invert` command line flags for that:
 
 ```js
 import { test, expect } from '@playwright/test';
 
-test('Test login page @fast', async ({ page }) => {
+test.tag('fast')('Test login page', async ({ page }) => {
   // ...
 });
 
-test('Test full report @slow', async ({ page }) => {
+test.tag('slow')('Test full report', async ({ page }) => {
+  // ...
+});
+```
+
+or via [`test.describe.configure`] which will tag all the tests in the file or current describe scope.
+
+```js
+import { test, expect } from '@playwright/test';
+
+test.describe.configure({ tags: ['fast'] });
+
+test('Test login page', async ({ page }) => {
   // ...
 });
 ```
@@ -78,19 +90,19 @@ test('Test full report @slow', async ({ page }) => {
 You will then be able to run only that test:
 
 ```bash
-npx playwright test --grep @fast
+npx playwright test --tag fast
 ```
 
 Or if you want the opposite, you can skip the tests with a certain tag:
 
 ```bash
-npx playwright test --grep-invert @slow
+npx playwright test --tag-invert slow
 ```
 
 To run tests containing either tag (logical `OR` operator):
 
 ```bash
-npx playwright test --grep "@fast|@slow"
+npx playwright test --tag "fast|slow"
 ```
 
 On Windows shells:
@@ -98,19 +110,19 @@ On Windows shells:
 - PowerShell
 
   ```bash
-  npx playwright test --grep --% "@fast^|@slow"
+  npx playwright test --tag --% "fast^|slow"
   ```
 
 - Command Prompt(cmd.exe) / Git Bash:
 
   ```bash
-  npx playwright test --grep "@fast^|@slow"
+  npx playwright test --tag "fast^|slow"
   ```
 
 Or run tests containing both tags (logical `AND` operator) using regex lookaheads:
 
 ```bash
-npx playwright test --grep "(?=.*@fast)(?=.*@slow)"
+npx playwright test --tag "(?=.*fast)(?=.*slow)"
 ```
 
 ## Conditionally skip a group of tests

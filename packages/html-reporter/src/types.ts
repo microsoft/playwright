@@ -63,6 +63,7 @@ export type TestCaseAnnotation = { type: string, description?: string };
 export type TestCaseSummary = {
   testId: string,
   title: string;
+  tags: string[];
   path: string[];
   projectName: string;
   reportName?: string;

@@ -1404,18 +1404,18 @@ for (const useIntermediateMergeReport of [false, true] as const) {
         await expect(page.locator('.test-file-test .test-file-title')).toHaveText('Error Pages › @GCC-1510 fails');
       });
 
-      test('tags with special symbols', async ({ runInlineTest, showReport, page }) => {
+      test('tags with special symbols in the test title', async ({ runInlineTest, showReport, page }) => {
         const result = await runInlineTest({
           'a.test.js': `
             const { expect, test } = require('@playwright/test');
             const tags = ['@smoke-p1', '@issue[123]', '@issue#123', '@$$$', '@tl/dr'];
 
             test.describe('Error Pages', () => {
-              tags.forEach(tag => {
+              for (const tag of tags) {
                 test(tag + ' passes', async ({}) => {
                   expect(1).toBe(1);
                 });
-              });
+              }
             });
           `,
         }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
@@ -1436,6 +1436,49 @@ for (const useIntermediateMergeReport of [false, true] as const) {
           await expect(page.locator('.chip')).toHaveCount(1);
           await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(1);
           await expect(page.locator('.test-file-test .test-file-title')).toHaveText(`Error Pages › @${tag} passes`);
+
+          const testTitle = page.locator('.test-file-test .test-file-title', { hasText: `${tag} passes` });
+          await testTitle.click();
+          await expect(page.locator('.test-case-title', { hasText: `${tag} passes` })).toBeVisible();
+          await expect(page.locator('.label', { hasText: tag })).toBeVisible();
+
+          await page.goBack();
+          await searchInput.clear();
+        }
+      });
+
+      test('tags with special symbols via test.tag()', async ({ runInlineTest, showReport, page }) => {
+        const result = await runInlineTest({
+          'a.test.js': `
+            const { expect, test } = require('@playwright/test');
+            const tags = ['smoke-p1', 'issue[123]', 'issue#123', '$$$', 'tl/dr'];
+
+            test.describe('Error Pages', () => {
+              for (const tag of tags) {
+                test.tag(tag)(tag + ' passes', async ({}) => {
+                  expect(1).toBe(1);
+                });
+              }
+            });
+          `,
+        }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+
+        expect(result.exitCode).toBe(0);
+        expect(result.passed).toBe(5);
+
+        await showReport();
+        const tags = ['smoke-p1', 'issue[123]', 'issue#123', '$$$', 'tl/dr'];
+        const searchInput = page.locator('.subnav-search-input');
+
+        for (const tag of tags) {
+          const tagButton = page.locator('.label').getByText(tag, { exact: true });
+          await expect(tagButton).toBeVisible();
+
+          await tagButton.click();
+          await expect(page.locator('.test-file-test')).toHaveCount(1);
+          await expect(page.locator('.chip')).toHaveCount(1);
+          await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(1);
+          await expect(page.locator('.test-file-test .test-file-title')).toHaveText(`Error Pages › ${tag} passes`);
 
           const testTitle = page.locator('.test-file-test .test-file-title', { hasText: `${tag} passes` });
           await testTitle.click();

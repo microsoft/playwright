@@ -48,6 +48,7 @@ const result: TestResult = {
 const testCase: TestCase = {
   testId: 'testid',
   title: 'My test',
+  tags: [],
   path: [],
   projectName: 'chromium',
   location: { file: 'test.spec.ts', line: 42, column: 0 },

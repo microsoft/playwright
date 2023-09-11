@@ -80,7 +80,7 @@ export function serializeError(error: Error | any): TestInfoError {
   };
 }
 
-export type Matcher = (value: string) => boolean;
+export type Matcher<Value = string> = (value: Value) => boolean;
 
 export type TestFileFilter = {
   re?: RegExp;
@@ -151,6 +151,22 @@ export function createTitleMatcher(patterns: RegExp | RegExp[]): Matcher {
         return true;
     }
     return false;
+  };
+}
+
+export function createTagMatcher(tags: string | RegExp | string[]): Matcher<string[]> {
+  return (testTags: string[]) => {
+    if (!tags)
+      return true;
+    if (tags instanceof RegExp){
+      return testTags.some(tag => {
+        tags.lastIndex = 0;
+        return tags.test(tag);
+      });
+    }
+    if (typeof tags === 'string')
+      return testTags.includes(tags);
+    return tags.every(tag => testTags.includes(tag));
   };
 }
 

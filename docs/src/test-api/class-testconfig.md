@@ -471,6 +471,18 @@ export default defineConfig({
 });
 ```
 
+## property: TestConfig.tags
+* since: v1.39
+- type: ?<[string]|[RegExp]|[Array]<[string]>>
+
+Filter to only run tests with a matching tag. When passing a string, it will match tests with a tag that exactly matches the string. When passing a regular expression, it will match tests with a tag that matches the regular expression. When passing an array of strings, it will match tests with a tag that exactly matches one of the strings.
+
+## property: TestConfig.tagsInvert
+* since: v1.39
+- type: ?<[string]|[RegExp]|[Array]<[string]>>
+
+Filter to only run tests without a matching tag. Opposite of [`property: TestConfig.tags`].
+
 ## property: TestConfig.testDir
 * since: v1.10
 - type: ?<[string]>

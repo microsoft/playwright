@@ -28,6 +28,7 @@ const testTypeSymbol = Symbol('testType');
 export class TestTypeImpl {
   readonly fixtures: FixturesWithLocation[];
   readonly test: TestType<any, any>;
+  private _tags: string[] = [];
 
   constructor(fixtures: FixturesWithLocation[]) {
     this.fixtures = fixtures;
@@ -57,6 +58,7 @@ export class TestTypeImpl {
     test.step = wrapFunctionWithLocation(this._step.bind(this));
     test.use = wrapFunctionWithLocation(this._use.bind(this));
     test.extend = wrapFunctionWithLocation(this._extend.bind(this));
+    test.tag = wrapFunctionWithLocation(this._tag.bind(this));
     test._extendTest = wrapFunctionWithLocation(this._extendTest.bind(this));
     test.info = () => {
       const result = currentTestInfo();
@@ -87,7 +89,7 @@ export class TestTypeImpl {
     const suite = this._currentSuite(location, 'test()');
     if (!suite)
       return;
-    const test = new TestCase(title, fn, this, location);
+    const test = new TestCase(title, fn, this, location, this._tags);
     test._requireFile = suite._requireFile;
     suite._addTest(test);
 
@@ -146,7 +148,7 @@ export class TestTypeImpl {
     suite._hooks.push({ type: name, fn: fn!, title, location });
   }
 
-  private _configure(location: Location, options: { mode?: 'default' | 'parallel' | 'serial', retries?: number, timeout?: number }) {
+  private _configure(location: Location, options: { mode?: 'default' | 'parallel' | 'serial', retries?: number, timeout?: number, tags?: string[] }) {
     throwIfRunningInsideJest();
     const suite = this._currentSuite(location, `test.describe.configure()`);
     if (!suite)
@@ -169,6 +171,12 @@ export class TestTypeImpl {
           throw new Error('describe with parallel mode cannot be nested inside describe with default mode');
       }
     }
+
+    if (options.tags !== undefined) {
+      if (!Array.isArray(options.tags))
+        throw new Error(`test.describe.configure() accepts only an array of tags`);
+    }
+    suite._tags = options.tags;
   }
 
   private _modifier(type: 'skip' | 'fail' | 'fixme' | 'slow', location: Location, ...modifierArgs: [arg?: any | Function, description?: string]) {
@@ -243,6 +251,12 @@ export class TestTypeImpl {
     // Filter out common ancestor fixtures.
     const newFixtures = testTypeImpl.fixtures.filter(theirs => !this.fixtures.find(ours => ours.fixtures === theirs.fixtures));
     return new TestTypeImpl([...this.fixtures, ...newFixtures]).test;
+  }
+
+  private _tag(location: Location, ...tags: string[]) {
+    const extendedTestType = new TestTypeImpl([...this.fixtures]);
+    extendedTestType._tags = [...this._tags, ...tags];
+    return extendedTestType.test;
   }
 }
 

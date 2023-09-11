@@ -92,6 +92,7 @@ const LabelsClickView: React.FC<React.PropsWithChildren<{
 }>> = ({ labels }) => {
 
   const onClickHandle = (e: React.MouseEvent, label: string) => {
+    const labelQuery = '@' + label;
     e.preventDefault();
     const searchParams = new URLSearchParams(window.location.hash.slice(1));
     let q = searchParams.get('q')?.toString() || '';
@@ -99,17 +100,17 @@ const LabelsClickView: React.FC<React.PropsWithChildren<{
     // If metaKey or ctrlKey is pressed, add tag to search query without replacing existing tags.
     // If metaKey or ctrlKey is pressed and tag is already in search query, remove tag from search query.
     // Always toggle non-@-tag labels.
-    if (e.metaKey || e.ctrlKey || !label.startsWith('@')) {
-      if (!q.includes(label))
-        q = `${q} ${label}`.trim();
+    if (e.metaKey || e.ctrlKey || !labelQuery.startsWith('@')) {
+      if (!q.includes(labelQuery))
+        q = `${q} ${labelQuery}`.trim();
       else
-        q = q.split(' ').filter(t => t !== label).join(' ').trim();
+        q = q.split(' ').filter(t => t !== labelQuery).join(' ').trim();
     } else {
       // if metaKey or ctrlKey is not pressed, replace existing tags with new tag
       if (!q.includes('@'))
-        q = `${q} ${label}`.trim();
+        q = `${q} ${labelQuery}`.trim();
       else
-        q = (q.split(' ').filter(t => !t.startsWith('@')).join(' ').trim() + ` ${label}`).trim();
+        q = (q.split(' ').filter(t => !t.startsWith('@')).join(' ').trim() + ` ${labelQuery}`).trim();
     }
     navigate(q ? `#?q=${q}` : '#');
   };

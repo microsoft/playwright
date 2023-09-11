@@ -285,6 +285,17 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
    */
   retries: number;
   /**
+   * Filter to only run tests with a matching tag. For example, passing `tags: /@smoke/` should only run tests with
+   * `@smoke` tag. Also available globally and in the [command line](https://playwright.dev/docs/test-cli) with the `--tag` option.
+   */
+  tags: string | string[] | RegExp | null
+  /**
+   * Filter to only run tests with a tag **not** matching one of the patterns. This is the opposite of
+   * [testProject.tags](https://playwright.dev/docs/api/class-testproject#test-project-tags). Also available globally
+   * and in the [command line](https://playwright.dev/docs/test-cli) with the `--tag-invert` option.
+   */
+  tagsInvert: string | string[] | RegExp | null
+  /**
    * Name of a project that needs to run after this and all dependent projects have finished. Teardown is useful to
    * cleanup any resources acquired by this project.
    *
@@ -1230,6 +1241,20 @@ interface TestConfig {
    * 1. Forward slashes `"/"` can be used as path separators on any platform.
    */
   snapshotPathTemplate?: string;
+
+  /**
+   * Filter to only run tests with a matching tag. When passing a string, it will match tests with a tag that exactly
+   * matches the string. When passing a regular expression, it will match tests with a tag that matches the regular
+   * expression. When passing an array of strings, it will match tests with a tag that exactly matches one of the
+   * strings.
+   */
+  tags?: string|RegExp|Array<string>;
+
+  /**
+   * Filter to only run tests without a matching tag. Opposite of
+   * [testConfig.tags](https://playwright.dev/docs/api/class-testconfig#test-config-tags).
+   */
+  tagsInvert?: string|RegExp|Array<string>;
 
   /**
    * Directory that will be recursively scanned for test files. Defaults to the directory of the configuration file.
@@ -2306,6 +2331,23 @@ export interface TestInfo {
   stdout: Array<string|Buffer>;
 
   /**
+   * Tags which belong to the current test. Tags are defined using
+   * [test.tag(tags)](https://playwright.dev/docs/api/class-test#test-tag) and
+   * [test.describe.configure([options])](https://playwright.dev/docs/api/class-test#test-describe-configure).
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.tag('smoke')('pass', () => {
+   *   console.log(test.info().tags);
+   *   // -> ['smoke']
+   * });
+   * ```
+   *
+   */
+  tags: Array<string>;
+
+  /**
    * Test id matching the test case id in the reporter API.
    */
   testId: string;
@@ -2682,7 +2724,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * @param options
    */
-  configure: (options: { mode?: 'default' | 'parallel' | 'serial', retries?: number, timeout?: number }) => void;
+  configure: (options: { mode?: 'default' | 'parallel' | 'serial', retries?: number, timeout?: number, tags?: string[] }) => void;
   };
   /**
    * Declares a skipped test, similarly to
@@ -3454,6 +3496,21 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    */
   info(): TestInfo;
+  /**
+   * Returns a test object with tags added to all tests in the scope. Tags can be used to filter tests in the command
+   * line.
+   *
+   * **Usage**
+   *
+   * ```js
+   * test.tag('smoke', 'production')('example test', async ({ page }) => {
+   *   // ...
+   * });
+   * ```
+   *
+   * @param tags
+   */
+  tag(...tags: string[]): TestType<TestArgs, WorkerArgs>;
 }
 
 type KeyValue = { [key: string]: any };
@@ -6698,6 +6755,19 @@ interface TestProject {
    * 1. Forward slashes `"/"` can be used as path separators on any platform.
    */
   snapshotPathTemplate?: string;
+
+  /**
+   * Filter to only run tests with a matching tag. For example, passing `tags: /@smoke/` should only run tests with
+   * `@smoke` tag. Also available globally and in the [command line](https://playwright.dev/docs/test-cli) with the `--tag` option.
+   */
+  tags?: RegExp|string|Array<string>;
+
+  /**
+   * Filter to only run tests with a tag **not** matching one of the patterns. This is the opposite of
+   * [testProject.tags](https://playwright.dev/docs/api/class-testproject#test-project-tags). Also available globally
+   * and in the [command line](https://playwright.dev/docs/test-cli) with the `--tag-invert` option.
+   */
+  tagsInvert?: RegExp|string|Array<string>;
 
   /**
    * Name of a project that needs to run after this and all dependent projects have finished. Teardown is useful to

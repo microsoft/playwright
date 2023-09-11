@@ -428,6 +428,21 @@ Output written to `process.stderr` or `console.error` during the test execution.
 
 Output written to `process.stdout` or `console.log` during the test execution.
 
+## property: TestInfo.tags
+* since: v1.39
+- type: <[Array]<[string]>>
+
+Tags which belong to the current test. Tags are defined using [`method: Test.tag`] and [`method: Test.describe.configure`].
+
+```js
+import { test, expect } from '@playwright/test';
+
+test.tag('smoke')('pass', () => {
+  console.log(test.info().tags);
+  // -> ['smoke']
+});
+```
+
 ## property: TestInfo.timeout
 * since: v1.10
 - type: <[int]>

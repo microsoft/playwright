@@ -109,6 +109,10 @@ export class TestInfoImpl implements TestInfo {
     // Ignored.
   }
 
+  get tags(): string[] {
+    return this._test.tags;
+  }
+
   _deadlineForMatcher(timeout: number): { deadline: number, timeoutMessage: string } {
     const startTime = monotonicTime();
     const matcherDeadline = timeout ? startTime + timeout : MaxTime;

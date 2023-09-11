@@ -14,7 +14,6 @@
   limitations under the License.
 */
 
-import { escapeRegExp } from './labelUtils';
 import type { TestCaseSummary } from './types';
 
 export class Filter {
@@ -43,7 +42,7 @@ export class Filter {
         continue;
       }
       if (token.startsWith('@')) {
-        labels.add(token);
+        labels.add(token.slice(1));
         continue;
       }
       text.push(token.toLowerCase());
@@ -108,8 +107,9 @@ export class Filter {
       if (test.outcome === 'skipped')
         status = 'skipped';
       const searchValues: SearchValues = {
-        text: (status + ' ' + test.projectName + ' ' + (test.reportName || '') + ' ' + test.location.file + ' ' + test.path.join(' ') + ' ' + test.title).toLowerCase(),
+        text: (status + ' ' + test.projectName + ' ' + test.location.file + ' ' + test.path.join(' ') + ' ' + test.title).toLowerCase(),
         project: test.projectName.toLowerCase(),
+        labels: [...test.tags, ...(test.reportName ? [test.reportName] : [])].map(l => l.toLowerCase()),
         status: status as any,
         file: test.location.file,
         line: String(test.location.line),
@@ -139,7 +139,7 @@ export class Filter {
       }
     }
     if (this.labels.length) {
-      const matches = this.labels.every(l => searchValues.text?.match(new RegExp(`(\\s|^)${escapeRegExp(l)}(\\s|$)`, 'g')));
+      const matches = this.labels.every(l => searchValues.labels.includes(l));
       if (!matches)
         return false;
     }
@@ -151,6 +151,7 @@ export class Filter {
 type SearchValues = {
   text: string;
   project: string;
+  labels: string[];
   status: 'passed' | 'failed' | 'flaky' | 'skipped';
   file: string;
   line: string;

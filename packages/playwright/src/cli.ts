@@ -130,6 +130,8 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   config.cliArgs = args;
   config.cliGrep = opts.grep as string | undefined;
   config.cliGrepInvert = opts.grepInvert as string | undefined;
+  config.cliTag = opts.tag;
+  config.cliTagInvert = opts.tagInvert;
   config.cliListOnly = !!opts.list;
   config.cliProjectFilter = opts.project || undefined;
   config.cliPassWithNoTests = !!opts.passWithNoTests;
@@ -219,6 +221,8 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
     ignoreSnapshots: options.ignoreSnapshots ? !!options.ignoreSnapshots : undefined,
     updateSnapshots: options.updateSnapshots ? 'all' as const : undefined,
     workers: options.workers,
+    tags: options.tag ? options.tag : undefined,
+    tagsInvert: options.tagInvert ? options.tagInvert : undefined,
   };
 
   if (options.browser) {
@@ -322,6 +326,8 @@ const testOptions: [string, string][] = [
   ['--retries <retries>', `Maximum retry count for flaky tests, zero for no retries (default: no retries)`],
   ['--shard <shard>', `Shard tests and execute only the selected shard, specify in the form "current/all", 1-based, for example "3/5"`],
   ['--timeout <timeout>', `Specify test timeout threshold in milliseconds, zero for unlimited (default: ${defaultTimeout})`],
+  ['--tag <tag>', `Only run tests from the specified regular expression (default: run all tags)`],
+  ['--tag-invert <tag>', `Only run tests that do not match this list of regular expressions (default: run all tags)`],
   ['--trace <mode>', `Force tracing mode, can be ${kTraceModes.map(mode => `"${mode}"`).join(', ')}`],
   ['--ui', `Run tests in interactive UI mode`],
   ['--ui-host <host>', 'Host to serve UI on; specifying this option opens UI in a browser tab'],

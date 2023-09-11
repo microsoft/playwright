@@ -176,6 +176,8 @@ export class TeleReporterEmitter implements ReporterV2 {
       }),
       grep: serializeRegexPatterns(project.grep),
       grepInvert: serializeRegexPatterns(project.grepInvert || []),
+      tag: serializeRegexPatterns(project.tags || []),
+      tagInvert: serializeRegexPatterns(project.tagsInvert || []),
       dependencies: project.dependencies,
       snapshotDir: this._relativePath(project.snapshotDir),
       teardown: project.teardown,
@@ -202,6 +204,7 @@ export class TeleReporterEmitter implements ReporterV2 {
       title: test.title,
       location: this._relativeLocation(test.location),
       retries: test.retries,
+      tags: test.tags,
     };
   }
 

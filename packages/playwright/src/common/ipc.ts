@@ -35,6 +35,8 @@ export type ConfigCLIOverrides = {
   workers?: number;
   projects?: { name: string, use?: any }[],
   use?: any;
+  tags?: string[],
+  tagsInvert?: string[],
 };
 
 export type SerializedConfig = {
