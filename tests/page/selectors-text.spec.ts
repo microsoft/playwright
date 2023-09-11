@@ -109,6 +109,10 @@ it('should work @smoke', async ({ page }) => {
   expect(await page.$(`text="lo wo"`)).toBe(null);
   expect((await page.$$(`text=lo \nwo`)).length).toBe(1);
   expect((await page.$$(`text="lo \nwo"`)).length).toBe(0);
+
+  await page.setContent(`<div>let's<span>hello</span></div>`);
+  expect(await page.$eval(`text=/let's/i >> span`, e => e.outerHTML)).toBe('<span>hello</span>');
+  expect(await page.$eval(`text=/let\\'s/i >> span`, e => e.outerHTML)).toBe('<span>hello</span>');
 });
 
 it('should work with :text', async ({ page }) => {
