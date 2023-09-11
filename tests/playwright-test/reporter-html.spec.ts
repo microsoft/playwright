@@ -42,7 +42,7 @@ const expect = baseExpect.configure({ timeout: process.env.CI ? 75000 : 25000 })
 
 test.describe.configure({ mode: 'parallel' });
 
-for (const useIntermediateMergeReport of [false] as const) {
+for (const useIntermediateMergeReport of [false, true] as const) {
   test.describe(`${useIntermediateMergeReport ? 'merged' : 'created'}`, () => {
     test.use({ useIntermediateMergeReport });
 
