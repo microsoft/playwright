@@ -109,7 +109,9 @@ export const TestResultView: React.FC<{
     {!!screenshots.length && <AutoChip header='Screenshots'>
       {screenshots.map((a, i) => {
         return <div key={`screenshot-${i}`}>
-          <img src={a.path} />
+          <a href={a.path}>
+            <img src={a.path} />
+          </a>
           <AttachmentLink attachment={a}></AttachmentLink>
         </div>;
       })}
