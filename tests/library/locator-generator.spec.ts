@@ -68,6 +68,13 @@ it('reverse engineer locators', async ({ page }) => {
     csharp: 'GetByTestId(new Regex("He\\"llo"))'
   });
 
+  expect.soft(generate(page.getByTestId(/He\\"llo/))).toEqual({
+    javascript: 'getByTestId(/He\\\\"llo/)',
+    python: 'get_by_test_id(re.compile(r"He\\\\\\"llo"))',
+    java: 'getByTestId(Pattern.compile("He\\\\\\\\\\"llo"))',
+    csharp: 'GetByTestId(new Regex("He\\\\\\\\\\"llo"))'
+  });
+
   expect.soft(generate(page.getByText('Hello', { exact: true }))).toEqual({
     csharp: 'GetByText("Hello", new() { Exact = true })',
     java: 'getByText("Hello", new Page.GetByTextOptions().setExact(true))',

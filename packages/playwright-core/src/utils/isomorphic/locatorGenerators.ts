@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { escapeWithQuotes, toSnakeCase, toTitleCase } from './stringUtils';
+import { escapeWithQuotes, normalizeEscapedRegexQuotes, toSnakeCase, toTitleCase } from './stringUtils';
 import { type NestedSelectorBody, parseAttributeSelector, parseSelector, stringifySelector } from './selectorParser';
 import type { ParsedSelector } from './selectorParser';
 
@@ -268,7 +268,7 @@ export class JavaScriptLocatorFactory implements LocatorFactory {
       case 'role':
         const attrs: string[] = [];
         if (isRegExp(options.name)) {
-          attrs.push(`name: ${options.name}`);
+          attrs.push(`name: ${this.regexToSourceString(options.name)}`);
         } else if (typeof options.name === 'string') {
           attrs.push(`name: ${this.quote(options.name)}`);
           if (options.exact)
@@ -313,21 +313,25 @@ export class JavaScriptLocatorFactory implements LocatorFactory {
     return locators.join('.');
   }
 
+  private regexToSourceString(re: RegExp) {
+    return normalizeEscapedRegexQuotes(String(re));
+  }
+
   private toCallWithExact(method: string, body: string | RegExp, exact?: boolean) {
     if (isRegExp(body))
-      return `${method}(${body})`;
+      return `${method}(${this.regexToSourceString(body)})`;
     return exact ? `${method}(${this.quote(body)}, { exact: true })` : `${method}(${this.quote(body)})`;
   }
 
   private toHasText(body: string | RegExp) {
     if (isRegExp(body))
-      return String(body);
+      return this.regexToSourceString(body);
     return this.quote(body);
   }
 
   private toTestIdValue(value: string | RegExp): string {
     if (isRegExp(value))
-      return String(value);
+      return this.regexToSourceString(value);
     return this.quote(value);
   }
 
@@ -407,7 +411,7 @@ export class PythonLocatorFactory implements LocatorFactory {
 
   private regexToString(body: RegExp) {
     const suffix = body.flags.includes('i') ? ', re.IGNORECASE' : '';
-    return `re.compile(r"${body.source.replace(/\\\//, '/').replace(/"/g, '\\"')}"${suffix})`;
+    return `re.compile(r"${normalizeEscapedRegexQuotes(body.source).replace(/\\\//, '/').replace(/"/g, '\\"')}"${suffix})`;
   }
 
   private toCallWithExact(method: string, body: string | RegExp, exact: boolean) {
@@ -508,7 +512,7 @@ export class JavaLocatorFactory implements LocatorFactory {
 
   private regexToString(body: RegExp) {
     const suffix = body.flags.includes('i') ? ', Pattern.CASE_INSENSITIVE' : '';
-    return `Pattern.compile(${this.quote(body.source)}${suffix})`;
+    return `Pattern.compile(${this.quote(normalizeEscapedRegexQuotes(body.source))}${suffix})`;
   }
 
   private toCallWithExact(clazz: string, method: string, body: string | RegExp, exact: boolean) {
@@ -603,7 +607,7 @@ export class CSharpLocatorFactory implements LocatorFactory {
 
   private regexToString(body: RegExp): string {
     const suffix = body.flags.includes('i') ? ', RegexOptions.IgnoreCase' : '';
-    return `new Regex(${this.quote(body.source)}${suffix})`;
+    return `new Regex(${this.quote(normalizeEscapedRegexQuotes(body.source))}${suffix})`;
   }
 
   private toCallWithExact(method: string, body: string | RegExp, exact: boolean) {
