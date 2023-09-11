@@ -109,6 +109,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       this._snapshotter = new Snapshotter(context, this);
       assert(tracesDir, 'tracesDir must be specified for BrowserContext');
       this._contextCreatedEvent.browserName = context._browser.options.name;
+      this._contextCreatedEvent.channel = context._browser.options.channel;
       this._contextCreatedEvent.options = context._options;
     }
   }

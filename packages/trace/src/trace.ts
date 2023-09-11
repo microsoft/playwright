@@ -34,6 +34,7 @@ export type ContextCreatedTraceEvent = {
   version: number,
   type: 'context-options',
   browserName: string,
+  channel?: string,
   platform: string,
   wallTime: number,
   title?: string,
