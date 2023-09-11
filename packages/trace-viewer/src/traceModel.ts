@@ -156,6 +156,7 @@ export class TraceModel {
         this._version = event.version;
         contextEntry.isPrimary = true;
         contextEntry.browserName = event.browserName;
+        contextEntry.channel = event.channel;
         contextEntry.title = event.title;
         contextEntry.platform = event.platform;
         contextEntry.wallTime = event.wallTime;

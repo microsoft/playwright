@@ -51,6 +51,7 @@ export class MultiTraceModel {
   readonly startTime: number;
   readonly endTime: number;
   readonly browserName: string;
+  readonly channel?: string;
   readonly platform?: string;
   readonly wallTime?: number;
   readonly title?: string;
@@ -72,6 +73,7 @@ export class MultiTraceModel {
 
     this.browserName = primaryContext?.browserName || '';
     this.sdkLanguage = primaryContext?.sdkLanguage;
+    this.channel = primaryContext?.channel;
     this.testIdAttributeName = primaryContext?.testIdAttributeName;
     this.platform = primaryContext?.platform || '';
     this.title = primaryContext?.title || '';
