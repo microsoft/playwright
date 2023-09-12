@@ -79,6 +79,7 @@ dialog .title .codicon {
 
 dialog .body {
   padding: 10px;
+  text-align: center;
 }
 
 .button {
@@ -89,6 +90,7 @@ dialog .body {
   height: 28px;
   min-width: 40px;
   cursor: pointer;
+  user-select: none;
 }
 
 .button:focus {
