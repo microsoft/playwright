@@ -410,7 +410,8 @@ export interface Reporter {
   onBegin?(config: FullConfig, suite: Suite): void;
   /**
    * Called after all tests have been run, or testing has been interrupted. Note that this method may return a [Promise]
-   * and Playwright Test will await it.
+   * and Playwright Test will await it. Reporter is allowed to override the status and hence affect the exit code of the
+   * test runner.
    * @param result Result of the full test run, `status` can be one of:
    * - `'passed'` - Everything went as expected.
    * - `'failed'` - Any test has failed.
@@ -419,7 +420,7 @@ export interface Reporter {
    * been reached.
    * - `'interrupted'` - Interrupted by the user.
    */
-  onEnd?(result: FullResult): void | Promise<void>;
+  onEnd?(result: FullResult): Promise<{ status?: FullResult['status'] } | undefined | void> | void;
   /**
    * Called on some global error, for example unhandled exception in the worker process.
    * @param error The error.

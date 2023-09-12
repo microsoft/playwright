@@ -72,7 +72,7 @@ export class InternalReporter {
       // onBegin was not reported, emit it.
       this.onBegin(new Suite('', 'root'));
     }
-    await this._reporter.onEnd({
+    return await this._reporter.onEnd({
       ...result,
       startTime: this._startTime!,
       duration: monotonicTime() - this._monotonicStartTime!,
