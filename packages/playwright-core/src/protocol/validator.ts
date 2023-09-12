@@ -342,8 +342,8 @@ scheme.PlaywrightNewRequestParams = tObject({
   })),
   timeout: tOptional(tNumber),
   storageState: tOptional(tObject({
-    cookies: tArray(tType('NetworkCookie')),
-    origins: tArray(tType('OriginStorage')),
+    cookies: tOptional(tArray(tType('NetworkCookie'))),
+    origins: tOptional(tArray(tType('OriginStorage'))),
   })),
   tracesDir: tOptional(tString),
 });
