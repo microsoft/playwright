@@ -80,7 +80,7 @@ Since Playwright runs in Python, you can debug it with your debugger of choice w
 To debug all tests run the following command.
 
 ```bash tab=bash-bash lang=python
-PWDEBUG=1 pytest -s 
+PWDEBUG=1 pytest -s
 ```
 
 ```batch tab=bash-batch lang=python
@@ -116,13 +116,13 @@ PWDEBUG=1 pytest -s -k test_get_started_link
 ```
 
 ```batch tab=bash-batch lang=python
-set PWDEBUG=1 -k test_get_started_link
-pytest -s
+set PWDEBUG=1
+pytest -s -k test_get_started_link
 ```
 
 ```powershell tab=bash-powershell lang=python
-$env:PWDEBUG=1 -k test_get_started_link
-pytest -s
+$env:PWDEBUG=1
+pytest -s -k test_get_started_link
 ```
 
 This command will open up a Browser window as well as the Playwright Inspector. You can use the step over button at the top of the inspector to step through your test. Or press the play button to run your test from start to finish. Once the test has finished the browser window will close.

@@ -30,7 +30,7 @@ npx playwright test
 
 ### Run tests in UI mode
 
-We highly recommend running your tests with [UI Mode](./test-ui-mode.md) for a better developer experience where you can easily walk through each step of the test and visually see what was happening during, before and after each step. UI mode also comes with many other features such as the locator picker, watch mode and more.
+We highly recommend running your tests with [UI Mode](./test-ui-mode.md) for a better developer experience where you can easily walk through each step of the test and visually see what was happening before, during, and after each step. UI mode also comes with many other features such as the locator picker, watch mode and more.
 
 ```bash
 npx playwright test --ui
@@ -42,7 +42,7 @@ Check out or [detailed guide on UI Mode](./test-ui-mode.md) to learn more about 
 
 ### Run tests in headed mode
 
-To run your tests in headed mode use the `--headed` flag. This will open up a browser window while running your tests and once finished the browser window will close.
+To run your tests in headed mode use the `--headed` flag. This will give you the ability to visually see, how Playwright interacts with the website.
 
 ```bash
 npx playwright test --headed
