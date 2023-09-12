@@ -112,11 +112,11 @@ Called after all tests have been run, or testing has been interrupted. Note that
 ### param: Reporter.onEnd.result
 * since: v1.10
 - `result` <[Object]>
-  - `status` <[FullStatus]<"passed"|"failed"|"timedout"|"interrupted">>
-  - `startTime` <[Date]>
-  - `duration` <[int]>
+  - `status` <[FullStatus]<"passed"|"failed"|"timedout"|"interrupted">> Test run status.
+  - `startTime` <[Date]> Test run start wall time.
+  - `duration` <[int]> Test run duration in milliseconds.
 
-Result of the full test run.
+Result of the full test run, `status` can be one of:
 * `'passed'` - Everything went as expected.
 * `'failed'` - Any test has failed.
 * `'timedout'` - The [`property: TestConfig.globalTimeout`] has been reached.
