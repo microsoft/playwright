@@ -190,11 +190,22 @@ export const UIModeView: React.FC<{}> = ({
   }, [closeInstallDialog]);
 
   return <div className='vbox ui-mode'>
+    {!hasBrowsers && <dialog ref={dialogRef}>
+      <div className='title'><span className='codicon codicon-lightbulb'></span>Install browsers</div>
+      <div className='body'>
+        Playwright did not find installed browsers.
+        <br></br>
+        Would you like to run `playwright install`?
+        <br></br>
+        <button className='button' onClick={installBrowsers}>Install</button>
+        <button className='button secondary' onClick={closeInstallDialog}>Dismiss</button>
+      </div>
+    </dialog>}
     {isDisconnected && <div className='drop-target'>
       <div className='title'>UI Mode disconnected</div>
       <div><a href='#' onClick={() => window.location.reload()}>Reload the page</a> to reconnect</div>
     </div>}
-    <SplitView sidebarSize={250} minSidebarSize={125} orientation='horizontal' sidebarIsFirst={true}>
+    <SplitView sidebarSize={250} minSidebarSize={150} orientation='horizontal' sidebarIsFirst={true} settingName='testListSidebar'>
       <div className='vbox'>
         <div className={'vbox' + (isShowingOutput ? '' : ' hidden')}>
           <Toolbar>
@@ -216,19 +227,7 @@ export const UIModeView: React.FC<{}> = ({
           <ToolbarButton icon='color-mode' title='Toggle color mode' onClick={() => toggleTheme()} />
           <ToolbarButton icon='refresh' title='Reload' onClick={() => reloadTests()} disabled={isRunningTest || isLoading}></ToolbarButton>
           <ToolbarButton icon='terminal' title='Toggle output' toggled={isShowingOutput} onClick={() => { setIsShowingOutput(!isShowingOutput); }} />
-          {!hasBrowsers && <ToolbarButton icon='lightbulb-autofix' style={{ color: 'var(--vscode-list-warningForeground)' }} title='Playwright browsers are missing' toggled={isShowingOutput} onClick={openInstallDialog}>
-            <dialog ref={dialogRef}>
-              <div className='title'><span className='codicon codicon-lightbulb'></span>Install browsers</div>
-              <div className='body'>
-                Playwright did not find installed browsers.
-                <br></br>
-                Would you like to run `playwright install`?
-                <br></br>
-                <button className='button' onClick={installBrowsers}>Yes</button>
-                <button className='button secondary' onClick={closeInstallDialog}>No</button>
-              </div>
-            </dialog>
-          </ToolbarButton>}
+          {!hasBrowsers && <ToolbarButton icon='lightbulb-autofix' style={{ color: 'var(--vscode-list-warningForeground)' }} title='Playwright browsers are missing' onClick={openInstallDialog} />}
         </Toolbar>
         <FiltersView
           filterText={filterText}
@@ -335,7 +334,7 @@ const FiltersView: React.FC<{
                 if (configFile)
                   settings.setObject(configFile + ':projects', [...copy.entries()].filter(([_, v]) => v).map(([k]) => k));
               }}/>
-              <div>{projectName}</div>
+              <div>{projectName || 'untitled'}</div>
             </label>
           </div>;
         })}
