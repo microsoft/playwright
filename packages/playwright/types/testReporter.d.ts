@@ -411,7 +411,7 @@ export interface Reporter {
   /**
    * Called after all tests have been run, or testing has been interrupted. Note that this method may return a [Promise]
    * and Playwright Test will await it.
-   * @param result Result of the full test run.
+   * @param result Result of the full test run, `status` can be one of:
    * - `'passed'` - Everything went as expected.
    * - `'failed'` - Any test has failed.
    * - `'timedout'` - The
