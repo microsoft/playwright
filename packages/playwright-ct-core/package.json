@@ -1,6 +1,6 @@
 {
   "name": "@playwright/experimental-ct-core",
-  "version": "1.38.0-next",
+  "version": "1.39.0-next",
   "description": "Playwright Component Testing Helpers",
   "repository": "github:Microsoft/playwright",
   "homepage": "https://playwright.dev",
@@ -24,9 +24,9 @@
     }
   },
   "dependencies": {
-    "playwright-core": "1.38.0-next",
+    "playwright-core": "1.39.0-next",
     "vite": "^4.3.9",
-    "playwright": "1.38.0-next"
+    "playwright": "1.39.0-next"
   },
   "bin": {
     "playwright": "./cli.js"
