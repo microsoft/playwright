@@ -523,7 +523,7 @@ export class GlobalAPIRequestContext extends APIRequestContext {
     }
     if (options.storageState) {
       this._origins = options.storageState.origins;
-      this._cookieStore.addCookies(options.storageState.cookies);
+      this._cookieStore.addCookies(options.storageState.cookies || []);
     }
     this._options = {
       baseURL: options.baseURL,
