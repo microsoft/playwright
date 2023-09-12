@@ -6,7 +6,9 @@
 loadSubScript('chrome://juggler/content/content/Runtime.js');
 loadSubScript('chrome://juggler/content/SimpleChannel.js');
 
-const channel = new SimpleChannel('worker::worker');
+// SimpleChannel in worker is never replaced: its lifetime matches the lifetime
+// of the worker itself, so anything would work as a unique identifier.
+const channel = new SimpleChannel('worker::content', 'unique_identifier');
 const eventListener = event => channel._onMessage(JSON.parse(event.data));
 this.addEventListener('message', eventListener);
 channel.setTransport({
