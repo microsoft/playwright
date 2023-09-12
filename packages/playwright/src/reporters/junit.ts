@@ -79,13 +79,21 @@ class JUnitReporter extends EmptyReporter {
 
     serializeXML(root, tokens, this.stripANSIControlSequences);
     const reportString = tokens.join('\n');
-    if (this.outputFile) {
-      assert(this.config.configFile || path.isAbsolute(this.outputFile), 'Expected fully resolved path if not using config file.');
-      const outputFile = this.config.configFile ? path.resolve(path.dirname(this.config.configFile), this.outputFile) : this.outputFile;
+    const outputFile = this.resolveOutputFile();
+    if (outputFile) {
       await fs.promises.mkdir(path.dirname(outputFile), { recursive: true });
       await fs.promises.writeFile(outputFile, reportString);
     } else {
       console.log(reportString);
+    }
+  }
+
+  private resolveOutputFile(): string | undefined {
+    if (this.outputFile) {
+      assert(this.config.configFile || path.isAbsolute(this.outputFile), 'Expected fully resolved path if not using config file.');
+      return this.config.configFile ? path.resolve(path.dirname(this.config.configFile), this.outputFile) : this.outputFile;
+    } else {
+      return undefined;
     }
   }
 
@@ -190,7 +198,15 @@ class JUnitReporter extends EmptyReporter {
       for (const attachment of result.attachments) {
         if (!attachment.path)
           continue;
-        const attachmentPath = path.relative(this.config.rootDir, attachment.path);
+
+        let attachmentPath = path.relative(this.config.rootDir, attachment.path);
+        try {
+          const outputFile = this.resolveOutputFile();
+          if (outputFile)
+            attachmentPath = path.relative(path.dirname(outputFile), attachment.path);
+        } catch {
+          systemOut.push(`\nWarning: Unable to make attachment path ${attachment.path} relative to report output file ${this.outputFile}`);
+        }
 
         try {
           await fs.promises.access(attachment.path);
