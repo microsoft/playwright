@@ -23,7 +23,7 @@ export interface ReporterV2 {
   onStdOut(chunk: string | Buffer, test?: TestCase, result?: TestResult): void;
   onStdErr(chunk: string | Buffer, test?: TestCase, result?: TestResult): void;
   onTestEnd(test: TestCase, result: TestResult): void;
-  onEnd(result: FullResult): void | Promise<void>;
+  onEnd(result: FullResult): Promise<{ status?: FullResult['status'] } | undefined | void> | void;
   onExit(): void | Promise<void>;
   onError(error: TestError): void;
   onStepBegin(test: TestCase, result: TestResult, step: TestStep): void;
@@ -104,7 +104,7 @@ class ReporterV2Wrapper implements ReporterV2 {
   }
 
   async onEnd(result: FullResult) {
-    await this._reporter.onEnd?.(result);
+    return await this._reporter.onEnd?.(result);
   }
 
   async onExit() {

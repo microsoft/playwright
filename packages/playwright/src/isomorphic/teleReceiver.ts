@@ -306,8 +306,8 @@ export class TeleReporterReceiver {
     }
   }
 
-  private _onEnd(result: JsonFullResult): Promise<void> | void {
-    return this._reporter.onEnd?.({
+  private async _onEnd(result: JsonFullResult): Promise<void> {
+    await this._reporter.onEnd?.({
       status: result.status,
       startTime: new Date(result.startTime),
       duration: result.duration,

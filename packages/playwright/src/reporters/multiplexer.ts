@@ -60,8 +60,12 @@ export class Multiplexer implements ReporterV2 {
   }
 
   async onEnd(result: FullResult) {
-    for (const reporter of this._reporters)
-      await wrapAsync(() => reporter.onEnd(result));
+    for (const reporter of this._reporters) {
+      const outResult = await wrapAsync(() => reporter.onEnd(result));
+      if (outResult?.status)
+        result.status = outResult.status;
+    }
+    return result;
   }
 
   async onExit() {
@@ -93,9 +97,9 @@ export class Multiplexer implements ReporterV2 {
   }
 }
 
-async function wrapAsync(callback: () => void | Promise<void>) {
+async function wrapAsync<T>(callback: () => T | Promise<T>) {
   try {
-    await callback();
+    return await callback();
   } catch (e) {
     console.error('Error in reporter', e);
   }

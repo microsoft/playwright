@@ -90,7 +90,10 @@ export class Runner {
     let status: FullResult['status'] = testRun.failureTracker.result();
     if (status === 'passed' && taskStatus !== 'passed')
       status = taskStatus;
-    await reporter.onEnd({ status });
+    const modifiedResult = await reporter.onEnd({ status });
+    if (modifiedResult && modifiedResult.status)
+      status = modifiedResult.status;
+
     await reporter.onExit();
 
     // Calling process.exit() might truncate large stdout/stderr output.
