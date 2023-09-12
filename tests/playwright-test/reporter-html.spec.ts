@@ -2064,6 +2064,36 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       await expect(page.getByText('passes title')).toBeVisible();
     });
 
+    test('tests should filter by fileName:line/column', async ({ runInlineTest, showReport, page }) => {
+      const result = await runInlineTest({
+        'a.test.js': `
+          const { test, expect } = require('@playwright/test');
+          test('test1', async ({}) => { expect(1).toBe(1); });
+              test('test2', async ({}) => { expect(1).toBe(2); });
+        `,
+      }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+
+      expect(result.exitCode).toBe(1);
+      expect(result.passed).toBe(1);
+      expect(result.failed).toBe(1);
+
+      await showReport();
+
+      const searchInput = page.locator('.subnav-search-input');
+
+      await searchInput.fill('a.test.js:3:11');
+      await expect(page.getByText('a.test.js:3', { exact: true })).toBeVisible();
+      await expect(page.getByText('a.test.js:4', { exact: true })).toBeHidden();
+
+      await searchInput.fill('a.test.js:3');
+      await expect(page.getByText('a.test.js:3', { exact: true })).toBeVisible();
+      await expect(page.getByText('a.test.js:4', { exact: true })).toBeHidden();
+
+      await searchInput.fill('a.test.js:4:15');
+      await expect(page.getByText('a.test.js:3', { exact: true })).toBeHidden();
+      await expect(page.getByText('a.test.js:4', { exact: true })).toBeVisible();
+    });
+
     test('should properly display beforeEach with and without title', async ({ runInlineTest, showReport, page }) => {
       const result = await runInlineTest({
         'a.test.js': `
