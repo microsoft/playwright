@@ -128,6 +128,10 @@ class UIMode {
       port: options.port,
       persistentContextOptions: {
         handleSIGINT: false,
+        ...(isUnderTest() ? {
+          viewport: { width: 1280, height: 800 },
+          colorScheme: 'light',
+        } : {})
       },
     };
     if (options.host !== undefined || options.port !== undefined) {

@@ -103,9 +103,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
         'a.spec.ts:3:15 › foobar',
         'one',
         '',
-        'two',
-        '',
-        'full-line',
+        'twofull-line',
       ].join('\n'));
     });
 

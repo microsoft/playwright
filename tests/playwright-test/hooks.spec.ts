@@ -102,9 +102,9 @@ test('afterEach failure should not prevent other hooks and fixtures teardown', a
       global.logs = [];
       export const test = base.extend({
         foo: async ({}, run) => {
-          console.log('+t');
+          console.log('%%+t');
           await run();
-          console.log('-t');
+          console.log('%%-t');
         }
       });
     `,
@@ -112,20 +112,20 @@ test('afterEach failure should not prevent other hooks and fixtures teardown', a
       const { test, expect } = require('./helper');
       test.describe('suite', () => {
         test.afterEach(async () => {
-          console.log('afterEach2');
+          console.log('%%afterEach2');
           throw new Error('afterEach2');
         });
         test.afterEach(async () => {
-          console.log('afterEach1');
+          console.log('%%afterEach1');
         });
         test('one', async ({foo}) => {
-          console.log('test');
+          console.log('%%test');
           expect(true).toBe(true);
         });
       });
     `,
   });
-  expect(report.output).toContain('+t\ntest\nafterEach2\nafterEach1\n-t');
+  expect(report.outputLines).toEqual(['+t', 'test', 'afterEach2', 'afterEach1', '-t']);
   expect(report.results[0].error.message).toContain('afterEach2');
 });
 
@@ -135,22 +135,22 @@ test('beforeEach failure should prevent the test, but not other hooks', async ({
       import { test, expect } from '@playwright/test';
       test.describe('suite', () => {
         test.beforeEach(async ({}) => {
-          console.log('beforeEach1');
+          console.log('%%beforeEach1');
         });
         test.beforeEach(async ({}) => {
-          console.log('beforeEach2');
+          console.log('%%beforeEach2');
           throw new Error('beforeEach2');
         });
         test.afterEach(async ({}) => {
-          console.log('afterEach');
+          console.log('%%afterEach');
         });
         test('one', async ({}) => {
-          console.log('test');
+          console.log('%%test');
         });
       });
     `,
   });
-  expect(report.output).toContain('beforeEach1\nbeforeEach2\nafterEach');
+  expect(report.outputLines).toEqual(['beforeEach1', 'beforeEach2', 'afterEach']);
   expect(report.results[0].error.message).toContain('beforeEach2');
 });
 

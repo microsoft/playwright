@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 import type { TestGroup } from './testGroups';
-import type { RunPayload, SerializedConfig, WorkerInitParams } from '../common/ipc';
+import type { RunPayload, SerializedConfig, TestOutputPayload, WorkerInitParams } from '../common/ipc';
 import { ProcessHost } from './processHost';
 import { artifactsFolderName } from '../isomorphic/folders';
 import { removeFolders } from 'playwright-core/lib/utils';
@@ -54,7 +54,10 @@ export class WorkerHost extends ProcessHost {
 
   async start() {
     await fs.promises.mkdir(this._params.artifactsDir, { recursive: true });
-    await this.startRunner(this._params, false);
+    await this.startRunner(this._params, {
+      onStdOut: text => this.emit('stdOut', { text } satisfies TestOutputPayload),
+      onStdErr: text => this.emit('stdErr', { text } satisfies TestOutputPayload),
+    });
   }
 
   override async stop(didFail?: boolean) {

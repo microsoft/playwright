@@ -15,9 +15,8 @@
  */
 
 import { colors, rimraf } from 'playwright-core/lib/utilsBundle';
-import util from 'util';
 import { debugTest, formatLocation, relativeFilePath, serializeError } from '../util';
-import type { TestBeginPayload, TestEndPayload, RunPayload, DonePayload, WorkerInitParams, TeardownErrorsPayload, TestOutputPayload } from '../common/ipc';
+import type { TestBeginPayload, TestEndPayload, RunPayload, DonePayload, WorkerInitParams, TeardownErrorsPayload } from '../common/ipc';
 import { setCurrentTestInfo, setIsWorkerProcess } from '../common/globals';
 import { ConfigLoader } from '../common/configLoader';
 import type { Suite, TestCase } from '../common/test';
@@ -75,25 +74,24 @@ export class WorkerMain extends ProcessRunner {
 
     process.on('unhandledRejection', reason => this.unhandledError(reason));
     process.on('uncaughtException', error => this.unhandledError(error));
-    process.stdout.write = (chunk: string | Buffer) => {
-      const outPayload: TestOutputPayload = {
-        ...chunkToParams(chunk)
-      };
-      this.dispatchEvent('stdOut', outPayload);
-      this._currentTest?._tracing.appendStdioToTrace('stdout', chunk);
-      return true;
-    };
 
-    if (!process.env.PW_RUNNER_DEBUG) {
-      process.stderr.write = (chunk: string | Buffer) => {
-        const outPayload: TestOutputPayload = {
-          ...chunkToParams(chunk)
-        };
-        this.dispatchEvent('stdErr', outPayload);
+    // For Trace stdout/stderr collection, we intercept it in the worker.
+    // For PWT Reporter API, we listen stdout/stdout on the worker host process.
+    process.stdout.write = new Proxy(process.stdout.write, {
+      apply: (write, thisArg, args) => {
+        const chunk = args[0];
+        this._currentTest?._tracing.appendStdioToTrace('stdout', chunk);
+        return Reflect.apply(write, thisArg, args);
+      }
+    });
+
+    process.stderr.write = new Proxy(process.stderr.write, {
+      apply: (write, thisArg, args) => {
+        const chunk = args[0];
         this._currentTest?._tracing.appendStdioToTrace('stderr', chunk);
-        return true;
-      };
-    }
+        return Reflect.apply(write, thisArg, args);
+      }
+    });
   }
 
   private _stop(): Promise<void> {
@@ -650,14 +648,6 @@ function formatTestTitle(test: TestCase, projectName: string) {
   const location = `${relativeFilePath(test.location.file)}:${test.location.line}:${test.location.column}`;
   const projectTitle = projectName ? `[${projectName}] › ` : '';
   return `${projectTitle}${location} › ${titles.join(' › ')}`;
-}
-
-function chunkToParams(chunk: Uint8Array | string, encoding?: BufferEncoding):  { text?: string, buffer?: string } {
-  if (chunk instanceof Uint8Array)
-    return { buffer: Buffer.from(chunk).toString('base64') };
-  if (typeof chunk !== 'string')
-    return { text: util.inspect(chunk) };
-  return { text: chunk };
 }
 
 export const create = (params: WorkerInitParams) => new WorkerMain(params);
