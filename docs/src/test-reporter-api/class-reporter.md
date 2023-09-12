@@ -114,7 +114,7 @@ Called after all tests have been run, or testing has been interrupted. Note that
 - `result` <[Object]>
   - `status` <[FullStatus]<"passed"|"failed"|"timedout"|"interrupted">> Test run status.
   - `startTime` <[Date]> Test run start wall time.
-  - `duration` <[int]> Test run start duration in milliseconds.
+  - `duration` <[int]> Test run duration in milliseconds.
 
 Result of the full test run, `status` can be one of:
 * `'passed'` - Everything went as expected.
