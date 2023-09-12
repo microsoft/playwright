@@ -444,6 +444,6 @@ it('should work with empty storage state', async ({ playwright, server }, testIn
 
   const state1 = await request1.storageState();
   expect(state1).toEqual({ cookies: [], origins: [] });
-  expect(await request1.get(server.EMPTY_PAGE)).toBeOK();
+  await expect(await request1.get(server.EMPTY_PAGE)).toBeOK();
   await request1.dispose();
 });
