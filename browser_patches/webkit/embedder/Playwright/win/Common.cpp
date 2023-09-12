@@ -62,14 +62,6 @@ void computeFullDesktopFrame()
     s_windowSize.cy = scaleFactor * (desktop.bottom - desktop.top);
 }
 
-BOOL WINAPI DllMain(HINSTANCE dllInstance, DWORD reason, LPVOID)
-{
-    if (reason == DLL_PROCESS_ATTACH)
-        hInst = dllInstance;
-
-    return TRUE;
-}
-
 bool getAppDataFolder(_bstr_t& directory)
 {
     wchar_t appDataDirectory[MAX_PATH];

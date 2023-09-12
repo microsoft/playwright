@@ -657,7 +657,7 @@ class Worker {
 
     workerDebugger.initialize('chrome://juggler/content/content/WorkerMain.js');
 
-    this._channel = new SimpleChannel(`content::worker[${this._workerId}]`);
+    this._channel = new SimpleChannel(`content::worker[${this._workerId}]`, 'worker-' + this._workerId);
     this._channel.setTransport({
       sendMessage: obj => workerDebugger.postMessage(JSON.stringify(obj)),
       dispose: () => {},

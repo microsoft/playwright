@@ -601,7 +601,7 @@ class PageHandler {
         }
         return;
       }
-    });
+    }, { muteNotificationsPopup: true });
   }
 
   async ['Page.dispatchWheelEvent']({x, y, button, deltaX, deltaY, deltaZ, modifiers }) {
@@ -629,7 +629,7 @@ class PageHandler {
         lineOrPageDeltaX,
         lineOrPageDeltaY,
         0 /* options */);
-    });
+    }, { muteNotificationsPopup: true });
   }
 
   async ['Page.insertText'](options) {
