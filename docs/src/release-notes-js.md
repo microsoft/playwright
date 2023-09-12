@@ -55,7 +55,7 @@ Run `npx playwright install` to download browsers after `npm install`. For examp
 
 Add `@playwright/browser-chromium`, `@playwright/browser-firefox` and `@playwright/browser-webkit` as a dependency. These packages download respective browsers during `npm install`. Make sure you keep the version of all playwright packages in sync:
 
-```json
+```js
 // package.json
 {
   "devDependencies": {
