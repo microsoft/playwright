@@ -134,9 +134,7 @@ export class Filter {
         if (searchValues.text.includes(text))
           continue;
         const [fileName, line, column] = text.split(':');
-        if (line && typeof column === 'string' && searchValues.file.includes(fileName) && searchValues.line === line && searchValues.column === column)
-          continue;
-        else if (line && typeof column === 'undefined' && searchValues.file.includes(fileName) && searchValues.line === line)
+        if (searchValues.file.includes(fileName) && searchValues.line === line && (column === undefined || searchValues.column === column))
           continue;
         return false;
       }

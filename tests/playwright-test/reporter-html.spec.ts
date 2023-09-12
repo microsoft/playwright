@@ -2085,6 +2085,10 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       await expect(page.getByText('a.test.js:3', { exact: true })).toBeVisible();
       await expect(page.getByText('a.test.js:4', { exact: true })).toBeHidden();
 
+      await searchInput.fill('a.test.js:3');
+      await expect(page.getByText('a.test.js:3', { exact: true })).toBeVisible();
+      await expect(page.getByText('a.test.js:4', { exact: true })).toBeHidden();
+
       await searchInput.fill('a.test.js:4:15');
       await expect(page.getByText('a.test.js:3', { exact: true })).toBeHidden();
       await expect(page.getByText('a.test.js:4', { exact: true })).toBeVisible();
