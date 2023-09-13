@@ -88,11 +88,11 @@ it('init script should run only once in iframe', async ({ page, server, browserN
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/26992' });
   it.fixme(browserName === 'webkit');
   let messages = [];
-  page.on("console", event => {
+  page.on('console', event => {
     if (event.text().startsWith('init script:'))
       messages.push(event.text());
   });
-  await page.addInitScript(() => console.log('init script:', location.pathname || "no url yet"));
+  await page.addInitScript(() => console.log('init script:', location.pathname || 'no url yet'));
   await page.goto(server.PREFIX + '/frames/one-frame.html');
   expect(messages).toEqual([
     'init script: /frames/one-frame.html',
