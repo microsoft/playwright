@@ -12,10 +12,8 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 ![Playwright UI Mode](https://github.com/microsoft/playwright/assets/746130/8ba27be0-58fd-4f62-8561-950480610369)
 
-1. Test timeline now supports range selection to zoom into specific part of the
-   test run. Network and console panels respect the selected range to ease
-   debugging.
-1. Network panel is redesigned to aid navigation.
+1. Zoom into time range.
+1. Network panel redesign.
 
 ### New APIs
 
