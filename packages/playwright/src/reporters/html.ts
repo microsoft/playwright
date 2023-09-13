@@ -561,8 +561,8 @@ function stdioAttachment(chunk: Buffer | string, type: 'stdout' | 'stderr'): Jso
   }
   return {
     name: type,
-    contentType: 'application/octet-stream',
-    body: chunk
+    contentType: 'text/plain',
+    body: chunk.toString()
   };
 }
 

@@ -56,10 +56,11 @@ class LineReporter extends BaseReporter {
     }
 
     stream.write(chunk);
-    if (chunk[chunk.length - 1] !== '\n')
-      console.log();
+    const lastCharacter = chunk instanceof Buffer ? String.fromCharCode(chunk[chunk.length - 1]) : chunk[chunk.length - 1];
+    if (lastCharacter !== '\n')
+      stream.write('\n');
 
-    console.log();
+    stream.write('\n');
   }
 
   override onTestBegin(test: TestCase, result: TestResult) {

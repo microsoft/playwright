@@ -46,7 +46,7 @@ export class ProcessHost extends EventEmitter {
     this._extraEnv = env;
   }
 
-  async startRunner(runnerParams: any, options: { onStdOut?: (chunk: string) => void, onStdErr?: (chunk: string) => void } = {}) {
+  async startRunner(runnerParams: any, options: { onStdOut?: (chunk: Buffer) => void, onStdErr?: (chunk: Buffer) => void } = {}) {
     this.process = child_process.fork(require.resolve('../common/process'), {
       detached: false,
       env: { ...process.env, ...this._extraEnv },
@@ -89,14 +89,10 @@ export class ProcessHost extends EventEmitter {
       }
     });
 
-    if (options.onStdOut) {
-      this.process.stdout?.setEncoding('utf8');
+    if (options.onStdOut)
       this.process.stdout?.on('data', options.onStdOut);
-    }
-    if (options.onStdErr) {
-      this.process.stderr?.setEncoding('utf8');
+    if (options.onStdErr)
       this.process.stderr?.on('data', options.onStdErr);
-    }
 
     await new Promise<void>((resolve, reject) => {
       this.process!.once('exit', (code, signal) => reject(new Error(`process exited with code "${code}" and signal "${signal}" before it became ready`)));

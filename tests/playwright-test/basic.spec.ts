@@ -422,7 +422,8 @@ test('should report unhandled rejection during worker shutdown', async ({ runInl
     `,
   });
   expect(result.exitCode).toBe(1);
-  expect(result.passed).toBe(1);
+  expect(result.passed).toBe(0);
+  expect(result.failed).toBe(1);
   expect(result.output).toContain('Error: Unhandled');
   expect(result.output).toContain('a.test.ts:4:33');
 });

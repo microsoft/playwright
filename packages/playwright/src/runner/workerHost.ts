@@ -55,8 +55,24 @@ export class WorkerHost extends ProcessHost {
   async start() {
     await fs.promises.mkdir(this._params.artifactsDir, { recursive: true });
     await this.startRunner(this._params, {
-      onStdOut: text => this.emit('stdOut', { text } satisfies TestOutputPayload),
-      onStdErr: text => this.emit('stdErr', { text } satisfies TestOutputPayload),
+      onStdOut: rawChunk => {
+        const [chunk, flushed] = splitChunkByFlushDelimiter(rawChunk);
+        if (chunk)
+          this.emit('stdOut', chunkToParams(chunk));
+        if (flushed) {
+          this.sendMessageNoReply({ method: 'stdOutFlushed' });
+          return;
+        }
+      },
+      onStdErr: rawChunk => {
+        const [chunk, flushed] = splitChunkByFlushDelimiter(rawChunk);
+        if (chunk)
+          this.emit('stdErr', chunkToParams(chunk));
+        if (flushed) {
+          this.sendMessageNoReply({ method: 'stdErrFlushed' });
+          return;
+        }
+      },
     });
   }
 
@@ -72,4 +88,20 @@ export class WorkerHost extends ProcessHost {
   hash() {
     return this._hash;
   }
+}
+
+function chunkToParams(chunk: Buffer | string): TestOutputPayload {
+  if (chunk instanceof Buffer)
+    return { buffer: chunk.toString('base64') };
+  return { text: chunk };
+}
+
+function splitChunkByFlushDelimiter(chunk: Buffer): [Buffer | undefined, boolean] {
+  const kFlushDelimiter = Buffer.from([0, 0, 0, 0]);
+  const index = chunk.indexOf(kFlushDelimiter);
+  if (index === -1)
+    return [chunk, false];
+  if (chunk.length === kFlushDelimiter.length)
+    return [undefined, true];
+  return [Buffer.concat([chunk.slice(0, index), chunk.slice(index + 4)]), true];
 }

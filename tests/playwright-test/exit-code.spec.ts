@@ -36,8 +36,8 @@ test('should collect stdio', async ({ runInlineTest }) => {
   expect(exitCode).toBe(0);
   const testResult = report.suites[0].specs[0].tests[0].results[0];
   const { stdout, stderr } = testResult;
-  expect(stdout.map(e => (e as any).text).join('')).toEqual('stdout textstdout buffer');
-  expect(stderr.map(e => (e as any).text).join('')).toEqual('stderr textstderr buffer');
+  expect(stdout.map(e => Buffer.from((e as any).buffer, 'base64').toString()).join('')).toEqual('stdout textstdout buffer');
+  expect(stderr.map(e => Buffer.from((e as any).buffer, 'base64').toString()).join('')).toEqual('stderr textstderr buffer');
 });
 
 test('should collect stdio from forked process', async ({ runInlineTest }) => {
@@ -60,8 +60,8 @@ test('should collect stdio from forked process', async ({ runInlineTest }) => {
   expect(exitCode).toBe(0);
   const testResult = report.suites[0].specs[0].tests[0].results[0];
   const { stdout, stderr } = testResult;
-  expect(stdout.map(e => (e as any).text).join('')).toEqual('stdout textstdout buffer');
-  expect(stderr.map(e => (e as any).text).join('')).toEqual('stderr textstderr buffer');
+  expect(stdout.map(e => Buffer.from((e as any).buffer, 'base64').toString()).join('')).toEqual('stdout textstdout buffer');
+  expect(stderr.map(e => Buffer.from((e as any).buffer, 'base64').toString()).join('')).toEqual('stderr textstderr buffer');
 });
 
 test('should work with not defined errors', async ({ runInlineTest }) => {

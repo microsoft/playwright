@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { EventEmitter } from 'events';
 import { colors, rimraf } from 'playwright-core/lib/utilsBundle';
 import { debugTest, formatLocation, relativeFilePath, serializeError } from '../util';
 import type { TestBeginPayload, TestEndPayload, RunPayload, DonePayload, WorkerInitParams, TeardownErrorsPayload } from '../common/ipc';
@@ -57,6 +58,7 @@ export class WorkerMain extends ProcessRunner {
   // Suites that had their beforeAll hooks, but not afterAll hooks executed.
   // These suites still need afterAll hooks to be executed for the proper cleanup.
   private _activeSuites = new Set<Suite>();
+  private _events = new EventEmitter();
 
   constructor(params: WorkerInitParams) {
     super();
@@ -92,6 +94,14 @@ export class WorkerMain extends ProcessRunner {
         return Reflect.apply(write, thisArg, args);
       }
     });
+  }
+
+  private stdOutFlushed() {
+    this._events.emit('stdOutFlushed');
+  }
+
+  private stdErrFlushed() {
+    this._events.emit('stdErrFlushed');
   }
 
   private _stop(): Promise<void> {
@@ -494,6 +504,15 @@ export class WorkerMain extends ProcessRunner {
 
       if (firstAfterHooksError)
         step.complete({ error: firstAfterHooksError });
+    });
+
+    await new Promise(f => {
+      this._events.once('stdErrFlushed', f);
+      process.stderr.write(Buffer.from([0, 0, 0, 0]));
+    });
+    await new Promise(f => {
+      this._events.once('stdOutFlushed', f);
+      process.stdout.write(Buffer.from([0, 0, 0, 0]));
     });
 
     this._currentTest = null;
