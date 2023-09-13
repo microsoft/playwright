@@ -12,8 +12,10 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 ![Playwright UI Mode](https://github.com/microsoft/playwright/assets/746130/8ba27be0-58fd-4f62-8561-950480610369)
 
-1. Test timeline now supports range selection to zoom into specific test steps.
-1. Network panel revamp
+1. Test timeline now supports range selection to zoom into specific part of the
+   test run. Network and console panels respect the selected range to ease
+   debugging.
+1. Network panel is redesigned to aid navigation.
 
 ### New APIs
 
@@ -23,8 +25,14 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 ### Deprecations
 
-* The following methods were deprecated: [`method: Page.type`], [`method: Frame.type`], [`method: Locator.type`], [`method: ElementHandle.type`]. Please use [`method: Locator.pressSequentially`] instead that provides clarity to test readers.
-* The method [`method: SnapshotAssertions.toMatchSnapshot#1`] is deprecated in favor of [`method: PageAssertions.toHaveScreenshot#1`] and [`method: LocatorAssertions.toHaveScreenshot#1`].
+* The following methods were deprecated: [`method: Page.type`], [`method:
+  Frame.type`], [`method: Locator.type`] and [`method: ElementHandle.type`].
+  Please use [`method: Locator.fill`] instead which is much faster. Use
+  [`method: Locator.pressSequentially`] only if there is a special keyboard
+  handling on the page, and you need to press keys one-by-one.
+* The method [`method: SnapshotAssertions.toMatchSnapshot#1`] is deprecated in
+  favor of [`method: PageAssertions.toHaveScreenshot#1`] and [`method:
+  LocatorAssertions.toHaveScreenshot#1`].
 
 ### Breaking Changes: Playwright no longer downloads browsers automatically
 
