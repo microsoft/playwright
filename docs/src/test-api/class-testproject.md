@@ -200,13 +200,13 @@ Use [`property: TestConfig.retries`] to change this option for all projects.
 * since: v1.39
 - type: ?<[RegExp]|[string]|[Array]<[string]>>
 
-Filter to only run tests with a matching tag. For example, passing `tags: /@smoke/` should only run tests with `@smoke` tag. Also available globally and in the [command line](../test-cli.md) with the `--tag` option.
+Filter to only run tests with a matching tag. For example, passing `tags: /smoke/` should only run tests with `@smoke` tag. Also available globally as [`property: TestConfig.tags`] and in the [command line](../test-cli.md#reference) with the `--tag` option.
 
 ## property: TestProject.tagsInvert
 * since: v1.39
 - type: ?<[RegExp]|[string]|[Array]<[string]>>
 
-Filter to only run tests with a tag **not** matching one of the patterns. This is the opposite of [`property: TestProject.tags`]. Also available globally and in the [command line](../test-cli.md) with the `--tag-invert` option.
+Filter to only run tests with a tag **not** matching one of the patterns. This is the opposite of [`property: TestProject.tags`]. Also available globally as [`property: TestConfig.tagsInvert`] and in the [command line](../test-cli.md) with the `--tag-invert` option.
 
 ## property: TestProject.teardown
 * since: v1.34

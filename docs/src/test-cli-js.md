@@ -95,7 +95,7 @@ Complete set of Playwright Test options is available in the [configuration file]
 | `--reporter <reporter>` | Choose a reporter: minimalist `dot`, concise `line` or detailed `list`. See [reporters](./test-reporters.md) for more information. |
 | `--retries <number>` | The maximum number of [retries](./test-retries.md#retries) for flaky tests, defaults to zero (no retries). |
 | `--shard <shard>` | [Shard](./test-parallel.md#shard-tests-between-multiple-machines) tests and execute only selected shard, specified in the form `current/all`, 1-based, for example `3/5`.|
-| `--tag <tag>` | Only run tests having tags matching this regular expression. For example, this will run `test.tag('fast')('my test', async ({ page }) => {` when passed `--tag fast`. |
+| `--tag <tag>` | Only run tests matching tags matching this regular expression. For example, this will run `test.tag('fast')('my test', async ({ page }) => {` when passed `--tag fast`. |
 | `--tag-invert <grep>` | Only run tests withh tags **not** matching this regular expression. The opposite of `--tag`. |
 | `--timeout <number>` | Maximum timeout in milliseconds for each test, defaults to 30 seconds. Learn more about [various timeouts](./test-timeouts.md).|
 | `--trace <mode>` | Force tracing mode, can be `on`, `off`, `on-first-retry`, `on-all-retries`, `retain-on-failure` |

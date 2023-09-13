@@ -285,14 +285,17 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
    */
   retries: number;
   /**
-   * Filter to only run tests with a matching tag. For example, passing `tags: /@smoke/` should only run tests with
-   * `@smoke` tag. Also available globally and in the [command line](https://playwright.dev/docs/test-cli) with the `--tag` option.
+   * Filter to only run tests with a matching tag. For example, passing `tags: /smoke/` should only run tests with
+   * `@smoke` tag. Also available globally as
+   * [testConfig.tags](https://playwright.dev/docs/api/class-testconfig#test-config-tags) and in the
+   * [command line](https://playwright.dev/docs/test-cli#reference) with the `--tag` option.
    */
   tags: string | string[] | RegExp | null
   /**
    * Filter to only run tests with a tag **not** matching one of the patterns. This is the opposite of
-   * [testProject.tags](https://playwright.dev/docs/api/class-testproject#test-project-tags). Also available globally
-   * and in the [command line](https://playwright.dev/docs/test-cli) with the `--tag-invert` option.
+   * [testProject.tags](https://playwright.dev/docs/api/class-testproject#test-project-tags). Also available globally as
+   * [testConfig.tagsInvert](https://playwright.dev/docs/api/class-testconfig#test-config-tags-invert) and in the
+   * [command line](https://playwright.dev/docs/test-cli) with the `--tag-invert` option.
    */
   tagsInvert: string | string[] | RegExp | null
   /**
@@ -1243,10 +1246,9 @@ interface TestConfig {
   snapshotPathTemplate?: string;
 
   /**
-   * Filter to only run tests with a matching tag. When passing a string, it will match tests with a tag that exactly
-   * matches the string. When passing a regular expression, it will match tests with a tag that matches the regular
-   * expression. When passing an array of strings, it will match tests with a tag that exactly matches one of the
-   * strings.
+   * Filter to only run tests with a matching tag. When passing a [string], it will match tests with a tag that matches
+   * the string. When passing a [RegExp], it will match tests with a tag that matches the regular expression. When
+   * passing a [Array]<[string]>, it will match tests with a tag that matches one of the strings.
    */
   tags?: string|RegExp|Array<string>;
 
@@ -3497,8 +3499,10 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    */
   info(): TestInfo;
   /**
-   * Returns a test object with tags added to all tests in the scope. Tags can be used to filter tests in the command
-   * line.
+   * Returns a test object with tags added to all tests which got declared with the test instance. Tags can be used to
+   * filter tests in the [command line](https://playwright.dev/docs/test-cli#reference), or via the config with
+   * [testConfig.tags](https://playwright.dev/docs/api/class-testconfig#test-config-tags) or
+   * [testProject.tags](https://playwright.dev/docs/api/class-testproject#test-project-tags).
    *
    * **Usage**
    *
@@ -3508,7 +3512,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * });
    * ```
    *
-   * @param tags
+   * @param tags Tags to be added. Multiple tags can be passed as separate arguments.
    */
   tag(...tags: string[]): TestType<TestArgs, WorkerArgs>;
 }
@@ -6757,15 +6761,18 @@ interface TestProject {
   snapshotPathTemplate?: string;
 
   /**
-   * Filter to only run tests with a matching tag. For example, passing `tags: /@smoke/` should only run tests with
-   * `@smoke` tag. Also available globally and in the [command line](https://playwright.dev/docs/test-cli) with the `--tag` option.
+   * Filter to only run tests with a matching tag. For example, passing `tags: /smoke/` should only run tests with
+   * `@smoke` tag. Also available globally as
+   * [testConfig.tags](https://playwright.dev/docs/api/class-testconfig#test-config-tags) and in the
+   * [command line](https://playwright.dev/docs/test-cli#reference) with the `--tag` option.
    */
   tags?: RegExp|string|Array<string>;
 
   /**
    * Filter to only run tests with a tag **not** matching one of the patterns. This is the opposite of
-   * [testProject.tags](https://playwright.dev/docs/api/class-testproject#test-project-tags). Also available globally
-   * and in the [command line](https://playwright.dev/docs/test-cli) with the `--tag-invert` option.
+   * [testProject.tags](https://playwright.dev/docs/api/class-testproject#test-project-tags). Also available globally as
+   * [testConfig.tagsInvert](https://playwright.dev/docs/api/class-testconfig#test-config-tags-invert) and in the
+   * [command line](https://playwright.dev/docs/test-cli) with the `--tag-invert` option.
    */
   tagsInvert?: RegExp|string|Array<string>;
 

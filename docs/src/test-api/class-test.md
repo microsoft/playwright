@@ -445,7 +445,7 @@ The number of retries for each test.
 * since: v1.39
 - `tags` <[Array]<[string]>>
 
-Tags to be added to all tests in the scope. Tags can be used to filter tests in the command line.
+Tags to be added to all tests in the scope. Tags can be used to filter tests in the [command line](../test-cli.md#reference), or via the config with [`property: TestConfig.tags`] or [`property: TestProject.tags`].
 
 ### option: Test.describe.configure.timeout
 * since: v1.28
@@ -1336,7 +1336,7 @@ Optional description that will be reflected in a test report.
 * since: v1.39
 - returns: <[Test]>
 
-Returns a test object with tags added to all tests in the scope. Tags can be used to filter tests in the command line.
+Returns a test object with tags added to all tests which got declared with the test instance. Tags can be used to filter tests in the [command line](../test-cli.md#reference), or via the config with [`property: TestConfig.tags`] or [`property: TestProject.tags`].
 
 **Usage**
 
@@ -1348,7 +1348,9 @@ test.tag('smoke', 'production')('example test', async ({ page }) => {
 
 ### param: Test.tag.tags
 * since: v1.39
-- `tags` <[Array]<[string]>|[string]>
+- `tags` <[Array]<[string]>>
+
+Tags to be added. Multiple tags can be passed as separate arguments.
 
 ## async method: Test.step
 * since: v1.10
