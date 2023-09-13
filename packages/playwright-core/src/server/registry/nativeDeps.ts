@@ -464,6 +464,7 @@ export const deps: any = {
       'libxtst6'
     ],
     webkit: [
+      'libsoup-3.0-0',
       'libenchant-2-2',
       'gstreamer1.0-libav',
       'gstreamer1.0-plugins-bad',
@@ -521,6 +522,7 @@ export const deps: any = {
       'libevent-2.1-7',
     ],
     lib2package: {
+      'libsoup-3.0.so.0': 'libsoup-3.0-0',
       'libasound.so.2': 'libasound2',
       'libatk-1.0.so.0': 'libatk1.0-0',
       'libatk-bridge-2.0.so.0': 'libatk-bridge2.0-0',
@@ -885,6 +887,7 @@ export const deps: any = {
       'libxtst6'
     ],
     webkit: [
+      'libsoup-3.0-0',
       'gstreamer1.0-libav',
       'gstreamer1.0-plugins-bad',
       'gstreamer1.0-plugins-base',
@@ -941,6 +944,7 @@ export const deps: any = {
       'libevent-2.1-7',
     ],
     lib2package: {
+      'libsoup-3.0.so.0': 'libsoup-3.0-0',
       'libasound.so.2': 'libasound2',
       'libatk-1.0.so.0': 'libatk1.0-0',
       'libatk-bridge-2.0.so.0': 'libatk-bridge2.0-0',
