@@ -70,7 +70,7 @@
     "@typescript-eslint/parser": "^6.6.0",
     "@vitejs/plugin-basic-ssl": "^1.0.1",
     "@vitejs/plugin-react": "^3.1.0",
-    "@zip.js/zip.js": "^2.4.2",
+    "@zip.js/zip.js": "^2.7.29",
     "chokidar": "^3.5.3",
     "colors": "^1.4.0",
     "commonmark": "^0.30.0",
