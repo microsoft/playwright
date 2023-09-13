@@ -83,3 +83,19 @@ it('should work after a cross origin navigation', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/tamperable.html');
   expect(await page.evaluate(() => window['result'])).toBe(123);
 });
+
+it('init script should run only once in iframe', async ({ page, server, browserName }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/26992' });
+  it.fixme(browserName === 'webkit');
+  const messages = [];
+  page.on('console', event => {
+    if (event.text().startsWith('init script:'))
+      messages.push(event.text());
+  });
+  await page.addInitScript(() => console.log('init script:', location.pathname || 'no url yet'));
+  await page.goto(server.PREFIX + '/frames/one-frame.html');
+  expect(messages).toEqual([
+    'init script: /frames/one-frame.html',
+    'init script: ' + (browserName === 'firefox' ? 'no url yet' : '/frames/frame.html'),
+  ]);
+});
