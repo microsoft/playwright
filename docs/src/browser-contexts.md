@@ -122,9 +122,9 @@ public class Example {
 
 ```python async
 import asyncio
-from playwright.async_api import async_playwright
+from playwright.async_api import async_playwright, Playwright
 
-async def run(playwright):
+async def run(playwright: Playwright):
     # create a chromium browser instance
     chromium = playwright.chromium
     browser = await chromium.launch()
@@ -142,9 +142,9 @@ asyncio.run(main())
 ```
 
 ```python sync
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import sync_playwright, Playwright
 
-def run(playwright):
+def run(playwright: Playwright):
     # create a chromium browser instance
     chromium = playwright.chromium
     browser = chromium.launch()
