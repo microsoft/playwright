@@ -75,7 +75,7 @@ Add `@playwright/browser-chromium`, `@playwright/browser-firefox` and `@playwrig
 
 ### Browser Versions
 
-* Chromium 117.0.5938.48
+* Chromium 117.0.5938.62
 * Mozilla Firefox 117.0
 * WebKit 17.0
 
