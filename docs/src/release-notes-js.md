@@ -23,14 +23,13 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 ### Deprecations
 
-* The following methods were deprecated: [`method: Page.type`], [`method:
-  Frame.type`], [`method: Locator.type`] and [`method: ElementHandle.type`].
+* The following methods were deprecated: [`method: Page.type`], [`method: Frame.type`],
+  [`method: Locator.type`] and [`method: ElementHandle.type`].
   Please use [`method: Locator.fill`] instead which is much faster. Use
   [`method: Locator.pressSequentially`] only if there is a special keyboard
   handling on the page, and you need to press keys one-by-one.
 * The method [`method: SnapshotAssertions.toMatchSnapshot#1`] is deprecated in
-  favor of [`method: PageAssertions.toHaveScreenshot#1`] and [`method:
-  LocatorAssertions.toHaveScreenshot#1`].
+  favor of [`method: PageAssertions.toHaveScreenshot#1`] and [`method: LocatorAssertions.toHaveScreenshot#1`].
 
 ### Breaking Changes: Playwright no longer downloads browsers automatically
 
