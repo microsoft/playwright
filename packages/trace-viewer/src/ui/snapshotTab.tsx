@@ -42,23 +42,24 @@ export const SnapshotTab: React.FunctionComponent<{
   const [measure, ref] = useMeasure<HTMLDivElement>();
   const [snapshotTab, setSnapshotTab] = React.useState<'action'|'before'|'after'>('action');
 
+  type Snapshot = { action: ActionTraceEvent, snapshotName: string, showPoint?: boolean };
   const { snapshots } = React.useMemo(() => {
     if (!action)
       return { snapshots: {} };
 
     // if the action has no beforeSnapshot, use the last available afterSnapshot.
-    let beforeSnapshot = action.beforeSnapshot ? { action, snapshotName: action.beforeSnapshot } : undefined;
+    let beforeSnapshot: Snapshot | undefined = action.beforeSnapshot ? { action, snapshotName: action.beforeSnapshot } : undefined;
     let a = action;
     while (!beforeSnapshot && a) {
       a = prevInList(a);
       beforeSnapshot = a?.afterSnapshot ? { action: a, snapshotName: a?.afterSnapshot } : undefined;
     }
-    const afterSnapshot = action.afterSnapshot ? { action, snapshotName: action.afterSnapshot } : beforeSnapshot;
-    const actionSnapshot = action.inputSnapshot ? { action, snapshotName: action.inputSnapshot } : afterSnapshot;
+    const afterSnapshot: Snapshot | undefined = action.afterSnapshot ? { action, snapshotName: action.afterSnapshot } : beforeSnapshot;
+    const actionSnapshot: Snapshot | undefined = action.inputSnapshot ? { action, snapshotName: action.inputSnapshot, showPoint: !!action.point } : afterSnapshot;
     return { snapshots: { action: actionSnapshot, before: beforeSnapshot, after: afterSnapshot } };
   }, [action]);
 
-  const { snapshotInfoUrl, snapshotUrl, pointX, pointY, popoutUrl } = React.useMemo(() => {
+  const { snapshotInfoUrl, snapshotUrl, popoutUrl } = React.useMemo(() => {
     const snapshot = snapshots[snapshotTab];
     if (!snapshot)
       return { snapshotUrl: kBlankSnapshotUrl };
@@ -66,16 +67,18 @@ export const SnapshotTab: React.FunctionComponent<{
     const params = new URLSearchParams();
     params.set('trace', context(snapshot.action).traceUrl);
     params.set('name', snapshot.snapshotName);
+    if (snapshot.showPoint)
+      params.set('showPoint', '1');
     const snapshotUrl = new URL(`snapshot/${snapshot.action.pageId}?${params.toString()}`, window.location.href).toString();
     const snapshotInfoUrl = new URL(`snapshotInfo/${snapshot.action.pageId}?${params.toString()}`, window.location.href).toString();
 
-    const pointX = snapshotTab === 'action' ? snapshot.action.point?.x : undefined;
-    const pointY = snapshotTab === 'action' ? snapshot.action.point?.y : undefined;
     const popoutParams = new URLSearchParams();
     popoutParams.set('r', snapshotUrl);
     popoutParams.set('trace', context(snapshot.action).traceUrl);
+    if (snapshot.showPoint)
+      popoutParams.set('showPoint', '1');
     const popoutUrl = new URL(`snapshot.html?${popoutParams.toString()}`, window.location.href).toString();
-    return { snapshots, snapshotInfoUrl, snapshotUrl, pointX, pointY, popoutUrl };
+    return { snapshots, snapshotInfoUrl, snapshotUrl, popoutUrl };
   }, [snapshots, snapshotTab]);
 
   const iframeRef0 = React.useRef<HTMLIFrameElement>(null);
@@ -111,12 +114,11 @@ export const SnapshotTab: React.FunctionComponent<{
           iframe.addEventListener('load', loadedCallback);
           iframe.addEventListener('error', loadedCallback);
 
-          const newUrl = snapshotUrl + (pointX === undefined ? '' : `&pointX=${pointX}&pointY=${pointY}`);
           // Try preventing history entry from being created.
           if (iframe.contentWindow)
-            iframe.contentWindow.location.replace(newUrl);
+            iframe.contentWindow.location.replace(snapshotUrl);
           else
-            iframe.src = newUrl;
+            iframe.src = snapshotUrl;
 
           await loadedPromise;
         } catch {
@@ -132,7 +134,7 @@ export const SnapshotTab: React.FunctionComponent<{
       loadingRef.current.visibleIframe = newVisibleIframe;
       setSnapshotInfo(newSnapshotInfo);
     })();
-  }, [snapshotUrl, snapshotInfoUrl, pointX, pointY]);
+  }, [snapshotUrl, snapshotInfoUrl]);
 
   const windowHeaderHeight = 40;
   const snapshotContainerSize = {
@@ -225,37 +227,55 @@ export const InspectModeController: React.FunctionComponent<{
   iteration: number,
 }> = ({ iframe, isInspecting, sdkLanguage, testIdAttributeName, highlightedLocator, setHighlightedLocator, iteration }) => {
   React.useEffect(() => {
-    const win = iframe?.contentWindow as any;
-    let recorder: Recorder | undefined;
+    const recorders: { recorder: Recorder, frameSelector: string }[] = [];
+    const isUnderTest = new URLSearchParams(window.location.search).get('isUnderTest') === 'true';
     try {
-      if (!win)
-        return;
-      recorder = win._recorder;
-      if (!recorder && !isInspecting && !highlightedLocator)
-        return;
+      createRecorders(recorders, sdkLanguage, testIdAttributeName, isUnderTest, '', iframe?.contentWindow);
     } catch {
-      // Potential cross-origin exception when accessing win._recorder.
-      return;
+      // Potential cross-origin exceptions.
     }
-    if (!recorder) {
-      const injectedScript = new InjectedScript(win, false, sdkLanguage, testIdAttributeName, 1, 'chromium', []);
-      recorder = new Recorder(injectedScript, {
+
+    for (const { recorder, frameSelector } of recorders) {
+      const actionSelector = locatorOrSelectorAsSelector(sdkLanguage, highlightedLocator, testIdAttributeName);
+      recorder.setUIState({
+        mode: isInspecting ? 'inspecting' : 'none',
+        actionSelector: actionSelector.startsWith(frameSelector) ? actionSelector.substring(frameSelector.length).trim() : undefined,
+        language: sdkLanguage,
+        testIdAttributeName,
+      }, {
         async setSelector(selector: string) {
-          setHighlightedLocator(asLocator(sdkLanguage, selector, false /* isFrameLocator */, true /* playSafe */));
+          setHighlightedLocator(asLocator(sdkLanguage, frameSelector + selector, false /* isFrameLocator */, true /* playSafe */));
+        },
+        highlightUpdated() {
+          for (const r of recorders) {
+            if (r.recorder !== recorder)
+              r.recorder.clearHighlight();
+          }
         }
       });
-      win._recorder = recorder;
     }
-    const actionSelector = locatorOrSelectorAsSelector(sdkLanguage, highlightedLocator, testIdAttributeName);
-    recorder.setUIState({
-      mode: isInspecting ? 'inspecting' : 'none',
-      actionSelector,
-      language: sdkLanguage,
-      testIdAttributeName,
-    });
   }, [iframe, isInspecting, highlightedLocator, setHighlightedLocator, sdkLanguage, testIdAttributeName, iteration]);
   return <></>;
 };
+
+function createRecorders(recorders: { recorder: Recorder, frameSelector: string }[], sdkLanguage: Language, testIdAttributeName: string, isUnderTest: boolean, parentFrameSelector: string, frameWindow: Window | null | undefined) {
+  if (!frameWindow)
+    return;
+  const win = frameWindow as any;
+  if (!win._recorder) {
+    const injectedScript = new InjectedScript(frameWindow as any, isUnderTest, sdkLanguage, testIdAttributeName, 1, 'chromium', []);
+    const recorder = new Recorder(injectedScript);
+    win._injectedScript = injectedScript;
+    win._recorder = { recorder, frameSelector: parentFrameSelector };
+  }
+  recorders.push(win._recorder);
+
+  for (let i = 0; i < frameWindow.frames.length; ++i) {
+    const childFrame = frameWindow.frames[i];
+    const frameSelector = childFrame.frameElement ? win._injectedScript.generateSelector(childFrame.frameElement, { omitInternalEngines: true, testIdAttributeName }) + ' >> internal:control=enter-frame >> ' : '';
+    createRecorders(recorders, sdkLanguage, testIdAttributeName, isUnderTest, parentFrameSelector + frameSelector, childFrame);
+  }
+}
 
 const kDefaultViewport = { width: 1280, height: 720 };
 const kBlankSnapshotUrl = 'data:text/html,<body style="background: #ddd"></body>';

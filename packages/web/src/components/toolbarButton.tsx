@@ -23,7 +23,7 @@ export interface ToolbarButtonProps {
   icon?: string,
   disabled?: boolean,
   toggled?: boolean,
-  onClick: () => void,
+  onClick: (e: React.MouseEvent) => void,
   style?: React.CSSProperties
 }
 

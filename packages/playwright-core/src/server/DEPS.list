@@ -13,7 +13,6 @@
 ./recorder/
 ./registry/
 ./trace/recorder/tracing.ts
-./chromium/crApp.ts
 
 [playwright.ts]
 ./android/

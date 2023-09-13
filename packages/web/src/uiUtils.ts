@@ -80,6 +80,28 @@ export function msToString(ms: number): string {
   return days.toFixed(1) + 'd';
 }
 
+export function bytesToString(bytes: number): string {
+  if (bytes < 0 || !isFinite(bytes))
+    return '-';
+
+  if (bytes === 0)
+    return '0';
+
+  if (bytes < 1000)
+    return bytes.toFixed(0);
+
+  const kb = bytes / 1024;
+  if (kb < 1000)
+    return kb.toFixed(1) + 'K';
+
+  const mb = kb / 1024;
+  if (mb < 1000)
+    return mb.toFixed(1) + 'M';
+
+  const gb = mb / 1024;
+  return gb.toFixed(1) + 'G';
+}
+
 export function lowerBound<S, T>(array: S[], object: T, comparator: (object: T, b: S) => number, left?: number, right?: number): number {
   let l = left || 0;
   let r = right !== undefined ? right : array.length;

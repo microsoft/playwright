@@ -34,16 +34,16 @@ export type Metainfo = {
 };
 
 class ErrorBoundary extends React.Component<React.PropsWithChildren<{}>, { error: Error | null, errorInfo: React.ErrorInfo | null }> {
-  state: { error: Error | null, errorInfo: React.ErrorInfo | null } = {
+  override state: { error: Error | null, errorInfo: React.ErrorInfo | null } = {
     error: null,
     errorInfo: null,
   };
 
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+  override componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     this.setState({ error, errorInfo });
   }
 
-  render() {
+  override render() {
     if (this.state.error || this.state.errorInfo) {
       return (
         <AutoChip header={'Commit Metainfo Error'} dataTestId='metadata-error'>

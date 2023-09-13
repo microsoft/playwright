@@ -21,7 +21,7 @@
   background-color: var(--color-canvas-subtle);
   padding: 0 8px;
   border-bottom: none;
-  margin-top: 24px;
+  margin-top: 12px;
   font-weight: 600;
   line-height: 38px;
   white-space: nowrap;
@@ -44,6 +44,7 @@
   border-bottom-left-radius: 6px;
   border-bottom-right-radius: 6px;
   padding: 16px;
+  margin-bottom: 12px;
 }
 
 .chip-body-no-insets {

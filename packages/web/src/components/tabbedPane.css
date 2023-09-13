@@ -28,13 +28,13 @@
   display: flex;
   flex: auto;
   overflow: hidden;
+  position: relative;
 }
 
 .tabbed-pane-tab {
-  padding: 2px 10px 0 10px;
+  padding: 2px 6px 0 6px;
   cursor: pointer;
   display: flex;
-  flex: none;
   align-items: center;
   justify-content: center;
   user-select: none;
@@ -53,4 +53,22 @@
 
 .tabbed-pane-tab.selected {
   background-color: var(--vscode-tab-activeBackground);
+}
+
+.tabbed-pane-tab-counter {
+  padding: 0 4px;
+  background: var(--vscode-menu-separatorBackground);
+  border-radius: 8px;
+  height: 16px;
+  margin-left: 4px;
+  line-height: 16px;
+  min-width: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tabbed-pane-tab-counter.error {
+  background: var(--vscode-list-errorForeground);
+  color: var(--vscode-button-foreground);
 }

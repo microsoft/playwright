@@ -1133,7 +1133,7 @@ export class InjectedScript {
       bubbles: true,
       cancelable: true,
       detail: callId,
-      composed: false,
+      composed: true,
     });
     for (const element of markedElements)
       element.dispatchEvent(customEvent);

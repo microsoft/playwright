@@ -9,7 +9,6 @@ const {Preferences} = ChromeUtils.import("resource://gre/modules/Preferences.jsm
 const {ContextualIdentityService} = ChromeUtils.import("resource://gre/modules/ContextualIdentityService.jsm");
 const {NetUtil} = ChromeUtils.import('resource://gre/modules/NetUtil.jsm');
 const {AppConstants} = ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
-const {OS} = ChromeUtils.import("resource://gre/modules/osfile.jsm");
 
 const Cr = Components.results;
 
@@ -350,7 +349,7 @@ class PageTarget {
     this._openerId = opener ? opener.id() : undefined;
     this._actor = undefined;
     this._actorSequenceNumber = 0;
-    this._channel = new SimpleChannel(`browser::page[${this._targetId}]`);
+    this._channel = new SimpleChannel(`browser::page[${this._targetId}]`, 'target-' + this._targetId);
     this._videoRecordingInfo = undefined;
     this._screencastRecordingInfo = undefined;
     this._dialogs = new Map();
@@ -381,7 +380,7 @@ class PageTarget {
     this._registry.emit(TargetRegistry.Events.TargetCreated, this);
   }
 
-  async activateAndRun(callback = () => {}) {
+  async activateAndRun(callback = () => {}, { muteNotificationsPopup = false } = {}) {
     const ownerWindow = this._tab.linkedBrowser.ownerGlobal;
     const tabBrowser = ownerWindow.gBrowser;
     // Serialize all tab-switching commands per tabbed browser
@@ -393,7 +392,13 @@ class PageTarget {
         tabBrowser.selectedTab = this._tab;
         await promise;
       }
-      await callback();
+      const notificationsPopup = muteNotificationsPopup ? this._linkedBrowser?.ownerDocument.getElementById('notification-popup') : null;
+      notificationsPopup?.style.setProperty('pointer-events', 'none');
+      try {
+        await callback();
+      } finally {
+        notificationsPopup?.style.removeProperty('pointer-events');
+      }
     });
     tabBrowser.__serializedChain = result.catch(error => { /* swallow errors to keep chain running */ });
     return result;
@@ -650,7 +655,7 @@ class PageTarget {
     // NSWindow.windowNumber may be -1, so we wait until the window is known
     // to be initialized and visible.
     await this.windowReady();
-    const file = OS.Path.join(dir, helper.generateId() + '.webm');
+    const file = PathUtils.join(dir, helper.generateId() + '.webm');
     if (width < 10 || width > 10000 || height < 10 || height > 10000)
       throw new Error("Invalid size");
 
@@ -733,12 +738,15 @@ class PageTarget {
     // Close context menu, if any, since it might capture mouse events on Linux
     // and prevent browser shutdown on MacOS.
     const doc = this._linkedBrowser.ownerDocument;
-    const contextMenu = doc.getElementById("contentAreaContextMenu");
+    const contextMenu = doc.getElementById('contentAreaContextMenu');
     if (contextMenu)
       contextMenu.hidePopup();
-    const autocompletePopup = doc.getElementById("PopupAutoComplete");
+    const autocompletePopup = doc.getElementById('PopupAutoComplete');
     if (autocompletePopup)
       autocompletePopup.hidePopup();
+    const selectPopup = doc.getElementById('ContentSelectDropdown')?.menupopup;
+    if (selectPopup)
+      selectPopup.hidePopup()
   }
 
   dispose() {

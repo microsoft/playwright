@@ -30,6 +30,7 @@ export interface ActionListProps {
   actions: ActionTraceEventInContext[],
   selectedAction: ActionTraceEventInContext | undefined,
   selectedTime: Boundaries | undefined,
+  setSelectedTime: (time: Boundaries | undefined) => void,
   sdkLanguage: Language | undefined;
   onSelected: (action: ActionTraceEventInContext) => void,
   onHighlighted: (action: ActionTraceEventInContext | undefined) => void,
@@ -43,6 +44,7 @@ export const ActionList: React.FC<ActionListProps> = ({
   actions,
   selectedAction,
   selectedTime,
+  setSelectedTime,
   sdkLanguage,
   onSelected,
   onHighlighted,
@@ -57,18 +59,22 @@ export const ActionList: React.FC<ActionListProps> = ({
     return { selectedItem };
   }, [itemMap, selectedAction]);
 
-  return <ActionTreeView
-    dataTestId='action-list'
-    rootItem={rootItem}
-    treeState={treeState}
-    setTreeState={setTreeState}
-    selectedItem={selectedItem}
-    onSelected={item => onSelected(item.action!)}
-    onHighlighted={item => onHighlighted(item?.action)}
-    isError={item => !!item.action?.error?.message}
-    isVisible={item => !selectedTime || (item.action!.startTime <= selectedTime.maximum && item.action!.endTime >= selectedTime.minimum)}
-    render={item => renderAction(item.action!, sdkLanguage, revealConsole, isLive || false)}
-  />;
+  return <div className='vbox'>
+    {selectedTime && <div className='action-list-show-all' onClick={() => setSelectedTime(undefined)}><span className='codicon codicon-triangle-left'></span>Show all</div>}
+    <ActionTreeView
+      name='actions'
+      rootItem={rootItem}
+      treeState={treeState}
+      setTreeState={setTreeState}
+      selectedItem={selectedItem}
+      onSelected={item => onSelected(item.action!)}
+      onHighlighted={item => onHighlighted(item?.action)}
+      onAccepted={item => setSelectedTime({ minimum: item.action!.startTime, maximum: item.action!.endTime })}
+      isError={item => !!item.action?.error?.message}
+      isVisible={item => !selectedTime || (item.action!.startTime <= selectedTime.maximum && item.action!.endTime >= selectedTime.minimum)}
+      render={item => renderAction(item.action!, sdkLanguage, revealConsole, isLive || false)}
+    />
+  </div>;
 };
 
 export const renderAction = (

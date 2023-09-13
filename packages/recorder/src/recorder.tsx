@@ -17,6 +17,7 @@
 import type { CallLog, Mode, Source } from './recorderTypes';
 import { CodeMirrorWrapper } from '@web/components/codeMirrorWrapper';
 import { SplitView } from '@web/components/splitView';
+import { TabbedPane } from '@web/components/tabbedPane';
 import { Toolbar } from '@web/components/toolbar';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import * as React from 'react';
@@ -48,6 +49,7 @@ export const Recorder: React.FC<RecorderProps> = ({
   mode,
 }) => {
   const [fileId, setFileId] = React.useState<string | undefined>();
+  const [selectedTab, setSelectedTab] = React.useState<string>('log');
 
   React.useEffect(() => {
     if (!fileId && sources.length > 0)
@@ -140,18 +142,27 @@ export const Recorder: React.FC<RecorderProps> = ({
     </Toolbar>
     <SplitView sidebarSize={200} sidebarHidden={mode === 'recording'}>
       <CodeMirrorWrapper text={source.text} language={source.language} highlight={source.highlight} revealLine={source.revealLine} readOnly={true} lineNumbers={true}/>
-      <div className='vbox'>
-        <Toolbar>
-          <ToolbarButton icon='microscope' title='Pick locator' toggled={mode === 'inspecting'} onClick={() => {
-            window.dispatch({ event: 'setMode', params: { mode: mode === 'inspecting' ? 'none' : 'inspecting' } }).catch(() => { });
-          }}>Pick locator</ToolbarButton>
-          <CodeMirrorWrapper text={locator} language={source.language} readOnly={false} focusOnChange={true} wrapLines={true} onChange={onEditorChange} />
-          <ToolbarButton icon='files' title='Copy' onClick={() => {
-            copy(locator);
-          }}></ToolbarButton>
-        </Toolbar>
-        <CallLogView language={source.language} log={Array.from(log.values())}/>
-      </div>
+      <TabbedPane
+        leftToolbar={[<ToolbarButton icon='target' title='Pick locator' toggled={mode === 'inspecting'} onClick={() => {
+          window.dispatch({ event: 'setMode', params: { mode: mode === 'inspecting' ? 'none' : 'inspecting' } }).catch(() => { });
+          setSelectedTab('locator');
+        }} />]}
+        rightToolbar={selectedTab === 'locator' ? [<ToolbarButton icon='files' title='Copy' onClick={() => copy(locator)} />] : []}
+        tabs={[
+          {
+            id: 'locator',
+            title: 'Locator',
+            render: () => <CodeMirrorWrapper text={locator} language={source.language} readOnly={false} focusOnChange={true} onChange={onEditorChange} />
+          },
+          {
+            id: 'log',
+            title: 'Log',
+            render: () => <CallLogView language={source.language} log={Array.from(log.values())}/>
+          },
+        ]}
+        selectedTab={selectedTab}
+        setSelectedTab={setSelectedTab}
+      />
     </SplitView>
   </div>;
 };

@@ -12,7 +12,7 @@
   "license": "MIT",
   "dependencies": {
     "@solidjs/router": "^0.8.2",
-    "solid-js": "^1.4.7"
+    "solid-js": "^1.7.3"
   },
   "devDependencies": {
     "typescript": "^4.7.4",

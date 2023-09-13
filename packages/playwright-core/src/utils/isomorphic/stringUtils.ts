@@ -67,15 +67,26 @@ export function normalizeWhiteSpace(text: string): string {
   return text.replace(/\u200b/g, '').trim().replace(/\s+/g, ' ');
 }
 
+export function normalizeEscapedRegexQuotes(source: string) {
+  // This function reverses the effect of escapeRegexForSelector below.
+  // Odd number of backslashes followed by the quote -> remove unneeded backslash.
+  return source.replace(/(^|[^\\])(\\\\)*\\(['"`])/g, '$1$2$3');
+}
+
+function escapeRegexForSelector(re: RegExp): string {
+  // Even number of backslashes followed by the quote -> insert a backslash.
+  return String(re).replace(/(^|[^\\])(\\\\)*(["'`])/g, '$1$2\\$3').replace(/>>/g, '\\>\\>');
+}
+
 export function escapeForTextSelector(text: string | RegExp, exact: boolean): string {
   if (typeof text !== 'string')
-    return String(text).replace(/>>/g, '\\>\\>');
+    return escapeRegexForSelector(text);
   return `${JSON.stringify(text)}${exact ? 's' : 'i'}`;
 }
 
 export function escapeForAttributeSelector(value: string | RegExp, exact: boolean): string {
   if (typeof value !== 'string')
-    return String(value).replace(/>>/g, '\\>\\>');
+    return escapeRegexForSelector(value);
   // TODO: this should actually be
   //   cssEscape(value).replace(/\\ /g, ' ')
   // However, our attribute selectors do not conform to CSS parsing spec,

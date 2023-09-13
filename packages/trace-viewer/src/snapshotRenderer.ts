@@ -42,7 +42,7 @@ export class SnapshotRenderer {
   }
 
   render(): RenderedFrameSnapshot {
-    const visit = (n: NodeSnapshot, snapshotIndex: number, parentTag: string | undefined): string => {
+    const visit = (n: NodeSnapshot, snapshotIndex: number, parentTag: string | undefined, parentAttrs: [string, string][] | undefined): string => {
       // Text node.
       if (typeof n === 'string') {
         const text = escapeText(n);
@@ -61,29 +61,45 @@ export class SnapshotRenderer {
             const nodes = snapshotNodes(this._snapshots[referenceIndex]);
             const nodeIndex = n[0][1];
             if (nodeIndex >= 0 && nodeIndex < nodes.length)
-              (n as any)._string = visit(nodes[nodeIndex], referenceIndex, parentTag);
+              (n as any)._string = visit(nodes[nodeIndex], referenceIndex, parentTag, parentAttrs);
           }
         } else if (typeof n[0] === 'string') {
           // Element node.
           const builder: string[] = [];
           builder.push('<', n[0]);
-          // Never set relative URLs as <iframe src> - they start fetching frames immediately.
+          const attrs = Object.entries(n[1] || {});
+          const kCurrentSrcAttribute = '__playwright_current_src__';
           const isFrame = n[0] === 'IFRAME' || n[0] === 'FRAME';
           const isAnchor = n[0] === 'A';
-          for (const [attr, value] of Object.entries(n[1] || {})) {
-            const attrName = isFrame && attr.toLowerCase() === 'src' ? '__playwright_src__' : attr;
-            let attrValue = value;
-            if (attr.toLowerCase() === 'href' || attr.toLowerCase() === 'src') {
-              if (isAnchor)
-                attrValue = 'link://' + value;
-              else
-                attrValue = rewriteURLForCustomProtocol(value);
+          const isImg = n[0] === 'IMG';
+          const isImgWithCurrentSrc = isImg && attrs.some(a => a[0] === kCurrentSrcAttribute);
+          const isSourceInsidePictureWithCurrentSrc = n[0] === 'SOURCE' && parentTag === 'PICTURE' && parentAttrs?.some(a => a[0] === kCurrentSrcAttribute);
+          for (const [attr, value] of attrs) {
+            let attrName = attr;
+            if (isFrame && attr.toLowerCase() === 'src') {
+              // Never set relative URLs as <iframe src> - they start fetching frames immediately.
+              attrName = '__playwright_src__';
             }
-            builder.push(' ', attrName, '="', escapeAttribute(attrValue as string), '"');
+            if (isImg && attr === kCurrentSrcAttribute) {
+              // Render currentSrc for images, so that trace viewer does not accidentally
+              // resolve srcset to a different source.
+              attrName = 'src';
+            }
+            if (['src', 'srcset'].includes(attr.toLowerCase()) && (isImgWithCurrentSrc || isSourceInsidePictureWithCurrentSrc)) {
+              // Disable actual <img src>, <img srcset>, <source src> and <source srcset> if
+              // we will be using the currentSrc instead.
+              attrName = '_' + attrName;
+            }
+            let attrValue = value;
+            if (isAnchor && attr.toLowerCase() === 'href')
+              attrValue = 'link://' + value;
+            else if (attr.toLowerCase() === 'href' || attr.toLowerCase() === 'src' || attr === kCurrentSrcAttribute)
+              attrValue = rewriteURLForCustomProtocol(value);
+            builder.push(' ', attrName, '="', escapeAttribute(attrValue), '"');
           }
           builder.push('>');
           for (let i = 2; i < n.length; i++)
-            builder.push(visit(n[i], snapshotIndex, n[0]));
+            builder.push(visit(n[i], snapshotIndex, n[0], attrs));
           if (!autoClosing.has(n[0]))
             builder.push('</', n[0], '>');
           (n as any)._string = builder.join('');
@@ -96,7 +112,7 @@ export class SnapshotRenderer {
     };
 
     const snapshot = this._snapshot;
-    let html = visit(snapshot.html, this._index, undefined);
+    let html = visit(snapshot.html, this._index, undefined, undefined);
     if (!html)
       return { html: '', pageId: snapshot.pageId, frameId: snapshot.frameId, index: this._index };
 
@@ -104,9 +120,7 @@ export class SnapshotRenderer {
     const prefix = snapshot.doctype ? `<!DOCTYPE ${snapshot.doctype}>` : '';
     html = prefix + [
       '<style>*,*::before,*::after { visibility: hidden }</style>',
-      `<style>*[__playwright_target__="${this.snapshotName}"] { outline: 2px solid #006ab1 !important; background-color: #6fa8dc7f !important; }</style>`,
-      `<style>*[__playwright_target__="${this._callId}"] { outline: 2px solid #006ab1 !important; background-color: #6fa8dc7f !important; }</style>`,
-      `<script>${snapshotScript()}</script>`
+      `<script>${snapshotScript(this._callId, this.snapshotName)}</script>`
     ].join('') + html;
 
     return { html, pageId: snapshot.pageId, frameId: snapshot.frameId, index: this._index };
@@ -195,10 +209,11 @@ function snapshotNodes(snapshot: FrameSnapshot): NodeSnapshot[] {
   return (snapshot as any)._nodes;
 }
 
-function snapshotScript() {
-  function applyPlaywrightAttributes(unwrapPopoutUrl: (url: string) => string) {
+function snapshotScript(...targetIds: (string | undefined)[]) {
+  function applyPlaywrightAttributes(unwrapPopoutUrl: (url: string) => string, ...targetIds: (string | undefined)[]) {
     const scrollTops: Element[] = [];
     const scrollLefts: Element[] = [];
+    const targetElements: Element[] = [];
 
     const visit = (root: Document | ShadowRoot) => {
       // Collect all scrolled elements for later use.
@@ -220,15 +235,22 @@ function snapshotScript() {
         element.removeAttribute('__playwright_selected_');
       }
 
+      for (const targetId of targetIds) {
+        for (const target of root.querySelectorAll(`[__playwright_target__="${targetId}"]`)) {
+          const style = (target as HTMLElement).style;
+          style.outline = '2px solid #006ab1';
+          style.backgroundColor = '#6fa8dc7f';
+          targetElements.push(target);
+        }
+      }
+
       for (const iframe of root.querySelectorAll('iframe, frame')) {
         const src = iframe.getAttribute('__playwright_src__');
         if (!src) {
           iframe.setAttribute('src', 'data:text/html,<body style="background: #ddd"></body>');
         } else {
-          // Append query parameters to inherit ?name= or ?time= values from parent.
+          // Retain query parameters to inherit name=, time=, showPoint= and other values from parent.
           const url = new URL(unwrapPopoutUrl(window.location.href));
-          url.searchParams.delete('pointX');
-          url.searchParams.delete('pointY');
           // We can be loading iframe from within iframe, reset base to be absolute.
           const index = url.pathname.lastIndexOf('/snapshot/');
           if (index !== -1)
@@ -278,23 +300,25 @@ function snapshotScript() {
         element.removeAttribute('__playwright_scroll_left_');
       }
 
-      const search = new URL(window.location.href).searchParams;
-      const pointX = search.get('pointX');
-      const pointY = search.get('pointY');
-      if (pointX) {
-        const pointElement = document.createElement('x-pw-pointer');
-        pointElement.style.position = 'fixed';
-        pointElement.style.backgroundColor = '#f44336';
-        pointElement.style.width = '20px';
-        pointElement.style.height = '20px';
-        pointElement.style.borderRadius = '10px';
-        pointElement.style.margin = '-10px 0 0 -10px';
-        pointElement.style.zIndex = '2147483647';
-        pointElement.style.left = pointX + 'px';
-        pointElement.style.top = pointY + 'px';
-        document.documentElement.appendChild(pointElement);
-      }
       document.styleSheets[0].disabled = true;
+
+      const search = new URL(window.location.href).searchParams;
+      if (search.get('showPoint')) {
+        for (const target of targetElements) {
+          const pointElement = document.createElement('x-pw-pointer');
+          pointElement.style.position = 'fixed';
+          pointElement.style.backgroundColor = '#f44336';
+          pointElement.style.width = '20px';
+          pointElement.style.height = '20px';
+          pointElement.style.borderRadius = '10px';
+          pointElement.style.margin = '-10px 0 0 -10px';
+          pointElement.style.zIndex = '2147483647';
+          const box = target.getBoundingClientRect();
+          pointElement.style.left = (box.left + box.width / 2) + 'px';
+          pointElement.style.top = (box.top + box.height / 2) + 'px';
+          document.documentElement.appendChild(pointElement);
+        }
+      }
     };
 
     const onDOMContentLoaded = () => visit(document);
@@ -303,7 +327,7 @@ function snapshotScript() {
     window.addEventListener('DOMContentLoaded', onDOMContentLoaded);
   }
 
-  return `\n(${applyPlaywrightAttributes.toString()})(${unwrapPopoutUrl.toString()})`;
+  return `\n(${applyPlaywrightAttributes.toString()})(${unwrapPopoutUrl.toString()}${targetIds.map(id => `, "${id}"`).join('')})`;
 }
 
 

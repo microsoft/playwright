@@ -1,0 +1,14 @@
+[*]
+common/
+./utils.ts
+./utilsBundle.ts
+
+[cli.ts]
+**
+
+[index.ts]
+@testIsomorphic/**
+./worker/testTracing.ts
+
+[internalsForTest.ts]
+**

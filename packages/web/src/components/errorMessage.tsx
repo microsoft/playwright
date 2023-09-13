@@ -14,45 +14,13 @@
  * limitations under the License.
  */
 
-import ansi2html from 'ansi-to-html';
+import { ansi2html } from '@web/ansi2html';
 import * as React from 'react';
 import './errorMessage.css';
 
 export const ErrorMessage: React.FC<{
   error: string;
 }> = ({ error }) => {
-  const html = React.useMemo(() => ansi2htmlMarkup(error), [error]);
+  const html = React.useMemo(() => ansi2html(error), [error]);
   return <div className='error-message' dangerouslySetInnerHTML={{ __html: html || '' }}></div>;
 };
-
-export function ansi2htmlMarkup(text: string) {
-  const config: any = {
-    bg: 'var(--vscode-panel-background)',
-    fg: 'var(--vscode-foreground)',
-  };
-  config.colors = ansiColors;
-  return new ansi2html(config).toHtml(escapeHTML(text));
-}
-
-const ansiColors = {
-  0: '#000',
-  1: '#C00',
-  2: '#0C0',
-  3: '#C50',
-  4: '#00C',
-  5: '#C0C',
-  6: '#0CC',
-  7: '#CCC',
-  8: '#555',
-  9: '#F55',
-  10: '#5F5',
-  11: '#FF5',
-  12: '#55F',
-  13: '#F5F',
-  14: '#5FF',
-  15: '#FFF'
-};
-
-function escapeHTML(text: string): string {
-  return text.replace(/[&"<>]/g, c => ({ '&': '&amp;', '"': '&quot;', '<': '&lt;', '>': '&gt;' }[c]!));
-}

@@ -37,6 +37,7 @@ export class TraceModel {
   private _version: number | undefined;
   private _backend!: TraceModelBackend;
   private _attachments = new Map<string, trace.AfterActionTraceEventAttachment>();
+  private _resourceToContentType = new Map<string, string>();
 
   constructor() {
   }
@@ -100,6 +101,13 @@ export class TraceModel {
       }
       unzipProgress(++done, total);
 
+      for (const resource of contextEntry.resources) {
+        if (resource.request.postData?._sha1)
+          this._resourceToContentType.set(resource.request.postData._sha1, stripEncodingFromContentType(resource.request.postData.mimeType));
+        if (resource.response.content?._sha1)
+          this._resourceToContentType.set(resource.response.content._sha1, stripEncodingFromContentType(resource.response.content.mimeType));
+      }
+
       this.contextEntries.push(contextEntry);
     }
 
@@ -111,7 +119,10 @@ export class TraceModel {
   }
 
   async resourceForSha1(sha1: string): Promise<Blob | undefined> {
-    return this._backend.readBlob('resources/' + sha1);
+    const blob = await this._backend.readBlob('resources/' + sha1);
+    if (!blob)
+      return;
+    return new Blob([blob], { type: this._resourceToContentType.get(sha1) || 'application/octet-stream' });
   }
 
   attachmentForSha1(sha1: string): trace.AfterActionTraceEventAttachment | undefined {
@@ -145,6 +156,7 @@ export class TraceModel {
         this._version = event.version;
         contextEntry.isPrimary = true;
         contextEntry.browserName = event.browserName;
+        contextEntry.channel = event.channel;
         contextEntry.title = event.title;
         contextEntry.platform = event.platform;
         contextEntry.wallTime = event.wallTime;
@@ -323,4 +335,11 @@ export class TraceModel {
       pageId: metadata.pageId,
     };
   }
+}
+
+function stripEncodingFromContentType(contentType: string) {
+  const charset = contentType.match(/^(.*);\s*charset=.*$/);
+  if (charset)
+    return charset[1];
+  return contentType;
 }

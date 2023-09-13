@@ -49,8 +49,8 @@ JAMMY_TAGS=(
 )
 
 if [[ "$RELEASE_CHANNEL" == "stable" ]]; then
-  FOCAL_TAGS+=("latest")
-  FOCAL_TAGS+=("jammy")
+  JAMMY_TAGS+=("latest")
+  JAMMY_TAGS+=("jammy")
 fi
 
 tag_and_push() {

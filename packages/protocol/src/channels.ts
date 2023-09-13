@@ -587,8 +587,8 @@ export type PlaywrightNewRequestParams = {
   },
   timeout?: number,
   storageState?: {
-    cookies: NetworkCookie[],
-    origins: OriginStorage[],
+    cookies?: NetworkCookie[],
+    origins?: OriginStorage[],
   },
   tracesDir?: string,
 };
@@ -610,8 +610,8 @@ export type PlaywrightNewRequestOptions = {
   },
   timeout?: number,
   storageState?: {
-    cookies: NetworkCookie[],
-    origins: OriginStorage[],
+    cookies?: NetworkCookie[],
+    origins?: OriginStorage[],
   },
   tracesDir?: string,
 };

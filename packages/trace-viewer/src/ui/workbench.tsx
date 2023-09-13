@@ -18,10 +18,12 @@ import { SplitView } from '@web/components/splitView';
 import * as React from 'react';
 import { ActionList } from './actionList';
 import { CallTab } from './callTab';
-import { ConsoleTab } from './consoleTab';
+import { LogTab } from './logTab';
+import { ErrorsTab, useErrorsTabModel } from './errorsTab';
+import { ConsoleTab, useConsoleTabModel } from './consoleTab';
 import type * as modelUtil from './modelUtil';
 import type { ActionTraceEventInContext, MultiTraceModel } from './modelUtil';
-import { NetworkTab } from './networkTab';
+import { NetworkTab, useNetworkTabModel } from './networkTab';
 import { SnapshotTab } from './snapshotTab';
 import { SourceTab } from './sourceTab';
 import { TabbedPane } from '@web/components/tabbedPane';
@@ -33,6 +35,7 @@ import type { Boundaries } from '../geometry';
 import { InspectorTab } from './inspectorTab';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { useSetting } from '@web/uiUtils';
+import type { Entry } from '@trace/har';
 
 export const Workbench: React.FunctionComponent<{
   model?: MultiTraceModel,
@@ -46,8 +49,9 @@ export const Workbench: React.FunctionComponent<{
 }> = ({ model, hideStackFrames, showSourcesFirst, rootDir, fallbackLocation, initialSelection, onSelectionChanged, isLive }) => {
   const [selectedAction, setSelectedAction] = React.useState<ActionTraceEventInContext | undefined>(undefined);
   const [highlightedAction, setHighlightedAction] = React.useState<ActionTraceEventInContext | undefined>();
+  const [highlightedEntry, setHighlightedEntry] = React.useState<Entry | undefined>();
   const [selectedNavigatorTab, setSelectedNavigatorTab] = React.useState<string>('actions');
-  const [selectedPropertiesTab, setSelectedPropertiesTab] = React.useState<string>(showSourcesFirst ? 'source' : 'call');
+  const [selectedPropertiesTab, setSelectedPropertiesTab] = useSetting<string>('propertiesTab', showSourcesFirst ? 'source' : 'call');
   const [isInspecting, setIsInspecting] = React.useState(false);
   const [highlightedLocator, setHighlightedLocator] = React.useState<string>('');
   const activeAction = model ? highlightedAction || selectedAction : undefined;
@@ -63,7 +67,7 @@ export const Workbench: React.FunctionComponent<{
   React.useEffect(() => {
     if (selectedAction && model?.actions.includes(selectedAction))
       return;
-    const failedAction = model?.actions.find(a => a.error);
+    const failedAction = model?.failedAction();
     if (initialSelection && model?.actions.includes(initialSelection))
       setSelectedAction(initialSelection);
     else if (failedAction)
@@ -81,12 +85,19 @@ export const Workbench: React.FunctionComponent<{
     setSelectedPropertiesTab(tab);
     if (tab !== 'inspector')
       setIsInspecting(false);
-  }, []);
+  }, [setSelectedPropertiesTab]);
 
   const locatorPicked = React.useCallback((locator: string) => {
     setHighlightedLocator(locator);
     selectPropertiesTab('inspector');
   }, [selectPropertiesTab]);
+
+  const consoleModel = useConsoleTabModel(model, selectedTime);
+  const networkModel = useNetworkTabModel(model, selectedTime);
+  const errorsModel = useErrorsTabModel(model);
+  const attachments = React.useMemo(() => {
+    return model?.actions.map(a => a.attachments || []).flat() || [];
+  }, [model]);
 
   const sdkLanguage = model?.sdkLanguage || 'javascript';
 
@@ -104,6 +115,17 @@ export const Workbench: React.FunctionComponent<{
     title: 'Call',
     render: () => <CallTab action={activeAction} sdkLanguage={sdkLanguage} />
   };
+  const logTab: TabbedPaneTabModel = {
+    id: 'log',
+    title: 'Log',
+    render: () => <LogTab action={activeAction} />
+  };
+  const errorsTab: TabbedPaneTabModel = {
+    id: 'errors',
+    title: 'Errors',
+    errorCount: errorsModel.errors.size,
+    render: () => <ErrorsTab errorsModel={errorsModel} sdkLanguage={sdkLanguage} boundaries={boundaries} />
+  };
   const sourceTab: TabbedPaneTabModel = {
     id: 'source',
     title: 'Source',
@@ -117,34 +139,37 @@ export const Workbench: React.FunctionComponent<{
   const consoleTab: TabbedPaneTabModel = {
     id: 'console',
     title: 'Console',
-    render: () => <ConsoleTab model={model} boundaries={boundaries} selectedTime={selectedTime} />
+    count: consoleModel.entries.length,
+    render: () => <ConsoleTab consoleModel={consoleModel} boundaries={boundaries} selectedTime={selectedTime} />
   };
   const networkTab: TabbedPaneTabModel = {
     id: 'network',
     title: 'Network',
-    render: () => <NetworkTab model={model} selectedTime={selectedTime} />
+    count: networkModel.resources.length,
+    render: () => <NetworkTab boundaries={boundaries} networkModel={networkModel} onEntryHovered={setHighlightedEntry}/>
   };
   const attachmentsTab: TabbedPaneTabModel = {
     id: 'attachments',
     title: 'Attachments',
+    count: attachments.length,
     render: () => <AttachmentsTab model={model} />
   };
 
-  const tabs: TabbedPaneTabModel[] = showSourcesFirst ? [
-    inspectorTab,
-    sourceTab,
-    consoleTab,
-    networkTab,
-    callTab,
-    attachmentsTab,
-  ] : [
+  const tabs: TabbedPaneTabModel[] = [
     inspectorTab,
     callTab,
+    logTab,
+    errorsTab,
     consoleTab,
     networkTab,
     sourceTab,
     attachmentsTab,
   ];
+  if (showSourcesFirst) {
+    const sourceTabIndex = tabs.indexOf(sourceTab);
+    tabs.splice(sourceTabIndex, 1);
+    tabs.splice(1, 0, sourceTab);
+  }
 
   const { boundaries } = React.useMemo(() => {
     const boundaries = { minimum: model?.startTime || 0, maximum: model?.endTime || 30000 };
@@ -161,12 +186,14 @@ export const Workbench: React.FunctionComponent<{
     <Timeline
       model={model}
       boundaries={boundaries}
+      highlightedAction={highlightedAction}
+      highlightedEntry={highlightedEntry}
       onSelected={onActionSelected}
       sdkLanguage={sdkLanguage}
       selectedTime={selectedTime}
       setSelectedTime={setSelectedTime}
     />
-    <SplitView sidebarSize={250} orientation='horizontal' sidebarIsFirst={true}>
+    <SplitView sidebarSize={250} orientation='horizontal' sidebarIsFirst={true} settingName='actionListSidebar'>
       <SplitView sidebarSize={250} orientation={sidebarLocation === 'bottom' ? 'vertical' : 'horizontal'} settingName='propertiesSidebar'>
         <SnapshotTab
           action={activeAction}
@@ -208,6 +235,7 @@ export const Workbench: React.FunctionComponent<{
               actions={model?.actions || []}
               selectedAction={model ? selectedAction : undefined}
               selectedTime={selectedTime}
+              setSelectedTime={setSelectedTime}
               onSelected={onActionSelected}
               onHighlighted={setHighlightedAction}
               revealConsole={() => selectPropertiesTab('console')}

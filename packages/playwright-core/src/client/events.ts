@@ -41,7 +41,7 @@ export const Events = {
     Page: 'page',
     // Can't use just 'error' due to node.js special treatment of error events.
     // @see https://nodejs.org/api/events.html#events_error_events
-    PageError: 'pageerror',
+    WebError: 'weberror',
     BackgroundPage: 'backgroundpage',
     ServiceWorker: 'serviceworker',
     Request: 'request',

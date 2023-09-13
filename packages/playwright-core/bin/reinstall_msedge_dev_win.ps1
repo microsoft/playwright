@@ -1,3 +1,4 @@
+$ErrorActionPreference = 'Stop'
 $url = $args[0]
 
 Write-Host "Downloading Microsoft Edge Dev"
@@ -16,6 +17,6 @@ if (Test-Path "${env:ProgramFiles(x86)}$suffix") {
 } elseif (Test-Path "${env:ProgramFiles}$suffix") {
     (Get-Item "${env:ProgramFiles}$suffix").VersionInfo
 } else {
-    write-host "ERROR: failed to install Microsoft Edge"
+    Write-Host "ERROR: failed to install Microsoft Edge"
     exit 1
 }

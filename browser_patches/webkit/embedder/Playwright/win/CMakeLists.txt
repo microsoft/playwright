@@ -29,10 +29,6 @@ list(APPEND Playwright_PRIVATE_LIBRARIES
 )
 
 WEBKIT_EXECUTABLE_DECLARE(Playwright)
-WEBKIT_WRAP_EXECUTABLE(Playwright
-    SOURCES ${TOOLS_DIR}/win/DLLLauncher/DLLLauncherMain.cpp Playwright.rc
-    LIBRARIES shlwapi
-)
 WEBKIT_EXECUTABLE(Playwright)
 
 set_target_properties(Playwright PROPERTIES WIN32_EXECUTABLE ON)

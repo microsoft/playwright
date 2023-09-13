@@ -19,30 +19,33 @@ import * as React from 'react';
 import './consoleTab.css';
 import * as modelUtil from './modelUtil';
 import { ListView } from '@web/components/listView';
-import { ansi2htmlMarkup } from '@web/components/errorMessage';
 import type { Boundaries } from '../geometry';
 import { msToString } from '@web/uiUtils';
-import type * as trace from '@trace/trace';
+import { ansi2html } from '@web/ansi2html';
+import { PlaceholderPanel } from './placeholderPanel';
 
-type ConsoleEntry = {
-  browserMessage?: trace.ConsoleMessageTraceEvent['initializer'],
+export type ConsoleEntry = {
+  browserMessage?: {
+    body: JSX.Element[];
+    location: string;
+  },
   browserError?: channels.SerializedError;
   nodeMessage?: {
-    text?: string;
-    base64?: string;
+    html: string;
   },
   isError: boolean;
   isWarning: boolean;
   timestamp: number;
 };
 
+type ConsoleTabModel = {
+  entries: ConsoleEntry[],
+};
+
 const ConsoleListView = ListView<ConsoleEntry>;
 
-export const ConsoleTab: React.FunctionComponent<{
-  model: modelUtil.MultiTraceModel | undefined,
-  boundaries: Boundaries,
-  selectedTime: Boundaries | undefined,
-}> = ({ model, boundaries, selectedTime }) => {
+
+export function useConsoleTabModel(model: modelUtil.MultiTraceModel | undefined, selectedTime: Boundaries | undefined): ConsoleTabModel {
   const { entries } = React.useMemo(() => {
     if (!model)
       return { entries: [] };
@@ -52,12 +55,23 @@ export const ConsoleTab: React.FunctionComponent<{
         continue;
       if (event.method === 'console') {
         const { guid } = event.params.message;
-        entries.push({
-          browserMessage: modelUtil.context(event).initializers[guid],
-          isError: modelUtil.context(event).initializers[guid]?.type === 'error',
-          isWarning: modelUtil.context(event).initializers[guid]?.type === 'warning',
-          timestamp: event.time,
-        });
+        const browserMessage = modelUtil.context(event).initializers[guid];
+        if (browserMessage) {
+          const body = browserMessage.args && browserMessage.args.length ? format(browserMessage.args) : formatAnsi(browserMessage.text);
+          const url = browserMessage.location.url;
+          const filename = url ? url.substring(url.lastIndexOf('/') + 1) : '<anonymous>';
+          const location = `${filename}:${browserMessage.location.lineNumber}`;
+
+          entries.push({
+            browserMessage: {
+              body,
+              location,
+            },
+            isError: modelUtil.context(event).initializers[guid]?.type === 'error',
+            isWarning: modelUtil.context(event).initializers[guid]?.type === 'warning',
+            timestamp: event.time,
+          });
+        }
       }
       if (event.method === 'pageError') {
         entries.push({
@@ -69,11 +83,14 @@ export const ConsoleTab: React.FunctionComponent<{
       }
     }
     for (const event of model.stdio) {
+      let html = '';
+      if (event.text)
+        html = ansi2html(event.text.trim()) || '';
+      if (event.base64)
+        html = ansi2html(atob(event.base64).trim()) || '';
+
       entries.push({
-        nodeMessage: {
-          text: event.text,
-          base64: event.base64,
-        },
+        nodeMessage: { html },
         isError: event.type === 'stderr',
         isWarning: false,
         timestamp: event.timestamp,
@@ -89,9 +106,21 @@ export const ConsoleTab: React.FunctionComponent<{
     return entries.filter(entry => entry.timestamp >= selectedTime.minimum && entry.timestamp <= selectedTime.maximum);
   }, [entries, selectedTime]);
 
+  return { entries: filteredEntries };
+}
+
+export const ConsoleTab: React.FunctionComponent<{
+  boundaries: Boundaries,
+  consoleModel: ConsoleTabModel,
+  selectedTime: Boundaries | undefined,
+}> = ({ consoleModel, boundaries }) => {
+  if (!consoleModel.entries.length)
+    return <PlaceholderPanel text='No console entries' />;
+
   return <div className='console-tab'>
     <ConsoleListView
-      items={filteredEntries}
+      name='console'
+      items={consoleModel.entries}
       isError={entry => entry.isError}
       isWarning={entry => entry.isWarning}
       render={entry => {
@@ -106,11 +135,8 @@ export const ConsoleTab: React.FunctionComponent<{
 
         const { browserMessage, browserError, nodeMessage } = entry;
         if (browserMessage) {
-          const text = browserMessage.args && browserMessage.args.length ? format(browserMessage.args) : browserMessage.text;
-          const url = browserMessage.location.url;
-          const filename = url ? url.substring(url.lastIndexOf('/') + 1) : '<anonymous>';
-          locationText = `${filename}:${browserMessage.location.lineNumber}`;
-          messageBody = text;
+          locationText = browserMessage.location;
+          messageBody = browserMessage.body;
         }
 
         if (browserError) {
@@ -123,11 +149,8 @@ export const ConsoleTab: React.FunctionComponent<{
           }
         }
 
-        if (nodeMessage?.text)
-          messageInnerHTML = ansi2htmlMarkup(nodeMessage.text.trim()) || '';
-
-        if (nodeMessage?.base64)
-          messageInnerHTML = ansi2htmlMarkup(atob(nodeMessage.base64).trim()) || '';
+        if (nodeMessage)
+          messageInnerHTML = nodeMessage.html;
 
         return <div className='console-line'>
           {timestampElement}
@@ -144,7 +167,8 @@ export const ConsoleTab: React.FunctionComponent<{
 
 function format(args: { preview: string, value: any }[]): JSX.Element[] {
   if (args.length === 1)
-    return [<span>{args[0].preview}</span>];
+    return formatAnsi(args[0].preview);
+
   const hasMessageFormat = typeof args[0].value === 'string' && args[0].value.includes('%');
   const messageFormat = hasMessageFormat ? args[0].value as string : '';
   const tail = hasMessageFormat ? args.slice(1) : args;
@@ -188,6 +212,10 @@ function format(args: { preview: string, value: any }[]): JSX.Element[] {
     tokens.push(<span style={styleObject}>{value?.preview || ''}</span>);
   }
   return formatted;
+}
+
+function formatAnsi(text: string): JSX.Element[] {
+  return [<span dangerouslySetInnerHTML={{ __html: ansi2html(text.trim()) }}></span>];
 }
 
 function parseCSSStyle(cssFormat: string): Record<string, string | number> {

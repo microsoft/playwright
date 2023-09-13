@@ -21,7 +21,7 @@ import { browserTest, contextTest as test, expect } from '../config/browserTest'
 import { parseTraceRaw } from '../config/utils';
 import type { StackFrame } from '@protocol/channels';
 import type { ActionTraceEvent } from '../../packages/trace/src/trace';
-import { artifactsFolderName } from '../../packages/playwright-test/src/isomorphic/folders';
+import { artifactsFolderName } from '../../packages/playwright/src/isomorphic/folders';
 
 test.skip(({ trace }) => trace === 'on');
 

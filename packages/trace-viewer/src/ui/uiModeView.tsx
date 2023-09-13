@@ -22,7 +22,7 @@ import { TreeView } from '@web/components/treeView';
 import type { TreeState } from '@web/components/treeView';
 import { baseFullConfig, TeleReporterReceiver, TeleSuite } from '@testIsomorphic/teleReceiver';
 import type { TeleTestCase } from '@testIsomorphic/teleReceiver';
-import type { FullConfig, Suite, TestCase, Location, TestError } from '@playwright/test/types/testReporter';
+import type { FullConfig, Suite, TestCase, Location, TestError } from 'playwright/types/testReporter';
 import { SplitView } from '@web/components/splitView';
 import { idForAction, MultiTraceModel } from './modelUtil';
 import type { SourceLocation } from './modelUtil';
@@ -168,13 +168,44 @@ export const UIModeView: React.FC<{}> = ({
   }, [projectFilters, runningState, testModel]);
 
   const isRunningTest = !!runningState;
+  const dialogRef = React.useRef<HTMLDialogElement>(null);
+  const openInstallDialog = React.useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dialogRef.current?.showModal();
+  }, []);
+  const closeInstallDialog = React.useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dialogRef.current?.close();
+  }, []);
+  const installBrowsers = React.useCallback((e: React.MouseEvent) => {
+    closeInstallDialog(e);
+    setIsShowingOutput(true);
+    sendMessage('installBrowsers').then(async () => {
+      setIsShowingOutput(false);
+      const { hasBrowsers } = await sendMessage('checkBrowsers');
+      setHasBrowsers(hasBrowsers);
+    });
+  }, [closeInstallDialog]);
 
   return <div className='vbox ui-mode'>
+    {!hasBrowsers && <dialog ref={dialogRef}>
+      <div className='title'><span className='codicon codicon-lightbulb'></span>Install browsers</div>
+      <div className='body'>
+        Playwright did not find installed browsers.
+        <br></br>
+        Would you like to run `playwright install`?
+        <br></br>
+        <button className='button' onClick={installBrowsers}>Install</button>
+        <button className='button secondary' onClick={closeInstallDialog}>Dismiss</button>
+      </div>
+    </dialog>}
     {isDisconnected && <div className='drop-target'>
       <div className='title'>UI Mode disconnected</div>
       <div><a href='#' onClick={() => window.location.reload()}>Reload the page</a> to reconnect</div>
     </div>}
-    <SplitView sidebarSize={250} minSidebarSize={125} orientation='horizontal' sidebarIsFirst={true}>
+    <SplitView sidebarSize={250} minSidebarSize={150} orientation='horizontal' sidebarIsFirst={true} settingName='testListSidebar'>
       <div className='vbox'>
         <div className={'vbox' + (isShowingOutput ? '' : ' hidden')}>
           <Toolbar>
@@ -196,14 +227,7 @@ export const UIModeView: React.FC<{}> = ({
           <ToolbarButton icon='color-mode' title='Toggle color mode' onClick={() => toggleTheme()} />
           <ToolbarButton icon='refresh' title='Reload' onClick={() => reloadTests()} disabled={isRunningTest || isLoading}></ToolbarButton>
           <ToolbarButton icon='terminal' title='Toggle output' toggled={isShowingOutput} onClick={() => { setIsShowingOutput(!isShowingOutput); }} />
-          {!hasBrowsers && <ToolbarButton icon='lightbulb-autofix' style={{ color: 'var(--vscode-errorForeground)' }}title='Install browsers' toggled={isShowingOutput} onClick={() => {
-            setIsShowingOutput(true);
-            sendMessage('installBrowsers').then(async () => {
-              setIsShowingOutput(false);
-              const { hasBrowsers } = await sendMessage('checkBrowsers');
-              setHasBrowsers(hasBrowsers);
-            });
-          }} />}
+          {!hasBrowsers && <ToolbarButton icon='lightbulb-autofix' style={{ color: 'var(--vscode-list-warningForeground)' }} title='Playwright browsers are missing' onClick={openInstallDialog} />}
         </Toolbar>
         <FiltersView
           filterText={filterText}
@@ -310,7 +334,7 @@ const FiltersView: React.FC<{
                 if (configFile)
                   settings.setObject(configFile + ':projects', [...copy.entries()].filter(([_, v]) => v).map(([k]) => k));
               }}/>
-              <div>{projectName}</div>
+              <div>{projectName || 'untitled'}</div>
             </label>
           </div>;
         })}
@@ -467,6 +491,7 @@ const TestList: React.FC<{
   };
 
   return <TestTreeView
+    name='tests'
     treeState={treeState}
     setTreeState={setTreeState}
     rootItem={rootItem}

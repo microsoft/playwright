@@ -2355,7 +2355,7 @@ export interface Page {
    * instead.
    *
    * To send fine-grained keyboard events, use
-   * [page.type(selector, text[, options])](https://playwright.dev/docs/api/class-page#page-type).
+   * [locator.pressSequentially(text[, options])](https://playwright.dev/docs/api/class-locator#locator-press-sequentially).
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
    * used.
    * @param value Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
@@ -4111,9 +4111,10 @@ export interface Page {
    * [keyboard.press(key[, options])](https://playwright.dev/docs/api/class-keyboard#keyboard-press).
    *
    * **Usage**
-   * @deprecated Use locator-based
-   * [locator.pressSequentially(text[, options])](https://playwright.dev/docs/api/class-locator#locator-press-sequentially)
-   * instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * @deprecated In most cases, you should use
+   * [locator.fill(value[, options])](https://playwright.dev/docs/api/class-locator#locator-fill) instead. You only need
+   * to press keys one by one if there is special keyboard handling on the page - in this case use
+   * [locator.pressSequentially(text[, options])](https://playwright.dev/docs/api/class-locator#locator-press-sequentially).
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
    * used.
    * @param text A text to type into a focused element.
@@ -5840,7 +5841,7 @@ export interface Frame {
    * instead.
    *
    * To send fine-grained keyboard events, use
-   * [frame.type(selector, text[, options])](https://playwright.dev/docs/api/class-frame#frame-type).
+   * [locator.pressSequentially(text[, options])](https://playwright.dev/docs/api/class-locator#locator-press-sequentially).
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
    * used.
    * @param value Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
@@ -7123,9 +7124,10 @@ export interface Frame {
    * [keyboard.press(key[, options])](https://playwright.dev/docs/api/class-keyboard#keyboard-press).
    *
    * **Usage**
-   * @deprecated Use locator-based
-   * [locator.pressSequentially(text[, options])](https://playwright.dev/docs/api/class-locator#locator-press-sequentially)
-   * instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * @deprecated In most cases, you should use
+   * [locator.fill(value[, options])](https://playwright.dev/docs/api/class-locator#locator-fill) instead. You only need
+   * to press keys one by one if there is special keyboard handling on the page - in this case use
+   * [locator.pressSequentially(text[, options])](https://playwright.dev/docs/api/class-locator#locator-press-sequentially).
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
    * used.
    * @param text A text to type into a focused element.
@@ -7625,11 +7627,10 @@ export interface BrowserContext {
   on(event: 'page', listener: (page: Page) => void): this;
 
   /**
-   * Emitted when unhandled exceptions occur on any pages created through this context. To only listen for `pageError`
-   * events from a particular page, use
-   * [page.on('pageerror')](https://playwright.dev/docs/api/class-page#page-event-page-error).
+   * Emitted when exception is unhandled in any of the pages in this context. To listen for errors from a particular
+   * page, use [page.on('pageerror')](https://playwright.dev/docs/api/class-page#page-event-page-error) instead.
    */
-  on(event: 'pageerror', listener: (pageError: PageError) => void): this;
+  on(event: 'weberror', listener: (webError: WebError) => void): this;
 
   /**
    * Emitted when a request is issued from any pages created through this context. The [request] object is read-only. To
@@ -7704,7 +7705,7 @@ export interface BrowserContext {
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
-  once(event: 'pageerror', listener: (pageError: PageError) => void): this;
+  once(event: 'weberror', listener: (webError: WebError) => void): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
@@ -7818,11 +7819,10 @@ export interface BrowserContext {
   addListener(event: 'page', listener: (page: Page) => void): this;
 
   /**
-   * Emitted when unhandled exceptions occur on any pages created through this context. To only listen for `pageError`
-   * events from a particular page, use
-   * [page.on('pageerror')](https://playwright.dev/docs/api/class-page#page-event-page-error).
+   * Emitted when exception is unhandled in any of the pages in this context. To listen for errors from a particular
+   * page, use [page.on('pageerror')](https://playwright.dev/docs/api/class-page#page-event-page-error) instead.
    */
-  addListener(event: 'pageerror', listener: (pageError: PageError) => void): this;
+  addListener(event: 'weberror', listener: (webError: WebError) => void): this;
 
   /**
    * Emitted when a request is issued from any pages created through this context. The [request] object is read-only. To
@@ -7897,7 +7897,7 @@ export interface BrowserContext {
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'pageerror', listener: (pageError: PageError) => void): this;
+  removeListener(event: 'weberror', listener: (webError: WebError) => void): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
@@ -7952,7 +7952,7 @@ export interface BrowserContext {
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  off(event: 'pageerror', listener: (pageError: PageError) => void): this;
+  off(event: 'weberror', listener: (webError: WebError) => void): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
@@ -8066,11 +8066,10 @@ export interface BrowserContext {
   prependListener(event: 'page', listener: (page: Page) => void): this;
 
   /**
-   * Emitted when unhandled exceptions occur on any pages created through this context. To only listen for `pageError`
-   * events from a particular page, use
-   * [page.on('pageerror')](https://playwright.dev/docs/api/class-page#page-event-page-error).
+   * Emitted when exception is unhandled in any of the pages in this context. To listen for errors from a particular
+   * page, use [page.on('pageerror')](https://playwright.dev/docs/api/class-page#page-event-page-error) instead.
    */
-  prependListener(event: 'pageerror', listener: (pageError: PageError) => void): this;
+  prependListener(event: 'weberror', listener: (webError: WebError) => void): this;
 
   /**
    * Emitted when a request is issued from any pages created through this context. The [request] object is read-only. To
@@ -8659,11 +8658,10 @@ export interface BrowserContext {
   waitForEvent(event: 'page', optionsOrPredicate?: { predicate?: (page: Page) => boolean | Promise<boolean>, timeout?: number } | ((page: Page) => boolean | Promise<boolean>)): Promise<Page>;
 
   /**
-   * Emitted when unhandled exceptions occur on any pages created through this context. To only listen for `pageError`
-   * events from a particular page, use
-   * [page.on('pageerror')](https://playwright.dev/docs/api/class-page#page-event-page-error).
+   * Emitted when exception is unhandled in any of the pages in this context. To listen for errors from a particular
+   * page, use [page.on('pageerror')](https://playwright.dev/docs/api/class-page#page-event-page-error) instead.
    */
-  waitForEvent(event: 'pageerror', optionsOrPredicate?: { predicate?: (pageError: PageError) => boolean | Promise<boolean>, timeout?: number } | ((pageError: PageError) => boolean | Promise<boolean>)): Promise<PageError>;
+  waitForEvent(event: 'weberror', optionsOrPredicate?: { predicate?: (webError: WebError) => boolean | Promise<boolean>, timeout?: number } | ((webError: WebError) => boolean | Promise<boolean>)): Promise<WebError>;
 
   /**
    * Emitted when a request is issued from any pages created through this context. The [request] object is read-only. To
@@ -9668,7 +9666,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * instead.
    *
    * To send fine-grained keyboard events, use
-   * [keyboard.type(text[, options])](https://playwright.dev/docs/api/class-keyboard#keyboard-type).
+   * [locator.pressSequentially(text[, options])](https://playwright.dev/docs/api/class-locator#locator-press-sequentially).
    * @param value Value to set for the `<input>`, `<textarea>` or `[contenteditable]` element.
    * @param options
    */
@@ -10267,9 +10265,10 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * [elementHandle.press(key[, options])](https://playwright.dev/docs/api/class-elementhandle#element-handle-press).
    *
    * **Usage**
-   * @deprecated Use locator-based
-   * [locator.pressSequentially(text[, options])](https://playwright.dev/docs/api/class-locator#locator-press-sequentially)
-   * instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * @deprecated In most cases, you should use
+   * [locator.fill(value[, options])](https://playwright.dev/docs/api/class-locator#locator-fill) instead. You only need
+   * to press keys one by one if there is special keyboard handling on the page - in this case use
+   * [locator.pressSequentially(text[, options])](https://playwright.dev/docs/api/class-locator#locator-press-sequentially).
    * @param text A text to type into a focused element.
    * @param options
    */
@@ -17719,6 +17718,9 @@ export interface Keyboard {
   insertText(text: string): Promise<void>;
 
   /**
+   * **NOTE** In most cases, you should use
+   * [locator.press(key[, options])](https://playwright.dev/docs/api/class-locator#locator-press) instead.
+   *
    * `key` can specify the intended
    * [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) value or a single character
    * to generate the text for. A superset of the `key` values can be found
@@ -17765,6 +17767,11 @@ export interface Keyboard {
   }): Promise<void>;
 
   /**
+   * **NOTE** In most cases, you should use
+   * [locator.fill(value[, options])](https://playwright.dev/docs/api/class-locator#locator-fill) instead. You only need
+   * to press keys one by one if there is special keyboard handling on the page - in this case use
+   * [locator.pressSequentially(text[, options])](https://playwright.dev/docs/api/class-locator#locator-press-sequentially).
+   *
    * Sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text.
    *
    * To press a special key, like `Control` or `ArrowDown`, use
@@ -17958,35 +17965,6 @@ export interface Mouse {
    * @param deltaY Pixels to scroll vertically.
    */
   wheel(deltaX: number, deltaY: number): Promise<void>;
-}
-
-/**
- * {@link PageError} class represents objects created by context when there are unhandled execeptions thrown on the
- * pages and dispatched via the
- * [browserContext.on('pageerror')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-page-error)
- * event.
- *
- * ```js
- * // Log all uncaught errors to the terminal
- * context.on('pageerror', pageerror => {
- *   console.log(`Uncaught exception: "${pageerror.error()}"`);
- * });
- *
- * // Navigate to a page with an exception.
- * await page.goto('data:text/html,<script>throw new Error("Test")</script>');
- * ```
- *
- */
-export interface PageError {
-  /**
-   * Unhandled error that was thrown.
-   */
-  error(): Error;
-
-  /**
-   * The page that produced this unhandled exception, if any.
-   */
-  page(): null|Page;
 }
 
 /**
@@ -19022,6 +19000,34 @@ export interface Video {
    * @param path Path where the video should be saved.
    */
   saveAs(path: string): Promise<void>;
+}
+
+/**
+ * {@link WebError} class represents an unhandled exeception thrown in the page. It is dispatched via the
+ * [browserContext.on('weberror')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-web-error)
+ * event.
+ *
+ * ```js
+ * // Log all uncaught errors to the terminal
+ * context.on('weberror', webError => {
+ *   console.log(`Uncaught exception: "${webError.error()}"`);
+ * });
+ *
+ * // Navigate to a page with an exception.
+ * await page.goto('data:text/html,<script>throw new Error("Test")</script>');
+ * ```
+ *
+ */
+export interface WebError {
+  /**
+   * Unhandled error that was thrown.
+   */
+  error(): Error;
+
+  /**
+   * The page that produced this unhandled exception, if any.
+   */
+  page(): null|Page;
 }
 
 /**

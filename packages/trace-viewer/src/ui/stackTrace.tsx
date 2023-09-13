@@ -29,7 +29,7 @@ export const StackTraceView: React.FunctionComponent<{
 }> = ({ action, setSelectedFrame, selectedFrame }) => {
   const frames = action?.stack || [];
   return <StackFrameListView
-    dataTestId='stack-trace'
+    name='stack-trace'
     items={frames}
     selectedItem={frames[selectedFrame]}
     render={frame => {

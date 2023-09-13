@@ -32,16 +32,20 @@ type TimelineBar = {
   rightPosition: number;
   leftTime: number;
   rightTime: number;
+  active: boolean;
+  error: boolean;
 };
 
 export const Timeline: React.FunctionComponent<{
   model: MultiTraceModel | undefined,
   boundaries: Boundaries,
+  highlightedAction: ActionTraceEventInContext | undefined,
+  highlightedEntry: Entry | undefined,
   onSelected: (action: ActionTraceEventInContext) => void,
   selectedTime: Boundaries | undefined,
   setSelectedTime: (time: Boundaries | undefined) => void,
   sdkLanguage: Language,
-}> = ({ model, boundaries, onSelected, selectedTime, setSelectedTime, sdkLanguage }) => {
+}> = ({ model, boundaries, onSelected, highlightedAction, highlightedEntry, selectedTime, setSelectedTime, sdkLanguage }) => {
   const [measure, ref] = useMeasure<HTMLDivElement>();
   const [dragWindow, setDragWindow] = React.useState<{ startX: number, endX: number, pivot?: number, type: 'resize' | 'move' } | undefined>();
   const [previewPoint, setPreviewPoint] = React.useState<FilmStripPreviewPoint | undefined>();
@@ -70,6 +74,8 @@ export const Timeline: React.FunctionComponent<{
         rightTime: entry.endTime || boundaries.maximum,
         leftPosition: timeToPosition(measure.width, boundaries, entry.startTime),
         rightPosition: timeToPosition(measure.width, boundaries, entry.endTime || boundaries.maximum),
+        active: false,
+        error: !!entry.error,
       });
     }
 
@@ -82,10 +88,17 @@ export const Timeline: React.FunctionComponent<{
         rightTime: endTime,
         leftPosition: timeToPosition(measure.width, boundaries, startTime),
         rightPosition: timeToPosition(measure.width, boundaries, endTime),
+        active: false,
+        error: false,
       });
     }
     return bars;
   }, [model, boundaries, measure]);
+
+  React.useMemo(() => {
+    for (const bar of bars)
+      bar.active = (!!highlightedAction && bar.action === highlightedAction) || (!!highlightedEntry && bar.resource === highlightedEntry);
+  }, [bars, highlightedAction, highlightedEntry]);
 
   const onMouseDown = React.useCallback((event: React.MouseEvent) => {
     setPreviewPoint(undefined);
@@ -169,15 +182,10 @@ export const Timeline: React.FunctionComponent<{
       const action = model?.actions.findLast(action => action.startTime <= time);
       if (action)
         onSelected(action);
-      // Include both, last action as well as the click position.
-      if (selectedTime && (time < selectedTime.minimum || time > selectedTime.maximum)) {
-        const minimum = action ? Math.max(Math.min(action.startTime, time), boundaries.minimum) : boundaries.minimum;
-        const maximum = action ? Math.min(Math.max(action.endTime, time), boundaries.maximum) : boundaries.maximum;
-        setSelectedTime({ minimum, maximum });
-      }
+      setSelectedTime(undefined);
     }
     setDragWindow(undefined);
-  }, [boundaries, dragWindow, measure, model, selectedTime, setSelectedTime, onSelected]);
+  }, [boundaries, dragWindow, measure, model, setSelectedTime, onSelected]);
 
   const onMouseMove = React.useCallback((event: React.MouseEvent) => {
     if (!ref.current)
@@ -215,30 +223,35 @@ export const Timeline: React.FunctionComponent<{
           </div>;
         })
       }</div>
-      {<div className='timeline-lane timeline-bars'>{
+      <div style={{ height: 8 }}></div>
+      <FilmStrip model={model} boundaries={boundaries} previewPoint={previewPoint} />
+      <div className='timeline-bars'>{
         bars.map((bar, index) => {
           return <div key={index}
-            className={'timeline-bar ' + (bar.action ? 'action ' : '') + (bar.resource ? 'network ' : '')}
+            className={'timeline-bar' + (bar.action ? ' action' : '')
+                                      + (bar.resource ? ' network' : '')
+                                      + (bar.active ? ' active' : '')
+                                      + (bar.error ? ' error' : '')}
             style={{
-              left: bar.leftPosition + 'px',
-              width: Math.max(1, bar.rightPosition - bar.leftPosition) + 'px',
-              top: barTop(bar) + 'px',
+              left: bar.leftPosition,
+              width: Math.max(1, bar.rightPosition - bar.leftPosition),
+              top: barTop(bar),
+              bottom: 0,
             }}
           ></div>;
         })
-      }</div>}
-      <FilmStrip model={model} boundaries={boundaries} previewPoint={previewPoint} />
+      }</div>
       <div className='timeline-marker' style={{
         display: (previewPoint !== undefined) ? 'block' : 'none',
         left: (previewPoint?.x || 0) + 'px',
       }} />
       {selectedTime && <div className='timeline-window'>
         <div className='timeline-window-curtain left' style={{ width: curtainLeft }}></div>
-        <div className='timeline-window-resizer'></div>
+        <div className='timeline-window-resizer' style={{ left: -5 }}></div>
         <div className='timeline-window-center'>
           <div className='timeline-window-drag'></div>
         </div>
-        <div className='timeline-window-resizer'></div>
+        <div className='timeline-window-resizer' style={{ left: 5 }}></div>
         <div className='timeline-window-curtain right' style={{ width: curtainRight }}></div>
       </div>}
     </div>
@@ -284,5 +297,5 @@ function positionToTime(clientWidth: number, boundaries: Boundaries, x: number):
 }
 
 function barTop(bar: TimelineBar): number {
-  return bar.resource ? 5 : 0;
+  return bar.resource ? 25 : 20;
 }

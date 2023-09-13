@@ -72,7 +72,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
         `,
       }, { reporter: 'list' }, { PW_TEST_DEBUG_REPORTERS: '1', PW_TEST_DEBUG_REPORTERS_PRINT_STEPS: '1', PWTEST_TTY_WIDTH: '80' });
       const text = result.output;
-      const lines = text.split('\n').filter(l => l.match(/^\d :/)).map(l => l.replace(/\d+ms/, 'Xms'));
+      const lines = text.split('\n').filter(l => l.match(/^\d :/)).map(l => l.replace(/[.\d]+m?s/, 'Xms'));
       lines.pop(); // Remove last item that contains [v] and time in ms.
       expect(lines).toEqual([
         '0 :      1 a.test.ts:3:15 › passes',
@@ -107,7 +107,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       });`,
       }, { reporter: 'list' }, { PW_TEST_DEBUG_REPORTERS: '1', PWTEST_TTY_WIDTH: '80' });
       const text = result.output;
-      const lines = text.split('\n').filter(l => l.match(/^\d :/)).map(l => l.replace(/\d+ms/, 'Xms'));
+      const lines = text.split('\n').filter(l => l.match(/^\d :/)).map(l => l.replace(/[.\d]+m?s/, 'Xms'));
       lines.pop(); // Remove last item that contains [v] and time in ms.
       expect(lines).toEqual([
         '0 :      1 a.test.ts:3:11 › passes',

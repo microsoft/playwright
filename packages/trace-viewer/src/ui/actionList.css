@@ -71,3 +71,10 @@
   padding-left: 5px;
   color: var(--vscode-charts-blue);
 }
+
+.action-list-show-all {
+  display: flex;
+  cursor: pointer;
+  height: 28px;
+  align-items: center;
+}

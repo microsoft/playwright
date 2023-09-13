@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-const { test: baseTest, expect, devices, defineConfig: originalDefineConfig } = require('@playwright/test');
+const { test: baseTest, expect, devices, defineConfig: originalDefineConfig } = require('playwright/test');
 const { fixtures } = require('./lib/mount');
 
 const defineConfig = config => originalDefineConfig({

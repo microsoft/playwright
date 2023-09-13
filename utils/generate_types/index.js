@@ -657,13 +657,13 @@ class TypesGenerator {
   const coreTypesDir = path.join(PROJECT_DIR, 'packages', 'playwright-core', 'types');
   if (!fs.existsSync(coreTypesDir))
     fs.mkdirSync(coreTypesDir)
-  const testTypesDir = path.join(PROJECT_DIR, 'packages', 'playwright-test', 'types');
-  if (!fs.existsSync(testTypesDir))
-    fs.mkdirSync(testTypesDir)
+  const playwrightTypesDir = path.join(PROJECT_DIR, 'packages', 'playwright', 'types');
+  if (!fs.existsSync(playwrightTypesDir))
+    fs.mkdirSync(playwrightTypesDir)
   writeFile(path.join(coreTypesDir, 'protocol.d.ts'), fs.readFileSync(path.join(PROJECT_DIR, 'packages', 'playwright-core', 'src', 'server', 'chromium', 'protocol.d.ts'), 'utf8'), false);
   writeFile(path.join(coreTypesDir, 'types.d.ts'), await generateCoreTypes(false), true);
-  writeFile(path.join(testTypesDir, 'test.d.ts'), await generateTestTypes(false), true);
-  writeFile(path.join(testTypesDir, 'testReporter.d.ts'), await generateReporterTypes(false), true);
+  writeFile(path.join(playwrightTypesDir, 'test.d.ts'), await generateTestTypes(false), true);
+  writeFile(path.join(playwrightTypesDir, 'testReporter.d.ts'), await generateReporterTypes(false), true);
   process.exit(hadChanges && process.argv.includes('--check-clean') ? 1 : 0);
 })().catch(e => {
   console.error(e);

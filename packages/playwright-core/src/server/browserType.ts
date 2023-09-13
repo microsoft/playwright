@@ -20,7 +20,7 @@ import path from 'path';
 import type { BrowserContext } from './browserContext';
 import { normalizeProxySettings, validateBrowserContextOptions } from './browserContext';
 import type { BrowserName } from './registry';
-import { findChromiumChannel, registry } from './registry';
+import { registry } from './registry';
 import type { ConnectionTransport } from './transport';
 import { WebSocketTransport } from './transport';
 import type { BrowserOptions, Browser, BrowserProcess } from './browser';
@@ -32,14 +32,13 @@ import { ProgressController } from './progress';
 import type * as types from './types';
 import type * as channels from '@protocol/channels';
 import { DEFAULT_TIMEOUT, TimeoutSettings } from '../common/timeoutSettings';
-import { debugMode, isUnderTest } from '../utils';
+import { debugMode } from '../utils';
 import { existsAsync } from '../utils/fileUtils';
 import { helper } from './helper';
 import { RecentLogsCollector } from '../common/debugLogger';
 import type { CallMetadata } from './instrumentation';
-import { SdkObject, serverSideCallMetadata } from './instrumentation';
+import { SdkObject } from './instrumentation';
 import { ManualPromise } from '../utils/manualPromise';
-import { installAppIcon } from './chromium/crApp';
 
 export const kNoXServerRunningError = 'Looks like you launched a headed browser without having a XServer running.\n' +
   'Set either \'headless: true\' or use \'xvfb-run <your-playwright-app>\' before running Playwright.\n\n<3 Playwright Team';
@@ -83,38 +82,6 @@ export abstract class BrowserType extends SdkObject {
       return this._innerLaunchWithRetries(progress, options, persistent, helper.debugProtocolLogger(), userDataDir).catch(e => { throw this._rewriteStartupError(e); });
     }, TimeoutSettings.launchTimeout(options));
     return browser._defaultContext!;
-  }
-
-  async launchApp(options: {
-    sdkLanguage: string,
-    windowSize: types.Size,
-    windowPosition?: types.Point,
-    persistentContextOptions?: Parameters<BrowserType['launchPersistentContext']>[2];
-  }) {
-    const args = [...options.persistentContextOptions?.args ?? []];
-
-    if (this._name === 'chromium') {
-      args.push(
-          '--app=data:text/html,',
-          `--window-size=${options.windowSize.width},${options.windowSize.height}`,
-          ...(options.windowPosition ? [`--window-position=${options.windowPosition.x},${options.windowPosition.y}`] : []),
-          '--test-type=',
-      );
-    }
-
-    const context = await this.launchPersistentContext(serverSideCallMetadata(), '', {
-      channel: findChromiumChannel(options.sdkLanguage),
-      noDefaultViewport: true,
-      ignoreDefaultArgs: ['--enable-automation'],
-      colorScheme: 'no-override',
-      acceptDownloads: isUnderTest() ? 'accept' : 'internal-browser-default',
-      ...options?.persistentContextOptions,
-      args,
-    });
-    const [page] = context.pages();
-    if (this._name === 'chromium')
-      await installAppIcon(page);
-    return { context, page };
   }
 
   async _innerLaunchWithRetries(progress: Progress, options: types.LaunchOptions, persistent: channels.BrowserNewContextParams | undefined, protocolLogger: types.ProtocolLogger, userDataDir?: string): Promise<Browser> {
@@ -312,6 +279,19 @@ export abstract class BrowserType extends SdkObject {
     if (this.attribution.playwright.options.socksProxyPort)
       proxy = { server: `socks5://127.0.0.1:${this.attribution.playwright.options.socksProxyPort}` };
     return { ...options, devtools, headless, downloadsPath, proxy };
+  }
+
+  protected _createUserDataDirArgMisuseError(userDataDirArg: string): Error {
+    switch (this.attribution.playwright.options.sdkLanguage) {
+      case 'java':
+        return new Error(`Pass userDataDir parameter to 'BrowserType.launchPersistentContext(userDataDir, options)' instead of specifying '${userDataDirArg}' argument`);
+      case 'python':
+        return new Error(`Pass user_data_dir parameter to 'browser_type.launch_persistent_context(user_data_dir, **kwargs)' instead of specifying '${userDataDirArg}' argument`);
+      case 'csharp':
+        return new Error(`Pass userDataDir parameter to 'BrowserType.LaunchPersistentContextAsync(userDataDir, options)' instead of specifying '${userDataDirArg}' argument`);
+      default:
+        return new Error(`Pass userDataDir parameter to 'browserType.launchPersistentContext(userDataDir, options)' instead of specifying '${userDataDirArg}' argument`);
+    }
   }
 
   abstract _defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): string[];

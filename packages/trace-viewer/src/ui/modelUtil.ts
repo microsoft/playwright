@@ -51,6 +51,7 @@ export class MultiTraceModel {
   readonly startTime: number;
   readonly endTime: number;
   readonly browserName: string;
+  readonly channel?: string;
   readonly platform?: string;
   readonly wallTime?: number;
   readonly title?: string;
@@ -68,13 +69,15 @@ export class MultiTraceModel {
 
   constructor(contexts: ContextEntry[]) {
     contexts.forEach(contextEntry => indexModel(contextEntry));
+    const primaryContext = contexts.find(context => context.isPrimary);
 
-    this.browserName = contexts[0]?.browserName || '';
-    this.sdkLanguage = contexts[0]?.sdkLanguage;
-    this.testIdAttributeName = contexts[0]?.testIdAttributeName;
-    this.platform = contexts[0]?.platform || '';
-    this.title = contexts[0]?.title || '';
-    this.options = contexts[0]?.options || {};
+    this.browserName = primaryContext?.browserName || '';
+    this.sdkLanguage = primaryContext?.sdkLanguage;
+    this.channel = primaryContext?.channel;
+    this.testIdAttributeName = primaryContext?.testIdAttributeName;
+    this.platform = primaryContext?.platform || '';
+    this.title = primaryContext?.title || '';
+    this.options = primaryContext?.options || {};
     this.wallTime = contexts.map(c => c.wallTime).reduce((prev, cur) => Math.min(prev || Number.MAX_VALUE, cur!), Number.MAX_VALUE);
     this.startTime = contexts.map(c => c.startTime).reduce((prev, cur) => Math.min(prev, cur), Number.MAX_VALUE);
     this.endTime = contexts.map(c => c.endTime).reduce((prev, cur) => Math.max(prev, cur), Number.MIN_VALUE);
@@ -88,6 +91,11 @@ export class MultiTraceModel {
     this.events.sort((a1, a2) => a1.time - a2.time);
     this.resources.sort((a1, a2) => a1._monotonicTime! - a2._monotonicTime!);
     this.sources = collectSources(this.actions);
+  }
+
+  failedAction() {
+    // This find innermost action for nested ones.
+    return this.actions.findLast(a => a.error);
   }
 }
 

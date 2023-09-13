@@ -4,7 +4,6 @@
   "version": "0.0.0",
   "scripts": {},
   "dependencies": {
-    "ansi-to-html": "^0.7.2",
     "codemirror": "^5.65.9",
     "xterm": "^5.1.0",
     "xterm-addon-fit": "^0.7.0"

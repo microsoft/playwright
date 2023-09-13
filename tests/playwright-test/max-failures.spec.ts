@@ -146,3 +146,40 @@ test('max-failures should properly shutdown', async ({ runInlineTest }) => {
   expect(result.failed).toBe(1);
   expect(result.output).toContain('expect(false).toBeTruthy()');
 });
+
+test('max-failures should work across phases', async ({ runInlineTest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/26344' });
+
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      const config = {
+        testDir: './',
+        maxFailures: 1,
+        projects: [
+          { name: 'a', testMatch: ['example.spec.ts'] },
+          { name: 'b', testMatch: ['example.spec.ts'], dependencies: ['a'] },
+          { name: 'c', testMatch: ['example.spec.ts'], dependencies: ['a'] },
+          { name: 'd', testMatch: ['example.spec.ts'], dependencies: ['b'] },
+        ]
+      };
+      export default config;
+    `,
+    'example.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test', () => {
+        const project = test.info().project.name;
+        console.log('running ' + project);
+        if (project === 'c')
+          throw new Error('failed!');
+      });
+    `,
+  }, { workers: 1 });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.passed).toBe(2);
+  expect(result.skipped).toBe(1);
+  expect(result.output).toContain('running a');
+  expect(result.output).toContain('running b');
+  expect(result.output).toContain('running c');
+  expect(result.output).not.toContain('running d');
+});

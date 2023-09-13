@@ -180,8 +180,16 @@ export class Recorder implements InstrumentationListener {
       return uiState;
     });
 
-    await this._context.exposeBinding('__pw_recorderSetSelector', false, async (_, selector: string) => {
-      await this._recorderApp?.setSelector(selector, true);
+    await this._context.exposeBinding('__pw_recorderSetSelector', false, async ({ frame }, selector: string) => {
+      const selectorPromises: Promise<string | undefined>[] = [];
+      let currentFrame: Frame | null = frame;
+      while (currentFrame) {
+        selectorPromises.push(findFrameSelector(currentFrame));
+        currentFrame = currentFrame.parentFrame();
+      }
+      const fullSelector = (await Promise.all(selectorPromises)).filter(Boolean);
+      fullSelector.push(selector);
+      await this._recorderApp?.setSelector(fullSelector.join(' >> internal:control=enter-frame >> '), true);
     });
 
     await this._context.exposeBinding('__pw_resume', false, () => {
@@ -532,7 +540,7 @@ class ContextRecorder extends EventEmitter {
 
     const selectorPromises: Promise<string | undefined>[] = [];
     for (let i = 0; i < chain.length - 1; i++)
-      selectorPromises.push(this._findFrameSelector(chain[i + 1], chain[i]));
+      selectorPromises.push(findFrameSelector(chain[i + 1]));
 
     const result = await raceAgainstDeadline(() => Promise.all(selectorPromises), monotonicTime() + 2000);
     if (!result.timedOut && result.result.every(selector => !!selector)) {
@@ -546,21 +554,6 @@ class ContextRecorder extends EventEmitter {
 
   testIdAttributeName(): string {
     return this._params.testIdAttributeName || this._context.selectors().testIdAttributeName() || 'data-testid';
-  }
-
-  private async _findFrameSelector(frame: Frame, parent: Frame): Promise<string | undefined> {
-    try {
-      const frameElement = await frame.frameElement();
-      if (!frameElement)
-        return;
-      const utility = await parent._utilityContext();
-      const injected = await utility.injectedScript();
-      const selector = await injected.evaluate((injected, element) => {
-        return injected.generateSelector(element as Element, { testIdAttributeName: '', omitInternalEngines: true });
-      }, frameElement);
-      return selector;
-    } catch (e) {
-    }
   }
 
   private async _performAction(frame: Frame, action: actions.Action) {
@@ -706,4 +699,20 @@ class ThrottledFile {
 
 function isScreenshotCommand(metadata: CallMetadata) {
   return metadata.method.toLowerCase().includes('screenshot');
+}
+
+async function findFrameSelector(frame: Frame): Promise<string | undefined> {
+  try {
+    const parent = frame.parentFrame();
+    const frameElement = await frame.frameElement();
+    if (!frameElement || !parent)
+      return;
+    const utility = await parent._utilityContext();
+    const injected = await utility.injectedScript();
+    const selector = await injected.evaluate((injected, element) => {
+      return injected.generateSelector(element as Element, { testIdAttributeName: '', omitInternalEngines: true });
+    }, frameElement);
+    return selector;
+  } catch (e) {
+  }
 }

@@ -88,15 +88,15 @@ The `pretest` script runs typescript on the tests. `test` will run the tests tha
 
 Then `npm run test` will build the tests and run them.
 
-## Transpilation issues
+## Using `import` inside `evaluate()`
 
 Using dynamic imports inside a function passed to various `evaluate()` methods is not supported. This is because Playwright uses `Function.prototype.toString()` to serialize functions, and transpiler will sometimes replace dynamic imports with `require()` calls, which are not valid inside the web page.
 
 To work around this issue, use a string template instead of a function:
 
 ```js
-await page.evaluate(`async () => {
+await page.evaluate(`(async () => {
   const { value } = await import('some-module');
   console.log(value);
-}`);
+})()`);
 ```

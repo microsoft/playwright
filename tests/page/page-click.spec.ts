@@ -1118,3 +1118,26 @@ it('should click if opened select covers the button', async ({ page }) => {
   await page.click('button');
   expect(await page.evaluate('window.__CLICKED')).toBe(42);
 });
+
+it('should fire contextmenu event on right click in correct order', async ({ page, server, browserName }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/26515' });
+  it.fixme(browserName === 'chromium', 'mouseup is fired');
+  it.fixme(browserName === 'firefox', 'mouseup is fired');
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`
+    <button id="target">Click me</button>
+  `);
+  await page.evaluate(() => {
+    const logEvent = e => console.log(e.type);
+    document.addEventListener('mousedown', logEvent);
+    document.addEventListener('mouseup', logEvent);
+    document.addEventListener('contextmenu', logEvent);
+  });
+  const entries = [];
+  page.on('console', message => entries.push(message.text()));
+  await page.getByRole('button', { name: 'Click me' }).click({ button: 'right' });
+  await expect.poll(() => entries).toEqual([
+    'mousedown',
+    'contextmenu',
+  ]);
+});

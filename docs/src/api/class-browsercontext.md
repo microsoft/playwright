@@ -239,12 +239,12 @@ Use [`method: Page.waitForLoadState`] to wait until the page gets to a particula
 cases).
 :::
 
-## event: BrowserContext.pageError
+## event: BrowserContext.webError
 * since: v1.38
-- argument: <[PageError]>
+- argument: <[WebError]>
 
-Emitted when unhandled exceptions occur on any pages created through this
-context. To only listen for `pageError` events from a particular page, use [`event: Page.pageError`].
+Emitted when exception is unhandled in any of the pages in this
+context. To listen for errors from a particular page, use [`event: Page.pageError`] instead.
 
 ## event: BrowserContext.request
 * since: v1.12

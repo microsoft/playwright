@@ -25,6 +25,7 @@ test-results
 /packages/*/LICENSE
 /packages/*/NOTICE
 /packages/playwright/README.md
+/packages/playwright-test/README.md
 /packages/playwright-core/api.json
 .env
 /tests/installation/output/

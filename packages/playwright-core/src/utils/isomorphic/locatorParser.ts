@@ -193,7 +193,7 @@ function transform(template: string, params: TemplateParams, testIdAttributeName
         .replace(/(?:r)\$(\d+)(i)?/g, (_, ordinal, suffix) => {
           const param = params[+ordinal - 1];
           if (t.startsWith('internal:attr') || t.startsWith('internal:testid') || t.startsWith('internal:role'))
-            return new RegExp(param.text) + (suffix || '');
+            return escapeForAttributeSelector(new RegExp(param.text), false) + (suffix || '');
           return escapeForTextSelector(new RegExp(param.text, suffix), false);
         })
         .replace(/\$(\d+)(i|s)?/g, (_, ordinal, suffix) => {

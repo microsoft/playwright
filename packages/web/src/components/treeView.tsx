@@ -28,6 +28,7 @@ export type TreeState = {
 };
 
 export type TreeViewProps<T> = {
+  name: string,
   rootItem: T,
   render: (item: T) => React.ReactNode,
   icon?: (item: T) => string | undefined,
@@ -47,6 +48,7 @@ export type TreeViewProps<T> = {
 const TreeListView = ListView<TreeItem>;
 
 export function TreeView<T extends TreeItem>({
+  name,
   rootItem,
   render,
   icon,
@@ -96,9 +98,10 @@ export function TreeView<T extends TreeItem>({
   }, [treeItems, isVisible]);
 
   return <TreeListView
+    name={name}
     items={visibleItems}
     id={item => item.id}
-    dataTestId={dataTestId}
+    dataTestId={dataTestId || (name + '-tree')}
     render={item => {
       const rendered = render(item as T);
       return <>
@@ -159,15 +162,15 @@ type TreeItemData = {
 
 function flattenTree<T extends TreeItem>(rootItem: T, selectedItem: T | undefined, expandedItems: Map<string, boolean | undefined>, autoExpandDepth: number): Map<T, TreeItemData> {
   const result = new Map<T, TreeItemData>();
-  const temporaryExpanded = new Map<string, boolean | undefined>();
+  const temporaryExpanded = new Set<string>();
   for (let item: TreeItem | undefined = selectedItem?.parent; item; item = item.parent)
-    temporaryExpanded.set(item.id, true);
+    temporaryExpanded.add(item.id);
 
   const appendChildren = (parent: T, depth: number) => {
     for (const item of parent.children as T[]) {
-      const expandState = expandedItems.get(item.id) ?? temporaryExpanded.get(item.id);
+      const expandState = temporaryExpanded.has(item.id) || expandedItems.get(item.id);
       const autoExpandMatches = autoExpandDepth > depth && result.size < 25 && expandState !== false;
-      const expanded = item.children.length ? expandState || autoExpandMatches : undefined;
+      const expanded = item.children.length ? expandState ?? autoExpandMatches : undefined;
       result.set(item, { depth, expanded, parent: rootItem === parent ? null : parent });
       if (expanded)
         appendChildren(item, depth + 1);

@@ -19,7 +19,7 @@ import './expandable.css';
 
 export const Expandable: React.FunctionComponent<React.PropsWithChildren<{
   title: JSX.Element | string,
-  setExpanded: Function,
+  setExpanded: (expanded: boolean) => void,
   expanded: boolean,
   expandOnTitleClick?: boolean,
 }>> = ({ title, children, setExpanded, expanded, expandOnTitleClick }) => {

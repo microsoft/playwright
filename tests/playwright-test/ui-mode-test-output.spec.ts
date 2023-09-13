@@ -108,8 +108,8 @@ test('should show console messages for test', async ({ runUITest }, testInfo) =>
     'codicon codicon-file status-none',
   ]);
 
-  await expect(page.getByText('RED', { exact: true })).toHaveCSS('color', 'rgb(204, 0, 0)');
-  await expect(page.getByText('GREEN', { exact: true })).toHaveCSS('color', 'rgb(0, 204, 0)');
+  await expect.soft(page.getByText('RED', { exact: true })).toHaveCSS('color', 'rgb(205, 49, 49)');
+  await expect.soft(page.getByText('GREEN', { exact: true })).toHaveCSS('color', 'rgb(0, 188, 0)');
 });
 
 test('should format console messages in page', async ({ runUITest }, testInfo) => {
@@ -179,4 +179,26 @@ test('should stream console messages live', async ({ runUITest }, testInfo) => {
     'I was clicked',
   ]);
   await page.getByTitle('Stop').click();
+});
+
+test('should print beforeAll console messages once', async ({ runUITest }, testInfo) => {
+  const { page } = await runUITest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test.beforeAll(() => {
+        console.log('before all log');
+      });
+      test('print', ({}) => {
+        console.log('test log');
+      });
+    `,
+  });
+  await page.getByTitle('Run all').click();
+  await page.getByText('Console').click();
+  await page.getByText('print').click();
+  await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
+  await expect(page.locator('.console-tab .console-line-message')).toHaveText([
+    'before all log',
+    'test log',
+  ]);
 });

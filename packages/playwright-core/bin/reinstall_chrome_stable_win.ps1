@@ -1,8 +1,5 @@
-$url = 'https://dl.google.com/tag/s/dl/chrome/install/googlechromestandaloneenterprise.msi';
-
-if ([Environment]::Is64BitProcess) {
-    $url = 'https://dl.google.com/tag/s/dl/chrome/install/googlechromestandaloneenterprise64.msi'
-}
+$ErrorActionPreference = 'Stop'
+$url = 'https://dl.google.com/tag/s/dl/chrome/install/googlechromestandaloneenterprise64.msi'
 
 $wc = New-Object net.webclient
 $msiInstaller = "$env:temp\google-chrome.msi"
@@ -21,6 +18,6 @@ if (Test-Path "${env:ProgramFiles(x86)}$suffix") {
 } elseif (Test-Path "${env:ProgramFiles}$suffix") {
     (Get-Item "${env:ProgramFiles}$suffix").VersionInfo
 } else {
-    write-host "ERROR: failed to install Google Chrome"
+    Write-Host "ERROR: failed to install Google Chrome"
     exit 1
 }

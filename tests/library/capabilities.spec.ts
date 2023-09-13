@@ -17,7 +17,6 @@
 import os from 'os';
 import url from 'url';
 import { contextTest as it, expect } from '../config/browserTest';
-const { hostPlatform } = require('playwright-core/lib/utils');
 
 it('SharedArrayBuffer should work @smoke', async function({ contextFactory, httpsServer, browserName }) {
   it.fail(browserName === 'webkit', 'no shared array buffer on webkit');
@@ -274,7 +273,6 @@ it('requestFullscreen', async ({ page, server, browserName, headless, isLinux })
 
 it('should send no Content-Length header for GET requests with a Content-Type', async ({ page, server, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22569' });
-  it.skip(browserName === 'webkit' && (hostPlatform.startsWith('ubuntu20.04') || hostPlatform.startsWith('debian11')), 'libsoup2.4 has a bug for this');
   await page.goto(server.EMPTY_PAGE);
   const [request] = await Promise.all([
     server.waitForRequest('/empty.html'),

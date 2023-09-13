@@ -30,6 +30,7 @@ export const MetadataView: React.FunctionComponent<{
     <div className='call-line'>duration:<span className='call-value number' title={msToString(model.endTime - model.startTime)}>{msToString(model.endTime - model.startTime)}</span></div>
     <div className='call-section'>Browser</div>
     <div className='call-line'>engine:<span className='call-value string' title={model.browserName}>{model.browserName}</span></div>
+    {model.channel && <div className='call-line'>channel:<span className='call-value string' title={model.channel}>{model.channel}</span></div>}
     {model.platform && <div className='call-line'>platform:<span className='call-value string' title={model.platform}>{model.platform}</span></div>}
     {model.options.userAgent && <div className='call-line'>user agent:<span className='call-value datetime' title={model.options.userAgent}>{model.options.userAgent}</span></div>}
     <div className='call-section'>Viewport</div>

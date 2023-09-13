@@ -17,7 +17,7 @@
 import './codeMirrorWrapper.css';
 import * as React from 'react';
 import type { CodeMirror } from './codeMirrorModule';
-import { ansi2htmlMarkup } from './errorMessage';
+import { ansi2html } from '../ansi2html';
 import { useMeasure } from '../uiUtils';
 
 export type SourceHighlight = {
@@ -152,7 +152,7 @@ export const CodeMirrorWrapper: React.FC<SourceProps> = ({
         }
 
         const errorWidgetElement = document.createElement('div');
-        errorWidgetElement.innerHTML = ansi2htmlMarkup(h.message || '');
+        errorWidgetElement.innerHTML = ansi2html(h.message || '');
         errorWidgetElement.className = 'source-line-error-widget';
         widgets.push(codemirror.addLineWidget(h.line, errorWidgetElement, { above: true, coverGutter: false }));
       }

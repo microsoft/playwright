@@ -93,7 +93,8 @@ function initialize(browsingContext, docShell, actor) {
   for (const { worldName, name, script } of [...contextCrossProcessCookie.bindings, ...pageCrossProcessCookie.bindings])
     data.frameTree.addBinding(worldName, name, script);
   data.frameTree.setInitScripts([...contextCrossProcessCookie.initScripts, ...pageCrossProcessCookie.initScripts]);
-  data.channel = SimpleChannel.createForActor(actor);
+  data.channel = new SimpleChannel('', 'process-' + Services.appinfo.processID);
+  data.channel.bindToActor(actor);
   data.pageAgent = new PageAgent(data.channel, data.frameTree);
   docShell.fileInputInterceptionEnabled = !!pageCrossProcessCookie.interceptFileChooserDialog;
 

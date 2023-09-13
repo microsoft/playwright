@@ -85,6 +85,38 @@ it('should filter by regex with quotes', async ({ page }) => {
   await expect(page.locator('div', { hasText: /Hello "world"/ })).toHaveText('Hello "world"');
 });
 
+it('should filter by regex with a single quote', async ({ page }) => {
+  await page.setContent(`<button>let's let's<span>hello</span></button>`);
+  await expect.soft(page.locator('button', { hasText: /let's/i }).locator('span')).toHaveText('hello');
+  await expect.soft(page.getByRole('button', { name: /let's/i }).locator('span')).toHaveText('hello');
+  await expect.soft(page.locator('button', { hasText: /let\'s/i }).locator('span')).toHaveText('hello');
+  await expect.soft(page.getByRole('button', { name: /let\'s/i }).locator('span')).toHaveText('hello');
+  await expect.soft(page.locator('button', { hasText: /'s/i }).locator('span')).toHaveText('hello');
+  await expect.soft(page.getByRole('button', { name: /'s/i }).locator('span')).toHaveText('hello');
+  await expect.soft(page.locator('button', { hasText: /\'s/i }).locator('span')).toHaveText('hello');
+  await expect.soft(page.getByRole('button', { name: /\'s/i }).locator('span')).toHaveText('hello');
+  await expect.soft(page.locator('button', { hasText: /let['abc]s/i }).locator('span')).toHaveText('hello');
+  await expect.soft(page.getByRole('button', { name: /let['abc]s/i }).locator('span')).toHaveText('hello');
+  await expect.soft(page.locator('button', { hasText: /let\\'s/i })).not.toBeVisible();
+  await expect.soft(page.getByRole('button', { name: /let\\'s/i })).not.toBeVisible();
+  await expect.soft(page.locator('button', { hasText: /let's let\'s/i }).locator('span')).toHaveText('hello');
+  await expect.soft(page.getByRole('button', { name: /let's let\'s/i }).locator('span')).toHaveText('hello');
+  await expect.soft(page.locator('button', { hasText: /let\'s let's/i }).locator('span')).toHaveText('hello');
+  await expect.soft(page.getByRole('button', { name: /let\'s let's/i }).locator('span')).toHaveText('hello');
+
+  await page.setContent(`<button>let\\'s let\\'s<span>hello</span></button>`);
+  await expect.soft(page.locator('button', { hasText: /let\'s/i })).not.toBeVisible();
+  await expect.soft(page.getByRole('button', { name: /let\'s/i })).not.toBeVisible();
+  await expect.soft(page.locator('button', { hasText: /let\\'s/i }).locator('span')).toHaveText('hello');
+  await expect.soft(page.getByRole('button', { name: /let\\'s/i }).locator('span')).toHaveText('hello');
+  await expect.soft(page.locator('button', { hasText: /let\\\'s/i }).locator('span')).toHaveText('hello');
+  await expect.soft(page.getByRole('button', { name: /let\\\'s/i }).locator('span')).toHaveText('hello');
+  await expect.soft(page.locator('button', { hasText: /let\\'s let\\\'s/i }).locator('span')).toHaveText('hello');
+  await expect.soft(page.getByRole('button', { name: /let\\'s let\\\'s/i }).locator('span')).toHaveText('hello');
+  await expect.soft(page.locator('button', { hasText: /let\\\'s let\\'s/i }).locator('span')).toHaveText('hello');
+  await expect.soft(page.getByRole('button', { name: /let\\\'s let\\'s/i }).locator('span')).toHaveText('hello');
+});
+
 it('should filter by regex and regexp flags', async ({ page }) => {
   await page.setContent(`<div>Hello "world"</div><div>Hello world</div>`);
   await expect(page.locator('div', { hasText: /hElLo "world"/i })).toHaveText('Hello "world"');
