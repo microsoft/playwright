@@ -25,9 +25,9 @@ const playwright = require('playwright');
 
 ```python async
 import asyncio
-from playwright.async_api import async_playwright, TimeoutError as PlaywrightTimeoutError
+from playwright.async_api import async_playwright, TimeoutError as PlaywrightTimeoutError, Playwright
 
-async def run(playwright):
+async def run(playwright: Playwright):
     browser = await playwright.chromium.launch()
     page = await browser.new_page()
     try:

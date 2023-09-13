@@ -76,9 +76,9 @@ browser.close();
 
 ```python async
 import asyncio
-from playwright.async_api import async_playwright
+from playwright.async_api import async_playwright, Playwright
 
-async def run(playwright):
+async def run(playwright: Playwright):
     tag_selector = """
       {
           // Returns the first element matching given selector in the root's subtree.
@@ -114,9 +114,9 @@ asyncio.run(main())
 ```
 
 ```python sync
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import sync_playwright, Playwright
 
-def run(playwright):
+def run(playwright: Playwright):
     tag_selector = """
       {
           // Returns the first element matching given selector in the root's subtree.
