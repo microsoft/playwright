@@ -777,7 +777,7 @@ Triggers a `change` and `input` event once all the provided options have been se
 **Usage**
 
 ```js
-// single selection matching the value
+// Single selection matching the value or label
 handle.selectOption('blue');
 
 // single selection matching the label
@@ -788,7 +788,7 @@ handle.selectOption(['red', 'green', 'blue']);
 ```
 
 ```java
-// single selection matching the value
+// Single selection matching the value or label
 handle.selectOption("blue");
 // single selection matching the label
 handle.selectOption(new SelectOption().setLabel("Blue"));
@@ -797,7 +797,7 @@ handle.selectOption(new String[] {"red", "green", "blue"});
 ```
 
 ```python async
-# single selection matching the value
+# Single selection matching the value or label
 await handle.select_option("blue")
 # single selection matching the label
 await handle.select_option(label="blue")
@@ -806,7 +806,7 @@ await handle.select_option(value=["red", "green", "blue"])
 ```
 
 ```python sync
-# single selection matching the value
+# Single selection matching the value or label
 handle.select_option("blue")
 # single selection matching both the label
 handle.select_option(label="blue")
@@ -815,7 +815,7 @@ handle.select_option(value=["red", "green", "blue"])
 ```
 
 ```csharp
-// single selection matching the value
+// Single selection matching the value or label
 await handle.SelectOptionAsync(new[] { "blue" });
 // single selection matching the label
 await handle.SelectOptionAsync(new[] { new SelectOptionValue() { Label = "blue" } });
