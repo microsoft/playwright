@@ -1,6 +1,6 @@
 ---
 id: running-tests
-title: "Running tests"
+title: "Running and debugging tests"
 ---
 ## Introduction
 
@@ -12,13 +12,14 @@ With Playwright you can run a single test, a set of tests or all tests. Tests ca
 - [How to debug tests](/running-tests.md#debugging-tests)
 - [How to open the HTML test reporter](/running-tests.md#test-reports)
 
-## VS Code extension
+## Running tests
+### VS Code extension
 
 Tests can be run right from VS Code using the [VS Code extension](https://marketplace.visualstudio.com/items?itemName=ms-playwright.playwright). Once installed you can simply click the green triangle next to the test you want to run or run all tests from the testing sidebar. Check out our [Getting Started with VS Code](./getting-started-vscode.md#running-tests) guide for more details.
 
 ![Playwright VS Code extension](https://github.com/microsoft/playwright/assets/13063165/47726e70-683b-4bd5-94de-7d03dd45c30f)
 
-## Command line
+### Command line
 
 You can run your tests with the `playwright test` command. This will run your tests on all browsers as configured in the `playwright.config` file. Tests run in headless mode by default meaning no browser window will be opened while running the tests and results will be seen in the terminal.
 

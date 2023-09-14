@@ -1,6 +1,6 @@
 ---
 id: running-tests
-title: "Running tests"
+title: "Running and debugging tests"
 ---
 ## Introduction
 
@@ -11,7 +11,9 @@ You can run a single test, a set of tests or all tests. Tests can be run on one 
 - [How to run tests from the command line](/running-tests.md#command-line)
 - [How to debug tests](/running-tests.md#debugging-tests)
 
-## Command Line
+## Running tests
+
+### Command Line
 
 To run your tests use the `pytest` command. This will run your tests on the Chromium browser by default. Tests run in headless mode by default meaning no browser window will be opened while running the tests and results will be seen in the terminal.
 
