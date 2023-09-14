@@ -31,6 +31,7 @@ class JUnitReporter extends EmptyReporter {
   private totalFailures = 0;
   private totalSkipped = 0;
   private outputFile: string | undefined;
+  private resolvedOutputFile: string | undefined;
   private stripANSIControlSequences = false;
 
   constructor(options: { outputFile?: string, stripANSIControlSequences?: boolean } = {}) {
@@ -51,6 +52,10 @@ class JUnitReporter extends EmptyReporter {
     this.suite = suite;
     this.timestamp = new Date();
     this.startTime = monotonicTime();
+    if (this.outputFile) {
+      assert(this.config.configFile || path.isAbsolute(this.outputFile), 'Expected fully resolved path if not using config file.');
+      this.resolvedOutputFile = this.config.configFile ? path.resolve(path.dirname(this.config.configFile), this.outputFile) : this.outputFile;
+    }
   }
 
   override async onEnd(result: FullResult) {
@@ -79,11 +84,9 @@ class JUnitReporter extends EmptyReporter {
 
     serializeXML(root, tokens, this.stripANSIControlSequences);
     const reportString = tokens.join('\n');
-    if (this.outputFile) {
-      assert(this.config.configFile || path.isAbsolute(this.outputFile), 'Expected fully resolved path if not using config file.');
-      const outputFile = this.config.configFile ? path.resolve(path.dirname(this.config.configFile), this.outputFile) : this.outputFile;
-      await fs.promises.mkdir(path.dirname(outputFile), { recursive: true });
-      await fs.promises.writeFile(outputFile, reportString);
+    if (this.resolvedOutputFile) {
+      await fs.promises.mkdir(path.dirname(this.resolvedOutputFile), { recursive: true });
+      await fs.promises.writeFile(this.resolvedOutputFile, reportString);
     } else {
       console.log(reportString);
     }
@@ -190,7 +193,14 @@ class JUnitReporter extends EmptyReporter {
       for (const attachment of result.attachments) {
         if (!attachment.path)
           continue;
-        const attachmentPath = path.relative(this.config.rootDir, attachment.path);
+
+        let attachmentPath = path.relative(this.config.rootDir, attachment.path);
+        try {
+          if (this.resolvedOutputFile)
+            attachmentPath = path.relative(path.dirname(this.resolvedOutputFile), attachment.path);
+        } catch {
+          systemOut.push(`\nWarning: Unable to make attachment path ${attachment.path} relative to report output file ${this.outputFile}`);
+        }
 
         try {
           await fs.promises.access(attachment.path);

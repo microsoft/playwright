@@ -307,6 +307,38 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       expect(result.exitCode).toBe(0);
     });
 
+    test('should render attachment paths relative to report file when report file name is specified', async ({ runInlineTest }, testInfo) => {
+      test.skip(useIntermediateMergeReport, 'Blob report hashes attachment paths');
+      const result = await runInlineTest({
+        'project/playwright.config.ts': `
+            module.exports = { reporter: [['junit', { outputFile: '../my-report/junit/a.xml' }]] };
+        `,
+        'project/a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test.use({ screenshot: 'on' });
+          test('one', async ({ page }, testInfo) => {
+            await page.setContent('hello');
+            const file = testInfo.outputPath('file.txt');
+            require('fs').writeFileSync(file, 'my file', 'utf8');
+            testInfo.attachments.push({ name: 'my-file', path: file, contentType: 'text/plain' });
+            console.log('log here');
+          });
+        `,
+      }, { reporter: '', config: './project/playwright.config.ts' });
+
+      expect(result.exitCode).toBe(0);
+      expect(fs.existsSync(testInfo.outputPath(path.join('my-report', 'junit', 'a.xml')))).toBeTruthy();
+      const xml = parseXML(fs.readFileSync(testInfo.outputPath(path.join('my-report', 'junit', 'a.xml'))).toString());
+      const testcase = xml['testsuites']['testsuite'][0]['testcase'][0];
+      expect(testcase['system-out'].length).toBe(1);
+      expect(testcase['system-out'][0].trim()).toBe([
+        `log here`,
+        `\n[[ATTACHMENT|..${path.sep}..${path.sep}test-results${path.sep}a-one${path.sep}file.txt]]`,
+        `\n[[ATTACHMENT|..${path.sep}..${path.sep}test-results${path.sep}a-one${path.sep}test-finished-1.png]]`,
+      ].join('\n'));
+      expect(result.exitCode).toBe(0);
+    });
+
     function parseXML(xml: string): any {
       let result: any;
       xml2js.parseString(xml, (err, r) => result = r);
