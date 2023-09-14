@@ -15,9 +15,8 @@
  */
 
 import { colors, rimraf } from 'playwright-core/lib/utilsBundle';
-import util from 'util';
 import { debugTest, formatLocation, relativeFilePath, serializeError } from '../util';
-import type { TestBeginPayload, TestEndPayload, RunPayload, DonePayload, WorkerInitParams, TeardownErrorsPayload, TestOutputPayload } from '../common/ipc';
+import { type TestBeginPayload, type TestEndPayload, type RunPayload, type DonePayload, type WorkerInitParams, type TeardownErrorsPayload, type TestOutputPayload, chunkToParams } from '../common/ipc';
 import { setCurrentTestInfo, setIsWorkerProcess } from '../common/globals';
 import { ConfigLoader } from '../common/configLoader';
 import type { Suite, TestCase } from '../common/test';
@@ -650,14 +649,6 @@ function formatTestTitle(test: TestCase, projectName: string) {
   const location = `${relativeFilePath(test.location.file)}:${test.location.line}:${test.location.column}`;
   const projectTitle = projectName ? `[${projectName}] › ` : '';
   return `${projectTitle}${location} › ${titles.join(' › ')}`;
-}
-
-function chunkToParams(chunk: Uint8Array | string, encoding?: BufferEncoding):  { text?: string, buffer?: string } {
-  if (chunk instanceof Uint8Array)
-    return { buffer: Buffer.from(chunk).toString('base64') };
-  if (typeof chunk !== 'string')
-    return { text: util.inspect(chunk) };
-  return { text: chunk };
 }
 
 export const create = (params: WorkerInitParams) => new WorkerMain(params);

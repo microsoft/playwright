@@ -46,11 +46,16 @@ export class ProcessHost extends EventEmitter {
     this._extraEnv = env;
   }
 
-  async startRunner(runnerParams: any, inheritStdio: boolean) {
+  async startRunner(runnerParams: any, options: { onStdOut?: (chunk: Buffer | string) => void, onStdErr?: (chunk: Buffer | string) => void } = {}) {
     this.process = child_process.fork(require.resolve('../common/process'), {
       detached: false,
       env: { ...process.env, ...this._extraEnv },
-      stdio: inheritStdio ? ['ignore', 'inherit', 'inherit', 'ipc'] : ['ignore', 'ignore', process.env.PW_RUNNER_DEBUG ? 'inherit' : 'ignore', 'ipc'],
+      stdio: [
+        'ignore',
+        options.onStdOut ? 'pipe' : 'inherit',
+        (options.onStdErr && !process.env.PW_RUNNER_DEBUG) ? 'pipe' : 'inherit',
+        'ipc',
+      ],
       ...(process.env.PW_TS_ESM_ON ? { execArgv: execArgvWithExperimentalLoaderOptions() } : {}),
     });
     this.process.on('exit', (code, signal) => {
@@ -83,6 +88,11 @@ export class ProcessHost extends EventEmitter {
         this.emit(message.method!, message.params);
       }
     });
+
+    if (options.onStdOut)
+      this.process.stdout?.on('data', options.onStdOut);
+    if (options.onStdErr)
+      this.process.stderr?.on('data', options.onStdErr);
 
     await new Promise<void>((resolve, reject) => {
       this.process!.once('exit', (code, signal) => reject(new Error(`process exited with code "${code}" and signal "${signal}" before it became ready`)));
