@@ -3676,7 +3676,7 @@ export interface Page {
    * **Usage**
    *
    * ```js
-   * // single selection matching the value
+   * // Single selection matching the value or label
    * page.selectOption('select#colors', 'blue');
    *
    * // single selection matching the label
@@ -6772,7 +6772,7 @@ export interface Frame {
    * **Usage**
    *
    * ```js
-   * // single selection matching the value
+   * // Single selection matching the value or label
    * frame.selectOption('select#colors', 'blue');
    *
    * // single selection matching both the value and the label
@@ -9988,7 +9988,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * **Usage**
    *
    * ```js
-   * // single selection matching the value
+   * // Single selection matching the value or label
    * handle.selectOption('blue');
    *
    * // single selection matching the label

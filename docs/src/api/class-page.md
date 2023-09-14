@@ -3406,7 +3406,7 @@ Triggers a `change` and `input` event once all the provided options have been se
 **Usage**
 
 ```js
-// single selection matching the value
+// Single selection matching the value or label
 page.selectOption('select#colors', 'blue');
 
 // single selection matching the label
@@ -3418,7 +3418,7 @@ page.selectOption('select#colors', ['red', 'green', 'blue']);
 ```
 
 ```java
-// single selection matching the value
+// Single selection matching the value or label
 page.selectOption("select#colors", "blue");
 // single selection matching both the value and the label
 page.selectOption("select#colors", new SelectOption().setLabel("Blue"));
@@ -3427,7 +3427,7 @@ page.selectOption("select#colors", new String[] {"red", "green", "blue"});
 ```
 
 ```python async
-# single selection matching the value
+# Single selection matching the value or label
 await page.select_option("select#colors", "blue")
 # single selection matching the label
 await page.select_option("select#colors", label="blue")
@@ -3436,7 +3436,7 @@ await page.select_option("select#colors", value=["red", "green", "blue"])
 ```
 
 ```python sync
-# single selection matching the value
+# Single selection matching the value or label
 page.select_option("select#colors", "blue")
 # single selection matching both the label
 page.select_option("select#colors", label="blue")
@@ -3445,7 +3445,7 @@ page.select_option("select#colors", value=["red", "green", "blue"])
 ```
 
 ```csharp
-// single selection matching the value
+// Single selection matching the value or label
 await page.SelectOptionAsync("select#colors", new[] { "blue" });
 // single selection matching both the value and the label
 await page.SelectOptionAsync("select#colors", new[] { new SelectOptionValue() { Label = "blue" } });
