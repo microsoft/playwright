@@ -16,7 +16,7 @@
 
 import { colors, rimraf } from 'playwright-core/lib/utilsBundle';
 import { debugTest, formatLocation, relativeFilePath, serializeError } from '../util';
-import { type TestBeginPayload, type TestEndPayload, type RunPayload, type DonePayload, type WorkerInitParams, type TeardownErrorsPayload, type TestOutputPayload, chunkToParams } from '../common/ipc';
+import { type TestBeginPayload, type TestEndPayload, type RunPayload, type DonePayload, type WorkerInitParams, type TeardownErrorsPayload, stdioChunkToParams } from '../common/ipc';
 import { setCurrentTestInfo, setIsWorkerProcess } from '../common/globals';
 import { ConfigLoader } from '../common/configLoader';
 import type { Suite, TestCase } from '../common/test';
@@ -75,20 +75,14 @@ export class WorkerMain extends ProcessRunner {
     process.on('unhandledRejection', reason => this.unhandledError(reason));
     process.on('uncaughtException', error => this.unhandledError(error));
     process.stdout.write = (chunk: string | Buffer) => {
-      const outPayload: TestOutputPayload = {
-        ...chunkToParams(chunk)
-      };
-      this.dispatchEvent('stdOut', outPayload);
+      this.dispatchEvent('stdOut', stdioChunkToParams(chunk));
       this._currentTest?._tracing.appendStdioToTrace('stdout', chunk);
       return true;
     };
 
     if (!process.env.PW_RUNNER_DEBUG) {
       process.stderr.write = (chunk: string | Buffer) => {
-        const outPayload: TestOutputPayload = {
-          ...chunkToParams(chunk)
-        };
-        this.dispatchEvent('stdErr', outPayload);
+        this.dispatchEvent('stdErr', stdioChunkToParams(chunk));
         this._currentTest?._tracing.appendStdioToTrace('stderr', chunk);
         return true;
       };
