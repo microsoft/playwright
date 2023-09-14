@@ -329,27 +329,6 @@ type FunctionAssertions = {
   toPass(options?: { timeout?: number, intervals?: number[] }): Promise<void>;
 };
 
-type BufferAssertions = {
-  /**
-   * Ensures that the passed [Buffer] matches the expected snapshot stored in the test snapshots directory.
-   * @deprecated To avoid flakiness, use
-   * [pageAssertions.toHaveScreenshot(name[, options])](https://playwright.dev/docs/api/class-pageassertions#page-assertions-to-have-screenshot-1)
-   * instead.
-   * @param name Snapshot name.
-   * @param options
-   */
-  toMatchSnapshot(name: string | Array<string>, options?: { maxDiffPixelRatio?: number, maxDiffPixels?: number, threshold?: number }): void;
-
-  /**
-   * Ensures that the passed [Buffer] matches the expected snapshot stored in the test snapshots directory.
-   * @deprecated To avoid flakiness, use
-   * [pageAssertions.toHaveScreenshot(name[, options])](https://playwright.dev/docs/api/class-pageassertions#page-assertions-to-have-screenshot-1)
-   * instead.
-   * @param options
-   */
-  toMatchSnapshot(options?: { maxDiffPixelRatio?: number, maxDiffPixels?: number, name?: string|Array<string>, threshold?: number }): void;
-};
-
 type BaseMatchers<R, T> = GenericAssertions<R> & PlaywrightTest.Matchers<R, T> & SnapshotAssertions;
 type AllowedGenericMatchers<R> = Pick<GenericAssertions<R>, 'toBe' | 'toBeDefined' | 'toBeFalsy' | 'toBeNull' | 'toBeTruthy' | 'toBeUndefined'>;
 
@@ -357,7 +336,6 @@ type SpecificMatchers<R, T> =
   T extends Page ? PageAssertions & AllowedGenericMatchers<R> :
   T extends Locator ? LocatorAssertions & AllowedGenericMatchers<R> :
   T extends APIResponse ? APIResponseAssertions & AllowedGenericMatchers<R> :
-  T extends Buffer ? BufferAssertions & GenericAssertions<R> & PlaywrightTest.Matchers<R, T> :
   BaseMatchers<R, T> & (T extends Function ? FunctionAssertions : {});
 type AllMatchers<R, T> = PageAssertions & LocatorAssertions & APIResponseAssertions & FunctionAssertions & BaseMatchers<R, T>;
 
