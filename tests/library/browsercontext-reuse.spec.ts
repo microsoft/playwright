@@ -249,7 +249,7 @@ test('should reset tracing', async ({ reusedContext, trace }, testInfo) => {
   await page.evaluate('2 + 2');
 
   const error = await context.tracing.stopChunk({ path: testInfo.outputPath('trace.zip') }).catch(e => e);
-  expect(error.message).toContain('tracing.stopChunk: Must start tracing before stopping');
+  expect(error.message).toContain('Must start tracing before stopping');
 });
 
 test('should continue issuing events after closing the reused page', async ({ reusedContext, server }) => {
