@@ -44,6 +44,27 @@ test('should list tests', async ({ runInlineTest }) => {
   ].join('\n'));
 });
 
+test('should list tests (not twice)', async ({ runInlineTest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/27087' });
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { reporter: 'dot' };
+    `,
+    'a.test.js': `
+      const { test, expect } = require('@playwright/test');
+      test('example1', ({}) => {});
+    `
+  }, { 'list': true });
+  expect(result.exitCode).toBe(0);
+  expect(result.output).toContain([
+    `Listing tests:`,
+    `  a.test.js:3:7 › example1`,
+    `Total: 1 test in 1 file`
+  ].join('\n'));
+  expect(result.output.match(/Listing tests:/g)).toHaveLength(1);
+  expect(result.output.match(/Total: 1 test in 1 file/g)).toHaveLength(1);
+});
+
 test('should list tests to stdout when JSON reporter outputs to a file', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
