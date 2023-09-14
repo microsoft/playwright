@@ -6230,6 +6230,10 @@ interface PageAssertions {
  */
 interface SnapshotAssertions {
   /**
+   * **NOTE** To compare screenshots, use
+   * [pageAssertions.toHaveScreenshot(name[, options])](https://playwright.dev/docs/api/class-pageassertions#page-assertions-to-have-screenshot-1)
+   * instead.
+   *
    * Ensures that passed value, either a [string] or a [Buffer], matches the expected snapshot stored in the test
    * snapshots directory.
    *
@@ -6280,6 +6284,10 @@ interface SnapshotAssertions {
   }): void;
 
   /**
+   * **NOTE** To compare screenshots, use
+   * [pageAssertions.toHaveScreenshot([options])](https://playwright.dev/docs/api/class-pageassertions#page-assertions-to-have-screenshot-2)
+   * instead.
+   *
    * Ensures that passed value, either a [string] or a [Buffer], matches the expected snapshot stored in the test
    * snapshots directory.
    *

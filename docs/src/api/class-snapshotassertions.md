@@ -12,6 +12,10 @@ expect(screenshot).toMatchSnapshot('landing-page.png');
 ## method: SnapshotAssertions.toMatchSnapshot#1
 * since: v1.22
 
+:::caution
+To compare screenshots, use [`method: PageAssertions.toHaveScreenshot#1`] instead.
+:::
+
 Ensures that passed value, either a [string] or a [Buffer], matches the expected snapshot stored in the test snapshots directory.
 
 **Usage**
@@ -54,6 +58,10 @@ Snapshot name.
 
 ## method: SnapshotAssertions.toMatchSnapshot#2
 * since: v1.22
+
+:::caution
+To compare screenshots, use [`method: PageAssertions.toHaveScreenshot#2`] instead.
+:::
 
 Ensures that passed value, either a [string] or a [Buffer], matches the expected snapshot stored in the test snapshots directory.
 
