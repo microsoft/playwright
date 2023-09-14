@@ -87,16 +87,6 @@ npx playwright test
 
 ![tests running in command line](https://github.com/microsoft/playwright/assets/13063165/981c1b2b-dc7e-4b85-b241-272b44da6628) 
 See our doc on [Running Tests](./running-tests.md) to learn more about running tests in headed mode, running multiple tests, running specific tests etc.
-## Running the Example Test in UI Mode
-
-Run your tests with [UI Mode](./test-ui-mode.md) for a better developer experience with time travel debugging, watch mode and more.
-
-```bash
-npx playwright test --ui
-```
-![UI Mode](https://github.com/microsoft/playwright/assets/13063165/c5b501cc-4f5d-485a-87cc-66044c651786)
-
-Check out or [detailed guide on UI Mode](./test-ui-mode.md) to learn more about it's features.
 
 ## HTML Test Reports
 
@@ -107,6 +97,17 @@ npx playwright show-report
 ```
 
 ![HTML Report](https://github.com/microsoft/playwright/assets/13063165/38ec17a7-9e61-4002-b137-a93812765501)
+
+## Running the Example Test in UI Mode
+
+Run your tests with [UI Mode](./test-ui-mode.md) for a better developer experience with time travel debugging, watch mode and more.
+
+```bash
+npx playwright test --ui
+```
+![UI Mode](https://github.com/microsoft/playwright/assets/13063165/c5b501cc-4f5d-485a-87cc-66044c651786)
+
+Check out or [detailed guide on UI Mode](./test-ui-mode.md) to learn more about it's features.
 
 ## Updating Playwright
 
