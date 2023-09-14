@@ -41,18 +41,18 @@ export default defineConfig({
 - type: ?<[Object]>
   - `timeout` ?<[int]> Default timeout for async expect matchers in milliseconds, defaults to 5000ms.
   - `toHaveScreenshot` ?<[Object]> Configuration for the [`method: PageAssertions.toHaveScreenshot#1`] method.
-    - `threshold` ?<[float]> An acceptable perceived color difference between the same pixel in compared images, ranging from `0` (strict) and `1` (lax). `"pixelmatch"` comparator computes color difference in [YIQ color space](https://en.wikipedia.org/wiki/YIQ) and defaults `threshold` value to `0.2`.
-    - `maxDiffPixels` ?<[int]> An acceptable amount of pixels that could be different, unset by default.
-    - `maxDiffPixelRatio` ?<[float]> An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by default.
+    - `threshold` ?<[float]> an acceptable perceived color difference between the same pixel in compared images, ranging from `0` (strict) and `1` (lax). `"pixelmatch"` comparator computes color difference in [YIQ color space](https://en.wikipedia.org/wiki/YIQ) and defaults `threshold` value to `0.2`.
+    - `maxDiffPixels` ?<[int]> an acceptable amount of pixels that could be different, unset by default.
+    - `maxDiffPixelRatio` ?<[float]> an acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by default.
     - `animations` ?<[ScreenshotAnimations]<"allow"|"disabled">> See [`option: animations`] in [`method: Page.screenshot`]. Defaults to `"disabled"`.
     - `caret` ?<[ScreenshotCaret]<"hide"|"initial">> See [`option: caret`] in [`method: Page.screenshot`]. Defaults to `"hide"`.
     - `scale` ?<[ScreenshotScale]<"css"|"device">> See [`option: scale`] in [`method: Page.screenshot`]. Defaults to `"css"`.
   - `toMatchSnapshot` ?<[Object]> Configuration for the [`method: SnapshotAssertions.toMatchSnapshot#1`] method.
-    - `threshold` ?<[float]> **Deprecated.** An acceptable perceived color difference between the same pixel in compared images, ranging from `0` (strict) and `1` (lax). `"pixelmatch"` comparator computes color difference in [YIQ color space](https://en.wikipedia.org/wiki/YIQ) and defaults `threshold` value to `0.2`.
-    - `maxDiffPixels` ?<[int]> **Deprecated.** An acceptable amount of pixels that could be different, unset by default.
-    - `maxDiffPixelRatio` ?<[float]> **Deprecated.** An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by default.
+    - `threshold` ?<[float]> an acceptable perceived color difference between the same pixel in compared images, ranging from `0` (strict) and `1` (lax). `"pixelmatch"` comparator computes color difference in [YIQ color space](https://en.wikipedia.org/wiki/YIQ) and defaults `threshold` value to `0.2`.
+    - `maxDiffPixels` ?<[int]> an acceptable amount of pixels that could be different, unset by default.
+    - `maxDiffPixelRatio` ?<[float]> an acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by default.
 
-Configuration for the `expect` assertion library. Learn more about [test configuration](../test-configuration.md#expect-options).
+Configuration for the `expect` assertion library. Learn more about [various timeouts](../test-timeouts.md).
 
 **Usage**
 
@@ -62,7 +62,7 @@ import { defineConfig } from '@playwright/test';
 export default defineConfig({
   expect: {
     timeout: 10000,
-    toHaveScreenshot: {
+    toMatchSnapshot: {
       maxDiffPixels: 10,
     },
   },
@@ -196,7 +196,7 @@ export default defineConfig({
 * since: v1.26
 - type: ?<[boolean]>
 
-Whether to skip snapshot expectations, such as [`method: PageAssertions.toHaveScreenshot#1`] and [`method: SnapshotAssertions.toMatchSnapshot#1`].
+Whether to skip snapshot expectations, such as `expect(value).toMatchSnapshot()` and `await expect(page).toHaveScreenshot()`.
 
 **Usage**
 
@@ -296,7 +296,7 @@ test('example test', async ({}, testInfo) => {
 * discouraged: Use [`property: TestConfig.snapshotPathTemplate`] to configure snapshot paths.
 - type: ?<[string]>
 
-The base directory, relative to the config file, for screenshot files created with [`method: PageAssertions.toHaveScreenshot#1`]. Defaults to [`property: TestConfig.testDir`].
+The base directory, relative to the config file, for snapshot files created with `toMatchSnapshot`. Defaults to [`property: TestConfig.testDir`].
 
 **Usage**
 
