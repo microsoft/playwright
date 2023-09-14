@@ -20,6 +20,7 @@ import url from 'url';
 import { test as baseTest, expect as baseExpect, createImage } from './playwright-test-fixtures';
 import type { HttpServer } from '../../packages/playwright-core/src/utils';
 import { startHtmlReportServer } from '../../packages/playwright/lib/reporters/html';
+import { msToString } from '../../packages/web/src/uiUtils';
 const { spawnAsync } = require('../../packages/playwright-core/lib/utils');
 
 const test = baseTest.extend<{ showReport: (reportFolder?: string) => Promise<void> }>({
@@ -1493,20 +1494,22 @@ for (const useIntermediateMergeReport of [false, true] as const) {
           'a.test.js': `
             const { expect, test } = require('@playwright/test');
             const names = ['one foo', 'two foo', 'three bar', 'four bar', 'five baz'];
-            names.forEach(name => {
-              test(name, async ({}) => {
+            for (const name of names) {
+              test('a-' + name, async ({}) => {
                 expect(name).not.toContain('foo');
+                await new Promise(f => setTimeout(f, 1100));
               });
-            });
+            }
           `,
           'b.test.js': `
             const { expect, test } = require('@playwright/test');
             const names = ['one foo', 'two foo', 'three bar', 'four bar', 'five baz'];
-            names.forEach(name => {
-              test(name, async ({}) => {
+            for (const name of names) {
+              test('b-' + name, async ({}) => {
                 expect(name).not.toContain('one');
+                await new Promise(f => setTimeout(f, 1100));
               });
-            });
+            }
           `,
         }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
 
@@ -1516,14 +1519,27 @@ for (const useIntermediateMergeReport of [false, true] as const) {
 
         await showReport();
 
-        async function checkTotalDuration() {
+        function calculateTotalTestDuration(testNames: string[]) {
           let total = 0;
-          for (const text of await page.getByTestId('test-duration').allTextContents()) {
-            expect(text).toMatch(/\d+ms$/);
-            total += parseInt(text.substring(0, text.length - 2), 10);
+          for (const suite of result.report.suites) {
+            for (const spec of suite.specs) {
+              if (!testNames.includes(spec.title))
+                continue;
+              for (const test of spec.tests) {
+                for (const result of test.results)
+                  total += result.duration;
+              }
+            }
           }
-          const totalDuration = await page.getByTestId('overall-duration').textContent();
-          expect(totalDuration).toBe(`Total time: ${total}ms`);
+          return total;
+        }
+
+        async function checkTotalDuration(testNames: string[]) {
+          for (const testDuration of await page.getByTestId('test-duration').allTextContents())
+            expect(testDuration).toMatch(/\d+m?s$/);
+
+          const expectedTotalTimeInMs = calculateTotalTestDuration(testNames);
+          await expect(page.getByTestId('overall-duration')).toHaveText(`Total time: ${msToString(expectedTotalTimeInMs)}`);
         }
 
         const searchInput = page.locator('.subnav-search-input');
@@ -1532,7 +1548,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
         await searchInput.fill('s:failed');
 
         await expect(page.getByTestId('filtered-tests-count')).toHaveText('Filtered: 3');
-        await checkTotalDuration();
+        await checkTotalDuration(['a-one foo', 'a-two foo', 'b-one foo']);
         await expect(page.locator('.subnav-item:has-text("All") .counter')).toHaveText('10');
         await expect(page.locator('.subnav-item:has-text("Passed") .counter')).toHaveText('7');
         await expect(page.locator('.subnav-item:has-text("Failed") .counter')).toHaveText('3');
@@ -1544,7 +1560,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
 
         await searchInput.fill('foo');
         await expect(page.getByTestId('filtered-tests-count')).toHaveText('Filtered: 4');
-        await checkTotalDuration();
+        await checkTotalDuration(['a-one foo', 'a-two foo', 'b-one foo', 'b-two foo']);
         await expect(page.locator('.subnav-item:has-text("All") .counter')).toHaveText('10');
         await expect(page.locator('.subnav-item:has-text("Passed") .counter')).toHaveText('7');
         await expect(page.locator('.subnav-item:has-text("Failed") .counter')).toHaveText('3');
