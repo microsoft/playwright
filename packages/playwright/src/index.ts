@@ -487,6 +487,7 @@ function attachConnectedHeaderIfNeeded(testInfo: TestInfo, browser: Browser | nu
 const kTracingStarted = Symbol('kTracingStarted');
 const kIsReusedContext = Symbol('kReusedContext');
 const kStartedContextTearDown = Symbol('kStartedContextTearDown');
+let traceOrdinal = 0;
 
 function connectOptionsFromEnv() {
   const wsEndpoint = process.env.PW_TEST_CONNECT_WS_ENDPOINT;
@@ -512,7 +513,6 @@ class ArtifactsRecorder {
   private _temporaryTraceFiles: string[] = [];
   private _temporaryScreenshots: string[] = [];
   private _reusedContexts = new Set<BrowserContext>();
-  private _traceOrdinal = 0;
   private _screenshotOrdinal = 0;
   private _screenshottedSymbol: symbol;
   private _startedCollectingArtifacts: symbol;
@@ -693,9 +693,10 @@ class ArtifactsRecorder {
   private async _startTraceChunkOnContextCreation(tracing: Tracing) {
     if (this._captureTrace) {
       const title = [path.relative(this._testInfo.project.testDir, this._testInfo.file) + ':' + this._testInfo.line, ...this._testInfo.titlePath.slice(1)].join(' › ');
-      const ordinalSuffix = this._traceOrdinal ? `-context${this._traceOrdinal}` : '';
-      ++this._traceOrdinal;
+      const ordinalSuffix = traceOrdinal ? `-context${traceOrdinal}` : '';
+      ++traceOrdinal;
       const retrySuffix = this._testInfo.retry ? `-retry${this._testInfo.retry}` : '';
+      // Note that trace name must start with testId for live tracing to work.
       const name = `${this._testInfo.testId}${retrySuffix}${ordinalSuffix}`;
       if (!(tracing as any)[kTracingStarted]) {
         await tracing.start({ ...this._traceOptions, title, name });
