@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import util from 'util';
 import { serializeCompilationCache } from '../transform/compilationCache';
 import type { FullConfigInternal } from './config';
 import type { ReporterDescription, TestInfoError, TestStatus } from '../../types/test';
@@ -140,4 +141,12 @@ export function serializeConfig(config: FullConfigInternal): SerializedConfig {
     compilationCache: serializeCompilationCache(),
   };
   return result;
+}
+
+export function stdioChunkToParams(chunk: Uint8Array | string): TestOutputPayload {
+  if (chunk instanceof Uint8Array)
+    return { buffer: Buffer.from(chunk).toString('base64') };
+  if (typeof chunk !== 'string')
+    return { text: util.inspect(chunk) };
+  return { text: chunk };
 }

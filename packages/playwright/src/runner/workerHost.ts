@@ -17,6 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 import type { TestGroup } from './testGroups';
+import { stdioChunkToParams } from '../common/ipc';
 import type { RunPayload, SerializedConfig, WorkerInitParams } from '../common/ipc';
 import { ProcessHost } from './processHost';
 import { artifactsFolderName } from '../isomorphic/folders';
@@ -54,7 +55,10 @@ export class WorkerHost extends ProcessHost {
 
   async start() {
     await fs.promises.mkdir(this._params.artifactsDir, { recursive: true });
-    await this.startRunner(this._params, false);
+    await this.startRunner(this._params, {
+      onStdOut: chunk => this.emit('stdOut', stdioChunkToParams(chunk)),
+      onStdErr: chunk => this.emit('stdErr', stdioChunkToParams(chunk)),
+    });
   }
 
   override async stop(didFail?: boolean) {

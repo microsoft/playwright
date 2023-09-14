@@ -58,7 +58,7 @@ export class OutOfProcessLoaderHost {
   }
 
   async start() {
-    await this._processHost.startRunner(serializeConfig(this._config), true);
+    await this._processHost.startRunner(serializeConfig(this._config));
   }
 
   async loadTestFile(file: string, testErrors: TestError[]): Promise<Suite> {
