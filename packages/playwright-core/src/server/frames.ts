@@ -200,7 +200,8 @@ export class FrameManager {
       // Do not override request with undefined.
       return;
     }
-    frame.setPendingDocument({ documentId, request: undefined });
+    const request = Array.from(frame._inflightRequests).find(request => request._documentId === documentId);
+    frame.setPendingDocument({ documentId, request });
   }
 
   frameCommittedNewDocumentNavigation(frameId: string, url: string, name: string, documentId: string, initial: boolean) {
