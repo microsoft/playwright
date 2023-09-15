@@ -40,5 +40,5 @@
 }
 
 .network-request-details .cm-wrapper {
-  height: 300px;
+  overflow: hidden;
 }
