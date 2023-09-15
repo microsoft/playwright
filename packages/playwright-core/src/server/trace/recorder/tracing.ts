@@ -384,7 +384,9 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   onEvent(sdkObject: SdkObject, event: trace.EventTraceEvent) {
     if (!sdkObject.attribution.context)
       return;
-    if (event.method === 'console' || (event.method === '__create__' && event.class === 'ConsoleMessage')) {
+    if (event.method === 'console' ||
+        (event.method === '__create__' && event.class === 'ConsoleMessage') ||
+        (event.method === '__create__' && event.class === 'JSHandle')) {
       // Console messages are handled separately.
       return;
     }
