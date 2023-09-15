@@ -235,6 +235,7 @@ export class FixtureRunner {
 
   async resolveParametersForFunction(fn: Function, testInfo: TestInfoImpl, autoFixtures: 'worker' | 'test' | 'all-hooks-only'): Promise<object | null> {
     // Install automatic fixtures.
+    const auto: FixtureRegistration[] = [];
     for (const registration of this.pool!.registrations.values()) {
       if (registration.auto === false)
         continue;
@@ -243,11 +244,14 @@ export class FixtureRunner {
         shouldRun = registration.scope === 'worker' || registration.auto === 'all-hooks-included';
       else if (autoFixtures === 'worker')
         shouldRun = registration.scope === 'worker';
-      if (shouldRun) {
-        const fixture = await this.setupFixtureForRegistration(registration, testInfo);
-        if (fixture.failed)
-          return null;
-      }
+      if (shouldRun)
+        auto.push(registration);
+    }
+    auto.sort((r1, r2) => (r1.scope === 'worker' ? 0 : 1) - (r2.scope === 'worker' ? 0 : 1));
+    for (const registration of auto) {
+      const fixture = await this.setupFixtureForRegistration(registration, testInfo);
+      if (fixture.failed)
+        return null;
     }
 
     // Install used fixtures.
