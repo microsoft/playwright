@@ -330,12 +330,12 @@ type FunctionAssertions = {
 };
 
 type BaseMatchers<R, T> = GenericAssertions<R> & PlaywrightTest.Matchers<R, T> & SnapshotAssertions;
-type AllowedGenericMatchers<R> = Pick<GenericAssertions<R>, 'toBe' | 'toBeDefined' | 'toBeFalsy' | 'toBeNull' | 'toBeTruthy' | 'toBeUndefined'>;
+type AllowedGenericMatchers<R, T> = PlaywrightTest.Matchers<R, T> & Pick<GenericAssertions<R>, 'toBe' | 'toBeDefined' | 'toBeFalsy' | 'toBeNull' | 'toBeTruthy' | 'toBeUndefined'>;
 
 type SpecificMatchers<R, T> =
-  T extends Page ? PageAssertions & AllowedGenericMatchers<R> :
-  T extends Locator ? LocatorAssertions & AllowedGenericMatchers<R> :
-  T extends APIResponse ? APIResponseAssertions & AllowedGenericMatchers<R> :
+  T extends Page ? PageAssertions & AllowedGenericMatchers<R, T> :
+  T extends Locator ? LocatorAssertions & AllowedGenericMatchers<R, T> :
+  T extends APIResponse ? APIResponseAssertions & AllowedGenericMatchers<R, T> :
   BaseMatchers<R, T> & (T extends Function ? FunctionAssertions : {});
 type AllMatchers<R, T> = PageAssertions & LocatorAssertions & APIResponseAssertions & FunctionAssertions & BaseMatchers<R, T>;
 
