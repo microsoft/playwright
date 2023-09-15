@@ -68,7 +68,8 @@
 }
 
 .network-request-header {
-  height: 28px;
+  margin-top: 3px;
+  height: 30px;
   border-bottom: 1px solid var(--vscode-panel-border);
   flex: none;
   align-items: center;

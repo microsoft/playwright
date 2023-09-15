@@ -30,7 +30,10 @@ export const NetworkResourceDetails: React.FunctionComponent<{
 
   return <TabbedPane
     dataTestId='network-request-details'
-    leftToolbar={[<ToolbarButton icon='arrow-left' title='Back' onClick={onClose}></ToolbarButton>]}
+    leftToolbar={[
+      <ToolbarButton icon='arrow-left' title='Back' onClick={onClose}></ToolbarButton>,
+      <div style={{ width: 30 }}></div>
+    ]}
     rightToolbar={[<ToolbarButton icon='close' title='Close' onClick={onClose}></ToolbarButton>]}
     tabs={[
       {
@@ -75,7 +78,7 @@ const RequestTab: React.FunctionComponent<{
     readResources();
   }, [resource]);
 
-  return <div className='network-request-details'>
+  return <div className='network-request-details-tab'>
     <div className='network-request-details-header'>URL</div>
     <div className='network-request-details-url'>{resource.request.url}</div>
     <div className='network-request-details-header'>Request Headers</div>
@@ -88,7 +91,7 @@ const RequestTab: React.FunctionComponent<{
 const ResponseTab: React.FunctionComponent<{
   resource: ResourceSnapshot;
 }> = ({ resource }) => {
-  return <div className='network-request-details'>
+  return <div className='network-request-details-tab'>
     <div className='network-request-details-header'>Response Headers</div>
     <div className='network-request-details-headers'>{resource.response.headers.map(pair => `${pair.name}: ${pair.value}`).join('\n')}</div>
   </div>;
@@ -121,7 +124,7 @@ const BodyTab: React.FunctionComponent<{
     readResources();
   }, [resource]);
 
-  return <div className='network-request-details'>
+  return <div className='network-request-details-tab'>
     {!resource.response.content._sha1 && <div>Response body is not available for this request.</div>}
     {responseBody && responseBody.dataUrl && <img draggable='false' src={responseBody.dataUrl} />}
     {responseBody && responseBody.text && <CodeMirrorWrapper text={responseBody.text} language={responseBody.language} readOnly lineNumbers={true}/>}
