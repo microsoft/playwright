@@ -20,6 +20,7 @@ import { Frame } from './frame';
 import * as network from './network';
 import type * as channels from '@protocol/channels';
 import fs from 'fs';
+import path from 'path';
 import { ChannelOwner } from './channelOwner';
 import { evaluationScript } from './clientHelper';
 import { Browser } from './browser';
@@ -469,6 +470,8 @@ export async function prepareBrowserContextParams(options: BrowserContextOptions
       size: options.videoSize
     };
   }
+  if (contextParams.recordVideo && contextParams.recordVideo.dir)
+    contextParams.recordVideo.dir = path.resolve(process.cwd(), contextParams.recordVideo.dir);
   return contextParams;
 }
 

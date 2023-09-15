@@ -310,6 +310,23 @@ it.describe('screencast', () => {
     expect(fs.existsSync(path)).toBeTruthy();
   });
 
+  it('should work with relative path for recordVideo.dir', async ({ browser }, testInfo) => {
+    it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/27086' });
+    const videosPath = path.relative(process.cwd(), testInfo.outputPath(''));
+    const size = { width: 320, height: 240 };
+    const context = await browser.newContext({
+      recordVideo: {
+        dir: videosPath,
+        size
+      },
+      viewport: size,
+    });
+    const page = await context.newPage();
+    const videoPath = await page.video()!.path();
+    await context.close();
+    expect(fs.existsSync(videoPath)).toBeTruthy();
+  });
+
   it('should expose video path blank popup', async ({ browser }, testInfo) => {
     const videosPath = testInfo.outputPath('');
     const size = { width: 320, height: 240 };
