@@ -392,6 +392,9 @@ LaunchOptions:
     args:
       type: array?
       items: string
+    excludeArgs:
+      type: array?
+      items: string
     ignoreAllDefaultArgs: boolean?
     ignoreDefaultArgs:
       type: array?

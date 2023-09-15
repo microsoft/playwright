@@ -12693,6 +12693,11 @@ export interface BrowserType<Unused = {}> {
     args?: Array<string>;
 
     /**
+     * Glob patterns to exlude unwantted default arguments.
+     */
+    excludeArgs?: Array<string>;
+
+    /**
      * When using [page.goto(url[, options])](https://playwright.dev/docs/api/class-page#page-goto),
      * [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route),
      * [page.waitForURL(url[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-url),
@@ -13123,6 +13128,11 @@ export interface BrowserType<Unused = {}> {
      * [here](http://peter.sh/experiments/chromium-command-line-switches/).
      */
     args?: Array<string>;
+
+    /**
+     * Glob patterns to exlude unwantted default arguments.
+     */
+    excludeArgs?: Array<string>;
 
     /**
      * Browser distribution channel.  Supported values are "chrome", "chrome-beta", "chrome-dev", "chrome-canary",
@@ -19683,6 +19693,11 @@ export interface LaunchOptions {
    * [here](http://peter.sh/experiments/chromium-command-line-switches/).
    */
   args?: Array<string>;
+
+  /**
+   * Glob patterns to exlude unwantted default arguments.
+   */
+  excludeArgs?: Array<string>;
 
   /**
    * Browser distribution channel.  Supported values are "chrome", "chrome-beta", "chrome-dev", "chrome-canary",

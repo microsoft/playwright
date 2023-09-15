@@ -272,6 +272,7 @@ function filterLaunchOptions(options: LaunchOptions): LaunchOptions {
   return {
     channel: options.channel,
     args: options.args,
+    excludeArgs: options.excludeArgs,
     ignoreAllDefaultArgs: options.ignoreAllDefaultArgs,
     ignoreDefaultArgs: options.ignoreDefaultArgs,
     timeout: options.timeout,

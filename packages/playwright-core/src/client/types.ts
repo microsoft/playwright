@@ -98,6 +98,7 @@ export type LaunchServerOptions = {
   channel?: channels.BrowserTypeLaunchOptions['channel'],
   executablePath?: string,
   args?: string[],
+  excludeArgs?: string[],
   ignoreDefaultArgs?: boolean | string[],
   handleSIGINT?: boolean,
   handleSIGTERM?: boolean,
