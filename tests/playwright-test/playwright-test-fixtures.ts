@@ -84,7 +84,7 @@ export async function writeFiles(testInfo: TestInfo, files: Files, initial: bool
 export const cliEntrypoint = path.join(__dirname, '../../packages/playwright-test/cli.js');
 
 const configFile = (baseDir: string, files: Files): string | undefined => {
-  for (const [name, content] of  Object.entries(files)) {
+  for (const [name, content] of Object.entries(files)) {
     if (name.includes('playwright.config')) {
       if (content.includes('reporter:') || content.includes('reportSlowTests:'))
         return path.resolve(baseDir, name);
@@ -128,11 +128,13 @@ async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], b
     params.reporter = 'blob';
   }
   const reportFile = path.join(baseDir, 'report.json');
-  const testProcess = startPlaywrightTest(childProcess, baseDir, params, {
+  // When we have useIntermediateMergeReport, we want the JSON reporter only at the merge step.
+  const envWithJsonReporter = {
     PW_TEST_REPORTER: path.join(__dirname, '../../packages/playwright/lib/reporters/json.js'),
     PLAYWRIGHT_JSON_OUTPUT_NAME: reportFile,
     ...env,
-  }, options);
+  };
+  const testProcess = startPlaywrightTest(childProcess, baseDir, params, useIntermediateMergeReport ? env : envWithJsonReporter, options);
   const { exitCode } = await testProcess.exited;
   let output = testProcess.output.toString();
 
@@ -146,7 +148,7 @@ async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], b
     const cwd = options.cwd ? path.resolve(baseDir, options.cwd) : baseDir;
     const packageRoot = path.resolve(baseDir, findPackageJSONDir(files, options.cwd ?? ''));
     const relativeBlobReportPath = path.relative(cwd, path.join(packageRoot, 'blob-report'));
-    const mergeResult = await mergeReports(relativeBlobReportPath, env, { cwd, additionalArgs });
+    const mergeResult = await mergeReports(relativeBlobReportPath, envWithJsonReporter, { cwd, additionalArgs });
     expect(mergeResult.exitCode).toBe(0);
     output = mergeResult.output;
   }
