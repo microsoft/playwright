@@ -223,7 +223,7 @@ export class HarTracer {
     harEntry.response.cookies = this._options.omitCookies ? [] : event.cookies.map(c => {
       return {
         ...c,
-        expires: c.expires === -1 ? undefined : new Date(c.expires).toISOString()
+        expires: c.expires === -1 ? undefined : safeDateToISOString(c.expires)
       };
     });
 
@@ -658,11 +658,11 @@ function parseCookie(c: string): har.Cookie {
     if (name === 'Domain')
       cookie.domain = value;
     if (name === 'Expires')
-      cookie.expires = new Date(value).toISOString();
+      cookie.expires = safeDateToISOString(value);
     if (name === 'HttpOnly')
       cookie.httpOnly = true;
     if (name === 'Max-Age')
-      cookie.expires = new Date(Date.now() + (+value) * 1000).toISOString();
+      cookie.expires = safeDateToISOString(Date.now() + (+value) * 1000);
     if (name === 'Path')
       cookie.path = value;
     if (name === 'SameSite')
@@ -671,6 +671,13 @@ function parseCookie(c: string): har.Cookie {
       cookie.secure = true;
   }
   return cookie;
+}
+
+function safeDateToISOString(value: string | number) {
+  try {
+    return new Date(value).toISOString();
+  } catch (e) {
+  }
 }
 
 const startedDateSymbol = Symbol('startedDate');
