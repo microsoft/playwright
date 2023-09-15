@@ -104,4 +104,8 @@ class ListModeReporter extends EmptyReporter {
     // eslint-disable-next-line no-console
     console.error('\n' + formatError(error, false).message);
   }
+
+  override printsToStdio(): boolean {
+    return true;
+  }
 }
