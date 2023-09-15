@@ -44,7 +44,7 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
       });
       const response = await this._channel.tracingStartChunk({ name: options.name, title: options.title });
       return response.traceName;
-    });
+    }, true);
     await this._startCollectingStacks(traceName);
   }
 
@@ -63,14 +63,16 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
   }
 
   async stopChunk(options: { path?: string } = {}) {
-    await this._doStopChunk(options.path);
+    await this._wrapApiCall(async () => {
+      await this._doStopChunk(options.path);
+    }, true);
   }
 
   async stop(options: { path?: string } = {}) {
     await this._wrapApiCall(async () => {
       await this._doStopChunk(options.path);
       await this._channel.tracingStop();
-    });
+    }, true);
   }
 
   private async _doStopChunk(filePath: string | undefined) {

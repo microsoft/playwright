@@ -231,8 +231,6 @@ it.describe('pause', () => {
     await recorderPage.waitForSelector('.source-line-paused:has-text("page.pause();  // 2")');
     expect(await sanitizeLog(recorderPage)).toEqual([
       'page.pause- XXms',
-      'tracing.start- XXms',
-      'tracing.stop- XXms',
       'page.pause',
     ]);
     await recorderPage.click('[title="Resume (F8)"]');
