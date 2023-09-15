@@ -272,10 +272,20 @@ test('should work with custom PlaywrightTest namespace', async ({ runTSC }) => {
       }
     `,
     'a.spec.ts': `
-      import { test, expect } from '@playwright/test';
+      import { test, expect, type Page, type APIResponse } from '@playwright/test';
       test.expect.extend({
         toBeWithinRange() { },
       });
+
+      const page = {} as Page;
+      const locator = page.locator('');
+      const apiResponse = {} as APIResponse;
+      test.expect(page).toBeEmpty();
+      test.expect(page).not.toBeEmpty();
+      test.expect(locator).toBeEmpty();
+      test.expect(locator).not.toBeEmpty();
+      test.expect(apiResponse).toBeEmpty();
+      test.expect(apiResponse).not.toBeEmpty();
 
       test.expect('').toBeEmpty();
       test.expect('hello').not.toBeEmpty();
