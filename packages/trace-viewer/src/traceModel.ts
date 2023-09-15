@@ -38,6 +38,7 @@ export class TraceModel {
   private _backend!: TraceModelBackend;
   private _attachments = new Map<string, trace.AfterActionTraceEventAttachment>();
   private _resourceToContentType = new Map<string, string>();
+  private _jsHandles = new Map<string, { preview: string }>();
 
   constructor() {
   }
@@ -112,6 +113,7 @@ export class TraceModel {
     }
 
     this._snapshotStorage!.finalize();
+    this._jsHandles.clear();
   }
 
   async hasEntry(filename: string): Promise<boolean> {
@@ -297,12 +299,23 @@ export class TraceModel {
       return null;
 
     if (event.type === 'event') {
+      if (metadata.method === '__create__' && metadata.type === 'JSHandle')
+        this._jsHandles.set(metadata.params.guid, metadata.params.initializer);
       if (metadata.method === '__create__' && metadata.type === 'ConsoleMessage') {
         return {
           type: 'object',
           class: metadata.type,
           guid: metadata.params.guid,
-          initializer: metadata.params.initializer,
+          initializer: {
+            ...metadata.params.initializer,
+            args: metadata.params.initializer.args?.map((arg: any) => {
+              if (arg.guid) {
+                const handle = this._jsHandles.get(arg.guid);
+                return { preview: handle?.preview || '', value: '' };
+              }
+              return { preview: '', value: '' };
+            })
+          },
         };
       }
       return {
