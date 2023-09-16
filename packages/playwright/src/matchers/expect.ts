@@ -265,16 +265,6 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
         const message = jestError.message;
         if (customMessage) {
           const messageLines = message.split('\n');
-          // Jest adds something like the following error to all errors:
-          //    expect(received).toBe(expected); // Object.is equality
-          const uselessMatcherLineIndex = messageLines.findIndex((line: string) => /expect.*\(.*received.*\)/.test(line));
-          if (uselessMatcherLineIndex !== -1) {
-            // if there's a newline after the matcher text, then remove it as well.
-            if (uselessMatcherLineIndex + 1 < messageLines.length && messageLines[uselessMatcherLineIndex + 1].trim() === '')
-              messageLines.splice(uselessMatcherLineIndex, 2);
-            else
-              messageLines.splice(uselessMatcherLineIndex, 1);
-          }
           const newMessage = [
             customMessage,
             '',

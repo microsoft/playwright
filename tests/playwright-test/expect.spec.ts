@@ -81,8 +81,8 @@ test('should include custom error message', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
   expect(result.output).toContain([
-    `    Error: one plus one is two!`,
-    ``,
+    `    Error: one plus one is two!\n`,
+    `    expect(received).toEqual(expected) // deep equality\n`,
     `    Expected: 3`,
     `    Received: 2`,
   ].join('\n'));
@@ -99,11 +99,10 @@ test('should include custom error message with web-first assertions', async ({ r
   });
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
-  expect(result.output).toContain([
-    `    Error: x-foo must be visible`,
-    ``,
-    `    Call log:`,
-  ].join('\n'));
+
+  expect(result.output).toContain('Error: x-foo must be visible');
+  expect(result.output).toContain(`Timed out 1ms waiting for expect(locator).toBeVisible()`);
+  expect(result.output).toContain('Call log:');
 });
 
 test('should work with generic matchers', async ({ runTSC }) => {
@@ -627,7 +626,7 @@ test('should print pending operations for toHaveText', async ({ runInlineTest })
   expect(result.exitCode).toBe(1);
   const output = result.output;
   expect(output).toContain('Pending operations:');
-  expect(output).toContain('expect(received).toHaveText(expected)');
+  expect(output).toContain(`expect(locator).toHaveText(expected)`);
   expect(output).toContain('Expected string: "Text"');
   expect(output).toContain('Received string: ""');
   expect(output).toContain('waiting for locator(\'no-such-thing\')');
@@ -677,7 +676,7 @@ test('should not print timed out error message when test times out', async ({ ru
   const output = result.output;
   expect(output).toContain('Test timeout of 3000ms exceeded');
   expect(output).not.toContain('Timed out 5000ms waiting for expect');
-  expect(output).toContain('Error: expect(received).toHaveText(expected)');
+  expect(output).toContain(`Error: expect(locator).toHaveText(expected)`);
 });
 
 test('should not leak long expect message strings', async ({ runInlineTest }) => {
