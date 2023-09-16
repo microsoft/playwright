@@ -47,11 +47,9 @@ test('should configure message', async ({ runInlineTest }) => {
   });
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
-  expect(result.output).toContain([
-    `    Error: x-foo must be visible`,
-    ``,
-    `    Call log:`,
-  ].join('\n'));
+  expect(result.output).toContain('Error: x-foo must be visible');
+  expect(result.output).toContain(`Timed out 1ms waiting for expect(locator).toBeVisible()`);
+  expect(result.output).toContain('Call log:');
 });
 
 test('should prefer local message', async ({ runInlineTest }) => {
@@ -66,11 +64,10 @@ test('should prefer local message', async ({ runInlineTest }) => {
   });
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
-  expect(result.output).toContain([
-    `    Error: overridden`,
-    ``,
-    `    Call log:`,
-  ].join('\n'));
+
+  expect(result.output).toContain('Error: overridden');
+  expect(result.output).toContain(`Timed out 1ms waiting for expect(locator).toBeVisible()`);
+  expect(result.output).toContain('Call log:');
 });
 
 test('should configure soft', async ({ runInlineTest }) => {

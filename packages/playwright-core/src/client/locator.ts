@@ -18,7 +18,7 @@ import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
 import type * as channels from '@protocol/channels';
 import * as util from 'util';
-import { isString, monotonicTime } from '../utils';
+import { asLocator, isString, monotonicTime } from '../utils';
 import { ElementHandle } from './elementHandle';
 import type { Frame } from './frame';
 import type { FilePayload, FrameExpectOptions, Rect, SelectOption, SelectOptionOptions, TimeoutOptions } from './types';
@@ -355,7 +355,7 @@ export class Locator implements api.Locator {
   }
 
   toString() {
-    return `Locator@${this._selector}`;
+    return asLocator('javascript', this._selector, undefined, true);
   }
 }
 

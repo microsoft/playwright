@@ -24,10 +24,10 @@ it('should have a nice preview', async ({ page, server }) => {
   const check = page.locator('#check');
   const text = await inner.evaluateHandle(e => e.firstChild);
   await page.evaluate(() => 1);  // Give them a chance to calculate the preview.
-  expect(String(outer)).toBe('Locator@#outer');
-  expect(String(inner)).toBe('Locator@#outer >> #inner');
-  expect(String(text)).toBe('JSHandle@#text=Text,↵more text');
-  expect(String(check)).toBe('Locator@#check');
+  expect.soft(String(outer)).toBe(`locator('#outer')`);
+  expect.soft(String(inner)).toBe(`locator('#outer').locator('#inner')`);
+  expect.soft(String(text)).toBe(`JSHandle@#text=Text,↵more text`);
+  expect.soft(String(check)).toBe(`locator('#check')`);
 });
 
 it('getAttribute should work', async ({ page, server }) => {

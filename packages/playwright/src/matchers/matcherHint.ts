@@ -16,10 +16,22 @@
 
 import { colors } from 'playwright-core/lib/utilsBundle';
 import type { ExpectMatcherContext } from './expect';
+import type { Locator } from 'playwright-core';
 
-export function matcherHint(state: ExpectMatcherContext, matcherName: string, a: any, b: any, matcherOptions: any, timeout?: number) {
-  const message = state.utils.matcherHint(matcherName, a, b, matcherOptions);
+export function matcherHint(state: ExpectMatcherContext, locator: Locator | undefined, matcherName: string, expression: any, actual: any, matcherOptions: any, timeout?: number) {
+  let header = state.utils.matcherHint(matcherName, expression, actual, matcherOptions).replace(/ \/\/ deep equality/, '') + '\n\n';
   if (timeout)
-    return colors.red(`Timed out ${timeout}ms waiting for `) + message;
-  return message;
+    header = colors.red(`Timed out ${timeout}ms waiting for `) + header;
+  if (locator)
+    header += `Locator: ${locator}\n`;
+  return header;
 }
+
+export type MatcherResult<E, A> = {
+  locator: Locator;
+  name: string;
+  expected: E;
+  message: () => string;
+  pass: boolean;
+  actual?: A;
+};
