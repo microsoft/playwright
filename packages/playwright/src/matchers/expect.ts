@@ -282,31 +282,17 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
         step?.complete({});
       };
 
-      // Process the async matchers separately to preserve the zones in the stacks.
-      if (this._info.isPoll || (matcherName in customAsyncMatchers && matcherName !== 'toPass')) {
-        return (async () => {
-          try {
-            const expectZone: ExpectZone = { title, wallTime };
-            await zones.run<ExpectZone, any>('expectZone', expectZone, async () => {
-              // We assume that the matcher will read the current expect timeout the first thing.
-              setCurrentExpectConfigureTimeout(this._info.timeout);
-              await matcher.call(target, ...args);
-            });
-            finalizer();
-          } catch (e) {
-            reportStepError(e);
-          }
-        })();
-      } else {
-        try {
-          const result = matcher.call(target, ...args);
-          if (result instanceof Promise)
-            return result.then(finalizer).catch(reportStepError);
-          finalizer();
-          return result;
-        } catch (e) {
-          reportStepError(e);
-        }
+      const expectZone: ExpectZone = { title, wallTime };
+      // We assume that the matcher will read the current expect timeout the first thing.
+      setCurrentExpectConfigureTimeout(this._info.timeout);
+      try {
+        const result = zones.run<ExpectZone, any>('expectZone', expectZone, () => matcher.call(target, ...args));
+        if (result instanceof Promise)
+          return result.then(finalizer).catch(reportStepError);
+        finalizer();
+        return result;
+      } catch (e) {
+        reportStepError(e);
       }
     };
   }
