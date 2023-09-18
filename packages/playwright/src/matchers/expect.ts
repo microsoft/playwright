@@ -59,12 +59,6 @@ export type { ExpectMatcherContext } from '../common/expectBundle';
 import { zones } from 'playwright-core/lib/utils';
 import { TestInfoImpl } from '../worker/testInfo';
 
-// from expect/build/types
-export type SyncExpectationResult = {
-  pass: boolean;
-  message: () => string;
-};
-
 // #region
 // Mirrored from https://github.com/facebook/jest/blob/f13abff8df9a0e1148baf3584bcde6d1b479edc7/packages/expect/src/print.ts
 /**

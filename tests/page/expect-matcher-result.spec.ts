@@ -245,3 +245,25 @@ Call log`);
 
   }
 });
+
+test('toHaveScreenshot should populate matcherResult', async ({ page, server }) => {
+  await page.setViewportSize({ width: 500, height: 500 });
+  await page.goto(server.EMPTY_PAGE);
+  const e = await expect(page).toHaveScreenshot('screenshot-sanity.png').catch(e => e);
+  e.matcherResult.message = stripAnsi(e.matcherResult.message);
+
+  expect.soft(e.matcherResult).toEqual({
+    actual: expect.stringContaining('screenshot-sanity-actual'),
+    expected: expect.stringContaining('screenshot-sanity-'),
+    diff: expect.stringContaining('screenshot-sanity-diff'),
+    message: expect.stringContaining(`Screenshot comparison failed`),
+    name: 'toHaveScreenshot',
+    pass: false,
+  });
+
+  expect.soft(stripAnsi(e.toString())).toContain(`Error: Screenshot comparison failed:
+
+  250000 pixels (ratio 1.00 of all image pixels) are different.
+
+Expected:`);
+});

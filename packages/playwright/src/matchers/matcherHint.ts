@@ -28,7 +28,7 @@ export function matcherHint(state: ExpectMatcherContext, locator: Locator | unde
 }
 
 export type MatcherResult<E, A> = {
-  locator: Locator;
+  locator?: Locator;
   name: string;
   expected: E;
   message: () => string;
