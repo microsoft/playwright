@@ -209,7 +209,7 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
       this.testInfo._failWithError(serializeError(new Error(message)), false /* isHardError */);
       return this.createMatcherResult('', true);
     }
-    return this.createMatcherResult('', false);
+    return this.createMatcherResult(message, false);
   }
 
   handleDifferent(
