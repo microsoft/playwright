@@ -31,6 +31,7 @@ test('toMatchText-based assertions should have matcher result', async ({ page })
       message: expect.stringContaining(`Timed out 1ms waiting for expect(locator).toHaveText(expected)`),
       name: 'toHaveText',
       pass: false,
+      log: expect.any(Array),
     });
 
     expect.soft(stripAnsi(e.toString())).toContain(`Error: Timed out 1ms waiting for expect(locator).toHaveText(expected)
@@ -52,6 +53,7 @@ Call log`);
       message: expect.stringContaining(`Timed out 1ms waiting for expect(locator).not.toHaveText(expected)`),
       name: 'toHaveText',
       pass: true,
+      log: expect.any(Array),
     });
     expect.soft(stripAnsi(e.toString())).toContain(`Error: Timed out 1ms waiting for expect(locator).not.toHaveText(expected)
 
@@ -77,6 +79,7 @@ test('toBeTruthy-based assertions should have matcher result', async ({ page }) 
       message: expect.stringContaining(`Timed out 1ms waiting for expect(locator).toBeVisible()`),
       name: 'toBeVisible',
       pass: false,
+      log: expect.any(Array),
     });
 
     expect.soft(stripAnsi(e.toString())).toContain(`Error: Timed out 1ms waiting for expect(locator).toBeVisible()
@@ -98,6 +101,7 @@ Call log`);
       message: expect.stringContaining(`Timed out 1ms waiting for expect(locator).not.toBeVisible()`),
       name: 'toBeVisible',
       pass: true,
+      log: expect.any(Array),
     });
 
     expect.soft(stripAnsi(e.toString())).toContain(`Error: Timed out 1ms waiting for expect(locator).not.toBeVisible()
@@ -123,6 +127,7 @@ test('toEqual-based assertions should have matcher result', async ({ page }) => 
       message: expect.stringContaining(`Timed out 1ms waiting for expect(locator).toHaveCount(expected)`),
       name: 'toHaveCount',
       pass: false,
+      log: expect.any(Array),
     });
 
     expect.soft(stripAnsi(e.toString())).toContain(`Error: Timed out 1ms waiting for expect(locator).toHaveCount(expected)
@@ -143,6 +148,7 @@ Call log`);
       message: expect.stringContaining(`Timed out 1ms waiting for expect(locator).not.toHaveCount(expected)`),
       name: 'toHaveCount',
       pass: true,
+      log: expect.any(Array),
     });
 
     expect.soft(stripAnsi(e.toString())).toContain(`Error: Timed out 1ms waiting for expect(locator).not.toHaveCount(expected)
@@ -171,6 +177,7 @@ test('toBeChecked({ checked: false }) should have expected: false', async ({ pag
       message: expect.stringContaining(`Timed out 1ms waiting for expect(locator).toBeChecked()`),
       name: 'toBeChecked',
       pass: false,
+      log: expect.any(Array),
     });
 
     expect.soft(stripAnsi(e.toString())).toContain(`Error: Timed out 1ms waiting for expect(locator).toBeChecked()
@@ -192,6 +199,7 @@ Call log`);
       message: expect.stringContaining(`Timed out 1ms waiting for expect(locator).not.toBeChecked()`),
       name: 'toBeChecked',
       pass: true,
+      log: expect.any(Array),
     });
 
     expect.soft(stripAnsi(e.toString())).toContain(`Error: Timed out 1ms waiting for expect(locator).not.toBeChecked()
@@ -213,6 +221,7 @@ Call log`);
       message: expect.stringContaining(`Timed out 1ms waiting for expect(locator).toBeChecked({ checked: false })`),
       name: 'toBeChecked',
       pass: false,
+      log: expect.any(Array),
     });
 
     expect.soft(stripAnsi(e.toString())).toContain(`Error: Timed out 1ms waiting for expect(locator).toBeChecked({ checked: false })
@@ -234,6 +243,7 @@ Call log`);
       message: expect.stringContaining(`Timed out 1ms waiting for expect(locator).not.toBeChecked({ checked: false })`),
       name: 'toBeChecked',
       pass: true,
+      log: expect.any(Array),
     });
 
     expect.soft(stripAnsi(e.toString())).toContain(`Error: Timed out 1ms waiting for expect(locator).not.toBeChecked({ checked: false })
@@ -259,6 +269,7 @@ test('toHaveScreenshot should populate matcherResult', async ({ page, server }) 
     message: expect.stringContaining(`Screenshot comparison failed`),
     name: 'toHaveScreenshot',
     pass: false,
+    log: expect.any(Array),
   });
 
   expect.soft(stripAnsi(e.toString())).toContain(`Error: Screenshot comparison failed:

@@ -348,8 +348,8 @@ export class TestInfoImpl implements TestInfo {
     this.errors.push(error);
   }
 
-  async _runAsStep<T>(stepInfo: Omit<TestStepInternal, 'complete' | 'wallTime' | 'parentStepId' | 'stepId' | 'steps'>, cb: (step: TestStepInternal) => Promise<T>): Promise<T> {
-    const step = this._addStep({ ...stepInfo, wallTime: Date.now() });
+  async _runAsStep<T>(stepInfo: Omit<TestStepInternal, 'complete' | 'wallTime' | 'parentStepId' | 'stepId' | 'steps'> & { wallTime?: number }, cb: (step: TestStepInternal) => Promise<T>): Promise<T> {
+    const step = this._addStep({ wallTime: Date.now(), ...stepInfo });
     return await zones.run('stepZone', step, async () => {
       try {
         const result = await cb(step);
