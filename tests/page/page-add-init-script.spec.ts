@@ -86,7 +86,6 @@ it('should work after a cross origin navigation', async ({ page, server }) => {
 
 it('init script should run only once in iframe', async ({ page, server, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/26992' });
-  it.fixme(browserName === 'webkit');
   const messages = [];
   page.on('console', event => {
     if (event.text().startsWith('init script:'))
