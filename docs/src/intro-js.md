@@ -90,7 +90,7 @@ See our doc on [Running Tests](./running-tests.md) to learn more about running t
 
 ## HTML Test Reports
 
-Once your test has finished running a [HTML Reporter](./test-reporters.md#html-reporter) will have been created which shows you a full report of your tests allowing you to filter the report by browsers, passed tests, failed tests, skipped tests and flaky tests. You can click on each test and explore the test's errors as well as each step of the test. By default, the HTML report is opened automatically if some of the tests failed.
+After your test completes, an [HTML Reporter](./test-reporters.md#html-reporter) will be generated, which shows you a full report of your tests allowing you to filter the report by browsers, passed tests, failed tests, skipped tests and flaky tests. You can click on each test and explore the test's errors as well as each step of the test. By default, the HTML report is opened automatically if some of the tests failed.
 
 ```bash
 npx playwright show-report
