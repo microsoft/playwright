@@ -43,7 +43,7 @@ import { Snapshotter } from './snapshotter';
 import { yazl } from '../../../zipBundle';
 import type { ConsoleMessage } from '../../console';
 
-const version: trace.VERSION = 4;
+const version: trace.VERSION = 5;
 
 export type TracerOptions = {
   name?: string;
@@ -430,8 +430,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
 
   private _onConsoleMessage(message: ConsoleMessage) {
     const object: trace.ConsoleMessageTraceEvent = {
-      type: 'object',
-      class: 'ConsoleMessage',
+      type: 'console',
       guid: message.guid,
       initializer: {
         type: message.type(),
@@ -478,7 +477,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   private _appendTraceEvent(event: trace.TraceEvent) {
     const visited = visitTraceEvent(event, this._state!.traceSha1s);
     // Do not flush (console) events, they are too noisy, unless we are in ui mode (live).
-    const flush = this._state!.options.live || (event.type !== 'event' && event.type !== 'object');
+    const flush = this._state!.options.live || (event.type !== 'event' && event.type !== 'console');
     this._fs.appendFile(this._state!.traceFile, JSON.stringify(visited) + '\n', flush);
   }
 
