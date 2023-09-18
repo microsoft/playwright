@@ -200,7 +200,8 @@ export class FrameManager {
       // Do not override request with undefined.
       return;
     }
-    const request = Array.from(frame._inflightRequests).find(request => request._documentId === documentId);
+
+    const request = documentId ? Array.from(frame._inflightRequests).find(request => request._documentId === documentId) : undefined;
     frame.setPendingDocument({ documentId, request });
   }
 
