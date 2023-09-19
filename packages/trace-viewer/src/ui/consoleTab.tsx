@@ -17,7 +17,7 @@
 import type * as channels from '@protocol/channels';
 import * as React from 'react';
 import './consoleTab.css';
-import * as modelUtil from './modelUtil';
+import type * as modelUtil from './modelUtil';
 import { ListView } from '@web/components/listView';
 import type { Boundaries } from '../geometry';
 import { msToString } from '@web/uiUtils';
@@ -51,29 +51,23 @@ export function useConsoleTabModel(model: modelUtil.MultiTraceModel | undefined,
       return { entries: [] };
     const entries: ConsoleEntry[] = [];
     for (const event of model.events) {
-      if (event.method !== 'console' && event.method !== 'pageError')
-        continue;
-      if (event.method === 'console') {
-        const { guid } = event.params.message;
-        const browserMessage = modelUtil.context(event).initializers[guid];
-        if (browserMessage) {
-          const body = browserMessage.args && browserMessage.args.length ? format(browserMessage.args) : formatAnsi(browserMessage.text);
-          const url = browserMessage.location.url;
-          const filename = url ? url.substring(url.lastIndexOf('/') + 1) : '<anonymous>';
-          const location = `${filename}:${browserMessage.location.lineNumber}`;
+      if (event.type === 'console') {
+        const body = event.args && event.args.length ? format(event.args) : formatAnsi(event.text);
+        const url = event.location.url;
+        const filename = url ? url.substring(url.lastIndexOf('/') + 1) : '<anonymous>';
+        const location = `${filename}:${event.location.lineNumber}`;
 
-          entries.push({
-            browserMessage: {
-              body,
-              location,
-            },
-            isError: modelUtil.context(event).initializers[guid]?.type === 'error',
-            isWarning: modelUtil.context(event).initializers[guid]?.type === 'warning',
-            timestamp: event.time,
-          });
-        }
+        entries.push({
+          browserMessage: {
+            body,
+            location,
+          },
+          isError: event.messageType === 'error',
+          isWarning: event.messageType === 'warning',
+          timestamp: event.time,
+        });
       }
-      if (event.method === 'pageError') {
+      if (event.type === 'event' && event.method === 'pageError') {
         entries.push({
           browserError: event.params.error,
           isError: true,
