@@ -8,7 +8,7 @@ toc_max_heading_level: 2
 
 ### Trace Viewer Updates
 
-![Playwright Trace Viewer](https://github.com/microsoft/playwright/assets/746130/8ba27be0-58fd-4f62-8561-950480610369)
+![Playwright Trace Viewer](https://github.com/microsoft/playwright/assets/746130/0c41e20d-c54b-4600-8ca8-1cbb6393ddef)
 
 1. Zoom into time range.
 1. Network panel redesign.
