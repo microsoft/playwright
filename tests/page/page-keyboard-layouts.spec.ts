@@ -132,73 +132,76 @@ const testData: Record<string, (SimpleKeyTest | AccentedKeyTest)[]> = {
   'fr-CH': [['è', 'BracketLeft', 186], ['ô', 'Equal', 221, 'KeyO', 79], ['ò', 'Shift+Equal', 221, 'KeyO', 79], ['Ò', 'Shift+Equal', 221, 'Shift+KeyO', 79]],
 };
 
-for (const [locale, test] of Object.entries(testData)) {
-  it(`should handle ${locale} keyboard layout`, async ({ page }) => {
-    await page.keyboard.changeLayout(locale);
+it(`should handle all keyboard layouts`, async ({ page }) => {
+  for (const [layoutName, test] of Object.entries(testData)) {
 
-    for (const [key, code, keyCode, letterCode, letterKeyCode] of test) {
-      const [modifiersDown, modifiersUp, modifiers, codeWithoutModifiers] = code.startsWith('Shift+') ?
-        [[`Keydown: Shift ShiftLeft 16 [Shift]`], [`Keyup: Shift ShiftLeft 16 []`], 'Shift', code.substring('Shift+'.length)] :
-        [[], [], '', code];
+    await it.step(`${layoutName} layout`, async () => {
+      await page.keyboard.changeLayout(layoutName);
 
-      if (!letterCode) {
+      for (const [key, code, keyCode, letterCode, letterKeyCode] of test) {
+        const [modifiersDown, modifiersUp, modifiers, codeWithoutModifiers] = code.startsWith('Shift+') ?
+          [[`Keydown: Shift ShiftLeft 16 [Shift]`], [`Keyup: Shift ShiftLeft 16 []`], 'Shift', code.substring('Shift+'.length)] :
+          [[], [], '', code];
 
-        await it.step(`fire events on ${code}`, async () => {
-          await page.keyboard.press(code);
-          const charCode = key.charCodeAt(0);
-          expect(await page.evaluate('getResult()')).toBe(
-              [...modifiersDown,
-                `Keydown: ${key} ${codeWithoutModifiers} ${keyCode} [${modifiers}]`,
-                `Keypress: ${key} ${codeWithoutModifiers} ${charCode} ${charCode} [${modifiers}]`,
-                `Keyup: ${key} ${codeWithoutModifiers} ${keyCode} [${modifiers}]`,
-                ...modifiersUp].join('\n'));
-        });
+        if (!letterCode) {
 
-        await it.step(`fire events on "${key}"`, async () => {
-          await page.keyboard.press(key);
-          const charCode = key.charCodeAt(0);
-          const result = await page.evaluate('getResult()');
-          // TODO shouldn't it send a Shift event if key is uppercase?
-          expect(result).toBe(
-              [`Keydown: ${key} ${codeWithoutModifiers} ${keyCode} []`,
-                `Keypress: ${key} ${codeWithoutModifiers} ${charCode} ${charCode} []`,
-                `Keyup: ${key} ${codeWithoutModifiers} ${keyCode} []`].join('\n'));
-        });
-      } else {
-        const [modifiersLetterDown, modifiersLetterUp, modifiersLetter, letterCodeWithoutModifiers] = letterCode.startsWith('Shift+') ?
-          [[`Keydown: Shift ShiftLeft 16 [Shift]`], [`Keyup: Shift ShiftLeft 16 []`], 'Shift', letterCode.substring('Shift+'.length)] :
-          [[], [], '', letterCode];
+          await it.step(`fire events on ${code}`, async () => {
+            await page.keyboard.press(code);
+            const charCode = key.charCodeAt(0);
+            expect(await page.evaluate('getResult()')).toBe(
+                [...modifiersDown,
+                  `Keydown: ${key} ${codeWithoutModifiers} ${keyCode} [${modifiers}]`,
+                  `Keypress: ${key} ${codeWithoutModifiers} ${charCode} ${charCode} [${modifiers}]`,
+                  `Keyup: ${key} ${codeWithoutModifiers} ${keyCode} [${modifiers}]`,
+                  ...modifiersUp].join('\n'));
+          });
 
-        await it.step(`fire events in accented key for ${code} ${letterCode}`, async () => {
-          await page.keyboard.press(code);
-          await page.keyboard.press(letterCode);
-          const charCode = key.charCodeAt(0);
-          expect(await page.evaluate('getResult()')).toBe(
-              [...modifiersDown,
-                `Keydown: Dead ${codeWithoutModifiers} ${keyCode} [${modifiers}]`,
-                `Keyup: Dead ${codeWithoutModifiers} ${keyCode} [${modifiers}]`,
-                ...modifiersUp,
-                ...modifiersLetterDown,
-                `Keydown: ${key} ${letterCodeWithoutModifiers} ${letterKeyCode} [${modifiersLetter}]`,
-                `Keypress: ${key} ${letterCodeWithoutModifiers} ${charCode} ${charCode} [${modifiersLetter}]`,
-                `Keyup: ${removeAccents(key)} ${letterCodeWithoutModifiers} ${letterKeyCode} [${modifiersLetter}]`,
-                ...modifiersLetterUp].join('\n'));
-        });
+          await it.step(`fire events on "${key}"`, async () => {
+            await page.keyboard.press(key);
+            const charCode = key.charCodeAt(0);
+            const result = await page.evaluate('getResult()');
+            // TODO shouldn't it send a Shift event if key is uppercase?
+            expect(result).toBe(
+                [`Keydown: ${key} ${codeWithoutModifiers} ${keyCode} []`,
+                  `Keypress: ${key} ${codeWithoutModifiers} ${charCode} ${charCode} []`,
+                  `Keyup: ${key} ${codeWithoutModifiers} ${keyCode} []`].join('\n'));
+          });
+        } else {
+          const [modifiersLetterDown, modifiersLetterUp, modifiersLetter, letterCodeWithoutModifiers] = letterCode.startsWith('Shift+') ?
+            [[`Keydown: Shift ShiftLeft 16 [Shift]`], [`Keyup: Shift ShiftLeft 16 []`], 'Shift', letterCode.substring('Shift+'.length)] :
+            [[], [], '', letterCode];
 
-        await it.step(`should fire events when typing accented key "${key}"`, async () => {
-          await page.keyboard.type(key);
-          const charCode = key.charCodeAt(0);
-          expect(await page.evaluate('getResult()')).toBe(
-              [...modifiersDown,
-                `Keydown: Dead ${codeWithoutModifiers} ${keyCode} [${modifiers}]`,
-                `Keyup: Dead ${codeWithoutModifiers} ${keyCode} [${modifiers}]`,
-                ...modifiersUp,
-                // TODO shouldn't it send a Shift event if letter is uppercase?
-                `Keydown: ${key} ${letterCodeWithoutModifiers} ${letterKeyCode} []`,
-                `Keypress: ${key} ${letterCodeWithoutModifiers} ${charCode} ${charCode} []`,
-                `Keyup: ${removeAccents(key)} ${letterCodeWithoutModifiers} ${letterKeyCode} []`,].join('\n'));
-        });
+          await it.step(`fire events in accented key for ${code} ${letterCode}`, async () => {
+            await page.keyboard.press(code);
+            await page.keyboard.press(letterCode);
+            const charCode = key.charCodeAt(0);
+            expect(await page.evaluate('getResult()')).toBe(
+                [...modifiersDown,
+                  `Keydown: Dead ${codeWithoutModifiers} ${keyCode} [${modifiers}]`,
+                  `Keyup: Dead ${codeWithoutModifiers} ${keyCode} [${modifiers}]`,
+                  ...modifiersUp,
+                  ...modifiersLetterDown,
+                  `Keydown: ${key} ${letterCodeWithoutModifiers} ${letterKeyCode} [${modifiersLetter}]`,
+                  `Keypress: ${key} ${letterCodeWithoutModifiers} ${charCode} ${charCode} [${modifiersLetter}]`,
+                  `Keyup: ${removeAccents(key)} ${letterCodeWithoutModifiers} ${letterKeyCode} [${modifiersLetter}]`,
+                  ...modifiersLetterUp].join('\n'));
+          });
+
+          await it.step(`should fire events when typing accented key "${key}"`, async () => {
+            await page.keyboard.type(key);
+            const charCode = key.charCodeAt(0);
+            expect(await page.evaluate('getResult()')).toBe(
+                [...modifiersDown,
+                  `Keydown: Dead ${codeWithoutModifiers} ${keyCode} [${modifiers}]`,
+                  `Keyup: Dead ${codeWithoutModifiers} ${keyCode} [${modifiers}]`,
+                  ...modifiersUp,
+                  // TODO shouldn't it send a Shift event if letter is uppercase?
+                  `Keydown: ${key} ${letterCodeWithoutModifiers} ${letterKeyCode} []`,
+                  `Keypress: ${key} ${letterCodeWithoutModifiers} ${charCode} ${charCode} []`,
+                  `Keyup: ${removeAccents(key)} ${letterCodeWithoutModifiers} ${letterKeyCode} []`,].join('\n'));
+          });
+        }
       }
-    }
-  });
-}
+    });
+  }
+});
