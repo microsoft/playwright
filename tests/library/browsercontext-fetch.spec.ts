@@ -1110,7 +1110,7 @@ it('should fetch long set-cookie value', async ({ context, server, browserName }
     res.setHeader('Set-Cookie', [`foo=${'a'.repeat(4100)}; path=/;`, `bar=val`]);
     res.end();
   });
-  await context.request.get(server.EMPTY_PAGE, {timeout: 5000});
+  await context.request.get(server.EMPTY_PAGE, { timeout: 5000 });
   const cookies = await context.cookies();
   expect(cookies.map(c => c.name)).toEqual(browserName === 'firefox' ? ['foo', 'bar'] : ['bar']);
 });
