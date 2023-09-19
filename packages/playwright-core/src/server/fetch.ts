@@ -282,8 +282,15 @@ export abstract class APIRequestContext extends SdkObject {
           progress.log(`  ${name}: ${value}`);
 
         const cookies = this._parseSetCookieHeader(response.url || url.toString(), response.headers['set-cookie']) ;
-        if (cookies.length)
-          await this._addCookies(cookies);
+        if (cookies.length) {
+          try {
+            await this._addCookies(cookies);
+          } catch (e) {
+            // Cookie value is limited by 4096 characters in the browsers. If setCookies failed,
+            // we try setting each cookie individually just in case only some of them are bad.
+            await Promise.all(cookies.map(c => this._addCookies([c]).catch(() => {})));
+          }
+        }
 
         if (redirectStatus.includes(response.statusCode!) && options.maxRedirects >= 0) {
           if (!options.maxRedirects) {
