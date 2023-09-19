@@ -16,6 +16,7 @@
 
 import type * as trace from '@trace/trace';
 import type * as traceV3 from './versions/traceV3';
+import type * as traceV4 from './versions/traceV4';
 import { parseClientSideCallMetadata } from '../../../packages/playwright-core/src/utils/isomorphic/traceUtils';
 import type { ContextEntry, PageEntry } from './entries';
 import { createEmptyContext } from './entries';
@@ -39,6 +40,7 @@ export class TraceModel {
   private _attachments = new Map<string, trace.AfterActionTraceEventAttachment>();
   private _resourceToContentType = new Map<string, string>();
   private _jsHandles = new Map<string, { preview: string }>();
+  private _consoleObjects = new Map<string, { type: string, text: string, location: { url: string, lineNumber: number, columnNumber: number }, args?: { preview: string, value: string }[] }>();
 
   constructor() {
   }
@@ -114,6 +116,7 @@ export class TraceModel {
 
     this._snapshotStorage!.finalize();
     this._jsHandles.clear();
+    this._consoleObjects.clear();
   }
 
   async hasEntry(filename: string): Promise<boolean> {
@@ -209,8 +212,8 @@ export class TraceModel {
         contextEntry!.stdio.push(event);
         break;
       }
-      case 'object': {
-        contextEntry!.initializers[event.guid] = event.initializer;
+      case 'console': {
+        contextEntry!.events.push(event);
         break;
       }
       case 'resource-snapshot':
@@ -235,12 +238,15 @@ export class TraceModel {
     }
   }
 
-  private _modernize(event: any): trace.TraceEvent {
+  private _modernize(event: any): trace.TraceEvent | null {
     if (this._version === undefined)
       return event;
-    const lastVersion: trace.VERSION = 4;
-    for (let version = this._version; version < lastVersion; ++version)
+    const lastVersion: trace.VERSION = 5;
+    for (let version = this._version; version < lastVersion; ++version) {
       event = (this as any)[`_modernize_${version}_to_${version + 1}`].call(this, event);
+      if (!event)
+        return null;
+    }
     return event;
   }
 
@@ -286,7 +292,7 @@ export class TraceModel {
     return event;
   }
 
-  _modernize_3_to_4(event: traceV3.TraceEvent): trace.TraceEvent | null {
+  _modernize_3_to_4(event: traceV3.TraceEvent): traceV4.TraceEvent | null {
     if (event.type !== 'action' && event.type !== 'event') {
       return event as traceV3.ContextCreatedTraceEvent |
         traceV3.ScreencastFrameTraceEvent |
@@ -299,23 +305,12 @@ export class TraceModel {
       return null;
 
     if (event.type === 'event') {
-      if (metadata.method === '__create__' && metadata.type === 'JSHandle')
-        this._jsHandles.set(metadata.params.guid, metadata.params.initializer);
       if (metadata.method === '__create__' && metadata.type === 'ConsoleMessage') {
         return {
           type: 'object',
           class: metadata.type,
           guid: metadata.params.guid,
-          initializer: {
-            ...metadata.params.initializer,
-            args: metadata.params.initializer.args?.map((arg: any) => {
-              if (arg.guid) {
-                const handle = this._jsHandles.get(arg.guid);
-                return { preview: handle?.preview || '', value: '' };
-              }
-              return { preview: '', value: '' };
-            })
-          },
+          initializer: metadata.params.initializer,
         };
       }
       return {
@@ -347,6 +342,47 @@ export class TraceModel {
       point: metadata.point,
       pageId: metadata.pageId,
     };
+  }
+
+  _modernize_4_to_5(event: traceV4.TraceEvent): trace.TraceEvent | null {
+    if (event.type === 'event' && event.method === '__create__' && event.class === 'JSHandle')
+      this._jsHandles.set(event.params.guid, event.params.initializer);
+    if (event.type === 'object') {
+      // We do not expect any other 'object' events.
+      if (event.class !== 'ConsoleMessage')
+        return null;
+      // Older traces might have `args` inherited from the protocol initializer - guid of JSHandle,
+      // but might also have modern `args` with preview and value.
+      const args: { preview: string, value: string }[] = (event.initializer as any).args?.map((arg: any) => {
+        if (arg.guid) {
+          const handle = this._jsHandles.get(arg.guid);
+          return { preview: handle?.preview || '', value: '' };
+        }
+        return { preview: arg.preview || '', value: arg.value || '' };
+      });
+      this._consoleObjects.set(event.guid, {
+        type: event.initializer.type,
+        text: event.initializer.text,
+        location: event.initializer.location,
+        args,
+      });
+      return null;
+    }
+    if (event.type === 'event' && event.method === 'console') {
+      const consoleMessage = this._consoleObjects.get(event.params.message?.guid || '');
+      if (!consoleMessage)
+        return null;
+      return {
+        type: 'console',
+        time: event.time,
+        pageId: event.pageId,
+        messageType: consoleMessage.type,
+        text: consoleMessage.text,
+        args: consoleMessage.args,
+        location: consoleMessage.location,
+      };
+    }
+    return event;
   }
 }
 
