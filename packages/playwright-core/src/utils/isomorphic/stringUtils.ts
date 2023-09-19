@@ -74,6 +74,12 @@ export function normalizeEscapedRegexQuotes(source: string) {
 }
 
 function escapeRegexForSelector(re: RegExp): string {
+  // Unicode mode does not allow "identity character escapes", so we do not escape and
+  // hope that it does not contain quotes and/or >> signs.
+  // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Regular_expressions/Character_escape
+  // TODO: rework RE usages in internal selectors away from literal representation to json, e.g. {source,flags}.
+  if (re.unicode || (re as any).unicodeSets)
+    return String(re);
   // Even number of backslashes followed by the quote -> insert a backslash.
   return String(re).replace(/(^|[^\\])(\\\\)*(["'`])/g, '$1$2\\$3').replace(/>>/g, '\\>\\>');
 }
