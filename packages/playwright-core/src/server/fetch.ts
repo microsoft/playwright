@@ -286,6 +286,8 @@ export abstract class APIRequestContext extends SdkObject {
           try {
             await this._addCookies(cookies);
           } catch (e) {
+            // Cookie value is limited by 4096 characters in the browsers. If setCookies failed,
+            // we try setting each cookie individually just in case only some of them are bad.
             await Promise.all(cookies.map(c => this._addCookies([c]).catch(() => {})));
           }
         }
