@@ -115,6 +115,10 @@ it('should filter by regex with a single quote', async ({ page }) => {
   await expect.soft(page.getByRole('button', { name: /let\\'s let\\\'s/i }).locator('span')).toHaveText('hello');
   await expect.soft(page.locator('button', { hasText: /let\\\'s let\\'s/i }).locator('span')).toHaveText('hello');
   await expect.soft(page.getByRole('button', { name: /let\\\'s let\\'s/i }).locator('span')).toHaveText('hello');
+
+  await page.setContent(`<button>let's hello</button>`);
+  await expect.soft(page.locator('button', { hasText: /let's/iu })).toHaveText(`let's hello`);
+  await expect.soft(page.getByRole('button', { name: /let's/iu })).toHaveText(`let's hello`);
 });
 
 it('should filter by regex and regexp flags', async ({ page }) => {
