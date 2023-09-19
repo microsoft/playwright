@@ -22,7 +22,7 @@ import { parseClientSideCallMetadata } from '../../packages/playwright-core/lib/
 import { TraceModel } from '../../packages/trace-viewer/src/traceModel';
 import type { ActionTreeItem } from '../../packages/trace-viewer/src/ui/modelUtil';
 import { buildActionTree, MultiTraceModel } from '../../packages/trace-viewer/src/ui/modelUtil';
-import type { ActionTraceEvent, EventTraceEvent, TraceEvent } from '@trace/trace';
+import type { ActionTraceEvent, ConsoleMessageTraceEvent, EventTraceEvent, TraceEvent } from '@trace/trace';
 
 export async function attachFrame(page: Page, frameId: string, url: string): Promise<Frame> {
   const handle = await page.evaluateHandle(async ({ frameId, url }) => {
@@ -158,7 +158,7 @@ export async function parseTraceRaw(file: string): Promise<{ events: any[], reso
   };
 }
 
-export async function parseTrace(file: string): Promise<{ resources: Map<string, Buffer>, events: EventTraceEvent[], actions: ActionTraceEvent[], apiNames: string[], traceModel: TraceModel, model: MultiTraceModel, actionTree: string[] }> {
+export async function parseTrace(file: string): Promise<{ resources: Map<string, Buffer>, events: (EventTraceEvent | ConsoleMessageTraceEvent)[], actions: ActionTraceEvent[], apiNames: string[], traceModel: TraceModel, model: MultiTraceModel, actionTree: string[] }> {
   const backend = new TraceBackend(file);
   const traceModel = new TraceModel();
   await traceModel.load(backend, () => {});

@@ -104,17 +104,16 @@ export type EventTraceEvent = {
 
 export type ConsoleMessageTraceEvent = {
   type: 'console';
-  initializer: {
-    type: string,
-    text: string,
-    args?: { preview: string, value: any }[],
-    location: {
-      url: string,
-      lineNumber: number,
-      columnNumber: number,
-    },
-  };
-  guid: string;
+  time: number;
+  pageId?: string;
+  messageType: string,
+  text: string,
+  args?: { preview: string, value: any }[],
+  location: {
+    url: string,
+    lineNumber: number,
+    columnNumber: number,
+  },
 };
 
 export type ResourceSnapshotTraceEvent = {

@@ -739,7 +739,7 @@ test('should flush console events on tracing stop', async ({ context, page }, te
   const tracePath = testInfo.outputPath('trace.zip');
   await context.tracing.stop({ path: tracePath });
   const trace = await parseTraceRaw(tracePath);
-  const events = trace.events.filter(e => e.method === 'console');
+  const events = trace.events.filter(e => e.type === 'console');
   expect(events).toHaveLength(100);
 });
 

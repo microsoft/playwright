@@ -40,6 +40,7 @@ export class TraceModel {
   private _attachments = new Map<string, trace.AfterActionTraceEventAttachment>();
   private _resourceToContentType = new Map<string, string>();
   private _jsHandles = new Map<string, { preview: string }>();
+  private _consoleObjects = new Map<string, { type: string, text: string, location: { url: string, lineNumber: number, columnNumber: number }, args?: { preview: string, value: string }[] }>();
 
   constructor() {
   }
@@ -115,6 +116,7 @@ export class TraceModel {
 
     this._snapshotStorage!.finalize();
     this._jsHandles.clear();
+    this._consoleObjects.clear();
   }
 
   async hasEntry(filename: string): Promise<boolean> {
@@ -211,7 +213,7 @@ export class TraceModel {
         break;
       }
       case 'console': {
-        contextEntry!.initializers[event.guid] = event.initializer;
+        contextEntry!.events.push(event);
         break;
       }
       case 'resource-snapshot':
@@ -349,22 +351,35 @@ export class TraceModel {
       // We do not expect any other 'object' events.
       if (event.class !== 'ConsoleMessage')
         return null;
+      // Older traces might have `args` inherited from the protocol initializer - guid of JSHandle,
+      // but might also have modern `args` with preview and value.
+      const args: { preview: string, value: string }[] = (event.initializer as any).args?.map((arg: any) => {
+        if (arg.guid) {
+          const handle = this._jsHandles.get(arg.guid);
+          return { preview: handle?.preview || '', value: '' };
+        }
+        return { preview: arg.preview || '', value: arg.value || '' };
+      });
+      this._consoleObjects.set(event.guid, {
+        type: event.initializer.type,
+        text: event.initializer.text,
+        location: event.initializer.location,
+        args,
+      });
+      return null;
+    }
+    if (event.type === 'event' && event.method === 'console') {
+      const consoleMessage = this._consoleObjects.get(event.params.message?.guid || '');
+      if (!consoleMessage)
+        return null;
       return {
         type: 'console',
-        initializer: {
-          type: event.initializer.type,
-          text: event.initializer.text,
-          location: event.initializer.location,
-          // Older traces might have args inherited from the protocol initializer.
-          args: (event.initializer as any).args?.map((arg: any) => {
-            if (arg.guid) {
-              const handle = this._jsHandles.get(arg.guid);
-              return { preview: handle?.preview || '', value: '' };
-            }
-            return { preview: '', value: '' };
-          })
-        },
-        guid: event.guid,
+        time: event.time,
+        pageId: event.pageId,
+        messageType: consoleMessage.type,
+        text: consoleMessage.text,
+        args: consoleMessage.args,
+        location: consoleMessage.location,
       };
     }
     return event;
