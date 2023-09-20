@@ -26,7 +26,7 @@ timeouts and racy checks in their tests altogether.
 - [How to perform actions](/writing-tests.md#actions)
 - [How to use assertions](/writing-tests.md#assertions)
 - [How tests run in isolation](/writing-tests.md#test-isolation)
-- [How to use test hooks](/writing-tests.md#using-test-hooks)
+- [How to use test hooks](/writing-tests.md#using-fixtures)
 
 ## First test
 
@@ -134,7 +134,7 @@ Here is the list of the most popular async assertions. Note that there are [many
 | [`method: PageAssertions.toHaveURL`] | Page has URL |
 
 
-### Test Isolation
+### Test isolation
 
 The Playwright Pytest plugin is based on the concept of test fixtures such as the [built in page fixture](./test-runners.md), which is passed into your test. Pages are [isolated between tests due to the Browser Context](./browser-contexts), which is equivalent to a brand new browser profile, where every test gets a fresh environment, even when multiple tests run in a single Browser.
 
@@ -150,7 +150,7 @@ def test_another_test(page: Page):
   # "page" in this second test is completely isolated from the first test.
 ```
 
-### Using Test Hooks
+### Using fixtures
 
 You can use various [fixtures](https://docs.pytest.org/en/6.2.x/fixture.html#autouse-fixtures-fixtures-you-don-t-have-to-request) to execute code before or after your tests and to share objects between them. A `function` scoped fixture e.g. with autouse behaves like a beforeEach/afterEach. And a `module` scoped fixture with autouse behaves like a beforeAll/afterAll which runs before all and after all the tests.
 
@@ -174,7 +174,7 @@ def test_main_navigation(page: Page):
     expect(page).to_have_url("https://playwright.dev/")
 ```
 
-## What's Next
+## What's next
 
 - [Run single test, multiple tests, headed mode](./running-tests.md)
 - [Generate tests with Codegen](./codegen-intro.md)
