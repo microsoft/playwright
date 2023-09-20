@@ -106,7 +106,7 @@ await context.Tracing.StopAsync(new()
 });
 ```
 
-This will record the trace and place it into the file named `trace.zip`.
+This will record the trace and place it into the file named `trace.zip` in your `test-results` directory.
 
 ## Opening the trace
 

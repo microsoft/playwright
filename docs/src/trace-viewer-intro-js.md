@@ -19,6 +19,7 @@ Playwright Trace Viewer is a GUI tool that lets you explore recorded Playwright 
     id="lfxjs--9ZQs"
     title="Viewing Playwright Traces"
 />
+
 ## Recording a Trace
 
 By default the [playwright.config](/test-configuration.md#record-test-trace) file will contain the configuration needed to create a `trace.zip` file for each test. Traces are setup to run `on-first-retry` meaning they will be run on the first retry of a failed test. Also `retries` are set to 2 when running on CI and 0 locally. This means the traces will be recorded on the first retry of a failed test but not on the first run and not on the second retry.
@@ -42,11 +43,7 @@ Traces are normally run in a Continuous Integration(CI) environment as locally y
 npx playwright test --trace on
 ```
 
-:::note 
-The `trace-on` flag was introduced in Playwright v1.25. Check your `package.json` to make sure you have at least this version of Playwright installed.
-:::
-
-## Opening the HTML Report
+## Opening the HTML report
 
 The HTML report shows you a report of all your tests that have been ran and on which browsers as well as how long they took. Tests can be filtered by passed tests, failed, flakey or skipped tests. You can also search for a particular test. Clicking on a test will open the detailed view where you can see more information on your tests such as the errors, the test steps and the trace.
 
@@ -54,9 +51,12 @@ The HTML report shows you a report of all your tests that have been ran and on w
 npx playwright show-report
 ```
 
+## Opening the trace
+
 In the HTML report click on the trace icon next to the test name file name to directly open the trace for the required test.
 
 ![playwright html report](https://github.com/microsoft/playwright/assets/13063165/a3da1fb5-6619-4c03-98aa-adf65c376525)
+
 
 You can also click open the detailed view of the test and scroll down to the `'Traces'` tab and open the trace by clicking on the trace screenshot.
 
@@ -65,7 +65,7 @@ You can also click open the detailed view of the test and scroll down to the `'T
 
 To learn more about reporters check out our detailed guide on reporters including the [HTML Reporter](/test-reporters.md#html-reporter).
 
-## Viewing the Trace
+## Viewing the trace
 
 View traces of your test by clicking through each action or hovering using the timeline and see the state of the page before and after the action. Inspect the log, source and network, errors and console during each step of the test. The trace viewer creates a DOM snapshot so you can fully interact with it and open the browser DevTools to inspect the HTML, CSS, Console etc.
 

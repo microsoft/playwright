@@ -17,34 +17,12 @@ Playwright Trace Viewer is a GUI tool that helps you explore recorded Playwright
     title="Viewing Playwright Traces"
 />
 
-
-## Viewing the trace
-
-You can open the saved trace using Playwright CLI or in your browser on [trace.playwright.dev](https://trace.playwright.dev).
-
-```bash js
-npx playwright show-trace trace.zip
-```
-
-```bash java
-mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="show-trace trace.zip"
-```
-
-```bash python
-playwright show-trace trace.zip
-```
-
-```bash csharp
-pwsh bin/Debug/netX/playwright.ps1 show-trace trace.zip
-```
-
+## Trace Viewer features
 ### Actions
 
 In the Actions tab you can see what locator was used for every action and how long each one took to run. Hover over each action of your test and visually see the change in the DOM snapshot. Go back and forward in time and click an action to inspect and debug. Use the Before and After tabs to visually see what happened before and after the action. 
 
 ![actions tab in trace viewer](https://github.com/microsoft/playwright/assets/13063165/948b65cd-f0fd-4c7f-8e53-2c632b5a07f1)
-
-<br/><br/>
 
 **Selecting each action reveals:**
 - action snapshots
@@ -53,7 +31,7 @@ In the Actions tab you can see what locator was used for every action and how lo
 - network log for this action
 - errors and console logs for this action
 
-In the properties pane you will also see rendered DOM snapshots associated with each action.
+In the properties panel you will also see rendered DOM snapshots associated with each action.
 
 ### Screenshots
 
@@ -189,7 +167,55 @@ You can also use `trace: 'retain-on-failure'` if you do not enable retries but s
 If you are not using Playwright as a Test Runner, use the [`property: BrowserContext.tracing`] API instead.
 
 ## Recording a trace
-* langs: java, csharp, python
+* langs: python
+
+Traces can be recorded by running your tests with the `--tracing` flag.
+
+```bash
+pytest --tracing on
+```
+Options for tracing are:
+- `on`: Record trace for each test
+- `off`: Do not record trace. (default)
+- `retain-on-failure`: Record trace for each test, but remove all traces from successful test runs.
+
+This will record the trace and place it into the file named `trace.zip` in your `test-results` directory.
+
+<details><summary>If you are not using Pytest, click here to learn how to record traces.
+</summary>
+
+```python async
+browser = await chromium.launch()
+context = await browser.new_context()
+
+# Start tracing before creating / navigating a page.
+await context.tracing.start(screenshots=True, snapshots=True, sources=True)
+
+page = await context.new_page()
+await page.goto("https://playwright.dev")
+
+# Stop tracing and export it into a zip archive.
+await context.tracing.stop(path = "trace.zip")
+```
+
+```python sync
+browser = chromium.launch()
+context = browser.new_context()
+
+# Start tracing before creating / navigating a page.
+context.tracing.start(screenshots=True, snapshots=True, sources=True)
+
+page = context.new_page()
+page.goto("https://playwright.dev")
+
+# Stop tracing and export it into a zip archive.
+context.tracing.stop(path = "trace.zip")
+```
+
+</details>
+
+## Recording a trace
+* langs: java, csharp
 
 Traces can be recorded using the [`property: BrowserContext.tracing`] API as follows:
 
@@ -209,32 +235,6 @@ page.navigate("https://playwright.dev");
 // Stop tracing and export it into a zip archive.
 context.tracing().stop(new Tracing.StopOptions()
   .setPath(Paths.get("trace.zip")));
-```
-
-```python async
-browser = await chromium.launch()
-context = await browser.new_context()
-
-# Start tracing before creating / navigating a page.
-await context.tracing.start(screenshots=True, snapshots=True, sources=True)
-
-await page.goto("https://playwright.dev")
-
-# Stop tracing and export it into a zip archive.
-await context.tracing.stop(path = "trace.zip")
-```
-
-```python sync
-browser = chromium.launch()
-context = browser.new_context()
-
-# Start tracing before creating / navigating a page.
-context.tracing.start(screenshots=True, snapshots=True, sources=True)
-
-page.goto("https://playwright.dev")
-
-# Stop tracing and export it into a zip archive.
-context.tracing.stop(path = "trace.zip")
 ```
 
 ```csharp
@@ -259,11 +259,11 @@ await context.Tracing.StopAsync(new()
 });
 ```
 
-This will record the trace and place it into the file named `trace.zip`.
+This will record the trace and place it into the file named `trace.zip` in your `test-results` directory.
 
-## Viewing the trace
+## Opening the trace
 
-You can open the saved trace using Playwright CLI or in your browser on [`trace.playwright.dev`](https://trace.playwright.dev).
+You can open the saved trace using the Playwright CLI or in your browser on [`trace.playwright.dev`](https://trace.playwright.dev). Make sure to add the full path to where your `trace.zip` file is located. This should include the `test-results` directory followed by the test name and then `trace.zip`.
 
 ```bash js
 npx playwright show-trace trace.zip
