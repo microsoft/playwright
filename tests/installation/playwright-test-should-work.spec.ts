@@ -16,7 +16,7 @@
 import { test } from './npmTest';
 import path from 'path';
 
-test('npm: @playwright/test should work', async ({ exec, nodeMajorVersion, tmpWorkspace }) => {
+test('npm: @playwright/test should work', async ({ exec, tmpWorkspace }) => {
   await exec('npm i --foreground-scripts @playwright/test');
   await exec('npx playwright test -c .', { expectToExitWithError: true, message: 'should not be able to run tests without installing browsers' });
 
@@ -24,33 +24,30 @@ test('npm: @playwright/test should work', async ({ exec, nodeMajorVersion, tmpWo
   await exec('npx playwright test -c . --browser=all --reporter=list,json sample.spec.js', { env: {  PLAYWRIGHT_JSON_OUTPUT_NAME: 'report.json' } });
   await exec('node read-json-report.js', path.join(tmpWorkspace, 'report.json'));
   await exec('node sanity.js @playwright/test chromium firefox webkit');
-  if (nodeMajorVersion >= 14)
-    await exec('node', 'esm-playwright-test.mjs');
+  await exec('node', 'esm-playwright-test.mjs');
 });
 
-test('npm: playwright + @playwright/test should work', async ({ exec, nodeMajorVersion, tmpWorkspace }) => {
+test('npm: playwright + @playwright/test should work', async ({ exec, tmpWorkspace }) => {
   await exec('npm i --foreground-scripts playwright');
   await exec('npm i --foreground-scripts @playwright/test');
   await exec('npx playwright install');
   await exec('npx playwright test -c . --browser=all --reporter=list,json sample.spec.js', { env: {  PLAYWRIGHT_JSON_OUTPUT_NAME: 'report.json' } });
   await exec('node read-json-report.js', path.join(tmpWorkspace, 'report.json'));
   await exec('node sanity.js @playwright/test chromium firefox webkit');
-  if (nodeMajorVersion >= 14)
-    await exec('node', 'esm-playwright-test.mjs');
+  await exec('node', 'esm-playwright-test.mjs');
 });
 
-test('npm: @playwright/test + playwright-core should work', async ({ exec, nodeMajorVersion, tmpWorkspace }) => {
+test('npm: @playwright/test + playwright-core should work', async ({ exec, tmpWorkspace }) => {
   await exec('npm i --foreground-scripts @playwright/test');
   await exec('npm i --foreground-scripts playwright-core');
   await exec('npx playwright install');
   await exec('npx playwright test -c . --browser=all --reporter=list,json sample.spec.js', { env: {  PLAYWRIGHT_JSON_OUTPUT_NAME: 'report.json' } });
   await exec('node read-json-report.js', path.join(tmpWorkspace, 'report.json'));
   await exec('node sanity.js @playwright/test chromium firefox webkit');
-  if (nodeMajorVersion >= 14)
-    await exec('node', 'esm-playwright-test.mjs');
+  await exec('node', 'esm-playwright-test.mjs');
 });
 
-test('yarn: @playwright/test should work', async ({ exec, nodeMajorVersion, tmpWorkspace }) => {
+test('yarn: @playwright/test should work', async ({ exec, tmpWorkspace }) => {
   await exec('yarn add @playwright/test');
   await exec('yarn playwright test -c .', { expectToExitWithError: true, message: 'should not be able to run tests without installing browsers' });
 
@@ -58,17 +55,15 @@ test('yarn: @playwright/test should work', async ({ exec, nodeMajorVersion, tmpW
   await exec('yarn playwright test -c . --browser=all --reporter=list,json sample.spec.js', { env: {  PLAYWRIGHT_JSON_OUTPUT_NAME: 'report.json' } });
   await exec('node read-json-report.js', path.join(tmpWorkspace, 'report.json'));
   await exec('node sanity.js @playwright/test chromium firefox webkit');
-  if (nodeMajorVersion >= 14)
-    await exec('node', 'esm-playwright-test.mjs');
+  await exec('node', 'esm-playwright-test.mjs');
 });
 
-test('pnpm: @playwright/test should work', async ({ exec, nodeMajorVersion, tmpWorkspace }) => {
+test('pnpm: @playwright/test should work', async ({ exec, tmpWorkspace }) => {
   await exec('pnpm add @playwright/test');
   await exec('pnpm exec playwright test -c .', { expectToExitWithError: true, message: 'should not be able to run tests without installing browsers' });
   await exec('pnpm exec playwright install');
   await exec('pnpm exec playwright test -c . --browser=all --reporter=list,json sample.spec.js', { env: {  PLAYWRIGHT_JSON_OUTPUT_NAME: 'report.json' } });
   await exec('node read-json-report.js', path.join(tmpWorkspace, 'report.json'));
   await exec('node sanity.js @playwright/test chromium firefox webkit');
-  if (nodeMajorVersion >= 14)
-    await exec('node', 'esm-playwright-test.mjs');
+  await exec('node', 'esm-playwright-test.mjs');
 });
