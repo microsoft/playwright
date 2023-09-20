@@ -1171,7 +1171,7 @@ For example, consider a scenario where you'd like to click on a "New email" butt
 
 :::note
 If both "New email" button and security dialog appear on screen, the "or" locator will match both of them,
-possibly yielding strictness assertion.
+possibly throwing the ["strict mode violation" error](#strictness).
 :::
 
 ```js
