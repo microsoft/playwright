@@ -911,6 +911,18 @@ test('should open trace-1.31', async ({ showTraceViewer }) => {
   await expect(snapshot.locator('[__playwright_target__]')).toHaveText(['Submit']);
 });
 
+test('should open trace-1.37', async ({ showTraceViewer }) => {
+  const traceViewer = await showTraceViewer([path.join(__dirname, '../assets/trace-1.37.zip')]);
+  const snapshot = await traceViewer.snapshotFrame('page.goto');
+  await expect(snapshot.locator('div')).toHaveCSS('background-color', 'rgb(255, 0, 0)');
+
+  await traceViewer.showConsoleTab();
+  await expect(traceViewer.consoleLineMessages).toHaveText(['hello {foo: bar}']);
+
+  await traceViewer.showNetworkTab();
+  await expect(traceViewer.networkRequests).toContainText([/200GET\/index.htmltext\/html/, /200GET\/style.cssx-unknown/]);
+});
+
 test('should prefer later resource request with the same method', async ({ page, server, runAndTrace }) => {
   const html = `
     <body>

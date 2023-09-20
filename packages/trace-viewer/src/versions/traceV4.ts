@@ -14,23 +14,94 @@
  * limitations under the License.
  */
 
-import type { Point, SerializedError, StackFrame } from '@protocol/channels';
-import type { Language } from '../../playwright-core/src/utils/isomorphic/locatorGenerators';
-import type { FrameSnapshot, ResourceSnapshot } from './snapshot';
+import type { Entry as ResourceSnapshot } from '../../../trace/src/har';
 
-export type Size = { width: number, height: number };
+type Language = 'javascript' | 'python' | 'java' | 'csharp' | 'jsonl';
+type Point = { x: number, y: number };
+type Size = { width: number, height: number };
 
-// Make sure you add _modernize_N_to_N1(event: any) to traceModel.ts.
-export type VERSION = 5;
+type StackFrame = {
+  file: string,
+  line: number,
+  column: number,
+  function?: string,
+};
 
-export type BrowserContextEventOptions = {
+type SerializedValue = {
+  n?: number,
+  b?: boolean,
+  s?: string,
+  v?: 'null' | 'undefined' | 'NaN' | 'Infinity' | '-Infinity' | '-0',
+  d?: string,
+  u?: string,
+  bi?: string,
+  m?: SerializedValue,
+  se?: SerializedValue,
+  r?: {
+    p: string,
+    f: string,
+  },
+  a?: SerializedValue[],
+  o?: {
+    k: string,
+    v: SerializedValue,
+  }[],
+  h?: number,
+  id?: number,
+  ref?: number,
+};
+
+type SerializedError = {
+  error?: {
+    message: string,
+    name: string,
+    stack?: string,
+  },
+  value?: SerializedValue,
+};
+
+type NodeSnapshot =
+  // Text node.
+  string |
+  // Subtree reference, "x snapshots ago, node #y". Could point to a text node.
+  // Only nodes that are not references are counted, starting from zero, using post-order traversal.
+  [ [number, number] ] |
+  // Just node name.
+  [ string ] |
+  // Node name, attributes, child nodes.
+  // Unfortunately, we cannot make this type definition recursive, therefore "any".
+  [ string, { [attr: string]: string }, ...any ];
+
+
+type ResourceOverride = {
+  url: string,
+  sha1?: string,
+  ref?: number
+};
+
+type FrameSnapshot = {
+  snapshotName?: string,
+  callId: string,
+  pageId: string,
+  frameId: string,
+  frameUrl: string,
+  timestamp: number,
+  collectionTime: number,
+  doctype?: string,
+  html: NodeSnapshot,
+  resourceOverrides: ResourceOverride[],
+  viewport: { width: number, height: number },
+  isMainFrame: boolean,
+};
+
+type BrowserContextEventOptions = {
   viewport?: Size,
   deviceScaleFactor?: number,
   isMobile?: boolean,
   userAgent?: string,
 };
 
-export type ContextCreatedTraceEvent = {
+type ContextCreatedTraceEvent = {
   version: number,
   type: 'context-options',
   browserName: string,
@@ -43,7 +114,7 @@ export type ContextCreatedTraceEvent = {
   testIdAttributeName?: string,
 };
 
-export type ScreencastFrameTraceEvent = {
+type ScreencastFrameTraceEvent = {
   type: 'screencast-frame',
   pageId: string,
   sha1: string,
@@ -52,7 +123,7 @@ export type ScreencastFrameTraceEvent = {
   timestamp: number,
 };
 
-export type BeforeActionTraceEvent = {
+type BeforeActionTraceEvent = {
   type: 'before',
   callId: string;
   startTime: number;
@@ -67,14 +138,14 @@ export type BeforeActionTraceEvent = {
   parentId?: string;
 };
 
-export type InputActionTraceEvent = {
+type InputActionTraceEvent = {
   type: 'input',
   callId: string;
   inputSnapshot?: string;
   point?: Point;
 };
 
-export type AfterActionTraceEventAttachment = {
+type AfterActionTraceEventAttachment = {
   name: string;
   contentType: string;
   path?: string;
@@ -82,7 +153,7 @@ export type AfterActionTraceEventAttachment = {
   base64?: string;
 };
 
-export type AfterActionTraceEvent = {
+type AfterActionTraceEvent = {
   type: 'after',
   callId: string;
   endTime: number;
@@ -93,7 +164,7 @@ export type AfterActionTraceEvent = {
   result?: any;
 };
 
-export type EventTraceEvent = {
+type EventTraceEvent = {
   type: 'event',
   time: number;
   class: string;
@@ -102,37 +173,38 @@ export type EventTraceEvent = {
   pageId?: string;
 };
 
-export type ConsoleMessageTraceEvent = {
-  type: 'console';
-  time: number;
-  pageId?: string;
-  messageType: string,
-  text: string,
-  args?: { preview: string, value: any }[],
-  location: {
-    url: string,
-    lineNumber: number,
-    columnNumber: number,
-  },
+type ConsoleMessageTraceEvent = {
+  type: 'object';
+  class: string;
+  initializer: {
+    type: string,
+    text: string,
+    location: {
+      url: string,
+      lineNumber: number,
+      columnNumber: number,
+    },
+  };
+  guid: string;
 };
 
-export type ResourceSnapshotTraceEvent = {
+type ResourceSnapshotTraceEvent = {
   type: 'resource-snapshot',
   snapshot: ResourceSnapshot,
 };
 
-export type FrameSnapshotTraceEvent = {
+type FrameSnapshotTraceEvent = {
   type: 'frame-snapshot',
   snapshot: FrameSnapshot,
 };
 
-export type ActionTraceEvent = {
+type ActionTraceEvent = {
   type: 'action',
 } & Omit<BeforeActionTraceEvent, 'type'>
   & Omit<AfterActionTraceEvent, 'type'>
   & Omit<InputActionTraceEvent, 'type'>;
 
-export type StdioTraceEvent = {
+type StdioTraceEvent = {
   type: 'stdout' | 'stderr';
   timestamp: number;
   text?: string;

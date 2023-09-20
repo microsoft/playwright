@@ -17,7 +17,7 @@
 import type { Language } from '@isomorphic/locatorGenerators';
 import type { ResourceSnapshot } from '@trace/snapshot';
 import type * as trace from '@trace/trace';
-import type { ActionTraceEvent, EventTraceEvent } from '@trace/trace';
+import type { ActionTraceEvent } from '@trace/trace';
 import type { ContextEntry, PageEntry } from '../entries';
 
 const contextSymbol = Symbol('context');
@@ -58,7 +58,7 @@ export class MultiTraceModel {
   readonly options: trace.BrowserContextEventOptions;
   readonly pages: PageEntry[];
   readonly actions: ActionTraceEventInContext[];
-  readonly events: trace.EventTraceEvent[];
+  readonly events: (trace.EventTraceEvent | trace.ConsoleMessageTraceEvent)[];
   readonly stdio: trace.StdioTraceEvent[];
   readonly hasSource: boolean;
   readonly sdkLanguage: Language | undefined;
@@ -83,7 +83,7 @@ export class MultiTraceModel {
     this.endTime = contexts.map(c => c.endTime).reduce((prev, cur) => Math.max(prev, cur), Number.MIN_VALUE);
     this.pages = ([] as PageEntry[]).concat(...contexts.map(c => c.pages));
     this.actions = mergeActions(contexts);
-    this.events = ([] as EventTraceEvent[]).concat(...contexts.map(c => c.events));
+    this.events = ([] as (trace.EventTraceEvent | trace.ConsoleMessageTraceEvent)[]).concat(...contexts.map(c => c.events));
     this.stdio = ([] as trace.StdioTraceEvent[]).concat(...contexts.map(c => c.stdio));
     this.hasSource = contexts.some(c => c.hasSource);
     this.resources = [...contexts.map(c => c.resources)].flat();
@@ -203,7 +203,7 @@ export function idForAction(action: ActionTraceEvent) {
   return `${action.pageId || 'none'}:${action.callId}`;
 }
 
-export function context(action: ActionTraceEvent | EventTraceEvent): ContextEntry {
+export function context(action: ActionTraceEvent | trace.EventTraceEvent): ContextEntry {
   return (action as any)[contextSymbol];
 }
 
@@ -218,24 +218,22 @@ export function prevInList(action: ActionTraceEvent): ActionTraceEvent {
 export function stats(action: ActionTraceEvent): { errors: number, warnings: number } {
   let errors = 0;
   let warnings = 0;
-  const c = context(action);
   for (const event of eventsForAction(action)) {
-    if (event.method === 'console') {
-      const { guid } = event.params.message;
-      const type = c.initializers[guid]?.type;
+    if (event.type === 'console') {
+      const type = event.messageType;
       if (type === 'warning')
         ++warnings;
       else if (type === 'error')
         ++errors;
     }
-    if (event.method === 'pageError')
+    if (event.type === 'event' && event.method === 'pageError')
       ++errors;
   }
   return { errors, warnings };
 }
 
-export function eventsForAction(action: ActionTraceEvent): EventTraceEvent[] {
-  let result: EventTraceEvent[] = (action as any)[eventsSymbol];
+export function eventsForAction(action: ActionTraceEvent): (trace.EventTraceEvent | trace.ConsoleMessageTraceEvent)[] {
+  let result: (trace.EventTraceEvent | trace.ConsoleMessageTraceEvent)[] = (action as any)[eventsSymbol];
   if (result)
     return result;
 
