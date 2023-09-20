@@ -26,7 +26,7 @@ timeouts and racy checks in their tests altogether.
 - [How to perform actions](/writing-tests.md#actions)
 - [How to use assertions](/writing-tests.md#assertions)
 - [How tests run in isolation](/writing-tests.md#test-isolation)
-- [How to use test hooks](/writing-tests.md#using-test-hooks)
+- [How to use test hooks](/writing-tests.md#using-fixtures)
 
 ## First test
 
