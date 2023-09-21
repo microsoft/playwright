@@ -1,6 +1,6 @@
 {
   "name": "@playwright/test",
-  "version": "1.38.0",
+  "version": "1.38.1",
   "description": "A high-level API to automate web browsers",
   "repository": "github:Microsoft/playwright",
   "homepage": "https://playwright.dev",
@@ -27,6 +27,6 @@
   },
   "scripts": {},
   "dependencies": {
-    "playwright": "1.38.0"
+    "playwright": "1.38.1"
   }
 }
