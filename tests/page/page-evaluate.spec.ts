@@ -654,6 +654,23 @@ it('should not use toJSON in jsonValue', async ({ page }) => {
   expect(await resultHandle.jsonValue()).toEqual({ data: 'data', toJSON: {} });
 });
 
+it('should ignore buggy toJSON', async ({ page }) => {
+  const result = await page.evaluate(() => {
+    class Foo {
+      toJSON() {
+        throw new Error('Bad');
+      }
+    }
+    class Bar {
+      get toJSON() {
+        throw new Error('Also bad');
+      }
+    }
+    return { foo: new Foo(), bar: new Bar() };
+  });
+  expect(result).toEqual({ foo: {}, bar: {} });
+});
+
 it('should not expose the injected script export', async ({ page }) => {
   expect(await page.evaluate('typeof pwExport === "undefined"')).toBe(true);
 });
