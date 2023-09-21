@@ -58,8 +58,6 @@ scheme.SerializedValue = tObject({
   d: tOptional(tString),
   u: tOptional(tString),
   bi: tOptional(tString),
-  m: tOptional(tType('SerializedValue')),
-  se: tOptional(tType('SerializedValue')),
   r: tOptional(tObject({
     p: tString,
     f: tString,
