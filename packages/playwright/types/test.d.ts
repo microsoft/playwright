@@ -5083,7 +5083,7 @@ type AllMatchers<R, T> = PageAssertions & LocatorAssertions & APIResponseAsserti
 
 type IfAny<T, Y, N> = 0 extends (1 & T) ? Y : N;
 type Awaited<T> = T extends PromiseLike<infer U> ? U : T;
-type MakeMatchers<R, T> = {
+export type MakeMatchers<R, T> = {
   /**
    * If you know how to test something, `.not` lets you test its opposite.
    */
