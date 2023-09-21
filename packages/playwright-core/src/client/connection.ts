@@ -24,7 +24,6 @@ import { JSHandle } from './jsHandle';
 import { Request, Response, Route, WebSocket } from './network';
 import { Page, BindingCall } from './page';
 import { Worker } from './worker';
-import { ConsoleMessage } from './consoleMessage';
 import { Dialog } from './dialog';
 import { parseError } from '../protocol/serializers';
 import { CDPSession } from './cdpSession';
@@ -239,9 +238,6 @@ export class Connection extends EventEmitter {
         break;
       case 'CDPSession':
         result = new CDPSession(parent, type, guid, initializer);
-        break;
-      case 'ConsoleMessage':
-        result = new ConsoleMessage(parent, type, guid, initializer);
         break;
       case 'Dialog':
         result = new Dialog(parent, type, guid, initializer);

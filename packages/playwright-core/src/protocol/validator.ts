@@ -763,7 +763,15 @@ scheme.BrowserContextBindingCallEvent = tObject({
   binding: tChannel(['BindingCall']),
 });
 scheme.BrowserContextConsoleEvent = tObject({
-  message: tChannel(['ConsoleMessage']),
+  page: tChannel(['Page']),
+  type: tString,
+  text: tString,
+  args: tArray(tChannel(['ElementHandle', 'JSHandle'])),
+  location: tObject({
+    url: tString,
+    lineNumber: tNumber,
+    columnNumber: tNumber,
+  }),
 });
 scheme.BrowserContextCloseEvent = tOptional(tObject({}));
 scheme.BrowserContextDialogEvent = tObject({
@@ -2090,17 +2098,6 @@ scheme.WebSocketSocketErrorEvent = tObject({
   error: tString,
 });
 scheme.WebSocketCloseEvent = tOptional(tObject({}));
-scheme.ConsoleMessageInitializer = tObject({
-  page: tChannel(['Page']),
-  type: tString,
-  text: tString,
-  args: tArray(tChannel(['ElementHandle', 'JSHandle'])),
-  location: tObject({
-    url: tString,
-    lineNumber: tNumber,
-    columnNumber: tNumber,
-  }),
-});
 scheme.BindingCallInitializer = tObject({
   frame: tChannel(['Frame']),
   name: tString,
