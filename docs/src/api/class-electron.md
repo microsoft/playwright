@@ -147,4 +147,4 @@ Maximum time in milliseconds to wait for the application to start. Defaults to `
 * since: v1.36
 
 ### option: Electron.launch.keyboardLayout = %%-context-option-keyboard-layout-%%
-* since: v1.**
+* since: v1.39

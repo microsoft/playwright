@@ -338,7 +338,7 @@ use a temporary directory instead.
 * since: v1.8
 
 ### option: BrowserType.launchPersistentContext.keyboardLayout = %%-context-option-keyboard-layout-%%
-* since: v1.**
+* since: v1.39
 
 ## async method: BrowserType.launchServer
 * since: v1.8

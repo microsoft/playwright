@@ -260,7 +260,7 @@ await browser.CloseAsync();
 * since: v1.9
 
 ### option: Browser.newContext.keyboardLayout = %%-context-option-keyboard-layout-%%
-* since: v1.**
+* since: v1.39
 
 ## async method: Browser.newPage
 * since: v1.8
@@ -288,7 +288,7 @@ testing frameworks should explicitly create [`method: Browser.newContext`] follo
 * since: v1.9
 
 ### option: Browser.newPage.keyboardLayout = %%-context-option-keyboard-layout-%%
-* since: v1.**
+* since: v1.39
 
 ## async method: Browser.startTracing
 * since: v1.11
