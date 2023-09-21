@@ -208,9 +208,15 @@ export function source() {
           o.push({ k: name, v: serialize(item, handleSerializer, visitorInfo) });
       }
 
-      // If Object.keys().length === 0 we fall back to toJSON if it exists
-      if (o.length === 0 && value.toJSON && typeof value.toJSON === 'function')
-        return innerSerialize(value.toJSON(), handleSerializer, visitorInfo);
+      let jsonWrapper;
+      try {
+        // If Object.keys().length === 0 we fall back to toJSON if it exists
+        if (o.length === 0 && value.toJSON && typeof value.toJSON === 'function')
+          jsonWrapper = { value: value.toJSON() };
+      } catch (e) {
+      }
+      if (jsonWrapper)
+        return innerSerialize(jsonWrapper.value, handleSerializer, visitorInfo);
 
       return { o, id };
     }
