@@ -1176,7 +1176,18 @@ BrowserContext:
 
     console:
       parameters:
-        message: ConsoleMessage
+        page: Page
+        type: string
+        text: string
+        args:
+          type: array
+          items: JSHandle
+        location:
+          type: object
+          properties:
+            url: string
+            lineNumber: number
+            columnNumber: number
 
     close:
 
@@ -2942,25 +2953,6 @@ WebSocket:
         error: string
 
     close:
-
-
-ConsoleMessage:
-  type: interface
-
-  initializer:
-    page: Page
-    type: string
-    text: string
-    args:
-      type: array
-      items: JSHandle
-    location:
-      type: object
-      properties:
-        url: string
-        lineNumber: number
-        columnNumber: number
-
 
 
 BindingCall:

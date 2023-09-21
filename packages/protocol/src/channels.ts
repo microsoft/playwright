@@ -38,7 +38,6 @@ export type InitializerTraits<T> =
     T extends TracingChannel ? TracingInitializer :
     T extends DialogChannel ? DialogInitializer :
     T extends BindingCallChannel ? BindingCallInitializer :
-    T extends ConsoleMessageChannel ? ConsoleMessageInitializer :
     T extends WebSocketChannel ? WebSocketInitializer :
     T extends ResponseChannel ? ResponseInitializer :
     T extends RouteChannel ? RouteInitializer :
@@ -76,7 +75,6 @@ export type EventsTraits<T> =
     T extends TracingChannel ? TracingEvents :
     T extends DialogChannel ? DialogEvents :
     T extends BindingCallChannel ? BindingCallEvents :
-    T extends ConsoleMessageChannel ? ConsoleMessageEvents :
     T extends WebSocketChannel ? WebSocketEvents :
     T extends ResponseChannel ? ResponseEvents :
     T extends RouteChannel ? RouteEvents :
@@ -114,7 +112,6 @@ export type EventTargetTraits<T> =
     T extends TracingChannel ? TracingEventTarget :
     T extends DialogChannel ? DialogEventTarget :
     T extends BindingCallChannel ? BindingCallEventTarget :
-    T extends ConsoleMessageChannel ? ConsoleMessageEventTarget :
     T extends WebSocketChannel ? WebSocketEventTarget :
     T extends ResponseChannel ? ResponseEventTarget :
     T extends RouteChannel ? RouteEventTarget :
@@ -1445,7 +1442,15 @@ export type BrowserContextBindingCallEvent = {
   binding: BindingCallChannel,
 };
 export type BrowserContextConsoleEvent = {
-  message: ConsoleMessageChannel,
+  page: PageChannel,
+  type: string,
+  text: string,
+  args: JSHandleChannel[],
+  location: {
+    url: string,
+    lineNumber: number,
+    columnNumber: number,
+  },
 };
 export type BrowserContextCloseEvent = {};
 export type BrowserContextDialogEvent = {
@@ -3705,27 +3710,6 @@ export interface WebSocketEvents {
   'frameReceived': WebSocketFrameReceivedEvent;
   'socketError': WebSocketSocketErrorEvent;
   'close': WebSocketCloseEvent;
-}
-
-// ----------- ConsoleMessage -----------
-export type ConsoleMessageInitializer = {
-  page: PageChannel,
-  type: string,
-  text: string,
-  args: JSHandleChannel[],
-  location: {
-    url: string,
-    lineNumber: number,
-    columnNumber: number,
-  },
-};
-export interface ConsoleMessageEventTarget {
-}
-export interface ConsoleMessageChannel extends ConsoleMessageEventTarget, Channel {
-  _type_ConsoleMessage: boolean;
-}
-
-export interface ConsoleMessageEvents {
 }
 
 // ----------- BindingCall -----------
