@@ -34,4 +34,5 @@ export type MatcherResult<E, A> = {
   message: () => string;
   pass: boolean;
   actual?: A;
+  log?: string[];
 };

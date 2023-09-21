@@ -105,6 +105,7 @@ export async function toMatchText(
     message,
     pass,
     actual: received,
+    log,
   };
 }
 

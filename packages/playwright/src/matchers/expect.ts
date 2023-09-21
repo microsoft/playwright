@@ -253,6 +253,7 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
         params: args[0] ? { expected: args[0] } : undefined,
         wallTime,
         infectParentStepsWithError: this._info.isSoft,
+        laxParent: true,
       }) : undefined;
 
       const reportStepError = (jestError: Error) => {
