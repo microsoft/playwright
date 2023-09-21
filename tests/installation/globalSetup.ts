@@ -54,6 +54,8 @@ async function globalSetup() {
       build('playwright-browser-chromium', '@playwright/browser-chromium'),
       build('playwright-browser-firefox', '@playwright/browser-firefox'),
       build('playwright-browser-webkit', '@playwright/browser-webkit'),
+      build('playwright-ct-react', '@playwright/experimental-ct-react'),
+      build('playwright-ct-core', '@playwright/experimental-ct-core'),
     ]);
 
     const buildPlaywrightTestPlugin = async () => {
@@ -67,7 +69,7 @@ async function globalSetup() {
       const tgzName = packResult.stdout.trim();
       const outPath = path.resolve(path.join(outputDir, `playwright-test-plugin.tgz`));
       await fs.promises.rename(path.join(cwd, tgzName), outPath);
-      console.log('Built playwright-test-plugin');
+      console.log('Built: playwright-test-plugin');
       return ['playwright-test-plugin', outPath];
     };
     builds.push(await buildPlaywrightTestPlugin());
