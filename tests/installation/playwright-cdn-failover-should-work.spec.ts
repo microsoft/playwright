@@ -32,9 +32,10 @@ const parsedDownloads = (rawLogs: string) => {
   return out;
 };
 
+test.use({ useRealCDN: true });
 
 for (const cdn of CDNS) {
-  test(`playwright cdn failover should work (${cdn})`, async ({ exec, nodeMajorVersion, installedSoftwareOnDisk }) => {
+  test(`playwright cdn failover should work (${cdn})`, async ({ exec, installedSoftwareOnDisk }) => {
     await exec('npm i --foreground-scripts playwright');
     const result = await exec('npx playwright install', { env: { PW_TEST_CDN_THAT_SHOULD_WORK: cdn, DEBUG: 'pw:install' } });
     expect(result).toHaveLoggedSoftwareDownload(['chromium', 'ffmpeg', 'firefox', 'webkit']);
@@ -43,7 +44,6 @@ for (const cdn of CDNS) {
     for (const software of ['chromium', 'ffmpeg', 'firefox', 'webkit'])
       expect(dls).toContainEqual({ status: 200, name: software, url: expect.stringContaining(cdn) });
     await exec('node sanity.js playwright chromium firefox webkit');
-    if (nodeMajorVersion >= 14)
-      await exec('node esm-playwright.mjs');
+    await exec('node esm-playwright.mjs');
   });
 }
