@@ -81,10 +81,15 @@ function babelTransformOptions({ isTypeScript, isModule, pluginsPrologue, plugin
       pragma: jsxFactory,
       pragmaFrag: jsxFragmentFactory
     }]);
-  } else {
+  } else if (jsx === 'react-jsx' || jsx === 'react-jsxdev') {
     plugins.push([require('@babel/plugin-transform-react-jsx'), {
       runtime: 'automatic',
       importSource: jsxImportSource
+    }]);
+  } else {
+    plugins.push([require('@babel/plugin-transform-react-jsx'), {
+      runtime: 'automatic',
+      importSource: 'playwright'
     }]);
   }
 
