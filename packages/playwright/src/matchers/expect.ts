@@ -48,7 +48,7 @@ import {
 import { toMatchSnapshot, toHaveScreenshot, toHaveScreenshotStepTitle } from './toMatchSnapshot';
 import type { Expect } from '../../types/test';
 import { currentTestInfo, currentExpectTimeout, setCurrentExpectConfigureTimeout } from '../common/globals';
-import { filteredStackTrace, serializeError, stringifyStackFrames, trimLongString } from '../util';
+import { filteredStackTrace, stringifyStackFrames, trimLongString } from '../util';
 import {
   expect as expectLibrary,
   INVERTED_COLOR,
@@ -106,7 +106,7 @@ function createMatchers(actual: unknown, info: ExpectMetaInfo): any {
 }
 
 function createExpect(info: ExpectMetaInfo) {
-  const expectInstance: Expect = new Proxy(expectLibrary, {
+  const expectInstance: Expect<{}> = new Proxy(expectLibrary, {
     apply: function(target: any, thisArg: any, argumentsList: [unknown, ExpectMessage?]) {
       const [actual, messageOrOptions] = argumentsList;
       const message = isString(messageOrOptions) ? messageOrOptions : messageOrOptions?.message || info.message;
@@ -122,6 +122,13 @@ function createExpect(info: ExpectMetaInfo) {
     get: function(target: any, property: string) {
       if (property === 'configure')
         return configure;
+
+      if (property === 'extend') {
+        return (matchers: any) => {
+          expectLibrary.extend(matchers);
+          return expectInstance;
+        };
+      }
 
       if (property === 'soft') {
         return (actual: unknown, messageOrOptions?: ExpectMessage) => {
@@ -160,7 +167,7 @@ function createExpect(info: ExpectMetaInfo) {
   return expectInstance;
 }
 
-export const expect: Expect = createExpect({});
+export const expect: Expect<{}> = createExpect({});
 
 expectLibrary.setState({ expand: false });
 
@@ -269,9 +276,13 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
           jestError.stack = jestError.name + ': ' + newMessage + '\n' + stringifyStackFrames(stackFrames).join('\n');
         }
 
-        const serializedError = serializeError(jestError);
-        // Serialized error has filtered stack trace.
-        jestError.stack = serializedError.stack;
+        // Use the exact stack that we entered the matcher with.
+        jestError.stack = jestError.name + ': ' + jestError.message + '\n' + stringifyStackFrames(stackFrames).join('\n');
+        const serializedError = {
+          message: jestError.message,
+          stack: jestError.stack,
+        };
+
         step?.complete({ error: serializedError });
         if (this._info.isSoft)
           testInfo._failWithError(serializedError, false /* isHardError */);

@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-// eslint-disable-next-line spaced-comment
-/// <reference path="./expect.d.ts" />
-
 import { _baseTest as _test, expect as _expect } from '@playwright/test';
 import fs from 'fs';
 import os from 'os';
@@ -32,7 +29,7 @@ export const TMP_WORKSPACES = path.join(os.platform() === 'darwin' ? '/tmp' : os
 
 const debug = debugLogger('itest');
 
-_expect.extend({
+const expect = _expect.extend({
   toHaveLoggedSoftwareDownload(received: any, browsers: ('chromium' | 'firefox' | 'webkit' | 'ffmpeg')[]) {
     if (typeof received !== 'string')
       throw new Error(`Expected argument to be a string.`);
@@ -42,8 +39,12 @@ _expect.extend({
       downloaded.add(browser.toLowerCase());
 
     const expected = browsers;
-    if (expected.length === downloaded.size && expected.every(browser => downloaded.has(browser)))
-      return { pass: true };
+    if (expected.length === downloaded.size && expected.every(browser => downloaded.has(browser))) {
+      return {
+        pass: true,
+        message: () => 'Expected not to download browsers, but did.'
+      };
+    }
     return {
       pass: false,
       message: () => [
@@ -54,8 +55,6 @@ _expect.extend({
     };
   }
 });
-
-const expect = _expect;
 
 type ExecOptions = { cwd?: string, env?: Record<string, string>, message?: string, expectToExitWithError?: boolean };
 type ArgsOrOptions = [] | [...string[]] | [...string[], ExecOptions] | [ExecOptions];
@@ -199,7 +198,7 @@ export const test = _test
       },
       tsc: async ({ exec }, use) => {
         await exec('npm i --foreground-scripts typescript@3.8 @types/node@14');
-        await use((...args: ArgsOrOptions) => exec('npx', '-p', 'typescript@3.8', 'tsc', ...args));
+        await use((...args: ArgsOrOptions) => exec('npx', '-p', 'typescript@4.1.6', 'tsc', ...args));
       },
     });
 

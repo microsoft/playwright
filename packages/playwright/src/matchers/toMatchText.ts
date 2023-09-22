@@ -99,7 +99,6 @@ export async function toMatchText(
     };
 
   return {
-    locator: receiver,
     name: matcherName,
     expected,
     message,

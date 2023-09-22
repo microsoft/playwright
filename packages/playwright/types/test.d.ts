@@ -3363,7 +3363,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * ```
    *
    */
-  expect: Expect;
+  expect: Expect<{}>;
   /**
    * Extends the `test` object by defining fixtures and/or options that can be used in the tests.
    *
@@ -5083,38 +5083,81 @@ type AllMatchers<R, T> = PageAssertions & LocatorAssertions & APIResponseAsserti
 
 type IfAny<T, Y, N> = 0 extends (1 & T) ? Y : N;
 type Awaited<T> = T extends PromiseLike<infer U> ? U : T;
-type MakeMatchers<R, T> = {
+type ToUserMatcher<F> = F extends (first: any, ...args: infer Rest) => infer R ? (...args: Rest) => (R extends PromiseLike<infer U> ? Promise<void> : void) : never;
+type ToUserMatcherObject<T, ArgType> = {
+  [K in keyof T as T[K] extends (arg: ArgType, ...rest: any[]) => any ? K : never]: ToUserMatcher<T[K]>;
+};
+
+type MatcherHintColor = (arg: string) => string;
+
+export type MatcherHintOptions = {
+  comment?: string;
+  expectedColor?: MatcherHintColor;
+  isDirectExpectCall?: boolean;
+  isNot?: boolean;
+  promise?: string;
+  receivedColor?: MatcherHintColor;
+  secondArgument?: string;
+  secondArgumentColor?: MatcherHintColor;
+};
+
+export interface ExpectMatcherUtils {
+  matcherHint(matcherName: string, received: unknown, expected: unknown, options?: MatcherHintOptions): string;
+  printDiffOrStringify(expected: unknown, received: unknown, expectedLabel: string, receivedLabel: string, expand: boolean): string;
+  printExpected(value: unknown): string;
+  printReceived(object: unknown): string;
+  printWithType<T>(name: string, value: T, print: (value: T) => string): string;
+  diff(a: unknown, b: unknown): string | null;
+  stringify(object: unknown, maxDepth?: number, maxWidth?: number): string;
+}
+
+type State = {
+  isNot: boolean;
+  promise: 'rejects' | 'resolves' | '';
+  utils: ExpectMatcherUtils;
+};
+
+type MatcherReturnType = {
+  message: () => string;
+  pass: boolean;
+  name?: string;
+  expected?: unknown;
+  actual?: any;
+  log?: string[];
+};
+
+type MakeMatchers<R, T, ExtendedMatchers> = {
   /**
    * If you know how to test something, `.not` lets you test its opposite.
    */
-  not: MakeMatchers<R, T>;
+  not: MakeMatchers<R, T, ExtendedMatchers>;
   /**
    * Use resolves to unwrap the value of a fulfilled promise so any other
    * matcher can be chained. If the promise is rejected the assertion fails.
    */
-  resolves: MakeMatchers<Promise<R>, Awaited<T>>;
+  resolves: MakeMatchers<Promise<R>, Awaited<T>, ExtendedMatchers>;
   /**
    * Unwraps the reason of a rejected promise so any other matcher can be chained.
    * If the promise is fulfilled the assertion fails.
    */
-  rejects: MakeMatchers<Promise<R>, any>;
-} & IfAny<T, AllMatchers<R, T>, SpecificMatchers<R, T>>;
+  rejects: MakeMatchers<Promise<R>, any, ExtendedMatchers>;
+} & IfAny<T, AllMatchers<R, T>, SpecificMatchers<R, T> & ToUserMatcherObject<ExtendedMatchers, T>>;
 
-export type Expect = {
-  <T = unknown>(actual: T, messageOrOptions?: string | { message?: string }): MakeMatchers<void, T>;
-  soft: <T = unknown>(actual: T, messageOrOptions?: string | { message?: string }) => MakeMatchers<void, T>;
+export type Expect<ExtendedMatchers> = {
+  <T = unknown>(actual: T, messageOrOptions?: string | { message?: string }): MakeMatchers<void, T, ExtendedMatchers>;
+  soft: <T = unknown>(actual: T, messageOrOptions?: string | { message?: string }) => MakeMatchers<void, T, ExtendedMatchers>;
   poll: <T = unknown>(actual: () => T | Promise<T>, messageOrOptions?: string | { message?: string, timeout?: number, intervals?: number[] }) => BaseMatchers<Promise<void>, T> & {
     /**
      * If you know how to test something, `.not` lets you test its opposite.
      */
      not: BaseMatchers<Promise<void>, T>;
   };
-  extend(matchers: any): void;
+  extend<MoreMatchers extends Record<string, (this: State, receiver: any, ...args: any[]) => MatcherReturnType | Promise<MatcherReturnType>>>(matchers: MoreMatchers): Expect<ExtendedMatchers & MoreMatchers>;
   configure: (configuration: {
     message?: string,
     timeout?: number,
     soft?: boolean,
-  }) => Expect;
+  }) => Expect<ExtendedMatchers>;
   getState(): {
     expand?: boolean;
     isNot?: boolean;
@@ -5141,7 +5184,7 @@ export const test: TestType<PlaywrightTestArgs & PlaywrightTestOptions, Playwrig
 export default test;
 
 export const _baseTest: TestType<{}, {}>;
-export const expect: Expect;
+export const expect: Expect<{}>;
 
 /**
  * Defines Playwright config
