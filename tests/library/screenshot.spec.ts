@@ -378,6 +378,7 @@ browserTest.describe('element screenshot', () => {
   browserTest('should work if the main resource hangs', async ({ browser, browserName, mode, server }) => {
     browserTest.skip(mode !== 'default');
     browserTest.skip(browserName === 'chromium', 'https://github.com/microsoft/playwright/issues/9757');
+    browserTest.skip(browserName === 'webkit', 'Started hanging after fixing https://github.com/microsoft/playwright/issues/21620');
 
     const page = await browser.newPage();
     server.setRoute('/slow', (req, res) => {
