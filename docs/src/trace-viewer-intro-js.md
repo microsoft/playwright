@@ -37,7 +37,7 @@ export default defineConfig({
 
 To learn more about available options to record a trace check out our detailed guide on [Trace Viewer](/trace-viewer.md).
 
-Traces are normally run in a Continuous Integration(CI) environment as locally you can use [UI Mode](/test-ui-mode.md) for developing and debugging tests. However should you want to run traces locally without using [UI Mode](/test-ui-mode.md) you can force tracing to be on with `--trace on`.
+Traces are normally run in a Continuous Integration(CI) environment, because locally you can use [UI Mode](/test-ui-mode.md) for developing and debugging tests. However should you want to run traces locally without using [UI Mode](/test-ui-mode.md), you can force tracing to be on with `--trace on`.
 
 ```bash
 npx playwright test --trace on
@@ -67,7 +67,7 @@ To learn more about reporters check out our detailed guide on reporters includin
 
 ## Viewing the trace
 
-View traces of your test by clicking through each action or hovering using the timeline and see the state of the page before and after the action. Inspect the log, source and network, errors and console during each step of the test. The trace viewer creates a DOM snapshot so you can fully interact with it and open the browser DevTools to inspect the HTML, CSS, Console etc.
+View traces of your test by clicking through each action or hovering using the timeline and see the state of the page before and after the action. Inspect the log, source and network, errors and console during each step of the test. The trace viewer creates a DOM snapshot so you can fully interact with it and open the browser DevTools to inspect the HTML, CSS, etc.
 
 ![playwright trace viewer](https://github.com/microsoft/playwright/assets/13063165/10fe3585-8401-4051-b1c2-b2e92ac4c274)
 

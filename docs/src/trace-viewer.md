@@ -28,10 +28,6 @@ In the Actions tab you can see what locator was used for every action and how lo
 - action snapshots
 - action log
 - source code location
-- network log for this action
-- errors and console logs for this action
-
-In the properties panel you will also see rendered DOM snapshots associated with each action.
 
 ### Screenshots
 
@@ -44,7 +40,7 @@ Double click on an action to see the time range for that action. You can use the
 
 ### Snapshots
 
-When tracing with the [`option: snapshots`] option turned on, Playwright captures a set of complete DOM snapshots for each action. Depending on the type of the action, it will capture:
+When tracing with the [`option: snapshots`] option turned on (default), Playwright captures a set of complete DOM snapshots for each action. Depending on the type of the action, it will capture:
 
 | Type | Description |
 |------|-------------|
@@ -259,14 +255,14 @@ await context.Tracing.StopAsync(new()
 });
 ```
 
-This will record the trace and place it into the file named `trace.zip` in your `test-results` directory.
+This will record the trace and place it into the file named `trace.zip`.
 
 ## Opening the trace
 
-You can open the saved trace using the Playwright CLI or in your browser on [`trace.playwright.dev`](https://trace.playwright.dev). Make sure to add the full path to where your `trace.zip` file is located. This should include the `test-results` directory followed by the test name and then `trace.zip`.
+You can open the saved trace using the Playwright CLI or in your browser on [`trace.playwright.dev`](https://trace.playwright.dev). Make sure to add the full path to where your `trace.zip` file is located. This should include the full path to your `trace.zip` file.
 
 ```bash js
-npx playwright show-trace trace.zip
+npx playwright show-trace path/to/trace.zip
 ```
 
 ```bash java

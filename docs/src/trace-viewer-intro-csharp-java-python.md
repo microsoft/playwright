@@ -106,15 +106,11 @@ await context.Tracing.StopAsync(new()
 });
 ```
 
-This will record the trace and place it into the file named `trace.zip` in your `test-results` directory.
+This will record the trace and place it into the file named `trace.zip`.
 
 ## Opening the trace
 
 You can open the saved trace using the Playwright CLI or in your browser on [`trace.playwright.dev`](https://trace.playwright.dev). Make sure to add the full path to where your `trace.zip` file is located. This should include the `test-results` directory followed by the test name and then `trace.zip`.
-
-```bash js
-npx playwright show-trace trace.zip
-```
 
 ```bash java
 mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="show-trace trace.zip"
