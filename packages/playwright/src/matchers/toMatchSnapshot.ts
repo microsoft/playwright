@@ -160,7 +160,6 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
   createMatcherResult(message: string, pass: boolean, log?: string[]): ImageMatcherResult {
     const unfiltered: ImageMatcherResult = {
       name: this.matcherName,
-      locator: this.locator,
       expected: this.snapshotPath,
       actual: this.actualPath,
       diff: this.diffPath,

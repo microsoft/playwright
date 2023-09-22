@@ -153,81 +153,57 @@ export default defineConfig({
 
 You can extend Playwright assertions by providing custom matchers. These matchers will be available on the `expect` object.
 
-In this example we add a custom `toBeWithinRange` function in the configuration file. Custom matcher should return a `message` callback and a `pass` flag indicating whether the assertion passed.
+In this example we add a custom `toHaveAmount` function. Custom matcher should return a `message` callback and a `pass` flag indicating whether the assertion passed.
 
-```js tab=js-js title="playwright.config.ts"
-const { expect, defineConfig } = require('@playwright/test');
+```js title="fixtures.ts"
+import { expect as baseExpect } from '@playwright/test';
+import type { Page, Locator } from '@playwright/test';
 
-expect.extend({
-  toBeWithinRange(received, floor, ceiling) {
-    const pass = received >= floor && received <= ceiling;
-    if (pass) {
-      return {
-        message: () => 'passed',
-        pass: true,
-      };
-    } else {
-      return {
-        message: () => 'failed',
-        pass: false,
-      };
+export { test } from '@playwright/test';
+
+export const expect = baseExpect.extend({
+  async toHaveAmount(locator: Locator, expected: number, options?: { timeout?: number }) {
+    let pass: boolean;
+    let matcherResult: any;
+    try {
+      await baseExpect(locator).toHaveAttribute('data-amount', String(expected), options);
+      pass = true;
+    } catch (e: any) {
+      matcherResult = e.matcherResult;
+      pass = false;
     }
+
+    const message = pass
+      ? () => this.utils.matcherHint('toHaveAmount', locator, expected, { isNot: this.isNot }) +
+          '\n\n' +
+          `Expected: \${this.isNot ? 'not' : ''}\${this.utils.printExpected(expected)}\n` +
+          (matcherResult ? `Received: ${this.utils.printReceived(matcherResult.actual)}` : '')
+      : () =>  this.utils.matcherHint('toHaveAmount', locator, expected, expectOptions) +
+          '\n\n' +
+          `Expected: ${this.utils.printExpected(expected)}\n` +
+          (matcherResult ? `Received: ${this.utils.printReceived(matcherResult.actual)}` : '');
+
+    return {
+      message,
+      pass,
+      name: 'toHaveAmount',
+      expected,
+      actual: matcherResult?.actual,
+    };
   },
 });
-
-module.exports = defineConfig({});
 ```
 
-```js tab=js-ts title="playwright.config.ts"
-import { expect, defineConfig } from '@playwright/test';
-
-expect.extend({
-  toBeWithinRange(received: number, floor: number, ceiling: number) {
-    const pass = received >= floor && received <= ceiling;
-    if (pass) {
-      return {
-        message: () => 'passed',
-        pass: true,
-      };
-    } else {
-      return {
-        message: () => 'failed',
-        pass: false,
-      };
-    }
-  },
-});
-
-export default defineConfig({});
-```
-
-Now we can use `toBeWithinRange` in the test.
+Now we can use `toHaveAmount` in the test.
 
 ```js title="example.spec.ts"
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 
-test('numeric ranges', () => {
-  expect(100).toBeWithinRange(90, 110);
-  expect(101).not.toBeWithinRange(0, 100);
+test('amount', async () => {
+  await expect(page.locator('.cart')).toHaveAmount(4);
 });
 ```
 
 :::note
 Do not confuse Playwright's `expect` with the [`expect` library](https://jestjs.io/docs/expect). The latter is not fully integrated with Playwright test runner, so make sure to use Playwright's own `expect`.
 :::
-
-For TypeScript, also add the following to your [`global.d.ts`](https://www.typescriptlang.org/docs/handbook/declaration-files/templates/global-d-ts.html). If it does not exist, you need to create it inside your repository. Make sure that your `global.d.ts` gets included inside your `tsconfig.json` via the `files`, `include` or `compilerOptions.typeRoots` option so that your IDE will pick it up.
-
-You don't need it for JavaScript.
-
-```js title="global.d.ts"
-export {};
-
-declare global {
- namespace PlaywrightTest {
-    interface Matchers<R, T> {
-      toBeWithinRange(a: number, b: number): R;
-    }
-  }
-}
-```

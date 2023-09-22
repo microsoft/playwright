@@ -48,7 +48,7 @@ import {
 import { toMatchSnapshot, toHaveScreenshot, toHaveScreenshotStepTitle } from './toMatchSnapshot';
 import type { Expect } from '../../types/test';
 import { currentTestInfo, currentExpectTimeout, setCurrentExpectConfigureTimeout } from '../common/globals';
-import { filteredStackTrace, stringifyStackFrames, trimLongString } from '../util';
+import { filteredStackTrace, trimLongString } from '../util';
 import {
   expect as expectLibrary,
   INVERTED_COLOR,
@@ -58,6 +58,7 @@ import {
 export type { ExpectMatcherContext } from '../common/expectBundle';
 import { zones } from 'playwright-core/lib/utils';
 import { TestInfoImpl } from '../worker/testInfo';
+import { ExpectError } from './matcherHint';
 
 // #region
 // Mirrored from https://github.com/facebook/jest/blob/f13abff8df9a0e1148baf3584bcde6d1b479edc7/packages/expect/src/print.ts
@@ -263,31 +264,17 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
         laxParent: true,
       }) : undefined;
 
-      const reportStepError = (jestError: Error) => {
-        const message = jestError.message;
-        if (customMessage) {
-          const messageLines = message.split('\n');
-          const newMessage = [
-            customMessage,
-            '',
-            ...messageLines,
-          ].join('\n');
-          jestError.message = newMessage;
-          jestError.stack = jestError.name + ': ' + newMessage + '\n' + stringifyStackFrames(stackFrames).join('\n');
-        }
-
-        // Use the exact stack that we entered the matcher with.
-        jestError.stack = jestError.name + ': ' + jestError.message + '\n' + stringifyStackFrames(stackFrames).join('\n');
+      const reportStepError = (jestError: ExpectError) => {
+        const error = new ExpectError(jestError, customMessage, stackFrames);
         const serializedError = {
-          message: jestError.message,
-          stack: jestError.stack,
+          message: error.message,
+          stack: error.stack,
         };
-
         step?.complete({ error: serializedError });
         if (this._info.isSoft)
           testInfo._failWithError(serializedError, false /* isHardError */);
         else
-          throw jestError;
+          throw error;
       };
 
       const finalizer = () => {

@@ -31,6 +31,7 @@ test('toMatchText-based assertions should have matcher result', async ({ page })
       name: 'toHaveText',
       pass: false,
       log: expect.any(Array),
+      timeout: 1,
     });
 
     expect.soft(stripAnsi(e.toString())).toContain(`Error: Timed out 1ms waiting for expect(locator).toHaveText(expected)
@@ -52,6 +53,7 @@ Call log`);
       name: 'toHaveText',
       pass: true,
       log: expect.any(Array),
+      timeout: 1,
     });
     expect.soft(stripAnsi(e.toString())).toContain(`Error: Timed out 1ms waiting for expect(locator).not.toHaveText(expected)
 
@@ -77,6 +79,7 @@ test('toBeTruthy-based assertions should have matcher result', async ({ page }) 
       name: 'toBeVisible',
       pass: false,
       log: expect.any(Array),
+      timeout: 1,
     });
 
     expect.soft(stripAnsi(e.toString())).toContain(`Error: Timed out 1ms waiting for expect(locator).toBeVisible()
@@ -98,6 +101,7 @@ Call log`);
       name: 'toBeVisible',
       pass: true,
       log: expect.any(Array),
+      timeout: 1,
     });
 
     expect.soft(stripAnsi(e.toString())).toContain(`Error: Timed out 1ms waiting for expect(locator).not.toBeVisible()
@@ -123,6 +127,7 @@ test('toEqual-based assertions should have matcher result', async ({ page }) => 
       name: 'toHaveCount',
       pass: false,
       log: expect.any(Array),
+      timeout: 1,
     });
 
     expect.soft(stripAnsi(e.toString())).toContain(`Error: Timed out 1ms waiting for expect(locator).toHaveCount(expected)
@@ -143,6 +148,7 @@ Call log`);
       name: 'toHaveCount',
       pass: true,
       log: expect.any(Array),
+      timeout: 1,
     });
 
     expect.soft(stripAnsi(e.toString())).toContain(`Error: Timed out 1ms waiting for expect(locator).not.toHaveCount(expected)
@@ -171,6 +177,7 @@ test('toBeChecked({ checked: false }) should have expected: false', async ({ pag
       name: 'toBeChecked',
       pass: false,
       log: expect.any(Array),
+      timeout: 1,
     });
 
     expect.soft(stripAnsi(e.toString())).toContain(`Error: Timed out 1ms waiting for expect(locator).toBeChecked()
@@ -192,6 +199,7 @@ Call log`);
       name: 'toBeChecked',
       pass: true,
       log: expect.any(Array),
+      timeout: 1,
     });
 
     expect.soft(stripAnsi(e.toString())).toContain(`Error: Timed out 1ms waiting for expect(locator).not.toBeChecked()
@@ -213,6 +221,7 @@ Call log`);
       name: 'toBeChecked',
       pass: false,
       log: expect.any(Array),
+      timeout: 1,
     });
 
     expect.soft(stripAnsi(e.toString())).toContain(`Error: Timed out 1ms waiting for expect(locator).toBeChecked({ checked: false })
@@ -234,6 +243,7 @@ Call log`);
       name: 'toBeChecked',
       pass: true,
       log: expect.any(Array),
+      timeout: 1,
     });
 
     expect.soft(stripAnsi(e.toString())).toContain(`Error: Timed out 1ms waiting for expect(locator).not.toBeChecked({ checked: false })

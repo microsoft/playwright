@@ -105,6 +105,7 @@ export async function toMatchText(
     pass,
     actual: received,
     log,
+    timeout: timedOut ? timeout : undefined,
   };
 }
 
