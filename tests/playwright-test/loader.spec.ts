@@ -519,11 +519,23 @@ test('should load a jsx/tsx files in ESM mode', async ({ runInlineTest }) => {
 test('should load jsx with top-level component', async ({ runInlineTest }) => {
   const { exitCode, passed } = await runInlineTest({
     'a.spec.tsx': `
-      import { jsx } from 'react/jsx-runtime';
       import { test, expect } from '@playwright/test';
       const component = <div>Hello <span>world</span></div>;
       test('succeeds', () => {
-        expect(component).toEqual(jsx('div', { children: ['Hello ', jsx('span', { children: 'world' })] }));
+        expect(component).toEqual({
+          type: 'div',
+          props: {
+            children: [
+              'Hello ',
+              {
+                type: 'span',
+                props: {
+                  children: 'world'
+                },
+              }
+            ]
+          },
+        });
       });
     `,
   });
