@@ -649,7 +649,7 @@ test('should print expected/received on Ctrl+C', async ({ interactWithTestRunner
       `,
   }, { workers: 1 });
   await testProcess.waitForOutput('%%SEND-SIGINT%%');
-  process.kill(testProcess.process.pid!, 'SIGINT');
+  process.kill(-testProcess.process.pid!, 'SIGINT');
   const { exitCode } = await testProcess.exited;
   expect(exitCode).toBe(130);
 

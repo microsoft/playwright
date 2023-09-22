@@ -45,7 +45,7 @@ export class ProcessHost extends EventEmitter {
     this._extraEnv = env;
   }
 
-  async startRunner(runnerParams: any, options: { onStdOut?: (chunk: Buffer | string) => void, onStdErr?: (chunk: Buffer | string) => void } = {}) {
+  async startRunner(runnerParams: any, options: { onStdOut?: (chunk: Buffer | string) => void, onStdErr?: (chunk: Buffer | string) => void } = {}): Promise<ProcessExitData | undefined> {
     this.process = child_process.fork(require.resolve('../common/process'), {
       detached: false,
       env: { ...process.env, ...this._extraEnv },
@@ -93,10 +93,13 @@ export class ProcessHost extends EventEmitter {
     if (options.onStdErr)
       this.process.stderr?.on('data', options.onStdErr);
 
-    await new Promise<void>((resolve, reject) => {
-      this.process!.once('exit', (code, signal) => reject(new Error(`process exited with code "${code}" and signal "${signal}" before it became ready`)));
-      this.once('ready', () => resolve());
+    const error = await new Promise<ProcessExitData | undefined>(resolve => {
+      this.process!.once('exit', (code, signal) => resolve({ unexpectedly: true, code, signal }));
+      this.once('ready', () => resolve(undefined));
     });
+
+    if (error)
+      return error;
 
     const processParams: ProcessInitParams = {
       stdoutParams: {

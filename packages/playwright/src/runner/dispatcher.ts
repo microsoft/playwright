@@ -117,21 +117,27 @@ export class Dispatcher {
         return;
     }
 
+    const stopCallback = () => this.stop().catch(() => {});
+    const jobDispatcher = new JobDispatcher(job, this._reporter, this._failureTracker, stopCallback);
+    this._workerSlots[index].jobDispatcher = jobDispatcher;
+
     // 2. Start the worker if it is down.
+    let startError;
     if (!worker) {
       worker = this._createWorker(job, index, serializeConfig(this._config));
       this._workerSlots[index].worker = worker;
       worker.on('exit', () => this._workerSlots[index].worker = undefined);
-      await worker.start();
+      startError = await worker.start();
       if (this._isStopped) // Check stopped signal after async hop.
         return;
     }
 
     // 3. Run the job.
-    const stopCallback = () => this.stop().catch(() => {});
-    const jobDispatcher = new JobDispatcher(job, this._reporter, this._failureTracker, stopCallback);
-    this._workerSlots[index].jobDispatcher = jobDispatcher;
-    const result = await jobDispatcher.runInWorker(worker);
+    if (startError)
+      jobDispatcher.onExit(startError);
+    else
+      jobDispatcher.runInWorker(worker);
+    const result = await jobDispatcher.jobResult;
     this._workerSlots[index].jobDispatcher = undefined;
     this._updateCounterForWorkerHash(job.workerHash, -1);
 
@@ -265,7 +271,8 @@ export class Dispatcher {
 }
 
 class JobDispatcher {
-  private _jobResult = new ManualPromise<{ newJob?: TestGroup, didFail: boolean }>();
+  jobResult = new ManualPromise<{ newJob?: TestGroup, didFail: boolean }>();
+
   private _listeners: RegisteredListener[] = [];
   private _failedTests = new Set<TestCase>();
   private _remainingByTestId = new Map<string, TestCase>();
@@ -498,19 +505,19 @@ class JobDispatcher {
     this._finished({ didFail: true, newJob });
   }
 
-  private _onExit(data: ProcessExitData) {
+  onExit(data: ProcessExitData) {
     const unexpectedExitError: TestError | undefined = data.unexpectedly ? {
-      message: `Internal error: worker process exited unexpectedly (code=${data.code}, signal=${data.signal})`
+      message: `Error: worker process exited unexpectedly (code=${data.code}, signal=${data.signal})`
     } : undefined;
     this._onDone({ skipTestsDueToSetupFailure: [], fatalErrors: [], unexpectedExitError });
   }
 
   private _finished(result: { newJob?: TestGroup, didFail: boolean }) {
     eventsHelper.removeEventListeners(this._listeners);
-    this._jobResult.resolve(result);
+    this.jobResult.resolve(result);
   }
 
-  async runInWorker(worker: WorkerHost): Promise<{ newJob?: TestGroup, didFail: boolean }> {
+  runInWorker(worker: WorkerHost) {
     this._parallelIndex = worker.parallelIndex;
     this._workerIndex = worker.workerIndex;
 
@@ -529,9 +536,8 @@ class JobDispatcher {
       eventsHelper.addEventListener(worker, 'stepEnd', this._onStepEnd.bind(this)),
       eventsHelper.addEventListener(worker, 'attach', this._onAttach.bind(this)),
       eventsHelper.addEventListener(worker, 'done', this._onDone.bind(this)),
-      eventsHelper.addEventListener(worker, 'exit', this._onExit.bind(this)),
+      eventsHelper.addEventListener(worker, 'exit', this.onExit.bind(this)),
     ];
-    return this._jobResult;
   }
 
   currentlyRunning() {
