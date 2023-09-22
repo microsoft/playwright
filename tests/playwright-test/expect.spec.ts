@@ -15,7 +15,7 @@
  */
 
 import path from 'path';
-import { test, expect, parseTestRunnerOutput } from './playwright-test-fixtures';
+import { test, expect, parseTestRunnerOutput, stripAnsi } from './playwright-test-fixtures';
 
 test('should be able to call expect.extend in config', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -273,7 +273,12 @@ test('should work with custom PlaywrightTest namespace', async ({ runTSC }) => {
     'a.spec.ts': `
       import { test, expect, type Page, type APIResponse } from '@playwright/test';
       test.expect.extend({
-        toBeWithinRange() { },
+        toBeWithinRange() {
+          return {
+            pass: true,
+            message: () => '',
+          };
+        },
       });
 
       const page = {} as Page;
@@ -703,4 +708,154 @@ test('should not leak long expect message strings', async ({ runInlineTest }) =>
   // expect(result.output).toBe('');
   expect(result.failed).toBe(0);
   expect(result.exitCode).toBe(0);
+});
+
+test('should chain expect matchers and expose matcher utils (TSC)', async ({ runTSC }) => {
+  const result = await runTSC({
+    'a.spec.ts': `
+    import { test, expect as baseExpect } from '@playwright/test';
+    import type { Page, Locator } from '@playwright/test';
+
+    function callLogText(log: string[] | undefined): string {
+      if (!log)
+        return '';
+      return log.join('\\n');
+    }
+
+    const expect = baseExpect.extend({
+      async toHaveAmount(locator: Locator, expected: string, options?: { timeout?: number }) {
+        const baseAmount = locator.locator('.base-amount');
+
+        let pass: boolean;
+        let matcherResult: any;
+        try {
+          await baseExpect(baseAmount).toHaveAttribute('data-amount', expected, options);
+          pass = true;
+        } catch (e: any) {
+          matcherResult = e.matcherResult;
+          pass = false;
+        }
+
+        const expectOptions = {
+          isNot: this.isNot,
+        };
+
+        const log = callLogText(matcherResult?.log);
+        const message = pass
+          ? () => this.utils.matcherHint('toBe', locator, expected, expectOptions) +
+              '\\n\\n' +
+              \`Expected: \${this.isNot ? 'not' : ''}\${this.utils.printExpected(expected)}\\n\` +
+              (matcherResult ? \`Received: \${this.utils.printReceived(matcherResult.actual)}\` : '') +
+              log
+          : () =>  this.utils.matcherHint('toBe', locator, expected, expectOptions) +
+              '\\n\\n' +
+              \`Expected: \${this.utils.printExpected(expected)}\n\` +
+              (matcherResult ? \`Received: \${this.utils.printReceived(matcherResult.actual)}\` : '') +
+              log;
+
+        return {
+          name: 'toHaveAmount',
+          expected,
+          message,
+          pass,
+          actual: matcherResult?.actual,
+          log: matcherResult?.log,
+        };
+      },
+
+      async toBeANicePage(page: Page) {
+        return {
+          name: 'toBeANicePage',
+          expected: 1,
+          message: () => '',
+          pass: true,
+        };
+      }
+    });
+
+    test('custom matchers', async ({ page }) => {
+      await page.setContent(\`
+        <div>
+          <div class='base-amount' data-amount='2'></div>
+        </div>
+      \`);
+      await expect(page.locator('div')).toHaveAmount('3', { timeout: 1000 });
+      await expect(page).toBeANicePage();
+      // @ts-expect-error
+      await expect(page).toHaveAmount('3', { timeout: 1000 });
+      // @ts-expect-error
+      await expect(page.locator('div')).toBeANicePage();
+    });`
+  });
+  expect(result.exitCode).toBe(0);
+});
+
+test('should chain expect matchers and expose matcher utils', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+    import { test, expect as baseExpect } from '@playwright/test';
+    import type { Page, Locator } from '@playwright/test';
+
+    function callLogText(log: string[] | undefined): string {
+      if (!log)
+        return '';
+      return log.join('\\n');
+    }
+
+    const expect = baseExpect.extend({
+      async toHaveAmount(locator: Locator, expected: string, options?: { timeout?: number }) {
+        const baseAmount = locator.locator('.base-amount');
+
+        let pass: boolean;
+        let matcherResult: any;
+        try {
+          await baseExpect(baseAmount).toHaveAttribute('data-amount', expected, options);
+          pass = true;
+        } catch (e: any) {
+          matcherResult = e.matcherResult;
+          pass = false;
+        }
+
+        const expectOptions = {
+          isNot: this.isNot,
+        };
+
+        const log = callLogText(matcherResult?.log);
+        const message = pass
+          ? () => this.utils.matcherHint('toBe', locator, expected, expectOptions) +
+              '\\n\\n' +
+              \`Expected: \${this.isNot ? 'not' : ''}\${this.utils.printExpected(expected)}\\n\` +
+              (matcherResult ? \`Received: \${this.utils.printReceived(matcherResult.actual)}\` : '') +
+              log
+          : () =>  this.utils.matcherHint('toBe', locator, expected, expectOptions) +
+              '\\n\\n' +
+              \`Expected: \${this.utils.printExpected(expected)}\n\` +
+              (matcherResult ? \`Received: \${this.utils.printReceived(matcherResult.actual)}\` : '') +
+              log;
+
+        return {
+          name: 'toHaveAmount',
+          expected,
+          message,
+          pass,
+          actual: matcherResult?.actual,
+          log: matcherResult?.log,
+        };
+      },
+    });
+
+    test('custom matchers', async ({ page }) => {
+      await page.setContent(\`
+        <div>
+          <div class='base-amount' data-amount='2'></div>
+        </div>
+      \`);
+      await expect(page.locator('div')).toHaveAmount('3', { timeout: 1000 });
+    });`
+  }, { workers: 1 });
+  const output = stripAnsi(result.output);
+  expect(output).toContain(`await expect(page.locator('div')).toHaveAmount('3', { timeout: 1000 });`);
+  expect(output).toContain('a.spec.ts:60');
+  expect(result.failed).toBe(1);
+  expect(result.exitCode).toBe(1);
 });
