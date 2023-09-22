@@ -552,6 +552,28 @@ test('should handle src=blob', async ({ page, server, runAndTrace, browserName }
   expect(size).toBe(10);
 });
 
+test('should preserve currentSrc', async ({ browser, server, showTraceViewer }) => {
+  const traceFile = test.info().outputPath('trace.zip');
+  const page = await browser.newPage({ deviceScaleFactor: 3 });
+  await page.context().tracing.start({ snapshots: true, screenshots: true, sources: true });
+  await page.setViewportSize({ width: 300, height: 300 });
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`
+    <picture>
+      <source srcset="digits/1.png 1x, digits/2.png 2x, digits/3.png 3x">
+      <img id=target1 src="digits/0.png">
+    </picture>
+    <img id=target2 srcset="digits/4.png 1x, digits/5.png 2x, digits/6.png 3x">
+  `);
+  await page.context().tracing.stop({ path: traceFile });
+  await page.close();
+
+  const traceViewer = await showTraceViewer([traceFile]);
+  const frame = await traceViewer.snapshotFrame('page.setContent');
+  await expect(frame.locator('#target1')).toHaveAttribute('src', server.PREFIX + '/digits/3.png');
+  await expect(frame.locator('#target2')).toHaveAttribute('src', server.PREFIX + '/digits/6.png');
+});
+
 test('should register custom elements', async ({ page, server, runAndTrace }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.goto(server.EMPTY_PAGE);
@@ -652,7 +674,7 @@ test('should show action source', async ({ showTraceViewer }) => {
 
   await page.click('text=Source');
   await expect(page.locator('.source-line-running')).toContainText('await page.getByText(\'Click\').click()');
-  await expect(page.getByTestId('stack-trace').locator('.list-view-entry.selected')).toHaveText(/doClick.*trace-viewer\.spec\.ts:[\d]+/);
+  await expect(page.getByTestId('stack-trace-list').locator('.list-view-entry.selected')).toHaveText(/doClick.*trace-viewer\.spec\.ts:[\d]+/);
 });
 
 test('should follow redirects', async ({ page, runAndTrace, server, asset }) => {
@@ -889,6 +911,18 @@ test('should open trace-1.31', async ({ showTraceViewer }) => {
   await expect(snapshot.locator('[__playwright_target__]')).toHaveText(['Submit']);
 });
 
+test('should open trace-1.37', async ({ showTraceViewer }) => {
+  const traceViewer = await showTraceViewer([path.join(__dirname, '../assets/trace-1.37.zip')]);
+  const snapshot = await traceViewer.snapshotFrame('page.goto');
+  await expect(snapshot.locator('div')).toHaveCSS('background-color', 'rgb(255, 0, 0)');
+
+  await traceViewer.showConsoleTab();
+  await expect(traceViewer.consoleLineMessages).toHaveText(['hello {foo: bar}']);
+
+  await traceViewer.showNetworkTab();
+  await expect(traceViewer.networkRequests).toContainText([/200GET\/index.htmltext\/html/, /200GET\/style.cssx-unknown/]);
+});
+
 test('should prefer later resource request with the same method', async ({ page, server, runAndTrace }) => {
   const html = `
     <body>
@@ -973,4 +1007,97 @@ test('should ignore 304 responses', async ({ page, server, runAndTrace }) => {
   });
   const frame = await traceViewer.snapshotFrame('locator.click');
   await expect(frame.locator('body')).toHaveCSS('background-color', 'rgb(123, 123, 123)');
+});
+
+test('should pick locator in iframe', async ({ page, runAndTrace, server }) => {
+  /*
+    iframe[id=frame1]
+      div Hello1
+      iframe
+        div Hello2
+        iframe[name=one]
+          div HelloNameOne
+        iframe[name=two]
+          dev HelloNameTwo
+  */
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.EMPTY_PAGE);
+    await page.setContent(`<iframe id=frame1 srcdoc="<div>Hello1</div><iframe srcdoc='<div>Hello2</div><iframe name=one></iframe><iframe name=two></iframe><iframe></iframe>'>">`);
+    const frameOne = page.frame({ name: 'one' });
+    await frameOne.setContent(`<div>HelloNameOne</div>`);
+    const frameTwo = page.frame({ name: 'two' });
+    await frameTwo.setContent(`<div>HelloNameTwo</div>`);
+    await page.evaluate('2+2');
+  });
+  await traceViewer.page.getByTitle('Pick locator').click();
+  const cmWrapper = traceViewer.page.locator('.cm-wrapper');
+
+  const snapshot = await traceViewer.snapshotFrame('page.evaluate');
+
+  await snapshot.frameLocator('#frame1').getByText('Hello1').click();
+  await expect.soft(cmWrapper).toContainText(`frameLocator('#frame1').getByText('Hello1')`);
+
+  await snapshot.frameLocator('#frame1').frameLocator('iframe').getByText('Hello2').click();
+  await expect.soft(cmWrapper).toContainText(`frameLocator('#frame1').frameLocator('iframe').getByText('Hello2')`, { timeout: 0 });
+
+  await snapshot.frameLocator('#frame1').frameLocator('iframe').frameLocator('[name=one]').getByText('HelloNameOne').click();
+  await expect.soft(cmWrapper).toContainText(`frameLocator('#frame1').frameLocator('iframe').frameLocator('iframe[name="one"]').getByText('HelloNameOne')`, { timeout: 0 });
+
+  await snapshot.frameLocator('#frame1').frameLocator('iframe').frameLocator('[name=two]').getByText('HelloNameTwo').click();
+  await expect.soft(cmWrapper).toContainText(`frameLocator('#frame1').frameLocator('iframe').frameLocator('iframe[name="two"]').getByText('HelloNameTwo')`, { timeout: 0 });
+});
+
+test('should highlight locator in iframe while typing', async ({ page, runAndTrace, server, platform }) => {
+  /*
+    iframe[id=frame1]
+      div Hello1
+      iframe
+        div Hello2
+        iframe[name=one]
+          div HelloNameOne
+        iframe[name=two]
+          dev HelloNameTwo
+  */
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.EMPTY_PAGE);
+    await page.setContent(`<iframe id=frame1 srcdoc="<div>Hello1</div><iframe srcdoc='<div>Hello2</div><iframe name=one></iframe><iframe name=two></iframe><iframe></iframe>'>">`);
+    const frameOne = page.frame({ name: 'one' });
+    await frameOne.setContent(`<div>HelloNameOne</div>`);
+    const frameTwo = page.frame({ name: 'two' });
+    await frameTwo.setContent(`<div>HelloNameTwo</div>`);
+    await page.evaluate('2+2');
+  });
+
+  const snapshot = await traceViewer.snapshotFrame('page.evaluate');
+  await traceViewer.page.getByText('Locator').click();
+  await traceViewer.page.locator('.CodeMirror').click();
+
+  const locators = [{
+    text: `frameLocator('#frame1').getByText('Hello1')`,
+    element: snapshot.frameLocator('#frame1').locator('div', { hasText: 'Hello1' }),
+    highlight: snapshot.frameLocator('#frame1').locator('x-pw-highlight'),
+  }, {
+    text: `frameLocator('#frame1').frameLocator('iframe').getByText('Hello2')`,
+    element: snapshot.frameLocator('#frame1').frameLocator('iframe').locator('div', { hasText: 'Hello2' }),
+    highlight: snapshot.frameLocator('#frame1').frameLocator('iframe').locator('x-pw-highlight'),
+  }, {
+    text: `frameLocator('#frame1').frameLocator('iframe').frameLocator('iframe[name="one"]').getByText('HelloNameOne')`,
+    element: snapshot.frameLocator('#frame1').frameLocator('iframe').frameLocator('iframe[name="one"]').locator('div', { hasText: 'HelloNameOne' }),
+    highlight: snapshot.frameLocator('#frame1').frameLocator('iframe').frameLocator('iframe[name="one"]').locator('x-pw-highlight'),
+  }];
+
+  for (const locator of locators) {
+    if (platform === 'darwin')
+      await traceViewer.page.keyboard.press('Meta+a');
+    else
+      await traceViewer.page.keyboard.press('Control+a');
+    await traceViewer.page.keyboard.press('Backspace');
+    await traceViewer.page.keyboard.type(locator.text);
+    const elementBox = await locator.element.boundingBox();
+    const highlightBox = await locator.highlight.boundingBox();
+    expect(Math.abs(elementBox.width - highlightBox.width)).toBeLessThan(5);
+    expect(Math.abs(elementBox.height - highlightBox.height)).toBeLessThan(5);
+    expect(Math.abs(elementBox.x - highlightBox.x)).toBeLessThan(5);
+    expect(Math.abs(elementBox.y - highlightBox.y)).toBeLessThan(5);
+  }
 });

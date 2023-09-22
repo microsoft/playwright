@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-.network-request-details {
+.network-request-details-tab {
   width: 100%;
   user-select: text;
   line-height: 24px;
@@ -39,6 +39,21 @@
   font-weight: bold;
 }
 
-.network-request-details .cm-wrapper {
-  height: 300px;
+.network-request-details-tab .cm-wrapper {
+  overflow: hidden;
+}
+
+.tab-network .toolbar {
+  margin-top: 3px !important;
+  min-height: 30px !important;
+  background-color: initial !important;
+  border-bottom: 1px solid var(--vscode-panel-border);
+}
+
+.tab-network .toolbar::after {
+  box-shadow: none !important;
+}
+ 
+.tab-network .tabbed-pane-tab.selected {
+  font-weight: bold;
 }

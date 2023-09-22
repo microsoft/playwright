@@ -21,7 +21,7 @@ import type { FrameSnapshot, ResourceSnapshot } from './snapshot';
 export type Size = { width: number, height: number };
 
 // Make sure you add _modernize_N_to_N1(event: any) to traceModel.ts.
-export type VERSION = 4;
+export type VERSION = 5;
 
 export type BrowserContextEventOptions = {
   viewport?: Size,
@@ -34,6 +34,7 @@ export type ContextCreatedTraceEvent = {
   version: number,
   type: 'context-options',
   browserName: string,
+  channel?: string,
   platform: string,
   wallTime: number,
   title?: string,
@@ -102,19 +103,17 @@ export type EventTraceEvent = {
 };
 
 export type ConsoleMessageTraceEvent = {
-  type: 'object';
-  class: string;
-  initializer: {
-    type: string,
-    text: string,
-    args?: { preview: string, value: any }[],
-    location: {
-      url: string,
-      lineNumber: number,
-      columnNumber: number,
-    },
-  };
-  guid: string;
+  type: 'console';
+  time: number;
+  pageId?: string;
+  messageType: string,
+  text: string,
+  args?: { preview: string, value: any }[],
+  location: {
+    url: string,
+    lineNumber: number,
+    columnNumber: number,
+  },
 };
 
 export type ResourceSnapshotTraceEvent = {

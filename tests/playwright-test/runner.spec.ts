@@ -120,7 +120,7 @@ test('sigint should stop workers', async ({ interactWithTestRunner }) => {
       });
     `,
   }, { 'workers': 2, 'reporter': 'line,json' }, {
-    PW_TEST_REPORTER: path.join(__dirname, '../../packages/playwright-test/lib/reporters/json.js'),
+    PW_TEST_REPORTER: path.join(__dirname, '../../packages/playwright/lib/reporters/json.js'),
     PLAYWRIGHT_JSON_OUTPUT_NAME: 'report.json',
   });
   await testProcess.waitForOutput('%%SEND-SIGINT%%', 2);

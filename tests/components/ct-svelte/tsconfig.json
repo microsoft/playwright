@@ -9,7 +9,8 @@
     "moduleResolution": "node",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "*": ["_"],
     }
   }
 }

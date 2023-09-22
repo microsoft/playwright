@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import type { Suite } from '@playwright/test/reporter';
-import type { PlaywrightTestConfig as BasePlaywrightTestConfig, FullConfig } from '@playwright/test';
+import type { Suite } from 'playwright/types/testReporter';
+import type { PlaywrightTestConfig as BasePlaywrightTestConfig, FullConfig } from 'playwright/test';
 
 import type { InlineConfig, Plugin, ResolveFn, ResolvedConfig, UserConfig } from 'vite';
-import type { TestRunnerPlugin } from '../../playwright-test/src/plugins';
+import type { TestRunnerPlugin } from '../../playwright/src/plugins';
 import type { ComponentInfo } from './tsxTransform';
 import type { AddressInfo } from 'net';
 import type { PluginContext } from 'rollup';
@@ -26,11 +26,11 @@ import { debug } from 'playwright-core/lib/utilsBundle';
 
 import fs from 'fs';
 import path from 'path';
-import { parse, traverse, types as t } from '@playwright/test/lib/transform/babelBundle';
-import { stoppable } from '@playwright/test/lib/utilsBundle';
+import { parse, traverse, types as t } from 'playwright/lib/transform/babelBundle';
+import { stoppable } from 'playwright/lib/utilsBundle';
 import { assert, calculateSha1 } from 'playwright-core/lib/utils';
 import { getPlaywrightVersion } from 'playwright-core/lib/utils';
-import { setExternalDependencies } from '@playwright/test/lib/transform/compilationCache';
+import { setExternalDependencies } from 'playwright/lib/transform/compilationCache';
 import { collectComponentUsages, componentInfo } from './tsxTransform';
 import { version as viteVersion, build, preview, mergeConfig } from 'vite';
 

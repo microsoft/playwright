@@ -23,7 +23,6 @@ import type { BrowserContext, BrowserContextOptions } from 'playwright-core';
 import type { AddressInfo } from 'net';
 import type { Log } from '../../packages/trace/src/har';
 import { parseHar } from '../config/utils';
-const { hostPlatform } = require('playwright-core/lib/utils');
 
 async function pageWithHar(contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>, testInfo: any, options: { outputPath?: string, content?: 'embed' | 'attach' | 'omit', omitContent?: boolean } = {}) {
   const harPath = testInfo.outputPath(options.outputPath || 'test.har');
@@ -225,6 +224,20 @@ it('should include set-cookies', async ({ contextFactory, server }, testInfo) =>
   expect(cookies[0]).toEqual({ name: 'name1', value: 'value1', httpOnly: true });
   expect(cookies[1]).toEqual({ name: 'name2', value: '"value2"' });
   expect(new Date(cookies[2].expires).valueOf()).toBeGreaterThan(Date.now());
+});
+
+it('should skip invalid Expires', async ({ contextFactory, server }, testInfo) => {
+  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+  server.setRoute('/empty.html', (req, res) => {
+    res.setHeader('Set-Cookie', [
+      'name=value;Expires=Sat Sep 14 01:02:27 CET 2024',
+    ]);
+    res.end();
+  });
+  await page.goto(server.EMPTY_PAGE);
+  const log = await getLog();
+  const cookies = log.entries[0].response.cookies;
+  expect(cookies[0]).toEqual({ name: 'name', value: 'value' });
 });
 
 it('should include set-cookies with comma', async ({ contextFactory, server, browserName }, testInfo) => {
@@ -673,7 +686,6 @@ it('should return security details directly from response', async ({ contextFact
 });
 
 it('should contain http2 for http2 requests', async ({ contextFactory, browserName, platform }, testInfo) => {
-  it.skip(browserName === 'webkit' && platform === 'linux' && (hostPlatform.startsWith('ubuntu20.04') || hostPlatform.startsWith('debian11')), 'libsoup2.4 does not support http2');
   it.fixme(browserName === 'webkit' && platform === 'win32');
 
   const server = http2.createSecureServer({

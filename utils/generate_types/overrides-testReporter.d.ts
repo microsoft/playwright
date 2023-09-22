@@ -55,7 +55,7 @@ export interface FullResult {
 
 export interface Reporter {
   onBegin?(config: FullConfig, suite: Suite): void;
-  onEnd?(result: FullResult): void | Promise<void>;
+  onEnd?(result: FullResult): Promise<{ status?: FullResult['status'] } | undefined | void> | void;
 }
 
 export interface JSONReport {

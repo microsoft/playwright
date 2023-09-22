@@ -182,15 +182,10 @@ export const Timeline: React.FunctionComponent<{
       const action = model?.actions.findLast(action => action.startTime <= time);
       if (action)
         onSelected(action);
-      // Include both, last action as well as the click position.
-      if (selectedTime && (time < selectedTime.minimum || time > selectedTime.maximum)) {
-        const minimum = action ? Math.max(Math.min(action.startTime, time), boundaries.minimum) : boundaries.minimum;
-        const maximum = action ? Math.min(Math.max(action.endTime, time), boundaries.maximum) : boundaries.maximum;
-        setSelectedTime({ minimum, maximum });
-      }
+      setSelectedTime(undefined);
     }
     setDragWindow(undefined);
-  }, [boundaries, dragWindow, measure, model, selectedTime, setSelectedTime, onSelected]);
+  }, [boundaries, dragWindow, measure, model, setSelectedTime, onSelected]);
 
   const onMouseMove = React.useCallback((event: React.MouseEvent) => {
     if (!ref.current)

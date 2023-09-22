@@ -24,6 +24,7 @@ export type ContextEntry = {
   startTime: number;
   endTime: number;
   browserName: string;
+  channel?: string;
   platform?: string;
   wallTime?: number;
   sdkLanguage?: Language;
@@ -33,9 +34,8 @@ export type ContextEntry = {
   pages: PageEntry[];
   resources: ResourceSnapshot[];
   actions: trace.ActionTraceEvent[];
-  events: trace.EventTraceEvent[];
+  events: (trace.EventTraceEvent | trace.ConsoleMessageTraceEvent)[];
   stdio: trace.StdioTraceEvent[];
-  initializers: { [key: string]: trace.ConsoleMessageTraceEvent['initializer'] };
   hasSource: boolean;
 };
 
@@ -64,7 +64,6 @@ export function createEmptyContext(): ContextEntry {
     actions: [],
     events: [],
     stdio: [],
-    initializers: {},
     hasSource: false
   };
 }

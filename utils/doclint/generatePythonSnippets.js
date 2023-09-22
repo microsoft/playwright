@@ -15,18 +15,18 @@ function transformValue(input, isSync) {
     let match = line.match(/const { (\w+) } = require\('playwright'\);/);
     if (match) {
       if (isSync) {
-        out.push('from playwright.sync_api import sync_playwright');
+        out.push('from playwright.sync_api import sync_playwright, Playwright');
         out.push('');
-        out.push('def run(playwright):');
+        out.push('def run(playwright: Playwright):');
         out.push(`    ${match[1]} = playwright.${match[1]}`);
         suffix.push(``);
         suffix.push(`with sync_playwright() as playwright:`);
         suffix.push(`    run(playwright)`);
       } else {
         out.push('import asyncio');
-        out.push('from playwright.async_api import async_playwright');
+        out.push('from playwright.async_api import async_playwright, Playwright');
         out.push('');
-        out.push('async def run(playwright):');
+        out.push('async def run(playwright: Playwright):');
         out.push(`    ${match[1]} = playwright.${match[1]}`);
         suffix.push(``);
         suffix.push(`async def main():`);

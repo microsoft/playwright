@@ -20,6 +20,7 @@ import { Frame } from './frame';
 import * as network from './network';
 import type * as channels from '@protocol/channels';
 import fs from 'fs';
+import path from 'path';
 import { ChannelOwner } from './channelOwner';
 import { evaluationScript } from './clientHelper';
 import { Browser } from './browser';
@@ -41,7 +42,7 @@ import { rewriteErrorMessage } from '../utils/stackTrace';
 import { HarRouter } from './harRouter';
 import { ConsoleMessage } from './consoleMessage';
 import { Dialog } from './dialog';
-import { PageError } from './pageError';
+import { WebError } from './webError';
 import { parseError } from '../protocol/serializers';
 
 export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel> implements api.BrowserContext {
@@ -95,8 +96,8 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
       this._serviceWorkers.add(serviceWorker);
       this.emit(Events.BrowserContext.ServiceWorker, serviceWorker);
     });
-    this._channel.on('console', ({ message }) => {
-      const consoleMessage = ConsoleMessage.from(message);
+    this._channel.on('console', event => {
+      const consoleMessage = new ConsoleMessage(event);
       this.emit(Events.BrowserContext.Console, consoleMessage);
       const page = consoleMessage.page();
       if (page)
@@ -105,7 +106,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this._channel.on('pageError', ({ error, page }) => {
       const pageObject = Page.from(page);
       const parsedError = parseError(error);
-      this.emit(Events.BrowserContext.PageError, new PageError(pageObject, parsedError));
+      this.emit(Events.BrowserContext.WebError, new WebError(pageObject, parsedError));
       if (pageObject)
         pageObject.emit(Events.Page.PageError, parsedError);
     });
@@ -469,6 +470,8 @@ export async function prepareBrowserContextParams(options: BrowserContextOptions
       size: options.videoSize
     };
   }
+  if (contextParams.recordVideo && contextParams.recordVideo.dir)
+    contextParams.recordVideo.dir = path.resolve(process.cwd(), contextParams.recordVideo.dir);
   return contextParams;
 }
 

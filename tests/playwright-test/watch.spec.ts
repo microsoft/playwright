@@ -40,7 +40,7 @@ test('should print dependencies in CJS mode', async ({ runInlineTest }) => {
       test('passes', () => {});
     `,
     'globalTeardown.ts': `
-      import { fileDependencies } from '@playwright/test/lib/internalsForTest';
+      import { fileDependencies } from 'playwright/lib/internalsForTest';
       export default () => {
         console.log('###' + JSON.stringify(fileDependencies()) + '###');
       };
@@ -79,7 +79,7 @@ test('should print dependencies in ESM mode', async ({ runInlineTest }) => {
       test('passes', () => {});
     `,
     'globalTeardown.ts': `
-      import { fileDependencies } from '@playwright/test/lib/internalsForTest';
+      import { fileDependencies } from 'playwright/lib/internalsForTest';
       export default () => {
         console.log('###' + JSON.stringify(fileDependencies()) + '###');
       };
@@ -600,7 +600,7 @@ test('should run CT on changed deps', async ({ runWatchTest, writeFiles }) => {
 
   await testProcess.waitForOutput(`src${path.sep}button.spec.tsx:4:11 › pass`);
   expect(testProcess.output).not.toContain(`src${path.sep}link.spec.tsx`);
-  await testProcess.waitForOutput('Error: Timed out 1000ms waiting for expect(received).toHaveText(expected)');
+  await testProcess.waitForOutput(`Error: Timed out 1000ms waiting for expect(locator).toHaveText(expected)`);
   await testProcess.waitForOutput('Waiting for file changes.');
 });
 

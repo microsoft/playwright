@@ -33,12 +33,12 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { createGuid, urlMatches } from '../../utils';
 import { WritableStreamDispatcher } from './writableStreamDispatcher';
-import { ConsoleMessageDispatcher } from './consoleMessageDispatcher';
 import { DialogDispatcher } from './dialogDispatcher';
 import type { Page } from '../page';
 import type { Dialog } from '../dialog';
 import type { ConsoleMessage } from '../console';
 import { serializeError } from '../../protocol/serializers';
+import { ElementHandleDispatcher } from './elementHandlerDispatcher';
 
 export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channels.BrowserContextChannel, DispatcherScope> implements channels.BrowserContextChannel {
   _type_EventTarget = true;
@@ -89,8 +89,16 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       this._dispatchEvent('pageError', { error: serializeError(error), page: PageDispatcher.from(this, page) });
     });
     this.addObjectListener(BrowserContext.Events.Console, (message: ConsoleMessage) => {
-      if (this._shouldDispatchEvent(message.page(), 'console'))
-        this._dispatchEvent('console', { message: new ConsoleMessageDispatcher(PageDispatcher.from(this, message.page()), message) });
+      if (this._shouldDispatchEvent(message.page(), 'console')) {
+        const pageDispatcher = PageDispatcher.from(this, message.page());
+        this._dispatchEvent('console', {
+          page: pageDispatcher,
+          type: message.type(),
+          text: message.text(),
+          args: message.args().map(a => ElementHandleDispatcher.fromJSHandle(pageDispatcher, a)),
+          location: message.location(),
+        });
+      }
     });
     this.addObjectListener(BrowserContext.Events.Dialog, (dialog: Dialog) => {
       if (this._shouldDispatchEvent(dialog.page(), 'dialog'))

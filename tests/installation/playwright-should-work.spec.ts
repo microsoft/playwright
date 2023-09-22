@@ -15,7 +15,9 @@
  */
 import { test, expect } from './npmTest';
 
-test(`playwright should work`, async ({ exec, nodeMajorVersion, installedSoftwareOnDisk }) => {
+test.use({ useRealCDN: true });
+
+test(`playwright should work`, async ({ exec, installedSoftwareOnDisk }) => {
   const result1 = await exec('npm i --foreground-scripts playwright');
   expect(result1).toHaveLoggedSoftwareDownload([]);
   expect(await installedSoftwareOnDisk()).toEqual([]);
@@ -25,8 +27,5 @@ test(`playwright should work`, async ({ exec, nodeMajorVersion, installedSoftwar
   expect(await installedSoftwareOnDisk()).toEqual(['chromium', 'ffmpeg', 'firefox', 'webkit']);
 
   await exec('node sanity.js playwright chromium firefox webkit');
-  if (nodeMajorVersion >= 14)
-    await exec('node esm-playwright.mjs');
-  const stdio = await exec('npx playwright', 'test', '-c', '.', { expectToExitWithError: true });
-  expect(stdio).toContain(`Please install @playwright/test package`);
+  await exec('node esm-playwright.mjs');
 });

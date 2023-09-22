@@ -17,7 +17,7 @@
 // eslint-disable-next-line spaced-comment
 /// <reference path="./expect.d.ts" />
 
-import { test as _test, expect as _expect } from '@playwright/test';
+import { _baseTest as _test, expect as _expect } from '@playwright/test';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -28,31 +28,11 @@ import type { CommonFixtures, CommonWorkerFixtures } from '../config/commonFixtu
 import { commonFixtures } from '../config/commonFixtures';
 import { removeFolders } from '../../packages/playwright-core/lib/utils/fileUtils';
 
-
 export const TMP_WORKSPACES = path.join(os.platform() === 'darwin' ? '/tmp' : os.tmpdir(), 'pwt', 'workspaces');
 
 const debug = debugLogger('itest');
 
-/**
- * A minimal NPM Registry Server that can serve local packages, or proxy to the upstream registry.
- * This is useful in test installation behavior of packages that aren't yet published. It's particularly helpful
- * when your installation requires transitive dependencies that are also not yet published.
- *
- * See https://github.com/npm/registry/blob/master/docs/REGISTRY-API.md for information on the offical APIs.
- */
-
 _expect.extend({
-  async toExistOnFS(received: any) {
-    if (typeof received !== 'string')
-      throw new Error(`Expected argument to be a string.`);
-    try {
-      await fs.promises.access(received);
-      return { pass: true };
-    } catch (e) {
-      return { pass: false, message: () => 'file does not exist' };
-    }
-  },
-
   toHaveLoggedSoftwareDownload(received: any, browsers: ('chromium' | 'firefox' | 'webkit' | 'ffmpeg')[]) {
     if (typeof received !== 'string')
       throw new Error(`Expected argument to be a string.`);
@@ -77,30 +57,44 @@ _expect.extend({
 
 const expect = _expect;
 
-export type ExecOptions = { cwd?: string, env?: Record<string, string>, message?: string, expectToExitWithError?: boolean };
-export type ArgsOrOptions = [] | [...string[]] | [...string[], ExecOptions] | [ExecOptions];
+type ExecOptions = { cwd?: string, env?: Record<string, string>, message?: string, expectToExitWithError?: boolean };
+type ArgsOrOptions = [] | [...string[]] | [...string[], ExecOptions] | [ExecOptions];
 
-export type NPMTestFixtures = {
-  _auto: void,
-  _browsersPath: string
-  tmpWorkspace: string,
-  nodeMajorVersion: number,
+type NPMTestOptions = {
+  useRealCDN: boolean;
+};
+
+type NPMTestFixtures = {
+  _auto: void;
+  _browsersPath: string;
+  tmpWorkspace: string;
   installedSoftwareOnDisk: (registryPath?: string) => Promise<string[]>;
-  writeFiles: (nameToContents: Record<string, string>) => Promise<void>,
-  exec: (cmd: string, ...argsAndOrOptions: ArgsOrOptions) => Promise<string>
-  tsc: (...argsAndOrOptions: ArgsOrOptions) => Promise<string>,
-  registry: Registry,
+  writeConfig: (allowGlobal: boolean) => Promise<void>;
+  writeFiles: (nameToContents: Record<string, string>) => Promise<void>;
+  exec: (cmd: string, ...argsAndOrOptions: ArgsOrOptions) => Promise<string>;
+  tsc: (...argsAndOrOptions: ArgsOrOptions) => Promise<string>;
+  registry: Registry;
 };
 
 export const test = _test
     .extend<CommonFixtures, CommonWorkerFixtures>(commonFixtures)
-    .extend<NPMTestFixtures>({
+    .extend<NPMTestFixtures & NPMTestOptions>({
+      useRealCDN: [false, { option: true }],
       _browsersPath: async ({ tmpWorkspace }, use) => use(path.join(tmpWorkspace, 'browsers')),
-      _auto: [async ({ tmpWorkspace, exec, _browsersPath }, use) => {
+      _auto: [async ({ tmpWorkspace, exec, _browsersPath, writeConfig }, use) => {
         await exec('npm init -y');
         const sourceDir = path.join(__dirname, 'fixture-scripts');
         const contents = await fs.promises.readdir(sourceDir);
         await Promise.all(contents.map(f => fs.promises.copyFile(path.join(sourceDir, f), path.join(tmpWorkspace, f))));
+
+        const packages = JSON.parse((await fs.promises.readFile(path.join(__dirname, '.registry.json'), 'utf8')));
+        const prefixed = Object.fromEntries(Object.entries(packages).map(entry => ([entry[0], 'file:' + entry[1]])));
+        const packageJSON = JSON.parse(await fs.promises.readFile(path.join(tmpWorkspace, 'package.json'), 'utf-8'));
+        packageJSON.pnpm = { overrides: prefixed };
+        await fs.promises.writeFile(path.join(tmpWorkspace, 'package.json'), JSON.stringify(packageJSON, null, 2));
+
+        await writeConfig(false);
+
         await use();
         if (test.info().status === test.info().expectedStatus) {
           // Browsers are large, we remove them after each test to save disk space.
@@ -109,9 +103,6 @@ export const test = _test
       }, {
         auto: true,
       }],
-      nodeMajorVersion: async ({}, use) => {
-        await use(+process.versions.node.split('.')[0]);
-      },
       writeFiles: async ({ tmpWorkspace }, use) => {
         await use(async (nameToContents: Record<string, string>) => {
           for (const [name, contents] of Object.entries(nameToContents))
@@ -133,10 +124,28 @@ export const test = _test
         await use(registry);
         await registry.shutdown();
       },
+      writeConfig: async ({ tmpWorkspace, registry }, use, testInfo) => {
+        await use(async (allowGlobal: boolean) => {
+          const yarnLines = [
+            `registry "${registry.url()}/"`,
+            `cache "${testInfo.outputPath('npm_cache')}"`,
+          ];
+          const npmLines = [
+            `registry = ${registry.url()}/`,
+            `cache = ${testInfo.outputPath('npm_cache')}`,
+          ];
+          if (!allowGlobal) {
+            yarnLines.push(`prefix "${testInfo.outputPath('npm_global')}"`);
+            npmLines.push(`prefix = ${testInfo.outputPath('npm_global')}`);
+          }
+          await fs.promises.writeFile(path.join(tmpWorkspace, '.yarnrc'), yarnLines.join('\n'), 'utf-8');
+          await fs.promises.writeFile(path.join(tmpWorkspace, '.npmrc'), npmLines.join('\n'), 'utf-8');
+        });
+      },
       installedSoftwareOnDisk: async ({ _browsersPath }, use) => {
         await use(async (registryPath?: string) => fs.promises.readdir(registryPath || _browsersPath).catch(() => []).then(files => files.map(f => f.split('-')[0]).filter(f => !f.startsWith('.'))));
       },
-      exec: async ({ registry, tmpWorkspace, _browsersPath }, use, testInfo) => {
+      exec: async ({ useRealCDN, tmpWorkspace, _browsersPath }, use, testInfo) => {
         await use(async (cmd: string, ...argsAndOrOptions: [] | [...string[]] | [...string[], ExecOptions] | [ExecOptions]) => {
           let args: string[] = [];
           let options: ExecOptions = {};
@@ -156,9 +165,7 @@ export const test = _test
                 'DISPLAY': process.env.DISPLAY,
                 'XAUTHORITY': process.env.XAUTHORITY,
                 'PLAYWRIGHT_BROWSERS_PATH': _browsersPath,
-                'npm_config_cache': testInfo.outputPath('npm_cache'),
-                'npm_config_registry': registry.url(),
-                'npm_config_prefix': testInfo.outputPath('npm_global'),
+                ...(useRealCDN ? {} : { PLAYWRIGHT_DOWNLOAD_HOST: process.env.CDN_PROXY_HOST }),
                 ...options.env,
               }
             });

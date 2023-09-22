@@ -56,9 +56,9 @@ public class Example {
 
 ```python async
 import asyncio
-from playwright.async_api import async_playwright
+from playwright.async_api import async_playwright, Playwright
 
-async def run(playwright):
+async def run(playwright: Playwright):
     firefox = playwright.firefox
     browser = await firefox.launch()
     page = await browser.new_page()
@@ -78,9 +78,9 @@ asyncio.run(main())
 ```
 
 ```python sync
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import sync_playwright, Playwright
 
-def run(playwright):
+def run(playwright: Playwright):
     firefox = playwright.firefox
     browser = firefox.launch()
     page = browser.new_page()
@@ -839,7 +839,7 @@ This method waits for an element matching [`param: selector`], waits for [action
 
 If the target element is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error. However, if the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be filled instead.
 
-To send fine-grained keyboard events, use [`method: Frame.type`].
+To send fine-grained keyboard events, use [`method: Locator.pressSequentially`].
 
 ### param: Frame.fill.selector = %%-input-selector-%%
 * since: v1.8
@@ -1486,7 +1486,7 @@ Triggers a `change` and `input` event once all the provided options have been se
 **Usage**
 
 ```js
-// single selection matching the value
+// Single selection matching the value or label
 frame.selectOption('select#colors', 'blue');
 
 // single selection matching both the value and the label
@@ -1497,7 +1497,7 @@ frame.selectOption('select#colors', 'red', 'green', 'blue');
 ```
 
 ```java
-// single selection matching the value
+// Single selection matching the value or label
 frame.selectOption("select#colors", "blue");
 // single selection matching both the value and the label
 frame.selectOption("select#colors", new SelectOption().setLabel("Blue"));
@@ -1506,7 +1506,7 @@ frame.selectOption("select#colors", new String[] {"red", "green", "blue"});
 ```
 
 ```python async
-# single selection matching the value
+# Single selection matching the value or label
 await frame.select_option("select#colors", "blue")
 # single selection matching the label
 await frame.select_option("select#colors", label="blue")
@@ -1515,7 +1515,7 @@ await frame.select_option("select#colors", value=["red", "green", "blue"])
 ```
 
 ```python sync
-# single selection matching the value
+# Single selection matching the value or label
 frame.select_option("select#colors", "blue")
 # single selection matching both the label
 frame.select_option("select#colors", label="blue")
@@ -1524,7 +1524,7 @@ frame.select_option("select#colors", value=["red", "green", "blue"])
 ```
 
 ```csharp
-// single selection matching the value
+// Single selection matching the value or label
 await frame.SelectOptionAsync("select#colors", new[] { "blue" });
 // single selection matching both the value and the label
 await frame.SelectOptionAsync("select#colors", new[] { new SelectOptionValue() { Label = "blue" } });
@@ -1733,7 +1733,7 @@ Returns the page title.
 
 ## async method: Frame.type
 * since: v1.8
-* deprecated: Use locator-based [`method: Locator.pressSequentially`] instead. Read more about [locators](../locators.md).
+* deprecated: In most cases, you should use [`method: Locator.fill`] instead. You only need to press keys one by one if there is special keyboard handling on the page - in this case use [`method: Locator.pressSequentially`].
 
 Sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text. `frame.type` can be used to
 send fine-grained keyboard events. To fill values in form fields, use [`method: Frame.fill`].
@@ -1860,9 +1860,9 @@ public class Example {
 
 ```python async
 import asyncio
-from playwright.async_api import async_playwright
+from playwright.async_api import async_playwright, Playwright
 
-async def run(playwright):
+async def run(playwright: Playwright):
     webkit = playwright.webkit
     browser = await webkit.launch()
     page = await browser.new_page()
@@ -1877,9 +1877,9 @@ asyncio.run(main())
 ```
 
 ```python sync
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import sync_playwright, Playwright
 
-def run(playwright):
+def run(playwright: Playwright):
     webkit = playwright.webkit
     browser = webkit.launch()
     page = browser.new_page()
@@ -2146,9 +2146,9 @@ public class Example {
 
 ```python async
 import asyncio
-from playwright.async_api import async_playwright
+from playwright.async_api import async_playwright, Playwright
 
-async def run(playwright):
+async def run(playwright: Playwright):
     chromium = playwright.chromium
     browser = await chromium.launch()
     page = await browser.new_page()
@@ -2165,9 +2165,9 @@ asyncio.run(main())
 ```
 
 ```python sync
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import sync_playwright, Playwright
 
-def run(playwright):
+def run(playwright: Playwright):
     chromium = playwright.chromium
     browser = chromium.launch()
     page = browser.new_page()

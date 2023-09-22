@@ -83,22 +83,22 @@
 
 .timeline-bar.action {
   --action-color: var(--vscode-charts-orange);
-  --action-background-color: #d1861633;
+  --action-background-color: #d1861666;
 }
 
 .timeline-bar.action.error {
   --action-color: var(--vscode-charts-red);
-  --action-background-color: #e5140033;
+  --action-background-color: #e5140066;
 }
 
 .timeline-bar.network {
   --action-color: var(--vscode-charts-blue);
-  --action-background-color: #1a85ff33;
+  --action-background-color: #1a85ff66;
 }
 
 body.dark-mode .timeline-bar.action.error {
   --action-color: var(--vscode-errorForeground);
-  --action-background-color: #f4877133;
+  --action-background-color: #f4877166;
 }
 
 .timeline-label {

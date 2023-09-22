@@ -193,7 +193,7 @@ export const Workbench: React.FunctionComponent<{
       selectedTime={selectedTime}
       setSelectedTime={setSelectedTime}
     />
-    <SplitView sidebarSize={250} orientation='horizontal' sidebarIsFirst={true}>
+    <SplitView sidebarSize={250} orientation='horizontal' sidebarIsFirst={true} settingName='actionListSidebar'>
       <SplitView sidebarSize={250} orientation={sidebarLocation === 'bottom' ? 'vertical' : 'horizontal'} settingName='propertiesSidebar'>
         <SnapshotTab
           action={activeAction}
@@ -235,6 +235,7 @@ export const Workbench: React.FunctionComponent<{
               actions={model?.actions || []}
               selectedAction={model ? selectedAction : undefined}
               selectedTime={selectedTime}
+              setSelectedTime={setSelectedTime}
               onSelected={onActionSelected}
               onHighlighted={setHighlightedAction}
               revealConsole={() => selectPropertiesTab('console')}

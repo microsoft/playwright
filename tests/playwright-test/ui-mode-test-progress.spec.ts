@@ -47,7 +47,7 @@ test('should update trace live', async ({ runUITest, server }) => {
   await page.getByText('live test').dblclick();
 
   // It should halt on loading one.html.
-  const listItem = page.getByTestId('action-list').getByRole('listitem');
+  const listItem = page.getByTestId('actions-tree').getByRole('listitem');
   await expect(
       listItem,
       'action list'
@@ -134,7 +134,7 @@ test('should preserve action list selection upon live trace update', async ({ ru
   await page.getByText('live test').dblclick();
 
   // It should wait on the latch.
-  const listItem = page.getByTestId('action-list').getByRole('listitem');
+  const listItem = page.getByTestId('actions-tree').getByRole('listitem');
   await expect(
       listItem,
       'action list'
@@ -145,7 +145,7 @@ test('should preserve action list selection upon live trace update', async ({ ru
   ]);
 
   // Manually select page.goto.
-  await page.getByTestId('action-list').getByText('page.goto').click();
+  await page.getByTestId('actions-tree').getByText('page.goto').click();
 
   // Generate more actions and check that we are still on the page.goto action.
   latch.open();
@@ -195,7 +195,7 @@ test('should update tracing network live', async ({ runUITest, server }) => {
   await page.getByText('live test').dblclick();
 
   // It should wait on the latch.
-  const listItem = page.getByTestId('action-list').getByRole('listitem');
+  const listItem = page.getByTestId('actions-tree').getByRole('listitem');
   await expect(
       listItem,
       'action list'
@@ -207,7 +207,7 @@ test('should update tracing network live', async ({ runUITest, server }) => {
 
   // Once page.setContent is visible, we can be sure that page.goto has all required
   // resources in the trace. Switch to it and check that everything renders.
-  await page.getByTestId('action-list').getByText('page.goto').click();
+  await page.getByTestId('actions-tree').getByText('page.goto').click();
 
   await expect(
       page.frameLocator('iframe.snapshot-visible[name=snapshot]').locator('body'),
@@ -235,7 +235,7 @@ test('should show trace w/ multiple contexts', async ({ runUITest, server, creat
   await page.getByText('live test').dblclick();
 
   // It should wait on the latch.
-  const listItem = page.getByTestId('action-list').getByRole('listitem');
+  const listItem = page.getByTestId('actions-tree').getByRole('listitem');
   await expect(
       listItem,
       'action list'
@@ -280,7 +280,7 @@ test('should show live trace for serial', async ({ runUITest, server, createLatc
   await page.getByText('two', { exact: true }).click();
   await page.getByTitle('Run all').click();
 
-  const listItem = page.getByTestId('action-list').getByRole('listitem');
+  const listItem = page.getByTestId('actions-tree').getByRole('listitem');
   await expect(
       listItem,
       'action list'

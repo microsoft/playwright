@@ -106,17 +106,20 @@ The root suite that contains all projects, files and test cases.
 
 ## optional async method: Reporter.onEnd
 * since: v1.10
+- `result` ?<[Object]>
+  - `status` ?<[FullStatus]<"passed"|"failed"|"timedout"|"interrupted">>
 
 Called after all tests have been run, or testing has been interrupted. Note that this method may return a [Promise] and Playwright Test will await it.
+Reporter is allowed to override the status and hence affect the exit code of the test runner.
 
 ### param: Reporter.onEnd.result
 * since: v1.10
 - `result` <[Object]>
-  - `status` <[FullStatus]<"passed"|"failed"|"timedout"|"interrupted">>
-  - `startTime` <[Date]>
-  - `duration` <[int]>
+  - `status` <[FullStatus]<"passed"|"failed"|"timedout"|"interrupted">> Test run status.
+  - `startTime` <[Date]> Test run start wall time.
+  - `duration` <[int]> Test run duration in milliseconds.
 
-Result of the full test run.
+Result of the full test run, `status` can be one of:
 * `'passed'` - Everything went as expected.
 * `'failed'` - Any test has failed.
 * `'timedout'` - The [`property: TestConfig.globalTimeout`] has been reached.

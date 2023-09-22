@@ -150,7 +150,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       expect(result.exitCode).toBe(0);
       expect(result.outputLines).toEqual([
         'reporter-begin-begin%%',
-        'version-' + require('../../packages/playwright-test/package.json').version,
+        'version-' + require('../../packages/playwright/package.json').version,
         'reporter-testbegin-is run-foo%%',
         'reporter-stdout%%',
         'reporter-stderr%%',

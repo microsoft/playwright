@@ -2,6 +2,7 @@
 id: writing-tests
 title: "Writing tests"
 ---
+## Introduction
 
 Playwright tests are simple, they
 
@@ -51,11 +52,11 @@ test('get started link', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Installation' })).toBeVisible();
 });
 ```
-
+  
 :::note
-Add `// @ts-check` at the start of each test file when using JavaScript in
-VS Code to get automatic type checking.
+Add `// @ts-check` at the start of each test file when using JavaScript in VS Code to get automatic type checking.
 :::
+
 
 ## Actions
 
@@ -68,21 +69,22 @@ will be able to interact with the page elements.
 await page.goto('https://playwright.dev/');
 ```
 
+```python
+page.goto("https://playwright.dev/")
+```
+
 Playwright will wait for page to reach the load state prior to moving forward.
 Learn more about the [`method: Page.goto`] options.
 
 ### Interactions
 
-Performing actions starts with locating the elements. Playwright uses
-[Locators API](./locators.md) for that. Locators represent a way to find
-element(s) on the page at any moment, learn more about the
-[different types](./locators.md) of locators available. Playwright will wait for the element to be [actionable](./actionability.md)
-prior to performing the action, so there is no need to wait for it to become available.
+Performing actions starts with locating the elements. Playwright uses [Locators API](./locators.md) for that. Locators represent a way to find element(s) on the page at any moment, learn more about the [different types](./locators.md) of locators available. Playwright will wait for the element to be [actionable](./actionability.md) prior to performing the action, so there is no need to wait for it to become available.
 
 
 ```js
 // Create a locator.
 const getStarted = page.getByRole('link', { name: 'Get started' });
+
 // Click it.
 await getStarted.click();
 ```
@@ -93,11 +95,9 @@ In most cases, it'll be written in one line:
 await page.getByRole('link', { name: 'Get started' }).click();
 ```
 
-
 ### Basic actions
 
-This is the list of the most popular Playwright actions. Note that there are
-many more, so make sure to check the [Locator API](./api/class-locator.md) section to
+This is the list of the most popular Playwright actions. Note that there are many more, so make sure to check the [Locator API](./api/class-locator.md) section to
 learn more about them.
 
 | Action | Description |
@@ -113,7 +113,7 @@ learn more about them.
 | [`method: Locator.selectOption`] | Select option in the drop down |
 
 ## Assertions
-
+  
 Playwright includes [test assertions](./test-assertions.md) in the form of `expect` function. To make an assertion, call `expect(value)` and choose a matcher that reflects the expectation.
 
 There are many generic matchers like `toEqual`, `toContain`, `toBeTruthy` that can be used to assert any conditions.
@@ -127,9 +127,7 @@ Playwright also includes async matchers that will wait until the expected condit
 ```js
 await expect(page).toHaveTitle(/Playwright/);
 ```
-
-
-
+  
 Here is the list of the most popular async assertions. Note that there are [many more](./test-assertions.md) to get familiar with:
 
 | Assertion | Description |
@@ -144,16 +142,20 @@ Here is the list of the most popular async assertions. Note that there are [many
 | [`method: LocatorAssertions.toHaveValue`] | Input element has value |
 | [`method: PageAssertions.toHaveTitle`] | Page has title |
 | [`method: PageAssertions.toHaveURL`] | Page has URL |
-| [`method: PageAssertions.toHaveScreenshot#1`] | Page has screenshot |
-
 
 ### Test Isolation
-
-Playwright Test is based on the concept of [test fixtures](./test-fixtures.md) such as the [built in page fixture](./test-fixtures#built-in-fixtures), which is passed into your test. Pages are isolated between tests due to the Browser Context, which is equivalent to a brand new browser profile, where every test gets a fresh environment, even when multiple tests run in a single Browser.
+  
+Playwright Test is based on the concept of [test fixtures](./test-fixtures.md) such as the [built in page fixture](./test-fixtures#built-in-fixtures), which is passed into your test. Pages are [isolated between tests due to the Browser Context](./browser-contexts), which is equivalent to a brand new browser profile, where every test gets a fresh environment, even when multiple tests run in a single Browser.
 
 ```js title="tests/example.spec.ts"
-test('basic test', async ({ page }) => {
-  // ...
+import { test } from '@playwright/test';
+
+test('example test', async ({ page }) => {
+  // "page" belongs to an isolated BrowserContext, created for this specific test.
+});
+
+test('another test', async ({ page }) => {
+  // "page" in this second test is completely isolated from the first test.
 });
 ```
 
@@ -182,3 +184,6 @@ test.describe('navigation', () => {
 - [Run single test, multiple tests, headed mode](./running-tests.md)
 - [Generate tests with Codegen](./codegen-intro.md)
 - [See a trace of your tests](./trace-viewer-intro.md)
+- [Explore UI Mode](./test-ui-mode.md)
+- [Run tests on CI with GitHub Actions](./ci-intro.md)
+

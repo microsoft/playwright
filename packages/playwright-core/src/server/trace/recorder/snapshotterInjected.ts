@@ -46,6 +46,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
   const kStyleSheetAttribute = '__playwright_style_sheet_';
   const kTargetAttribute = '__playwright_target__';
   const kCustomElementsAttribute = '__playwright_custom_elements__';
+  const kCurrentSrcAttribute = '__playwright_current_src__';
 
   // Symbols for our own info on Nodes/StyleSheets.
   const kSnapshotFrameId = Symbol('__playwright_snapshot_frameid_');
@@ -483,6 +484,14 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
           expectValue(kCustomElementsAttribute);
           expectValue(value);
           attrs[kCustomElementsAttribute] = value;
+        }
+
+        // Process currentSrc before bailing out since it depends on JS, not the DOM.
+        if (nodeName === 'IMG' || nodeName === 'PICTURE') {
+          const value = nodeName === 'PICTURE' ? '' : this._sanitizeUrl((node as HTMLImageElement).currentSrc);
+          expectValue(kCurrentSrcAttribute);
+          expectValue(value);
+          attrs[kCurrentSrcAttribute] = value;
         }
 
         // We can skip attributes comparison because nothing else has changed,

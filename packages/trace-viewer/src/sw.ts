@@ -37,7 +37,7 @@ const loadedTraces = new Map<string, { traceModel: TraceModel, snapshotServer: S
 
 const clientIdToTraceUrls = new Map<string, Set<string>>();
 
-async function loadTrace(traceUrl: string, traceFileName: string | null, clientId: string, progress: (done: number, total: number) => void): Promise<TraceModel> {
+async function loadTrace(traceUrl: string, traceFileName: string | null, clientId: string, progress: (done: number, total: number) => undefined): Promise<TraceModel> {
   await gc();
   let set = clientIdToTraceUrls.get(clientId);
   if (!set) {

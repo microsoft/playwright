@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-type Progress = (done: number, total: number) => void;
+type Progress = (done: number, total: number) => undefined;
 
 export function splitProgress(progress: Progress, weights: number[]): Progress[] {
   const doneList = new Array(weights.length).fill(0);

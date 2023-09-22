@@ -783,3 +783,36 @@ test('worker teardown errors reflected in timed-out tests', async ({ runInlineTe
   expect(result.output).toContain('Test timeout of 1000ms exceeded.');
   expect(result.output).toContain('Rejecting!');
 });
+
+test('automatic worker fixtures should start before automatic test fixtures', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend({
+          autoTest: [async ({}, use) => {
+              console.log('\\n%%TEST FIXTURE 1');
+              await use();
+              console.log('\\n%%TEST FIXTURE 2');
+          }, { scope: 'test', auto: true }],
+
+          autoWorker: [async ({}, use) => {
+              console.log('\\n%%WORKER FIXTURE 1');
+              await use();
+              console.log('\\n%%WORKER FIXTURE 2');
+          }, { scope: 'worker', auto: true }],
+      });
+
+      test('test', async () => {
+          console.log('\\n%%TEST');
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.outputLines).toEqual([
+    'WORKER FIXTURE 1',
+    'TEST FIXTURE 1',
+    'TEST',
+    'TEST FIXTURE 2',
+    'WORKER FIXTURE 2',
+  ]);
+});

@@ -49,5 +49,7 @@ export const chromiumSwitches = [
   '--use-mock-keychain',
   // See https://chromium-review.googlesource.com/c/chromium/src/+/2436773
   '--no-service-autorun',
-  '--export-tagged-pdf'
+  '--export-tagged-pdf',
+  // https://chromium-review.googlesource.com/c/chromium/src/+/4853540
+  '--disable-search-engine-choice-screen',
 ];

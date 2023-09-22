@@ -113,6 +113,7 @@ export class Filter {
         status: status as any,
         file: test.location.file,
         line: String(test.location.line),
+        column: String(test.location.column),
       };
       (test as any).searchValues = searchValues;
     }
@@ -132,8 +133,8 @@ export class Filter {
       for (const text of this.text) {
         if (searchValues.text.includes(text))
           continue;
-        const location = text.split(':');
-        if (location.length === 2 && searchValues.file.includes(location[0]) && searchValues.line.includes(location[1]))
+        const [fileName, line, column] = text.split(':');
+        if (searchValues.file.includes(fileName) && searchValues.line === line && (column === undefined || searchValues.column === column))
           continue;
         return false;
       }
@@ -154,5 +155,6 @@ type SearchValues = {
   status: 'passed' | 'failed' | 'flaky' | 'skipped';
   file: string;
   line: string;
+  column: string;
 };
 

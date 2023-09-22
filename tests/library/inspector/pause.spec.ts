@@ -231,8 +231,6 @@ it.describe('pause', () => {
     await recorderPage.waitForSelector('.source-line-paused:has-text("page.pause();  // 2")');
     expect(await sanitizeLog(recorderPage)).toEqual([
       'page.pause- XXms',
-      'tracing.start- XXms',
-      'tracing.stop- XXms',
       'page.pause',
     ]);
     await recorderPage.click('[title="Resume (F8)"]');
@@ -376,7 +374,8 @@ it.describe('pause', () => {
     const recorderPage = await recorderPageGetter();
 
     const box1Promise = waitForTestLog<Box>(page, 'Highlight box for test: ');
-    await recorderPage.click('.toolbar .CodeMirror');
+    await recorderPage.getByText('Locator', { exact: true }).click();
+    await recorderPage.locator('.tabbed-pane .CodeMirror').click();
     await recorderPage.keyboard.type('getByText(\'Submit\')');
     const box1 = await box1Promise;
 

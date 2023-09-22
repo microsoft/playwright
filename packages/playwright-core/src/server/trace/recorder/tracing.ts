@@ -43,7 +43,7 @@ import { Snapshotter } from './snapshotter';
 import { yazl } from '../../../zipBundle';
 import type { ConsoleMessage } from '../../console';
 
-const version: trace.VERSION = 4;
+const version: trace.VERSION = 5;
 
 export type TracerOptions = {
   name?: string;
@@ -109,6 +109,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       this._snapshotter = new Snapshotter(context, this);
       assert(tracesDir, 'tracesDir must be specified for BrowserContext');
       this._contextCreatedEvent.browserName = context._browser.options.name;
+      this._contextCreatedEvent.channel = context._browser.options.channel;
       this._contextCreatedEvent.options = context._options;
     }
   }
@@ -383,7 +384,9 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   onEvent(sdkObject: SdkObject, event: trace.EventTraceEvent) {
     if (!sdkObject.attribution.context)
       return;
-    if (event.method === 'console' || (event.method === '__create__' && event.class === 'ConsoleMessage')) {
+    if (event.method === 'console' ||
+        (event.method === '__create__' && event.class === 'ConsoleMessage') ||
+        (event.method === '__create__' && event.class === 'JSHandle')) {
       // Console messages are handled separately.
       return;
     }
@@ -426,24 +429,12 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   }
 
   private _onConsoleMessage(message: ConsoleMessage) {
-    const object: trace.ConsoleMessageTraceEvent = {
-      type: 'object',
-      class: 'ConsoleMessage',
-      guid: message.guid,
-      initializer: {
-        type: message.type(),
-        text: message.text(),
-        args: message.args().map(a => ({ preview: a.toString(), value: a.rawValue() })),
-        location: message.location(),
-      },
-    };
-    this._appendTraceEvent(object);
-
-    const event: trace.EventTraceEvent = {
-      type: 'event',
-      class: 'BrowserContext',
-      method: 'console',
-      params: { message: { guid: message.guid } },
+    const event: trace.ConsoleMessageTraceEvent = {
+      type: 'console',
+      messageType: message.type(),
+      text: message.text(),
+      args: message.args().map(a => ({ preview: a.toString(), value: a.rawValue() })),
+      location: message.location(),
       time: monotonicTime(),
       pageId: message.page().guid,
     };
@@ -475,7 +466,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   private _appendTraceEvent(event: trace.TraceEvent) {
     const visited = visitTraceEvent(event, this._state!.traceSha1s);
     // Do not flush (console) events, they are too noisy, unless we are in ui mode (live).
-    const flush = this._state!.options.live || (event.type !== 'event' && event.type !== 'object');
+    const flush = this._state!.options.live || (event.type !== 'event' && event.type !== 'console');
     this._fs.appendFile(this._state!.traceFile, JSON.stringify(visited) + '\n', flush);
   }
 

@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import type { Fixtures, Locator, Page, BrowserContextOptions, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, BrowserContext } from '@playwright/test';
+import type { Fixtures, Locator, Page, BrowserContextOptions, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, BrowserContext } from 'playwright/test';
 import type { Component, JsxComponent, MountOptions } from '../types/component';
-import type { ContextReuseMode, FullConfigInternal } from '../../playwright-test/src/common/config';
+import type { ContextReuseMode, FullConfigInternal } from '../../playwright/src/common/config';
 
 let boundCallbacksForMount: Function[] = [];
 

@@ -1165,9 +1165,14 @@ var button = page.GetByRole(AriaRole.Button).And(page.GetByTitle("Subscribe"));
 
 ### Matching one of the two alternative locators
 
-If you'd like to target one of the two or more elements, and you don't know which one it will be, use [`method: Locator.or`] to create a locator that matches any of the alternatives.
+If you'd like to target one of the two or more elements, and you don't know which one it will be, use [`method: Locator.or`] to create a locator that matches all of the alternatives.
 
 For example, consider a scenario where you'd like to click on a "New email" button, but sometimes a security settings dialog shows up instead. In this case, you can wait for either a "New email" button, or a dialog and act accordingly.
+
+:::note
+If both "New email" button and security dialog appear on screen, the "or" locator will match both of them,
+possibly throwing the ["strict mode violation" error](#strictness).
+:::
 
 ```js
 const newEmail = page.getByRole('button', { name: 'New' });

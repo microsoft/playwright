@@ -21,7 +21,7 @@ import { browserTest, contextTest as test, expect } from '../config/browserTest'
 import { parseTraceRaw } from '../config/utils';
 import type { StackFrame } from '@protocol/channels';
 import type { ActionTraceEvent } from '../../packages/trace/src/trace';
-import { artifactsFolderName } from '../../packages/playwright-test/src/isomorphic/folders';
+import { artifactsFolderName } from '../../packages/playwright/src/isomorphic/folders';
 
 test.skip(({ trace }) => trace === 'on');
 
@@ -739,7 +739,7 @@ test('should flush console events on tracing stop', async ({ context, page }, te
   const tracePath = testInfo.outputPath('trace.zip');
   await context.tracing.stop({ path: tracePath });
   const trace = await parseTraceRaw(tracePath);
-  const events = trace.events.filter(e => e.method === 'console');
+  const events = trace.events.filter(e => e.type === 'console');
   expect(events).toHaveLength(100);
 });
 

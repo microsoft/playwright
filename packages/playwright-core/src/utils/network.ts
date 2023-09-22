@@ -20,7 +20,7 @@ import https from 'https';
 import type net from 'net';
 import { getProxyForUrl } from '../utilsBundle';
 import { HttpsProxyAgent } from '../utilsBundle';
-import * as URL from 'url';
+import url from 'url';
 import type { URLMatch } from '../common/types';
 import { isString, isRegExp } from './rtti';
 import { globToRegex } from './glob';
@@ -38,7 +38,7 @@ export type HTTPRequestParams = {
 export const NET_DEFAULT_TIMEOUT = 30_000;
 
 export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.IncomingMessage) => void, onError: (error: Error) => void) {
-  const parsedUrl = URL.parse(params.url);
+  const parsedUrl = url.parse(params.url);
   let options: https.RequestOptions = {
     ...parsedUrl,
     agent: parsedUrl.protocol === 'https:' ? httpsHappyEyeballsAgent : httpHappyEyeballsAgent,
@@ -52,7 +52,7 @@ export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.Inco
 
   const proxyURL = getProxyForUrl(params.url);
   if (proxyURL) {
-    const parsedProxyURL = URL.parse(proxyURL);
+    const parsedProxyURL = url.parse(proxyURL);
     if (params.url.startsWith('http:')) {
       options = {
         path: parsedUrl.href,
@@ -72,7 +72,7 @@ export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.Inco
   const requestCallback = (res: http.IncomingMessage) => {
     const statusCode = res.statusCode || 0;
     if (statusCode >= 300 && statusCode < 400 && res.headers.location)
-      httpRequest({ ...params, url: new URL.URL(res.headers.location, params.url).toString() }, onResponse, onError);
+      httpRequest({ ...params, url: new URL(res.headers.location, params.url).toString() }, onResponse, onError);
     else
       onResponse(res);
   };
@@ -139,7 +139,7 @@ export function urlMatches(baseURL: string | undefined, urlString: string, match
 
 function parsedURL(url: string): URL | null {
   try {
-    return new URL.URL(url);
+    return new URL(url);
   } catch (e) {
     return null;
   }
@@ -147,7 +147,7 @@ function parsedURL(url: string): URL | null {
 
 export function constructURLBasedOnBaseURL(baseURL: string | undefined, givenURL: string): string {
   try {
-    return (new URL.URL(givenURL, baseURL)).toString();
+    return (new URL(givenURL, baseURL)).toString();
   } catch (e) {
     return givenURL;
   }

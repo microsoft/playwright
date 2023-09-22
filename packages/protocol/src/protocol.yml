@@ -82,10 +82,6 @@ SerializedValue:
     u: string?
     # String representation of BigInt.
     bi: string?
-    # JS representation of Map: [[key1, value1], [key2, value2], ...].
-    m: SerializedValue?
-    # JS representation of Set: [item1, item2, ...].
-    se: SerializedValue?
     # Regular expression pattern and flags.
     r:
       type: object?
@@ -683,10 +679,10 @@ Playwright:
           type: object?
           properties:
             cookies:
-              type: array
+              type: array?
               items: NetworkCookie
             origins:
-              type: array
+              type: array?
               items: OriginStorage
         tracesDir: string?
 
@@ -1180,7 +1176,18 @@ BrowserContext:
 
     console:
       parameters:
-        message: ConsoleMessage
+        page: Page
+        type: string
+        text: string
+        args:
+          type: array
+          items: JSHandle
+        location:
+          type: object
+          properties:
+            url: string
+            lineNumber: number
+            columnNumber: number
 
     close:
 
@@ -2946,25 +2953,6 @@ WebSocket:
         error: string
 
     close:
-
-
-ConsoleMessage:
-  type: interface
-
-  initializer:
-    page: Page
-    type: string
-    text: string
-    args:
-      type: array
-      items: JSHandle
-    location:
-      type: object
-      properties:
-        url: string
-        lineNumber: number
-        columnNumber: number
-
 
 
 BindingCall:

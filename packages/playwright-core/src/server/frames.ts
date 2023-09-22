@@ -200,7 +200,9 @@ export class FrameManager {
       // Do not override request with undefined.
       return;
     }
-    frame.setPendingDocument({ documentId, request: undefined });
+
+    const request = documentId ? Array.from(frame._inflightRequests).find(request => request._documentId === documentId) : undefined;
+    frame.setPendingDocument({ documentId, request });
   }
 
   frameCommittedNewDocumentNavigation(frameId: string, url: string, name: string, documentId: string, initial: boolean) {
@@ -896,7 +898,6 @@ export class Frame extends SdkObject {
           });
         });
         const contentPromise = context.evaluate(({ html, tag }) => {
-          window.stop();
           document.open();
           console.debug(tag);  // eslint-disable-line no-console
           document.write(html);

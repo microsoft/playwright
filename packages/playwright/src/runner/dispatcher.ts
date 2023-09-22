@@ -1,0 +1,553 @@
+/**
+ * Copyright Microsoft Corporation. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import type { TestBeginPayload, TestEndPayload, DonePayload, TestOutputPayload, StepBeginPayload, StepEndPayload, TeardownErrorsPayload, RunPayload, SerializedConfig, AttachmentPayload } from '../common/ipc';
+import { serializeConfig } from '../common/ipc';
+import type { TestResult, TestStep, TestError } from '../../types/testReporter';
+import type { Suite } from '../common/test';
+import type { ProcessExitData } from './processHost';
+import type { TestCase } from '../common/test';
+import { ManualPromise, type RegisteredListener, eventsHelper } from 'playwright-core/lib/utils';
+import { WorkerHost } from './workerHost';
+import type { TestGroup } from './testGroups';
+import type { FullConfigInternal } from '../common/config';
+import type { ReporterV2 } from '../reporters/reporterV2';
+import type { FailureTracker } from './failureTracker';
+
+export type EnvByProjectId = Map<string, Record<string, string | undefined>>;
+
+export class Dispatcher {
+  private _workerSlots: { busy: boolean, worker?: WorkerHost, jobDispatcher?: JobDispatcher }[] = [];
+  private _queue: TestGroup[] = [];
+  private _queuedOrRunningHashCount = new Map<string, number>();
+  private _finished = new ManualPromise<void>();
+  private _isStopped = true;
+
+  private _allTests: TestCase[] = [];
+  private _config: FullConfigInternal;
+  private _reporter: ReporterV2;
+  private _failureTracker: FailureTracker;
+
+  private _extraEnvByProjectId: EnvByProjectId = new Map();
+  private _producedEnvByProjectId: EnvByProjectId = new Map();
+
+  constructor(config: FullConfigInternal, reporter: ReporterV2, failureTracker: FailureTracker) {
+    this._config = config;
+    this._reporter = reporter;
+    this._failureTracker = failureTracker;
+  }
+
+  private _processFullySkippedJobs() {
+    // If all the tests in a group are skipped, we report them immediately
+    // without sending anything to a worker. This avoids creating unnecessary worker processes.
+    //
+    // However, if there is at least one non-skipped test in a group, we'll send
+    // the whole group to the worker process and report tests in the natural order,
+    // with skipped tests mixed in-between non-skipped. This makes
+    // for a better reporter experience.
+    while (!this._isStopped && this._queue.length) {
+      const group = this._queue[0];
+      const allTestsSkipped = group.tests.every(test => test.expectedStatus === 'skipped');
+      if (!allTestsSkipped)
+        break;
+
+      for (const test of group.tests) {
+        const result = test._appendTestResult();
+        result.status = 'skipped';
+        this._reporter.onTestBegin(test, result);
+        this._reportTestEnd(test, result);
+      }
+      this._queue.shift();
+    }
+
+    // If all remaining tests were skipped, resolve finished state.
+    this._checkFinished();
+  }
+
+  private async _scheduleJob() {
+    this._processFullySkippedJobs();
+
+    // 1. Find a job to run.
+    if (this._isStopped || !this._queue.length)
+      return;
+    const job = this._queue[0];
+
+    // 2. Find a worker with the same hash, or just some free worker.
+    let index = this._workerSlots.findIndex(w => !w.busy && w.worker && w.worker.hash() === job.workerHash && !w.worker.didSendStop());
+    if (index === -1)
+      index = this._workerSlots.findIndex(w => !w.busy);
+    // No workers available, bail out.
+    if (index === -1)
+      return;
+
+    // 3. Claim both the job and the worker, run the job and release the worker.
+    this._queue.shift();
+    this._workerSlots[index].busy = true;
+    await this._startJobInWorker(index, job);
+    this._workerSlots[index].busy = false;
+
+    // 4. Check the "finished" condition.
+    this._checkFinished();
+
+    // 5. We got a free worker - perhaps we can immediately start another job?
+    void this._scheduleJob();
+  }
+
+  private async _startJobInWorker(index: number, job: TestGroup) {
+    let worker = this._workerSlots[index].worker;
+
+    // 1. Restart the worker if it has the wrong hash or is being stopped already.
+    if (worker && (worker.hash() !== job.workerHash || worker.didSendStop())) {
+      await worker.stop();
+      worker = undefined;
+      if (this._isStopped) // Check stopped signal after async hop.
+        return;
+    }
+
+    // 2. Start the worker if it is down.
+    if (!worker) {
+      worker = this._createWorker(job, index, serializeConfig(this._config));
+      this._workerSlots[index].worker = worker;
+      worker.on('exit', () => this._workerSlots[index].worker = undefined);
+      await worker.start();
+      if (this._isStopped) // Check stopped signal after async hop.
+        return;
+    }
+
+    // 3. Run the job.
+    const stopCallback = () => this.stop().catch(() => {});
+    const jobDispatcher = new JobDispatcher(job, this._reporter, this._failureTracker, stopCallback);
+    this._workerSlots[index].jobDispatcher = jobDispatcher;
+    const result = await jobDispatcher.runInWorker(worker);
+    this._workerSlots[index].jobDispatcher = undefined;
+    this._updateCounterForWorkerHash(job.workerHash, -1);
+
+    // 4. When worker encounters error, we stop it and create a new one.
+    //    We also do not keep the worker alive if it cannot serve any more jobs.
+    if (result.didFail)
+      void worker.stop(true /* didFail */);
+    else if (this._isWorkerRedundant(worker))
+      void worker.stop();
+
+    // 5. Possibly schedule a new job with leftover tests and/or retries.
+    if (!this._isStopped && result.newJob) {
+      this._queue.unshift(result.newJob);
+      this._updateCounterForWorkerHash(job.workerHash, +1);
+    }
+  }
+
+  private _checkFinished() {
+    if (this._finished.isDone())
+      return;
+
+    // Check that we have no more work to do.
+    if (this._queue.length && !this._isStopped)
+      return;
+
+    // Make sure all workers have finished the current job.
+    if (this._workerSlots.some(w => w.busy))
+      return;
+
+    for (const test of this._allTests) {
+      // Emulate skipped test run if we have stopped early.
+      if (!test.results.length)
+        test._appendTestResult().status = 'skipped';
+    }
+    this._finished.resolve();
+  }
+
+  private _isWorkerRedundant(worker: WorkerHost) {
+    let workersWithSameHash = 0;
+    for (const slot of this._workerSlots) {
+      if (slot.worker && !slot.worker.didSendStop() && slot.worker.hash() === worker.hash())
+        workersWithSameHash++;
+    }
+    return workersWithSameHash > this._queuedOrRunningHashCount.get(worker.hash())!;
+  }
+
+  private _updateCounterForWorkerHash(hash: string, delta: number) {
+    this._queuedOrRunningHashCount.set(hash, delta + (this._queuedOrRunningHashCount.get(hash) || 0));
+  }
+
+  async run(testGroups: TestGroup[], extraEnvByProjectId: EnvByProjectId) {
+    this._extraEnvByProjectId = extraEnvByProjectId;
+    this._queue = testGroups;
+    this._allTests = testGroups.map(g => g.tests).flat();
+    for (const group of testGroups)
+      this._updateCounterForWorkerHash(group.workerHash, +1);
+    this._isStopped = false;
+    this._workerSlots = [];
+    // 0. Stop right away if we have reached max failures.
+    if (this._failureTracker.hasReachedMaxFailures())
+      void this.stop();
+    // 1. Allocate workers.
+    for (let i = 0; i < this._config.config.workers; i++)
+      this._workerSlots.push({ busy: false });
+    // 2. Schedule enough jobs.
+    for (let i = 0; i < this._workerSlots.length; i++)
+      void this._scheduleJob();
+    this._checkFinished();
+    // 3. More jobs are scheduled when the worker becomes free.
+    // 4. Wait for all jobs to finish.
+    await this._finished;
+  }
+
+  _createWorker(testGroup: TestGroup, parallelIndex: number, loaderData: SerializedConfig) {
+    const projectConfig = this._config.projects.find(p => p.id === testGroup.projectId)!;
+    const outputDir = projectConfig.project.outputDir;
+    const worker = new WorkerHost(testGroup, parallelIndex, loaderData, this._extraEnvByProjectId.get(testGroup.projectId) || {}, outputDir);
+    const handleOutput = (params: TestOutputPayload) => {
+      const chunk = chunkFromParams(params);
+      if (worker.didFail()) {
+        // Note: we keep reading stdio from workers that are currently stopping after failure,
+        // to debug teardown issues. However, we avoid spoiling the test result from
+        // the next retry.
+        return { chunk };
+      }
+      const currentlyRunning = this._workerSlots[parallelIndex].jobDispatcher?.currentlyRunning();
+      if (!currentlyRunning)
+        return { chunk };
+      return { chunk, test: currentlyRunning.test, result: currentlyRunning.result };
+    };
+    worker.on('stdOut', (params: TestOutputPayload) => {
+      const { chunk, test, result } = handleOutput(params);
+      result?.stdout.push(chunk);
+      this._reporter.onStdOut(chunk, test, result);
+    });
+    worker.on('stdErr', (params: TestOutputPayload) => {
+      const { chunk, test, result } = handleOutput(params);
+      result?.stderr.push(chunk);
+      this._reporter.onStdErr(chunk, test, result);
+    });
+    worker.on('teardownErrors', (params: TeardownErrorsPayload) => {
+      this._failureTracker.onWorkerError();
+      for (const error of params.fatalErrors)
+        this._reporter.onError(error);
+    });
+    worker.on('exit', () => {
+      const producedEnv = this._producedEnvByProjectId.get(testGroup.projectId) || {};
+      this._producedEnvByProjectId.set(testGroup.projectId, { ...producedEnv, ...worker.producedEnv() });
+    });
+    return worker;
+  }
+
+  producedEnvByProjectId() {
+    return this._producedEnvByProjectId;
+  }
+
+  async stop() {
+    if (this._isStopped)
+      return;
+    this._isStopped = true;
+    await Promise.all(this._workerSlots.map(({ worker }) => worker?.stop()));
+    this._checkFinished();
+  }
+
+  private _reportTestEnd(test: TestCase, result: TestResult) {
+    this._reporter.onTestEnd(test, result);
+    this._failureTracker.onTestEnd(test, result);
+    if (this._failureTracker.hasReachedMaxFailures())
+      this.stop().catch(e => {});
+  }
+}
+
+class JobDispatcher {
+  private _jobResult = new ManualPromise<{ newJob?: TestGroup, didFail: boolean }>();
+  private _listeners: RegisteredListener[] = [];
+  private _failedTests = new Set<TestCase>();
+  private _remainingByTestId = new Map<string, TestCase>();
+  private _dataByTestId = new Map<string, { test: TestCase, result: TestResult, steps: Map<string, TestStep> }>();
+  private _parallelIndex = 0;
+  private _workerIndex = 0;
+  private _currentlyRunning: { test: TestCase, result: TestResult } | undefined;
+
+  constructor(private _job: TestGroup, private _reporter: ReporterV2, private _failureTracker: FailureTracker, private _stopCallback: () => void) {
+    this._remainingByTestId = new Map(this._job.tests.map(e => [e.id, e]));
+  }
+
+  private _onTestBegin(params: TestBeginPayload) {
+    const test = this._remainingByTestId.get(params.testId);
+    if (!test) {
+      // TODO: this should never be the case, report an internal error?
+      return;
+    }
+    const result = test._appendTestResult();
+    this._dataByTestId.set(test.id, { test, result, steps: new Map() });
+    result.parallelIndex = this._parallelIndex;
+    result.workerIndex = this._workerIndex;
+    result.startTime = new Date(params.startWallTime);
+    this._reporter.onTestBegin(test, result);
+    this._currentlyRunning = { test, result };
+  }
+
+  private _onTestEnd(params: TestEndPayload) {
+    if (this._failureTracker.hasReachedMaxFailures()) {
+      // Do not show more than one error to avoid confusion, but report
+      // as interrupted to indicate that we did actually start the test.
+      params.status = 'interrupted';
+      params.errors = [];
+    }
+    const data = this._dataByTestId.get(params.testId);
+    if (!data) {
+      // TODO: this should never be the case, report an internal error?
+      return;
+    }
+    this._dataByTestId.delete(params.testId);
+    this._remainingByTestId.delete(params.testId);
+    const { result, test } = data;
+    result.duration = params.duration;
+    result.errors = params.errors;
+    result.error = result.errors[0];
+    result.status = params.status;
+    test.expectedStatus = params.expectedStatus;
+    test.annotations = params.annotations;
+    test.timeout = params.timeout;
+    const isFailure = result.status !== 'skipped' && result.status !== test.expectedStatus;
+    if (isFailure)
+      this._failedTests.add(test);
+    this._reportTestEnd(test, result);
+    this._currentlyRunning = undefined;
+  }
+
+  private _onStepBegin(params: StepBeginPayload) {
+    const data = this._dataByTestId.get(params.testId);
+    if (!data) {
+      // The test has finished, but steps are still coming. Just ignore them.
+      return;
+    }
+    const { result, steps, test } = data;
+    const parentStep = params.parentStepId ? steps.get(params.parentStepId) : undefined;
+    const step: TestStep = {
+      title: params.title,
+      titlePath: () => {
+        const parentPath = parentStep?.titlePath() || [];
+        return [...parentPath, params.title];
+      },
+      parent: parentStep,
+      category: params.category,
+      startTime: new Date(params.wallTime),
+      duration: -1,
+      steps: [],
+      location: params.location,
+    };
+    steps.set(params.stepId, step);
+    (parentStep || result).steps.push(step);
+    this._reporter.onStepBegin(test, result, step);
+  }
+
+  private _onStepEnd(params: StepEndPayload) {
+    const data = this._dataByTestId.get(params.testId);
+    if (!data) {
+      // The test has finished, but steps are still coming. Just ignore them.
+      return;
+    }
+    const { result, steps, test } = data;
+    const step = steps.get(params.stepId);
+    if (!step) {
+      this._reporter.onStdErr('Internal error: step end without step begin: ' + params.stepId, test, result);
+      return;
+    }
+    step.duration = params.wallTime - step.startTime.getTime();
+    if (params.error)
+      step.error = params.error;
+    steps.delete(params.stepId);
+    this._reporter.onStepEnd(test, result, step);
+  }
+
+  private _onAttach(params: AttachmentPayload) {
+    const data = this._dataByTestId.get(params.testId)!;
+    if (!data) {
+      // The test has finished, but attachments are still coming. Just ignore them.
+      return;
+    }
+    const attachment = {
+      name: params.name,
+      path: params.path,
+      contentType: params.contentType,
+      body: params.body !== undefined ? Buffer.from(params.body, 'base64') : undefined
+    };
+    data.result.attachments.push(attachment);
+  }
+
+  private _massSkipTestsFromRemaining(testIds: Set<string>, errors: TestError[], onlyStartedTests?: boolean) {
+    for (const test of this._remainingByTestId.values()) {
+      if (!testIds.has(test.id))
+        continue;
+      if (!this._failureTracker.hasReachedMaxFailures()) {
+        const runData = this._dataByTestId.get(test.id);
+        // There might be a single test that has started but has not finished yet.
+        let result: TestResult;
+        if (runData) {
+          result = runData.result;
+        } else {
+          if (onlyStartedTests && this._currentlyRunning)
+            continue;
+          result = test._appendTestResult();
+          this._reporter.onTestBegin(test, result);
+        }
+        result.errors = [...errors];
+        result.error = result.errors[0];
+        result.status = errors.length ? 'failed' : 'skipped';
+        this._reportTestEnd(test, result);
+        this._failedTests.add(test);
+        errors = []; // Only report errors for the first test.
+      }
+      this._remainingByTestId.delete(test.id);
+    }
+    if (errors.length) {
+      // We had fatal errors after all tests have passed - most likely in some teardown.
+      // Let's just fail the test run.
+      this._failureTracker.onWorkerError();
+      for (const error of errors)
+        this._reporter.onError(error);
+    }
+  }
+
+  private _onDone(params: DonePayload & { unexpectedExitError?: TestError }) {
+    // We won't file remaining if:
+    // - there are no remaining
+    // - we are here not because something failed
+    // - no unrecoverable worker error
+    if (!this._remainingByTestId.size && !this._failedTests.size && !params.fatalErrors.length && !params.skipTestsDueToSetupFailure.length && !params.fatalUnknownTestIds && !params.unexpectedExitError) {
+      this._finished({ didFail: false });
+      return;
+    }
+
+    if (params.fatalUnknownTestIds) {
+      const titles = params.fatalUnknownTestIds.map(testId => {
+        const test = this._remainingByTestId.get(testId);
+        return test?.titlePath().slice(1).join(' > ');
+      }).filter(title => !!title);
+      this._massSkipTestsFromRemaining(new Set(params.fatalUnknownTestIds), [{
+        message: `Test(s) not found in the worker process. Make sure test titles do not change:\n${titles.join('\n')}`
+      }]);
+    }
+    if (params.fatalErrors.length) {
+      // In case of fatal errors, report first remaining test as failing with these errors,
+      // and all others as skipped.
+      this._massSkipTestsFromRemaining(new Set(this._remainingByTestId.keys()), params.fatalErrors);
+    }
+    // Handle tests that should be skipped because of the setup failure.
+    this._massSkipTestsFromRemaining(new Set(params.skipTestsDueToSetupFailure), []);
+    // Handle unexpected worker exit.
+    if (params.unexpectedExitError)
+      this._massSkipTestsFromRemaining(new Set(this._remainingByTestId.keys()), [params.unexpectedExitError], true /* onlyStartedTests */);
+
+    const retryCandidates = new Set<TestCase>();
+    const serialSuitesWithFailures = new Set<Suite>();
+
+    for (const failedTest of this._failedTests) {
+      retryCandidates.add(failedTest);
+
+      let outermostSerialSuite: Suite | undefined;
+      for (let parent: Suite | undefined = failedTest.parent; parent; parent = parent.parent) {
+        if (parent._parallelMode ===  'serial')
+          outermostSerialSuite = parent;
+      }
+      if (outermostSerialSuite)
+        serialSuitesWithFailures.add(outermostSerialSuite);
+    }
+
+    // We have failed tests that belong to a serial suite.
+    // We should skip all future tests from the same serial suite.
+    for (const test of this._remainingByTestId.values()) {
+      let parent: Suite | undefined = test.parent;
+      while (parent && !serialSuitesWithFailures.has(parent))
+        parent = parent.parent;
+
+      // Does not belong to the failed serial suite, keep it.
+      if (!parent)
+        continue;
+
+      // Emulate a "skipped" run, and drop this test from remaining.
+      const result = test._appendTestResult();
+      this._reporter.onTestBegin(test, result);
+      result.status = 'skipped';
+      this._reportTestEnd(test, result);
+      this._remainingByTestId.delete(test.id);
+    }
+
+    for (const serialSuite of serialSuitesWithFailures) {
+      // Add all tests from faiiled serial suites for possible retry.
+      // These will only be retried together, because they have the same
+      // "retries" setting and the same number of previous runs.
+      serialSuite.allTests().forEach(test => retryCandidates.add(test));
+    }
+
+    const remaining = [...this._remainingByTestId.values()];
+    for (const test of retryCandidates) {
+      if (test.results.length < test.retries + 1)
+        remaining.push(test);
+    }
+
+    // This job is over, we will schedule another one.
+    const newJob = remaining.length ? { ...this._job, tests: remaining } : undefined;
+    this._finished({ didFail: true, newJob });
+  }
+
+  private _onExit(data: ProcessExitData) {
+    const unexpectedExitError: TestError | undefined = data.unexpectedly ? {
+      message: `Internal error: worker process exited unexpectedly (code=${data.code}, signal=${data.signal})`
+    } : undefined;
+    this._onDone({ skipTestsDueToSetupFailure: [], fatalErrors: [], unexpectedExitError });
+  }
+
+  private _finished(result: { newJob?: TestGroup, didFail: boolean }) {
+    eventsHelper.removeEventListeners(this._listeners);
+    this._jobResult.resolve(result);
+  }
+
+  async runInWorker(worker: WorkerHost): Promise<{ newJob?: TestGroup, didFail: boolean }> {
+    this._parallelIndex = worker.parallelIndex;
+    this._workerIndex = worker.workerIndex;
+
+    const runPayload: RunPayload = {
+      file: this._job.requireFile,
+      entries: this._job.tests.map(test => {
+        return { testId: test.id, retry: test.results.length };
+      }),
+    };
+    worker.runTestGroup(runPayload);
+
+    this._listeners = [
+      eventsHelper.addEventListener(worker, 'testBegin', this._onTestBegin.bind(this)),
+      eventsHelper.addEventListener(worker, 'testEnd', this._onTestEnd.bind(this)),
+      eventsHelper.addEventListener(worker, 'stepBegin', this._onStepBegin.bind(this)),
+      eventsHelper.addEventListener(worker, 'stepEnd', this._onStepEnd.bind(this)),
+      eventsHelper.addEventListener(worker, 'attach', this._onAttach.bind(this)),
+      eventsHelper.addEventListener(worker, 'done', this._onDone.bind(this)),
+      eventsHelper.addEventListener(worker, 'exit', this._onExit.bind(this)),
+    ];
+    return this._jobResult;
+  }
+
+  currentlyRunning() {
+    return this._currentlyRunning;
+  }
+
+  private _reportTestEnd(test: TestCase, result: TestResult) {
+    this._reporter.onTestEnd(test, result);
+    this._failureTracker.onTestEnd(test, result);
+    if (this._failureTracker.hasReachedMaxFailures())
+      this._stopCallback();
+  }
+}
+
+function chunkFromParams(params: TestOutputPayload): string | Buffer {
+  if (typeof params.text === 'string')
+    return params.text;
+  return Buffer.from(params.buffer!, 'base64');
+}

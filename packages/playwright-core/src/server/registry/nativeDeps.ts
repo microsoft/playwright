@@ -283,7 +283,6 @@ export const deps: any = {
       'libpango-1.0-0',
       'libpng16-16',
       'libsecret-1-0',
-      'libsoup2.4-1',
       'libvpx6',
       'libwayland-client0',
       'libwayland-egl1',
@@ -364,7 +363,6 @@ export const deps: any = {
       'libpng16.so.16': 'libpng16-16',
       'libsecret-1.so.0': 'libsecret-1-0',
       'libsmime3.so': 'libnss3',
-      'libsoup-2.4.so.1': 'libsoup2.4-1',
       'libvpx.so.6': 'libvpx6',
       'libwayland-client.so.0': 'libwayland-client0',
       'libwayland-egl.so.1': 'libwayland-egl1',
@@ -466,6 +464,7 @@ export const deps: any = {
       'libxtst6'
     ],
     webkit: [
+      'libsoup-3.0-0',
       'libenchant-2-2',
       'gstreamer1.0-libav',
       'gstreamer1.0-plugins-bad',
@@ -507,7 +506,6 @@ export const deps: any = {
       'libpng16-16',
       'libproxy1v5',
       'libsecret-1-0',
-      'libsoup2.4-1',
       'libwayland-client0',
       'libwayland-egl1',
       'libwayland-server0',
@@ -524,6 +522,7 @@ export const deps: any = {
       'libevent-2.1-7',
     ],
     lib2package: {
+      'libsoup-3.0.so.0': 'libsoup-3.0-0',
       'libasound.so.2': 'libasound2',
       'libatk-1.0.so.0': 'libatk1.0-0',
       'libatk-bridge-2.0.so.0': 'libatk-bridge2.0-0',
@@ -580,7 +579,6 @@ export const deps: any = {
       'libproxy.so.1': 'libproxy1v5',
       'libsecret-1.so.0': 'libsecret-1-0',
       'libsmime3.so': 'libnss3',
-      'libsoup-2.4.so.1': 'libsoup2.4-1',
       'libwayland-client.so.0': 'libwayland-client0',
       'libwayland-egl.so.1': 'libwayland-egl1',
       'libwayland-server.so.0': 'libwayland-server0',
@@ -722,7 +720,6 @@ export const deps: any = {
       'libpng16-16',
       'libproxy1v5',
       'libsecret-1-0',
-      'libsoup2.4-1',
       'libwayland-client0',
       'libwayland-egl1',
       'libwayland-server0',
@@ -797,7 +794,6 @@ export const deps: any = {
       'libproxy.so.1': 'libproxy1v5',
       'libsecret-1.so.0': 'libsecret-1-0',
       'libsmime3.so': 'libnss3',
-      'libsoup-2.4.so.1': 'libsoup2.4-1',
       'libwayland-client.so.0': 'libwayland-client0',
       'libwayland-egl.so.1': 'libwayland-egl1',
       'libwayland-server.so.0': 'libwayland-server0',
@@ -891,6 +887,7 @@ export const deps: any = {
       'libxtst6'
     ],
     webkit: [
+      'libsoup-3.0-0',
       'gstreamer1.0-libav',
       'gstreamer1.0-plugins-bad',
       'gstreamer1.0-plugins-base',
@@ -931,7 +928,6 @@ export const deps: any = {
       'libpng16-16',
       'libproxy1v5',
       'libsecret-1-0',
-      'libsoup2.4-1',
       'libwayland-client0',
       'libwayland-egl1',
       'libwayland-server0',
@@ -948,6 +944,7 @@ export const deps: any = {
       'libevent-2.1-7',
     ],
     lib2package: {
+      'libsoup-3.0.so.0': 'libsoup-3.0-0',
       'libasound.so.2': 'libasound2',
       'libatk-1.0.so.0': 'libatk1.0-0',
       'libatk-bridge-2.0.so.0': 'libatk-bridge2.0-0',

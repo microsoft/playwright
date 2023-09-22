@@ -40,6 +40,30 @@ test('should collect stdio', async ({ runInlineTest }) => {
   expect(stderr).toEqual([{ text: 'stderr text' }, { buffer: Buffer.from('stderr buffer').toString('base64') }]);
 });
 
+test('should collect stdio from forked process', async ({ runInlineTest }) => {
+  const { exitCode, report } = await runInlineTest({
+    'stdio.spec.js': `
+      import { test } from '@playwright/test';
+      import { fork } from 'child_process';
+      test('stdio', async () => {
+        const child = fork('fork.js');
+        await new Promise((resolve) => child.on('exit', (code) => resolve(code)));
+      });
+    `,
+    'fork.js': `
+      process.stdout.write('stdout text');
+      process.stdout.write(Buffer.from('stdout buffer'));
+      process.stderr.write('stderr text');
+      process.stderr.write(Buffer.from('stderr buffer'));
+    `
+  });
+  expect(exitCode).toBe(0);
+  const testResult = report.suites[0].specs[0].tests[0].results[0];
+  const { stdout, stderr } = testResult;
+  expect(stdout.map(e => Buffer.from((e as any).buffer, 'base64').toString()).join('')).toEqual('stdout textstdout buffer');
+  expect(stderr.map(e => Buffer.from((e as any).buffer, 'base64').toString()).join('')).toEqual('stderr textstderr buffer');
+});
+
 test('should work with not defined errors', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'is-not-defined-error.spec.ts': `

@@ -98,15 +98,21 @@ jobs:
           core.notice('Report url: ' + reportUrl);
           const mergeWorkflowUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
           const reportMd = await fs.promises.readFile('report.md', 'utf8');
+          function formatComment(lines) {
+            let body = lines.join('\n');
+            if (body.length > 65535)
+              body = body.substring(0, 65000) + `... ${body.length - 65000} more characters`;
+            return body;
+          }
           const { data: response } = await github.rest.issues.createComment({
             ...context.repo,
             issue_number: prNumber,
-            body: [
+            body: formatComment([
               `### [Test results](${reportUrl}) for "${{ github.event.workflow_run.name }}"`,
               reportMd,
               '',
               `Merge [workflow run](${mergeWorkflowUrl}).`
-            ].join('\n'),
+            ]),
           });
           core.info('Posted comment: ' + response.html_url);
 

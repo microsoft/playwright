@@ -239,12 +239,12 @@ Use [`method: Page.waitForLoadState`] to wait until the page gets to a particula
 cases).
 :::
 
-## event: BrowserContext.pageError
+## event: BrowserContext.webError
 * since: v1.38
-- argument: <[PageError]>
+- argument: <[WebError]>
 
-Emitted when unhandled exceptions occur on any pages created through this
-context. To only listen for `pageError` events from a particular page, use [`event: Page.pageError`].
+Emitted when exception is unhandled in any of the pages in this
+context. To listen for errors from a particular page, use [`event: Page.pageError`] instead.
 
 ## event: BrowserContext.request
 * since: v1.12
@@ -589,9 +589,9 @@ public class Example {
 
 ```python async
 import asyncio
-from playwright.async_api import async_playwright
+from playwright.async_api import async_playwright, Playwright
 
-async def run(playwright):
+async def run(playwright: Playwright):
     webkit = playwright.webkit
     browser = await webkit.launch(headless=false)
     context = await browser.new_context()
@@ -615,9 +615,9 @@ asyncio.run(main())
 ```
 
 ```python sync
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import sync_playwright, Playwright
 
-def run(playwright):
+def run(playwright: Playwright):
     webkit = playwright.webkit
     browser = webkit.launch(headless=false)
     context = browser.new_context()
@@ -833,15 +833,15 @@ public class Example {
 ```python async
 import asyncio
 import hashlib
-from playwright.async_api import async_playwright
+from playwright.async_api import async_playwright, Playwright
 
-def sha256(text):
+def sha256(text: str) -> str:
     m = hashlib.sha256()
     m.update(bytes(text, "utf8"))
     return m.hexdigest()
 
 
-async def run(playwright):
+async def run(playwright: Playwright):
     webkit = playwright.webkit
     browser = await webkit.launch(headless=False)
     context = await browser.new_context()
@@ -868,13 +868,13 @@ asyncio.run(main())
 import hashlib
 from playwright.sync_api import sync_playwright
 
-def sha256(text):
+def sha256(text: str) -> str:
     m = hashlib.sha256()
     m.update(bytes(text, "utf8"))
     return m.hexdigest()
 
 
-def run(playwright):
+def run(playwright: Playwright):
     webkit = playwright.webkit
     browser = webkit.launch(headless=False)
     context = browser.new_context()

@@ -436,3 +436,14 @@ it('storage state should round-trip through file', async ({ playwright, server }
   const state2 = await request2.storageState();
   expect(state2).toEqual(storageState);
 });
+
+it('should work with empty storage state', async ({ playwright, server }, testInfo) => {
+  const storageState = testInfo.outputPath('storage-state.json');
+  await fs.promises.writeFile(storageState, '{}');
+  const request1 = await playwright.request.newContext({ storageState });
+
+  const state1 = await request1.storageState();
+  expect(state1).toEqual({ cookies: [], origins: [] });
+  await expect(await request1.get(server.EMPTY_PAGE)).toBeOK();
+  await request1.dispose();
+});

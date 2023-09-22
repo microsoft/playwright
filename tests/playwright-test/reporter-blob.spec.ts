@@ -15,11 +15,11 @@
  */
 
 import * as fs from 'fs';
-import type { PlaywrightTestConfig } from 'packages/playwright-test';
+import type { PlaywrightTestConfig } from '@playwright/test';
 import path from 'path';
 import url from 'url';
 import type { HttpServer } from '../../packages/playwright-core/src/utils';
-import { startHtmlReportServer } from '../../packages/playwright-test/lib/reporters/html';
+import { startHtmlReportServer } from '../../packages/playwright/lib/reporters/html';
 import { expect as baseExpect, test as baseTest, stripAnsi } from './playwright-test-fixtures';
 import extractZip from '../../packages/playwright-core/bundles/zip/node_modules/extract-zip';
 import * as yazl from '../../packages/playwright-core/bundles/zip/node_modules/yazl';
@@ -668,7 +668,7 @@ test('generate html with attachment urls', async ({ runInlineTest, mergeReports,
   // Check that trace loads.
   await page.locator('div').filter({ hasText: /^a\.test\.js:13$/ }).getByRole('link', { name: 'View trace' }).click();
   await expect(page).toHaveTitle('Playwright Trace Viewer');
-  await expect(page.getByTestId('action-list').locator('div').filter({ hasText: /^expect\.toBe$/ })).toBeVisible();
+  await expect(page.getByTestId('actions-tree').locator('div').filter({ hasText: /^expect\.toBe$/ })).toBeVisible();
 });
 
 test('resource names should not clash between runs', async ({ runInlineTest, showReport, mergeReports, page }) => {

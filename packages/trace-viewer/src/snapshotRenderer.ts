@@ -42,7 +42,7 @@ export class SnapshotRenderer {
   }
 
   render(): RenderedFrameSnapshot {
-    const visit = (n: NodeSnapshot, snapshotIndex: number, parentTag: string | undefined): string => {
+    const visit = (n: NodeSnapshot, snapshotIndex: number, parentTag: string | undefined, parentAttrs: [string, string][] | undefined): string => {
       // Text node.
       if (typeof n === 'string') {
         const text = escapeText(n);
@@ -61,29 +61,45 @@ export class SnapshotRenderer {
             const nodes = snapshotNodes(this._snapshots[referenceIndex]);
             const nodeIndex = n[0][1];
             if (nodeIndex >= 0 && nodeIndex < nodes.length)
-              (n as any)._string = visit(nodes[nodeIndex], referenceIndex, parentTag);
+              (n as any)._string = visit(nodes[nodeIndex], referenceIndex, parentTag, parentAttrs);
           }
         } else if (typeof n[0] === 'string') {
           // Element node.
           const builder: string[] = [];
           builder.push('<', n[0]);
-          // Never set relative URLs as <iframe src> - they start fetching frames immediately.
+          const attrs = Object.entries(n[1] || {});
+          const kCurrentSrcAttribute = '__playwright_current_src__';
           const isFrame = n[0] === 'IFRAME' || n[0] === 'FRAME';
           const isAnchor = n[0] === 'A';
-          for (const [attr, value] of Object.entries(n[1] || {})) {
-            const attrName = isFrame && attr.toLowerCase() === 'src' ? '__playwright_src__' : attr;
-            let attrValue = value;
-            if (attr.toLowerCase() === 'href' || attr.toLowerCase() === 'src') {
-              if (isAnchor)
-                attrValue = 'link://' + value;
-              else
-                attrValue = rewriteURLForCustomProtocol(value);
+          const isImg = n[0] === 'IMG';
+          const isImgWithCurrentSrc = isImg && attrs.some(a => a[0] === kCurrentSrcAttribute);
+          const isSourceInsidePictureWithCurrentSrc = n[0] === 'SOURCE' && parentTag === 'PICTURE' && parentAttrs?.some(a => a[0] === kCurrentSrcAttribute);
+          for (const [attr, value] of attrs) {
+            let attrName = attr;
+            if (isFrame && attr.toLowerCase() === 'src') {
+              // Never set relative URLs as <iframe src> - they start fetching frames immediately.
+              attrName = '__playwright_src__';
             }
-            builder.push(' ', attrName, '="', escapeAttribute(attrValue as string), '"');
+            if (isImg && attr === kCurrentSrcAttribute) {
+              // Render currentSrc for images, so that trace viewer does not accidentally
+              // resolve srcset to a different source.
+              attrName = 'src';
+            }
+            if (['src', 'srcset'].includes(attr.toLowerCase()) && (isImgWithCurrentSrc || isSourceInsidePictureWithCurrentSrc)) {
+              // Disable actual <img src>, <img srcset>, <source src> and <source srcset> if
+              // we will be using the currentSrc instead.
+              attrName = '_' + attrName;
+            }
+            let attrValue = value;
+            if (isAnchor && attr.toLowerCase() === 'href')
+              attrValue = 'link://' + value;
+            else if (attr.toLowerCase() === 'href' || attr.toLowerCase() === 'src' || attr === kCurrentSrcAttribute)
+              attrValue = rewriteURLForCustomProtocol(value);
+            builder.push(' ', attrName, '="', escapeAttribute(attrValue), '"');
           }
           builder.push('>');
           for (let i = 2; i < n.length; i++)
-            builder.push(visit(n[i], snapshotIndex, n[0]));
+            builder.push(visit(n[i], snapshotIndex, n[0], attrs));
           if (!autoClosing.has(n[0]))
             builder.push('</', n[0], '>');
           (n as any)._string = builder.join('');
@@ -96,7 +112,7 @@ export class SnapshotRenderer {
     };
 
     const snapshot = this._snapshot;
-    let html = visit(snapshot.html, this._index, undefined);
+    let html = visit(snapshot.html, this._index, undefined, undefined);
     if (!html)
       return { html: '', pageId: snapshot.pageId, frameId: snapshot.frameId, index: this._index };
 

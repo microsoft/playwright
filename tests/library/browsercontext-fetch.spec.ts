@@ -1105,6 +1105,16 @@ it('should set domain=localhost cookie', async ({ context, server, browserName, 
   expect(cookie.value).toBe('val');
 });
 
+it('fetch should not throw on long set-cookie value', async ({ context, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/27165' });
+  server.setRoute('/empty.html', (req, res) => {
+    res.setHeader('Set-Cookie', [`foo=${'a'.repeat(4100)}; path=/;`, `bar=val`]);
+    res.end();
+  });
+  await context.request.get(server.EMPTY_PAGE, { timeout: 5000 });
+  const cookies = await context.cookies();
+  expect(cookies.map(c => c.name)).toContain('bar');
+});
 
 it('should support set-cookie with SameSite and without Secure attribute over HTTP', async ({ page, server, browserName, isWindows }) => {
   for (const value of ['None', 'Lax', 'Strict']) {

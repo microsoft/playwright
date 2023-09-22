@@ -41,9 +41,9 @@ public class Example {
 
 ```python async
 import asyncio
-from playwright.async_api import async_playwright
+from playwright.async_api import async_playwright, Playwright
 
-async def run(playwright):
+async def run(playwright: Playwright):
     webkit = playwright.webkit
     browser = await webkit.launch()
     context = await browser.new_context()
@@ -59,9 +59,9 @@ asyncio.run(main())
 ```
 
 ```python sync
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import sync_playwright, Playwright
 
-def run(playwright):
+def run(playwright: Playwright):
     webkit = playwright.webkit
     browser = webkit.launch()
     context = browser.new_context()
@@ -1726,9 +1726,9 @@ public class Example {
 
 ```python async
 import asyncio
-from playwright.async_api import async_playwright
+from playwright.async_api import async_playwright, Playwright
 
-async def run(playwright):
+async def run(playwright: Playwright):
     webkit = playwright.webkit
     browser = await webkit.launch(headless=false)
     context = await browser.new_context()
@@ -1752,9 +1752,9 @@ asyncio.run(main())
 ```
 
 ```python sync
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import sync_playwright, Playwright
 
-def run(playwright):
+def run(playwright: Playwright):
     webkit = playwright.webkit
     browser = webkit.launch(headless=false)
     context = browser.new_context()
@@ -1979,7 +1979,7 @@ public class Example {
 ```python async
 import asyncio
 import hashlib
-from playwright.async_api import async_playwright
+from playwright.async_api import async_playwright, Playwright
 
 def sha256(text):
     m = hashlib.sha256()
@@ -1987,7 +1987,7 @@ def sha256(text):
     return m.hexdigest()
 
 
-async def run(playwright):
+async def run(playwright: Playwright):
     webkit = playwright.webkit
     browser = await webkit.launch(headless=False)
     page = await browser.new_page()
@@ -2011,7 +2011,7 @@ asyncio.run(main())
 
 ```python sync
 import hashlib
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import sync_playwright, Playwright
 
 def sha256(text):
     m = hashlib.sha256()
@@ -2019,7 +2019,7 @@ def sha256(text):
     return m.hexdigest()
 
 
-def run(playwright):
+def run(playwright: Playwright):
     webkit = playwright.webkit
     browser = webkit.launch(headless=False)
     page = browser.new_page()
@@ -2096,7 +2096,7 @@ This method waits for an element matching [`param: selector`], waits for [action
 
 If the target element is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error. However, if the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be filled instead.
 
-To send fine-grained keyboard events, use [`method: Page.type`].
+To send fine-grained keyboard events, use [`method: Locator.pressSequentially`].
 
 ### param: Page.fill.selector = %%-input-selector-%%
 * since: v1.8
@@ -3406,7 +3406,7 @@ Triggers a `change` and `input` event once all the provided options have been se
 **Usage**
 
 ```js
-// single selection matching the value
+// Single selection matching the value or label
 page.selectOption('select#colors', 'blue');
 
 // single selection matching the label
@@ -3418,7 +3418,7 @@ page.selectOption('select#colors', ['red', 'green', 'blue']);
 ```
 
 ```java
-// single selection matching the value
+// Single selection matching the value or label
 page.selectOption("select#colors", "blue");
 // single selection matching both the value and the label
 page.selectOption("select#colors", new SelectOption().setLabel("Blue"));
@@ -3427,7 +3427,7 @@ page.selectOption("select#colors", new String[] {"red", "green", "blue"});
 ```
 
 ```python async
-# single selection matching the value
+# Single selection matching the value or label
 await page.select_option("select#colors", "blue")
 # single selection matching the label
 await page.select_option("select#colors", label="blue")
@@ -3436,7 +3436,7 @@ await page.select_option("select#colors", value=["red", "green", "blue"])
 ```
 
 ```python sync
-# single selection matching the value
+# Single selection matching the value or label
 page.select_option("select#colors", "blue")
 # single selection matching both the label
 page.select_option("select#colors", label="blue")
@@ -3445,7 +3445,7 @@ page.select_option("select#colors", value=["red", "green", "blue"])
 ```
 
 ```csharp
-// single selection matching the value
+// Single selection matching the value or label
 await page.SelectOptionAsync("select#colors", new[] { "blue" });
 // single selection matching both the value and the label
 await page.SelectOptionAsync("select#colors", new[] { new SelectOptionValue() { Label = "blue" } });
@@ -3772,7 +3772,7 @@ Returns the page's title.
 
 ## async method: Page.type
 * since: v1.8
-* deprecated: Use locator-based [`method: Locator.pressSequentially`] instead. Read more about [locators](../locators.md).
+* deprecated: In most cases, you should use [`method: Locator.fill`] instead. You only need to press keys one by one if there is special keyboard handling on the page - in this case use [`method: Locator.pressSequentially`].
 
 Sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text. `page.type` can be used to send
 fine-grained keyboard events. To fill values in form fields, use [`method: Page.fill`].
@@ -4094,9 +4094,9 @@ public class Example {
 
 ```python async
 import asyncio
-from playwright.async_api import async_playwright
+from playwright.async_api import async_playwright, Playwright
 
-async def run(playwright):
+async def run(playwright: Playwright):
     webkit = playwright.webkit
     browser = await webkit.launch()
     page = await browser.new_page()
@@ -4111,9 +4111,9 @@ asyncio.run(main())
 ```
 
 ```python sync
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import sync_playwright, Playwright
 
-def run(playwright):
+def run(playwright: Playwright):
     webkit = playwright.webkit
     browser = webkit.launch()
     page = browser.new_page()
@@ -4712,9 +4712,9 @@ public class Example {
 
 ```python async
 import asyncio
-from playwright.async_api import async_playwright
+from playwright.async_api import async_playwright, Playwright
 
-async def run(playwright):
+async def run(playwright: Playwright):
     chromium = playwright.chromium
     browser = await chromium.launch()
     page = await browser.new_page()
@@ -4731,9 +4731,9 @@ asyncio.run(main())
 ```
 
 ```python sync
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import sync_playwright, Playwright
 
-def run(playwright):
+def run(playwright: Playwright):
     chromium = playwright.chromium
     browser = chromium.launch()
     page = browser.new_page()
