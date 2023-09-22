@@ -498,7 +498,7 @@ const TestList: React.FC<{
     dataTestId='test-tree'
     render={treeItem => {
       return <div className='hbox ui-mode-list-item'>
-        <div className='ui-mode-list-item-title'>{treeItem.title}</div>
+        <div className='ui-mode-list-item-title' title={treeItem.title}>{treeItem.title}</div>
         {!!treeItem.duration && treeItem.status !== 'skipped' && <div className='ui-mode-list-item-time'>{msToString(treeItem.duration)}</div>}
         <Toolbar noMinHeight={true} noShadow={true}>
           <ToolbarButton icon='play' title='Run' onClick={() => runTreeItem(treeItem)} disabled={!!runningState}></ToolbarButton>
