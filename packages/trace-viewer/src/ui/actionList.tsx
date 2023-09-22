@@ -94,7 +94,7 @@ export const renderAction = (
   else if (!isLive)
     time = '-';
   return <>
-    <div className='action-title'>
+    <div className='action-title' title={action.apiName}>
       <span>{action.apiName}</span>
       {locator && <div className='action-selector' title={locator}>{locator}</div>}
       {action.method === 'goto' && action.params.url && <div className='action-url' title={action.params.url}>{action.params.url}</div>}

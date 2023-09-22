@@ -193,8 +193,8 @@ export const Workbench: React.FunctionComponent<{
       selectedTime={selectedTime}
       setSelectedTime={setSelectedTime}
     />
-    <SplitView sidebarSize={250} orientation='horizontal' sidebarIsFirst={true} settingName='actionListSidebar'>
-      <SplitView sidebarSize={250} orientation={sidebarLocation === 'bottom' ? 'vertical' : 'horizontal'} settingName='propertiesSidebar'>
+    <SplitView sidebarSize={250} orientation={sidebarLocation === 'bottom' ? 'vertical' : 'horizontal'} settingName='propertiesSidebar'>
+      <SplitView sidebarSize={250} orientation='horizontal' sidebarIsFirst={true} settingName='actionListSidebar'>
         <SnapshotTab
           action={activeAction}
           sdkLanguage={sdkLanguage}
@@ -204,51 +204,51 @@ export const Workbench: React.FunctionComponent<{
           highlightedLocator={highlightedLocator}
           setHighlightedLocator={locatorPicked} />
         <TabbedPane
-          tabs={tabs}
-          selectedTab={selectedPropertiesTab}
-          setSelectedTab={selectPropertiesTab}
-          leftToolbar={[
-            <ToolbarButton title='Pick locator' icon='target' toggled={isInspecting} onClick={() => {
-              if (!isInspecting)
-                selectPropertiesTab('inspector');
-              setIsInspecting(!isInspecting);
-            }} />
+          tabs={[
+            {
+              id: 'actions',
+              title: 'Actions',
+              component: <ActionList
+                sdkLanguage={sdkLanguage}
+                actions={model?.actions || []}
+                selectedAction={model ? selectedAction : undefined}
+                selectedTime={selectedTime}
+                setSelectedTime={setSelectedTime}
+                onSelected={onActionSelected}
+                onHighlighted={setHighlightedAction}
+                revealConsole={() => selectPropertiesTab('console')}
+                isLive={isLive}
+              />
+            },
+            {
+              id: 'metadata',
+              title: 'Metadata',
+              component: <MetadataView model={model}/>
+            },
           ]}
-          rightToolbar={[
-            sidebarLocation === 'bottom' ?
-              <ToolbarButton title='Dock to right' icon='layout-sidebar-right-off' onClick={() => {
-                setSidebarLocation('right');
-              }} /> :
-              <ToolbarButton title='Dock to bottom' icon='layout-panel-off' onClick={() => {
-                setSidebarLocation('bottom');
-              }} />
-          ]}
-        />
+          selectedTab={selectedNavigatorTab} setSelectedTab={setSelectedNavigatorTab}/>
       </SplitView>
       <TabbedPane
-        tabs={[
-          {
-            id: 'actions',
-            title: 'Actions',
-            component: <ActionList
-              sdkLanguage={sdkLanguage}
-              actions={model?.actions || []}
-              selectedAction={model ? selectedAction : undefined}
-              selectedTime={selectedTime}
-              setSelectedTime={setSelectedTime}
-              onSelected={onActionSelected}
-              onHighlighted={setHighlightedAction}
-              revealConsole={() => selectPropertiesTab('console')}
-              isLive={isLive}
-            />
-          },
-          {
-            id: 'metadata',
-            title: 'Metadata',
-            component: <MetadataView model={model}/>
-          },
+        tabs={tabs}
+        selectedTab={selectedPropertiesTab}
+        setSelectedTab={selectPropertiesTab}
+        leftToolbar={[
+          <ToolbarButton title='Pick locator' icon='target' toggled={isInspecting} onClick={() => {
+            if (!isInspecting)
+              selectPropertiesTab('inspector');
+            setIsInspecting(!isInspecting);
+          }} />
         ]}
-        selectedTab={selectedNavigatorTab} setSelectedTab={setSelectedNavigatorTab}/>
+        rightToolbar={[
+          sidebarLocation === 'bottom' ?
+            <ToolbarButton title='Dock to right' icon='layout-sidebar-right-off' onClick={() => {
+              setSidebarLocation('right');
+            }} /> :
+            <ToolbarButton title='Dock to bottom' icon='layout-panel-off' onClick={() => {
+              setSidebarLocation('bottom');
+            }} />
+        ]}
+      />
     </SplitView>
   </div>;
 };
