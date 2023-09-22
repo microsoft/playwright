@@ -157,7 +157,7 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
     this.kind = this.mimeType.startsWith('image/') ? 'Screenshot' : 'Snapshot';
   }
 
-  createMatcherResult(message: string, pass: boolean): ImageMatcherResult {
+  createMatcherResult(message: string, pass: boolean, log?: string[]): ImageMatcherResult {
     const unfiltered: ImageMatcherResult = {
       name: this.matcherName,
       locator: this.locator,
@@ -166,6 +166,7 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
       diff: this.diffPath,
       pass,
       message: () => message,
+      log,
     };
     return Object.fromEntries(Object.entries(unfiltered).filter(([_, v]) => v !== undefined)) as ImageMatcherResult;
   }
@@ -255,7 +256,7 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
     else
       output.push('');
 
-    return this.createMatcherResult(output.join('\n'), false);
+    return this.createMatcherResult(output.join('\n'), false, log);
   }
 
   handleMatching(): ImageMatcherResult {

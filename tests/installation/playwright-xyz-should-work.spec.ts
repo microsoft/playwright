@@ -17,7 +17,7 @@
 import { test, expect } from './npmTest';
 
 for (const browser of ['chromium', 'firefox', 'webkit']) {
-  test(`playwright-${browser} should work`, async ({ exec, nodeMajorVersion, installedSoftwareOnDisk }) => {
+  test(`playwright-${browser} should work`, async ({ exec, installedSoftwareOnDisk }) => {
     const pkg = `playwright-${browser}`;
     const result = await exec('npm i --foreground-scripts', pkg);
     const browserName = pkg.split('-')[1];
@@ -28,8 +28,7 @@ for (const browser of ['chromium', 'firefox', 'webkit']) {
     expect(await installedSoftwareOnDisk()).toEqual(expectedSoftware);
     expect(result).not.toContain(`To avoid unexpected behavior, please install your dependencies first`);
     await exec('node sanity.js', pkg, browser);
-    if (nodeMajorVersion >= 14)
-      await exec('node', `esm-${pkg}.mjs`);
+    await exec('node', `esm-${pkg}.mjs`);
   });
 }
 

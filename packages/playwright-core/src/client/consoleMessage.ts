@@ -17,25 +17,19 @@
 import * as util from 'util';
 import { JSHandle } from './jsHandle';
 import type * as channels from '@protocol/channels';
-import { ChannelOwner } from './channelOwner';
 import type * as api from '../../types/types';
 import { Page } from './page';
 
-type ConsoleMessageLocation = channels.ConsoleMessageInitializer['location'];
+type ConsoleMessageLocation = channels.BrowserContextConsoleEvent['location'];
 
-export class ConsoleMessage extends ChannelOwner<channels.ConsoleMessageChannel> implements api.ConsoleMessage {
-  static from(message: channels.ConsoleMessageChannel): ConsoleMessage {
-    return (message as any)._object;
-  }
+export class ConsoleMessage implements api.ConsoleMessage {
 
   private _page: Page | null;
+  private _event: channels.BrowserContextConsoleEvent;
 
-  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.ConsoleMessageInitializer) {
-    super(parent, type, guid, initializer);
-    // Note: currently, we only report console messages for pages and they always have a page.
-    // However, in the future we might report console messages for service workers or something else,
-    // where page() would be null.
-    this._page = Page.fromNullable(initializer.page);
+  constructor(event: channels.BrowserContextConsoleEvent) {
+    this._page = event.page ? Page.from(event.page) : null;
+    this._event = event;
   }
 
   page() {
@@ -43,19 +37,19 @@ export class ConsoleMessage extends ChannelOwner<channels.ConsoleMessageChannel>
   }
 
   type(): string {
-    return this._initializer.type;
+    return this._event.type;
   }
 
   text(): string {
-    return this._initializer.text;
+    return this._event.text;
   }
 
   args(): JSHandle[] {
-    return this._initializer.args.map(JSHandle.from);
+    return this._event.args.map(JSHandle.from);
   }
 
   location(): ConsoleMessageLocation {
-    return this._initializer.location;
+    return this._event.location;
   }
 
   [util.inspect.custom]() {

@@ -99,14 +99,9 @@ it('should transfer bigint', async ({ page }) => {
   expect(await page.evaluate(a => a, 17n)).toBe(17n);
 });
 
-it('should transfer maps', async ({ page }) => {
-  expect(await page.evaluate(() => new Map([[1, { test: 42n }]]))).toEqual(new Map([[1, { test: 42n }]]));
-  expect(await page.evaluate(a => a, new Map([[1, { test: 17n }]]))).toEqual(new Map([[1, { test: 17n }]]));
-});
-
-it('should transfer sets', async ({ page }) => {
-  expect(await page.evaluate(() => new Set([1, { test: 42n }]))).toEqual(new Set([1, { test: 42n }]));
-  expect(await page.evaluate(a => a, new Set([1, { test: 17n }]))).toEqual(new Set([1, { test: 17n }]));
+it('should transfer maps as empty objects', async ({ page }) => {
+  const result = await page.evaluate(a => a.x.constructor.name + ' ' + JSON.stringify(a.x), { x: new Map([[1, 2]]) });
+  expect(result).toBe('Object {}');
 });
 
 it('should modify global environment', async ({ page }) => {
@@ -657,6 +652,23 @@ it('should not add a toJSON property to newly created Arrays after evaluation', 
 it('should not use toJSON in jsonValue', async ({ page }) => {
   const resultHandle = await page.evaluateHandle(() => ({ toJSON: () => 'string', data: 'data' }));
   expect(await resultHandle.jsonValue()).toEqual({ data: 'data', toJSON: {} });
+});
+
+it('should ignore buggy toJSON', async ({ page }) => {
+  const result = await page.evaluate(() => {
+    class Foo {
+      toJSON() {
+        throw new Error('Bad');
+      }
+    }
+    class Bar {
+      get toJSON() {
+        throw new Error('Also bad');
+      }
+    }
+    return { foo: new Foo(), bar: new Bar() };
+  });
+  expect(result).toEqual({ foo: {}, bar: {} });
 });
 
 it('should not expose the injected script export', async ({ page }) => {

@@ -17,6 +17,8 @@ import http from 'http';
 import type { AddressInfo } from 'net';
 import { test, expect } from './npmTest';
 
+test.use({ useRealCDN: true });
+
 test(`playwright cdn should race with a timeout`, async ({ exec }) => {
   const server = http.createServer(() => {});
   await new Promise<void>(resolve => server.listen(0, resolve));

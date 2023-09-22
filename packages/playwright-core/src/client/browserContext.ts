@@ -96,8 +96,8 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
       this._serviceWorkers.add(serviceWorker);
       this.emit(Events.BrowserContext.ServiceWorker, serviceWorker);
     });
-    this._channel.on('console', ({ message }) => {
-      const consoleMessage = ConsoleMessage.from(message);
+    this._channel.on('console', event => {
+      const consoleMessage = new ConsoleMessage(event);
       this.emit(Events.BrowserContext.Console, consoleMessage);
       const page = consoleMessage.page();
       if (page)
