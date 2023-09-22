@@ -90,13 +90,14 @@ export async function loadFileSuites(testRun: TestRun, mode: 'out-of-process' | 
   // Load test files.
   const fileSuiteByFile = new Map<string, Suite>();
   const loaderHost = mode === 'out-of-process' ? new OutOfProcessLoaderHost(config) : new InProcessLoaderHost(config);
-  await loaderHost.start();
-  for (const file of allTestFiles) {
-    const fileSuite = await loaderHost.loadTestFile(file, errors);
-    fileSuiteByFile.set(file, fileSuite);
-    errors.push(...createDuplicateTitlesErrors(config, fileSuite));
+  if (await loaderHost.start(errors)) {
+    for (const file of allTestFiles) {
+      const fileSuite = await loaderHost.loadTestFile(file, errors);
+      fileSuiteByFile.set(file, fileSuite);
+      errors.push(...createDuplicateTitlesErrors(config, fileSuite));
+    }
+    await loaderHost.stop();
   }
-  await loaderHost.stop();
 
   // Check that no test file imports another test file.
   // Loader must be stopped first, since it popuplates the dependency tree.

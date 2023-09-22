@@ -660,7 +660,7 @@ test('should not hang and report results when worker process suddenly exits duri
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(1);
-  expect(result.output).toContain('Internal error: worker process exited unexpectedly');
+  expect(result.output).toContain('Error: worker process exited unexpectedly');
   expect(result.output).toContain('[1/1] a.spec.js:3:11 › failing due to afterall');
 });
 

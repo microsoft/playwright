@@ -92,7 +92,66 @@ test('should continue with other tests after worker process suddenly exits', asy
   expect(result.passed).toBe(4);
   expect(result.failed).toBe(1);
   expect(result.skipped).toBe(0);
-  expect(result.output).toContain('Internal error: worker process exited unexpectedly');
+  expect(result.output).toContain('Error: worker process exited unexpectedly');
+});
+
+test('should report subprocess creation error', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'preload.js': `
+      process.exit(42);
+    `,
+    'a.spec.js': `
+      import { test, expect } from '@playwright/test';
+      test('fails', () => {});
+      test('skipped', () => {});
+      // Infect subprocesses to immediately exit when spawning a worker.
+      process.env.NODE_OPTIONS = '--require ${JSON.stringify(testInfo.outputPath('preload.js').replace(/\\/g, '\\\\'))}';
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(0);
+  expect(result.failed).toBe(1);
+  expect(result.skipped).toBe(1);
+  expect(result.output).toContain('Error: worker process exited unexpectedly (code=42, signal=null)');
+});
+
+test('should ignore subprocess creation error because of SIGINT', async ({ interactWithTestRunner }, testInfo) => {
+  test.skip(process.platform === 'win32', 'No sending SIGINT on Windows');
+
+  const readyFile = testInfo.outputPath('ready.txt');
+  const testProcess = await interactWithTestRunner({
+    'hang.js': `
+      require('fs').writeFileSync(${JSON.stringify(readyFile)}, 'ready');
+      setInterval(() => {}, 1000);
+    `,
+    'preload.js': `
+      require('child_process').spawnSync(
+        process.argv[0],
+        [require('path').resolve('./hang.js')],
+        { env: { ...process.env, NODE_OPTIONS: '' } },
+      );
+    `,
+    'a.spec.js': `
+      import { test, expect } from '@playwright/test';
+      test('fails', () => {});
+      test('skipped', () => {});
+      // Infect subprocesses to immediately hang when spawning a worker.
+      process.env.NODE_OPTIONS = '--require ${JSON.stringify(testInfo.outputPath('preload.js'))}';
+    `
+  });
+
+  while (!fs.existsSync(readyFile))
+    await new Promise(f => setTimeout(f, 100));
+  process.kill(-testProcess.process.pid!, 'SIGINT');
+
+  const { exitCode } = await testProcess.exited;
+  expect(exitCode).toBe(130);
+
+  const result = parseTestRunnerOutput(testProcess.output);
+  expect(result.passed).toBe(0);
+  expect(result.failed).toBe(0);
+  expect(result.skipped).toBe(2);
+  expect(result.output).not.toContain('worker process exited unexpectedly');
 });
 
 test('sigint should stop workers', async ({ interactWithTestRunner }) => {
@@ -124,7 +183,7 @@ test('sigint should stop workers', async ({ interactWithTestRunner }) => {
     PLAYWRIGHT_JSON_OUTPUT_NAME: 'report.json',
   });
   await testProcess.waitForOutput('%%SEND-SIGINT%%', 2);
-  process.kill(testProcess.process.pid!, 'SIGINT');
+  process.kill(-testProcess.process.pid!, 'SIGINT');
   const { exitCode } = await testProcess.exited;
   expect(exitCode).toBe(130);
 
@@ -200,7 +259,7 @@ test('worker interrupt should report errors', async ({ interactWithTestRunner })
     `,
   });
   await testProcess.waitForOutput('%%SEND-SIGINT%%');
-  process.kill(testProcess.process.pid!, 'SIGINT');
+  process.kill(-testProcess.process.pid!, 'SIGINT');
   const { exitCode } = await testProcess.exited;
   expect(exitCode).toBe(130);
 
@@ -378,7 +437,7 @@ test('sigint should stop global setup', async ({ interactWithTestRunner }) => {
     `,
   }, { 'workers': 1 });
   await testProcess.waitForOutput('%%SEND-SIGINT%%');
-  process.kill(testProcess.process.pid!, 'SIGINT');
+  process.kill(-testProcess.process.pid!, 'SIGINT');
   const { exitCode } = await testProcess.exited;
   expect(exitCode).toBe(130);
 
@@ -425,7 +484,7 @@ test('sigint should stop plugins', async ({ interactWithTestRunner }) => {
     `,
   }, { 'workers': 1 });
   await testProcess.waitForOutput('%%SEND-SIGINT%%');
-  process.kill(testProcess.process.pid!, 'SIGINT');
+  process.kill(-testProcess.process.pid!, 'SIGINT');
   const { exitCode } = await testProcess.exited;
   expect(exitCode).toBe(130);
 
@@ -473,7 +532,7 @@ test('sigint should stop plugins 2', async ({ interactWithTestRunner }) => {
     `,
   }, { 'workers': 1 });
   await testProcess.waitForOutput('%%SEND-SIGINT%%');
-  process.kill(testProcess.process.pid!, 'SIGINT');
+  process.kill(-testProcess.process.pid!, 'SIGINT');
   const { exitCode } = await testProcess.exited;
   expect(exitCode).toBe(130);
 
@@ -578,7 +637,7 @@ test('should not hang on worker error in test file', async ({ runInlineTest }) =
   }, { 'timeout': 3000 });
   expect(result.exitCode).toBe(1);
   expect(result.results[0].status).toBe('failed');
-  expect(result.results[0].error.message).toContain('Internal error: worker process exited unexpectedly');
+  expect(result.results[0].error.message).toContain('Error: worker process exited unexpectedly');
   expect(result.results[1].status).toBe('skipped');
 });
 
@@ -606,8 +665,8 @@ test('fast double SIGINT should be ignored', async ({ interactWithTestRunner }) 
   });
   await testProcess.waitForOutput('%%SEND-SIGINT%%');
   // Send SIGINT twice in quick succession.
-  process.kill(testProcess.process.pid!, 'SIGINT');
-  process.kill(testProcess.process.pid!, 'SIGINT');
+  process.kill(-testProcess.process.pid!, 'SIGINT');
+  process.kill(-testProcess.process.pid!, 'SIGINT');
   const { exitCode } = await testProcess.exited;
   expect(exitCode).toBe(130);
 
@@ -639,9 +698,9 @@ test('slow double SIGINT should be respected', async ({ interactWithTestRunner }
     `,
   });
   await testProcess.waitForOutput('%%SEND-SIGINT%%');
-  process.kill(testProcess.process.pid!, 'SIGINT');
+  process.kill(-testProcess.process.pid!, 'SIGINT');
   await new Promise(f => setTimeout(f, 2000));
-  process.kill(testProcess.process.pid!, 'SIGINT');
+  process.kill(-testProcess.process.pid!, 'SIGINT');
   const { exitCode } = await testProcess.exited;
   expect(exitCode).toBe(130);
 
@@ -680,10 +739,10 @@ test('slow double SIGINT should be respected in reporter.onExit', async ({ inter
     `,
   }, { reporter: '' });
   await testProcess.waitForOutput('%%SEND-SIGINT%%');
-  process.kill(testProcess.process.pid!, 'SIGINT');
+  process.kill(-testProcess.process.pid!, 'SIGINT');
   await new Promise(f => setTimeout(f, 2000));
   await testProcess.waitForOutput('MyReporter.onExit started');
-  process.kill(testProcess.process.pid!, 'SIGINT');
+  process.kill(-testProcess.process.pid!, 'SIGINT');
   const { exitCode, signal } = await testProcess.exited;
   expect(exitCode).toBe(null);
   expect(signal).toBe('SIGINT');  // Default handler should report the signal.
