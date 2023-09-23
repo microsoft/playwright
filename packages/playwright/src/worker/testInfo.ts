@@ -21,6 +21,7 @@ import type { TestInfoError, TestInfo, TestStatus, FullProject, FullConfig } fro
 import type { AttachmentPayload, StepBeginPayload, StepEndPayload, WorkerInitParams } from '../common/ipc';
 import type { TestCase } from '../common/test';
 import { TimeoutManager } from './timeoutManager';
+import type { RunnableType, TimeSlot, RunnableDescription } from './timeoutManager';
 import type { Annotation, FullConfigInternal, FullProjectInternal } from '../common/config';
 import type { Location } from '../../types/testReporter';
 import { getContainedPath, normalizeAndSaveAttachment, serializeError, trimLongString } from '../util';
@@ -227,6 +228,12 @@ export class TestInfoImpl implements TestInfo {
     this.duration = this._timeoutManager.defaultSlotTimings().elapsed | 0;
   }
 
+  async _runWithRunnableAndFailOnError(runnable: RunnableDescription, cb: () => Promise<void>): Promise<TestInfoError | undefined> {
+    return await this._timeoutManager.withRunnable(runnable, async () => {
+      return await this._runAndFailOnError(cb);
+    });
+  }
+
   async _runAndFailOnError(fn: () => Promise<void>, skips?: 'allowSkips'): Promise<TestInfoError | undefined> {
     try {
       await fn();
@@ -346,6 +353,21 @@ export class TestInfoImpl implements TestInfo {
     if (this.status === 'passed' || this.status === 'skipped')
       this.status = 'failed';
     this.errors.push(error);
+  }
+
+  async _runAsStepWithRunnable<T>(
+    stepInfo: Omit<TestStepInternal, 'complete' | 'wallTime' | 'parentStepId' | 'stepId' | 'steps'> & {
+      wallTime?: number,
+      runnableType: RunnableType;
+      runnableSlot?: TimeSlot;
+    }, cb: (step: TestStepInternal) => Promise<T>): Promise<T> {
+    return await this._timeoutManager.withRunnable({
+      type: stepInfo.runnableType,
+      slot: stepInfo.runnableSlot,
+      location: stepInfo.location,
+    }, async () => {
+      return await this._runAsStep(stepInfo, cb);
+    });
   }
 
   async _runAsStep<T>(stepInfo: Omit<TestStepInternal, 'complete' | 'wallTime' | 'parentStepId' | 'stepId' | 'steps'> & { wallTime?: number }, cb: (step: TestStepInternal) => Promise<T>): Promise<T> {

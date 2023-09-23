@@ -24,8 +24,10 @@ export type TimeSlot = {
   elapsed: number;
 };
 
-type RunnableDescription = {
-  type: 'test' | 'beforeAll' | 'afterAll' | 'beforeEach' | 'afterEach' | 'slow' | 'skip' | 'fail' | 'fixme' | 'teardown';
+export type RunnableType = 'test' | 'beforeAll' | 'afterAll' | 'beforeEach' | 'afterEach' | 'slow' | 'skip' | 'fail' | 'fixme' | 'teardown';
+
+export type RunnableDescription = {
+  type: RunnableType;
   location?: Location;
   slot?: TimeSlot;  // Falls back to test slot.
 };
@@ -39,13 +41,15 @@ export type FixtureDescription = {
 
 export class TimeoutManager {
   private _defaultSlot: TimeSlot;
+  private _defaultRunnable: RunnableDescription;
   private _runnable: RunnableDescription;
   private _fixture: FixtureDescription | undefined;
   private _timeoutRunner: TimeoutRunner;
 
   constructor(timeout: number) {
     this._defaultSlot = { timeout, elapsed: 0 };
-    this._runnable = { type: 'test', slot: this._defaultSlot };
+    this._defaultRunnable = { type: 'test', slot: this._defaultSlot };
+    this._runnable = this._defaultRunnable;
     this._timeoutRunner = new TimeoutRunner(timeout);
   }
 
@@ -53,8 +57,15 @@ export class TimeoutManager {
     this._timeoutRunner.interrupt();
   }
 
-  setCurrentRunnable(runnable: RunnableDescription) {
-    this._updateRunnables(runnable, undefined);
+  async withRunnable<R>(runnable: RunnableDescription, cb: () => Promise<R>): Promise<R> {
+    const existingRunnable = this._runnable;
+    const effectiveRunnable = { ...this._runnable, ...runnable };
+    this._updateRunnables(effectiveRunnable, undefined);
+    try {
+      return await cb();
+    } finally {
+      this._updateRunnables(existingRunnable, undefined);
+    }
   }
 
   setCurrentFixture(fixture: FixtureDescription | undefined) {
