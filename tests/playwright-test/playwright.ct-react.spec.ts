@@ -337,3 +337,38 @@ test('should bundle public folder', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 });
+
+test('should work with property expressions in JSX', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': playwrightConfig,
+    'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
+    'playwright/index.ts': `
+    `,
+    'src/button1.tsx': `
+      const Button = () => <button>Button 1</button>;
+      export const components1 = { Button };
+    `,
+    'src/button2.tsx': `
+      const Button = () => <button>Button 2</button>;
+      export default { Button };
+    `,
+    'src/button.test.tsx': `
+      import { test, expect } from '@playwright/experimental-ct-react';
+      import { components1 } from './button1';
+      import components2 from './button2';
+
+      test('pass 1', async ({ mount }) => {
+        const component = await mount(<components1.Button />);
+        await expect(component).toHaveText('Button 1');
+      });
+
+      test('pass 2', async ({ mount }) => {
+        const component = await mount(<components2.Button />);
+        await expect(component).toHaveText('Button 2');
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(2);
+});
