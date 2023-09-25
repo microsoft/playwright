@@ -75,6 +75,10 @@ export interface JSONReport {
   };
   suites: JSONReportSuite[];
   errors: TestError[];
+  stats: {
+    startTime: string; // Date in ISO 8601 format.
+    duration: number; // In milliseconds;
+  }
 }
 
 export interface JSONReportSuite {
@@ -122,7 +126,7 @@ export interface JSONReportTestResult {
   stderr: JSONReportSTDIOEntry[];
   retry: number;
   steps?: JSONReportTestStep[];
-  startTime: Date;
+  startTime: string; // Date in ISO 8601 format.
   attachments: {
     name: string;
     path?: string;
