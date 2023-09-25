@@ -72,6 +72,24 @@ it.describe('snapshots', () => {
     expect(distillSnapshot(snapshot2)).toBe('<STYLE>button { color: blue; }</STYLE><BUTTON>Hello</BUTTON>');
   });
 
+  it('should respect CSSOM change through CSSGroupingRule', async ({ page, toImpl, snapshotter }) => {
+    await page.setContent('<style>@media { button { color: red; } }</style><button>Hello</button>');
+    await page.evaluate(() => {
+      window['rule'] = document.styleSheets[0].cssRules[0];
+      void 0;
+    });
+    const snapshot1 = await snapshotter.captureSnapshot(toImpl(page), 'call@1', 'snapshot@call@1');
+    expect(distillSnapshot(snapshot1)).toBe('<STYLE>@media  {\n  button { color: red; }\n}</STYLE><BUTTON>Hello</BUTTON>');
+
+    await page.evaluate(() => { window['rule'].cssRules[0].style.color = 'blue'; });
+    const snapshot2 = await snapshotter.captureSnapshot(toImpl(page), 'call@2', 'snapshot@call@2');
+    expect(distillSnapshot(snapshot2)).toBe('<STYLE>@media  {\n  button { color: blue; }\n}</STYLE><BUTTON>Hello</BUTTON>');
+
+    await page.evaluate(() => { window['rule'].insertRule('button { color: green; }', 1); });
+    const snapshot3 = await snapshotter.captureSnapshot(toImpl(page), 'call@3', 'snapshot@call@3');
+    expect(distillSnapshot(snapshot3)).toBe('<STYLE>@media  {\n  button { color: blue; }\n  button { color: green; }\n}</STYLE><BUTTON>Hello</BUTTON>');
+  });
+
   it('should respect node removal', async ({ page, toImpl, snapshotter }) => {
     await page.setContent('<div><button id="button1"></button><button id="button2"></button></div>');
     const snapshot1 = await snapshotter.captureSnapshot(toImpl(page), 'call@1', 'snapshot@call@1');
