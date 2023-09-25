@@ -70,6 +70,7 @@ export function createPlugin(
 
       const use = config.projects[0].use as CtConfig;
       const port = use.ctPort || 3100;
+      const host = use.baseURL || 'localhost';
       const relativeTemplateDir = use.ctTemplateDir || 'playwright';
 
       // FIXME: use build plugin to determine html location to resolve this.
@@ -91,7 +92,8 @@ export function createPlugin(
           outDir: use.ctCacheDir ? path.resolve(configDir, use.ctCacheDir) : path.resolve(templateDir, '.cache')
         },
         preview: {
-          port
+          port,
+          host,
         },
         // Vite preview server will otherwise always return the index.html with 200.
         appType: 'custom',
@@ -209,7 +211,7 @@ export function createPlugin(
       const address = previewServer.httpServer.address();
       if (isAddressInfo(address)) {
         const protocol = finalConfig.preview.https ? 'https:' : 'http:';
-        process.env.PLAYWRIGHT_TEST_BASE_URL = `${protocol}//localhost:${address.port}`;
+        process.env.PLAYWRIGHT_TEST_BASE_URL = `${protocol}//${finalConfig.preview.host}:${address.port}`;
       }
     },
 
