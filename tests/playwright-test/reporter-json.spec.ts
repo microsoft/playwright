@@ -63,7 +63,7 @@ test('should not report skipped due to sharding', async ({ runInlineTest }) => {
   expect(result.report.suites[0].specs[1].tests[0].status).toBe('skipped');
 });
 
-test('should report projects', async ({ runInlineTest }, testInfo) => {
+test('should report projects and stats', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = {
@@ -107,6 +107,9 @@ test('should report projects', async ({ runInlineTest }, testInfo) => {
 
   expect(result.report.suites[0].specs[0].tests[0].projectName).toBe('p1');
   expect(result.report.suites[0].specs[0].tests[1].projectName).toBe('p2');
+
+  expect(new Date(result.report.stats.startTime).valueOf()).not.toBeNaN();
+  expect(result.report.stats.duration).toEqual(expect.any(Number));
 });
 
 test('should show steps', async ({ runInlineTest }) => {

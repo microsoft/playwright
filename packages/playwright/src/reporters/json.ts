@@ -55,10 +55,10 @@ class JSONReporter extends EmptyReporter {
   }
 
   override async onEnd(result: FullResult) {
-    await outputReport(this._serializeReport(), this.config, this._outputFile);
+    await outputReport(this._serializeReport(result), this.config, this._outputFile);
   }
 
-  private _serializeReport(): JSONReport {
+  private _serializeReport(result: FullResult): JSONReport {
     return {
       config: {
         ...removePrivateFields(this.config),
@@ -79,7 +79,11 @@ class JSONReporter extends EmptyReporter {
         })
       },
       suites: this._mergeSuites(this.suite.suites),
-      errors: this._errors
+      errors: this._errors,
+      stats: {
+        startTime: result.startTime.toISOString(),
+        duration: result.duration,
+      },
     };
   }
 
@@ -194,7 +198,7 @@ class JSONReporter extends EmptyReporter {
       stderr: result.stderr.map(s => stdioEntry(s)),
       retry: result.retry,
       steps: steps.length ? steps.map(s => this._serializeTestStep(s)) : undefined,
-      startTime: result.startTime,
+      startTime: result.startTime.toISOString(),
       attachments: result.attachments.map(a => ({
         name: a.name,
         contentType: a.contentType,
