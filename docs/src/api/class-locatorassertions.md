@@ -833,26 +833,83 @@ element should intersect viewport at any positive ratio. Defaults to `0`.
 
 Ensures that [Locator] points to an [attached](../actionability.md#attached) and [visible](../actionability.md#visible) DOM node.
 
+To check that at least one element from the list is visible, use [`method: Locator.first`].
+
 **Usage**
 
 ```js
+// A specific element is visible.
 await expect(page.getByText('Welcome')).toBeVisible();
+
+// At least one item in the list is visible.
+await expect(page.getByTestId('todo-item').first()).toBeVisible();
+
+// At least one of the two elements is visible, possibly both.
+await expect(
+    page.getByRole('button', { name: 'Sign in' })
+        .or(page.getByRole('button', { name: 'Sign up' }))
+        .first()
+).toBeVisible();
 ```
 
 ```java
+// A specific element is visible.
 assertThat(page.getByText("Welcome")).isVisible();
+
+// At least one item in the list is visible.
+asserThat(page.getByTestId("todo-item").first()).isVisible();
+
+// At least one of the two elements is visible, possibly both.
+asserThat(
+  page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Sign in"))
+    .or(page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Sign up")))
+    .first()
+).isVisible();
 ```
 
 ```python async
+# A specific element is visible.
 await expect(page.get_by_text("Welcome")).to_be_visible()
+
+# At least one item in the list is visible.
+await expect(page.get_by_test_id("todo-item").first).to_be_visible()
+
+# At least one of the two elements is visible, possibly both.
+await expect(
+    page.get_by_role("button", name="Sign in")
+    .or_(page.get_by_role("button", name="Sign up"))
+    .first
+).to_be_visible()
 ```
 
 ```python sync
+# A specific element is visible.
 expect(page.get_by_text("Welcome")).to_be_visible()
+
+# At least one item in the list is visible.
+expect(page.get_by_test_id("todo-item").first).to_be_visible()
+
+# At least one of the two elements is visible, possibly both.
+expect(
+    page.get_by_role("button", name="Sign in")
+    .or_(page.get_by_role("button", name="Sign up"))
+    .first
+).to_be_visible()
 ```
 
 ```csharp
+// A specific element is visible.
 await Expect(Page.GetByText("Welcome")).ToBeVisibleAsync();
+
+// At least one item in the list is visible.
+await Expect(Page.GetByTestId("todo-item").First).ToBeVisibleAsync();
+
+// At least one of the two elements is visible, possibly both.
+await Expect(
+  Page.GetByRole(AriaRole.Button, new() { Name = "Sign in" })
+    .Or(Page.GetByRole(AriaRole.Button, new() { Name = "Sign up" }))
+    .First
+).ToBeVisibleAsync();
 ```
 
 ### option: LocatorAssertions.toBeVisible.visible
