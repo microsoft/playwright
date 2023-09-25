@@ -5455,10 +5455,24 @@ interface LocatorAssertions {
    * Ensures that {@link Locator} points to an [attached](https://playwright.dev/docs/actionability#attached) and
    * [visible](https://playwright.dev/docs/actionability#visible) DOM node.
    *
+   * To check that at least one element from the list is visible, use
+   * [locator.first()](https://playwright.dev/docs/api/class-locator#locator-first).
+   *
    * **Usage**
    *
    * ```js
+   * // A specific element is visible.
    * await expect(page.getByText('Welcome')).toBeVisible();
+   *
+   * // At least one item in the list is visible.
+   * await expect(page.getByTestId('todo-item').first()).toBeVisible();
+   *
+   * // At least one of the two elements is visible, possibly both.
+   * await expect(
+   *     page.getByRole('button', { name: 'Sign in' })
+   *         .or(page.getByRole('button', { name: 'Sign up' }))
+   *         .first()
+   * ).toBeVisible();
    * ```
    *
    * @param options
