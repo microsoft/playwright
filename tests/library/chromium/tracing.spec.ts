@@ -19,13 +19,21 @@ import fs from 'fs';
 import path from 'path';
 
 it('should output a trace', async ({ browser, server }, testInfo) => {
+  let warning = null;
+  const warningHandler = w => warning = w;
+  process.on('warning', warningHandler);
+
   const page = await browser.newPage();
   const outputTraceFile = testInfo.outputPath(path.join(`trace.json`));
   await browser.startTracing(page, { screenshots: true, path: outputTraceFile });
-  await page.goto(server.PREFIX + '/grid.html');
+  for (let i = 0; i < 20; i++)
+    await page.goto(server.PREFIX + '/grid.html');
   await browser.stopTracing();
   expect(fs.existsSync(outputTraceFile)).toBe(true);
   await page.close();
+
+  process.off('warning', warningHandler);
+  expect(warning).toBe(null);
 });
 
 it('should create directories as needed', async ({ browser, server }, testInfo) => {

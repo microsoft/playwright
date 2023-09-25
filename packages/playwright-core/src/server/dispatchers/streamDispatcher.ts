@@ -17,7 +17,7 @@
 import type * as channels from '@protocol/channels';
 import { Dispatcher } from './dispatcher';
 import type * as stream from 'stream';
-import { createGuid } from '../../utils';
+import { ManualPromise, createGuid } from '../../utils';
 import type { ArtifactDispatcher } from './artifactDispatcher';
 
 export class StreamDispatcher extends Dispatcher<{ guid: string, stream: stream.Readable }, channels.StreamChannel, ArtifactDispatcher> implements channels.StreamChannel {
@@ -36,11 +36,15 @@ export class StreamDispatcher extends Dispatcher<{ guid: string, stream: stream.
     if (this._ended)
       return { binary: Buffer.from('') };
     if (!stream.readableLength) {
-      await new Promise((fulfill, reject) => {
-        stream.once('readable', fulfill);
-        stream.once('end', fulfill);
-        stream.once('error', reject);
-      });
+      const readyPromise = new ManualPromise<void>();
+      const done = () => readyPromise.resolve();
+      stream.on('readable', done);
+      stream.on('end', done);
+      stream.on('error', done);
+      await readyPromise;
+      stream.off('readable', done);
+      stream.off('end', done);
+      stream.off('error', done);
     }
     const buffer = stream.read(Math.min(stream.readableLength, params.size || stream.readableLength));
     return { binary: buffer || Buffer.from('') };
