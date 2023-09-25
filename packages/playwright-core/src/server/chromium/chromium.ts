@@ -202,7 +202,6 @@ export class Chromium extends BrowserType {
         ...headers,
       },
       data: JSON.stringify({
-        desiredCapabilities,
         capabilities: { alwaysMatch: desiredCapabilities }
       }),
       timeout: progress.timeUntilDeadline(),
