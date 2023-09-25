@@ -75,7 +75,7 @@ console.log(buffer.toString('base64'));
 
 ```java
 byte[] buffer = page.screenshot();
-System.out.println(Base64.getEncoder().encode(buffer));
+System.out.println(Base64.getEncoder().encodeToString(buffer));
 ```
 
 ```python async
