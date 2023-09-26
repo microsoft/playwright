@@ -35,6 +35,11 @@ export function existingDispatcher<DispatcherType>(object: any): DispatcherType 
   return object[dispatcherSymbol];
 }
 
+let maxDispatchers = 1000;
+export function setMaxDispatchersForTest(value: number | undefined) {
+  maxDispatchers = value || 1000;
+}
+
 export class Dispatcher<Type extends { guid: string }, ChannelType, ParentScopeType extends DispatcherScope> extends EventEmitter implements channels.Channel {
   private _connection: DispatcherConnection;
   // Parent is always "isScope".
@@ -55,18 +60,18 @@ export class Dispatcher<Type extends { guid: string }, ChannelType, ParentScopeT
     this._parent = parent instanceof DispatcherConnection ? undefined : parent;
 
     const guid = object.guid;
-    assert(!this._connection._dispatchers.has(guid));
-    this._connection._dispatchers.set(guid, this);
+    this._guid = guid;
+    this._type = type;
+    this._object = object;
+
+    (object as any)[dispatcherSymbol] = this;
+
+    this._connection.registerDispatcher(this);
     if (this._parent) {
       assert(!this._parent._dispatchers.has(guid));
       this._parent._dispatchers.set(guid, this);
     }
 
-    this._type = type;
-    this._guid = guid;
-    this._object = object;
-
-    (object as any)[dispatcherSymbol] = this;
     if (this._parent)
       this._connection.sendCreate(this._parent, type, guid, initializer, this._parent._object);
   }
@@ -100,9 +105,9 @@ export class Dispatcher<Type extends { guid: string }, ChannelType, ParentScopeT
     this._connection.sendEvent(this, method as string, params, sdkObject);
   }
 
-  _dispose() {
+  _dispose(reason?: 'gc') {
     this._disposeRecursively();
-    this._connection.sendDispose(this);
+    this._connection.sendDispose(this, reason);
   }
 
   protected _onDispose() {
@@ -115,8 +120,9 @@ export class Dispatcher<Type extends { guid: string }, ChannelType, ParentScopeT
     eventsHelper.removeEventListeners(this._eventListeners);
 
     // Clean up from parent and connection.
-    if (this._parent)
-      this._parent._dispatchers.delete(this._guid);
+    this._parent?._dispatchers.delete(this._guid);
+    const list = this._connection._dispatchersByType.get(this._type);
+    list?.delete(this._guid);
     this._connection._dispatchers.delete(this._guid);
 
     // Dispose all children.
@@ -159,6 +165,8 @@ export class RootDispatcher extends Dispatcher<{ guid: '' }, any, any> {
 
 export class DispatcherConnection {
   readonly _dispatchers = new Map<string, DispatcherScope>();
+  // Collect stale dispatchers by type.
+  readonly _dispatchersByType = new Map<string, Set<string>>();
   onmessage = (message: object) => {};
   private _waitOperations = new Map<string, CallMetadata>();
   private _isLocal: boolean;
@@ -183,8 +191,8 @@ export class DispatcherConnection {
     this._sendMessageToClient(parent._guid, dispatcher._type, '__adopt__', { guid: dispatcher._guid });
   }
 
-  sendDispose(dispatcher: DispatcherScope) {
-    this._sendMessageToClient(dispatcher._guid, dispatcher._type, '__dispose__', {});
+  sendDispose(dispatcher: DispatcherScope, reason?: 'gc') {
+    this._sendMessageToClient(dispatcher._guid, dispatcher._type, '__dispose__', { reason });
   }
 
   private _sendMessageToClient(guid: string, type: string, method: string, params: any, sdkObject?: SdkObject) {
@@ -222,6 +230,32 @@ export class DispatcherConnection {
       return { guid: arg._guid };
     }
     throw new ValidationError(`${path}: expected dispatcher ${names.toString()}`);
+  }
+
+  registerDispatcher(dispatcher: DispatcherScope) {
+    assert(!this._dispatchers.has(dispatcher._guid));
+    this._dispatchers.set(dispatcher._guid, dispatcher);
+    const type = dispatcher._type;
+
+    let list = this._dispatchersByType.get(type);
+    if (!list) {
+      list = new Set();
+      this._dispatchersByType.set(type, list);
+    }
+    list.add(dispatcher._guid);
+    if (list.size > maxDispatchers)
+      this._disposeStaleDispatchers(type, list);
+  }
+
+  private _disposeStaleDispatchers(type: string, dispatchers: Set<string>) {
+    const dispatchersArray = [...dispatchers];
+    this._dispatchersByType.set(type, new Set(dispatchersArray.slice(maxDispatchers / 10)));
+    for (let i = 0; i < maxDispatchers / 10; ++i) {
+      const d = this._dispatchers.get(dispatchersArray[i]);
+      if (!d)
+        continue;
+      d._dispose('gc');
+    }
   }
 
   async dispatch(message: object) {

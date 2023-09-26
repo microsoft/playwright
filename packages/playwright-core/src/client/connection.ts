@@ -116,6 +116,8 @@ export class Connection extends EventEmitter {
   async sendMessageToServer(object: ChannelOwner, type: string, method: string, params: any, stackTrace: ParsedStackTrace | null, wallTime: number | undefined): Promise<any> {
     if (this._closedErrorMessage)
       throw new Error(this._closedErrorMessage);
+    if (object._wasCollected)
+      throw new Error('The object has been collected to prevent unbounded heap growth.');
 
     const { apiName, frames } = stackTrace || { apiName: '', frames: [] };
     const guid = object._guid;
@@ -170,7 +172,7 @@ export class Connection extends EventEmitter {
     }
 
     if (method === '__dispose__') {
-      object._dispose();
+      object._dispose(params.reason);
       return;
     }
 

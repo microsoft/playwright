@@ -47,3 +47,5 @@ jobs:
       if: always()
     - run: npm run stest browsers -- --project=firefox
       if: always()
+    - run: npm run stest heap -- --project=chromium
+      if: always()
