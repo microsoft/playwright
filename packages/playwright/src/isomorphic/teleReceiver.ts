@@ -199,8 +199,6 @@ export class TeleReporterReceiver {
     this._rootDir = this._reportConfig?.rootDir || config.rootDir;
     this._listOnly = config.listOnly;
     this._config = this._parseConfig(config);
-    if (this._reportConfig)
-      this._config.reporter = [...this._reportConfig?.reporter];
     this._reporter.onConfigure(this._config);
   }
 
@@ -329,6 +327,7 @@ export class TeleReporterReceiver {
       result.rootDir = this._reportConfig.rootDir;
       result.reportSlowTests = this._reportConfig.reportSlowTests;
       result.quiet = this._reportConfig.quiet;
+      result.reporter = [...this._reportConfig.reporter];
     }
     return result;
   }
