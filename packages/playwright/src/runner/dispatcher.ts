@@ -441,24 +441,15 @@ class JobDispatcher {
         serialSuitesWithFailures.add(outermostSerialSuite);
     }
 
-    // We have failed tests that belong to a serial suite.
-    // We should skip all future tests from the same serial suite.
-    for (const test of this._remainingByTestId.values()) {
+    // If we have failed tests that belong to a serial suite,
+    // we should skip all future tests from the same serial suite.
+    const testsBelongingToSomeSerialSuiteWithFailures = [...this._remainingByTestId.values()].filter(test => {
       let parent: Suite | undefined = test.parent;
       while (parent && !serialSuitesWithFailures.has(parent))
         parent = parent.parent;
-
-      // Does not belong to the failed serial suite, keep it.
-      if (!parent)
-        continue;
-
-      // Emulate a "skipped" run, and drop this test from remaining.
-      const result = test._appendTestResult();
-      this._reporter.onTestBegin(test, result);
-      result.status = 'skipped';
-      this._reportTestEnd(test, result);
-      this._remainingByTestId.delete(test.id);
-    }
+      return !!parent;
+    });
+    this._massSkipTestsFromRemaining(new Set(testsBelongingToSomeSerialSuiteWithFailures.map(test => test.id)), []);
 
     for (const serialSuite of serialSuitesWithFailures) {
       // Add all tests from faiiled serial suites for possible retry.
