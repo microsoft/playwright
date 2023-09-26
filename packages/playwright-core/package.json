@@ -26,7 +26,7 @@
     "./lib/image_tools/colorUtils": "./lib/image_tools/colorUtils.js",
     "./lib/cli/cli": "./lib/cli/cli.js",
     "./lib/cli/program": "./lib/cli/program.js",
-    "./lib/containers/docker": "./lib/containers/docker.js",
+    "./lib/server/registry/index": "./lib/server/registry/index.js",
     "./lib/remote/playwrightServer": "./lib/remote/playwrightServer.js",
     "./lib/server": "./lib/server/index.js",
     "./lib/utils": "./lib/utils/index.js",
