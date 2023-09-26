@@ -32,7 +32,7 @@ export type JsonConfig = Pick<FullConfig, 'configFile' | 'globalTimeout' | 'maxF
   listOnly: boolean;
 };
 
-export type MergeReporterConfig = Pick<FullConfig, 'configFile' | 'quiet' | 'reportSlowTests' | 'rootDir' >;
+export type MergeReporterConfig = Pick<FullConfig, 'configFile' | 'quiet' | 'reportSlowTests' | 'rootDir' | 'reporter' >;
 
 export type JsonPattern = {
   s?: string;
@@ -199,6 +199,8 @@ export class TeleReporterReceiver {
     this._rootDir = this._reportConfig?.rootDir || config.rootDir;
     this._listOnly = config.listOnly;
     this._config = this._parseConfig(config);
+    if (this._reportConfig)
+      this._config.reporter = [...this._reportConfig?.reporter];
     this._reporter.onConfigure(this._config);
   }
 
