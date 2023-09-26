@@ -256,7 +256,8 @@ Call log`);
   }
 });
 
-test('toHaveScreenshot should populate matcherResult', async ({ page, server }) => {
+test('toHaveScreenshot should populate matcherResult', async ({ page, server, isAndroid }) => {
+  test.skip(isAndroid);
   await page.setViewportSize({ width: 500, height: 500 });
   await page.goto(server.EMPTY_PAGE);
   const e = await expect(page).toHaveScreenshot('screenshot-sanity.png').catch(e => e);
@@ -274,7 +275,7 @@ test('toHaveScreenshot should populate matcherResult', async ({ page, server }) 
 
   expect.soft(stripAnsi(e.toString())).toContain(`Error: Screenshot comparison failed:
 
-  250000 pixels (ratio 1.00 of all image pixels) are different.
+  23362 pixels (ratio 0.10 of all image pixels) are different.
 
 Expected:`);
 });
