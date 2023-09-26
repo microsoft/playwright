@@ -372,3 +372,92 @@ test('should work with property expressions in JSX', async ({ runInlineTest }) =
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(2);
 });
+
+test('should handle the baseUrl config', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      import { defineConfig } from '@playwright/experimental-ct-react';
+      export default defineConfig({ use: { baseURL: '127.0.0.1' } });
+    `,
+    'playwright/index.html': `<script type="module" src="./index.js"></script>`,
+    'playwright/index.js': ``,
+
+    'src/component.jsx': `
+      export const Component = () => <></>;
+    `,
+
+    'src/component.test.jsx': `
+      import { test, expect } from '@playwright/experimental-ct-react';
+      import { Component } from './component';
+
+      test('pass component', async ({ page, mount }) => {
+        const component = await mount(<Component />);
+        await expect(page).toHaveURL('http://127.0.0.1:3100/');
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
+test('should handle the vite host config', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      import { defineConfig } from '@playwright/experimental-ct-react';
+      export default defineConfig({ use: { ctViteConfig: { preview: { host: '127.0.0.1' } } } });
+    `,
+    'playwright/index.html': `<script type="module" src="./index.js"></script>`,
+    'playwright/index.js': ``,
+
+    'src/component.jsx': `
+      export const Component = () => <></>;
+    `,
+
+    'src/component.test.jsx': `
+      import { test, expect } from '@playwright/experimental-ct-react';
+      import { Component } from './component';
+
+      test('pass component', async ({ page, mount }) => {
+        const component = await mount(<Component />);
+        await expect(page).toHaveURL('http://127.0.0.1:3100/');
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
+test('should prioritize the vite host config over the baseUrl config', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      import { defineConfig } from '@playwright/experimental-ct-react';
+      export default defineConfig({
+        use: {
+          baseURL: 'localhost',
+          ctViteConfig: { preview: { host: '127.0.0.1' } }
+        },
+      });
+    `,
+    'playwright/index.html': `<script type="module" src="./index.js"></script>`,
+    'playwright/index.js': ``,
+
+    'src/component.jsx': `
+      export const Component = () => <></>;
+    `,
+
+    'src/component.test.jsx': `
+      import { test, expect } from '@playwright/experimental-ct-react';
+      import { Component } from './component';
+
+      test('pass component', async ({ page, mount }) => {
+        const component = await mount(<Component />);
+        await expect(page).toHaveURL('http://127.0.0.1:3100/');
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
