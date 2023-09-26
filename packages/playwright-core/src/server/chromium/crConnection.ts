@@ -37,9 +37,10 @@ export const kBrowserCloseMessageId = -9999;
 export class CRConnection extends EventEmitter {
   private _lastId = 0;
   private readonly _transport: ConnectionTransport;
-  private readonly _sessions = new Map<string, CRSession>();
+  readonly _sessions = new Map<string, CRSession>();
   private readonly _protocolLogger: ProtocolLogger;
   private readonly _browserLogsCollector: RecentLogsCollector;
+  _browserDisconnectedLogs: string | undefined;
   readonly rootSession: CRSession;
   _closed = false;
 
@@ -49,19 +50,11 @@ export class CRConnection extends EventEmitter {
     this._transport = transport;
     this._protocolLogger = protocolLogger;
     this._browserLogsCollector = browserLogsCollector;
-    this.rootSession = new CRSession(this, '', 'browser', '');
+    this.rootSession = new CRSession(this, null, '');
     this._sessions.set('', this.rootSession);
     this._transport.onmessage = this._onMessage.bind(this);
     // onclose should be set last, since it can be immediately called.
     this._transport.onclose = this._onClose.bind(this);
-  }
-
-  static fromSession(session: CRSession): CRConnection {
-    return session._connection!;
-  }
-
-  session(sessionId: string): CRSession | null {
-    return this._sessions.get(sessionId) || null;
   }
 
   _rawSend(sessionId: string, method: string, params: any): number {
@@ -78,18 +71,6 @@ export class CRConnection extends EventEmitter {
     this._protocolLogger('receive', message);
     if (message.id === kBrowserCloseMessageId)
       return;
-    if (message.method === 'Target.attachedToTarget') {
-      const sessionId = message.params.sessionId;
-      const rootSessionId = message.sessionId || '';
-      const session = new CRSession(this, rootSessionId, message.params.targetInfo.type, sessionId);
-      this._sessions.set(sessionId, session);
-    } else if (message.method === 'Target.detachedFromTarget') {
-      const session = this._sessions.get(message.params.sessionId);
-      if (session) {
-        session._onClosed(undefined);
-        this._sessions.delete(message.params.sessionId);
-      }
-    }
     const session = this._sessions.get(message.sessionId || '');
     if (session)
       session._onMessage(message);
@@ -99,10 +80,8 @@ export class CRConnection extends EventEmitter {
     this._closed = true;
     this._transport.onmessage = undefined;
     this._transport.onclose = undefined;
-    const browserDisconnectedLogs = helper.formatBrowserLogs(this._browserLogsCollector.recentLogs());
-    for (const session of this._sessions.values())
-      session._onClosed(browserDisconnectedLogs);
-    this._sessions.clear();
+    this._browserDisconnectedLogs = helper.formatBrowserLogs(this._browserLogsCollector.recentLogs());
+    this.rootSession.dispose();
     Promise.resolve().then(() => this.emit(ConnectionEvents.Disconnected));
   }
 
@@ -111,14 +90,9 @@ export class CRConnection extends EventEmitter {
       this._transport.close();
   }
 
-  async createSession(targetInfo: Protocol.Target.TargetInfo): Promise<CRSession> {
-    const { sessionId } = await this.rootSession.send('Target.attachToTarget', { targetId: targetInfo.targetId, flatten: true });
-    return this._sessions.get(sessionId)!;
-  }
-
   async createBrowserSession(): Promise<CRSession> {
     const { sessionId } = await this.rootSession.send('Target.attachToBrowserTarget');
-    return this._sessions.get(sessionId)!;
+    return this.rootSession.createChildSession(sessionId);
   }
 }
 
@@ -127,14 +101,13 @@ export const CRSessionEvents = {
 };
 
 export class CRSession extends EventEmitter {
-  _connection: CRConnection | null;
+  private readonly _connection: CRConnection;
   _eventListener?: (method: string, params?: Object) => void;
   private readonly _callbacks = new Map<number, {resolve: (o: any) => void, reject: (e: ProtocolError) => void, error: ProtocolError, method: string}>();
-  private readonly _targetType: string;
   private readonly _sessionId: string;
-  private readonly _rootSessionId: string;
+  private readonly _parentSession: CRSession | null;
   private _crashed: boolean = false;
-  private _browserDisconnectedLogs: string | undefined;
+  private _closed = false;
   override on: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
   override addListener: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
   override off: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
@@ -142,13 +115,12 @@ export class CRSession extends EventEmitter {
   override once: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
   readonly guid: string;
 
-  constructor(connection: CRConnection, rootSessionId: string, targetType: string, sessionId: string) {
+  constructor(connection: CRConnection, parentSession: CRSession | null, sessionId: string) {
     super();
     this.guid = `cdp-session@${sessionId}`;
     this.setMaxListeners(0);
     this._connection = connection;
-    this._rootSessionId = rootSessionId;
-    this._targetType = targetType;
+    this._parentSession = parentSession;
     this._sessionId = sessionId;
 
     this.on = super.on;
@@ -162,16 +134,28 @@ export class CRSession extends EventEmitter {
     this._crashed = true;
   }
 
+  createChildSession(sessionId: string): CRSession {
+    const session = new CRSession(this._connection, this, sessionId);
+    this._connection._sessions.set(sessionId, session);
+    return session;
+  }
+
+  private _closedErrorMessage() {
+    if (this._crashed)
+      return 'Target crashed';
+    if (this._connection._browserDisconnectedLogs !== undefined)
+      return `Browser closed.` + this._connection._browserDisconnectedLogs;
+    if (this._closed)
+      return `Target closed`;
+  }
+
   async send<T extends keyof Protocol.CommandParameters>(
     method: T,
     params?: Protocol.CommandParameters[T]
   ): Promise<Protocol.CommandReturnValues[T]> {
-    if (this._crashed)
-      throw new ProtocolError(true, 'Target crashed');
-    if (this._browserDisconnectedLogs !== undefined)
-      throw new ProtocolError(true, `Browser closed.` + this._browserDisconnectedLogs);
-    if (!this._connection)
-      throw new ProtocolError(true, `Target closed`);
+    const closedErrorMessage = this._closedErrorMessage();
+    if (closedErrorMessage)
+      throw new ProtocolError(true, closedErrorMessage);
     const id = this._connection._rawSend(this._sessionId, method, params);
     return new Promise((resolve, reject) => {
       this._callbacks.set(id, { resolve, reject, error: new ProtocolError(false), method });
@@ -203,23 +187,23 @@ export class CRSession extends EventEmitter {
   }
 
   async detach() {
-    if (!this._connection)
-      throw new Error(`Session already detached. Most likely the ${this._targetType} has been closed.`);
-    const rootSession = this._connection.session(this._rootSessionId);
-    if (!rootSession)
-      throw new Error('Root session has been closed');
-    await rootSession.send('Target.detachFromTarget', { sessionId: this._sessionId });
+    if (this._closed)
+      throw new Error(`Session already detached. Most likely the page has been closed.`);
+    if (!this._parentSession)
+      throw new Error('Root session cannot be closed');
+    await this._parentSession.send('Target.detachFromTarget', { sessionId: this._sessionId });
+    this.dispose();
   }
 
-  _onClosed(browserDisconnectedLogs: string | undefined) {
-    this._browserDisconnectedLogs = browserDisconnectedLogs;
-    const errorMessage = browserDisconnectedLogs !== undefined ? 'Browser closed.' + browserDisconnectedLogs : 'Target closed';
+  dispose() {
+    this._closed = true;
+    this._connection._sessions.delete(this._sessionId);
+    const errorMessage = this._closedErrorMessage()!;
     for (const callback of this._callbacks.values()) {
       callback.error.sessionClosed = true;
       callback.reject(rewriteErrorMessage(callback.error, errorMessage));
     }
     this._callbacks.clear();
-    this._connection = null;
     Promise.resolve().then(() => this.emit(CRSessionEvents.Disconnected));
   }
 }

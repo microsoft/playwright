@@ -136,11 +136,9 @@ export class Page extends SdkObject {
 
   private _closedState: 'open' | 'closing' | 'closed' = 'open';
   private _closedPromise = new ManualPromise<void>();
-  private _disconnected = false;
   private _initialized = false;
   private _eventsToEmitAfterInitialized: { event: string | symbol, args: any[] }[] = [];
-  readonly _disconnectedScope = new LongStandingScope();
-  readonly _crashedScope = new LongStandingScope();
+  private _crashed = false;
   readonly openScope = new LongStandingScope();
   readonly _browserContext: BrowserContext;
   readonly keyboard: input.Keyboard;
@@ -284,18 +282,9 @@ export class Page extends SdkObject {
     this._frameManager.dispose();
     this._frameThrottler.dispose();
     this.emit(Page.Events.Crash);
-    this._crashedScope.close('Page crashed');
+    this._crashed = true;
     this.instrumentation.onPageClose(this);
-    this.openScope.close('Page closed');
-  }
-
-  _didDisconnect() {
-    this._frameManager.dispose();
-    this._frameThrottler.dispose();
-    assert(!this._disconnected, 'Page disconnected twice');
-    this._disconnected = true;
-    this._disconnectedScope.close('Page closed');
-    this.openScope.close('Page closed');
+    this.openScope.close('Page crashed');
   }
 
   async _onFileChooserOpened(handle: dom.ElementHandle) {
@@ -366,7 +355,7 @@ export class Page extends SdkObject {
   }
 
   async _onBindingCalled(payload: string, context: dom.FrameExecutionContext) {
-    if (this._disconnected || this._closedState === 'closed')
+    if (this._closedState === 'closed')
       return;
     await PageBinding.dispatch(this, payload, context);
   }
@@ -612,7 +601,6 @@ export class Page extends SdkObject {
     const runBeforeUnload = !!options && !!options.runBeforeUnload;
     if (this._closedState !== 'closing') {
       this._closedState = 'closing';
-      assert(!this._disconnected, 'Target closed');
       // This might throw if the browser context containing the page closes
       // while we are trying to close the page.
       await this._delegate.closePage(runBeforeUnload).catch(e => debugLogger.log('error', e));
@@ -632,8 +620,12 @@ export class Page extends SdkObject {
     return this._closedState === 'closed';
   }
 
+  hasCrashed() {
+    return this._crashed;
+  }
+
   isClosedOrClosingOrCrashed() {
-    return this._closedState !== 'open' || this._crashedScope.isClosed();
+    return this._closedState !== 'open' || this._crashed;
   }
 
   _addWorker(workerId: string, worker: Worker) {

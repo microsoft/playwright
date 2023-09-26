@@ -49,3 +49,15 @@ test('version should work', async function({ browser, browserName }) {
   else
     expect(version.match(/^\d+\.\d+/)).toBeTruthy();
 });
+
+test('should dispatch page.on(close) upon browser.close and reject evaluate', async ({ browserType }) => {
+  const browser = await browserType.launch();
+  const page = await browser.newPage();
+  let closed = false;
+  page.on('close', () => closed = true);
+  const promise = page.evaluate(() => new Promise<void>(() => {})).catch(e => e);
+  await browser.close();
+  expect(closed).toBe(true);
+  const error = await promise;
+  expect(error.message).toMatch(/(Target|Browser) closed/);
+});

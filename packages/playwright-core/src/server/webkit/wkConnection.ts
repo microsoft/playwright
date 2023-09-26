@@ -40,7 +40,8 @@ export class WKConnection {
   private readonly _transport: ConnectionTransport;
   private readonly _onDisconnect: () => void;
   private readonly _protocolLogger: ProtocolLogger;
-  readonly _browserLogsCollector: RecentLogsCollector;
+  private readonly _browserLogsCollector: RecentLogsCollector;
+  _browserDisconnectedLogs: string | undefined;
   private _lastId = 0;
   private _closed = false;
   readonly browserSession: WKSession;
@@ -83,7 +84,8 @@ export class WKConnection {
     this._closed = true;
     this._transport.onmessage = undefined;
     this._transport.onclose = undefined;
-    this.browserSession.dispose(true);
+    this._browserDisconnectedLogs = helper.formatBrowserLogs(this._browserLogsCollector.recentLogs());
+    this.browserSession.dispose();
     this._onDisconnect();
   }
 
@@ -156,9 +158,9 @@ export class WKSession extends EventEmitter {
     return this._disposed;
   }
 
-  dispose(disconnected: boolean) {
-    if (disconnected)
-      this.errorText = 'Browser closed.' + helper.formatBrowserLogs(this.connection._browserLogsCollector.recentLogs());
+  dispose() {
+    if (this.connection._browserDisconnectedLogs)
+      this.errorText = 'Browser closed.' + this.connection._browserDisconnectedLogs;
     for (const callback of this._callbacks.values()) {
       callback.error.sessionClosed = true;
       callback.reject(rewriteErrorMessage(callback.error, this.errorText));

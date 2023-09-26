@@ -47,9 +47,9 @@ it('should report requests and responses handled by service worker', async ({ pa
 
   await page.goto(server.PREFIX + '/serviceworkers/fetchdummy/sw.html');
   await page.evaluate(() => window['activationPromise']);
-  const [swResponse, request] = await Promise.all([
-    page.evaluate(() => window['fetchDummy']('foo')),
+  const [request, swResponse] = await Promise.all([
     page.waitForEvent('request'),
+    page.evaluate(() => window['fetchDummy']('foo')),
   ]);
   expect(swResponse).toBe('responseFromServiceWorker:foo');
   expect(request.url()).toBe(server.PREFIX + '/serviceworkers/fetchdummy/foo');

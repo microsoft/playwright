@@ -617,8 +617,7 @@ export class Frame extends SdkObject {
   async raceNavigationAction(progress: Progress, options: types.GotoOptions, action: () => Promise<network.Response | null>): Promise<network.Response | null> {
     return LongStandingScope.raceMultiple([
       this._detachedScope,
-      this._page._disconnectedScope,
-      this._page._crashedScope,
+      this._page.openScope,
     ], action().catch(e => {
       if (e instanceof NavigationAbortedError && e.documentId) {
         const data = this._redirectedNavigations.get(e.documentId);
@@ -1055,8 +1054,7 @@ export class Frame extends SdkObject {
         // We need this to show expected/received values in time.
         const actionPromise = new Promise(f => setTimeout(f, timeout));
         await LongStandingScope.raceMultiple([
-          this._page._disconnectedScope,
-          this._page._crashedScope,
+          this._page.openScope,
           this._detachedScope,
         ], actionPromise);
       }
@@ -1704,8 +1702,7 @@ class SignalBarrier {
       return true;
     });
     await LongStandingScope.raceMultiple([
-      frame._page._disconnectedScope,
-      frame._page._crashedScope,
+      frame._page.openScope,
       frame._detachedScope,
     ], waiter.promise).catch(() => {});
     waiter.dispose();

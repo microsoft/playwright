@@ -91,7 +91,7 @@ export class CRBrowser extends Browser {
     super(parent, options);
     this._connection = connection;
     this._session = this._connection.rootSession;
-    this._connection.on(ConnectionEvents.Disconnected, () => this._didClose());
+    this._connection.on(ConnectionEvents.Disconnected, () => this._didDisconnect());
     this._session.on('Target.attachedToTarget', this._onAttachedToTarget.bind(this));
     this._session.on('Target.detachedFromTarget', this._onDetachedFromTarget.bind(this));
     this._session.on('Browser.downloadWillBegin', this._onDownloadWillBegin.bind(this));
@@ -149,7 +149,7 @@ export class CRBrowser extends Browser {
   _onAttachedToTarget({ targetInfo, sessionId, waitingForDebugger }: Protocol.Target.attachedToTargetPayload) {
     if (targetInfo.type === 'browser')
       return;
-    const session = this._connection.session(sessionId)!;
+    const session = this._session.createChildSession(sessionId);
     assert(targetInfo.browserContextId, 'targetInfo: ' + JSON.stringify(targetInfo, null, 2));
     let context = this._contexts.get(targetInfo.browserContextId) || null;
     if (!context) {
@@ -232,6 +232,19 @@ export class CRBrowser extends Browser {
       serviceWorker.didClose();
       return;
     }
+  }
+
+  private _didDisconnect() {
+    for (const crPage of this._crPages.values())
+      crPage.didClose();
+    this._crPages.clear();
+    for (const backgroundPage of this._backgroundPages.values())
+      backgroundPage.didClose();
+    this._backgroundPages.clear();
+    for (const serviceWorker of this._serviceWorkers.values())
+      serviceWorker.didClose();
+    this._serviceWorkers.clear();
+    this._didClose();
   }
 
   private _findOwningPage(frameId: string) {
@@ -593,6 +606,6 @@ export class CRBrowserContext extends BrowserContext {
 
     const rootSession = await this._browser._clientRootSession();
     const { sessionId } = await rootSession.send('Target.attachToTarget', { targetId, flatten: true });
-    return this._browser._connection.session(sessionId)!;
+    return rootSession.createChildSession(sessionId);
   }
 }
