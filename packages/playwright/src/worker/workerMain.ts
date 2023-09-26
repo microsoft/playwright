@@ -411,7 +411,7 @@ export class WorkerMain extends ProcessRunner {
 
     // A timed-out test gets a full additional timeout to run after hooks.
     const afterHooksSlot = testInfo._didTimeout ? { timeout: this._project.project.timeout, elapsed: 0 } : undefined;
-    await testInfo._runAsStepWithRunnable({ category: 'hook', title: 'After Hooks', runnableType: 'afterEach', runnableSlot: afterHooksSlot }, async step => {
+    await testInfo._runAsStepWithRunnable({ category: 'hook', title: 'After Hooks', runnableType: 'afterHooks', runnableSlot: afterHooksSlot }, async step => {
       testInfo._afterHooksStep = step;
       let firstAfterHooksError: TestInfoError | undefined;
       await testInfo._runWithTimeout(async () => {
@@ -433,7 +433,7 @@ export class WorkerMain extends ProcessRunner {
         // Teardown test-scoped fixtures. Attribute to 'test' so that users understand
         // they should probably increase the test timeout to fix this issue.
         debugTest(`tearing down test scope started`);
-        const testScopeError = await testInfo._runWithRunnableAndFailOnError({ type: 'test' }, () => {
+        const testScopeError = await testInfo._runAndFailOnError(() => {
           return this._fixtureRunner.teardownScope('test', testInfo._timeoutManager);
         });
         debugTest(`tearing down test scope finished`);
@@ -463,10 +463,10 @@ export class WorkerMain extends ProcessRunner {
           debugTest(`running full cleanup after the failure`);
 
           const teardownSlot = { timeout: this._project.project.timeout, elapsed: 0 };
-          await testInfo._timeoutManager.withRunnable({ type: 'test', slot: teardownSlot }, async () => {
+          await testInfo._timeoutManager.withRunnable({ type: 'teardown', slot: teardownSlot }, async () => {
             // Attribute to 'test' so that users understand they should probably increate the test timeout to fix this issue.
             debugTest(`tearing down test scope started`);
-            const testScopeError = await testInfo._runWithRunnableAndFailOnError({ type: 'test' }, () => {
+            const testScopeError = await testInfo._runAndFailOnError(() => {
               return this._fixtureRunner.teardownScope('test', testInfo._timeoutManager);
             });
             debugTest(`tearing down test scope finished`);
@@ -479,7 +479,7 @@ export class WorkerMain extends ProcessRunner {
 
             // Attribute to 'teardown' because worker fixtures are not perceived as a part of a test.
             debugTest(`tearing down worker scope started`);
-            const workerScopeError = await testInfo._runWithRunnableAndFailOnError({ type: 'teardown' }, () => {
+            const workerScopeError = await testInfo._runAndFailOnError(() => {
               return this._fixtureRunner.teardownScope('worker', testInfo._timeoutManager);
             });
             debugTest(`tearing down worker scope finished`);
