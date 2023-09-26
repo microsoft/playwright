@@ -213,6 +213,7 @@ Playwright comes with a range of tooling to help you write tests.
 - The [VS Code extension](./getting-started-vscode.md) gives you a great developer experience when writing, running, and debugging tests.
 - The [test generator](./codegen.md) can generate tests and pick locators for you.
 - The [trace viewer](./trace-viewer.md) gives you a full trace of your tests as a local PWA that can easily be shared. With the trace viewer you can view the timeline, inspect DOM snapshots for each action, view network requests and more.
+- The [UI Mode](./test-ui-mode) let's you explore, run and debug tests with a time travel experience complete with watch mode. All test files are loaded into the testing sidebar where you can expand each file and describe block to individually run, view, watch and debug each test.
 - [Typescript](./test-typescript) in Playwright works out of the box and gives you better IDE integrations. Your IDE will show you everything you can do and highlight when you do something wrong. No TypeScript experience is needed and it is not necessary for your code to be in TypeScript, all you need to do is create your tests with a `.ts` extension.
 
 ### Test across all browsers
@@ -265,7 +266,7 @@ Use Linux when running your tests on CI as it is cheaper. Developers can use wha
 
 Linting the tests helps catching errors early. Use [`@typescript-eslint/no-floating-promises`](https://typescript-eslint.io/rules/no-floating-promises/) [ESLint](https://eslint.org) rule to make sure there are no missing awaits before the asynchronous calls to the Playwright API.
 
-#### Use parallelism and sharding
+### Use parallelism and sharding
 
 Playwright runs tests in [parallel](./test-parallel.md) by default. Tests in a single file are run in order, in the same worker process. If you have many independent tests in a single file, you might want to run them in parallel
 
