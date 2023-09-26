@@ -21,7 +21,7 @@ import type { TestInfoError, TestInfo, TestStatus, FullProject, FullConfig } fro
 import type { AttachmentPayload, StepBeginPayload, StepEndPayload, WorkerInitParams } from '../common/ipc';
 import type { TestCase } from '../common/test';
 import { TimeoutManager } from './timeoutManager';
-import type { RunnableType, TimeSlot, RunnableDescription } from './timeoutManager';
+import type { RunnableType, TimeSlot } from './timeoutManager';
 import type { Annotation, FullConfigInternal, FullProjectInternal } from '../common/config';
 import type { Location } from '../../types/testReporter';
 import { getContainedPath, normalizeAndSaveAttachment, serializeError, trimLongString } from '../util';
@@ -226,12 +226,6 @@ export class TestInfoImpl implements TestInfo {
         this.status = 'timedOut';
     }
     this.duration = this._timeoutManager.defaultSlotTimings().elapsed | 0;
-  }
-
-  async _runWithRunnableAndFailOnError(runnable: RunnableDescription, cb: () => Promise<void>): Promise<TestInfoError | undefined> {
-    return await this._timeoutManager.withRunnable(runnable, async () => {
-      return await this._runAndFailOnError(cb);
-    });
   }
 
   async _runAndFailOnError(fn: () => Promise<void>, skips?: 'allowSkips'): Promise<TestInfoError | undefined> {

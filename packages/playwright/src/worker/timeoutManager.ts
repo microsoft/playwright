@@ -24,7 +24,7 @@ export type TimeSlot = {
   elapsed: number;
 };
 
-export type RunnableType = 'test' | 'beforeAll' | 'afterAll' | 'beforeEach' | 'afterEach' | 'slow' | 'skip' | 'fail' | 'fixme' | 'teardown';
+export type RunnableType = 'test' | 'beforeAll' | 'afterAll' | 'beforeEach' | 'afterEach' | 'afterHooks' | 'slow' | 'skip' | 'fail' | 'fixme' | 'teardown';
 
 export type RunnableDescription = {
   type: RunnableType;
@@ -59,7 +59,9 @@ export class TimeoutManager {
 
   async withRunnable<R>(runnable: RunnableDescription, cb: () => Promise<R>): Promise<R> {
     const existingRunnable = this._runnable;
-    const effectiveRunnable = { ...this._runnable, ...runnable };
+    const effectiveRunnable = { ...runnable };
+    if (!effectiveRunnable.slot)
+      effectiveRunnable.slot = this._runnable.slot;
     this._updateRunnables(effectiveRunnable, undefined);
     try {
       return await cb();
@@ -129,6 +131,7 @@ export class TimeoutManager {
     let message = '';
     const timeout = this._currentSlot().timeout;
     switch (this._runnable.type) {
+      case 'afterHooks':
       case 'test': {
         if (this._fixture) {
           if (this._fixture.phase === 'setup') {
