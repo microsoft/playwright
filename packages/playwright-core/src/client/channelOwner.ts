@@ -40,6 +40,7 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
   _logger: Logger | undefined;
   readonly _instrumentation: ClientInstrumentation;
   private _eventToSubscriptionMapping: Map<string, string> = new Map();
+  _wasCollected: boolean = false;
 
   constructor(parent: ChannelOwner | Connection, type: string, guid: string, initializer: channels.InitializerTraits<T>) {
     super();
@@ -114,15 +115,16 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
     child._parent = this;
   }
 
-  _dispose() {
+  _dispose(reason: 'gc' | undefined) {
     // Clean up from parent and connection.
     if (this._parent)
       this._parent._objects.delete(this._guid);
     this._connection._objects.delete(this._guid);
+    this._wasCollected = reason === 'gc';
 
     // Dispose all children.
     for (const object of [...this._objects.values()])
-      object._dispose();
+      object._dispose(reason);
     this._objects.clear();
   }
 
