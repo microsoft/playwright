@@ -1377,3 +1377,42 @@ function readAllFromStreamAsString(stream: NodeJS.ReadableStream): Promise<strin
     stream.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
   });
 }
+
+test('reporter list in the custom config', async ({ runInlineTest, mergeReports }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/27281' });
+  const reportDir = test.info().outputPath('blob-report');
+  const files = {
+    'playwright.config.ts': `
+      module.exports = { reporter: 'blob' };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+
+      test('first', async ({}) => {
+      });
+    `,
+    'merged/testReporter.js': `
+      class TestReporter {
+        onBegin(fullConfig, suite) {
+          console.log('reporter', fullConfig.reporter);
+        }
+      }
+
+      module.exports = TestReporter;
+    `,
+    'merged/playwright.config.ts': `
+      module.exports = {
+        retries: 1,
+        reporter: [['./testReporter.js', { myOpt: 1 }]]
+      };
+    `,
+  };
+  await runInlineTest(files);
+
+  const { exitCode, output } = await mergeReports(reportDir, undefined, { additionalArgs: ['--config', test.info().outputPath('merged/playwright.config.ts')] });
+  expect(exitCode).toBe(0);
+
+  const text = stripAnsi(output);
+  expect(text).toContain('testReporter.js');
+  expect(text).toContain('{ myOpt: 1 }');
+});
