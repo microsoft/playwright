@@ -42,19 +42,21 @@ export default declare((api: BabelAPI) => {
         if (!t.isStringLiteral(importNode.source))
           return;
 
-        let remove = false;
+        let components = 0;
         for (const specifier of importNode.specifiers) {
-          if (!componentNames.has(specifier.local.name))
+          const specifierName = specifier.local.name;
+          const componentName = componentNames.has(specifierName) ? specifierName : [...componentNames].find(c => c.startsWith(specifierName + '.'));
+          if (!componentName)
             continue;
           if (t.isImportNamespaceSpecifier(specifier))
             continue;
-          const { fullName } = componentInfo(specifier, importNode.source.value, this.filename!);
-          fullNames.set(specifier.local.name, fullName);
-          remove = true;
+          const { fullName } = componentInfo(specifier, importNode.source.value, this.filename!, componentName);
+          fullNames.set(componentName, fullName);
+          ++components;
         }
 
-        // If one of the imports was a component, consider them all component imports.
-        if (remove) {
+        // All the imports were components => delete.
+        if (components && components === importNode.specifiers.length) {
           p.skip();
           p.remove();
         }
@@ -70,8 +72,14 @@ export default declare((api: BabelAPI) => {
       JSXElement(path) {
         const jsxElement = path.node;
         const jsxName = jsxElement.openingElement.name;
-        if (!t.isJSXIdentifier(jsxName))
+        let nameOrExpression: string = '';
+        if (t.isJSXIdentifier(jsxName))
+          nameOrExpression = jsxName.name;
+        else if (t.isJSXMemberExpression(jsxName) && t.isJSXIdentifier(jsxName.object) && t.isJSXIdentifier(jsxName.property))
+          nameOrExpression = jsxName.object.name + '.' + jsxName.property.name;
+        if (!nameOrExpression)
           return;
+        const componentName = fullNames.get(nameOrExpression) || nameOrExpression;
 
         const props: (T.ObjectProperty | T.SpreadElement)[] = [];
 
@@ -113,7 +121,6 @@ export default declare((api: BabelAPI) => {
             children.push(t.spreadElement(child.expression));
         }
 
-        const componentName = fullNames.get(jsxName.name) || jsxName.name;
         path.replaceWith(t.objectExpression([
           t.objectProperty(t.identifier('kind'), t.stringLiteral('jsx')),
           t.objectProperty(t.identifier('type'), t.stringLiteral(componentName)),
@@ -147,8 +154,12 @@ export function collectComponentUsages(node: T.Node) {
       }
 
       // Treat JSX-everything as component usages.
-      if (t.isJSXElement(p.node) && t.isJSXIdentifier(p.node.openingElement.name))
-        names.add(p.node.openingElement.name.name);
+      if (t.isJSXElement(p.node)) {
+        if (t.isJSXIdentifier(p.node.openingElement.name))
+          names.add(p.node.openingElement.name.name);
+        if (t.isJSXMemberExpression(p.node.openingElement.name) && t.isJSXIdentifier(p.node.openingElement.name.object) && t.isJSXIdentifier(p.node.openingElement.name.property))
+          names.add(p.node.openingElement.name.object.name + '.' + p.node.openingElement.name.property.name);
+      }
 
       // Treat mount(identifier, ...) as component usage if it is in the importedLocalNames list.
       if (t.isAwaitExpression(p.node) && t.isCallExpression(p.node.argument) && t.isIdentifier(p.node.argument.callee) && p.node.argument.callee.name === 'mount') {
@@ -170,10 +181,11 @@ export type ComponentInfo = {
   importPath: string;
   isModuleOrAlias: boolean;
   importedName?: string;
+  importedNameProperty?: string;
   deps: string[];
 };
 
-export function componentInfo(specifier: T.ImportSpecifier | T.ImportDefaultSpecifier, importSource: string, filename: string): ComponentInfo {
+export function componentInfo(specifier: T.ImportSpecifier | T.ImportDefaultSpecifier, importSource: string, filename: string, componentName: string): ComponentInfo {
   const isModuleOrAlias = !importSource.startsWith('.');
   const unresolvedImportPath = path.resolve(path.dirname(filename), importSource);
   // Support following notations for Button.tsx:
@@ -183,10 +195,19 @@ export function componentInfo(specifier: T.ImportSpecifier | T.ImportDefaultSpec
   const prefix = importPath.replace(/[^\w_\d]/g, '_');
   const pathInfo = { importPath, isModuleOrAlias };
 
+  const specifierName = specifier.local.name;
+  let fullNameSuffix = '';
+  let importedNameProperty = '';
+  if (componentName !== specifierName) {
+    const suffix = componentName.substring(specifierName.length + 1);
+    fullNameSuffix = '_' + suffix;
+    importedNameProperty = '.' + suffix;
+  }
+
   if (t.isImportDefaultSpecifier(specifier))
-    return { fullName: prefix, deps: [], ...pathInfo };
+    return { fullName: prefix + fullNameSuffix, importedNameProperty, deps: [], ...pathInfo };
 
   if (t.isIdentifier(specifier.imported))
-    return { fullName: prefix + '_' + specifier.imported.name, importedName: specifier.imported.name, deps: [], ...pathInfo };
-  return { fullName: prefix + '_' + specifier.imported.value, importedName: specifier.imported.value, deps: [], ...pathInfo };
+    return { fullName: prefix + '_' + specifier.imported.name + fullNameSuffix, importedName: specifier.imported.name, importedNameProperty, deps: [], ...pathInfo };
+  return { fullName: prefix + '_' + specifier.imported.value + fullNameSuffix, importedName: specifier.imported.value, importedNameProperty, deps: [], ...pathInfo };
 }

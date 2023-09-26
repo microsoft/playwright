@@ -300,6 +300,7 @@ async function parseTestFile(testFile: string): Promise<ComponentInfo[]> {
   const text = await fs.promises.readFile(testFile, 'utf-8');
   const ast = parse(text, { errorRecovery: true, plugins: ['typescript', 'jsx'], sourceType: 'module' });
   const componentUsages = collectComponentUsages(ast);
+  const componentNames = componentUsages.names;
   const result: ComponentInfo[] = [];
 
   traverse(ast, {
@@ -310,11 +311,13 @@ async function parseTestFile(testFile: string): Promise<ComponentInfo[]> {
           return;
 
         for (const specifier of importNode.specifiers) {
-          if (!componentUsages.names.has(specifier.local.name))
+          const specifierName = specifier.local.name;
+          const componentName = componentNames.has(specifierName) ? specifierName : [...componentNames].find(c => c.startsWith(specifierName + '.'));
+          if (!componentName)
             continue;
           if (t.isImportNamespaceSpecifier(specifier))
             continue;
-          result.push(componentInfo(specifier, importNode.source.value, testFile));
+          result.push(componentInfo(specifier, importNode.source.value, testFile, componentName));
         }
       }
     }
@@ -366,9 +369,9 @@ function vitePlugin(registerSource: string, templateDir: string, buildInfo: Buil
       for (const [alias, value] of componentRegistry) {
         const importPath = value.isModuleOrAlias ? value.importPath : './' + path.relative(folder, value.importPath).replace(/\\/g, '/');
         if (value.importedName)
-          lines.push(`const ${alias} = () => import('${importPath}').then((mod) => mod.${value.importedName});`);
+          lines.push(`const ${alias} = () => import('${importPath}').then((mod) => mod.${value.importedName + (value.importedNameProperty || '')});`);
         else
-          lines.push(`const ${alias} = () => import('${importPath}').then((mod) => mod.default);`);
+          lines.push(`const ${alias} = () => import('${importPath}').then((mod) => mod.default${value.importedNameProperty || ''});`);
       }
 
       lines.push(`pwRegister({ ${[...componentRegistry.keys()].join(',\n  ')} });`);
