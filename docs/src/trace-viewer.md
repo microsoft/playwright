@@ -160,6 +160,13 @@ Available options to record a trace:
 
 You can also use `trace: 'retain-on-failure'` if you do not enable retries but still want traces for failed tests.
 
+To save disk space, you can use an object to configure the trace options and disable features like screenshots:
+- `'mode'` - Specify the trace mode, e.g. `'on-first-retry'`.
+- `'snapshots'` -  Set to `true` to capture snapshots during tracing.
+- `'screenshots'` - Set to `true` to capture screenshots during tracing.
+- `'sources'` - Set to `true` to capture source code during tracing.
+- `'attachments'` - Set to `true` to include additional attachments during tracing.
+
 If you are not using Playwright as a Test Runner, use the [`property: BrowserContext.tracing`] API instead.
 
 ## Recording a trace
