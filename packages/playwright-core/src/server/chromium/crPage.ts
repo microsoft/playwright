@@ -34,7 +34,6 @@ import type * as channels from '@protocol/channels';
 import { getAccessibilityTree } from './crAccessibility';
 import { CRBrowserContext } from './crBrowser';
 import type { CRSession } from './crConnection';
-import { CRConnection, CRSessionEvents } from './crConnection';
 import { CRCoverage } from './crCoverage';
 import { DragManager } from './crDragDrop';
 import { CRExecutionContext } from './crExecutionContext';
@@ -93,7 +92,6 @@ export class CRPage implements PageDelegate {
     this._page = new Page(this, browserContext);
     this._mainFrameSession = new FrameSession(this, client, targetId, null);
     this._sessions.set(targetId, this._mainFrameSession);
-    client.once(CRSessionEvents.Disconnected, () => this._page._didDisconnect());
     if (opener && !browserContext._options.noDefaultViewport) {
       const features = opener._nextWindowOpenPopupFeatures.shift() || [];
       const viewportSize = helper.getViewportSizeFromWindowFeatures(features);
@@ -407,6 +405,7 @@ class FrameSession {
   private _evaluateOnNewDocumentIdentifiers: string[] = [];
   private _exposedBindingNames: string[] = [];
   private _metricsOverride: Protocol.Emulation.setDeviceMetricsOverrideParameters | undefined;
+  private _workerSessions = new Map<string, CRSession>();
 
   constructor(crPage: CRPage, client: CRSession, targetId: string, parentSession: FrameSession | null) {
     this._client = client;
@@ -420,9 +419,6 @@ class FrameSession {
     this._firstNonInitialNavigationCommittedPromise = new Promise((f, r) => {
       this._firstNonInitialNavigationCommittedFulfill = f;
       this._firstNonInitialNavigationCommittedReject = r;
-    });
-    client.once(CRSessionEvents.Disconnected, () => {
-      this._firstNonInitialNavigationCommittedReject(new Error('Page closed'));
     });
   }
 
@@ -578,6 +574,7 @@ class FrameSession {
   }
 
   dispose() {
+    this._firstNonInitialNavigationCommittedReject(new Error('Page closed'));
     for (const childSession of this._childSessions)
       childSession.dispose();
     if (this._parentSession)
@@ -585,6 +582,7 @@ class FrameSession {
     eventsHelper.removeEventListeners(this._eventListeners);
     this._networkManager.dispose();
     this._crPage._sessions.delete(this._targetId);
+    this._client.dispose();
   }
 
   async _navigate(frame: frames.Frame, url: string, referrer: string | undefined): Promise<frames.GotoResult> {
@@ -719,7 +717,7 @@ class FrameSession {
   }
 
   _onAttachedToTarget(event: Protocol.Target.attachedToTargetPayload) {
-    const session = CRConnection.fromSession(this._client).session(event.sessionId)!;
+    const session = this._client.createChildSession(event.sessionId);
 
     if (event.targetInfo.type === 'iframe') {
       // Frame id equals target id.
@@ -745,6 +743,7 @@ class FrameSession {
     const url = event.targetInfo.url;
     const worker = new Worker(this._page, url);
     this._page._addWorker(event.sessionId, worker);
+    this._workerSessions.set(event.sessionId, session);
     session.once('Runtime.executionContextCreated', async event => {
       worker._createExecutionContext(new CRExecutionContext(session, event.context));
     });
@@ -763,7 +762,11 @@ class FrameSession {
 
   _onDetachedFromTarget(event: Protocol.Target.detachedFromTargetPayload) {
     // This might be a worker...
-    this._page._removeWorker(event.sessionId);
+    const workerSession = this._workerSessions.get(event.sessionId);
+    if (workerSession) {
+      workerSession.dispose();
+      this._page._removeWorker(event.sessionId);
+    }
 
     // ... or an oopif.
     const childFrameSession = this._crPage._sessions.get(event.targetId!);

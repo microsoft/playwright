@@ -78,7 +78,8 @@ export class WKBrowser extends Browser {
 
   _onDisconnect() {
     for (const wkPage of this._wkPages.values())
-      wkPage.dispose(true);
+      wkPage.didClose();
+    this._wkPages.clear();
     for (const video of this._idToVideo.values())
       video.artifact.reportFinished(kBrowserClosedError);
     this._idToVideo.clear();
@@ -178,7 +179,6 @@ export class WKBrowser extends Browser {
     if (!wkPage)
       return;
     wkPage.didClose();
-    wkPage.dispose(false);
     this._wkPages.delete(pageProxyId);
   }
 

@@ -159,6 +159,9 @@ export class FFBrowser extends Browser {
     for (const video of this._idToVideo.values())
       video.artifact.reportFinished(kBrowserClosedError);
     this._idToVideo.clear();
+    for (const ffPage of this._ffPages.values())
+      ffPage.didClose();
+    this._ffPages.clear();
     this._didClose();
   }
 }

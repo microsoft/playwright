@@ -97,10 +97,10 @@ it('should not stall on evaluate when dismissing beforeunload', async ({ page, s
   await page.click('body');
 
   await Promise.all([
+    page.waitForEvent('dialog').then(dialog => dialog.dismiss()),
     page.evaluate(() => {
       window.location.reload();
     }),
-    page.waitForEvent('dialog').then(dialog => dialog.dismiss()),
   ]);
 });
 

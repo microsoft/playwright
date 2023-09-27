@@ -193,7 +193,7 @@ export abstract class BrowserContext extends SdkObject {
     const [, ...otherPages] = this.pages();
     for (const p of otherPages)
       await p.close(metadata);
-    if (page && page._crashedScope.isClosed()) {
+    if (page && page.hasCrashed()) {
       await page.close(metadata);
       page = undefined;
     }

@@ -247,11 +247,11 @@ export class WKPage implements PageDelegate {
   private _onTargetDestroyed(event: Protocol.Target.targetDestroyedPayload) {
     const { targetId, crashed } = event;
     if (this._provisionalPage && this._provisionalPage._session.sessionId === targetId) {
-      this._provisionalPage._session.dispose(false);
+      this._provisionalPage._session.dispose();
       this._provisionalPage.dispose();
       this._provisionalPage = null;
     } else if (this._session.sessionId === targetId) {
-      this._session.dispose(false);
+      this._session.dispose();
       eventsHelper.removeEventListeners(this._sessionListeners);
       if (crashed) {
         this._session.markAsCrashed();
@@ -261,22 +261,18 @@ export class WKPage implements PageDelegate {
   }
 
   didClose() {
-    this._page._didClose();
-  }
-
-  dispose(disconnected: boolean) {
-    this._pageProxySession.dispose(disconnected);
+    this._pageProxySession.dispose();
     eventsHelper.removeEventListeners(this._sessionListeners);
     eventsHelper.removeEventListeners(this._eventListeners);
     if (this._session)
-      this._session.dispose(disconnected);
+      this._session.dispose();
     if (this._provisionalPage) {
-      this._provisionalPage._session.dispose(disconnected);
+      this._provisionalPage._session.dispose();
       this._provisionalPage.dispose();
       this._provisionalPage = null;
     }
-    this._page._didDisconnect();
     this._firstNonInitialNavigationCommittedReject(new Error('Page closed'));
+    this._page._didClose();
   }
 
   dispatchMessageToSession(message: any) {

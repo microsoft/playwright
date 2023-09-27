@@ -126,9 +126,6 @@ export class FFConnection extends EventEmitter {
     this._transport.onmessage = undefined;
     this._transport.onclose = undefined;
     const formattedBrowserLogs = helper.formatBrowserLogs(this._browserLogsCollector.recentLogs());
-    for (const session of this._sessions.values())
-      session.dispose();
-    this._sessions.clear();
     for (const callback of this._callbacks.values()) {
       const error = rewriteErrorMessage(callback.error, `Protocol error (${callback.method}): Browser closed.` + formattedBrowserLogs);
       error.sessionClosed =  true;
@@ -149,10 +146,6 @@ export class FFConnection extends EventEmitter {
     return session;
   }
 }
-
-export const FFSessionEvents = {
-  Disconnected: Symbol('Disconnected')
-};
 
 export class FFSession extends EventEmitter {
   _connection: FFConnection;
@@ -228,7 +221,6 @@ export class FFSession extends EventEmitter {
     this._callbacks.clear();
     this._disposed = true;
     this._connection._sessions.delete(this._sessionId);
-    Promise.resolve().then(() => this.emit(FFSessionEvents.Disconnected));
   }
 }
 
