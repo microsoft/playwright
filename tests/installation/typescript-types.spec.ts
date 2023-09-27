@@ -37,8 +37,6 @@ test('typescript types should work', async ({ exec, tsc, writeFiles }) => {
 });
 
 test('typescript types should work with module: NodeNext', async ({ exec, tsc, writeFiles }) => {
-  // module: NodeNext got added in TypeScript 4.7
-  await exec('npm i --foreground-scripts typescript@4.7 @types/node@18');
   const libraryPackages = [
     'playwright',
     'playwright-core',
@@ -53,8 +51,8 @@ test('typescript types should work with module: NodeNext', async ({ exec, tsc, w
     await writeFiles({
       [filename]: `import { Page } from '${libraryPackage}';`,
     });
-    await exec('npx', '-p', 'typescript@4.7', 'tsc', '--module nodenext', filename);
+    await tsc(`--module nodenext ${filename}`);
   }
 
-  await exec('npx', '-p', 'typescript@4.7', 'tsc', '--module nodenext', 'playwright-test-types.ts');
+  await tsc('--module nodenext playwright-test-types.ts');
 });

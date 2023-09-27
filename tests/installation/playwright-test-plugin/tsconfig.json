@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "ES2019",
+    "module": "commonjs",
+    "lib": ["esnext", "dom", "DOM.Iterable"],
+    "esModuleInterop": true,
+    "strict": true,
+    "allowJs": false,
+    "resolveJsonModule": true,
+    "noImplicitOverride": true,
+    "useUnknownInCatchVariables": false,
+    "declaration": true,
+  },
+}

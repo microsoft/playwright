@@ -19,5 +19,5 @@
         },
     },
     "include": ["**/*.spec.js", "**/*.ts", "index.d.ts"],
-    "exclude": ["components/"]
+    "exclude": ["components/", "installation/fixture-scripts/"]
 }

@@ -1,0 +1,15 @@
+{
+  "name": "playwright-test-plugin",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "peerDependencies": {
+    "@playwright/test": "1.x"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

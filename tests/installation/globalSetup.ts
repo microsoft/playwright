@@ -65,6 +65,22 @@ async function globalSetup() {
       build('playwright-browser-webkit', '@playwright/browser-webkit'),
     ]);
 
+    const buildPlaywrightTestPlugin = async () => {
+      const cwd = path.resolve(path.join(__dirname, `playwright-test-plugin`));
+      const tscResult = await spawnAsync('npx', ['tsc', '-p', 'tsconfig.json'], { cwd, shell: process.platform === 'win32' });
+      if (tscResult.code)
+        throw new Error(`Failed to build playwright-test-plugin:\n${tscResult.stderr}\n${tscResult.stdout}`);
+      const packResult = await spawnAsync('npm', ['pack'], { cwd, shell: process.platform === 'win32' });
+      if (packResult.code)
+        throw new Error(`Failed to build playwright-test-plugin:\n${packResult.stderr}\n${packResult.stdout}`);
+      const tgzName = packResult.stdout.trim();
+      const outPath = path.resolve(path.join(outputDir, `playwright-test-plugin.tgz`));
+      await fs.promises.rename(path.join(cwd, tgzName), outPath);
+      console.log('Built playwright-test-plugin');
+      return ['playwright-test-plugin', outPath];
+    };
+    builds.push(await buildPlaywrightTestPlugin());
+
     await fs.promises.writeFile(path.join(__dirname, '.registry.json'), JSON.stringify(Object.fromEntries(builds)));
   }
 
