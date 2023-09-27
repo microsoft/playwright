@@ -512,6 +512,7 @@ class ArtifactsRecorder {
   private _traceOptions: { screenshots: boolean, snapshots: boolean, sources: boolean, attachments: boolean, _live: boolean, mode?: TraceMode };
   private _temporaryTraceFiles: string[] = [];
   private _temporaryScreenshots: string[] = [];
+  private _temporaryArtifacts: string[] = [];
   private _reusedContexts = new Set<BrowserContext>();
   private _screenshotOrdinal = 0;
   private _screenshottedSymbol: symbol;
@@ -529,12 +530,18 @@ class ArtifactsRecorder {
     this._startedCollectingArtifacts = Symbol('startedCollectingArtifacts');
   }
 
+  private _createTemporaryArtifact(...name: string[]) {
+    const file = path.join(this._artifactsDir, ...name);
+    this._temporaryArtifacts.push(file);
+    return file;
+  }
+
   async willStartTest(testInfo: TestInfoImpl) {
     this._testInfo = testInfo;
     testInfo._onDidFinishTestFunction = () => this.didFinishTestFunction();
     this._captureTrace = shouldCaptureTrace(this._traceMode, testInfo) && !process.env.PW_TEST_DISABLE_TRACING;
     if (this._captureTrace)
-      this._testInfo._tracing.start(path.join(this._artifactsDir, 'traces', `${this._testInfo.testId}-test.trace`), this._traceOptions);
+      this._testInfo._tracing.start(this._createTemporaryArtifact('traces', `${this._testInfo.testId}-test.trace`), this._traceOptions);
 
     // Since beforeAll(s), test and afterAll(s) reuse the same TestInfo, make sure we do not
     // overwrite previous screenshots.
@@ -571,7 +578,7 @@ class ArtifactsRecorder {
     if (this._screenshotMode === 'on' || this._screenshotMode === 'only-on-failure') {
       // Capture screenshot for now. We'll know whether we have to preserve them
       // after the test finishes.
-      await Promise.all(context.pages().map(page => this._screenshotPage(page)));
+      await Promise.all(context.pages().map(page => this._screenshotPage(page, true)));
     }
   }
 
@@ -586,12 +593,15 @@ class ArtifactsRecorder {
   }
 
   async didFinishTestFunction() {
-    if (this._testInfo._isFailure() && (this._screenshotMode === 'on' || this._screenshotMode === 'only-on-failure'))
+    const captureScreenshots = this._screenshotMode === 'on' || (this._screenshotMode === 'only-on-failure' && this._testInfo._isFailure());
+    if (captureScreenshots)
       await this._screenshotOnTestFailure();
   }
 
   async didFinishTest() {
-    const captureScreenshots = this._screenshotMode === 'on' || (this._screenshotMode === 'only-on-failure' && this._testInfo.status !== this._testInfo.expectedStatus);
+    const captureScreenshots = this._screenshotMode === 'on' || (this._screenshotMode === 'only-on-failure' && this._testInfo._isFailure());
+    if (captureScreenshots)
+      await this._screenshotOnTestFailure();
 
     const leftoverContexts: BrowserContext[] = [];
     for (const browserType of [this._playwright.chromium, this._playwright.firefox, this._playwright.webkit])
@@ -601,44 +611,26 @@ class ArtifactsRecorder {
     // Collect traces/screenshots for remaining contexts.
     await Promise.all(leftoverContexts.map(async context => {
       await this._stopTracing(context.tracing, true);
-      if (captureScreenshots) {
-        await Promise.all(context.pages().map(async page => {
-          if ((page as any)[this._screenshottedSymbol])
-            return;
-          try {
-            const screenshotPath = this._createScreenshotAttachmentPath();
-            // Pass caret=initial to avoid any evaluations that might slow down the screenshot
-            // and let the page modify itself from the problematic state it had at the moment of failure.
-            await page.screenshot({ ...this._screenshotOptions, timeout: 5000, path: screenshotPath, caret: 'initial' });
-            this._testInfo.attachments.push({ name: 'screenshot', path: screenshotPath, contentType: 'image/png' });
-          } catch {
-            // Screenshot may fail, just ignore.
-          }
-        }));
-      }
     }).concat(leftoverApiRequests.map(async context => {
       const tracing = (context as any)._tracing as Tracing;
       await this._stopTracing(tracing, true);
     })));
 
-    // Either remove or attach temporary screenshots for contexts closed before
-    // collecting the test trace.
-    await Promise.all(this._temporaryScreenshots.map(async file => {
-      if (!captureScreenshots) {
-        await fs.promises.unlink(file).catch(() => {});
-        return;
+    // Attach temporary screenshots for contexts closed before collecting the test trace.
+    if (captureScreenshots) {
+      for (const file of this._temporaryScreenshots) {
+        try {
+          const screenshotPath = this._createScreenshotAttachmentPath();
+          await fs.promises.rename(file, screenshotPath);
+          this._attachScreenshot(screenshotPath);
+        } catch {
+        }
       }
-      try {
-        const screenshotPath = this._createScreenshotAttachmentPath();
-        await fs.promises.rename(file, screenshotPath);
-        this._testInfo.attachments.push({ name: 'screenshot', path: screenshotPath, contentType: 'image/png' });
-      } catch {
-      }
-    }));
+    }
 
     // Collect test trace.
     if (this._preserveTrace()) {
-      const tracePath = path.join(this._artifactsDir, createGuid() + '.zip');
+      const tracePath = this._createTemporaryArtifact(createGuid() + '.zip');
       this._temporaryTraceFiles.push(tracePath);
       await this._testInfo._tracing.stop(tracePath);
     }
@@ -658,36 +650,47 @@ class ArtifactsRecorder {
       if (!beforeHooksHadTrace)
         this._testInfo.attachments.push({ name: 'trace', path: tracePath, contentType: 'application/zip' });
     }
+
+    for (const file of this._temporaryArtifacts)
+      await fs.promises.unlink(file).catch(() => {});
   }
 
   private _createScreenshotAttachmentPath() {
-    const testFailed = this._testInfo.status !== this._testInfo.expectedStatus;
+    const testFailed = this._testInfo._isFailure();
     const index = this._screenshotOrdinal + 1;
     ++this._screenshotOrdinal;
     const screenshotPath = this._testInfo.outputPath(`test-${testFailed ? 'failed' : 'finished'}-${index}.png`);
     return screenshotPath;
   }
 
-  private async _screenshotPage(page: Page) {
+  private async _screenshotPage(page: Page, temporary: boolean) {
     if ((page as any)[this._screenshottedSymbol])
       return;
     (page as any)[this._screenshottedSymbol] = true;
     try {
-      const screenshotPath = path.join(this._artifactsDir, createGuid() + '.png');
+      const screenshotPath = temporary ? this._createTemporaryArtifact(createGuid() + '.png') : this._createScreenshotAttachmentPath();
       // Pass caret=initial to avoid any evaluations that might slow down the screenshot
       // and let the page modify itself from the problematic state it had at the moment of failure.
-      await page.screenshot({ ...this._screenshotOptions, timeout: 5000, path: screenshotPath, caret: 'initial' }).catch(() => {});
-      this._temporaryScreenshots.push(screenshotPath);
+      await page.screenshot({ ...this._screenshotOptions, timeout: 5000, path: screenshotPath, caret: 'initial' });
+      if (temporary)
+        this._temporaryScreenshots.push(screenshotPath);
+      else
+        this._attachScreenshot(screenshotPath);
     } catch {
       // Screenshot may fail, just ignore.
     }
+  }
+
+  private _attachScreenshot(screenshotPath: string) {
+    this._testInfo.attachments.push({ name: 'screenshot', path: screenshotPath, contentType: 'image/png' });
   }
 
   private async _screenshotOnTestFailure() {
     const contexts: BrowserContext[] = [];
     for (const browserType of [this._playwright.chromium, this._playwright.firefox, this._playwright.webkit])
       contexts.push(...(browserType as any)._contexts);
-    await Promise.all(contexts.map(ctx => Promise.all(ctx.pages().map(page => this._screenshotPage(page)))));
+    const pages = contexts.map(ctx => ctx.pages()).flat();
+    await Promise.all(pages.map(page => this._screenshotPage(page, false)));
   }
 
   private async _startTraceChunkOnContextCreation(tracing: Tracing) {
@@ -727,7 +730,7 @@ class ArtifactsRecorder {
       // - it is's going to be used due to the config setting and the test status or
       // - we are inside a test or afterEach and the user manually closed the context.
       if (this._preserveTrace() || !contextTearDownStarted) {
-        tracePath = path.join(this._artifactsDir, createGuid() + '.zip');
+        tracePath = this._createTemporaryArtifact(createGuid() + '.zip');
         this._temporaryTraceFiles.push(tracePath);
       }
       await tracing.stopChunk({ path: tracePath });
