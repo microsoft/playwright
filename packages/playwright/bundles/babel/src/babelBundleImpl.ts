@@ -31,19 +31,19 @@ function babelTransformOptions(isTypeScript: boolean, isModule: boolean, plugins
 
   if (isTypeScript) {
     plugins.push(
-        [require('@babel/plugin-proposal-decorators'), { version: '2022-03' }],
-        [require('@babel/plugin-proposal-class-properties')],
-        [require('@babel/plugin-proposal-class-static-block')],
-        [require('@babel/plugin-proposal-numeric-separator')],
-        [require('@babel/plugin-proposal-logical-assignment-operators')],
-        [require('@babel/plugin-proposal-nullish-coalescing-operator')],
-        [require('@babel/plugin-proposal-optional-chaining')],
-        [require('@babel/plugin-proposal-private-methods')],
+        [require('@babel/plugin-proposal-decorators'), { version: '2023-05' }],
+        [require('@babel/plugin-transform-class-properties')],
+        [require('@babel/plugin-transform-class-static-block')],
+        [require('@babel/plugin-transform-numeric-separator')],
+        [require('@babel/plugin-transform-logical-assignment-operators')],
+        [require('@babel/plugin-transform-nullish-coalescing-operator')],
+        [require('@babel/plugin-transform-optional-chaining')],
+        [require('@babel/plugin-transform-private-methods')],
         [require('@babel/plugin-syntax-json-strings')],
         [require('@babel/plugin-syntax-optional-catch-binding')],
         [require('@babel/plugin-syntax-async-generators')],
         [require('@babel/plugin-syntax-object-rest-spread')],
-        [require('@babel/plugin-proposal-export-namespace-from')],
+        [require('@babel/plugin-transform-export-namespace-from')],
         [
           // From https://github.com/G-Rath/babel-plugin-replace-ts-export-assignment/blob/8dfdca32c8aa428574b0cae341444fc5822f2dc6/src/index.ts
           (
@@ -71,7 +71,7 @@ function babelTransformOptions(isTypeScript: boolean, isModule: boolean, plugins
   if (!isModule) {
     plugins.push([require('@babel/plugin-transform-modules-commonjs')]);
     // This converts async imports to require() calls so that we can intercept them with pirates.
-    plugins.push([require('@babel/plugin-proposal-dynamic-import')]);
+    plugins.push([require('@babel/plugin-transform-dynamic-import')]);
     plugins.push([
       (): PluginObj => ({
         name: 'css-to-identity-obj-proxy',
