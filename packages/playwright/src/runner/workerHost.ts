@@ -61,11 +61,14 @@ export class WorkerHost extends ProcessHost {
     });
   }
 
+  override async onExit() {
+    await removeFolders([this._params.artifactsDir]);
+  }
+
   override async stop(didFail?: boolean) {
     if (didFail)
       this._didFail = true;
     await super.stop();
-    await removeFolders([this._params.artifactsDir]);
   }
 
   runTestGroup(runPayload: RunPayload) {
