@@ -33,16 +33,16 @@ function patchPackageJsonForPreReleaseIfNeeded(tmpWorkspace: string) {
 }
 
 test('npm: @playwright/test plugin should work', async ({ exec, tmpWorkspace }) => {
-  await exec('npm i --foreground-scripts @playwright/test');
+  await exec('npm i @playwright/test');
   patchPackageJsonForPreReleaseIfNeeded(tmpWorkspace);
-  await exec('npm i --foreground-scripts playwright-test-plugin');
+  await exec('npm i playwright-test-plugin');
   await exec('npx playwright install chromium');
 
   const output = await exec('npx playwright test -c . --browser=chromium --reporter=line plugin.spec.ts');
   expect(output).toContain('plugin value: hello from plugin');
   expect(output).toContain('1 passed');
 
-  await exec('npm i --foreground-scripts typescript@5.2.2 @types/node@16');
+  await exec('npm i typescript@5.2.2 @types/node@16');
   await exec('npx tsc playwright-test-plugin-types.ts');
 });
 

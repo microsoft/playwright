@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 import { test, expect } from './npmTest';
+import path from 'path';
+import fs from 'fs';
 
-test('codegen should work', async ({ exec }) => {
-  await exec('npm i --foreground-scripts playwright');
+test('cli should work', async ({ exec, tmpWorkspace }) => {
+  await exec('npm i playwright');
   await exec('npx playwright install chromium');
 
   await test.step('codegen without arguments', async () => {
@@ -47,5 +49,13 @@ test('codegen should work', async ({ exec }) => {
       },
     });
     expect(result).toContain(`browser.close`);
+  });
+
+  await test.step('screenshot', async () => {
+    await exec(path.join('node_modules', '.bin', 'playwright'), 'screenshot about:blank one.png');
+    await fs.promises.stat(path.join(tmpWorkspace, 'one.png'));
+
+    await exec('npx playwright screenshot about:blank two.png');
+    await fs.promises.stat(path.join(tmpWorkspace, 'two.png'));
   });
 });
