@@ -18,9 +18,10 @@ import type { APIRequestContext, Browser, BrowserContext, BrowserContextOptions,
 export * from 'playwright-core';
 
 export type ReporterDescription =
+  ['blob'] | ['blob', { outputDir?: string }] |
   ['dot'] |
   ['line'] |
-  ['list'] |
+  ['list'] | ['list', { printSteps?: boolean }] |
   ['github'] |
   ['junit'] | ['junit', { outputFile?: string, stripANSIControlSequences?: boolean }] |
   ['json'] | ['json', { outputFile?: string }] |
