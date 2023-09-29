@@ -937,8 +937,8 @@ function compensateHalfIntegerRoundingError(point: types.Point) {
 export type SchedulableTask<T> = (injectedScript: js.JSHandle<InjectedScript>) => Promise<js.JSHandle<InjectedScriptPoll<T>>>;
 
 function joinWithAnd(strings: string[]): string {
-  if (strings.length < 1)
-    return strings.join(', ');
+  if (strings.length <= 1)
+    return strings.join('');
   return strings.slice(0, strings.length - 1).join(', ') + ' and ' + strings[strings.length - 1];
 }
 
