@@ -34,7 +34,7 @@ const parsedDownloads = (rawLogs: string) => {
   return out;
 };
 
-test.use({ useRealCDN: true, isolateBrowsers: true });
+test.use({ isolateBrowsers: true });
 
 for (const cdn of CDNS) {
   test(`playwright cdn failover should work (${cdn})`, async ({ exec, installedSoftwareOnDisk }) => {

@@ -61,7 +61,6 @@ type ExecOptions = SpawnOptions & { message?: string, expectToExitWithError?: bo
 type ArgsOrOptions = [] | [...string[]] | [...string[], ExecOptions] | [ExecOptions];
 
 type NPMTestOptions = {
-  useRealCDN: boolean;
   isolateBrowsers: boolean;
   allowGlobalInstall: boolean;
 };
@@ -80,7 +79,6 @@ type NPMTestFixtures = {
 export const test = _test
     .extend<CommonFixtures, CommonWorkerFixtures>(commonFixtures)
     .extend<NPMTestFixtures & NPMTestOptions>({
-      useRealCDN: [false, { option: true }],
       isolateBrowsers: [false, { option: true }],
       allowGlobalInstall: [false, { option: true }],
       _browsersPath: async ({ tmpWorkspace }, use) => use(path.join(tmpWorkspace, 'browsers')),
@@ -145,7 +143,7 @@ export const test = _test
           throw new Error(`Test that checks browser installation must set "isolateBrowsers" to true`);
         await use(async () => fs.promises.readdir(_browsersPath).catch(() => []).then(files => files.map(f => f.split('-')[0]).filter(f => !f.startsWith('.'))));
       },
-      exec: async ({ useRealCDN, tmpWorkspace, _browsersPath, isolateBrowsers }, use, testInfo) => {
+      exec: async ({ tmpWorkspace, _browsersPath, isolateBrowsers }, use, testInfo) => {
         await use(async (cmd: string, ...argsAndOrOptions: [] | [...string[]] | [...string[], ExecOptions] | [ExecOptions]) => {
           let args: string[] = [];
           let options: ExecOptions = {};
@@ -165,7 +163,6 @@ export const test = _test
                 'DISPLAY': process.env.DISPLAY,
                 'XAUTHORITY': process.env.XAUTHORITY,
                 ...(isolateBrowsers ? { PLAYWRIGHT_BROWSERS_PATH: _browsersPath } : {}),
-                ...(useRealCDN ? {} : { PLAYWRIGHT_DOWNLOAD_HOST: process.env.CDN_PROXY_HOST }),
                 ...options.env,
               }
             });
