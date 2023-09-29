@@ -53,6 +53,10 @@ foreach (var li in await page.GetByRole("listitem").AllAsync())
 
 Returns an array of `node.innerText` values for all matching nodes.
 
+:::caution Asserting text
+If you need to assert text on the page, prefer [`method: LocatorAssertions.toHaveText`] with [`option: useInnerText`] option to avoid flakiness. See [assertions guide](../test-assertions.md) for more details.
+:::
+
 **Usage**
 
 ```js
@@ -80,6 +84,10 @@ var texts = await page.GetByRole(AriaRole.Link).AllInnerTextsAsync();
 - returns: <[Array]<[string]>>
 
 Returns an array of `node.textContent` values for all matching nodes.
+
+:::caution Asserting text
+If you need to assert text on the page, prefer [`method: LocatorAssertions.toHaveText`] to avoid flakiness. See [assertions guide](../test-assertions.md) for more details.
+:::
 
 **Usage**
 
@@ -434,6 +442,10 @@ await page.Locator("canvas").ClickAsync(new() {
 - returns: <[int]>
 
 Returns the number of elements matching the locator.
+
+:::caution Asserting count
+If you need to assert the number of elements on the page, prefer [`method: LocatorAssertions.toHaveCount`] to avoid flakiness. See [assertions guide](../test-assertions.md) for more details.
+:::
 
 **Usage**
 
@@ -1059,6 +1071,10 @@ await locator.ClickAsync();
 
 Returns the matching element's attribute value.
 
+:::caution Asserting attributes
+If you need to assert an element's attribute, prefer [`method: LocatorAssertions.toHaveAttribute`] to avoid flakiness. See [assertions guide](../test-assertions.md) for more details.
+:::
+
 ### param: Locator.getAttribute.name
 * since: v1.14
 - `name` <[string]>
@@ -1227,6 +1243,10 @@ Returns the [`element.innerHTML`](https://developer.mozilla.org/en-US/docs/Web/A
 
 Returns the [`element.innerText`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/innerText).
 
+:::caution Asserting text
+If you need to assert text on the page, prefer [`method: LocatorAssertions.toHaveText`] with [`option: useInnerText`] option to avoid flakiness. See [assertions guide](../test-assertions.md) for more details.
+:::
+
 ### option: Locator.innerText.timeout = %%-input-timeout-%%
 * since: v1.14
 
@@ -1238,6 +1258,10 @@ Returns the [`element.innerText`](https://developer.mozilla.org/en-US/docs/Web/A
 - returns: <[string]>
 
 Returns the value for the matching `<input>` or `<textarea>` or `<select>` element.
+
+:::caution Asserting value
+If you need to assert input value, prefer [`method: LocatorAssertions.toHaveValue`] to avoid flakiness. See [assertions guide](../test-assertions.md) for more details.
+:::
 
 **Usage**
 
@@ -1277,6 +1301,10 @@ Throws elements that are not an input, textarea or a select. However, if the ele
 
 Returns whether the element is checked. Throws if the element is not a checkbox or radio input.
 
+:::caution Asserting checked state
+If you need to assert that checkobx is checked, prefer [`method: LocatorAssertions.toBeChecked`] to avoid flakiness. See [assertions guide](../test-assertions.md) for more details.
+:::
+
 **Usage**
 
 ```js
@@ -1310,6 +1338,10 @@ var isChecked = await page.GetByRole(AriaRole.Checkbox).IsCheckedAsync();
 - returns: <[boolean]>
 
 Returns whether the element is disabled, the opposite of [enabled](../actionability.md#enabled).
+
+:::caution Asserting disabled state
+If you need to assert that an element is disabled, prefer [`method: LocatorAssertions.toBeDisabled`] to avoid flakiness. See [assertions guide](../test-assertions.md) for more details.
+:::
 
 **Usage**
 
@@ -1345,6 +1377,10 @@ Boolean disabled = await page.GetByRole(AriaRole.Button).IsDisabledAsync();
 
 Returns whether the element is [editable](../actionability.md#editable).
 
+:::caution Asserting editable state
+If you need to assert that an element is editable, prefer [`method: LocatorAssertions.toBeEditable`] to avoid flakiness. See [assertions guide](../test-assertions.md) for more details.
+:::
+
 **Usage**
 
 ```js
@@ -1378,6 +1414,10 @@ Boolean editable = await page.GetByRole(AriaRole.Textbox).IsEditableAsync();
 - returns: <[boolean]>
 
 Returns whether the element is [enabled](../actionability.md#enabled).
+
+:::caution Asserting enabled state
+If you need to assert that an element is enabled, prefer [`method: LocatorAssertions.toBeEnabled`] to avoid flakiness. See [assertions guide](../test-assertions.md) for more details.
+:::
 
 **Usage**
 
@@ -1413,6 +1453,10 @@ Boolean enabled = await page.GetByRole(AriaRole.Button).IsEnabledAsync();
 
 Returns whether the element is hidden, the opposite of [visible](../actionability.md#visible).
 
+:::caution Asserting visibility
+If you need to assert that element is hidden, prefer [`method: LocatorAssertions.toBeHidden`] to avoid flakiness. See [assertions guide](../test-assertions.md) for more details.
+:::
+
 **Usage**
 
 ```js
@@ -1445,6 +1489,10 @@ Boolean hidden = await page.GetByRole(AriaRole.Button).IsHiddenAsync();
 - returns: <[boolean]>
 
 Returns whether the element is [visible](../actionability.md#visible).
+
+:::caution Asserting visibility
+If you need to assert that element is visible, prefer [`method: LocatorAssertions.toBeVisible`] to avoid flakiness. See [assertions guide](../test-assertions.md) for more details.
+:::
 
 **Usage**
 
@@ -2222,6 +2270,10 @@ When all steps combined have not finished during the specified [`option: timeout
 - returns: <[null]|[string]>
 
 Returns the [`node.textContent`](https://developer.mozilla.org/en-US/docs/Web/API/Node/textContent).
+
+:::caution Asserting text
+If you need to assert text on the page, prefer [`method: LocatorAssertions.toHaveText`] to avoid flakiness. See [assertions guide](../test-assertions.md) for more details.
+:::
 
 ### option: Locator.textContent.timeout = %%-input-timeout-%%
 * since: v1.14

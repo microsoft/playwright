@@ -10575,6 +10575,10 @@ export interface Locator {
   /**
    * Returns an array of `node.innerText` values for all matching nodes.
    *
+   * **NOTE** If you need to assert text on the page, prefer
+   * [locatorAssertions.toHaveText(expected[, options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-have-text)
+   * with `useInnerText` option to avoid flakiness. See [assertions guide](https://playwright.dev/docs/test-assertions) for more details.
+   *
    * **Usage**
    *
    * ```js
@@ -10586,6 +10590,10 @@ export interface Locator {
 
   /**
    * Returns an array of `node.textContent` values for all matching nodes.
+   *
+   * **NOTE** If you need to assert text on the page, prefer
+   * [locatorAssertions.toHaveText(expected[, options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-have-text)
+   * to avoid flakiness. See [assertions guide](https://playwright.dev/docs/test-assertions) for more details.
    *
    * **Usage**
    *
@@ -10888,6 +10896,10 @@ export interface Locator {
 
   /**
    * Returns the number of elements matching the locator.
+   *
+   * **NOTE** If you need to assert the number of elements on the page, prefer
+   * [locatorAssertions.toHaveCount(count[, options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-have-count)
+   * to avoid flakiness. See [assertions guide](https://playwright.dev/docs/test-assertions) for more details.
    *
    * **Usage**
    *
@@ -11235,6 +11247,10 @@ export interface Locator {
 
   /**
    * Returns the matching element's attribute value.
+   *
+   * **NOTE** If you need to assert an element's attribute, prefer
+   * [locatorAssertions.toHaveAttribute(name, value[, options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-have-attribute)
+   * to avoid flakiness. See [assertions guide](https://playwright.dev/docs/test-assertions) for more details.
    * @param name Attribute name to get the value for.
    * @param options
    */
@@ -11650,6 +11666,10 @@ export interface Locator {
 
   /**
    * Returns the [`element.innerText`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/innerText).
+   *
+   * **NOTE** If you need to assert text on the page, prefer
+   * [locatorAssertions.toHaveText(expected[, options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-have-text)
+   * with `useInnerText` option to avoid flakiness. See [assertions guide](https://playwright.dev/docs/test-assertions) for more details.
    * @param options
    */
   innerText(options?: {
@@ -11664,6 +11684,10 @@ export interface Locator {
 
   /**
    * Returns the value for the matching `<input>` or `<textarea>` or `<select>` element.
+   *
+   * **NOTE** If you need to assert input value, prefer
+   * [locatorAssertions.toHaveValue(value[, options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-have-value)
+   * to avoid flakiness. See [assertions guide](https://playwright.dev/docs/test-assertions) for more details.
    *
    * **Usage**
    *
@@ -11692,6 +11716,10 @@ export interface Locator {
   /**
    * Returns whether the element is checked. Throws if the element is not a checkbox or radio input.
    *
+   * **NOTE** If you need to assert that checkobx is checked, prefer
+   * [locatorAssertions.toBeChecked([options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-be-checked)
+   * to avoid flakiness. See [assertions guide](https://playwright.dev/docs/test-assertions) for more details.
+   *
    * **Usage**
    *
    * ```js
@@ -11712,6 +11740,10 @@ export interface Locator {
 
   /**
    * Returns whether the element is disabled, the opposite of [enabled](https://playwright.dev/docs/actionability#enabled).
+   *
+   * **NOTE** If you need to assert that an element is disabled, prefer
+   * [locatorAssertions.toBeDisabled([options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-be-disabled)
+   * to avoid flakiness. See [assertions guide](https://playwright.dev/docs/test-assertions) for more details.
    *
    * **Usage**
    *
@@ -11734,6 +11766,10 @@ export interface Locator {
   /**
    * Returns whether the element is [editable](https://playwright.dev/docs/actionability#editable).
    *
+   * **NOTE** If you need to assert that an element is editable, prefer
+   * [locatorAssertions.toBeEditable([options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-be-editable)
+   * to avoid flakiness. See [assertions guide](https://playwright.dev/docs/test-assertions) for more details.
+   *
    * **Usage**
    *
    * ```js
@@ -11754,6 +11790,10 @@ export interface Locator {
 
   /**
    * Returns whether the element is [enabled](https://playwright.dev/docs/actionability#enabled).
+   *
+   * **NOTE** If you need to assert that an element is enabled, prefer
+   * [locatorAssertions.toBeEnabled([options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-be-enabled)
+   * to avoid flakiness. See [assertions guide](https://playwright.dev/docs/test-assertions) for more details.
    *
    * **Usage**
    *
@@ -11776,6 +11816,10 @@ export interface Locator {
   /**
    * Returns whether the element is hidden, the opposite of [visible](https://playwright.dev/docs/actionability#visible).
    *
+   * **NOTE** If you need to assert that element is hidden, prefer
+   * [locatorAssertions.toBeHidden([options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-be-hidden)
+   * to avoid flakiness. See [assertions guide](https://playwright.dev/docs/test-assertions) for more details.
+   *
    * **Usage**
    *
    * ```js
@@ -11795,6 +11839,10 @@ export interface Locator {
 
   /**
    * Returns whether the element is [visible](https://playwright.dev/docs/actionability#visible).
+   *
+   * **NOTE** If you need to assert that element is visible, prefer
+   * [locatorAssertions.toBeVisible([options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-be-visible)
+   * to avoid flakiness. See [assertions guide](https://playwright.dev/docs/test-assertions) for more details.
    *
    * **Usage**
    *
@@ -12395,6 +12443,10 @@ export interface Locator {
 
   /**
    * Returns the [`node.textContent`](https://developer.mozilla.org/en-US/docs/Web/API/Node/textContent).
+   *
+   * **NOTE** If you need to assert text on the page, prefer
+   * [locatorAssertions.toHaveText(expected[, options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-have-text)
+   * to avoid flakiness. See [assertions guide](https://playwright.dev/docs/test-assertions) for more details.
    * @param options
    */
   textContent(options?: {
