@@ -19,7 +19,7 @@ import type { Server } from 'http';
 import type http from 'http';
 import https from 'https';
 import path from 'path';
-import { spawnAsync } from './spawnAsync';
+import { spawnAsync } from '../../packages/playwright-core/lib/utils/spawnAsync';
 import { createHttpServer } from '../../packages/playwright-core/lib/utils/network';
 
 const kPublicNpmRegistry = 'https://registry.npmjs.org';

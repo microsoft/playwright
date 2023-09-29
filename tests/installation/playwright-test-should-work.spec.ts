@@ -18,7 +18,7 @@ import path from 'path';
 
 test('npm: @playwright/test should work', async ({ exec, tmpWorkspace }) => {
   await exec('npm i --foreground-scripts @playwright/test');
-  await exec('npx playwright test -c .', { expectToExitWithError: true, message: 'should not be able to run tests without installing browsers' });
+  await exec('npx playwright test -c . sample.spec.js', { expectToExitWithError: true, message: 'should not be able to run tests without installing browsers' });
 
   await exec('npx playwright install');
   await exec('npx playwright test -c . --browser=all --reporter=list,json sample.spec.js', { env: {  PLAYWRIGHT_JSON_OUTPUT_NAME: 'report.json' } });

@@ -20,10 +20,11 @@ import os from 'os';
 import path from 'path';
 import debugLogger from 'debug';
 import { Registry }  from './registry';
-import { spawnAsync } from './spawnAsync';
 import type { CommonFixtures, CommonWorkerFixtures } from '../config/commonFixtures';
 import { commonFixtures } from '../config/commonFixtures';
 import { removeFolders } from '../../packages/playwright-core/lib/utils/fileUtils';
+import { spawnAsync } from '../../packages/playwright-core/lib/utils/spawnAsync';
+import type { SpawnOptions } from 'child_process';
 
 export const TMP_WORKSPACES = path.join(os.platform() === 'darwin' ? '/tmp' : os.tmpdir(), 'pwt', 'workspaces');
 
@@ -56,7 +57,7 @@ const expect = _expect.extend({
   }
 });
 
-type ExecOptions = { cwd?: string, env?: Record<string, string>, message?: string, expectToExitWithError?: boolean };
+type ExecOptions = SpawnOptions & { message?: string, expectToExitWithError?: boolean };
 type ArgsOrOptions = [] | [...string[]] | [...string[], ExecOptions] | [ExecOptions];
 
 type NPMTestOptions = {
@@ -71,7 +72,7 @@ type NPMTestFixtures = {
   writeConfig: (allowGlobal: boolean) => Promise<void>;
   writeFiles: (nameToContents: Record<string, string>) => Promise<void>;
   exec: (cmd: string, ...argsAndOrOptions: ArgsOrOptions) => Promise<string>;
-  tsc: (...argsAndOrOptions: ArgsOrOptions) => Promise<string>;
+  tsc: (args: string) => Promise<string>;
   registry: Registry;
 };
 
@@ -153,7 +154,7 @@ export const test = _test
 
           args = argsAndOrOptions as string[];
 
-          let result!: Awaited<ReturnType<typeof spawnAsync>>;
+          let result!: {stdout: string, stderr: string, code: number | null, error?: Error};
           await test.step(`exec: ${[cmd, ...args].join(' ')}`, async () => {
             result = await spawnAsync(cmd, args, {
               shell: true,
@@ -197,8 +198,8 @@ export const test = _test
         });
       },
       tsc: async ({ exec }, use) => {
-        await exec('npm i --foreground-scripts typescript@3.8 @types/node@14');
-        await use((...args: ArgsOrOptions) => exec('npx', '-p', 'typescript@4.1.6', 'tsc', ...args));
+        await exec('npm i --foreground-scripts typescript@5.2.2 @types/node@16');
+        await use((args: string) => exec('npx', 'tsc', args, { shell: process.platform === 'win32' }));
       },
     });
 
