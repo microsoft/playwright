@@ -103,7 +103,7 @@ it('should scroll into view element in iframe', async ({ page, isAndroid, server
   it.fixme(isAndroid);
   it.fixme(browserName === 'chromium', 'rAFs are paused in cross-origin iframes outside viewport');
   await page.goto(server.EMPTY_PAGE);
-  await page.setContent( `
+  await page.setContent(`
     <div id=big style="height: 10000px;"></div>
     <iframe src='${server.CROSS_PROCESS_PREFIX}/input/button.html'></iframe>
   `);
