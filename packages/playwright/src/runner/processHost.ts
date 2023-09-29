@@ -20,6 +20,7 @@ import { debug } from 'playwright-core/lib/utilsBundle';
 import type { EnvProducedPayload, ProcessInitParams } from '../common/ipc';
 import type { ProtocolResponse } from '../common/process';
 import { execArgvWithExperimentalLoaderOptions } from '../util';
+import { assert } from 'playwright-core/lib/utils';
 
 export type ProcessExitData = {
   unexpectedly: boolean;
@@ -30,7 +31,8 @@ export type ProcessExitData = {
 export class ProcessHost extends EventEmitter {
   private process: child_process.ChildProcess | undefined;
   private _didSendStop = false;
-  private didExit = false;
+  private _processDidExit = false;
+  private _didExitAndRanOnExit = false;
   private _runnerScript: string;
   private _lastMessageId = 0;
   private _callbacks = new Map<number, { resolve: (result: any) => void, reject: (error: Error) => void }>();
@@ -46,6 +48,7 @@ export class ProcessHost extends EventEmitter {
   }
 
   async startRunner(runnerParams: any, options: { onStdOut?: (chunk: Buffer | string) => void, onStdErr?: (chunk: Buffer | string) => void } = {}): Promise<ProcessExitData | undefined> {
+    assert(!this.process, 'Internal error: starting the same process twice');
     this.process = child_process.fork(require.resolve('../common/process'), {
       detached: false,
       env: { ...process.env, ...this._extraEnv },
@@ -57,8 +60,10 @@ export class ProcessHost extends EventEmitter {
       ],
       ...(process.env.PW_TS_ESM_ON ? { execArgv: execArgvWithExperimentalLoaderOptions() } : {}),
     });
-    this.process.on('exit', (code, signal) => {
-      this.didExit = true;
+    this.process.on('exit', async (code, signal) => {
+      this._processDidExit = true;
+      await this.onExit();
+      this._didExitAndRanOnExit = true;
       this.emit('exit', { unexpectedly: !this._didSendStop, code, signal } as ProcessExitData);
     });
     this.process.on('error', e => {});  // do not yell at a send to dead process.
@@ -139,14 +144,16 @@ export class ProcessHost extends EventEmitter {
     this.sendMessage(message).catch(() => {});
   }
 
+  protected async onExit() {
+  }
+
   async stop() {
-    if (this.didExit)
-      return;
-    if (!this._didSendStop) {
+    if (!this._processDidExit && !this._didSendStop) {
       this.send({ method: '__stop__' });
       this._didSendStop = true;
     }
-    await new Promise(f => this.once('exit', f));
+    if (!this._didExitAndRanOnExit)
+      await new Promise(f => this.once('exit', f));
   }
 
   didSendStop() {
