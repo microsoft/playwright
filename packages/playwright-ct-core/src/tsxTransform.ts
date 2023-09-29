@@ -15,7 +15,7 @@
  */
 
 import path from 'path';
-import type { T, BabelAPI } from 'playwright/src/transform/babelBundle';
+import type { T, BabelAPI, PluginObj } from 'playwright/src/transform/babelBundle';
 import { types, declare, traverse } from 'playwright/lib/transform/babelBundle';
 import { resolveImportSpecifierExtension } from 'playwright/lib/util';
 const t: typeof T = types;
@@ -27,7 +27,7 @@ let componentIdentifiers: Set<T.Identifier>;
 export default declare((api: BabelAPI) => {
   api.assertVersion(7);
 
-  const result: babel.PluginObj = {
+  const result: PluginObj = {
     name: 'playwright-debug-transform',
     visitor: {
       Program(path) {
