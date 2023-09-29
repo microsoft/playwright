@@ -237,14 +237,24 @@ test('should respect tracesDir and name', async ({ browserType, server, mode }, 
 });
 
 test('should not include trace resources from the previous chunks', async ({ context, page, server, browserName, mode }, testInfo) => {
-  test.skip(browserName !== 'chromium', 'The number of screenshots is flaky in non-Chromium');
-  test.skip(mode.startsWith('service'), 'The number of screenshots is flaky');
   await context.tracing.start({ screenshots: true, snapshots: true, sources: true });
 
   await context.tracing.startChunk();
   await page.goto(server.EMPTY_PAGE);
-  await page.setContent('<button>Click</button>');
-  await page.click('"Click"');
+  await page.setContent(`
+    <style>
+      @keyframes move {
+        from { marign-left: 0; }
+        to   { margin-left: 1000px; }
+      }
+      button {
+        animation: 20s linear move;
+        animation-iteration-count: infinite;
+      }
+    </style>
+    <button>Click</button>
+  `);
+  await page.click('"Click"', { force: true });
   // Give it enough time for both screenshots to get into the trace.
   await new Promise(f => setTimeout(f, 3000));
   await context.tracing.stopChunk({ path: testInfo.outputPath('trace1.zip') });
@@ -252,11 +262,13 @@ test('should not include trace resources from the previous chunks', async ({ con
   await context.tracing.startChunk();
   await context.tracing.stopChunk({ path: testInfo.outputPath('trace2.zip') });
 
+  let jpegs: string[] = [];
   {
     const { resources } = await parseTraceRaw(testInfo.outputPath('trace1.zip'));
     const names = Array.from(resources.keys());
     expect(names.filter(n => n.endsWith('.html')).length).toBe(1);
-    expect(names.filter(n => n.endsWith('.jpeg')).length).toBeGreaterThan(0);
+    jpegs = names.filter(n => n.endsWith('.jpeg'));
+    expect(jpegs.length).toBeGreaterThan(0);
     // 1 source file for the test.
     expect(names.filter(n => n.endsWith('.txt')).length).toBe(1);
   }
@@ -266,8 +278,9 @@ test('should not include trace resources from the previous chunks', async ({ con
     const names = Array.from(resources.keys());
     // 1 network resource should be preserved.
     expect(names.filter(n => n.endsWith('.html')).length).toBe(1);
-    expect(names.filter(n => n.endsWith('.jpeg')).length).toBe(0);
-    // 0 source file for the second test.
+    // screenshots from the previous chunk should not be preserved.
+    expect(names.filter(n => jpegs.includes(n)).length).toBe(0);
+    // 0 source files for the second test.
     expect(names.filter(n => n.endsWith('.txt')).length).toBe(0);
   }
 });

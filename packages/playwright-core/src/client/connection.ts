@@ -113,7 +113,7 @@ export class Connection extends EventEmitter {
       this._tracingCount--;
   }
 
-  async sendMessageToServer(object: ChannelOwner, type: string, method: string, params: any, stackTrace: ParsedStackTrace | null, wallTime: number | undefined): Promise<any> {
+  async sendMessageToServer(object: ChannelOwner, method: string, params: any, stackTrace: ParsedStackTrace | null, wallTime: number | undefined): Promise<any> {
     if (this._closedErrorMessage)
       throw new Error(this._closedErrorMessage);
     if (object._wasCollected)
@@ -121,15 +121,16 @@ export class Connection extends EventEmitter {
 
     const { apiName, frames } = stackTrace || { apiName: '', frames: [] };
     const guid = object._guid;
+    const type = object._type;
     const id = ++this._lastId;
     const converted = { id, guid, method, params };
     // Do not include metadata in debug logs to avoid noise.
     debugLogger.log('channel:command', converted);
     const location = frames[0] ? { file: frames[0].file, line: frames[0].line, column: frames[0].column } : undefined;
     const metadata: channels.Metadata = { wallTime, apiName, location, internal: !apiName };
-    this.onmessage({ ...converted, metadata });
     if (this._tracingCount && frames && type !== 'LocalUtils')
       this._localUtils?._channel.addStackToTracingNoReply({ callData: { stack: frames, id } }).catch(() => {});
+    this.onmessage({ ...converted, metadata });
     return await new Promise((resolve, reject) => this._callbacks.set(id, { resolve, reject, stackTrace, type, method }));
   }
 
