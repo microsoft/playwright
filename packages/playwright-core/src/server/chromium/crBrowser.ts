@@ -28,7 +28,7 @@ import type { Dialog } from '../dialog';
 import type { ConnectionTransport } from '../transport';
 import type * as types from '../types';
 import type * as channels from '@protocol/channels';
-import type { CRSession } from './crConnection';
+import type { CRSession, CDPSession } from './crConnection';
 import { ConnectionEvents, CRConnection } from './crConnection';
 import { CRPage } from './crPage';
 import { saveProtocolStream } from './crProtocolHelper';
@@ -41,7 +41,7 @@ import { Artifact } from '../artifact';
 export class CRBrowser extends Browser {
   readonly _connection: CRConnection;
   _session: CRSession;
-  private _clientRootSessionPromise: Promise<CRSession> | null = null;
+  private _clientRootSessionPromise: Promise<CDPSession> | null = null;
   readonly _contexts = new Map<string, CRBrowserContext>();
   _crPages = new Map<string, CRPage>();
   _backgroundPages = new Map<string, CRPage>();
@@ -166,12 +166,7 @@ export class CRBrowser extends Browser {
     const treatOtherAsPage = targetInfo.type === 'other' && process.env.PW_CHROMIUM_ATTACH_TO_OTHER;
 
     if (!context || (targetInfo.type === 'other' && !treatOtherAsPage)) {
-      if (waitingForDebugger) {
-        // Ideally, detaching should resume any target, but there is a bug in the backend.
-        session._sendMayFail('Runtime.runIfWaitingForDebugger').then(() => {
-          this._session._sendMayFail('Target.detachFromTarget', { sessionId });
-        });
-      }
+      session.detach().catch(() => {});
       return;
     }
 
@@ -204,15 +199,10 @@ export class CRBrowser extends Browser {
     // One example of a side effect: upon shared worker restart, we receive
     // Inspector.targetReloadedAfterCrash and backend waits for Runtime.runIfWaitingForDebugger
     // from any attached client. If we do not resume, shared worker will stall.
-    //
-    // Ideally, detaching should resume any target, but there is a bug in the backend,
-    // so we must Runtime.runIfWaitingForDebugger first.
-    session._sendMayFail('Runtime.runIfWaitingForDebugger').then(() => {
-      this._session._sendMayFail('Target.detachFromTarget', { sessionId });
-    });
+    session.detach().catch(() => {});
   }
 
-  _onDetachedFromTarget(payload: Protocol.Target.detachFromTargetParameters) {
+  _onDetachedFromTarget(payload: Protocol.Target.detachedFromTargetPayload) {
     const targetId = payload.targetId!;
     const crPage = this._crPages.get(targetId);
     if (crPage) {
@@ -286,7 +276,7 @@ export class CRBrowser extends Browser {
     await this._session.send('Target.closeTarget', { targetId: crPage._targetId });
   }
 
-  async newBrowserCDPSession(): Promise<CRSession> {
+  async newBrowserCDPSession(): Promise<CDPSession> {
     return await this._connection.createBrowserSession();
   }
 
@@ -333,7 +323,7 @@ export class CRBrowser extends Browser {
     return !this._connection._closed;
   }
 
-  async _clientRootSession(): Promise<CRSession> {
+  async _clientRootSession(): Promise<CDPSession> {
     if (!this._clientRootSessionPromise)
       this._clientRootSessionPromise = this._connection.createBrowserSession();
     return this._clientRootSessionPromise;
@@ -592,7 +582,7 @@ export class CRBrowserContext extends BrowserContext {
     return Array.from(this._browser._serviceWorkers.values()).filter(serviceWorker => serviceWorker._browserContext === this);
   }
 
-  async newCDPSession(page: Page | Frame): Promise<CRSession> {
+  async newCDPSession(page: Page | Frame): Promise<CDPSession> {
     let targetId: string | null = null;
     if (page instanceof Page) {
       targetId = (page._delegate as CRPage)._targetId;
@@ -605,7 +595,6 @@ export class CRBrowserContext extends BrowserContext {
     }
 
     const rootSession = await this._browser._clientRootSession();
-    const { sessionId } = await rootSession.send('Target.attachToTarget', { targetId, flatten: true });
-    return rootSession.createChildSession(sessionId);
+    return rootSession.attachToTarget(targetId);
   }
 }

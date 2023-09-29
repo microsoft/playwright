@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { assert } from '../../utils';
+import { type RegisteredListener, assert, eventsHelper } from '../../utils';
 import type { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../transport';
 import type { Protocol } from './protocol';
 import { EventEmitter } from 'events';
@@ -90,19 +90,17 @@ export class CRConnection extends EventEmitter {
       this._transport.close();
   }
 
-  async createBrowserSession(): Promise<CRSession> {
+  async createBrowserSession(): Promise<CDPSession> {
     const { sessionId } = await this.rootSession.send('Target.attachToBrowserTarget');
-    return this.rootSession.createChildSession(sessionId);
+    return new CDPSession(this.rootSession, sessionId);
   }
 }
 
-export const CRSessionEvents = {
-  Disconnected: Symbol('Events.CDPSession.Disconnected')
-};
+type SessionEventListener = (method: string, params?: Object) => void;
 
 export class CRSession extends EventEmitter {
   private readonly _connection: CRConnection;
-  _eventListener?: (method: string, params?: Object) => void;
+  private _eventListener?: SessionEventListener;
   private readonly _callbacks = new Map<number, {resolve: (o: any) => void, reject: (e: ProtocolError) => void, error: ProtocolError, method: string}>();
   private readonly _sessionId: string;
   private readonly _parentSession: CRSession | null;
@@ -113,15 +111,14 @@ export class CRSession extends EventEmitter {
   override off: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
   override removeListener: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
   override once: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
-  readonly guid: string;
 
-  constructor(connection: CRConnection, parentSession: CRSession | null, sessionId: string) {
+  constructor(connection: CRConnection, parentSession: CRSession | null, sessionId: string, eventListener?: SessionEventListener) {
     super();
-    this.guid = `cdp-session@${sessionId}`;
     this.setMaxListeners(0);
     this._connection = connection;
     this._parentSession = parentSession;
     this._sessionId = sessionId;
+    this._eventListener = eventListener;
 
     this.on = super.on;
     this.addListener = super.addListener;
@@ -134,8 +131,8 @@ export class CRSession extends EventEmitter {
     this._crashed = true;
   }
 
-  createChildSession(sessionId: string): CRSession {
-    const session = new CRSession(this._connection, this, sessionId);
+  createChildSession(sessionId: string, eventListener?: SessionEventListener): CRSession {
+    const session = new CRSession(this._connection, this, sessionId, eventListener);
     this._connection._sessions.set(sessionId, session);
     return session;
   }
@@ -147,6 +144,8 @@ export class CRSession extends EventEmitter {
       return `Browser closed.` + this._connection._browserDisconnectedLogs;
     if (this._closed)
       return `Target closed`;
+    if (this._connection._closed)
+      return 'Browser closed';
   }
 
   async send<T extends keyof Protocol.CommandParameters>(
@@ -191,6 +190,9 @@ export class CRSession extends EventEmitter {
       throw new Error(`Session already detached. Most likely the page has been closed.`);
     if (!this._parentSession)
       throw new Error('Root session cannot be closed');
+    // Ideally, detaching should resume any target, but there is a bug in the backend,
+    // so we must Runtime.runIfWaitingForDebugger first.
+    await this._sendMayFail('Runtime.runIfWaitingForDebugger');
     await this._parentSession.send('Target.detachFromTarget', { sessionId: this._sessionId });
     this.dispose();
   }
@@ -204,7 +206,46 @@ export class CRSession extends EventEmitter {
       callback.reject(rewriteErrorMessage(callback.error, errorMessage));
     }
     this._callbacks.clear();
-    Promise.resolve().then(() => this.emit(CRSessionEvents.Disconnected));
+  }
+}
+
+export class CDPSession extends EventEmitter {
+  static Events = {
+    Event: 'event',
+    Closed: 'close',
+  };
+
+  readonly guid: string;
+  private _session: CRSession;
+  private _listeners: RegisteredListener[] = [];
+
+  constructor(parentSession: CRSession, sessionId: string) {
+    super();
+    this.guid = `cdp-session@${sessionId}`;
+    this._session = parentSession.createChildSession(sessionId, (method, params) => this.emit(CDPSession.Events.Event, { method, params }));
+    this._listeners = [eventsHelper.addEventListener(parentSession, 'Target.detachedFromTarget', (event: Protocol.Target.detachedFromTargetPayload) => {
+      if (event.sessionId === sessionId)
+        this._onClose();
+    })];
+  }
+
+  async send(method: string, params?: any) {
+    return await this._session.send(method as any, params);
+  }
+
+  async detach() {
+    return await this._session.detach();
+  }
+
+  async attachToTarget(targetId: string) {
+    const { sessionId } = await this.send('Target.attachToTarget', { targetId, flatten: true });
+    return new CDPSession(this._session, sessionId);
+  }
+
+  private _onClose() {
+    eventsHelper.removeEventListeners(this._listeners);
+    this._session.dispose();
+    this.emit(CDPSession.Events.Closed);
   }
 }
 

@@ -733,10 +733,7 @@ class FrameSession {
     }
 
     if (event.targetInfo.type !== 'worker') {
-      // Ideally, detaching should resume any target, but there is a bug in the backend.
-      session._sendMayFail('Runtime.runIfWaitingForDebugger').then(() => {
-        this._client._sendMayFail('Target.detachFromTarget', { sessionId: event.sessionId });
-      });
+      session.detach().catch(() => {});
       return;
     }
 
