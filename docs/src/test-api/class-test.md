@@ -1374,7 +1374,50 @@ Step name.
 
 Step body.
 
+### option: Test.step.box
+* since: v1.39
+- `box` <boolean>
 
+Whether to box the step in the report. Defaults to `false`. When the step is boxed, errors thrown from the step internals point to the step call site.
+
+```js
+const assertGoodPage = async page => {
+  await test.step('assertGoodPage', async () => {
+    await expect(page.getByText('does-not-exist')).toBeVisible();
+  }, { box: true });
+};
+
+test('box', async ({ page }) => {
+  await assertGoodPage(page);  // <-- Errors will be reported on this line.
+});
+```
+
+You can also use TypeScript method decorators to annotate method as a boxed step:
+
+```js
+function boxedStep(target: Function, context: ClassMethodDecoratorContext) {
+  return function replacementMethod(...args: any) {
+    const name = this.constructor.name + '.' + (context.name as string);
+    return test.step(name, async () => {
+      return await target.call(this, ...args);
+    }, { box: true });
+  };
+}
+
+class Pom {
+  constructor(readonly page: Page) {}
+
+  @boxedStep
+  async assertGoodPage() {
+    await expect(this.page.getByText('does-not-exist')).toBeVisible({ timeout: 1 });
+  }
+}
+
+test('box', async ({ page }) => {
+  const pom = new Pom(page);
+  await pom.assertGoodPage();  // <-- Error will be reported on this line.
+});
+```
 
 ## method: Test.use
 * since: v1.10
