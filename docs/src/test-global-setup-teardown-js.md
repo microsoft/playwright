@@ -160,8 +160,8 @@ Then we add the [`property: TestProject.teardown`] property to our setup project
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
-    testDir: './tests',
-    // ...
+  testDir: './tests',
+  // ...
   projects: [
     {
       name: 'setup db',
