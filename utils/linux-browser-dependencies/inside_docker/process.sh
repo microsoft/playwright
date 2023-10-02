@@ -2,14 +2,18 @@
 set -e
 set +x
 
-# Install Node.js
+export DEBIAN_FRONTEND=noninteractive
+export TZ=America/Los_Angeles
 
-apt-get update && apt-get install -y curl && \
+# Install Node.js
+apt-get update && \
+    apt-get install -y --no-install-recommends ca-certificates && \
+    apt-get install -y --no-install-recommends curl && \
     curl -sL https://deb.nodesource.com/setup_18.x | bash - && \
-    apt-get install -y nodejs
+    apt-get install -y --no-install-recommends nodejs
 
 # Install apt-file
-apt-get update && apt-get install -y apt-file && apt-file update
+apt-get update && apt-get install -y --no-install-recommends apt-file && apt-file update
 
 # Install tip-of-tree playwright-core and browsers
 mkdir /root/tmp && cd /root/tmp && npm init -y && npm i /root/hostfolder/playwright-core.tar.gz && npx playwright-core install
