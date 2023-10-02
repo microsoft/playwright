@@ -361,6 +361,26 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
   async _performPointerAction(progress: Progress, actionName: ActionName, waitForEnabled: boolean, action: (point: types.Point) => Promise<void>, forceScrollOptions: ScrollIntoViewOptions | undefined, options: types.PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notvisible' | 'error:notconnected' | 'error:notinviewport' | { hitTargetDescription: string } | 'done'> {
     const { force = false, position } = options;
+
+    const doScrollIntoView = async () => {
+      if (forceScrollOptions) {
+        return await this.evaluateInUtility(([injected, node, options]) => {
+          if (node.nodeType === 1 /* Node.ELEMENT_NODE */)
+            (node as Node as Element).scrollIntoView(options);
+          return 'done' as const;
+        }, forceScrollOptions);
+      }
+      return await this._scrollRectIntoViewIfNeeded(position ? { x: position.x, y: position.y, width: 0, height: 0 } : undefined);
+    };
+
+    if (this._frame.parentFrame()) {
+      // Best-effort scroll to make sure any iframes containing this element are scrolled
+      // into view and visible, so they are not throttled.
+      // See https://github.com/microsoft/playwright/issues/27196 for an example.
+      progress.throwIfAborted();  // Avoid action that has side-effects.
+      await doScrollIntoView().catch(() => {});
+    }
+
     if ((options as any).__testHookBeforeStable)
       await (options as any).__testHookBeforeStable();
     const result = await this._waitForElementStates(progress, waitForEnabled ? ['visible', 'enabled', 'stable'] : ['visible', 'stable'], force);
@@ -371,18 +391,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
     progress.log('  scrolling into view if needed');
     progress.throwIfAborted();  // Avoid action that has side-effects.
-    if (forceScrollOptions) {
-      const scrolled = await this.evaluateInUtility(([injected, node, options]) => {
-        if (node.nodeType === 1 /* Node.ELEMENT_NODE */)
-          (node as Node as Element).scrollIntoView(options);
-      }, forceScrollOptions);
-      if (scrolled === 'error:notconnected')
-        return scrolled;
-    } else {
-      const scrolled = await this._scrollRectIntoViewIfNeeded(position ? { x: position.x, y: position.y, width: 0, height: 0 } : undefined);
-      if (scrolled !== 'done')
-        return scrolled;
-    }
+    const scrolled = await doScrollIntoView();
+    if (scrolled !== 'done')
+      return scrolled;
     progress.log('  done scrolling');
 
     const maybePoint = position ? await this._offsetPoint(position) : await this._clickablePoint();
