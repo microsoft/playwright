@@ -72,6 +72,10 @@ export const hostPlatform = ((): HostPlatform => {
       return ('debian11' + archSuffix) as HostPlatform;
     if (distroInfo?.id === 'debian' && distroInfo?.version === '12')
       return ('debian12' + archSuffix) as HostPlatform;
+    // use most recent supported release for 'debian testing' and 'unstable'.
+    // they never include a numeric version entry in /etc/os-release.
+    if (distroInfo?.id === 'debian' && distroInfo?.version === '')
+      return ('debian12' + archSuffix) as HostPlatform;
     return ('generic-linux' + archSuffix) as HostPlatform;
   }
   if (platform === 'win32')
