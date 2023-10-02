@@ -234,7 +234,7 @@ jobs:
       env:
         DEBUG: pw:install
     - run: npm run build
-    - run: npx playwright install-deps
+    - run: npx playwright install --with-deps
     - run: npm install -g yarn@1
     - run: npm install -g pnpm@8
     - run: npm run itest

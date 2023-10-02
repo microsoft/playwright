@@ -16,8 +16,6 @@
 import { test } from './npmTest';
 
 test('screencast works', async ({ exec }) => {
-  await exec('npm i --foreground-scripts', 'playwright', 'playwright-chromium', 'playwright-firefox', 'playwright-webkit');
-  await test.step('playwright', () => exec('node screencast.js playwright chromium firefox webkit'));
-  for (const browser of ['chromium', 'firefox', 'webkit'])
-    await test.step(browser, () => exec(`node screencast.js playwright-${browser} ${browser}`));
+  await exec('npm i playwright');
+  await exec('node screencast.js playwright chromium firefox webkit');
 });
