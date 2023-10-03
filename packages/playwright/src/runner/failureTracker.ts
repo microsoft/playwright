@@ -19,6 +19,7 @@ import type { FullConfigInternal } from '../common/config';
 import type { Suite, TestCase } from '../common/test';
 
 export class FailureTracker {
+  private _totalTestCount = 0;
   private _failureCount = 0;
   private _hasWorkerErrors = false;
   private _rootSuite: Suite | undefined;
@@ -28,6 +29,7 @@ export class FailureTracker {
 
   onRootSuite(rootSuite: Suite) {
     this._rootSuite = rootSuite;
+    this._totalTestCount = this._rootSuite.allTests().length;
   }
 
   onTestEnd(test: TestCase, result: TestResult) {
@@ -40,7 +42,9 @@ export class FailureTracker {
   }
 
   hasReachedMaxFailures() {
-    const maxFailures = this._config.config.maxFailures;
+    let maxFailures = this._config.config.maxFailures;
+    maxFailures = Number.isInteger(maxFailures) ? maxFailures : Math.ceil(maxFailures * this._totalTestCount);
+
     return maxFailures > 0 && this._failureCount >= maxFailures;
   }
 

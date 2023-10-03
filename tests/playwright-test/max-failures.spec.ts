@@ -42,6 +42,30 @@ test('max-failures should work', async ({ runInlineTest }) => {
   expect(result.report.suites[1].specs.map(spec => spec.tests[0].results.length)).toEqual(new Array(10).fill(1));
 });
 
+test('max-failures should work with dynamic value', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.js': `
+      import { test, expect } from '@playwright/test';
+      for (let i = 0; i < 10; ++i) {
+        test('fail_' + i, () => {
+          expect(true).toBe(false);
+        });
+      }
+    `,
+    'b.spec.js': `
+      import { test, expect } from '@playwright/test';
+      for (let i = 0; i < 10; ++i) {
+        test('fail_' + i, () => {
+          expect(true).toBe(false);
+        });
+      }
+    `
+  }, { 'max-failures': 0.5 });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(10);
+  expect(result.output.split('\n').filter(l => l.includes('expect(')).length).toBe(20);
+});
+
 test('-x should work', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.js': `

@@ -254,11 +254,14 @@ export class BaseReporter implements ReporterV2 {
   }
 
   private _printMaxFailuresReached() {
-    if (!this.config.maxFailures)
+    let maxFailures = this.config.maxFailures;
+    maxFailures = Number.isInteger(maxFailures) ? maxFailures : Math.ceil(maxFailures * this.totalTestCount);
+
+    if (!maxFailures)
       return;
-    if (this._failureCount < this.config.maxFailures)
+    if (this._failureCount < maxFailures)
       return;
-    console.log(colors.yellow(`Testing stopped early after ${this.config.maxFailures} maximum allowed failures.`));
+    console.log(colors.yellow(`Testing stopped early after ${maxFailures} maximum allowed failures.`));
   }
 
   private _printSummary(summary: string) {

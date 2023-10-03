@@ -83,7 +83,7 @@ export class FullConfigInternal {
       globalTimeout: takeFirst(configCLIOverrides.globalTimeout, config.globalTimeout, 0),
       grep: takeFirst(config.grep, defaultGrep),
       grepInvert: takeFirst(config.grepInvert, null),
-      maxFailures: takeFirst(configCLIOverrides.maxFailures, config.maxFailures, 0),
+      maxFailures: handleMaxFailures(takeFirst(configCLIOverrides.maxFailures, config.maxFailures, 0)),
       metadata: takeFirst(config.metadata, {}),
       preserveOutput: takeFirst(config.preserveOutput, 'always'),
       reporter: takeFirst(configCLIOverrides.reporter, resolveReporters(config.reporter, configDir), [[defaultReporter]]),
@@ -204,6 +204,10 @@ function pathResolve(baseDir: string, relative: string | undefined): string | un
   if (!relative)
     return undefined;
   return path.resolve(baseDir, relative);
+}
+
+function handleMaxFailures(maxFailures: number): number {
+  return !Number.isInteger(maxFailures) && maxFailures < 1 ? maxFailures : Math.trunc(maxFailures);
 }
 
 function resolveReporters(reporters: Config['reporter'], rootDir: string): ReporterDescription[] | undefined {
