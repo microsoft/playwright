@@ -5198,6 +5198,15 @@ export function defineConfig(config: PlaywrightTestConfig, ...configs: Playwrigh
 export function defineConfig<T>(config: PlaywrightTestConfig<T>, ...configs: PlaywrightTestConfig[]): PlaywrightTestConfig<T>;
 export function defineConfig<T, W>(config: PlaywrightTestConfig<T, W>, ...configs: PlaywrightTestConfig[]): PlaywrightTestConfig<T, W>;
 
+type MergedT<List> = List extends [TestType<infer T, any>, ...(infer Rest)] ? T & MergedT<Rest> : {};
+type MergedW<List> = List extends [TestType<any, infer W>, ...(infer Rest)] ? W & MergedW<Rest> : {};
+type MergedTestType<List> = TestType<MergedT<List>, MergedW<List>>;
+
+/**
+ * Merges fixtures
+ */
+export function composedTest<List extends any[]>(...tests: List): MergedTestType<List>;
+
 // This is required to not export everything by default. See https://github.com/Microsoft/TypeScript/issues/19545#issuecomment-340490459
 export {};
 
