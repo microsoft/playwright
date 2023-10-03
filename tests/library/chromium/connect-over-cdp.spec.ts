@@ -446,3 +446,25 @@ test('emulate media should not be affected by second connectOverCDP', async ({ b
     await browserServer.close();
   }
 });
+
+test('should allow tracing over cdp session', async ({ browserType, mode }, testInfo) => {
+  const port = 9339 + testInfo.workerIndex;
+  const browserServer = await browserType.launch({
+    args: ['--remote-debugging-port=' + port]
+  });
+  try {
+    const cdpBrowser = await browserType.connectOverCDP({
+      endpointURL: `http://127.0.0.1:${port}/`,
+    });
+    const [context] = cdpBrowser.contexts();
+    await context.tracing.start({ screenshots: true, snapshots: true });
+    const page = await context.newPage();
+    await page.evaluate(() => 2 + 2);
+    const traceZip = testInfo.outputPath('trace.zip');
+    await context.tracing.stop({ path: traceZip });
+    await cdpBrowser.close();
+    expect(fs.existsSync(traceZip)).toBe(true);
+  } finally {
+    await browserServer.close();
+  }
+});
