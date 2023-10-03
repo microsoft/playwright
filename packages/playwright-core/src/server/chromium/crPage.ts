@@ -748,6 +748,9 @@ class FrameSession {
     session._sendMayFail('Runtime.enable');
     session._sendMayFail('Network.enable');
     session._sendMayFail('Runtime.runIfWaitingForDebugger');
+    session._sendMayFail('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true });
+    session.on('Target.attachedToTarget', event => this._onAttachedToTarget(event));
+    session.on('Target.detachedFromTarget', event => this._onDetachedFromTarget(event));
     session.on('Runtime.consoleAPICalled', event => {
       const args = event.args.map(o => worker._existingExecutionContext!.createHandle(o));
       this._page._addConsoleMessage(event.type, args, toConsoleMessageLocation(event.stackTrace));
@@ -763,6 +766,7 @@ class FrameSession {
     if (workerSession) {
       workerSession.dispose();
       this._page._removeWorker(event.sessionId);
+      return;
     }
 
     // ... or an oopif.
