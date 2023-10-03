@@ -35,6 +35,7 @@ const codegenLang2Id: Map<string, string> = new Map([
   ['JSON', 'jsonl'],
   ['JavaScript', 'javascript'],
   ['Java', 'java'],
+  ['Java JUnit', 'java-junit'],
   ['Python', 'python'],
   ['Python Async', 'python-async'],
   ['Pytest', 'python-pytest'],
