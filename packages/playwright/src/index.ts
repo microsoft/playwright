@@ -764,4 +764,7 @@ function renderApiCall(apiName: string, params: any) {
 
 export const test = _baseTest.extend<TestFixtures, WorkerFixtures>(playwrightFixtures);
 
+export { defineConfig } from './common/configLoader';
+export { composedTest } from './common/testType';
+
 export default test;
