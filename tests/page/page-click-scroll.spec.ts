@@ -101,7 +101,6 @@ it('should scroll into view span element', async ({ page, isAndroid }) => {
 it('should scroll into view element in iframe', async ({ page, isAndroid, server, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/27196' });
   it.fixme(isAndroid);
-  it.fixme(browserName === 'chromium', 'rAFs are paused in cross-origin iframes outside viewport');
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`
     <div id=big style="height: 10000px;"></div>
