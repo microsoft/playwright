@@ -101,10 +101,17 @@ The viewport is included in the device but you can override it for some tests wi
 ```js tab=js-test title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 export default defineConfig({
-  use: {
-    // Viewport used for all pages in the context.
-    viewport: { width: 1280, height: 720 },
-  },
+  projects: [
+    {
+      name: 'chromium',
+      use: {
+        ...devices['Desktop Chrome'],
+        // It is important to define the `viewport` property after destructuring `devices`,
+        // since devices also define the `viewport` for that device.
+        viewport: { width: 1280, height: 720 },
+      },
+    },
+  ]
 });
 ```
 
@@ -239,9 +246,17 @@ Whether the meta viewport tag is taken into account and touch events are enabled
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
-  use: {
-    isMobile: false,
-  },
+  projects: [
+    {
+      name: 'chromium',
+      use: {
+        ...devices['Desktop Chrome'],
+        // It is important to define the `isMobile` property after destructuring `devices`,
+        // since devices also define the `isMobile` for that device.
+        isMobile: false,
+      },
+    },
+  ]
 });
 ```
 
