@@ -389,7 +389,26 @@ export type APIResponse = {
 
 export type LifecycleEvent = 'load' | 'domcontentloaded' | 'networkidle' | 'commit';
 // ----------- LocalUtils -----------
-export type LocalUtilsInitializer = {};
+export type LocalUtilsInitializer = {
+  deviceDescriptors: {
+    name: string,
+    descriptor: {
+      userAgent: string,
+      viewport: {
+        width: number,
+        height: number,
+      },
+      screen?: {
+        width: number,
+        height: number,
+      },
+      deviceScaleFactor: number,
+      isMobile: boolean,
+      hasTouch: boolean,
+      defaultBrowserType: 'chromium' | 'firefox' | 'webkit',
+    },
+  }[],
+};
 export interface LocalUtilsEventTarget {
 }
 export interface LocalUtilsChannel extends LocalUtilsEventTarget, Channel {
@@ -534,25 +553,7 @@ export type PlaywrightInitializer = {
   webkit: BrowserTypeChannel,
   android: AndroidChannel,
   electron: ElectronChannel,
-  utils: LocalUtilsChannel,
-  deviceDescriptors: {
-    name: string,
-    descriptor: {
-      userAgent: string,
-      viewport: {
-        width: number,
-        height: number,
-      },
-      screen?: {
-        width: number,
-        height: number,
-      },
-      deviceScaleFactor: number,
-      isMobile: boolean,
-      hasTouch: boolean,
-      defaultBrowserType: 'chromium' | 'firefox' | 'webkit',
-    },
-  }[],
+  utils?: LocalUtilsChannel,
   selectors: SelectorsChannel,
   preLaunchedBrowser?: BrowserChannel,
   preConnectedAndroidDevice?: AndroidDeviceChannel,

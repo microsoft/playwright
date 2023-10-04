@@ -26,7 +26,7 @@ import { Dispatcher } from './dispatcher';
 import { yazl, yauzl } from '../../zipBundle';
 import { ZipFile } from '../../utils/zipFile';
 import type * as har from '@trace/har';
-import type { HeadersArray } from '../types';
+import type { HeadersArray, Devices } from '../types';
 import { JsonPipeDispatcher } from '../dispatchers/jsonPipeDispatcher';
 import { WebSocketTransport } from '../transport';
 import { SocksInterceptor } from '../socksInterceptor';
@@ -53,7 +53,12 @@ export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.
 
   constructor(scope: RootDispatcher, playwright: Playwright) {
     const localUtils = new SdkObject(playwright, 'localUtils', 'localUtils');
-    super(scope, localUtils, 'LocalUtils', {});
+    const descriptors = require('../deviceDescriptors') as Devices;
+    const deviceDescriptors = Object.entries(descriptors)
+        .map(([name, descriptor]) => ({ name, descriptor }));
+    super(scope, localUtils, 'LocalUtils', {
+      deviceDescriptors,
+    });
     this._type_LocalUtils = true;
   }
 
