@@ -484,7 +484,7 @@ export class HarTracer {
       this._recordRequestHeadersAndCookies(harEntry, headers);
     }));
     // Record available headers including redirect location in case the tracing is stopped before
-    // reponse extra info is received (in Chromium).
+    // response extra info is received (in Chromium).
     this._recordResponseHeaders(harEntry, response.headers());
     this._addBarrier(page || request.serviceWorker(), response.rawResponseHeaders().then(headers => {
       this._recordResponseHeaders(harEntry, headers);

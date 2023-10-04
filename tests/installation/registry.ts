@@ -30,7 +30,7 @@ const kContentTypeAbbreviatedMetadata = 'application/vnd.npm.install-v1+json';
  * This is useful in test installation behavior of packages that aren't yet published. It's particularly helpful
  * when your installation requires transitive dependencies that are also not yet published.
  *
- * See https://github.com/npm/registry/blob/master/docs/REGISTRY-API.md for information on the offical APIs.
+ * See https://github.com/npm/registry/blob/master/docs/REGISTRY-API.md for information on the official APIs.
  */
 export class Registry {
   private _workDir: string;

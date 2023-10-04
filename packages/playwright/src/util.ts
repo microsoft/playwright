@@ -340,7 +340,7 @@ export function resolveImportSpecifierExtension(resolved: string): string | unde
       if (fileExists(modified))
         return modified;
     }
-    break;  // Do not try '' when a more specific extesion like '.jsx' matched.
+    break;  // Do not try '' when a more specific extension like '.jsx' matched.
   }
 
   if (dirExists(resolved)) {

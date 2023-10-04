@@ -94,7 +94,7 @@ it('isVisible during navigation should not throw', async ({ page, server }) => {
           window.location.href = ${JSON.stringify(server.EMPTY_PAGE)};
         }, Math.random(50));
       </script>
-    `).catch(() => {});  // Avoid page.setContent throwing becuase of scheduled navigation.
+    `).catch(() => {});  // Avoid page.setContent throwing because of scheduled navigation.
     expect(await page.locator('div').isVisible()).toBe(false);
   }
 });

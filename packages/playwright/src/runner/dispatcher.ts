@@ -452,7 +452,7 @@ class JobDispatcher {
     this._massSkipTestsFromRemaining(new Set(testsBelongingToSomeSerialSuiteWithFailures.map(test => test.id)), []);
 
     for (const serialSuite of serialSuitesWithFailures) {
-      // Add all tests from faiiled serial suites for possible retry.
+      // Add all tests from failed serial suites for possible retry.
       // These will only be retried together, because they have the same
       // "retries" setting and the same number of previous runs.
       serialSuite.allTests().forEach(test => retryCandidates.add(test));

@@ -188,7 +188,7 @@ export class CRNetworkManager {
 
   _onRequestPaused(sessionInfo: SessionInfo, event: Protocol.Fetch.requestPausedPayload) {
     if (!event.networkId) {
-      // Fetch without networkId means that request was not recongnized by inspector, and
+      // Fetch without networkId means that request was not recognized by inspector, and
       // it will never receive Network.requestWillBeSent. Most likely, this is an internal request
       // that we can safely fail.
       this._session._sendMayFail('Fetch.failRequest', {
@@ -310,7 +310,7 @@ export class CRNetworkManager {
       if (response.body || !expectedLength)
         return Buffer.from(response.body, response.base64Encoded ? 'base64' : 'utf8');
 
-      // For <link prefetch we are going to receive empty body with non-emtpy content-length expectation. Reach out for the actual content.
+      // For <link prefetch we are going to receive empty body with non-empty content-length expectation. Reach out for the actual content.
       const resource = await session.send('Network.loadNetworkResource', { url: request.request.url(), frameId: this._serviceWorker ? undefined : request.request.frame()!._id, options: { disableCache: false, includeCredentials: true } });
       const chunks: Buffer[] = [];
       while (resource.resource.stream) {

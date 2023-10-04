@@ -166,7 +166,7 @@ it('should propagate ignoreHTTPSErrors on redirects', async ({ playwright, https
   expect(response.status()).toBe(200);
 });
 
-it('should resolve url relative to gobal baseURL option', async ({ playwright, server }) => {
+it('should resolve url relative to global baseURL option', async ({ playwright, server }) => {
   const request = await playwright.request.newContext({ baseURL: server.PREFIX });
   const response = await request.get('/empty.html');
   expect(response.url()).toBe(server.EMPTY_PAGE);

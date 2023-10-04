@@ -716,7 +716,7 @@ it('should filter favicon and favicon redirects', async ({ server, browserName, 
 
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
 
-  // Browsers aggresively cache favicons, so force bust with the
+  // Browsers aggressively cache favicons, so force bust with the
   // `d` parameter to make iterating on this test more predictable and isolated.
   const favicon = `/no-cache-2/favicon.ico`;
   const hashedFaviconUrl = `/favicon-hashed.ico`;

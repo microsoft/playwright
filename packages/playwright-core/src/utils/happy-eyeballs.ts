@@ -133,7 +133,7 @@ async function lookupAddresses(hostname: string): Promise<dns.LookupAddress[]> {
     secondFamily = tmp;
   }
   const result = [];
-  // Alternate ipv6 and ipv4 addreses.
+  // Alternate ipv6 and ipv4 addresses.
   for (let i = 0; i < Math.max(firstFamily.length, secondFamily.length); i++) {
     if (firstFamily[i])
       result.push(firstFamily[i]);

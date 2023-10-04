@@ -174,7 +174,7 @@ it('should return response body when Cross-Origin-Opener-Policy is set', async (
 it('should fire requestfailed when intercepting race', async ({ page, server, browserName }) => {
   it.skip(browserName !== 'chromium', 'This test is specifically testing Chromium race');
 
-  const promsie = new Promise<void>(resolve => {
+  const promise = new Promise<void>(resolve => {
     let counter = 0;
     const failures = new Set();
     const alive = new Set();
@@ -217,7 +217,7 @@ it('should fire requestfailed when intercepting race', async ({ page, server, br
     </script>
   `);
 
-  await promsie;
+  await promise;
 });
 
 it('main resource xhr should have type xhr', async ({ page, server }) => {

@@ -276,7 +276,7 @@ test('run hooks after failure', async ({ runInlineTest }) => {
     'a.test.js': `
       import { test, expect } from '@playwright/test';
       test.describe('suite', () => {
-        test('faled', ({}) => {
+        test('failed', ({}) => {
           console.log('\\n%%test');
           expect(1).toBe(2);
         });

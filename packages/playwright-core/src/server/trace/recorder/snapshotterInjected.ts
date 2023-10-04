@@ -341,7 +341,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
           return;
         if (nodeName === 'META' && (node as HTMLMetaElement).httpEquiv.toLowerCase() === 'content-security-policy')
           return;
-        // Skip iframes which are inside document's head as they are not visisble.
+        // Skip iframes which are inside document's head as they are not visible.
         // See https://github.com/microsoft/playwright/issues/12005.
         if ((nodeName === 'IFRAME' || nodeName === 'FRAME') && headNesting)
           return;

@@ -245,7 +245,7 @@ If omitted, the full tree is returned.
       depth?: number;
       /**
        * The frame for whose document the AX tree should be retrieved.
-If omited, the root frame is used.
+If omitted, the root frame is used.
        */
       frameId?: Page.FrameId;
     }
@@ -1101,7 +1101,7 @@ Munich 81456
      */
     export interface AddressUI {
       /**
-       * A two dimension array containing the repesentation of values from an address profile.
+       * A two dimension array containing the representation of values from an address profile.
        */
       addressFields: AddressFields[];
     }
@@ -1505,7 +1505,7 @@ Note that userVisibleOnly = true is the only currently supported type.
       /**
        * Whether to allow all or deny all download requests, or use default Chrome behavior if
 available (otherwise deny). |allowAndName| allows download and names files according to
-their dowmload guids.
+their download guides.
        */
       behavior: "deny"|"allow"|"allowAndName"|"default";
       /**
@@ -1853,7 +1853,7 @@ pseudo-classes.
       frameId: Page.FrameId;
       /**
        * Stylesheet resource URL. Empty if this is a constructed stylesheet created using
-new CSSStyleSheet() (but non-empty if this is a constructed sylesheet imported
+new CSSStyleSheet() (but non-empty if this is a constructed stylesheet imported
 as a CSS module script).
        */
       sourceURL: string;
@@ -3549,7 +3549,7 @@ The property is always undefined now.
        */
       nodeId: NodeId;
       /**
-       * A ttribute name.
+       * Attribute name.
        */
       name: string;
     }
@@ -3860,7 +3860,7 @@ be called for that search.
      */
     export type getAttributesParameters = {
       /**
-       * Id of the node to retrieve attibutes for.
+       * Id of the node to retrieve attributes for.
        */
       nodeId: NodeId;
     }
@@ -5995,7 +5995,7 @@ on Android.
        */
       userAgent: string;
       /**
-       * Browser langugage to emulate.
+       * Browser language to emulate.
        */
       acceptLanguage?: string;
       /**
@@ -7258,7 +7258,7 @@ transform/scrolling purposes only.
     }
     export type layerTreeDidChangePayload = {
       /**
-       * Layer tree, absent if not in the comspositing mode.
+       * Layer tree, absent if not in the compositing mode.
        */
       layers?: Layer[];
     }
@@ -7869,7 +7869,7 @@ passed by the developer (e.g. via "fetch") as understood by the backend.
       trustTokenParams?: TrustTokenParams;
       /**
        * True if this resource request is considered to be the 'same site' as the
-request correspondinfg to the main frame.
+request corresponding to the main frame.
        */
       isSameSite?: boolean;
     }
@@ -8581,7 +8581,7 @@ https://wicg.github.io/webpackage/draft-yasskin-httpbis-origin-signed-exchanges-
        */
       securityDetails?: SecurityDetails;
       /**
-       * Errors occurred while handling the signed exchagne.
+       * Errors occurred while handling the signed exchange.
        */
       errors?: SignedExchangeError[];
     }
@@ -9847,7 +9847,7 @@ continueInterceptedRequest call.
        */
       userAgent: string;
       /**
-       * Browser langugage to emulate.
+       * Browser language to emulate.
        */
       acceptLanguage?: string;
       /**
@@ -9917,7 +9917,7 @@ should be omitted for worker targets.
      */
     export interface SourceOrderConfig {
       /**
-       * the color to outline the givent element in.
+       * the color to outline the given element in.
        */
       parentOutlineColor: DOM.RGBA;
       /**
@@ -10401,7 +10401,7 @@ user manually inspects an element.
     }
     /**
      * Highlights owner element of the frame with given id.
-Deprecated: Doesn't work reliablity and cannot be fixed due to process
+Deprecated: Doesn't work reliably and cannot be fixed due to process
 separatation (the owner node might be in a different process). Determine
 the owner node in the client and use highlightNode.
      */
@@ -11003,7 +11003,7 @@ Example URLs: http://www.google.com/file.html -> "google.com"
        */
       message: string;
       /**
-       * If criticial, this is a non-recoverable parse error.
+       * If critical, this is a non-recoverable parse error.
        */
       critical: number;
       /**
@@ -11210,7 +11210,7 @@ Example URLs: http://www.google.com/file.html -> "google.com"
       eager?: boolean;
     }
     /**
-     * Enum of possible auto-reponse for permisison / prompt dialogs.
+     * Enum of possible auto-response for permission / prompt dialogs.
      */
     export type AutoResponseMode = "none"|"autoAccept"|"autoReject"|"autoOptOut";
     /**
@@ -12468,7 +12468,7 @@ https://github.com/WICG/web-lifecycle/
     }
     /**
      * Requests backend to produce compilation cache for the specified scripts.
-`scripts` are appeneded to the list of scripts for which the cache
+`scripts` are appended to the list of scripts for which the cache
 would be produced. The list may be reset during page navigation.
 When script with a matching URL is encountered, the cache is optionally
 produced upon backend discretion, based on internal heuristics.
@@ -12687,7 +12687,7 @@ https://w3c.github.io/performance-timeline/#dom-performanceobserver.
       frameId: Page.FrameId;
       /**
        * The event type, as specified in https://w3c.github.io/performance-timeline/#dom-performanceentry-entrytype
-This determines which of the optional "details" fiedls is present.
+This determines which of the optional "details" fields is present.
        */
       type: string;
       /**
@@ -12797,7 +12797,7 @@ https://www.w3.org/TR/mixed-content/#categories
        */
       certificateNetworkError?: string;
       /**
-       * True if the certificate uses a weak signature aglorithm.
+       * True if the certificate uses a weak signature algorithm.
        */
       certificateHasWeakSignature: boolean;
       /**
@@ -14146,7 +14146,7 @@ the type of "page", this may be set to "portal" or "prerender".
      */
     export interface FilterEntry {
       /**
-       * If set, causes exclusion of mathcing targets from the list.
+       * If set, causes exclusion of matching targets from the list.
        */
       exclude?: boolean;
       /**
@@ -15918,7 +15918,7 @@ still keyed with the initial URL.
 that had a speculation rule that triggered the attempt, and the
 BackendNodeIds of <a href> or <area href> elements that triggered the
 attempt (in the case of attempts triggered by a document rule). It is
-possible for mulitple rule sets and links to trigger a single attempt.
+possible for multiple rule sets and links to trigger a single attempt.
      */
     export interface PreloadingAttemptSource {
       key: PreloadingAttemptKey;
@@ -16781,7 +16781,7 @@ will return errors.
      * Restarts particular call frame from the beginning. The old, deprecated
 behavior of `restartFrame` is to stay paused and allow further CDP commands
 after a restart was scheduled. This can cause problems with restarting, so
-we now continue execution immediatly after it has been scheduled until we
+we now continue execution immediately after it has been scheduled until we
 reach the beginning of the restarted frame.
 
 To stay back-wards compatible, `restartFrame` now expects a `mode`
@@ -18240,7 +18240,7 @@ execution. Overrides `setPauseOnException` state.
       silent?: boolean;
       /**
        * Whether the result is expected to be a JSON object which should be sent by value.
-Can be overriden by `serializationOptions`.
+Can be overridden by `serializationOptions`.
        */
       returnByValue?: boolean;
       /**

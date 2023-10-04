@@ -470,7 +470,7 @@ test.describe('PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS=1', () => {
 
               // 3. Prevent tracker.js from being retrieved, and returns a placeholder response
               if (event.request.url.endsWith("tracker.js"))
-                return new Response('conosole.log("no trackers!")', {
+                return new Response('console.log("no trackers!")', {
                   status: 200,
                   headers: { "Content-Type": "text/javascript" },
                 });
