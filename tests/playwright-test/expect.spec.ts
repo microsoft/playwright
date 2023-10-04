@@ -879,3 +879,68 @@ test('should suppport toHaveAttribute without optional value', async ({ runTSC }
   });
   expect(result.exitCode).toBe(0);
 });
+
+test('should support composedExpect (TSC)', async ({ runTSC }) => {
+  const result = await runTSC({
+    'a.spec.ts': `
+      import { test, composedExpect, expect as baseExpect } from '@playwright/test';
+      import type { Page } from '@playwright/test';
+
+      const expect1 = baseExpect.extend({
+        async toBeAGoodPage(page: Page, x: number) {
+          return { pass: true, message: () => '' };
+        }
+      });
+
+      const expect2 = baseExpect.extend({
+        async toBeABadPage(page: Page, y: string) {
+          return { pass: true, message: () => '' };
+        }
+      });
+
+      const expect = composedExpect(expect1, expect2);
+
+      test('custom matchers', async ({ page }) => {
+        await expect(page).toBeAGoodPage(123);
+        await expect(page).toBeABadPage('123');
+        // @ts-expect-error
+        await expect(page).toBeAMedicorePage();
+        // @ts-expect-error
+        await expect(page).toBeABadPage(123);
+        // @ts-expect-error
+        await expect(page).toBeAGoodPage('123');
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+});
+
+test('should support composedExpect', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test, composedExpect, expect as baseExpect } from '@playwright/test';
+      import type { Page } from '@playwright/test';
+
+      const expect1 = baseExpect.extend({
+        async toBeAGoodPage(page: Page, x: number) {
+          return { pass: true, message: () => '' };
+        }
+      });
+
+      const expect2 = baseExpect.extend({
+        async toBeABadPage(page: Page, y: string) {
+          return { pass: true, message: () => '' };
+        }
+      });
+
+      const expect = composedExpect(expect1, expect2);
+
+      test('custom matchers', async ({ page }) => {
+        await expect(page).toBeAGoodPage(123);
+        await expect(page).toBeABadPage('123');
+      });
+    `
+  }, { workers: 1 });
+  expect(result.passed).toBe(1);
+  expect(result.exitCode).toBe(0);
+});
