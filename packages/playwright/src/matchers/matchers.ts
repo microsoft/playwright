@@ -21,7 +21,7 @@ import { expectTypes, callLogText, filteredStackTrace } from '../util';
 import { toBeTruthy } from './toBeTruthy';
 import { toEqual } from './toEqual';
 import { toExpectedTextValues, toMatchText } from './toMatchText';
-import { captureRawStack, constructURLBasedOnBaseURL, isTextualMimeType, pollAgainstDeadline } from 'playwright-core/lib/utils';
+import { captureRawStack, constructURLBasedOnBaseURL, isRegExp, isTextualMimeType, pollAgainstDeadline } from 'playwright-core/lib/utils';
 import { currentTestInfo } from '../common/globals';
 import { TestInfoImpl, type TestStepInternal } from '../worker/testInfo';
 import type { ExpectMatcherContext } from './expect';
@@ -177,13 +177,25 @@ export function toHaveAttribute(
   this: ExpectMatcherContext,
   locator: LocatorEx,
   name: string,
-  expected: string | RegExp,
+  expected: string | RegExp | undefined | { timeout?: number },
   options?: { timeout?: number },
 ) {
+  if (!options) {
+    // Update params for the case toHaveAttribute(name, options);
+    if (typeof expected === 'object' && !isRegExp(expected)) {
+      options = expected;
+      expected = undefined;
+    }
+  }
+  if (expected === undefined) {
+    return toBeTruthy.call(this, 'toHaveAttribute', locator, 'Locator', 'have attribute', 'not have attribute', '', async (isNot, timeout) => {
+      return await locator._expect('to.have.attribute', { expressionArg: name, isNot, timeout });
+    }, options);
+  }
   return toMatchText.call(this, 'toHaveAttribute', locator, 'Locator', async (isNot, timeout) => {
-    const expectedText = toExpectedTextValues([expected]);
-    return await locator._expect('to.have.attribute', { expressionArg: name, expectedText, isNot, timeout });
-  }, expected, options);
+    const expectedText = toExpectedTextValues([expected as (string | RegExp)]);
+    return await locator._expect('to.have.attribute.value', { expressionArg: name, expectedText, isNot, timeout });
+  }, expected as (string | RegExp), options);
 }
 
 export function toHaveClass(

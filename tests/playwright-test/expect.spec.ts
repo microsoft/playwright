@@ -859,3 +859,23 @@ test('should chain expect matchers and expose matcher utils', async ({ runInline
   expect(result.failed).toBe(1);
   expect(result.exitCode).toBe(1);
 });
+
+test('should suppport toHaveAttribute without optional value', async ({ runTSC }) => {
+  const result = await runTSC({
+    'a.spec.ts': `
+    import { test, expect as baseExpect } from '@playwright/test';
+    test('custom matchers', async ({ page }) => {
+      const locator = page.locator('#node');
+      await test.expect(locator).toHaveAttribute('name', 'value');
+      await test.expect(locator).toHaveAttribute('name', 'value', { timeout: 10 });
+      await test.expect(locator).toHaveAttribute('disabled');
+      await test.expect(locator).toHaveAttribute('disabled', { timeout: 10 });
+      // @ts-expect-error
+      await test.expect(locator).toHaveAttribute('disabled', { foo: 1 });
+      // @ts-expect-error
+      await test.expect(locator).toHaveAttribute('name', 'value', 'opt');
+    });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+});

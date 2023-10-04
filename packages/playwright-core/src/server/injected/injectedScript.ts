@@ -1206,7 +1206,9 @@ export class InjectedScript {
     {
       // Element state / boolean values.
       let elementState: boolean | 'error:notconnected' | 'error:notcheckbox' | undefined;
-      if (expression === 'to.be.checked') {
+      if (expression === 'to.have.attribute') {
+        elementState = element.hasAttribute(options.expressionArg);
+      } else if (expression === 'to.be.checked') {
         elementState = this.elementState(element, 'checked');
       } else if (expression === 'to.be.unchecked') {
         elementState = this.elementState(element, 'unchecked');
@@ -1277,7 +1279,7 @@ export class InjectedScript {
     {
       // Single text value.
       let received: string | undefined;
-      if (expression === 'to.have.attribute') {
+      if (expression === 'to.have.attribute.value') {
         const value = element.getAttribute(options.expressionArg);
         if (value === null)
           return { received: null, matches: false };

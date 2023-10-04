@@ -5575,6 +5575,26 @@ interface LocatorAssertions {
   }): Promise<void>;
 
   /**
+   * Ensures the {@link Locator} points to an element with given attribute. The method will assert attribute presence.
+   *
+   * ```js
+   * const locator = page.locator('input');
+   * // Assert attribute existence.
+   * await expect(locator).toHaveAttribute('disabled');
+   * await expect(locator).not.toHaveAttribute('open');
+   * ```
+   *
+   * @param name Attribute name.
+   * @param options
+   */
+  toHaveAttribute(name: string, options?: {
+    /**
+     * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
    * Ensures the {@link Locator} points to an element with given CSS classes. This needs to be a full match or using a
    * relaxed regular expression.
    *
