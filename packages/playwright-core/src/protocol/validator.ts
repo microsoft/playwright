@@ -217,7 +217,26 @@ scheme.APIResponse = tObject({
   headers: tArray(tType('NameValue')),
 });
 scheme.LifecycleEvent = tEnum(['load', 'domcontentloaded', 'networkidle', 'commit']);
-scheme.LocalUtilsInitializer = tOptional(tObject({}));
+scheme.LocalUtilsInitializer = tObject({
+  deviceDescriptors: tArray(tObject({
+    name: tString,
+    descriptor: tObject({
+      userAgent: tString,
+      viewport: tObject({
+        width: tNumber,
+        height: tNumber,
+      }),
+      screen: tOptional(tObject({
+        width: tNumber,
+        height: tNumber,
+      })),
+      deviceScaleFactor: tNumber,
+      isMobile: tBoolean,
+      hasTouch: tBoolean,
+      defaultBrowserType: tEnum(['chromium', 'firefox', 'webkit']),
+    }),
+  })),
+});
 scheme.LocalUtilsZipParams = tObject({
   zipFile: tString,
   entries: tArray(tType('NameValue')),
@@ -298,25 +317,7 @@ scheme.PlaywrightInitializer = tObject({
   webkit: tChannel(['BrowserType']),
   android: tChannel(['Android']),
   electron: tChannel(['Electron']),
-  utils: tChannel(['LocalUtils']),
-  deviceDescriptors: tArray(tObject({
-    name: tString,
-    descriptor: tObject({
-      userAgent: tString,
-      viewport: tObject({
-        width: tNumber,
-        height: tNumber,
-      }),
-      screen: tOptional(tObject({
-        width: tNumber,
-        height: tNumber,
-      })),
-      deviceScaleFactor: tNumber,
-      isMobile: tBoolean,
-      hasTouch: tBoolean,
-      defaultBrowserType: tEnum(['chromium', 'firefox', 'webkit']),
-    }),
-  })),
+  utils: tOptional(tChannel(['LocalUtils'])),
   selectors: tChannel(['Selectors']),
   preLaunchedBrowser: tOptional(tChannel(['Browser'])),
   preConnectedAndroidDevice: tOptional(tChannel(['AndroidDevice'])),

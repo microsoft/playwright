@@ -501,6 +501,37 @@ ContextOptions:
 LocalUtils:
   type: interface
 
+  initializer:
+    deviceDescriptors:
+      type: array
+      items:
+        type: object
+        properties:
+          name: string
+          descriptor:
+            type: object
+            properties:
+              userAgent: string
+              viewport:
+                type: object
+                properties:
+                  width: number
+                  height: number
+              screen:
+                type: object?
+                properties:
+                  width: number
+                  height: number
+              deviceScaleFactor: number
+              isMobile: boolean
+              hasTouch: boolean
+              defaultBrowserType:
+                type: enum
+                literals:
+                - chromium
+                - firefox
+                - webkit
+
   commands:
 
     zip:
@@ -614,36 +645,7 @@ Playwright:
     webkit: BrowserType
     android: Android
     electron: Electron
-    utils: LocalUtils
-    deviceDescriptors:
-      type: array
-      items:
-        type: object
-        properties:
-          name: string
-          descriptor:
-            type: object
-            properties:
-              userAgent: string
-              viewport:
-                type: object
-                properties:
-                  width: number
-                  height: number
-              screen:
-                type: object?
-                properties:
-                  width: number
-                  height: number
-              deviceScaleFactor: number
-              isMobile: boolean
-              hasTouch: boolean
-              defaultBrowserType:
-                type: enum
-                literals:
-                - chromium
-                - firefox
-                - webkit
+    utils: LocalUtils?
     selectors: Selectors
     # Only present when connecting remotely via BrowserType.connect() method.
     preLaunchedBrowser: Browser?
