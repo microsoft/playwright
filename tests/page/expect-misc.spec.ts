@@ -262,6 +262,22 @@ test.describe('toHaveAttribute', () => {
       expect(error.message).toContain('expect.not.toHaveAttribute with timeout 1000ms');
     }
   });
+
+  test('should match attribute without value', async ({ page }) => {
+    await page.setContent('<div checked id=node>Text content</div>');
+    const locator = page.locator('#node');
+    await expect(locator).toHaveAttribute('id');
+    await expect(locator).toHaveAttribute('checked');
+    await expect(locator).not.toHaveAttribute('open');
+  });
+
+  test('should support boolean attribute with options', async ({ page }) => {
+    await page.setContent('<div checked id=node>Text content</div>');
+    const locator = page.locator('#node');
+    await expect(locator).toHaveAttribute('id', { timeout: 5000 });
+    await expect(locator).toHaveAttribute('checked', { timeout: 5000 });
+    await expect(locator).not.toHaveAttribute('open', { timeout: 5000 });
+  });
 });
 
 test.describe('toHaveCSS', () => {
