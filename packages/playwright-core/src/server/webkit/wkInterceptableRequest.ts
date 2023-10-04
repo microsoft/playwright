@@ -64,13 +64,6 @@ export class WKInterceptableRequest {
         resourceType, event.request.method, postDataBuffer, headersObjectToArray(event.request.headers));
   }
 
-  _routeForRedirectChain(): WKRouteImpl | null {
-    let request: WKInterceptableRequest = this;
-    while (request._redirectedFrom)
-      request = request._redirectedFrom;
-    return request._route;
-  }
-
   createResponse(responsePayload: Protocol.Network.Response): network.Response {
     const getResponseBody = async () => {
       const response = await this._session.send('Network.getResponseBody', { requestId: this._requestId });
