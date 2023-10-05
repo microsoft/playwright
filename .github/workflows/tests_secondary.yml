@@ -27,13 +27,13 @@ jobs:
       fail-fast: false
       matrix:
         browser: [chromium, firefox, webkit]
-        os: [ubuntu-20.04, ubuntu-22.04]
+        os: [ubuntu-20.04]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18
     - run: npm ci
       env:
         DEBUG: pw:install
@@ -65,7 +65,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18
     - run: npm ci
       env:
         DEBUG: pw:install
@@ -95,7 +95,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18
     - run: npm ci
       env:
         DEBUG: pw:install
@@ -123,7 +123,7 @@ jobs:
       matrix:
         include:
         - os: ubuntu-latest
-          node_version: 18
+          node_version: 16
         - os: ubuntu-latest
           node_version: 20
     timeout-minutes: 30
@@ -159,7 +159,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18
     - run: npm ci
       env:
         DEBUG: pw:install
@@ -194,7 +194,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18
     - run: npm ci
       env:
         DEBUG: pw:install
@@ -230,7 +230,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18
     - run: npm ci
       env:
         DEBUG: pw:install
@@ -258,7 +258,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -284,7 +284,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -311,7 +311,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -341,7 +341,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -377,7 +377,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -409,7 +409,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -435,7 +435,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -462,7 +462,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -488,7 +488,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -514,7 +514,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -541,7 +541,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -567,7 +567,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -593,7 +593,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -620,7 +620,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -646,7 +646,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -672,7 +672,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -699,7 +699,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -725,7 +725,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -751,7 +751,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -778,7 +778,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -804,7 +804,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18
     - run: npm ci
     - run: npm run build
     - run: npx playwright install-deps
@@ -817,7 +817,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18
     - run: npm ci
       env:
         DEBUG: pw:install
