@@ -884,3 +884,9 @@ it('page screenshot should capture css transform', async function({ page, browse
 
   await expect(page).toHaveScreenshot();
 });
+
+it('should capture css box-shadow', async ({ page }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/21620' });
+  await page.setContent(`<div style="box-shadow: red 10px 10px 10px; width: 50px; height: 50px;"></div>`);
+  await expect(page).toHaveScreenshot();
+});
