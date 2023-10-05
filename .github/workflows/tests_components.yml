@@ -19,7 +19,7 @@ env:
 
 jobs:
   test_components:
-    name: ${{ matrix.os }}
+    name: ${{ matrix.os }} - Node.js ${{ matrix.node-version }}
     strategy:
       fail-fast: false
       matrix:

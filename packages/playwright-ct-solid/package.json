@@ -4,7 +4,7 @@
   "description": "Playwright Component Testing for Solid",
   "repository": {
     "type": "git",
-    "url": "https://github.com/microsoft/playwright.git"
+    "url": "git+https://github.com/microsoft/playwright.git"
   },
   "homepage": "https://playwright.dev",
   "engines": {
@@ -36,6 +36,6 @@
     "solid-js": "^1.7.0"
   },
   "bin": {
-    "playwright": "./cli.js"
+    "playwright": "cli.js"
   }
 }

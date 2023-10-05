@@ -4,7 +4,7 @@
   "description": "Playwright Component Testing for Svelte",
   "repository": {
     "type": "git",
-    "url": "https://github.com/microsoft/playwright.git"
+    "url": "git+https://github.com/microsoft/playwright.git"
   },
   "homepage": "https://playwright.dev",
   "engines": {
@@ -36,6 +36,6 @@
     "svelte": "^3.55.1"
   },
   "bin": {
-    "playwright": "./cli.js"
+    "playwright": "cli.js"
   }
 }
