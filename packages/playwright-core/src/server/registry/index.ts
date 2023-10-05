@@ -25,7 +25,7 @@ import { fetchData } from '../../utils/network';
 import { getEmbedderName } from '../../utils/userAgent';
 import { getFromENV, getAsBooleanFromENV, calculateSha1, wrapInASCIIBox, getPackageManagerExecCommand } from '../../utils';
 import { removeFolders, existsAsync, canAccessFile } from '../../utils/fileUtils';
-import { hostPlatform, HostPlatform } from '../../utils/hostPlatform';
+import { hostPlatform } from '../../utils/hostPlatform';
 import { spawnAsync } from '../../utils/spawnAsync';
 import type { DependencyGroup } from './dependencies';
 import { transformCommandsForRoot, dockerVersion, readDockerVersionSync } from './dependencies';
