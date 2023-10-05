@@ -11716,7 +11716,7 @@ export interface Locator {
   /**
    * Returns whether the element is checked. Throws if the element is not a checkbox or radio input.
    *
-   * **NOTE** If you need to assert that checkobx is checked, prefer
+   * **NOTE** If you need to assert that checkbox is checked, prefer
    * [locatorAssertions.toBeChecked([options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-be-checked)
    * to avoid flakiness. See [assertions guide](https://playwright.dev/docs/test-assertions) for more details.
    *
@@ -19055,7 +19055,7 @@ export interface Video {
 }
 
 /**
- * {@link WebError} class represents an unhandled exeception thrown in the page. It is dispatched via the
+ * {@link WebError} class represents an unhandled exception thrown in the page. It is dispatched via the
  * [browserContext.on('weberror')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-web-error)
  * event.
  *

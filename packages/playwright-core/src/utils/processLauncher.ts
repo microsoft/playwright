@@ -200,7 +200,7 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     // reentrancy to this function, for example user sends SIGINT second time.
     // In this case, let's forcefully kill the process.
     if (gracefullyClosing) {
-      options.log(`[pid=${spawnedProcess.pid}] <forecefully close>`);
+      options.log(`[pid=${spawnedProcess.pid}] <forcefully close>`);
       killProcess();
       await waitForCleanup;  // Ensure the process is dead and we have cleaned up.
       return;

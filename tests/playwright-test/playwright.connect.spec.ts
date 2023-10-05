@@ -110,7 +110,7 @@ test('should respect connectOptions.timeout', async ({ runInlineTest }) => {
       module.exports = {
         use: {
           connectOptions: {
-            wsEndpoint: 'wss://locahost:5678',
+            wsEndpoint: 'wss://localhost:5678',
             timeout: 1,
           },
         },

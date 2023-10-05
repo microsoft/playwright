@@ -708,9 +708,9 @@ it('should convert navigation to a resource with unsupported mime type into down
 it('should download links with data url', async ({ page }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/21892' });
   await page.setContent('<a download="SomeFile.txt" href="data:text/plain;charset=utf8;,hello world">Download!</a>');
-  const donwloadPromise = page.waitForEvent('download');
+  const downloadPromise = page.waitForEvent('download');
   await page.getByText('Download').click();
-  const download = await donwloadPromise;
+  const download = await downloadPromise;
   expect(download.suggestedFilename()).toBe('SomeFile.txt');
 });
 

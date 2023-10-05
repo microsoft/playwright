@@ -80,7 +80,7 @@ test('project.grepInvert should work', async ({ runInlineTest }) => {
   expect(result.output).toContain('%% test2');
 });
 
-test('config.grep should intercect with --grep and --grepInvert', async ({ runInlineTest }) => {
+test('config.grep should intersect with --grep and --grepInvert', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = { grep: /test./, grepInvert: /test4/ };

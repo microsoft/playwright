@@ -907,7 +907,7 @@ export module Protocol {
      */
     export interface FontVariationAxis {
       /**
-       * The name, generally human-readable, of the variation axis. Some axes may not provide a human-readable name distiguishable from the tag. This field is ommited when there is no name, or the name matches the tag exactly.
+       * The name, generally human-readable, of the variation axis. Some axes may not provide a human-readable name distinguishable from the tag. This field is omitted when there is no name, or the name matches the tag exactly.
        */
       name?: string;
       /**
@@ -1209,7 +1209,7 @@ export module Protocol {
     export type forcePseudoStateReturnValue = {
     }
     /**
-     * Change how layout context type changes are handled for nodes. When the new mode would observe nodes the frontend has not yet recieved, those nodes will be sent to the frontend immediately.
+     * Change how layout context type changes are handled for nodes. When the new mode would observe nodes the frontend has not yet received, those nodes will be sent to the frontend immediately.
      */
     export type setLayoutContextTypeChangedModeParameters = {
       /**
@@ -1908,7 +1908,7 @@ export module Protocol {
        */
       binding: string;
       /**
-       * A more descriptive name for the type of binding that represents this paritcular data relationship
+       * A more descriptive name for the type of binding that represents this particular data relationship
        */
       type?: string;
       /**
@@ -6315,7 +6315,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
      */
     export type Setting = "PrivateClickMeasurementDebugModeEnabled"|"AuthorAndUserStylesEnabled"|"ICECandidateFilteringEnabled"|"ITPDebugModeEnabled"|"ImagesEnabled"|"MediaCaptureRequiresSecureConnection"|"MockCaptureDevicesEnabled"|"NeedsSiteSpecificQuirks"|"ScriptEnabled"|"ShowDebugBorders"|"ShowRepaintCounter"|"WebSecurityEnabled"|"DeviceOrientationEventEnabled"|"SpeechRecognitionEnabled"|"PointerLockEnabled"|"NotificationsEnabled"|"FullScreenEnabled"|"InputTypeMonthEnabled"|"InputTypeWeekEnabled";
     /**
-     * A user preference that can be overriden by Web Inspector, like an accessibility preference.
+     * A user preference that can be overridden by Web Inspector, like an accessibility preference.
      */
     export interface UserPreference {
       /**
@@ -6606,7 +6606,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        */
       children?: AXNode[];
       /**
-       * True if this AXNode corresponds with the ObjectId passed into acessibilitySnapshot.
+       * True if this AXNode corresponds with the ObjectId passed into accessibilitySnapshot.
        */
       found?: boolean;
     }
@@ -6693,7 +6693,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        */
       delay: number;
       /**
-       * Whether the naviation will happen in the same frame.
+       * Whether the navigation will happen in the same frame.
        */
       targetIsCurrentFrame: boolean;
     }
@@ -6724,7 +6724,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
      */
     export type defaultUserPreferencesDidChangePayload = {
       /**
-       * List of user preferences that can be overriden and their new system (default) values.
+       * List of user preferences that can be overridden and their new system (default) values.
        */
       preferences: UserPreference[];
     }
@@ -7501,7 +7501,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
       browserContextId: ContextID;
     }
     /**
-     * Deletes browser context previously created with createContect. The command will automatically close all pages that use the context.
+     * Deletes browser context previously created with createContext. The command will automatically close all pages that use the context.
      */
     export type deleteContextParameters = {
       /**
@@ -7768,7 +7768,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
       version: number;
       type: Type;
       /**
-       * JSON data of inital state of object before recording.
+       * JSON data of initial state of object before recording.
        */
       initialState: InitialState;
       /**
@@ -8108,7 +8108,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
      */
     export interface TypeDescription {
       /**
-       * If true, we were able to correlate the offset successfuly with a program location. If false, the offset may be bogus or the offset may be from a CodeBlock that hasn't executed.
+       * If true, we were able to correlate the offset successfully with a program location. If false, the offset may be bogus or the offset may be from a CodeBlock that hasn't executed.
        */
       isValid: boolean;
       /**
@@ -8606,7 +8606,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     }
     
     /**
-     * Starts recoring video to speified file.
+     * Starts recording video to specified file.
      */
     export type startVideoParameters = {
       /**

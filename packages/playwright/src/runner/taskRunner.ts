@@ -106,7 +106,7 @@ export class TaskRunner<Context> {
     }
     cancelPromise?.resolve();
     // Note that upon hitting deadline, we "run cleanup", but it exits immediately
-    // because of the same deadline. Essentially, we're not perfomring any cleanup.
+    // because of the same deadline. Essentially, we're not performing any cleanup.
     const cleanup = () => teardownRunner.runDeferCleanup(context, deadline).then(r => r.status);
     return { status, cleanup };
   }

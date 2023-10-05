@@ -179,7 +179,7 @@ test('should work with workers=1 and --fully-parallel', async ({ runInlineTest }
     `,
     'a2.spec.ts': `
     import { test } from '@playwright/test';
-    test('shoul pass', async ({ }) => {
+    test('should pass', async ({ }) => {
     });
   `,
   };

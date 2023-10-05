@@ -122,7 +122,7 @@ export class WKBrowser extends Browser {
     // here by simulating cancelled provisional load which matches downloads from network.
     //
     // TODO: this is racy, because download might be unrelated any navigation, and we will
-    // abort navgitation that is still running. We should be able to fix this by
+    // abort navigation that is still running. We should be able to fix this by
     // instrumenting policy decision start/proceed/cancel.
     page._page._frameManager.frameAbortedNavigation(payload.frameId, 'Download is starting');
     let originPage = page._initializedPage;

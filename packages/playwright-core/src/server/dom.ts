@@ -854,7 +854,7 @@ export class InjectedScriptPollHandler<T> {
     this._poll = poll;
     // Ensure we cancel the poll before progress aborts and returns:
     //   - no unnecessary work in the page;
-    //   - no possible side effects after progress promsie rejects.
+    //   - no possible side effects after progress promise rejects.
     this._progress.cleanupWhenAborted(() => this.cancel());
     this._streamLogs();
   }

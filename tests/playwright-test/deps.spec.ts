@@ -452,7 +452,7 @@ test('should run project with teardown', async ({ runInlineTest }) => {
   expect(result.outputLines).toEqual(['A', 'B']);
 });
 
-test('should run teardown after depedents', async ({ runInlineTest }) => {
+test('should run teardown after dependents', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = {

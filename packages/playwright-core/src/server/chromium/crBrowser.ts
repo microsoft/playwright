@@ -537,7 +537,7 @@ export class CRBrowserContext extends BrowserContext {
       // When closing a browser context, service workers are shutdown
       // asynchronously and we get detached from them later.
       // To avoid the wrong order of notifications, we manually fire
-      // "close" event here and forget about the serivce worker.
+      // "close" event here and forget about the service worker.
       serviceWorker.didClose();
       this._browser._serviceWorkers.delete(targetId);
     }

@@ -155,7 +155,7 @@ function expectRedFrames(videoFile: string, size: { width: number, height: numbe
 
 it.describe('screencast', () => {
   it.slow();
-  it.skip(({ mode }) => mode !== 'default', 'video.path() is not avaialble in remote mode');
+  it.skip(({ mode }) => mode !== 'default', 'video.path() is not available in remote mode');
 
   it('videoSize should require videosPath', async ({ browser }) => {
     const error = await browser.newContext({ videoSize: { width: 100, height: 100 } }).catch(e => e);

@@ -93,7 +93,7 @@ export class ElectronApplication extends ChannelOwner<channels.ElectronApplicati
   }
 
   windows(): Page[] {
-    // TODO: add ElectronPage class inherting from Page.
+    // TODO: add ElectronPage class inheriting from Page.
     return [...this._windows];
   }
 

@@ -199,7 +199,7 @@ test('should connect over a ws endpoint', async ({ browserType, server }, testIn
     expect(contexts.length).toBe(1);
     await cdpBrowser.close();
 
-    // also connect with the depercreated wsEndpoint option
+    // also connect with the deprecated wsEndpoint option
     const cdpBrowser2 = await browserType.connectOverCDP({
       wsEndpoint: JSON.parse(json).webSocketDebuggerUrl,
     });

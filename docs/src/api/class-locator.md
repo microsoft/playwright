@@ -1302,7 +1302,7 @@ Throws elements that are not an input, textarea or a select. However, if the ele
 Returns whether the element is checked. Throws if the element is not a checkbox or radio input.
 
 :::caution Asserting checked state
-If you need to assert that checkobx is checked, prefer [`method: LocatorAssertions.toBeChecked`] to avoid flakiness. See [assertions guide](../test-assertions.md) for more details.
+If you need to assert that checkbox is checked, prefer [`method: LocatorAssertions.toBeChecked`] to avoid flakiness. See [assertions guide](../test-assertions.md) for more details.
 :::
 
 **Usage**

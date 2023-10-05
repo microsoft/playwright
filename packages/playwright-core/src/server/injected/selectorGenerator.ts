@@ -176,7 +176,7 @@ function generateSelectorFor(injectedScript: InjectedScript, targetElement: Elem
 function buildNoTextCandidates(injectedScript: InjectedScript, element: Element, options: GenerateSelectorOptions): SelectorToken[] {
   const candidates: SelectorToken[] = [];
 
-  // CSS selectors are applicale to elements via locator() and iframes via frameLocator().
+  // CSS selectors are applicable to elements via locator() and iframes via frameLocator().
   {
     for (const attr of ['data-testid', 'data-test-id', 'data-test']) {
       if (attr !== options.testIdAttributeName && element.getAttribute(attr))

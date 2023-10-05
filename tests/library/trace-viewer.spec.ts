@@ -759,7 +759,7 @@ test('should open two trace files', async ({ context, page, request, server, sho
   const callLine = traceViewer.page.locator('.call-line');
   // Should get metadata from the context trace
   await expect(callLine.getByText('start time')).toHaveText(/start time:[\d/,: ]+/);
-  // duration in the metatadata section
+  // duration in the metadata section
   await expect(callLine.getByText('duration').first()).toHaveText(/duration:[\dms]+/);
   await expect(callLine.getByText('engine')).toHaveText(/engine:[\w]+/);
   await expect(callLine.getByText('platform')).toHaveText(/platform:[\w]+/);

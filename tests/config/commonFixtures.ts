@@ -33,7 +33,7 @@ import childProcess from 'child_process';
 
 type ProcessData = {
   pid: number, // process ID
-  pgrp: number, // process groupd ID
+  pgrp: number, // process group ID
   children: Set<ProcessData>, // direct children of the process
 };
 

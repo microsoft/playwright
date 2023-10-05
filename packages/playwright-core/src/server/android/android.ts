@@ -178,7 +178,7 @@ export class AndroidDevice extends SdkObject {
     debug('pw:android')('Stopping the old driver');
     await this.shell(`am force-stop com.microsoft.playwright.androiddriver`);
 
-    // uninstall and install driver on every excution
+    // uninstall and install driver on every execution
     if (!this._options.omitDriverInstall) {
       debug('pw:android')('Uninstalling the old driver');
       await this.shell(`cmd package uninstall com.microsoft.playwright.androiddriver`);

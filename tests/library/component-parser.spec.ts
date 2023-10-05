@@ -94,7 +94,7 @@ it('should parse float values', async () => {
   expect(serialize(parse(`ColorButton  [    'nested' .value =4.1]`))).toBe('ColorButton[nested.value = 4.1]');
 });
 
-it('shoulud parse bool', async () => {
+it('should parse bool', async () => {
   expect(serialize(parse(`ColorButton[enabled= false] `))).toBe('ColorButton[enabled = false]');
   expect(serialize(parse(`ColorButton[enabled  =true] `))).toBe('ColorButton[enabled = true]');
   expect(serialize(parse(`ColorButton[enabled  =true][ color = "red"]`))).toBe('ColorButton[enabled = true][color = "red"]');
@@ -114,7 +114,7 @@ it('should parse identifiers', async () => {
   expect(serialize(parse('[😀=true]'))).toBe('["😀" = true]');
 });
 
-it('should parse unqouted string', async () => {
+it('should parse unquoted string', async () => {
   expect(serialize(parseAttributeSelector('[hey=foo]', true))).toBe('[hey = "foo"]');
   expect(serialize(parseAttributeSelector('[yay=and😀more]', true))).toBe('[yay = "and😀more"]');
   expect(serialize(parseAttributeSelector('[yay= trims  ]', true))).toBe('[yay = "trims"]');

@@ -106,8 +106,8 @@ export function compare(actual: Buffer, expected: Buffer, diff: Buffer|null, wid
       const [ssimX1, ssimY1] = r1.boundXY(x - SSIM_WINDOW_RADIUS, y - SSIM_WINDOW_RADIUS);
       const [ssimX2, ssimY2] = r1.boundXY(x + SSIM_WINDOW_RADIUS, y + SSIM_WINDOW_RADIUS);
       const ssimRGB = (ssim(fastR, ssimX1, ssimY1, ssimX2, ssimY2) + ssim(fastG, ssimX1, ssimY1, ssimX2, ssimY2) + ssim(fastB, ssimX1, ssimY1, ssimX2, ssimY2)) / 3.0;
-      const isAntialiassed = ssimRGB >= 0.99;
-      if (isAntialiassed) {
+      const isAntialiased = ssimRGB >= 0.99;
+      if (isAntialiased) {
         drawYellowPixel(x, y);
       } else {
         drawRedPixel(x, y);

@@ -455,9 +455,9 @@ it('should allow unnamed cookies', async ({ page, context, server, browserName, 
 });
 
 it('should set secure cookies on secure WebSocket', async ({ contextFactory, httpsServer }) => {
-  let resolveResceivedWebSocketHeaders = (headers: IncomingHttpHeaders) => { };
-  const receivedWebSocketHeaders = new Promise<IncomingHttpHeaders>(resolve => resolveResceivedWebSocketHeaders = resolve);
-  httpsServer.onceWebSocketConnection((ws, req) => resolveResceivedWebSocketHeaders(req.headers));
+  let resolveReceivedWebSocketHeaders = (headers: IncomingHttpHeaders) => { };
+  const receivedWebSocketHeaders = new Promise<IncomingHttpHeaders>(resolve => resolveReceivedWebSocketHeaders = resolve);
+  httpsServer.onceWebSocketConnection((ws, req) => resolveReceivedWebSocketHeaders(req.headers));
   const context = await contextFactory({ ignoreHTTPSErrors: true });
   const page = await context.newPage();
   await page.goto(httpsServer.EMPTY_PAGE);

@@ -94,7 +94,7 @@ export class WKInterceptableRequest {
         headers['Host'] = new URL(this.request.url()).host;
       this.request.setRawRequestHeaders(headersObjectToArray(headers));
     } else {
-      // No raw headers avaialable, use provisional ones.
+      // No raw headers available, use provisional ones.
       this.request.setRawRequestHeaders(null);
     }
     return response;

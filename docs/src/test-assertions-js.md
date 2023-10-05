@@ -85,7 +85,7 @@ Prefer [auto-retrying](#auto-retrying-assertions) assertions whenever possible. 
 | [`method: GenericAssertions.toStrictEqual`] | Value is similar, including property types |
 | [`method: GenericAssertions.toThrow`] | Function throws an error |
 | [`method: GenericAssertions.any`] | Matches any instance of a class/primitive |
-| [`method: GenericAssertions.anything`] | Matches antyhing |
+| [`method: GenericAssertions.anything`] | Matches anything |
 | [`method: GenericAssertions.arrayContaining`] | Array contains specific elements |
 | [`method: GenericAssertions.closeTo`] | Number is approximately equal |
 | [`method: GenericAssertions.objectContaining`] | Object contains specific properties |
