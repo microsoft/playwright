@@ -129,7 +129,7 @@ npx playwright --version
 - MacOS 12 Monterey or MacOS 13 Ventura.
 - Debian 11, Debian 12, Ubuntu 20.04 or Ubuntu 22.04.
 
-Binaries exist for x64 and arm64. Other architectures are unsupported, but you can specify the [executablePath](/api/class-browsertype#browser-type-launch-option-executable-path) to try.
+Binaries exist for x64 and arm64. Other architectures are unsupported, but you can specify the [executablePath](./api/class-browsertype#browser-type-launch-option-executable-path) to try.
 
 ## What's next
 
