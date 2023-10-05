@@ -13,6 +13,7 @@ jobs:
     runs-on: ubuntu-20.04
     if: github.repository == 'microsoft/playwright'
     permissions:
+      contents: read
       id-token: write
     steps:
     - uses: actions/checkout@v3
