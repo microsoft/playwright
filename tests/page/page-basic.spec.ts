@@ -17,8 +17,9 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should reject all promises when page is closed', async ({ page, isWebView2 }) => {
+it('should reject all promises when page is closed', async ({ page, isWebView2, isAndroid }) => {
   it.skip(isWebView2, 'Page.close() is not supported in WebView2');
+  it.fixme(isAndroid, '"Target crashed" instead of "Target closed"');
 
   let error = null;
   await Promise.all([

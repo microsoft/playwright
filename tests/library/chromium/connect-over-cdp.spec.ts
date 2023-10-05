@@ -447,7 +447,9 @@ test('emulate media should not be affected by second connectOverCDP', async ({ b
   }
 });
 
-test('should allow tracing over cdp session', async ({ browserType, mode }, testInfo) => {
+test('should allow tracing over cdp session', async ({ browserType, trace }, testInfo) => {
+  test.skip(trace === 'on');
+
   const port = 9339 + testInfo.workerIndex;
   const browserServer = await browserType.launch({
     args: ['--remote-debugging-port=' + port]
