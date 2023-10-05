@@ -396,7 +396,12 @@ export function formatTestTitle(config: FullConfig, test: TestCase, step?: TestS
     location = `${relativeTestPath(config, test)}`;
   else
     location = `${relativeTestPath(config, test)}:${step?.location?.line ?? test.location.line}:${step?.location?.column ?? test.location.column}`;
-  const projectTitle = projectName ? `[${projectName}] › ` : '';
+  let projectSuite = test.parent;
+  while (projectSuite.parent && projectSuite.parent.parent)
+    projectSuite = projectSuite.parent;
+  const reportName = projectSuite.project()?.metadata?.reportName;
+  const projectTitleParts = [reportName, projectName].filter(Boolean) as string[];
+  const projectTitle = projectTitleParts.length ? `[${projectTitleParts.join(' › ')}] › ` : '';
   return `${projectTitle}${location} › ${titles.join(' › ')}${stepSuffix(step)}`;
 }
 

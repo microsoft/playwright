@@ -1211,6 +1211,30 @@ test('same project different suffixes', async ({ runInlineTest, mergeReports }) 
   expect(output).toContain(`reportNames: first,second`);
 });
 
+test('should add report name to test title reporting', async ({ runInlineTest, mergeReports }) => {
+  const files = {
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: 'blob',
+        projects: [
+          { name: 'chromium' },
+        ]
+      };
+    `,
+    'a.test.js': `
+      import { test } from '@playwright/test';
+      test('math 1', ({}) => {});
+    `,
+  };
+
+  await runInlineTest(files, undefined, { PWTEST_BLOB_REPORT_NAME: 'msedge-dev-windows' });
+
+  const reportDir = test.info().outputPath('blob-report');
+  const { exitCode, output } = await mergeReports(reportDir, {}, { additionalArgs: ['--reporter', 'list'] });
+  expect(exitCode).toBe(0);
+  expect(output).toContain(`[msedge-dev-windows › chromium] › a.test.js:3:11 › math 1`);
+});
+
 test('no reports error', async ({ runInlineTest, mergeReports }) => {
   const reportDir = test.info().outputPath('blob-report');
   fs.mkdirSync(reportDir, { recursive: true });
