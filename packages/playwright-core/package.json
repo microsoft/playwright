@@ -4,7 +4,7 @@
   "description": "A high-level API to automate web browsers",
   "repository": {
     "type": "git",
-    "url": "https://github.com/microsoft/playwright.git"
+    "url": "git+https://github.com/microsoft/playwright.git"
   },
   "homepage": "https://playwright.dev",
   "engines": {
@@ -39,7 +39,7 @@
     "./types/structs": "./types/structs.d.ts"
   },
   "bin": {
-    "playwright-core": "./cli.js"
+    "playwright-core": "cli.js"
   },
   "types": "types/types.d.ts"
 }

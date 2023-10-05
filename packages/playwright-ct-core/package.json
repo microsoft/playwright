@@ -4,7 +4,7 @@
   "description": "Playwright Component Testing Helpers",
   "repository": {
     "type": "git",
-    "url": "https://github.com/microsoft/playwright.git"
+    "url": "git+https://github.com/microsoft/playwright.git"
   },
   "homepage": "https://playwright.dev",
   "engines": {
@@ -32,6 +32,6 @@
     "playwright": "1.39.0-next"
   },
   "bin": {
-    "playwright": "./cli.js"
+    "playwright": "cli.js"
   }
 }

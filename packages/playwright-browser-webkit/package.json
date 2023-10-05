@@ -4,7 +4,7 @@
   "description": "Playwright package that automatically installs WebKit",
   "repository": {
     "type": "git",
-    "url": "https://github.com/microsoft/playwright.git"
+    "url": "git+https://github.com/microsoft/playwright.git"
   },
   "homepage": "https://playwright.dev",
   "engines": {
