@@ -72,17 +72,21 @@ export const ActionList: React.FC<ActionListProps> = ({
       onAccepted={item => setSelectedTime({ minimum: item.action!.startTime, maximum: item.action!.endTime })}
       isError={item => !!item.action?.error?.message}
       isVisible={item => !selectedTime || (item.action!.startTime <= selectedTime.maximum && item.action!.endTime >= selectedTime.minimum)}
-      render={item => renderAction(item.action!, sdkLanguage, revealConsole, isLive || false)}
+      render={item => renderAction(item.action!, { sdkLanguage, revealConsole, isLive, showDuration: true, showBadges: true })}
     />
   </div>;
 };
 
 export const renderAction = (
   action: ActionTraceEvent,
-  sdkLanguage?: Language,
-  revealConsole?: () => void,
-  isLive?: boolean,
-) => {
+  options: {
+    sdkLanguage?: Language,
+    revealConsole?: () => void,
+    isLive?: boolean,
+    showDuration?: boolean,
+    showBadges?: boolean,
+  }) => {
+  const { sdkLanguage, revealConsole, isLive, showDuration, showBadges } = options;
   const { errors, warnings } = modelUtil.stats(action);
   const locator = action.params.selector ? asLocator(sdkLanguage || 'javascript', action.params.selector, false /* isFrameLocator */, true /* playSafe */) : undefined;
 
@@ -99,10 +103,11 @@ export const renderAction = (
       {locator && <div className='action-selector' title={locator}>{locator}</div>}
       {action.method === 'goto' && action.params.url && <div className='action-url' title={action.params.url}>{action.params.url}</div>}
     </div>
-    <div className='action-duration' style={{ flex: 'none' }}>{time || <span className='codicon codicon-loading'></span>}</div>
-    <div className='action-icons' onClick={() => revealConsole?.()}>
+    {(showDuration || showBadges) && <div className='spacer'></div>}
+    {showDuration && <div className='action-duration'>{time || <span className='codicon codicon-loading'></span>}</div>}
+    {showBadges && <div className='action-icons' onClick={() => revealConsole?.()}>
       {!!errors && <div className='action-icon'><span className='codicon codicon-error'></span><span className="action-icon-value">{errors}</span></div>}
       {!!warnings && <div className='action-icon'><span className='codicon codicon-warning'></span><span className="action-icon-value">{warnings}</span></div>}
-    </div>
+    </div>}
   </>;
 };

@@ -822,16 +822,16 @@ test('should chain expect matchers and expose matcher utils', async ({ runInline
 
         const log = callLogText(matcherResult?.log);
         const message = pass
-          ? () => this.utils.matcherHint('toBe', locator, expected, expectOptions) +
+          ? () => this.utils.matcherHint('toHaveAmount', undefined, undefined, expectOptions) +
               '\\n\\n' +
               \`Expected: \${this.isNot ? 'not' : ''}\${this.utils.printExpected(expected)}\\n\` +
               (matcherResult ? \`Received: \${this.utils.printReceived(matcherResult.actual)}\` : '') +
-              log
-          : () =>  this.utils.matcherHint('toBe', locator, expected, expectOptions) +
+              '\\n\\n' +log
+          : () =>  this.utils.matcherHint('toHaveAmount', undefined, undefined, expectOptions) +
               '\\n\\n' +
               \`Expected: \${this.utils.printExpected(expected)}\n\` +
               (matcherResult ? \`Received: \${this.utils.printReceived(matcherResult.actual)}\` : '') +
-              log;
+              '\\n\\n' +log;
 
         return {
           name: 'toHaveAmount',

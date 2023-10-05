@@ -55,8 +55,8 @@ export const FilmStrip: React.FunctionComponent<{
     const previewTime = boundaries.minimum + (boundaries.maximum - boundaries.minimum) * previewPoint.x / measure.width;
     previewImage = screencastFrames[upperBound(screencastFrames, previewTime, timeComparator) - 1];
     const fitInto = {
-      width: Math.min(500, (window.innerWidth / 2) | 0),
-      height: Math.min(500, (window.innerHeight / 2) | 0),
+      width: Math.min(800, (window.innerWidth / 2) | 0),
+      height: Math.min(800, (window.innerHeight / 2) | 0),
     };
     previewSize = previewImage ? inscribe({ width: previewImage.width, height: previewImage.height }, fitInto) : undefined;
   }
@@ -75,7 +75,7 @@ export const FilmStrip: React.FunctionComponent<{
         top: measure.bottom + 5,
         left: Math.min(previewPoint!.x, measure.width - (previewSize ? previewSize.width : 0) - 10),
       }}>
-        {previewPoint.action && <div className='film-strip-hover-title'>{renderAction(previewPoint.action, previewPoint.sdkLanguage)}</div>}
+        {previewPoint.action && <div className='film-strip-hover-title'>{renderAction(previewPoint.action, previewPoint)}</div>}
         {previewImage && previewSize && <div style={{ width: previewSize.width, height: previewSize.height }}>
           <img src={`sha1/${previewImage.sha1}`} width={previewSize.width} height={previewSize.height} />
         </div>}

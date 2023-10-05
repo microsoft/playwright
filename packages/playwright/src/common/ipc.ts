@@ -33,7 +33,7 @@ export type ConfigCLIOverrides = {
   timeout?: number;
   ignoreSnapshots?: boolean;
   updateSnapshots?: 'all'|'none'|'missing';
-  workers?: number;
+  workers?: number | string;
   projects?: { name: string, use?: any }[],
   use?: any;
 };

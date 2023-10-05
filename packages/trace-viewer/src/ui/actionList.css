@@ -15,10 +15,22 @@
 */
 
 .action-title {
-  flex: auto;
   display: block;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.action-location {
+  display: flex;
+  flex: none;
+  margin: 0 4px;
+  color: var(--vscode-foreground);
+}
+
+.action-location > span {
+  margin: 0 4px;
+  cursor: pointer;
+  text-decoration: underline;
 }
 
 .action-duration {

@@ -124,7 +124,10 @@ export const Workbench: React.FunctionComponent<{
     id: 'errors',
     title: 'Errors',
     errorCount: errorsModel.errors.size,
-    render: () => <ErrorsTab errorsModel={errorsModel} sdkLanguage={sdkLanguage} boundaries={boundaries} />
+    render: () => <ErrorsTab errorsModel={errorsModel} sdkLanguage={sdkLanguage} revealInSource={action => {
+      setSelectedAction(action);
+      selectPropertiesTab('source');
+    }} />
   };
   const sourceTab: TabbedPaneTabModel = {
     id: 'source',
