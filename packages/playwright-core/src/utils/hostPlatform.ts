@@ -23,12 +23,12 @@ export type HostPlatform = 'win64' |
                            'mac10.15' |
                            'mac11' | 'mac11-arm64' |
                            'mac12' | 'mac12-arm64' |
-                           'ubuntu18.04' | 'ubuntu18.04-arm64' |
-                           'ubuntu20.04' | 'ubuntu20.04-arm64' |
-                           'ubuntu22.04' | 'ubuntu22.04-arm64' |
-                           'debian11' | 'debian11-arm64' |
-                           'debian12' | 'debian12-arm64' |
-                           'generic-linux' | 'generic-linux-arm64' |
+                           'ubuntu18.04-x64' | 'ubuntu18.04-arm64' |
+                           'ubuntu20.04-x64' | 'ubuntu20.04-arm64' |
+                           'ubuntu22.04-x64' | 'ubuntu22.04-arm64' |
+                           'debian11-x64' | 'debian11-arm64' |
+                           'debian12-x64' | 'debian12-arm64' |
+                           'generic-linux-x64' | 'generic-linux-arm64' |
                            '<unknown>';
 
 export const hostPlatform = ((): HostPlatform => {
@@ -55,7 +55,7 @@ export const hostPlatform = ((): HostPlatform => {
     return macVersion as HostPlatform;
   }
   if (platform === 'linux') {
-    const archSuffix = os.arch() === 'arm64' ? '-arm64' : '';
+    const archSuffix = '-' + os.arch();
     const distroInfo = getLinuxDistributionInfoSync();
 
     // Pop!_OS is ubuntu-based and has the same versions.
@@ -68,13 +68,13 @@ export const hostPlatform = ((): HostPlatform => {
         return ('ubuntu20.04' + archSuffix) as HostPlatform;
       return ('ubuntu22.04' + archSuffix) as HostPlatform;
     }
-    if (distroInfo?.id === 'debian' && distroInfo?.version === '11')
+    if ((distroInfo?.id === 'debian' || distroInfo?.id === 'raspbian') && distroInfo?.version === '11')
       return ('debian11' + archSuffix) as HostPlatform;
-    if (distroInfo?.id === 'debian' && distroInfo?.version === '12')
+    if ((distroInfo?.id === 'debian' || distroInfo?.id === 'raspbian') && distroInfo?.version === '12')
       return ('debian12' + archSuffix) as HostPlatform;
     // use most recent supported release for 'debian testing' and 'unstable'.
     // they never include a numeric version entry in /etc/os-release.
-    if (distroInfo?.id === 'debian' && distroInfo?.version === '')
+    if ((distroInfo?.id === 'debian' || distroInfo?.id === 'raspbian') && distroInfo?.version === '')
       return ('debian12' + archSuffix) as HostPlatform;
     return ('generic-linux' + archSuffix) as HostPlatform;
   }

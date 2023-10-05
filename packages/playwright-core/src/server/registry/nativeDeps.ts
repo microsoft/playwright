@@ -19,7 +19,7 @@
 //     ./utils/linux-browser-dependencies/run.sh ubuntu:20.04
 
 export const deps: any = {
-  'ubuntu18.04': {
+  'ubuntu18.04-x64': {
     tools: [
       'xvfb',
       'fonts-noto-color-emoji',
@@ -181,7 +181,7 @@ export const deps: any = {
     },
   },
 
-  'ubuntu20.04': {
+  'ubuntu20.04-x64': {
     tools: [
       'xvfb',
       'fonts-noto-color-emoji',
@@ -396,7 +396,7 @@ export const deps: any = {
     },
   },
 
-  'ubuntu22.04': {
+  'ubuntu22.04-x64': {
     tools: [
       'xvfb',
       'fonts-noto-color-emoji',
@@ -612,7 +612,7 @@ export const deps: any = {
       'libevent-2.1.so.7': 'libevent-2.1-7',
     },
   },
-  'debian11': {
+  'debian11-x64': {
     tools: [
       'xvfb',
       'fonts-noto-color-emoji',
@@ -822,7 +822,7 @@ export const deps: any = {
       'libevent-2.1.so.7': 'libevent-2.1-7',
     }
   },
-  'debian12': {
+  'debian12-x64': {
     tools: [
       'xvfb',
       'fonts-noto-color-emoji',
@@ -977,58 +977,58 @@ export const deps: any = {
 };
 
 deps['ubuntu20.04-arm64'] = {
-  tools: [...deps['ubuntu20.04'].tools],
-  chromium: [...deps['ubuntu20.04'].chromium],
+  tools: [...deps['ubuntu20.04-x64'].tools],
+  chromium: [...deps['ubuntu20.04-x64'].chromium],
   firefox: [
-    ...deps['ubuntu20.04'].firefox,
+    ...deps['ubuntu20.04-x64'].firefox,
   ],
   webkit: [
-    ...deps['ubuntu20.04'].webkit,
+    ...deps['ubuntu20.04-x64'].webkit,
   ],
   lib2package: {
-    ...deps['ubuntu20.04'].lib2package,
+    ...deps['ubuntu20.04-x64'].lib2package,
   },
 };
 
 deps['ubuntu22.04-arm64'] = {
-  tools: [...deps['ubuntu22.04'].tools],
-  chromium: [...deps['ubuntu22.04'].chromium],
+  tools: [...deps['ubuntu22.04-x64'].tools],
+  chromium: [...deps['ubuntu22.04-x64'].chromium],
   firefox: [
-    ...deps['ubuntu22.04'].firefox,
+    ...deps['ubuntu22.04-x64'].firefox,
   ],
   webkit: [
-    ...deps['ubuntu22.04'].webkit,
+    ...deps['ubuntu22.04-x64'].webkit,
   ],
   lib2package: {
-    ...deps['ubuntu22.04'].lib2package,
+    ...deps['ubuntu22.04-x64'].lib2package,
   },
 };
 
 deps['debian11-arm64'] = {
-  tools: [...deps['debian11'].tools],
-  chromium: [...deps['debian11'].chromium],
+  tools: [...deps['debian11-x64'].tools],
+  chromium: [...deps['debian11-x64'].chromium],
   firefox: [
-    ...deps['debian11'].firefox,
+    ...deps['debian11-x64'].firefox,
   ],
   webkit: [
-    ...deps['debian11'].webkit,
+    ...deps['debian11-x64'].webkit,
   ],
   lib2package: {
-    ...deps['debian11'].lib2package,
+    ...deps['debian11-x64'].lib2package,
   },
 };
 
 deps['debian12-arm64'] = {
-  tools: [...deps['debian12'].tools],
-  chromium: [...deps['debian12'].chromium],
+  tools: [...deps['debian12-x64'].tools],
+  chromium: [...deps['debian12-x64'].chromium],
   firefox: [
-    ...deps['debian12'].firefox,
+    ...deps['debian12-x64'].firefox,
   ],
   webkit: [
-    ...deps['debian12'].webkit,
+    ...deps['debian12-x64'].webkit,
   ],
   lib2package: {
-    ...deps['debian12'].lib2package,
+    ...deps['debian12-x64'].lib2package,
   },
 };
 

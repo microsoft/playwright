@@ -86,9 +86,9 @@ export async function installDependenciesWindows(targets: Set<DependencyGroup>, 
 export async function installDependenciesLinux(targets: Set<DependencyGroup>, dryRun: boolean) {
   const libraries: string[] = [];
   let platform = hostPlatform;
-  if (platform === 'generic-linux' || platform === 'generic-linux-arm64') {
+  if (platform === 'generic-linux-x64' || platform === 'generic-linux-arm64') {
     console.warn('BEWARE: your OS is not officially supported by Playwright; installing dependencies for Ubuntu as a fallback.'); // eslint-disable-line no-console
-    platform = hostPlatform === 'generic-linux' ? 'ubuntu20.04' : 'ubuntu20.04-arm64';
+    platform = hostPlatform === 'generic-linux-x64' ? 'ubuntu20.04-x64' : 'ubuntu20.04-arm64';
   }
   for (const target of targets) {
     const info = deps[platform];
