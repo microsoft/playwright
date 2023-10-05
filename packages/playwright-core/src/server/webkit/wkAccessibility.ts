@@ -210,7 +210,6 @@ class WKAXNode implements accessibility.AXNode {
       'expanded',
       'focused',
       'modal',
-      'multiline',
       'multiselectable',
       'readonly',
       'required',
