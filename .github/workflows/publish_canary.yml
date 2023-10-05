@@ -25,7 +25,6 @@ jobs:
       with:
         node-version: 18
         registry-url: 'https://registry.npmjs.org'
-    - run: npm i -g npm@8
     - run: npm ci
     - run: npm run build
     - run: npx playwright install-deps
@@ -79,7 +78,6 @@ jobs:
     - uses: actions/setup-node@v3
       with:
         node-version: 16
-    - run: npm i -g npm@8
     - name: Deploy Canary
       run: bash utils/build/deploy-trace-viewer.sh --canary
       if: contains(github.ref, 'main')
