@@ -8,6 +8,11 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 ## Version 1.38
 
+<LiteYouTube
+  id="YGJTeXaZDTM"
+  title="Playwright 1.38"
+/>
+
 ### UI Mode Updates
 
 ![Playwright UI Mode](https://github.com/microsoft/playwright/assets/746130/8ba27be0-58fd-4f62-8561-950480610369)
