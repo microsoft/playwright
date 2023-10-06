@@ -3,6 +3,8 @@ id: evaluating
 title: "Evaluating JavaScript"
 ---
 
+## Introduction
+
 Playwright scripts run in your Playwright environment. Your page scripts run in the browser page environment. Those environments don't intersect, they are running in different virtual machines in different processes and even potentially on different computers.
 
 The [`method: Page.evaluate`] API can run a JavaScript function in the context

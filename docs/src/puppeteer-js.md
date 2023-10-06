@@ -3,8 +3,6 @@ id: puppeteer
 title: "Migrating from Puppeteer"
 ---
 
-<!-- TOC -->
-
 ## Migration Principles
 
 This guide describes migration to [Playwright Library](./library) and [Playwright Test](./intro.md) from Puppeteer. The APIs have similarities, but Playwright offers much more possibilities for web testing and cross-browser automation.
