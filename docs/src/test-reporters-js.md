@@ -346,5 +346,5 @@ export default defineConfig({
 * [ReportPortal](https://github.com/reportportal/agent-js-playwright)
 * [Serenity/JS](https://serenity-js.org/handbook/test-runners/playwright-test)
 * [Testmo](https://github.com/jonasclaes/playwright-testmo-reporter)
-* [Tesults](https://www.tesults.com/docs/playwright)
 * [Testomat.io](https://github.com/testomatio/reporter/blob/master/docs/frameworks.md#playwright)
+* [Tesults](https://www.tesults.com/docs/playwright)
