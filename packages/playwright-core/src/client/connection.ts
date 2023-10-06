@@ -123,14 +123,16 @@ export class Connection extends EventEmitter {
     const guid = object._guid;
     const type = object._type;
     const id = ++this._lastId;
-    const converted = { id, guid, method, params };
-    // Do not include metadata in debug logs to avoid noise.
-    debugLogger.log('channel:command', converted);
+    const message = { id, guid, method, params };
+    if (debugLogger.isEnabled('channel:command')) {
+      // Do not include metadata in debug logs to avoid noise.
+      debugLogger.log('channel:command', JSON.stringify(message));
+    }
     const location = frames[0] ? { file: frames[0].file, line: frames[0].line, column: frames[0].column } : undefined;
     const metadata: channels.Metadata = { wallTime, apiName, location, internal: !apiName };
     if (this._tracingCount && frames && type !== 'LocalUtils')
       this._localUtils?._channel.addStackToTracingNoReply({ callData: { stack: frames, id } }).catch(() => {});
-    this.onmessage({ ...converted, metadata });
+    this.onmessage({ ...message, metadata });
     return await new Promise((resolve, reject) => this._callbacks.set(id, { resolve, reject, stackTrace, type, method }));
   }
 
@@ -140,7 +142,8 @@ export class Connection extends EventEmitter {
 
     const { id, guid, method, params, result, error } = message as any;
     if (id) {
-      debugLogger.log('channel:response', message);
+      if (debugLogger.isEnabled('channel:response'))
+        debugLogger.log('channel:response', JSON.stringify(message));
       const callback = this._callbacks.get(id);
       if (!callback)
         throw new Error(`Cannot find command to respond: ${id}`);
@@ -154,7 +157,8 @@ export class Connection extends EventEmitter {
       return;
     }
 
-    debugLogger.log('channel:event', message);
+    if (debugLogger.isEnabled('channel:event'))
+      debugLogger.log('channel:event', JSON.stringify(message));
     if (method === '__create__') {
       this._createRemoteObject(guid, params.type, params.guid, params.initializer);
       return;
