@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { stripAnsi } from '../config/utils';
 import { test, expect } from './pageTest';
 
 test.describe('toHaveCount', () => {
@@ -164,6 +165,26 @@ test.describe('toHaveJSProperty', () => {
     await page.$eval('div', e => (e as any).foo = null);
     const locator = page.locator('div');
     await expect(locator).toHaveJSProperty('foo', null);
+  });
+
+  test('pass nested', async ({ page }) => {
+    await page.setContent('<div></div>');
+    await page.$eval('div', e => (e as any).foo = { nested: { a: 1, b: 'string', c: new Date(1627503992000) } });
+    const locator = page.locator('div');
+    await expect(locator).toHaveJSProperty('foo.nested', { a: 1, b: 'string', c: new Date(1627503992000) });
+    await expect(locator).toHaveJSProperty('foo.nested.a', 1);
+    await expect(locator).toHaveJSProperty('foo.nested.b', 'string');
+    await expect(locator).toHaveJSProperty('foo.nested.c', new Date(1627503992000));
+  });
+
+  test('fail nested', async ({ page }) => {
+    await page.setContent('<div></div>');
+    await page.$eval('div', e => (e as any).foo = { nested: { a: 1, b: 'string', c: new Date(1627503992000) } });
+    const locator = page.locator('div');
+    const error1 = await expect(locator).toHaveJSProperty('foo.bar', { a: 1, b: 'string', c: new Date(1627503992001) }, { timeout: 1000 }).catch(e => e);
+    expect.soft(stripAnsi(error1.message)).toContain(`Received: undefined`);
+    const error2 = await expect(locator).toHaveJSProperty('foo.nested.a', 2, { timeout: 1000 }).catch(e => e);
+    expect.soft(stripAnsi(error2.message)).toContain(`Received: 1`);
   });
 });
 
