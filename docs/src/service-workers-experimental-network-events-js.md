@@ -3,6 +3,8 @@ id: service-workers-experimental
 title: "(Experimental) Service Worker Network Events"
 ---
 
+## Introduction
+
 :::warning
 If you're looking to do general network mocking, routing, and interception, please see the [Network Guide](./network.md) first. Playwright provides built-in APIs for this use case that don't require the information below. However, if you're interested in requests made by Service Workers themselves, please read below.
 :::

@@ -3,6 +3,8 @@ id: screenshots
 title: "Screenshots"
 ---
 
+## Introduction
+
 Here is a quick way to capture a screenshot and save it into a file:
 
 ```js

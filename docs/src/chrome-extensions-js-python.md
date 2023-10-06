@@ -3,6 +3,8 @@ id: chrome-extensions
 title: "Chrome extensions"
 ---
 
+## Introduction
+
 :::note
 Extensions only work in Chrome / Chromium launched with a persistent context.
 :::

@@ -3,8 +3,6 @@ id: testing-library
 title: "Migrating from Testing Library"
 ---
 
-<!-- TOC -->
-
 ## Migration principles
 
 This guide describes migration to Playwright's [Experimental Component Testing](./test-components) from [DOM Testing Library](https://testing-library.com/docs/dom-testing-library/intro/), [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/), [Vue Testing Library](https://testing-library.com/docs/vue-testing-library/intro) and [Svelte Testing Library](https://testing-library.com/docs/svelte-testing-library/intro).

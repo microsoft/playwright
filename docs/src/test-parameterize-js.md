@@ -2,6 +2,7 @@
 id: test-parameterize
 title: "Parameterize tests"
 ---
+## Introduction
 
 You can either parameterize tests on a test level or on a project level.
 

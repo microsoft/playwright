@@ -3,6 +3,8 @@ id: videos
 title: "Videos"
 ---
 
+## Introduction
+
 With Playwright you can record videos for your tests.
 
 ## Record video

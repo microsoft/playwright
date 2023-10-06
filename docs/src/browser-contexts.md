@@ -3,6 +3,8 @@ id: browser-contexts
 title: "Isolation"
 ---
 
+## Introduction
+
 Tests written with Playwright execute in isolated clean-slate environments called browser contexts. This isolation model improves reproducibility and prevents cascading test failures. 
 
 ## What is Test Isolation? 

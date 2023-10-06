@@ -3,6 +3,7 @@ id: best-practices
 title: "Best Practices"
 ---
 
+## Introduction
 
 This guide should help you to make sure you are following our best practices and writing tests that are more resilient.
 

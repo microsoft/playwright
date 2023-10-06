@@ -3,6 +3,8 @@ id: test-configuration
 title: "Test configuration"
 ---
 
+## Introduction
+
 Playwright has many options to configure how your tests are run. You can specify these options in the configuration file. Note that test runner options are **top-level**, do not put them into the `use` section.
 
 ## Basic Configuration
