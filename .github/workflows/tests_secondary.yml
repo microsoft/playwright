@@ -102,7 +102,13 @@ jobs:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
     - run: npx playwright install --with-deps ${{ matrix.browser }} chromium
+    - run: npm run test -- --project=${{ matrix.browser }} --workers=1
+      if: matrix.browser == 'firefox'
+      shell: bash
+      env:
+        PWTEST_BLOB_REPORT_NAME: "${{ matrix.browser }}-windows-latest"
     - run: npm run test -- --project=${{ matrix.browser }}
+      if: matrix.browser != 'firefox'
       shell: bash
       env:
         PWTEST_BLOB_REPORT_NAME: "${{ matrix.browser }}-windows-latest"
@@ -441,7 +447,7 @@ jobs:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
     - run: npx playwright install --with-deps firefox-beta chromium
-    - run: npm run ftest
+    - run: npm run ftest -- --workers=1
       shell: bash
       env:
         PWTEST_CHANNEL: firefox-beta
