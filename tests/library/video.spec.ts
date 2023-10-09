@@ -444,7 +444,8 @@ it.describe('screencast', () => {
   });
 
   it('should scale frames down to the requested size ', async ({ browser, browserName, server, headless, trace }, testInfo) => {
-    it.fixme(!headless, 'Fails on headed');
+    const isChromiumHeadlessNew = browserName === 'chromium' && !!headless && !!process.env.PLAYWRIGHT_CHROMIUM_USE_HEADLESS_NEW;
+    it.fixme(!headless || isChromiumHeadlessNew, 'Fails on headed');
 
     const context = await browser.newContext({
       recordVideo: {
