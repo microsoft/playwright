@@ -345,6 +345,7 @@ export async function toHaveScreenshot(
         _comparator: config?._comparator,
         maxDiffPixels: config?.maxDiffPixels,
         maxDiffPixelRatio: config?.maxDiffPixelRatio,
+        maxDiffSize: config?.maxDiffSize,
         threshold: config?.threshold,
       },
       nameOrOptions, optOptions);
