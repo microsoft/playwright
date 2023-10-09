@@ -598,7 +598,7 @@ test('should write missing expectations locally twice and attach them', async ({
 
   expect(result.output).toContain('Here we are!');
 
-  const stackLines = result.output.split('\n').filter(line => line.includes('    at ')).filter(line => !line.includes(testInfo.outputPath()));
+  const stackLines = result.output.split('\n').filter(line => line.includes('    at ')).filter(line => !line.includes('a.spec.js'));
   expect(result.output).toContain('a.spec.js:5');
   expect(stackLines.length).toBe(0);
 

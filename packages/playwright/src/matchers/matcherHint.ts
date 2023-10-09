@@ -17,8 +17,8 @@
 import { colors } from 'playwright-core/lib/utilsBundle';
 import type { ExpectMatcherContext } from './expect';
 import type { Locator } from 'playwright-core';
-import { stringifyStackFrames } from '../util';
 import type { StackFrame } from '@protocol/channels';
+import { stringifyStackFrames } from 'playwright-core/lib/utils';
 
 export function matcherHint(state: ExpectMatcherContext, locator: Locator | undefined, matcherName: string, expression: any, actual: any, matcherOptions: any, timeout?: number) {
   let header = state.utils.matcherHint(matcherName, expression, actual, matcherOptions).replace(/ \/\/ deep equality/, '') + '\n\n';
