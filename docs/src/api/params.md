@@ -849,6 +849,12 @@ An acceptable amount of pixels that could be different. Default is configurable 
 
 An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1`. Default is configurable with `TestConfig.expect`. Unset by default.
 
+## assertions-max-diff-size
+* langs: js
+- `maxDiffSize` <[int]>
+
+An acceptable number of pixels to vary the size by, between `0` and `1`. Default is configurable with `TestConfig.expect`. 1 by default.
+
 ## assertions-threshold
 * langs: js
 - `threshold` <[float]>

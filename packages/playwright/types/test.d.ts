@@ -646,6 +646,11 @@ interface TestConfig {
       maxDiffPixelRatio?: number;
 
       /**
+       * an acceptable number of pixels to vary the size by, `1` by default.
+       */
+      maxDiffSize?: number;
+
+      /**
        * See `animations` in [page.screenshot([options])](https://playwright.dev/docs/api/class-page#page-screenshot).
        * Defaults to `"disabled"`.
        */
@@ -687,6 +692,11 @@ interface TestConfig {
        * default.
        */
       maxDiffPixelRatio?: number;
+
+      /**
+       * an acceptable number of pixels to vary the size by, `1` by default.
+       */
+      maxDiffSize?: number;
     };
   };
 
@@ -6587,6 +6597,11 @@ interface TestProject {
       maxDiffPixelRatio?: number;
 
       /**
+       * an acceptable number of pixels to vary the size by, `1` by default.
+       */
+      maxDiffSize?: number;
+
+      /**
        * See `animations` in [page.screenshot([options])](https://playwright.dev/docs/api/class-page#page-screenshot).
        * Defaults to `"disabled"`.
        */
@@ -6628,6 +6643,11 @@ interface TestProject {
        * default.
        */
       maxDiffPixelRatio?: number;
+
+      /**
+       * an acceptable number of pixels to vary the size by, `1` by default.
+       */
+      maxDiffSize?: number;
     };
   };
 
