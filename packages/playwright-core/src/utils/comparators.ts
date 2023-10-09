@@ -60,12 +60,10 @@ function compareImages(mimeType: string, actualBuffer: Buffer | string, expected
   let sizesMismatchError = '';
   if (expected.width !== actual.width || expected.height !== actual.height) {
     const maxDiffSize = 1 + (options.maxDiffSize ?? 1);
-    if (Math.abs(expected.width - actual.width) >= maxDiffSize || Math.abs(expected.height - actual.height) >= maxDiffSize) {
+    if (Math.abs(expected.width - actual.width) >= maxDiffSize || Math.abs(expected.height - actual.height) >= maxDiffSize)
       sizesMismatchError = `Expected an image ${expected.width}px by ${expected.height}px, received ${actual.width}px by ${actual.height}px. `;
-    } else {
-      actual = resizeImage(actual, size);
-      expected = resizeImage(expected, size);
-    }
+    actual = resizeImage(actual, size);
+    expected = resizeImage(expected, size);
   }
 
   const diff = new PNG({ width: size.width, height: size.height });
