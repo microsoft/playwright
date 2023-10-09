@@ -52,6 +52,10 @@ export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChann
     return await newContextForReuse(this._object, this, params, null, metadata);
   }
 
+  async stopPendingOperations(params: channels.BrowserStopPendingOperationsParams, metadata: CallMetadata): Promise<channels.BrowserStopPendingOperationsResult> {
+    await this._object.stopPendingOperations(params.reason);
+  }
+
   async close(): Promise<void> {
     await this._object.close();
   }
@@ -111,6 +115,10 @@ export class ConnectedBrowserDispatcher extends Dispatcher<Browser, channels.Bro
 
   async newContextForReuse(params: channels.BrowserNewContextForReuseParams, metadata: CallMetadata): Promise<channels.BrowserNewContextForReuseResult> {
     return await newContextForReuse(this._object, this as any as BrowserDispatcher, params, this.selectors, metadata);
+  }
+
+  async stopPendingOperations(params: channels.BrowserStopPendingOperationsParams, metadata: CallMetadata): Promise<channels.BrowserStopPendingOperationsResult> {
+    await this._object.stopPendingOperations(params.reason);
   }
 
   async close(): Promise<void> {

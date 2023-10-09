@@ -330,8 +330,6 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       return context;
     });
 
-    const prependToError = testInfoImpl._didTimeout ? (browser as any)._connection.pendingProtocolCalls() : '';
-
     let counter = 0;
     await Promise.all([...contexts.keys()].map(async context => {
       (context as any)[kStartedContextTearDown] = true;
@@ -356,8 +354,6 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       }
     }));
 
-    if (prependToError)
-      testInfo.errors.push({ message: prependToError });
   }, { scope: 'test',  _title: 'context' } as any],
 
   _contextReuseMode: process.env.PW_TEST_REUSE_CONTEXT === 'when-possible' ? 'when-possible' : (process.env.PW_TEST_REUSE_CONTEXT ? 'force' : 'none'),
@@ -378,6 +374,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     const context = await (browser as any)._newContextForReuse(defaultContextOptions);
     (context as any)[kIsReusedContext] = true;
     await use(context);
+    await (browser as any)._stopPendingOperations('Test ended');
   },
 
   page: async ({ context, _reuseContext }, use) => {

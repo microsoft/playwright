@@ -94,8 +94,12 @@ export abstract class Browser extends SdkObject {
       this._contextForReuse = { context: await this.newContext(metadata, params), hash };
       return { context: this._contextForReuse.context, needsReset: false };
     }
-    await this._contextForReuse.context.stopPendingOperations();
+    await this._contextForReuse.context.stopPendingOperations('Context recreated');
     return { context: this._contextForReuse.context, needsReset: true };
+  }
+
+  async stopPendingOperations(reason: string) {
+    await this._contextForReuse?.context?.stopPendingOperations(reason);
   }
 
   _downloadCreated(page: Page, uuid: string, url: string, suggestedFilename?: string) {

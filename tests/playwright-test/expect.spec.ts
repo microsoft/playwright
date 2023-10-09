@@ -630,7 +630,6 @@ test('should print pending operations for toHaveText', async ({ runInlineTest })
   expect(result.failed).toBe(1);
   expect(result.exitCode).toBe(1);
   const output = result.output;
-  expect(output).toContain('Pending operations:');
   expect(output).toContain(`expect(locator).toHaveText(expected)`);
   expect(output).toContain('Expected string: "Text"');
   expect(output).toContain('Received string: ""');
