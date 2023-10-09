@@ -21,7 +21,7 @@ import { compare } from '../image_tools/compare';
 const { diff_match_patch, DIFF_INSERT, DIFF_DELETE, DIFF_EQUAL } = require('../third_party/diff_match_patch');
 import { PNG } from '../utilsBundle';
 
-export type ImageComparatorOptions = { threshold?: number, maxDiffPixels?: number, maxDiffPixelRatio?: number, _comparator?: string };
+export type ImageComparatorOptions = { threshold?: number, maxDiffPixels?: number, maxDiffPixelRatio?: number, maxDiffSize?: number, _comparator?: string };
 export type ComparatorResult = { diff?: Buffer; errorMessage: string; } | null;
 export type Comparator = (actualBuffer: Buffer | string, expectedBuffer: Buffer, options?: any) => ComparatorResult;
 
@@ -56,13 +56,18 @@ function compareImages(mimeType: string, actualBuffer: Buffer | string, expected
 
   let actual: ImageData = mimeType === 'image/png' ? PNG.sync.read(actualBuffer) : jpegjs.decode(actualBuffer, { maxMemoryUsageInMB: JPEG_JS_MAX_BUFFER_SIZE_IN_MB });
   let expected: ImageData = mimeType === 'image/png' ? PNG.sync.read(expectedBuffer) : jpegjs.decode(expectedBuffer, { maxMemoryUsageInMB: JPEG_JS_MAX_BUFFER_SIZE_IN_MB });
-  const size = { width: Math.max(expected.width, actual.width), height: Math.max(expected.height, actual.height) };
+  const size = { width: Math.min(expected.width, actual.width), height: Math.min(expected.height, actual.height) };
   let sizesMismatchError = '';
   if (expected.width !== actual.width || expected.height !== actual.height) {
-    sizesMismatchError = `Expected an image ${expected.width}px by ${expected.height}px, received ${actual.width}px by ${actual.height}px. `;
-    actual = resizeImage(actual, size);
-    expected = resizeImage(expected, size);
+    const maxDiffSize = 1 + (options.maxDiffSize ?? 1);
+    if (Math.abs(expected.width - actual.width) >= maxDiffSize || Math.abs(expected.height - actual.height) >= maxDiffSize) {
+      sizesMismatchError = `Expected an image ${expected.width}px by ${expected.height}px, received ${actual.width}px by ${actual.height}px. `;
+    } else {
+      actual = resizeImage(actual, size);
+      expected = resizeImage(expected, size);
+    }
   }
+
   const diff = new PNG({ width: size.width, height: size.height });
   let count;
   if (options._comparator === 'ssim-cie94') {
@@ -80,17 +85,19 @@ function compareImages(mimeType: string, actualBuffer: Buffer | string, expected
   }
 
   const maxDiffPixels1 = options.maxDiffPixels;
-  const maxDiffPixels2 = options.maxDiffPixelRatio !== undefined ? expected.width * expected.height * options.maxDiffPixelRatio : undefined;
+  const maxDiffPixels2 = options.maxDiffPixelRatio !== undefined ? size.width * size.height * options.maxDiffPixelRatio : undefined;
   let maxDiffPixels;
   if (maxDiffPixels1 !== undefined && maxDiffPixels2 !== undefined)
     maxDiffPixels = Math.min(maxDiffPixels1, maxDiffPixels2);
   else
     maxDiffPixels = maxDiffPixels1 ?? maxDiffPixels2 ?? 0;
-  const ratio = Math.ceil(count / (expected.width * expected.height) * 100) / 100;
+
+  const ratio = Math.ceil(count / (size.width * size.height) * 100) / 100;
   const pixelsMismatchError = count > maxDiffPixels ? `${count} pixels (ratio ${ratio.toFixed(2)} of all image pixels) are different.` : '';
   if (pixelsMismatchError || sizesMismatchError)
     return { errorMessage: sizesMismatchError + pixelsMismatchError, diff: PNG.sync.write(diff) };
-  return null;
+  else
+    return null;
 }
 
 function validateBuffer(buffer: Buffer, mimeType: string): void {
