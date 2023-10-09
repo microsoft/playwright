@@ -219,8 +219,8 @@ import { test, expect } from '@playwright/test';
 import { test as dbTest, expect as dbExpect } from 'database-test-utils';
 import { test as a11yTest, expect as a11yExpect } from 'a11y-test-utils';
 
-export const expect = expect.composedExpect([dbExpect, a11yExpect]);
-export const test = test.composedTest([dbTest, a11yTest]);
+export const expect = expect.composedExpect(dbExpect, a11yExpect);
+export const test = test.composedTest(dbTest, a11yTest);
 ```
 
 ```js title="test.spec.ts"
