@@ -188,32 +188,39 @@ it('should exclude patterns', async ({ browserType, server, browserName, headles
     proxy: { server: `localhost:${server.PORT}`, bypass: '1.non.existent.domain.for.the.test, 2.non.existent.domain.for.the.test, .another.test' }
   });
 
-  const page = await browser.newPage();
-  await page.goto('http://0.non.existent.domain.for.the.test/target.html');
-  expect(await page.title()).toBe('Served by the proxy');
+  {
+    const page = await browser.newPage();
+    await page.goto('http://0.non.existent.domain.for.the.test/target.html');
+    expect(await page.title()).toBe('Served by the proxy');
+    await page.close();
+  }
 
   {
+    const page = await browser.newPage();
     const error = await page.goto('http://1.non.existent.domain.for.the.test/target.html').catch(e => e);
     expect(error.message).toBeTruthy();
+    await page.close();
   }
 
   {
+    const page = await browser.newPage();
     const error = await page.goto('http://2.non.existent.domain.for.the.test/target.html').catch(e => e);
     expect(error.message).toBeTruthy();
+    await page.close();
   }
 
   {
+    const page = await browser.newPage();
     const error = await page.goto('http://foo.is.the.another.test/target.html').catch(e => e);
     expect(error.message).toBeTruthy();
+    await page.close();
   }
 
-  // Make sure error page commits.
-  if (browserName === 'chromium')
-    await page.waitForURL('chrome-error://chromewebdata/');
-
   {
+    const page = await browser.newPage();
     await page.goto('http://3.non.existent.domain.for.the.test/target.html');
     expect(await page.title()).toBe('Served by the proxy');
+    await page.close();
   }
 
   await browser.close();
