@@ -141,7 +141,7 @@ export default defineConfig({
       // total amount of pixels, between 0 and 1.
       maxDiffPixelRatio: 0.1,
       // An acceptable ratio for the difference in width or height,
-      // greater than 1.
+      // greater than 0.
       maxDiffSizeRatio: 0.2,
     },
   },

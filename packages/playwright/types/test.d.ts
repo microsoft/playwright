@@ -651,7 +651,7 @@ interface TestConfig {
       maxDiffSize?: number;
 
       /**
-       * an acceptable ratio for the difference in width or height, greater than `1`, `1` by default.
+       * an acceptable ratio for the difference in width or height, greater than `0`, unset by default.
        */
       maxDiffSizeRatio?: number;
 
@@ -704,7 +704,7 @@ interface TestConfig {
       maxDiffSize?: number;
 
       /**
-       * an acceptable ratio for the difference in width or height, greater than `1`, `1` by default.
+       * an acceptable ratio for the difference in width or height, greater than `0`, unset by default.
        */
       maxDiffSizeRatio?: number;
     };
@@ -5810,8 +5810,8 @@ interface LocatorAssertions {
     maxDiffSize?: number;
 
     /**
-     * An acceptable ratio for the difference in width or height, greater than `1`. Default is configurable with
-     * `TestConfig.expect`. 1 by default.
+     * An acceptable ratio for the difference in width or height, greater than `0`. Default is configurable with
+     * `TestConfig.expect`. Unset by default.
      */
     maxDiffSizeRatio?: number;
 
@@ -5905,8 +5905,8 @@ interface LocatorAssertions {
     maxDiffSize?: number;
 
     /**
-     * An acceptable ratio for the difference in width or height, greater than `1`. Default is configurable with
-     * `TestConfig.expect`. 1 by default.
+     * An acceptable ratio for the difference in width or height, greater than `0`. Default is configurable with
+     * `TestConfig.expect`. Unset by default.
      */
     maxDiffSizeRatio?: number;
 
@@ -6636,7 +6636,7 @@ interface TestProject {
       maxDiffSize?: number;
 
       /**
-       * an acceptable ratio for the difference in width or height, greater than `1`, `1` by default.
+       * an acceptable ratio for the difference in width or height, greater than `0`, unset by default.
        */
       maxDiffSizeRatio?: number;
 
@@ -6689,7 +6689,7 @@ interface TestProject {
       maxDiffSize?: number;
 
       /**
-       * an acceptable ratio for the difference in width or height, greater than `1`, `1` by default.
+       * an acceptable ratio for the difference in width or height, greater than `0`, unset by default.
        */
       maxDiffSizeRatio?: number;
     };

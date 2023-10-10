@@ -406,7 +406,7 @@ test('should compile with different option combinations', async ({ runTSC }) => 
             maxDiffPixels: 10,
             maxDiffPixelRatio: 0.2,
             maxDiffSize: 2,
-            maxDiffSizeRatio: 1.2,
+            maxDiffSizeRatio: 0.2,
             animations: "allow",
             caret: "hide",
             scale: "css",

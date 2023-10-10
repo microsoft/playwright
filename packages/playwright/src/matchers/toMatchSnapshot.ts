@@ -130,8 +130,8 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
     if (options.maxDiffSize !== undefined && options.maxDiffSize < 0)
       throw new Error('`maxDiffSize` option value must be non-negative integer');
 
-    if (options.maxDiffSizeRatio !== undefined && options.maxDiffSizeRatio < 1)
-      throw new Error('`maxDiffSizeRatio` option value must be greater than 1');
+    if (options.maxDiffSizeRatio !== undefined && options.maxDiffSizeRatio < 0)
+      throw new Error('`maxDiffSizeRatio` option value must be non-negative number');
 
     // sanitizes path if string
     const inputPathSegments = Array.isArray(name) ? name : [addSuffixToFilePath(name, '', undefined, true)];

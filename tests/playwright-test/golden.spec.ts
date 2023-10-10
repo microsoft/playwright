@@ -100,7 +100,7 @@ test('should compile with different option combinations', async ({ runTSC }) => 
         expect('foo').toMatchSnapshot({ maxDiffPixelRatio: 0.2 });
         expect('foo').toMatchSnapshot({ maxDiffPixels: 0.2 });
         expect('foo').toMatchSnapshot({ maxDiffSize: 2 });
-        expect('foo').toMatchSnapshot({ maxDiffSizeRatio: 1.2 });
+        expect('foo').toMatchSnapshot({ maxDiffSizeRatio: 0.2 });
       });
     `
   });

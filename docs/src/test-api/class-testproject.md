@@ -95,7 +95,7 @@ export default defineConfig({
     - `maxDiffPixels` ?<[int]> an acceptable amount of pixels that could be different, unset by default.
     - `maxDiffPixelRatio` ?<[float]> an acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by default.
     - `maxDiffSize` ?<[int]> an acceptable number of pixels to vary the width or height by, `1` by default.
-    - `maxDiffSizeRatio` ?<[float]> an acceptable ratio for the difference in width or height, greater than `1`, `1` by default.
+    - `maxDiffSizeRatio` ?<[float]> an acceptable ratio for the difference in width or height, greater than `0`, unset by default.
     - `animations` ?<[ScreenshotAnimations]<"allow"|"disabled">> See [`option: animations`] in [`method: Page.screenshot`]. Defaults to `"disabled"`.
     - `caret` ?<[ScreenshotCaret]<"hide"|"initial">> See [`option: caret`] in [`method: Page.screenshot`]. Defaults to `"hide"`.
     - `scale` ?<[ScreenshotScale]<"css"|"device">> See [`option: scale`] in [`method: Page.screenshot`]. Defaults to `"css"`.
@@ -104,7 +104,7 @@ export default defineConfig({
     - `maxDiffPixels` ?<[int]> an acceptable amount of pixels that could be different, unset by default.
     - `maxDiffPixelRatio` ?<[float]> an acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by default.
     - `maxDiffSize` ?<[int]> an acceptable number of pixels to vary the width or height by, `1` by default.
-    - `maxDiffSizeRatio` ?<[float]> an acceptable ratio for the difference in width or height, greater than `1`, `1` by default.
+    - `maxDiffSizeRatio` ?<[float]> an acceptable ratio for the difference in width or height, greater than `0`, unset by default.
 
 Configuration for the `expect` assertion library.
 
