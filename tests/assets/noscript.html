@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Noscript Test</title>
+    </head>
+    <body>
+        <h1>Noscript Test</h1>
+
+        <p>Here you should see a message, if JS was dissabled
+        durring this Test:</p>
+
+        "<noscript><b id="id1">JS Disabled (1)</b></noscript>"
+
+        <p>This output should look identical:</p>
+
+        "<b id="id2">JS Disabled (2)</b>"
+        <script>document.getElementById("id2").hidden = true;</script>
+    </body>
+</html>
