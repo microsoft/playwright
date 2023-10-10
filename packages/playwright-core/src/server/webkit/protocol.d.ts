@@ -1237,7 +1237,7 @@ export module Protocol {
     /**
      * The type of rendering context backing the canvas element.
      */
-    export type ContextType = "canvas-2d"|"offscreen-canvas-2d"|"bitmaprenderer"|"webgl"|"webgl2";
+    export type ContextType = "canvas-2d"|"offscreen-canvas-2d"|"bitmaprenderer"|"webgl"|"webgl2"|"webgpu";
     export type ProgramType = "compute"|"render";
     export type ShaderType = "compute"|"fragment"|"vertex";
     /**
@@ -6541,10 +6541,6 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        * Whether the node is modal.
        */
       modal?: boolean;
-      /**
-       * Whether the node text input supports multiline.
-       */
-      multiline?: boolean;
       /**
        * Whether more than one child can be selected.
        */

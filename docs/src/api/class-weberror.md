@@ -1,7 +1,7 @@
 # class: WebError
 * since: v1.38
 
-[WebError] class represents an unhandled exeception thrown in the page. It is dispatched via the [`event: BrowserContext.webError`] event.
+[WebError] class represents an unhandled exception thrown in the page. It is dispatched via the [`event: BrowserContext.webError`] event.
 
 ```js
 // Log all uncaught errors to the terminal

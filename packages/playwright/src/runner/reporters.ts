@@ -66,7 +66,7 @@ export async function createReporters(config: FullConfigInternal, mode: 'list' |
   const someReporterPrintsToStdio = reporters.some(r => r.printsToStdio());
   if (reporters.length && !someReporterPrintsToStdio) {
     // Add a line/dot/list-mode reporter for convenience.
-    // Important to put it first, jsut in case some other reporter stalls onEnd.
+    // Important to put it first, just in case some other reporter stalls onEnd.
     if (mode === 'list')
       reporters.unshift(new ListModeReporter());
     else if (mode !== 'merge')

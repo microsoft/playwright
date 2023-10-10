@@ -4791,8 +4791,8 @@ class FrameExamples
 * since: v1.32
 * langs: java
 
-The method will block until the codition returns true. All Playwright events will
-be dispatched while the method is waiting for the codition.
+The method will block until the condition returns true. All Playwright events will
+be dispatched while the method is waiting for the condition.
 
 **Usage**
 
@@ -4809,7 +4809,7 @@ page.waitForCondition(() -> messages.size() > 3);
 * since: v1.32
 - `condition` <[BooleanSupplier]>
 
-Codition to wait for.
+Condition to wait for.
 
 ### option: Page.waitForCondition.timeout = %%-wait-for-function-timeout-%%
 * since: v1.32

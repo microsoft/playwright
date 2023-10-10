@@ -2,7 +2,10 @@
   "name": "@playwright/experimental-ct-react",
   "version": "1.39.0-next",
   "description": "Playwright Component Testing for React",
-  "repository": "github:Microsoft/playwright",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/microsoft/playwright.git"
+  },
   "homepage": "https://playwright.dev",
   "engines": {
     "node": ">=16"
@@ -30,6 +33,6 @@
     "@vitejs/plugin-react": "^4.0.0"
   },
   "bin": {
-    "playwright": "./cli.js"
+    "playwright": "cli.js"
   }
 }

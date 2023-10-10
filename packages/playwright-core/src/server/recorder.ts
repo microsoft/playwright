@@ -239,7 +239,7 @@ export class Recorder implements InstrumentationListener {
     this._refreshOverlay();
   }
 
-  hideHighlightedSelecor() {
+  hideHighlightedSelector() {
     this._highlightedSelector = '';
     this._refreshOverlay();
   }
@@ -260,7 +260,7 @@ export class Recorder implements InstrumentationListener {
     this._updateUserSources();
     this.updateCallLog([metadata]);
     if (isScreenshotCommand(metadata)) {
-      this.hideHighlightedSelecor();
+      this.hideHighlightedSelector();
     } else if (metadata.params && metadata.params.selector) {
       this._highlightedSelector = metadata.params.selector;
       this._recorderApp?.setSelector(this._highlightedSelector).catch(() => {});

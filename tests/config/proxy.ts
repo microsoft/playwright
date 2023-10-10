@@ -62,7 +62,7 @@ export class TestProxy {
       // MITM connect requests otherwise, unless the system/browser is configured
       // to ignore HTTPS errors (or the host has been configured to trust the test
       // certs), Playwright will crash in funny ways. (e.g. CR Headful tries to connect
-      // to accounts.google.com as part of its starup routine and fatally complains of "Invalid method encountered".)
+      // to accounts.google.com as part of its startup routine and fatally complains of "Invalid method encountered".)
       if (options?.skipConnectRequests)
         return;
       this.connectHosts.push(req.url);

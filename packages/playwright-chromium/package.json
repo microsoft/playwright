@@ -2,7 +2,10 @@
   "name": "playwright-chromium",
   "version": "1.39.0-next",
   "description": "A high-level API to automate Chromium",
-  "repository": "github:Microsoft/playwright",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/microsoft/playwright.git"
+  },
   "homepage": "https://playwright.dev",
   "engines": {
     "node": ">=16"
@@ -21,7 +24,7 @@
     "./package.json": "./package.json"
   },
   "bin": {
-    "playwright": "./cli.js"
+    "playwright": "cli.js"
   },
   "scripts": {
     "install": "node install.js"

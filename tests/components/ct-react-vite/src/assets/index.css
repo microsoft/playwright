@@ -18,3 +18,12 @@ code {
     background-color: #1b1b1d;
   }
 }
+
+@font-face {
+  font-family: 'pwtest-iconfont';
+  /* See tests/assets/webfont/README.md */
+  src: url('./iconfont.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}

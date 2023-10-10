@@ -100,7 +100,7 @@ export async function loadFileSuites(testRun: TestRun, mode: 'out-of-process' | 
   }
 
   // Check that no test file imports another test file.
-  // Loader must be stopped first, since it popuplates the dependency tree.
+  // Loader must be stopped first, since it populates the dependency tree.
   for (const file of allTestFiles) {
     for (const dependency of dependenciesForTestFile(file)) {
       if (allTestFiles.has(dependency)) {

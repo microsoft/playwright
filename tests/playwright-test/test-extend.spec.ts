@@ -160,7 +160,7 @@ test('config should override options but not fixtures', async ({ runInlineTest }
   expect(result.output).toContain('fixture-config-fixture');
 });
 
-test('test.extend should be able to merge', async ({ runInlineTest }) => {
+test('composedTest should be able to merge', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = {
@@ -168,7 +168,7 @@ test('test.extend should be able to merge', async ({ runInlineTest }) => {
       };
     `,
     'a.test.ts': `
-      import { test, expect } from '@playwright/test';
+      import { test, expect, composedTest } from '@playwright/test';
       const base = test.extend({
         myFixture: 'abc',
       });
@@ -184,7 +184,7 @@ test('test.extend should be able to merge', async ({ runInlineTest }) => {
         fixture2: ({}, use) => use('fixture2'),
       });
 
-      const test3 = test1._extendTest(test2);
+      const test3 = composedTest(test1, test2);
 
       test3('merged', async ({ param, fixture1, myFixture, fixture2 }) => {
         console.log('param-' + param);
@@ -202,7 +202,7 @@ test('test.extend should be able to merge', async ({ runInlineTest }) => {
   expect(result.output).toContain('fixture2-fixture2');
 });
 
-test('test.extend should print nice message when used as _extendTest', async ({ runInlineTest }) => {
+test('test.extend should print nice message when used as composedTest', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
       import { test as base, expect } from '@playwright/test';
@@ -215,14 +215,14 @@ test('test.extend should print nice message when used as _extendTest', async ({ 
   });
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
-  expect(result.output).toContain('Did you mean to call test._extendTest()?');
+  expect(result.output).toContain('Did you mean to call composedTest()?');
 });
 
-test('test._extendTest should print nice message when used as extend', async ({ runInlineTest }) => {
+test('composedTest should print nice message when used as extend', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      import { test as base, expect } from '@playwright/test';
-      const test3 = base._extendTest({});
+      import { test as base, expect, composedTest } from '@playwright/test';
+      const test3 = composedTest(base, {});
       test3('test', () => {});
     `,
   });

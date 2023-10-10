@@ -348,7 +348,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     const event = createBeforeActionTraceEvent(metadata);
     if (!event)
       return Promise.resolve();
-    sdkObject.attribution.page?.temporarlyDisableTracingScreencastThrottling();
+    sdkObject.attribution.page?.temporarilyDisableTracingScreencastThrottling();
     event.beforeSnapshot = `before@${metadata.id}`;
     this._state?.callIds.add(metadata.id);
     this._appendTraceEvent(event);
@@ -362,7 +362,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     const event = createInputActionTraceEvent(metadata);
     if (!event)
       return Promise.resolve();
-    sdkObject.attribution.page?.temporarlyDisableTracingScreencastThrottling();
+    sdkObject.attribution.page?.temporarilyDisableTracingScreencastThrottling();
     event.inputSnapshot = `input@${metadata.id}`;
     this._appendTraceEvent(event);
     return this._captureSnapshot(event.inputSnapshot, sdkObject, metadata, element);
@@ -375,7 +375,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     const event = createAfterActionTraceEvent(metadata);
     if (!event)
       return;
-    sdkObject.attribution.page?.temporarlyDisableTracingScreencastThrottling();
+    sdkObject.attribution.page?.temporarilyDisableTracingScreencastThrottling();
     event.afterSnapshot = `after@${metadata.id}`;
     this._appendTraceEvent(event);
     return this._captureSnapshot(event.afterSnapshot, sdkObject, metadata);

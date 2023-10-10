@@ -3,6 +3,8 @@ id: other-locators
 title: "Other locators"
 ---
 
+## Introduction
+
 :::note
 Check out the main [locators guide](./locators) for most common and recommended locators.
 :::

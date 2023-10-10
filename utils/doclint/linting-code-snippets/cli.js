@@ -26,6 +26,7 @@ const { ESLint } = require('eslint')
 const child_process = require('child_process');
 const os = require('os');
 const actions = require('@actions/core')
+const { codeFrameColumns } = require('@babel/code-frame');
 
 /** @typedef {import('../documentation').Type} Type */
 /** @typedef {import('../../markdown').MarkdownNode} MarkdownNode */
@@ -139,6 +140,13 @@ class JSLintingService extends LintingService {
       overrideConfigFile: path.join(PROJECT_DIR, '.eslintrc.js'),
       useEslintrc: false,
       overrideConfig: {
+        plugins: ['react'],
+        settings: {
+          react: { version: 'detect', }
+        },
+        extends: [
+          'plugin:react/recommended',
+        ],
         rules: {
           'notice/notice': 'off',
           '@typescript-eslint/no-unused-vars': 'off',
@@ -162,7 +170,9 @@ class JSLintingService extends LintingService {
     const results = await this.eslint.lintText(snippet.code);
     if (!results || !results.length || !results[0].messages.length)
       return { status: 'ok' };
-    return { status: 'error', error: results[0].messages[0].message };
+    const result = results[0];
+    const error = result.source ? results[0].messages[0].message + '\n\n' + codeFrameColumns(result.source, { start: result.messages[0] }, { highlightCode: true }) : results[0].messages[0].message;
+    return { status: 'error', error };
   }
 
   /**

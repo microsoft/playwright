@@ -20,8 +20,6 @@ import type * as modelUtil from './modelUtil';
 import { PlaceholderPanel } from './placeholderPanel';
 import { renderAction } from './actionList';
 import type { Language } from '@isomorphic/locatorGenerators';
-import type { Boundaries } from '../geometry';
-import { msToString } from '@web/uiUtils';
 
 type ErrorsTabModel = {
   errors: Map<string, modelUtil.ActionTraceEventInContext>;
@@ -42,17 +40,32 @@ export function useErrorsTabModel(model: modelUtil.MultiTraceModel | undefined):
 export const ErrorsTab: React.FunctionComponent<{
   errorsModel: ErrorsTabModel,
   sdkLanguage: Language,
-  boundaries: Boundaries,
-}> = ({ errorsModel, sdkLanguage, boundaries }) => {
+  revealInSource: (action: modelUtil.ActionTraceEventInContext) => void,
+}> = ({ errorsModel, sdkLanguage, revealInSource }) => {
   if (!errorsModel.errors.size)
     return <PlaceholderPanel text='No errors' />;
 
-  return <div className='fill' style={{ overflow: 'auto ' }}>
+  return <div className='fill' style={{ overflow: 'auto' }}>
     {[...errorsModel.errors.entries()].map(([message, action]) => {
+      let location: string | undefined;
+      let longLocation: string | undefined;
+      if (action.stack?.[0]) {
+        const file = action.stack[0].file.replace(/.*\/(.*)/, '$1');
+        location = file + ':' + action.stack[0].line;
+        longLocation = action.stack[0].file + ':' + action.stack[0].line;
+      }
       return <div key={message}>
-        <div className='hbox' style={{ alignItems: 'center', padding: 5 }}>
-          <div style={{ color: 'var(--vscode-editorCodeLens-foreground)', marginRight: 5 }}>{msToString(action.startTime - boundaries.minimum)}</div>
-          {renderAction(action, sdkLanguage)}
+        <div className='hbox' style={{
+          alignItems: 'center',
+          padding: '5px 10px',
+          minHeight: 36,
+          fontWeight: 'bold',
+          color: 'var(--vscode-errorForeground)',
+        }}>
+          {renderAction(action, { sdkLanguage })}
+          {location && <div className='action-location'>
+            @ <span title={longLocation} onClick={() => revealInSource(action)}>{location}</span>
+          </div>}
         </div>
         <ErrorMessage error={message} />
       </div>;

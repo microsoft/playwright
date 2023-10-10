@@ -3,9 +3,11 @@ id: test-global-setup-teardown
 title: "Global setup and teardown"
 ---
 
-There are two ways to configure global setup and teardown: using a global setup file and setting it in the config under [`globalSetup`](#configure-globalsetup-and-globalteardown) or using [project dependencies](#project-dependencies). With project dependencies, you define a project that runs before all other projects. This is the recommended way to configure global setup as with Project dependencies your HTML report will show the global setup, trace viewer will record a trace of the setup and fixtures can be used.
+## Introduction
 
-## Project Dependencies
+There are two ways to configure global setup and teardown: using a global setup file and setting it in the config under [`globalSetup`](#option-2-configure-globalsetup-and-globalteardown) or using [project dependencies](#option-1-project-dependencies). With project dependencies, you define a project that runs before all other projects. This is the recommended way to configure global setup as with Project dependencies your HTML report will show the global setup, trace viewer will record a trace of the setup and fixtures can be used.
+
+## Option 1: Project Dependencies
 
 [Project dependencies](./api/class-testproject#test-project-dependencies) are a list of projects that need to run before the tests in another project run. They can be useful for configuring the global setup actions so that one project depends on this running first. Using dependencies allows global setup to produce traces and other artifacts.
 
@@ -17,6 +19,8 @@ First we add a new project with the name 'setup'. We then give it a [`property: 
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
+  testDir: './tests',
+  // ...
   projects: [
     {
       name: 'setup',
@@ -34,6 +38,8 @@ Then we add the [`property: TestProject.dependencies`] property to our projects 
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
+  testDir: './tests',
+  // ...
   projects: [
     {
       name: 'setup',
@@ -61,6 +67,8 @@ import { defineConfig } from '@playwright/test';
 export const STORAGE_STATE = path.join(__dirname, 'playwright/.auth/user.json');
 
 export default defineConfig({
+  testDir: './tests',
+  // ...
   use: {
     baseURL: 'http://localhost:3000/',
   },
@@ -89,7 +97,7 @@ export default defineConfig({
 
 We then create a setup test, stored at root level of your project, that logs in to an application and populates the context with the storage state after the login actions have been performed. By doing this you only have to log in once and the credentials will be stored in the `STORAGE_STATE` file, meaning you don't need to log in again for every test. Start by importing the `STORAGE_STATE` from the Playwright config file and then use this as the path to save your storage state to the page's context.
 
-```js title="global.setup.ts"
+```js title="tests/global.setup.ts"
 import { test as setup, expect } from '@playwright/test';
 import { STORAGE_STATE } from '../playwright.config';
 
@@ -130,6 +138,8 @@ First we add a new project into the projects array and give it a name such as 'c
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
+  testDir: './tests',
+  // ...
   projects: [
     // {
     //   setup project
@@ -150,6 +160,8 @@ Then we add the [`property: TestProject.teardown`] property to our setup project
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
+  testDir: './tests',
+  // ...
   projects: [
     {
       name: 'setup db',
@@ -169,14 +181,14 @@ export default defineConfig({
 
 ### Teardown Example
 
-Start by creating a `global.setup.ts` file at the root level of your project. This will be used to seed the database with some data before all tests have run.
+Start by creating a `global.setup.ts` file in the tests directory of your project. This will be used to seed the database with some data before all tests have run.
 
-```js title="global.setup.ts"
+```js title="tests/global.setup.ts"
 // seed the database with some data
 ```
-Then create a `global.teardown.ts` file at the root level of your project. This will be used to delete the data from the database after all tests have run.
+Then create a `global.teardown.ts` file in the tests directory of your project. This will be used to delete the data from the database after all tests have run.
 
-```js title="global.teardown.ts"
+```js title="tests/global.teardown.ts"
 // delete the data from the database
 ```
 In the Playwright config file:
@@ -191,6 +203,8 @@ In the Playwright config file:
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
+  testDir: './tests',
+  // ...
   projects: [
     {
       name: 'setup db',
@@ -210,14 +224,14 @@ export default defineConfig({
 });
 ```
 
-## Configure globalSetup and globalTeardown
+## Option 2: Configure globalSetup and globalTeardown
 
 You can use the `globalSetup` option in the [configuration file](./test-configuration.md#advanced-configuration) to set something up once before running all tests. The global setup file must export a single function that takes a config object. This function will be run once before all the tests.
 
 Similarly, use `globalTeardown` to run something once after all the tests. Alternatively, let `globalSetup` return a function that will be used as a global teardown. You can pass data such as port number, authentication tokens, etc. from your global setup to your tests using environment variables.
 
 :::note
-Using `globalSetup` and `globalTeardown` will not produce traces or artifacts. If you want to produce traces and artifacts, use [project dependencies](#project-dependencies).
+Using `globalSetup` and `globalTeardown` will not produce traces or artifacts. If you want to produce traces and artifacts, use [project dependencies](#option-1-project-dependencies).
 :::
 
 ```js title="playwright.config.ts"

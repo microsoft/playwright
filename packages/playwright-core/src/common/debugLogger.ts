@@ -25,9 +25,7 @@ const debugLoggerColorMap = {
   'browser': 0, // reset
   'socks': 92, // purple
   'error': 160, // red,
-  'channel:command': 33, // blue
-  'channel:response': 202, // orange
-  'channel:event': 207, // magenta
+  'channel': 33, // blue
   'server': 45, // cyan
   'server:channel': 34, // green
 };
@@ -55,7 +53,7 @@ class DebugLogger {
     if (!cachedDebugger) {
       cachedDebugger = debug(`pw:${name}`);
       this._debuggers.set(name, cachedDebugger);
-      (cachedDebugger as any).color = debugLoggerColorMap[name];
+      (cachedDebugger as any).color = debugLoggerColorMap[name] || 0;
     }
     cachedDebugger(message);
   }

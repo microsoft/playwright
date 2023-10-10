@@ -479,3 +479,8 @@ test('hidden with shadow dom slots', async ({ page }) => {
     `<button>visible2</button>`,
   ]);
 });
+
+test('should support output accessible name', async ({ page }) => {
+  await page.setContent(`<label>Output1<output>output</output></label>`);
+  await expect(page.getByRole('status', { name: 'Output1' })).toBeVisible();
+});

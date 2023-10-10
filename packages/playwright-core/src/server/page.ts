@@ -685,7 +685,7 @@ export class Page extends SdkObject {
     this._frameThrottler.ack(ack);
   }
 
-  temporarlyDisableTracingScreencastThrottling() {
+  temporarilyDisableTracingScreencastThrottling() {
     this._frameThrottler.recharge();
   }
 

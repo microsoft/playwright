@@ -337,3 +337,7 @@ function computeArgsSuffix(matcherName: string, args: any[]) {
 }
 
 expectLibrary.extend(customMatchers);
+
+export function composedExpect(...expects: any[]) {
+  return expect;
+}

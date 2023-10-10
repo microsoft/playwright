@@ -389,7 +389,26 @@ export type APIResponse = {
 
 export type LifecycleEvent = 'load' | 'domcontentloaded' | 'networkidle' | 'commit';
 // ----------- LocalUtils -----------
-export type LocalUtilsInitializer = {};
+export type LocalUtilsInitializer = {
+  deviceDescriptors: {
+    name: string,
+    descriptor: {
+      userAgent: string,
+      viewport: {
+        width: number,
+        height: number,
+      },
+      screen?: {
+        width: number,
+        height: number,
+      },
+      deviceScaleFactor: number,
+      isMobile: boolean,
+      hasTouch: boolean,
+      defaultBrowserType: 'chromium' | 'firefox' | 'webkit',
+    },
+  }[],
+};
 export interface LocalUtilsEventTarget {
 }
 export interface LocalUtilsChannel extends LocalUtilsEventTarget, Channel {
@@ -534,25 +553,7 @@ export type PlaywrightInitializer = {
   webkit: BrowserTypeChannel,
   android: AndroidChannel,
   electron: ElectronChannel,
-  utils: LocalUtilsChannel,
-  deviceDescriptors: {
-    name: string,
-    descriptor: {
-      userAgent: string,
-      viewport: {
-        width: number,
-        height: number,
-      },
-      screen?: {
-        width: number,
-        height: number,
-      },
-      deviceScaleFactor: number,
-      isMobile: boolean,
-      hasTouch: boolean,
-      defaultBrowserType: 'chromium' | 'firefox' | 'webkit',
-    },
-  }[],
+  utils?: LocalUtilsChannel,
   selectors: SelectorsChannel,
   preLaunchedBrowser?: BrowserChannel,
   preConnectedAndroidDevice?: AndroidDeviceChannel,
@@ -1084,6 +1085,7 @@ export interface BrowserChannel extends BrowserEventTarget, Channel {
   defaultUserAgentForTest(params?: BrowserDefaultUserAgentForTestParams, metadata?: CallMetadata): Promise<BrowserDefaultUserAgentForTestResult>;
   newContext(params: BrowserNewContextParams, metadata?: CallMetadata): Promise<BrowserNewContextResult>;
   newContextForReuse(params: BrowserNewContextForReuseParams, metadata?: CallMetadata): Promise<BrowserNewContextForReuseResult>;
+  stopPendingOperations(params: BrowserStopPendingOperationsParams, metadata?: CallMetadata): Promise<BrowserStopPendingOperationsResult>;
   newBrowserCDPSession(params?: BrowserNewBrowserCDPSessionParams, metadata?: CallMetadata): Promise<BrowserNewBrowserCDPSessionResult>;
   startTracing(params: BrowserStartTracingParams, metadata?: CallMetadata): Promise<BrowserStartTracingResult>;
   stopTracing(params?: BrowserStopTracingParams, metadata?: CallMetadata): Promise<BrowserStopTracingResult>;
@@ -1338,6 +1340,13 @@ export type BrowserNewContextForReuseOptions = {
 export type BrowserNewContextForReuseResult = {
   context: BrowserContextChannel,
 };
+export type BrowserStopPendingOperationsParams = {
+  reason: string,
+};
+export type BrowserStopPendingOperationsOptions = {
+
+};
+export type BrowserStopPendingOperationsResult = void;
 export type BrowserNewBrowserCDPSessionParams = {};
 export type BrowserNewBrowserCDPSessionOptions = {};
 export type BrowserNewBrowserCDPSessionResult = {

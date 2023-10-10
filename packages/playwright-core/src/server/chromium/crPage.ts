@@ -130,7 +130,7 @@ export class CRPage implements PageDelegate {
       if (frameSession._isMainFrame())
         return cb(frameSession);
       return cb(frameSession).catch(e => {
-        // Broadcasting a message to the closed iframe shoule be a noop.
+        // Broadcasting a message to the closed iframe should be a noop.
         if (e.message && e.message.includes('Target closed'))
           return;
         throw e;
@@ -668,7 +668,7 @@ class FrameSession {
 
   _onFrameDetached(frameId: string, reason: 'remove' | 'swap') {
     if (this._crPage._sessions.has(frameId)) {
-      // This is a local -> remote frame transtion, where
+      // This is a local -> remote frame transition, where
       // Page.frameDetached arrives after Target.attachedToTarget.
       // We've already handled the new target and frame reattach - nothing to do here.
       return;
@@ -748,6 +748,9 @@ class FrameSession {
     session._sendMayFail('Runtime.enable');
     session._sendMayFail('Network.enable');
     session._sendMayFail('Runtime.runIfWaitingForDebugger');
+    session._sendMayFail('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true });
+    session.on('Target.attachedToTarget', event => this._onAttachedToTarget(event));
+    session.on('Target.detachedFromTarget', event => this._onDetachedFromTarget(event));
     session.on('Runtime.consoleAPICalled', event => {
       const args = event.args.map(o => worker._existingExecutionContext!.createHandle(o));
       this._page._addConsoleMessage(event.type, args, toConsoleMessageLocation(event.stackTrace));
@@ -763,6 +766,7 @@ class FrameSession {
     if (workerSession) {
       workerSession.dispose();
       this._page._removeWorker(event.sessionId);
+      return;
     }
 
     // ... or an oopif.
@@ -777,7 +781,7 @@ class FrameSession {
     }
 
     // However, sometimes we get detachedFromTarget before frameAttached.
-    // In this case we don't know wheter this is a remote frame detach,
+    // In this case we don't know whether this is a remote frame detach,
     // or just a remote -> local transition. In the latter case, frameAttached
     // is already inflight, so let's make a safe roundtrip to ensure it arrives.
     this._client.send('Page.enable').catch(e => null).then(() => {
@@ -953,7 +957,7 @@ class FrameSession {
     this._videoRecorder = null;
     await this._stopScreencast(recorder);
     await recorder.stop().catch(() => {});
-    // Keep the video artifact in the map utntil encoding is fully finished, if the context
+    // Keep the video artifact in the map until encoding is fully finished, if the context
     // starts closing before the video is fully written to disk it will wait for it.
     const video = this._crPage._browserContext._browser._takeVideo(screencastId);
     video?.reportFinished();

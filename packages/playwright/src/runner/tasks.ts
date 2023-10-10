@@ -261,11 +261,11 @@ function createRunTestsTask(): Task<TestRun> {
 
       for (const { dispatcher, projects } of phases) {
         // Each phase contains dispatcher and a set of test groups.
-        // We don't want to run the test groups beloning to the projects
+        // We don't want to run the test groups belonging to the projects
         // that depend on the projects that failed previously.
         const phaseTestGroups: TestGroup[] = [];
         for (const { project, testGroups } of projects) {
-          // Inherit extra enviroment variables from dependencies.
+          // Inherit extra environment variables from dependencies.
           let extraEnv: Record<string, string | undefined> = {};
           for (const dep of project.deps)
             extraEnv = { ...extraEnv, ...extraEnvByProjectId.get(dep.id) };

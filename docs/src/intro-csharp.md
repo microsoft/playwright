@@ -3,6 +3,8 @@ id: intro
 title: "Installation"
 ---
 
+## Introduction
+
 Playwright was created specifically to accommodate the needs of end-to-end testing. Playwright supports all modern rendering engines including Chromium, WebKit, and Firefox. Test on Windows, Linux, and macOS, locally or on CI, headless or headed with native mobile emulation.
 
 You can choose to use [NUnit base classes](./test-runners.md#nunit) or [MSTest base classes](./test-runners.md#mstest) that Playwright provides to write end-to-end tests. These classes support running tests on multiple browser engines, parallelizing tests, adjusting launch/context options and getting a [Page]/[BrowserContext] instance per test out of the box. Alternatively you can use the [library](./library.md) to manually write the testing infrastructure.

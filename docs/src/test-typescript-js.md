@@ -3,6 +3,8 @@ id: test-typescript
 title: "TypeScript"
 ---
 
+## Introduction
+
 Playwright supports TypeScript out of the box. You just write tests in TypeScript, and Playwright will read them, transform to JavaScript and run.
 
 ## tsconfig.json

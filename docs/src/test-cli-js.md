@@ -3,6 +3,8 @@ id: test-cli
 title: "Command line"
 ---
 
+## Introduction
+
 Here are the most common options available in the command line.
 
 - Run all the tests

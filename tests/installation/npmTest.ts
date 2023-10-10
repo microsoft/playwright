@@ -153,24 +153,25 @@ export const test = _test
           args = argsAndOrOptions as string[];
 
           let result!: {stdout: string, stderr: string, code: number | null, error?: Error};
+          const cwd = options.cwd ?? tmpWorkspace;
+          // NB: We end up running npm-in-npm, so it's important that we do NOT forward process.env and instead cherry-pick environment variables.
+          const PATH = sanitizeEnvPath(process.env.PATH || '');
+          const env = {
+            'PATH': PATH,
+            'DISPLAY': process.env.DISPLAY,
+            'XAUTHORITY': process.env.XAUTHORITY,
+            ...(isolateBrowsers ? { PLAYWRIGHT_BROWSERS_PATH: _browsersPath } : {}),
+            ...options.env,
+          };
           await test.step(`exec: ${[cmd, ...args].join(' ')}`, async () => {
-            result = await spawnAsync(cmd, args, {
-              shell: true,
-              cwd: options.cwd ?? tmpWorkspace,
-              // NB: We end up running npm-in-npm, so it's important that we do NOT forward process.env and instead cherry-pick environment variables.
-              env: {
-                'PATH': process.env.PATH,
-                'DISPLAY': process.env.DISPLAY,
-                'XAUTHORITY': process.env.XAUTHORITY,
-                ...(isolateBrowsers ? { PLAYWRIGHT_BROWSERS_PATH: _browsersPath } : {}),
-                ...options.env,
-              }
-            });
+            result = await spawnAsync(cmd, args, { shell: true, cwd, env });
           });
 
           const command = [cmd, ...args].join(' ');
           const stdio = result.stdout + result.stderr;
-          await testInfo.attach(command, { body: `COMMAND: ${command}\n\nEXIT CODE: ${result.code}\n\n====== STDOUT + STDERR ======\n\n${stdio}` });
+          const commandEnv = Object.entries(env).map(e => `${e[0]}=${e[1]}`).join(' ');
+          const fullCommand = `cd ${cwd} && ${commandEnv} ${command}`;
+          await testInfo.attach(command, { body: `COMMAND: ${fullCommand}\n\nEXIT CODE: ${result.code}\n\n====== STDOUT + STDERR ======\n\n${stdio}` });
 
           // This means something is really off with spawn
           if (result.error)
@@ -200,5 +201,10 @@ export const test = _test
       },
     });
 
+function sanitizeEnvPath(value: string) {
+  if (process.platform === 'win32')
+    return value.split(';').filter(path => !path.endsWith('node_modules\\.bin')).join(';');
+  return value.split(':').filter(path => !path.endsWith('node_modules/.bin')).join(':');
+}
 
 export { expect };

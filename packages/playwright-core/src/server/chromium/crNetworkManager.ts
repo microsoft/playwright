@@ -188,7 +188,7 @@ export class CRNetworkManager {
 
   _onRequestPaused(sessionInfo: SessionInfo, event: Protocol.Fetch.requestPausedPayload) {
     if (!event.networkId) {
-      // Fetch without networkId means that request was not recongnized by inspector, and
+      // Fetch without networkId means that request was not recognized by inspector, and
       // it will never receive Network.requestWillBeSent. Most likely, this is an internal request
       // that we can safely fail.
       this._session._sendMayFail('Fetch.failRequest', {
@@ -206,6 +206,24 @@ export class CRNetworkManager {
       this._onRequest(sessionInfo, requestWillBeSentEvent, event);
       this._requestIdToRequestWillBeSentEvent.delete(requestId);
     } else {
+      const existingRequest = this._requestIdToRequest.get(requestId);
+      const alreadyContinuedParams = existingRequest?._route?._alreadyContinuedParams;
+      if (alreadyContinuedParams && !event.redirectedRequestId) {
+        // Sometimes Chromium network stack restarts the request internally.
+        // For example, when no-cors request hits a "less public address space", it should be resent with cors.
+        // There are some more examples here: https://source.chromium.org/chromium/chromium/src/+/main:services/network/url_loader.cc;l=1205-1234;drc=d5dd931e0ad3d9ffe74888ec62a3cc106efd7ea6
+        // There are probably even more cases deep inside the network stack.
+        //
+        // Anyway, in this case, continue the request in the same way as before, and it should go through.
+        //
+        // Note: make sure not to prematurely continue the redirect, which shares the
+        // `networkId` between the original request and the redirect.
+        this._session._sendMayFail('Fetch.continueRequest', {
+          ...alreadyContinuedParams,
+          requestId: event.requestId,
+        });
+        return;
+      }
       this._requestIdToRequestPausedEvent.set(requestId, event);
     }
   }
@@ -310,7 +328,7 @@ export class CRNetworkManager {
       if (response.body || !expectedLength)
         return Buffer.from(response.body, response.base64Encoded ? 'base64' : 'utf8');
 
-      // For <link prefetch we are going to receive empty body with non-emtpy content-length expectation. Reach out for the actual content.
+      // For <link prefetch we are going to receive empty body with non-empty content-length expectation. Reach out for the actual content.
       const resource = await session.send('Network.loadNetworkResource', { url: request.request.url(), frameId: this._serviceWorker ? undefined : request.request.frame()!._id, options: { disableCache: false, includeCredentials: true } });
       const chunks: Buffer[] = [];
       while (resource.resource.stream) {
@@ -368,14 +386,20 @@ export class CRNetworkManager {
     return response;
   }
 
+  _deleteRequest(request: InterceptableRequest) {
+    this._requestIdToRequest.delete(request._requestId);
+    if (request._route)
+      request._route._alreadyContinuedParams = undefined;
+    if (request._interceptionId)
+      this._attemptedAuthentications.delete(request._interceptionId);
+  }
+
   _handleRequestRedirect(request: InterceptableRequest, responsePayload: Protocol.Network.Response, timestamp: number, hasExtraInfo: boolean) {
     const response = this._createResponse(request, responsePayload, hasExtraInfo);
     response.setTransferSize(null);
     response.setEncodedBodySize(null);
     response._requestFinished((timestamp - request._timestamp) * 1000);
-    this._requestIdToRequest.delete(request._requestId);
-    if (request._interceptionId)
-      this._attemptedAuthentications.delete(request._interceptionId);
+    this._deleteRequest(request);
     (this._page?._frameManager || this._serviceWorker)!.requestReceivedResponse(response);
     (this._page?._frameManager || this._serviceWorker)!.reportRequestFinished(request.request, response);
   }
@@ -423,9 +447,7 @@ export class CRNetworkManager {
       response.responseHeadersSize().then(size => response.setEncodedBodySize(event.encodedDataLength - size));
       response._requestFinished(helper.secondsToRoundishMillis(event.timestamp - request._timestamp));
     }
-    this._requestIdToRequest.delete(request._requestId);
-    if (request._interceptionId)
-      this._attemptedAuthentications.delete(request._interceptionId);
+    this._deleteRequest(request);
     (this._page?._frameManager || this._serviceWorker)!.reportRequestFinished(request.request, response);
   }
 
@@ -458,9 +480,7 @@ export class CRNetworkManager {
       response.setEncodedBodySize(null);
       response._requestFinished(helper.secondsToRoundishMillis(event.timestamp - request._timestamp));
     }
-    this._requestIdToRequest.delete(request._requestId);
-    if (request._interceptionId)
-      this._attemptedAuthentications.delete(request._interceptionId);
+    this._deleteRequest(request);
     request.request._setFailureText(event.errorText);
     (this._page?._frameManager || this._serviceWorker)!.requestFailed(request.request, !!event.canceled);
   }
@@ -491,7 +511,7 @@ class InterceptableRequest {
   readonly _documentId: string | undefined;
   readonly _timestamp: number;
   readonly _wallTime: number;
-  private _route: RouteImpl | null;
+  readonly _route: RouteImpl | null;
   private _redirectedFrom: InterceptableRequest | null;
   session: CRSession;
 
@@ -529,18 +549,12 @@ class InterceptableRequest {
 
     this.request = new network.Request(context, frame, serviceWorker, redirectedFrom?.request || null, documentId, url, type, method, postDataBuffer, headersObjectToArray(headers));
   }
-
-  _routeForRedirectChain(): RouteImpl | null {
-    let request: InterceptableRequest = this;
-    while (request._redirectedFrom)
-      request = request._redirectedFrom;
-    return request._route;
-  }
 }
 
 class RouteImpl implements network.RouteDelegate {
   private readonly _session: CRSession;
   private _interceptionId: string;
+  _alreadyContinuedParams: Protocol.Fetch.continueRequestParameters | undefined;
 
   constructor(session: CRSession, interceptionId: string) {
     this._session = session;
@@ -548,15 +562,16 @@ class RouteImpl implements network.RouteDelegate {
   }
 
   async continue(request: network.Request, overrides: types.NormalizedContinueOverrides): Promise<void> {
-    // In certain cases, protocol will return error if the request was already canceled
-    // or the page was closed. We should tolerate these errors.
-    await this._session._sendMayFail('Fetch.continueRequest', {
+    this._alreadyContinuedParams = {
       requestId: this._interceptionId!,
       url: overrides.url,
       headers: overrides.headers,
       method: overrides.method,
       postData: overrides.postData ? overrides.postData.toString('base64') : undefined
-    });
+    };
+    // In certain cases, protocol will return error if the request was already canceled
+    // or the page was closed. We should tolerate these errors.
+    await this._session._sendMayFail('Fetch.continueRequest', this._alreadyContinuedParams);
   }
 
   async fulfill(response: types.NormalizedFulfillResponse) {

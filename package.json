@@ -3,7 +3,10 @@
   "private": true,
   "version": "1.39.0-next",
   "description": "A high-level API to automate web browsers",
-  "repository": "github:Microsoft/playwright",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/microsoft/playwright.git"
+  },
   "homepage": "https://playwright.dev",
   "engines": {
     "node": ">=16"
@@ -49,6 +52,7 @@
   "devDependencies": {
     "@actions/core": "^1.10.0",
     "@babel/cli": "^7.19.3",
+    "@babel/code-frame": "^7.22.13",
     "@babel/plugin-proposal-class-properties": "^7.18.6",
     "@babel/plugin-proposal-export-namespace-from": "^7.18.9",
     "@babel/plugin-proposal-logical-assignment-operators": "^7.18.9",
@@ -83,6 +87,7 @@
     "esbuild": "^0.18.11",
     "eslint": "^8.37.0",
     "eslint-plugin-notice": "^0.9.10",
+    "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-react-hooks": "^4.3.0",
     "formidable": "^2.1.1",
     "license-checker": "^25.0.1",

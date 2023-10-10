@@ -137,7 +137,7 @@ export class PlaywrightServer {
       }
 
       const connection = new PlaywrightConnection(
-          semaphore.aquire(),
+          semaphore.acquire(),
           clientType, ws,
           { socksProxyPattern: proxyValue, browserName, launchOptions },
           {
@@ -184,7 +184,7 @@ export class PlaywrightServer {
 
 export class Semaphore {
   private _max: number;
-  private _aquired = 0;
+  private _acquired = 0;
   private _queue: ManualPromise[] = [];
 
   constructor(max: number) {
@@ -195,7 +195,7 @@ export class Semaphore {
     this._max = max;
   }
 
-  aquire(): Promise<void> {
+  acquire(): Promise<void> {
     const lock = new ManualPromise();
     this._queue.push(lock);
     this._flush();
@@ -203,13 +203,13 @@ export class Semaphore {
   }
 
   release() {
-    --this._aquired;
+    --this._acquired;
     this._flush();
   }
 
   private _flush() {
-    while (this._aquired < this._max && this._queue.length) {
-      ++this._aquired;
+    while (this._acquired < this._max && this._queue.length) {
+      ++this._acquired;
       this._queue.shift()!.resolve();
     }
   }

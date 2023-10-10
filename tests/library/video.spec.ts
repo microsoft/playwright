@@ -155,7 +155,7 @@ function expectRedFrames(videoFile: string, size: { width: number, height: numbe
 
 it.describe('screencast', () => {
   it.slow();
-  it.skip(({ mode }) => mode !== 'default', 'video.path() is not avaialble in remote mode');
+  it.skip(({ mode }) => mode !== 'default', 'video.path() is not available in remote mode');
 
   it('videoSize should require videosPath', async ({ browser }) => {
     const error = await browser.newContext({ videoSize: { width: 100, height: 100 } }).catch(e => e);
@@ -444,7 +444,8 @@ it.describe('screencast', () => {
   });
 
   it('should scale frames down to the requested size ', async ({ browser, browserName, server, headless, trace }, testInfo) => {
-    it.fixme(!headless, 'Fails on headed');
+    const isChromiumHeadlessNew = browserName === 'chromium' && !!headless && !!process.env.PLAYWRIGHT_CHROMIUM_USE_HEADLESS_NEW;
+    it.fixme(!headless || isChromiumHeadlessNew, 'Fails on headed');
 
     const context = await browser.newContext({
       recordVideo: {

@@ -508,15 +508,8 @@ function getElementAccessibleNameInternal(element: Element, options: AccessibleN
     if (element.tagName === 'INPUT' && (element as HTMLInputElement).type === 'image') {
       options.visitedElements.add(element);
       const labels = (element as HTMLInputElement).labels || [];
-      if (labels.length && options.embeddedInLabelledBy === 'none') {
-        return [...labels].map(label => getElementAccessibleNameInternal(label, {
-          ...options,
-          embeddedInLabel: 'self',
-          embeddedInTextAlternativeElement: false,
-          embeddedInLabelledBy: 'none',
-          embeddedInTargetElement: 'none',
-        })).filter(accessibleName => !!accessibleName).join(' ');
-      }
+      if (labels.length && options.embeddedInLabelledBy === 'none')
+        return getAccessibleNameFromAssociatedLabels(labels, options);
       const alt = element.getAttribute('alt') || '';
       if (alt.trim())
         return alt;
@@ -532,16 +525,18 @@ function getElementAccessibleNameInternal(element: Element, options: AccessibleN
     if (!labelledBy && element.tagName === 'BUTTON') {
       options.visitedElements.add(element);
       const labels = (element as HTMLButtonElement).labels || [];
-      if (labels.length) {
-        return [...labels].map(label => getElementAccessibleNameInternal(label, {
-          ...options,
-          embeddedInLabel: 'self',
-          embeddedInTextAlternativeElement: false,
-          embeddedInLabelledBy: 'none',
-          embeddedInTargetElement: 'none',
-        })).filter(accessibleName => !!accessibleName).join(' ');
-      }
+      if (labels.length)
+        return getAccessibleNameFromAssociatedLabels(labels, options);
       // From here, fallthrough to step 2f.
+    }
+
+    // https://w3c.github.io/html-aam/#output-element-accessible-name-computation
+    if (!labelledBy && element.tagName === 'OUTPUT') {
+      options.visitedElements.add(element);
+      const labels = (element as HTMLOutputElement).labels || [];
+      if (labels.length)
+        return getAccessibleNameFromAssociatedLabels(labels, options);
+      return element.getAttribute('title') || '';
     }
 
     // https://w3c.github.io/html-aam/#input-type-text-input-type-password-input-type-number-input-type-search-input-type-tel-input-type-email-input-type-url-and-textarea-element-accessible-name-computation
@@ -552,15 +547,8 @@ function getElementAccessibleNameInternal(element: Element, options: AccessibleN
     if (!labelledBy && (element.tagName === 'TEXTAREA' || element.tagName === 'SELECT' || element.tagName === 'INPUT')) {
       options.visitedElements.add(element);
       const labels = (element as (HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement)).labels || [];
-      if (labels.length) {
-        return [...labels].map(label => getElementAccessibleNameInternal(label, {
-          ...options,
-          embeddedInLabel: 'self',
-          embeddedInTextAlternativeElement: false,
-          embeddedInLabelledBy: 'none',
-          embeddedInTargetElement: 'none',
-        })).filter(accessibleName => !!accessibleName).join(' ');
-      }
+      if (labels.length)
+        return getAccessibleNameFromAssociatedLabels(labels, options);
 
       const usePlaceholder = (element.tagName === 'INPUT' && ['text', 'password', 'search', 'tel', 'email', 'url'].includes((element as HTMLInputElement).type)) || element.tagName === 'TEXTAREA';
       const placeholder = element.getAttribute('placeholder') || '';
@@ -834,6 +822,16 @@ function hasExplicitAriaDisabled(element: Element | undefined): boolean {
   }
   // aria-disabled works across shadow boundaries.
   return hasExplicitAriaDisabled(parentElementOrShadowHost(element));
+}
+
+function getAccessibleNameFromAssociatedLabels(labels: Iterable<HTMLLabelElement>, options: AccessibleNameOptions) {
+  return [...labels].map(label => getElementAccessibleNameInternal(label, {
+    ...options,
+    embeddedInLabel: 'self',
+    embeddedInTextAlternativeElement: false,
+    embeddedInLabelledBy: 'none',
+    embeddedInTargetElement: 'none',
+  })).filter(accessibleName => !!accessibleName).join(' ');
 }
 
 let cacheAccessibleName: Map<Element, string> | undefined;

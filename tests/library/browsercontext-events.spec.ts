@@ -120,7 +120,7 @@ test('dialog event should work in popup 2', async ({ page, browserName }) => {
   await promise;
 });
 
-test('dialog event should work in immdiately closed popup', async ({ page }) => {
+test('dialog event should work in immediately closed popup', async ({ page }) => {
   const promise = page.evaluate(async () => {
     const win = window.open();
     const result = (win as any).prompt('hey?');

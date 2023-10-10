@@ -36,13 +36,6 @@ const internalStackPrefixes = [
 ];
 export const addInternalStackPrefix = (prefix: string) => internalStackPrefixes.push(prefix);
 
-export type ParsedStackTrace = {
-  allFrames: StackFrame[];
-  frames: StackFrame[];
-  frameTexts: string[];
-  apiName: string | undefined;
-};
-
 export type RawStack = string[];
 
 export function captureRawStack(): RawStack {
@@ -54,7 +47,7 @@ export function captureRawStack(): RawStack {
   return stack.split('\n');
 }
 
-export function captureLibraryStackTrace(rawStack?: RawStack): ParsedStackTrace {
+export function captureLibraryStackTrace(rawStack?: RawStack): { frames: StackFrame[], apiName: string } {
   const stack = rawStack || captureRawStack();
 
   const isTesting = isUnderTest();
@@ -79,7 +72,6 @@ export function captureLibraryStackTrace(rawStack?: RawStack): ParsedStackTrace 
   }).filter(Boolean) as ParsedFrame[];
 
   let apiName = '';
-  const allFrames = parsedFrames;
 
   // Deepest transition between non-client code calling into client
   // code is the api entry.
@@ -110,11 +102,25 @@ export function captureLibraryStackTrace(rawStack?: RawStack): ParsedStackTrace 
   });
 
   return {
-    allFrames: allFrames.map(p => p.frame),
     frames: parsedFrames.map(p => p.frame),
-    frameTexts: parsedFrames.map(p => p.frameText),
     apiName
   };
+}
+
+export function stringifyStackFrames(frames: StackFrame[]): string[] {
+  const stackLines: string[] = [];
+  for (const frame of frames) {
+    if (frame.function)
+      stackLines.push(`    at ${frame.function} (${frame.file}:${frame.line}:${frame.column})`);
+    else
+      stackLines.push(`    at ${frame.file}:${frame.line}:${frame.column}`);
+  }
+  return stackLines;
+}
+
+export function captureLibraryStackText() {
+  const parsed = captureLibraryStackTrace();
+  return stringifyStackFrames(parsed.frames).join('\n');
 }
 
 export function splitErrorMessage(message: string): { name: string, message: string } {

@@ -302,7 +302,7 @@ export function parseAttributeSelector(selector: string, allowUnquotedStrings: b
       if (next() === '\\') {
         source += eat1();
         if (EOL)
-          syntaxError('parsing regular expressiion');
+          syntaxError('parsing regular expression');
       } else if (inClass && next() === ']') {
         inClass = false;
       } else if (!inClass && next() === '[') {

@@ -16,7 +16,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { MaxTime, captureRawStack, monotonicTime, zones, sanitizeForFilePath } from 'playwright-core/lib/utils';
+import { MaxTime, captureRawStack, monotonicTime, zones, sanitizeForFilePath, stringifyStackFrames } from 'playwright-core/lib/utils';
 import type { TestInfoError, TestInfo, TestStatus, FullProject, FullConfig } from '../../types/test';
 import type { AttachmentPayload, StepBeginPayload, StepEndPayload, WorkerInitParams } from '../common/ipc';
 import type { TestCase } from '../common/test';
@@ -24,7 +24,7 @@ import { TimeoutManager } from './timeoutManager';
 import type { RunnableType, TimeSlot } from './timeoutManager';
 import type { Annotation, FullConfigInternal, FullProjectInternal } from '../common/config';
 import type { Location } from '../../types/testReporter';
-import { filteredStackTrace, getContainedPath, normalizeAndSaveAttachment, serializeError, stringifyStackFrames, trimLongString } from '../util';
+import { filteredStackTrace, getContainedPath, normalizeAndSaveAttachment, serializeError, trimLongString } from '../util';
 import { TestTracing } from './testTracing';
 import type { Attachment } from './testTracing';
 

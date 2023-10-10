@@ -2,7 +2,10 @@
   "name": "@playwright/experimental-ct-solid",
   "version": "1.39.0-next",
   "description": "Playwright Component Testing for Solid",
-  "repository": "github:Microsoft/playwright",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/microsoft/playwright.git"
+  },
   "homepage": "https://playwright.dev",
   "engines": {
     "node": ">=16"
@@ -33,6 +36,6 @@
     "solid-js": "^1.7.0"
   },
   "bin": {
-    "playwright": "./cli.js"
+    "playwright": "cli.js"
   }
 }

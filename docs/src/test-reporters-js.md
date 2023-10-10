@@ -3,6 +3,8 @@ id: test-reporters
 title: "Reporters"
 ---
 
+## Introduction
+
 Playwright Test comes with a few built-in reporters for different needs and ability to provide custom reporters. The easiest way to try out built-in reporters is to pass `--reporter` [command line option](./test-cli.md).
 
 
@@ -346,4 +348,5 @@ export default defineConfig({
 * [ReportPortal](https://github.com/reportportal/agent-js-playwright)
 * [Serenity/JS](https://serenity-js.org/handbook/test-runners/playwright-test)
 * [Testmo](https://github.com/jonasclaes/playwright-testmo-reporter)
+* [Testomat.io](https://github.com/testomatio/reporter/blob/master/docs/frameworks.md#playwright)
 * [Tesults](https://www.tesults.com/docs/playwright)

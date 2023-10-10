@@ -558,7 +558,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       expect((await page.waitForNavigation().catch(e => e)).message).toContain('Navigation failed because page was closed');
     });
 
-    test('should be able to connect when the wsEndpont is passed as an option', async ({ browserType, startRemoteServer }) => {
+    test('should be able to connect when the wsEndpoint is passed as an option', async ({ browserType, startRemoteServer }) => {
       const remoteServer = await startRemoteServer(kind);
       const browser = await browserType.connect({
         wsEndpoint: remoteServer.wsEndpoint(),

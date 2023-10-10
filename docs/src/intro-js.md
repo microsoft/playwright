@@ -107,7 +107,7 @@ npx playwright test --ui
 ```
 ![UI Mode](https://github.com/microsoft/playwright/assets/13063165/c5b501cc-4f5d-485a-87cc-66044c651786)
 
-Check out or [detailed guide on UI Mode](./test-ui-mode.md) to learn more about it's features.
+Check out or [detailed guide on UI Mode](./test-ui-mode.md) to learn more about its features.
 
 ## Updating Playwright
 
