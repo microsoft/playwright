@@ -107,6 +107,7 @@ function compareImages(mimeType: string, actualBuffer: Buffer | string, expected
   } else {
     maxDiffPixels = maxDiffPixels1 ?? maxDiffPixels2 ?? 0;
   }
+  maxDiffPixels += 0.5; // accounting for floating point rounding errors
 
   // Determine if there is a mismatch error, and return it
   const ratio = Math.ceil(count / (size.width * size.height) * 100) / 100;
