@@ -63,7 +63,7 @@ function compareImages(mimeType: string, actualBuffer: Buffer | string, expected
   // Determine if the size of the images are significantly different, and resize them to match
   let sizesMismatchError = '';
   if (expected.width !== actual.width || expected.height !== actual.height) {
-    const maxDiffSize = 0.5 + (options.maxDiffSize ?? 1);
+    const maxDiffSize = options.maxDiffSize ?? 1;
     const maxDiffSizeRatio = options.maxDiffSizeRatio ?? 0;
     let maxDiffWidth = maxDiffSize;
     let maxDiffHeight = maxDiffSize;
@@ -71,6 +71,8 @@ function compareImages(mimeType: string, actualBuffer: Buffer | string, expected
       maxDiffWidth = Math.max(maxDiffWidth, expected.width * maxDiffSizeRatio);
       maxDiffHeight = Math.max(maxDiffHeight, expected.height * maxDiffSizeRatio);
     }
+    maxDiffWidth += 0.5; // accounting for floating point rounding errors
+    maxDiffHeight += 0.5; // accounting for floating point rounding errors
     if (Math.abs(expected.width - actual.width) >= maxDiffWidth || Math.abs(expected.height - actual.height) >= maxDiffHeight) {
       sizesMismatchError = `Expected an image ${expected.width}px by ${expected.height}px, received ${actual.width}px by ${actual.height}px. `;
     }
