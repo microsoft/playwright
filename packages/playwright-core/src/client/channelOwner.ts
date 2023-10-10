@@ -18,8 +18,8 @@ import { EventEmitter } from 'events';
 import type * as channels from '@protocol/channels';
 import { maybeFindValidator, ValidationError, type ValidatorContext } from '../protocol/validator';
 import { debugLogger } from '../common/debugLogger';
-import type { ExpectZone, ParsedStackTrace } from '../utils/stackTrace';
-import { captureRawStack, captureLibraryStackTrace } from '../utils/stackTrace';
+import type { ExpectZone } from '../utils/stackTrace';
+import { captureRawStack, captureLibraryStackTrace, stringifyStackFrames } from '../utils/stackTrace';
 import { isUnderTest } from '../utils';
 import { zones } from '../utils/zones';
 import type { ClientInstrumentation } from './clientInstrumentation';
@@ -143,11 +143,11 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
           if (validator) {
             return (params: any) => {
               return this._wrapApiCall(apiZone => {
-                const { stackTrace, csi, callCookie, wallTime } = apiZone.reported ? { csi: undefined, callCookie: undefined, stackTrace: null, wallTime: undefined } : apiZone;
+                const { apiName, frames, csi, callCookie, wallTime } = apiZone.reported ? { apiName: undefined, csi: undefined, callCookie: undefined, frames: [], wallTime: undefined } : apiZone;
                 apiZone.reported = true;
-                if (csi && stackTrace && stackTrace.apiName)
-                  csi.onApiCallBegin(stackTrace.apiName, params, stackTrace, wallTime, callCookie);
-                return this._connection.sendMessageToServer(this, prop, validator(params, '', { tChannelImpl: tChannelImplToWire, binary: this._connection.isRemote() ? 'toBase64' : 'buffer' }), stackTrace, wallTime);
+                if (csi && apiName)
+                  csi.onApiCallBegin(apiName, params, frames, wallTime, callCookie);
+                return this._connection.sendMessageToServer(this, prop, validator(params, '', { tChannelImpl: tChannelImplToWire, binary: this._connection.isRemote() ? 'toBase64' : 'buffer' }), apiName, frames, wallTime);
               });
             };
           }
@@ -167,23 +167,25 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
       return func(apiZone);
 
     const stackTrace = captureLibraryStackTrace(stack);
+    let apiName: string | undefined = stackTrace.apiName;
+    const frames: channels.StackFrame[] = stackTrace.frames;
+
     isInternal = isInternal || this._type === 'LocalUtils';
     if (isInternal)
-      delete stackTrace.apiName;
+      apiName = undefined;
 
     // Enclosing zone could have provided the apiName and wallTime.
     const expectZone = zones.zoneData<ExpectZone>('expectZone', stack);
     const wallTime = expectZone ? expectZone.wallTime : Date.now();
     if (!isInternal && expectZone)
-      stackTrace.apiName = expectZone.title;
+      apiName = expectZone.title;
 
     const csi = isInternal ? undefined : this._instrumentation;
     const callCookie: any = {};
 
-    const { apiName, frameTexts } = stackTrace;
     try {
       logApiCall(logger, `=> ${apiName} started`, isInternal);
-      const apiZone = { stackTrace, isInternal, reported: false, csi, callCookie, wallTime };
+      const apiZone: ApiZone = { apiName, frames, isInternal, reported: false, csi, callCookie, wallTime };
       const result = await zones.run<ApiZone, Promise<R>>('apiZone', apiZone, async () => {
         return await func(apiZone);
       });
@@ -194,7 +196,7 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
       const innerError = ((process.env.PWDEBUGIMPL || isUnderTest()) && e.stack) ? '\n<inner error>\n' + e.stack : '';
       if (apiName && !apiName.includes('<anonymous>'))
         e.message = apiName + ': ' + e.message;
-      const stackFrames = '\n' + frameTexts.join('\n') + innerError;
+      const stackFrames = '\n' + stringifyStackFrames(stackTrace.frames).join('\n') + innerError;
       if (stackFrames.trim())
         e.stack = e.message + stackFrames;
       else
@@ -236,7 +238,8 @@ function tChannelImplToWire(names: '*' | string[], arg: any, path: string, conte
 }
 
 type ApiZone = {
-  stackTrace: ParsedStackTrace;
+  apiName: string | undefined;
+  frames: channels.StackFrame[];
   isInternal: boolean;
   reported: boolean;
   csi: ClientInstrumentation | undefined;

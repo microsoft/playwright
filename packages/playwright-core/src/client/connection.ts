@@ -35,7 +35,7 @@ import { WritableStream } from './writableStream';
 import { debugLogger } from '../common/debugLogger';
 import { SelectorsOwner } from './selectors';
 import { Android, AndroidSocket, AndroidDevice } from './android';
-import { captureLibraryStackTrace, type ParsedStackTrace } from '../utils/stackTrace';
+import { captureLibraryStackText, stringifyStackFrames } from '../utils/stackTrace';
 import { Artifact } from './artifact';
 import { EventEmitter } from 'events';
 import { JsonPipe } from './jsonPipe';
@@ -65,7 +65,7 @@ export class Connection extends EventEmitter {
   readonly _objects = new Map<string, ChannelOwner>();
   onmessage = (message: object): void => {};
   private _lastId = 0;
-  private _callbacks = new Map<number, { resolve: (a: any) => void, reject: (a: Error) => void, stackTrace: ParsedStackTrace | null, type: string, method: string }>();
+  private _callbacks = new Map<number, { resolve: (a: any) => void, reject: (a: Error) => void, apiName: string | undefined, frames: channels.StackFrame[], type: string, method: string }>();
   private _rootObject: Root;
   private _closedErrorMessage: string | undefined;
   private _isRemote = false;
@@ -98,8 +98,14 @@ export class Connection extends EventEmitter {
     return await this._rootObject.initialize();
   }
 
-  pendingProtocolCalls(): ParsedStackTrace[] {
-    return Array.from(this._callbacks.values()).map(callback => callback.stackTrace).filter(Boolean) as ParsedStackTrace[];
+  pendingProtocolCalls(): String {
+    const lines: string[] = [];
+    for (const call of this._callbacks.values()) {
+      if (!call.apiName)
+        continue;
+      lines.push(`  - ${call.apiName}\n${stringifyStackFrames(call.frames)}\n`);
+    }
+    return lines.length ? 'Pending operations:\n' + lines.join('\n') : '';
   }
 
   getObjectWithKnownName(guid: string): any {
@@ -113,13 +119,12 @@ export class Connection extends EventEmitter {
       this._tracingCount--;
   }
 
-  async sendMessageToServer(object: ChannelOwner, method: string, params: any, stackTrace: ParsedStackTrace | null, wallTime: number | undefined): Promise<any> {
+  async sendMessageToServer(object: ChannelOwner, method: string, params: any, apiName: string | undefined, frames: channels.StackFrame[], wallTime: number | undefined): Promise<any> {
     if (this._closedErrorMessage)
       throw new Error(this._closedErrorMessage);
     if (object._wasCollected)
       throw new Error('The object has been collected to prevent unbounded heap growth.');
 
-    const { apiName, frames } = stackTrace || { apiName: '', frames: [] };
     const guid = object._guid;
     const type = object._type;
     const id = ++this._lastId;
@@ -133,7 +138,7 @@ export class Connection extends EventEmitter {
     if (this._tracingCount && frames && type !== 'LocalUtils')
       this._localUtils?._channel.addStackToTracingNoReply({ callData: { stack: frames, id } }).catch(() => {});
     this.onmessage({ ...message, metadata });
-    return await new Promise((resolve, reject) => this._callbacks.set(id, { resolve, reject, stackTrace, type, method }));
+    return await new Promise((resolve, reject) => this._callbacks.set(id, { resolve, reject, apiName, frames, type, method }));
   }
 
   dispatch(message: object) {
@@ -186,7 +191,7 @@ export class Connection extends EventEmitter {
   }
 
   close(errorMessage: string = 'Connection closed') {
-    const stack = captureLibraryStackTrace().frameTexts.join('\n');
+    const stack = captureLibraryStackText();
     if (stack)
       errorMessage += '\n    ==== Closed by ====\n' + stack + '\n';
     this._closedErrorMessage = errorMessage;
