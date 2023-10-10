@@ -33,8 +33,8 @@ import { WKPage } from './wkPage';
 import { kBrowserClosedError } from '../../common/errors';
 import type { SdkObject } from '../instrumentation';
 
-const DEFAULT_USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15';
-const BROWSER_VERSION = '17.0';
+const DEFAULT_USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15';
+const BROWSER_VERSION = '17.4';
 
 export class WKBrowser extends Browser {
   private readonly _connection: WKConnection;
