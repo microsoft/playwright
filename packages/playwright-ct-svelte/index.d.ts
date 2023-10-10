@@ -47,7 +47,7 @@ export interface MountOptions<HooksConfig extends JsonObject, Component extends 
   hooksConfig?: HooksConfig;
 }
 
-interface MountResult<Component extends SvelteComponent> extends Locator {
+export interface MountResult<Component extends SvelteComponent> extends Locator {
   unmount(): Promise<void>;
   update(options: {
     props?: Partial<ComponentProps<Component>>;

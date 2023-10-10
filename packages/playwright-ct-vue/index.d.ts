@@ -57,7 +57,7 @@ export interface MountOptionsJsx<HooksConfig extends JsonObject> {
   hooksConfig?: HooksConfig;
 }
 
-interface MountResult<Component> extends Locator {
+export interface MountResult<Component> extends Locator {
   unmount(): Promise<void>;
   update(options: {
     props?: Partial<ComponentProps<Component>>;
@@ -66,7 +66,7 @@ interface MountResult<Component> extends Locator {
   }): Promise<void>;
 }
 
-interface MountResultJsx extends Locator {
+export interface MountResultJsx extends Locator {
   unmount(): Promise<void>;
   update(component: JSX.Element): Promise<void>;
 }
