@@ -127,6 +127,12 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
     if (options.maxDiffPixelRatio !== undefined && (options.maxDiffPixelRatio < 0 || options.maxDiffPixelRatio > 1))
       throw new Error('`maxDiffPixelRatio` option value must be between 0 and 1');
 
+    if (options.maxDiffSize !== undefined && options.maxDiffSize < 0)
+      throw new Error('`maxDiffSize` option value must be non-negative integer');
+
+    if (options.maxDiffSizeRatio !== undefined && options.maxDiffSizeRatio < 1)
+      throw new Error('`maxDiffSizeRatio` option value must be greater than 1');
+
     // sanitizes path if string
     const inputPathSegments = Array.isArray(name) ? name : [addSuffixToFilePath(name, '', undefined, true)];
     const outputPathSegments = Array.isArray(name) ? name : [addSuffixToFilePath(name, actualModifier, undefined, true)];
@@ -151,6 +157,8 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
     this.comparatorOptions = {
       maxDiffPixels: options.maxDiffPixels,
       maxDiffPixelRatio: options.maxDiffPixelRatio,
+      maxDiffSize: options.maxDiffSize,
+      maxDiffSizeRatio: options.maxDiffSizeRatio,
       threshold: options.threshold,
       _comparator: options._comparator,
     };
@@ -365,6 +373,8 @@ export async function toHaveScreenshot(
     threshold: undefined,
     maxDiffPixels: undefined,
     maxDiffPixelRatio: undefined,
+    maxDiffSize: undefined,
+    maxDiffSizeRatio: undefined,
   };
 
   const hasSnapshot = fs.existsSync(helper.snapshotPath);

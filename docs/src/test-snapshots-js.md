@@ -66,7 +66,7 @@ import { test, expect } from '@playwright/test';
 
 test('example test', async ({ page }) => {
   await page.goto('https://playwright.dev');
-  await expect(page).toHaveScreenshot({ maxDiffPixels: 100 });
+  await expect(page).toHaveScreenshot({ maxDiffPixels: 100, maxDiffSize: 2 });
 });
 ```
 
@@ -76,7 +76,7 @@ If you'd like to share the default value among all the tests in the project, you
 import { defineConfig } from '@playwright/test';
 export default defineConfig({
   expect: {
-    toHaveScreenshot: { maxDiffPixels: 100 },
+    toHaveScreenshot: { maxDiffPixels: 100, maxDiffSize: 2 },
   },
 });
 ```

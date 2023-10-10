@@ -1360,6 +1360,8 @@ Page:
             comparator: string?
             maxDiffPixels: number?
             maxDiffPixelRatio: number?
+            maxDiffSize: number?
+            maxDiffSizeRatio: number?
             threshold: number?
         screenshotOptions:
           type: object?

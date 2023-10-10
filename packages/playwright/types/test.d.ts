@@ -5804,6 +5804,18 @@ interface LocatorAssertions {
     maxDiffPixels?: number;
 
     /**
+     * An acceptable number of pixels to vary the width or height by. Default is configurable with `TestConfig.expect`. 1
+     * by default.
+     */
+    maxDiffSize?: number;
+
+    /**
+     * An acceptable ratio for the difference in width or height, greater than `1`. Default is configurable with
+     * `TestConfig.expect`. 1 by default.
+     */
+    maxDiffSizeRatio?: number;
+
+    /**
      * Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images.
      * Defaults to `false`.
      */
@@ -5885,6 +5897,18 @@ interface LocatorAssertions {
      * default.
      */
     maxDiffPixels?: number;
+
+    /**
+     * An acceptable number of pixels to vary the width or height by. Default is configurable with `TestConfig.expect`. 1
+     * by default.
+     */
+    maxDiffSize?: number;
+
+    /**
+     * An acceptable ratio for the difference in width or height, greater than `1`. Default is configurable with
+     * `TestConfig.expect`. 1 by default.
+     */
+    maxDiffSizeRatio?: number;
 
     /**
      * Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images.

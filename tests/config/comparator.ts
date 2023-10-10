@@ -18,7 +18,7 @@ import { getComparator } from '../../packages/playwright-core/lib/utils/comparat
 
 const pngComparator = getComparator('image/png');
 type ComparatorResult = { diff?: Buffer; errorMessage: string; } | null;
-type ImageComparatorOptions = { threshold?: number, maxDiffPixels?: number, maxDiffPixelRatio?: number };
+type ImageComparatorOptions = { threshold?: number, maxDiffPixels?: number, maxDiffPixelRatio?: number, maxDiffSize?: number, maxDiffSizeRatio?: number };
 
 export function comparePNGs(actual: Buffer, expected: Buffer, options: ImageComparatorOptions = {}): ComparatorResult {
   // Strict threshold by default in our tests.
