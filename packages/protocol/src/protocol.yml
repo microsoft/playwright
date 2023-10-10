@@ -955,6 +955,10 @@ Browser:
       returns:
         context: BrowserContext
 
+    stopPendingOperations:
+      parameters:
+        reason: string
+
     newBrowserCDPSession:
       returns:
         session: CDPSession

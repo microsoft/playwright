@@ -72,6 +72,12 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
     }, true);
   }
 
+  async _stopPendingOperations(reason: string) {
+    return await this._wrapApiCall(async () => {
+      await this._channel.stopPendingOperations({ reason });
+    }, true);
+  }
+
   async _innerNewContext(options: BrowserContextOptions = {}, forReuse: boolean): Promise<BrowserContext> {
     options = { ...this._browserType._defaultContextOptions, ...options };
     const contextOptions = await prepareBrowserContextParams(options);

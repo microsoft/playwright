@@ -211,7 +211,7 @@ export class PlaywrightConnection {
           if (!context.pages().length)
             await context.close(serverSideCallMetadata());
           else
-            await context.stopPendingOperations();
+            await context.stopPendingOperations('Connection closed');
         }
         if (!browser.contexts())
           await browser.close();

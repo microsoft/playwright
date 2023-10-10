@@ -339,13 +339,8 @@ test('should report error and pending operations on timeout', async ({ runInline
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(1);
-  expect(result.output).toContain('Pending operations:');
-  expect(result.output).toContain('- locator.click');
-  expect(result.output).toContain('a.test.ts:6:37');
-  expect(result.output).toContain('- locator.textContent');
+  expect(result.output).toContain('Error: locator.textContent: Page closed');
   expect(result.output).toContain('a.test.ts:7:42');
-  expect(result.output).toContain('waiting for');
-  expect(result.output).toContain(`7 |           page.getByText('More missing').textContent(),`);
 });
 
 test('should report error on timeout with shared page', async ({ runInlineTest }) => {
@@ -411,8 +406,7 @@ test('should not report waitForEventInfo as pending', async ({ runInlineTest }) 
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(1);
-  expect(result.output).toContain('Pending operations:');
-  expect(result.output).toContain('- page.click');
+  expect(result.output).toContain('page.click');
   expect(result.output).toContain('a.test.ts:6:20');
   expect(result.output).not.toContain('- page.waitForLoadState');
 });
