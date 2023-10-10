@@ -178,12 +178,12 @@ export const expect = baseExpect.extend({
     const message = pass
       ? () => this.utils.matcherHint('toHaveAmount', undefined, undefined, { isNot: this.isNot }) +
           '\n\n' +
-          `Locator: \${locator}\n`,
-          `Expected: \${this.isNot ? 'not' : ''}\${this.utils.printExpected(expected)}\n` +
+          `Locator: ${locator}\n`,
+          `Expected: ${this.isNot ? 'not' : ''}${this.utils.printExpected(expected)}\n` +
           (matcherResult ? `Received: ${this.utils.printReceived(matcherResult.actual)}` : '')
       : () =>  this.utils.matcherHint('toHaveAmount', undefined, undefined, expectOptions) +
           '\n\n' +
-          `Locator: \${locator}\n`,
+          `Locator: ${locator}\n`,
           `Expected: ${this.utils.printExpected(expected)}\n` +
           (matcherResult ? `Received: ${this.utils.printReceived(matcherResult.actual)}` : '');
 
