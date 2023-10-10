@@ -48,7 +48,7 @@
         "mac11-arm64": "1816",
         "ubuntu18.04": "1728"
       },
-      "browserVersion": "17.0"
+      "browserVersion": "17.4"
     },
     {
       "name": "ffmpeg",
