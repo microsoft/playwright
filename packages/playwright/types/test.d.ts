@@ -646,9 +646,14 @@ interface TestConfig {
       maxDiffPixelRatio?: number;
 
       /**
-       * an acceptable number of pixels to vary the size by, `1` by default.
+       * an acceptable number of pixels to vary the width or height by, `1` by default.
        */
       maxDiffSize?: number;
+
+      /**
+       * an acceptable ratio for the difference in width or height, greater than `1`, `1` by default.
+       */
+      maxDiffSizeRatio?: number;
 
       /**
        * See `animations` in [page.screenshot([options])](https://playwright.dev/docs/api/class-page#page-screenshot).
@@ -694,9 +699,14 @@ interface TestConfig {
       maxDiffPixelRatio?: number;
 
       /**
-       * an acceptable number of pixels to vary the size by, `1` by default.
+       * an acceptable number of pixels to vary the width or height by, `1` by default.
        */
       maxDiffSize?: number;
+
+      /**
+       * an acceptable ratio for the difference in width or height, greater than `1`, `1` by default.
+       */
+      maxDiffSizeRatio?: number;
     };
   };
 
@@ -6597,9 +6607,14 @@ interface TestProject {
       maxDiffPixelRatio?: number;
 
       /**
-       * an acceptable number of pixels to vary the size by, `1` by default.
+       * an acceptable number of pixels to vary the width or height by, `1` by default.
        */
       maxDiffSize?: number;
+
+      /**
+       * an acceptable ratio for the difference in width or height, greater than `1`, `1` by default.
+       */
+      maxDiffSizeRatio?: number;
 
       /**
        * See `animations` in [page.screenshot([options])](https://playwright.dev/docs/api/class-page#page-screenshot).
@@ -6645,9 +6660,14 @@ interface TestProject {
       maxDiffPixelRatio?: number;
 
       /**
-       * an acceptable number of pixels to vary the size by, `1` by default.
+       * an acceptable number of pixels to vary the width or height by, `1` by default.
        */
       maxDiffSize?: number;
+
+      /**
+       * an acceptable ratio for the difference in width or height, greater than `1`, `1` by default.
+       */
+      maxDiffSizeRatio?: number;
     };
   };
 

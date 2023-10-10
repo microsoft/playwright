@@ -15,13 +15,14 @@
  * limitations under the License.
  */
 
+/* eslint-disable curly */
 import { colors, jpegjs } from '../utilsBundle';
 const pixelmatch = require('../third_party/pixelmatch');
 import { compare } from '../image_tools/compare';
 const { diff_match_patch, DIFF_INSERT, DIFF_DELETE, DIFF_EQUAL } = require('../third_party/diff_match_patch');
 import { PNG } from '../utilsBundle';
 
-export type ImageComparatorOptions = { threshold?: number, maxDiffPixels?: number, maxDiffPixelRatio?: number, maxDiffSize?: number, _comparator?: string };
+export type ImageComparatorOptions = { threshold?: number, maxDiffPixels?: number, maxDiffPixelRatio?: number, maxDiffSize?: number, maxDiffSizeRatio?: number, _comparator?: string };
 export type ComparatorResult = { diff?: Buffer; errorMessage: string; } | null;
 export type Comparator = (actualBuffer: Buffer | string, expectedBuffer: Buffer, options?: any) => ComparatorResult;
 
@@ -50,22 +51,38 @@ function compareBuffersOrStrings(actualBuffer: Buffer | string, expectedBuffer: 
 type ImageData = { width: number, height: number, data: Buffer };
 
 function compareImages(mimeType: string, actualBuffer: Buffer | string, expectedBuffer: Buffer, options: ImageComparatorOptions = {}): ComparatorResult {
-  if (!actualBuffer || !(actualBuffer instanceof Buffer))
+  if (!actualBuffer || !(actualBuffer instanceof Buffer)) {
     return { errorMessage: 'Actual result should be a Buffer.' };
+  }
   validateBuffer(expectedBuffer, mimeType);
 
   let actual: ImageData = mimeType === 'image/png' ? PNG.sync.read(actualBuffer) : jpegjs.decode(actualBuffer, { maxMemoryUsageInMB: JPEG_JS_MAX_BUFFER_SIZE_IN_MB });
   let expected: ImageData = mimeType === 'image/png' ? PNG.sync.read(expectedBuffer) : jpegjs.decode(expectedBuffer, { maxMemoryUsageInMB: JPEG_JS_MAX_BUFFER_SIZE_IN_MB });
   const size = { width: Math.min(expected.width, actual.width), height: Math.min(expected.height, actual.height) };
+
+  // Determine if the size of the images are significantly different, and resize them to match
   let sizesMismatchError = '';
   if (expected.width !== actual.width || expected.height !== actual.height) {
-    const maxDiffSize = 1 + (options.maxDiffSize ?? 1);
-    if (Math.abs(expected.width - actual.width) >= maxDiffSize || Math.abs(expected.height - actual.height) >= maxDiffSize)
+    const maxDiffSize = 0.5 + (options.maxDiffSize ?? 1);
+    let maxDiffSizeRatio = options.maxDiffSizeRatio ?? 1;
+    let maxDiffWidth = maxDiffSize;
+    let maxDiffHeight = maxDiffSize;
+    if (maxDiffSizeRatio > 0 && maxDiffSizeRatio < 1) {
+      maxDiffSizeRatio = 2 - maxDiffSizeRatio;  // example: convert 0.8 to 1.2
+    }
+    if (maxDiffSizeRatio > 1) {
+      maxDiffWidth = Math.max(maxDiffWidth, expected.width * (maxDiffSizeRatio - 1));
+      maxDiffHeight = Math.max(maxDiffHeight, expected.height * (maxDiffSizeRatio - 1));
+    }
+    if (Math.abs(expected.width - actual.width) >= maxDiffWidth || Math.abs(expected.height - actual.height) >= maxDiffHeight) {
       sizesMismatchError = `Expected an image ${expected.width}px by ${expected.height}px, received ${actual.width}px by ${actual.height}px. `;
+    }
+    // always resize both images, so that we can perform the pixel diff
     actual = resizeImage(actual, size);
     expected = resizeImage(expected, size);
   }
 
+  // Count the number of pixels that are different
   const diff = new PNG({ width: size.width, height: size.height });
   let count;
   if (options._comparator === 'ssim-cie94') {
@@ -82,20 +99,24 @@ function compareImages(mimeType: string, actualBuffer: Buffer | string, expected
     throw new Error(`Configuration specifies unknown comparator "${options._comparator}"`);
   }
 
+  // Compute the max number of pixels that can be different in the diff image
   const maxDiffPixels1 = options.maxDiffPixels;
   const maxDiffPixels2 = options.maxDiffPixelRatio !== undefined ? size.width * size.height * options.maxDiffPixelRatio : undefined;
   let maxDiffPixels;
-  if (maxDiffPixels1 !== undefined && maxDiffPixels2 !== undefined)
+  if (maxDiffPixels1 !== undefined && maxDiffPixels2 !== undefined) {
     maxDiffPixels = Math.min(maxDiffPixels1, maxDiffPixels2);
-  else
+  } else {
     maxDiffPixels = maxDiffPixels1 ?? maxDiffPixels2 ?? 0;
+  }
 
+  // Determine if there is a mismatch error, and return it
   const ratio = Math.ceil(count / (size.width * size.height) * 100) / 100;
   const pixelsMismatchError = count > maxDiffPixels ? `${count} pixels (ratio ${ratio.toFixed(2)} of all image pixels) are different.` : '';
-  if (pixelsMismatchError || sizesMismatchError)
+  if (pixelsMismatchError || sizesMismatchError) {
     return { errorMessage: sizesMismatchError + pixelsMismatchError, diff: PNG.sync.write(diff) };
-  else
+  } else {
     return null;
+  }
 }
 
 function validateBuffer(buffer: Buffer, mimeType: string): void {

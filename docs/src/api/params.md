@@ -853,7 +853,13 @@ An acceptable ratio of pixels that are different to the total amount of pixels, 
 * langs: js
 - `maxDiffSize` <[int]>
 
-An acceptable number of pixels to vary the size by, between `0` and `1`. Default is configurable with `TestConfig.expect`. 1 by default.
+An acceptable number of pixels to vary the width or height by. Default is configurable with `TestConfig.expect`. 1 by default.
+
+## assertions-max-diff-size-ratio
+* langs: js
+- `maxDiffSizeRatio` <[float]>
+
+An acceptable ratio for the difference in width or height, greater than `1`. Default is configurable with `TestConfig.expect`. 1 by default.
 
 ## assertions-threshold
 * langs: js
