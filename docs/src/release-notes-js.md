@@ -6,6 +6,86 @@ toc_max_heading_level: 2
 
 import LiteYouTube from '@site/src/components/LiteYouTube';
 
+## Version 1.39
+
+### Extending expect with custom matchers
+
+You can extend Playwright assertions by providing custom matchers. These matchers will be available on the expect object.
+
+```js title=fixtures.ts
+import { expect as baseExpect } from '@playwright/test';
+export const expect = baseExpect.extend({
+  async toHaveAmount(locator: Locator, expected: number, options?: { timeout?: number }) {
+    // Note: this matcher never passes, see the documentation for a full example.
+    // Return a "pass" flag and a message getter.
+    return { pass: false, message: () => `Expected ${expected} amount` };
+  },
+});
+```
+
+See the documentation [for a full example](./test-configuration.md#add-custom-matchers-using-expectextend).
+
+### Merging fixtures and expect matchers
+
+You can combine fixtures and custom expect matchers from multiple files or modules.
+
+```js title="fixtures.ts"
+import { composedTest, composedExpect } from '@playwright/test';
+import { test as dbTest, expect as dbExpect } from 'database-test-utils';
+import { test as a11yTest, expect as a11yExpect } from 'a11y-test-utils';
+
+export const expect = composedExpect(dbExpect, a11yExpect);
+export const test = composedTest(dbTest, a11yTest);
+```
+
+```js title="test.spec.ts"
+import { test, expect } from './fixtures';
+
+test('passes', async ({ database, page }) => {
+  await expect(database).toHaveDatabaseUser('admin');
+  await expect(page).toPassA11yAudit();
+});
+```
+
+### Boxed test steps
+
+You can mark a [`method: Test.step`] as "boxed" so that errors inside it point to the step call site.
+
+```js
+async function login(page) {
+  await test.step('login', async () => {
+    // ...
+  }, { box: true });  // Note the "box" option here.
+}
+```
+
+```txt
+Error: Timed out 5000ms waiting for expect(locator).toBeVisible()
+  ... error details omitted ...
+
+  14 |   await page.goto('https://github.com/login');
+> 15 |   await login(page);
+     |         ^
+  16 | });
+```
+
+See [`method: Test.step`] documentation for a full example.
+
+### New APIs
+
+- [`method: LocatorAssertions.toHaveAttribute#2`]
+
+### Browser Versions
+
+* Chromium 119.0.6045.9
+* Mozilla Firefox 118.0.1
+* WebKit 17.4
+
+This version was also tested against the following stable channels:
+
+* Google Chrome 118
+* Microsoft Edge 118
+
 ## Version 1.38
 
 <LiteYouTube
