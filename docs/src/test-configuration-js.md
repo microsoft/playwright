@@ -215,7 +215,7 @@ Do not confuse Playwright's `expect` with the [`expect` library](https://jestjs.
 You can combine custom matchers from multiple files or modules.
 
 ```js title="fixtures.ts"
-import { test, expect } from '@playwright/test';
+import { composedTest, composedExpect } from '@playwright/test';
 import { test as dbTest, expect as dbExpect } from 'database-test-utils';
 import { test as a11yTest, expect as a11yExpect } from 'a11y-test-utils';
 
