@@ -487,6 +487,7 @@ test('should work with multiple chunks', async ({ context, page, server }, testI
   await page.setContent('<button>Click</button>');
   await page.click('"Click"');
   page.click('"ClickNoButton"', { timeout: 0 }).catch(() =>  {});
+  await page.evaluate(() => {});
   await context.tracing.stopChunk({ path: testInfo.outputPath('trace.zip') });
 
   await context.tracing.startChunk();
@@ -503,6 +504,7 @@ test('should work with multiple chunks', async ({ context, page, server }, testI
     'page.setContent',
     'page.click',
     'page.click',
+    'page.evaluate',
   ]);
   expect(trace1.events.some(e => e.type === 'frame-snapshot')).toBeTruthy();
   expect(trace1.events.some(e => e.type === 'resource-snapshot' && e.snapshot.request.url.endsWith('style.css'))).toBeTruthy();

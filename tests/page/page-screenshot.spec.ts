@@ -817,8 +817,8 @@ it.describe('page screenshot animations', () => {
     // Ensure CSS animation is finite.
     expect(await div.evaluate(async el => Number.isFinite(el.getAnimations()[0].effect.getComputedTiming().endTime))).toBe(true);
     await Promise.all([
-      page.screenshot({ animations: 'disabled' }),
       page.waitForEvent('console', msg => msg.text() === 'animationend'),
+      page.screenshot({ animations: 'disabled' }),
     ]);
     expect(await page.evaluate(() => window._EVENTS)).toEqual([
       'onfinish', 'animationend'
