@@ -8,46 +8,68 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 ## Version 1.39
 
-### Extending expect with custom matchers
+### Add custom matchers to your expect
 
 You can extend Playwright assertions by providing custom matchers. These matchers will be available on the expect object.
 
-```js title=fixtures.ts
+```js title="test.spec.ts"
 import { expect as baseExpect } from '@playwright/test';
 export const expect = baseExpect.extend({
   async toHaveAmount(locator: Locator, expected: number, options?: { timeout?: number }) {
-    // Note: this matcher never passes, see the documentation for a full example.
-    // Return a "pass" flag and a message getter.
-    return { pass: false, message: () => `Expected ${expected} amount` };
+    // ... see documentation for how to write matchers.
   },
+});
+
+test('pass', async ({ page }) => {
+  await expect(page.getByTestId('cart')).toHaveAmount(5);
 });
 ```
 
 See the documentation [for a full example](./test-configuration.md#add-custom-matchers-using-expectextend).
 
-### Merging fixtures and expect matchers
+### Merge test fixtures
 
-You can combine fixtures and custom expect matchers from multiple files or modules.
+You can now merge test fixtures from multiple files or modules:
 
 ```js title="fixtures.ts"
-import { composedTest, composedExpect } from '@playwright/test';
+import { mergeTests } from '@playwright/test';
+import { test as dbTest } from 'database-test-utils';
+import { test as a11yTest } from 'a11y-test-utils';
+
+export const test = mergeTests(dbTest, a11yTest);
+```
+
+```js title="test.spec.ts"
+import { test } from './fixtures';
+
+test('passes', async ({ database, page, a11y }) => {
+  // use database and a11y fixtures.
+});
+```
+
+### Merge custom expect matchers
+
+You can now merge custom expect matchers from multiple files or modules:
+
+```js title="fixtures.ts"
+import { mergeTests, mergeExpects } from '@playwright/test';
 import { test as dbTest, expect as dbExpect } from 'database-test-utils';
 import { test as a11yTest, expect as a11yExpect } from 'a11y-test-utils';
 
-export const expect = composedExpect(dbExpect, a11yExpect);
-export const test = composedTest(dbTest, a11yTest);
+export const test = mergeTests(dbTest, a11yTest);
+export const expect = mergeExpects(dbExpect, a11yExpect);
 ```
 
 ```js title="test.spec.ts"
 import { test, expect } from './fixtures';
 
-test('passes', async ({ database, page }) => {
+test('passes', async ({ page, database }) => {
   await expect(database).toHaveDatabaseUser('admin');
   await expect(page).toPassA11yAudit();
 });
 ```
 
-### Boxed test steps
+### Hide implementation details: box test steps
 
 You can mark a [`method: Test.step`] as "boxed" so that errors inside it point to the step call site.
 

@@ -5328,7 +5328,7 @@ type MergedTestType<List> = TestType<MergedT<List>, MergedW<List>>;
 /**
  * Merges fixtures
  */
-export function composedTest<List extends any[]>(...tests: List): MergedTestType<List>;
+export function mergeTests<List extends any[]>(...tests: List): MergedTestType<List>;
 
 type MergedExpectMatchers<List> = List extends [Expect<infer M>, ...(infer Rest)] ? M & MergedExpectMatchers<Rest> : {};
 type MergedExpect<List> = Expect<MergedExpectMatchers<List>>;
@@ -5336,7 +5336,7 @@ type MergedExpect<List> = Expect<MergedExpectMatchers<List>>;
 /**
  * Merges expects
  */
-export function composedExpect<List extends any[]>(...expects: List): MergedExpect<List>;
+export function mergeExpects<List extends any[]>(...expects: List): MergedExpect<List>;
 
 // This is required to not export everything by default. See https://github.com/Microsoft/TypeScript/issues/19545#issuecomment-340490459
 export {};

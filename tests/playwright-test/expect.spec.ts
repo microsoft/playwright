@@ -879,10 +879,10 @@ test('should suppport toHaveAttribute without optional value', async ({ runTSC }
   expect(result.exitCode).toBe(0);
 });
 
-test('should support composedExpect (TSC)', async ({ runTSC }) => {
+test('should support mergeExpects (TSC)', async ({ runTSC }) => {
   const result = await runTSC({
     'a.spec.ts': `
-      import { test, composedExpect, expect as baseExpect } from '@playwright/test';
+      import { test, mergeExpects, expect as baseExpect } from '@playwright/test';
       import type { Page } from '@playwright/test';
 
       const expect1 = baseExpect.extend({
@@ -897,7 +897,7 @@ test('should support composedExpect (TSC)', async ({ runTSC }) => {
         }
       });
 
-      const expect = composedExpect(expect1, expect2);
+      const expect = mergeExpects(expect1, expect2);
 
       test('custom matchers', async ({ page }) => {
         await expect(page).toBeAGoodPage(123);
@@ -914,10 +914,10 @@ test('should support composedExpect (TSC)', async ({ runTSC }) => {
   expect(result.exitCode).toBe(0);
 });
 
-test('should support composedExpect', async ({ runInlineTest }) => {
+test('should support mergeExpects', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
-      import { test, composedExpect, expect as baseExpect } from '@playwright/test';
+      import { test, mergeExpects, expect as baseExpect } from '@playwright/test';
       import type { Page } from '@playwright/test';
 
       const expect1 = baseExpect.extend({
@@ -932,7 +932,7 @@ test('should support composedExpect', async ({ runInlineTest }) => {
         }
       });
 
-      const expect = composedExpect(expect1, expect2);
+      const expect = mergeExpects(expect1, expect2);
 
       test('custom matchers', async ({ page }) => {
         await expect(page).toBeAGoodPage(123);

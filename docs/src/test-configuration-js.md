@@ -217,12 +217,12 @@ Do not confuse Playwright's `expect` with the [`expect` library](https://jestjs.
 You can combine custom matchers from multiple files or modules.
 
 ```js title="fixtures.ts"
-import { composedTest, composedExpect } from '@playwright/test';
+import { mergeTests, mergeExpects } from '@playwright/test';
 import { test as dbTest, expect as dbExpect } from 'database-test-utils';
 import { test as a11yTest, expect as a11yExpect } from 'a11y-test-utils';
 
-export const expect = composedExpect(dbExpect, a11yExpect);
-export const test = composedTest(dbTest, a11yTest);
+export const expect = mergeExpects(dbExpect, a11yExpect);
+export const test = mergeTests(dbTest, a11yTest);
 ```
 
 ```js title="test.spec.ts"
