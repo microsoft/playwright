@@ -66,7 +66,7 @@ export class FrameSelectors {
     const resolved = await this.resolveInjectedForSelector(selector, { mainWorld: true }, scope);
     // Be careful, |this.frame| can be different from |resolved.frame|.
     if (!resolved)
-      throw new Error(`Error: failed to find frame for selector "${selector}"`);
+      throw new Error(`Failed to find frame for selector "${selector}"`);
     return await resolved.injected.evaluateHandle((injected, { info, scope }) => {
       return injected.querySelectorAll(info.parsed, scope || document);
     }, { info: resolved.info, scope: resolved.scope });
@@ -76,7 +76,7 @@ export class FrameSelectors {
     const resolved = await this.resolveInjectedForSelector(selector);
     // Be careful, |this.frame| can be different from |resolved.frame|.
     if (!resolved)
-      throw new Error(`Error: failed to find frame for selector "${selector}"`);
+      throw new Error(`Failed to find frame for selector "${selector}"`);
     return await resolved.injected.evaluate((injected, { info }) => {
       return injected.querySelectorAll(info.parsed, document).length;
     }, { info: resolved.info });

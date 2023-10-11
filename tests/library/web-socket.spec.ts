@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import { kTargetClosedErrorMessage } from '../config/errors';
 import { contextTest as it, expect } from '../config/browserTest';
 import { Server as WebSocketServer } from 'ws';
 
@@ -196,7 +197,7 @@ it('should reject waitForEvent on page close', async ({ page, server }) => {
   ]);
   const error = ws.waitForEvent('framesent').catch(e => e);
   await page.close();
-  expect((await error).message).toContain('Page closed');
+  expect((await error).message).toContain(kTargetClosedErrorMessage);
 });
 
 it('should turn off when offline', async ({ page }) => {

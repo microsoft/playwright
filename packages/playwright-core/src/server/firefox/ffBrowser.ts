@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { kBrowserClosedError } from '../../common/errors';
+import { kTargetClosedErrorMessage } from '../../common/errors';
 import { assert } from '../../utils';
 import type { BrowserOptions } from '../browser';
 import { Browser } from '../browser';
@@ -159,7 +159,7 @@ export class FFBrowser extends Browser {
 
   _onDisconnect() {
     for (const video of this._idToVideo.values())
-      video.artifact.reportFinished(kBrowserClosedError);
+      video.artifact.reportFinished(kTargetClosedErrorMessage);
     this._idToVideo.clear();
     for (const ffPage of this._ffPages.values())
       ffPage.didClose();

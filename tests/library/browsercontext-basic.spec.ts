@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import { kTargetClosedErrorMessage } from '../config/errors';
 import { browserTest as it, expect } from '../config/browserTest';
 import { attachFrame, verifyViewport } from '../config/utils';
 
@@ -129,7 +130,7 @@ it('close() should abort waitForEvent', async ({ browser }) => {
   const promise = context.waitForEvent('page').catch(e => e);
   await context.close();
   const error = await promise;
-  expect(error.message).toContain('Context closed');
+  expect(error.message).toContain(kTargetClosedErrorMessage);
 });
 
 it('close() should be callable twice', async ({ browser }) => {

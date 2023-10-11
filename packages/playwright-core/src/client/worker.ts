@@ -23,7 +23,7 @@ import type { BrowserContext } from './browserContext';
 import type * as api from '../../types/types';
 import type * as structs from '../../types/structs';
 import { LongStandingScope } from '../utils';
-import { kBrowserOrContextClosedError } from '../common/errors';
+import { kTargetClosedErrorMessage } from '../common/errors';
 
 export class Worker extends ChannelOwner<channels.WorkerChannel> implements api.Worker {
   _page: Page | undefined;  // Set for web workers.
@@ -43,7 +43,7 @@ export class Worker extends ChannelOwner<channels.WorkerChannel> implements api.
         this._context._serviceWorkers.delete(this);
       this.emit(Events.Worker.Close, this);
     });
-    this.once(Events.Worker.Close, () => this._closedScope.close(kBrowserOrContextClosedError));
+    this.once(Events.Worker.Close, () => this._closedScope.close(kTargetClosedErrorMessage));
   }
 
   url(): string {

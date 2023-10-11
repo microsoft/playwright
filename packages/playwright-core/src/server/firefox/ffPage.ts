@@ -35,6 +35,7 @@ import { splitErrorMessage } from '../../utils/stackTrace';
 import { debugLogger } from '../../common/debugLogger';
 import { ManualPromise } from '../../utils/manualPromise';
 import { BrowserContext } from '../browserContext';
+import { TargetClosedError } from '../../common/errors';
 
 export const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
@@ -342,7 +343,7 @@ export class FFPage implements PageDelegate {
   }
 
   didClose() {
-    this._markAsError(new Error('Page closed'));
+    this._markAsError(new TargetClosedError());
     this._session.dispose();
     eventsHelper.removeEventListeners(this._eventListeners);
     this._networkManager.dispose();

@@ -30,7 +30,7 @@ import type { Protocol } from './protocol';
 import type { PageProxyMessageReceivedPayload } from './wkConnection';
 import { kPageProxyMessageReceived, WKConnection, WKSession } from './wkConnection';
 import { WKPage } from './wkPage';
-import { kBrowserClosedError } from '../../common/errors';
+import { kTargetClosedErrorMessage } from '../../common/errors';
 import type { SdkObject } from '../instrumentation';
 
 const DEFAULT_USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15';
@@ -81,7 +81,7 @@ export class WKBrowser extends Browser {
       wkPage.didClose();
     this._wkPages.clear();
     for (const video of this._idToVideo.values())
-      video.artifact.reportFinished(kBrowserClosedError);
+      video.artifact.reportFinished(kTargetClosedErrorMessage);
     this._idToVideo.clear();
     this._didClose();
   }
@@ -165,7 +165,7 @@ export class WKBrowser extends Browser {
       context = this._defaultContext as WKBrowserContext;
     if (!context)
       return;
-    const pageProxySession = new WKSession(this._connection, pageProxyId, `Target closed`, (message: any) => {
+    const pageProxySession = new WKSession(this._connection, pageProxyId, kTargetClosedErrorMessage, (message: any) => {
       this._connection.rawSend({ ...message, pageProxyId });
     });
     const opener = event.openerId ? this._wkPages.get(event.openerId) : undefined;

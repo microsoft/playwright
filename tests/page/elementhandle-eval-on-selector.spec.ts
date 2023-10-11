@@ -37,7 +37,7 @@ it('should throw in case of missing selector', async ({ page, server }) => {
   await page.setContent(htmlContent);
   const elementHandle = await page.$('#myId');
   const errorMessage = await elementHandle.$eval('.a', node => (node as HTMLElement).innerText).catch(error => error.message);
-  expect(errorMessage).toContain(`Error: failed to find element matching selector ".a"`);
+  expect(errorMessage).toContain(`elementHandle.$eval: Failed to find element matching selector ".a"`);
 });
 
 it('should work for all', async ({ page, server }) => {

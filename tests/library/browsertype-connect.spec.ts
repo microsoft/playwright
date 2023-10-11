@@ -27,6 +27,7 @@ import { parseTrace, suppressCertificateWarning } from '../config/utils';
 import formidable from 'formidable';
 import type { Browser, ConnectOptions } from 'playwright-core';
 import { createHttpServer } from '../../packages/playwright-core/lib/utils/network';
+import { kTargetClosedErrorMessage } from '../config/errors';
 
 type ExtraFixtures = {
   connect: (wsEndpoint: string, options?: ConnectOptions, redirectPortForTest?: number) => Promise<Browser>,
@@ -336,7 +337,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       ]);
       expect(browser.isConnected()).toBe(false);
       const error = await page.waitForNavigation().catch(e => e);
-      expect(error.message).toContain('Navigation failed because page was closed');
+      expect(error.message).toContain(kTargetClosedErrorMessage);
     });
 
     test('should reject navigation when browser closes', async ({ connect, startRemoteServer, server }) => {
@@ -391,7 +392,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       ]);
       for (let i = 0; i < 2; i++) {
         const message = results[i].message;
-        expect(message).toContain('Page closed');
+        expect(message).toContain(kTargetClosedErrorMessage);
         expect(message).not.toContain('Timeout');
       }
     });
@@ -549,13 +550,11 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       await disconnectedPromise;
       expect(browser.isConnected()).toBe(false);
 
-      const navMessage = (await navigationPromise).message;
-      expect(navMessage).toContain('Connection closed');
-      expect(navMessage).toContain('Closed by');
-      expect(navMessage).toContain(__filename);
-      expect((await waitForNavigationPromise).message).toContain('Navigation failed because page was closed');
+      const navError = await navigationPromise;
+      expect(navError.message).toContain(kTargetClosedErrorMessage);
+      expect((await waitForNavigationPromise).message).toContain(kTargetClosedErrorMessage);
       expect((await page.goto(server.EMPTY_PAGE).catch(e => e)).message).toContain('has been closed');
-      expect((await page.waitForNavigation().catch(e => e)).message).toContain('Navigation failed because page was closed');
+      expect((await page.waitForNavigation().catch(e => e)).message).toContain(kTargetClosedErrorMessage);
     });
 
     test('should be able to connect when the wsEndpoint is passed as an option', async ({ browserType, startRemoteServer }) => {
@@ -894,9 +893,9 @@ test.describe('launchServer only', () => {
     expect(browser.isConnected()).toBe(false);
 
     expect((await navigationPromise).message).toContain('has been closed');
-    expect((await waitForNavigationPromise).message).toContain('Navigation failed because page was closed');
+    expect((await waitForNavigationPromise).message).toContain(kTargetClosedErrorMessage);
     expect((await page.goto(server.EMPTY_PAGE).catch(e => e)).message).toContain('has been closed');
-    expect((await page.waitForNavigation().catch(e => e)).message).toContain('Navigation failed because page was closed');
+    expect((await page.waitForNavigation().catch(e => e)).message).toContain(kTargetClosedErrorMessage);
   });
 
   test('should be able to reconnect to a browser 12 times without warnings', async ({ connect, startRemoteServer, server }) => {

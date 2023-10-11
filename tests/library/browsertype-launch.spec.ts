@@ -64,7 +64,7 @@ it('should reject if launched browser fails immediately', async ({ mode, browser
 
   let waitError = null;
   await browserType.launch({ executablePath: asset('dummy_bad_browser_executable.js') }).catch(e => waitError = e);
-  expect(waitError.message).toContain('== logs ==');
+  expect(waitError.message).toContain('Browser logs:');
 });
 
 it('should reject if executable path is invalid', async ({ browserType, mode }) => {

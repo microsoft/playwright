@@ -113,12 +113,12 @@ it('$eval should throw for missing frame', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   {
     const error = await page.$eval('iframe >> internal:control=enter-frame >> canvas', e => 1).catch(e => e);
-    expect(error.message).toContain('Error: failed to find element matching selector');
+    expect(error.message).toContain('page.$eval: Failed to find element matching selector');
   }
   {
     const body = await page.$('body');
     const error = await body.$eval('iframe >> internal:control=enter-frame >> canvas', e => 1).catch(e => e);
-    expect(error.message).toContain('Error: failed to find element matching selector');
+    expect(error.message).toContain('elementHandle.$eval: Failed to find element matching selector');
   }
 });
 
@@ -126,12 +126,12 @@ it('$$eval should throw for missing frame', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   {
     const error = await page.$$eval('iframe >> internal:control=enter-frame >> canvas', e => 1).catch(e => e);
-    expect(error.message).toContain('Error: failed to find frame for selector');
+    expect(error.message).toContain('page.$$eval: Failed to find frame for selector');
   }
   {
     const body = await page.$('body');
     const error = await body.$$eval('iframe >> internal:control=enter-frame >> canvas', e => 1).catch(e => e);
-    expect(error.message).toContain('Error: failed to find frame for selector');
+    expect(error.message).toContain('Failed to find frame for selector');
   }
 });
 
