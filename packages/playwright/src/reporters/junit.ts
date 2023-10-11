@@ -29,6 +29,7 @@ class JUnitReporter extends EmptyReporter {
   private startTime!: number;
   private totalTests = 0;
   private totalFailures = 0;
+  private totalFlaky = 0;
   private totalSkipped = 0;
   private outputFile: string | undefined;
   private resolvedOutputFile: string | undefined;
@@ -76,6 +77,7 @@ class JUnitReporter extends EmptyReporter {
         tests: self.totalTests,
         failures: self.totalFailures,
         skipped: self.totalSkipped,
+        flaky: self.totalFlaky,
         errors: 0,
         time: duration / 1000
       },
@@ -96,6 +98,7 @@ class JUnitReporter extends EmptyReporter {
     let tests = 0;
     let skipped = 0;
     let failures = 0;
+    let flaky = 0;
     let duration = 0;
     const children: XMLEntry[] = [];
 
@@ -103,6 +106,8 @@ class JUnitReporter extends EmptyReporter {
       ++tests;
       if (test.outcome() === 'skipped')
         ++skipped;
+      if (test.outcome() === 'flaky')
+        ++flaky;
       if (!test.ok())
         ++failures;
       for (const result of test.results)
@@ -113,6 +118,7 @@ class JUnitReporter extends EmptyReporter {
     this.totalTests += tests;
     this.totalSkipped += skipped;
     this.totalFailures += failures;
+    this.totalFlaky += flaky;
 
     const entry: XMLEntry = {
       name: 'testsuite',
@@ -122,6 +128,7 @@ class JUnitReporter extends EmptyReporter {
         hostname: projectName,
         tests,
         failures,
+        flaky,
         skipped,
         time: duration / 1000,
         errors: 0,
@@ -168,6 +175,9 @@ class JUnitReporter extends EmptyReporter {
 
     if (properties.children?.length)
       entry.children.push(properties);
+
+    if (test.outcome() === 'flaky')
+      entry.children.push({ name: 'flaky' });
 
     if (test.outcome() === 'skipped') {
       entry.children.push({ name: 'skipped' });
