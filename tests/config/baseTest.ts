@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { composedTest } from '@playwright/test';
+import { mergeTests } from '@playwright/test';
 import { test } from '@playwright/test';
 import type { CommonFixtures, CommonWorkerFixtures } from './commonFixtures';
 import { commonFixtures } from './commonFixtures';
@@ -26,7 +26,7 @@ import { testModeTest } from './testModeFixtures';
 
 export const base = test;
 
-export const baseTest = composedTest(base, coverageTest, platformTest, testModeTest)
+export const baseTest = mergeTests(base, coverageTest, platformTest, testModeTest)
     .extend<CommonFixtures, CommonWorkerFixtures>(commonFixtures)
     .extend<ServerFixtures, ServerWorkerOptions>(serverFixtures);
 
