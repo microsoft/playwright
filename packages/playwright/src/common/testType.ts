@@ -230,7 +230,7 @@ export class TestTypeImpl {
 
   private _extend(location: Location, fixtures: Fixtures) {
     if ((fixtures as any)[testTypeSymbol])
-      throw new Error(`test.extend() accepts fixtures object, not a test object.\nDid you mean to call composedTest()?`);
+      throw new Error(`test.extend() accepts fixtures object, not a test object.\nDid you mean to call mergeTests()?`);
     const fixturesWithLocation: FixturesWithLocation = { fixtures, location };
     return new TestTypeImpl([...this.fixtures, fixturesWithLocation]).test;
   }
@@ -249,12 +249,12 @@ function throwIfRunningInsideJest() {
 
 export const rootTestType = new TestTypeImpl([]);
 
-export function composedTest(...tests: TestType<any, any>[]) {
+export function mergeTests(...tests: TestType<any, any>[]) {
   let result = rootTestType;
   for (const t of tests) {
     const testTypeImpl = (t as any)[testTypeSymbol] as TestTypeImpl;
     if (!testTypeImpl)
-      throw new Error(`composedTest() accepts "test" functions as parameters.\nDid you mean to call test.extend() with fixtures instead?`);
+      throw new Error(`mergeTests() accepts "test" functions as parameters.\nDid you mean to call test.extend() with fixtures instead?`);
     // Filter out common ancestor fixtures.
     const newFixtures = testTypeImpl.fixtures.filter(theirs => !result.fixtures.find(ours => ours.fixtures === theirs.fixtures));
     result = new TestTypeImpl([...result.fixtures, ...newFixtures]);

@@ -84,7 +84,7 @@ test('can return anything from hooks', async ({ runTSC }) => {
 test('test.extend options should check types', async ({ runTSC }) => {
   const result = await runTSC({
     'helper.ts': `
-      import { test as base, expect, composedTest } from '@playwright/test';
+      import { test as base, expect, mergeTests } from '@playwright/test';
       export type Params = { foo: string };
       export const test = base;
       export const test1 = test.extend<Params>({ foo: [ 'foo', { option: true } ] });
@@ -100,7 +100,7 @@ test('test.extend options should check types', async ({ runTSC }) => {
         // @ts-expect-error
         bar: async ({ baz }, run) => { await run(42); }
       });
-      export const test4 = composedTest(test1, testW);
+      export const test4 = mergeTests(test1, testW);
       const test5 = test4.extend<{}, { hey: string, hey2: string }>({
         // @ts-expect-error
         hey: [async ({ foo }, use) => {

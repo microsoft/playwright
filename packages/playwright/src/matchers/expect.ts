@@ -338,6 +338,6 @@ function computeArgsSuffix(matcherName: string, args: any[]) {
 
 expectLibrary.extend(customMatchers);
 
-export function composedExpect(...expects: any[]) {
+export function mergeExpects(...expects: any[]) {
   return expect;
 }
