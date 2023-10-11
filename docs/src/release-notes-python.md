@@ -6,7 +6,7 @@ toc_max_heading_level: 2
 
 ## Version 1.39
 
-Maintenance release.
+Evergreen browsers update.
 
 ### Browser Versions
 
