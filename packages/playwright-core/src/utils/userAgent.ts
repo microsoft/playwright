@@ -17,6 +17,7 @@
 import { execSync } from 'child_process';
 import os from 'os';
 import { getLinuxDistributionInfoSync } from '../utils/linuxUtils';
+import { wrapInASCIIBox } from './ascii';
 
 let cachedUserAgent: string | undefined;
 
@@ -76,8 +77,31 @@ export function getEmbedderName(): { embedderName: string, embedderVersion: stri
 }
 
 export function getPlaywrightVersion(majorMinorOnly = false): string {
-  const packageJson = require('./../../package.json');
-  if (process.env.PW_VERSION_OVERRIDE)
-    return process.env.PW_VERSION_OVERRIDE;
-  return majorMinorOnly ? packageJson.version.split('.').slice(0, 2).join('.') : packageJson.version;
+  const version = process.env.PW_VERSION_OVERRIDE || require('./../../package.json').version;
+  return majorMinorOnly ? version.split('.').slice(0, 2).join('.') : version;
+}
+
+export function userAgentVersionMatchesErrorMessage(userAgent: string) {
+  const match = userAgent.match(/^Playwright\/(\d+\.\d+\.\d+)/);
+  if (!match) {
+    // Cannot parse user agent - be lax.
+    return;
+  }
+  const received = match[1].split('.').slice(0, 2).join('.');
+  const expected = getPlaywrightVersion(true);
+  if (received !== expected) {
+    return wrapInASCIIBox([
+      `Playwright version mismatch:`,
+      `  - server version: v${expected}`,
+      `  - client version: v${received}`,
+      ``,
+      `If you are using VSCode extension, restart VSCode.`,
+      ``,
+      `If you are connecting to a remote service,`,
+      `keep your local Playwright version in sync`,
+      `with the remote service version.`,
+      ``,
+      `<3 Playwright Team`
+    ].join('\n'), 1);
+  }
 }
