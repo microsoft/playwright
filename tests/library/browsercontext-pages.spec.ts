@@ -171,6 +171,4 @@ it('should keep selection in multiple pages', async ({ context, browserName, isL
     });
     expect(range).toEqual({ rangeCount: 1, startOffset: 6, endOffset: 11 });
   }
-
-  await page2.close();
 });
