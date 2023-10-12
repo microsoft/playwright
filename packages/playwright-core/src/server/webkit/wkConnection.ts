@@ -24,7 +24,7 @@ import type { RecentLogsCollector } from '../../common/debugLogger';
 import { debugLogger } from '../../common/debugLogger';
 import type { ProtocolLogger } from '../types';
 import { helper } from '../helper';
-import { kBrowserClosedError } from '../../common/errors';
+import { kTargetClosedErrorMessage } from '../../common/errors';
 import { ProtocolError } from '../protocolError';
 
 // WKPlaywright uses this special id to issue Browser.close command which we
@@ -51,7 +51,7 @@ export class WKConnection {
     this._onDisconnect = onDisconnect;
     this._protocolLogger = protocolLogger;
     this._browserLogsCollector = browserLogsCollector;
-    this.browserSession = new WKSession(this, '', kBrowserClosedError, (message: any) => {
+    this.browserSession = new WKSession(this, '', kTargetClosedErrorMessage, (message: any) => {
       this.rawSend(message);
     });
     this._transport.onmessage = this._dispatchMessage.bind(this);
@@ -137,7 +137,7 @@ export class WKSession extends EventEmitter {
     if (this._crashed)
       throw new ProtocolError(true, 'Target crashed');
     if (this._disposed)
-      throw new ProtocolError(true, `Target closed`);
+      throw new ProtocolError(true, kTargetClosedErrorMessage);
     const id = this.connection.nextMessageId();
     const messageObj = { id, method, params };
     this._rawSend(messageObj);
@@ -160,7 +160,7 @@ export class WKSession extends EventEmitter {
 
   dispose() {
     if (this.connection._browserDisconnectedLogs)
-      this.errorText = 'Browser closed.' + this.connection._browserDisconnectedLogs;
+      this.errorText = kTargetClosedErrorMessage + '\nBrowser logs: ' + this.connection._browserDisconnectedLogs;
     for (const callback of this._callbacks.values()) {
       callback.error.sessionClosed = true;
       callback.reject(rewriteErrorMessage(callback.error, this.errorText));

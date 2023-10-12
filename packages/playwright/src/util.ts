@@ -20,7 +20,8 @@ import type { StackFrame } from '@protocol/channels';
 import util from 'util';
 import path from 'path';
 import url from 'url';
-import { colors, debug, minimatch, parseStackTraceLine } from 'playwright-core/lib/utilsBundle';
+import { debug, minimatch, parseStackTraceLine } from 'playwright-core/lib/utilsBundle';
+import { formatCallLog } from 'playwright-core/lib/utils';
 import type { TestInfoError } from './../types/test';
 import type { Location } from './../types/testReporter';
 import { calculateSha1, isRegExp, isString, sanitizeForFilePath, stringifyStackFrames } from 'playwright-core/lib/utils';
@@ -213,14 +214,7 @@ export function getContainedPath(parentPath: string, subPath: string = ''): stri
 
 export const debugTest = debug('pw:test');
 
-export function callLogText(log: string[] | undefined): string {
-  if (!log)
-    return '';
-  return `
-Call log:
-  ${colors.dim('- ' + (log || []).join('\n  - '))}
-`;
-}
+export const callLogText = formatCallLog;
 
 const folderToPackageJsonPath = new Map<string, string>();
 

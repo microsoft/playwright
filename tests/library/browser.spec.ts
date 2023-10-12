@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { kTargetClosedErrorMessage } from '../config/errors';
 import { browserTest as test, expect } from '../config/browserTest';
 
 test('should return browserType', function({ browser, browserType }) {
@@ -59,5 +60,5 @@ test('should dispatch page.on(close) upon browser.close and reject evaluate', as
   await browser.close();
   expect(closed).toBe(true);
   const error = await promise;
-  expect(error.message).toMatch(/(Target|Browser) closed/);
+  expect(error.message).toContain(kTargetClosedErrorMessage);
 });

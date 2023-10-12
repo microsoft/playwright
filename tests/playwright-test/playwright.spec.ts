@@ -339,7 +339,7 @@ test('should report error and pending operations on timeout', async ({ runInline
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(1);
-  expect(result.output).toContain('Error: locator.textContent: Page closed');
+  expect(result.output).toContain('Error: locator.textContent: Target page, context or browser has been closed');
   expect(result.output).toContain('a.test.ts:7:42');
 });
 

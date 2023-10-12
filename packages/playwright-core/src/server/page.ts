@@ -43,6 +43,7 @@ import type { TimeoutOptions } from '../common/types';
 import { isInvalidSelectorError } from '../utils/isomorphic/selectorParser';
 import { parseEvaluationResultValue, source } from './isomorphic/utilityScriptSerializers';
 import type { SerializedValue } from './isomorphic/utilityScriptSerializers';
+import { kTargetClosedErrorMessage } from '../common/errors';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
@@ -275,7 +276,7 @@ export class Page extends SdkObject {
     this.emit(Page.Events.Close);
     this._closedPromise.resolve();
     this.instrumentation.onPageClose(this);
-    this.openScope.close('Page closed');
+    this.openScope.close(kTargetClosedErrorMessage);
   }
 
   _didCrash() {

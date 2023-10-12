@@ -45,6 +45,7 @@ import { platformToFontFamilies } from './defaultFontFamilies';
 import type { Protocol } from './protocol';
 import { VideoRecorder } from './videoRecorder';
 import { BrowserContext } from '../browserContext';
+import { TargetClosedError } from '../../common/errors';
 
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
@@ -574,7 +575,7 @@ class FrameSession {
   }
 
   dispose() {
-    this._firstNonInitialNavigationCommittedReject(new Error('Page closed'));
+    this._firstNonInitialNavigationCommittedReject(new TargetClosedError());
     for (const childSession of this._childSessions)
       childSession.dispose();
     if (this._parentSession)

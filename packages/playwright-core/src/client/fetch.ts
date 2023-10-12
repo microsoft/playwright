@@ -21,7 +21,6 @@ import type { Serializable } from '../../types/structs';
 import type * as api from '../../types/types';
 import type { HeadersArray, NameValue } from '../common/types';
 import type * as channels from '@protocol/channels';
-import { kBrowserOrContextClosedError } from '../common/errors';
 import { assert, headersObjectToArray, isString } from '../utils';
 import { mkdirIfNeeded } from '../utils/fileUtils';
 import { ChannelOwner } from './channelOwner';
@@ -29,6 +28,7 @@ import { RawHeaders } from './network';
 import type { FilePayload, Headers, StorageState } from './types';
 import type { Playwright } from './playwright';
 import { Tracing } from './tracing';
+import { isTargetClosedError } from '../common/errors';
 
 export type FetchOptions = {
   params?: { [key: string]: string; },
@@ -272,7 +272,7 @@ export class APIResponse implements api.APIResponse {
         throw new Error('Response has been disposed');
       return result.binary;
     } catch (e) {
-      if (e.message.includes(kBrowserOrContextClosedError))
+      if (isTargetClosedError(e))
         throw new Error('Response has been disposed');
       throw e;
     }

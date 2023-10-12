@@ -20,6 +20,7 @@ import type { Worker as PwWorker } from '@playwright/test';
 import { attachFrame } from '../config/utils';
 import type { ConsoleMessage } from 'playwright-core';
 import fs from 'fs';
+import { kTargetClosedErrorMessage } from '../config/errors';
 
 it('Page.workers @smoke', async function({ page, server }) {
   await Promise.all([
@@ -43,7 +44,8 @@ it('should emit created and destroyed events', async function({ page }) {
   await page.evaluate(workerObj => workerObj.terminate(), workerObj);
   expect(await workerDestroyedPromise).toBe(worker);
   const error = await workerThisObj.getProperty('self').catch(error => error);
-  expect(error.message).toMatch(/jsHandle.getProperty: (Worker was closed|Target closed)/);
+  expect(error.message).toContain('jsHandle.getProperty');
+  expect(error.message).toContain(kTargetClosedErrorMessage);
 });
 
 it('should report console logs', async function({ page }) {

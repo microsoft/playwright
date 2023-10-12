@@ -25,6 +25,7 @@ import { debugLogger } from '../../common/debugLogger';
 import type { ProtocolLogger } from '../types';
 import { helper } from '../helper';
 import { ProtocolError } from '../protocolError';
+import { kTargetClosedErrorMessage } from '../../common/errors';
 
 export const ConnectionEvents = {
   Disconnected: Symbol('ConnectionEvents.Disconnected')
@@ -140,12 +141,10 @@ export class CRSession extends EventEmitter {
   private _closedErrorMessage() {
     if (this._crashed)
       return 'Target crashed';
-    if (this._connection._browserDisconnectedLogs !== undefined)
-      return `Browser closed.` + this._connection._browserDisconnectedLogs;
-    if (this._closed)
-      return `Target closed`;
-    if (this._connection._closed)
-      return 'Browser closed';
+    if (this._connection._browserDisconnectedLogs)
+      return kTargetClosedErrorMessage + '\nBrowser logs: ' + this._connection._browserDisconnectedLogs;
+    if (this._closed || this._connection._closed)
+      return kTargetClosedErrorMessage;
   }
 
   async send<T extends keyof Protocol.CommandParameters>(

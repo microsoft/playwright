@@ -18,6 +18,7 @@ import path from 'path';
 import { parseStackTraceLine } from '../utilsBundle';
 import { isUnderTest } from './';
 import type { StackFrame } from '@protocol/channels';
+import { colors } from '../utilsBundle';
 
 export function rewriteErrorMessage<E extends Error>(e: E, newMessage: string): E {
   const lines: string[] = (e.stack?.split('\n') || []).filter(l => l.startsWith('    at '));
@@ -129,6 +130,15 @@ export function splitErrorMessage(message: string): { name: string, message: str
     name: separationIdx !== -1 ? message.slice(0, separationIdx) : '',
     message: separationIdx !== -1 && separationIdx + 2 <= message.length ? message.substring(separationIdx + 2) : message,
   };
+}
+
+export function formatCallLog(log: string[] | undefined): string {
+  if (!log || !log.some(l => !!l))
+    return '';
+  return `
+Call log:
+  ${colors.dim('- ' + (log || []).join('\n  - '))}
+`;
 }
 
 export type ExpectZone = {

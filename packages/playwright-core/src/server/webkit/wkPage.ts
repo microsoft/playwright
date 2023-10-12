@@ -45,6 +45,7 @@ import { WKWorkers } from './wkWorkers';
 import { debugLogger } from '../../common/debugLogger';
 import { ManualPromise } from '../../utils/manualPromise';
 import { BrowserContext } from '../browserContext';
+import { TargetClosedError, kTargetClosedErrorMessage } from '../../common/errors';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
@@ -271,7 +272,7 @@ export class WKPage implements PageDelegate {
       this._provisionalPage.dispose();
       this._provisionalPage = null;
     }
-    this._firstNonInitialNavigationCommittedReject(new Error('Page closed'));
+    this._firstNonInitialNavigationCommittedReject(new TargetClosedError());
     this._page._didClose();
   }
 
@@ -303,7 +304,7 @@ export class WKPage implements PageDelegate {
 
   private async _onTargetCreated(event: Protocol.Target.targetCreatedPayload) {
     const { targetInfo } = event;
-    const session = new WKSession(this._pageProxySession.connection, targetInfo.targetId, `Target closed`, (message: any) => {
+    const session = new WKSession(this._pageProxySession.connection, targetInfo.targetId, kTargetClosedErrorMessage, (message: any) => {
       this._pageProxySession.send('Target.sendMessageToTarget', {
         message: JSON.stringify(message), targetId: targetInfo.targetId
       }).catch(e => {
@@ -524,7 +525,7 @@ export class WKPage implements PageDelegate {
 
   async navigateFrame(frame: frames.Frame, url: string, referrer: string | undefined): Promise<frames.GotoResult> {
     if (this._pageProxySession.isDisposed())
-      throw new Error('Target closed');
+      throw new TargetClosedError();
     const pageProxyId = this._pageProxySession.sessionId;
     const result = await this._pageProxySession.connection.browserSession.send('Playwright.navigate', { url, pageProxyId, frameId: frame._id, referrer });
     return { newDocumentId: result.loaderId };

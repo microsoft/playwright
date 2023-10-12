@@ -198,7 +198,7 @@ it('should throw nice error without injected script stack when element is not an
   let error = null;
   await page.goto(server.PREFIX + '/input/textarea.html');
   await page.fill('body', '').catch(e => error = e);
-  expect(error.message).toContain('page.fill: Error: Element is not an <input>, <textarea> or [contenteditable] element\n=========================== logs');
+  expect(error.message).toContain('page.fill: Error: Element is not an <input>, <textarea> or [contenteditable] element\nCall log:');
 });
 
 it('should throw if passed a non-string value', async ({ page, server }) => {

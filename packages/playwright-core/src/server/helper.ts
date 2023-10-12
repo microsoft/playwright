@@ -98,7 +98,7 @@ class Helper {
   static formatBrowserLogs(logs: string[]) {
     if (!logs.length)
       return '';
-    return '\n' + '='.repeat(20) + ' Browser output: ' + '='.repeat(20) + '\n' + logs.join('\n');
+    return '\n' + logs.join('\n');
   }
 }
 

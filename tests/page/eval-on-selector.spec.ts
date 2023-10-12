@@ -99,7 +99,7 @@ it('should accept ElementHandles as arguments', async ({ page, server }) => {
 it('should throw error if no element is found', async ({ page, server }) => {
   let error = null;
   await page.$eval('section', e => e.id).catch(e => error = e);
-  expect(error.message).toContain('failed to find element matching selector "section"');
+  expect(error.message).toContain('Failed to find element matching selector "section"');
 });
 
 it('should support >> syntax', async ({ page, server }) => {
