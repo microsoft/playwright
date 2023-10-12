@@ -148,19 +148,23 @@ it.describe('permissions', () => {
     await otherContext.close();
     await context.close();
   });
+});
 
-  it('should support clipboard read', async ({ page, context, server, browserName, headless }) => {
-    it.fail(browserName === 'webkit');
-    it.fail(browserName === 'firefox', 'No such permissions (requires flag) in Firefox');
-    it.fixme(browserName === 'chromium' && (!headless || !!process.env.PLAYWRIGHT_CHROMIUM_USE_HEADLESS_NEW));
-
-    await page.goto(server.EMPTY_PAGE);
+it('should support clipboard read', async ({ page, context, server, browserName, headless }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/27475' });
+  it.fail(browserName === 'firefox', 'No such permissions (requires flag) in Firefox');
+  it.fixme(browserName === 'chromium' && (!headless || !!process.env.PLAYWRIGHT_CHROMIUM_USE_HEADLESS_NEW));
+  await page.goto(server.EMPTY_PAGE);
+  if (browserName !== 'webkit')
     expect(await getPermission(page, 'clipboard-read')).toBe('prompt');
-    let error;
-    await page.evaluate(() => navigator.clipboard.readText()).catch(e => error = e);
-    expect(error.toString()).toContain('denied');
-    await context.grantPermissions(['clipboard-read']);
+  let error;
+  await page.evaluate(() => navigator.clipboard.readText()).catch(e => error = e);
+  expect(error.toString()).toContain('denied');
+  await context.grantPermissions(['clipboard-read']);
+  if (browserName !== 'webkit')
     expect(await getPermission(page, 'clipboard-read')).toBe('granted');
-    await page.evaluate(() => navigator.clipboard.readText());
-  });
+  if (browserName === 'chromium')
+    await context.grantPermissions(['clipboard-write']);
+  await page.evaluate(() => navigator.clipboard.writeText('test content'));
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('test content');
 });

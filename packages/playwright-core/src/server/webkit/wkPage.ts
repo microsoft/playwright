@@ -1148,6 +1148,7 @@ export class WKPage implements PageDelegate {
   async _grantPermissions(origin: string, permissions: string[]) {
     const webPermissionToProtocol = new Map<string, string>([
       ['geolocation', 'geolocation'],
+      ['clipboard-read', 'clipboard-read'],
     ]);
     const filtered = permissions.map(permission => {
       const protocolPermission = webPermissionToProtocol.get(permission);
