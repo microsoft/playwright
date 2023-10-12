@@ -184,7 +184,7 @@ export class Connection extends EventEmitter {
   }
 
   close(cause?: Error) {
-    this._closedError = cause || new TargetClosedError();
+    this._closedError = new TargetClosedError();
     if (cause)
       rewriteErrorMessage(this._closedError, this._closedError.message + '\nCaused by: ' + cause.toString());
     for (const callback of this._callbacks.values())
