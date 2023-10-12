@@ -138,3 +138,37 @@ it('should not leak listeners during navigation of 20 pages', async ({ contextFa
   process.off('warning', warningHandler);
   expect(warning).toBe(null);
 });
+
+it('should keep selection in multiple pages', async ({ context, browserName, isLinux, headless }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/27475' });
+  it.fixme(browserName === 'webkit' && isLinux && !headless);
+  const page1 = await context.newPage();
+  const page2 = await context.newPage();
+  for (const page of [page1, page2]) {
+    await page.setContent('<div id="container">lorem ipsum dolor sit amet</div>');
+    await page.evaluate(() => {
+      const element = document.getElementById('container') as HTMLDivElement;
+      const textNode = element.firstChild as Text;
+
+      const range = textNode.ownerDocument.createRange();
+      range.setStart(textNode, 6);
+      range.setEnd(textNode, 11);
+
+      const selection = textNode.ownerDocument.defaultView?.getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+    });
+  }
+  for (const page of [page1, page2]) {
+    const range = await page.evaluate(() => {
+      const selection = document.getSelection();
+      const range = selection?.getRangeAt(0);
+      return {
+        rangeCount: selection?.rangeCount,
+        startOffset: range?.startOffset,
+        endOffset: range?.endOffset,
+      };
+    });
+    expect(range).toEqual({ rangeCount: 1, startOffset: 6, endOffset: 11 });
+  }
+});
