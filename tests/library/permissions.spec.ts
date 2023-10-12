@@ -155,6 +155,7 @@ it('should support clipboard read', async ({ page, context, server, browserName,
   it.fail(browserName === 'firefox', 'No such permissions (requires flag) in Firefox');
   it.fixme(browserName === 'chromium' && (!headless || !!process.env.PLAYWRIGHT_CHROMIUM_USE_HEADLESS_NEW));
   await page.goto(server.EMPTY_PAGE);
+  // There is no 'clipboard-read' permission in WebKit Web API.
   if (browserName !== 'webkit')
     expect(await getPermission(page, 'clipboard-read')).toBe('prompt');
   let error;
@@ -163,6 +164,7 @@ it('should support clipboard read', async ({ page, context, server, browserName,
   await context.grantPermissions(['clipboard-read']);
   if (browserName !== 'webkit')
     expect(await getPermission(page, 'clipboard-read')).toBe('granted');
+  // There is no 'clipboard-write' permission in WebKit Web API.
   if (browserName === 'chromium')
     await context.grantPermissions(['clipboard-write']);
   await page.evaluate(() => navigator.clipboard.writeText('test content'));
