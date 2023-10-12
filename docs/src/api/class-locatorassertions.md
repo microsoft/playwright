@@ -1152,7 +1152,7 @@ Expected attribute value.
 * since: v1.18
 
 ## async method: LocatorAssertions.toHaveAttribute#2
-* since: v1.40
+* since: v1.39
 * langs: js
 
 Ensures the [Locator] points to an element with given attribute. The method will assert attribute
@@ -1166,13 +1166,13 @@ await expect(locator).not.toHaveAttribute('open');
 ```
 
 ### param: LocatorAssertions.toHaveAttribute#2.name
-* since: v1.40
+* since: v1.39
 - `name` <[string]>
 
 Attribute name.
 
 ### option: LocatorAssertions.toHaveAttribute#2.timeout = %%-js-assertions-timeout-%%
-* since: v1.40
+* since: v1.39
 
 ## async method: LocatorAssertions.toHaveClass
 * since: v1.20
