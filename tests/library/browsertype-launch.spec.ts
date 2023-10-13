@@ -59,12 +59,12 @@ it('should throw if page argument is passed', async ({ browserType, browserName 
   expect(waitError.message).toContain('can not specify page');
 });
 
-it('should reject if launched browser fails immediately', async ({ mode, browserType, asset }) => {
+it('should reject if launched browser fails immediately', async ({ mode, browserType, asset, isWindows }) => {
   it.skip(mode.startsWith('service'));
 
   let waitError = null;
   await browserType.launch({ executablePath: asset('dummy_bad_browser_executable.js') }).catch(e => waitError = e);
-  expect(waitError.message).toContain('Browser logs:');
+  expect(waitError.message).toContain(isWindows ? 'browserType.launch: spawn UNKNOWN' : 'Browser logs:');
 });
 
 it('should reject if executable path is invalid', async ({ browserType, mode }) => {
