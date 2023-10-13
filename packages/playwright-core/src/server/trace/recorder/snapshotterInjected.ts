@@ -81,6 +81,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
   }
 
   class Streamer {
+    private _removeNoScript = true;
     private _lastSnapshotNumber = 0;
     private _staleStyleSheets = new Set<CSSStyleSheet>();
     private _readingStyleSheet = false;  // To avoid invalidating due to our own reads.
@@ -336,6 +337,8 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
           if (rel === 'preload' || rel === 'prefetch')
             return;
         }
+        if (this._removeNoScript && nodeName === 'NOSCRIPT')
+          return;
         if (nodeName === 'META' && (node as HTMLMetaElement).httpEquiv.toLowerCase() === 'content-security-policy')
           return;
         // Skip iframes which are inside document's head as they are not visible.
