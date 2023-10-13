@@ -30,9 +30,12 @@ it('should fail without credentials', async ({ browser, server, isChromiumHeaded
   server.setAuth('/empty.html', 'user', 'pass');
   const context = await browser.newContext();
   const page = await context.newPage();
-  const response = await page.goto(server.EMPTY_PAGE);
-  expect(response.status()).toBe(401);
-  await context.close();
+  try {
+    const response = await page.goto(server.EMPTY_PAGE);
+    expect(response.status()).toBe(401);
+  } finally {
+    await context.close();
+  }
 });
 
 it('should work with setHTTPCredentials', async ({ browser, server, isChromiumHeadedLike }) => {
