@@ -105,8 +105,13 @@ export class Snapshotter {
   }
 
   async captureSnapshot(page: Page, callId: string, snapshotName: string, element?: ElementHandle): Promise<void> {
+
+    const noscript_remove = this._context._options.javaScriptEnabled
+      ? `window["${this._snapshotStreamer}"]._removeNoScript = true;` 
+      : `window["${this._snapshotStreamer}"]._removeNoScript = false;`;
+
     // Prepare expression synchronously.
-    const expression = `window["${this._snapshotStreamer}"].captureSnapshot(${JSON.stringify(snapshotName)})`;
+    const expression = `${noscript_remove} window["${this._snapshotStreamer}"].captureSnapshot(${JSON.stringify(snapshotName)})`;
 
     // In a best-effort manner, without waiting for it, mark target element.
     element?.callFunctionNoReply((element: Element, callId: string) => {
