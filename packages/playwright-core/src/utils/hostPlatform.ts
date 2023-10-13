@@ -55,9 +55,9 @@ export const hostPlatform = ((): HostPlatform => {
     return macVersion as HostPlatform;
   }
   if (platform === 'linux') {
-    if (!['x64', 'arm64'].includes(os.arch())) {
+    if (!['x64', 'arm64'].includes(os.arch()))
       return '<unknown>';
-    }
+
     const archSuffix = '-' + os.arch();
     const distroInfo = getLinuxDistributionInfoSync();
 
