@@ -150,10 +150,12 @@ it.describe('permissions', () => {
   });
 });
 
-it('should support clipboard read', async ({ page, context, server, browserName, headless }) => {
+it('should support clipboard read', async ({ page, context, server, browserName, isWindows, isLinux, headless }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/27475' });
   it.fail(browserName === 'firefox', 'No such permissions (requires flag) in Firefox');
   it.fixme(browserName === 'chromium' && (!headless || !!process.env.PLAYWRIGHT_CHROMIUM_USE_HEADLESS_NEW));
+  it.fixme(browserName === 'webkit' && isWindows, 'WebPasteboardProxy::allPasteboardItemInfo not implemented for Windows.');
+  it.fixme(browserName === 'webkit' && isLinux && headless, 'WebPasteboardProxy::allPasteboardItemInfo not implemented for WPE.');
   await page.goto(server.EMPTY_PAGE);
   // There is no 'clipboard-read' permission in WebKit Web API.
   if (browserName !== 'webkit')
