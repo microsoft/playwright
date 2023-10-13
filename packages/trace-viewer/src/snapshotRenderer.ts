@@ -66,6 +66,9 @@ export class SnapshotRenderer {
         } else if (typeof n[0] === 'string') {
           // Element node.
           const builder: string[] = [];
+          // mask noscript tags in trace-viewers HTML display
+          if (n[0] === 'NOSCRIPT')
+            n[0] = 'MASKED-NOSCRIPT';
           builder.push('<', n[0]);
           const attrs = Object.entries(n[1] || {});
           const kCurrentSrcAttribute = '__playwright_current_src__';
