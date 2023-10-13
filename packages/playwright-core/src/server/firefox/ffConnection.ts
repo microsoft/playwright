@@ -18,13 +18,11 @@
 import { EventEmitter } from 'events';
 import type { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../transport';
 import type { Protocol } from './protocol';
-import { rewriteErrorMessage } from '../../utils/stackTrace';
 import type { RecentLogsCollector } from '../../common/debugLogger';
 import { debugLogger } from '../../common/debugLogger';
 import type { ProtocolLogger } from '../types';
 import { helper } from '../helper';
 import { ProtocolError } from '../protocolError';
-import { kTargetClosedErrorMessage } from '../../common/errors';
 
 export const ConnectionEvents = {
   Disconnected: Symbol('Disconnected'),
@@ -103,7 +101,7 @@ export class FFConnection extends EventEmitter {
 export class FFSession extends EventEmitter {
   _connection: FFConnection;
   _disposed = false;
-  private _callbacks: Map<number, {resolve: Function, reject: Function, error: ProtocolError, method: string}>;
+  private _callbacks: Map<number, { resolve: Function, reject: Function, error: ProtocolError }>;
   private _sessionId: string;
   private _rawSend: (message: any) => void;
   private _crashed: boolean = false;
@@ -132,26 +130,16 @@ export class FFSession extends EventEmitter {
     this._crashed = true;
   }
 
-  private _closedErrorMessage() {
-    if (this._crashed)
-      return 'Target crashed';
-    if (this._connection._browserDisconnectedLogs)
-      return kTargetClosedErrorMessage + '\nBrowser logs: ' + this._connection._browserDisconnectedLogs;
-    if (this._disposed || this._connection._closed)
-      return kTargetClosedErrorMessage;
-  }
-
   async send<T extends keyof Protocol.CommandParameters>(
     method: T,
     params?: Protocol.CommandParameters[T]
   ): Promise<Protocol.CommandReturnValues[T]> {
-    const closedErrorMessage = this._closedErrorMessage();
-    if (closedErrorMessage)
-      throw new ProtocolError(true, closedErrorMessage);
+    if (this._crashed || this._disposed || this._connection._closed || this._connection._browserDisconnectedLogs)
+      throw new ProtocolError(this._crashed ? 'crashed' : 'closed', undefined, this._connection._browserDisconnectedLogs);
     const id = this._connection.nextMessageId();
     this._rawSend({ method, params, id });
     return new Promise((resolve, reject) => {
-      this._callbacks.set(id, { resolve, reject, error: new ProtocolError(false), method });
+      this._callbacks.set(id, { resolve, reject, error: new ProtocolError('error', method) });
     });
   }
 
@@ -165,10 +153,12 @@ export class FFSession extends EventEmitter {
       // Callbacks could be all rejected if someone has called `.dispose()`.
       if (callback) {
         this._callbacks.delete(object.id);
-        if (object.error)
-          callback.reject(createProtocolError(callback.error, callback.method, object.error));
-        else
+        if (object.error) {
+          callback.error.setMessage(object.error.message);
+          callback.reject(callback.error);
+        } else {
           callback.resolve(object.result);
+        }
       }
     } else {
       Promise.resolve().then(() => this.emit(object.method!, object.params));
@@ -178,18 +168,11 @@ export class FFSession extends EventEmitter {
   dispose() {
     this._disposed = true;
     this._connection._sessions.delete(this._sessionId);
-    const errorMessage = this._closedErrorMessage()!;
     for (const callback of this._callbacks.values()) {
-      callback.error.sessionClosed = true;
-      callback.reject(rewriteErrorMessage(callback.error, errorMessage));
+      callback.error.type = this._crashed ? 'crashed' : 'closed';
+      callback.error.logs = this._connection._browserDisconnectedLogs;
+      callback.reject(callback.error);
     }
     this._callbacks.clear();
   }
-}
-
-function createProtocolError(error: ProtocolError, method: string, protocolError: { message: string; data: any; }): ProtocolError {
-  let message = `Protocol error (${method}): ${protocolError.message}`;
-  if ('data' in protocolError)
-    message += ` ${protocolError.data}`;
-  return rewriteErrorMessage(error, message);
 }

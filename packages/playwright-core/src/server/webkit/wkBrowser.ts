@@ -165,7 +165,7 @@ export class WKBrowser extends Browser {
       context = this._defaultContext as WKBrowserContext;
     if (!context)
       return;
-    const pageProxySession = new WKSession(this._connection, pageProxyId, kTargetClosedErrorMessage, (message: any) => {
+    const pageProxySession = new WKSession(this._connection, pageProxyId, (message: any) => {
       this._connection.rawSend({ ...message, pageProxyId });
     });
     const opener = event.openerId ? this._wkPages.get(event.openerId) : undefined;
