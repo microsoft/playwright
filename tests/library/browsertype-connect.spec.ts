@@ -20,7 +20,7 @@ import os from 'os';
 import type http from 'http';
 import type net from 'net';
 import * as path from 'path';
-import { getUserAgent } from '../../packages/playwright-core/lib/utils/userAgent';
+import { getUserAgent, getPlaywrightVersion } from '../../packages/playwright-core/lib/utils/userAgent';
 import WebSocket from 'ws';
 import { expect, playwrightTest } from '../config/browserTest';
 import { parseTrace, suppressCertificateWarning } from '../config/utils';
@@ -28,6 +28,7 @@ import formidable from 'formidable';
 import type { Browser, ConnectOptions } from 'playwright-core';
 import { createHttpServer } from '../../packages/playwright-core/lib/utils/network';
 import { kTargetClosedErrorMessage } from '../config/errors';
+import { RunServer } from '../config/remoteServer';
 
 type ExtraFixtures = {
   connect: (wsEndpoint: string, options?: ConnectOptions, redirectPortForTest?: number) => Promise<Browser>,
@@ -913,4 +914,14 @@ test.describe('launchServer only', () => {
       });
     }
   });
+});
+
+test('should refuse connecting when versions do not match', async ({ connect, childProcess }) => {
+  const server = new RunServer();
+  await server.start(childProcess, 'default', { PW_VERSION_OVERRIDE: '1.2.3' });
+  const error = await connect(server.wsEndpoint()).catch(e => e);
+  await server.close();
+  expect(error.message).toContain('Playwright version mismatch');
+  expect(error.message).toContain('server version: v1.2');
+  expect(error.message).toContain('client version: v' + getPlaywrightVersion(true));
 });
