@@ -139,9 +139,8 @@ it('should not leak listeners during navigation of 20 pages', async ({ contextFa
   expect(warning).toBe(null);
 });
 
-it('should keep selection in multiple pages', async ({ context, browserName, isLinux, headless }) => {
+it('should keep selection in multiple pages', async ({ context }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/27475' });
-  it.fixme(browserName === 'webkit' && isLinux && !headless);
   const page1 = await context.newPage();
   const page2 = await context.newPage();
   for (const page of [page1, page2]) {
@@ -150,15 +149,17 @@ it('should keep selection in multiple pages', async ({ context, browserName, isL
       const element = document.getElementById('container') as HTMLDivElement;
       const textNode = element.firstChild as Text;
 
-      const range = textNode.ownerDocument.createRange();
+      const range = document.createRange();
       range.setStart(textNode, 6);
       range.setEnd(textNode, 11);
 
-      const selection = textNode.ownerDocument.defaultView?.getSelection();
+      const selection = document.getSelection();
       selection?.removeAllRanges();
       selection?.addRange(range);
     });
   }
+  // In WebKit, selection is updated via IPC, give it enough time to take effect.
+  await new Promise(f => setTimeout(f, 1_000));
   for (const page of [page1, page2]) {
     const range = await page.evaluate(() => {
       const selection = document.getSelection();
