@@ -295,8 +295,6 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this.addInitScript(
         ([items, overwrite]: [{name: string, value: unknown}[], boolean]) => {
           items.forEach(({ name, value }) => {
-            // eslint-disable-next-line no-console
-            console.log('check', name, window.localStorage.getItem(name));
             if (overwrite || !window.localStorage.getItem(name)) window.localStorage.setItem(name, String(value));
           });
         },
