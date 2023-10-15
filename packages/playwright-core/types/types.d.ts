@@ -294,6 +294,12 @@ export interface Page {
    * @param arg Optional argument to pass to `script` (only supported when passing a function).
    */
   addInitScript<Arg>(script: PageFunction<Arg, any> | { path?: string, content?: string }, arg?: Arg): Promise<void>;
+  /**
+   * Adds items to be added to `localStorage` in the same scenarios as `BrowserContext.addInitScript`
+   * @param items Items to add to the `localStorage`.
+   * @param overwrite Enabled by default. It will overwrite existing items in `localStorage`.
+   */
+  addInitLocalStorageItems(items: Array<{name: string, value: unknown}>, overwrite?: boolean | undefined): Promise<void>;
 
   /**
    * **NOTE** Use locator-based [page.locator(selector[, options])](https://playwright.dev/docs/api/class-page#page-locator)
@@ -1782,23 +1788,6 @@ export interface Page {
    * by the page.
    */
   prependListener(event: 'worker', listener: (worker: Worker) => void): this;
-
-  /**
-   * Adds items to be added to `localStorage` in the same scenarios as `BrowserContext.addInitScript`
-   * @param items Items to add to the `localStorage`.
-   * @param overwrite Enabled by default. It will overwrite existing items in `localStorage`.
-   */
-  addInitLocalStorageItems(items: Array<{
-    /**
-     * Key of the item
-     */
-    name: string;
-
-    /**
-     * Value of the item
-     */
-    value: unknown;
-  }>, overwrite: boolean): Promise<void>;
 
   /**
    * Adds a `<script>` tag into the page with the desired url or content. Returns the added tag when the script's onload
@@ -7558,6 +7547,12 @@ export interface BrowserContext {
    */
   addInitScript<Arg>(script: PageFunction<Arg, any> | { path?: string, content?: string }, arg?: Arg): Promise<void>;
   /**
+   * Adds items to be added to `localStorage` in the same scenarios as `BrowserContext.addInitScript`
+   * @param items Items to add to the `localStorage`.
+   * @param overwrite Enabled by default. It will overwrite existing items in `localStorage`.
+   */
+  addInitLocalStorageItems(items: Array<{name: string, value: unknown}>, overwrite?: boolean | undefined): Promise<void>;
+  /**
    * **NOTE** Only works with Chromium browser's persistent context.
    *
    * Emitted when new background page is created in the context.
@@ -8188,23 +8183,6 @@ export interface BrowserContext {
      */
     sameSite?: "Strict"|"Lax"|"None";
   }>): Promise<void>;
-
-  /**
-   * Adds items to be added to `localStorage` in the same scenarios as `BrowserContext.addInitScript`
-   * @param items Items to add to the `localStorage`.
-   * @param overwrite Enabled by default. It will overwrite existing items in `localStorage`.
-   */
-  addInitLocalStorageItems(items: Array<{
-    /**
-     * Key of the item
-     */
-    name: string;
-
-    /**
-     * Value of the item
-     */
-    value: unknown;
-  }>, overwrite: boolean): Promise<void>;
 
   /**
    * **NOTE** Background pages are only supported on Chromium-based browsers.

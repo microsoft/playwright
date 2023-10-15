@@ -35,6 +35,7 @@ export interface Page {
   evaluateHandle<R>(pageFunction: PageFunction<void, R>, arg?: any): Promise<SmartHandle<R>>;
 
   addInitScript<Arg>(script: PageFunction<Arg, any> | { path?: string, content?: string }, arg?: Arg): Promise<void>;
+  addInitLocalStorageItems(items: Array<{name: string, value: unknown}>, overwrite?: boolean | undefined): Promise<void>;
 
   $<K extends keyof HTMLElementTagNameMap>(selector: K, options?: { strict: boolean }): Promise<ElementHandleForTag<K> | null>;
   $(selector: string, options?: { strict: boolean }): Promise<ElementHandle<SVGElement | HTMLElement> | null>;
@@ -101,6 +102,7 @@ export interface BrowserContext {
   exposeBinding(name: string, playwrightBinding: (source: BindingSource, ...args: any[]) => any, options?: { handle?: boolean }): Promise<void>;
 
   addInitScript<Arg>(script: PageFunction<Arg, any> | { path?: string, content?: string }, arg?: Arg): Promise<void>;
+  addInitLocalStorageItems(items: Array<{name: string, value: unknown}>, overwrite?: boolean | undefined): Promise<void>;
 }
 
 export interface Worker {
