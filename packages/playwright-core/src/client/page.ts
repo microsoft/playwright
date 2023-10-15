@@ -443,6 +443,10 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     await this._channel.addInitScript({ source });
   }
 
+  async addInitLocalStorageItems(items: Array<{name: string, value: unknown}>, overwrite?: boolean | undefined): Promise<void> {
+    await this._browserContext.addInitLocalStorageItems(items, overwrite);
+  }
+
   async route(url: URLMatch, handler: RouteHandlerCallback, options: { times?: number } = {}): Promise<void> {
     this._routes.unshift(new RouteHandler(this._browserContext._options.baseURL, url, handler, options.times));
     await this._updateInterceptionPatterns();
