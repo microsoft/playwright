@@ -1784,6 +1784,23 @@ export interface Page {
   prependListener(event: 'worker', listener: (worker: Worker) => void): this;
 
   /**
+   * Adds items to be added to `localStorage` in the same scenarios as `BrowserContext.addInitScript`
+   * @param items Items to add to the `localStorage`.
+   * @param overwrite Enabled by default. It will overwrite existing items in `localStorage`.
+   */
+  addInitLocalStorageItems(items: Array<{
+    /**
+     * Key of the item
+     */
+    name: string;
+
+    /**
+     * Value of the item
+     */
+    value: unknown;
+  }>, overwrite: boolean): Promise<void>;
+
+  /**
    * Adds a `<script>` tag into the page with the desired url or content. Returns the added tag when the script's onload
    * fires or when the script content was injected into frame.
    * @param options
@@ -8171,6 +8188,23 @@ export interface BrowserContext {
      */
     sameSite?: "Strict"|"Lax"|"None";
   }>): Promise<void>;
+
+  /**
+   * Adds items to be added to `localStorage` in the same scenarios as `BrowserContext.addInitScript`
+   * @param items Items to add to the `localStorage`.
+   * @param overwrite Enabled by default. It will overwrite existing items in `localStorage`.
+   */
+  addInitLocalStorageItems(items: Array<{
+    /**
+     * Key of the item
+     */
+    name: string;
+
+    /**
+     * Value of the item
+     */
+    value: unknown;
+  }>, overwrite: boolean): Promise<void>;
 
   /**
    * **NOTE** Background pages are only supported on Chromium-based browsers.
