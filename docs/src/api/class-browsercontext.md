@@ -430,6 +430,27 @@ Path to the JavaScript file. If `path` is a relative path, then it is resolved r
 
 Script to be evaluated in all pages in the browser context. Optional.
 
+## async method: BrowserContext.addInitLocalStorageItems
+* since: v1.8
+
+Adds items to be added to `localStorage` in the same scenarios as `BrowserContext.addInitScript`
+
+### param: BrowserContext.addInitLocalStorageItems.items
+* since: v1.8
+* langs: js
+- `items` <[Array]<[Object]>>
+  - `name` <string> Key of the item
+  - `value` <unknown> Value of the item
+
+Items to add to the `localStorage`.
+
+### param: BrowserContext.addInitLocalStorageItems.overwrite
+* since: v1.8
+* langs: js
+- `overwrite` <boolean> 
+
+Enabled by default. It will overwrite existing items in `localStorage`.
+
 ## method: BrowserContext.backgroundPages
 * since: v1.11
 * langs: js, python
