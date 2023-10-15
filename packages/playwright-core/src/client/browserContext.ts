@@ -288,6 +288,22 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     await this._channel.addInitScript({ source });
   }
 
+  async addInitLocalStorageItems(
+    items: Array<{name: string, value: unknown}>,
+    overwrite = true
+  ) {
+    this.addInitScript(
+        ([items, overwrite]: [{name: string, value: unknown}[], boolean]) => {
+          items.forEach(({ name, value }) => {
+            // eslint-disable-next-line no-console
+            console.log('check', name, window.localStorage.getItem(name));
+            if (overwrite || !window.localStorage.getItem(name)) window.localStorage.setItem(name, String(value));
+          });
+        },
+        [items, overwrite]
+    );
+  }
+
   async exposeBinding(name: string, callback: (source: structs.BindingSource, ...args: any[]) => any, options: { handle?: boolean } = {}): Promise<void> {
     await this._channel.exposeBinding({ name, needsHandle: options.handle });
     this._bindings.set(name, callback);
