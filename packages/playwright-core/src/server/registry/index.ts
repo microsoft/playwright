@@ -25,7 +25,7 @@ import { fetchData } from '../../utils/network';
 import { getEmbedderName } from '../../utils/userAgent';
 import { getFromENV, getAsBooleanFromENV, calculateSha1, wrapInASCIIBox, getPackageManagerExecCommand } from '../../utils';
 import { removeFolders, existsAsync, canAccessFile } from '../../utils/fileUtils';
-import { hostPlatform } from '../../utils/hostPlatform';
+import { type HostPlatform, hostPlatform, isOfficiallySupportedPlatform } from '../../utils/hostPlatform';
 import { spawnAsync } from '../../utils/spawnAsync';
 import type { DependencyGroup } from './dependencies';
 import { transformCommandsForRoot, dockerVersion, readDockerVersionSync } from './dependencies';
@@ -73,11 +73,10 @@ const EXECUTABLE_PATHS = {
   },
 };
 
-const DOWNLOAD_PATHS = {
+type DownloadPaths = Record<HostPlatform, string | undefined>;
+const DOWNLOAD_PATHS: Record<BrowserName | InternalTool, DownloadPaths> = {
   'chromium': {
     '<unknown>': undefined,
-    'generic-linux': 'builds/chromium/%s/chromium-linux.zip',
-    'generic-linux-arm64': 'builds/chromium/%s/chromium-linux-arm64.zip',
     'ubuntu18.04': 'builds/chromium/%s/chromium-linux.zip',
     'ubuntu20.04': 'builds/chromium/%s/chromium-linux.zip',
     'ubuntu22.04': 'builds/chromium/%s/chromium-linux.zip',
@@ -101,8 +100,6 @@ const DOWNLOAD_PATHS = {
   },
   'chromium-tip-of-tree': {
     '<unknown>': undefined,
-    'generic-linux': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-linux.zip',
-    'generic-linux-arm64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-linux-arm64.zip',
     'ubuntu18.04': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-linux.zip',
     'ubuntu20.04': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-linux.zip',
     'ubuntu22.04': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-linux.zip',
@@ -126,8 +123,6 @@ const DOWNLOAD_PATHS = {
   },
   'chromium-with-symbols': {
     '<unknown>': undefined,
-    'generic-linux': 'builds/chromium/%s/chromium-with-symbols-linux.zip',
-    'generic-linux-arm64': 'builds/chromium/%s/chromium-with-symbols-linux-arm64.zip',
     'ubuntu18.04': 'builds/chromium/%s/chromium-with-symbols-linux.zip',
     'ubuntu20.04': 'builds/chromium/%s/chromium-with-symbols-linux.zip',
     'ubuntu22.04': 'builds/chromium/%s/chromium-with-symbols-linux.zip',
@@ -151,8 +146,6 @@ const DOWNLOAD_PATHS = {
   },
   'firefox': {
     '<unknown>': undefined,
-    'generic-linux': 'builds/firefox/%s/firefox-ubuntu-20.04.zip',
-    'generic-linux-arm64': 'builds/firefox/%s/firefox-ubuntu-20.04-arm64.zip',
     'ubuntu18.04': 'builds/firefox/%s/firefox-ubuntu-18.04.zip',
     'ubuntu20.04': 'builds/firefox/%s/firefox-ubuntu-20.04.zip',
     'ubuntu22.04': 'builds/firefox/%s/firefox-ubuntu-22.04.zip',
@@ -176,8 +169,6 @@ const DOWNLOAD_PATHS = {
   },
   'firefox-beta': {
     '<unknown>': undefined,
-    'generic-linux': 'builds/firefox-beta/%s/firefox-beta-ubuntu-20.04.zip',
-    'generic-linux-arm64': undefined,
     'ubuntu18.04': 'builds/firefox-beta/%s/firefox-beta-ubuntu-18.04.zip',
     'ubuntu20.04': 'builds/firefox-beta/%s/firefox-beta-ubuntu-20.04.zip',
     'ubuntu22.04': 'builds/firefox-beta/%s/firefox-beta-ubuntu-22.04.zip',
@@ -201,8 +192,6 @@ const DOWNLOAD_PATHS = {
   },
   'firefox-asan': {
     '<unknown>': undefined,
-    'generic-linux': 'builds/firefox/%s/firefox-asan-ubuntu-20.04.zip',
-    'generic-linux-arm64': undefined,
     'ubuntu18.04': undefined,
     'ubuntu20.04': undefined,
     'ubuntu22.04': 'builds/firefox/%s/firefox-asan-ubuntu-22.04.zip',
@@ -211,6 +200,8 @@ const DOWNLOAD_PATHS = {
     'ubuntu22.04-arm64': undefined,
     'debian11': undefined,
     'debian11-arm64': undefined,
+    'debian12': undefined,
+    'debian12-arm64': undefined,
     'mac10.13': 'builds/firefox/%s/firefox-asan-mac-13.zip',
     'mac10.14': 'builds/firefox/%s/firefox-asan-mac-13.zip',
     'mac10.15': 'builds/firefox/%s/firefox-asan-mac-13.zip',
@@ -224,8 +215,6 @@ const DOWNLOAD_PATHS = {
   },
   'webkit': {
     '<unknown>': undefined,
-    'generic-linux': 'builds/webkit/%s/webkit-ubuntu-20.04.zip',
-    'generic-linux-arm64': 'builds/webkit/%s/webkit-ubuntu-20.04-arm64.zip',
     'ubuntu18.04': 'builds/deprecated-webkit-ubuntu-18.04/%s/deprecated-webkit-ubuntu-18.04.zip',
     'ubuntu20.04': 'builds/webkit/%s/webkit-ubuntu-20.04.zip',
     'ubuntu22.04': 'builds/webkit/%s/webkit-ubuntu-22.04.zip',
@@ -249,8 +238,6 @@ const DOWNLOAD_PATHS = {
   },
   'ffmpeg': {
     '<unknown>': undefined,
-    'generic-linux': 'builds/ffmpeg/%s/ffmpeg-linux.zip',
-    'generic-linux-arm64': 'builds/ffmpeg/%s/ffmpeg-linux-arm64.zip',
     'ubuntu18.04': 'builds/ffmpeg/%s/ffmpeg-linux.zip',
     'ubuntu20.04': 'builds/ffmpeg/%s/ffmpeg-linux.zip',
     'ubuntu22.04': 'builds/ffmpeg/%s/ffmpeg-linux.zip',
@@ -274,6 +261,26 @@ const DOWNLOAD_PATHS = {
   },
   'android': {
     '<unknown>': 'builds/android/%s/android.zip',
+    'ubuntu18.04': 'builds/android/%s/android.zip',
+    'ubuntu20.04': 'builds/android/%s/android.zip',
+    'ubuntu22.04': 'builds/android/%s/android.zip',
+    'ubuntu18.04-arm64': 'builds/android/%s/android.zip',
+    'ubuntu20.04-arm64': 'builds/android/%s/android.zip',
+    'ubuntu22.04-arm64': 'builds/android/%s/android.zip',
+    'debian11': 'builds/android/%s/android.zip',
+    'debian11-arm64': 'builds/android/%s/android.zip',
+    'debian12': 'builds/android/%s/android.zip',
+    'debian12-arm64': 'builds/android/%s/android.zip',
+    'mac10.13': 'builds/android/%s/android.zip',
+    'mac10.14': 'builds/android/%s/android.zip',
+    'mac10.15': 'builds/android/%s/android.zip',
+    'mac11': 'builds/android/%s/android.zip',
+    'mac11-arm64': 'builds/android/%s/android.zip',
+    'mac12': 'builds/android/%s/android.zip',
+    'mac12-arm64': 'builds/android/%s/android.zip',
+    'mac13': 'builds/android/%s/android.zip',
+    'mac13-arm64': 'builds/android/%s/android.zip',
+    'win64': 'builds/android/%s/android.zip',
   },
 };
 
@@ -878,8 +885,8 @@ export class Registry {
     const downloadURLs = this._downloadURLs(descriptor);
     if (!downloadURLs.length)
       throw new Error(`ERROR: Playwright does not support ${descriptor.name} on ${hostPlatform}`);
-    if (hostPlatform === 'generic-linux' || hostPlatform === 'generic-linux-arm64')
-      logPolitely('BEWARE: your OS is not officially supported by Playwright; downloading fallback build.');
+    if (!isOfficiallySupportedPlatform)
+      logPolitely(`BEWARE: your OS is not officially supported by Playwright; downloading fallback build for ${hostPlatform}.`);
 
     const displayName = descriptor.name.split('-').map(word => {
       return word === 'ffmpeg' ? 'FFMPEG' : word.charAt(0).toUpperCase() + word.slice(1);
