@@ -632,3 +632,43 @@ test('should be able to use use execSync with a Node.js file inside a spec', asy
     'fork: hello from hellofork.js',
   ]);
 });
+
+test('should be able to use mergeTests/mergeExpect', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.mjs': `
+      import { test as base, expect as baseExpect, mergeTests, mergeExpects } from '@playwright/test';
+      const test = mergeTests(
+        base.extend({
+          myFixture1: '1',
+        }),
+        base.extend({
+          myFixture2: '2',
+        }),
+      );
+
+      const expect = mergeExpects(
+        baseExpect.extend({
+          async toBeFoo1(page, x) {
+            return { pass: true, message: () => '' };
+          }
+        }),
+        baseExpect.extend({
+          async toBeFoo2(page, x) {
+            return { pass: true, message: () => '' };
+          }
+        }),
+      );
+
+      test('merged', async ({ myFixture1, myFixture2 }) => {
+        console.log('%%myFixture1: ' + myFixture1);
+        console.log('%%myFixture2: ' + myFixture2);
+        await expect(1).toBeFoo1();
+        await expect(1).toBeFoo2();
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.outputLines).toContain('myFixture1: 1');
+  expect(result.outputLines).toContain('myFixture2: 2');
+});
