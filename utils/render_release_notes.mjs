@@ -16,13 +16,11 @@
 // @ts-check
 
 import path from 'path';
-import childProcess from 'child_process';
-import os from 'os';
 import fs from 'fs';
 
 import { parseApi } from './doclint/api_parser.js';
 import md, { visitAll } from './markdown.js';
-import { renderPlaywrightDevLinks, docsLinkRendererForLanguage, languageToRelativeDocsPath } from './generate_types/utils.js';
+import { renderPlaywrightDevLinks, docsLinkRendererForLanguage, languageToRelativeDocsPath } from './doclint/linkUtils.js';
 
 const __dirname = new URL('.', import.meta.url).pathname;
 
@@ -33,7 +31,7 @@ const allowedLanguages = ['js', 'python', 'csharp', 'java'];
 const [, , language, version] = process.argv;
 
 if (!allowedLanguages.includes(language) || !version.match(/^\d+\.\d+$/))
-  throw new Error(`Usage: node ${path.basename(process.argv[1])} <language> <version>\n\nWhere <version> is a version tag`);
+  throw new Error(`Usage: node ${path.basename(process.argv[1])} <language> <version>\n\nWhere <version> is a version tag without v prefix, e.g. 1.45`);
 
 let documentation = parseApi(path.join(documentationRoot, 'api'));
 if (language === 'js') {
@@ -71,9 +69,8 @@ documentation.renderLinksInNodes(nodes);
     }
   });
   if (!foundVersion)
-    throw new Error(`Could not find version ${version} in release notes`);
+    throw new Error(`Could not find version ${version} in release notes.\nUsage: node ${path.basename(process.argv[1])} <language> <version>\n\nWhere <version> is a version tag without v prefix, e.g. 1.45`);
 }
 
-const tmpFile = path.join(os.tmpdir(), `pw-release-notes-${language}.md`);
-fs.writeFileSync(tmpFile, renderPlaywrightDevLinks(md.render(nodes), languageToRelativeDocsPath(language), ''));
-childProcess.execFileSync('code', [tmpFile], { stdio: 'inherit' });
+const output = renderPlaywrightDevLinks(md.render(nodes), languageToRelativeDocsPath(language), '');
+process.stdout.write(output);

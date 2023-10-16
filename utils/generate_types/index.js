@@ -25,7 +25,7 @@ const fs = require('fs');
 const { parseOverrides } = require('./parseOverrides');
 const exported = require('./exported.json');
 const { parseApi } = require('../doclint/api_parser');
-const { docsLinkRendererForLanguage, renderPlaywrightDevLinks } = require('./utils');
+const { docsLinkRendererForLanguage, renderPlaywrightDevLinks } = require('../doclint/linkUtils');
 
 Error.stackTraceLimit = 50;
 
