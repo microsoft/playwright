@@ -28,4 +28,6 @@ export const _android = playwright._android;
 export const test = playwright.test;
 export const expect = playwright.expect;
 export const defineConfig = playwright.defineConfig;
+export const mergeTests = playwright.mergeTests;
+export const mergeExpects = playwright.mergeExpects;
 export default playwright.test;
