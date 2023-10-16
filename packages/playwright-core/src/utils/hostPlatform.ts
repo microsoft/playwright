@@ -23,15 +23,15 @@ export type HostPlatform = 'win64' |
                            'mac10.15' |
                            'mac11' | 'mac11-arm64' |
                            'mac12' | 'mac12-arm64' |
+                           'mac13' | 'mac13-arm64' |
                            'ubuntu18.04' | 'ubuntu18.04-arm64' |
                            'ubuntu20.04' | 'ubuntu20.04-arm64' |
                            'ubuntu22.04' | 'ubuntu22.04-arm64' |
                            'debian11' | 'debian11-arm64' |
                            'debian12' | 'debian12-arm64' |
-                           'generic-linux' | 'generic-linux-arm64' |
                            '<unknown>';
 
-export const hostPlatform = ((): HostPlatform => {
+function calculatePlatform(): { hostPlatform: HostPlatform, isOfficiallySupportedPlatform: boolean } {
   const platform = os.platform();
   if (platform === 'darwin') {
     const ver = os.release().split('.').map((a: string) => parseInt(a, 10));
@@ -52,7 +52,7 @@ export const hostPlatform = ((): HostPlatform => {
       if (os.cpus().some(cpu => cpu.model.includes('Apple')))
         macVersion += '-arm64';
     }
-    return macVersion as HostPlatform;
+    return { hostPlatform: macVersion as HostPlatform, isOfficiallySupportedPlatform: true };
   }
   if (platform === 'linux') {
     const archSuffix = os.arch() === 'arm64' ? '-arm64' : '';
@@ -62,23 +62,26 @@ export const hostPlatform = ((): HostPlatform => {
     // KDE Neon is ubuntu-based and has the same versions.
     // TUXEDO OS is ubuntu-based and has the same versions.
     if (distroInfo?.id === 'ubuntu' || distroInfo?.id === 'pop' || distroInfo?.id === 'neon' || distroInfo?.id === 'tuxedo') {
+      const isOfficiallySupportedPlatform = distroInfo?.id === 'ubuntu';
       if (parseInt(distroInfo.version, 10) <= 19)
-        return ('ubuntu18.04' + archSuffix) as HostPlatform;
+        return { hostPlatform: ('ubuntu18.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform };
       if (parseInt(distroInfo.version, 10) <= 21)
-        return ('ubuntu20.04' + archSuffix) as HostPlatform;
-      return ('ubuntu22.04' + archSuffix) as HostPlatform;
+        return { hostPlatform: ('ubuntu20.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform };
+      return { hostPlatform: ('ubuntu22.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform };
     }
     if (distroInfo?.id === 'debian' && distroInfo?.version === '11')
-      return ('debian11' + archSuffix) as HostPlatform;
+      return { hostPlatform: ('debian11' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: true };
     if (distroInfo?.id === 'debian' && distroInfo?.version === '12')
-      return ('debian12' + archSuffix) as HostPlatform;
+      return { hostPlatform: ('debian12' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: true };
     // use most recent supported release for 'debian testing' and 'unstable'.
     // they never include a numeric version entry in /etc/os-release.
     if (distroInfo?.id === 'debian' && distroInfo?.version === '')
-      return ('debian12' + archSuffix) as HostPlatform;
-    return ('generic-linux' + archSuffix) as HostPlatform;
+      return { hostPlatform: ('debian12' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: true };
+    return { hostPlatform: ('ubuntu20.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: false };
   }
   if (platform === 'win32')
-    return 'win64';
-  return '<unknown>';
-})();
+    return { hostPlatform: 'win64', isOfficiallySupportedPlatform: true };
+  return { hostPlatform: '<unknown>', isOfficiallySupportedPlatform: false };
+}
+
+export const { hostPlatform, isOfficiallySupportedPlatform } = calculatePlatform();
