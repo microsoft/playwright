@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import { PNG } from 'playwright-core/lib/utilsBundle';
+import { PNG, type PNGType } from 'playwright-core/lib/utilsBundle';
+
 import { ImageChannel } from 'playwright-core/lib/image_tools/imageChannel';
 
 // mulberry32
@@ -46,7 +47,7 @@ export function assertEqual(value1, value2) {
 
 // NOTE: this is exact formula from SSIM.js and it DOES NOT include alpha.
 // We use it to better compare with original SSIM implementation.
-export function grayChannel(image: PNG) {
+export function grayChannel(image: PNGType) {
   const width = image.width;
   const height = image.height;
   const gray = new Uint8Array(image.width * image.height);

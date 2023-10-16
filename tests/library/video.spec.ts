@@ -19,7 +19,7 @@ import fs from 'fs';
 import path from 'path';
 import type { Page } from 'playwright-core';
 import { spawnSync } from 'child_process';
-import { PNG, jpegjs } from 'playwright-core/lib/utilsBundle';
+import { PNG, jpegjs, type PNGType } from 'playwright-core/lib/utilsBundle';
 import { registry } from '../../packages/playwright-core/lib/server';
 import { rewriteErrorMessage } from '../../packages/playwright-core/lib/utils/stackTrace';
 import { parseTraceRaw } from '../config/utils';
@@ -56,7 +56,7 @@ export class VideoPlayer {
     this.videoHeight = parseInt(resolutionMatch![2], 10);
   }
 
-  seekFirstNonEmptyFrame(offset?: { x: number, y: number }): PNG | undefined {
+  seekFirstNonEmptyFrame(offset?: { x: number, y: number }): PNGType | undefined {
     for (let f = 1; f <= this.frames; ++f) {
       const frame = this.frame(f, offset);
       let hasColor = false;
@@ -71,11 +71,11 @@ export class VideoPlayer {
     }
   }
 
-  seekLastFrame(offset?: { x: number, y: number }): PNG {
+  seekLastFrame(offset?: { x: number, y: number }): PNGType {
     return this.frame(this.frames, offset);
   }
 
-  frame(frame: number, offset = { x: 10, y: 10 }): PNG {
+  frame(frame: number, offset = { x: 10, y: 10 }): PNGType {
     if (!this.cache.has(frame)) {
       const gap = '0'.repeat(3 - String(frame).length);
       const buffer = fs.readFileSync(`${this.fileName}-${gap}${frame}.png`);

@@ -27,6 +27,7 @@ export const mime: typeof import('../bundles/utils/node_modules/@types/mime') = 
 export const minimatch: typeof import('../bundles/utils/node_modules/@types/minimatch') = require('./utilsBundleImpl').minimatch;
 export const open: typeof import('../bundles/utils/node_modules/open') = require('./utilsBundleImpl').open;
 export const PNG: typeof import('../bundles/utils/node_modules/@types/pngjs').PNG = require('./utilsBundleImpl').PNG;
+export type PNGType = import('../bundles/utils/node_modules/@types/pngjs').PNG;
 export const program: typeof import('../bundles/utils/node_modules/commander').program = require('./utilsBundleImpl').program;
 export const progress: typeof import('../bundles/utils/node_modules/@types/progress') = require('./utilsBundleImpl').progress;
 export const rimraf: typeof import('../bundles/utils/node_modules/rimraf').rimraf = require('./utilsBundleImpl').rimraf;
