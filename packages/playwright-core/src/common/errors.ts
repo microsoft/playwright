@@ -26,6 +26,7 @@ class CustomError extends Error {
 export class TimeoutError extends CustomError {}
 
 export const kTargetClosedErrorMessage = 'Target page, context or browser has been closed';
+export const kTargetCrashedErrorMessage = 'Target crashed';
 
 export class TargetClosedError extends Error {
   constructor() {

@@ -23,7 +23,6 @@ import { CRBrowser } from './crBrowser';
 import type { Env } from '../../utils/processLauncher';
 import { gracefullyCloseSet } from '../../utils/processLauncher';
 import { kBrowserCloseMessageId } from './crConnection';
-import { rewriteErrorMessage } from '../../utils/stackTrace';
 import { BrowserType, kNoXServerRunningError } from '../browserType';
 import type { ConnectionTransport, ProtocolRequest } from '../transport';
 import { WebSocketTransport } from '../transport';
@@ -49,6 +48,7 @@ import { registry } from '../registry';
 import { ManualPromise } from '../../utils/manualPromise';
 import { validateBrowserContextOptions } from '../browserContext';
 import { chromiumSwitches } from './chromiumSwitches';
+import type { ProtocolError } from '../protocolError';
 
 const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');
 
@@ -139,14 +139,16 @@ export class Chromium extends BrowserType {
     return CRBrowser.connect(this.attribution.playwright, transport, options, devtools);
   }
 
-  _rewriteStartupError(error: Error): Error {
-    if (error.message.includes('Missing X server'))
-      return rewriteErrorMessage(error, '\n' + wrapInASCIIBox(kNoXServerRunningError, 1));
+  _doRewriteStartupLog(error: ProtocolError): ProtocolError {
+    if (!error.logs)
+      return error;
+    if (error.logs.includes('Missing X server'))
+      error.logs = '\n' + wrapInASCIIBox(kNoXServerRunningError, 1);
     // These error messages are taken from Chromium source code as of July, 2020:
     // https://github.com/chromium/chromium/blob/70565f67e79f79e17663ad1337dc6e63ee207ce9/content/browser/zygote_host/zygote_host_impl_linux.cc
-    if (!error.message.includes('crbug.com/357670') && !error.message.includes('No usable sandbox!') && !error.message.includes('crbug.com/638180'))
+    if (!error.logs.includes('crbug.com/357670') && !error.logs.includes('No usable sandbox!') && !error.logs.includes('crbug.com/638180'))
       return error;
-    return rewriteErrorMessage(error, [
+    error.logs = [
       `Chromium sandboxing failed!`,
       `================================`,
       `To workaround sandboxing issues, do either of the following:`,
@@ -154,7 +156,8 @@ export class Chromium extends BrowserType {
       `  - (alternative): Launch Chromium without sandbox using 'chromiumSandbox: false' option`,
       `================================`,
       ``,
-    ].join('\n'));
+    ].join('\n');
+    return error;
   }
 
   _amendEnvironment(env: Env, userDataDir: string, executable: string, browserArguments: string[]): Env {

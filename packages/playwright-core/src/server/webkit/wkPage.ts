@@ -45,7 +45,7 @@ import { WKWorkers } from './wkWorkers';
 import { debugLogger } from '../../common/debugLogger';
 import { ManualPromise } from '../../utils/manualPromise';
 import { BrowserContext } from '../browserContext';
-import { TargetClosedError, kTargetClosedErrorMessage } from '../../common/errors';
+import { TargetClosedError } from '../../common/errors';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
@@ -304,7 +304,7 @@ export class WKPage implements PageDelegate {
 
   private async _onTargetCreated(event: Protocol.Target.targetCreatedPayload) {
     const { targetInfo } = event;
-    const session = new WKSession(this._pageProxySession.connection, targetInfo.targetId, kTargetClosedErrorMessage, (message: any) => {
+    const session = new WKSession(this._pageProxySession.connection, targetInfo.targetId, (message: any) => {
       this._pageProxySession.send('Target.sendMessageToTarget', {
         message: JSON.stringify(message), targetId: targetInfo.targetId
       }).catch(e => {
