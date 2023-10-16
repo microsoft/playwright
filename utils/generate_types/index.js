@@ -25,6 +25,7 @@ const fs = require('fs');
 const { parseOverrides } = require('./parseOverrides');
 const exported = require('./exported.json');
 const { parseApi } = require('../doclint/api_parser');
+const { docsLinkRendererForLanguage, renderPlaywrightDevLinks } = require('../doclint/linkUtils');
 
 Error.stackTraceLimit = 50;
 
@@ -60,35 +61,7 @@ class TypesGenerator {
    * @returns {Promise<string>}
    */
   async generateTypes(overridesFile) {
-    const createMarkdownLink = (member, text) => {
-      const className = toKebabCase(member.clazz.name);
-      const memberName = toKebabCase(member.name);
-      let hash = null;
-      if (member.kind === 'property' || member.kind === 'method')
-        hash = `${className}-${memberName}`.toLowerCase();
-      else if (member.kind === 'event')
-        hash = `${className}-event-${memberName}`.toLowerCase();
-      return `[${text}](https://playwright.dev/docs/api/class-${member.clazz.name.toLowerCase()}#${hash})`;
-    };
-    this.documentation.setLinkRenderer(item => {
-      const { clazz, member, param, option } = item;
-      if (param)
-        return `\`${param}\``;
-      if (option)
-        return `\`${option}\``;
-      if (clazz)
-        return `{@link ${clazz.name}}`;
-      if (!member || !member.clazz)
-        throw new Error('Internal error');
-      const className = member.clazz.varName === 'playwrightAssertions' ? '' : member.clazz.varName + '.';
-      if (member.kind === 'method')
-        return createMarkdownLink(member, `${className}${member.alias}(${this.renderJSSignature(member.argsArray)})`);
-      if (member.kind === 'event')
-        return createMarkdownLink(member, `${className}on('${member.alias.toLowerCase()}')`);
-      if (member.kind === 'property')
-        return createMarkdownLink(member, `${className}${member.alias}`);
-      throw new Error('Unknown member kind ' + member.kind);
-    });
+    this.documentation.setLinkRenderer(docsLinkRendererForLanguage('js'));
     this.documentation.setCodeGroupsTransformer('js', tabs => tabs.filter(tab => tab.value === 'ts').map(tab => tab.spec));
     this.documentation.generateSourceCodeComments();
 
@@ -371,9 +344,7 @@ class TypesGenerator {
         pushLine(line);
     }
     comment = out.join('\n');
-    comment = comment.replace(/\[([^\]]+)\]\((\.[^\)]+)\)/g, (match, p1, p2) => {
-      return `[${p1}](${new URL(p2.replace('.md', ''), 'https://playwright.dev/docs/api/').toString()})`;
-    });
+    comment = renderPlaywrightDevLinks(comment, '', '/api');
 
     parts.push(indent + '/**');
     parts.push(...comment.split('\n').map(line => indent + ' * ' + line.replace(/\*\//g, '*\\/')));
@@ -488,33 +459,6 @@ class TypesGenerator {
     if (!lines.length)
       return indent;
     return this.writeComment(lines.join('\n'), indent) + '\n' + indent;
-  }
-
-  /**
-   * @param {docs.Member[]} args
-   */
-  renderJSSignature(args) {
-    const tokens = [];
-    let hasOptional = false;
-    for (const arg of args) {
-      const name = arg.alias;
-      const optional = !arg.required;
-      if (tokens.length) {
-        if (optional && !hasOptional)
-          tokens.push(`[, ${name}`);
-        else
-          tokens.push(`, ${name}`);
-      } else {
-        if (optional && !hasOptional)
-          tokens.push(`[${name}`);
-        else
-          tokens.push(`${name}`);
-      }
-      hasOptional = hasOptional || optional;
-    }
-    if (hasOptional)
-      tokens.push(']');
-    return tokens.join('');
   }
 }
 
