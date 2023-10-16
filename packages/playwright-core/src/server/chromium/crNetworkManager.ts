@@ -189,12 +189,8 @@ export class CRNetworkManager {
   _onRequestPaused(sessionInfo: SessionInfo, event: Protocol.Fetch.requestPausedPayload) {
     if (!event.networkId) {
       // Fetch without networkId means that request was not recognized by inspector, and
-      // it will never receive Network.requestWillBeSent. Most likely, this is an internal request
-      // that we can safely fail.
-      this._session._sendMayFail('Fetch.failRequest', {
-        requestId: event.requestId,
-        errorReason: 'Aborted',
-      });
+      // it will never receive Network.requestWillBeSent. Continue the request to not affect it.
+      this._session._sendMayFail('Fetch.continueRequest', { requestId: event.requestId });
       return;
     }
     if (event.request.url.startsWith('data:'))
