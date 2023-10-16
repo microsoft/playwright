@@ -8,7 +8,7 @@ This project incorporates components from the projects listed below. The origina
 -	@babel/code-frame@7.22.13 (https://github.com/babel/babel)
 -	@babel/code-frame@7.22.5 (https://github.com/babel/babel)
 -	@babel/compat-data@7.22.20 (https://github.com/babel/babel)
--	@babel/core@7.23.0 (https://github.com/babel/babel)
+-	@babel/core@7.23.2 (https://github.com/babel/babel)
 -	@babel/generator@7.23.0 (https://github.com/babel/babel)
 -	@babel/helper-annotate-as-pure@7.22.5 (https://github.com/babel/babel)
 -	@babel/helper-compilation-targets@7.22.15 (https://github.com/babel/babel)
@@ -29,11 +29,11 @@ This project incorporates components from the projects listed below. The origina
 -	@babel/helper-validator-identifier@7.22.20 (https://github.com/babel/babel)
 -	@babel/helper-validator-identifier@7.22.5 (https://github.com/babel/babel)
 -	@babel/helper-validator-option@7.22.15 (https://github.com/babel/babel)
--	@babel/helpers@7.23.1 (https://github.com/babel/babel)
+-	@babel/helpers@7.23.2 (https://github.com/babel/babel)
 -	@babel/highlight@7.22.20 (https://github.com/babel/babel)
 -	@babel/highlight@7.22.5 (https://github.com/babel/babel)
 -	@babel/parser@7.23.0 (https://github.com/babel/babel)
--	@babel/plugin-proposal-decorators@7.23.0 (https://github.com/babel/babel)
+-	@babel/plugin-proposal-decorators@7.23.2 (https://github.com/babel/babel)
 -	@babel/plugin-syntax-async-generators@7.8.4 (https://github.com/babel/babel/tree/master/packages/babel-plugin-syntax-async-generators)
 -	@babel/plugin-syntax-class-static-block@7.14.5 (https://github.com/babel/babel)
 -	@babel/plugin-syntax-decorators@7.22.10 (https://github.com/babel/babel)
@@ -63,9 +63,9 @@ This project incorporates components from the projects listed below. The origina
 -	@babel/plugin-transform-private-property-in-object@7.22.11 (https://github.com/babel/babel)
 -	@babel/plugin-transform-react-jsx@7.22.15 (https://github.com/babel/babel)
 -	@babel/plugin-transform-typescript@7.22.15 (https://github.com/babel/babel)
--	@babel/preset-typescript@7.23.0 (https://github.com/babel/babel)
+-	@babel/preset-typescript@7.23.2 (https://github.com/babel/babel)
 -	@babel/template@7.22.15 (https://github.com/babel/babel)
--	@babel/traverse@7.23.0 (https://github.com/babel/babel)
+-	@babel/traverse@7.23.2 (https://github.com/babel/babel)
 -	@babel/types@7.23.0 (https://github.com/babel/babel)
 -	@jest/expect-utils@29.5.0 (https://github.com/facebook/jest)
 -	@jest/schemas@29.4.3 (https://github.com/facebook/jest)
@@ -441,7 +441,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
 END OF @babel/compat-data@7.22.20 AND INFORMATION
 
-%% @babel/core@7.23.0 NOTICES AND INFORMATION BEGIN HERE
+%% @babel/core@7.23.2 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -466,7 +466,7 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF @babel/core@7.23.0 AND INFORMATION
+END OF @babel/core@7.23.2 AND INFORMATION
 
 %% @babel/generator@7.23.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -1008,7 +1008,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
 END OF @babel/helper-validator-option@7.22.15 AND INFORMATION
 
-%% @babel/helpers@7.23.1 NOTICES AND INFORMATION BEGIN HERE
+%% @babel/helpers@7.23.2 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -1033,7 +1033,7 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF @babel/helpers@7.23.1 AND INFORMATION
+END OF @babel/helpers@7.23.2 AND INFORMATION
 
 %% @babel/highlight@7.22.20 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -1113,7 +1113,7 @@ THE SOFTWARE.
 =========================================
 END OF @babel/parser@7.23.0 AND INFORMATION
 
-%% @babel/plugin-proposal-decorators@7.23.0 NOTICES AND INFORMATION BEGIN HERE
+%% @babel/plugin-proposal-decorators@7.23.2 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -1138,7 +1138,7 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF @babel/plugin-proposal-decorators@7.23.0 AND INFORMATION
+END OF @babel/plugin-proposal-decorators@7.23.2 AND INFORMATION
 
 %% @babel/plugin-syntax-async-generators@7.8.4 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -1923,7 +1923,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
 END OF @babel/plugin-transform-typescript@7.22.15 AND INFORMATION
 
-%% @babel/preset-typescript@7.23.0 NOTICES AND INFORMATION BEGIN HERE
+%% @babel/preset-typescript@7.23.2 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -1948,7 +1948,7 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF @babel/preset-typescript@7.23.0 AND INFORMATION
+END OF @babel/preset-typescript@7.23.2 AND INFORMATION
 
 %% @babel/template@7.22.15 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -1977,7 +1977,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
 END OF @babel/template@7.22.15 AND INFORMATION
 
-%% @babel/traverse@7.23.0 NOTICES AND INFORMATION BEGIN HERE
+%% @babel/traverse@7.23.2 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -2002,7 +2002,7 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF @babel/traverse@7.23.0 AND INFORMATION
+END OF @babel/traverse@7.23.2 AND INFORMATION
 
 %% @babel/types@7.23.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
