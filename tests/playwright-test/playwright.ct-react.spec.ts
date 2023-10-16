@@ -377,7 +377,7 @@ test('should handle the baseUrl config', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       import { defineConfig } from '@playwright/experimental-ct-react';
-      export default defineConfig({ use: { baseURL: '127.0.0.1' } });
+      export default defineConfig({ use: { baseURL: 'http://127.0.0.1:8080' } });
     `,
     'playwright/index.html': `<script type="module" src="./index.js"></script>`,
     'playwright/index.js': ``,
@@ -392,7 +392,7 @@ test('should handle the baseUrl config', async ({ runInlineTest }) => {
 
       test('pass component', async ({ page, mount }) => {
         const component = await mount(<Component />);
-        await expect(page).toHaveURL('http://127.0.0.1:3100/');
+        await expect(page).toHaveURL('http://127.0.0.1:8080/');
       });
     `,
   }, { workers: 1 });
@@ -435,7 +435,7 @@ test('should prioritize the vite host config over the baseUrl config', async ({ 
       import { defineConfig } from '@playwright/experimental-ct-react';
       export default defineConfig({
         use: {
-          baseURL: 'localhost',
+          baseURL: 'http://localhost:8080',
           ctViteConfig: { preview: { host: '127.0.0.1' } }
         },
       });
@@ -453,7 +453,7 @@ test('should prioritize the vite host config over the baseUrl config', async ({ 
 
       test('pass component', async ({ page, mount }) => {
         const component = await mount(<Component />);
-        await expect(page).toHaveURL('http://127.0.0.1:3100/');
+        await expect(page).toHaveURL('http://127.0.0.1:8080/');
       });
     `,
   }, { workers: 1 });
