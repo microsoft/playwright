@@ -671,26 +671,11 @@ function parseCookie(header: string): channels.NetworkCookie | null {
   return cookie;
 }
 
-function isJsonParsable(value: any) {
-  if (typeof value !== 'string')
-    return false;
-  try {
-    JSON.parse(value);
-    return true;
-  } catch (e) {
-    if (e instanceof SyntaxError)
-      return false;
-    else
-      throw e;
-  }
-}
-
 function serializePostData(params: channels.APIRequestContextFetchParams, headers: HeadersObject): Buffer | undefined {
   assert((params.postData ? 1 : 0) + (params.jsonData ? 1 : 0) + (params.formData ? 1 : 0) + (params.multipartData ? 1 : 0) <= 1, `Only one of 'data', 'form' or 'multipart' can be specified`);
   if (params.jsonData !== undefined) {
-    const json = isJsonParsable(params.jsonData) ? params.jsonData : JSON.stringify(params.jsonData);
     setHeader(headers, 'content-type', 'application/json', true);
-    return Buffer.from(json, 'utf8');
+    return Buffer.from(params.jsonData, 'utf8');
   } else if (params.formData) {
     const searchParams = new URLSearchParams();
     for (const { name, value } of params.formData)
