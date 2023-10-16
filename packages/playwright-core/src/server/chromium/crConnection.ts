@@ -19,13 +19,11 @@ import { type RegisteredListener, assert, eventsHelper } from '../../utils';
 import type { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../transport';
 import type { Protocol } from './protocol';
 import { EventEmitter } from 'events';
-import { rewriteErrorMessage } from '../../utils/stackTrace';
 import type { RecentLogsCollector } from '../../common/debugLogger';
 import { debugLogger } from '../../common/debugLogger';
 import type { ProtocolLogger } from '../types';
 import { helper } from '../helper';
 import { ProtocolError } from '../protocolError';
-import { kTargetClosedErrorMessage } from '../../common/errors';
 
 export const ConnectionEvents = {
   Disconnected: Symbol('ConnectionEvents.Disconnected')
@@ -102,7 +100,7 @@ type SessionEventListener = (method: string, params?: Object) => void;
 export class CRSession extends EventEmitter {
   private readonly _connection: CRConnection;
   private _eventListener?: SessionEventListener;
-  private readonly _callbacks = new Map<number, {resolve: (o: any) => void, reject: (e: ProtocolError) => void, error: ProtocolError, method: string}>();
+  private readonly _callbacks = new Map<number, { resolve: (o: any) => void, reject: (e: ProtocolError) => void, error: ProtocolError }>();
   private readonly _sessionId: string;
   private readonly _parentSession: CRSession | null;
   private _crashed: boolean = false;
@@ -138,25 +136,15 @@ export class CRSession extends EventEmitter {
     return session;
   }
 
-  private _closedErrorMessage() {
-    if (this._crashed)
-      return 'Target crashed';
-    if (this._connection._browserDisconnectedLogs)
-      return kTargetClosedErrorMessage + '\nBrowser logs: ' + this._connection._browserDisconnectedLogs;
-    if (this._closed || this._connection._closed)
-      return kTargetClosedErrorMessage;
-  }
-
   async send<T extends keyof Protocol.CommandParameters>(
     method: T,
     params?: Protocol.CommandParameters[T]
   ): Promise<Protocol.CommandReturnValues[T]> {
-    const closedErrorMessage = this._closedErrorMessage();
-    if (closedErrorMessage)
-      throw new ProtocolError(true, closedErrorMessage);
+    if (this._crashed || this._closed || this._connection._closed || this._connection._browserDisconnectedLogs)
+      throw new ProtocolError(this._crashed ? 'crashed' : 'closed', undefined, this._connection._browserDisconnectedLogs);
     const id = this._connection._rawSend(this._sessionId, method, params);
     return new Promise((resolve, reject) => {
-      this._callbacks.set(id, { resolve, reject, error: new ProtocolError(false), method });
+      this._callbacks.set(id, { resolve, reject, error: new ProtocolError('error', method) });
     });
   }
 
@@ -168,10 +156,12 @@ export class CRSession extends EventEmitter {
     if (object.id && this._callbacks.has(object.id)) {
       const callback = this._callbacks.get(object.id)!;
       this._callbacks.delete(object.id);
-      if (object.error)
-        callback.reject(createProtocolError(callback.error, callback.method, object.error));
-      else
+      if (object.error) {
+        callback.error.setMessage(object.error.message);
+        callback.reject(callback.error);
+      } else {
         callback.resolve(object.result);
+      }
     } else if (object.id && object.error?.code === -32001) {
       // Message to a closed session, just ignore it.
     } else {
@@ -199,10 +189,10 @@ export class CRSession extends EventEmitter {
   dispose() {
     this._closed = true;
     this._connection._sessions.delete(this._sessionId);
-    const errorMessage = this._closedErrorMessage()!;
     for (const callback of this._callbacks.values()) {
-      callback.error.sessionClosed = true;
-      callback.reject(rewriteErrorMessage(callback.error, errorMessage));
+      callback.error.type = this._crashed ? 'crashed' : 'closed';
+      callback.error.logs = this._connection._browserDisconnectedLogs;
+      callback.reject(callback.error);
     }
     this._callbacks.clear();
   }
@@ -246,11 +236,4 @@ export class CDPSession extends EventEmitter {
     this._session.dispose();
     this.emit(CDPSession.Events.Closed);
   }
-}
-
-function createProtocolError(error: ProtocolError, method: string, protocolError: { message: string; data: any; }): ProtocolError {
-  let message = `Protocol error (${method}): ${protocolError.message}`;
-  if ('data' in protocolError)
-    message += ` ${protocolError.data}`;
-  return rewriteErrorMessage(error, message);
 }
