@@ -100,7 +100,7 @@ export class ElectronApplication extends SdkObject {
   async close() {
     const progressController = new ProgressController(serverSideCallMetadata(), this);
     const closed = progressController.run(progress => helper.waitForEvent(progress, this, ElectronApplication.Events.Close).promise);
-    await this._browserContext.close(serverSideCallMetadata());
+    await this._browserContext.close({ reason: 'Application exited' });
     this._nodeConnection.close();
     await closed;
   }

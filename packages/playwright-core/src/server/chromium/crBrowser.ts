@@ -510,7 +510,7 @@ export class CRBrowserContext extends BrowserContext {
       await (sw as CRServiceWorker).updateRequestInterception();
   }
 
-  async doClose() {
+  async doClose(reason: string | undefined) {
     // Headful chrome cannot dispose browser context with opened 'beforeunload'
     // dialogs, so we should close all that are currently opened.
     // We also won't get new ones since `Target.disposeBrowserContext` does not trigger
@@ -525,7 +525,7 @@ export class CRBrowserContext extends BrowserContext {
     if (!this._browserContextId) {
       await Promise.all(this._crPages().map(crPage => crPage._mainFrameSession._stopVideoRecording()));
       // Closing persistent context should close the browser.
-      await this._browser.close();
+      await this._browser.close({ reason });
       return;
     }
 
