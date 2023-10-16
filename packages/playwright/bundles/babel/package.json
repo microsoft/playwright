@@ -10,10 +10,10 @@
   },
   "dependencies": {
     "@babel/code-frame": "^7.22.13",
-    "@babel/core": "^7.23.0",
+    "@babel/core": "^7.23.2",
     "@babel/helper-plugin-utils": "^7.22.5",
     "@babel/parser": "^7.23.0",
-    "@babel/plugin-proposal-decorators": "^7.23.0",
+    "@babel/plugin-proposal-decorators": "^7.23.2",
     "@babel/plugin-syntax-async-generators": "^7.8.4",
     "@babel/plugin-syntax-import-assertions": "^7.22.5",
     "@babel/plugin-syntax-json-strings": "^7.8.3",
@@ -31,12 +31,12 @@
     "@babel/plugin-transform-private-methods": "^7.22.5",
     "@babel/plugin-transform-private-property-in-object": "^7.22.11",
     "@babel/plugin-transform-react-jsx": "^7.22.15",
-    "@babel/preset-typescript": "^7.23.0"
+    "@babel/preset-typescript": "^7.23.2"
   },
   "devDependencies": {
-    "@types/babel__code-frame": "^7.0.3",
-    "@types/babel__core": "^7.20.0",
-    "@types/babel__helper-plugin-utils": "^7.10.0",
+    "@types/babel__code-frame": "^7.0.4",
+    "@types/babel__core": "^7.20.2",
+    "@types/babel__helper-plugin-utils": "^7.10.1",
     "@types/babel__traverse": "^7.20.2"
   }
 }
