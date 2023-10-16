@@ -714,6 +714,21 @@ it('should download links with data url', async ({ page }) => {
   expect(download.suggestedFilename()).toBe('SomeFile.txt');
 });
 
+it('should download successfully when routing', async ({ browser, server }) => {
+  const page = await browser.newPage();
+  await page.context().route('**/*', route => route.continue());
+  await page.goto(server.PREFIX + '/empty.html');
+  await page.setContent(`<a href="${server.PREFIX}/chromium-linux.zip" download="foo.zip">download</a>`);
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.click('a')
+  ]);
+  expect(download.suggestedFilename()).toBe('foo.zip');
+  expect(download.url()).toBe(`${server.PREFIX}/chromium-linux.zip`);
+  expect(await download.failure()).toBe(null);
+  await page.close();
+});
+
 async function assertDownloadToPDF(download: Download, filePath: string) {
   expect(download.suggestedFilename()).toBe(path.basename(filePath));
   const stream = await download.createReadStream();
