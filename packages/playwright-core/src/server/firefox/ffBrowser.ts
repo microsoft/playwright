@@ -376,7 +376,7 @@ export class FFBrowserContext extends BrowserContext {
     await this._browser.session.send('Browser.clearCache');
   }
 
-  async doClose() {
+  async doClose(reason: string | undefined) {
     if (!this._browserContextId) {
       if (this._options.recordVideo) {
         await this._browser.session.send('Browser.setVideoRecordingOptions', {
@@ -385,7 +385,7 @@ export class FFBrowserContext extends BrowserContext {
         });
       }
       // Closing persistent context should close the browser.
-      await this._browser.close();
+      await this._browser.close({ reason });
     } else {
       await this._browser.session.send('Browser.removeBrowserContext', { browserContextId: this._browserContextId });
       this._browser._contexts.delete(this._browserContextId);
