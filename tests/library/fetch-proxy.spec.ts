@@ -28,7 +28,7 @@ it.use({
 it.skip(({ mode }) => mode !== 'default');
 
 it('context request should pick up proxy credentials', async ({ browserType, server, proxyServer }) => {
-  proxyServer.forwardTo(server.PORT);
+  proxyServer.forwardTo(server.PORT, { allowConnectRequests: true });
   let auth;
   proxyServer.setAuthHandler(req => {
     auth = req.headers['proxy-authorization'];
@@ -46,7 +46,7 @@ it('context request should pick up proxy credentials', async ({ browserType, ser
 });
 
 it('global request should pick up proxy credentials', async ({ playwright, server, proxyServer }) => {
-  proxyServer.forwardTo(server.PORT);
+  proxyServer.forwardTo(server.PORT, { allowConnectRequests: true });
   let auth;
   proxyServer.setAuthHandler(req => {
     auth = req.headers['proxy-authorization'];
@@ -67,7 +67,7 @@ it('should work with context level proxy', async ({ contextFactory, contextOptio
     res.end('<title>Served by the proxy</title>');
   });
 
-  proxyServer.forwardTo(server.PORT);
+  proxyServer.forwardTo(server.PORT, { allowConnectRequests: true });
   const context = await contextFactory({
     proxy: { server: `localhost:${proxyServer.PORT}` }
   });
@@ -88,7 +88,7 @@ it(`should support proxy.bypass`, async ({ contextFactory, contextOptions, serve
   // that resolves everything to some weird search results page.
   //
   // @see https://gist.github.com/CollinChaffin/24f6c9652efb3d6d5ef2f5502720ef00
-  proxyServer.forwardTo(server.PORT);
+  proxyServer.forwardTo(server.PORT, { allowConnectRequests: true });
   const context = await contextFactory({
     ...contextOptions,
     proxy: { server: `localhost:${proxyServer.PORT}`, bypass: `1.non.existent.domain.for.the.test, 2.non.existent.domain.for.the.test, .another.test` }
