@@ -72,14 +72,17 @@ function calculatePlatform(): { hostPlatform: HostPlatform, isOfficiallySupporte
         return { hostPlatform: ('ubuntu20.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform };
       return { hostPlatform: ('ubuntu22.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform };
     }
-    if (distroInfo?.id === 'debian' && distroInfo?.version === '11')
-      return { hostPlatform: ('debian11' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: true };
-    if (distroInfo?.id === 'debian' && distroInfo?.version === '12')
-      return { hostPlatform: ('debian12' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: true };
-    // use most recent supported release for 'debian testing' and 'unstable'.
-    // they never include a numeric version entry in /etc/os-release.
-    if (distroInfo?.id === 'debian' && distroInfo?.version === '')
-      return { hostPlatform: ('debian12' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: true };
+    if (distroInfo?.id === 'debian' || distroInfo?.id === 'raspbian') {
+      const isOfficiallySupportedPlatform = distroInfo?.id === 'debian';
+      if (distroInfo?.version === '11')
+        return { hostPlatform: ('debian11' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform };
+      if (distroInfo?.version === '12')
+        return { hostPlatform: ('debian12' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform };
+      // use most recent supported release for 'debian testing' and 'unstable'.
+      // they never include a numeric version entry in /etc/os-release.
+      if (distroInfo?.version === '')
+        return { hostPlatform: ('debian12' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform };
+    }
     return { hostPlatform: ('ubuntu20.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: false };
   }
   if (platform === 'win32')
