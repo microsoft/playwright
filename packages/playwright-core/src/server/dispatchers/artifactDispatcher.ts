@@ -44,14 +44,14 @@ export class ArtifactDispatcher extends Dispatcher<Artifact, channels.ArtifactCh
 
   async pathAfterFinished(): Promise<channels.ArtifactPathAfterFinishedResult> {
     const path = await this._object.localPathAfterFinished();
-    return { value: path || undefined };
+    return { value: path };
   }
 
   async saveAs(params: channels.ArtifactSaveAsParams): Promise<channels.ArtifactSaveAsResult> {
     return await new Promise((resolve, reject) => {
       this._object.saveAs(async (localPath, error) => {
-        if (error !== undefined) {
-          reject(new Error(error));
+        if (error) {
+          reject(error);
           return;
         }
         try {
@@ -68,8 +68,8 @@ export class ArtifactDispatcher extends Dispatcher<Artifact, channels.ArtifactCh
   async saveAsStream(): Promise<channels.ArtifactSaveAsStreamResult> {
     return await new Promise((resolve, reject) => {
       this._object.saveAs(async (localPath, error) => {
-        if (error !== undefined) {
-          reject(new Error(error));
+        if (error) {
+          reject(error);
           return;
         }
         try {
@@ -92,8 +92,6 @@ export class ArtifactDispatcher extends Dispatcher<Artifact, channels.ArtifactCh
 
   async stream(): Promise<channels.ArtifactStreamResult> {
     const fileName = await this._object.localPathAfterFinished();
-    if (!fileName)
-      return {};
     const readable = fs.createReadStream(fileName, { highWaterMark: 1024 * 1024 });
     return { stream: new StreamDispatcher(this, readable) };
   }

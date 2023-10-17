@@ -19,6 +19,7 @@ import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 import type { Download } from 'playwright-core';
+import { kTargetClosedErrorMessage } from '../config/errors';
 
 it.describe('download event', () => {
   it.skip(({ mode }) => mode !== 'default', 'download.path() is not available in remote mode');
@@ -115,7 +116,7 @@ it.describe('download event', () => {
     expect(download.suggestedFilename()).toBe(`file.txt`);
     await download.path().catch(e => error = e);
     expect(await download.failure()).toContain('acceptDownloads');
-    expect(error.message).toContain('acceptDownloads: true');
+    expect(error!.message).toContain('acceptDownloads: true');
     await page.close();
   });
 
@@ -421,12 +422,12 @@ it.describe('download event', () => {
       // probably because of http -> https link.
       page.click('a', { modifiers: ['Alt'] })
     ]);
-    const [downloadPath, saveError] = await Promise.all([
-      download.path(),
+    const [downloadError, saveError] = await Promise.all([
+      download.path().catch(e => e),
       download.saveAs(testInfo.outputPath('download.txt')).catch(e => e),
       page.context().close(),
     ]);
-    expect(downloadPath).toBe(null);
+    expect(downloadError.message).toBe('download.path: canceled');
     expect([
       'download.saveAs: File not found on disk. Check download.failure() for details.',
       'download.saveAs: canceled',
@@ -451,17 +452,20 @@ it.describe('download event', () => {
       page.waitForEvent('download'),
       page.click('a')
     ]);
-    const [downloadPath, saveError] = await Promise.all([
-      download.path(),
+    const [downloadError, saveError] = await Promise.all([
+      download.path().catch(e => e),
       download.saveAs(testInfo.outputPath('download.txt')).catch(e => e),
       page.context().close(),
     ]);
-    expect(downloadPath).toBe(null);
     // The exact error message is racy, because sometimes browser is fast enough
     // to cancel the download.
     expect([
+      'download.path: canceled',
+      'download.path: ' + kTargetClosedErrorMessage,
+    ]).toContain(downloadError.message);
+    expect([
       'download.saveAs: canceled',
-      'download.saveAs: File deleted upon browser context closure.',
+      'download.saveAs: ' + kTargetClosedErrorMessage,
     ]).toContain(saveError.message);
   });
 
@@ -482,13 +486,13 @@ it.describe('download event', () => {
       page.waitForEvent('download'),
       page.click('a')
     ]);
-    const [downloadPath, saveError] = await Promise.all([
-      download.path(),
+    const [downloadError, saveError] = await Promise.all([
+      download.path().catch(e => e),
       download.saveAs(testInfo.outputPath('download.txt')).catch(e => e),
       (browser as any)._channel.killForTests(),
     ]);
-    expect(downloadPath).toBe(null);
-    expect(saveError.message).toContain('File deleted upon browser context closure.');
+    expect(downloadError.message).toBe('download.path: ' + kTargetClosedErrorMessage);
+    expect(saveError.message).toContain('download.saveAs: ' + kTargetClosedErrorMessage);
     await browser.close();
   });
 
@@ -512,10 +516,10 @@ it.describe('download event', () => {
 
     const stream = await download.createReadStream();
     const data = await new Promise<Buffer>((fulfill, reject) => {
-      const bufs = [];
-      stream.on('data', d => bufs.push(d));
+      const buffs: Buffer[] = [];
+      stream.on('data', d => buffs.push(d));
       stream.on('error', reject);
-      stream.on('end', () => fulfill(Buffer.concat(bufs)));
+      stream.on('end', () => fulfill(Buffer.concat(buffs)));
     });
     expect(data.byteLength).toBe(content.byteLength);
     expect(data.equals(content)).toBe(true);
@@ -585,7 +589,7 @@ it.describe('download event', () => {
       page.waitForEvent('download'),
       page.frame({
         url: server.PREFIX + '/3'
-      }).click('text=download')
+      })!.click('text=download')
     ]);
     const userPath = testInfo.outputPath('download.txt');
     await download.saveAs(userPath);
@@ -733,10 +737,10 @@ async function assertDownloadToPDF(download: Download, filePath: string) {
   expect(download.suggestedFilename()).toBe(path.basename(filePath));
   const stream = await download.createReadStream();
   const data = await new Promise<Buffer>((fulfill, reject) => {
-    const bufs = [];
-    stream.on('data', d => bufs.push(d));
+    const buffs: Buffer[] = [];
+    stream.on('data', d => buffs.push(d));
     stream.on('error', reject);
-    stream.on('end', () => fulfill(Buffer.concat(bufs)));
+    stream.on('end', () => fulfill(Buffer.concat(buffs)));
   });
   expect(download.url().endsWith('/' + path.basename(filePath))).toBeTruthy();
   const expectedPrefix = '%PDF';
