@@ -27,7 +27,7 @@ import { TimeoutSettings } from '../common/timeoutSettings';
 import { Waiter } from './waiter';
 import { EventEmitter } from 'events';
 import { Connection } from './connection';
-import { isSafeCloseError, kBrowserClosedError } from '../common/errors';
+import { isTargetClosedError, TargetClosedError } from '../common/errors';
 import { raceAgainstDeadline } from '../utils/timeoutRunner';
 import type { AndroidServerLauncherImpl } from '../androidServerImpl';
 
@@ -76,10 +76,10 @@ export class Android extends ChannelOwner<channels.AndroidChannel> implements ap
       connection.on('close', closePipe);
 
       let device: AndroidDevice;
-      let closeError: string | undefined;
+      let closeError: Error | undefined;
       const onPipeClosed = () => {
         device?._didClose();
-        connection.close(closeError || kBrowserClosedError);
+        connection.close(closeError);
       };
       pipe.on('closed', onPipeClosed);
       connection.onmessage = message => pipe.send({ message }).catch(onPipeClosed);
@@ -88,7 +88,7 @@ export class Android extends ChannelOwner<channels.AndroidChannel> implements ap
         try {
           connection!.dispatch(message);
         } catch (e) {
-          closeError = e.toString();
+          closeError = e;
           closePipe();
         }
       });
@@ -237,11 +237,11 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> i
   async close() {
     try {
       if (this._shouldCloseConnectionOnClose)
-        this._connection.close(kBrowserClosedError);
+        this._connection.close();
       else
         await this._channel.close();
     } catch (e) {
-      if (isSafeCloseError(e))
+      if (isTargetClosedError(e))
         return;
       throw e;
     }
@@ -281,7 +281,7 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> i
       const waiter = Waiter.createForEvent(this, event);
       waiter.rejectOnTimeout(timeout, `Timeout ${timeout}ms exceeded while waiting for event "${event}"`);
       if (event !== Events.AndroidDevice.Close)
-        waiter.rejectOnEvent(this, Events.AndroidDevice.Close, new Error('Device closed'));
+        waiter.rejectOnEvent(this, Events.AndroidDevice.Close, new TargetClosedError());
       const result = await waiter.waitForEvent(this, event, predicate as any);
       waiter.dispose();
       return result;

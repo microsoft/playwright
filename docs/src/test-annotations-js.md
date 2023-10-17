@@ -3,6 +3,8 @@ id: test-annotations
 title: "Annotations"
 ---
 
+## Introduction
+
 Playwright Test supports test annotations to deal with failures, flakiness, skip, focus and tag tests:
 - [`method: Test.skip#1`] marks the test as irrelevant. Playwright Test does not run such a test. Use this annotation when the test is not applicable in some configuration.
 - [`method: Test.fail#1`] marks the test as failing. Playwright Test will run this test and ensure it does indeed fail. If the test does not fail, Playwright Test will complain.

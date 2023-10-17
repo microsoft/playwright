@@ -30,11 +30,11 @@ import type { Protocol } from './protocol';
 import type { PageProxyMessageReceivedPayload } from './wkConnection';
 import { kPageProxyMessageReceived, WKConnection, WKSession } from './wkConnection';
 import { WKPage } from './wkPage';
-import { kBrowserClosedError } from '../../common/errors';
+import { kTargetClosedErrorMessage } from '../../common/errors';
 import type { SdkObject } from '../instrumentation';
 
-const DEFAULT_USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15';
-const BROWSER_VERSION = '17.0';
+const DEFAULT_USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15';
+const BROWSER_VERSION = '17.4';
 
 export class WKBrowser extends Browser {
   private readonly _connection: WKConnection;
@@ -81,7 +81,7 @@ export class WKBrowser extends Browser {
       wkPage.didClose();
     this._wkPages.clear();
     for (const video of this._idToVideo.values())
-      video.artifact.reportFinished(kBrowserClosedError);
+      video.artifact.reportFinished(kTargetClosedErrorMessage);
     this._idToVideo.clear();
     this._didClose();
   }
@@ -165,7 +165,7 @@ export class WKBrowser extends Browser {
       context = this._defaultContext as WKBrowserContext;
     if (!context)
       return;
-    const pageProxySession = new WKSession(this._connection, pageProxyId, `Target closed`, (message: any) => {
+    const pageProxySession = new WKSession(this._connection, pageProxyId, (message: any) => {
       this._connection.rawSend({ ...message, pageProxyId });
     });
     const opener = event.openerId ? this._wkPages.get(event.openerId) : undefined;
@@ -349,11 +349,11 @@ export class WKBrowserContext extends BrowserContext {
     });
   }
 
-  async doClose() {
+  async doClose(reason: string | undefined) {
     if (!this._browserContextId) {
       await Promise.all(this._wkPages().map(wkPage => wkPage._stopVideo()));
       // Closing persistent context should close the browser.
-      await this._browser.close();
+      await this._browser.close({ reason });
     } else {
       await this._browser._browserSession.send('Playwright.deleteContext', { browserContextId: this._browserContextId });
       this._browser._contexts.delete(this._browserContextId);

@@ -1249,7 +1249,14 @@ export class InjectedScript {
     {
       // JS property
       if (expression === 'to.have.property') {
-        const received = (element as any)[options.expressionArg];
+        let target = element;
+        const properties = options.expressionArg.split('.');
+        for (let i = 0; i < properties.length - 1; i++) {
+          if (typeof target !== 'object' || !(properties[i] in target))
+            return { received: undefined, matches: false };
+          target = (target as any)[properties[i]];
+        }
+        const received = (target as any)[properties[properties.length - 1]];
         const matches = deepEquals(received, options.expectedValue);
         return { received, matches };
       }

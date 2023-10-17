@@ -4,6 +4,21 @@ title: "Release notes"
 toc_max_heading_level: 2
 ---
 
+## Version 1.39
+
+Evergreen browsers update.
+
+### Browser Versions
+
+* Chromium 119.0.6045.9
+* Mozilla Firefox 118.0.1
+* WebKit 17.4
+
+This version was also tested against the following stable channels:
+
+* Google Chrome 118
+* Microsoft Edge 118
+
 ## Version 1.38
 
 ### Trace Viewer Updates
@@ -47,7 +62,7 @@ Let us know if you encounter any issues!
 Linux support looks like this:
 
 |          | Ubuntu 20.04 | Ubuntu 22.04 | Debian 11 | Debian 12 |
-| :--- | :---: | :---: | :---: | :---: | 
+| :--- | :---: | :---: | :---: | :---: |
 | Chromium | ✅ | ✅ | ✅ | ✅ |
 | WebKit | ✅ | ✅ | ✅ | ✅ |
 | Firefox | ✅ | ✅ | ✅ | ✅ |

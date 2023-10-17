@@ -195,8 +195,10 @@ for (const pkg of workspace.packages()) {
   const bundlesDir = path.join(pkg.path, 'bundles');
   if (!fs.existsSync(bundlesDir))
     continue;
-  for (const bundle of fs.readdirSync(bundlesDir))
-    bundles.push(path.join(bundlesDir, bundle));
+  for (const bundle of fs.readdirSync(bundlesDir)) {
+    if (fs.existsSync(path.join(bundlesDir, bundle, 'package.json')))
+      bundles.push(path.join(bundlesDir, bundle));
+  }
 }
 
 // Update test runner.

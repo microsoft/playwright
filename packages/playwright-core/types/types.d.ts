@@ -2002,6 +2002,11 @@ export interface Page {
    */
   close(options?: {
     /**
+     * The reason to be reported to the operations interrupted by the page closure.
+     */
+    reason?: string;
+
+    /**
      * Defaults to `false`. Whether to run the
      * [before unload](https://developer.mozilla.org/en-US/docs/Web/Events/beforeunload) page handlers.
      */
@@ -3627,7 +3632,8 @@ export interface Page {
     /**
      * If specified, updates the given HAR with the actual network information instead of serving from file. The file is
      * written to disk when
-     * [browserContext.close()](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) is called.
+     * [browserContext.close([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) is
+     * called.
      */
     update?: boolean;
 
@@ -7556,7 +7562,7 @@ export interface BrowserContext {
    * Emitted when Browser context gets closed. This might happen because of one of the following:
    * - Browser context is closed.
    * - Browser application is closed or crashed.
-   * - The [browser.close()](https://playwright.dev/docs/api/class-browser#browser-close) method was called.
+   * - The [browser.close([options])](https://playwright.dev/docs/api/class-browser#browser-close) method was called.
    */
   on(event: 'close', listener: (browserContext: BrowserContext) => void): this;
 
@@ -7748,7 +7754,7 @@ export interface BrowserContext {
    * Emitted when Browser context gets closed. This might happen because of one of the following:
    * - Browser context is closed.
    * - Browser application is closed or crashed.
-   * - The [browser.close()](https://playwright.dev/docs/api/class-browser#browser-close) method was called.
+   * - The [browser.close([options])](https://playwright.dev/docs/api/class-browser#browser-close) method was called.
    */
   addListener(event: 'close', listener: (browserContext: BrowserContext) => void): this;
 
@@ -7995,7 +8001,7 @@ export interface BrowserContext {
    * Emitted when Browser context gets closed. This might happen because of one of the following:
    * - Browser context is closed.
    * - Browser application is closed or crashed.
-   * - The [browser.close()](https://playwright.dev/docs/api/class-browser#browser-close) method was called.
+   * - The [browser.close([options])](https://playwright.dev/docs/api/class-browser#browser-close) method was called.
    */
   prependListener(event: 'close', listener: (browserContext: BrowserContext) => void): this;
 
@@ -8208,8 +8214,14 @@ export interface BrowserContext {
    * Closes the browser context. All the pages that belong to the browser context will be closed.
    *
    * **NOTE** The default browser context cannot be closed.
+   * @param options
    */
-  close(): Promise<void>;
+  close(options?: {
+    /**
+     * The reason to be reported to the operations interrupted by the context closure.
+     */
+    reason?: string;
+  }): Promise<void>;
 
   /**
    * If no URLs are specified, this method returns all cookies. If URLs are specified, only cookies that affect those
@@ -8395,7 +8407,8 @@ export interface BrowserContext {
     /**
      * If specified, updates the given HAR with the actual network information instead of serving from file. The file is
      * written to disk when
-     * [browserContext.close()](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) is called.
+     * [browserContext.close([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) is
+     * called.
      */
     update?: boolean;
 
@@ -8587,7 +8600,7 @@ export interface BrowserContext {
    * Emitted when Browser context gets closed. This might happen because of one of the following:
    * - Browser context is closed.
    * - Browser application is closed or crashed.
-   * - The [browser.close()](https://playwright.dev/docs/api/class-browser#browser-close) method was called.
+   * - The [browser.close([options])](https://playwright.dev/docs/api/class-browser#browser-close) method was called.
    */
   waitForEvent(event: 'close', optionsOrPredicate?: { predicate?: (browserContext: BrowserContext) => boolean | Promise<boolean>, timeout?: number } | ((browserContext: BrowserContext) => boolean | Promise<boolean>)): Promise<BrowserContext>;
 
@@ -10576,7 +10589,7 @@ export interface Locator {
    * Returns an array of `node.innerText` values for all matching nodes.
    *
    * **NOTE** If you need to assert text on the page, prefer
-   * [locatorAssertions.toHaveText(expected[, options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-have-text)
+   * [expect(locator).toHaveText(expected[, options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-have-text)
    * with `useInnerText` option to avoid flakiness. See [assertions guide](https://playwright.dev/docs/test-assertions) for more details.
    *
    * **Usage**
@@ -10592,7 +10605,7 @@ export interface Locator {
    * Returns an array of `node.textContent` values for all matching nodes.
    *
    * **NOTE** If you need to assert text on the page, prefer
-   * [locatorAssertions.toHaveText(expected[, options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-have-text)
+   * [expect(locator).toHaveText(expected[, options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-have-text)
    * to avoid flakiness. See [assertions guide](https://playwright.dev/docs/test-assertions) for more details.
    *
    * **Usage**
@@ -10898,7 +10911,7 @@ export interface Locator {
    * Returns the number of elements matching the locator.
    *
    * **NOTE** If you need to assert the number of elements on the page, prefer
-   * [locatorAssertions.toHaveCount(count[, options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-have-count)
+   * [expect(locator).toHaveCount(count[, options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-have-count)
    * to avoid flakiness. See [assertions guide](https://playwright.dev/docs/test-assertions) for more details.
    *
    * **Usage**
@@ -11249,7 +11262,7 @@ export interface Locator {
    * Returns the matching element's attribute value.
    *
    * **NOTE** If you need to assert an element's attribute, prefer
-   * [locatorAssertions.toHaveAttribute(name, value[, options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-have-attribute)
+   * [expect(locator).toHaveAttribute(name, value[, options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-have-attribute)
    * to avoid flakiness. See [assertions guide](https://playwright.dev/docs/test-assertions) for more details.
    * @param name Attribute name to get the value for.
    * @param options
@@ -11668,7 +11681,7 @@ export interface Locator {
    * Returns the [`element.innerText`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/innerText).
    *
    * **NOTE** If you need to assert text on the page, prefer
-   * [locatorAssertions.toHaveText(expected[, options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-have-text)
+   * [expect(locator).toHaveText(expected[, options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-have-text)
    * with `useInnerText` option to avoid flakiness. See [assertions guide](https://playwright.dev/docs/test-assertions) for more details.
    * @param options
    */
@@ -11686,7 +11699,7 @@ export interface Locator {
    * Returns the value for the matching `<input>` or `<textarea>` or `<select>` element.
    *
    * **NOTE** If you need to assert input value, prefer
-   * [locatorAssertions.toHaveValue(value[, options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-have-value)
+   * [expect(locator).toHaveValue(value[, options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-have-value)
    * to avoid flakiness. See [assertions guide](https://playwright.dev/docs/test-assertions) for more details.
    *
    * **Usage**
@@ -11717,7 +11730,7 @@ export interface Locator {
    * Returns whether the element is checked. Throws if the element is not a checkbox or radio input.
    *
    * **NOTE** If you need to assert that checkbox is checked, prefer
-   * [locatorAssertions.toBeChecked([options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-be-checked)
+   * [expect(locator).toBeChecked([options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-be-checked)
    * to avoid flakiness. See [assertions guide](https://playwright.dev/docs/test-assertions) for more details.
    *
    * **Usage**
@@ -11742,7 +11755,7 @@ export interface Locator {
    * Returns whether the element is disabled, the opposite of [enabled](https://playwright.dev/docs/actionability#enabled).
    *
    * **NOTE** If you need to assert that an element is disabled, prefer
-   * [locatorAssertions.toBeDisabled([options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-be-disabled)
+   * [expect(locator).toBeDisabled([options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-be-disabled)
    * to avoid flakiness. See [assertions guide](https://playwright.dev/docs/test-assertions) for more details.
    *
    * **Usage**
@@ -11767,7 +11780,7 @@ export interface Locator {
    * Returns whether the element is [editable](https://playwright.dev/docs/actionability#editable).
    *
    * **NOTE** If you need to assert that an element is editable, prefer
-   * [locatorAssertions.toBeEditable([options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-be-editable)
+   * [expect(locator).toBeEditable([options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-be-editable)
    * to avoid flakiness. See [assertions guide](https://playwright.dev/docs/test-assertions) for more details.
    *
    * **Usage**
@@ -11792,7 +11805,7 @@ export interface Locator {
    * Returns whether the element is [enabled](https://playwright.dev/docs/actionability#enabled).
    *
    * **NOTE** If you need to assert that an element is enabled, prefer
-   * [locatorAssertions.toBeEnabled([options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-be-enabled)
+   * [expect(locator).toBeEnabled([options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-be-enabled)
    * to avoid flakiness. See [assertions guide](https://playwright.dev/docs/test-assertions) for more details.
    *
    * **Usage**
@@ -11817,7 +11830,7 @@ export interface Locator {
    * Returns whether the element is hidden, the opposite of [visible](https://playwright.dev/docs/actionability#visible).
    *
    * **NOTE** If you need to assert that element is hidden, prefer
-   * [locatorAssertions.toBeHidden([options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-be-hidden)
+   * [expect(locator).toBeHidden([options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-be-hidden)
    * to avoid flakiness. See [assertions guide](https://playwright.dev/docs/test-assertions) for more details.
    *
    * **Usage**
@@ -11841,7 +11854,7 @@ export interface Locator {
    * Returns whether the element is [visible](https://playwright.dev/docs/actionability#visible).
    *
    * **NOTE** If you need to assert that element is visible, prefer
-   * [locatorAssertions.toBeVisible([options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-be-visible)
+   * [expect(locator).toBeVisible([options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-be-visible)
    * to avoid flakiness. See [assertions guide](https://playwright.dev/docs/test-assertions) for more details.
    *
    * **Usage**
@@ -12445,7 +12458,7 @@ export interface Locator {
    * Returns the [`node.textContent`](https://developer.mozilla.org/en-US/docs/Web/API/Node/textContent).
    *
    * **NOTE** If you need to assert text on the page, prefer
-   * [locatorAssertions.toHaveText(expected[, options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-have-text)
+   * [expect(locator).toHaveText(expected[, options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-have-text)
    * to avoid flakiness. See [assertions guide](https://playwright.dev/docs/test-assertions) for more details.
    * @param options
    */
@@ -12968,8 +12981,8 @@ export interface BrowserType<Unused = {}> {
     /**
      * Enables [HAR](http://www.softwareishard.com/blog/har-12-spec) recording for all pages into `recordHar.path` file.
      * If not specified, the HAR is not recorded. Make sure to await
-     * [browserContext.close()](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) for the HAR to
-     * be saved.
+     * [browserContext.close([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) for
+     * the HAR to be saved.
      */
     recordHar?: {
       /**
@@ -13009,8 +13022,8 @@ export interface BrowserType<Unused = {}> {
     /**
      * Enables video recording for all pages into `recordVideo.dir` directory. If not specified videos are not recorded.
      * Make sure to await
-     * [browserContext.close()](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) for videos to
-     * be saved.
+     * [browserContext.close([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) for
+     * videos to be saved.
      */
     recordVideo?: {
       /**
@@ -14379,8 +14392,8 @@ export interface AndroidDevice {
     /**
      * Enables [HAR](http://www.softwareishard.com/blog/har-12-spec) recording for all pages into `recordHar.path` file.
      * If not specified, the HAR is not recorded. Make sure to await
-     * [browserContext.close()](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) for the HAR to
-     * be saved.
+     * [browserContext.close([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) for
+     * the HAR to be saved.
      */
     recordHar?: {
       /**
@@ -14420,8 +14433,8 @@ export interface AndroidDevice {
     /**
      * Enables video recording for all pages into `recordVideo.dir` directory. If not specified videos are not recorded.
      * Make sure to await
-     * [browserContext.close()](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) for videos to
-     * be saved.
+     * [browserContext.close([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) for
+     * videos to be saved.
      */
     recordVideo?: {
       /**
@@ -15963,7 +15976,7 @@ export interface Browser extends EventEmitter {
    * Emitted when Browser gets disconnected from the browser application. This might happen because of one of the
    * following:
    * - Browser application is closed or crashed.
-   * - The [browser.close()](https://playwright.dev/docs/api/class-browser#browser-close) method was called.
+   * - The [browser.close([options])](https://playwright.dev/docs/api/class-browser#browser-close) method was called.
    */
   on(event: 'disconnected', listener: (browser: Browser) => void): this;
 
@@ -15976,7 +15989,7 @@ export interface Browser extends EventEmitter {
    * Emitted when Browser gets disconnected from the browser application. This might happen because of one of the
    * following:
    * - Browser application is closed or crashed.
-   * - The [browser.close()](https://playwright.dev/docs/api/class-browser#browser-close) method was called.
+   * - The [browser.close([options])](https://playwright.dev/docs/api/class-browser#browser-close) method was called.
    */
   addListener(event: 'disconnected', listener: (browser: Browser) => void): this;
 
@@ -15994,7 +16007,7 @@ export interface Browser extends EventEmitter {
    * Emitted when Browser gets disconnected from the browser application. This might happen because of one of the
    * following:
    * - Browser application is closed or crashed.
-   * - The [browser.close()](https://playwright.dev/docs/api/class-browser#browser-close) method was called.
+   * - The [browser.close([options])](https://playwright.dev/docs/api/class-browser#browser-close) method was called.
    */
   prependListener(event: 'disconnected', listener: (browser: Browser) => void): this;
 
@@ -16012,14 +16025,20 @@ export interface Browser extends EventEmitter {
    * the browser server.
    *
    * **NOTE** This is similar to force quitting the browser. Therefore, you should call
-   * [browserContext.close()](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) on any {@link
-   * BrowserContext}'s you explicitly created earlier with
+   * [browserContext.close([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) on
+   * any {@link BrowserContext}'s you explicitly created earlier with
    * [browser.newContext([options])](https://playwright.dev/docs/api/class-browser#browser-new-context) **before**
-   * calling [browser.close()](https://playwright.dev/docs/api/class-browser#browser-close).
+   * calling [browser.close([options])](https://playwright.dev/docs/api/class-browser#browser-close).
    *
    * The {@link Browser} object itself is considered to be disposed and cannot be used anymore.
+   * @param options
    */
-  close(): Promise<void>;
+  close(options?: {
+    /**
+     * The reason to be reported to the operations interrupted by the browser closure.
+     */
+    reason?: string;
+  }): Promise<void>;
 
   /**
    * Returns an array of all open browser contexts. In a newly created browser, this will return zero browser contexts.
@@ -16054,10 +16073,10 @@ export interface Browser extends EventEmitter {
    *
    * **NOTE** If directly using this method to create {@link BrowserContext}s, it is best practice to explicitly close
    * the returned context via
-   * [browserContext.close()](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) when your code
-   * is done with the {@link BrowserContext}, and before calling
-   * [browser.close()](https://playwright.dev/docs/api/class-browser#browser-close). This will ensure the `context` is
-   * closed gracefully and any artifacts—like HARs and videos—are fully flushed and saved.
+   * [browserContext.close([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) when
+   * your code is done with the {@link BrowserContext}, and before calling
+   * [browser.close([options])](https://playwright.dev/docs/api/class-browser#browser-close). This will ensure the
+   * `context` is closed gracefully and any artifacts—like HARs and videos—are fully flushed and saved.
    *
    * **Usage**
    *
@@ -16258,8 +16277,8 @@ export interface Browser extends EventEmitter {
     /**
      * Enables [HAR](http://www.softwareishard.com/blog/har-12-spec) recording for all pages into `recordHar.path` file.
      * If not specified, the HAR is not recorded. Make sure to await
-     * [browserContext.close()](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) for the HAR to
-     * be saved.
+     * [browserContext.close([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) for
+     * the HAR to be saved.
      */
     recordHar?: {
       /**
@@ -16299,8 +16318,8 @@ export interface Browser extends EventEmitter {
     /**
      * Enables video recording for all pages into `recordVideo.dir` directory. If not specified videos are not recorded.
      * Make sure to await
-     * [browserContext.close()](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) for videos to
-     * be saved.
+     * [browserContext.close([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) for
+     * videos to be saved.
      */
     recordVideo?: {
       /**
@@ -17093,8 +17112,8 @@ export interface Electron {
     /**
      * Enables [HAR](http://www.softwareishard.com/blog/har-12-spec) recording for all pages into `recordHar.path` file.
      * If not specified, the HAR is not recorded. Make sure to await
-     * [browserContext.close()](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) for the HAR to
-     * be saved.
+     * [browserContext.close([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) for
+     * the HAR to be saved.
      */
     recordHar?: {
       /**
@@ -17134,8 +17153,8 @@ export interface Electron {
     /**
      * Enables video recording for all pages into `recordVideo.dir` directory. If not specified videos are not recorded.
      * Make sure to await
-     * [browserContext.close()](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) for videos to
-     * be saved.
+     * [browserContext.close([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) for
+     * videos to be saved.
      */
     recordVideo?: {
       /**
@@ -19472,8 +19491,8 @@ export interface BrowserContextOptions {
   /**
    * Enables [HAR](http://www.softwareishard.com/blog/har-12-spec) recording for all pages into `recordHar.path` file.
    * If not specified, the HAR is not recorded. Make sure to await
-   * [browserContext.close()](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) for the HAR to
-   * be saved.
+   * [browserContext.close([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) for
+   * the HAR to be saved.
    */
   recordHar?: {
     /**
@@ -19513,8 +19532,8 @@ export interface BrowserContextOptions {
   /**
    * Enables video recording for all pages into `recordVideo.dir` directory. If not specified videos are not recorded.
    * Make sure to await
-   * [browserContext.close()](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) for videos to
-   * be saved.
+   * [browserContext.close([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) for
+   * videos to be saved.
    */
   recordVideo?: {
     /**

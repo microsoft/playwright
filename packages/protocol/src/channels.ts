@@ -317,7 +317,7 @@ export type APIRequestContextFetchParams = {
   method?: string,
   headers?: NameValue[],
   postData?: Binary,
-  jsonData?: any,
+  jsonData?: string,
   formData?: NameValue[],
   multipartData?: FormField[],
   timeout?: number,
@@ -330,7 +330,7 @@ export type APIRequestContextFetchOptions = {
   method?: string,
   headers?: NameValue[],
   postData?: Binary,
-  jsonData?: any,
+  jsonData?: string,
   formData?: NameValue[],
   multipartData?: FormField[],
   timeout?: number,
@@ -1080,18 +1080,23 @@ export interface BrowserEventTarget {
 }
 export interface BrowserChannel extends BrowserEventTarget, Channel {
   _type_Browser: boolean;
-  close(params?: BrowserCloseParams, metadata?: CallMetadata): Promise<BrowserCloseResult>;
+  close(params: BrowserCloseParams, metadata?: CallMetadata): Promise<BrowserCloseResult>;
   killForTests(params?: BrowserKillForTestsParams, metadata?: CallMetadata): Promise<BrowserKillForTestsResult>;
   defaultUserAgentForTest(params?: BrowserDefaultUserAgentForTestParams, metadata?: CallMetadata): Promise<BrowserDefaultUserAgentForTestResult>;
   newContext(params: BrowserNewContextParams, metadata?: CallMetadata): Promise<BrowserNewContextResult>;
   newContextForReuse(params: BrowserNewContextForReuseParams, metadata?: CallMetadata): Promise<BrowserNewContextForReuseResult>;
+  stopPendingOperations(params: BrowserStopPendingOperationsParams, metadata?: CallMetadata): Promise<BrowserStopPendingOperationsResult>;
   newBrowserCDPSession(params?: BrowserNewBrowserCDPSessionParams, metadata?: CallMetadata): Promise<BrowserNewBrowserCDPSessionResult>;
   startTracing(params: BrowserStartTracingParams, metadata?: CallMetadata): Promise<BrowserStartTracingResult>;
   stopTracing(params?: BrowserStopTracingParams, metadata?: CallMetadata): Promise<BrowserStopTracingResult>;
 }
 export type BrowserCloseEvent = {};
-export type BrowserCloseParams = {};
-export type BrowserCloseOptions = {};
+export type BrowserCloseParams = {
+  reason?: string,
+};
+export type BrowserCloseOptions = {
+  reason?: string,
+};
 export type BrowserCloseResult = void;
 export type BrowserKillForTestsParams = {};
 export type BrowserKillForTestsOptions = {};
@@ -1339,6 +1344,13 @@ export type BrowserNewContextForReuseOptions = {
 export type BrowserNewContextForReuseResult = {
   context: BrowserContextChannel,
 };
+export type BrowserStopPendingOperationsParams = {
+  reason: string,
+};
+export type BrowserStopPendingOperationsOptions = {
+
+};
+export type BrowserStopPendingOperationsResult = void;
 export type BrowserNewBrowserCDPSessionParams = {};
 export type BrowserNewBrowserCDPSessionOptions = {};
 export type BrowserNewBrowserCDPSessionResult = {
@@ -1418,7 +1430,7 @@ export interface BrowserContextChannel extends BrowserContextEventTarget, EventT
   addInitScript(params: BrowserContextAddInitScriptParams, metadata?: CallMetadata): Promise<BrowserContextAddInitScriptResult>;
   clearCookies(params?: BrowserContextClearCookiesParams, metadata?: CallMetadata): Promise<BrowserContextClearCookiesResult>;
   clearPermissions(params?: BrowserContextClearPermissionsParams, metadata?: CallMetadata): Promise<BrowserContextClearPermissionsResult>;
-  close(params?: BrowserContextCloseParams, metadata?: CallMetadata): Promise<BrowserContextCloseResult>;
+  close(params: BrowserContextCloseParams, metadata?: CallMetadata): Promise<BrowserContextCloseResult>;
   cookies(params: BrowserContextCookiesParams, metadata?: CallMetadata): Promise<BrowserContextCookiesResult>;
   exposeBinding(params: BrowserContextExposeBindingParams, metadata?: CallMetadata): Promise<BrowserContextExposeBindingResult>;
   grantPermissions(params: BrowserContextGrantPermissionsParams, metadata?: CallMetadata): Promise<BrowserContextGrantPermissionsResult>;
@@ -1516,8 +1528,12 @@ export type BrowserContextClearCookiesResult = void;
 export type BrowserContextClearPermissionsParams = {};
 export type BrowserContextClearPermissionsOptions = {};
 export type BrowserContextClearPermissionsResult = void;
-export type BrowserContextCloseParams = {};
-export type BrowserContextCloseOptions = {};
+export type BrowserContextCloseParams = {
+  reason?: string,
+};
+export type BrowserContextCloseOptions = {
+  reason?: string,
+};
 export type BrowserContextCloseResult = void;
 export type BrowserContextCookiesParams = {
   urls: string[],
@@ -1833,9 +1849,11 @@ export type PageAddInitScriptOptions = {
 export type PageAddInitScriptResult = void;
 export type PageCloseParams = {
   runBeforeUnload?: boolean,
+  reason?: string,
 };
 export type PageCloseOptions = {
   runBeforeUnload?: boolean,
+  reason?: string,
 };
 export type PageCloseResult = void;
 export type PageEmulateMediaParams = {

@@ -85,6 +85,14 @@ By default tests will be run on chromium. This can be configured via the [CLI op
 pytest
 ```
 
+## Updating Playwright
+
+To update Playwright to the latest version run the following command:
+
+```bash
+pip install pytest-playwright playwright -U
+```
+
 ## System requirements
 
 - Python 3.8 or higher.

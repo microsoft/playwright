@@ -3,6 +3,8 @@ id: api-testing
 title: "API testing"
 ---
 
+## Introduction
+
 Playwright can be used to get access to the [REST](https://en.wikipedia.org/wiki/Representational_state_transfer) API of
 your application.
 

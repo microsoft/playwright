@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { rewriteErrorMessage } from './stackTrace';
+import { captureRawStack } from './stackTrace';
 
 export class ManualPromise<T = void> extends Promise<T> {
   private _resolve!: (t: T) => void;
@@ -59,7 +59,7 @@ export class ManualPromise<T = void> extends Promise<T> {
 export class LongStandingScope {
   private _terminateError: Error | undefined;
   private _terminateErrorMessage: string | undefined;
-  private _terminatePromises = new Map<ManualPromise<Error>, Error>();
+  private _terminatePromises = new Map<ManualPromise<Error>, string[]>();
   private _isClosed = false;
 
   reject(error: Error) {
@@ -72,9 +72,10 @@ export class LongStandingScope {
   close(errorMessage: string) {
     this._isClosed = true;
     this._terminateErrorMessage = errorMessage;
-    for (const [p, e] of this._terminatePromises) {
-      rewriteErrorMessage(e, errorMessage);
-      p.resolve(e);
+    for (const [p, frames] of this._terminatePromises) {
+      const error = new Error(errorMessage);
+      error.stack = [error.name + ':' + errorMessage, ...frames].join('\n');
+      p.resolve(error);
     }
   }
 
@@ -100,7 +101,7 @@ export class LongStandingScope {
       terminatePromise.resolve(this._terminateError);
     if (this._terminateErrorMessage)
       terminatePromise.resolve(new Error(this._terminateErrorMessage));
-    this._terminatePromises.set(terminatePromise, new Error(''));
+    this._terminatePromises.set(terminatePromise, captureRawStack());
     try {
       return await Promise.race([
         terminatePromise.then(e => safe ? defaultValue : Promise.reject(e)),

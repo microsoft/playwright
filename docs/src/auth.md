@@ -3,6 +3,8 @@ id: auth
 title: "Authentication"
 ---
 
+## Introduction
+
 Playwright executes tests in isolated environments called [browser contexts](./browser-contexts.md). This isolation model improves reproducibility and prevents cascading test failures. Tests can load existing authenticated state. This eliminates the need to authenticate in every test and speeds up test execution.
 
 ## Core concepts

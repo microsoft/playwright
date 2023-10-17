@@ -21,7 +21,6 @@ import type { Serializable } from '../../types/structs';
 import type * as api from '../../types/types';
 import type { HeadersArray, NameValue } from '../common/types';
 import type * as channels from '@protocol/channels';
-import { kBrowserOrContextClosedError } from '../common/errors';
 import { assert, headersObjectToArray, isString } from '../utils';
 import { mkdirIfNeeded } from '../utils/fileUtils';
 import { ChannelOwner } from './channelOwner';
@@ -29,6 +28,7 @@ import { RawHeaders } from './network';
 import type { FilePayload, Headers, StorageState } from './types';
 import type { Playwright } from './playwright';
 import { Tracing } from './tracing';
+import { isTargetClosedError } from '../common/errors';
 
 export type FetchOptions = {
   params?: { [key: string]: string; },
@@ -168,13 +168,13 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
       if (options.data !== undefined) {
         if (isString(options.data)) {
           if (isJsonContentType(headers))
-            jsonData = options.data;
+            jsonData = isJsonParsable(options.data) ? options.data : JSON.stringify(options.data);
           else
             postDataBuffer = Buffer.from(options.data, 'utf8');
         } else if (Buffer.isBuffer(options.data)) {
           postDataBuffer = options.data;
         } else if (typeof options.data === 'object' || typeof options.data === 'number' || typeof options.data === 'boolean') {
-          jsonData = options.data;
+          jsonData = JSON.stringify(options.data);
         } else {
           throw new Error(`Unexpected 'data' type`);
         }
@@ -230,6 +230,20 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
   }
 }
 
+function isJsonParsable(value: any) {
+  if (typeof value !== 'string')
+    return false;
+  try {
+    JSON.parse(value);
+    return true;
+  } catch (e) {
+    if (e instanceof SyntaxError)
+      return false;
+    else
+      throw e;
+  }
+}
+
 export class APIResponse implements api.APIResponse {
   private readonly _initializer: channels.APIResponse;
   private readonly _headers: RawHeaders;
@@ -272,7 +286,7 @@ export class APIResponse implements api.APIResponse {
         throw new Error('Response has been disposed');
       return result.binary;
     } catch (e) {
-      if (e.message.includes(kBrowserOrContextClosedError))
+      if (isTargetClosedError(e))
         throw new Error('Response has been disposed');
       throw e;
     }

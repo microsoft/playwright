@@ -18,12 +18,26 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { sourceMapSupport } from '../utilsBundle';
+import { isWorkerProcess } from '../common/globals';
 
 export type MemoryCache = {
   codePath: string;
   sourceMapPath: string;
   moduleUrl?: string;
 };
+
+// Assumptions for the compilation cache:
+// - Files in the temp directory we work with can disappear at any moment, either some of them or all together.
+// - Multiple workers can be trying to read from the compilation cache at the same time.
+// - There is a single invocation of the test runner at a time.
+//
+// Therefore, we implement the following logic:
+// - Never assume that file is present, always try to read it to determine whether it's actually present.
+// - Never write to the cache from worker processes to avoid "multiple writers" races.
+// - Since we perform all static imports in the runner beforehand, most of the time
+//   workers should be able to read from the cache.
+// - For workers-only dynamic imports or some cache problems, we will re-transpile files in
+//   each worker anew.
 
 const cacheDir = process.env.PWTEST_CACHE_DIR || (() => {
   if (process.platform === 'win32')
@@ -58,12 +72,14 @@ export function installSourceMapSupportIfNeeded() {
       if (!sourceMaps.has(source))
         return null;
       const sourceMapPath = sourceMaps.get(source)!;
-      if (!fs.existsSync(sourceMapPath))
+      try {
+        return {
+          map: JSON.parse(fs.readFileSync(sourceMapPath, 'utf-8')),
+          url: source,
+        };
+      } catch {
         return null;
-      return {
-        map: JSON.parse(fs.readFileSync(sourceMapPath, 'utf-8')),
-        url: source
-      };
+      }
     }
   });
 }
@@ -73,55 +89,37 @@ function _innerAddToCompilationCache(filename: string, options: { codePath: stri
   memoryCache.set(filename, options);
 }
 
-// Each worker (and runner) process compiles and caches client code and source maps.
-// There are 2 levels of caching:
-// 1. Memory Cache: per-process, single threaded.
-// 2. SHARED Disk Cache: helps to re-use caching across processes (worker re-starts).
-//
-// Now, SHARED Disk Cache might be accessed at the same time by different workers, trying
-// to write/read concurrently to it. We tried to implement "atomic write" to disk cache, but
-// failed to do so on Windows. See context: https://github.com/microsoft/playwright/issues/26769#issuecomment-1701870842
-//
-// Under further inspection, it turns out that our Disk Cache is append-only, so instead of a general-purpose
-// "atomic write" it will suffice to have "atomic append". For "atomic append", it is sufficient to:
-// - make sure there are no concurrent writes to the same file. This is implemented using the `wx` flag to the Node.js `fs.writeFile` calls.
-// - have a signal that guarantees that file is actually finished writing. We use marker files for this.
-//
-// The following method implements the "atomic append" principles for the disk cache.
-//
 export function getFromCompilationCache(filename: string, hash: string, moduleUrl?: string): { cachedCode?: string, addToCache?: (code: string, map?: any) => void } {
   // First check the memory cache by filename, this cache will always work in the worker,
   // because we just compiled this file in the loader.
   const cache = memoryCache.get(filename);
-  if (cache?.codePath)
-    return { cachedCode: fs.readFileSync(cache.codePath, 'utf-8') };
+  if (cache?.codePath) {
+    try {
+      return { cachedCode: fs.readFileSync(cache.codePath, 'utf-8') };
+    } catch {
+      // Not able to read the file - fall through.
+    }
+  }
 
   // Then do the disk cache, this cache works between the Playwright Test runs.
   const cachePath = calculateCachePath(filename, hash);
   const codePath = cachePath + '.js';
   const sourceMapPath = cachePath + '.map';
-  const markerFile = codePath + '-marker';
-  if (fs.existsSync(markerFile)) {
+  try {
+    const cachedCode = fs.readFileSync(codePath, 'utf8');
     _innerAddToCompilationCache(filename, { codePath, sourceMapPath, moduleUrl });
-    return { cachedCode: fs.readFileSync(codePath, 'utf8') };
+    return { cachedCode };
+  } catch {
   }
 
   return {
     addToCache: (code: string, map: any) => {
+      if (isWorkerProcess())
+        return;
       fs.mkdirSync(path.dirname(cachePath), { recursive: true });
-      try {
-        if (map)
-          fs.writeFileSync(sourceMapPath, JSON.stringify(map), { encoding: 'utf8', flag: 'wx' });
-        fs.writeFileSync(codePath, code, { encoding: 'utf8', flag: 'wx' });
-        // NOTE: if the worker crashes RIGHT HERE, before creating a marker file, we will never be able to
-        // create it later on. As a result, the entry will never be added to the disk cache.
-        //
-        // However, this scenario is EXTREMELY unlikely, so we accept this
-        // limitation to reduce algorithm complexity.
-        fs.closeSync(fs.openSync(markerFile, 'w'));
-      } catch (error) {
-        // Ignore error that is triggered by the `wx` flag.
-      }
+      if (map)
+        fs.writeFileSync(sourceMapPath, JSON.stringify(map), 'utf8');
+      fs.writeFileSync(codePath, code, 'utf8');
       _innerAddToCompilationCache(filename, { codePath, sourceMapPath, moduleUrl });
     }
   };

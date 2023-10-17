@@ -19,7 +19,7 @@ import fs from 'fs';
 import path from 'path';
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
-import { isSafeCloseError, kBrowserOrContextClosedError } from '../common/errors';
+import { isTargetClosedError, TargetClosedError, kTargetClosedErrorMessage } from '../common/errors';
 import { urlMatches } from '../utils/network';
 import { TimeoutSettings } from '../common/timeoutSettings';
 import type * as channels from '@protocol/channels';
@@ -140,8 +140,8 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
 
     this.coverage = new Coverage(this._channel);
 
-    this.once(Events.Page.Close, () => this._closedOrCrashedScope.close(kBrowserOrContextClosedError));
-    this.once(Events.Page.Crash, () => this._closedOrCrashedScope.close(kBrowserOrContextClosedError));
+    this.once(Events.Page.Close, () => this._closedOrCrashedScope.close(kTargetClosedErrorMessage));
+    this.once(Events.Page.Crash, () => this._closedOrCrashedScope.close(kTargetClosedErrorMessage));
 
     this._setEventToSubscriptionMapping(new Map<string, channels.PageUpdateSubscriptionParams['event']>([
       [Events.Page.Console, 'console'],
@@ -398,7 +398,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
       if (event !== Events.Page.Crash)
         waiter.rejectOnEvent(this, Events.Page.Crash, new Error('Page crashed'));
       if (event !== Events.Page.Close)
-        waiter.rejectOnEvent(this, Events.Page.Close, new Error('Page closed'));
+        waiter.rejectOnEvent(this, Events.Page.Close, new TargetClosedError());
       const result = await waiter.waitForEvent(this, event, predicate as any);
       waiter.dispose();
       return result;
@@ -520,7 +520,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
       else
         await this._channel.close(options);
     } catch (e) {
-      if (isSafeCloseError(e) && !options.runBeforeUnload)
+      if (isTargetClosedError(e) && !options.runBeforeUnload)
         return;
       throw e;
     }

@@ -86,6 +86,7 @@ export abstract class BrowserContext extends SdkObject {
   readonly initScripts: string[] = [];
   private _routesInFlight = new Set<network.Route>();
   private _debugger!: Debugger;
+  _closeReason: string | undefined;
 
   constructor(browser: Browser, options: channels.BrowserNewContextParams, browserContextId: string | undefined) {
     super(browser, 'browser-context');
@@ -157,9 +158,13 @@ export abstract class BrowserContext extends SdkObject {
     return true;
   }
 
-  async stopPendingOperations() {
+  async stopPendingOperations(reason: string) {
+    // When using context reuse, stop pending operations to gracefully terminate all the actions
+    // with a user-friendly error message containing operation log.
     for (const controller of this._activeProgressControllers)
-      controller.abort(new Error(`Context was reset for reuse.`));
+      controller.abort(new Error(reason));
+    // Let rejections in microtask generate events before returning.
+    await new Promise(f => setTimeout(f, 0));
   }
 
   static reusableContextHash(params: channels.BrowserNewContextForReuseParams): string {
@@ -268,7 +273,7 @@ export abstract class BrowserContext extends SdkObject {
   protected abstract doExposeBinding(binding: PageBinding): Promise<void>;
   protected abstract doRemoveExposedBindings(): Promise<void>;
   protected abstract doUpdateRequestInterception(): Promise<void>;
-  protected abstract doClose(): Promise<void>;
+  protected abstract doClose(reason: string | undefined): Promise<void>;
   protected abstract onClosePersistent(): void;
 
   async cookies(urls: string | string[] | undefined = []): Promise<channels.NetworkCookie[]> {
@@ -408,8 +413,10 @@ export abstract class BrowserContext extends SdkObject {
     this._customCloseHandler = handler;
   }
 
-  async close(metadata: CallMetadata) {
+  async close(options: { reason?: string }) {
     if (this._closedStatus === 'open') {
+      if (options.reason)
+        this._closeReason = options.reason;
       this.emit(BrowserContext.Events.BeforeClose);
       this._closedStatus = 'closing';
 
@@ -429,7 +436,7 @@ export abstract class BrowserContext extends SdkObject {
         await this._customCloseHandler();
       } else {
         // Close the context.
-        await this.doClose();
+        await this.doClose(options.reason);
       }
 
       // We delete downloads after context closure

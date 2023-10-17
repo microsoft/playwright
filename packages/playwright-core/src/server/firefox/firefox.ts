@@ -24,9 +24,9 @@ import type { Env } from '../../utils/processLauncher';
 import type { ConnectionTransport } from '../transport';
 import type { BrowserOptions } from '../browser';
 import type * as types from '../types';
-import { rewriteErrorMessage } from '../../utils/stackTrace';
 import { wrapInASCIIBox } from '../../utils';
 import type { SdkObject } from '../instrumentation';
+import type { ProtocolError } from '../protocolError';
 
 export class Firefox extends BrowserType {
   constructor(parent: SdkObject) {
@@ -37,9 +37,11 @@ export class Firefox extends BrowserType {
     return FFBrowser.connect(this.attribution.playwright, transport, options);
   }
 
-  _rewriteStartupError(error: Error): Error {
-    if (error.message.includes('no DISPLAY environment variable specified'))
-      return rewriteErrorMessage(error, '\n' + wrapInASCIIBox(kNoXServerRunningError, 1));
+  _doRewriteStartupLog(error: ProtocolError): ProtocolError {
+    if (!error.logs)
+      return error;
+    if (error.logs.includes('no DISPLAY environment variable specified'))
+      error.logs = '\n' + wrapInASCIIBox(kNoXServerRunningError, 1);
     return error;
   }
 

@@ -3,6 +3,8 @@ id: test-assertions
 title: "Assertions"
 ---
 
+## Introduction
+
 Playwright includes test assertions in the form of `expect` function. To make an assertion, call `expect(value)` and choose a matcher that reflects the expectation. There are many [generic matchers](./api/class-genericassertions.md) like `toEqual`, `toContain`, `toBeTruthy` that can be used to assert any conditions.
 
 ```js

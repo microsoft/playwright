@@ -18,15 +18,15 @@ import { EventEmitter } from 'events';
 import type * as channels from '@protocol/channels';
 import { serializeError } from '../../protocol/serializers';
 import { findValidator, ValidationError, createMetadataValidator, type ValidatorContext } from '../../protocol/validator';
-import { assert, isUnderTest, monotonicTime } from '../../utils';
-import { kBrowserOrContextClosedError } from '../../common/errors';
+import { assert, isUnderTest, monotonicTime, rewriteErrorMessage } from '../../utils';
+import { TargetClosedError, isTargetClosedError, kTargetClosedErrorMessage, kTargetCrashedErrorMessage } from '../../common/errors';
 import type { CallMetadata } from '../instrumentation';
 import { SdkObject } from '../instrumentation';
-import { rewriteErrorMessage } from '../../utils/stackTrace';
 import type { PlaywrightDispatcher } from './playwrightDispatcher';
 import { eventsHelper } from '../..//utils/eventsHelper';
 import type { RegisteredListener } from '../..//utils/eventsHelper';
 import type * as trace from '@trace/trace';
+import { isProtocolError } from '../protocolError';
 
 export const dispatcherSymbol = Symbol('dispatcher');
 const metadataValidator = createMetadataValidator();
@@ -262,7 +262,7 @@ export class DispatcherConnection {
     const { id, guid, method, params, metadata } = message as any;
     const dispatcher = this._dispatchers.get(guid);
     if (!dispatcher) {
-      this.onmessage({ id, error: serializeError(new Error(kBrowserOrContextClosedError)) });
+      this.onmessage({ id, error: serializeError(new TargetClosedError()) });
       return;
     }
 
@@ -324,20 +324,23 @@ export class DispatcherConnection {
       }
     }
 
-
-    let error: any;
     await sdkObject?.instrumentation.onBeforeCall(sdkObject, callMetadata);
     try {
       const result = await (dispatcher as any)[method](validParams, callMetadata);
       const validator = findValidator(dispatcher._type, method, 'Result');
       callMetadata.result = validator(result, '', { tChannelImpl: this._tChannelImplToWire.bind(this), binary: this._isLocal ? 'buffer' : 'toBase64' });
     } catch (e) {
-      // Dispatching error
-      // We want original, unmodified error in metadata.
+      if (isTargetClosedError(e) && sdkObject)
+        rewriteErrorMessage(e, closeReason(sdkObject));
+      if (isProtocolError(e)) {
+        if (e.type === 'closed') {
+          const closedReason = sdkObject ? closeReason(sdkObject) : kTargetClosedErrorMessage;
+          rewriteErrorMessage(e, closedReason + e.browserLogMessage());
+        }
+        if (e.type === 'crashed')
+          rewriteErrorMessage(e, kTargetCrashedErrorMessage + e.browserLogMessage());
+      }
       callMetadata.error = serializeError(e);
-      if (callMetadata.log.length)
-        rewriteErrorMessage(e, e.message + formatLogRecording(callMetadata.log));
-      error = serializeError(e);
     } finally {
       callMetadata.endTime = monotonicTime();
       await sdkObject?.instrumentation.onAfterCall(sdkObject, callMetadata);
@@ -346,18 +349,16 @@ export class DispatcherConnection {
     const response: any = { id };
     if (callMetadata.result)
       response.result = callMetadata.result;
-    if (error)
-      response.error = error;
+    if (callMetadata.error) {
+      response.error = callMetadata.error;
+      response.log = callMetadata.log;
+    }
     this.onmessage(response);
   }
 }
 
-function formatLogRecording(log: string[]): string {
-  if (!log.length)
-    return '';
-  const header = ` logs `;
-  const headerLength = 60;
-  const leftLength = (headerLength - header.length) / 2;
-  const rightLength = headerLength - header.length - leftLength;
-  return `\n${'='.repeat(leftLength)}${header}${'='.repeat(rightLength)}\n${log.join('\n')}\n${'='.repeat(headerLength)}`;
+function closeReason(sdkObject: SdkObject) {
+  return sdkObject.attribution.page?._closeReason ||
+    sdkObject.attribution.context?._closeReason ||
+    sdkObject.attribution.browser?._closeReason || kTargetClosedErrorMessage;
 }

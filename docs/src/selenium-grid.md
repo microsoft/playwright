@@ -3,6 +3,8 @@ id: selenium-grid
 title: "Selenium Grid"
 ---
 
+## Introduction
+
 Playwright can connect to [Selenium Grid Hub](https://www.selenium.dev/documentation/grid/) that runs Selenium 4 to launch **Google Chrome** or **Microsoft Edge** browser, instead of running browser on the local machine.
 
 :::warning

@@ -35,7 +35,6 @@ import { WritableStream } from './writableStream';
 import { debugLogger } from '../common/debugLogger';
 import { SelectorsOwner } from './selectors';
 import { Android, AndroidSocket, AndroidDevice } from './android';
-import { captureLibraryStackTrace, type ParsedStackTrace } from '../utils/stackTrace';
 import { Artifact } from './artifact';
 import { EventEmitter } from 'events';
 import { JsonPipe } from './jsonPipe';
@@ -45,6 +44,8 @@ import { Tracing } from './tracing';
 import { findValidator, ValidationError, type ValidatorContext } from '../protocol/validator';
 import { createInstrumentation } from './clientInstrumentation';
 import type { ClientInstrumentation } from './clientInstrumentation';
+import { TargetClosedError } from '../common/errors';
+import { formatCallLog, rewriteErrorMessage } from '../utils';
 
 class Root extends ChannelOwner<channels.RootChannel> {
   constructor(connection: Connection) {
@@ -65,9 +66,9 @@ export class Connection extends EventEmitter {
   readonly _objects = new Map<string, ChannelOwner>();
   onmessage = (message: object): void => {};
   private _lastId = 0;
-  private _callbacks = new Map<number, { resolve: (a: any) => void, reject: (a: Error) => void, stackTrace: ParsedStackTrace | null, type: string, method: string }>();
+  private _callbacks = new Map<number, { resolve: (a: any) => void, reject: (a: Error) => void, apiName: string | undefined, type: string, method: string }>();
   private _rootObject: Root;
-  private _closedErrorMessage: string | undefined;
+  private _closedError: Error | undefined;
   private _isRemote = false;
   private _localUtils?: LocalUtils;
   // Some connections allow resolving in-process dispatchers.
@@ -98,10 +99,6 @@ export class Connection extends EventEmitter {
     return await this._rootObject.initialize();
   }
 
-  pendingProtocolCalls(): ParsedStackTrace[] {
-    return Array.from(this._callbacks.values()).map(callback => callback.stackTrace).filter(Boolean) as ParsedStackTrace[];
-  }
-
   getObjectWithKnownName(guid: string): any {
     return this._objects.get(guid)!;
   }
@@ -113,40 +110,44 @@ export class Connection extends EventEmitter {
       this._tracingCount--;
   }
 
-  async sendMessageToServer(object: ChannelOwner, method: string, params: any, stackTrace: ParsedStackTrace | null, wallTime: number | undefined): Promise<any> {
-    if (this._closedErrorMessage)
-      throw new Error(this._closedErrorMessage);
+  async sendMessageToServer(object: ChannelOwner, method: string, params: any, apiName: string | undefined, frames: channels.StackFrame[], wallTime: number | undefined): Promise<any> {
+    if (this._closedError)
+      throw this._closedError;
     if (object._wasCollected)
       throw new Error('The object has been collected to prevent unbounded heap growth.');
 
-    const { apiName, frames } = stackTrace || { apiName: '', frames: [] };
     const guid = object._guid;
     const type = object._type;
     const id = ++this._lastId;
-    const converted = { id, guid, method, params };
-    // Do not include metadata in debug logs to avoid noise.
-    debugLogger.log('channel:command', converted);
+    const message = { id, guid, method, params };
+    if (debugLogger.isEnabled('channel')) {
+      // Do not include metadata in debug logs to avoid noise.
+      debugLogger.log('channel', 'SEND> ' + JSON.stringify(message));
+    }
     const location = frames[0] ? { file: frames[0].file, line: frames[0].line, column: frames[0].column } : undefined;
     const metadata: channels.Metadata = { wallTime, apiName, location, internal: !apiName };
     if (this._tracingCount && frames && type !== 'LocalUtils')
       this._localUtils?._channel.addStackToTracingNoReply({ callData: { stack: frames, id } }).catch(() => {});
-    this.onmessage({ ...converted, metadata });
-    return await new Promise((resolve, reject) => this._callbacks.set(id, { resolve, reject, stackTrace, type, method }));
+    this.onmessage({ ...message, metadata });
+    return await new Promise((resolve, reject) => this._callbacks.set(id, { resolve, reject, apiName, type, method }));
   }
 
   dispatch(message: object) {
-    if (this._closedErrorMessage)
+    if (this._closedError)
       return;
 
-    const { id, guid, method, params, result, error } = message as any;
+    const { id, guid, method, params, result, error, log } = message as any;
     if (id) {
-      debugLogger.log('channel:response', message);
+      if (debugLogger.isEnabled('channel'))
+        debugLogger.log('channel', '<RECV ' + JSON.stringify(message));
       const callback = this._callbacks.get(id);
       if (!callback)
         throw new Error(`Cannot find command to respond: ${id}`);
       this._callbacks.delete(id);
       if (error && !result) {
-        callback.reject(parseError(error));
+        const parsedError = parseError(error);
+        rewriteErrorMessage(parsedError, parsedError.message + formatCallLog(log));
+        callback.reject(parsedError);
       } else {
         const validator = findValidator(callback.type, callback.method, 'Result');
         callback.resolve(validator(result, '', { tChannelImpl: this._tChannelImplFromWire.bind(this), binary: this.isRemote() ? 'fromBase64' : 'buffer' }));
@@ -154,7 +155,8 @@ export class Connection extends EventEmitter {
       return;
     }
 
-    debugLogger.log('channel:event', message);
+    if (debugLogger.isEnabled('channel'))
+      debugLogger.log('channel', '<EVENT ' + JSON.stringify(message));
     if (method === '__create__') {
       this._createRemoteObject(guid, params.type, params.guid, params.initializer);
       return;
@@ -181,13 +183,12 @@ export class Connection extends EventEmitter {
     (object._channel as any).emit(method, validator(params, '', { tChannelImpl: this._tChannelImplFromWire.bind(this), binary: this.isRemote() ? 'fromBase64' : 'buffer' }));
   }
 
-  close(errorMessage: string = 'Connection closed') {
-    const stack = captureLibraryStackTrace().frameTexts.join('\n');
-    if (stack)
-      errorMessage += '\n    ==== Closed by ====\n' + stack + '\n';
-    this._closedErrorMessage = errorMessage;
+  close(cause?: Error) {
+    this._closedError = new TargetClosedError();
+    if (cause)
+      rewriteErrorMessage(this._closedError, this._closedError.message + '\nCaused by: ' + cause.toString());
     for (const callback of this._callbacks.values())
-      callback.reject(new Error(errorMessage));
+      callback.reject(this._closedError);
     this._callbacks.clear();
     this.emit('close');
   }

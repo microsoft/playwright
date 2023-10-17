@@ -3,6 +3,8 @@ id: handles
 title: "Handles"
 ---
 
+## Introduction
+
 Playwright can create handles to the page DOM elements or any other objects inside the
 page. These handles live in the Playwright process, whereas the actual objects live
 in the browser. There are two types of handles:

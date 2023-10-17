@@ -288,7 +288,7 @@ APIRequestContext:
           type: array?
           items: NameValue
         postData: binary?
-        jsonData: json?
+        jsonData: string?
         formData:
           type: array?
           items: NameValue
@@ -904,6 +904,8 @@ Browser:
   commands:
 
     close:
+      parameters:
+        reason: string?
 
     killForTests:
 
@@ -954,6 +956,10 @@ Browser:
               items: OriginStorage
       returns:
         context: BrowserContext
+
+    stopPendingOperations:
+      parameters:
+        reason: string
 
     newBrowserCDPSession:
       returns:
@@ -1026,6 +1032,8 @@ BrowserContext:
     clearPermissions:
 
     close:
+      parameters:
+        reason: string?
 
     cookies:
       parameters:
@@ -1278,6 +1286,7 @@ Page:
     close:
       parameters:
         runBeforeUnload: boolean?
+        reason: string?
 
     emulateMedia:
       parameters:

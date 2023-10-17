@@ -630,7 +630,6 @@ test('should print pending operations for toHaveText', async ({ runInlineTest })
   expect(result.failed).toBe(1);
   expect(result.exitCode).toBe(1);
   const output = result.output;
-  expect(output).toContain('Pending operations:');
   expect(output).toContain(`expect(locator).toHaveText(expected)`);
   expect(output).toContain('Expected string: "Text"');
   expect(output).toContain('Received string: ""');
@@ -822,16 +821,16 @@ test('should chain expect matchers and expose matcher utils', async ({ runInline
 
         const log = callLogText(matcherResult?.log);
         const message = pass
-          ? () => this.utils.matcherHint('toBe', locator, expected, expectOptions) +
+          ? () => this.utils.matcherHint('toHaveAmount', undefined, undefined, expectOptions) +
               '\\n\\n' +
               \`Expected: \${this.isNot ? 'not' : ''}\${this.utils.printExpected(expected)}\\n\` +
               (matcherResult ? \`Received: \${this.utils.printReceived(matcherResult.actual)}\` : '') +
-              log
-          : () =>  this.utils.matcherHint('toBe', locator, expected, expectOptions) +
+              '\\n\\n' +log
+          : () =>  this.utils.matcherHint('toHaveAmount', undefined, undefined, expectOptions) +
               '\\n\\n' +
               \`Expected: \${this.utils.printExpected(expected)}\n\` +
               (matcherResult ? \`Received: \${this.utils.printReceived(matcherResult.actual)}\` : '') +
-              log;
+              '\\n\\n' +log;
 
         return {
           name: 'toHaveAmount',
@@ -880,10 +879,10 @@ test('should suppport toHaveAttribute without optional value', async ({ runTSC }
   expect(result.exitCode).toBe(0);
 });
 
-test('should support composedExpect (TSC)', async ({ runTSC }) => {
+test('should support mergeExpects (TSC)', async ({ runTSC }) => {
   const result = await runTSC({
     'a.spec.ts': `
-      import { test, composedExpect, expect as baseExpect } from '@playwright/test';
+      import { test, mergeExpects, expect as baseExpect } from '@playwright/test';
       import type { Page } from '@playwright/test';
 
       const expect1 = baseExpect.extend({
@@ -898,7 +897,7 @@ test('should support composedExpect (TSC)', async ({ runTSC }) => {
         }
       });
 
-      const expect = composedExpect(expect1, expect2);
+      const expect = mergeExpects(expect1, expect2);
 
       test('custom matchers', async ({ page }) => {
         await expect(page).toBeAGoodPage(123);
@@ -915,10 +914,10 @@ test('should support composedExpect (TSC)', async ({ runTSC }) => {
   expect(result.exitCode).toBe(0);
 });
 
-test('should support composedExpect', async ({ runInlineTest }) => {
+test('should support mergeExpects', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
-      import { test, composedExpect, expect as baseExpect } from '@playwright/test';
+      import { test, mergeExpects, expect as baseExpect } from '@playwright/test';
       import type { Page } from '@playwright/test';
 
       const expect1 = baseExpect.extend({
@@ -933,7 +932,7 @@ test('should support composedExpect', async ({ runInlineTest }) => {
         }
       });
 
-      const expect = composedExpect(expect1, expect2);
+      const expect = mergeExpects(expect1, expect2);
 
       test('custom matchers', async ({ page }) => {
         await expect(page).toBeAGoodPage(123);

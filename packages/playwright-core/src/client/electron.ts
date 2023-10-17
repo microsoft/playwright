@@ -28,6 +28,7 @@ import { JSHandle, parseResult, serializeArgument } from './jsHandle';
 import type { Page } from './page';
 import type { Env, WaitForEventOptions, Headers, BrowserContextOptions } from './types';
 import { Waiter } from './waiter';
+import { TargetClosedError } from '../common/errors';
 
 type ElectronOptions = Omit<channels.ElectronLaunchOptions, 'env'|'extraHTTPHeaders'|'recordHar'|'colorScheme'|'acceptDownloads'> & {
   env?: Env,
@@ -120,7 +121,7 @@ export class ElectronApplication extends ChannelOwner<channels.ElectronApplicati
       const waiter = Waiter.createForEvent(this, event);
       waiter.rejectOnTimeout(timeout, `Timeout ${timeout}ms exceeded while waiting for event "${event}"`);
       if (event !== Events.ElectronApplication.Close)
-        waiter.rejectOnEvent(this, Events.ElectronApplication.Close, new Error('Electron application closed'));
+        waiter.rejectOnEvent(this, Events.ElectronApplication.Close, new TargetClosedError());
       const result = await waiter.waitForEvent(this, event, predicate as any);
       waiter.dispose();
       return result;

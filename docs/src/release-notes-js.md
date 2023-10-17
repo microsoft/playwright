@@ -6,7 +6,114 @@ toc_max_heading_level: 2
 
 import LiteYouTube from '@site/src/components/LiteYouTube';
 
+## Version 1.39
+
+### Add custom matchers to your expect
+
+You can extend Playwright assertions by providing custom matchers. These matchers will be available on the expect object.
+
+```js title="test.spec.ts"
+import { expect as baseExpect } from '@playwright/test';
+export const expect = baseExpect.extend({
+  async toHaveAmount(locator: Locator, expected: number, options?: { timeout?: number }) {
+    // ... see documentation for how to write matchers.
+  },
+});
+
+test('pass', async ({ page }) => {
+  await expect(page.getByTestId('cart')).toHaveAmount(5);
+});
+```
+
+See the documentation [for a full example](./test-configuration.md#add-custom-matchers-using-expectextend).
+
+### Merge test fixtures
+
+You can now merge test fixtures from multiple files or modules:
+
+```js title="fixtures.ts"
+import { mergeTests } from '@playwright/test';
+import { test as dbTest } from 'database-test-utils';
+import { test as a11yTest } from 'a11y-test-utils';
+
+export const test = mergeTests(dbTest, a11yTest);
+```
+
+```js title="test.spec.ts"
+import { test } from './fixtures';
+
+test('passes', async ({ database, page, a11y }) => {
+  // use database and a11y fixtures.
+});
+```
+
+### Merge custom expect matchers
+
+You can now merge custom expect matchers from multiple files or modules:
+
+```js title="fixtures.ts"
+import { mergeTests, mergeExpects } from '@playwright/test';
+import { test as dbTest, expect as dbExpect } from 'database-test-utils';
+import { test as a11yTest, expect as a11yExpect } from 'a11y-test-utils';
+
+export const test = mergeTests(dbTest, a11yTest);
+export const expect = mergeExpects(dbExpect, a11yExpect);
+```
+
+```js title="test.spec.ts"
+import { test, expect } from './fixtures';
+
+test('passes', async ({ page, database }) => {
+  await expect(database).toHaveDatabaseUser('admin');
+  await expect(page).toPassA11yAudit();
+});
+```
+
+### Hide implementation details: box test steps
+
+You can mark a [`method: Test.step`] as "boxed" so that errors inside it point to the step call site.
+
+```js
+async function login(page) {
+  await test.step('login', async () => {
+    // ...
+  }, { box: true });  // Note the "box" option here.
+}
+```
+
+```txt
+Error: Timed out 5000ms waiting for expect(locator).toBeVisible()
+  ... error details omitted ...
+
+  14 |   await page.goto('https://github.com/login');
+> 15 |   await login(page);
+     |         ^
+  16 | });
+```
+
+See [`method: Test.step`] documentation for a full example.
+
+### New APIs
+
+- [`method: LocatorAssertions.toHaveAttribute#2`]
+
+### Browser Versions
+
+* Chromium 119.0.6045.9
+* Mozilla Firefox 118.0.1
+* WebKit 17.4
+
+This version was also tested against the following stable channels:
+
+* Google Chrome 118
+* Microsoft Edge 118
+
 ## Version 1.38
+
+<LiteYouTube
+  id="YGJTeXaZDTM"
+  title="Playwright 1.38"
+/>
 
 ### UI Mode Updates
 

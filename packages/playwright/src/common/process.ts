@@ -54,8 +54,8 @@ process.on('SIGTERM', () => {});
 // Clear execArgv immediately, so that the user-code does not inherit our loader.
 process.execArgv = execArgvWithoutExperimentalLoaderOptions();
 
-let processRunner: ProcessRunner;
-let processName: string;
+let processRunner: ProcessRunner | undefined;
+let processName: string | undefined;
 const startingEnv = { ...process.env };
 
 process.on('message', async (message: any) => {
@@ -97,8 +97,9 @@ async function gracefullyCloseAndExit() {
   // eslint-disable-next-line no-restricted-properties
   setTimeout(() => process.exit(0), 30000);
   // Meanwhile, try to gracefully shutdown.
-  await processRunner.gracefullyClose().catch(() => {});
-  await stopProfiling(processName).catch(() => {});
+  await processRunner?.gracefullyClose().catch(() => {});
+  if (processName)
+    await stopProfiling(processName).catch(() => {});
   // eslint-disable-next-line no-restricted-properties
   process.exit(0);
 }

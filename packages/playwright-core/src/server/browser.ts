@@ -64,6 +64,7 @@ export abstract class Browser extends SdkObject {
   private _startedClosing = false;
   readonly _idToVideo = new Map<string, { context: BrowserContext, artifact: Artifact }>();
   private _contextForReuse: { context: BrowserContext, hash: string } | undefined;
+  _closeReason: string | undefined;
 
   constructor(parent: SdkObject, options: BrowserOptions) {
     super(parent, 'browser');
@@ -90,12 +91,16 @@ export abstract class Browser extends SdkObject {
     const hash = BrowserContext.reusableContextHash(params);
     if (!this._contextForReuse || hash !== this._contextForReuse.hash || !this._contextForReuse.context.canResetForReuse()) {
       if (this._contextForReuse)
-        await this._contextForReuse.context.close(metadata);
+        await this._contextForReuse.context.close({ reason: 'Context reused' });
       this._contextForReuse = { context: await this.newContext(metadata, params), hash };
       return { context: this._contextForReuse.context, needsReset: false };
     }
-    await this._contextForReuse.context.stopPendingOperations();
+    await this._contextForReuse.context.stopPendingOperations('Context recreated');
     return { context: this._contextForReuse.context, needsReset: true };
+  }
+
+  async stopPendingOperations(reason: string) {
+    await this._contextForReuse?.context?.stopPendingOperations(reason);
   }
 
   _downloadCreated(page: Page, uuid: string, url: string, suggestedFilename?: string) {
@@ -145,8 +150,10 @@ export abstract class Browser extends SdkObject {
     this.instrumentation.onBrowserClose(this);
   }
 
-  async close() {
+  async close(options: { reason?: string }) {
     if (!this._startedClosing) {
+      if (options.reason)
+        this._closeReason = options.reason;
       this._startedClosing = true;
       await this.options.browserProcess.close();
     }

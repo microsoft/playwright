@@ -94,6 +94,12 @@ Emitted when Browser context gets closed. This might happen because of one of th
 * Browser application is closed or crashed.
 * The [`method: Browser.close`] method was called.
 
+### option: BrowserContext.close.reason
+* since: v1.40
+- `reason` <[string]>
+
+The reason to be reported to the operations interrupted by the context closure.
+
 ## event: BrowserContext.console
 * since: v1.34
 * langs:

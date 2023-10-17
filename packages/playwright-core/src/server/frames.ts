@@ -834,7 +834,7 @@ export class Frame extends SdkObject {
   async evalOnSelector(selector: string, strict: boolean, expression: string, isFunction: boolean | undefined, arg: any, scope?: dom.ElementHandle): Promise<any> {
     const handle = await this.selectors.query(selector, { strict }, scope);
     if (!handle)
-      throw new Error(`Error: failed to find element matching selector "${selector}"`);
+      throw new Error(`Failed to find element matching selector "${selector}"`);
     const result = await handle.evaluateExpression(expression, { isFunction }, arg);
     handle.dispose();
     return result;

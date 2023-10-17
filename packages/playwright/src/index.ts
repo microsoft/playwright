@@ -24,7 +24,6 @@ import type { TestInfoImpl } from './worker/testInfo';
 import { rootTestType } from './common/testType';
 import type { ContextReuseMode } from './common/config';
 import type { ClientInstrumentation, ClientInstrumentationListener } from '../../playwright-core/src/client/clientInstrumentation';
-import type { ParsedStackTrace } from '../../playwright-core/src/utils/stackTrace';
 import { currentTestInfo } from './common/globals';
 import { mergeTraceFiles } from './worker/testTracing';
 export { expect } from './matchers/expect';
@@ -113,7 +112,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       });
       await use(browser);
       await (browser as any)._wrapApiCall(async () => {
-        await browser.close();
+        await browser.close({ reason: 'Test ended.' });
       }, true);
       return;
     }
@@ -121,7 +120,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     const browser = await playwright[browserName].launch();
     await use(browser);
     await (browser as any)._wrapApiCall(async () => {
-      await browser.close();
+      await browser.close({ reason: 'Test ended.' });
     }, true);
   }, { scope: 'worker', timeout: 0 }],
 
@@ -253,12 +252,12 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     const artifactsRecorder = new ArtifactsRecorder(playwright, _artifactsDir, trace, screenshot);
     await artifactsRecorder.willStartTest(testInfo as TestInfoImpl);
     const csiListener: ClientInstrumentationListener = {
-      onApiCallBegin: (apiName: string, params: Record<string, any>, stackTrace: ParsedStackTrace | null, wallTime: number, userData: any) => {
+      onApiCallBegin: (apiName: string, params: Record<string, any>, frames: StackFrame[], wallTime: number, userData: any) => {
         const testInfo = currentTestInfo();
         if (!testInfo || apiName.startsWith('expect.') || apiName.includes('setTestIdAttribute'))
           return { userObject: null };
         const step = testInfo._addStep({
-          location: stackTrace?.frames[0] as any,
+          location: frames[0] as any,
           category: 'pw:api',
           title: renderApiCall(apiName, params),
           apiName,
@@ -331,14 +330,12 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       return context;
     });
 
-    const prependToError = testInfoImpl._didTimeout ?
-      formatPendingCalls((browser as any)._connection.pendingProtocolCalls()) : '';
-
     let counter = 0;
+    const closeReason = testInfo.status === 'timedOut' ? 'Test timeout of ' + testInfo.timeout + 'ms exceeded.' : 'Test ended.';
     await Promise.all([...contexts.keys()].map(async context => {
       (context as any)[kStartedContextTearDown] = true;
       await (context as any)._wrapApiCall(async () => {
-        await context.close();
+        await context.close({ reason: closeReason });
       }, true);
       const testFailed = testInfo.status !== testInfo.expectedStatus;
       const preserveVideo = captureVideo && (videoMode === 'on' || (testFailed && videoMode === 'retain-on-failure') || (videoMode === 'on-first-retry' && testInfo.retry === 1));
@@ -358,8 +355,6 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       }
     }));
 
-    if (prependToError)
-      testInfo.errors.push({ message: prependToError });
   }, { scope: 'test',  _title: 'context' } as any],
 
   _contextReuseMode: process.env.PW_TEST_REUSE_CONTEXT === 'when-possible' ? 'when-possible' : (process.env.PW_TEST_REUSE_CONTEXT ? 'force' : 'none'),
@@ -380,6 +375,8 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     const context = await (browser as any)._newContextForReuse(defaultContextOptions);
     (context as any)[kIsReusedContext] = true;
     await use(context);
+    const closeReason = testInfo.status === 'timedOut' ? 'Test timeout of ' + testInfo.timeout + 'ms exceeded.' : 'Test ended.';
+    await (browser as any)._stopPendingOperations(closeReason);
   },
 
   page: async ({ context, _reuseContext }, use) => {
@@ -402,22 +399,6 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     await request.dispose();
   },
 });
-
-
-function formatPendingCalls(calls: ParsedStackTrace[]) {
-  calls = calls.filter(call => !!call.apiName);
-  if (!calls.length)
-    return '';
-  return 'Pending operations:\n' + calls.map(call => {
-    const frame = call.frames && call.frames[0] ? ' at ' + formatStackFrame(call.frames[0]) : '';
-    return `  - ${call.apiName}${frame}\n`;
-  }).join('');
-}
-
-function formatStackFrame(frame: StackFrame) {
-  const file = path.relative(process.cwd(), frame.file) || path.basename(frame.file);
-  return `${file}:${frame.line || 1}:${frame.column || 1}`;
-}
 
 function hookType(testInfo: TestInfoImpl): 'beforeAll' | 'afterAll' | undefined {
   const type = testInfo._timeoutManager.currentRunnableType();
@@ -765,7 +746,7 @@ function renderApiCall(apiName: string, params: any) {
 export const test = _baseTest.extend<TestFixtures, WorkerFixtures>(playwrightFixtures);
 
 export { defineConfig } from './common/configLoader';
-export { composedTest } from './common/testType';
-export { composedExpect } from './matchers/expect';
+export { mergeTests } from './common/testType';
+export { mergeExpects } from './matchers/expect';
 
 export default test;

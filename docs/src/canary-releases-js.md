@@ -3,6 +3,8 @@ id: canary-releases
 title: "Canary releases"
 ---
 
+## Introduction
+
 Playwright for Node.js has a canary releases system.
 
 It permits you to **test new unreleased features** instead of waiting for a full release. They get released daily on the `next` NPM tag of Playwright.

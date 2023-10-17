@@ -3,7 +3,7 @@ id: downloads
 title: "Downloads"
 ---
 
-
+## Introduction
 
 For every attachment downloaded by the page, [`event: Page.download`] event is emitted. All these attachments are downloaded into a temporary folder. You can obtain the download url, file name and payload stream using the [Download] object from the event.
 
