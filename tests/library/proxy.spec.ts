@@ -99,7 +99,7 @@ it.describe('should proxy local network requests', () => {
           });
 
           const url = `http://${params.target}:${server.PORT}${path}`;
-          proxyServer.forwardTo(server.PORT, { skipConnectRequests: true });
+          proxyServer.forwardTo(server.PORT);
           const browser = await browserType.launch({
             proxy: { server: `localhost:${proxyServer.PORT}`, bypass: additionalBypass ? '1.non.existent.domain.for.the.test' : undefined }
           });
@@ -300,6 +300,8 @@ async function setupSocksForwardingServer(port: number, forwardPort: number){
       socket.pipe(dstSock).pipe(socket);
       socket.on('close', () => dstSock.end());
       socket.on('end', () => dstSock.end());
+      dstSock.on('error', () => socket.end());
+      dstSock.on('end', () => socket.end());
       dstSock.setKeepAlive(false);
       dstSock.connect(forwardPort, '127.0.0.1');
     }

@@ -171,6 +171,7 @@ export abstract class APIRequestContext extends SdkObject {
       } else {
         if (proxy.username)
           proxyOpts.auth = `${proxy.username}:${proxy.password || ''}`;
+        // TODO: We should use HttpProxyAgent conditional on proxyOpts.protocol instead of always using CONNECT method.
         agent = new HttpsProxyAgent(proxyOpts);
       }
     }
