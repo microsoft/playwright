@@ -200,7 +200,7 @@ const DOWNLOAD_PATHS: Record<BrowserName | InternalTool, DownloadPaths> = {
     'ubuntu22.04-arm64': undefined,
     'debian11-x64': undefined,
     'debian11-arm64': undefined,
-    'debian12': undefined,
+    'debian12-x64': undefined,
     'debian12-arm64': undefined,
     'mac10.13': 'builds/firefox/%s/firefox-asan-mac-13.zip',
     'mac10.14': 'builds/firefox/%s/firefox-asan-mac-13.zip',
