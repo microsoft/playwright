@@ -44,7 +44,7 @@ export class Download implements api.Download {
     return this._suggestedFilename;
   }
 
-  async path(): Promise<string | null> {
+  async path(): Promise<string> {
     return this._artifact.pathAfterFinished();
   }
 
@@ -56,7 +56,7 @@ export class Download implements api.Download {
     return this._artifact.failure();
   }
 
-  async createReadStream(): Promise<Readable | null> {
+  async createReadStream(): Promise<Readable> {
     return this._artifact.createReadStream();
   }
 
