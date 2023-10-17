@@ -35,7 +35,7 @@ import { splitErrorMessage } from '../../utils/stackTrace';
 import { debugLogger } from '../../common/debugLogger';
 import { ManualPromise } from '../../utils/manualPromise';
 import { BrowserContext } from '../browserContext';
-import { TargetClosedError } from '../../common/errors';
+import { TargetClosedError } from '../errors';
 
 export const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 

@@ -43,8 +43,7 @@ import { HarRouter } from './harRouter';
 import { ConsoleMessage } from './consoleMessage';
 import { Dialog } from './dialog';
 import { WebError } from './webError';
-import { parseError } from '../protocol/serializers';
-import { TargetClosedError } from '../common/errors';
+import { TargetClosedError, parseError } from './errors';
 
 export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel> implements api.BrowserContext {
   _pages = new Set<Page>();

@@ -15,7 +15,7 @@
  */
 
 import type * as channels from '@protocol/channels';
-import { TimeoutError } from '../common/errors';
+import { TimeoutError } from './errors';
 import { Android } from './android';
 import { BrowserType } from './browserType';
 import { ChannelOwner } from './channelOwner';

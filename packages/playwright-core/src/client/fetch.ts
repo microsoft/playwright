@@ -28,7 +28,7 @@ import { RawHeaders } from './network';
 import type { FilePayload, Headers, StorageState } from './types';
 import type { Playwright } from './playwright';
 import { Tracing } from './tracing';
-import { isTargetClosedError } from '../common/errors';
+import { isTargetClosedError } from './errors';
 
 export type FetchOptions = {
   params?: { [key: string]: string; },

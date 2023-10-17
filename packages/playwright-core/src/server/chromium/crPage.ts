@@ -45,7 +45,7 @@ import { platformToFontFamilies } from './defaultFontFamilies';
 import type { Protocol } from './protocol';
 import { VideoRecorder } from './videoRecorder';
 import { BrowserContext } from '../browserContext';
-import { TargetClosedError } from '../../common/errors';
+import { TargetClosedError } from '../errors';
 
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';

@@ -17,7 +17,7 @@
 import type * as channels from '@protocol/channels';
 import { Dispatcher } from './dispatcher';
 import { createGuid } from '../../utils';
-import { serializeError } from '../../protocol/serializers';
+import { serializeError } from '../errors';
 import type { LocalUtilsDispatcher } from './localUtilsDispatcher';
 
 export class JsonPipeDispatcher extends Dispatcher<{ guid: string }, channels.JsonPipeChannel, LocalUtilsDispatcher> implements channels.JsonPipeChannel {

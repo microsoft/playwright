@@ -21,7 +21,7 @@ import type { Page } from './page';
 import { ChannelOwner } from './channelOwner';
 import { Events } from './events';
 import type { LaunchOptions, BrowserContextOptions, HeadersArray } from './types';
-import { isTargetClosedError } from '../common/errors';
+import { isTargetClosedError } from './errors';
 import type * as api from '../../types/types';
 import { CDPSession } from './cdpSession';
 import type { BrowserType } from './browserType';
