@@ -110,8 +110,10 @@ export class TestServer {
   _onSocket(socket: net.Socket) {
     // ECONNRESET and HPE_INVALID_EOF_STATE are legit errors given
     // that tab closing aborts outgoing connections to the server.
+    // HPE_INVALID_METHOD is a legit error when a client (e.g. Chromium which
+    // makes https requests to http sites) makes a https connection to a http server.
     socket.on('error', error => {
-      if ((error as any).code !== 'ECONNRESET' && (error as any).code !== 'HPE_INVALID_EOF_STATE')
+      if (!['ECONNRESET', 'HPE_INVALID_EOF_STATE', 'HPE_INVALID_METHOD'].includes((error as any).code))
         throw error;
     });
   }

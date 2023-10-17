@@ -300,6 +300,8 @@ async function setupSocksForwardingServer(port: number, forwardPort: number){
       socket.pipe(dstSock).pipe(socket);
       socket.on('close', () => dstSock.end());
       socket.on('end', () => dstSock.end());
+      dstSock.on('error', () => socket.end());
+      dstSock.on('end', () => socket.end());
       dstSock.setKeepAlive(false);
       dstSock.connect(forwardPort, '127.0.0.1');
     }
