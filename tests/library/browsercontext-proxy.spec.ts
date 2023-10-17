@@ -97,7 +97,7 @@ it('should use proxy', async ({ contextFactory, server, proxyServer }) => {
 it('should set cookie for top-level domain', async ({ contextFactory, server, proxyServer, browserName, isLinux }) => {
   it.fixme(browserName === 'webkit' && isLinux);
 
-  proxyServer.forwardTo(server.PORT);
+  proxyServer.forwardTo(server.PORT, { allowConnectRequests: true });
   const context = await contextFactory({
     proxy: { server: `localhost:${proxyServer.PORT}` }
   });
@@ -216,7 +216,7 @@ it('should use proxy for https urls', async ({ contextFactory, httpsServer, prox
   httpsServer.setRoute('/target.html', async (req, res) => {
     res.end('<html><title>Served by https server via proxy</title></html>');
   });
-  proxyServer.forwardTo(httpsServer.PORT);
+  proxyServer.forwardTo(httpsServer.PORT, { allowConnectRequests: true });
   const context = await contextFactory({
     ignoreHTTPSErrors: true,
     proxy: { server: `localhost:${proxyServer.PORT}` }

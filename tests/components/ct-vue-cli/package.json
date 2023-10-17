@@ -14,8 +14,8 @@
     "vue-router": "^4.1.5"
   },
   "devDependencies": {
-    "@babel/core": "^7.12.16",
-    "@babel/eslint-parser": "^7.12.16",
+    "@babel/core": "^7.23.2",
+    "@babel/eslint-parser": "^7.22.15",
     "@vue/cli-plugin-babel": "~5.0.0",
     "@vue/cli-plugin-eslint": "~5.0.0",
     "@vue/cli-plugin-router": "~5.0.0",

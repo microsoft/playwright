@@ -16897,7 +16897,7 @@ export interface Download {
   /**
    * Returns readable stream for current download or `null` if download failed.
    */
-  createReadStream(): Promise<null|Readable>;
+  createReadStream(): Promise<Readable>;
 
   /**
    * Deletes the downloaded file. Will wait for the download to finish if necessary.
@@ -16922,7 +16922,7 @@ export interface Download {
    * [download.suggestedFilename()](https://playwright.dev/docs/api/class-download#download-suggested-filename) to get
    * suggested file name.
    */
-  path(): Promise<null|string>;
+  path(): Promise<string>;
 
   /**
    * Copy the download to a user-specified path. It is safe to call this method while the download is still in progress.

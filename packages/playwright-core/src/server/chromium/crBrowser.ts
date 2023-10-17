@@ -269,7 +269,7 @@ export class CRBrowser extends Browser {
     if (payload.state === 'completed')
       this._downloadFinished(payload.guid, '');
     if (payload.state === 'canceled')
-      this._downloadFinished(payload.guid, 'canceled');
+      this._downloadFinished(payload.guid, this._closeReason || 'canceled');
   }
 
   async _closePage(crPage: CRPage) {
