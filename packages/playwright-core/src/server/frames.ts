@@ -1532,7 +1532,7 @@ export class Frame extends SdkObject {
 
   _onDetached() {
     this._stopNetworkIdleTimer();
-    this._detachedScope.close('Frame was detached');
+    this._detachedScope.close(new Error('Frame was detached'));
     for (const data of this._contextData.values()) {
       if (data.context)
         data.context.contextDestroyed('Frame was detached');

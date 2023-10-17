@@ -43,7 +43,7 @@ import type { TimeoutOptions } from '../common/types';
 import { isInvalidSelectorError } from '../utils/isomorphic/selectorParser';
 import { parseEvaluationResultValue, source } from './isomorphic/utilityScriptSerializers';
 import type { SerializedValue } from './isomorphic/utilityScriptSerializers';
-import { kTargetClosedErrorMessage } from '../common/errors';
+import { TargetClosedError } from '../common/errors';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
@@ -277,7 +277,7 @@ export class Page extends SdkObject {
     this.emit(Page.Events.Close);
     this._closedPromise.resolve();
     this.instrumentation.onPageClose(this);
-    this.openScope.close(kTargetClosedErrorMessage);
+    this.openScope.close(new TargetClosedError());
   }
 
   _didCrash() {
@@ -286,7 +286,7 @@ export class Page extends SdkObject {
     this.emit(Page.Events.Crash);
     this._crashed = true;
     this.instrumentation.onPageClose(this);
-    this.openScope.close('Page crashed');
+    this.openScope.close(new Error('Page crashed'));
   }
 
   async _onFileChooserOpened(handle: dom.ElementHandle) {
@@ -733,7 +733,7 @@ export class Worker extends SdkObject {
     if (this._existingExecutionContext)
       this._existingExecutionContext.contextDestroyed('Worker was closed');
     this.emit(Worker.Events.Close, this);
-    this.openScope.close('Worker closed');
+    this.openScope.close(new Error('Worker closed'));
   }
 
   async evaluateExpression(expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {

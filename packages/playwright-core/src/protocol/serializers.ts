@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { TimeoutError } from '../common/errors';
+import { TargetClosedError, TimeoutError } from '../common/errors';
 import type { SerializedError, SerializedValue } from '@protocol/channels';
 
 export function serializeError(e: any): SerializedError {
@@ -31,6 +31,11 @@ export function parseError(error: SerializedError): Error {
   }
   if (error.error.name === 'TimeoutError') {
     const e = new TimeoutError(error.error.message);
+    e.stack = error.error.stack || '';
+    return e;
+  }
+  if (error.error.name === 'TargetClosedError') {
+    const e = new TargetClosedError(error.error.message);
     e.stack = error.error.stack || '';
     return e;
   }
