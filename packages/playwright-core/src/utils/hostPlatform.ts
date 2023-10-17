@@ -24,11 +24,11 @@ export type HostPlatform = 'win64' |
                            'mac11' | 'mac11-arm64' |
                            'mac12' | 'mac12-arm64' |
                            'mac13' | 'mac13-arm64' |
-                           'ubuntu18.04' | 'ubuntu18.04-arm64' |
-                           'ubuntu20.04' | 'ubuntu20.04-arm64' |
-                           'ubuntu22.04' | 'ubuntu22.04-arm64' |
-                           'debian11' | 'debian11-arm64' |
-                           'debian12' | 'debian12-arm64' |
+                           'ubuntu18.04-x64' | 'ubuntu18.04-arm64' |
+                           'ubuntu20.04-x64' | 'ubuntu20.04-arm64' |
+                           'ubuntu22.04-x64' | 'ubuntu22.04-arm64' |
+                           'debian11-x64' | 'debian11-arm64' |
+                           'debian12-x64' | 'debian12-arm64' |
                            '<unknown>';
 
 function calculatePlatform(): { hostPlatform: HostPlatform, isOfficiallySupportedPlatform: boolean } {
@@ -55,7 +55,10 @@ function calculatePlatform(): { hostPlatform: HostPlatform, isOfficiallySupporte
     return { hostPlatform: macVersion as HostPlatform, isOfficiallySupportedPlatform: true };
   }
   if (platform === 'linux') {
-    const archSuffix = os.arch() === 'arm64' ? '-arm64' : '';
+    if (!['x64', 'arm64'].includes(os.arch()))
+      return { hostPlatform: '<unknown>', isOfficiallySupportedPlatform: false };
+
+    const archSuffix = '-' + os.arch();
     const distroInfo = getLinuxDistributionInfoSync();
 
     // Pop!_OS is ubuntu-based and has the same versions.
@@ -69,14 +72,17 @@ function calculatePlatform(): { hostPlatform: HostPlatform, isOfficiallySupporte
         return { hostPlatform: ('ubuntu20.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform };
       return { hostPlatform: ('ubuntu22.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform };
     }
-    if (distroInfo?.id === 'debian' && distroInfo?.version === '11')
-      return { hostPlatform: ('debian11' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: true };
-    if (distroInfo?.id === 'debian' && distroInfo?.version === '12')
-      return { hostPlatform: ('debian12' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: true };
-    // use most recent supported release for 'debian testing' and 'unstable'.
-    // they never include a numeric version entry in /etc/os-release.
-    if (distroInfo?.id === 'debian' && distroInfo?.version === '')
-      return { hostPlatform: ('debian12' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: true };
+    if (distroInfo?.id === 'debian' || distroInfo?.id === 'raspbian') {
+      const isOfficiallySupportedPlatform = distroInfo?.id === 'debian';
+      if (distroInfo?.version === '11')
+        return { hostPlatform: ('debian11' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform };
+      if (distroInfo?.version === '12')
+        return { hostPlatform: ('debian12' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform };
+      // use most recent supported release for 'debian testing' and 'unstable'.
+      // they never include a numeric version entry in /etc/os-release.
+      if (distroInfo?.version === '')
+        return { hostPlatform: ('debian12' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform };
+    }
     return { hostPlatform: ('ubuntu20.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: false };
   }
   if (platform === 'win32')
