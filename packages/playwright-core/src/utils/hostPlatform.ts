@@ -56,7 +56,7 @@ function calculatePlatform(): { hostPlatform: HostPlatform, isOfficiallySupporte
   }
   if (platform === 'linux') {
     if (!['x64', 'arm64'].includes(os.arch()))
-      return '<unknown>';
+      return { hostPlatform: '<unknown>', isOfficiallySupportedPlatform: false };
 
     const archSuffix = '-' + os.arch();
     const distroInfo = getLinuxDistributionInfoSync();
