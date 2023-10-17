@@ -33,7 +33,7 @@ export class VideoPlayer {
   frames: number;
   videoWidth: number;
   videoHeight: number;
-  cache = new Map<number, PNG>();
+  cache = new Map<number, any>();
 
   constructor(fileName: string) {
     this.fileName = fileName;
@@ -56,7 +56,7 @@ export class VideoPlayer {
     this.videoHeight = parseInt(resolutionMatch![2], 10);
   }
 
-  seekFirstNonEmptyFrame(offset?: { x: number, y: number }): PNG | undefined {
+  seekFirstNonEmptyFrame(offset?: { x: number, y: number }): any | undefined {
     for (let f = 1; f <= this.frames; ++f) {
       const frame = this.frame(f, offset);
       let hasColor = false;
@@ -71,11 +71,11 @@ export class VideoPlayer {
     }
   }
 
-  seekLastFrame(offset?: { x: number, y: number }): PNG {
+  seekLastFrame(offset?: { x: number, y: number }): any {
     return this.frame(this.frames, offset);
   }
 
-  frame(frame: number, offset = { x: 10, y: 10 }): PNG {
+  frame(frame: number, offset = { x: 10, y: 10 }): any {
     if (!this.cache.has(frame)) {
       const gap = '0'.repeat(3 - String(frame).length);
       const buffer = fs.readFileSync(`${this.fileName}-${gap}${frame}.png`);
