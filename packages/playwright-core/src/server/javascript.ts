@@ -73,7 +73,7 @@ export class ExecutionContext extends SdkObject {
   }
 
   contextDestroyed(reason: string) {
-    this._contextDestroyedScope.close(reason);
+    this._contextDestroyedScope.close(new Error(reason));
   }
 
   async _raceAgainstContextDestroyed<T>(promise: Promise<T>): Promise<T> {

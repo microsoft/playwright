@@ -58,7 +58,7 @@ export class ManualPromise<T = void> extends Promise<T> {
 
 export class LongStandingScope {
   private _terminateError: Error | undefined;
-  private _terminateErrorMessage: string | undefined;
+  private _closeError: Error | undefined;
   private _terminatePromises = new Map<ManualPromise<Error>, string[]>();
   private _isClosed = false;
 
@@ -69,14 +69,11 @@ export class LongStandingScope {
       p.resolve(error);
   }
 
-  close(errorMessage: string) {
+  close(error: Error) {
     this._isClosed = true;
-    this._terminateErrorMessage = errorMessage;
-    for (const [p, frames] of this._terminatePromises) {
-      const error = new Error(errorMessage);
-      error.stack = [error.name + ':' + errorMessage, ...frames].join('\n');
-      p.resolve(error);
-    }
+    this._closeError = error;
+    for (const [p, frames] of this._terminatePromises)
+      p.resolve(cloneError(error, frames));
   }
 
   isClosed() {
@@ -97,11 +94,12 @@ export class LongStandingScope {
 
   private async _race(promises: Promise<any>[], safe: boolean, defaultValue?: any): Promise<any> {
     const terminatePromise = new ManualPromise<Error>();
+    const frames = captureRawStack();
     if (this._terminateError)
       terminatePromise.resolve(this._terminateError);
-    if (this._terminateErrorMessage)
-      terminatePromise.resolve(new Error(this._terminateErrorMessage));
-    this._terminatePromises.set(terminatePromise, captureRawStack());
+    if (this._closeError)
+      terminatePromise.resolve(cloneError(this._closeError, frames));
+    this._terminatePromises.set(terminatePromise, frames);
     try {
       return await Promise.race([
         terminatePromise.then(e => safe ? defaultValue : Promise.reject(e)),
@@ -111,4 +109,12 @@ export class LongStandingScope {
       this._terminatePromises.delete(terminatePromise);
     }
   }
+}
+
+function cloneError(error: Error, frames: string[]) {
+  const clone = new Error();
+  clone.name = error.name;
+  clone.message = error.message;
+  clone.stack = [error.name + ':' + error.message, ...frames].join('\n');
+  return clone;
 }

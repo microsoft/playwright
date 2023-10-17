@@ -25,16 +25,13 @@ class CustomError extends Error {
 
 export class TimeoutError extends CustomError {}
 
-export const kTargetClosedErrorMessage = 'Target page, context or browser has been closed';
-export const kTargetCrashedErrorMessage = 'Target crashed';
-
 export class TargetClosedError extends Error {
-  constructor() {
-    super(kTargetClosedErrorMessage);
+  constructor(cause?: string, logs?: string) {
+    super((cause || 'Target page, context or browser has been closed') + (logs || ''));
     this.name = this.constructor.name;
   }
 }
 
 export function isTargetClosedError(error: Error) {
-  return error instanceof TargetClosedError || error.message.includes(kTargetClosedErrorMessage);
+  return error instanceof TargetClosedError || error.name === 'TargetClosedError';
 }

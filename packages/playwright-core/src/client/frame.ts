@@ -36,7 +36,6 @@ import { urlMatches } from '../utils/network';
 import type * as api from '../../types/types';
 import type * as structs from '../../types/structs';
 import { debugLogger } from '../common/debugLogger';
-import { TargetClosedError } from '../common/errors';
 
 export type WaitForNavigationOptions = {
   timeout?: number,
@@ -105,8 +104,8 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
   private _setupNavigationWaiter(options: { timeout?: number }): Waiter {
     const waiter = new Waiter(this._page!, '');
     if (this._page!.isClosed())
-      waiter.rejectImmediately(new TargetClosedError());
-    waiter.rejectOnEvent(this._page!, Events.Page.Close, new TargetClosedError());
+      waiter.rejectImmediately(this._page!._closeErrorWithReason());
+    waiter.rejectOnEvent(this._page!, Events.Page.Close, () => this._page!._closeErrorWithReason());
     waiter.rejectOnEvent(this._page!, Events.Page.Crash, new Error('Navigation failed because page crashed!'));
     waiter.rejectOnEvent<Frame>(this._page!, Events.Page.FrameDetached, new Error('Navigating frame was detached!'), frame => frame === this);
     const timeout = this._page!._timeoutSettings.navigationTimeout(options);
