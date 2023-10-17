@@ -826,6 +826,12 @@ if [`option: runBeforeUnload`] is passed as true, a `beforeunload` dialog might 
 manually via [`event: Page.dialog`] event.
 :::
 
+### option: Page.close.reason
+* since: v1.40
+- `reason` <[string]>
+
+The reason to be reported to the operations interrupted by the page closure.
+
 ### option: Page.close.runBeforeUnload
 * since: v1.8
 - `runBeforeUnload` <[boolean]>

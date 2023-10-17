@@ -588,7 +588,9 @@ scheme.BrowserInitializer = tObject({
   name: tString,
 });
 scheme.BrowserCloseEvent = tOptional(tObject({}));
-scheme.BrowserCloseParams = tOptional(tObject({}));
+scheme.BrowserCloseParams = tObject({
+  reason: tOptional(tString),
+});
 scheme.BrowserCloseResult = tOptional(tObject({}));
 scheme.BrowserKillForTestsParams = tOptional(tObject({}));
 scheme.BrowserKillForTestsResult = tOptional(tObject({}));
@@ -831,7 +833,9 @@ scheme.BrowserContextClearCookiesParams = tOptional(tObject({}));
 scheme.BrowserContextClearCookiesResult = tOptional(tObject({}));
 scheme.BrowserContextClearPermissionsParams = tOptional(tObject({}));
 scheme.BrowserContextClearPermissionsResult = tOptional(tObject({}));
-scheme.BrowserContextCloseParams = tOptional(tObject({}));
+scheme.BrowserContextCloseParams = tObject({
+  reason: tOptional(tString),
+});
 scheme.BrowserContextCloseResult = tOptional(tObject({}));
 scheme.BrowserContextCookiesParams = tObject({
   urls: tArray(tString),
@@ -1000,6 +1004,7 @@ scheme.PageAddInitScriptParams = tObject({
 scheme.PageAddInitScriptResult = tOptional(tObject({}));
 scheme.PageCloseParams = tObject({
   runBeforeUnload: tOptional(tBoolean),
+  reason: tOptional(tString),
 });
 scheme.PageCloseResult = tOptional(tObject({}));
 scheme.PageEmulateMediaParams = tObject({

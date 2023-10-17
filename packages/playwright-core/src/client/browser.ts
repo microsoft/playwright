@@ -130,12 +130,12 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
     return buffer;
   }
 
-  async close(): Promise<void> {
+  async close(options: { reason?: string } = {}): Promise<void> {
     try {
       if (this._shouldCloseConnectionOnClose)
         this._connection.close();
       else
-        await this._channel.close();
+        await this._channel.close(options);
       await this._closedPromise;
     } catch (e) {
       if (isTargetClosedError(e))

@@ -383,7 +383,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this.emit(Events.BrowserContext.Close, this);
   }
 
-  async close(): Promise<void> {
+  async close(options: { reason?: string } = {}): Promise<void> {
     if (this._closeWasCalled)
       return;
     this._closeWasCalled = true;
@@ -404,7 +404,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
         await artifact.delete();
       }
     }, true);
-    await this._channel.close();
+    await this._channel.close(options);
     await this._closedPromise;
   }
 

@@ -75,7 +75,7 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
   }
 
   async close() {
-    await this._page.context().close(serverSideCallMetadata());
+    await this._page.context().close({ reason: 'Recorder window closed' });
   }
 
   private async _init() {
@@ -105,7 +105,7 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
 
     this._page.once('close', () => {
       this.emit('close');
-      this._page.context().close(serverSideCallMetadata()).catch(() => {});
+      this._page.context().close({ reason: 'Recorder window closed' }).catch(() => {});
     });
 
     const mainFrame = this._page.mainFrame();

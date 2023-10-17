@@ -102,6 +102,12 @@ This is similar to force quitting the browser. Therefore, you should call [`meth
 
 The [Browser] object itself is considered to be disposed and cannot be used anymore.
 
+### option: Browser.close.reason
+* since: v1.40
+- `reason` <[string]>
+
+The reason to be reported to the operations interrupted by the browser closure.
+
 ## method: Browser.contexts
 * since: v1.8
 - returns: <[Array]<[BrowserContext]>>

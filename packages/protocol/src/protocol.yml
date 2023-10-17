@@ -904,6 +904,8 @@ Browser:
   commands:
 
     close:
+      parameters:
+        reason: string?
 
     killForTests:
 
@@ -1030,6 +1032,8 @@ BrowserContext:
     clearPermissions:
 
     close:
+      parameters:
+        reason: string?
 
     cookies:
       parameters:
@@ -1282,6 +1286,7 @@ Page:
     close:
       parameters:
         runBeforeUnload: boolean?
+        reason: string?
 
     emulateMedia:
       parameters:

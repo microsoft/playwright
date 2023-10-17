@@ -116,7 +116,7 @@ export class PlaywrightConnection {
 
     this._cleanups.push(async () => {
       for (const browser of playwright.allBrowsers())
-        await browser.close();
+        await browser.close({ reason: 'Connection terminated' });
     });
     browser.on(Browser.Events.Disconnected, () => {
       // Underlying browser did close for some reason - force disconnect the client.
@@ -143,7 +143,7 @@ export class PlaywrightConnection {
     // In pre-launched mode, keep only the pre-launched browser.
     for (const b of playwright.allBrowsers()) {
       if (b !== browser)
-        await b.close();
+        await b.close({ reason: 'Connection terminated' });
     }
     this._cleanups.push(() => playwrightDispatcher.cleanup());
     return playwrightDispatcher;
@@ -189,7 +189,7 @@ export class PlaywrightConnection {
       if (b === browser)
         continue;
       if (b.options.name === this._options.browserName && b.options.channel === this._options.launchOptions.channel)
-        await b.close();
+        await b.close({ reason: 'Connection terminated' });
     }
 
     if (!browser) {
@@ -209,12 +209,12 @@ export class PlaywrightConnection {
       for (const browser of playwright.allBrowsers()) {
         for (const context of browser.contexts()) {
           if (!context.pages().length)
-            await context.close(serverSideCallMetadata());
+            await context.close({ reason: 'Connection terminated' });
           else
             await context.stopPendingOperations('Connection closed');
         }
         if (!browser.contexts())
-          await browser.close();
+          await browser.close({ reason: 'Connection terminated' });
       }
     });
 

@@ -19,7 +19,7 @@ import type * as channels from '@protocol/channels';
 import { serializeError } from '../../protocol/serializers';
 import { findValidator, ValidationError, createMetadataValidator, type ValidatorContext } from '../../protocol/validator';
 import { assert, isUnderTest, monotonicTime, rewriteErrorMessage } from '../../utils';
-import { TargetClosedError, kTargetClosedErrorMessage, kTargetCrashedErrorMessage } from '../../common/errors';
+import { TargetClosedError, isTargetClosedError, kTargetClosedErrorMessage, kTargetCrashedErrorMessage } from '../../common/errors';
 import type { CallMetadata } from '../instrumentation';
 import { SdkObject } from '../instrumentation';
 import type { PlaywrightDispatcher } from './playwrightDispatcher';
@@ -330,9 +330,13 @@ export class DispatcherConnection {
       const validator = findValidator(dispatcher._type, method, 'Result');
       callMetadata.result = validator(result, '', { tChannelImpl: this._tChannelImplToWire.bind(this), binary: this._isLocal ? 'buffer' : 'toBase64' });
     } catch (e) {
+      if (isTargetClosedError(e) && sdkObject)
+        rewriteErrorMessage(e, closeReason(sdkObject));
       if (isProtocolError(e)) {
-        if (e.type === 'closed')
-          rewriteErrorMessage(e, kTargetClosedErrorMessage + e.browserLogMessage());
+        if (e.type === 'closed') {
+          const closedReason = sdkObject ? closeReason(sdkObject) : kTargetClosedErrorMessage;
+          rewriteErrorMessage(e, closedReason + e.browserLogMessage());
+        }
         if (e.type === 'crashed')
           rewriteErrorMessage(e, kTargetCrashedErrorMessage + e.browserLogMessage());
       }
@@ -351,4 +355,10 @@ export class DispatcherConnection {
     }
     this.onmessage(response);
   }
+}
+
+function closeReason(sdkObject: SdkObject) {
+  return sdkObject.attribution.page?._closeReason ||
+    sdkObject.attribution.context?._closeReason ||
+    sdkObject.attribution.browser?._closeReason || kTargetClosedErrorMessage;
 }

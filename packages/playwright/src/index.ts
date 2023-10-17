@@ -112,7 +112,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       });
       await use(browser);
       await (browser as any)._wrapApiCall(async () => {
-        await browser.close();
+        await browser.close({ reason: 'Test ended.' });
       }, true);
       return;
     }
@@ -120,7 +120,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     const browser = await playwright[browserName].launch();
     await use(browser);
     await (browser as any)._wrapApiCall(async () => {
-      await browser.close();
+      await browser.close({ reason: 'Test ended.' });
     }, true);
   }, { scope: 'worker', timeout: 0 }],
 
@@ -331,10 +331,11 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     });
 
     let counter = 0;
+    const closeReason = testInfo.status === 'timedOut' ? 'Test timeout of ' + testInfo.timeout + 'ms exceeded.' : 'Test ended.';
     await Promise.all([...contexts.keys()].map(async context => {
       (context as any)[kStartedContextTearDown] = true;
       await (context as any)._wrapApiCall(async () => {
-        await context.close();
+        await context.close({ reason: closeReason });
       }, true);
       const testFailed = testInfo.status !== testInfo.expectedStatus;
       const preserveVideo = captureVideo && (videoMode === 'on' || (testFailed && videoMode === 'retain-on-failure') || (videoMode === 'on-first-retry' && testInfo.retry === 1));
@@ -374,7 +375,8 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     const context = await (browser as any)._newContextForReuse(defaultContextOptions);
     (context as any)[kIsReusedContext] = true;
     await use(context);
-    await (browser as any)._stopPendingOperations('Test ended');
+    const closeReason = testInfo.status === 'timedOut' ? 'Test timeout of ' + testInfo.timeout + 'ms exceeded.' : 'Test ended.';
+    await (browser as any)._stopPendingOperations(closeReason);
   },
 
   page: async ({ context, _reuseContext }, use) => {

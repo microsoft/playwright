@@ -170,6 +170,7 @@ export class Page extends SdkObject {
   // Aiming at 25 fps by default - each frame is 40ms, but we give some slack with 35ms.
   // When throttling for tracing, 200ms between frames, except for 10 frames around the action.
   private _frameThrottler = new FrameThrottler(10, 35, 200);
+  _closeReason: string | undefined;
 
   constructor(delegate: PageDelegate, browserContext: BrowserContext) {
     super(browserContext, 'page');
@@ -596,10 +597,12 @@ export class Page extends SdkObject {
         this._timeoutSettings.timeout(options));
   }
 
-  async close(metadata: CallMetadata, options?: { runBeforeUnload?: boolean }) {
+  async close(metadata: CallMetadata, options: { runBeforeUnload?: boolean, reason?: string } = {}) {
     if (this._closedState === 'closed')
       return;
-    const runBeforeUnload = !!options && !!options.runBeforeUnload;
+    if (options.reason)
+      this._closeReason = options.reason;
+    const runBeforeUnload = !!options.runBeforeUnload;
     if (this._closedState !== 'closing') {
       this._closedState = 'closing';
       // This might throw if the browser context containing the page closes
@@ -609,7 +612,7 @@ export class Page extends SdkObject {
     if (!runBeforeUnload)
       await this._closedPromise;
     if (this._ownedContext)
-      await this._ownedContext.close(metadata);
+      await this._ownedContext.close(options);
   }
 
   private _setIsError(error: Error) {

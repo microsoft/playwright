@@ -328,10 +328,7 @@ test('should report error and pending operations on timeout', async ({ runInline
       import { test, expect } from '@playwright/test';
       test('timedout', async ({ page }) => {
         await page.setContent('<div>Click me</div>');
-        await Promise.all([
-          page.getByText('Missing').click(),
-          page.getByText('More missing').textContent(),
-        ]);
+        await page.getByText('Missing').click();
       });
     `,
   }, { workers: 1, timeout: 2000 });
@@ -339,8 +336,8 @@ test('should report error and pending operations on timeout', async ({ runInline
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(1);
-  expect(result.output).toContain('Error: locator.textContent: Target page, context or browser has been closed');
-  expect(result.output).toContain('a.test.ts:7:42');
+  expect(result.output).toContain('Error: locator.click: Test timeout of 2000ms exceeded.');
+  expect(result.output).toContain('a.test.ts:5:41');
 });
 
 test('should report error on timeout with shared page', async ({ runInlineTest }) => {

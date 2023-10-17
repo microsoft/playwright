@@ -197,7 +197,7 @@ export class PlaywrightServer {
 
     debugLogger.log('server', 'closing browsers');
     if (this._preLaunchedPlaywright)
-      await Promise.all(this._preLaunchedPlaywright.allBrowsers().map(browser => browser.close()));
+      await Promise.all(this._preLaunchedPlaywright.allBrowsers().map(browser => browser.close({ reason: 'Playwright Server stopped' })));
     debugLogger.log('server', 'closed browsers');
   }
 }
