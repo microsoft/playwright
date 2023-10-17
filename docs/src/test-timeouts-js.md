@@ -9,8 +9,8 @@ Playwright Test has multiple configurable timeouts for various tasks.
 
 |Timeout    |Default             |Description                      |
 |:----------|:----------------|:--------------------------------|
-|Test timeout|30000 ms|Timeout for each test, includes test, hooks and fixtures:<br/><span style={{textTransform:'uppercase',fontSize:'smaller',fontWeight:'bold',opacity:'0.6'}}>Set default</span><br/><code>{`config = { timeout: 60000 }`}</code><br/><span style={{textTransform: 'uppercase',fontSize: 'smaller', fontWeight: 'bold', opacity: '0.6'}}>Override</span><br/>`test.setTimeout(120000)` |
-|Expect timeout|5000 ms|Timeout for each assertion:<br/><span style={{textTransform:'uppercase',fontSize:'smaller',fontWeight:'bold',opacity:'0.6'}}>Set default</span><br/><code>{`config = { expect: { timeout: 10000 } }`}</code><br/><span style={{textTransform: 'uppercase',fontSize: 'smaller', fontWeight: 'bold', opacity: '0.6'}}>Override</span><br/>`expect(locator).toBeVisible({ timeout: 10000 })` |
+|Test timeout|30000 ms|Timeout for each test, includes test, hooks and fixtures:<br/><span style={{textTransform:'uppercase',fontSize:'smaller',fontWeight:'bold',opacity:'0.7'}}>Set default</span><br/><code>{`config = { timeout: 60000 }`}</code><br/><span style={{textTransform: 'uppercase',fontSize: 'smaller', fontWeight: 'bold', opacity: '0.7'}}>Override</span><br/>`test.setTimeout(120000)` |
+|Expect timeout|5000 ms|Timeout for each assertion:<br/><span style={{textTransform:'uppercase',fontSize:'smaller',fontWeight:'bold',opacity:'0.7'}}>Set default</span><br/><code>{`config = { expect: { timeout: 10000 } }`}</code><br/><span style={{textTransform: 'uppercase',fontSize: 'smaller', fontWeight: 'bold', opacity: '0.7'}}>Override</span><br/>`expect(locator).toBeVisible({ timeout: 10000 })` |
 
 ## Test timeout
 
@@ -144,11 +144,11 @@ If you happen to be in this section because your test are flaky, it is very like
 
 |Timeout    |Default             |Description                      |
 |:----------|:----------------|:--------------------------------|
-|Action timeout| no timeout |Timeout for each action:<br/><span style={{textTransform:'uppercase',fontSize:'smaller',fontWeight:'bold',opacity:'0.6'}}>Set default</span><br/><code>{`config = { use: { actionTimeout: 10000 } }`}</code><br/><span style={{textTransform: 'uppercase',fontSize: 'smaller', fontWeight: 'bold', opacity: '0.6'}}>Override</span><br/>`locator.click({ timeout: 10000 })` |
-|Navigation timeout| no timeout |Timeout for each navigation action:<br/><span style={{textTransform:'uppercase',fontSize:'smaller',fontWeight:'bold',opacity:'0.6'}}>Set default</span><br/><code>{`config = { use: { navigationTimeout: 30000 } }`}</code><br/><span style={{textTransform: 'uppercase',fontSize: 'smaller', fontWeight: 'bold', opacity: '0.6'}}>Override</span><br/>`page.goto('/', { timeout: 30000 })` |
-|Global timeout|no timeout |Global timeout for the whole test run:<br/><span style={{textTransform:'uppercase',fontSize:'smaller',fontWeight:'bold',opacity:'0.6'}}>Set in config</span><br/>`config = { globalTimeout: 60*60*1000 }`<br/> |
-|`beforeAll`/`afterAll` timeout|30000 ms|Timeout for the hook:<br/><span style={{textTransform:'uppercase',fontSize:'smaller',fontWeight:'bold',opacity:'0.6'}}>Set in hook</span><br/>`test.setTimeout(60000)`<br/> |
-|Fixture timeout|no timeout |Timeout for an individual fixture:<br/><span style={{textTransform:'uppercase',fontSize:'smaller',fontWeight:'bold',opacity:'0.6'}}>Set in fixture</span><br/>`{ scope: 'test', timeout: 30000 }`<br/> |
+|Action timeout| no timeout |Timeout for each action:<br/><span style={{textTransform:'uppercase',fontSize:'smaller',fontWeight:'bold',opacity:'0.7'}}>Set default</span><br/><code>{`config = { use: { actionTimeout: 10000 } }`}</code><br/><span style={{textTransform: 'uppercase',fontSize: 'smaller', fontWeight: 'bold', opacity: '0.7'}}>Override</span><br/>`locator.click({ timeout: 10000 })` |
+|Navigation timeout| no timeout |Timeout for each navigation action:<br/><span style={{textTransform:'uppercase',fontSize:'smaller',fontWeight:'bold',opacity:'0.7'}}>Set default</span><br/><code>{`config = { use: { navigationTimeout: 30000 } }`}</code><br/><span style={{textTransform: 'uppercase',fontSize: 'smaller', fontWeight: 'bold', opacity: '0.7'}}>Override</span><br/>`page.goto('/', { timeout: 30000 })` |
+|Global timeout|no timeout |Global timeout for the whole test run:<br/><span style={{textTransform:'uppercase',fontSize:'smaller',fontWeight:'bold',opacity:'0.7'}}>Set in config</span><br/>`config = { globalTimeout: 60*60*1000 }`<br/> |
+|`beforeAll`/`afterAll` timeout|30000 ms|Timeout for the hook:<br/><span style={{textTransform:'uppercase',fontSize:'smaller',fontWeight:'bold',opacity:'0.7'}}>Set in hook</span><br/>`test.setTimeout(60000)`<br/> |
+|Fixture timeout|no timeout |Timeout for an individual fixture:<br/><span style={{textTransform:'uppercase',fontSize:'smaller',fontWeight:'bold',opacity:'0.7'}}>Set in fixture</span><br/>`{ scope: 'test', timeout: 30000 }`<br/> |
 
 
 ### Set timeout for a single assertion
