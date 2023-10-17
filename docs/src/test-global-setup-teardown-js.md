@@ -35,7 +35,7 @@ export default defineConfig({
 Then we add the [`property: TestProject.dependencies`] property to our projects that depend on the setup project and pass into the array the name of of our dependency project, which we defined in the previous step:
 
 ```js title="playwright.config.ts"
-import { defineConfig } from '@playwright/test';
+import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './tests',
@@ -43,7 +43,7 @@ export default defineConfig({
   projects: [
     {
       name: 'setup',
-      testMatch: /global.setup\.ts/,
+      testMatch: /global\.setup\.ts/,
     },
     {
       name: 'chromium',
@@ -62,7 +62,7 @@ The setup project will write the storage state into an 'playwright/.auth/user.js
 In this example the 'logged in chromium' project depends on the setup project whereas the 'logged out chromium' project does not depend on the setup project, and does not use the `storageState` option.
 
 ```js title="playwright.config.ts"
-import { defineConfig } from '@playwright/test';
+import { defineConfig, devices } from '@playwright/test';
 
 export const STORAGE_STATE = path.join(__dirname, 'playwright/.auth/user.json');
 
@@ -75,7 +75,7 @@ export default defineConfig({
   projects: [
     {
       name: 'setup',
-      testMatch: /global.setup\.ts/,
+      testMatch: /global\.setup\.ts/,
     },
     {
       name: 'logged in chromium',
@@ -146,7 +146,7 @@ export default defineConfig({
     // },
     {
       name: 'cleanup db',
-      testMatch: /global.teardown\.ts/,
+      testMatch: /global\.teardown\.ts/,
     },
     // {
     //   other project
