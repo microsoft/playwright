@@ -19,7 +19,7 @@ import type * as channels from '@protocol/channels';
 import { serializeError } from '../../protocol/serializers';
 import { findValidator, ValidationError, createMetadataValidator, type ValidatorContext } from '../../protocol/validator';
 import { assert, isUnderTest, monotonicTime, rewriteErrorMessage } from '../../utils';
-import { TargetClosedError, isTargetClosedError, kTargetClosedErrorMessage, kTargetCrashedErrorMessage } from '../../common/errors';
+import { TargetClosedError, isTargetClosedError } from '../../common/errors';
 import type { CallMetadata } from '../instrumentation';
 import { SdkObject } from '../instrumentation';
 import type { PlaywrightDispatcher } from './playwrightDispatcher';
@@ -330,15 +330,17 @@ export class DispatcherConnection {
       const validator = findValidator(dispatcher._type, method, 'Result');
       callMetadata.result = validator(result, '', { tChannelImpl: this._tChannelImplToWire.bind(this), binary: this._isLocal ? 'buffer' : 'toBase64' });
     } catch (e) {
-      if (isTargetClosedError(e) && sdkObject)
-        rewriteErrorMessage(e, closeReason(sdkObject));
-      if (isProtocolError(e)) {
+      if (isTargetClosedError(e) && sdkObject) {
+        const reason = closeReason(sdkObject);
+        if (reason)
+          rewriteErrorMessage(e, reason);
+      } else if (isProtocolError(e)) {
         if (e.type === 'closed') {
-          const closedReason = sdkObject ? closeReason(sdkObject) : kTargetClosedErrorMessage;
-          rewriteErrorMessage(e, closedReason + e.browserLogMessage());
+          const reason = sdkObject ? closeReason(sdkObject) : undefined;
+          e = new TargetClosedError(reason, e.browserLogMessage());
+        } else if (e.type === 'crashed') {
+          rewriteErrorMessage(e, 'Target crashed ' + e.browserLogMessage());
         }
-        if (e.type === 'crashed')
-          rewriteErrorMessage(e, kTargetCrashedErrorMessage + e.browserLogMessage());
       }
       callMetadata.error = serializeError(e);
     } finally {
@@ -357,8 +359,8 @@ export class DispatcherConnection {
   }
 }
 
-function closeReason(sdkObject: SdkObject) {
+function closeReason(sdkObject: SdkObject): string | undefined {
   return sdkObject.attribution.page?._closeReason ||
     sdkObject.attribution.context?._closeReason ||
-    sdkObject.attribution.browser?._closeReason || kTargetClosedErrorMessage;
+    sdkObject.attribution.browser?._closeReason;
 }

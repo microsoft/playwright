@@ -19,7 +19,7 @@ import fs from 'fs';
 import path from 'path';
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
-import { isTargetClosedError, TargetClosedError, kTargetClosedErrorMessage } from '../common/errors';
+import { isTargetClosedError, TargetClosedError } from '../common/errors';
 import { urlMatches } from '../utils/network';
 import { TimeoutSettings } from '../common/timeoutSettings';
 import type * as channels from '@protocol/channels';
@@ -93,6 +93,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   readonly _timeoutSettings: TimeoutSettings;
   private _video: Video | null = null;
   readonly _opener: Page | null;
+  private _closeReason: string | undefined;
 
   static from(page: channels.PageChannel): Page {
     return (page as any)._object;
@@ -140,8 +141,8 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
 
     this.coverage = new Coverage(this._channel);
 
-    this.once(Events.Page.Close, () => this._closedOrCrashedScope.close(kTargetClosedErrorMessage));
-    this.once(Events.Page.Crash, () => this._closedOrCrashedScope.close(kTargetClosedErrorMessage));
+    this.once(Events.Page.Close, () => this._closedOrCrashedScope.close(this._closeErrorWithReason()));
+    this.once(Events.Page.Crash, () => this._closedOrCrashedScope.close(new TargetClosedError()));
 
     this._setEventToSubscriptionMapping(new Map<string, channels.PageUpdateSubscriptionParams['event']>([
       [Events.Page.Console, 'console'],
@@ -387,6 +388,10 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return this._waitForEvent(event, optionsOrPredicate, `waiting for event "${event}"`);
   }
 
+  _closeErrorWithReason(): TargetClosedError {
+    return new TargetClosedError(this._closeReason || this._browserContext._effectiveCloseReason());
+  }
+
   private async _waitForEvent(event: string, optionsOrPredicate: WaitForEventOptions, logLine?: string): Promise<any> {
     return this._wrapApiCall(async () => {
       const timeout = this._timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
@@ -398,7 +403,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
       if (event !== Events.Page.Crash)
         waiter.rejectOnEvent(this, Events.Page.Crash, new Error('Page crashed'));
       if (event !== Events.Page.Close)
-        waiter.rejectOnEvent(this, Events.Page.Close, new TargetClosedError());
+        waiter.rejectOnEvent(this, Events.Page.Close, () => this._closeErrorWithReason());
       const result = await waiter.waitForEvent(this, event, predicate as any);
       waiter.dispose();
       return result;
@@ -513,7 +518,8 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     await this._channel.bringToFront();
   }
 
-  async close(options: { runBeforeUnload?: boolean } = { runBeforeUnload: undefined }) {
+  async close(options: { runBeforeUnload?: boolean, reason?: string } = {}) {
+    this._closeReason = options.reason;
     try {
       if (this._ownedContext)
         await this._ownedContext.close();
