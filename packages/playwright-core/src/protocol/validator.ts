@@ -940,6 +940,7 @@ scheme.BrowserContextHarExportResult = tObject({
 });
 scheme.BrowserContextCreateTempFileParams = tObject({
   name: tString,
+  lastModifiedMs: tOptional(tNumber),
 });
 scheme.BrowserContextCreateTempFileResult = tObject({
   writableStream: tChannel(['WritableStream']),

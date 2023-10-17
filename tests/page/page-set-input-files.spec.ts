@@ -614,3 +614,14 @@ it('input should trigger events when files changed second time', async ({ page, 
   expect(await input.evaluate(e => (e as HTMLInputElement).files[0].name)).toBe('pptr.png');
   expect(await events.evaluate(e => e)).toEqual(['input', 'change']);
 });
+
+it('should preserve lastModified timestamp', async ({ page, asset }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/27452' });
+  await page.setContent(`<input type=file multiple=true/>`);
+  const input = page.locator('input');
+  const files = ['file-to-upload.txt', 'file-to-upload-2.txt'];
+  await input.setInputFiles(files.map(f => asset(f)));
+  expect(await input.evaluate(e => [...(e as HTMLInputElement).files].map(f => f.name))).toEqual(files);
+  const timestamps = await input.evaluate(e => [...(e as HTMLInputElement).files].map(f => f.lastModified));
+  expect(timestamps).toEqual(files.map(file => Math.trunc(fs.statSync(asset(file)).mtimeMs)));
+});

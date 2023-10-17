@@ -182,7 +182,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     await fs.promises.mkdir(tmpDir);
     this._context._tempDirs.push(tmpDir);
     const file = fs.createWriteStream(path.join(tmpDir, params.name));
-    return { writableStream: new WritableStreamDispatcher(this, file) };
+    return { writableStream: new WritableStreamDispatcher(this, file, params.lastModifiedMs) };
   }
 
   async setDefaultNavigationTimeoutNoReply(params: channels.BrowserContextSetDefaultNavigationTimeoutNoReplyParams) {

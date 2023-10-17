@@ -698,6 +698,22 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       await Promise.all([uploadFile, file1.filepath].map(fs.promises.unlink));
     });
 
+    test('setInputFiles should preserve lastModified timestamp', async ({ connect, startRemoteServer, asset }) => {
+      test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/27452' });
+      const remoteServer = await startRemoteServer(kind);
+      const browser = await connect(remoteServer.wsEndpoint());
+      const context = await browser.newContext();
+      const page = await context.newPage();
+
+      await page.setContent(`<input type=file multiple=true/>`);
+      const input = page.locator('input');
+      const files = ['file-to-upload.txt', 'file-to-upload-2.txt'];
+      await input.setInputFiles(files.map(f => asset(f)));
+      expect(await input.evaluate(e => [...(e as HTMLInputElement).files].map(f => f.name))).toEqual(files);
+      const timestamps = await input.evaluate(e => [...(e as HTMLInputElement).files].map(f => f.lastModified));
+      expect(timestamps).toEqual(files.map(file => Math.trunc(fs.statSync(asset(file)).mtimeMs)));
+    });
+
     test('should connect over http', async ({ connect, startRemoteServer, mode }) => {
       test.skip(mode !== 'default');
       const remoteServer = await startRemoteServer(kind);
