@@ -119,7 +119,7 @@ export abstract class Browser extends SdkObject {
     const download = this._downloads.get(uuid);
     if (!download)
       return;
-    download.artifact.reportFinished(error);
+    download.artifact.reportFinished(error ? new Error(error) : undefined);
     this._downloads.delete(uuid);
   }
 

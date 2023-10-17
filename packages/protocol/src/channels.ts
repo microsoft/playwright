@@ -3862,7 +3862,7 @@ export interface ArtifactChannel extends ArtifactEventTarget, Channel {
 export type ArtifactPathAfterFinishedParams = {};
 export type ArtifactPathAfterFinishedOptions = {};
 export type ArtifactPathAfterFinishedResult = {
-  value?: string,
+  value: string,
 };
 export type ArtifactSaveAsParams = {
   path: string,
@@ -3884,7 +3884,7 @@ export type ArtifactFailureResult = {
 export type ArtifactStreamParams = {};
 export type ArtifactStreamOptions = {};
 export type ArtifactStreamResult = {
-  stream?: StreamChannel,
+  stream: StreamChannel,
 };
 export type ArtifactCancelParams = {};
 export type ArtifactCancelOptions = {};

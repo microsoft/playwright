@@ -70,7 +70,7 @@ Upon successful cancellations, `download.failure()` would resolve to `'canceled'
 ## async method: Download.createReadStream
 * since: v1.8
 * langs: java, js, csharp
-- returns: <[null]|[Readable]>
+- returns: <[Readable]>
 
 Returns readable stream for current download or `null` if download failed.
 
@@ -93,7 +93,7 @@ Get the page that the download belongs to.
 
 ## async method: Download.path
 * since: v1.8
-- returns: <[null]|[path]>
+- returns: <[path]>
 
 Returns path to the downloaded file in case of successful download. The method will
 wait for the download to finish if necessary. The method throws when connected remotely.

@@ -3056,7 +3056,7 @@ Artifact:
 
     pathAfterFinished:
       returns:
-        value: string?
+        value: string
 
     # Blocks path/failure/delete/context.close until saved to the local |path|.
     saveAs:
@@ -3074,7 +3074,7 @@ Artifact:
 
     stream:
       returns:
-        stream: Stream?
+        stream: Stream
 
     cancel:
 
