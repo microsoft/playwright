@@ -36,6 +36,7 @@ type ErrorDetails = {
 
 type TestSummary = {
   skipped: number;
+  ignored: number;
   expected: number;
   interrupted: TestCase[];
   unexpected: TestCase[];
@@ -92,7 +93,7 @@ export class BaseReporter implements ReporterV2 {
   }
 
   onTestEnd(test: TestCase, result: TestResult) {
-    if (result.status !== 'skipped' && result.status !== test.expectedStatus)
+    if (result.status !== 'ignored' && result.status !== test.expectedStatus)
       ++this._failureCount;
     // Ignore any tests that are run in parallel.
     for (let suite: Suite | undefined = test.parent; suite; suite = suite.parent) {
@@ -158,7 +159,7 @@ export class BaseReporter implements ReporterV2 {
     return fileDurations.filter(([, duration]) => duration > threshold).slice(0, count);
   }
 
-  protected generateSummaryMessage({ skipped, expected, interrupted, unexpected, flaky, fatalErrors }: TestSummary) {
+  protected generateSummaryMessage({ skipped, ignored, expected, interrupted, unexpected, flaky, fatalErrors }: TestSummary) {
     const tokens: string[] = [];
     if (unexpected.length) {
       tokens.push(colors.red(`  ${unexpected.length} failed`));
@@ -177,6 +178,8 @@ export class BaseReporter implements ReporterV2 {
     }
     if (skipped)
       tokens.push(colors.yellow(`  ${skipped} skipped`));
+    if (ignored)
+      tokens.push(colors.yellow(`  ${ignored} ignored`));
     if (expected)
       tokens.push(colors.green(`  ${expected} passed`) + colors.dim(` (${milliseconds(this.result.duration)})`));
     if (this.result.status === 'timedout')
@@ -190,6 +193,7 @@ export class BaseReporter implements ReporterV2 {
   protected generateSummary(): TestSummary {
     let skipped = 0;
     let expected = 0;
+    let ignored = 0;
     const interrupted: TestCase[] = [];
     const interruptedToPrint: TestCase[] = [];
     const unexpected: TestCase[] = [];
@@ -202,6 +206,8 @@ export class BaseReporter implements ReporterV2 {
             if (test.results.some(result => !!result.error))
               interruptedToPrint.push(test);
             interrupted.push(test);
+          } else if (test.results.every(result => result.status === 'ignored')) {
+            ++ignored;
           } else {
             ++skipped;
           }
@@ -216,6 +222,7 @@ export class BaseReporter implements ReporterV2 {
     const failuresToPrint = [...unexpected, ...flaky, ...interruptedToPrint];
     return {
       skipped,
+      ignored,
       expected,
       interrupted,
       unexpected,

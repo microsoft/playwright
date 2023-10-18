@@ -111,7 +111,7 @@ test('should report subprocess creation error', async ({ runInlineTest }, testIn
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(1);
-  expect(result.skipped).toBe(1);
+  expect(result.ignored).toBe(1);
   expect(result.output).toContain('Error: worker process exited unexpectedly (code=42, signal=null)');
 });
 
@@ -150,7 +150,7 @@ test('should ignore subprocess creation error because of SIGINT', async ({ inter
   const result = parseTestRunnerOutput(testProcess.output);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(0);
-  expect(result.skipped).toBe(2);
+  expect(result.ignored).toBe(2);
   expect(result.output).not.toContain('worker process exited unexpectedly');
 });
 
@@ -190,7 +190,7 @@ test('sigint should stop workers', async ({ interactWithTestRunner }) => {
   const result = parseTestRunnerOutput(testProcess.output);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(0);
-  expect(result.skipped).toBe(2);
+  expect(result.ignored).toBe(2);
   expect(result.interrupted).toBe(2);
   expect(result.output).toContain('%%SEND-SIGINT%%1');
   expect(result.output).toContain('%%SEND-SIGINT%%2');
@@ -405,7 +405,7 @@ test('should not hang if test suites in worker are inconsistent with runner', as
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(1);
   expect(result.failed).toBe(1);
-  expect(result.skipped).toBe(1);
+  expect(result.ignored).toBe(1);
   expect(result.report.suites[0].specs[1].tests[0].results[0].error!.message).toBe('Test(s) not found in the worker process. Make sure test titles do not change:\nproject-name > a.spec.js > Test 1 - bar\nproject-name > a.spec.js > Test 2 - baz');
 });
 
@@ -638,7 +638,7 @@ test('should not hang on worker error in test file', async ({ runInlineTest }) =
   expect(result.exitCode).toBe(1);
   expect(result.results[0].status).toBe('failed');
   expect(result.results[0].error.message).toContain('Error: worker process exited unexpectedly');
-  expect(result.results[1].status).toBe('skipped');
+  expect(result.results[1].status).toBe('ignored');
 });
 
 test('fast double SIGINT should be ignored', async ({ interactWithTestRunner }) => {

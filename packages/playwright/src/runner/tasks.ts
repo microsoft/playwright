@@ -279,7 +279,7 @@ function createRunTestsTask(): Task<TestRun> {
           } else {
             for (const testGroup of testGroups) {
               for (const test of testGroup.tests)
-                test._appendTestResult().status = 'skipped';
+                test._appendTestResult().status = 'ignored';
             }
           }
         }

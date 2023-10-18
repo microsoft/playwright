@@ -1864,7 +1864,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   configFile?: string;
 }
 
-export type TestStatus = 'passed' | 'failed' | 'timedOut' | 'skipped' | 'interrupted';
+export type TestStatus = 'passed' | 'failed' | 'timedOut' | 'skipped' | 'interrupted' | 'ignored';
 
 /**
  * `WorkerInfo` contains information about the worker that is running tests and is available to worker-scoped
@@ -2186,7 +2186,7 @@ export interface TestInfo {
    * ```
    *
    */
-  expectedStatus: "passed"|"failed"|"timedOut"|"skipped"|"interrupted";
+  expectedStatus: "passed"|"failed"|"timedOut"|"skipped"|"interrupted"|"ignored";
 
   /**
    * Absolute path to a file where the currently running test is declared.
@@ -2290,7 +2290,7 @@ export interface TestInfo {
    * ```
    *
    */
-  status?: "passed"|"failed"|"timedOut"|"skipped"|"interrupted";
+  status?: "passed"|"failed"|"timedOut"|"skipped"|"interrupted"|"ignored";
 
   /**
    * Output written to `process.stderr` or `console.error` during the test execution.

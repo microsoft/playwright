@@ -99,7 +99,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   // [internal] !!! DO NOT ADD TO THIS !!! See prior note.
 }
 
-export type TestStatus = 'passed' | 'failed' | 'timedOut' | 'skipped' | 'interrupted';
+export type TestStatus = 'passed' | 'failed' | 'timedOut' | 'skipped' | 'interrupted' | 'ignored';
 
 export interface WorkerInfo {
   config: FullConfig;

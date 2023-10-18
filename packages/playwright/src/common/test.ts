@@ -22,6 +22,7 @@ import { rootTestType } from './testType';
 import type { Annotation, FixturesWithLocation, FullProjectInternal } from './config';
 import type { FullProject } from '../../types/test';
 import type { Location } from '../../types/testReporter';
+import { calculateTestOutcome } from '../isomorphic/outcome';
 
 class Base {
   title: string;
@@ -256,21 +257,7 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   }
 
   outcome(): 'skipped' | 'expected' | 'unexpected' | 'flaky' {
-    // Ignore initial skips that may be a result of "skipped because previous test in serial mode failed".
-    const results = [...this.results];
-    while (results[0]?.status === 'skipped' || results[0]?.status === 'interrupted')
-      results.shift();
-
-    // All runs were skipped.
-    if (!results.length)
-      return 'skipped';
-
-    const failures = results.filter(result => result.status !== 'skipped' && result.status !== 'interrupted' && result.status !== this.expectedStatus);
-    if (!failures.length) // all passed
-      return 'expected';
-    if (failures.length === results.length) // all failed
-      return 'unexpected';
-    return 'flaky'; // mixed bag
+    return calculateTestOutcome(this.expectedStatus, this.results.map(result => result.status));
   }
 
   ok(): boolean {
@@ -331,7 +318,7 @@ export class TestCase extends Base implements reporterTypes.TestCase {
       stdout: [],
       stderr: [],
       attachments: [],
-      status: 'skipped',
+      status: 'ignored',
       steps: [],
       errors: [],
     };

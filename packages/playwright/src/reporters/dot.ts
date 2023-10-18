@@ -49,7 +49,7 @@ class DotReporter extends BaseReporter {
       this._counter = 0;
     }
     ++this._counter;
-    if (result.status === 'skipped') {
+    if (result.status === 'skipped' || result.status === 'ignored') {
       process.stdout.write(colors.yellow('°'));
       return;
     }

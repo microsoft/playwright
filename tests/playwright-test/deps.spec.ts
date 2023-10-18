@@ -133,7 +133,7 @@ test('should not run project if dependency failed', async ({ runInlineTest }) =>
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(1);
   expect(result.failed).toBe(1);
-  expect(result.skipped).toBe(1);
+  expect(result.ignored).toBe(1);
   expect(result.output).toContain('Failed project B');
   expect(result.outputLines).toEqual(['A', 'B']);
 });
@@ -318,7 +318,7 @@ test('should report skipped dependent tests', async ({ runInlineTest }) => {
   });
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
-  expect(result.skipped).toBe(1);
+  expect(result.ignored).toBe(1);
   expect(result.results.length).toBe(2);
 });
 
@@ -499,7 +499,7 @@ test('should run teardown after failure', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(1);
   expect(result.failed).toBe(1);
-  expect(result.skipped).toBe(2);
+  expect(result.ignored).toBe(2);
   expect(result.outputLines).toEqual(['A', 'D']);
 });
 

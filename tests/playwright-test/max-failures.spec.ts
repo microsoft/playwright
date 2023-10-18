@@ -111,7 +111,7 @@ test('max-failures should stop workers', async ({ runInlineTest }) => {
   expect(result.passed).toBe(2);
   expect(result.failed).toBe(1);
   expect(result.interrupted).toBe(1);
-  expect(result.skipped).toBe(1);
+  expect(result.ignored).toBe(1);
   expect(result.output).toContain('%%interrupted');
   expect(result.output).not.toContain('%%skipped');
 });
@@ -177,7 +177,7 @@ test('max-failures should work across phases', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
   expect(result.passed).toBe(2);
-  expect(result.skipped).toBe(1);
+  expect(result.ignored).toBe(1);
   expect(result.output).toContain('running a');
   expect(result.output).toContain('running b');
   expect(result.output).toContain('running c');

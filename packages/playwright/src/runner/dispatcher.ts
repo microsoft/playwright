@@ -141,9 +141,9 @@ export class Dispatcher {
       return;
 
     for (const test of this._allTests) {
-      // Emulate skipped test run if we have stopped early.
+      // Emulate an ignored test run if we have stopped early.
       if (!test.results.length)
-        test._appendTestResult().status = 'skipped';
+        test._appendTestResult().status = 'ignored';
     }
     this._finished.resolve();
   }
@@ -295,7 +295,7 @@ class JobDispatcher {
     test.expectedStatus = params.expectedStatus;
     test.annotations = params.annotations;
     test.timeout = params.timeout;
-    const isFailure = result.status !== 'skipped' && result.status !== test.expectedStatus;
+    const isFailure = result.status !== 'ignored' && result.status !== test.expectedStatus;
     if (isFailure)
       this._failedTests.add(test);
     this._reportTestEnd(test, result);
@@ -362,7 +362,7 @@ class JobDispatcher {
     data.result.attachments.push(attachment);
   }
 
-  private _massSkipTestsFromRemaining(testIds: Set<string>, errors: TestError[], onlyStartedTests?: boolean) {
+  private _massIgnoreTestsFromRemaining(testIds: Set<string>, errors: TestError[], onlyStartedTests?: boolean, setStatus: 'skipped' | 'ignored' = 'ignored') {
     for (const test of this._remainingByTestId.values()) {
       if (!testIds.has(test.id))
         continue;
@@ -380,7 +380,7 @@ class JobDispatcher {
         }
         result.errors = [...errors];
         result.error = result.errors[0];
-        result.status = errors.length ? 'failed' : 'skipped';
+        result.status = errors.length ? 'failed' : setStatus;
         this._reportTestEnd(test, result);
         this._failedTests.add(test);
         errors = []; // Only report errors for the first test.
@@ -411,20 +411,20 @@ class JobDispatcher {
         const test = this._remainingByTestId.get(testId);
         return test?.titlePath().slice(1).join(' > ');
       }).filter(title => !!title);
-      this._massSkipTestsFromRemaining(new Set(params.fatalUnknownTestIds), [{
+      this._massIgnoreTestsFromRemaining(new Set(params.fatalUnknownTestIds), [{
         message: `Test(s) not found in the worker process. Make sure test titles do not change:\n${titles.join('\n')}`
       }]);
     }
     if (params.fatalErrors.length) {
       // In case of fatal errors, report first remaining test as failing with these errors,
       // and all others as skipped.
-      this._massSkipTestsFromRemaining(new Set(this._remainingByTestId.keys()), params.fatalErrors);
+      this._massIgnoreTestsFromRemaining(new Set(this._remainingByTestId.keys()), params.fatalErrors);
     }
     // Handle tests that should be skipped because of the setup failure.
-    this._massSkipTestsFromRemaining(new Set(params.skipTestsDueToSetupFailure), []);
+    this._massIgnoreTestsFromRemaining(new Set(params.skipTestsDueToSetupFailure), []);
     // Handle unexpected worker exit.
     if (params.unexpectedExitError)
-      this._massSkipTestsFromRemaining(new Set(this._remainingByTestId.keys()), [params.unexpectedExitError], true /* onlyStartedTests */);
+      this._massIgnoreTestsFromRemaining(new Set(this._remainingByTestId.keys()), [params.unexpectedExitError], true /* onlyStartedTests */);
 
     const retryCandidates = new Set<TestCase>();
     const serialSuitesWithFailures = new Set<Suite>();
@@ -449,7 +449,7 @@ class JobDispatcher {
         parent = parent.parent;
       return !!parent;
     });
-    this._massSkipTestsFromRemaining(new Set(testsBelongingToSomeSerialSuiteWithFailures.map(test => test.id)), []);
+    this._massIgnoreTestsFromRemaining(new Set(testsBelongingToSomeSerialSuiteWithFailures.map(test => test.id)), []);
 
     for (const serialSuite of serialSuitesWithFailures) {
       // Add all tests from failed serial suites for possible retry.
@@ -514,7 +514,7 @@ class JobDispatcher {
     // for a better reporter experience.
     const allTestsSkipped = this._job.tests.every(test => test.expectedStatus === 'skipped');
     if (allTestsSkipped) {
-      this._massSkipTestsFromRemaining(new Set(this._remainingByTestId.keys()), []);
+      this._massIgnoreTestsFromRemaining(new Set(this._remainingByTestId.keys()), [], undefined, 'skipped');
       return true;
     }
     return false;

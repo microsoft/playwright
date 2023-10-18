@@ -2,6 +2,7 @@
 ../util.ts
 ../utilsBundle.ts
 ../transform
+../isomorphic
 
 [testType.ts]
 ../matchers/expect.ts

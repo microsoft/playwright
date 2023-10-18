@@ -885,7 +885,7 @@ function createTree(rootSuite: Suite | undefined, loadErrors: TestError[], proje
         status = 'running';
       else if (result?.status === 'skipped')
         status = 'skipped';
-      else if (result?.status === 'interrupted')
+      else if (result?.status === 'interrupted' || result?.status === 'ignored')
         status = 'none';
       else if (result && test.outcome() !== 'expected')
         status = 'failed';

@@ -21,6 +21,7 @@ import type * as reporterTypes from '../../types/testReporter';
 import type { SuitePrivate } from '../../types/reporterPrivate';
 import type { ReporterV2 } from '../reporters/reporterV2';
 import { StringInternPool } from './stringInternPool';
+import { calculateTestOutcome } from './outcome';
 
 export type JsonLocation = Location;
 export type JsonError = string;
@@ -493,21 +494,7 @@ export class TeleTestCase implements reporterTypes.TestCase {
   }
 
   outcome(): 'skipped' | 'expected' | 'unexpected' | 'flaky' {
-    // Ignore initial skips that may be a result of "skipped because previous test in serial mode failed".
-    const results = [...this.results];
-    while (results[0]?.status === 'skipped' || results[0]?.status === 'interrupted')
-      results.shift();
-
-    // All runs were skipped.
-    if (!results.length)
-      return 'skipped';
-
-    const failures = results.filter(result => result.status !== 'skipped' && result.status !== 'interrupted' && result.status !== this.expectedStatus);
-    if (!failures.length) // all passed
-      return 'expected';
-    if (failures.length === results.length) // all failed
-      return 'unexpected';
-    return 'flaky'; // mixed bag
+    return calculateTestOutcome(this.expectedStatus, this.results.map(result => result.status));
   }
 
   ok(): boolean {

@@ -169,7 +169,7 @@ class ListReporter extends BaseReporter {
     let prefix = '';
     let text = '';
     const index = this._resultIndex.get(result)!;
-    if (result.status === 'skipped') {
+    if (result.status === 'skipped' || result.status === 'ignored') {
       prefix = this._testPrefix(index, colors.green('-'));
       // Do not show duration for skipped.
       text = colors.cyan(title) + this._retrySuffix(result);

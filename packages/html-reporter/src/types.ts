@@ -96,7 +96,7 @@ export type TestResult = {
   steps: TestStep[];
   errors: string[];
   attachments: TestAttachment[];
-  status: 'passed' | 'failed' | 'timedOut' | 'skipped' | 'interrupted';
+  status: 'passed' | 'failed' | 'timedOut' | 'skipped' | 'interrupted' | 'ignored';
 };
 
 export type TestStep = {
