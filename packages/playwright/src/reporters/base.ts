@@ -54,6 +54,7 @@ export class BaseReporter implements ReporterV2 {
   private readonly _ttyWidthForTest: number;
   private _fatalErrors: TestError[] = [];
   private _failureCount: number = 0;
+  private _maxFailures: number = 0;
 
   constructor(options: { omitFailures?: boolean } = {}) {
     this._omitFailures = options.omitFailures || false;
@@ -71,6 +72,9 @@ export class BaseReporter implements ReporterV2 {
   onBegin(suite: Suite) {
     this.suite = suite;
     this.totalTestCount = suite.allTests().length;
+
+    const maxFailures = this.config.maxFailures;
+    this._maxFailures = Number.isInteger(maxFailures) ? maxFailures : Math.ceil(maxFailures * this.totalTestCount);
   }
 
   onStdOut(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
@@ -254,14 +258,11 @@ export class BaseReporter implements ReporterV2 {
   }
 
   private _printMaxFailuresReached() {
-    let maxFailures = this.config.maxFailures;
-    maxFailures = Number.isInteger(maxFailures) ? maxFailures : Math.ceil(maxFailures * this.totalTestCount);
-
-    if (!maxFailures)
+    if (!this._maxFailures)
       return;
-    if (this._failureCount < maxFailures)
+    if (this._failureCount < this._maxFailures)
       return;
-    console.log(colors.yellow(`Testing stopped early after ${maxFailures} maximum allowed failures.`));
+    console.log(colors.yellow(`Testing stopped early after ${this._maxFailures} maximum allowed failures.`));
   }
 
   private _printSummary(summary: string) {

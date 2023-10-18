@@ -856,11 +856,11 @@ interface TestConfig {
    * this number, testing will stop and exit with an error. Setting to zero (default) disables this behavior.
    *
    * Can be specified as:
-   * - static value (positive integer number);
-   * - dynamic value (positive float number less than 1) relative to the total number of tests.
+   * - static value - positive integer number;
+   * - dynamic value - percentage relative to the total number of tests.
    *
-   * For example, if 100 tests are run in the project and the `maxFailures` is set to 0.3 (dynamic value), then when 30
-   * tests are failed, testing will stop. When using a static value you just need to specify 30.
+   * For example, if 100 tests are run in the project and the `maxFailures` is set to `'30%'` (dynamic value), then when
+   * 30 tests are failed, testing will stop. When using a static value you just need to specify `30``.
    *
    * Use dynamic value if you don't want to keep it up to date as the number of tests increases.
    *
@@ -873,7 +873,7 @@ interface TestConfig {
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
-   *   maxFailures: process.env.CI ? 0.3 : 0,
+   *   maxFailures: process.env.CI ? '30%' : 0,
    * });
    * ```
    *
@@ -1596,11 +1596,11 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    * this number, testing will stop and exit with an error. Setting to zero (default) disables this behavior.
    *
    * Can be specified as:
-   * - static value (positive integer number);
-   * - dynamic value (positive float number less than 1) relative to the total number of tests.
+   * - static value - positive integer number;
+   * - dynamic value - percentage relative to the total number of tests.
    *
-   * For example, if 100 tests are run in the project and the `maxFailures` is set to 0.3 (dynamic value), then when 30
-   * tests are failed, testing will stop. When using a static value you just need to specify 30.
+   * For example, if 100 tests are run in the project and the `maxFailures` is set to `'30%'` (dynamic value), then when
+   * 30 tests are failed, testing will stop. When using a static value you just need to specify `30``.
    *
    * Use dynamic value if you don't want to keep it up to date as the number of tests increases.
    *
@@ -1613,7 +1613,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
-   *   maxFailures: process.env.CI ? 0.3 : 0,
+   *   maxFailures: process.env.CI ? '30%' : 0,
    * });
    * ```
    *

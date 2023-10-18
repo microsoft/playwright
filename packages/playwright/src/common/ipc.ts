@@ -23,7 +23,7 @@ export type ConfigCLIOverrides = {
   forbidOnly?: boolean;
   fullyParallel?: boolean;
   globalTimeout?: number;
-  maxFailures?: number;
+  maxFailures?: number | string;
   outputDir?: string;
   quiet?: boolean;
   repeatEach?: number;

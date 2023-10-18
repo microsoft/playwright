@@ -208,7 +208,7 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
     forbidOnly: options.forbidOnly ? true : undefined,
     fullyParallel: options.fullyParallel ? true : undefined,
     globalTimeout: options.globalTimeout ? parseInt(options.globalTimeout, 10) : undefined,
-    maxFailures: options.x ? 1 : (options.maxFailures ? parseFloat(options.maxFailures) : undefined),
+    maxFailures: options.x ? 1 : options.maxFailures,
     outputDir: options.output ? path.resolve(process.cwd(), options.output) : undefined,
     quiet: options.quiet ? options.quiet : undefined,
     repeatEach: options.repeatEach ? parseInt(options.repeatEach, 10) : undefined,

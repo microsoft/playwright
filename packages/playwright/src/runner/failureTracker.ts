@@ -23,6 +23,7 @@ export class FailureTracker {
   private _failureCount = 0;
   private _hasWorkerErrors = false;
   private _rootSuite: Suite | undefined;
+  private _maxFailures: number = 0;
 
   constructor(private _config: FullConfigInternal) {
   }
@@ -30,6 +31,7 @@ export class FailureTracker {
   onRootSuite(rootSuite: Suite) {
     this._rootSuite = rootSuite;
     this._totalTestCount = this._rootSuite.allTests().length;
+    this._maxFailures = this._calcMaxFailures();
   }
 
   onTestEnd(test: TestCase, result: TestResult) {
@@ -42,10 +44,7 @@ export class FailureTracker {
   }
 
   hasReachedMaxFailures() {
-    let maxFailures = this._config.config.maxFailures;
-    maxFailures = Number.isInteger(maxFailures) ? maxFailures : Math.ceil(maxFailures * this._totalTestCount);
-
-    return maxFailures > 0 && this._failureCount >= maxFailures;
+    return this._maxFailures > 0 && this._failureCount >= this._maxFailures;
   }
 
   hasWorkerErrors() {
@@ -54,5 +53,11 @@ export class FailureTracker {
 
   result(): 'failed' | 'passed' {
     return this._hasWorkerErrors || this._rootSuite?.allTests().some(test => !test.ok()) ? 'failed' : 'passed';
+  }
+
+  private _calcMaxFailures() {
+    const maxFailures = this._config.config.maxFailures;
+
+    return Number.isInteger(maxFailures) ? maxFailures : Math.ceil(maxFailures * this._totalTestCount);
   }
 }

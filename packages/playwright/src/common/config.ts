@@ -206,8 +206,13 @@ function pathResolve(baseDir: string, relative: string | undefined): string | un
   return path.resolve(baseDir, relative);
 }
 
-function handleMaxFailures(maxFailures: number): number {
-  return !Number.isInteger(maxFailures) && maxFailures < 1 ? maxFailures : Math.trunc(maxFailures);
+function handleMaxFailures(maxFailures: number | string): number {
+  if (typeof maxFailures === 'string') {
+    const parsedMaxFailures = parseInt(maxFailures, 10);
+    return maxFailures.endsWith('%') ? Math.min(0.99, parsedMaxFailures / 100) : parsedMaxFailures;
+  }
+
+  return maxFailures;
 }
 
 function resolveReporters(reporters: Config['reporter'], rootDir: string): ReporterDescription[] | undefined {

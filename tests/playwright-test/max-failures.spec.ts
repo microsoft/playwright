@@ -60,7 +60,7 @@ test('max-failures should work with dynamic value', async ({ runInlineTest }) =>
         });
       }
     `
-  }, { 'max-failures': 0.5 });
+  }, { 'max-failures': '50%' });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(10);
   expect(result.output.split('\n').filter(l => l.includes('expect(')).length).toBe(20);
