@@ -16,14 +16,17 @@
 
 import type * as channels from '@protocol/channels';
 import { Dispatcher } from './dispatcher';
-import type * as fs from 'fs';
+import * as fs from 'fs';
 import { createGuid } from '../../utils';
 import type { BrowserContextDispatcher } from './browserContextDispatcher';
 
 export class WritableStreamDispatcher extends Dispatcher<{ guid: string, stream: fs.WriteStream }, channels.WritableStreamChannel, BrowserContextDispatcher> implements channels.WritableStreamChannel {
   _type_WritableStream = true;
-  constructor(scope: BrowserContextDispatcher, stream: fs.WriteStream) {
+  private _lastModifiedMs: number | undefined;
+
+  constructor(scope: BrowserContextDispatcher, stream: fs.WriteStream, lastModifiedMs?: number) {
     super(scope, { guid: 'writableStream@' + createGuid(), stream }, 'WritableStream', {});
+    this._lastModifiedMs = lastModifiedMs;
   }
 
   async write(params: channels.WritableStreamWriteParams): Promise<channels.WritableStreamWriteResult> {
@@ -41,6 +44,8 @@ export class WritableStreamDispatcher extends Dispatcher<{ guid: string, stream:
   async close() {
     const stream = this._object.stream;
     await new Promise<void>(fulfill => stream.end(fulfill));
+    if (this._lastModifiedMs)
+      await fs.promises.utimes(this.path(), new Date(this._lastModifiedMs), new Date(this._lastModifiedMs));
   }
 
   path(): string {

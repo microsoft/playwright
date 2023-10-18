@@ -1702,9 +1702,10 @@ export type BrowserContextHarExportResult = {
 };
 export type BrowserContextCreateTempFileParams = {
   name: string,
+  lastModifiedMs?: number,
 };
 export type BrowserContextCreateTempFileOptions = {
-
+  lastModifiedMs?: number,
 };
 export type BrowserContextCreateTempFileResult = {
   writableStream: WritableStreamChannel,

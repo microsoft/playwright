@@ -402,9 +402,10 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
   async setInputFiles(selector: string, files: string | FilePayload | string[] | FilePayload[], options: channels.FrameSetInputFilesOptions = {}): Promise<void> {
     const converted = await convertInputFiles(files, this.page().context());
     if (converted.files) {
+      debugLogger.log('api', 'setting input buffers');
       await this._channel.setInputFiles({ selector, files: converted.files, ...options });
     } else {
-      debugLogger.log('api', 'switching to large files mode');
+      debugLogger.log('api', 'setting input file paths');
       await this._channel.setInputFilePaths({ selector, ...converted, ...options });
     }
   }

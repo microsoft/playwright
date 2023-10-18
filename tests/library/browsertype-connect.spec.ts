@@ -698,6 +698,26 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       await Promise.all([uploadFile, file1.filepath].map(fs.promises.unlink));
     });
 
+    test('setInputFiles should preserve lastModified timestamp', async ({ connect, startRemoteServer, asset }) => {
+      test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/27452' });
+      const remoteServer = await startRemoteServer(kind);
+      const browser = await connect(remoteServer.wsEndpoint());
+      const context = await browser.newContext();
+      const page = await context.newPage();
+
+      await page.setContent(`<input type=file multiple=true/>`);
+      const input = page.locator('input');
+      const files = ['file-to-upload.txt', 'file-to-upload-2.txt'];
+      await input.setInputFiles(files.map(f => asset(f)));
+      expect(await input.evaluate(e => [...(e as HTMLInputElement).files].map(f => f.name))).toEqual(files);
+      const timestamps = await input.evaluate(e => [...(e as HTMLInputElement).files].map(f => f.lastModified));
+      const expectedTimestamps = files.map(file => Math.round(fs.statSync(asset(file)).mtimeMs));
+      // On Linux browser sometimes reduces the timestamp by 1ms: 1696272058110.0715  -> 1696272058109 or even
+      // rounds it to seconds in WebKit: 1696272058110 -> 1696272058000.
+      for (let i = 0; i < timestamps.length; i++)
+        expect(Math.abs(timestamps[i] - expectedTimestamps[i]), `expected: ${expectedTimestamps}; actual: ${timestamps}`).toBeLessThan(1000);
+    });
+
     test('should connect over http', async ({ connect, startRemoteServer, mode }) => {
       test.skip(mode !== 'default');
       const remoteServer = await startRemoteServer(kind);
