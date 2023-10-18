@@ -622,6 +622,6 @@ it('should preserve lastModified timestamp', async ({ page, asset }) => {
   const files = ['file-to-upload.txt', 'file-to-upload-2.txt'];
   await input.setInputFiles(files.map(f => asset(f)));
   expect(await input.evaluate(e => [...(e as HTMLInputElement).files].map(f => f.name))).toEqual(files);
-  const timestamps = await input.evaluate(e => [...(e as HTMLInputElement).files].map(f => f.lastModified));
-  expect(timestamps).toEqual(files.map(file => Math.trunc(fs.statSync(asset(file)).mtimeMs)));
+  const timestamps = await input.evaluate(e => [...(e as HTMLInputElement).files].map(f => new Date(f.lastModified)));
+  expect(timestamps).toEqual(files.map(file => fs.statSync(asset(file)).mtime));
 });
