@@ -753,3 +753,49 @@ test('should use custom expect message in trace', async ({ runInlineTest }, test
     '  fixture: context',
   ]);
 });
+
+test('should not throw when merging traces multiple times', async ({ runInlineTest }, testInfo) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/27286' });
+
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { use: { trace: 'on' } };
+    `,
+    'a.spec.ts': `
+      import { BrowserContext, expect, Page, test as baseTest } from '@playwright/test';
+
+      let pg: Page;
+      let ctx: BrowserContext;
+
+      const test = baseTest.extend({
+        page: async ({}, use) => {
+          await use(pg);
+        },
+        context: async ({}, use) => {
+          await use(ctx);
+        },
+      });
+
+      test.beforeAll(async ({ browser }) => {
+        ctx = await browser.newContext();
+        pg = await ctx.newPage();
+      });
+
+      test.beforeAll(async ({ page }) => {
+        await page.goto('https://playwright.dev');
+      });
+
+      test.afterAll(async ({ context }) => {
+        await context.close();
+      });
+
+      test('foo', async ({ page }) => {
+        await expect(page.locator('h1')).toContainText('Playwright');
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-foo', 'trace.zip'))).toBe(true);
+});

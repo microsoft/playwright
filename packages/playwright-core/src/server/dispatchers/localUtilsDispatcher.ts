@@ -139,7 +139,7 @@ export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.
               zipFile.outputStream.pipe(fs.createWriteStream(params.zipFile)).on('close', () => {
                 fs.promises.unlink(tempFile).then(() => {
                   promise.resolve();
-                });
+                }).catch(error => promise.reject(error));
               });
             });
           }
