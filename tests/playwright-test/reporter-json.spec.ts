@@ -18,7 +18,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { test, expect, stripAnsi } from './playwright-test-fixtures';
 
-test('should support spec.ok', async ({ runInlineTest }) => {
+test('should support spec.ok and stats', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
       import { test, expect } from '@playwright/test';
@@ -28,11 +28,18 @@ test('should support spec.ok', async ({ runInlineTest }) => {
       test('math fails!', async ({}) => {
         expect(1 + 1).toBe(3);
       });
+      test.skip('math skipped', async ({}) => {
+      });
     `
   }, { });
   expect(result.exitCode).toBe(1);
   expect(result.report.suites[0].specs[0].ok).toBe(true);
   expect(result.report.suites[0].specs[1].ok).toBe(false);
+  expect(result.report.suites[0].specs[2].ok).toBe(true);
+  expect(result.report.stats.expected).toEqual(1);
+  expect(result.report.stats.unexpected).toEqual(1);
+  expect(result.report.stats.flaky).toEqual(0);
+  expect(result.report.stats.skipped).toEqual(1);
 });
 
 test('should not report skipped due to sharding', async ({ runInlineTest }) => {

@@ -59,7 +59,7 @@ class JSONReporter extends EmptyReporter {
   }
 
   private _serializeReport(result: FullResult): JSONReport {
-    return {
+    const report: JSONReport = {
       config: {
         ...removePrivateFields(this.config),
         rootDir: toPosixPath(this.config.rootDir),
@@ -83,8 +83,15 @@ class JSONReporter extends EmptyReporter {
       stats: {
         startTime: result.startTime.toISOString(),
         duration: result.duration,
+        expected: 0,
+        skipped: 0,
+        unexpected: 0,
+        flaky: 0,
       },
     };
+    for (const test of this.suite.allTests())
+      ++report.stats[test.outcome()];
+    return report;
   }
 
   private _mergeSuites(suites: Suite[]): JSONReportSuite[] {
