@@ -270,8 +270,7 @@ export async function convertInputFiles(files: string | FilePayload | string[] |
     if (!items.every(item => typeof item === 'string'))
       throw new Error('File paths cannot be mixed with buffers');
     if (context._connection.isRemote()) {
-      const streams: channels.WritableStreamChannel[] = await Promise.all(items.map(async item => {
-        assert(isString(item));
+      const streams: channels.WritableStreamChannel[] = await Promise.all((items as string[]).map(async item => {
         const lastModifiedMs = (await fs.promises.stat(item)).mtimeMs;
         const { writableStream: stream } = await context._channel.createTempFile({ name: path.basename(item), lastModifiedMs });
         const writable = WritableStream.from(stream);
@@ -283,19 +282,13 @@ export async function convertInputFiles(files: string | FilePayload | string[] |
     return { localPaths: items.map(f => path.resolve(f as string)) as string[] };
   }
 
+  const payloads = items as FilePayload[];
   const sizeLimit = 50 * 1024 * 1024;
-  const totalBufferSizeExceedsLimit = items.reduce((size, item) => size + ((typeof item === 'object' && item.buffer) ? item.buffer.byteLength : 0), 0) > sizeLimit;
+  const totalBufferSizeExceedsLimit = payloads.reduce((size, item) => size + (item.buffer ? item.buffer.byteLength : 0), 0) > sizeLimit;
   if (totalBufferSizeExceedsLimit)
     throw new Error('Cannot set buffer larger than 50Mb, please write it to a file and pass its path instead.');
 
-  const filePayloads: SetInputFilesFiles = await Promise.all((items as FilePayload[]).map(async item => {
-    return {
-      name: item.name,
-      mimeType: item.mimeType,
-      buffer: item.buffer,
-    };
-  }));
-  return { files: filePayloads };
+  return { files: payloads };
 }
 
 export function determineScreenshotType(options: { path?: string, type?: 'png' | 'jpeg' }): 'png' | 'jpeg' | undefined {
