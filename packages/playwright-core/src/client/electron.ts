@@ -28,7 +28,7 @@ import { JSHandle, parseResult, serializeArgument } from './jsHandle';
 import type { Page } from './page';
 import type { Env, WaitForEventOptions, Headers, BrowserContextOptions } from './types';
 import { Waiter } from './waiter';
-import { TargetClosedError } from '../common/errors';
+import { TargetClosedError } from './errors';
 
 type ElectronOptions = Omit<channels.ElectronLaunchOptions, 'env'|'extraHTTPHeaders'|'recordHar'|'colorScheme'|'acceptDownloads'> & {
   env?: Env,

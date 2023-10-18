@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { TargetClosedError } from '../../common/errors';
+import { TargetClosedError } from '../errors';
 import { assert } from '../../utils';
 import type { BrowserOptions } from '../browser';
 import { Browser } from '../browser';

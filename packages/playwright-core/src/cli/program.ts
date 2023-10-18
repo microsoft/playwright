@@ -34,7 +34,7 @@ import { spawn } from 'child_process';
 import { wrapInASCIIBox, isLikelyNpxGlobal, assert, gracefullyProcessExitDoNotHang, getPackageManagerExecCommand } from '../utils';
 import type { Executable } from '../server';
 import { registry, writeDockerVersion } from '../server';
-import { isTargetClosedError } from '../common/errors';
+import { isTargetClosedError } from '../client/errors';
 
 const packageJSON = require('../../package.json');
 

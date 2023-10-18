@@ -27,7 +27,7 @@ import { TimeoutSettings } from '../common/timeoutSettings';
 import { Waiter } from './waiter';
 import { EventEmitter } from 'events';
 import { Connection } from './connection';
-import { isTargetClosedError, TargetClosedError } from '../common/errors';
+import { isTargetClosedError, TargetClosedError } from './errors';
 import { raceAgainstDeadline } from '../utils/timeoutRunner';
 import type { AndroidServerLauncherImpl } from '../androidServerImpl';
 

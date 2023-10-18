@@ -41,7 +41,7 @@ import type { ScreenshotOptions } from './screenshotter';
 import type { InputFilesItems } from './dom';
 import { asLocator } from '../utils/isomorphic/locatorGenerators';
 import { FrameSelectors } from './frameSelectors';
-import { TimeoutError } from '../common/errors';
+import { TimeoutError } from './errors';
 
 type ContextData = {
   contextPromise: ManualPromise<dom.FrameExecutionContext | { destroyedReason: string }>;

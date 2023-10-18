@@ -18,7 +18,7 @@ import fs from 'fs';
 import { assert } from '../utils';
 import { ManualPromise } from '../utils/manualPromise';
 import { SdkObject } from './instrumentation';
-import { TargetClosedError } from '../common/errors';
+import { TargetClosedError } from './errors';
 
 type SaveCallback = (localPath: string, error?: Error) => Promise<void>;
 type CancelCallback = () => Promise<void>;
