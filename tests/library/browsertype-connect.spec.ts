@@ -711,7 +711,10 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       await input.setInputFiles(files.map(f => asset(f)));
       expect(await input.evaluate(e => [...(e as HTMLInputElement).files].map(f => f.name))).toEqual(files);
       const timestamps = await input.evaluate(e => [...(e as HTMLInputElement).files].map(f => f.lastModified));
-      expect(timestamps).toEqual(files.map(file => Math.round(fs.statSync(asset(file)).mtimeMs)));
+      const expectedTimestamps = files.map(file => Math.round(fs.statSync(asset(file)).mtimeMs));
+      // On Linux browser sometimes reduces the timestamp by 1ms: 1696272058110.0715  -> 1696272058109
+      for (let i = 0; i < timestamps.length; i++)
+        expect(Math.abs(timestamps[i] - expectedTimestamps[i])).toBeLessThan(2);
     });
 
     test('should connect over http', async ({ connect, startRemoteServer, mode }) => {
