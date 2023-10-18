@@ -84,6 +84,8 @@ function __pwRender(component) {
   const componentFunc = __pwRegistry.get(component.type);
 
   return __pwReact.createElement(componentFunc || component.type, component.props, ...component.children.map(child => {
+    if (Array.isArray(child))
+      return child.map(grandChild => __pwRender(grandChild));
     if (typeof child === 'string')
       return child;
     return __pwRender(child);
