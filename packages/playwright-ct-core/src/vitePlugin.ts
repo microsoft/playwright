@@ -69,8 +69,7 @@ export function createPlugin(
       // - frameworks overrides (frameworkOverrides);
 
       const use = config.projects[0].use as CtConfig;
-      const port = use.ctPort || 3100;
-      const host = use.baseURL || 'localhost';
+      const baseURL = new URL(use.baseURL || 'http://localhost');
       const relativeTemplateDir = use.ctTemplateDir || 'playwright';
 
       // FIXME: use build plugin to determine html location to resolve this.
@@ -79,7 +78,7 @@ export function createPlugin(
       const templateDir = path.join(configDir, relativeTemplateDir);
 
       // Compose base config from the playwright config only.
-      const baseConfig = {
+      const baseConfig: InlineConfig = {
         root: configDir,
         configFile: false,
         define: {
@@ -92,8 +91,9 @@ export function createPlugin(
           outDir: use.ctCacheDir ? path.resolve(configDir, use.ctCacheDir) : path.resolve(templateDir, '.cache')
         },
         preview: {
-          port,
-          host,
+          https: baseURL.protocol.startsWith('https:'),
+          host: baseURL.hostname,
+          port: use.ctPort || Number(baseURL.port) || 3100
         },
         // Vite preview server will otherwise always return the index.html with 200.
         appType: 'custom',
