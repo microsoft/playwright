@@ -25,7 +25,7 @@ import { Request, Response, Route, WebSocket } from './network';
 import { Page, BindingCall } from './page';
 import { Worker } from './worker';
 import { Dialog } from './dialog';
-import { parseError } from '../protocol/serializers';
+import { parseError, TargetClosedError } from './errors';
 import { CDPSession } from './cdpSession';
 import { Playwright } from './playwright';
 import { Electron, ElectronApplication } from './electron';
@@ -44,7 +44,6 @@ import { Tracing } from './tracing';
 import { findValidator, ValidationError, type ValidatorContext } from '../protocol/validator';
 import { createInstrumentation } from './clientInstrumentation';
 import type { ClientInstrumentation } from './clientInstrumentation';
-import { TargetClosedError } from '../common/errors';
 import { formatCallLog, rewriteErrorMessage } from '../utils';
 
 class Root extends ChannelOwner<channels.RootChannel> {

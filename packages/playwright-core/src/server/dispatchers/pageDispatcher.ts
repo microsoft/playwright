@@ -19,7 +19,7 @@ import type { Frame } from '../frames';
 import { Page, Worker } from '../page';
 import type * as channels from '@protocol/channels';
 import { Dispatcher, existingDispatcher } from './dispatcher';
-import { parseError } from '../../protocol/serializers';
+import { parseError } from '../errors';
 import { FrameDispatcher } from './frameDispatcher';
 import { RequestDispatcher } from './networkDispatchers';
 import { ResponseDispatcher } from './networkDispatchers';

@@ -43,7 +43,7 @@ import type { TimeoutOptions } from '../common/types';
 import { isInvalidSelectorError } from '../utils/isomorphic/selectorParser';
 import { parseEvaluationResultValue, source } from './isomorphic/utilityScriptSerializers';
 import type { SerializedValue } from './isomorphic/utilityScriptSerializers';
-import { TargetClosedError } from '../common/errors';
+import { TargetClosedError } from './errors';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;

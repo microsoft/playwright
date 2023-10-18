@@ -16,10 +16,9 @@
 
 import { EventEmitter } from 'events';
 import type * as channels from '@protocol/channels';
-import { serializeError } from '../../protocol/serializers';
 import { findValidator, ValidationError, createMetadataValidator, type ValidatorContext } from '../../protocol/validator';
 import { assert, isUnderTest, monotonicTime, rewriteErrorMessage } from '../../utils';
-import { TargetClosedError, isTargetClosedError } from '../../common/errors';
+import { TargetClosedError, isTargetClosedError, serializeError } from '../errors';
 import type { CallMetadata } from '../instrumentation';
 import { SdkObject } from '../instrumentation';
 import type { PlaywrightDispatcher } from './playwrightDispatcher';
