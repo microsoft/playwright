@@ -715,7 +715,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       // On Linux browser sometimes reduces the timestamp by 1ms: 1696272058110.0715  -> 1696272058109 or even
       // rounds it to seconds in WebKit: 1696272058110 -> 1696272058000.
       for (let i = 0; i < timestamps.length; i++)
-        expect(Math.abs(timestamps[i] - expectedTimestamps[i]), `expected: ${expectedTimestamps}; actual: ${timestamps}` ).toBeLessThan(1000);
+        expect(Math.abs(timestamps[i] - expectedTimestamps[i]), `expected: ${expectedTimestamps}; actual: ${timestamps}`).toBeLessThan(1000);
     });
 
     test('should connect over http', async ({ connect, startRemoteServer, mode }) => {
