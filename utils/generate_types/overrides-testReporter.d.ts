@@ -78,6 +78,10 @@ export interface JSONReport {
   stats: {
     startTime: string; // Date in ISO 8601 format.
     duration: number; // In milliseconds;
+    expected: number;
+    unexpected: number;
+    flaky: number;
+    skipped: number;
   }
 }
 
