@@ -627,5 +627,4 @@ it('should preserve lastModified timestamp', async ({ page, asset }) => {
   // On Linux browser sometimes reduces the timestamp by 1ms: 1696272058110.0715  -> 1696272058109
   for (let i = 0; i < timestamps.length; i++)
     expect(Math.abs(timestamps[i] - expectedTimestamps[i])).toBeLessThan(2);
-
 });
