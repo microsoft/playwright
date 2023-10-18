@@ -712,9 +712,10 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       expect(await input.evaluate(e => [...(e as HTMLInputElement).files].map(f => f.name))).toEqual(files);
       const timestamps = await input.evaluate(e => [...(e as HTMLInputElement).files].map(f => f.lastModified));
       const expectedTimestamps = files.map(file => Math.round(fs.statSync(asset(file)).mtimeMs));
-      // On Linux browser sometimes reduces the timestamp by 1ms: 1696272058110.0715  -> 1696272058109
+      // On Linux browser sometimes reduces the timestamp by 1ms: 1696272058110.0715  -> 1696272058109 or even
+      // rounds it to seconds in WebKit: 1696272058110 -> 1696272058000.
       for (let i = 0; i < timestamps.length; i++)
-        expect(Math.abs(timestamps[i] - expectedTimestamps[i]), `expected: ${expectedTimestamps}; actual: ${timestamps}` ).toBeLessThan(2);
+        expect(Math.abs(timestamps[i] - expectedTimestamps[i]), `expected: ${expectedTimestamps}; actual: ${timestamps}` ).toBeLessThan(1000);
     });
 
     test('should connect over http', async ({ connect, startRemoteServer, mode }) => {
