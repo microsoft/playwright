@@ -114,19 +114,15 @@ export class Keyboard {
     }
 
     const tokens = split(key);
-    const promises = [];
     key = tokens[tokens.length - 1];
     for (let i = 0; i < tokens.length - 1; ++i)
-      promises.push(this.down(tokens[i]));
-    promises.push(this.down(key));
-    if (options.delay) {
-      await Promise.all(promises);
+      await this.down(tokens[i]);
+    await this.down(key);
+    if (options.delay)
       await new Promise(f => setTimeout(f, options.delay));
-    }
-    promises.push(this.up(key));
+    await this.up(key);
     for (let i = tokens.length - 2; i >= 0; --i)
-      promises.push(this.up(tokens[i]));
-    await Promise.all(promises);
+      await this.up(tokens[i]);
   }
 
   async _ensureModifiers(modifiers: types.KeyboardModifier[]): Promise<types.KeyboardModifier[]> {
@@ -135,16 +131,14 @@ export class Keyboard {
         throw new Error('Unknown modifier ' + modifier);
     }
     const restore: types.KeyboardModifier[] = Array.from(this._pressedModifiers);
-    const promises: Promise<void>[] = [];
     for (const key of kModifiers) {
       const needDown = modifiers.includes(key);
       const isDown = this._pressedModifiers.has(key);
       if (needDown && !isDown)
-        promises.push(this.down(key));
+        await this.down(key);
       else if (!needDown && isDown)
-        promises.push(this.up(key));
+        await this.up(key);
     }
-    await Promise.all(promises);
     return restore;
   }
 
