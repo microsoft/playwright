@@ -274,7 +274,7 @@ class Watcher {
   }
 
   update(watchedFiles: string[], ignoredFolders: string[], reportPending: boolean) {
-    if (JSON.stringify([this._watchedFiles, ignoredFolders]) === JSON.stringify(watchedFiles, this._ignoredFolders))
+    if (JSON.stringify([this._watchedFiles, this._ignoredFolders]) === JSON.stringify(watchedFiles, ignoredFolders))
       return;
 
     if (reportPending)
