@@ -434,7 +434,7 @@ pipeline {
    stages {
       stage('e2e-tests') {
          steps {
-            sh 'ci'
+            sh 'npm ci' // to install packages in CI mode, see https://docs.npmjs.com/cli/v10/commands/npm-ci for details 
             sh 'npx playwright test'
          }
       }
