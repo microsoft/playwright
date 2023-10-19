@@ -129,7 +129,7 @@ export type JsonEvent = {
 export class TeleReporterReceiver {
   private _rootSuite: TeleSuite;
   private _pathSeparator: string;
-  private _reporter: ReporterV2;
+  private _reporter: Partial<ReporterV2>;
   private _tests = new Map<string, TeleTestCase>();
   private _rootDir!: string;
   private _listOnly = false;
@@ -139,7 +139,7 @@ export class TeleReporterReceiver {
   private _config!: FullConfig;
   private _stringPool = new StringInternPool();
 
-  constructor(pathSeparator: string, reporter: ReporterV2, reuseTestCases: boolean, reportConfig?: MergeReporterConfig) {
+  constructor(pathSeparator: string, reporter: Partial<ReporterV2>, reuseTestCases: boolean, reportConfig?: MergeReporterConfig) {
     this._rootSuite = new TeleSuite('', 'root');
     this._pathSeparator = pathSeparator;
     this._reporter = reporter;
@@ -199,7 +199,7 @@ export class TeleReporterReceiver {
     this._rootDir = this._reportConfig?.rootDir || config.rootDir;
     this._listOnly = config.listOnly;
     this._config = this._parseConfig(config);
-    this._reporter.onConfigure(this._config);
+    this._reporter.onConfigure?.(this._config);
   }
 
   private _onProject(project: JsonProject) {
