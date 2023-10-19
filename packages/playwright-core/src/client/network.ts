@@ -165,8 +165,7 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
 
     if (!this._actualHeadersPromise) {
       this._actualHeadersPromise = this._wrapApiCall(async () => {
-        const protocolHeaders = await this._targetClosedScope().race(this._channel.rawRequestHeaders());
-        return new RawHeaders(protocolHeaders.headers);
+        return new RawHeaders((await this._channel.rawRequestHeaders()).headers);
       });
     }
     return this._actualHeadersPromise;
@@ -185,8 +184,7 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
   }
 
   async response(): Promise<Response | null> {
-    const protocolResponse = await this._targetClosedScope().race(this._channel.response());
-    return Response.fromNullable(protocolResponse.response);
+    return Response.fromNullable((await this._channel.response()).response);
   }
 
   async _internalResponse(): Promise<Response | null> {
