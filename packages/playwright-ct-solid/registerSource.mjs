@@ -92,6 +92,8 @@ function __pwCreateComponent(component) {
 
   const children = component.children.reduce((/** @type {any[]} */ children, current) => {
     const child = __pwCreateChild(current);
+    if (Array.isArray(child))
+      return child.map(grandChild => __pwCreateChild(grandChild));
     if (typeof child !== 'string' || !!child.trim())
       children.push(child);
     return children;
