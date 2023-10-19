@@ -262,3 +262,30 @@ test('should queue watches', async ({ runUITest, writeFiles, createLatch }) => {
 
   await expect(page.getByTestId('status-line')).toHaveText('3/3 passed (100%)');
 });
+
+test('should not watch output', async ({ runUITest }) => {
+  const { page } = await runUITest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('passes', ({}, testInfo) => {
+        require('fs').writeFileSync(testInfo.outputPath('output.txt'), 'DATA');
+      });
+    `,
+  });
+
+  await expect.poll(dumpTestTree(page)).toBe(`
+    ▼ ◯ a.test.ts
+        ◯ passes
+  `);
+
+  const commands: string[] = [];
+  await page.exposeBinding('__logForTest', (source, arg) => {
+    commands.push(arg.method);
+  });
+
+  await page.getByTitle('Run all').click();
+
+  await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
+  expect(commands).toContain('run');
+  expect(commands).not.toContain('list');
+});

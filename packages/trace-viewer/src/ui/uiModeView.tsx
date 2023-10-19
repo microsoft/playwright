@@ -103,7 +103,11 @@ export const UIModeView: React.FC<{}> = ({
     inputRef.current?.focus();
     setIsLoading(true);
     connect({ onEvent: dispatchEvent, onClose: () => setIsDisconnected(true) }).then(send => {
-      sendMessage = send;
+      sendMessage = async (method, params) => {
+        const logForTest = (window as any).__logForTest;
+        logForTest?.({ method, params });
+        await send(method, params);
+      };
       reloadTests();
     });
   }, [reloadTests]);
