@@ -139,7 +139,7 @@ it('should resolve responses after a navigation', async ({ page, server, browser
   expect(await responsePromise).toBe(null);
 });
 
-it('interrupt request.response() and request.allHeaders() on page.close', async ({ page, server }) => {
+it('interrupt request.response() and request.allHeaders() on page.close', async ({ page, server, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/27227' });
   server.setRoute('/one-style.css', (req, res) => {
     res.setHeader('Content-Type', 'text/css');
@@ -151,5 +151,10 @@ it('interrupt request.response() and request.allHeaders() on page.close', async 
   const headersPromise = req.allHeaders().catch(e => e);
   await page.close();
   expect((await respPromise).message).toContain(kTargetClosedErrorMessage);
-  expect((await headersPromise).message).toContain(kTargetClosedErrorMessage);
+  // All headers are the same as "provisional" headers in Firefox.
+  if (browserName === 'firefox')
+    expect((await headersPromise)['user-agent']).toBeTruthy();
+  else
+    expect((await headersPromise).message).toContain(kTargetClosedErrorMessage);
+
 });
