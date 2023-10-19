@@ -114,7 +114,7 @@ export class Recorder implements InstrumentationListener {
         return;
       }
       if (data.event === 'selectorUpdated') {
-        this.setHighlightedSelector(data.params.language, data.params.selector);
+        this.setHighlightedSelector(this._currentLanguage, data.params.selector);
         return;
       }
       if (data.event === 'step') {
