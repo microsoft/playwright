@@ -150,7 +150,7 @@ test('should ignore subprocess creation error because of SIGINT', async ({ inter
   const result = parseTestRunnerOutput(testProcess.output);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(0);
-  expect(result.skipped).toBe(2);
+  expect(result.didNotRun).toBe(2);
   expect(result.output).not.toContain('worker process exited unexpectedly');
 });
 
@@ -190,7 +190,7 @@ test('sigint should stop workers', async ({ interactWithTestRunner }) => {
   const result = parseTestRunnerOutput(testProcess.output);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(0);
-  expect(result.skipped).toBe(2);
+  expect(result.didNotRun).toBe(2);
   expect(result.interrupted).toBe(2);
   expect(result.output).toContain('%%SEND-SIGINT%%1');
   expect(result.output).toContain('%%SEND-SIGINT%%2');
@@ -206,7 +206,7 @@ test('sigint should stop workers', async ({ interactWithTestRunner }) => {
 
   const skipped2 = report.suites[1].specs[1];
   expect(skipped2.title).toBe('skipped2');
-  expect(skipped2.tests[0].results[0].workerIndex).toBe(-1);
+  expect(skipped2.tests[0].results).toHaveLength(0);
 });
 
 test('should use the first occurring error when an unhandled exception was thrown', async ({ runInlineTest }) => {

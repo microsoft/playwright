@@ -370,7 +370,7 @@ test('max-failures should still run afterEach/afterAll', async ({ runInlineTest 
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(1);
-  expect(result.skipped).toBe(1);
+  expect(result.didNotRun).toBe(1);
   expect(result.outputLines).toEqual([
     'test',
     'afterEach',

@@ -35,6 +35,7 @@ type ErrorDetails = {
 };
 
 type TestSummary = {
+  didNotRun: number;
   skipped: number;
   expected: number;
   interrupted: TestCase[];
@@ -158,7 +159,7 @@ export class BaseReporter implements ReporterV2 {
     return fileDurations.filter(([, duration]) => duration > threshold).slice(0, count);
   }
 
-  protected generateSummaryMessage({ skipped, expected, interrupted, unexpected, flaky, fatalErrors }: TestSummary) {
+  protected generateSummaryMessage({ didNotRun, skipped, expected, interrupted, unexpected, flaky, fatalErrors }: TestSummary) {
     const tokens: string[] = [];
     if (unexpected.length) {
       tokens.push(colors.red(`  ${unexpected.length} failed`));
@@ -177,6 +178,8 @@ export class BaseReporter implements ReporterV2 {
     }
     if (skipped)
       tokens.push(colors.yellow(`  ${skipped} skipped`));
+    if (didNotRun)
+      tokens.push(colors.yellow(`  ${didNotRun} did not run`));
     if (expected)
       tokens.push(colors.green(`  ${expected} passed`) + colors.dim(` (${milliseconds(this.result.duration)})`));
     if (this.result.status === 'timedout')
@@ -188,6 +191,7 @@ export class BaseReporter implements ReporterV2 {
   }
 
   protected generateSummary(): TestSummary {
+    let didNotRun = 0;
     let skipped = 0;
     let expected = 0;
     const interrupted: TestCase[] = [];
@@ -202,6 +206,8 @@ export class BaseReporter implements ReporterV2 {
             if (test.results.some(result => !!result.error))
               interruptedToPrint.push(test);
             interrupted.push(test);
+          } else if (!test.results.length) {
+            ++didNotRun;
           } else {
             ++skipped;
           }
@@ -215,6 +221,7 @@ export class BaseReporter implements ReporterV2 {
 
     const failuresToPrint = [...unexpected, ...flaky, ...interruptedToPrint];
     return {
+      didNotRun,
       skipped,
       expected,
       interrupted,
