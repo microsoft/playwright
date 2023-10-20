@@ -158,25 +158,36 @@ it.describe('pause', () => {
     await scriptPromise;
   });
 
-  it('should highlight pointer', async ({ page, recorderPageGetter }) => {
-    const actionPointPromise = waitForTestLog<{ x: number, y: number }>(page, 'Action point for test: ');
-    await page.setContent('<button>Submit</button>');
+  it('should highlight pointer, only in main frame', async ({ page, recorderPageGetter }) => {
+    await page.setContent(`
+      <iframe
+        style="margin: 100px;"
+        srcdoc="<button style='margin: 80px;'>Submit</button>">
+      </iframe>
+    `);
     const scriptPromise = (async () => {
       await page.pause();
-      await page.click('button');
+      await page.frameLocator('iframe').locator('button').click();
     })();
     const recorderPage = await recorderPageGetter();
     await recorderPage.click('[title="Step over (F10)"]');
 
-    const { x, y } = await actionPointPromise;
-    const button = await page.waitForSelector('button');
+    const iframe = page.frames()[1];
+    const button = await iframe.waitForSelector('button');
     const box1 = await button.boundingBox();
+    const actionPoint = await page.waitForSelector('x-pw-action-point');
+    const box2 = await actionPoint.boundingBox();
+
+    const iframeActionPoint = await iframe.$('x-pw-action-point');
+    expect(await iframeActionPoint?.boundingBox()).toBeFalsy();
 
     const x1 = box1.x + box1.width / 2;
     const y1 = box1.y + box1.height / 2;
+    const x2 = box2.x + box2.width / 2;
+    const y2 = box2.y + box2.height / 2;
 
-    expect(Math.abs(x1 - x) < 2).toBeTruthy();
-    expect(Math.abs(y1 - y) < 2).toBeTruthy();
+    expect(Math.abs(x1 - x2) < 2).toBeTruthy();
+    expect(Math.abs(y1 - y2) < 2).toBeTruthy();
 
     await recorderPage.click('[title="Resume (F8)"]');
     await scriptPromise;
