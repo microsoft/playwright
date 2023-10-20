@@ -394,3 +394,51 @@ test('should remove output folder before test run', async ({ runUITest }) => {
   `);
   await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
 });
+
+test('should show proper total when using deps', async ({ runUITest }) => {
+  const { page } = await runUITest({
+    'playwright.config.ts': `
+      import { defineConfig } from "@playwright/test";
+      export default defineConfig({
+        projects: [
+          { name: "setup", grep: /@setup/, },
+          { name: "chromium", grep: /@chromium/, dependencies: ["setup"], },
+        ],
+      });
+    `,
+    'a.test.ts': `
+      import { expect, test } from "@playwright/test";
+      test("run @setup", async ({ page }) => {
+        console.log("Test setup executed");
+      });
+      test("run @chromium", async ({ page }) => {
+        console.log("Test chromium executed");
+      });
+    `,
+  });
+
+
+  await page.getByText('Status:').click();
+  await page.getByLabel('setup').setChecked(true);
+  await page.getByLabel('chromium').setChecked(true);
+
+  await expect.poll(dumpTestTree(page)).toContain(`
+    ▼ ◯ a.test.ts
+  `);
+
+  await page.getByTitle('run @setup').dblclick();
+  await expect.poll(dumpTestTree(page)).toBe(`
+    ▼ ◯ a.test.ts
+        ✅ run @setup <=
+        ◯ run @chromium
+  `);
+  await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
+
+  await page.getByTitle('run @chromium').dblclick();
+  await expect.poll(dumpTestTree(page)).toBe(`
+    ▼ ✅ a.test.ts
+        ✅ run @setup
+        ✅ run @chromium <=
+  `);
+  await expect(page.getByTestId('status-line')).toHaveText('2/2 passed (100%)');
+});
