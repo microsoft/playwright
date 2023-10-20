@@ -33,19 +33,19 @@ test.describe('cli codegen', () => {
       recorder.trustedClick(),
     ]);
 
-    expect.soft(sources.get('JavaScript').text).toContain(`
+    expect.soft(sources.get('JavaScript')!.text).toContain(`
   await page.getByRole('button', { name: 'Submit' }).click();`);
 
-    expect.soft(sources.get('Python').text).toContain(`
+    expect.soft(sources.get('Python')!.text).toContain(`
     page.get_by_role("button", name="Submit").click()`);
 
-    expect.soft(sources.get('Python Async').text).toContain(`
+    expect.soft(sources.get('Python Async')!.text).toContain(`
     await page.get_by_role("button", name="Submit").click()`);
 
-    expect.soft(sources.get('Java').text).toContain(`
+    expect.soft(sources.get('Java')!.text).toContain(`
       page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Submit")).click()`);
 
-    expect.soft(sources.get('C#').text).toContain(`
+    expect.soft(sources.get('C#')!.text).toContain(`
         await page.GetByRole(AriaRole.Button, new() { Name = "Submit" }).ClickAsync();`);
 
     expect(message.text()).toBe('click');
@@ -68,7 +68,7 @@ test.describe('cli codegen', () => {
       recorder.trustedClick()
     ]);
 
-    const clicks = recorder.sources().get('Playwright Test').actions.filter(l => l.includes('Submit'));
+    const clicks = recorder.sources().get('Playwright Test')!.actions!.filter(l => l.includes('Submit'));
     expect(clicks.length).toBe(1);
   });
 
@@ -97,7 +97,7 @@ test.describe('cli codegen', () => {
       recorder.trustedClick(),
     ]);
 
-    expect(sources.get('JavaScript').text).toContain(`
+    expect(sources.get('JavaScript')!.text).toContain(`
   await page.getByRole('button', { name: 'Submit' }).click();`);
     expect(message.text()).toBe('click');
   });
@@ -125,7 +125,7 @@ test.describe('cli codegen', () => {
       recorder.trustedClick(),
     ]);
 
-    expect(sources.get('JavaScript').text).toContain(`
+    expect(sources.get('JavaScript')!.text).toContain(`
   await page.locator('canvas').click({
     position: {
       x: 250,
@@ -133,17 +133,17 @@ test.describe('cli codegen', () => {
     }
   });`);
 
-    expect(sources.get('Python').text).toContain(`
+    expect(sources.get('Python')!.text).toContain(`
     page.locator("canvas").click(position={"x":250,"y":250})`);
 
-    expect(sources.get('Python Async').text).toContain(`
+    expect(sources.get('Python Async')!.text).toContain(`
     await page.locator("canvas").click(position={"x":250,"y":250})`);
 
-    expect(sources.get('Java').text).toContain(`
+    expect(sources.get('Java')!.text).toContain(`
       page.locator("canvas").click(new Locator.ClickOptions()
         .setPosition(250, 250));`);
 
-    expect(sources.get('C#').text).toContain(`
+    expect(sources.get('C#')!.text).toContain(`
         await page.Locator("canvas").ClickAsync(new LocatorClickOptions
         {
             Position = new Position
@@ -175,19 +175,19 @@ test.describe('cli codegen', () => {
       recorder.trustedClick(),
     ]);
 
-    expect.soft(sources.get('JavaScript').text).toContain(`
+    expect.soft(sources.get('JavaScript')!.text).toContain(`
   await page.getByRole('button', { name: 'Submit' }).click();`);
 
-    expect.soft(sources.get('Python').text).toContain(`
+    expect.soft(sources.get('Python')!.text).toContain(`
     page.get_by_role("button", name="Submit").click()`);
 
-    expect.soft(sources.get('Python Async').text).toContain(`
+    expect.soft(sources.get('Python Async')!.text).toContain(`
     await page.get_by_role("button", name="Submit").click()`);
 
-    expect.soft(sources.get('Java').text).toContain(`
+    expect.soft(sources.get('Java')!.text).toContain(`
       page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Submit")).click()`);
 
-    expect.soft(sources.get('C#').text).toContain(`
+    expect.soft(sources.get('C#')!.text).toContain(`
         await page.GetByRole(AriaRole.Button, new() { Name = "Submit" }).ClickAsync();`);
 
     expect(message.text()).toBe('click');
@@ -219,7 +219,7 @@ test.describe('cli codegen', () => {
       recorder.waitForOutput('JavaScript', 'click'),
       recorder.trustedMove('div').then(() => recorder.trustedClick()),
     ]);
-    expect(sources.get('JavaScript').text).toContain(`
+    expect(sources.get('JavaScript')!.text).toContain(`
   await page.getByText('Some long text here').click();`);
     expect(message.text()).toBe('click');
   });
@@ -237,18 +237,18 @@ test.describe('cli codegen', () => {
       page.fill('input', 'John')
     ]);
 
-    expect(sources.get('JavaScript').text).toContain(`
+    expect(sources.get('JavaScript')!.text).toContain(`
   await page.locator('#input').fill('John');`);
-    expect(sources.get('Java').text).toContain(`
+    expect(sources.get('Java')!.text).toContain(`
       page.locator("#input").fill("John");`);
 
-    expect(sources.get('Python').text).toContain(`
+    expect(sources.get('Python')!.text).toContain(`
     page.locator("#input").fill(\"John\")`);
 
-    expect(sources.get('Python Async').text).toContain(`
+    expect(sources.get('Python Async')!.text).toContain(`
     await page.locator("#input").fill(\"John\")`);
 
-    expect(sources.get('C#').text).toContain(`
+    expect(sources.get('C#')!.text).toContain(`
         await page.Locator("#input").FillAsync(\"John\");`);
 
     expect(message.text()).toBe('John');
@@ -271,18 +271,18 @@ test.describe('cli codegen', () => {
         await recorder.page.dispatchEvent('input', 'keyup', { key: 'Process' });
       })()
     ]);
-    expect(sources.get('JavaScript').text).toContain(`
+    expect(sources.get('JavaScript')!.text).toContain(`
   await page.locator('#input').fill('てすと');`);
-    expect(sources.get('Java').text).toContain(`
+    expect(sources.get('Java')!.text).toContain(`
       page.locator("#input").fill("てすと");`);
 
-    expect(sources.get('Python').text).toContain(`
+    expect(sources.get('Python')!.text).toContain(`
     page.locator("#input").fill(\"てすと\")`);
 
-    expect(sources.get('Python Async').text).toContain(`
+    expect(sources.get('Python Async')!.text).toContain(`
     await page.locator("#input").fill(\"てすと\")`);
 
-    expect(sources.get('C#').text).toContain(`
+    expect(sources.get('C#')!.text).toContain(`
         await page.Locator("#input").FillAsync(\"てすと\");`);
 
     expect(message.text()).toBe('てすと');
@@ -300,7 +300,7 @@ test.describe('cli codegen', () => {
       recorder.waitForOutput('JavaScript', 'fill'),
       page.fill('textarea', 'John')
     ]);
-    expect(sources.get('JavaScript').text).toContain(`
+    expect(sources.get('JavaScript')!.text).toContain(`
   await page.locator('#textarea').fill('John');`);
     expect(message.text()).toBe('John');
   });
@@ -316,8 +316,8 @@ test.describe('cli codegen', () => {
     // Issue was that the input event was not fired for the last newline, so we check for that.
     await page.waitForFunction(() => (window as any).lastInputValue === 'Hello\n');
     const sources = await waitForOutputPromise;
-    expect(sources.get('JavaScript').text).toContain(`await page.locator('#textarea').fill('Hello\\n');`);
-    expect(sources.get('JavaScript').text).not.toContain(`Enter`);
+    expect(sources.get('JavaScript')!.text).toContain(`await page.locator('#textarea').fill('Hello\\n');`);
+    expect(sources.get('JavaScript')!.text).not.toContain(`Enter`);
   });
 
   test('should fill [contentEditable]', async ({ page, openRecorder }) => {
@@ -332,7 +332,7 @@ test.describe('cli codegen', () => {
       recorder.waitForOutput('JavaScript', 'fill'),
       page.fill('div', 'John Doe')
     ]);
-    expect(sources.get('JavaScript').text).toContain(`
+    expect(sources.get('JavaScript')!.text).toContain(`
   await page.locator('#content').fill('John Doe');`);
     expect(message.text()).toBe('John Doe');
   });
@@ -353,19 +353,19 @@ test.describe('cli codegen', () => {
       page.press('input', 'Shift+Enter')
     ]);
 
-    expect(sources.get('JavaScript').text).toContain(`
+    expect(sources.get('JavaScript')!.text).toContain(`
   await page.getByRole('textbox').press('Shift+Enter');`);
 
-    expect(sources.get('Java').text).toContain(`
+    expect(sources.get('Java')!.text).toContain(`
       page.getByRole(AriaRole.TEXTBOX).press("Shift+Enter");`);
 
-    expect(sources.get('Python').text).toContain(`
+    expect(sources.get('Python')!.text).toContain(`
     page.get_by_role("textbox").press("Shift+Enter")`);
 
-    expect(sources.get('Python Async').text).toContain(`
+    expect(sources.get('Python Async')!.text).toContain(`
     await page.get_by_role("textbox").press("Shift+Enter")`);
 
-    expect(sources.get('C#').text).toContain(`
+    expect(sources.get('C#')!.text).toContain(`
         await page.GetByRole(AriaRole.Textbox).PressAsync("Shift+Enter");`);
 
     expect(messages[0].text()).toBe('press');
@@ -389,7 +389,7 @@ test.describe('cli codegen', () => {
     await page.keyboard.type('barfoo321');
     await recorder.waitForOutput('JavaScript', 'barfoo321');
 
-    const text = recorder.sources().get('JavaScript').text;
+    const text = recorder.sources().get('JavaScript')!.text;
     expect(text).toContain(`
   await page.locator('input[name="one"]').fill('foobar123');`);
 
@@ -417,7 +417,7 @@ test.describe('cli codegen', () => {
       recorder.waitForOutput('JavaScript', 'press'),
       page.press('input', 'ArrowDown')
     ]);
-    expect(sources.get('JavaScript').text).toContain(`
+    expect(sources.get('JavaScript')!.text).toContain(`
   await page.getByRole('textbox').press('ArrowDown');`);
     expect(messages[0].text()).toBe('press:ArrowDown');
   });
@@ -440,7 +440,7 @@ test.describe('cli codegen', () => {
       recorder.waitForOutput('JavaScript', 'press'),
       page.press('input', 'ArrowDown')
     ]);
-    expect(sources.get('JavaScript').text).toContain(`
+    expect(sources.get('JavaScript')!.text).toContain(`
   await page.getByRole('textbox').press('ArrowDown');`);
     expect(messages.length).toBe(2);
     expect(messages[0].text()).toBe('down:ArrowDown');
@@ -461,19 +461,19 @@ test.describe('cli codegen', () => {
       page.click('input')
     ]);
 
-    expect(sources.get('JavaScript').text).toContain(`
+    expect(sources.get('JavaScript')!.text).toContain(`
   await page.locator('#checkbox').check();`);
 
-    expect(sources.get('Java').text).toContain(`
+    expect(sources.get('Java')!.text).toContain(`
       page.locator("#checkbox").check();`);
 
-    expect(sources.get('Python').text).toContain(`
+    expect(sources.get('Python')!.text).toContain(`
     page.locator("#checkbox").check()`);
 
-    expect(sources.get('Python Async').text).toContain(`
+    expect(sources.get('Python Async')!.text).toContain(`
     await page.locator("#checkbox").check()`);
 
-    expect(sources.get('C#').text).toContain(`
+    expect(sources.get('C#')!.text).toContain(`
         await page.Locator("#checkbox").CheckAsync();`);
 
     expect(message.text()).toBe('true');
@@ -493,7 +493,7 @@ test.describe('cli codegen', () => {
       page.click('input')
     ]);
 
-    expect(sources.get('JavaScript').text).toContain(`
+    expect(sources.get('JavaScript')!.text).toContain(`
   await page.locator('#checkbox').check();`);
     expect(message.text()).toBe('true');
   });
@@ -512,7 +512,7 @@ test.describe('cli codegen', () => {
       page.keyboard.press('Space')
     ]);
 
-    expect(sources.get('JavaScript').text).toContain(`
+    expect(sources.get('JavaScript')!.text).toContain(`
   await page.locator('#checkbox').check();`);
     expect(message.text()).toBe('true');
   });
@@ -531,19 +531,19 @@ test.describe('cli codegen', () => {
       page.click('input')
     ]);
 
-    expect(sources.get('JavaScript').text).toContain(`
+    expect(sources.get('JavaScript')!.text).toContain(`
   await page.locator('#checkbox').uncheck();`);
 
-    expect(sources.get('Java').text).toContain(`
+    expect(sources.get('Java')!.text).toContain(`
       page.locator("#checkbox").uncheck();`);
 
-    expect(sources.get('Python').text).toContain(`
+    expect(sources.get('Python')!.text).toContain(`
     page.locator("#checkbox").uncheck()`);
 
-    expect(sources.get('Python Async').text).toContain(`
+    expect(sources.get('Python Async')!.text).toContain(`
     await page.locator("#checkbox").uncheck()`);
 
-    expect(sources.get('C#').text).toContain(`
+    expect(sources.get('C#')!.text).toContain(`
         await page.Locator("#checkbox").UncheckAsync();`);
 
     expect(message.text()).toBe('false');
@@ -563,19 +563,19 @@ test.describe('cli codegen', () => {
       page.selectOption('select', '2')
     ]);
 
-    expect(sources.get('JavaScript').text).toContain(`
+    expect(sources.get('JavaScript')!.text).toContain(`
   await page.locator('#age').selectOption('2');`);
 
-    expect(sources.get('Java').text).toContain(`
+    expect(sources.get('Java')!.text).toContain(`
       page.locator("#age").selectOption("2");`);
 
-    expect(sources.get('Python').text).toContain(`
+    expect(sources.get('Python')!.text).toContain(`
     page.locator("#age").select_option("2")`);
 
-    expect(sources.get('Python Async').text).toContain(`
+    expect(sources.get('Python Async')!.text).toContain(`
     await page.locator("#age").select_option("2")`);
 
-    expect(sources.get('C#').text).toContain(`
+    expect(sources.get('C#')!.text).toContain(`
         await page.Locator("#age").SelectOptionAsync(new[] { "2" });`);
 
     expect(message.text()).toBe('2');
@@ -604,19 +604,19 @@ test.describe('cli codegen', () => {
       page.mouse.click(10, 25)
     ]);
 
-    expect(sources.get('JavaScript').text).toContain(`
+    expect(sources.get('JavaScript')!.text).toContain(`
   await page.locator('#age').selectOption('2');`);
 
-    expect(sources.get('Java').text).toContain(`
+    expect(sources.get('Java')!.text).toContain(`
       page.locator("#age").selectOption("2");`);
 
-    expect(sources.get('Python').text).toContain(`
+    expect(sources.get('Python')!.text).toContain(`
     page.locator(\"#age\").select_option(\"2\")`);
 
-    expect(sources.get('Python Async').text).toContain(`
+    expect(sources.get('Python Async')!.text).toContain(`
     await page.locator(\"#age\").select_option(\"2\")`);
 
-    expect(sources.get('C#').text).toContain(`
+    expect(sources.get('C#')!.text).toContain(`
         await page.Locator(\"#age\").SelectOptionAsync(new[] { \"2\" });`);
 
     expect(message.text()).toBe('2');
@@ -635,27 +635,27 @@ test.describe('cli codegen', () => {
       recorder.trustedClick(),
     ]);
 
-    expect.soft(sources.get('JavaScript').text).toContain(`
+    expect.soft(sources.get('JavaScript')!.text).toContain(`
   const page1Promise = page.waitForEvent('popup');
   await page.getByRole('link', { name: 'link' }).click();
   const page1 = await page1Promise;`);
 
-    expect.soft(sources.get('Java').text).toContain(`
+    expect.soft(sources.get('Java')!.text).toContain(`
       Page page1 = page.waitForPopup(() -> {
         page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("link")).click();
       });`);
 
-    expect.soft(sources.get('Python').text).toContain(`
+    expect.soft(sources.get('Python')!.text).toContain(`
     with page.expect_popup() as page1_info:
         page.get_by_role("link", name="link").click()
     page1 = page1_info.value`);
 
-    expect.soft(sources.get('Python Async').text).toContain(`
+    expect.soft(sources.get('Python Async')!.text).toContain(`
     async with page.expect_popup() as page1_info:
         await page.get_by_role("link", name="link").click()
     page1 = await page1_info.value`);
 
-    expect.soft(sources.get('C#').text).toContain(`
+    expect.soft(sources.get('C#')!.text).toContain(`
         var page1 = await page.RunAndWaitForPopupAsync(async () =>
         {
             await page.GetByRole(AriaRole.Link, new() { Name = "link" }).ClickAsync();
@@ -677,25 +677,25 @@ test.describe('cli codegen', () => {
       recorder.trustedClick(),
     ]);
 
-    expect.soft(sources.get('JavaScript').text).toContain(`
+    expect.soft(sources.get('JavaScript')!.text).toContain(`
   await page.getByText('link').click();`);
 
-    expect.soft(sources.get('Playwright Test').text).toContain(`
+    expect.soft(sources.get('Playwright Test')!.text).toContain(`
   await page.getByText('link').click();`);
 
-    expect.soft(sources.get('Java').text).toContain(`
+    expect.soft(sources.get('Java')!.text).toContain(`
       page.getByText("link").click();`);
 
-    expect.soft(sources.get('Python').text).toContain(`
+    expect.soft(sources.get('Python')!.text).toContain(`
     page.get_by_text("link").click()`);
 
-    expect.soft(sources.get('Python Async').text).toContain(`
+    expect.soft(sources.get('Python Async')!.text).toContain(`
     await page.get_by_text("link").click()`);
 
-    expect.soft(sources.get('Pytest').text).toContain(`
+    expect.soft(sources.get('Pytest')!.text).toContain(`
     page.get_by_text("link").click()`);
 
-    expect.soft(sources.get('C#').text).toContain(`
+    expect.soft(sources.get('C#')!.text).toContain(`
         await page.GetByText("link").ClickAsync();`);
 
     expect(page.url()).toContain('about:blank#foo');
@@ -711,8 +711,8 @@ test.describe('cli codegen', () => {
     await recorder.page.keyboard.insertText('@');
     await recorder.page.keyboard.type('example.com');
     await recorder.waitForOutput('JavaScript', 'example.com');
-    expect(recorder.sources().get('JavaScript').text).not.toContain(`await page.getByRole('textbox').press('AltGraph');`);
-    expect(recorder.sources().get('JavaScript').text).toContain(`await page.getByRole('textbox').fill('playwright@example.com');`);
+    expect(recorder.sources().get('JavaScript')!.text).not.toContain(`await page.getByRole('textbox').press('AltGraph');`);
+    expect(recorder.sources().get('JavaScript')!.text).toContain(`await page.getByRole('textbox').fill('playwright@example.com');`);
   });
 
   test('should middle click', async ({ page, openRecorder, server }) => {
@@ -725,22 +725,22 @@ test.describe('cli codegen', () => {
       page.click('a', { button: 'middle' }),
     ]);
 
-    expect(sources.get('JavaScript').text).toContain(`
+    expect(sources.get('JavaScript')!.text).toContain(`
   await page.getByText('Click me').click({
     button: 'middle'
   });`);
 
-    expect(sources.get('Python').text).toContain(`
+    expect(sources.get('Python')!.text).toContain(`
     page.get_by_text("Click me").click(button="middle")`);
 
-    expect(sources.get('Python Async').text).toContain(`
+    expect(sources.get('Python Async')!.text).toContain(`
     await page.get_by_text("Click me").click(button="middle")`);
 
-    expect(sources.get('Java').text).toContain(`
+    expect(sources.get('Java')!.text).toContain(`
       page.getByText("Click me").click(new Locator.ClickOptions()
         .setButton(MouseButton.MIDDLE));`);
 
-    expect(sources.get('C#').text).toContain(`
+    expect(sources.get('C#')!.text).toContain(`
         await page.GetByText("Click me").ClickAsync(new LocatorClickOptions
         {
             Button = MouseButton.Middle,

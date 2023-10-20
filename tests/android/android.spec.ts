@@ -24,7 +24,7 @@ test('androidDevice.close', async function({ playwright }) {
   const devices = await playwright._android.devices();
   expect(devices.length).toBe(1);
   const device = devices[0];
-  const events = [];
+  const events: string[] = [];
   device.on('close', () => events.push('close'));
   await device.close();
   await device.close();

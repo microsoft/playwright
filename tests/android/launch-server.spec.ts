@@ -31,7 +31,7 @@ test('android.launchServer should connect to a device', async ({ playwright }) =
 });
 
 test('android.launchServer should handle close event correctly', async ({ playwright }) => {
-  const receivedEvents = [];
+  const receivedEvents: string[] = [];
   const browserServer = await playwright._android.launchServer();
   const device = await playwright._android.connect(browserServer.wsEndpoint());
   device.on('close', () => receivedEvents.push('device'));
@@ -116,7 +116,7 @@ test('android.launchServer BrowserServer.kill() will disconnect the device',  as
 test('android.launchServer should terminate WS connection when device gets disconnected', async  ({ playwright }) => {
   const browserServer = await playwright._android.launchServer();
   const forwardingServer = new ws.Server({ port: 0, path: '/connect' });
-  let receivedConnection: ws.WebSocket;
+  let receivedConnection: ws.WebSocket | undefined;
   forwardingServer.on('connection', connection => {
     receivedConnection = connection;
     const actualConnection = new ws.WebSocket(browserServer.wsEndpoint());
@@ -130,11 +130,11 @@ test('android.launchServer should terminate WS connection when device gets disco
   try {
     const device = await playwright._android.connect(`ws://localhost:${(forwardingServer.address() as ws.AddressInfo).port}/connect`);
     expect((await device.shell('echo 123')).toString()).toBe('123\n');
-    expect(receivedConnection.readyState).toBe(ws.OPEN);
-    const waitToClose = new Promise(f => receivedConnection.on('close', f));
+    expect(receivedConnection!.readyState).toBe(ws.OPEN);
+    const waitToClose = new Promise(f => receivedConnection!.on('close', f));
     await device.close();
     await waitToClose;
-    expect(receivedConnection.readyState).toBe(ws.CLOSED);
+    expect(receivedConnection!.readyState).toBe(ws.CLOSED);
   } finally {
     await browserServer.close();
     await new Promise(f => forwardingServer.close(f));

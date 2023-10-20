@@ -38,7 +38,7 @@ export const androidTest = baseTest.extend<PageTestFixtures, AndroidWorkerFixtur
     const browserVersion = (await androidDevice.shell('dumpsys package com.android.chrome'))
         .toString('utf8')
         .split('\n')
-        .find(line => line.includes('versionName='))
+        .find(line => line.includes('versionName='))!
         .trim()
         .split('=')[1];
     await run(browserVersion);

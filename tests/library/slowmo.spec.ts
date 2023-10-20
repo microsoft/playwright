@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
+import type { Page, Frame, ElementHandle } from '@playwright/test';
 import { contextTest as it, expect } from '../config/browserTest';
 import { attachFrame } from '../config/utils';
+import type { TestServer } from '../config/testserver';
 
-async function checkSlowMo(toImpl, page, task) {
+async function checkSlowMo(toImpl: (api: any) => any, page: Page, task: () => Promise<unknown>) {
   let didSlowMo = false;
   const contextDebugger = toImpl(page.context()).debugger();
   contextDebugger._slowMo = 100;
@@ -33,7 +35,7 @@ async function checkSlowMo(toImpl, page, task) {
   expect(!!didSlowMo).toBe(true);
 }
 
-async function checkPageSlowMo(toImpl, page, task) {
+async function checkPageSlowMo(toImpl: (api: any) => any, page: Page, task: () => Promise<unknown>) {
   await page.setContent(`
     <button>a</button>
     <input type="checkbox" class="check">
@@ -169,7 +171,7 @@ it.describe('slowMo', () => {
   });
 });
 
-async function checkFrameSlowMo(toImpl, page, server, task) {
+async function checkFrameSlowMo(toImpl: (api: any) => any, page: Page, server: TestServer, task: (frame: Frame) => Promise<unknown>) {
   const frame = await attachFrame(page, 'frame1', server.EMPTY_PAGE);
   await frame.setContent(`
     <button>a</button>
@@ -185,7 +187,7 @@ async function checkFrameSlowMo(toImpl, page, server, task) {
 }
 
 
-async function checkElementSlowMo(toImpl, page, selector, task) {
+async function checkElementSlowMo(toImpl: (api: any) => any, page: Page, selector: string, task: (element: ElementHandle<HTMLElement>) => Promise<unknown>) {
   await page.setContent(`
     <button>a</button>
     <input type="checkbox" class="check">
@@ -196,6 +198,6 @@ async function checkElementSlowMo(toImpl, page, selector, task) {
     </select>
     <input type="file" class="file">
   `);
-  const element = await page.$(selector);
+  const element = (await page.$(selector)) as ElementHandle<HTMLElement>;
   await checkSlowMo(toImpl, page, task.bind(null, element));
 }

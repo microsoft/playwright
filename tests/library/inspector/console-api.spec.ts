@@ -18,7 +18,7 @@ import { test as it, expect } from './inspectorTest';
 
 it.skip(({ mode }) => mode !== 'default');
 
-let scriptPromise;
+let scriptPromise: Promise<void>;
 
 it.beforeEach(async ({ page, recorderPageGetter }) => {
   scriptPromise = (async () => {

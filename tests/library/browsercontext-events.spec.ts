@@ -45,7 +45,7 @@ test('console event should work in popup 2', async ({ page, browserName }) => {
 
   const [, message, popup] = await Promise.all([
     page.evaluate(async () => {
-      const win = window.open('javascript:console.log("hello")');
+      const win = window.open('javascript:console.log("hello")')!;
       await new Promise(f => setTimeout(f, 0));
       win.close();
     }),
@@ -62,7 +62,7 @@ test('console event should work in immediately closed popup', async ({ page, bro
 
   const [, message, popup] = await Promise.all([
     page.evaluate(async () => {
-      const win = window.open();
+      const win = window.open()!;
       (win as any).console.log('hello');
       win.close();
     }),
@@ -122,7 +122,7 @@ test('dialog event should work in popup 2', async ({ page, browserName }) => {
 
 test('dialog event should work in immediately closed popup', async ({ page }) => {
   const promise = page.evaluate(async () => {
-    const win = window.open();
+    const win = window.open()!;
     const result = (win as any).prompt('hey?');
     win.close();
     return result;

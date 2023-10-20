@@ -15,6 +15,7 @@
  */
 
 import { contextTest as it, expect } from '../../config/browserTest';
+import type { Frame, Browser } from '@playwright/test';
 
 it.use({
   launchOptions: async ({ launchOptions }, use) => {
@@ -37,7 +38,7 @@ it('should handle oopif detach', async function({ page, browser, server }) {
   expect(await frame.evaluate(() => '' + location.href)).toBe(server.CROSS_PROCESS_PREFIX + '/grid.html');
   const [detachedFrame] = await Promise.all([
     page.waitForEvent('framedetached'),
-    page.evaluate(() => document.querySelector('iframe').remove()),
+    page.evaluate(() => document.querySelector('iframe')!.remove()),
   ]);
   expect(detachedFrame).toBe(frame);
 });
@@ -87,9 +88,9 @@ it('should expose function', async ({ page, browser, server }) => {
   expect(page.frames().length).toBe(2);
   expect(await countOOPIFs(browser)).toBe(1);
   const oopif = page.frames()[1];
-  await page.exposeFunction('mul', (a, b) => a * b);
+  await page.exposeFunction('mul', (a: number, b: number) => a * b);
   const result = await oopif.evaluate(async function() {
-    return await window['mul'](9, 4);
+    return await (window as any)['mul'](9, 4);
   });
   expect(result).toBe(36);
 });
@@ -163,9 +164,9 @@ it('should load oopif iframes with subresources and route', async function({ pag
 });
 
 it('should report main requests', async function({ page, browser, server }) {
-  const requestFrames = [];
+  const requestFrames: Frame[] = [];
   page.on('request', r => requestFrames.push(r.frame()));
-  const finishedFrames = [];
+  const finishedFrames: Frame[] = [];
   page.on('requestfinished', r => finishedFrames.push(r.frame()));
 
   await page.goto(server.PREFIX + '/empty.html');
@@ -201,34 +202,34 @@ it('should report main requests', async function({ page, browser, server }) {
 });
 
 it('should support exposeFunction', async function({ page, browser, server }) {
-  await page.context().exposeFunction('dec', a => a - 1);
-  await page.exposeFunction('inc', a => a + 1);
+  await page.context().exposeFunction('dec', (a: number) => a - 1);
+  await page.exposeFunction('inc', (a: number) => a + 1);
   await page.goto(server.PREFIX + '/dynamic-oopif.html');
   expect(await countOOPIFs(browser)).toBe(1);
   expect(page.frames().length).toBe(2);
-  expect(await page.frames()[0].evaluate(() => window['inc'](3))).toBe(4);
-  expect(await page.frames()[1].evaluate(() => window['inc'](4))).toBe(5);
-  expect(await page.frames()[0].evaluate(() => window['dec'](3))).toBe(2);
-  expect(await page.frames()[1].evaluate(() => window['dec'](4))).toBe(3);
+  expect(await page.frames()[0].evaluate(() => (window as any)['inc'](3))).toBe(4);
+  expect(await page.frames()[1].evaluate(() => (window as any)['inc'](4))).toBe(5);
+  expect(await page.frames()[0].evaluate(() => (window as any)['dec'](3))).toBe(2);
+  expect(await page.frames()[1].evaluate(() => (window as any)['dec'](4))).toBe(3);
 });
 
 it('should support addInitScript', async function({ page, browser, server }) {
-  await page.context().addInitScript(() => window['bar'] = 17);
-  await page.addInitScript(() => window['foo'] = 42);
+  await page.context().addInitScript(() => (window as any)['bar'] = 17);
+  await page.addInitScript(() => (window as any)['foo'] = 42);
   await page.goto(server.PREFIX + '/dynamic-oopif.html');
   expect(await countOOPIFs(browser)).toBe(1);
   expect(page.frames().length).toBe(2);
-  expect(await page.frames()[0].evaluate(() => window['foo'])).toBe(42);
-  expect(await page.frames()[1].evaluate(() => window['foo'])).toBe(42);
-  expect(await page.frames()[0].evaluate(() => window['bar'])).toBe(17);
-  expect(await page.frames()[1].evaluate(() => window['bar'])).toBe(17);
+  expect(await page.frames()[0].evaluate(() => (window as any)['foo'])).toBe(42);
+  expect(await page.frames()[1].evaluate(() => (window as any)['foo'])).toBe(42);
+  expect(await page.frames()[0].evaluate(() => (window as any)['bar'])).toBe(17);
+  expect(await page.frames()[1].evaluate(() => (window as any)['bar'])).toBe(17);
 });
 // @see https://github.com/microsoft/playwright/issues/1240
 it('should click a button when it overlays oopif', async function({ page, browser, server }) {
   await page.goto(server.PREFIX + '/button-overlay-oopif.html');
   expect(await countOOPIFs(browser)).toBe(1);
   await page.click('button');
-  expect(await page.evaluate(() => window['BUTTON_CLICKED'])).toBe(true);
+  expect(await page.evaluate(() => (window as any)['BUTTON_CLICKED'])).toBe(true);
 });
 
 it('should report google.com frame with headed', async ({ browserType, server }) => {
@@ -268,7 +269,7 @@ it('ElementHandle.boundingBox() should work', async function({ page, browser, se
 
   expect(await countOOPIFs(browser)).toBe(1);
   const handle1 = await page.frames()[1].$('.box:nth-of-type(13)');
-  expect(await handle1.boundingBox()).toEqual({ x: 100 + 42, y: 50 + 17, width: 50, height: 50 });
+  expect(await handle1!.boundingBox()).toEqual({ x: 100 + 42, y: 50 + 17, width: 50, height: 50 });
 
   await Promise.all([
     page.frames()[1].waitForNavigation(),
@@ -276,7 +277,7 @@ it('ElementHandle.boundingBox() should work', async function({ page, browser, se
   ]);
   expect(await countOOPIFs(browser)).toBe(0);
   const handle2 = await page.frames()[1].$('.box:nth-of-type(13)');
-  expect(await handle2.boundingBox()).toEqual({ x: 100 + 42, y: 50 + 17, width: 50, height: 50 });
+  expect(await handle2!.boundingBox()).toEqual({ x: 100 + 42, y: 50 + 17, width: 50, height: 50 });
 });
 
 it('should click', async function({ page, browser, server }) {
@@ -290,10 +291,10 @@ it('should click', async function({ page, browser, server }) {
   await page.frames()[1].goto(page.frames()[1].url());
 
   expect(await countOOPIFs(browser)).toBe(1);
-  const handle1 = await page.frames()[1].$('.box:nth-of-type(13)');
-  await handle1.evaluate(div => div.addEventListener('click', () => window['_clicked'] = true, false));
+  const handle1 = (await page.frames()[1].$('.box:nth-of-type(13)'))!;
+  await handle1.evaluate(div => div.addEventListener('click', () => (window as any)['_clicked'] = true, false));
   await handle1.click();
-  expect(await handle1.evaluate(() => window['_clicked'])).toBe(true);
+  expect(await handle1.evaluate(() => (window as any)['_clicked'])).toBe(true);
 });
 
 it('should allow cdp sessions on oopifs', async function({ page, browser, server }) {
@@ -331,7 +332,7 @@ it('should not throw on exposeFunction when oopif detaches', async ({ page, brow
   expect(await countOOPIFs(browser)).toBe(1);
   await Promise.all([
     page.exposeFunction('myFunc', () => 2022),
-    page.evaluate(() => document.querySelector('iframe').remove()),
+    page.evaluate(() => document.querySelector('iframe')!.remove()),
   ]);
   expect(await page.evaluate(() => (window as any).myFunc())).toBe(2022);
 });
@@ -345,7 +346,7 @@ it('should intercept response body from oopif', async function({ page, browser, 
   expect(await response.text()).toBeTruthy();
 });
 
-async function countOOPIFs(browser) {
+async function countOOPIFs(browser: Browser) {
   const browserSession = await browser.newBrowserCDPSession();
   const oopifs = [];
   browserSession.on('Target.targetCreated', async ({ targetInfo }) => {

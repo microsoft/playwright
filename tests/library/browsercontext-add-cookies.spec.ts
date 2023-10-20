@@ -87,7 +87,7 @@ it('should roundtrip cookie', async ({ context, page, server }) => {
 it('should send cookie header', async ({ server, context }) => {
   let cookie = '';
   server.setRoute('/empty.html', (req, res) => {
-    cookie = req.headers.cookie;
+    cookie = req.headers.cookie!;
     res.end();
   });
   await context.addCookies([{ url: server.EMPTY_PAGE, name: 'cookie', value: 'value' }]);
@@ -345,7 +345,7 @@ it('should set cookies for a frame', async ({ context, page, server }) => {
     { url: server.PREFIX, name: 'frame-cookie', value: 'value' }
   ]);
   await page.evaluate(src => {
-    let fulfill;
+    let fulfill!: (value: unknown) => void;
     const promise = new Promise(x => fulfill = x);
     const iframe = document.createElement('iframe');
     document.body.appendChild(iframe);
@@ -360,7 +360,7 @@ it('should set cookies for a frame', async ({ context, page, server }) => {
 it('should(not) block third party cookies', async ({ context, page, server, browserName, allowsThirdParty }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(src => {
-    let fulfill;
+    let fulfill!: (value: unknown) => void;
     const promise = new Promise(x => fulfill = x);
     const iframe = document.createElement('iframe');
     document.body.appendChild(iframe);
@@ -438,10 +438,10 @@ it('should allow unnamed cookies', async ({ page, context, server, browserName, 
   // Round-trip behavior
   const resp = await page.goto(server.PREFIX + '/cookies');
   if (browserName === 'webkit' && platform === 'darwin') {
-    expect.soft(await resp.text()).toBe('undefined-on-server');
+    expect.soft(await resp!.text()).toBe('undefined-on-server');
     expect.soft(await page.evaluate('document.cookie')).toBe('');
   } else {
-    expect.soft(await resp.text()).toBe('unnamed-via-add-cookies');
+    expect.soft(await resp!.text()).toBe('unnamed-via-add-cookies');
     expect.soft(await page.evaluate('document.cookie')).toBe('unnamed-via-add-cookies');
   }
   // Within PW behavior

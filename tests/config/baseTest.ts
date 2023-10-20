@@ -30,7 +30,7 @@ export const baseTest = mergeTests(base, coverageTest, platformTest, testModeTes
     .extend<CommonFixtures, CommonWorkerFixtures>(commonFixtures)
     .extend<ServerFixtures, ServerWorkerOptions>(serverFixtures);
 
-export function step<This, Args extends any[], Return>(
+export function step<This extends Object, Args extends any[], Return>(
   target: (this: This, ...args: Args) => Promise<Return>,
   context: ClassMethodDecoratorContext<This, (this: This, ...args: Args) => Promise<Return>>
 ) {

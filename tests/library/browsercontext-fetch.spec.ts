@@ -134,7 +134,7 @@ for (const method of ['fetch', 'delete', 'get', 'head', 'patch', 'post', 'put'] 
         }
       }),
     ]);
-    const params = new URLSearchParams(request.url.substr(request.url.indexOf('?')));
+    const params = new URLSearchParams(request.url!.substr(request.url!.indexOf('?')));
     expect(params.get('p1')).toEqual('v1');
     expect(params.get('парам2')).toEqual('знач2');
   });
@@ -337,7 +337,7 @@ it('should handle cookies on redirects', async ({ context, server, browserName, 
       context.request.get(`${server.PREFIX}/redirect1`),
     ]);
     expect(req1.headers.cookie).toBe('r1=v1');
-    expect(req2.headers.cookie.split(';').map(s => s.trim()).sort()).toEqual(['r1=v1', 'r2=v2']);
+    expect(req2.headers.cookie!.split(';').map(s => s.trim()).sort()).toEqual(['r1=v1', 'r2=v2']);
     expect(req3.headers.cookie).toBe('r1=v1');
   }
   const cookies = await context.cookies();
@@ -369,7 +369,7 @@ it('should return raw headers', async ({ context, page, server }) => {
   server.setRoute('/headers', (req, res) => {
     // Headers array is only supported since Node v14.14.0 so we write directly to the socket.
     // res.writeHead(200, ['name-a', 'v1','name-b', 'v4','Name-a', 'v2', 'name-A', 'v3']);
-    const conn = res.connection;
+    const conn = res.connection!;
     conn.write('HTTP/1.1 200 OK\r\n');
     conn.write('Name-A: v1\r\n');
     conn.write('name-b: v4\r\n');
@@ -773,7 +773,7 @@ it('should throw on a redirect with an invalid URL', async ({ context, server })
   server.setRedirect('/redirect', '/test');
   server.setRoute('/test', (req, res) => {
     // Node.js prevents us from responding with an invalid header, therefore we manually write the response.
-    const conn = res.connection;
+    const conn = res.connection!;
     conn.write('HTTP/1.1 302\r\n');
     conn.write('Location: https://здравствуйте/\r\n');
     conn.write('\r\n');
@@ -1029,7 +1029,7 @@ it('should accept bool and numeric params', async ({ page, server }) => {
       'bool2': false,
     }
   });
-  const params = new URLSearchParams(request.url.substr(request.url.indexOf('?')));
+  const params = new URLSearchParams(request!.url.substr(request!.url.indexOf('?')));
   expect(params.get('str')).toEqual('s');
   expect(params.get('num')).toEqual('10');
   expect(params.get('bool')).toEqual('true');

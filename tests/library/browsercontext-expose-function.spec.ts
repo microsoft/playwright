@@ -16,9 +16,10 @@
  */
 
 import { contextTest as it, expect } from '../config/browserTest';
+import type { JSHandle } from '@playwright/test';
 
 it('expose binding should work', async ({ context }) => {
-  let bindingSource;
+  let bindingSource: any;
   await context.exposeBinding('add', (source, a, b) => {
     bindingSource = source;
     return a + b;
@@ -32,10 +33,10 @@ it('expose binding should work', async ({ context }) => {
 });
 
 it('should work', async ({ context, server }) => {
-  await context.exposeFunction('add', (a, b) => a + b);
+  await context.exposeFunction('add', (a: number, b: number) => a + b);
   const page = await context.newPage();
-  await page.exposeFunction('mul', (a, b) => a * b);
-  await context.exposeFunction('sub', (a, b) => a - b);
+  await page.exposeFunction('mul', (a: number, b: number) => a * b);
+  await context.exposeFunction('sub', (a: number, b: number) => a - b);
   await context.exposeBinding('addHandle', async ({ frame }, a, b) => {
     const handle = await frame.evaluateHandle(([a, b]) => a + b, [a, b]);
     return handle;
@@ -58,8 +59,8 @@ it('should throw for duplicate registrations', async ({ context, server }) => {
 });
 
 it('should be callable from-inside addInitScript', async ({ context, server }) => {
-  let args = [];
-  await context.exposeFunction('woof', function(arg) {
+  let args: string[] = [];
+  await context.exposeFunction('woof', function(arg: string) {
     args.push(arg);
   });
   await context.addInitScript('window["woof"]("context")');
@@ -73,14 +74,14 @@ it('should be callable from-inside addInitScript', async ({ context, server }) =
 });
 
 it('exposeBindingHandle should work', async ({ context }) => {
-  let target;
+  let target!: JSHandle<any>;
   await context.exposeBinding('logme', (source, t) => {
     target = t;
     return 17;
   }, { handle: true });
   const page = await context.newPage();
   const result = await page.evaluate(async function() {
-    return window['logme']({ foo: 42 });
+    return (window as any)['logme']({ foo: 42 });
   });
   expect(await target.evaluate(x => x.foo)).toBe(42);
   expect(result).toEqual(17);

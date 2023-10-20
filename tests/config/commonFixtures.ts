@@ -47,7 +47,7 @@ function readAllProcessesLinux(): { pid: number, ppid: number, pgrp: number }[] 
       const statFile = fs.readFileSync(`/proc/${pid}/stat`, 'utf8');
       // Format of /proc/*/stat is described https://man7.org/linux/man-pages/man5/proc.5.html
       const match = statFile.match(/^(?<pid>\d+)\s+\((?<comm>.*)\)\s+(?<state>R|S|D|Z|T|t|W|X|x|K|W|P)\s+(?<ppid>\d+)\s+(?<pgrp>\d+)/);
-      if (match) {
+      if (match && match.groups) {
         result.push({
           pid: +match.groups.pid,
           ppid: +match.groups.ppid,
@@ -89,7 +89,7 @@ function buildProcessTreePosix(pid: number): ProcessData {
     if (parent && child)
       parent.children.add(child);
   }
-  return pidToProcess.get(pid);
+  return pidToProcess.get(pid)!;
 }
 
 export class TestChildProcess {
@@ -98,8 +98,8 @@ export class TestChildProcess {
   output = '';
   fullOutput = '';
   onOutput?: (chunk: string | Buffer) => void;
-  exited: Promise<{ exitCode: number, signal: string | null }>;
-  exitCode: Promise<number>;
+  exited: Promise<{ exitCode: number | null, signal: string | null }>;
+  exitCode: Promise<number | null>;
 
   private _outputCallbacks = new Set<() => void>();
 
@@ -133,8 +133,8 @@ export class TestChildProcess {
       this._outputCallbacks.clear();
     };
 
-    this.process.stderr.on('data', appendChunk);
-    this.process.stdout.on('data', appendChunk);
+    this.process.stderr!.on('data', appendChunk);
+    this.process.stdout!.on('data', appendChunk);
 
     const killProcessGroup = this._killProcessTree.bind(this, 'SIGKILL');
     process.on('exit', killProcessGroup);
@@ -214,7 +214,7 @@ export class TestChildProcess {
   }
 
   write(chars: string) {
-    this.process.stdin.write(chars);
+    this.process.stdin!.write(chars);
   }
 }
 
