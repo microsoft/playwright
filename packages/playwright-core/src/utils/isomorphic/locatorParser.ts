@@ -16,11 +16,11 @@
 
 import { escapeForAttributeSelector, escapeForTextSelector } from '../../utils/isomorphic/stringUtils';
 import { asLocators } from './locatorGenerators';
-import type { Language } from './locatorGenerators';
+import type { Language, Quote } from './locatorGenerators';
 import { parseSelector } from './selectorParser';
 
 type TemplateParams = { quote: string, text: string }[];
-function parseLocator(locator: string, testIdAttributeName: string): string {
+function parseLocator(locator: string, testIdAttributeName: string): { selector: string, preferredQuote: Quote | undefined } {
   locator = locator
       .replace(/AriaRole\s*\.\s*([\w]+)/g, (_, group) => group.toLowerCase())
       .replace(/(get_by_role|getByRole)\s*\(\s*(?:["'`])([^'"`]+)['"`]/g, (_, group1, group2) => `${group1}(${group2.toLowerCase()}`);
@@ -92,7 +92,8 @@ function parseLocator(locator: string, testIdAttributeName: string): string {
       .replace(/regex=/g, '=')
       .replace(/,,/g, ',');
 
-  return transform(template, params, testIdAttributeName);
+  const preferredQuote = params.map(p => p.quote).filter(quote => '\'"`'.includes(quote))[0] as Quote | undefined;
+  return { selector: transform(template, params, testIdAttributeName), preferredQuote };
 }
 
 function countParams(template: string) {
@@ -217,8 +218,8 @@ export function locatorOrSelectorAsSelector(language: Language, locator: string,
   } catch (e) {
   }
   try {
-    const selector = parseLocator(locator, testIdAttributeName);
-    const locators = asLocators(language, selector);
+    const { selector, preferredQuote } = parseLocator(locator, testIdAttributeName);
+    const locators = asLocators(language, selector, undefined, undefined, undefined, preferredQuote);
     const digest = digestForComparison(locator);
     if (locators.some(candidate => digestForComparison(candidate) === digest))
       return selector;

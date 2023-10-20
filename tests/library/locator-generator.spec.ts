@@ -509,6 +509,18 @@ it('asLocator xpath', async () => {
   expect.soft(asLocator('csharp', selector, false)).toBe(`Locator(\"xpath=//*[contains(normalizer-text(), 'foo']\")`);
 });
 
+it('parseLocator quotes', async () => {
+  expect.soft(parseLocator('javascript', `locator('text="bar"')`, '')).toBe(`text="bar"`);
+  expect.soft(parseLocator('javascript', `locator("text='bar'")`, '')).toBe(`text='bar'`);
+  expect.soft(parseLocator('javascript', "locator(`text='bar'`)", '')).toBe(`text='bar'`);
+  expect.soft(parseLocator('python', `locator("text='bar'")`, '')).toBe(`text='bar'`);
+  expect.soft(parseLocator('python', `locator('text="bar"')`, '')).toBe(``);
+  expect.soft(parseLocator('java', `locator("text='bar'")`, '')).toBe(`text='bar'`);
+  expect.soft(parseLocator('java', `locator('text="bar"')`, '')).toBe(``);
+  expect.soft(parseLocator('csharp', `Locator("text='bar'")`, '')).toBe(`text='bar'`);
+  expect.soft(parseLocator('csharp', `Locator('text="bar"')`, '')).toBe(``);
+});
+
 it('parse locators strictly', () => {
   const selector = 'div >> internal:has-text=\"Goodbye world\"i >> span';
 
