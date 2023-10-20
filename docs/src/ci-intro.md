@@ -101,7 +101,14 @@ jobs:
     - name: Ensure browsers are installed
       run: python -m playwright install --with-deps
     - name: Run your tests
-      run: pytest
+      run: pytest --tracing=retain-on-failure
+    - name: upload test artifacts
+      if: {{ failure() && steps.e2e.conclusion == 'failure'}}
+    - uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: playwright-traces
+        path: test-results/
 ```
 
 ```yml java title=".github/workflows/playwright.yml"
