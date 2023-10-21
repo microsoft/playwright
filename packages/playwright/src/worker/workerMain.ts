@@ -158,41 +158,32 @@ export class WorkerMain extends ProcessRunner {
   }
 
   unhandledError(error: Error | any) {
-    const failWithFatalErrorAndStop = () => {
+    // No current test - fatal error.
+    if (!this._currentTest) {
       if (!this._fatalErrors.length)
         this._fatalErrors.push(serializeError(error));
-      void this._stop();
-    };
-
-    // No current test - fatal error.
-    if (!this._currentTest)
-      return failWithFatalErrorAndStop();
-
-    // Usually, we do not differentiate between errors in the control flow
-    // and unhandled errors - both lead to the test failing. This is good for regular tests,
-    // so that you can, e.g. expect() from inside an event handler. The test fails,
-    // and we restart the worker.
-    if (this._currentTest.expectedStatus !== 'failed') {
-      this._currentTest._failWithError(serializeError(error), true /* isHardError */);
       void this._stop();
       return;
     }
 
-    // However, for tests marked with test.fail(), this is a problem. Unhandled error
-    // could come either from the user test code (legit failure), or from a fixture or
-    // a test runner. In the latter case, the worker state could be messed up,
-    // and continuing to run tests in the same worker is problematic. Therefore,
-    // we turn this into a fatal error and restart the worker anyway.
+    // We do not differentiate between errors in the control flow
+    // and unhandled errors - both lead to the test failing. This is good for regular tests,
+    // so that you can, e.g. expect() from inside an event handler. The test fails,
+    // and we restart the worker.
+    this._currentTest._failWithError(serializeError(error), true /* isHardError */);
+
+    // For tests marked with test.fail(), this might be a problem when unhandled error
+    // is not coming from the user test code (legit failure), but from fixtures or test runner.
     //
-    // The only exception is the expect() error that we still consider ok.
+    // Ideally, we would mark this test as "failed unexpectedly" and show that in the report.
+    // However, we do not have such a special test status, so the test will be considered ok (failed as expected).
+    //
+    // To avoid messing up future tests, we forcefully stop the worker, unless it is
+    // an expect() error which we know does not mess things up.
     const isExpectError = (error instanceof Error) && !!(error as any).matcherResult;
-    if (isExpectError) {
-      // Note: do not stop the worker, because test marked with test.fail() that fails an assertion
-      // is perfectly fine.
-      this._currentTest._failWithError(serializeError(error), true /* isHardError */);
-    } else {
-      failWithFatalErrorAndStop();
-    }
+    const shouldContinueInThisWorker = this._currentTest.expectedStatus === 'failed' && isExpectError;
+    if (!shouldContinueInThisWorker)
+      void this._stop();
   }
 
   private async _loadIfNeeded() {
