@@ -140,11 +140,6 @@ export class Dispatcher {
     if (this._workerSlots.some(w => w.busy))
       return;
 
-    for (const test of this._allTests) {
-      // Emulate skipped test run if we have stopped early.
-      if (!test.results.length)
-        test._appendTestResult().status = 'skipped';
-    }
     this._finished.resolve();
   }
 
@@ -513,8 +508,13 @@ class JobDispatcher {
     // with skipped tests mixed in-between non-skipped. This makes
     // for a better reporter experience.
     const allTestsSkipped = this._job.tests.every(test => test.expectedStatus === 'skipped');
-    if (allTestsSkipped) {
-      this._massSkipTestsFromRemaining(new Set(this._remainingByTestId.keys()), []);
+    if (allTestsSkipped && !this._failureTracker.hasReachedMaxFailures()) {
+      for (const test of this._job.tests) {
+        const result = test._appendTestResult();
+        this._reporter.onTestBegin(test, result);
+        result.status = 'skipped';
+        this._reportTestEnd(test, result);
+      }
       return true;
     }
     return false;

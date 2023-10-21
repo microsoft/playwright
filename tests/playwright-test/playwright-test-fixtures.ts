@@ -43,6 +43,7 @@ export type RunResult = {
   flaky: number,
   skipped: number,
   interrupted: number,
+  didNotRun: number,
   report: JSONReport,
   results: any[],
 };
@@ -417,6 +418,7 @@ export function parseTestRunnerOutput(output: string) {
   const flaky = summary(/(\d+) flaky/g);
   const skipped = summary(/(\d+) skipped/g);
   const interrupted = summary(/(\d+) interrupted/g);
+  const didNotRun = summary(/(\d+) did not run/g);
 
   const strippedOutput = stripAnsi(output);
   return {
@@ -428,5 +430,6 @@ export function parseTestRunnerOutput(output: string) {
     flaky,
     skipped,
     interrupted,
+    didNotRun,
   };
 }

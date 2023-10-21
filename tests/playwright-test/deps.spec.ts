@@ -133,7 +133,7 @@ test('should not run project if dependency failed', async ({ runInlineTest }) =>
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(1);
   expect(result.failed).toBe(1);
-  expect(result.skipped).toBe(1);
+  expect(result.didNotRun).toBe(1);
   expect(result.output).toContain('Failed project B');
   expect(result.outputLines).toEqual(['A', 'B']);
 });
@@ -297,7 +297,7 @@ test('should not filter dependency by only 3', async ({ runInlineTest }) => {
   expect(result.outputLines).toEqual(['setup 2 in setup']);
 });
 
-test('should report skipped dependent tests', async ({ runInlineTest }) => {
+test('should not report skipped dependent tests', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = { projects: [
@@ -318,8 +318,8 @@ test('should report skipped dependent tests', async ({ runInlineTest }) => {
   });
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
-  expect(result.skipped).toBe(1);
-  expect(result.results.length).toBe(2);
+  expect(result.didNotRun).toBe(1);
+  expect(result.results.length).toBe(1);
 });
 
 test('should report circular dependencies', async ({ runInlineTest }) => {
@@ -499,7 +499,7 @@ test('should run teardown after failure', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(1);
   expect(result.failed).toBe(1);
-  expect(result.skipped).toBe(2);
+  expect(result.didNotRun).toBe(2);
   expect(result.outputLines).toEqual(['A', 'D']);
 });
 

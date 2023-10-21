@@ -274,14 +274,8 @@ function createRunTestsTask(): Task<TestRun> {
           extraEnvByProjectId.set(project.id, extraEnv);
 
           const hasFailedDeps = project.deps.some(p => !successfulProjects.has(p));
-          if (!hasFailedDeps) {
+          if (!hasFailedDeps)
             phaseTestGroups.push(...testGroups);
-          } else {
-            for (const testGroup of testGroups) {
-              for (const test of testGroup.tests)
-                test._appendTestResult().status = 'skipped';
-            }
-          }
         }
 
         if (phaseTestGroups.length) {

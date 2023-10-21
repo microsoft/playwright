@@ -205,7 +205,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       expect(result.exitCode).toBe(1);
       expect(result.failed).toBe(1);
       expect(result.passed).toBe(0);
-      expect(result.skipped).toBe(2);
+      expect(result.didNotRun).toBe(2);
       expect(result.output).toContain('Testing stopped early after 1 maximum allowed failures.');
     });
 

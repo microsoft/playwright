@@ -38,8 +38,6 @@ test('max-failures should work', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(8);
   expect(result.output.split('\n').filter(l => l.includes('expect(')).length).toBe(16);
-  expect(result.report.suites[0].specs.map(spec => spec.tests[0].results.length)).toEqual(new Array(10).fill(1));
-  expect(result.report.suites[1].specs.map(spec => spec.tests[0].results.length)).toEqual(new Array(10).fill(1));
 });
 
 test('-x should work', async ({ runInlineTest }) => {
@@ -111,7 +109,7 @@ test('max-failures should stop workers', async ({ runInlineTest }) => {
   expect(result.passed).toBe(2);
   expect(result.failed).toBe(1);
   expect(result.interrupted).toBe(1);
-  expect(result.skipped).toBe(1);
+  expect(result.didNotRun).toBe(1);
   expect(result.output).toContain('%%interrupted');
   expect(result.output).not.toContain('%%skipped');
 });
@@ -177,7 +175,7 @@ test('max-failures should work across phases', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
   expect(result.passed).toBe(2);
-  expect(result.skipped).toBe(1);
+  expect(result.didNotRun).toBe(1);
   expect(result.output).toContain('running a');
   expect(result.output).toContain('running b');
   expect(result.output).toContain('running c');

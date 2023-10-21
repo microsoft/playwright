@@ -63,7 +63,8 @@ class MarkdownReporter extends BaseReporter {
       lines.push(``);
     }
     const skipped = summary.skipped ? `, ${summary.skipped} skipped` : '';
-    lines.push(`**${summary.expected} passed${skipped}**`);
+    const didNotRun = summary.didNotRun ? `, ${summary.didNotRun} did not run` : '';
+    lines.push(`**${summary.expected} passed${skipped}${didNotRun}**`);
     lines.push(`:heavy_check_mark::heavy_check_mark::heavy_check_mark:`);
     lines.push(``);
 
