@@ -130,8 +130,6 @@ export class Highlight {
     this._actionPointElement.style.top = y + 'px';
     this._actionPointElement.style.left = x + 'px';
     this._actionPointElement.hidden = false;
-    if (this._isUnderTest)
-      console.error('Action point for test: ' + JSON.stringify({ x, y })); // eslint-disable-line no-console
   }
 
   hideActionPoint() {

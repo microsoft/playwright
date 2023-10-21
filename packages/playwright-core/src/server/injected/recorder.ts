@@ -545,6 +545,12 @@ export class PollingRecorder implements RecorderDelegate {
       this._pollRecorderModeTimer = setTimeout(() => this._pollRecorderMode(), pollPeriod);
       return;
     }
+    const win = this._recorder.document.defaultView!;
+    if (win.top !== win) {
+      // Only show action point in the main frame, since it is relative to the page's viewport.
+      // Otherwise we'll see multiple action points at different locations.
+      state.actionPoint = undefined;
+    }
     this._recorder.setUIState(state, this);
     this._pollRecorderModeTimer = setTimeout(() => this._pollRecorderMode(), pollPeriod);
   }
