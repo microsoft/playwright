@@ -139,6 +139,13 @@ Here's how to polyfill `waitForAngular` function in Playwright Test:
     await waitForAngular(page);
     ```
 
+## Migration Automation
+
+The following tools exist to automate migration from Protractor to Playwright:
+
+– [Protractor to Playwright](https://ray.run/tools/protractor-to-playwright) – LLM based tool
+– [Protractor to Playwright migration tool](https://github.com/AmadeusITGroup/protractor-to-playwright) – CLI based tool
+
 ## Playwright Test Super Powers
 
 Once you're on Playwright Test, you get a lot!
