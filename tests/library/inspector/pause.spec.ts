@@ -387,9 +387,9 @@ it.describe('pause', () => {
   });
 
   it('should highlight on explore (csharp)', async ({ page, recorderPageGetter }) => {
-    await page.setContent('<button>Submit</button>');
     process.env.TEST_INSPECTOR_LANGUAGE = 'csharp';
     try {
+      await page.setContent('<button>Submit</button>');
       const scriptPromise = (async () => {
         await page.pause();
       })();
