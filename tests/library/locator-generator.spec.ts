@@ -503,10 +503,20 @@ it('asLocator internal:chain', async () => {
 
 it('asLocator xpath', async () => {
   const selector = `//*[contains(normalizer-text(), 'foo']`;
-  expect.soft(asLocator('javascript', selector, false)).toBe(`locator('xpath=//*[contains(normalizer-text(), \\'foo\\']')`);
-  expect.soft(asLocator('python', selector, false)).toBe(`locator(\"xpath=//*[contains(normalizer-text(), 'foo']\")`);
-  expect.soft(asLocator('java', selector, false)).toBe(`locator(\"xpath=//*[contains(normalizer-text(), 'foo']\")`);
-  expect.soft(asLocator('csharp', selector, false)).toBe(`Locator(\"xpath=//*[contains(normalizer-text(), 'foo']\")`);
+  expect.soft(asLocator('javascript', selector, false)).toBe(`locator('//*[contains(normalizer-text(), \\'foo\\']')`);
+  expect.soft(asLocator('python', selector, false)).toBe(`locator(\"//*[contains(normalizer-text(), 'foo']\")`);
+  expect.soft(asLocator('java', selector, false)).toBe(`locator(\"//*[contains(normalizer-text(), 'foo']\")`);
+  expect.soft(asLocator('csharp', selector, false)).toBe(`Locator(\"//*[contains(normalizer-text(), 'foo']\")`);
+  expect.soft(parseLocator('javascript', `locator('//*[contains(normalizer-text(), \\'foo\\']')`, 'data-testid')).toBe("//*[contains(normalizer-text(), 'foo']");
+  expect.soft(parseLocator('javascript', `locator("//*[contains(normalizer-text(), 'foo']")`, 'data-testid')).toBe("//*[contains(normalizer-text(), 'foo']");
+  expect.soft(parseLocator('javascript', `locator('xpath=//*[contains(normalizer-text(), \\'foo\\']')`, 'data-testid')).toBe("xpath=//*[contains(normalizer-text(), 'foo']");
+  expect.soft(parseLocator('javascript', `locator("xpath=//*[contains(normalizer-text(), 'foo']")`, 'data-testid')).toBe("xpath=//*[contains(normalizer-text(), 'foo']");
+  expect.soft(parseLocator('python', `locator("//*[contains(normalizer-text(), 'foo']")`, 'data-testid')).toBe("//*[contains(normalizer-text(), 'foo']");
+  expect.soft(parseLocator('python', `locator("xpath=//*[contains(normalizer-text(), 'foo']")`, 'data-testid')).toBe("xpath=//*[contains(normalizer-text(), 'foo']");
+  expect.soft(parseLocator('java', `locator("//*[contains(normalizer-text(), 'foo']")`, 'data-testid')).toBe("//*[contains(normalizer-text(), 'foo']");
+  expect.soft(parseLocator('java', `locator("xpath=//*[contains(normalizer-text(), 'foo']")`, 'data-testid')).toBe("xpath=//*[contains(normalizer-text(), 'foo']");
+  expect.soft(parseLocator('csharp', `Locator("//*[contains(normalizer-text(), 'foo']")`, 'data-testid')).toBe("//*[contains(normalizer-text(), 'foo']");
+  expect.soft(parseLocator('csharp', `Locator("xpath=//*[contains(normalizer-text(), 'foo']")`, 'data-testid')).toBe("xpath=//*[contains(normalizer-text(), 'foo']");
 });
 
 it('parseLocator quotes', async () => {
@@ -519,6 +529,17 @@ it('parseLocator quotes', async () => {
   expect.soft(parseLocator('java', `locator('text="bar"')`, '')).toBe(``);
   expect.soft(parseLocator('csharp', `Locator("text='bar'")`, '')).toBe(`text='bar'`);
   expect.soft(parseLocator('csharp', `Locator('text="bar"')`, '')).toBe(``);
+});
+
+it('parseLocator css', async () => {
+  expect.soft(parseLocator('javascript', `locator('.foo')`, '')).toBe(`.foo`);
+  expect.soft(parseLocator('javascript', `locator('css=.foo')`, '')).toBe(`css=.foo`);
+  expect.soft(parseLocator('python', `locator(".foo")`, '')).toBe(`.foo`);
+  expect.soft(parseLocator('python', `locator("css=.foo")`, '')).toBe(`css=.foo`);
+  expect.soft(parseLocator('java', `locator(".foo")`, '')).toBe(`.foo`);
+  expect.soft(parseLocator('java', `locator("css=.foo")`, '')).toBe(`css=.foo`);
+  expect.soft(parseLocator('csharp', `Locator(".foo")`, '')).toBe(`.foo`);
+  expect.soft(parseLocator('csharp', `Locator("css=.foo")`, '')).toBe(`css=.foo`);
 });
 
 it('parse locators strictly', () => {

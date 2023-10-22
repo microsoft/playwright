@@ -204,7 +204,14 @@ function innerAsLocators(factory: LocatorFactory, parsed: ParsedSelector, isFram
       }
     }
 
-    tokens.push([locatorPart]);
+    // Selectors can be prefixed with engine name, e.g. xpath=//foo
+    let locatorPartWithEngine: string | undefined;
+    if (['xpath', 'css'].includes(part.name)) {
+      const selectorPart = stringifySelector({ parts: [part] }, /* forceEngineName */ true);
+      locatorPartWithEngine = factory.generateLocator(base, locatorType, selectorPart);
+    }
+
+    tokens.push([locatorPart, locatorPartWithEngine].filter(Boolean) as string[]);
   }
 
   return combineTokens(factory, tokens, maxOutputSize);
