@@ -397,6 +397,31 @@ it.describe('pause', () => {
     await scriptPromise;
   });
 
+  it('should highlight on explore (csharp)', async ({ page, recorderPageGetter }) => {
+    process.env.TEST_INSPECTOR_LANGUAGE = 'csharp';
+    try {
+      await page.setContent('<button>Submit</button>');
+      const scriptPromise = (async () => {
+        await page.pause();
+      })();
+      const recorderPage = await recorderPageGetter();
+
+      const box1Promise = waitForTestLog<Box>(page, 'Highlight box for test: ');
+      await recorderPage.getByText('Locator', { exact: true }).click();
+      await recorderPage.locator('.tabbed-pane .CodeMirror').click();
+      await recorderPage.keyboard.type('GetByText("Submit")');
+      const box1 = await box1Promise;
+
+      const button = await page.$('text=Submit');
+      const box2 = await button.boundingBox();
+      expect(roundBox(box1)).toEqual(roundBox(box2));
+      await recorderPage.click('[title="Resume (F8)"]');
+      await scriptPromise;
+    } finally {
+      delete process.env.TEST_INSPECTOR_LANGUAGE;
+    }
+  });
+
   it('should not prevent key events', async ({ page, recorderPageGetter }) => {
     await page.setContent('<div>Hello</div>');
     await page.evaluate(() => {

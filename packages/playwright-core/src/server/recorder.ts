@@ -36,7 +36,7 @@ import { RecorderApp } from './recorder/recorderApp';
 import type { CallMetadata, InstrumentationListener, SdkObject } from './instrumentation';
 import type { Point } from '../common/types';
 import type { CallLog, CallLogStatus, EventData, Mode, Source, UIState } from '@recorder/recorderTypes';
-import { createGuid, monotonicTime } from '../utils';
+import { createGuid, isUnderTest, monotonicTime } from '../utils';
 import { metadataToCallLog } from './recorder/recorderUtils';
 import { Debugger } from './debugger';
 import { EventEmitter } from 'events';
@@ -71,7 +71,10 @@ export class Recorder implements InstrumentationListener {
   }
 
   static showInspector(context: BrowserContext) {
-    Recorder.show(context, {}).catch(() => {});
+    const params: channels.BrowserContextRecorderSupplementEnableParams = {};
+    if (isUnderTest())
+      params.language = process.env.TEST_INSPECTOR_LANGUAGE;
+    Recorder.show(context, params).catch(() => {});
   }
 
   static show(context: BrowserContext, params: channels.BrowserContextRecorderSupplementEnableParams = {}): Promise<Recorder> {
@@ -114,7 +117,7 @@ export class Recorder implements InstrumentationListener {
         return;
       }
       if (data.event === 'selectorUpdated') {
-        this.setHighlightedSelector(data.params.language, data.params.selector);
+        this.setHighlightedSelector(this._currentLanguage, data.params.selector);
         return;
       }
       if (data.event === 'step') {
