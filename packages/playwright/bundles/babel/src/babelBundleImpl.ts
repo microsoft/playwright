@@ -33,7 +33,7 @@ type BabelTransformOptionsInput  = {
   pluginsPrologue: [string, any?][]
   pluginsEpilogue: [string, any?][]
   jsx?: {
-    type?: string
+    type?: 'react' | 'react-jsx' | 'react-jsxdev' | 'react-native' | 'preserve'
     factory?: string
     fragmentFactory?: string
     importSource?: string
