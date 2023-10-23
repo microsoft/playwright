@@ -1390,7 +1390,7 @@
     "defaultBrowserType": "chromium"
   },
   "Pixel 7": {
-    "userAgent": "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.6045.21 Mobile Safari/537.36",
+    "userAgent": "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.6045.33 Mobile Safari/537.36",
     "screen": {
       "width": 412,
       "height": 915
@@ -1405,7 +1405,7 @@
     "defaultBrowserType": "chromium"
   },
   "Pixel 7 landscape": {
-    "userAgent": "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.6045.21 Mobile Safari/537.36",
+    "userAgent": "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.6045.33 Mobile Safari/537.36",
     "screen": {
       "width": 915,
       "height": 412
