@@ -233,7 +233,7 @@ it('should respect timeout xpath', async ({ page, playwright }) => {
   await page.waitForSelector('//div', { state: 'attached', timeout: 3000 }).catch(e => error = e);
   expect(error).toBeTruthy();
   expect(error.message).toContain('page.waitForSelector: Timeout 3000ms exceeded');
-  expect(error.message).toContain('waiting for locator(\'xpath=//div\')');
+  expect(error.message).toContain('waiting for locator(\'//div\')');
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
 });
 
