@@ -167,13 +167,14 @@ export function shouldTransform(filename: string): boolean {
 export function transformHook(originalCode: string, filename: string, moduleUrl?: string): string {
   const isTypeScript = filename.endsWith('.ts') || filename.endsWith('.tsx') || filename.endsWith('.mts') || filename.endsWith('.cts');
   const tsconfig = loadAndValidateTsconfigForFile(filename);
+  const jsx = { type: tsconfig?.jsx, factory: tsconfig?.jsxFactory, fragmentFactory: tsconfig?.jsxFragmentFactory, importSource: tsconfig?.jsxImportSource };
   const hasPreprocessor =
       process.env.PW_TEST_SOURCE_TRANSFORM &&
       process.env.PW_TEST_SOURCE_TRANSFORM_SCOPE &&
       process.env.PW_TEST_SOURCE_TRANSFORM_SCOPE.split(pathSeparator).some(f => filename.startsWith(f));
   const pluginsPrologue = _transformConfig.babelPlugins;
   const pluginsEpilogue = hasPreprocessor ? [[process.env.PW_TEST_SOURCE_TRANSFORM!]] as BabelPlugin[] : [];
-  const hash = calculateHash(originalCode, filename, !!moduleUrl, pluginsPrologue, pluginsEpilogue);
+  const hash = calculateHash(originalCode, filename, !!moduleUrl, pluginsPrologue, pluginsEpilogue, jsx);
   const { cachedCode, addToCache } = getFromCompilationCache(filename, hash, moduleUrl);
   if (cachedCode !== undefined)
     return cachedCode;
@@ -183,13 +184,13 @@ export function transformHook(originalCode: string, filename: string, moduleUrl?
   process.env.BROWSERSLIST_IGNORE_OLD_DATA = 'true';
 
   const { babelTransform }: { babelTransform: BabelTransformFunction } = require('./babelBundle');
-  const { code, map } = babelTransform(originalCode, filename, { isTypeScript, isModule: !!moduleUrl, pluginsPrologue, pluginsEpilogue, jsx: tsconfig?.jsx, jsxFactory: tsconfig?.jsxFactory, jsxFragmentFactory: tsconfig?.jsxFragmentFactory, jsxImportSource: tsconfig?.jsxImportSource });
+  const { code, map } = babelTransform(originalCode, filename, { isTypeScript, isModule: !!moduleUrl, pluginsPrologue, pluginsEpilogue, jsx });
   if (code)
     addToCache!(code, map);
   return code || '';
 }
 
-function calculateHash(content: string, filePath: string, isModule: boolean, pluginsPrologue: BabelPlugin[], pluginsEpilogue: BabelPlugin[]): string {
+function calculateHash(content: string, filePath: string, isModule: boolean, pluginsPrologue: BabelPlugin[], pluginsEpilogue: BabelPlugin[], jsx: {type?: string, factory?: string, fragmentFactory?: string, importSource?: string}|undefined): string {
   const hash = crypto.createHash('sha1')
       .update(isModule ? 'esm' : 'no_esm')
       .update(content)
@@ -197,6 +198,7 @@ function calculateHash(content: string, filePath: string, isModule: boolean, plu
       .update(version)
       .update(pluginsPrologue.map(p => p[0]).join(','))
       .update(pluginsEpilogue.map(p => p[0]).join(','))
+      .update([jsx?.type ?? '-', jsx?.factory ?? '-', jsx?.fragmentFactory ?? '-', jsx?.importSource ?? '-'].join(','))
       .digest('hex');
   return hash;
 }

@@ -27,18 +27,20 @@ import traverseFunction from '@babel/traverse';
 export const traverse = traverseFunction;
 
 
-interface BabelTransformOptionsInput {
+type BabelTransformOptionsInput  = {
   isTypeScript: boolean
   isModule: boolean
   pluginsPrologue: [string, any?][]
   pluginsEpilogue: [string, any?][]
-  jsx: string | undefined
-  jsxFactory: string | undefined
-  jsxFragmentFactory: string | undefined
-  jsxImportSource: string | undefined
-}
+  jsx?: {
+    type?: string
+    factory?: string
+    fragmentFactory?: string
+    importSource?: string
+  };
+};
 
-function babelTransformOptions({ isTypeScript, isModule, pluginsPrologue, pluginsEpilogue, jsx, jsxFactory, jsxFragmentFactory, jsxImportSource }: BabelTransformOptionsInput): TransformOptions {
+function babelTransformOptions({ isTypeScript, isModule, pluginsPrologue, pluginsEpilogue, jsx }: BabelTransformOptionsInput): TransformOptions {
   const plugins = [];
 
   if (isTypeScript) {
@@ -75,16 +77,16 @@ function babelTransformOptions({ isTypeScript, isModule, pluginsPrologue, plugin
   }
 
   // Support JSX/TSX at all times, regardless of the file extension.
-  if (jsx === 'react') {
+  if (jsx?.type === 'react') {
     plugins.push([require('@babel/plugin-transform-react-jsx'), {
       runtime: 'classic',
-      pragma: jsxFactory,
-      pragmaFrag: jsxFragmentFactory
+      pragma: jsx.factory,
+      pragmaFrag: jsx.fragmentFactory
     }]);
-  } else if (jsx === 'react-jsx' || jsx === 'react-jsxdev') {
+  } else if (jsx?.type === 'react-jsx' || jsx?.type === 'react-jsxdev') {
     plugins.push([require('@babel/plugin-transform-react-jsx'), {
       runtime: 'automatic',
-      importSource: jsxImportSource
+      importSource: jsx.importSource
     }]);
   } else {
     plugins.push([require('@babel/plugin-transform-react-jsx'), {
@@ -122,7 +124,7 @@ function babelTransformOptions({ isTypeScript, isModule, pluginsPrologue, plugin
       setPublicClassFields: true,
     },
     presets: isTypeScript ? [
-      [require('@babel/preset-typescript'), { onlyRemoveTypeImports: false, jsxPragma: jsxFactory, jsxPragmaFrag: jsxFragmentFactory }],
+      [require('@babel/preset-typescript'), { onlyRemoveTypeImports: false, jsxPragma: jsx?.factory, jsxPragmaFrag: jsx?.fragmentFactory }],
     ] : [],
     plugins: [
       ...pluginsPrologue.map(([name, options]) => [require(name), options]),
