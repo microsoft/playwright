@@ -119,8 +119,10 @@ export const test = _test
       }],
       writeFiles: async ({ tmpWorkspace }, use) => {
         await use(async (nameToContents: Record<string, string>) => {
-          for (const [name, contents] of Object.entries(nameToContents))
+          for (const [name, contents] of Object.entries(nameToContents)) {
+            await fs.promises.mkdir(path.join(tmpWorkspace, path.dirname(name)), { recursive: true });
             await fs.promises.writeFile(path.join(tmpWorkspace, name), contents);
+          }
         });
       },
       tmpWorkspace: async ({}, use) => {
