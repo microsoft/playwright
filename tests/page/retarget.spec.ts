@@ -15,9 +15,10 @@
  * limitations under the License.
  */
 
+import type { Page } from '@playwright/test';
 import { test as it, expect } from './pageTest';
 
-async function giveItAChanceToResolve(page) {
+async function giveItAChanceToResolve(page: Page) {
   for (let i = 0; i < 5; i++)
     await page.evaluate(() => new Promise(f => requestAnimationFrame(() => requestAnimationFrame(f))));
 }
@@ -40,7 +41,7 @@ it('element state checks should work as expected for label with zero-sized input
 
 it('should wait for enclosing disabled button', async ({ page }) => {
   await page.setContent('<button><span>Target</span></button>');
-  const span = await page.$('text=Target');
+  const span = (await page.$('text=Target'))!;
   let done = false;
   const promise = span.waitForElementState('disabled').then(() => done = true);
   await giveItAChanceToResolve(page);
@@ -51,18 +52,18 @@ it('should wait for enclosing disabled button', async ({ page }) => {
 
 it('should wait for enclosing button with a disabled fieldset', async ({ page }) => {
   await page.setContent('<fieldset disabled=true><button><span>Target</span></button></div>');
-  const span = await page.$('text=Target');
+  const span = (await page.$('text=Target'))!;
   let done = false;
   const promise = span.waitForElementState('enabled').then(() => done = true);
   await giveItAChanceToResolve(page);
   expect(done).toBe(false);
-  await span.evaluate(span => (span.parentElement.parentElement as HTMLFieldSetElement).disabled = false);
+  await span.evaluate((span: HTMLElement) => (span.parentElement!.parentElement as HTMLFieldSetElement).disabled = false);
   await promise;
 });
 
 it('should wait for enclosing enabled button', async ({ page, server }) => {
   await page.setContent('<button disabled><span>Target</span></button>');
-  const span = await page.$('text=Target');
+  const span = (await page.$('text=Target'))!;
   let done = false;
   const promise = span.waitForElementState('enabled').then(() => done = true);
   await giveItAChanceToResolve(page);
@@ -91,8 +92,8 @@ it('should check the box outside shadow dom label', async ({ page }) => {
 it('setInputFiles should work with label', async ({ page, asset }) => {
   await page.setContent(`<label for=target>Choose a file</label><input id=target type=file>`);
   await page.setInputFiles('text=Choose a file', asset('file-to-upload.txt'));
-  expect(await page.$eval('input', input => input.files.length)).toBe(1);
-  expect(await page.$eval('input', input => input.files[0].name)).toBe('file-to-upload.txt');
+  expect(await page.$eval('input', (input: HTMLInputElement) => input.files!.length)).toBe(1);
+  expect(await page.$eval('input', (input: HTMLInputElement) => input.files?.[0].name)).toBe('file-to-upload.txt');
 });
 
 type Options = { disabled?: boolean, hidden?: boolean, readonly?: boolean };
@@ -123,7 +124,7 @@ it('enabled/disabled retargeting', async ({ page, asset }) => {
     await it.step(`"${locator}" in "${dom}" should be enabled=${enabled}`, async () => {
       await page.setContent(dom);
       const target = page.locator(locator);
-      const handle = await page.$(locator);
+      const handle = (await page.$(locator))!;
       expect(await target.isEnabled()).toBe(enabled);
       expect(await target.isDisabled()).toBe(!enabled);
       if (enabled) {
@@ -161,7 +162,7 @@ it('visible/hidden retargeting', async ({ page, asset }) => {
     await it.step(`"${locator}" in "${dom}" should be visible=${visible}`, async () => {
       await page.setContent(dom);
       const target = page.locator(locator);
-      const handle = await page.$(locator);
+      const handle = (await page.$(locator))!;
       expect(await target.isVisible()).toBe(visible);
       expect(await target.isHidden()).toBe(!visible);
       if (visible) {
@@ -197,7 +198,7 @@ it('editable retargeting', async ({ page, asset }) => {
     await it.step(`"${locator}" in "${dom}" should be editable=${editable}`, async () => {
       await page.setContent(dom);
       const target = page.locator(locator);
-      const handle = await page.$(locator);
+      const handle = (await page.$(locator))!;
       expect(await target.isEditable()).toBe(editable);
       if (editable) {
         await expect(target).toBeEditable();
@@ -222,7 +223,7 @@ it('input value retargeting', async ({ page, browserName }) => {
     await it.step(`"${locator}" in "${dom}" input value`, async () => {
       await page.setContent(dom);
       const target = page.locator(locator);
-      const handle = await page.$(locator);
+      const handle = (await page.$(locator))!;
 
       expect(await target.inputValue()).toBe('');
       expect(await handle.inputValue()).toBe('');
@@ -243,7 +244,7 @@ it('input value retargeting', async ({ page, browserName }) => {
         expect(await page.locator('#target').evaluate((el: HTMLInputElement) => el.selectionStart)).toBe(0);
         expect(await page.locator('#target').evaluate((el: HTMLInputElement) => el.selectionEnd)).toBe(3);
       } else {
-        expect(await page.evaluate(() => window.getSelection().toString())).toBe('bar');
+        expect(await page.evaluate(() => window.getSelection()!.toString())).toBe('bar');
       }
     });
   }
@@ -260,7 +261,7 @@ it.fixme('selection retargeting', async ({ page, browserName }) => {
     await it.step(`"${locator}" in "${dom}" text selection`, async () => {
       await page.setContent(dom);
       const target = page.locator(locator);
-      const handle = await page.$(locator);
+      const handle = (await page.$(locator))!;
 
       expect(await target.isEditable()).toBe(true);
       expect(await handle.isEditable()).toBe(true);
@@ -272,11 +273,11 @@ it.fixme('selection retargeting', async ({ page, browserName }) => {
       await target.selectText();
       if (browserName === 'firefox') {
         expect(await page.$eval('#target', target => {
-          const selection = window.getSelection();
+          const selection = window.getSelection()!;
           return selection.anchorNode === target && selection.focusNode === target;
         })).toBe(true);
       } else {
-        expect(await page.evaluate(() => window.getSelection().toString())).toBe('foo');
+        expect(await page.evaluate(() => window.getSelection()!.toString())).toBe('foo');
       }
     });
   }
@@ -295,7 +296,7 @@ it('select options retargeting', async ({ page }) => {
     await it.step(`"${locator}" in "${dom}" select option`, async () => {
       await page.setContent(dom);
       const target = page.locator(locator);
-      const handle = await page.$(locator);
+      const handle = (await page.$(locator))!;
 
       expect(await target.inputValue()).toBe('dog');
       expect(await handle.inputValue()).toBe('dog');

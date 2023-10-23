@@ -28,7 +28,7 @@ test('androidDevice.open', async function({ androidDevice }) {
   const socket = await androidDevice.open('shell:/bin/cat');
   await socket.write(Buffer.from('321\n'));
   const output = await new Promise(resolve => socket.on('data', resolve));
-  expect(output.toString()).toBe('321\n');
+  expect(output!.toString()).toBe('321\n');
   const closedPromise = new Promise<void>(resolve => socket.on('close', resolve));
   await socket.close();
   await closedPromise;

@@ -28,7 +28,7 @@ import { parseHar } from '../config/utils';
 export type BrowserTestWorkerFixtures = PageWorkerFixtures & {
   browserVersion: string;
   defaultSameSiteCookieValue: string;
-  allowsThirdParty
+  allowsThirdParty: boolean;
   browserMajorVersion: number;
   browserType: BrowserType;
   isAndroid: boolean;

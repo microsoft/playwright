@@ -15,22 +15,23 @@
  * limitations under the License.
  */
 
+import type { Frame } from '@playwright/test';
 import { test as it, expect } from './pageTest';
 import { attachFrame, detachFrame } from '../config/utils';
 
-async function giveItTimeToLog(frame) {
+async function giveItTimeToLog(frame: Frame) {
   await frame.evaluate(() => new Promise(f => requestAnimationFrame(() => requestAnimationFrame(f))));
   await frame.evaluate(() => new Promise(f => requestAnimationFrame(() => requestAnimationFrame(f))));
 }
 
-const addElement = tag => document.body.appendChild(document.createElement(tag));
+const addElement = (tag: string) => document.body.appendChild(document.createElement(tag));
 
 it('should throw on waitFor', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   let error;
   // @ts-expect-error waitFor is undocumented
   await page.waitForSelector('*', { waitFor: 'attached' }).catch(e => error = e);
-  expect(error.message).toContain('options.waitFor is not supported, did you mean options.state?');
+  expect(error!.message).toContain('options.waitFor is not supported, did you mean options.state?');
 });
 
 it('should tolerate waitFor=visible', async ({ page, server }) => {
@@ -51,14 +52,14 @@ it('should immediately resolve promise if node exists', async ({ page, server })
 
 it('elementHandle.waitForSelector should immediately resolve if node exists', async ({ page }) => {
   await page.setContent(`<span>extra</span><div><span>target</span></div>`);
-  const div = await page.$('div');
+  const div = (await page.$('div'))!;
   const span = await div.waitForSelector('span', { state: 'attached' });
   expect(await span.evaluate(e => e.textContent)).toBe('target');
 });
 
 it('elementHandle.waitForSelector should wait', async ({ page }) => {
   await page.setContent(`<div></div>`);
-  const div = await page.$('div');
+  const div = (await page.$('div'))!;
   const promise = div.waitForSelector('span', { state: 'attached' });
   await div.evaluate(div => div.innerHTML = '<span>target</span>');
   const span = await promise;
@@ -67,14 +68,14 @@ it('elementHandle.waitForSelector should wait', async ({ page }) => {
 
 it('elementHandle.waitForSelector should timeout', async ({ page }) => {
   await page.setContent(`<div></div>`);
-  const div = await page.$('div');
+  const div = (await page.$('div'))!;
   const error = await div.waitForSelector('span', { timeout: 100 }).catch(e => e);
   expect(error.message).toContain('Timeout 100ms exceeded.');
 });
 
 it('elementHandle.waitForSelector should throw on navigation', async ({ page, server }) => {
   await page.setContent(`<div></div>`);
-  const div = await page.$('div');
+  const div = (await page.$('div'))!;
   const promise = div.waitForSelector('span').catch(e => e);
   // Give it some time before navigating.
   for (let i = 0; i < 10; i++)
@@ -84,8 +85,8 @@ it('elementHandle.waitForSelector should throw on navigation', async ({ page, se
   expect(error.message).toContain(`waiting for locator('span') to be visible`);
 });
 
-it('should work with removed MutationObserver', async ({ page, server }) => {
-  await page.evaluate(() => delete window.MutationObserver);
+it('should work with removed MutationObserver', async ({ page }) => {
+  await page.evaluate(() => delete (window as any).MutationObserver);
   const [handle] = await Promise.all([
     page.waitForSelector('.zombo'),
     page.setContent(`<div class='zombo'>anything</div>`),
@@ -120,7 +121,7 @@ it('should report logs while waiting for visible', async ({ page, server }) => {
   });
   await giveItTimeToLog(frame);
 
-  await frame.evaluate(() => document.querySelector('div').remove());
+  await frame.evaluate(() => document.querySelector('div')!.remove());
   await giveItTimeToLog(frame);
 
   await frame.evaluate(() => {
@@ -153,7 +154,7 @@ it('should report logs while waiting for hidden', async ({ page, server }) => {
   await giveItTimeToLog(frame);
 
   await frame.evaluate(() => {
-    document.querySelector('div').remove();
+    document.querySelector('div')!.remove();
     const div = document.createElement('div');
     div.className = 'another';
     div.textContent = 'hello';
@@ -192,7 +193,7 @@ it('should resolve promise when node is added in shadow dom', async ({ page, ser
   await page.evaluate(() => {
     const span = document.createElement('span');
     span.textContent = 'Hello from shadow';
-    document.querySelector('div').shadowRoot.appendChild(span);
+    document.querySelector('div')!.shadowRoot!.appendChild(span);
   });
   const handle = await watchdog;
   expect(await handle.evaluate(e => e.textContent)).toBe('Hello from shadow');
@@ -202,7 +203,7 @@ it('should work when node is added through innerHTML', async ({ page, server }) 
   await page.goto(server.EMPTY_PAGE);
   const watchdog = page.waitForSelector('h3 div', { state: 'attached' });
   await page.evaluate(addElement, 'span');
-  await page.evaluate(() => document.querySelector('span').innerHTML = '<h3><div></div></h3>');
+  await page.evaluate(() => document.querySelector('span')!.innerHTML = '<h3><div></div></h3>');
   await watchdog;
 });
 
@@ -237,5 +238,5 @@ it('should throw when frame is detached', async ({ page, server }) => {
   await detachFrame(page, 'frame1');
   await waitPromise;
   expect(waitError).toBeTruthy();
-  expect(waitError.message).toContain('frame.waitForSelector: Frame was detached');
+  expect(waitError!.message).toContain('frame.waitForSelector: Frame was detached');
 });

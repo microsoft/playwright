@@ -37,10 +37,10 @@ test('should create new page @smoke', async function({ browser }) {
 
 test('should throw upon second create new page', async function({ browser }) {
   const page = await browser.newPage();
-  let error;
+  let error: Error;
   await page.context().newPage().catch(e => error = e);
   await page.close();
-  expect(error.message).toContain('Please use browser.newContext()');
+  expect(error!.message).toContain('Please use browser.newContext()');
 });
 
 test('version should work', async function({ browser, browserName }) {

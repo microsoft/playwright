@@ -32,7 +32,7 @@ it('should fail without credentials', async ({ browser, server, isChromiumHeaded
   const page = await context.newPage();
   try {
     const response = await page.goto(server.EMPTY_PAGE);
-    expect(response.status()).toBe(401);
+    expect(response!.status()).toBe(401);
   } finally {
     await context.close();
   }
@@ -45,10 +45,10 @@ it('should work with setHTTPCredentials', async ({ browser, server, isChromiumHe
   const context = await browser.newContext();
   const page = await context.newPage();
   let response = await page.goto(server.EMPTY_PAGE);
-  expect(response.status()).toBe(401);
+  expect(response!.status()).toBe(401);
   await context.setHTTPCredentials({ username: 'user', password: 'pass' });
   response = await page.reload();
-  expect(response.status()).toBe(200);
+  expect(response!.status()).toBe(200);
   await context.close();
 });
 
@@ -59,7 +59,7 @@ it('should work with correct credentials @smoke', async ({ browser, server }) =>
   });
   const page = await context.newPage();
   const response = await page.goto(server.EMPTY_PAGE);
-  expect(response.status()).toBe(200);
+  expect(response!.status()).toBe(200);
   await context.close();
 });
 
@@ -70,7 +70,7 @@ it('should fail with wrong credentials', async ({ browser, server }) => {
   });
   const page = await context.newPage();
   const response = await page.goto(server.EMPTY_PAGE);
-  expect(response.status()).toBe(401);
+  expect(response!.status()).toBe(401);
   await context.close();
 });
 
@@ -81,9 +81,9 @@ it('should return resource body', async ({ browser, server }) => {
   });
   const page = await context.newPage();
   const response = await page.goto(server.PREFIX + '/playground.html');
-  expect(response.status()).toBe(200);
+  expect(response!.status()).toBe(200);
   expect(await page.title()).toBe('Playground');
-  expect((await response.body()).toString()).toContain('Playground');
+  expect((await response!.body()).toString()).toContain('Playground');
   await context.close();
 });
 
@@ -94,7 +94,7 @@ it('should work with correct credentials and matching origin', async ({ browser,
   });
   const page = await context.newPage();
   const response = await page.goto(server.EMPTY_PAGE);
-  expect(response.status()).toBe(200);
+  expect(response!.status()).toBe(200);
   await context.close();
 });
 
@@ -105,7 +105,7 @@ it('should work with correct credentials and matching origin case insensitive', 
   });
   const page = await context.newPage();
   const response = await page.goto(server.EMPTY_PAGE);
-  expect(response.status()).toBe(200);
+  expect(response!.status()).toBe(200);
   await context.close();
 });
 
@@ -117,7 +117,7 @@ it('should fail with correct credentials and mismatching scheme', async ({ brows
   });
   const page = await context.newPage();
   const response = await page.goto(server.EMPTY_PAGE);
-  expect(response.status()).toBe(401);
+  expect(response!.status()).toBe(401);
   await context.close();
 });
 
@@ -131,7 +131,7 @@ it('should fail with correct credentials and mismatching hostname', async ({ bro
   });
   const page = await context.newPage();
   const response = await page.goto(server.EMPTY_PAGE);
-  expect(response.status()).toBe(401);
+  expect(response!.status()).toBe(401);
   await context.close();
 });
 
@@ -144,6 +144,6 @@ it('should fail with correct credentials and mismatching port', async ({ browser
   });
   const page = await context.newPage();
   const response = await page.goto(server.EMPTY_PAGE);
-  expect(response.status()).toBe(401);
+  expect(response!.status()).toBe(401);
   await context.close();
 });

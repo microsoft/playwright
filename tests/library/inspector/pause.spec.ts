@@ -181,10 +181,10 @@ it.describe('pause', () => {
     const iframeActionPoint = await iframe.$('x-pw-action-point');
     expect(await iframeActionPoint?.boundingBox()).toBeFalsy();
 
-    const x1 = box1.x + box1.width / 2;
-    const y1 = box1.y + box1.height / 2;
-    const x2 = box2.x + box2.width / 2;
-    const y2 = box2.y + box2.height / 2;
+    const x1 = box1!.x + box1!.width / 2;
+    const y1 = box1!.y + box1!.height / 2;
+    const x2 = box2!.x + box2!.width / 2;
+    const y2 = box2!.y + box2!.height / 2;
 
     expect(Math.abs(x1 - x2) < 2).toBeTruthy();
     expect(Math.abs(y1 - y2) < 2).toBeTruthy();
@@ -391,8 +391,8 @@ it.describe('pause', () => {
     const box1 = await box1Promise;
 
     const button = await page.$('text=Submit');
-    const box2 = await button.boundingBox();
-    expect(roundBox(box1)).toEqual(roundBox(box2));
+    const box2 = await button!.boundingBox();
+    expect(roundBox(box1)).toEqual(roundBox(box2!));
     await recorderPage.click('[title="Resume (F8)"]');
     await scriptPromise;
   });
@@ -473,7 +473,7 @@ it.describe('pause', () => {
 
     const box1Promise = waitForTestLog<Box>(page, 'Highlight box for test: ');
     await recorderPage.click('[title="Step over (F10)"]');
-    const box2 = roundBox(await page.locator('#target').boundingBox());
+    const box2 = roundBox((await page.locator('#target').boundingBox())!);
     const box1 = roundBox(await box1Promise);
     expect(box1).toEqual(box2);
 
@@ -485,7 +485,7 @@ it.describe('pause', () => {
 async function sanitizeLog(recorderPage: Page): Promise<string[]> {
   const results = [];
   for (const entry of await recorderPage.$$('.call-log-call')) {
-    const header =  (await (await entry.$('.call-log-call-header')).textContent()).replace(/— [\d.]+(ms|s)/, '- XXms');
+    const header =  (await (await entry.$('.call-log-call-header'))!.textContent())!.replace(/— [\d.]+(ms|s)/, '- XXms');
     results.push(header.replace(/page\.waitForEvent\(console\).*/, 'page.waitForEvent(console)'));
     results.push(...await entry.$$eval('.call-log-message', ee => ee.map(e => {
       return (e.classList.contains('error') ? 'error: ' : '') + e.textContent;
