@@ -110,7 +110,7 @@ dotnet test --filter "Name~Slogan"
 ### Running NUnit tests in Parallel
 
 By default NUnit will run all test files in parallel, while running tests inside each file sequentially (`ParallelScope.Self`). It will create as many processes as there are cores on the host system. You can adjust this behavior using the NUnit.NumberOfTestWorkers parameter.
-Running test in parallel using `ParallelScope.All` or `ParallelScope.Fixtures` is not supported.
+Only `ParallelScope.Self` is supported.
 
 For CPU-bound tests, we recommend using as many workers as there are cores on your system, divided by 2. For IO-bound tests you can use as many workers as you have cores.
 
