@@ -127,14 +127,14 @@ export function stringifySelector(selector: string | ParsedSelector, forceEngine
   if (typeof selector === 'string')
     return selector;
   return selector.parts.map((p, i) => {
-    let hideEngine = false;
-    if (!forceEngineName) {
+    let includeEngine = true;
+    if (!forceEngineName && i !== selector.capture) {
       if (p.name === 'css')
-        hideEngine = true;
-      else if (p.name === 'xpath' && (p.source.startsWith('//') || p.source.startsWith('..')))
-        hideEngine = true;
+        includeEngine = false;
+      else if (p.name === 'xpath' && p.source.startsWith('//') || p.source.startsWith('..'))
+        includeEngine = false;
     }
-    const prefix = hideEngine ? '' : p.name + '=';
+    const prefix = includeEngine ? p.name + '=' : '';
     return `${i === selector.capture ? '*' : ''}${prefix}${p.source}`;
   }).join(' >> ');
 }
