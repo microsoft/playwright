@@ -20323,6 +20323,8 @@ type Devices = {
   "Pixel 4a (5G) landscape": DeviceDescriptor;
   "Pixel 5": DeviceDescriptor;
   "Pixel 5 landscape": DeviceDescriptor;
+  "Pixel 7": DeviceDescriptor;
+  "Pixel 7 landscape": DeviceDescriptor;
   "Moto G4": DeviceDescriptor;
   "Moto G4 landscape": DeviceDescriptor;
   "Desktop Chrome HiDPI": DeviceDescriptor;
