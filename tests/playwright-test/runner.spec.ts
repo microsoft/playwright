@@ -751,3 +751,28 @@ test('slow double SIGINT should be respected in reporter.onExit', async ({ inter
   expect(result.output).toContain('MyReporter.onExit started');
   expect(result.output).not.toContain('MyReporter.onExit finished');
 });
+
+test('unhandled exception in test.fail should restart worker and continue', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+
+      test('bad', async () => {
+        test.fail();
+        console.log('\\n%%bad running worker=' + test.info().workerIndex);
+        setTimeout(() => {
+          throw new Error('oh my!');
+        }, 0);
+        await new Promise(f => setTimeout(f, 1000));
+      });
+
+      test('good', () => {
+        console.log('\\n%%good running worker=' + test.info().workerIndex);
+      });
+    `
+  }, { retries: 1, reporter: 'list' });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(2);
+  expect(result.failed).toBe(0);
+  expect(result.outputLines).toEqual(['bad running worker=0', 'good running worker=1']);
+});
