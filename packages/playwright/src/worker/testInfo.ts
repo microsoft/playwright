@@ -65,6 +65,7 @@ export class TestInfoImpl implements TestInfo {
   _beforeHooksStep: TestStepInternal | undefined;
   _afterHooksStep: TestStepInternal | undefined;
   _onDidFinishTestFunction: (() => Promise<void>) | undefined;
+  _onSoftExpectFailedFunction: () => Promise<void> | undefined = () => undefined;
 
   // ------------ TestInfo fields ------------
   readonly testId: string;

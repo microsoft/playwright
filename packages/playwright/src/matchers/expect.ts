@@ -132,8 +132,9 @@ function createExpect(info: ExpectMetaInfo) {
       }
 
       if (property === 'soft') {
-        return (actual: unknown, messageOrOptions?: ExpectMessage) => {
-          return configure({ soft: true })(actual, messageOrOptions) as any;
+        return (actual: unknown, messageOrOptions?: ExpectMessage & { screenshotOnSoftFailure?: boolean }) => {
+          const soft = isString(messageOrOptions) ? {} : messageOrOptions || {};
+          return configure({ _soft: soft })(actual, messageOrOptions) as any;
         };
       }
 
@@ -147,14 +148,18 @@ function createExpect(info: ExpectMetaInfo) {
     },
   });
 
-  const configure = (configuration: { message?: string, timeout?: number, soft?: boolean, _poll?: boolean | { timeout?: number, intervals?: number[] } }) => {
+  const configure = (configuration: { message?: string, timeout?: number, _soft?: boolean | { screenshotOnSoftFailure?: boolean }, _poll?: boolean | { timeout?: number, intervals?: number[] } }) => {
     const newInfo = { ...info };
     if ('message' in configuration)
       newInfo.message = configuration.message;
     if ('timeout' in configuration)
       newInfo.timeout = configuration.timeout;
-    if ('soft' in configuration)
-      newInfo.isSoft = configuration.soft;
+    if ('_soft' in configuration) {
+      newInfo.isSoft = !!configuration._soft;
+      if (typeof configuration._soft === 'object')
+        newInfo.screenshotOnSoftFailure = configuration._soft.screenshotOnSoftFailure;
+
+    }
     if ('_poll' in configuration) {
       newInfo.isPoll = !!configuration._poll;
       if (typeof configuration._poll === 'object') {
@@ -211,6 +216,7 @@ type ExpectMetaInfo = {
   message?: string;
   isNot?: boolean;
   isSoft?: boolean;
+  screenshotOnSoftFailure?: boolean;
   isPoll?: boolean;
   timeout?: number;
   pollTimeout?: number;
@@ -241,7 +247,7 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
         throw new Error(`\`expect.poll()\` does not support "${matcherName}" matcher.`);
       matcher = (...args: any[]) => pollMatcher(matcherName, !!this._info.isNot, this._info.pollIntervals, currentExpectTimeout({ timeout: this._info.pollTimeout }), this._info.generator!, ...args);
     }
-    return (...args: any[]) => {
+    return async (...args: any[]) => {
       const testInfo = currentTestInfo();
       if (!testInfo)
         return matcher.call(target, ...args);
@@ -264,17 +270,18 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
         laxParent: true,
       }) : undefined;
 
-      const reportStepError = (jestError: ExpectError) => {
+      const reportStepError = async (jestError: ExpectError) => {
         const error = new ExpectError(jestError, customMessage, stackFrames);
         const serializedError = {
           message: error.message,
           stack: error.stack,
         };
         step?.complete({ error: serializedError });
-        if (this._info.isSoft)
+        if (this._info.isSoft) {
           testInfo._failWithError(serializedError, false /* isHardError */);
-        else
-          throw error;
+          if (this._info.screenshotOnSoftFailure)
+            await testInfo._onSoftExpectFailedFunction?.();
+        } else {throw error;}
       };
 
       const finalizer = () => {
@@ -291,7 +298,7 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
         finalizer();
         return result;
       } catch (e) {
-        reportStepError(e);
+        await reportStepError(e);
       }
     };
   }

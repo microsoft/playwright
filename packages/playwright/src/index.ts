@@ -520,6 +520,7 @@ class ArtifactsRecorder {
   async willStartTest(testInfo: TestInfoImpl) {
     this._testInfo = testInfo;
     testInfo._onDidFinishTestFunction = () => this.didFinishTestFunction();
+    testInfo._onSoftExpectFailedFunction =  () => this.onSoftExpectFailed();
     this._captureTrace = shouldCaptureTrace(this._traceMode, testInfo) && !process.env.PW_TEST_DISABLE_TRACING;
     if (this._captureTrace)
       this._testInfo._tracing.start(this._createTemporaryArtifact('traces', `${this._testInfo.testId}-test.trace`), this._traceOptions);
@@ -634,6 +635,11 @@ class ArtifactsRecorder {
 
     for (const file of this._temporaryArtifacts)
       await fs.promises.unlink(file).catch(() => {});
+  }
+
+  async onSoftExpectFailed() {
+    if (this._testInfo._isFailure() && (this._screenshotMode === 'on' || this._screenshotMode === 'only-on-failure'))
+      await this._screenshotOnTestFailure();
   }
 
   private _createScreenshotAttachmentPath() {

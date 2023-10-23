@@ -15,6 +15,7 @@
  */
 
 import { test, expect } from './playwright-test-fixtures';
+import { listFiles } from './playwright.artifacts.spec';
 
 test('soft expects should compile', async ({ runTSC }) => {
   const result = await runTSC({
@@ -78,4 +79,36 @@ test('testInfo should contain all soft expect errors', async ({ runInlineTest })
   expect(result.output).toContain('Error: one plus one');
   expect(result.output).toContain('Error: two times two');
   expect(result.output).not.toContain('Error: must be exactly two errors');
+});
+
+test.describe('screenshots on soft expect ', async () => {
+  test('should make screenshot on soft expect failure', async ({ runInlineTest }, testInfo) => {
+    const result = await runInlineTest({
+      'playwright.config.ts': `
+        export default { 
+          expect: {
+            screenshotOnSoftFailure: true
+          },
+          use: { screenshot: 'only-on-failure' }
+       };
+    `,
+      'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('should work', async ({ page }) => {
+        await page.goto('https://playwright.dev/');
+        await expect.soft(page, { screenshotOnSoftFailure: true }).toHaveTitle(/Playwrighttt/);
+
+        await page.getByRole('link', { name: 'Get started' }).click();
+        await expect.soft(page, { screenshotOnSoftFailure: true }).toHaveURL(/.*introlololo/);
+      });
+    `
+    });
+    expect(result.exitCode).toBe(1);
+
+    expect(listFiles(testInfo.outputPath('test-results'))).toEqual([
+      'artifacts-failing',
+      '  test-failed-1.png',
+      'artifacts-own-context-failing'
+    ]);
+  });
 });
