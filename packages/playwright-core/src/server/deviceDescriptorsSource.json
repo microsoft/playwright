@@ -1389,7 +1389,7 @@
     "hasTouch": true,
     "defaultBrowserType": "chromium"
   },
-    "Pixel 7": {
+  "Pixel 7": {
     "userAgent": "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.6045.21 Mobile Safari/537.36",
     "screen": {
       "width": 412,
@@ -1397,7 +1397,7 @@
     },
     "viewport": {
       "width": 412,
-      "height": 915
+      "height": 839
     },
     "deviceScaleFactor": 2.625,
     "isMobile": true,
@@ -1412,7 +1412,7 @@
     },
     "viewport": {
       "width": 915,
-      "height": 412
+      "height": 336
     },
     "deviceScaleFactor": 2.625,
     "isMobile": true,
