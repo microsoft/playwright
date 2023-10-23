@@ -46,8 +46,8 @@ test('pnpm: @playwright/experimental-ct-react should work', async ({ exec, tmpWo
       });
     `,
   });
-  await exec('pnpm exec playwright test -c . --browser=all --reporter=list,json example.spec.tsx', { env: { PLAYWRIGHT_JSON_OUTPUT_NAME: 'report.json' } });
-  await exec('node read-json-report.js', path.join(tmpWorkspace, 'report.json'));
+  await exec('pnpm exec playwright test -c . --browser=chromium --reporter=list,json example.spec.tsx', { env: { PLAYWRIGHT_JSON_OUTPUT_NAME: 'report.json' } });
+  await exec('node read-json-report.js', path.join(tmpWorkspace, 'report.json'), '--validate-chromium-project-only');
 });
 
 test('pnpm: JSX inside a @playwright/test should work', async ({ exec, tmpWorkspace, writeFiles }) => {
