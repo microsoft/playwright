@@ -1736,7 +1736,7 @@ from playwright.async_api import async_playwright, Playwright
 
 async def run(playwright: Playwright):
     webkit = playwright.webkit
-    browser = await webkit.launch(headless=false)
+    browser = await webkit.launch(headless=False)
     context = await browser.new_context()
     page = await context.new_page()
     await page.expose_binding("pageURL", lambda source: source["page"].url)
@@ -1762,7 +1762,7 @@ from playwright.sync_api import sync_playwright, Playwright
 
 def run(playwright: Playwright):
     webkit = playwright.webkit
-    browser = webkit.launch(headless=false)
+    browser = webkit.launch(headless=False)
     context = browser.new_context()
     page = context.new_page()
     page.expose_binding("pageURL", lambda source: source["page"].url)
