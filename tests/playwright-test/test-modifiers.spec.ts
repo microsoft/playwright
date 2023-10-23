@@ -640,7 +640,7 @@ test('static modifiers should be added in serial mode', async ({ runInlineTest }
   });
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
-  expect(result.skipped).toBe(3);
+  expect(result.didNotRun).toBe(3);
   expect(result.report.suites[0].specs[0].tests[0].annotations).toEqual([{ type: 'slow' }]);
   expect(result.report.suites[0].specs[1].tests[0].annotations).toEqual([{ type: 'fixme' }]);
   expect(result.report.suites[0].specs[2].tests[0].annotations).toEqual([{ type: 'skip' }]);
