@@ -20,7 +20,7 @@ import type * as frames from './frames';
 import type * as types from './types';
 import type * as channels from '@protocol/channels';
 import { assert } from '../utils';
-import { ManualPromise } from '../utils/manualPromise';
+import { LongStandingScope, ManualPromise } from '../utils/manualPromise';
 import { SdkObject } from './instrumentation';
 import type { HeadersArray, NameValue } from '../common/types';
 import { APIRequestContext } from './fetch';
@@ -129,6 +129,10 @@ export class Request extends SdkObject {
     this._isFavicon = url.endsWith('/favicon.ico') || !!redirectedFrom?._isFavicon;
   }
 
+  private _targetClosedScope(): LongStandingScope {
+    return this._serviceWorker?.openScope || this._frame?._page.openScope || new LongStandingScope();
+  }
+
   _setFailureText(failureText: string) {
     this._failureText = failureText;
     this._waitForResponsePromise.resolve(null);
@@ -179,11 +183,11 @@ export class Request extends SdkObject {
   }
 
   async rawRequestHeaders(): Promise<HeadersArray> {
-    return this._overrides?.headers || this._rawRequestHeadersPromise;
+    return this._overrides?.headers || this._targetClosedScope().race(this._rawRequestHeadersPromise);
   }
 
   response(): PromiseLike<Response | null> {
-    return this._waitForResponsePromise;
+    return this._targetClosedScope().race(this._waitForResponsePromise);
   }
 
   _existingResponse(): Response | null {
