@@ -357,27 +357,29 @@ class JobDispatcher {
     data.result.attachments.push(attachment);
   }
 
-  private _massSkipTestsFromRemaining(testIds: Set<string>, errors: TestError[], onlyStartedTests?: boolean) {
+  private _failTestWithErrors(test: TestCase, errors: TestError[]) {
+    const runData = this._dataByTestId.get(test.id);
+    // There might be a single test that has started but has not finished yet.
+    let result: TestResult;
+    if (runData) {
+      result = runData.result;
+    } else {
+      result = test._appendTestResult();
+      this._reporter.onTestBegin(test, result);
+    }
+    result.errors = [...errors];
+    result.error = result.errors[0];
+    result.status = errors.length ? 'failed' : 'skipped';
+    this._reportTestEnd(test, result);
+    this._failedTests.add(test);
+  }
+
+  private _massSkipTestsFromRemaining(testIds: Set<string>, errors: TestError[]) {
     for (const test of this._remainingByTestId.values()) {
       if (!testIds.has(test.id))
         continue;
       if (!this._failureTracker.hasReachedMaxFailures()) {
-        const runData = this._dataByTestId.get(test.id);
-        // There might be a single test that has started but has not finished yet.
-        let result: TestResult;
-        if (runData) {
-          result = runData.result;
-        } else {
-          if (onlyStartedTests && this._currentlyRunning)
-            continue;
-          result = test._appendTestResult();
-          this._reporter.onTestBegin(test, result);
-        }
-        result.errors = [...errors];
-        result.error = result.errors[0];
-        result.status = errors.length ? 'failed' : 'skipped';
-        this._reportTestEnd(test, result);
-        this._failedTests.add(test);
+        this._failTestWithErrors(test, errors);
         errors = []; // Only report errors for the first test.
       }
       this._remainingByTestId.delete(test.id);
@@ -401,15 +403,14 @@ class JobDispatcher {
       return;
     }
 
-    if (params.fatalUnknownTestIds) {
-      const titles = params.fatalUnknownTestIds.map(testId => {
-        const test = this._remainingByTestId.get(testId);
-        return test?.titlePath().slice(1).join(' > ');
-      }).filter(title => !!title);
-      this._massSkipTestsFromRemaining(new Set(params.fatalUnknownTestIds), [{
-        message: `Test(s) not found in the worker process. Make sure test titles do not change:\n${titles.join('\n')}`
-      }]);
+    for (const testId of params.fatalUnknownTestIds || []) {
+      const test = this._remainingByTestId.get(testId);
+      if (test) {
+        this._remainingByTestId.delete(testId);
+        this._failTestWithErrors(test, [{ message: `Test not found in the worker process. Make sure test title does not change.` }]);
+      }
     }
+
     if (params.fatalErrors.length) {
       // In case of fatal errors, report first remaining test as failing with these errors,
       // and all others as skipped.
@@ -417,9 +418,18 @@ class JobDispatcher {
     }
     // Handle tests that should be skipped because of the setup failure.
     this._massSkipTestsFromRemaining(new Set(params.skipTestsDueToSetupFailure), []);
-    // Handle unexpected worker exit.
-    if (params.unexpectedExitError)
-      this._massSkipTestsFromRemaining(new Set(this._remainingByTestId.keys()), [params.unexpectedExitError], true /* onlyStartedTests */);
+
+    if (params.unexpectedExitError) {
+      // When worker exits during a test, we blame the test itself.
+      //
+      // The most common situation when worker exits while not running a test is:
+      //   worker failed to require the test file (at the start) because of an exception in one of imports.
+      // In this case, "skip" all remaining tests, to avoid running into the same exception over and over.
+      if (this._currentlyRunning)
+        this._massSkipTestsFromRemaining(new Set([this._currentlyRunning.test.id]), [params.unexpectedExitError]);
+      else
+        this._massSkipTestsFromRemaining(new Set(this._remainingByTestId.keys()), [params.unexpectedExitError]);
+    }
 
     const retryCandidates = new Set<TestCase>();
     const serialSuitesWithFailures = new Set<Suite>();
