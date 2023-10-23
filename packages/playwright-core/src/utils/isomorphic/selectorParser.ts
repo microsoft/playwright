@@ -131,7 +131,7 @@ export function stringifySelector(selector: string | ParsedSelector, forceEngine
     if (!forceEngineName) {
       if (p.name === 'css')
         hideEngine = true;
-      else if (p.name === 'xpath' && p.source.startsWith('//') || p.source.startsWith('..'))
+      else if (p.name === 'xpath' && (p.source.startsWith('//') || p.source.startsWith('..')))
         hideEngine = true;
     }
     const prefix = hideEngine ? '' : p.name + '=';
